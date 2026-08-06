@@ -88,7 +88,8 @@ TransitionPresetEntry TransitionPackageLoader::loadPackage(const QString &packag
 
     QString error;
     if (!GpuPackageParse::parseParameters(root.value(QStringLiteral("parameters")).toArray(),
-                                          &entry.meta.parameters, /*gpuBackend=*/true, &error)) {
+                                          &entry.meta.parameters, /*gpuBackend=*/true, &error,
+                                          packageDir)) {
         setError(errorOut, &entry, error);
         return entry;
     }

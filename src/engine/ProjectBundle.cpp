@@ -262,6 +262,8 @@ QString mediaRoleToString(MediaRole role)
         return QStringLiteral("matte");
     case MediaRole::FaceTrack:
         return QStringLiteral("facetrack");
+    case MediaRole::Model3d:
+        return QStringLiteral("model3d");
     case MediaRole::Source:
         break;
     }
@@ -274,6 +276,8 @@ MediaRole mediaRoleFromString(const QString &role)
         return MediaRole::Matte;
     if (role == QLatin1String("facetrack"))
         return MediaRole::FaceTrack;
+    if (role == QLatin1String("model3d"))
+        return MediaRole::Model3d;
     return MediaRole::Source;
 }
 

@@ -1,7 +1,9 @@
 #include "GpuCompositor.h"
 
 #include "EffectCatalog.h"
+#include "FaceModelTransform.h"
 #include "FaceTrack.h"
+#include "GlModelRenderer.h"
 #include "GlRuntime.h"
 #include "GpuEffectDefinition.h"
 #include "MaskApplier.h"
@@ -222,10 +224,25 @@ GlTarget buildLayerTarget(GlRuntime &rt, QOpenGLExtraFunctions *gl, const GpuLay
     for (const drift::Effect &effect : layer.effects) {
         const EffectPresetEntry *def =
             effect.catalogId.isEmpty() ? nullptr : effectDefForId(effect.catalogId);
-        if (!def || !def->isGpu || !def->gpu.valid)
+        if (!def)
             continue;
         if (def->meta.id == QStringLiteral("time_echo"))
             continue; // history is assembled before the scene is built
+
+        if (def->isModel3d) {
+            QMap<QString, QVariant> params = resolvedEffectParameters(effect, *def);
+            const drift::FaceModelParams modelParams = drift::faceModelParamsFromMap(params);
+            GlTarget next =
+                drawFaceModelEffect(rt, gl, modelParams, layer.faceSlots, target);
+            if (!next.isValid())
+                continue; // grace mode
+            rt.releaseTarget(std::move(target));
+            target = std::move(next);
+            continue;
+        }
+
+        if (!def->isGpu || !def->gpu.valid)
+            continue;
 
         QMap<QString, QVariant> params = resolvedEffectParameters(effect, *def);
         if (def->needsFace)

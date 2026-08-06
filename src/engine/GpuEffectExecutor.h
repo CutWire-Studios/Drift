@@ -1,10 +1,12 @@
 #pragma once
 
 #include "EffectCatalog.h"
+#include "FaceLandmarker.h"
 #include "GpuEffectDefinition.h"
 #include "core/Time.h"
 
 #include <QImage>
+#include <QList>
 #include <QMap>
 #include <QVariant>
 
@@ -16,11 +18,14 @@ public:
     static GpuEffectExecutor &instance();
 
     // One effect in a chain. `gpu` must outlive the applyChain call (catalog entries do).
+    // modelDef is set for "backend": "model3d" steps; gpu stays null for those.
     struct ChainStep
     {
         QString cacheKey;
         const drift::GpuEffectDefinition *gpu = nullptr;
+        const EffectPresetEntry *modelDef = nullptr;
         QMap<QString, QVariant> parameters;
+        QList<drift::FaceAnchors> faceSlots;
     };
 
     // Run a whole effect chain with a single upload and a single readback, keeping

@@ -23,8 +23,9 @@ QString slugifyCategory(const QString &raw);
 QVariant jsonToVariant(const QJsonValue &value);
 
 // Parse "parameters": [...]. Rejects identifiers colliding with reserved uniforms when gpuBackend.
+// packageDir is used to resolve FilePath defaults via resolvePackageAsset; may be empty.
 bool parseParameters(const QJsonArray &params, QList<drift::EffectParamSpec> *out, bool gpuBackend,
-                     QString *errorOut);
+                     QString *errorOut, const QString &packageDir = {});
 
 void parseFixedParams(const QJsonObject &obj, QMap<QString, QVariant> *out);
 

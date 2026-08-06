@@ -1,5 +1,7 @@
 #include "GpuEffectExecutor.h"
 
+#include "FaceModelTransform.h"
+#include "GlModelRenderer.h"
 #include "GlRuntime.h"
 #include "GpuEffectDefinition.h"
 
@@ -91,6 +93,18 @@ QImage GpuEffectExecutor::applyChain(const QList<ChainStep> &steps, const QImage
         // Each step reads the previous step's framebuffer and writes a new one.
         // The image only crosses the CPU boundary once, at the end.
         for (const ChainStep &step : steps) {
+            if (step.modelDef && step.modelDef->isModel3d) {
+                const drift::FaceModelParams modelParams =
+                    drift::faceModelParamsFromMap(step.parameters);
+                GlTarget next =
+                    drawFaceModelEffect(rt, gl, modelParams, step.faceSlots, current);
+                if (!next.isValid())
+                    continue;
+                rt.releaseTarget(std::move(current));
+                current = std::move(next);
+                continue;
+            }
+
             if (!step.gpu || !step.gpu->valid)
                 continue;
 

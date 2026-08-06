@@ -20,7 +20,7 @@ Search order: `DRIFT_EFFECTS_DIR`, `<applicationDir>/effects`, `<AppDataLocation
 |---|---|
 | `id` / `displayName` / `category` / `order` | Catalog metadata |
 | `thumbnail` | Optional image path (relative to package, or absolute). Defaults to `thumbnail.png` when that file exists |
-| `backend` | `"gpu"` |
+| `backend` | `"gpu"` or `"model3d"` |
 | `parameters[]` | User-facing uniforms — see the parameter types below |
 | `fixedParams` | Hidden uniforms (colors as `#rrggbb`, enums as strings) |
 | `requires` | `"face"` to receive the baked face anchors (see below). Any other value is a parse error |
@@ -33,11 +33,11 @@ Search order: `DRIFT_EFFECTS_DIR`, `<applicationDir>/effects`, `<AppDataLocation
 | `float` (default) | `float` | `minValue`/`maxValue`/`defaultValue`; keyframable |
 | `bool` / `boolean` | `float` (0 or 1) | Rendered as a switch; not keyframable |
 | `color` / `colour` | `vec3` | `defaultValue` is a `"#rrggbb"` string; rendered as a swatch |
+| `file` | *(not bound)* | Absolute path string; `fileFilters` for the picker. Used by `model3d` |
 
 Colour parameters bind as **`vec3`** — alpha is dropped, so declare a separate opacity float if you
 need one. Any alpha in `defaultValue` is discarded at parse time and the value is normalized to six
-digits. Colours are **not keyframable**: the whole keyframe stack is typed `double`, and packing a
-shade into one would interpolate through desaturated mud in sRGB.
+digits. Colours and file paths are **not keyframable**: the whole keyframe stack is typed `double`.
 
 Pass inputs: `source_texture` (+ optional `index`), `buffer` (+ `id`), or `texture` (+ `id`). Multiple inputs bind as `u_currentTexture` (unit 0) and `u_texture1`…  
 Pass outputs: `buffer` or `canvas`.
@@ -106,3 +106,24 @@ inspector offers a re-detect when a Beauty effect meets an older track.
 ## Special case: time_echo
 
 History frames are still decoded in `FrameCompositor`; blending runs on the GPU via `GpuEffectExecutor::blendTimeEcho` (CPU fallback if GL is unavailable).
+
+## 3D face props (`backend: "model3d"`)
+
+Not a fragment pipeline — there is no `.frag`. The package declares parameters only; the engine
+loads a user-supplied `.glb`, attaches it to the tracked head pose, and composites with an optional
+head-proxy occlusion pass.
+
+- Orthographic MVP from `(faceCenter, faceRx, pose, user params, aspect)` — never a pixel size, so
+  preview at `renderScale 0.5` and export at 1.0 produce a bit-identical matrix. Depth maps as
+  `z_ndc = −z_wn / 4` so `+forward` (toward the viewer) is nearer in the GL depth buffer.
+- Lighting is **screen-space** (fixed relative to the frame) and approximate Blinn-Phong in sRGB —
+  the rest of the compositor is untagged 8-bit, so linearizing the model alone would look foreign.
+- Materials: `baseColorFactor` / `baseColorTexture`, metallic/roughness scalars, emissive factor,
+  OPAQUE/MASK/BLEND, double-sided. Draco / meshopt compressed meshes are refused with a specific
+  message. Skinned meshes render in bind pose with a warning.
+- Props live in the `face-props` addon kind (`DRIFT_FACE_PROPS_DIR`). Starter GLBs ship from the
+  separate `drift-addons` repo — nothing asset-shaped enters this tree.
+- The `face_model_3d` package ships `markers.glb` as its default model: coloured dots at the eye
+  midpoint, eyes, nose, mouth, chin, forehead and cheeks in head-width space, so custom props can
+  be authored against the same place markers. See `effects/face_model_3d/README.md`.
+- Failure mode: skip the effect, keep the frame. Empty path is silent (cleared model param).

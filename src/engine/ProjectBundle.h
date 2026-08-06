@@ -38,7 +38,7 @@ namespace drift::bundle {
 // Bumped only by this file. Major is the compatibility gate: a reader refuses a larger major and
 // warns on a larger minor.
 inline constexpr int kFormatMajor = 1;
-inline constexpr int kFormatMinor = 0;
+inline constexpr int kFormatMinor = 1;
 inline constexpr int kFormatPatch = 0;
 
 QString formatVersionString();
@@ -55,7 +55,7 @@ struct AddonRef
 
 // Source media is the only thing that can be referenced instead of embedded; derived artifacts are
 // always embedded, because they live in a volatile app-data cache the user never backs up.
-enum class MediaRole { Source, Matte, FaceTrack };
+enum class MediaRole { Source, Matte, FaceTrack, Model3d };
 
 QString mediaRoleToString(MediaRole role);
 MediaRole mediaRoleFromString(const QString &role);

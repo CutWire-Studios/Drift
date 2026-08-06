@@ -515,6 +515,11 @@ public:
                                     double value);
     Q_INVOKABLE void setEffectColorParam(int trackIndex, int clipIndex, int effectIndex,
                                          const QString &key, const QString &value);
+    // File-path params (model3d .glb). Same commit-once path as colour — no preview stream.
+    // Takes a QUrl like replaceAssetSource / importSubtitleFile so the portal and native
+    // dialogs hand us a real local path without QML having to call toLocalFile().
+    Q_INVOKABLE void setEffectStringParam(int trackIndex, int clipIndex, int effectIndex,
+                                          const QString &key, const QUrl &url);
     Q_INVOKABLE QVariantList audioEffectCatalog() const;
     Q_INVOKABLE QVariantList audioEffectCategories() const;
     Q_INVOKABLE void addAudioEffect(int trackIndex, int clipIndex, const QString &effectId);

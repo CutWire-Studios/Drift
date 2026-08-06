@@ -397,6 +397,14 @@ add_library(driftengine STATIC
     src/engine/FaceLandmarker.cpp
     src/engine/FaceTrack.h
     src/engine/FaceTrack.cpp
+    src/engine/FaceModelTransform.h
+    src/engine/FaceModelTransform.cpp
+    src/engine/ModelAsset.h
+    src/engine/ModelAsset.cpp
+    src/engine/GlModelRenderer.h
+    src/engine/GlModelRenderer.cpp
+    src/engine/FacePropCatalog.h
+    src/engine/FacePropCatalog.cpp
     src/engine/DeepFilterDenoiser.h
     src/engine/DeepFilterDenoiser.cpp
     src/engine/MatteWriter.h
@@ -413,6 +421,8 @@ add_library(driftengine STATIC
     src/engine/ProjectDependencies.cpp
 )
 target_include_directories(driftengine PUBLIC src)
+# cgltf is PRIVATE: ModelAsset.h exposes no cgltf type, so nothing outside ModelAsset.cpp includes it.
+target_include_directories(driftengine SYSTEM PRIVATE ${CMAKE_SOURCE_DIR}/third_party/cgltf)
 target_link_libraries(driftengine PUBLIC Qt6::Core Qt6::Gui Qt6::OpenGL FFmpeg::FFmpeg driftcore
     driftaudiodsp onnxruntime::headers)
 target_link_libraries(driftengine PRIVATE ${DRIFT_ZSTD_TARGET} OpenSSL::Crypto ${CMAKE_DL_LIBS})

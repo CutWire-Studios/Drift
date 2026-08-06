@@ -114,7 +114,7 @@ QVariant jsonToVariant(const QJsonValue &value)
 }
 
 bool parseParameters(const QJsonArray &params, QList<drift::EffectParamSpec> *out, bool gpuBackend,
-                     QString *errorOut)
+                     QString *errorOut, const QString &packageDir)
 {
     for (const QJsonValue &pv : params) {
         const QJsonObject p = pv.toObject();
@@ -132,6 +132,8 @@ bool parseParameters(const QJsonArray &params, QList<drift::EffectParamSpec> *ou
             spec.type = drift::EffectParamType::Bool;
         else if (type == QLatin1String("color") || type == QLatin1String("colour"))
             spec.type = drift::EffectParamType::Color;
+        else if (type == QLatin1String("file"))
+            spec.type = drift::EffectParamType::FilePath;
         else
             spec.type = drift::EffectParamType::Float;
         spec.min = p.value(QStringLiteral("minValue")).toDouble(p.value(QStringLiteral("min")).toDouble(0.0));
@@ -157,8 +159,25 @@ bool parseParameters(const QJsonArray &params, QList<drift::EffectParamSpec> *ou
             // spelling. Alpha is dropped on purpose: colours bind as vec3, and a package that
             // wants transparency declares a separate opacity float.
             spec.defaultColorHex = color.name(QColor::HexRgb);
+        } else if (spec.type == drift::EffectParamType::FilePath) {
+            QString def = p.value(QStringLiteral("defaultValue")).toString();
+            if (def.isEmpty())
+                def = p.value(QStringLiteral("default")).toString();
+            if (!def.isEmpty() && !packageDir.isEmpty())
+                spec.defaultString = resolvePackageAsset(packageDir, def);
+            else
+                spec.defaultString = def;
+            for (const QJsonValue &f : p.value(QStringLiteral("fileFilters")).toArray()) {
+                const QString filter = f.toString();
+                if (!filter.isEmpty())
+                    spec.fileFilters.append(filter);
+            }
+            if (spec.fileFilters.isEmpty())
+                spec.fileFilters.append(QStringLiteral("All files (*)"));
         }
-        if (gpuBackend && drift::isReservedGpuUniform(spec.key)) {
+        // File params are never GPU uniforms — skip the reserved-name check for them so a
+        // package can still call a file param something that would collide as a uniform.
+        if (gpuBackend && !spec.isFilePath() && drift::isReservedGpuUniform(spec.key)) {
             fail(errorOut,
                  QStringLiteral("parameter '%1' collides with reserved uniform").arg(spec.key));
             return false;

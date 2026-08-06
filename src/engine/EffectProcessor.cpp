@@ -182,12 +182,24 @@ QImage EffectProcessor::applyEffects(const QImage &input, const QList<drift::Eff
         if (def && def->meta.id == QStringLiteral("time_echo"))
             continue;
 
+        if (def && def->isModel3d) {
+            flushLegacy();
+            QMap<QString, QVariant> params = resolvedEffectParameters(effect, *def);
+            GpuEffectExecutor::ChainStep step;
+            step.cacheKey = def->meta.id;
+            step.modelDef = def;
+            step.parameters = params;
+            step.faceSlots = faceSlots;
+            gpuChain.append(step);
+            continue;
+        }
+
         if (def && def->isGpu && def->gpu.valid) {
             flushLegacy();
             QMap<QString, QVariant> params = resolvedEffectParameters(effect, *def);
             if (def->needsFace)
                 drift::applyFaceUniforms(&params, faceSlots);
-            gpuChain.append(GpuEffectExecutor::ChainStep{def->meta.id, &def->gpu, params});
+            gpuChain.append(GpuEffectExecutor::ChainStep{def->meta.id, &def->gpu, nullptr, params, {}});
             continue;
         }
 

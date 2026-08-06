@@ -72,6 +72,7 @@ void rebuildCatalogLocked(const QStringList &packageRoots)
         {QStringLiteral("blurs_distortions"), QStringLiteral("Blurs & Distortions")},
         {QStringLiteral("funny"), QStringLiteral("Funny Face")},
         {QStringLiteral("beauty"), QStringLiteral("Beauty & Makeup")},
+        {QStringLiteral("props"), QStringLiteral("Face Props")},
         {QStringLiteral("artistic"), QStringLiteral("Artistic")},
     };
 
@@ -171,9 +172,13 @@ QMap<QString, QVariant> resolvedEffectParameters(const drift::Effect &effect, co
     // A colour key can carry a stale double: isKnownKeyframeProp accepts any well-formed fx.N.key
     // without consulting the catalog, so a hand-edited project or a package that changed a
     // parameter from float to colour would otherwise reach the shader as a number and bind black.
+    // File params have the same hole — without this a fresh effect defaults to the double 0.0 and
+    // the model silently never loads.
     for (const drift::EffectParamSpec &spec : def.meta.parameters) {
         if (spec.isColor() && params.value(spec.key).typeId() != QMetaType::QString)
             params.insert(spec.key, spec.defaultColorHex);
+        if (spec.isFilePath() && params.value(spec.key).typeId() != QMetaType::QString)
+            params.insert(spec.key, spec.defaultString);
     }
 
     // Derived placeholders used by graph templates.
@@ -196,7 +201,7 @@ QString buildFilterGraphForEffect(const drift::Effect &effect, const EffectPrese
         entry = effectDefForId(effect.catalogId);
 
     if (entry) {
-        if (entry->meta.compositorOnly || entry->isGpu)
+        if (entry->meta.compositorOnly || entry->isGpu || entry->isModel3d)
             return {};
 
         const QMap<QString, QVariant> params = resolvedEffectParameters(effect, *entry);

@@ -3,12 +3,15 @@
 #include <QDir>
 #include <QFile>
 #include <QFileInfo>
+#include <QJsonDocument>
+#include <QMatrix4x4>
 #include <QPainter>
 #include <QProcess>
 #include <QSet>
 #include <QStandardPaths>
 #include <QTemporaryDir>
 #include <QThread>
+#include <QVector4D>
 #include <atomic>
 
 #include <cmath>
@@ -31,6 +34,10 @@
 #include "engine/EffectPackageLoader.h"
 #include "engine/EffectProcessor.h"
 #include "engine/FaceTrack.h"
+#include "engine/FaceModelTransform.h"
+#include "engine/ModelAsset.h"
+#include "engine/GlModelRenderer.h"
+#include "engine/GlRuntime.h"
 #include "engine/EmojiCatalog.h"
 #include "engine/FontCatalog.h"
 #include "engine/FrameCompositor.h"
@@ -38,7 +45,6 @@
 #include "engine/GpuEffectExecutor.h"
 #include "engine/GpuPackageParse.h"
 
-#include <QJsonDocument>
 #include "engine/MaskApplier.h"
 #include "engine/MatteWriter.h"
 #include "engine/ReverseProxyCache.h"
@@ -63,6 +69,14 @@ private slots:
     void smoothFaceTrackHandlesMissingBlocks();
     void applyFaceUniformsEmitsContourArrays();
     void colorParametersParseAndResolve();
+    void modelAssetLoadsCubeGlb();
+    void modelAssetRejectsDraco();
+    void modelAssetRejectsCorrupt();
+    void faceModelMvpIsResolutionIndependent();
+    void faceModelMvpMapsUpToDecreasingNdcY();
+    void faceModelOcclusionDepthTest();
+    void faceModelDoesNotLeakGlState();
+    void model3dEffectPackageLoads();
     void beautyEffectsPassThroughWithoutContours();
     void emojiCatalogNeedsFontAddon();
     void emojiRasterisesGlyph();
@@ -600,6 +614,255 @@ void EngineTest::colorParametersParseAndResolve()
     effect.parameters.insert(QStringLiteral("shade"), QStringLiteral("#123456"));
     QCOMPARE(resolvedEffectParameters(effect, *def).value(QStringLiteral("shade")).toString(),
              QStringLiteral("#123456"));
+}
+
+#ifndef DRIFT_TEST_DATA_DIR
+#define DRIFT_TEST_DATA_DIR "."
+#endif
+
+void EngineTest::modelAssetLoadsCubeGlb()
+{
+    const QString path = QStringLiteral(DRIFT_TEST_DATA_DIR "/cube.glb");
+    QVERIFY2(QFileInfo::exists(path), qPrintable(path));
+
+    QString warning;
+    const auto asset = drift::loadModelAsset(path, &warning);
+    QVERIFY2(asset, qPrintable(warning));
+    QCOMPARE(asset->vertexCount(), 8);
+    QCOMPARE(asset->indices.size(), 36);
+    // Normalised to one head-width: AABB x spans ±0.5.
+    QCOMPARE(asset->aabbMin.x(), -0.5f);
+    QCOMPARE(asset->aabbMax.x(), 0.5f);
+    QVERIFY(asset->aabbMin.y() >= -0.51f && asset->aabbMin.y() <= -0.49f);
+    QVERIFY(asset->aabbMax.y() >= 0.49f && asset->aabbMax.y() <= 0.51f);
+}
+
+void EngineTest::modelAssetRejectsDraco()
+{
+    // Minimal GLB whose JSON requires KHR_draco_mesh_compression. No mesh payload needed —
+    // the loader must refuse before touching accessors.
+    QTemporaryDir tmp;
+    QVERIFY(tmp.isValid());
+    const QString path = tmp.filePath(QStringLiteral("draco.glb"));
+
+    const QByteArray json =
+        R"({"asset":{"version":"2.0"},"extensionsRequired":["KHR_draco_mesh_compression"],)"
+        R"("buffers":[{"byteLength":0}],"scenes":[{"nodes":[]}],"scene":0})";
+    const int jsonPad = (4 - (json.size() % 4)) % 4;
+    QByteArray jsonChunk = json + QByteArray(jsonPad, ' ');
+    const quint32 total = 12 + 8 + quint32(jsonChunk.size());
+    QByteArray glb;
+    glb.append("glTF", 4);
+    auto le32 = [](quint32 v) {
+        char b[4];
+        b[0] = char(v & 0xff);
+        b[1] = char((v >> 8) & 0xff);
+        b[2] = char((v >> 16) & 0xff);
+        b[3] = char((v >> 24) & 0xff);
+        return QByteArray(b, 4);
+    };
+    glb += le32(2);
+    glb += le32(total);
+    glb += le32(quint32(jsonChunk.size()));
+    glb.append("JSON", 4);
+    glb += jsonChunk;
+    QFile f(path);
+    QVERIFY(f.open(QIODevice::WriteOnly));
+    f.write(glb);
+    f.close();
+
+    QString warning;
+    const auto asset = drift::loadModelAsset(path, &warning);
+    QVERIFY(asset == nullptr);
+    QVERIFY2(warning.contains(QStringLiteral("Draco"), Qt::CaseInsensitive), qPrintable(warning));
+}
+
+void EngineTest::modelAssetRejectsCorrupt()
+{
+    QTemporaryDir tmp;
+    QVERIFY(tmp.isValid());
+    const QString path = tmp.filePath(QStringLiteral("corrupt.glb"));
+    QFile f(path);
+    QVERIFY(f.open(QIODevice::WriteOnly));
+    f.write(QByteArray("glTF\x02\x00\x00\x00not-a-real-glb"));
+    f.close();
+
+    QString warning;
+    QVERIFY(drift::loadModelAsset(path, &warning) == nullptr);
+    QVERIFY(!warning.isEmpty());
+}
+
+void EngineTest::faceModelMvpIsResolutionIndependent()
+{
+    drift::FaceAnchors face;
+    face.valid = true;
+    face.hasPose = true;
+    face.faceCenter = QPointF(0.5, 0.5);
+    face.faceRx = 0.2;
+    face.faceRy = 0.24;
+    face.poseQx = 0.0;
+    face.poseQy = 0.0;
+    face.poseQz = 0.0;
+    face.poseQw = 1.0;
+    face.poseOx = 0.5;
+    face.poseOy = 0.5; // already width-normalized for a square frame
+    face.poseOz = 0.0;
+    face.poseScale = 0.2;
+
+    drift::FaceModelParams params;
+    params.scale = 1.0;
+
+    const double aspect = 1.0; // square
+    const QMatrix4x4 a = drift::faceModelMvp(face, params, aspect);
+    const QMatrix4x4 b = drift::faceModelMvp(face, params, aspect);
+    // Bit-identical for a fixed aspect — the WYSIWYG invariant. Pixel size never enters.
+    for (int i = 0; i < 16; ++i)
+        QCOMPARE(a.data()[i], b.data()[i]);
+
+    // Model ±0.5 x-corners at scale=1 with faceRx=0.2 → headBasis scales by 2*0.2=0.4,
+    // so model x=±0.5 maps to wn x = 0.5 ± 0.2 = 0.3 / 0.7, then NDC = 2*wn-1 = -0.4 / 0.4.
+    const QVector4D left = a * QVector4D(-0.5f, 0.f, 0.f, 1.f);
+    const QVector4D right = a * QVector4D(0.5f, 0.f, 0.f, 1.f);
+    QCOMPARE(left.x() / left.w(), float(2.0 * 0.3 - 1.0));
+    QCOMPARE(right.x() / right.w(), float(2.0 * 0.7 - 1.0));
+}
+
+void EngineTest::faceModelMvpMapsUpToDecreasingNdcY()
+{
+    drift::FaceAnchors face;
+    face.valid = true;
+    face.hasPose = true;
+    face.faceRx = 0.2;
+    face.faceRy = 0.24;
+    // Identity quaternion: right=+x, up=+y, fwd=+z in mesh space. Phase-1 pose encodes
+    // image-up as −y in uv, so for hasPose we use a quaternion that maps mesh +Y to −uv.y.
+    // With identity, mesh +Y goes to +wn.y; after wnToNdc that increases NDC y (toward the
+    // bottom of a top-left image). The fallback (no pose) basis uses up=(0,-1,0) explicitly.
+    face.hasPose = false;
+    face.faceCenter = QPointF(0.5, 0.5);
+    face.poseQw = 1.0;
+
+    drift::FaceModelParams params;
+    const double aspect = 1.0;
+    const QMatrix4x4 mvp = drift::faceModelMvp(face, params, aspect);
+    // Model "up" (+Y) must map to decreasing NDC y (toward image top / FBO v=0).
+    const QVector4D origin = mvp * QVector4D(0.f, 0.f, 0.f, 1.f);
+    const QVector4D upPt = mvp * QVector4D(0.f, 0.5f, 0.f, 1.f);
+    QVERIFY2((upPt.y() / upPt.w()) < (origin.y() / origin.w()),
+             "model +Y must map to decreasing NDC y");
+}
+
+void EngineTest::faceModelOcclusionDepthTest()
+{
+    if (!GpuEffectExecutor::instance().isAvailable())
+        QSKIP("GPU effect executor unavailable");
+
+    const QString modelPath = QStringLiteral(DRIFT_TEST_DATA_DIR "/cube.glb");
+    QVERIFY(QFileInfo::exists(modelPath));
+
+    // Flat grey source; a white cube in front of the head should change the centre pixel,
+    // and the same cube pushed behind the occlusion proxy should not.
+    QImage source(128, 128, QImage::Format_RGBA8888);
+    source.fill(QColor(80, 80, 80));
+
+    drift::FaceAnchors face;
+    face.valid = true;
+    face.hasPose = true;
+    face.faceCenter = QPointF(0.5, 0.5);
+    face.faceRx = 0.25;
+    face.faceRy = 0.3;
+    face.poseQx = face.poseQy = face.poseQz = 0.0;
+    face.poseQw = 1.0;
+    face.poseOx = 0.5;
+    face.poseOy = 0.5;
+    face.poseOz = 0.0;
+    face.poseScale = 0.25;
+
+    auto run = [&](double offsetZ, bool occlusion) -> QImage {
+        drift::Effect effect;
+        effect.catalogId = QStringLiteral("face_model_3d");
+        effect.parameters.insert(QStringLiteral("model"), modelPath);
+        effect.parameters.insert(QStringLiteral("scale"), 0.6);
+        effect.parameters.insert(QStringLiteral("offsetZ"), offsetZ);
+        effect.parameters.insert(QStringLiteral("occlusion"), occlusion);
+        effect.parameters.insert(QStringLiteral("ambient"), 1.0);
+        effect.parameters.insert(QStringLiteral("lightIntensity"), 0.0);
+        return EffectProcessor::applyEffects(source, {effect}, 0, {face});
+    };
+
+    // Behind the head with occlusion on → centre stays source grey.
+    const QImage behind = run(-0.5, true);
+    QVERIFY(!behind.isNull());
+    QVERIFY2(behind.pixelColor(64, 64).red() == 80,
+             qPrintable(QStringLiteral("behind red=%1 (expected 80, occlusion should hide the cube)")
+                            .arg(behind.pixelColor(64, 64).red())));
+
+    // In front → centre changes.
+    const QImage front = run(+0.5, true);
+    QVERIFY2(front.pixelColor(64, 64).red() != 80,
+             qPrintable(QStringLiteral("front red=%1").arg(front.pixelColor(64, 64).red())));
+
+    // Behind with occlusion off → still changes (depth path not writing the proxy).
+    const QImage behindOpen = run(-0.5, false);
+    QVERIFY2(behindOpen.pixelColor(64, 64).red() != 80,
+             qPrintable(QStringLiteral("open red=%1").arg(behindOpen.pixelColor(64, 64).red())));
+}
+
+void EngineTest::faceModelDoesNotLeakGlState()
+{
+    if (!GpuEffectExecutor::instance().isAvailable())
+        QSKIP("GPU effect executor unavailable");
+
+    const QString modelPath = QStringLiteral(DRIFT_TEST_DATA_DIR "/cube.glb");
+    QVERIFY(QFileInfo::exists(modelPath));
+
+    QImage source(64, 64, QImage::Format_RGBA8888);
+    source.fill(QColor(100, 100, 100));
+
+    drift::FaceAnchors face;
+    face.valid = true;
+    face.hasPose = true;
+    face.faceCenter = QPointF(0.5, 0.5);
+    face.faceRx = 0.2;
+    face.faceRy = 0.24;
+    face.poseQw = 1.0;
+    face.poseOx = 0.5;
+    face.poseOy = 0.5;
+
+    drift::Effect model;
+    model.catalogId = QStringLiteral("face_model_3d");
+    model.parameters.insert(QStringLiteral("model"), modelPath);
+    model.parameters.insert(QStringLiteral("scale"), 0.5);
+    EffectProcessor::applyEffects(source, {model}, 0, {face});
+
+    // Brightness after a model3d step must still work — catches a leaked GL_DEPTH_TEST /
+    // glDepthMask that would make the fullscreen quad vanish.
+    const EffectPresetEntry *bright = effectDefForId(QStringLiteral("adjust.brightness"));
+    if (!bright)
+        QSKIP("adjust.brightness not in catalog");
+    drift::Effect brightness;
+    brightness.catalogId = bright->meta.id;
+    brightness.parameters.insert(QStringLiteral("brightness"), 0.5);
+    const QImage out = EffectProcessor::applyEffects(source, {brightness}, 0, {});
+    QVERIFY(!out.isNull());
+    QVERIFY(out.pixelColor(32, 32).red() != 100);
+}
+
+void EngineTest::model3dEffectPackageLoads()
+{
+    const EffectPresetEntry *def = effectDefForId(QStringLiteral("face_model_3d"));
+    QVERIFY2(def, "face_model_3d package missing from catalog");
+    QVERIFY(def->isModel3d);
+    QVERIFY(def->needsFace);
+    QVERIFY(!def->isGpu);
+    bool hasModel = false;
+    for (const drift::EffectParamSpec &spec : def->meta.parameters) {
+        if (spec.key == QLatin1String("model")) {
+            QVERIFY(spec.isFilePath());
+            hasModel = true;
+        }
+    }
+    QVERIFY(hasModel);
 }
 
 // Every beauty package must pass the frame through untouched when the clip has no contours, or an

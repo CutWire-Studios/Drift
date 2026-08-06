@@ -61,6 +61,7 @@ target_compile_definitions(tst_engine PRIVATE
     DRIFT_TEST_FONTS_DIR="${CMAKE_SOURCE_DIR}/fonts"
     DRIFT_TEST_EMOJI_FONT_DIR="${CMAKE_SOURCE_DIR}/emoji-fonts"
     DRIFT_TEST_AUDIO_EFFECTS_DIR="${CMAKE_SOURCE_DIR}/audio-effects"
+    DRIFT_TEST_DATA_DIR="${CMAKE_CURRENT_SOURCE_DIR}/data"
     # Not committed (models/ is gitignored). The denoise tests skip when it is absent so a
     # checkout without the model still passes.
     DRIFT_TEST_DENOISE_MODEL_DIR="${CMAKE_SOURCE_DIR}/models/deepfilternet3"

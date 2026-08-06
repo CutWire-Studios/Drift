@@ -18,7 +18,12 @@ Item {
     }
     readonly property bool hasSelection: !!clipData && Object.keys(clipData).length > 0
     readonly property string clipKind: hasSelection ? (clipData.kind || "") : ""
-    readonly property var selectedEffects: EditorState.selectedClipEffects
+    // Depend on clipDataRevision the same way clipData does: the Repeater is keyed on
+    // selectedEffects.length, so a same-length param edit would otherwise leave stale delegates.
+    readonly property var selectedEffects: {
+        void clipDataRevision
+        return EditorState.selectedClipEffects
+    }
 
     height: contentCol.height
     implicitHeight: contentCol.height
@@ -367,6 +372,59 @@ Item {
                                     onEdited: value => EditorState.setEffectColorParam(
                                                   EditorState.selectedTrack, EditorState.selectedClip,
                                                   effectCard.index, paramRow.paramData.key, value)
+                                }
+                            }
+
+                            // File paths (face-prop .glb): basename + Choose / Clear. Not keyframed.
+                            Row {
+                                visible: paramRow.paramData.type === "file"
+                                width: parent.width
+                                spacing: 8
+                                Text {
+                                    width: parent.width - 148
+                                    elide: Text.ElideMiddle
+                                    text: {
+                                        const p = paramRow.paramData.value || ""
+                                        if (!p)
+                                            return paramRow.paramData.label + qsTr(": (none)")
+                                        const parts = String(p).split(/[/\\]/)
+                                        return parts[parts.length - 1] || p
+                                    }
+                                    color: paramRow.paramData.missing ? Theme.destructive
+                                                                     : Theme.mutedForeground
+                                    font.family: Theme.fontFamily
+                                    font.pixelSize: Theme.fontSizeXs
+                                    anchors.verticalCenter: parent.verticalCenter
+                                }
+                                IconButton {
+                                    glyph: Theme.icons.folder
+                                    variant: "ghost"
+                                    buttonSize: 22
+                                    iconSize: 12
+                                    tooltip: qsTr("Choose file")
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    onClicked: {
+                                        const filters = paramRow.paramData.fileFilters || ["All files (*)"]
+                                        const url = FileDialogs.openFile(
+                                            qsTr("Choose %1").arg(paramRow.paramData.label), filters)
+                                        if (!url || url.toString() === "")
+                                            return
+                                        EditorState.setEffectStringParam(
+                                            EditorState.selectedTrack, EditorState.selectedClip,
+                                            effectCard.index, paramRow.paramData.key, url)
+                                    }
+                                }
+                                IconButton {
+                                    glyph: Theme.icons.x
+                                    variant: "ghost"
+                                    buttonSize: 22
+                                    iconSize: 12
+                                    tooltip: qsTr("Clear")
+                                    enabled: !!(paramRow.paramData.value)
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    onClicked: EditorState.setEffectStringParam(
+                                                   EditorState.selectedTrack, EditorState.selectedClip,
+                                                   effectCard.index, paramRow.paramData.key, "")
                                 }
                             }
 

@@ -48,7 +48,7 @@ EffectPresetEntry EffectPackageLoader::loadPackage(const QString &packageDir, QS
     const QJsonObject root = doc.object();
     const QString backend = root.value(QStringLiteral("backend")).toString();
     if (backend != QLatin1String("gpu") && backend != QLatin1String("libav")
-        && backend != QLatin1String("compositor")) {
+        && backend != QLatin1String("compositor") && backend != QLatin1String("model3d")) {
         setError(errorOut, &entry,
                  backend.isEmpty() ? QStringLiteral("effect.json missing backend")
                                    : QStringLiteral("unsupported backend '%1'").arg(backend));
@@ -84,9 +84,12 @@ EffectPresetEntry EffectPackageLoader::loadPackage(const QString &packageDir, QS
     entry.thumbnailPath = GpuPackageParse::resolvePackageAsset(packageDir, thumbRel);
 
     QString error;
+    // model3d is not a GPU fragment pipeline, but its parameters still use the same schema
+    // (and may include file defaults resolved against the package dir).
+    const bool reservedUniforms = backend == QLatin1String("gpu");
     if (!GpuPackageParse::parseParameters(root.value(QStringLiteral("parameters")).toArray(),
-                                          &entry.meta.parameters, backend == QLatin1String("gpu"),
-                                          &error)) {
+                                          &entry.meta.parameters, reservedUniforms, &error,
+                                          packageDir)) {
         setError(errorOut, &entry, error);
         return entry;
     }
@@ -94,6 +97,13 @@ EffectPresetEntry EffectPackageLoader::loadPackage(const QString &packageDir, QS
     if (root.contains(QStringLiteral("fixedParams")))
         GpuPackageParse::parseFixedParams(root.value(QStringLiteral("fixedParams")).toObject(),
                                           &entry.fixedParams);
+
+    if (backend == QLatin1String("model3d")) {
+        entry.isModel3d = true;
+        entry.meta.compositorOnly = true;
+        entry.gpu.packageDir = packageDir;
+        return entry;
+    }
 
     if (backend == QLatin1String("gpu")) {
         entry.isGpu = true;
