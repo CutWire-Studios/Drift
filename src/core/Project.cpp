@@ -358,6 +358,9 @@ QJsonObject maskToJson(const Mask &m)
 
     return QJsonObject{
         {QStringLiteral("shape"), maskShapeToString(m.shape)},
+        {QStringLiteral("op"), maskOpToString(m.op)},
+        {QStringLiteral("enabled"), m.enabled},
+        {QStringLiteral("name"), m.name},
         {QStringLiteral("x"), m.x},
         {QStringLiteral("y"), m.y},
         {QStringLiteral("w"), m.w},
@@ -377,6 +380,9 @@ Mask maskFromJson(const QJsonObject &o)
     if (o.isEmpty())
         return m;
     m.shape = maskShapeFromString(o.value(QStringLiteral("shape")).toString());
+    m.op = maskOpFromString(o.value(QStringLiteral("op")).toString());
+    m.enabled = o.value(QStringLiteral("enabled")).toBool(m.enabled);
+    m.name = o.value(QStringLiteral("name")).toString(m.name);
     m.x = o.value(QStringLiteral("x")).toDouble(m.x);
     m.y = o.value(QStringLiteral("y")).toDouble(m.y);
     m.w = o.value(QStringLiteral("w")).toDouble(m.w);
@@ -394,6 +400,37 @@ Mask maskFromJson(const QJsonObject &o)
             m.points.append(QPointF(pair.at(0).toDouble(), pair.at(1).toDouble()));
     }
     return m;
+}
+
+QJsonArray maskListToJson(const QList<Mask> &masks)
+{
+    QJsonArray out;
+    for (const Mask &mask : masks)
+        out.append(maskToJson(mask));
+    return out;
+}
+
+// Reads the stack, falling back to the pre-stack single "mask" object. That fallback is the only
+// migration path for existing projects, so it stays regardless of how old the format gets.
+QList<Mask> maskListFromJson(const QJsonObject &clipObject)
+{
+    QList<Mask> masks;
+    if (clipObject.contains(QStringLiteral("masks"))) {
+        const QJsonArray array = clipObject.value(QStringLiteral("masks")).toArray();
+        for (const QJsonValue &value : array) {
+            const Mask mask = maskFromJson(value.toObject());
+            // Legacy projects wrote shape "none" to mean unmasked; do not resurrect those as
+            // stack entries or every old clip gains a dead row in the inspector.
+            if (mask.shape != MaskShape::None)
+                masks.append(mask);
+        }
+        return masks;
+    }
+
+    const Mask legacy = maskFromJson(clipObject.value(QStringLiteral("mask")).toObject());
+    if (legacy.shape != MaskShape::None)
+        masks.append(legacy);
+    return masks;
 }
 
 QJsonObject transitionToJson(const Transition &t)
@@ -506,7 +543,7 @@ QJsonObject clipToJson(const Clip &clip)
         {QStringLiteral("reverse"), clip.reverse},
         {QStringLiteral("flipH"), clip.flipH},
         {QStringLiteral("flipV"), clip.flipV},
-        {QStringLiteral("mask"), maskToJson(clip.mask)},
+        {QStringLiteral("masks"), maskListToJson(clip.masks)},
         {QStringLiteral("faceTrackPath"), clip.faceTrackPath},
         {QStringLiteral("faceTrackSrcOffsetUs"), qint64(clip.faceTrackSrcOffsetUs)},
         {QStringLiteral("fadeInUs"), static_cast<double>(clip.fadeInUs)},
@@ -588,7 +625,7 @@ Clip clipFromJsonV2(const QJsonObject &object, int canvasW = 1920, int canvasH =
     clip.reverse = object.value(QStringLiteral("reverse")).toBool(false);
     clip.flipH = object.value(QStringLiteral("flipH")).toBool(false);
     clip.flipV = object.value(QStringLiteral("flipV")).toBool(false);
-    clip.mask = maskFromJson(object.value(QStringLiteral("mask")).toObject());
+    clip.masks = maskListFromJson(object);
     clip.faceTrackPath = object.value(QStringLiteral("faceTrackPath")).toString();
     clip.faceTrackSrcOffsetUs =
         TimeUs(object.value(QStringLiteral("faceTrackSrcOffsetUs")).toInteger(0));
@@ -761,7 +798,9 @@ void detachClip(Clip &clip)
     clip.rotation.detachSharedData();
     clip.volume.detachSharedData();
     clip.speedCurve.detachSharedData();
-    clip.mask.points.detach();
+    clip.masks.detach();
+    for (Mask &mask : clip.masks)
+        mask.points.detach();
     clip.subtitleCues.detach();
     clip.effects.detach();
     for (Effect &effect : clip.effects)

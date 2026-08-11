@@ -66,7 +66,9 @@ struct Clip
     bool reverse = false; // play source range backward; speed still applies as magnitude
     bool flipH = false;
     bool flipV = false;
-    Mask mask;
+    // Ordered stack, composited front to back by MaskOp. Empty means unmasked; a project saved
+    // before the stack existed loads its single mask as a one-element list.
+    QList<Mask> masks;
 
     // Baked face landmarks driving the face warp effects, written once by the detect job and read
     // back per frame at composite time. Like a matte it covers the detected source range, so it is

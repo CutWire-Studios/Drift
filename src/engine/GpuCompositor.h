@@ -32,8 +32,10 @@ struct GpuLayer
     int nv12Width = 0;
     int nv12Height = 0;
     QList<drift::Effect> effects;
-    drift::Mask mask;
-    QImage matte; // MaskShape::Matte only: this frame's coverage map, decoded by FrameCompositor
+    QList<drift::Mask> masks;
+    // Index-parallel with `masks`: this frame's decoded coverage map for each Matte entry, null
+    // for parametric ones. Decoded by FrameCompositor, which is the only place that knows the time.
+    QList<QImage> maskMedia;
     QRectF rect;             // destination rect on the canvas, in canvas pixels
     double rotation = 0.0;   // degrees, clockwise, about the rect centre
     bool flipH = false;

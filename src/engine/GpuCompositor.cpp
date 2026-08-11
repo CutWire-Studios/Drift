@@ -170,31 +170,44 @@ QMatrix4x4 modelMatrixFor(const GpuLayer &layer, const QSize &canvas)
     return m;
 }
 
-// Mask coverage maps only change when the mask or the size does, so they are
-// rasterized once and kept as GL textures.
-GLuint maskTexture(GlRuntime &rt, QOpenGLExtraFunctions *gl, const drift::Mask &mask, const QSize &size)
+QString maskCacheKey(const drift::Mask &mask)
 {
-    if (mask.shape == drift::MaskShape::None)
-        return 0;
+    // The point coordinates have to be in the key, not just the count: dragging a freeform
+    // vertex leaves the count alone and would otherwise keep hitting the stale texture.
+    const size_t pointsHash =
+        mask.points.isEmpty()
+            ? 0
+            : qHashBits(mask.points.constData(), size_t(mask.points.size()) * sizeof(QPointF));
 
-    const QString key = QStringLiteral("__mask__:%1:%2:%3:%4:%5:%6:%7:%8:%9:%10:%11")
-                            .arg(int(mask.shape))
-                            .arg(mask.x)
-                            .arg(mask.y)
-                            .arg(mask.w)
-                            .arg(mask.h)
-                            .arg(mask.rotation)
-                            .arg(mask.feather)
-                            .arg(mask.invert ? 1 : 0)
-                            .arg(mask.points.size())
-                            .arg(size.width())
-                            .arg(size.height());
+    return QStringLiteral("%1:%2:%3:%4:%5:%6:%7:%8:%9:%10:%11")
+        .arg(int(mask.shape))
+        .arg(int(mask.op))
+        .arg(mask.x)
+        .arg(mask.y)
+        .arg(mask.w)
+        .arg(mask.h)
+        .arg(mask.rotation)
+        .arg(mask.feather)
+        .arg(mask.invert ? 1 : 0)
+        .arg(mask.points.size())
+        .arg(quint64(pointsHash));
+}
+
+// Parametric coverage only changes when the stack or the size does, so it is rasterized once and
+// kept as a GL texture. Matte entries are excluded by the caller — their pixels change every
+// frame, and caching them here would never evict.
+GLuint maskTexture(GlRuntime &rt, QOpenGLExtraFunctions *gl, const QList<drift::Mask> &masks,
+                   const QSize &size)
+{
+    QString key = QStringLiteral("__mask__:%1:%2").arg(size.width()).arg(size.height());
+    for (const drift::Mask &mask : masks)
+        key += QLatin1Char('|') + maskCacheKey(mask);
 
     const auto it = rt.staticTextures.find(key);
     if (it != rt.staticTextures.end())
         return it->second;
 
-    const QImage alpha = drift::maskAlphaMap(mask, size.width(), size.height());
+    const QImage alpha = drift::maskAlphaMap(masks, size.width(), size.height());
     if (alpha.isNull()) {
         rt.staticTextures[key] = 0;
         return 0;
@@ -205,6 +218,98 @@ GLuint maskTexture(GlRuntime &rt, QOpenGLExtraFunctions *gl, const drift::Mask &
     const GLuint tex = uploadTexture(gl, alpha.convertToFormat(QImage::Format_RGBA8888));
     rt.staticTextures[key] = tex;
     return tex;
+}
+
+// How a layer's stack should be turned into the single coverage texture the layer shader wants.
+struct MaskPlan
+{
+    QList<drift::Mask> parametric; // contributing entries that can be rasterized and cached
+    int soleMatte = -1;            // index into layer.maskMedia when the stack is exactly one matte
+    bool mixed = false;            // decoded coverage and shapes together: must fold per frame
+};
+
+MaskPlan planMasks(const GpuLayer &layer)
+{
+    MaskPlan plan;
+    int matteCount = 0;
+    int lastMatte = -1;
+    for (int i = 0; i < layer.masks.size(); ++i) {
+        const drift::Mask &mask = layer.masks.at(i);
+        if (!mask.contributes())
+            continue;
+        // A matte whose frame failed to decode contributes nothing this frame; treating it as
+        // present would blank the clip, which is the behaviour the decode path already avoids.
+        if (mask.shape == drift::MaskShape::Matte) {
+            if (i < layer.maskMedia.size() && !layer.maskMedia.at(i).isNull()) {
+                ++matteCount;
+                lastMatte = i;
+            }
+            continue;
+        }
+        plan.parametric.append(mask);
+    }
+
+    if (matteCount == 1 && plan.parametric.isEmpty())
+        plan.soleMatte = lastMatte;
+    else if (matteCount > 0)
+        plan.mixed = true;
+    return plan;
+}
+
+// CPU fold of a stack containing decoded coverage. Mirrors drift::maskAlphaMap's op semantics,
+// but has to run here because the matte pixels only exist per frame.
+QImage composeMasksOnCpu(const GpuLayer &layer, const QSize &size)
+{
+    if (size.isEmpty())
+        return {};
+
+    QImage accum;
+    for (int i = 0; i < layer.masks.size(); ++i) {
+        const drift::Mask &mask = layer.masks.at(i);
+        if (!mask.contributes())
+            continue;
+
+        QImage coverage;
+        if (mask.shape == drift::MaskShape::Matte) {
+            if (i >= layer.maskMedia.size() || layer.maskMedia.at(i).isNull())
+                continue;
+            coverage = layer.maskMedia.at(i).convertToFormat(QImage::Format_Grayscale8);
+            if (coverage.size() != size)
+                coverage = coverage.scaled(size, Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
+            if (mask.invert)
+                coverage.invertPixels();
+        } else {
+            coverage = drift::maskAlphaMap(mask, size.width(), size.height());
+        }
+        if (coverage.isNull())
+            continue;
+
+        if (accum.isNull()) {
+            accum = coverage;
+            continue;
+        }
+
+        for (int y = 0; y < size.height(); ++y) {
+            uchar *dstRow = accum.scanLine(y);
+            const uchar *srcRow = coverage.constScanLine(y);
+            for (int x = 0; x < size.width(); ++x) {
+                const int a = dstRow[x];
+                const int b = srcRow[x];
+                switch (mask.op) {
+                case drift::MaskOp::Add:
+                    dstRow[x] = uchar(qMax(a, b));
+                    break;
+                case drift::MaskOp::Subtract:
+                    dstRow[x] = uchar(a * (255 - b) / 255);
+                    break;
+                case drift::MaskOp::Intersect:
+                    dstRow[x] = uchar(a * b / 255);
+                    break;
+                }
+            }
+        }
+    }
+    return accum;
 }
 
 // Source pixels → effects → a canvas-space layer target, still on the GPU.
@@ -268,17 +373,28 @@ void drawLayerOnCanvas(GlRuntime &rt, QOpenGLExtraFunctions *gl, GlTarget &canva
 
     // A matte changes every frame, so it goes through the recycled target pool rather than
     // maskTexture()'s static cache, which is keyed by mask parameters and would never evict.
-    // Invert cannot be baked in either: the foreground and background clips of a segmentation
-    // share one matte file and differ only by this flag.
+    // Invert cannot be baked in for the lone-matte case either: the foreground and background
+    // clips of a segmentation share one matte file and differ only by this flag.
     GlTarget matteTarget;
     GLuint maskTex = 0;
     float maskInvert = 0.f;
-    if (!layer.matte.isNull()) {
-        matteTarget = promoteImageToTargetCached(rt, gl, layer.matte, layer.matte.size());
+    const MaskPlan plan = planMasks(layer);
+    if (plan.soleMatte >= 0) {
+        const QImage &matte = layer.maskMedia.at(plan.soleMatte);
+        matteTarget = promoteImageToTargetCached(rt, gl, matte, matte.size());
         maskTex = matteTarget.isValid() ? matteTarget.texture() : 0;
-        maskInvert = layer.mask.invert ? 1.f : 0.f;
-    } else {
-        maskTex = maskTexture(rt, gl, layer.mask, layerTarget.size());
+        maskInvert = layer.masks.at(plan.soleMatte).invert ? 1.f : 0.f;
+    } else if (plan.mixed) {
+        // A stack that mixes decoded coverage with shapes has to be folded per frame. Phase 3
+        // moves this onto the GPU; until then correctness beats speed, and the common cases
+        // (lone matte, parametric-only) both avoid this path.
+        const QImage composed = composeMasksOnCpu(layer, layerTarget.size());
+        if (!composed.isNull()) {
+            matteTarget = promoteImageToTargetCached(rt, gl, composed, composed.size());
+            maskTex = matteTarget.isValid() ? matteTarget.texture() : 0;
+        }
+    } else if (!plan.parametric.isEmpty()) {
+        maskTex = maskTexture(rt, gl, plan.parametric, layerTarget.size());
     }
     const QMatrix4x4 model = modelMatrixFor(layer, canvasSize);
 

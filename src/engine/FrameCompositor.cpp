@@ -51,8 +51,10 @@ void collectActivePaths(const drift::Project *project, drift::TimeUs timelineUs,
 
             // Retained separately from clip.path: the matte has its own reader, and dropping it
             // here would tear the worker down and re-open the file every frame.
-            if (clip.mask.shape == drift::MaskShape::Matte && !clip.mask.mattePath.isEmpty())
-                videoPaths.insert(clip.mask.mattePath);
+            for (const drift::Mask &mask : clip.masks) {
+                if (mask.contributes() && mask.isMatte())
+                    videoPaths.insert(mask.mattePath);
+            }
 
             if (clip.path.isEmpty())
                 continue;
@@ -93,11 +95,13 @@ QList<ClipReaderPool::VideoRequest> collectVideoRequests(const drift::Project *p
 
             // Mattes decode like any other video, so warm them alongside the sources rather
             // than stalling the composite on a serial read later.
-            if (clip.mask.shape == drift::MaskShape::Matte && !clip.mask.mattePath.isEmpty()) {
+            for (const drift::Mask &mask : clip.masks) {
+                if (!mask.contributes() || !mask.isMatte())
+                    continue;
                 requests.append(ClipReaderPool::VideoRequest{
-                    clip.mask.mattePath,
+                    mask.mattePath,
                     qMax<drift::TimeUs>(0, clip.timelineToSourceUs(timelineUs)
-                                               - clip.mask.matteSrcOffsetUs),
+                                               - mask.matteSrcOffsetUs),
                     maxWidth, maxHeight});
             }
 
@@ -314,8 +318,8 @@ QImage imageForClip(const drift::Clip &clip, drift::TimeUs timelineUs, int maxWi
         image = EffectProcessor::applyEffects(image, otherEffects, clipTimeUs,
                                               faceSlotsForClip(clip, otherEffects, timelineUs));
     }
-    if (clip.mask.shape != drift::MaskShape::None)
-        image = drift::applyMask(image, clip.mask, image.width(), image.height());
+    if (!drift::masksAreInert(clip.masks))
+        image = drift::applyMask(image, clip.masks, image.width(), image.height());
     return image;
 }
 
@@ -677,16 +681,19 @@ GpuLayer buildGpuLayer(const drift::Clip &clip, drift::TimeUs timelineUs, int pr
 
     applyClipBodyAnimation(clip, timelineUs, w, h, &destRect, &opacity, &rotation);
 
-    layer.mask = clip.mask;
-    if (clip.mask.shape == drift::MaskShape::Matte && !clip.mask.mattePath.isEmpty()) {
+    layer.masks = clip.masks;
+    layer.maskMedia.resize(layer.masks.size());
+    for (int i = 0; i < layer.masks.size(); ++i) {
+        const drift::Mask &mask = layer.masks.at(i);
+        if (!mask.contributes() || !mask.isMatte())
+            continue;
         // The matte covers the segmented source range, so it starts at matteSrcOffsetUs.
-        const drift::TimeUs matteUs =
-            clip.timelineToSourceUs(timelineUs) - clip.mask.matteSrcOffsetUs;
+        const drift::TimeUs matteUs = clip.timelineToSourceUs(timelineUs) - mask.matteSrcOffsetUs;
         const QImage matte = ClipReaderPool::instance().readVideoFrame(
-            clip.mask.mattePath, qMax<drift::TimeUs>(0, matteUs), canvasWidth, canvasHeight);
-        // A missing matte frame must not silently blank the clip — leave the layer unmasked.
+            mask.mattePath, qMax<drift::TimeUs>(0, matteUs), canvasWidth, canvasHeight);
+        // A missing matte frame must not silently blank the clip — leave that entry unmasked.
         if (!matte.isNull())
-            layer.matte = matte;
+            layer.maskMedia[i] = matte;
     }
     layer.rect = destRect;
     layer.rotation = rotation;

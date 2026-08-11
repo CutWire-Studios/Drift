@@ -149,6 +149,8 @@ private slots:
     void textAnimationFadesAndSlides();
     void clipBodyAnimationFadeRampsOpacity();
     void maskApplierEllipseMasksCorners();
+    void maskFeatherProducesSoftEdge();
+    void maskRotationAppliesToFreeform();
     void exporterProducesPlayableFileWithBackground();
     void exporterProducesAudioOnlyMp3();
     void exporterTagsSdrBt709ColorMetadata();
@@ -3383,6 +3385,48 @@ void EngineTest::maskApplierEllipseMasksCorners()
     const QImage masked = drift::applyMask(image, mask, 64, 64);
     QVERIFY(qAlpha(masked.pixel(32, 32)) > 200);
     QVERIFY(qAlpha(masked.pixel(0, 0)) < 20);
+}
+
+// Feather is a separable box blur; the guarantee is a monotonic ramp across the edge with the
+// interior and exterior left saturated, which is what the (much slower) 2D window produced.
+void EngineTest::maskFeatherProducesSoftEdge()
+{
+    drift::Mask mask;
+    mask.shape = drift::MaskShape::Rectangle;
+    mask.x = 0.5;
+    mask.y = 0.5;
+    mask.w = 0.5;
+    mask.h = 0.5;
+    mask.feather = 8.0;
+
+    const QImage alpha = drift::maskAlphaMap(mask, 128, 128);
+    QCOMPARE(alpha.format(), QImage::Format_Grayscale8);
+    QCOMPARE(alpha.size(), QSize(128, 128));
+
+    // The rectangle spans x in [32, 96); sample the ramp across its left edge at mid-height.
+    const auto at = [&alpha](int x) { return int(alpha.constScanLine(64)[x]); };
+    QVERIFY2(at(64) > 250, "mask interior was not opaque");
+    QVERIFY2(at(4) < 5, "mask exterior was not clear");
+    QVERIFY2(at(32) > 100 && at(32) < 155, "edge did not land near half coverage");
+    for (int x = 24; x < 40; ++x)
+        QVERIFY2(at(x) <= at(x + 1), "feather ramp was not monotonic");
+}
+
+// Rotation used to be skipped for freeform, silently making the slider a no-op.
+void EngineTest::maskRotationAppliesToFreeform()
+{
+    drift::Mask mask;
+    mask.shape = drift::MaskShape::Freeform;
+    // A thin horizontal bar through the middle; rotating it 90° should stand it upright.
+    mask.points = {{0.1, 0.45}, {0.9, 0.45}, {0.9, 0.55}, {0.1, 0.55}};
+
+    const QImage flat = drift::maskAlphaMap(mask, 64, 64);
+    mask.rotation = 90.0;
+    const QImage upright = drift::maskAlphaMap(mask, 64, 64);
+
+    QVERIFY2(flat.constScanLine(32)[8] > 200, "flat bar did not cover the left edge");
+    QVERIFY2(upright.constScanLine(32)[8] < 50, "rotation did not move the freeform shape");
+    QVERIFY2(upright.constScanLine(8)[32] > 200, "rotated bar did not cover the top edge");
 }
 
 void EngineTest::exporterProducesPlayableFileWithBackground()

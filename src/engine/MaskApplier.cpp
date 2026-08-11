@@ -66,33 +66,71 @@ QPainterPath maskPath(const drift::Mask &mask, int canvasWidth, int canvasHeight
     return {};
 }
 
+// One separable box pass along x. Callers transpose to cover y, so this is the whole kernel.
+// The window is a running sum with clamp-to-edge, which is what makes it O(1) per pixel
+// instead of O(radius) — a 2D window per pixel is unaffordable at canvas sizes.
+void boxBlurRows(const QImage &src, QImage &dst, int radius)
+{
+    const int width = src.width();
+    const int height = src.height();
+    const int window = radius * 2 + 1;
+
+    for (int y = 0; y < height; ++y) {
+        const uchar *in = src.constScanLine(y);
+        uchar *out = dst.scanLine(y);
+
+        // Seed the window at x = 0: radius+1 copies of the left edge plus the first radius pixels.
+        int sum = int(in[0]) * (radius + 1);
+        for (int x = 1; x <= radius; ++x)
+            sum += in[qMin(x, width - 1)];
+
+        for (int x = 0; x < width; ++x) {
+            out[x] = uchar(sum / window);
+            sum += in[qMin(x + radius + 1, width - 1)];
+            sum -= in[qMax(x - radius, 0)];
+        }
+    }
+}
+
+QImage transposed(const QImage &src)
+{
+    QImage out(src.height(), src.width(), QImage::Format_Grayscale8);
+    uchar *outBits = out.bits();
+    const qsizetype outStride = out.bytesPerLine();
+    for (int y = 0; y < src.height(); ++y) {
+        const uchar *in = src.constScanLine(y);
+        for (int x = 0; x < src.width(); ++x)
+            outBits[x * outStride + y] = in[x];
+    }
+    return out;
+}
+
+// Blur rows, transpose, blur rows, transpose back — a separable box, identical to the 2D
+// (2r+1)² window it replaces but O(1) per pixel instead of O(r²).
+QImage boxBlurPass(const QImage &src, int radius)
+{
+    QImage rows(src.size(), QImage::Format_Grayscale8);
+    boxBlurRows(src, rows, radius);
+    const QImage flipped = transposed(rows);
+    QImage cols(flipped.size(), QImage::Format_Grayscale8);
+    boxBlurRows(flipped, cols, radius);
+    return transposed(cols);
+}
+
 QImage blurAlpha(const QImage &alpha, int radius)
 {
     if (radius <= 0 || alpha.isNull())
         return alpha;
 
     QImage out = alpha;
+    if (out.format() != QImage::Format_Grayscale8)
+        out = out.convertToFormat(QImage::Format_Grayscale8);
+
+    // Repeated box passes approximate a gaussian; the count matches the old kernel so the
+    // edge falloff is unchanged.
     const int passes = qBound(1, radius / 2, 8);
-    for (int pass = 0; pass < passes; ++pass) {
-        QImage blurred(out.size(), QImage::Format_Grayscale8);
-        for (int y = 0; y < out.height(); ++y) {
-            auto *line = blurred.scanLine(y);
-            for (int x = 0; x < out.width(); ++x) {
-                int sum = 0;
-                int count = 0;
-                for (int dy = -radius; dy <= radius; ++dy) {
-                    const int sy = qBound(0, y + dy, out.height() - 1);
-                    for (int dx = -radius; dx <= radius; ++dx) {
-                        const int sx = qBound(0, x + dx, out.width() - 1);
-                        sum += qGray(out.pixel(sx, sy));
-                        ++count;
-                    }
-                }
-                line[x] = static_cast<uchar>(sum / qMax(1, count));
-            }
-        }
-        out = blurred;
-    }
+    for (int pass = 0; pass < passes; ++pass)
+        out = boxBlurPass(out, radius);
     return out;
 }
 
@@ -117,7 +155,9 @@ QImage maskAlphaMap(const Mask &mask, int canvasWidth, int canvasHeight)
     QPainterPath path = maskPath(mask, canvasWidth, canvasHeight);
     if (!path.isEmpty()) {
         const QPointF center(mask.x * canvasWidth, mask.y * canvasHeight);
-        if (!qFuzzyIsNull(mask.rotation) && mask.shape != MaskShape::Bars && mask.shape != MaskShape::Freeform) {
+        // Bars is a full-width band by construction, so rotating it only clips the frame.
+        // Every other shape, freeform included, rotates about its centre.
+        if (!qFuzzyIsNull(mask.rotation) && mask.shape != MaskShape::Bars) {
             QTransform transform;
             transform.translate(center.x(), center.y());
             transform.rotate(mask.rotation);
@@ -134,16 +174,63 @@ QImage maskAlphaMap(const Mask &mask, int canvasWidth, int canvasHeight)
     return alpha;
 }
 
-QImage applyMask(const QImage &frame, const Mask &mask, int canvasWidth, int canvasHeight)
+QImage maskAlphaMap(const QList<Mask> &masks, int canvasWidth, int canvasHeight)
 {
-    if (mask.shape == MaskShape::None || mask.shape == MaskShape::Matte || frame.isNull())
-        return frame;
+    if (canvasWidth <= 0 || canvasHeight <= 0)
+        return {};
 
-    const QImage alpha = maskAlphaMap(mask, canvasWidth, canvasHeight);
-    if (alpha.isNull())
-        return frame;
+    QImage accum;
+    for (const Mask &mask : masks) {
+        // A matte has no path to rasterize — FrameCompositor decodes its frame and the GPU
+        // compositor folds it in, because only they know the time.
+        if (!mask.contributes() || mask.shape == MaskShape::Matte)
+            continue;
 
-  QImage rgba = frame.convertToFormat(QImage::Format_RGBA8888);
+        const QImage coverage = maskAlphaMap(mask, canvasWidth, canvasHeight);
+        if (coverage.isNull())
+            continue;
+
+        // The first contributing entry has nothing to combine with, so it seeds the accumulator
+        // whatever its op says. Starting from black instead would make a lone Subtract or
+        // Intersect entry blank the clip.
+        if (accum.isNull()) {
+            accum = coverage;
+            continue;
+        }
+
+        uchar *dst = accum.bits();
+        const uchar *src = coverage.constBits();
+        const qsizetype dstStride = accum.bytesPerLine();
+        const qsizetype srcStride = coverage.bytesPerLine();
+
+        for (int y = 0; y < canvasHeight; ++y) {
+            uchar *dstRow = dst + y * dstStride;
+            const uchar *srcRow = src + y * srcStride;
+            for (int x = 0; x < canvasWidth; ++x) {
+                const int a = dstRow[x];
+                const int b = srcRow[x];
+                switch (mask.op) {
+                case MaskOp::Add:
+                    dstRow[x] = uchar(qMax(a, b));
+                    break;
+                case MaskOp::Subtract:
+                    dstRow[x] = uchar(a * (255 - b) / 255);
+                    break;
+                case MaskOp::Intersect:
+                    dstRow[x] = uchar(a * b / 255);
+                    break;
+                }
+            }
+        }
+    }
+    return accum;
+}
+
+namespace {
+
+QImage multiplyAlpha(const QImage &frame, const QImage &alpha, int canvasWidth, int canvasHeight)
+{
+    QImage rgba = frame.convertToFormat(QImage::Format_RGBA8888);
     if (rgba.size() != alpha.size())
         rgba = rgba.scaled(canvasWidth, canvasHeight, Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
 
@@ -158,6 +245,32 @@ QImage applyMask(const QImage &frame, const Mask &mask, int canvasWidth, int can
         }
     }
     return out;
+}
+
+} // namespace
+
+QImage applyMask(const QImage &frame, const Mask &mask, int canvasWidth, int canvasHeight)
+{
+    if (mask.shape == MaskShape::None || mask.shape == MaskShape::Matte || frame.isNull())
+        return frame;
+
+    const QImage alpha = maskAlphaMap(mask, canvasWidth, canvasHeight);
+    if (alpha.isNull())
+        return frame;
+
+    return multiplyAlpha(frame, alpha, canvasWidth, canvasHeight);
+}
+
+QImage applyMask(const QImage &frame, const QList<Mask> &masks, int canvasWidth, int canvasHeight)
+{
+    if (frame.isNull() || masksAreInert(masks))
+        return frame;
+
+    const QImage alpha = maskAlphaMap(masks, canvasWidth, canvasHeight);
+    if (alpha.isNull())
+        return frame;
+
+    return multiplyAlpha(frame, alpha, canvasWidth, canvasHeight);
 }
 
 } // namespace drift

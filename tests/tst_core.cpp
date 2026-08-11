@@ -70,6 +70,8 @@ private slots:
     void clipLinkFieldsSerialization();
     void maskAndTransitionSerialization();
     void matteMaskSerialization();
+    void legacySingleMaskLoadsAsStack();
+    void legacyEmptyMaskLoadsAsNoStack();
     void faceTrackSerialization();
     void emojiClipSerialization();
     void allTransitionKindsRoundTrip();
@@ -1777,9 +1779,16 @@ void CoreTest::maskAndTransitionSerialization()
     clipA.timelineStart = 0;
     clipA.timelineDuration = drift::secondsToUs(2.0);
     clipA.speed = 2.0;
-    clipA.mask.shape = drift::MaskShape::Ellipse;
-    clipA.mask.w = 0.5;
-    clipA.mask.feather = 4.0;
+    drift::Mask ellipse;
+    ellipse.shape = drift::MaskShape::Ellipse;
+    ellipse.w = 0.5;
+    ellipse.feather = 4.0;
+    drift::Mask hole;
+    hole.shape = drift::MaskShape::Star;
+    hole.op = drift::MaskOp::Subtract;
+    hole.name = QStringLiteral("Punch");
+    hole.enabled = false;
+    clipA.masks = {ellipse, hole};
 
     drift::Clip clipB;
     clipB.id = QStringLiteral("clip-b");
@@ -1804,7 +1813,14 @@ void CoreTest::maskAndTransitionSerialization()
 
     QVERIFY(error.isEmpty());
     QCOMPARE(loaded.tracks()[0].clips[0].speed, 2.0);
-    QCOMPARE(loaded.tracks()[0].clips[0].mask.shape, drift::MaskShape::Ellipse);
+    const QList<drift::Mask> &roundTripped = loaded.tracks()[0].clips[0].masks;
+    QCOMPARE(roundTripped.size(), 2);
+    QCOMPARE(roundTripped.at(0).shape, drift::MaskShape::Ellipse);
+    QCOMPARE(roundTripped.at(0).op, drift::MaskOp::Add);
+    QCOMPARE(roundTripped.at(1).shape, drift::MaskShape::Star);
+    QCOMPARE(roundTripped.at(1).op, drift::MaskOp::Subtract);
+    QCOMPARE(roundTripped.at(1).name, QStringLiteral("Punch"));
+    QCOMPARE(roundTripped.at(1).enabled, false);
     QCOMPARE(loaded.tracks()[0].transitions.size(), 1);
     QCOMPARE(loaded.tracks()[0].transitions[0].kindId, QStringLiteral("dip"));
     QCOMPARE(loaded.tracks()[0].transitions[0].fromClipId, QStringLiteral("clip-a"));
@@ -1823,10 +1839,12 @@ void CoreTest::matteMaskSerialization()
     clip.type = drift::ClipType::Video;
     clip.timelineStart = 0;
     clip.timelineDuration = drift::secondsToUs(3.0);
-    clip.mask.shape = drift::MaskShape::Matte;
-    clip.mask.mattePath = QStringLiteral("/tmp/mattes/abc.mkv");
-    clip.mask.matteSrcOffsetUs = drift::secondsToUs(1.5);
-    clip.mask.invert = true;
+    drift::Mask matte;
+    matte.shape = drift::MaskShape::Matte;
+    matte.mattePath = QStringLiteral("/tmp/mattes/abc.mkv");
+    matte.matteSrcOffsetUs = drift::secondsToUs(1.5);
+    matte.invert = true;
+    clip.masks = {matte};
     project.tracks()[0].clips.append(clip);
 
     const QJsonObject json = project.toJson();
@@ -1834,11 +1852,91 @@ void CoreTest::matteMaskSerialization()
     const drift::Project loaded = drift::Project::fromJson(json, &error);
 
     QVERIFY(error.isEmpty());
-    const drift::Mask &mask = loaded.tracks()[0].clips[0].mask;
+    QCOMPARE(loaded.tracks()[0].clips[0].masks.size(), 1);
+    const drift::Mask &mask = loaded.tracks()[0].clips[0].masks.at(0);
     QCOMPARE(mask.shape, drift::MaskShape::Matte);
     QCOMPARE(mask.mattePath, QStringLiteral("/tmp/mattes/abc.mkv"));
     QCOMPARE(mask.matteSrcOffsetUs, drift::secondsToUs(1.5));
     QCOMPARE(mask.invert, true);
+}
+
+// Every project saved before the mask stack existed carries a single "mask" object. That
+// fallback is the only migration path there is, so it has to keep working indefinitely.
+void CoreTest::legacySingleMaskLoadsAsStack()
+{
+    drift::Project project;
+    project.tracks().clear();
+    project.tracks().append(drift::Track{.type = drift::TrackType::Video});
+
+    drift::Clip clip;
+    clip.id = QStringLiteral("clip-legacy");
+    clip.type = drift::ClipType::Video;
+    clip.timelineDuration = drift::secondsToUs(2.0);
+    project.tracks()[0].clips.append(clip);
+
+    // Rewrite the document the way the old serializer did: a "mask" object, no "masks" array.
+    QJsonObject json = project.toJson();
+    QJsonArray tracks = json.value(QStringLiteral("tracks")).toArray();
+    QJsonObject track = tracks.at(0).toObject();
+    QJsonArray clips = track.value(QStringLiteral("clips")).toArray();
+    QJsonObject clipJson = clips.at(0).toObject();
+    clipJson.remove(QStringLiteral("masks"));
+    clipJson.insert(QStringLiteral("mask"),
+                    QJsonObject{{QStringLiteral("shape"), QStringLiteral("ellipse")},
+                                {QStringLiteral("x"), 0.25},
+                                {QStringLiteral("feather"), 6.0},
+                                {QStringLiteral("invert"), true}});
+    clips.replace(0, clipJson);
+    track.insert(QStringLiteral("clips"), clips);
+    tracks.replace(0, track);
+    json.insert(QStringLiteral("tracks"), tracks);
+
+    QString error;
+    const drift::Project loaded = drift::Project::fromJson(json, &error);
+    QVERIFY(error.isEmpty());
+
+    const QList<drift::Mask> &masks = loaded.tracks().at(0).clips.at(0).masks;
+    QCOMPARE(masks.size(), 1);
+    QCOMPARE(masks.at(0).shape, drift::MaskShape::Ellipse);
+    QCOMPARE(masks.at(0).x, 0.25);
+    QCOMPARE(masks.at(0).feather, 6.0);
+    QCOMPARE(masks.at(0).invert, true);
+    // Defaults the old format never stored.
+    QCOMPARE(masks.at(0).op, drift::MaskOp::Add);
+    QCOMPARE(masks.at(0).enabled, true);
+}
+
+// "none" was how the old format spelled "unmasked". Carrying those over would give every
+// pre-existing clip a dead row in the stack list.
+void CoreTest::legacyEmptyMaskLoadsAsNoStack()
+{
+    drift::Project project;
+    project.tracks().clear();
+    project.tracks().append(drift::Track{.type = drift::TrackType::Video});
+
+    drift::Clip clip;
+    clip.id = QStringLiteral("clip-unmasked");
+    clip.type = drift::ClipType::Video;
+    clip.timelineDuration = drift::secondsToUs(2.0);
+    project.tracks()[0].clips.append(clip);
+
+    QJsonObject json = project.toJson();
+    QJsonArray tracks = json.value(QStringLiteral("tracks")).toArray();
+    QJsonObject track = tracks.at(0).toObject();
+    QJsonArray clips = track.value(QStringLiteral("clips")).toArray();
+    QJsonObject clipJson = clips.at(0).toObject();
+    clipJson.remove(QStringLiteral("masks"));
+    clipJson.insert(QStringLiteral("mask"),
+                    QJsonObject{{QStringLiteral("shape"), QStringLiteral("none")}});
+    clips.replace(0, clipJson);
+    track.insert(QStringLiteral("clips"), clips);
+    tracks.replace(0, track);
+    json.insert(QStringLiteral("tracks"), tracks);
+
+    QString error;
+    const drift::Project loaded = drift::Project::fromJson(json, &error);
+    QVERIFY(error.isEmpty());
+    QVERIFY(loaded.tracks().at(0).clips.at(0).masks.isEmpty());
 }
 
 void CoreTest::faceTrackSerialization()

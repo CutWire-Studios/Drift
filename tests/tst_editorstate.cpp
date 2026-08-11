@@ -19,6 +19,7 @@
 #include "core/Clip.h"
 #include "core/Project.h"
 #include "core/Track.h"
+#include "engine/MaskApplier.h"
 
 class EditorStateTest : public QObject
 {
@@ -33,6 +34,8 @@ private slots:
     void undoRedoClipAdd();
     void undoTrackMute();
     void packagedProjectCarriesDerivedArtifacts();
+    void maskEditPreservesMattePath();
+    void maskStackCombinesByOp();
     void undoBookmarkAdd();
     void bookmarkNavigationAndToggle();
     void workAreaMarkClearAndUndo();
@@ -383,9 +386,10 @@ void EditorStateTest::packagedProjectCarriesDerivedArtifacts()
                              QStringLiteral("With a matte"));
 
     // No QML-facing setter carries a matte path; the segmentation job writes it directly.
-    drift::Clip &clip = state.project()->tracks()[0].clips[0];
-    clip.mask.shape = drift::MaskShape::Matte;
-    clip.mask.mattePath = mattePath;
+    drift::Mask matte;
+    matte.shape = drift::MaskShape::Matte;
+    matte.mattePath = mattePath;
+    state.project()->tracks()[0].clips[0].masks = {matte};
 
     QTemporaryDir out;
     QVERIFY(out.isValid());
@@ -412,9 +416,74 @@ void EditorStateTest::packagedProjectCarriesDerivedArtifacts()
              QStringLiteral("Ada"));
 
     const drift::Clip &loaded = state.project()->tracks().at(0).clips.at(0);
-    QVERIFY(loaded.mask.mattePath != mattePath);
-    QVERIFY2(QFileInfo::exists(loaded.mask.mattePath), qPrintable(loaded.mask.mattePath));
-    QCOMPARE(QFileInfo(loaded.mask.mattePath).size(), 1024);
+    QCOMPARE(loaded.masks.size(), 1);
+    const QString relinked = loaded.masks.at(0).mattePath;
+    QVERIFY(relinked != mattePath);
+    QVERIFY2(QFileInfo::exists(relinked), qPrintable(relinked));
+    QCOMPARE(QFileInfo(relinked).size(), 1024);
+}
+
+// The inspector edits a mask by writing back a whole map read from clipData, so any field the
+// QML bridge drops is destroyed on the first slider move — which used to include the matte a
+// segmentation had just produced.
+void EditorStateTest::maskEditPreservesMattePath()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    state.addTextClip(QStringLiteral("Masked"), 0.0);
+
+    // No QML-facing setter carries a matte path; the segmentation job writes it directly.
+    drift::Mask matte;
+    matte.shape = drift::MaskShape::Matte;
+    matte.mattePath = QStringLiteral("/tmp/does-not-need-to-exist.mp4");
+    matte.matteSrcOffsetUs = 1'500'000;
+    state.project()->tracks()[0].clips[0].masks = {matte};
+
+    // Exactly what MasksInspector does: read the published map, change one field, write it back.
+    QVariantMap edited = state.clipMasks(0, 0).value(0).toMap();
+    QVERIFY2(!edited.value(QStringLiteral("mattePath")).toString().isEmpty(),
+             "mask map did not publish the matte path");
+    edited[QStringLiteral("feather")] = 12.0;
+    state.setClipMaskAt(0, 0, 0, edited);
+
+    const drift::Clip &after = state.project()->tracks().at(0).clips.at(0);
+    QCOMPARE(after.masks.size(), 1);
+    QCOMPARE(after.masks.at(0).mattePath, QStringLiteral("/tmp/does-not-need-to-exist.mp4"));
+    QCOMPARE(after.masks.at(0).matteSrcOffsetUs, drift::TimeUs(1'500'000));
+    QCOMPARE(after.masks.at(0).feather, 12.0);
+}
+
+// The stack composites in list order: a Subtract entry punches a hole in what precedes it.
+void EditorStateTest::maskStackCombinesByOp()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    state.addTextClip(QStringLiteral("Masked"), 0.0);
+
+    QCOMPARE(state.addClipMask(0, 0, QStringLiteral("rectangle")), 0);
+    QCOMPARE(state.addClipMask(0, 0, QStringLiteral("ellipse")), 1);
+    QCOMPARE(state.clipMasks(0, 0).size(), 2);
+
+    QVariantMap hole = state.clipMasks(0, 0).value(1).toMap();
+    hole[QStringLiteral("op")] = QStringLiteral("subtract");
+    hole[QStringLiteral("w")] = 0.3;
+    hole[QStringLiteral("h")] = 0.3;
+    state.setClipMaskAt(0, 0, 1, hole);
+
+    const QList<drift::Mask> &masks = state.project()->tracks().at(0).clips.at(0).masks;
+    QCOMPARE(masks.at(0).op, drift::MaskOp::Add);
+    QCOMPARE(masks.at(1).op, drift::MaskOp::Subtract);
+
+    // Default rectangle is 0.6 wide/tall about the centre, so it spans [20, 80). The ellipse
+    // hole is 0.3, spanning [35, 65) across the middle row.
+    const QImage coverage = drift::maskAlphaMap(masks, 100, 100);
+    QVERIFY(!coverage.isNull());
+    QVERIFY2(coverage.constScanLine(50)[50] < 20, "subtract entry did not punch a hole");
+    QVERIFY2(coverage.constScanLine(50)[25] > 200, "outer rectangle was lost");
+    QVERIFY2(coverage.constScanLine(2)[2] < 20, "coverage leaked outside the rectangle");
+
+    state.removeClipMask(0, 0, 1);
+    QCOMPARE(state.clipMasks(0, 0).size(), 1);
 }
 
 void EditorStateTest::projectPersistenceRoundTrip()

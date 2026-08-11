@@ -44,4 +44,35 @@ MaskShape maskShapeFromString(const QString &shape)
     return MaskShape::None;
 }
 
+QString maskOpToString(MaskOp op)
+{
+    switch (op) {
+    case MaskOp::Subtract:
+        return QStringLiteral("subtract");
+    case MaskOp::Intersect:
+        return QStringLiteral("intersect");
+    case MaskOp::Add:
+        break;
+    }
+    return QStringLiteral("add");
+}
+
+MaskOp maskOpFromString(const QString &op)
+{
+    if (op == QStringLiteral("subtract"))
+        return MaskOp::Subtract;
+    if (op == QStringLiteral("intersect"))
+        return MaskOp::Intersect;
+    return MaskOp::Add;
+}
+
+bool masksAreInert(const QList<Mask> &masks)
+{
+    for (const Mask &mask : masks) {
+        if (mask.contributes())
+            return false;
+    }
+    return true;
+}
+
 } // namespace drift

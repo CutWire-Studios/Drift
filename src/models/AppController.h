@@ -513,7 +513,8 @@ public:
     Q_INVOKABLE void previewSetEffectParam(int trackIndex, int clipIndex, int effectIndex,
                                            const QString &key, double value);
     Q_INVOKABLE void previewSetClipSpeed(int trackIndex, int clipIndex, double speed);
-    Q_INVOKABLE void previewSetClipMask(int trackIndex, int clipIndex, const QVariantMap &mask);
+    Q_INVOKABLE void previewSetClipMaskAt(int trackIndex, int clipIndex, int maskIndex,
+                                          const QVariantMap &mask);
     Q_INVOKABLE void previewSetClipFade(int trackIndex, int clipIndex, double fadeInSeconds, double fadeOutSeconds);
     Q_INVOKABLE void commitPreviewDrag();
     Q_INVOKABLE void cancelPreviewDrag();
@@ -601,7 +602,14 @@ public:
     Q_INVOKABLE void separateAudioFromSelection();
     Q_INVOKABLE bool canUnlinkSelection() const;
     Q_INVOKABLE void unlinkSelectedClips();
-    Q_INVOKABLE void setClipMask(int trackIndex, int clipIndex, const QVariantMap &mask);
+    // Mask stack. Entries composite in list order by their MaskOp; index 0 seeds the coverage.
+    Q_INVOKABLE QVariantList clipMasks(int trackIndex, int clipIndex) const;
+    Q_INVOKABLE void setClipMaskAt(int trackIndex, int clipIndex, int maskIndex,
+                                   const QVariantMap &mask);
+    // Returns the new entry's index, or -1 when the clip cannot take one.
+    Q_INVOKABLE int addClipMask(int trackIndex, int clipIndex, const QString &shape);
+    Q_INVOKABLE void removeClipMask(int trackIndex, int clipIndex, int maskIndex);
+    Q_INVOKABLE void moveClipMask(int trackIndex, int clipIndex, int fromIndex, int toIndex);
     // Partial patch: only the keys present are applied, like setTextStyle.
     Q_INVOKABLE void setShapeStyle(int trackIndex, int clipIndex, const QVariantMap &style);
     Q_INVOKABLE void setClipFade(int trackIndex, int clipIndex, double fadeInSeconds, double fadeOutSeconds);
@@ -957,6 +965,9 @@ protected:
                                    const QString &mattePath = {},
                                    drift::TimeUs matteSrcOffsetUs = 0);
     bool resolveTemplateApplyTarget(int *trackIndex, int *clipIndex) const;
+    // Bounds-checked mutable clip lookup; null when either index is out of range.
+    drift::Clip *clipRefAt(int trackIndex, int clipIndex);
+    const drift::Clip *clipRefAt(int trackIndex, int clipIndex) const;
     bool beatAnalysisReadyForClip(const drift::Clip &clip, const QString &sync) const;
     // Digest of everything the AudioMixer reads; a change means detected beats are stale.
     QByteArray audioLayoutFingerprint() const;

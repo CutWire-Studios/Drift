@@ -14,15 +14,39 @@ Item {
     }
     readonly property bool hasSelection: !!clipData && Object.keys(clipData).length > 0
     readonly property string clipKind: hasSelection ? (clipData.kind || "") : ""
+    readonly property bool maskable: clipKind !== "" && clipKind !== "audio"
+                                     && clipKind !== "text" && clipKind !== "subtitle"
+    readonly property var masks: (clipData && clipData.masks) || []
+
+    // Which stack row is expanded. Kept here rather than per-delegate so opening one closes
+    // the others — a column of six sliders per entry would otherwise bury the list.
+    property int expandedIndex: 0
 
     height: contentCol.height
     implicitHeight: contentCol.height
 
     function refreshFields() {}
 
+    function writeMask(index, changes) {
+        const mask = Object.assign({}, root.masks[index] || {}, changes)
+        EditorState.setClipMaskAt(EditorState.selectedTrack, EditorState.selectedClip, index, mask)
+    }
+
+    function maskLabel(mask, index) {
+        if (mask.name)
+            return mask.name
+        if (mask.shape === "matte")
+            return qsTr("Cutout %1").arg(index + 1)
+        const shapeLabels = {
+            "rectangle": qsTr("Rectangle"), "ellipse": qsTr("Ellipse"), "star": qsTr("Star"),
+            "heart": qsTr("Heart"), "bars": qsTr("Bars"), "freeform": qsTr("Polygon")
+        }
+        return shapeLabels[mask.shape] || mask.shape
+    }
+
     Connections {
         target: EditorState
-        function onSelectionChanged() { root.clipDataRevision++ }
+        function onSelectionChanged() { root.clipDataRevision++; root.expandedIndex = 0 }
         function onSelectedClipDataChanged() { root.clipDataRevision++ }
         function onTracksChanged() { root.clipDataRevision++ }
     }
@@ -102,139 +126,258 @@ Item {
             }
         }
 
-        // The tab used to open with a lone unlabelled combo box
-        // and no explanation of what a mask does.
-        Text {
-            visible: maskShapeBox.visible
+        Column {
             width: parent.width
-            text: qsTr("Cutout shape")
-            color: Theme.mutedForeground
-            font.family: Theme.fontFamily
-            font.pixelSize: Theme.fontSizeXs
-        }
+            spacing: Theme.spacingSm
+            visible: root.maskable
 
-        Text {
-            visible: maskShapeBox.visible
-            width: parent.width
-            wrapMode: Text.WordWrap
-            text: qsTr("Hides everything outside the shape. Feather softens its edge.")
-            color: Theme.mutedForeground
-            font.family: Theme.fontFamily
-            font.pixelSize: Theme.fontSizeXs
-            opacity: 0.8
-        }
-
-        ThemedComboBox {
-            id: maskShapeBox
-            visible: root.clipKind !== "audio" && root.clipKind !== "text"
-                     && root.clipKind !== "subtitle"
-            width: parent.width
-            model: ["none", "rectangle", "ellipse", "star", "heart", "bars", "freeform"]
-            // Human labels — the raw ids were shown to the user.
-            readonly property var labels: ({
-                "none": qsTr("None"),
-                "rectangle": qsTr("Rectangle"),
-                "ellipse": qsTr("Ellipse"),
-                "star": qsTr("Star"),
-                "heart": qsTr("Heart"),
-                "bars": qsTr("Bars"),
-                "freeform": qsTr("Freeform")
-            })
-            displayText: labels[model[currentIndex]] || model[currentIndex]
-            tooltip: qsTr("Shape used to cut out this clip")
-            currentIndex: Math.max(0, model.indexOf((root.clipData.mask && root.clipData.mask.shape) || "none"))
-            onActivated: {
-                const mask = Object.assign({}, root.clipData.mask || {})
-                mask.shape = model[currentIndex]
-                EditorState.setClipMask(EditorState.selectedTrack, EditorState.selectedClip, mask)
-            }
-        }
-
-        // Clearing a mask previously required knowing to reselect
-        // "none" in the combo above.
-        ThemedButton {
-            visible: maskShapeBox.visible
-                     && ((root.clipData.mask && root.clipData.mask.shape) || "none") !== "none"
-            text: qsTr("Remove cutout")
-            variant: "destructive"
-            glyph: Theme.icons.trash
-            onClicked: {
-                const mask = Object.assign({}, root.clipData.mask || {})
-                mask.shape = "none"
-                EditorState.setClipMask(EditorState.selectedTrack, EditorState.selectedClip, mask)
-            }
-        }
-
-        Repeater {
-            model: [
-                { key: "x", label: "Center X", min: 0, max: 1 },
-                { key: "y", label: "Center Y", min: 0, max: 1 },
-                { key: "w", label: "Width", min: 0.05, max: 1 },
-                { key: "h", label: "Height", min: 0.05, max: 1 },
-                { key: "rotation", label: "Rotation", min: -180, max: 180 },
-                { key: "feather", label: "Feather", min: 0, max: 64 }
-            ]
-            delegate: Column {
-                required property var modelData
-                width: parent.width
-                spacing: 4
-                visible: root.clipKind !== "audio" && root.clipKind !== "text"
-                     && root.clipKind !== "subtitle"
-                         && !!root.clipData.mask && root.clipData.mask.shape !== "none"
-                         && (modelData.key !== "rotation" || root.clipData.mask.shape !== "bars")
-
-                Text {
-                    text: modelData.label
-                    color: Theme.mutedForeground
-                    font.family: Theme.fontFamily
-                    font.pixelSize: Theme.fontSizeXs
-                }
-                ThemedSlider {
-                    id: maskParamSlider
-                    label: modelData.label
-                    width: parent.width
-                    from: modelData.min
-                    to: modelData.max
-                    stepSize: modelData.key === "feather" ? 1 : 0.01
-                    Binding on value {
-                        when: !maskParamSlider.pressed
-                        value: (root.clipData.mask && root.clipData.mask[modelData.key]) || 0
-                    }
-                    onMoved: {
-                        const mask = Object.assign({}, root.clipData.mask || {})
-                        mask[modelData.key] = value
-                        EditorState.previewSetClipMask(
-                            EditorState.selectedTrack, EditorState.selectedClip, mask)
-                    }
-                    onPressedChanged: {
-                        if (pressed)
-                            EditorState.beginPreviewDrag(qsTr("Mask changed"))
-                        else
-                            EditorState.commitPreviewDrag()
-                    }
-                }
-            }
-        }
-
-        Row {
-            width: parent.width
-            spacing: 8
-            visible: root.clipKind !== "audio" && root.clipKind !== "text"
-                     && root.clipKind !== "subtitle"
-                     && !!root.clipData.mask && root.clipData.mask.shape !== "none"
             Text {
-                text: qsTr("Invert")
+                width: parent.width
+                text: qsTr("Cutout stack")
                 color: Theme.mutedForeground
                 font.family: Theme.fontFamily
                 font.pixelSize: Theme.fontSizeXs
-                anchors.verticalCenter: parent.verticalCenter
             }
-            ThemedSwitch {
-                checked: !!(root.clipData.mask && root.clipData.mask.invert)
-                onToggled: {
-                    const mask = Object.assign({}, root.clipData.mask || {})
-                    mask.invert = checked
-                    EditorState.setClipMask(EditorState.selectedTrack, EditorState.selectedClip, mask)
+
+            Text {
+                width: parent.width
+                wrapMode: Text.WordWrap
+                text: qsTr("Entries stack top to bottom. The first one sets the visible area; "
+                           + "the rest add to it, cut into it, or trim it.")
+                color: Theme.mutedForeground
+                font.family: Theme.fontFamily
+                font.pixelSize: Theme.fontSizeXs
+                opacity: 0.8
+            }
+
+            EmptyState {
+                visible: root.masks.length === 0
+                width: parent.width
+                compact: true
+                glyph: Theme.icons.mask
+                title: qsTr("No cutouts")
+                hint: qsTr("Add a shape to hide everything outside it.")
+            }
+        }
+
+        Column {
+            width: parent.width
+            spacing: Theme.spacingSm
+            visible: root.maskable
+
+            Repeater {
+                model: root.masks
+
+                delegate: Column {
+                    id: maskRow
+                    required property var modelData
+                    required property int index
+
+                    readonly property bool expanded: root.expandedIndex === index
+                    readonly property bool isMatte: modelData.shape === "matte"
+
+                    width: parent.width
+                    spacing: Theme.spacingSm
+
+                    Rectangle {
+                        width: parent.width
+                        height: header.height + Theme.spacingSm * 2
+                        radius: Theme.radiusSm
+                        color: maskRow.expanded ? Theme.panelMuted : "transparent"
+                        border.width: 1
+                        border.color: maskRow.expanded ? Theme.panelBorder : "transparent"
+
+                        MouseArea {
+                            anchors.fill: parent
+                            onClicked: root.expandedIndex = maskRow.expanded ? -1 : maskRow.index
+                        }
+
+                        Row {
+                            id: header
+                            anchors.verticalCenter: parent.verticalCenter
+                            anchors.left: parent.left
+                            anchors.right: parent.right
+                            anchors.leftMargin: Theme.spacingSm
+                            anchors.rightMargin: Theme.spacingSm
+                            spacing: Theme.spacingSm
+
+                            IconGlyph {
+                                anchors.verticalCenter: parent.verticalCenter
+                                glyph: maskRow.modelData.enabled ? Theme.icons.eye : Theme.icons.eyeOff
+                                iconColor: maskRow.modelData.enabled ? Theme.foreground
+                                                                     : Theme.mutedForeground
+                                MouseArea {
+                                    anchors.fill: parent
+                                    anchors.margins: -4
+                                    cursorShape: Qt.PointingHandCursor
+                                    onClicked: root.writeMask(maskRow.index,
+                                                              { "enabled": !maskRow.modelData.enabled })
+                                }
+                            }
+
+                            Text {
+                                anchors.verticalCenter: parent.verticalCenter
+                                width: parent.width - opBox.width - removeGlyph.width
+                                       - Theme.spacingSm * 4 - Theme.spacingLg
+                                elide: Text.ElideRight
+                                text: root.maskLabel(maskRow.modelData, maskRow.index)
+                                color: maskRow.modelData.enabled ? Theme.foreground : Theme.mutedForeground
+                                font.family: Theme.fontFamily
+                                font.pixelSize: Theme.fontSizeSm
+                            }
+
+                            // The first entry seeds the coverage, so its op has nothing to
+                            // combine with and would only mislead.
+                            ThemedComboBox {
+                                id: opBox
+                                anchors.verticalCenter: parent.verticalCenter
+                                width: Theme.spacing2xl * 3
+                                visible: maskRow.index > 0
+                                model: ["add", "subtract", "intersect"]
+                                readonly property var labels: ({
+                                    "add": qsTr("Add"),
+                                    "subtract": qsTr("Subtract"),
+                                    "intersect": qsTr("Intersect")
+                                })
+                                displayText: labels[model[currentIndex]] || model[currentIndex]
+                                tooltip: qsTr("How this cutout combines with the ones above it")
+                                currentIndex: Math.max(0, model.indexOf(maskRow.modelData.op || "add"))
+                                onActivated: root.writeMask(maskRow.index, { "op": model[currentIndex] })
+                            }
+
+                            IconGlyph {
+                                id: removeGlyph
+                                anchors.verticalCenter: parent.verticalCenter
+                                glyph: Theme.icons.trash
+                                iconColor: Theme.mutedForeground
+                                MouseArea {
+                                    anchors.fill: parent
+                                    anchors.margins: -4
+                                    cursorShape: Qt.PointingHandCursor
+                                    onClicked: EditorState.removeClipMask(
+                                        EditorState.selectedTrack, EditorState.selectedClip,
+                                        maskRow.index)
+                                }
+                            }
+                        }
+                    }
+
+                    Column {
+                        width: parent.width
+                        spacing: Theme.spacingSm
+                        visible: maskRow.expanded
+
+                        Repeater {
+                            model: [
+                                { key: "x", label: qsTr("Center X"), min: 0, max: 1 },
+                                { key: "y", label: qsTr("Center Y"), min: 0, max: 1 },
+                                { key: "w", label: qsTr("Width"), min: 0.05, max: 1 },
+                                { key: "h", label: qsTr("Height"), min: 0.05, max: 1 },
+                                { key: "rotation", label: qsTr("Rotation"), min: -180, max: 180 },
+                                { key: "feather", label: qsTr("Feather"), min: 0, max: 64 }
+                            ]
+                            delegate: Column {
+                                required property var modelData
+                                width: parent.width
+                                spacing: 4
+                                // A matte's coverage comes from its video frames, so only
+                                // feather and invert mean anything for it. Bars spans the
+                                // frame, so rotating it only crops.
+                                visible: (!maskRow.isMatte || modelData.key === "feather")
+                                         && (modelData.key !== "rotation"
+                                             || maskRow.modelData.shape !== "bars")
+
+                                Text {
+                                    text: modelData.label
+                                    color: Theme.mutedForeground
+                                    font.family: Theme.fontFamily
+                                    font.pixelSize: Theme.fontSizeXs
+                                }
+                                ThemedSlider {
+                                    id: maskParamSlider
+                                    label: modelData.label
+                                    width: parent.width
+                                    from: modelData.min
+                                    to: modelData.max
+                                    stepSize: modelData.key === "feather" ? 1 : 0.01
+                                    Binding on value {
+                                        when: !maskParamSlider.pressed
+                                        value: maskRow.modelData[modelData.key] || 0
+                                    }
+                                    onMoved: {
+                                        const mask = Object.assign({}, maskRow.modelData)
+                                        mask[modelData.key] = value
+                                        EditorState.previewSetClipMaskAt(
+                                            EditorState.selectedTrack, EditorState.selectedClip,
+                                            maskRow.index, mask)
+                                    }
+                                    onPressedChanged: {
+                                        if (pressed)
+                                            EditorState.beginPreviewDrag(qsTr("Mask changed"))
+                                        else
+                                            EditorState.commitPreviewDrag()
+                                    }
+                                }
+                            }
+                        }
+
+                        Row {
+                            width: parent.width
+                            spacing: 8
+                            Text {
+                                text: qsTr("Invert")
+                                color: Theme.mutedForeground
+                                font.family: Theme.fontFamily
+                                font.pixelSize: Theme.fontSizeXs
+                                anchors.verticalCenter: parent.verticalCenter
+                            }
+                            ThemedSwitch {
+                                checked: !!maskRow.modelData.invert
+                                onToggled: root.writeMask(maskRow.index, { "invert": checked })
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        Column {
+            width: parent.width
+            spacing: Theme.spacingSm
+            visible: root.maskable
+
+            Text {
+                width: parent.width
+                text: qsTr("Add cutout")
+                color: Theme.mutedForeground
+                font.family: Theme.fontFamily
+                font.pixelSize: Theme.fontSizeXs
+            }
+
+            Flow {
+                width: parent.width
+                spacing: Theme.spacingSm
+
+                Repeater {
+                    model: [
+                        { shape: "rectangle", label: qsTr("Rectangle") },
+                        { shape: "ellipse", label: qsTr("Ellipse") },
+                        { shape: "star", label: qsTr("Star") },
+                        { shape: "heart", label: qsTr("Heart") },
+                        { shape: "bars", label: qsTr("Bars") },
+                        { shape: "freeform", label: qsTr("Polygon") }
+                    ]
+                    delegate: ThemedButton {
+                        required property var modelData
+                        text: modelData.label
+                        onClicked: {
+                            const added = EditorState.addClipMask(
+                                EditorState.selectedTrack, EditorState.selectedClip,
+                                modelData.shape)
+                            if (added >= 0)
+                                root.expandedIndex = added
+                        }
+                    }
                 }
             }
         }
