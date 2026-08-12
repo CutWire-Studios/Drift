@@ -116,13 +116,17 @@ Item {
         return Math.min(wanted, Math.max(0, height * 0.5))
     }
 
-    y: Theme.clipSelectionRingWidth
+    // Cutouts occupy a lane across the top of the row, so clips start below it. The lane is zero
+    // height on a track with no cutouts, which is every track until one is added.
+    readonly property real maskLaneOffset: panel.maskLaneBlockHeight(trackIndex)
+
+    y: Theme.clipSelectionRingWidth + maskLaneOffset
     // Floored so short clips stay visible and
     // trimmable even at low zoom.
     width: Math.max(Theme.clipMinWidth,
                     clipData.duration * panel.pxPerSecond
                     - 2 * Theme.clipSelectionRingWidth)
-    height: Math.max(0, trackRow.height - 2 * Theme.clipSelectionRingWidth)
+    height: Math.max(0, trackRow.height - maskLaneOffset - 2 * Theme.clipSelectionRingWidth)
 
     // While dragging, show the same snapped landing outline the
     // library drop uses, on whichever track the clip is over.

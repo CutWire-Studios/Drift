@@ -36,6 +36,11 @@ private slots:
     void packagedProjectCarriesDerivedArtifacts();
     void maskEditPreservesMattePath();
     void maskStackCombinesByOp();
+    void maskEditModeExcludesCanvasCrop();
+    void maskPointInsertAndRemove();
+    void maskKeyframesAnimateAndSurviveEdits();
+    void trackMasksAreIndependentOfClipEdits();
+    void trackMaskLanesAvoidOverlap();
     void undoBookmarkAdd();
     void bookmarkNavigationAndToggle();
     void workAreaMarkClearAndUndo();
@@ -387,9 +392,9 @@ void EditorStateTest::packagedProjectCarriesDerivedArtifacts()
 
     // No QML-facing setter carries a matte path; the segmentation job writes it directly.
     drift::Mask matte;
-    matte.shape = drift::MaskShape::Matte;
-    matte.mattePath = mattePath;
-    state.project()->tracks()[0].clips[0].masks = {matte};
+    matte.shape = drift::MaskShape::Media;
+    matte.mediaPath = mattePath;
+    state.project()->tracks()[0].masks = {matte};
 
     QTemporaryDir out;
     QVERIFY(out.isValid());
@@ -415,9 +420,9 @@ void EditorStateTest::packagedProjectCarriesDerivedArtifacts()
     QCOMPARE(state.projectMetadata().value(QStringLiteral("author")).toString(),
              QStringLiteral("Ada"));
 
-    const drift::Clip &loaded = state.project()->tracks().at(0).clips.at(0);
-    QCOMPARE(loaded.masks.size(), 1);
-    const QString relinked = loaded.masks.at(0).mattePath;
+    const drift::Track &loadedTrack = state.project()->tracks().at(0);
+    QCOMPARE(loadedTrack.masks.size(), 1);
+    const QString relinked = loadedTrack.masks.at(0).mediaPath;
     QVERIFY(relinked != mattePath);
     QVERIFY2(QFileInfo::exists(relinked), qPrintable(relinked));
     QCOMPARE(QFileInfo(relinked).size(), 1024);
@@ -434,22 +439,22 @@ void EditorStateTest::maskEditPreservesMattePath()
 
     // No QML-facing setter carries a matte path; the segmentation job writes it directly.
     drift::Mask matte;
-    matte.shape = drift::MaskShape::Matte;
-    matte.mattePath = QStringLiteral("/tmp/does-not-need-to-exist.mp4");
-    matte.matteSrcOffsetUs = 1'500'000;
-    state.project()->tracks()[0].clips[0].masks = {matte};
+    matte.shape = drift::MaskShape::Media;
+    matte.mediaPath = QStringLiteral("/tmp/does-not-need-to-exist.mp4");
+    matte.mediaOffsetUs = 1'500'000;
+    state.project()->tracks()[0].masks = {matte};
 
     // Exactly what MasksInspector does: read the published map, change one field, write it back.
-    QVariantMap edited = state.clipMasks(0, 0).value(0).toMap();
-    QVERIFY2(!edited.value(QStringLiteral("mattePath")).toString().isEmpty(),
-             "mask map did not publish the matte path");
+    QVariantMap edited = state.trackMasks(0).value(0).toMap();
+    QVERIFY2(!edited.value(QStringLiteral("mediaPath")).toString().isEmpty(),
+             "mask map did not publish the media path");
     edited[QStringLiteral("feather")] = 12.0;
-    state.setClipMaskAt(0, 0, 0, edited);
+    state.setTrackMaskAt(0, 0, edited);
 
-    const drift::Clip &after = state.project()->tracks().at(0).clips.at(0);
+    const drift::Track &after = state.project()->tracks().at(0);
     QCOMPARE(after.masks.size(), 1);
-    QCOMPARE(after.masks.at(0).mattePath, QStringLiteral("/tmp/does-not-need-to-exist.mp4"));
-    QCOMPARE(after.masks.at(0).matteSrcOffsetUs, drift::TimeUs(1'500'000));
+    QCOMPARE(after.masks.at(0).mediaPath, QStringLiteral("/tmp/does-not-need-to-exist.mp4"));
+    QCOMPARE(after.masks.at(0).mediaOffsetUs, drift::TimeUs(1'500'000));
     QCOMPARE(after.masks.at(0).feather, 12.0);
 }
 
@@ -460,17 +465,17 @@ void EditorStateTest::maskStackCombinesByOp()
     AppController state(&library);
     state.addTextClip(QStringLiteral("Masked"), 0.0);
 
-    QCOMPARE(state.addClipMask(0, 0, QStringLiteral("rectangle")), 0);
-    QCOMPARE(state.addClipMask(0, 0, QStringLiteral("ellipse")), 1);
-    QCOMPARE(state.clipMasks(0, 0).size(), 2);
+    QCOMPARE(state.addTrackMask(0, QStringLiteral("rectangle")), 0);
+    QCOMPARE(state.addTrackMask(0, QStringLiteral("ellipse")), 1);
+    QCOMPARE(state.trackMasks(0).size(), 2);
 
-    QVariantMap hole = state.clipMasks(0, 0).value(1).toMap();
+    QVariantMap hole = state.trackMasks(0).value(1).toMap();
     hole[QStringLiteral("op")] = QStringLiteral("subtract");
     hole[QStringLiteral("w")] = 0.3;
     hole[QStringLiteral("h")] = 0.3;
-    state.setClipMaskAt(0, 0, 1, hole);
+    state.setTrackMaskAt(0, 1, hole);
 
-    const QList<drift::Mask> &masks = state.project()->tracks().at(0).clips.at(0).masks;
+    const QList<drift::Mask> &masks = state.project()->tracks().at(0).masks;
     QCOMPARE(masks.at(0).op, drift::MaskOp::Add);
     QCOMPARE(masks.at(1).op, drift::MaskOp::Subtract);
 
@@ -482,8 +487,185 @@ void EditorStateTest::maskStackCombinesByOp()
     QVERIFY2(coverage.constScanLine(50)[25] > 200, "outer rectangle was lost");
     QVERIFY2(coverage.constScanLine(2)[2] < 20, "coverage leaked outside the rectangle");
 
-    state.removeClipMask(0, 0, 1);
-    QCOMPARE(state.clipMasks(0, 0).size(), 1);
+    state.removeTrackMask(0, 1);
+    QCOMPARE(state.trackMasks(0).size(), 1);
+}
+
+// The polygon editor inserts on an edge and deletes on right-click, and must refuse to go below
+// a triangle — two vertices rasterize to nothing, which reads as a broken mask rather than an
+// empty one.
+void EditorStateTest::maskPointInsertAndRemove()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    state.addTextClip(QStringLiteral("Masked"), 0.0);
+
+    const int index = state.addTrackMask(0, QStringLiteral("freeform"));
+    QCOMPARE(index, 0);
+
+    const auto points = [&] {
+        return state.project()->tracks().at(0).masks.at(0).points;
+    };
+    // addClipMask seeds a diamond so the entry is visible the moment it is created.
+    QCOMPARE(points().size(), 4);
+
+    state.insertMaskPoint(0, 0, 2, 0.75, 0.65);
+    QCOMPARE(points().size(), 5);
+    QCOMPARE(points().at(2).pos, QPointF(0.75, 0.65));
+    QVERIFY(points().at(2).isStraight());
+
+    state.removeMaskPoint(0, 0, 2);
+    QCOMPARE(points().size(), 4);
+
+    // Down to the floor, then refuse.
+    state.removeMaskPoint(0, 0, 0);
+    QCOMPARE(points().size(), 3);
+    state.removeMaskPoint(0, 0, 0);
+    QCOMPARE(points().size(), 3);
+
+    // Vertex edits do not apply to the parametric shapes.
+    const int rect = state.addTrackMask(0, QStringLiteral("rectangle"));
+    QCOMPARE(rect, 1);
+    state.insertMaskPoint(0, 1, 0, 0.5, 0.5);
+    QVERIFY(state.project()->tracks().at(0).masks.at(1).points.isEmpty());
+}
+
+// Mask properties are addressed as "mask.<index>.<param>" so the generic keyframe API reaches
+// them. The edit path is the trap: the inspector writes back a whole mask map, and maskFromMap
+// does not carry keyframes, so a naive assignment would delete the animation on the first drag.
+void EditorStateTest::maskKeyframesAnimateAndSurviveEdits()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    state.addTextClip(QStringLiteral("Masked"), 0.0);
+    QCOMPARE(state.addTrackMask(0, QStringLiteral("ellipse")), 0);
+
+    const QString prop = QStringLiteral("mask.0.x");
+    state.setClipKeyframe(0, 0, prop, 0.0, 0.2);
+    state.setClipKeyframe(0, 0, prop, 1.0, 0.8);
+
+    const auto &mask = [&]() -> const drift::Mask & {
+        return state.project()->tracks().at(0).masks.at(0);
+    };
+    QCOMPARE(mask().keyframes.value(prop.mid(7)).keyframes().size(), 2);
+    QVERIFY(mask().isAnimated());
+    QVERIFY(state.clipAnimatedProperties(0, 0).contains(prop));
+
+    // Midway between the two keys.
+    const drift::Mask atHalf = mask().resolvedAt(drift::secondsToUs(0.5));
+    QVERIFY2(qAbs(atHalf.x - 0.5) < 0.02,
+             qPrintable(QStringLiteral("interpolated to %1").arg(atHalf.x)));
+    QCOMPARE(mask().resolvedAt(0).x, 0.2);
+    QCOMPARE(mask().resolvedAt(drift::secondsToUs(1.0)).x, 0.8);
+
+    // Now the trap: an ordinary inspector edit of an unrelated field.
+    QVariantMap edited = state.trackMasks(0).value(0).toMap();
+    edited[QStringLiteral("feather")] = 8.0;
+    state.setTrackMaskAt(0, 0, edited);
+
+    QCOMPARE(mask().feather, 8.0);
+    QCOMPARE(mask().keyframes.value(QStringLiteral("x")).keyframes().size(), 2);
+    QCOMPARE(mask().resolvedAt(drift::secondsToUs(1.0)).x, 0.8);
+
+    // A second cutout on the lane gets its own property ids.
+    QCOMPARE(state.addTrackMask(0, QStringLiteral("rectangle")), 1);
+    QVERIFY(state.clipAnimatedProperties(0, 0).contains(QStringLiteral("mask.0.x")));
+    QVERIFY(!state.clipAnimatedProperties(0, 0).contains(QStringLiteral("mask.1.x")));
+}
+
+// Cutouts live on the track's lane with their own absolute timing, so structural edits to the
+// clips beneath them must leave them exactly where the user put them.
+void EditorStateTest::trackMasksAreIndependentOfClipEdits()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    state.addTextClip(QStringLiteral("Host"), 0.0);
+
+    const int added = state.addTrackMask(0, QStringLiteral("ellipse"));
+    QCOMPARE(added, 0);
+
+    const auto masks = [&]() -> const QList<drift::Mask> & {
+        return state.project()->tracks().at(0).masks;
+    };
+    // A new cutout covers the clip under the playhead.
+    const drift::Clip host = state.project()->tracks().at(0).clips.at(0);
+    QCOMPARE(masks().size(), 1);
+    QCOMPARE(masks().at(0).timelineStart, host.timelineStart);
+    QCOMPARE(masks().at(0).timelineDuration, host.timelineDuration);
+
+    // Retime it to something the clip does not determine, then delete the clip out from under it.
+    state.moveTrackMask(0, 0, 5.0, 0);
+    QCOMPARE(masks().at(0).timelineStart, drift::secondsToUs(5.0));
+
+    state.selectClip(0, 0);
+    state.deleteSelectedClip();
+    QVERIFY(state.project()->tracks().at(0).clips.isEmpty());
+    QCOMPARE(masks().size(), 1);
+    QCOMPARE(masks().at(0).timelineStart, drift::secondsToUs(5.0));
+
+    // Selection tracks the list, and clearing it when the selected entry goes.
+    state.selectMask(0, 0);
+    QCOMPARE(state.selectedMaskTrack(), 0);
+    QCOMPARE(state.selectedMaskIndex(), 0);
+    QCOMPARE(state.selectedMaskData().value(QStringLiteral("shape")).toString(),
+             QStringLiteral("ellipse"));
+
+    state.removeTrackMask(0, 0);
+    QCOMPARE(state.selectedMaskTrack(), -1);
+    QCOMPARE(state.selectedMaskIndex(), -1);
+    QVERIFY(state.selectedMaskData().isEmpty());
+}
+
+// The lane grows a row per overlapping cutout, so a subtract can sit over an add at the same
+// moment without the two colliding visually.
+void EditorStateTest::trackMaskLanesAvoidOverlap()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    state.addTextClip(QStringLiteral("Host"), 0.0);
+
+    // Both land on the clip under the playhead, so the second has to step up a row.
+    QCOMPARE(state.addTrackMask(0, QStringLiteral("rectangle")), 0);
+    QCOMPARE(state.addTrackMask(0, QStringLiteral("ellipse")), 1);
+
+    const auto masks = [&]() -> const QList<drift::Mask> & {
+        return state.project()->tracks().at(0).masks;
+    };
+    QCOMPARE(masks().at(0).lane, 0);
+    QCOMPARE(masks().at(1).lane, 1);
+    QCOMPARE(state.trackMaskLaneCount(0), 2);
+
+    // Slide the second clear of the first and the lane can collapse back to one row.
+    state.moveTrackMask(0, 1, 60.0, 0);
+    QCOMPARE(masks().at(1).lane, 0);
+    QCOMPARE(state.trackMaskLaneCount(0), 1);
+
+    // A track with no cutouts shows no lane at all.
+    state.removeTrackMask(0, 1);
+    state.removeTrackMask(0, 0);
+    QCOMPARE(state.trackMaskLaneCount(0), 0);
+}
+
+// Both modes claim the preview's grips and pointer, so they must never be on together — the
+// overlays would draw two sets of handles over each other and fight for the same drags.
+void EditorStateTest::maskEditModeExcludesCanvasCrop()
+{
+    AssetLibrary library;
+    AppController state(&library);
+
+    QSignalSpy cropSpy(&state, &AppController::canvasCropModeChanged);
+    state.setCanvasCropMode(true);
+    QVERIFY(state.canvasCropMode());
+
+    state.setMaskEditMode(true);
+    QVERIFY(state.maskEditMode());
+    QVERIFY2(!state.canvasCropMode(), "entering mask edit did not leave canvas crop");
+    QCOMPARE(cropSpy.count(), 2); // on, then off — QML bindings need both edges
+
+    // Leaving mask edit must not switch crop back on behind the user's back.
+    state.setMaskEditMode(false);
+    QVERIFY(!state.maskEditMode());
+    QVERIFY(!state.canvasCropMode());
 }
 
 void EditorStateTest::projectPersistenceRoundTrip()

@@ -177,6 +177,20 @@ class AppController : public QObject
     Q_PROPERTY(QString guideType READ guideType WRITE setGuideType NOTIFY guidesChanged)
     Q_PROPERTY(QVariantMap background READ background NOTIFY backgroundChanged)
     Q_PROPERTY(bool canvasCropMode READ canvasCropMode WRITE setCanvasCropMode NOTIFY canvasCropModeChanged)
+    // Direct manipulation of the selected clip's mask stack in the preview. Mutually exclusive
+    // with canvasCropMode — both want the same grips and the same pointer.
+    Q_PROPERTY(bool maskEditMode READ maskEditMode WRITE setMaskEditMode NOTIFY maskEditModeChanged)
+    // Which stack entry the overlay draws grips for. Shared with the inspector so clicking an
+    // outline in the preview opens the matching row and vice versa.
+    // The cutout the lane and the properties panel are both pointing at. A mask belongs to a
+    // track rather than a clip, so it takes a track index of its own — selecting a clip does not
+    // select a mask and vice versa. -1 for either means nothing is selected.
+    Q_PROPERTY(int selectedMaskTrack READ selectedMaskTrack NOTIFY selectedMaskChanged)
+    Q_PROPERTY(int selectedMaskIndex READ selectedMaskIndex NOTIFY selectedMaskChanged)
+    // Clip id whose mask coverage the preview shows instead of the composite, or empty. Held as
+    // an id rather than indices so it survives a track or clip reorder.
+    Q_PROPERTY(QString maskViewClipId READ maskViewClipId WRITE setMaskViewClipId NOTIFY
+                       maskViewClipIdChanged)
     Q_PROPERTY(bool inlineTextEditing READ inlineTextEditing NOTIFY inlineTextEditingChanged)
     Q_PROPERTY(QVariantList actions READ actions NOTIFY shortcutsChanged)
     Q_PROPERTY(QVariantList bookmarks READ bookmarks NOTIFY bookmarksChanged)
@@ -513,8 +527,6 @@ public:
     Q_INVOKABLE void previewSetEffectParam(int trackIndex, int clipIndex, int effectIndex,
                                            const QString &key, double value);
     Q_INVOKABLE void previewSetClipSpeed(int trackIndex, int clipIndex, double speed);
-    Q_INVOKABLE void previewSetClipMaskAt(int trackIndex, int clipIndex, int maskIndex,
-                                          const QVariantMap &mask);
     Q_INVOKABLE void previewSetClipFade(int trackIndex, int clipIndex, double fadeInSeconds, double fadeOutSeconds);
     Q_INVOKABLE void commitPreviewDrag();
     Q_INVOKABLE void cancelPreviewDrag();
@@ -526,6 +538,18 @@ public:
     Q_INVOKABLE void applyCanvasCrop(double x, double y, double width, double height);
     bool canvasCropMode() const { return m_canvasCropMode; }
     void setCanvasCropMode(bool active);
+    bool maskEditMode() const { return m_maskEditMode; }
+    void setMaskEditMode(bool active);
+    int selectedMaskTrack() const { return m_selectedMaskTrack; }
+    int selectedMaskIndex() const { return m_selectedMaskIndex; }
+    Q_INVOKABLE void selectMask(int trackIndex, int maskIndex);
+    Q_INVOKABLE void clearMaskSelection() { selectMask(-1, -1); }
+    // The selected cutout's fields, or an empty map when nothing is selected.
+    Q_INVOKABLE QVariantMap selectedMaskData() const;
+    QString maskViewClipId() const { return m_maskViewClipId; }
+    void setMaskViewClipId(const QString &id);
+    // Turns mask view on for the selected clip, or off if it is already showing it.
+    Q_INVOKABLE void toggleMaskViewForSelectedClip();
     Q_INVOKABLE void setBackground(const QVariantMap &background);
     Q_INVOKABLE bool timelineHasVisualClips() const;
     Q_INVOKABLE bool shouldConfigureProjectForAsset(int assetIndex) const;
@@ -602,14 +626,30 @@ public:
     Q_INVOKABLE void separateAudioFromSelection();
     Q_INVOKABLE bool canUnlinkSelection() const;
     Q_INVOKABLE void unlinkSelectedClips();
-    // Mask stack. Entries composite in list order by their MaskOp; index 0 seeds the coverage.
-    Q_INVOKABLE QVariantList clipMasks(int trackIndex, int clipIndex) const;
-    Q_INVOKABLE void setClipMaskAt(int trackIndex, int clipIndex, int maskIndex,
-                                   const QVariantMap &mask);
-    // Returns the new entry's index, or -1 when the clip cannot take one.
-    Q_INVOKABLE int addClipMask(int trackIndex, int clipIndex, const QString &shape);
-    Q_INVOKABLE void removeClipMask(int trackIndex, int clipIndex, int maskIndex);
-    Q_INVOKABLE void moveClipMask(int trackIndex, int clipIndex, int fromIndex, int toIndex);
+    // Cutouts on a track's mask lane. Each is a timed bar that masks whichever of that track's
+    // clips it overlaps; lane order decides the composite, low lane folding in first.
+    Q_INVOKABLE QVariantList trackMasks(int trackIndex) const;
+    // Rows the lane needs to draw, or 0 when the track has no cutouts and shows no lane at all.
+    Q_INVOKABLE int trackMaskLaneCount(int trackIndex) const;
+    Q_INVOKABLE void setTrackMaskAt(int trackIndex, int maskIndex, const QVariantMap &mask);
+    Q_INVOKABLE void previewSetTrackMaskAt(int trackIndex, int maskIndex, const QVariantMap &mask);
+    // Returns the new cutout's index, or -1 when the track cannot take one.
+    Q_INVOKABLE int addTrackMask(int trackIndex, const QString &shape);
+    // Adds an image or video cutout. `source` may be a local path or a file:// URL, so the same
+    // call serves the asset library and an OS file drop.
+    Q_INVOKABLE int addTrackMaskMedia(int trackIndex, const QString &source);
+    Q_INVOKABLE int addTrackMaskFromAsset(int trackIndex, int assetIndex);
+    Q_INVOKABLE void removeTrackMask(int trackIndex, int maskIndex);
+    Q_INVOKABLE void moveTrackMask(int trackIndex, int maskIndex, double startSeconds, int lane);
+    Q_INVOKABLE void previewMoveTrackMask(int trackIndex, int maskIndex, double startSeconds,
+                                          int lane);
+    Q_INVOKABLE void previewTrimTrackMask(int trackIndex, int maskIndex, double startSeconds,
+                                          double durationSeconds);
+    // Freeform vertex editing. Insert places a straight vertex at `pointIndex`, so passing the
+    // index of the edge's far end splits that edge.
+    Q_INVOKABLE void insertMaskPoint(int trackIndex, int maskIndex, int pointIndex,
+                                     double x, double y);
+    Q_INVOKABLE void removeMaskPoint(int trackIndex, int maskIndex, int pointIndex);
     // Partial patch: only the keys present are applied, like setTextStyle.
     Q_INVOKABLE void setShapeStyle(int trackIndex, int clipIndex, const QVariantMap &style);
     Q_INVOKABLE void setClipFade(int trackIndex, int clipIndex, double fadeInSeconds, double fadeOutSeconds);
@@ -924,6 +964,9 @@ signals:
     void shortcutsChanged();
     void assetFavoritesChanged();
     void canvasCropModeChanged();
+    void maskEditModeChanged();
+    void selectedMaskChanged();
+    void maskViewClipIdChanged();
     void backgroundChanged();
     void dirtyChanged();
     void currentProjectPathChanged();
@@ -956,6 +999,9 @@ protected:
     void dropKeyframeGraphPropertiesForEffect(int removedIndex);
     // Same idea after a reorder: fx.N.* indices move with the effect.
     void remapKeyframeGraphPropertiesForEffectMove(int fromIndex, int toIndex);
+    // Renumbers "<prefix>.<index>.<param>" entries in the keyframe-strip selection after a
+    // reorder. Prefix is "fx" or "mask".
+    void remapKeyframeGraphProperties(const QString &prefix, int fromIndex, int toIndex);
     // Publishes a finished beat analysis into m_beatAnalysis / m_beatSnapTargets.
     void applyBeatAnalysis(const AudioBeatAnalysis &analysis, double startSeconds, double durSeconds,
                            const QByteArray &fingerprint);
@@ -968,6 +1014,8 @@ protected:
     // Bounds-checked mutable clip lookup; null when either index is out of range.
     drift::Clip *clipRefAt(int trackIndex, int clipIndex);
     const drift::Clip *clipRefAt(int trackIndex, int clipIndex) const;
+    drift::Track *trackRefAt(int trackIndex);
+    const drift::Track *trackRefAt(int trackIndex) const;
     bool beatAnalysisReadyForClip(const drift::Clip &clip, const QString &sync) const;
     // Digest of everything the AudioMixer reads; a change means detected beats are stale.
     QByteArray audioLayoutFingerprint() const;
@@ -1164,6 +1212,10 @@ protected:
     int m_timelineTrimCursorHeight = 0;
     bool m_guidesEnabled = false;
     bool m_canvasCropMode = false;
+    bool m_maskEditMode = false;
+    int m_selectedMaskTrack = -1;
+    int m_selectedMaskIndex = -1;
+    QString m_maskViewClipId;
     QString m_guideType = QStringLiteral("thirds");
     QHash<QString, QString> m_shortcuts;
     QHash<QString, QSet<QString>> m_assetFavorites;

@@ -350,17 +350,89 @@ ShapeStyle shapeStyleFromJson(const QJsonObject &o)
     return s;
 }
 
+QJsonArray maskPointsToJson(const QVector<MaskPoint> &points)
+{
+    QJsonArray out;
+    for (const MaskPoint &pt : points) {
+        // Straight vertices keep the compact legacy pair form, so a polygon with no curves
+        // round-trips through older builds unchanged and the common case stays readable.
+        if (pt.isStraight()) {
+            out.append(QJsonArray{pt.pos.x(), pt.pos.y()});
+            continue;
+        }
+        out.append(QJsonObject{
+            {QStringLiteral("x"), pt.pos.x()},
+            {QStringLiteral("y"), pt.pos.y()},
+            {QStringLiteral("inX"), pt.inTan.x()},
+            {QStringLiteral("inY"), pt.inTan.y()},
+            {QStringLiteral("outX"), pt.outTan.x()},
+            {QStringLiteral("outY"), pt.outTan.y()},
+            {QStringLiteral("corner"), pt.corner},
+        });
+    }
+    return out;
+}
+
+QVector<MaskPoint> maskPointsFromJson(const QJsonArray &array)
+{
+    QVector<MaskPoint> out;
+    for (const QJsonValue &value : array) {
+        // Two forms: the legacy [x, y] pair, and the object that also carries tangents.
+        if (value.isArray()) {
+            const QJsonArray pair = value.toArray();
+            if (pair.size() >= 2)
+                out.append(MaskPoint{QPointF(pair.at(0).toDouble(), pair.at(1).toDouble())});
+            continue;
+        }
+        const QJsonObject obj = value.toObject();
+        if (obj.isEmpty())
+            continue;
+        MaskPoint pt;
+        pt.pos = QPointF(obj.value(QStringLiteral("x")).toDouble(),
+                         obj.value(QStringLiteral("y")).toDouble());
+        pt.inTan = QPointF(obj.value(QStringLiteral("inX")).toDouble(),
+                           obj.value(QStringLiteral("inY")).toDouble());
+        pt.outTan = QPointF(obj.value(QStringLiteral("outX")).toDouble(),
+                            obj.value(QStringLiteral("outY")).toDouble());
+        pt.corner = obj.value(QStringLiteral("corner")).toBool(true);
+        out.append(pt);
+    }
+    return out;
+}
+
+QJsonObject maskKeyframesToJson(const Mask &m)
+{
+    QJsonObject out;
+    for (auto it = m.keyframes.constBegin(); it != m.keyframes.constEnd(); ++it) {
+        // An empty track carries no user choice worth persisting.
+        if (!it->isEmpty())
+            out.insert(it.key(), keyframesToJson(it.value()));
+    }
+    return out;
+}
+
+QJsonArray maskPathKeysToJson(const Mask &m)
+{
+    QJsonArray out;
+    for (auto it = m.pathKeys.constBegin(); it != m.pathKeys.constEnd(); ++it) {
+        out.append(QJsonObject{
+            {QStringLiteral("timeUs"), double(it.key())},
+            {QStringLiteral("points"), maskPointsToJson(it.value())},
+        });
+    }
+    return out;
+}
+
 QJsonObject maskToJson(const Mask &m)
 {
-    QJsonArray points;
-    for (const QPointF &pt : m.points)
-        points.append(QJsonArray{pt.x(), pt.y()});
-
     return QJsonObject{
         {QStringLiteral("shape"), maskShapeToString(m.shape)},
         {QStringLiteral("op"), maskOpToString(m.op)},
         {QStringLiteral("enabled"), m.enabled},
         {QStringLiteral("name"), m.name},
+        {QStringLiteral("timelineStart"), double(m.timelineStart)},
+        {QStringLiteral("timelineDuration"), double(m.timelineDuration)},
+        {QStringLiteral("lane"), m.lane},
         {QStringLiteral("x"), m.x},
         {QStringLiteral("y"), m.y},
         {QStringLiteral("w"), m.w},
@@ -368,9 +440,14 @@ QJsonObject maskToJson(const Mask &m)
         {QStringLiteral("rotation"), m.rotation},
         {QStringLiteral("feather"), m.feather},
         {QStringLiteral("invert"), m.invert},
-        {QStringLiteral("points"), points},
-        {QStringLiteral("mattePath"), m.mattePath},
-        {QStringLiteral("matteSrcOffsetUs"), qint64(m.matteSrcOffsetUs)},
+        {QStringLiteral("points"), maskPointsToJson(m.points)},
+        {QStringLiteral("mediaPath"), m.mediaPath},
+        {QStringLiteral("mediaOffsetUs"), qint64(m.mediaOffsetUs)},
+        {QStringLiteral("mediaFit"), maskMediaFitToString(m.mediaFit)},
+        {QStringLiteral("mediaChannel"), maskMediaChannelToString(m.mediaChannel)},
+        {QStringLiteral("mediaLoop"), m.mediaLoop},
+        {QStringLiteral("keyframes"), maskKeyframesToJson(m)},
+        {QStringLiteral("pathKeys"), maskPathKeysToJson(m)},
     };
 }
 
@@ -383,6 +460,9 @@ Mask maskFromJson(const QJsonObject &o)
     m.op = maskOpFromString(o.value(QStringLiteral("op")).toString());
     m.enabled = o.value(QStringLiteral("enabled")).toBool(m.enabled);
     m.name = o.value(QStringLiteral("name")).toString(m.name);
+    m.timelineStart = TimeUs(o.value(QStringLiteral("timelineStart")).toDouble());
+    m.timelineDuration = TimeUs(o.value(QStringLiteral("timelineDuration")).toDouble());
+    m.lane = o.value(QStringLiteral("lane")).toInt(0);
     m.x = o.value(QStringLiteral("x")).toDouble(m.x);
     m.y = o.value(QStringLiteral("y")).toDouble(m.y);
     m.w = o.value(QStringLiteral("w")).toDouble(m.w);
@@ -390,14 +470,37 @@ Mask maskFromJson(const QJsonObject &o)
     m.rotation = o.value(QStringLiteral("rotation")).toDouble(m.rotation);
     m.feather = o.value(QStringLiteral("feather")).toDouble(m.feather);
     m.invert = o.value(QStringLiteral("invert")).toBool(m.invert);
-    m.mattePath = o.value(QStringLiteral("mattePath")).toString(m.mattePath);
-    m.matteSrcOffsetUs =
-        TimeUs(o.value(QStringLiteral("matteSrcOffsetUs")).toInteger(m.matteSrcOffsetUs));
-    const QJsonArray points = o.value(QStringLiteral("points")).toArray();
-    for (const QJsonValue &value : points) {
-        const QJsonArray pair = value.toArray();
-        if (pair.size() >= 2)
-            m.points.append(QPointF(pair.at(0).toDouble(), pair.at(1).toDouble()));
+    // "mattePath"/"matteSrcOffsetUs" are what segmentation output was called before user-supplied
+    // media joined it; projects written then still carry those names.
+    m.mediaPath = o.value(QStringLiteral("mediaPath"))
+                          .toString(o.value(QStringLiteral("mattePath")).toString(m.mediaPath));
+    m.mediaOffsetUs = TimeUs(
+            o.value(QStringLiteral("mediaOffsetUs"))
+                    .toInteger(o.value(QStringLiteral("matteSrcOffsetUs")).toInteger(m.mediaOffsetUs)));
+    m.mediaFit = maskMediaFitFromString(o.value(QStringLiteral("mediaFit")).toString());
+    m.mediaChannel = maskMediaChannelFromString(o.value(QStringLiteral("mediaChannel")).toString());
+    m.mediaLoop = o.value(QStringLiteral("mediaLoop")).toBool(m.mediaLoop);
+
+    // A pre-media matte ignored x/y/w/h entirely and always covered the frame. Those fields were
+    // still serialized at their parametric defaults (0.6), so honouring them now would shrink
+    // every existing segmentation to 60% and crop the subject. Detect the old shape by the
+    // absence of the new key and restore full coverage.
+    if (m.shape == MaskShape::Media && !o.contains(QStringLiteral("mediaPath"))) {
+        m.x = 0.5;
+        m.y = 0.5;
+        m.w = 1.0;
+        m.h = 1.0;
+    }
+    m.points = maskPointsFromJson(o.value(QStringLiteral("points")).toArray());
+
+    const QJsonObject keyframes = o.value(QStringLiteral("keyframes")).toObject();
+    for (auto it = keyframes.constBegin(); it != keyframes.constEnd(); ++it)
+        m.keyframes.insert(it.key(), keyframesFromJson(it.value().toObject()));
+
+    for (const QJsonValue &value : o.value(QStringLiteral("pathKeys")).toArray()) {
+        const QJsonObject key = value.toObject();
+        m.pathKeys.insert(TimeUs(key.value(QStringLiteral("timeUs")).toDouble()),
+                          maskPointsFromJson(key.value(QStringLiteral("points")).toArray()));
     }
     return m;
 }
@@ -412,24 +515,44 @@ QJsonArray maskListToJson(const QList<Mask> &masks)
 
 // Reads the stack, falling back to the pre-stack single "mask" object. That fallback is the only
 // migration path for existing projects, so it stays regardless of how old the format gets.
-QList<Mask> maskListFromJson(const QJsonObject &clipObject)
+QList<Mask> maskListFromJson(const QJsonArray &array)
 {
     QList<Mask> masks;
-    if (clipObject.contains(QStringLiteral("masks"))) {
-        const QJsonArray array = clipObject.value(QStringLiteral("masks")).toArray();
-        for (const QJsonValue &value : array) {
-            const Mask mask = maskFromJson(value.toObject());
-            // Legacy projects wrote shape "none" to mean unmasked; do not resurrect those as
-            // stack entries or every old clip gains a dead row in the inspector.
-            if (mask.shape != MaskShape::None)
-                masks.append(mask);
-        }
-        return masks;
+    for (const QJsonValue &value : array) {
+        const Mask mask = maskFromJson(value.toObject());
+        // Projects predating the stack wrote shape "none" to mean unmasked; do not resurrect
+        // those or every old clip gains a dead bar on the lane.
+        if (mask.shape != MaskShape::None)
+            masks.append(mask);
     }
+    return masks;
+}
 
-    const Mask legacy = maskFromJson(clipObject.value(QStringLiteral("mask")).toObject());
-    if (legacy.shape != MaskShape::None)
-        masks.append(legacy);
+// Masks a clip used to own, lifted onto the track's lane. Masks were per-clip and untimed before
+// the lane existed, so each one becomes a bar spanning exactly its old host — which is what it
+// effectively covered. Lanes are assigned by stack position, preserving the composite order the
+// stack's list order used to give.
+QList<Mask> legacyClipMasksToTrackMasks(const QJsonObject &clipObject, const Clip &host)
+{
+    QList<Mask> masks;
+    if (clipObject.contains(QStringLiteral("masks")))
+        masks = maskListFromJson(clipObject.value(QStringLiteral("masks")).toArray());
+    else if (clipObject.contains(QStringLiteral("mask")))
+        masks = maskListFromJson(QJsonArray{clipObject.value(QStringLiteral("mask"))});
+
+    for (int i = 0; i < masks.size(); ++i) {
+        Mask &mask = masks[i];
+        mask.timelineStart = host.timelineStart;
+        mask.timelineDuration = host.timelineDuration;
+        mask.lane = i;
+
+        // Media used to be indexed by the host's *source* time (sourceUs - offset); a mask on
+        // the lane can span several clips, so it is now indexed from its own start. At normal
+        // speed the two agree once the offset absorbs the host's trim, which keeps every
+        // existing segmentation landing on the same frame it did before.
+        if (mask.shape == MaskShape::Media)
+            mask.mediaOffsetUs = host.srcIn - mask.mediaOffsetUs;
+    }
     return masks;
 }
 
@@ -543,7 +666,6 @@ QJsonObject clipToJson(const Clip &clip)
         {QStringLiteral("reverse"), clip.reverse},
         {QStringLiteral("flipH"), clip.flipH},
         {QStringLiteral("flipV"), clip.flipV},
-        {QStringLiteral("masks"), maskListToJson(clip.masks)},
         {QStringLiteral("faceTrackPath"), clip.faceTrackPath},
         {QStringLiteral("faceTrackSrcOffsetUs"), qint64(clip.faceTrackSrcOffsetUs)},
         {QStringLiteral("fadeInUs"), static_cast<double>(clip.fadeInUs)},
@@ -625,7 +747,6 @@ Clip clipFromJsonV2(const QJsonObject &object, int canvasW = 1920, int canvasH =
     clip.reverse = object.value(QStringLiteral("reverse")).toBool(false);
     clip.flipH = object.value(QStringLiteral("flipH")).toBool(false);
     clip.flipV = object.value(QStringLiteral("flipV")).toBool(false);
-    clip.masks = maskListFromJson(object);
     clip.faceTrackPath = object.value(QStringLiteral("faceTrackPath")).toString();
     clip.faceTrackSrcOffsetUs =
         TimeUs(object.value(QStringLiteral("faceTrackSrcOffsetUs")).toInteger(0));
@@ -798,9 +919,6 @@ void detachClip(Clip &clip)
     clip.rotation.detachSharedData();
     clip.volume.detachSharedData();
     clip.speedCurve.detachSharedData();
-    clip.masks.detach();
-    for (Mask &mask : clip.masks)
-        mask.points.detach();
     clip.subtitleCues.detach();
     clip.effects.detach();
     for (Effect &effect : clip.effects)
@@ -821,6 +939,9 @@ void detachTrack(Track &track)
         for (auto it = transition.parameters.begin(); it != transition.parameters.end(); ++it)
             it.value().detach();
     }
+    track.masks.detach();
+    for (Mask &mask : track.masks)
+        mask.detachSharedData();
 }
 
 } // namespace
@@ -946,7 +1067,16 @@ Project Project::fromJson(const QJsonObject &object, QString *errorOut)
                     track.clips.append(clipFromJsonV2(clipObject, project.width(), project.height()));
                 else
                     track.clips.append(clipFromJsonV1(clipObject, project.m_assetOrder));
+
+                // Masks lived on the clip before the lane existed. Lift them onto the track,
+                // each spanning the clip that owned it — the stretch it actually covered.
+                track.masks.append(
+                    legacyClipMasksToTrackMasks(clipObject, track.clips.last()));
             }
+
+            // Masks written by the current format sit on the track, already timed.
+            track.masks.append(
+                maskListFromJson(trackObject.value(QStringLiteral("masks")).toArray()));
 
             const QJsonArray transitionsArray = trackObject.value(QStringLiteral("transitions")).toArray();
             for (const QJsonValue &transitionValue : transitionsArray)
@@ -1017,6 +1147,10 @@ QJsonObject Project::toJson() const
         for (const Transition &transition : track.transitions)
             transitionsArray.append(transitionToJson(transition));
 
+        QJsonArray masksArray;
+        for (const Mask &mask : track.masks)
+            masksArray.append(maskToJson(mask));
+
         tracksArray.append(QJsonObject{
             {QStringLiteral("type"), trackTypeToString(track.type)},
             {QStringLiteral("muted"), track.muted},
@@ -1026,6 +1160,7 @@ QJsonObject Project::toJson() const
             {QStringLiteral("heightScale"), track.heightScale},
             {QStringLiteral("clips"), clipsArray},
             {QStringLiteral("transitions"), transitionsArray},
+            {QStringLiteral("masks"), masksArray},
         });
     }
 

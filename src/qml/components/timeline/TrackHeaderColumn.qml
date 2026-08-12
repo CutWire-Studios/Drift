@@ -379,6 +379,42 @@ Item {
                                          index, !trackLabelRow.trackWaveform)
                     }
                     ThemedMenuSeparator {}
+                    // Cutouts live on this track's lane and mask its clips. Adding one from here
+                    // is the discoverable route; the lane itself also takes dropped media.
+                    ThemedMenuItem {
+                        visible: root.tracks[index].type === "video"
+                                 || root.tracks[index].type === "shape"
+                        text: qsTr("Add rectangle cutout")
+                        icon.name: Theme.icons.mask
+                        onTriggered: {
+                            const added = EditorState.addTrackMask(index, "rectangle")
+                            if (added >= 0)
+                                EditorState.selectMask(index, added)
+                        }
+                    }
+                    ThemedMenuItem {
+                        visible: root.tracks[index].type === "video"
+                                 || root.tracks[index].type === "shape"
+                        text: qsTr("Add ellipse cutout")
+                        icon.name: Theme.icons.mask
+                        onTriggered: {
+                            const added = EditorState.addTrackMask(index, "ellipse")
+                            if (added >= 0)
+                                EditorState.selectMask(index, added)
+                        }
+                    }
+                    ThemedMenuItem {
+                        visible: root.tracks[index].type === "video"
+                                 || root.tracks[index].type === "shape"
+                        text: qsTr("Add polygon cutout")
+                        icon.name: Theme.icons.penTool
+                        onTriggered: {
+                            const added = EditorState.addTrackMask(index, "freeform")
+                            if (added >= 0)
+                                EditorState.selectMask(index, added)
+                        }
+                    }
+                    ThemedMenuSeparator {}
                     ThemedMenuItem {
                         text: qsTr("Reset row height")
                         icon.name: Theme.icons.minimize

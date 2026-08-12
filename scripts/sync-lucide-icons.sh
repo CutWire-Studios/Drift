@@ -54,6 +54,8 @@ icons=(
   cassette-tape orbit rabbit arrow-down-wide-narrow shield activity audio-waveform
   repeat reply layers circle-dot-dashed circle-dashed unfold-horizontal door-closed
   ear equal maximize
+  # Masking: coverage view, polygon authoring, image/video mask sources
+  contrast pen-tool image-play
 )
 
 for name in "${icons[@]}"; do

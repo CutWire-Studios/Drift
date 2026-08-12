@@ -368,6 +368,23 @@ PanelFrame {
         const track = tracks[index]
         const scale = track.heightScale > 0 ? track.heightScale : 1
         return Math.round(Math.max(20, trackBaseHeight(track.type) * scale))
+               + maskLaneBlockHeight(index)
+    }
+
+    // Height of one row on a track's cutout lane.
+    readonly property real maskLaneRowHeight: 18
+
+    // The cutout lane's total height on a track, or 0 when the track has no cutouts — a track
+    // that will never carry one should not pay vertical space for a lane it does not show.
+    function maskLaneBlockHeight(index) {
+        void tracks
+        const rows = EditorState.trackMaskLaneCount(index)
+        return rows > 0 ? rows * maskLaneRowHeight + Theme.borderWidth : 0
+    }
+
+    function trackMasksFor(index) {
+        void tracks
+        return EditorState.trackMasks(index)
     }
 
     function clipColor(type) {
@@ -1323,6 +1340,79 @@ PanelFrame {
                                         panel: root
                                         timelineColumn: trackColumn
                                         trackIndex: trackRow.trackIndex
+                                    }
+                                }
+
+                                // Cutout lane. The row stays one track — one header, one reorder
+                                // handle, moved as a unit — but is divided so cutouts can be
+                                // timed against the clips beneath them.
+                                Item {
+                                    id: maskLane
+                                    readonly property real blockHeight:
+                                        root.maskLaneBlockHeight(trackRow.trackIndex)
+                                    visible: blockHeight > 0
+                                    x: 0
+                                    y: 0
+                                    width: parent.width
+                                    height: blockHeight
+                                    z: 6
+
+                                    Rectangle {
+                                        anchors.fill: parent
+                                        color: Qt.rgba(Theme.panelMuted.r, Theme.panelMuted.g,
+                                                       Theme.panelMuted.b, 0.5)
+                                    }
+
+                                    // The dividing line the lane is named for.
+                                    Rectangle {
+                                        anchors.bottom: parent.bottom
+                                        width: parent.width
+                                        height: Theme.borderWidth
+                                        color: Theme.panelBorder
+                                    }
+
+                                    Repeater {
+                                        model: root.trackMasksFor(trackRow.trackIndex)
+                                        delegate: TimelineMaskItem {
+                                            panel: root
+                                            trackIndex: trackRow.trackIndex
+                                        }
+                                    }
+
+                                    // Dropping media here adds a cutout to this track.
+                                    DropArea {
+                                        id: maskDrop
+                                        anchors.fill: parent
+                                        keys: ["text/plain", "text/uri-list"]
+
+                                        onDropped: (drop) => {
+                                            let added = -1
+                                            if (drop.hasUrls && drop.urls.length > 0) {
+                                                for (const url of drop.urls) {
+                                                    const at = EditorState.addTrackMaskMedia(
+                                                        trackRow.trackIndex, url.toString())
+                                                    if (at >= 0)
+                                                        added = at
+                                                }
+                                            } else if (EditorState.draggingAssetIndex >= 0) {
+                                                added = EditorState.addTrackMaskFromAsset(
+                                                    trackRow.trackIndex,
+                                                    EditorState.draggingAssetIndex)
+                                            }
+                                            if (added >= 0) {
+                                                EditorState.selectMask(trackRow.trackIndex, added)
+                                                drop.accept()
+                                            } else {
+                                                drop.accepted = false
+                                            }
+                                        }
+                                    }
+
+                                    Rectangle {
+                                        visible: maskDrop.containsDrag
+                                        anchors.fill: parent
+                                        color: Theme.primary
+                                        opacity: 0.2
                                     }
                                 }
 

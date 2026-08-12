@@ -569,6 +569,7 @@ qt_add_qml_module(drift
         src/qml/PreviewPanel.qml
         src/qml/components/preview/TransformOverlay.qml
         src/qml/components/preview/CropOverlay.qml
+        src/qml/components/preview/MaskOverlay.qml
         src/qml/components/preview/PreviewToolbar.qml
         src/qml/SegmentationWindow.qml
         src/qml/DenoiseWindow.qml
@@ -601,6 +602,7 @@ qt_add_qml_module(drift
         src/qml/components/timeline/TimelineToolbar.qml
         src/qml/components/timeline/TrackHeaderColumn.qml
         src/qml/components/timeline/TimelineClipItem.qml
+        src/qml/components/timeline/TimelineMaskItem.qml
         src/qml/components/IconGlyph.qml
         src/qml/components/IconButton.qml
         src/qml/components/PanelFrame.qml

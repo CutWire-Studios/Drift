@@ -44,19 +44,31 @@ QPainterPath maskPath(const drift::Mask &mask, int canvasWidth, int canvasHeight
     }
     case drift::MaskShape::Freeform: {
         QPainterPath path;
-        if (mask.points.isEmpty())
+        if (mask.points.size() < 2)
             return path;
+
+        const auto scale = [canvasWidth, canvasHeight](const QPointF &p) {
+            return QPointF(p.x() * canvasWidth, p.y() * canvasHeight);
+        };
+
+        path.moveTo(scale(mask.points.first().pos));
+        // Every edge, including the closing one back to the first vertex.
         for (int i = 0; i < mask.points.size(); ++i) {
-            const QPointF pt(mask.points.at(i).x() * canvasWidth, mask.points.at(i).y() * canvasHeight);
-            if (i == 0)
-                path.moveTo(pt);
-            else
-                path.lineTo(pt);
+            const drift::MaskPoint &from = mask.points.at(i);
+            const drift::MaskPoint &to = mask.points.at((i + 1) % mask.points.size());
+            const QPointF end = scale(to.pos);
+            // Zero tangents on both ends mean a straight edge; anything else is a cubic, so a
+            // later editor can expose handles without touching this.
+            if (from.outTan.isNull() && to.inTan.isNull()) {
+                path.lineTo(end);
+            } else {
+                path.cubicTo(scale(from.pos + from.outTan), scale(to.pos + to.inTan), end);
+            }
         }
         path.closeSubpath();
         return path;
     }
-    case drift::MaskShape::Matte:
+    case drift::MaskShape::Media:
         // Raster, not parametric: the coverage map is decoded per frame in FrameCompositor and
         // rides on GpuLayer::matte. There is no path to rasterize.
         break;
@@ -140,7 +152,7 @@ namespace drift {
 
 QImage maskAlphaMap(const Mask &mask, int canvasWidth, int canvasHeight)
 {
-    if (mask.shape == MaskShape::None || mask.shape == MaskShape::Matte || canvasWidth <= 0
+    if (mask.shape == MaskShape::None || mask.shape == MaskShape::Media || canvasWidth <= 0
         || canvasHeight <= 0)
         return {};
 
@@ -183,7 +195,7 @@ QImage maskAlphaMap(const QList<Mask> &masks, int canvasWidth, int canvasHeight)
     for (const Mask &mask : masks) {
         // A matte has no path to rasterize — FrameCompositor decodes its frame and the GPU
         // compositor folds it in, because only they know the time.
-        if (!mask.contributes() || mask.shape == MaskShape::Matte)
+        if (!mask.contributes() || mask.shape == MaskShape::Media)
             continue;
 
         const QImage coverage = maskAlphaMap(mask, canvasWidth, canvasHeight);
@@ -251,7 +263,7 @@ QImage multiplyAlpha(const QImage &frame, const QImage &alpha, int canvasWidth, 
 
 QImage applyMask(const QImage &frame, const Mask &mask, int canvasWidth, int canvasHeight)
 {
-    if (mask.shape == MaskShape::None || mask.shape == MaskShape::Matte || frame.isNull())
+    if (mask.shape == MaskShape::None || mask.shape == MaskShape::Media || frame.isNull())
         return frame;
 
     const QImage alpha = maskAlphaMap(mask, canvasWidth, canvasHeight);

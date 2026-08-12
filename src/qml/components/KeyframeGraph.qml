@@ -59,6 +59,9 @@ Item {
         const fx = effectParam(id)
         if (fx)
             return fx.effect.label + " · " + fx.param.label
+        const mask = maskParam(id)
+        if (mask)
+            return qsTr("Cutout %1 · %2").arg(mask.index + 1).arg(mask.label)
         return id
     }
     function chipLabel(id) {
@@ -74,7 +77,34 @@ Item {
         const fx = effectParam(id)
         if (fx)
             return fx.param.label.substring(0, 3)
+        const mask = maskParam(id)
+        if (mask)
+            return "M" + (mask.index + 1) + mask.chip
         return id
+    }
+
+    // "mask.<index>.<param>" -> { index, param, label, chip, min, max }, or null.
+    function maskParam(id) {
+        if (id.substring(0, 5) !== "mask.")
+            return null
+        const dot = id.indexOf(".", 5)
+        if (dot < 0)
+            return null
+        const index = parseInt(id.substring(5, dot))
+        const param = id.substring(dot + 1)
+        const defs = {
+            "x":        { label: qsTr("Center X"), chip: "X",  min: 0,    max: 1 },
+            "y":        { label: qsTr("Center Y"), chip: "Y",  min: 0,    max: 1 },
+            "w":        { label: qsTr("Width"),    chip: "W",  min: 0.05, max: 1 },
+            "h":        { label: qsTr("Height"),   chip: "H",  min: 0.05, max: 1 },
+            "rotation": { label: qsTr("Rotation"), chip: "°",  min: -180, max: 180 },
+            "feather":  { label: qsTr("Feather"),  chip: "Fe", min: 0,    max: 64 }
+        }
+        const def = defs[param]
+        if (isNaN(index) || !def)
+            return null
+        return { index: index, param: param, label: def.label, chip: def.chip,
+                 min: def.min, max: def.max }
     }
     // Volume only exists on clips that carry audio; the rest are visual.
     function supportsProperty(id) {
@@ -84,6 +114,11 @@ Item {
             return clip.kind === "audio" || clip.kind === "video"
         if (id.substring(0, 3) === "fx.")
             return clip.kind !== "audio" && effectParam(id) !== null
+        if (id.substring(0, 5) === "mask.") {
+            const mask = maskParam(id)
+            return clip.kind !== "audio" && mask !== null
+                   && !!clip.masks && mask.index < clip.masks.length
+        }
         return clip.kind !== "audio"
     }
 
@@ -99,6 +134,9 @@ Item {
         const fx = effectParam(id)
         if (fx)
             return { min: fx.param.min, max: fx.param.max }
+        const mask = maskParam(id)
+        if (mask)
+            return { min: mask.min, max: mask.max }
         let lo = Infinity
         let hi = -Infinity
         for (let i = 0; i < pts.length; ++i) {

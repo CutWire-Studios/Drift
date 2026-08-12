@@ -69,6 +69,10 @@ public:
     // Empty id follows the system default. Applied to the sink immediately.
     void setAudioDeviceId(const QByteArray &id) { m_audio.setDeviceId(id); }
 
+    // Id of the clip whose mask coverage the preview should show in place of the composite.
+    // Empty renders normally. Export is unaffected: it never reads this.
+    void setMaskViewClipId(const QString &id);
+
 signals:
     // Playback cannot produce sound; carries a message meant for the user.
     void audioError(const QString &message);
@@ -119,6 +123,7 @@ private:
     // seek that lands elsewhere while it renders must not be stepped over.
     drift::TimeUs m_qualityRequestUs = -1;
     QString m_editingClipId;
+    QString m_maskViewClipId;
     int m_previewRenderWidth = 0;
     int m_previewRenderHeight = 0;
     // The rate the sink negotiated, which is what the mixer renders at and what the clock counts

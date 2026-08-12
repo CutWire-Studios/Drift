@@ -72,6 +72,11 @@ private slots:
     void matteMaskSerialization();
     void legacySingleMaskLoadsAsStack();
     void legacyEmptyMaskLoadsAsNoStack();
+    void maskPointsRoundTripBothForms();
+    void legacyMatteLoadsAsFullFrameMedia();
+    void legacyClipMasksLiftOntoTheTrackLane();
+    void masksActiveOnlyWithinTheirSpan();
+    void maskKeyframeSerialization();
     void faceTrackSerialization();
     void emojiClipSerialization();
     void allTransitionKindsRoundTrip();
@@ -1788,7 +1793,7 @@ void CoreTest::maskAndTransitionSerialization()
     hole.op = drift::MaskOp::Subtract;
     hole.name = QStringLiteral("Punch");
     hole.enabled = false;
-    clipA.masks = {ellipse, hole};
+    project.tracks()[0].masks = {ellipse, hole};
 
     drift::Clip clipB;
     clipB.id = QStringLiteral("clip-b");
@@ -1813,7 +1818,7 @@ void CoreTest::maskAndTransitionSerialization()
 
     QVERIFY(error.isEmpty());
     QCOMPARE(loaded.tracks()[0].clips[0].speed, 2.0);
-    const QList<drift::Mask> &roundTripped = loaded.tracks()[0].clips[0].masks;
+    const QList<drift::Mask> &roundTripped = loaded.tracks()[0].masks;
     QCOMPARE(roundTripped.size(), 2);
     QCOMPARE(roundTripped.at(0).shape, drift::MaskShape::Ellipse);
     QCOMPARE(roundTripped.at(0).op, drift::MaskOp::Add);
@@ -1840,11 +1845,11 @@ void CoreTest::matteMaskSerialization()
     clip.timelineStart = 0;
     clip.timelineDuration = drift::secondsToUs(3.0);
     drift::Mask matte;
-    matte.shape = drift::MaskShape::Matte;
-    matte.mattePath = QStringLiteral("/tmp/mattes/abc.mkv");
-    matte.matteSrcOffsetUs = drift::secondsToUs(1.5);
+    matte.shape = drift::MaskShape::Media;
+    matte.mediaPath = QStringLiteral("/tmp/mattes/abc.mkv");
+    matte.mediaOffsetUs = drift::secondsToUs(1.5);
     matte.invert = true;
-    clip.masks = {matte};
+    project.tracks()[0].masks = {matte};
     project.tracks()[0].clips.append(clip);
 
     const QJsonObject json = project.toJson();
@@ -1852,11 +1857,11 @@ void CoreTest::matteMaskSerialization()
     const drift::Project loaded = drift::Project::fromJson(json, &error);
 
     QVERIFY(error.isEmpty());
-    QCOMPARE(loaded.tracks()[0].clips[0].masks.size(), 1);
-    const drift::Mask &mask = loaded.tracks()[0].clips[0].masks.at(0);
-    QCOMPARE(mask.shape, drift::MaskShape::Matte);
-    QCOMPARE(mask.mattePath, QStringLiteral("/tmp/mattes/abc.mkv"));
-    QCOMPARE(mask.matteSrcOffsetUs, drift::secondsToUs(1.5));
+    QCOMPARE(loaded.tracks()[0].masks.size(), 1);
+    const drift::Mask &mask = loaded.tracks()[0].masks.at(0);
+    QCOMPARE(mask.shape, drift::MaskShape::Media);
+    QCOMPARE(mask.mediaPath, QStringLiteral("/tmp/mattes/abc.mkv"));
+    QCOMPARE(mask.mediaOffsetUs, drift::secondsToUs(1.5));
     QCOMPARE(mask.invert, true);
 }
 
@@ -1895,7 +1900,7 @@ void CoreTest::legacySingleMaskLoadsAsStack()
     const drift::Project loaded = drift::Project::fromJson(json, &error);
     QVERIFY(error.isEmpty());
 
-    const QList<drift::Mask> &masks = loaded.tracks().at(0).clips.at(0).masks;
+    const QList<drift::Mask> &masks = loaded.tracks().at(0).masks;
     QCOMPARE(masks.size(), 1);
     QCOMPARE(masks.at(0).shape, drift::MaskShape::Ellipse);
     QCOMPARE(masks.at(0).x, 0.25);
@@ -1936,7 +1941,311 @@ void CoreTest::legacyEmptyMaskLoadsAsNoStack()
     QString error;
     const drift::Project loaded = drift::Project::fromJson(json, &error);
     QVERIFY(error.isEmpty());
-    QVERIFY(loaded.tracks().at(0).clips.at(0).masks.isEmpty());
+    QVERIFY(loaded.tracks().at(0).masks.isEmpty());
+}
+
+// Polygon vertices were plain [x, y] pairs before tangents existed, and straight vertices still
+// serialize that way so simple polygons stay readable and forward-compatible.
+void CoreTest::maskPointsRoundTripBothForms()
+{
+    drift::Project project;
+    project.tracks().clear();
+    project.tracks().append(drift::Track{.type = drift::TrackType::Video});
+
+    drift::Mask poly;
+    poly.shape = drift::MaskShape::Freeform;
+    poly.points = {drift::MaskPoint{QPointF(0.1, 0.1)},
+                   drift::MaskPoint{QPointF(0.9, 0.1), QPointF(-0.05, 0.0), QPointF(0.05, 0.0),
+                                    false},
+                   drift::MaskPoint{QPointF(0.5, 0.9)}};
+
+    drift::Clip clip;
+    clip.id = QStringLiteral("clip-poly");
+    clip.type = drift::ClipType::Video;
+    clip.timelineDuration = drift::secondsToUs(1.0);
+    project.tracks()[0].masks = {poly};
+    project.tracks()[0].clips.append(clip);
+
+    QString error;
+    const drift::Project loaded = drift::Project::fromJson(project.toJson(), &error);
+    QVERIFY(error.isEmpty());
+
+    const QVector<drift::MaskPoint> &points = loaded.tracks().at(0).masks.at(0).points;
+    QCOMPARE(points.size(), 3);
+    QCOMPARE(points.at(0).pos, QPointF(0.1, 0.1));
+    QVERIFY(points.at(0).isStraight());
+    QCOMPARE(points.at(1).pos, QPointF(0.9, 0.1));
+    QCOMPARE(points.at(1).inTan, QPointF(-0.05, 0.0));
+    QCOMPARE(points.at(1).outTan, QPointF(0.05, 0.0));
+    QCOMPARE(points.at(1).corner, false);
+    QVERIFY(points.at(2).isStraight());
+
+    // The straight vertices must still be written as compact pairs.
+    const QJsonArray stored = project.toJson()
+                                      .value(QStringLiteral("tracks")).toArray().at(0).toObject()
+                                      .value(QStringLiteral("masks")).toArray().at(0).toObject()
+                                      .value(QStringLiteral("points")).toArray();
+    QCOMPARE(stored.size(), 3);
+    QVERIFY2(stored.at(0).isArray(), "straight vertex was not stored as a pair");
+    QVERIFY2(stored.at(1).isObject(), "curved vertex lost its tangents");
+}
+
+// Before media masks had a transform, a matte always covered the whole frame and x/y/w/h were
+// ignored — but still serialized at the parametric defaults (0.6). Honouring those on load would
+// shrink every existing segmentation to 60% and crop the subject.
+void CoreTest::legacyMatteLoadsAsFullFrameMedia()
+{
+    drift::Project project;
+    project.tracks().clear();
+    project.tracks().append(drift::Track{.type = drift::TrackType::Video});
+
+    drift::Clip clip;
+    clip.id = QStringLiteral("clip-legacy-matte");
+    clip.type = drift::ClipType::Video;
+    clip.timelineStart = drift::secondsToUs(1.0);
+    clip.timelineDuration = drift::secondsToUs(2.0);
+    // Segmentation stored the host's srcIn as the matte offset, so an untrimmed-since clip has
+    // the two equal.
+    clip.srcIn = 250000;
+    clip.srcOut = clip.srcIn + clip.timelineDuration;
+    project.tracks()[0].clips.append(clip);
+
+    // The pre-media shape: "matte" with the old key names and the default rect.
+    QJsonObject json = project.toJson();
+    QJsonArray tracks = json.value(QStringLiteral("tracks")).toArray();
+    QJsonObject track = tracks.at(0).toObject();
+    QJsonArray clips = track.value(QStringLiteral("clips")).toArray();
+    QJsonObject clipJson = clips.at(0).toObject();
+    clipJson.insert(QStringLiteral("masks"),
+                    QJsonArray{QJsonObject{
+                            {QStringLiteral("shape"), QStringLiteral("matte")},
+                            {QStringLiteral("mattePath"), QStringLiteral("/tmp/mattes/x.mp4")},
+                            // Segmentation always wrote the host's srcIn here.
+                            {QStringLiteral("matteSrcOffsetUs"), 250000},
+                            {QStringLiteral("x"), 0.5},
+                            {QStringLiteral("y"), 0.5},
+                            {QStringLiteral("w"), 0.6},
+                            {QStringLiteral("h"), 0.6},
+                            {QStringLiteral("invert"), true},
+                    }});
+    clips.replace(0, clipJson);
+    track.insert(QStringLiteral("clips"), clips);
+    tracks.replace(0, track);
+    json.insert(QStringLiteral("tracks"), tracks);
+
+    QString error;
+    const drift::Project loaded = drift::Project::fromJson(json, &error);
+    QVERIFY(error.isEmpty());
+
+    const QList<drift::Mask> &masks = loaded.tracks().at(0).masks;
+    QCOMPARE(masks.size(), 1);
+    const drift::Mask &mask = masks.at(0);
+    QCOMPARE(mask.shape, drift::MaskShape::Media);
+    QCOMPARE(mask.mediaPath, QStringLiteral("/tmp/mattes/x.mp4"));
+    QCOMPARE(mask.invert, true);
+    // Lifted onto the track's lane, spanning the clip that owned it.
+    QCOMPARE(mask.timelineStart, drift::secondsToUs(1.0));
+    QCOMPARE(mask.timelineDuration, drift::secondsToUs(2.0));
+    QCOMPARE(mask.lane, 0);
+    // Media used to be indexed by the host's source time; it is now indexed from the bar's own
+    // start, so the offset absorbs the host's trim. Untrimmed since segmentation, that is zero —
+    // the matte plays from its first frame at the bar's first frame, exactly as before.
+    QCOMPARE(mask.mediaOffsetUs, drift::TimeUs(0));
+    // The whole point: the stored 0.6 must not survive.
+    QCOMPARE(mask.w, 1.0);
+    QCOMPARE(mask.h, 1.0);
+    QCOMPARE(mask.x, 0.5);
+    QCOMPARE(mask.y, 0.5);
+    QCOMPARE(mask.mediaFit, drift::MaskMediaFit::Stretch);
+    QCOMPARE(mask.mediaChannel, drift::MaskMediaChannel::Luma);
+
+    // A mask written by the current serializer keeps whatever rect it was given.
+    drift::Mask placed = drift::fullFrameMediaMask(QStringLiteral("/tmp/mattes/y.mp4"));
+    placed.w = 0.4;
+    placed.h = 0.3;
+    project.tracks()[0].masks = {placed};
+    const drift::Project reloaded = drift::Project::fromJson(project.toJson(), &error);
+    QVERIFY(error.isEmpty());
+    QCOMPARE(reloaded.tracks().at(0).masks.at(0).w, 0.4);
+    QCOMPARE(reloaded.tracks().at(0).masks.at(0).h, 0.3);
+}
+
+// Animated masks have to survive a save/load, including the polygon path keys — those hold a
+// vertex list rather than a number, so they do not go through the shared keyframe serializer.
+void CoreTest::maskKeyframeSerialization()
+{
+    drift::Project project;
+    project.tracks().clear();
+    project.tracks().append(drift::Track{.type = drift::TrackType::Video});
+
+    drift::Mask animated;
+    animated.shape = drift::MaskShape::Ellipse;
+    animated.keyframes[QStringLiteral("x")].setKeyframe(0, 0.2);
+    animated.keyframes[QStringLiteral("x")].setKeyframe(drift::secondsToUs(1.0), 0.8);
+    animated.keyframes[QStringLiteral("feather")].setKeyframe(0, 0.0);
+    animated.keyframes[QStringLiteral("feather")].setKeyframe(drift::secondsToUs(1.0), 20.0);
+
+    drift::Mask poly;
+    poly.shape = drift::MaskShape::Freeform;
+    poly.points = {drift::MaskPoint{QPointF(0.1, 0.1)}, drift::MaskPoint{QPointF(0.9, 0.1)},
+                   drift::MaskPoint{QPointF(0.5, 0.9)}};
+    poly.pathKeys.insert(0, poly.points);
+    poly.pathKeys.insert(drift::secondsToUs(2.0),
+                         {drift::MaskPoint{QPointF(0.3, 0.3)}, drift::MaskPoint{QPointF(0.7, 0.3)},
+                          drift::MaskPoint{QPointF(0.5, 0.7)}});
+
+    drift::Clip clip;
+    clip.id = QStringLiteral("clip-animated-mask");
+    clip.type = drift::ClipType::Video;
+    clip.timelineDuration = drift::secondsToUs(3.0);
+    project.tracks()[0].masks = {animated, poly};
+    project.tracks()[0].clips.append(clip);
+
+    QString error;
+    const drift::Project loaded = drift::Project::fromJson(project.toJson(), &error);
+    QVERIFY(error.isEmpty());
+
+    const QList<drift::Mask> &masks = loaded.tracks().at(0).masks;
+    QCOMPARE(masks.size(), 2);
+
+    QVERIFY(masks.at(0).isAnimated());
+    QCOMPARE(masks.at(0).keyframes.value(QStringLiteral("x")).keyframes().size(), 2);
+    QCOMPARE(masks.at(0).resolvedAt(0).x, 0.2);
+    QCOMPARE(masks.at(0).resolvedAt(drift::secondsToUs(1.0)).x, 0.8);
+    QCOMPARE(masks.at(0).resolvedAt(drift::secondsToUs(1.0)).feather, 20.0);
+
+    QVERIFY(masks.at(1).isAnimated());
+    QCOMPARE(masks.at(1).pathKeys.size(), 2);
+    // Halfway between the two path keys, with matching vertex counts, interpolates.
+    const drift::Mask mid = masks.at(1).resolvedAt(drift::secondsToUs(1.0));
+    QCOMPARE(mid.points.size(), 3);
+    QVERIFY2(qAbs(mid.points.at(0).pos.x() - 0.2) < 1e-6,
+             qPrintable(QStringLiteral("got %1").arg(mid.points.at(0).pos.x())));
+    QVERIFY2(qAbs(mid.points.at(2).pos.y() - 0.8) < 1e-6,
+             qPrintable(QStringLiteral("got %1").arg(mid.points.at(2).pos.y())));
+
+    // A vertex-count change has no honest correspondence, so the earlier key holds.
+    drift::Mask mismatched = masks.at(1);
+    mismatched.pathKeys.insert(drift::secondsToUs(2.0),
+                               {drift::MaskPoint{QPointF(0.0, 0.0)},
+                                drift::MaskPoint{QPointF(1.0, 0.0)},
+                                drift::MaskPoint{QPointF(1.0, 1.0)},
+                                drift::MaskPoint{QPointF(0.0, 1.0)}});
+    const drift::Mask held = mismatched.resolvedAt(drift::secondsToUs(1.0));
+    QCOMPARE(held.points.size(), 3);
+    QCOMPARE(held.points.at(0).pos, QPointF(0.1, 0.1));
+}
+
+// Masks used to be a per-clip stack with no timing at all. Lifting them onto the track's lane is
+// the only migration path there is, and each one has to end up spanning exactly the clip that
+// owned it — that is the stretch it effectively covered.
+void CoreTest::legacyClipMasksLiftOntoTheTrackLane()
+{
+    drift::Project project;
+    project.tracks().clear();
+    project.tracks().append(drift::Track{.type = drift::TrackType::Video});
+
+    drift::Clip first;
+    first.id = QStringLiteral("a");
+    first.type = drift::ClipType::Video;
+    first.timelineStart = 0;
+    first.timelineDuration = drift::secondsToUs(2.0);
+    drift::Clip second;
+    second.id = QStringLiteral("b");
+    second.type = drift::ClipType::Video;
+    second.timelineStart = drift::secondsToUs(2.0);
+    second.timelineDuration = drift::secondsToUs(3.0);
+    project.tracks()[0].clips = {first, second};
+
+    QJsonObject json = project.toJson();
+    QJsonArray tracks = json.value(QStringLiteral("tracks")).toArray();
+    QJsonObject track = tracks.at(0).toObject();
+    QJsonArray clips = track.value(QStringLiteral("clips")).toArray();
+
+    // Clip A carried a two-entry stack; clip B a single pre-stack "mask" object.
+    QJsonObject clipA = clips.at(0).toObject();
+    clipA.insert(QStringLiteral("masks"),
+                 QJsonArray{QJsonObject{{QStringLiteral("shape"), QStringLiteral("ellipse")}},
+                            QJsonObject{{QStringLiteral("shape"), QStringLiteral("star")},
+                                        {QStringLiteral("op"), QStringLiteral("subtract")}}});
+    clips.replace(0, clipA);
+
+    QJsonObject clipB = clips.at(1).toObject();
+    clipB.remove(QStringLiteral("masks"));
+    clipB.insert(QStringLiteral("mask"),
+                 QJsonObject{{QStringLiteral("shape"), QStringLiteral("rectangle")}});
+    clips.replace(1, clipB);
+
+    track.insert(QStringLiteral("clips"), clips);
+    track.remove(QStringLiteral("masks"));
+    tracks.replace(0, track);
+    json.insert(QStringLiteral("tracks"), tracks);
+
+    QString error;
+    const drift::Project loaded = drift::Project::fromJson(json, &error);
+    QVERIFY(error.isEmpty());
+
+    const QList<drift::Mask> &masks = loaded.tracks().at(0).masks;
+    QCOMPARE(masks.size(), 3);
+    QVERIFY(loaded.tracks().at(0).clips.at(0).timelineDuration > 0);
+
+    // A's two, each spanning A, stacked so the subtract still folds after the add.
+    QCOMPARE(masks.at(0).shape, drift::MaskShape::Ellipse);
+    QCOMPARE(masks.at(0).timelineStart, drift::TimeUs(0));
+    QCOMPARE(masks.at(0).timelineDuration, drift::secondsToUs(2.0));
+    QCOMPARE(masks.at(0).lane, 0);
+    QCOMPARE(masks.at(1).shape, drift::MaskShape::Star);
+    QCOMPARE(masks.at(1).op, drift::MaskOp::Subtract);
+    QCOMPARE(masks.at(1).lane, 1);
+
+    // B's one, spanning B.
+    QCOMPARE(masks.at(2).shape, drift::MaskShape::Rectangle);
+    QCOMPARE(masks.at(2).timelineStart, drift::secondsToUs(2.0));
+    QCOMPARE(masks.at(2).timelineDuration, drift::secondsToUs(3.0));
+}
+
+// A mask's bar means exactly the stretch it covers: outside it the clips are untouched.
+void CoreTest::masksActiveOnlyWithinTheirSpan()
+{
+    drift::Mask early;
+    early.shape = drift::MaskShape::Rectangle;
+    early.timelineStart = 0;
+    early.timelineDuration = drift::secondsToUs(1.0);
+    early.lane = 1;
+
+    drift::Mask late;
+    late.shape = drift::MaskShape::Ellipse;
+    late.timelineStart = drift::secondsToUs(0.5);
+    late.timelineDuration = drift::secondsToUs(1.0);
+    late.lane = 0;
+
+    drift::Mask off = late;
+    off.enabled = false;
+    off.lane = 2;
+
+    const QList<drift::Mask> masks{early, late, off};
+
+    QCOMPARE(drift::masksActiveAt(masks, drift::secondsToUs(0.25)).size(), 1);
+    QCOMPARE(drift::masksActiveAt(masks, drift::secondsToUs(0.25)).at(0).shape,
+             drift::MaskShape::Rectangle);
+
+    // Both overlap here, and lane order decides the fold — low lane first, regardless of the
+    // order they happen to sit in the list.
+    const QList<drift::Mask> both = drift::masksActiveAt(masks, drift::secondsToUs(0.75));
+    QCOMPARE(both.size(), 2);
+    QCOMPARE(both.at(0).shape, drift::MaskShape::Ellipse);
+    QCOMPARE(both.at(1).shape, drift::MaskShape::Rectangle);
+
+    // Past both bars nothing applies; end is exclusive so a mask ending at 1.5s is already gone.
+    QVERIFY(drift::masksActiveAt(masks, drift::secondsToUs(1.5)).isEmpty());
+    QVERIFY(drift::masksActiveAt(masks, drift::secondsToUs(9.0)).isEmpty());
+
+    QCOMPARE(drift::maskLaneCount(masks), 3);
+    // Free lane for a bar overlapping both: 1 and 0 are taken across that span, 2 holds the
+    // disabled one, so the next clear row is 3.
+    QCOMPARE(drift::firstFreeMaskLane(masks, drift::secondsToUs(0.6), drift::secondsToUs(0.2)), 3);
+    // A bar past everything fits on lane 0.
+    QCOMPARE(drift::firstFreeMaskLane(masks, drift::secondsToUs(5.0), drift::secondsToUs(1.0)), 0);
 }
 
 void CoreTest::faceTrackSerialization()

@@ -300,7 +300,22 @@ PanelFrame {
                     height: canvasRect.height
                     z: 100
                     visible: !root.playing && EditorState.projectWidth() > 0
-                             && !EditorState.canvasCropMode
+                             && !EditorState.canvasCropMode && !EditorState.maskEditMode
+                }
+
+                // Mask editing. Sits outside the clipped canvas rect for the same reason as
+                // the transform overlay, and replaces it while active — both want the same
+                // grips and the same pointer.
+                MaskOverlay {
+                    id: maskOverlay
+                    x: canvasRect.x
+                    y: canvasRect.y
+                    width: canvasRect.width
+                    height: canvasRect.height
+                    z: 150
+                    visible: !root.playing && EditorState.projectWidth() > 0
+                             && EditorState.maskEditMode && !EditorState.canvasCropMode
+                    enabled: visible
                 }
 
                 // Canvas crop tool. Lives outside the (clipped) canvas rect so the

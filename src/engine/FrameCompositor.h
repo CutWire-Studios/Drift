@@ -22,6 +22,11 @@ public:
         // Clip id to omit from the frame (the text clip being edited in place on
         // the preview). Empty renders everything.
         QString skipClipId;
+        // Clip id whose mask coverage should be shown instead of the composite, as a
+        // black-and-white frame. Preview only — the exporter builds its own RenderOptions and
+        // never sets this, which is the whole reason it lives here rather than on the
+        // controller where the compositor could reach it.
+        QString maskViewClipId;
     };
 
     void setProject(const drift::Project *project) { m_project = project; }

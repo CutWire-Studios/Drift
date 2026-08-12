@@ -103,11 +103,10 @@ QList<MediaEntry> collectMedia(const Project &project, bool embedSource)
     }
 
     for (const Track &track : project.tracks()) {
-        for (const Clip &clip : track.clips) {
-            for (const Mask &mask : clip.masks)
-                append(mask.mattePath, MediaRole::Matte, true);
+        for (const Mask &mask : track.masks)
+            append(mask.mediaPath, MediaRole::Matte, true);
+        for (const Clip &clip : track.clips)
             append(clip.faceTrackPath, MediaRole::FaceTrack, true);
-        }
     }
 
     return media;

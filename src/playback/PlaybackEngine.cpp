@@ -459,7 +459,17 @@ FrameCompositor::RenderOptions PlaybackEngine::playbackRenderOptions() const
     if (!m_playing)
         options.skipClipId = m_editingClipId;
 
+    options.maskViewClipId = m_maskViewClipId;
+
     return options;
+}
+
+void PlaybackEngine::setMaskViewClipId(const QString &id)
+{
+    if (m_maskViewClipId == id)
+        return;
+    m_maskViewClipId = id;
+    refreshFrame();
 }
 
 void PlaybackEngine::setEditingClipId(const QString &id)

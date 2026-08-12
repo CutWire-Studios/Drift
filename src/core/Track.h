@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Clip.h"
+#include "Mask.h"
 #include "Transition.h"
 
 #include <QList>
@@ -18,6 +19,10 @@ struct Track
     TrackType type = TrackType::Video;
     QList<Clip> clips;
     QList<Transition> transitions;
+    // Timed cutouts on this track's mask lane. They mask whichever of `clips` they overlap and
+    // nothing on any other track. Not owned by any clip: a mask survives its host being split or
+    // deleted, and may span a cut.
+    QList<Mask> masks;
     bool muted = false;
     bool hidden = false;
     bool locked = false;

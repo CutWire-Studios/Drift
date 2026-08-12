@@ -151,6 +151,11 @@ private slots:
     void maskApplierEllipseMasksCorners();
     void maskFeatherProducesSoftEdge();
     void maskRotationAppliesToFreeform();
+    void maskFreeformHonoursTangents();
+    void compositorFoldsMaskStackLikeTheCpuPath();
+    void maskImageMediaCoversByItsOwnRect();
+    void compositorAnimatesMaskAcrossTheClip();
+    void maskViewRendersCoverageAndNeverExports();
     void exporterProducesPlayableFileWithBackground();
     void exporterProducesAudioOnlyMp3();
     void exporterTagsSdrBt709ColorMetadata();
@@ -3418,7 +3423,8 @@ void EngineTest::maskRotationAppliesToFreeform()
     drift::Mask mask;
     mask.shape = drift::MaskShape::Freeform;
     // A thin horizontal bar through the middle; rotating it 90° should stand it upright.
-    mask.points = {{0.1, 0.45}, {0.9, 0.45}, {0.9, 0.55}, {0.1, 0.55}};
+    mask.points = {drift::MaskPoint{QPointF(0.1, 0.45)}, drift::MaskPoint{QPointF(0.9, 0.45)},
+                   drift::MaskPoint{QPointF(0.9, 0.55)}, drift::MaskPoint{QPointF(0.1, 0.55)}};
 
     const QImage flat = drift::maskAlphaMap(mask, 64, 64);
     mask.rotation = 90.0;
@@ -3427,6 +3433,267 @@ void EngineTest::maskRotationAppliesToFreeform()
     QVERIFY2(flat.constScanLine(32)[8] > 200, "flat bar did not cover the left edge");
     QVERIFY2(upright.constScanLine(32)[8] < 50, "rotation did not move the freeform shape");
     QVERIFY2(upright.constScanLine(8)[32] > 200, "rotated bar did not cover the top edge");
+}
+
+// Tangents are carried on every vertex so curved masks are additive later. The rasterizer already
+// honours them, which is what keeps that a UI change rather than a second data migration.
+void EngineTest::maskFreeformHonoursTangents()
+{
+    drift::Mask straight;
+    straight.shape = drift::MaskShape::Freeform;
+    // A triangle with its apex at the top; the bottom edge runs flat across y = 0.8.
+    straight.points = {drift::MaskPoint{QPointF(0.5, 0.2)}, drift::MaskPoint{QPointF(0.9, 0.8)},
+                       drift::MaskPoint{QPointF(0.1, 0.8)}};
+
+    drift::Mask curved = straight;
+    // Bow the bottom edge (vertex 1 -> vertex 2) downward, well past the straight line.
+    curved.points[1].outTan = QPointF(0.0, 0.18);
+    curved.points[2].inTan = QPointF(0.0, 0.18);
+
+    const QImage flat = drift::maskAlphaMap(straight, 100, 100);
+    const QImage bowed = drift::maskAlphaMap(curved, 100, 100);
+    QVERIFY(!flat.isNull());
+    QVERIFY(!bowed.isNull());
+
+    // Just below the straight edge: outside the flat triangle, inside the bowed one.
+    QVERIFY2(flat.constScanLine(88)[50] < 40, "straight edge leaked below y=0.8");
+    QVERIFY2(bowed.constScanLine(88)[50] > 200, "tangents did not bow the edge outward");
+    // Well inside both.
+    QVERIFY2(flat.constScanLine(70)[50] > 200, "triangle interior was not covered");
+    QVERIFY2(bowed.constScanLine(70)[50] > 200, "curved interior was not covered");
+}
+
+namespace {
+
+// A full-canvas white image clip, so whatever survives to the canvas is the mask coverage.
+drift::Project maskStackProject(const QString &imagePath, const QList<drift::Mask> &masks)
+{
+    drift::Project project;
+    project.setResolution(64, 64);
+    project.tracks().clear();
+    project.tracks().append(drift::Track{.type = drift::TrackType::Shape});
+
+    drift::Clip clip;
+    clip.id = QStringLiteral("masked");
+    clip.type = drift::ClipType::Image;
+    clip.path = imagePath;
+    clip.timelineStart = 0;
+    clip.timelineDuration = drift::secondsToUs(1.0);
+    project.tracks()[0].clips.append(clip);
+
+    // Masks live on the track's lane. Each fixture mask spans the clip unless it already carries
+    // its own timing, so the tests below are unaffected by the move.
+    project.tracks()[0].masks = masks;
+    for (drift::Mask &mask : project.tracks()[0].masks) {
+        if (mask.timelineDuration <= 0) {
+            mask.timelineStart = clip.timelineStart;
+            mask.timelineDuration = clip.timelineDuration;
+        }
+    }
+    return project;
+}
+
+} // namespace
+
+// The GPU fold and drift::maskAlphaMap implement the same op semantics in two places. They have
+// to agree, or the preview and the CPU fallback would disagree about what a stack means.
+void EngineTest::compositorFoldsMaskStackLikeTheCpuPath()
+{
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    const QString whitePath = dir.filePath(QStringLiteral("white.png"));
+    {
+        QImage white(64, 64, QImage::Format_RGBA8888);
+        white.fill(Qt::white);
+        QVERIFY(white.save(whitePath, "PNG"));
+    }
+
+    drift::Mask base;
+    base.shape = drift::MaskShape::Rectangle;
+    base.w = 0.8;
+    base.h = 0.8;
+
+    drift::Mask hole;
+    hole.shape = drift::MaskShape::Ellipse;
+    hole.op = drift::MaskOp::Subtract;
+    hole.w = 0.3;
+    hole.h = 0.3;
+
+    drift::Mask trim;
+    trim.shape = drift::MaskShape::Rectangle;
+    trim.op = drift::MaskOp::Intersect;
+    trim.x = 0.4;
+    trim.w = 0.6;
+    trim.h = 1.0;
+
+    const QList<drift::Mask> masks{base, hole, trim};
+
+    const drift::Project project = maskStackProject(whitePath, masks);
+    FrameCompositor compositor;
+    compositor.setProject(&project);
+    const QImage composed = compositor.compositeAt(0);
+    QVERIFY(!composed.isNull());
+
+    const QImage expected = drift::maskAlphaMap(masks, 64, 64);
+    QVERIFY(!expected.isNull());
+
+    // The clip covers the canvas, so canvas pixel == layer pixel and the two maps line up.
+    // Antialiasing and the GPU's filtering differ slightly at edges, hence the tolerance.
+    int checked = 0;
+    for (int y = 4; y < 60; y += 4) {
+        for (int x = 4; x < 60; x += 4) {
+            const int want = expected.constScanLine(y)[x];
+            const int got = qRed(composed.pixel(x, y));
+            QVERIFY2(qAbs(want - got) <= 24,
+                     qPrintable(QStringLiteral("mask mismatch at %1,%2: cpu %3 gpu %4")
+                                        .arg(x).arg(y).arg(want).arg(got)));
+            ++checked;
+        }
+    }
+    QVERIFY(checked > 100);
+
+    // Sanity that the three ops each did something distinguishable. On a 64px canvas: base
+    // spans x 6.4..57.6, the subtracted ellipse spans 22.4..41.6, and the intersect keeps
+    // 6.4..44.8.
+    QVERIFY2(qRed(composed.pixel(12, 32)) > 200, "base rectangle was lost");
+    QVERIFY2(qRed(composed.pixel(32, 32)) < 40, "subtract did not punch the centre");
+    QVERIFY2(qRed(composed.pixel(52, 32)) < 40, "intersect did not trim past x=44.8");
+}
+
+// The compositor bakes animated mask properties at the frame's clip time, the way it already does
+// for effect params. Both preview and export come through here, so a mask cannot animate in one
+// and sit still in the other.
+void EngineTest::compositorAnimatesMaskAcrossTheClip()
+{
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    const QString whitePath = dir.filePath(QStringLiteral("white.png"));
+    {
+        QImage white(64, 64, QImage::Format_RGBA8888);
+        white.fill(Qt::white);
+        QVERIFY(white.save(whitePath, "PNG"));
+    }
+
+    // A narrow rectangle that slides from the left edge to the right across one second.
+    drift::Mask sliding;
+    sliding.shape = drift::MaskShape::Rectangle;
+    sliding.w = 0.25;
+    sliding.h = 1.0;
+    sliding.keyframes[QStringLiteral("x")].setKeyframe(0, 0.15);
+    sliding.keyframes[QStringLiteral("x")].setKeyframe(drift::secondsToUs(1.0), 0.85);
+
+    const drift::Project project = maskStackProject(whitePath, {sliding});
+    FrameCompositor compositor;
+    compositor.setProject(&project);
+
+    const QImage atStart = compositor.compositeAt(0);
+    QVERIFY2(qRed(atStart.pixel(10, 32)) > 200, "mask was not at the left at t=0");
+    QVERIFY2(qRed(atStart.pixel(54, 32)) < 40, "mask covered the right at t=0");
+
+    // Just inside the clip: containsTime is end-exclusive, so t=1.0 renders nothing at all.
+    const QImage atEnd = compositor.compositeAt(drift::secondsToUs(0.99));
+    QVERIFY2(qRed(atEnd.pixel(54, 32)) > 200, "mask did not reach the right by the clip's end");
+    QVERIFY2(qRed(atEnd.pixel(10, 32)) < 40, "mask still covered the left at the clip's end");
+
+    // And in between, somewhere in the middle.
+    const QImage atMid = compositor.compositeAt(drift::secondsToUs(0.5));
+    QVERIFY2(qRed(atMid.pixel(32, 32)) > 200, "mask was not mid-frame at t=0.5");
+}
+
+// An image mask's pixels are its coverage, placed by its own rect. This is the drop-a-PNG path,
+// and it decodes through the still-image cache rather than the video reader.
+void EngineTest::maskImageMediaCoversByItsOwnRect()
+{
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+
+    const QString whitePath = dir.filePath(QStringLiteral("white.png"));
+    {
+        QImage white(64, 64, QImage::Format_RGBA8888);
+        white.fill(Qt::white);
+        QVERIFY(white.save(whitePath, "PNG"));
+    }
+    // The mask media: white on the left half, black on the right.
+    const QString maskPath = dir.filePath(QStringLiteral("halves.png"));
+    {
+        QImage halves(64, 64, QImage::Format_RGBA8888);
+        halves.fill(Qt::black);
+        for (int y = 0; y < 64; ++y) {
+            for (int x = 0; x < 32; ++x)
+                halves.setPixelColor(x, y, Qt::white);
+        }
+        QVERIFY(halves.save(maskPath, "PNG"));
+    }
+
+    // Full frame: the media's own halves decide coverage.
+    {
+        const drift::Project project =
+            maskStackProject(whitePath, {drift::fullFrameMediaMask(maskPath)});
+        FrameCompositor compositor;
+        compositor.setProject(&project);
+        const QImage out = compositor.compositeAt(0);
+        QVERIFY2(qRed(out.pixel(16, 32)) > 200, "left half of the media did not show through");
+        QVERIFY2(qRed(out.pixel(48, 32)) < 40, "right half of the media was not masked out");
+    }
+
+    // Half width, centred: the media is squeezed into the middle, so its own boundary lands at
+    // the centre of that box and everything outside the box is uncovered.
+    {
+        drift::Mask placed = drift::fullFrameMediaMask(maskPath);
+        placed.w = 0.5;
+        placed.h = 1.0;
+        const drift::Project project = maskStackProject(whitePath, {placed});
+        FrameCompositor compositor;
+        compositor.setProject(&project);
+        const QImage out = compositor.compositeAt(0);
+        QVERIFY2(qRed(out.pixel(4, 32)) < 40, "coverage leaked left of the media's rect");
+        QVERIFY2(qRed(out.pixel(60, 32)) < 40, "coverage leaked right of the media's rect");
+        QVERIFY2(qRed(out.pixel(20, 32)) > 200, "media's white half did not land inside the rect");
+        QVERIFY2(qRed(out.pixel(40, 32)) < 40, "media's black half did not land inside the rect");
+    }
+}
+
+// Mask view is a preview affordance. It rides on RenderOptions precisely so the exporter, which
+// builds its own, cannot render one by accident.
+void EngineTest::maskViewRendersCoverageAndNeverExports()
+{
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    const QString redPath = dir.filePath(QStringLiteral("red.png"));
+    {
+        QImage red(64, 64, QImage::Format_RGBA8888);
+        red.fill(Qt::red);
+        QVERIFY(red.save(redPath, "PNG"));
+    }
+
+    drift::Mask ellipse;
+    ellipse.shape = drift::MaskShape::Ellipse;
+    ellipse.w = 0.5;
+    ellipse.h = 0.5;
+
+    const drift::Project project = maskStackProject(redPath, {ellipse});
+    FrameCompositor compositor;
+    compositor.setProject(&project);
+
+    FrameCompositor::RenderOptions options;
+    options.maskViewClipId = QStringLiteral("masked");
+    const QImage view = compositor.compositeAt(0, options);
+    QVERIFY(!view.isNull());
+
+    // Coverage is monochrome: white inside the ellipse, black outside, and no trace of the red.
+    const QColor inside = view.pixelColor(32, 32);
+    QVERIFY2(inside.red() > 200 && inside.green() > 200 && inside.blue() > 200,
+             qPrintable(QStringLiteral("inside was %1").arg(inside.name())));
+    const QColor outside = view.pixelColor(2, 2);
+    QVERIFY2(outside.red() < 40 && outside.green() < 40 && outside.blue() < 40,
+             qPrintable(QStringLiteral("outside was %1").arg(outside.name())));
+
+    // The default options are what the exporter uses: the picture comes back.
+    const QImage normal = compositor.compositeAt(0);
+    const QColor normalInside = normal.pixelColor(32, 32);
+    QVERIFY2(normalInside.red() > 200 && normalInside.green() < 60,
+             qPrintable(QStringLiteral("export path was not the picture: %1")
+                                .arg(normalInside.name())));
 }
 
 void EngineTest::exporterProducesPlayableFileWithBackground()
