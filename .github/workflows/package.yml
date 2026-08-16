@@ -378,8 +378,49 @@ jobs:
       - name: Test
         run: ctest --test-dir build-macos --output-on-failure
 
+      # Signing and notarisation happen only when the secrets are set. Without them — a fork, or
+      # any run that cannot see repository secrets — the image is still built and ad-hoc signed.
       - name: Build disk image
-        run: scripts/package-macos.sh --build-dir build-macos --skip-build
+        env:
+          MACOS_CERTIFICATE: ${{ secrets.MACOS_CERTIFICATE }}
+          MACOS_CERTIFICATE_PWD: ${{ secrets.MACOS_CERTIFICATE_PWD }}
+          MACOS_SIGN_IDENTITY: ${{ secrets.MACOS_SIGN_IDENTITY }}
+          MACOS_NOTARY_KEY_B64: ${{ secrets.MACOS_NOTARY_KEY }}
+          NOTARY_KEY_ID: ${{ secrets.MACOS_NOTARY_KEY_ID }}
+          NOTARY_ISSUER_ID: ${{ secrets.MACOS_NOTARY_ISSUER_ID }}
+        run: |
+          ARGS=(--build-dir build-macos --skip-build)
+
+          if [ -n "$MACOS_CERTIFICATE" ]; then
+            KEYCHAIN="$RUNNER_TEMP/signing.keychain-db"
+            KEYCHAIN_PWD="$(uuidgen)"
+            echo "$MACOS_CERTIFICATE" | base64 --decode > "$RUNNER_TEMP/cert.p12"
+            security create-keychain -p "$KEYCHAIN_PWD" "$KEYCHAIN"
+            security set-keychain-settings -lut 21600 "$KEYCHAIN"
+            security unlock-keychain -p "$KEYCHAIN_PWD" "$KEYCHAIN"
+            security import "$RUNNER_TEMP/cert.p12" -k "$KEYCHAIN" \
+              -P "$MACOS_CERTIFICATE_PWD" -T /usr/bin/codesign
+            # Without this codesign waits on a keychain access prompt nobody can answer.
+            security set-key-partition-list -S apple-tool:,apple:,codesign: \
+              -s -k "$KEYCHAIN_PWD" "$KEYCHAIN" > /dev/null
+            security list-keychain -d user -s "$KEYCHAIN" login.keychain-db
+            rm -f "$RUNNER_TEMP/cert.p12"
+            ARGS+=(--identity "$MACOS_SIGN_IDENTITY")
+
+            if [ -n "$MACOS_NOTARY_KEY_B64" ]; then
+              echo "$MACOS_NOTARY_KEY_B64" | base64 --decode > "$RUNNER_TEMP/notary.p8"
+              export NOTARY_KEY="$RUNNER_TEMP/notary.p8"
+              ARGS+=(--notarize)
+            fi
+          fi
+
+          scripts/package-macos.sh "${ARGS[@]}"
+
+      - name: Clean up signing material
+        if: always()
+        run: |
+          rm -f "$RUNNER_TEMP/notary.p8" "$RUNNER_TEMP/cert.p12"
+          security delete-keychain "$RUNNER_TEMP/signing.keychain-db" 2>/dev/null || true
 
       # The script already names it from the project version, which is what a release tag carries.
       - name: Name the artifact for this release

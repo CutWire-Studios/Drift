@@ -57,6 +57,7 @@ jobs:
     uses: ./.github/workflows/package.yml
     with:
       version: ${{ needs.verify.outputs.version }}
+    secrets: inherit
 
   release:
     name: Publish GitHub release

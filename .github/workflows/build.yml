@@ -44,3 +44,4 @@ jobs:
     with:
       version: ${{ needs.meta.outputs.version }}
       platforms: ${{ inputs.platforms }}
+    secrets: inherit
