@@ -766,29 +766,36 @@ include(GNUInstallDirs)
 # and nothing else: `cmake --install build --component drift`. JUCE's modules install ~50 MB of
 # their own sources into include/JUCE-<version>, and a plain `cmake --install` has no way to say no
 # to them. (The Flatpak manifests get the same result the other way round, by cleaning up /include.)
-install(TARGETS drift RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT drift)
+if(APPLE)
+    # The icon, the plist and the package directories are staged into the bundle at build time, so
+    # installing is only a matter of placing Drift.app. Pass -DCMAKE_INSTALL_PREFIX=/Applications;
+    # the default /usr/local is not where an app belongs.
+    install(TARGETS drift BUNDLE DESTINATION . COMPONENT drift)
+else()
+    install(TARGETS drift RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT drift)
 
-# File-based effect/transition/template/audio-effect packages ship next to the binary;
-# the app searches <appDir>/<subdir> (GpuPackageParse::defaultSearchPaths). Installing
-# them here (rather than via the DRIFT_*_DIR env vars) keeps installed addons able to
-# supersede the bundled copies.
-foreach(_assetdir effects transitions effect-templates audio-effects)
-    install(DIRECTORY ${CMAKE_SOURCE_DIR}/${_assetdir}
-            DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT drift)
-endforeach()
+    # File-based effect/transition/template/audio-effect packages ship next to the binary;
+    # the app searches <appDir>/<subdir> (GpuPackageParse::defaultSearchPaths). Installing
+    # them here (rather than via the DRIFT_*_DIR env vars) keeps installed addons able to
+    # supersede the bundled copies.
+    foreach(_assetdir effects transitions effect-templates audio-effects)
+        install(DIRECTORY ${CMAKE_SOURCE_DIR}/${_assetdir}
+                DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT drift)
+    endforeach()
 
-# Desktop integration for Flatpak / freedesktop.
-install(FILES flatpak/org.cutwire.Drift.desktop
-        DESTINATION ${CMAKE_INSTALL_DATADIR}/applications COMPONENT drift)
-install(FILES flatpak/org.cutwire.Drift.metainfo.xml
-        DESTINATION ${CMAKE_INSTALL_DATADIR}/metainfo COMPONENT drift)
-# 1024px source is intentionally skipped: flatpak build-export rejects icons
-# larger than 512x512.
-foreach(_size 64 128 256 512)
-    install(FILES
-        flatpak/share/icons/hicolor/${_size}x${_size}/apps/org.cutwire.Drift.png
-        DESTINATION ${CMAKE_INSTALL_DATADIR}/icons/hicolor/${_size}x${_size}/apps COMPONENT drift)
-endforeach()
+    # Desktop integration for Flatpak / freedesktop. On macOS Info.plist covers this instead.
+    install(FILES flatpak/org.cutwire.Drift.desktop
+            DESTINATION ${CMAKE_INSTALL_DATADIR}/applications COMPONENT drift)
+    install(FILES flatpak/org.cutwire.Drift.metainfo.xml
+            DESTINATION ${CMAKE_INSTALL_DATADIR}/metainfo COMPONENT drift)
+    # 1024px source is intentionally skipped: flatpak build-export rejects icons
+    # larger than 512x512.
+    foreach(_size 64 128 256 512)
+        install(FILES
+            flatpak/share/icons/hicolor/${_size}x${_size}/apps/org.cutwire.Drift.png
+            DESTINATION ${CMAKE_INSTALL_DATADIR}/icons/hicolor/${_size}x${_size}/apps COMPONENT drift)
+    endforeach()
+endif()
 
 # --- CLI tools (headless engine testing, no GUI) ----------------------------
 add_subdirectory(tools)
