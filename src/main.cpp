@@ -20,10 +20,24 @@
 #include <QIcon>
 #include <QQmlApplicationEngine>
 #include <QQuickWindow>
+#include <QSurfaceFormat>
 #include <QtQml/qqml.h>
 
 int main(int argc, char *argv[])
 {
+#ifdef Q_OS_MACOS
+    // macOS has no compatibility profile: a context is either legacy 2.1 or core 3.2+. Qt's
+    // default format asks for the former while GlRuntime asks for 3.3 core, and NSOpenGLContext
+    // refuses to share between the two. The share is then dropped with only a warning, and the
+    // compositor's texture is not valid in the scene graph's context, so the preview stays black.
+    // Matching the default to what GlRuntime asks for keeps the two shareable. X11 and WGL share
+    // across differing formats, so this is not needed there.
+    QSurfaceFormat macFormat = QSurfaceFormat::defaultFormat();
+    macFormat.setVersion(3, 3);
+    macFormat.setProfile(QSurfaceFormat::CoreProfile);
+    QSurfaceFormat::setDefaultFormat(macFormat);
+#endif
+
     // The compositor renders into an FBO on its own GL context and hands the
     // texture to the scene graph without a readback. That requires both contexts
     // to share objects, and the scene graph to actually be on OpenGL. Both must
