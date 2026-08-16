@@ -1,4 +1,9 @@
 cmake_minimum_required(VERSION 3.21)
+
+# Must be set before project(). Left unset, the binary is stamped with the build machine's OS
+# version and will not launch on anything older.
+set(CMAKE_OSX_DEPLOYMENT_TARGET "12.0" CACHE STRING "Oldest macOS release Drift runs on")
+
 # C is enabled for JUCE only: its modules compile a handful of C sources (zlib, flac, oggvorbis)
 # and its CMake refuses to configure without it.
 project(Drift VERSION 0.2.2 LANGUAGES CXX C)
@@ -484,6 +489,31 @@ if(WIN32)
         OBJECT_DEPENDS "${CMAKE_SOURCE_DIR}/resources/windows/drift.ico")
 endif()
 
+# Without a bundle macOS runs the app as a background process, with no Dock tile or menu bar.
+# It also collides with the <build>/Drift/ directory qt_add_qml_module(URI Drift) writes, which
+# on case-insensitive APFS fails the link with EISDIR.
+if(APPLE)
+    set(DRIFT_MACOS_EXECUTABLE "Drift")
+    set(DRIFT_MACOS_BUNDLE_ID "org.cutwire.Drift")
+    set(DRIFT_MACOS_ICON_FILE "Drift.icns")
+
+    # Not CMake's MACOSX_BUNDLE_* properties: the NS* and LSMinimumSystemVersion keys have none.
+    configure_file(
+        "${CMAKE_SOURCE_DIR}/resources/macos/Info.plist.in"
+        "${CMAKE_CURRENT_BINARY_DIR}/Info.plist"
+        @ONLY)
+
+    set(DRIFT_MACOS_ICNS "${CMAKE_SOURCE_DIR}/resources/macos/${DRIFT_MACOS_ICON_FILE}")
+    target_sources(drift PRIVATE "${DRIFT_MACOS_ICNS}")
+    set_source_files_properties("${DRIFT_MACOS_ICNS}" PROPERTIES
+        MACOSX_PACKAGE_LOCATION "Resources")
+
+    set_target_properties(drift PROPERTIES
+        MACOSX_BUNDLE TRUE
+        OUTPUT_NAME "${DRIFT_MACOS_EXECUTABLE}"
+        MACOSX_BUNDLE_INFO_PLIST "${CMAKE_CURRENT_BINARY_DIR}/Info.plist")
+endif()
+
 # App icon for QApplication::setWindowIcon (all platforms). Rendered from Drift_icon.png,
 # as is resources/windows/drift.ico — keep the two in sync when the branding changes.
 qt_add_resources(drift "drift_app_icon"
@@ -638,6 +668,17 @@ target_compile_definitions(drift PRIVATE
 # target: two `cmake -E copy_directory` processes writing the same tree concurrently — which is
 # what `cmake --build --parallel` does — fail with "Error copying directory".
 function(drift_stage_packages target assetdir)
+    # Only drift is a bundle, so the shared output directory guarded against below cannot happen.
+    get_target_property(_bundle ${target} MACOSX_BUNDLE)
+    if(_bundle)
+        add_custom_command(TARGET ${target} POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E copy_directory
+                    "${CMAKE_SOURCE_DIR}/${assetdir}"
+                    "$<TARGET_BUNDLE_CONTENT_DIR:${target}>/Resources/${assetdir}"
+            COMMENT "Copy ${assetdir} packages into ${target}.app/Contents/Resources")
+        return()
+    endif()
+
     get_target_property(_outdir ${target} RUNTIME_OUTPUT_DIRECTORY)
     if(NOT _outdir)
         set(_outdir "${CMAKE_CURRENT_BINARY_DIR}")
@@ -682,12 +723,17 @@ endfunction()
 # no runtime at all.
 function(drift_bundle_onnxruntime target)
     if(DRIFT_BUNDLE_ONNXRUNTIME AND ONNXRUNTIME_RUNTIME_LIBS)
+        get_target_property(_bundle ${target} MACOSX_BUNDLE)
+        if(_bundle)
+            set(_ortdir "$<TARGET_BUNDLE_CONTENT_DIR:${target}>/Resources/onnxruntime/lib")
+        else()
+            set(_ortdir "$<TARGET_FILE_DIR:${target}>/onnxruntime/lib")
+        endif()
         add_custom_command(TARGET ${target} POST_BUILD
-            COMMAND ${CMAKE_COMMAND} -E make_directory
-                    "$<TARGET_FILE_DIR:${target}>/onnxruntime/lib"
+            COMMAND ${CMAKE_COMMAND} -E make_directory "${_ortdir}"
             COMMAND ${CMAKE_COMMAND} -E copy_if_different
                     ${ONNXRUNTIME_RUNTIME_LIBS}
-                    "$<TARGET_FILE_DIR:${target}>/onnxruntime/lib"
+                    "${_ortdir}"
             COMMENT "Stage onnxruntime into ${target}'s build tree"
         )
     endif()
