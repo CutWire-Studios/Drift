@@ -74,6 +74,33 @@ if ! rpaths | grep -qx "@executable_path/../Frameworks"; then
   install_name_tool -add_rpath "@executable_path/../Frameworks" "$EXE"
 fi
 
+# macdeployqt copies every plugin in a category, including ones belonging to Qt modules Drift does
+# not link — the virtual keyboard is one. Their frameworks are never deployed, so the plugin can
+# only fail to load, and the "Cannot resolve rpath" errors macdeployqt printed above are it saying
+# so. Drop them rather than sign and ship a binary that cannot resolve.
+while IFS= read -r -d '' PLUGIN; do
+  while IFS= read -r DEP; do
+    [[ -e "$APP/Contents/Frameworks/$DEP" ]] && continue
+    echo "Dropping ${PLUGIN#"$APP/Contents/"}: needs $DEP"
+    rm -f "$PLUGIN"
+    break
+  done < <(otool -L "$PLUGIN" | awk -F'@rpath/' '/@rpath\//{print $2}' | awk '{print $1}')
+done < <(find "$APP/Contents/PlugIns" -name "*.dylib" -print0)
+
+# Those same modules also get a QML module directory laid down with a symlink to the plugin that
+# was never copied. A dangling symlink is enough on its own to fail codesign --deep --strict, and
+# a module directory without its plugin is unusable anyway, so the directory goes with it.
+DANGLING="$(find "$APP/Contents" -type l ! -exec test -e {} \; -print)"
+while IFS= read -r LINK; do
+  [[ -n "$LINK" ]] || continue
+  MODULE="$(dirname "$LINK")"
+  [[ -d "$MODULE" ]] || continue
+  echo "Dropping ${MODULE#"$APP/Contents/"}: plugin was never deployed"
+  rm -rf "$MODULE"
+done <<< "$DANGLING"
+
+find "$APP/Contents/PlugIns" "$APP/Contents/Resources/qml" -type d -empty -delete 2>/dev/null || true
+
 # After install_name_tool, which invalidates any signature. Apple Silicon will not run an
 # unsigned binary at all, so "-" (ad-hoc) is the floor rather than an option.
 CODESIGN_ARGS=(--force --sign "${IDENTITY:--}" --timestamp=none)
