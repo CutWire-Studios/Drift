@@ -331,8 +331,13 @@ QStringList defaultSearchPaths(const QString &envVar, const QString &subdir,
         roots.append(drift::addon::addonRootsForKind(addonKind));
 
     const QString appDir = QCoreApplication::applicationDirPath();
-    if (!appDir.isEmpty())
+    if (!appDir.isEmpty()) {
         roots.append(QDir(appDir).filePath(subdir));
+#ifdef Q_OS_MACOS
+        // In a bundle applicationDirPath() is Contents/MacOS; packages ship in Contents/Resources.
+        roots.append(QDir::cleanPath(QDir(appDir).filePath(QStringLiteral("../Resources/%1").arg(subdir))));
+#endif
+    }
 
     const QString appData = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
     if (!appData.isEmpty())
