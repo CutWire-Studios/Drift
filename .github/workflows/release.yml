@@ -78,6 +78,9 @@ jobs:
 
           - **AppImage** (Linux, any distro): `chmod +x Drift-*.AppImage && ./Drift-*.AppImage`
           - **Windows installer**: run `Drift-Setup-*.exe`
+          - **macOS** (Apple Silicon): open `Drift-*-arm64.dmg` and drag Drift to Applications. The
+            app is signed ad-hoc rather than notarised, so the first launch needs right-click →
+            Open, or `xattr -dr com.apple.quarantine /Applications/Drift.app`.
           - **Arch Linux**: `sudo pacman -U drift-*.pkg.tar.zst`
           - **Flatpak**: requires `flatpak` with the Flathub remote added (`flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo`), then `flatpak install --user Drift-*.flatpak`
 
@@ -94,5 +97,6 @@ jobs:
             --notes-file notes.md \
             dist/linux-appimage/*.AppImage \
             dist/windows-installer/*.exe \
+            dist/macos-dmg/*.dmg \
             dist/arch-package/*.pkg.tar.zst \
             dist/flatpak-bundle/*.flatpak

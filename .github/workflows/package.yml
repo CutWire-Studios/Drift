@@ -11,7 +11,7 @@ on:
         required: true
         type: string
       platforms:
-        description: "all, flatpak, linux, windows or arch"
+        description: "all, flatpak, linux, windows, macos or arch"
         required: false
         default: all
         type: string
@@ -347,6 +347,53 @@ jobs:
         with:
           name: windows-installer
           path: dist/*.exe
+
+  macos:
+    name: macOS disk image
+    # Apple Silicon only: Homebrew bottles are single-architecture.
+    runs-on: macos-15
+    if: inputs.platforms == 'all' || inputs.platforms == 'macos'
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+
+      # Homebrew, not install-qt-action: its Qt links the same FFmpeg Drift does, so unlike the
+      # other jobs there is no second libavcodec in the process to keep ABI-compatible.
+      - name: Install dependencies
+        run: |
+          brew update
+          brew install qt ffmpeg zstd openssl@3 sound-touch ninja
+
+      - name: Configure
+        run: |
+          cmake -B build-macos -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_PREFIX_PATH="$(brew --prefix qt);$(brew --prefix openssl@3);$(brew --prefix)" \
+            -DFETCHCONTENT_BASE_DIR="${FETCHCONTENT_BASE_DIR}" \
+            -DDRIFT_BUNDLE_ONNXRUNTIME=OFF
+
+      - name: Build
+        run: cmake --build build-macos --parallel
+
+      - name: Test
+        run: ctest --test-dir build-macos --output-on-failure
+
+      - name: Build disk image
+        run: scripts/package-macos.sh --build-dir build-macos --skip-build
+
+      # The script already names it from the project version, which is what a release tag carries.
+      - name: Name the artifact for this release
+        run: |
+          want="dist/Drift-${{ inputs.version }}-arm64.dmg"
+          for f in dist/Drift-*.dmg; do
+            [ "$f" = "$want" ] || mv "$f" "$want"
+          done
+
+      - name: Upload disk image artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos-dmg
+          path: dist/*.dmg
 
   arch:
     name: Arch package

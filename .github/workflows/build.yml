@@ -15,6 +15,7 @@ on:
           - flatpak
           - linux
           - windows
+          - macos
           - arch
 
 permissions:
