@@ -11,7 +11,7 @@ on:
         required: true
         type: string
       platforms:
-        description: "all, flatpak, linux, windows or arch"
+        description: "all, flatpak, linux, windows, macos or arch"
         required: false
         default: all
         type: string
@@ -347,6 +347,64 @@ jobs:
         with:
           name: windows-installer
           path: dist/*.exe
+
+  macos:
+    name: macOS disk image
+    # Apple Silicon only. Homebrew ships single-architecture bottles, so a universal binary would
+    # need universal builds of Qt, FFmpeg, zstd, OpenSSL and SoundTouch first — an Intel .dmg
+    # means a second job on an Intel runner, not a lipo of this one.
+    runs-on: macos-15
+    if: inputs.platforms == 'all' || inputs.platforms == 'macos'
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+
+      # Homebrew rather than install-qt-action as the other jobs use. Qt's own macOS binaries
+      # bundle a private FFmpeg for QtMultimedia's backend, and Drift links FFmpeg itself, which
+      # would put two builds of libavcodec in one process — the same pairing the Linux job pins
+      # FFMPEG_BRANCH for. Homebrew's Qt links the same Homebrew FFmpeg, so there is only one.
+      #
+      # The cost is the deployment floor: Homebrew builds for the runner's OS, so this .dmg needs
+      # a newer macOS than the 12.0 a from-source build targets.
+      - name: Install dependencies
+        run: |
+          brew update
+          brew install qt ffmpeg zstd openssl@3 sound-touch ninja
+
+      - name: Configure
+        run: |
+          cmake -B build-macos -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_PREFIX_PATH="$(brew --prefix qt);$(brew --prefix openssl@3);$(brew --prefix)" \
+            -DFETCHCONTENT_BASE_DIR="${FETCHCONTENT_BASE_DIR}" \
+            -DDRIFT_BUNDLE_ONNXRUNTIME=OFF
+
+      - name: Build
+        run: cmake --build build-macos --parallel
+
+      # No Xvfb and no QT_QPA_PLATFORM override: the runner has a window server, so the compositor
+      # gets a real GL 3.3 core context and the GPU tests run rather than skip.
+      - name: Test
+        run: ctest --test-dir build-macos --output-on-failure
+
+      - name: Build disk image
+        run: scripts/package-macos.sh --build-dir build-macos --skip-build
+
+      # The script names the image from CMakeLists.txt's version, which is what a release tag
+      # carries, so there the name already matches and mv would fail with "are identical". Only
+      # build.yml's 0.0.0-<sha> needs renaming.
+      - name: Name the artifact for this release
+        run: |
+          want="dist/Drift-${{ inputs.version }}-arm64.dmg"
+          for f in dist/Drift-*.dmg; do
+            [ "$f" = "$want" ] || mv "$f" "$want"
+          done
+
+      - name: Upload disk image artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos-dmg
+          path: dist/*.dmg
 
   arch:
     name: Arch package
