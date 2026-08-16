@@ -6,8 +6,9 @@
 #   scripts/package-macos.sh --build-dir build-macos --skip-build
 #
 # Signing is ad-hoc unless --identity is given. --notarize submits to Apple and staples the
-# ticket, and needs NOTARY_KEY (path to the App Store Connect .p8), NOTARY_KEY_ID and
-# NOTARY_ISSUER_ID in the environment.
+# ticket, using either an App Store Connect API key (NOTARY_KEY holding the .p8 path,
+# NOTARY_KEY_ID, NOTARY_ISSUER_ID) or an Apple ID (NOTARY_APPLE_ID, NOTARY_PASSWORD holding an
+# app-specific password, NOTARY_TEAM_ID).
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
@@ -37,7 +38,17 @@ if [[ $NOTARIZE -eq 1 ]]; then
     echo "--notarize needs --identity: Apple will not notarise an ad-hoc signature." >&2
     exit 2
   fi
-  for VAR in NOTARY_KEY NOTARY_KEY_ID NOTARY_ISSUER_ID; do
+  # An API key is the tidier credential, but it needs App Store Connect API access granted on the
+  # account; an Apple ID with an app-specific password does not, so both are accepted.
+  if [[ -n "${NOTARY_KEY:-}" ]]; then
+    REQUIRED=(NOTARY_KEY_ID NOTARY_ISSUER_ID)
+  elif [[ -n "${NOTARY_APPLE_ID:-}" ]]; then
+    REQUIRED=(NOTARY_PASSWORD NOTARY_TEAM_ID)
+  else
+    echo "--notarize needs NOTARY_KEY (API key) or NOTARY_APPLE_ID (Apple ID)." >&2
+    exit 2
+  fi
+  for VAR in "${REQUIRED[@]}"; do
     if [[ -z "${!VAR:-}" ]]; then
       echo "--notarize needs $VAR in the environment." >&2
       exit 2
@@ -146,8 +157,13 @@ STAGING="$(mktemp -d)"
 trap 'rm -rf "$STAGING"' EXIT
 
 notarize() {
-  xcrun notarytool submit "$1" --wait \
-    --key "$NOTARY_KEY" --key-id "$NOTARY_KEY_ID" --issuer "$NOTARY_ISSUER_ID"
+  if [[ -n "${NOTARY_KEY:-}" ]]; then
+    xcrun notarytool submit "$1" --wait \
+      --key "$NOTARY_KEY" --key-id "$NOTARY_KEY_ID" --issuer "$NOTARY_ISSUER_ID"
+  else
+    xcrun notarytool submit "$1" --wait \
+      --apple-id "$NOTARY_APPLE_ID" --password "$NOTARY_PASSWORD" --team-id "$NOTARY_TEAM_ID"
+  fi
 }
 
 # The app is notarised and stapled before the image is built, so the copy a user drags out of it

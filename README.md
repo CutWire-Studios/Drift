@@ -227,7 +227,11 @@ Signing is ad-hoc by default — enough to launch locally, since Apple Silicon w
 For a distributable build, sign with a Developer ID and notarise:
 
 ```bash
+# either an App Store Connect API key…
 export NOTARY_KEY=AuthKey_XXXXXXXXXX.p8 NOTARY_KEY_ID=XXXXXXXXXX NOTARY_ISSUER_ID=<uuid>
+# …or an Apple ID with an app-specific password, which needs no API access
+export NOTARY_APPLE_ID=you@example.com NOTARY_PASSWORD=abcd-efgh-ijkl-mnop NOTARY_TEAM_ID=TEAMID
+
 scripts/package-macos.sh --identity "Developer ID Application: … (TEAMID)" --notarize
 ```
 
@@ -242,11 +246,23 @@ The release workflow signs and notarises when these repository secrets exist, an
 | `MACOS_CERTIFICATE` | Developer ID Application certificate and key, exported as `.p12`, base64-encoded |
 | `MACOS_CERTIFICATE_PWD` | Password set when exporting that `.p12` |
 | `MACOS_SIGN_IDENTITY` | Identity name, e.g. `Developer ID Application: Your Name (TEAMID)` |
+Then, for notarisation, **either** an App Store Connect API key:
+
+| Secret | What it is |
+|---|---|
 | `MACOS_NOTARY_KEY` | App Store Connect API key `.p8`, base64-encoded |
 | `MACOS_NOTARY_KEY_ID` | That key's ID |
 | `MACOS_NOTARY_ISSUER_ID` | Issuer UUID from App Store Connect |
 
-Encode the two files with `base64 -i cert.p12 | pbcopy`. Setting only the first three signs without notarising. All six require a paid Apple Developer account.
+**or** an Apple ID, which needs no App Store Connect API access:
+
+| Secret | What it is |
+|---|---|
+| `MACOS_NOTARY_APPLE_ID` | Apple ID email of the developer account |
+| `MACOS_NOTARY_PASSWORD` | App-specific password from [appleid.apple.com](https://appleid.apple.com) |
+| `MACOS_NOTARY_TEAM_ID` | Team ID, the parenthesised part of the signing identity |
+
+Encode the two files with `base64 -i cert.p12 | pbcopy`. Setting only the certificate secrets signs without notarising. All of them require a paid Apple Developer account.
 
 Homebrew ships single-architecture bottles, so the image is Apple Silicon only and Intel Macs build from source. Its deployment floor also follows Homebrew's rather than the macOS 12 a source build targets — build against Qt from qt.io to reach 12.
 

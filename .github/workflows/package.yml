@@ -388,6 +388,9 @@ jobs:
           MACOS_NOTARY_KEY_B64: ${{ secrets.MACOS_NOTARY_KEY }}
           NOTARY_KEY_ID: ${{ secrets.MACOS_NOTARY_KEY_ID }}
           NOTARY_ISSUER_ID: ${{ secrets.MACOS_NOTARY_ISSUER_ID }}
+          NOTARY_APPLE_ID: ${{ secrets.MACOS_NOTARY_APPLE_ID }}
+          NOTARY_PASSWORD: ${{ secrets.MACOS_NOTARY_PASSWORD }}
+          NOTARY_TEAM_ID: ${{ secrets.MACOS_NOTARY_TEAM_ID }}
         run: |
           ARGS=(--build-dir build-macos --skip-build)
 
@@ -407,9 +410,12 @@ jobs:
             rm -f "$RUNNER_TEMP/cert.p12"
             ARGS+=(--identity "$MACOS_SIGN_IDENTITY")
 
+            # Either notarisation credential works; the API key wins when both are set.
             if [ -n "$MACOS_NOTARY_KEY_B64" ]; then
               echo "$MACOS_NOTARY_KEY_B64" | base64 --decode > "$RUNNER_TEMP/notary.p8"
               export NOTARY_KEY="$RUNNER_TEMP/notary.p8"
+              ARGS+=(--notarize)
+            elif [ -n "$NOTARY_APPLE_ID" ]; then
               ARGS+=(--notarize)
             fi
           fi
