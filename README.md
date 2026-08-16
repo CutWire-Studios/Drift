@@ -45,7 +45,7 @@ Or grab a build for your platform from the [latest release](https://github.com/C
 |----------|---------|
 | Linux | [Flathub](https://flathub.org/apps/org.cutwire.Drift) · [AppImage](https://github.com/CutWire-Studios/Drift/releases/latest) |
 | Windows | [Installer (.exe)](https://github.com/CutWire-Studios/Drift/releases/latest) |
-| macOS | [Build from source](#macos) |
+| macOS | [Disk image (.dmg, Apple Silicon)](https://github.com/CutWire-Studios/Drift/releases/latest) · [Build from source](#macos) |
 
 See [all releases](https://github.com/CutWire-Studios/Drift/releases) for previous versions and full changelogs.
 
@@ -139,10 +139,11 @@ See [all releases](https://github.com/CutWire-Studios/Drift/releases) for previo
 | FFmpeg | 8.x (libavformat, libavcodec, libavutil, libswscale, libswresample, libavfilter) |
 | libzstd | any (addon package decompression) |
 | OpenSSL | 3.x, libcrypto only (addon signature verification) |
+| SoundTouch | any (pitch shifting behind the voice effects) |
 
 ONNX Runtime powers auto-subtitles (and related ML features). Drift does not link it — only its headers are needed to build, and the library itself is an addon the user installs from the Acceleration category, which is what makes the CPU / CUDA / WebGPU choice theirs rather than the packager's. The headers are downloaded automatically at configure time; pass `-DDRIFT_FETCH_ONNXRUNTIME=OFF` to use a system install instead. A development build also stages a CPU runtime into `<build>/onnxruntime` so it works before anything is installed — `-DDRIFT_BUNDLE_ONNXRUNTIME=OFF` (what the Flatpak manifests use) turns that off, and `DRIFT_ONNXRUNTIME_DIR` points at an extracted release instead.
 
-On Debian/Ubuntu install `libzstd-dev` and `libssl-dev`; on Arch, `zstd` and `openssl`. Neither has a download fallback — configure fails with a pkg-config error if the development headers are missing.
+On Debian/Ubuntu install `libzstd-dev`, `libssl-dev` and `libsoundtouch-dev`; on Arch, `zstd`, `openssl` and `soundtouch`; on macOS, `brew install qt ffmpeg zstd openssl@3 sound-touch` (see [macOS](#macos)). None of them has a download fallback — configure fails with a pkg-config error if the development headers are missing.
 
 Optional: OpenCV for experimental background-removal builds (`-DWITH_BGREMOVAL=ON`). Only `core`, `imgproc`, and `imgcodecs` are linked.
 
@@ -188,6 +189,42 @@ QT_QPA_PLATFORM=xcb xvfb-run -a -s "-screen 0 1280x1024x24" ctest --output-on-fa
 is not the issue — llvmpipe passes the whole suite once there is an X server.
 
 `AddonPackage` verifies against a signed fixture in `tests/data/`, so that file has to be checked out with the repo.
+
+## macOS
+
+Everything above applies, with Homebrew supplying the dependencies:
+
+```bash
+brew install cmake ninja qt ffmpeg zstd openssl@3 sound-touch
+
+cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Debug \
+  -DCMAKE_PREFIX_PATH="$(brew --prefix qt);$(brew --prefix openssl@3);$(brew --prefix)"
+cmake --build build -j$(sysctl -n hw.ncpu)
+```
+
+`openssl@3` needs naming explicitly because Homebrew keeps it keg-only, and `sysctl -n hw.ncpu` stands in for `nproc`. Qt from [qt.io](https://www.qt.io/download-open-source) works too — point `CMAKE_PREFIX_PATH` at `.../6.x.x/macos` instead.
+
+The build produces an application bundle rather than a bare executable, so run it with:
+
+```bash
+open build/Drift.app          # or: ./build/Drift.app/Contents/MacOS/Drift to see stderr
+```
+
+The bundle is not cosmetic: macOS treats a loose binary as a background process, with no Dock tile, no menu bar and no way to raise the window, and only `Info.plist` can set `NSHighResolutionCapable`, without which the UI and the preview render at 1x on Retina displays.
+
+Effects, transitions, templates and audio effects are staged into `Drift.app/Contents/Resources`, which `GpuPackageParse::defaultSearchPaths` adds as a search root next to the directory holding the executable. The `DRIFT_*_DIR` overrides behave as they do elsewhere.
+
+### Disk image
+
+```bash
+scripts/package-macos.sh
+```
+
+Builds Release, runs `macdeployqt` to copy Qt, FFmpeg, OpenSSL, zstd and SoundTouch into `Contents/Frameworks`, drops the build machine's `LC_RPATH` entries, signs, and writes `dist/Drift-<version>-<arch>.dmg`. The rpath step matters: dyld searches the executable's rpaths before the `@loader_path` entries in the nested frameworks, so a bundle still listing `/opt/homebrew/opt/qt6/lib` loads the host's Qt on any Mac that has one.
+
+Signing is ad-hoc by default — enough to launch locally, since Apple Silicon will not run unsigned binaries, but it still shows the unidentified-developer prompt elsewhere. Pass `--identity "Developer ID Application: …"` for a distributable signature and notarise the `.dmg` with `notarytool`. Without notarisation, opening it needs right-click → Open, or `xattr -dr com.apple.quarantine /Applications/Drift.app`.
+
+Homebrew ships single-architecture bottles, so the image is Apple Silicon only and Intel Macs build from source. Its deployment floor also follows Homebrew's rather than the macOS 12 a source build targets — build against Qt from qt.io to reach 12.
 
 ## Addons
 
