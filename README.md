@@ -222,7 +222,31 @@ scripts/package-macos.sh
 
 Builds Release, runs `macdeployqt` to copy Qt, FFmpeg, OpenSSL, zstd and SoundTouch into `Contents/Frameworks`, drops the build machine's `LC_RPATH` entries, signs, and writes `dist/Drift-<version>-<arch>.dmg`. The rpath step matters: dyld searches the executable's rpaths before the `@loader_path` entries in the nested frameworks, so a bundle still listing `/opt/homebrew/opt/qt6/lib` loads the host's Qt on any Mac that has one.
 
-Signing is ad-hoc by default — enough to launch locally, since Apple Silicon will not run unsigned binaries, but it still shows the unidentified-developer prompt elsewhere. Pass `--identity "Developer ID Application: …"` for a distributable signature and notarise the `.dmg` with `notarytool`. Without notarisation, opening it needs right-click → Open, or `xattr -dr com.apple.quarantine /Applications/Drift.app`.
+Signing is ad-hoc by default — enough to launch locally, since Apple Silicon will not run unsigned binaries, but it still shows the unidentified-developer prompt elsewhere. Without notarisation, opening it needs right-click → Open, or `xattr -dr com.apple.quarantine /Applications/Drift.app`.
+
+For a distributable build, sign with a Developer ID and notarise:
+
+```bash
+export NOTARY_KEY=AuthKey_XXXXXXXXXX.p8 NOTARY_KEY_ID=XXXXXXXXXX NOTARY_ISSUER_ID=<uuid>
+scripts/package-macos.sh --identity "Developer ID Application: … (TEAMID)" --notarize
+```
+
+That signs under the hardened runtime with `resources/macos/Drift.entitlements`, then notarises and staples the app and the image. Both entitlements are load-bearing: the hardened runtime otherwise blocks QtQml's JIT, and library validation stops Drift from `dlopen`ing the ONNX Runtime an Acceleration addon installs, which silently removes auto-subtitles, segmentation and face tracking.
+
+### Release secrets
+
+The release workflow signs and notarises when these repository secrets exist, and falls back to an ad-hoc image when they do not — a fork builds unchanged.
+
+| Secret | What it is |
+|---|---|
+| `MACOS_CERTIFICATE` | Developer ID Application certificate and key, exported as `.p12`, base64-encoded |
+| `MACOS_CERTIFICATE_PWD` | Password set when exporting that `.p12` |
+| `MACOS_SIGN_IDENTITY` | Identity name, e.g. `Developer ID Application: Your Name (TEAMID)` |
+| `MACOS_NOTARY_KEY` | App Store Connect API key `.p8`, base64-encoded |
+| `MACOS_NOTARY_KEY_ID` | That key's ID |
+| `MACOS_NOTARY_ISSUER_ID` | Issuer UUID from App Store Connect |
+
+Encode the two files with `base64 -i cert.p12 | pbcopy`. Setting only the first three signs without notarising. All six require a paid Apple Developer account.
 
 Homebrew ships single-architecture bottles, so the image is Apple Silicon only and Intel Macs build from source. Its deployment floor also follows Homebrew's rather than the macOS 12 a source build targets — build against Qt from qt.io to reach 12.
 
