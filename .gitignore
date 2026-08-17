@@ -50,6 +50,9 @@ installer/windows/output/
 # OS
 .DS_Store
 
+# Compiled Qt translations (generated into the build tree; never commit)
+*.qm
+
 # Local credential files — never commit
 .env
 .env.*

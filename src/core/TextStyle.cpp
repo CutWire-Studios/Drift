@@ -1,5 +1,7 @@
 #include "TextStyle.h"
 
+#include <QCoreApplication>
+
 namespace drift {
 
 QString textAlignToString(TextAlign align)
@@ -238,8 +240,8 @@ QList<TextPreset> buildPresets()
         s.outlineWidth = 2.0;
         s.outlineEnabled = true;
         s.animIn = {TextAnimKind::Fade, 400000, TextEase::EaseOut};
-        presets.append({QStringLiteral("title"), QStringLiteral("Title"), s,
-                        QStringLiteral("Main Title")});
+        presets.append({QStringLiteral("title"), QCoreApplication::translate("TextStyle", "Title"), s,
+                        QCoreApplication::translate("TextStyle", "Main Title")});
     }
     {
         TextStyle s;
@@ -251,8 +253,8 @@ QList<TextPreset> buildPresets()
         s.boxColor = QColor(0, 0, 0, 140);
         s.boxPadding = 10.0;
         s.boxRadius = 6.0;
-        presets.append({QStringLiteral("subtitle"), QStringLiteral("Subtitle"), s,
-                        QStringLiteral("A supporting line")});
+        presets.append({QStringLiteral("subtitle"), QCoreApplication::translate("TextStyle", "Subtitle"), s,
+                        QCoreApplication::translate("TextStyle", "A supporting line")});
     }
     {
         TextStyle s;
@@ -266,8 +268,8 @@ QList<TextPreset> buildPresets()
         s.boxPadding = 12.0;
         s.animIn = {TextAnimKind::SlideRight, 500000, TextEase::EaseOut};
         s.animOut = {TextAnimKind::SlideLeft, 400000, TextEase::EaseInOut};
-        presets.append({QStringLiteral("lower-third"), QStringLiteral("Lower third"), s,
-                        QStringLiteral("Alex Rivera · Host")});
+        presets.append({QStringLiteral("lower-third"), QCoreApplication::translate("TextStyle", "Lower third"), s,
+                        QCoreApplication::translate("TextStyle", "Alex Rivera · Host")});
     }
     {
         TextStyle s;
@@ -278,8 +280,8 @@ QList<TextPreset> buildPresets()
         s.outlineWidth = 3.0;
         s.outlineEnabled = true;
         s.shadowEnabled = true;
-        presets.append({QStringLiteral("caption"), QStringLiteral("Caption"), s,
-                        QStringLiteral("Watch until the end")});
+        presets.append({QStringLiteral("caption"), QCoreApplication::translate("TextStyle", "Caption"), s,
+                        QCoreApplication::translate("TextStyle", "Watch until the end")});
     }
     {
         TextStyle s;
@@ -289,8 +291,8 @@ QList<TextPreset> buildPresets()
         s.italic = true;
         s.lineHeight = 1.4;
         s.animIn = {TextAnimKind::Blur, 700000, TextEase::EaseOut};
-        presets.append({QStringLiteral("quote"), QStringLiteral("Quote"), s,
-                        QStringLiteral("Words worth keeping")});
+        presets.append({QStringLiteral("quote"), QCoreApplication::translate("TextStyle", "Quote"), s,
+                        QCoreApplication::translate("TextStyle", "Words worth keeping")});
     }
     {
         TextStyle s;
@@ -304,8 +306,8 @@ QList<TextPreset> buildPresets()
         s.shadowBlur = 12.0;
         s.shadowOffsetY = 6.0;
         s.animIn = {TextAnimKind::Pop, 350000, TextEase::Back};
-        presets.append({QStringLiteral("impact"), QStringLiteral("Impact"), s,
-                        QStringLiteral("STOP SCROLLING")});
+        presets.append({QStringLiteral("impact"), QCoreApplication::translate("TextStyle", "Impact"), s,
+                        QCoreApplication::translate("TextStyle", "STOP SCROLLING")});
     }
     {
         TextStyle s;
@@ -317,8 +319,8 @@ QList<TextPreset> buildPresets()
         s.outlineEnabled = true;
         s.animIn = {TextAnimKind::Pop, 450000, TextEase::Back};
         s.animOut = {TextAnimKind::Pop, 300000, TextEase::EaseInOut};
-        presets.append({QStringLiteral("pop"), QStringLiteral("Pop"), s,
-                        QStringLiteral("Big news!")});
+        presets.append({QStringLiteral("pop"), QCoreApplication::translate("TextStyle", "Pop"), s,
+                        QCoreApplication::translate("TextStyle", "Big news!")});
     }
     {
         TextStyle s;
@@ -336,8 +338,8 @@ QList<TextPreset> buildPresets()
         s.shadowOffsetX = 0.0;
         s.shadowOffsetY = 0.0;
         s.shadowOpacity = 0.9;
-        presets.append({QStringLiteral("neon"), QStringLiteral("Neon"), s,
-                        QStringLiteral("NEON NIGHTS")});
+        presets.append({QStringLiteral("neon"), QCoreApplication::translate("TextStyle", "Neon"), s,
+                        QCoreApplication::translate("TextStyle", "NEON NIGHTS")});
     }
     {
         TextStyle s;
@@ -348,8 +350,8 @@ QList<TextPreset> buildPresets()
         s.shadowEnabled = true;
         s.shadowBlur = 6.0;
         s.animIn = {TextAnimKind::SlideUp, 550000, TextEase::EaseOut};
-        presets.append({QStringLiteral("handwritten"), QStringLiteral("Handwritten"), s,
-                        QStringLiteral("With love")});
+        presets.append({QStringLiteral("handwritten"), QCoreApplication::translate("TextStyle", "Handwritten"), s,
+                        QCoreApplication::translate("TextStyle", "With love")});
     }
 
     // Short-form caption packs. Unlike the presets above these carry a per-word accent rule, so the
@@ -367,8 +369,8 @@ QList<TextPreset> buildPresets()
         s.accent.rule = WordAccentRule::FirstWord;
         s.accent.colorEnabled = true;
         s.accent.color = QColor(255, 45, 45);
-        presets.append({QStringLiteral("hormozi"), QStringLiteral("Hormozi"), s,
-                        QStringLiteral("Stop wasting time")});
+        presets.append({QStringLiteral("hormozi"), QCoreApplication::translate("TextStyle", "Hormozi"), s,
+                        QCoreApplication::translate("TextStyle", "Stop wasting time")});
     }
     {
         TextStyle s;
@@ -382,8 +384,8 @@ QList<TextPreset> buildPresets()
         s.accent.n = 3;
         s.accent.colorEnabled = true;
         s.accent.color = QColor(255, 59, 48);
-        presets.append({QStringLiteral("one-word-color"), QStringLiteral("One word colour"), s,
-                        QStringLiteral("Make every word count")});
+        presets.append({QStringLiteral("one-word-color"), QCoreApplication::translate("TextStyle", "One word colour"), s,
+                        QCoreApplication::translate("TextStyle", "Make every word count")});
     }
     {
         TextStyle s;
@@ -397,8 +399,8 @@ QList<TextPreset> buildPresets()
         s.accent.highlight.color = QColor(230, 40, 40);
         s.accent.highlight.padding = 8.0;
         s.accent.highlight.radius = 6.0;
-        presets.append({QStringLiteral("word-background"), QStringLiteral("Word background"), s,
-                        QStringLiteral("Highlight what matters most")});
+        presets.append({QStringLiteral("word-background"), QCoreApplication::translate("TextStyle", "Word background"), s,
+                        QCoreApplication::translate("TextStyle", "Highlight what matters most")});
     }
     {
         TextStyle s;
@@ -410,8 +412,8 @@ QList<TextPreset> buildPresets()
         s.boxColor = QColor(255, 196, 0);
         s.boxPadding = 14.0;
         s.boxRadius = 10.0;
-        presets.append({QStringLiteral("sentence-background"), QStringLiteral("Sentence background"), s,
-                        QStringLiteral("Read this carefully")});
+        presets.append({QStringLiteral("sentence-background"), QCoreApplication::translate("TextStyle", "Sentence background"), s,
+                        QCoreApplication::translate("TextStyle", "Read this carefully")});
     }
     {
         TextStyle s;
@@ -425,8 +427,8 @@ QList<TextPreset> buildPresets()
         s.accent.colorEnabled = true;
         s.accent.color = QColor(255, 212, 0);
         s.accent.sizeScale = 1.12;
-        presets.append({QStringLiteral("karaoke-pop"), QStringLiteral("Karaoke pop"), s,
-                        QStringLiteral("Sing along with me")});
+        presets.append({QStringLiteral("karaoke-pop"), QCoreApplication::translate("TextStyle", "Karaoke pop"), s,
+                        QCoreApplication::translate("TextStyle", "Sing along with me")});
     }
     {
         TextStyle s;
@@ -440,8 +442,8 @@ QList<TextPreset> buildPresets()
         s.accent.highlight.color = QColor(34, 197, 94);
         s.accent.highlight.padding = 8.0;
         s.accent.highlight.radius = 8.0;
-        presets.append({QStringLiteral("karaoke-highlight"), QStringLiteral("Karaoke highlight"), s,
-                        QStringLiteral("Follow the bouncing words")});
+        presets.append({QStringLiteral("karaoke-highlight"), QCoreApplication::translate("TextStyle", "Karaoke highlight"), s,
+                        QCoreApplication::translate("TextStyle", "Follow the bouncing words")});
     }
     {
         TextStyle s;
@@ -453,8 +455,8 @@ QList<TextPreset> buildPresets()
         s.glowColor = QColor(255, 255, 255);
         s.glowRadius = 20.0;
         s.glowOpacity = 0.9;
-        presets.append({QStringLiteral("mirage"), QStringLiteral("Mirage"), s,
-                        QStringLiteral("Soft and dreamy")});
+        presets.append({QStringLiteral("mirage"), QCoreApplication::translate("TextStyle", "Mirage"), s,
+                        QCoreApplication::translate("TextStyle", "Soft and dreamy")});
     }
     {
         TextStyle s;
@@ -467,8 +469,8 @@ QList<TextPreset> buildPresets()
         s.underlineColor = QColor(230, 40, 40);
         s.underlineWidth = 8.0;
         s.underlineOffset = 8.0;
-        presets.append({QStringLiteral("underline"), QStringLiteral("Underline"), s,
-                        QStringLiteral("Underline this line")});
+        presets.append({QStringLiteral("underline"), QCoreApplication::translate("TextStyle", "Underline"), s,
+                        QCoreApplication::translate("TextStyle", "Underline this line")});
     }
     {
         TextStyle s;
@@ -482,8 +484,8 @@ QList<TextPreset> buildPresets()
         s.wordHighlight.radius = 2.0;
         s.accent.rule = WordAccentRule::FirstWord;
         s.accent.sizeScale = 1.35;
-        presets.append({QStringLiteral("bulky"), QStringLiteral("Bulky"), s,
-                        QStringLiteral("Big first word")});
+        presets.append({QStringLiteral("bulky"), QCoreApplication::translate("TextStyle", "Bulky"), s,
+                        QCoreApplication::translate("TextStyle", "Big first word")});
     }
     {
         TextStyle s;
@@ -497,8 +499,8 @@ QList<TextPreset> buildPresets()
         s.accent.rule = WordAccentRule::EveryOther;
         s.accent.colorEnabled = true;
         s.accent.color = QColor(255, 255, 255);
-        presets.append({QStringLiteral("word-outline"), QStringLiteral("Word outline"), s,
-                        QStringLiteral("Outline every other word")});
+        presets.append({QStringLiteral("word-outline"), QCoreApplication::translate("TextStyle", "Word outline"), s,
+                        QCoreApplication::translate("TextStyle", "Outline every other word")});
     }
 
     return presets;

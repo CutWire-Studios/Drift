@@ -1,5 +1,6 @@
 #include "ProjectBundle.h"
 
+#include <QCoreApplication>
 #include <QCryptographicHash>
 #include <QDir>
 #include <QFile>
@@ -126,7 +127,7 @@ bool decompressBytes(const QByteArray &stored, quint64 rawSize, QByteArray *out,
     const size_t written = ZSTD_decompress(raw.data(), size_t(rawSize), stored.constData(),
                                            size_t(stored.size()));
     if (ZSTD_isError(written) || written != size_t(rawSize))
-        return fail(error, QStringLiteral("compressed block is corrupt"));
+        return fail(error, QCoreApplication::translate("ProjectBundle", "compressed block is corrupt"));
     *out = raw;
     return true;
 }
@@ -138,37 +139,37 @@ bool readAll(const QString &path, QFile *file, BundleInfo *info, QList<BlobRecor
 {
     file->setFileName(path);
     if (!file->open(QIODevice::ReadOnly))
-        return fail(error, QStringLiteral("cannot open %1").arg(QFileInfo(path).fileName()));
+        return fail(error, QCoreApplication::translate("ProjectBundle", "cannot open %1").arg(QFileInfo(path).fileName()));
 
     const QByteArray header = file->read(kHeaderSize);
     if (header.size() != kHeaderSize)
-        return fail(error, QStringLiteral("file is too short to be a Drift project"));
+        return fail(error, QCoreApplication::translate("ProjectBundle", "file is too short to be a Drift project"));
     if (memcmp(header.constData(), kMagic, sizeof(kMagic)) != 0)
-        return fail(error, QStringLiteral("not a Drift project (bad magic)"));
+        return fail(error, QCoreApplication::translate("ProjectBundle", "not a Drift project (bad magic)"));
     if (readU32(header.constData() + 8) != kContainerVersion)
-        return fail(error, QStringLiteral("unsupported container revision"));
+        return fail(error, QCoreApplication::translate("ProjectBundle", "unsupported container revision"));
 
     const quint32 storedSize = readU32(header.constData() + 12);
     const quint32 rawSize = readU32(header.constData() + 16);
     if (storedSize == 0 || storedSize > kMaxManifestSize || rawSize > kMaxManifestSize)
-        return fail(error, QStringLiteral("project manifest has an implausible size"));
+        return fail(error, QCoreApplication::translate("ProjectBundle", "project manifest has an implausible size"));
     const QByteArray expectedDigest = header.mid(20, kDigestSize);
 
     const QByteArray stored = file->read(storedSize);
     if (stored.size() != qsizetype(storedSize))
-        return fail(error, QStringLiteral("project file is truncated"));
+        return fail(error, QCoreApplication::translate("ProjectBundle", "project file is truncated"));
     *blobRegion = kHeaderSize + qint64(storedSize);
 
     QByteArray manifestJson;
     if (!decompressBytes(stored, rawSize, &manifestJson, error))
         return false;
     if (QCryptographicHash::hash(manifestJson, QCryptographicHash::Sha256) != expectedDigest)
-        return fail(error, QStringLiteral("project manifest is corrupt"));
+        return fail(error, QCoreApplication::translate("ProjectBundle", "project manifest is corrupt"));
 
     QJsonParseError parseError;
     const QJsonDocument document = QJsonDocument::fromJson(manifestJson, &parseError);
     if (!document.isObject())
-        return fail(error, QStringLiteral("project manifest is not valid JSON: %1")
+        return fail(error, QCoreApplication::translate("ProjectBundle", "project manifest is not valid JSON: %1")
                                .arg(parseError.errorString()));
     const QJsonObject root = document.object();
 
@@ -177,10 +178,12 @@ bool readAll(const QString &path, QFile *file, BundleInfo *info, QList<BlobRecor
     info->appVersion = format.value(QStringLiteral("appVersion")).toString();
     const int major = info->formatVersion.section(QLatin1Char('.'), 0, 0).toInt();
     if (major <= 0)
-        return fail(error, QStringLiteral("project manifest has no format version"));
+        return fail(error, QCoreApplication::translate("ProjectBundle", "project manifest has no format version"));
     if (major > kFormatMajor) {
-        return fail(error, QStringLiteral("this project was saved by a newer version of Drift "
-                                          "(format %1) — update to open it")
+        return fail(error, QCoreApplication::translate(
+                               "ProjectBundle",
+                               "this project was saved by a newer version of Drift "
+                               "(format %1) — update to open it")
                                .arg(info->formatVersion));
     }
 
@@ -208,9 +211,9 @@ bool readAll(const QString &path, QFile *file, BundleInfo *info, QList<BlobRecor
         blob.compressed =
             object.value(QStringLiteral("codec")).toString() == QLatin1String("zstd");
         if (blob.offset != expectedOffset)
-            return fail(error, QStringLiteral("project blob table is not contiguous"));
+            return fail(error, QCoreApplication::translate("ProjectBundle", "project blob table is not contiguous"));
         if (blob.compressed && blob.size > kMaxCompressedBlobSize)
-            return fail(error, QStringLiteral("project blob table is implausible"));
+            return fail(error, QCoreApplication::translate("ProjectBundle", "project blob table is implausible"));
         expectedOffset += blob.storedSize;
         blobs->append(blob);
     }
@@ -226,9 +229,9 @@ bool readAll(const QString &path, QFile *file, BundleInfo *info, QList<BlobRecor
         entry.blob = object.value(QStringLiteral("blob")).toInt(-1);
         if (entry.embedded) {
             if (entry.blob < 0 || entry.blob >= blobs->size())
-                return fail(error, QStringLiteral("project media entry names no blob"));
+                return fail(error, QCoreApplication::translate("ProjectBundle", "project media entry names no blob"));
             if (!safeFileName(entry.fileName))
-                return fail(error, QStringLiteral("unsafe file name in project: %1")
+                return fail(error, QCoreApplication::translate("ProjectBundle", "unsafe file name in project: %1")
                                        .arg(entry.fileName));
             info->embeddedBytes += blobs->at(entry.blob).size;
         }
@@ -237,13 +240,13 @@ bool readAll(const QString &path, QFile *file, BundleInfo *info, QList<BlobRecor
 
     info->document = root.value(QStringLiteral("document")).toObject();
     if (info->document.isEmpty())
-        return fail(error, QStringLiteral("project file contains no timeline"));
+        return fail(error, QCoreApplication::translate("ProjectBundle", "project file contains no timeline"));
 
     // The trailer must account for exactly one digest per blob.
     const qint64 expectedSize =
         *blobRegion + qint64(expectedOffset) + qint64(blobs->size()) * kDigestSize;
     if (file->size() != expectedSize)
-        return fail(error, QStringLiteral("project file is truncated or has trailing data"));
+        return fail(error, QCoreApplication::translate("ProjectBundle", "project file is truncated or has trailing data"));
 
     return true;
 }
@@ -324,7 +327,7 @@ bool write(const QString &path, const WriteRequest &request, const ProgressFn &p
             const QByteArray raw = source.readAll();
             blob.packed = compressBytes(raw, 10);
             if (blob.packed.isEmpty() && !raw.isEmpty())
-                return fail(error, QStringLiteral("cannot compress %1").arg(info.fileName()));
+                return fail(error, QCoreApplication::translate("ProjectBundle", "cannot compress %1").arg(info.fileName()));
             blob.digest = QCryptographicHash::hash(raw, QCryptographicHash::Sha256);
             blob.size = quint64(raw.size()); // authoritative: stat can lag a just-written file
             blob.storedSize = quint64(blob.packed.size());
@@ -408,10 +411,10 @@ bool write(const QString &path, const WriteRequest &request, const ProgressFn &p
 
     const QByteArray manifestJson = QJsonDocument(manifest).toJson(QJsonDocument::Compact);
     if (manifestJson.size() > qsizetype(kMaxManifestSize))
-        return fail(error, QStringLiteral("project is too large to save"));
+        return fail(error, QCoreApplication::translate("ProjectBundle", "project is too large to save"));
     const QByteArray manifestStored = compressBytes(manifestJson, 10);
     if (manifestStored.isEmpty())
-        return fail(error, QStringLiteral("cannot compress the project manifest"));
+        return fail(error, QCoreApplication::translate("ProjectBundle", "cannot compress the project manifest"));
 
     QSaveFile out(path);
     // Over the documents portal the sibling temp file QSaveFile normally writes may be refused, and
@@ -419,7 +422,7 @@ bool write(const QString &path, const WriteRequest &request, const ProgressFn &p
     // target directly is the correct outcome there; elsewhere the atomic temp-and-rename still runs.
     out.setDirectWriteFallback(true);
     if (!out.open(QIODevice::WriteOnly))
-        return fail(error, QStringLiteral("cannot write %1").arg(QFileInfo(path).fileName()));
+        return fail(error, QCoreApplication::translate("ProjectBundle", "cannot write %1").arg(QFileInfo(path).fileName()));
 
     QByteArray header(kHeaderSize, Qt::Uninitialized);
     memcpy(header.data(), kMagic, sizeof(kMagic));
@@ -430,7 +433,7 @@ bool write(const QString &path, const WriteRequest &request, const ProgressFn &p
                                    .constData(),
            kDigestSize);
     if (out.write(header) != kHeaderSize || out.write(manifestStored) != manifestStored.size())
-        return fail(error, QStringLiteral("cannot write the project manifest"));
+        return fail(error, QCoreApplication::translate("ProjectBundle", "cannot write the project manifest"));
 
     QByteArray hashes;
     hashes.reserve(blobs.size() * kDigestSize);
@@ -440,39 +443,39 @@ bool write(const QString &path, const WriteRequest &request, const ProgressFn &p
         if (blob.compressed) {
             // Compressed and hashed during planning, so nothing is read or compressed twice.
             if (out.write(blob.packed) != blob.packed.size())
-                return fail(error, QStringLiteral("cannot write project data"));
+                return fail(error, QCoreApplication::translate("ProjectBundle", "cannot write project data"));
             hashes.append(blob.digest);
             done += qint64(blob.size);
             if (progress && !progress(done, qint64(totalRaw)))
-                return fail(error, QStringLiteral("Cancelled"));
+                return fail(error, QCoreApplication::translate("ProjectBundle", "Cancelled"));
             continue;
         }
 
         QFile source(blob.sourcePath);
         if (!source.open(QIODevice::ReadOnly))
-            return fail(error, QStringLiteral("cannot read %1").arg(blob.sourcePath));
+            return fail(error, QCoreApplication::translate("ProjectBundle", "cannot read %1").arg(blob.sourcePath));
 
         QCryptographicHash digest(QCryptographicHash::Sha256);
         quint64 remaining = blob.size;
         while (remaining > 0) {
             const QByteArray chunk = source.read(qMin<qint64>(kChunkSize, qint64(remaining)));
             if (chunk.isEmpty())
-                return fail(error, QStringLiteral("%1 changed while saving").arg(blob.sourcePath));
+                return fail(error, QCoreApplication::translate("ProjectBundle", "%1 changed while saving").arg(blob.sourcePath));
             digest.addData(chunk);
             if (out.write(chunk) != chunk.size())
-                return fail(error, QStringLiteral("cannot write project data"));
+                return fail(error, QCoreApplication::translate("ProjectBundle", "cannot write project data"));
             remaining -= quint64(chunk.size());
             done += chunk.size();
             if (progress && !progress(done, qint64(totalRaw)))
-                return fail(error, QStringLiteral("Cancelled"));
+                return fail(error, QCoreApplication::translate("ProjectBundle", "Cancelled"));
         }
         hashes.append(digest.result());
     }
 
     if (out.write(hashes) != hashes.size())
-        return fail(error, QStringLiteral("cannot write project data"));
+        return fail(error, QCoreApplication::translate("ProjectBundle", "cannot write project data"));
     if (!out.commit())
-        return fail(error, QStringLiteral("cannot finish writing %1").arg(QFileInfo(path).fileName()));
+        return fail(error, QCoreApplication::translate("ProjectBundle", "cannot finish writing %1").arg(QFileInfo(path).fileName()));
     return true;
 }
 
@@ -498,17 +501,17 @@ bool extract(const QString &path, const QString &destDir, const ProgressFn &prog
         return false;
 
     if (!QDir().mkpath(destDir))
-        return fail(error, QStringLiteral("cannot create %1").arg(destDir));
+        return fail(error, QCoreApplication::translate("ProjectBundle", "cannot create %1").arg(destDir));
 
     const qint64 hashesAt = blobRegion
                             + (blobs.isEmpty() ? 0
                                                : qint64(blobs.constLast().offset
                                                         + blobs.constLast().storedSize));
     if (!file.seek(hashesAt))
-        return fail(error, QStringLiteral("project file is truncated"));
+        return fail(error, QCoreApplication::translate("ProjectBundle", "project file is truncated"));
     const QByteArray hashes = file.read(qint64(blobs.size()) * kDigestSize);
     if (hashes.size() != qint64(blobs.size()) * kDigestSize)
-        return fail(error, QStringLiteral("project file is truncated"));
+        return fail(error, QCoreApplication::translate("ProjectBundle", "project file is truncated"));
 
     qint64 total = 0;
     for (const MediaEntry &entry : info.media) {
@@ -535,51 +538,51 @@ bool extract(const QString &path, const QString &destDir, const ProgressFn &prog
         if (existing.isFile() && existing.size() == qint64(blob.size)) {
             done += qint64(blob.size);
             if (progress && !progress(done, total))
-                return fail(error, QStringLiteral("Cancelled"));
+                return fail(error, QCoreApplication::translate("ProjectBundle", "Cancelled"));
             continue;
         }
 
         if (!file.seek(blobRegion + qint64(blob.offset)))
-            return fail(error, QStringLiteral("project file is truncated"));
+            return fail(error, QCoreApplication::translate("ProjectBundle", "project file is truncated"));
 
         QSaveFile out(target);
         if (!out.open(QIODevice::WriteOnly))
-            return fail(error, QStringLiteral("cannot write %1").arg(entry.fileName));
+            return fail(error, QCoreApplication::translate("ProjectBundle", "cannot write %1").arg(entry.fileName));
 
         QCryptographicHash digest(QCryptographicHash::Sha256);
         if (blob.compressed) {
             const QByteArray stored = file.read(qint64(blob.storedSize));
             if (stored.size() != qint64(blob.storedSize))
-                return fail(error, QStringLiteral("project file is truncated"));
+                return fail(error, QCoreApplication::translate("ProjectBundle", "project file is truncated"));
             QByteArray raw;
             if (!decompressBytes(stored, blob.size, &raw, error))
                 return false;
             digest.addData(raw);
             if (out.write(raw) != raw.size())
-                return fail(error, QStringLiteral("cannot write %1").arg(entry.fileName));
+                return fail(error, QCoreApplication::translate("ProjectBundle", "cannot write %1").arg(entry.fileName));
             done += raw.size();
             if (progress && !progress(done, total))
-                return fail(error, QStringLiteral("Cancelled"));
+                return fail(error, QCoreApplication::translate("ProjectBundle", "Cancelled"));
         } else {
             quint64 remaining = blob.size;
             while (remaining > 0) {
                 const QByteArray chunk = file.read(qMin<qint64>(kChunkSize, qint64(remaining)));
                 if (chunk.isEmpty())
-                    return fail(error, QStringLiteral("project file is truncated"));
+                    return fail(error, QCoreApplication::translate("ProjectBundle", "project file is truncated"));
                 digest.addData(chunk);
                 if (out.write(chunk) != chunk.size())
-                    return fail(error, QStringLiteral("cannot write %1").arg(entry.fileName));
+                    return fail(error, QCoreApplication::translate("ProjectBundle", "cannot write %1").arg(entry.fileName));
                 remaining -= quint64(chunk.size());
                 done += chunk.size();
                 if (progress && !progress(done, total))
-                    return fail(error, QStringLiteral("Cancelled"));
+                    return fail(error, QCoreApplication::translate("ProjectBundle", "Cancelled"));
             }
         }
 
         if (digest.result() != hashes.mid(entry.blob * kDigestSize, kDigestSize))
-            return fail(error, QStringLiteral("%1 is corrupt in this project").arg(entry.fileName));
+            return fail(error, QCoreApplication::translate("ProjectBundle", "%1 is corrupt in this project").arg(entry.fileName));
         if (!out.commit())
-            return fail(error, QStringLiteral("cannot finish writing %1").arg(entry.fileName));
+            return fail(error, QCoreApplication::translate("ProjectBundle", "cannot finish writing %1").arg(entry.fileName));
     }
 
     return true;

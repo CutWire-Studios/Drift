@@ -2,6 +2,7 @@
 
 #include "GpuPackageParse.h"
 
+#include <QCoreApplication>
 #include <QDir>
 #include <QFile>
 #include <QFontDatabase>
@@ -196,10 +197,10 @@ const FontFamilyEntry *fontFamilyForName(const QString &family)
 QList<QPair<QString, QString>> fontCategories()
 {
     return {
-        {QStringLiteral("impact"), QStringLiteral("High-Impact & Bold")},
-        {QStringLiteral("clean"), QStringLiteral("Clean & Minimal")},
-        {QStringLiteral("editorial"), QStringLiteral("Classy & Editorial")},
-        {QStringLiteral("playful"), QStringLiteral("Creative & Playful")},
+        {QStringLiteral("impact"), QCoreApplication::translate("FontCatalog", "High-Impact & Bold")},
+        {QStringLiteral("clean"), QCoreApplication::translate("FontCatalog", "Clean & Minimal")},
+        {QStringLiteral("editorial"), QCoreApplication::translate("FontCatalog", "Classy & Editorial")},
+        {QStringLiteral("playful"), QCoreApplication::translate("FontCatalog", "Creative & Playful")},
     };
 }
 

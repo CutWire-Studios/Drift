@@ -1,5 +1,6 @@
 #include "ShapeStyle.h"
 
+#include <QCoreApplication>
 #include <algorithm>
 
 namespace drift {
@@ -69,68 +70,68 @@ QList<ShapeCatalogEntry> buildCatalog()
     const QColor pinkDeep(200, 30, 110);
 
     QList<ShapeCatalogEntry> catalog{
-        {QStringLiteral("rectangle"), QStringLiteral("Rectangle"), QStringLiteral("basic"), 1.6,
+        {QStringLiteral("rectangle"), QCoreApplication::translate("ShapeStyle", "Rectangle"), QStringLiteral("basic"), 1.6,
          makeStyle(ShapeKind::Rectangle, blue, blueDeep)},
-        {QStringLiteral("rounded-rectangle"), QStringLiteral("Rounded rectangle"),
+        {QStringLiteral("rounded-rectangle"), QCoreApplication::translate("ShapeStyle", "Rounded rectangle"),
          QStringLiteral("basic"), 1.6, makeStyle(ShapeKind::RoundedRectangle, blue, blueDeep)},
-        {QStringLiteral("square"), QStringLiteral("Square"), QStringLiteral("basic"), 1.0,
+        {QStringLiteral("square"), QCoreApplication::translate("ShapeStyle", "Square"), QStringLiteral("basic"), 1.0,
          makeStyle(ShapeKind::Square, orange, orangeDeep)},
         // "ellipse" leads "circle" because the inspector's kind list keeps the first entry of each
         // ShapeKind, and "Ellipse" is the honest label for both.
-        {QStringLiteral("ellipse"), QStringLiteral("Ellipse"), QStringLiteral("basic"), 1.6,
+        {QStringLiteral("ellipse"), QCoreApplication::translate("ShapeStyle", "Ellipse"), QStringLiteral("basic"), 1.6,
          makeStyle(ShapeKind::Ellipse, yellow, yellowDeep)},
-        {QStringLiteral("circle"), QStringLiteral("Circle"), QStringLiteral("basic"), 1.0,
+        {QStringLiteral("circle"), QCoreApplication::translate("ShapeStyle", "Circle"), QStringLiteral("basic"), 1.0,
          makeStyle(ShapeKind::Ellipse, yellow, yellowDeep)},
-        {QStringLiteral("triangle"), QStringLiteral("Triangle"), QStringLiteral("basic"), 1.0,
+        {QStringLiteral("triangle"), QCoreApplication::translate("ShapeStyle", "Triangle"), QStringLiteral("basic"), 1.0,
          makeStyle(ShapeKind::Triangle, yellow, yellowDeep)},
-        {QStringLiteral("right-triangle"), QStringLiteral("Right triangle"), QStringLiteral("basic"),
+        {QStringLiteral("right-triangle"), QCoreApplication::translate("ShapeStyle", "Right triangle"), QStringLiteral("basic"),
          1.0, makeStyle(ShapeKind::RightTriangle, yellow, yellowDeep)},
-        {QStringLiteral("diamond"), QStringLiteral("Diamond"), QStringLiteral("basic"), 1.0,
+        {QStringLiteral("diamond"), QCoreApplication::translate("ShapeStyle", "Diamond"), QStringLiteral("basic"), 1.0,
          makeStyle(ShapeKind::Diamond, blue, blueDeep)},
-        {QStringLiteral("pentagon"), QStringLiteral("Pentagon"), QStringLiteral("basic"), 1.0,
+        {QStringLiteral("pentagon"), QCoreApplication::translate("ShapeStyle", "Pentagon"), QStringLiteral("basic"), 1.0,
          makeStyle(ShapeKind::Pentagon, purple, purpleDeep)},
-        {QStringLiteral("hexagon"), QStringLiteral("Hexagon"), QStringLiteral("basic"), 1.0,
+        {QStringLiteral("hexagon"), QCoreApplication::translate("ShapeStyle", "Hexagon"), QStringLiteral("basic"), 1.0,
          makeStyle(ShapeKind::Hexagon, green, greenDeep)},
-        {QStringLiteral("octagon"), QStringLiteral("Octagon"), QStringLiteral("basic"), 1.0,
+        {QStringLiteral("octagon"), QCoreApplication::translate("ShapeStyle", "Octagon"), QStringLiteral("basic"), 1.0,
          makeStyle(ShapeKind::Octagon, green, greenDeep)},
-        {QStringLiteral("parallelogram"), QStringLiteral("Parallelogram"), QStringLiteral("basic"),
+        {QStringLiteral("parallelogram"), QCoreApplication::translate("ShapeStyle", "Parallelogram"), QStringLiteral("basic"),
          1.6, makeStyle(ShapeKind::Parallelogram, blue, blueDeep)},
-        {QStringLiteral("trapezoid"), QStringLiteral("Trapezoid"), QStringLiteral("basic"), 1.6,
+        {QStringLiteral("trapezoid"), QCoreApplication::translate("ShapeStyle", "Trapezoid"), QStringLiteral("basic"), 1.6,
          makeStyle(ShapeKind::Trapezoid, blue, blueDeep)},
 
-        {QStringLiteral("arrow"), QStringLiteral("Arrow"), QStringLiteral("arrows"), 2.0,
+        {QStringLiteral("arrow"), QCoreApplication::translate("ShapeStyle", "Arrow"), QStringLiteral("arrows"), 2.0,
          makeStyle(ShapeKind::Arrow, orange, orangeDeep)},
-        {QStringLiteral("double-arrow"), QStringLiteral("Double arrow"), QStringLiteral("arrows"),
+        {QStringLiteral("double-arrow"), QCoreApplication::translate("ShapeStyle", "Double arrow"), QStringLiteral("arrows"),
          2.0, makeStyle(ShapeKind::DoubleArrow, orange, orangeDeep)},
-        {QStringLiteral("block-arrow"), QStringLiteral("Block arrow"), QStringLiteral("arrows"), 1.6,
+        {QStringLiteral("block-arrow"), QCoreApplication::translate("ShapeStyle", "Block arrow"), QStringLiteral("arrows"), 1.6,
          makeStyle(ShapeKind::BlockArrow, orange, orangeDeep)},
-        {QStringLiteral("curved-arrow"), QStringLiteral("Curved arrow"), QStringLiteral("arrows"),
+        {QStringLiteral("curved-arrow"), QCoreApplication::translate("ShapeStyle", "Curved arrow"), QStringLiteral("arrows"),
          1.3, makeStyle(ShapeKind::CurvedArrow, orange, orangeDeep)},
-        {QStringLiteral("chevron"), QStringLiteral("Chevron"), QStringLiteral("arrows"), 1.4,
+        {QStringLiteral("chevron"), QCoreApplication::translate("ShapeStyle", "Chevron"), QStringLiteral("arrows"), 1.4,
          makeStyle(ShapeKind::Chevron, orange, orangeDeep)},
 
-        {QStringLiteral("speech-bubble"), QStringLiteral("Speech bubble"), QStringLiteral("bubbles"),
+        {QStringLiteral("speech-bubble"), QCoreApplication::translate("ShapeStyle", "Speech bubble"), QStringLiteral("bubbles"),
          1.4, makeStyle(ShapeKind::SpeechBubble, blue, blueDeep)},
-        {QStringLiteral("speech-bubble-rect"), QStringLiteral("Rounded bubble"),
+        {QStringLiteral("speech-bubble-rect"), QCoreApplication::translate("ShapeStyle", "Rounded bubble"),
          QStringLiteral("bubbles"), 1.5, makeStyle(ShapeKind::SpeechBubbleRect, blue, blueDeep)},
-        {QStringLiteral("thought-bubble"), QStringLiteral("Thought bubble"),
+        {QStringLiteral("thought-bubble"), QCoreApplication::translate("ShapeStyle", "Thought bubble"),
          QStringLiteral("bubbles"), 1.4, makeStyle(ShapeKind::ThoughtBubble, blue, blueDeep)},
-        {QStringLiteral("callout"), QStringLiteral("Callout"), QStringLiteral("bubbles"), 1.5,
+        {QStringLiteral("callout"), QCoreApplication::translate("ShapeStyle", "Callout"), QStringLiteral("bubbles"), 1.5,
          makeStyle(ShapeKind::Callout, purple, purpleDeep)},
 
-        {QStringLiteral("star"), QStringLiteral("Star"), QStringLiteral("fun"), 1.0,
+        {QStringLiteral("star"), QCoreApplication::translate("ShapeStyle", "Star"), QStringLiteral("fun"), 1.0,
          makeStyle(ShapeKind::Star, yellow, yellowDeep)},
-        {QStringLiteral("burst"), QStringLiteral("Burst"), QStringLiteral("fun"), 1.0,
+        {QStringLiteral("burst"), QCoreApplication::translate("ShapeStyle", "Burst"), QStringLiteral("fun"), 1.0,
          makeStyle(ShapeKind::Burst, yellow, orangeDeep)},
-        {QStringLiteral("lightning-bolt"), QStringLiteral("Lightning bolt"), QStringLiteral("fun"),
+        {QStringLiteral("lightning-bolt"), QCoreApplication::translate("ShapeStyle", "Lightning bolt"), QStringLiteral("fun"),
          0.6, makeStyle(ShapeKind::LightningBolt, yellow, orangeDeep)},
-        {QStringLiteral("cloud"), QStringLiteral("Cloud"), QStringLiteral("fun"), 1.6,
+        {QStringLiteral("cloud"), QCoreApplication::translate("ShapeStyle", "Cloud"), QStringLiteral("fun"), 1.6,
          makeStyle(ShapeKind::Cloud, QColor(235, 245, 255), QColor(150, 190, 235))},
-        {QStringLiteral("heart"), QStringLiteral("Heart"), QStringLiteral("fun"), 1.0,
+        {QStringLiteral("heart"), QCoreApplication::translate("ShapeStyle", "Heart"), QStringLiteral("fun"), 1.0,
          makeStyle(ShapeKind::Heart, pink, pinkDeep)},
-        {QStringLiteral("cross"), QStringLiteral("Cross"), QStringLiteral("fun"), 1.0,
+        {QStringLiteral("cross"), QCoreApplication::translate("ShapeStyle", "Cross"), QStringLiteral("fun"), 1.0,
          makeStyle(ShapeKind::Cross, pink, pinkDeep)},
-        {QStringLiteral("banner"), QStringLiteral("Banner"), QStringLiteral("fun"), 2.2,
+        {QStringLiteral("banner"), QCoreApplication::translate("ShapeStyle", "Banner"), QStringLiteral("fun"), 2.2,
          makeStyle(ShapeKind::Banner, purple, purpleDeep)},
     };
 
@@ -260,10 +261,10 @@ const ShapeCatalogEntry *shapeCatalogEntry(const QString &id)
 QList<ShapeCategory> shapeCategories()
 {
     return {
-        {QStringLiteral("basic"), QStringLiteral("Basic")},
-        {QStringLiteral("arrows"), QStringLiteral("Arrows")},
-        {QStringLiteral("bubbles"), QStringLiteral("Bubbles")},
-        {QStringLiteral("fun"), QStringLiteral("Fun")},
+        {QStringLiteral("basic"), QCoreApplication::translate("ShapeStyle", "Basic")},
+        {QStringLiteral("arrows"), QCoreApplication::translate("ShapeStyle", "Arrows")},
+        {QStringLiteral("bubbles"), QCoreApplication::translate("ShapeStyle", "Bubbles")},
+        {QStringLiteral("fun"), QCoreApplication::translate("ShapeStyle", "Fun")},
     };
 }
 

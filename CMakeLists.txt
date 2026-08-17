@@ -65,7 +65,7 @@ set(DRIFT_ADDON_CLIENT_TOKEN "79a388bba9301cacc81cc6eb0724c81e948e1b27c69aee1b"
 set(DRIFT_UPDATE_FEED_URL "https://api.github.com/repos/CutWire-Studios/Drift/releases/latest"
     CACHE STRING "Release feed polled for updates; empty disables the update check")
 
-find_package(Qt6 6.5 REQUIRED COMPONENTS Quick QuickControls2 Multimedia Test Concurrent Widgets OpenGL Network QuickEffects)
+find_package(Qt6 6.5 REQUIRED COMPONENTS Quick QuickControls2 Multimedia Test Concurrent Widgets OpenGL Network QuickEffects LinguistTools)
 find_package(FFmpeg REQUIRED)
 
 # ONNX Runtime powers auto subtitles, object segmentation, face tracking and noise removal. The
@@ -669,6 +669,43 @@ target_link_libraries(drift PRIVATE
     driftengine
 )
 target_include_directories(drift PRIVATE src src/preview)
+
+# MCP tool names, JSON schemas, agent errors and copied configs are a machine protocol and must
+# stay English. QT_EXCLUDE_FROM_TRANSLATION is a no-op until src/mcp/ exists (the mcp branch);
+# lupdate also ignores QStringLiteral, so those files only leak if someone later adds tr().
+file(GLOB DRIFT_MCP_SOURCES CONFIGURE_DEPENDS
+    "${CMAKE_SOURCE_DIR}/src/mcp/*.cpp"
+    "${CMAKE_SOURCE_DIR}/src/mcp/*.h")
+if(DRIFT_MCP_SOURCES)
+    set_source_files_properties(${DRIFT_MCP_SOURCES} PROPERTIES QT_EXCLUDE_FROM_TRANSLATION ON)
+endif()
+
+# Catalogs, project/SRT errors and reverse-proxy messages live on driftengine/driftcore, which
+# qt_add_translations(drift) does not scan on its own.
+file(GLOB DRIFT_TS_FILES CONFIGURE_DEPENDS "${CMAKE_SOURCE_DIR}/i18n/drift_*.ts")
+qt_add_translations(drift
+    TS_FILES
+        "${CMAKE_SOURCE_DIR}/i18n/drift.ts"
+        ${DRIFT_TS_FILES}
+    RESOURCE_PREFIX "/i18n"
+    SOURCES
+        src/engine/EffectCatalog.cpp
+        src/engine/EffectTemplateCatalog.cpp
+        src/engine/AudioEffectCatalog.cpp
+        src/engine/TransitionCatalog.cpp
+        src/engine/FontCatalog.cpp
+        src/engine/ReverseRenderer.cpp
+        src/engine/ProjectBundle.cpp
+        src/core/Project.cpp
+        src/core/SrtIO.cpp
+        src/core/ShapeStyle.cpp
+        src/core/TextStyle.cpp
+        src/core/SubtitleCue.cpp
+    LUPDATE_OPTIONS -no-obsolete -locations relative
+)
+if(NOT TARGET update_translations AND TARGET drift_lupdate)
+    add_custom_target(update_translations DEPENDS drift_lupdate)
+endif()
 
 # Defined here rather than in the header so there is exactly one place to change them.
 target_compile_definitions(drift PRIVATE

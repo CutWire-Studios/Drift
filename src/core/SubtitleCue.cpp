@@ -1,5 +1,6 @@
 #include "SubtitleCue.h"
 
+#include <QCoreApplication>
 #include <QRegularExpression>
 
 #include <algorithm>
@@ -10,8 +11,8 @@ namespace drift {
 QString subtitleClipName(const QList<SubtitleCue> &cues)
 {
     if (cues.isEmpty())
-        return QStringLiteral("Subtitles");
-    return QStringLiteral("Subtitles (%1)").arg(cues.size());
+        return QCoreApplication::translate("SubtitleCue", "Subtitles");
+    return QCoreApplication::translate("SubtitleCue", "Subtitles (%1)").arg(cues.size());
 }
 
 namespace {

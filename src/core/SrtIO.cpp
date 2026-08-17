@@ -2,6 +2,7 @@
 
 #include "Time.h"
 
+#include <QCoreApplication>
 #include <QFile>
 #include <QRegularExpression>
 #include <QStringList>
@@ -77,14 +78,14 @@ bool parseSrt(const QString &content, QList<SubtitleCue> *outCues, QString *erro
 {
     if (!outCues) {
         if (error)
-            *error = QStringLiteral("Missing output");
+            *error = QCoreApplication::translate("SrtIO", "Missing output");
         return false;
     }
 
     const QString text = normalizeNewlines(content).trimmed();
     if (text.isEmpty()) {
         if (error)
-            *error = QStringLiteral("Subtitle file is empty");
+            *error = QCoreApplication::translate("SrtIO", "Subtitle file is empty");
         return false;
     }
 
@@ -109,7 +110,7 @@ bool parseSrt(const QString &content, QList<SubtitleCue> *outCues, QString *erro
         const auto match = timingRe.match(lines.at(timingLine).trimmed());
         if (!match.hasMatch()) {
             if (error)
-                *error = QStringLiteral("Invalid subtitle timing line");
+                *error = QCoreApplication::translate("SrtIO", "Invalid subtitle timing line");
             return false;
         }
 
@@ -118,7 +119,7 @@ bool parseSrt(const QString &content, QList<SubtitleCue> *outCues, QString *erro
         if (!parseSrtTimestamp(match.capturedView(1), &startUs)
             || !parseSrtTimestamp(match.capturedView(2), &endUs)) {
             if (error)
-                *error = QStringLiteral("Invalid subtitle timestamp");
+                *error = QCoreApplication::translate("SrtIO", "Invalid subtitle timestamp");
             return false;
         }
         if (endUs <= startUs)
@@ -142,7 +143,7 @@ bool parseSrt(const QString &content, QList<SubtitleCue> *outCues, QString *erro
 
     if (cues.isEmpty()) {
         if (error)
-            *error = QStringLiteral("No subtitle cues found");
+            *error = QCoreApplication::translate("SrtIO", "No subtitle cues found");
         return false;
     }
 
@@ -156,7 +157,7 @@ bool parseSrtFile(const QString &path, QList<SubtitleCue> *outCues, QString *err
     QFile file(path);
     if (!file.open(QIODevice::ReadOnly)) {
         if (error)
-            *error = QStringLiteral("Could not open subtitle file");
+            *error = QCoreApplication::translate("SrtIO", "Could not open subtitle file");
         return false;
     }
 
@@ -199,14 +200,14 @@ bool writeSrtFile(const QString &path, const QList<SubtitleCue> &cues, QString *
     QFile file(path);
     if (!file.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
         if (error)
-            *error = QStringLiteral("Could not write subtitle file");
+            *error = QCoreApplication::translate("SrtIO", "Could not write subtitle file");
         return false;
     }
 
     const QByteArray bytes = writeSrt(cues).toUtf8();
     if (file.write(bytes) != bytes.size()) {
         if (error)
-            *error = QStringLiteral("Could not write subtitle file");
+            *error = QCoreApplication::translate("SrtIO", "Could not write subtitle file");
         return false;
     }
     return true;

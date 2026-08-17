@@ -2,6 +2,7 @@
 
 #include "TransitionPackageLoader.h"
 
+#include <QCoreApplication>
 #include <QHash>
 #include <QMutex>
 #include <QMutexLocker>
@@ -28,12 +29,12 @@ void rebuildLocked(const QStringList &packageRoots)
     for (int i = 0; i < g_catalog.size(); ++i)
         g_idIndex.insert(g_catalog.at(i).meta.id, i);
 
-    static const QHash<QString, QString> kCategoryLabels = {
-        {QStringLiteral("basic"), QStringLiteral("Basic")},
-        {QStringLiteral("geometric"), QStringLiteral("Grid & Geometric")},
-        {QStringLiteral("liquid"), QStringLiteral("Particle & Liquid")},
-        {QStringLiteral("glitch"), QStringLiteral("Glitch & Digital")},
-        {QStringLiteral("cinematic"), QStringLiteral("Stylized & Cinematic")},
+    static const QHash<QString, const char *> kCategoryLabels = {
+        {QStringLiteral("basic"), QT_TRANSLATE_NOOP("TransitionCatalog", "Basic")},
+        {QStringLiteral("geometric"), QT_TRANSLATE_NOOP("TransitionCatalog", "Grid & Geometric")},
+        {QStringLiteral("liquid"), QT_TRANSLATE_NOOP("TransitionCatalog", "Particle & Liquid")},
+        {QStringLiteral("glitch"), QT_TRANSLATE_NOOP("TransitionCatalog", "Glitch & Digital")},
+        {QStringLiteral("cinematic"), QT_TRANSLATE_NOOP("TransitionCatalog", "Stylized & Cinematic")},
     };
 
     // Categories in first-seen (i.e. catalog order) order, so `order` in the JSON controls the UI.
@@ -42,11 +43,12 @@ void rebuildLocked(const QStringList &packageRoots)
         if (seen.contains(pkg.meta.category))
             continue;
         seen.insert(pkg.meta.category);
-        const QString label = kCategoryLabels.value(
-            pkg.meta.category,
-            pkg.meta.category.isEmpty()
-                ? QStringLiteral("Other")
-                : pkg.meta.category.at(0).toUpper() + pkg.meta.category.mid(1));
+        const auto it = kCategoryLabels.constFind(pkg.meta.category);
+        const QString label = it != kCategoryLabels.cend()
+            ? QCoreApplication::translate("TransitionCatalog", it.value())
+            : (pkg.meta.category.isEmpty()
+                   ? QCoreApplication::translate("TransitionCatalog", "Other")
+                   : pkg.meta.category.at(0).toUpper() + pkg.meta.category.mid(1));
         g_categories.append({pkg.meta.category, label});
     }
 

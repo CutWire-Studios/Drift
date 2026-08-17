@@ -3,6 +3,7 @@
 #include "GpuPackageParse.h"
 #include "engine/audio/AudioEffectFactory.h"
 
+#include <QCoreApplication>
 #include <QDir>
 #include <QFileInfo>
 #include <QJsonArray>
@@ -22,17 +23,16 @@ bool g_loaded = false;
 // User-facing labels for the known category slugs; unknown slugs are title-cased as a fallback.
 QString labelForCategory(const QString &slug)
 {
-    static const QMap<QString, QString> known{
-        {QStringLiteral("voice"), QStringLiteral("Voice")},
-        {QStringLiteral("transmission"), QStringLiteral("Transmission")},
-        {QStringLiteral("texture"), QStringLiteral("Texture")},
-        {QStringLiteral("space"), QStringLiteral("Space")},
-    };
-    const auto it = known.find(slug);
-    if (it != known.end())
-        return it.value();
+    if (slug == QLatin1String("voice"))
+        return QCoreApplication::translate("AudioEffectCatalog", "Voice");
+    if (slug == QLatin1String("transmission"))
+        return QCoreApplication::translate("AudioEffectCatalog", "Transmission");
+    if (slug == QLatin1String("texture"))
+        return QCoreApplication::translate("AudioEffectCatalog", "Texture");
+    if (slug == QLatin1String("space"))
+        return QCoreApplication::translate("AudioEffectCatalog", "Space");
     if (slug.isEmpty())
-        return QStringLiteral("Other");
+        return QCoreApplication::translate("AudioEffectCatalog", "Other");
     QString label = slug;
     label[0] = label[0].toUpper();
     return label;

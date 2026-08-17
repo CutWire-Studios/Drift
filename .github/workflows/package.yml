@@ -27,6 +27,7 @@ env:
   QT_MODULES: >-
     qtmultimedia
     qtimageformats
+    qttools
   # Deliberately not QT_QPA_PLATFORM=offscreen: that plugin cannot create an OpenGL context on a
   # runner with no /dev/dri, so every compositor test renders a null QImage. Mesa is not the
   # problem — llvmpipe works fine once there is an X server, so the test steps run under Xvfb on

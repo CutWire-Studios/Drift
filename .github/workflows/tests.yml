@@ -21,6 +21,7 @@ env:
   QT_MODULES: >-
     qtmultimedia
     qtimageformats
+    qttools
   FETCHCONTENT_BASE_DIR: ${{ github.workspace }}/.deps
   # Same pin as package.yml: FFmpeg 7.1 gpl-shared, hosted on our CutWire-Studios/FFmpeg-Builds
   # fork so we are not tied to BtbN's moving `latest` tag (which dropped n7.1 on 2026-08-17).

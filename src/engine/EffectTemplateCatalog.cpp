@@ -3,12 +3,12 @@
 #include "EffectCatalog.h"
 #include "GpuPackageParse.h"
 
+#include <QCoreApplication>
 #include <QDir>
 #include <QFileInfo>
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
-#include <QMap>
 #include <QSet>
 
 #include <algorithm>
@@ -21,24 +21,26 @@ bool g_loaded = false;
 
 QString labelForCategory(const QString &slug)
 {
-    static const QMap<QString, QString> known{
-        {QStringLiteral("rhythm"), QStringLiteral("Hype")},
-        {QStringLiteral("hype"), QStringLiteral("Hype")},
-        {QStringLiteral("look"), QStringLiteral("Dreamy")},
-        {QStringLiteral("dreamy"), QStringLiteral("Dreamy")},
-        {QStringLiteral("cinematic"), QStringLiteral("Cinematic")},
-        {QStringLiteral("clone"), QStringLiteral("Clone")},
-        {QStringLiteral("anime"), QStringLiteral("Anime")},
-        {QStringLiteral("retro"), QStringLiteral("Retro")},
-        {QStringLiteral("chaos"), QStringLiteral("Chaos")},
-        {QStringLiteral("drama"), QStringLiteral("Drama")},
-        {QStringLiteral("transition"), QStringLiteral("Transition")},
-    };
-    const auto it = known.find(slug);
-    if (it != known.end())
-        return it.value();
+    if (slug == QLatin1String("rhythm") || slug == QLatin1String("hype"))
+        return QCoreApplication::translate("EffectTemplateCatalog", "Hype");
+    if (slug == QLatin1String("look") || slug == QLatin1String("dreamy"))
+        return QCoreApplication::translate("EffectTemplateCatalog", "Dreamy");
+    if (slug == QLatin1String("cinematic"))
+        return QCoreApplication::translate("EffectTemplateCatalog", "Cinematic");
+    if (slug == QLatin1String("clone"))
+        return QCoreApplication::translate("EffectTemplateCatalog", "Clone");
+    if (slug == QLatin1String("anime"))
+        return QCoreApplication::translate("EffectTemplateCatalog", "Anime");
+    if (slug == QLatin1String("retro"))
+        return QCoreApplication::translate("EffectTemplateCatalog", "Retro");
+    if (slug == QLatin1String("chaos"))
+        return QCoreApplication::translate("EffectTemplateCatalog", "Chaos");
+    if (slug == QLatin1String("drama"))
+        return QCoreApplication::translate("EffectTemplateCatalog", "Drama");
+    if (slug == QLatin1String("transition"))
+        return QCoreApplication::translate("EffectTemplateCatalog", "Transition");
     if (slug.isEmpty())
-        return QStringLiteral("Other");
+        return QCoreApplication::translate("EffectTemplateCatalog", "Other");
     QString label = slug;
     label[0] = label[0].toUpper();
     return label;

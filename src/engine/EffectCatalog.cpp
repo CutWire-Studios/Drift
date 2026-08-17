@@ -2,6 +2,7 @@
 
 #include "EffectPackageLoader.h"
 
+#include <QCoreApplication>
 #include <QHash>
 #include <QMutex>
 #include <QMutexLocker>
@@ -36,6 +37,31 @@ QString singleFilterGraph(const QString &filterName, const QMap<QString, QVarian
     return QStringLiteral("%1=%2").arg(filterName, parts.join(QLatin1Char(':')));
 }
 
+QString translatedCategoryLabel(const QString &slug)
+{
+    if (slug == QLatin1String("color"))
+        return QCoreApplication::translate("EffectCatalog", "Color");
+    if (slug == QLatin1String("glitch"))
+        return QCoreApplication::translate("EffectCatalog", "Glitch & Distortion");
+    if (slug == QLatin1String("retro"))
+        return QCoreApplication::translate("EffectCatalog", "Retro / Analog");
+    if (slug == QLatin1String("dreamy"))
+        return QCoreApplication::translate("EffectCatalog", "Dreamy & Stylish");
+    if (slug == QLatin1String("impact"))
+        return QCoreApplication::translate("EffectCatalog", "Impact");
+    if (slug == QLatin1String("blurs") || slug == QLatin1String("blurs_distortions"))
+        return QCoreApplication::translate("EffectCatalog", "Blurs & Distortions");
+    if (slug == QLatin1String("funny"))
+        return QCoreApplication::translate("EffectCatalog", "Funny Face");
+    if (slug == QLatin1String("beauty"))
+        return QCoreApplication::translate("EffectCatalog", "Beauty & Makeup");
+    if (slug == QLatin1String("artistic"))
+        return QCoreApplication::translate("EffectCatalog", "Artistic");
+    if (slug.isEmpty())
+        return QCoreApplication::translate("EffectCatalog", "Other");
+    return slug.at(0).toUpper() + slug.mid(1);
+}
+
 QList<EffectPresetEntry> g_mergedCatalog;
 QHash<QString, int> g_idIndex;
 QList<QPair<QString, QString>> g_extraCategories;
@@ -62,28 +88,11 @@ void rebuildCatalogLocked(const QStringList &packageRoots)
         QStringLiteral("dreamy"),
         QStringLiteral("impact"),
     };
-    static const QHash<QString, QString> kCategoryLabels = {
-        {QStringLiteral("color"), QStringLiteral("Color")},
-        {QStringLiteral("glitch"), QStringLiteral("Glitch & Distortion")},
-        {QStringLiteral("retro"), QStringLiteral("Retro / Analog")},
-        {QStringLiteral("dreamy"), QStringLiteral("Dreamy & Stylish")},
-        {QStringLiteral("impact"), QStringLiteral("Impact")},
-        {QStringLiteral("blurs"), QStringLiteral("Blurs & Distortions")},
-        {QStringLiteral("blurs_distortions"), QStringLiteral("Blurs & Distortions")},
-        {QStringLiteral("funny"), QStringLiteral("Funny Face")},
-        {QStringLiteral("beauty"), QStringLiteral("Beauty & Makeup")},
-        {QStringLiteral("artistic"), QStringLiteral("Artistic")},
-    };
 
     for (const EffectPresetEntry &pkg : g_mergedCatalog) {
         if (!knownCats.contains(pkg.meta.category)) {
             knownCats.insert(pkg.meta.category);
-            const QString label = kCategoryLabels.value(
-                pkg.meta.category,
-                pkg.meta.category.isEmpty()
-                    ? QStringLiteral("Other")
-                    : pkg.meta.category.at(0).toUpper() + pkg.meta.category.mid(1));
-            g_extraCategories.append({pkg.meta.category, label});
+            g_extraCategories.append({pkg.meta.category, translatedCategoryLabel(pkg.meta.category)});
         }
     }
     g_catalogInitialized = true;
@@ -139,11 +148,11 @@ QStringList effectPresetIds()
 QList<QPair<QString, QString>> effectCategories()
 {
     QList<QPair<QString, QString>> cats = {
-        {QStringLiteral("color"), QStringLiteral("Color")},
-        {QStringLiteral("glitch"), QStringLiteral("Glitch & Distortion")},
-        {QStringLiteral("retro"), QStringLiteral("Retro / Analog")},
-        {QStringLiteral("dreamy"), QStringLiteral("Dreamy & Stylish")},
-        {QStringLiteral("impact"), QStringLiteral("Impact")},
+        {QStringLiteral("color"), QCoreApplication::translate("EffectCatalog", "Color")},
+        {QStringLiteral("glitch"), QCoreApplication::translate("EffectCatalog", "Glitch & Distortion")},
+        {QStringLiteral("retro"), QCoreApplication::translate("EffectCatalog", "Retro / Analog")},
+        {QStringLiteral("dreamy"), QCoreApplication::translate("EffectCatalog", "Dreamy & Stylish")},
+        {QStringLiteral("impact"), QCoreApplication::translate("EffectCatalog", "Impact")},
     };
     QMutexLocker lock(&g_catalogMutex);
     ensureCatalogLocked();

@@ -459,7 +459,7 @@ public:
     // SVG "d" string for the assets-panel thumbnail, on the 0..100 grid ShapePreview.qml uses.
     Q_INVOKABLE QString shapeSvgPath(const QString &shapeId) const;
     Q_INVOKABLE QVariantList previewClipsAtPlayhead() const;
-    Q_INVOKABLE void beginPreviewDrag(const QString &undoText = QStringLiteral("Edit clip"));
+    Q_INVOKABLE void beginPreviewDrag(const QString &undoText = {});
     Q_INVOKABLE void previewSetClipPosition(int trackIndex, int clipIndex, double xPixels, double yPixels);
     Q_INVOKABLE void previewSetClipSize(int trackIndex, int clipIndex, double widthPixels, double heightPixels);
     Q_INVOKABLE void previewSetClipRect(int trackIndex, int clipIndex, double xPixels, double yPixels,
@@ -1113,7 +1113,7 @@ protected:
     bool m_inlineTextEditing = false;
     bool m_previewDragActive = false;
     drift::Project m_previewDragBefore;
-    QString m_previewDragText = QStringLiteral("Edit clip");
+    QString m_previewDragText;
     void emitPreviewFrame();
     void syncTextOverlaySkip();
     struct ClipboardItem

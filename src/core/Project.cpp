@@ -3,6 +3,7 @@
 #include "Clip.h"
 #include "SubtitleCue.h"
 
+#include <QCoreApplication>
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QUuid>
@@ -848,8 +849,10 @@ Project Project::fromJson(const QJsonObject &object, QString *errorOut)
     // this, whatever the newer version added is dropped on read and can then be saved back over
     // the original, which looks like a successful open.
     if (version > kCurrentVersion) {
-        return fail(QStringLiteral("This project was saved by a newer version of Drift "
-                                   "(project format %1; this build reads up to %2).")
+        return fail(QCoreApplication::translate(
+            "Project",
+            "This project was saved by a newer version of Drift "
+            "(project format %1; this build reads up to %2).")
                         .arg(version)
                         .arg(kCurrentVersion));
     }
@@ -857,7 +860,7 @@ Project Project::fromJson(const QJsonObject &object, QString *errorOut)
     // Every version writes a tracks array — an empty timeline included, as `[]`. Without this any
     // JSON object at all, `{}` included, parses into a plausible-looking empty project.
     if (!object.value(QStringLiteral("tracks")).isArray())
-        return fail(QStringLiteral("This file isn’t a Drift project."));
+        return fail(QCoreApplication::translate("Project", "This file isn’t a Drift project."));
 
     Project project;
 

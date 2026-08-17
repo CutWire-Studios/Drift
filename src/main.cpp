@@ -20,10 +20,13 @@
 #include <QApplication>
 #include <QCoreApplication>
 #include <QIcon>
+#include <QLibraryInfo>
+#include <QLocale>
 #include <QLoggingCategory>
 #include <QQmlApplicationEngine>
 #include <QQuickWindow>
 #include <QSurfaceFormat>
+#include <QTranslator>
 #include <QtQml/qqml.h>
 
 extern "C" {
@@ -100,6 +103,19 @@ int main(int argc, char *argv[])
     // Linux runs from the build tree). The .exe still needs the Windows .rc icon
     // for Explorer and pinned-taskbar identity.
     QApplication::setWindowIcon(QIcon(QStringLiteral(":/app/drift.png")));
+
+    // qsTr/tr resolve when the QML engine loads, so translators must be installed first.
+    // Protocol strings under src/mcp/ are excluded from the catalog; they stay English.
+    QTranslator appTranslator;
+    if (appTranslator.load(QLocale(), QStringLiteral("drift"), QStringLiteral("_"),
+                           QStringLiteral(":/i18n"))) {
+        app.installTranslator(&appTranslator);
+    }
+    QTranslator qtTranslator;
+    if (qtTranslator.load(QLocale(), QStringLiteral("qtbase"), QStringLiteral("_"),
+                          QLibraryInfo::path(QLibraryInfo::TranslationsPath))) {
+        app.installTranslator(&qtTranslator);
+    }
 
     // Registering the bundled fonts needs a QGuiApplication, and must happen before the compositor
     // thread starts touching QFontDatabase.
