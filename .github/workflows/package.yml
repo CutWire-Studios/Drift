@@ -24,10 +24,10 @@ env:
   # Drift needs Quick, QuickControls2, QuickEffects, Widgets, OpenGL, Network, Concurrent and Test
   # (qtbase + qtdeclarative, both in the base install); qtmultimedia is the only extra it links.
   # qtimageformats is for the import side: without it webp/tiff stills cannot be added to a project.
+  # LinguistTools (lupdate) ships in the default qttools archive — it is not an aqtinstall module.
   QT_MODULES: >-
     qtmultimedia
     qtimageformats
-    qttools
   # Deliberately not QT_QPA_PLATFORM=offscreen: that plugin cannot create an OpenGL context on a
   # runner with no /dev/dri, so every compositor test renders a null QImage. Mesa is not the
   # problem — llvmpipe works fine once there is an X server, so the test steps run under Xvfb on
