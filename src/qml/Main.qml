@@ -16,6 +16,9 @@ ApplicationWindow {
     title: "CutWire Drift"
     color: Theme.appBackground
 
+    LayoutMirroring.enabled: Qt.application.layoutDirection === Qt.RightToLeft
+    LayoutMirroring.childrenInherit: true
+
     // Set true after the unsaved prompt resolves so onClosing can finish quit.
     property bool forceClose: false
 

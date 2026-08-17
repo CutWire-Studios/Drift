@@ -346,6 +346,35 @@ Item {
             }
 
             Text {
+                text: qsTr("Language")
+                color: Theme.mutedForeground
+                font.family: Theme.fontFamily
+                font.pixelSize: Theme.fontSizeXs
+                topPadding: Theme.spacingMd
+            }
+
+            ThemedComboBox {
+                width: parent.width
+                textRole: "label"
+                valueRole: "id"
+                model: EditorState.uiLanguages
+                tooltip: qsTr("Language for menus and labels. Takes effect immediately.")
+                currentIndex: {
+                    const langs = EditorState.uiLanguages
+                    for (var i = 0; i < langs.length; ++i) {
+                        if (langs[i].id === EditorState.uiLanguage)
+                            return i
+                    }
+                    return 0
+                }
+                onActivated: {
+                    const langs = EditorState.uiLanguages
+                    if (currentIndex >= 0 && currentIndex < langs.length)
+                        EditorState.uiLanguage = langs[currentIndex].id
+                }
+            }
+
+            Text {
                 text: qsTr("Startup")
                 color: Theme.mutedForeground
                 font.family: Theme.fontFamily

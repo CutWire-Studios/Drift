@@ -58,7 +58,10 @@
 #include <QPainter>
 #include <QPainterPath>
 #include <QPixmap>
+#include <QLibraryInfo>
+#include <QLocale>
 #include <QSettings>
+#include <QTranslator>
 #include <QSet>
 #include <QStandardPaths>
 #include <QTimer>
@@ -76,6 +79,34 @@
 
 namespace {
 QHash<QString, QString> defaultShortcuts();
+
+QTranslator g_appTranslator;
+QTranslator g_qtTranslator;
+
+QString storedUiLanguage()
+{
+    return QSettings().value(QStringLiteral("ui/language")).toString().trimmed();
+}
+
+QLocale uiLocaleFromStored()
+{
+    const QString code = storedUiLanguage();
+    return code.isEmpty() ? QLocale::system() : QLocale(code);
+}
+
+QString languageLabel(const QString &code)
+{
+    const QLocale loc(code);
+    QString native = loc.nativeLanguageName();
+    if (native.isEmpty())
+        return code;
+    if (code.contains(QLatin1Char('_')) || code.contains(QLatin1Char('-'))) {
+        const QString territory = loc.nativeTerritoryName();
+        if (!territory.isEmpty())
+            native += QStringLiteral(" (%1)").arg(territory);
+    }
+    return native;
+}
 
 QCursor timelineTrimCursor(int side, int heightPx)
 {
@@ -256,6 +287,7 @@ AppController::AppController(AssetLibrary *assetLibrary, QObject *parent)
     // keyframe, and an animation appears where the user only meant to reposition something.
     m_autoKeyEnabled = settings.value(QStringLiteral("editor/autoKeyEnabled"), false).toBool();
     m_reopenLastProject = settings.value(QStringLiteral("editor/reopenLastProject"), false).toBool();
+    m_uiLanguage = storedUiLanguage();
     // Unset means the user has never toggled the theme, so the UI keeps tracking the OS.
     const QVariant storedDarkMode = settings.value(QStringLiteral("ui/darkMode"));
     m_darkModeOverridden = storedDarkMode.isValid();
@@ -1966,6 +1998,81 @@ void AppController::setReopenLastProject(bool enabled)
     QSettings settings;
     settings.setValue(QStringLiteral("editor/reopenLastProject"), m_reopenLastProject);
     emit reopenLastProjectChanged();
+}
+
+void AppController::installUiTranslators()
+{
+    QCoreApplication *app = QCoreApplication::instance();
+    if (!app)
+        return;
+
+    app->removeTranslator(&g_appTranslator);
+    app->removeTranslator(&g_qtTranslator);
+
+    const QLocale locale = uiLocaleFromStored();
+    QLocale::setDefault(locale);
+    QGuiApplication::setLayoutDirection(locale.textDirection());
+
+    const QString translationsDir = QLibraryInfo::path(QLibraryInfo::TranslationsPath);
+    if (g_qtTranslator.load(locale, QStringLiteral("qtbase"), QStringLiteral("_"), translationsDir))
+        app->installTranslator(&g_qtTranslator);
+
+    if (locale.language() == QLocale::English)
+        return;
+
+    if (g_appTranslator.load(locale, QStringLiteral("drift"), QStringLiteral("_"), QStringLiteral(":/i18n")))
+        app->installTranslator(&g_appTranslator);
+}
+
+QVariantList AppController::uiLanguages() const
+{
+    QVariantList languages;
+
+    QVariantMap system;
+    system.insert(QStringLiteral("id"), QString());
+    system.insert(QStringLiteral("label"), tr("System default"));
+    languages.append(system);
+
+    QVariantMap english;
+    english.insert(QStringLiteral("id"), QStringLiteral("en"));
+    english.insert(QStringLiteral("label"), languageLabel(QStringLiteral("en")));
+    languages.append(english);
+
+    QStringList codes;
+    const QDir dir(QStringLiteral(":/i18n"));
+    const QStringList files = dir.entryList({QStringLiteral("drift_*.qm")}, QDir::Files);
+    for (const QString &file : files) {
+        if (!file.startsWith(QStringLiteral("drift_")) || !file.endsWith(QStringLiteral(".qm")))
+            continue;
+        const QString code = file.mid(6, file.size() - 9); // strip drift_ and .qm
+        if (code.isEmpty() || code.compare(QStringLiteral("en"), Qt::CaseInsensitive) == 0)
+            continue;
+        if (!codes.contains(code))
+            codes.append(code);
+    }
+    codes.sort(Qt::CaseInsensitive);
+    for (const QString &code : codes) {
+        QVariantMap entry;
+        entry.insert(QStringLiteral("id"), code);
+        entry.insert(QStringLiteral("label"), languageLabel(code));
+        languages.append(entry);
+    }
+    return languages;
+}
+
+void AppController::setUiLanguage(const QString &language)
+{
+    const QString normalized = language.trimmed();
+    if (m_uiLanguage == normalized)
+        return;
+    m_uiLanguage = normalized;
+    QSettings settings;
+    if (m_uiLanguage.isEmpty())
+        settings.remove(QStringLiteral("ui/language"));
+    else
+        settings.setValue(QStringLiteral("ui/language"), m_uiLanguage);
+    installUiTranslators();
+    emit uiLanguageChanged();
 }
 
 void AppController::toggleKeyframeGraphPropertyVisible(const QString &prop)

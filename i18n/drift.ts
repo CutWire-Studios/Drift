@@ -426,7 +426,7 @@
 <context>
     <name>AppController</name>
     <message>
-        <location filename="../src/models/AppController.cpp" line="+1471"/>
+        <location filename="../src/models/AppController.cpp" line="+1503"/>
         <source>Media removed</source>
         <translation type="unfinished"></translation>
     </message>
@@ -471,12 +471,12 @@
     </message>
     <message>
         <location line="+133"/>
-        <location line="+8618"/>
+        <location line="+8693"/>
         <source>New project</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-8617"/>
+        <location line="-8692"/>
         <source>Open project</source>
         <translation type="unfinished"></translation>
     </message>
@@ -527,13 +527,13 @@
     </message>
     <message>
         <location line="+1"/>
-        <location line="+877"/>
+        <location line="+952"/>
         <location line="+1"/>
         <source>Split at current time</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-877"/>
+        <location line="-952"/>
         <source>Merge adjacent clips</source>
         <translation type="unfinished"></translation>
     </message>
@@ -589,18 +589,18 @@
     </message>
     <message>
         <location line="+1"/>
-        <location line="+7095"/>
+        <location line="+7170"/>
         <source>Mark work area in</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-7094"/>
-        <location line="+7108"/>
+        <location line="-7169"/>
+        <location line="+7183"/>
         <source>Mark work area out</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-7107"/>
+        <location line="-7182"/>
         <source>Go to work area in</source>
         <translation type="unfinished"></translation>
     </message>
@@ -611,12 +611,12 @@
     </message>
     <message>
         <location line="+1"/>
-        <location line="+7131"/>
+        <location line="+7206"/>
         <source>Clear work area</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-7130"/>
+        <location line="-7205"/>
         <source>Loop work area playback</source>
         <translation type="unfinished"></translation>
     </message>
@@ -631,7 +631,12 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+538"/>
+        <location line="+194"/>
+        <source>System default</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+419"/>
         <location line="+1"/>
         <location line="+116"/>
         <location line="+1"/>
@@ -3912,7 +3917,7 @@
 <context>
     <name>Main</name>
     <message>
-        <location filename="../src/qml/Main.qml" line="+302"/>
+        <location filename="../src/qml/Main.qml" line="+305"/>
         <source>Export finished.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -5242,12 +5247,12 @@ Quality: renders and shows every single frame, silently and slower than real tim
     </message>
     <message>
         <location line="+30"/>
-        <location line="+140"/>
+        <location line="+169"/>
         <source>Choose background colour</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-117"/>
+        <location line="-146"/>
         <source>Enter a color like #FF0000</source>
         <translation type="unfinished"></translation>
     </message>
@@ -5314,6 +5319,16 @@ Quality: renders and shows every single frame, silently and slower than real tim
     </message>
     <message>
         <location line="+5"/>
+        <source>Language</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+12"/>
+        <source>Language for menus and labels. Takes effect immediately.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+17"/>
         <source>Startup</source>
         <translation type="unfinished"></translation>
     </message>

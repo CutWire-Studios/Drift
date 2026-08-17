@@ -193,7 +193,7 @@ is not the issue — llvmpipe passes the whole suite once there is an X server.
 
 ## Translating
 
-Translate Drift at [weblate.cutwire.org](https://weblate.cutwire.org/projects/drift/). UI strings use Qt Linguist. QML already wraps copy in `qsTr()`; C++ uses `tr()` / `QCoreApplication::translate()`. The app follows the system locale — there is no in-app language picker yet.
+Translate Drift at [weblate.cutwire.org](https://weblate.cutwire.org/projects/drift/). UI strings use Qt Linguist. QML already wraps copy in `qsTr()`; C++ uses `tr()` / `QCoreApplication::translate()`. Pick a language in Settings, or leave it on System default to follow the OS locale.
 
 Catalogs live in [`i18n/`](i18n/):
 

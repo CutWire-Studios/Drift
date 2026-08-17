@@ -85,6 +85,10 @@ class AppController : public QObject
     Q_PROPERTY(QString mcpCursorSnippet READ mcpCursorSnippet NOTIFY mcpRunningChanged)
     Q_PROPERTY(QString mcpClaudeCommand READ mcpClaudeCommand NOTIFY mcpRunningChanged)
     Q_PROPERTY(QString mcpStdioSnippet READ mcpStdioSnippet NOTIFY mcpRunningChanged)
+    // App-wide interface language, QSettings("ui/language"). Empty means follow the OS locale.
+    // "en" is the source catalog (no .qm). Other codes match i18n/drift_<code>.qm.
+    Q_PROPERTY(QString uiLanguage READ uiLanguage WRITE setUiLanguage NOTIFY uiLanguageChanged)
+    Q_PROPERTY(QVariantList uiLanguages READ uiLanguages NOTIFY uiLanguageChanged)
     // The keyframe strip draws every animated property of the selected clip. This is the subset
     // the user has folded away: a view filter only — hiding a curve never changes what renders.
     Q_PROPERTY(QStringList keyframeGraphHiddenProperties READ keyframeGraphHiddenProperties
@@ -227,6 +231,11 @@ public:
     bool mediaGridMode() const { return m_mediaGridMode; }
     bool autoKeyEnabled() const { return m_autoKeyEnabled; }
     bool reopenLastProject() const { return m_reopenLastProject; }
+    QString uiLanguage() const { return m_uiLanguage; }
+    QVariantList uiLanguages() const;
+    // Installs the .qm for ui/language (or the system locale). Call once after QApplication
+    // is named, and again from setUiLanguage. Safe before any AppController exists.
+    static void installUiTranslators();
     QStringList keyframeGraphHiddenProperties() const { return m_keyframeGraphHiddenProperties; }
     bool subtitleEditing() const { return m_subtitleEditing; }
     int selectedSubtitleCue() const { return m_selectedSubtitleCue; }
@@ -324,6 +333,7 @@ public:
     void mcpRememberExportSettings(const QVariantMap &settings);
     void mcpBeginBatch();
     void mcpEndBatch(const QString &text, bool pushUndo);
+    void setUiLanguage(const QString &code);
     // Strip chip click — folds `prop`'s curve away, or brings it back. Purely a view filter: the
     // chip stays put either way, and the animation keeps playing while it is hidden.
     Q_INVOKABLE void toggleKeyframeGraphPropertyVisible(const QString &prop);
@@ -803,6 +813,7 @@ signals:
     void reopenLastProjectChanged();
     void mcpRunningChanged();
     void mcpErrorChanged();
+    void uiLanguageChanged();
     void keyframeGraphVisibilityChanged();
     void subtitleEditingChanged();
     void selectedSubtitleCueChanged();
@@ -1021,6 +1032,7 @@ protected:
     bool m_mediaGridMode = true;
     bool m_autoKeyEnabled = false;
     bool m_reopenLastProject = false;
+    QString m_uiLanguage;
     QStringList m_keyframeGraphHiddenProperties;
     bool m_subtitleEditing = false;
     int m_selectedSubtitleCue = -1;
