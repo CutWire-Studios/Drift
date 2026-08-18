@@ -426,7 +426,7 @@
 <context>
     <name>AppController</name>
     <message>
-        <location filename="../src/models/AppController.cpp" line="+1503"/>
+        <location filename="../src/models/AppController.cpp" line="+1516"/>
         <source>Media removed</source>
         <translation type="unfinished"></translation>
     </message>
@@ -471,12 +471,12 @@
     </message>
     <message>
         <location line="+133"/>
-        <location line="+8693"/>
+        <location line="+8709"/>
         <source>New project</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-8692"/>
+        <location line="-8708"/>
         <source>Open project</source>
         <translation type="unfinished"></translation>
     </message>
@@ -527,13 +527,13 @@
     </message>
     <message>
         <location line="+1"/>
-        <location line="+952"/>
+        <location line="+965"/>
         <location line="+1"/>
         <source>Split at current time</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-952"/>
+        <location line="-965"/>
         <source>Merge adjacent clips</source>
         <translation type="unfinished"></translation>
     </message>
@@ -589,18 +589,18 @@
     </message>
     <message>
         <location line="+1"/>
-        <location line="+7170"/>
+        <location line="+7184"/>
         <source>Mark work area in</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-7169"/>
-        <location line="+7183"/>
+        <location line="-7183"/>
+        <location line="+7197"/>
         <source>Mark work area out</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-7182"/>
+        <location line="-7196"/>
         <source>Go to work area in</source>
         <translation type="unfinished"></translation>
     </message>
@@ -611,12 +611,12 @@
     </message>
     <message>
         <location line="+1"/>
-        <location line="+7206"/>
+        <location line="+7220"/>
         <source>Clear work area</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-7205"/>
+        <location line="-7219"/>
         <source>Loop work area playback</source>
         <translation type="unfinished"></translation>
     </message>
@@ -631,12 +631,12 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+194"/>
+        <location line="+204"/>
         <source>System default</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+419"/>
+        <location line="+422"/>
         <location line="+1"/>
         <location line="+116"/>
         <location line="+1"/>
@@ -1071,12 +1071,12 @@
     <message>
         <location line="-12"/>
         <location line="+339"/>
-        <location line="+2863"/>
+        <location line="+2864"/>
         <source>Clip</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-3143"/>
+        <location line="-3144"/>
         <source>Getting noise removal ready…</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1275,25 +1275,25 @@
     </message>
     <message>
         <location line="+22"/>
-        <location line="+2761"/>
+        <location line="+2762"/>
         <location line="+37"/>
         <source>Edit effect</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-2765"/>
-        <location line="+654"/>
+        <location line="-2766"/>
+        <location line="+655"/>
         <source>Speed changed</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-636"/>
+        <location line="-637"/>
         <source>Adjust fade</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location line="+41"/>
-        <location line="+1284"/>
+        <location line="+1285"/>
         <source>Mask changed</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1935,14 +1935,14 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+832"/>
+        <location line="+834"/>
         <location line="+30"/>
-        <location line="+630"/>
+        <location line="+632"/>
         <source>That save location isn’t valid</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-656"/>
+        <location line="-658"/>
         <source>Already saving</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1987,7 +1987,7 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+227"/>
+        <location line="+229"/>
         <source>Export already in progress</source>
         <translation type="unfinished"></translation>
     </message>
@@ -2732,7 +2732,22 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+88"/>
+        <location line="+29"/>
+        <source>Agent access is on</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+14"/>
+        <source>Agent</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+11"/>
+        <source>Agent access is on — localhost MCP is listening. Turn it off in Settings when you are done.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+80"/>
         <source>Recommended packs and updates</source>
         <translation type="unfinished"></translation>
     </message>
@@ -5247,12 +5262,12 @@ Quality: renders and shows every single frame, silently and slower than real tim
     </message>
     <message>
         <location line="+30"/>
-        <location line="+169"/>
+        <location line="+330"/>
         <source>Choose background colour</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-146"/>
+        <location line="-307"/>
         <source>Enter a color like #FF0000</source>
         <translation type="unfinished"></translation>
     </message>
@@ -5340,6 +5355,106 @@ Quality: renders and shows every single frame, silently and slower than real tim
     <message>
         <location line="+1"/>
         <source>Automatically restore the last open project. Unsaved work is kept in a side snapshot and never overwrites your save file.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>Agent access</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+25"/>
+        <source>Lets local agents (Cursor, Claude Code) control this editor: import media, edit the timeline, and capture frames. Any process on this computer with the token can do the same. Off at every launch. Turn it off when you are done.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>Enable for this session</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Start a localhost MCP server. Not saved. Stops when Drift quits or you turn this off.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+18"/>
+        <source>Listening on %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <source>Token (shown once this session)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+20"/>
+        <source>Copy Cursor config</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Copy an mcp.json snippet with this session’s URL and token</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <source>Copy Claude command</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Copy a claude mcp add command for this session</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+8"/>
+        <source>Copy stdio attach (one-time setup)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Add this once to mcp.json. drift --mcp-stdio talks to whichever session is running. Agent access still has to be turned on in Drift.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <source>Copy agent guide</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Copy workflow, conventions, and toolbox list for agents</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>Pinned endpoints: /mcp/media, /mcp/timeline, /mcp/canvas, /mcp/playback, /mcp/text, /mcp/effects, /mcp/project</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+27"/>
+        <source>Agent workflow</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>1. Enable agent access for this session.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>2. Connect Cursor or Claude with the copied config.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>3. Call catalog, then toolbox, then apply with batched ops.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>4. Use inspect({clips:true}) for clip ids; capture() to verify frames.</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
