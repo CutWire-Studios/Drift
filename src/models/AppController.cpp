@@ -7586,6 +7586,60 @@ void AppController::setTrackMaskAt(int trackIndex, int maskIndex, const QVariant
     finishEdit(tr("Cutout updated"));
 }
 
+void AppController::setClipMask(int trackIndex, int clipIndex, const QVariantMap &maskMap)
+{
+    drift::Track *track = trackRefAt(trackIndex);
+    const drift::Clip *clip = clipRefAt(trackIndex, clipIndex);
+    if (!track || !clip)
+        return;
+
+    const drift::Mask parsed = maskFromMap(maskMap);
+
+    int existing = -1;
+    for (int i = 0; i < track->masks.size(); ++i) {
+        const drift::Mask &mask = track->masks.at(i);
+        if (mask.timelineStart < clip->timelineEnd() && clip->timelineStart < mask.timelineEnd()) {
+            existing = i;
+            break;
+        }
+    }
+
+    if (parsed.shape == drift::MaskShape::None) {
+        if (existing >= 0)
+            removeTrackMask(trackIndex, existing);
+        return;
+    }
+
+    const drift::Project before = m_project;
+    if (existing >= 0) {
+        // MCP's mask object has no start/duration/lane; keep the bar where it already sits.
+        drift::Mask &target = track->masks[existing];
+        const auto keyframes = target.keyframes;
+        const auto pathKeys = target.pathKeys;
+        const auto start = target.timelineStart;
+        const auto duration = target.timelineDuration;
+        const auto lane = target.lane;
+        target = parsed;
+        target.keyframes = keyframes;
+        target.pathKeys = pathKeys;
+        target.timelineStart = start;
+        target.timelineDuration = duration;
+        target.lane = lane;
+        pushProjectEdit(before, tr("Mask changed"));
+        finishEdit(tr("Cutout updated"));
+        return;
+    }
+
+    drift::Mask placed = parsed;
+    if (placed.shape == drift::MaskShape::Freeform && placed.points.isEmpty()) {
+        placed.points = {drift::MaskPoint{QPointF(0.5, 0.2)}, drift::MaskPoint{QPointF(0.8, 0.5)},
+                         drift::MaskPoint{QPointF(0.5, 0.8)}, drift::MaskPoint{QPointF(0.2, 0.5)}};
+    }
+    track->masks.append(maskSpanning(placed, *clip, track->masks));
+    pushProjectEdit(before, tr("Mask changed"));
+    finishEdit(tr("Cutout updated"));
+}
+
 void AppController::previewSetTrackMaskAt(int trackIndex, int maskIndex, const QVariantMap &maskMap)
 {
     drift::Track *track = trackRefAt(trackIndex);
@@ -11972,7 +12026,8 @@ bool AppController::mcpSetClipCanvas(int trackIndex, int clipIndex, const QVaria
     auto write = [&](const QString &patchKey, const QString &prop) {
         if (!patch.contains(patchKey))
             return;
-        any = writeClipPropValue(clip, prop, relative, patch.value(patchKey).toDouble(), true, true)
+        any = writeClipPropValue(track, clip, prop, relative, patch.value(patchKey).toDouble(),
+                                 true, true)
               || any;
     };
     write(QStringLiteral("x"), QStringLiteral("x"));
@@ -12457,9 +12512,10 @@ QJsonObject AppController::mcpSetClipVolume(int trackIndex, int clipIndex, doubl
         // diamond's: no key on an un-animated clip, retarget the only key on a clip that has
         // one, and on a genuinely animated clip retarget whichever key is at the playhead.
         const drift::Project before = m_project;
-        drift::Clip &clip = m_project.tracks()[trackIndex].clips[clipIndex];
+        drift::Track &track = m_project.tracks()[trackIndex];
+        drift::Clip &clip = track.clips[clipIndex];
         const drift::TimeUs relative = qMax<drift::TimeUs>(0, m_playheadUs - clip.timelineStart);
-        if (!writeClipPropValue(clip, QStringLiteral("volume"), relative, clamped,
+        if (!writeClipPropValue(track, clip, QStringLiteral("volume"), relative, clamped,
                                 /*autoKey=*/false, /*force=*/false)) {
             return err("bad_args",
                        QStringLiteral("Clip volume is animated and no key sits at the playhead — "

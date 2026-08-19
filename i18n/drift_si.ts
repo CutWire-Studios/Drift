@@ -426,7 +426,7 @@
 <context>
     <name>AppController</name>
     <message>
-        <location filename="../src/models/AppController.cpp" line="+1546"/>
+        <location filename="../src/models/AppController.cpp" line="+1768"/>
         <source>Media removed</source>
         <translation>මාධ්‍ය ඉවත් කරන ලදී</translation>
     </message>
@@ -471,12 +471,12 @@
     </message>
     <message>
         <location line="+133"/>
-        <location line="+8763"/>
+        <location line="+9196"/>
         <source>New project</source>
         <translation>නව ව්‍යාපෘතිය</translation>
     </message>
     <message>
-        <location line="-8762"/>
+        <location line="-9195"/>
         <source>Open project</source>
         <translation>ව්‍යාපෘතිය විවෘත කරන්න</translation>
     </message>
@@ -527,13 +527,13 @@
     </message>
     <message>
         <location line="+1"/>
-        <location line="+993"/>
+        <location line="+1013"/>
         <location line="+1"/>
         <source>Split at current time</source>
         <translation>වත්මන් වේලාවේදී වෙන් කරන්න</translation>
     </message>
     <message>
-        <location line="-993"/>
+        <location line="-1013"/>
         <source>Merge adjacent clips</source>
         <translation>යාබද ක්ලිප් ඒකාබද්ධ කරන්න</translation>
     </message>
@@ -589,18 +589,18 @@
     </message>
     <message>
         <location line="+1"/>
-        <location line="+7214"/>
+        <location line="+7645"/>
         <source>Mark work area in</source>
         <translation>වැඩ කලාපයේ ආරම්භය සලකුණු කරන්න (In)</translation>
     </message>
     <message>
-        <location line="-7213"/>
-        <location line="+7227"/>
+        <location line="-7644"/>
+        <location line="+7658"/>
         <source>Mark work area out</source>
         <translation>වැඩ කලාපයේ අවසානය සලකුණු කරන්න (Out)</translation>
     </message>
     <message>
-        <location line="-7226"/>
+        <location line="-7657"/>
         <source>Go to work area in</source>
         <translation>වැඩ කලාපයේ ආරම්භයට යන්න</translation>
     </message>
@@ -611,12 +611,12 @@
     </message>
     <message>
         <location line="+1"/>
-        <location line="+7250"/>
+        <location line="+7681"/>
         <source>Clear work area</source>
         <translation>වැඩ කලාපය හිස් කරන්න</translation>
     </message>
     <message>
-        <location line="-7249"/>
+        <location line="-7680"/>
         <source>Loop work area playback</source>
         <translation>වැඩ කලාපය ලූපයක් සේ ධාවනය කරන්න</translation>
     </message>
@@ -632,7 +632,7 @@
     </message>
     <message>
         <location line="+204"/>
-        <location line="+218"/>
+        <location line="+238"/>
         <source>System default</source>
         <translation>පද්ධති පෙරනිමිය</translation>
     </message>
@@ -797,33 +797,33 @@
     </message>
     <message>
         <location line="+9"/>
-        <location line="+1503"/>
+        <location line="+1518"/>
         <location line="+74"/>
         <source>Starting…</source>
         <translation>ආරම්භ කරමින්…</translation>
     </message>
     <message>
-        <location line="-1536"/>
+        <location line="-1551"/>
         <location line="+871"/>
         <location line="+238"/>
-        <location line="+457"/>
+        <location line="+472"/>
         <source>Done</source>
         <translation>නිමයි</translation>
     </message>
     <message>
-        <location line="-1554"/>
+        <location line="-1569"/>
         <source>Getting speech recognition ready…</source>
         <translation>කථන හඳුනාගැනීම සූදානම් කරමින්…</translation>
     </message>
     <message>
         <location line="+9"/>
-        <location line="+1330"/>
+        <location line="+1345"/>
         <location line="+15"/>
         <source>Reading audio…</source>
         <translation>ශ්‍රව්‍ය කියවමින්…</translation>
     </message>
     <message>
-        <location line="-1337"/>
+        <location line="-1352"/>
         <location line="+50"/>
         <source>Subtitle generation cancelled</source>
         <translation>උපසිරැසි ජනනය අවලංගු කෙරිණි</translation>
@@ -835,12 +835,12 @@
     </message>
     <message>
         <location line="+8"/>
-        <location line="+1311"/>
+        <location line="+1326"/>
         <source>No audio decoded</source>
         <translation>කිසිදු ශ්‍රව්‍යයක් විකේතනය නොවීය</translation>
     </message>
     <message>
-        <location line="-1306"/>
+        <location line="-1321"/>
         <source>Transcribing…</source>
         <translation>පිටපත් කරමින් (Transcribing)…</translation>
     </message>
@@ -861,14 +861,14 @@
     </message>
     <message>
         <location line="+3"/>
-        <location line="+1543"/>
+        <location line="+1557"/>
         <location line="+1"/>
         <location line="+2"/>
         <source>Subtitles generated</source>
         <translation>උපසිරැසි ජනනය කරන ලදී</translation>
     </message>
     <message>
-        <location line="-1515"/>
+        <location line="-1529"/>
         <location line="+652"/>
         <source>Select a video clip to cut out</source>
         <translation>වෙන් කිරීමට වීඩියෝ ක්ලිපයක් තෝරන්න</translation>
@@ -1041,22 +1041,22 @@
         <translation>එම ක්ලිපය තවදුරටත් නොපවතී</translation>
     </message>
     <message>
-        <location line="+14"/>
+        <location line="+19"/>
         <location line="+1"/>
-        <location line="+25"/>
+        <location line="+35"/>
         <location line="+1"/>
         <source>Cut out subject</source>
         <translation>විෂයය වෙන් කරන්න</translation>
     </message>
     <message>
-        <location line="-12"/>
-        <location line="+339"/>
-        <location line="+2864"/>
+        <location line="-24"/>
+        <location line="+350"/>
+        <location line="+3257"/>
         <source>Clip</source>
         <translation>ක්ලිප්</translation>
     </message>
     <message>
-        <location line="-3144"/>
+        <location line="-3536"/>
         <source>Getting noise removal ready…</source>
         <translation>ඝෝෂා ඉවත් කිරීම සූදානම් කරමින්…</translation>
     </message>
@@ -1115,7 +1115,7 @@
         <translation>සූදානම්</translation>
     </message>
     <message numerus="yes">
-        <location line="-1657"/>
+        <location line="-1672"/>
         <location line="+42"/>
         <source>Imported %n subtitles</source>
         <translation>
@@ -1124,12 +1124,12 @@
         </translation>
     </message>
     <message>
-        <location line="-3151"/>
+        <location line="-3392"/>
         <source>No audio output devices were found, so playback will be silent.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+3242"/>
+        <location line="+3483"/>
         <source>Creating captions…</source>
         <translation>උපසිරැසි නිර්මාණය කරමින්…</translation>
     </message>
@@ -1144,7 +1144,7 @@
         <translation>මුහුණු හඳුනාගනිමින්…</translation>
     </message>
     <message>
-        <location line="+467"/>
+        <location line="+482"/>
         <source>Removing noise…</source>
         <translation>ඝෝෂා ඉවත් කරමින්…</translation>
     </message>
@@ -1154,7 +1154,7 @@
         <translation>ප්‍රතිදාන ගොනුවක් සෑදීමට නොහැකි විය</translation>
     </message>
     <message>
-        <location line="+69"/>
+        <location line="+68"/>
         <source> (denoised)</source>
         <translation> (ඝෝෂා ඉවත් කළ)</translation>
     </message>
@@ -1217,7 +1217,7 @@
         <translation>වීඩියෝ ප්‍රමාණය %1×%2 ට කප්පාදු කරන ලදී</translation>
     </message>
     <message>
-        <location line="+45"/>
+        <location line="+103"/>
         <source>Change background</source>
         <translation>පසුබිම වෙනස් කරන්න</translation>
     </message>
@@ -1228,12 +1228,12 @@
     </message>
     <message>
         <location line="+102"/>
-        <location line="+257"/>
+        <location line="+241"/>
         <source>Edit clip</source>
         <translation>ක්ලිපය සංස්කරණය කරන්න</translation>
     </message>
     <message>
-        <location line="-231"/>
+        <location line="-215"/>
         <source>Turn on Auto keyframes to move this</source>
         <translation>මෙය ගෙනයාමට ස්වයංක්‍රීය කීෆ්‍රේම ක්‍රියාත්මක කරන්න</translation>
     </message>
@@ -1284,30 +1284,31 @@
     </message>
     <message>
         <location line="+22"/>
-        <location line="+2762"/>
+        <location line="+3101"/>
         <location line="+37"/>
         <source>Edit effect</source>
         <translation>ප්‍රයෝගය සංස්කරණය කරන්න</translation>
     </message>
     <message>
-        <location line="-2766"/>
-        <location line="+655"/>
+        <location line="-3105"/>
+        <location line="+639"/>
         <source>Speed changed</source>
         <translation>වේගය වෙනස් විය</translation>
     </message>
     <message>
-        <location line="-637"/>
+        <location line="-621"/>
         <source>Adjust fade</source>
         <translation>Fade සකසන්න</translation>
     </message>
     <message>
-        <location line="+41"/>
-        <location line="+1285"/>
+        <location line="+1353"/>
+        <location line="+43"/>
+        <location line="+11"/>
         <source>Mask changed</source>
         <translation>ආවරණය (Mask) වෙනස් විය</translation>
     </message>
     <message>
-        <location line="-1241"/>
+        <location line="-1338"/>
         <location line="+1"/>
         <source>Start updated</source>
         <translation>ආරම්භය යාවත්කාලීන විය</translation>
@@ -1513,12 +1514,7 @@
         <translation>හැඩතල විලාසය යාවත්කාලීන විය</translation>
     </message>
     <message>
-        <location line="+15"/>
-        <source>Clip mask updated</source>
-        <translation>ක්ලිප් ආවරණය යාවත්කාලීන විය</translation>
-    </message>
-    <message>
-        <location line="+29"/>
+        <location line="+367"/>
         <source>Replace transition</source>
         <translation>සංක්‍රාන්තිය ප්‍රතිස්ථාපනය කරන්න</translation>
     </message>
@@ -1600,7 +1596,7 @@
         <translation>කීෆ්‍රේමය ගෙනයන්න</translation>
     </message>
     <message>
-        <location line="+164"/>
+        <location line="+166"/>
         <source>Enable keyframes</source>
         <translation>කීෆ්‍රේම ක්‍රියාත්මක කරන්න</translation>
     </message>
@@ -1620,7 +1616,7 @@
         <translation>කීෆ්‍රේම අක්‍රිය කෙරිණි</translation>
     </message>
     <message>
-        <location line="+75"/>
+        <location line="+83"/>
         <source>Keyframe easing changed</source>
         <translation>කීෆ්‍රේම Easing වෙනස් විය</translation>
     </message>
@@ -1675,7 +1671,7 @@
         <translation>ප්‍රයෝගය එක් කරන ලදී</translation>
     </message>
     <message>
-        <location line="+493"/>
+        <location line="+515"/>
         <source>Apply effect template</source>
         <translation>ප්‍රයෝග ආකෘතියක් යොදන්න</translation>
     </message>
@@ -1937,29 +1933,41 @@
         </translation>
     </message>
     <message>
-        <location line="+1575"/>
+        <location line="+1577"/>
         <source>Exporting…</source>
         <translation>නිර්යාත කරමින්…</translation>
     </message>
     <message>
-        <location line="-1543"/>
+        <location line="-1545"/>
         <source>Nudge selection</source>
         <translation>තේරීම මඳක් චලනය කරන්න</translation>
     </message>
     <message>
-        <location line="+1"/>
+        <location line="-2535"/>
+        <location line="+43"/>
+        <location line="+11"/>
+        <source>Cutout updated</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+69"/>
+        <source>That file is not there any more</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+2413"/>
         <source>Selection nudged</source>
         <translation>තේරීම මඳක් චලනය කරන ලදී</translation>
     </message>
     <message>
-        <location line="+858"/>
+        <location line="+859"/>
         <location line="+30"/>
-        <location line="+632"/>
+        <location line="+633"/>
         <source>That save location isn’t valid</source>
         <translation>එම සුරැකීමේ ස්ථානය වලංගු නැත</translation>
     </message>
     <message>
-        <location line="-658"/>
+        <location line="-659"/>
         <source>Already saving</source>
         <translation>දැනටමත් සුරකිමින් පවතී</translation>
     </message>
@@ -1989,7 +1997,7 @@
         <translation>ව්‍යාපෘති මාධ්‍ය දිගහරිමින්…</translation>
     </message>
     <message>
-        <location line="+255"/>
+        <location line="+256"/>
         <source>No recovery file found</source>
         <translation>ප්‍රතිසාධන ගොනුවක් හමු නොවීය</translation>
     </message>
@@ -3720,21 +3728,24 @@
     </message>
     <message>
         <location line="+1"/>
+        <location line="+45"/>
         <source>Width</source>
         <translation>පළල</translation>
     </message>
     <message>
-        <location line="+1"/>
+        <location line="-44"/>
+        <location line="+45"/>
         <source>Height</source>
         <translation>උස</translation>
     </message>
     <message>
-        <location line="+1"/>
+        <location line="-44"/>
+        <location line="+45"/>
         <source>Rotation</source>
         <translation>භ්‍රමණය</translation>
     </message>
     <message>
-        <location line="+1"/>
+        <location line="-44"/>
         <source>Opacity</source>
         <translation>පාරාන්ධතාව</translation>
     </message>
@@ -3744,7 +3755,27 @@
         <translation>ශබ්ද මට්ටම</translation>
     </message>
     <message>
-        <location line="+311"/>
+        <location line="+7"/>
+        <source>Cutout %1 · %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+32"/>
+        <source>Center X</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Center Y</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Feather</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+305"/>
         <source>Keyframes</source>
         <translation>කීෆ්‍රේම</translation>
     </message>
@@ -4041,19 +4072,35 @@
     </message>
 </context>
 <context>
-    <name>MasksInspector</name>
+    <name>MaskOverlay</name>
     <message>
-        <location filename="../src/qml/components/properties/MasksInspector.qml" line="+41"/>
-        <source>Not available</source>
-        <translation>ලබාගත නොහැක</translation>
+        <location filename="../src/qml/components/preview/MaskOverlay.qml" line="+309"/>
+        <location line="+68"/>
+        <location line="+72"/>
+        <location line="+279"/>
+        <source>Mask changed</source>
+        <translation type="unfinished">ආවරණය (Mask) වෙනස් විය</translation>
+    </message>
+    <message>
+        <location line="-199"/>
+        <source>Mask point moved</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+312"/>
+        <source>Add a cutout in the Cutouts tab to edit it here</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location line="+1"/>
-        <source>Cutouts apply to visual clips.</source>
-        <translation>විෂය වෙන් කිරීම අදාළ වන්නේ දෘශ්‍ය ක්ලිප් සඳහා පමණි.</translation>
+        <source>Select a clip at the playhead to edit its cutouts</source>
+        <translation type="unfinished"></translation>
     </message>
+</context>
+<context>
+    <name>MasksInspector</name>
     <message>
-        <location line="+31"/>
+        <location filename="../src/qml/components/properties/MasksInspector.qml" line="+83"/>
         <source>Subject</source>
         <translation>විෂයය</translation>
     </message>
@@ -4074,26 +4121,31 @@
     </message>
     <message>
         <location line="+12"/>
-        <source>Cutout shape</source>
-        <translation>Cutout හැඩතලය</translation>
-    </message>
-    <message>
-        <location line="+10"/>
-        <source>Hides everything outside the shape. Feather softens its edge.</source>
-        <translation>හැඩතලයෙන් පිටත ඇති සියල්ල සඟවයි. Feather මඟින් එහි දාර මෘදු කරයි.</translation>
-    </message>
-    <message>
-        <location line="+15"/>
-        <source>None</source>
-        <translation>කිසිවක් නැත</translation>
+        <source>No cutout selected</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location line="+1"/>
+        <source>Cutouts live on a track&apos;s own lane. Right-click a track&apos;s name to add one, or drop an image or video onto its lane, then click it to shape it here.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+13"/>
+        <source>This cutout masks the clips beneath it, for as long as its bar runs. Outside that stretch the clips are untouched.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+9"/>
+        <source>Shape</source>
+        <translation type="unfinished">හැඩතලය</translation>
+    </message>
+    <message>
+        <location line="+13"/>
         <source>Rectangle</source>
         <translation>සෘජුකෝණාස්‍රය</translation>
     </message>
     <message>
-        <location line="+1"/>
+        <location line="+0"/>
         <source>Ellipse</source>
         <translation>ඉලිප්සය</translation>
     </message>
@@ -4103,37 +4155,157 @@
         <translation>තරුව</translation>
     </message>
     <message>
-        <location line="+1"/>
+        <location line="+0"/>
         <source>Heart</source>
         <translation>හදවත</translation>
     </message>
     <message>
-        <location line="+1"/>
+        <location line="+0"/>
         <source>Bars</source>
         <translation>තීරු (Bars)</translation>
     </message>
     <message>
         <location line="+1"/>
-        <source>Freeform</source>
-        <translation>නිදහස් හැඩය (Freeform)</translation>
+        <source>Polygon</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+19"/>
+        <source>Combines by</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+11"/>
+        <source>Revealing</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Cutting out</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Trimming</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location line="+3"/>
-        <source>Shape used to cut out this clip</source>
-        <translation>මෙම ක්ලිපය වෙන් කිරීමට භාවිත කළ හැඩතලය</translation>
+        <source>How this cutout combines with the ones on lower lanes</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+14"/>
-        <source>Remove cutout</source>
-        <translation>Cutout ඉවත් කරන්න</translation>
+        <location line="+7"/>
+        <source>Done editing in preview</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+53"/>
-        <source>Mask changed</source>
-        <translation>ආවරණය (Mask) වෙනස් විය</translation>
+        <location line="+1"/>
+        <source>Edit in preview</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+15"/>
+        <location line="+8"/>
+        <source>Hide cutout view</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Show cutout view</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Show what the cutouts cover, in black and white. Preview only — exports are unaffected.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+13"/>
+        <source>Center X</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Center Y</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Width</source>
+        <translation type="unfinished">පළල</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Height</source>
+        <translation type="unfinished">උස</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Rotation</source>
+        <translation type="unfinished">භ්‍රමණය</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Feather</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+61"/>
+        <source>Fit</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+9"/>
+        <source>Stretch</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Fit inside</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Fill</source>
+        <translation type="unfinished">පිරවුම (Fill)</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>How the file is sized into the cutout&apos;s box</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <source>Coverage from</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+9"/>
+        <source>Brightness</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Transparency</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Brightness suits black-and-white mattes; transparency suits a cut-out PNG</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+11"/>
+        <source>Loop</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+16"/>
+        <source>Delete cutout</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="-79"/>
         <source>Invert</source>
         <translation>ප්‍රතිලෝම කරන්න (Invert)</translation>
     </message>
@@ -4312,7 +4484,7 @@
         <translation>වත්මන් වේලාවේ ක්ලිපයක් නැත</translation>
     </message>
     <message>
-        <location line="+55"/>
+        <location line="+70"/>
         <source>Seek</source>
         <translation>සොයන්න (Seek)</translation>
     </message>
@@ -4365,7 +4537,17 @@
         <translation>තත් 1ක් ඉදිරියට පනින්න · තත් 5ක් සඳහා Shift · තත් 10ක් සඳහා Ctrl</translation>
     </message>
     <message>
-        <location line="+23"/>
+        <location line="+17"/>
+        <source>Cutout view</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Showing what the cutouts cover. Exports are unaffected. Click to go back to the picture.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+17"/>
         <source>Preview zoom — Ctrl+scroll over the preview to zoom, middle-drag to pan. Click to reset to 100%.</source>
         <translation>පෙරදසුන් විශාලනය — විශාලනය කිරීමට පෙරදසුන මත Ctrl+scroll කරන්න, දසුන චලනය කිරීමට මැද බොත්තමෙන් අදින්න. 100% වෙත යළි සැකසීමට ක්ලික් කරන්න.</translation>
     </message>
@@ -4446,7 +4628,7 @@ Quality: තථ්‍ය කාලයට වඩා සෙමින්, ශබ්
 <context>
     <name>Project</name>
     <message>
-        <location filename="../src/core/Project.cpp" line="+852"/>
+        <location filename="../src/core/Project.cpp" line="+1012"/>
         <source>This project was saved by a newer version of Drift (project format %1; this build reads up to %2).</source>
         <translation>මෙම ව්‍යාපෘතිය Drift හි නව අනුවාදයකින් සුරකින ලද්දකි (ව්‍යාපෘති ආකෘතිය %1; මෙම සංස්කරණය කියවන්නේ %2 දක්වා පමණි).</translation>
     </message>
@@ -7183,7 +7365,7 @@ Quality: තථ්‍ය කාලයට වඩා සෙමින්, ශබ්
         <translation>%1 (අක්‍රියයි)</translation>
     </message>
     <message>
-        <location line="+352"/>
+        <location line="+356"/>
         <source>Subtitles</source>
         <translation>උපසිරැසි</translation>
     </message>
@@ -7255,9 +7437,87 @@ Quality: තථ්‍ය කාලයට වඩා සෙමින්, ශබ්
     </message>
 </context>
 <context>
+    <name>TimelineMaskItem</name>
+    <message>
+        <location filename="../src/qml/components/timeline/TimelineMaskItem.qml" line="+52"/>
+        <source>Rectangle</source>
+        <translation type="unfinished">සෘජුකෝණාස්‍රය</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Ellipse</source>
+        <translation type="unfinished">ඉලිප්සය</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Star</source>
+        <translation type="unfinished">තරුව</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Heart</source>
+        <translation type="unfinished">හදවත</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Bars</source>
+        <translation type="unfinished">තීරු (Bars)</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Polygon</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+40"/>
+        <source>%1 · %2. Drag to move, drag an edge to retime.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>cuts out</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>trims</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>reveals</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+28"/>
+        <source>Move cutout</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+30"/>
+        <source>Disable cutout</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Enable cutout</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+10"/>
+        <source>Delete cutout</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+33"/>
+        <source>Trim cutout</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>TimelinePanel</name>
     <message>
-        <location filename="../src/qml/TimelinePanel.qml" line="+703"/>
+        <location filename="../src/qml/TimelinePanel.qml" line="+720"/>
         <source>Add new track</source>
         <translation>නව ට්‍රැකයක් එක් කරන්න</translation>
     </message>
@@ -7297,7 +7557,7 @@ Quality: තථ්‍ය කාලයට වඩා සෙමින්, ශබ්
         <translation>නව ට්‍රැකය</translation>
     </message>
     <message>
-        <location line="+818"/>
+        <location line="+891"/>
         <source>Rename bookmark</source>
         <translation>පොත් සලකුණේ නම වෙනස් කරන්න</translation>
     </message>
@@ -7537,12 +7797,12 @@ Quality: තථ්‍ය කාලයට වඩා සෙමින්, ශබ්
     </message>
     <message>
         <location line="+1"/>
-        <location line="+358"/>
+        <location line="+394"/>
         <source>Delete track</source>
         <translation>ට්‍රැකය මකන්න</translation>
     </message>
     <message numerus="yes">
-        <location line="-341"/>
+        <location line="-377"/>
         <source>This removes the track and its %n clips. You can undo afterwards.</source>
         <translation>
             <numerusform>මෙමඟින් ට්‍රැකය සහ එහි ඇති ක්ලිප් %n ඉවත් කෙරේ. පසුව ඔබට එය අහෝසි කළ හැක.</numerusform>
@@ -7621,7 +7881,22 @@ Quality: තථ්‍ය කාලයට වඩා සෙමින්, ශබ්
         <translation>තරංග ආකෘතිය (Waveform) පෙන්වන්න</translation>
     </message>
     <message>
-        <location line="+8"/>
+        <location line="+12"/>
+        <source>Add rectangle cutout</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+11"/>
+        <source>Add ellipse cutout</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+11"/>
+        <source>Add polygon cutout</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+10"/>
         <source>Reset row height</source>
         <translation>පේළි උස යළි සකසන්න</translation>
     </message>

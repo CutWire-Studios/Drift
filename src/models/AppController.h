@@ -632,6 +632,9 @@ public:
     // Rows the lane needs to draw, or 0 when the track has no cutouts and shows no lane at all.
     Q_INVOKABLE int trackMaskLaneCount(int trackIndex) const;
     Q_INVOKABLE void setTrackMaskAt(int trackIndex, int maskIndex, const QVariantMap &mask);
+    // MCP `set_mask`: the tool is still clip-addressed, so this writes a cutout on the
+    // track that spans `clipIndex`. Shape none / omitted removes that covering cutout.
+    void setClipMask(int trackIndex, int clipIndex, const QVariantMap &mask);
     Q_INVOKABLE void previewSetTrackMaskAt(int trackIndex, int maskIndex, const QVariantMap &mask);
     // Returns the new cutout's index, or -1 when the track cannot take one.
     Q_INVOKABLE int addTrackMask(int trackIndex, const QString &shape);
