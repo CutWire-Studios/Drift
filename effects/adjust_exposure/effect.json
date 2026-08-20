@@ -1,0 +1,34 @@
+{
+  "id": "adjust.exposure",
+  "displayName": "Exposure",
+  "category": "color",
+  "order": 5,
+  "parameters": [
+    {
+      "identifier": "exposure",
+      "displayName": "Stops",
+      "type": "float",
+      "minValue": -3,
+      "maxValue": 3,
+      "defaultValue": 0
+    }
+  ],
+  "backend": "gpu",
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture"
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  }
+}

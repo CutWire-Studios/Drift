@@ -1,0 +1,34 @@
+{
+  "id": "adjust.blacks",
+  "displayName": "Blacks",
+  "category": "color",
+  "order": 28,
+  "parameters": [
+    {
+      "identifier": "blacks",
+      "displayName": "Amount",
+      "type": "float",
+      "minValue": -1,
+      "maxValue": 1,
+      "defaultValue": 0
+    }
+  ],
+  "backend": "gpu",
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture"
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  }
+}
