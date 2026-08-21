@@ -856,38 +856,38 @@
     </message>
     <message>
         <source>Angle %1</source>
-        <translation type="unfinished"></translation>
+        <translation>කෝණය %1</translation>
     </message>
     <message>
         <source>Set up multicam</source>
-        <translation type="unfinished"></translation>
+        <translation>බහු කැමරා සකසන්න</translation>
     </message>
     <message numerus="yes">
         <source>Multicam ready: %n camera(s) lined up at the start. Drag a clip to adjust its sync, then pick a shot.</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>බහු කැමරාව සූදානම්: %n කැමරාව ආරම්භයේ පෙළගස්වා ඇත. එහි සමමුහුර්තකරණය සකස් කිරීමට ක්ලිප් එකක් ඇදගෙන යන්න, ඉන්පසු ඡායාරූපයක් තෝරන්න.</numerusform>
+            <numerusform>බහු කැමරාව සූදානම්: %n කැමරා ආරම්භයේ පෙළගස්වා ඇත. එහි සමමුහුර්තකරණය සකස් කිරීමට ක්ලිප් එකක් ඇදගෙන යන්න, ඉන්පසු ඡායාරූපයක් තෝරන්න.</numerusform>
         </translation>
     </message>
     <message>
         <source>Select at least two video clips on different tracks.</source>
-        <translation type="unfinished"></translation>
+        <translation>විවිධ ධාවන පථවල අවම වශයෙන් වීඩියෝ ක්ලිප් දෙකක්වත් තෝරන්න.</translation>
     </message>
     <message>
         <source>That angle has nothing at the current time.</source>
-        <translation type="unfinished"></translation>
+        <translation>ඒ කෝණයට වත්මන් කාලයේ කිසිවක් නැත.</translation>
     </message>
     <message>
         <source>Too close to the edge of the shot to cut here.</source>
-        <translation type="unfinished"></translation>
+        <translation>මෙතන කපන්න බැරි තරම් දර්ශනවල කෙළවරට ළඟයි.</translation>
     </message>
     <message>
         <source>Save multicam as separate tracks</source>
-        <translation type="unfinished"></translation>
+        <translation>බහු කැමරාව වෙනම පීලි ලෙස සුරකින්න</translation>
     </message>
     <message>
         <source>Save combined multicam</source>
-        <translation type="unfinished"></translation>
+        <translation>ඒකාබද්ධ බහු කැමරාව සුරකින්න</translation>
     </message>
     <message>
         <source>Cutting out subject…</source>
@@ -899,7 +899,7 @@
     </message>
     <message>
         <source>Already looking for scenes</source>
-        <translation type="unfinished"></translation>
+        <translation>දැනටමත් දර්ශන සොයමින් සිටී</translation>
     </message>
     <message>
         <source>Select a video clip to find scenes in</source>
