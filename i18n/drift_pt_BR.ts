@@ -1920,7 +1920,7 @@
     </message>
     <message>
         <source>This project uses &quot;%1&quot;, which isn’t installed — it won’t show. Open Extras to install it.</source>
-        <translation>Este projeto usa "%1", que não está instalado — ele não vai aparecer. Abra Extras para instalar.</translation>
+        <translation>Este projeto usa &quot;%1&quot;, que não está instalado — ele não vai aparecer. Abra Extras para instalar.</translation>
     </message>
     <message>
         <source>This project uses %1 effects or transitions that aren’t installed (%2%3) — they won’t show. Open Extras to install them.</source>
