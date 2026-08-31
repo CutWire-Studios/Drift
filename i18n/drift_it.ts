@@ -2826,19 +2826,37 @@
     </message>
     <message>
         <source>Folder created</source>
-        <translation type="unfinished"></translation>
+        <translation>Cartella creata</translation>
     </message>
     <message>
         <source>Folder renamed</source>
-        <translation type="unfinished"></translation>
+        <translation>Cartella rinominata</translation>
     </message>
     <message>
         <source>Folder deleted</source>
-        <translation type="unfinished"></translation>
+        <translation>Cartella eliminata</translation>
     </message>
     <message>
         <source>Media moved</source>
-        <translation type="unfinished"></translation>
+        <translation>Elemento multimediale spostato</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n items removed</source>
+        <translation>
+            <numerusform>%n elemento rimosso</numerusform>
+            <numerusform>%n elementi rimossi</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n items moved</source>
+        <translation>
+            <numerusform>%n elemento spostato</numerusform>
+            <numerusform>%n elementi spostati</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Clips added</source>
+        <translation>Clip aggiunte</translation>
     </message>
 </context>
 <context>
@@ -2945,13 +2963,6 @@
         <translation>
             <numerusform>Impossibile importare %n file selezionato.</numerusform>
             <numerusform>Impossibile importare nessuno dei %n file selezionati.</numerusform>
-        </translation>
-    </message>
-    <message numerus="yes">
-        <source>“%1” is still used by %n clips on the timeline.</source>
-        <translation>
-            <numerusform>“%1” è ancora utilizzato da %n clip sulla timeline.</numerusform>
-            <numerusform>“%1” è ancora utilizzato da %n clip sulla timeline.</numerusform>
         </translation>
     </message>
     <message numerus="yes">
@@ -3139,31 +3150,60 @@
     </message>
     <message>
         <source>New folder</source>
-        <translation type="unfinished"></translation>
+        <translation>Nuova cartella</translation>
     </message>
     <message>
         <source>Create</source>
-        <translation type="unfinished">Crea</translation>
+        <translation>Crea</translation>
     </message>
     <message>
         <source>Folder name</source>
-        <translation type="unfinished"></translation>
+        <translation>Nome della cartella</translation>
     </message>
     <message>
         <source>Rename folder</source>
-        <translation type="unfinished"></translation>
+        <translation>Rinomina cartella</translation>
     </message>
     <message>
         <source>Move to folder</source>
-        <translation type="unfinished"></translation>
+        <translation>Sposta nella cartella</translation>
     </message>
     <message>
         <source>New Folder</source>
-        <translation type="unfinished"></translation>
+        <translation>Nuova cartella</translation>
     </message>
     <message>
         <source>Create a new folder here</source>
-        <translation type="unfinished"></translation>
+        <translation>Crea una nuova cartella qui</translation>
+    </message>
+    <message>
+        <source>“%1” is still used by clips on the timeline.</source>
+        <translation>“%1” è ancora utilizzato da clip nella timeline.</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n of the selected items are still used by clips on the timeline.</source>
+        <translation>
+            <numerusform>%n degli elementi selezionati è ancora utilizzato da clip nella timeline.</numerusform>
+            <numerusform>%n degli elementi selezionati sono ancora utilizzati da clip nella timeline.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n items</source>
+        <translation>
+            <numerusform>%n elemento</numerusform>
+            <numerusform>%n elementi</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Remove these items?</source>
+        <translation>Rimuovere questi elementi?</translation>
+    </message>
+    <message numerus="yes">
+        <source>Removed %n items.</source>
+        <translation>
+            <numerusform>%n elemento rimosso.</numerusform>
+            <numerusform>%n elementi rimossi.</numerusform>
+        </translation>
     </message>
 </context>
 <context>
@@ -3393,7 +3433,7 @@
     <name>BinBreadcrumb</name>
     <message>
         <source>Media</source>
-        <translation type="unfinished">Elementi multimediali</translation>
+        <translation>Elementi multimediali</translation>
     </message>
 </context>
 <context>
@@ -5010,23 +5050,48 @@
     </message>
     <message>
         <source>Move to folder…</source>
-        <translation type="unfinished"></translation>
+        <translation>Sposta nella cartella…</translation>
     </message>
     <message>
         <source>This folder is empty</source>
-        <translation type="unfinished"></translation>
+        <translation>Questa cartella è vuota</translation>
     </message>
     <message>
         <source>Drag media here, or import more.</source>
-        <translation type="unfinished"></translation>
+        <translation>Trascina qui gli elementi multimediali oppure importane altri.</translation>
     </message>
     <message>
         <source>Open</source>
-        <translation type="unfinished">Apri</translation>
+        <translation>Apri</translation>
     </message>
     <message>
         <source>Delete</source>
-        <translation type="unfinished">Elimina</translation>
+        <translation>Elimina</translation>
+    </message>
+    <message numerus="yes">
+        <source>Add %n items to timeline</source>
+        <translation>
+            <numerusform>Aggiungi %n elemento alla timeline</numerusform>
+            <numerusform>Aggiungi %n elementi alla timeline</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Add to timeline</source>
+        <translation>Aggiungi alla timeline</translation>
+    </message>
+    <message numerus="yes">
+        <source>Move %n items to folder…</source>
+        <translation>
+            <numerusform>Sposta %n elemento nella cartella…</numerusform>
+            <numerusform>Sposta %n elementi nella cartella…</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Remove %n items from project</source>
+        <translation>
+            <numerusform>Rimuovi %n elemento dal progetto</numerusform>
+            <numerusform>Rimuovi %n elementi dal progetto</numerusform>
+        </translation>
     </message>
 </context>
 <context>

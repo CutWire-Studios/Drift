@@ -2262,6 +2262,40 @@ bool AppController::removeAsset(int assetIndex)
     return true;
 }
 
+int AppController::removeAssets(const QStringList &assetIds)
+{
+    if (!m_assetLibrary || assetIds.isEmpty())
+        return 0;
+
+    // Refuse the whole batch if any id is still referenced by a clip — checked up front so
+    // this stays atomic (no partial removal) and holds even for a caller that bypasses the
+    // QML confirmation flow's own in-use check (AssetsPanel.qml's requestRemoveAsset).
+    for (const QString &id : assetIds) {
+        const int index = m_assetLibrary->indexOfId(id);
+        if (index >= 0 && clipCountForAsset(index) > 0)
+            return 0;
+    }
+
+    const drift::Project before = m_project;
+    int removed = 0;
+    for (const QString &id : assetIds) {
+        // Resolved fresh per id rather than upfront: removeAssetAt shifts every row after the
+        // one it removes, so an index captured before the loop started would drift out from
+        // under the ids that come after it.
+        const int index = m_assetLibrary->indexOfId(id);
+        if (index < 0)
+            continue;
+        if (m_assetLibrary->removeAssetAt(index))
+            ++removed;
+    }
+    if (removed == 0)
+        return 0;
+
+    setDraggingAssetIndex(-1);
+    pushProjectEdit(before, removed == 1 ? tr("Media removed") : tr("%n items removed", "", removed));
+    return removed;
+}
+
 bool AppController::renameAsset(int assetIndex, const QString &name)
 {
     if (!m_assetLibrary)
@@ -2363,6 +2397,27 @@ bool AppController::moveAssetToFolder(int assetIndex, const QString &folderId)
 
     pushProjectEdit(before, tr("Media moved"));
     return true;
+}
+
+int AppController::moveAssetsToFolder(const QStringList &assetIds, const QString &folderId)
+{
+    if (!m_assetLibrary || assetIds.isEmpty())
+        return 0;
+
+    const drift::Project before = m_project;
+    int moved = 0;
+    for (const QString &id : assetIds) {
+        const int index = m_assetLibrary->indexOfId(id);
+        if (index < 0)
+            continue;
+        if (m_assetLibrary->moveAssetToFolder(index, folderId))
+            ++moved;
+    }
+    if (moved == 0)
+        return 0;
+
+    pushProjectEdit(before, moved == 1 ? tr("Media moved") : tr("%n items moved", "", moved));
+    return moved;
 }
 
 bool AppController::replaceAssetSource(int assetIndex, const QUrl &url)
@@ -3555,6 +3610,75 @@ void AppController::addClipFromAsset(int assetIndex)
     pushProjectEdit(before, tr("Clip added"));
     finishEdit(tr("Clip added"));
     selectClip(trackIndex, track.clips.size() - 1);
+}
+
+void AppController::addClipsFromAssets(const QStringList &assetIds)
+{
+    if (!m_assetLibrary || assetIds.isEmpty())
+        return;
+
+    const drift::Project before = m_project;
+    // Advances by each clip's duration as it's placed, so the batch reads as one sequence
+    // rather than every clip landing at the playhead on top of each other. Shared across
+    // tracks: two clips of the same kind stay back to back; a kind change (video, then audio)
+    // still keeps its place in the sequence rather than resetting to the playhead.
+    drift::TimeUs cursor = m_playheadUs;
+    int lastTrackIndex = -1;
+    int lastClipIndex = -1;
+
+    for (const QString &id : assetIds) {
+        const int assetIndex = m_assetLibrary->indexOfId(id);
+        if (assetIndex < 0)
+            continue;
+
+        const QVariantMap asset = m_assetLibrary->assetAt(assetIndex);
+        if (asset.isEmpty())
+            continue;
+
+        const drift::ClipType clipType = drift::clipTypeFromString(asset.value(QStringLiteral("kind")).toString());
+        int trackIndex = drift::defaultTrackForClipType(m_project, clipType);
+        if (trackIndex < 0)
+            trackIndex = drift::ensureTrackForClipType(m_project, clipType, false);
+        if (trackIndex < 0)
+            continue;
+
+        drift::Track &track = m_project.tracks()[trackIndex];
+        if (!track.allowsClipType(clipType))
+            continue;
+
+        m_assetLibrary->ensureMedia(assetIndex);
+        const QString thumbnailPath = m_assetLibrary->thumbnailAt(assetIndex);
+        const QString filmstripPath = m_assetLibrary->filmstripAt(assetIndex);
+        const drift::TimeUs duration = clipDurationForAssetIndex(assetIndex);
+        const drift::TimeUs start =
+            drift::resolveClipStart(m_project, track, -1, cursor, duration, m_snapEnabled, cursor);
+
+        drift::Clip clip;
+        clip.id = QUuid::createUuid().toString(QUuid::WithoutBraces);
+        clip.assetId = m_assetLibrary->assetIdAt(assetIndex);
+        clip.type = clipType;
+        clip.name = asset.value(QStringLiteral("name")).toString();
+        clip.path = asset.value(QStringLiteral("path")).toString();
+        clip.thumbnailPath = thumbnailPath;
+        clip.filmstripPath = filmstripPath;
+        clip.timelineStart = start;
+        clip.timelineDuration = duration;
+        clip.srcIn = 0;
+        clip.srcOut = duration;
+        applyAssetLayout(clip, asset, m_project.width(), m_project.height());
+
+        track.clips.append(clip);
+        lastTrackIndex = trackIndex;
+        lastClipIndex = track.clips.size() - 1;
+        cursor = start + duration;
+    }
+
+    if (lastTrackIndex < 0)
+        return;
+
+    pushProjectEdit(before, tr("Clips added"));
+    finishEdit(tr("Clips added"));
+    selectClip(lastTrackIndex, lastClipIndex);
 }
 
 bool AppController::trackAcceptsAsset(int trackIndex, int assetIndex) const

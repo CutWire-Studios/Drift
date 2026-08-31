@@ -62,6 +62,10 @@ private slots:
     void importUnreadableUrlReportsFailed();
     void moveAssetToFolderAndUndo();
     void deleteBinFolderMovesChildrenAndUndo();
+    void removeAssetsIsOneUndoStep();
+    void removeAssetsRefusesBatchWithInUseAsset();
+    void moveAssetsToFolderIsOneUndoStep();
+    void addClipsFromAssetsPlacesThemSequentially();
     void moveTrackReordersAndRemapsSelection();
     void addTrackInsertsEmptyTrackByType();
     void projectPersistenceRoundTrip();
@@ -528,6 +532,154 @@ void EditorStateTest::deleteBinFolderMovesChildrenAndUndo()
     state.undo();
     QCOMPARE(state.binFolderModel()->count(), 2);
     QCOMPARE(library.assetAt(0).value(QStringLiteral("folderId")).toString(), childId);
+}
+
+void EditorStateTest::removeAssetsIsOneUndoStep()
+{
+    AssetLibrary library;
+    AppController state(&library);
+
+    for (int i = 0; i < 3; ++i) {
+        drift::MediaAsset asset;
+        asset.id = QStringLiteral("asset-%1").arg(i);
+        asset.name = QStringLiteral("clip-%1.mp4").arg(i);
+        asset.path = QStringLiteral("/tmp/clip-%1.mp4").arg(i);
+        asset.kind = drift::MediaKind::Video;
+        state.project()->assets().insert(asset.id, asset);
+        state.project()->assetOrder().append(asset.id);
+    }
+    library.syncToProject();
+    QCOMPARE(library.count(), 3);
+
+    // Removed out of position order deliberately — removeAssets must resolve each id fresh
+    // rather than trusting indices captured before earlier removals shifted the rest down.
+    const int removed = state.removeAssets({QStringLiteral("asset-2"), QStringLiteral("asset-0")});
+    QCOMPARE(removed, 2);
+    QCOMPARE(library.count(), 1);
+    QCOMPARE(library.assetAt(0).value(QStringLiteral("id")).toString(), QStringLiteral("asset-1"));
+
+    // One undo step restores both, not one step per asset.
+    state.undo();
+    QCOMPARE(library.count(), 3);
+}
+
+void EditorStateTest::removeAssetsRefusesBatchWithInUseAsset()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    drift::Project &project = *state.project();
+
+    for (int i = 0; i < 3; ++i) {
+        drift::MediaAsset asset;
+        asset.id = QStringLiteral("asset-%1").arg(i);
+        asset.name = QStringLiteral("clip-%1.mp4").arg(i);
+        asset.path = QStringLiteral("/tmp/clip-%1.mp4").arg(i);
+        asset.kind = drift::MediaKind::Video;
+        project.assets().insert(asset.id, asset);
+        project.assetOrder().append(asset.id);
+    }
+
+    // asset-1 is still referenced by a clip on the timeline.
+    drift::Clip clip;
+    clip.id = QStringLiteral("clip-0");
+    clip.assetId = QStringLiteral("asset-1");
+    clip.type = drift::ClipType::Video;
+    clip.timelineStart = 0;
+    clip.timelineDuration = drift::secondsToUs(2.0);
+    drift::Track track{.type = drift::TrackType::Video};
+    track.clips.append(clip);
+    project.tracks().append(track);
+    library.syncToProject();
+    QCOMPARE(library.count(), 3);
+
+    // One in-use id anywhere in the batch must refuse the whole removal, not just skip
+    // that one id — otherwise a caller that bypasses the QML confirmation flow's own
+    // in-use check (AssetsPanel.qml's requestRemoveAsset) could orphan the clip above.
+    const int removed = state.removeAssets(
+        {QStringLiteral("asset-0"), QStringLiteral("asset-1"), QStringLiteral("asset-2")});
+    QCOMPARE(removed, 0);
+    QCOMPARE(library.count(), 3);
+}
+
+void EditorStateTest::moveAssetsToFolderIsOneUndoStep()
+{
+    AssetLibrary library;
+    AppController state(&library);
+
+    const QString folderId = state.createBinFolder(QStringLiteral("B-Roll"), QString());
+    for (int i = 0; i < 2; ++i) {
+        drift::MediaAsset asset;
+        asset.id = QStringLiteral("asset-%1").arg(i);
+        asset.name = QStringLiteral("clip-%1.mp4").arg(i);
+        asset.path = QStringLiteral("/tmp/clip-%1.mp4").arg(i);
+        asset.kind = drift::MediaKind::Video;
+        state.project()->assets().insert(asset.id, asset);
+        state.project()->assetOrder().append(asset.id);
+    }
+    library.syncToProject();
+
+    const int moved = state.moveAssetsToFolder(
+        {QStringLiteral("asset-0"), QStringLiteral("asset-1")}, folderId);
+    QCOMPARE(moved, 2);
+    QCOMPARE(library.assetAt(0).value(QStringLiteral("folderId")).toString(), folderId);
+    QCOMPARE(library.assetAt(1).value(QStringLiteral("folderId")).toString(), folderId);
+
+    state.undo();
+    QCOMPARE(library.assetAt(0).value(QStringLiteral("folderId")).toString(), QString());
+    QCOMPARE(library.assetAt(1).value(QStringLiteral("folderId")).toString(), QString());
+}
+
+void EditorStateTest::addClipsFromAssetsPlacesThemSequentially()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    state.setPlayheadSeconds(0.0);
+
+    drift::MediaAsset first;
+    first.id = QStringLiteral("asset-0");
+    first.name = QStringLiteral("first.mp4");
+    first.path = QStringLiteral("/tmp/first.mp4");
+    first.kind = drift::MediaKind::Video;
+    first.durationUs = drift::secondsToUs(4.0);
+    state.project()->assets().insert(first.id, first);
+    state.project()->assetOrder().append(first.id);
+
+    drift::MediaAsset second;
+    second.id = QStringLiteral("asset-1");
+    second.name = QStringLiteral("second.mp4");
+    second.path = QStringLiteral("/tmp/second.mp4");
+    second.kind = drift::MediaKind::Video;
+    second.durationUs = drift::secondsToUs(2.0);
+    state.project()->assets().insert(second.id, second);
+    state.project()->assetOrder().append(second.id);
+    library.syncToProject();
+
+    state.addClipsFromAssets({QStringLiteral("asset-0"), QStringLiteral("asset-1")});
+
+    // Both land on the same default video track, back to back in the order given — not both
+    // sitting at the playhead on top of each other.
+    int videoTrack = -1;
+    for (int i = 0; i < state.project()->tracks().size(); ++i) {
+        if (state.project()->tracks().at(i).clips.size() == 2) {
+            videoTrack = i;
+            break;
+        }
+    }
+    QVERIFY(videoTrack >= 0);
+    const drift::Track &track = state.project()->tracks().at(videoTrack);
+    QCOMPARE(track.clips[0].assetId, QStringLiteral("asset-0"));
+    QCOMPARE(track.clips[1].assetId, QStringLiteral("asset-1"));
+    QCOMPARE(track.clips[0].timelineStart, drift::TimeUs(0));
+    QCOMPARE(track.clips[1].timelineStart, track.clips[0].timelineEnd());
+
+    // One undo step removes both clips added by the batch.
+    state.undo();
+    bool anyClipsLeft = false;
+    for (const drift::Track &t : state.project()->tracks()) {
+        if (!t.clips.isEmpty())
+            anyClipsLeft = true;
+    }
+    QVERIFY(!anyClipsLeft);
 }
 
 void EditorStateTest::moveTrackReordersAndRemapsSelection()
