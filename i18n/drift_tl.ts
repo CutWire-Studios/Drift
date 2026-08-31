@@ -13,18 +13,18 @@
     </message>
     <message>
         <source>NVIDIA graphics (faster)</source>
-        <translation type="unfinished"></translation>
+        <translation>Grapikong NVIDIA (mas mabilis)</translation>
     </message>
     <message>
         <source>Graphics card (faster)</source>
-        <translation>Graphics card (mas mabilis)</translation>
+        <translation>Sistemang grapiko (mas mabilis)</translation>
     </message>
 </context>
 <context>
     <name>AddonManagerDialog</name>
     <message>
         <source>Extras</source>
-        <translation type="unfinished"></translation>
+        <translation>Dagdag</translation>
     </message>
     <message>
         <source>Close</source>
@@ -32,11 +32,11 @@
     </message>
     <message>
         <source>Remove this pack?</source>
-        <translation type="unfinished"></translation>
+        <translation>Gusto mo tangallin ang dagdag?</translation>
     </message>
     <message>
         <source>Remove</source>
-        <translation type="unfinished"></translation>
+        <translation>Tanggal</translation>
     </message>
     <message>
         <source>“%1” and its downloaded data will be deleted. You can install it again later.</source>
@@ -56,7 +56,7 @@
     </message>
     <message>
         <source>Audio FX</source>
-        <translation type="unfinished"></translation>
+        <translation>Epektong audyo</translation>
     </message>
     <message>
         <source>Fonts</source>
