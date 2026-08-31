@@ -210,7 +210,8 @@ PreviewVideoFrame ClipReaderPool::readPreviewVideoFrame(const QString &path, qui
 
 int ClipReaderPool::readAudioInterleaved(const QString &path, quint64 streamId,
                                          drift::TimeUs sourceStartUs, int sampleCount,
-                                         int outputSampleRate, float *interleavedStereoOut)
+                                         int outputSampleRate, float *interleavedStereoOut,
+                                         int audioStreamOrdinal)
 {
     if (path.isEmpty() || !interleavedStereoOut || sampleCount <= 0)
         return 0;
@@ -227,7 +228,8 @@ int ClipReaderPool::readAudioInterleaved(const QString &path, quint64 streamId,
                               Q_RETURN_ARG(int, written),
                               Q_ARG(quint64, streamId), Q_ARG(drift::TimeUs, sourceStartUs),
                               Q_ARG(int, sampleCount), Q_ARG(int, outputSampleRate),
-                              Q_ARG(float *, interleavedStereoOut));
+                              Q_ARG(float *, interleavedStereoOut),
+                              Q_ARG(int, audioStreamOrdinal));
 
     QMutexLocker lock(&m_mutex);
     --entry->inFlight;

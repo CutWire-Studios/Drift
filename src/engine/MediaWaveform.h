@@ -23,14 +23,14 @@ public:
     // Decodes the whole file, so cost scales with duration — prefer peaksForRange() for
     // anything that only needs part of a long source.
     static Dense densePeaks(const QString &sourcePath, int peaksPerSecond = 100,
-                            int maxPeaks = 1 << 20);
+                            int maxPeaks = 1 << 20, int streamOrdinal = 0);
 
     // Peaks for [startSeconds, endSeconds) only. Seeks first, so the cost is proportional to
     // the span asked for rather than to the file length. Returns exactly
     // ceil((end - start) * peaksPerSecond) values, or empty if nothing decoded (past the end
     // of the media, no audio stream, unreadable file).
     static QVector<float> peaksForRange(const QString &sourcePath, double startSeconds,
-                                        double endSeconds, int peaksPerSecond);
+                                        double endSeconds, int peaksPerSecond, int streamOrdinal = 0);
 
     // Writes up to `maxFrames` frames of interleaved-stereo float PCM starting `frameOffset`
     // frames into the span, and returns how many it wrote. Return 0 to stop early.

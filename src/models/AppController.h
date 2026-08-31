@@ -848,6 +848,11 @@ public:
     Q_INVOKABLE void mergeSelectedClips();
     Q_INVOKABLE bool canSeparateAudioSelection() const;
     Q_INVOKABLE void separateAudioFromSelection();
+    Q_INVOKABLE void separateAllAudioTracks(int trackIndex, int clipIndex);
+    Q_INVOKABLE void separateAllAudioTracksFromSelection();
+    Q_INVOKABLE QVariantList clipAudioStreams(int trackIndex, int clipIndex) const;
+    Q_INVOKABLE int clipAudioStreamCount(int trackIndex, int clipIndex) const;
+    Q_INVOKABLE void setClipAudioStreamIndex(int trackIndex, int clipIndex, int streamIndex);
     Q_INVOKABLE bool canUnlinkSelection() const;
     Q_INVOKABLE void unlinkSelectedClips();
     Q_INVOKABLE void setClipMask(int trackIndex, int clipIndex, const QVariantMap &mask);
@@ -1039,7 +1044,8 @@ public:
     // Peaks for just the source window [startSeconds, startSeconds + durSeconds), reduced to
     // `buckets` values, so a clip only ever asks for as many peaks as it has visible pixels.
     Q_INVOKABLE QVariantList waveformPeaksRange(const QString &path, double startSeconds,
-                                                double durSeconds, int buckets) const;
+                                                double durSeconds, int buckets,
+                                                int audioStreamIndex = 0) const;
     // title / author / description / createdAt / modifiedAt, for the properties dialog.
     QVariantMap projectMetadata() const;
     Q_INVOKABLE void setProjectMetadata(const QString &title, const QString &author,

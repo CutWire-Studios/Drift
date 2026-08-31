@@ -149,7 +149,7 @@ constexpr double kButterQ1 = 0.54119610;
 constexpr double kButterQ2 = 1.30656296;
 
 bool openAudioDecoder(const QString &absolutePath, AVFormatContext **fmtOut, int *streamIndexOut,
-                      AVCodecContext **codecCtxOut)
+                      AVCodecContext **codecCtxOut, int streamOrdinal = 0)
 {
     AVFormatContext *fmt = nullptr;
     if (avformat_open_input(&fmt, absolutePath.toUtf8().constData(), nullptr, nullptr) < 0)
@@ -160,10 +160,23 @@ bool openAudioDecoder(const QString &absolutePath, AVFormatContext **fmtOut, int
     }
 
     int audioStreamIndex = -1;
+    int audioCount = 0;
     for (unsigned i = 0; i < fmt->nb_streams; ++i) {
         if (fmt->streams[i]->codecpar->codec_type == AVMEDIA_TYPE_AUDIO) {
-            audioStreamIndex = static_cast<int>(i);
-            break;
+            if (audioCount == streamOrdinal) {
+                audioStreamIndex = static_cast<int>(i);
+                break;
+            }
+            ++audioCount;
+        }
+    }
+
+    if (audioStreamIndex < 0 && audioCount > 0) {
+        for (unsigned i = 0; i < fmt->nb_streams; ++i) {
+            if (fmt->streams[i]->codecpar->codec_type == AVMEDIA_TYPE_AUDIO) {
+                audioStreamIndex = static_cast<int>(i);
+                break;
+            }
         }
     }
 
@@ -196,7 +209,7 @@ bool openAudioDecoder(const QString &absolutePath, AVFormatContext **fmtOut, int
 } // namespace
 
 MediaWaveform::Dense MediaWaveform::densePeaks(const QString &sourcePath, int peaksPerSecond,
-                                               int maxPeaks)
+                                               int maxPeaks, int streamOrdinal)
 {
     Dense result;
     if (peaksPerSecond <= 0 || maxPeaks <= 0)
@@ -209,7 +222,7 @@ MediaWaveform::Dense MediaWaveform::densePeaks(const QString &sourcePath, int pe
     AVFormatContext *fmt = nullptr;
     int audioStreamIndex = -1;
     AVCodecContext *codecCtx = nullptr;
-    if (!openAudioDecoder(absolutePath, &fmt, &audioStreamIndex, &codecCtx))
+    if (!openAudioDecoder(absolutePath, &fmt, &audioStreamIndex, &codecCtx, streamOrdinal))
         return result;
 
     const AVStream *stream = fmt->streams[audioStreamIndex];
@@ -350,7 +363,7 @@ MediaWaveform::Dense MediaWaveform::densePeaks(const QString &sourcePath, int pe
 }
 
 QVector<float> MediaWaveform::peaksForRange(const QString &sourcePath, double startSeconds,
-                                            double endSeconds, int peaksPerSecond)
+                                            double endSeconds, int peaksPerSecond, int streamOrdinal)
 {
     if (peaksPerSecond <= 0 || endSeconds <= startSeconds)
         return {};
@@ -362,7 +375,7 @@ QVector<float> MediaWaveform::peaksForRange(const QString &sourcePath, double st
     AVFormatContext *fmt = nullptr;
     int audioStreamIndex = -1;
     AVCodecContext *codecCtx = nullptr;
-    if (!openAudioDecoder(absolutePath, &fmt, &audioStreamIndex, &codecCtx))
+    if (!openAudioDecoder(absolutePath, &fmt, &audioStreamIndex, &codecCtx, streamOrdinal))
         return {};
 
     AVStream *stream = fmt->streams[audioStreamIndex];

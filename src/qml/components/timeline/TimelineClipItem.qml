@@ -575,7 +575,8 @@ Item {
                         clipItem.clipData.path,
                         (clipItem.clipData.inPoint || 0) + x * srcPerPx,
                         width * srcPerPx,
-                        Math.ceil(width))
+                        Math.ceil(width),
+                        clipItem.clipData.audioStreamIndex || 0)
                 }
 
                 onPeaksChanged: requestPaint()
@@ -804,6 +805,13 @@ Item {
                 // CapCut: only offer extract when the clip still has embedded audio.
                 visible: clipItem.trackType === "video" && EditorState.separateAudioAvailable
                 onTriggered: EditorState.separateAudioFromSelection()
+            }
+            ThemedMenuItem {
+                text: qsTr("Separate all audio tracks")
+                icon.name: Theme.icons.audioLines
+                visible: clipItem.trackType === "video" && EditorState.separateAudioAvailable
+                         && EditorState.clipAudioStreamCount(clipItem.trackIndex, clipItem.clipIndex) > 1
+                onTriggered: EditorState.separateAllAudioTracks(clipItem.trackIndex, clipItem.clipIndex)
             }
             ThemedMenuItem {
                 text: qsTr("Unlink")

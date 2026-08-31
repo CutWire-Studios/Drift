@@ -23,6 +23,12 @@ struct StreamInfo {
     // treated as real video.
     bool attachedPicture = false;
 
+    // Stream index in AVFormatContext
+    int streamIndex = 0;
+    int audioStreamOrdinal = 0; // 0-based index among audio streams
+    QString title;
+    QString language;
+
     // Audio-only fields.
     int sampleRate = 0;
     int channels = 0;
@@ -44,6 +50,7 @@ class MediaProbe
 {
 public:
     static MediaInfo probe(const QString &path);
+    static QList<StreamInfo> audioStreams(const QString &path);
 };
 
 struct AVStream;

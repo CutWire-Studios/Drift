@@ -26,13 +26,13 @@ WaveformBlockCache::WaveformBlockCache(QObject *parent)
 {
 }
 
-QString WaveformBlockCache::keyFor(const QString &sourcePath, int block)
+QString WaveformBlockCache::keyFor(const QString &sourcePath, int block, int streamOrdinal)
 {
-    return sourcePath + QLatin1Char('|') + QString::number(block);
+    return sourcePath + QLatin1Char('#') + QString::number(streamOrdinal) + QLatin1Char('|') + QString::number(block);
 }
 
 QVector<float> WaveformBlockCache::range(const QString &sourcePath, double startSeconds,
-                                         double durSeconds, int outCount)
+                                         double durSeconds, int outCount, int streamOrdinal)
 {
     if (sourcePath.isEmpty() || durSeconds <= 0.0 || outCount <= 0)
         return {};
@@ -52,11 +52,11 @@ QVector<float> WaveformBlockCache::range(const QString &sourcePath, double start
     bool queuedAny = false;
 
     for (int b = firstBlock; b <= lastBlock; ++b) {
-        const QString key = keyFor(sourcePath, b);
+        const QString key = keyFor(sourcePath, b, streamOrdinal);
         if (m_blocks.contains(key) || m_queued.contains(key))
             continue;
         m_queued.insert(key);
-        m_queue.append({sourcePath, b});
+        m_queue.append({sourcePath, b, streamOrdinal});
         queuedAny = true;
     }
 
@@ -70,7 +70,7 @@ QVector<float> WaveformBlockCache::range(const QString &sourcePath, double start
         const int b = static_cast<int>(g / kPeaksPerBlock);
         if (b != blockIndex) {
             blockIndex = b;
-            const auto it = m_blocks.constFind(keyFor(sourcePath, b));
+            const auto it = m_blocks.constFind(keyFor(sourcePath, b, streamOrdinal));
             block = it == m_blocks.constEnd() ? nullptr : &it.value();
         }
         if (!block)
@@ -94,7 +94,7 @@ QVector<float> WaveformBlockCache::range(const QString &sourcePath, double start
 
     if (queuedAny) {
         while (m_queue.size() > kMaxQueued) {
-            m_queued.remove(keyFor(m_queue.first().first, m_queue.first().second));
+            m_queued.remove(keyFor(m_queue.first().sourcePath, m_queue.first().block, m_queue.first().streamOrdinal));
             m_queue.removeFirst();
         }
         scheduleBatch();
@@ -122,14 +122,15 @@ void WaveformBlockCache::runBatch()
 
     // Newest first: that is what the viewport asked for most recently. Take a contiguous run
     // from there so the decode is one seek followed by a straight read.
-    const QString sourcePath = m_queue.last().first;
-    const int anchor = m_queue.last().second;
+    const QString sourcePath = m_queue.last().sourcePath;
+    const int anchor = m_queue.last().block;
+    const int streamOrdinal = m_queue.last().streamOrdinal;
 
     QSet<int> wanted;
     for (int i = m_queue.size() - 1; i >= 0 && wanted.size() < kBatchBlocks; --i) {
-        if (m_queue.at(i).first != sourcePath)
+        if (m_queue.at(i).sourcePath != sourcePath || m_queue.at(i).streamOrdinal != streamOrdinal)
             continue;
-        const int block = m_queue.at(i).second;
+        const int block = m_queue.at(i).block;
         if (block < anchor - kBatchBlocks || block > anchor + kBatchBlocks)
             continue;
         wanted.insert(block);
@@ -148,21 +149,21 @@ void WaveformBlockCache::runBatch()
     QList<int> requested;
     for (int block = first; block <= last; ++block) {
         requested.append(block);
-        m_queued.remove(keyFor(sourcePath, block));
+        m_queued.remove(keyFor(sourcePath, block, streamOrdinal));
     }
     for (int i = m_queue.size() - 1; i >= 0; --i) {
-        if (m_queue.at(i).first == sourcePath && m_queue.at(i).second >= first
-            && m_queue.at(i).second <= last)
+        if (m_queue.at(i).sourcePath == sourcePath && m_queue.at(i).streamOrdinal == streamOrdinal
+            && m_queue.at(i).block >= first && m_queue.at(i).block <= last)
             m_queue.removeAt(i);
     }
 
     m_busy = true;
     const double startSeconds = static_cast<double>(first) * kBlockSeconds;
     const double endSeconds = static_cast<double>(last + 1) * kBlockSeconds;
-    QThreadPool::globalInstance()->start([this, sourcePath, first, startSeconds, endSeconds,
+    QThreadPool::globalInstance()->start([this, sourcePath, first, streamOrdinal, startSeconds, endSeconds,
                                           requested] {
         const QVector<float> peaks =
-            MediaWaveform::peaksForRange(sourcePath, startSeconds, endSeconds, kPeaksPerSecond);
+            MediaWaveform::peaksForRange(sourcePath, startSeconds, endSeconds, kPeaksPerSecond, streamOrdinal);
 
         // Split the one decode back into per-block entries so panning reuses them piecemeal.
         QList<QVector<float>> blocks;
@@ -175,25 +176,25 @@ void WaveformBlockCache::runBatch()
 
         QMetaObject::invokeMethod(
             this,
-            [this, sourcePath, first, blocks, requested] {
-                applyBatch(sourcePath, first, blocks, requested);
+            [this, sourcePath, first, streamOrdinal, blocks, requested] {
+                applyBatch(sourcePath, first, streamOrdinal, blocks, requested);
             },
             Qt::QueuedConnection);
     });
 }
 
-void WaveformBlockCache::applyBatch(const QString &sourcePath, int firstBlock,
+void WaveformBlockCache::applyBatch(const QString &sourcePath, int firstBlock, int streamOrdinal,
                                     const QList<QVector<float>> &blocks, const QList<int> &requested)
 {
     m_busy = false;
 
     for (int i = 0; i < blocks.size(); ++i)
-        m_blocks.insert(keyFor(sourcePath, firstBlock + i), blocks.at(i));
+        m_blocks.insert(keyFor(sourcePath, firstBlock + i, streamOrdinal), blocks.at(i));
 
     // Blocks the decode never reached are past the end of the media (or unreadable). Store
     // them empty so they read as "decoded, nothing there" instead of being asked for forever.
     for (const int block : requested) {
-        const QString key = keyFor(sourcePath, block);
+        const QString key = keyFor(sourcePath, block, streamOrdinal);
         if (!m_blocks.contains(key))
             m_blocks.insert(key, {});
     }

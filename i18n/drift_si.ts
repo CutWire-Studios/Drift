@@ -2286,6 +2286,14 @@
         <translation>ශ්‍රව්‍ය වෙන් කරන ලදී</translation>
     </message>
     <message>
+        <source>All audio tracks separated</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Change audio track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Clips unlinked</source>
         <translation>ක්ලිප් විසන්ධි කරන ලදී</translation>
     </message>
@@ -3368,6 +3376,14 @@
     <message>
         <source>This clip has no audio track.</source>
         <translation>මෙම ක්ලිපයේ ශ්‍රව්‍ය ට්‍රැකයක් නැත.</translation>
+    </message>
+    <message>
+        <source>Audio track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Extract all audio tracks</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Noise</source>
@@ -7943,6 +7959,10 @@ If playback stutters, try another.</source>
     <message>
         <source>Separate audio</source>
         <translation>ශ්‍රව්‍ය වෙන් කරන්න</translation>
+    </message>
+    <message>
+        <source>Separate all audio tracks</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Unlink</source>

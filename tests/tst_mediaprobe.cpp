@@ -14,6 +14,7 @@ class TestMediaProbe : public QObject
 private slots:
     void missingFileFails();
     void readsDisplayMatrixRotation();
+    void multiTrackAudioProbing();
 };
 
 void TestMediaProbe::missingFileFails()
@@ -75,6 +76,44 @@ void TestMediaProbe::readsDisplayMatrixRotation()
         if (stream.type == StreamInfo::Type::Video)
             QCOMPARE(stream.rotationDegrees, 0);
     }
+}
+
+void TestMediaProbe::multiTrackAudioProbing()
+{
+    const QString ffmpeg = QStandardPaths::findExecutable(QStringLiteral("ffmpeg"));
+    if (ffmpeg.isEmpty())
+        QSKIP("ffmpeg not available to generate a multi-track test clip");
+
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+
+    const QString multiTrack = dir.filePath(QStringLiteral("multitrack.mkv"));
+    QProcess make;
+    make.start(ffmpeg,
+               {QStringLiteral("-y"),
+                QStringLiteral("-f"), QStringLiteral("lavfi"), QStringLiteral("-i"), QStringLiteral("color=c=black:s=64x32:r=25:d=1"),
+                QStringLiteral("-f"), QStringLiteral("lavfi"), QStringLiteral("-i"), QStringLiteral("sine=frequency=440:d=1"),
+                QStringLiteral("-f"), QStringLiteral("lavfi"), QStringLiteral("-i"), QStringLiteral("sine=frequency=880:d=1"),
+                QStringLiteral("-map"), QStringLiteral("0:v"),
+                QStringLiteral("-map"), QStringLiteral("1:a"),
+                QStringLiteral("-map"), QStringLiteral("2:a"),
+                QStringLiteral("-metadata:s:a:0"), QStringLiteral("title=Game Audio"),
+                QStringLiteral("-metadata:s:a:1"), QStringLiteral("title=Microphone"),
+                QStringLiteral("-c:v"), QStringLiteral("libx264"),
+                QStringLiteral("-c:a"), QStringLiteral("aac"),
+                multiTrack});
+    QVERIFY(make.waitForFinished(30000));
+    QCOMPARE(make.exitCode(), 0);
+
+    const MediaInfo info = MediaProbe::probe(multiTrack);
+    QVERIFY(info.ok);
+
+    const QList<StreamInfo> audio = MediaProbe::audioStreams(multiTrack);
+    QCOMPARE(audio.size(), 2);
+    QCOMPARE(audio[0].audioStreamOrdinal, 0);
+    QCOMPARE(audio[0].title, QStringLiteral("Game Audio"));
+    QCOMPARE(audio[1].audioStreamOrdinal, 1);
+    QCOMPARE(audio[1].title, QStringLiteral("Microphone"));
 }
 
 QTEST_MAIN(TestMediaProbe)

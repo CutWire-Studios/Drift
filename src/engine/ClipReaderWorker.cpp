@@ -22,16 +22,18 @@ void ClipReaderWorker::closePath()
 
 // Runs on the worker thread, so opening and closing readers here never blocks a decode request's
 // caller — the audio callback or the compositor — on an avformat operation.
-ClipReader *ClipReaderWorker::readerFor(quint64 streamId)
+ClipReader *ClipReaderWorker::readerFor(quint64 streamId, int audioStreamOrdinal)
 {
     auto it = m_readers.find(streamId);
     if (it == m_readers.end()) {
         if (m_path.isEmpty())
             return nullptr;
         auto reader = std::make_unique<ClipReader>();
-        if (!reader->open(m_path))
+        if (!reader->open(m_path, audioStreamOrdinal))
             return nullptr;
         it = m_readers.emplace(streamId, std::move(reader)).first;
+    } else if (it->second->audioStreamOrdinal() != audioStreamOrdinal) {
+        it->second->setAudioStreamOrdinal(audioStreamOrdinal);
     }
 
     std::erase(m_lru, streamId);
@@ -78,7 +80,7 @@ PreviewVideoFrame ClipReaderWorker::decodePreviewVideo(quint64 streamId, drift::
 }
 
 int ClipReaderWorker::decodeAudio(quint64 streamId, drift::TimeUs sourceStartUs, int sampleCount,
-                                  int outputSampleRate, float *interleavedStereoOut)
+                                  int outputSampleRate, float *interleavedStereoOut, int audioStreamOrdinal)
 {
     QMutexLocker lock(&m_mutex);
 
@@ -87,7 +89,7 @@ int ClipReaderWorker::decodeAudio(quint64 streamId, drift::TimeUs sourceStartUs,
             entry.second->invalidateAudioPosition();
     }
 
-    ClipReader *reader = readerFor(streamId);
+    ClipReader *reader = readerFor(streamId, audioStreamOrdinal);
     if (!reader)
         return 0;
     return reader->readAudioInterleaved(sourceStartUs, sampleCount, outputSampleRate,
