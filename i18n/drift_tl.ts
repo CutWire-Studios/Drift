@@ -52,7 +52,7 @@
     </message>
     <message>
         <source>Transitions</source>
-        <translation type="unfinished"></translation>
+        <translation>Pagbabagong-kalagayan</translation>
     </message>
     <message>
         <source>Audio FX</source>
