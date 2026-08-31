@@ -18,11 +18,16 @@ Item {
     property var assetVisibleFn: function(kind) { return true }
     readonly property string query: search.text.trim().toLowerCase()
 
+    // Emitted from the card/row context menu — adds the selected asset(s) to the timeline in
+    // selection order. The parent routes a single id to the existing single-asset add so that
+    // case behaves exactly as it always has; a multi-selection goes through the batch add.
+    signal addToTimelineRequested(var assetIds)
     // Emitted from the card/row context menu. Opens the preview/edit window.
     signal previewRequested(int assetIndex)
-    // Emitted from the card/row context menu. The parent owns the in-use
-    // check and the confirmation.
-    signal removeRequested(int assetIndex)
+    // Emitted from the card/row context menu. Carries every selected asset's id, not just the
+    // one clicked — see selectedAssetIds below. The parent owns the in-use check and the
+    // confirmation.
+    signal removeRequested(var assetIds)
     // Emitted from the card/row context menu. The parent owns the file picker.
     signal replaceRequested(int assetIndex)
     // Emitted from the card/row context menu. The parent owns the rename dialog.
@@ -32,11 +37,68 @@ Item {
     // Emitted when the empty-state action asks to import media.
     signal importRequested()
     // Emitted from the card/row context menu — the only way to move an asset into a folder;
-    // there is no drag-onto-a-folder-tile path on desktop or touch. The parent owns the
+    // there is no drag-onto-a-folder-tile path on desktop or touch. Carries every selected
+    // asset's id, not just the one clicked — see selectedAssetIds below. The parent owns the
     // folder-picker dialog.
-    signal moveToFolderRequested(int assetIndex)
+    signal moveToFolderRequested(var assetIds)
     // Emitted from a folder tile's context menu. The parent owns the rename dialog.
     signal folderRenameRequested(string folderId, string folderName)
+
+    // Multi-select, by asset id rather than position: assetIndex is a live row position that
+    // shifts on removal/reorder, so an id survives everything except the asset itself going
+    // away. Folders are never selectable — only individual media items are, per the request
+    // this was built for. Plain click replaces the selection with just that card; Ctrl/Cmd+click
+    // (Qt remaps ControlModifier to Cmd on macOS already, so no platform branch is needed) toggles
+    // one card in or out of it. Right-click (or touch's tap-for-menu) on a card already in the
+    // selection keeps the whole selection and extends the bulk menu items to it; on a card that
+    // isn't, it replaces the selection with just that card first, matching how the timeline's
+    // clip selection already treats a right-click (TimelineClipItem.qml).
+    property var selectedAssetIds: []
+
+    function isAssetSelected(assetId) {
+        return assetId.length > 0 && root.selectedAssetIds.indexOf(assetId) >= 0
+    }
+    function selectOnlyAsset(assetId) {
+        root.selectedAssetIds = [assetId]
+    }
+    function clearAssetSelection() {
+        root.selectedAssetIds = []
+    }
+    function toggleAssetSelection(assetId) {
+        const at = root.selectedAssetIds.indexOf(assetId)
+        if (at < 0) {
+            root.selectedAssetIds = root.selectedAssetIds.concat([assetId])
+        } else {
+            const next = root.selectedAssetIds.slice()
+            next.splice(at, 1)
+            root.selectedAssetIds = next
+        }
+    }
+    // Ensures `assetId` is part of the selection before a menu opens on it, without disturbing
+    // an existing multi-selection it's already a member of.
+    function ensureAssetSelected(assetId) {
+        if (!root.isAssetSelected(assetId))
+            root.selectOnlyAsset(assetId)
+    }
+
+    // Prunes ids that dropped out of view — removed, moved to a different folder, filtered out
+    // by search/kind, or the folder was navigated away from (combinedItems is scoped to the
+    // current folder, so leaving it empties out every id that was in it). Reassigning only when
+    // something actually changed avoids spamming dependents of selectedAssetIds on every
+    // unrelated combinedItems recompute.
+    onCombinedItemsChanged: {
+        if (root.selectedAssetIds.length === 0)
+            return
+        const present = {}
+        for (let i = 0; i < root.combinedItems.length; ++i) {
+            const item = root.combinedItems[i]
+            if (!item.isFolder)
+                present[item.assetId] = true
+        }
+        const pruned = root.selectedAssetIds.filter(id => present[id] === true)
+        if (pruned.length !== root.selectedAssetIds.length)
+            root.selectedAssetIds = pruned
+    }
 
     // Bumped on every project edit (rename, folder create/delete/reparent, move-to-folder,
     // undo/redo — anything that goes through pushProjectEdit) and on every async metadata
@@ -87,6 +149,7 @@ Item {
             items.push({
                 isFolder: true,
                 folderId: folder.id,
+                assetId: "",
                 name: folder.name,
                 assetIndex: -1,
                 kind: "",
@@ -109,6 +172,7 @@ Item {
             items.push({
                 isFolder: false,
                 folderId: "",
+                assetId: asset.id,
                 name: asset.name,
                 assetIndex: asset.assetIndex,
                 kind: asset.kind,
@@ -139,6 +203,7 @@ Item {
 
             required property bool isFolder
             required property string folderId
+            required property string assetId
             required property string name
             required property string kind
             required property string duration
@@ -147,6 +212,8 @@ Item {
             required property string thumbnailPath
             required property string filmstripPath
             required property int assetIndex
+
+            readonly property bool selected: !isFolder && root.isAssetSelected(assetId)
 
             // Lift on grab: dims and grows slightly, so the card reads as
             // picked up rather than just sitting there while a ghost moves.
@@ -195,7 +262,9 @@ Item {
                 radius: Theme.radiusSm
                 color: Theme.panelAccent
                 clip: true
-                border.width: cardHover.hovered ? Theme.borderWidth : 0
+                // Hover ring only here; the selection ring is a separate overlay
+                // (below) so it always paints on top of the thumbnail image.
+                border.width: (!cardRoot.selected && cardHover.hovered) ? Theme.borderWidth : 0
                 border.color: Theme.primary
                 scale: (!cardRoot.isFolder && cardHover.hovered) ? 1.03 : 1.0
 
@@ -311,6 +380,24 @@ Item {
                     }
                 }
 
+                // A dedicated overlay for the selection ring, painted above the
+                // thumbnail image and busy scrim (both earlier siblings) so it
+                // is never covered by them. Square corners on purpose — a
+                // rounded ring here reads chunkier than the thumbnail's own
+                // radius at this border width.
+                Rectangle {
+                    z: 2
+                    anchors.fill: parent
+                    radius: 0
+                    color: "transparent"
+                    border.width: cardRoot.selected ? Theme.clipSelectionRingWidth : 0
+                    border.color: Theme.primary
+
+                    Behavior on border.width {
+                        NumberAnimation { duration: Theme.durationFast; easing.type: Theme.easing }
+                    }
+                }
+
                 // Both handlers live on this child, not on the Column
                 // that owns the Drag attached property. With them on the
                 // Column, QDrag::exec() ungrabs the very item Drag.active
@@ -320,10 +407,21 @@ Item {
                 // property active", and the drag dies mid-flight.
                 // EffectBrowser and ShapesTab already nest them this way.
                 TapHandler {
+                    id: leftTap
                     acceptedButtons: Qt.LeftButton
                     // Touch keeps press-and-hold for the lift below — the menu
                     // is a tap there.
                     enabled: !Theme.touchUi && !assetDrag.active
+                    onTapped: {
+                        if (cardRoot.isFolder)
+                            return
+                        // Qt remaps ControlModifier to Cmd on macOS, so this is already the
+                        // right "system key" on every desktop platform without branching.
+                        if ((leftTap.point.modifiers & Qt.ControlModifier) !== 0)
+                            root.toggleAssetSelection(cardRoot.assetId)
+                        else
+                            root.selectOnlyAsset(cardRoot.assetId)
+                    }
                     onDoubleTapped: if (cardRoot.isFolder) EditorState.currentBinFolderId = cardRoot.folderId
                     onLongPressed: cardRoot.isFolder ? folderMenu.popup() : cardMenu.popup()
                 }
@@ -351,7 +449,19 @@ Item {
                 }
                 TapHandler {
                     acceptedButtons: Qt.RightButton
-                    onTapped: cardRoot.isFolder ? folderMenu.popup() : cardMenu.popup()
+                    onTapped: {
+                        if (cardRoot.isFolder) {
+                            folderMenu.popup()
+                            return
+                        }
+                        // Right-clicking a card that's part of the current multi-selection
+                        // extends the bulk menu items to all of it; right-clicking anything
+                        // else replaces the selection with just that card first — same
+                        // "select if not already selected" rule the timeline's clip right-click
+                        // already uses (TimelineClipItem.qml).
+                        root.ensureAssetSelected(cardRoot.assetId)
+                        cardMenu.popup()
+                    }
                 }
 
                 // Hold to carry the asset onto the timeline, tap for the menu. The phone's
@@ -369,12 +479,30 @@ Item {
                     glyph: kind === "audio" ? Theme.icons.music
                             : kind === "image" ? Theme.icons.image
                             : Theme.icons.film
-                    onLiftTapped: cardRoot.isFolder ? folderMenu.popup() : cardMenu.popup()
+                    onLiftTapped: {
+                        if (cardRoot.isFolder) {
+                            folderMenu.popup()
+                            return
+                        }
+                        // Touch has no modifier-key multi-select, so a lift-tap always means
+                        // "just this card" unless it's already part of a selection built some
+                        // other way (there isn't one yet, but this keeps the same rule as the
+                        // desktop right-click rather than special-casing touch).
+                        root.ensureAssetSelected(cardRoot.assetId)
+                        cardMenu.popup()
+                    }
                 }
 
                 ThemedContextMenu {
                     id: cardMenu
 
+                    ThemedMenuItem {
+                        text: root.selectedAssetIds.length > 1
+                              ? qsTr("Add %n items to timeline", "", root.selectedAssetIds.length)
+                              : qsTr("Add to timeline")
+                        icon.name: Theme.icons.plus
+                        onTriggered: root.addToTimelineRequested(root.selectedAssetIds)
+                    }
                     ThemedMenuItem {
                         text: qsTr("Preview and edit…")
                         icon.name: Theme.icons.eye
@@ -383,18 +511,24 @@ Item {
                     ThemedMenuItem {
                         text: qsTr("Rename…")
                         icon.name: Theme.icons.pencil
+                        visible: root.selectedAssetIds.length <= 1
                         onTriggered: root.renameRequested(assetIndex)
                     }
                     ThemedMenuItem {
                         text: qsTr("Replace media…")
                         icon.name: Theme.icons.refresh
+                        visible: root.selectedAssetIds.length <= 1
                         onTriggered: root.replaceRequested(assetIndex)
                     }
                     ThemedMenuItem {
-                        text: qsTr("Move to folder…")
+                        // "the selection" once it covers more than the clicked card — matches
+                        // the count the bulk actions below will actually act on.
+                        text: root.selectedAssetIds.length > 1
+                              ? qsTr("Move %n items to folder…", "", root.selectedAssetIds.length)
+                              : qsTr("Move to folder…")
                         icon.name: Theme.icons.folder
                         visible: BinFolderModel.count > 0
-                        onTriggered: root.moveToFolderRequested(assetIndex)
+                        onTriggered: root.moveToFolderRequested(root.selectedAssetIds)
                     }
                     ThemedMenuItem {
                         text: qsTr("Export image…")
@@ -403,9 +537,11 @@ Item {
                         onTriggered: root.exportRequested(assetIndex)
                     }
                     ThemedMenuItem {
-                        text: qsTr("Remove from project")
+                        text: root.selectedAssetIds.length > 1
+                              ? qsTr("Remove %n items from project", "", root.selectedAssetIds.length)
+                              : qsTr("Remove from project")
                         icon.name: Theme.icons.trash
-                        onTriggered: root.removeRequested(assetIndex)
+                        onTriggered: root.removeRequested(root.selectedAssetIds)
                     }
                 }
 
@@ -450,6 +586,9 @@ Item {
             height: 48
             radius: Theme.radiusSm
             color: rowHover.hovered ? Theme.popoverHover : Theme.panelAccent
+            // Matches the grid card's selection ring.
+            border.width: listRow.selected ? Theme.clipSelectionRingWidth : 0
+            border.color: Theme.primary
             opacity: rowDrag.active ? 0.85 : 1
             scale: rowDrag.active ? 1.02 : 1.0
 
@@ -462,9 +601,13 @@ Item {
             Behavior on scale {
                 NumberAnimation { duration: Theme.durationFast; easing.type: Theme.easing }
             }
+            Behavior on border.width {
+                NumberAnimation { duration: Theme.durationFast; easing.type: Theme.easing }
+            }
 
             required property bool isFolder
             required property string folderId
+            required property string assetId
             required property string name
             required property string kind
             required property string duration
@@ -473,6 +616,7 @@ Item {
             readonly property bool replaceBusy:
                 !isFolder && EditorState.replacingAssetId.length > 0
                 && EditorState.replacingAssetId === AssetLibrary.assetIdAt(assetIndex)
+            readonly property bool selected: !isFolder && root.isAssetSelected(assetId)
 
             Drag.active: !isFolder && rowDrag.active
             Drag.dragType: Drag.Automatic
@@ -591,8 +735,17 @@ Item {
                 enabled: !replaceBusy
 
                 TapHandler {
+                    id: leftRowTap
                     acceptedButtons: Qt.LeftButton
                     enabled: !Theme.touchUi && !rowDrag.active
+                    onTapped: {
+                        if (listRow.isFolder)
+                            return
+                        if ((leftRowTap.point.modifiers & Qt.ControlModifier) !== 0)
+                            root.toggleAssetSelection(listRow.assetId)
+                        else
+                            root.selectOnlyAsset(listRow.assetId)
+                    }
                     onDoubleTapped: if (listRow.isFolder) EditorState.currentBinFolderId = listRow.folderId
                     onLongPressed: listRow.isFolder ? folderRowMenu.popup() : rowMenu.popup()
                 }
@@ -614,7 +767,14 @@ Item {
                 }
                 TapHandler {
                     acceptedButtons: Qt.RightButton
-                    onTapped: listRow.isFolder ? folderRowMenu.popup() : rowMenu.popup()
+                    onTapped: {
+                        if (listRow.isFolder) {
+                            folderRowMenu.popup()
+                            return
+                        }
+                        root.ensureAssetSelected(listRow.assetId)
+                        rowMenu.popup()
+                    }
                 }
 
                 // See the grid card: hold lifts, tap opens the menu — also a folder row's
@@ -628,13 +788,27 @@ Item {
                     glyph: kind === "audio" ? Theme.icons.music
                             : kind === "image" ? Theme.icons.image
                             : Theme.icons.film
-                    onLiftTapped: listRow.isFolder ? folderRowMenu.popup() : rowMenu.popup()
+                    onLiftTapped: {
+                        if (listRow.isFolder) {
+                            folderRowMenu.popup()
+                            return
+                        }
+                        root.ensureAssetSelected(listRow.assetId)
+                        rowMenu.popup()
+                    }
                 }
             }
 
             ThemedContextMenu {
                 id: rowMenu
 
+                ThemedMenuItem {
+                    text: root.selectedAssetIds.length > 1
+                          ? qsTr("Add %n items to timeline", "", root.selectedAssetIds.length)
+                          : qsTr("Add to timeline")
+                    icon.name: Theme.icons.plus
+                    onTriggered: root.addToTimelineRequested(root.selectedAssetIds)
+                }
                 ThemedMenuItem {
                     text: qsTr("Preview and edit…")
                     icon.name: Theme.icons.eye
@@ -643,18 +817,22 @@ Item {
                 ThemedMenuItem {
                     text: qsTr("Rename…")
                     icon.name: Theme.icons.pencil
+                    visible: root.selectedAssetIds.length <= 1
                     onTriggered: root.renameRequested(assetIndex)
                 }
                 ThemedMenuItem {
                     text: qsTr("Replace media…")
                     icon.name: Theme.icons.refresh
+                    visible: root.selectedAssetIds.length <= 1
                     onTriggered: root.replaceRequested(assetIndex)
                 }
                 ThemedMenuItem {
-                    text: qsTr("Move to folder…")
+                    text: root.selectedAssetIds.length > 1
+                          ? qsTr("Move %n items to folder…", "", root.selectedAssetIds.length)
+                          : qsTr("Move to folder…")
                     icon.name: Theme.icons.folder
                     visible: BinFolderModel.count > 0
-                    onTriggered: root.moveToFolderRequested(assetIndex)
+                    onTriggered: root.moveToFolderRequested(root.selectedAssetIds)
                 }
                 ThemedMenuItem {
                     text: qsTr("Export image…")
@@ -663,9 +841,11 @@ Item {
                     onTriggered: root.exportRequested(assetIndex)
                 }
                 ThemedMenuItem {
-                    text: qsTr("Remove from project")
+                    text: root.selectedAssetIds.length > 1
+                          ? qsTr("Remove %n items from project", "", root.selectedAssetIds.length)
+                          : qsTr("Remove from project")
                     icon.name: Theme.icons.trash
-                    onTriggered: root.removeRequested(assetIndex)
+                    onTriggered: root.removeRequested(root.selectedAssetIds)
                 }
             }
 

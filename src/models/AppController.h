@@ -528,6 +528,11 @@ public:
     void setGuideType(const QString &type);
 
     Q_INVOKABLE void addClipFromAsset(int assetIndex);
+    // Multi-select "Add to timeline": each asset lands on its own kind-appropriate default
+    // track (creating one if needed, exactly like addClipFromAsset), placed back to back in
+    // the given order starting at the playhead — not all stacked on top of each other at the
+    // same start time. One undo step for the whole batch.
+    Q_INVOKABLE void addClipsFromAssets(const QStringList &assetIds);
     Q_INVOKABLE void addClipFromAssetAt(int assetIndex, int trackIndex, double atSeconds);
     Q_INVOKABLE void addClipFromAssetOnNewTrack(int assetIndex, double atSeconds);
     // Same, but the new track goes at insertIndex rather than always on top, so
@@ -535,6 +540,12 @@ public:
     Q_INVOKABLE void addClipFromAssetOnNewTrackAt(int assetIndex, int insertIndex, double atSeconds);
     Q_INVOKABLE int clipCountForAsset(int assetIndex) const;
     Q_INVOKABLE bool removeAsset(int assetIndex);
+    // Multi-select bulk removal, one undo step for the whole batch. Like removeAsset, refuses
+    // the whole batch if any id is still referenced by a clip (see clipCountForAsset) — the
+    // guard is enforced here, not just by the QML confirmation flow, so a caller that skips
+    // that flow can't orphan a timeline clip. Ids that no longer resolve are skipped.
+    // Returns how many were actually removed.
+    Q_INVOKABLE int removeAssets(const QStringList &assetIds);
     // Bin label only — does not rename the file on disk or rewrite clip names.
     Q_INVOKABLE bool renameAsset(int assetIndex, const QString &name);
     // Bin folder CRUD. parentId empty = bin root; nesting is arbitrary depth.
@@ -544,6 +555,8 @@ public:
     // removes it. Never blocks and never recurses into deleting contents.
     Q_INVOKABLE bool deleteBinFolder(const QString &folderId);
     Q_INVOKABLE bool moveAssetToFolder(int assetIndex, const QString &folderId);
+    // Multi-select bulk move, one undo step for the whole batch. Returns how many were moved.
+    Q_INVOKABLE int moveAssetsToFolder(const QStringList &assetIds, const QString &folderId);
     // Points an existing bin row at a different file, keeping every clip that uses it where it
     // is — its position, trim, effects and transitions all survive. Asynchronous: true only means
     // the probe started, and the outcome arrives as assetReplaceFinished.

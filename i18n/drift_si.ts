@@ -2822,19 +2822,37 @@
     </message>
     <message>
         <source>Folder created</source>
-        <translation type="unfinished"></translation>
+        <translation>ෆෝල්ඩරය සාදන ලදී</translation>
     </message>
     <message>
         <source>Folder renamed</source>
-        <translation type="unfinished"></translation>
+        <translation>ෆෝල්ඩරයේ නම වෙනස් කරන ලදී</translation>
     </message>
     <message>
         <source>Folder deleted</source>
-        <translation type="unfinished"></translation>
+        <translation>ෆෝල්ඩරය මකා දමන ලදී</translation>
     </message>
     <message>
         <source>Media moved</source>
-        <translation type="unfinished"></translation>
+        <translation>මාධ්‍යය ගෙන යන ලදී</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n items removed</source>
+        <translation>
+            <numerusform>අයිතම %n ක් ඉවත් කරන ලදී</numerusform>
+            <numerusform>අයිතම %n ක් ඉවත් කරන ලදී</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n items moved</source>
+        <translation>
+            <numerusform>අයිතම %n ක් ගෙන යන ලදී</numerusform>
+            <numerusform>අයිතම %n ක් ගෙන යන ලදී</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Clips added</source>
+        <translation>ක්ලිප් එක් කරන ලදී</translation>
     </message>
 </context>
 <context>
@@ -2941,13 +2959,6 @@
         <translation>
             <numerusform>තෝරාගත් ගොනු %nන් කිසිවක් ආයාත කිරීමට නොහැකි විය.</numerusform>
             <numerusform>තෝරාගත් ගොනු %nන් කිසිවක් ආයාත කිරීමට නොහැකි විය.</numerusform>
-        </translation>
-    </message>
-    <message numerus="yes">
-        <source>“%1” is still used by %n clips on the timeline.</source>
-        <translation>
-            <numerusform>“%1” තවමත් කාලරේඛාවේ ක්ලිප් %nක් මඟින් භාවිත කෙරේ.</numerusform>
-            <numerusform>“%1” තවමත් කාලරේඛාවේ ක්ලිප් %nක් මඟින් භාවිත කෙරේ.</numerusform>
         </translation>
     </message>
     <message numerus="yes">
@@ -3135,31 +3146,60 @@
     </message>
     <message>
         <source>New folder</source>
-        <translation type="unfinished"></translation>
+        <translation>නව ෆෝල්ඩරය</translation>
     </message>
     <message>
         <source>Create</source>
-        <translation type="unfinished">සාදන්න</translation>
+        <translation>සාදන්න</translation>
     </message>
     <message>
         <source>Folder name</source>
-        <translation type="unfinished"></translation>
+        <translation>ෆෝල්ඩර නම</translation>
     </message>
     <message>
         <source>Rename folder</source>
-        <translation type="unfinished"></translation>
+        <translation>ෆෝල්ඩරයේ නම වෙනස් කරන්න</translation>
     </message>
     <message>
         <source>Move to folder</source>
-        <translation type="unfinished"></translation>
+        <translation>ෆෝල්ඩරයට ගෙන යන්න</translation>
     </message>
     <message>
         <source>New Folder</source>
-        <translation type="unfinished"></translation>
+        <translation>නව ෆෝල්ඩරය</translation>
     </message>
     <message>
         <source>Create a new folder here</source>
-        <translation type="unfinished"></translation>
+        <translation>මෙහි නව ෆෝල්ඩරයක් සාදන්න</translation>
+    </message>
+    <message>
+        <source>“%1” is still used by clips on the timeline.</source>
+        <translation>“%1” තවමත් කාලරේඛාවේ ක්ලිප් මගින් භාවිතා වේ.</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n of the selected items are still used by clips on the timeline.</source>
+        <translation>
+            <numerusform>තෝරාගත් අයිතමවලින් %n ක් තවමත් කාලරේඛාවේ ක්ලිප් මගින් භාවිතා වේ.</numerusform>
+            <numerusform>තෝරාගත් අයිතමවලින් %n ක් තවමත් කාලරේඛාවේ ක්ලිප් මගින් භාවිතා වේ.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n items</source>
+        <translation>
+            <numerusform>අයිතම %n ක්</numerusform>
+            <numerusform>අයිතම %n ක්</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Remove these items?</source>
+        <translation>මෙම අයිතම ඉවත් කරන්නද?</translation>
+    </message>
+    <message numerus="yes">
+        <source>Removed %n items.</source>
+        <translation>
+            <numerusform>අයිතම %n ක් ඉවත් කරන ලදී.</numerusform>
+            <numerusform>අයිතම %n ක් ඉවත් කරන ලදී.</numerusform>
+        </translation>
     </message>
 </context>
 <context>
@@ -3389,7 +3429,7 @@
     <name>BinBreadcrumb</name>
     <message>
         <source>Media</source>
-        <translation type="unfinished">මාධ්‍ය</translation>
+        <translation>මාධ්‍ය</translation>
     </message>
 </context>
 <context>
@@ -5006,23 +5046,48 @@
     </message>
     <message>
         <source>Move to folder…</source>
-        <translation type="unfinished"></translation>
+        <translation>ෆෝල්ඩරයට ගෙන යන්න…</translation>
     </message>
     <message>
         <source>This folder is empty</source>
-        <translation type="unfinished"></translation>
+        <translation>මෙම ෆෝල්ඩරය හිස්ය</translation>
     </message>
     <message>
         <source>Drag media here, or import more.</source>
-        <translation type="unfinished"></translation>
+        <translation>මාධ්‍ය මෙහි අදින්න, නැතහොත් තවත් ආයාත කරන්න.</translation>
     </message>
     <message>
         <source>Open</source>
-        <translation type="unfinished">විවෘත කරන්න</translation>
+        <translation>විවෘත කරන්න</translation>
     </message>
     <message>
         <source>Delete</source>
-        <translation type="unfinished">මකන්න</translation>
+        <translation>මකන්න</translation>
+    </message>
+    <message numerus="yes">
+        <source>Add %n items to timeline</source>
+        <translation>
+            <numerusform>අයිතම %n ක් කාලරේඛාවට එක් කරන්න</numerusform>
+            <numerusform>අයිතම %n ක් කාලරේඛාවට එක් කරන්න</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Add to timeline</source>
+        <translation>කාලරේඛාවට එක් කරන්න</translation>
+    </message>
+    <message numerus="yes">
+        <source>Move %n items to folder…</source>
+        <translation>
+            <numerusform>අයිතම %n ක් ෆෝල්ඩරයට ගෙන යන්න…</numerusform>
+            <numerusform>අයිතම %n ක් ෆෝල්ඩරයට ගෙන යන්න…</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Remove %n items from project</source>
+        <translation>
+            <numerusform>අයිතම %n ක් ව්‍යාපෘතියෙන් ඉවත් කරන්න</numerusform>
+            <numerusform>අයිතම %n ක් ව්‍යාපෘතියෙන් ඉවත් කරන්න</numerusform>
+        </translation>
     </message>
 </context>
 <context>

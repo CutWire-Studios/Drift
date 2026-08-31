@@ -93,28 +93,78 @@ PanelFrame {
     // True while an import is running, so the panel can show progress.
     readonly property bool importing: AssetLibrary.importing
 
-    // Asset awaiting confirmation in confirmAssetRemoval. The name is held
-    // separately because the row is gone by the time the toast reports it.
-    property int pendingRemovalIndex: -1
-    property string pendingRemovalName: ""
+    // A single id goes through the existing single-asset add so that case is byte-for-byte the
+    // behavior it always was; only an actual multi-selection goes through the batch add, which
+    // places each clip back to back in selection order instead of stacking them all at the
+    // playhead.
+    function requestAddToTimeline(assetIds) {
+        if (assetIds.length === 0)
+            return
 
-    // Removing an asset a clip still points at would leave that clip playing
-    // but unable to trim past its cut or merge, so refuse rather than confirm.
-    function requestRemoveAsset(assetIndex) {
-        const inUse = EditorState.clipCountForAsset(assetIndex)
-        const name = AssetLibrary.assetAt(assetIndex).name
-        if (inUse > 0) {
-            Toasts.warning(qsTr("“%1” is still used by %n clips on the timeline.", "", inUse).arg(name))
+        function runAdd() {
+            if (assetIds.length === 1)
+                EditorState.addClipFromAsset(AssetLibrary.indexOfId(assetIds[0]))
+            else
+                EditorState.addClipsFromAssets(assetIds)
+        }
+
+        // On a pristine project, the first video/image clip offers to set up the canvas
+        // (resolution/orientation) — same flow as dragging onto the timeline (see
+        // TimelinePanel.qml/AndroidTimeline.qml). For a multi-selection, offer it from the
+        // first asset that actually needs it, not always assetIds[0].
+        if (typeof Window === "undefined" || !Window.window || !Window.window.configureAndAddAsset) {
+            runAdd()
             return
         }
-        root.pendingRemovalIndex = assetIndex
-        root.pendingRemovalName = name
+        for (const id of assetIds) {
+            const index = AssetLibrary.indexOfId(id)
+            if (index >= 0 && EditorState.shouldConfigureProjectForAsset(index)) {
+                Window.window.configureAndAddAsset(index, runAdd)
+                return
+            }
+        }
+        runAdd()
+    }
+
+    // Asset ids awaiting confirmation in confirmAssetRemoval — a single-element array for a
+    // plain right-click, or the whole multi-selection. The label is held separately because
+    // the rows are gone by the time the toast reports on them.
+    property var pendingRemovalIds: []
+    property string pendingRemovalLabel: ""
+
+    // Removing an asset a clip still points at would leave that clip playing but unable to
+    // trim past its cut or merge, so refuse rather than confirm — for a bulk removal, refusing
+    // the whole batch over one in-use item beats silently dropping it and surprising the user
+    // with a smaller removal than they asked for.
+    function requestRemoveAsset(assetIds) {
+        const names = []
+        const inUseNames = []
+        for (const id of assetIds) {
+            const index = AssetLibrary.indexOfId(id)
+            if (index < 0)
+                continue
+            const name = AssetLibrary.assetAt(index).name
+            names.push(name)
+            if (EditorState.clipCountForAsset(index) > 0)
+                inUseNames.push(name)
+        }
+        if (inUseNames.length > 0) {
+            Toasts.warning(inUseNames.length === 1
+                ? qsTr("“%1” is still used by clips on the timeline.").arg(inUseNames[0])
+                : qsTr("%n of the selected items are still used by clips on the timeline.",
+                       "", inUseNames.length))
+            return
+        }
+        if (names.length === 0)
+            return
+        root.pendingRemovalIds = assetIds
+        root.pendingRemovalLabel = names.length === 1 ? names[0] : qsTr("%n items", "", names.length)
         confirmAssetRemoval.open()
     }
 
     ThemedDialog {
         id: confirmAssetRemoval
-        title: qsTr("Remove this media?")
+        title: root.pendingRemovalIds.length === 1 ? qsTr("Remove this media?") : qsTr("Remove these items?")
         acceptText: qsTr("Remove")
         acceptVariant: "destructive"
         preferredWidth: Theme.dialogWidthSm
@@ -126,15 +176,19 @@ PanelFrame {
             wrapMode: Text.WordWrap
             size: "sm"
             text: qsTr("“%1” will be removed from this project. The file on disk is not deleted.")
-                  .arg(root.pendingRemovalName)
+                  .arg(root.pendingRemovalLabel)
         }
 
         onAccepted: {
-            if (EditorState.removeAsset(root.pendingRemovalIndex))
-                Toasts.success(qsTr("Removed “%1”.").arg(root.pendingRemovalName))
-            root.pendingRemovalIndex = -1
+            const removed = EditorState.removeAssets(root.pendingRemovalIds)
+            if (removed > 0) {
+                Toasts.success(removed === 1
+                    ? qsTr("Removed “%1”.").arg(root.pendingRemovalLabel)
+                    : qsTr("Removed %n items.", "", removed))
+            }
+            root.pendingRemovalIds = []
         }
-        onRejected: root.pendingRemovalIndex = -1
+        onRejected: root.pendingRemovalIds = []
     }
 
     property int pendingRenameIndex: -1
@@ -263,15 +317,18 @@ PanelFrame {
         onRejected: root.pendingFolderRenameId = ""
     }
 
-    // The "move to folder" path — right-click on a card, choose a destination from a flat list.
-    property int pendingMoveAssetIndex: -1
-    // The folder the asset is in right now, so the picker can omit it — moving it "into" the
-    // folder it's already in isn't a real destination.
+    // The "move to folder" path — right-click on a card (or a multi-selection), choose a
+    // destination from a flat list.
+    property var pendingMoveAssetIds: []
+    // The folder every selected asset is in right now, so the picker can omit it — moving them
+    // "into" the folder they're already in isn't a real destination. A single common value is
+    // safe here (not a per-asset lookup): MediaAssetsTab's grid only ever shows one folder's
+    // contents at a time, so anything selectable there already shares this folder.
     property string pendingMoveAssetCurrentFolderId: ""
 
-    function requestMoveAssetToFolder(assetIndex) {
-        root.pendingMoveAssetIndex = assetIndex
-        root.pendingMoveAssetCurrentFolderId = AssetLibrary.assetAt(assetIndex).folderId || ""
+    function requestMoveAssetToFolder(assetIds) {
+        root.pendingMoveAssetIds = assetIds
+        root.pendingMoveAssetCurrentFolderId = EditorState.currentBinFolderId
         folderPickerDialog.open()
     }
 
@@ -358,9 +415,9 @@ PanelFrame {
                         }
 
                         onClicked: {
-                            if (root.pendingMoveAssetIndex >= 0)
-                                EditorState.moveAssetToFolder(root.pendingMoveAssetIndex, optionRow.modelData.id)
-                            root.pendingMoveAssetIndex = -1
+                            if (root.pendingMoveAssetIds.length > 0)
+                                EditorState.moveAssetsToFolder(root.pendingMoveAssetIds, optionRow.modelData.id)
+                            root.pendingMoveAssetIds = []
                             folderPickerDialog.close()
                         }
                     }
@@ -1172,6 +1229,7 @@ PanelFrame {
 
             // Shared media browser used by the Media tab.
             MediaAssetsTab {
+                id: mediaAssetsTab
                 visible: kindsForTab(tabsModel.get(activeTab).tabId).length > 0
                 width: parent.width
                 opacity: root.tabOpacity
@@ -1183,12 +1241,13 @@ PanelFrame {
                     if (typeof Window !== "undefined" && Window.window && Window.window.openMediaPreview)
                         Window.window.openMediaPreview(assetIndex)
                 }
-                onRemoveRequested: (assetIndex) => root.requestRemoveAsset(assetIndex)
+                onAddToTimelineRequested: (assetIds) => root.requestAddToTimeline(assetIds)
+                onRemoveRequested: (assetIds) => root.requestRemoveAsset(assetIds)
                 onReplaceRequested: (assetIndex) => root.requestReplaceAsset(assetIndex)
                 onRenameRequested: (assetIndex) => root.requestRenameAsset(assetIndex)
                 onExportRequested: (assetIndex) => root.requestExportAsset(assetIndex)
                 onImportRequested: root.importMedia()
-                onMoveToFolderRequested: (assetIndex) => root.requestMoveAssetToFolder(assetIndex)
+                onMoveToFolderRequested: (assetIds) => root.requestMoveAssetToFolder(assetIds)
                 onFolderRenameRequested: (folderId, folderName) => root.requestRenameFolder(folderId, folderName)
             }
         }

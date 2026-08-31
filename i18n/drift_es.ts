@@ -2836,6 +2836,24 @@
         <source>Media moved</source>
         <translation>Medio movido</translation>
     </message>
+    <message numerus="yes">
+        <source>%n items removed</source>
+        <translation>
+            <numerusform>%n elemento eliminado</numerusform>
+            <numerusform>%n elementos eliminados</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n items moved</source>
+        <translation>
+            <numerusform>%n elemento movido</numerusform>
+            <numerusform>%n elementos movidos</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Clips added</source>
+        <translation>Clips añadidos</translation>
+    </message>
 </context>
 <context>
     <name>AssetCategoryChips</name>
@@ -2941,13 +2959,6 @@
         <translation>
             <numerusform>No se pudo importar el archivo seleccionado (%n).</numerusform>
             <numerusform>No se pudo importar ninguno de los %n archivos seleccionados.</numerusform>
-        </translation>
-    </message>
-    <message numerus="yes">
-        <source>“%1” is still used by %n clips on the timeline.</source>
-        <translation>
-            <numerusform>“%1” todavía se usa en %n clip de la línea de tiempo.</numerusform>
-            <numerusform>“%1” todavía se usa en %n clips de la línea de tiempo.</numerusform>
         </translation>
     </message>
     <message numerus="yes">
@@ -3160,6 +3171,35 @@
     <message>
         <source>Create a new folder here</source>
         <translation>Crea una carpeta nueva aquí</translation>
+    </message>
+    <message>
+        <source>“%1” is still used by clips on the timeline.</source>
+        <translation>“%1” todavía es utilizado por clips en la línea de tiempo.</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n of the selected items are still used by clips on the timeline.</source>
+        <translation>
+            <numerusform>%n de los elementos seleccionados todavía es utilizado por clips en la línea de tiempo.</numerusform>
+            <numerusform>%n de los elementos seleccionados todavía son utilizados por clips en la línea de tiempo.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n items</source>
+        <translation>
+            <numerusform>%n elemento</numerusform>
+            <numerusform>%n elementos</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Remove these items?</source>
+        <translation>¿Eliminar estos elementos?</translation>
+    </message>
+    <message numerus="yes">
+        <source>Removed %n items.</source>
+        <translation>
+            <numerusform>%n elemento eliminado.</numerusform>
+            <numerusform>%n elementos eliminados.</numerusform>
+        </translation>
     </message>
 </context>
 <context>
@@ -5023,6 +5063,31 @@
     <message>
         <source>Delete</source>
         <translation>Eliminar</translation>
+    </message>
+    <message numerus="yes">
+        <source>Add %n items to timeline</source>
+        <translation>
+            <numerusform>Añadir %n elemento a la línea de tiempo</numerusform>
+            <numerusform>Añadir %n elementos a la línea de tiempo</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Add to timeline</source>
+        <translation>Añadir a la línea de tiempo</translation>
+    </message>
+    <message numerus="yes">
+        <source>Move %n items to folder…</source>
+        <translation>
+            <numerusform>Mover %n elemento a la carpeta…</numerusform>
+            <numerusform>Mover %n elementos a la carpeta…</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Remove %n items from project</source>
+        <translation>
+            <numerusform>Eliminar %n elemento del proyecto</numerusform>
+            <numerusform>Eliminar %n elementos del proyecto</numerusform>
+        </translation>
     </message>
 </context>
 <context>
