@@ -354,7 +354,7 @@ Item {
                             elide: Text.ElideRight
                             text: (block.modelData.text && block.modelData.text.length)
                                   ? block.modelData.text : qsTr("(empty)")
-                            color: Theme.primaryForeground
+                            color: Theme.onMedia
                             font.family: Theme.fontFamily
                             font.pixelSize: Theme.fontSizeXs
                             font.italic: !(block.modelData.text && block.modelData.text.length)
