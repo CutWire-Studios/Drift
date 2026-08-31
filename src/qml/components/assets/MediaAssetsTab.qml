@@ -63,6 +63,7 @@ Item {
     }
     function clearAssetSelection() {
         root.selectedAssetIds = []
+        root.selectionAnchorId = ""
     }
     function toggleAssetSelection(assetId) {
         const at = root.selectedAssetIds.indexOf(assetId)
@@ -81,13 +82,58 @@ Item {
             root.selectOnlyAsset(assetId)
     }
 
+    // Anchor for Shift-click range selection: the asset id from the last plain or Ctrl/Cmd
+    // click. A Shift-click itself doesn't move it, so a run of Shift-clicks grows or shrinks
+    // the same range instead of walking it forward each time.
+    property string selectionAnchorId: ""
+
+    // combinedItems in visual/tab order, assets only — folders can't be range-selected and
+    // never appear in selectedAssetIds.
+    function orderedAssetIds() {
+        const ids = []
+        for (let i = 0; i < root.combinedItems.length; ++i) {
+            const item = root.combinedItems[i]
+            if (!item.isFolder)
+                ids.push(item.assetId)
+        }
+        return ids
+    }
+
+    // Adds every asset between anchorId and targetId (inclusive of both ends) to the
+    // selection, in whatever order they currently render in. Purely additive — ids already
+    // selected outside the range are left alone, matching how every other selection tool
+    // in this bin (Ctrl-click, bulk menu actions) never silently drops a prior pick.
+    function selectAssetRange(anchorId, targetId) {
+        const order = root.orderedAssetIds()
+        const anchorAt = order.indexOf(anchorId)
+        const targetAt = order.indexOf(targetId)
+        if (anchorAt < 0 || targetAt < 0) {
+            // No valid anchor to range from — fall back to a plain-click selection, and
+            // promote the target to the new anchor so the next Shift-click ranges from
+            // here instead of silently repeating this fallback.
+            root.selectOnlyAsset(targetId)
+            root.selectionAnchorId = targetId
+            return
+        }
+        const lo = Math.min(anchorAt, targetAt)
+        const hi = Math.max(anchorAt, targetAt)
+        const next = root.selectedAssetIds.slice()
+        for (let i = lo; i <= hi; ++i) {
+            if (next.indexOf(order[i]) < 0)
+                next.push(order[i])
+        }
+        root.selectedAssetIds = next
+    }
+
     // Prunes ids that dropped out of view — removed, moved to a different folder, filtered out
     // by search/kind, or the folder was navigated away from (combinedItems is scoped to the
-    // current folder, so leaving it empties out every id that was in it). Reassigning only when
-    // something actually changed avoids spamming dependents of selectedAssetIds on every
-    // unrelated combinedItems recompute.
+    // current folder, so leaving it empties out every id that was in it). Also drops the range
+    // anchor if it dropped out along with them — left stale, it would make every future
+    // Shift-click silently fall back to a single-item selection instead of a range. Reassigning
+    // only when something actually changed avoids spamming dependents on every unrelated
+    // combinedItems recompute.
     onCombinedItemsChanged: {
-        if (root.selectedAssetIds.length === 0)
+        if (root.selectedAssetIds.length === 0 && root.selectionAnchorId.length === 0)
             return
         const present = {}
         for (let i = 0; i < root.combinedItems.length; ++i) {
@@ -98,6 +144,8 @@ Item {
         const pruned = root.selectedAssetIds.filter(id => present[id] === true)
         if (pruned.length !== root.selectedAssetIds.length)
             root.selectedAssetIds = pruned
+        if (root.selectionAnchorId.length > 0 && present[root.selectionAnchorId] !== true)
+            root.selectionAnchorId = ""
     }
 
     // Bumped on every project edit (rename, folder create/delete/reparent, move-to-folder,
@@ -417,10 +465,16 @@ Item {
                             return
                         // Qt remaps ControlModifier to Cmd on macOS, so this is already the
                         // right "system key" on every desktop platform without branching.
-                        if ((leftTap.point.modifiers & Qt.ControlModifier) !== 0)
+                        const mods = leftTap.point.modifiers
+                        if ((mods & Qt.ShiftModifier) !== 0) {
+                            root.selectAssetRange(root.selectionAnchorId || cardRoot.assetId, cardRoot.assetId)
+                        } else if ((mods & Qt.ControlModifier) !== 0) {
                             root.toggleAssetSelection(cardRoot.assetId)
-                        else
+                            root.selectionAnchorId = cardRoot.assetId
+                        } else {
                             root.selectOnlyAsset(cardRoot.assetId)
+                            root.selectionAnchorId = cardRoot.assetId
+                        }
                     }
                     onDoubleTapped: if (cardRoot.isFolder) EditorState.currentBinFolderId = cardRoot.folderId
                     onLongPressed: cardRoot.isFolder ? folderMenu.popup() : cardMenu.popup()
@@ -741,10 +795,16 @@ Item {
                     onTapped: {
                         if (listRow.isFolder)
                             return
-                        if ((leftRowTap.point.modifiers & Qt.ControlModifier) !== 0)
+                        const mods = leftRowTap.point.modifiers
+                        if ((mods & Qt.ShiftModifier) !== 0) {
+                            root.selectAssetRange(root.selectionAnchorId || listRow.assetId, listRow.assetId)
+                        } else if ((mods & Qt.ControlModifier) !== 0) {
                             root.toggleAssetSelection(listRow.assetId)
-                        else
+                            root.selectionAnchorId = listRow.assetId
+                        } else {
                             root.selectOnlyAsset(listRow.assetId)
+                            root.selectionAnchorId = listRow.assetId
+                        }
                     }
                     onDoubleTapped: if (listRow.isFolder) EditorState.currentBinFolderId = listRow.folderId
                     onLongPressed: listRow.isFolder ? folderRowMenu.popup() : rowMenu.popup()
