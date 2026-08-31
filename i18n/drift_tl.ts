@@ -5,7 +5,7 @@
     <name>AddonManager</name>
     <message>
         <source>Automatic (recommended)</source>
-        <translation type="unfinished"></translation>
+        <translation>Awtomatiko (inirerekomenda)</translation>
     </message>
     <message>
         <source>This computer</source>
@@ -32,7 +32,7 @@
     </message>
     <message>
         <source>Remove this pack?</source>
-        <translation>Gusto mo tangallin ang dagdag?</translation>
+        <translation>Gusto mo tanggalin ang dagdag?</translation>
     </message>
     <message>
         <source>Remove</source>
@@ -44,7 +44,7 @@
     </message>
     <message>
         <source>All</source>
-        <translation type="unfinished"></translation>
+        <translation>Lahat</translation>
     </message>
     <message>
         <source>Effects</source>
@@ -368,15 +368,15 @@
     <name>AndroidBottomRail</name>
     <message>
         <source>Edit</source>
-        <translation type="unfinished"></translation>
+        <translation>Pagbabago</translation>
     </message>
     <message>
         <source>Effects</source>
-        <translation type="unfinished"></translation>
+        <translation>Epekto</translation>
     </message>
     <message>
         <source>Audio FX</source>
-        <translation type="unfinished"></translation>
+        <translation>Epektong audyo</translation>
     </message>
     <message>
         <source>Transitions</source>
@@ -564,7 +564,7 @@
     </message>
     <message>
         <source>Edit</source>
-        <translation type="unfinished"></translation>
+        <translation>Pagbabago</translation>
     </message>
 </context>
 <context>
