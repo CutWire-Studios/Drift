@@ -7911,11 +7911,11 @@ If playback stutters, try another.</source>
     <name>TimelineClipItem</name>
     <message>
         <source>Effect</source>
-        <translation type="unfinished"></translation>
+        <translation>Epekto</translation>
     </message>
     <message>
         <source>%1 (off)</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 (pinatay)</translation>
     </message>
     <message>
         <source>Subtitles</source>
