@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!DOCTYPE TS>
-<TS version="2.1" language="en" sourcelanguage="en">
+<TS version="2.1" language="tl" sourcelanguage="en">
 <context>
     <name>AddonManager</name>
     <message>
@@ -2035,7 +2035,7 @@
     </message>
     <message>
         <source>Frame rate</source>
-        <translation type="unfinished"></translation>
+        <translation>Mga larawan bawat segundo</translation>
     </message>
     <message>
         <source>Project setup</source>
