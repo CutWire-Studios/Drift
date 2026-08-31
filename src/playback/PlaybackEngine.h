@@ -75,6 +75,9 @@ public:
     Q_INVOKABLE void pause();
     Q_INVOKABLE void refreshFrame();
     Q_INVOKABLE void setPreviewRenderSize(int width, int height);
+    // Restart the composite tick from the current project fps and rate. Playback
+    // samples `m_project` live, but the QTimer interval is snapped at play().
+    void syncDisplayCadence();
 
     // Id of the text clip currently edited in place on the preview; that clip is
     // omitted from the composited frame so the QML inline editor stands in for it.

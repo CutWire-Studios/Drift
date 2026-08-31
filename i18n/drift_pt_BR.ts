@@ -2034,6 +2034,10 @@
         <translation>Instale o pacote de adesivos de emoji para adicionar emojis</translation>
     </message>
     <message>
+        <source>Frame rate</source>
+        <translation type="unfinished">Taxa de quadros</translation>
+    </message>
+    <message>
         <source>Project setup</source>
         <translation>Configuração do projeto</translation>
     </message>
@@ -8516,6 +8520,10 @@ Se a reprodução travar, experimente outro.</translation>
         <translation>Altura</translation>
     </message>
     <message>
+        <source>Frames per second</source>
+        <translation type="unfinished">Quadros por segundo</translation>
+    </message>
+    <message>
         <source>Cancel crop</source>
         <translation>Cancelar recorte</translation>
     </message>
@@ -8530,6 +8538,10 @@ Se a reprodução travar, experimente outro.</translation>
     <message>
         <source>Changing size doesn’t shrink your clips — anything outside the new edges is cut off.</source>
         <translation>Alterar o tamanho não encolhe seus clipes — qualquer conteúdo fora das novas bordas será cortado.</translation>
+    </message>
+    <message>
+        <source>Clips keep their length. A higher rate samples more pictures per second from the same footage.</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>

@@ -2030,6 +2030,10 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Frame rate</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Project setup</source>
         <translation type="unfinished"></translation>
     </message>
@@ -8497,6 +8501,10 @@ If playback stutters, try another.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Frames per second</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Cancel crop</source>
         <translation type="unfinished"></translation>
     </message>
@@ -8510,6 +8518,10 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Changing size doesn’t shrink your clips — anything outside the new edges is cut off.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Clips keep their length. A higher rate samples more pictures per second from the same footage.</source>
         <translation type="unfinished"></translation>
     </message>
 </context>

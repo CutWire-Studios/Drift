@@ -2040,6 +2040,10 @@
         <translation>Installez l&apos;extension d&apos;autocollants emoji pour ajouter des emojis</translation>
     </message>
     <message>
+        <source>Frame rate</source>
+        <translation type="unfinished">Fréquence d&apos;images</translation>
+    </message>
+    <message>
         <source>Project setup</source>
         <translation>Configuration du projet</translation>
     </message>
@@ -8521,6 +8525,10 @@ En cas de saccades à la lecture, essayez un autre mode.</translation>
         <translation>Hauteur</translation>
     </message>
     <message>
+        <source>Frames per second</source>
+        <translation type="unfinished">Images par seconde</translation>
+    </message>
+    <message>
         <source>Cancel crop</source>
         <translation>Annuler le recadrage</translation>
     </message>
@@ -8535,6 +8543,10 @@ En cas de saccades à la lecture, essayez un autre mode.</translation>
     <message>
         <source>Changing size doesn’t shrink your clips — anything outside the new edges is cut off.</source>
         <translation>Modifier la taille ne réduit pas vos clips — tout ce qui dépasse les nouvelles limites sera coupé.</translation>
+    </message>
+    <message>
+        <source>Clips keep their length. A higher rate samples more pictures per second from the same footage.</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>

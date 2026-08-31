@@ -2034,6 +2034,10 @@
         <translation>ඉමෝජි එක් කිරීමට ඉමෝජි ස්ටිකර් පැකේජය ස්ථාපනය කරන්න</translation>
     </message>
     <message>
+        <source>Frame rate</source>
+        <translation type="unfinished">රාමු අනුපාතය</translation>
+    </message>
+    <message>
         <source>Project setup</source>
         <translation>ව්‍යාපෘති සැකසුම</translation>
     </message>
@@ -8516,6 +8520,10 @@ If playback stutters, try another.</source>
         <translation>උස</translation>
     </message>
     <message>
+        <source>Frames per second</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Cancel crop</source>
         <translation>කප්පාදුව අවලංගු කරන්න</translation>
     </message>
@@ -8530,6 +8538,10 @@ If playback stutters, try another.</source>
     <message>
         <source>Changing size doesn’t shrink your clips — anything outside the new edges is cut off.</source>
         <translation>ප්‍රමාණය වෙනස් කිරීමෙන් ඔබේ ක්ලිප් හැකිලෙන්නේ නැත — නව දාරවලින් පිටත ඇති සියල්ල කපා හැරේ.</translation>
+    </message>
+    <message>
+        <source>Clips keep their length. A higher rate samples more pictures per second from the same footage.</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>

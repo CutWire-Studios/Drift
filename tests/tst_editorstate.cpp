@@ -69,6 +69,7 @@ private slots:
     void projectJsonImportRejectsGarbageAndLeavesTimeline();
     void newProjectClearsEverything();
     void projectSetupOnPristineProjectStaysClean();
+    void projectFpsCanChangeAfterSetup();
     void darkModePreferencePersistsAcrossSessions();
     void uiScalePersistsAcrossSessions();
     void uiLanguagePersistsAcrossSessions();
@@ -817,6 +818,28 @@ void EditorStateTest::projectSetupOnPristineProjectStaysClean()
     state.undo();
     QCOMPARE(state.projectWidth(), 1080);
     QCOMPARE(state.projectHeight(), 1920);
+}
+
+void EditorStateTest::projectFpsCanChangeAfterSetup()
+{
+    AssetLibrary library;
+    AppController state(&library);
+
+    QCOMPARE(state.projectFps(), 30);
+    QCOMPARE(state.projectWidth(), 1920);
+    QCOMPARE(state.projectHeight(), 1080);
+
+    state.setProjectFps(60);
+    QCOMPARE(state.projectFps(), 60);
+    QCOMPARE(state.projectWidth(), 1920);
+    QCOMPARE(state.projectHeight(), 1080);
+
+    state.setProjectFps(0);
+    QCOMPARE(state.projectFps(), 1);
+    state.setProjectFps(999);
+    QCOMPARE(state.projectFps(), 240);
+    state.setProjectFps(24);
+    QCOMPARE(state.projectFps(), 24);
 }
 
 // The picker offers a backend only when its device opens here, and a mode naming one

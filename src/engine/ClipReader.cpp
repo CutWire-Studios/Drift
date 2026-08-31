@@ -238,9 +238,14 @@ AVFrame *softwareFrameToNv12(const AVFrame *frame, SwsContext *&sws, int targetW
 
 drift::TimeUs ptsToUs(const AVFrame *frame, const AVRational &timeBase)
 {
-    if (!frame || frame->pts == AV_NOPTS_VALUE)
+    if (!frame)
         return 0;
-    return av_rescale_q(frame->pts, timeBase, {1, drift::kUsPerSecond});
+    const int64_t pts = frame->best_effort_timestamp != AV_NOPTS_VALUE
+                            ? frame->best_effort_timestamp
+                            : frame->pts;
+    if (pts == AV_NOPTS_VALUE)
+        return 0;
+    return av_rescale_q(pts, timeBase, {1, drift::kUsPerSecond});
 }
 
 } // namespace
@@ -256,6 +261,9 @@ void ClipReader::teardownVideoDecoder()
 {
     teardownSwFilterGraph();
     teardownHwScaler();
+    // Hardware surfaces in the cursor belong to the decoder pool; drop them
+    // before the context goes away.
+    freeVideoCursor();
     if (m_sws) {
         sws_freeContext(m_sws);
         m_sws = nullptr;
@@ -1242,7 +1250,10 @@ bool ClipReader::seekVideoStream(drift::TimeUs sourceUs)
         return false;
 
     AVStream *stream = m_fmt->streams[m_videoStream];
-    const int64_t targetTs = av_rescale_q(sourceUs, {1, AV_TIME_BASE}, stream->time_base);
+    const int64_t startTs = stream->start_time != AV_NOPTS_VALUE ? stream->start_time : 0;
+    const int64_t targetTs = av_rescale_q(sourceUs, {1, AV_TIME_BASE}, stream->time_base) + startTs;
+    // A seek invalidates decoder surfaces held in the cover/peek cursor.
+    clearVideoCursor();
     if (av_seek_frame(m_fmt, m_videoStream, targetTs, AVSEEK_FLAG_BACKWARD) < 0) {
         if (sourceUs > 0)
             return false;
@@ -1268,39 +1279,102 @@ bool ClipReader::seekAudioStream(drift::TimeUs sourceUs)
     return true;
 }
 
-bool ClipReader::decodeVideoFrameAtOnce(drift::TimeUs sourceUs, QImage &out, int maxWidth, int maxHeight,
-                                        bool *hwFailure)
+drift::TimeUs ClipReader::videoPtsToUs(const AVFrame *frame) const
+{
+    if (!frame || !m_fmt || m_videoStream < 0)
+        return 0;
+    const AVStream *stream = m_fmt->streams[m_videoStream];
+    int64_t pts = frame->best_effort_timestamp != AV_NOPTS_VALUE
+                      ? frame->best_effort_timestamp
+                      : frame->pts;
+    if (pts == AV_NOPTS_VALUE)
+        return 0;
+    if (stream->start_time != AV_NOPTS_VALUE)
+        pts -= stream->start_time;
+    return av_rescale_q(pts, stream->time_base, {1, drift::kUsPerSecond});
+}
+
+void ClipReader::clearVideoCursor()
+{
+    if (m_coverFrame)
+        av_frame_unref(m_coverFrame);
+    if (m_peekFrame)
+        av_frame_unref(m_peekFrame);
+    m_hasCover = false;
+    m_hasPeek = false;
+    m_coverPtsUs = 0;
+    m_peekPtsUs = 0;
+}
+
+void ClipReader::freeVideoCursor()
+{
+    av_frame_free(&m_coverFrame);
+    av_frame_free(&m_peekFrame);
+    m_hasCover = false;
+    m_hasPeek = false;
+    m_coverPtsUs = 0;
+    m_peekPtsUs = 0;
+}
+
+bool ClipReader::coverHolds(drift::TimeUs sourceUs) const
+{
+    return m_hasCover && m_hasPeek && sourceUs >= m_coverPtsUs && sourceUs < m_peekPtsUs;
+}
+
+void ClipReader::promotePeekToCover()
+{
+    if (!m_hasPeek)
+        return;
+    if (m_coverFrame)
+        av_frame_unref(m_coverFrame);
+    std::swap(m_coverFrame, m_peekFrame);
+    m_coverPtsUs = m_peekPtsUs;
+    m_hasCover = true;
+    m_hasPeek = false;
+    m_peekPtsUs = 0;
+}
+
+bool ClipReader::refVideoFrame(AVFrame *&dst, const AVFrame *src)
+{
+    if (!src)
+        return false;
+    if (!dst) {
+        dst = av_frame_alloc();
+        if (!dst)
+            return false;
+    }
+    av_frame_unref(dst);
+    return av_frame_ref(dst, src) >= 0;
+}
+
+bool ClipReader::advanceVideoTo(drift::TimeUs sourceUs, int maxWidth, int maxHeight, bool *hwFailure)
 {
     if (hwFailure)
         *hwFailure = false;
     if (!ensureVideoDecoder())
         return false;
 
-    applyDecodeSize(decodeSizeFor(maxWidth, maxHeight));
-
-    if (lookupCachedFrame(sourceUs, out))
+    while (m_hasPeek && sourceUs >= m_peekPtsUs)
+        promotePeekToCover();
+    if (coverHolds(sourceUs))
+        return true;
+    if (m_hasCover && sourceUs == m_coverPtsUs)
         return true;
 
-    const drift::TimeUs tolerance = frameToleranceUs();
-    const bool needSeek = !m_videoPositioned || sourceUs < m_lastVideoPtsUs - tolerance
+    const bool needSeek = !m_videoPositioned
+                          || (m_hasCover && sourceUs < m_coverPtsUs)
                           || sourceUs - m_lastVideoPtsUs > kForwardSeekThresholdUs;
     if (needSeek && !seekVideoStream(sourceUs))
         return false;
 
     AVPacket *packet = av_packet_alloc();
     AVFrame *frame = av_frame_alloc();
-    AVFrame *best = av_frame_alloc();
-    if (!packet || !frame || !best) {
-        av_frame_free(&best);
+    if (!packet || !frame) {
         av_frame_free(&frame);
         av_packet_free(&packet);
         return false;
     }
 
-    const AVRational timeBase = m_fmt->streams[m_videoStream]->time_base;
-    drift::TimeUs bestDelta = INT64_MAX;
-    drift::TimeUs bestPtsUs = 0;
-    bool found = false;
     bool done = false;
     bool sawHwFailure = false;
     bool droppedPacket = false;
@@ -1312,8 +1386,6 @@ bool ClipReader::decodeVideoFrameAtOnce(drift::TimeUs sourceUs, QImage &out, int
         }
     };
 
-    // Everything the decoder has ready, keeping the frame closest to sourceUs. Shared with the
-    // end-of-stream drain below so both select the same way.
     auto receiveFrames = [&] {
         while (!done) {
             const int rc = avcodec_receive_frame(m_videoCtx, frame);
@@ -1329,30 +1401,35 @@ bool ClipReader::decodeVideoFrameAtOnce(drift::TimeUs sourceUs, QImage &out, int
             }
 
             AVFrame *stabilized = filterFrameInPlace(frame, maxWidth, maxHeight);
-
-            const drift::TimeUs ptsUs = ptsToUs(stabilized, timeBase);
+            const drift::TimeUs ptsUs = videoPtsToUs(stabilized);
             m_lastVideoPtsUs = ptsUs;
             g_videoFramesDecoded.fetch_add(1, std::memory_order_relaxed);
-            const drift::TimeUs delta = qAbs(ptsUs - sourceUs);
-            if (delta < bestDelta) {
-                bestDelta = delta;
-                bestPtsUs = ptsUs;
-                av_frame_unref(best);
-                if (av_frame_ref(best, stabilized) < 0) {
-                    if (stabilized != frame) av_frame_free(&stabilized);
+
+            if (ptsUs <= sourceUs) {
+                if (!refVideoFrame(m_coverFrame, stabilized)) {
+                    if (stabilized != frame)
+                        av_frame_free(&stabilized);
                     av_frame_unref(frame);
                     done = true;
                     break;
                 }
-                found = true;
-            }
-            if (stabilized != frame) av_frame_free(&stabilized);
-            av_frame_unref(frame);
-
-            if (ptsUs >= sourceUs) {
+                m_coverPtsUs = ptsUs;
+                m_hasCover = true;
+            } else {
+                if (!refVideoFrame(m_peekFrame, stabilized)) {
+                    if (stabilized != frame)
+                        av_frame_free(&stabilized);
+                    av_frame_unref(frame);
+                    done = true;
+                    break;
+                }
+                m_peekPtsUs = ptsUs;
+                m_hasPeek = true;
                 done = true;
-                break;
             }
+            if (stabilized != frame)
+                av_frame_free(&stabilized);
+            av_frame_unref(frame);
         }
     };
 
@@ -1405,20 +1482,6 @@ bool ClipReader::decodeVideoFrameAtOnce(drift::TimeUs sourceUs, QImage &out, int
         drained = true;
     }
 
-    QImage converted;
-    bool convertedOk = false;
-    if (found && !sawHwFailure) {
-        convertedOk = convertFrame(best, converted, m_decodeW, m_decodeH);
-        if (!convertedOk && m_hwAccelActive
-            && (best->format == m_hwPixFmt
-                || isHardwarePixelFormat(static_cast<AVPixelFormat>(best->format)))) {
-            // Transfer from the hardware surface failed — abandon hwaccel.
-            sawHwFailure = true;
-        }
-    }
-
-    av_frame_unref(best);
-    av_frame_free(&best);
     av_frame_unref(frame);
     av_frame_free(&frame);
     av_packet_free(&packet);
@@ -1427,18 +1490,58 @@ bool ClipReader::decodeVideoFrameAtOnce(drift::TimeUs sourceUs, QImage &out, int
         if (hwFailure)
             *hwFailure = true;
         m_videoPositioned = false;
+        clearVideoCursor();
         return false;
     }
 
-    if (convertedOk) {
-        out = converted;
-        storeCachedFrame(bestPtsUs, converted);
-        m_videoPositioned = !drained && !droppedPacket;
-        return true;
+    if (!m_hasCover && m_hasPeek)
+        promotePeekToCover();
+
+    if (!m_hasCover) {
+        m_videoPositioned = false;
+        return false;
     }
 
-    m_videoPositioned = false;
-    return false;
+    m_videoPositioned = !drained && !droppedPacket;
+    return true;
+}
+
+bool ClipReader::decodeVideoFrameAtOnce(drift::TimeUs sourceUs, QImage &out, int maxWidth, int maxHeight,
+                                        bool *hwFailure)
+{
+    if (hwFailure)
+        *hwFailure = false;
+    if (!ensureVideoDecoder())
+        return false;
+
+    applyDecodeSize(decodeSizeFor(maxWidth, maxHeight));
+
+    while (m_hasPeek && sourceUs >= m_peekPtsUs)
+        promotePeekToCover();
+    if (coverHolds(sourceUs) && lookupCachedFrame(m_coverPtsUs, out))
+        return true;
+    if (lookupCachedFrame(sourceUs, out))
+        return true;
+
+    if (!advanceVideoTo(sourceUs, maxWidth, maxHeight, hwFailure))
+        return false;
+    if (!m_coverFrame)
+        return false;
+
+    QImage converted;
+    if (!convertFrame(m_coverFrame, converted, m_decodeW, m_decodeH)) {
+        if (m_hwAccelActive
+            && (m_coverFrame->format == m_hwPixFmt
+                || isHardwarePixelFormat(static_cast<AVPixelFormat>(m_coverFrame->format)))) {
+            if (hwFailure)
+                *hwFailure = true;
+            m_videoPositioned = false;
+        }
+        return false;
+    }
+    out = converted;
+    storeCachedFrame(m_coverPtsUs, converted);
+    return true;
 }
 
 bool ClipReader::readVideoFrameAt(drift::TimeUs sourceUs, QImage &out, int maxWidth, int maxHeight)
@@ -1468,154 +1571,32 @@ bool ClipReader::decodePreviewVideoFrameAtOnce(drift::TimeUs sourceUs, PreviewVi
 
     applyDecodeSize(decodeSizeFor(maxWidth, maxHeight));
 
+    while (m_hasPeek && sourceUs >= m_peekPtsUs)
+        promotePeekToCover();
+    if (coverHolds(sourceUs) && lookupCachedPreview(m_coverPtsUs, out))
+        return true;
     if (lookupCachedPreview(sourceUs, out))
         return true;
 
-    const drift::TimeUs tolerance = frameToleranceUs();
-    const bool needSeek = !m_videoPositioned || sourceUs < m_lastVideoPtsUs - tolerance
-                          || sourceUs - m_lastVideoPtsUs > kForwardSeekThresholdUs;
-    if (needSeek && !seekVideoStream(sourceUs))
+    if (!advanceVideoTo(sourceUs, maxWidth, maxHeight, hwFailure))
         return false;
-
-    AVPacket *packet = av_packet_alloc();
-    AVFrame *frame = av_frame_alloc();
-    AVFrame *best = av_frame_alloc();
-    if (!packet || !frame || !best) {
-        av_frame_free(&best);
-        av_frame_free(&frame);
-        av_packet_free(&packet);
+    if (!m_coverFrame)
         return false;
-    }
-
-    const AVRational timeBase = m_fmt->streams[m_videoStream]->time_base;
-    drift::TimeUs bestDelta = INT64_MAX;
-    drift::TimeUs bestPtsUs = 0;
-    bool found = false;
-    bool done = false;
-    bool sawHwFailure = false;
-    bool droppedPacket = false;
-
-    auto markHwFailure = [&]() {
-        if (m_hwAccelActive || m_mediaCodecActive) {
-            sawHwFailure = true;
-            done = true;
-        }
-    };
-
-    // Same selection for the read loop and the end-of-stream drain below.
-    auto receiveFrames = [&] {
-        while (!done) {
-            const int rc = avcodec_receive_frame(m_videoCtx, frame);
-            if (rc == AVERROR(EAGAIN) || rc == AVERROR_EOF)
-                break;
-            if (rc < 0) {
-                av_frame_unref(frame);
-                markHwFailure();
-                break;
-            }
-
-            AVFrame *stabilized = filterFrameInPlace(frame, maxWidth, maxHeight);
-
-            const drift::TimeUs ptsUs = ptsToUs(stabilized, timeBase);
-            m_lastVideoPtsUs = ptsUs;
-            g_videoFramesDecoded.fetch_add(1, std::memory_order_relaxed);
-            const drift::TimeUs delta = qAbs(ptsUs - sourceUs);
-            if (delta < bestDelta) {
-                bestDelta = delta;
-                bestPtsUs = ptsUs;
-                av_frame_unref(best);
-                if (av_frame_ref(best, stabilized) < 0) {
-                    if (stabilized != frame) av_frame_free(&stabilized);
-                    av_frame_unref(frame);
-                    done = true;
-                    break;
-                }
-                found = true;
-            }
-            if (stabilized != frame) av_frame_free(&stabilized);
-            av_frame_unref(frame);
-
-            if (ptsUs >= sourceUs) {
-                done = true;
-                break;
-            }
-        }
-    };
-
-    bool eof = false;
-    while (!done) {
-        if (av_read_frame(m_fmt, packet) < 0) {
-            eof = true;
-            break;
-        }
-        if (packet->stream_index != m_videoStream) {
-            av_packet_unref(packet);
-            continue;
-        }
-
-        int sendRc = avcodec_send_packet(m_videoCtx, packet);
-        // See decodeVideoFrameAtOnce: MediaCodec can refuse a packet, and dropping it corrupts
-        // the rest of the GOP.
-        if (sendRc == AVERROR(EAGAIN) && m_mediaCodecActive) {
-            receiveFrames();
-            if (!done)
-                sendRc = avcodec_send_packet(m_videoCtx, packet);
-            if (sendRc == AVERROR(EAGAIN))
-                droppedPacket = true;
-        }
-        av_packet_unref(packet);
-        if (sendRc == AVERROR(EAGAIN)) {
-            // Fall through to receive.
-        } else if (sendRc < 0) {
-            markHwFailure();
-            continue;
-        }
-
-        receiveFrames();
-    }
-
-    // See decodeVideoFrameAtOnce: out of packets is not out of frames.
-    bool drained = false;
-    if (eof && !done && !sawHwFailure) {
-        avcodec_send_packet(m_videoCtx, nullptr);
-        receiveFrames();
-        avcodec_flush_buffers(m_videoCtx);
-        drained = true;
-    }
 
     PreviewVideoFrame converted;
-    bool convertedOk = false;
-    if (found && !sawHwFailure) {
-        convertedOk = convertFramePreview(best, converted, m_decodeW, m_decodeH);
-        if (!convertedOk && m_hwAccelActive
-            && (best->format == m_hwPixFmt
-                || isHardwarePixelFormat(static_cast<AVPixelFormat>(best->format)))) {
-            sawHwFailure = true;
+    if (!convertFramePreview(m_coverFrame, converted, m_decodeW, m_decodeH)) {
+        if (m_hwAccelActive
+            && (m_coverFrame->format == m_hwPixFmt
+                || isHardwarePixelFormat(static_cast<AVPixelFormat>(m_coverFrame->format)))) {
+            if (hwFailure)
+                *hwFailure = true;
+            m_videoPositioned = false;
         }
-    }
-
-    av_frame_unref(best);
-    av_frame_free(&best);
-    av_frame_unref(frame);
-    av_frame_free(&frame);
-    av_packet_free(&packet);
-
-    if (sawHwFailure) {
-        if (hwFailure)
-            *hwFailure = true;
-        m_videoPositioned = false;
         return false;
     }
-
-    if (convertedOk) {
-        out = converted;
-        storeCachedPreview(bestPtsUs, converted);
-        m_videoPositioned = !drained && !droppedPacket;
-        return true;
-    }
-
-    m_videoPositioned = false;
-    return false;
+    out = converted;
+    storeCachedPreview(m_coverPtsUs, converted);
+    return true;
 }
 
 bool ClipReader::readPreviewVideoFrame(drift::TimeUs sourceUs, PreviewVideoFrame &out, int maxWidth,

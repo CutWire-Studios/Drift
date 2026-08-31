@@ -8073,6 +8073,11 @@ void AppController::setProjectResolution(int width, int height)
     setProjectSetup(width, height, m_project.fps());
 }
 
+void AppController::setProjectFps(int fps)
+{
+    setProjectSetup(m_project.width(), m_project.height(), fps);
+}
+
 void AppController::setProjectSetup(int width, int height, int fps)
 {
     width = qBound(16, width, 7680);
@@ -8092,10 +8097,15 @@ void AppController::setProjectSetup(int width, int height, int fps)
     if (m_project.width() != width || m_project.height() != height)
         drift::rebaseClipLayout(m_project, m_project.width(), m_project.height(), 0.0, 0.0);
     m_project.setResolution(width, height);
+    const bool fpsChanged = m_project.fps() != fps;
     m_project.setFps(fps);
     if (!pristine)
-        pushProjectEdit(before, tr("Project setup"));
+        pushProjectEdit(before, fpsChanged && width == before.width() && height == before.height()
+                                    ? tr("Frame rate")
+                                    : tr("Project setup"));
     finishEdit(tr("Project setup updated"));
+    if (fpsChanged && m_playback.isPlaying())
+        m_playback.syncDisplayCadence();
 }
 
 // Crop rect is given in current-canvas pixels; it may extend outside the canvas

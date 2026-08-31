@@ -744,6 +744,7 @@ public:
     Q_INVOKABLE int projectHeight() const;
     Q_INVOKABLE int projectFps() const;
     Q_INVOKABLE void setProjectResolution(int width, int height);
+    Q_INVOKABLE void setProjectFps(int fps);
     Q_INVOKABLE void setProjectSetup(int width, int height, int fps);
     Q_INVOKABLE void applyCanvasCrop(double x, double y, double width, double height);
     bool canvasCropMode() const { return m_canvasCropMode; }

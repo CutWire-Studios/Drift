@@ -2,7 +2,7 @@ import QtQuick
 import QtQuick.Window
 import Drift
 
-// Canvas size and crop. Shared by the header Video dialog and Android Settings.
+// Canvas size, frame rate, and crop. Shared by the header Video dialog and Android Settings.
 Column {
     id: root
 
@@ -13,6 +13,7 @@ Column {
 
     property int canvasW: { void EditorState.tracks; return EditorState.projectWidth() }
     property int canvasH: { void EditorState.tracks; return EditorState.projectHeight() }
+    property int canvasFps: { void EditorState.tracks; return EditorState.projectFps() }
 
     readonly property var canvasPresets: [
         { label: qsTr("Custom"), w: 0, h: 0 },
@@ -94,6 +95,21 @@ Column {
         }
     }
 
+    Column {
+        width: (parent.width - Theme.spacingLg) / 2
+        spacing: Theme.spacingSm
+        ThemedLabel { text: qsTr("Frames per second") }
+        ThemedNumberField {
+            width: parent.width
+            enabled: !EditorState.canvasCropMode
+            from: 1
+            to: 240
+            unit: "fps"
+            value: root.canvasFps
+            onEdited: v => EditorState.setProjectFps(v)
+        }
+    }
+
     ThemedButton {
         width: parent.width
         variant: EditorState.canvasCropMode ? "primary" : "secondary"
@@ -112,5 +128,11 @@ Column {
         width: parent.width
         wrapMode: Text.WordWrap
         text: qsTr("Changing size doesn’t shrink your clips — anything outside the new edges is cut off.")
+    }
+
+    ThemedLabel {
+        width: parent.width
+        wrapMode: Text.WordWrap
+        text: qsTr("Clips keep their length. A higher rate samples more pictures per second from the same footage.")
     }
 }

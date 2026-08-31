@@ -486,6 +486,16 @@ void PlaybackEngine::play()
     emit playingChanged();
 
     m_playheadTimer.start(kPlayheadUpdateMs);
+    syncDisplayCadence();
+
+    onPlayheadTick();
+    onCompositeTick();
+}
+
+void PlaybackEngine::syncDisplayCadence()
+{
+    if (!m_playing || isQualityMode())
+        return;
 
     const int fps = m_project ? qMax(1, m_project->fps()) : 30;
     // This is a display cadence, not a timeline one: a wall second should show about fps frames
@@ -499,9 +509,6 @@ void PlaybackEngine::play()
     // the budget from the tick keeps it tied to the real cadence at this fps and
     // rate, instead of a fixed figure that only ever suited 30 fps at 1x.
     m_compositor.setLateFrameBudgetMs(tickMs * 2);
-
-    onPlayheadTick();
-    onCompositeTick();
 }
 
 void PlaybackEngine::pause()

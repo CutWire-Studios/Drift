@@ -129,6 +129,19 @@ private:
     bool seekVideoStream(drift::TimeUs sourceUs);
     bool seekAudioStream(drift::TimeUs sourceUs);
 
+    // PTS in clip-local microseconds (best_effort, minus stream start_time).
+    drift::TimeUs videoPtsToUs(const AVFrame *frame) const;
+    // Cover/peek cursor: the last frame with pts <= the request, plus the next
+    // decoded frame. Variable-frame-rate sources (game captures especially) have
+    // gaps longer than a project tick; without the peek, that overshoot looks
+    // like a backward jump and the next read re-seeks a whole GOP.
+    void clearVideoCursor();
+    void freeVideoCursor();
+    bool coverHolds(drift::TimeUs sourceUs) const;
+    void promotePeekToCover();
+    bool refVideoFrame(AVFrame *&dst, const AVFrame *src);
+    bool advanceVideoTo(drift::TimeUs sourceUs, int maxWidth, int maxHeight, bool *hwFailure);
+
     // Decode size fitted into the caller's box, quantized so small preview
     // resizes don't churn the sws context and the frame cache.
     QSize decodeSizeFor(int maxWidth, int maxHeight) const;
@@ -217,6 +230,15 @@ private:
     drift::TimeUs m_sourceFrameDurationUs = 0; // 0 until the stream is opened
     static constexpr drift::TimeUs kForwardSeekThresholdUs = 2 * drift::kUsPerSecond;
 
+    // Cover = last source frame at or before the request; peek = the next one.
+    // Playback holds cover until peek's PTS, so VFR gaps do not re-seek.
+    AVFrame *m_coverFrame = nullptr;
+    AVFrame *m_peekFrame = nullptr;
+    drift::TimeUs m_coverPtsUs = 0;
+    drift::TimeUs m_peekPtsUs = 0;
+    bool m_hasCover = false;
+    bool m_hasPeek = false;
+
     // Recently returned frames, most-recent first, keyed by source PTS. Backward
     // scrubbing and time_echo's history samples hit this instead of re-seeking.
     struct CachedFrame
@@ -233,7 +255,8 @@ private:
     QList<CachedPreview> m_previewCache;
     static constexpr int kMaxCachedFrames = 16;
     // Hardware surfaces live in FFmpeg's decoder pool. Holding 2 s of them would
-    // exhaust extra_hw_frames and stall decode, so the GPU ring is short.
+    // exhaust extra_hw_frames and stall decode, so the GPU ring is short. Cover
+    // and peek each hold one extra ref on top of the cache.
     static constexpr int kMaxHwCachedFrames = 8;
     static constexpr int kHwExtraFrames = 16;
 

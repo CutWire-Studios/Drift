@@ -2034,6 +2034,10 @@
         <translation>Installa il pacchetto adesivi emoji per aggiungere emoji</translation>
     </message>
     <message>
+        <source>Frame rate</source>
+        <translation type="unfinished">Frequenza dei fotogrammi</translation>
+    </message>
+    <message>
         <source>Project setup</source>
         <translation>Configurazione progetto</translation>
     </message>
@@ -8516,6 +8520,10 @@ Se la riproduzione va a scatti, prova un&apos;altra opzione.</translation>
         <translation>Altezza</translation>
     </message>
     <message>
+        <source>Frames per second</source>
+        <translation type="unfinished">Fotogrammi al secondo</translation>
+    </message>
+    <message>
         <source>Cancel crop</source>
         <translation>Annulla ritaglio quadro</translation>
     </message>
@@ -8530,6 +8538,10 @@ Se la riproduzione va a scatti, prova un&apos;altra opzione.</translation>
     <message>
         <source>Changing size doesn’t shrink your clips — anything outside the new edges is cut off.</source>
         <translation>La modifica delle dimensioni non riduce le clip: tutto ciò che si trova all&apos;esterno dei nuovi bordi viene tagliato.</translation>
+    </message>
+    <message>
+        <source>Clips keep their length. A higher rate samples more pictures per second from the same footage.</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>

@@ -2034,6 +2034,10 @@
         <translation>Instala el paquete de pegatinas de emojis para añadir emojis</translation>
     </message>
     <message>
+        <source>Frame rate</source>
+        <translation type="unfinished">Velocidad de fotogramas</translation>
+    </message>
+    <message>
         <source>Project setup</source>
         <translation>Configuración del proyecto</translation>
     </message>
@@ -8516,6 +8520,10 @@ Si la reproducción se corta, prueba con otra opción.</translation>
         <translation>Altura</translation>
     </message>
     <message>
+        <source>Frames per second</source>
+        <translation type="unfinished">Fotogramas por segundo</translation>
+    </message>
+    <message>
         <source>Cancel crop</source>
         <translation>Cancelar recorte</translation>
     </message>
@@ -8530,6 +8538,10 @@ Si la reproducción se corta, prueba con otra opción.</translation>
     <message>
         <source>Changing size doesn’t shrink your clips — anything outside the new edges is cut off.</source>
         <translation>Cambiar de tamaño no reduce los clips: todo lo que quede fuera de los nuevos bordes se recortará.</translation>
+    </message>
+    <message>
+        <source>Clips keep their length. A higher rate samples more pictures per second from the same footage.</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>

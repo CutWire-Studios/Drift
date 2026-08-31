@@ -122,6 +122,7 @@ private slots:
     void effectProcessorPassthroughWithoutEffects();
     void effectProcessorBrightness();
     void clipReaderSequentialAndSeek();
+    void clipReaderHoldsFrameAcrossGaps();
     void clipReaderAppliesDisplayRotation_data();
     void clipReaderAppliesDisplayRotation();
     void hwAccelBackendIdsRoundTrip();
@@ -1801,10 +1802,11 @@ void EngineTest::reverseRendererPlaysSourceBackwards()
     QVERIFY(QFileInfo::exists(proxyPath));
     QVERIFY(!QFileInfo::exists(proxyPath + QStringLiteral(".part")));
 
-    // Each source frame keeps the mirror of its own timestamp, so source frame i lands at
-    // coverOut - i frames into the proxy. Walking the proxy forwards must walk the source back.
-    for (int j = 1; j <= frames; ++j) {
-        const drift::TimeUs us = drift::TimeUs(j) * drift::kUsPerSecond / fps;
+    // Each source frame keeps the mirror of its own timestamp, so walking the proxy
+    // forwards walks the source back. Sample the middle of each frame's interval —
+    // the boundary can land a hair below the next PTS and resolve to the previous frame.
+    for (int j = 0; j < frames; ++j) {
+        const drift::TimeUs us = (2 * drift::TimeUs(j) + 1) * drift::kUsPerSecond / (2 * fps);
         const QImage frame = ClipReaderPool::instance().readVideoFrame(proxyPath, 1, us, 0, 0);
         QVERIFY2(!frame.isNull(), qPrintable(QStringLiteral("proxy frame %1 did not decode").arg(j)));
 
@@ -1815,7 +1817,7 @@ void EngineTest::reverseRendererPlaysSourceBackwards()
                 break;
             }
         }
-        QCOMPARE(band, frames - j);
+        QCOMPARE(band, frames - 1 - j);
     }
 }
 
@@ -2046,6 +2048,79 @@ void EngineTest::clipReaderSequentialAndSeek()
     // Backward jump forces a keyframe reseek and must not return a stale frame.
     QCOMPARE(dominant(500'000), QChar('R'));
     QCOMPARE(dominant(1'500'000), QChar('G'));
+}
+
+// Game captures are VFR: the file is tagged 60 fps but frames arrive in bursts and
+// gaps. Playback ticks at project fps, so most ticks land in a gap. The reader used
+// to treat the overshot next-frame PTS as "we have gone backwards" and re-seek the
+// GOP on every tick — that is the stutter. Sampling 10 fps source at 60 Hz is the
+// same pattern with a file ffmpeg can make.
+void EngineTest::clipReaderHoldsFrameAcrossGaps()
+{
+    const QString ffmpeg = QStandardPaths::findExecutable(QStringLiteral("ffmpeg"));
+    if (ffmpeg.isEmpty())
+        QSKIP("ffmpeg not available to generate a test clip");
+
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    const QString path = dir.filePath(QStringLiteral("sparse.mp4"));
+    QProcess proc;
+    proc.start(ffmpeg,
+               {QStringLiteral("-y"), QStringLiteral("-f"), QStringLiteral("lavfi"),
+                QStringLiteral("-i"), QStringLiteral("testsrc2=s=64x64:r=10:d=2"),
+                QStringLiteral("-c:v"), QStringLiteral("libx264"), QStringLiteral("-g"),
+                QStringLiteral("20"), QStringLiteral("-pix_fmt"), QStringLiteral("yuv420p"),
+                path});
+    QVERIFY(proc.waitForFinished(30000));
+    QCOMPARE(proc.exitCode(), 0);
+
+    const auto previous = ClipReader::hardwareDecodeMode();
+    ClipReader::setHardwareDecodeMode(ClipReader::HardwareDecodeMode::Software);
+    const auto restore = qScopeGuard([previous] {
+        ClipReader::setHardwareDecodeMode(previous);
+    });
+
+    ClipReader reader;
+    QVERIFY(reader.open(path));
+
+    constexpr int kRequests = 60;                 // 1 s at 60 Hz
+    constexpr drift::TimeUs kStep = 1'000'000 / 60;
+
+    PreviewVideoFrame first;
+    QVERIFY(reader.readPreviewVideoFrame(0, first, 64, 64) && first.isValid());
+    PreviewVideoFrame second;
+    QVERIFY(reader.readPreviewVideoFrame(kStep, second, 64, 64) && second.isValid());
+    const quint64 beforeHold = ClipReader::videoFramesDecoded();
+    PreviewVideoFrame third;
+    // 5 ticks is 83 ms, past the 50 ms cache window of a 10 fps file, still
+    // inside the first source frame — so this only stays cheap if the cover/peek
+    // cursor holds rather than seeking.
+    QVERIFY(reader.readPreviewVideoFrame(kStep * 5, third, 64, 64) && third.isValid());
+    const quint64 holdDecoded = ClipReader::videoFramesDecoded() - beforeHold;
+    QVERIFY2(holdDecoded == 0,
+             qPrintable(QStringLiteral("in-gap tick decoded %1 frames").arg(holdDecoded)));
+
+    const quint64 before = ClipReader::videoFramesDecoded();
+    for (int i = 0; i < kRequests; ++i) {
+        PreviewVideoFrame frame;
+        QVERIFY2(reader.readPreviewVideoFrame(drift::TimeUs(i) * kStep, frame, 64, 64)
+                     && frame.isValid(),
+                 qPrintable(QStringLiteral("request %1 failed").arg(i)));
+    }
+    const quint64 decoded = ClipReader::videoFramesDecoded() - before;
+
+    // 10 source frames in that second, plus a peek past each one. Frame-threaded
+    // software decode may pull extra pictures out of the GOP; a seek storm walks
+    // that GOP on most ticks and lands in the hundreds.
+    QVERIFY2(decoded < 80,
+             qPrintable(QStringLiteral("decoded %1 frames for %2 60 Hz ticks of 10 fps source")
+                            .arg(decoded)
+                            .arg(kRequests)));
+
+    // A real backward jump must still reseek rather than holding the late frame.
+    PreviewVideoFrame early;
+    QVERIFY(reader.readPreviewVideoFrame(0, early, 64, 64));
+    QVERIFY(early.isValid());
 }
 
 // 64x32 landscape, red left half / blue right half, tagged with a display matrix.
