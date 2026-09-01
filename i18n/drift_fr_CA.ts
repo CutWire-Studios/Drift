@@ -2868,6 +2868,10 @@
         <source>Clips added</source>
         <translation>Clips ajoutés</translation>
     </message>
+    <message>
+        <source>Folder moved</source>
+        <translation>Dossier déplacé</translation>
+    </message>
 </context>
 <context>
     <name>AssetCategoryChips</name>

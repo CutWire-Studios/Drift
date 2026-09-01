@@ -62,6 +62,9 @@ private slots:
     void importIntoDeletedFolderFallsBackToRoot();
     void importUnreadableUrlReportsFailed();
     void moveAssetToFolderAndUndo();
+    void moveBinFolderReparentsAndUndo();
+    void moveBinFolderRefusesCycle();
+    void moveBinFolderRefusesNonexistentParent();
     void deleteBinFolderMovesChildrenAndUndo();
     void removeAssetsIsOneUndoStep();
     void removeAssetsRefusesBatchWithInUseAsset();
@@ -506,6 +509,64 @@ void EditorStateTest::moveAssetToFolderAndUndo()
 
     state.undo();
     QCOMPARE(library.assetAt(0).value(QStringLiteral("folderId")).toString(), QString());
+}
+
+void EditorStateTest::moveBinFolderReparentsAndUndo()
+{
+    AssetLibrary library;
+    AppController state(&library);
+
+    const QString interviewsId = state.createBinFolder(QStringLiteral("Interviews"), QString());
+    const QString day1Id = state.createBinFolder(QStringLiteral("Day 1"), QString());
+    const QString clipId = state.createBinFolder(QStringLiteral("Close-ups"), day1Id);
+
+    // Reparent "Day 1" (and everything under it) into "Interviews".
+    QVERIFY(state.moveBinFolder(day1Id, interviewsId));
+    QCOMPARE(state.binFolderModel()->folderById(day1Id).value(QStringLiteral("parentId")).toString(),
+             interviewsId);
+    // The child folder never had its own parentId touched — it moved along for free.
+    QCOMPARE(state.binFolderModel()->folderById(clipId).value(QStringLiteral("parentId")).toString(),
+             day1Id);
+
+    state.undo();
+    QCOMPARE(state.binFolderModel()->folderById(day1Id).value(QStringLiteral("parentId")).toString(),
+             QString());
+}
+
+void EditorStateTest::moveBinFolderRefusesCycle()
+{
+    AssetLibrary library;
+    AppController state(&library);
+
+    const QString parentId = state.createBinFolder(QStringLiteral("Interviews"), QString());
+    const QString childId = state.createBinFolder(QStringLiteral("Day 1"), parentId);
+    const QString grandchildId = state.createBinFolder(QStringLiteral("Close-ups"), childId);
+
+    // Into itself, and into its own descendant at any depth — either would disconnect the
+    // whole branch from the root by making "Interviews" its own ancestor.
+    QVERIFY(!state.moveBinFolder(parentId, parentId));
+    QVERIFY(!state.moveBinFolder(parentId, childId));
+    QVERIFY(!state.moveBinFolder(parentId, grandchildId));
+    QCOMPARE(state.binFolderModel()->folderById(parentId).value(QStringLiteral("parentId")).toString(),
+             QString());
+
+    // Already there is refused too — not a cycle, just not an actual move.
+    QVERIFY(!state.moveBinFolder(childId, parentId));
+}
+
+void EditorStateTest::moveBinFolderRefusesNonexistentParent()
+{
+    AssetLibrary library;
+    AppController state(&library);
+
+    const QString folderId = state.createBinFolder(QStringLiteral("Interviews"), QString());
+
+    // A stale or fabricated id (moveBinFolder is QML-invokable, so a caller could pass
+    // anything) must not be assigned as-is — that would silently detach the folder and
+    // everything under it from the root hierarchy instead of failing loudly.
+    QVERIFY(!state.moveBinFolder(folderId, QStringLiteral("no-such-folder")));
+    QCOMPARE(state.binFolderModel()->folderById(folderId).value(QStringLiteral("parentId")).toString(),
+             QString());
 }
 
 void EditorStateTest::deleteBinFolderMovesChildrenAndUndo()

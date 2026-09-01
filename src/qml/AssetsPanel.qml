@@ -318,18 +318,47 @@ PanelFrame {
     }
 
     // The "move to folder" path — right-click on a card (or a multi-selection), choose a
-    // destination from a flat list.
+    // destination from a flat list. Also doubles as the folder-move picker (pendingMoveFolderId)
+    // for reparenting a folder itself; the two are mutually exclusive, never both set.
     property var pendingMoveAssetIds: []
     // The folder every selected asset is in right now, so the picker can omit it — moving them
     // "into" the folder they're already in isn't a real destination. A single common value is
     // safe here (not a per-asset lookup): MediaAssetsTab's grid only ever shows one folder's
     // contents at a time, so anything selectable there already shares this folder.
     property string pendingMoveAssetCurrentFolderId: ""
+    // Non-empty while the picker is choosing a new parent for this folder rather than a
+    // destination for assets.
+    property string pendingMoveFolderId: ""
 
     function requestMoveAssetToFolder(assetIds) {
+        root.pendingMoveFolderId = ""
         root.pendingMoveAssetIds = assetIds
         root.pendingMoveAssetCurrentFolderId = EditorState.currentBinFolderId
         folderPickerDialog.open()
+    }
+
+    function requestMoveFolder(folderId) {
+        root.pendingMoveAssetIds = []
+        root.pendingMoveFolderId = folderId
+        folderPickerDialog.open()
+    }
+
+    // True if candidateId is folderId itself or nested anywhere inside it — walked the same
+    // way BinBreadcrumb.qml walks a trail, with the same cycle guard folderPath() uses, since
+    // this runs on the same possibly-malformed parentId chains.
+    function isFolderOrDescendant(candidateId, folderId) {
+        const visited = new Set()
+        let id = candidateId
+        while (id !== "" && !visited.has(id)) {
+            if (id === folderId)
+                return true
+            visited.add(id)
+            const folder = BinFolderModel.folderById(id)
+            if (!folder || Object.keys(folder).length === 0)
+                break
+            id = folder.parentId
+        }
+        return false
     }
 
     // Matches BinBreadcrumb.qml's own separator glyph, so a folder's path reads the same way
@@ -363,7 +392,7 @@ PanelFrame {
         showFooter: false
         preferredWidth: Theme.dialogWidthSm
 
-        // Flat list, root first, minus the folder the asset is already in. Each entry shows
+        // Flat list, root first, minus destinations that aren't real moves. Each entry shows
         // its full path rather than just its own name, so two folders that happen to share a
         // name (nested under different parents) still read as distinct destinations.
         //
@@ -373,8 +402,26 @@ PanelFrame {
         // NOTIFY is undoStackChanged, which fires after every project edit including a rename.
         readonly property var folderOptions: {
             void EditorState.undoAvailable
-            const currentFolderId = root.pendingMoveAssetCurrentFolderId
+            const movingFolderId = root.pendingMoveFolderId
             const out = []
+            if (movingFolderId !== "") {
+                // Moving a folder itself: exclude the folder, anything already its parent (no-op),
+                // and every one of its own descendants — landing there would create a cycle.
+                const currentParentId = BinFolderModel.folderById(movingFolderId).parentId || ""
+                if (currentParentId !== "")
+                    out.push({ id: "", name: qsTr("Media"), path: qsTr("Media") })
+                for (let i = 0; i < BinFolderModel.count; ++i) {
+                    const folder = BinFolderModel.folderAt(i)
+                    if (folder.id === currentParentId)
+                        continue
+                    if (root.isFolderOrDescendant(folder.id, movingFolderId))
+                        continue
+                    out.push({ id: folder.id, name: folder.name, path: root.folderPath(folder.id) })
+                }
+                return out
+            }
+
+            const currentFolderId = root.pendingMoveAssetCurrentFolderId
             if (currentFolderId !== "")
                 out.push({ id: "", name: qsTr("Media"), path: qsTr("Media") })
             for (let i = 0; i < BinFolderModel.count; ++i) {
@@ -440,10 +487,19 @@ PanelFrame {
                         }
 
                         onClicked: {
-                            if (root.pendingMoveAssetIds.length > 0)
-                                EditorState.moveAssetsToFolder(root.pendingMoveAssetIds, optionRow.modelData.id)
-                            root.pendingMoveAssetIds = []
+                            // Closed before the move runs, not after: moving a folder changes
+                            // undoAvailable, which folderOptions depends on, which swaps the
+                            // ListView's model out from under this very delegate — closing
+                            // first avoids racing that live update instead of fighting it.
+                            const targetId = optionRow.modelData.id
                             folderPickerDialog.close()
+                            if (root.pendingMoveFolderId !== "") {
+                                EditorState.moveBinFolder(root.pendingMoveFolderId, targetId)
+                                root.pendingMoveFolderId = ""
+                            } else if (root.pendingMoveAssetIds.length > 0) {
+                                EditorState.moveAssetsToFolder(root.pendingMoveAssetIds, targetId)
+                                root.pendingMoveAssetIds = []
+                            }
                         }
                     }
                 }
@@ -1274,6 +1330,7 @@ PanelFrame {
                 onImportRequested: root.importMedia()
                 onMoveToFolderRequested: (assetIds) => root.requestMoveAssetToFolder(assetIds)
                 onFolderRenameRequested: (folderId, folderName) => root.requestRenameFolder(folderId, folderName)
+                onFolderMoveRequested: (folderId) => root.requestMoveFolder(folderId)
             }
         }
     }

@@ -43,6 +43,9 @@ Item {
     signal moveToFolderRequested(var assetIds)
     // Emitted from a folder tile's context menu. The parent owns the rename dialog.
     signal folderRenameRequested(string folderId, string folderName)
+    // Emitted from a folder tile's context menu. The parent owns the folder-picker dialog —
+    // the same one moveToFolderRequested above opens for assets.
+    signal folderMoveRequested(string folderId)
 
     // Multi-select, by asset id rather than position: assetIndex is a live row position that
     // shifts on removal/reorder, so an id survives everything except the asset itself going
@@ -612,6 +615,11 @@ Item {
                         icon.name: Theme.icons.pencil
                         onTriggered: root.folderRenameRequested(cardRoot.folderId, cardRoot.name)
                     }
+                    ThemedMenuItem {
+                        text: qsTr("Move to folder…")
+                        icon.name: Theme.icons.folder
+                        onTriggered: root.folderMoveRequested(cardRoot.folderId)
+                    }
                     ThemedMenuSeparator { }
                     ThemedMenuItem {
                         text: qsTr("Delete")
@@ -921,6 +929,11 @@ Item {
                     text: qsTr("Rename…")
                     icon.name: Theme.icons.pencil
                     onTriggered: root.folderRenameRequested(listRow.folderId, listRow.name)
+                }
+                ThemedMenuItem {
+                    text: qsTr("Move to folder…")
+                    icon.name: Theme.icons.folder
+                    onTriggered: root.folderMoveRequested(listRow.folderId)
                 }
                 ThemedMenuSeparator { }
                 ThemedMenuItem {

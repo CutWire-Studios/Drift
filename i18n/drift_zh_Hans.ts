@@ -2859,6 +2859,10 @@
         <source>Clips added</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>Folder moved</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>AssetCategoryChips</name>

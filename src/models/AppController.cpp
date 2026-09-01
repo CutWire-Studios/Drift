@@ -2417,6 +2417,20 @@ bool AppController::renameBinFolder(const QString &folderId, const QString &name
     return true;
 }
 
+bool AppController::moveBinFolder(const QString &folderId, const QString &newParentId)
+{
+    // Plain copy, not detachedCopy(): nothing here runs off the GUI thread, so there's no
+    // concurrent reader to race — the same reasoning removeAsset already relies on. A full
+    // detach walks every clip's keyframes/masks/effects across the whole timeline, which is
+    // real, perceptible latency on a project of any size for an edit that touches none of it.
+    const drift::Project before = m_project;
+    if (!m_binFolderModel.moveFolder(folderId, newParentId))
+        return false;
+
+    pushProjectEdit(before, tr("Folder moved"));
+    return true;
+}
+
 bool AppController::deleteBinFolder(const QString &folderId)
 {
     // Plain copy, not detachedCopy(): nothing here runs off the GUI thread, so there's no
