@@ -332,15 +332,40 @@ PanelFrame {
         folderPickerDialog.open()
     }
 
+    // Matches BinBreadcrumb.qml's own separator glyph, so a folder's path reads the same way
+    // here as it does in the "where you are" trail above the grid.
+    readonly property string folderPathSeparator: ">"
+
+    // Full path from the bin root down to folderId, e.g. "Interviews > B-Roll" — walks
+    // parentId the same way BinBreadcrumb.qml does, since a flat name alone can't
+    // distinguish two same-named folders nested under different parents.
+    function folderPath(folderId) {
+        const names = []
+        const visited = new Set()
+        let id = folderId
+        // Project deserialization doesn't reject a self- or mutually-parented folder, and
+        // this runs once per folder every time the picker opens — an undetected cycle would
+        // spin this loop forever and hang the UI, so bail the moment an id repeats.
+        while (id !== "" && !visited.has(id)) {
+            visited.add(id)
+            const folder = BinFolderModel.folderById(id)
+            if (!folder || Object.keys(folder).length === 0)
+                break
+            names.unshift(folder.name)
+            id = folder.parentId
+        }
+        return names.join(" " + root.folderPathSeparator + " ")
+    }
+
     ThemedDialog {
         id: folderPickerDialog
         title: qsTr("Move to folder")
         showFooter: false
         preferredWidth: Theme.dialogWidthSm
 
-        // Flat list, root first, minus the folder the asset is already in — nesting depth is
-        // not shown, matching the breadcrumb's "where you are" rather than "the whole tree"
-        // framing.
+        // Flat list, root first, minus the folder the asset is already in. Each entry shows
+        // its full path rather than just its own name, so two folders that happen to share a
+        // name (nested under different parents) still read as distinct destinations.
         //
         // folderAt() is a plain invokable call, not a property read, so it isn't by itself
         // enough to make this binding re-evaluate after a rename (BinFolderModel.count doesn't
@@ -351,11 +376,11 @@ PanelFrame {
             const currentFolderId = root.pendingMoveAssetCurrentFolderId
             const out = []
             if (currentFolderId !== "")
-                out.push({ id: "", name: qsTr("Media") })
+                out.push({ id: "", name: qsTr("Media"), path: qsTr("Media") })
             for (let i = 0; i < BinFolderModel.count; ++i) {
                 const folder = BinFolderModel.folderAt(i)
                 if (folder.id !== currentFolderId)
-                    out.push(folder)
+                    out.push({ id: folder.id, name: folder.name, path: root.folderPath(folder.id) })
             }
             return out
         }
@@ -407,7 +432,7 @@ PanelFrame {
                             anchors.leftMargin: 12
                             anchors.rightMargin: 12
                             verticalAlignment: Text.AlignVCenter
-                            text: optionRow.modelData.name
+                            text: optionRow.modelData.path
                             elide: Text.ElideRight
                             color: Theme.panelForeground
                             font.family: Theme.fontFamily
