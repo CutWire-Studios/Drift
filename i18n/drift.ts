@@ -2286,6 +2286,14 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>All audio tracks separated</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Change audio track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Clips unlinked</source>
         <translation type="unfinished"></translation>
     </message>
@@ -3367,6 +3375,14 @@
     </message>
     <message>
         <source>This clip has no audio track.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Audio track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Extract all audio tracks</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -7935,6 +7951,10 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Separate audio</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Separate all audio tracks</source>
         <translation type="unfinished"></translation>
     </message>
     <message>

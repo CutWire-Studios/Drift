@@ -28,10 +28,13 @@ public:
     ClipReader(const ClipReader &) = delete;
     ClipReader &operator=(const ClipReader &) = delete;
 
-    bool open(const QString &path);
+    bool open(const QString &path, int audioStreamOrdinal = 0);
     void close();
     bool isOpen() const { return m_fmt != nullptr; }
     const QString &path() const { return m_path; }
+
+    void setAudioStreamOrdinal(int ordinal);
+    int audioStreamOrdinal() const { return m_audioStreamOrdinal; }
 
     bool hasVideo() const { return m_videoStream >= 0; }
     bool hasAudio() const { return m_audioStream >= 0; }
@@ -165,6 +168,7 @@ private:
     struct SwrContext *m_swr = nullptr;
     int m_videoStream = -1;
     int m_audioStream = -1;
+    int m_audioStreamOrdinal = 0;
     // Source display-matrix rotation (0/90/180/270), applied to every decoded frame
     // so everything downstream sees upright pixels.
     int m_sourceRotation = 0;

@@ -2286,6 +2286,14 @@
         <translation>Audio separato</translation>
     </message>
     <message>
+        <source>All audio tracks separated</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Change audio track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Clips unlinked</source>
         <translation>Clip scollegate</translation>
     </message>
@@ -3368,6 +3376,14 @@
     <message>
         <source>This clip has no audio track.</source>
         <translation>Questa clip non ha una traccia audio.</translation>
+    </message>
+    <message>
+        <source>Audio track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Extract all audio tracks</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Noise</source>
@@ -7943,6 +7959,10 @@ Se la riproduzione va a scatti, prova un&apos;altra opzione.</translation>
     <message>
         <source>Separate audio</source>
         <translation>Separa audio</translation>
+    </message>
+    <message>
+        <source>Separate all audio tracks</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Unlink</source>

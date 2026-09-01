@@ -69,7 +69,8 @@ public:
                                             const QString &stabilizePath = QString(),
                                             int stabilizeSmoothing = 15, bool stabilizeTripod = false);
     int readAudioInterleaved(const QString &path, quint64 streamId, drift::TimeUs sourceStartUs,
-                             int sampleCount, int outputSampleRate, float *interleavedStereoOut);
+                             int sampleCount, int outputSampleRate, float *interleavedStereoOut,
+                             int audioStreamOrdinal = 0);
     // Tell every audio reader its cursor is stale, so the next read seeks to the position asked
     // for. Called when the timeline playhead moves: a short forward seek looks like ordinary
     // playback to the sequential fast path, which would keep streaming from the old position.

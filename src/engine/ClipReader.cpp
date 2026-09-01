@@ -537,6 +537,7 @@ void ClipReader::close()
 
     m_videoStream = -1;
     m_audioStream = -1;
+    m_audioStreamOrdinal = 0;
     m_sourceRotation = 0;
     m_hwAccelDisabled = false;
     m_hwScalerFailed = false;
@@ -546,15 +547,16 @@ void ClipReader::close()
     m_path.clear();
 }
 
-bool ClipReader::open(const QString &path)
+bool ClipReader::open(const QString &path, int audioStreamOrdinal)
 {
     if (path.isEmpty())
         return false;
-    if (m_path == path && isOpen())
+    if (m_path == path && m_audioStreamOrdinal == audioStreamOrdinal && isOpen())
         return true;
 
     close();
     m_path = path;
+    m_audioStreamOrdinal = audioStreamOrdinal;
 
     AVFormatContext *fmt = nullptr;
     if (avformat_open_input(&fmt, path.toUtf8().constData(), nullptr, nullptr) < 0)
@@ -565,12 +567,24 @@ bool ClipReader::open(const QString &path)
     }
 
     m_fmt = fmt;
+    int audioCount = 0;
     for (unsigned i = 0; i < m_fmt->nb_streams; ++i) {
         const AVMediaType type = m_fmt->streams[i]->codecpar->codec_type;
         if (type == AVMEDIA_TYPE_VIDEO && m_videoStream < 0)
             m_videoStream = static_cast<int>(i);
-        else if (type == AVMEDIA_TYPE_AUDIO && m_audioStream < 0)
-            m_audioStream = static_cast<int>(i);
+        else if (type == AVMEDIA_TYPE_AUDIO) {
+            if (audioCount == m_audioStreamOrdinal)
+                m_audioStream = static_cast<int>(i);
+            ++audioCount;
+        }
+    }
+    if (m_audioStream < 0 && audioCount > 0) {
+        for (unsigned i = 0; i < m_fmt->nb_streams; ++i) {
+            if (m_fmt->streams[i]->codecpar->codec_type == AVMEDIA_TYPE_AUDIO) {
+                m_audioStream = static_cast<int>(i);
+                break;
+            }
+        }
     }
 
     if (m_videoStream >= 0) {
@@ -583,6 +597,43 @@ bool ClipReader::open(const QString &path)
     }
 
     return hasVideo() || hasAudio();
+}
+
+void ClipReader::setAudioStreamOrdinal(int ordinal)
+{
+    if (m_audioStreamOrdinal == ordinal)
+        return;
+    m_audioStreamOrdinal = ordinal;
+    if (!m_fmt)
+        return;
+
+    if (m_audioCtx)
+        avcodec_free_context(&m_audioCtx);
+    if (m_swr)
+        swr_free(&m_swr);
+    m_audioStream = -1;
+    m_audioPositioned = false;
+    m_audioNextPtsUs = 0;
+    m_audioLeftover.clear();
+
+    int audioCount = 0;
+    for (unsigned i = 0; i < m_fmt->nb_streams; ++i) {
+        if (m_fmt->streams[i]->codecpar->codec_type == AVMEDIA_TYPE_AUDIO) {
+            if (audioCount == m_audioStreamOrdinal) {
+                m_audioStream = static_cast<int>(i);
+                break;
+            }
+            ++audioCount;
+        }
+    }
+    if (m_audioStream < 0 && audioCount > 0) {
+        for (unsigned i = 0; i < m_fmt->nb_streams; ++i) {
+            if (m_fmt->streams[i]->codecpar->codec_type == AVMEDIA_TYPE_AUDIO) {
+                m_audioStream = static_cast<int>(i);
+                break;
+            }
+        }
+    }
 }
 
 bool ClipReader::openSoftwareVideoDecoder()

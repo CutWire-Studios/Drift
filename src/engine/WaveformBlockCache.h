@@ -34,23 +34,29 @@ public:
     // loaded yet" from "silent"; missing blocks are queued and rangeReady() fires for the
     // source as they land.
     QVector<float> range(const QString &sourcePath, double startSeconds, double durSeconds,
-                         int outCount);
+                         int outCount, int streamOrdinal = 0);
 
 signals:
     void rangeReady(const QString &sourcePath);
 
 private:
+    struct QueueItem {
+        QString sourcePath;
+        int block = 0;
+        int streamOrdinal = 0;
+    };
+
     void scheduleBatch();
     void runBatch();
-    void applyBatch(const QString &sourcePath, int firstBlock, const QList<QVector<float>> &blocks,
-                    const QList<int> &requested);
+    void applyBatch(const QString &sourcePath, int firstBlock, int streamOrdinal,
+                    const QList<QVector<float>> &blocks, const QList<int> &requested);
 
-    static QString keyFor(const QString &sourcePath, int block);
+    static QString keyFor(const QString &sourcePath, int block, int streamOrdinal = 0);
 
     QHash<QString, QVector<float>> m_blocks;
     QSet<QString> m_queued;
-    // path + block index, newest last.
-    QList<QPair<QString, int>> m_queue;
+    // path + block index + streamOrdinal, newest last.
+    QList<QueueItem> m_queue;
     bool m_busy = false;
     bool m_batchScheduled = false;
 };

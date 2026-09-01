@@ -2286,6 +2286,14 @@
         <translation>Áudio separado</translation>
     </message>
     <message>
+        <source>All audio tracks separated</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Change audio track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Clips unlinked</source>
         <translation>Clipes desvinculados</translation>
     </message>
@@ -3368,6 +3376,14 @@
     <message>
         <source>This clip has no audio track.</source>
         <translation>Este clipe não tem faixa de áudio.</translation>
+    </message>
+    <message>
+        <source>Audio track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Extract all audio tracks</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Noise</source>
@@ -7943,6 +7959,10 @@ Se a reprodução travar, experimente outro.</translation>
     <message>
         <source>Separate audio</source>
         <translation>Separar áudio</translation>
+    </message>
+    <message>
+        <source>Separate all audio tracks</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Unlink</source>

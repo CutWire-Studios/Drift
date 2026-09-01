@@ -41,6 +41,7 @@
 #include "engine/MediaEditor.h"
 #include "engine/AudioOnsets.h"
 #include "engine/LoudnessMeter.h"
+#include "engine/MediaProbe.h"
 #include "engine/MediaWaveform.h"
 #include "engine/FaceLandmarker.h"
 #include "engine/FaceSwapSource.h"
@@ -1969,17 +1970,21 @@ bool clipHasEmbeddedAudio(const drift::Project &project, AssetLibrary *library, 
 {
     if (clip.type != drift::ClipType::Video || clip.suppressEmbeddedAudio || clip.path.isEmpty())
         return false;
-    return assetHasAudioStreams(project, library, clip.assetId);
+    if (!clip.assetId.isEmpty())
+        return assetHasAudioStreams(project, library, clip.assetId);
+    return !MediaProbe::audioStreams(clip.path).isEmpty();
 }
 
-drift::Clip makeAudioCompanionFromVideo(const drift::Clip &videoClip, const QString &linkId = {})
+drift::Clip makeAudioCompanionFromVideo(const drift::Clip &videoClip, const QString &linkId = {},
+                                        int audioStreamIndex = 0, const QString &customName = {})
 {
     drift::Clip audio;
     audio.id = QUuid::createUuid().toString(QUuid::WithoutBraces);
     audio.linkId = linkId;
     audio.assetId = videoClip.assetId;
     audio.type = drift::ClipType::Audio;
-    audio.name = videoClip.name;
+    audio.audioStreamIndex = audioStreamIndex;
+    audio.name = customName.isEmpty() ? videoClip.name : customName;
     audio.path = videoClip.path;
     audio.timelineStart = videoClip.timelineStart;
     audio.timelineDuration = videoClip.timelineDuration;
@@ -2010,7 +2015,56 @@ bool detachEmbeddedAudioFromVideo(drift::Project &project, AssetLibrary *library
     videoClip.suppressEmbeddedAudio = true;
 
     const int audioTrack = drift::ensureTrackForClipType(project, drift::ClipType::Audio, false);
-    project.tracks()[audioTrack].clips.append(makeAudioCompanionFromVideo(videoClip, linkId));
+    project.tracks()[audioTrack].clips.append(makeAudioCompanionFromVideo(videoClip, linkId, videoClip.audioStreamIndex));
+    return true;
+}
+
+// Split all embedded audio streams onto separate audio tracks (video keeps picture only).
+bool detachAllAudioTracksFromVideo(drift::Project &project, AssetLibrary *library, drift::Clip &videoClip)
+{
+    if (!clipHasEmbeddedAudio(project, library, videoClip))
+        return false;
+
+    const QList<StreamInfo> streams = MediaProbe::audioStreams(videoClip.path);
+    if (streams.isEmpty())
+        return detachEmbeddedAudioFromVideo(project, library, videoClip);
+
+    const QString linkId = videoClip.linkId.isEmpty()
+        ? QUuid::createUuid().toString(QUuid::WithoutBraces)
+        : videoClip.linkId;
+    videoClip.linkId = linkId;
+    videoClip.suppressEmbeddedAudio = true;
+
+    for (int i = 0; i < streams.size(); ++i) {
+        const StreamInfo &s = streams.at(i);
+        QString trackName = videoClip.name;
+        if (!s.title.isEmpty()) {
+            trackName = QStringLiteral("%1 (%2)").arg(videoClip.name, s.title);
+        } else if (streams.size() > 1) {
+            trackName = QStringLiteral("%1 (Audio %2)").arg(videoClip.name).arg(i + 1);
+        }
+
+        int targetTrack = -1;
+        int audioTrackCount = 0;
+        for (int t = 0; t < project.tracks().size(); ++t) {
+            if (project.tracks()[t].type == drift::TrackType::Audio) {
+                if (audioTrackCount == i) {
+                    targetTrack = t;
+                    break;
+                }
+                ++audioTrackCount;
+            }
+        }
+        if (targetTrack < 0) {
+            drift::Track newTrack;
+            newTrack.type = drift::TrackType::Audio;
+            project.tracks().append(newTrack);
+            targetTrack = project.tracks().size() - 1;
+        }
+
+        project.tracks()[targetTrack].clips.append(
+            makeAudioCompanionFromVideo(videoClip, linkId, i, trackName));
+    }
     return true;
 }
 
@@ -2202,6 +2256,7 @@ QVariantMap AppController::clipToMap(const drift::Clip &clip) const
         {QStringLiteral("assetId"), clip.assetId},
         {QStringLiteral("assetIndex"), assetIndexForClip(clip)},
         {QStringLiteral("linked"), !clip.linkId.isEmpty()},
+        {QStringLiteral("audioStreamIndex"), clip.audioStreamIndex},
         {QStringLiteral("volume"), clip.volume.isEmpty() ? 1.0 : clip.volume.evaluateAt(0)},
         {QStringLiteral("fadeIn"), drift::usToSeconds(clip.fadeInUs)},
         {QStringLiteral("fadeOut"), drift::usToSeconds(clip.fadeOutUs)},
@@ -9792,6 +9847,127 @@ void AppController::separateAudioFromSelection()
     finishEdit(tr("Audio separated"));
 }
 
+void AppController::separateAllAudioTracks(int trackIndex, int clipIndex)
+{
+    if (!isValidClipIndex(trackIndex, clipIndex))
+        return;
+
+    const drift::Project before = m_project;
+    drift::Clip &clip = m_project.tracks()[trackIndex].clips[clipIndex];
+    if (clip.type != drift::ClipType::Video)
+        return;
+
+    if (!detachAllAudioTracksFromVideo(m_project, m_assetLibrary, clip))
+        return;
+
+    m_selection = selectionWithLinkedPartners(m_project, trackIndex, clipIndex);
+    pushProjectEdit(before, tr("All audio tracks separated"));
+    finishEdit(tr("All audio tracks separated"));
+}
+
+void AppController::separateAllAudioTracksFromSelection()
+{
+    QList<QPair<int, int>> pairs = m_selection;
+    if (pairs.isEmpty() && m_selectedTrack >= 0 && m_selectedClip >= 0)
+        pairs.append(qMakePair(m_selectedTrack, m_selectedClip));
+    if (pairs.isEmpty())
+        return;
+
+    const drift::Project before = m_project;
+    bool changed = false;
+    QSet<QString> detachedVideoIds;
+    for (const QPair<int, int> &pair : pairs) {
+        if (!isValidClipIndex(pair.first, pair.second))
+            continue;
+
+        drift::Clip &clip = m_project.tracks()[pair.first].clips[pair.second];
+        if (clip.type != drift::ClipType::Video || detachedVideoIds.contains(clip.id))
+            continue;
+        if (detachAllAudioTracksFromVideo(m_project, m_assetLibrary, clip)) {
+            detachedVideoIds.insert(clip.id);
+            changed = true;
+        }
+    }
+
+    if (!changed)
+        return;
+
+    if (m_selectedTrack >= 0 && m_selectedClip >= 0)
+        m_selection = selectionWithLinkedPartners(m_project, m_selectedTrack, m_selectedClip);
+
+    pushProjectEdit(before, tr("All audio tracks separated"));
+    finishEdit(tr("All audio tracks separated"));
+}
+
+QVariantList AppController::clipAudioStreams(int trackIndex, int clipIndex) const
+{
+    if (!isValidClipIndex(trackIndex, clipIndex))
+        return {};
+
+    const drift::Clip &clip = m_project.tracks().at(trackIndex).clips.at(clipIndex);
+    if (clip.path.isEmpty())
+        return {};
+
+    const QList<StreamInfo> streams = MediaProbe::audioStreams(clip.path);
+    QVariantList out;
+    for (int i = 0; i < streams.size(); ++i) {
+        const StreamInfo &s = streams.at(i);
+        QString label;
+        if (!s.title.isEmpty()) {
+            label = QStringLiteral("Track %1: %2 (%3 ch, %4 Hz)")
+                        .arg(i + 1)
+                        .arg(s.title)
+                        .arg(s.channels)
+                        .arg(s.sampleRate);
+        } else {
+            label = QStringLiteral("Track %1: %2 ch, %3 Hz (%4)")
+                        .arg(i + 1)
+                        .arg(s.channels)
+                        .arg(s.sampleRate)
+                        .arg(s.codecName);
+        }
+        if (!s.language.isEmpty())
+            label += QStringLiteral(" [%1]").arg(s.language);
+
+        QVariantMap map;
+        map.insert(QStringLiteral("index"), i);
+        map.insert(QStringLiteral("streamIndex"), s.streamIndex);
+        map.insert(QStringLiteral("label"), label);
+        map.insert(QStringLiteral("title"), s.title);
+        map.insert(QStringLiteral("language"), s.language);
+        map.insert(QStringLiteral("codec"), s.codecName);
+        map.insert(QStringLiteral("channels"), s.channels);
+        map.insert(QStringLiteral("sampleRate"), s.sampleRate);
+        out.append(map);
+    }
+    return out;
+}
+
+int AppController::clipAudioStreamCount(int trackIndex, int clipIndex) const
+{
+    if (!isValidClipIndex(trackIndex, clipIndex))
+        return 0;
+    const drift::Clip &clip = m_project.tracks().at(trackIndex).clips.at(clipIndex);
+    if (clip.path.isEmpty())
+        return 0;
+    return MediaProbe::audioStreams(clip.path).size();
+}
+
+void AppController::setClipAudioStreamIndex(int trackIndex, int clipIndex, int streamIndex)
+{
+    if (!isValidClipIndex(trackIndex, clipIndex) || streamIndex < 0)
+        return;
+
+    const drift::Project before = m_project;
+    drift::Clip &clip = m_project.tracks()[trackIndex].clips[clipIndex];
+    if (clip.audioStreamIndex == streamIndex)
+        return;
+
+    clip.audioStreamIndex = streamIndex;
+    pushProjectEdit(before, tr("Change audio track"));
+    finishEdit(tr("Change audio track"));
+}
+
 void AppController::unlinkSelectedClips()
 {
     QList<QPair<int, int>> pairs = m_selection;
@@ -13094,7 +13270,7 @@ QVariantList AppController::waveformPeaksForSourceRange(const QString &path, dou
 }
 
 QVariantList AppController::waveformPeaksRange(const QString &path, double startSeconds,
-                                               double durSeconds, int buckets) const
+                                               double durSeconds, int buckets, int audioStreamIndex) const
 {
     if (path.isEmpty() || durSeconds <= 0.0 || buckets <= 0)
         return {};
@@ -13102,7 +13278,7 @@ QVariantList AppController::waveformPeaksRange(const QString &path, double start
     // Block-backed: only the source span the clip's visible pixels cover is ever decoded, so
     // a three-hour file costs a viewport's worth of audio instead of the whole timeline.
     const int outCount = qBound(1, buckets, 4096);
-    const QVector<float> span = m_waveformBlocks.range(path, startSeconds, durSeconds, outCount);
+    const QVector<float> span = m_waveformBlocks.range(path, startSeconds, durSeconds, outCount, audioStreamIndex);
     if (span.isEmpty())
         return {};
 

@@ -63,6 +63,59 @@ Item {
             percent: true
         }
 
+        // ----- Audio Track Selection (Multi-Track) -------------------------
+        Column {
+            id: audioTrackSection
+            width: parent.width
+            spacing: Theme.spacingSm
+            visible: (root.clipKind === "audio" || root.clipKind === "video") && audioTrackModel.length > 1
+
+            property var audioTrackModel: {
+                void root.clipDataRevision
+                if (EditorState.selectedTrack < 0 || EditorState.selectedClip < 0)
+                    return []
+                return EditorState.clipAudioStreams(EditorState.selectedTrack, EditorState.selectedClip)
+            }
+
+            Text {
+                width: parent.width
+                text: qsTr("Audio track")
+                color: Theme.mutedForeground
+                font.family: Theme.fontFamily
+                font.pixelSize: Theme.fontSizeXs
+            }
+
+            ThemedComboBox {
+                id: audioStreamSelector
+                width: parent.width
+                textRole: "label"
+                valueRole: "index"
+                model: audioTrackSection.audioTrackModel
+                currentIndex: {
+                    const currentIdx = (root.clipData && root.clipData.audioStreamIndex !== undefined)
+                                       ? root.clipData.audioStreamIndex : 0
+                    for (let i = 0; i < audioTrackSection.audioTrackModel.length; ++i) {
+                        if (audioTrackSection.audioTrackModel[i].index === currentIdx)
+                            return i
+                    }
+                    return 0
+                }
+                onActivated: {
+                    EditorState.setClipAudioStreamIndex(
+                        EditorState.selectedTrack, EditorState.selectedClip, currentValue)
+                }
+            }
+
+            ThemedButton {
+                visible: root.clipKind === "video" && EditorState.separateAudioAvailable
+                width: parent.width
+                text: qsTr("Extract all audio tracks")
+                onClicked: {
+                    EditorState.separateAllAudioTracks(EditorState.selectedTrack, EditorState.selectedClip)
+                }
+            }
+        }
+
         Rectangle {
             visible: root.clipKind === "audio" || root.clipKind === "video"
             width: parent.width

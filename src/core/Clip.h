@@ -41,6 +41,8 @@ struct Clip
     ClipType type = ClipType::Video;
     // When true, AudioMixer skips this video clip's embedded audio (companion audio track plays it).
     bool suppressEmbeddedAudio = false;
+    // 0-based index among the audio streams in `path` (for multi-track video/audio files from OBS, etc.)
+    int audioStreamIndex = 0;
 
     TimeUs timelineStart = 0;
     TimeUs timelineDuration = 0;

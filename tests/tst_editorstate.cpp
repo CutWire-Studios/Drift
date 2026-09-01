@@ -43,6 +43,7 @@ private slots:
     void pastedUnknownEffectIsKeptAndReported();
     void clipboardHasEffectsIgnoresOrdinaryText();
     void savedEffectPresetAppliesToAnotherClip();
+    void multiTrackAudioSelectionAndExtraction();
     void addTextClip();
     void addTextClipEmptyUsesPlaceholder();
     void addTextClipWithTextDoesNotRequestEdit();
@@ -3259,6 +3260,97 @@ void EditorStateTest::savedEffectPresetAppliesToAnotherClip()
     QCoreApplication::setOrganizationName(org);
     QCoreApplication::setApplicationName(app);
     QStandardPaths::setTestModeEnabled(false);
+}
+
+void EditorStateTest::multiTrackAudioSelectionAndExtraction()
+{
+    const QString ffmpeg = QStandardPaths::findExecutable(QStringLiteral("ffmpeg"));
+    if (ffmpeg.isEmpty())
+        QSKIP("ffmpeg not available to generate a multi-track test clip");
+
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+
+    const QString multiTrack = dir.filePath(QStringLiteral("obs_multitrack.mkv"));
+    QProcess make;
+    make.start(ffmpeg,
+               {QStringLiteral("-y"),
+                QStringLiteral("-f"), QStringLiteral("lavfi"), QStringLiteral("-i"), QStringLiteral("color=c=blue:s=64x32:r=25:d=2"),
+                QStringLiteral("-f"), QStringLiteral("lavfi"), QStringLiteral("-i"), QStringLiteral("sine=frequency=440:d=2"),
+                QStringLiteral("-f"), QStringLiteral("lavfi"), QStringLiteral("-i"), QStringLiteral("sine=frequency=880:d=2"),
+                QStringLiteral("-map"), QStringLiteral("0:v"),
+                QStringLiteral("-map"), QStringLiteral("1:a"),
+                QStringLiteral("-map"), QStringLiteral("2:a"),
+                QStringLiteral("-metadata:s:a:0"), QStringLiteral("title=Desktop"),
+                QStringLiteral("-metadata:s:a:1"), QStringLiteral("title=Mic"),
+                QStringLiteral("-c:v"), QStringLiteral("libx264"),
+                QStringLiteral("-c:a"), QStringLiteral("aac"),
+                multiTrack});
+    QVERIFY(make.waitForFinished(30000));
+    QCOMPARE(make.exitCode(), 0);
+
+    AssetLibrary library;
+    AppController state(&library);
+
+    drift::Clip clip;
+    clip.id = QStringLiteral("clip-obs");
+    clip.type = drift::ClipType::Video;
+    clip.name = QStringLiteral("OBS Recording");
+    clip.path = multiTrack;
+    clip.timelineStart = 0;
+    clip.timelineDuration = drift::secondsToUs(2.0);
+    clip.srcIn = 0;
+    clip.srcOut = clip.timelineDuration;
+    state.project()->tracks().clear();
+    state.project()->tracks().append(drift::Track{.type = drift::TrackType::Video});
+    state.project()->tracks()[0].clips.append(clip);
+    state.selectClip(0, 0);
+
+    // Check clip audio streams
+    const QVariantList streams = state.clipAudioStreams(0, 0);
+    QCOMPARE(streams.size(), 2);
+    QCOMPARE(streams[0].toMap().value(QStringLiteral("title")).toString(), QStringLiteral("Desktop"));
+    QCOMPARE(streams[1].toMap().value(QStringLiteral("title")).toString(), QStringLiteral("Mic"));
+    QCOMPARE(state.clipAudioStreamCount(0, 0), 2);
+
+    // Initial audioStreamIndex should be 0
+    QCOMPARE(state.clipAt(0, 0).value(QStringLiteral("audioStreamIndex")).toInt(), 0);
+
+    // Select second audio stream
+    state.setClipAudioStreamIndex(0, 0, 1);
+    QCOMPARE(state.clipAt(0, 0).value(QStringLiteral("audioStreamIndex")).toInt(), 1);
+
+    // Undo should restore audioStreamIndex to 0
+    state.undo();
+    QCOMPARE(state.clipAt(0, 0).value(QStringLiteral("audioStreamIndex")).toInt(), 0);
+
+    state.redo();
+    QCOMPARE(state.clipAt(0, 0).value(QStringLiteral("audioStreamIndex")).toInt(), 1);
+
+    // Extract all audio tracks
+    state.separateAllAudioTracks(0, 0);
+    // Video clip should now have suppressEmbeddedAudio = true
+    const drift::Clip &videoClip = state.project()->tracks().at(0).clips.at(0);
+    QVERIFY(videoClip.suppressEmbeddedAudio);
+    QVERIFY(!videoClip.linkId.isEmpty());
+
+    // Should have created audio tracks with companion clips
+    bool hasAudioTrack1 = false;
+    bool hasAudioTrack2 = false;
+    for (const drift::Track &track : state.project()->tracks()) {
+        if (track.type != drift::TrackType::Audio)
+            continue;
+        for (const drift::Clip &clip : track.clips) {
+            if (clip.linkId == videoClip.linkId) {
+                if (clip.audioStreamIndex == 0)
+                    hasAudioTrack1 = true;
+                else if (clip.audioStreamIndex == 1)
+                    hasAudioTrack2 = true;
+            }
+        }
+    }
+    QVERIFY(hasAudioTrack1);
+    QVERIFY(hasAudioTrack2);
 }
 
 QTEST_MAIN(EditorStateTest)

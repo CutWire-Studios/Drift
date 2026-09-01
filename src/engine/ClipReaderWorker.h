@@ -53,7 +53,7 @@ public slots:
                                          int maxHeight, const QString &stabilizePath = QString(),
                                          int stabilizeSmoothing = 15, bool stabilizeTripod = false);
     int decodeAudio(quint64 streamId, drift::TimeUs sourceStartUs, int sampleCount,
-                    int outputSampleRate, float *interleavedStereoOut);
+                    int outputSampleRate, float *interleavedStereoOut, int audioStreamOrdinal = 0);
     void prefetchNextVideo(quint64 streamId, int maxWidth, int maxHeight);
     void prefetchNextPreviewVideo(quint64 streamId, int maxWidth, int maxHeight,
                                   drift::TimeUs readAheadUs);
@@ -65,7 +65,7 @@ private:
     static constexpr size_t kMaxStreams = 4;
 
     // Call with m_mutex held.
-    ClipReader *readerFor(quint64 streamId);
+    ClipReader *readerFor(quint64 streamId, int audioStreamOrdinal = 0);
 
     QString m_path;
     std::map<quint64, std::unique_ptr<ClipReader>> m_readers;

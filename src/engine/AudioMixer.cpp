@@ -124,7 +124,8 @@ QVector<float> AudioMixer::readClipAudio(const drift::Clip &clip, quint64 stream
                          : clip.timelineToSourceUs(playStartUs);
 
         const int got = ClipReaderPool::instance().readAudioInterleaved(
-            clip.path, streamId, sourceStartUs, wantFrames, sampleRate, out.data() + leadFrames * 2);
+            clip.path, streamId, sourceStartUs, wantFrames, sampleRate, out.data() + leadFrames * 2,
+            clip.audioStreamIndex);
         if (got > 1 && clip.reverse) {
             for (int i = leadFrames, j = leadFrames + got - 1; i < j; ++i, --j) {
                 std::swap(out[i * 2], out[j * 2]);
@@ -163,11 +164,12 @@ QVector<float> AudioMixer::readClipAudio(const drift::Clip &clip, quint64 stream
     block.reverse = clip.reverse;
 
     const QString path = clip.path;
+    const int audioStreamIndex = clip.audioStreamIndex;
     retimer->process(
         block,
-        [&path, streamId, sampleRate](drift::TimeUs sourceStartUs, int frames, float *dst) {
+        [&path, streamId, sampleRate, audioStreamIndex](drift::TimeUs sourceStartUs, int frames, float *dst) {
             return ClipReaderPool::instance().readAudioInterleaved(path, streamId, sourceStartUs, frames,
-                                                                   sampleRate, dst);
+                                                                   sampleRate, dst, audioStreamIndex);
         },
         wantFrames, out.data() + leadFrames * 2);
     return out;
