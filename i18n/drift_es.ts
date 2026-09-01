@@ -2886,6 +2886,10 @@
         <source>Folder moved</source>
         <translation>Carpeta movida</translation>
     </message>
+    <message>
+        <source>Track renamed</source>
+        <translation>Pista renombrada</translation>
+    </message>
 </context>
 <context>
     <name>AssetCategoryChips</name>
@@ -8386,6 +8390,22 @@ Si la reproducción se corta, prueba con otra opción.</translation>
     <message>
         <source>Reset row height</source>
         <translation>Restablecer altura de fila</translation>
+    </message>
+    <message>
+        <source>Rename track</source>
+        <translation>Cambiar nombre de la pista</translation>
+    </message>
+    <message>
+        <source>Rename</source>
+        <translation>Cambiar nombre</translation>
+    </message>
+    <message>
+        <source>Track name</source>
+        <translation>Nombre de la pista</translation>
+    </message>
+    <message>
+        <source>Rename…</source>
+        <translation>Cambiar nombre…</translation>
     </message>
 </context>
 <context>

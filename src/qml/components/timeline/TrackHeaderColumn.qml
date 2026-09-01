@@ -32,8 +32,39 @@ Item {
     // Pending delete confirmation — index kept until Accept/Reject so the menu
     // can close without wiping the track immediately.
     property int pendingDeleteTrack: -1
+    // Same idea for the rename dialog.
+    property int pendingRenameTrack: -1
 
     clip: true
+
+    ThemedDialog {
+        id: renameTrackDialog
+        title: qsTr("Rename track")
+        acceptText: qsTr("Rename")
+        preferredWidth: Theme.dialogWidthSm
+
+        contentItem: Column {
+            width: parent ? parent.width : Theme.dialogWidthSm
+            spacing: Theme.spacingMd
+
+            ThemedTextField {
+                id: renameTrackField
+                width: parent.width
+                placeholderText: qsTr("Track name")
+            }
+        }
+
+        onOpened: {
+            renameTrackField.forceActiveFocus()
+            renameTrackField.selectAll()
+        }
+        onAccepted: {
+            if (root.pendingRenameTrack >= 0)
+                EditorState.renameTrack(root.pendingRenameTrack, renameTrackField.text)
+            root.pendingRenameTrack = -1
+        }
+        onRejected: root.pendingRenameTrack = -1
+    }
 
     ThemedDialog {
         id: confirmDeleteTrack
@@ -94,8 +125,9 @@ Item {
         return Theme.icons.video;
     }
 
-    // Single-letter stand-in for the type glyph plus name band, which do not fit a
-    // 72px compact header. "V1"/"A2" is the whole identification a phone gets.
+    // Single-letter stand-in for the type glyph plus name band, which do not fit a 72px
+    // compact header. "V1"/"A2" is the fallback identification a phone gets until the track
+    // has a custom name — see trackCompactLabel, which prefers that name when it's set.
     function trackTypeShortLabel(type) {
         if (type === "audio") return qsTr("A");
         if (type === "text") return qsTr("T");
@@ -160,6 +192,17 @@ Item {
             readonly property bool trackMuted: root.tracks[index].muted === true
             readonly property bool trackHidden: root.tracks[index].hidden === true
             readonly property bool trackWaveform: root.tracks[index].showWaveform === true
+            // Falls back to the type+position label until a custom name is set.
+            readonly property string trackDisplayName:
+                root.tracks[index].name && root.tracks[index].name.length > 0
+                ? root.tracks[index].name
+                : root.trackTypeLabel(root.tracks[index].type) + " " + (index + 1)
+            // Same, but falling back to the short "V1"/"A2" form the compact header uses when
+            // there's no custom name to show instead.
+            readonly property string trackCompactLabel:
+                root.tracks[index].name && root.tracks[index].name.length > 0
+                ? root.tracks[index].name
+                : root.trackTypeShortLabel(root.tracks[index].type) + (index + 1)
             width: root.labelsWidth
             height: root.trackHeight(index)
                     + (index < root.tracks.length - 1 ? Theme.trackGap : 0)
@@ -290,6 +333,7 @@ Item {
             }
 
             Row {
+                id: trackIconRow
                 anchors.right: parent.right
                 anchors.rightMargin: root.compact ? 4 : 12
                 anchors.verticalCenter: parent.verticalCenter
@@ -399,19 +443,43 @@ Item {
                 }
             }
 
+            // Text/subtitle rows are too short for the name band above (it needs both a
+            // top-anchored name and a vertically centered icon row without the two
+            // overlapping), so the name sits inline here instead, between the grip and the
+            // type/toggle icons.
+            Text {
+                visible: !root.compact && root.trackHeight(index) < 40
+                anchors.left: parent.left
+                anchors.leftMargin: Theme.spacing3xl + Theme.spacingSm
+                anchors.right: trackIconRow.left
+                anchors.rightMargin: Theme.spacingSm
+                anchors.verticalCenter: parent.verticalCenter
+                anchors.verticalCenterOffset: index < root.tracks.length - 1 ? -Theme.trackGap / 2 : 0
+                text: trackLabelRow.trackDisplayName
+                color: Theme.mutedForeground
+                font.family: Theme.fontFamily
+                font.pixelSize: Theme.fontSizeTiny
+                elide: Text.ElideRight
+            }
+
             // Compact stand-in for the glyph and the name band: sits in the gap
             // between the grip and the mute/hide pair, which is the only free
-            // horizontal space the compact header has.
+            // horizontal space the compact header has. Shows the custom name (elided) once
+            // one is set — the context menu's Rename is reachable here too (long-press),
+            // and a rename that changes nothing visible would look like it silently failed.
             Text {
                 visible: root.compact
                 anchors.left: parent.left
                 anchors.leftMargin: 18
+                anchors.right: trackIconRow.left
+                anchors.rightMargin: Theme.spacingSm
                 anchors.verticalCenter: parent.verticalCenter
                 anchors.verticalCenterOffset: index < root.tracks.length - 1 ? -Theme.trackGap / 2 : 0
-                text: root.trackTypeShortLabel(root.tracks[index].type) + (index + 1)
+                text: trackLabelRow.trackCompactLabel
                 color: Theme.mutedForeground
                 font.family: Theme.fontFamily
                 font.pixelSize: Theme.fontSizeTiny
+                elide: Text.ElideRight
             }
 
             // Filmstrip/waveform toggle for compact headers. Parked in the bottom-left
@@ -446,8 +514,7 @@ Item {
                 anchors.rightMargin: Theme.spacingLg
                 anchors.top: parent.top
                 anchors.topMargin: Theme.spacingMd
-                text: root.trackTypeLabel(root.tracks[index].type)
-                      + " " + (index + 1)
+                text: trackLabelRow.trackDisplayName
                 color: Theme.mutedForeground
                 font.family: Theme.fontFamily
                 font.pixelSize: Theme.fontSizeTiny
@@ -468,6 +535,16 @@ Item {
                 ThemedContextMenu {
                     id: trackContextMenu
 
+                    ThemedMenuItem {
+                        text: qsTr("Rename…")
+                        icon.name: Theme.icons.pencil
+                        onTriggered: {
+                            root.pendingRenameTrack = index
+                            renameTrackField.text = trackLabelRow.trackDisplayName
+                            renameTrackDialog.open()
+                        }
+                    }
+                    ThemedMenuSeparator {}
                     ThemedMenuItem {
                         text: trackLabelRow.trackMuted ? qsTr("Unmute track")
                                                        : qsTr("Mute track")

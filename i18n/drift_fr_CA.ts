@@ -2888,6 +2888,10 @@
         <source>Folder moved</source>
         <translation>Dossier déplacé</translation>
     </message>
+    <message>
+        <source>Track renamed</source>
+        <translation>Piste renommée</translation>
+    </message>
 </context>
 <context>
     <name>AssetCategoryChips</name>
@@ -8391,6 +8395,22 @@ En cas de saccades à la lecture, essayez un autre mode.</translation>
     <message>
         <source>Reset row height</source>
         <translation>Réinitialiser la hauteur de ligne</translation>
+    </message>
+    <message>
+        <source>Rename track</source>
+        <translation>Renommer la piste</translation>
+    </message>
+    <message>
+        <source>Rename</source>
+        <translation>Renommer</translation>
+    </message>
+    <message>
+        <source>Track name</source>
+        <translation>Nom de la piste</translation>
+    </message>
+    <message>
+        <source>Rename…</source>
+        <translation>Renommer…</translation>
     </message>
 </context>
 <context>

@@ -2886,6 +2886,10 @@
         <source>Folder moved</source>
         <translation>Cartella spostata</translation>
     </message>
+    <message>
+        <source>Track renamed</source>
+        <translation>Traccia rinominata</translation>
+    </message>
 </context>
 <context>
     <name>AssetCategoryChips</name>
@@ -8386,6 +8390,22 @@ Se la riproduzione va a scatti, prova un&apos;altra opzione.</translation>
     <message>
         <source>Reset row height</source>
         <translation>Reimposta altezza riga</translation>
+    </message>
+    <message>
+        <source>Rename track</source>
+        <translation>Rinomina traccia</translation>
+    </message>
+    <message>
+        <source>Rename</source>
+        <translation>Rinomina</translation>
+    </message>
+    <message>
+        <source>Track name</source>
+        <translation>Nome traccia</translation>
+    </message>
+    <message>
+        <source>Rename…</source>
+        <translation>Rinomina…</translation>
     </message>
 </context>
 <context>

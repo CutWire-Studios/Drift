@@ -73,6 +73,7 @@ private slots:
     void addClipsFromAssetsPlacesThemSequentially();
     void moveTrackReordersAndRemapsSelection();
     void addTrackInsertsEmptyTrackByType();
+    void renameTrackAndUndo();
     void projectPersistenceRoundTrip();
     void projectJsonExportImportRoundTrip();
     void projectJsonImportRejectsGarbageAndLeavesTimeline();
@@ -799,6 +800,35 @@ void EditorStateTest::addTrackInsertsEmptyTrackByType()
     QVERIFY(state.undoAvailable());
     state.undo();
     QCOMPARE(state.tracks().size(), 2);
+}
+
+void EditorStateTest::renameTrackAndUndo()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    QCOMPARE(state.tracks().size(), 1);
+
+    // No custom name yet.
+    QCOMPARE(state.tracks().at(0).toMap().value(QStringLiteral("name")).toString(), QString());
+
+    QVERIFY(state.renameTrack(0, QStringLiteral("Dialogue")));
+    QCOMPARE(state.tracks().at(0).toMap().value(QStringLiteral("name")).toString(),
+             QStringLiteral("Dialogue"));
+
+    // Unchanged and out-of-range are both refused, not pushed as no-op undo steps.
+    QVERIFY(!state.renameTrack(0, QStringLiteral("Dialogue")));
+    QVERIFY(!state.renameTrack(5, QStringLiteral("Nope")));
+
+    // Empty clears the custom name back to the type+position fallback, rather than being
+    // refused the way an empty asset name is.
+    QVERIFY(state.renameTrack(0, QStringLiteral("  ")));
+    QCOMPARE(state.tracks().at(0).toMap().value(QStringLiteral("name")).toString(), QString());
+
+    state.undo();
+    QCOMPARE(state.tracks().at(0).toMap().value(QStringLiteral("name")).toString(),
+             QStringLiteral("Dialogue"));
+    state.undo();
+    QCOMPARE(state.tracks().at(0).toMap().value(QStringLiteral("name")).toString(), QString());
 }
 
 // Packaging embeds the derived artifacts and repoints the project at the extraction directory, so

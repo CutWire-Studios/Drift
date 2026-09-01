@@ -2886,6 +2886,10 @@
         <source>Folder moved</source>
         <translation>ෆෝල්ඩරය ගෙන යන ලදී</translation>
     </message>
+    <message>
+        <source>Track renamed</source>
+        <translation>ට්‍රැකයේ නම වෙනස් කරන ලදී</translation>
+    </message>
 </context>
 <context>
     <name>AssetCategoryChips</name>
@@ -8386,6 +8390,22 @@ If playback stutters, try another.</source>
     <message>
         <source>Reset row height</source>
         <translation>පේළි උස යළි සකසන්න</translation>
+    </message>
+    <message>
+        <source>Rename track</source>
+        <translation>ට්‍රැකයේ නම වෙනස් කරන්න</translation>
+    </message>
+    <message>
+        <source>Rename</source>
+        <translation>නම වෙනස් කරන්න</translation>
+    </message>
+    <message>
+        <source>Track name</source>
+        <translation>ට්‍රැක් නම</translation>
+    </message>
+    <message>
+        <source>Rename…</source>
+        <translation>නම වෙනස් කරන්න…</translation>
     </message>
 </context>
 <context>
