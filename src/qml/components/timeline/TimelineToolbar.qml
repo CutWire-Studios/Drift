@@ -81,6 +81,29 @@ Item {
             active: toolbar.panel.timelineTool === "split"
             onClicked: toolbar.panel.timelineTool = toolbar.panel.timelineTool === "split" ? "" : "split"
         }
+
+        // A/V actions belong beside the primary clip tools rather than at the end
+        // of the toolbar. On narrower desktop windows the old placement was clipped,
+        // which made an already-implemented feature look as if it did not exist.
+        // Keep only the action that is relevant to the current selection visible:
+        // embedded A/V -> Separate; linked pair -> Unlink.
+        IconButton {
+            glyph: Theme.icons.audioLines
+            variant: "text"
+            tooltip: toolbar.withShortcut(qsTr("Separate audio from video"), "separateAudio")
+            visible: EditorState.separateAudioAvailable
+            enabled: EditorState.separateAudioAvailable
+            onClicked: EditorState.separateAudioFromSelection()
+        }
+        IconButton {
+            glyph: Theme.icons.unlink
+            variant: "text"
+            tooltip: toolbar.withShortcut(qsTr("Unlink video and audio"), "unlink")
+            visible: EditorState.unlinkAvailable
+            enabled: EditorState.unlinkAvailable
+            onClicked: EditorState.unlinkSelectedClips()
+        }
+
         IconButton {
             glyph: Theme.icons.trimStart
             variant: "text"
@@ -181,20 +204,6 @@ Item {
             tooltip: toolbar.withShortcut(qsTr("Clear work area"), "clearInOut")
             enabled: EditorState.workAreaInSeconds >= 0 || EditorState.workAreaOutSeconds >= 0
             onClicked: EditorState.clearWorkArea()
-        }
-        IconButton {
-            glyph: Theme.icons.audioLines
-            variant: "text"
-            tooltip: toolbar.withShortcut(qsTr("Separate audio from video"), "separateAudio")
-            enabled: EditorState.separateAudioAvailable
-            onClicked: EditorState.separateAudioFromSelection()
-        }
-        IconButton {
-            glyph: Theme.icons.unlink
-            variant: "text"
-            tooltip: toolbar.withShortcut(qsTr("Unlink video and audio"), "unlink")
-            enabled: EditorState.unlinkAvailable
-            onClicked: EditorState.unlinkSelectedClips()
         }
         IconButton {
             glyph: Theme.icons.linkTwo
