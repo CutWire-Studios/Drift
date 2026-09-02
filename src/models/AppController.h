@@ -546,6 +546,12 @@ public:
     // that flow can't orphan a timeline clip. Ids that no longer resolve are skipped.
     // Returns how many were actually removed.
     Q_INVOKABLE int removeAssets(const QStringList &assetIds);
+
+    // Explicit destructive variant used only after user confirmation. Removes every
+    // timeline clip referencing the selected assets, cleans transitions that reference
+    // those clips, then removes the assets from the project. The source files on disk
+    // are never touched. The whole operation is recorded as one undo step.
+    Q_INVOKABLE int removeAssetsAndClips(const QStringList &assetIds);
     // Bin label only — does not rename the file on disk or rewrite clip names.
     Q_INVOKABLE bool renameAsset(int assetIndex, const QString &name);
     // Bin folder CRUD. parentId empty = bin root; nesting is arbitrary depth.

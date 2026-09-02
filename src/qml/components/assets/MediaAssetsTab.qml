@@ -9,6 +9,19 @@ import ".."
 Item {
     id: root
 
+    // Delete/Backspace belongs only to the editing surface that currently
+    // owns keyboard focus. A media selection may remain highlighted while the
+    // user returns to the timeline, so this must NOT be a global shortcut.
+    focus: false
+
+    Keys.onPressed: function(event) {
+        if ((event.key === Qt.Key_Delete || event.key === Qt.Key_Backspace)
+                && root.selectedAssetIds.length > 0) {
+            root.removeRequested(root.selectedAssetIds)
+            event.accepted = true
+        }
+    }
+
     // Mirrors the header's view toggle, owned by the parent so the toolbar and
     // grid stay in sync.
     property bool gridMode: true
@@ -463,6 +476,10 @@ Item {
                     onTapped: {
                         if (cardRoot.isFolder)
                             return
+
+                        // The most recently interacted editing surface owns Delete.
+                        root.forceActiveFocus()
+
                         // Qt remaps ControlModifier to Cmd on macOS, so this is already the
                         // right "system key" on every desktop platform without branching.
                         const mods = leftTap.point.modifiers
@@ -513,6 +530,7 @@ Item {
                         // else replaces the selection with just that card first — same
                         // "select if not already selected" rule the timeline's clip right-click
                         // already uses (TimelineClipItem.qml).
+                        root.forceActiveFocus()
                         root.ensureAssetSelected(cardRoot.assetId)
                         cardMenu.popup()
                     }
@@ -795,6 +813,10 @@ Item {
                     onTapped: {
                         if (listRow.isFolder)
                             return
+
+                        // Keep keyboard actions scoped to this surface.
+                        root.forceActiveFocus()
+
                         const mods = leftRowTap.point.modifiers
                         if ((mods & Qt.ShiftModifier) !== 0) {
                             root.selectAssetRange(root.selectionAnchorId || listRow.assetId, listRow.assetId)
@@ -832,6 +854,7 @@ Item {
                             folderRowMenu.popup()
                             return
                         }
+                        root.forceActiveFocus()
                         root.ensureAssetSelected(listRow.assetId)
                         rowMenu.popup()
                     }

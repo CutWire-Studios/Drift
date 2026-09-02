@@ -65,6 +65,7 @@ private slots:
     void deleteBinFolderMovesChildrenAndUndo();
     void removeAssetsIsOneUndoStep();
     void removeAssetsRefusesBatchWithInUseAsset();
+    void removeAssetsAndClipsRemovesReferencesAndUndoesAtomically();
     void moveAssetsToFolderIsOneUndoStep();
     void addClipsFromAssetsPlacesThemSequentially();
     void moveTrackReordersAndRemapsSelection();
@@ -601,6 +602,69 @@ void EditorStateTest::removeAssetsRefusesBatchWithInUseAsset()
     QCOMPARE(removed, 0);
     QCOMPARE(library.count(), 3);
 }
+
+void EditorStateTest::removeAssetsAndClipsRemovesReferencesAndUndoesAtomically()
+{
+    AssetLibrary library;
+    AppController state(&library);
+
+    drift::MediaAsset asset;
+    asset.id = QStringLiteral("asset-used");
+    asset.name = QStringLiteral("used.mp4");
+    asset.path = QStringLiteral("/tmp/used.mp4");
+    asset.kind = drift::MediaKind::Video;
+
+    state.project()->assets().insert(asset.id, asset);
+    state.project()->assetOrder().append(asset.id);
+
+    library.syncToProject();
+
+    QCOMPARE(library.count(), 1);
+
+    // Build the timeline through the controller's public editing path instead
+    // of manually mutating Project tracks. This mirrors actual application use.
+    state.addClipsFromAssets({asset.id});
+
+    int initialReferences = 0;
+    for (const drift::Track &track : state.project()->tracks()) {
+        for (const drift::Clip &clip : track.clips) {
+            if (clip.assetId == asset.id)
+                ++initialReferences;
+        }
+    }
+    QCOMPARE(initialReferences, 1);
+
+    const int removed =
+        state.removeAssetsAndClips({QStringLiteral("asset-used")});
+
+    QCOMPARE(removed, 1);
+    QCOMPARE(library.count(), 0);
+
+    int remainingReferences = 0;
+    for (const drift::Track &track : state.project()->tracks()) {
+        for (const drift::Clip &clip : track.clips) {
+            if (clip.assetId == QStringLiteral("asset-used"))
+                ++remainingReferences;
+        }
+    }
+    QCOMPARE(remainingReferences, 0);
+
+    // The destructive removal itself must be exactly one undo operation.
+    state.undo();
+
+    QCOMPARE(library.count(), 1);
+
+    int restoredReferences = 0;
+    for (const drift::Track &track : state.project()->tracks()) {
+        for (const drift::Clip &clip : track.clips) {
+            if (clip.assetId == QStringLiteral("asset-used"))
+                ++restoredReferences;
+        }
+    }
+
+    QCOMPARE(restoredReferences, 1);
+}
+
 
 void EditorStateTest::moveAssetsToFolderIsOneUndoStep()
 {

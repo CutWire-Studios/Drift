@@ -2351,6 +2351,87 @@ int AppController::removeAssets(const QStringList &assetIds)
     return removed;
 }
 
+int AppController::removeAssetsAndClips(const QStringList &assetIds)
+{
+    if (!m_assetLibrary || assetIds.isEmpty())
+        return 0;
+
+    QSet<QString> targetAssetIds;
+    for (const QString &id : assetIds) {
+        if (m_assetLibrary->indexOfId(id) >= 0)
+            targetAssetIds.insert(id);
+    }
+
+    if (targetAssetIds.isEmpty())
+        return 0;
+
+    // Snapshot before touching either the timeline or the asset library. AssetLibrary
+    // mirrors the project's asset collection, so the ProjectSnapshotCommand restores
+    // the complete operation in one undo step.
+    const drift::Project before = m_project.detachedCopy();
+
+    QSet<QString> removedClipIds;
+    int removedClips = 0;
+
+    // Remove backwards so QList indices remain valid.
+    for (drift::Track &track : m_project.tracks()) {
+        for (int i = track.clips.size() - 1; i >= 0; --i) {
+            const drift::Clip &clip = track.clips.at(i);
+            if (!targetAssetIds.contains(clip.assetId))
+                continue;
+
+            removedClipIds.insert(clip.id);
+            track.clips.removeAt(i);
+            ++removedClips;
+        }
+    }
+
+    // A transition may reference a clip that has just disappeared. Keep the same
+    // invariant enforced by deleteSelectedClip().
+    if (!removedClipIds.isEmpty()) {
+        for (drift::Track &track : m_project.tracks()) {
+            for (int i = track.transitions.size() - 1; i >= 0; --i) {
+                const drift::Transition &transition = track.transitions.at(i);
+                if (removedClipIds.contains(transition.fromClipId)
+                    || removedClipIds.contains(transition.toClipId)) {
+                    track.transitions.removeAt(i);
+                }
+            }
+        }
+    }
+
+    int removedAssets = 0;
+    for (const QString &id : targetAssetIds) {
+        const int index = m_assetLibrary->indexOfId(id);
+        if (index >= 0 && m_assetLibrary->removeAssetAt(index))
+            ++removedAssets;
+    }
+
+    if (removedAssets == 0) {
+        // Defensive rollback. Normally impossible because all ids were resolved before
+        // mutation, but do not leave timeline edits behind if the asset operation fails.
+        m_project = before;
+        m_assetLibrary->syncToProject();
+        return 0;
+    }
+
+    setDraggingAssetIndex(-1);
+    clearSelection();
+
+    pushProjectEdit(
+        before,
+        removedAssets == 1
+            ? tr("Media and referenced clips removed")
+            : tr("%n media items and referenced clips removed", "", removedAssets));
+
+    finishEdit(
+        removedClips == 1
+            ? tr("Media and referenced clip removed")
+            : tr("Media and referenced clips removed"));
+
+    return removedAssets;
+}
+
 bool AppController::renameAsset(int assetIndex, const QString &name)
 {
     if (!m_assetLibrary)

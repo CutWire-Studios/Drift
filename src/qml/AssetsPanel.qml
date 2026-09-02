@@ -131,6 +131,7 @@ PanelFrame {
     // the rows are gone by the time the toast reports on them.
     property var pendingRemovalIds: []
     property string pendingRemovalLabel: ""
+    property int pendingRemovalClipCount: 0
 
     // Removing an asset a clip still points at would leave that clip playing but unable to
     // trim past its cut or merge, so refuse rather than confirm — for a bulk removal, refusing
@@ -138,27 +139,24 @@ PanelFrame {
     // with a smaller removal than they asked for.
     function requestRemoveAsset(assetIds) {
         const names = []
-        const inUseNames = []
+        let clipCount = 0
+
         for (const id of assetIds) {
             const index = AssetLibrary.indexOfId(id)
             if (index < 0)
                 continue
-            const name = AssetLibrary.assetAt(index).name
-            names.push(name)
-            if (EditorState.clipCountForAsset(index) > 0)
-                inUseNames.push(name)
+
+            names.push(AssetLibrary.assetAt(index).name)
+            clipCount += EditorState.clipCountForAsset(index)
         }
-        if (inUseNames.length > 0) {
-            Toasts.warning(inUseNames.length === 1
-                ? qsTr("“%1” is still used by clips on the timeline.").arg(inUseNames[0])
-                : qsTr("%n of the selected items are still used by clips on the timeline.",
-                       "", inUseNames.length))
-            return
-        }
+
         if (names.length === 0)
             return
+
         root.pendingRemovalIds = assetIds
-        root.pendingRemovalLabel = names.length === 1 ? names[0] : qsTr("%n items", "", names.length)
+        root.pendingRemovalLabel =
+            names.length === 1 ? names[0] : qsTr("%n items", "", names.length)
+        root.pendingRemovalClipCount = clipCount
         confirmAssetRemoval.open()
     }
 
@@ -175,12 +173,21 @@ PanelFrame {
             width: parent ? parent.width : Theme.dialogWidthSm
             wrapMode: Text.WordWrap
             size: "sm"
-            text: qsTr("“%1” will be removed from this project. The file on disk is not deleted.")
-                  .arg(root.pendingRemovalLabel)
+            text: root.pendingRemovalClipCount > 0
+                ? (root.pendingRemovalClipCount === 1
+                    ? qsTr("“%1” is used by 1 clip on the timeline. Removing this media will also remove that clip and any transitions connected to it. The file on disk is not deleted.")
+                        .arg(root.pendingRemovalLabel)
+                    : qsTr("“%1” is used by %2 clips on the timeline. Removing this media will also remove those clips and any transitions connected to them. The files on disk are not deleted.")
+                        .arg(root.pendingRemovalLabel)
+                        .arg(root.pendingRemovalClipCount))
+                : qsTr("“%1” will be removed from this project. The file on disk is not deleted.")
+                    .arg(root.pendingRemovalLabel)
         }
 
         onAccepted: {
-            const removed = EditorState.removeAssets(root.pendingRemovalIds)
+            const removed = root.pendingRemovalClipCount > 0
+                ? EditorState.removeAssetsAndClips(root.pendingRemovalIds)
+                : EditorState.removeAssets(root.pendingRemovalIds)
             if (removed > 0) {
                 Toasts.success(removed === 1
                     ? qsTr("Removed “%1”.").arg(root.pendingRemovalLabel)
