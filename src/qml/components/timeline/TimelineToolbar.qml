@@ -86,11 +86,11 @@ Item {
         // of the toolbar. On narrower desktop windows the old placement was clipped,
         // which made an already-implemented feature look as if it did not exist.
         // Keep only the action that is relevant to the current selection visible:
-        // embedded A/V -> Separate; linked pair -> Unlink.
+        // embedded A/V -> show audio on its own linked lane; linked pair -> Unlink.
         IconButton {
             glyph: Theme.icons.audioLines
             variant: "text"
-            tooltip: toolbar.withShortcut(qsTr("Separate audio from video"), "separateAudio")
+            tooltip: toolbar.withShortcut(qsTr("Show audio on separate track"), "separateAudio")
             visible: EditorState.separateAudioAvailable
             enabled: EditorState.separateAudioAvailable
             onClicked: EditorState.separateAudioFromSelection()
@@ -267,7 +267,7 @@ Item {
             }
             ThemedMenuSeparator { }
             ThemedMenuItem {
-                text: qsTr("Separate audio from video")
+                text: qsTr("Show audio on separate track")
                 icon.name: Theme.icons.audioLines
                 enabled: EditorState.separateAudioAvailable
                 onTriggered: EditorState.separateAudioFromSelection()
