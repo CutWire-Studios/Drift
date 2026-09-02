@@ -676,7 +676,7 @@ ApplicationWindow {
             width: 0
             height: 0
             Shortcut {
-                sequence: modelData.shortcut
+                sequence: Theme.nativeShortcutSequence(modelData.shortcut)
                 context: Qt.ApplicationShortcut
                 onActivated: {
                     if (modelData.id === "clearSelection"
