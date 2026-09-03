@@ -1198,6 +1198,7 @@ QVariantList AppController::tracks() const
 
         result.append(QVariantMap{
             {QStringLiteral("type"), drift::trackTypeToString(track.type)},
+            {QStringLiteral("name"), track.name},
             {QStringLiteral("clips"), clips},
             {QStringLiteral("transitions"), transitions},
             {QStringLiteral("muted"), track.muted},
@@ -12382,6 +12383,25 @@ void AppController::setTrackHidden(int trackIndex, bool hidden)
     m_project.tracks()[trackIndex].hidden = hidden;
     pushProjectEdit(before, tr("Track visibility"));
     finishEdit(hidden ? tr("Track hidden") : tr("Track shown"));
+}
+
+bool AppController::renameTrack(int trackIndex, const QString &name)
+{
+    if (trackIndex < 0 || trackIndex >= m_project.tracks().size())
+        return false;
+
+    // Unlike renameAsset, an empty result is allowed through rather than refused — it clears
+    // the custom name back to the type+position fallback ("Video 1"), which is a real,
+    // reachable state (Track::name's own default) rather than an invalid one.
+    const QString trimmed = name.trimmed();
+    if (m_project.tracks()[trackIndex].name == trimmed)
+        return false;
+
+    const drift::Project before = m_project;
+    m_project.tracks()[trackIndex].name = trimmed;
+    pushProjectEdit(before, tr("Track renamed"));
+    finishEdit(tr("Track renamed"));
+    return true;
 }
 
 bool AppController::trackMuted(int trackIndex) const

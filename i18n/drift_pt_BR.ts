@@ -2886,6 +2886,10 @@
         <source>Folder moved</source>
         <translation>Pasta movida</translation>
     </message>
+    <message>
+        <source>Track renamed</source>
+        <translation>Faixa renomeada</translation>
+    </message>
 </context>
 <context>
     <name>AssetCategoryChips</name>
@@ -8386,6 +8390,22 @@ Se a reprodução travar, experimente outro.</translation>
     <message>
         <source>Reset row height</source>
         <translation>Redefinir altura da linha</translation>
+    </message>
+    <message>
+        <source>Rename track</source>
+        <translation>Renomear faixa</translation>
+    </message>
+    <message>
+        <source>Rename</source>
+        <translation>Renomear</translation>
+    </message>
+    <message>
+        <source>Track name</source>
+        <translation>Nome da faixa</translation>
+    </message>
+    <message>
+        <source>Rename…</source>
+        <translation>Renomear…</translation>
     </message>
 </context>
 <context>

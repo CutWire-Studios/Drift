@@ -2879,6 +2879,10 @@
         <source>Folder moved</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>Track renamed</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>AssetCategoryChips</name>
@@ -8359,6 +8363,22 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Reset row height</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Rename track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Rename</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Track name</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Rename…</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
