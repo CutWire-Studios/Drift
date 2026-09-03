@@ -95,7 +95,7 @@ Item {
     }
 
     // Single-letter stand-in for the type glyph plus name band, which do not fit a
-    // 72px compact header. "V1"/"A2" is the whole identification a phone gets.
+    // 72px compact header. Numbering is per type: V1, V2, A1, A2...
     function trackTypeShortLabel(type) {
         if (type === "audio") return qsTr("A");
         if (type === "text") return qsTr("T");
@@ -111,6 +111,21 @@ Item {
         if (type === "subtitle") return qsTr("Subtitle");
         if (type === "shape") return qsTr("Graphic");
         return qsTr("Video");
+    }
+
+    // Track numbers are scoped to their media type rather than the absolute row.
+    // A project with Video 1 followed by its first extracted audio lane should read
+    // Audio 1, not Audio 2. Reordering mixed track types keeps each sequence natural.
+    function trackTypeOrdinal(index) {
+        if (index < 0 || index >= tracks.length)
+            return 1
+        const type = tracks[index].type
+        var ordinal = 0
+        for (var i = 0; i <= index; i++) {
+            if (tracks[i].type === type)
+                ordinal++
+        }
+        return Math.max(1, ordinal)
     }
 
     function trackRowTop(index) {
@@ -408,7 +423,8 @@ Item {
                 anchors.leftMargin: 18
                 anchors.verticalCenter: parent.verticalCenter
                 anchors.verticalCenterOffset: index < root.tracks.length - 1 ? -Theme.trackGap / 2 : 0
-                text: root.trackTypeShortLabel(root.tracks[index].type) + (index + 1)
+                text: root.trackTypeShortLabel(root.tracks[index].type)
+                      + root.trackTypeOrdinal(index)
                 color: Theme.mutedForeground
                 font.family: Theme.fontFamily
                 font.pixelSize: Theme.fontSizeTiny
@@ -447,7 +463,7 @@ Item {
                 anchors.top: parent.top
                 anchors.topMargin: Theme.spacingMd
                 text: root.trackTypeLabel(root.tracks[index].type)
-                      + " " + (index + 1)
+                      + " " + root.trackTypeOrdinal(index)
                 color: Theme.mutedForeground
                 font.family: Theme.fontFamily
                 font.pixelSize: Theme.fontSizeTiny
