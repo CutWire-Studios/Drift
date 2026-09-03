@@ -435,7 +435,7 @@ Item {
                     // Tracks were identifiable only by this 16px
                     // glyph, with no name and no tooltip.
                     ThemedToolTip {
-                        text: root.trackTypeLabel(root.tracks[index].type)
+                        text: trackLabelRow.trackDisplayName
                         visible: typeHover.hovered
                     }
 
@@ -540,7 +540,10 @@ Item {
                         icon.name: Theme.icons.pencil
                         onTriggered: {
                             root.pendingRenameTrack = index
-                            renameTrackField.text = trackLabelRow.trackDisplayName
+                            // Custom name only — pre-filling the type+position fallback
+                            // ("Video 1") would persist it as a real name on an unchanged
+                            // confirm, then stick after the track is reordered.
+                            renameTrackField.text = root.tracks[index].name || ""
                             renameTrackDialog.open()
                         }
                     }

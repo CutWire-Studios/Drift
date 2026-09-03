@@ -815,6 +815,11 @@ void EditorStateTest::renameTrackAndUndo()
     QCOMPARE(state.tracks().at(0).toMap().value(QStringLiteral("name")).toString(),
              QStringLiteral("Dialogue"));
 
+    QString error;
+    const drift::Project reloaded = drift::Project::fromJson(state.project()->toJson(), &error);
+    QVERIFY(error.isEmpty());
+    QCOMPARE(reloaded.tracks().at(0).name, QStringLiteral("Dialogue"));
+
     // Unchanged and out-of-range are both refused, not pushed as no-op undo steps.
     QVERIFY(!state.renameTrack(0, QStringLiteral("Dialogue")));
     QVERIFY(!state.renameTrack(5, QStringLiteral("Nope")));
