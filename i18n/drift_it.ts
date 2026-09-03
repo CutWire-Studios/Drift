@@ -2030,6 +2030,22 @@
         <translation>Forma aggiunta</translation>
     </message>
     <message>
+        <source>Adjustment Layer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Adjustment (%1)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add adjustment layer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Adjustment layer added</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Install the emoji sticker pack to add emoji</source>
         <translation>Installa il pacchetto adesivi emoji per aggiungere emoji</translation>
     </message>
@@ -3881,12 +3897,20 @@
         <translation>Trascina un predefinito su una clip o fai clic per applicarlo alla selezione</translation>
     </message>
     <message>
-        <source>Drag a preset onto a clip in the timeline</source>
-        <translation>Trascina un predefinito su una clip nella timeline</translation>
+        <source>Click to add as adjustment layer, or drag onto a clip</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Search effects</source>
         <translation>Cerca effetti</translation>
+    </message>
+    <message>
+        <source>Add adjustment layer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add an adjustment layer to apply effects across all clips underneath</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>No effects match “%1”.</source>
@@ -4570,6 +4594,10 @@
     <message>
         <source>Sticker</source>
         <translation>Adesivo</translation>
+    </message>
+    <message>
+        <source>Adjustment</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Untitled clip</source>
@@ -8197,6 +8225,10 @@ Se la riproduzione va a scatti, prova un&apos;altra opzione.</translation>
     <message>
         <source>More edit actions</source>
         <translation>Altre azioni di modifica</translation>
+    </message>
+    <message>
+        <source>Add adjustment layer</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Scene 1</source>

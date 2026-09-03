@@ -280,6 +280,12 @@ Item {
                 icon.name: Theme.icons.snowflake
                 onTriggered: EditorState.freezeFrameAtPlayhead()
             }
+            ThemedMenuSeparator { }
+            ThemedMenuItem {
+                text: qsTr("Add adjustment layer")
+                icon.name: Theme.icons.wand
+                onTriggered: EditorState.addAdjustmentClip(-1, -1)
+            }
         }
     }
 

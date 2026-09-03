@@ -8096,6 +8096,87 @@ void AppController::addShapeClipAt(const QString &shapeId, int trackIndex, doubl
     selectClip(target, track.clips.size() - 1);
 }
 
+void AppController::addAdjustmentClip(double atSeconds, double durationSeconds)
+{
+    addAdjustmentClipAt(-1, atSeconds, durationSeconds);
+}
+
+void AppController::addAdjustmentClipAt(int trackIndex, double atSeconds, double durationSeconds)
+{
+    addAdjustmentClipWithEffect(QString(), trackIndex, atSeconds, durationSeconds);
+}
+
+void AppController::addAdjustmentClipWithEffect(const QString &effectId, int trackIndex, double atSeconds, double durationSeconds)
+{
+    const drift::Project before = m_project;
+
+    int target = trackIndex;
+    const drift::TimeUs durUs = durationSeconds > 0.0
+        ? drift::secondsToUs(durationSeconds)
+        : drift::kImageClipDurationUs;
+    const drift::TimeUs startSeconds = atSeconds < 0.0 ? m_playheadUs : drift::secondsToUs(atSeconds);
+
+    if (target < 0 || target >= m_project.tracks().size()
+        || !m_project.tracks().at(target).allowsClipType(drift::ClipType::Adjustment)) {
+        int candidateTrack = -1;
+        for (int i = 0; i < m_project.tracks().size(); ++i) {
+            const drift::Track &t = m_project.tracks().at(i);
+            if (t.type == drift::TrackType::Video && t.allowsClipType(drift::ClipType::Adjustment)) {
+                bool hasOverlap = false;
+                for (const drift::Clip &c : t.clips) {
+                    if (startSeconds < c.timelineEnd() && startSeconds + durUs > c.timelineStart) {
+                        hasOverlap = true;
+                        break;
+                    }
+                }
+                if (!hasOverlap) {
+                    candidateTrack = i;
+                    break;
+                }
+            }
+        }
+        if (candidateTrack >= 0) {
+            target = candidateTrack;
+        } else {
+            target = drift::insertTrackAtTopForClipType(m_project, drift::ClipType::Adjustment);
+        }
+    }
+    if (target < 0)
+        return;
+
+    drift::Track &track = m_project.tracks()[target];
+    const drift::TimeUs start = drift::resolveClipStart(m_project, track, -1, startSeconds,
+                                                        durUs, m_snapEnabled, m_playheadUs);
+
+    drift::Clip clip;
+    clip.id = QUuid::createUuid().toString(QUuid::WithoutBraces);
+    clip.type = drift::ClipType::Adjustment;
+    clip.name = tr("Adjustment Layer");
+    clip.timelineStart = start;
+    clip.timelineDuration = durUs;
+    clip.srcIn = 0;
+    clip.srcOut = durUs;
+
+    if (!effectId.isEmpty()) {
+        if (const EffectPresetEntry *def = effectDefForId(effectId)) {
+            drift::Effect effect;
+            effect.name = def->filterName;
+            effect.catalogId = def->meta.id;
+            for (auto it = def->fixedParams.constBegin(); it != def->fixedParams.constEnd(); ++it)
+                effect.parameters.insert(it.key(), it.value());
+            for (const drift::EffectParamSpec &p : def->meta.parameters)
+                effect.parameters.insert(p.key, p.defaultVariant());
+            clip.effects.append(effect);
+            clip.name = tr("Adjustment (%1)").arg(def->filterName);
+        }
+    }
+
+    track.clips.append(clip);
+    pushProjectEdit(before, tr("Add adjustment layer"));
+    finishEdit(tr("Adjustment layer added"));
+    selectClip(target, track.clips.size() - 1);
+}
+
 void AppController::addStickerClip(const QString &stickerId, double atSeconds)
 {
     QString path;

@@ -2030,6 +2030,22 @@
         <translation>හැඩතලය එක් කරන ලදී</translation>
     </message>
     <message>
+        <source>Adjustment Layer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Adjustment (%1)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add adjustment layer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Adjustment layer added</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Install the emoji sticker pack to add emoji</source>
         <translation>ඉමෝජි එක් කිරීමට ඉමෝජි ස්ටිකර් පැකේජය ස්ථාපනය කරන්න</translation>
     </message>
@@ -3881,12 +3897,20 @@
         <translation>ක්ලිපයක් මතට පෙරසැකසුමක් අදින්න, නැතහොත් තේරීමට යෙදීමට ක්ලික් කරන්න</translation>
     </message>
     <message>
-        <source>Drag a preset onto a clip in the timeline</source>
-        <translation>කාලරේඛාවේ ඇති ක්ලිපයක් මතට පෙරසැකසුමක් අදින්න</translation>
+        <source>Click to add as adjustment layer, or drag onto a clip</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Search effects</source>
         <translation>ප්‍රයෝග සොයන්න</translation>
+    </message>
+    <message>
+        <source>Add adjustment layer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add an adjustment layer to apply effects across all clips underneath</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>No effects match “%1”.</source>
@@ -4570,6 +4594,10 @@
     <message>
         <source>Sticker</source>
         <translation>ස්ටිකරය</translation>
+    </message>
+    <message>
+        <source>Adjustment</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Untitled clip</source>
@@ -8197,6 +8225,10 @@ If playback stutters, try another.</source>
     <message>
         <source>More edit actions</source>
         <translation>තවත් සංස්කරණ ක්‍රියාමාර්ග</translation>
+    </message>
+    <message>
+        <source>Add adjustment layer</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Scene 1</source>

@@ -19,6 +19,7 @@
 #include <QJsonDocument>
 
 #include "engine/HwAccel.h"
+#include "engine/FrameCompositor.h"
 #include "models/AppController.h"
 #include "models/AssetLibrary.h"
 #include "MulticamImageProvider.h"
@@ -119,6 +120,7 @@ private slots:
     void multicamSessionPublishesADecodedTilePerAngle();
     void multicamProviderServesTilesByAngleIdWithRevisionQuery();
     void multicamSetUpBuildsAWorkingRigFromTheBin();
+    void adjustmentLayerCreationAndCompositing();
 };
 
 void EditorStateTest::snapTimeEnabled()
@@ -3351,6 +3353,86 @@ void EditorStateTest::multiTrackAudioSelectionAndExtraction()
     }
     QVERIFY(hasAudioTrack1);
     QVERIFY(hasAudioTrack2);
+}
+
+void EditorStateTest::adjustmentLayerCreationAndCompositing()
+{
+    AssetLibrary library;
+    AppController state(&library);
+
+    // Initial state: 1 default video track with 0 clips
+    QCOMPARE(state.project()->tracks().size(), 1);
+    QCOMPARE(state.project()->tracks().at(0).clips.size(), 0);
+
+    // Add an adjustment clip at 0 with duration 5.0 seconds
+    state.addAdjustmentClip(0.0, 5.0);
+
+    // Video track should now have 1 clip
+    QCOMPARE(state.project()->tracks().size(), 1);
+    const drift::Track &track = state.project()->tracks().at(0);
+    QCOMPARE(track.type, drift::TrackType::Video);
+    QCOMPARE(track.clips.size(), 1);
+
+    const drift::Clip &adjClip = track.clips.at(0);
+    QCOMPARE(adjClip.type, drift::ClipType::Adjustment);
+    QCOMPARE(adjClip.timelineStart, 0);
+    QCOMPARE(adjClip.timelineDuration, drift::secondsToUs(5.0));
+
+    // Exposed to QML as "adjustment"
+    const QVariantMap clipMap = state.clipAt(0, 0);
+    QCOMPARE(clipMap.value(QStringLiteral("kind")).toString(), QStringLiteral("adjustment"));
+    QCOMPARE(clipMap.value(QStringLiteral("duration")).toDouble(), 5.0);
+
+    // Selection should be on the new clip
+    QCOMPARE(state.selectedTrack(), 0);
+    QCOMPARE(state.selectedClip(), 0);
+
+    // Add an effect to the adjustment clip
+    state.addEffect(0, 0, QStringLiteral("builtin.effects.gaussian_blur"));
+    const drift::Clip &withEffect = state.project()->tracks().at(0).clips.at(0);
+    QCOMPARE(withEffect.effects.size(), 1);
+    QCOMPARE(withEffect.effects.at(0).catalogId, QStringLiteral("builtin.effects.gaussian_blur"));
+
+    // Test addAdjustmentClipWithEffect
+    state.addAdjustmentClipWithEffect(QStringLiteral("builtin.effects.gaussian_blur"), -1, 6.0, 3.0);
+    // Should be placed on track 0 (starts at 6.0, no overlap with 0..5.0)
+    QCOMPARE(state.project()->tracks().at(0).clips.size(), 2);
+    const drift::Clip &secondAdj = state.project()->tracks().at(0).clips.at(1);
+    QCOMPARE(secondAdj.type, drift::ClipType::Adjustment);
+    QCOMPARE(secondAdj.effects.size(), 1);
+    QCOMPARE(secondAdj.timelineDuration, drift::secondsToUs(3.0));
+
+    // Test project JSON serialization roundtrip for Adjustment clips
+    const QJsonObject json = state.project()->toJson();
+    QString error;
+    drift::Project reloaded = drift::Project::fromJson(json, &error);
+    QVERIFY(error.isEmpty());
+    QCOMPARE(reloaded.tracks().size(), 1);
+    QCOMPARE(reloaded.tracks().at(0).clips.size(), 2);
+    QCOMPARE(reloaded.tracks().at(0).clips.at(0).type, drift::ClipType::Adjustment);
+    QCOMPARE(reloaded.tracks().at(0).clips.at(0).effects.size(), 1);
+
+    // Test Undo/Redo
+    state.undo(); // undo second adjustment clip
+    QCOMPARE(state.project()->tracks().at(0).clips.size(), 1);
+    state.redo();
+    QCOMPARE(state.project()->tracks().at(0).clips.size(), 2);
+
+    // Test GpuScene building with adjustment item
+    FrameCompositor compositor;
+    compositor.setProject(state.project());
+    GpuScene scene;
+    QVERIFY(compositor.buildSceneAt(drift::secondsToUs(2.0), {}, &scene));
+    QVERIFY(scene.items.size() > 0);
+    bool foundAdjustment = false;
+    for (const GpuItem &item : scene.items) {
+        if (item.isAdjustment) {
+            foundAdjustment = true;
+            QCOMPARE(item.layer.effects.size(), 1);
+            QCOMPARE(item.layer.effects.at(0).catalogId, QStringLiteral("builtin.effects.gaussian_blur"));
+        }
+    }
+    QVERIFY(foundAdjustment);
 }
 
 QTEST_MAIN(EditorStateTest)

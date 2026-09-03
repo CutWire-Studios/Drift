@@ -148,6 +148,7 @@ TrackType trackTypeForClipType(ClipType type)
     case ClipType::Shape:
         return TrackType::Shape;
     case ClipType::Video:
+    case ClipType::Adjustment:
         break;
     }
     return TrackType::Video;

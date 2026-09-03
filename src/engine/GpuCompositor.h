@@ -52,6 +52,7 @@ struct GpuLayer
 struct GpuItem
 {
     bool isTransition = false;
+    bool isAdjustment = false;
     drift::BlendMode blend = drift::BlendMode::Normal;
 
     GpuLayer layer; // when !isTransition

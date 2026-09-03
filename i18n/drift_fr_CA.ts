@@ -2036,6 +2036,22 @@
         <translation>Forme ajoutée</translation>
     </message>
     <message>
+        <source>Adjustment Layer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Adjustment (%1)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add adjustment layer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Adjustment layer added</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Install the emoji sticker pack to add emoji</source>
         <translation>Installez l&apos;extension d&apos;autocollants emoji pour ajouter des emojis</translation>
     </message>
@@ -3883,12 +3899,20 @@
         <translation>Faites glisser un préréglage sur un clip, ou cliquez pour l&apos;appliquer à la sélection</translation>
     </message>
     <message>
-        <source>Drag a preset onto a clip in the timeline</source>
-        <translation>Faites glisser un préréglage sur un clip dans la ligne de temps</translation>
+        <source>Click to add as adjustment layer, or drag onto a clip</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Search effects</source>
         <translation>Rechercher des effets</translation>
+    </message>
+    <message>
+        <source>Add adjustment layer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add an adjustment layer to apply effects across all clips underneath</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>No effects match “%1”.</source>
@@ -4572,6 +4596,10 @@
     <message>
         <source>Sticker</source>
         <translation>Autocollant</translation>
+    </message>
+    <message>
+        <source>Adjustment</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Untitled clip</source>
@@ -8202,6 +8230,10 @@ En cas de saccades à la lecture, essayez un autre mode.</translation>
     <message>
         <source>More edit actions</source>
         <translation>Plus d&apos;actions de montage</translation>
+    </message>
+    <message>
+        <source>Add adjustment layer</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Scene 1</source>

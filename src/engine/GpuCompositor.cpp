@@ -604,6 +604,60 @@ void composeOnGlThread(GlRuntime &rt, const GpuScene &scene, GlTarget &canvas)
     fillBackground(rt, gl, canvas, scene);
 
     for (const GpuItem &item : scene.items) {
+        if (item.isAdjustment) {
+            if (item.layer.effects.isEmpty() || item.layer.opacity <= 0.001)
+                continue;
+
+            GlTarget copy = rt.acquireTarget(canvasSize.width(), canvasSize.height());
+            if (!copy.isValid())
+                continue;
+            if (!blitTextureToTarget(rt, gl, canvas.texture(), copy)) {
+                rt.releaseTarget(std::move(copy));
+                continue;
+            }
+
+            GlTarget target = std::move(copy);
+            for (const drift::Effect &effect : item.layer.effects) {
+                if (!effect.enabled)
+                    continue;
+                const EffectPresetEntry *def = effectDefForId(effect.catalogId);
+                if (!def)
+                    continue;
+
+                if (def->isFaceSwap) {
+                    QMap<QString, QVariant> params = resolvedEffectParameters(effect, *def);
+                    const drift::FaceSwapParams swapParams =
+                        drift::faceSwapParamsFromMap(params, def->gpu.packageDir);
+                    GlTarget next = drawFaceSwapEffect(rt, gl, swapParams, item.layer.faceSlots, target);
+                    if (!next.isValid())
+                        continue;
+                    rt.releaseTarget(std::move(target));
+                    target = std::move(next);
+                    continue;
+                }
+
+                if (!def->isGpu || !def->gpu.valid)
+                    continue;
+
+                QMap<QString, QVariant> params = resolvedEffectParameters(effect, *def);
+                if (def->needsFace)
+                    drift::applyFaceUniforms(&params, item.layer.faceSlots);
+
+                const std::vector<const GlTarget *> sources{&target};
+                GlTarget next = runPipeline(rt, gl, def->meta.id, def->gpu, sources, params,
+                                            item.layer.clipTimeUs, 0.0, target.size());
+                if (!next.isValid())
+                    continue;
+
+                rt.releaseTarget(std::move(target));
+                target = std::move(next);
+            }
+
+            drawLayerOnCanvas(rt, gl, canvas, target, item.layer, item.blend, canvasSize);
+            rt.releaseTarget(std::move(target));
+            continue;
+        }
+
         if (!item.isTransition) {
             GlTarget layerTarget = buildLayerTarget(rt, gl, item.layer, canvasSize);
             if (!layerTarget.isValid())

@@ -2026,6 +2026,22 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Adjustment Layer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Adjustment (%1)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add adjustment layer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Adjustment layer added</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Install the emoji sticker pack to add emoji</source>
         <translation type="unfinished"></translation>
     </message>
@@ -3868,11 +3884,19 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Drag a preset onto a clip in the timeline</source>
+        <source>Click to add as adjustment layer, or drag onto a clip</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Search effects</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add adjustment layer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add an adjustment layer to apply effects across all clips underneath</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -4556,6 +4580,10 @@
     </message>
     <message>
         <source>Sticker</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Adjustment</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -8171,6 +8199,10 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>More edit actions</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add adjustment layer</source>
         <translation type="unfinished"></translation>
     </message>
     <message>

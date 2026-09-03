@@ -283,6 +283,11 @@ Item {
         // Lightens on hover — previously nothing
         // in the clip reacted to the pointer.
         color: {
+            if (clipItem.clipData.kind === "adjustment") {
+                const base = Theme.clipEffect
+                const lit = clipMouse.containsMouse || clipItem.lifted
+                return lit ? Qt.lighter(base, 1.15) : base
+            }
             const base = panel.clipColor(
                 clipItem.trackType === "shape" ? "graphic" : clipItem.trackType)
             const lit = clipMouse.containsMouse || clipItem.lifted

@@ -814,7 +814,7 @@ Item {
         if (type === "subtitle") return Theme.clipSubtitle
         if (type === "audio") return Theme.clipAudio
         if (type === "graphic") return Theme.clipGraphic
-        if (type === "effect") return Theme.clipEffect
+        if (type === "effect" || type === "adjustment") return Theme.clipEffect
         return Theme.clipVideoPlaceholder
     }
 

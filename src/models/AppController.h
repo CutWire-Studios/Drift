@@ -721,6 +721,9 @@ public:
     // "circle" and "ellipse" are the same kind with different default aspects.
     Q_INVOKABLE void addShapeClip(const QString &shapeKind, double atSeconds);
     Q_INVOKABLE void addShapeClipAt(const QString &shapeId, int trackIndex, double atSeconds);
+    Q_INVOKABLE void addAdjustmentClip(double atSeconds = -1.0, double durationSeconds = -1.0);
+    Q_INVOKABLE void addAdjustmentClipAt(int trackIndex, double atSeconds = -1.0, double durationSeconds = -1.0);
+    Q_INVOKABLE void addAdjustmentClipWithEffect(const QString &effectId, int trackIndex = -1, double atSeconds = -1.0, double durationSeconds = -1.0);
     Q_INVOKABLE void addStickerClip(const QString &stickerId, double atSeconds);
     Q_INVOKABLE QVariantList builtinStickers() const;
     Q_INVOKABLE QVariantList builtinStickerCategories() const;

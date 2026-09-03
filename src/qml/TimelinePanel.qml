@@ -381,7 +381,7 @@ PanelFrame {
         if (type === "subtitle") return Theme.clipSubtitle;
         if (type === "audio") return Theme.clipAudio;
         if (type === "graphic") return Theme.clipGraphic;
-        if (type === "effect") return Theme.clipEffect;
+        if (type === "effect" || type === "adjustment") return Theme.clipEffect;
         return Theme.clipVideoPlaceholder; // video: no flat fill, thumbnails would go here
     }
 
@@ -1338,6 +1338,13 @@ PanelFrame {
                                         }
                                         if (isEffectDrag(drop) || isAudioEffectDrag(drop)) {
                                             root.updateEffectDropHighlight(trackRow.trackIndex, drop.x)
+                                            if (isEffectDrag(drop) && root.tracks[trackRow.trackIndex].type === "video"
+                                                    && root.clipIndexAtPosition(trackRow.trackIndex, drop.x) < 0) {
+                                                const desired = Math.max(0, drop.x / root.pxPerSecond)
+                                                root.showLandingPreview(trackRow.trackIndex, desired, 5.0)
+                                            } else {
+                                                root.clearLandingOutline()
+                                            }
                                             return
                                         }
                                         root.clearEffectDropHighlight()
@@ -1381,9 +1388,13 @@ PanelFrame {
                                             const effectId = drop.getDataAsString("application/x-drift-effect")
                                             const clipIndex = root.clipIndexAtPosition(trackRow.trackIndex, drop.x)
                                             root.clearEffectDropHighlight()
+                                            root.clearLandingOutline()
                                             if (clipIndex >= 0 && effectId.length > 0) {
                                                 EditorState.addEffect(trackRow.trackIndex, clipIndex, effectId)
                                                 EditorState.selectClip(trackRow.trackIndex, clipIndex)
+                                            } else if (effectId.length > 0 && root.tracks[trackRow.trackIndex].type === "video") {
+                                                const atSec = Math.max(0, drop.x / root.pxPerSecond)
+                                                EditorState.addAdjustmentClipWithEffect(effectId, trackRow.trackIndex, atSec)
                                             }
                                             return
                                         }
