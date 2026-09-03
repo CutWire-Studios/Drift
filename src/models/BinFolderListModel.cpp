@@ -2,6 +2,7 @@
 
 #include "core/Project.h"
 
+#include <QSet>
 #include <QUuid>
 
 BinFolderListModel::BinFolderListModel(QObject *parent)
@@ -224,6 +225,47 @@ bool BinFolderListModel::renameFolder(const QString &id, const QString &name)
 
     folder->name = name;
     emitFolderRowChanged(index, {NameRole});
+    snapshotFolders();
+    return true;
+}
+
+bool BinFolderListModel::isFolderOrDescendant(const QString &candidateId, const QString &ancestorId) const
+{
+    QSet<QString> visited;
+    QString id = candidateId;
+    while (!id.isEmpty()) {
+        if (id == ancestorId)
+            return true;
+        if (visited.contains(id))
+            break;
+        visited.insert(id);
+        const drift::BinFolder *folder = m_project ? m_project->binFolder(id) : nullptr;
+        id = folder ? folder->parentId : QString{};
+    }
+    return false;
+}
+
+bool BinFolderListModel::moveFolder(const QString &id, const QString &newParentId)
+{
+    if (!m_project)
+        return false;
+
+    const int index = indexOfId(id);
+    drift::BinFolder *folder = folderAtIndex(index);
+    if (!folder || folder->parentId == newParentId)
+        return false;
+    // A non-empty newParentId that names no real folder (stale id, or a caller passing junk —
+    // this is QML-invokable) would otherwise be assigned as-is, silently detaching id and
+    // everything under it from the root hierarchy.
+    if (!newParentId.isEmpty() && !m_project->binFolder(newParentId))
+        return false;
+    // Refuses id == newParentId (folder into itself) and newParentId being one of id's own
+    // descendants — either would make id its own ancestor once the pointer is applied.
+    if (isFolderOrDescendant(newParentId, id))
+        return false;
+
+    folder->parentId = newParentId;
+    emitFolderRowChanged(index, {ParentIdRole});
     snapshotFolders();
     return true;
 }

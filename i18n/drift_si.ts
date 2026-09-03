@@ -2882,6 +2882,10 @@
         <source>Clips added</source>
         <translation>ක්ලිප් එක් කරන ලදී</translation>
     </message>
+    <message>
+        <source>Folder moved</source>
+        <translation>ෆෝල්ඩරය ගෙන යන ලදී</translation>
+    </message>
 </context>
 <context>
     <name>AssetCategoryChips</name>

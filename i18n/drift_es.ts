@@ -2882,6 +2882,10 @@
         <source>Clips added</source>
         <translation>Clips añadidos</translation>
     </message>
+    <message>
+        <source>Folder moved</source>
+        <translation>Carpeta movida</translation>
+    </message>
 </context>
 <context>
     <name>AssetCategoryChips</name>

@@ -551,6 +551,10 @@ public:
     // Bin folder CRUD. parentId empty = bin root; nesting is arbitrary depth.
     Q_INVOKABLE QString createBinFolder(const QString &name, const QString &parentId);
     Q_INVOKABLE bool renameBinFolder(const QString &folderId, const QString &name);
+    // Reparents the folder itself, keeping its own assets and subfolders — they stay pointed
+    // at it, so they move along without being touched individually. Refuses moving a folder
+    // into itself or into one of its own descendants.
+    Q_INVOKABLE bool moveBinFolder(const QString &folderId, const QString &newParentId);
     // Moves the folder's direct children (assets and subfolders) up to its own parent, then
     // removes it. Never blocks and never recurses into deleting contents.
     Q_INVOKABLE bool deleteBinFolder(const QString &folderId);
