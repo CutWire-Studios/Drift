@@ -10,6 +10,107 @@ import Drift
 QtObject {
     id: theme
 
+
+    // --- Platform keyboard shortcuts -----------------------------------------
+    // Shortcut strings stored by EditorState use a portable/canonical notation:
+    //
+    //   Ctrl  = primary application accelerator
+    //           Command on macOS, Control on Windows/Linux
+    //
+    // This keeps project/settings data portable while the UI and actual Shortcut
+    // objects follow the conventions of the operating system.
+    readonly property bool isMacOS: Qt.platform.os === "osx"
+    readonly property bool isWindows: Qt.platform.os === "windows"
+    readonly property bool isLinux: Qt.platform.os === "linux"
+
+    function nativeShortcutSequence(sequence) {
+        // Qt already performs the native Apple modifier mapping:
+        //
+        //   Ctrl -> Command (⌘)
+        //   Meta -> physical Control (⌃)
+        //   Alt  -> Option (⌥)
+        //
+        // Therefore the canonical shortcut string must be passed through
+        // unchanged. Converting Ctrl to Meta here would incorrectly turn
+        // Command shortcuts into physical Control shortcuts on macOS.
+        return sequence
+    }
+
+    function shortcutDisplay(sequence) {
+        if (!sequence || sequence.length === 0)
+            return ""
+
+        if (!isMacOS)
+            return sequence
+
+        const parts = sequence.split("+")
+
+        let control = false
+        let option = false
+        let shift = false
+        let command = false
+        let key = ""
+
+        for (let i = 0; i < parts.length; ++i) {
+            const part = parts[i]
+
+            // Qt's native Apple mapping:
+            // Ctrl = Command, Meta = physical Control.
+            if (part === "Ctrl")
+                command = true
+            else if (part === "Meta")
+                control = true
+            else if (part === "Alt")
+                option = true
+            else if (part === "Shift")
+                shift = true
+            else
+                key = part
+        }
+
+        const keySymbols = {
+            "Left": "←",
+            "Right": "→",
+            "Up": "↑",
+            "Down": "↓",
+            "Backspace": "⌫",
+            "Delete": "⌦",
+            "Escape": "⎋",
+            "Return": "↩",
+            "Enter": "⌅"
+        }
+
+        if (keySymbols[key] !== undefined)
+            key = keySymbols[key]
+
+        // Ordem visual tradicional da Apple.
+        return (control ? "⌃" : "")
+             + (option ? "⌥" : "")
+             + (shift ? "⇧" : "")
+             + (command ? "⌘" : "")
+             + key
+    }
+
+    function platformShortcutText(text) {
+        if (!text || !isMacOS)
+            return text
+
+        // Used for prose/tooltips such as "Ctrl+scroll" and
+        // "Shift for 5s", preserving the translated sentence itself.
+        return text
+            .replace(/Ctrl/g, "⌘")
+            .replace(/Alt/g, "⌥")
+            .replace(/Shift/g, "⇧")
+            .replace(/Meta/g, "⌘")
+    }
+
+    function primaryModifierPressed(modifiers) {
+        // On macOS Qt maps Command to ControlModifier by default.
+        // On Windows/Linux this is the physical Control key.
+        return (modifiers & Qt.ControlModifier) !== 0
+    }
+
+
     property FontLoader _interLoader: FontLoader { source: "qrc:/qt/qml/Drift/resources/fonts/Inter.ttf" }
 
     readonly property string fontFamily: _interLoader.name || "sans-serif"

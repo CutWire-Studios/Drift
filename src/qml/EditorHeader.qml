@@ -293,7 +293,7 @@ Rectangle {
                 text: qsTr("Save")
                 tooltip: {
                     const keys = EditorState.shortcutFor("save")
-                    return keys.length > 0 ? qsTr("Save project (%1)").arg(keys)
+                    return keys.length > 0 ? qsTr("Save project (%1)").arg(Theme.shortcutDisplay(keys))
                                            : qsTr("Save project")
                 }
                 anchors.verticalCenter: parent.verticalCenter
