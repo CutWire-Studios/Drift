@@ -1483,12 +1483,13 @@ QVariantMap transitionToMap(const drift::Track &track, const drift::Transition &
 bool isSyntheticTimelineClip(drift::ClipType type)
 {
     return type == drift::ClipType::Text || type == drift::ClipType::Subtitle
-           || type == drift::ClipType::Shape || type == drift::ClipType::Image;
+           || type == drift::ClipType::Shape || type == drift::ClipType::Image
+           || type == drift::ClipType::Adjustment;
 }
 
 drift::TimeUs syntheticClipMaxDurationUs()
 {
-    return drift::secondsToUs(300.0);
+    return drift::secondsToUs(86400.0);
 }
 
 void syncSyntheticSourceRange(drift::Clip &clip)
@@ -4320,13 +4321,13 @@ void AppController::trimClipRight(int trackIndex, int clipIndex, double newEnd)
             ? static_cast<drift::TimeUs>(llround(static_cast<double>(maxSourceSpan) / clip.effectiveSpeed()))
             : maxSourceSpan;
     const drift::TimeUs maxDuration =
-        syntheticVisual ? drift::secondsToUs(300.0) : mediaMaxDuration;
+        syntheticVisual ? syntheticClipMaxDurationUs() : mediaMaxDuration;
     newDuration = qBound(drift::kMinClipDurationUs, newDuration, maxDuration);
 
     clip.timelineDuration = newDuration;
     const drift::TimeUs span =
         clip.hasSpeedCurve() ? trimSourceDelta(clip, newDuration, false, true) : clip.sourceSpanUs();
-    const drift::TimeUs maxSrcOut = syntheticVisual ? drift::secondsToUs(300.0) : maxSource;
+    const drift::TimeUs maxSrcOut = syntheticVisual ? syntheticClipMaxDurationUs() : maxSource;
     if (clip.reverse) {
         clip.srcIn = qMax<drift::TimeUs>(0, clip.srcOut - span);
     } else {
@@ -4348,7 +4349,8 @@ void AppController::setClipTrim(int trackIndex, int clipIndex, double inPoint, d
         return;
 
     drift::Clip &clip = track.clips[clipIndex];
-    const drift::TimeUs sourceDuration = sourceDurationForClip(clip);
+    const bool syntheticVisual = isSyntheticTimelineClip(clip.type);
+    const drift::TimeUs sourceDuration = syntheticVisual ? syntheticClipMaxDurationUs() : sourceDurationForClip(clip);
     const drift::TimeUs clampedIn = qBound<drift::TimeUs>(0, drift::secondsToUs(inPoint),
                                                           sourceDuration - drift::kMinClipDurationUs);
     const drift::TimeUs clampedOut = qBound(clampedIn + drift::kMinClipDurationUs, drift::secondsToUs(outPoint),

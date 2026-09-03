@@ -3433,6 +3433,33 @@ void EditorStateTest::adjustmentLayerCreationAndCompositing()
         }
     }
     QVERIFY(foundAdjustment);
+
+    // Test trimming adjustment layer length (right edge): extend from 3.0s to 10.0s
+    state.trimClipRight(0, 1, 16.0); // starts at 6.0, end dragged to 16.0 => duration 10.0s
+    QCOMPARE(state.project()->tracks().at(0).clips.at(1).timelineDuration, drift::secondsToUs(10.0));
+
+    // Test trimming adjustment layer left edge: trim start from 6.0s to 8.0s => duration 8.0s
+    state.trimClipLeft(0, 1, 8.0);
+    QCOMPARE(state.project()->tracks().at(0).clips.at(1).timelineStart, drift::secondsToUs(8.0));
+    QCOMPARE(state.project()->tracks().at(0).clips.at(1).timelineDuration, drift::secondsToUs(8.0));
+
+    // Test setClipDuration on adjustment layer
+    state.setClipDuration(0, 1, 25.0);
+    QCOMPARE(state.project()->tracks().at(0).clips.at(1).timelineDuration, drift::secondsToUs(25.0));
+
+    // Test splitting adjustment layer at 15.0s (offset 7.0s into clip)
+    state.splitClipAt(0, 1, 15.0);
+    QCOMPARE(state.project()->tracks().at(0).clips.size(), 3);
+    const drift::Clip &head = state.project()->tracks().at(0).clips.at(1);
+    const drift::Clip &tail = state.project()->tracks().at(0).clips.at(2);
+    QCOMPARE(head.type, drift::ClipType::Adjustment);
+    QCOMPARE(tail.type, drift::ClipType::Adjustment);
+    QCOMPARE(head.timelineStart, drift::secondsToUs(8.0));
+    QCOMPARE(head.timelineDuration, drift::secondsToUs(7.0));
+    QCOMPARE(tail.timelineStart, drift::secondsToUs(15.0));
+    QCOMPARE(tail.timelineDuration, drift::secondsToUs(18.0));
+    QCOMPARE(head.effects.size(), 1);
+    QCOMPARE(tail.effects.size(), 1);
 }
 
 QTEST_MAIN(EditorStateTest)
