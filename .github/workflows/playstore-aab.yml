@@ -8,8 +8,9 @@ on:
   workflow_dispatch:
     inputs:
       ref:
-        description: "Tag or commit SHA to build (e.g. v0.5.0 or a full hash)"
-        required: true
+        description: "Tag, branch, or commit (short SHA is fine). Empty = this workflow revision. 'latest' = newest GitHub release tag."
+        required: false
+        default: ""
         type: string
       version_code:
         description: "Play Store versionCode; leave empty to use CMake default (major*10000+minor*100+patch). Must increase for each Play upload."
@@ -40,9 +41,34 @@ jobs:
     timeout-minutes: 240
 
     steps:
+      # Do not pass `ref` into actions/checkout: fetch-depth 1 treats a short SHA
+      # as a branch/tag glob (`refs/heads/a9055aa*`) and fails. Fetch the workflow
+      # revision fully, then resolve tags / short SHAs / 'latest' ourselves.
       - uses: actions/checkout@v4
         with:
-          ref: ${{ inputs.ref }}
+          fetch-depth: 0
+          fetch-tags: true
+
+      - name: Check out requested ref
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          REF='${{ inputs.ref }}'
+          REF="${REF#"${REF%%[![:space:]]*}"}"
+          REF="${REF%"${REF##*[![:space:]]}"}"
+          case "$REF" in
+            ''|HEAD) ;;
+            latest)
+              REF="$(gh release view --json tagName --jq .tagName)"
+              echo "latest release tag: $REF"
+              git checkout --force "$REF"
+              ;;
+            *)
+              git checkout --force "$REF"
+              ;;
+          esac
+          echo "HEAD=$(git rev-parse HEAD) ($(git describe --tags --always))"
 
       - name: Record checkout and resolve versionCode
         id: meta
@@ -224,10 +250,23 @@ jobs:
           CMAKE_CXX_COMPILER_LAUNCHER: ccache
           CCACHE_MAXSIZE: 2G
         run: |
+          set -euo pipefail
           export QT_ANDROID_ROOT="$HOME/Qt/$QT_ANDROID_VERSION/$PRIMARY_QT_ARCH"
           export QT_HOST_PATH="$HOME/Qt/$QT_ANDROID_VERSION/gcc_64"
           ./scripts/build.sh "$PRIMARY_ABI" Release
           ccache -s
+
+          # The workflow file comes from this branch, but `ref` may be an older
+          # tag whose scripts/build.sh still only knows how to make an APK
+          # (v0.5.1 printed "==> APK:" and ignored BUILD_AAB). androiddeployqt
+          # always leaves a gradle project; bundleRelease is the Play Store
+          # package regardless of which cmake target the tag invoked.
+          BUILD="build/android-$PRIMARY_ABI"
+          GRADLE="$BUILD/android-build/gradlew"
+          [ -f "$GRADLE" ] || { echo "no gradle wrapper at $GRADLE" >&2; exit 1; }
+          chmod +x "$GRADLE"
+          "$GRADLE" -p "$BUILD/android-build" bundleRelease
+          find "$BUILD/android-build" -name '*.aab' -print
 
       - name: Save ccache
         if: always()
@@ -254,7 +293,11 @@ jobs:
           BUILD="build/android-$PRIMARY_ABI"
           AAB="$(find "$BUILD/android-build/build/outputs/bundle/release" -name '*.aab' -print -quit 2>/dev/null || true)"
           [ -n "$AAB" ] || AAB="$(find "$BUILD/android-build" -name '*.aab' -print -quit)"
-          [ -n "$AAB" ] || { echo "no release AAB under $BUILD/android-build" >&2; exit 1; }
+          if [ -z "$AAB" ]; then
+            echo "no release AAB under $BUILD/android-build" >&2
+            find "$BUILD/android-build" \( -name '*.apk' -o -name '*.aab' -o -name 'gradlew' \) | head >&2
+            exit 1
+          fi
 
           KS="$RUNNER_TEMP/upload.jks"
           printf '%s' "$KEYSTORE_B64" | base64 -d > "$KS"
