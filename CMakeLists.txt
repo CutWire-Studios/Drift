@@ -866,15 +866,28 @@ if(ANDROID)
     )
 
     # Qt Network's OpenSSL TLS plugin dlopens libcrypto_3.so / libssl_3.so at runtime.
-    set(_drift_android_ssl_crypto "${DRIFT_PREBUILT}/lib/libcrypto_3.so")
-    set(_drift_android_ssl_ssl "${DRIFT_PREBUILT}/lib/libssl_3.so")
-    if(NOT EXISTS "${_drift_android_ssl_crypto}" OR NOT EXISTS "${_drift_android_ssl_ssl}")
-        message(FATAL_ERROR
-            "Missing OpenSSL shared libs for Qt Network TLS under ${DRIFT_PREBUILT}/lib.\n"
-            "Expected libcrypto_3.so and libssl_3.so (KDAB android_openssl ssl_3 layout).\n"
-            "Rebuild deps with third_party/build-android.sh ${ANDROID_ABI}, or copy the\n"
-            "ssl_3/${ANDROID_ABI}/*.so files from https://github.com/KDAB/android_openssl.")
+    # androiddeployqt files each extra .so under lib/<abi>/ from its ELF architecture, so a
+    # multi-ABI AAB must list the OpenSSL pair for every ABI in QT_ANDROID_ABIS — not only
+    # the toolchain ABI CMake is currently compiling.
+    if(QT_ANDROID_ABIS)
+        set(_drift_packaged_abis ${QT_ANDROID_ABIS})
+    else()
+        set(_drift_packaged_abis ${ANDROID_ABI})
     endif()
+    set(_drift_android_extra_libs "")
+    foreach(_abi IN LISTS _drift_packaged_abis)
+        set(_prebuilt "${CMAKE_SOURCE_DIR}/third_party/prebuilt/android/${_abi}")
+        set(_crypto "${_prebuilt}/lib/libcrypto_3.so")
+        set(_ssl "${_prebuilt}/lib/libssl_3.so")
+        if(NOT EXISTS "${_crypto}" OR NOT EXISTS "${_ssl}")
+            message(FATAL_ERROR
+                "Missing OpenSSL shared libs for Qt Network TLS under ${_prebuilt}/lib.\n"
+                "Expected libcrypto_3.so and libssl_3.so (KDAB android_openssl ssl_3 layout).\n"
+                "Rebuild deps with third_party/build-android.sh ${_abi}, or copy the\n"
+                "ssl_3/${_abi}/*.so files from https://github.com/KDAB/android_openssl.")
+        endif()
+        list(APPEND _drift_android_extra_libs "${_crypto}" "${_ssl}")
+    endforeach()
 
     set(DRIFT_ANDROID_PACKAGE_NAME "org.cutwire.drift" CACHE STRING
         "Android application id (use org.cutwire.drift.ci for side-by-side test builds)")
@@ -902,7 +915,7 @@ if(ANDROID)
         QT_ANDROID_TARGET_SDK_VERSION 36
         QT_ANDROID_VERSION_NAME "${PROJECT_VERSION}"
         QT_ANDROID_VERSION_CODE "${DRIFT_ANDROID_VERSION_CODE}"
-        QT_ANDROID_EXTRA_LIBS "${_drift_android_ssl_crypto};${_drift_android_ssl_ssl}"
+        QT_ANDROID_EXTRA_LIBS "${_drift_android_extra_libs}"
     )
 endif()
 

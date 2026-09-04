@@ -1,0 +1,290 @@
+name: Play Store AAB
+
+# Manual Play Store package. Sideload APKs stay in package.yml (build.yml / release.yml);
+# this is the one artifact Play Console accepts. Run it from main (so this file exists)
+# and point `ref` at the tag or commit you want inside the bundle — github.sha on
+# workflow_dispatch is the branch the workflow was loaded from, not that input.
+on:
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: "Tag or commit SHA to build (e.g. v0.5.0 or a full hash)"
+        required: true
+        type: string
+      version_code:
+        description: "Play Store versionCode; leave empty to use CMake default (major*10000+minor*100+patch). Must increase for each Play upload."
+        required: false
+        default: ""
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: playstore-aab-${{ inputs.ref }}
+  cancel-in-progress: true
+
+env:
+  # Same Android kit pin as package.yml / android.yml / scripts/build.sh.
+  QT_ANDROID_VERSION: 6.11.1
+  NDK_VERSION: 27.2.12479018
+  # Primary kit for qt-cmake. The other two are installed as siblings so Qt packages
+  # every ABI into one bundle; Play then serves the matching split.
+  PRIMARY_ABI: arm64-v8a
+  PRIMARY_QT_ARCH: android_arm64_v8a
+
+jobs:
+  aab:
+    name: Android AAB
+    runs-on: ubuntu-24.04
+    timeout-minutes: 240
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref }}
+
+      - name: Record checkout and resolve versionCode
+        id: meta
+        run: |
+          set -euo pipefail
+          SHA="$(git rev-parse HEAD)"
+          VERSION="$(grep -oP '^project\(Drift VERSION \K[0-9]+\.[0-9]+\.[0-9]+' CMakeLists.txt)"
+          VC='${{ inputs.version_code }}'
+          if [ -n "$VC" ]; then
+            if ! [[ "$VC" =~ ^[1-9][0-9]*$ ]]; then
+              echo "::error::version_code must be a positive integer (got '$VC')"
+              exit 1
+            fi
+          else
+            IFS=. read -r major minor patch <<< "$VERSION"
+            VC=$((major * 10000 + minor * 100 + patch))
+          fi
+          echo "sha=$SHA" >> "$GITHUB_OUTPUT"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "version_code=$VC" >> "$GITHUB_OUTPUT"
+          echo "Built $SHA (versionName=$VERSION versionCode=$VC) from ref '${{ inputs.ref }}'"
+
+      # Three Android kits plus an unstripped libdrift.so per ABI do not fit next to the
+      # image's preinstalled toolchains on a 14 GB runner. Extra hostedtoolcache languages
+      # and leftover Docker images go as well — this job is heavier than a single-ABI APK.
+      - name: Free disk space
+        run: |
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/node_modules \
+                      /opt/ghc /opt/hostedtoolcache/CodeQL /usr/local/share/powershell \
+                      /usr/share/swift /opt/hostedtoolcache/go /opt/hostedtoolcache/node \
+                      /opt/hostedtoolcache/Python /opt/hostedtoolcache/Ruby
+          sudo rm -rf "$ANDROID_SDK_ROOT"/ndk
+          sudo docker image prune --all --force >/dev/null 2>&1 || true
+          df -h /
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Resolve SDK and NDK paths
+        run: |
+          SDK="${ANDROID_SDK_ROOT:-$ANDROID_HOME}"
+          echo "ANDROID_SDK_ROOT=$SDK" >> "$GITHUB_ENV"
+          echo "ANDROID_NDK_ROOT=$SDK/ndk/$NDK_VERSION" >> "$GITHUB_ENV"
+
+      - name: Install host build tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            ninja-build nasm meson pkg-config ccache \
+            libgl1 libegl1 libxkbcommon0 libfontconfig1
+
+      - name: Install Android NDK ${{ env.NDK_VERSION }} and SDK platform 36
+        run: |
+          SDKMANAGER="$ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager"
+          yes | "$SDKMANAGER" --licenses >/dev/null
+          "$SDKMANAGER" --install "ndk;$NDK_VERSION" "platforms;android-36" "build-tools;36.0.0"
+
+      # aqt rather than an action: since Qt 6.8 the Android kits are published under the
+      # `all_os` host, which the wrapper actions address inconsistently.
+      - name: Install Qt ${{ env.QT_ANDROID_VERSION }} (host + every Android ABI)
+        run: |
+          pipx install aqtinstall
+          export PATH="$HOME/.local/bin:$PATH"
+          aqt install-qt linux desktop "$QT_ANDROID_VERSION" linux_gcc_64 \
+            -m qtmultimedia qtshadertools -O "$HOME/Qt"
+          for arch in android_arm64_v8a android_armv7 android_x86_64; do
+            aqt install-qt all_os android "$QT_ANDROID_VERSION" "$arch" \
+              -m qtmultimedia qtshadertools -O "$HOME/Qt"
+            # Qt builds each Android kit on whichever host it happens to use — the ARMv7 one
+            # comes from a Windows machine, and that 7z carries no POSIX permission bits, so
+            # every script in the kit extracts non-executable and scripts/build.sh finds no
+            # runnable qt-cmake. (The arm64 kit is built on macOS and keeps its +x.)
+            KIT="$HOME/Qt/$QT_ANDROID_VERSION/$arch"
+            find "$KIT/bin" "$KIT/libexec" -maxdepth 1 -type f ! -name '*.bat' -exec chmod +x {} +
+          done
+          rm -rf "$HOME/.cache/aqt"
+
+      # FFmpeg, x264, zstd, OpenSSL and SoundTouch cross-built for Android: ~45 min per ABI,
+      # and they only change when the script that pins their tags does.
+      #
+      # Prefer a combined cache from a previous AAB run. On a miss, reuse package.yml's
+      # per-ABI caches (each is a full third_party/prebuilt tree, so stash before the
+      # next restore overwrites it) and do not write back to those keys — a fat tree
+      # would bloat the APK job.
+      - name: Restore combined native dependencies
+        id: deps-all
+        uses: actions/cache/restore@v4
+        with:
+          path: third_party/prebuilt
+          key: android-deps-aab-all-${{ env.NDK_VERSION }}-${{ hashFiles('third_party/build-android.sh') }}
+
+      - name: Restore prebuilt native dependencies (arm64-v8a)
+        if: steps.deps-all.outputs.cache-hit != 'true'
+        id: deps-arm64
+        uses: actions/cache/restore@v4
+        with:
+          path: third_party/prebuilt
+          key: android-deps-arm64-v8a-${{ env.NDK_VERSION }}-${{ hashFiles('third_party/build-android.sh') }}
+
+      - name: Stash arm64-v8a prebuilts
+        if: steps.deps-all.outputs.cache-hit != 'true' && steps.deps-arm64.outputs.cache-hit == 'true'
+        run: |
+          mkdir -p "$RUNNER_TEMP/deps"
+          mv third_party/prebuilt/android/arm64-v8a "$RUNNER_TEMP/deps/"
+          rm -rf third_party/prebuilt
+
+      - name: Restore prebuilt native dependencies (armeabi-v7a)
+        if: steps.deps-all.outputs.cache-hit != 'true'
+        id: deps-armv7
+        uses: actions/cache/restore@v4
+        with:
+          path: third_party/prebuilt
+          key: android-deps-armeabi-v7a-${{ env.NDK_VERSION }}-${{ hashFiles('third_party/build-android.sh') }}
+
+      - name: Stash armeabi-v7a prebuilts
+        if: steps.deps-all.outputs.cache-hit != 'true' && steps.deps-armv7.outputs.cache-hit == 'true'
+        run: |
+          mkdir -p "$RUNNER_TEMP/deps"
+          mv third_party/prebuilt/android/armeabi-v7a "$RUNNER_TEMP/deps/"
+          rm -rf third_party/prebuilt
+
+      - name: Restore prebuilt native dependencies (x86_64)
+        if: steps.deps-all.outputs.cache-hit != 'true'
+        id: deps-x86
+        uses: actions/cache/restore@v4
+        with:
+          path: third_party/prebuilt
+          key: android-deps-x86_64-${{ env.NDK_VERSION }}-${{ hashFiles('third_party/build-android.sh') }}
+
+      - name: Stash x86_64 prebuilts
+        if: steps.deps-all.outputs.cache-hit != 'true' && steps.deps-x86.outputs.cache-hit == 'true'
+        run: |
+          mkdir -p "$RUNNER_TEMP/deps"
+          mv third_party/prebuilt/android/x86_64 "$RUNNER_TEMP/deps/"
+          rm -rf third_party/prebuilt
+
+      - name: Assemble and build native dependencies
+        if: steps.deps-all.outputs.cache-hit != 'true'
+        run: |
+          set -euo pipefail
+          mkdir -p third_party/prebuilt/android
+          for abi in arm64-v8a armeabi-v7a x86_64; do
+            if [ -d "$RUNNER_TEMP/deps/$abi" ]; then
+              mv "$RUNNER_TEMP/deps/$abi" "third_party/prebuilt/android/$abi"
+            else
+              ./third_party/build-android.sh "$abi"
+            fi
+          done
+
+      - name: Save combined native dependencies
+        if: steps.deps-all.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: third_party/prebuilt
+          key: ${{ steps.deps-all.outputs.cache-primary-key }}
+
+      - name: Drop native dependency sources
+        run: rm -rf third_party/src
+
+      - name: Restore ccache
+        uses: actions/cache/restore@v4
+        with:
+          path: ~/.cache/ccache
+          key: ccache-aab-${{ steps.meta.outputs.sha }}
+          restore-keys: |
+            ccache-aab-
+            ccache-android-arm64-v8a-
+
+      - name: Build release AAB
+        env:
+          DRIFT_ANDROID_PACKAGE_NAME: org.cutwire.drift
+          DRIFT_ANDROID_APP_NAME: Drift
+          DRIFT_ANDROID_VERSION_CODE: ${{ steps.meta.outputs.version_code }}
+          QT_ANDROID_ABIS: "arm64-v8a;armeabi-v7a;x86_64"
+          BUILD_AAB: '1'
+          CMAKE_C_COMPILER_LAUNCHER: ccache
+          CMAKE_CXX_COMPILER_LAUNCHER: ccache
+          CCACHE_MAXSIZE: 2G
+        run: |
+          export QT_ANDROID_ROOT="$HOME/Qt/$QT_ANDROID_VERSION/$PRIMARY_QT_ARCH"
+          export QT_HOST_PATH="$HOME/Qt/$QT_ANDROID_VERSION/gcc_64"
+          ./scripts/build.sh "$PRIMARY_ABI" Release
+          ccache -s
+
+      - name: Save ccache
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: ~/.cache/ccache
+          key: ccache-aab-${{ steps.meta.outputs.sha }}
+
+      # Play Console rejects an unsigned bundle. jarsigner (JAR signing) is what an AAB
+      # wants — apksigner is the APK scheme used in package.yml.
+      - name: Sign release AAB
+        env:
+          KEYSTORE_B64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          VERSION: ${{ steps.meta.outputs.version }}
+          VERSION_CODE: ${{ steps.meta.outputs.version_code }}
+        run: |
+          set -euo pipefail
+          [ -n "${KEYSTORE_B64:-}" ] || { echo "::error::ANDROID_KEYSTORE_BASE64 is not set" >&2; exit 1; }
+          [ -n "${KEYSTORE_PASSWORD:-}" ] || { echo "::error::ANDROID_KEYSTORE_PASSWORD is not set" >&2; exit 1; }
+          [ -n "${KEY_ALIAS:-}" ] || { echo "::error::ANDROID_KEY_ALIAS is not set" >&2; exit 1; }
+
+          BUILD="build/android-$PRIMARY_ABI"
+          AAB="$(find "$BUILD/android-build/build/outputs/bundle/release" -name '*.aab' -print -quit 2>/dev/null || true)"
+          [ -n "$AAB" ] || AAB="$(find "$BUILD/android-build" -name '*.aab' -print -quit)"
+          [ -n "$AAB" ] || { echo "no release AAB under $BUILD/android-build" >&2; exit 1; }
+
+          KS="$RUNNER_TEMP/upload.jks"
+          printf '%s' "$KEYSTORE_B64" | base64 -d > "$KS"
+          mkdir -p "$RUNNER_TEMP/out"
+          OUT="$RUNNER_TEMP/out/Drift-${VERSION}-${VERSION_CODE}.aab"
+          jarsigner -keystore "$KS" \
+            -storepass:env KEYSTORE_PASSWORD -keypass:env KEYSTORE_PASSWORD \
+            -signedjar "$OUT" \
+            -sigalg SHA256withRSA -digestalg SHA-256 \
+            "$AAB" "$KEY_ALIAS"
+          jarsigner -verify -certs "$OUT"
+
+      - name: Shred keystore
+        if: always()
+        run: rm -f "$RUNNER_TEMP/upload.jks"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: drift-${{ steps.meta.outputs.version }}-${{ steps.meta.outputs.version_code }}-aab
+          path: ${{ runner.temp }}/out/Drift-${{ steps.meta.outputs.version }}-${{ steps.meta.outputs.version_code }}.aab
+          retention-days: 30
+          if-no-files-found: error
+
+      - name: Summary
+        run: |
+          {
+            echo "## Play Store AAB"
+            echo "- **ref:** \`${{ inputs.ref }}\`"
+            echo "- **commit:** \`${{ steps.meta.outputs.sha }}\`"
+            echo "- **versionName:** ${{ steps.meta.outputs.version }}"
+            echo "- **versionCode:** ${{ steps.meta.outputs.version_code }}"
+            echo "- **artifact:** \`Drift-${{ steps.meta.outputs.version }}-${{ steps.meta.outputs.version_code }}.aab\`"
+          } >> "$GITHUB_STEP_SUMMARY"
