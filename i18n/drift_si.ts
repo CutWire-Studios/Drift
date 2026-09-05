@@ -1962,6 +1962,10 @@
         <translation>මාධ්‍ය සංස්කරණය කරන ලදී</translation>
     </message>
     <message>
+        <source>Clips moved</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Building keyframes…</source>
         <translation>කීෆ්‍රේම ගොඩනඟමින්…</translation>
     </message>

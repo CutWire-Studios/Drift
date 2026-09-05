@@ -1958,6 +1958,10 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Clips moved</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Building keyframes…</source>
         <translation type="unfinished"></translation>
     </message>

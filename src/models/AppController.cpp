@@ -4008,22 +4008,52 @@ void AppController::moveClip(int trackIndex, int clipIndex, double newStart)
     const drift::TimeUs desiredUs = drift::secondsToUs(newStart);
     const drift::TimeUs baseUs = m_project.tracks().at(trackIndex).clips.at(clipIndex).timelineStart;
     const drift::TimeUs delta = desiredUs - baseUs;
+
+    // When moving multiple clips, clamp leftward movement so the earliest clip in the selection
+    // stops at 0 and the relative distance between selected clips is preserved.
+    drift::TimeUs minGroupStartUs = -1;
+    for (const QPair<int, int> &pair : targets) {
+        if (isValidClipIndex(pair.first, pair.second)) {
+            const drift::TimeUs s = m_project.tracks().at(pair.first).clips.at(pair.second).timelineStart;
+            if (minGroupStartUs < 0 || s < minGroupStartUs)
+                minGroupStartUs = s;
+        }
+    }
+    drift::TimeUs clampedDelta = delta;
+    if (clampedDelta < 0 && minGroupStartUs >= 0 && -clampedDelta > minGroupStartUs) {
+        clampedDelta = -minGroupStartUs;
+    }
+
     QSet<QString> movedIds;
     for (const QPair<int, int> &pair : targets) {
         if (!isValidClipIndex(pair.first, pair.second))
             continue;
         drift::Clip &clip = m_project.tracks()[pair.first].clips[pair.second];
-        clip.timelineStart = qMax<drift::TimeUs>(0, clip.timelineStart + delta);
+        clip.timelineStart = qMax<drift::TimeUs>(0, clip.timelineStart + clampedDelta);
         movedIds.insert(clip.id);
     }
     if (!m_allowClipOverlap) {
+        drift::TimeUs maxPushRight = 0;
         for (const QPair<int, int> &pair : targets) {
             if (!isValidClipIndex(pair.first, pair.second))
                 continue;
-            drift::Track &targetTrack = m_project.tracks()[pair.first];
-            drift::Clip &clip = targetTrack.clips[pair.second];
-            clip.timelineStart = drift::clampClipStartNoOverlap(targetTrack, movedIds, clip.timelineStart,
-                                                                clip.timelineDuration);
+            const drift::Track &targetTrack = m_project.tracks().at(pair.first);
+            const drift::Clip &clip = targetTrack.clips.at(pair.second);
+            const drift::TimeUs clampedStart = drift::clampClipStartNoOverlap(targetTrack, movedIds, clip.timelineStart,
+                                                                              clip.timelineDuration);
+            if (clampedStart > clip.timelineStart) {
+                const drift::TimeUs push = clampedStart - clip.timelineStart;
+                if (push > maxPushRight)
+                    maxPushRight = push;
+            }
+        }
+        if (maxPushRight > 0) {
+            for (const QPair<int, int> &pair : targets) {
+                if (!isValidClipIndex(pair.first, pair.second))
+                    continue;
+                drift::Clip &clip = m_project.tracks()[pair.first].clips[pair.second];
+                clip.timelineStart += maxPushRight;
+            }
         }
     }
     for (const QPair<int, int> &pair : targets) {
@@ -4477,50 +4507,164 @@ void AppController::moveClipToTrack(int trackIndex, int clipIndex, int newTrackI
         return;
     if (newTrackIndex < 0 || newTrackIndex >= m_project.tracks().size())
         return;
-
-    drift::Track &fromTrack = m_project.tracks()[trackIndex];
-    if (clipIndex < 0 || clipIndex >= fromTrack.clips.size())
+    if (!isValidClipIndex(trackIndex, clipIndex))
         return;
 
-    drift::Track &toTrack = m_project.tracks()[newTrackIndex];
-    const drift::Clip clip = fromTrack.clips.at(clipIndex);
-    if (!toTrack.allowsClipType(clip.type))
+    const int trackDelta = newTrackIndex - trackIndex;
+    if (trackDelta == 0) {
+        moveClip(trackIndex, clipIndex, newStart);
         return;
-
-    const drift::Project before = m_project;
-    fromTrack.clips.removeAt(clipIndex);
-
-    // Source-track indices after the hole shift down. Drop the moved slot and
-    // remap anything that pointed past it, otherwise finishEdit's normalize
-    // would keep the old (track, index) and light up the wrong clip.
-    for (int i = m_selection.size() - 1; i >= 0; --i) {
-        QPair<int, int> &pair = m_selection[i];
-        if (pair.first != trackIndex)
-            continue;
-        if (pair.second == clipIndex)
-            m_selection.removeAt(i);
-        else if (pair.second > clipIndex)
-            --pair.second;
     }
 
-    drift::Clip moved = clip;
-    moved.timelineStart = drift::resolveClipStart(m_project, toTrack, -1, drift::secondsToUs(newStart),
-                                                  moved.timelineDuration, m_snapEnabled, m_playheadUs,
-                                                  extraSnapTargets());
-    toTrack.clips.append(moved);
-    const int newClipIndex = toTrack.clips.size() - 1;
+    const QPair<int, int> requested(trackIndex, clipIndex);
+    QList<QPair<int, int>> targets = m_selection.contains(requested) ? m_selection
+                                                                      : QList<QPair<int, int>>{requested};
 
-    syncLinkedPartnersFrom(m_project, moved);
+    const drift::Project before = m_project;
+    const drift::TimeUs desiredUs = drift::secondsToUs(newStart);
+    const drift::TimeUs baseUs = m_project.tracks().at(trackIndex).clips.at(clipIndex).timelineStart;
+    const drift::TimeUs timeDelta = desiredUs - baseUs;
 
-    // Selection follows the clip to its new track before tracksChanged fires.
-    m_selectedTrack = newTrackIndex;
-    m_selectedClip = newClipIndex;
-    m_selection = selectionWithLinkedPartners(m_project, newTrackIndex, newClipIndex);
+    // Verify the leader clip can land on the destination track
+    const drift::Clip &leaderClip = m_project.tracks().at(trackIndex).clips.at(clipIndex);
+    if (!m_project.tracks().at(newTrackIndex).allowsClipType(leaderClip.type))
+        return;
+    const QString leaderId = leaderClip.id;
+
+    drift::TimeUs minGroupStartUs = -1;
+    for (const QPair<int, int> &pair : targets) {
+        if (!isValidClipIndex(pair.first, pair.second))
+            continue;
+        const drift::Clip &c = m_project.tracks().at(pair.first).clips.at(pair.second);
+        if (minGroupStartUs < 0 || c.timelineStart < minGroupStartUs)
+            minGroupStartUs = c.timelineStart;
+    }
+
+    drift::TimeUs clampedTimeDelta = timeDelta;
+    if (clampedTimeDelta < 0 && minGroupStartUs >= 0 && -clampedTimeDelta > minGroupStartUs) {
+        clampedTimeDelta = -minGroupStartUs;
+    }
+
+    struct ClipToMove {
+        int fromTrack;
+        int fromClipIndex;
+        int toTrack;
+        drift::Clip clip;
+        drift::TimeUs newTimelineStart;
+    };
+
+    QList<ClipToMove> toMove;
+    QSet<QString> movedIds;
+    for (const QPair<int, int> &pair : targets) {
+        if (!isValidClipIndex(pair.first, pair.second))
+            continue;
+        const drift::Clip &c = m_project.tracks().at(pair.first).clips.at(pair.second);
+        int destTrack = pair.first;
+        if (pair.first == trackIndex) {
+            destTrack = newTrackIndex;
+        } else {
+            const int candidate = pair.first + trackDelta;
+            if (candidate >= 0 && candidate < m_project.tracks().size()
+                && m_project.tracks().at(candidate).allowsClipType(c.type)) {
+                destTrack = candidate;
+            }
+        }
+        ClipToMove item;
+        item.fromTrack = pair.first;
+        item.fromClipIndex = pair.second;
+        item.toTrack = destTrack;
+        item.clip = c;
+        item.newTimelineStart = qMax<drift::TimeUs>(0, c.timelineStart + clampedTimeDelta);
+        movedIds.insert(c.id);
+        toMove.append(item);
+    }
+
+    if (!m_allowClipOverlap) {
+        drift::TimeUs maxPushRight = 0;
+        for (const ClipToMove &item : toMove) {
+            const drift::Track &destTrack = m_project.tracks().at(item.toTrack);
+            const drift::TimeUs clampedStart = drift::clampClipStartNoOverlap(destTrack, movedIds, item.newTimelineStart,
+                                                                              item.clip.timelineDuration);
+            if (clampedStart > item.newTimelineStart) {
+                const drift::TimeUs push = clampedStart - item.newTimelineStart;
+                if (push > maxPushRight)
+                    maxPushRight = push;
+            }
+        }
+        if (maxPushRight > 0) {
+            for (ClipToMove &item : toMove) {
+                item.newTimelineStart += maxPushRight;
+            }
+        }
+    }
+
+    // For clips that stay on the same track, update their timeline start in place
+    for (const ClipToMove &item : toMove) {
+        if (item.fromTrack == item.toTrack) {
+            m_project.tracks()[item.fromTrack].clips[item.fromClipIndex].timelineStart = item.newTimelineStart;
+        }
+    }
+
+    // Removals for clips that change tracks, in descending clip index order
+    QList<ClipToMove> removals;
+    for (const ClipToMove &item : toMove) {
+        if (item.fromTrack != item.toTrack)
+            removals.append(item);
+    }
+    std::sort(removals.begin(), removals.end(), [](const ClipToMove &a, const ClipToMove &b) {
+        if (a.fromTrack != b.fromTrack)
+            return a.fromTrack < b.fromTrack;
+        return a.fromClipIndex > b.fromClipIndex;
+    });
+    for (const ClipToMove &item : removals) {
+        m_project.tracks()[item.fromTrack].clips.removeAt(item.fromClipIndex);
+    }
+
+    // Append clips changing tracks to their new destination tracks
+    for (const ClipToMove &item : toMove) {
+        if (item.fromTrack != item.toTrack) {
+            drift::Clip moved = item.clip;
+            moved.timelineStart = item.newTimelineStart;
+            m_project.tracks()[item.toTrack].clips.append(moved);
+        }
+    }
+
+    // Update selection and sync linked partners
+    QList<QPair<int, int>> newSelection;
+    int selectedT = -1;
+    int selectedC = -1;
+    for (const ClipToMove &item : toMove) {
+        int foundIdx = -1;
+        const drift::Track &t = m_project.tracks().at(item.toTrack);
+        for (int i = 0; i < t.clips.size(); ++i) {
+            if (t.clips.at(i).id == item.clip.id) {
+                foundIdx = i;
+                break;
+            }
+        }
+        if (foundIdx >= 0) {
+            newSelection.append(qMakePair(item.toTrack, foundIdx));
+            if (item.clip.id == leaderId) {
+                selectedT = item.toTrack;
+                selectedC = foundIdx;
+            }
+        }
+        syncLinkedPartnersFrom(m_project, item.clip, movedIds);
+    }
+
+    m_selection = newSelection;
+    if (selectedT >= 0 && selectedC >= 0) {
+        m_selectedTrack = selectedT;
+        m_selectedClip = selectedC;
+    } else if (!newSelection.isEmpty()) {
+        m_selectedTrack = newSelection.constFirst().first;
+        m_selectedClip = newSelection.constFirst().second;
+    }
     m_selectedTransitionTrack = -1;
     m_selectedTransitionLeftClip = -1;
 
-    pushProjectEdit(before, tr("Clip moved"));
-    finishEdit(tr("Clip moved"));
+    pushProjectEdit(before, tr("Clips moved"));
+    finishEdit(tr("Clips moved"));
 }
 
 void AppController::addTextClip(const QString &text, double atSeconds, const QString &presetId)
@@ -13024,22 +13168,50 @@ void AppController::nudgeSelection(double deltaSeconds)
         return;
     const drift::Project before = m_project;
     const drift::TimeUs deltaUs = drift::secondsToUs(deltaSeconds);
+
+    drift::TimeUs minGroupStartUs = -1;
+    for (const QPair<int, int> &pair : pairs) {
+        if (isValidClipIndex(pair.first, pair.second)) {
+            const drift::TimeUs s = m_project.tracks().at(pair.first).clips.at(pair.second).timelineStart;
+            if (minGroupStartUs < 0 || s < minGroupStartUs)
+                minGroupStartUs = s;
+        }
+    }
+    drift::TimeUs clampedDeltaUs = deltaUs;
+    if (clampedDeltaUs < 0 && minGroupStartUs >= 0 && -clampedDeltaUs > minGroupStartUs) {
+        clampedDeltaUs = -minGroupStartUs;
+    }
+
     QSet<QString> movedIds;
     for (const QPair<int, int> &pair : pairs) {
         if (!isValidClipIndex(pair.first, pair.second))
             continue;
         drift::Clip &clip = m_project.tracks()[pair.first].clips[pair.second];
-        clip.timelineStart = qMax<drift::TimeUs>(0, clip.timelineStart + deltaUs);
+        clip.timelineStart = qMax<drift::TimeUs>(0, clip.timelineStart + clampedDeltaUs);
         movedIds.insert(clip.id);
     }
     if (!m_allowClipOverlap) {
+        drift::TimeUs maxPushRight = 0;
         for (const QPair<int, int> &pair : pairs) {
             if (!isValidClipIndex(pair.first, pair.second))
                 continue;
-            drift::Track &track = m_project.tracks()[pair.first];
-            drift::Clip &clip = track.clips[pair.second];
-            clip.timelineStart = drift::clampClipStartNoOverlap(track, movedIds, clip.timelineStart,
-                                                                clip.timelineDuration);
+            const drift::Track &track = m_project.tracks().at(pair.first);
+            const drift::Clip &clip = track.clips.at(pair.second);
+            const drift::TimeUs clampedStart = drift::clampClipStartNoOverlap(track, movedIds, clip.timelineStart,
+                                                                              clip.timelineDuration);
+            if (clampedStart > clip.timelineStart) {
+                const drift::TimeUs push = clampedStart - clip.timelineStart;
+                if (push > maxPushRight)
+                    maxPushRight = push;
+            }
+        }
+        if (maxPushRight > 0) {
+            for (const QPair<int, int> &pair : pairs) {
+                if (!isValidClipIndex(pair.first, pair.second))
+                    continue;
+                drift::Clip &clip = m_project.tracks()[pair.first].clips[pair.second];
+                clip.timelineStart += maxPushRight;
+            }
         }
     }
     pushProjectEdit(before, tr("Nudge selection"));
@@ -13049,6 +13221,19 @@ void AppController::nudgeSelection(double deltaSeconds)
 bool AppController::selectionContains(int trackIndex, int clipIndex) const
 {
     return m_selection.contains(qMakePair(trackIndex, clipIndex));
+}
+
+double AppController::selectionEarliestStartSeconds() const
+{
+    drift::TimeUs minStart = -1;
+    for (const QPair<int, int> &pair : m_selection) {
+        if (!isValidClipIndex(pair.first, pair.second))
+            continue;
+        const drift::TimeUs s = m_project.tracks().at(pair.first).clips.at(pair.second).timelineStart;
+        if (minStart < 0 || s < minStart)
+            minStart = s;
+    }
+    return minStart >= 0 ? drift::usToSeconds(minStart) : 0.0;
 }
 
 void AppController::setTimelineTrimCursor(int side, int heightPx)
