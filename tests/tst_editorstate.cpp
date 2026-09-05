@@ -128,6 +128,7 @@ private slots:
     void multiClipMoveLeftPreservesSelectionAndRelativeSpacing();
     void multiClipMoveCrossTracks();
     void multiClipMoveCrossTracksWithLinkedPartners();
+    void pasteAttributesToMultipleClips();
 };
 
 void EditorStateTest::snapTimeEnabled()
@@ -3773,6 +3774,91 @@ void EditorStateTest::multiClipMoveCrossTracksWithLinkedPartners()
     QCOMPARE(state.project()->tracks().at(2).clips.at(1).timelineStart, drift::secondsToUs(7.0));
     QCOMPARE(state.project()->tracks().at(1).clips.at(0).timelineStart, drift::secondsToUs(3.0));
     QCOMPARE(state.project()->tracks().at(1).clips.at(1).timelineStart, drift::secondsToUs(7.0));
+}
+
+void EditorStateTest::pasteAttributesToMultipleClips()
+{
+    AssetLibrary library;
+    AppController state(&library);
+
+    // Create 3 visual clips
+    state.addTextClip(QStringLiteral("Source"), 0.0);
+    state.addTextClip(QStringLiteral("Target1"), 4.0);
+    state.addTextClip(QStringLiteral("Target2"), 8.0);
+
+    const int track = state.selectedTrack();
+    QVERIFY(track >= 0);
+
+    // Set custom transform on clip 0 (Source)
+    drift::Clip &sourceClip = state.project()->tracks()[track].clips[0];
+    sourceClip.rotation.setKeyframe(0, 45.0);
+    sourceClip.opacity.setKeyframe(0, 0.75);
+    sourceClip.flipH = true;
+    sourceClip.blendMode = drift::BlendMode::Screen;
+    sourceClip.transformX.setKeyframe(0, 100.0);
+    sourceClip.transformX.setKeyframe(sourceClip.timelineDuration, 200.0);
+
+    // Copy clip 0
+    state.selectClip(track, 0);
+    state.copySelection();
+    QVERIFY(state.canPasteAttributes());
+
+    QVariantMap summary = state.clipboardAttributes();
+    QCOMPARE(summary.value(QStringLiteral("hasClip")).toBool(), true);
+    QCOMPARE(summary.value(QStringLiteral("hasTransform")).toBool(), true);
+
+    // Select target clips 1 and 2
+    state.selectClip(track, 1);
+    state.addToSelection(track, 2);
+    QCOMPARE(state.selection().size(), 2);
+
+    summary = state.clipboardAttributes();
+    QCOMPARE(summary.value(QStringLiteral("targetClipCount")).toInt(), 2);
+
+    // Initial check on Target1 and Target2: their flipH is false, blendMode is normal
+    const drift::Clip &t1Before = state.project()->tracks().at(track).clips.at(1);
+    const drift::Clip &t2Before = state.project()->tracks().at(track).clips.at(2);
+    QCOMPARE(t1Before.flipH, false);
+    QCOMPARE(t2Before.flipH, false);
+    QCOMPARE(t1Before.blendMode, drift::BlendMode::Normal);
+    QCOMPARE(t2Before.blendMode, drift::BlendMode::Normal);
+
+    // Paste attributes with transform only
+    QVariantMap options;
+    options.insert(QStringLiteral("transform"), true);
+    state.pasteAttributes(options);
+
+    // Verify both Target1 and Target2 received the transform
+    const drift::Clip &t1After = state.project()->tracks().at(track).clips.at(1);
+    const drift::Clip &t2After = state.project()->tracks().at(track).clips.at(2);
+    QCOMPARE(t1After.flipH, true);
+    QCOMPARE(t2After.flipH, true);
+    QCOMPARE(t1After.blendMode, drift::BlendMode::Screen);
+    QCOMPARE(t2After.blendMode, drift::BlendMode::Screen);
+    QCOMPARE(t1After.transformX.keyframes().size(), 2);
+    QCOMPARE(t2After.transformX.keyframes().size(), 2);
+
+    // Verify single undo step restores BOTH targets at once!
+    QVERIFY(state.undoAvailable());
+    state.undo();
+
+    const drift::Clip &t1Undone = state.project()->tracks().at(track).clips.at(1);
+    const drift::Clip &t2Undone = state.project()->tracks().at(track).clips.at(2);
+    QCOMPARE(t1Undone.flipH, false);
+    QCOMPARE(t2Undone.flipH, false);
+    QCOMPARE(t1Undone.blendMode, drift::BlendMode::Normal);
+    QCOMPARE(t2Undone.blendMode, drift::BlendMode::Normal);
+    QCOMPARE(t1Undone.transformX.keyframes().size(), t1Before.transformX.keyframes().size());
+    QCOMPARE(t2Undone.transformX.keyframes().size(), t2Before.transformX.keyframes().size());
+
+    // Redo restores them both
+    QVERIFY(state.redoAvailable());
+    state.redo();
+
+    const drift::Clip &t1Redone = state.project()->tracks().at(track).clips.at(1);
+    const drift::Clip &t2Redone = state.project()->tracks().at(track).clips.at(2);
+    QCOMPARE(t1Redone.flipH, true);
+    QCOMPARE(t2Redone.flipH, true);
 }
 
 QTEST_MAIN(EditorStateTest)

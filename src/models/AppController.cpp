@@ -1854,6 +1854,26 @@ QVariantMap keyframesToMap(const drift::Clip &clip)
     };
 }
 
+template<typename T>
+drift::KeyframeTrack<T> rescaleKeyframeTrackTimes(const drift::KeyframeTrack<T> &track,
+                                                  drift::TimeUs fromDurationUs,
+                                                  drift::TimeUs toDurationUs)
+{
+    if (track.isEmpty() || fromDurationUs <= 0 || toDurationUs <= 0 || fromDurationUs == toDurationUs)
+        return track;
+
+    const double scale = static_cast<double>(toDurationUs) / static_cast<double>(fromDurationUs);
+    drift::KeyframeTrack<T> out;
+    out.setEnabled(track.enabled());
+    for (auto it = track.keyframes().constBegin(); it != track.keyframes().constEnd(); ++it) {
+        drift::Keyframe<T> key = it.value();
+        key.inDx *= scale;
+        key.outDx *= scale;
+        out.setKeyframe(static_cast<drift::TimeUs>(llround(static_cast<double>(it.key()) * scale)), key);
+    }
+    return out;
+}
+
 // Keyframe times are clip-relative, so a clip that changes duration would leave its animation
 // sliding against the picture. Both clips cover the same source range, so each key is carried
 // across through the moment of source it was sitting on.
@@ -2188,7 +2208,8 @@ QHash<QString, QString> defaultShortcuts()
         {QStringLiteral("duplicate"), QStringLiteral("Ctrl+D")},
         // Premiere's Copy/Paste Attributes bindings, and clear of the clip clipboard on Ctrl+C/V.
         {QStringLiteral("copyEffects"), QStringLiteral("Ctrl+Alt+C")},
-        {QStringLiteral("pasteEffects"), QStringLiteral("Ctrl+Alt+V")},
+        {QStringLiteral("pasteEffects"), QStringLiteral("Ctrl+Shift+V")},
+        {QStringLiteral("pasteAttributes"), QStringLiteral("Ctrl+Alt+V")},
         {QStringLiteral("split"), QStringLiteral("S")},
         {QStringLiteral("merge"), QStringLiteral("Ctrl+M")},
         {QStringLiteral("unlink"), QStringLiteral("Ctrl+Shift+U")},
@@ -2939,6 +2960,7 @@ QVariantList AppController::actions() const
         action(QStringLiteral("duplicate"), tr("Duplicate selected clip")),
         action(QStringLiteral("copyEffects"), tr("Copy effects from clip")),
         action(QStringLiteral("pasteEffects"), tr("Paste effects onto clip")),
+        action(QStringLiteral("pasteAttributes"), tr("Paste attributes…")),
         action(QStringLiteral("split"), tr("Split at current time")),
         action(QStringLiteral("merge"), tr("Merge adjacent clips")),
         action(QStringLiteral("separateAudio"), tr("Separate audio")),
@@ -12369,6 +12391,298 @@ void AppController::pasteEffectsFromClipboard(int trackIndex, int clipIndex)
     applyEffectStack(trackIndex, clipIndex, stack, tr("Paste effects"));
 }
 
+bool AppController::canPasteAttributes() const
+{
+    if (m_clipboard.isEmpty())
+        return false;
+    if (!m_selection.isEmpty())
+        return true;
+    return isValidClipIndex(m_selectedTrack, m_selectedClip);
+}
+
+QVariantMap AppController::clipboardAttributes() const
+{
+    QVariantMap out;
+    if (m_clipboard.isEmpty()) {
+        out.insert(QStringLiteral("hasClip"), false);
+        return out;
+    }
+
+    const ClipboardItem &item = m_clipboard.constFirst();
+    const drift::Clip &c = item.clip;
+    out.insert(QStringLiteral("hasClip"), true);
+    out.insert(QStringLiteral("clipName"), c.name.isEmpty() ? tr("Clip") : c.name);
+
+    const bool isVisual = (c.type != drift::ClipType::Audio);
+    out.insert(QStringLiteral("isVisual"), isVisual);
+
+    const bool hasTransform = isVisual && (!c.transformX.isEmpty() || !c.transformY.isEmpty()
+                                           || !c.transformW.isEmpty() || !c.transformH.isEmpty()
+                                           || !c.rotation.isEmpty() || !c.opacity.isEmpty()
+                                           || c.blendMode != drift::BlendMode::Normal
+                                           || c.flipH || c.flipV
+                                           || c.mask.shape != drift::MaskShape::None
+                                           || c.animIn.kind != drift::ClipAnimKind::None
+                                           || c.animOut.kind != drift::ClipAnimKind::None);
+    out.insert(QStringLiteral("hasTransform"), hasTransform);
+
+    const bool isAudioOrVideo = (c.type == drift::ClipType::Video || c.type == drift::ClipType::Audio);
+    const bool hasSpeed = isAudioOrVideo && ((std::abs(c.speed - 1.0) > 0.001) || c.hasSpeedCurve() || c.reverse);
+    out.insert(QStringLiteral("isAudioOrVideo"), isAudioOrVideo);
+    out.insert(QStringLiteral("hasSpeed"), hasSpeed);
+    out.insert(QStringLiteral("speed"), c.speed);
+    out.insert(QStringLiteral("hasSpeedCurve"), c.hasSpeedCurve());
+    out.insert(QStringLiteral("reverse"), c.reverse);
+
+    const bool hasVolume = isAudioOrVideo && (!c.volume.isEmpty() || c.fadeInUs > 0 || c.fadeOutUs > 0);
+    out.insert(QStringLiteral("hasVolume"), hasVolume);
+
+    out.insert(QStringLiteral("hasEffects"), !c.effects.isEmpty());
+    out.insert(QStringLiteral("effectCount"), c.effects.size());
+
+    out.insert(QStringLiteral("hasAudioEffects"), !c.audioEffects.isEmpty());
+    out.insert(QStringLiteral("audioEffectCount"), c.audioEffects.size());
+
+    out.insert(QStringLiteral("hasTransitions"), !item.transitions.isEmpty());
+    out.insert(QStringLiteral("transitionCount"), item.transitions.size());
+
+    int count = 0;
+    if (!m_selection.isEmpty()) {
+        for (const auto &pair : m_selection) {
+            if (isValidClipIndex(pair.first, pair.second))
+                ++count;
+        }
+    } else if (isValidClipIndex(m_selectedTrack, m_selectedClip)) {
+        count = 1;
+    }
+    out.insert(QStringLiteral("targetClipCount"), count);
+
+    return out;
+}
+
+void AppController::requestPasteAttributes()
+{
+    if (!canPasteAttributes()) {
+        setLastMessage(tr("Copy a clip and select target clips first"), QStringLiteral("warning"));
+        return;
+    }
+    emit openPasteAttributesRequested();
+}
+
+void AppController::pasteAttributes(const QVariantMap &options)
+{
+    if (m_clipboard.isEmpty())
+        return;
+
+    const bool pasteTransform = options.value(QStringLiteral("transform"), false).toBool();
+    const bool pasteSpeed = options.value(QStringLiteral("speed"), false).toBool();
+    const bool pasteVolume = options.value(QStringLiteral("volume"), false).toBool();
+    const bool pasteEffects = options.value(QStringLiteral("effects"), false).toBool();
+    const bool pasteAudioEffects = options.value(QStringLiteral("audioEffects"), false).toBool();
+    const bool pasteTransitions = options.value(QStringLiteral("transitions"), false).toBool();
+    const bool replaceEffects = options.value(QStringLiteral("replaceEffects"), false).toBool();
+
+    if (!pasteTransform && !pasteSpeed && !pasteVolume && !pasteEffects && !pasteAudioEffects && !pasteTransitions)
+        return;
+
+    QList<QPair<int, int>> pairs;
+    if (!m_selection.isEmpty()) {
+        for (const auto &pair : m_selection) {
+            if (isValidClipIndex(pair.first, pair.second))
+                pairs.append(pair);
+        }
+    } else if (isValidClipIndex(m_selectedTrack, m_selectedClip)) {
+        pairs.append(qMakePair(m_selectedTrack, m_selectedClip));
+    }
+    if (pairs.isEmpty())
+        return;
+
+    const ClipboardItem &sourceItem = m_clipboard.constFirst();
+    const drift::Clip &sourceClip = sourceItem.clip;
+    const drift::TimeUs srcDurationUs = sourceClip.timelineDuration;
+
+    const drift::Project before = m_project;
+    bool anyModified = false;
+    int modifiedCount = 0;
+    QStringList missingEffectPacks;
+
+    for (const auto &pair : pairs) {
+        const int trackIdx = pair.first;
+        const int clipIdx = pair.second;
+        if (!isValidClipIndex(trackIdx, clipIdx))
+            continue;
+
+        drift::Track &track = m_project.tracks()[trackIdx];
+        drift::Clip &targetClip = track.clips[clipIdx];
+        bool clipModified = false;
+
+        // 1. Speed / Retime (applied first so target duration adjusts before keyframe scaling)
+        if (pasteSpeed && (targetClip.type == drift::ClipType::Video || targetClip.type == drift::ClipType::Audio)) {
+            if (sourceClip.hasSpeedCurve()) {
+                targetClip.speedCurve = sourceClip.speedCurve;
+                targetClip.reverse = sourceClip.reverse;
+                targetClip.syncDurationFromSpeedCurve();
+            } else {
+                targetClip.speed = sourceClip.speed;
+                targetClip.reverse = sourceClip.reverse;
+                targetClip.speedCurve.clear();
+                targetClip.syncSrcOutFromSpeed(sourceDurationForClip(targetClip));
+            }
+            syncLinkedPartnersFrom(m_project, targetClip);
+            clipModified = true;
+        }
+
+        const drift::TimeUs targetDurationUs = targetClip.timelineDuration;
+        const bool targetIsVisual = (targetClip.type != drift::ClipType::Audio);
+        const bool targetHasAudio = (targetClip.type == drift::ClipType::Video || targetClip.type == drift::ClipType::Audio);
+
+        // 2. Transform / Motion
+        if (pasteTransform && targetIsVisual) {
+            targetClip.transformX = rescaleKeyframeTrackTimes(sourceClip.transformX, srcDurationUs, targetDurationUs);
+            targetClip.transformY = rescaleKeyframeTrackTimes(sourceClip.transformY, srcDurationUs, targetDurationUs);
+            targetClip.transformW = rescaleKeyframeTrackTimes(sourceClip.transformW, srcDurationUs, targetDurationUs);
+            targetClip.transformH = rescaleKeyframeTrackTimes(sourceClip.transformH, srcDurationUs, targetDurationUs);
+            targetClip.rotation = rescaleKeyframeTrackTimes(sourceClip.rotation, srcDurationUs, targetDurationUs);
+            targetClip.opacity = rescaleKeyframeTrackTimes(sourceClip.opacity, srcDurationUs, targetDurationUs);
+            targetClip.blendMode = sourceClip.blendMode;
+            targetClip.flipH = sourceClip.flipH;
+            targetClip.flipV = sourceClip.flipV;
+            targetClip.mask = sourceClip.mask;
+            targetClip.animIn = sourceClip.animIn;
+            targetClip.animOut = sourceClip.animOut;
+            if (targetClip.animIn.durationUs > targetDurationUs)
+                targetClip.animIn.durationUs = targetDurationUs;
+            if (targetClip.animOut.durationUs > targetDurationUs)
+                targetClip.animOut.durationUs = targetDurationUs;
+            clipModified = true;
+        }
+
+        // 3. Audio / Volume & Fades
+        if (pasteVolume && targetHasAudio) {
+            targetClip.volume = rescaleKeyframeTrackTimes(sourceClip.volume, srcDurationUs, targetDurationUs);
+            targetClip.fadeInUs = qMin(sourceClip.fadeInUs, targetDurationUs);
+            targetClip.fadeOutUs = qMin(sourceClip.fadeOutUs, targetDurationUs);
+            targetClip.fadeCurve = sourceClip.fadeCurve;
+            targetClip.fadeShape = sourceClip.fadeShape;
+            clipModified = true;
+        }
+
+        // 4. Video Effects
+        if (pasteEffects && targetIsVisual && !sourceClip.effects.isEmpty()) {
+            QList<drift::Effect> video;
+            video.reserve(sourceClip.effects.size());
+            for (const drift::Effect &incoming : sourceClip.effects) {
+                if (const EffectPresetEntry *def = effectDefForId(incoming.catalogId)) {
+                    drift::Effect effect = effectFromCatalogEntry(*def, incoming.parameters);
+                    effect.paramKeyframes = incoming.paramKeyframes;
+                    effect.enabled = incoming.enabled;
+                    video.append(effect);
+                } else {
+                    video.append(incoming);
+                    if (!incoming.catalogId.isEmpty())
+                        missingEffectPacks.append(incoming.catalogId);
+                }
+            }
+            drift::rescaleEffectKeyframes(video, srcDurationUs, targetDurationUs);
+            if (replaceEffects) {
+                targetClip.effects = video;
+            } else {
+                targetClip.effects.append(video);
+            }
+            clipModified = true;
+        } else if (pasteEffects && targetIsVisual && replaceEffects && sourceClip.effects.isEmpty()) {
+            if (!targetClip.effects.isEmpty()) {
+                targetClip.effects.clear();
+                clipModified = true;
+            }
+        }
+
+        // 5. Audio Effects
+        if (pasteAudioEffects && targetHasAudio && !sourceClip.audioEffects.isEmpty()) {
+            QList<drift::Effect> audio;
+            audio.reserve(sourceClip.audioEffects.size());
+            for (const drift::Effect &incoming : sourceClip.audioEffects) {
+                if (const AudioEffectEntry *def = audioEffectDefForId(incoming.catalogId)) {
+                    drift::Effect effect = audioEffectFromCatalogEntry(*def, incoming.parameters);
+                    effect.enabled = incoming.enabled;
+                    audio.append(effect);
+                } else {
+                    audio.append(incoming);
+                    if (!incoming.catalogId.isEmpty())
+                        missingEffectPacks.append(incoming.catalogId);
+                }
+            }
+            if (replaceEffects) {
+                targetClip.audioEffects = audio;
+            } else {
+                targetClip.audioEffects.append(audio);
+            }
+            clipModified = true;
+        } else if (pasteAudioEffects && targetHasAudio && replaceEffects && sourceClip.audioEffects.isEmpty()) {
+            if (!targetClip.audioEffects.isEmpty()) {
+                targetClip.audioEffects.clear();
+                clipModified = true;
+            }
+        }
+
+        // 6. Transitions
+        if (pasteTransitions && !sourceItem.transitions.isEmpty() && trackAllowsTransitions(track.type)) {
+            const int partnerIndex = findTransitionPartnerIndex(track, clipIdx);
+            if (partnerIndex >= 0) {
+                const drift::Clip &fromClip = track.clips.at(clipIdx);
+                const drift::Clip &toClip = track.clips.at(partnerIndex);
+                for (const drift::Transition &srcTrans : sourceItem.transitions) {
+                    bool found = false;
+                    for (drift::Transition &existing : track.transitions) {
+                        if (existing.fromClipId == fromClip.id && existing.toClipId == toClip.id) {
+                            existing.kindId = srcTrans.kindId;
+                            existing.durationUs = srcTrans.durationUs;
+                            existing.parameters = srcTrans.parameters;
+                            found = true;
+                            break;
+                        }
+                    }
+                    if (!found) {
+                        drift::Transition transition;
+                        transition.id = QUuid::createUuid().toString(QUuid::WithoutBraces);
+                        transition.fromClipId = fromClip.id;
+                        transition.toClipId = toClip.id;
+                        transition.kindId = srcTrans.kindId;
+                        transition.durationUs = srcTrans.durationUs;
+                        transition.parameters = srcTrans.parameters;
+                        track.transitions.append(transition);
+                    }
+                    clipModified = true;
+                }
+            }
+        }
+
+        if (clipModified) {
+            anyModified = true;
+            ++modifiedCount;
+        }
+    }
+
+    if (!anyModified)
+        return;
+
+    pushProjectEdit(before, tr("Paste attributes"));
+    finishEdit(tr("Pasted attributes onto %n clip(s)", "", modifiedCount));
+
+    if (!missingEffectPacks.isEmpty()) {
+        missingEffectPacks.removeDuplicates();
+        missingEffectPacks.sort();
+        const QString sample = missingEffectPacks.mid(0, 3).join(QStringLiteral(", "));
+        setLastMessage(missingEffectPacks.size() == 1
+                           ? tr("Pasted effects use “%1”, which isn’t installed — it "
+                                "won’t show. Open Extras to install it.").arg(sample)
+                           : tr("Pasted effects use %1 packs that aren’t installed — they "
+                                "won’t show. Open Extras to install them.")
+                                 .arg(missingEffectPacks.size()),
+                       QStringLiteral("warning"));
+    }
+}
+
 QVariantList AppController::userEffectPresets() const
 {
     QVariantList out;
@@ -13132,6 +13446,10 @@ void AppController::copySelection()
         ClipboardItem item;
         item.clip = m_project.tracks().at(pair.first).clips.at(pair.second);
         item.trackType = m_project.tracks().at(pair.first).type;
+        for (const drift::Transition &tr : m_project.tracks().at(pair.first).transitions) {
+            if (tr.fromClipId == item.clip.id || tr.toClipId == item.clip.id)
+                item.transitions.append(tr);
+        }
         m_clipboard.append(item);
     }
 }
@@ -13401,6 +13719,8 @@ void AppController::triggerAction(const QString &actionId)
         copyClipEffectsToClipboard(m_selectedTrack, m_selectedClip);
     else if (actionId == QStringLiteral("pasteEffects"))
         pasteEffectsFromClipboard(m_selectedTrack, m_selectedClip);
+    else if (actionId == QStringLiteral("pasteAttributes"))
+        requestPasteAttributes();
     else if (actionId == QStringLiteral("split"))
         splitAtPlayhead();
     else if (actionId == QStringLiteral("merge"))

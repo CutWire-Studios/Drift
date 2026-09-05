@@ -778,7 +778,11 @@ Item {
             id: clipContextMenu
 
             property bool canPasteEffects: false
-            onAboutToShow: canPasteEffects = EditorState.clipboardHasEffects()
+            property bool canPasteAttributes: false
+            onAboutToShow: {
+                canPasteEffects = EditorState.clipboardHasEffects()
+                canPasteAttributes = EditorState.canPasteAttributes()
+            }
 
             ThemedMenuItem {
                 text: qsTr("Properties")
@@ -845,6 +849,12 @@ Item {
                 text: qsTr("Copy")
                 icon.name: Theme.icons.copy
                 onTriggered: EditorState.copySelection()
+            }
+            ThemedMenuItem {
+                text: qsTr("Paste attributes…")
+                icon.name: Theme.icons.clipboardPaste
+                enabled: clipContextMenu.canPasteAttributes
+                onTriggered: EditorState.requestPasteAttributes()
             }
             ThemedMenuItem {
                 text: qsTr("Duplicate")

@@ -807,6 +807,7 @@ qt_add_qml_module(drift
         src/qml/components/VideoSizeDialog.qml
         src/qml/components/VideoSizeControls.qml
         src/qml/components/ProjectPropertiesDialog.qml
+        src/qml/components/PasteAttributesDialog.qml
         src/qml/components/PackageProgressDialog.qml
         src/qml/components/ExportDialog.qml
         src/qml/components/ExportProgressDialog.qml

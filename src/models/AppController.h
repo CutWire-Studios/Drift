@@ -971,6 +971,11 @@ public:
     Q_INVOKABLE bool clipboardHasEffects() const;
     Q_INVOKABLE void pasteEffectsFromClipboard(int trackIndex, int clipIndex);
 
+    Q_INVOKABLE bool canPasteAttributes() const;
+    Q_INVOKABLE QVariantMap clipboardAttributes() const;
+    Q_INVOKABLE void requestPasteAttributes();
+    Q_INVOKABLE void pasteAttributes(const QVariantMap &options);
+
     Q_INVOKABLE QVariantList userEffectPresets() const;
     Q_INVOKABLE QString saveEffectAsPreset(int trackIndex, int clipIndex, int effectIndex,
                                            const QString &label);
@@ -1307,6 +1312,7 @@ signals:
     void newProjectRequested();
     void openRequested();
     void saveRequested();
+    void openPasteAttributesRequested();
 
 protected:
     void pushProjectEdit(const drift::Project &before, const QString &text);
@@ -1670,6 +1676,7 @@ protected:
     {
         drift::Clip clip;
         drift::TrackType trackType = drift::TrackType::Video;
+        QList<drift::Transition> transitions;
     };
     QList<ClipboardItem> m_clipboard;
 
