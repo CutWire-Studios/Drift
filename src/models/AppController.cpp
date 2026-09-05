@@ -2002,71 +2002,258 @@ drift::Clip makeAudioCompanionFromVideo(const drift::Clip &videoClip, const QStr
     return audio;
 }
 
-// Split embedded audio onto the audio track (video keeps picture only).
-// CapCut-style: the new audio clip stays linked to the video so they move together
-// until the user explicitly unlinks.
-bool detachEmbeddedAudioFromVideo(drift::Project &project, AssetLibrary *library, drift::Clip &videoClip)
+// Relative position of a video track inside the video-track group.
+//
+// Example:
+//
+//   project tracks: Video, Video, Video, Audio, Audio
+//                   0      1      2
+//
+// The result is independent of absolute project-track indexes so audio tracks can
+// mirror the video hierarchy without interleaving video and audio tracks.
+int videoTrackOrdinal(const drift::Project &project, int trackIndex)
 {
+    if (trackIndex < 0 || trackIndex >= project.tracks().size())
+        return -1;
+    if (project.tracks().at(trackIndex).type != drift::TrackType::Video)
+        return -1;
+
+    int ordinal = 0;
+    for (int t = 0; t < trackIndex; ++t) {
+        if (project.tracks().at(t).type == drift::TrackType::Video)
+            ++ordinal;
+    }
+    return ordinal;
+}
+
+// Returns the video-track ordinal associated with a linked audio track.
+//
+// Detached A/V companions already carry the same linkId, so there is no need to
+// add persistent track metadata merely to determine their visual hierarchy.
+int ownerVideoOrdinalForAudioTrack(const drift::Project &project, int audioTrackIndex)
+{
+    if (audioTrackIndex < 0 || audioTrackIndex >= project.tracks().size())
+        return -1;
+
+    const drift::Track &audioTrack = project.tracks().at(audioTrackIndex);
+    if (audioTrack.type != drift::TrackType::Audio)
+        return -1;
+
+    for (const drift::Clip &audioClip : audioTrack.clips) {
+        if (audioClip.linkId.isEmpty())
+            continue;
+
+        for (int t = 0; t < project.tracks().size(); ++t) {
+            const drift::Track &videoTrack = project.tracks().at(t);
+            if (videoTrack.type != drift::TrackType::Video)
+                continue;
+
+            for (const drift::Clip &videoClip : videoTrack.clips) {
+                if (!videoClip.linkId.isEmpty()
+                    && videoClip.linkId == audioClip.linkId) {
+                    return videoTrackOrdinal(project, t);
+                }
+            }
+        }
+    }
+
+    // Ordinary/imported audio tracks do not have a linked video owner.
+    return -1;
+}
+
+// Find where a newly detached audio track belongs.
+//
+// Rules:
+//   1. Video tracks remain together.
+//   2. Detached audio tracks remain together below the video group.
+//   3. Their relative order mirrors their source video tracks.
+//   4. Unrelated audio tracks are kept below the linked companion group.
+//   5. Existing companion tracks are shifted down instead of receiving an
+//      overlapping clip.
+int audioTrackInsertIndexForVideoTrack(const drift::Project &project,
+                                       int sourceVideoTrackIndex)
+{
+    const int sourceOrdinal =
+        videoTrackOrdinal(project, sourceVideoTrackIndex);
+
+    if (sourceOrdinal < 0)
+        return project.tracks().size();
+
+    int lastVideoTrack = -1;
+    int firstAudioTrack = -1;
+    int lastAudioTrack = -1;
+
+    for (int t = 0; t < project.tracks().size(); ++t) {
+        const drift::TrackType type = project.tracks().at(t).type;
+
+        if (type == drift::TrackType::Video)
+            lastVideoTrack = t;
+
+        if (type != drift::TrackType::Audio)
+            continue;
+
+        if (firstAudioTrack < 0)
+            firstAudioTrack = t;
+
+        lastAudioTrack = t;
+
+        const int ownerOrdinal =
+            ownerVideoOrdinalForAudioTrack(project, t);
+
+        // An unrelated audio track marks the end of the linked-companion block.
+        if (ownerOrdinal < 0)
+            return t;
+
+        // Insert before the first companion belonging to a lower video track.
+        if (ownerOrdinal > sourceOrdinal)
+            return t;
+    }
+
+    // No audio tracks yet: begin the audio group immediately below all videos.
+    if (firstAudioTrack < 0)
+        return qBound(0, lastVideoTrack + 1, project.tracks().size());
+
+    // All existing companion tracks belong to videos above this one.
+    return lastAudioTrack + 1;
+}
+
+// Split embedded audio onto its own audio track (video keeps picture only).
+//
+// The new audio clip remains linked to the video, but receives a dedicated
+// track whose relative position mirrors the source video track.
+bool detachEmbeddedAudioFromVideo(drift::Project &project,
+                                  AssetLibrary *library,
+                                  int videoTrackIndex,
+                                  int videoClipIndex)
+{
+    if (videoTrackIndex < 0
+        || videoTrackIndex >= project.tracks().size())
+        return false;
+
+    if (videoClipIndex < 0
+        || videoClipIndex >= project.tracks().at(videoTrackIndex).clips.size())
+        return false;
+
+    drift::Clip &videoClip =
+        project.tracks()[videoTrackIndex].clips[videoClipIndex];
+
     if (!clipHasEmbeddedAudio(project, library, videoClip))
         return false;
 
-    const QString linkId = videoClip.linkId.isEmpty()
-        ? QUuid::createUuid().toString(QUuid::WithoutBraces)
-        : videoClip.linkId;
+    const QString linkId =
+        videoClip.linkId.isEmpty()
+            ? QUuid::createUuid().toString(QUuid::WithoutBraces)
+            : videoClip.linkId;
+
     videoClip.linkId = linkId;
     videoClip.suppressEmbeddedAudio = true;
 
-    const int audioTrack = drift::ensureTrackForClipType(project, drift::ClipType::Audio, false);
-    project.tracks()[audioTrack].clips.append(makeAudioCompanionFromVideo(videoClip, linkId, videoClip.audioStreamIndex));
+    // Build the companion before inserting into project.tracks(); QList insertion
+    // may relocate Track objects and invalidate references into that container.
+    const drift::Clip audioClip =
+        makeAudioCompanionFromVideo(
+            videoClip,
+            linkId,
+            videoClip.audioStreamIndex);
+
+    const int insertAt =
+        audioTrackInsertIndexForVideoTrack(
+            project,
+            videoTrackIndex);
+
+    drift::Track audioTrack;
+    audioTrack.type = drift::TrackType::Audio;
+    audioTrack.clips.append(audioClip);
+
+    project.tracks().insert(insertAt, audioTrack);
+
     return true;
 }
 
-// Split all embedded audio streams onto separate audio tracks (video keeps picture only).
-bool detachAllAudioTracksFromVideo(drift::Project &project, AssetLibrary *library, drift::Clip &videoClip)
+// Split every embedded audio stream onto dedicated, consecutive audio tracks.
+//
+// All streams from the same video stay together, and that group follows the
+// source video's position relative to the other video tracks.
+bool detachAllAudioTracksFromVideo(drift::Project &project,
+                                   AssetLibrary *library,
+                                   int videoTrackIndex,
+                                   int videoClipIndex)
 {
+    if (videoTrackIndex < 0
+        || videoTrackIndex >= project.tracks().size())
+        return false;
+
+    if (videoClipIndex < 0
+        || videoClipIndex >= project.tracks().at(videoTrackIndex).clips.size())
+        return false;
+
+    drift::Clip &videoClip =
+        project.tracks()[videoTrackIndex].clips[videoClipIndex];
+
     if (!clipHasEmbeddedAudio(project, library, videoClip))
         return false;
 
-    const QList<StreamInfo> streams = MediaProbe::audioStreams(videoClip.path);
-    if (streams.isEmpty())
-        return detachEmbeddedAudioFromVideo(project, library, videoClip);
+    const QList<StreamInfo> streams =
+        MediaProbe::audioStreams(videoClip.path);
 
-    const QString linkId = videoClip.linkId.isEmpty()
-        ? QUuid::createUuid().toString(QUuid::WithoutBraces)
-        : videoClip.linkId;
+    if (streams.isEmpty()) {
+        return detachEmbeddedAudioFromVideo(
+            project,
+            library,
+            videoTrackIndex,
+            videoClipIndex);
+    }
+
+    const QString linkId =
+        videoClip.linkId.isEmpty()
+            ? QUuid::createUuid().toString(QUuid::WithoutBraces)
+            : videoClip.linkId;
+
     videoClip.linkId = linkId;
     videoClip.suppressEmbeddedAudio = true;
 
+    QList<drift::Clip> companions;
+    companions.reserve(streams.size());
+
     for (int i = 0; i < streams.size(); ++i) {
-        const StreamInfo &s = streams.at(i);
+        const StreamInfo &stream = streams.at(i);
+
         QString trackName = videoClip.name;
-        if (!s.title.isEmpty()) {
-            trackName = QStringLiteral("%1 (%2)").arg(videoClip.name, s.title);
+
+        if (!stream.title.isEmpty()) {
+            trackName =
+                QStringLiteral("%1 (%2)")
+                    .arg(videoClip.name, stream.title);
         } else if (streams.size() > 1) {
-            trackName = QStringLiteral("%1 (Audio %2)").arg(videoClip.name).arg(i + 1);
+            trackName =
+                QStringLiteral("%1 (Audio %2)")
+                    .arg(videoClip.name)
+                    .arg(i + 1);
         }
 
-        int targetTrack = -1;
-        int audioTrackCount = 0;
-        for (int t = 0; t < project.tracks().size(); ++t) {
-            if (project.tracks()[t].type == drift::TrackType::Audio) {
-                if (audioTrackCount == i) {
-                    targetTrack = t;
-                    break;
-                }
-                ++audioTrackCount;
-            }
-        }
-        if (targetTrack < 0) {
-            drift::Track newTrack;
-            newTrack.type = drift::TrackType::Audio;
-            project.tracks().append(newTrack);
-            targetTrack = project.tracks().size() - 1;
-        }
-
-        project.tracks()[targetTrack].clips.append(
-            makeAudioCompanionFromVideo(videoClip, linkId, i, trackName));
+        companions.append(
+            makeAudioCompanionFromVideo(
+                videoClip,
+                linkId,
+                i,
+                trackName));
     }
+
+    const int insertAt =
+        audioTrackInsertIndexForVideoTrack(
+            project,
+            videoTrackIndex);
+
+    for (int i = 0; i < companions.size(); ++i) {
+        drift::Track audioTrack;
+        audioTrack.type = drift::TrackType::Audio;
+        audioTrack.clips.append(companions.at(i));
+
+        project.tracks().insert(
+            insertAt + i,
+            audioTrack);
+    }
+
     return true;
 }
 
@@ -10073,8 +10260,15 @@ void AppController::separateAudioFromSelection()
         drift::Clip &clip = m_project.tracks()[pair.first].clips[pair.second];
         if (clip.type != drift::ClipType::Video || detachedVideoIds.contains(clip.id))
             continue;
-        if (detachEmbeddedAudioFromVideo(m_project, m_assetLibrary, clip)) {
-            detachedVideoIds.insert(clip.id);
+
+        const QString videoId = clip.id;
+
+        if (detachEmbeddedAudioFromVideo(
+                m_project,
+                m_assetLibrary,
+                pair.first,
+                pair.second)) {
+            detachedVideoIds.insert(videoId);
             changed = true;
         }
     }
@@ -10099,7 +10293,11 @@ void AppController::separateAllAudioTracks(int trackIndex, int clipIndex)
     if (clip.type != drift::ClipType::Video)
         return;
 
-    if (!detachAllAudioTracksFromVideo(m_project, m_assetLibrary, clip))
+    if (!detachAllAudioTracksFromVideo(
+            m_project,
+            m_assetLibrary,
+            trackIndex,
+            clipIndex))
         return;
 
     m_selection = selectionWithLinkedPartners(m_project, trackIndex, clipIndex);
@@ -10125,8 +10323,15 @@ void AppController::separateAllAudioTracksFromSelection()
         drift::Clip &clip = m_project.tracks()[pair.first].clips[pair.second];
         if (clip.type != drift::ClipType::Video || detachedVideoIds.contains(clip.id))
             continue;
-        if (detachAllAudioTracksFromVideo(m_project, m_assetLibrary, clip)) {
-            detachedVideoIds.insert(clip.id);
+
+        const QString videoId = clip.id;
+
+        if (detachAllAudioTracksFromVideo(
+                m_project,
+                m_assetLibrary,
+                pair.first,
+                pair.second)) {
+            detachedVideoIds.insert(videoId);
             changed = true;
         }
     }

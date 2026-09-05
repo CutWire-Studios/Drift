@@ -99,7 +99,9 @@ private slots:
     void replaceTransitionOnDrop();
     void overlapAutoAppliesCrossfade();
     void separateAudioFromCombinedClip();
+    void separatedAudioTracksMirrorVideoHierarchy();
     void linkedAudioUnlinkAndMove();
+    void deleteLinkedPairTogetherAndUnlinkedClipAlone();
     void linkedFadeCurveSyncsPartner();
     void customFadeCurveSessionApplyAndCancel();
     void keyframeGraphPropertySelection();
@@ -1939,6 +1941,154 @@ void EditorStateTest::separateAudioFromCombinedClip()
     QVERIFY(!state.canSeparateAudioSelection());
 }
 
+
+// Delete follows the same relationship semantics as move/trim:
+//
+//   linked video + audio
+//       deleting either side removes the complete pair.
+//
+//   unlinked video + audio
+//       deleting one side leaves the other side untouched.
+void EditorStateTest::deleteLinkedPairTogetherAndUnlinkedClipAlone()
+{
+    auto countClipsOfType =
+        [](const drift::Project &project,
+           drift::ClipType type) {
+
+        int count = 0;
+
+        for (const drift::Track &track : project.tracks()) {
+            for (const drift::Clip &clip : track.clips) {
+                if (clip.type == type)
+                    ++count;
+            }
+        }
+
+        return count;
+    };
+
+    AssetLibrary library;
+    AppController state(&library);
+
+    appendLinkedVideoAudioPair(
+        *state.project());
+
+    QCOMPARE(
+        countClipsOfType(
+            *state.project(),
+            drift::ClipType::Video),
+        1);
+
+    QCOMPARE(
+        countClipsOfType(
+            *state.project(),
+            drift::ClipType::Audio),
+        1);
+
+    // --------------------------------------------------------
+    // LINKED:
+    // selecting the audio and deleting it must remove BOTH.
+    // --------------------------------------------------------
+
+    state.selectClip(1, 0);
+
+    QVERIFY(
+        state.canUnlinkSelection());
+
+    state.deleteSelectedClip();
+
+    QCOMPARE(
+        countClipsOfType(
+            *state.project(),
+            drift::ClipType::Video),
+        0);
+
+    QCOMPARE(
+        countClipsOfType(
+            *state.project(),
+            drift::ClipType::Audio),
+        0);
+
+    // The pair deletion is one project edit.
+    state.undo();
+
+    QCOMPARE(
+        countClipsOfType(
+            *state.project(),
+            drift::ClipType::Video),
+        1);
+
+    QCOMPARE(
+        countClipsOfType(
+            *state.project(),
+            drift::ClipType::Audio),
+        1);
+
+    // --------------------------------------------------------
+    // UNLINK:
+    // break the relationship first.
+    // --------------------------------------------------------
+
+    state.selectClip(0, 0);
+
+    QVERIFY(
+        state.canUnlinkSelection());
+
+    state.unlinkSelectedClips();
+
+    QVERIFY(
+        !state.canUnlinkSelection());
+
+    // Re-select ONLY the audio after unlinking.
+    //
+    // The track indexes remain Video 0 / Audio 1 here.
+    state.selectClip(1, 0);
+
+    QCOMPARE(
+        state.selection().size(),
+        1);
+
+    // --------------------------------------------------------
+    // UNLINKED:
+    // Delete must remove ONLY the audio.
+    // --------------------------------------------------------
+
+    state.deleteSelectedClip();
+
+    QCOMPARE(
+        countClipsOfType(
+            *state.project(),
+            drift::ClipType::Video),
+        1);
+
+    QCOMPARE(
+        countClipsOfType(
+            *state.project(),
+            drift::ClipType::Audio),
+        0);
+
+    // Undo restores just that audio deletion.
+    state.undo();
+
+    QCOMPARE(
+        countClipsOfType(
+            *state.project(),
+            drift::ClipType::Video),
+        1);
+
+    QCOMPARE(
+        countClipsOfType(
+            *state.project(),
+            drift::ClipType::Audio),
+        1);
+
+    // They must remain unlinked after undoing only the deletion.
+    state.selectClip(0, 0);
+
+    QVERIFY(
+        !state.canUnlinkSelection());
+}
+
 void EditorStateTest::linkedFadeCurveSyncsPartner()
 {
     AssetLibrary library;
@@ -1997,6 +2147,153 @@ void EditorStateTest::customFadeCurveSessionApplyAndCancel()
     QVERIFY(qAbs(state.project()->tracks().at(0).clips.at(0).fadeShape.gainAt(0.5) - 0.75) < 1e-6);
     QCOMPARE(state.project()->tracks().at(1).clips.at(0).fadeCurve, drift::FadeCurve::Custom);
     QVERIFY(qAbs(state.project()->tracks().at(1).clips.at(0).fadeShape.gainAt(0.5) - 0.75) < 1e-6);
+}
+
+
+// Audio separation must mirror the vertical video hierarchy, regardless of the
+// order in which the user performs the operation.
+//
+// Separate in deliberately scrambled order:
+//
+//     Video 3
+//     Video 1
+//     Video 2
+//
+// The final layout must still be:
+//
+//     Video 1
+//     Video 2
+//     Video 3
+//     Audio 1
+//     Audio 2
+//     Audio 3
+//
+// Each audio clip also keeps the linkId of its corresponding video.
+void EditorStateTest::separatedAudioTracksMirrorVideoHierarchy()
+{
+    AssetLibrary library;
+    AppController state(&library);
+
+    drift::Project *project = state.project();
+    project->tracks().clear();
+
+    for (int i = 0; i < 3; ++i) {
+        const QString suffix = QString::number(i + 1);
+        const QString assetId =
+            QStringLiteral("hierarchy-asset-%1").arg(suffix);
+
+        drift::MediaAsset asset;
+        asset.id = assetId;
+        asset.name =
+            QStringLiteral("video-%1.mp4").arg(suffix);
+        asset.path =
+            QStringLiteral("/tmp/video-%1.mp4").arg(suffix);
+        asset.kind = drift::MediaKind::Video;
+        asset.durationUs = drift::secondsToUs(5.0);
+        asset.hasAudioKnown = true;
+        asset.hasAudio = true;
+        asset.channels = 2;
+        asset.sampleRate = 48000;
+
+        project->assets().insert(asset.id, asset);
+        project->assetOrder().append(asset.id);
+
+        drift::Clip clip;
+        clip.id =
+            QStringLiteral("hierarchy-video-%1").arg(suffix);
+        clip.assetId = asset.id;
+        clip.name = asset.name;
+        clip.path = asset.path;
+        clip.type = drift::ClipType::Video;
+        clip.timelineStart = 0;
+        clip.timelineDuration = drift::secondsToUs(5.0);
+        clip.srcIn = 0;
+        clip.srcOut = drift::secondsToUs(5.0);
+
+        drift::Track track;
+        track.type = drift::TrackType::Video;
+        track.clips.append(clip);
+
+        project->tracks().append(track);
+    }
+
+    library.syncToProject();
+
+    QCOMPARE(project->tracks().size(), 3);
+
+    // Intentionally separate out of visual order.
+    state.selectClip(2, 0);
+    state.separateAudioFromSelection();
+
+    state.selectClip(0, 0);
+    state.separateAudioFromSelection();
+
+    state.selectClip(1, 0);
+    state.separateAudioFromSelection();
+
+    QCOMPARE(project->tracks().size(), 6);
+
+    // Videos stay grouped at the top.
+    for (int i = 0; i < 3; ++i) {
+        QCOMPARE(
+            project->tracks().at(i).type,
+            drift::TrackType::Video);
+
+        QCOMPARE(
+            project->tracks().at(i).clips.size(),
+            1);
+    }
+
+    // Audio stays grouped below the videos.
+    for (int i = 0; i < 3; ++i) {
+        const int audioTrackIndex = 3 + i;
+
+        QCOMPARE(
+            project->tracks().at(audioTrackIndex).type,
+            drift::TrackType::Audio);
+
+        QCOMPARE(
+            project->tracks().at(audioTrackIndex).clips.size(),
+            1);
+
+        const drift::Clip &video =
+            project->tracks().at(i).clips.at(0);
+
+        const drift::Clip &audio =
+            project->tracks().at(audioTrackIndex).clips.at(0);
+
+        QCOMPARE(audio.assetId, video.assetId);
+
+        QVERIFY(!video.linkId.isEmpty());
+
+        QCOMPARE(audio.linkId, video.linkId);
+
+        QVERIFY(video.suppressEmbeddedAudio);
+    }
+
+    // One undo reverts only the most recent separation.
+    state.undo();
+
+    QCOMPARE(project->tracks().size(), 5);
+
+    // Redo must reconstruct exactly the same hierarchy.
+    state.redo();
+
+    QCOMPARE(project->tracks().size(), 6);
+
+    for (int i = 0; i < 3; ++i) {
+        QCOMPARE(
+            project->tracks().at(i).type,
+            drift::TrackType::Video);
+
+        QCOMPARE(
+            project->tracks().at(3 + i).type,
+            drift::TrackType::Audio);
+
+        QCOMPARE(
+            project->tracks().at(3 + i).clips.at(0).linkId,
+            project->tracks().at(i).clips.at(0).linkId);
+    }
 }
 
 void EditorStateTest::linkedAudioUnlinkAndMove()
