@@ -26,6 +26,8 @@ qt_add_executable(tst_editorstate
     ../src/playback/PlaybackClock.cpp
     ../src/playback/AudioOutputChannel.cpp
     ../src/playback/CompositorService.cpp
+    ../src/playback/PlaybackStats.cpp
+    ../src/playback/PlaybackDiagnostics.cpp
     ../src/playback/ClipPreviewPlayer.cpp
     ../src/mcp/McpSession.cpp
     ../src/mcp/McpCatalog.cpp
@@ -79,7 +81,13 @@ target_include_directories(tst_projectbundle PRIVATE ../src)
 target_link_libraries(tst_projectbundle PRIVATE Qt6::Test driftengine ${DRIFT_ZSTD_TARGET})
 add_test(NAME ProjectBundle COMMAND tst_projectbundle)
 
-qt_add_executable(tst_engine tst_engine.cpp)
+qt_add_executable(tst_engine
+    tst_engine.cpp
+    # Diagnostics live in the playback layer but are engine-shaped: a collector plus a
+    # plain-text rendering, exactly like DebugReport, and tested alongside it.
+    ../src/playback/PlaybackStats.cpp
+    ../src/playback/PlaybackDiagnostics.cpp
+)
 target_include_directories(tst_engine PRIVATE ../src)
 target_link_libraries(tst_engine PRIVATE Qt6::Test Qt6::Gui Qt6::OpenGL driftengine driftcore)
 target_compile_definitions(tst_engine PRIVATE
@@ -119,6 +127,8 @@ qt_add_executable(tst_mcp
     ../src/playback/PlaybackClock.cpp
     ../src/playback/AudioOutputChannel.cpp
     ../src/playback/CompositorService.cpp
+    ../src/playback/PlaybackStats.cpp
+    ../src/playback/PlaybackDiagnostics.cpp
     ../src/playback/ClipPreviewPlayer.cpp
     ../src/mcp/McpDispatcher.cpp
     ../src/mcp/McpDispatcherExtended.cpp

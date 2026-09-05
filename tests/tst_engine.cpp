@@ -29,6 +29,9 @@
 #include "engine/ClipReader.h"
 #include "engine/DebugReport.h"
 #include "engine/Exporter.h"
+#include "engine/GpuCompositor.h"
+#include "playback/PlaybackDiagnostics.h"
+#include "playback/PlaybackStats.h"
 #include "engine/GpuStatus.h"
 #include "engine/HwAccel.h"
 #include "engine/OrtRuntime.h"
@@ -135,6 +138,9 @@ private slots:
     void clipReaderStaysOnSoftwareWhenHardwareDisabled();
     void clipReaderAutoKeepsCheapClipsOnSoftware();
     void debugReportListsCommonCodecs();
+    void decodeBackendOrderFollowsTheRenderGpu();
+    void playbackDiagnosticsReportsStagesAndFindings();
+    void cudaInteropUploadsAFrameWithoutBlanking();
     void reverseProxyKeepsDisplayRotation();
     void clipReaderAudioSequential();
     void audioStreamsAreIndependentPerStreamId();
@@ -2663,6 +2669,198 @@ void EngineTest::clipReaderAutoKeepsCheapClipsOnSoftware()
     QVERIFY(reader.readVideoFrameAt(0, frame, 64, 64));
     QVERIFY(!frame.isNull());
     QVERIFY(!reader.hardwareAccelActive());
+}
+
+// Guards the regression that had CUDA-GL interop disabled: the copy ran on the null stream
+// while map/unmap ran on FFmpeg's non-blocking decoder stream, and it went through the v1
+// cuMemcpy2D entry point with a v2-layout descriptor. Either one produces frames that arrive
+// blank. Only runs where GL and NVDEC are on the same NVIDIA GPU — on a hybrid laptop that
+// means launching under PRIME render offload, since an Intel GL context cannot register its
+// textures with a CUDA context at all.
+void EngineTest::cudaInteropUploadsAFrameWithoutBlanking()
+{
+    if (!GpuCompositor::isAvailable())
+        QSKIP("no GPU compositor on this machine");
+    if (!GpuCompositor::status().vendor.contains(QStringLiteral("NVIDIA"), Qt::CaseInsensitive))
+        QSKIP("GL is not on the NVIDIA GPU; CUDA-GL interop cannot apply here");
+    if (!drift::hwaccel::availableDecodeBackends().contains(drift::hwaccel::Backend::Cuda))
+        QSKIP("no CUDA decode device");
+
+    const QString ffmpeg = QStandardPaths::findExecutable(QStringLiteral("ffmpeg"));
+    if (ffmpeg.isEmpty())
+        QSKIP("ffmpeg not available to generate a test clip");
+
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    const QString path = dir.filePath(QStringLiteral("solid.mp4"));
+    QProcess enc;
+    enc.start(ffmpeg,
+              {QStringLiteral("-y"), QStringLiteral("-f"), QStringLiteral("lavfi"),
+               QStringLiteral("-i"), QStringLiteral("color=c=red:s=640x480:d=1:r=30"),
+               QStringLiteral("-c:v"), QStringLiteral("libx264"), QStringLiteral("-pix_fmt"),
+               QStringLiteral("yuv420p"), path});
+    QVERIFY(enc.waitForFinished(30000));
+    QVERIFY(QFileInfo::exists(path));
+
+    // Force the backend so the per-clip "is hardware worth it" heuristic cannot decide this
+    // small clip belongs on the CPU and quietly skip what we came to test.
+    const auto restore = qScopeGuard([] {
+        ClipReader::setHardwareDecodeMode(ClipReader::HardwareDecodeMode::Auto, {});
+    });
+    ClipReader::setHardwareDecodeMode(ClipReader::HardwareDecodeMode::Hardware,
+                                      drift::hwaccel::Backend::Cuda);
+
+    ClipReader reader;
+    QVERIFY(reader.open(path));
+    PreviewVideoFrame preview;
+    QVERIFY(reader.readPreviewVideoFrame(500'000, preview, 640, 480));
+    QVERIFY(preview.isValid());
+    if (!preview.isHardware())
+        QSKIP("this build decoded in software; nothing to import");
+
+    drift::Project project;
+    project.setResolution(640, 480);
+    project.setFps(30);
+    project.tracks().clear();
+    project.tracks().append(drift::Track{.type = drift::TrackType::Video});
+
+    drift::Clip clip;
+    clip.id = QStringLiteral("cuda");
+    clip.type = drift::ClipType::Video;
+    clip.path = path;
+    clip.timelineStart = 0;
+    clip.timelineDuration = drift::secondsToUs(1.0);
+    project.tracks()[0].clips.append(clip);
+
+    FrameCompositor compositor;
+    compositor.setProject(&project);
+    const QImage composited = compositor.compositeAt(500'000);
+    QVERIFY(!composited.isNull());
+
+    QCOMPARE(GpuCompositor::previewUploadPathId(), QStringLiteral("cuda-interop"));
+
+    // The source is solid red. A frame sampled before the copy lands is black, which is
+    // exactly what the disabled path produced, so assert on the picture rather than on the
+    // import merely reporting success.
+    const QRgb centre = composited.pixel(composited.width() / 2, composited.height() / 2);
+    QVERIFY2(qRed(centre) > 128, qPrintable(QStringLiteral("centre pixel was %1,%2,%3")
+                                                .arg(qRed(centre))
+                                                .arg(qGreen(centre))
+                                                .arg(qBlue(centre))));
+    QVERIFY(qRed(centre) > qGreen(centre) && qRed(centre) > qBlue(centre));
+}
+
+void EngineTest::playbackDiagnosticsReportsStagesAndFindings()
+{
+    PlaybackStats stats;
+    stats.noteComposite(4.0, 1.0);
+    stats.noteComposite(6.0, 2.0);
+    stats.setUploadPath(QStringLiteral("cpu-roundtrip"));
+
+    drift::Project project;
+    project.setFps(50);
+
+    // 50 fps on a 60 Hz display: 1.2 refreshes per frame, so frames cannot be shown for equal
+    // lengths of time however fast they are produced. This is the finding that separates a
+    // cadence problem from a throughput one, and it is the whole reason the report exists.
+    const QVariantMap info = PlaybackDiagnostics::collect(stats, &project, 60.0);
+    const QVariantList rows = info.value(QStringLiteral("rows")).toList();
+    QVERIFY(!rows.isEmpty());
+
+    QStringList labels;
+    for (const QVariant &v : rows)
+        labels << v.toMap().value(QStringLiteral("label")).toString();
+    QVERIFY(labels.contains(QStringLiteral("Project frame rate")));
+    QVERIFY(labels.contains(QStringLiteral("Display refresh")));
+    QVERIFY(labels.contains(QStringLiteral("Delivered frames")));
+    QVERIFY(labels.contains(QStringLiteral("Displayed frames")));
+
+    QStringList hintIds;
+    for (const QVariant &v : info.value(QStringLiteral("hints")).toList())
+        hintIds << v.toMap().value(QStringLiteral("id")).toString();
+    QVERIFY2(hintIds.contains(QStringLiteral("cadence-beat")), qPrintable(hintIds.join(u',')));
+
+    // A rate that does divide the refresh evenly must not trip it, or the finding is noise.
+    project.setFps(30);
+    QStringList evenIds;
+    for (const QVariant &v :
+         PlaybackDiagnostics::collect(stats, &project, 60.0).value(QStringLiteral("hints")).toList())
+        evenIds << v.toMap().value(QStringLiteral("id")).toString();
+    QVERIFY(!evenIds.contains(QStringLiteral("cadence-beat")));
+
+    const QString text = PlaybackDiagnostics::formatPlainText(info);
+    QVERIFY(text.startsWith(QStringLiteral("# Drift playback diagnostics")));
+    QVERIFY(text.contains(QStringLiteral("Display refresh")));
+
+    // The staged sweep on a real file: each stage must produce a number, and the readback
+    // stage must not come out cheaper than the decode it contains.
+    const QString ffmpeg = QStandardPaths::findExecutable(QStringLiteral("ffmpeg"));
+    if (ffmpeg.isEmpty())
+        QSKIP("ffmpeg not available to generate a clip for the staged sweep");
+
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    const QString clip = dir.filePath(QStringLiteral("bench.mp4"));
+    QProcess enc;
+    enc.start(ffmpeg,
+              {QStringLiteral("-y"), QStringLiteral("-f"), QStringLiteral("lavfi"),
+               QStringLiteral("-i"), QStringLiteral("testsrc2=size=320x240:duration=1:rate=30"),
+               QStringLiteral("-c:v"), QStringLiteral("libx264"), QStringLiteral("-pix_fmt"),
+               QStringLiteral("yuv420p"), clip});
+    QVERIFY(enc.waitForFinished(30000));
+    QVERIFY(QFileInfo::exists(clip));
+
+    const QVariantMap bench = PlaybackDiagnostics::benchmarkClip(clip, QSize(320, 240));
+    QVERIFY2(!bench.contains(QStringLiteral("error")),
+             qPrintable(bench.value(QStringLiteral("error")).toString()));
+    QVERIFY(bench.value(QStringLiteral("decodeMedianMs")).toDouble() > 0.0);
+    QVERIFY(bench.value(QStringLiteral("readbackMedianMs")).toDouble() > 0.0);
+    QVERIFY(bench.value(QStringLiteral("sourceFps")).toDouble() > 0.0);
+}
+
+void EngineTest::decodeBackendOrderFollowsTheRenderGpu()
+{
+#if defined(Q_OS_MACOS)
+    QSKIP("VideoToolbox is the only decode backend on macOS; there is no order to pick.");
+#else
+    using drift::hwaccel::Backend;
+    // Global hint; put it back so ordering-sensitive tests after this one are unaffected.
+    const auto restore = qScopeGuard([] { drift::hwaccel::setRenderVendor(QString()); });
+
+    drift::hwaccel::setRenderVendor(QStringLiteral("NVIDIA Corporation"));
+    const QList<Backend> onNvidia = drift::hwaccel::decodeBackendOrder();
+    QVERIFY(!onNvidia.isEmpty());
+    QVERIFY(onNvidia.contains(Backend::Cuda));
+    // Drawing on the NVIDIA card: NVDEC decodes where the frames are already wanted.
+    QCOMPARE(onNvidia.first(), Backend::Cuda);
+
+    // A hybrid laptop compositing on the integrated GPU. NVDEC would decode on the discrete
+    // card and pay a PCIe round trip per previewed frame to reach the one that draws.
+    for (const char *vendor : {"Intel", "AMD", "Mesa/X.org"}) {
+        drift::hwaccel::setRenderVendor(QString::fromLatin1(vendor));
+        const QList<Backend> order = drift::hwaccel::decodeBackendOrder();
+        QVERIFY2(order.size() == onNvidia.size(), vendor);
+        // Reordered, never removed: Auto must still be able to reach CUDA if it is all
+        // this machine has that opens.
+        QVERIFY2(order.contains(Backend::Cuda), vendor);
+        QVERIFY2(order.last() == Backend::Cuda, vendor);
+    }
+
+    // Unseeded falls back to whatever the compositor reports, so the order has to match what
+    // seeding that same vendor explicitly would give. Asserting a fixed answer here instead
+    // would depend on whether some earlier test happened to bring GL up.
+    drift::hwaccel::setRenderVendor(QString());
+    const QList<Backend> unseeded = drift::hwaccel::decodeBackendOrder();
+    const QString live = GpuCompositor::status().vendor;
+    if (live.isEmpty()) {
+        // No renderer known at all: the platform default stands rather than being treated
+        // as "not NVIDIA" and demoting CUDA on a machine that wants it.
+        QCOMPARE(unseeded.first(), Backend::Cuda);
+    } else {
+        drift::hwaccel::setRenderVendor(live);
+        QCOMPARE(unseeded, drift::hwaccel::decodeBackendOrder());
+    }
+#endif
 }
 
 void EngineTest::debugReportListsCommonCodecs()

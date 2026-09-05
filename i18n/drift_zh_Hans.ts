@@ -3611,6 +3611,10 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Playback</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Video decoders</source>
         <translation type="unfinished"></translation>
     </message>
@@ -3664,6 +3668,90 @@
     </message>
     <message>
         <source>System</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Delivered well above displayed means frames are being produced that the display never shows — a cadence problem rather than a slow machine.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show live stats on the preview</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Stays on after this dialog closes, so you can watch the numbers while the timeline plays.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Where the time goes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Decodes a fixed 1080p60 clip, and the first clip on the timeline, through each stage of the preview. Takes a few seconds.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Measuring…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Run test</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Reference clip (1080p60)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Timeline clip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Source</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Decoder</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source> (hardware)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source> (software)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Preview upload</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Decode</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Readback to CPU costs</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Compositing costs</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Total per frame</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Budget at this frame rate</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Findings</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Nothing stood out. Turn on the live stats above, play the timeline for a few seconds, then reopen this.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -3805,6 +3893,10 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Debug info and playback diagnostics</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Recommended packs and updates</source>
         <translation type="unfinished"></translation>
     </message>
@@ -3818,10 +3910,6 @@
     </message>
     <message>
         <source>Language for menus and labels</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Debug info</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -5403,6 +5491,61 @@
     </message>
     <message>
         <source>Hardware (%1)</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>PlaybackStats</name>
+    <message>
+        <source>Delivered frames</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Displayed frames</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Display refresh</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Delivery jitter</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Composite (median)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Composite (p95)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Decode wait (median)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Preview scale</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Frames dropped</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Requests coalesced</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Composites in flight (peak)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Preview upload</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Samples</source>
         <translation type="unfinished"></translation>
     </message>
 </context>

@@ -1,20 +1,13 @@
 #include "CompositorService.h"
 
+#include "PlaybackStats.h"
+#include "engine/ClipReaderPool.h"
+
+#include <QElapsedTimer>
 #include <QMetaType>
 #include <cmath>
 
 namespace {
-#ifdef Q_OS_ANDROID
-// How late a finished frame may be and still be worth showing. A phone can miss the
-// desktop 100 ms deadline on every single frame, and dropping them all leaves the
-// playhead running over a frozen canvas, which is worse than a late picture. The
-// adaptive-quality feedback below still measures against its own wall-clock budget,
-// so a phone that is actually behind still scales down — this only widens the window
-// for a frame that is late but not stale enough to be worse than nothing.
-constexpr drift::TimeUs kMaxPreviewFrameStalenessUs = 1'000'000;
-#else
-constexpr drift::TimeUs kMaxPreviewFrameStalenessUs = 100'000;
-#endif
 constexpr double kAdaptiveScaleMin = 0.25;
 constexpr double kAdaptiveScaleStepDown = 0.75;
 constexpr double kAdaptiveScaleStepUp = 1.25;
@@ -35,41 +28,57 @@ CompositorWorker::CompositorWorker(QObject *parent)
 }
 
 void CompositorWorker::composite(drift::TimeUs timeUs, FrameCompositor::RenderOptions options,
-                                 std::shared_ptr<const drift::Project> snapshot)
+                                 std::shared_ptr<const drift::Project> snapshot, quint64 sequence)
 {
     // Keep the shared tree alive for the whole frame; setProject only borrows.
     m_snapshot = std::move(snapshot);
     if (!m_snapshot) {
         // Still report completion: the service treats a request as in flight
         // until the worker answers, and the quality-mode play loop waits for it.
-        emit frameReady(GpuFrameTexture{}, timeUs);
+        emit frameReady(GpuFrameTexture{}, timeUs, CompositeTiming{}, sequence);
         return;
     }
     m_compositor.setProject(m_snapshot.get());
 
-    emit frameReady(m_compositor.compositeToTextureAt(timeUs, options), timeUs);
+    // Zero the per-thread decode accumulator so what we read back below belongs to this
+    // frame only. Safe against a second worker: the accumulator is thread_local.
+    ClipReaderPool::resetDecodeWaitNs();
+    QElapsedTimer elapsed;
+    elapsed.start();
+
+    GpuFrameTexture frame = m_compositor.compositeToTextureAt(timeUs, options);
+
+    CompositeTiming timing;
+    timing.compositeMs = double(elapsed.nsecsElapsed()) / 1'000'000.0;
+    timing.decodeWaitMs = double(ClipReaderPool::decodeWaitNs()) / 1'000'000.0;
+    emit frameReady(frame, timeUs, timing, sequence);
 }
 
 CompositorService::CompositorService(QObject *parent)
     : QObject(parent)
-    , m_worker(new CompositorWorker)
 {
     qRegisterMetaType<drift::TimeUs>("drift::TimeUs");
     qRegisterMetaType<std::shared_ptr<const drift::Project>>("std::shared_ptr<const drift::Project>");
     qRegisterMetaType<FrameCompositor::RenderOptions>("FrameCompositor::RenderOptions");
     qRegisterMetaType<GpuFrameTexture>("GpuFrameTexture");
-    m_worker->moveToThread(&m_thread);
-    connect(m_worker, &CompositorWorker::frameReady, this, &CompositorService::onWorkerFrameReady,
-            Qt::QueuedConnection);
-    m_thread.start();
+    qRegisterMetaType<CompositeTiming>("CompositeTiming");
+    for (int i = 0; i < GpuCompositor::kMaxPreviewComposites; ++i) {
+        m_workers[i] = new CompositorWorker;
+        m_workers[i]->moveToThread(&m_threads[i]);
+        connect(m_workers[i], &CompositorWorker::frameReady, this,
+                &CompositorService::onWorkerFrameReady, Qt::QueuedConnection);
+        m_threads[i].start();
+    }
 }
 
 CompositorService::~CompositorService()
 {
-    m_thread.quit();
-    m_thread.wait();
-    delete m_worker;
-    m_worker = nullptr;
+    for (int i = 0; i < GpuCompositor::kMaxPreviewComposites; ++i) {
+        m_threads[i].quit();
+        m_threads[i].wait();
+        delete m_workers[i];
+        m_workers[i] = nullptr;
+    }
 }
 
 void CompositorService::setProject(const drift::Project *project)
@@ -82,6 +91,10 @@ void CompositorService::invalidateSnapshot()
 {
     ++m_liveGeneration;
     m_sharedSnapshot.reset();
+    // Forget what was last drawn. An edit changes the picture without moving the playhead, so
+    // dispatchPending would otherwise recognise the incoming request as one it has already
+    // served and decline to redraw — leaving the edit invisible until the playhead moved.
+    m_lastDispatchedTimeUs = -1;
 }
 
 void CompositorService::setDropLateFrames(bool drop)
@@ -169,6 +182,14 @@ void CompositorService::noteFrameLate(bool late)
     }
 }
 
+int CompositorService::maxInFlight() const
+{
+    // Pipelining exists to keep realtime playback fed. Scrubbing and seeking issue one
+    // request at a time by nature, and running two decoders against a moving playhead would
+    // only make them fight over the same cursor, so outside playback the depth stays at one.
+    return m_playbackActive ? GpuCompositor::kMaxPreviewComposites : 1;
+}
+
 void CompositorService::dispatch(drift::TimeUs timeUs, const FrameCompositor::RenderOptions &options)
 {
     if (!m_project)
@@ -182,11 +203,48 @@ void CompositorService::dispatch(drift::TimeUs timeUs, const FrameCompositor::Re
         m_snapshotGeneration = m_liveGeneration;
     }
 
-    m_renderElapsed.start();
-    QMetaObject::invokeMethod(m_worker, "composite", Qt::QueuedConnection,
+    ++m_inFlight;
+    if (m_stats)
+        m_stats->noteInFlight(m_inFlight);
+
+    // Round-robin rather than "first idle": the workers are interchangeable, and alternating
+    // keeps a long composite on one of them from starving the other's warm decoder caches.
+    CompositorWorker *worker = m_workers[m_nextWorker];
+    m_nextWorker = (m_nextWorker + 1) % GpuCompositor::kMaxPreviewComposites;
+
+    QMetaObject::invokeMethod(worker, "composite", Qt::QueuedConnection,
                               Q_ARG(drift::TimeUs, timeUs),
                               Q_ARG(FrameCompositor::RenderOptions, options),
-                              Q_ARG(std::shared_ptr<const drift::Project>, m_sharedSnapshot));
+                              Q_ARG(std::shared_ptr<const drift::Project>, m_sharedSnapshot),
+                              Q_ARG(quint64, m_nextSequence++));
+}
+
+bool CompositorService::dispatchPending()
+{
+    if (m_inFlight >= maxInFlight())
+        return false;
+
+    const drift::TimeUs latest = m_pendingTimeUs.load(std::memory_order_acquire);
+    FrameCompositor::RenderOptions latestOptions;
+    latestOptions.previewScale =
+        static_cast<double>(m_pendingPreviewScalePercent.load(std::memory_order_acquire)) / 100.0;
+    latestOptions.maxTimeEchoHistoryFrames =
+        m_pendingMaxTimeEchoHistoryFrames.load(std::memory_order_acquire);
+    latestOptions.readAheadUs = m_pendingReadAheadUs.load(std::memory_order_acquire);
+
+    // Nothing new to draw. Re-rendering the frame already requested would burn a worker on a
+    // picture identical to the one on screen.
+    if (latest == m_lastDispatchedTimeUs
+        && latestOptions.previewScale == m_lastDispatchedOptions.previewScale
+        && latestOptions.maxTimeEchoHistoryFrames == m_lastDispatchedOptions.maxTimeEchoHistoryFrames
+        && latestOptions.readAheadUs == m_lastDispatchedOptions.readAheadUs) {
+        return false;
+    }
+
+    m_lastDispatchedTimeUs = latest;
+    m_lastDispatchedOptions = latestOptions;
+    dispatch(latest, effectiveOptions(latestOptions));
+    return true;
 }
 
 void CompositorService::requestComposite(drift::TimeUs timeUs, FrameCompositor::RenderOptions options)
@@ -210,48 +268,49 @@ void CompositorService::requestComposite(drift::TimeUs timeUs, FrameCompositor::
     m_pendingPreviewScalePercent.store(previewScalePercent, std::memory_order_release);
     m_pendingMaxTimeEchoHistoryFrames.store(options.maxTimeEchoHistoryFrames, std::memory_order_release);
     m_pendingReadAheadUs.store(options.readAheadUs, std::memory_order_release);
-    if (m_requestPending.exchange(true, std::memory_order_acq_rel))
-        return;
 
-    m_lastDispatchedTimeUs = timeUs;
-    m_lastDispatchedOptions = options;
-    dispatch(timeUs, effectiveOptions(options));
+    // Folded into work already running. Counted because a high rate here is the signal that
+    // the pipeline cannot keep up with the cadence being asked of it.
+    if (!dispatchPending() && m_stats)
+        m_stats->noteCoalesced();
 }
 
-void CompositorService::onWorkerFrameReady(const GpuFrameTexture &frame, drift::TimeUs timeUs)
+void CompositorService::onWorkerFrameReady(const GpuFrameTexture &frame, drift::TimeUs timeUs,
+                                           CompositeTiming timing, quint64 sequence)
 {
-    const qint64 renderMs = m_renderElapsed.isValid() ? m_renderElapsed.elapsed() : 0;
-    const drift::TimeUs latest = m_pendingTimeUs.load(std::memory_order_acquire);
-    FrameCompositor::RenderOptions latestOptions;
-    latestOptions.previewScale =
-        static_cast<double>(m_pendingPreviewScalePercent.load(std::memory_order_acquire)) / 100.0;
-    latestOptions.maxTimeEchoHistoryFrames =
-        m_pendingMaxTimeEchoHistoryFrames.load(std::memory_order_acquire);
-    latestOptions.readAheadUs = m_pendingReadAheadUs.load(std::memory_order_acquire);
+    Q_UNUSED(timeUs);
+    m_inFlight = qMax(0, m_inFlight - 1);
+    if (m_stats)
+        m_stats->noteComposite(timing.compositeMs, timing.decodeWaitMs);
 
-    // Quality mode shows every frame it renders, however far behind the request
-    // it finished; only fast mode discards frames the playhead has run past.
-    const bool stale = m_dropLateFrames && latest > timeUs
-        && latest - timeUs > kMaxPreviewFrameStalenessUs;
-    // Whether the frame is worth showing and whether it was rendered fast enough
-    // are different questions. Adaptation asks the second one, in wall time, and
-    // only about frames with a deadline: a paused or scrubbed frame is never late.
+    // Whether the frame is worth showing and whether it was rendered fast enough are
+    // different questions. Adaptation asks the second one, and asks it of the compositing
+    // work itself rather than of dispatch-to-delivery: with more than one composite in
+    // flight, time spent queued behind another frame is normal and says nothing about
+    // whether this machine can keep up.
     if (m_adaptiveQuality && m_dropLateFrames && m_playbackActive)
-        noteFrameLate(renderMs > m_lateFrameBudgetMs);
-    if (!stale && frame.isValid())
+        noteFrameLate(timing.compositeMs > double(m_lateFrameBudgetMs));
+
+    // Present unless something newer already got there. That covers both ways a finished
+    // frame can be worthless — it completed out of order behind a later one, or the playhead
+    // moved past it and a newer request beat it to the screen — without the old behaviour of
+    // discarding a frame purely for being late when nothing existed to replace it. Paying for
+    // a composite and then showing nothing is a hitch; showing it slightly late is not.
+    const bool overtaken = sequence <= m_lastPresentedSequence;
+    if (!overtaken && frame.isValid()) {
+        m_lastPresentedSequence = sequence;
+        if (m_stats)
+            m_stats->noteDelivered();
         emit frameReady(frame);
-
-    m_requestPending.store(false, std::memory_order_release);
-
-    if (latest != m_lastDispatchedTimeUs
-        || latestOptions.previewScale != m_lastDispatchedOptions.previewScale
-        || latestOptions.maxTimeEchoHistoryFrames != m_lastDispatchedOptions.maxTimeEchoHistoryFrames
-        || latestOptions.readAheadUs != m_lastDispatchedOptions.readAheadUs) {
-        m_lastDispatchedTimeUs = latest;
-        m_lastDispatchedOptions = latestOptions;
-        if (!m_requestPending.exchange(true, std::memory_order_acq_rel))
-            dispatch(latest, effectiveOptions(latestOptions));
+    } else if (overtaken && frame.isValid() && m_stats) {
+        m_stats->noteDropped();
     }
+
+    if (m_stats)
+        m_stats->setAdaptiveScale(m_adaptiveScale);
+
+    // Keep the pipe full: a slot just freed up, so start whatever is newest and pending.
+    dispatchPending();
 
     // Last: a listener may start the next composite from here, and that request
     // must not be overwritten by the catch-up dispatch above.

@@ -120,4 +120,16 @@ bool isAvailable();
 // so call that first when you want one made.
 drift::gl::GlStatusInfo status();
 
+// How the last preview video frame reached the GPU: "cuda-interop", "vaapi-dmabuf",
+// "cpu-roundtrip", or "none". A stable untranslated id, like drift::gl::statusId() — each
+// presentation site maps it to its own catalogue. Exposed here rather than from GlRuntime so
+// the playback layer can read it without pulling in the engine-private runtime header.
+QString previewUploadPathId();
+
+// How many preview composites may be in flight at once. The presentation ring holds one
+// target per in-flight frame plus the one the scene graph is still sampling, so this is the
+// ring depth less one — going past it would have a worker draw into the target on screen.
+// GpuCompositor.cpp static_asserts the ring against this so the two cannot drift apart.
+inline constexpr int kMaxPreviewComposites = 2;
+
 } // namespace GpuCompositor

@@ -43,8 +43,12 @@ public:
     void syncPlaybackUs(drift::TimeUs playedUs);
     drift::TimeUs currentTimeUs() const;
 
-private:
+    // Steady-clock nanoseconds. Public because the engine measures display cadence against
+    // the same clock the playhead is interpolated on; comparing the two across different
+    // clock sources would be meaningless.
     static qint64 nowNs();
+
+private:
 
     drift::TimeUs m_startPlayheadUs = 0;
     drift::TimeUs m_pausedAtUs = 0;

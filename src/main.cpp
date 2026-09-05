@@ -1,6 +1,7 @@
 #include "engine/AudioFileWriter.h"
 #include "engine/EmojiCatalog.h"
 #include "engine/FontCatalog.h"
+#include "engine/HwAccel.h"
 #include "engine/ReverseProxyCache.h"
 #ifndef Q_OS_ANDROID
 #include "mcp/McpStdio.h"
@@ -203,7 +204,7 @@ bool runSelfTest()
 // Creates a throwaway context in `format`. On success reports what the driver
 // actually handed back, which is not always what was asked for.
 bool probeOpenGl(const QSurfaceFormat &format, QSurfaceFormat *obtained = nullptr,
-                 QString *renderer = nullptr)
+                 QString *renderer = nullptr, QString *vendor = nullptr)
 {
     QOffscreenSurface surface;
     surface.setFormat(format);
@@ -217,10 +218,16 @@ bool probeOpenGl(const QSurfaceFormat &format, QSurfaceFormat *obtained = nullpt
         return false;
     if (obtained)
         *obtained = ctx.format();
-    if (renderer && ctx.makeCurrent(&surface)) {
+    if ((renderer || vendor) && ctx.makeCurrent(&surface)) {
         if (QOpenGLFunctions *fn = ctx.functions()) {
-            if (const char *name = reinterpret_cast<const char *>(fn->glGetString(GL_RENDERER)))
-                *renderer = QString::fromUtf8(name);
+            if (renderer) {
+                if (const char *name = reinterpret_cast<const char *>(fn->glGetString(GL_RENDERER)))
+                    *renderer = QString::fromUtf8(name);
+            }
+            if (vendor) {
+                if (const char *name = reinterpret_cast<const char *>(fn->glGetString(GL_VENDOR)))
+                    *vendor = QString::fromUtf8(name);
+            }
         }
         ctx.doneCurrent();
     }
@@ -244,7 +251,13 @@ void warnIfNoOpenGl()
 
     QSurfaceFormat obtained;
     QString renderer;
-    bool haveGl = probeOpenGl(QSurfaceFormat::defaultFormat(), &obtained, &renderer);
+    QString vendor;
+    bool haveGl = probeOpenGl(QSurfaceFormat::defaultFormat(), &obtained, &renderer, &vendor);
+    // Tell the decoder which GPU will be drawing, while this is the only context that has
+    // existed. Decoding on a card that is not the one compositing costs a PCIe round trip per
+    // previewed frame, and a reader keeps whichever backend it opened with, so this has to be
+    // known before the first clip does — not whenever the compositor happens to come up.
+    drift::hwaccel::setRenderVendor(vendor);
     if (haveGl && atLeast33(obtained))
         return;
 
@@ -254,7 +267,9 @@ void warnIfNoOpenGl()
     // ceiling, and it is the difference between "your driver is too old" and "you
     // have no driver", which are very different things to tell someone.
     if (!haveGl)
-        haveGl = probeOpenGl(QSurfaceFormat(), &obtained, &renderer);
+        haveGl = probeOpenGl(QSurfaceFormat(), &obtained, &renderer, &vendor);
+    if (!vendor.isEmpty())
+        drift::hwaccel::setRenderVendor(vendor);
 
     const QString driver =
         renderer.isEmpty() ? QCoreApplication::translate("main", "unknown") : renderer;

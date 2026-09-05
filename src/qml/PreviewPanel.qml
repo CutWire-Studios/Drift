@@ -183,6 +183,16 @@ PanelFrame {
                         onPixelRatioChanged: updateRenderSize()
                     }
 
+                    // Top-left so it never covers the transport controls or the bottom-right
+                    // resolution readout. Only visible while the diagnostics dialog has the
+                    // counters armed.
+                    PlaybackStatsOverlay {
+                        anchors.left: parent.left
+                        anchors.top: parent.top
+                        anchors.margins: Theme.spacingLg
+                        z: 10
+                    }
+
                     Item {
                         anchors.fill: parent
                         visible: EditorState.guidesEnabled

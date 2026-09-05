@@ -261,8 +261,27 @@ private:
     // Hardware surfaces live in FFmpeg's decoder pool. Holding 2 s of them would
     // exhaust extra_hw_frames and stall decode, so the GPU ring is short. Cover
     // and peek each hold one extra ref on top of the cache.
-    static constexpr int kMaxHwCachedFrames = 8;
-    static constexpr int kHwExtraFrames = 16;
+    //
+    // Sized by time rather than by a flat frame count: a fixed 8 frames is a quarter second
+    // of 30 fps material but only an eighth of 60 fps, so the buffer shrank exactly where
+    // the frame budget was already halved. The cap is what the surface pool can spare, so
+    // high frame rates get as much wall time as the pool allows rather than half of it.
+    static constexpr drift::TimeUs kHwPreviewReadAheadUs = 300'000;
+    static constexpr int kMinHwCachedFrames = 4;
+    static constexpr int kMaxHwCachedFrames = 12;
+    // Must stay ahead of kMaxHwCachedFrames plus the cover and peek refs and the decoder's
+    // own reorder buffer, or the pool runs dry and decode stalls waiting for a free surface.
+    static constexpr int kHwExtraFrames = 20;
+    // Cover and peek hold one ref each on top of the cache; the rest is the decoder's own
+    // reorder headroom. Raising the cache without raising the pool is what stalls decode.
+    static_assert(kHwExtraFrames >= kMaxHwCachedFrames + 2 + 4,
+                  "hardware surface pool must cover the preview cache, cover/peek, and the "
+                  "decoder's reorder buffer");
+    // Cover and peek hold one ref each on top of the cache; the rest is the decoder's own
+    // reorder headroom. Raising the cache without raising the pool is what stalls decode.
+    static_assert(kHwExtraFrames >= kMaxHwCachedFrames + 2 + 4,
+                  "hardware surface pool must cover the preview cache, cover/peek, and the "
+                  "decoder's reorder buffer");
 
     // Preview read-ahead. m_lastRequestedPreviewUs is the last position a caller
     // actually asked for — prefetch must not advance it, or the buffer would

@@ -563,7 +563,7 @@ Rectangle {
             IconButton {
                 glyph: Theme.icons.bug
                 variant: "ghost"
-                tooltip: qsTr("Debug info")
+                tooltip: qsTr("Debug info and playback diagnostics")
                 anchors.verticalCenter: parent.verticalCenter
                 onClicked: {
                     const win = root.Window.window

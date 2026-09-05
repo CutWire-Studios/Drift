@@ -712,6 +712,10 @@ void composeOnGlThread(GlRuntime &rt, const GpuScene &scene, GlTarget &canvas)
 
 namespace GpuCompositor {
 
+static_assert(GlRuntime::kPresentRingSize >= kMaxPreviewComposites + 1,
+              "the presentation ring must hold every in-flight composite plus the one the "
+              "scene graph is still sampling");
+
 bool isAvailable()
 {
     return runtime().available();
@@ -720,6 +724,21 @@ bool isAvailable()
 drift::gl::GlStatusInfo status()
 {
     return GlRuntime::lastStatus();
+}
+
+QString previewUploadPathId()
+{
+    switch (GlRuntime::lastPreviewUploadPath()) {
+    case GlRuntime::PreviewUploadPath::CudaInterop:
+        return QStringLiteral("cuda-interop");
+    case GlRuntime::PreviewUploadPath::VaapiDmaBuf:
+        return QStringLiteral("vaapi-dmabuf");
+    case GlRuntime::PreviewUploadPath::CpuRoundTrip:
+        return QStringLiteral("cpu-roundtrip");
+    case GlRuntime::PreviewUploadPath::None:
+        break;
+    }
+    return QStringLiteral("none");
 }
 
 QImage render(const GpuScene &scene)

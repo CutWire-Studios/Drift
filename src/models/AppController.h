@@ -29,6 +29,8 @@
 #include <QUrl>
 #include <QVariantList>
 #include <QVariantMap>
+
+#include <atomic>
 #include <QProcess>
 #include <QMap>
 
@@ -106,6 +108,7 @@ class AppController : public QObject
     // Opt-in VAAPI dma-buf preview import. Takes effect after restart; hidden when this
     // machine has no VAAPI decode backend.
     Q_PROPERTY(bool vaapiZeroCopy READ vaapiZeroCopy WRITE setVaapiZeroCopy NOTIFY vaapiZeroCopyChanged)
+    Q_PROPERTY(bool playbackBenchmarkRunning READ playbackBenchmarkRunning NOTIFY playbackBenchmarkRunningChanged)
     Q_PROPERTY(bool vaapiZeroCopySupported READ vaapiZeroCopySupported CONSTANT)
     Q_PROPERTY(bool invertTimelineScroll READ invertTimelineScroll WRITE setInvertTimelineScroll
                    NOTIFY invertTimelineScrollChanged)
@@ -437,6 +440,17 @@ public:
     Q_INVOKABLE QVariantMap debugInfo() const;
     Q_INVOKABLE QString debugInfoText() const;
     Q_INVOKABLE void copyDebugInfo();
+
+    // Playback diagnostics. The environment and counter half is cheap enough to call whenever
+    // the dialog opens; the benchmark decodes for a couple of seconds and so runs off the GUI
+    // thread and answers with playbackBenchmarkFinished.
+    bool playbackBenchmarkRunning() const { return m_benchmarkRunning.load(); }
+    Q_INVOKABLE QVariantMap playbackDiagnostics() const;
+    Q_INVOKABLE void startPlaybackBenchmark();
+    // One paste for a bug report: host facts and codec support followed by what playback is
+    // actually doing. Split across two clipboard copies, reporters send whichever tab they
+    // happened to have open, which is rarely the one that explains the problem.
+    Q_INVOKABLE void copyDiagnosticsReport(const QVariantMap &playbackInfo);
 
     // MCP helpers (GUI thread). Used by src/mcp, not QML.
     QPair<int, int> mcpLocateClip(const QString &id) const;
@@ -1174,6 +1188,9 @@ signals:
     void autoKeyEnabledChanged();
     void reopenLastProjectChanged();
     void vaapiZeroCopyChanged();
+    // Carries the finished benchmark, merged into whatever the dialog already collected.
+    void playbackBenchmarkFinished(const QVariantMap &info);
+    void playbackBenchmarkRunningChanged();
     void invertTimelineScrollChanged();
     void mcpRunningChanged();
     void mcpErrorChanged();
@@ -1482,6 +1499,9 @@ protected:
     bool m_autoKeyEnabled = false;
     bool m_reopenLastProject = false;
     bool m_vaapiZeroCopy = false;
+    // One benchmark at a time: it drives the shared decoders and the GL thread, and two
+    // sweeps interleaved would measure each other rather than the pipeline.
+    std::atomic<bool> m_benchmarkRunning{false};
     bool m_invertTimelineScroll = false;
     QString m_uiLanguage;
     bool m_needsUiLanguagePrompt = false;

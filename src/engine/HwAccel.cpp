@@ -1,5 +1,7 @@
 #include "HwAccel.h"
 
+#include "GpuCompositor.h"
+
 #include <QHash>
 #include <QMutex>
 #include <QMutexLocker>
@@ -35,14 +37,55 @@ bool vaapiLoadable()
 
 } // namespace
 
+namespace {
+
+QMutex g_renderVendorMutex;
+QString g_renderVendor;
+
+QString renderVendor()
+{
+    {
+        QMutexLocker lock(&g_renderVendorMutex);
+        if (!g_renderVendor.isEmpty())
+            return g_renderVendor;
+    }
+    // Nothing seeded yet: fall back to whatever the compositor last reported. A snapshot,
+    // so this stays empty until GL has actually been brought up somewhere.
+    return GpuCompositor::status().vendor;
+}
+
+} // namespace
+
+void setRenderVendor(const QString &vendor)
+{
+    QMutexLocker lock(&g_renderVendorMutex);
+    g_renderVendor = vendor;
+}
+
 QList<Backend> decodeBackendOrder()
 {
 #if defined(Q_OS_MACOS)
     return {Backend::VideoToolbox};
-#elif defined(Q_OS_WIN)
-    return {Backend::Cuda, Backend::D3d11va};
 #else
-    return {Backend::Cuda, Backend::Vaapi};
+#if defined(Q_OS_WIN)
+    QList<Backend> order = {Backend::Cuda, Backend::D3d11va};
+#else
+    QList<Backend> order = {Backend::Cuda, Backend::Vaapi};
+#endif
+
+    // CUDA leads because it is the only backend with both a fast readback and a surface
+    // scaler — but only when the frames it decodes are already on the GPU that will draw
+    // them. On a hybrid laptop whose display is wired to the integrated GPU, putting NVDEC
+    // first means every previewed frame is decoded on the discrete card, pulled across PCIe
+    // into system memory, and uploaded again to the integrated one: two bus crossings per
+    // frame to reach a device that could have decoded it in place. Follow the renderer
+    // instead, and leave the order alone when there is no GL context to ask yet.
+    const QString vendor = renderVendor();
+    if (!vendor.isEmpty() && !vendor.contains(QStringLiteral("NVIDIA"), Qt::CaseInsensitive)) {
+        order.removeOne(Backend::Cuda);
+        order.append(Backend::Cuda);
+    }
+    return order;
 #endif
 }
 

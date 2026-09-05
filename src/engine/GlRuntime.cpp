@@ -120,25 +120,35 @@ extern "C" {
 
 namespace drift {
 
-bool vaapiZeroCopyEnabled()
+VaapiZeroCopyMode vaapiZeroCopyMode()
 {
     // Env is read live so tests can qputenv after other imports have already
     // resolved the settings half. QSettings is what must not run per frame.
-    if (qEnvironmentVariableIsSet("DRIFT_VAAPI_ZEROCOPY"))
-        return qgetenv("DRIFT_VAAPI_ZEROCOPY") != "0";
-    static bool settingsEnabled = false;
+    if (qEnvironmentVariableIsSet("DRIFT_VAAPI_ZEROCOPY")) {
+        return qgetenv("DRIFT_VAAPI_ZEROCOPY") != "0" ? VaapiZeroCopyMode::On
+                                                      : VaapiZeroCopyMode::Off;
+    }
+    static VaapiZeroCopyMode mode = VaapiZeroCopyMode::Auto;
     static std::once_flag once;
     std::call_once(once, [] {
-        settingsEnabled =
-            QSettings().value(QStringLiteral("preview/vaapiZeroCopy"), false).toBool();
+        const QSettings settings;
+        const QString key = QStringLiteral("preview/vaapiZeroCopy");
+        // Absent is Auto, not false: the setting having never been touched is what tells the
+        // import it may decide for itself, and a stored false must still mean off.
+        if (settings.contains(key)) {
+            mode = settings.value(key).toBool() ? VaapiZeroCopyMode::On : VaapiZeroCopyMode::Off;
+        }
     });
-    return settingsEnabled;
+    return mode;
 }
 
 void applyVaapiZeroCopyXcbEgl()
 {
 #if !defined(Q_OS_WIN) && !defined(Q_OS_MACOS) && !defined(Q_OS_ANDROID)
-    if (!vaapiZeroCopyEnabled())
+    // Only on an explicit request. Auto must not rewrite QT_XCB_GL_INTEGRATION for every X11
+    // user on first launch — that changes how the whole window is rendered, far past the
+    // preview, and there is no way to fall back from it once the app is up.
+    if (vaapiZeroCopyMode() != VaapiZeroCopyMode::On)
         return;
     if (!qEnvironmentVariableIsEmpty("QT_XCB_GL_INTEGRATION"))
         return;
@@ -324,6 +334,11 @@ using CUgraphicsResource = void *;
 
 enum { kCuSuccess = 0, kCuMemoryDevice = 2, kCuMemoryArray = 3, kCuRegisterWriteDiscard = 0x02 };
 
+// CUDA_MEMCPY2D as the *_v2 entry points expect it. The unversioned cuMemcpy2D symbol that
+// libcuda still exports is the v1 ABI, whose equivalent fields are unsigned int rather than
+// size_t — a completely different layout on 64-bit. cuda.h hides this behind
+// `#define cuMemcpy2D cuMemcpy2D_v2`, so source that includes it gets v2 automatically and
+// only a dlsym of the bare name lands on v1. Load the _v2 names below to match this struct.
 struct CudaMemcpy2D
 {
     size_t srcXInBytes = 0;
@@ -359,7 +374,8 @@ struct CudaGlApi
     CUresult (*cuGraphicsUnmapResources)(unsigned int, CUgraphicsResource *, CUstream) = nullptr;
     CUresult (*cuGraphicsSubResourceGetMappedArray)(CUarray *, CUgraphicsResource, unsigned int,
                                                     unsigned int) = nullptr;
-    CUresult (*cuMemcpy2D)(const CudaMemcpy2D *) = nullptr;
+    CUresult (*cuMemcpy2DAsync)(const CudaMemcpy2D *, CUstream) = nullptr;
+    CUresult (*cuStreamSynchronize)(CUstream) = nullptr;
     bool ok = false;
 };
 
@@ -384,15 +400,21 @@ CudaGlApi &cudaGlApi()
     api.field = reinterpret_cast<decltype(api.field)>(sym(name)); \
     if (!api.field) \
         return;
+        // The _v2 suffixes are not optional: libcuda exports both ABIs, and the bare names
+        // are the deprecated v1 ones. Anything that takes or returns a struct or a device
+        // pointer must use the versioned symbol or it will read the arguments at the wrong
+        // offsets. If a driver is old enough to lack them, ok stays false and the preview
+        // falls back to the hardware-transfer path.
         DRIFT_CUDA_SYM(cuInit, "cuInit");
-        DRIFT_CUDA_SYM(cuCtxPushCurrent, "cuCtxPushCurrent");
-        DRIFT_CUDA_SYM(cuCtxPopCurrent, "cuCtxPopCurrent");
+        DRIFT_CUDA_SYM(cuCtxPushCurrent, "cuCtxPushCurrent_v2");
+        DRIFT_CUDA_SYM(cuCtxPopCurrent, "cuCtxPopCurrent_v2");
         DRIFT_CUDA_SYM(cuGraphicsGLRegisterImage, "cuGraphicsGLRegisterImage");
         DRIFT_CUDA_SYM(cuGraphicsUnregisterResource, "cuGraphicsUnregisterResource");
         DRIFT_CUDA_SYM(cuGraphicsMapResources, "cuGraphicsMapResources");
         DRIFT_CUDA_SYM(cuGraphicsUnmapResources, "cuGraphicsUnmapResources");
         DRIFT_CUDA_SYM(cuGraphicsSubResourceGetMappedArray, "cuGraphicsSubResourceGetMappedArray");
-        DRIFT_CUDA_SYM(cuMemcpy2D, "cuMemcpy2D");
+        DRIFT_CUDA_SYM(cuMemcpy2DAsync, "cuMemcpy2DAsync_v2");
+        DRIFT_CUDA_SYM(cuStreamSynchronize, "cuStreamSynchronize");
 #undef DRIFT_CUDA_SYM
         if (api.cuInit(0) != kCuSuccess)
             return;
@@ -422,28 +444,58 @@ bool cudaSwFormatIsNv12(const AVFrame *frame)
     return fc && fc->sw_format == AV_PIX_FMT_NV12;
 }
 
-bool copyCudaPlaneToTexture(CudaGlApi &api, CUstream stream, CUgraphicsResource resource,
-                            CUdeviceptr src, size_t srcPitch, size_t widthBytes, size_t height)
+bool queueCudaPlaneCopy(CudaGlApi &api, CUstream stream, CUarray dst, CUdeviceptr src,
+                        size_t srcPitch, size_t widthBytes, size_t height)
 {
-    CUarray array = nullptr;
-    if (api.cuGraphicsMapResources(1, &resource, stream) != kCuSuccess)
+    CudaMemcpy2D op{};
+    op.srcMemoryType = kCuMemoryDevice;
+    op.srcDevice = src;
+    op.srcPitch = srcPitch;
+    op.dstMemoryType = kCuMemoryArray;
+    op.dstArray = dst;
+    op.WidthInBytes = widthBytes;
+    op.Height = height;
+    // On the frame's own stream, not the null stream. FFmpeg creates its decoder stream with
+    // CU_STREAM_NON_BLOCKING, which by definition does not synchronise against the legacy
+    // null stream — so a copy issued there was unordered with respect to the map and unmap
+    // around it, and GL could sample the WRITE_DISCARD textures before the pixels arrived.
+    return api.cuMemcpy2DAsync(&op, stream) == kCuSuccess;
+}
+
+// Both NV12 planes in one map/unmap pair and one stream wait, rather than a pair each: the
+// two copies are independent, and the only thing that has to be true before GL samples is
+// that both have landed.
+bool copyCudaNv12ToTextures(CudaGlApi &api, CUstream stream, CUgraphicsResource yRes,
+                            CUgraphicsResource uvRes, const AVFrame *frame, int width, int height)
+{
+    CUgraphicsResource resources[2] = {yRes, uvRes};
+    if (api.cuGraphicsMapResources(2, resources, stream) != kCuSuccess)
         return false;
-    const bool gotArray =
-        api.cuGraphicsSubResourceGetMappedArray(&array, resource, 0, 0) == kCuSuccess && array;
-    bool copied = false;
-    if (gotArray) {
-        CudaMemcpy2D op{};
-        op.srcMemoryType = kCuMemoryDevice;
-        op.srcDevice = src;
-        op.srcPitch = srcPitch;
-        op.dstMemoryType = kCuMemoryArray;
-        op.dstArray = array;
-        op.WidthInBytes = widthBytes;
-        op.Height = height;
-        copied = api.cuMemcpy2D(&op) == kCuSuccess;
+
+    CUarray yArray = nullptr;
+    CUarray uvArray = nullptr;
+    bool ok = api.cuGraphicsSubResourceGetMappedArray(&yArray, yRes, 0, 0) == kCuSuccess && yArray
+        && api.cuGraphicsSubResourceGetMappedArray(&uvArray, uvRes, 0, 0) == kCuSuccess && uvArray;
+
+    if (ok) {
+        // The interleaved UV plane is full-width in bytes over half the rows: width/2 texels
+        // of two bytes each.
+        ok = queueCudaPlaneCopy(api, stream, yArray, frame->data[0],
+                                size_t(qMax(0, frame->linesize[0])), size_t(width), size_t(height))
+            && queueCudaPlaneCopy(api, stream, uvArray, frame->data[1],
+                                  size_t(qMax(0, frame->linesize[1])), size_t(width),
+                                  size_t(height / 2));
     }
-    api.cuGraphicsUnmapResources(1, &resource, stream);
-    return copied;
+
+    api.cuGraphicsUnmapResources(2, resources, stream);
+
+    // Unmap only orders the copies on the stream; it does not wait for them. This does, and
+    // it is the sync point that makes the textures safe for the convert shader. One wait on
+    // one stream per frame, against a full hardware-transfer download plus PBO upload if this
+    // path is not taken.
+    if (ok && api.cuStreamSynchronize(stream) != kCuSuccess)
+        ok = false;
+    return ok;
 }
 #endif
 
@@ -589,6 +641,9 @@ struct VaEglApi
     void *egl = nullptr;
     VAStatus (*vaExportSurfaceHandle)(void *, VASurfaceID, uint32_t, uint32_t, void *) = nullptr;
     VAStatus (*vaSyncSurface)(void *, VASurfaceID) = nullptr;
+    // Optional: only used to recognise a driver Auto mode trusts, so a libva without it
+    // degrades to "not verified" rather than to no zero-copy path at all.
+    const char *(*vaQueryVendorString)(void *) = nullptr;
     EGLDisplayHandle (*eglGetCurrentDisplay)() = nullptr;
     const char *(*eglQueryString)(EGLDisplayHandle, int) = nullptr;
     // The KHR entry point takes 32-bit EGLint attributes, not the EGLAttrib (intptr_t) list
@@ -613,6 +668,8 @@ VaEglApi &vaEglApi()
     api.field = reinterpret_cast<decltype(api.field)>(dlsym(handle, name)); \
     if (!api.field) \
         return;
+        api.vaQueryVendorString = reinterpret_cast<decltype(api.vaQueryVendorString)>(
+            dlsym(api.va, "vaQueryVendorString"));
         DRIFT_VA_SYM(api.va, vaExportSurfaceHandle, "vaExportSurfaceHandle");
         DRIFT_VA_SYM(api.va, vaSyncSurface, "vaSyncSurface");
         DRIFT_VA_SYM(api.egl, eglGetCurrentDisplay, "eglGetCurrentDisplay");
@@ -1505,9 +1562,14 @@ void GlRuntime::unregisterCudaResources()
 #endif
 }
 
-// Intentionally unused from promoteVideoFrameToTarget: the GPU-to-GPU copy
-// flickered black on NVIDIA. Re-enable only after cuMemcpy2DAsync runs on the
-// same decoder stream as map/unmap.
+// NVDEC surface -> the same R8 + RG8 pair the convert shader samples, GPU to GPU. Replaces a
+// full av_hwframe_transfer_data download and PBO re-upload of every displayed frame.
+//
+// This was disabled for black flicker on NVIDIA. Two things were wrong: the copy ran on the
+// null stream while map/unmap ran on FFmpeg's non-blocking decoder stream, and it went through
+// the v1 cuMemcpy2D entry point with a v2-layout descriptor. Both are fixed above; the failure
+// flag below stays sticky so any driver that still refuses drops back to the transfer path for
+// the rest of the session rather than flickering.
 bool GlRuntime::importCudaNv12(QOpenGLExtraFunctions *gl, const AVFrame *frame)
 {
 #if defined(Q_OS_MACOS)
@@ -1558,12 +1620,8 @@ bool GlRuntime::importCudaNv12(QOpenGLExtraFunctions *gl, const AVFrame *frame)
     }
 
     if (m_cudaYResource && m_cudaUvResource) {
-        ok = copyCudaPlaneToTexture(api, stream, static_cast<CUgraphicsResource>(m_cudaYResource),
-                                    frame->data[0], size_t(qMax(0, frame->linesize[0])), size_t(w),
-                                    size_t(h))
-            && copyCudaPlaneToTexture(api, stream, static_cast<CUgraphicsResource>(m_cudaUvResource),
-                                      frame->data[1], size_t(qMax(0, frame->linesize[1])), size_t(w),
-                                      size_t(h / 2));
+        ok = copyCudaNv12ToTextures(api, stream, static_cast<CUgraphicsResource>(m_cudaYResource),
+                                    static_cast<CUgraphicsResource>(m_cudaUvResource), frame, w, h);
         if (!ok)
             m_cudaImportFailed = true;
     }
@@ -1599,6 +1657,30 @@ bool GlRuntime::ensureImportTextureNames(QOpenGLExtraFunctions *gl)
 
 // VAAPI surface -> dma-buf -> two EGLImages -> the same R8 + RG8 pair the convert shader already
 // samples. Replaces an av_hwframe_transfer_data of the displayed frame on every Intel/AMD host.
+namespace {
+
+// Auto engages zero-copy only where the whole chain — surface export, dma-buf import and
+// sampling — has been checked end to end. Everything else in this function can detect its own
+// failure and fall back; sampling an imported surface wrongly cannot, because it produces a
+// picture that looks like a decode bug. An unrecognised driver therefore stays on the PBO
+// path instead of being guessed at. Users who want it anyway can still set it explicitly.
+bool vaapiDriverIsVerified(VaEglApi &api, void *display, QOpenGLExtraFunctions *gl)
+{
+    if (!api.vaQueryVendorString || !display || !gl)
+        return false;
+    const char *vaVendor = api.vaQueryVendorString(display);
+    if (!vaVendor || !strstr(vaVendor, "iHD"))
+        return false;
+    const char *renderer = reinterpret_cast<const char *>(gl->glGetString(GL_RENDERER));
+    if (!renderer)
+        return false;
+    // Mesa's iris. i965, removed from Mesa in 22.0, reports "Mesa DRI Intel(R) ..." and has
+    // never been through this path.
+    return strstr(renderer, "Mesa") && strstr(renderer, "Intel") && !strstr(renderer, "DRI");
+}
+
+} // namespace
+
 bool GlRuntime::importVaapiNv12(QOpenGLExtraFunctions *gl, const AVFrame *frame)
 {
 #if !defined(DRIFT_VAAPI_IMPORT)
@@ -1618,15 +1700,15 @@ bool GlRuntime::importVaapiNv12(QOpenGLExtraFunctions *gl, const AVFrame *frame)
     if (!display)
         return false;
 
-    // Opt-in, not opt-out. Every *detectable* failure below falls back to the PBO upload, but a
-    // driver that exports a surface we import successfully and sample wrongly shows up as
-    // corrupt preview with nothing to catch. That has been verified on Mesa iris + iHD and
-    // nowhere else, so until other drivers have been through it the default stays off: slower
-    // preview is a far better failure than a broken picture.
+    // Every *detectable* failure below falls back to the PBO upload, but a driver that exports
+    // a surface we import successfully and sample wrongly shows up as corrupt preview with
+    // nothing to catch. So an explicit setting is honoured as given, and Auto engages only on
+    // the driver this has been verified against — see vaapiDriverIsVerified.
     //
-    // Off is not sticky: a later test (or a restart after flipping the setting) must still be
-    // able to engage the path. Real import failures below are.
-    if (!drift::vaapiZeroCopyEnabled())
+    // Neither refusal is sticky: a later test, or a restart after flipping the setting, must
+    // still be able to engage the path. Real import failures below are.
+    const drift::VaapiZeroCopyMode zeroCopy = drift::vaapiZeroCopyMode();
+    if (zeroCopy == drift::VaapiZeroCopyMode::Off)
         return false;
 
     VaEglApi &api = vaEglApi();
@@ -1634,6 +1716,16 @@ bool GlRuntime::importVaapiNv12(QOpenGLExtraFunctions *gl, const AVFrame *frame)
         logVaapiImportOnce("libva/EGL entry points or GL_OES_EGL_image missing");
         m_vaapiImportFailed = true;
         return false;
+    }
+
+    if (zeroCopy == drift::VaapiZeroCopyMode::Auto) {
+        if (m_vaapiAutoVerified < 0)
+            m_vaapiAutoVerified = vaapiDriverIsVerified(api, display, gl) ? 1 : 0;
+        if (m_vaapiAutoVerified == 0) {
+            logVaapiImportOnce("driver outside the verified zero-copy set; set "
+                               "preview/vaapiZeroCopy to use it anyway");
+            return false;
+        }
     }
 
     // Only valid while the context is current, which exec() guarantees. Under Qt's xcb plugin
@@ -2146,16 +2238,23 @@ GlTarget promoteVideoFrameToTarget(GlRuntime &rt, QOpenGLExtraFunctions *gl,
     if (codedW < 2 || codedH < 2)
         return {};
 
-    // CUDA-GL interop is off: map/unmap use FFmpeg's CU_STREAM_NON_BLOCKING
-    // decoder stream while cuMemcpy2D runs on the null stream, so GL can sample a
-    // WRITE_DISCARD texture before the copy lands (black flicker on NVIDIA).
-    // CUDA decode is unchanged; frames fall through to hw transfer + PBO.
-    // VAAPI binds the decoder's own dma-buf into a separate pair, so the draw
-    // below has to be told which one holds this frame.
-    GLuint texY = rt.m_videoY;
-    GLuint texUV = rt.m_videoUV;
-    bool uploaded = false;
-    if (rt.importVaapiNv12(gl, av)) {
+    // CUDA copies into the pooled textures; VAAPI binds the decoder's own dma-buf into a
+    // separate pair, so the draw below has to be told which one holds this frame. Either way
+    // the frame never leaves the GPU. Anything neither takes falls through to a hardware
+    // transfer and a PBO upload.
+    GLuint texY = 0;
+    GLuint texUV = 0;
+    bool uploaded = rt.importCudaNv12(gl, av);
+    if (uploaded) {
+        // Read the names back only now. importCudaNv12 allocates the pooled pair through
+        // ensureVideoUploadTextures, which deletes and recreates them whenever the frame size
+        // changes — and creates them at all on the very first frame. Sampling names captured
+        // before the call meant binding texture 0 on that first frame and after every preview
+        // resize, which is the black flicker this path was disabled for.
+        texY = rt.m_videoY;
+        texUV = rt.m_videoUV;
+        recordPreviewUploadPath(GlRuntime::PreviewUploadPath::CudaInterop);
+    } else if (rt.importVaapiNv12(gl, av)) {
         uploaded = true;
         texY = rt.m_importY;
         texUV = rt.m_importUV;

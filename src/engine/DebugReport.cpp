@@ -600,8 +600,10 @@ QString previewUploadLabel()
 
 QString zeroCopyLabel()
 {
-    if (!drift::vaapiZeroCopyEnabled())
+    if (drift::vaapiZeroCopyMode() == drift::VaapiZeroCopyMode::Off)
         return trReport("Off");
+    // Auto reports the same way: whether it actually engaged shows up as either "Active" or
+    // the reason the import declined, which is more useful in a bug report than the mode name.
     const QString reason = drift::gl::GlRuntime::lastVaapiImportReason();
     return reason.isEmpty() ? trReport("Active") : reason;
 }

@@ -48,6 +48,8 @@
 #include "engine/FaceTrack.h"
 #include "engine/ModelAsset.h"
 #include "engine/ReverseProxyCache.h"
+#include "engine/VaapiZeroCopy.h"
+#include "playback/PlaybackDiagnostics.h"
 #include "engine/ReverseRenderer.h"
 #include "engine/Sam2Segmenter.h"
 #include "engine/StickerCatalog.h"
@@ -84,6 +86,7 @@
 #include <QLibraryInfo>
 #include <QLocale>
 #include <QAudioDevice>
+#include <QThreadPool>
 #include <QSaveFile>
 #include <QSettings>
 #include <QByteArray>
@@ -916,7 +919,11 @@ AppController::AppController(AssetLibrary *assetLibrary, QObject *parent)
     // keyframe, and an animation appears where the user only meant to reposition something.
     m_autoKeyEnabled = settings.value(QStringLiteral("editor/autoKeyEnabled"), false).toBool();
     m_reopenLastProject = settings.value(QStringLiteral("editor/reopenLastProject"), false).toBool();
-    m_vaapiZeroCopy = settings.value(QStringLiteral("preview/vaapiZeroCopy"), false).toBool();
+    // Checked means "allowed", not "forced": with the key unset the engine is in Auto and
+    // will use zero-copy on drivers it has been verified against, so showing the box
+    // unchecked would contradict what the preview is actually doing. Unchecking writes an
+    // explicit false, which turns it off everywhere.
+    m_vaapiZeroCopy = drift::vaapiZeroCopyMode() != drift::VaapiZeroCopyMode::Off;
     m_invertTimelineScroll = settings.value(QStringLiteral("timeline/invertScroll"), false).toBool();
     m_uiLanguage = storedUiLanguage();
     m_needsUiLanguagePrompt = needsFirstLaunchLanguagePrompt();
@@ -15444,6 +15451,65 @@ void AppController::copyMcpAgentGuide()
 QVariantMap AppController::debugInfo() const
 {
     return DebugReport::collect();
+}
+
+QVariantMap AppController::playbackDiagnostics() const
+{
+    return PlaybackDiagnostics::collect(*m_playback.stats(), &m_project,
+                                        m_playback.displayRefreshRate());
+}
+
+void AppController::startPlaybackBenchmark()
+{
+    if (m_benchmarkRunning.exchange(true))
+        return;
+    emit playbackBenchmarkRunningChanged();
+
+    // The reference clip is what makes two bug reports comparable; the timeline's own first
+    // video clip is what reproduces the reporter's actual codec and frame rate. Measure both,
+    // because either one alone leaves a question the other answers.
+    QString timelineClip;
+    for (const drift::Track &track : m_project.tracks()) {
+        for (const drift::Clip &clip : track.clips) {
+            if (clip.type == drift::ClipType::Video && !clip.path.isEmpty()) {
+                timelineClip = clip.path;
+                break;
+            }
+        }
+        if (!timelineClip.isEmpty())
+            break;
+    }
+    const QSize canvas(m_project.width(), m_project.height());
+
+    // Off the GUI thread: the sweep decodes for a couple of seconds. Everything it touches —
+    // the reader pool and the GL runtime — is already called from the compositor's own worker
+    // threads, so this adds no new threading assumption.
+    QThreadPool::globalInstance()->start([this, timelineClip, canvas] {
+        QVariantMap out;
+        out.insert(QStringLiteral("reference"), PlaybackDiagnostics::benchmarkClip({}, canvas));
+        if (!timelineClip.isEmpty()) {
+            out.insert(QStringLiteral("timeline"),
+                       PlaybackDiagnostics::benchmarkClip(timelineClip, canvas));
+        }
+        QMetaObject::invokeMethod(
+            this,
+            [this, out] {
+                m_benchmarkRunning.store(false);
+                emit playbackBenchmarkRunningChanged();
+                emit playbackBenchmarkFinished(out);
+            },
+            Qt::QueuedConnection);
+    });
+}
+
+void AppController::copyDiagnosticsReport(const QVariantMap &playbackInfo)
+{
+    QString report = DebugReport::formatPlainText(DebugReport::collect());
+    if (!playbackInfo.isEmpty()) {
+        report += QLatin1Char('\n');
+        report += PlaybackDiagnostics::formatPlainText(playbackInfo);
+    }
+    copyToClipboard(report);
 }
 
 QString AppController::debugInfoText() const

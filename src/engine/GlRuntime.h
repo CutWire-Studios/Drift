@@ -97,6 +97,11 @@ struct CompiledEffect
 class GlRuntime
 {
 public:
+    // Presentation targets rotated between the compositor and the scene graph. Public so
+    // GpuCompositor can static_assert the in-flight composite cap against it: every composite
+    // that may be running at once needs a slot, plus one for the frame still on screen.
+    static constexpr int kPresentRingSize = 3;
+
     std::unique_ptr<QOpenGLContext> context;
     std::unique_ptr<QOffscreenSurface> surface;
     GLuint vao = 0;
@@ -276,7 +281,6 @@ private:
     size_t m_pooledTargets = 0;
     static constexpr size_t kMaxPooledTargets = 32;
 
-    static constexpr int kPresentRingSize = 3;
     GlTarget m_presentRing[kPresentRingSize];
     GLsync m_presentFence[kPresentRingSize] = {};
     int m_presentNext = 0;
@@ -311,6 +315,9 @@ private:
     GLuint m_importY = 0;
     GLuint m_importUV = 0;
     bool m_vaapiImportFailed = false;
+    // Auto-mode driver verdict: -1 unknown, 0 unverified, 1 verified. Cached because the
+    // answer depends only on the driver, which does not change within a session.
+    int m_vaapiAutoVerified = -1;
 
     struct ExportNv12Slot
     {
@@ -351,9 +358,10 @@ GlTarget promoteImageToTarget(GlRuntime &rt, QOpenGLExtraFunctions *gl, const QI
 GlTarget promoteImageToTargetCached(GlRuntime &rt, QOpenGLExtraFunctions *gl, const QImage &image,
                                     const QSize &fallbackSize);
 
-// Preview video → RGBA FBO. CUDA-GL interop is disabled (NVIDIA black flicker);
-// CUDA frames download via hw transfer and upload NV12 through a pooled PBO, same
-// as other backends. Colour and display rotation are applied in the convert shader.
+// Preview video → RGBA FBO. Hardware CUDA and VAAPI frames stay on the GPU — CUDA copies
+// into the pooled textures on the decoder's own stream, VAAPI imports its dma-buf directly;
+// everything else uploads NV12 through a pooled PBO. Colour and display rotation are applied
+// in the convert shader.
 GlTarget promoteVideoFrameToTarget(GlRuntime &rt, QOpenGLExtraFunctions *gl,
                                    const PreviewVideoFrame &frame);
 

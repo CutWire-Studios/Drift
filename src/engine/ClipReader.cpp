@@ -474,7 +474,13 @@ int ClipReader::previewCacheCapacity() const
 
     const bool hw = !m_previewCache.isEmpty() && m_previewCache.constFirst().frame.isHardware();
     if (hw) {
-        return qMax(2, kMaxHwCachedFrames / m_previewCacheShares);
+        int frames = kMaxHwCachedFrames;
+        if (m_sourceFrameDurationUs > 0) {
+            frames = qBound(kMinHwCachedFrames,
+                            static_cast<int>(kHwPreviewReadAheadUs / m_sourceFrameDurationUs),
+                            kMaxHwCachedFrames);
+        }
+        return qMax(2, frames / m_previewCacheShares);
     }
 
     if (m_readAheadUs <= 0 || m_sourceFrameDurationUs <= 0)
@@ -679,6 +685,9 @@ bool ClipReader::openSoftwareVideoDecoder()
 // (D3D11VA), where the readback moves full-resolution pixels. Auto uses this to keep
 // light clips on the CPU and send 4K / high-bitrate ones to the GPU.
 constexpr double kHwAccelMinKbitPerFrame = 250.0;
+// Pixels a second above which software decode is sent to the GPU whatever the bitrate.
+// 1080p60 sits just over this; 1080p30 and 720p60 sit under it.
+constexpr double kHwAccelMinPixelsPerSecond = 1920.0 * 1080.0 * 50.0;
 
 bool ClipReader::hardwareDecodeIsWorthIt() const
 {
@@ -688,17 +697,27 @@ bool ClipReader::hardwareDecodeIsWorthIt() const
     if (int64_t(par->width) * par->height >= 3840LL * 2160)
         return true;
 
+    const AVRational rate = stream->avg_frame_rate;
+    const double fps = (rate.num > 0 && rate.den > 0) ? double(rate.num) / double(rate.den) : 0.0;
+
+    // Frame rate belongs on this side of the comparison, not the other. The kbit-per-frame
+    // test below divides by fps, so doubling the frame rate halves the figure and makes
+    // hardware decode *less* likely — backwards, because the same content at 60 fps is twice
+    // the decode work in half the time budget. A 1080p60 screen capture at a typical bitrate
+    // lands just under the per-frame threshold while its 30 fps twin clears it comfortably,
+    // which is exactly the pair users report as "60 fps stutters, 30 fps is fine".
+    if (fps > 0.0 && double(par->width) * par->height * fps >= kHwAccelMinPixelsPerSecond)
+        return true;
+
     int64_t bitRate = par->bit_rate;
     if (bitRate <= 0)
         bitRate = m_fmt->bit_rate; // Matroska usually omits the per-stream value
     if (bitRate <= 0)
         return true;
 
-    const AVRational rate = stream->avg_frame_rate;
-    if (rate.num <= 0 || rate.den <= 0)
+    if (fps <= 0.0)
         return true;
 
-    const double fps = double(rate.num) / double(rate.den);
     return (double(bitRate) / fps / 1000.0) >= kHwAccelMinKbitPerFrame;
 }
 
@@ -784,13 +803,19 @@ bool ClipReader::tryOpenHardwareDecoder()
 #else
     // An explicit pick is honoured on its own: falling back to a backend the user did
     // not choose would hide exactly the problem they picked around.
-    if (const drift::hwaccel::Backend pinned = pinnedDecodeBackend();
-        pinned != drift::hwaccel::Backend::None) {
+    const drift::hwaccel::Backend pinned = pinnedDecodeBackend();
+    if (mode == HardwareDecodeMode::Hardware && pinned != drift::hwaccel::Backend::None) {
         if (openHardwareDecoderWith(pinned))
             return true;
     } else {
+        // Auto used to ignore the pin entirely and always take the first backend that
+        // opened, so choosing one in the picker changed nothing unless Hardware was also
+        // forced. Try it first here, then fall through to the rest of the order — Auto's
+        // promise is that it still finds something, not that it ignores the preference.
+        if (pinned != drift::hwaccel::Backend::None && openHardwareDecoderWith(pinned))
+            return true;
         for (const drift::hwaccel::Backend backend : drift::hwaccel::decodeBackendOrder()) {
-            if (openHardwareDecoderWith(backend))
+            if (backend != pinned && openHardwareDecoderWith(backend))
                 return true;
         }
     }

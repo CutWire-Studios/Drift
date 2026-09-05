@@ -601,6 +601,10 @@ qt_add_executable(drift
     src/playback/ClipPreviewPlayer.cpp
     src/playback/CompositorService.h
     src/playback/CompositorService.cpp
+    src/playback/PlaybackStats.h
+    src/playback/PlaybackStats.cpp
+    src/playback/PlaybackDiagnostics.h
+    src/playback/PlaybackDiagnostics.cpp
     src/preview/PreviewItem.h
     src/preview/PreviewItem.cpp
 )
@@ -670,6 +674,14 @@ qt_add_resources(drift "drift_app_icon"
     PREFIX "/app"
     BASE resources
     FILES resources/drift.png
+)
+
+# Fixed input for the playback diagnostics benchmark, so numbers from two different bug
+# reports are comparable. See resources/diagnostics/README.md for how it is generated.
+qt_add_resources(drift "drift_diagnostics"
+    PREFIX "/diagnostics"
+    BASE resources/diagnostics
+    FILES resources/diagnostics/bench1080p60.mp4
 )
 
 set_source_files_properties(src/qml/Theme.qml PROPERTIES QT_QML_SINGLETON_TYPE true)
@@ -787,6 +799,7 @@ qt_add_qml_module(drift
         src/qml/components/MissingAddonsDialog.qml
         src/qml/components/UpdateDialog.qml
         src/qml/components/DebugInfoDialog.qml
+        src/qml/components/preview/PlaybackStatsOverlay.qml
         src/qml/components/ProjectSetupDialog.qml
         src/qml/components/LayoutChooserDialog.qml
         src/qml/components/LanguageChooserDialog.qml

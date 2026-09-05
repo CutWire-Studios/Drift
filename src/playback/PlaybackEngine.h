@@ -3,6 +3,7 @@
 #include "AudioOutputChannel.h"
 #include "CompositorService.h"
 #include "PlaybackClock.h"
+#include "PlaybackStats.h"
 #include "core/Project.h"
 #include "core/Time.h"
 #include "engine/AudioMixer.h"
@@ -39,6 +40,9 @@ class PlaybackEngine : public QObject
     Q_PROPERTY(QString playbackMode READ playbackMode WRITE setPlaybackMode NOTIFY playbackModeChanged)
     Q_PROPERTY(double playbackRate READ playbackRate WRITE setPlaybackRate NOTIFY playbackRateChanged)
     Q_PROPERTY(QString decodeMode READ decodeMode WRITE setDecodeMode NOTIFY decodeModeChanged)
+    // Live playback counters for the diagnostics report and the preview overlay. Constant
+    // because the block itself is owned here for the engine's lifetime; its contents change.
+    Q_PROPERTY(PlaybackStats *stats READ stats CONSTANT)
 
 public:
     explicit PlaybackEngine(QObject *parent = nullptr);
@@ -84,6 +88,11 @@ public:
     // here. Not a constant — it depends on the GPU and driver the app started with.
     Q_INVOKABLE QVariantList decodeModes() const;
 
+    PlaybackStats *stats() { return &m_stats; }
+    const PlaybackStats *stats() const { return &m_stats; }
+    // Refresh rate of the screen the preview is on, 0 when no window has reported one.
+    double displayRefreshRate() const { return m_refreshRate; }
+
     Q_INVOKABLE void play();
     Q_INVOKABLE void pause();
     Q_INVOKABLE void refreshFrame();
@@ -91,6 +100,15 @@ public:
     // Restart the composite tick from the current project fps and rate. Playback
     // samples `m_project` live, but the QTimer interval is snapped at play().
     void syncDisplayCadence();
+
+    // Called once per rendered frame from the GUI thread (QQuickWindow::afterAnimating),
+    // and once per buffer swap from the render thread (frameSwapped, queued). Together
+    // these phase-lock the preview to the display instead of to a free-running timer.
+    void onDisplayTick();
+    void onFrameSwapped();
+    // Hz of the screen the preview window is on. 0 when there is no window — a headless
+    // test, or before the item enters a scene — which falls the engine back to the timer.
+    void setDisplayRefreshRate(double hz);
 
     // Id of the text clip currently edited in place on the preview; that clip is
     // omitted from the composited frame so the QML inline editor stands in for it.
@@ -124,6 +142,11 @@ private:
     void onAudioSampleRateChanged();
     void onPlayheadTick();
     void onCompositeTick();
+    // Pick the frame that should be on screen at the next swap and ask for it, unless it is
+    // the one already requested.
+    void requestFrameForPresentation();
+    // Interval between refreshes, or 0 when the refresh rate is unknown.
+    qint64 refreshIntervalNs() const;
     void onCompositeFinished();
     void onFrameReady(const GpuFrameTexture &frame);
     void checkEndOfTimeline(drift::TimeUs timeUs);
@@ -138,6 +161,7 @@ private:
     drift::Project *m_project = nullptr;
     PlaybackClock m_clock;
     CompositorService m_compositor;
+    PlaybackStats m_stats;
     AudioMixer m_mixer;
     AudioOutputChannel m_audio;
     QTimer m_playheadTimer;
@@ -151,7 +175,12 @@ private:
     mutable QMutex m_frameMutex;
     drift::TimeUs m_playheadUs = 0;
     std::atomic<bool> m_playing = false;
-    QString m_previewQuality = QStringLiteral("full");
+    // Auto, not full. Auto is full quality plus the adaptive ratchet in CompositorService,
+    // which walks the preview scale down while composites overrun their frame budget and
+    // back up once they stop. Defaulting to full meant that ratchet never ran unless the user
+    // found the setting, so a machine that could not keep up simply stuttered instead of
+    // degrading. A saved preference still wins; only fresh installs move.
+    QString m_previewQuality = QStringLiteral("auto");
     QString m_playbackMode = QStringLiteral("fast");
     QString m_decodeMode = QStringLiteral("auto");
     // Baseline for ClipReader's process-wide fallback counter, so the notice fires on
@@ -170,6 +199,13 @@ private:
     QString m_editingClipId;
     int m_previewRenderWidth = 0;
     int m_previewRenderHeight = 0;
+    // Display cadence. The refresh rate comes from the window's screen and is 0 until one
+    // exists; m_lastDisplayTickNs is what tells the watchdog timer whether the display is
+    // still producing frames, and m_lastRequestedFrameUs quantises requests onto the
+    // project's frame grid so each source frame is asked for exactly once.
+    double m_refreshRate = 0.0;
+    qint64 m_lastDisplayTickNs = 0;
+    drift::TimeUs m_lastRequestedFrameUs = -1;
     // The rate the sink negotiated, which is what the mixer renders at and what the clock counts
     // samples in — not necessarily the project's rate, since the device has the final say.
     int m_sampleRate = 48000;
