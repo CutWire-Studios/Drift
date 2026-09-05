@@ -717,6 +717,11 @@ bool isAvailable()
     return runtime().available();
 }
 
+drift::gl::GlStatusInfo status()
+{
+    return GlRuntime::lastStatus();
+}
+
 QImage render(const GpuScene &scene)
 {
     if (scene.canvasSize.isEmpty())

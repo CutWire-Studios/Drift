@@ -5,6 +5,7 @@
 #include "core/Mask.h"
 #include "core/Time.h"
 #include "engine/FaceLandmarker.h"
+#include "engine/GpuStatus.h"
 #include "engine/PreviewVideoFrame.h"
 
 #include <QColor>
@@ -113,5 +114,10 @@ bool finishExportNv12(int slot, uint8_t *y, int yStride, uint8_t *uv, int uvStri
                       int height);
 
 bool isAvailable();
+
+// Why the compositor is unusable, for the preview's error state and the debug
+// report. A snapshot: unlike isAvailable() it never forces a bring-up attempt,
+// so call that first when you want one made.
+drift::gl::GlStatusInfo status();
 
 } // namespace GpuCompositor

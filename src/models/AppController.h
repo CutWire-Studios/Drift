@@ -1017,6 +1017,7 @@ public:
     Q_INVOKABLE void pasteAtPlayhead();
     Q_INVOKABLE void nudgeSelection(double deltaSeconds);
     Q_INVOKABLE bool selectionContains(int trackIndex, int clipIndex) const;
+    Q_INVOKABLE double selectionEarliestStartSeconds() const;
     // Premiere-style trim pointer. side: -1=start, 0=off, 1=end.
     // heightPx scales the cursor to the hovered clip/track height.
     Q_INVOKABLE void setTimelineTrimCursor(int side, int heightPx = 0);

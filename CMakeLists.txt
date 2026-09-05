@@ -474,6 +474,8 @@ add_library(driftengine STATIC
     src/engine/GpuCompositor.cpp
     src/engine/GlRuntime.h
     src/engine/GlRuntime.cpp
+    src/engine/GpuStatus.h
+    src/engine/GpuStatus.cpp
     src/engine/VaapiZeroCopy.h
     src/engine/GpuEffectExecutor.h
     src/engine/GpuEffectExecutor.cpp

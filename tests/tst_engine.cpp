@@ -29,6 +29,7 @@
 #include "engine/ClipReader.h"
 #include "engine/DebugReport.h"
 #include "engine/Exporter.h"
+#include "engine/GpuStatus.h"
 #include "engine/HwAccel.h"
 #include "engine/OrtRuntime.h"
 #include "engine/CompositorFrameHistory.h"
@@ -260,6 +261,8 @@ private slots:
     void denoiseRemovesBroadbandNoise();
     void denoiseHasNoSeamAcrossWindows();
     void audioFileWriterRoundTripsThroughClipReader();
+    void glStatusIdsAreStableAndOnlyShareContextRetries();
+    void softwareRenderersAreRecognisedByName();
 
 private:
     static QString makeColorSegmentsVideo(QTemporaryDir &dir);
@@ -2697,6 +2700,16 @@ void EngineTest::debugReportListsCommonCodecs()
     QVERIFY(systemLabels.contains(QStringLiteral("Window platform")));
     QVERIFY(systemLabels.contains(QStringLiteral("Preview upload")));
     QVERIFY(systemLabels.contains(QStringLiteral("Zero-copy")));
+    // Without this row a report from a machine whose preview is black reads
+    // exactly like one from a healthy machine, which is what made issue #139
+    // impossible to triage from the outside.
+    QVERIFY(systemLabels.contains(QStringLiteral("GPU compositor")));
+    for (const QVariant &entry : info.value(QStringLiteral("system")).toList()) {
+        const QVariantMap row = entry.toMap();
+        const QString label = row.value(QStringLiteral("label")).toString();
+        if (label.startsWith(QStringLiteral("OpenGL")) || label == QStringLiteral("GPU compositor"))
+            qInfo() << qPrintable(label) << "=" << qPrintable(row.value(QStringLiteral("value")).toString());
+    }
 
     const QVariantList encoders = info.value(QStringLiteral("encoders")).toList();
     QCOMPARE(encoders.size(), 5);
@@ -7795,6 +7808,75 @@ void EngineTest::objectNmsIsPerClass()
     QCOMPARE(apart.size(), 2);
 
     QVERIFY(drift::nonMaximumSuppression({}, 0.45).isEmpty());
+}
+
+// The ids travel into bug reports and QML bindings, so they are API. The switch
+// has no default: a new GlStatus has to come here and decide whether it is worth
+// retrying, rather than silently inheriting "give up".
+void EngineTest::glStatusIdsAreStableAndOnlyShareContextRetries()
+{
+    using drift::gl::GlStatus;
+
+    QCOMPARE(QLatin1String(drift::gl::statusId(GlStatus::Ready)), QLatin1String("ready"));
+    QCOMPARE(QLatin1String(drift::gl::statusId(GlStatus::VersionTooLow)),
+             QLatin1String("version-too-low"));
+    QCOMPARE(QLatin1String(drift::gl::statusId(GlStatus::NoShareContext)),
+             QLatin1String("no-share-context"));
+    QCOMPARE(QLatin1String(drift::gl::statusId(GlStatus::NotAttempted)), QLatin1String("unknown"));
+
+    // Ids are distinct: two statuses sharing one would make the preview show the
+    // wrong explanation.
+    QSet<QByteArray> ids;
+    const GlStatus all[] = {
+        GlStatus::NotAttempted,      GlStatus::Ready,         GlStatus::NoApplication,
+        GlStatus::NoShareContext,    GlStatus::SurfaceFailed, GlStatus::ContextFailed,
+        GlStatus::MakeCurrentFailed, GlStatus::NoFunctions,   GlStatus::VersionTooLow,
+        GlStatus::ShaderLinkFailed,
+    };
+    for (const GlStatus status : all)
+        ids.insert(QByteArray(drift::gl::statusId(status)));
+    QCOMPARE(ids.size(), int(std::size(all)));
+
+    // Only "Qt Quick has not built the share context yet" is worth another go.
+    // Anything the driver decided about itself will decide the same way again.
+    QVERIFY(drift::gl::isTransient(GlStatus::NotAttempted));
+    QVERIFY(drift::gl::isTransient(GlStatus::NoApplication));
+    QVERIFY(drift::gl::isTransient(GlStatus::NoShareContext));
+    QVERIFY(!drift::gl::isTransient(GlStatus::Ready));
+    QVERIFY(!drift::gl::isTransient(GlStatus::VersionTooLow));
+    QVERIFY(!drift::gl::isTransient(GlStatus::ShaderLinkFailed));
+    QVERIFY(!drift::gl::isTransient(GlStatus::SurfaceFailed));
+    QVERIFY(!drift::gl::isTransient(GlStatus::ContextFailed));
+    QVERIFY(!drift::gl::isTransient(GlStatus::MakeCurrentFailed));
+    QVERIFY(!drift::gl::isTransient(GlStatus::NoFunctions));
+}
+
+void EngineTest::softwareRenderersAreRecognisedByName()
+{
+    // GL_RENDERER is the only reliable signal: GL_VENDOR reads "Mesa" for
+    // radeonsi and iris too, so matching on it would call every Linux box software.
+    QVERIFY(drift::gl::isSoftwareRenderer(
+        QStringLiteral("Gallium 0.4 on llvmpipe (LLVM 3.6, 128 bits)")));
+    QVERIFY(drift::gl::isSoftwareRenderer(QStringLiteral("softpipe")));
+    QVERIFY(drift::gl::isSoftwareRenderer(QStringLiteral("Mesa X11 (swrast)")));
+    QVERIFY(drift::gl::isSoftwareRenderer(QStringLiteral("GDI Generic")));
+    QVERIFY(drift::gl::isSoftwareRenderer(QStringLiteral("Microsoft Basic Render Driver")));
+    QVERIFY(drift::gl::isSoftwareRenderer(QStringLiteral("D3D12 (Microsoft Basic Render Driver)")));
+
+    QVERIFY(!drift::gl::isSoftwareRenderer(
+        QStringLiteral("AMD Radeon RX 6600 (radeonsi, navi23, LLVM 18.1.8, DRM 3.57)")));
+    QVERIFY(!drift::gl::isSoftwareRenderer(QStringLiteral("NVIDIA GeForce RTX 3060/PCIe/SSE2")));
+    QVERIFY(!drift::gl::isSoftwareRenderer(QStringLiteral("Mesa Intel(R) UHD Graphics (CML GT2)")));
+    QVERIFY(!drift::gl::isSoftwareRenderer(QString()));
+
+    // A D3D12 adapter that is a real GPU must not be caught by the WARP marker.
+    QVERIFY(!drift::gl::isSoftwareRenderer(QStringLiteral("D3D12 (NVIDIA GeForce RTX 4070)")));
+
+    drift::gl::GlStatusInfo info;
+    info.major = 3;
+    info.minor = 0;
+    info.renderer = QStringLiteral("llvmpipe");
+    QCOMPARE(drift::gl::describeGl(info), QStringLiteral("OpenGL 3.0 — llvmpipe"));
 }
 
 QTEST_MAIN(EngineTest)

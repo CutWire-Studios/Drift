@@ -26,6 +26,14 @@ class PlaybackEngine : public QObject
     Q_PROPERTY(QSize previewTextureSize READ previewTextureSize NOTIFY currentFrameChanged)
     Q_PROPERTY(QImage previewImage READ previewImage NOTIFY currentFrameChanged)
     Q_PROPERTY(bool hasFrame READ hasFrame NOTIFY currentFrameChanged)
+    // hasFrame alone cannot tell "the playhead is over a gap" from "the GPU
+    // compositor never started", and the preview used to report the second as the
+    // first. These carry the difference. The status is a stable id, not a
+    // sentence, so the message retranslates with the rest of the UI.
+    Q_PROPERTY(bool gpuCompositorReady READ gpuCompositorReady NOTIFY gpuCompositorStatusChanged)
+    Q_PROPERTY(QString gpuCompositorStatus READ gpuCompositorStatus NOTIFY gpuCompositorStatusChanged)
+    // Raw driver output, e.g. "OpenGL 3.0 — llvmpipe (LLVM 3.6, 128 bits)". Never translated.
+    Q_PROPERTY(QString gpuCompositorDetail READ gpuCompositorDetail NOTIFY gpuCompositorStatusChanged)
     Q_PROPERTY(bool playing READ isPlaying NOTIFY playingChanged)
     Q_PROPERTY(QString previewQuality READ previewQuality WRITE setPreviewQuality NOTIFY previewQualityChanged)
     Q_PROPERTY(QString playbackMode READ playbackMode WRITE setPlaybackMode NOTIFY playbackModeChanged)
@@ -49,6 +57,11 @@ public:
     // graph (see GpuFrameTexture). Null whenever the texture path above is usable.
     QImage previewImage() const;
     bool hasFrame() const;
+    bool gpuCompositorReady() const { return m_gpuStatusId == QStringLiteral("ready"); }
+    // "unknown" until the first probe runs, so the UI can hold off rather than
+    // flash a failure during startup.
+    QString gpuCompositorStatus() const { return m_gpuStatusId; }
+    QString gpuCompositorDetail() const { return m_gpuStatusDetail; }
     bool isPlaying() const { return m_playing; }
     QString previewQuality() const;
     void setPreviewQuality(const QString &quality);
@@ -92,7 +105,11 @@ signals:
     // A reader hit a driver failure and went sticky-software. `backendName` is the
     // backend the user pinned, empty when Auto chose it.
     void hardwareDecodeFellBack(const QString &backendName);
+    // The GPU compositor will not come up on this machine. Fires once per session;
+    // `statusId` is drift::gl::statusId(), `detail` the raw GL version and renderer.
+    void gpuCompositorUnavailable(const QString &statusId, const QString &detail);
 
+    void gpuCompositorStatusChanged();
     void currentFrameChanged();
     void playingChanged();
     void previewQualityChanged();
@@ -111,6 +128,7 @@ private:
     void onFrameReady(const GpuFrameTexture &frame);
     void checkEndOfTimeline(drift::TimeUs timeUs);
     void checkHardwareFallback();
+    void probeGpuCompositor();
     bool isQualityMode() const { return m_playbackMode == QStringLiteral("quality"); }
     bool isAutoQuality() const { return m_previewQuality == QStringLiteral("auto"); }
     bool shouldLoopWorkArea(drift::TimeUs *loopInOut, drift::TimeUs *loopOutOut) const;
@@ -124,6 +142,11 @@ private:
     AudioOutputChannel m_audio;
     QTimer m_playheadTimer;
     QTimer m_compositeTimer;
+    QTimer m_gpuProbeTimer;
+    int m_gpuProbeAttempts = 0;
+    bool m_gpuUnavailableNotified = false;
+    QString m_gpuStatusId = QStringLiteral("unknown");
+    QString m_gpuStatusDetail;
     GpuFrameTexture m_currentFrame;
     mutable QMutex m_frameMutex;
     drift::TimeUs m_playheadUs = 0;

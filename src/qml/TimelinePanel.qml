@@ -223,23 +223,26 @@ PanelFrame {
     }
 
     // While dragging a clip, other selected clips (linked A/V partners included)
-    // ride along on the X axis so they don't sit still until drop. CapCut-style.
+    // ride along on the X and Y axes so they don't sit still until drop. CapCut-style.
     property bool moveFollowActive: false
     property int moveLeaderTrack: -1
     property int moveLeaderClip: -1
     property real moveFollowDeltaX: 0
+    property real moveFollowDeltaY: 0
 
     function beginMoveFollow(trackIndex, clipIndex) {
         moveLeaderTrack = trackIndex
         moveLeaderClip = clipIndex
         moveFollowDeltaX = 0
+        moveFollowDeltaY = 0
         moveFollowActive = true
     }
 
-    function updateMoveFollow(deltaX) {
+    function updateMoveFollow(deltaX, deltaY) {
         if (!moveFollowActive)
             return
         moveFollowDeltaX = deltaX
+        moveFollowDeltaY = deltaY || 0
     }
 
     function clearMoveFollow() {
@@ -247,6 +250,7 @@ PanelFrame {
         moveLeaderTrack = -1
         moveLeaderClip = -1
         moveFollowDeltaX = 0
+        moveFollowDeltaY = 0
     }
 
     // Shared by library drops and in-timeline clip moves so both snap and show
@@ -1251,7 +1255,7 @@ PanelFrame {
 
                         onPressed: (mouse) => {
                             root.forceActiveFocus()
-                            root.marqueeAdditive = (mouse.modifiers & Qt.ShiftModifier) !== 0
+                            root.marqueeAdditive = (mouse.modifiers & (Qt.ShiftModifier | Qt.ControlModifier)) !== 0
                             root.marqueeOriginX = mouse.x
                             root.marqueeOriginY = mouse.y
                             root.marqueeCurrentX = mouse.x

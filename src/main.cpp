@@ -30,6 +30,10 @@
 #include <QIcon>
 #include <QImageReader>
 #include <QLoggingCategory>
+#include <QMessageBox>
+#include <QOffscreenSurface>
+#include <QOpenGLContext>
+#include <QOpenGLFunctions>
 #include <QQmlApplicationEngine>
 #include <QQmlEngine>
 #include <QQuickWindow>
@@ -62,6 +66,30 @@ bool verboseLoggingRequested(int argc, char *argv[])
             return true;
     }
     return false;
+}
+
+// Qt only writes messages to stderr when it thinks a console is attached — a
+// controlling TTY on Unix, a console window on Windows. Everywhere else it hands
+// them to the platform's own sink instead: journald on Linux, OutputDebugString on
+// Windows. So `drift > log.txt 2>&1`, which is exactly what someone does to collect
+// a log for a bug report, produced an empty file and every qWarning went to the
+// journal unnoticed. Send them to stderr always.
+//
+// Not on Android: there the platform sink is logcat, which *is* the way to read an
+// Android app's log, and a GUI app's stderr goes to /dev/null. Forcing it there
+// would throw the logs away rather than redirect them.
+//
+// QT_LOGGING_TO_CONSOLE would also work but is deprecated in Qt 6 and prints a
+// warning about itself on every launch. Anything the user set already wins.
+void forceStderrLogging()
+{
+#ifndef Q_OS_ANDROID
+    if (qEnvironmentVariableIsEmpty("QT_FORCE_STDERR_LOGGING")
+        && qEnvironmentVariableIsEmpty("QT_ASSUME_STDERR_HAS_CONSOLE")
+        && qEnvironmentVariableIsEmpty("QT_LOGGING_TO_CONSOLE")) {
+        qputenv("QT_FORCE_STDERR_LOGGING", "1");
+    }
+#endif
 }
 
 // FFmpeg logs at INFO and Qt prints every qDebug/qInfo, which buries the failures worth acting on
@@ -171,10 +199,113 @@ bool runSelfTest()
 }
 #endif // Q_OS_ANDROID
 
+#ifndef Q_OS_ANDROID
+// Creates a throwaway context in `format`. On success reports what the driver
+// actually handed back, which is not always what was asked for.
+bool probeOpenGl(const QSurfaceFormat &format, QSurfaceFormat *obtained = nullptr,
+                 QString *renderer = nullptr)
+{
+    QOffscreenSurface surface;
+    surface.setFormat(format);
+    surface.create();
+    if (!surface.isValid())
+        return false;
+
+    QOpenGLContext ctx;
+    ctx.setFormat(format);
+    if (!ctx.create())
+        return false;
+    if (obtained)
+        *obtained = ctx.format();
+    if (renderer && ctx.makeCurrent(&surface)) {
+        if (QOpenGLFunctions *fn = ctx.functions()) {
+            if (const char *name = reinterpret_cast<const char *>(fn->glGetString(GL_RENDERER)))
+                *renderer = QString::fromUtf8(name);
+        }
+        ctx.doneCurrent();
+    }
+    return true;
+}
+
+// Qt Quick asks for QSurfaceFormat::defaultFormat() and calls qFatal() when it
+// cannot have it, so on a driver below OpenGL 3.3 Drift aborts before there is a
+// window to put an error in — the app simply vanishes. Say why first.
+void warnIfNoOpenGl()
+{
+    // Probe exactly what Qt Quick will ask for — and check what came *back*, not
+    // just that creation succeeded. Both WGL and GLX quietly clamp the request to
+    // whatever the driver can do rather than failing it, so a machine that tops out
+    // at 3.0 hands back a valid 3.0 context and only the version reveals it. That
+    // clamp is the whole of issue #139: Qt Quick is content, and the compositor's
+    // 3.3 floor is what breaks.
+    auto atLeast33 = [](const QSurfaceFormat &f) {
+        return f.majorVersion() > 3 || (f.majorVersion() == 3 && f.minorVersion() >= 3);
+    };
+
+    QSurfaceFormat obtained;
+    QString renderer;
+    bool haveGl = probeOpenGl(QSurfaceFormat::defaultFormat(), &obtained, &renderer);
+    if (haveGl && atLeast33(obtained))
+        return;
+
+    // The 3.3 request did not give us 3.3. The two platforms disagree about how it
+    // fails — WGL clamps and hands back a valid older context, GLX refuses outright
+    // — so ask again for the bare minimum. That is what reveals the driver's real
+    // ceiling, and it is the difference between "your driver is too old" and "you
+    // have no driver", which are very different things to tell someone.
+    if (!haveGl)
+        haveGl = probeOpenGl(QSurfaceFormat(), &obtained, &renderer);
+
+    const QString driver =
+        renderer.isEmpty() ? QCoreApplication::translate("main", "unknown") : renderer;
+
+    QString title;
+    QString body;
+    if (!haveGl) {
+        title = QCoreApplication::translate("main", "No OpenGL driver");
+        body = QCoreApplication::translate(
+            "main",
+            "Drift could not create an OpenGL context, so it cannot draw its interface "
+            "or render the preview.\n\nInstall or update your graphics driver.");
+    } else if (atLeast33(obtained)) {
+        // New enough, so it is the 3.3 *core profile* that could not be had — a
+        // driver or session quirk, not old hardware. Do not tell someone their GPU
+        // is too old when it is not.
+        title = QCoreApplication::translate("main", "OpenGL context unavailable");
+        body = QCoreApplication::translate(
+                   "main",
+                   "Drift could not create an OpenGL 3.3 core profile context, though "
+                   "this driver reports OpenGL %1.%2 (%3).\n\nThe video preview cannot "
+                   "render. Updating your graphics driver may help.")
+                   .arg(obtained.majorVersion())
+                   .arg(obtained.minorVersion())
+                   .arg(driver);
+    } else {
+        title = QCoreApplication::translate("main", "Graphics driver is too old");
+        // Deliberately does not promise what happens next: below 3.3 the preview
+        // cannot render on any platform, and on some Drift cannot start at all.
+        body = QCoreApplication::translate(
+                   "main",
+                   "Drift needs OpenGL 3.3, but this graphics driver only provides "
+                   "OpenGL %1.%2 (%3).\n\nThe video preview cannot render, and Drift may "
+                   "not start at all. Update your graphics driver, or run Drift on a "
+                   "machine with a newer GPU.")
+                   .arg(obtained.majorVersion())
+                   .arg(obtained.minorVersion())
+                   .arg(driver);
+    }
+
+    // Also to the log: the dialog cannot be read from a terminal or a bug report.
+    qCritical("%s: %s", qUtf8Printable(title), qUtf8Printable(body));
+    QMessageBox::critical(nullptr, title, body);
+}
+#endif
+
 } // namespace
 
 int main(int argc, char *argv[])
 {
+    forceStderrLogging();
     applyLogLevel(verboseLoggingRequested(argc, argv));
 
 #ifndef Q_OS_ANDROID
@@ -220,6 +351,22 @@ int main(int argc, char *argv[])
     // An explicit QT_QPA_PLATFORM from the environment still wins.
     if (qEnvironmentVariableIsEmpty("QT_QPA_PLATFORM"))
         qputenv("QT_QPA_PLATFORM", "windows:fontengine=freetype");
+
+    // Before allowing desktop OpenGL, Qt looks the GPU up in a blacklist keyed on
+    // the vendor and device id it gets from Direct3D 9. When that probe fails the
+    // ids come back 0x0000, which matches the list's "Standard VGA" entry, and Qt
+    // silently loads opengl32sw.dll instead — Mesa llvmpipe, OpenGL 3.0 at best.
+    // Qt Quick runs on 3.0, so the window looks fine while the compositor's 3.3
+    // floor fails and the preview stays black on cards that would have run it.
+    // The list also still bans a set of pre-2015 Intel parts outright. Skip the id
+    // lookup and let context creation decide: Qt's own testDesktopGL() still runs,
+    // so a machine that genuinely cannot do desktop GL still falls back.
+    // Anything the user set — including a custom buglist — still wins.
+    if (qEnvironmentVariableIsEmpty("QT_NO_OPENGL_BUGLIST")
+        && qEnvironmentVariableIsEmpty("QT_OPENGL")
+        && qEnvironmentVariableIsEmpty("QT_OPENGL_BUGLIST")) {
+        qputenv("QT_NO_OPENGL_BUGLIST", "1");
+    }
 #endif
 
     // Names must be set before reading QSettings for ui/scale, and QT_SCALE_FACTOR
@@ -249,6 +396,17 @@ int main(int argc, char *argv[])
     // qsTr/tr resolve when the QML engine loads, so translators must be installed first.
     // Protocol strings under src/mcp/ are excluded from the catalog; they stay English.
     AppController::installUiTranslators();
+
+#ifndef Q_OS_ANDROID
+    // The whole UI is a Qt Quick scene graph on OpenGL, so with no OpenGL at all
+    // there is no window to put an error in — the app would just appear not to
+    // start. That is reachable on Windows, where the packages no longer carry Qt's
+    // software rasterizer as a fallback. Deliberately narrow: this asks for no
+    // particular version, so it fires only when a context cannot be created at
+    // all. A driver that is merely too old still starts, and the preview explains
+    // itself in the panel instead.
+    warnIfNoOpenGl();
+#endif
 
     // Registering the bundled fonts needs a QGuiApplication, and must happen before the compositor
     // thread starts touching QFontDatabase.

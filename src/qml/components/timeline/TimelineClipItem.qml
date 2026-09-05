@@ -224,8 +224,9 @@ Item {
     function updateMovePreview() {
         if (!clipMouse.moving)
             return
-        // Keep linked/selected partners locked to this clip's live X.
-        panel.updateMoveFollow(x - clipMouse.moveOriginX)
+        // Keep linked/selected partners locked to this clip's live X and Y.
+        panel.updateMoveFollow(x - clipMouse.moveOriginX,
+                               y - Theme.clipSelectionRingWidth)
         const desired = Math.max(0, (x - Theme.clipSelectionRingWidth) / panel.pxPerSecond)
         const pos = mapToItem(timelineColumn, width / 2, height / 2)
         const targetTrack = panel.trackIndexAtY(pos.y)
@@ -241,21 +242,24 @@ Item {
                                               && !(panel.moveLeaderTrack === trackIndex
                                                    && panel.moveLeaderClip === clipIndex)
     readonly property real followOffsetX: moveFollowFollower ? panel.moveFollowDeltaX : 0
+    readonly property real followOffsetY: (moveFollowFollower && trackIndex === panel.moveLeaderTrack)
+                                          ? panel.moveFollowDeltaY : 0
 
     Binding {
         target: clipItem
         property: "x"
         when: !clipMouse.drag.active
-        value: clipItem.clipData.start * panel.pxPerSecond
-               + Theme.clipSelectionRingWidth
-               + clipItem.followOffsetX
+        value: Math.max(Theme.clipSelectionRingWidth,
+                        clipItem.clipData.start * panel.pxPerSecond
+                        + Theme.clipSelectionRingWidth
+                        + clipItem.followOffsetX)
     }
 
     Binding {
         target: clipItem
         property: "y"
         when: !clipMouse.drag.active
-        value: Theme.clipSelectionRingWidth
+        value: Theme.clipSelectionRingWidth + followOffsetY
     }
 
     // No `Behavior on y` here. A drop settle looks appealing but cannot work at this
@@ -270,7 +274,7 @@ Item {
     // neighbours for as long as the finger owns it.
     readonly property bool lifted: clipItem.touchMode
                                   && (clipMouse.moveArmed || clipMouse.drag.active)
-    z: lifted ? 10 : 0
+    z: (lifted || clipMouse.drag.active || (moveFollowFollower && Math.abs(followOffsetY) > 1)) ? 10 : 0
     scale: lifted ? 1.03 : 1.0
     Behavior on scale {
         NumberAnimation { duration: Theme.durationPress; easing.type: Theme.easing }
@@ -664,7 +668,14 @@ Item {
         drag.axis: Drag.XAndYAxis
         // Once armed the finger is already down and still, so any motion is the move.
         drag.threshold: clipItem.touchMode ? 0 : 8
-        drag.minimumX: Theme.clipSelectionRingWidth
+        drag.minimumX: {
+            if (clipItem.selected && EditorState.selection.length > 1) {
+                const earliest = EditorState.selectionEarliestStartSeconds()
+                const minStart = Math.max(0, (clipItem.clipData.start || 0) - earliest)
+                return minStart * panel.pxPerSecond + Theme.clipSelectionRingWidth
+            }
+            return Theme.clipSelectionRingWidth
+        }
         // Allow dropping onto any track, not just the immediate neighbours.
         drag.minimumY: -Math.max(clipItem.trackRow.height, panel.totalTracksHeight())
         drag.maximumY: Math.max(clipItem.trackRow.height * 2, panel.totalTracksHeight())
@@ -719,9 +730,9 @@ Item {
             // on release. Undefined on desktop, which has shift-click and the marquee.
             if (panel.multiSelectActive === true)
                 return
-            if ((mouse.modifiers & Qt.ShiftModifier) !== 0)
+            if ((mouse.modifiers & (Qt.ShiftModifier | Qt.ControlModifier)) !== 0)
                 EditorState.addToSelection(clipItem.trackIndex, clipItem.clipIndex)
-            else
+            else if (!wasSelected)
                 EditorState.selectClip(clipItem.trackIndex, clipItem.clipIndex)
             // Only when the press changed the selection. Tapping a clip that is already selected
             // does nothing, and onClicked is about to run this same branch again — ticking on both
@@ -754,7 +765,7 @@ Item {
                 Haptics.select()
                 return
             }
-            if ((mouse.modifiers & Qt.ShiftModifier) !== 0)
+            if ((mouse.modifiers & (Qt.ShiftModifier | Qt.ControlModifier)) !== 0)
                 EditorState.addToSelection(clipItem.trackIndex, clipItem.clipIndex)
             else
                 EditorState.selectClip(clipItem.trackIndex, clipItem.clipIndex)
@@ -878,7 +889,11 @@ Item {
             const moved = drag.active || didDrag
             // Armed but never moved: the hold was a request for the menu.
             const wantsMenu = clipItem.touchMode && moveArmed && !moved
-            didDrag = false
+            // NOTE: Keep didDrag true if moved so onClicked (which runs immediately after
+            // onReleased in Qt Quick) knows a drag happened and does not collapse the selection.
+            // didDrag is reset on the next onPressed or onCanceled.
+            if (!moved)
+                didDrag = false
             moving = false
             moveArmed = false
             // Clear follow before committing so partners don't keep the drag
@@ -913,7 +928,8 @@ Item {
                     moving = true
                     panel.beginMoveFollow(originTrack, originClip)
                 }
-                panel.updateMoveFollow(clipItem.x - moveOriginX)
+                panel.updateMoveFollow(clipItem.x - moveOriginX,
+                                       clipItem.y - Theme.clipSelectionRingWidth)
             }
         }
         onCanceled: {

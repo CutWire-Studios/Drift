@@ -451,6 +451,47 @@ QMutex g_previewImportMutex;
 GlRuntime::PreviewUploadPath g_previewUploadPath = GlRuntime::PreviewUploadPath::None;
 QString g_vaapiImportReason;
 
+// Its own mutex, not m_initMutex: initGlObjects() records the outcome while the
+// caller of ensureReady() still holds m_initMutex, and the debug report reads the
+// status from the GUI thread while that attempt is in flight.
+QMutex g_statusMutex;
+drift::gl::GlStatusInfo g_glStatus;
+
+void setGlStatus(const drift::gl::GlStatusInfo &info)
+{
+    QMutexLocker lock(&g_statusMutex);
+    g_glStatus = info;
+}
+
+void setGlStatus(drift::gl::GlStatus status)
+{
+    drift::gl::GlStatusInfo info;
+    info.status = status;
+    setGlStatus(info);
+}
+
+// The vendor/renderer/version the context actually landed on. Needs the context
+// current; `gl` may be null when the failure happened before functions resolved.
+drift::gl::GlStatusInfo describeContext(const QOpenGLContext *context, QOpenGLExtraFunctions *gl,
+                                        drift::gl::GlStatus status)
+{
+    drift::gl::GlStatusInfo info;
+    info.status = status;
+    if (context) {
+        info.isEs = context->isOpenGLES();
+        info.major = context->format().majorVersion();
+        info.minor = context->format().minorVersion();
+    }
+    if (gl) {
+        if (const char *vendor = reinterpret_cast<const char *>(gl->glGetString(GL_VENDOR)))
+            info.vendor = QString::fromUtf8(vendor);
+        if (const char *renderer = reinterpret_cast<const char *>(gl->glGetString(GL_RENDERER)))
+            info.renderer = QString::fromUtf8(renderer);
+    }
+    info.software = drift::gl::isSoftwareRenderer(info.renderer);
+    return info;
+}
+
 void recordPreviewUploadPath(GlRuntime::PreviewUploadPath path)
 {
     QMutexLocker lock(&g_previewImportMutex);
@@ -729,6 +770,7 @@ bool GlRuntime::initGlObjects()
 
     if (sharingRequired && !shared) {
         qWarning("GlRuntime: required global OpenGL share context is unavailable");
+        setGlStatus(drift::gl::GlStatus::NoShareContext);
         return false;
     }
 
@@ -750,12 +792,23 @@ bool GlRuntime::initGlObjects()
         format.setStencilBufferSize(0);
     }
 
+    // Not every platform hands out a real offscreen surface. QOffscreenSurface
+    // then falls back to a hidden QWindow, which cannot be created off the GUI
+    // thread — Qt warns "Attempting to create QWindow-based QOffscreenSurface
+    // outside the gui thread" and this fails. QtWayland takes that path when the
+    // EGL client-buffer integration is missing, which would explain a preview that
+    // is black on Wayland and fine on X11. Building it on the GUI thread instead
+    // is not as simple as it looks: the GUI thread also calls ensureReady(), and
+    // blocking on it from here while it waits on us deadlocks. So for now this
+    // reports SurfaceFailed and the debug report says so, which is what confirms
+    // the theory on an affected machine.
     surface = std::make_unique<QOffscreenSurface>();
     surface->setFormat(format);
     surface->create();
     if (!surface->isValid()) {
         qWarning("GlRuntime: failed to create offscreen surface");
         surface.reset();
+        setGlStatus(drift::gl::GlStatus::SurfaceFailed);
         return false;
     }
 
@@ -765,6 +818,7 @@ bool GlRuntime::initGlObjects()
     context->setFormat(format);
     if (!context->create()) {
         qWarning("GlRuntime: failed to create OpenGL context");
+        setGlStatus(describeContext(context.get(), nullptr, drift::gl::GlStatus::ContextFailed));
         context.reset();
         surface.reset();
         return false;
@@ -776,6 +830,8 @@ bool GlRuntime::initGlObjects()
 
     if (!context->makeCurrent(surface.get())) {
         qWarning("GlRuntime: makeCurrent failed on the GL thread");
+        setGlStatus(
+            describeContext(context.get(), nullptr, drift::gl::GlStatus::MakeCurrentFailed));
         context.reset();
         surface.reset();
         return false;
@@ -784,7 +840,10 @@ bool GlRuntime::initGlObjects()
     auto *gl = context->extraFunctions();
     if (!gl) {
         qWarning("GlRuntime: OpenGL extra functions unavailable");
+        setGlStatus(describeContext(context.get(), nullptr, drift::gl::GlStatus::NoFunctions));
         context->doneCurrent();
+        context.reset();
+        surface.reset();
         return false;
     }
 
@@ -799,6 +858,7 @@ bool GlRuntime::initGlObjects()
                   isEs ? " ES" : "", major, minor,
                   reinterpret_cast<const char *>(gl->glGetString(GL_VENDOR)),
                   reinterpret_cast<const char *>(gl->glGetString(GL_RENDERER)));
+        setGlStatus(describeContext(context.get(), gl, drift::gl::GlStatus::VersionTooLow));
         context->doneCurrent();
         context.reset();
         surface.reset();
@@ -824,11 +884,18 @@ bool GlRuntime::initGlObjects()
                                                  translateShader(kCopyFragShader, true))
         || !copyProgram->link()) {
         qWarning("GlRuntime: copy shader failed: %s", qPrintable(copyProgram->log()));
+        drift::gl::GlStatusInfo info =
+            describeContext(context.get(), gl, drift::gl::GlStatus::ShaderLinkFailed);
+        info.detail = copyProgram->log();
+        setGlStatus(info);
         copyProgram.reset();
         context->doneCurrent();
+        context.reset();
+        surface.reset();
         return false;
     }
 
+    setGlStatus(describeContext(context.get(), gl, drift::gl::GlStatus::Ready));
     context->doneCurrent();
     return true;
 }
@@ -836,14 +903,36 @@ bool GlRuntime::initGlObjects()
 bool GlRuntime::ensureReady()
 {
     QMutexLocker lock(&m_initMutex);
-    if (m_initTried)
-        return m_ok;
-    m_initTried = true;
+    if (m_ok)
+        return true;
+    if (m_failedPermanently)
+        return false;
 
     if (!QCoreApplication::instance()) {
         qWarning("GlRuntime: no QCoreApplication; OpenGL unavailable");
+        setGlStatus(drift::gl::GlStatus::NoApplication);
         return false;
     }
+
+    // Qt Quick builds the global share context when the first QQuickWindow
+    // initialises, so a composite requested during startup can arrive before one
+    // exists. That is not a verdict on the machine, and it used to end the
+    // session's preview: check it here, before spending a thread and a context on
+    // an attempt that cannot succeed yet, and leave nothing latched.
+    if (QCoreApplication::testAttribute(Qt::AA_ShareOpenGLContexts)) {
+        const QOpenGLContext *shared = QOpenGLContext::globalShareContext();
+        if (!shared || !shared->isValid()) {
+            setGlStatus(drift::gl::GlStatus::NoShareContext);
+            return false;
+        }
+    }
+
+    // Bring-up is expensive and callers ask once per composite request. If it
+    // fails for a reason worth retrying, do not retry it at frame rate.
+    constexpr int kRetryIntervalMs = 250;
+    if (m_lastAttempt.isValid() && m_lastAttempt.elapsed() < kRetryIntervalMs)
+        return false;
+    m_lastAttempt.start();
 
     m_glThread = new QThread;
     m_glThread->setObjectName(QStringLiteral("DriftGL"));
@@ -857,17 +946,26 @@ bool GlRuntime::ensureReady()
         m_glOwner, [this] { return initGlObjects(); }, Qt::BlockingQueuedConnection, &initialized);
 
     if (!initialized) {
-        delete m_glOwner;
-        m_glOwner = nullptr;
+        // Stop the thread before deleting the object that lives on it — deleting a
+        // QObject from a thread other than its own is undefined behaviour.
         m_glThread->quit();
         m_glThread->wait();
+        delete m_glOwner;
+        m_glOwner = nullptr;
         delete m_glThread;
         m_glThread = nullptr;
+        m_failedPermanently = !drift::gl::isTransient(GlRuntime::lastStatus().status);
         return false;
     }
 
     m_ok = true;
     return m_ok;
+}
+
+drift::gl::GlStatusInfo GlRuntime::lastStatus()
+{
+    QMutexLocker lock(&g_statusMutex);
+    return g_glStatus;
 }
 
 bool GlRuntime::available()
@@ -994,6 +1092,7 @@ void GlRuntime::shutdown()
     context.reset();
     surface.reset();
     m_ok = false;
+    setGlStatus(drift::gl::GlStatus::NotAttempted);
 }
 
 

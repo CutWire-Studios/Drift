@@ -890,6 +890,10 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>GPU preview unavailable</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Fit</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1926,6 +1930,18 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Your graphics driver is too old for the preview, which needs OpenGL 3.3. See Help → Debug info.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Your graphics driver only provides %1; the preview needs OpenGL 3.3. See Help → Debug info.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>GPU preview rendering is unavailable on this machine. See Help → Debug info.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>An edit is already saving</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1955,6 +1971,10 @@
     </message>
     <message>
         <source>Media edited</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Clips moved</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -5274,6 +5294,10 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>GPU preview unavailable — see Help → Debug info</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Program</source>
         <translation type="unfinished"></translation>
     </message>
@@ -5390,6 +5414,22 @@
     </message>
     <message>
         <source>Import media and drag it onto the timeline below to see it here.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>GPU preview unavailable</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Your graphics driver only provides %1. Drift&apos;s preview needs OpenGL 3.3.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Drift could not start its GPU renderer, so the preview cannot draw.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Debug info</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -8668,6 +8708,43 @@ If playback stutters, try another.</source>
     <message>
         <source>Close</source>
         <translation type="unfinished">关闭</translation>
+    </message>
+</context>
+<context>
+    <name>main</name>
+    <message>
+        <source>unknown</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No OpenGL driver</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Drift could not create an OpenGL context, so it cannot draw its interface or render the preview.
+
+Install or update your graphics driver.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>OpenGL context unavailable</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Drift could not create an OpenGL 3.3 core profile context, though this driver reports OpenGL %1.%2 (%3).
+
+The video preview cannot render. Updating your graphics driver may help.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Graphics driver is too old</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Drift needs OpenGL 3.3, but this graphics driver only provides OpenGL %1.%2 (%3).
+
+The video preview cannot render, and Drift may not start at all. Update your graphics driver, or run Drift on a machine with a newer GPU.</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 </TS>

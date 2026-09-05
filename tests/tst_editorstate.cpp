@@ -125,6 +125,9 @@ private slots:
     void multicamProviderServesTilesByAngleIdWithRevisionQuery();
     void multicamSetUpBuildsAWorkingRigFromTheBin();
     void adjustmentLayerCreationAndCompositing();
+    void multiClipMoveLeftPreservesSelectionAndRelativeSpacing();
+    void multiClipMoveCrossTracks();
+    void multiClipMoveCrossTracksWithLinkedPartners();
 };
 
 void EditorStateTest::snapTimeEnabled()
@@ -3558,5 +3561,220 @@ void EditorStateTest::adjustmentLayerCreationAndCompositing()
     QCOMPARE(tail.effects.size(), 1);
 }
 
+void EditorStateTest::multiClipMoveLeftPreservesSelectionAndRelativeSpacing()
+{
+    AssetLibrary library;
+    AppController state(&library);
+
+    // Create 3 clips on track 0:
+    // Clip 0 at 1.0s (duration 2.0s, spans 1.0..3.0s)
+    // Clip 1 at 7.0s (duration 2.0s, spans 7.0..9.0s)
+    // Clip 2 at 10.0s (duration 2.0s, spans 10.0..12.0s)
+    state.addAdjustmentClip(1.0, 2.0);
+    state.addAdjustmentClip(7.0, 2.0);
+    state.addAdjustmentClip(10.0, 2.0);
+
+    QCOMPARE(state.project()->tracks().at(0).clips.size(), 3);
+    QCOMPARE(state.project()->tracks().at(0).clips.at(0).timelineStart, drift::secondsToUs(1.0));
+    QCOMPARE(state.project()->tracks().at(0).clips.at(1).timelineStart, drift::secondsToUs(7.0));
+    QCOMPARE(state.project()->tracks().at(0).clips.at(2).timelineStart, drift::secondsToUs(10.0));
+
+    // Select Clip 1 and Clip 2
+    state.selectClip(0, 1);
+    state.addToSelection(0, 2);
+    QCOMPARE(state.selection().size(), 2);
+    QCOMPARE(state.selectionEarliestStartSeconds(), 7.0);
+
+    // Move Clip 1 left from 7.0s to 5.0s (delta = -2.0s).
+    // Clip 1 should move to 5.0s, Clip 2 should move to 8.0s.
+    // Clip 0 (not in selection) must remain untouched at 1.0s.
+    state.moveClip(0, 1, 5.0);
+    QCOMPARE(state.project()->tracks().at(0).clips.at(0).timelineStart, drift::secondsToUs(1.0));
+    QCOMPARE(state.project()->tracks().at(0).clips.at(1).timelineStart, drift::secondsToUs(5.0));
+    QCOMPARE(state.project()->tracks().at(0).clips.at(2).timelineStart, drift::secondsToUs(8.0));
+
+    // Select all 3 clips
+    state.selectClip(0, 0);
+    state.addToSelection(0, 1);
+    state.addToSelection(0, 2);
+    QCOMPARE(state.selection().size(), 3);
+    QCOMPARE(state.selectionEarliestStartSeconds(), 1.0);
+
+    // Move Clip 2 left from 8.0s to 7.0s (delta = -1.0s).
+    // All 3 clips should move left together by 1.0s:
+    // Clip 0: 1.0s -> 0.0s (reaches timeline start)
+    // Clip 1: 5.0s -> 4.0s
+    // Clip 2: 8.0s -> 7.0s
+    state.moveClip(0, 2, 7.0);
+    QCOMPARE(state.project()->tracks().at(0).clips.at(0).timelineStart, drift::secondsToUs(0.0));
+    QCOMPARE(state.project()->tracks().at(0).clips.at(1).timelineStart, drift::secondsToUs(4.0));
+    QCOMPARE(state.project()->tracks().at(0).clips.at(2).timelineStart, drift::secondsToUs(7.0));
+    QCOMPARE(state.selectionEarliestStartSeconds(), 0.0);
+
+    // Test undo/redo
+    state.undo();
+    QCOMPARE(state.project()->tracks().at(0).clips.at(0).timelineStart, drift::secondsToUs(1.0));
+    QCOMPARE(state.project()->tracks().at(0).clips.at(1).timelineStart, drift::secondsToUs(5.0));
+    QCOMPARE(state.project()->tracks().at(0).clips.at(2).timelineStart, drift::secondsToUs(8.0));
+    state.redo();
+    QCOMPARE(state.project()->tracks().at(0).clips.at(0).timelineStart, drift::secondsToUs(0.0));
+    QCOMPARE(state.project()->tracks().at(0).clips.at(1).timelineStart, drift::secondsToUs(4.0));
+    QCOMPARE(state.project()->tracks().at(0).clips.at(2).timelineStart, drift::secondsToUs(7.0));
+
+    // Now try to move Clip 1 left from 4.0s to 2.0s (delta = -2.0s).
+    // Since earliest clip (Clip 0) is already at 0.0s, the group delta is clamped to 0.
+    // All clips stay at their current positions (0.0s, 4.0s, 7.0s).
+    // None should collapse or overlap!
+    state.moveClip(0, 1, 2.0);
+    QCOMPARE(state.project()->tracks().at(0).clips.at(0).timelineStart, drift::secondsToUs(0.0));
+    QCOMPARE(state.project()->tracks().at(0).clips.at(1).timelineStart, drift::secondsToUs(4.0));
+    QCOMPARE(state.project()->tracks().at(0).clips.at(2).timelineStart, drift::secondsToUs(7.0));
+    QCOMPARE(state.selectionEarliestStartSeconds(), 0.0);
+}
+
+void EditorStateTest::multiClipMoveCrossTracks()
+{
+    AssetLibrary library;
+    AppController state(&library);
+
+    // Add a second video track so there are two tracks (Track 0 and Track 1)
+    state.addTrack(QStringLiteral("video"));
+    QCOMPARE(state.project()->tracks().size(), 2);
+
+    // Track 0 has 2 adjustment clips:
+    // Clip 0: start 2.0s, dur 2.0s
+    // Clip 1: start 6.0s, dur 2.0s
+    state.addAdjustmentClipAt(0, 2.0, 2.0);
+    state.addAdjustmentClipAt(0, 6.0, 2.0);
+
+    QCOMPARE(state.project()->tracks().at(0).clips.size(), 2);
+    QCOMPARE(state.project()->tracks().at(1).clips.size(), 0);
+
+    // Select both clips on Track 0
+    state.selectClip(0, 0);
+    state.addToSelection(0, 1);
+    QCOMPARE(state.selection().size(), 2);
+
+    // Drag both clips from Track 0 down to Track 1, shifting right by 1.0s (start 2.0 -> 3.0)
+    state.moveClipToTrack(0, 0, 1, 3.0);
+
+    // Verify both clips moved to Track 1
+    QCOMPARE(state.project()->tracks().at(0).clips.size(), 0);
+    QCOMPARE(state.project()->tracks().at(1).clips.size(), 2);
+    QCOMPARE(state.project()->tracks().at(1).clips.at(0).timelineStart, drift::secondsToUs(3.0));
+    QCOMPARE(state.project()->tracks().at(1).clips.at(1).timelineStart, drift::secondsToUs(7.0));
+
+    // Verify selection follows to Track 1
+    QCOMPARE(state.selection().size(), 2);
+    QCOMPARE(state.selection().at(0).toMap().value("track").toInt(), 1);
+    QCOMPARE(state.selection().at(1).toMap().value("track").toInt(), 1);
+
+    // Undo restores to Track 0
+    state.undo();
+    QCOMPARE(state.project()->tracks().at(0).clips.size(), 2);
+    QCOMPARE(state.project()->tracks().at(1).clips.size(), 0);
+    QCOMPARE(state.project()->tracks().at(0).clips.at(0).timelineStart, drift::secondsToUs(2.0));
+    QCOMPARE(state.project()->tracks().at(0).clips.at(1).timelineStart, drift::secondsToUs(6.0));
+
+    // Redo puts both back on Track 1
+    state.redo();
+    QCOMPARE(state.project()->tracks().at(0).clips.size(), 0);
+    QCOMPARE(state.project()->tracks().at(1).clips.size(), 2);
+    QCOMPARE(state.project()->tracks().at(1).clips.at(0).timelineStart, drift::secondsToUs(3.0));
+    QCOMPARE(state.project()->tracks().at(1).clips.at(1).timelineStart, drift::secondsToUs(7.0));
+}
+
+void EditorStateTest::multiClipMoveCrossTracksWithLinkedPartners()
+{
+    AssetLibrary library;
+    AppController state(&library);
+
+    // Track 0: Video (default)
+    // Track 1: Audio
+    // Track 2: Video
+    state.addTrack(QStringLiteral("audio"));
+    state.addTrack(QStringLiteral("video"));
+    QCOMPARE(state.project()->tracks().size(), 3);
+
+    // Build 2 video clips on Track 0, each with a linked audio companion on Track 1
+    drift::Clip v1;
+    v1.id = QStringLiteral("v1");
+    v1.linkId = QStringLiteral("link-1");
+    v1.type = drift::ClipType::Video;
+    v1.timelineStart = drift::secondsToUs(2.0);
+    v1.timelineDuration = drift::secondsToUs(2.0);
+    state.project()->tracks()[0].clips.append(v1);
+
+    drift::Clip a1;
+    a1.id = QStringLiteral("a1");
+    a1.linkId = QStringLiteral("link-1");
+    a1.type = drift::ClipType::Audio;
+    a1.timelineStart = drift::secondsToUs(2.0);
+    a1.timelineDuration = drift::secondsToUs(2.0);
+    state.project()->tracks()[1].clips.append(a1);
+
+    drift::Clip v2;
+    v2.id = QStringLiteral("v2");
+    v2.linkId = QStringLiteral("link-2");
+    v2.type = drift::ClipType::Video;
+    v2.timelineStart = drift::secondsToUs(6.0);
+    v2.timelineDuration = drift::secondsToUs(2.0);
+    state.project()->tracks()[0].clips.append(v2);
+
+    drift::Clip a2;
+    a2.id = QStringLiteral("a2");
+    a2.linkId = QStringLiteral("link-2");
+    a2.type = drift::ClipType::Audio;
+    a2.timelineStart = drift::secondsToUs(6.0);
+    a2.timelineDuration = drift::secondsToUs(2.0);
+    state.project()->tracks()[1].clips.append(a2);
+
+    // Select v1 and v2 on Track 0 (which brings their linked companions into selection)
+    state.selectClip(0, 0);
+    state.addToSelection(0, 1);
+    // Selection should now have all 4 clips (2 video on Track 0, 2 audio on Track 1)
+    QCOMPARE(state.selection().size(), 4);
+
+    // Drag from Track 0 to Track 2, moving start 2.0 -> 3.0s (+1.0s)
+    state.moveClipToTrack(0, 0, 2, 3.0);
+
+    // Verify video clips moved to Track 2, while audio companions STAYED on Track 1
+    QCOMPARE(state.project()->tracks().at(0).clips.size(), 0);
+    QCOMPARE(state.project()->tracks().at(1).clips.size(), 2);
+    QCOMPARE(state.project()->tracks().at(2).clips.size(), 2);
+
+    // Video clips on Track 2 at 3.0s and 7.0s
+    QCOMPARE(state.project()->tracks().at(2).clips.at(0).timelineStart, drift::secondsToUs(3.0));
+    QCOMPARE(state.project()->tracks().at(2).clips.at(1).timelineStart, drift::secondsToUs(7.0));
+
+    // Audio companions on Track 1 at 3.0s and 7.0s
+    QCOMPARE(state.project()->tracks().at(1).clips.at(0).timelineStart, drift::secondsToUs(3.0));
+    QCOMPARE(state.project()->tracks().at(1).clips.at(1).timelineStart, drift::secondsToUs(7.0));
+
+    // Selection has 4 clips across Track 2 and Track 1
+    QCOMPARE(state.selection().size(), 4);
+
+    // Test Undo
+    state.undo();
+    QCOMPARE(state.project()->tracks().at(0).clips.size(), 2);
+    QCOMPARE(state.project()->tracks().at(1).clips.size(), 2);
+    QCOMPARE(state.project()->tracks().at(2).clips.size(), 0);
+    QCOMPARE(state.project()->tracks().at(0).clips.at(0).timelineStart, drift::secondsToUs(2.0));
+    QCOMPARE(state.project()->tracks().at(0).clips.at(1).timelineStart, drift::secondsToUs(6.0));
+    QCOMPARE(state.project()->tracks().at(1).clips.at(0).timelineStart, drift::secondsToUs(2.0));
+    QCOMPARE(state.project()->tracks().at(1).clips.at(1).timelineStart, drift::secondsToUs(6.0));
+
+    // Test Redo
+    state.redo();
+    QCOMPARE(state.project()->tracks().at(0).clips.size(), 0);
+    QCOMPARE(state.project()->tracks().at(1).clips.size(), 2);
+    QCOMPARE(state.project()->tracks().at(2).clips.size(), 2);
+    QCOMPARE(state.project()->tracks().at(2).clips.at(0).timelineStart, drift::secondsToUs(3.0));
+    QCOMPARE(state.project()->tracks().at(2).clips.at(1).timelineStart, drift::secondsToUs(7.0));
+    QCOMPARE(state.project()->tracks().at(1).clips.at(0).timelineStart, drift::secondsToUs(3.0));
+    QCOMPARE(state.project()->tracks().at(1).clips.at(1).timelineStart, drift::secondsToUs(7.0));
+}
+
 QTEST_MAIN(EditorStateTest)
 #include "tst_editorstate.moc"
+
