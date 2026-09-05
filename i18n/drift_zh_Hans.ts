@@ -2818,6 +2818,14 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Failed to open Premiere Pro project</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Premiere Pro project imported: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Exporting…</source>
         <translation type="unfinished"></translation>
     </message>
@@ -3847,6 +3855,14 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Premiere Pro project (*.prproj)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Final Cut Pro XML (*.xml)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Open Project</source>
         <translation type="unfinished"></translation>
     </message>
@@ -3864,6 +3880,14 @@
     </message>
     <message>
         <source>Open Project JSON</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Import Premiere Pro Project</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Premiere Pro project (*.prproj *.xml)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -3968,6 +3992,10 @@
     </message>
     <message>
         <source>Multicam</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>All Supported Projects (*.drift *.prproj *.xml)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -6206,6 +6234,38 @@ If playback stutters, try another.</source>
         <source>Scanning frame %1 of %2…</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>Clip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cannot open file: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>File is empty</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Failed to decompress Premiere project archive</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>XML parse error at line %1: %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Imported Premiere Project</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>V%1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>A%1</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>RecentProjectsPopup</name>
@@ -6256,6 +6316,10 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Open JSON…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Import Premiere project…</source>
         <translation type="unfinished"></translation>
     </message>
     <message>

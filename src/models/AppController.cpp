@@ -7,6 +7,7 @@
 #include "core/Mask.h"
 #include "core/SpeedCurve.h"
 #include "core/Stabilize.h"
+#include "core/PrprojReader.h"
 #include "core/ShapePath.h"
 #include "core/SubtitleCue.h"
 #include "core/SrtIO.h"
@@ -14668,6 +14669,42 @@ void AppController::loadProjectJson(const QUrl &url)
     setLastMessage(tr("Project JSON loaded"), QStringLiteral("success"));
 }
 
+void AppController::loadPremiereProject(const QUrl &url)
+{
+    const QString path = readTargetPath(url);
+    if (path.isEmpty()) {
+        setLastMessage(tr("That project location isn’t valid"), QStringLiteral("error"));
+        return;
+    }
+
+    QString readError;
+    const std::optional<drift::Project> proj = drift::prproj::readProject(path, &readError);
+    if (!proj) {
+        setLastMessage(readError.isEmpty() ? tr("Failed to open Premiere Pro project") : readError,
+                       QStringLiteral("error"));
+        return;
+    }
+
+    // Drop an in-flight bundle extract so it cannot land on top of this document.
+    ++m_loadGeneration;
+
+    const QByteArray data = QJsonDocument(proj->toJson()).toJson(QJsonDocument::Compact);
+
+    QString error;
+    if (!applyProjectJson(data, &error)) {
+        setLastMessage(error, QStringLiteral("error"));
+        return;
+    }
+
+    m_embeddedSources.clear();
+    // Untitled: Save must not write a .drift bundle over this .prproj, and recents stay .drift.
+    setCurrentProjectPath(QString());
+    setDirty(true);
+    deleteRecoveryFile();
+    setProjectLayoutChosen(true);
+    setLastMessage(tr("Premiere Pro project imported: %1").arg(proj->name()), QStringLiteral("success"));
+}
+
 void AppController::packageProject(const QUrl &url)
 {
     // The bundle writer needs a real file to seek in, so on Android this stages into app storage
@@ -14763,6 +14800,13 @@ void AppController::loadProject(const QUrl &url)
     const QString path = readTargetPath(url);
     if (path.isEmpty()) {
         setLastMessage(tr("That project location isn’t valid"), QStringLiteral("error"));
+        return;
+    }
+
+    if (path.endsWith(QLatin1String(".prproj"), Qt::CaseInsensitive)
+        || path.endsWith(QLatin1String(".xml"), Qt::CaseInsensitive)
+        || drift::prproj::isPremiereProject(path)) {
+        loadPremiereProject(url);
         return;
     }
 

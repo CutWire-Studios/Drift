@@ -1108,6 +1108,9 @@ public:
     // Save cannot overwrite the .json with a .drift bundle. loadProject routes here when the file
     // is JSON, so a dropped / CLI / MCP path works without a second entry point.
     Q_INVOKABLE void loadProjectJson(const QUrl &url);
+    // Imports an Adobe Premiere Pro project (.prproj) or Final Cut Pro XML (.xml),
+    // mapping sequences, video/audio tracks, clips, in/out trimming, and media assets.
+    Q_INVOKABLE void loadPremiereProject(const QUrl &url);
     Q_INVOKABLE void cancelPackage();
     Q_INVOKABLE void loadProject(const QUrl &url);
     Q_INVOKABLE void newProject();

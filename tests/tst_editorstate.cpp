@@ -17,6 +17,7 @@
 #include <QClipboard>
 #include <QGuiApplication>
 #include <QJsonDocument>
+#include <zlib.h>
 
 #include "engine/HwAccel.h"
 #include "engine/FrameCompositor.h"
@@ -77,6 +78,8 @@ private slots:
     void projectPersistenceRoundTrip();
     void projectJsonExportImportRoundTrip();
     void projectJsonImportRejectsGarbageAndLeavesTimeline();
+    void premiereProjectImportPrproj();
+    void premiereProjectImportFcpXml();
     void newProjectClearsEverything();
     void projectSetupOnPristineProjectStaysClean();
     void projectFpsCanChangeAfterSetup();
@@ -998,6 +1001,257 @@ void EditorStateTest::projectJsonImportRejectsGarbageAndLeavesTimeline()
     QCOMPARE(state.lastMessage(), QStringLiteral("This file isn’t a Drift project."));
     QCOMPARE(state.tracks().size(), 2);
     QCOMPARE(state.tracks().at(0).toMap().value(QStringLiteral("clips")).toList().size(), 1);
+}
+
+namespace {
+QByteArray gzipCompressForTest(const QByteArray &data)
+{
+    z_stream strm;
+    std::memset(&strm, 0, sizeof(strm));
+    deflateInit2(&strm, Z_DEFAULT_COMPRESSION, Z_DEFLATED, 31, 8, Z_DEFAULT_STRATEGY);
+    strm.next_in = reinterpret_cast<Bytef *>(const_cast<char *>(data.constData()));
+    strm.avail_in = static_cast<uInt>(data.size());
+
+    QByteArray out;
+    char buffer[16384];
+    int ret = Z_OK;
+    while (ret != Z_STREAM_END) {
+        strm.next_out = reinterpret_cast<Bytef *>(buffer);
+        strm.avail_out = sizeof(buffer);
+        ret = deflate(&strm, Z_FINISH);
+        out.append(buffer, sizeof(buffer) - strm.avail_out);
+    }
+    deflateEnd(&strm);
+    return out;
+}
+} // namespace
+
+void EditorStateTest::premiereProjectImportPrproj()
+{
+    AssetLibrary library;
+    AppController state(&library);
+
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    const QString prprojPath = dir.filePath(QStringLiteral("test_project.prproj"));
+
+    const QString xml = QStringLiteral(
+        "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+        "<PremiereData Version=\"3\">\n"
+        "  <Project ObjectID=\"1\">\n"
+        "    <Name>Premiere Test Project</Name>\n"
+        "  </Project>\n"
+        "  <Sequence ObjectID=\"2\">\n"
+        "    <Name>Sequence 1</Name>\n"
+        "    <VideoCanvasWidth>3840</VideoCanvasWidth>\n"
+        "    <VideoCanvasHeight>2160</VideoCanvasHeight>\n"
+        "    <Timebase>4233600000</Timebase>\n"
+        "    <TrackGroups>\n"
+        "      <TrackGroup ObjectRef=\"10\"/>\n"
+        "      <TrackGroup ObjectRef=\"11\"/>\n"
+        "    </TrackGroups>\n"
+        "  </Sequence>\n"
+        "  <TrackGroup ObjectID=\"10\">\n"
+        "    <MediaType>228cda6f-b111-49a9-9904-32ab2e6577b5</MediaType>\n"
+        "    <Name>Video</Name>\n"
+        "    <Tracks>\n"
+        "      <Track ObjectRef=\"20\"/>\n"
+        "    </Tracks>\n"
+        "  </TrackGroup>\n"
+        "  <TrackGroup ObjectID=\"11\">\n"
+        "    <MediaType>c8ee8ef5-0814-49ee-b4c6-be11311ff12e</MediaType>\n"
+        "    <Name>Audio</Name>\n"
+        "    <Tracks>\n"
+        "      <Track ObjectRef=\"21\"/>\n"
+        "    </Tracks>\n"
+        "  </TrackGroup>\n"
+        "  <Track ObjectID=\"20\">\n"
+        "    <Name>Video 1</Name>\n"
+        "    <TrackItems>\n"
+        "      <TrackItem ObjectRef=\"30\"/>\n"
+        "      <TrackItem ObjectRef=\"31\"/>\n"
+        "    </TrackItems>\n"
+        "  </Track>\n"
+        "  <Track ObjectID=\"21\">\n"
+        "    <Name>Audio 1</Name>\n"
+        "    <TrackItems>\n"
+        "      <TrackItem ObjectRef=\"32\"/>\n"
+        "    </TrackItems>\n"
+        "  </Track>\n"
+        "  <TrackItem ObjectID=\"30\">\n"
+        "    <Name>Intro.mp4</Name>\n"
+        "    <Start>0</Start>\n"
+        "    <End>1270080000000</End>\n"
+        "    <In>0</In>\n"
+        "    <Out>1270080000000</Out>\n"
+        "    <SubClip ObjectRef=\"40\"/>\n"
+        "  </TrackItem>\n"
+        "  <TrackItem ObjectID=\"31\">\n"
+        "    <Name>Adjustment Layer</Name>\n"
+        "    <Start>1270080000000</Start>\n"
+        "    <End>2540160000000</End>\n"
+        "    <In>0</In>\n"
+        "    <Out>2540160000000</Out>\n"
+        "    <IsAdjustmentLayer>true</IsAdjustmentLayer>\n"
+        "  </TrackItem>\n"
+        "  <TrackItem ObjectID=\"32\">\n"
+        "    <Name>Voice.mp3</Name>\n"
+        "    <Start>0</Start>\n"
+        "    <End>2540160000000</End>\n"
+        "    <In>0</In>\n"
+        "    <Out>2540160000000</Out>\n"
+        "    <SubClip ObjectRef=\"41\"/>\n"
+        "  </TrackItem>\n"
+        "  <SubClip ObjectID=\"40\">\n"
+        "    <MasterClip ObjectRef=\"50\"/>\n"
+        "  </SubClip>\n"
+        "  <MasterClip ObjectID=\"50\">\n"
+        "    <Media ObjectRef=\"60\"/>\n"
+        "  </MasterClip>\n"
+        "  <Media ObjectID=\"60\">\n"
+        "    <ActualMediaFilePath>/Footage/Intro.mp4</ActualMediaFilePath>\n"
+        "  </Media>\n"
+        "  <SubClip ObjectID=\"41\">\n"
+        "    <MasterClip ObjectRef=\"51\"/>\n"
+        "  </SubClip>\n"
+        "  <MasterClip ObjectID=\"51\">\n"
+        "    <Media ObjectRef=\"61\"/>\n"
+        "  </MasterClip>\n"
+        "  <Media ObjectID=\"61\">\n"
+        "    <ActualMediaFilePath>/Audio/Voice.mp3</ActualMediaFilePath>\n"
+        "  </Media>\n"
+        "</PremiereData>\n");
+
+    const QByteArray compressed = gzipCompressForTest(xml.toUtf8());
+    {
+        QFile file(prprojPath);
+        QVERIFY(file.open(QIODevice::WriteOnly));
+        file.write(compressed);
+    }
+
+    state.loadProject(QUrl::fromLocalFile(prprojPath));
+    QCOMPARE(state.project()->name(), QStringLiteral("Premiere Test Project"));
+    QCOMPARE(state.project()->width(), 3840);
+    QCOMPARE(state.project()->height(), 2160);
+    QCOMPARE(state.project()->fps(), 60);
+    QCOMPARE(state.tracks().size(), 2);
+
+    // Track 0: Video with Intro.mp4 (5s) and Adjustment Layer (5s)
+    const auto vTrack = state.tracks().at(0).toMap();
+    const auto vClips = vTrack.value(QStringLiteral("clips")).toList();
+    QCOMPARE(vClips.size(), 2);
+    const auto clip0 = vClips.at(0).toMap();
+    QCOMPARE(clip0.value(QStringLiteral("name")).toString(), QStringLiteral("Intro.mp4"));
+    QCOMPARE(clip0.value(QStringLiteral("kind")).toString(), QStringLiteral("video"));
+    QCOMPARE(clip0.value(QStringLiteral("duration")).toDouble(), 5.0);
+    QCOMPARE(state.project()->tracks().at(0).clips.at(0).type, drift::ClipType::Video);
+    QCOMPARE(state.project()->tracks().at(0).clips.at(0).timelineDuration, 5000000LL);
+
+    const auto clip1 = vClips.at(1).toMap();
+    QCOMPARE(clip1.value(QStringLiteral("name")).toString(), QStringLiteral("Adjustment Layer"));
+    QCOMPARE(clip1.value(QStringLiteral("kind")).toString(), QStringLiteral("adjustment"));
+    QCOMPARE(clip1.value(QStringLiteral("duration")).toDouble(), 5.0);
+    QCOMPARE(state.project()->tracks().at(0).clips.at(1).type, drift::ClipType::Adjustment);
+    QCOMPARE(state.project()->tracks().at(0).clips.at(1).timelineDuration, 5000000LL);
+
+    // Track 1: Audio with Voice.mp3 (10s)
+    const auto aTrack = state.tracks().at(1).toMap();
+    const auto aClips = aTrack.value(QStringLiteral("clips")).toList();
+    QCOMPARE(aClips.size(), 1);
+    const auto aClip0 = aClips.at(0).toMap();
+    QCOMPARE(aClip0.value(QStringLiteral("name")).toString(), QStringLiteral("Voice.mp3"));
+    QCOMPARE(aClip0.value(QStringLiteral("kind")).toString(), QStringLiteral("audio"));
+    QCOMPARE(aClip0.value(QStringLiteral("duration")).toDouble(), 10.0);
+    QCOMPARE(state.project()->tracks().at(1).clips.at(0).type, drift::ClipType::Audio);
+    QCOMPARE(state.project()->tracks().at(1).clips.at(0).timelineDuration, 10000000LL);
+
+    // Imported project is dirty and untitled (needs Save As)
+    QVERIFY(state.hasUnsavedChanges());
+    QVERIFY(state.currentProjectPath().isEmpty());
+}
+
+void EditorStateTest::premiereProjectImportFcpXml()
+{
+    AssetLibrary library;
+    AppController state(&library);
+
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    const QString xmlPath = dir.filePath(QStringLiteral("timeline.xml"));
+
+    const QString xml = QStringLiteral(
+        "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+        "<xmeml version=\"5\">\n"
+        "  <sequence>\n"
+        "    <name>FCP Sequence</name>\n"
+        "    <rate>\n"
+        "      <timebase>24</timebase>\n"
+        "    </rate>\n"
+        "    <media>\n"
+        "      <video>\n"
+        "        <format>\n"
+        "          <samplecharacteristics>\n"
+        "            <width>1280</width>\n"
+        "            <height>720</height>\n"
+        "          </samplecharacteristics>\n"
+        "        </format>\n"
+        "        <track>\n"
+        "          <clipitem id=\"clip-1\">\n"
+        "            <name>Scene1.mp4</name>\n"
+        "            <start>0</start>\n"
+        "            <end>48</end>\n"
+        "            <in>0</in>\n"
+        "            <out>48</out>\n"
+        "            <file id=\"f-1\">\n"
+        "              <pathurl>file://localhost/media/Scene1.mp4</pathurl>\n"
+        "            </file>\n"
+        "          </clipitem>\n"
+        "        </track>\n"
+        "      </video>\n"
+        "      <audio>\n"
+        "        <track>\n"
+        "          <clipitem id=\"clip-2\">\n"
+        "            <name>Voiceover.wav</name>\n"
+        "            <start>0</start>\n"
+        "            <end>96</end>\n"
+        "            <in>0</in>\n"
+        "            <out>96</out>\n"
+        "            <file id=\"f-2\">\n"
+        "              <pathurl>file://localhost/media/Voiceover.wav</pathurl>\n"
+        "            </file>\n"
+        "          </clipitem>\n"
+        "        </track>\n"
+        "      </audio>\n"
+        "    </media>\n"
+        "  </sequence>\n"
+        "</xmeml>\n");
+
+    {
+        QFile file(xmlPath);
+        QVERIFY(file.open(QIODevice::WriteOnly));
+        file.write(xml.toUtf8());
+    }
+
+    state.loadProject(QUrl::fromLocalFile(xmlPath));
+    QCOMPARE(state.project()->name(), QStringLiteral("FCP Sequence"));
+    QCOMPARE(state.project()->width(), 1280);
+    QCOMPARE(state.project()->height(), 720);
+    QCOMPARE(state.project()->fps(), 24);
+    QCOMPARE(state.tracks().size(), 2);
+
+    // 48 frames at 24 fps = 2,000,000 us (2s)
+    const auto vTrack = state.tracks().at(0).toMap();
+    const auto vClips = vTrack.value(QStringLiteral("clips")).toList();
+    QCOMPARE(vClips.size(), 1);
+    QCOMPARE(vClips.at(0).toMap().value(QStringLiteral("duration")).toDouble(), 2.0);
+    QCOMPARE(state.project()->tracks().at(0).clips.at(0).timelineDuration, 2000000LL);
+
+    // 96 frames at 24 fps = 4,000,000 us (4s)
+    const auto aTrack = state.tracks().at(1).toMap();
+    const auto aClips = aTrack.value(QStringLiteral("clips")).toList();
+    QCOMPARE(aClips.size(), 1);
+    QCOMPARE(aClips.at(0).toMap().value(QStringLiteral("duration")).toDouble(), 4.0);
+    QCOMPARE(state.project()->tracks().at(1).clips.at(0).timelineDuration, 4000000LL);
 }
 
 // resetToDefaultTimeline() only clears the tracks, so New Project used to keep the asset pool,

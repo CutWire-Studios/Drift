@@ -73,7 +73,7 @@ set(DRIFT_ADDON_CLIENT_TOKEN "79a388bba9301cacc81cc6eb0724c81e948e1b27c69aee1b"
 set(DRIFT_UPDATE_FEED_URL "https://api.github.com/repos/CutWire-Studios/Drift/releases/latest"
     CACHE STRING "Release feed polled for updates; empty disables the update check")
 
-find_package(Qt6 6.5 REQUIRED COMPONENTS Quick QuickControls2 Multimedia Test Concurrent Widgets OpenGL Network QuickEffects Svg)
+find_package(Qt6 6.5 REQUIRED COMPONENTS Quick QuickControls2 Multimedia Test Concurrent Widgets OpenGL Network QuickEffects Svg Xml)
 find_package(Qt6 COMPONENTS LinguistTools QUIET)
 
 # IconImage loads Lucide SVGs from qrc. The SVG imageformat plugin is refused when it was
@@ -197,6 +197,7 @@ if(NOT ANDROID)
     endif()
     find_package(OpenSSL REQUIRED COMPONENTS Crypto)
 endif()
+find_package(ZLIB REQUIRED)
 
 # SoundTouch does the pitch shifting behind the voice effects. juce_dsp has no pitch shifter, and a
 # hand-rolled granular one cancels the signal outright wherever the tap spacing lands on an odd
@@ -359,13 +360,15 @@ add_library(driftcore STATIC
     src/core/Track.cpp
     src/core/Project.h
     src/core/Project.cpp
+    src/core/PrprojReader.h
+    src/core/PrprojReader.cpp
     src/core/TimelineOps.h
     src/core/TimelineOps.cpp
     src/core/commands/ProjectCommands.h
     src/core/commands/ProjectCommands.cpp
 )
 target_include_directories(driftcore PUBLIC src)
-target_link_libraries(driftcore PUBLIC Qt6::Core Qt6::Gui)
+target_link_libraries(driftcore PUBLIC Qt6::Core Qt6::Gui Qt6::Xml ZLIB::ZLIB)
 
 # Audio effect DSP. JUCE modules compile into whatever target links them, so keeping them in a
 # library of their own is what stops JUCE's headers, its compile definitions and its build time

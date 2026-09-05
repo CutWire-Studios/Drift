@@ -2824,6 +2824,14 @@
         <translation>JSON del progetto caricato</translation>
     </message>
     <message>
+        <source>Failed to open Premiere Pro project</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Premiere Pro project imported: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Exporting…</source>
         <translation>Esportazione in corso…</translation>
     </message>
@@ -3861,6 +3869,14 @@
         <translation>Progetto Drift (*.drift)</translation>
     </message>
     <message>
+        <source>Premiere Pro project (*.prproj)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Final Cut Pro XML (*.xml)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Open Project</source>
         <translation>Apri progetto</translation>
     </message>
@@ -3879,6 +3895,14 @@
     <message>
         <source>Open Project JSON</source>
         <translation>Apri JSON del progetto</translation>
+    </message>
+    <message>
+        <source>Import Premiere Pro Project</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Premiere Pro project (*.prproj *.xml)</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Save Shareable Copy</source>
@@ -3983,6 +4007,10 @@
     <message>
         <source>Multicam</source>
         <translation>Multicam</translation>
+    </message>
+    <message>
+        <source>All Supported Projects (*.drift *.prproj *.xml)</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Workspace</source>
@@ -6234,6 +6262,38 @@ Se la riproduzione va a scatti, prova un&apos;altra opzione.</translation>
         <source>Scanning frame %1 of %2…</source>
         <translation>Scansione del fotogramma %1 di %2…</translation>
     </message>
+    <message>
+        <source>Clip</source>
+        <translation type="unfinished">Clip</translation>
+    </message>
+    <message>
+        <source>Cannot open file: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>File is empty</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Failed to decompress Premiere project archive</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>XML parse error at line %1: %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Imported Premiere Project</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>V%1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>A%1</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>RecentProjectsPopup</name>
@@ -6286,6 +6346,10 @@ Se la riproduzione va a scatti, prova un&apos;altra opzione.</translation>
     <message>
         <source>Open JSON…</source>
         <translation>Apri JSON…</translation>
+    </message>
+    <message>
+        <source>Import Premiere project…</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Project properties…</source>

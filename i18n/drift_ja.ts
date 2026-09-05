@@ -2818,6 +2818,14 @@
         <translation>プロジェクト JSON を読み込みました</translation>
     </message>
     <message>
+        <source>Failed to open Premiere Pro project</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Premiere Pro project imported: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Exporting…</source>
         <translation>エクスポート中…</translation>
     </message>
@@ -3847,6 +3855,14 @@
         <translation>Drift プロジェクト (*.drift)</translation>
     </message>
     <message>
+        <source>Premiere Pro project (*.prproj)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Final Cut Pro XML (*.xml)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Open Project</source>
         <translation>プロジェクトを開く</translation>
     </message>
@@ -3865,6 +3881,14 @@
     <message>
         <source>Open Project JSON</source>
         <translation>プロジェクト JSON を開く</translation>
+    </message>
+    <message>
+        <source>Import Premiere Pro Project</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Premiere Pro project (*.prproj *.xml)</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Save Shareable Copy</source>
@@ -3929,6 +3953,10 @@
     <message>
         <source>Language</source>
         <translation>言語</translation>
+    </message>
+    <message>
+        <source>All Supported Projects (*.drift *.prproj *.xml)</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Language for menus and labels</source>
@@ -6212,6 +6240,38 @@ If playback stutters, try another.</source>
         <source>Scanning frame %1 of %2…</source>
         <translation>フレーム %1 / %2 をスキャン中…</translation>
     </message>
+    <message>
+        <source>Clip</source>
+        <translation type="unfinished">クリップ</translation>
+    </message>
+    <message>
+        <source>Cannot open file: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>File is empty</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Failed to decompress Premiere project archive</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>XML parse error at line %1: %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Imported Premiere Project</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>V%1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>A%1</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>RecentProjectsPopup</name>
@@ -6264,6 +6324,10 @@ If playback stutters, try another.</source>
     <message>
         <source>Open JSON…</source>
         <translation>JSON を開く…</translation>
+    </message>
+    <message>
+        <source>Import Premiere project…</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Project properties…</source>

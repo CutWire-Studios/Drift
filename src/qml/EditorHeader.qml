@@ -13,8 +13,17 @@ Rectangle {
 
     property string projectName: EditorState.projectName
 
-    readonly property var projectFilter: [qsTr("Drift project (*.drift)")]
-    readonly property var projectMimeTypes: ["application/x-drift-project"]
+    readonly property var projectFilter: [
+        qsTr("All Supported Projects (*.drift *.prproj *.xml)"),
+        qsTr("Drift project (*.drift)"),
+        qsTr("Premiere Pro project (*.prproj)"),
+        qsTr("Final Cut Pro XML (*.xml)")
+    ]
+    readonly property var projectMimeTypes: [
+        "application/x-drift-project",
+        "application/xml",
+        "text/xml"
+    ]
 
     // Action to run after Save or Don't Save resolves. Null when idle.
     property var _pendingAfterUnsaved: null
@@ -87,6 +96,18 @@ Rectangle {
                                            ["application/json"])
             if (url != "")
                 EditorState.loadProjectJson(url)
+        })
+    }
+
+    function openPremiereProject() {
+        root.confirmIfDirty(function () {
+            var url = FileDialogs.openFile(qsTr("Import Premiere Pro Project"),
+                                           [qsTr("Premiere Pro project (*.prproj *.xml)"),
+                                            qsTr("Premiere Pro project (*.prproj)"),
+                                            qsTr("Final Cut Pro XML (*.xml)")],
+                                           ["application/xml", "text/xml"])
+            if (url != "")
+                EditorState.loadPremiereProject(url)
         })
     }
 
@@ -283,6 +304,7 @@ Rectangle {
                     onPackageRequested: root.packageProject()
                     onSaveJsonRequested: root.saveProjectJson()
                     onOpenJsonRequested: root.openProjectJson()
+                    onImportPremiereRequested: root.openPremiereProject()
                     onPropertiesRequested: projectPropertiesDialog.openDialog()
                 }
             }
