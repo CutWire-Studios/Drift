@@ -976,6 +976,53 @@ if(Qt6LinguistTools_FOUND)
         add_custom_target(update_translations DEPENDS drift_lupdate)
     endif()
 
+    # An lupdate built before qtdeclarative has no QML parser: it warns "missing qml/javascript
+    # support", skips every .qml, and -no-obsolete then strips every QML string out of i18n/*.ts.
+    # org.kde.Sdk ships exactly that lupdate, and flatpak-builder does not pass CI into its
+    # sandbox, so the Flatpak regenerated its catalogs down to the C++ strings on every build and
+    # shipped a UI that was English apart from the toasts (#167). Probe once and stay off where
+    # lupdate cannot see QML, rather than letting it gut the committed catalogs.
+    if(NOT DEFINED DRIFT_LUPDATE_HAS_QML AND TARGET Qt6::lupdate)
+        get_target_property(_drift_lupdate_exe Qt6::lupdate IMPORTED_LOCATION)
+        if(NOT _drift_lupdate_exe)
+            get_target_property(_drift_lupdate_cfgs Qt6::lupdate IMPORTED_CONFIGURATIONS)
+            foreach(_drift_cfg IN LISTS _drift_lupdate_cfgs)
+                get_target_property(_drift_lupdate_exe Qt6::lupdate IMPORTED_LOCATION_${_drift_cfg})
+                if(_drift_lupdate_exe)
+                    break()
+                endif()
+            endforeach()
+        endif()
+        set(_drift_probe_dir "${CMAKE_CURRENT_BINARY_DIR}/lupdate-qml-probe")
+        file(REMOVE_RECURSE "${_drift_probe_dir}")
+        file(WRITE "${_drift_probe_dir}/probe.qml"
+            "import QtQuick\nItem { property string s: qsTr(\"drift_lupdate_qml_probe\") }\n")
+        if(_drift_lupdate_exe)
+            execute_process(
+                COMMAND "${_drift_lupdate_exe}" probe.qml -ts probe.ts
+                WORKING_DIRECTORY "${_drift_probe_dir}"
+                OUTPUT_QUIET ERROR_QUIET)
+        endif()
+        set(_drift_probe_ts "")
+        if(EXISTS "${_drift_probe_dir}/probe.ts")
+            file(READ "${_drift_probe_dir}/probe.ts" _drift_probe_ts)
+        endif()
+        string(FIND "${_drift_probe_ts}" "drift_lupdate_qml_probe" _drift_probe_hit)
+        if(_drift_probe_hit GREATER -1)
+            set(DRIFT_LUPDATE_HAS_QML ON CACHE INTERNAL "lupdate can parse QML")
+        else()
+            set(DRIFT_LUPDATE_HAS_QML OFF CACHE INTERNAL "lupdate can parse QML")
+        endif()
+    endif()
+
+    if(DRIFT_AUTO_UPDATE_TRANSLATIONS AND NOT DRIFT_LUPDATE_HAS_QML)
+        message(WARNING
+            "lupdate has no QML/JavaScript support; running it would delete every QML string from "
+            "i18n/*.ts and ship English-only .qm files. Not running lupdate as part of this build. "
+            "Install a Qt Linguist build with QML support to refresh the catalogs.")
+        set(DRIFT_AUTO_UPDATE_TRANSLATIONS OFF)
+    endif()
+
     # Qt keeps lupdate out of the default build, so a new qsTr() only reaches i18n/*.ts when
     # someone remembers the manual target -- which is what keeps breaking the Translations test.
     # Order it ahead of lrelease so the .qm files come from the refreshed catalogs rather than

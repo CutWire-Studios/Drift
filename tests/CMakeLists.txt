@@ -143,11 +143,17 @@ drift_copy_effects(tst_mcp)
 drift_copy_transitions(tst_mcp)
 
 # Runs lupdate and fails if i18n/*.ts would change — i.e. someone added qsTr/tr and
-# did not run `cmake --build build --target update_translations`.
-add_test(NAME Translations
-    COMMAND ${CMAKE_COMMAND}
-        -DSOURCE_DIR=${CMAKE_SOURCE_DIR}
-        -DBINARY_DIR=${CMAKE_BINARY_DIR}
-        -DCONFIG=$<CONFIG>
-        -P ${CMAKE_SOURCE_DIR}/cmake/CheckTranslations.cmake
-)
+# did not run `cmake --build build --target update_translations`. Skipped where lupdate cannot
+# parse QML: there the test would rewrite the checkout's catalogs without their QML strings
+# before failing on the diff it caused itself (#167).
+if(DRIFT_LUPDATE_HAS_QML)
+    add_test(NAME Translations
+        COMMAND ${CMAKE_COMMAND}
+            -DSOURCE_DIR=${CMAKE_SOURCE_DIR}
+            -DBINARY_DIR=${CMAKE_BINARY_DIR}
+            -DCONFIG=$<CONFIG>
+            -P ${CMAKE_SOURCE_DIR}/cmake/CheckTranslations.cmake
+    )
+else()
+    message(STATUS "lupdate has no QML support; skipping the Translations test.")
+endif()
