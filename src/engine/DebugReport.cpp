@@ -3,6 +3,7 @@
 #include "ClipReader.h"
 #include "Exporter.h"
 #include "GlRuntime.h"
+#include "GpuCompositor.h"
 #include "HwAccel.h"
 #include "OrtRuntime.h"
 #include "VaapiZeroCopy.h"
@@ -321,36 +322,129 @@ QList<GpuAdapter> enumerateGpus()
     return gpus;
 }
 
-QString openglRenderer()
+struct OpenGlInfo
 {
+    QString renderer; // "AMD Radeon RX 6600 (ATI Technologies Inc.)"
+    int major = 0;
+    int minor = 0;
+    bool isEs = false;
+    bool core = false;
+    bool software = false;
+    bool valid = false;
+};
+
+// What OpenGL this process actually got. The version matters as much as the
+// renderer — a report that said only "AMD Radeon RX 6600" could not distinguish a
+// healthy machine from one Qt had quietly put on a 3.0 software rasterizer — so
+// prefer the scene graph's own context, which is the format GlRuntime inherits,
+// and fall back to a probe context that does not insist on 3.3 so a machine below
+// the floor still reports what it has instead of nothing at all.
+OpenGlInfo openglInfo()
+{
+    OpenGlInfo info;
     if (!qobject_cast<QGuiApplication *>(QCoreApplication::instance()))
-        return {};
+        return info;
+
+    QSurfaceFormat format = QSurfaceFormat::defaultFormat();
+    QOpenGLContext *shared = QOpenGLContext::globalShareContext();
+    if (shared && shared->isValid())
+        format = shared->format();
 
     QOffscreenSurface surface;
-    surface.setFormat(QSurfaceFormat::defaultFormat());
+    surface.setFormat(format);
     surface.create();
     if (!surface.isValid())
-        return {};
+        return info;
 
     QOpenGLContext ctx;
     ctx.setFormat(surface.format());
-    if (!ctx.create() || !ctx.makeCurrent(&surface))
-        return {};
+    if (shared && shared->isValid())
+        ctx.setShareContext(shared);
+    if (!ctx.create()) {
+        // The requested version is the thing that failed; ask for whatever exists.
+        ctx.setFormat(QSurfaceFormat());
+        if (!ctx.create())
+            return info;
+    }
+    if (!ctx.makeCurrent(&surface))
+        return info;
 
-    QString renderer;
     if (QOpenGLFunctions *fn = ctx.functions()) {
         const char *glRenderer = reinterpret_cast<const char *>(fn->glGetString(GL_RENDERER));
         const char *glVendor = reinterpret_cast<const char *>(fn->glGetString(GL_VENDOR));
         if (glRenderer)
-            renderer = QString::fromUtf8(glRenderer);
+            info.renderer = QString::fromUtf8(glRenderer);
+        info.software = drift::gl::isSoftwareRenderer(info.renderer);
         if (glVendor) {
             const QString vendor = QString::fromUtf8(glVendor);
-            if (!vendor.isEmpty() && !renderer.contains(vendor, Qt::CaseInsensitive))
-                renderer = renderer.isEmpty() ? vendor : QStringLiteral("%1 (%2)").arg(renderer, vendor);
+            if (!vendor.isEmpty() && !info.renderer.contains(vendor, Qt::CaseInsensitive)) {
+                info.renderer = info.renderer.isEmpty()
+                    ? vendor
+                    : QStringLiteral("%1 (%2)").arg(info.renderer, vendor);
+            }
         }
     }
+    info.major = ctx.format().majorVersion();
+    info.minor = ctx.format().minorVersion();
+    info.isEs = ctx.isOpenGLES();
+    info.core = ctx.format().profile() == QSurfaceFormat::CoreProfile;
+    info.valid = true;
     ctx.doneCurrent();
-    return renderer;
+    return info;
+}
+
+QString openglLabel(const OpenGlInfo &info)
+{
+    if (!info.valid)
+        return {};
+    QString version;
+    if (info.major > 0) {
+        version = (info.isEs ? QStringLiteral("OpenGL ES %1.%2") : QStringLiteral("OpenGL %1.%2"))
+                      .arg(info.major)
+                      .arg(info.minor);
+        if (info.core)
+            version += QStringLiteral(" core");
+    }
+    if (info.renderer.isEmpty())
+        return version;
+    if (version.isEmpty())
+        return info.renderer;
+    return QStringLiteral("%1 — %2").arg(info.renderer, version);
+}
+
+// Why the preview can or cannot draw. Forces a bring-up attempt so the row is
+// meaningful even when the user opens this before touching the timeline.
+QString gpuCompositorLabel()
+{
+    if (!qobject_cast<QGuiApplication *>(QCoreApplication::instance()))
+        return trReport("Not available");
+
+    GpuCompositor::isAvailable();
+    const drift::gl::GlStatusInfo info = GpuCompositor::status();
+    switch (info.status) {
+    case drift::gl::GlStatus::Ready:
+        return trReport("Ready");
+    case drift::gl::GlStatus::VersionTooLow:
+        return trReport("OpenGL %1.%2 is below the 3.3 minimum")
+            .arg(info.major)
+            .arg(info.minor);
+    case drift::gl::GlStatus::NoShareContext:
+        return trReport("No shared OpenGL context");
+    case drift::gl::GlStatus::SurfaceFailed:
+        return trReport("Offscreen surface creation failed");
+    case drift::gl::GlStatus::ContextFailed:
+        return trReport("OpenGL context creation failed");
+    case drift::gl::GlStatus::MakeCurrentFailed:
+        return trReport("Could not make the OpenGL context current");
+    case drift::gl::GlStatus::NoFunctions:
+        return trReport("OpenGL functions unavailable");
+    case drift::gl::GlStatus::ShaderLinkFailed:
+        return trReport("Shader compilation failed");
+    case drift::gl::GlStatus::NoApplication:
+    case drift::gl::GlStatus::NotAttempted:
+        break;
+    }
+    return trReport("Unknown");
 }
 
 // The backend the preview decoder would land on here: the first one this platform
@@ -651,8 +745,17 @@ QVariantMap DebugReport::collect()
             system.append(systemRow(trReport("GPU %1").arg(i + 1), formatGpu(gpus.at(i))));
         }
     }
-    if (const QString gl = openglRenderer(); !gl.isEmpty())
+    const OpenGlInfo glInfo = openglInfo();
+    if (const QString gl = openglLabel(glInfo); !gl.isEmpty())
         system.append(systemRow(QStringLiteral("OpenGL"), gl));
+    // Its own row rather than a suffix on the one above: this is the line worth
+    // grepping for in a pasted report.
+    if (glInfo.valid) {
+        system.append(systemRow(trReport("OpenGL driver"),
+                                glInfo.software ? trReport("Software rasterizer")
+                                                : trReport("Hardware")));
+    }
+    system.append(systemRow(trReport("GPU compositor"), gpuCompositorLabel()));
 
     system.append(systemRow(trReport("Qt"), QString::fromLatin1(qVersion())));
     system.append(systemRow(trReport("FFmpeg"), QString::fromUtf8(av_version_info())));
@@ -728,6 +831,28 @@ QVariantMap DebugReport::collect()
                      "without a DRM modifier, so Drift refuses zero-copy preview and copies "
                      "each frame through system memory. Vega, Navi and newer can enable "
                      "Settings → Preview → Faster preview.")));
+    }
+    // The whole of issue #139: Qt's GPU blacklist matches a card it failed to
+    // identify, loads its bundled llvmpipe, and the preview goes black on hardware
+    // that would have run it fine.
+    if (glInfo.software || GpuCompositor::status().status == drift::gl::GlStatus::VersionTooLow) {
+#if defined(Q_OS_WIN)
+        hints.append(hintRow(
+            QStringLiteral("software-opengl"),
+            trReport("Preview is running on a software OpenGL driver"),
+            trReport("Windows loaded Qt's bundled software renderer instead of your graphics "
+                     "card. It only provides OpenGL 3.0, below the 3.3 the preview needs, so "
+                     "the picture stays black. Update your graphics driver; if that does not "
+                     "help, start Drift with QT_OPENGL=desktop."),
+            QStringLiteral("set QT_OPENGL=desktop")));
+#else
+        hints.append(hintRow(
+            QStringLiteral("software-opengl"),
+            trReport("Preview is running on a software OpenGL driver"),
+            trReport("OpenGL is being rendered on the CPU rather than the GPU, which the "
+                     "preview may be too old to use. Check that a Mesa driver for your card is "
+                     "installed and that LIBGL_ALWAYS_SOFTWARE is not set.")));
+#endif
     }
     if (ortRuntimes.isEmpty()) {
         hints.append(hintRow(

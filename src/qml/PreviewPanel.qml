@@ -267,13 +267,38 @@ PanelFrame {
                         hint: qsTr("Import media and drag it onto the timeline below to see it here.")
                     }
 
+                    // A dead GPU compositor produces no frame at any playhead position,
+                    // which for a long time read as "No clip at the current time" and sent
+                    // people hunting through their timeline. Say what actually happened,
+                    // and where the details are. Held back until the first probe answers,
+                    // so a slow driver does not flash a failure during startup.
+                    EmptyState {
+                        anchors.centerIn: parent
+                        width: Math.min(parent.width - Theme.spacing3xl, 280)
+                        visible: EditorState.tracks.length > 0
+                                 && EditorState.playback.gpuCompositorStatus !== "unknown"
+                                 && !EditorState.playback.gpuCompositorReady
+                        glyph: Theme.icons.warning
+                        title: qsTr("GPU preview unavailable")
+                        hint: EditorState.playback.gpuCompositorStatus === "version-too-low"
+                              && EditorState.playback.gpuCompositorDetail
+                              ? qsTr("Your graphics driver only provides %1. Drift's preview needs OpenGL 3.3.")
+                                    .arg(EditorState.playback.gpuCompositorDetail)
+                              : qsTr("Drift could not start its GPU renderer, so the preview cannot draw.")
+                        actionText: qsTr("Debug info")
+                        onActionTriggered: root.Window.window.openDebugInfo()
+                    }
+
                     // Fades rather than popping, so scrubbing across a gap no
                     // longer flickers this text on and off.
                     Text {
                         anchors.centerIn: parent
                         visible: opacity > 0
+                        // Only ever a gap message now: when the compositor is down the
+                        // state above explains that instead.
                         opacity: EditorState.playback.hasFrame
-                                 || EditorState.tracks.length === 0 ? 0 : 1
+                                 || EditorState.tracks.length === 0
+                                 || !EditorState.playback.gpuCompositorReady ? 0 : 1
                         text: EditorState.activeAudioClipAtPlayhead().path
                               ? qsTr("Audio only") : qsTr("No clip at the current time")
                         // Drawn on the letterbox scrim, not a panel surface, so it

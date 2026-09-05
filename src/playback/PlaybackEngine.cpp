@@ -2,6 +2,7 @@
 
 #include "engine/AndroidUri.h"
 #include "engine/ClipReaderPool.h"
+#include "engine/GpuCompositor.h"
 #include "engine/HwAccel.h"
 
 #include <QSettings>
@@ -67,6 +68,14 @@ inline void abandonAudioFocus() {}
 #endif
 
 constexpr int kPlayheadUpdateMs = 16; // ~60 Hz UI updates, independent of video decode
+
+// GPU compositor readiness polling. The first ask is deferred past the window's
+// own bring-up so it neither delays launch nor reports a failure that has not
+// happened yet; the cap keeps a machine that will never have a share context
+// from probing for the rest of the session.
+constexpr int kGpuProbeDelayMs = 300;
+constexpr int kGpuProbeIntervalMs = 250;
+constexpr int kGpuProbeMaxAttempts = 20;
 
 // How much decoded source each clip's reader keeps buffered ahead of the
 // playhead during fast playback. This absorbs frames that decode slower than
@@ -181,6 +190,19 @@ PlaybackEngine::PlaybackEngine(QObject *parent)
     connect(&m_compositor, &CompositorService::frameReady, this, &PlaybackEngine::onFrameReady);
     connect(&m_compositor, &CompositorService::compositeFinished, this,
             &PlaybackEngine::onCompositeFinished);
+
+    // The GPU compositor needs Qt Quick's global share context, which does not
+    // exist until the first QQuickWindow initialises — after this constructor. So
+    // do not ask now: ask shortly after, and keep asking while the answer is still
+    // "not yet", otherwise a project opened from the command line composites once,
+    // fails, and leaves the preview black for the session.
+    m_gpuProbeTimer.setInterval(kGpuProbeIntervalMs);
+    connect(&m_gpuProbeTimer, &QTimer::timeout, this, &PlaybackEngine::probeGpuCompositor);
+    QTimer::singleShot(kGpuProbeDelayMs, this, [this] {
+        probeGpuCompositor();
+        if (m_gpuStatusId == QStringLiteral("unknown") || !gpuCompositorReady())
+            m_gpuProbeTimer.start();
+    });
 
 #ifdef Q_OS_ANDROID
     g_audioFocusEngine.store(this, std::memory_order_release);
@@ -416,6 +438,44 @@ void PlaybackEngine::checkHardwareFallback()
     emit hardwareDecodeFellBack(backend == drift::hwaccel::Backend::None
                                     ? QString()
                                     : QString::fromLatin1(drift::hwaccel::name(backend)));
+}
+
+// Ask the GPU compositor whether it is up, and republish the answer when it
+// changes. Also the recovery path: the share context can appear after the
+// preview's one and only composite request has already failed, so a compositor
+// that comes good is re-asked for the frame nobody else will ask for again.
+void PlaybackEngine::probeGpuCompositor()
+{
+    // Forces an attempt rather than reading the last one; status() alone would
+    // stay "unknown" forever if nothing else ever composited.
+    const bool ready = GpuCompositor::isAvailable();
+    const drift::gl::GlStatusInfo info = GpuCompositor::status();
+
+    const QString id = QString::fromLatin1(drift::gl::statusId(info.status));
+    const QString detail = drift::gl::describeGl(info);
+    if (id != m_gpuStatusId || detail != m_gpuStatusDetail) {
+        m_gpuStatusId = id;
+        m_gpuStatusDetail = detail;
+        emit gpuCompositorStatusChanged();
+    }
+
+    if (ready) {
+        m_gpuProbeTimer.stop();
+        refreshFrame();
+        return;
+    }
+
+    // Keep retrying only while the answer could still change, and not forever:
+    // a share context that has not appeared in a few seconds is not coming.
+    ++m_gpuProbeAttempts;
+    if (drift::gl::isTransient(info.status) && m_gpuProbeAttempts < kGpuProbeMaxAttempts)
+        return;
+
+    m_gpuProbeTimer.stop();
+    if (!m_gpuUnavailableNotified) {
+        m_gpuUnavailableNotified = true;
+        emit gpuCompositorUnavailable(m_gpuStatusId, m_gpuStatusDetail);
+    }
 }
 
 drift::TimeUs PlaybackEngine::frameStepUs() const

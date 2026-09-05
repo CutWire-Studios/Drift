@@ -279,7 +279,17 @@ Window {
                 ThemedLabel {
                     anchors.centerIn: parent
                     visible: !EditorState.playback.hasFrame
+                             && EditorState.playback.gpuCompositorReady
                     text: qsTr("No clip at the current time")
+                }
+
+                // Same distinction as the main preview: no frame anywhere means the
+                // GPU renderer never came up, not that the timeline is empty here.
+                ThemedLabel {
+                    anchors.centerIn: parent
+                    visible: EditorState.playback.gpuCompositorStatus !== "unknown"
+                             && !EditorState.playback.gpuCompositorReady
+                    text: qsTr("GPU preview unavailable — see Help → Debug info")
                 }
 
                 Text {

@@ -9,11 +9,13 @@
 // public API — do not include from outside src/engine.
 
 #include "GpuEffectDefinition.h"
+#include "GpuStatus.h"
 #include "ModelAsset.h"
 #include "PreviewVideoFrame.h"
 #include "core/Time.h"
 
 #include <QByteArray>
+#include <QElapsedTimer>
 #include <QImage>
 #include <QMap>
 #include <QMutex>
@@ -234,6 +236,11 @@ public:
     static PreviewUploadPath lastPreviewUploadPath();
     static QString lastVaapiImportReason();
 
+    // Outcome of the last bring-up attempt. Safe from any thread, and never starts
+    // one itself — call available() first if you want an attempt made rather than a
+    // snapshot of what already happened.
+    static drift::gl::GlStatusInfo lastStatus();
+
 private:
     bool ensureReady();
     bool initGlObjects();
@@ -256,7 +263,10 @@ private:
     AVFrame *ensureSoftwareNv12(const AVFrame *src);
 
     QMutex m_initMutex;
-    bool m_initTried = false;
+    // Only a driver's own verdict is final. A missing share context just means Qt
+    // Quick has not built one yet, so that attempt is retried rather than latched.
+    bool m_failedPermanently = false;
+    QElapsedTimer m_lastAttempt;
     bool m_ok = false;
     bool m_sharesWithGui = false;
     QThread *m_glThread = nullptr;

@@ -789,6 +789,25 @@ AppController::AppController(AssetLibrary *assetLibrary, QObject *parent)
                                QStringLiteral("warning"));
             });
 
+    // Unlike a decode fallback, nothing still works when this fires: the preview
+    // panel is blank and used to blame the timeline for it. "error", not "warning".
+    connect(&m_playback, &PlaybackEngine::gpuCompositorUnavailable, this,
+            [this](const QString &statusId, const QString &detail) {
+                QString message;
+                if (statusId == QStringLiteral("version-too-low")) {
+                    message = detail.isEmpty()
+                        ? tr("Your graphics driver is too old for the preview, which needs "
+                             "OpenGL 3.3. See Help → Debug info.")
+                        : tr("Your graphics driver only provides %1; the preview needs "
+                             "OpenGL 3.3. See Help → Debug info.")
+                              .arg(detail);
+                } else {
+                    message = tr("GPU preview rendering is unavailable on this machine. "
+                                 "See Help → Debug info.");
+                }
+                setLastMessage(message, QStringLiteral("error"));
+            });
+
     // An empty device list on a machine that plainly has speakers means the multimedia backend
     // plugin did not load — which is silent everywhere else, because video decoding does not go
     // through it. Deferred so the toast host exists by the time this fires.
