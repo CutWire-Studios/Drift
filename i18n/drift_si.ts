@@ -3133,6 +3133,13 @@
         </translation>
     </message>
     <message numerus="yes">
+        <source>Imported %n files into %1 folders. %2 files were skipped — Drift does not recognize their format. Drag them onto the bin to try anyway.</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
         <source>Imported %n files into %1 folders.</source>
         <translation type="unfinished">
             <numerusform></numerusform>

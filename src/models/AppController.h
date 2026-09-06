@@ -1329,9 +1329,10 @@ signals:
     // the replacement and was pulled back to it.
     void assetReplaceFinished(bool ok, const QString &message, int adjustedClips);
     void importingFolderChanged();
-    // Outcome of importFolder: how many bin folders and assets it actually created, and whether
-    // the walk stopped at the file limit with more still on disk.
-    void folderImportFinished(int folders, int files, bool truncated);
+    // Outcome of importFolder: how many bin folders and assets it actually created, how many
+    // files it passed over as unrecognized, and whether the walk stopped at the file limit with
+    // more still on disk.
+    void folderImportFinished(int folders, int files, int skipped, bool truncated);
     void replacingAssetIdChanged();
     void assetEditChanged();
     void assetEditFinished(bool ok, const QString &message);

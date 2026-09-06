@@ -2827,6 +2827,10 @@ struct FolderImportEntry
 struct FolderImportPlan
 {
     QList<FolderImportEntry> entries;
+    // Files the walk looked at and passed over because nothing recognizes the extension. Only
+    // counts what was actually examined, so hitting the limit below does not inflate it with
+    // everything the walk never reached.
+    int skipped = 0;
     bool truncated = false;
 };
 
@@ -2850,8 +2854,10 @@ void planDirectory(const QDir &dir, int parentIndex, FolderImportPlan &plan, int
 
     const QFileInfoList files = dir.entryInfoList(QDir::Files, QDir::Name);
     for (const QFileInfo &info : files) {
-        if (!AssetLibrary::isMediaPath(info.fileName()))
+        if (!AssetLibrary::isMediaPath(info.fileName())) {
+            ++plan.skipped;
             continue;
+        }
         if (fileCount >= kFolderImportFileLimit) {
             plan.truncated = true;
             break;
@@ -2949,7 +2955,7 @@ bool AppController::importFolder(const QUrl &folderUrl)
 
         m_importingFolder = false;
         emit importingFolderChanged();
-        emit folderImportFinished(folderCount, fileCount, plan.truncated);
+        emit folderImportFinished(folderCount, fileCount, plan.skipped, plan.truncated);
     });
 
     watcher->setFuture(QtConcurrent::run([dir]() {

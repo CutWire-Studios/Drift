@@ -538,7 +538,9 @@ void EditorStateTest::importFolderMirrorsDirectoryTree()
     // root, SubA, SubB, EmptyDir.
     QCOMPARE(finished.first().at(0).toInt(), 4);
     QCOMPARE(finished.first().at(1).toInt(), 3);
-    QVERIFY(!finished.first().at(2).toBool());
+    // notes.txt, and nothing else.
+    QCOMPARE(finished.first().at(2).toInt(), 1);
+    QVERIFY(!finished.first().at(3).toBool());
     QCOMPARE(library.count(), 3);
     QCOMPARE(state.binFolderModel()->count(), 4);
 
@@ -697,8 +699,10 @@ void EditorStateTest::importFolderStopsAtFileLimit()
     QSignalSpy finished(&state, &AppController::folderImportFinished);
     QVERIFY(state.importFolder(QUrl::fromLocalFile(tempDir.path())));
     QTRY_COMPARE_WITH_TIMEOUT(finished.count(), 1, 30000);
-    QVERIFY(finished.first().at(2).toBool());
+    QVERIFY(finished.first().at(3).toBool());
     QCOMPARE(finished.first().at(1).toInt(), 500);
+    // Everything in the tree is media, so stopping early must not be reported as skipping.
+    QCOMPARE(finished.first().at(2).toInt(), 0);
 
     // The probes these kicked off run on worker threads that capture `library` by raw pointer, so
     // they have to finish before teardown. None of the placeholder files is real media, so every

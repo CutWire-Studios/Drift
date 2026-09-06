@@ -135,11 +135,31 @@ QString materializeImportUrl(const QUrl &url)
 // The one place that decides what counts as media. The picker's name filter, the folder-import
 // walk and the provisional kind guess all read these lists, so a format can no longer be offered
 // by one entry point and skipped by another.
+// Containers FFmpeg demuxes, not everything it can be made to open: its own extension table is
+// no help here, since half of these demuxers probe instead of matching on a suffix (mpegts and
+// mpeg declare none at all) while the ones that do declare cover raw streams, subtitles and
+// tracker music. Anything not here can still be dragged onto the bin, where the probe decides.
 const QStringList &videoExtensions()
 {
     static const QStringList extensions = {
-        QStringLiteral("mp4"), QStringLiteral("mov"),  QStringLiteral("mkv"),
-        QStringLiteral("avi"), QStringLiteral("webm"), QStringLiteral("m4v"),
+        // MP4 / QuickTime family
+        QStringLiteral("mp4"),  QStringLiteral("m4v"),  QStringLiteral("mov"),
+        QStringLiteral("3gp"),  QStringLiteral("3g2"),
+        // Matroska
+        QStringLiteral("mkv"),  QStringLiteral("webm"),
+        // AVI / ASF
+        QStringLiteral("avi"),  QStringLiteral("wmv"),  QStringLiteral("asf"),
+        QStringLiteral("divx"),
+        // Flash
+        QStringLiteral("flv"),  QStringLiteral("f4v"),
+        // MPEG program and transport streams
+        QStringLiteral("mpg"),  QStringLiteral("mpeg"), QStringLiteral("m2v"),
+        QStringLiteral("ts"),   QStringLiteral("m2ts"), QStringLiteral("mts"),
+        QStringLiteral("m2t"),  QStringLiteral("vob"),
+        // Ogg, RealMedia
+        QStringLiteral("ogv"),  QStringLiteral("rm"),   QStringLiteral("rmvb"),
+        // Broadcast and camera
+        QStringLiteral("mxf"),  QStringLiteral("dv"),   QStringLiteral("y4m"),
     };
     return extensions;
 }
