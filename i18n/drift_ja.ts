@@ -1942,6 +1942,20 @@
         <translation>このマシンでは GPU プレビューレンダリングを利用できません。「ヘルプ」→「デバッグ情報」を参照してください。</translation>
     </message>
     <message>
+        <source>Media and referenced clips removed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%n media items and referenced clips removed</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Media and referenced clip removed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>An edit is already saving</source>
         <translation>編集は既に保存中です</translation>
     </message>
@@ -3085,6 +3099,14 @@
         <translation>%2 個中 %1 個のファイルをインポートしました。残りは開けませんでした — このパッケージは他のアプリからドロップされたファイルを読み取れません。代わりにインポートを使用してください。</translation>
     </message>
     <message>
+        <source>“%1” is used by 1 clip on the timeline. Removing this media will also remove that clip and any transitions connected to it. The file on disk is not deleted.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>“%1” is used by %2 clips on the timeline. Removing this media will also remove those clips and any transitions connected to them. The files on disk are not deleted.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Text</source>
         <translation>テキスト</translation>
     </message>
@@ -3251,16 +3273,6 @@
     <message>
         <source>Create a new folder here</source>
         <translation>ここに新しいフォルダーを作成</translation>
-    </message>
-    <message>
-        <source>“%1” is still used by clips on the timeline.</source>
-        <translation>「%1」はタイムライン上のクリップでまだ使用されています。</translation>
-    </message>
-    <message numerus="yes">
-        <source>%n of the selected items are still used by clips on the timeline.</source>
-        <translation>
-            <numerusform>選択された項目のうち %n 個はタイムライン上のクリップでまだ使用されています。</numerusform>
-        </translation>
     </message>
     <message numerus="yes">
         <source>%n items</source>
@@ -8521,6 +8533,10 @@ If playback stutters, try another.</source>
         <translation>カットモード — クリップをクリックして分割</translation>
     </message>
     <message>
+        <source>Show audio on separate track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Trim start — click a clip to drop everything left of the cut</source>
         <translation>開始トリム — クリップをクリックしてカットより左を削除</translation>
     </message>
@@ -8571,10 +8587,6 @@ If playback stutters, try another.</source>
     <message>
         <source>Clear work area</source>
         <translation>ワークエリアをクリア</translation>
-    </message>
-    <message>
-        <source>Separate audio from video</source>
-        <translation>ビデオからオーディオを分離</translation>
     </message>
     <message>
         <source>Unlink video and audio</source>

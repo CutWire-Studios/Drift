@@ -1930,6 +1930,20 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Media and referenced clips removed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%n media items and referenced clips removed</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Media and referenced clip removed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Your graphics driver is too old for the preview, which needs OpenGL 3.3. See Help → Debug info.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -3085,6 +3099,14 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>“%1” is used by 1 clip on the timeline. Removing this media will also remove that clip and any transitions connected to it. The file on disk is not deleted.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>“%1” is used by %2 clips on the timeline. Removing this media will also remove those clips and any transitions connected to them. The files on disk are not deleted.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Text</source>
         <translation type="unfinished">文本</translation>
     </message>
@@ -3251,16 +3273,6 @@
     <message>
         <source>Create a new folder here</source>
         <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>“%1” is still used by clips on the timeline.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message numerus="yes">
-        <source>%n of the selected items are still used by clips on the timeline.</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-        </translation>
     </message>
     <message numerus="yes">
         <source>%n items</source>
@@ -8514,6 +8526,10 @@ If playback stutters, try another.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Show audio on separate track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Trim start — click a clip to drop everything left of the cut</source>
         <translation type="unfinished"></translation>
     </message>
@@ -8563,10 +8579,6 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Clear work area</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Separate audio from video</source>
         <translation type="unfinished"></translation>
     </message>
     <message>

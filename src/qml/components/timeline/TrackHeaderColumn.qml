@@ -145,6 +145,21 @@ Item {
         return qsTr("Video");
     }
 
+    // Track numbers are scoped to their media type rather than the absolute row.
+    // A project with Video 1 followed by its first extracted audio lane should read
+    // Audio 1, not Audio 2. Reordering mixed track types keeps each sequence natural.
+    function trackTypeOrdinal(index) {
+        if (index < 0 || index >= tracks.length)
+            return 1
+        const type = tracks[index].type
+        var ordinal = 0
+        for (var i = 0; i <= index; i++) {
+            if (tracks[i].type === type)
+                ordinal++
+        }
+        return Math.max(1, ordinal)
+    }
+
     function trackRowTop(index) {
         var cursor = 0
         for (var i = 0; i < index && i < tracks.length; i++)
@@ -196,13 +211,15 @@ Item {
             readonly property string trackDisplayName:
                 root.tracks[index].name && root.tracks[index].name.length > 0
                 ? root.tracks[index].name
-                : root.trackTypeLabel(root.tracks[index].type) + " " + (index + 1)
+                : root.trackTypeLabel(root.tracks[index].type)
+                  + " " + root.trackTypeOrdinal(index)
             // Same, but falling back to the short "V1"/"A2" form the compact header uses when
             // there's no custom name to show instead.
             readonly property string trackCompactLabel:
                 root.tracks[index].name && root.tracks[index].name.length > 0
                 ? root.tracks[index].name
-                : root.trackTypeShortLabel(root.tracks[index].type) + (index + 1)
+                : root.trackTypeShortLabel(root.tracks[index].type)
+                  + root.trackTypeOrdinal(index)
             width: root.labelsWidth
             height: root.trackHeight(index)
                     + (index < root.tracks.length - 1 ? Theme.trackGap : 0)

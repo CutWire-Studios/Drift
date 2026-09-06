@@ -1657,6 +1657,7 @@ bool GlRuntime::ensureImportTextureNames(QOpenGLExtraFunctions *gl)
 
 // VAAPI surface -> dma-buf -> two EGLImages -> the same R8 + RG8 pair the convert shader already
 // samples. Replaces an av_hwframe_transfer_data of the displayed frame on every Intel/AMD host.
+#if defined(DRIFT_VAAPI_IMPORT)
 namespace {
 
 // Auto engages zero-copy only where the whole chain — surface export, dma-buf import and
@@ -1680,6 +1681,7 @@ bool vaapiDriverIsVerified(VaEglApi &api, void *display, QOpenGLExtraFunctions *
 }
 
 } // namespace
+#endif // DRIFT_VAAPI_IMPORT
 
 bool GlRuntime::importVaapiNv12(QOpenGLExtraFunctions *gl, const AVFrame *frame)
 {
