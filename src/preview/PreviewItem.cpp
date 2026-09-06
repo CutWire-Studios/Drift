@@ -5,11 +5,15 @@
 #include <QQuickWindow>
 #include <QSGSimpleTextureNode>
 #include <QSGTexture>
+#include <QScreen>
 
 PreviewItem::PreviewItem(QQuickItem *parent)
     : QQuickItem(parent)
 {
     setFlag(ItemHasContents, true);
+    // The item has no window until it enters a scene, so the cadence hook-up cannot happen
+    // here — it happens on every window change, including the first.
+    connect(this, &QQuickItem::windowChanged, this, &PreviewItem::bindDisplayCadence);
 }
 
 void PreviewItem::setPlayback(PlaybackEngine *engine)
@@ -25,7 +29,52 @@ void PreviewItem::setPlayback(PlaybackEngine *engine)
         connect(m_playback, &PlaybackEngine::currentFrameChanged, this, &PreviewItem::pullFrame);
         pullFrame();
     }
+    // The engine may arrive after the window does, so bind from both ends.
+    bindDisplayCadence();
     emit playbackChanged();
+}
+
+void PreviewItem::bindDisplayCadence()
+{
+    QQuickWindow *win = window();
+    if (m_cadenceWindow == win && m_afterAnimatingConn)
+        return;
+
+    disconnect(m_afterAnimatingConn);
+    disconnect(m_frameSwappedConn);
+    disconnect(m_screenChangedConn);
+    m_cadenceWindow = win;
+
+    if (!win || !m_playback) {
+        // No display to follow. The engine falls back to its own timer, which is also what
+        // headless tests and Android's offscreen paths get.
+        if (m_playback)
+            m_playback->setDisplayRefreshRate(0.0);
+        return;
+    }
+
+    // afterAnimating is the one per-frame window signal Qt emits on the GUI thread, and it
+    // lands at the right moment: animations have advanced, the scene has not yet been
+    // synced, so a frame requested now is the one that should appear at the coming swap.
+    m_afterAnimatingConn = connect(win, &QQuickWindow::afterAnimating, m_playback,
+                                   &PlaybackEngine::onDisplayTick);
+    // frameSwapped comes from the render thread, so it must be queued. It is only used to
+    // count real presents — a rate the delivered-frame rate is compared against — which
+    // survives the event-loop hop that scheduling would not.
+    m_frameSwappedConn = connect(win, &QQuickWindow::frameSwapped, m_playback,
+                                 &PlaybackEngine::onFrameSwapped, Qt::QueuedConnection);
+    m_screenChangedConn =
+        connect(win, &QWindow::screenChanged, this, [this](QScreen *) { reportRefreshRate(); });
+    reportRefreshRate();
+}
+
+void PreviewItem::reportRefreshRate()
+{
+    if (!m_playback)
+        return;
+    const QQuickWindow *win = window();
+    const QScreen *screen = win ? win->screen() : nullptr;
+    m_playback->setDisplayRefreshRate(screen ? screen->refreshRate() : 0.0);
 }
 
 void PreviewItem::pullFrame()

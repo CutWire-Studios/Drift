@@ -17,6 +17,8 @@ QString clipTypeToString(ClipType type)
         return QStringLiteral("subtitle");
     case ClipType::Shape:
         return QStringLiteral("shape");
+    case ClipType::Adjustment:
+        return QStringLiteral("adjustment");
     }
     return QStringLiteral("video");
 }
@@ -33,6 +35,8 @@ ClipType clipTypeFromString(const QString &type)
         return ClipType::Subtitle;
     if (type == QStringLiteral("shape"))
         return ClipType::Shape;
+    if (type == QStringLiteral("adjustment"))
+        return ClipType::Adjustment;
     return ClipType::Video;
 }
 

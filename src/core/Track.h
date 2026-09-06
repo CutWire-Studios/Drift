@@ -18,6 +18,9 @@ struct Track
     TrackType type = TrackType::Video;
     QList<Clip> clips;
     QList<Transition> transitions;
+    // User-given label, shown instead of the type+position fallback ("Video 1") once set.
+    // Empty by default — most tracks never get a custom name.
+    QString name;
     bool muted = false;
     bool hidden = false;
     bool locked = false;

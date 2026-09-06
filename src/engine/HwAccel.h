@@ -22,6 +22,13 @@ enum class Backend { None, Cuda, D3d11va, Vaapi, VideoToolbox };
 // because it is the only one of the three with both a fast readback and a scaler.
 QList<Backend> decodeBackendOrder();
 
+// The GPU Qt renders on, as its GL_VENDOR string. Seeded at startup from the same context
+// probe that checks the driver's OpenGL version, and refreshed when the compositor comes up.
+// decodeBackendOrder() uses it to keep decode on the device that will draw the frames; without
+// it the order would depend on whether GL happened to be up when the first clip opened, and a
+// reader latches its backend for good.
+void setRenderVendor(const QString &vendor);
+
 // Those of decodeBackendOrder() whose device actually opens here, same order. This is
 // what the preview's decode picker offers, so a listed choice is one that works.
 QList<Backend> availableDecodeBackends();

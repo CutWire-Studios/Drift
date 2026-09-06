@@ -74,7 +74,7 @@ Item {
         // stay centred. AbstractButton.clicked carries no modifiers, hence the query into Qt.
         function jumpStep() {
             const modifiers = EditorState.keyboardModifiers()
-            if (modifiers & Qt.ControlModifier)
+            if (Theme.primaryModifierPressed(modifiers))
                 return 10
             if (modifiers & Qt.ShiftModifier)
                 return 5
@@ -85,7 +85,7 @@ Item {
             anchors.verticalCenter: parent.verticalCenter
             glyph: Theme.icons.rewind
             variant: "text"
-            tooltip: qsTr("Jump back 1s · Shift for 5s · Ctrl for 10s")
+            tooltip: Theme.platformShortcutText(qsTr("Jump back 1s · Shift for 5s · Ctrl for 10s"))
             onClicked: EditorState.jumpSeconds(-parent.jumpStep())
         }
 
@@ -129,7 +129,7 @@ Item {
             anchors.verticalCenter: parent.verticalCenter
             glyph: Theme.icons.fastForward
             variant: "text"
-            tooltip: qsTr("Jump forward 1s · Shift for 5s · Ctrl for 10s")
+            tooltip: Theme.platformShortcutText(qsTr("Jump forward 1s · Shift for 5s · Ctrl for 10s"))
             onClicked: EditorState.jumpSeconds(parent.jumpStep())
         }
     }
@@ -152,8 +152,9 @@ Item {
             horizontalAlignment: Text.AlignHCenter
 
             ThemedToolTip {
-                text: qsTr("Preview zoom — Ctrl+scroll over the preview to zoom, "
-                           + "middle-drag to pan. Click to reset to 100%.")
+                text: Theme.platformShortcutText(
+                          qsTr("Preview zoom — Ctrl+scroll over the preview to zoom, "
+                             + "middle-drag to pan. Click to reset to 100%."))
                 visible: zoomLabelMouse.containsMouse
             }
 

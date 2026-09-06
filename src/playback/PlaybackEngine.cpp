@@ -2,6 +2,7 @@
 
 #include "engine/AndroidUri.h"
 #include "engine/ClipReaderPool.h"
+#include "engine/GpuCompositor.h"
 #include "engine/HwAccel.h"
 
 #include <QSettings>
@@ -16,6 +17,7 @@
 #include <algorithm>
 #include <array>
 #include <atomic>
+#include <cmath>
 #include <cstring>
 
 namespace {
@@ -67,6 +69,14 @@ inline void abandonAudioFocus() {}
 #endif
 
 constexpr int kPlayheadUpdateMs = 16; // ~60 Hz UI updates, independent of video decode
+
+// GPU compositor readiness polling. The first ask is deferred past the window's
+// own bring-up so it neither delays launch nor reports a failure that has not
+// happened yet; the cap keeps a machine that will never have a share context
+// from probing for the rest of the session.
+constexpr int kGpuProbeDelayMs = 300;
+constexpr int kGpuProbeIntervalMs = 250;
+constexpr int kGpuProbeMaxAttempts = 20;
 
 // How much decoded source each clip's reader keeps buffered ahead of the
 // playhead during fast playback. This absorbs frames that decode slower than
@@ -167,6 +177,7 @@ PlaybackEngine::PlaybackEngine(QObject *parent)
 
     m_compositor.setDropLateFrames(!isQualityMode());
     m_compositor.setAdaptiveQuality(isAutoQuality());
+    m_compositor.setStats(&m_stats);
 
     m_audio.setFillCallback([this](float *stereo, int frames) { return fillAudio(stereo, frames); });
     connect(&m_audio, &AudioOutputChannel::sampleRateChanged, this,
@@ -181,6 +192,19 @@ PlaybackEngine::PlaybackEngine(QObject *parent)
     connect(&m_compositor, &CompositorService::frameReady, this, &PlaybackEngine::onFrameReady);
     connect(&m_compositor, &CompositorService::compositeFinished, this,
             &PlaybackEngine::onCompositeFinished);
+
+    // The GPU compositor needs Qt Quick's global share context, which does not
+    // exist until the first QQuickWindow initialises — after this constructor. So
+    // do not ask now: ask shortly after, and keep asking while the answer is still
+    // "not yet", otherwise a project opened from the command line composites once,
+    // fails, and leaves the preview black for the session.
+    m_gpuProbeTimer.setInterval(kGpuProbeIntervalMs);
+    connect(&m_gpuProbeTimer, &QTimer::timeout, this, &PlaybackEngine::probeGpuCompositor);
+    QTimer::singleShot(kGpuProbeDelayMs, this, [this] {
+        probeGpuCompositor();
+        if (m_gpuStatusId == QStringLiteral("unknown") || !gpuCompositorReady())
+            m_gpuProbeTimer.start();
+    });
 
 #ifdef Q_OS_ANDROID
     g_audioFocusEngine.store(this, std::memory_order_release);
@@ -248,6 +272,9 @@ void PlaybackEngine::setPlayheadUs(drift::TimeUs us)
     m_mixer.resetClipAudioState();
     m_audioStreamGeneration.fetch_add(1, std::memory_order_release);
     m_clock.reset(m_playheadUs, m_sampleRate);
+    // The grid position is stale after a jump: without this the next display tick can
+    // quantise to the frame that is already on screen and decline to redraw it.
+    m_lastRequestedFrameUs = -1;
     // reset() clears the running flag; resume the clock if we are still in play
     // so edits/seeks during playback don't freeze audio at one timeline spot.
     // Quality mode has no clock — its loop picks the new playhead up on the next
@@ -418,6 +445,50 @@ void PlaybackEngine::checkHardwareFallback()
                                     : QString::fromLatin1(drift::hwaccel::name(backend)));
 }
 
+// Ask the GPU compositor whether it is up, and republish the answer when it
+// changes. Also the recovery path: the share context can appear after the
+// preview's one and only composite request has already failed, so a compositor
+// that comes good is re-asked for the frame nobody else will ask for again.
+void PlaybackEngine::probeGpuCompositor()
+{
+    // Forces an attempt rather than reading the last one; status() alone would
+    // stay "unknown" forever if nothing else ever composited.
+    const bool ready = GpuCompositor::isAvailable();
+    const drift::gl::GlStatusInfo info = GpuCompositor::status();
+
+    // The compositor's context is the one that actually draws, so its vendor is the
+    // authoritative answer to "which GPU should be decoding". Startup seeds this from a
+    // throwaway probe; this corrects it if the two ever disagree.
+    if (!info.vendor.isEmpty())
+        drift::hwaccel::setRenderVendor(info.vendor);
+
+    const QString id = QString::fromLatin1(drift::gl::statusId(info.status));
+    const QString detail = drift::gl::describeGl(info);
+    if (id != m_gpuStatusId || detail != m_gpuStatusDetail) {
+        m_gpuStatusId = id;
+        m_gpuStatusDetail = detail;
+        emit gpuCompositorStatusChanged();
+    }
+
+    if (ready) {
+        m_gpuProbeTimer.stop();
+        refreshFrame();
+        return;
+    }
+
+    // Keep retrying only while the answer could still change, and not forever:
+    // a share context that has not appeared in a few seconds is not coming.
+    ++m_gpuProbeAttempts;
+    if (drift::gl::isTransient(info.status) && m_gpuProbeAttempts < kGpuProbeMaxAttempts)
+        return;
+
+    m_gpuProbeTimer.stop();
+    if (!m_gpuUnavailableNotified) {
+        m_gpuUnavailableNotified = true;
+        emit gpuCompositorUnavailable(m_gpuStatusId, m_gpuStatusDetail);
+    }
+}
+
 drift::TimeUs PlaybackEngine::frameStepUs() const
 {
     return drift::frameDurationUs(m_project ? qMax(1, m_project->fps()) : 30);
@@ -485,6 +556,8 @@ void PlaybackEngine::play()
 
     emit playingChanged();
 
+    m_stats.reset();
+    m_lastRequestedFrameUs = -1;
     m_playheadTimer.start(kPlayheadUpdateMs);
     syncDisplayCadence();
 
@@ -503,12 +576,80 @@ void PlaybackEngine::syncDisplayCadence()
     // the same interval would re-request the frame already on screen several times over, so the
     // tick stretches with the rate instead.
     const double frameMs = drift::usToSeconds(drift::frameDurationUs(fps)) * 1000.0;
-    const int tickMs = qMax(1, static_cast<int>(frameMs * qMax(1.0, 1.0 / m_playbackRate)));
-    m_compositeTimer.start(tickMs);
+    // Rounded, not truncated. The cast this replaces turned 16.67 ms into 16, which asks a
+    // 60 Hz display for 62.5 frames a second: the two drift through a full frame of phase
+    // about every half second, and the picture hitches each time they cross. Whole
+    // milliseconds still cannot express 16.67, which is why the display, not this timer,
+    // drives playback whenever a window is telling us its refresh rate.
+    const int tickMs =
+        qMax(1, static_cast<int>(std::lround(frameMs * qMax(1.0, 1.0 / m_playbackRate))));
+    // Watchdog interval when the display is driving: long enough that it only fires once the
+    // swap stream has genuinely stopped (hidden window, no compositor throttling, headless).
+    m_compositeTimer.start(m_refreshRate > 0.0 ? tickMs * 2 : tickMs);
     // Auto quality reacts to composites that overrun two display ticks. Deriving
     // the budget from the tick keeps it tied to the real cadence at this fps and
     // rate, instead of a fixed figure that only ever suited 30 fps at 1x.
     m_compositor.setLateFrameBudgetMs(tickMs * 2);
+}
+
+qint64 PlaybackEngine::refreshIntervalNs() const
+{
+    if (m_refreshRate <= 0.0)
+        return 0;
+    return static_cast<qint64>(std::llround(1'000'000'000.0 / m_refreshRate));
+}
+
+void PlaybackEngine::setDisplayRefreshRate(double hz)
+{
+    const double rate = hz > 0.0 ? hz : 0.0;
+    if (qFuzzyCompare(m_refreshRate, rate))
+        return;
+    m_refreshRate = rate;
+    m_stats.setRefreshRate(m_refreshRate);
+    // Re-arm: the watchdog interval depends on whether a display is driving us, and dragging
+    // the window to a panel with a different refresh rate changes the lead time too.
+    syncDisplayCadence();
+}
+
+void PlaybackEngine::onFrameSwapped()
+{
+    // Queued from the render thread, so this only counts. Comparing this rate against the
+    // delivered rate is what separates "we cannot composite fast enough" from "we composite
+    // fine but the display never gets to show the frames evenly".
+    m_stats.noteDisplayed();
+}
+
+void PlaybackEngine::onDisplayTick()
+{
+    m_lastDisplayTickNs = PlaybackClock::nowNs();
+    if (!m_playing || !m_project || isQualityMode())
+        return;
+    requestFrameForPresentation();
+}
+
+void PlaybackEngine::requestFrameForPresentation()
+{
+    const drift::TimeUs step = frameStepUs();
+    if (step <= 0)
+        return;
+
+    // The composite started now reaches the screen at the *next* swap, not this one. Choosing
+    // the frame for that instant is what decouples motion from composite latency: aiming at
+    // "now" instead means every millisecond of variation in how long a frame takes to build
+    // moves the picture, which is what the eye reads as stutter even when the frame rate is
+    // nominally fine.
+    const drift::TimeUs targetUs = m_clock.currentTimeUs() + refreshIntervalNs() / 1000;
+
+    // Quantise onto the project's frame grid so each source frame is requested exactly once
+    // and then held for however many refreshes fall before the next one is due — a steady 2:2
+    // for 30 fps on a 60 Hz panel, 2:3 for 24. Requesting on a cadence of our own instead is
+    // what let 60 fps content beat against a 60 Hz display.
+    const drift::TimeUs frameUs = (targetUs / step) * step;
+    if (frameUs == m_lastRequestedFrameUs)
+        return;
+    m_lastRequestedFrameUs = frameUs;
+
+    m_compositor.requestComposite(frameUs, playbackRenderOptions());
 }
 
 void PlaybackEngine::pause()
@@ -603,7 +744,16 @@ void PlaybackEngine::onCompositeTick()
     if (!m_playing || !m_project)
         return;
 
-    m_compositor.requestComposite(m_clock.currentTimeUs(), playbackRenderOptions());
+    // Backstop only. While the display is producing frames it schedules the preview, and this
+    // timer has to stay out of the way — two clocks asking for frames is the arrangement that
+    // produced the beat in the first place.
+    if (const qint64 interval = refreshIntervalNs();
+        interval > 0 && m_lastDisplayTickNs != 0
+        && PlaybackClock::nowNs() - m_lastDisplayTickNs < 2 * interval) {
+        return;
+    }
+
+    requestFrameForPresentation();
 }
 
 void PlaybackEngine::onCompositeFinished()
@@ -636,6 +786,7 @@ void PlaybackEngine::onFrameReady(const GpuFrameTexture &frame)
         QMutexLocker lock(&m_frameMutex);
         m_currentFrame = frame;
     }
+    m_stats.setUploadPath(GpuCompositor::previewUploadPathId());
     emit currentFrameChanged();
 }
 

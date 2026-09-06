@@ -17,7 +17,7 @@
 
 namespace drift {
 
-enum class ClipType { Video, Audio, Image, Text, Subtitle, Shape };
+enum class ClipType { Video, Audio, Image, Text, Subtitle, Shape, Adjustment };
 
 QString clipTypeToString(ClipType type);
 ClipType clipTypeFromString(const QString &type);

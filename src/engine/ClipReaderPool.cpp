@@ -140,6 +140,23 @@ void ClipReaderPool::warmVideoFrames(const QList<VideoRequest> &requests)
     }
 }
 
+namespace {
+// Per-thread so two compositor workers building different frames each measure only their own
+// blocking reads. Nanoseconds: a single 4K hardware readback can be well under a millisecond,
+// and rounding those to 0 would hide exactly the cost this is here to find.
+thread_local qint64 t_decodeWaitNs = 0;
+} // namespace
+
+void ClipReaderPool::resetDecodeWaitNs()
+{
+    t_decodeWaitNs = 0;
+}
+
+qint64 ClipReaderPool::decodeWaitNs()
+{
+    return t_decodeWaitNs;
+}
+
 QImage ClipReaderPool::readVideoFrame(const QString &path, quint64 streamId, drift::TimeUs sourceUs,
                                       int maxWidth, int maxHeight, const QString &stabilizePath,
                                       int stabilizeSmoothing, bool stabilizeTripod)
@@ -160,10 +177,13 @@ QImage ClipReaderPool::readVideoFrame(const QString &path, quint64 streamId, dri
     ClipReaderWorker *worker = entry->worker;
 
     QImage frame;
+    QElapsedTimer decodeWait;
+    decodeWait.start();
     QMetaObject::invokeMethod(worker, "decodeVideo", Qt::BlockingQueuedConnection, Q_RETURN_ARG(QImage, frame),
                                Q_ARG(quint64, streamId), Q_ARG(drift::TimeUs, sourceUs),
                                Q_ARG(int, maxWidth), Q_ARG(int, maxHeight),
                                Q_ARG(QString, stabilizePath), Q_ARG(int, stabilizeSmoothing), Q_ARG(bool, stabilizeTripod));
+    t_decodeWaitNs += decodeWait.nsecsElapsed();
 
     // Decode one frame beyond the current position while the caller composites
     // this one. The reader knows the source frame duration; the old code guessed
@@ -193,12 +213,15 @@ PreviewVideoFrame ClipReaderPool::readPreviewVideoFrame(const QString &path, qui
     ClipReaderWorker *worker = entry->worker;
 
     PreviewVideoFrame frame;
+    QElapsedTimer decodeWait;
+    decodeWait.start();
     QMetaObject::invokeMethod(worker, "decodePreviewVideo", Qt::BlockingQueuedConnection,
                                Q_RETURN_ARG(PreviewVideoFrame, frame), Q_ARG(quint64, streamId),
                                Q_ARG(drift::TimeUs, sourceUs), Q_ARG(int, maxWidth),
                                Q_ARG(int, maxHeight),
                                Q_ARG(QString, stabilizePath), Q_ARG(int, stabilizeSmoothing),
                                Q_ARG(bool, stabilizeTripod));
+    t_decodeWaitNs += decodeWait.nsecsElapsed();
 
     worker->requestPrefetchPreview(streamId, maxWidth, maxHeight,
                                    m_readAheadUs.load(std::memory_order_relaxed));

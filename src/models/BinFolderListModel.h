@@ -48,6 +48,11 @@ public:
     // the undo snapshot.
     QString createFolder(const QString &name, const QString &parentId);
     bool renameFolder(const QString &id, const QString &name);
+    // Reparents the folder itself; its own children (assets and subfolders) keep pointing at
+    // it, so they move along for free. Refuses a no-op (already there), moving into itself, or
+    // moving into one of its own descendants — the last would otherwise disconnect that whole
+    // branch from the root by making it its own ancestor.
+    bool moveFolder(const QString &id, const QString &newParentId);
     // Removes the folder row. Any other folder whose parentId == id is reparented to this
     // folder's own parentId (moved up one level, not deleted). Does not touch assets — the
     // caller reparents those separately via AssetLibrary::reparentAssetsInFolder.
@@ -68,6 +73,10 @@ private:
     drift::BinFolder *folderAtIndex(int index);
     QList<QString> currentParentIds() const;
     QList<QString> currentNames() const;
+    // True if candidateId is ancestorId itself or nested anywhere under it — walking up
+    // candidateId's own parentId chain. Guards against a corrupt (cyclic) chain the same way
+    // BinBreadcrumb.qml's trail walk does, since this reads the same project data.
+    bool isFolderOrDescendant(const QString &candidateId, const QString &ancestorId) const;
 
     drift::Project *m_project = nullptr;
     QList<QString> m_syncedOrder;

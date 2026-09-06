@@ -55,6 +55,13 @@ public:
     // buffers — export and thumbnails consume as fast as they decode anyway.
     void setReadAheadUs(drift::TimeUs readAheadUs);
 
+    // Time this thread has spent blocked inside a video decoder. The compositor zeroes it
+    // before building a frame and reads it after, which attributes decode wait to that frame
+    // without threading a timer down through every layer of the scene build. Per-thread, so
+    // concurrent compositor workers do not pollute each other's figure.
+    static void resetDecodeWaitNs();
+    static qint64 decodeWaitNs();
+
     // Preview toolbar: Auto (per clip), Software, or Hardware on a named backend.
     // Drops every open video decoder so the next read opens on the chosen path.
     void setHardwareDecodeMode(ClipReader::HardwareDecodeMode mode,

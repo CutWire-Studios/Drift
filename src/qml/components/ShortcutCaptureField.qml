@@ -24,7 +24,7 @@ AbstractButton {
 
     Accessible.role: Accessible.Button
     Accessible.name: qsTr("Shortcut for %1").arg(root.actionId)
-    Accessible.description: root.shortcut.length > 0 ? root.shortcut : qsTr("Not set")
+    Accessible.description: root.shortcut.length > 0 ? Theme.shortcutDisplay(root.shortcut) : qsTr("Not set")
     Accessible.onPressAction: root.arm()
 
     function arm() {
@@ -90,6 +90,14 @@ AbstractButton {
             return ""
 
         let parts = []
+
+        // Qt already normalizes Apple modifiers:
+        //
+        // ControlModifier = Command on macOS
+        // MetaModifier    = physical Control on macOS
+        //
+        // Store exactly Qt's canonical names. This keeps Shortcut {}
+        // execution and the persisted shortcut map consistent.
         if (event.modifiers & Qt.ControlModifier)
             parts.push("Ctrl")
         if (event.modifiers & Qt.AltModifier)
@@ -98,6 +106,7 @@ AbstractButton {
             parts.push("Shift")
         if (event.modifiers & Qt.MetaModifier)
             parts.push("Meta")
+
         parts.push(name)
         return parts.join("+")
     }
@@ -108,7 +117,9 @@ AbstractButton {
         verticalAlignment: Text.AlignVCenter
         elide: Text.ElideRight
         text: root.capturing ? qsTr("Press keys…")
-                             : (root.shortcut.length > 0 ? root.shortcut : qsTr("Click to set"))
+                             : (root.shortcut.length > 0
+                                ? Theme.shortcutDisplay(root.shortcut)
+                                : qsTr("Click to set"))
         color: root.capturing ? Theme.primary : Theme.panelForeground
         font.family: Theme.monoFontFamily
         font.pixelSize: Theme.fontSizeXs
@@ -146,7 +157,8 @@ AbstractButton {
         // binding it twice would make Qt fire neither.
         const clash = EditorState.setShortcut(root.actionId, chord)
         if (clash.length > 0)
-            Toasts.warning(qsTr("“%1” is already used by %2.").arg(chord).arg(clash))
+            Toasts.warning(qsTr("“%1” is already used by %2.")
+                           .arg(Theme.shortcutDisplay(chord)).arg(clash))
         root.capturing = false
         event.accepted = true
     }
