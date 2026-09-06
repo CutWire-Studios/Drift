@@ -3200,20 +3200,16 @@
         <translation>その他の絵文字</translation>
     </message>
     <message>
-        <source>Grid view</source>
-        <translation>グリッド表示</translation>
+        <source>More import options</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>List view</source>
-        <translation>リスト表示</translation>
+        <source>Import Files…</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Sort by name</source>
-        <translation>名前でソート</translation>
-    </message>
-    <message>
-        <source>Sort by type</source>
-        <translation>タイプでソート</translation>
+        <source>Import Folder…</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Import</source>
@@ -3222,10 +3218,6 @@
     <message>
         <source>Import video, audio or image files</source>
         <translation>ビデオ、オーディオ、画像ファイルをインポート</translation>
-    </message>
-    <message>
-        <source>Import a folder, keeping its structure as bin folders</source>
-        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Touch and hold a transition, then drag it onto where two clips meet.</source>
@@ -5256,6 +5248,22 @@
     <message>
         <source>Search media</source>
         <translation>メディアを検索</translation>
+    </message>
+    <message>
+        <source>Grid view</source>
+        <translation type="unfinished">グリッド表示</translation>
+    </message>
+    <message>
+        <source>List view</source>
+        <translation type="unfinished">リスト表示</translation>
+    </message>
+    <message>
+        <source>Sort by name</source>
+        <translation type="unfinished">名前でソート</translation>
+    </message>
+    <message>
+        <source>Sort by type</source>
+        <translation type="unfinished">タイプでソート</translation>
     </message>
     <message>
         <source>No media match “%1”</source>

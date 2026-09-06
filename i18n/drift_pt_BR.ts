@@ -3215,20 +3215,16 @@
         <translation>Mais emojis</translation>
     </message>
     <message>
-        <source>Grid view</source>
-        <translation>Visualização em grade</translation>
+        <source>More import options</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>List view</source>
-        <translation>Visualização em lista</translation>
+        <source>Import Files…</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Sort by name</source>
-        <translation>Ordenar por nome</translation>
-    </message>
-    <message>
-        <source>Sort by type</source>
-        <translation>Ordenar por tipo</translation>
+        <source>Import Folder…</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Import</source>
@@ -3237,10 +3233,6 @@
     <message>
         <source>Import video, audio or image files</source>
         <translation>Importar arquivos de vídeo, áudio ou imagem</translation>
-    </message>
-    <message>
-        <source>Import a folder, keeping its structure as bin folders</source>
-        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Touch and hold a transition, then drag it onto where two clips meet.</source>
@@ -5274,6 +5266,22 @@
     <message>
         <source>Search media</source>
         <translation>Pesquisar mídia</translation>
+    </message>
+    <message>
+        <source>Grid view</source>
+        <translation type="unfinished">Visualização em grade</translation>
+    </message>
+    <message>
+        <source>List view</source>
+        <translation type="unfinished">Visualização em lista</translation>
+    </message>
+    <message>
+        <source>Sort by name</source>
+        <translation type="unfinished">Ordenar por nome</translation>
+    </message>
+    <message>
+        <source>Sort by type</source>
+        <translation type="unfinished">Ordenar por tipo</translation>
     </message>
     <message>
         <source>No media match “%1”</source>

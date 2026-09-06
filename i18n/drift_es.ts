@@ -3215,20 +3215,16 @@
         <translation>Más emojis</translation>
     </message>
     <message>
-        <source>Grid view</source>
-        <translation>Vista de cuadrícula</translation>
+        <source>More import options</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>List view</source>
-        <translation>Vista de lista</translation>
+        <source>Import Files…</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Sort by name</source>
-        <translation>Ordenar por nombre</translation>
-    </message>
-    <message>
-        <source>Sort by type</source>
-        <translation>Ordenar por tipo</translation>
+        <source>Import Folder…</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Import</source>
@@ -3237,10 +3233,6 @@
     <message>
         <source>Import video, audio or image files</source>
         <translation>Importar archivos de vídeo, audio o imagen</translation>
-    </message>
-    <message>
-        <source>Import a folder, keeping its structure as bin folders</source>
-        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Touch and hold a transition, then drag it onto where two clips meet.</source>
@@ -5274,6 +5266,22 @@
     <message>
         <source>Search media</source>
         <translation>Buscar medios</translation>
+    </message>
+    <message>
+        <source>Grid view</source>
+        <translation type="unfinished">Vista de cuadrícula</translation>
+    </message>
+    <message>
+        <source>List view</source>
+        <translation type="unfinished">Vista de lista</translation>
+    </message>
+    <message>
+        <source>Sort by name</source>
+        <translation type="unfinished">Ordenar por nombre</translation>
+    </message>
+    <message>
+        <source>Sort by type</source>
+        <translation type="unfinished">Ordenar por tipo</translation>
     </message>
     <message>
         <source>No media match “%1”</source>

@@ -3215,20 +3215,16 @@
         <translation>තවත් ඉමෝජි</translation>
     </message>
     <message>
-        <source>Grid view</source>
-        <translation>ජාලක දසුන</translation>
+        <source>More import options</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>List view</source>
-        <translation>ලැයිස්තු දසුන</translation>
+        <source>Import Files…</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Sort by name</source>
-        <translation>නම අනුව පෙළගස්වන්න</translation>
-    </message>
-    <message>
-        <source>Sort by type</source>
-        <translation>වර්ගය අනුව පෙළගස්වන්න</translation>
+        <source>Import Folder…</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Import</source>
@@ -3237,10 +3233,6 @@
     <message>
         <source>Import video, audio or image files</source>
         <translation>වීඩියෝ, ශ්‍රව්‍ය හෝ පින්තූර ගොනු ආයාත කරන්න</translation>
-    </message>
-    <message>
-        <source>Import a folder, keeping its structure as bin folders</source>
-        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Touch and hold a transition, then drag it onto where two clips meet.</source>
@@ -5274,6 +5266,22 @@
     <message>
         <source>Search media</source>
         <translation>මාධ්‍ය සොයන්න</translation>
+    </message>
+    <message>
+        <source>Grid view</source>
+        <translation type="unfinished">ජාලක දසුන</translation>
+    </message>
+    <message>
+        <source>List view</source>
+        <translation type="unfinished">ලැයිස්තු දසුන</translation>
+    </message>
+    <message>
+        <source>Sort by name</source>
+        <translation type="unfinished">නම අනුව පෙළගස්වන්න</translation>
+    </message>
+    <message>
+        <source>Sort by type</source>
+        <translation type="unfinished">වර්ගය අනුව පෙළගස්වන්න</translation>
     </message>
     <message>
         <source>No media match “%1”</source>

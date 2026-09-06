@@ -25,6 +25,9 @@ Item {
     // Mirrors the header's view toggle, owned by the parent so the toolbar and
     // grid stay in sync.
     property bool gridMode: true
+    // Sorting is a bin-wide reorder of AssetLibrary itself, so this only tracks
+    // which of the two orders the toolbar applied last.
+    property bool sortByKind: false
     // True while an import is running, so the empty state can step aside.
     property bool importing: false
     // Kind visibility filter supplied by the parent (depends on the active tab).
@@ -983,27 +986,68 @@ Item {
         onActionTriggered: root.importRequested()
     }
 
-    BinBreadcrumb {
-        id: breadcrumb
+    ThemedTextField {
+        id: search
         anchors.top: parent.top
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.margins: Theme.pagePadding
-        anchors.bottomMargin: 0
-        currentFolderId: EditorState.currentBinFolderId
-        onNavigate: (folderId) => EditorState.currentBinFolderId = folderId
-    }
-
-    ThemedTextField {
-        id: search
-        anchors.top: breadcrumb.visible ? breadcrumb.bottom : parent.top
-        anchors.topMargin: breadcrumb.visible ? Theme.spacingSm : 0
-        anchors.left: parent.left
-        anchors.right: parent.right
-        anchors.margins: Theme.pagePadding
+        // Shares its row with the view/sort toggles, which the panel header no
+        // longer has room for alongside the import actions.
+        anchors.rightMargin: Theme.pagePadding + viewControls.width + Theme.spacingMd
         visible: AssetLibrary.count > 0 || BinFolderModel.count > 0
         placeholderText: qsTr("Search media")
         font.family: Theme.fontFamily
+    }
+
+    Row {
+        id: viewControls
+        anchors.right: parent.right
+        anchors.rightMargin: Theme.pagePadding
+        anchors.verticalCenter: search.verticalCenter
+        spacing: Theme.spacingSm
+        visible: search.visible
+
+        IconButton {
+            glyph: Theme.icons.grid
+            variant: "ghost"
+            tooltip: qsTr("Grid view")
+            active: root.gridMode
+            onClicked: EditorState.mediaGridMode = true
+        }
+
+        IconButton {
+            glyph: Theme.icons.list
+            variant: "ghost"
+            tooltip: qsTr("List view")
+            active: !root.gridMode
+            onClicked: EditorState.mediaGridMode = false
+        }
+
+        IconButton {
+            glyph: root.sortByKind ? Theme.icons.sortByKind : Theme.icons.sortByName
+            variant: "ghost"
+            tooltip: root.sortByKind ? qsTr("Sort by name") : qsTr("Sort by type")
+            onClicked: {
+                if (root.sortByKind)
+                    AssetLibrary.sortByName()
+                else
+                    AssetLibrary.sortByKind()
+                root.sortByKind = !root.sortByKind
+            }
+        }
+    }
+
+    BinBreadcrumb {
+        id: breadcrumb
+        anchors.top: search.visible ? search.bottom : parent.top
+        anchors.topMargin: visible ? Theme.spacingSm : 0
+        anchors.left: parent.left
+        anchors.right: parent.right
+        anchors.leftMargin: Theme.pagePadding
+        anchors.rightMargin: Theme.pagePadding
+        currentFolderId: EditorState.currentBinFolderId
+        onNavigate: (folderId) => EditorState.currentBinFolderId = folderId
     }
 
     // Search matched nothing in this folder.
@@ -1034,7 +1078,7 @@ Item {
         id: grid
         visible: root.gridMode && root.combinedItems.length > 0
 
-        anchors.top: search.bottom
+        anchors.top: breadcrumb.bottom
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.bottom: parent.bottom
@@ -1057,7 +1101,7 @@ Item {
         id: listColumn
         visible: !root.gridMode && root.combinedItems.length > 0
 
-        anchors.top: search.bottom
+        anchors.top: breadcrumb.bottom
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.bottom: parent.bottom

@@ -3200,19 +3200,15 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Grid view</source>
+        <source>More import options</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>List view</source>
+        <source>Import Files…</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Sort by name</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Sort by type</source>
+        <source>Import Folder…</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -3221,10 +3217,6 @@
     </message>
     <message>
         <source>Import video, audio or image files</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Import a folder, keeping its structure as bin folders</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -5255,6 +5247,22 @@
     </message>
     <message>
         <source>Search media</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Grid view</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>List view</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Sort by name</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Sort by type</source>
         <translation type="unfinished"></translation>
     </message>
     <message>

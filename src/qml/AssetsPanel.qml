@@ -679,7 +679,6 @@ PanelFrame {
         Theme.icons.listVideo
     ]
     property int activeTab: 0
-    property bool sortByKind: false
 
     // Fades the tab body in on a tab change instead of hard-cutting to it. Driven
     // as one property the bodies share, rather than fading the whole content
@@ -904,33 +903,6 @@ PanelFrame {
                     spacing: 6
                     visible: kindsForTab(tabsModel.get(root.activeTab).tabId).length > 0
 
-                    IconButton {
-                        glyph: Theme.icons.grid
-                        variant: "ghost"
-                        tooltip: qsTr("Grid view")
-                        active: assetsContent.gridMode
-                        onClicked: EditorState.mediaGridMode = true
-                    }
-                    IconButton {
-                        glyph: Theme.icons.list
-                        variant: "ghost"
-                        tooltip: qsTr("List view")
-                        active: !assetsContent.gridMode
-                        onClicked: EditorState.mediaGridMode = false
-                    }
-                    IconButton {
-                        glyph: root.sortByKind ? Theme.icons.sortByKind : Theme.icons.sortByName
-                        variant: "ghost"
-                        tooltip: root.sortByKind ? qsTr("Sort by name") : qsTr("Sort by type")
-                        onClicked: {
-                            if (root.sortByKind)
-                                AssetLibrary.sortByName()
-                            else
-                                AssetLibrary.sortByKind()
-                            root.sortByKind = !root.sortByKind
-                        }
-                    }
-
                     ThemedButton {
                         text: qsTr("New Folder")
                         variant: "ghost"
@@ -940,25 +912,82 @@ PanelFrame {
                         onClicked: newFolderDialog.open()
                     }
 
-                    ThemedButton {
-                        text: qsTr("Import")
-                        variant: "ghost"
-                        glyph: Theme.icons.upload
-                        tooltip: qsTr("Import video, audio or image files")
-                        enabled: !root.importing
+                    // Split button: the left half imports files, the chevron opens the
+                    // folder variant. Both halves share one bordered box so the header
+                    // reads as two actions, not three competing buttons.
+                    Rectangle {
+                        id: importSplit
                         anchors.verticalCenter: parent.verticalCenter
-                        onClicked: root.importMedia()
-                    }
+                        width: importFilesHalf.width
+                               + (importMenuHalf.visible ? importSplitDivider.width + importMenuHalf.width : 0)
+                        height: Theme.controlHeight
+                        radius: Theme.radiusSm
+                        color: "transparent"
+                        border.width: Theme.borderWidth
+                        border.color: Theme.panelBorder
+                        opacity: root.importing ? 0.6 : 1
 
-                    ThemedButton {
-                        text: qsTr("Import Folder")
-                        variant: "ghost"
-                        glyph: Theme.icons.folderInput
-                        tooltip: qsTr("Import a folder, keeping its structure as bin folders")
-                        enabled: !root.importing
-                        visible: !Theme.touchUi
-                        anchors.verticalCenter: parent.verticalCenter
-                        onClicked: root.importFolder()
+                        Row {
+                            anchors.fill: parent
+                            spacing: 0
+
+                            ThemedButton {
+                                id: importFilesHalf
+                                text: qsTr("Import")
+                                variant: "ghost"
+                                flat: true
+                                radius: Theme.radiusXs
+                                glyph: Theme.icons.upload
+                                tooltip: qsTr("Import video, audio or image files")
+                                enabled: !root.importing
+                                height: parent.height - Theme.borderWidth * 2
+                                anchors.verticalCenter: parent.verticalCenter
+                                onClicked: root.importMedia()
+                            }
+
+                            Rectangle {
+                                id: importSplitDivider
+                                width: Theme.borderWidth
+                                height: parent.height - Theme.spacingLg
+                                anchors.verticalCenter: parent.verticalCenter
+                                color: Theme.panelBorder
+                                visible: importMenuHalf.visible
+                            }
+
+                            ThemedButton {
+                                id: importMenuHalf
+                                variant: "ghost"
+                                flat: true
+                                radius: Theme.radiusXs
+                                glyph: Theme.icons.chevronDown
+                                glyphSize: Theme.iconSizeSm
+                                leftPadding: Theme.spacingLg
+                                rightPadding: Theme.spacingLg
+                                tooltip: qsTr("More import options")
+                                enabled: !root.importing
+                                visible: !Theme.touchUi
+                                height: parent.height - Theme.borderWidth * 2
+                                anchors.verticalCenter: parent.verticalCenter
+                                onClicked: importMenu.popup(0, importSplit.height + Theme.spacingSm)
+                            }
+                        }
+
+                        ThemedContextMenu {
+                            id: importMenu
+                            implicitWidth: 220
+
+                            ThemedMenuItem {
+                                text: qsTr("Import Files…")
+                                icon.name: Theme.icons.upload
+                                onTriggered: root.importMedia()
+                            }
+
+                            ThemedMenuItem {
+                                text: qsTr("Import Folder…")
+                                icon.name: Theme.icons.folderInput
+                                onTriggered: root.importFolder()
+                            }
+                        }
                     }
                 }
             }
