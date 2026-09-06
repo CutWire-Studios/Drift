@@ -4099,8 +4099,8 @@
         <translation>プリセットをクリップにドラッグするか、クリックして選択範囲に適用</translation>
     </message>
     <message>
-        <source>Drag a preset onto a clip in the timeline</source>
-        <translation>プリセットをタイムライン上のクリップにドラッグ</translation>
+        <source>Click to add as adjustment layer, or drag onto a clip</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Search effects</source>
