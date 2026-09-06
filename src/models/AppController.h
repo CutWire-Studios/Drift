@@ -88,6 +88,9 @@ class AppController : public QObject
     Q_PROPERTY(bool allowClipOverlap READ allowClipOverlap WRITE setAllowClipOverlap NOTIFY allowClipOverlapChanged)
   // Per-project UI prefs (serialized with the .drift file, not global QSettings).
     Q_PROPERTY(bool mediaGridMode READ mediaGridMode WRITE setMediaGridMode NOTIFY mediaGridModeChanged)
+    // "grid" | "list" | "tree". mediaGridMode above is the older two-state view of the same
+    // setting, kept because MCP and saved projects already speak it.
+    Q_PROPERTY(QString mediaViewMode READ mediaViewMode WRITE setMediaViewMode NOTIFY mediaViewModeChanged)
     // App-wide theme preference, backed by QSettings("ui/darkMode"). Until the user
     // toggles once, darkModeOverridden is false and the UI follows the OS colour
     // scheme live; after that the stored choice wins on every launch.
@@ -324,7 +327,8 @@ public:
     Q_INVOKABLE void setWorkspaceLayoutPreference(const QString &layout);
     // Back to following the canvas orientation.
     Q_INVOKABLE void clearWorkspaceLayoutPreference();
-    bool mediaGridMode() const { return m_mediaGridMode; }
+    bool mediaGridMode() const { return m_mediaViewMode == QLatin1String("grid"); }
+    QString mediaViewMode() const { return m_mediaViewMode; }
     bool autoKeyEnabled() const { return m_autoKeyEnabled; }
     bool reopenLastProject() const { return m_reopenLastProject; }
     bool vaapiZeroCopy() const { return m_vaapiZeroCopy; }
@@ -421,6 +425,7 @@ public:
     Q_INVOKABLE void setDarkModePreference(bool enabled);
     Q_INVOKABLE void clearDarkModePreference();
     void setMediaGridMode(bool enabled);
+    void setMediaViewMode(const QString &mode);
     void setAutoKeyEnabled(bool enabled);
     void setReopenLastProject(bool enabled);
     void setVaapiZeroCopy(bool enabled);
@@ -1213,6 +1218,7 @@ signals:
     void darkModePreferenceChanged();
     void workspaceLayoutPreferenceChanged();
     void mediaGridModeChanged();
+    void mediaViewModeChanged();
     void autoKeyEnabledChanged();
     void reopenLastProjectChanged();
     void vaapiZeroCopyChanged();
@@ -1530,7 +1536,7 @@ protected:
     bool m_darkModePreferred = true;
     bool m_workspaceLayoutOverridden = false;
     QString m_workspaceLayoutPreferred = QStringLiteral("landscape");
-    bool m_mediaGridMode = true;
+    QString m_mediaViewMode = QStringLiteral("grid");
     bool m_autoKeyEnabled = false;
     bool m_reopenLastProject = false;
     bool m_vaapiZeroCopy = false;

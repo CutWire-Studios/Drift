@@ -3559,9 +3559,20 @@ void AppController::clearWorkspaceLayoutPreference()
 
 void AppController::setMediaGridMode(bool enabled)
 {
-    if (m_mediaGridMode == enabled)
+    setMediaViewMode(enabled ? QStringLiteral("grid") : QStringLiteral("list"));
+}
+
+void AppController::setMediaViewMode(const QString &mode)
+{
+    // An unknown mode (an older build's project, a bad MCP argument) falls back to the
+    // grid rather than leaving the bin with nothing to render.
+    const QString next = (mode == QLatin1String("list") || mode == QLatin1String("tree"))
+                             ? mode
+                             : QStringLiteral("grid");
+    if (m_mediaViewMode == next)
         return;
-    m_mediaGridMode = enabled;
+    m_mediaViewMode = next;
+    emit mediaViewModeChanged();
     emit mediaGridModeChanged();
 }
 
@@ -14714,7 +14725,10 @@ QByteArray AppController::serializeProjectJson() const
     root.insert(QStringLiteral("snapEnabled"), m_snapEnabled);
     root.insert(QStringLiteral("rippleEnabled"), m_rippleEnabled);
     root.insert(QStringLiteral("allowClipOverlap"), m_allowClipOverlap);
-    root.insert(QStringLiteral("mediaGridMode"), m_mediaGridMode);
+    root.insert(QStringLiteral("mediaViewMode"), m_mediaViewMode);
+    // Still written so a project saved here opens with the right view in builds that
+    // predate the tree mode.
+    root.insert(QStringLiteral("mediaGridMode"), mediaGridMode());
     root.insert(QStringLiteral("loopWorkArea"), m_loopWorkAreaEnabled);
     return QJsonDocument(root).toJson(QJsonDocument::Indented);
 }
@@ -14820,9 +14834,10 @@ bool AppController::applyProjectJson(const QByteArray &data, QString *error)
     m_rippleEnabled = root.value(QStringLiteral("rippleEnabled")).toBool(false);
     m_allowClipOverlap = root.value(QStringLiteral("allowClipOverlap")).toBool(false);
 
-    if (root.contains(QStringLiteral("mediaGridMode"))) {
-        m_mediaGridMode = root.value(QStringLiteral("mediaGridMode")).toBool(true);
-        emit mediaGridModeChanged();
+    if (root.contains(QStringLiteral("mediaViewMode"))) {
+        setMediaViewMode(root.value(QStringLiteral("mediaViewMode")).toString());
+    } else if (root.contains(QStringLiteral("mediaGridMode"))) {
+        setMediaGridMode(root.value(QStringLiteral("mediaGridMode")).toBool(true));
     }
 
     if (root.contains(QStringLiteral("loopWorkArea"))) {

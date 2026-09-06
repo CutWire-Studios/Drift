@@ -5276,12 +5276,24 @@
         <translation type="unfinished">Vista de lista</translation>
     </message>
     <message>
+        <source>Tree view</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Sort by name</source>
         <translation type="unfinished">Ordenar por nombre</translation>
     </message>
     <message>
         <source>Sort by type</source>
         <translation type="unfinished">Ordenar por tipo</translation>
+    </message>
+    <message>
+        <source>Expand all</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Collapse all</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>No media match “%1”</source>
@@ -5314,6 +5326,14 @@
     <message>
         <source>Remove from project</source>
         <translation>Eliminar del proyecto</translation>
+    </message>
+    <message>
+        <source>Collapse folder</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Expand folder</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Import video, audio or images, then drag them onto the timeline. Right-click a clip to preview and trim it first.</source>

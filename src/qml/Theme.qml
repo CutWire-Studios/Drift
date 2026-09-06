@@ -550,7 +550,11 @@ QtObject {
         moon: "moon",
         sun: "sun",
         grid: "grid-3x3",
+        // The media bin's grid toggle; grid-3x3 above still marks the layout
+        // pickers and the preview overlay's guide grid.
+        layoutGrid: "layout-grid",
         list: "list",
+        listTree: "list-tree",
         sortByName: "arrow-down-a-z",
         sortByKind: "tags",
         gripVertical: "grip-vertical",

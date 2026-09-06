@@ -5258,12 +5258,24 @@
         <translation type="unfinished">リスト表示</translation>
     </message>
     <message>
+        <source>Tree view</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Sort by name</source>
         <translation type="unfinished">名前でソート</translation>
     </message>
     <message>
         <source>Sort by type</source>
         <translation type="unfinished">タイプでソート</translation>
+    </message>
+    <message>
+        <source>Expand all</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Collapse all</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>No media match “%1”</source>
@@ -5296,6 +5308,14 @@
     <message>
         <source>Remove from project</source>
         <translation>プロジェクトから削除</translation>
+    </message>
+    <message>
+        <source>Collapse folder</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Expand folder</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Import video, audio or images, then drag them onto the timeline. Right-click a clip to preview and trim it first.</source>

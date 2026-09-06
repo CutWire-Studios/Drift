@@ -5258,11 +5258,23 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Tree view</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Sort by name</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Sort by type</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Expand all</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Collapse all</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -5295,6 +5307,14 @@
     </message>
     <message>
         <source>Remove from project</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Collapse folder</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Expand folder</source>
         <translation type="unfinished"></translation>
     </message>
     <message>

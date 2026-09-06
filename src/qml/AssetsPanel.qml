@@ -852,7 +852,6 @@ PanelFrame {
             id: assetsContent
             width: parent.width - (root.sheetMode ? 0 : (Theme.tabRailWidth + Theme.borderWidth))
             height: parent.height
-            property bool gridMode: EditorState.mediaGridMode
 
             Rectangle {
                 width: parent.width
@@ -1386,7 +1385,6 @@ PanelFrame {
                 width: parent.width
                 opacity: root.tabOpacity
                 height: parent.height - Theme.panelHeaderHeight
-                gridMode: assetsContent.gridMode
                 importing: root.importing
                 assetVisibleFn: function(kind) { return root.assetVisible(kind) }
                 onPreviewRequested: (assetIndex) => {
