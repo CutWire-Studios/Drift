@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!DOCTYPE TS>
-<TS version="2.1" language="ja" sourcelanguage="en">
+<TS version="2.1" language="ja_JP" sourcelanguage="en_US">
 <context>
     <name>AddonManager</name>
     <message>
@@ -891,7 +891,7 @@
     </message>
     <message>
         <source>GPU preview unavailable</source>
-        <translation type="unfinished"></translation>
+        <translation>GPUプレビューは利用できません</translation>
     </message>
     <message>
         <source>Fit</source>
@@ -986,7 +986,7 @@
     </message>
     <message>
         <source>Rename</source>
-        <translation>名前を変更</translation>
+        <translation>名前の変更</translation>
     </message>
     <message>
         <source>Name</source>
@@ -1030,7 +1030,7 @@
     </message>
     <message numerus="yes">
         <source>%n clip(s)</source>
-        <translation type="unfinished">
+        <translation>
             <numerusform>%n 個のクリップ</numerusform>
         </translation>
     </message>
@@ -1060,7 +1060,7 @@
     </message>
     <message>
         <source>Rename…</source>
-        <translation>名前を変更…</translation>
+        <translation>名前の変更…</translation>
     </message>
     <message>
         <source>Delete</source>
@@ -1321,7 +1321,7 @@
     </message>
     <message>
         <source>Delete selection</source>
-        <translation>選択を削除</translation>
+        <translation>選択範囲を削除</translation>
     </message>
     <message>
         <source>Undo</source>
@@ -1365,7 +1365,7 @@
     </message>
     <message>
         <source>Clear selection</source>
-        <translation>選択を解除</translation>
+        <translation>選択範囲を解除</translation>
     </message>
     <message>
         <source>Select all clips</source>
@@ -1777,7 +1777,7 @@
     </message>
     <message numerus="yes">
         <source>Imported %n subtitles</source>
-        <translation type="unfinished">
+        <translation>
             <numerusform>%n 件の字幕をインポートしました</numerusform>
         </translation>
     </message>
@@ -1803,7 +1803,7 @@
     </message>
     <message numerus="yes">
         <source>Multicam ready: %n camera(s) lined up at the start. Drag a clip to adjust its sync, then pick a shot.</source>
-        <translation type="unfinished">
+        <translation>
             <numerusform>マルチカム準備完了 : %n 台のカメラが開始位置で同期しました。クリップをドラッグして同期を調整し、ショットを選択してください。</numerusform>
         </translation>
     </message>
@@ -1909,7 +1909,7 @@
     </message>
     <message numerus="yes">
         <source>Found %n scene(s)</source>
-        <translation type="unfinished">
+        <translation>
             <numerusform>%n 件のシーンを発見</numerusform>
         </translation>
     </message>
@@ -1931,15 +1931,15 @@
     </message>
     <message>
         <source>Your graphics driver is too old for the preview, which needs OpenGL 3.3. See Help → Debug info.</source>
-        <translation type="unfinished"></translation>
+        <translation>グラフィックスドライバーのバージョンが古いため、プレビューを表示できません (OpenGL 3.3が必要です)。「ヘルプ」→「デバッグ情報」を参照してください。</translation>
     </message>
     <message>
         <source>Your graphics driver only provides %1; the preview needs OpenGL 3.3. See Help → Debug info.</source>
-        <translation type="unfinished"></translation>
+        <translation>お使いのグラフィックスドライバーは %1 にしか対応していません。プレビューには OpenGL 3.3 が必要です。「ヘルプ」→「デバッグ情報」を参照してください。</translation>
     </message>
     <message>
         <source>GPU preview rendering is unavailable on this machine. See Help → Debug info.</source>
-        <translation type="unfinished"></translation>
+        <translation>このマシンでは GPU プレビューレンダリングを利用できません。「ヘルプ」→「デバッグ情報」を参照してください。</translation>
     </message>
     <message>
         <source>Media and referenced clips removed</source>
@@ -1989,11 +1989,11 @@
     </message>
     <message>
         <source>Paste attributes…</source>
-        <translation type="unfinished"></translation>
+        <translation>属性を貼り付け...</translation>
     </message>
     <message>
         <source>Clips moved</source>
-        <translation type="unfinished"></translation>
+        <translation>クリップを移動しました</translation>
     </message>
     <message>
         <source>Building keyframes…</source>
@@ -2637,25 +2637,25 @@
     </message>
     <message>
         <source>Copy a clip and select target clips first</source>
-        <translation type="unfinished"></translation>
+        <translation>対象クリップを選択してからコピーしてください</translation>
     </message>
     <message>
         <source>Paste attributes</source>
-        <translation type="unfinished"></translation>
+        <translation>属性を貼り付け</translation>
     </message>
     <message numerus="yes">
         <source>Pasted attributes onto %n clip(s)</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>%n 個のクリップに属性を貼り付けました</numerusform>
         </translation>
     </message>
     <message>
         <source>Pasted effects use “%1”, which isn’t installed — it won’t show. Open Extras to install it.</source>
-        <translation type="unfinished"></translation>
+        <translation>貼り付けたエフェクト「%1」は未インストールのため表示できません。拡張機能からインストールしてください。</translation>
     </message>
     <message>
         <source>Pasted effects use %1 packs that aren’t installed — they won’t show. Open Extras to install them.</source>
-        <translation type="unfinished"></translation>
+        <translation>貼り付けたエフェクトのパック「%1」が未インストールの ため表示できません。拡張機能からインストールしてください。</translation>
     </message>
     <message>
         <source>There are no effects to save</source>
@@ -2811,7 +2811,7 @@
     </message>
     <message numerus="yes">
         <source>Pasted %n clips</source>
-        <translation type="unfinished">
+        <translation>
             <numerusform>%n 個のクリップを貼り付けました</numerusform>
         </translation>
     </message>
@@ -2833,11 +2833,11 @@
     </message>
     <message>
         <source>Failed to open Premiere Pro project</source>
-        <translation type="unfinished"></translation>
+        <translation>Premiere Pro プロジェクトを開けません</translation>
     </message>
     <message>
         <source>Premiere Pro project imported: %1</source>
-        <translation type="unfinished"></translation>
+        <translation>インポートされたPremiere Proプロジェクト : %1</translation>
     </message>
     <message>
         <source>Exporting…</source>
@@ -2853,11 +2853,11 @@
     </message>
     <message>
         <source>Nudge selection</source>
-        <translation>選択を微調整</translation>
+        <translation>選択範囲を微調整</translation>
     </message>
     <message>
         <source>Selection nudged</source>
-        <translation>選択を微調整しました</translation>
+        <translation>選択範囲を微調整しました</translation>
     </message>
     <message>
         <source>That save location isn’t valid</source>
@@ -2929,13 +2929,13 @@
     </message>
     <message numerus="yes">
         <source>%n items removed</source>
-        <translation type="unfinished">
+        <translation>
             <numerusform>%n 個の項目を削除しました</numerusform>
         </translation>
     </message>
     <message numerus="yes">
         <source>%n items moved</source>
-        <translation type="unfinished">
+        <translation>
             <numerusform>%n 個の項目を移動しました</numerusform>
         </translation>
     </message>
@@ -3042,7 +3042,7 @@
     </message>
     <message numerus="yes">
         <source>Imported %n files.</source>
-        <translation type="unfinished">
+        <translation>
             <numerusform>%n 個のファイルをインポートしました。</numerusform>
         </translation>
     </message>
@@ -3052,13 +3052,13 @@
     </message>
     <message numerus="yes">
         <source>Could not import any of the %n selected files.</source>
-        <translation type="unfinished">
+        <translation>
             <numerusform>選択された %n 個のファイルはインポートできませんでした。</numerusform>
         </translation>
     </message>
     <message numerus="yes">
         <source>Replaced with “%1”. %n clips were shortened to fit the new file.</source>
-        <translation type="unfinished">
+        <translation>
             <numerusform>「%1」に置き換えました。%n 個のクリップは新しいファイルに合わせて短縮されました。</numerusform>
         </translation>
     </message>
@@ -3276,7 +3276,7 @@
     </message>
     <message numerus="yes">
         <source>%n items</source>
-        <translation type="unfinished">
+        <translation>
             <numerusform>%n 個の項目</numerusform>
         </translation>
     </message>
@@ -3286,7 +3286,7 @@
     </message>
     <message numerus="yes">
         <source>Removed %n items.</source>
-        <translation type="unfinished">
+        <translation>
             <numerusform>%n 個の項目を削除しました。</numerusform>
         </translation>
     </message>
@@ -3307,7 +3307,7 @@
     </message>
     <message>
         <source>Drag a preset onto a clip, or click to apply to the selection</source>
-        <translation>プリセットをクリップにドラッグするか、クリックして選択に適用</translation>
+        <translation>プリセットをクリップにドラッグするか、クリックして選択範囲に適用</translation>
     </message>
     <message>
         <source>Drag a preset onto a clip in the timeline</source>
@@ -3658,7 +3658,7 @@
     </message>
     <message>
         <source>Playback</source>
-        <translation type="unfinished">再生</translation>
+        <translation>再生</translation>
     </message>
     <message>
         <source>Video decoders</source>
@@ -3718,87 +3718,87 @@
     </message>
     <message>
         <source>Delivered well above displayed means frames are being produced that the display never shows — a cadence problem rather than a slow machine.</source>
-        <translation type="unfinished"></translation>
+        <translation>配信レートが表示レートを大きく上回っている場合、ディスプレイに一度も表示されないフレームが生成されていることになります — 処理が遅いのではなく、フレームの送出間隔（ケイデンス）の問題です。</translation>
     </message>
     <message>
         <source>Show live stats on the preview</source>
-        <translation type="unfinished"></translation>
+        <translation>プレビューにライブ統計を表示する</translation>
     </message>
     <message>
         <source>Stays on after this dialog closes, so you can watch the numbers while the timeline plays.</source>
-        <translation type="unfinished"></translation>
+        <translation>このダイアログを閉じても表示されたままになるため、タイムラインの再生中に数値を確認できます。</translation>
     </message>
     <message>
         <source>Where the time goes</source>
-        <translation type="unfinished"></translation>
+        <translation>処理時間の内訳</translation>
     </message>
     <message>
         <source>Decodes a fixed 1080p60 clip, and the first clip on the timeline, through each stage of the preview. Takes a few seconds.</source>
-        <translation type="unfinished"></translation>
+        <translation>固定の 1080p60 クリップと、タイムライン上の最初のクリップを、プレビューの各段階でデコードします。数秒かかります。</translation>
     </message>
     <message>
         <source>Measuring…</source>
-        <translation type="unfinished"></translation>
+        <translation>測定中…</translation>
     </message>
     <message>
         <source>Run test</source>
-        <translation type="unfinished"></translation>
+        <translation>テストを実行</translation>
     </message>
     <message>
         <source>Reference clip (1080p60)</source>
-        <translation type="unfinished"></translation>
+        <translation>リファレンスクリップ (1080p60)</translation>
     </message>
     <message>
         <source>Timeline clip</source>
-        <translation type="unfinished"></translation>
+        <translation>タイムラインクリップ</translation>
     </message>
     <message>
         <source>Source</source>
-        <translation type="unfinished"></translation>
+        <translation>ソース</translation>
     </message>
     <message>
         <source>Decoder</source>
-        <translation type="unfinished"></translation>
+        <translation>デコーダー</translation>
     </message>
     <message>
         <source> (hardware)</source>
-        <translation type="unfinished"></translation>
+        <translation> (ハードウェア)</translation>
     </message>
     <message>
         <source> (software)</source>
-        <translation type="unfinished"></translation>
+        <translation> (ソフトウェア)</translation>
     </message>
     <message>
         <source>Preview upload</source>
-        <translation type="unfinished"></translation>
+        <translation>プレビューアップロード</translation>
     </message>
     <message>
         <source>Decode</source>
-        <translation type="unfinished"></translation>
+        <translation>デコード</translation>
     </message>
     <message>
         <source>Readback to CPU costs</source>
-        <translation type="unfinished"></translation>
+        <translation>CPU への読み戻しコスト</translation>
     </message>
     <message>
         <source>Compositing costs</source>
-        <translation type="unfinished"></translation>
+        <translation>コンポジットコスト</translation>
     </message>
     <message>
         <source>Total per frame</source>
-        <translation type="unfinished"></translation>
+        <translation>1フレームあたりの合計</translation>
     </message>
     <message>
         <source>Budget at this frame rate</source>
-        <translation type="unfinished"></translation>
+        <translation>このフレームレートにおける許容時間</translation>
     </message>
     <message>
         <source>Findings</source>
-        <translation type="unfinished"></translation>
+        <translation>検出結果</translation>
     </message>
     <message>
         <source>Nothing stood out. Turn on the live stats above, play the timeline for a few seconds, then reopen this.</source>
-        <translation type="unfinished"></translation>
+        <translation>特に目立った点はありませんでした。上のライブ統計をオンにしてタイムラインを数秒再生し、これを再度開いてください。</translation>
     </message>
     <message>
         <source>Need help? Copy the report above when you file an issue.</source>
@@ -3868,11 +3868,11 @@
     </message>
     <message>
         <source>Premiere Pro project (*.prproj)</source>
-        <translation type="unfinished"></translation>
+        <translation>Premiere Pro プロジェクト (*.prproj)</translation>
     </message>
     <message>
         <source>Final Cut Pro XML (*.xml)</source>
-        <translation type="unfinished"></translation>
+        <translation>Final Cut Pro XML (*.xml)</translation>
     </message>
     <message>
         <source>Open Project</source>
@@ -3896,11 +3896,11 @@
     </message>
     <message>
         <source>Import Premiere Pro Project</source>
-        <translation type="unfinished"></translation>
+        <translation>Premiere Pro プロジェクトのインポート</translation>
     </message>
     <message>
         <source>Premiere Pro project (*.prproj *.xml)</source>
-        <translation type="unfinished"></translation>
+        <translation>Premiere Pro プロジェクト (*.prproj *.xml)</translation>
     </message>
     <message>
         <source>Save Shareable Copy</source>
@@ -3955,6 +3955,10 @@
         <translation>エージェントアクセスがオン</translation>
     </message>
     <message>
+        <source>Debug info and playback diagnostics</source>
+        <translation>デバッグ情報と再生診断</translation>
+    </message>
+    <message>
         <source>Recommended packs and updates</source>
         <translation>推奨パックとアップデート</translation>
     </message>
@@ -3965,10 +3969,6 @@
     <message>
         <source>Language</source>
         <translation>言語</translation>
-    </message>
-    <message>
-        <source>All Supported Projects (*.drift *.prproj *.xml)</source>
-        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Language for menus and labels</source>
@@ -3985,10 +3985,6 @@
     <message>
         <source>Agent access</source>
         <translation>エージェントアクセス</translation>
-    </message>
-    <message>
-        <source>Debug info and playback diagnostics</source>
-        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Export in progress (%1%) — click to view</source>
@@ -4009,6 +4005,10 @@
     <message>
         <source>Multicam</source>
         <translation>マルチカム</translation>
+    </message>
+    <message>
+        <source>All Supported Projects (*.drift *.prproj *.xml)</source>
+        <translation>サポートされているすべてのプロジェクト (*.drift *.prproj *.xml)</translation>
     </message>
     <message>
         <source>Workspace</source>
@@ -4063,11 +4063,11 @@
     </message>
     <message>
         <source>Drag a preset onto a clip, or click to apply to the selection</source>
-        <translation>プリセットをクリップにドラッグするか、クリックして選択に適用</translation>
+        <translation>プリセットをクリップにドラッグするか、クリックして選択範囲に適用</translation>
     </message>
     <message>
-        <source>Click to add as adjustment layer, or drag onto a clip</source>
-        <translation type="unfinished"></translation>
+        <source>Drag a preset onto a clip in the timeline</source>
+        <translation>プリセットをタイムライン上のクリップにドラッグ</translation>
     </message>
     <message>
         <source>Search effects</source>
@@ -4185,7 +4185,7 @@
     </message>
     <message>
         <source>Rename…</source>
-        <translation>名前を変更…</translation>
+        <translation>名前の変更…</translation>
     </message>
     <message>
         <source>Export…</source>
@@ -4224,7 +4224,7 @@
     </message>
     <message>
         <source>Click a template to apply music-synced effects to the selection</source>
-        <translation>テンプレートをクリックして、音楽に同期したエフェクトを選択に適用</translation>
+        <translation>テンプレートをクリックして、音楽に同期したエフェクトを選択範囲に適用</translation>
     </message>
     <message>
         <source>Select a clip, then click a template to apply</source>
@@ -4885,7 +4885,7 @@
     </message>
     <message numerus="yes">
         <source>%n keyframes</source>
-        <translation type="unfinished">
+        <translation>
             <numerusform>%n キーフレーム</numerusform>
         </translation>
     </message>
@@ -5234,7 +5234,7 @@
     </message>
     <message>
         <source>Rename…</source>
-        <translation>名前を変更…</translation>
+        <translation>名前の変更…</translation>
     </message>
     <message>
         <source>%1 — drag to the timeline, right-click to preview</source>
@@ -5282,7 +5282,7 @@
     </message>
     <message numerus="yes">
         <source>Add %n items to timeline</source>
-        <translation type="unfinished">
+        <translation>
             <numerusform>%n 個の項目をタイムラインに追加</numerusform>
         </translation>
     </message>
@@ -5292,13 +5292,13 @@
     </message>
     <message numerus="yes">
         <source>Move %n items to folder…</source>
-        <translation type="unfinished">
+        <translation>
             <numerusform>%n 個の項目をフォルダーに移動…</numerusform>
         </translation>
     </message>
     <message numerus="yes">
         <source>Remove %n items from project</source>
-        <translation type="unfinished">
+        <translation>
             <numerusform>%n 個の項目をプロジェクトから削除</numerusform>
         </translation>
     </message>
@@ -5449,7 +5449,7 @@
     </message>
     <message>
         <source>GPU preview unavailable — see Help → Debug info</source>
-        <translation type="unfinished"></translation>
+        <translation>GPU プレビューは利用できません — 「ヘルプ」→「デバッグ情報」を参照してください</translation>
     </message>
     <message>
         <source>Program</source>
@@ -5549,99 +5549,99 @@
     <name>PasteAttributesDialog</name>
     <message>
         <source>Paste Attributes</source>
-        <translation type="unfinished"></translation>
+        <translation>属性を貼り付け</translation>
     </message>
     <message>
         <source>Paste</source>
-        <translation type="unfinished">貼り付け</translation>
+        <translation>貼り付け</translation>
     </message>
     <message>
         <source>Cancel</source>
-        <translation type="unfinished">キャンセル</translation>
+        <translation>キャンセル</translation>
     </message>
     <message>
         <source>Clip</source>
-        <translation type="unfinished">クリップ</translation>
+        <translation>クリップ</translation>
     </message>
     <message numerus="yes">
         <source>Pasting from “%1” onto %n selected clip(s):</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>「%1」から %n 個の選択されたクリップに貼り付け :</numerusform>
         </translation>
     </message>
     <message>
         <source>Video Attributes</source>
-        <translation type="unfinished"></translation>
+        <translation>ビデオの属性</translation>
     </message>
     <message>
         <source>Transform (motion, position, scale, opacity)</source>
-        <translation type="unfinished"></translation>
+        <translation>変形 (動き、位置、スケール、不透明度)</translation>
     </message>
     <message>
         <source>, reverse</source>
-        <translation type="unfinished"></translation>
+        <translation>, 逆再生</translation>
     </message>
     <message>
         <source>, speed curve</source>
-        <translation type="unfinished"></translation>
+        <translation>, スピードカーブ</translation>
     </message>
     <message>
         <source>Speed / Retime (%1x%2%3)</source>
-        <translation type="unfinished"></translation>
+        <translation>速度 / リタイム (%1x%2%3)</translation>
     </message>
     <message>
         <source>Speed / Retime</source>
-        <translation type="unfinished"></translation>
+        <translation>速度 / リタイム</translation>
     </message>
     <message numerus="yes">
         <source>Video Effects (%n effect(s))</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>ビデオエフェクト (%n 個)</numerusform>
         </translation>
     </message>
     <message>
         <source>Video Effects (none)</source>
-        <translation type="unfinished"></translation>
+        <translation>ビデオエフェクト (なし)</translation>
     </message>
     <message>
         <source>Audio Attributes</source>
-        <translation type="unfinished"></translation>
+        <translation>オーディオ属性</translation>
     </message>
     <message>
         <source>Volume &amp; Fades (volume keyframes, in/out ramps)</source>
-        <translation type="unfinished"></translation>
+        <translation>音量とフェード (音量のキーフレーム、イン/アウトのランプ)</translation>
     </message>
     <message numerus="yes">
         <source>Audio Effects (%n effect(s))</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>オーディオエフェクト (%n 個)</numerusform>
         </translation>
     </message>
     <message>
         <source>Audio Effects (none)</source>
-        <translation type="unfinished"></translation>
+        <translation>オーディオエフェクト (なし)</translation>
     </message>
     <message>
         <source>Transitions</source>
-        <translation type="unfinished">トランジション</translation>
+        <translation>トランジション</translation>
     </message>
     <message numerus="yes">
         <source>Transitions (%n transition(s))</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>トランジション (%n 個)</numerusform>
         </translation>
     </message>
     <message>
         <source>Replace existing effects (instead of appending)</source>
-        <translation type="unfinished"></translation>
+        <translation>既存のエフェクトを置き換える (追加するのではなく)</translation>
     </message>
     <message>
         <source>Select All</source>
-        <translation type="unfinished"></translation>
+        <translation>すべて選択</translation>
     </message>
     <message>
         <source>Select None</source>
-        <translation type="unfinished"></translation>
+        <translation>選択解除</translation>
     </message>
 </context>
 <context>
@@ -5663,55 +5663,55 @@
     <name>PlaybackStats</name>
     <message>
         <source>Delivered frames</source>
-        <translation type="unfinished"></translation>
+        <translation>配信フレーム数</translation>
     </message>
     <message>
         <source>Displayed frames</source>
-        <translation type="unfinished"></translation>
+        <translation>表示フレーム数</translation>
     </message>
     <message>
         <source>Display refresh</source>
-        <translation type="unfinished"></translation>
+        <translation>ディスプレイのリフレッシュレート</translation>
     </message>
     <message>
         <source>Delivery jitter</source>
-        <translation type="unfinished"></translation>
+        <translation>配信ジッター</translation>
     </message>
     <message>
         <source>Composite (median)</source>
-        <translation type="unfinished"></translation>
+        <translation>コンポジット (中央値)</translation>
     </message>
     <message>
         <source>Composite (p95)</source>
-        <translation type="unfinished"></translation>
+        <translation>コンポジット (p95)</translation>
     </message>
     <message>
         <source>Decode wait (median)</source>
-        <translation type="unfinished"></translation>
+        <translation>デコード待機 (中央値)</translation>
     </message>
     <message>
         <source>Preview scale</source>
-        <translation type="unfinished"></translation>
+        <translation>プレビュースケール</translation>
     </message>
     <message>
         <source>Frames dropped</source>
-        <translation type="unfinished"></translation>
+        <translation>ドロップしたフレーム数</translation>
     </message>
     <message>
         <source>Requests coalesced</source>
-        <translation type="unfinished"></translation>
+        <translation>統合されたリクエスト数</translation>
     </message>
     <message>
         <source>Composites in flight (peak)</source>
-        <translation type="unfinished"></translation>
+        <translation>実行中のコンポジット数 (ピーク)</translation>
     </message>
     <message>
         <source>Preview upload</source>
-        <translation type="unfinished"></translation>
+        <translation>プレビューアップロード</translation>
     </message>
     <message>
         <source>Samples</source>
-        <translation type="unfinished"></translation>
+        <translation>サンプル数</translation>
     </message>
 </context>
 <context>
@@ -5726,19 +5726,19 @@
     </message>
     <message>
         <source>GPU preview unavailable</source>
-        <translation type="unfinished"></translation>
+        <translation>GPUプレビューは利用できません</translation>
     </message>
     <message>
         <source>Your graphics driver only provides %1. Drift&apos;s preview needs OpenGL 3.3.</source>
-        <translation type="unfinished"></translation>
+        <translation>お使いのグラフィックスドライバーは %1 にしか対応していません。プレビューには OpenGL 3.3 が必要です。</translation>
     </message>
     <message>
         <source>Drift could not start its GPU renderer, so the preview cannot draw.</source>
-        <translation type="unfinished"></translation>
+        <translation>Drift は GPU レンダラーを起動できなかったため、プレビューを描画できません。</translation>
     </message>
     <message>
         <source>Debug info</source>
-        <translation type="unfinished">デバッグ情報</translation>
+        <translation>デバッグ情報</translation>
     </message>
     <message>
         <source>Audio only</source>
@@ -6254,35 +6254,35 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Clip</source>
-        <translation type="unfinished">クリップ</translation>
+        <translation>クリップ</translation>
     </message>
     <message>
         <source>Cannot open file: %1</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 を開けません</translation>
     </message>
     <message>
         <source>File is empty</source>
-        <translation type="unfinished"></translation>
+        <translation>ファイルは空です</translation>
     </message>
     <message>
         <source>Failed to decompress Premiere project archive</source>
-        <translation type="unfinished"></translation>
+        <translation>Premiere プロジェクトアーカイブの解凍に失敗しました。</translation>
     </message>
     <message>
         <source>XML parse error at line %1: %2</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 行目で XML 解析エラーが発生しました : %2</translation>
     </message>
     <message>
         <source>Imported Premiere Project</source>
-        <translation type="unfinished"></translation>
+        <translation>インポートされた Premiere プロジェクト</translation>
     </message>
     <message>
         <source>V%1</source>
-        <translation type="unfinished"></translation>
+        <translation>V%1</translation>
     </message>
     <message>
         <source>A%1</source>
-        <translation type="unfinished"></translation>
+        <translation>A%1</translation>
     </message>
 </context>
 <context>
@@ -6339,7 +6339,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Import Premiere project…</source>
-        <translation type="unfinished"></translation>
+        <translation>Premiere プロジェクトをインポート...</translation>
     </message>
     <message>
         <source>Project properties…</source>
@@ -7501,7 +7501,7 @@ If playback stutters, try another.</source>
     </message>
     <message numerus="yes">
         <source>%n captions</source>
-        <translation type="unfinished">
+        <translation>
             <numerusform>%n キャプション</numerusform>
         </translation>
     </message>
@@ -7759,7 +7759,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Rename…</source>
-        <translation>名前を変更…</translation>
+        <translation>名前の変更…</translation>
     </message>
     <message>
         <source>Export…</source>
@@ -8380,7 +8380,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Paste attributes…</source>
-        <translation type="unfinished"></translation>
+        <translation>属性を貼り付け...</translation>
     </message>
     <message>
         <source>Duplicate</source>
@@ -8451,7 +8451,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Rename…</source>
-        <translation>名前を変更…</translation>
+        <translation>名前の変更…</translation>
     </message>
     <message>
         <source>Delete</source>
@@ -8475,7 +8475,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Rename</source>
-        <translation>名前を変更</translation>
+        <translation>名前の変更</translation>
     </message>
     <message>
         <source>Label</source>
@@ -8558,7 +8558,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Copy selection</source>
-        <translation>選択をコピー</translation>
+        <translation>選択範囲をコピー</translation>
     </message>
     <message>
         <source>Paste at current time</source>
@@ -8672,7 +8672,7 @@ If playback stutters, try another.</source>
     </message>
     <message numerus="yes">
         <source>This removes the track and its %n clips. You can undo afterwards.</source>
-        <translation type="unfinished">
+        <translation>
             <numerusform>これによりトラックとその %n 個のクリップが削除されます。後で元に戻せます。</numerusform>
         </translation>
     </message>
@@ -8766,7 +8766,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Rename</source>
-        <translation>名前を変更</translation>
+        <translation>名前の変更</translation>
     </message>
     <message>
         <source>Track name</source>
@@ -8774,7 +8774,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Rename…</source>
-        <translation>名前を変更…</translation>
+        <translation>名前の変更…</translation>
     </message>
 </context>
 <context>
@@ -9069,37 +9069,43 @@ If playback stutters, try another.</source>
     <name>main</name>
     <message>
         <source>unknown</source>
-        <translation type="unfinished"></translation>
+        <translation>不明</translation>
     </message>
     <message>
         <source>No OpenGL driver</source>
-        <translation type="unfinished"></translation>
+        <translation>OpenGL ドライバーがありません</translation>
     </message>
     <message>
         <source>Drift could not create an OpenGL context, so it cannot draw its interface or render the preview.
 
 Install or update your graphics driver.</source>
-        <translation type="unfinished"></translation>
+        <translation>Drift は OpenGL コンテキストを作成できなかったため、インターフェースの描画やプレビューのレンダリングを行うことができません。
+
+グラフィックスドライバーをインストールまたは更新してください。</translation>
     </message>
     <message>
         <source>OpenGL context unavailable</source>
-        <translation type="unfinished"></translation>
+        <translation>OpenGL コンテキストが利用できません</translation>
     </message>
     <message>
         <source>Drift could not create an OpenGL 3.3 core profile context, though this driver reports OpenGL %1.%2 (%3).
 
 The video preview cannot render. Updating your graphics driver may help.</source>
-        <translation type="unfinished"></translation>
+        <translation>Drift は OpenGL 3.3 コアプロファイルコンテキストを作成できませんでした (ただし、このドライバーは OpenGL %1.%2 (%3) を報告しています)。
+
+ビデオプレビューをレンダリングできません。グラフィックスドライバーを更新すると解決する可能性があります。</translation>
     </message>
     <message>
         <source>Graphics driver is too old</source>
-        <translation type="unfinished"></translation>
+        <translation>グラフィックドライバーが古すぎます</translation>
     </message>
     <message>
         <source>Drift needs OpenGL 3.3, but this graphics driver only provides OpenGL %1.%2 (%3).
 
 The video preview cannot render, and Drift may not start at all. Update your graphics driver, or run Drift on a machine with a newer GPU.</source>
-        <translation type="unfinished"></translation>
+        <translation>Drift には OpenGL 3.3 が必要ですが、現在のグラフィックスドライバーは OpenGL %1.%2 (%3)にしか対応していません。
+
+そのため、ビデオプレビューをレンダリングできず、Drift が起動しない可能性があります。グラフィックスドライバーを更新するか、より新しい GPU を搭載したマシンで Drift を実行してください。</translation>
     </message>
 </context>
 </TS>
