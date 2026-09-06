@@ -62,6 +62,15 @@ public:
     Q_INVOKABLE bool importUrlsAsync(const QList<QUrl> &urls);
     bool importing() const { return m_importing; }
     bool sandboxed() const;
+    // The one place that decides what counts as media, so the file picker, the folder-import
+    // walk and the kind guess can never disagree about a format. Extension-only: the real kind
+    // comes from the probe once the file is open.
+    static bool isVideoPath(const QString &path);
+    static bool isAudioPath(const QString &path);
+    static bool isImagePath(const QString &path);
+    static bool isMediaPath(const QString &path);
+    // The same set spelled as a QFileDialog name filter, e.g. "Media files (*.mp4 *.mov ...)".
+    Q_INVOKABLE QString mediaNameFilter() const;
     // Import local paths and return the asset ids involved (new or already-present).
     QStringList importLocalPaths(const QStringList &paths);
     bool isImportPending(const QString &assetId) const;

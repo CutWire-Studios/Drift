@@ -62,6 +62,9 @@ class AppController : public QObject
     // not persisted, not undoable, same treatment as mediaGridMode's touch-only sibling.
     Q_PROPERTY(QString currentBinFolderId READ currentBinFolderId WRITE setCurrentBinFolderId
                    NOTIFY currentBinFolderIdChanged)
+    // True while importFolder's off-thread directory walk is running, so the bin can raise its
+    // progress overlay over a slow tree (a big hierarchy, or a Flatpak document-portal mount).
+    Q_PROPERTY(bool importingFolder READ importingFolder NOTIFY importingFolderChanged)
     Q_PROPERTY(TimelineModel *timelineModel READ timelineModel CONSTANT)
     Q_PROPERTY(ClipListModel *clipListModel READ clipListModel CONSTANT)
     Q_PROPERTY(PlaybackEngine *playback READ playback CONSTANT)
@@ -581,6 +584,17 @@ public:
     Q_INVOKABLE bool moveAssetToFolder(int assetIndex, const QString &folderId);
     // Multi-select bulk move, one undo step for the whole batch. Returns how many were moved.
     Q_INVOKABLE int moveAssetsToFolder(const QStringList &assetIds, const QString &folderId);
+    // Imports a whole directory: mirrors its subfolder tree into the bin (one new bin folder per
+    // filesystem folder, including empty ones) and imports every media file into the bin folder
+    // matching its containing directory. `folderUrl` must be a local (file://) directory. The
+    // directory walk runs off-thread, so this returns as soon as it starts — false means the URL
+    // didn't resolve to a readable directory or an import was already running, and the outcome
+    // arrives as folderImportFinished. Stops after a fixed number of files so a folder picked by
+    // mistake can't queue thousands of probes. Not undoable — like a plain media import, "undo"
+    // is deleting the folder by hand — but still marks the project dirty, so autosave and the
+    // unsaved-changes prompt cover the hierarchy it creates.
+    Q_INVOKABLE bool importFolder(const QUrl &folderUrl);
+    bool importingFolder() const { return m_importingFolder; }
     // Points an existing bin row at a different file, keeping every clip that uses it where it
     // is — its position, trim, effects and transitions all survive. Asynchronous: true only means
     // the probe started, and the outcome arrives as assetReplaceFinished.
@@ -1314,6 +1328,11 @@ signals:
     // media's name on success. `adjustedClips` counts clips whose source range no longer fitted
     // the replacement and was pulled back to it.
     void assetReplaceFinished(bool ok, const QString &message, int adjustedClips);
+    void importingFolderChanged();
+    // Outcome of importFolder: how many bin folders and assets it actually created, how many
+    // files it passed over as unrecognized, and whether the walk stopped at the file limit with
+    // more still on disk.
+    void folderImportFinished(int folders, int files, int skipped, bool truncated);
     void replacingAssetIdChanged();
     void assetEditChanged();
     void assetEditFinished(bool ok, const QString &message);
@@ -1484,6 +1503,7 @@ protected:
     AddonManager *m_addonManager = nullptr;
     BinFolderListModel m_binFolderModel;
     QString m_currentBinFolderId;
+    bool m_importingFolder = false;
     TimelineModel m_timelineModel;
     ClipListModel m_clipListModel;
     // These trees must outlive m_playback: the compositor thread holds a bare

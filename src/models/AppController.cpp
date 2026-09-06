@@ -2807,6 +2807,167 @@ int AppController::moveAssetsToFolder(const QStringList &assetIds, const QString
     return moved;
 }
 
+namespace {
+
+// A folder picked by mistake — a home directory, an external drive — can hold tens of thousands
+// of files, and importing them all means a probe and a thumbnail job each. The walk stops here
+// and says so, rather than filling the bin with something nobody asked for.
+constexpr int kFolderImportFileLimit = 500;
+
+// One filesystem directory, flattened out of the walk so the GUI-thread half can replay the tree
+// without touching the disk again. `parentIndex` points at an earlier entry in the same list;
+// -1 is the folder the user picked.
+struct FolderImportEntry
+{
+    QString name;
+    int parentIndex = -1;
+    QStringList files;
+};
+
+struct FolderImportPlan
+{
+    QList<FolderImportEntry> entries;
+    // Files the walk looked at and passed over because nothing recognizes the extension. Only
+    // counts what was actually examined, so hitting the limit below does not inflate it with
+    // everything the walk never reached.
+    int skipped = 0;
+    bool truncated = false;
+};
+
+// Runs on a worker thread: nothing here touches the project, the models, or anything else the
+// GUI thread owns. That matters most under Flatpak, where the picked directory is a
+// document-portal FUSE mount and every stat is a round trip out of the sandbox.
+void planDirectory(const QDir &dir, int parentIndex, FolderImportPlan &plan, int &fileCount,
+                   QSet<QString> &visitedDirs)
+{
+    // Guards against a symlinked subdirectory that loops back to an ancestor (or to another
+    // already-planned directory): canonicalFilePath() resolves the symlink, so the second
+    // visit is recognized and skipped instead of recursing forever.
+    const QString canonicalPath = QFileInfo(dir.absolutePath()).canonicalFilePath();
+    if (canonicalPath.isEmpty() || visitedDirs.contains(canonicalPath))
+        return;
+    visitedDirs.insert(canonicalPath);
+
+    FolderImportEntry entry;
+    entry.name = dir.dirName();
+    entry.parentIndex = parentIndex;
+
+    const QFileInfoList files = dir.entryInfoList(QDir::Files, QDir::Name);
+    for (const QFileInfo &info : files) {
+        if (!AssetLibrary::isMediaPath(info.fileName())) {
+            ++plan.skipped;
+            continue;
+        }
+        if (fileCount >= kFolderImportFileLimit) {
+            plan.truncated = true;
+            break;
+        }
+        entry.files.append(info.absoluteFilePath());
+        ++fileCount;
+    }
+
+    const int index = plan.entries.size();
+    plan.entries.append(entry);
+    // Stop the whole walk at the limit rather than only the file collection, so hitting it
+    // leaves a partial tree instead of thousands of empty mirrored folders.
+    if (plan.truncated)
+        return;
+
+    const QFileInfoList subdirs = dir.entryInfoList(QDir::Dirs | QDir::NoDotAndDotDot, QDir::Name);
+    for (const QFileInfo &subdirInfo : subdirs) {
+        planDirectory(QDir(subdirInfo.absoluteFilePath()), index, plan, fileCount, visitedDirs);
+        if (plan.truncated)
+            return;
+    }
+}
+
+} // namespace
+
+bool AppController::importFolder(const QUrl &folderUrl)
+{
+    if (m_importingFolder)
+        return false;
+
+    const QString path = folderUrl.isLocalFile() ? folderUrl.toLocalFile() : folderUrl.toString();
+    const QDir dir(path);
+    if (path.isEmpty() || !dir.exists())
+        return false;
+
+    m_importingFolder = true;
+    emit importingFolderChanged();
+
+    // Only the walk is off-thread. Creating the bin folders and the asset rows stays on the GUI
+    // thread, because both are model mutations — but with the file limit above, that half is
+    // bounded work on data already in memory.
+    auto *watcher = new QFutureWatcher<FolderImportPlan>(this);
+    connect(watcher, &QFutureWatcher<FolderImportPlan>::finished, this, [this, watcher]() {
+        watcher->deleteLater();
+        const FolderImportPlan plan = watcher->result();
+
+        QStringList folderIds;
+        folderIds.reserve(plan.entries.size());
+        int folderCount = 0;
+        int fileCount = 0;
+
+        for (const FolderImportEntry &entry : plan.entries) {
+            const QString parentId =
+                entry.parentIndex < 0 ? m_currentBinFolderId : folderIds.at(entry.parentIndex);
+            const QString folderId = m_binFolderModel.createFolder(entry.name, parentId);
+            // Appended before the empty check so later entries' parentIndex stays aligned.
+            folderIds.append(folderId);
+            if (folderId.isEmpty())
+                continue;
+            ++folderCount;
+
+            if (entry.files.isEmpty() || !m_assetLibrary)
+                continue;
+
+            // Retargeted for the duration of this one entry — importLocalPaths reads it via
+            // m_importFolderId — then put back once the whole tree is done.
+            m_assetLibrary->setImportFolderId(folderId);
+            const QStringList ids = m_assetLibrary->importLocalPaths(entry.files);
+            fileCount += ids.size();
+            // A path already in the bin from an earlier import is returned as-is by
+            // importLocalPaths, keeping whatever folder it already lived in — otherwise this
+            // mirrored folder would look empty despite the file counting as imported into it.
+            for (const QString &id : ids) {
+                const int index = m_assetLibrary->indexOfId(id);
+                if (index < 0)
+                    continue;
+                if (m_assetLibrary->assetAt(index).value(QStringLiteral("folderId")).toString()
+                    != folderId)
+                    m_assetLibrary->moveAssetToFolder(index, folderId);
+            }
+        }
+
+        // The loop above repointed the import destination at whichever folder it last populated;
+        // put it back at wherever the user is actually browsing.
+        if (m_assetLibrary)
+            m_assetLibrary->setImportFolderId(m_currentBinFolderId);
+
+        // Not pushed through pushProjectEdit: like a plain media import, this isn't meant to be
+        // undoable — "undo" is deleting the folder by hand, same as removing an imported asset.
+        // But unlike plain media import, autosave/the unsaved-changes prompt should still cover
+        // it, so it's marked dirty directly (the same split setProjectName/setProjectMetadata
+        // already use).
+        if (folderCount > 0)
+            setDirty(true);
+
+        m_importingFolder = false;
+        emit importingFolderChanged();
+        emit folderImportFinished(folderCount, fileCount, plan.skipped, plan.truncated);
+    });
+
+    watcher->setFuture(QtConcurrent::run([dir]() {
+        FolderImportPlan plan;
+        int fileCount = 0;
+        QSet<QString> visitedDirs;
+        planDirectory(dir, -1, plan, fileCount, visitedDirs);
+        return plan;
+    }));
+    return true;
+}
+
 bool AppController::replaceAssetSource(int assetIndex, const QUrl &url)
 {
     if (!m_assetLibrary)

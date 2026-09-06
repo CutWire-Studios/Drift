@@ -132,29 +132,61 @@ QString materializeImportUrl(const QUrl &url)
 
 #endif // Q_OS_ANDROID
 
-bool isImagePath(const QString &path)
+// The one place that decides what counts as media. The picker's name filter, the folder-import
+// walk and the provisional kind guess all read these lists, so a format can no longer be offered
+// by one entry point and skipped by another.
+// Containers FFmpeg demuxes, not everything it can be made to open: its own extension table is
+// no help here, since half of these demuxers probe instead of matching on a suffix (mpegts and
+// mpeg declare none at all) while the ones that do declare cover raw streams, subtitles and
+// tracker music. Anything not here can still be dragged onto the bin, where the probe decides.
+const QStringList &videoExtensions()
 {
     static const QStringList extensions = {
-        QStringLiteral("png"),  QStringLiteral("jpg"),  QStringLiteral("jpeg"),
-        QStringLiteral("gif"),  QStringLiteral("webp"), QStringLiteral("bmp"),
-        QStringLiteral("tiff"), QStringLiteral("tif"),  QStringLiteral("svg"),
+        // MP4 / QuickTime family
+        QStringLiteral("mp4"),  QStringLiteral("m4v"),  QStringLiteral("mov"),
+        QStringLiteral("3gp"),  QStringLiteral("3g2"),
+        // Matroska
+        QStringLiteral("mkv"),  QStringLiteral("webm"),
+        // AVI / ASF
+        QStringLiteral("avi"),  QStringLiteral("wmv"),  QStringLiteral("asf"),
+        QStringLiteral("divx"),
+        // Flash
+        QStringLiteral("flv"),  QStringLiteral("f4v"),
+        // MPEG program and transport streams
+        QStringLiteral("mpg"),  QStringLiteral("mpeg"), QStringLiteral("m2v"),
+        QStringLiteral("ts"),   QStringLiteral("m2ts"), QStringLiteral("mts"),
+        QStringLiteral("m2t"),  QStringLiteral("vob"),
+        // Ogg, RealMedia
+        QStringLiteral("ogv"),  QStringLiteral("rm"),   QStringLiteral("rmvb"),
+        // Broadcast and camera
+        QStringLiteral("mxf"),  QStringLiteral("dv"),   QStringLiteral("y4m"),
     };
-    return extensions.contains(QFileInfo(path).suffix().toLower());
+    return extensions;
 }
 
-bool isAudioPath(const QString &path)
+const QStringList &audioExtensions()
 {
     static const QStringList extensions = {
         QStringLiteral("mp3"),  QStringLiteral("wav"),  QStringLiteral("aac"),
         QStringLiteral("flac"), QStringLiteral("ogg"),  QStringLiteral("m4a"),
         QStringLiteral("wma"),  QStringLiteral("aiff"), QStringLiteral("aif"),
     };
-    return extensions.contains(QFileInfo(path).suffix().toLower());
+    return extensions;
+}
+
+const QStringList &imageExtensions()
+{
+    static const QStringList extensions = {
+        QStringLiteral("png"),  QStringLiteral("jpg"),  QStringLiteral("jpeg"),
+        QStringLiteral("gif"),  QStringLiteral("webp"), QStringLiteral("bmp"),
+        QStringLiteral("tiff"), QStringLiteral("tif"),  QStringLiteral("svg"),
+    };
+    return extensions;
 }
 
 drift::MediaKind kindFrom(const MediaInfo &info, const QString &path)
 {
-    if (isImagePath(path))
+    if (AssetLibrary::isImagePath(path))
         return drift::MediaKind::Image;
 
     for (const StreamInfo &stream : info.streams) {
@@ -170,9 +202,9 @@ drift::MediaKind kindFrom(const MediaInfo &info, const QString &path)
 
 drift::MediaKind provisionalKind(const QString &path)
 {
-    if (isImagePath(path))
+    if (AssetLibrary::isImagePath(path))
         return drift::MediaKind::Image;
-    if (isAudioPath(path))
+    if (AssetLibrary::isAudioPath(path))
         return drift::MediaKind::Audio;
     return drift::MediaKind::Video;
 }
@@ -282,6 +314,39 @@ std::optional<drift::MediaAsset> probeAsset(const QString &absolutePath, bool im
 }
 
 } // namespace
+
+bool AssetLibrary::isVideoPath(const QString &path)
+{
+    return videoExtensions().contains(QFileInfo(path).suffix().toLower());
+}
+
+bool AssetLibrary::isAudioPath(const QString &path)
+{
+    return audioExtensions().contains(QFileInfo(path).suffix().toLower());
+}
+
+bool AssetLibrary::isImagePath(const QString &path)
+{
+    return imageExtensions().contains(QFileInfo(path).suffix().toLower());
+}
+
+bool AssetLibrary::isMediaPath(const QString &path)
+{
+    return isVideoPath(path) || isAudioPath(path) || isImagePath(path);
+}
+
+QString AssetLibrary::mediaNameFilter() const
+{
+    static const QString pattern = [] {
+        QStringList globs;
+        for (const QStringList *group : {&videoExtensions(), &audioExtensions(), &imageExtensions()}) {
+            for (const QString &extension : *group)
+                globs.append(QStringLiteral("*.") + extension);
+        }
+        return globs.join(QLatin1Char(' '));
+    }();
+    return tr("Media files (%1)").arg(pattern);
+}
 
 bool AssetLibrary::sandboxed() const
 {

@@ -2980,6 +2980,13 @@
     </message>
 </context>
 <context>
+    <name>AssetLibrary</name>
+    <message>
+        <source>Media files (%1)</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>AssetsPanel</name>
     <message>
         <source>Imported %1 of %2 files. %3 could not be read.</source>
@@ -3024,10 +3031,6 @@
     <message>
         <source>Replace Media</source>
         <translation>Substituir mídia</translation>
-    </message>
-    <message>
-        <source>Media files (*.mp4 *.mov *.mkv *.avi *.webm *.m4v *.mp3 *.wav *.aac *.flac *.ogg *.m4a *.png *.jpg *.jpeg *.gif *.webp *.bmp)</source>
-        <translation>Arquivos de mídia (*.mp4 *.mov *.mkv *.avi *.webm *.m4v *.mp3 *.wav *.aac *.flac *.ogg *.m4a *.png *.jpg *.jpeg *.gif *.webp *.bmp)</translation>
     </message>
     <message>
         <source>Export Image</source>
@@ -3119,6 +3122,35 @@
         <translation>Há %2 clipes na linha do tempo usando “%1”. Ao remover esta mídia, esses clipes e as transições associadas também serão removidos. O arquivo original no disco não será apagado.</translation>
     </message>
     <message>
+        <source>Couldn’t import that folder.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>Imported %n files into %1 folders — as many as one folder import takes. Import the remaining subfolders separately.</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Imported %n files into %1 folders. %2 files were skipped — Drift does not recognize their format. Drag them onto the bin to try anyway.</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Imported %n files into %1 folders.</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Import Folder</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Text</source>
         <translation>Texto</translation>
     </message>
@@ -3205,6 +3237,10 @@
     <message>
         <source>Import video, audio or image files</source>
         <translation>Importar arquivos de vídeo, áudio ou imagem</translation>
+    </message>
+    <message>
+        <source>Import a folder, keeping its structure as bin folders</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Touch and hold a transition, then drag it onto where two clips meet.</source>

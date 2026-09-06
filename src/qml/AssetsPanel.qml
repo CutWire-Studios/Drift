@@ -90,8 +90,9 @@ PanelFrame {
         }
     }
 
-    // True while an import is running, so the panel can show progress.
-    readonly property bool importing: AssetLibrary.importing
+    // True while an import is running, so the panel can show progress. The folder walk counts:
+    // it is the half that can take a while on a deep tree or a sandboxed (portal) mount.
+    readonly property bool importing: AssetLibrary.importing || EditorState.importingFolder
 
     // A single id goes through the existing single-asset add so that case is byte-for-byte the
     // behavior it always was; only an actual multi-selection goes through the batch add, which
@@ -517,9 +518,7 @@ PanelFrame {
     // Points a bin row at a different file while every clip using it stays put, so a project set
     // up once — music, outro, CTA — can be re-pointed at the next video instead of rebuilt.
     function requestReplaceAsset(assetIndex) {
-        var url = FileDialogs.openFile(qsTr("Replace Media"), [
-            qsTr("Media files (*.mp4 *.mov *.mkv *.avi *.webm *.m4v *.mp3 *.wav *.aac *.flac *.ogg *.m4a *.png *.jpg *.jpeg *.gif *.webp *.bmp)")
-        ])
+        var url = FileDialogs.openFile(qsTr("Replace Media"), [AssetLibrary.mediaNameFilter()])
         if (!url || url.toString() === "")
             return
         EditorState.replaceAssetSource(assetIndex, url)
@@ -546,6 +545,20 @@ PanelFrame {
     Connections {
         target: EditorState
 
+        // Hitting the limit outranks the skipped count: the walk stopped early, so what it passed
+        // over is only part of the story and saying both would suggest otherwise.
+        function onFolderImportFinished(folders, files, skipped, truncated) {
+            if (folders === 0) {
+                Toasts.error(qsTr("Couldn’t import that folder."))
+            } else if (truncated) {
+                Toasts.warning(qsTr("Imported %n files into %1 folders — as many as one folder import takes. Import the remaining subfolders separately.", "", files).arg(folders))
+            } else if (skipped > 0) {
+                Toasts.warning(qsTr("Imported %n files into %1 folders. %2 files were skipped — Drift does not recognize their format. Drag them onto the bin to try anyway.", "", files).arg(folders).arg(skipped))
+            } else {
+                Toasts.success(qsTr("Imported %n files into %1 folders.", "", files).arg(folders))
+            }
+        }
+
         // The probe runs off-thread, so the outcome comes back here rather than from the call.
         function onAssetReplaceFinished(ok, message, adjustedClips) {
             if (!ok) {
@@ -568,10 +581,21 @@ PanelFrame {
     }
 
     function importMedia() {
-        var urls = FileDialogs.openFiles(qsTr("Import Media"), [
-            qsTr("Media files (*.mp4 *.mov *.mkv *.avi *.webm *.m4v *.mp3 *.wav *.aac *.flac *.ogg *.m4a *.png *.jpg *.jpeg *.gif *.webp *.bmp)")
-        ])
+        var urls = FileDialogs.openFiles(qsTr("Import Media"), [AssetLibrary.mediaNameFilter()])
         root.importUrlsReporting(urls)
+    }
+
+    // Imports a whole directory: a new bin folder mirrors the picked folder (and everything
+    // nested under it), and every media file lands in the bin folder matching its containing
+    // directory. EditorState.importFolder does the walk synchronously — probing and
+    // thumbnailing each file still happens in the background the same as any other import.
+    function importFolder() {
+        var url = FileDialogs.openDirectory(qsTr("Import Folder"))
+        if (!url || url.toString() === "")
+            return
+        // The walk runs off-thread, so the outcome arrives as onFolderImportFinished below.
+        if (!EditorState.importFolder(url))
+            Toasts.error(qsTr("Couldn’t import that folder."))
     }
 
     // Selects a tab by id. Used by cross-panel jumps such as the properties
@@ -924,6 +948,17 @@ PanelFrame {
                         enabled: !root.importing
                         anchors.verticalCenter: parent.verticalCenter
                         onClicked: root.importMedia()
+                    }
+
+                    ThemedButton {
+                        text: qsTr("Import Folder")
+                        variant: "ghost"
+                        glyph: Theme.icons.folderInput
+                        tooltip: qsTr("Import a folder, keeping its structure as bin folders")
+                        enabled: !root.importing
+                        visible: !Theme.touchUi
+                        anchors.verticalCenter: parent.verticalCenter
+                        onClicked: root.importFolder()
                     }
                 }
             }
