@@ -304,6 +304,8 @@ ApplicationWindow {
     MissingAddonsDialog { id: missingAddonsDialog }
     UpdateDialog { id: updateDialog }
     DebugInfoDialog { id: debugInfoDialog }
+
+    SettingsDialog { id: settingsDialog }
     SubtitleProgressDialog { id: subtitleProgressDialog }
     ReverseProgressDialog { id: reverseProgressDialog }
 
@@ -356,6 +358,12 @@ ApplicationWindow {
 
     function openMulticam() {
         multicamWindow.openSession()
+    }
+
+    // Opened from the overflow menu, which used to switch the asset sheet to a
+    // settings tab.
+    function openSettings() {
+        settingsDialog.open()
     }
 
     function openAddonManager(kind) {

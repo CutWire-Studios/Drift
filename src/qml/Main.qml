@@ -372,6 +372,10 @@ ApplicationWindow {
         id: debugInfoDialog
     }
 
+    SettingsDialog {
+        id: settingsDialog
+    }
+
     PasteAttributesDialog {
         id: pasteAttributesDialog
     }
@@ -436,6 +440,12 @@ ApplicationWindow {
     // not bound to one clip, so it survives any edit and only closes when the document does.
     function openMulticam() {
         multicamWindow.openSession()
+    }
+
+    // Opened from the header's Settings menu. Every preference lives here now; the
+    // assets rail no longer carries a settings tab.
+    function openSettings() {
+        settingsDialog.open()
     }
 
     // Opened from the header, and from every empty state that a missing addon causes.

@@ -622,7 +622,7 @@ PanelFrame {
         const tabId = tabsModel.get(activeTab).tabId
         if (tabId === "text" || tabId === "subtitles" || tabId === "stickers" || tabId === "shapes"
                 || tabId === "effects" || tabId === "templates" || tabId === "adjustment"
-                || tabId === "settings" || tabId === "sounds" || tabId === "transitions"
+                || tabId === "sounds" || tabId === "transitions"
                 || tabId === "shortcuts" || tabId === "scenes")
             return false
         const kinds = kindsForTab(tabId)
@@ -642,7 +642,6 @@ PanelFrame {
         "templates": qsTr("Templates"),
         "transitions": qsTr("Transitions"),
         "sounds": qsTr("Audio FX"),
-        "settings": qsTr("Settings"),
         "shortcuts": qsTr("Shortcuts")
     })
 
@@ -656,13 +655,12 @@ PanelFrame {
         ListElement { tabId: "subtitles"; icon: 2; separatorAfter: false }
         ListElement { tabId: "stickers"; icon: 3; separatorAfter: false }
         ListElement { tabId: "shapes"; icon: 4; separatorAfter: true }
-        ListElement { tabId: "scenes"; icon: 11; separatorAfter: true }
+        ListElement { tabId: "scenes"; icon: 10; separatorAfter: true }
         ListElement { tabId: "effects"; icon: 5; separatorAfter: false }
         ListElement { tabId: "templates"; icon: 6; separatorAfter: false }
         ListElement { tabId: "transitions"; icon: 7; separatorAfter: false }
         ListElement { tabId: "sounds"; icon: 8; separatorAfter: true }
-        ListElement { tabId: "settings"; icon: 9; separatorAfter: false }
-        ListElement { tabId: "shortcuts"; icon: 10; separatorAfter: false }
+        ListElement { tabId: "shortcuts"; icon: 9; separatorAfter: false }
     }
     property var tabIcons: [
         Theme.icons.film,
@@ -674,7 +672,6 @@ PanelFrame {
         Theme.icons.layers,
         Theme.icons.chevronsRight,
         Theme.icons.audioLines,
-        Theme.icons.settings,
         Theme.icons.keyboard,
         Theme.icons.listVideo
     ]
@@ -1042,13 +1039,6 @@ PanelFrame {
 
             ScenesTab {
                 visible: tabsModel.get(activeTab).tabId === "scenes"
-                width: parent.width
-                opacity: root.tabOpacity
-                height: parent.height - Theme.panelHeaderHeight
-            }
-
-            SettingsTab {
-                visible: tabsModel.get(activeTab).tabId === "settings"
                 width: parent.width
                 opacity: root.tabOpacity
                 height: parent.height - Theme.panelHeaderHeight

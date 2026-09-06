@@ -3172,10 +3172,6 @@
         <translation>オーディオ FX</translation>
     </message>
     <message>
-        <source>Settings</source>
-        <translation>設定</translation>
-    </message>
-    <message>
         <source>Shortcuts</source>
         <translation>ショートカット</translation>
     </message>
@@ -3972,6 +3968,34 @@
         <translation>ビデオサイズとレイアウト</translation>
     </message>
     <message>
+        <source>Settings</source>
+        <translation type="unfinished">設定</translation>
+    </message>
+    <message>
+        <source>Workspace, theme, language and more</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Light</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Dark</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Language…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Debug info…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>More settings…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Agent</source>
         <translation>エージェント</translation>
     </message>
@@ -3980,24 +4004,12 @@
         <translation>エージェントアクセスがオン</translation>
     </message>
     <message>
-        <source>Debug info and playback diagnostics</source>
-        <translation>デバッグ情報と再生診断</translation>
-    </message>
-    <message>
         <source>Recommended packs and updates</source>
         <translation>推奨パックとアップデート</translation>
     </message>
     <message>
         <source>Extras</source>
         <translation>拡張機能</translation>
-    </message>
-    <message>
-        <source>Language</source>
-        <translation>言語</translation>
-    </message>
-    <message>
-        <source>Language for menus and labels</source>
-        <translation>メニューとラベルの言語</translation>
     </message>
     <message>
         <source>Update</source>
@@ -4040,14 +4052,6 @@
         <translation>ワークスペース</translation>
     </message>
     <message>
-        <source>Workspace: portrait</source>
-        <translation>ワークスペース : 縦向き</translation>
-    </message>
-    <message>
-        <source>Workspace: landscape</source>
-        <translation>ワークスペース : 横向き</translation>
-    </message>
-    <message>
         <source>Auto (follow canvas)</source>
         <translation>自動 (キャンバスに追従)</translation>
     </message>
@@ -4062,14 +4066,6 @@
     <message>
         <source>Theme</source>
         <translation>テーマ</translation>
-    </message>
-    <message>
-        <source>Switch to light mode</source>
-        <translation>ライトモードに切り替え</translation>
-    </message>
-    <message>
-        <source>Switch to dark mode</source>
-        <translation>ダークモードに切り替え</translation>
     </message>
 </context>
 <context>
@@ -6759,182 +6755,193 @@ If playback stutters, try another.</source>
     </message>
 </context>
 <context>
-    <name>SettingsTab</name>
+    <name>SettingsDialog</name>
     <message>
-        <source>Show alignment guides over the preview</source>
-        <translation>プレビューにアライメントガイドを表示</translation>
+        <source>Settings</source>
+        <translation type="unfinished">設定</translation>
     </message>
     <message>
-        <source>Rule of thirds</source>
-        <translation>三分割法</translation>
+        <source>Done</source>
+        <translation type="unfinished">完了</translation>
     </message>
-    <message>
-        <source>Center cross</source>
-        <translation>センタークロス</translation>
-    </message>
-    <message>
-        <source>Safe margins</source>
-        <translation>セーフマージン</translation>
-    </message>
-    <message>
-        <source>Which guide to show</source>
-        <translation>表示するガイド</translation>
-    </message>
-    <message>
-        <source>Background</source>
-        <translation>背景</translation>
-    </message>
-    <message>
-        <source>Solid color</source>
-        <translation>単色</translation>
-    </message>
-    <message>
-        <source>Blur</source>
-        <translation>ブラー</translation>
-    </message>
-    <message>
-        <source>Fill behind clips that don’t cover the whole screen</source>
-        <translation>画面全体を覆わないクリップの後ろを埋める</translation>
-    </message>
-    <message>
-        <source>Choose background colour</source>
-        <translation>背景色を選択</translation>
-    </message>
+</context>
+<context>
+    <name>SettingsPane</name>
     <message>
         <source>Video</source>
-        <translation>ビデオ</translation>
+        <translation type="unfinished">ビデオ</translation>
     </message>
     <message>
         <source>Preview</source>
-        <translation>プレビュー</translation>
+        <translation type="unfinished">プレビュー</translation>
     </message>
     <message>
         <source>Show guides</source>
-        <translation>ガイドを表示</translation>
+        <translation type="unfinished">ガイドを表示</translation>
+    </message>
+    <message>
+        <source>Show alignment guides over the preview</source>
+        <translation type="unfinished">プレビューにアライメントガイドを表示</translation>
+    </message>
+    <message>
+        <source>Rule of thirds</source>
+        <translation type="unfinished">三分割法</translation>
+    </message>
+    <message>
+        <source>Center cross</source>
+        <translation type="unfinished">センタークロス</translation>
+    </message>
+    <message>
+        <source>Safe margins</source>
+        <translation type="unfinished">セーフマージン</translation>
+    </message>
+    <message>
+        <source>Which guide to show</source>
+        <translation type="unfinished">表示するガイド</translation>
+    </message>
+    <message>
+        <source>Background</source>
+        <translation type="unfinished">背景</translation>
+    </message>
+    <message>
+        <source>Solid color</source>
+        <translation type="unfinished">単色</translation>
+    </message>
+    <message>
+        <source>Blur</source>
+        <translation type="unfinished">ブラー</translation>
+    </message>
+    <message>
+        <source>Fill behind clips that don’t cover the whole screen</source>
+        <translation type="unfinished">画面全体を覆わないクリップの後ろを埋める</translation>
+    </message>
+    <message>
+        <source>Choose background colour</source>
+        <translation type="unfinished">背景色を選択</translation>
     </message>
     <message>
         <source>Blur strength</source>
-        <translation>ブラーの強さ</translation>
-    </message>
-    <message>
-        <source>Playback</source>
-        <translation>再生</translation>
-    </message>
-    <message>
-        <source>Audio output</source>
-        <translation>オーディオ出力</translation>
-    </message>
-    <message>
-        <source>Where playback is heard. “System default” follows whatever your computer is set to, including when that changes.</source>
-        <translation>再生が聞こえる場所。「システムデフォルト」はコンピューターの設定に追従し、変更時も反映されます。</translation>
-    </message>
-    <message>
-        <source>Interface</source>
-        <translation>インターフェース</translation>
-    </message>
-    <message>
-        <source>Size</source>
-        <translation>サイズ</translation>
-    </message>
-    <message>
-        <source>Haptic feedback</source>
-        <translation>触覚フィードバック</translation>
-    </message>
-    <message>
-        <source>Vibrate on taps, snaps, and edits. Uses this device’s own haptic effects when it has them.</source>
-        <translation>タップ、スナップ、編集時に振動します。このデバイスが独自の触覚エフェクトを持っている場合はそれを使用します。</translation>
-    </message>
-    <message>
-        <source>App</source>
-        <translation>アプリ</translation>
-    </message>
-    <message>
-        <source>Updates</source>
-        <translation>アップデート</translation>
-    </message>
-    <message>
-        <source>Check on startup</source>
-        <translation>起動時に確認</translation>
-    </message>
-    <message>
-        <source>Ask GitHub once a day whether a newer Drift has been released</source>
-        <translation>1日1回 GitHub に新しい Drift がリリースされていないか問い合わせる</translation>
-    </message>
-    <message>
-        <source>Checking…</source>
-        <translation>確認中…</translation>
-    </message>
-    <message>
-        <source>Check now</source>
-        <translation>今すぐ確認</translation>
-    </message>
-    <message>
-        <source>Drift %1</source>
-        <translation>Drift %1</translation>
-    </message>
-    <message>
-        <source>Extra packs</source>
-        <translation>拡張パック</translation>
-    </message>
-    <message>
-        <source>Remind about essential packs</source>
-        <translation>必須パックの通知</translation>
-    </message>
-    <message>
-        <source>Pulse the Extras icon when the video, transitions, and audio packs are not installed</source>
-        <translation>ビデオ、トランジション、オーディオパックがインストールされていないときに拡張機能アイコンを点滅させる</translation>
-    </message>
-    <message>
-        <source>Remind about pack updates</source>
-        <translation>パックアップデートの通知</translation>
-    </message>
-    <message>
-        <source>Pulse the Extras icon when updates are available for packs you already have installed</source>
-        <translation>インストール済みのパックにアップデートが利用可能なときに拡張機能アイコンを点滅させる</translation>
-    </message>
-    <message>
-        <source>100% (system)</source>
-        <translation>100% (システム)</translation>
+        <translation type="unfinished">ブラーの強さ</translation>
     </message>
     <message>
         <source>Faster preview (experimental)</source>
-        <translation>高速プレビュー (実験的)</translation>
+        <translation type="unfinished">高速プレビュー (実験的)</translation>
     </message>
     <message>
         <source>Can make playback smoother by keeping video on the graphics card. Turn it off if the picture looks wrong. Takes effect after restart.</source>
-        <translation>ビデオをグラフィックスカード上に保持することで再生を滑らかにできます。画像がおかしくなる場合はオフにしてください。再起動後に有効になります。</translation>
+        <translation type="unfinished">ビデオをグラフィックスカード上に保持することで再生を滑らかにできます。画像がおかしくなる場合はオフにしてください。再起動後に有効になります。</translation>
+    </message>
+    <message>
+        <source>Playback</source>
+        <translation type="unfinished">再生</translation>
+    </message>
+    <message>
+        <source>Audio output</source>
+        <translation type="unfinished">オーディオ出力</translation>
+    </message>
+    <message>
+        <source>Where playback is heard. “System default” follows whatever your computer is set to, including when that changes.</source>
+        <translation type="unfinished">再生が聞こえる場所。「システムデフォルト」はコンピューターの設定に追従し、変更時も反映されます。</translation>
+    </message>
+    <message>
+        <source>Interface</source>
+        <translation type="unfinished">インターフェース</translation>
+    </message>
+    <message>
+        <source>Size</source>
+        <translation type="unfinished">サイズ</translation>
+    </message>
+    <message>
+        <source>100% (system)</source>
+        <translation type="unfinished">100% (システム)</translation>
     </message>
     <message>
         <source>Makes buttons, text, and icons larger. This is extra scale on top of the size already set in your display settings. Takes effect after restart.</source>
-        <translation>ボタン、テキスト、アイコンを大きくします。これはディスプレイ設定で既に設定されているサイズに加えての拡大です。再起動後に有効になります。</translation>
+        <translation type="unfinished">ボタン、テキスト、アイコンを大きくします。これはディスプレイ設定で既に設定されているサイズに加えての拡大です。再起動後に有効になります。</translation>
     </message>
     <message>
         <source>Restart Drift to apply this size.</source>
-        <translation>このサイズを適用するには Drift を再起動してください。</translation>
+        <translation type="unfinished">このサイズを適用するには Drift を再起動してください。</translation>
     </message>
     <message>
         <source>Horizontal mouse-wheel pan</source>
-        <translation>マウスホイール水平パン</translation>
+        <translation type="unfinished">マウスホイール水平パン</translation>
     </message>
     <message>
         <source>Scroll pans left and right along the timeline. Shift+scroll moves between tracks. Middle-click drag also pans.</source>
-        <translation>スクロールでタイムラインに沿って左右にパンします。Shift+スクロールでトラック間を移動します。中クリックドラッグでもパンします。</translation>
+        <translation type="unfinished">スクロールでタイムラインに沿って左右にパンします。Shift+スクロールでトラック間を移動します。中クリックドラッグでもパンします。</translation>
+    </message>
+    <message>
+        <source>Haptic feedback</source>
+        <translation type="unfinished">触覚フィードバック</translation>
+    </message>
+    <message>
+        <source>Vibrate on taps, snaps, and edits. Uses this device’s own haptic effects when it has them.</source>
+        <translation type="unfinished">タップ、スナップ、編集時に振動します。このデバイスが独自の触覚エフェクトを持っている場合はそれを使用します。</translation>
     </message>
     <message>
         <source>Language</source>
-        <translation>言語</translation>
+        <translation type="unfinished">言語</translation>
     </message>
     <message>
         <source>Language for menus and labels. Takes effect immediately.</source>
-        <translation>メニューとラベルの言語。即座に反映されます。</translation>
+        <translation type="unfinished">メニューとラベルの言語。即座に反映されます。</translation>
+    </message>
+    <message>
+        <source>App</source>
+        <translation type="unfinished">アプリ</translation>
     </message>
     <message>
         <source>Reopen last project on startup</source>
-        <translation>起動時に最後のプロジェクトを開く</translation>
+        <translation type="unfinished">起動時に最後のプロジェクトを開く</translation>
     </message>
     <message>
         <source>Automatically restore the last open project on startup. Closing still asks you to save; a crash snapshot never overwrites your save file.</source>
-        <translation>起動時に最後に開いていたプロジェクトを自動的に復元します。終了時には依然として保存を確認します；クラッシュ時のスナップショットが保存ファイルを上書きすることはありません。</translation>
+        <translation type="unfinished">起動時に最後に開いていたプロジェクトを自動的に復元します。終了時には依然として保存を確認します；クラッシュ時のスナップショットが保存ファイルを上書きすることはありません。</translation>
+    </message>
+    <message>
+        <source>Updates</source>
+        <translation type="unfinished">アップデート</translation>
+    </message>
+    <message>
+        <source>Check on startup</source>
+        <translation type="unfinished">起動時に確認</translation>
+    </message>
+    <message>
+        <source>Ask GitHub once a day whether a newer Drift has been released</source>
+        <translation type="unfinished">1日1回 GitHub に新しい Drift がリリースされていないか問い合わせる</translation>
+    </message>
+    <message>
+        <source>Checking…</source>
+        <translation type="unfinished">確認中…</translation>
+    </message>
+    <message>
+        <source>Check now</source>
+        <translation type="unfinished">今すぐ確認</translation>
+    </message>
+    <message>
+        <source>Drift %1</source>
+        <translation type="unfinished">Drift %1</translation>
+    </message>
+    <message>
+        <source>Extra packs</source>
+        <translation type="unfinished">拡張パック</translation>
+    </message>
+    <message>
+        <source>Remind about essential packs</source>
+        <translation type="unfinished">必須パックの通知</translation>
+    </message>
+    <message>
+        <source>Pulse the Extras icon when the video, transitions, and audio packs are not installed</source>
+        <translation type="unfinished">ビデオ、トランジション、オーディオパックがインストールされていないときに拡張機能アイコンを点滅させる</translation>
+    </message>
+    <message>
+        <source>Remind about pack updates</source>
+        <translation type="unfinished">パックアップデートの通知</translation>
+    </message>
+    <message>
+        <source>Pulse the Extras icon when updates are available for packs you already have installed</source>
+        <translation type="unfinished">インストール済みのパックにアップデートが利用可能なときに拡張機能アイコンを点滅させる</translation>
     </message>
 </context>
 <context>

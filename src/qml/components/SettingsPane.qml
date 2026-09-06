@@ -2,13 +2,19 @@ import QtQuick
 import QtQuick.Controls.Basic
 import QtQuick.Window
 import Drift
-import ".."
 
-// Settings tab: this project’s canvas, then the editor, then the app.
+// Every editor and app preference, in one scrolling pane: this project’s canvas,
+// then the editor, then the app. Hosted by SettingsDialog; it used to be a tab in
+// the assets panel's rail.
 Item {
     id: root
 
+    // Natural height of the whole list, so the dialog can size itself to the content
+    // and cap it at what fits on screen instead of guessing.
+    readonly property real contentHeight: flick.contentHeight
+
     Flickable {
+        id: flick
         anchors.fill: parent
         contentHeight: settingsColumn.height + Theme.spacing3xl
         clip: true

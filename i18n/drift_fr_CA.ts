@@ -3189,10 +3189,6 @@
         <translation>Audio FX</translation>
     </message>
     <message>
-        <source>Settings</source>
-        <translation>Paramètres</translation>
-    </message>
-    <message>
         <source>Shortcuts</source>
         <translation>Raccourcis</translation>
     </message>
@@ -3991,6 +3987,34 @@
         <translation>Taille et disposition de la vidéo</translation>
     </message>
     <message>
+        <source>Settings</source>
+        <translation type="unfinished">Paramètres</translation>
+    </message>
+    <message>
+        <source>Workspace, theme, language and more</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Light</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Dark</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Language…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Debug info…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>More settings…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Agent</source>
         <translation>Agent</translation>
     </message>
@@ -3999,24 +4023,12 @@
         <translation>L’accès aux agents est activé</translation>
     </message>
     <message>
-        <source>Debug info and playback diagnostics</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Recommended packs and updates</source>
         <translation>extensions et mises à jour recommandées</translation>
     </message>
     <message>
         <source>Extras</source>
         <translation>Extras</translation>
-    </message>
-    <message>
-        <source>Language</source>
-        <translation>Langue</translation>
-    </message>
-    <message>
-        <source>Language for menus and labels</source>
-        <translation>Langue des menus et des libellés</translation>
     </message>
     <message>
         <source>Update</source>
@@ -4059,14 +4071,6 @@
         <translation>Espace de travail</translation>
     </message>
     <message>
-        <source>Workspace: portrait</source>
-        <translation>Espace de travail : portrait</translation>
-    </message>
-    <message>
-        <source>Workspace: landscape</source>
-        <translation>Espace de travail : paysage</translation>
-    </message>
-    <message>
         <source>Auto (follow canvas)</source>
         <translation>Auto (suivre le canevas)</translation>
     </message>
@@ -4081,14 +4085,6 @@
     <message>
         <source>Theme</source>
         <translation>Thème</translation>
-    </message>
-    <message>
-        <source>Switch to light mode</source>
-        <translation>Passer en mode clair</translation>
-    </message>
-    <message>
-        <source>Switch to dark mode</source>
-        <translation>Passer en mode sombre</translation>
     </message>
 </context>
 <context>
@@ -6787,142 +6783,73 @@ En cas de saccades à la lecture, essayez un autre mode.</translation>
     </message>
 </context>
 <context>
-    <name>SettingsTab</name>
+    <name>SettingsDialog</name>
     <message>
-        <source>Show alignment guides over the preview</source>
-        <translation>Afficher les guides d’alignement sur l’aperçu</translation>
+        <source>Settings</source>
+        <translation type="unfinished">Paramètres</translation>
     </message>
     <message>
-        <source>Rule of thirds</source>
-        <translation>Règle des tiers</translation>
+        <source>Done</source>
+        <translation type="unfinished">Terminé</translation>
     </message>
-    <message>
-        <source>Center cross</source>
-        <translation>Croix centrale</translation>
-    </message>
-    <message>
-        <source>Safe margins</source>
-        <translation>Marges sûres</translation>
-    </message>
-    <message>
-        <source>Which guide to show</source>
-        <translation>Quel guide afficher</translation>
-    </message>
-    <message>
-        <source>Background</source>
-        <translation>Arrière-plan</translation>
-    </message>
-    <message>
-        <source>Solid color</source>
-        <translation>Couleur unie</translation>
-    </message>
-    <message>
-        <source>Blur</source>
-        <translation>Flou</translation>
-    </message>
-    <message>
-        <source>Fill behind clips that don’t cover the whole screen</source>
-        <translation>Remplir derrière les clips qui ne couvrent pas tout l&apos;écran</translation>
-    </message>
-    <message>
-        <source>Choose background colour</source>
-        <translation>Choisir la couleur de fond</translation>
-    </message>
+</context>
+<context>
+    <name>SettingsPane</name>
     <message>
         <source>Video</source>
-        <translation>Vidéo</translation>
+        <translation type="unfinished">Vidéo</translation>
     </message>
     <message>
         <source>Preview</source>
-        <translation>Aperçu</translation>
+        <translation type="unfinished">Aperçu</translation>
     </message>
     <message>
         <source>Show guides</source>
-        <translation>Afficher les guides</translation>
+        <translation type="unfinished">Afficher les guides</translation>
+    </message>
+    <message>
+        <source>Show alignment guides over the preview</source>
+        <translation type="unfinished">Afficher les guides d’alignement sur l’aperçu</translation>
+    </message>
+    <message>
+        <source>Rule of thirds</source>
+        <translation type="unfinished">Règle des tiers</translation>
+    </message>
+    <message>
+        <source>Center cross</source>
+        <translation type="unfinished">Croix centrale</translation>
+    </message>
+    <message>
+        <source>Safe margins</source>
+        <translation type="unfinished">Marges sûres</translation>
+    </message>
+    <message>
+        <source>Which guide to show</source>
+        <translation type="unfinished">Quel guide afficher</translation>
+    </message>
+    <message>
+        <source>Background</source>
+        <translation type="unfinished">Arrière-plan</translation>
+    </message>
+    <message>
+        <source>Solid color</source>
+        <translation type="unfinished">Couleur unie</translation>
+    </message>
+    <message>
+        <source>Blur</source>
+        <translation type="unfinished">Flou</translation>
+    </message>
+    <message>
+        <source>Fill behind clips that don’t cover the whole screen</source>
+        <translation type="unfinished">Remplir derrière les clips qui ne couvrent pas tout l&apos;écran</translation>
+    </message>
+    <message>
+        <source>Choose background colour</source>
+        <translation type="unfinished">Choisir la couleur de fond</translation>
     </message>
     <message>
         <source>Blur strength</source>
-        <translation>Intensité du flou</translation>
-    </message>
-    <message>
-        <source>Playback</source>
-        <translation>Lecture</translation>
-    </message>
-    <message>
-        <source>Audio output</source>
-        <translation>Sortie audio</translation>
-    </message>
-    <message>
-        <source>Where playback is heard. “System default” follows whatever your computer is set to, including when that changes.</source>
-        <translation>Où le son est entendu. « Par défaut du système » suit ce que votre ordinateur a configuré, y compris lorsqu’il change.</translation>
-    </message>
-    <message>
-        <source>Interface</source>
-        <translation>Interface</translation>
-    </message>
-    <message>
-        <source>Size</source>
-        <translation>Taille</translation>
-    </message>
-    <message>
-        <source>Haptic feedback</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Vibrate on taps, snaps, and edits. Uses this device’s own haptic effects when it has them.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>App</source>
-        <translation>Application</translation>
-    </message>
-    <message>
-        <source>Updates</source>
-        <translation>Mises à jour</translation>
-    </message>
-    <message>
-        <source>Check on startup</source>
-        <translation>Vérifier au démarrage</translation>
-    </message>
-    <message>
-        <source>Ask GitHub once a day whether a newer Drift has been released</source>
-        <translation>Demander à GitHub une fois par jour si une nouvelle version de Drift est disponible</translation>
-    </message>
-    <message>
-        <source>Checking…</source>
-        <translation>Vérification…</translation>
-    </message>
-    <message>
-        <source>Check now</source>
-        <translation>Vérifier maintenant</translation>
-    </message>
-    <message>
-        <source>Drift %1</source>
-        <translation>Drift %1</translation>
-    </message>
-    <message>
-        <source>Extra packs</source>
-        <translation>extensions supplémentaires</translation>
-    </message>
-    <message>
-        <source>Remind about essential packs</source>
-        <translation>Rappeler les extensions essentielles</translation>
-    </message>
-    <message>
-        <source>Pulse the Extras icon when the video, transitions, and audio packs are not installed</source>
-        <translation>Faire pulser l’icône Extras quand les extensions vidéo, transitions et audio ne sont pas installées</translation>
-    </message>
-    <message>
-        <source>Remind about pack updates</source>
-        <translation>Rappeler les mises à jour des extensions</translation>
-    </message>
-    <message>
-        <source>Pulse the Extras icon when updates are available for packs you already have installed</source>
-        <translation>Faire pulser l’icône Extras lorsqu’il y a des mises à jour disponibles pour les extensions déjà installées</translation>
-    </message>
-    <message>
-        <source>100% (system)</source>
-        <translation>100% (système)</translation>
+        <translation type="unfinished">Intensité du flou</translation>
     </message>
     <message>
         <source>Faster preview (experimental)</source>
@@ -6933,36 +6860,116 @@ En cas de saccades à la lecture, essayez un autre mode.</translation>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Playback</source>
+        <translation type="unfinished">Lecture</translation>
+    </message>
+    <message>
+        <source>Audio output</source>
+        <translation type="unfinished">Sortie audio</translation>
+    </message>
+    <message>
+        <source>Where playback is heard. “System default” follows whatever your computer is set to, including when that changes.</source>
+        <translation type="unfinished">Où le son est entendu. « Par défaut du système » suit ce que votre ordinateur a configuré, y compris lorsqu’il change.</translation>
+    </message>
+    <message>
+        <source>Interface</source>
+        <translation type="unfinished">Interface</translation>
+    </message>
+    <message>
+        <source>Size</source>
+        <translation type="unfinished">Taille</translation>
+    </message>
+    <message>
+        <source>100% (system)</source>
+        <translation type="unfinished">100% (système)</translation>
+    </message>
+    <message>
         <source>Makes buttons, text, and icons larger. This is extra scale on top of the size already set in your display settings. Takes effect after restart.</source>
-        <translation>Agrandit les boutons, le texte et les icônes. Cette échelle s&apos;ajoute à celle déjà définie dans vos paramètres d&apos;affichage. Prend effet après le redémarrage.</translation>
+        <translation type="unfinished">Agrandit les boutons, le texte et les icônes. Cette échelle s&apos;ajoute à celle déjà définie dans vos paramètres d&apos;affichage. Prend effet après le redémarrage.</translation>
     </message>
     <message>
         <source>Restart Drift to apply this size.</source>
-        <translation>Redémarrer Drift pour appliquer cette échelle.</translation>
+        <translation type="unfinished">Redémarrer Drift pour appliquer cette échelle.</translation>
     </message>
     <message>
         <source>Horizontal mouse-wheel pan</source>
-        <translation>Déplacement horizontal avec la molette de la souris</translation>
+        <translation type="unfinished">Déplacement horizontal avec la molette de la souris</translation>
     </message>
     <message>
         <source>Scroll pans left and right along the timeline. Shift+scroll moves between tracks. Middle-click drag also pans.</source>
-        <translation>Le défilement déplace la vue vers la gauche et la droite sur la timeline. Maj+défilement navigue entre les pistes. Glisser avec le clic du milieu déplace également la vue.</translation>
+        <translation type="unfinished">Le défilement déplace la vue vers la gauche et la droite sur la timeline. Maj+défilement navigue entre les pistes. Glisser avec le clic du milieu déplace également la vue.</translation>
+    </message>
+    <message>
+        <source>Haptic feedback</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Vibrate on taps, snaps, and edits. Uses this device’s own haptic effects when it has them.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Language</source>
-        <translation>Langue</translation>
+        <translation type="unfinished">Langue</translation>
     </message>
     <message>
         <source>Language for menus and labels. Takes effect immediately.</source>
-        <translation>Langue des menus et des libellés. Prise en compte immédiate.</translation>
+        <translation type="unfinished">Langue des menus et des libellés. Prise en compte immédiate.</translation>
+    </message>
+    <message>
+        <source>App</source>
+        <translation type="unfinished">Application</translation>
     </message>
     <message>
         <source>Reopen last project on startup</source>
-        <translation>Rouvrir le dernier projet au démarrage</translation>
+        <translation type="unfinished">Rouvrir le dernier projet au démarrage</translation>
     </message>
     <message>
         <source>Automatically restore the last open project on startup. Closing still asks you to save; a crash snapshot never overwrites your save file.</source>
-        <translation>Rouvre automatiquement le dernier projet ouvert au démarrage. La fermeture demande toujours d&apos;enregistrer les modifications ; une capture en cas de plantage n&apos;écrase jamais votre fichier sauvegardé.</translation>
+        <translation type="unfinished">Rouvre automatiquement le dernier projet ouvert au démarrage. La fermeture demande toujours d&apos;enregistrer les modifications ; une capture en cas de plantage n&apos;écrase jamais votre fichier sauvegardé.</translation>
+    </message>
+    <message>
+        <source>Updates</source>
+        <translation type="unfinished">Mises à jour</translation>
+    </message>
+    <message>
+        <source>Check on startup</source>
+        <translation type="unfinished">Vérifier au démarrage</translation>
+    </message>
+    <message>
+        <source>Ask GitHub once a day whether a newer Drift has been released</source>
+        <translation type="unfinished">Demander à GitHub une fois par jour si une nouvelle version de Drift est disponible</translation>
+    </message>
+    <message>
+        <source>Checking…</source>
+        <translation type="unfinished">Vérification…</translation>
+    </message>
+    <message>
+        <source>Check now</source>
+        <translation type="unfinished">Vérifier maintenant</translation>
+    </message>
+    <message>
+        <source>Drift %1</source>
+        <translation type="unfinished">Drift %1</translation>
+    </message>
+    <message>
+        <source>Extra packs</source>
+        <translation type="unfinished">extensions supplémentaires</translation>
+    </message>
+    <message>
+        <source>Remind about essential packs</source>
+        <translation type="unfinished">Rappeler les extensions essentielles</translation>
+    </message>
+    <message>
+        <source>Pulse the Extras icon when the video, transitions, and audio packs are not installed</source>
+        <translation type="unfinished">Faire pulser l’icône Extras quand les extensions vidéo, transitions et audio ne sont pas installées</translation>
+    </message>
+    <message>
+        <source>Remind about pack updates</source>
+        <translation type="unfinished">Rappeler les mises à jour des extensions</translation>
+    </message>
+    <message>
+        <source>Pulse the Extras icon when updates are available for packs you already have installed</source>
+        <translation type="unfinished">Faire pulser l’icône Extras lorsqu’il y a des mises à jour disponibles pour les extensions déjà installées</translation>
     </message>
 </context>
 <context>

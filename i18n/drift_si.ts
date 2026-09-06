@@ -3187,10 +3187,6 @@
         <translation>ශ්‍රව්‍ය ප්‍රයෝග</translation>
     </message>
     <message>
-        <source>Settings</source>
-        <translation>සැකසීම්</translation>
-    </message>
-    <message>
         <source>Shortcuts</source>
         <translation>කෙටිමං</translation>
     </message>
@@ -3989,6 +3985,34 @@
         <translation>වීඩියෝ ප්‍රමාණය සහ පිරිසැලසුම</translation>
     </message>
     <message>
+        <source>Settings</source>
+        <translation type="unfinished">සැකසීම්</translation>
+    </message>
+    <message>
+        <source>Workspace, theme, language and more</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Light</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Dark</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Language…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Debug info…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>More settings…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Agent</source>
         <translation>නියෝජිතයා</translation>
     </message>
@@ -3997,24 +4021,12 @@
         <translation>නියෝජිත (Agent) ප්‍රවේශය ක්‍රියාත්මකයි</translation>
     </message>
     <message>
-        <source>Debug info and playback diagnostics</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Recommended packs and updates</source>
         <translation>නිර්දේශිත පැකේජ සහ යාවත්කාලීන</translation>
     </message>
     <message>
         <source>Extras</source>
         <translation>අමතර අංග</translation>
-    </message>
-    <message>
-        <source>Language</source>
-        <translation>භාෂාව</translation>
-    </message>
-    <message>
-        <source>Language for menus and labels</source>
-        <translation>මෙනු සහ ලේබල් සඳහා භාෂාව</translation>
     </message>
     <message>
         <source>Update</source>
@@ -4057,14 +4069,6 @@
         <translation>වැඩබිම</translation>
     </message>
     <message>
-        <source>Workspace: portrait</source>
-        <translation>වැඩබිම: සිරස් (portrait)</translation>
-    </message>
-    <message>
-        <source>Workspace: landscape</source>
-        <translation>වැඩබිම: තිරස් (landscape)</translation>
-    </message>
-    <message>
         <source>Auto (follow canvas)</source>
         <translation>ස්වයංක්‍රීය (කැන්වසය අනුව)</translation>
     </message>
@@ -4079,14 +4083,6 @@
     <message>
         <source>Theme</source>
         <translation>තේමාව</translation>
-    </message>
-    <message>
-        <source>Switch to light mode</source>
-        <translation>ආලෝක ප්‍රකාරයට මාරු වන්න</translation>
-    </message>
-    <message>
-        <source>Switch to dark mode</source>
-        <translation>අඳුරු ප්‍රකාරයට මාරු වන්න</translation>
     </message>
 </context>
 <context>
@@ -6784,142 +6780,73 @@ If playback stutters, try another.</source>
     </message>
 </context>
 <context>
-    <name>SettingsTab</name>
+    <name>SettingsDialog</name>
     <message>
-        <source>Show alignment guides over the preview</source>
-        <translation>පෙරදසුන මත පෙළගැස්වීමේ මඟපෙන්වුම් රේඛා පෙන්වන්න</translation>
+        <source>Settings</source>
+        <translation type="unfinished">සැකසීම්</translation>
     </message>
     <message>
-        <source>Rule of thirds</source>
-        <translation>තුනෙන් පංගුවේ නියමය (Rule of thirds)</translation>
+        <source>Done</source>
+        <translation type="unfinished"></translation>
     </message>
-    <message>
-        <source>Center cross</source>
-        <translation>මධ්‍ය කුරුසය (Center cross)</translation>
-    </message>
-    <message>
-        <source>Safe margins</source>
-        <translation>ආරක්ෂිත මායිම් (Safe margins)</translation>
-    </message>
-    <message>
-        <source>Which guide to show</source>
-        <translation>පෙන්විය යුතු මඟපෙන්වීම</translation>
-    </message>
-    <message>
-        <source>Background</source>
-        <translation>පසුබිම</translation>
-    </message>
-    <message>
-        <source>Solid color</source>
-        <translation>තනි වර්ණය</translation>
-    </message>
-    <message>
-        <source>Blur</source>
-        <translation>බොඳ කිරීම</translation>
-    </message>
-    <message>
-        <source>Fill behind clips that don’t cover the whole screen</source>
-        <translation>මුළු තිරයම ආවරණය නොකරන ක්ලිප් පිටුපසින් පුරවන්න</translation>
-    </message>
-    <message>
-        <source>Choose background colour</source>
-        <translation>පසුබිම් වර්ණය තෝරන්න</translation>
-    </message>
+</context>
+<context>
+    <name>SettingsPane</name>
     <message>
         <source>Video</source>
-        <translation>වීඩියෝ</translation>
+        <translation type="unfinished">වීඩියෝ</translation>
     </message>
     <message>
         <source>Preview</source>
-        <translation>පෙරදසුන</translation>
+        <translation type="unfinished">පෙරදසුන</translation>
     </message>
     <message>
         <source>Show guides</source>
-        <translation>මඟපෙන්වුම් රේඛා පෙන්වන්න</translation>
+        <translation type="unfinished">මඟපෙන්වුම් රේඛා පෙන්වන්න</translation>
+    </message>
+    <message>
+        <source>Show alignment guides over the preview</source>
+        <translation type="unfinished">පෙරදසුන මත පෙළගැස්වීමේ මඟපෙන්වුම් රේඛා පෙන්වන්න</translation>
+    </message>
+    <message>
+        <source>Rule of thirds</source>
+        <translation type="unfinished">තුනෙන් පංගුවේ නියමය (Rule of thirds)</translation>
+    </message>
+    <message>
+        <source>Center cross</source>
+        <translation type="unfinished">මධ්‍ය කුරුසය (Center cross)</translation>
+    </message>
+    <message>
+        <source>Safe margins</source>
+        <translation type="unfinished">ආරක්ෂිත මායිම් (Safe margins)</translation>
+    </message>
+    <message>
+        <source>Which guide to show</source>
+        <translation type="unfinished">පෙන්විය යුතු මඟපෙන්වීම</translation>
+    </message>
+    <message>
+        <source>Background</source>
+        <translation type="unfinished">පසුබිම</translation>
+    </message>
+    <message>
+        <source>Solid color</source>
+        <translation type="unfinished">තනි වර්ණය</translation>
+    </message>
+    <message>
+        <source>Blur</source>
+        <translation type="unfinished">බොඳ කිරීම</translation>
+    </message>
+    <message>
+        <source>Fill behind clips that don’t cover the whole screen</source>
+        <translation type="unfinished">මුළු තිරයම ආවරණය නොකරන ක්ලිප් පිටුපසින් පුරවන්න</translation>
+    </message>
+    <message>
+        <source>Choose background colour</source>
+        <translation type="unfinished">පසුබිම් වර්ණය තෝරන්න</translation>
     </message>
     <message>
         <source>Blur strength</source>
-        <translation>බොඳ කිරීමේ ප්‍රබලතාව</translation>
-    </message>
-    <message>
-        <source>Playback</source>
-        <translation>ධාවනය</translation>
-    </message>
-    <message>
-        <source>Audio output</source>
-        <translation>ශ්‍රව්‍ය ප්‍රතිදානය</translation>
-    </message>
-    <message>
-        <source>Where playback is heard. “System default” follows whatever your computer is set to, including when that changes.</source>
-        <translation>ධාවනය ඇසෙන ස්ථානය. “පද්ධති පෙරනිමිය” ඔබේ පරිගණකය සකසා ඇති ඕනෑම දෙයක් අනුගමනය කරයි (එය වෙනස් වන විටද ඇතුළුව).</translation>
-    </message>
-    <message>
-        <source>Interface</source>
-        <translation>අතුරුමුහුණත</translation>
-    </message>
-    <message>
-        <source>Size</source>
-        <translation>ප්‍රමාණය</translation>
-    </message>
-    <message>
-        <source>Haptic feedback</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Vibrate on taps, snaps, and edits. Uses this device’s own haptic effects when it has them.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>App</source>
-        <translation>යෙදුම</translation>
-    </message>
-    <message>
-        <source>Updates</source>
-        <translation>යාවත්කාලීන</translation>
-    </message>
-    <message>
-        <source>Check on startup</source>
-        <translation>ආරම්භයේදී පරීක්ෂා කරන්න</translation>
-    </message>
-    <message>
-        <source>Ask GitHub once a day whether a newer Drift has been released</source>
-        <translation>දිනකට වරක් GitHub වෙතින් නව Drift අනුවාදයක් නිකුත් කර ඇත්දැයි විමසන්න</translation>
-    </message>
-    <message>
-        <source>Checking…</source>
-        <translation>පරීක්ෂා කරමින්…</translation>
-    </message>
-    <message>
-        <source>Check now</source>
-        <translation>දැන් පරීක්ෂා කරන්න</translation>
-    </message>
-    <message>
-        <source>Drift %1</source>
-        <translation>Drift %1</translation>
-    </message>
-    <message>
-        <source>Extra packs</source>
-        <translation>අමතර පැකේජ</translation>
-    </message>
-    <message>
-        <source>Remind about essential packs</source>
-        <translation>අත්‍යවශ්‍ය පැකේජ ගැන මතක් කරන්න</translation>
-    </message>
-    <message>
-        <source>Pulse the Extras icon when the video, transitions, and audio packs are not installed</source>
-        <translation>වීඩියෝ, සංක්‍රාන්ති සහ ශ්‍රව්‍ය පැකේජ ස්ථාපනය කර නොමැති විට අමතර අංග අයිකනය ස්පන්දනය කරන්න</translation>
-    </message>
-    <message>
-        <source>Remind about pack updates</source>
-        <translation>පැකේජ යාවත්කාලීන ගැන මතක් කරන්න</translation>
-    </message>
-    <message>
-        <source>Pulse the Extras icon when updates are available for packs you already have installed</source>
-        <translation>ඔබ දැනටමත් ස්ථාපනය කර ඇති පැකේජ සඳහා යාවත්කාලීන ඇති විට අමතර අංග අයිකනය ස්පන්දනය කරන්න</translation>
-    </message>
-    <message>
-        <source>100% (system)</source>
-        <translation>100% (පද්ධතිය)</translation>
+        <translation type="unfinished">බොඳ කිරීමේ ප්‍රබලතාව</translation>
     </message>
     <message>
         <source>Faster preview (experimental)</source>
@@ -6930,36 +6857,116 @@ If playback stutters, try another.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Playback</source>
+        <translation type="unfinished">ධාවනය</translation>
+    </message>
+    <message>
+        <source>Audio output</source>
+        <translation type="unfinished">ශ්‍රව්‍ය ප්‍රතිදානය</translation>
+    </message>
+    <message>
+        <source>Where playback is heard. “System default” follows whatever your computer is set to, including when that changes.</source>
+        <translation type="unfinished">ධාවනය ඇසෙන ස්ථානය. “පද්ධති පෙරනිමිය” ඔබේ පරිගණකය සකසා ඇති ඕනෑම දෙයක් අනුගමනය කරයි (එය වෙනස් වන විටද ඇතුළුව).</translation>
+    </message>
+    <message>
+        <source>Interface</source>
+        <translation type="unfinished">අතුරුමුහුණත</translation>
+    </message>
+    <message>
+        <source>Size</source>
+        <translation type="unfinished">ප්‍රමාණය</translation>
+    </message>
+    <message>
+        <source>100% (system)</source>
+        <translation type="unfinished">100% (පද්ධතිය)</translation>
+    </message>
+    <message>
         <source>Makes buttons, text, and icons larger. This is extra scale on top of the size already set in your display settings. Takes effect after restart.</source>
-        <translation>බොත්තම්, පෙළ සහ අයිකන විශාල කරයි. ඔබේ දර්ශන සැකසුම්වල දැනටමත් ඇති ප්‍රමාණයට අමතර පරිමාණයකි. නැවත ආරම්භයෙන් පසු බලපැවැත්වේ.</translation>
+        <translation type="unfinished">බොත්තම්, පෙළ සහ අයිකන විශාල කරයි. ඔබේ දර්ශන සැකසුම්වල දැනටමත් ඇති ප්‍රමාණයට අමතර පරිමාණයකි. නැවත ආරම්භයෙන් පසු බලපැවැත්වේ.</translation>
     </message>
     <message>
         <source>Restart Drift to apply this size.</source>
-        <translation>මෙම ප්‍රමාණය යෙදීමට Drift නැවත ආරම්භ කරන්න.</translation>
+        <translation type="unfinished">මෙම ප්‍රමාණය යෙදීමට Drift නැවත ආරම්භ කරන්න.</translation>
     </message>
     <message>
         <source>Horizontal mouse-wheel pan</source>
-        <translation>මවුස් රෝදය මඟින් තිරස්ව පෑන් කිරීම (Pan)</translation>
+        <translation type="unfinished">මවුස් රෝදය මඟින් තිරස්ව පෑන් කිරීම (Pan)</translation>
     </message>
     <message>
         <source>Scroll pans left and right along the timeline. Shift+scroll moves between tracks. Middle-click drag also pans.</source>
-        <translation>Scroll කිරීමෙන් කාලරේඛාව ඔස්සේ වමට සහ දකුණට පෑන් වේ. Shift+scroll මඟින් ට්‍රැක් අතර මාරු වේ. මැද බොත්තම ක්ලික් කර ඇදීමෙන්ද පෑන් කළ හැක.</translation>
+        <translation type="unfinished">Scroll කිරීමෙන් කාලරේඛාව ඔස්සේ වමට සහ දකුණට පෑන් වේ. Shift+scroll මඟින් ට්‍රැක් අතර මාරු වේ. මැද බොත්තම ක්ලික් කර ඇදීමෙන්ද පෑන් කළ හැක.</translation>
+    </message>
+    <message>
+        <source>Haptic feedback</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Vibrate on taps, snaps, and edits. Uses this device’s own haptic effects when it has them.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Language</source>
-        <translation>භාෂාව</translation>
+        <translation type="unfinished">භාෂාව</translation>
     </message>
     <message>
         <source>Language for menus and labels. Takes effect immediately.</source>
-        <translation>මෙනු සහ ලේබල් සඳහා භාෂාව. වහාම බලපැවැත්වේ.</translation>
+        <translation type="unfinished">මෙනු සහ ලේබල් සඳහා භාෂාව. වහාම බලපැවැත්වේ.</translation>
+    </message>
+    <message>
+        <source>App</source>
+        <translation type="unfinished">යෙදුම</translation>
     </message>
     <message>
         <source>Reopen last project on startup</source>
-        <translation>ආරම්භයේදී අවසන් ව්‍යාපෘතිය නැවත විවෘත කරන්න</translation>
+        <translation type="unfinished">ආරම්භයේදී අවසන් ව්‍යාපෘතිය නැවත විවෘත කරන්න</translation>
     </message>
     <message>
         <source>Automatically restore the last open project on startup. Closing still asks you to save; a crash snapshot never overwrites your save file.</source>
-        <translation>අවසන් වරට විවෘත කළ ව්‍යාපෘතිය ආරම්භයේදී ස්වයංක්‍රීයව ප්‍රතිසාධනය කරන්න. වසා දැමීමේදී තවමත් සුරැකීමට ඇසෙනු ඇත; බිඳවැටුම් පිටපතක් කිසි විටෙකත් ඔබේ සුරැකි ගොනුව මත ලියවෙන්නේ නැත.</translation>
+        <translation type="unfinished">අවසන් වරට විවෘත කළ ව්‍යාපෘතිය ආරම්භයේදී ස්වයංක්‍රීයව ප්‍රතිසාධනය කරන්න. වසා දැමීමේදී තවමත් සුරැකීමට ඇසෙනු ඇත; බිඳවැටුම් පිටපතක් කිසි විටෙකත් ඔබේ සුරැකි ගොනුව මත ලියවෙන්නේ නැත.</translation>
+    </message>
+    <message>
+        <source>Updates</source>
+        <translation type="unfinished">යාවත්කාලීන</translation>
+    </message>
+    <message>
+        <source>Check on startup</source>
+        <translation type="unfinished">ආරම්භයේදී පරීක්ෂා කරන්න</translation>
+    </message>
+    <message>
+        <source>Ask GitHub once a day whether a newer Drift has been released</source>
+        <translation type="unfinished">දිනකට වරක් GitHub වෙතින් නව Drift අනුවාදයක් නිකුත් කර ඇත්දැයි විමසන්න</translation>
+    </message>
+    <message>
+        <source>Checking…</source>
+        <translation type="unfinished">පරීක්ෂා කරමින්…</translation>
+    </message>
+    <message>
+        <source>Check now</source>
+        <translation type="unfinished">දැන් පරීක්ෂා කරන්න</translation>
+    </message>
+    <message>
+        <source>Drift %1</source>
+        <translation type="unfinished">Drift %1</translation>
+    </message>
+    <message>
+        <source>Extra packs</source>
+        <translation type="unfinished">අමතර පැකේජ</translation>
+    </message>
+    <message>
+        <source>Remind about essential packs</source>
+        <translation type="unfinished">අත්‍යවශ්‍ය පැකේජ ගැන මතක් කරන්න</translation>
+    </message>
+    <message>
+        <source>Pulse the Extras icon when the video, transitions, and audio packs are not installed</source>
+        <translation type="unfinished">වීඩියෝ, සංක්‍රාන්ති සහ ශ්‍රව්‍ය පැකේජ ස්ථාපනය කර නොමැති විට අමතර අංග අයිකනය ස්පන්දනය කරන්න</translation>
+    </message>
+    <message>
+        <source>Remind about pack updates</source>
+        <translation type="unfinished">පැකේජ යාවත්කාලීන ගැන මතක් කරන්න</translation>
+    </message>
+    <message>
+        <source>Pulse the Extras icon when updates are available for packs you already have installed</source>
+        <translation type="unfinished">ඔබ දැනටමත් ස්ථාපනය කර ඇති පැකේජ සඳහා යාවත්කාලීන ඇති විට අමතර අංග අයිකනය ස්පන්දනය කරන්න</translation>
     </message>
 </context>
 <context>

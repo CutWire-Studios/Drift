@@ -296,7 +296,7 @@ Item {
                 MenuRow {
                     text: qsTr("Settings")
                     glyph: Theme.icons.settings
-                    onTriggered: root.assetsTabRequested("settings")
+                    onTriggered: root.Window.window.openSettings()
                 }
                 MenuRow {
                     text: Theme.darkMode ? qsTr("Light mode") : qsTr("Dark mode")

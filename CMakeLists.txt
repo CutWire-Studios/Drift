@@ -753,7 +753,6 @@ qt_add_qml_module(drift
         src/qml/components/assets/StickersTab.qml
         src/qml/components/assets/ShapesTab.qml
         src/qml/components/assets/SoundsTab.qml
-        src/qml/components/assets/SettingsTab.qml
         src/qml/components/assets/ShortcutsTab.qml
         src/qml/components/assets/MediaAssetsTab.qml
         src/qml/components/assets/BinBreadcrumb.qml
@@ -810,6 +809,8 @@ qt_add_qml_module(drift
         src/qml/components/VideoSizeDialog.qml
         src/qml/components/VideoSizeControls.qml
         src/qml/components/ProjectPropertiesDialog.qml
+        src/qml/components/SettingsPane.qml
+        src/qml/components/SettingsDialog.qml
         src/qml/components/PasteAttributesDialog.qml
         src/qml/components/PackageProgressDialog.qml
         src/qml/components/ExportDialog.qml
