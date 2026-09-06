@@ -10,6 +10,7 @@ extern "C" {
 #include <libavformat/avformat.h>
 #include <libavutil/imgutils.h>
 #include <libavutil/opt.h>
+#include <libswscale/swscale.h>
 }
 
 namespace drift {
@@ -25,6 +26,8 @@ struct MatteWriter::Impl
     QString path;
     QString tmpPath;
     QSize size;
+    MatteWriter::Mode mode = MatteWriter::Mode::Coverage;
+    SwsContext *sws = nullptr; // Colour mode only: RGB888 -> YUV420P
     int64_t nextPts = 0;
     bool headerWritten = false;
     bool finished = false;
@@ -58,6 +61,10 @@ bool MatteWriter::Impl::drainPackets(QString *errorOut)
 
 void MatteWriter::Impl::teardown()
 {
+    if (sws) {
+        sws_freeContext(sws);
+        sws = nullptr;
+    }
     if (frame)
         av_frame_free(&frame);
     if (pkt)
@@ -84,7 +91,7 @@ MatteWriter::~MatteWriter()
 }
 
 bool MatteWriter::open(const QString &path, const QSize &size, int fpsNum, int fpsDen,
-                       QString *errorOut)
+                       QString *errorOut, Mode mode)
 {
     auto fail = [&](const QString &message) {
         if (errorOut)
@@ -97,6 +104,7 @@ bool MatteWriter::open(const QString &path, const QSize &size, int fpsNum, int f
         return fail(QStringLiteral("Invalid matte dimensions or frame rate"));
 
     d->path = path;
+    d->mode = mode;
     // Same temp-then-rename discipline as Exporter: a cancelled run must not leave a file that
     // looks like a usable matte.
     d->tmpPath = path + QStringLiteral(".part");
@@ -126,13 +134,24 @@ bool MatteWriter::open(const QString &path, const QSize &size, int fpsNum, int f
     d->ctx->pix_fmt = AV_PIX_FMT_YUV420P;
     d->ctx->time_base = AVRational{fpsDen, fpsNum};
     d->ctx->framerate = AVRational{fpsNum, fpsDen};
+    // Full range, and not optional. Left unset the stream is tagged limited-range and ClipReader
+    // expands 16..235 back out to 0..255 on the way in, which shifts every midtone by about 7% and
+    // crushes both ends. A binary SAM2 mask survives that because 0 and 255 clamp back to
+    // themselves; a soft RVM alpha does not, and neither does a colour foreground.
+    d->ctx->color_range = AVCOL_RANGE_JPEG;
     // Every frame a keyframe: the compositor seeks to arbitrary times, and a matte that has to
     // decode a GOP to answer costs far more than the size it saves.
     d->ctx->gop_size = 1;
     d->ctx->max_b_frames = 0;
     if (d->fmt->oformat->flags & AVFMT_GLOBALHEADER)
         d->ctx->flags |= AV_CODEC_FLAG_GLOBAL_HEADER;
-    av_opt_set(d->ctx->priv_data, "qp", "0", 0); // lossless luma
+    if (mode == Mode::Coverage) {
+        av_opt_set(d->ctx->priv_data, "qp", "0", 0); // lossless luma: the mask edge is the payload
+    } else {
+        // Ordinary picture content. Lossless would run to hundreds of megabytes for a clip and buy
+        // nothing: this is only ever sampled where the alpha is already non-zero.
+        av_opt_set(d->ctx->priv_data, "crf", "16", 0);
+    }
     av_opt_set(d->ctx->priv_data, "preset", "veryfast", 0);
     av_opt_set(d->ctx->priv_data, "tune", "fastdecode", 0);
 
@@ -163,13 +182,26 @@ bool MatteWriter::open(const QString &path, const QSize &size, int fpsNum, int f
     d->frame->format = AV_PIX_FMT_YUV420P;
     d->frame->width = size.width();
     d->frame->height = size.height();
+    d->frame->color_range = AVCOL_RANGE_JPEG;
     if (av_frame_get_buffer(d->frame, 0) < 0)
         return fail(QStringLiteral("Could not allocate the matte frame"));
+
+    if (mode == Mode::Colour) {
+        d->sws = sws_getContext(size.width(), size.height(), AV_PIX_FMT_RGB24, size.width(),
+                                size.height(), AV_PIX_FMT_YUV420P, SWS_BILINEAR, nullptr, nullptr,
+                                nullptr);
+        if (!d->sws)
+            return fail(QStringLiteral("Could not create the matte colour converter"));
+        // Match the full-range tagging above, or swscale writes limited-range luma into a stream
+        // that says otherwise.
+        const int *coeff = sws_getCoefficients(SWS_CS_ITU709);
+        sws_setColorspaceDetails(d->sws, coeff, 1, coeff, 1, 0, 1 << 16, 1 << 16);
+    }
 
     return true;
 }
 
-bool MatteWriter::writeFrame(const QImage &mask, QString *errorOut)
+bool MatteWriter::writeFrame(const QImage &image, QString *errorOut)
 {
     if (!d->ctx || !d->frame) {
         if (errorOut)
@@ -177,11 +209,11 @@ bool MatteWriter::writeFrame(const QImage &mask, QString *errorOut)
         return false;
     }
 
-    QImage gray = mask.format() == QImage::Format_Grayscale8
-                      ? mask
-                      : mask.convertToFormat(QImage::Format_Grayscale8);
-    if (gray.size() != d->size)
-        gray = gray.scaled(d->size, Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
+    const QImage::Format want =
+        d->mode == Mode::Coverage ? QImage::Format_Grayscale8 : QImage::Format_RGB888;
+    QImage src = image.format() == want ? image : image.convertToFormat(want);
+    if (src.size() != d->size)
+        src = src.scaled(d->size, Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
 
     if (av_frame_make_writable(d->frame) < 0) {
         if (errorOut)
@@ -189,14 +221,22 @@ bool MatteWriter::writeFrame(const QImage &mask, QString *errorOut)
         return false;
     }
 
-    // Mask into luma; chroma stays neutral and is never read back.
-    for (int y = 0; y < d->size.height(); ++y) {
-        memcpy(d->frame->data[0] + y * d->frame->linesize[0], gray.constScanLine(y),
-               size_t(d->size.width()));
-    }
-    for (int p = 1; p <= 2; ++p) {
-        for (int y = 0; y < (d->size.height() + 1) / 2; ++y)
-            memset(d->frame->data[p] + y * d->frame->linesize[p], 128, size_t((d->size.width() + 1) / 2));
+    if (d->mode == Mode::Coverage) {
+        // Mask into luma; chroma stays neutral and is never read back.
+        for (int y = 0; y < d->size.height(); ++y) {
+            memcpy(d->frame->data[0] + y * d->frame->linesize[0], src.constScanLine(y),
+                   size_t(d->size.width()));
+        }
+        for (int p = 1; p <= 2; ++p) {
+            for (int y = 0; y < (d->size.height() + 1) / 2; ++y)
+                memset(d->frame->data[p] + y * d->frame->linesize[p], 128,
+                       size_t((d->size.width() + 1) / 2));
+        }
+    } else {
+        const uint8_t *planes[1] = {src.constBits()};
+        const int strides[1] = {int(src.bytesPerLine())};
+        sws_scale(d->sws, planes, strides, 0, d->size.height(), d->frame->data,
+                  d->frame->linesize);
     }
     d->frame->pts = d->nextPts++;
     d->frame->duration = 1; // one tick of the encoder time base

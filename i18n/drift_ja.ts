@@ -5183,10 +5183,6 @@
         <translation>被写体を切り抜く…</translation>
     </message>
     <message>
-        <source>Download cutout AI (about 190 MB)</source>
-        <translation>切り抜き AI をダウンロード (約 190 MB)</translation>
-    </message>
-    <message>
         <source>Install AI engine first</source>
         <translation>まず AI エンジンをインストール</translation>
     </message>
@@ -5205,6 +5201,14 @@
     <message>
         <source>None</source>
         <translation>なし</translation>
+    </message>
+    <message>
+        <source>Download people cutout (about 20 MB)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add click-to-pick cutout (about 190 MB)</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Rectangle</source>
@@ -6730,6 +6734,22 @@ If playback stutters, try another.</source>
         <translation>被写体を切り抜く</translation>
     </message>
     <message>
+        <source>Anything (click to pick)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>People (automatic)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Best quality (slower)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Fast</source>
+        <translation type="unfinished">高速</translation>
+    </message>
+    <message>
         <source>Looking at this moment…</source>
         <translation>この瞬間を確認中…</translation>
     </message>
@@ -6744,6 +6764,18 @@ If playback stutters, try another.</source>
     <message>
         <source>Left-click marks the subject, right-click marks what to exclude. Click a marker to remove it.</source>
         <translation>左クリックで被写体をマーク、右クリックで除外するものをマークします。マーカーをクリックすると削除されます。</translation>
+    </message>
+    <message>
+        <source>Everyone in the shot is cut out automatically — there is nothing to click.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cut out</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Quality</source>
+        <translation type="unfinished">品質</translation>
     </message>
     <message>
         <source>AI: %1</source>

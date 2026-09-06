@@ -5201,10 +5201,6 @@
         <translation>Recortar assunto…</translation>
     </message>
     <message>
-        <source>Download cutout AI (about 190 MB)</source>
-        <translation>Baixar IA de recorte (cerca de 190 MB)</translation>
-    </message>
-    <message>
         <source>Install AI engine first</source>
         <translation>Instale o mecanismo de IA primeiro</translation>
     </message>
@@ -5223,6 +5219,14 @@
     <message>
         <source>None</source>
         <translation>Nenhuma</translation>
+    </message>
+    <message>
+        <source>Download people cutout (about 20 MB)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add click-to-pick cutout (about 190 MB)</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Rectangle</source>
@@ -6755,6 +6759,22 @@ Se a reprodução travar, experimente outro.</translation>
         <translation>Recorte automático</translation>
     </message>
     <message>
+        <source>Anything (click to pick)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>People (automatic)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Best quality (slower)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Fast</source>
+        <translation type="unfinished">Rápida</translation>
+    </message>
+    <message>
         <source>Looking at this moment…</source>
         <translation>Analisando este momento…</translation>
     </message>
@@ -6769,6 +6789,18 @@ Se a reprodução travar, experimente outro.</translation>
     <message>
         <source>Left-click marks the subject, right-click marks what to exclude. Click a marker to remove it.</source>
         <translation>Clique esquerdo marca o sujeito, clique direito marca o que excluir. Clique em um marcador para removê-lo.</translation>
+    </message>
+    <message>
+        <source>Everyone in the shot is cut out automatically — there is nothing to click.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cut out</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Quality</source>
+        <translation type="unfinished">Qualidade</translation>
     </message>
     <message>
         <source>AI: %1</source>

@@ -51,8 +51,11 @@ void collectActivePaths(const drift::Project *project, drift::TimeUs timelineUs,
 
             // Retained separately from clip.path: the matte has its own reader, and dropping it
             // here would tear the worker down and re-open the file every frame.
-            if (clip.mask.shape == drift::MaskShape::Matte && !clip.mask.mattePath.isEmpty())
+            if (clip.mask.shape == drift::MaskShape::Matte && !clip.mask.mattePath.isEmpty()) {
                 videoPaths.insert(clip.mask.mattePath);
+                if (!clip.mask.matteFgrPath.isEmpty() && !clip.mask.invert)
+                    videoPaths.insert(clip.mask.matteFgrPath);
+            }
 
             if (clip.path.isEmpty())
                 continue;
@@ -94,11 +97,18 @@ QList<ClipReaderPool::VideoRequest> collectVideoRequests(const drift::Project *p
             // Mattes decode like any other video, so warm them alongside the sources rather
             // than stalling the composite on a serial read later.
             if (clip.mask.shape == drift::MaskShape::Matte && !clip.mask.mattePath.isEmpty()) {
+                const drift::TimeUs matteUs = qMax<drift::TimeUs>(
+                    0, clip.timelineToSourceUs(timelineUs) - clip.mask.matteSrcOffsetUs);
                 requests.append(ClipReaderPool::VideoRequest{
-                    clip.mask.mattePath, ClipReaderPool::streamIdForClip(clip.id),
-                    qMax<drift::TimeUs>(0, clip.timelineToSourceUs(timelineUs)
-                                               - clip.mask.matteSrcOffsetUs),
+                    clip.mask.mattePath, ClipReaderPool::streamIdForClip(clip.id), matteUs,
                     maxWidth, maxHeight});
+                // The pool keys workers by path, so the sidecar reusing the clip's stream id gets
+                // its own reader rather than fighting the matte for one.
+                if (!clip.mask.matteFgrPath.isEmpty() && !clip.mask.invert) {
+                    requests.append(ClipReaderPool::VideoRequest{
+                        clip.mask.matteFgrPath, ClipReaderPool::streamIdForClip(clip.id), matteUs,
+                        maxWidth, maxHeight});
+                }
             }
 
             if (clip.type != drift::ClipType::Video || clip.path.isEmpty())
@@ -721,6 +731,17 @@ GpuLayer buildGpuLayer(const drift::Clip &clip, drift::TimeUs timelineUs, int pr
         // A missing matte frame must not silently blank the clip — leave the layer unmasked.
         if (!matte.isNull())
             layer.matte = matte;
+
+        // The decontaminated foreground, when the cutout produced one. Only for the foreground
+        // half: the background clip of a cutout pair shares this matte and differs only by
+        // `invert`, and giving it the subject's colours would be plainly wrong.
+        if (!clip.mask.matteFgrPath.isEmpty() && !clip.mask.invert) {
+            const QImage fgr = ClipReaderPool::instance().readVideoFrame(
+                clip.mask.matteFgrPath, ClipReaderPool::streamIdForClip(clip.id),
+                qMax<drift::TimeUs>(0, matteUs), canvasWidth, canvasHeight);
+            if (!fgr.isNull())
+                layer.fgr = fgr;
+        }
     }
     layer.rect = destRect;
     layer.rotation = rotation;

@@ -42,12 +42,21 @@ in vec2 v_texCoord;
 out vec4 fragColor;
 uniform sampler2D u_layer;
 uniform sampler2D u_mask;
+uniform sampler2D u_fgr;
 uniform float u_opacity;
 uniform float u_hasMask;
 uniform float u_maskInvert;
+uniform float u_hasFgr;
 uniform float u_layerPremul;
 void main() {
     vec4 c = texture(u_layer, v_texCoord);
+    // A matte can carry a decontaminated foreground alongside its coverage map. It replaces the
+    // colour only; alpha still comes from the mask below. The sidecar is straight colour, so it
+    // has to be premultiplied back when the layer texture is.
+    if (u_hasFgr > 0.5) {
+        vec3 f = texture(u_fgr, v_texCoord).rgb;
+        c.rgb = (u_layerPremul > 0.5) ? f * c.a : f;
+    }
     float s = u_opacity;
     if (u_hasMask > 0.5) {
         float m = texture(u_mask, v_texCoord).r;
@@ -66,11 +75,13 @@ in vec2 v_texCoord;
 out vec4 fragColor;
 uniform sampler2D u_layer;
 uniform sampler2D u_mask;
+uniform sampler2D u_fgr;
 uniform sampler2D u_dst;      // canvas, premultiplied
 uniform vec2 u_canvasSize;
 uniform float u_opacity;
 uniform float u_hasMask;
 uniform float u_maskInvert;
+uniform float u_hasFgr;
 uniform float u_layerPremul;
 uniform int u_blendMode;      // 1 multiply, 2 screen, 3 overlay, 5 darken, 6 lighten
 
@@ -90,6 +101,9 @@ vec3 blendRgb(vec3 base, vec3 src) {
 void main() {
     vec4 src = texture(u_layer, v_texCoord);
     vec3 srcRgb = (u_layerPremul > 0.5 && src.a > 0.0001) ? src.rgb / src.a : src.rgb;
+    // The foreground sidecar is straight, not premultiplied, so it replaces srcRgb after the
+    // un-premultiply above rather than before it.
+    if (u_hasFgr > 0.5) srcRgb = texture(u_fgr, v_texCoord).rgb;
     float sa = src.a * u_opacity;
     if (u_hasMask > 0.5) {
         float m = texture(u_mask, v_texCoord).r;
@@ -351,28 +365,37 @@ void drawLayerOnCanvas(GlRuntime &rt, QOpenGLExtraFunctions *gl, GlTarget &canva
     // Invert cannot be baked in either: the foreground and background clips of a segmentation
     // share one matte file and differ only by this flag.
     GlTarget matteTarget;
+    GlTarget fgrTarget;
     GLuint maskTex = 0;
+    GLuint fgrTex = 0;
     float maskInvert = 0.f;
     if (!layer.matte.isNull()) {
         matteTarget = promoteImageToTargetCached(rt, gl, layer.matte, layer.matte.size());
         maskTex = matteTarget.isValid() ? matteTarget.texture() : 0;
         maskInvert = layer.mask.invert ? 1.f : 0.f;
+        if (!layer.fgr.isNull()) {
+            fgrTarget = promoteImageToTargetCached(rt, gl, layer.fgr, layer.fgr.size());
+            fgrTex = fgrTarget.isValid() ? fgrTarget.texture() : 0;
+        }
     } else {
         maskTex = maskTexture(rt, gl, layer.mask, layerTarget.size());
     }
     const QMatrix4x4 model = modelMatrixFor(layer, canvasSize);
 
-    // Every return path below must recycle the matte target.
+    // Every return path below must recycle the matte targets.
     struct MatteGuard
     {
         GlRuntime &rt;
-        GlTarget &target;
+        GlTarget &matte;
+        GlTarget &fgr;
         ~MatteGuard()
         {
-            if (target.isValid())
-                rt.releaseTarget(std::move(target));
+            if (matte.isValid())
+                rt.releaseTarget(std::move(matte));
+            if (fgr.isValid())
+                rt.releaseTarget(std::move(fgr));
         }
-    } matteGuard{rt, matteTarget};
+    } matteGuard{rt, matteTarget, fgrTarget};
 
     // Only worth it when the quad is actually smaller than the texture; at ~1:1 the
     // single bilinear tap is already exact and the copy would be pure cost.
@@ -418,13 +441,17 @@ void drawLayerOnCanvas(GlRuntime &rt, QOpenGLExtraFunctions *gl, GlTarget &canva
         program->setUniformValue("u_opacity", float(layer.opacity));
         program->setUniformValue("u_hasMask", maskTex ? 1.f : 0.f);
         program->setUniformValue("u_maskInvert", maskInvert);
+        program->setUniformValue("u_hasFgr", fgrTex ? 1.f : 0.f);
         program->setUniformValue("u_layer", 0);
         program->setUniformValue("u_mask", 1);
+        program->setUniformValue("u_fgr", 2);
         program->setUniformValue("u_layerPremul", layerPremul);
         gl->glActiveTexture(GL_TEXTURE0);
         gl->glBindTexture(GL_TEXTURE_2D, layerTex);
         gl->glActiveTexture(GL_TEXTURE1);
         gl->glBindTexture(GL_TEXTURE_2D, maskTex);
+        gl->glActiveTexture(GL_TEXTURE2);
+        gl->glBindTexture(GL_TEXTURE_2D, fgrTex);
         bindQuad(rt, gl);
         program->release();
         gl->glDisable(GL_BLEND);
@@ -458,12 +485,14 @@ void drawLayerOnCanvas(GlRuntime &rt, QOpenGLExtraFunctions *gl, GlTarget &canva
     program->setUniformValue("u_opacity", float(layer.opacity));
     program->setUniformValue("u_hasMask", maskTex ? 1.f : 0.f);
     program->setUniformValue("u_maskInvert", maskInvert);
+    program->setUniformValue("u_hasFgr", fgrTex ? 1.f : 0.f);
     program->setUniformValue("u_blendMode", blendModeCode(blend));
     program->setUniformValue("u_canvasSize",
                              QVector2D(float(canvasSize.width()), float(canvasSize.height())));
     program->setUniformValue("u_layer", 0);
     program->setUniformValue("u_mask", 1);
     program->setUniformValue("u_dst", 2);
+    program->setUniformValue("u_fgr", 3);
     program->setUniformValue("u_layerPremul", layerPremul);
     gl->glActiveTexture(GL_TEXTURE0);
     gl->glBindTexture(GL_TEXTURE_2D, layerTex);
@@ -471,6 +500,8 @@ void drawLayerOnCanvas(GlRuntime &rt, QOpenGLExtraFunctions *gl, GlTarget &canva
     gl->glBindTexture(GL_TEXTURE_2D, maskTex);
     gl->glActiveTexture(GL_TEXTURE2);
     gl->glBindTexture(GL_TEXTURE_2D, previous.texture());
+    gl->glActiveTexture(GL_TEXTURE3);
+    gl->glBindTexture(GL_TEXTURE_2D, fgrTex);
     bindQuad(rt, gl);
     program->release();
     canvas.fbo->release();

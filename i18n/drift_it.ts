@@ -5201,10 +5201,6 @@
         <translation>Ritaglia soggetto…</translation>
     </message>
     <message>
-        <source>Download cutout AI (about 190 MB)</source>
-        <translation>Scarica IA di ritaglio (circa 190 MB)</translation>
-    </message>
-    <message>
         <source>Install AI engine first</source>
         <translation>Installa prima il motore IA</translation>
     </message>
@@ -5223,6 +5219,14 @@
     <message>
         <source>None</source>
         <translation>Nessuno</translation>
+    </message>
+    <message>
+        <source>Download people cutout (about 20 MB)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add click-to-pick cutout (about 190 MB)</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Rectangle</source>
@@ -6755,6 +6759,22 @@ Se la riproduzione va a scatti, prova un&apos;altra opzione.</translation>
         <translation>Ritaglia soggetto</translation>
     </message>
     <message>
+        <source>Anything (click to pick)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>People (automatic)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Best quality (slower)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Fast</source>
+        <translation type="unfinished">Veloce</translation>
+    </message>
+    <message>
         <source>Looking at this moment…</source>
         <translation>Analisi di questo momento in corso…</translation>
     </message>
@@ -6769,6 +6789,18 @@ Se la riproduzione va a scatti, prova un&apos;altra opzione.</translation>
     <message>
         <source>Left-click marks the subject, right-click marks what to exclude. Click a marker to remove it.</source>
         <translation>Fai clic con il tasto sinistro per contrassegnare il soggetto, con il tasto destro per escludere. Fai clic su un marcatore per rimuoverlo.</translation>
+    </message>
+    <message>
+        <source>Everyone in the shot is cut out automatically — there is nothing to click.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cut out</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Quality</source>
+        <translation type="unfinished">Qualità</translation>
     </message>
     <message>
         <source>AI: %1</source>

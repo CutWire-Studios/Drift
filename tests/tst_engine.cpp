@@ -90,6 +90,8 @@ class EngineTest : public QObject
 private slots:
     void initTestCase();
     void matteWriterRoundTripsThroughClipReader();
+    void matteWriterPreservesSoftAlpha();
+    void matteWriterRoundTripsColourForeground();
     void reverseRendererPlaysSourceBackwards();
     void mediaEditorCropsAnImage();
     void reverseProxyLookupIsByContainmentAndSourceIdentity();
@@ -1771,6 +1773,93 @@ void EngineTest::matteWriterRoundTripsThroughClipReader()
             }
         }
         QCOMPARE(band, i);
+    }
+}
+
+// A binary mask survives a limited-range round trip by accident: 0 and 255 clamp back to
+// themselves. A soft alpha does not — untagged, ClipReader expands 16..235 out to 0..255 and every
+// midtone shifts by about 7%. RVM's whole advantage over SAM2 is the soft edge, so the full-range
+// tagging is pinned here rather than left to whoever next touches the encoder settings.
+void EngineTest::matteWriterPreservesSoftAlpha()
+{
+    if (!Exporter::videoCodecById(QStringLiteral("h264")).value(QStringLiteral("available")).toBool())
+        QSKIP("No H.264 encoder available in this FFmpeg build");
+
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    const QString path = dir.filePath(QStringLiteral("soft.mp4"));
+    const QSize size(256, 64);
+
+    // One flat grey per 16-pixel column, covering the whole range including the ends.
+    const int levels[] = {0, 16, 32, 64, 96, 128, 160, 192, 224, 239, 255};
+
+    drift::MatteWriter writer;
+    QString error;
+    QVERIFY2(writer.open(path, size, 30, 1, &error), qPrintable(error));
+    QImage mask(size, QImage::Format_Grayscale8);
+    mask.fill(0);
+    for (int i = 0; i < int(std::size(levels)); ++i) {
+        QPainter p(&mask);
+        p.fillRect(QRect(i * 20, 0, 20, size.height()), QColor(levels[i], levels[i], levels[i]));
+        p.end();
+    }
+    QVERIFY2(writer.writeFrame(mask, &error), qPrintable(error));
+    QVERIFY2(writer.finish(&error), qPrintable(error));
+
+    const QImage frame = ClipReaderPool::instance().readVideoFrame(path, 1, 0, 0, 0);
+    QVERIFY(!frame.isNull());
+    QCOMPARE(frame.size(), size);
+
+    for (int i = 0; i < int(std::size(levels)); ++i) {
+        const int got = qRed(frame.pixel(i * 20 + 10, size.height() / 2));
+        QVERIFY2(qAbs(got - levels[i]) <= 2,
+                 qPrintable(QStringLiteral("alpha %1 came back as %2").arg(levels[i]).arg(got)));
+    }
+}
+
+// The foreground sidecar goes through a different path in the same writer: swscale rather than a
+// memcpy into luma, and crf rather than qp 0. Colour surviving at all is what this pins — a
+// mismatch between the swscale range and the stream tagging washes it out.
+void EngineTest::matteWriterRoundTripsColourForeground()
+{
+    if (!Exporter::videoCodecById(QStringLiteral("h264")).value(QStringLiteral("available")).toBool())
+        QSKIP("No H.264 encoder available in this FFmpeg build");
+
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    const QString path = dir.filePath(QStringLiteral("fgr.mp4"));
+    const QSize size(256, 64);
+
+    const QColor colours[] = {Qt::black, Qt::white, Qt::red, Qt::green, Qt::blue, QColor(128, 64, 32)};
+
+    drift::MatteWriter writer;
+    QString error;
+    QVERIFY2(writer.open(path, size, 30, 1, &error, drift::MatteWriter::Mode::Colour),
+             qPrintable(error));
+    QImage rgb(size, QImage::Format_RGB888);
+    rgb.fill(Qt::black);
+    for (int i = 0; i < int(std::size(colours)); ++i) {
+        QPainter p(&rgb);
+        p.fillRect(QRect(i * 40, 0, 40, size.height()), colours[i]);
+        p.end();
+    }
+    QVERIFY2(writer.writeFrame(rgb, &error), qPrintable(error));
+    QVERIFY2(writer.finish(&error), qPrintable(error));
+
+    const QImage frame = ClipReaderPool::instance().readVideoFrame(path, 1, 0, 0, 0);
+    QVERIFY(!frame.isNull());
+    QCOMPARE(frame.size(), size);
+
+    for (int i = 0; i < int(std::size(colours)); ++i) {
+        const QRgb got = frame.pixel(i * 40 + 20, size.height() / 2);
+        const QColor want = colours[i];
+        QVERIFY2(qAbs(qRed(got) - want.red()) <= 8 && qAbs(qGreen(got) - want.green()) <= 8
+                     && qAbs(qBlue(got) - want.blue()) <= 8,
+                 qPrintable(QStringLiteral("colour %1 came back as %2,%3,%4")
+                                .arg(want.name())
+                                .arg(qRed(got))
+                                .arg(qGreen(got))
+                                .arg(qBlue(got))));
     }
 }
 

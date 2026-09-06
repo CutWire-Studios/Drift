@@ -503,6 +503,8 @@ add_library(driftengine STATIC
     src/engine/OrtRuntime.cpp
     src/engine/Sam2Segmenter.h
     src/engine/Sam2Segmenter.cpp
+    src/engine/RvmMatter.h
+    src/engine/RvmMatter.cpp
     src/engine/FaceLandmarker.h
     src/engine/FaceLandmarker.cpp
     src/engine/FaceTrack.h

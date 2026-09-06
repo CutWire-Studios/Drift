@@ -5201,10 +5201,6 @@
         <translation>Recortar sujeto…</translation>
     </message>
     <message>
-        <source>Download cutout AI (about 190 MB)</source>
-        <translation>Descargar IA de recorte (aprox. 190 MB)</translation>
-    </message>
-    <message>
         <source>Install AI engine first</source>
         <translation>Instala el motor de IA primero</translation>
     </message>
@@ -5223,6 +5219,14 @@
     <message>
         <source>None</source>
         <translation>Ninguno</translation>
+    </message>
+    <message>
+        <source>Download people cutout (about 20 MB)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add click-to-pick cutout (about 190 MB)</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Rectangle</source>
@@ -6755,6 +6759,22 @@ Si la reproducción se corta, prueba con otra opción.</translation>
         <translation>Recortar sujeto</translation>
     </message>
     <message>
+        <source>Anything (click to pick)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>People (automatic)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Best quality (slower)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Fast</source>
+        <translation type="unfinished">Rápido</translation>
+    </message>
+    <message>
         <source>Looking at this moment…</source>
         <translation>Analizando este momento…</translation>
     </message>
@@ -6769,6 +6789,18 @@ Si la reproducción se corta, prueba con otra opción.</translation>
     <message>
         <source>Left-click marks the subject, right-click marks what to exclude. Click a marker to remove it.</source>
         <translation>Clic izquierdo marca el sujeto, clic derecho marca lo que se debe excluir. Haz clic en un marcador para eliminarlo.</translation>
+    </message>
+    <message>
+        <source>Everyone in the shot is cut out automatically — there is nothing to click.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cut out</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Quality</source>
+        <translation type="unfinished">Calidad</translation>
     </message>
     <message>
         <source>AI: %1</source>

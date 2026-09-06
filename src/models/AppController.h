@@ -10,6 +10,7 @@
 #include "engine/MediaWaveform.h"
 #include "engine/WaveformBlockCache.h"
 #include "engine/ProjectBundle.h"
+#include "engine/RvmMatter.h"
 #include "engine/Sam2Segmenter.h"
 #include "ClipListModel.h"
 #include "TimelineModel.h"
@@ -188,6 +189,8 @@ class AppController : public QObject
     Q_PROPERTY(bool segmentEncoding READ segmentEncoding NOTIFY segmentSessionChanged)
     Q_PROPERTY(int segmentRevision READ segmentRevision NOTIFY segmentSessionChanged)
     Q_PROPERTY(QVariantList segmentPoints READ segmentPoints NOTIFY segmentSessionChanged)
+    Q_PROPERTY(QString segmentBackend READ segmentBackend NOTIFY segmentSessionChanged)
+    Q_PROPERTY(bool segmentBackendUsesPoints READ segmentBackendUsesPoints NOTIFY segmentSessionChanged)
     Q_PROPERTY(QSize segmentFrameSize READ segmentFrameSize NOTIFY segmentSessionChanged)
     // Multicam punching session. The live project is not touched until Save; switches rewrite a
     // staged copy that playback is pointed at so the program monitor shows the mix.
@@ -377,6 +380,9 @@ public:
     bool segmentEncoding() const { return m_segEncoding; }
     int segmentRevision() const { return m_segRevision; }
     QVariantList segmentPoints() const { return m_segPoints; }
+    QString segmentBackend() const { return m_segBackend; }
+    // SAM2 is prompted; RVM finds people on its own and has nothing to click.
+    bool segmentBackendUsesPoints() const { return m_segBackend == QLatin1String("sam2"); }
     QSize segmentFrameSize() const { return m_segFrame.size(); }
     bool faceDetecting() const { return m_faceDetecting; }
     double faceDetectProgress() const { return m_faceDetectProgress; }
@@ -638,8 +644,15 @@ public:
     Q_INVOKABLE QVariantList whisperLanguages();
     // points: [{x, y, include}] with x/y normalized to the source frame.
     // outputMode: "clips" (foreground + background on two new tracks) or "mask" (in place).
+    // Which cutout models are installed: "sam2" (click to pick anything) and/or "rvm" (people,
+    // automatic). Empty when neither is.
+    Q_INVOKABLE QStringList segmentationBackends();
+    // Installed RVM model variants, best first: "mobilenetv3", "resnet50".
+    Q_INVOKABLE QStringList rvmQualities();
+    Q_INVOKABLE void setSegmentationBackend(const QString &backend, const QString &quality = {});
     Q_INVOKABLE void segmentClip(int trackIndex, int clipIndex, const QVariantList &points,
-                                 const QString &outputMode);
+                                 const QString &outputMode, const QString &backend = {},
+                                 const QString &quality = {});
     Q_INVOKABLE void cancelSegmentation();
     Q_INVOKABLE bool segmentationAvailable();
     Q_INVOKABLE QString segmentationModelVariant();
@@ -1433,6 +1446,7 @@ protected:
     void applySceneAnalysis(const drift::SceneAnalysis &analysis, const QString &clipId,
                             const QString &clipPath);
     void finalizeSegmentation(const QString &clipId, const QString &mattePath,
+                              const QString &matteFgrPath,
                               drift::TimeUs matteSrcOffsetUs, const QString &outputMode);
     void finalizeGeneratedSubtitles(drift::TimeUs timelineStart, drift::TimeUs timelineDuration,
                                     const QList<drift::SubtitleCue> &cues);
@@ -1695,6 +1709,9 @@ protected:
     int m_loadGeneration = 0; // bumped per loadProject; stale extracts are dropped
     QImage m_segFrame;
     drift::Sam2Embedding m_segEmbedding;
+    // "sam2" or "rvm". Persists across sessions so the window reopens on the last choice.
+    QString m_segBackend = QStringLiteral("sam2");
+    QString m_segQuality; // RVM variant; empty means the best installed
     QVariantList m_segPoints;
     int m_selectedTrack = -1;
     int m_selectedClip = -1;

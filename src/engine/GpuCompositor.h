@@ -34,6 +34,7 @@ struct GpuLayer
     QList<drift::Effect> effects;
     drift::Mask mask;
     QImage matte; // MaskShape::Matte only: this frame's coverage map, decoded by FrameCompositor
+    QImage fgr;   // MaskShape::Matte only: the decontaminated foreground, when the matte has one
     QRectF rect;             // destination rect on the canvas, in canvas pixels
     double rotation = 0.0;   // degrees, clockwise, about the rect centre
     bool flipH = false;

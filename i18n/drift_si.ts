@@ -5201,10 +5201,6 @@
         <translation>විෂයය වෙන් කරන්න…</translation>
     </message>
     <message>
-        <source>Download cutout AI (about 190 MB)</source>
-        <translation>Cutout AI බාගන්න (මෙගාබයිට් 190ක් පමණ)</translation>
-    </message>
-    <message>
         <source>Install AI engine first</source>
         <translation>පළමුව AI එන්ජිම ස්ථාපනය කරන්න</translation>
     </message>
@@ -5223,6 +5219,14 @@
     <message>
         <source>None</source>
         <translation>කිසිවක් නැත</translation>
+    </message>
+    <message>
+        <source>Download people cutout (about 20 MB)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add click-to-pick cutout (about 190 MB)</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Rectangle</source>
@@ -6755,6 +6759,22 @@ If playback stutters, try another.</source>
         <translation>විෂයය වෙන් කරන්න</translation>
     </message>
     <message>
+        <source>Anything (click to pick)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>People (automatic)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Best quality (slower)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Fast</source>
+        <translation type="unfinished">වේගවත්</translation>
+    </message>
+    <message>
         <source>Looking at this moment…</source>
         <translation>මෙම මොහොත පරීක්ෂා කරමින්…</translation>
     </message>
@@ -6769,6 +6789,18 @@ If playback stutters, try another.</source>
     <message>
         <source>Left-click marks the subject, right-click marks what to exclude. Click a marker to remove it.</source>
         <translation>වම් ක්ලික් කිරීමෙන් විෂයය සලකුණු කරයි, දකුණු ක්ලික් කිරීමෙන් බැහැර කළ යුතු දේ සලකුණු කරයි. ලකුණුකාරකය ඉවත් කිරීමට එය ක්ලික් කරන්න.</translation>
+    </message>
+    <message>
+        <source>Everyone in the shot is cut out automatically — there is nothing to click.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cut out</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Quality</source>
+        <translation type="unfinished">ගුණාත්මකභාවය</translation>
     </message>
     <message>
         <source>AI: %1</source>

@@ -5592,12 +5592,55 @@ bool AppController::segmentationAvailable()
 {
     // Deliberately only checks that the model files exist. This is reached from a QML binding, and
     // loading the sessions here would block the GUI thread for seconds.
-    return drift::Sam2Segmenter::modelPresent();
+    return drift::Sam2Segmenter::modelPresent() || drift::RvmMatter::modelPresent();
 }
 
 QString AppController::segmentationModelVariant()
 {
+    if (m_segBackend == QLatin1String("rvm")) {
+        const QStringList variants = drift::RvmMatter::installedVariants();
+        if (m_segQuality.isEmpty())
+            return variants.value(0);
+        return variants.contains(m_segQuality) ? m_segQuality : variants.value(0);
+    }
     return drift::Sam2Segmenter::installedVariant();
+}
+
+QStringList AppController::segmentationBackends()
+{
+    // File-existence checks only, like segmentationAvailable(): this is reached from a QML binding.
+    QStringList out;
+    if (drift::Sam2Segmenter::modelPresent())
+        out.append(QStringLiteral("sam2"));
+    if (drift::RvmMatter::modelPresent())
+        out.append(QStringLiteral("rvm"));
+    return out;
+}
+
+QStringList AppController::rvmQualities()
+{
+    return drift::RvmMatter::installedVariants();
+}
+
+void AppController::setSegmentationBackend(const QString &backend, const QString &quality)
+{
+    const QString wanted =
+        backend == QLatin1String("rvm") ? QStringLiteral("rvm") : QStringLiteral("sam2");
+    if (wanted == m_segBackend && quality == m_segQuality)
+        return;
+
+    m_segBackend = wanted;
+    m_segQuality = quality;
+    // The prompt belongs to SAM2, and the preview on screen was produced by the other model.
+    m_segPoints.clear();
+    SegmentImageStore::setMask(QImage());
+    ++m_segRevision;
+    emit segmentSessionChanged();
+
+    // Re-derive the preview for the new backend: SAM2 needs its encoder run on this frame, RVM
+    // needs its one forward pass, and neither has been done.
+    if (m_segSessionActive)
+        setSegmentationFrame(m_segSeconds);
 }
 
 void AppController::cancelSegmentation()
@@ -5618,6 +5661,12 @@ void AppController::beginSegmentationSession(int trackIndex, int clipIndex, doub
         setLastMessage(tr("Select a video clip to cut out"), QStringLiteral("warning"));
         return;
     }
+
+    // The remembered choice can outlive the addon it names — the user may have removed one model
+    // since the last session.
+    const QStringList backends = segmentationBackends();
+    if (!backends.isEmpty() && !backends.contains(m_segBackend))
+        m_segBackend = backends.first();
 
     m_segTrack = trackIndex;
     m_segClip = clipIndex;
@@ -6785,18 +6834,42 @@ void AppController::setSegmentationFrame(double seconds)
     const int generation = ++m_segGeneration;
     emit segmentSessionChanged();
 
-    // The encoder is the expensive half (seconds per frame on a CPU provider), so it runs off the
-    // GUI thread. Decodes after this are milliseconds and stay inline.
-    (void)QtConcurrent::run([this, path, sourceUs, canvasW, canvasH, generation]() {
+    const bool rvm = m_segBackend == QLatin1String("rvm");
+    const QString quality = m_segQuality;
+
+    // The model pass is the expensive half (seconds per frame for the SAM2 encoder on a CPU
+    // provider), so it runs off the GUI thread. Decodes after this are milliseconds and stay inline.
+    (void)QtConcurrent::run([this, path, sourceUs, canvasW, canvasH, generation, rvm, quality]() {
         const QImage frame = ClipReaderPool::instance().readVideoFrame(path, kSegmentEncodeStreamId,
                                                                        sourceUs, canvasW, canvasH);
         drift::Sam2Embedding embedding;
-        if (!frame.isNull())
-            embedding = drift::Sam2Segmenter::instance().encode(frame);
+        QImage mask;
+        QString error;
+        if (!frame.isNull()) {
+            if (rvm) {
+                // RVM has no prompt, so the preview is the whole answer rather than a seed: one
+                // forward pass on a throwaway track, with no recurrent history to carry.
+                std::unique_ptr<drift::RvmMatter::Track> track =
+                    drift::RvmMatter::instance().newTrack(quality);
+                if (!track) {
+                    error = drift::RvmMatter::instance().lastError();
+                } else {
+                    const drift::RvmResult result = track->step(frame);
+                    if (result.ok)
+                        mask = result.alpha;
+                    else
+                        error = result.error;
+                }
+            } else {
+                embedding = drift::Sam2Segmenter::instance().encode(frame);
+                if (!embedding.valid)
+                    error = drift::Sam2Segmenter::instance().lastError();
+            }
+        }
 
         QMetaObject::invokeMethod(
             this,
-            [this, frame, embedding, generation]() {
+            [this, frame, embedding, mask, error, generation]() {
                 // Dropped when the window closed, reopened, or the user scrubbed again while
                 // this encode was running — otherwise a stale frame would land on a live session.
                 if (generation != m_segGeneration)
@@ -6807,10 +6880,10 @@ void AppController::setSegmentationFrame(double seconds)
                 m_segFrame = frame;
                 m_segEmbedding = embedding;
                 SegmentImageStore::setFrame(frame);
-                SegmentImageStore::setMask(QImage());
+                SegmentImageStore::setMask(mask);
                 ++m_segRevision;
-                if (frame.isNull() || !embedding.valid)
-                    setLastMessage(drift::Sam2Segmenter::instance().lastError(), QStringLiteral("error"));
+                if (frame.isNull() || !error.isEmpty())
+                    setLastMessage(error, QStringLiteral("error"));
                 emit segmentSessionChanged();
             },
             Qt::QueuedConnection);
@@ -6847,6 +6920,10 @@ void AppController::clearSegmentationPoints()
 
 void AppController::refreshSegmentationPreview()
 {
+    // RVM's preview is produced by setSegmentationFrame and has nothing to do with prompts;
+    // falling through here would clear it the moment anything touched the point list.
+    if (m_segBackend != QLatin1String("sam2"))
+        return;
     if (m_segPoints.isEmpty() || !m_segEmbedding.valid) {
         ++m_segSeedGeneration;
         SegmentImageStore::setMask(QImage());
@@ -6904,7 +6981,9 @@ void AppController::runSegmentationSeed(int generation)
 
 void AppController::runSegmentationSession(const QString &outputMode)
 {
-    if (!m_segSessionActive || m_segPoints.isEmpty())
+    if (!m_segSessionActive)
+        return;
+    if (segmentBackendUsesPoints() && m_segPoints.isEmpty())
         return;
     QString mode = outputMode;
     if (m_segForTemplate && m_pendingEffectTemplate && m_pendingEffectTemplate->valid())
@@ -6931,7 +7010,8 @@ void AppController::openSegmentationForTemplate(int trackIndex, int clipIndex)
 }
 
 void AppController::segmentClip(int trackIndex, int clipIndex, const QVariantList &points,
-                                const QString &outputMode)
+                                const QString &outputMode, const QString &backend,
+                                const QString &quality)
 {
     if (m_segmenting) {
         setLastMessage(tr("Cutout is already running"), QStringLiteral("warning"));
@@ -6952,7 +7032,11 @@ void AppController::segmentClip(int trackIndex, int clipIndex, const QVariantLis
         setLastMessage(tr("This clip has no video to cut out"), QStringLiteral("warning"));
         return;
     }
-    if (points.isEmpty()) {
+    // Empty means "whatever the session is set to", which is also what a direct MCP call gets.
+    const bool rvm = (backend.isEmpty() ? m_segBackend : backend) == QLatin1String("rvm");
+    const QString rvmQuality = quality.isEmpty() ? m_segQuality : quality;
+
+    if (!rvm && points.isEmpty()) {
         setLastMessage(tr("Click the subject first"), QStringLiteral("warning"));
         return;
     }
@@ -6992,7 +7076,7 @@ void AppController::segmentClip(int trackIndex, int clipIndex, const QVariantLis
     const QString clipId = clip.id;
 
     (void)QtConcurrent::run([this, path, srcIn, srcOut, fps, canvasW, canvasH, normalized, mode,
-                             clipId]() {
+                             clipId, rvm, rvmQuality]() {
         auto setProgress = [this](double fraction, const QString &status) {
             QMetaObject::invokeMethod(
                 this,
@@ -7008,10 +7092,11 @@ void AppController::segmentClip(int trackIndex, int clipIndex, const QVariantLis
         };
 
         auto finish = [this, clipId, srcIn, mode](bool ok, const QString &message,
-                                                  const QString &mattePath) {
+                                                  const QString &mattePath,
+                                                  const QString &fgrPath = QString()) {
             QMetaObject::invokeMethod(
                 this,
-                [this, ok, message, mattePath, clipId, srcIn, mode]() {
+                [this, ok, message, mattePath, fgrPath, clipId, srcIn, mode]() {
                     m_segmenting = false;
                     emit segmentingChanged();
                     m_segmentProgress = ok ? 1.0 : 0.0;
@@ -7038,7 +7123,7 @@ void AppController::segmentClip(int trackIndex, int clipIndex, const QVariantLis
                         emit segmentationFinished(true, message);
                         return;
                     }
-                    finalizeSegmentation(clipId, mattePath, srcIn, mode);
+                    finalizeSegmentation(clipId, mattePath, fgrPath, srcIn, mode);
                     setLastMessage(message);
                     emit segmentationFinished(true, message);
                 },
@@ -7046,7 +7131,7 @@ void AppController::segmentClip(int trackIndex, int clipIndex, const QVariantLis
         };
 
         drift::Sam2Segmenter &sam = drift::Sam2Segmenter::instance();
-        if (!sam.available()) {
+        if (!rvm && !sam.available()) {
             finish(false, sam.lastError(), {});
             return;
         }
@@ -7064,19 +7149,49 @@ void AppController::segmentClip(int trackIndex, int clipIndex, const QVariantLis
             return;
         }
 
-        drift::MatteWriter writer;
-        bool writerOpen = false;
-        std::unique_ptr<drift::Sam2Segmenter::Track> track = sam.newTrack();
-        if (!track) {
-            finish(false, sam.lastError(), {});
+        // RVM also produces a colour-decontaminated foreground. It rides in a second sidecar next
+        // to the matte, except for a template cutout, which only ever consumes the coverage map —
+        // writing one there would encode a whole clip for a file nothing reads.
+        const bool wantFgr = rvm && mode != QLatin1String("template");
+        const QString fgrPath = wantFgr ? drift::newMattePath() : QString();
+        if (wantFgr && fgrPath.isEmpty()) {
+            finish(false, tr("Could not create a cutout file"), {});
             return;
+        }
+
+        drift::MatteWriter writer;
+        drift::MatteWriter fgrWriter;
+        bool writerOpen = false;
+
+        std::unique_ptr<drift::Sam2Segmenter::Track> track;
+        std::unique_ptr<drift::RvmMatter::Track> rvmTrack;
+        if (rvm) {
+            rvmTrack = drift::RvmMatter::instance().newTrack(rvmQuality);
+            if (!rvmTrack) {
+                finish(false, drift::RvmMatter::instance().lastError(), {});
+                return;
+            }
+        } else {
+            track = sam.newTrack();
+            if (!track) {
+                finish(false, sam.lastError(), {});
+                return;
+            }
         }
         int occludedFrames = 0;
         QString error;
 
+        // Both sidecars are aborted together: a foreground with no matte is unusable, and a
+        // half-written pair must not look like a finished cutout.
+        const auto abortAll = [&] {
+            writer.abort();
+            if (wantFgr)
+                fgrWriter.abort();
+        };
+
         for (int i = 0; i < totalFrames; ++i) {
             if (m_segmentCancel.loadRelaxed() != 0) {
-                writer.abort();
+                abortAll();
                 finish(false, tr("Cutout cancelled"), {});
                 return;
             }
@@ -7085,7 +7200,7 @@ void AppController::segmentClip(int trackIndex, int clipIndex, const QVariantLis
             const QImage frame = ClipReaderPool::instance().readVideoFrame(
                 path, kCutoutRenderStreamId, sourceUs, canvasW, canvasH);
             if (frame.isNull()) {
-                writer.abort();
+                abortAll();
                 finish(false, tr("Could not decode frame %1").arg(i), {});
                 return;
             }
@@ -7095,41 +7210,67 @@ void AppController::segmentClip(int trackIndex, int clipIndex, const QVariantLis
                     finish(false, error, {});
                     return;
                 }
+                if (wantFgr
+                    && !fgrWriter.open(fgrPath, frame.size(), fps, 1, &error,
+                                       drift::MatteWriter::Mode::Colour)) {
+                    writer.abort();
+                    finish(false, error, {});
+                    return;
+                }
                 writerOpen = true;
             }
 
-            const drift::Sam2Embedding embedding = sam.encode(frame);
-            if (!embedding.valid) {
-                writer.abort();
-                finish(false, sam.lastError(), {});
-                return;
-            }
-
-            // The first frame is prompted; every later frame is propagated purely from the
-            // model's memory bank, so no prompt is carried forward by hand.
-            drift::Sam2Result result;
-            if (i == 0) {
-                drift::Sam2Prompt prompt;
-                for (int p = 0; p < normalized.points.size(); ++p) {
-                    prompt.points.append(QPointF(normalized.points.at(p).x() * frame.width(),
-                                                 normalized.points.at(p).y() * frame.height()));
-                    prompt.labels.append(normalized.labels.at(p));
+            QImage coverage;
+            if (rvm) {
+                // No prompt and no seed frame: the subject is "the people in shot", and the
+                // recurrent state carries identity from one frame to the next.
+                const drift::RvmResult result = rvmTrack->step(frame);
+                if (!result.ok) {
+                    abortAll();
+                    finish(false, result.error, {});
+                    return;
                 }
-                result = track->seed(embedding, prompt);
+                coverage = result.alpha;
+                if (wantFgr && !fgrWriter.writeFrame(result.foreground, &error)) {
+                    abortAll();
+                    finish(false, error, {});
+                    return;
+                }
             } else {
-                result = track->step(embedding);
+                const drift::Sam2Embedding embedding = sam.encode(frame);
+                if (!embedding.valid) {
+                    abortAll();
+                    finish(false, sam.lastError(), {});
+                    return;
+                }
+
+                // The first frame is prompted; every later frame is propagated purely from the
+                // model's memory bank, so no prompt is carried forward by hand.
+                drift::Sam2Result result;
+                if (i == 0) {
+                    drift::Sam2Prompt prompt;
+                    for (int p = 0; p < normalized.points.size(); ++p) {
+                        prompt.points.append(QPointF(normalized.points.at(p).x() * frame.width(),
+                                                     normalized.points.at(p).y() * frame.height()));
+                        prompt.labels.append(normalized.labels.at(p));
+                    }
+                    result = track->seed(embedding, prompt);
+                } else {
+                    result = track->step(embedding);
+                }
+
+                if (!result.ok) {
+                    abortAll();
+                    finish(false, result.error, {});
+                    return;
+                }
+                if (result.occluded)
+                    ++occludedFrames;
+                coverage = result.mask;
             }
 
-            if (!result.ok) {
-                writer.abort();
-                finish(false, result.error, {});
-                return;
-            }
-            if (result.occluded)
-                ++occludedFrames;
-
-            if (!writer.writeFrame(result.mask, &error)) {
-                writer.abort();
+            if (!writer.writeFrame(coverage, &error)) {
+                abortAll();
                 finish(false, error, {});
                 return;
             }
@@ -7138,8 +7279,8 @@ void AppController::segmentClip(int trackIndex, int clipIndex, const QVariantLis
                         tr("Processing frame %1 of %2\u2026").arg(i + 1).arg(totalFrames));
         }
 
-        if (!writer.finish(&error)) {
-            writer.abort();
+        if (!writer.finish(&error) || (wantFgr && !fgrWriter.finish(&error))) {
+            abortAll();
             finish(false, error, {});
             return;
         }
@@ -7152,7 +7293,7 @@ void AppController::segmentClip(int trackIndex, int clipIndex, const QVariantLis
                          .arg(occludedFrames)
                          .arg(totalFrames)
                    : tr("Cutout complete"),
-               mattePath);
+               mattePath, fgrPath);
     });
 }
 
@@ -8160,6 +8301,7 @@ void AppController::detectScenesForClip(int trackIndex, int clipIndex, bool with
 }
 
 void AppController::finalizeSegmentation(const QString &clipId, const QString &mattePath,
+                                         const QString &matteFgrPath,
                                          drift::TimeUs matteSrcOffsetUs, const QString &outputMode)
 {
     int trackIndex = -1;
@@ -8177,6 +8319,8 @@ void AppController::finalizeSegmentation(const QString &clipId, const QString &m
     if (trackIndex < 0) {
         // The clip was deleted while the job ran; the matte has nothing to attach to.
         QFile::remove(mattePath);
+        if (!matteFgrPath.isEmpty())
+            QFile::remove(matteFgrPath);
         setLastMessage(tr("That clip no longer exists"), QStringLiteral("warning"));
         return;
     }
@@ -8187,6 +8331,7 @@ void AppController::finalizeSegmentation(const QString &clipId, const QString &m
     drift::Mask matte;
     matte.shape = drift::MaskShape::Matte;
     matte.mattePath = mattePath;
+    matte.matteFgrPath = matteFgrPath;
     matte.matteSrcOffsetUs = matteSrcOffsetUs;
 
     if (outputMode == QStringLiteral("mask")) {
@@ -17536,7 +17681,9 @@ QJsonObject AppController::mcpAiCapabilities() const
         {"whisper-model", drift::WhisperTranscriber::modelPresent(),
          "generate_subtitles — speech to timed captions"},
         {"sam2-model", drift::Sam2Segmenter::modelPresent(),
-         "subject cutout and mask generation"},
+         "subject cutout and mask generation — click to pick any subject"},
+        {"rvm-model", drift::RvmMatter::modelPresent(),
+         "people cutout — no prompt, soft alpha, decontaminated foreground"},
         {"face-model", drift::FaceLandmarker::modelPresent(),
          "face tracking and the face warp effects"},
         {"denoise-model", drift::DeepFilterDenoiser::modelPresent(),

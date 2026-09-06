@@ -51,20 +51,25 @@ Item {
             width: parent.width
             spacing: Theme.spacingSm
 
-            // The model is an addon, but it can equally come from a bundled
-            // models/sam2 or DRIFT_SAM2_MODEL_DIR, so ask the engine rather than
-            // the addon registry. That answer is not a binding, hence the reset
-            // below when an addon of this kind appears.
+            // The models are addons, but either can equally come from a bundled
+            // models/ directory or a DRIFT_*_MODEL_DIR override, so ask the engine
+            // rather than the addon registry. That answer is not a binding, hence
+            // the reset below when an addon of either kind appears.
             property bool segmentReady: EditorState.segmentationAvailable()
             property bool runtimeReady: Addons.runtimeAvailable()
+            // Either cutout model unlocks the window, so the download prompt below points at
+            // RVM — the smaller one — and SAM2 is offered separately as an extra capability.
+            property bool hasSam2: EditorState.segmentationBackends().indexOf("sam2") >= 0
 
             Connections {
                 target: Addons
                 function onKindChanged(kind) {
-                    if (kind === "sam2-model")
+                    if (kind === "sam2-model" || kind === "rvm-model") {
                         segmentSection.segmentReady = EditorState.segmentationAvailable()
-                    else if (kind === "onnxruntime")
+                        segmentSection.hasSam2 = EditorState.segmentationBackends().indexOf("sam2") >= 0
+                    } else if (kind === "onnxruntime") {
                         segmentSection.runtimeReady = Addons.runtimeAvailable()
+                    }
                 }
             }
 
@@ -94,11 +99,23 @@ Item {
                 visible: !segmentSection.segmentReady || !segmentSection.runtimeReady
                 width: parent.width
                 text: segmentSection.runtimeReady
-                      ? qsTr("Download cutout AI (about 190 MB)")
+                      ? qsTr("Download people cutout (about 20 MB)")
                       : qsTr("Install AI engine first")
                 variant: "primary"
                 onClicked: root.Window.window.openAddonManager(
-                    segmentSection.runtimeReady ? "sam2-model" : "onnxruntime")
+                    segmentSection.runtimeReady ? "rvm-model" : "onnxruntime")
+            }
+
+            // Offered separately once people cutout works: clicking a specific subject is a
+            // different capability, not a better version of the same one, and it is ten times
+            // the download.
+            ThemedButton {
+                visible: segmentSection.segmentReady && segmentSection.runtimeReady
+                         && !segmentSection.hasSam2
+                width: parent.width
+                variant: "secondary"
+                text: qsTr("Add click-to-pick cutout (about 190 MB)")
+                onClicked: root.Window.window.openAddonManager("sam2-model")
             }
         }
 

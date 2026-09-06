@@ -32,6 +32,12 @@ struct Mask
     // source range, so it is indexed at (sourceUs - matteSrcOffsetUs).
     QString mattePath;
     TimeUs matteSrcOffsetUs = 0;
+
+    // Matte only, and only from the people-cutout backend: the colour-decontaminated foreground,
+    // which is what removes background spill from hair edges. Same size, timebase and offset as
+    // mattePath. Empty for SAM2 mattes, which have no such output. Ignored when `invert` is set —
+    // the background half of a cutout pair must keep its own colours.
+    QString matteFgrPath;
 };
 
 } // namespace drift

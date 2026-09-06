@@ -1154,7 +1154,9 @@ QJsonObject McpDispatcher::applyOneExtended(const QString &tool, const QJsonObje
     // --- segmentation ---
     if (tool == QLatin1String("segmentation_status")) {
         return ok({{QStringLiteral("available"), m_controller->segmentationAvailable()},
-                   {QStringLiteral("model"), m_controller->segmentationModelVariant()}});
+                   {QStringLiteral("model"), m_controller->segmentationModelVariant()},
+                   {QStringLiteral("backends"),
+                    QJsonArray::fromStringList(m_controller->segmentationBackends())}});
     }
 
     if (tool == QLatin1String("begin_segmentation_session")) {
@@ -1207,8 +1209,12 @@ QJsonObject McpDispatcher::applyOneExtended(const QString &tool, const QJsonObje
 
     if (tool == QLatin1String("run_segmentation")) {
         const QString output = argString(args, QStringLiteral("output"));
+        const QString backend = argString(args, QStringLiteral("backend"));
+        if (!backend.isEmpty())
+            m_controller->setSegmentationBackend(backend);
         m_controller->runSegmentationSession(output.isEmpty() ? QStringLiteral("clips") : output);
-        return ok({{QStringLiteral("output"), output.isEmpty() ? QStringLiteral("clips") : output}});
+        return ok({{QStringLiteral("output"), output.isEmpty() ? QStringLiteral("clips") : output},
+                   {QStringLiteral("backend"), m_controller->segmentBackend()}});
     }
 
     if (tool == QLatin1String("segment_clip")) {
@@ -1216,12 +1222,16 @@ QJsonObject McpDispatcher::applyOneExtended(const QString &tool, const QJsonObje
         if (!ref.valid())
             return err("not_found", QStringLiteral("Unknown clip"));
         const QJsonArray pointArray = args.value(QStringLiteral("points")).toArray();
-        if (pointArray.isEmpty())
-            return err("bad_args", QStringLiteral("points required"));
+        const QString backend = argString(args, QStringLiteral("backend"));
+        const bool rvm = backend == QLatin1String("rvm");
+        // RVM takes no prompt, so requiring points there would be a lie about what it needs.
+        if (!rvm && pointArray.isEmpty())
+            return err("bad_args", QStringLiteral("points required for the sam2 backend"));
         const QString output = argString(args, QStringLiteral("output"));
         m_controller->segmentClip(ref.track, ref.clip, segmentationPointsFromJson(pointArray),
-                                  output.isEmpty() ? QStringLiteral("clips") : output);
-        return ok(clipFeedback(ref, {{QStringLiteral("output"), output.isEmpty() ? QStringLiteral("clips") : output}}));
+                                  output.isEmpty() ? QStringLiteral("clips") : output, backend);
+        return ok(clipFeedback(ref, {{QStringLiteral("output"), output.isEmpty() ? QStringLiteral("clips") : output},
+                                     {QStringLiteral("backend"), rvm ? QStringLiteral("rvm") : QStringLiteral("sam2")}}));
     }
 
     if (tool == QLatin1String("cancel_segmentation")) {

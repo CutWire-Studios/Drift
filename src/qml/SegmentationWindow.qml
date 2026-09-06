@@ -4,8 +4,11 @@ import QtQuick.Window
 import Drift 1.0
 import "components"
 
-// Prompting surface for SAM2 segmentation. Opened for one clip: pick a reference frame, mark the
-// subject, then run the pass over the whole clip.
+// Cutout surface, for whichever backend is installed. Opened for one clip: pick a reference frame,
+// mark the subject if the backend takes prompts, then run the pass over the whole clip.
+//
+// SAM2 is prompted and cuts out anything; RVM finds people on its own and has nothing to click, so
+// the prompt overlay is bound to segmentBackendUsesPoints rather than shown unconditionally.
 Window {
     id: root
 
@@ -36,11 +39,51 @@ Window {
 
     onClosing: EditorState.endSegmentationSession()
 
+    // Rebuilt rather than bound: segmentationBackends() and rvmQualities() are plain calls, so
+    // nothing would re-evaluate them when an addon is installed while this window is open.
+    property var backendModel: []
+    property var qualityModel: []
+
+    function refreshBackends() {
+        const installed = EditorState.segmentationBackends()
+        const backends = []
+        if (installed.indexOf("sam2") >= 0)
+            backends.push({ label: qsTr("Anything (click to pick)"), value: "sam2" })
+        if (installed.indexOf("rvm") >= 0)
+            backends.push({ label: qsTr("People (automatic)"), value: "rvm" })
+        root.backendModel = backends
+
+        const qualities = []
+        const variants = EditorState.rvmQualities()
+        for (let i = 0; i < variants.length; ++i) {
+            qualities.push({
+                label: variants[i] === "resnet50" ? qsTr("Best quality (slower)") : qsTr("Fast"),
+                value: variants[i]
+            })
+        }
+        root.qualityModel = qualities
+    }
+
+    Component.onCompleted: root.refreshBackends()
+
+    Connections {
+        target: Addons
+        function onKindChanged(kind) {
+            if (kind === "sam2-model" || kind === "rvm-model")
+                root.refreshBackends()
+        }
+    }
+
     Connections {
         target: EditorState
         function onSegmentationFinished(ok, message) {
             if (ok)
                 root.close()
+        }
+        // The session corrects a remembered backend that is no longer installed, so the control
+        // follows the session rather than the other way round.
+        function onSegmentSessionChanged() {
+            backendBox.currentIndex = backendBox.indexOfValue(EditorState.segmentBackend)
         }
     }
 
@@ -109,8 +152,8 @@ Window {
                 MouseArea {
                     anchors.fill: parent
                     acceptedButtons: Qt.LeftButton | Qt.RightButton
-                    enabled: EditorState.segmentSessionActive && !EditorState.segmentEncoding
-                             && !EditorState.segmenting
+                    enabled: EditorState.segmentSessionActive && EditorState.segmentBackendUsesPoints
+                             && !EditorState.segmentEncoding && !EditorState.segmenting
                     onClicked: function (mouse) {
                         const nx = (mouse.x - stage.fitX) / stage.fitW
                         const ny = (mouse.y - stage.fitY) / stage.fitH
@@ -122,7 +165,7 @@ Window {
 
                 // Prompt markers. Green includes the subject, red carves it out; click one to drop it.
                 Repeater {
-                    model: EditorState.segmentPoints
+                    model: EditorState.segmentBackendUsesPoints ? EditorState.segmentPoints : []
                     delegate: Rectangle {
                         required property int index
                         required property var modelData
@@ -202,7 +245,47 @@ Window {
             ThemedLabel {
                 width: parent.width
                 wrapMode: Text.WordWrap
-                text: qsTr("Left-click marks the subject, right-click marks what to exclude. Click a marker to remove it.")
+                text: EditorState.segmentBackendUsesPoints
+                      ? qsTr("Left-click marks the subject, right-click marks what to exclude. Click a marker to remove it.")
+                      : qsTr("Everyone in the shot is cut out automatically — there is nothing to click.")
+            }
+
+            // Only worth a control when there is a choice to make. The list is what is installed,
+            // so this disappears entirely on a machine with one cutout addon.
+            Column {
+                width: parent.width
+                spacing: Theme.spacingSm
+                visible: backendBox.count > 1
+
+                ThemedLabel { text: qsTr("Cut out") }
+
+                ThemedComboBox {
+                    id: backendBox
+                    width: parent.width
+                    enabled: !EditorState.segmenting && !EditorState.segmentEncoding
+                    textRole: "label"
+                    valueRole: "value"
+                    model: root.backendModel
+                    onActivated: EditorState.setSegmentationBackend(currentValue, qualityBox.currentValue || "")
+                }
+            }
+
+            Column {
+                width: parent.width
+                spacing: Theme.spacingSm
+                visible: !EditorState.segmentBackendUsesPoints && qualityBox.count > 1
+
+                ThemedLabel { text: qsTr("Quality") }
+
+                ThemedComboBox {
+                    id: qualityBox
+                    width: parent.width
+                    enabled: !EditorState.segmenting && !EditorState.segmentEncoding
+                    textRole: "label"
+                    valueRole: "value"
+                    model: root.qualityModel
+                    onActivated: EditorState.setSegmentationBackend(EditorState.segmentBackend, currentValue)
+                }
             }
 
             ThemedLabel {
@@ -239,6 +322,7 @@ Window {
 
             ThemedButton {
                 width: parent.width
+                visible: EditorState.segmentBackendUsesPoints
                 variant: "secondary"
                 text: qsTr("Clear points")
                 enabled: EditorState.segmentPoints.length > 0 && !EditorState.segmenting
@@ -253,8 +337,9 @@ Window {
                       : (EditorState.segmentationForTemplate
                          ? qsTr("Cut out & apply effect")
                          : qsTr("Cut out subject"))
-                enabled: EditorState.segmentPoints.length > 0 && !EditorState.segmenting
-                         && !EditorState.segmentEncoding
+                enabled: (!EditorState.segmentBackendUsesPoints
+                          || EditorState.segmentPoints.length > 0)
+                         && !EditorState.segmenting && !EditorState.segmentEncoding
                 onClicked: EditorState.runSegmentationSession(
                     EditorState.segmentationForTemplate ? "template" : outputBox.currentValue)
             }
