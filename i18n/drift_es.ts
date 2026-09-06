@@ -8544,6 +8544,10 @@ Si la reproducción se corta, prueba con otra opción.</translation>
         <translation>Modo de corte — haz clic en un clip para dividirlo</translation>
     </message>
     <message>
+        <source>Show audio on separate track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Trim start — click a clip to drop everything left of the cut</source>
         <translation>Recortar inicio — haz clic en un clip para descartar todo a la izquierda del corte</translation>
     </message>
@@ -8594,10 +8598,6 @@ Si la reproducción se corta, prueba con otra opción.</translation>
     <message>
         <source>Clear work area</source>
         <translation>Borrar área de trabajo</translation>
-    </message>
-    <message>
-        <source>Separate audio from video</source>
-        <translation>Separar audio del vídeo</translation>
     </message>
     <message>
         <source>Unlink video and audio</source>

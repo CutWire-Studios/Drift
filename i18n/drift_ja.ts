@@ -8521,6 +8521,10 @@ If playback stutters, try another.</source>
         <translation>カットモード — クリップをクリックして分割</translation>
     </message>
     <message>
+        <source>Show audio on separate track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Trim start — click a clip to drop everything left of the cut</source>
         <translation>開始トリム — クリップをクリックしてカットより左を削除</translation>
     </message>
@@ -8571,10 +8575,6 @@ If playback stutters, try another.</source>
     <message>
         <source>Clear work area</source>
         <translation>ワークエリアをクリア</translation>
-    </message>
-    <message>
-        <source>Separate audio from video</source>
-        <translation>ビデオからオーディオを分離</translation>
     </message>
     <message>
         <source>Unlink video and audio</source>

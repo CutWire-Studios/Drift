@@ -8549,6 +8549,10 @@ En cas de saccades à la lecture, essayez un autre mode.</translation>
         <translation>Diviser — cliquez sur un clip pour le diviser</translation>
     </message>
     <message>
+        <source>Show audio on separate track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Trim start — click a clip to drop everything left of the cut</source>
         <translation>Raccourcir début — cliquez sur un clip pour supprimer tout à gauche de la coupe</translation>
     </message>
@@ -8599,10 +8603,6 @@ En cas de saccades à la lecture, essayez un autre mode.</translation>
     <message>
         <source>Clear work area</source>
         <translation>Effacer la zone de travail</translation>
-    </message>
-    <message>
-        <source>Separate audio from video</source>
-        <translation>Séparer l’audio de la vidéo</translation>
     </message>
     <message>
         <source>Unlink video and audio</source>

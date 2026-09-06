@@ -8544,6 +8544,10 @@ Se la riproduzione va a scatti, prova un&apos;altra opzione.</translation>
         <translation>Modalità taglio — fai clic su una clip per dividerla</translation>
     </message>
     <message>
+        <source>Show audio on separate track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Trim start — click a clip to drop everything left of the cut</source>
         <translation>Ritaglio iniziale — fai clic su una clip per eliminare tutto a sinistra del taglio</translation>
     </message>
@@ -8594,10 +8598,6 @@ Se la riproduzione va a scatti, prova un&apos;altra opzione.</translation>
     <message>
         <source>Clear work area</source>
         <translation>Cancella area di lavoro</translation>
-    </message>
-    <message>
-        <source>Separate audio from video</source>
-        <translation>Separa audio da video</translation>
     </message>
     <message>
         <source>Unlink video and audio</source>
