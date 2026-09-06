@@ -63,6 +63,9 @@ private slots:
     void undoingBinFolderRenameEmitsDataChanged();
     void importIntoDeletedFolderFallsBackToRoot();
     void importUnreadableUrlReportsFailed();
+    void importFolderMirrorsDirectoryTree();
+    void importFolderMovesAlreadyImportedMediaIntoMirroredFolder();
+    void importFolderSkipsSymlinkCycles();
     void moveAssetToFolderAndUndo();
     void moveBinFolderReparentsAndUndo();
     void moveBinFolderRefusesCycle();
@@ -496,6 +499,165 @@ void EditorStateTest::importUnreadableUrlReportsFailed()
     QCOMPARE(finished.first().at(0).toInt(), 0);
     QCOMPARE(finished.first().at(1).toInt(), 1);
     QCOMPARE(library.count(), 0);
+}
+
+void EditorStateTest::importFolderMirrorsDirectoryTree()
+{
+    AssetLibrary library;
+    AppController state(&library);
+
+    QTemporaryDir tempDir;
+    QVERIFY(tempDir.isValid());
+    QDir root(tempDir.path());
+    QVERIFY(root.mkpath(QStringLiteral("SubA/SubB")));
+    QVERIFY(root.mkpath(QStringLiteral("EmptyDir")));
+
+    auto writeFile = [](const QString &path) {
+        QFile file(path);
+        QVERIFY(file.open(QIODevice::WriteOnly));
+        file.write("not a real media file");
+        file.close();
+    };
+    writeFile(root.filePath(QStringLiteral("root.mp4")));
+    writeFile(root.filePath(QStringLiteral("SubA/a.mp4")));
+    writeFile(root.filePath(QStringLiteral("SubA/SubB/b.mp4")));
+    // A non-media sidecar file must be left out of the import.
+    writeFile(root.filePath(QStringLiteral("SubA/notes.txt")));
+
+    const QVariantMap result = state.importFolder(QUrl::fromLocalFile(tempDir.path()));
+    // root, SubA, SubB, EmptyDir.
+    QCOMPARE(result.value(QStringLiteral("folders")).toInt(), 4);
+    QCOMPARE(result.value(QStringLiteral("files")).toInt(), 3);
+    QCOMPARE(library.count(), 3);
+    QCOMPARE(state.binFolderModel()->count(), 4);
+
+    const QString rootFolderId = [&] {
+        for (int i = 0; i < state.binFolderModel()->count(); ++i) {
+            const QVariantMap folder = state.binFolderModel()->folderAt(i);
+            if (folder.value(QStringLiteral("name")).toString() == root.dirName()
+                && folder.value(QStringLiteral("parentId")).toString().isEmpty())
+                return folder.value(QStringLiteral("id")).toString();
+        }
+        return QString();
+    }();
+    QVERIFY(!rootFolderId.isEmpty());
+
+    auto folderNamed = [&](const QString &name, const QString &parentId) {
+        for (int i = 0; i < state.binFolderModel()->count(); ++i) {
+            const QVariantMap folder = state.binFolderModel()->folderAt(i);
+            if (folder.value(QStringLiteral("name")).toString() == name
+                && folder.value(QStringLiteral("parentId")).toString() == parentId)
+                return folder.value(QStringLiteral("id")).toString();
+        }
+        return QString();
+    };
+    const QString subAId = folderNamed(QStringLiteral("SubA"), rootFolderId);
+    QVERIFY(!subAId.isEmpty());
+    const QString subBId = folderNamed(QStringLiteral("SubB"), subAId);
+    QVERIFY(!subBId.isEmpty());
+    QVERIFY(!folderNamed(QStringLiteral("EmptyDir"), rootFolderId).isEmpty());
+
+    auto folderIdOfAsset = [&](const QString &fileName) {
+        for (int i = 0; i < library.count(); ++i) {
+            const QVariantMap asset = library.assetAt(i);
+            if (QFileInfo(asset.value(QStringLiteral("path")).toString()).fileName() == fileName)
+                return asset.value(QStringLiteral("folderId")).toString();
+        }
+        return QString(QStringLiteral("<not found>"));
+    };
+    QCOMPARE(folderIdOfAsset(QStringLiteral("root.mp4")), rootFolderId);
+    QCOMPARE(folderIdOfAsset(QStringLiteral("a.mp4")), subAId);
+    QCOMPARE(folderIdOfAsset(QStringLiteral("b.mp4")), subBId);
+
+    // Import destination is left wherever the user was browsing (root), not inside the tree
+    // this walk last populated.
+    QCOMPARE(state.currentBinFolderId(), QString());
+
+    // The probe this kicked off runs on a QtConcurrent worker thread that captures `library` by
+    // raw pointer; wait for it to finish before the undo below tears the assets back down again.
+    for (int i = 0; i < library.count(); ++i) {
+        const QString id = library.assetIdAt(i);
+        QTRY_VERIFY_WITH_TIMEOUT(!library.isImportPending(id), 5000);
+    }
+
+    // Marks the project dirty like any other bin folder mutation, or a close right after an
+    // import silently drops the hierarchy with no prompt — but is not undoable: "undo" for a
+    // folder import is deleting the folder by hand, the same as removing an imported asset.
+    QVERIFY(state.hasUnsavedChanges());
+    QVERIFY(!state.undoAvailable());
+}
+
+void EditorStateTest::importFolderMovesAlreadyImportedMediaIntoMirroredFolder()
+{
+    AssetLibrary library;
+    AppController state(&library);
+
+    QTemporaryDir tempDir;
+    QVERIFY(tempDir.isValid());
+    QDir root(tempDir.path());
+    QVERIFY(root.mkpath(QStringLiteral("SubA")));
+
+    auto writeFile = [](const QString &path) {
+        QFile file(path);
+        QVERIFY(file.open(QIODevice::WriteOnly));
+        file.write("not a real media file");
+        file.close();
+    };
+    const QString filePath = root.filePath(QStringLiteral("SubA/a.mp4"));
+    writeFile(filePath);
+
+    // The file is already in the bin — imported individually, at the root — before the folder
+    // import ever runs.
+    const QStringList preexistingIds = library.importLocalPaths({filePath});
+    QCOMPARE(preexistingIds.size(), 1);
+    const QString assetId = preexistingIds.first();
+    QCOMPARE(library.assetAt(library.indexOfId(assetId)).value(QStringLiteral("folderId")).toString(),
+             QString());
+
+    const QVariantMap result = state.importFolder(QUrl::fromLocalFile(tempDir.path()));
+    QCOMPARE(result.value(QStringLiteral("files")).toInt(), 1);
+    QCOMPARE(library.count(), 1);
+
+    // The mirrored SubA folder must actually contain the file, not sit empty while the count
+    // above claims it was imported.
+    QString subAId;
+    for (int i = 0; i < state.binFolderModel()->count(); ++i) {
+        const QVariantMap folder = state.binFolderModel()->folderAt(i);
+        if (folder.value(QStringLiteral("name")).toString() == QStringLiteral("SubA"))
+            subAId = folder.value(QStringLiteral("id")).toString();
+    }
+    QVERIFY(!subAId.isEmpty());
+    QCOMPARE(library.assetAt(library.indexOfId(assetId)).value(QStringLiteral("folderId")).toString(),
+             subAId);
+
+    QTRY_VERIFY_WITH_TIMEOUT(!library.isImportPending(assetId), 5000);
+}
+
+void EditorStateTest::importFolderSkipsSymlinkCycles()
+{
+#ifdef Q_OS_WIN
+    QSKIP("Symlink creation needs elevated privileges on Windows");
+#endif
+    AssetLibrary library;
+    AppController state(&library);
+
+    QTemporaryDir tempDir;
+    QVERIFY(tempDir.isValid());
+    QDir root(tempDir.path());
+    QVERIFY(root.mkpath(QStringLiteral("SubA")));
+
+    // SubA/loop -> the temp dir itself, so recursing into it would walk back into root forever
+    // without a visited-set guard.
+    const QString linkPath = root.filePath(QStringLiteral("SubA/loop"));
+    if (!QFile::link(tempDir.path(), linkPath))
+        QSKIP("This filesystem does not support symlinks");
+
+    // Hangs (or stack-overflows) here if the visited-set guard regresses — there is no bound on
+    // the recursion otherwise, since the symlink always resolves back to an already-mirrored
+    // directory.
+    const QVariantMap result = state.importFolder(QUrl::fromLocalFile(tempDir.path()));
+    // root and SubA only — the cycle back through the symlink is skipped, not re-descended.
+    QCOMPARE(result.value(QStringLiteral("folders")).toInt(), 2);
 }
 
 void EditorStateTest::moveAssetToFolderAndUndo()

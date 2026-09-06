@@ -2539,6 +2539,107 @@ int AppController::moveAssetsToFolder(const QStringList &assetIds, const QString
     return moved;
 }
 
+namespace {
+// Matches the extensions AssetsPanel.qml's import file picker offers, so a folder import never
+// treats a project file, cache entry, or stray document as media.
+bool isImportableMediaFile(const QFileInfo &info)
+{
+    static const QSet<QString> extensions = {
+        // video
+        QStringLiteral("mp4"), QStringLiteral("mov"), QStringLiteral("mkv"),
+        QStringLiteral("avi"), QStringLiteral("webm"), QStringLiteral("m4v"),
+        // audio
+        QStringLiteral("mp3"), QStringLiteral("wav"), QStringLiteral("aac"),
+        QStringLiteral("flac"), QStringLiteral("ogg"), QStringLiteral("m4a"),
+        // image
+        QStringLiteral("png"), QStringLiteral("jpg"), QStringLiteral("jpeg"),
+        QStringLiteral("gif"), QStringLiteral("webp"), QStringLiteral("bmp"),
+    };
+    return extensions.contains(info.suffix().toLower());
+}
+} // namespace
+
+void AppController::importDirectoryInto(const QDir &dir, const QString &parentFolderId,
+                                        int &folderCount, int &fileCount,
+                                        QSet<QString> &visitedDirs)
+{
+    // Guards against a symlinked subdirectory that loops back to an ancestor (or to another
+    // already-mirrored directory): canonicalFilePath() resolves the symlink, so the second
+    // visit is recognized and skipped instead of recursing forever.
+    const QString canonicalPath = QFileInfo(dir.absolutePath()).canonicalFilePath();
+    if (canonicalPath.isEmpty() || visitedDirs.contains(canonicalPath))
+        return;
+    visitedDirs.insert(canonicalPath);
+
+    const QString folderId = m_binFolderModel.createFolder(dir.dirName(), parentFolderId);
+    if (folderId.isEmpty())
+        return;
+    ++folderCount;
+
+    if (m_assetLibrary) {
+        QStringList mediaPaths;
+        const QFileInfoList entries = dir.entryInfoList(QDir::Files, QDir::Name);
+        for (const QFileInfo &info : entries) {
+            if (isImportableMediaFile(info))
+                mediaPaths.append(info.absoluteFilePath());
+        }
+        if (!mediaPaths.isEmpty()) {
+            // Retargeted for the duration of this one call — importLocalPaths reads it via
+            // m_importFolderId — then left for the caller to restore once the whole tree is done.
+            m_assetLibrary->setImportFolderId(folderId);
+            const QStringList ids = m_assetLibrary->importLocalPaths(mediaPaths);
+            fileCount += ids.size();
+            // A path already in the bin from an earlier import is returned as-is by
+            // importLocalPaths, keeping whatever folder it already lived in — otherwise this
+            // mirrored folder would look empty despite the file counting as imported into it.
+            for (const QString &id : ids) {
+                const int index = m_assetLibrary->indexOfId(id);
+                if (index < 0)
+                    continue;
+                if (m_assetLibrary->assetAt(index).value(QStringLiteral("folderId")).toString()
+                    != folderId)
+                    m_assetLibrary->moveAssetToFolder(index, folderId);
+            }
+        }
+    }
+
+    const QFileInfoList subdirs = dir.entryInfoList(QDir::Dirs | QDir::NoDotAndDotDot, QDir::Name);
+    for (const QFileInfo &subdirInfo : subdirs) {
+        importDirectoryInto(QDir(subdirInfo.absoluteFilePath()), folderId, folderCount, fileCount,
+                            visitedDirs);
+    }
+}
+
+QVariantMap AppController::importFolder(const QUrl &folderUrl)
+{
+    const QString path = folderUrl.isLocalFile() ? folderUrl.toLocalFile() : folderUrl.toString();
+    const QDir dir(path);
+    if (path.isEmpty() || !dir.exists())
+        return {};
+
+    int folderCount = 0;
+    int fileCount = 0;
+    QSet<QString> visitedDirs;
+    importDirectoryInto(dir, m_currentBinFolderId, folderCount, fileCount, visitedDirs);
+
+    // The recursive walk above repointed the import destination at whichever subfolder it last
+    // populated; put it back at wherever the user is actually browsing.
+    if (m_assetLibrary)
+        m_assetLibrary->setImportFolderId(m_currentBinFolderId);
+
+    // Not pushed through pushProjectEdit: like a plain media import, this isn't meant to be
+    // undoable — "undo" is deleting the folder by hand, same as removing an imported asset. But
+    // unlike plain media import, autosave/the unsaved-changes prompt should still cover it, so
+    // it's marked dirty directly (the same split setProjectName/setProjectMetadata already use).
+    if (folderCount > 0)
+        setDirty(true);
+
+    return {
+        {QStringLiteral("folders"), folderCount},
+        {QStringLiteral("files"), fileCount},
+    };
+}
+
 bool AppController::replaceAssetSource(int assetIndex, const QUrl &url)
 {
     if (!m_assetLibrary)

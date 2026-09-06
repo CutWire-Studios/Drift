@@ -567,6 +567,22 @@ PanelFrame {
         root.importUrlsReporting(urls)
     }
 
+    // Imports a whole directory: a new bin folder mirrors the picked folder (and everything
+    // nested under it), and every media file lands in the bin folder matching its containing
+    // directory. EditorState.importFolder does the walk synchronously — probing and
+    // thumbnailing each file still happens in the background the same as any other import.
+    function importFolder() {
+        var url = FileDialogs.openDirectory(qsTr("Import Folder"))
+        if (!url || url.toString() === "")
+            return
+        const result = EditorState.importFolder(url)
+        if (!result || !result.folders) {
+            Toasts.error(qsTr("Couldn’t import that folder."))
+            return
+        }
+        Toasts.success(qsTr("Imported %n files into %1 folders.", "", result.files).arg(result.folders))
+    }
+
     // Selects a tab by id. Used by cross-panel jumps such as the properties
     // panel's "Browse effects" / "Browse audio effects" empty-state actions.
     function showTab(tabId) {
@@ -917,6 +933,17 @@ PanelFrame {
                         enabled: !root.importing
                         anchors.verticalCenter: parent.verticalCenter
                         onClicked: root.importMedia()
+                    }
+
+                    ThemedButton {
+                        text: qsTr("Import Folder")
+                        variant: "ghost"
+                        glyph: Theme.icons.folderInput
+                        tooltip: qsTr("Import a folder, keeping its structure as bin folders")
+                        enabled: !root.importing
+                        visible: !Theme.touchUi
+                        anchors.verticalCenter: parent.verticalCenter
+                        onClicked: root.importFolder()
                     }
                 }
             }

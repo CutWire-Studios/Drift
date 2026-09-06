@@ -39,6 +39,7 @@
 
 struct EffectTemplateEntry;
 
+class QDir;
 class QTimer;
 class AddonManager;
 
@@ -575,6 +576,14 @@ public:
     Q_INVOKABLE bool moveAssetToFolder(int assetIndex, const QString &folderId);
     // Multi-select bulk move, one undo step for the whole batch. Returns how many were moved.
     Q_INVOKABLE int moveAssetsToFolder(const QStringList &assetIds, const QString &folderId);
+    // Imports a whole directory: mirrors its subfolder tree into the bin (one new bin folder per
+    // filesystem folder, including empty ones) and imports every media file into the bin folder
+    // matching its containing directory. `folderUrl` must be a local (file://) directory. Returns
+    // {"folders": N, "files": N} counting what was created/queued, or an empty map if the URL
+    // didn't resolve to a readable directory. Not undoable — like a plain media import, "undo" is
+    // deleting the folder by hand — but still marks the project dirty, so autosave and the
+    // unsaved-changes prompt cover the hierarchy it creates.
+    Q_INVOKABLE QVariantMap importFolder(const QUrl &folderUrl);
     // Points an existing bin row at a different file, keeping every clip that uses it where it
     // is — its position, trim, effects and transitions all survive. Asynchronous: true only means
     // the probe started, and the outcome arrives as assetReplaceFinished.
@@ -1319,6 +1328,13 @@ signals:
 
 protected:
     void pushProjectEdit(const drift::Project &before, const QString &text);
+    // Recursive worker behind importFolder: creates a bin folder for `dir` under parentFolderId,
+    // imports the media files directly inside it, then recurses into its subdirectories. Tallies
+    // into folderCount/fileCount as it goes. `visitedDirs` holds every canonical path already
+    // mirrored, so a symlink cycle (or a diamond pointing at the same real directory twice)
+    // stops instead of recursing forever.
+    void importDirectoryInto(const QDir &dir, const QString &parentFolderId, int &folderCount,
+                             int &fileCount, QSet<QString> &visitedDirs);
 
     // Lifts one effect, one audio effect, or the whole stack off a clip. Every copy and
     // save-as-preset entry point funnels through this, so all of them produce one payload shape.
