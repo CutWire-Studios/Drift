@@ -2407,6 +2407,20 @@ QHash<QString, QString> defaultShortcuts()
         {QStringLiteral("paste"), QStringLiteral("Ctrl+V")},
         {QStringLiteral("nudgeLeft"), QStringLiteral("Alt+Left")},
         {QStringLiteral("nudgeRight"), QStringLiteral("Alt+Right")},
+        // Cut-point navigation joins the nudge pair on Alt+arrow rather than taking the bare
+        // Up/Down that Premiere uses: an application-context Shortcut is resolved before the
+        // key reaches the focused item, so bare arrows would swallow the number-field spinners
+        // and the list navigation in the font, track and asset pickers.
+        {QStringLiteral("previousEdit"), QStringLiteral("Alt+Up")},
+        {QStringLiteral("nextEdit"), QStringLiteral("Alt+Down")},
+        {QStringLiteral("goToStart"), QStringLiteral("Home")},
+        // Premiere's ripple-trim-to-playhead keys, which is exactly what these do.
+        {QStringLiteral("deleteLeft"), QStringLiteral("Q")},
+        {QStringLiteral("deleteRight"), QStringLiteral("W")},
+        // Shuttle-style speed keys for reviewing long footage. Audio keeps its pitch at every
+        // rate, so the material stays listenable while it runs fast.
+        {QStringLiteral("speedUp"), QStringLiteral("L")},
+        {QStringLiteral("speedDown"), QStringLiteral("J")},
         {QStringLiteral("toggleGuides"), QStringLiteral("G")},
         {QStringLiteral("toggleBookmark"), QStringLiteral("M")},
         {QStringLiteral("nextBookmark"), QStringLiteral("Shift+M")},
@@ -2423,6 +2437,9 @@ QHash<QString, QString> defaultShortcuts()
         // TimelinePanel they were neither.
         {QStringLiteral("selectTool"), QStringLiteral("V")},
         {QStringLiteral("bladeTool"), QStringLiteral("B")},
+        // Timeline zoom is QML state too, so these take the same route as the tool modes.
+        {QStringLiteral("zoomIn"), QStringLiteral("Ctrl+=")},
+        {QStringLiteral("zoomOut"), QStringLiteral("Ctrl+-")},
         // QML owns the window, so triggerAction only raises the request — same shape as the
         // file actions above.
         {QStringLiteral("multicam"), QStringLiteral("Ctrl+Shift+C")},
@@ -3399,6 +3416,13 @@ QVariantList AppController::actions() const
         action(QStringLiteral("selectAll"), tr("Select all clips")),
         action(QStringLiteral("nudgeLeft"), tr("Move selection left a little")),
         action(QStringLiteral("nudgeRight"), tr("Move selection right a little")),
+        action(QStringLiteral("previousEdit"), tr("Go to previous cut point")),
+        action(QStringLiteral("nextEdit"), tr("Go to next cut point")),
+        action(QStringLiteral("goToStart"), tr("Go to start of timeline")),
+        action(QStringLiteral("deleteLeft"), tr("Delete left of the playhead")),
+        action(QStringLiteral("deleteRight"), tr("Delete right of the playhead")),
+        action(QStringLiteral("speedUp"), tr("Increase playback speed")),
+        action(QStringLiteral("speedDown"), tr("Decrease playback speed")),
         action(QStringLiteral("toggleGuides"), tr("Toggle guides")),
         action(QStringLiteral("toggleBookmark"), tr("Add/remove bookmark at current time")),
         action(QStringLiteral("nextBookmark"), tr("Go to next bookmark")),
@@ -3411,6 +3435,8 @@ QVariantList AppController::actions() const
         action(QStringLiteral("toggleLoop"), tr("Loop work area playback")),
         action(QStringLiteral("selectTool"), tr("Select tool")),
         action(QStringLiteral("bladeTool"), tr("Cut tool")),
+        action(QStringLiteral("zoomIn"), tr("Zoom in")),
+        action(QStringLiteral("zoomOut"), tr("Zoom out")),
         action(QStringLiteral("multicam"), tr("Multicam window")),
     };
 }
@@ -4672,20 +4698,26 @@ void AppController::splitClipAt(int trackIndex, int clipIndex, double seconds)
 
 void AppController::splitClipLeftAt(int trackIndex, int clipIndex, double seconds)
 {
-    if (trackIndex < 0 || trackIndex >= m_project.tracks().size())
+    if (!isValidClipIndex(trackIndex, clipIndex))
         return;
 
-    drift::Track &track = m_project.tracks()[trackIndex];
-    if (clipIndex < 0 || clipIndex >= track.clips.size())
-        return;
-
-    drift::Clip &clip = track.clips[clipIndex];
     const drift::TimeUs atUs = drift::secondsToUs(seconds);
-    if (!clip.containsTime(atUs) || atUs == clip.timelineStart)
-        return;
+    drift::TimeUs offset = 0;
+    {
+        // Read through a const view so nothing detaches before the snapshot below.
+        const drift::Project &project = m_project;
+        const drift::Clip &probe = project.tracks().at(trackIndex).clips.at(clipIndex);
+        if (!probe.containsTime(atUs) || atUs == probe.timelineStart)
+            return;
+        offset = atUs - probe.timelineStart;
+    }
 
-    const drift::TimeUs offset = atUs - clip.timelineStart;
+    // Snapshot before taking any non-const reference into m_project: QList is
+    // copy-on-write, and a reference grabbed first mutates the buffer the copy
+    // still shares, leaving `before` already split and undo a no-op.
     const drift::Project before = m_project;
+    drift::Track &track = m_project.tracks()[trackIndex];
+    drift::Clip &clip = track.clips[clipIndex];
 
     drift::Clip right;
     if (!drift::splitClipAtOffset(clip, right, offset))
@@ -4707,21 +4739,28 @@ void AppController::splitClipLeftAt(int trackIndex, int clipIndex, double second
 
 void AppController::splitClipRightAt(int trackIndex, int clipIndex, double seconds)
 {
-    if (trackIndex < 0 || trackIndex >= m_project.tracks().size())
+    if (!isValidClipIndex(trackIndex, clipIndex))
         return;
 
-    drift::Track &track = m_project.tracks()[trackIndex];
-    if (clipIndex < 0 || clipIndex >= track.clips.size())
-        return;
-
-    drift::Clip &clip = track.clips[clipIndex];
     const drift::TimeUs atUs = drift::secondsToUs(seconds);
-    if (!clip.containsTime(atUs))
-        return;
+    drift::TimeUs offset = 0;
+    drift::TimeUs oldDuration = 0;
+    {
+        // Read through a const view so nothing detaches before the snapshot below.
+        const drift::Project &project = m_project;
+        const drift::Clip &probe = project.tracks().at(trackIndex).clips.at(clipIndex);
+        if (!probe.containsTime(atUs))
+            return;
+        offset = atUs - probe.timelineStart;
+        oldDuration = probe.timelineDuration;
+    }
 
-    const drift::TimeUs offset = atUs - clip.timelineStart;
+    // Snapshot before taking any non-const reference into m_project: QList is
+    // copy-on-write, and a reference grabbed first mutates the buffer the copy
+    // still shares, leaving `before` already split and undo a no-op.
     const drift::Project before = m_project;
-    const drift::TimeUs oldDuration = clip.timelineDuration;
+    drift::Track &track = m_project.tracks()[trackIndex];
+    drift::Clip &clip = track.clips[clipIndex];
 
     drift::Clip discardedTail;
     if (!drift::splitClipAtOffset(clip, discardedTail, offset))
@@ -4935,59 +4974,18 @@ void AppController::alignSelectedClipRight()
     splitSelectedClipRight();
 }
 
+// The playhead-relative half of the pair above, reached by the "delete left"/"delete right"
+// shortcuts and by the align_clip_left/right MCP tools. These used to carry their own copy
+// of the split, which both broke their undo snapshot and left them ignoring rippleEnabled
+// while the identical context-menu path honoured it.
 void AppController::splitSelectedClipLeft()
 {
-    if (m_selectedTrack < 0 || m_selectedClip < 0)
-        return;
-
-    drift::Track &track = m_project.tracks()[m_selectedTrack];
-    if (m_selectedClip >= track.clips.size())
-        return;
-
-    drift::Clip &clip = track.clips[m_selectedClip];
-    if (!clip.containsTime(m_playheadUs) || m_playheadUs == clip.timelineStart)
-        return;
-
-    const drift::TimeUs offset = m_playheadUs - clip.timelineStart;
-    const drift::Project before = m_project;
-
-    drift::Clip right;
-    if (!drift::splitClipAtOffset(clip, right, offset))
-        return;
-
-    right.id = QUuid::createUuid().toString(QUuid::WithoutBraces);
-    // Keep only the right half (discard left) — same as previous "split left" behavior.
-    track.clips[m_selectedClip] = right;
-
-    pushProjectEdit(before, tr("Split left"));
-    finishEdit(tr("Split left"));
-    selectClip(m_selectedTrack, m_selectedClip);
+    splitClipLeftAt(m_selectedTrack, m_selectedClip, playheadSeconds());
 }
 
 void AppController::splitSelectedClipRight()
 {
-    if (m_selectedTrack < 0 || m_selectedClip < 0)
-        return;
-
-    drift::Track &track = m_project.tracks()[m_selectedTrack];
-    if (m_selectedClip >= track.clips.size())
-        return;
-
-    drift::Clip &clip = track.clips[m_selectedClip];
-    if (!clip.containsTime(m_playheadUs) || m_playheadUs == clip.timelineEnd())
-        return;
-
-    const drift::TimeUs offset = m_playheadUs - clip.timelineStart;
-    const drift::Project before = m_project;
-
-    drift::Clip discardedTail;
-    if (!drift::splitClipAtOffset(clip, discardedTail, offset))
-        return;
-
-    // Keep only the left half (discard right) — same as previous "split right" behavior.
-    pushProjectEdit(before, tr("Split right"));
-    finishEdit(tr("Split right"));
-    selectClip(m_selectedTrack, m_selectedClip);
+    splitClipRightAt(m_selectedTrack, m_selectedClip, playheadSeconds());
 }
 
 void AppController::moveClipToTrack(int trackIndex, int clipIndex, int newTrackIndex, double newStart)
@@ -13741,6 +13739,36 @@ int previousBookmarkIndex(const QList<drift::Bookmark> &bookmarks, drift::TimeUs
     return bestIndex >= 0 ? bestIndex : latestIndex;
 }
 
+// Nearest cut point strictly after (direction > 0) or strictly before (direction < 0)
+// `fromUs`, or `fromUs` itself when there is none. The candidates are every clip edge on
+// every track plus both ends of the timeline — the same set snapTime() collects, so
+// walking the cuts by keyboard stops exactly where a dragged clip would snap. Clips are
+// not stored in time order, so this compares values rather than trusting indices.
+drift::TimeUs adjacentEditPoint(const drift::Project &project, drift::TimeUs fromUs, int direction)
+{
+    drift::TimeUs best = fromUs;
+    bool found = false;
+
+    auto consider = [&](drift::TimeUs candidate) {
+        if (direction > 0 ? candidate <= fromUs : candidate >= fromUs)
+            return;
+        if (!found || (direction > 0 ? candidate < best : candidate > best)) {
+            best = candidate;
+            found = true;
+        }
+    };
+
+    consider(0);
+    consider(project.durationUs());
+    for (const drift::Track &track : project.tracks()) {
+        for (const drift::Clip &clip : track.clips) {
+            consider(clip.timelineStart);
+            consider(clip.timelineEnd());
+        }
+    }
+    return found ? best : fromUs;
+}
+
 } // namespace
 
 void AppController::goToNextBookmark()
@@ -13755,6 +13783,16 @@ void AppController::goToPreviousBookmark()
     const int index = previousBookmarkIndex(m_project.bookmarks(), m_playheadUs);
     if (index >= 0)
         goToBookmark(index);
+}
+
+void AppController::goToNextEdit()
+{
+    setPlayheadUs(adjacentEditPoint(m_project, m_playheadUs, 1));
+}
+
+void AppController::goToPreviousEdit()
+{
+    setPlayheadUs(adjacentEditPoint(m_project, m_playheadUs, -1));
 }
 
 void AppController::toggleBookmarkAtPlayhead()
@@ -14218,6 +14256,25 @@ void AppController::triggerAction(const QString &actionId)
         clearWorkArea();
     else if (actionId == QStringLiteral("toggleLoop"))
         toggleLoopWorkArea();
+    else if (actionId == QStringLiteral("previousEdit"))
+        goToPreviousEdit();
+    else if (actionId == QStringLiteral("nextEdit"))
+        goToNextEdit();
+    else if (actionId == QStringLiteral("goToStart"))
+        setPlayheadUs(0);
+    else if (actionId == QStringLiteral("deleteLeft"))
+        splitSelectedClipLeft();
+    else if (actionId == QStringLiteral("deleteRight"))
+        splitSelectedClipRight();
+    else if (actionId == QStringLiteral("speedUp")) {
+        m_playback.stepPlaybackRate(1);
+        // Reviewing long footage is the whole point of the key, so from a stopped transport
+        // the first press starts rolling rather than only arming a rate for later. This has
+        // to follow the step: setPlaybackRate restarts the transport itself when it was
+        // already playing, and would otherwise undo the resume.
+        setPlaying(true);
+    } else if (actionId == QStringLiteral("speedDown"))
+        m_playback.stepPlaybackRate(-1);
 }
 
 void AppController::undo()

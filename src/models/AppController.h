@@ -1045,6 +1045,11 @@ public:
     // Seek to the next/previous bookmark by time (wraps). No-op when empty.
     Q_INVOKABLE void goToNextBookmark();
     Q_INVOKABLE void goToPreviousBookmark();
+    // Seek to the next/previous cut point — any clip edge on any track, plus the two ends
+    // of the timeline. Unlike the bookmark pair these clamp rather than wrap, so holding the
+    // key walks to the first or last cut and stops there.
+    Q_INVOKABLE void goToNextEdit();
+    Q_INVOKABLE void goToPreviousEdit();
     // Add at the playhead, or remove the nearest bookmark when one already sits
     // within the snap threshold — same key for mark and unmark.
     Q_INVOKABLE void toggleBookmarkAtPlayhead();

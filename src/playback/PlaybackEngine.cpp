@@ -385,6 +385,19 @@ void PlaybackEngine::setPlaybackRate(double rate)
         play();
 }
 
+void PlaybackEngine::stepPlaybackRate(int direction)
+{
+    if (direction == 0)
+        return;
+
+    // m_playbackRate is only ever assigned from kPlaybackRates, so this always finds a match.
+    const auto current = std::find_if(kPlaybackRates.begin(), kPlaybackRates.end(),
+                                      [this](double candidate) { return qFuzzyCompare(candidate, m_playbackRate); });
+    const int index = static_cast<int>(std::distance(kPlaybackRates.begin(), current));
+    const int next = qBound(0, index + direction, static_cast<int>(kPlaybackRates.size()) - 1);
+    setPlaybackRate(kPlaybackRates[next]);
+}
+
 QString PlaybackEngine::decodeMode() const
 {
     return m_decodeMode;

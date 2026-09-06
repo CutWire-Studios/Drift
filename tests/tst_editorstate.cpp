@@ -56,6 +56,10 @@ private slots:
     void packagedProjectCarriesDerivedArtifacts();
     void undoBookmarkAdd();
     void bookmarkNavigationAndToggle();
+    void editPointNavigationWalksEveryClipEdge();
+    void splitLeftRightUndoRestoresTheDiscardedHalf();
+    void deleteLeftRightActionsCutAtThePlayhead();
+    void playbackRateStepsThroughTheOfferedRates();
     void workAreaMarkClearAndUndo();
     void bookmarkSnapTarget();
     void renameClipAndAsset();
@@ -324,6 +328,140 @@ void EditorStateTest::bookmarkNavigationAndToggle()
     state.setPlayheadSeconds(4.0);
     state.toggleBookmarkAtPlayhead();
     QCOMPARE(state.bookmarks().size(), 3);
+}
+
+void EditorStateTest::editPointNavigationWalksEveryClipEdge()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    // Snapping would drag the clips below onto each other's edges as they are placed.
+    state.setSnapEnabled(false);
+    state.addAdjustmentClip(0.0, 4.0);   // edges at 0 and 4
+    state.addAdjustmentClip(6.0, 3.0);   // edges at 6 and 9, with a gap from 4
+    // On its own track: cut points are timeline-wide, not scoped to the selection.
+    state.addTextClip(QStringLiteral("Title"), 12.0);   // edges at 12 and 17
+
+    state.setPlayheadSeconds(0.0);
+    for (double expected : {4.0, 6.0, 9.0, 12.0, 17.0}) {
+        state.triggerAction(QStringLiteral("nextEdit"));
+        QCOMPARE(state.playheadSeconds(), expected);
+    }
+    // Clamps at the last cut rather than wrapping the way the bookmark pair does.
+    state.triggerAction(QStringLiteral("nextEdit"));
+    QCOMPARE(state.playheadSeconds(), 17.0);
+
+    for (double expected : {12.0, 9.0, 6.0, 4.0, 0.0}) {
+        state.triggerAction(QStringLiteral("previousEdit"));
+        QCOMPARE(state.playheadSeconds(), expected);
+    }
+    state.triggerAction(QStringLiteral("previousEdit"));
+    QCOMPARE(state.playheadSeconds(), 0.0);
+
+    state.setPlayheadSeconds(5.0);
+    state.triggerAction(QStringLiteral("goToStart"));
+    QCOMPARE(state.playheadSeconds(), 0.0);
+}
+
+void EditorStateTest::splitLeftRightUndoRestoresTheDiscardedHalf()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    state.addAdjustmentClip(0.0, 10.0);
+
+    const drift::Clip original = state.project()->tracks().at(0).clips.at(0);
+
+    state.splitClipLeftAt(0, 0, 4.0);
+    QCOMPARE(state.project()->tracks().at(0).clips.at(0).timelineStart, drift::secondsToUs(4.0));
+    QCOMPARE(state.project()->tracks().at(0).clips.at(0).timelineDuration, drift::secondsToUs(6.0));
+
+    // Regression: the undo snapshot used to alias the very clip it was meant to preserve.
+    // Project's QLists are copy-on-write, and the Track&/Clip& references were taken before
+    // the copy, so the split wrote straight through into `before` and undo did nothing.
+    state.undo();
+    {
+        const drift::Clip &restored = state.project()->tracks().at(0).clips.at(0);
+        QCOMPARE(restored.timelineStart, original.timelineStart);
+        QCOMPARE(restored.timelineDuration, original.timelineDuration);
+        QCOMPARE(restored.srcIn, original.srcIn);
+        QCOMPARE(restored.srcOut, original.srcOut);
+    }
+
+    state.splitClipRightAt(0, 0, 4.0);
+    QCOMPARE(state.project()->tracks().at(0).clips.at(0).timelineDuration, drift::secondsToUs(4.0));
+
+    state.undo();
+    {
+        const drift::Clip &restored = state.project()->tracks().at(0).clips.at(0);
+        QCOMPARE(restored.timelineStart, original.timelineStart);
+        QCOMPARE(restored.timelineDuration, original.timelineDuration);
+        QCOMPARE(restored.srcIn, original.srcIn);
+        QCOMPARE(restored.srcOut, original.srcOut);
+    }
+}
+
+void EditorStateTest::deleteLeftRightActionsCutAtThePlayhead()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    state.addAdjustmentClip(0.0, 10.0);
+    state.addAdjustmentClip(10.0, 5.0);
+
+    state.selectClip(0, 0);
+    state.setRippleEnabled(false);
+    state.setPlayheadSeconds(4.0);
+    state.triggerAction(QStringLiteral("deleteLeft"));
+
+    // Without ripple the surviving half stays where it sits and leaves a gap behind it.
+    QCOMPARE(state.project()->tracks().at(0).clips.at(0).timelineStart, drift::secondsToUs(4.0));
+    QCOMPARE(state.project()->tracks().at(0).clips.at(0).timelineDuration, drift::secondsToUs(6.0));
+    QCOMPARE(state.project()->tracks().at(0).clips.at(1).timelineStart, drift::secondsToUs(10.0));
+
+    state.undo();
+
+    // With ripple on it slides back to where the discarded head began, dragging followers.
+    // The dead splitSelectedClipLeft carried its own copy of the split and missed this.
+    state.setRippleEnabled(true);
+    state.setPlayheadSeconds(4.0);
+    state.triggerAction(QStringLiteral("deleteLeft"));
+    QCOMPARE(state.project()->tracks().at(0).clips.at(0).timelineStart, drift::secondsToUs(0.0));
+    QCOMPARE(state.project()->tracks().at(0).clips.at(0).timelineDuration, drift::secondsToUs(6.0));
+    QCOMPARE(state.project()->tracks().at(0).clips.at(1).timelineStart, drift::secondsToUs(6.0));
+
+    state.undo();
+
+    // deleteRight keeps the head and pulls the follower up by what it dropped.
+    state.setPlayheadSeconds(4.0);
+    state.triggerAction(QStringLiteral("deleteRight"));
+    QCOMPARE(state.project()->tracks().at(0).clips.at(0).timelineStart, drift::secondsToUs(0.0));
+    QCOMPARE(state.project()->tracks().at(0).clips.at(0).timelineDuration, drift::secondsToUs(4.0));
+    QCOMPARE(state.project()->tracks().at(0).clips.at(1).timelineStart, drift::secondsToUs(4.0));
+}
+
+void EditorStateTest::playbackRateStepsThroughTheOfferedRates()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    PlaybackEngine *playback = state.playback();
+
+    QCOMPARE(playback->playbackRate(), 1.0);
+
+    for (double expected : {1.5, 2.0, 4.0}) {
+        playback->stepPlaybackRate(1);
+        QCOMPARE(playback->playbackRate(), expected);
+    }
+    // Clamps at the top: a held-down key must not wrap 4x round to the slowest rate.
+    playback->stepPlaybackRate(1);
+    QCOMPARE(playback->playbackRate(), 4.0);
+
+    for (double expected : {2.0, 1.5, 1.0, 0.5, 0.25}) {
+        playback->stepPlaybackRate(-1);
+        QCOMPARE(playback->playbackRate(), expected);
+    }
+    playback->stepPlaybackRate(-1);
+    QCOMPARE(playback->playbackRate(), 0.25);
+
+    playback->stepPlaybackRate(0);
+    QCOMPARE(playback->playbackRate(), 0.25);
 }
 
 void EditorStateTest::workAreaMarkClearAndUndo()

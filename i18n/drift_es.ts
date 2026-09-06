@@ -1997,6 +1997,42 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Go to previous cut point</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Go to next cut point</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Go to start of timeline</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Delete left of the playhead</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Delete right of the playhead</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Increase playback speed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Decrease playback speed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Zoom in</source>
+        <translation type="unfinished">Acercar zoom</translation>
+    </message>
+    <message>
+        <source>Zoom out</source>
+        <translation type="unfinished">Alejar zoom</translation>
+    </message>
+    <message>
         <source>Clips moved</source>
         <translation type="unfinished"></translation>
     </message>

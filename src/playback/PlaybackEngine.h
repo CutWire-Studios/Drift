@@ -78,6 +78,10 @@ public:
     // somewhere the stretcher has never been tested.
     double playbackRate() const { return m_playbackRate; }
     void setPlaybackRate(double rate);
+    // Move one entry along the offered rates, clamped at both ends. Keeping the walk in here
+    // rather than handing the list out means a held-down key cannot wrap 4x round to 0.25x,
+    // and callers never have to know which rates exist.
+    Q_INVOKABLE void stepPlaybackRate(int direction);
     // Preview video decode: "auto" (default, per-clip heuristic), "software", or
     // "hw:<backend>" naming one of decodeModes(). Auto keeps cheap clips on the CPU and
     // uses the GPU for 4K / heavy bitrates; the other two force that path for every

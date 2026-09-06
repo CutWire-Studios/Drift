@@ -716,6 +716,19 @@ ApplicationWindow {
                         timelinePanel.timelineTool = "split"
                         return
                     }
+                    // Timeline zoom is QML state as well, and the 1.5 step matches the
+                    // toolbar buttons. setZoom clamps to minZoom/maxZoom and re-anchors on
+                    // the playhead, so holding the key walks to the end of the range and stops.
+                    if (modelData.id === "zoomIn") {
+                        if (timelinePanel.visible)
+                            timelinePanel.setZoom(timelinePanel.zoom * 1.5)
+                        return
+                    }
+                    if (modelData.id === "zoomOut") {
+                        if (timelinePanel.visible)
+                            timelinePanel.setZoom(timelinePanel.zoom / 1.5)
+                        return
+                    }
                     EditorState.triggerAction(modelData.id)
                 }
             }
