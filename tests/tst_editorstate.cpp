@@ -66,6 +66,7 @@ private slots:
     void importFolderMirrorsDirectoryTree();
     void importFolderMovesAlreadyImportedMediaIntoMirroredFolder();
     void importFolderSkipsSymlinkCycles();
+    void importFolderStopsAtFileLimit();
     void moveAssetToFolderAndUndo();
     void moveBinFolderReparentsAndUndo();
     void moveBinFolderRefusesCycle();
@@ -515,22 +516,29 @@ void EditorStateTest::importFolderMirrorsDirectoryTree()
     QVERIFY(root.mkpath(QStringLiteral("SubA/SubB")));
     QVERIFY(root.mkpath(QStringLiteral("EmptyDir")));
 
-    auto writeFile = [](const QString &path) {
-        QFile file(path);
-        QVERIFY(file.open(QIODevice::WriteOnly));
-        file.write("not a real media file");
-        file.close();
+    // Real 1x1 images, not placeholder bytes: a file that fails to probe is dropped from the bin
+    // again, and the folder assertions below need the rows to still be there.
+    auto writeMedia = [](const QString &path) {
+        QImage image(1, 1, QImage::Format_RGB32);
+        image.fill(Qt::black);
+        QVERIFY(image.save(path));
     };
-    writeFile(root.filePath(QStringLiteral("root.mp4")));
-    writeFile(root.filePath(QStringLiteral("SubA/a.mp4")));
-    writeFile(root.filePath(QStringLiteral("SubA/SubB/b.mp4")));
+    writeMedia(root.filePath(QStringLiteral("root.png")));
+    writeMedia(root.filePath(QStringLiteral("SubA/a.png")));
+    writeMedia(root.filePath(QStringLiteral("SubA/SubB/b.png")));
     // A non-media sidecar file must be left out of the import.
-    writeFile(root.filePath(QStringLiteral("SubA/notes.txt")));
+    QFile notes(root.filePath(QStringLiteral("SubA/notes.txt")));
+    QVERIFY(notes.open(QIODevice::WriteOnly));
+    notes.write("not a real media file");
+    notes.close();
 
-    const QVariantMap result = state.importFolder(QUrl::fromLocalFile(tempDir.path()));
+    QSignalSpy finished(&state, &AppController::folderImportFinished);
+    QVERIFY(state.importFolder(QUrl::fromLocalFile(tempDir.path())));
+    QTRY_COMPARE_WITH_TIMEOUT(finished.count(), 1, 10000);
     // root, SubA, SubB, EmptyDir.
-    QCOMPARE(result.value(QStringLiteral("folders")).toInt(), 4);
-    QCOMPARE(result.value(QStringLiteral("files")).toInt(), 3);
+    QCOMPARE(finished.first().at(0).toInt(), 4);
+    QCOMPARE(finished.first().at(1).toInt(), 3);
+    QVERIFY(!finished.first().at(2).toBool());
     QCOMPARE(library.count(), 3);
     QCOMPARE(state.binFolderModel()->count(), 4);
 
@@ -568,9 +576,9 @@ void EditorStateTest::importFolderMirrorsDirectoryTree()
         }
         return QString(QStringLiteral("<not found>"));
     };
-    QCOMPARE(folderIdOfAsset(QStringLiteral("root.mp4")), rootFolderId);
-    QCOMPARE(folderIdOfAsset(QStringLiteral("a.mp4")), subAId);
-    QCOMPARE(folderIdOfAsset(QStringLiteral("b.mp4")), subBId);
+    QCOMPARE(folderIdOfAsset(QStringLiteral("root.png")), rootFolderId);
+    QCOMPARE(folderIdOfAsset(QStringLiteral("a.png")), subAId);
+    QCOMPARE(folderIdOfAsset(QStringLiteral("b.png")), subBId);
 
     // Import destination is left wherever the user was browsing (root), not inside the tree
     // this walk last populated.
@@ -600,14 +608,10 @@ void EditorStateTest::importFolderMovesAlreadyImportedMediaIntoMirroredFolder()
     QDir root(tempDir.path());
     QVERIFY(root.mkpath(QStringLiteral("SubA")));
 
-    auto writeFile = [](const QString &path) {
-        QFile file(path);
-        QVERIFY(file.open(QIODevice::WriteOnly));
-        file.write("not a real media file");
-        file.close();
-    };
-    const QString filePath = root.filePath(QStringLiteral("SubA/a.mp4"));
-    writeFile(filePath);
+    const QString filePath = root.filePath(QStringLiteral("SubA/a.png"));
+    QImage image(1, 1, QImage::Format_RGB32);
+    image.fill(Qt::black);
+    QVERIFY(image.save(filePath));
 
     // The file is already in the bin — imported individually, at the root — before the folder
     // import ever runs.
@@ -617,8 +621,10 @@ void EditorStateTest::importFolderMovesAlreadyImportedMediaIntoMirroredFolder()
     QCOMPARE(library.assetAt(library.indexOfId(assetId)).value(QStringLiteral("folderId")).toString(),
              QString());
 
-    const QVariantMap result = state.importFolder(QUrl::fromLocalFile(tempDir.path()));
-    QCOMPARE(result.value(QStringLiteral("files")).toInt(), 1);
+    QSignalSpy finished(&state, &AppController::folderImportFinished);
+    QVERIFY(state.importFolder(QUrl::fromLocalFile(tempDir.path())));
+    QTRY_COMPARE_WITH_TIMEOUT(finished.count(), 1, 10000);
+    QCOMPARE(finished.first().at(1).toInt(), 1);
     QCOMPARE(library.count(), 1);
 
     // The mirrored SubA folder must actually contain the file, not sit empty while the count
@@ -658,9 +664,46 @@ void EditorStateTest::importFolderSkipsSymlinkCycles()
     // Hangs (or stack-overflows) here if the visited-set guard regresses — there is no bound on
     // the recursion otherwise, since the symlink always resolves back to an already-mirrored
     // directory.
-    const QVariantMap result = state.importFolder(QUrl::fromLocalFile(tempDir.path()));
+    QSignalSpy finished(&state, &AppController::folderImportFinished);
+    QVERIFY(state.importFolder(QUrl::fromLocalFile(tempDir.path())));
+    QTRY_COMPARE_WITH_TIMEOUT(finished.count(), 1, 10000);
     // root and SubA only — the cycle back through the symlink is skipped, not re-descended.
-    QCOMPARE(result.value(QStringLiteral("folders")).toInt(), 2);
+    QCOMPARE(finished.first().at(0).toInt(), 2);
+}
+
+void EditorStateTest::importFolderStopsAtFileLimit()
+{
+    AssetLibrary library;
+    AppController state(&library);
+
+    QTemporaryDir tempDir;
+    QVERIFY(tempDir.isValid());
+    QDir root(tempDir.path());
+    QVERIFY(root.mkpath(QStringLiteral("Deeper")));
+
+    // Comfortably past the limit, and split across two directories so the walk has to stop
+    // mid-tree rather than at a directory boundary.
+    for (int i = 0; i < 400; ++i) {
+        QFile file(root.filePath(QStringLiteral("root%1.mp4").arg(i)));
+        QVERIFY(file.open(QIODevice::WriteOnly));
+        file.close();
+    }
+    for (int i = 0; i < 400; ++i) {
+        QFile file(root.filePath(QStringLiteral("Deeper/deep%1.mp4").arg(i)));
+        QVERIFY(file.open(QIODevice::WriteOnly));
+        file.close();
+    }
+
+    QSignalSpy finished(&state, &AppController::folderImportFinished);
+    QVERIFY(state.importFolder(QUrl::fromLocalFile(tempDir.path())));
+    QTRY_COMPARE_WITH_TIMEOUT(finished.count(), 1, 30000);
+    QVERIFY(finished.first().at(2).toBool());
+    QCOMPARE(finished.first().at(1).toInt(), 500);
+
+    // The probes these kicked off run on worker threads that capture `library` by raw pointer, so
+    // they have to finish before teardown. None of the placeholder files is real media, so every
+    // one of them fails to probe and drops its row again — draining the bin is the wait.
+    QTRY_COMPARE_WITH_TIMEOUT(library.count(), 0, 60000);
 }
 
 void EditorStateTest::moveAssetToFolderAndUndo()

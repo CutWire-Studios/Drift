@@ -2971,6 +2971,13 @@
     </message>
 </context>
 <context>
+    <name>AssetLibrary</name>
+    <message>
+        <source>Media files (%1)</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>AssetsPanel</name>
     <message>
         <source>Imported %1 of %2 files. %3 could not be read.</source>
@@ -3015,10 +3022,6 @@
     <message>
         <source>Replace Media</source>
         <translation>メディアを置き換え</translation>
-    </message>
-    <message>
-        <source>Media files (*.mp4 *.mov *.mkv *.avi *.webm *.m4v *.mp3 *.wav *.aac *.flac *.ogg *.m4a *.png *.jpg *.jpeg *.gif *.webp *.bmp)</source>
-        <translation>メディアファイル (*.mp4 *.mov *.mkv *.avi *.webm *.m4v *.mp3 *.wav *.aac *.flac *.ogg *.m4a *.png *.jpg *.jpeg *.gif *.webp *.bmp)</translation>
     </message>
     <message>
         <source>Export Image</source>
@@ -3104,6 +3107,26 @@
     </message>
     <message>
         <source>“%1” is used by %2 clips on the timeline. Removing this media will also remove those clips and any transitions connected to them. The files on disk are not deleted.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Couldn’t import that folder.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>Imported %n files into %1 folders — as many as one folder import takes. Import the remaining subfolders separately.</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Imported %n files into %1 folders.</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Import Folder</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -3193,6 +3216,10 @@
     <message>
         <source>Import video, audio or image files</source>
         <translation>ビデオ、オーディオ、画像ファイルをインポート</translation>
+    </message>
+    <message>
+        <source>Import a folder, keeping its structure as bin folders</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Touch and hold a transition, then drag it onto where two clips meet.</source>

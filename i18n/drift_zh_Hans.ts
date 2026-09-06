@@ -2971,6 +2971,13 @@
     </message>
 </context>
 <context>
+    <name>AssetLibrary</name>
+    <message>
+        <source>Media files (%1)</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>AssetsPanel</name>
     <message>
         <source>Imported %1 of %2 files. %3 could not be read.</source>
@@ -3014,10 +3021,6 @@
     </message>
     <message>
         <source>Replace Media</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Media files (*.mp4 *.mov *.mkv *.avi *.webm *.m4v *.mp3 *.wav *.aac *.flac *.ogg *.m4a *.png *.jpg *.jpeg *.gif *.webp *.bmp)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -3107,6 +3110,26 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Couldn’t import that folder.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>Imported %n files into %1 folders — as many as one folder import takes. Import the remaining subfolders separately.</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Imported %n files into %1 folders.</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Import Folder</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Text</source>
         <translation type="unfinished">文本</translation>
     </message>
@@ -3192,6 +3215,10 @@
     </message>
     <message>
         <source>Import video, audio or image files</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Import a folder, keeping its structure as bin folders</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
