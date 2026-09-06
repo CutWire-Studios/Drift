@@ -22,9 +22,12 @@
 #include "mcp/McpDispatcher.h"
 #include "mcp/McpProtocol.h"
 #include "mcp/McpSession.h"
+#include "mcp/McpStdio.h"
 #include "engine/ObjectDetector.h"
 #include "models/AppController.h"
 #include "models/AssetLibrary.h"
+
+#include <cstdio>
 
 class McpTest : public QObject
 {
@@ -46,6 +49,13 @@ private slots:
     void protocolNotificationHasNoReply();
     void sessionFileRoundTrip();
     void sessionFileMissing();
+    void stdioFramingIsNewlineDelimited();
+    void stdioWriteEscapesEmbeddedNewlines();
+    void stdioReadsNewlineDelimited();
+    void stdioReadsCrlfBomAndBlankLines();
+    void stdioReadsLegacyContentLength();
+    void stdioReadsLargeMessage();
+    void stdioReadsEofAndTrailingMessage();
     void serverRequiresBearerToken();
     void serverInitializeWithToken();
     void serverNotificationReturns202();
@@ -1813,6 +1823,137 @@ void McpTest::linearHistoryDropsRedo()
                                                     {{QStringLiteral("hash"), dropped}});
     QCOMPARE(missing.value(QStringLiteral("ok")).toBool(), false);
     QCOMPARE(missing.value(QStringLiteral("error")).toString(), QStringLiteral("not_found"));
+}
+
+namespace {
+
+// The framing helpers take a FILE*, so a pipe is not needed: a temporary file seeded
+// with the bytes a client would have written reads back identically.
+std::FILE *stdioFixture(const QByteArray &input)
+{
+    std::FILE *f = std::tmpfile();
+    if (!f)
+        return nullptr;
+    std::fwrite(input.constData(), 1, static_cast<size_t>(input.size()), f);
+    std::rewind(f);
+    return f;
+}
+
+QByteArray readAllFrom(std::FILE *f)
+{
+    std::rewind(f);
+    QByteArray out;
+    char buf[4096];
+    size_t n = 0;
+    while ((n = std::fread(buf, 1, sizeof(buf), f)) > 0)
+        out.append(buf, static_cast<int>(n));
+    return out;
+}
+
+} // namespace
+
+// #135: Drift used to answer with LSP-style "Content-Length: N\r\n\r\n{...}". The MCP
+// stdio transport is newline-delimited JSON, so the official SDK's reader choked on the
+// header line and then stalled forever on a body with no trailing newline.
+void McpTest::stdioFramingIsNewlineDelimited()
+{
+    std::FILE *out = std::tmpfile();
+    QVERIFY(out);
+    const auto close = qScopeGuard([out] { std::fclose(out); });
+
+    drift::mcp::writeStdioMessage(
+        out, QByteArray(R"({"jsonrpc":"2.0","id":1,"result":{"ok":true}})"));
+
+    const QByteArray written = readAllFrom(out);
+    QVERIFY(!written.contains("Content-Length"));
+    QVERIFY(written.endsWith('\n'));
+    QCOMPARE(written.count('\n'), 1);
+
+    const QJsonObject parsed = QJsonDocument::fromJson(written.trimmed()).object();
+    QCOMPARE(parsed.value(QStringLiteral("id")).toInt(), 1);
+}
+
+void McpTest::stdioWriteEscapesEmbeddedNewlines()
+{
+    std::FILE *out = std::tmpfile();
+    QVERIFY(out);
+    const auto close = qScopeGuard([out] { std::fclose(out); });
+
+    const QJsonObject body{{QStringLiteral("text"), QStringLiteral("first\nsecond")}};
+    drift::mcp::writeStdioMessage(out, QJsonDocument(body).toJson(QJsonDocument::Indented));
+
+    const QByteArray written = readAllFrom(out);
+    // Indented input, one line out: the message must not carry a raw newline.
+    QCOMPARE(written.count('\n'), 1);
+    QCOMPARE(QJsonDocument::fromJson(written).object().value(QStringLiteral("text")).toString(),
+             QStringLiteral("first\nsecond"));
+}
+
+void McpTest::stdioReadsNewlineDelimited()
+{
+    const QByteArray first = R"({"jsonrpc":"2.0","id":1,"method":"initialize"})";
+    const QByteArray second = R"({"jsonrpc":"2.0","method":"notifications/initialized"})";
+    std::FILE *in = stdioFixture(first + "\n" + second + "\n");
+    QVERIFY(in);
+    const auto close = qScopeGuard([in] { std::fclose(in); });
+
+    QCOMPARE(drift::mcp::readStdioMessage(in), first);
+    QCOMPARE(drift::mcp::readStdioMessage(in), second);
+    QVERIFY(drift::mcp::readStdioMessage(in).isEmpty());
+}
+
+// A UTF-8 BOM or a leading blank line used to knock the reader into header-block mode,
+// where it waited for a blank line a newline-delimited client never sends.
+void McpTest::stdioReadsCrlfBomAndBlankLines()
+{
+    const QByteArray message = R"({"jsonrpc":"2.0","id":7,"method":"tools/list"})";
+    std::FILE *in = stdioFixture(QByteArray("\xEF\xBB\xBF") + "\r\n" + message + "\r\n");
+    QVERIFY(in);
+    const auto close = qScopeGuard([in] { std::fclose(in); });
+
+    QCOMPARE(drift::mcp::readStdioMessage(in), message);
+}
+
+void McpTest::stdioReadsLegacyContentLength()
+{
+    const QByteArray message = R"({"jsonrpc":"2.0","id":2,"method":"tools/list"})";
+    std::FILE *in = stdioFixture("Content-Length: " + QByteArray::number(message.size())
+                                 + "\r\nContent-Type: application/json\r\n\r\n" + message);
+    QVERIFY(in);
+    const auto close = qScopeGuard([in] { std::fclose(in); });
+
+    QCOMPARE(drift::mcp::readStdioMessage(in), message);
+}
+
+// The old reader gave up at 64 KB, which an apply({ops:[...]}) batch can exceed.
+void McpTest::stdioReadsLargeMessage()
+{
+    const QJsonObject body{{QStringLiteral("id"), 3},
+                           {QStringLiteral("blob"), QString(200000, QLatin1Char('x'))}};
+    const QByteArray message = QJsonDocument(body).toJson(QJsonDocument::Compact);
+    QVERIFY(message.size() > 64 * 1024);
+
+    std::FILE *in = stdioFixture(message + "\n");
+    QVERIFY(in);
+    const auto close = qScopeGuard([in] { std::fclose(in); });
+
+    QCOMPARE(drift::mcp::readStdioMessage(in), message);
+}
+
+void McpTest::stdioReadsEofAndTrailingMessage()
+{
+    const QByteArray message = R"({"jsonrpc":"2.0","id":4,"method":"tools/list"})";
+    std::FILE *unterminated = stdioFixture(message);
+    QVERIFY(unterminated);
+    const auto closeOne = qScopeGuard([unterminated] { std::fclose(unterminated); });
+    // A client that closes without a trailing newline still gets its last message through.
+    QCOMPARE(drift::mcp::readStdioMessage(unterminated), message);
+    QVERIFY(drift::mcp::readStdioMessage(unterminated).isEmpty());
+
+    std::FILE *empty = stdioFixture({});
+    QVERIFY(empty);
+    const auto closeTwo = qScopeGuard([empty] { std::fclose(empty); });
+    QVERIFY(drift::mcp::readStdioMessage(empty).isEmpty());
 }
 
 QTEST_MAIN(McpTest)

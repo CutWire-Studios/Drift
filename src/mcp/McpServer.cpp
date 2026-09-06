@@ -76,7 +76,7 @@ bool McpServer::start()
         return true;
 
     m_error.clear();
-    m_token = makeToken();
+    m_token = m_fixedToken.isEmpty() ? makeToken() : m_fixedToken;
 
     m_thread = new QThread(this);
     m_http = new McpHttp;
@@ -117,7 +117,8 @@ bool McpServer::start()
             loop.quit();
         });
     QTimer::singleShot(3000, &loop, &QEventLoop::quit);
-    QMetaObject::invokeMethod(m_http, [this]() { m_http->listen(4731); }, Qt::QueuedConnection);
+    QMetaObject::invokeMethod(
+        m_http, [this]() { m_http->listen(m_requestedPort); }, Qt::QueuedConnection);
     loop.exec();
     QObject::disconnect(listeningConn);
     QObject::disconnect(failedConn);
@@ -130,7 +131,7 @@ bool McpServer::start()
         return false;
     }
     m_port = port;
-    writeSessionFile(port, m_token);
+    m_wroteSessionFile = writeSessionFile(port, m_token);
     m_running = true;
     emit runningChanged();
     return true;
@@ -138,7 +139,10 @@ bool McpServer::start()
 
 void McpServer::stop()
 {
-    removeSessionFile();
+    if (m_wroteSessionFile) {
+        removeSessionFile();
+        m_wroteSessionFile = false;
+    }
     if (m_http) {
         McpHttp *http = m_http;
         m_http = nullptr;

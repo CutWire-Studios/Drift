@@ -4,6 +4,7 @@
 #include "engine/HwAccel.h"
 #include "engine/ReverseProxyCache.h"
 #ifndef Q_OS_ANDROID
+#include "HeadlessApp.h"
 #include "mcp/McpStdio.h"
 #endif
 #include "models/AddonManager.h"
@@ -324,6 +325,12 @@ int main(int argc, char *argv[])
     applyLogLevel(verboseLoggingRequested(argc, argv));
 
 #ifndef Q_OS_ANDROID
+    // --headless is checked first: it also accepts --mcp-stdio, as the transport to serve
+    // rather than as a request to attach to an editor running elsewhere.
+    for (int i = 1; i < argc; ++i) {
+        if (qstrcmp(argv[i], "--headless") == 0)
+            return drift::runHeadless(argc, argv);
+    }
     for (int i = 1; i < argc; ++i) {
         if (qstrcmp(argv[i], "--mcp-stdio") == 0) {
             QCoreApplication app(argc, argv);

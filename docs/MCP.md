@@ -19,7 +19,56 @@ Drift can expose a localhost MCP server so Cursor, Claude Code, or other agents 
 }
 ```
 
-`drift --mcp-stdio` attaches to a running editor with Agent access enabled.
+`drift --mcp-stdio` attaches to a running editor with Agent access enabled. It speaks
+newline-delimited JSON-RPC, the framing the MCP stdio transport specifies. If the editor
+is closed or Agent access is off, each call comes back as a JSON-RPC error and the bridge
+keeps running, so enabling Agent access is enough to make it work — no need to restart the
+client.
+
+## Headless
+
+`drift --headless` runs the editor with no window and serves MCP itself, for servers and
+unattended automation. It needs no running editor, no session token and no open project:
+
+```json
+{
+  "mcpServers": {
+    "drift": {
+      "command": "/path/to/drift",
+      "args": ["--headless"]
+    }
+  }
+}
+```
+
+| Command | Transport |
+| --- | --- |
+| `drift --headless [project.json]` | MCP on stdin/stdout; quits when stdin closes |
+| `drift --headless --mcp-port 4731 [--mcp-token T]` | MCP over HTTP; runs until SIGINT/SIGTERM |
+| `drift --headless --mcp-stdio --mcp-port 4731` | both |
+
+On startup it prints what is running — platform plugin, OpenGL, project, transports, and
+the HTTP URL, token and session-file path. That banner goes to **stdout**, except when
+stdio is a transport, where it goes to stderr instead: the spec allows nothing but MCP
+messages on stdout, and a banner there is exactly what breaks clients.
+
+Without `--mcp-token` (or `$DRIFT_MCP_TOKEN`) a token is generated and shown in the
+banner. Only the HTTP form writes the session file that `--mcp-stdio` reads, so a headless
+instance serving stdio never disturbs a GUI editor running alongside it.
+
+Both forms shut down on SIGINT (Ctrl-C) and SIGTERM.
+
+**Rendering needs a GL context, which is not the same as needing a window.** The
+compositor wants OpenGL 3.3 core on an offscreen surface, and Qt's `offscreen` platform
+plugin cannot provide one on a host with no `/dev/dri`. On a headless Linux box run:
+
+```bash
+QT_QPA_PLATFORM=xcb xvfb-run -a drift --headless
+```
+
+Mesa's llvmpipe covers 3.3 in software; a GPU host can use an EGL platform plugin
+instead. Started without a usable context, Drift still serves MCP and still edits
+projects — it says so on stderr, and only render, capture and export fail.
 
 ## Workflow
 

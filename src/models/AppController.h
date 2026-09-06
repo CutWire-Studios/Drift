@@ -431,6 +431,11 @@ public:
     void setVaapiZeroCopy(bool enabled);
     void setInvertTimelineScroll(bool enabled);
     Q_INVOKABLE void setMcpEnabled(bool enabled);
+#ifndef Q_OS_ANDROID
+    // Headless wires transports onto the server itself, which the on/off switch above
+    // does not expose. Null on Android, where there is no MCP server.
+    drift::mcp::McpServer *mcpServer() const { return m_mcp.get(); }
+#endif
     bool mcpEnabled() const { return mcpRunning(); }
     bool mcpRunning() const;
     QString mcpUrl() const;

@@ -630,7 +630,11 @@ if(NOT ANDROID)
         src/mcp/McpServer.cpp
         src/mcp/McpStdio.h
         src/mcp/McpStdio.cpp
+        src/mcp/McpStdioServer.h
+        src/mcp/McpStdioServer.cpp
         src/mcp/McpJson.h
+        src/HeadlessApp.h
+        src/HeadlessApp.cpp
     )
 endif()
 

@@ -37,6 +37,7 @@ qt_add_executable(tst_editorstate
     ../src/mcp/McpDispatcherExtended.cpp
     ../src/mcp/McpServer.cpp
     ../src/mcp/McpStdio.cpp
+    ../src/mcp/McpStdioServer.cpp
 )
 target_include_directories(tst_editorstate PRIVATE ../src)
 target_link_libraries(tst_editorstate PRIVATE Qt6::Test Qt6::Gui Qt6::Quick Qt6::Multimedia Qt6::Concurrent Qt6::Network driftcore driftengine)
@@ -134,6 +135,7 @@ qt_add_executable(tst_mcp
     ../src/mcp/McpDispatcherExtended.cpp
     ../src/mcp/McpServer.cpp
     ../src/mcp/McpStdio.cpp
+    ../src/mcp/McpStdioServer.cpp
 )
 target_include_directories(tst_mcp PRIVATE ../src)
 target_link_libraries(tst_mcp PRIVATE Qt6::Test Qt6::Gui Qt6::Network Qt6::Multimedia Qt6::Concurrent driftcore driftengine)
