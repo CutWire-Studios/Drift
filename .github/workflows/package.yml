@@ -255,7 +255,12 @@ jobs:
           # playable only on GPUs whose VAAPI/NVDEC covers it and black everywhere else.
           export LD_LIBRARY_PATH="${GITHUB_WORKSPACE}/.deps/ffmpeg/lib:${QT_ROOT_DIR}/lib:${LD_LIBRARY_PATH:-}"
           export EXTRA_PLATFORM_PLUGINS="libqwayland.so"
-          export EXTRA_QT_MODULES="waylandcompositor"
+          # waylandclient as well as waylandcompositor: the client half is what brings
+          # wayland-graphics-integration-client, and without its EGL plugin QtWayland
+          # cannot hand out an offscreen surface — the compositor then falls back to a
+          # hidden QWindow it is not allowed to create off the GUI thread, and the
+          # preview goes black on Wayland while X11 is fine.
+          export EXTRA_QT_MODULES="waylandcompositor waylandclient"
           #
           # The -l lines are libraries dlopened by soname, so linuxdeploy sees no NEEDED entry
           # to follow: OpenSSL is Qt's ossl TLS backend — without it the AppImage ships the
@@ -378,8 +383,14 @@ jobs:
           Copy-Item build\Release\drift.exe dist\bin -Force
           # --qmldir: Drift's own QML lives in the binary's resources, but the Qt Quick modules it
           # imports have to be deployed, and qmlimportscanner reads the sources to find them.
+          # --no-opengl-sw: opengl32sw.dll is Qt's bundled Mesa llvmpipe, and it only
+          # provides OpenGL 3.0 — below the 3.3 the compositor needs. Whenever Qt chose
+          # it, Qt Quick came up on it and the preview then stayed black (issue #139),
+          # and users were fixing that by deleting the DLL by hand. Do not ship it.
+          # main.cpp sets QT_NO_OPENGL_BUGLIST so Qt stops picking it over a perfectly
+          # good card in the first place; keep the two together.
           & "${{ env.QT_ROOT_DIR }}\bin\windeployqt.exe" --release --no-translations `
-            --qmldir src\qml dist\bin\drift.exe
+            --no-opengl-sw --qmldir src\qml dist\bin\drift.exe
           Copy-Item vcpkg\installed\x64-windows\bin\*.dll dist\bin -Force
           Copy-Item .deps\ffmpeg\bin\*.dll dist\bin -Force
           # Bundled effect/transition/template packages: a POST_BUILD step already put them beside

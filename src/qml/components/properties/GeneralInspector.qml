@@ -27,6 +27,7 @@ Item {
         case "subtitle": return qsTr("Subtitle")
         case "shape": return qsTr("Shape")
         case "sticker": return qsTr("Sticker")
+        case "adjustment": return qsTr("Adjustment")
         }
         return kind.length > 0 ? kind : "—"
     }
@@ -156,6 +157,7 @@ Item {
             width: root.width
             spacing: 8
             visible: root.clipKind !== "text" && root.clipKind !== "subtitle"
+                     && root.clipKind !== "adjustment" && root.clipKind !== "shape"
 
             Text {
                 text: qsTr("Trim")

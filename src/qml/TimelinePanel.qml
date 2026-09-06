@@ -223,23 +223,26 @@ PanelFrame {
     }
 
     // While dragging a clip, other selected clips (linked A/V partners included)
-    // ride along on the X axis so they don't sit still until drop. CapCut-style.
+    // ride along on the X and Y axes so they don't sit still until drop. CapCut-style.
     property bool moveFollowActive: false
     property int moveLeaderTrack: -1
     property int moveLeaderClip: -1
     property real moveFollowDeltaX: 0
+    property real moveFollowDeltaY: 0
 
     function beginMoveFollow(trackIndex, clipIndex) {
         moveLeaderTrack = trackIndex
         moveLeaderClip = clipIndex
         moveFollowDeltaX = 0
+        moveFollowDeltaY = 0
         moveFollowActive = true
     }
 
-    function updateMoveFollow(deltaX) {
+    function updateMoveFollow(deltaX, deltaY) {
         if (!moveFollowActive)
             return
         moveFollowDeltaX = deltaX
+        moveFollowDeltaY = deltaY || 0
     }
 
     function clearMoveFollow() {
@@ -247,6 +250,7 @@ PanelFrame {
         moveLeaderTrack = -1
         moveLeaderClip = -1
         moveFollowDeltaX = 0
+        moveFollowDeltaY = 0
     }
 
     // Shared by library drops and in-timeline clip moves so both snap and show
@@ -381,7 +385,7 @@ PanelFrame {
         if (type === "subtitle") return Theme.clipSubtitle;
         if (type === "audio") return Theme.clipAudio;
         if (type === "graphic") return Theme.clipGraphic;
-        if (type === "effect") return Theme.clipEffect;
+        if (type === "effect" || type === "adjustment") return Theme.clipEffect;
         return Theme.clipVideoPlaceholder; // video: no flat fill, thumbnails would go here
     }
 
@@ -1251,7 +1255,7 @@ PanelFrame {
 
                         onPressed: (mouse) => {
                             root.forceActiveFocus()
-                            root.marqueeAdditive = (mouse.modifiers & Qt.ShiftModifier) !== 0
+                            root.marqueeAdditive = (mouse.modifiers & (Qt.ShiftModifier | Qt.ControlModifier)) !== 0
                             root.marqueeOriginX = mouse.x
                             root.marqueeOriginY = mouse.y
                             root.marqueeCurrentX = mouse.x
@@ -1338,6 +1342,13 @@ PanelFrame {
                                         }
                                         if (isEffectDrag(drop) || isAudioEffectDrag(drop)) {
                                             root.updateEffectDropHighlight(trackRow.trackIndex, drop.x)
+                                            if (isEffectDrag(drop) && root.tracks[trackRow.trackIndex].type === "video"
+                                                    && root.clipIndexAtPosition(trackRow.trackIndex, drop.x) < 0) {
+                                                const desired = Math.max(0, drop.x / root.pxPerSecond)
+                                                root.showLandingPreview(trackRow.trackIndex, desired, 5.0)
+                                            } else {
+                                                root.clearLandingOutline()
+                                            }
                                             return
                                         }
                                         root.clearEffectDropHighlight()
@@ -1381,9 +1392,13 @@ PanelFrame {
                                             const effectId = drop.getDataAsString("application/x-drift-effect")
                                             const clipIndex = root.clipIndexAtPosition(trackRow.trackIndex, drop.x)
                                             root.clearEffectDropHighlight()
+                                            root.clearLandingOutline()
                                             if (clipIndex >= 0 && effectId.length > 0) {
                                                 EditorState.addEffect(trackRow.trackIndex, clipIndex, effectId)
                                                 EditorState.selectClip(trackRow.trackIndex, clipIndex)
+                                            } else if (effectId.length > 0 && root.tracks[trackRow.trackIndex].type === "video") {
+                                                const atSec = Math.max(0, drop.x / root.pxPerSecond)
+                                                EditorState.addAdjustmentClipWithEffect(effectId, trackRow.trackIndex, atSec)
                                             }
                                             return
                                         }

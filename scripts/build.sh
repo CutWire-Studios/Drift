@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Configures and builds the APK. Bootstraps the android/ package overlay from the Qt kit's template
+# Configures and builds the APK or AAB. Bootstraps the android/ package overlay from the Qt kit's template
 # on first run, and the native prebuilt dependencies if they are not there yet.
 #
 #   scripts/build.sh [abi] [build-type]
@@ -18,7 +18,12 @@
 #   DRIFT_ANDROID_APP_NAME      launcher label (default Drift)
 #   DRIFT_ANDROID_VERSION_CODE  optional Play-Store integer; unset → CMake derives from
 #                               PROJECT_VERSION (same semver as desktop)
-#   SKIP_APK=1                  compile the native library only (no APK packaging)
+#   QT_ANDROID_ABIS             semicolon-separated ABI list packaged into the APK/AAB.
+#                               Defaults to the abi argument. A Play Store AAB wants every
+#                               ABI in one bundle, with matching Qt kits as siblings of
+#                               QT_ANDROID_ROOT.
+#   BUILD_AAB=1                 package an Android App Bundle (cmake --target aab) instead of an APK
+#   SKIP_APK=1                  compile the native library only (no APK/AAB packaging)
 set -euo pipefail
 
 ABI="${1:-arm64-v8a}"
@@ -51,8 +56,11 @@ esac
 # VERSION_CODE defaults in CMake from PROJECT_VERSION (same semver as desktop); set it only when
 # you need a different integer (e.g. github.run_number for successive CI side-loads).
 # SKIP_APK=1 builds the native library only — used by the push smoke test.
+# BUILD_AAB=1 is the Play Store package; QT_ANDROID_ABIS defaults to the abi argument.
 : "${DRIFT_ANDROID_PACKAGE_NAME:=org.cutwire.drift}"
 : "${DRIFT_ANDROID_APP_NAME:=Drift}"
+: "${QT_ANDROID_ABIS:=$ABI}"
+: "${BUILD_AAB:=0}"
 : "${SKIP_APK:=0}"
 
 [ -d "$ANDROID_NDK_ROOT" ] || { echo "no NDK at $ANDROID_NDK_ROOT" >&2; exit 1; }
@@ -77,10 +85,13 @@ if [ ! -f "$ROOT/android/AndroidManifest.xml" ]; then
 fi
 
 # --- native dependencies -----------------------------------------------------
-if [ ! -f "$ROOT/third_party/prebuilt/android/$ABI/lib/libavcodec.a" ]; then
-    echo "==> no prebuilt dependencies for $ABI; building them first"
-    "$ROOT/third_party/build-android.sh" "$ABI"
-fi
+IFS=';' read -ra _abis <<< "$QT_ANDROID_ABIS"
+for _abi in "${_abis[@]}"; do
+    if [ ! -f "$ROOT/third_party/prebuilt/android/$_abi/lib/libavcodec.a" ]; then
+        echo "==> no prebuilt dependencies for $_abi; building them first"
+        "$ROOT/third_party/build-android.sh" "$_abi"
+    fi
+done
 
 # --- configure and build -----------------------------------------------------
 CMAKE_ARGS=(
@@ -89,7 +100,7 @@ CMAKE_ARGS=(
     -DQT_HOST_PATH="$QT_HOST_PATH"
     -DANDROID_SDK_ROOT="$ANDROID_SDK_ROOT"
     -DANDROID_NDK_ROOT="$ANDROID_NDK_ROOT"
-    -DQT_ANDROID_ABIS="$ABI"
+    -DQT_ANDROID_ABIS="$QT_ANDROID_ABIS"
     -DDRIFT_BUNDLE_ONNXRUNTIME=OFF
     -DDRIFT_ANDROID_PACKAGE_NAME="$DRIFT_ANDROID_PACKAGE_NAME"
     -DDRIFT_ANDROID_APP_NAME="$DRIFT_ANDROID_APP_NAME"
@@ -105,8 +116,14 @@ if [ "$SKIP_APK" = "1" ]; then
     echo "==> SKIP_APK=1: native build only (no androiddeployqt / gradle package)"
     exit 0
 fi
-cmake --build "$BUILD" --target apk
-
-echo
-echo "==> APK:"
-find "$BUILD/android-build" -name '*.apk' -newer "$BUILD/CMakeCache.txt" 2>/dev/null || true
+if [ "$BUILD_AAB" = "1" ]; then
+    cmake --build "$BUILD" --target aab
+    echo
+    echo "==> AAB:"
+    find "$BUILD/android-build" -name '*.aab' -newer "$BUILD/CMakeCache.txt" 2>/dev/null || true
+else
+    cmake --build "$BUILD" --target apk
+    echo
+    echo "==> APK:"
+    find "$BUILD/android-build" -name '*.apk' -newer "$BUILD/CMakeCache.txt" 2>/dev/null || true
+fi

@@ -372,6 +372,10 @@ ApplicationWindow {
         id: debugInfoDialog
     }
 
+    PasteAttributesDialog {
+        id: pasteAttributesDialog
+    }
+
     SegmentationWindow {
         id: segmentationWindow
     }
@@ -380,6 +384,9 @@ ApplicationWindow {
         target: EditorState
         function onOpenSegmentationWindowRequested(track, clip, startSeconds, durationSeconds) {
             segmentationWindow.openFor(track, clip, startSeconds, durationSeconds, true)
+        }
+        function onOpenPasteAttributesRequested() {
+            window.openPasteAttributes()
         }
     }
 
@@ -454,6 +461,10 @@ ApplicationWindow {
 
     function openDebugInfo() {
         debugInfoDialog.open()
+    }
+
+    function openPasteAttributes() {
+        pasteAttributesDialog.openDialog()
     }
 
     function promptRecoveryIfNeeded() {
@@ -676,7 +687,7 @@ ApplicationWindow {
             width: 0
             height: 0
             Shortcut {
-                sequence: modelData.shortcut
+                sequence: Theme.nativeShortcutSequence(modelData.shortcut)
                 context: Qt.ApplicationShortcut
                 onActivated: {
                     if (modelData.id === "clearSelection"

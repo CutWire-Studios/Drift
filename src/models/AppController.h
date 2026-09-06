@@ -29,6 +29,8 @@
 #include <QUrl>
 #include <QVariantList>
 #include <QVariantMap>
+
+#include <atomic>
 #include <QProcess>
 #include <QMap>
 
@@ -106,6 +108,7 @@ class AppController : public QObject
     // Opt-in VAAPI dma-buf preview import. Takes effect after restart; hidden when this
     // machine has no VAAPI decode backend.
     Q_PROPERTY(bool vaapiZeroCopy READ vaapiZeroCopy WRITE setVaapiZeroCopy NOTIFY vaapiZeroCopyChanged)
+    Q_PROPERTY(bool playbackBenchmarkRunning READ playbackBenchmarkRunning NOTIFY playbackBenchmarkRunningChanged)
     Q_PROPERTY(bool vaapiZeroCopySupported READ vaapiZeroCopySupported CONSTANT)
     Q_PROPERTY(bool invertTimelineScroll READ invertTimelineScroll WRITE setInvertTimelineScroll
                    NOTIFY invertTimelineScrollChanged)
@@ -438,6 +441,17 @@ public:
     Q_INVOKABLE QString debugInfoText() const;
     Q_INVOKABLE void copyDebugInfo();
 
+    // Playback diagnostics. The environment and counter half is cheap enough to call whenever
+    // the dialog opens; the benchmark decodes for a couple of seconds and so runs off the GUI
+    // thread and answers with playbackBenchmarkFinished.
+    bool playbackBenchmarkRunning() const { return m_benchmarkRunning.load(); }
+    Q_INVOKABLE QVariantMap playbackDiagnostics() const;
+    Q_INVOKABLE void startPlaybackBenchmark();
+    // One paste for a bug report: host facts and codec support followed by what playback is
+    // actually doing. Split across two clipboard copies, reporters send whichever tab they
+    // happened to have open, which is rarely the one that explains the problem.
+    Q_INVOKABLE void copyDiagnosticsReport(const QVariantMap &playbackInfo);
+
     // MCP helpers (GUI thread). Used by src/mcp, not QML.
     QPair<int, int> mcpLocateClip(const QString &id) const;
     QString mcpClipId(int trackIndex, int clipIndex) const;
@@ -557,6 +571,10 @@ public:
     // Bin folder CRUD. parentId empty = bin root; nesting is arbitrary depth.
     Q_INVOKABLE QString createBinFolder(const QString &name, const QString &parentId);
     Q_INVOKABLE bool renameBinFolder(const QString &folderId, const QString &name);
+    // Reparents the folder itself, keeping its own assets and subfolders — they stay pointed
+    // at it, so they move along without being touched individually. Refuses moving a folder
+    // into itself or into one of its own descendants.
+    Q_INVOKABLE bool moveBinFolder(const QString &folderId, const QString &newParentId);
     // Moves the folder's direct children (assets and subfolders) up to its own parent, then
     // removes it. Never blocks and never recurses into deleting contents.
     Q_INVOKABLE bool deleteBinFolder(const QString &folderId);
@@ -727,6 +745,9 @@ public:
     // "circle" and "ellipse" are the same kind with different default aspects.
     Q_INVOKABLE void addShapeClip(const QString &shapeKind, double atSeconds);
     Q_INVOKABLE void addShapeClipAt(const QString &shapeId, int trackIndex, double atSeconds);
+    Q_INVOKABLE void addAdjustmentClip(double atSeconds = -1.0, double durationSeconds = -1.0);
+    Q_INVOKABLE void addAdjustmentClipAt(int trackIndex, double atSeconds = -1.0, double durationSeconds = -1.0);
+    Q_INVOKABLE void addAdjustmentClipWithEffect(const QString &effectId, int trackIndex = -1, double atSeconds = -1.0, double durationSeconds = -1.0);
     Q_INVOKABLE void addStickerClip(const QString &stickerId, double atSeconds);
     Q_INVOKABLE QVariantList builtinStickers() const;
     Q_INVOKABLE QVariantList builtinStickerCategories() const;
@@ -956,6 +977,11 @@ public:
     Q_INVOKABLE bool clipboardHasEffects() const;
     Q_INVOKABLE void pasteEffectsFromClipboard(int trackIndex, int clipIndex);
 
+    Q_INVOKABLE bool canPasteAttributes() const;
+    Q_INVOKABLE QVariantMap clipboardAttributes() const;
+    Q_INVOKABLE void requestPasteAttributes();
+    Q_INVOKABLE void pasteAttributes(const QVariantMap &options);
+
     Q_INVOKABLE QVariantList userEffectPresets() const;
     Q_INVOKABLE QString saveEffectAsPreset(int trackIndex, int clipIndex, int effectIndex,
                                            const QString &label);
@@ -970,6 +996,9 @@ public:
     Q_INVOKABLE bool importUserEffectPreset(const QUrl &fileUrl);
     Q_INVOKABLE void setTrackMuted(int trackIndex, bool muted);
     Q_INVOKABLE void setTrackHidden(int trackIndex, bool hidden);
+    // Empty name clears the custom label, falling back to the type+position display
+    // ("Video 1") again.
+    Q_INVOKABLE bool renameTrack(int trackIndex, const QString &name);
     Q_INVOKABLE bool trackMuted(int trackIndex) const;
     Q_INVOKABLE bool trackHidden(int trackIndex) const;
     Q_INVOKABLE void setTrackShowWaveform(int trackIndex, bool show);
@@ -1013,6 +1042,7 @@ public:
     Q_INVOKABLE void pasteAtPlayhead();
     Q_INVOKABLE void nudgeSelection(double deltaSeconds);
     Q_INVOKABLE bool selectionContains(int trackIndex, int clipIndex) const;
+    Q_INVOKABLE double selectionEarliestStartSeconds() const;
     // Premiere-style trim pointer. side: -1=start, 0=off, 1=end.
     // heightPx scales the cursor to the hovered clip/track height.
     Q_INVOKABLE void setTimelineTrimCursor(int side, int heightPx = 0);
@@ -1084,6 +1114,9 @@ public:
     // Save cannot overwrite the .json with a .drift bundle. loadProject routes here when the file
     // is JSON, so a dropped / CLI / MCP path works without a second entry point.
     Q_INVOKABLE void loadProjectJson(const QUrl &url);
+    // Imports an Adobe Premiere Pro project (.prproj) or Final Cut Pro XML (.xml),
+    // mapping sequences, video/audio tracks, clips, in/out trimming, and media assets.
+    Q_INVOKABLE void loadPremiereProject(const QUrl &url);
     Q_INVOKABLE void cancelPackage();
     Q_INVOKABLE void loadProject(const QUrl &url);
     Q_INVOKABLE void newProject();
@@ -1169,6 +1202,9 @@ signals:
     void autoKeyEnabledChanged();
     void reopenLastProjectChanged();
     void vaapiZeroCopyChanged();
+    // Carries the finished benchmark, merged into whatever the dialog already collected.
+    void playbackBenchmarkFinished(const QVariantMap &info);
+    void playbackBenchmarkRunningChanged();
     void invertTimelineScrollChanged();
     void mcpRunningChanged();
     void mcpErrorChanged();
@@ -1285,6 +1321,7 @@ signals:
     void newProjectRequested();
     void openRequested();
     void saveRequested();
+    void openPasteAttributesRequested();
 
 protected:
     void pushProjectEdit(const drift::Project &before, const QString &text);
@@ -1477,6 +1514,9 @@ protected:
     bool m_autoKeyEnabled = false;
     bool m_reopenLastProject = false;
     bool m_vaapiZeroCopy = false;
+    // One benchmark at a time: it drives the shared decoders and the GL thread, and two
+    // sweeps interleaved would measure each other rather than the pipeline.
+    std::atomic<bool> m_benchmarkRunning{false};
     bool m_invertTimelineScroll = false;
     QString m_uiLanguage;
     bool m_needsUiLanguagePrompt = false;
@@ -1645,6 +1685,7 @@ protected:
     {
         drift::Clip clip;
         drift::TrackType trackType = drift::TrackType::Video;
+        QList<drift::Transition> transitions;
     };
     QList<ClipboardItem> m_clipboard;
 

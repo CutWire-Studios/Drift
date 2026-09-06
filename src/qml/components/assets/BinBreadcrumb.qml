@@ -31,8 +31,12 @@ Row {
     readonly property var trail: {
         void root._refreshTick
         const chain = []
+        const visited = new Set()
         let id = root.currentFolderId
-        while (id !== "") {
+        // Project deserialization doesn't reject a self- or mutually-parented folder; an
+        // undetected cycle here would spin forever and hang the UI, so bail on a repeat id.
+        while (id !== "" && !visited.has(id)) {
+            visited.add(id)
             const folder = BinFolderModel.folderById(id)
             if (!folder || Object.keys(folder).length === 0)
                 break

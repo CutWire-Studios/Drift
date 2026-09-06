@@ -86,6 +86,11 @@ modules:
       # Flathub updates this build, so the in-app update check is compiled out: an app that nags
       # about a version flatpak will fetch on its own is noise the user cannot act on.
       - -DDRIFT_UPDATE_FEED_URL=
+      # A package build compiles the committed catalogs and never regenerates them. org.kde.Sdk's
+      # lupdate has no QML parser, so a refresh here strips every QML string from i18n/*.ts and
+      # ships .qm files that only translate the C++ side (#167). CMake also detects this on its
+      # own; the flag makes the intent explicit, since flatpak-builder hides CI from the sandbox.
+      - -DDRIFT_AUTO_UPDATE_TRANSLATIONS=OFF
     sources:
       - type: dir
         path: ..

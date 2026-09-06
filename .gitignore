@@ -64,3 +64,5 @@ third_party/prebuilt/
 # Local credential files — never commit
 .env
 .env.*
+
+!resources/diagnostics/bench1080p60.mp4

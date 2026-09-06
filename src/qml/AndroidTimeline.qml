@@ -371,23 +371,27 @@ Item {
     property int moveLeaderTrack: -1
     property int moveLeaderClip: -1
     property real moveFollowDeltaX: 0
+    property real moveFollowDeltaY: 0
 
     function beginMoveFollow(trackIndex, clipIndex) {
         moveLeaderTrack = trackIndex
         moveLeaderClip = clipIndex
         moveFollowDeltaX = 0
+        moveFollowDeltaY = 0
         moveFollowActive = true
     }
-    function updateMoveFollow(deltaX) {
+    function updateMoveFollow(deltaX, deltaY) {
         if (!moveFollowActive)
             return
         moveFollowDeltaX = deltaX
+        moveFollowDeltaY = deltaY || 0
     }
     function clearMoveFollow() {
         moveFollowActive = false
         moveLeaderTrack = -1
         moveLeaderClip = -1
         moveFollowDeltaX = 0
+        moveFollowDeltaY = 0
     }
 
     readonly property real timelineViewY: flick.contentY
@@ -814,7 +818,7 @@ Item {
         if (type === "subtitle") return Theme.clipSubtitle
         if (type === "audio") return Theme.clipAudio
         if (type === "graphic") return Theme.clipGraphic
-        if (type === "effect") return Theme.clipEffect
+        if (type === "effect" || type === "adjustment") return Theme.clipEffect
         return Theme.clipVideoPlaceholder
     }
 

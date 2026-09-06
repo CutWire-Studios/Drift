@@ -283,7 +283,10 @@ Item {
                     Text {
                         anchors.centerIn: parent
                         visible: opacity > 0
-                        opacity: EditorState.playback.hasFrame ? 0 : 1
+                        // Only a gap message: a compositor that never came up shows
+                        // the explanation below instead of blaming the timeline.
+                        opacity: EditorState.playback.hasFrame
+                                 || !EditorState.playback.gpuCompositorReady ? 0 : 1
                         text: EditorState.activeAudioClipAtPlayhead().path
                               ? qsTr("Audio only") : qsTr("No clip at the current time")
                         color: Theme.guideMedium
@@ -293,6 +296,19 @@ Item {
                         Behavior on opacity {
                             NumberAnimation { duration: Theme.durationBase; easing.type: Theme.easing }
                         }
+                    }
+
+                    Text {
+                        anchors.centerIn: parent
+                        width: parent.width - Theme.spacingXl
+                        visible: EditorState.playback.gpuCompositorStatus !== "unknown"
+                                 && !EditorState.playback.gpuCompositorReady
+                        text: qsTr("GPU preview unavailable")
+                        horizontalAlignment: Text.AlignHCenter
+                        wrapMode: Text.Wrap
+                        color: Theme.guideMedium
+                        font.family: Theme.fontFamily
+                        font.pixelSize: Theme.fontSizeSm
                     }
                 }
 

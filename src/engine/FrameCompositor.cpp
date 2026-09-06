@@ -908,6 +908,30 @@ GpuScene buildGpuScene(const drift::Project &project, drift::TimeUs timelineUs, 
                 }
             }
 
+            if (clip.type == drift::ClipType::Adjustment) {
+                GpuItem item;
+                item.isAdjustment = true;
+                item.blend = clip.blendMode;
+                item.layer.valid = true;
+                item.layer.effects = resolvedClipEffects(clip, timelineUs - clip.timelineStart);
+                item.layer.mask = clip.mask;
+                if (clip.mask.shape == drift::MaskShape::Matte && !clip.mask.mattePath.isEmpty()) {
+                    const drift::TimeUs matteUs =
+                        clip.timelineToSourceUs(timelineUs) - clip.mask.matteSrcOffsetUs;
+                    const QImage matte = ClipReaderPool::instance().readVideoFrame(
+                        clip.mask.mattePath, ClipReaderPool::streamIdForClip(clip.id),
+                        qMax<drift::TimeUs>(0, matteUs), width, height);
+                    if (!matte.isNull())
+                        item.layer.matte = matte;
+                }
+                item.layer.rect = QRectF(0, 0, width, height);
+                item.layer.opacity = opacityForClip(clip, timelineUs);
+                item.layer.clipTimeUs = timelineUs - clip.timelineStart;
+                item.layer.faceSlots = faceSlotsForClip(clip, item.layer.effects, timelineUs);
+                scene.items.append(item);
+                continue;
+            }
+
             GpuItem item;
             item.blend = clip.blendMode;
             item.layer = buildGpuLayer(clip, timelineUs, projectWidth, projectHeight, renderScale, width,

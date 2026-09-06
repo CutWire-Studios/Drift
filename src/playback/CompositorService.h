@@ -3,12 +3,23 @@
 #include "engine/FrameCompositor.h"
 #include "engine/GpuCompositor.h"
 
-#include <QElapsedTimer>
 #include <QObject>
 #include <QThread>
 
+#include <array>
 #include <atomic>
 #include <memory>
+
+class PlaybackStats;
+
+// What one composite cost, measured inside the worker that ran it. Reported with the frame
+// rather than timed from the service, because the service cannot tell queue wait from work
+// once more than one composite is in flight.
+struct CompositeTiming
+{
+    double compositeMs = 0.0;  // wall time in the worker
+    double decodeWaitMs = 0.0; // of which, blocked on a decoder
+};
 
 class CompositorWorker : public QObject
 {
@@ -23,21 +34,32 @@ public slots:
     // editing, and reading a QMap/QList while the GUI thread rebalances it is a
     // use-after-free. Use Project::detachedCopy() so Qt COW payloads are unique,
     // then share that snapshot via shared_ptr across queued invokes.
+    //
+    // `sequence` is the service's request counter, returned untouched. With more than one
+    // composite running, completion order is not request order, and the sequence is how the
+    // service tells a frame that superseded what is on screen from one that has been overtaken.
     void composite(drift::TimeUs timeUs, FrameCompositor::RenderOptions options,
-                   std::shared_ptr<const drift::Project> snapshot);
+                   std::shared_ptr<const drift::Project> snapshot, quint64 sequence);
 
 signals:
-    void frameReady(const GpuFrameTexture &frame, drift::TimeUs timeUs);
+    void frameReady(const GpuFrameTexture &frame, drift::TimeUs timeUs, CompositeTiming timing,
+                    quint64 sequence);
 
 private:
     FrameCompositor m_compositor;
     std::shared_ptr<const drift::Project> m_snapshot;
 };
 
-// Background compositor thread. Frames are delivered to the GUI as live GL
-// textures out of the runtime's presentation ring — never read back to the CPU
-// and never re-uploaded. The ring is what keeps the scene graph from sampling a
-// target that is being drawn into, so there is no frame buffering here.
+// Background compositor threads. Frames are delivered to the GUI as live GL textures out of
+// the runtime's presentation ring — never read back to the CPU and never re-uploaded. The
+// ring is what keeps the scene graph from sampling a target that is being drawn into, and
+// its depth is therefore what caps how many composites may run at once.
+//
+// During playback up to GpuCompositor::kMaxPreviewComposites run concurrently. That is stage
+// parallelism, not throughput: GL work cannot overlap GL work, because every composite funnels
+// through the one GL thread. What it does overlap is one frame's wait on a decoder with
+// another frame's GL work, which is where the pipeline previously sat idle. Outside playback
+// the depth drops back to one, so scrubbing and seeking behave exactly as before.
 class CompositorService : public QObject
 {
     Q_OBJECT
@@ -74,16 +96,25 @@ public:
     // quality is on (1.0 = full requested quality).
     double adaptiveScaleFactor() const;
 
+    // Optional counter sink, owned by the caller. Everything reported here happens on the
+    // GUI thread, so the stats block needs no locking of its own.
+    void setStats(PlaybackStats *stats) { m_stats = stats; }
+
 signals:
     void frameReady(const GpuFrameTexture &frame);
     // One per completed request, whether or not a frame was produced or shown.
     void compositeFinished();
 
 private slots:
-    void onWorkerFrameReady(const GpuFrameTexture &frame, drift::TimeUs timeUs);
+    void onWorkerFrameReady(const GpuFrameTexture &frame, drift::TimeUs timeUs,
+                            CompositeTiming timing, quint64 sequence);
 
 private:
     void dispatch(drift::TimeUs timeUs, const FrameCompositor::RenderOptions &options);
+    // Starts the newest pending request if it differs from the last one dispatched and there
+    // is room in flight. Returns whether it dispatched.
+    bool dispatchPending();
+    int maxInFlight() const;
     void noteFrameLate(bool late);
     void resetAdaptiveState();
     FrameCompositor::RenderOptions effectiveOptions(FrameCompositor::RenderOptions options) const;
@@ -95,7 +126,15 @@ private:
     int m_snapshotGeneration = 0;
     int m_liveGeneration = 0;
 
-    std::atomic<bool> m_requestPending{false};
+    // Requests and completions are both GUI-thread only (every requestComposite caller is
+    // PlaybackEngine, and onWorkerFrameReady is a queued slot), so this needs no atomic.
+    int m_inFlight = 0;
+    quint64 m_nextSequence = 1;
+    // Highest sequence already put on screen. A completion below it has been overtaken —
+    // either it finished out of order, or the playhead moved past it while it rendered — and
+    // showing it would step the picture backwards. This replaces the old wall-clock staleness
+    // test, which threw away finished frames that had nothing newer to replace them with.
+    quint64 m_lastPresentedSequence = 0;
     std::atomic<drift::TimeUs> m_pendingTimeUs{0};
     std::atomic<int> m_pendingPreviewScalePercent{100};
     std::atomic<int> m_pendingMaxTimeEchoHistoryFrames{-1};
@@ -104,12 +143,6 @@ private:
     // The scale the caller asked for, before any adaptive multiplier — that is
     // applied at dispatch, so a change takes effect on the very next frame.
     FrameCompositor::RenderOptions m_lastDispatchedOptions;
-    // Wall time the in-flight composite has been running, which is what "late"
-    // means. The old measure was how far the playhead had moved, in timeline
-    // microseconds: at 4x that is four times larger for the same real delay, so
-    // fast rates were judged late no matter how quickly frames actually rendered.
-    QElapsedTimer m_renderElapsed;
-
     // Adaptive quality: consecutive on-time frames recover; late frames drop scale.
     int m_lateStreak = 0;
     int m_onTimeStreak = 0;
@@ -120,8 +153,14 @@ private:
     bool m_playbackActive = false;
     bool m_dropLateFrames = true;
 
-    QThread m_thread;
-    CompositorWorker *m_worker = nullptr;
+    PlaybackStats *m_stats = nullptr;
+
+    // One thread per possible in-flight composite. Each worker owns its own FrameCompositor,
+    // which is safe because that class holds nothing but a project pointer and every cache it
+    // reaches is either mutex-guarded (the still-image cache) or serialised on the GL thread.
+    std::array<QThread, GpuCompositor::kMaxPreviewComposites> m_threads;
+    std::array<CompositorWorker *, GpuCompositor::kMaxPreviewComposites> m_workers{};
+    int m_nextWorker = 0;
 
 public:
     // Call when the live project has been mutated so the next dispatch recopies.
@@ -129,4 +168,5 @@ public:
 };
 
 Q_DECLARE_METATYPE(GpuFrameTexture)
+Q_DECLARE_METATYPE(CompositeTiming)
 Q_DECLARE_METATYPE(std::shared_ptr<const drift::Project>)

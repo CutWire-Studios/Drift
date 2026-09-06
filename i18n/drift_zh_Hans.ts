@@ -890,6 +890,10 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>GPU preview unavailable</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Fit</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1940,6 +1944,18 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Your graphics driver is too old for the preview, which needs OpenGL 3.3. See Help → Debug info.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Your graphics driver only provides %1; the preview needs OpenGL 3.3. See Help → Debug info.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>GPU preview rendering is unavailable on this machine. See Help → Debug info.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>An edit is already saving</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1969,6 +1985,14 @@
     </message>
     <message>
         <source>Media edited</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Paste attributes…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Clips moved</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -2037,6 +2061,22 @@
     </message>
     <message>
         <source>Shape added</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Adjustment Layer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Adjustment (%1)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add adjustment layer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Adjustment layer added</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -2596,6 +2636,28 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Copy a clip and select target clips first</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Paste attributes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>Pasted attributes onto %n clip(s)</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Pasted effects use “%1”, which isn’t installed — it won’t show. Open Extras to install it.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Pasted effects use %1 packs that aren’t installed — they won’t show. Open Extras to install them.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>There are no effects to save</source>
         <translation type="unfinished"></translation>
     </message>
@@ -2770,6 +2832,14 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Failed to open Premiere Pro project</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Premiere Pro project imported: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Exporting…</source>
         <translation type="unfinished"></translation>
     </message>
@@ -2871,6 +2941,14 @@
     </message>
     <message>
         <source>Clips added</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Folder moved</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Track renamed</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -3579,6 +3657,10 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Playback</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Video decoders</source>
         <translation type="unfinished"></translation>
     </message>
@@ -3632,6 +3714,90 @@
     </message>
     <message>
         <source>System</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Delivered well above displayed means frames are being produced that the display never shows — a cadence problem rather than a slow machine.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show live stats on the preview</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Stays on after this dialog closes, so you can watch the numbers while the timeline plays.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Where the time goes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Decodes a fixed 1080p60 clip, and the first clip on the timeline, through each stage of the preview. Takes a few seconds.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Measuring…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Run test</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Reference clip (1080p60)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Timeline clip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Source</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Decoder</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source> (hardware)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source> (software)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Preview upload</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Decode</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Readback to CPU costs</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Compositing costs</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Total per frame</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Budget at this frame rate</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Findings</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Nothing stood out. Turn on the live stats above, play the timeline for a few seconds, then reopen this.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -3701,6 +3867,14 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Premiere Pro project (*.prproj)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Final Cut Pro XML (*.xml)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Open Project</source>
         <translation type="unfinished"></translation>
     </message>
@@ -3718,6 +3892,14 @@
     </message>
     <message>
         <source>Open Project JSON</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Import Premiere Pro Project</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Premiere Pro project (*.prproj *.xml)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -3773,6 +3955,10 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Debug info and playback diagnostics</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Recommended packs and updates</source>
         <translation type="unfinished"></translation>
     </message>
@@ -3786,10 +3972,6 @@
     </message>
     <message>
         <source>Language for menus and labels</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Debug info</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -3822,6 +4004,10 @@
     </message>
     <message>
         <source>Multicam</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>All Supported Projects (*.drift *.prproj *.xml)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -3880,11 +4066,19 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Drag a preset onto a clip in the timeline</source>
+        <source>Click to add as adjustment layer, or drag onto a clip</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Search effects</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add adjustment layer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add an adjustment layer to apply effects across all clips underneath</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -4571,6 +4765,10 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Adjustment</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Untitled clip</source>
         <translation type="unfinished"></translation>
     </message>
@@ -5250,6 +5448,10 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>GPU preview unavailable — see Help → Debug info</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Program</source>
         <translation type="unfinished"></translation>
     </message>
@@ -5344,6 +5546,105 @@
     </message>
 </context>
 <context>
+    <name>PasteAttributesDialog</name>
+    <message>
+        <source>Paste Attributes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Paste</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation type="unfinished">取消</translation>
+    </message>
+    <message>
+        <source>Clip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>Pasting from “%1” onto %n selected clip(s):</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Video Attributes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Transform (motion, position, scale, opacity)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>, reverse</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>, speed curve</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Speed / Retime (%1x%2%3)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Speed / Retime</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>Video Effects (%n effect(s))</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Video Effects (none)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Audio Attributes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Volume &amp; Fades (volume keyframes, in/out ramps)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>Audio Effects (%n effect(s))</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Audio Effects (none)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Transitions</source>
+        <translation type="unfinished">转场</translation>
+    </message>
+    <message numerus="yes">
+        <source>Transitions (%n transition(s))</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Replace existing effects (instead of appending)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Select All</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Select None</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>PlaybackEngine</name>
     <message>
         <source>Auto</source>
@@ -5359,6 +5660,61 @@
     </message>
 </context>
 <context>
+    <name>PlaybackStats</name>
+    <message>
+        <source>Delivered frames</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Displayed frames</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Display refresh</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Delivery jitter</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Composite (median)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Composite (p95)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Decode wait (median)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Preview scale</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Frames dropped</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Requests coalesced</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Composites in flight (peak)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Preview upload</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Samples</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>PreviewPanel</name>
     <message>
         <source>Nothing to preview yet</source>
@@ -5366,6 +5722,22 @@
     </message>
     <message>
         <source>Import media and drag it onto the timeline below to see it here.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>GPU preview unavailable</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Your graphics driver only provides %1. Drift&apos;s preview needs OpenGL 3.3.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Drift could not start its GPU renderer, so the preview cannot draw.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Debug info</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -5874,6 +6246,38 @@ If playback stutters, try another.</source>
         <source>Scanning frame %1 of %2…</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>Clip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cannot open file: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>File is empty</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Failed to decompress Premiere project archive</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>XML parse error at line %1: %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Imported Premiere Project</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>V%1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>A%1</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>RecentProjectsPopup</name>
@@ -5924,6 +6328,10 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Open JSON…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Import Premiere project…</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -7964,6 +8372,10 @@ If playback stutters, try another.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Paste attributes…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Duplicate</source>
         <translation type="unfinished"></translation>
     </message>
@@ -8114,6 +8526,10 @@ If playback stutters, try another.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Show audio on separate track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Trim start — click a clip to drop everything left of the cut</source>
         <translation type="unfinished"></translation>
     </message>
@@ -8166,10 +8582,6 @@ If playback stutters, try another.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Separate audio from video</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Unlink video and audio</source>
         <translation type="unfinished"></translation>
     </message>
@@ -8183,6 +8595,10 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>More edit actions</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add adjustment layer</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -8335,6 +8751,22 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Reset row height</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Rename track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Rename</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Track name</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Rename…</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -8624,6 +9056,43 @@ If playback stutters, try another.</source>
     <message>
         <source>Close</source>
         <translation type="unfinished">关闭</translation>
+    </message>
+</context>
+<context>
+    <name>main</name>
+    <message>
+        <source>unknown</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No OpenGL driver</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Drift could not create an OpenGL context, so it cannot draw its interface or render the preview.
+
+Install or update your graphics driver.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>OpenGL context unavailable</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Drift could not create an OpenGL 3.3 core profile context, though this driver reports OpenGL %1.%2 (%3).
+
+The video preview cannot render. Updating your graphics driver may help.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Graphics driver is too old</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Drift needs OpenGL 3.3, but this graphics driver only provides OpenGL %1.%2 (%3).
+
+The video preview cannot render, and Drift may not start at all. Update your graphics driver, or run Drift on a machine with a newer GPU.</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 </TS>

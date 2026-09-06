@@ -699,6 +699,7 @@ Project Project::fromJson(const QJsonObject &object, QString *errorOut)
             Track track;
             track.type = trackTypeFromString(
                 trackObject.value(QStringLiteral("type")).toString(QStringLiteral("video")));
+            track.name = trackObject.value(QStringLiteral("name")).toString();
             track.muted = trackObject.value(QStringLiteral("muted")).toBool(false);
             track.hidden = trackObject.value(QStringLiteral("hidden")).toBool(false);
             track.locked = trackObject.value(QStringLiteral("locked")).toBool(false);
@@ -798,6 +799,7 @@ QJsonObject Project::toJson() const
 
         tracksArray.append(QJsonObject{
             {QStringLiteral("type"), trackTypeToString(track.type)},
+            {QStringLiteral("name"), track.name},
             {QStringLiteral("muted"), track.muted},
             {QStringLiteral("hidden"), track.hidden},
             {QStringLiteral("locked"), track.locked},

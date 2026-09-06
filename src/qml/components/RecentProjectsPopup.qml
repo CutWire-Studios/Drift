@@ -15,6 +15,7 @@ Popup {
     signal packageRequested()
     signal saveJsonRequested()
     signal openJsonRequested()
+    signal importPremiereRequested()
     signal propertiesRequested()
 
     component ActionRow: Rectangle {
@@ -416,6 +417,12 @@ Popup {
             glyph: Theme.icons.upload
             text: qsTr("Open JSON…")
             onTriggered: root.openJsonRequested()
+        }
+
+        ActionRow {
+            glyph: Theme.icons.film
+            text: qsTr("Import Premiere project…")
+            onTriggered: root.importPremiereRequested()
         }
 
         ActionRow {

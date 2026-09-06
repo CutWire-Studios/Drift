@@ -46,8 +46,10 @@ Column {
     }
 
     function applyPreset(effectId) {
-        if (EditorState.selectedClip < 0)
+        if (EditorState.selectedClip < 0) {
+            EditorState.addAdjustmentClipWithEffect(effectId, -1, -1)
             return
+        }
         EditorState.addEffect(EditorState.selectedTrack, EditorState.selectedClip, effectId)
     }
 
@@ -84,7 +86,7 @@ Column {
             horizontalAlignment: Text.AlignHCenter
             text: EditorState.selectedClip >= 0
                   ? qsTr("Drag a preset onto a clip, or click to apply to the selection")
-                  : qsTr("Drag a preset onto a clip in the timeline")
+                  : qsTr("Click to add as adjustment layer, or drag onto a clip")
             color: Theme.mutedForeground
             font.family: Theme.fontFamily
             font.pixelSize: Theme.fontSizeXs
@@ -96,6 +98,26 @@ Column {
             x: 12
             placeholderText: qsTr("Search effects")
             font.family: Theme.fontFamily
+        }
+
+        Item {
+            width: 1
+            height: Theme.spacingSm
+        }
+
+        Row {
+            width: parent.width - 24
+            x: 12
+            spacing: Theme.spacingSm
+
+            ThemedButton {
+                width: parent.width
+                text: qsTr("Add adjustment layer")
+                glyph: Theme.icons.wand
+                variant: "secondary"
+                tooltip: qsTr("Add an adjustment layer to apply effects across all clips underneath")
+                onClicked: EditorState.addAdjustmentClip(-1, -1)
+            }
         }
 
         Item {
