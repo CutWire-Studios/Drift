@@ -10540,18 +10540,19 @@ void AppController::setClipMask(int trackIndex, int clipIndex, const QVariantMap
     finishEdit(tr("Clip mask updated"));
 }
 
-void AppController::addTransition(int trackIndex, int clipIndex, const QString &kind, double durationSeconds)
+AppController::TransitionApplyOutcome AppController::addOrReplaceTransitionAt(
+    int trackIndex, int clipIndex, const QString &kind, double durationSeconds)
 {
     if (trackIndex < 0 || trackIndex >= m_project.tracks().size())
-        return;
+        return TransitionApplyOutcome::Failed;
 
     drift::Track &track = m_project.tracks()[trackIndex];
     if (!trackAllowsTransitions(track.type))
-        return;
+        return TransitionApplyOutcome::Failed;
 
     const int partnerIndex = findTransitionPartnerIndex(track, clipIndex);
     if (partnerIndex < 0)
-        return;
+        return TransitionApplyOutcome::Failed;
 
     const drift::Clip &fromClip = track.clips.at(clipIndex);
     const drift::Clip &toClip = track.clips.at(partnerIndex);
@@ -10562,14 +10563,10 @@ void AppController::addTransition(int trackIndex, int clipIndex, const QString &
 
     for (drift::Transition &existing : track.transitions) {
         if (existing.fromClipId == fromClip.id && existing.toClipId == toClip.id) {
-            const drift::Project before = m_project;
             existing.kindId = kindId;
             existing.parameters.clear(); // overrides belong to the old package
             existing.durationUs = durationUs;
-            pushProjectEdit(before, tr("Replace transition"));
-            finishEdit(tr("Transition updated"));
-            selectTransition(trackIndex, clipIndex);
-            return;
+            return TransitionApplyOutcome::Replaced;
         }
     }
 
@@ -10579,12 +10576,95 @@ void AppController::addTransition(int trackIndex, int clipIndex, const QString &
     transition.toClipId = toClip.id;
     transition.kindId = kindId;
     transition.durationUs = durationUs;
+    track.transitions.append(transition);
+    return TransitionApplyOutcome::Added;
+}
+
+void AppController::addTransition(int trackIndex, int clipIndex, const QString &kind, double durationSeconds)
+{
+    const drift::Project before = m_project;
+    const TransitionApplyOutcome outcome = addOrReplaceTransitionAt(trackIndex, clipIndex, kind, durationSeconds);
+    if (outcome == TransitionApplyOutcome::Failed)
+        return;
+
+    pushProjectEdit(before, outcome == TransitionApplyOutcome::Replaced ? tr("Replace transition")
+                                                                        : tr("Add transition"));
+    finishEdit(outcome == TransitionApplyOutcome::Replaced ? tr("Transition updated") : tr("Transition added"));
+
+    // selectTransition() collapses m_selection down to just this boundary, so both the
+    // multi-selection check and the snapshot handed to the caller have to happen before that,
+    // not after — by the time the user clicks "Apply to All", the live selection is gone.
+    const bool offerApplyToSelection = m_selection.size() > 1 && selectionContains(trackIndex, clipIndex);
+    const QVariantList selectionSnapshot = offerApplyToSelection ? selection() : QVariantList{};
+
+    selectTransition(trackIndex, clipIndex);
+
+    // Offer to spread the same transition across the rest of a multi-clip selection, rather
+    // than making the user drop it onto every boundary one at a time.
+    if (offerApplyToSelection)
+        emit transitionSelectionApplyAvailable(selectionSnapshot, kind, durationSeconds);
+}
+
+int AppController::applyTransitionToSelection(const QVariantList &selectionPairs, const QString &kind,
+                                              double durationSeconds)
+{
+    QList<QPair<int, int>> pairs;
+    pairs.reserve(selectionPairs.size());
+    for (const QVariant &value : selectionPairs) {
+        const QVariantMap map = value.toMap();
+        pairs.append(qMakePair(map.value(QStringLiteral("track")).toInt(),
+                               map.value(QStringLiteral("clip")).toInt()));
+    }
+    if (pairs.size() < 2)
+        return 0;
+
+    QHash<int, QSet<int>> selectedByTrack;
+    for (const auto &pair : pairs)
+        selectedByTrack[pair.first].insert(pair.second);
+
+    // Collect target boundaries first, while every track is still untouched — mutating
+    // transitions mid-scan would be fine here (clips themselves never move), but doing the
+    // read pass up front keeps this independent of that invariant.
+    QHash<int, QList<int>> boundariesByTrack;
+    for (auto it = selectedByTrack.constBegin(); it != selectedByTrack.constEnd(); ++it) {
+        const int trackIndex = it.key();
+        if (trackIndex < 0 || trackIndex >= m_project.tracks().size())
+            continue;
+        const drift::Track &track = m_project.tracks().at(trackIndex);
+        if (!trackAllowsTransitions(track.type))
+            continue;
+
+        const QSet<int> &selectedClips = it.value();
+        QList<int> boundaries;
+        for (int i = 0; i < track.clips.size(); ++i) {
+            const int partner = findTransitionPartnerIndex(track, i);
+            if (partner < 0)
+                continue;
+            if (selectedClips.contains(i) || selectedClips.contains(partner))
+                boundaries.append(i);
+        }
+        if (!boundaries.isEmpty())
+            boundariesByTrack.insert(trackIndex, boundaries);
+    }
+
+    if (boundariesByTrack.isEmpty())
+        return 0;
 
     const drift::Project before = m_project;
-    track.transitions.append(transition);
-    pushProjectEdit(before, tr("Add transition"));
-    finishEdit(tr("Transition added"));
-    selectTransition(trackIndex, clipIndex);
+    int appliedCount = 0;
+    for (auto it = boundariesByTrack.constBegin(); it != boundariesByTrack.constEnd(); ++it) {
+        for (int clipIndex : it.value()) {
+            if (addOrReplaceTransitionAt(it.key(), clipIndex, kind, durationSeconds) != TransitionApplyOutcome::Failed)
+                ++appliedCount;
+        }
+    }
+
+    if (appliedCount == 0)
+        return 0;
+
+    pushProjectEdit(before, tr("Apply transition to selection"));
+    finishEdit(tr("Transition applied to %n clip(s)", nullptr, appliedCount));
+    return appliedCount;
 }
 
 void AppController::removeTransition(int trackIndex, const QString &transitionId)

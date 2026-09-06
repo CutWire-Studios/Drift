@@ -822,6 +822,7 @@ qt_add_qml_module(drift
         src/qml/components/RecentProjectsPopup.qml
         src/qml/components/NewTrackMenu.qml
         src/qml/components/ToastHost.qml
+        src/qml/components/TransitionSelectionBanner.qml
         src/qml/components/EmptyState.qml
         src/qml/components/TouchLiftArea.qml
         src/qml/components/SkeletonBox.qml

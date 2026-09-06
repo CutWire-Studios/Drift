@@ -885,6 +885,14 @@ public:
     Q_INVOKABLE void setClipAnimation(int trackIndex, int clipIndex, const QString &which,
                                       const QVariantMap &patch);
     Q_INVOKABLE void addTransition(int trackIndex, int clipIndex, const QString &kind, double durationSeconds);
+    // Adds/replaces `kind` at every clip boundary touching a clip in `selectionPairs` (each a
+    // {track, clip} map, as produced by the `selection` property) — one undo step. `selectionPairs`
+    // is a caller-held snapshot rather than the live selection because selectTransition() (called
+    // right after a single addTransition()) collapses the live selection down to one clip before
+    // the user gets a chance to click "Apply to All". Returns how many boundaries were touched;
+    // 0 if fewer than two clips are named.
+    Q_INVOKABLE int applyTransitionToSelection(const QVariantList &selectionPairs, const QString &kind,
+                                               double durationSeconds);
     Q_INVOKABLE void removeTransition(int trackIndex, const QString &transitionId);
     Q_INVOKABLE void setTransitionDuration(int trackIndex, const QString &transitionId, double durationSeconds);
     Q_INVOKABLE void setTransitionKind(int trackIndex, const QString &transitionId, const QString &kind);
@@ -1316,6 +1324,11 @@ signals:
     void openRequested();
     void saveRequested();
     void openPasteAttributesRequested();
+    // Fired after addTransition() lands on a clip that is part of a multi-clip selection, so
+    // the timeline can offer to apply the same transition to the rest of the selection.
+    // `selectionPairs` is a snapshot (see applyTransitionToSelection()), not a live reference.
+    void transitionSelectionApplyAvailable(const QVariantList &selectionPairs, const QString &kind,
+                                           double durationSeconds);
 
 protected:
     void pushProjectEdit(const drift::Project &before, const QString &text);
@@ -1345,6 +1358,11 @@ protected:
                            const QByteArray &fingerprint);
     void loadAssetFavorites();
     void saveAssetFavorites(const QString &tabId);
+    enum class TransitionApplyOutcome { Failed, Added, Replaced };
+    // Core of addTransition()/applyTransitionToSelection(): adds or replaces the transition
+    // between clipIndex and its timeline neighbor. No undo push — callers batch that.
+    TransitionApplyOutcome addOrReplaceTransitionAt(int trackIndex, int clipIndex, const QString &kind,
+                                                    double durationSeconds);
     void applyEffectTemplateInternal(int trackIndex, int clipIndex, const EffectTemplateEntry &entry,
                                    const QString &mattePath = {},
                                    drift::TimeUs matteSrcOffsetUs = 0);

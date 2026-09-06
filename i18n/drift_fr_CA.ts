@@ -2947,6 +2947,17 @@
         <source>Track renamed</source>
         <translation>Piste renommée</translation>
     </message>
+    <message>
+        <source>Apply transition to selection</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>Transition applied to %n clip(s)</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
 </context>
 <context>
     <name>AssetCategoryChips</name>
@@ -8937,6 +8948,24 @@ En cas de saccades à la lecture, essayez un autre mode.</translation>
     <message>
         <source>Remove transition</source>
         <translation>Supprimer la transition</translation>
+    </message>
+</context>
+<context>
+    <name>TransitionSelectionBanner</name>
+    <message numerus="yes">
+        <source>Apply this transition to the other %n selected clip(s)?</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Apply to All</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Dismiss</source>
+        <translation type="unfinished">Fermer</translation>
     </message>
 </context>
 <context>

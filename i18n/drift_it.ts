@@ -2945,6 +2945,17 @@
         <source>Track renamed</source>
         <translation>Traccia rinominata</translation>
     </message>
+    <message>
+        <source>Apply transition to selection</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>Transition applied to %n clip(s)</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
 </context>
 <context>
     <name>AssetCategoryChips</name>
@@ -8932,6 +8943,24 @@ Se la riproduzione va a scatti, prova un&apos;altra opzione.</translation>
     <message>
         <source>Remove transition</source>
         <translation>Rimuovi transizione</translation>
+    </message>
+</context>
+<context>
+    <name>TransitionSelectionBanner</name>
+    <message numerus="yes">
+        <source>Apply this transition to the other %n selected clip(s)?</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Apply to All</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Dismiss</source>
+        <translation type="unfinished">Ignora</translation>
     </message>
 </context>
 <context>

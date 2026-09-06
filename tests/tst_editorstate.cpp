@@ -97,6 +97,8 @@ private slots:
     void multiSelectClipboardGuidesAndShortcuts();
     void addTransitionBetweenAdjacentClips();
     void addTransitionBetweenAdjacentTextClips();
+    void applyTransitionToSelectionCoversTouchedBoundaries();
+    void addTransitionSignalsSelectionApplyWhenMultiSelected();
     void clipAnimationUndoRestoresKind();
     void setTransitionKindAndDurationPersist();
     void replaceTransitionOnDrop();
@@ -2082,6 +2084,25 @@ static void appendAdjacentShapeClips(drift::Project &project, drift::TimeUs gapU
     project.tracks()[0].clips.append(clipB);
 }
 
+// A chain of `count` abutting shape clips on one video track: clip-0..clip-(count-1),
+// each 2s long, back to back with no gap.
+static void appendAdjacentShapeClipChain(drift::Project &project, int count)
+{
+    project.tracks().clear();
+    project.tracks().append(drift::Track{.type = drift::TrackType::Video});
+
+    drift::TimeUs start = 0;
+    for (int i = 0; i < count; ++i) {
+        drift::Clip clip;
+        clip.id = QStringLiteral("clip-%1").arg(i);
+        clip.type = drift::ClipType::Shape;
+        clip.timelineStart = start;
+        clip.timelineDuration = drift::secondsToUs(2.0);
+        project.tracks()[0].clips.append(clip);
+        start = clip.timelineEnd();
+    }
+}
+
 static void appendCombinedVideoClip(drift::Project &project)
 {
     project.tracks().clear();
@@ -2315,6 +2336,88 @@ void EditorStateTest::addTransitionBetweenAdjacentTextClips()
     QVERIFY(!transition.isEmpty());
     QCOMPARE(transition.value(QStringLiteral("kind")).toString(), QStringLiteral("crossfade"));
     QCOMPARE(transition.value(QStringLiteral("duration")).toDouble(), 0.5);
+}
+
+void EditorStateTest::applyTransitionToSelectionCoversTouchedBoundaries()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    appendAdjacentShapeClipChain(*state.project(), 4); // clip-0 | clip-1 | clip-2 | clip-3
+
+    // Fewer than two named clips: no-op.
+    QCOMPARE(state.applyTransitionToSelection(QVariantList{
+                 QVariantMap{{QStringLiteral("track"), 0}, {QStringLiteral("clip"), 1}},
+             }, QStringLiteral("crossfade"), 0.5),
+             0);
+
+    // Name clip-1 and clip-3: every boundary touching either one should get the transition —
+    // (0,1) and (1,2) via clip-1, (2,3) via clip-3 — but not clip-0's other boundary alone,
+    // since clip-0 itself was never named.
+    const QVariantList selectionPairs{
+        QVariantMap{{QStringLiteral("track"), 0}, {QStringLiteral("clip"), 1}},
+        QVariantMap{{QStringLiteral("track"), 0}, {QStringLiteral("clip"), 3}},
+    };
+    QCOMPARE(state.applyTransitionToSelection(selectionPairs, QStringLiteral("crossfade"), 0.5), 3);
+
+    for (int fromIndex = 0; fromIndex < 3; ++fromIndex) {
+        const QVariantMap transition = state.transitionBetweenClips(0, fromIndex);
+        QVERIFY(!transition.isEmpty());
+        QCOMPARE(transition.value(QStringLiteral("kind")).toString(), QStringLiteral("crossfade"));
+        QCOMPARE(transition.value(QStringLiteral("duration")).toDouble(), 0.5);
+    }
+    QCOMPARE(state.project()->tracks().at(0).transitions.size(), 3);
+
+    // All three additions land in one undo step.
+    QVERIFY(state.undoAvailable());
+    state.undo();
+    QCOMPARE(state.project()->tracks().at(0).transitions.size(), 0);
+}
+
+void EditorStateTest::addTransitionSignalsSelectionApplyWhenMultiSelected()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    appendAdjacentShapeClipChain(*state.project(), 3); // clip-0 | clip-1 | clip-2
+
+    QSignalSpy spy(&state, &AppController::transitionSelectionApplyAvailable);
+
+    // Single selection: adding a transition never offers to spread it further.
+    state.selectClip(0, 0);
+    state.addTransition(0, 0, QStringLiteral("crossfade"), 0.5);
+    QCOMPARE(spy.count(), 0);
+
+    // Multi-selection, but the boundary about to be edited (clip-1 -> clip-2) doesn't touch
+    // either selected clip (clip-0 and clip-2, without clip-1): still no offer. selectTransition()
+    // collapses the live selection after every addTransition(), so it has to be re-set before
+    // each call that matters here rather than relying on it surviving the previous one.
+    state.setSelection(QVariantList{
+        QVariantMap{{QStringLiteral("track"), 0}, {QStringLiteral("clip"), 0}},
+        QVariantMap{{QStringLiteral("track"), 0}, {QStringLiteral("clip"), 2}},
+    });
+    state.addTransition(0, 1, QStringLiteral("crossfade"), 0.5);
+    QCOMPARE(spy.count(), 0);
+    QCOMPARE(state.selection().size(), 1); // collapsed to the boundary just selected
+
+    // Multi-selection where the boundary about to be edited (clip-0 -> clip-1) touches a
+    // selected clip: now the timeline should offer to spread it across the rest of the
+    // selection, carrying a snapshot of it rather than a live reference.
+    state.setSelection(QVariantList{
+        QVariantMap{{QStringLiteral("track"), 0}, {QStringLiteral("clip"), 0}},
+        QVariantMap{{QStringLiteral("track"), 0}, {QStringLiteral("clip"), 2}},
+    });
+    state.addTransition(0, 0, QStringLiteral("wipe_left"), 0.75);
+    QCOMPARE(spy.count(), 1);
+
+    const QList<QVariant> args = spy.takeFirst();
+    const QVariantList selectionSnapshot = args.at(0).toList();
+    QCOMPARE(selectionSnapshot.size(), 2);
+    QCOMPARE(args.at(1).toString(), QStringLiteral("wipe_left"));
+    QCOMPARE(args.at(2).toDouble(), 0.75);
+
+    // The live selection is already collapsed to just clip-0 by selectTransition() — the
+    // snapshot from the signal is what makes "Apply to All" still work at this point.
+    QCOMPARE(state.selection().size(), 1);
+    QCOMPARE(state.applyTransitionToSelection(selectionSnapshot, QStringLiteral("wipe_left"), 0.75), 2);
 }
 
 void EditorStateTest::clipAnimationUndoRestoresKind()
