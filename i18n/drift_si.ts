@@ -1934,6 +1934,21 @@
         <translation>ප්‍රතිදාන ගොනුවක් සෑදීමට නොහැකි විය</translation>
     </message>
     <message>
+        <source>Media and referenced clips removed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%n media items and referenced clips removed</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Media and referenced clip removed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Your graphics driver is too old for the preview, which needs OpenGL 3.3. See Help → Debug info.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -3096,6 +3111,14 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>“%1” is used by 1 clip on the timeline. Removing this media will also remove that clip and any transitions connected to it. The file on disk is not deleted.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>“%1” is used by %2 clips on the timeline. Removing this media will also remove those clips and any transitions connected to them. The files on disk are not deleted.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Text</source>
         <translation>පෙළ</translation>
     </message>
@@ -3262,17 +3285,6 @@
     <message>
         <source>Create a new folder here</source>
         <translation>මෙහි නව ෆෝල්ඩරයක් සාදන්න</translation>
-    </message>
-    <message>
-        <source>“%1” is still used by clips on the timeline.</source>
-        <translation>“%1” තවමත් කාලරේඛාවේ ක්ලිප් මගින් භාවිතා වේ.</translation>
-    </message>
-    <message numerus="yes">
-        <source>%n of the selected items are still used by clips on the timeline.</source>
-        <translation>
-            <numerusform>තෝරාගත් අයිතමවලින් %n ක් තවමත් කාලරේඛාවේ ක්ලිප් මගින් භාවිතා වේ.</numerusform>
-            <numerusform>තෝරාගත් අයිතමවලින් %n ක් තවමත් කාලරේඛාවේ ක්ලිප් මගින් භාවිතා වේ.</numerusform>
-        </translation>
     </message>
     <message numerus="yes">
         <source>%n items</source>
@@ -8544,6 +8556,10 @@ If playback stutters, try another.</source>
         <translation>කැපුම් ප්‍රකාරය — වෙන් කිරීමට ක්ලිපයක් මත ක්ලික් කරන්න</translation>
     </message>
     <message>
+        <source>Show audio on separate track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Trim start — click a clip to drop everything left of the cut</source>
         <translation>ආරම්භය කප්පාදුව — කැපුමට වම්පස ඇති සියල්ල ඉවත් කිරීමට ක්ලිපයක් මත ක්ලික් කරන්න</translation>
     </message>
@@ -8594,10 +8610,6 @@ If playback stutters, try another.</source>
     <message>
         <source>Clear work area</source>
         <translation>වැඩ කලාපය හිස් කරන්න</translation>
-    </message>
-    <message>
-        <source>Separate audio from video</source>
-        <translation>වීඩියෝවෙන් ශ්‍රව්‍ය වෙන් කරන්න</translation>
     </message>
     <message>
         <source>Unlink video and audio</source>
