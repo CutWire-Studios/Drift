@@ -14,6 +14,13 @@ Item {
     }
     readonly property bool hasSelection: !!clipData && Object.keys(clipData).length > 0
     readonly property string clipKind: hasSelection ? (clipData.kind || "") : ""
+    readonly property bool isVisualClip: clipKind !== "audio" && clipKind !== "text"
+                                         && clipKind !== "subtitle"
+    readonly property string maskShape: (clipData.mask && clipData.mask.shape) || "none"
+    // A matte is a per-frame raster mask backed by a grayscale video (see core/Mask.h): none of
+    // the parametric geometry applies to it, and MaskApplier bails out before reading any of it.
+    // Only invert and removal mean anything, so only those are offered.
+    readonly property bool isMatte: maskShape === "matte"
 
     height: contentCol.height
     implicitHeight: contentCol.height
@@ -143,8 +150,9 @@ Item {
 
         ThemedComboBox {
             id: maskShapeBox
-            visible: root.clipKind !== "audio" && root.clipKind !== "text"
-                     && root.clipKind !== "subtitle"
+            // Hidden for a matte: "matte" is not one of the shapes below, so currentIndex would
+            // clamp to 0 and the control would read "None" next to an applied cutout.
+            visible: root.isVisualClip && !root.isMatte
             width: parent.width
             // Shape masks are unfinished — keep the control in the layout so
             // the Cutouts tab still shows what is coming, but do not let it open.
@@ -173,8 +181,7 @@ Item {
         // Clearing a mask previously required knowing to reselect
         // "none" in the combo above.
         ThemedButton {
-            visible: maskShapeBox.visible
-                     && ((root.clipData.mask && root.clipData.mask.shape) || "none") !== "none"
+            visible: root.isVisualClip && root.maskShape !== "none"
             text: qsTr("Remove cutout")
             variant: "destructive"
             glyph: Theme.icons.trash
@@ -198,10 +205,8 @@ Item {
                 required property var modelData
                 width: parent.width
                 spacing: 4
-                visible: root.clipKind !== "audio" && root.clipKind !== "text"
-                     && root.clipKind !== "subtitle"
-                         && !!root.clipData.mask && root.clipData.mask.shape !== "none"
-                         && (modelData.key !== "rotation" || root.clipData.mask.shape !== "bars")
+                visible: root.isVisualClip && !root.isMatte && root.maskShape !== "none"
+                         && (modelData.key !== "rotation" || root.maskShape !== "bars")
 
                 Text {
                     text: modelData.label
@@ -239,9 +244,7 @@ Item {
         Row {
             width: parent.width
             spacing: 8
-            visible: root.clipKind !== "audio" && root.clipKind !== "text"
-                     && root.clipKind !== "subtitle"
-                     && !!root.clipData.mask && root.clipData.mask.shape !== "none"
+            visible: root.isVisualClip && root.maskShape !== "none"
             Text {
                 text: qsTr("Invert")
                 color: Theme.mutedForeground
