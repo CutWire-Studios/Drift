@@ -24,6 +24,26 @@ Item {
     // Wider trim/move hit areas for phones; desktop leaves this false.
     property bool touchMode: false
 
+    // Desktop timeline deletion is intentionally scoped to the clip that owns
+    // keyboard focus. Clicking a clip already calls forceActiveFocus(), so this
+    // does not steal Delete from the Media Bin, dialogs or other editor surfaces.
+    //
+    // macOS sends the key labelled Delete on MacBook keyboards as Backspace;
+    // extended keyboards can also send the forward-delete Key_Delete.
+    //
+    // deleteSelectedClip() owns the A/V semantics:
+    //   linked pair   -> delete the whole linked set
+    //   unlinked pair -> delete only the current selection
+    Keys.onPressed: function(event) {
+        if ((event.key === Qt.Key_Delete
+                || event.key === Qt.Key_Backspace)
+                && clipItem.selected) {
+
+            EditorState.deleteSelectedClip()
+            event.accepted = true
+        }
+    }
+
     property var clipData: panel.tracks[trackIndex].clips[clipIndex]
     property bool selected: (EditorState.selection,
                              EditorState.selectionContains(trackIndex, clipIndex))

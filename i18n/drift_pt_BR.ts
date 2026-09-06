@@ -1934,6 +1934,21 @@
         <translation>Não foi possível criar um arquivo de saída</translation>
     </message>
     <message>
+        <source>Media and referenced clips removed</source>
+        <translation>Mídia e clipes associados removidos</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n media items and referenced clips removed</source>
+        <translation>
+            <numerusform>%n item de mídia e seus clipes associados foram removidos</numerusform>
+            <numerusform>%n itens de mídia e seus clipes associados foram removidos</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Media and referenced clip removed</source>
+        <translation>Mídia e clipe associado removidos</translation>
+    </message>
+    <message>
         <source>Your graphics driver is too old for the preview, which needs OpenGL 3.3. See Help → Debug info.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -3107,6 +3122,14 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>“%1” is used by 1 clip on the timeline. Removing this media will also remove that clip and any transitions connected to it. The file on disk is not deleted.</source>
+        <translation>Há 1 clipe na linha do tempo usando “%1”. Ao remover esta mídia, esse clipe e as transições associadas também serão removidos. O arquivo original no disco não será apagado.</translation>
+    </message>
+    <message>
+        <source>“%1” is used by %2 clips on the timeline. Removing this media will also remove those clips and any transitions connected to them. The files on disk are not deleted.</source>
+        <translation>Há %2 clipes na linha do tempo usando “%1”. Ao remover esta mídia, esses clipes e as transições associadas também serão removidos. O arquivo original no disco não será apagado.</translation>
+    </message>
+    <message>
         <source>Text</source>
         <translation>Texto</translation>
     </message>
@@ -3273,17 +3296,6 @@
     <message>
         <source>Create a new folder here</source>
         <translation>Criar uma nova pasta aqui</translation>
-    </message>
-    <message>
-        <source>“%1” is still used by clips on the timeline.</source>
-        <translation>“%1” ainda está sendo usado por clipes na linha do tempo.</translation>
-    </message>
-    <message numerus="yes">
-        <source>%n of the selected items are still used by clips on the timeline.</source>
-        <translation>
-            <numerusform>%n dos itens selecionados ainda está sendo usado por clipes na linha do tempo.</numerusform>
-            <numerusform>%n dos itens selecionados ainda estão sendo usados por clipes na linha do tempo.</numerusform>
-        </translation>
     </message>
     <message numerus="yes">
         <source>%n items</source>
@@ -8555,6 +8567,10 @@ Se a reprodução travar, experimente outro.</translation>
         <translation>Modo de corte — clique em um clipe para dividi-lo</translation>
     </message>
     <message>
+        <source>Show audio on separate track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Trim start — click a clip to drop everything left of the cut</source>
         <translation>Aparar início — clique em um clipe para descartar tudo à esquerda do corte</translation>
     </message>
@@ -8605,10 +8621,6 @@ Se a reprodução travar, experimente outro.</translation>
     <message>
         <source>Clear work area</source>
         <translation>Limpar área de trabalho</translation>
-    </message>
-    <message>
-        <source>Separate audio from video</source>
-        <translation>Separar áudio do vídeo</translation>
     </message>
     <message>
         <source>Unlink video and audio</source>
