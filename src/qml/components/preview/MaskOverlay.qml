@@ -837,7 +837,7 @@ Item {
         Text {
             id: hintText
             anchors.centerIn: parent
-            text: root.hasFrame ? qsTr("Add a mask in the Cutouts tab to edit it here")
+            text: root.hasFrame ? qsTr("Drag a mask from the Masks tab onto a clip to edit it here")
                                 : qsTr("Select a clip at the playhead to edit its masks")
             color: Theme.mutedForeground
             font.family: Theme.fontFamily

@@ -91,6 +91,18 @@ QList<ClipRef> linkedMaskAdjustments(const Project &project, int trackIndex, int
 // alone. INSERTS TRACKS, so any index held across the call goes stale.
 void setLinkedMask(Project &project, int trackIndex, int clipIndex, const Mask &mask);
 
+// Pin `mask` as an *additional* Mask-kind adjustment on clips[clipIndex], stacking on whatever is
+// already pinned there instead of replacing it — which is what dropping a second mask onto a clip
+// means. Returns the new adjustment's position, or a null ClipRef when the mask would not
+// contribute. INSERTS TRACKS.
+ClipRef addLinkedMask(Project &project, int trackIndex, int clipIndex, const Mask &mask);
+
+// An unlinked Mask adjustment on one of `trackIndex`'s lanes, spanning [startUs, +durationUs).
+// Pinned to nothing, so its edges stay draggable and it masks whatever the track shows over that
+// span rather than one clip. `trackIndex` must be a track that can carry lanes. INSERTS TRACKS.
+ClipRef addLaneMask(Project &project, int trackIndex, const Mask &mask, TimeUs startUs,
+                    TimeUs durationUs);
+
 // Drop the mask adjustments pinned to clips[clipIndex]. `mediaOnly` keeps parametric masks, which
 // is what a multicam switch wants: a matte describes the camera it was traced from, but a
 // geometric mask is treatment like the transform.

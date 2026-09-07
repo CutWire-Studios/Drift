@@ -363,6 +363,14 @@
         <source>Boxes, circles and lines</source>
         <translation>四角、丸、線</translation>
     </message>
+    <message>
+        <source>Masks</source>
+        <translation type="unfinished">マスク</translation>
+    </message>
+    <message>
+        <source>Cut a shape or a subject out of the selected clip</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>AndroidBottomRail</name>
@@ -2472,6 +2480,38 @@
         <translation>クリップマスクを更新しました</translation>
     </message>
     <message>
+        <source>Rectangle</source>
+        <translation type="unfinished">長方形</translation>
+    </message>
+    <message>
+        <source>Ellipse</source>
+        <translation type="unfinished">楕円</translation>
+    </message>
+    <message>
+        <source>Star</source>
+        <translation type="unfinished">星</translation>
+    </message>
+    <message>
+        <source>Heart</source>
+        <translation type="unfinished">ハート</translation>
+    </message>
+    <message>
+        <source>Bars</source>
+        <translation type="unfinished">バー</translation>
+    </message>
+    <message>
+        <source>Freeform</source>
+        <translation type="unfinished">フリーフォーム</translation>
+    </message>
+    <message>
+        <source>Add mask</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Mask added</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Add mask point</source>
         <translation type="unfinished"></translation>
     </message>
@@ -3258,6 +3298,10 @@
     <message>
         <source>Scenes</source>
         <translation>シーン</translation>
+    </message>
+    <message>
+        <source>Masks</source>
+        <translation type="unfinished">マスク</translation>
     </message>
     <message>
         <source>Effects</source>
@@ -5263,7 +5307,7 @@
         <translation type="unfinished">マスクを変更しました</translation>
     </message>
     <message>
-        <source>Add a mask in the Cutouts tab to edit it here</source>
+        <source>Drag a mask from the Masks tab onto a clip to edit it here</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -5274,40 +5318,12 @@
 <context>
     <name>MasksInspector</name>
     <message>
-        <source>Not available</source>
-        <translation>利用できません</translation>
-    </message>
-    <message>
-        <source>Cutouts apply to visual clips.</source>
-        <translation>切り抜きはビジュアルクリップに適用されます。</translation>
-    </message>
-    <message>
-        <source>Subject</source>
-        <translation>被写体</translation>
-    </message>
-    <message>
-        <source>Cut out subject…</source>
-        <translation>被写体を切り抜く…</translation>
-    </message>
-    <message>
-        <source>Install AI engine first</source>
-        <translation>まず AI エンジンをインストール</translation>
-    </message>
-    <message>
-        <source>Cutout shape</source>
-        <translation>切り抜き形状</translation>
-    </message>
-    <message>
         <source>None</source>
         <translation>なし</translation>
     </message>
     <message>
-        <source>Download people cutout (about 20 MB)</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Add click-to-pick cutout (about 190 MB)</source>
-        <translation type="unfinished"></translation>
+        <source>Shape</source>
+        <translation type="unfinished">シェイプ</translation>
     </message>
     <message>
         <source>Rectangle</source>
@@ -5332,6 +5348,22 @@
     <message>
         <source>Freeform</source>
         <translation>フリーフォーム</translation>
+    </message>
+    <message>
+        <source>Combine</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add</source>
+        <translation type="unfinished">加算</translation>
+    </message>
+    <message>
+        <source>Subtract</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Intersect</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Remove cutout layer</source>
@@ -5368,6 +5400,73 @@
     <message>
         <source>Invert</source>
         <translation>反転</translation>
+    </message>
+</context>
+<context>
+    <name>MasksTab</name>
+    <message>
+        <source>Click to apply to the selection, or drag onto a clip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Select a clip, or drag a mask onto one</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Subject</source>
+        <translation type="unfinished">被写体</translation>
+    </message>
+    <message>
+        <source>Cut out subject…</source>
+        <translation type="unfinished">被写体を切り抜く…</translation>
+    </message>
+    <message>
+        <source>Trace the subject and pin the result as a mask layer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Select a video clip first</source>
+        <translation type="unfinished">まずビデオクリップを選択してください</translation>
+    </message>
+    <message>
+        <source>Download people cutout (about 20 MB)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Install AI engine first</source>
+        <translation type="unfinished">まず AI エンジンをインストール</translation>
+    </message>
+    <message>
+        <source>Add click-to-pick cutout (about 190 MB)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Image or video as mask…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Use a file&apos;s own pixels as the coverage map</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Choose a mask image or video</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Media files (*.png *.jpg *.jpeg *.webp *.mp4 *.mov *.mkv *.webm)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>All files (*)</source>
+        <translation type="unfinished">すべてのファイル (*)</translation>
+    </message>
+    <message>
+        <source>%1 — click to apply, or drag onto a clip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 — drag onto a clip</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>

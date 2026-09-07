@@ -38,6 +38,7 @@
 #include "engine/DeepFilterDenoiser.h"
 #include "engine/ObjectDetector.h"
 #include "engine/OrtRuntime.h"
+#include "engine/MaskApplier.h"
 #include "engine/MatteWriter.h"
 #include "engine/MediaEditor.h"
 #include "engine/AudioOnsets.h"
@@ -1468,6 +1469,21 @@ QVariantMap keyframeTrackToMap(const drift::KeyframeTrack<double> &track,
 
 // `timelineStart` is the carrying adjustment's start: mask keys are stored relative to it, and
 // the inspector reports every key time on the timeline.
+// A freeform with no vertices rasterizes to an empty path, which blanks the clip with no way back
+// except removing the mask. Seed the rect it would have had as a quad, so picking Freeform gives
+// you something to drag instead of a hole.
+void seedFreeformMask(drift::Mask &mask)
+{
+    if (mask.shape != drift::MaskShape::Freeform || !mask.points.isEmpty())
+        return;
+    const double left = mask.x - mask.w / 2.0;
+    const double right = mask.x + mask.w / 2.0;
+    const double top = mask.y - mask.h / 2.0;
+    const double bottom = mask.y + mask.h / 2.0;
+    mask.points = {QPointF(left, top), QPointF(right, top), QPointF(right, bottom),
+                   QPointF(left, bottom)};
+}
+
 QVariantMap maskToMap(const drift::Mask &m, drift::TimeUs timelineStart = 0)
 {
     // {x, y} objects rather than [x, y] pairs: a Repeater delegate's `modelData` does not index
@@ -8534,8 +8550,9 @@ void AppController::finalizeSegmentation(const QString &clipId, const QString &m
     matte.invert = false;
 
     // The original clip is deliberately left alone: the cutout is a mask pinned to it, visible on
-    // its own lane, and removing the lane restores the shot.
-    drift::setLinkedMask(m_project, trackIndex, clipIndex, matte);
+    // its own lane, and removing the lane restores the shot. Stacked, not replaced — a cutout is
+    // one more layer on whatever masks the clip already carries.
+    drift::addLinkedMask(m_project, trackIndex, clipIndex, matte);
 
     pushProjectEdit(before, tr("Cut out subject"));
     finishEdit(tr("Cut out subject"));
@@ -11846,17 +11863,7 @@ void AppController::writeClipMask(int trackIndex, int clipIndex, const drift::Ma
         return;
 
     drift::Mask seeded = mask;
-    // A freeform with no vertices rasterizes to an empty path, which blanks the clip with no way
-    // back except removing the mask. Seed the rect it would have had as a quad, so picking
-    // Freeform gives you something to drag instead of a hole.
-    if (seeded.shape == drift::MaskShape::Freeform && seeded.points.isEmpty()) {
-        const double left = seeded.x - seeded.w / 2.0;
-        const double right = seeded.x + seeded.w / 2.0;
-        const double top = seeded.y - seeded.h / 2.0;
-        const double bottom = seeded.y + seeded.h / 2.0;
-        seeded.points = {QPointF(left, top), QPointF(right, top), QPointF(right, bottom),
-                         QPointF(left, bottom)};
-    }
+    seedFreeformMask(seeded);
 
     drift::Clip &clip = track.clips[clipIndex];
     if (clip.type == drift::ClipType::Adjustment) {
@@ -11867,6 +11874,127 @@ void AppController::writeClipMask(int trackIndex, int clipIndex, const drift::Ma
         return;
     }
     drift::setLinkedMask(m_project, trackIndex, clipIndex, seeded);
+}
+
+drift::Mask AppController::maskFromCatalogId(const QString &shape) const
+{
+    drift::Mask mask;
+    mask.shape = drift::maskShapeFromString(shape);
+    // maskShapeFromString falls back to None for anything it does not know, and Media needs a
+    // path it cannot invent — either way the mask contributes nothing and the caller does nothing.
+    if (mask.shape == drift::MaskShape::Media)
+        mask.shape = drift::MaskShape::None;
+    seedFreeformMask(mask);
+    return mask;
+}
+
+void AppController::selectClipById(const QString &clipId)
+{
+    int foundTrack = -1;
+    int foundClip = -1;
+    if (!clipId.isEmpty() && findClipById(m_project, clipId, &foundTrack, &foundClip))
+        selectClip(foundTrack, foundClip);
+}
+
+QVariantList AppController::maskCatalog() const
+{
+    // Ordered as the inspector's shape combo lists them, so the two read alike.
+    const QList<QPair<QString, QString>> entries = {
+        {QStringLiteral("rectangle"), tr("Rectangle")}, {QStringLiteral("ellipse"), tr("Ellipse")},
+        {QStringLiteral("star"), tr("Star")},           {QStringLiteral("heart"), tr("Heart")},
+        {QStringLiteral("bars"), tr("Bars")},           {QStringLiteral("freeform"), tr("Freeform")},
+    };
+
+    QVariantList out;
+    for (const auto &entry : entries) {
+        out.append(QVariantMap{{QStringLiteral("id"), entry.first},
+                               {QStringLiteral("label"), entry.second}});
+    }
+    return out;
+}
+
+QString AppController::maskShapeSvgPath(const QString &shape) const
+{
+    drift::Mask mask = maskFromCatalogId(shape);
+    if (mask.shape == drift::MaskShape::None)
+        return {};
+
+    // Thumbnails are authored on the 0..100 grid ShapePreview.qml scales from. The mask rect is
+    // normalized, so widening it here is what fills the card rather than sitting at the 60% the
+    // timeline default would give. Bars spans the full width by construction and is left alone.
+    if (mask.shape != drift::MaskShape::Bars) {
+        mask.w = 0.94;
+        mask.h = 0.94;
+        mask.points.clear();
+        seedFreeformMask(mask);
+    }
+    return drift::painterPathToSvg(drift::maskPath(mask, 100, 100));
+}
+
+void AppController::addMaskToClip(int trackIndex, int clipIndex, const QString &shape)
+{
+    const drift::Mask mask = maskFromCatalogId(shape);
+    if (!mask.contributes())
+        return;
+
+    const drift::Project before = m_project;
+    const drift::ClipRef added = drift::addLinkedMask(m_project, trackIndex, clipIndex, mask);
+    if (added.trackIndex < 0)
+        return;
+    const QString addedId = m_project.tracks().at(added.trackIndex).clips.at(added.clipIndex).id;
+
+    pushProjectEdit(before, tr("Add mask"));
+    finishEdit(tr("Mask added"));
+    selectClipById(addedId);
+}
+
+void AppController::addMaskLaneClip(int trackIndex, const QString &shape, double atSeconds,
+                                    double durationSeconds)
+{
+    const drift::Mask mask = maskFromCatalogId(shape);
+    if (!mask.contributes())
+        return;
+
+    const drift::TimeUs startUs =
+        atSeconds < 0.0 ? m_playheadUs : drift::secondsToUs(atSeconds);
+    const drift::TimeUs durationUs = durationSeconds > 0.0
+                                         ? drift::secondsToUs(durationSeconds)
+                                         : drift::kImageClipDurationUs;
+
+    const drift::Project before = m_project;
+    const drift::ClipRef added =
+        drift::addLaneMask(m_project, trackIndex, mask, startUs, durationUs);
+    if (added.trackIndex < 0)
+        return;
+    const QString addedId = m_project.tracks().at(added.trackIndex).clips.at(added.clipIndex).id;
+
+    pushProjectEdit(before, tr("Add mask"));
+    finishEdit(tr("Mask added"));
+    selectClipById(addedId);
+}
+
+void AppController::addMediaMaskToClip(int trackIndex, int clipIndex, const QUrl &url)
+{
+    // The compositor decodes the coverage with FFmpeg, which cannot open a content:// URI, so the
+    // document is staged to a real file first on the platforms that hand one back.
+    const QString path = readTargetPath(url);
+    if (path.isEmpty())
+        return;
+
+    // Full-frame, for the same reason a segmentation matte is: the media's own pixels place the
+    // coverage, so the parametric default rect would crop it.
+    drift::Mask mask = drift::fullFrameMediaMask(path);
+    mask.name = QFileInfo(path).completeBaseName();
+
+    const drift::Project before = m_project;
+    const drift::ClipRef added = drift::addLinkedMask(m_project, trackIndex, clipIndex, mask);
+    if (added.trackIndex < 0)
+        return;
+    const QString addedId = m_project.tracks().at(added.trackIndex).clips.at(added.clipIndex).id;
+
+    pushProjectEdit(before, tr("Add mask"));
+    finishEdit(tr("Mask added"));
+    selectClipById(addedId);
 }
 
 void AppController::insertMaskPoint(int trackIndex, int clipIndex, int pointIndex, double x,
@@ -13392,7 +13520,7 @@ void AppController::applyEffectTemplateInternal(int trackIndex, int clipIndex,
         int maskTrack = -1;
         int maskClip = -1;
         if (findClipById(m_project, pending.first, &maskTrack, &maskClip))
-            drift::setLinkedMask(m_project, maskTrack, maskClip, pending.second);
+            drift::addLinkedMask(m_project, maskTrack, maskClip, pending.second);
     }
     if (!selectId.isEmpty()) {
         int foundTrack = -1;
@@ -14428,14 +14556,20 @@ void AppController::pasteAttributes(const QVariantMap &options)
     if (!anyModified)
         return;
 
-    // A clip carries at most one pinned mask today, so this replaces rather than stacks; a
-    // default-constructed Mask clears whatever the target had, which is what "paste transform
-    // from a clip with no mask" should mean.
+    // Paste replaces the target's whole stack with the source's, rather than merging the two:
+    // an empty list clears what the target had, which is what "paste transform from a clip with
+    // no mask" should mean.
     for (const auto &pending : std::as_const(pendingMasks)) {
         int maskTrack = -1;
         int maskClip = -1;
-        if (findClipById(m_project, pending.first, &maskTrack, &maskClip))
-            drift::setLinkedMask(m_project, maskTrack, maskClip, pending.second.value(0));
+        if (!findClipById(m_project, pending.first, &maskTrack, &maskClip))
+            continue;
+        drift::clearLinkedMasks(m_project, maskTrack, maskClip);
+        for (const drift::Mask &mask : pending.second) {
+            // Each pin can insert a lane, which moves the clip; re-resolve before the next one.
+            if (findClipById(m_project, pending.first, &maskTrack, &maskClip))
+                drift::addLinkedMask(m_project, maskTrack, maskClip, mask);
+        }
     }
 
     pushProjectEdit(before, tr("Paste attributes"));

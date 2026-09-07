@@ -106,6 +106,8 @@ private slots:
     void retargetClipToSourceKeepsPlacementAndSyncsSource();
     void retargetClipToSourceClearsPerSourceState();
     void retargetClipToSourceKeepsAGeometricMask();
+    void addLinkedMaskStacksRatherThanReplacing();
+    void laneMaskIsUnpinnedAndSurvivesTheLiftPass();
     void legacyClipMaskMigratesToAnAdjustmentLane();
     void retargetClipToSourceShrinksWhenMediaRunsOut();
     void applyMulticamSwitchPunchesAndRecuts();
@@ -2847,6 +2849,82 @@ void CoreTest::retargetClipToSourceKeepsAGeometricMask()
                                                    drift::secondsToUs(2.0)));
     drift::clearLinkedMasks(project, 0, 0, /*mediaOnly=*/true);
     QVERIFY(drift::laneMasksAt(project, 0, drift::secondsToUs(1.5)).isEmpty());
+}
+
+// setLinkedMask replaces, which is what a full-replacement write (MCP, paste) means. Dropping a
+// second mask onto a clip means something else entirely, so it has its own call.
+void CoreTest::addLinkedMaskStacksRatherThanReplacing()
+{
+    drift::Project project;
+    project.tracks().clear();
+    project.tracks().append(drift::Track{.type = drift::TrackType::Video});
+    project.tracks()[0].clips.append(makeAngleClip(QStringLiteral("cam1.mp4"),
+                                                   drift::secondsToUs(1.0),
+                                                   drift::secondsToUs(2.0), 0));
+
+    drift::Mask ellipse;
+    ellipse.shape = drift::MaskShape::Ellipse;
+    const drift::ClipRef first = drift::addLinkedMask(project, 0, 0, ellipse);
+    QVERIFY(first.trackIndex >= 0);
+
+    drift::Mask star;
+    star.shape = drift::MaskShape::Star;
+    star.op = drift::MaskOp::Subtract;
+    // The clip has not moved: the lane goes in below it.
+    const drift::ClipRef second = drift::addLinkedMask(project, 0, 0, star);
+    QVERIFY(second.trackIndex >= 0);
+
+    const QList<drift::ClipRef> pinned = drift::linkedMaskAdjustments(project, 0, 0);
+    QCOMPARE(pinned.size(), 2);
+
+    // Both reach the compositor, in lane order, with their ops intact.
+    const QList<drift::LaneMask> stack = drift::laneMasksAt(project, 0, drift::secondsToUs(1.5));
+    QCOMPARE(stack.size(), 2);
+    QCOMPARE(stack.at(0).mask.shape, drift::MaskShape::Ellipse);
+    QCOMPARE(stack.at(1).mask.shape, drift::MaskShape::Star);
+    QCOMPARE(stack.at(1).mask.op, drift::MaskOp::Subtract);
+    // Distinct ids, or the reader pool would decode both under one cursor.
+    QVERIFY(stack.at(0).adjustmentId != stack.at(1).adjustmentId);
+
+    // The replacing call still collapses the stack to one, which is what it promises.
+    drift::Mask heart;
+    heart.shape = drift::MaskShape::Heart;
+    drift::setLinkedMask(project, 0, 0, heart);
+    QCOMPARE(drift::linkedMaskAdjustments(project, 0, 0).size(), 1);
+}
+
+// Dropping a mask on empty track space masks whatever the track shows over that span, so the
+// adjustment is pinned to nothing and keeps its own edges. liftAdjustmentClipsToOwnTracks must
+// leave it where it is — it only hoists adjustments sitting on a *video* track.
+void CoreTest::laneMaskIsUnpinnedAndSurvivesTheLiftPass()
+{
+    drift::Project project;
+    project.tracks().clear();
+    project.tracks().append(drift::Track{.type = drift::TrackType::Video});
+    project.tracks()[0].clips.append(makeAngleClip(QStringLiteral("cam1.mp4"),
+                                                   drift::secondsToUs(0.0),
+                                                   drift::secondsToUs(4.0), 0));
+
+    drift::Mask bars;
+    bars.shape = drift::MaskShape::Bars;
+    const drift::ClipRef ref = drift::addLaneMask(project, 0, bars, drift::secondsToUs(1.0),
+                                                  drift::secondsToUs(2.0));
+    QVERIFY(ref.trackIndex >= 0);
+    QVERIFY(project.tracks().at(ref.trackIndex).isAdjustmentLane());
+
+    const drift::Clip &adjustment = project.tracks().at(ref.trackIndex).clips.at(ref.clipIndex);
+    QVERIFY2(adjustment.linkedClipId.isEmpty(), "a lane mask must not pin itself to a clip");
+    QCOMPARE(adjustment.timelineStart, drift::secondsToUs(1.0));
+    QCOMPARE(adjustment.timelineDuration, drift::secondsToUs(2.0));
+
+    // It is not pinned, so it does not belong to a clip — only to the span.
+    QVERIFY(drift::linkedMaskAdjustments(project, 0, 0).isEmpty());
+    QVERIFY(drift::laneMasksAt(project, 0, drift::secondsToUs(0.5)).isEmpty());
+    QCOMPARE(drift::laneMasksAt(project, 0, drift::secondsToUs(2.0)).size(), 1);
+
+    drift::liftAdjustmentClipsToOwnTracks(project);
+    QVERIFY(project.tracks().at(ref.trackIndex).isAdjustmentLane());
+    QCOMPARE(drift::laneMasksAt(project, 0, drift::secondsToUs(2.0)).size(), 1);
 }
 
 void CoreTest::retargetClipToSourceShrinksWhenMediaRunsOut()

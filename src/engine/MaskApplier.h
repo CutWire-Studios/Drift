@@ -3,8 +3,15 @@
 #include "core/Mask.h"
 
 #include <QImage>
+#include <QPainterPath>
 
 namespace drift {
+
+// The parametric shape as a path on a canvasWidth x canvasHeight grid, before rotation and
+// feather. Media masks have no path — their pixels are the coverage — and return an empty one.
+// Shared with the assets-panel thumbnails so a card cannot show a shape the compositor does not
+// rasterize.
+QPainterPath maskPath(const Mask &mask, int canvasWidth, int canvasHeight);
 
 // Grayscale8 coverage map for the mask, white where the frame shows through.
 // The GPU compositor uploads this as a texture and multiplies alpha in a shader,

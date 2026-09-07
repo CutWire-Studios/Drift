@@ -956,6 +956,22 @@ public:
     Q_INVOKABLE bool canUnlinkSelection() const;
     Q_INVOKABLE void unlinkSelectedClips();
     Q_INVOKABLE void setClipMask(int trackIndex, int clipIndex, const QVariantMap &mask);
+
+    // The mask shapes the assets panel offers as cards: {id, label} per entry. A "media" mask is
+    // not here — it needs a file, so the panel asks for one and calls addMediaMaskToClip.
+    Q_INVOKABLE QVariantList maskCatalog() const;
+    // The shape as an SVG "d" string on the 0..100 grid ShapePreview.qml scales from, for the
+    // asset cards. Serialized from the same drift::maskPath the compositor rasterizes.
+    Q_INVOKABLE QString maskShapeSvgPath(const QString &shape) const;
+    // Pin a new mask to a clip, stacking on any already there rather than replacing them, and
+    // select the mask adjustment it created. Ignores clips that cannot carry a mask.
+    Q_INVOKABLE void addMaskToClip(int trackIndex, int clipIndex, const QString &shape);
+    // A mask clip on one of `trackIndex`'s lanes, pinned to nothing: it masks whatever that track
+    // shows over its span. This is what dropping a mask on empty track space means.
+    Q_INVOKABLE void addMaskLaneClip(int trackIndex, const QString &shape, double atSeconds = -1.0,
+                                     double durationSeconds = -1.0);
+    // Pin an image or video as a raster mask, the way a segmentation matte is pinned.
+    Q_INVOKABLE void addMediaMaskToClip(int trackIndex, int clipIndex, const QUrl &url);
     // Freeform vertex editing, driven by the preview overlay. `pointIndex` is the insertion slot,
     // so passing the index after an edge's first vertex splits that edge.
     Q_INVOKABLE void insertMaskPoint(int trackIndex, int clipIndex, int pointIndex, double x,
@@ -1581,6 +1597,12 @@ protected:
     // Write a mask for (trackIndex, clipIndex), whether that names a mask adjustment (the mask is
     // its payload) or a media clip (the mask is pinned to it through a lane). MAY INSERT TRACKS.
     void writeClipMask(int trackIndex, int clipIndex, const drift::Mask &mask);
+    // A ready-to-use mask for a maskCatalog() id, Freeform already seeded with the quad its rect
+    // implies. An unknown id yields a mask with shape None, which contributes nothing.
+    drift::Mask maskFromCatalogId(const QString &shape) const;
+    // Select the clip with this id. Pinning a mask inserts a lane and normalization reorders, so
+    // an index captured before the edit is stale by the time there is something to select.
+    void selectClipById(const QString &clipId);
     // Re-establishes the two structural invariants the adjustment model rests on: no stack sits
     // on a media clip, and every lane is adjacent to and directly above its parent. Both passes
     // can insert or reorder tracks, so the selection is carried across by id. Idempotent and

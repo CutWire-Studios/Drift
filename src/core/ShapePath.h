@@ -13,8 +13,12 @@ namespace drift {
 // stroke width to keep the outline inside the layer.
 QPainterPath shapePath(const ShapeStyle &style, const QRectF &bounds);
 
-// The same path serialized as an SVG "d" string, for QML's PathSvg. Sharing shapePath() is what
-// keeps the assets-panel thumbnails and the composited frame from drifting apart.
+// Any path serialized as an SVG "d" string, for QML's PathSvg. Sharing the paths the compositor
+// rasterizes is what keeps the assets-panel thumbnails and the composited frame from drifting
+// apart — masks serialize drift::maskPath() through here for the same reason.
+QString painterPathToSvg(const QPainterPath &path);
+
+// The same path serialized as an SVG "d" string, for QML's PathSvg.
 QString shapeSvgPath(const ShapeStyle &style, const QRectF &bounds);
 
 // Regular n-gon inscribed in `bounds`, first vertex at the top. Shared with mask rendering.

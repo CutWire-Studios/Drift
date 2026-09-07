@@ -1,6 +1,5 @@
 import QtQuick
 import QtQuick.Controls.Basic
-import QtQuick.Window
 import Drift
 import ".."
 
@@ -14,11 +13,9 @@ Item {
     }
     readonly property bool hasSelection: !!clipData && Object.keys(clipData).length > 0
     readonly property string clipKind: hasSelection ? (clipData.kind || "") : ""
-    readonly property bool isVisualClip: clipKind !== "audio" && clipKind !== "text"
-                                         && clipKind !== "subtitle"
-    // The mask reported for the selected clip. For a media clip that is the mask on the adjustment
-    // pinned to it (clipToMap redirects); for a mask adjustment it is its own payload. Either way
-    // setClipMask writes back to the right place.
+    // The tab is only offered for a mask adjustment (this is its payload) or a video-effects one
+    // (where a mask scopes where the chain lands). Masks are added from the assets panel and
+    // edited by selecting the mask clip, so a media clip never reaches here.
     readonly property string maskShape: (clipData.mask && clipData.mask.shape) || "none"
     // Media is a raster mask whose pixels are the coverage map (see core/Mask.h). The parametric
     // geometry does place it, but a segmentation matte is full-frame by construction and nudging
@@ -43,99 +40,12 @@ Item {
         width: root.width
         spacing: Theme.spacingXl
 
-        EmptyState {
-            visible: root.clipKind === "audio" || root.clipKind === "text"
-                     || root.clipKind === "subtitle"
-            width: parent.width
-            compact: true
-            glyph: Theme.icons.mask
-            title: qsTr("Not available")
-            hint: qsTr("Cutouts apply to visual clips.")
-        }
-
-        // Segmentation produces a matte — a per-frame mask — so it belongs beside
-        // the parametric shapes rather than in a tab of its own. It needs a
-        // prompting surface, so it opens a window instead of running from here.
-        Column {
-            id: segmentSection
-            visible: root.clipKind === "video"
-            width: parent.width
-            spacing: Theme.spacingSm
-
-            // The models are addons, but either can equally come from a bundled
-            // models/ directory or a DRIFT_*_MODEL_DIR override, so ask the engine
-            // rather than the addon registry. That answer is not a binding, hence
-            // the reset below when an addon of either kind appears.
-            property bool segmentReady: EditorState.segmentationAvailable()
-            property bool runtimeReady: Addons.runtimeAvailable()
-            // Either cutout model unlocks the window, so the download prompt below points at
-            // RVM — the smaller one — and SAM2 is offered separately as an extra capability.
-            property bool hasSam2: EditorState.segmentationBackends().indexOf("sam2") >= 0
-
-            Connections {
-                target: Addons
-                function onKindChanged(kind) {
-                    if (kind === "sam2-model" || kind === "rvm-model") {
-                        segmentSection.segmentReady = EditorState.segmentationAvailable()
-                        segmentSection.hasSam2 = EditorState.segmentationBackends().indexOf("sam2") >= 0
-                    } else if (kind === "onnxruntime") {
-                        segmentSection.runtimeReady = Addons.runtimeAvailable()
-                    }
-                }
-            }
-
-            Text {
-                width: parent.width
-                text: qsTr("Subject")
-                color: Theme.mutedForeground
-                font.family: Theme.fontFamily
-                font.pixelSize: Theme.fontSizeXs
-            }
-
-            ThemedButton {
-                visible: segmentSection.segmentReady && segmentSection.runtimeReady
-                width: parent.width
-                text: qsTr("Cut out subject…")
-                enabled: !EditorState.segmenting
-                onClicked: {
-                    const data = EditorState.selectedClipData
-                    root.Window.window.openSegmentation(
-                        EditorState.selectedTrack, EditorState.selectedClip,
-                        data.start !== undefined ? data.start : 0,
-                        data.duration !== undefined ? data.duration : 0)
-                }
-            }
-
-            ThemedButton {
-                visible: !segmentSection.segmentReady || !segmentSection.runtimeReady
-                width: parent.width
-                text: segmentSection.runtimeReady
-                      ? qsTr("Download people cutout (about 20 MB)")
-                      : qsTr("Install AI engine first")
-                variant: "primary"
-                onClicked: root.Window.window.openAddonManager(
-                    segmentSection.runtimeReady ? "rvm-model" : "onnxruntime")
-            }
-
-            // Offered separately once people cutout works: clicking a specific subject is a
-            // different capability, not a better version of the same one, and it is ten times
-            // the download.
-            ThemedButton {
-                visible: segmentSection.segmentReady && segmentSection.runtimeReady
-                         && !segmentSection.hasSam2
-                width: parent.width
-                variant: "secondary"
-                text: qsTr("Add click-to-pick cutout (about 190 MB)")
-                onClicked: root.Window.window.openAddonManager("sam2-model")
-            }
-        }
-
         // The tab used to open with a lone unlabelled combo box
         // and no explanation of what a mask does.
         Text {
             visible: maskShapeBox.visible
             width: parent.width
-            text: qsTr("Cutout shape")
+            text: qsTr("Shape")
             color: Theme.mutedForeground
             font.family: Theme.fontFamily
             font.pixelSize: Theme.fontSizeXs
@@ -145,7 +55,7 @@ Item {
             id: maskShapeBox
             // Hidden for a media mask: "media" is not one of the shapes below, so currentIndex
             // would clamp to 0 and the control would read "None" next to an applied cutout.
-            visible: root.isVisualClip && !root.isMedia
+            visible: !root.isMedia
             width: parent.width
             model: ["none", "rectangle", "ellipse", "star", "heart", "bars", "freeform"]
             // Human labels — the raw ids were shown to the user.
@@ -167,10 +77,45 @@ Item {
             }
         }
 
+        // How this mask folds into the ones stacked before it on the same track. Only meaningful
+        // once there is more than one: the compositor ignores the first enabled entry's op and
+        // lets it seed the coverage, because a lone Subtract or Intersect would blank the layer.
+        Column {
+            visible: root.maskShape !== "none"
+            width: parent.width
+            spacing: Theme.spacingSm
+
+            Text {
+                width: parent.width
+                text: qsTr("Combine")
+                color: Theme.mutedForeground
+                font.family: Theme.fontFamily
+                font.pixelSize: Theme.fontSizeXs
+            }
+
+            ThemedComboBox {
+                id: maskOpBox
+                width: parent.width
+                model: ["add", "subtract", "intersect"]
+                readonly property var labels: ({
+                    "add": qsTr("Add"),
+                    "subtract": qsTr("Subtract"),
+                    "intersect": qsTr("Intersect")
+                })
+                displayText: labels[model[currentIndex]] || model[currentIndex]
+                currentIndex: Math.max(0, model.indexOf((root.clipData.mask && root.clipData.mask.op) || "add"))
+                onActivated: {
+                    const mask = Object.assign({}, root.clipData.mask || {})
+                    mask.op = model[currentIndex]
+                    EditorState.setClipMask(EditorState.selectedTrack, EditorState.selectedClip, mask)
+                }
+            }
+        }
+
         // Clearing a mask previously required knowing to reselect
         // "none" in the combo above.
         ThemedButton {
-            visible: root.isVisualClip && root.maskShape !== "none"
+            visible: root.maskShape !== "none"
             text: root.isMedia ? qsTr("Remove cutout layer") : qsTr("Remove mask")
             variant: "destructive"
             glyph: Theme.icons.trash
@@ -210,7 +155,7 @@ Item {
             delegate: PropertyKeyframeRow {
                 required property var modelData
                 width: parent.width
-                visible: root.isVisualClip && !root.isMedia
+                visible: !root.isMedia
                          && modelData.shapes.indexOf(root.maskShape) >= 0
                 propDef: modelData
                 // Key times come back on the timeline already, keyed by the bare scalar name.
@@ -229,7 +174,7 @@ Item {
         Row {
             width: parent.width
             spacing: 8
-            visible: root.isVisualClip && root.maskShape !== "none"
+            visible: root.maskShape !== "none"
             Text {
                 text: qsTr("Invert")
                 color: Theme.mutedForeground

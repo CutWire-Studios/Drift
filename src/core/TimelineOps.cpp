@@ -243,6 +243,42 @@ int ensureAdjustmentLane(Project &project, int parentIndex, AdjustmentKind kind,
     return insertAt;
 }
 
+namespace {
+
+// One Mask-kind adjustment clip. An empty `linkedClipId` leaves it free-standing on its lane with
+// draggable edges; set, it is pinned and syncLinkedAdjustments mirrors the host clip's span onto
+// it through every move/trim/split/delete, so the mask cannot drift off the shot it was made for.
+Clip makeMaskAdjustment(const Mask &mask, const QString &linkedClipId, TimeUs startUs,
+                        TimeUs durationUs)
+{
+    Clip adjustment;
+    adjustment.id = QUuid::createUuid().toString(QUuid::WithoutBraces);
+    adjustment.type = ClipType::Adjustment;
+    adjustment.adjustmentKind = AdjustmentKind::Mask;
+    adjustment.linkedClipId = linkedClipId;
+    adjustment.timelineStart = startUs;
+    adjustment.timelineDuration = durationUs;
+    adjustment.srcIn = 0;
+    adjustment.srcOut = durationUs;
+    adjustment.mask = mask;
+    return adjustment;
+}
+
+// Drop `adjustment` on a lane of `parentIndex` with room for it, minting one if need be. A null
+// ClipRef when the parent cannot take a lane.
+ClipRef appendToMaskLane(Project &project, int parentIndex, const Clip &adjustment)
+{
+    const int laneIndex = ensureAdjustmentLane(project, parentIndex, AdjustmentKind::Mask,
+                                               adjustment.timelineStart,
+                                               adjustment.timelineDuration);
+    if (laneIndex < 0)
+        return {};
+    project.tracks()[laneIndex].clips.append(adjustment);
+    return ClipRef{laneIndex, static_cast<int>(project.tracks().at(laneIndex).clips.size()) - 1};
+}
+
+} // namespace
+
 QList<LaneMask> laneMasksAt(const Project &project, int trackIndex, TimeUs timelineUs)
 {
     QList<LaneMask> result;
@@ -318,26 +354,36 @@ void setLinkedMask(Project &project, int trackIndex, int clipIndex, const Mask &
         return;
 
     const Clip source = project.tracks().at(trackIndex).clips.at(clipIndex);
+    appendToMaskLane(project, trackIndex,
+                     makeMaskAdjustment(mask, source.id, source.timelineStart,
+                                        source.timelineDuration));
+}
 
-    Clip adjustment;
-    adjustment.id = QUuid::createUuid().toString(QUuid::WithoutBraces);
-    adjustment.type = ClipType::Adjustment;
-    adjustment.adjustmentKind = AdjustmentKind::Mask;
-    // Pinned: syncLinkedAdjustments mirrors the clip's span onto it through every
-    // move/trim/split/delete, so the mask cannot drift off the shot it was made for.
-    adjustment.linkedClipId = source.id;
-    adjustment.timelineStart = source.timelineStart;
-    adjustment.timelineDuration = source.timelineDuration;
-    adjustment.srcIn = 0;
-    adjustment.srcOut = source.timelineDuration;
-    adjustment.mask = mask;
+ClipRef addLinkedMask(Project &project, int trackIndex, int clipIndex, const Mask &mask)
+{
+    if (trackIndex < 0 || trackIndex >= project.tracks().size())
+        return {};
+    if (clipIndex < 0 || clipIndex >= project.tracks().at(trackIndex).clips.size())
+        return {};
+    if (!mask.contributes())
+        return {};
 
-    const int laneIndex = ensureAdjustmentLane(project, trackIndex, AdjustmentKind::Mask,
-                                               adjustment.timelineStart,
-                                               adjustment.timelineDuration);
-    if (laneIndex < 0)
-        return;
-    project.tracks()[laneIndex].clips.append(adjustment);
+    const Clip source = project.tracks().at(trackIndex).clips.at(clipIndex);
+    return appendToMaskLane(project, trackIndex,
+                            makeMaskAdjustment(mask, source.id, source.timelineStart,
+                                               source.timelineDuration));
+}
+
+ClipRef addLaneMask(Project &project, int trackIndex, const Mask &mask, TimeUs startUs,
+                    TimeUs durationUs)
+{
+    if (trackIndex < 0 || trackIndex >= project.tracks().size())
+        return {};
+    if (!mask.contributes() || durationUs <= 0)
+        return {};
+
+    return appendToMaskLane(project, trackIndex,
+                            makeMaskAdjustment(mask, {}, qMax<TimeUs>(0, startUs), durationUs));
 }
 
 void clearLinkedMasks(Project &project, int trackIndex, int clipIndex, bool mediaOnly)

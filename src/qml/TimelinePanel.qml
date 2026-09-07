@@ -1381,10 +1381,24 @@ PanelFrame {
                                     anchors.fill: parent
                                     keys: ["text/plain", "application/x-drift-effect",
                                            "application/x-drift-audio-effect",
-                                           "application/x-drift-shape", "application/x-drift-transition"]
+                                           "application/x-drift-shape", "application/x-drift-transition",
+                                           "application/x-drift-mask"]
 
                                     function isEffectDrag(drop) {
                                         return drop.keys.indexOf("application/x-drift-effect") !== -1
+                                    }
+
+                                    function isMaskDrag(drop) {
+                                        return drop.keys.indexOf("application/x-drift-mask") !== -1
+                                    }
+
+                                    // A mask lane only ever masks the track it is nested in, so
+                                    // audio (no picture) and adjustment rows (a lane inside a lane
+                                    // would have two scopes) take neither drop.
+                                    function acceptsMask(trackIndex) {
+                                        const track = root.tracks[trackIndex]
+                                        return !!track && track.type !== "audio"
+                                               && !track.isAdjustmentLane
                                     }
 
                                     function isAudioEffectDrag(drop) {
@@ -1411,6 +1425,23 @@ PanelFrame {
                                         if (isTransitionDrag(drop)) {
                                             root.clearLandingPreview()
                                             root.clearEffectDropHighlight()
+                                            return
+                                        }
+                                        if (isMaskDrag(drop)) {
+                                            if (!acceptsMask(trackRow.trackIndex)) {
+                                                root.clearLandingOutline()
+                                                root.clearEffectDropHighlight()
+                                                return
+                                            }
+                                            root.updateEffectDropHighlight(trackRow.trackIndex, drop.x)
+                                            // Over a gap the mask lands as its own lane clip, so
+                                            // promise the span the same way a media drop does.
+                                            if (root.clipIndexAtPosition(trackRow.trackIndex, drop.x) < 0) {
+                                                const at = Math.max(0, drop.x / root.pxPerSecond)
+                                                root.showLandingPreview(trackRow.trackIndex, at, 5.0)
+                                            } else {
+                                                root.clearLandingOutline()
+                                            }
                                             return
                                         }
                                         if (isEffectDrag(drop) || isAudioEffectDrag(drop)) {
@@ -1459,6 +1490,24 @@ PanelFrame {
                                         if (isTransitionDrag(drop)) {
                                             const kind = drop.getDataAsString("application/x-drift-transition")
                                             root.applyTransitionDrop(trackRow.trackIndex, drop.x, kind)
+                                            return
+                                        }
+                                        if (isMaskDrag(drop)) {
+                                            const maskId = drop.getDataAsString("application/x-drift-mask")
+                                            const clipIndex = root.clipIndexAtPosition(trackRow.trackIndex, drop.x)
+                                            root.clearEffectDropHighlight()
+                                            root.clearLandingOutline()
+                                            if (maskId.length === 0 || !acceptsMask(trackRow.trackIndex))
+                                                return
+                                            // No selectClip here, unlike the effect branch: both
+                                            // calls select the mask clip they minted, which is
+                                            // what opens its inspector and preview handles.
+                                            if (clipIndex >= 0) {
+                                                EditorState.addMaskToClip(trackRow.trackIndex, clipIndex, maskId)
+                                            } else {
+                                                const atSec = Math.max(0, drop.x / root.pxPerSecond)
+                                                EditorState.addMaskLaneClip(trackRow.trackIndex, maskId, atSec)
+                                            }
                                             return
                                         }
                                         if (isEffectDrag(drop)) {

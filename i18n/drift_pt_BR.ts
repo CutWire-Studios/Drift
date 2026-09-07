@@ -363,6 +363,14 @@
         <source>Boxes, circles and lines</source>
         <translation>Caixas, círculos e linhas</translation>
     </message>
+    <message>
+        <source>Masks</source>
+        <translation type="unfinished">Máscaras</translation>
+    </message>
+    <message>
+        <source>Cut a shape or a subject out of the selected clip</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>AndroidBottomRail</name>
@@ -2477,6 +2485,38 @@
         <translation>Máscara do clipe atualizada</translation>
     </message>
     <message>
+        <source>Rectangle</source>
+        <translation type="unfinished">Retângulo</translation>
+    </message>
+    <message>
+        <source>Ellipse</source>
+        <translation type="unfinished">Elipse</translation>
+    </message>
+    <message>
+        <source>Star</source>
+        <translation type="unfinished">Estrela</translation>
+    </message>
+    <message>
+        <source>Heart</source>
+        <translation type="unfinished">Coração</translation>
+    </message>
+    <message>
+        <source>Bars</source>
+        <translation type="unfinished">Barras</translation>
+    </message>
+    <message>
+        <source>Freeform</source>
+        <translation type="unfinished">Forma livre</translation>
+    </message>
+    <message>
+        <source>Add mask</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Mask added</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Add mask point</source>
         <translation type="unfinished"></translation>
     </message>
@@ -3273,6 +3313,10 @@
     <message>
         <source>Scenes</source>
         <translation>Cenas</translation>
+    </message>
+    <message>
+        <source>Masks</source>
+        <translation type="unfinished">Máscaras</translation>
     </message>
     <message>
         <source>Effects</source>
@@ -5281,7 +5325,7 @@
         <translation type="unfinished">Máscara alterada</translation>
     </message>
     <message>
-        <source>Add a mask in the Cutouts tab to edit it here</source>
+        <source>Drag a mask from the Masks tab onto a clip to edit it here</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -5292,40 +5336,12 @@
 <context>
     <name>MasksInspector</name>
     <message>
-        <source>Not available</source>
-        <translation>Não disponível</translation>
-    </message>
-    <message>
-        <source>Cutouts apply to visual clips.</source>
-        <translation>Recortes se aplicam a clipes visuais.</translation>
-    </message>
-    <message>
-        <source>Subject</source>
-        <translation>Assunto</translation>
-    </message>
-    <message>
-        <source>Cut out subject…</source>
-        <translation>Recortar assunto…</translation>
-    </message>
-    <message>
-        <source>Install AI engine first</source>
-        <translation>Instale o mecanismo de IA primeiro</translation>
-    </message>
-    <message>
-        <source>Cutout shape</source>
-        <translation>Forma de recorte</translation>
-    </message>
-    <message>
         <source>None</source>
         <translation>Nenhuma</translation>
     </message>
     <message>
-        <source>Download people cutout (about 20 MB)</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Add click-to-pick cutout (about 190 MB)</source>
-        <translation type="unfinished"></translation>
+        <source>Shape</source>
+        <translation type="unfinished">Forma</translation>
     </message>
     <message>
         <source>Rectangle</source>
@@ -5350,6 +5366,22 @@
     <message>
         <source>Freeform</source>
         <translation>Forma livre</translation>
+    </message>
+    <message>
+        <source>Combine</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add</source>
+        <translation type="unfinished">Adicionar</translation>
+    </message>
+    <message>
+        <source>Subtract</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Intersect</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Remove cutout layer</source>
@@ -5386,6 +5418,73 @@
     <message>
         <source>Invert</source>
         <translation>Inverter</translation>
+    </message>
+</context>
+<context>
+    <name>MasksTab</name>
+    <message>
+        <source>Click to apply to the selection, or drag onto a clip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Select a clip, or drag a mask onto one</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Subject</source>
+        <translation type="unfinished">Assunto</translation>
+    </message>
+    <message>
+        <source>Cut out subject…</source>
+        <translation type="unfinished">Recortar assunto…</translation>
+    </message>
+    <message>
+        <source>Trace the subject and pin the result as a mask layer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Select a video clip first</source>
+        <translation type="unfinished">Selecione um clipe de vídeo primeiro</translation>
+    </message>
+    <message>
+        <source>Download people cutout (about 20 MB)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Install AI engine first</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add click-to-pick cutout (about 190 MB)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Image or video as mask…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Use a file&apos;s own pixels as the coverage map</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Choose a mask image or video</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Media files (*.png *.jpg *.jpeg *.webp *.mp4 *.mov *.mkv *.webm)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>All files (*)</source>
+        <translation type="unfinished">Todos os arquivos (*)</translation>
+    </message>
+    <message>
+        <source>%1 — click to apply, or drag onto a clip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 — drag onto a clip</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>

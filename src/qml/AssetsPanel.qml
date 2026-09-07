@@ -622,7 +622,7 @@ PanelFrame {
         const tabId = tabsModel.get(activeTab).tabId
         if (tabId === "text" || tabId === "subtitles" || tabId === "stickers" || tabId === "shapes"
                 || tabId === "effects" || tabId === "templates" || tabId === "adjustment"
-                || tabId === "sounds" || tabId === "transitions"
+                || tabId === "sounds" || tabId === "transitions" || tabId === "masks"
                 || tabId === "shortcuts" || tabId === "scenes")
             return false
         const kinds = kindsForTab(tabId)
@@ -638,6 +638,7 @@ PanelFrame {
         "stickers": qsTr("Stickers"),
         "shapes": qsTr("Shapes"),
         "scenes": qsTr("Scenes"),
+        "masks": qsTr("Masks"),
         "effects": qsTr("Effects"),
         "templates": qsTr("Templates"),
         "transitions": qsTr("Transitions"),
@@ -654,7 +655,8 @@ PanelFrame {
         ListElement { tabId: "text"; icon: 1; separatorAfter: false }
         ListElement { tabId: "subtitles"; icon: 2; separatorAfter: false }
         ListElement { tabId: "stickers"; icon: 3; separatorAfter: false }
-        ListElement { tabId: "shapes"; icon: 4; separatorAfter: true }
+        ListElement { tabId: "shapes"; icon: 4; separatorAfter: false }
+        ListElement { tabId: "masks"; icon: 11; separatorAfter: true }
         ListElement { tabId: "scenes"; icon: 10; separatorAfter: true }
         ListElement { tabId: "effects"; icon: 5; separatorAfter: false }
         ListElement { tabId: "templates"; icon: 6; separatorAfter: false }
@@ -673,7 +675,8 @@ PanelFrame {
         Theme.icons.chevronsRight,
         Theme.icons.audioLines,
         Theme.icons.keyboard,
-        Theme.icons.listVideo
+        Theme.icons.listVideo,
+        Theme.icons.mask
     ]
     property int activeTab: 0
 
@@ -1049,6 +1052,14 @@ PanelFrame {
                 width: parent.width
                 opacity: root.tabOpacity
                 height: parent.height - Theme.panelHeaderHeight
+            }
+
+            MasksTab {
+                visible: tabsModel.get(activeTab).tabId === "masks"
+                width: parent.width
+                opacity: root.tabOpacity
+                height: parent.height - Theme.panelHeaderHeight
+                onAdded: root.addCompleted()
             }
 
             // Effects browser

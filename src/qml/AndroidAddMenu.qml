@@ -66,6 +66,12 @@ AndroidBottomSheet {
             label: qsTr("Shapes"),
             detail: qsTr("Boxes, circles and lines"),
             icon: Theme.icons.shapes
+        },
+        {
+            id: "masks",
+            label: qsTr("Masks"),
+            detail: qsTr("Cut a shape or a subject out of the selected clip"),
+            icon: Theme.icons.mask
         }
     ]
 

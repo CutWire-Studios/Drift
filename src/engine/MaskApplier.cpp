@@ -6,9 +6,9 @@
 #include <QPainterPath>
 #include <QtMath>
 
-namespace {
+namespace drift {
 
-QPainterPath maskPath(const drift::Mask &mask, int canvasWidth, int canvasHeight)
+QPainterPath maskPath(const Mask &mask, int canvasWidth, int canvasHeight)
 {
     const QPointF center(mask.x * canvasWidth, mask.y * canvasHeight);
     const double halfW = qMax(1.0, mask.w * canvasWidth * 0.5);
@@ -66,6 +66,10 @@ QPainterPath maskPath(const drift::Mask &mask, int canvasWidth, int canvasHeight
     }
     return {};
 }
+
+} // namespace drift
+
+namespace {
 
 QImage blurAlpha(const QImage &alpha, int radius)
 {

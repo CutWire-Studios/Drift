@@ -149,6 +149,8 @@ private slots:
     void freeformMaskPointsAreEditable();
     void maskEditorStateResolvesTheHostFrame();
     void selectingAMaskClipTurnsOnThePreviewHandles();
+    void droppingAMaskOnAClipStacksAndSelectsIt();
+    void droppingAMaskOnEmptyTrackSpaceMakesALaneClip();
     void standaloneMaskAdjustmentGetsAnEditorFrame();
     void freeformPointsCrossToQmlAsNamedFields();
     void trackMovesAndDeletesCarryTheirAdjustmentLanes();
@@ -4987,6 +4989,73 @@ void EditorStateTest::maskEditorStateResolvesTheHostFrame()
 
 // Selecting a mask clip on a lane is itself the request to edit it. Requiring the toolbar toggle
 // as well made the handles undiscoverable — you had to already know they existed.
+// The assets-panel drop path. Dropping onto a clip pins a mask and selects the adjustment it
+// minted — that selection is what opens the Masks inspector and the preview handles.
+void EditorStateTest::droppingAMaskOnAClipStacksAndSelectsIt()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    appendTwoVideoClips(*state.project());
+
+    state.addMaskToClip(0, 0, QStringLiteral("ellipse"));
+    QList<drift::ClipRef> pinned = drift::linkedMaskAdjustments(*state.project(), 0, 0);
+    QCOMPARE(pinned.size(), 1);
+    QCOMPARE(state.selectedTrack(), pinned.constFirst().trackIndex);
+    QCOMPARE(state.selectedClip(), pinned.constFirst().clipIndex);
+    QCOMPARE(state.selectedClipData().value(QStringLiteral("adjustmentKind")).toString(),
+             QStringLiteral("mask"));
+    // Selecting the mask clip is what arms the preview handles, with no toolbar toggle.
+    QVERIFY(state.maskEditActive());
+
+    // A second drop stacks rather than replacing.
+    state.addMaskToClip(0, 0, QStringLiteral("star"));
+    pinned = drift::linkedMaskAdjustments(*state.project(), 0, 0);
+    QCOMPARE(pinned.size(), 2);
+    QCOMPARE(drift::laneMasksAt(*state.project(), 0, drift::secondsToUs(1.0)).size(), 2);
+
+    // Freeform arrives with the quad its rect implies, not as an empty path that would blank
+    // the clip.
+    state.addMaskToClip(0, 0, QStringLiteral("freeform"));
+    pinned = drift::linkedMaskAdjustments(*state.project(), 0, 0);
+    QCOMPARE(pinned.size(), 3);
+    const drift::Clip &freeform = state.project()
+                                      ->tracks()
+                                      .at(pinned.constLast().trackIndex)
+                                      .clips.at(pinned.constLast().clipIndex);
+    QCOMPARE(freeform.mask.shape, drift::MaskShape::Freeform);
+    QCOMPARE(freeform.mask.points.size(), 4);
+
+    state.undo();
+    QCOMPARE(drift::linkedMaskAdjustments(*state.project(), 0, 0).size(), 2);
+}
+
+// Dropped on empty track space instead, it becomes a lane clip of its own: unpinned, with its
+// own span, masking whatever the track shows there. It has to survive finishEdit's normalization.
+void EditorStateTest::droppingAMaskOnEmptyTrackSpaceMakesALaneClip()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    appendTwoVideoClips(*state.project());
+
+    state.addMaskLaneClip(0, QStringLiteral("rectangle"), 8.0, 3.0);
+
+    const int track = state.selectedTrack();
+    const int clip = state.selectedClip();
+    QVERIFY(track >= 0);
+    QVERIFY(state.project()->tracks().at(track).isAdjustmentLane());
+
+    const drift::Clip &adjustment = state.project()->tracks().at(track).clips.at(clip);
+    QCOMPARE(adjustment.adjustmentKind, drift::AdjustmentKind::Mask);
+    QVERIFY2(adjustment.linkedClipId.isEmpty(), "a lane mask must keep its own draggable edges");
+    QCOMPARE(adjustment.timelineStart, drift::secondsToUs(8.0));
+    QCOMPARE(adjustment.timelineDuration, drift::secondsToUs(3.0));
+
+    // It masks the track over its span and nowhere else, and belongs to no clip.
+    QCOMPARE(drift::laneMasksAt(*state.project(), 0, drift::secondsToUs(9.0)).size(), 1);
+    QVERIFY(drift::laneMasksAt(*state.project(), 0, drift::secondsToUs(1.0)).isEmpty());
+    QVERIFY(drift::linkedMaskAdjustments(*state.project(), 0, 0).isEmpty());
+}
+
 void EditorStateTest::selectingAMaskClipTurnsOnThePreviewHandles()
 {
     AssetLibrary library;

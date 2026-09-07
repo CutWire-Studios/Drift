@@ -759,6 +759,7 @@ qt_add_qml_module(drift
         src/qml/components/assets/SubtitlesTab.qml
         src/qml/components/assets/StickersTab.qml
         src/qml/components/assets/ShapesTab.qml
+        src/qml/components/assets/MasksTab.qml
         src/qml/components/assets/SoundsTab.qml
         src/qml/components/assets/ShortcutsTab.qml
         src/qml/components/assets/MediaAssetsTab.qml

@@ -63,6 +63,8 @@ PanelFrame {
             root.syncTextTab()
             root.syncAnimationTab()
             root.syncStabilizeTab()
+            root.syncMasksTab()
+            root.syncActiveTab()
         }
         function onSelectedClipDataChanged() {
             root.clipDataRevision++
@@ -166,6 +168,11 @@ PanelFrame {
                    || root.clipKind === "audio"
         if (tabId === "stabilize")
             return root.clipKind === "video"
+        // A media clip's masks live on adjustments pinned to it, and those are what you select to
+        // edit them — the tab used to be the only way to *create* one, which the assets panel now
+        // does. Offering it here as well would edit only the first mask of a stack.
+        if (tabId === "masks")
+            return false
         return true
     }
 
@@ -195,6 +202,7 @@ PanelFrame {
     readonly property int textTabIndex: tabIndexOf("text")
     readonly property int animationTabIndex: tabIndexOf("animation")
     readonly property int stabilizeTabIndex: tabIndexOf("stabilize")
+    readonly property int masksTabIndex: tabIndexOf("masks")
 
     // The Subtitles tab only exists for subtitle clips, so leaving it selected would show a blank
     // pane once the selection moves off one. Selecting a subtitle clip never opens the tab by
@@ -228,6 +236,23 @@ PanelFrame {
     function syncStabilizeTab() {
         if (root.stabilizeTabIndex >= 0 && root.activeTab === root.stabilizeTabIndex
                 && !root.tabVisible("stabilize"))
+            root.activeTab = 0
+    }
+
+    // Selecting a mask clip is how you edit a mask now, so it opens the pane that edits one —
+    // the same courtesy selecting a transition already gets. Only for a Mask adjustment: a
+    // video-effects adjustment also offers the tab, but its effect stack is what you came for.
+    function syncMasksTab() {
+        if (root.masksTabIndex < 0)
+            return
+        if (root.clipKind === "adjustment" && root.clipData.adjustmentKind === "mask")
+            root.activeTab = root.masksTabIndex
+    }
+
+    // The catch-all behind the per-tab syncs above: an adjustment hides most of the rail, so any
+    // tab open on the clip you came from can vanish under you and leave an empty pane.
+    function syncActiveTab() {
+        if (!root.tabVisible(root.currentTabId))
             root.activeTab = 0
     }
 
