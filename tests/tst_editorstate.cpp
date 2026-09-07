@@ -145,6 +145,12 @@ private slots:
     void deletingAClipUnlinksRatherThanStrandsItsAdjustment();
     void cutoutLandsAsAMaskLayerOnTheClipsOwnLane();
     void maskRoundTripsThroughTheInspectorMap();
+    void maskScalarsKeyframeThroughTheGenericApi();
+    void freeformMaskPointsAreEditable();
+    void maskEditorStateResolvesTheHostFrame();
+    void selectingAMaskClipTurnsOnThePreviewHandles();
+    void standaloneMaskAdjustmentGetsAnEditorFrame();
+    void freeformPointsCrossToQmlAsNamedFields();
     void trackMovesAndDeletesCarryTheirAdjustmentLanes();
     void projectV3MigratesEffectsOntoAdjustmentLanes();
     void adjustmentMovesBetweenStandaloneAndNested();
@@ -4831,6 +4837,280 @@ void EditorStateTest::maskRoundTripsThroughTheInspectorMap()
     cleared.insert(QStringLiteral("shape"), QStringLiteral("none"));
     state.setClipMask(0, 0, cleared);
     QVERIFY(drift::linkedMaskAdjustments(*state.project(), 0, 0).isEmpty());
+}
+
+// Mask scalars animate through the same generic keyframe API as everything else, addressed as
+// "mask.<key>". The user has the media clip selected, but the mask lives on the adjustment pinned
+// to it — redirectToKeyframeHost is what makes the plain (track, clip) pair reach it.
+void EditorStateTest::maskScalarsKeyframeThroughTheGenericApi()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    appendTwoVideoClips(*state.project());
+
+    drift::Mask ellipse;
+    ellipse.shape = drift::MaskShape::Ellipse;
+    ellipse.x = 0.5;
+    drift::setLinkedMask(*state.project(), 0, 0, ellipse);
+
+    // Addressed against the media clip, not the adjustment.
+    state.setClipKeyframe(0, 0, QStringLiteral("mask.x"), 0.0, 0.2);
+    state.setClipKeyframe(0, 0, QStringLiteral("mask.x"), 2.0, 0.8);
+
+    const QList<drift::ClipRef> pinned = drift::linkedMaskAdjustments(*state.project(), 0, 0);
+    QCOMPARE(pinned.size(), 1);
+    const drift::Clip &adjustment =
+        state.project()->tracks().at(pinned.constFirst().trackIndex).clips.at(
+            pinned.constFirst().clipIndex);
+
+    // The keys landed on the adjustment's mask, not on the media clip.
+    QVERIFY(state.project()->tracks().at(0).clips.at(0).mask.keyframes.isEmpty());
+    QVERIFY(adjustment.mask.isAnimated());
+    QCOMPARE(adjustment.mask.keyframes.value(QStringLiteral("x")).keyframes().size(), 2);
+
+    // And they evaluate: halfway between the two keys is halfway between the two values.
+    const drift::Mask midway = adjustment.mask.resolvedAt(drift::secondsToUs(1.0));
+    QVERIFY(qAbs(midway.x - 0.5) < 1e-6);
+    QCOMPARE(adjustment.mask.resolvedAt(0).x, 0.2);
+    QCOMPARE(adjustment.mask.resolvedAt(drift::secondsToUs(2.0)).x, 0.8);
+
+    // The strip enumerates it for the media clip, which is what the user has selected.
+    QVERIFY(state.clipAnimatedProperties(0, 0).contains(QStringLiteral("mask.x")));
+
+    // The inspector's readout goes through the same path.
+    QCOMPARE(state.propertyValueAt(0, 0, QStringLiteral("mask.x"), 1.0, 0.0), 0.5);
+    // An unkeyed scalar falls back to the mask's own static value, not to the caller's default.
+    QCOMPARE(state.propertyBaseValue(0, 0, QStringLiteral("mask.y"), -1.0), 0.5);
+
+    // Round-trips to the project document.
+    QString error;
+    const drift::Project reloaded =
+        drift::Project::fromJson(state.project()->toJson(), &error);
+    QVERIFY(error.isEmpty());
+    const QList<drift::LaneMask> masks =
+        drift::laneMasksAt(reloaded, 0, drift::secondsToUs(1.0));
+    QCOMPARE(masks.size(), 1);
+    // laneMasksAt resolves as it gathers, so this is the baked value the compositor sees.
+    QVERIFY(qAbs(masks.constFirst().mask.x - 0.5) < 1e-6);
+
+    state.removeClipKeyframe(0, 0, QStringLiteral("mask.x"), 0.0);
+    state.removeClipKeyframe(0, 0, QStringLiteral("mask.x"), 2.0);
+    QVERIFY(!state.clipAnimatedProperties(0, 0).contains(QStringLiteral("mask.x")));
+}
+
+// A freeform with no vertices rasterizes to an empty path, which blanks the clip with no way back
+// except deleting the mask. Picking the shape has to hand the user something to drag.
+void EditorStateTest::freeformMaskPointsAreEditable()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    appendTwoVideoClips(*state.project());
+
+    QVariantMap mask;
+    mask.insert(QStringLiteral("shape"), QStringLiteral("freeform"));
+    mask.insert(QStringLiteral("x"), 0.5);
+    mask.insert(QStringLiteral("y"), 0.5);
+    mask.insert(QStringLiteral("w"), 0.6);
+    mask.insert(QStringLiteral("h"), 0.6);
+    state.setClipMask(0, 0, mask);
+
+    const auto points = [&state]() {
+        const QList<drift::ClipRef> pinned = drift::linkedMaskAdjustments(*state.project(), 0, 0);
+        if (pinned.isEmpty())
+            return QVector<QPointF>{};
+        return state.project()
+            ->tracks()
+            .at(pinned.constFirst().trackIndex)
+            .clips.at(pinned.constFirst().clipIndex)
+            .mask.points;
+    };
+
+    // Seeded from the rect it would have had, not left empty.
+    QCOMPARE(points().size(), 4);
+    QCOMPARE(points().at(0), QPointF(0.2, 0.2));
+    QCOMPARE(points().at(2), QPointF(0.8, 0.8));
+
+    // Splitting an edge inserts at the requested slot.
+    state.insertMaskPoint(0, 0, 1, 0.5, 0.2);
+    QCOMPARE(points().size(), 5);
+    QCOMPARE(points().at(1), QPointF(0.5, 0.2));
+
+    state.removeMaskPoint(0, 0, 1);
+    QCOMPARE(points().size(), 4);
+
+    // A polygon needs three vertices to enclose anything, so removal stops there rather than
+    // silently blanking the clip.
+    state.removeMaskPoint(0, 0, 0);
+    QCOMPARE(points().size(), 3);
+    state.removeMaskPoint(0, 0, 0);
+    QCOMPARE(points().size(), 3);
+}
+
+// The preview overlay resolves its host frame, its layer list and which layer is selected in one
+// call, so the three can never disagree. Selecting the mask adjustment and selecting the clip it
+// masks must both land on the same host.
+void EditorStateTest::maskEditorStateResolvesTheHostFrame()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    appendTwoVideoClips(*state.project());
+
+    drift::Mask ellipse;
+    ellipse.shape = drift::MaskShape::Ellipse;
+    drift::setLinkedMask(*state.project(), 0, 0, ellipse);
+
+    const drift::Clip clip = state.project()->tracks().at(0).clips.at(0);
+    state.setPlayheadSeconds(drift::usToSeconds(clip.timelineStart) + 0.1);
+
+    // Selected via the media clip.
+    state.selectClip(0, 0);
+    const QVariantMap viaClip = state.maskEditorState();
+    QCOMPARE(viaClip.value(QStringLiteral("hostTrack")).toInt(), 0);
+    QCOMPARE(viaClip.value(QStringLiteral("hostClip")).toInt(), 0);
+    QCOMPARE(viaClip.value(QStringLiteral("layers")).toList().size(), 1);
+    QVERIFY(viaClip.value(QStringLiteral("layers")).toList().constFirst().toMap()
+                .value(QStringLiteral("selected")).toBool());
+    // The frame the handles are placed against defaults to the whole canvas for an untransformed
+    // clip, which is what mask coordinates are normalized to.
+    QCOMPARE(viaClip.value(QStringLiteral("width")).toInt(), state.project()->width());
+
+    // Selected via the adjustment itself resolves to the same host.
+    const QList<drift::ClipRef> pinned = drift::linkedMaskAdjustments(*state.project(), 0, 0);
+    QCOMPARE(pinned.size(), 1);
+    state.selectClip(pinned.constFirst().trackIndex, pinned.constFirst().clipIndex);
+    const QVariantMap viaLane = state.maskEditorState();
+    QCOMPARE(viaLane.value(QStringLiteral("hostTrack")).toInt(), 0);
+    QCOMPARE(viaLane.value(QStringLiteral("hostClip")).toInt(), 0);
+    QVERIFY(viaLane.value(QStringLiteral("layers")).toList().constFirst().toMap()
+                .value(QStringLiteral("selected")).toBool());
+}
+
+// Selecting a mask clip on a lane is itself the request to edit it. Requiring the toolbar toggle
+// as well made the handles undiscoverable — you had to already know they existed.
+void EditorStateTest::selectingAMaskClipTurnsOnThePreviewHandles()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    appendTwoVideoClips(*state.project());
+
+    drift::Mask ellipse;
+    ellipse.shape = drift::MaskShape::Ellipse;
+    drift::setLinkedMask(*state.project(), 0, 0, ellipse);
+
+    // A media clip alone does not: the transform gizmo owns the preview there.
+    state.selectClip(0, 0);
+    QVERIFY(!state.maskEditActive());
+
+    const QList<drift::ClipRef> pinned = drift::linkedMaskAdjustments(*state.project(), 0, 0);
+    QCOMPARE(pinned.size(), 1);
+
+    QSignalSpy activeSpy(&state, &AppController::maskEditActiveChanged);
+    state.selectClip(pinned.constFirst().trackIndex, pinned.constFirst().clipIndex);
+    QVERIFY2(state.maskEditActive(), "selecting the mask clip must show its handles");
+    QVERIFY(activeSpy.count() > 0);
+
+    // The toolbar toggle still forces them on while something else is selected, which is how you
+    // edit a mask without leaving the clip it masks.
+    state.selectClip(0, 0);
+    QVERIFY(!state.maskEditActive());
+    state.setMaskEditMode(true);
+    QVERIFY(state.maskEditActive());
+
+    // Entering canvas crop takes the preview back, since both claim the same grips.
+    state.setCanvasCropMode(true);
+    QVERIFY(!state.maskEditMode());
+}
+
+// A mask on a standalone adjustment track masks the canvas composited so far, so its frame is the
+// canvas rather than any one clip. It still needs handles.
+void EditorStateTest::standaloneMaskAdjustmentGetsAnEditorFrame()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    appendTwoVideoClips(*state.project());
+
+    drift::Track lane;
+    lane.type = drift::TrackType::Adjustment;
+    lane.adjustmentScope = drift::AdjustmentScope::AllBelow;
+    drift::Clip adjustment;
+    adjustment.id = QStringLiteral("standalone-mask");
+    adjustment.type = drift::ClipType::Adjustment;
+    adjustment.adjustmentKind = drift::AdjustmentKind::Mask;
+    adjustment.timelineStart = 0;
+    adjustment.timelineDuration = drift::secondsToUs(4.0);
+    adjustment.mask.shape = drift::MaskShape::Bars;
+    adjustment.mask.h = 0.3;
+    lane.clips.append(adjustment);
+    state.project()->tracks().prepend(lane);
+
+    state.setPlayheadSeconds(0.5);
+    state.selectClip(0, 0);
+    QVERIFY(state.maskEditActive());
+
+    const QVariantMap editor = state.maskEditorState();
+    QVERIFY2(editor.value(QStringLiteral("hasFrame")).toBool(),
+             "a standalone mask still needs a frame to place handles against");
+    QCOMPARE(editor.value(QStringLiteral("width")).toInt(), state.project()->width());
+    const QVariantList layers = editor.value(QStringLiteral("layers")).toList();
+    QCOMPARE(layers.size(), 1);
+    QVERIFY(layers.constFirst().toMap().value(QStringLiteral("selected")).toBool());
+    QCOMPARE(layers.constFirst().toMap().value(QStringLiteral("mask")).toMap()
+                 .value(QStringLiteral("shape")).toString(), QStringLiteral("bars"));
+}
+
+// Vertices reach QML as {x, y} objects, not [x, y] pairs: a Repeater delegate's `modelData` does
+// not index a nested array reliably, and the pair form left every vertex undefined and stacked in
+// the corner. The pair form is still accepted on the way back in, for anything already sending it.
+void EditorStateTest::freeformPointsCrossToQmlAsNamedFields()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    appendTwoVideoClips(*state.project());
+
+    QVariantMap freeform;
+    freeform.insert(QStringLiteral("shape"), QStringLiteral("freeform"));
+    freeform.insert(QStringLiteral("x"), 0.5);
+    freeform.insert(QStringLiteral("y"), 0.5);
+    freeform.insert(QStringLiteral("w"), 0.6);
+    freeform.insert(QStringLiteral("h"), 0.6);
+    state.setClipMask(0, 0, freeform);
+
+    const QVariantList points =
+        state.clipAt(0, 0).value(QStringLiteral("mask")).toMap()
+            .value(QStringLiteral("points")).toList();
+    QCOMPARE(points.size(), 4);
+    const QVariantMap first = points.constFirst().toMap();
+    QVERIFY2(first.contains(QStringLiteral("x")) && first.contains(QStringLiteral("y")),
+             "a vertex must carry named fields QML can bind to");
+    QCOMPARE(first.value(QStringLiteral("x")).toDouble(), 0.2);
+    QCOMPARE(first.value(QStringLiteral("y")).toDouble(), 0.2);
+
+    // Round-trips: handing the map straight back preserves the polygon.
+    QVariantMap edited = state.clipAt(0, 0).value(QStringLiteral("mask")).toMap();
+    QVariantList moved;
+    moved.append(QVariantMap{{QStringLiteral("x"), 0.1}, {QStringLiteral("y"), 0.1}});
+    moved.append(QVariantMap{{QStringLiteral("x"), 0.9}, {QStringLiteral("y"), 0.1}});
+    moved.append(QVariantMap{{QStringLiteral("x"), 0.5}, {QStringLiteral("y"), 0.9}});
+    edited.insert(QStringLiteral("points"), moved);
+    state.setClipMask(0, 0, edited);
+
+    const QVariantList after =
+        state.clipAt(0, 0).value(QStringLiteral("mask")).toMap()
+            .value(QStringLiteral("points")).toList();
+    QCOMPARE(after.size(), 3);
+    QCOMPARE(after.at(2).toMap().value(QStringLiteral("y")).toDouble(), 0.9);
+
+    // The older [x, y] pair form still parses, so an agent already sending it keeps working.
+    QVariantMap legacy = edited;
+    legacy.insert(QStringLiteral("points"),
+                  QVariantList{QVariantList{0.25, 0.25}, QVariantList{0.75, 0.25},
+                               QVariantList{0.5, 0.75}});
+    state.setClipMask(0, 0, legacy);
+    const QVariantList parsed =
+        state.clipAt(0, 0).value(QStringLiteral("mask")).toMap()
+            .value(QStringLiteral("points")).toList();
+    QCOMPARE(parsed.size(), 3);
+    QCOMPARE(parsed.constFirst().toMap().value(QStringLiteral("x")).toDouble(), 0.25);
 }
 
 // Deleting a clip must not silently promote its lane to a standalone adjustment, which would

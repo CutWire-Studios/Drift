@@ -323,6 +323,19 @@ PanelFrame {
                     }
                 }
 
+                // Mask editing claims the same grips and pointer as the transform gizmo, so the
+                // two are mutually exclusive rather than stacked.
+                MaskOverlay {
+                    id: maskOverlay
+                    x: canvasRect.x
+                    y: canvasRect.y
+                    width: canvasRect.width
+                    height: canvasRect.height
+                    z: 150
+                    visible: !root.playing && EditorState.projectWidth() > 0
+                             && EditorState.maskEditActive && !EditorState.canvasCropMode
+                }
+
                 TransformOverlay {
                     id: transformOverlay
                     // Sits outside the (clipped) canvas rect, mirroring its
@@ -335,7 +348,7 @@ PanelFrame {
                     height: canvasRect.height
                     z: 100
                     visible: !root.playing && EditorState.projectWidth() > 0
-                             && !EditorState.canvasCropMode
+                             && !EditorState.canvasCropMode && !EditorState.maskEditActive
                 }
 
                 // Canvas crop tool. Lives outside the (clipped) canvas rect so the

@@ -257,7 +257,13 @@ QList<LaneMask> laneMasksAt(const Project &project, int trackIndex, TimeUs timel
                 continue;
             if (!adjustment.mask.contributes())
                 continue;
-            result.append(LaneMask{adjustment.mask, adjustment.id});
+            // Bake animated properties down to this frame the way resolvedClipEffects does for
+            // effects, so the rasterizer and the GPU fold only ever see plain numbers and preview
+            // cannot diverge from export. Keys are relative to the adjustment's own start.
+            const Mask &mask = adjustment.mask;
+            result.append(LaneMask{
+                mask.isAnimated() ? mask.resolvedAt(timelineUs - adjustment.timelineStart) : mask,
+                adjustment.id});
         }
     }
     return result;

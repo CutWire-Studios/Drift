@@ -2477,6 +2477,22 @@
         <translation>Máscara do clipe atualizada</translation>
     </message>
     <message>
+        <source>Add mask point</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Mask point added</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Remove mask point</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Mask point removed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Replace transition</source>
         <translation>Substituir transição</translation>
     </message>
@@ -4970,6 +4986,30 @@
         <translation>Volume</translation>
     </message>
     <message>
+        <source>Mask X</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Mask Y</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Mask width</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Mask height</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Mask rotation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Mask feather</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Keyframes</source>
         <translation>Quadros-chave</translation>
     </message>
@@ -5235,6 +5275,21 @@
     </message>
 </context>
 <context>
+    <name>MaskOverlay</name>
+    <message>
+        <source>Mask changed</source>
+        <translation type="unfinished">Máscara alterada</translation>
+    </message>
+    <message>
+        <source>Add a mask in the Cutouts tab to edit it here</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Select a clip at the playhead to edit its masks</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>MasksInspector</name>
     <message>
         <source>Not available</source>
@@ -5259,14 +5314,6 @@
     <message>
         <source>Cutout shape</source>
         <translation>Forma de recorte</translation>
-    </message>
-    <message>
-        <source>Coming soon — shape masks are still under development.</source>
-        <translation>Em breve — as máscaras de forma ainda estão em desenvolvimento.</translation>
-    </message>
-    <message>
-        <source>Shape masks are still under development</source>
-        <translation>As máscaras de forma ainda estão em desenvolvimento</translation>
     </message>
     <message>
         <source>None</source>
@@ -5335,10 +5382,6 @@
     <message>
         <source>Feather</source>
         <translation>Suavização de borda</translation>
-    </message>
-    <message>
-        <source>Mask changed</source>
-        <translation>Máscara alterada</translation>
     </message>
     <message>
         <source>Invert</source>
@@ -6024,6 +6067,10 @@ Se a reprodução travar, experimente outro.</translation>
     <message>
         <source>Toggle guides</source>
         <translation>Alternar guias</translation>
+    </message>
+    <message>
+        <source>Keep mask handles on the preview while another clip is selected</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Exit fullscreen preview (Esc)</source>

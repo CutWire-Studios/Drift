@@ -219,6 +219,8 @@ private slots:
     void clipBodyAnimationFadeRampsOpacity();
     void maskApplierEllipseMasksCorners();
     void maskApplierFoldsAStackByItsOps();
+    void maskShapesUseBothSizeAxes();
+    void starMaskRotatesOnceNotTwice();
     void maskAdjustmentLaneMasksItsParentsClips();
     void maskLaneOpsCombineAcrossLanes();
     void soleMediaMaskCarriesTheDecontaminatedForeground();
@@ -5752,6 +5754,76 @@ void EngineTest::maskApplierFoldsAStackByItsOps()
     const QList<drift::Mask> disabled{off};
     QVERIFY(drift::maskAlphaMap(disabled, 64, 64).isNull());
     QVERIFY(drift::masksAreInert(disabled));
+}
+
+// Star and heart were forced into a square of qMin(halfW, halfH), which quietly discarded
+// whichever of the two size sliders was larger. Both generators take a rect, so both axes count.
+void EngineTest::maskShapesUseBothSizeAxes()
+{
+    const auto coverageWidth = [](drift::MaskShape shape, double w, double h) {
+        drift::Mask mask;
+        mask.shape = shape;
+        mask.x = 0.5;
+        mask.y = 0.5;
+        mask.w = w;
+        mask.h = h;
+        const QImage alpha = drift::maskAlphaMap(mask, 128, 128);
+        if (alpha.isNull())
+            return 0;
+        // Widest covered run on the centre row.
+        int count = 0;
+        for (int x = 0; x < alpha.width(); ++x) {
+            if (qGray(alpha.pixel(x, 64)) > 128)
+                ++count;
+        }
+        return count;
+    };
+
+    for (const drift::MaskShape shape : {drift::MaskShape::Star, drift::MaskShape::Heart}) {
+        const int narrow = coverageWidth(shape, 0.3, 0.9);
+        const int wide = coverageWidth(shape, 0.9, 0.9);
+        QVERIFY2(narrow > 0 && wide > 0, "both should cover something on the centre row");
+        QVERIFY2(wide > narrow * 1.5,
+                 "widening the mask must widen the shape, not be capped by the height");
+    }
+}
+
+// regularPolygonPath bakes the angle into its vertices and maskAlphaMap rotates the finished path
+// about its centre as well; doing both turned a star twice as far as the slider said.
+void EngineTest::starMaskRotatesOnceNotTwice()
+{
+    const auto coverageAt = [](double rotation) {
+        drift::Mask mask;
+        mask.shape = drift::MaskShape::Star;
+        mask.x = 0.5;
+        mask.y = 0.5;
+        mask.w = 0.8;
+        mask.h = 0.8;
+        mask.rotation = rotation;
+        return drift::maskAlphaMap(mask, 128, 128);
+    };
+
+    // A pentagon has five-fold symmetry, so 72° is a full period: it must land back on itself.
+    const QImage base = coverageAt(0.0);
+    const QImage full = coverageAt(72.0);
+    QVERIFY(!base.isNull() && !full.isNull());
+
+    const auto differingPixels = [](const QImage &a, const QImage &b) {
+        int diff = 0;
+        for (int y = 0; y < a.height(); ++y) {
+            for (int x = 0; x < a.width(); ++x) {
+                if (qAbs(qGray(a.pixel(x, y)) - qGray(b.pixel(x, y))) > 96)
+                    ++diff;
+            }
+        }
+        return diff;
+    };
+
+    // Rotated twice it would have landed on 144°, which is not a symmetry of a pentagon.
+    QVERIFY2(differingPixels(base, full) < 64,
+             "72 degrees is a full period for a pentagon; a double rotation would miss it");
+    QVERIFY2(differingPixels(base, coverageAt(36.0)) > 200,
+             "half a period must visibly differ, or nothing is rotating at all");
 }
 
 // The bar the handover set for Phase 5: a model-level check passes while the picture is still

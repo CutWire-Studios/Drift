@@ -248,6 +248,15 @@ Item {
         }
 
         IconButton {
+            glyph: Theme.icons.mask
+            variant: "text"
+            tooltip: qsTr("Keep mask handles on the preview while another clip is selected")
+            anchors.verticalCenter: parent.verticalCenter
+            active: EditorState.maskEditMode
+            onClicked: EditorState.maskEditMode = !EditorState.maskEditMode
+        }
+
+        IconButton {
             glyph: toolbar.panel.previewFullscreen ? Theme.icons.minimize : Theme.icons.maximize
             variant: "text"
             tooltip: toolbar.panel.previewFullscreen

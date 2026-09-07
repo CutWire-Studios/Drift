@@ -1,8 +1,11 @@
 #pragma once
 
+#include "Keyframe.h"
 #include "Time.h"
 
 #include <QList>
+#include <QMap>
+#include <QStringList>
 #include <QPointF>
 #include <QString>
 #include <QVector>
@@ -81,10 +84,36 @@ struct Mask
     // inverting a cutout keeps the background, which must keep its own colours.
     QString mediaFgrPath;
 
+    // Animated scalars, keyed by the same names the inspector and the keyframe graph use:
+    // "x", "y", "w", "h", "rotation", "feather". A non-empty track wins over the scalar above at
+    // render time; the scalar still holds the last static value, so clearing a track returns the
+    // property to a constant rather than to the struct default. Mirrors Effect::paramKeyframes.
+    //
+    // Key times are relative to the carrying adjustment clip's own start, matching how
+    // laneAdjustmentEffects resolves an adjustment's effect keyframes. For a linked adjustment
+    // that start mirrors the host clip's, so the two coincide.
+    QMap<QString, KeyframeTrack<double>> keyframes;
+
+    // Polygon shape over time. The whole vertex list is one key, because a polygon is edited as
+    // a shape: separate tracks per coordinate would make "the same shape at time t" impossible
+    // to express. Between two keys with matching vertex counts the positions interpolate
+    // linearly; a mismatch holds the earlier key rather than inventing a correspondence.
+    QMap<TimeUs, QVector<QPointF>> pathKeys;
+
     // Media coverage is decoded per frame by the compositor, so it has no rasterizable path.
     bool isMedia() const { return shape == MaskShape::Media && !mediaPath.isEmpty(); }
     bool contributes() const { return enabled && shape != MaskShape::None; }
+
+    bool isAnimated() const;
+    // The scalar, overridden by keyframes[key] evaluated at maskTimeUs.
+    double valueAt(const QString &key, TimeUs maskTimeUs) const;
+    // A copy with every animated property baked down to its value at maskTimeUs. The compositor
+    // calls this once per frame so the rasterizer only ever sees plain numbers.
+    Mask resolvedAt(TimeUs maskTimeUs) const;
 };
+
+// The scalar members a mask can animate, in the order the inspector lists them.
+const QStringList &maskKeyframeProperties();
 
 // True when no entry would change the layer's alpha, so the compositor can skip masking whole.
 bool masksAreInert(const QList<Mask> &masks);

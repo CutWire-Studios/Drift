@@ -8,22 +8,20 @@
 
 namespace {
 
-// Square box of the given radius, centred — masks size their parametric shapes uniformly.
-QRectF squareBounds(const QPointF &center, double radius)
-{
-    return QRectF(center.x() - radius, center.y() - radius, radius * 2.0, radius * 2.0);
-}
-
 QPainterPath maskPath(const drift::Mask &mask, int canvasWidth, int canvasHeight)
 {
     const QPointF center(mask.x * canvasWidth, mask.y * canvasHeight);
     const double halfW = qMax(1.0, mask.w * canvasWidth * 0.5);
     const double halfH = qMax(1.0, mask.h * canvasHeight * 0.5);
+    // The mask's own rect. Star and heart used to be forced into a square of qMin(halfW, halfH),
+    // which quietly threw away whichever of the width and height sliders was larger; both
+    // generators handle a non-square box, so both sliders now mean something.
+    const QRectF bounds(center.x() - halfW, center.y() - halfH, halfW * 2.0, halfH * 2.0);
 
     switch (mask.shape) {
     case drift::MaskShape::Rectangle: {
         QPainterPath path;
-        path.addRect(QRectF(center.x() - halfW, center.y() - halfH, halfW * 2.0, halfH * 2.0));
+        path.addRect(bounds);
         return path;
     }
     case drift::MaskShape::Ellipse: {
@@ -32,9 +30,12 @@ QPainterPath maskPath(const drift::Mask &mask, int canvasWidth, int canvasHeight
         return path;
     }
     case drift::MaskShape::Star:
-        return drift::regularPolygonPath(squareBounds(center, qMin(halfW, halfH)), 5, mask.rotation);
+        // Rotation is deliberately not passed through: maskAlphaMap rotates every parametric
+        // shape about its centre below, and baking it in here as well turned a star twice as far
+        // as the slider said.
+        return drift::regularPolygonPath(bounds, 5, 0.0);
     case drift::MaskShape::Heart:
-        return drift::heartPath(squareBounds(center, qMin(halfW, halfH)));
+        return drift::heartPath(bounds);
     case drift::MaskShape::Bars: {
         const double barH = halfH;
         QPainterPath path;

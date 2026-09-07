@@ -55,6 +55,12 @@ Item {
         case "rotation": return qsTr("Rotation")
         case "opacity": return qsTr("Opacity")
         case "volume": return qsTr("Volume")
+        case "mask.x": return qsTr("Mask X")
+        case "mask.y": return qsTr("Mask Y")
+        case "mask.w": return qsTr("Mask width")
+        case "mask.h": return qsTr("Mask height")
+        case "mask.rotation": return qsTr("Mask rotation")
+        case "mask.feather": return qsTr("Mask feather")
         }
         const fx = effectParam(id)
         if (fx)
@@ -70,6 +76,12 @@ Item {
         case "rotation": return "°"
         case "opacity": return "Op"
         case "volume": return "Vol"
+        case "mask.x": return "MX"
+        case "mask.y": return "MY"
+        case "mask.w": return "MW"
+        case "mask.h": return "MH"
+        case "mask.rotation": return "M°"
+        case "mask.feather": return "MFe"
         }
         const fx = effectParam(id)
         if (fx)
@@ -84,6 +96,10 @@ Item {
             return clip.kind === "audio" || clip.kind === "video"
         if (id.substring(0, 3) === "fx.")
             return clip.kind !== "audio" && effectParam(id) !== null
+        // A mask lives on the clip's lane, so the strip offers it for the same clips the Masks
+        // tab does. There is no per-id validation to do: the id set is fixed and closed.
+        if (id.substring(0, 5) === "mask.")
+            return clip.kind !== "audio"
         return clip.kind !== "audio"
     }
 
@@ -94,8 +110,12 @@ Item {
             return { min: 0, max: 1 }
         if (id === "volume")
             return { min: 0, max: 2 }
-        if (id === "rotation")
+        if (id === "rotation" || id === "mask.rotation")
             return { min: -180, max: 180 }
+        // Mask geometry is normalized to the clip frame, so a fixed 0..1 axis is meaningful and
+        // keeps the four curves comparable. Feather is in px and auto-fits like anything else.
+        if (id === "mask.x" || id === "mask.y" || id === "mask.w" || id === "mask.h")
+            return { min: 0, max: 1 }
         const fx = effectParam(id)
         if (fx)
             return { min: fx.param.min, max: fx.param.max }
@@ -286,7 +306,7 @@ Item {
     // Open whenever the clip has an animation to show, even if every curve is currently folded
     // away — otherwise hiding the last one would take the chips with it.
     visible: (propertiesTab === "transform" || propertiesTab === "effects"
-              || propertiesTab === "stabilize")
+              || propertiesTab === "stabilize" || propertiesTab === "masks")
              && hasClip && clip && allSeries.length > 0
 
     // Curve editing focuses one series: it gets tangent handles and owns the value axis,

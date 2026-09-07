@@ -2472,6 +2472,22 @@
         <translation>クリップマスクを更新しました</translation>
     </message>
     <message>
+        <source>Add mask point</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Mask point added</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Remove mask point</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Mask point removed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Replace transition</source>
         <translation>トランジションを置き換え</translation>
     </message>
@@ -4953,6 +4969,30 @@
         <translation>音量</translation>
     </message>
     <message>
+        <source>Mask X</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Mask Y</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Mask width</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Mask height</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Mask rotation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Mask feather</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Keyframes</source>
         <translation>キーフレーム</translation>
     </message>
@@ -5217,6 +5257,21 @@
     </message>
 </context>
 <context>
+    <name>MaskOverlay</name>
+    <message>
+        <source>Mask changed</source>
+        <translation type="unfinished">マスクを変更しました</translation>
+    </message>
+    <message>
+        <source>Add a mask in the Cutouts tab to edit it here</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Select a clip at the playhead to edit its masks</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>MasksInspector</name>
     <message>
         <source>Not available</source>
@@ -5241,14 +5296,6 @@
     <message>
         <source>Cutout shape</source>
         <translation>切り抜き形状</translation>
-    </message>
-    <message>
-        <source>Coming soon — shape masks are still under development.</source>
-        <translation>近日公開 — シェイプマスクはまだ開発中です。</translation>
-    </message>
-    <message>
-        <source>Shape masks are still under development</source>
-        <translation>シェイプマスクはまだ開発中です</translation>
     </message>
     <message>
         <source>None</source>
@@ -5317,10 +5364,6 @@
     <message>
         <source>Feather</source>
         <translation>ぼかし</translation>
-    </message>
-    <message>
-        <source>Mask changed</source>
-        <translation>マスクを変更しました</translation>
     </message>
     <message>
         <source>Invert</source>
@@ -5999,6 +6042,10 @@ If playback stutters, try another.</source>
     <message>
         <source>Toggle guides</source>
         <translation>ガイドの切り替え</translation>
+    </message>
+    <message>
+        <source>Keep mask handles on the preview while another clip is selected</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Exit fullscreen preview (Esc)</source>

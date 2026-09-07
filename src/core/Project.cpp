@@ -71,6 +71,23 @@ QJsonObject maskToJson(const Mask &m)
     for (const QPointF &pt : m.points)
         points.append(QJsonArray{pt.x(), pt.y()});
 
+    QJsonObject maskKeyframesJson;
+    for (auto it = m.keyframes.constBegin(); it != m.keyframes.constEnd(); ++it) {
+        if (it->isEmpty())
+            continue;
+        maskKeyframesJson.insert(it.key(), keyframesToJson(it.value()));
+    }
+
+    // One entry per shape key: [timeUs, [[x, y], ...]]. An array rather than an object because
+    // the key is a time, and JSON object keys would force it through a string round trip.
+    QJsonArray pathKeys;
+    for (auto it = m.pathKeys.constBegin(); it != m.pathKeys.constEnd(); ++it) {
+        QJsonArray shape;
+        for (const QPointF &pt : it.value())
+            shape.append(QJsonArray{pt.x(), pt.y()});
+        pathKeys.append(QJsonArray{qint64(it.key()), shape});
+    }
+
     return QJsonObject{
         {QStringLiteral("shape"), maskShapeToString(m.shape)},
         {QStringLiteral("op"), maskOpToString(m.op)},
@@ -90,6 +107,8 @@ QJsonObject maskToJson(const Mask &m)
         {QStringLiteral("mediaFit"), maskMediaFitToString(m.mediaFit)},
         {QStringLiteral("mediaChannel"), maskMediaChannelToString(m.mediaChannel)},
         {QStringLiteral("mediaLoop"), m.mediaLoop},
+        {QStringLiteral("keyframes"), maskKeyframesJson},
+        {QStringLiteral("pathKeys"), pathKeys},
     };
 }
 
@@ -127,6 +146,23 @@ Mask maskFromJson(const QJsonObject &o)
         const QJsonArray pair = value.toArray();
         if (pair.size() >= 2)
             m.points.append(QPointF(pair.at(0).toDouble(), pair.at(1).toDouble()));
+    }
+
+    const QJsonObject maskKeyframesJson = o.value(QStringLiteral("keyframes")).toObject();
+    for (auto it = maskKeyframesJson.constBegin(); it != maskKeyframesJson.constEnd(); ++it)
+        m.keyframes.insert(it.key(), keyframesFromJson(it.value().toObject()));
+
+    for (const QJsonValue &value : o.value(QStringLiteral("pathKeys")).toArray()) {
+        const QJsonArray entry = value.toArray();
+        if (entry.size() < 2)
+            continue;
+        QVector<QPointF> shape;
+        for (const QJsonValue &pointValue : entry.at(1).toArray()) {
+            const QJsonArray pair = pointValue.toArray();
+            if (pair.size() >= 2)
+                shape.append(QPointF(pair.at(0).toDouble(), pair.at(1).toDouble()));
+        }
+        m.pathKeys.insert(TimeUs(entry.at(0).toInteger()), shape);
     }
 
     // A pre-v5 "matte" had no geometry: every consumer bailed out before reading the rect and
@@ -595,6 +631,12 @@ void detachClip(Clip &clip)
     clip.volume.detachSharedData();
     clip.speedCurve.detachSharedData();
     clip.mask.points.detach();
+    clip.mask.pathKeys.detach();
+    for (auto it = clip.mask.pathKeys.begin(); it != clip.mask.pathKeys.end(); ++it)
+        it.value().detach();
+    clip.mask.keyframes.detach();
+    for (auto it = clip.mask.keyframes.begin(); it != clip.mask.keyframes.end(); ++it)
+        it.value().detachSharedData();
     clip.subtitleCues.detach();
     clip.effects.detach();
     for (Effect &effect : clip.effects)

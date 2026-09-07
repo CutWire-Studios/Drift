@@ -271,6 +271,11 @@ class AppController : public QObject
     Q_PROPERTY(QString guideType READ guideType WRITE setGuideType NOTIFY guidesChanged)
     Q_PROPERTY(QVariantMap background READ background NOTIFY backgroundChanged)
     Q_PROPERTY(bool canvasCropMode READ canvasCropMode WRITE setCanvasCropMode NOTIFY canvasCropModeChanged)
+    Q_PROPERTY(bool maskEditMode READ maskEditMode WRITE setMaskEditMode NOTIFY maskEditModeChanged)
+    // Whether the preview should be showing mask handles right now. Selecting a mask clip is
+    // itself a request to edit it, so the toolbar toggle is only needed to keep the handles up
+    // while some *other* clip is selected.
+    Q_PROPERTY(bool maskEditActive READ maskEditActive NOTIFY maskEditActiveChanged)
     Q_PROPERTY(bool inlineTextEditing READ inlineTextEditing NOTIFY inlineTextEditingChanged)
     Q_PROPERTY(QVariantList actions READ actions NOTIFY shortcutsChanged)
     Q_PROPERTY(QVariantList bookmarks READ bookmarks NOTIFY bookmarksChanged)
@@ -853,6 +858,9 @@ public:
     Q_INVOKABLE void setProjectSetup(int width, int height, int fps);
     Q_INVOKABLE void applyCanvasCrop(double x, double y, double width, double height);
     bool canvasCropMode() const { return m_canvasCropMode; }
+    bool maskEditMode() const { return m_maskEditMode; }
+    void setMaskEditMode(bool active);
+    bool maskEditActive() const;
     void setCanvasCropMode(bool active);
     Q_INVOKABLE void setBackground(const QVariantMap &background);
     Q_INVOKABLE bool timelineHasVisualClips() const;
@@ -948,6 +956,15 @@ public:
     Q_INVOKABLE bool canUnlinkSelection() const;
     Q_INVOKABLE void unlinkSelectedClips();
     Q_INVOKABLE void setClipMask(int trackIndex, int clipIndex, const QVariantMap &mask);
+    // Freeform vertex editing, driven by the preview overlay. `pointIndex` is the insertion slot,
+    // so passing the index after an edge's first vertex splits that edge.
+    Q_INVOKABLE void insertMaskPoint(int trackIndex, int clipIndex, int pointIndex, double x,
+                                     double y);
+    Q_INVOKABLE void removeMaskPoint(int trackIndex, int clipIndex, int pointIndex);
+    // Everything the preview's mask editor needs, resolved in one call so QML cannot get the
+    // three lookups out of step: the host clip's rect at the playhead, and the mask layers on
+    // that track covering it. Empty when the selection names no maskable track.
+    Q_INVOKABLE QVariantMap maskEditorState() const;
     // Partial patch: only the keys present are applied, like setTextStyle.
     Q_INVOKABLE void setShapeStyle(int trackIndex, int clipIndex, const QVariantMap &style);
     Q_INVOKABLE void setClipFade(int trackIndex, int clipIndex, double fadeInSeconds, double fadeOutSeconds);
@@ -1389,6 +1406,8 @@ signals:
     void userTextPresetsChanged();
     void userEffectPresetsChanged();
     void canvasCropModeChanged();
+    void maskEditModeChanged();
+    void maskEditActiveChanged();
     void backgroundChanged();
     void dirtyChanged();
     void currentProjectPathChanged();
@@ -1825,6 +1844,7 @@ protected:
     int m_timelineTrimCursorHeight = 0;
     bool m_guidesEnabled = false;
     bool m_canvasCropMode = false;
+    bool m_maskEditMode = false;
     QString m_guideType = QStringLiteral("thirds");
     QHash<QString, QString> m_shortcuts;
     QHash<QString, QSet<QString>> m_assetFavorites;

@@ -1164,7 +1164,11 @@ GpuScene buildGpuScene(const drift::Project &project, drift::TimeUs timelineUs, 
                 // its chain lands, which is independent of a Mask adjustment carrying one as its
                 // whole payload.
                 if (clip.mask.contributes()) {
-                    fillGpuLayerMasks(item.layer, clip, {drift::LaneMask{clip.mask, clip.id}},
+                    const drift::TimeUs maskTimeUs = timelineUs - clip.timelineStart;
+                    const drift::Mask resolved = clip.mask.isAnimated()
+                                                     ? clip.mask.resolvedAt(maskTimeUs)
+                                                     : clip.mask;
+                    fillGpuLayerMasks(item.layer, clip, {drift::LaneMask{resolved, clip.id}},
                                       timelineUs, width, height);
                 }
                 item.layer.rect = QRectF(0, 0, width, height);

@@ -730,6 +730,7 @@ qt_add_qml_module(drift
         src/qml/PreviewPanel.qml
         src/qml/components/preview/TransformOverlay.qml
         src/qml/components/preview/CropOverlay.qml
+        src/qml/components/preview/MaskOverlay.qml
         src/qml/components/preview/PreviewToolbar.qml
         src/qml/components/preview/AndroidTransformOverlay.qml
         src/qml/components/preview/AndroidCropOverlay.qml
