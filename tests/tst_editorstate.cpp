@@ -6135,9 +6135,11 @@ void EditorStateTest::pasteAttributesToMultipleClips()
     summary = state.clipboardAttributes();
     QCOMPARE(summary.value(QStringLiteral("targetClipCount")).toInt(), 2);
 
-    // Initial check on Target1 and Target2: their flipH is false, blendMode is normal
-    const drift::Clip &t1Before = state.project()->tracks().at(track).clips.at(1);
-    const drift::Clip &t2Before = state.project()->tracks().at(track).clips.at(2);
+    // Initial check on Target1 and Target2: their flipH is false, blendMode is normal.
+    // Copied out by value: pasteAttributes detaches the clip list, so references
+    // taken here would dangle by the time the undo is checked below.
+    const drift::Clip t1Before = state.project()->tracks().at(track).clips.at(1);
+    const drift::Clip t2Before = state.project()->tracks().at(track).clips.at(2);
     QCOMPARE(t1Before.flipH, false);
     QCOMPARE(t2Before.flipH, false);
     QCOMPARE(t1Before.blendMode, drift::BlendMode::Normal);
