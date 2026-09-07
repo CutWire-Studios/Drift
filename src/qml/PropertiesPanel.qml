@@ -63,7 +63,7 @@ PanelFrame {
             root.syncTextTab()
             root.syncAnimationTab()
             root.syncStabilizeTab()
-            root.syncMasksTab()
+            root.syncAdjustmentTab()
             root.syncActiveTab()
         }
         function onSelectedClipDataChanged() {
@@ -168,10 +168,11 @@ PanelFrame {
                    || root.clipKind === "audio"
         if (tabId === "stabilize")
             return root.clipKind === "video"
-        // A media clip's masks live on adjustments pinned to it, and those are what you select to
-        // edit them — the tab used to be the only way to *create* one, which the assets panel now
-        // does. Offering it here as well would edit only the first mask of a stack.
-        if (tabId === "masks")
+        // Masks and effect stacks live on the adjustments pinned to a clip, and those adjustments
+        // are what you select to edit them. The clip is where you *aim* one from — the assets
+        // panel does that — but not where it is configured: a clip can carry several mask
+        // adjustments, and reporting one clip-shaped stack for it can only ever show the first.
+        if (tabId === "masks" || tabId === "effects" || tabId === "audioEffects")
             return false
         return true
     }
@@ -202,7 +203,15 @@ PanelFrame {
     readonly property int textTabIndex: tabIndexOf("text")
     readonly property int animationTabIndex: tabIndexOf("animation")
     readonly property int stabilizeTabIndex: tabIndexOf("stabilize")
-    readonly property int masksTabIndex: tabIndexOf("masks")
+    // The one tab an adjustment exists for. Mirrors the kind switch in tabVisible above.
+    readonly property string adjustmentTabId: {
+        const kind = root.clipData.adjustmentKind || "videoEffects"
+        if (kind === "mask")
+            return "masks"
+        if (kind === "audioEffects")
+            return "audioEffects"
+        return "effects"
+    }
 
     // The Subtitles tab only exists for subtitle clips, so leaving it selected would show a blank
     // pane once the selection moves off one. Selecting a subtitle clip never opens the tab by
@@ -239,14 +248,16 @@ PanelFrame {
             root.activeTab = 0
     }
 
-    // Selecting a mask clip is how you edit a mask now, so it opens the pane that edits one —
-    // the same courtesy selecting a transition already gets. Only for a Mask adjustment: a
-    // video-effects adjustment also offers the tab, but its effect stack is what you came for.
-    function syncMasksTab() {
-        if (root.masksTabIndex < 0)
+    // Selecting an adjustment is how you edit its payload now, so it opens the pane that edits
+    // one — the same courtesy selecting a transition already gets. A video-effects adjustment
+    // also offers the Masks tab (a mask there scopes where the chain lands), but its effect
+    // stack is what you came for, so kind decides and not tab order.
+    function syncAdjustmentTab() {
+        if (root.clipKind !== "adjustment")
             return
-        if (root.clipKind === "adjustment" && root.clipData.adjustmentKind === "mask")
-            root.activeTab = root.masksTabIndex
+        const target = tabIndexOf(root.adjustmentTabId)
+        if (target >= 0)
+            root.activeTab = target
     }
 
     // The catch-all behind the per-tab syncs above: an adjustment hides most of the rail, so any

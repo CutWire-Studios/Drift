@@ -2615,8 +2615,11 @@ QHash<QString, QString> defaultShortcuts()
 
 QVariantMap AppController::clipToMap(const drift::Clip &clip, const drift::Clip *videoEffectHost,
                                      const drift::Clip *audioEffectHost,
-                                     const drift::Clip *maskHost) const
+                                     const drift::Clip *maskHost,
+                                     const drift::Clip *faceSource) const
 {
+    // Face landmarks live on the media clip, so a linked adjustment reports its host's.
+    const drift::Clip &face = faceSource ? *faceSource : clip;
     // A media clip's stack physically lives on the adjustment linked to it, but the inspector,
     // the timeline badge and the MCP tools all still ask the clip for "its" effects — so report
     // the host's list here. Indices line up 1:1 with what the effect invokables take, because a
@@ -2670,9 +2673,13 @@ QVariantMap AppController::clipToMap(const drift::Clip &clip, const drift::Clip 
         // pinned to it, but the inspector and the MCP tools still ask the clip for "its" mask.
         {QStringLiteral("mask"), maskToMap(maskHost ? maskHost->mask : clip.mask,
                                            maskHost ? maskHost->timelineStart : clip.timelineStart)},
-        {QStringLiteral("hasFaceTrack"), !clip.faceTrackPath.isEmpty()},
-        {QStringLiteral("faceTrackHasContours"), faceTrackHasContours(clip.faceTrackPath)},
-        {QStringLiteral("faceTrackHasMesh"), faceTrackHasMesh(clip.faceTrackPath)},
+        {QStringLiteral("hasFaceTrack"), !face.faceTrackPath.isEmpty()},
+        {QStringLiteral("faceTrackHasContours"), faceTrackHasContours(face.faceTrackPath)},
+        {QStringLiteral("faceTrackHasMesh"), faceTrackHasMesh(face.faceTrackPath)},
+        // Whether there is anything a face scan could run on at all: an unlinked adjustment or an
+        // audio clip has no source, and the inspector must not offer to scan one.
+        {QStringLiteral("canFaceTrack"), face.type == drift::ClipType::Video
+             || face.type == drift::ClipType::Image},
         {QStringLiteral("stabilized"), clip.stabilizeAppliedSmoothing >= 0},
         {QStringLiteral("stabilizing"), clip.stabilizing},
         {QStringLiteral("stabilizeMode"), drift::stabilizeModeToString(clip.stabilizeMode)},
@@ -4233,11 +4240,17 @@ QVariantMap AppController::clipAt(int trackIndex, int clipIndex) const
         return {};
 
     // The single-clip form resolves its own hosts. Unlike tracks(), this runs once, so the two
-    // scans cost nothing worth indexing around.
+    // scans cost nothing worth indexing around — which is also why the face source is looked up
+    // here rather than in tracks(), where finding a clip by id per adjustment would be quadratic.
+    const drift::ClipRef source = sourceClipRef(trackIndex, clipIndex);
+    const bool redirected = source.trackIndex >= 0
+                            && (source.trackIndex != trackIndex || source.clipIndex != clipIndex);
     return clipToMap(tracks[trackIndex].clips.at(clipIndex),
                      effectHostClip(trackIndex, clipIndex, drift::AdjustmentKind::VideoEffects),
                      effectHostClip(trackIndex, clipIndex, drift::AdjustmentKind::AudioEffects),
-                     effectHostClip(trackIndex, clipIndex, drift::AdjustmentKind::Mask));
+                     effectHostClip(trackIndex, clipIndex, drift::AdjustmentKind::Mask),
+                     redirected ? &tracks.at(source.trackIndex).clips.at(source.clipIndex)
+                                : nullptr);
 }
 
 QVariantMap AppController::activeVideoClipAtPlayhead() const
@@ -7521,6 +7534,10 @@ void AppController::cancelFaceDetection()
 
 void AppController::clearFaceTrack(int trackIndex, int clipIndex)
 {
+    // Same redirect as detectFacesForClip: the caller is the effect adjustment's inspector.
+    const drift::ClipRef source = sourceClipRef(trackIndex, clipIndex);
+    trackIndex = source.trackIndex;
+    clipIndex = source.clipIndex;
     if (trackIndex < 0 || trackIndex >= m_project.tracks().size())
         return;
     if (clipIndex < 0 || clipIndex >= m_project.tracks().at(trackIndex).clips.size())
@@ -8050,6 +8067,11 @@ void AppController::detectFacesForClip(int trackIndex, int clipIndex)
         setLastMessage(tr("Face detection already in progress"), QStringLiteral("warning"));
         return;
     }
+    // The prompt that asks for a scan lives in the effect adjustment's inspector, so what it
+    // hands over is the adjustment. The landmarks belong on the clip it is pinned to.
+    const drift::ClipRef source = sourceClipRef(trackIndex, clipIndex);
+    trackIndex = source.trackIndex;
+    clipIndex = source.clipIndex;
     if (trackIndex < 0 || trackIndex >= m_project.tracks().size())
         return;
     const drift::Track &track = m_project.tracks().at(trackIndex);
@@ -9127,6 +9149,26 @@ drift::ClipRef AppController::createLinkedAdjustment(int trackIndex, int clipInd
     drift::Track &lane = m_project.tracks()[laneIndex];
     lane.clips.append(adjustment);
     return {laneIndex, static_cast<int>(lane.clips.size()) - 1};
+}
+
+drift::ClipRef AppController::sourceClipRef(int trackIndex, int clipIndex) const
+{
+    if (trackIndex < 0 || trackIndex >= m_project.tracks().size())
+        return {};
+    const drift::Track &track = m_project.tracks().at(trackIndex);
+    if (clipIndex < 0 || clipIndex >= track.clips.size())
+        return {};
+
+    const drift::Clip &clip = track.clips.at(clipIndex);
+    if (clip.type != drift::ClipType::Adjustment || clip.linkedClipId.isEmpty())
+        return {trackIndex, clipIndex};
+
+    int foundTrack = -1;
+    int foundClip = -1;
+    if (findClipById(m_project, clip.linkedClipId, &foundTrack, &foundClip))
+        return {foundTrack, foundClip};
+    // A link whose clip is gone; syncLinkedAdjustments clears these, so this is a transient.
+    return {};
 }
 
 drift::ClipRef AppController::effectHostRef(int trackIndex, int clipIndex,
@@ -12922,6 +12964,17 @@ QVariantList AppController::effectCategories() const
     return out;
 }
 
+namespace {
+
+// Every effect that follows baked face landmarks is named face_*. The catalog carries no other
+// marker for it, and the inspector's own beauty/mesh checks already key off the same prefix.
+bool isFaceEffectId(const QString &catalogId)
+{
+    return catalogId.startsWith(QLatin1String("face_"));
+}
+
+} // namespace
+
 void AppController::addEffect(int trackIndex, int clipIndex, const QString &effectId)
 {
     if (trackIndex < 0 || trackIndex >= m_project.tracks().size())
@@ -12945,15 +12998,24 @@ void AppController::addEffect(int trackIndex, int clipIndex, const QString &effe
 
     // The parent track is about to be addressed by id, so it needs one before the snapshot.
     m_project.ensureTrackIds();
+
+    // A face effect follows baked landmarks and does nothing without them, so adding one starts
+    // the scan rather than leaving the user to discover why the effect looks inert. Captured by
+    // id before the edit, because minting a lane shifts every index after it.
+    QString faceSourceId;
+    if (isFaceEffectId(effectId)) {
+        const drift::ClipRef source = sourceClipRef(trackIndex, clipIndex);
+        if (source.trackIndex >= 0) {
+            const drift::Clip &sourceClip =
+                m_project.tracks().at(source.trackIndex).clips.at(source.clipIndex);
+            if (sourceClip.faceTrackPath.isEmpty())
+                faceSourceId = sourceClip.id;
+        }
+    }
+
     // Snapshot first: creating the lane is part of the edit, so undo must take it back out
     // along with the effect rather than leaving an empty row behind.
     const drift::Project before = m_project;
-
-    // Selection stays on the clip the user aimed at, not on the adjustment the effect physically
-    // lands on — clipToMap reports the linked adjustment's stack as the clip's own, so the
-    // inspector shows what they just added.
-    const QString clipId = m_project.tracks().at(trackIndex).clips.at(clipIndex).id;
-    const QString trackId = m_project.tracks().at(trackIndex).id;
 
     int hostTrack = trackIndex;
     int hostClip = clipIndex;
@@ -12963,26 +13025,23 @@ void AppController::addEffect(int trackIndex, int clipIndex, const QString &effe
     }
     m_project.tracks()[hostTrack].clips[hostClip].effects.append(effect);
 
-    // Creating a lane inserts a track above the parent, so the indices the caller passed may
-    // have shifted underneath us.
-    const int selectedTrack = m_project.trackIndexById(trackId);
-    int selectedClip = -1;
-    if (selectedTrack >= 0) {
-        const drift::Track &owner = m_project.tracks().at(selectedTrack);
-        for (int c = 0; c < owner.clips.size(); ++c) {
-            if (owner.clips.at(c).id == clipId) {
-                selectedClip = c;
-                break;
-            }
-        }
-    }
-    if (selectedClip >= 0) {
-        m_selectedTrack = selectedTrack;
-        m_selectedClip = selectedClip;
-        m_selection = {qMakePair(selectedTrack, selectedClip)};
-    }
+    // Selection moves to the adjustment carrying the stack, because that is the only thing whose
+    // inspector shows it: the Effects tab is no longer offered for the clip the effect was aimed
+    // at. redirectToEffectHost already returns post-insert indices, and normalizeProjectStructure
+    // carries the selection across any reorder by track id.
+    m_selectedTrack = hostTrack;
+    m_selectedClip = hostClip;
+    m_selection = {qMakePair(hostTrack, hostClip)};
+
     pushProjectEdit(before, tr("Add effect"));
     finishEdit(tr("Effect added"));
+
+    if (faceSourceId.isEmpty() || m_faceDetecting || !faceDetectionAvailable())
+        return;
+    int faceTrack = -1;
+    int faceClip = -1;
+    if (findClipById(m_project, faceSourceId, &faceTrack, &faceClip))
+        detectFacesForClip(faceTrack, faceClip);
 }
 
 namespace {
@@ -13866,12 +13925,6 @@ void AppController::addAudioEffect(int trackIndex, int clipIndex, const QString 
     // along with the effect rather than leaving an empty row behind.
     const drift::Project before = m_project;
 
-    // Selection stays on the clip the user aimed at, not on the adjustment the effect physically
-    // lands on — clipToMap reports the linked adjustment's stack as the clip's own, so the
-    // inspector shows what they just added.
-    const QString clipId = m_project.tracks().at(trackIndex).clips.at(clipIndex).id;
-    const QString trackId = m_project.tracks().at(trackIndex).id;
-
     int hostTrack = trackIndex;
     int hostClip = clipIndex;
     if (!redirectToEffectHost(&hostTrack, &hostClip, drift::AdjustmentKind::AudioEffects,
@@ -13880,24 +13933,14 @@ void AppController::addAudioEffect(int trackIndex, int clipIndex, const QString 
     }
     m_project.tracks()[hostTrack].clips[hostClip].audioEffects.append(effect);
 
-    // Creating a lane inserts a track above the parent, so the indices the caller passed may
-    // have shifted underneath us.
-    const int selectedTrack = m_project.trackIndexById(trackId);
-    int selectedClip = -1;
-    if (selectedTrack >= 0) {
-        const drift::Track &owner = m_project.tracks().at(selectedTrack);
-        for (int c = 0; c < owner.clips.size(); ++c) {
-            if (owner.clips.at(c).id == clipId) {
-                selectedClip = c;
-                break;
-            }
-        }
-    }
-    if (selectedClip >= 0) {
-        m_selectedTrack = selectedTrack;
-        m_selectedClip = selectedClip;
-        m_selection = {qMakePair(selectedTrack, selectedClip)};
-    }
+    // Selection moves to the adjustment carrying the stack — the Audio FX tab is no longer
+    // offered for the clip the effect was aimed at, so nothing else would show it.
+    // redirectToEffectHost already returns post-insert indices, and normalizeProjectStructure
+    // carries the selection across any reorder by track id.
+    m_selectedTrack = hostTrack;
+    m_selectedClip = hostClip;
+    m_selection = {qMakePair(hostTrack, hostClip)};
+
     pushProjectEdit(before, tr("Add audio effect"));
     finishEdit(tr("Audio effect added"));
 }
@@ -14150,12 +14193,16 @@ void AppController::applyEffectStack(int trackIndex, int clipIndex,
     // Append, never replace. Appending is also what lets the keyframe graph's hidden-property set
     // stand: every existing "fx.<n>.<key>" still addresses the effect it did before. Each half
     // goes to the adjustment linked to this clip for that kind, minted here if there is none.
+    // Where the selection lands afterwards: the stack is only visible in the inspector of the
+    // adjustment holding it, and the video half is the one the user is usually after.
+    drift::ClipRef selectHost;
     if (!video.isEmpty()) {
         int hostTrack = trackIndex;
         int hostClip = clipIndex;
         if (redirectToEffectHost(&hostTrack, &hostClip, drift::AdjustmentKind::VideoEffects,
                                  /*create=*/true)) {
             m_project.tracks()[hostTrack].clips[hostClip].effects.append(video);
+            selectHost = {hostTrack, hostClip};
         }
     }
     if (!audio.isEmpty()) {
@@ -14177,20 +14224,34 @@ void AppController::applyEffectStack(int trackIndex, int clipIndex,
             if (redirectToEffectHost(&hostTrack, &hostClip, drift::AdjustmentKind::AudioEffects,
                                      /*create=*/true)) {
                 m_project.tracks()[hostTrack].clips[hostClip].audioEffects.append(audio);
+                // Minting the video host above can shift indices, so the video ref is re-resolved
+                // by id below rather than trusted here. An audio-only stack has nowhere else to go.
+                if (selectHost.trackIndex < 0)
+                    selectHost = {hostTrack, hostClip};
             }
         }
     }
 
-    // Selection stays on the clip the stack was applied to, wherever it ended up after the lane
-    // inserts shifted the track list.
-    const int selectedTrack = m_project.trackIndexById(targetTrackId);
+    // Re-resolved by id: the audio host's lane insert may have moved the video host.
+    int selectedTrack = -1;
     int selectedClip = -1;
-    if (selectedTrack >= 0) {
-        const drift::Track &owner = m_project.tracks().at(selectedTrack);
-        for (int c = 0; c < owner.clips.size(); ++c) {
-            if (owner.clips.at(c).id == targetClipId) {
-                selectedClip = c;
-                break;
+    if (selectHost.trackIndex >= 0) {
+        const QString hostId = m_project.tracks()
+                                   .at(selectHost.trackIndex)
+                                   .clips.at(selectHost.clipIndex)
+                                   .id;
+        findClipById(m_project, hostId, &selectedTrack, &selectedClip);
+    }
+    if (selectedClip < 0) {
+        // Nothing applied, or the host vanished: leave the selection on the target clip.
+        selectedTrack = m_project.trackIndexById(targetTrackId);
+        if (selectedTrack >= 0) {
+            const drift::Track &owner = m_project.tracks().at(selectedTrack);
+            for (int c = 0; c < owner.clips.size(); ++c) {
+                if (owner.clips.at(c).id == targetClipId) {
+                    selectedClip = c;
+                    break;
+                }
             }
         }
     }

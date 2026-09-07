@@ -151,6 +151,8 @@ private slots:
     void selectingAMaskClipTurnsOnThePreviewHandles();
     void droppingAMaskOnAClipStacksAndSelectsIt();
     void droppingAMaskOnEmptyTrackSpaceMakesALaneClip();
+    void addingAnEffectSelectsTheAdjustmentCarryingIt();
+    void effectAdjustmentReportsItsSourceClipsFaceState();
     void standaloneMaskAdjustmentGetsAnEditorFrame();
     void freeformPointsCrossToQmlAsNamedFields();
     void trackMovesAndDeletesCarryTheirAdjustmentLanes();
@@ -4991,6 +4993,78 @@ void EditorStateTest::maskEditorStateResolvesTheHostFrame()
 // as well made the handles undiscoverable — you had to already know they existed.
 // The assets-panel drop path. Dropping onto a clip pins a mask and selects the adjustment it
 // minted — that selection is what opens the Masks inspector and the preview handles.
+// An effect stack is only editable in the inspector of the adjustment holding it — the Effects
+// tab is not offered for the clip the effect was aimed at — so adding one has to leave the
+// selection there rather than back on the media clip.
+void EditorStateTest::addingAnEffectSelectsTheAdjustmentCarryingIt()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    appendTwoVideoClips(*state.project());
+
+    state.selectClip(0, 0);
+    state.addEffect(0, 0, QStringLiteral("adjust.contrast"));
+
+    const drift::Clip &selected =
+        state.project()->tracks().at(state.selectedTrack()).clips.at(state.selectedClip());
+    QCOMPARE(selected.type, drift::ClipType::Adjustment);
+    QCOMPARE(selected.adjustmentKind, drift::AdjustmentKind::VideoEffects);
+    QVERIFY(state.project()->tracks().at(state.selectedTrack()).isAdjustmentLane());
+    QCOMPARE(state.selectedClipData().value(QStringLiteral("adjustmentKind")).toString(),
+             QStringLiteral("videoEffects"));
+    QCOMPARE(state.selectedClipEffects().size(), 1);
+
+    // A second effect on the same clip reuses that adjustment and stays on it.
+    const QString hostId = selected.id;
+    state.addEffect(0, 0, QStringLiteral("adjust.brightness"));
+    QCOMPARE(state.project()
+                 ->tracks()
+                 .at(state.selectedTrack())
+                 .clips.at(state.selectedClip())
+                 .id,
+             hostId);
+    QCOMPARE(state.selectedClipEffects().size(), 2);
+
+    // Audio effects land on their own kind of adjustment, and selection follows there too.
+    state.selectClip(0, 1);
+    state.addAudioEffect(0, 1, QStringLiteral("space.autopan"));
+    const drift::Clip &audioHost =
+        state.project()->tracks().at(state.selectedTrack()).clips.at(state.selectedClip());
+    QCOMPARE(audioHost.type, drift::ClipType::Adjustment);
+    QCOMPARE(audioHost.adjustmentKind, drift::AdjustmentKind::AudioEffects);
+}
+
+// Face landmarks are baked onto the media clip, but the only thing that can ask for a scan now is
+// the adjustment's inspector, so a linked adjustment has to report its source clip's state.
+void EditorStateTest::effectAdjustmentReportsItsSourceClipsFaceState()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    appendTwoVideoClips(*state.project());
+    state.project()->tracks()[0].clips[0].path = QStringLiteral("/tmp/shot.mp4");
+
+    state.addEffect(0, 0, QStringLiteral("adjust.contrast"));
+    const int hostTrack = state.selectedTrack();
+    const int hostClip = state.selectedClip();
+
+    QVariantMap data = state.selectedClipData();
+    QCOMPARE(data.value(QStringLiteral("canFaceTrack")).toBool(), true);
+    QCOMPARE(data.value(QStringLiteral("hasFaceTrack")).toBool(), false);
+
+    // A track baked onto the media clip shows up on the adjustment.
+    state.project()->tracks()[0].clips[0].faceTrackPath = QStringLiteral("/tmp/shot.facetrack");
+    state.selectClip(hostTrack, hostClip);
+    QCOMPARE(state.selectedClipData().value(QStringLiteral("hasFaceTrack")).toBool(), true);
+
+    // And the scan reaches through: asking the adjustment to clear it clears the clip's.
+    state.clearFaceTrack(hostTrack, hostClip);
+    QVERIFY(state.project()->tracks().at(0).clips.at(0).faceTrackPath.isEmpty());
+
+    // A standalone adjustment layer has no one clip to scan, so it must not offer to.
+    state.addAdjustmentClipWithEffect(QStringLiteral("adjust.contrast"), -1, 0.0);
+    QCOMPARE(state.selectedClipData().value(QStringLiteral("canFaceTrack")).toBool(), false);
+}
+
 void EditorStateTest::droppingAMaskOnAClipStacksAndSelectsIt()
 {
     AssetLibrary library;

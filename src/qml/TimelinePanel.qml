@@ -1515,9 +1515,10 @@ PanelFrame {
                                             const clipIndex = root.clipIndexAtPosition(trackRow.trackIndex, drop.x)
                                             root.clearEffectDropHighlight()
                                             root.clearLandingOutline()
+                                            // No selectClip: addEffect selects the adjustment it
+                                            // put the stack on, which is where the Effects tab is.
                                             if (clipIndex >= 0 && effectId.length > 0) {
                                                 EditorState.addEffect(trackRow.trackIndex, clipIndex, effectId)
-                                                EditorState.selectClip(trackRow.trackIndex, clipIndex)
                                             } else if (effectId.length > 0 && root.tracks[trackRow.trackIndex].type === "video") {
                                                 const atSec = Math.max(0, drop.x / root.pxPerSecond)
                                                 EditorState.addAdjustmentClipWithEffect(effectId, trackRow.trackIndex, atSec)
@@ -1528,10 +1529,8 @@ PanelFrame {
                                             const effectId = drop.getDataAsString("application/x-drift-audio-effect")
                                             const clipIndex = root.clipIndexAtPosition(trackRow.trackIndex, drop.x)
                                             root.clearEffectDropHighlight()
-                                            if (clipIndex >= 0 && effectId.length > 0) {
+                                            if (clipIndex >= 0 && effectId.length > 0)
                                                 EditorState.addAudioEffect(trackRow.trackIndex, clipIndex, effectId)
-                                                EditorState.selectClip(trackRow.trackIndex, clipIndex)
-                                            }
                                             return
                                         }
                                         if (isShapeDrag(drop)) {

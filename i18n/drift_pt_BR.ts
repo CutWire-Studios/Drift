@@ -4491,10 +4491,6 @@
         <translation>Rastreamento de rosto</translation>
     </message>
     <message>
-        <source>Scan this clip once, then the Funny Face effects will follow the face through it.</source>
-        <translation>Escaneie este clipe uma vez e os efeitos de Rosto engraçado seguirão o rosto ao longo dele.</translation>
-    </message>
-    <message>
         <source>This clip was scanned before makeup was supported. Re-detect faces to enable the Beauty effects.</source>
         <translation>Este clipe foi escaneado antes do suporte a maquiagem. Detecte os rostos novamente para ativar os efeitos de Beleza.</translation>
     </message>
@@ -4507,8 +4503,16 @@
         <translation>Detectar rostos novamente</translation>
     </message>
     <message>
-        <source>Detect faces…</source>
-        <translation>Detectar rostos…</translation>
+        <source>These effects follow a face, so the clip has to be scanned before they do anything.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Face effects follow one clip&apos;s faces. Add this to a clip rather than to an adjustment layer.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Scan for faces…</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Clear face track</source>

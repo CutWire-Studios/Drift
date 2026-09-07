@@ -1560,9 +1560,19 @@ protected:
     // `effectHost` supplies the stack to report for a media clip, whose effects now live on the
     // adjustment linked to it. Passing it in rather than looking it up keeps a tracks() rebuild
     // linear — resolving per clip would make it quadratic.
+    // `faceSource` runs the other way: face landmarks are baked onto the media clip, but the
+    // effects inspector now only ever sees the adjustment, so a linked adjustment reports the
+    // clip it is pinned to. Null means "this clip's own", which is right for a media clip and for
+    // an unlinked adjustment (which has no source to scan).
     QVariantMap clipToMap(const drift::Clip &clip, const drift::Clip *videoEffectHost = nullptr,
                           const drift::Clip *audioEffectHost = nullptr,
-                          const drift::Clip *maskHost = nullptr) const;
+                          const drift::Clip *maskHost = nullptr,
+                          const drift::Clip *faceSource = nullptr) const;
+
+    // The media clip behind (trackIndex, clipIndex): a linked adjustment resolves to the clip it
+    // is pinned to, anything else to itself. The per-clip bake jobs — face tracking today — are
+    // reached through the adjustment that needs them, so they have to find their way back.
+    drift::ClipRef sourceClipRef(int trackIndex, int clipIndex) const;
 
     // The clip whose `effects` / `audioEffects` list holds the stack for (trackIndex, clipIndex).
     // An adjustment hosts its own; a media clip's lives on the adjustment linked to it in one of

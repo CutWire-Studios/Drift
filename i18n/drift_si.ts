@@ -4491,10 +4491,6 @@
         <translation>මුහුණු ලුහුබැඳීම</translation>
     </message>
     <message>
-        <source>Scan this clip once, then the Funny Face effects will follow the face through it.</source>
-        <translation>මෙම ක්ලිපය එක් වරක් ස්කෑන් කරන්න, එවිට විනෝදජනක මුහුණු ප්‍රයෝග ක්ලිපය පුරා මුහුණ පසුපස හඹා යනු ඇත.</translation>
-    </message>
-    <message>
         <source>This clip was scanned before makeup was supported. Re-detect faces to enable the Beauty effects.</source>
         <translation>මේකප් සහය දැක්වීමට පෙර මෙම ක්ලිපය ස්කෑන් කර ඇත. රූපලාවන්‍ය ප්‍රයෝග සක්‍රීය කිරීමට මුහුණු නැවත හඳුනාගන්න.</translation>
     </message>
@@ -4507,8 +4503,16 @@
         <translation>මුහුණු නැවත හඳුනාගන්න</translation>
     </message>
     <message>
-        <source>Detect faces…</source>
-        <translation>මුහුණු හඳුනාගන්න…</translation>
+        <source>These effects follow a face, so the clip has to be scanned before they do anything.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Face effects follow one clip&apos;s faces. Add this to a clip rather than to an adjustment layer.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Scan for faces…</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Clear face track</source>

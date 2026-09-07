@@ -4491,10 +4491,6 @@
         <translation>Seguimiento facial</translation>
     </message>
     <message>
-        <source>Scan this clip once, then the Funny Face effects will follow the face through it.</source>
-        <translation>Analiza este clip una vez y los efectos de Caras divertidas seguirán el rostro a lo largo de él.</translation>
-    </message>
-    <message>
         <source>This clip was scanned before makeup was supported. Re-detect faces to enable the Beauty effects.</source>
         <translation>Este clip se analizó antes de que se admitiera el maquillaje. Vuelve a detectar caras para habilitar los efectos de Belleza.</translation>
     </message>
@@ -4507,8 +4503,16 @@
         <translation>Volver a detectar caras</translation>
     </message>
     <message>
-        <source>Detect faces…</source>
-        <translation>Detectar caras…</translation>
+        <source>These effects follow a face, so the clip has to be scanned before they do anything.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Face effects follow one clip&apos;s faces. Add this to a clip rather than to an adjustment layer.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Scan for faces…</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Clear face track</source>
