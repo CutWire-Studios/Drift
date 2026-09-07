@@ -69,6 +69,14 @@ add_test(NAME LayoutStore COMMAND tst_layoutstore)
 # test means the same thing on a dev machine as it does headless in CI.
 set_tests_properties(LayoutStore PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
 
+qt_add_executable(tst_uifont tst_uifont.cpp)
+target_link_libraries(tst_uifont PRIVATE Qt6::Test Qt6::Gui)
+target_compile_definitions(tst_uifont PRIVATE
+    DRIFT_TEST_UI_FONT_DIR="${CMAKE_SOURCE_DIR}/resources/fonts")
+add_test(NAME UiFont COMMAND tst_uifont)
+# Font matching only, no window: offscreen keeps the result the same on a dev machine as in CI.
+set_tests_properties(UiFont PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+
 qt_add_executable(tst_addonpackage tst_addonpackage.cpp)
 target_include_directories(tst_addonpackage PRIVATE ../src)
 target_link_libraries(tst_addonpackage PRIVATE Qt6::Test driftengine)

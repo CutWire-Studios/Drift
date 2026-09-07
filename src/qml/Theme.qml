@@ -111,9 +111,15 @@ QtObject {
     }
 
 
-    property FontLoader _interLoader: FontLoader { source: "qrc:/qt/qml/Drift/resources/fonts/Inter.ttf" }
+    // One loader per file: the UI ships static Inter instances under the family "Inter UI",
+    // so the Essential Fonts addon's "Inter" cannot shadow them whichever registers last.
+    property FontLoader _interRegular: FontLoader { source: "qrc:/qt/qml/Drift/resources/fonts/InterUI-Regular.ttf" }
+    property FontLoader _interMedium: FontLoader { source: "qrc:/qt/qml/Drift/resources/fonts/InterUI-Medium.ttf" }
+    property FontLoader _interSemiBold: FontLoader { source: "qrc:/qt/qml/Drift/resources/fonts/InterUI-SemiBold.ttf" }
+    property FontLoader _interBold: FontLoader { source: "qrc:/qt/qml/Drift/resources/fonts/InterUI-Bold.ttf" }
+    property FontLoader _interItalic: FontLoader { source: "qrc:/qt/qml/Drift/resources/fonts/InterUI-Italic.ttf" }
 
-    readonly property string fontFamily: _interLoader.name || "sans-serif"
+    readonly property string fontFamily: _interRegular.name || "sans-serif"
     readonly property string monoFontFamily: "monospace"
 
     // --- Light/dark mode: follows the OS until the user picks a side -----------

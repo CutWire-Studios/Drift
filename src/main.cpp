@@ -368,12 +368,6 @@ int main(int argc, char *argv[])
     QCoreApplication::setAttribute(Qt::AA_ShareOpenGLContexts);
 
 #ifdef Q_OS_WIN
-    // DirectWrite mis-maps glyphs in the qrc-embedded Inter used by Theme.fontFamily
-    // (neighbouring letters, stray diacritics). FreeType renders the same file correctly.
-    // An explicit QT_QPA_PLATFORM from the environment still wins.
-    if (qEnvironmentVariableIsEmpty("QT_QPA_PLATFORM"))
-        qputenv("QT_QPA_PLATFORM", "windows:fontengine=freetype");
-
     // Before allowing desktop OpenGL, Qt looks the GPU up in a blacklist keyed on
     // the vendor and device id it gets from Direct3D 9. When that probe fails the
     // ids come back 0x0000, which matches the list's "Standard VGA" entry, and Qt

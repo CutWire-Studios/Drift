@@ -844,7 +844,15 @@ qt_add_qml_module(drift
         src/qml/components/LabelledProgressRing.qml
     RESOURCES
         # UI chrome: interface font and Lucide SVG icons (always needed, including before addons).
-        resources/fonts/Inter.ttf
+        # Static instances rather than the variable Inter: on Windows Qt registers application
+        # fonts through GDI before converting them to a DirectWrite face, and GDI cannot express a
+        # variable instance, so the face Qt rasterised with stopped matching the glyph indices it
+        # had looked up (issues #115, #162). Regenerate with scripts/gen-ui-font.py.
+        resources/fonts/InterUI-Regular.ttf
+        resources/fonts/InterUI-Medium.ttf
+        resources/fonts/InterUI-SemiBold.ttf
+        resources/fonts/InterUI-Bold.ttf
+        resources/fonts/InterUI-Italic.ttf
         ${DRIFT_LUCIDE_ICONS}
 )
 
