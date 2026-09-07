@@ -16,6 +16,7 @@
 #include "core/ShapePath.h"
 #include "core/SubtitleCue.h"
 #include "core/Time.h"
+#include "core/TimelineOps.h"
 #include "core/Transition.h"
 
 #include <QBrush>
@@ -179,6 +180,40 @@ QList<drift::Effect> resolvedClipEffects(const drift::Clip &clip, drift::TimeUs 
             filtered.append(effect.resolvedAt(clipTimeUs));
     }
     return filtered;
+}
+
+// The chain the nested adjustment lanes on `trackIndex` contribute at this instant.
+//
+// A lane is scoped to one track, so its effects fold into each of that track's clips inside the
+// clip's own layer pass — the same place Clip::effects used to run, which is what keeps the
+// clip's transform, opacity and blend carrying them. A standalone adjustment track is the other
+// thing entirely: it emits its own item and snapshots the canvas.
+//
+// Only the time matters, not which clip: a clip is emitted only when it contains `timelineUs`, so
+// a lane adjustment containing that instant necessarily overlaps it. That makes this once per
+// track per frame rather than once per clip.
+//
+// Keyframes resolve against the adjustment's own start, so an unlinked lane adjustment spanning
+// several clips animates over its own span rather than restarting on each one. For a linked
+// adjustment the two coincide, which is why migrated effects keyframe exactly as before.
+QList<drift::Effect> laneAdjustmentEffects(const drift::Project &project, int trackIndex,
+                                           drift::TimeUs timelineUs)
+{
+    QList<drift::Effect> result;
+    for (const int laneIndex : drift::adjustmentLaneIndexes(project, trackIndex)) {
+        const drift::Track &lane = project.tracks().at(laneIndex);
+        if (lane.hidden)
+            continue;
+        for (const drift::Clip &adjustment : lane.clips) {
+            if (adjustment.adjustmentKind != drift::AdjustmentKind::VideoEffects)
+                continue;
+            if (!adjustment.containsTime(timelineUs))
+                continue;
+            result.append(
+                resolvedClipEffects(adjustment, timelineUs - adjustment.timelineStart));
+        }
+    }
+    return result;
 }
 
 // Keyed on mtime and size as well as path: the same path can hold different
@@ -625,7 +660,8 @@ void applyClipBodyAnimation(const drift::Clip &clip, drift::TimeUs timelineUs, d
 
 GpuLayer buildGpuLayer(const drift::Clip &clip, drift::TimeUs timelineUs, int projectWidth,
                        int projectHeight, double renderScale, int canvasWidth, int canvasHeight,
-                       int projectFps, int maxTimeEchoHistoryFrames)
+                       int projectFps, int maxTimeEchoHistoryFrames,
+                       const QList<drift::Effect> &laneEffects = {})
 {
     GpuLayer layer;
 
@@ -749,6 +785,9 @@ GpuLayer buildGpuLayer(const drift::Clip &clip, drift::TimeUs timelineUs, int pr
     layer.flipV = clip.flipV;
     layer.opacity = opacity;
     layer.clipTimeUs = timelineUs - clip.timelineStart;
+    // After the clip's own chain: a lane sits above the clip in the timeline, so it reads as the
+    // later treatment. Derived face slots come after, so a lane's face effect binds too.
+    layer.effects.append(laneEffects);
     layer.faceSlots = faceSlotsForClip(clip, layer.effects, timelineUs);
     layer.valid = true;
     return layer;
@@ -769,7 +808,8 @@ drift::TextAnimUnit activeSpanUnit(const drift::TextStyle &style)
 // staggers across the block. Mirrors the text branch of buildGpuLayer, but each span is its own
 // layer carrying its own sampled transform. Returns empty for whole-block text (use buildGpuLayer).
 QList<GpuItem> buildTextSpanItems(const drift::Clip &clip, drift::TimeUs timelineUs, int projectWidth,
-                                  int projectHeight, double renderScale, drift::TextAnimUnit unit)
+                                  int projectHeight, double renderScale, drift::TextAnimUnit unit,
+                                  const QList<drift::Effect> &laneEffects = {})
 {
     QList<GpuItem> items;
 
@@ -841,6 +881,7 @@ QList<GpuItem> buildTextSpanItems(const drift::Clip &clip, drift::TimeUs timelin
         layer.flipV = clip.flipV;
         layer.opacity = opacity;
         layer.clipTimeUs = clipTimeUs;
+        layer.effects.append(laneEffects);
         layer.faceSlots = faceSlotsForClip(clip, layer.effects, timelineUs);
         layer.valid = true;
         items.append(item);
@@ -876,6 +917,12 @@ GpuScene buildGpuScene(const drift::Project &project, drift::TimeUs timelineUs, 
         const drift::Track &track = tracks.at(ti);
         if (track.hidden || track.type == drift::TrackType::Audio)
             continue;
+        // A nested lane has no z-position of its own — it is drawn inside its parent's clips,
+        // gathered below as laneEffects. Emitting it here would apply it to the whole canvas.
+        if (track.isAdjustmentLane())
+            continue;
+
+        const QList<drift::Effect> laneEffects = laneAdjustmentEffects(project, ti, timelineUs);
 
         QSet<QString> transitionClipIds;
         drift::TimeUs transitionStart = 0;
@@ -889,9 +936,11 @@ GpuScene buildGpuScene(const drift::Project &project, drift::TimeUs timelineUs, 
                 GpuItem item;
                 item.isTransition = true;
                 item.from = buildGpuLayer(*fromClip, timelineUs, projectWidth, projectHeight, renderScale,
-                                          width, height, fps, options.maxTimeEchoHistoryFrames);
+                                          width, height, fps, options.maxTimeEchoHistoryFrames,
+                                          laneEffects);
                 item.to = buildGpuLayer(*toClip, timelineUs, projectWidth, projectHeight, renderScale,
-                                        width, height, fps, options.maxTimeEchoHistoryFrames);
+                                        width, height, fps, options.maxTimeEchoHistoryFrames,
+                                        laneEffects);
                 item.progress = drift::transitionProgress(timelineUs, transitionStart, transitionEnd);
                 // Time is measured from the start of the transition window so a
                 // shader's u_time is a pure function of window position, like
@@ -924,12 +973,17 @@ GpuScene buildGpuScene(const drift::Project &project, drift::TimeUs timelineUs, 
                 const drift::TextAnimUnit unit = activeSpanUnit(clip.textStyle);
                 if (unit != drift::TextAnimUnit::Block) {
                     scene.items.append(buildTextSpanItems(clip, timelineUs, projectWidth, projectHeight,
-                                                          renderScale, unit));
+                                                          renderScale, unit, laneEffects));
                     continue;
                 }
             }
 
             if (clip.type == drift::ClipType::Adjustment) {
+                // An audio adjustment shares the timeline with the visual ones but belongs to the
+                // mixer; rendering it here would blit the canvas for an empty effect chain.
+                if (clip.adjustmentKind != drift::AdjustmentKind::VideoEffects)
+                    continue;
+
                 GpuItem item;
                 item.isAdjustment = true;
                 item.blend = clip.blendMode;
@@ -956,7 +1010,7 @@ GpuScene buildGpuScene(const drift::Project &project, drift::TimeUs timelineUs, 
             GpuItem item;
             item.blend = clip.blendMode;
             item.layer = buildGpuLayer(clip, timelineUs, projectWidth, projectHeight, renderScale, width,
-                                       height, fps, options.maxTimeEchoHistoryFrames);
+                                       height, fps, options.maxTimeEchoHistoryFrames, laneEffects);
             if (item.layer.valid)
                 scene.items.append(item);
         }

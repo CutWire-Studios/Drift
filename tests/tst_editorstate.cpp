@@ -139,6 +139,14 @@ private slots:
     void multicamProviderServesTilesByAngleIdWithRevisionQuery();
     void multicamSetUpBuildsAWorkingRigFromTheBin();
     void adjustmentLayerCreationAndCompositing();
+    void clipEffectsLiveOnALinkedAdjustmentLane();
+    void linkedAdjustmentFollowsItsClip();
+    void deletingAClipUnlinksRatherThanStrandsItsAdjustment();
+    void trackMovesAndDeletesCarryTheirAdjustmentLanes();
+    void projectV3MigratesEffectsOntoAdjustmentLanes();
+    void adjustmentMovesBetweenStandaloneAndNested();
+    void trackRowHeightsForAdjustmentsAndLanes();
+    void overlappingAdjustmentsGetASecondLane();
     void multiClipMoveLeftPreservesSelectionAndRelativeSpacing();
     void multiClipMoveCrossTracks();
     void multiClipMoveCrossTracksWithLinkedPartners();
@@ -1417,6 +1425,58 @@ void EditorStateTest::projectJsonImportRejectsGarbageAndLeavesTimeline()
 }
 
 namespace {
+
+// A clip's effect stack no longer lives on the clip: it sits on the adjustment linked to it, in
+// one of its track's nested lanes. These resolve it the way the app does, so the tests below
+// assert what a clip *has* rather than where it happens to be stored.
+const drift::Clip *adjustmentFor(const drift::Project &project, const QString &clipId,
+                                 drift::AdjustmentKind kind)
+{
+    for (const drift::Track &track : project.tracks()) {
+        if (!track.isAdjustmentLane())
+            continue;
+        for (const drift::Clip &adjustment : track.clips) {
+            if (adjustment.adjustmentKind == kind && adjustment.linkedClipId == clipId)
+                return &adjustment;
+        }
+    }
+    return nullptr;
+}
+
+QList<drift::Effect> videoEffectsOf(const drift::Project &project, const drift::Clip &clip)
+{
+    const drift::Clip *host =
+        adjustmentFor(project, clip.id, drift::AdjustmentKind::VideoEffects);
+    return host ? host->effects : clip.effects;
+}
+
+QList<drift::Effect> audioEffectsOf(const drift::Project &project, const drift::Clip &clip)
+{
+    const drift::Clip *host =
+        adjustmentFor(project, clip.id, drift::AdjustmentKind::AudioEffects);
+    return host ? host->audioEffects : clip.audioEffects;
+}
+
+// Adding an effect inserts a lane track, so a literal track index written before that no longer
+// points where it did. This finds the nth track that actually carries media.
+int mediaTrackIndex(const drift::Project &project, int nth)
+{
+    int seen = 0;
+    for (int i = 0; i < project.tracks().size(); ++i) {
+        if (project.tracks().at(i).isAdjustment())
+            continue;
+        if (seen++ == nth)
+            return i;
+    }
+    return -1;
+}
+
+const drift::Clip &mediaClip(const drift::Project &project, int trackNth, int clipIndex)
+{
+    return project.tracks().at(mediaTrackIndex(project, trackNth)).clips.at(clipIndex);
+}
+
+
 QByteArray gzipCompressForTest(const QByteArray &data)
 {
     z_stream strm;
@@ -1547,36 +1607,45 @@ void EditorStateTest::premiereProjectImportPrproj()
     QCOMPARE(state.project()->width(), 3840);
     QCOMPARE(state.project()->height(), 2160);
     QCOMPARE(state.project()->fps(), 60);
-    QCOMPARE(state.tracks().size(), 2);
+    // Premiere models an adjustment layer as a clip on a video track. The import lifts it onto a
+    // track of its own, at the depth it already had, so what was one mixed video track arrives as
+    // an adjustment track above a video track.
+    QCOMPARE(state.tracks().size(), 3);
 
-    // Track 0: Video with Intro.mp4 (5s) and Adjustment Layer (5s)
-    const auto vTrack = state.tracks().at(0).toMap();
+    // Track 0: the lifted Adjustment Layer (5s)
+    const auto adjTrack = state.tracks().at(0).toMap();
+    QCOMPARE(adjTrack.value(QStringLiteral("type")).toString(), QStringLiteral("adjustment"));
+    const auto adjClips = adjTrack.value(QStringLiteral("clips")).toList();
+    QCOMPARE(adjClips.size(), 1);
+    const auto clip1 = adjClips.at(0).toMap();
+    QCOMPARE(clip1.value(QStringLiteral("name")).toString(), QStringLiteral("Adjustment Layer"));
+    QCOMPARE(clip1.value(QStringLiteral("kind")).toString(), QStringLiteral("adjustment"));
+    QCOMPARE(clip1.value(QStringLiteral("duration")).toDouble(), 5.0);
+    QCOMPARE(state.project()->tracks().at(0).clips.at(0).type, drift::ClipType::Adjustment);
+    QCOMPARE(state.project()->tracks().at(0).clips.at(0).timelineDuration, 5000000LL);
+
+    // Track 1: Video with Intro.mp4 (5s)
+    const auto vTrack = state.tracks().at(1).toMap();
+    QCOMPARE(vTrack.value(QStringLiteral("type")).toString(), QStringLiteral("video"));
     const auto vClips = vTrack.value(QStringLiteral("clips")).toList();
-    QCOMPARE(vClips.size(), 2);
+    QCOMPARE(vClips.size(), 1);
     const auto clip0 = vClips.at(0).toMap();
     QCOMPARE(clip0.value(QStringLiteral("name")).toString(), QStringLiteral("Intro.mp4"));
     QCOMPARE(clip0.value(QStringLiteral("kind")).toString(), QStringLiteral("video"));
     QCOMPARE(clip0.value(QStringLiteral("duration")).toDouble(), 5.0);
-    QCOMPARE(state.project()->tracks().at(0).clips.at(0).type, drift::ClipType::Video);
-    QCOMPARE(state.project()->tracks().at(0).clips.at(0).timelineDuration, 5000000LL);
+    QCOMPARE(state.project()->tracks().at(1).clips.at(0).type, drift::ClipType::Video);
+    QCOMPARE(state.project()->tracks().at(1).clips.at(0).timelineDuration, 5000000LL);
 
-    const auto clip1 = vClips.at(1).toMap();
-    QCOMPARE(clip1.value(QStringLiteral("name")).toString(), QStringLiteral("Adjustment Layer"));
-    QCOMPARE(clip1.value(QStringLiteral("kind")).toString(), QStringLiteral("adjustment"));
-    QCOMPARE(clip1.value(QStringLiteral("duration")).toDouble(), 5.0);
-    QCOMPARE(state.project()->tracks().at(0).clips.at(1).type, drift::ClipType::Adjustment);
-    QCOMPARE(state.project()->tracks().at(0).clips.at(1).timelineDuration, 5000000LL);
-
-    // Track 1: Audio with Voice.mp3 (10s)
-    const auto aTrack = state.tracks().at(1).toMap();
+    // Track 2: Audio with Voice.mp3 (10s)
+    const auto aTrack = state.tracks().at(2).toMap();
     const auto aClips = aTrack.value(QStringLiteral("clips")).toList();
     QCOMPARE(aClips.size(), 1);
     const auto aClip0 = aClips.at(0).toMap();
     QCOMPARE(aClip0.value(QStringLiteral("name")).toString(), QStringLiteral("Voice.mp3"));
     QCOMPARE(aClip0.value(QStringLiteral("kind")).toString(), QStringLiteral("audio"));
     QCOMPARE(aClip0.value(QStringLiteral("duration")).toDouble(), 10.0);
-    QCOMPARE(state.project()->tracks().at(1).clips.at(0).type, drift::ClipType::Audio);
-    QCOMPARE(state.project()->tracks().at(1).clips.at(0).timelineDuration, 10000000LL);
+    QCOMPARE(state.project()->tracks().at(2).clips.at(0).type, drift::ClipType::Audio);
+    QCOMPARE(state.project()->tracks().at(2).clips.at(0).timelineDuration, 10000000LL);
 
     // Imported project is dirty and untitled (needs Save As)
     QVERIFY(state.hasUnsavedChanges());
@@ -2412,12 +2481,14 @@ void EditorStateTest::effectBrowserCategoriesAndApply()
     QCOMPARE(effects.first().toMap().value(QStringLiteral("catalogId")).toString(),
              QStringLiteral("rgb_split"));
     QCOMPARE(effects.first().toMap().value(QStringLiteral("label")).toString(), QStringLiteral("RGB Split"));
-    QCOMPARE(state.project()->tracks()[track].clips[clip].effects.size(), 1);
+    QCOMPARE(videoEffectsOf(*state.project(),
+                            state.project()->tracks()[track].clips[clip]).size(), 1);
 
     state.removeEffect(track, clip, 0);
     QCOMPARE(state.selectedClipData().value(QStringLiteral("effects")).toList().size(), 0);
     QCOMPARE(state.selectedClipEffects().size(), 0);
-    QCOMPARE(state.project()->tracks()[track].clips[clip].effects.size(), 0);
+    QCOMPARE(videoEffectsOf(*state.project(),
+                            state.project()->tracks()[track].clips[clip]).size(), 0);
 }
 
 void EditorStateTest::multiSelectClipboardGuidesAndShortcuts()
@@ -3618,7 +3689,7 @@ void EditorStateTest::replaceAssetSourceRebindsClipsAndClampsTrim()
     QCOMPARE(after.path, QFileInfo(replacement).absoluteFilePath());
     // Position on the timeline and the editing work on the clip both carry over untouched.
     QCOMPARE(after.timelineStart, beforeSwap.timelineStart);
-    QCOMPARE(after.effects.size(), 1);
+    QCOMPARE(videoEffectsOf(project, after).size(), 1);
     // Landmarks were baked against the old pixels; keeping them would warp to a face the new
     // footage never had.
     QVERIFY(after.faceTrackPath.isEmpty());
@@ -4138,7 +4209,7 @@ void EditorStateTest::effectStackCopyPasteAppendsAndRescales()
     state.addEffect(0, 0, QStringLiteral("adjust.contrast"));
     state.setClipKeyframe(0, 0, QStringLiteral("fx.0.contrast"), 0.0, 1.0);
     state.setClipKeyframe(0, 0, QStringLiteral("fx.0.contrast"), 2.0, 2.0);
-    QCOMPARE(keyTimes(state.project()->tracks().at(0).clips.at(0).effects.at(0),
+    QCOMPARE(keyTimes(videoEffectsOf(*state.project(), mediaClip(*state.project(), 0, 0)).at(0),
                       QStringLiteral("contrast")).size(), 2);
 
     state.copyClipEffectsToClipboard(0, 0);
@@ -4148,20 +4219,21 @@ void EditorStateTest::effectStackCopyPasteAppendsAndRescales()
     state.addEffect(0, 1, QStringLiteral("adjust.brightness"));
     state.pasteEffectsFromClipboard(0, 1);
 
-    const drift::Clip &target = state.project()->tracks().at(0).clips.at(1);
-    QCOMPARE(target.effects.size(), 2);
+    const QList<drift::Effect> target =
+        videoEffectsOf(*state.project(), mediaClip(*state.project(), 0, 1));
+    QCOMPARE(target.size(), 2);
     // Appended, not prepended and not replacing.
-    QCOMPARE(target.effects.at(0).catalogId, QStringLiteral("adjust.brightness"));
-    QCOMPARE(target.effects.at(1).catalogId, QStringLiteral("adjust.contrast"));
+    QCOMPARE(target.at(0).catalogId, QStringLiteral("adjust.brightness"));
+    QCOMPARE(target.at(1).catalogId, QStringLiteral("adjust.contrast"));
     // 2s of source stretched over a 4s clip.
-    QCOMPARE(keyTimes(target.effects.at(1), QStringLiteral("contrast")),
+    QCOMPARE(keyTimes(target.at(1), QStringLiteral("contrast")),
              (QList<drift::TimeUs>{0, drift::secondsToUs(4.0)}));
     // The clip it was copied from is untouched.
-    QCOMPARE(state.project()->tracks().at(0).clips.at(0).effects.size(), 1);
+    QCOMPARE(videoEffectsOf(*state.project(), mediaClip(*state.project(), 0, 0)).size(), 1);
 
     QVERIFY(state.undoAvailable());
     state.undo();
-    QCOMPARE(state.project()->tracks().at(0).clips.at(1).effects.size(), 1);
+    QCOMPARE(videoEffectsOf(*state.project(), mediaClip(*state.project(), 0, 1)).size(), 1);
 }
 
 // The executable form of "appending never shifts an existing effect index": keyframe-graph
@@ -4196,20 +4268,20 @@ void EditorStateTest::copiedSingleEffectRoutesToTheRightList()
     state.selectClip(0, 0);
     state.addEffect(0, 0, QStringLiteral("adjust.contrast"));
     state.addAudioEffect(0, 0, QStringLiteral("space.autopan"));
-    QCOMPARE(state.project()->tracks().at(0).clips.at(0).audioEffects.size(), 1);
+    QCOMPARE(audioEffectsOf(*state.project(), mediaClip(*state.project(), 0, 0)).size(), 1);
 
     // One video effect: video side only.
     state.copyEffectToClipboard(0, 0, 0);
     state.pasteEffectsFromClipboard(0, 1);
-    QCOMPARE(state.project()->tracks().at(0).clips.at(1).effects.size(), 1);
-    QCOMPARE(state.project()->tracks().at(0).clips.at(1).audioEffects.size(), 0);
+    QCOMPARE(videoEffectsOf(*state.project(), mediaClip(*state.project(), 0, 1)).size(), 1);
+    QCOMPARE(audioEffectsOf(*state.project(), mediaClip(*state.project(), 0, 1)).size(), 0);
 
     // One audio effect: audio side only.
     state.copyAudioEffectToClipboard(0, 0, 0);
     state.pasteEffectsFromClipboard(0, 1);
-    QCOMPARE(state.project()->tracks().at(0).clips.at(1).effects.size(), 1);
-    QCOMPARE(state.project()->tracks().at(0).clips.at(1).audioEffects.size(), 1);
-    QCOMPARE(state.project()->tracks().at(0).clips.at(1).audioEffects.at(0).catalogId,
+    QCOMPARE(videoEffectsOf(*state.project(), mediaClip(*state.project(), 0, 1)).size(), 1);
+    QCOMPARE(audioEffectsOf(*state.project(), mediaClip(*state.project(), 0, 1)).size(), 1);
+    QCOMPARE(audioEffectsOf(*state.project(), mediaClip(*state.project(), 0, 1)).at(0).catalogId,
              QStringLiteral("space.autopan"));
 }
 
@@ -4232,8 +4304,9 @@ void EditorStateTest::pastedAudioEffectsAreDroppedOnClipsWithNoAudio()
     QCOMPARE(state.project()->tracks().at(track).clips.at(clip).type, drift::ClipType::Text);
 
     state.pasteEffectsFromClipboard(track, clip);
-    QCOMPARE(state.project()->tracks().at(track).clips.at(clip).effects.size(), 1);
-    QVERIFY(state.project()->tracks().at(track).clips.at(clip).audioEffects.isEmpty());
+    const drift::Clip &pasteTarget = state.project()->tracks().at(track).clips.at(clip);
+    QCOMPARE(videoEffectsOf(*state.project(), pasteTarget).size(), 1);
+    QVERIFY(audioEffectsOf(*state.project(), pasteTarget).isEmpty());
 }
 
 // An effect from an addon the user has not installed is kept, exactly as project load keeps it, so
@@ -4259,9 +4332,10 @@ void EditorStateTest::pastedUnknownEffectIsKeptAndReported()
     state.selectClip(0, 1);
     state.pasteEffectsFromClipboard(0, 1);
 
-    const drift::Clip &target = state.project()->tracks().at(0).clips.at(1);
-    QCOMPARE(target.effects.size(), 2);
-    QCOMPARE(target.effects.at(1).catalogId, QStringLiteral("nope.not_installed"));
+    const QList<drift::Effect> target =
+        videoEffectsOf(*state.project(), mediaClip(*state.project(), 0, 1));
+    QCOMPARE(target.size(), 2);
+    QCOMPARE(target.at(1).catalogId, QStringLiteral("nope.not_installed"));
     // finishEdit() clears lastMessage, so the warning has to survive being emitted after it.
     QVERIFY(state.lastMessage().contains(QStringLiteral("nope.not_installed")));
 }
@@ -4277,7 +4351,7 @@ void EditorStateTest::clipboardHasEffectsIgnoresOrdinaryText()
 
     state.selectClip(0, 1);
     state.pasteEffectsFromClipboard(0, 1);
-    QVERIFY(state.project()->tracks().at(0).clips.at(1).effects.isEmpty());
+    QVERIFY(videoEffectsOf(*state.project(), mediaClip(*state.project(), 0, 1)).isEmpty());
 
     state.selectClip(0, 0);
     state.addEffect(0, 0, QStringLiteral("adjust.contrast"));
@@ -4312,10 +4386,11 @@ void EditorStateTest::savedEffectPresetAppliesToAnotherClip()
     state.addEffect(0, 1, QStringLiteral("adjust.brightness"));
     state.applyEffectPreset(0, 1, id);
 
-    const drift::Clip &target = state.project()->tracks().at(0).clips.at(1);
-    QCOMPARE(target.effects.size(), 2);
-    QCOMPARE(target.effects.at(0).catalogId, QStringLiteral("adjust.brightness"));
-    QCOMPARE(keyTimes(target.effects.at(1), QStringLiteral("contrast")),
+    const QList<drift::Effect> target =
+        videoEffectsOf(*state.project(), mediaClip(*state.project(), 0, 1));
+    QCOMPARE(target.size(), 2);
+    QCOMPARE(target.at(0).catalogId, QStringLiteral("adjust.brightness"));
+    QCOMPARE(keyTimes(target.at(1), QStringLiteral("contrast")),
              (QList<drift::TimeUs>{0, drift::secondsToUs(4.0)}));
 
     QVERIFY(state.deleteUserEffectPreset(id));
@@ -4429,14 +4504,20 @@ void EditorStateTest::adjustmentLayerCreationAndCompositing()
     // Add an adjustment clip at 0 with duration 5.0 seconds
     state.addAdjustmentClip(0.0, 5.0);
 
-    // Video track should now have 1 clip
-    QCOMPARE(state.project()->tracks().size(), 1);
+    // An adjustment is no longer a clip squatting on a video track: it gets a track of its own,
+    // prepended so it composites over everything below it.
+    QCOMPARE(state.project()->tracks().size(), 2);
     const drift::Track &track = state.project()->tracks().at(0);
-    QCOMPARE(track.type, drift::TrackType::Video);
+    QCOMPARE(track.type, drift::TrackType::Adjustment);
+    QCOMPARE(track.adjustmentScope, drift::AdjustmentScope::AllBelow);
+    QVERIFY(!track.isAdjustmentLane());
     QCOMPARE(track.clips.size(), 1);
+    QCOMPARE(state.project()->tracks().at(1).type, drift::TrackType::Video);
 
     const drift::Clip &adjClip = track.clips.at(0);
     QCOMPARE(adjClip.type, drift::ClipType::Adjustment);
+    QCOMPARE(adjClip.adjustmentKind, drift::AdjustmentKind::VideoEffects);
+    QVERIFY(adjClip.linkedClipId.isEmpty());
     QCOMPARE(adjClip.timelineStart, 0);
     QCOMPARE(adjClip.timelineDuration, drift::secondsToUs(5.0));
 
@@ -4449,27 +4530,40 @@ void EditorStateTest::adjustmentLayerCreationAndCompositing()
     QCOMPARE(state.selectedTrack(), 0);
     QCOMPARE(state.selectedClip(), 0);
 
-    // Add an effect to the adjustment clip
+    // An adjustment hosts its own stack, so an effect added to it lands on the clip itself
+    // rather than being hoisted onto a lane.
     state.addEffect(0, 0, QStringLiteral("builtin.effects.gaussian_blur"));
     const drift::Clip &withEffect = state.project()->tracks().at(0).clips.at(0);
     QCOMPARE(withEffect.effects.size(), 1);
     QCOMPARE(withEffect.effects.at(0).catalogId, QStringLiteral("builtin.effects.gaussian_blur"));
 
+    // The timeline labels an adjustment with the effects it carries and tints it by kind, so
+    // both have to reach QML: a display label per effect, and the kind on the clip.
+    const QVariantMap withEffectMap = state.clipAt(0, 0);
+    QCOMPARE(withEffectMap.value(QStringLiteral("adjustmentKind")).toString(),
+             QStringLiteral("videoEffects"));
+    const QVariantList reportedEffects =
+        withEffectMap.value(QStringLiteral("effects")).toList();
+    QCOMPARE(reportedEffects.size(), 1);
+    QVERIFY(!reportedEffects.at(0).toMap().value(QStringLiteral("label")).toString().isEmpty());
+
     // Test addAdjustmentClipWithEffect
     state.addAdjustmentClipWithEffect(QStringLiteral("builtin.effects.gaussian_blur"), -1, 6.0, 3.0);
-    // Should be placed on track 0 (starts at 6.0, no overlap with 0..5.0)
+    // Reuses the existing adjustment track (starts at 6.0, no overlap with 0..5.0)
     QCOMPARE(state.project()->tracks().at(0).clips.size(), 2);
     const drift::Clip &secondAdj = state.project()->tracks().at(0).clips.at(1);
     QCOMPARE(secondAdj.type, drift::ClipType::Adjustment);
     QCOMPARE(secondAdj.effects.size(), 1);
     QCOMPARE(secondAdj.timelineDuration, drift::secondsToUs(3.0));
 
-    // Test project JSON serialization roundtrip for Adjustment clips
+    // Test project JSON serialization roundtrip for Adjustment tracks and clips
     const QJsonObject json = state.project()->toJson();
     QString error;
     drift::Project reloaded = drift::Project::fromJson(json, &error);
     QVERIFY(error.isEmpty());
-    QCOMPARE(reloaded.tracks().size(), 1);
+    QCOMPARE(reloaded.tracks().size(), 2);
+    QCOMPARE(reloaded.tracks().at(0).type, drift::TrackType::Adjustment);
+    QCOMPARE(reloaded.tracks().at(0).id, state.project()->tracks().at(0).id);
     QCOMPARE(reloaded.tracks().at(0).clips.size(), 2);
     QCOMPARE(reloaded.tracks().at(0).clips.at(0).type, drift::ClipType::Adjustment);
     QCOMPARE(reloaded.tracks().at(0).clips.at(0).effects.size(), 1);
@@ -4480,7 +4574,7 @@ void EditorStateTest::adjustmentLayerCreationAndCompositing()
     state.redo();
     QCOMPARE(state.project()->tracks().at(0).clips.size(), 2);
 
-    // Test GpuScene building with adjustment item
+    // A standalone adjustment still emits its own canvas-snapshot item.
     FrameCompositor compositor;
     compositor.setProject(state.project());
     GpuScene scene;
@@ -4522,6 +4616,410 @@ void EditorStateTest::adjustmentLayerCreationAndCompositing()
     QCOMPARE(tail.timelineDuration, drift::secondsToUs(18.0));
     QCOMPARE(head.effects.size(), 1);
     QCOMPARE(tail.effects.size(), 1);
+}
+
+// Adding an effect to a media clip no longer writes it onto the clip: it creates a nested lane on
+// that clip's track holding an adjustment pinned to it. The clip still reports the stack as its
+// own, so the inspector and the MCP tools see no difference.
+void EditorStateTest::clipEffectsLiveOnALinkedAdjustmentLane()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    appendTwoVideoClips(*state.project());
+    state.project()->ensureTrackIds();
+    const QString videoTrackId = state.project()->tracks().at(0).id;
+
+    state.selectClip(0, 0);
+    state.addEffect(0, 0, QStringLiteral("adjust.contrast"));
+
+    // A lane appeared, stored below its parent so the parent's index did not move.
+    QCOMPARE(state.project()->tracks().size(), 2);
+    QCOMPARE(state.project()->tracks().at(0).id, videoTrackId);
+    const drift::Track &lane = state.project()->tracks().at(1);
+    QVERIFY(lane.isAdjustmentLane());
+    QCOMPARE(lane.adjustmentScope, drift::AdjustmentScope::ParentTrack);
+    QCOMPARE(lane.parentTrackId, videoTrackId);
+    QCOMPARE(drift::adjustmentLaneParentIndex(*state.project(), 1), 0);
+
+    // Nothing is left on the clip itself.
+    const drift::Clip &clip = state.project()->tracks().at(0).clips.at(0);
+    QVERIFY(clip.effects.isEmpty());
+
+    // The adjustment is pinned to the clip: same span, and it says which clip it follows.
+    QCOMPARE(lane.clips.size(), 1);
+    const drift::Clip &adjustment = lane.clips.at(0);
+    QCOMPARE(adjustment.linkedClipId, clip.id);
+    QCOMPARE(adjustment.adjustmentKind, drift::AdjustmentKind::VideoEffects);
+    QCOMPARE(adjustment.timelineStart, clip.timelineStart);
+    QCOMPARE(adjustment.timelineDuration, clip.timelineDuration);
+
+    // The clip still reports the stack as its own.
+    QCOMPARE(state.clipAt(0, 0).value(QStringLiteral("effects")).toList().size(), 1);
+    QCOMPARE(state.selectedClipEffects().size(), 1);
+
+    // A second effect reuses the lane rather than stacking up rows.
+    state.addEffect(0, 0, QStringLiteral("adjust.brightness"));
+    QCOMPARE(state.project()->tracks().size(), 2);
+    QCOMPARE(state.project()->tracks().at(1).clips.size(), 1);
+    QCOMPARE(state.clipAt(0, 0).value(QStringLiteral("effects")).toList().size(), 2);
+
+    // A lane contributes to its parent's clips inside their own layer pass, so it emits no item
+    // of its own — unlike a standalone adjustment track.
+    //
+    // A text clip, because the clips appendTwoVideoClips() makes have no media behind them:
+    // buildGpuLayer drops a layer with no pixels, so there would be nothing to inspect.
+    AppController scened(&library);
+    scened.addTextClip(QStringLiteral("Lane"), 0.0);
+    const int textTrack = scened.selectedTrack();
+    const int textClip = scened.selectedClip();
+    scened.addEffect(textTrack, textClip, QStringLiteral("adjust.contrast"));
+    scened.addEffect(textTrack, textClip, QStringLiteral("adjust.brightness"));
+
+    FrameCompositor compositor;
+    compositor.setProject(scened.project());
+    GpuScene scene;
+    QVERIFY(compositor.buildSceneAt(drift::secondsToUs(1.0), {}, &scene));
+    int adjustmentItems = 0;
+    int layersCarryingTheStack = 0;
+    for (const GpuItem &item : scene.items) {
+        if (item.isAdjustment)
+            ++adjustmentItems;
+        else if (item.layer.effects.size() == 2)
+            ++layersCarryingTheStack;
+    }
+    QCOMPARE(adjustmentItems, 0);
+    QCOMPARE(layersCarryingTheStack, 1);
+}
+
+// The pin is enforced centrally, so every path that moves or trims a clip keeps it true without
+// knowing adjustments exist.
+void EditorStateTest::linkedAdjustmentFollowsItsClip()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    appendTwoVideoClips(*state.project());
+
+    state.selectClip(0, 0);
+    state.addEffect(0, 0, QStringLiteral("adjust.contrast"));
+
+    const auto adjustmentSpan = [&state]() {
+        const drift::Clip &a = state.project()->tracks().at(1).clips.at(0);
+        return QPair<drift::TimeUs, drift::TimeUs>{a.timelineStart, a.timelineDuration};
+    };
+
+    // Trimming the clip drags the adjustment with it.
+    state.trimClipRight(0, 0, 1.5);
+    const drift::Clip &trimmed = state.project()->tracks().at(0).clips.at(0);
+    QCOMPARE(adjustmentSpan().first, trimmed.timelineStart);
+    QCOMPARE(adjustmentSpan().second, trimmed.timelineDuration);
+
+    // Unlinking leaves it where it is but stops it following.
+    state.unlinkAdjustment(1, 0);
+    QVERIFY(state.project()->tracks().at(1).clips.at(0).linkedClipId.isEmpty());
+    const QPair<drift::TimeUs, drift::TimeUs> frozen = adjustmentSpan();
+    state.trimClipRight(0, 0, 1.9);
+    QCOMPARE(adjustmentSpan(), frozen);
+
+    // Once unlinked the stack is no longer reported as the clip's own — it is an independent
+    // adjustment the user edits by selecting it.
+    QCOMPARE(state.clipAt(0, 0).value(QStringLiteral("effects")).toList().size(), 0);
+}
+
+// Deleting a clip must not silently promote its lane to a standalone adjustment, which would
+// start applying the effect to the whole canvas.
+void EditorStateTest::deletingAClipUnlinksRatherThanStrandsItsAdjustment()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    appendTwoVideoClips(*state.project());
+
+    state.selectClip(0, 0);
+    state.addEffect(0, 0, QStringLiteral("adjust.contrast"));
+    QCOMPARE(state.project()->tracks().at(1).clips.size(), 1);
+
+    state.selectClip(0, 0);
+    state.deleteSelectedClip();
+
+    // The adjustment survives — the effects are the user's work — but it is no longer pinned,
+    // and it is still a lane, so it still only affects the track it was nested in.
+    const drift::Track &lane = state.project()->tracks().at(1);
+    QVERIFY(lane.isAdjustmentLane());
+    QCOMPARE(lane.clips.size(), 1);
+    QVERIFY(lane.clips.at(0).linkedClipId.isEmpty());
+}
+
+// Reordering a track takes its nested lanes with it, and deleting one takes them away.
+void EditorStateTest::trackMovesAndDeletesCarryTheirAdjustmentLanes()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    appendTwoVideoClips(*state.project());
+    state.addTrack(QStringLiteral("video")); // prepends, so the clip track is now index 1
+
+    const int clipTrack = 1;
+    state.selectClip(clipTrack, 0);
+    state.addEffect(clipTrack, 0, QStringLiteral("adjust.contrast"));
+
+    state.project()->ensureTrackIds();
+    const QString parentId = state.project()->tracks().at(clipTrack).id;
+    QCOMPARE(state.project()->tracks().size(), 3);
+    QCOMPARE(state.project()->tracks().at(2).parentTrackId, parentId);
+
+    // Move the parent to the top; its lane comes along and stays directly below it.
+    state.moveTrack(clipTrack, 0);
+    QCOMPARE(state.project()->tracks().at(0).id, parentId);
+    QVERIFY(state.project()->tracks().at(1).isAdjustmentLane());
+    QCOMPARE(state.project()->tracks().at(1).parentTrackId, parentId);
+
+    // Deleting the parent takes the lane with it: a lane exists only to modify that track, so
+    // leaving it would strand the effects and quietly widen what they apply to.
+    state.removeTrack(0);
+    QCOMPARE(state.project()->tracks().size(), 1);
+    QVERIFY(!state.project()->tracks().at(0).isAdjustment());
+}
+
+// The timeline asks C++ for a row's height so the desktop panel, the track headers and the
+// Android timeline cannot disagree. Two things it has to get right: an adjustment is a label, not
+// a picture, and a nested lane has no row of its own.
+void EditorStateTest::trackRowHeightsForAdjustmentsAndLanes()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    appendTwoVideoClips(*state.project());
+    state.project()->ensureTrackIds();
+    const QString videoTrackId = state.project()->tracks().at(0).id;
+
+    const QVariantMap metrics{
+        {QStringLiteral("video"), 65.0},   {QStringLiteral("audio"), 50.0},
+        {QStringLiteral("text"), 25.0},    {QStringLiteral("subtitle"), 25.0},
+        {QStringLiteral("shape"), 50.0},   {QStringLiteral("adjustment"), 28.0},
+        {QStringLiteral("lane"), 20.0},
+    };
+
+    const int videoRow = state.trackRowHeight(0, metrics);
+    QCOMPARE(videoRow, 65);
+
+    // A standalone adjustment track is short: it shows the effects it carries and nothing else.
+    state.addAdjustmentClip(0.0, 2.0);
+    const int adjustmentIndex = state.project()->trackIndexById(videoTrackId) == 1 ? 0 : 1;
+    QCOMPARE(state.trackRowHeight(adjustmentIndex, metrics), 28);
+
+    // A nested lane takes no row, and its parent grows by exactly one lane's worth.
+    AppController laned(&library);
+    appendTwoVideoClips(*laned.project());
+    laned.selectClip(0, 0);
+    laned.addEffect(0, 0, QStringLiteral("adjust.contrast"));
+    const int parent = 0;
+    const QList<int> lanes = drift::adjustmentLaneIndexes(*laned.project(), parent);
+    QCOMPARE(lanes.size(), 1);
+    QCOMPARE(laned.trackRowHeight(lanes.at(0), metrics), 0);
+    QCOMPARE(laned.trackRowHeight(parent, metrics), 65 + 20);
+
+    // A second lane adds another strip rather than scaling the row.
+    laned.addAudioEffect(0, 0, QStringLiteral("space.autopan"));
+    QCOMPARE(drift::adjustmentLaneIndexes(*laned.project(), parent).size(), 2);
+    QCOMPARE(laned.trackRowHeight(parent, metrics), 65 + 40);
+
+    // Missing keys fall back rather than collapsing the row to nothing.
+    QVERIFY(laned.trackRowHeight(parent, QVariantMap{}) > 0);
+}
+
+// The two placements are the whole point of the feature: a standalone adjustment applies to
+// everything composited below it, a nested one only to the track it sits in. Dragging between
+// them is how you switch, and it is a one-way door in neither direction.
+void EditorStateTest::adjustmentMovesBetweenStandaloneAndNested()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    appendTwoVideoClips(*state.project());
+    state.project()->ensureTrackIds();
+    const QString videoTrackId = state.project()->tracks().at(0).id;
+
+    // A free-standing adjustment gets a track of its own, above the video track.
+    state.addAdjustmentClip(0.0, 2.0);
+    QCOMPARE(state.project()->tracks().size(), 2);
+    const int standalone = state.project()->trackIndexById(videoTrackId) == 1 ? 0 : 1;
+    QVERIFY(state.project()->tracks().at(standalone).isAdjustment());
+    QVERIFY(!state.project()->tracks().at(standalone).isAdjustmentLane());
+
+    // Drag it onto the video track: it becomes a lane nested in that track, and the track it
+    // came from is dropped rather than left behind as an empty row.
+    state.moveAdjustmentToLane(standalone, 0, state.project()->trackIndexById(videoTrackId), 1.0);
+    QCOMPARE(state.project()->tracks().size(), 2);
+    const int videoIndex = state.project()->trackIndexById(videoTrackId);
+    QVERIFY(videoIndex >= 0);
+    const QList<int> lanes = drift::adjustmentLaneIndexes(*state.project(), videoIndex);
+    QCOMPARE(lanes.size(), 1);
+    const drift::Track &lane = state.project()->tracks().at(lanes.at(0));
+    QCOMPARE(lane.clips.size(), 1);
+    QCOMPARE(lane.parentTrackId, videoTrackId);
+    // The drag also carried it along the timeline.
+    QCOMPARE(lane.clips.at(0).timelineStart, drift::secondsToUs(1.0));
+    // Re-scoping breaks any pin: it now belongs to a track, not to a clip.
+    QVERIFY(lane.clips.at(0).linkedClipId.isEmpty());
+
+    // Drag it back out: a track of its own again, and the emptied lane goes away.
+    state.moveAdjustmentToOwnTrack(lanes.at(0), 0, 3.0);
+    QCOMPARE(state.project()->tracks().size(), 2);
+    int nowStandalone = -1;
+    for (int i = 0; i < state.project()->tracks().size(); ++i) {
+        const drift::Track &track = state.project()->tracks().at(i);
+        QVERIFY(!track.isAdjustmentLane());
+        if (track.isAdjustment())
+            nowStandalone = i;
+    }
+    QVERIFY(nowStandalone >= 0);
+    // Above the track it was nested in, not below it. A lane is stored below its parent, so
+    // detaching at the lane's own index would land the new track under the one it came from —
+    // where a canvas-snapshot adjustment no longer affects it at all.
+    QVERIFY2(nowStandalone < state.project()->trackIndexById(videoTrackId),
+             "a detached adjustment must sit above the track it was nested in");
+    QCOMPARE(state.project()->tracks().at(nowStandalone).clips.size(), 1);
+    QCOMPARE(state.project()->tracks().at(nowStandalone).clips.at(0).timelineStart,
+             drift::secondsToUs(3.0));
+
+    // Both moves are ordinary undoable edits.
+    QVERIFY(state.undoAvailable());
+    state.undo();
+    QCOMPARE(drift::adjustmentLaneIndexes(*state.project(),
+                                          state.project()->trackIndexById(videoTrackId)).size(), 1);
+}
+
+// Two adjustments of the same kind overlapping in time cannot share a lane, so a second one
+// appears — but only then.
+void EditorStateTest::overlappingAdjustmentsGetASecondLane()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    appendTwoVideoClips(*state.project());
+    state.project()->ensureTrackIds();
+    const QString videoTrackId = state.project()->tracks().at(0).id;
+    const int videoIndex = 0;
+
+    // Both clips on the track take an effect. They do not overlap, so one lane holds both.
+    state.addEffect(videoIndex, 0, QStringLiteral("adjust.contrast"));
+    state.addEffect(state.project()->trackIndexById(videoTrackId), 1,
+                    QStringLiteral("adjust.contrast"));
+    int parent = state.project()->trackIndexById(videoTrackId);
+    QCOMPARE(drift::adjustmentLaneIndexes(*state.project(), parent).size(), 1);
+    QCOMPARE(state.project()->tracks().at(
+                 drift::adjustmentLaneIndexes(*state.project(), parent).at(0)).clips.size(), 2);
+
+    // An audio stack is a different kind, so it gets its own lane rather than sharing.
+    state.addAudioEffect(state.project()->trackIndexById(videoTrackId), 0,
+                         QStringLiteral("space.autopan"));
+    parent = state.project()->trackIndexById(videoTrackId);
+    const QList<int> lanes = drift::adjustmentLaneIndexes(*state.project(), parent);
+    QCOMPARE(lanes.size(), 2);
+
+    // Each lane holds one kind.
+    for (const int laneIndex : lanes) {
+        const drift::Track &lane = state.project()->tracks().at(laneIndex);
+        QVERIFY(!lane.clips.isEmpty());
+        const drift::AdjustmentKind kind = lane.clips.at(0).adjustmentKind;
+        for (const drift::Clip &clip : lane.clips)
+            QCOMPARE(clip.adjustmentKind, kind);
+    }
+}
+
+// A v3 project loads into the new shape: adjustment clips become their own tracks, and per-clip
+// effects become adjustments pinned to those clips.
+void EditorStateTest::projectV3MigratesEffectsOntoAdjustmentLanes()
+{
+    drift::Project legacy;
+    legacy.tracks().clear();
+
+    drift::Track video;
+    video.type = drift::TrackType::Video;
+
+    drift::Clip clip;
+    clip.id = QStringLiteral("legacy-clip");
+    clip.type = drift::ClipType::Video;
+    clip.timelineStart = 0;
+    clip.timelineDuration = drift::secondsToUs(4.0);
+    clip.srcOut = clip.timelineDuration;
+    drift::Effect fx;
+    fx.catalogId = QStringLiteral("adjust.contrast");
+    fx.name = QStringLiteral("eq");
+    clip.effects.append(fx);
+    drift::Effect afx;
+    afx.catalogId = QStringLiteral("space.autopan");
+    clip.audioEffects.append(afx);
+    video.clips.append(clip);
+
+    drift::Clip legacyAdjustment;
+    legacyAdjustment.id = QStringLiteral("legacy-adjustment");
+    legacyAdjustment.type = drift::ClipType::Adjustment;
+    legacyAdjustment.timelineStart = drift::secondsToUs(6.0);
+    legacyAdjustment.timelineDuration = drift::secondsToUs(2.0);
+    video.clips.append(legacyAdjustment);
+
+    legacy.tracks().append(video);
+
+    // Write it out as a v3 document, which is what an existing project on disk looks like.
+    QJsonObject json = legacy.toJson();
+    json.insert(QStringLiteral("version"), 3);
+
+    QString error;
+    const drift::Project loaded = drift::Project::fromJson(json, &error);
+    QVERIFY(error.isEmpty());
+
+    // The legacy adjustment was lifted onto a standalone track directly above the video track it
+    // was sharing, which is the z-position it already had.
+    int mediaTrack = -1;
+    int standalone = -1;
+    QList<int> lanes;
+    for (int i = 0; i < loaded.tracks().size(); ++i) {
+        const drift::Track &track = loaded.tracks().at(i);
+        QVERIFY(!track.id.isEmpty());
+        if (!track.isAdjustment())
+            mediaTrack = i;
+        else if (track.isAdjustmentLane())
+            lanes.append(i);
+        else
+            standalone = i;
+    }
+    QVERIFY(mediaTrack >= 0);
+    QVERIFY(standalone >= 0);
+    QCOMPARE(loaded.tracks().at(standalone).clips.size(), 1);
+    QCOMPARE(loaded.tracks().at(standalone).clips.at(0).id, QStringLiteral("legacy-adjustment"));
+    QVERIFY(standalone < mediaTrack);
+
+    // The clip's own stacks moved onto adjustments pinned to it, one lane per kind.
+    const drift::Clip &migrated = loaded.tracks().at(mediaTrack).clips.at(0);
+    QCOMPARE(migrated.id, QStringLiteral("legacy-clip"));
+    QVERIFY(migrated.effects.isEmpty());
+    QVERIFY(migrated.audioEffects.isEmpty());
+    QCOMPARE(lanes.size(), 2);
+
+    bool foundVideo = false;
+    bool foundAudio = false;
+    for (const int laneIndex : lanes) {
+        const drift::Track &lane = loaded.tracks().at(laneIndex);
+        QCOMPARE(lane.parentTrackId, loaded.tracks().at(mediaTrack).id);
+        QCOMPARE(lane.clips.size(), 1);
+        const drift::Clip &adjustment = lane.clips.at(0);
+        QCOMPARE(adjustment.linkedClipId, QStringLiteral("legacy-clip"));
+        // Pinned, so effect keyframes measure from the same origin they always did.
+        QCOMPARE(adjustment.timelineStart, migrated.timelineStart);
+        QCOMPARE(adjustment.timelineDuration, migrated.timelineDuration);
+        if (adjustment.adjustmentKind == drift::AdjustmentKind::VideoEffects) {
+            foundVideo = true;
+            QCOMPARE(adjustment.effects.size(), 1);
+            QCOMPARE(adjustment.effects.at(0).catalogId, QStringLiteral("adjust.contrast"));
+        } else if (adjustment.adjustmentKind == drift::AdjustmentKind::AudioEffects) {
+            foundAudio = true;
+            QCOMPARE(adjustment.audioEffects.size(), 1);
+            QCOMPARE(adjustment.audioEffects.at(0).catalogId, QStringLiteral("space.autopan"));
+        }
+    }
+    QVERIFY(foundVideo);
+    QVERIFY(foundAudio);
+
+    // Re-loading the migrated document is a no-op: the migration is not applied twice.
+    const drift::Project again = drift::Project::fromJson(loaded.toJson(), &error);
+    QVERIFY(error.isEmpty());
+    QCOMPARE(again.tracks().size(), loaded.tracks().size());
 }
 
 void EditorStateTest::multiClipMoveLeftPreservesSelectionAndRelativeSpacing()
@@ -4600,51 +5098,50 @@ void EditorStateTest::multiClipMoveCrossTracks()
     AssetLibrary library;
     AppController state(&library);
 
-    // Add a second video track so there are two tracks (Track 0 and Track 1)
-    state.addTrack(QStringLiteral("video"));
-    QCOMPARE(state.project()->tracks().size(), 2);
-
-    // Track 0 has 2 adjustment clips:
+    // Two adjustment clips, which land together on an auto-created adjustment track:
     // Clip 0: start 2.0s, dur 2.0s
     // Clip 1: start 6.0s, dur 2.0s
-    state.addAdjustmentClipAt(0, 2.0, 2.0);
-    state.addAdjustmentClipAt(0, 6.0, 2.0);
+    state.addAdjustmentClipAt(-1, 2.0, 2.0);
+    state.addAdjustmentClipAt(-1, 6.0, 2.0);
 
-    QCOMPARE(state.project()->tracks().at(0).clips.size(), 2);
-    QCOMPARE(state.project()->tracks().at(1).clips.size(), 0);
-
-    // Select both clips on Track 0
-    state.selectClip(0, 0);
-    state.addToSelection(0, 1);
-    QCOMPARE(state.selection().size(), 2);
-
-    // Drag both clips from Track 0 down to Track 1, shifting right by 1.0s (start 2.0 -> 3.0)
-    state.moveClipToTrack(0, 0, 1, 3.0);
-
-    // Verify both clips moved to Track 1
+    // A second adjustment track to drag them onto. It prepends, so the clips are now on Track 1
+    // and the empty destination is Track 0.
+    state.addAdjustmentTrack(QStringLiteral("videoEffects"));
     QCOMPARE(state.project()->tracks().at(0).clips.size(), 0);
     QCOMPARE(state.project()->tracks().at(1).clips.size(), 2);
-    QCOMPARE(state.project()->tracks().at(1).clips.at(0).timelineStart, drift::secondsToUs(3.0));
-    QCOMPARE(state.project()->tracks().at(1).clips.at(1).timelineStart, drift::secondsToUs(7.0));
 
-    // Verify selection follows to Track 1
+    // Select both clips on Track 1
+    state.selectClip(1, 0);
+    state.addToSelection(1, 1);
     QCOMPARE(state.selection().size(), 2);
-    QCOMPARE(state.selection().at(0).toMap().value("track").toInt(), 1);
-    QCOMPARE(state.selection().at(1).toMap().value("track").toInt(), 1);
 
-    // Undo restores to Track 0
+    // Drag both clips from Track 1 up to Track 0, shifting right by 1.0s (start 2.0 -> 3.0)
+    state.moveClipToTrack(1, 0, 0, 3.0);
+
+    // Verify both clips moved to Track 0
+    QCOMPARE(state.project()->tracks().at(1).clips.size(), 0);
+    QCOMPARE(state.project()->tracks().at(0).clips.size(), 2);
+    QCOMPARE(state.project()->tracks().at(0).clips.at(0).timelineStart, drift::secondsToUs(3.0));
+    QCOMPARE(state.project()->tracks().at(0).clips.at(1).timelineStart, drift::secondsToUs(7.0));
+
+    // Verify selection follows to Track 0
+    QCOMPARE(state.selection().size(), 2);
+    QCOMPARE(state.selection().at(0).toMap().value("track").toInt(), 0);
+    QCOMPARE(state.selection().at(1).toMap().value("track").toInt(), 0);
+
+    // Undo restores to Track 1
     state.undo();
-    QCOMPARE(state.project()->tracks().at(0).clips.size(), 2);
-    QCOMPARE(state.project()->tracks().at(1).clips.size(), 0);
-    QCOMPARE(state.project()->tracks().at(0).clips.at(0).timelineStart, drift::secondsToUs(2.0));
-    QCOMPARE(state.project()->tracks().at(0).clips.at(1).timelineStart, drift::secondsToUs(6.0));
-
-    // Redo puts both back on Track 1
-    state.redo();
-    QCOMPARE(state.project()->tracks().at(0).clips.size(), 0);
     QCOMPARE(state.project()->tracks().at(1).clips.size(), 2);
-    QCOMPARE(state.project()->tracks().at(1).clips.at(0).timelineStart, drift::secondsToUs(3.0));
-    QCOMPARE(state.project()->tracks().at(1).clips.at(1).timelineStart, drift::secondsToUs(7.0));
+    QCOMPARE(state.project()->tracks().at(0).clips.size(), 0);
+    QCOMPARE(state.project()->tracks().at(1).clips.at(0).timelineStart, drift::secondsToUs(2.0));
+    QCOMPARE(state.project()->tracks().at(1).clips.at(1).timelineStart, drift::secondsToUs(6.0));
+
+    // Redo puts both back on Track 0
+    state.redo();
+    QCOMPARE(state.project()->tracks().at(1).clips.size(), 0);
+    QCOMPARE(state.project()->tracks().at(0).clips.size(), 2);
+    QCOMPARE(state.project()->tracks().at(0).clips.at(0).timelineStart, drift::secondsToUs(3.0));
+    QCOMPARE(state.project()->tracks().at(0).clips.at(1).timelineStart, drift::secondsToUs(7.0));
 }
 
 void EditorStateTest::multiClipMoveCrossTracksWithLinkedPartners()

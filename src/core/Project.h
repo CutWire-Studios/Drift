@@ -34,7 +34,7 @@ struct Background
 class Project
 {
 public:
-    static constexpr int kCurrentVersion = 3;
+    static constexpr int kCurrentVersion = 4;
 
     Project() { resetToDefaultTimeline(); }
 
@@ -100,6 +100,15 @@ public:
 
     void resetToDefaultTimeline();
     TimeUs durationUs() const;
+
+    // Mints an id for every track that lacks one, and drops a nested adjustment lane's
+    // `parentTrackId` when the track it names is gone. Track creation is spread over a dozen
+    // call sites (plus tests, which build bare `Track{.type = …}` aggregates), so minting is
+    // centralised here rather than duplicated: anything that appends a track can leave the id
+    // empty and this makes it valid. Idempotent — existing ids are never rewritten.
+    void ensureTrackIds();
+
+    int trackIndexById(const QString &id) const;
 
     // Copy that uniquely owns its Qt containers. A plain `Project copy = *this` shares
     // QMap/QList payloads via implicit sharing; mutating either side while another thread

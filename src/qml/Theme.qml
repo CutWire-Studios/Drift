@@ -248,6 +248,11 @@ QtObject {
     readonly property color clipAudio: "#8F5DBA"
     readonly property color clipGraphic: "#BA5D7A"
     readonly property color clipEffect: "#5d93ba"
+    // Adjustment layers, tinted by what they act on so a glance at the lane says which it is.
+    // The video one is clipEffect itself, which is the colour adjustments have always had.
+    readonly property color clipAdjustmentVideo: clipEffect
+    readonly property color clipAdjustmentAudio: "#9B6BC9"
+    readonly property color clipAdjustmentMask: "#BA9B5D"
     readonly property color transitionOverlap: "#9B5DE5"
     readonly property color waveformColor: "#ffffffb3" // rgba(255,255,255,0.7) — on dark clip chrome
     // Waveform drawn on panel surfaces (subtitle cue lane, etc.): follows light/dark FG.
@@ -410,6 +415,13 @@ QtObject {
     readonly property real trackHeightText: touchUi ? 44 : 25
     readonly property real trackHeightSubtitle: touchUi ? 44 : 25
     readonly property real trackHeightShape: 50
+    // An adjustment carries no picture and no waveform — just the list of effects in it — so it
+    // needs a label's worth of room, not a video track's.
+    readonly property real trackHeightAdjustment: touchUi ? 40 : 28
+    // One nested adjustment lane, drawn as a strip across the top of its parent's row. Roughly
+    // 30% of a video track, which is where a track with a single lane lands — a percentage per
+    // lane instead would make a track with three of them nearly twice its natural height.
+    readonly property real adjustmentLaneHeight: 20
     readonly property real trackGap: 6
     // Invisible hit area above tracks (no visible UI) for new-track drops when timeline has clips.
     readonly property real newTrackHitSlop: 24

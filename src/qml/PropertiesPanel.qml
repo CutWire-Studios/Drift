@@ -139,6 +139,21 @@ PanelFrame {
     ]
 
     function tabVisible(tabId) {
+        // An adjustment carries one kind of payload, so it shows the inspector for that and
+        // nothing else. It used to offer Transform and Speed, which the compositor ignores for
+        // an adjustment — the layer is the whole canvas, and there is no source to retime.
+        if (root.clipKind === "adjustment") {
+            const kind = root.clipData.adjustmentKind || "videoEffects"
+            if (tabId === "general" || tabId === "blending")
+                return true
+            if (tabId === "effects")
+                return kind === "videoEffects"
+            if (tabId === "audioEffects")
+                return kind === "audioEffects"
+            if (tabId === "masks")
+                return kind === "mask" || kind === "videoEffects"
+            return false
+        }
         if (tabId === "subtitles")
             return root.clipKind === "subtitle"
         if (tabId === "shape")

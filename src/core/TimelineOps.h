@@ -42,6 +42,35 @@ TrackType trackTypeForClipType(ClipType type);
 
 int defaultTrackForClipType(const Project &project, ClipType type);
 
+// Indices of the nested adjustment lanes attached to `parentIndex`, in track order (topmost
+// first, which is also the order their effects apply in). Lanes are kept immediately above their
+// parent, but `parentTrackId` is what actually binds them, so this scans by id rather than
+// trusting the layout to be intact.
+QList<int> adjustmentLaneIndexes(const Project &project, int parentIndex);
+
+// Inverse: the track a lane is nested in, or -1 if `laneIndex` is not a lane.
+int adjustmentLaneParentIndex(const Project &project, int laneIndex);
+
+// Moves any effect stack still sitting directly on a media clip onto an adjustment linked to it,
+// in one of its track's nested lanes, minting lanes as needed.
+//
+// This is the single invariant the whole adjustment model rests on: a stack lives on an
+// adjustment, never on a clip, so there are never two places holding one that can disagree about
+// what the clip has. Running it centrally is what lets effect templates, the Premiere importer
+// and project load all keep writing clip.effects the straightforward way.
+//
+// Idempotent, and a no-op once no clip holds a stack. INSERTS TRACKS, so any index held across
+// the call goes stale — callers address tracks by id around it.
+void hoistClipEffectsToAdjustmentLanes(Project &project);
+
+// Moves any ClipType::Adjustment clip still sitting on a video track onto a standalone
+// adjustment track at the same depth, which is the z-position it already had — so this is
+// visually lossless.
+//
+// Shared by v3 project load and the Premiere importer, which both produce the older shape where
+// an adjustment was just a clip squatting on a video track. INSERTS TRACKS.
+void liftAdjustmentClipsToOwnTracks(Project &project);
+
 int ensureTrackForClipType(Project &project, ClipType type, bool insertAtTop = false);
 
 // Always prepends a fresh track (multiple tracks of the same type are allowed).

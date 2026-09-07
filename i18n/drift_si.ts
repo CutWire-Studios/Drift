@@ -2121,6 +2121,54 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Add adjustment track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Adjustment track added</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add adjustment lane</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Adjustment lane added</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Nest adjustment in track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Adjustment nested</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Detach adjustment to its own track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Adjustment detached</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Unlink adjustment</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Adjustment unlinked</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Link adjustment to clip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Adjustment linked</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Install the emoji sticker pack to add emoji</source>
         <translation>ඉමෝජි එක් කිරීමට ඉමෝජි ස්ටිකර් පැකේජය ස්ථාපනය කරන්න</translation>
     </message>
@@ -5644,6 +5692,14 @@
         <translation>ග්‍රැෆික්</translation>
     </message>
     <message>
+        <source>Adjustment</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Audio adjustment</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>New track</source>
         <translation>නව ට්‍රැකය</translation>
     </message>
@@ -8505,6 +8561,18 @@ If playback stutters, try another.</source>
         <translation>%1 (අක්‍රියයි)</translation>
     </message>
     <message>
+        <source>Audio adjustment</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Mask</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Adjustment</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Subtitles</source>
         <translation>උපසිරැසි</translation>
     </message>
@@ -8563,6 +8631,14 @@ If playback stutters, try another.</source>
     <message>
         <source>Save effects as preset…</source>
         <translation>ප්‍රයෝග පෙරසැකසුමක් ලෙස සුරකින්න…</translation>
+    </message>
+    <message>
+        <source>Unlink from clip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move to its own track</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Delete</source>
@@ -8844,6 +8920,10 @@ If playback stutters, try another.</source>
         <translation>මෙමඟින් හිස් ට්‍රැකය ඉවත් කෙරේ. පසුව ඔබට එය අහෝසි කළ හැක.</translation>
     </message>
     <message>
+        <source>FX</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>A</source>
         <translation>A</translation>
     </message>
@@ -8862,6 +8942,10 @@ If playback stutters, try another.</source>
     <message>
         <source>V</source>
         <translation>V</translation>
+    </message>
+    <message>
+        <source>Adjustment</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Audio</source>

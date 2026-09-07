@@ -251,6 +251,8 @@ private slots:
     void audioEffectRackPrimingAlignsLatentStages();
     void pitchShiftMovesPitchInTheRightDirection();
     void audioEffectRackParameterChangeIsContinuous();
+    void audioAdjustmentLanesAndMasterBus();
+    void audioEffectRackReportsChainRebuilds();
     void onsetsDetectClickTrackTempo();
     void onsetsIgnoreSilence();
 
@@ -6925,6 +6927,129 @@ void EngineTest::retimedAudioSurvivesBlockSizeChanges()
         }
         t += static_cast<drift::TimeUs>(frames) * drift::kUsPerSecond / kToneRate;
     }
+}
+
+// An audio adjustment on a nested lane reaches the mix through the clips it modifies, exactly the
+// way a video lane folds into a clip's layer pass. A standalone one is the master bus instead.
+void EngineTest::audioAdjustmentLanesAndMasterBus()
+{
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    const QString path = makeToneAudio(dir);
+    if (path.isEmpty())
+        QSKIP("ffmpeg not available to generate a test clip");
+
+    constexpr int kFrames = 1024;
+    const auto rmsOf = [](drift::Project &project) {
+        AudioMixer mixer;
+        mixer.setProject(&project);
+        QVector<float> buffer(kFrames * 2);
+        // A couple of blocks in, so the decoder and any rack priming have settled.
+        drift::TimeUs t = 0;
+        double rms = 0.0;
+        for (int b = 0; b < 4; ++b) {
+            mixer.mix(t, kFrames, kToneRate, buffer.data());
+            rms = blockRms(buffer, kFrames);
+            t += static_cast<drift::TimeUs>(kFrames) * drift::kUsPerSecond / kToneRate;
+        }
+        return rms;
+    };
+
+    drift::Project dry = makeRetimedToneProject(path, 1.0, false);
+    const double dryRms = rmsOf(dry);
+    QVERIFY2(dryRms > 0.02, qPrintable(QString::number(dryRms)));
+
+    // A quietening effect, so "did it reach the mix" is a level question rather than a
+    // spectral one.
+    drift::Effect quieter;
+    quieter.catalogId = QStringLiteral("transmission.muffled");
+    quieter.parameters.insert(QStringLiteral("cutoff"), 400.0);
+    quieter.parameters.insert(QStringLiteral("gain"), 0.15);
+
+    // --- nested lane: scoped to the audio track it is nested in -------------------------
+    {
+        drift::Project project = makeRetimedToneProject(path, 1.0, false);
+        project.ensureTrackIds();
+
+        drift::Track lane;
+        lane.type = drift::TrackType::Adjustment;
+        lane.adjustmentScope = drift::AdjustmentScope::ParentTrack;
+        lane.parentTrackId = project.tracks().at(0).id;
+
+        drift::Clip adjustment;
+        adjustment.id = QStringLiteral("lane-adjustment");
+        adjustment.type = drift::ClipType::Adjustment;
+        adjustment.adjustmentKind = drift::AdjustmentKind::AudioEffects;
+        adjustment.timelineStart = 0;
+        adjustment.timelineDuration = project.tracks().at(0).clips.at(0).timelineDuration;
+        adjustment.audioEffects.append(quieter);
+        lane.clips.append(adjustment);
+        project.tracks().append(lane);
+        project.ensureTrackIds();
+
+        const double wetRms = rmsOf(project);
+        QVERIFY2(wetRms < dryRms * 0.8,
+                 qPrintable(QStringLiteral("lane adjustment did not reach the mix: %1 vs %2")
+                                .arg(wetRms).arg(dryRms)));
+    }
+
+    // --- standalone: the master bus ------------------------------------------------------
+    {
+        drift::Project project = makeRetimedToneProject(path, 1.0, false);
+
+        drift::Track bus;
+        bus.type = drift::TrackType::Adjustment;
+        bus.adjustmentScope = drift::AdjustmentScope::AllBelow;
+
+        drift::Clip adjustment;
+        adjustment.id = QStringLiteral("bus-adjustment");
+        adjustment.type = drift::ClipType::Adjustment;
+        adjustment.adjustmentKind = drift::AdjustmentKind::AudioEffects;
+        adjustment.timelineStart = 0;
+        adjustment.timelineDuration = project.tracks().at(0).clips.at(0).timelineDuration;
+        adjustment.audioEffects.append(quieter);
+        bus.clips.append(adjustment);
+        project.tracks().prepend(bus);
+        project.ensureTrackIds();
+
+        const double wetRms = rmsOf(project);
+        QVERIFY2(wetRms < dryRms * 0.8,
+                 qPrintable(QStringLiteral("master bus did not reach the mix: %1 vs %2")
+                                .arg(wetRms).arg(dryRms)));
+    }
+}
+
+// A rebuilt chain has no history, so it is as much a discontinuity as a seek. Without treating it
+// as one, a lane that starts part-way through a clip opens its tail cold.
+void EngineTest::audioEffectRackReportsChainRebuilds()
+{
+    constexpr int kRate = 48000;
+
+    drift::Effect a;
+    a.catalogId = QStringLiteral("transmission.muffled");
+    a.parameters.insert(QStringLiteral("cutoff"), 4000.0);
+
+    drift::Effect b;
+    b.catalogId = QStringLiteral("space.autopan");
+
+    drift::AudioEffectRack rack;
+
+    bool rebuilt = false;
+    QVERIFY(rack.configure(audioEffectSpecsFor({a}), kRate, &rebuilt));
+    QVERIFY(rebuilt); // first build
+
+    rebuilt = false;
+    QVERIFY(rack.configure(audioEffectSpecsFor({a}), kRate, &rebuilt));
+    QVERIFY(!rebuilt); // same set: values are pushed into live stages, nothing is torn down
+
+    a.parameters.insert(QStringLiteral("cutoff"), 900.0);
+    rebuilt = false;
+    QVERIFY(rack.configure(audioEffectSpecsFor({a}), kRate, &rebuilt));
+    QVERIFY2(!rebuilt, "a parameter change must not tear the DSP down");
+
+    rebuilt = false;
+    QVERIFY(rack.configure(audioEffectSpecsFor({a, b}), kRate, &rebuilt));
+    QVERIFY2(rebuilt, "adding an effect changes the chain and must report a rebuild");
 }
 
 void EngineTest::reversedRetimedAudioIsNotSilent()

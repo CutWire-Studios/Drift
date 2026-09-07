@@ -1211,12 +1211,34 @@ QVariantList AppController::tracks() const
     QVariantList result;
     result.reserve(m_project.tracks().size());
 
-    for (const drift::Track &track : m_project.tracks()) {
+    for (int ti = 0; ti < m_project.tracks().size(); ++ti) {
+        const drift::Track &track = m_project.tracks().at(ti);
+
+        // Each clip's effect stack lives on the adjustment linked to it in one of this track's
+        // lanes. Gathered once per track rather than resolved per clip: tracks() is rebuilt on
+        // every read and every binding re-reads it, so a per-clip lookup would be quadratic.
+        QHash<QString, const drift::Clip *> videoHosts;
+        QHash<QString, const drift::Clip *> audioHosts;
+        if (!track.isAdjustment()) {
+            for (const int laneIndex : drift::adjustmentLaneIndexes(m_project, ti)) {
+                for (const drift::Clip &adjustment : m_project.tracks().at(laneIndex).clips) {
+                    if (adjustment.linkedClipId.isEmpty())
+                        continue;
+                    if (adjustment.adjustmentKind == drift::AdjustmentKind::VideoEffects)
+                        videoHosts.insert(adjustment.linkedClipId, &adjustment);
+                    else if (adjustment.adjustmentKind == drift::AdjustmentKind::AudioEffects)
+                        audioHosts.insert(adjustment.linkedClipId, &adjustment);
+                }
+            }
+        }
+
         QVariantList clips;
         clips.reserve(track.clips.size());
 
-        for (const drift::Clip &clip : track.clips)
-            clips.append(clipToMap(clip));
+        for (const drift::Clip &clip : track.clips) {
+            clips.append(clipToMap(clip, videoHosts.value(clip.id, nullptr),
+                                   audioHosts.value(clip.id, nullptr)));
+        }
 
         QVariantList transitions;
         transitions.reserve(track.transitions.size());
@@ -1224,7 +1246,13 @@ QVariantList AppController::tracks() const
             transitions.append(transitionToMap(track, transition));
 
         result.append(QVariantMap{
+            {QStringLiteral("id"), track.id},
             {QStringLiteral("type"), drift::trackTypeToString(track.type)},
+            {QStringLiteral("adjustmentScope"), drift::adjustmentScopeToString(track.adjustmentScope)},
+            {QStringLiteral("parentTrackId"), track.parentTrackId},
+            // The timeline draws a lane inside its parent's row instead of giving it one of its
+            // own, so it needs to tell the two apart without re-deriving the rule.
+            {QStringLiteral("isAdjustmentLane"), track.isAdjustmentLane()},
             {QStringLiteral("name"), track.name},
             {QStringLiteral("clips"), clips},
             {QStringLiteral("transitions"), transitions},
@@ -2448,14 +2476,23 @@ QHash<QString, QString> defaultShortcuts()
 
 } // namespace
 
-QVariantMap AppController::clipToMap(const drift::Clip &clip) const
+QVariantMap AppController::clipToMap(const drift::Clip &clip, const drift::Clip *videoEffectHost,
+                                     const drift::Clip *audioEffectHost) const
 {
+    // A media clip's stack physically lives on the adjustment linked to it, but the inspector,
+    // the timeline badge and the MCP tools all still ask the clip for "its" effects — so report
+    // the host's list here. Indices line up 1:1 with what the effect invokables take, because a
+    // clip has at most one linked adjustment per kind. The two kinds are separate adjustments,
+    // hence two hosts. An adjustment clip passes neither and reports its own lists.
+    const drift::Clip &videoHost = videoEffectHost ? *videoEffectHost : clip;
+    const drift::Clip &audioHost = audioEffectHost ? *audioEffectHost : clip;
+
     QVariantList effects;
-    for (int i = 0; i < clip.effects.size(); ++i)
-        effects.append(effectToMap(clip.effects.at(i), i, clip.timelineStart));
+    for (int i = 0; i < videoHost.effects.size(); ++i)
+        effects.append(effectToMap(videoHost.effects.at(i), i, clip.timelineStart));
 
     QVariantList audioEffects;
-    for (const drift::Effect &effect : clip.audioEffects)
+    for (const drift::Effect &effect : audioHost.audioEffects)
         audioEffects.append(audioEffectToMap(effect));
 
     QVariantList fadeShape;
@@ -2475,6 +2512,10 @@ QVariantMap AppController::clipToMap(const drift::Clip &clip) const
         {QStringLiteral("name"), clip.name},
         {QStringLiteral("path"), clip.path},
         {QStringLiteral("kind"), drift::clipTypeToString(clip.type)},
+        // Adjustment clips only: which inspector they get, and whether the timeline should
+        // treat their edges as pinned.
+        {QStringLiteral("adjustmentKind"), drift::adjustmentKindToString(clip.adjustmentKind)},
+        {QStringLiteral("linkedClipId"), clip.linkedClipId},
         {QStringLiteral("thumbnailPath"), clip.thumbnailPath},
         {QStringLiteral("filmstripPath"), clip.filmstripPath},
         {QStringLiteral("textContent"), clip.textContent},
@@ -4050,7 +4091,11 @@ QVariantMap AppController::clipAt(int trackIndex, int clipIndex) const
     if (clipIndex < 0 || clipIndex >= tracks[trackIndex].clips.size())
         return {};
 
-    return clipToMap(tracks[trackIndex].clips.at(clipIndex));
+    // The single-clip form resolves its own hosts. Unlike tracks(), this runs once, so the two
+    // scans cost nothing worth indexing around.
+    return clipToMap(tracks[trackIndex].clips.at(clipIndex),
+                     effectHostClip(trackIndex, clipIndex, drift::AdjustmentKind::VideoEffects),
+                     effectHostClip(trackIndex, clipIndex, drift::AdjustmentKind::AudioEffects));
 }
 
 QVariantMap AppController::activeVideoClipAtPlayhead() const
@@ -4106,6 +4151,13 @@ double AppController::sourceTimeAtPlayhead() const
 
 void AppController::pushProjectEdit(const drift::Project &before, const QString &text)
 {
+    // Before the snapshot, not after: the structural invariants have to be part of the recorded
+    // state, or a redo would restore a project with effects still sitting on their clips and the
+    // representation would only settle on the next unrelated edit.
+    //
+    // This is also where a track created by this edit gets its id — nested lanes address their
+    // parent by it, and the dozen places that append a track all leave it empty.
+    normalizeProjectStructure();
     if (m_mcpUndoSuspended)
         return;
     m_undoStack.push(new drift::ProjectSnapshotCommand(&m_project, before, m_project, text));
@@ -4114,6 +4166,15 @@ void AppController::pushProjectEdit(const drift::Project &before, const QString 
 void AppController::finishEdit(const QString &message)
 {
     syncOverlapTransitions(m_project);
+
+    // Catches edit paths that bypass pushProjectEdit (preview drags, MCP batches with undo
+    // suspended). Idempotent, and pushProjectEdit has normally already done the work.
+    normalizeProjectStructure();
+
+    // Pinned adjustments follow their clip from here rather than from each of the dozens of
+    // paths that can move one, so a drag, trim, split, ripple delete or multicam retarget all
+    // keep the link true for free.
+    syncLinkedAdjustments(m_project);
     normalizeSelection();
     if (m_selectedTransitionTrack >= 0) {
         const QVariantMap selected = selectedTransitionData();
@@ -4818,6 +4879,8 @@ void AppController::trimClipLeft(int trackIndex, int clipIndex, double newStart)
         syncSyntheticSourceRange(clip);
         syncLinkedPartnersFrom(m_project, clip);
         syncOverlapTransitions(m_project);
+        // Live drag: see the note in trimClipRight.
+        syncLinkedAdjustments(m_project);
         emit tracksChanged();
         return;
     }
@@ -4864,6 +4927,9 @@ void AppController::trimClipLeft(int trackIndex, int clipIndex, double newStart)
     clip.syncDurationFromSpeedCurve();
     syncLinkedPartnersFrom(m_project, clip);
     syncOverlapTransitions(m_project);
+    // Live drag: this path never reaches finishEdit, so a pinned adjustment would visibly lag
+    // its clip until the drag was released.
+    syncLinkedAdjustments(m_project);
     emit tracksChanged();
 }
 
@@ -4909,6 +4975,9 @@ void AppController::trimClipRight(int trackIndex, int clipIndex, double newEnd)
     clip.syncDurationFromSpeedCurve();
     syncLinkedPartnersFrom(m_project, clip);
     syncOverlapTransitions(m_project);
+    // Live drag: this path never reaches finishEdit, so a pinned adjustment would visibly lag
+    // its clip until the drag was released.
+    syncLinkedAdjustments(m_project);
     emit tracksChanged();
 }
 
@@ -8889,6 +8958,312 @@ void AppController::addShapeClipAt(const QString &shapeId, int trackIndex, doubl
     selectClip(target, track.clips.size() - 1);
 }
 
+namespace {
+
+// A lane holds one kind: a row mixing video and audio adjustments would have no unambiguous
+// colour or inspector, and the two never need to share a slot. An empty lane takes anything.
+bool laneAcceptsKind(const drift::Track &lane, drift::AdjustmentKind kind)
+{
+    return lane.clips.isEmpty() || lane.clips.first().adjustmentKind == kind;
+}
+
+bool spansOverlap(drift::TimeUs aStart, drift::TimeUs aDuration, const drift::Clip &b)
+{
+    return aStart < b.timelineEnd() && b.timelineStart < aStart + aDuration;
+}
+
+} // namespace
+
+int AppController::ensureAdjustmentLaneFor(int parentTrackIndex, drift::AdjustmentKind kind,
+                                           drift::TimeUs startUs, drift::TimeUs durationUs)
+{
+    if (parentTrackIndex < 0 || parentTrackIndex >= m_project.tracks().size())
+        return -1;
+    // A lane addresses its parent by id, so the parent needs one before it can be pointed at.
+    m_project.ensureTrackIds();
+
+    const drift::Track &parent = m_project.tracks().at(parentTrackIndex);
+    // Lanes nest in the tracks that carry clips. Nesting one inside another lane would give it
+    // two scopes at once.
+    if (parent.isAdjustment())
+        return -1;
+
+    for (const int laneIndex : drift::adjustmentLaneIndexes(m_project, parentTrackIndex)) {
+        const drift::Track &lane = m_project.tracks().at(laneIndex);
+        if (!laneAcceptsKind(lane, kind))
+            continue;
+        bool collides = false;
+        for (const drift::Clip &existing : lane.clips) {
+            if (spansOverlap(startUs, durationUs, existing)) {
+                collides = true;
+                break;
+            }
+        }
+        if (!collides)
+            return laneIndex;
+    }
+
+    // No room anywhere: a fresh lane just after the parent's existing ones, so those keep
+    // applying in the order they did.
+    //
+    // Stored *below* the parent, not above. A lane has no z-position of its own — it is drawn
+    // inside the parent's row either way — so the only thing array position decides is whose
+    // indices shift when one is created. Below leaves the parent and everything above it alone,
+    // which matters because adding an effect creates a lane, and the caller is usually holding
+    // the index of the very track it is editing.
+    drift::Track lane;
+    lane.id = QUuid::createUuid().toString(QUuid::WithoutBraces);
+    lane.type = drift::TrackType::Adjustment;
+    lane.adjustmentScope = drift::AdjustmentScope::ParentTrack;
+    lane.parentTrackId = m_project.tracks().at(parentTrackIndex).id;
+
+    const QList<int> existing = drift::adjustmentLaneIndexes(m_project, parentTrackIndex);
+    const int insertAt = existing.isEmpty() ? parentTrackIndex + 1 : existing.constLast() + 1;
+    m_project.tracks().insert(insertAt, lane);
+    return insertAt;
+}
+
+drift::ClipRef AppController::createLinkedAdjustment(int trackIndex, int clipIndex,
+                                                     drift::AdjustmentKind kind)
+{
+    if (trackIndex < 0 || trackIndex >= m_project.tracks().size())
+        return {};
+    if (clipIndex < 0 || clipIndex >= m_project.tracks().at(trackIndex).clips.size())
+        return {};
+
+    // Copied, not referenced: ensureAdjustmentLaneFor may insert a track and invalidate it.
+    const drift::Clip source = m_project.tracks().at(trackIndex).clips.at(clipIndex);
+
+    drift::Clip adjustment;
+    adjustment.id = QUuid::createUuid().toString(QUuid::WithoutBraces);
+    adjustment.type = drift::ClipType::Adjustment;
+    adjustment.adjustmentKind = kind;
+    adjustment.linkedClipId = source.id;
+    adjustment.timelineStart = source.timelineStart;
+    adjustment.timelineDuration = source.timelineDuration;
+    adjustment.srcIn = 0;
+    adjustment.srcOut = source.timelineDuration;
+
+    const int laneIndex = ensureAdjustmentLaneFor(trackIndex, kind, adjustment.timelineStart,
+                                                  adjustment.timelineDuration);
+    if (laneIndex < 0)
+        return {};
+
+    drift::Track &lane = m_project.tracks()[laneIndex];
+    lane.clips.append(adjustment);
+    return {laneIndex, static_cast<int>(lane.clips.size()) - 1};
+}
+
+drift::ClipRef AppController::effectHostRef(int trackIndex, int clipIndex,
+                                            drift::AdjustmentKind kind, bool create)
+{
+    if (trackIndex < 0 || trackIndex >= m_project.tracks().size())
+        return {};
+    const drift::Track &track = m_project.tracks().at(trackIndex);
+    if (clipIndex < 0 || clipIndex >= track.clips.size())
+        return {};
+
+    const drift::Clip &clip = track.clips.at(clipIndex);
+    if (clip.type == drift::ClipType::Adjustment) {
+        // An adjustment hosts its own stack, but only the one it is for — an audio stack must not
+        // land on a video adjustment.
+        return clip.adjustmentKind == kind ? drift::ClipRef{trackIndex, clipIndex} : drift::ClipRef{};
+    }
+
+    const QString clipId = clip.id;
+    for (const int laneIndex : drift::adjustmentLaneIndexes(m_project, trackIndex)) {
+        const drift::Track &lane = m_project.tracks().at(laneIndex);
+        for (int c = 0; c < lane.clips.size(); ++c) {
+            const drift::Clip &adjustment = lane.clips.at(c);
+            if (adjustment.adjustmentKind == kind && adjustment.linkedClipId == clipId)
+                return {laneIndex, c};
+        }
+    }
+
+    if (!create)
+        return {};
+    return createLinkedAdjustment(trackIndex, clipIndex, kind);
+}
+
+const drift::Clip *AppController::effectHostClip(int trackIndex, int clipIndex,
+                                                 drift::AdjustmentKind kind) const
+{
+    const drift::ClipRef ref =
+        const_cast<AppController *>(this)->effectHostRef(trackIndex, clipIndex, kind,
+                                                         /*create=*/false);
+    if (ref.trackIndex < 0)
+        return nullptr;
+    return &m_project.tracks().at(ref.trackIndex).clips.at(ref.clipIndex);
+}
+
+bool AppController::redirectToEffectHost(int *trackIndex, int *clipIndex,
+                                         drift::AdjustmentKind kind, bool create)
+{
+    if (!trackIndex || !clipIndex)
+        return false;
+    const drift::ClipRef ref = effectHostRef(*trackIndex, *clipIndex, kind, create);
+    if (ref.trackIndex < 0)
+        return false;
+    *trackIndex = ref.trackIndex;
+    *clipIndex = ref.clipIndex;
+    return true;
+}
+
+void AppController::redirectToKeyframeHost(int *trackIndex, int *clipIndex,
+                                           const QString &prop) const
+{
+    if (!trackIndex || !clipIndex || !prop.startsWith(QLatin1String("fx.")))
+        return;
+    // Only video effect params are animatable — the keyframe track type is double all the way
+    // down and audio params never gained tracks — so there is one kind to follow.
+    const drift::ClipRef ref =
+        const_cast<AppController *>(this)->effectHostRef(*trackIndex, *clipIndex,
+                                                         drift::AdjustmentKind::VideoEffects,
+                                                         /*create=*/false);
+    if (ref.trackIndex < 0)
+        return;
+    *trackIndex = ref.trackIndex;
+    *clipIndex = ref.clipIndex;
+}
+
+void AppController::syncLinkedAdjustments(drift::Project &project) const
+{
+    // One pass over every clip to build the span table, then one over the adjustments. Scanning
+    // per adjustment instead would be quadratic on a timeline with many effects.
+    QHash<QString, QPair<drift::TimeUs, drift::TimeUs>> spans;
+    for (const drift::Track &track : project.tracks()) {
+        if (track.isAdjustment())
+            continue;
+        for (const drift::Clip &clip : track.clips)
+            spans.insert(clip.id, {clip.timelineStart, clip.timelineDuration});
+    }
+
+    for (drift::Track &track : project.tracks()) {
+        if (!track.isAdjustment())
+            continue;
+        for (drift::Clip &adjustment : track.clips) {
+            if (adjustment.linkedClipId.isEmpty())
+                continue;
+            const auto it = spans.constFind(adjustment.linkedClipId);
+            if (it == spans.constEnd()) {
+                // The clip it was pinned to is gone. Unlink rather than delete: the effects are
+                // the user's work, and a stranded adjustment is visible and recoverable.
+                adjustment.linkedClipId.clear();
+                continue;
+            }
+            adjustment.timelineStart = it->first;
+            adjustment.timelineDuration = it->second;
+            adjustment.srcIn = 0;
+            adjustment.srcOut = it->second;
+        }
+    }
+}
+
+void AppController::normalizeProjectStructure()
+{
+    m_project.ensureTrackIds();
+    const QList<QPair<QString, int>> selection = captureSelectionByTrackId();
+    // Belt and braces for anything that hands the editor a project built the old way — an
+    // importer, a tool, a test. Both passes are cheap no-ops once the shape is right.
+    drift::liftAdjustmentClipsToOwnTracks(m_project);
+    drift::hoistClipEffectsToAdjustmentLanes(m_project);
+    normalizeAdjustmentLanes(m_project);
+    restoreSelectionByTrackId(selection);
+}
+
+void AppController::normalizeAdjustmentLanes(drift::Project &project) const
+{
+    bool hasLane = false;
+    for (const drift::Track &track : project.tracks()) {
+        if (track.type == drift::TrackType::Adjustment
+            && track.adjustmentScope == drift::AdjustmentScope::ParentTrack) {
+            hasLane = true;
+            break;
+        }
+    }
+    if (!hasLane)
+        return;
+
+    project.ensureTrackIds();
+
+    // A lane whose parent became an adjustment track would have two scopes at once; demote it to
+    // standalone rather than leave it ambiguous.
+    for (drift::Track &track : project.tracks()) {
+        if (!track.isAdjustmentLane())
+            continue;
+        const int parentIndex = project.trackIndexById(track.parentTrackId);
+        if (parentIndex < 0 || project.tracks().at(parentIndex).isAdjustment()) {
+            track.parentTrackId.clear();
+            track.adjustmentScope = drift::AdjustmentScope::AllBelow;
+        }
+    }
+
+    // Re-gather each parent's lanes directly below it. Lanes keep their relative order, so the
+    // sequence their effects apply in survives a track move — and moving a track carries its
+    // lanes along, which is what makes reordering behave.
+    QList<drift::Track> ordered;
+    ordered.reserve(project.tracks().size());
+    QSet<QString> placed;
+    for (const drift::Track &track : project.tracks()) {
+        if (track.isAdjustmentLane())
+            continue;
+        ordered.append(track);
+        placed.insert(track.id);
+        for (const drift::Track &lane : project.tracks()) {
+            if (lane.isAdjustmentLane() && lane.parentTrackId == track.id
+                && !placed.contains(lane.id)) {
+                ordered.append(lane);
+                placed.insert(lane.id);
+            }
+        }
+    }
+    // Anything left is a lane whose parent vanished mid-pass; keep it rather than drop it.
+    for (const drift::Track &track : project.tracks()) {
+        if (!placed.contains(track.id))
+            ordered.append(track);
+    }
+    project.tracks() = ordered;
+}
+
+QString AppController::trackIdAt(int trackIndex) const
+{
+    if (trackIndex < 0 || trackIndex >= m_project.tracks().size())
+        return {};
+    return m_project.tracks().at(trackIndex).id;
+}
+
+QList<QPair<QString, int>> AppController::captureSelectionByTrackId() const
+{
+    QList<QPair<QString, int>> captured;
+    captured.reserve(m_selection.size());
+    for (const QPair<int, int> &pair : m_selection) {
+        const QString id = trackIdAt(pair.first);
+        if (!id.isEmpty())
+            captured.append({id, pair.second});
+    }
+    return captured;
+}
+
+void AppController::restoreSelectionByTrackId(const QList<QPair<QString, int>> &captured)
+{
+    m_selection.clear();
+    for (const QPair<QString, int> &pair : captured) {
+        const int trackIndex = m_project.trackIndexById(pair.first);
+        if (trackIndex < 0)
+            continue;
+        if (pair.second < 0 || pair.second >= m_project.tracks().at(trackIndex).clips.size())
+            continue;
+        m_selection.append(qMakePair(trackIndex, pair.second));
+    }
+    if (m_selection.isEmpty()) {
+        m_selectedTrack = -1;
+        m_selectedClip = -1;
+    } else {
+        m_selectedTrack = m_selection.constLast().first;
+        m_selectedClip = m_selection.constLast().second;
+    }
+}
+
 void AppController::addAdjustmentClip(double atSeconds, double durationSeconds)
 {
     addAdjustmentClipAt(-1, atSeconds, durationSeconds);
@@ -8909,23 +9284,31 @@ void AppController::addAdjustmentClipWithEffect(const QString &effectId, int tra
         : drift::kImageClipDurationUs;
     const drift::TimeUs startSeconds = atSeconds < 0.0 ? m_playheadUs : drift::secondsToUs(atSeconds);
 
-    if (target < 0 || target >= m_project.tracks().size()
-        || !m_project.tracks().at(target).allowsClipType(drift::ClipType::Adjustment)) {
+    // A free-standing adjustment goes on a standalone adjustment track — never into a nested
+    // lane, which is scoped to somebody else's track and would silently change what it applies to.
+    const auto usableTarget = [this](int index) {
+        if (index < 0 || index >= m_project.tracks().size())
+            return false;
+        const drift::Track &t = m_project.tracks().at(index);
+        return t.isAdjustment() && !t.isAdjustmentLane();
+    };
+
+    if (!usableTarget(target)) {
         int candidateTrack = -1;
         for (int i = 0; i < m_project.tracks().size(); ++i) {
+            if (!usableTarget(i))
+                continue;
             const drift::Track &t = m_project.tracks().at(i);
-            if (t.type == drift::TrackType::Video && t.allowsClipType(drift::ClipType::Adjustment)) {
-                bool hasOverlap = false;
-                for (const drift::Clip &c : t.clips) {
-                    if (startSeconds < c.timelineEnd() && startSeconds + durUs > c.timelineStart) {
-                        hasOverlap = true;
-                        break;
-                    }
-                }
-                if (!hasOverlap) {
-                    candidateTrack = i;
+            bool hasOverlap = false;
+            for (const drift::Clip &c : t.clips) {
+                if (startSeconds < c.timelineEnd() && startSeconds + durUs > c.timelineStart) {
+                    hasOverlap = true;
                     break;
                 }
+            }
+            if (!hasOverlap) {
+                candidateTrack = i;
+                break;
             }
         }
         if (candidateTrack >= 0) {
@@ -8968,6 +9351,211 @@ void AppController::addAdjustmentClipWithEffect(const QString &effectId, int tra
     pushProjectEdit(before, tr("Add adjustment layer"));
     finishEdit(tr("Adjustment layer added"));
     selectClip(target, track.clips.size() - 1);
+}
+
+namespace {
+
+drift::AdjustmentKind adjustmentKindFromArg(const QString &kind)
+{
+    return drift::adjustmentKindFromString(kind.trimmed());
+}
+
+} // namespace
+
+void AppController::addAdjustmentTrack(const QString &kind)
+{
+    const drift::Project before = m_project;
+
+    drift::Track track;
+    track.id = QUuid::createUuid().toString(QUuid::WithoutBraces);
+    track.type = drift::TrackType::Adjustment;
+    track.adjustmentScope = drift::AdjustmentScope::AllBelow;
+    m_project.tracks().prepend(track);
+
+    // Every stored index just moved down one.
+    const QList<QPair<QString, int>> selection = captureSelectionByTrackId();
+    restoreSelectionByTrackId(selection);
+    if (m_selectedTransitionTrack >= 0)
+        ++m_selectedTransitionTrack;
+
+    Q_UNUSED(adjustmentKindFromArg(kind))
+    pushProjectEdit(before, tr("Add adjustment track"));
+    finishEdit(tr("Adjustment track added"));
+}
+
+int AppController::ensureAdjustmentLane(int parentTrackIndex, const QString &kind, double atSeconds,
+                                        double durationSeconds)
+{
+    const drift::TimeUs startUs =
+        atSeconds < 0.0 ? m_playheadUs : drift::secondsToUs(atSeconds);
+    const drift::TimeUs durUs = durationSeconds > 0.0 ? drift::secondsToUs(durationSeconds)
+                                                      : drift::kImageClipDurationUs;
+
+    const drift::Project before = m_project;
+    const int laneIndex =
+        ensureAdjustmentLaneFor(parentTrackIndex, adjustmentKindFromArg(kind), startUs, durUs);
+    if (laneIndex < 0)
+        return -1;
+
+    // Only a fresh lane changes the project; reusing one is a pure lookup and must not land on
+    // the undo stack as an empty edit.
+    if (m_project.tracks().size() != before.tracks().size()) {
+        const QList<QPair<QString, int>> selection = captureSelectionByTrackId();
+        restoreSelectionByTrackId(selection);
+        pushProjectEdit(before, tr("Add adjustment lane"));
+        finishEdit(tr("Adjustment lane added"));
+    }
+    return laneIndex;
+}
+
+void AppController::moveAdjustmentToLane(int fromTrack, int fromClip, int parentTrackIndex,
+                                         double atSeconds)
+{
+    if (fromTrack < 0 || fromTrack >= m_project.tracks().size())
+        return;
+    if (fromClip < 0 || fromClip >= m_project.tracks().at(fromTrack).clips.size())
+        return;
+    const drift::Clip &source = m_project.tracks().at(fromTrack).clips.at(fromClip);
+    if (source.type != drift::ClipType::Adjustment)
+        return;
+    if (parentTrackIndex < 0 || parentTrackIndex >= m_project.tracks().size())
+        return;
+    if (m_project.tracks().at(parentTrackIndex).isAdjustment())
+        return;
+
+    const drift::Project before = m_project;
+    m_project.ensureTrackIds();
+
+    // Copied before anything moves: creating the lane can insert a track and invalidate both the
+    // reference and the indices the caller passed.
+    drift::Clip adjustment = m_project.tracks().at(fromTrack).clips.at(fromClip);
+    // Re-scoping breaks the pin: a linked adjustment belongs to its clip's track, so carrying the
+    // link onto a different one would leave it following a clip it no longer applies to.
+    adjustment.linkedClipId.clear();
+    if (atSeconds >= 0.0)
+        adjustment.timelineStart = drift::secondsToUs(atSeconds);
+
+    const QString sourceTrackId = m_project.tracks().at(fromTrack).id;
+    const QString parentTrackId = m_project.tracks().at(parentTrackIndex).id;
+
+    const int laneIndex = ensureAdjustmentLaneFor(m_project.trackIndexById(parentTrackId),
+                                                  adjustment.adjustmentKind,
+                                                  adjustment.timelineStart,
+                                                  adjustment.timelineDuration);
+    if (laneIndex < 0)
+        return;
+
+    const int sourceIndex = m_project.trackIndexById(sourceTrackId);
+    if (sourceIndex < 0)
+        return;
+    m_project.tracks()[sourceIndex].clips.removeAt(fromClip);
+    m_project.tracks()[laneIndex].clips.append(adjustment);
+
+    // A track that existed only to hold this adjustment is left empty; dropping it keeps the
+    // timeline from accumulating dead rows every time one is dragged into a lane.
+    if (m_project.tracks().at(sourceIndex).isAdjustment()
+        && m_project.tracks().at(sourceIndex).clips.isEmpty()) {
+        m_project.tracks().removeAt(sourceIndex);
+    }
+
+    normalizeAdjustmentLanes(m_project);
+    clearSelection();
+    pushProjectEdit(before, tr("Nest adjustment in track"));
+    finishEdit(tr("Adjustment nested"));
+}
+
+void AppController::moveAdjustmentToOwnTrack(int fromTrack, int fromClip, double atSeconds)
+{
+    if (fromTrack < 0 || fromTrack >= m_project.tracks().size())
+        return;
+    if (fromClip < 0 || fromClip >= m_project.tracks().at(fromTrack).clips.size())
+        return;
+    if (m_project.tracks().at(fromTrack).clips.at(fromClip).type != drift::ClipType::Adjustment)
+        return;
+
+    const drift::Project before = m_project;
+    m_project.ensureTrackIds();
+
+    drift::Clip adjustment = m_project.tracks().at(fromTrack).clips.at(fromClip);
+    // Standalone means "everything composited below", which is not something a clip can be
+    // pinned to.
+    adjustment.linkedClipId.clear();
+    if (atSeconds >= 0.0)
+        adjustment.timelineStart = drift::secondsToUs(atSeconds);
+
+    const QString sourceTrackId = m_project.tracks().at(fromTrack).id;
+
+    // Above the track it was nested in, so it keeps affecting that track and gains the ones
+    // below it. A lane is stored *below* its parent, so the lane's own index is one slot too
+    // low — landing there would put the new track under the one it came from, where it no
+    // longer applies to it at all.
+    const int laneParent = drift::adjustmentLaneParentIndex(m_project, fromTrack);
+    const int insertAt = qMax(0, laneParent >= 0 ? laneParent : fromTrack);
+
+    drift::Track track;
+    track.id = QUuid::createUuid().toString(QUuid::WithoutBraces);
+    track.type = drift::TrackType::Adjustment;
+    track.adjustmentScope = drift::AdjustmentScope::AllBelow;
+    track.clips.append(adjustment);
+    m_project.tracks().insert(insertAt, track);
+
+    const int sourceIndex = m_project.trackIndexById(sourceTrackId);
+    if (sourceIndex >= 0) {
+        m_project.tracks()[sourceIndex].clips.removeAt(fromClip);
+        if (m_project.tracks().at(sourceIndex).isAdjustment()
+            && m_project.tracks().at(sourceIndex).clips.isEmpty()) {
+            m_project.tracks().removeAt(sourceIndex);
+        }
+    }
+
+    normalizeAdjustmentLanes(m_project);
+    clearSelection();
+    pushProjectEdit(before, tr("Detach adjustment to its own track"));
+    finishEdit(tr("Adjustment detached"));
+}
+
+void AppController::unlinkAdjustment(int trackIndex, int clipIndex)
+{
+    if (trackIndex < 0 || trackIndex >= m_project.tracks().size())
+        return;
+    if (clipIndex < 0 || clipIndex >= m_project.tracks().at(trackIndex).clips.size())
+        return;
+    const drift::Clip &clip = m_project.tracks().at(trackIndex).clips.at(clipIndex);
+    if (clip.type != drift::ClipType::Adjustment || clip.linkedClipId.isEmpty())
+        return;
+
+    const drift::Project before = m_project;
+    m_project.tracks()[trackIndex].clips[clipIndex].linkedClipId.clear();
+    pushProjectEdit(before, tr("Unlink adjustment"));
+    finishEdit(tr("Adjustment unlinked"));
+}
+
+void AppController::relinkAdjustment(int trackIndex, int clipIndex, int mediaTrack, int mediaClip)
+{
+    if (trackIndex < 0 || trackIndex >= m_project.tracks().size())
+        return;
+    if (clipIndex < 0 || clipIndex >= m_project.tracks().at(trackIndex).clips.size())
+        return;
+    if (m_project.tracks().at(trackIndex).clips.at(clipIndex).type != drift::ClipType::Adjustment)
+        return;
+    if (mediaTrack < 0 || mediaTrack >= m_project.tracks().size())
+        return;
+    if (mediaClip < 0 || mediaClip >= m_project.tracks().at(mediaTrack).clips.size())
+        return;
+
+    const drift::Clip &target = m_project.tracks().at(mediaTrack).clips.at(mediaClip);
+    if (target.type == drift::ClipType::Adjustment)
+        return;
+    // Pinning only means something for a lane nested in the target's own track — anywhere else
+    // the adjustment would follow a clip it does not apply to.
+    if (drift::adjustmentLaneParentIndex(m_project, trackIndex) != mediaTrack)
+        return;
+
+    const drift::Project before = m_project;
+    m_project.tracks()[trackIndex].clips[clipIndex].linkedClipId = target.id;
+    // finishEdit's sync pass is what actually snaps the span onto the clip.
+    pushProjectEdit(before, tr("Link adjustment to clip"));
+    finishEdit(tr("Adjustment linked"));
 }
 
 void AppController::addStickerClip(const QString &stickerId, double atSeconds)
@@ -9442,6 +10030,9 @@ void AppController::previewSetClipKeyframe(int trackIndex, int clipIndex, const 
 {
     if (trackIndex < 0 || trackIndex >= m_project.tracks().size())
         return;
+    // "fx.<i>.<param>" addresses the effect stack, which now lives on the adjustment
+    // linked to this clip. Transform props are untouched by this.
+    redirectToKeyframeHost(&trackIndex, &clipIndex, prop);
 
     drift::Track &track = m_project.tracks()[trackIndex];
     if (clipIndex < 0 || clipIndex >= track.clips.size())
@@ -9465,6 +10056,11 @@ void AppController::previewSetEffectParam(int trackIndex, int clipIndex, int eff
 {
     if (trackIndex < 0 || trackIndex >= m_project.tracks().size())
         return;
+    // The stack lives on the adjustment linked to this clip, not on the clip.
+    if (!redirectToEffectHost(&trackIndex, &clipIndex, drift::AdjustmentKind::VideoEffects,
+                              /*create=*/false)) {
+        return;
+    }
 
     drift::Track &track = m_project.tracks()[trackIndex];
     if (clipIndex < 0 || clipIndex >= track.clips.size())
@@ -11447,6 +12043,9 @@ void AppController::setClipKeyframe(int trackIndex, int clipIndex, const QString
 {
     if (trackIndex < 0 || trackIndex >= m_project.tracks().size())
         return;
+    // "fx.<i>.<param>" addresses the effect stack, which now lives on the adjustment
+    // linked to this clip. Transform props are untouched by this.
+    redirectToKeyframeHost(&trackIndex, &clipIndex, prop);
 
     drift::Track &track = m_project.tracks()[trackIndex];
     if (clipIndex < 0 || clipIndex >= track.clips.size())
@@ -11465,6 +12064,9 @@ void AppController::removeClipKeyframe(int trackIndex, int clipIndex, const QStr
 {
     if (trackIndex < 0 || trackIndex >= m_project.tracks().size())
         return;
+    // "fx.<i>.<param>" addresses the effect stack, which now lives on the adjustment
+    // linked to this clip. Transform props are untouched by this.
+    redirectToKeyframeHost(&trackIndex, &clipIndex, prop);
 
     drift::Track &track = m_project.tracks()[trackIndex];
     if (clipIndex < 0 || clipIndex >= track.clips.size())
@@ -11490,6 +12092,9 @@ void AppController::previewMoveClipKeyframe(int trackIndex, int clipIndex, const
 {
     if (trackIndex < 0 || trackIndex >= m_project.tracks().size())
         return;
+    // "fx.<i>.<param>" addresses the effect stack, which now lives on the adjustment
+    // linked to this clip. Transform props are untouched by this.
+    redirectToKeyframeHost(&trackIndex, &clipIndex, prop);
 
     drift::Track &track = m_project.tracks()[trackIndex];
     if (clipIndex < 0 || clipIndex >= track.clips.size())
@@ -11519,6 +12124,8 @@ drift::Keyframe<double> *AppController::keyframeAt(int trackIndex, int clipIndex
 {
     if (trackIndex < 0 || trackIndex >= m_project.tracks().size())
         return nullptr;
+    // Covers the tangent and hold entry points too — they all resolve their key through here.
+    redirectToKeyframeHost(&trackIndex, &clipIndex, prop);
 
     drift::Track &track = m_project.tracks()[trackIndex];
     if (clipIndex < 0 || clipIndex >= track.clips.size())
@@ -11559,6 +12166,9 @@ double AppController::propertyValueAt(int trackIndex, int clipIndex, const QStri
 {
     if (trackIndex < 0 || trackIndex >= m_project.tracks().size())
         return fallback;
+    // "fx.<i>.<param>" addresses the effect stack, which now lives on the adjustment
+    // linked to this clip. Transform props are untouched by this.
+    redirectToKeyframeHost(&trackIndex, &clipIndex, prop);
 
     const drift::Track &track = m_project.tracks().at(trackIndex);
     if (clipIndex < 0 || clipIndex >= track.clips.size())
@@ -11590,7 +12200,8 @@ double AppController::propertyBaseValue(int trackIndex, int clipIndex, const QSt
     }
 
     // Effect params fall back to the effect's own static value, which is what the compositor
-    // reads for an unkeyed param.
+    // reads for an unkeyed param — and that value now sits on the adjustment linked to the clip.
+    redirectToKeyframeHost(&trackIndex, &clipIndex, prop);
     if (trackIndex >= 0 && trackIndex < m_project.tracks().size()) {
         const drift::Track &track = m_project.tracks().at(trackIndex);
         if (clipIndex >= 0 && clipIndex < track.clips.size()) {
@@ -11613,6 +12224,9 @@ QVariantList AppController::clipKeyframes(int trackIndex, int clipIndex, const Q
     QVariantList out;
     if (trackIndex < 0 || trackIndex >= m_project.tracks().size())
         return out;
+    // "fx.<i>.<param>" addresses the effect stack, which now lives on the adjustment
+    // linked to this clip. Transform props are untouched by this.
+    redirectToKeyframeHost(&trackIndex, &clipIndex, prop);
 
     const drift::Track &track = m_project.tracks().at(trackIndex);
     if (clipIndex < 0 || clipIndex >= track.clips.size())
@@ -11631,6 +12245,9 @@ bool AppController::clipPropertyKeyframesEnabled(int trackIndex, int clipIndex,
 {
     if (trackIndex < 0 || trackIndex >= m_project.tracks().size())
         return true;
+    // "fx.<i>.<param>" addresses the effect stack, which now lives on the adjustment
+    // linked to this clip. Transform props are untouched by this.
+    redirectToKeyframeHost(&trackIndex, &clipIndex, prop);
 
     const drift::Track &track = m_project.tracks().at(trackIndex);
     if (clipIndex < 0 || clipIndex >= track.clips.size())
@@ -11646,6 +12263,9 @@ void AppController::setClipPropertyKeyframesEnabled(int trackIndex, int clipInde
 {
     if (trackIndex < 0 || trackIndex >= m_project.tracks().size())
         return;
+    // "fx.<i>.<param>" addresses the effect stack, which now lives on the adjustment
+    // linked to this clip. Transform props are untouched by this.
+    redirectToKeyframeHost(&trackIndex, &clipIndex, prop);
 
     if (clipIndex < 0 || clipIndex >= m_project.tracks().at(trackIndex).clips.size())
         return;
@@ -11708,11 +12328,18 @@ QStringList AppController::clipAnimatedProperties(int trackIndex, int clipIndex)
         out.append(prop);
     }
 
-    for (int i = 0; i < clip.effects.size(); ++i) {
-        const QMap<QString, drift::KeyframeTrack<double>> &params = clip.effects.at(i).paramKeyframes;
-        for (auto it = params.constBegin(); it != params.constEnd(); ++it) {
-            if (!it.value().isEmpty())
-                out.append(QStringLiteral("fx.%1.%2").arg(i).arg(it.key()));
+    // Transform props stay on the clip, but its effect stack lives on the adjustment linked to
+    // it — so the fx half of the series list is enumerated from there.
+    const drift::Clip *host =
+        effectHostClip(trackIndex, clipIndex, drift::AdjustmentKind::VideoEffects);
+    if (host) {
+        for (int i = 0; i < host->effects.size(); ++i) {
+            const QMap<QString, drift::KeyframeTrack<double>> &params =
+                host->effects.at(i).paramKeyframes;
+            for (auto it = params.constBegin(); it != params.constEnd(); ++it) {
+                if (!it.value().isEmpty())
+                    out.append(QStringLiteral("fx.%1.%2").arg(i).arg(it.key()));
+            }
         }
     }
     return out;
@@ -11723,6 +12350,9 @@ void AppController::setKeyframeInterpolation(int trackIndex, int clipIndex, cons
 {
     if (trackIndex < 0 || trackIndex >= m_project.tracks().size())
         return;
+    // "fx.<i>.<param>" addresses the effect stack, which now lives on the adjustment
+    // linked to this clip. Transform props are untouched by this.
+    redirectToKeyframeHost(&trackIndex, &clipIndex, prop);
 
     drift::Track &track = m_project.tracks()[trackIndex];
     if (clipIndex < 0 || clipIndex >= track.clips.size())
@@ -11877,11 +12507,44 @@ void AppController::addEffect(int trackIndex, int clipIndex, const QString &effe
     for (const drift::EffectParamSpec &p : def->meta.parameters)
         effect.parameters.insert(p.key, p.defaultVariant());
 
+    // The parent track is about to be addressed by id, so it needs one before the snapshot.
+    m_project.ensureTrackIds();
+    // Snapshot first: creating the lane is part of the edit, so undo must take it back out
+    // along with the effect rather than leaving an empty row behind.
     const drift::Project before = m_project;
-    track.clips[clipIndex].effects.append(effect);
-    m_selectedTrack = trackIndex;
-    m_selectedClip = clipIndex;
-    m_selection = {qMakePair(trackIndex, clipIndex)};
+
+    // Selection stays on the clip the user aimed at, not on the adjustment the effect physically
+    // lands on — clipToMap reports the linked adjustment's stack as the clip's own, so the
+    // inspector shows what they just added.
+    const QString clipId = m_project.tracks().at(trackIndex).clips.at(clipIndex).id;
+    const QString trackId = m_project.tracks().at(trackIndex).id;
+
+    int hostTrack = trackIndex;
+    int hostClip = clipIndex;
+    if (!redirectToEffectHost(&hostTrack, &hostClip, drift::AdjustmentKind::VideoEffects,
+                              /*create=*/true)) {
+        return;
+    }
+    m_project.tracks()[hostTrack].clips[hostClip].effects.append(effect);
+
+    // Creating a lane inserts a track above the parent, so the indices the caller passed may
+    // have shifted underneath us.
+    const int selectedTrack = m_project.trackIndexById(trackId);
+    int selectedClip = -1;
+    if (selectedTrack >= 0) {
+        const drift::Track &owner = m_project.tracks().at(selectedTrack);
+        for (int c = 0; c < owner.clips.size(); ++c) {
+            if (owner.clips.at(c).id == clipId) {
+                selectedClip = c;
+                break;
+            }
+        }
+    }
+    if (selectedClip >= 0) {
+        m_selectedTrack = selectedTrack;
+        m_selectedClip = selectedClip;
+        m_selection = {qMakePair(selectedTrack, selectedClip)};
+    }
     pushProjectEdit(before, tr("Add effect"));
     finishEdit(tr("Effect added"));
 }
@@ -12450,6 +13113,11 @@ void AppController::removeEffect(int trackIndex, int clipIndex, int effectIndex)
 {
     if (trackIndex < 0 || trackIndex >= m_project.tracks().size())
         return;
+    // The stack lives on the adjustment linked to this clip, not on the clip.
+    if (!redirectToEffectHost(&trackIndex, &clipIndex, drift::AdjustmentKind::VideoEffects,
+                              /*create=*/false)) {
+        return;
+    }
 
     drift::Track &track = m_project.tracks()[trackIndex];
     if (clipIndex < 0 || clipIndex >= track.clips.size())
@@ -12470,6 +13138,11 @@ void AppController::setEffectEnabled(int trackIndex, int clipIndex, int effectIn
 {
     if (trackIndex < 0 || trackIndex >= m_project.tracks().size())
         return;
+    // The stack lives on the adjustment linked to this clip, not on the clip.
+    if (!redirectToEffectHost(&trackIndex, &clipIndex, drift::AdjustmentKind::VideoEffects,
+                              /*create=*/false)) {
+        return;
+    }
 
     drift::Track &track = m_project.tracks()[trackIndex];
     if (clipIndex < 0 || clipIndex >= track.clips.size())
@@ -12492,6 +13165,11 @@ void AppController::moveEffect(int trackIndex, int clipIndex, int fromIndex, int
 {
     if (trackIndex < 0 || trackIndex >= m_project.tracks().size())
         return;
+    // The stack lives on the adjustment linked to this clip, not on the clip.
+    if (!redirectToEffectHost(&trackIndex, &clipIndex, drift::AdjustmentKind::VideoEffects,
+                              /*create=*/false)) {
+        return;
+    }
 
     drift::Track &track = m_project.tracks()[trackIndex];
     if (clipIndex < 0 || clipIndex >= track.clips.size())
@@ -12516,6 +13194,11 @@ void AppController::setEffectParam(int trackIndex, int clipIndex, int effectInde
 {
     if (trackIndex < 0 || trackIndex >= m_project.tracks().size())
         return;
+    // The stack lives on the adjustment linked to this clip, not on the clip.
+    if (!redirectToEffectHost(&trackIndex, &clipIndex, drift::AdjustmentKind::VideoEffects,
+                              /*create=*/false)) {
+        return;
+    }
 
     drift::Track &track = m_project.tracks()[trackIndex];
     if (clipIndex < 0 || clipIndex >= track.clips.size())
@@ -12552,6 +13235,11 @@ void AppController::setEffectColorParam(int trackIndex, int clipIndex, int effec
 {
     if (trackIndex < 0 || trackIndex >= m_project.tracks().size())
         return;
+    // The stack lives on the adjustment linked to this clip, not on the clip.
+    if (!redirectToEffectHost(&trackIndex, &clipIndex, drift::AdjustmentKind::VideoEffects,
+                              /*create=*/false)) {
+        return;
+    }
 
     drift::Track &track = m_project.tracks()[trackIndex];
     if (clipIndex < 0 || clipIndex >= track.clips.size())
@@ -12586,6 +13274,11 @@ void AppController::setEffectStringParam(int trackIndex, int clipIndex, int effe
 {
     if (trackIndex < 0 || trackIndex >= m_project.tracks().size())
         return;
+    // The stack lives on the adjustment linked to this clip, not on the clip.
+    if (!redirectToEffectHost(&trackIndex, &clipIndex, drift::AdjustmentKind::VideoEffects,
+                              /*create=*/false)) {
+        return;
+    }
 
     drift::Track &track = m_project.tracks()[trackIndex];
     if (clipIndex < 0 || clipIndex >= track.clips.size())
@@ -12690,11 +13383,44 @@ void AppController::addAudioEffect(int trackIndex, int clipIndex, const QString 
 
     const drift::Effect effect = audioEffectFromCatalogEntry(*def, {});
 
+    // The parent track is about to be addressed by id, so it needs one before the snapshot.
+    m_project.ensureTrackIds();
+    // Snapshot first: creating the lane is part of the edit, so undo must take it back out
+    // along with the effect rather than leaving an empty row behind.
     const drift::Project before = m_project;
-    track.clips[clipIndex].audioEffects.append(effect);
-    m_selectedTrack = trackIndex;
-    m_selectedClip = clipIndex;
-    m_selection = {qMakePair(trackIndex, clipIndex)};
+
+    // Selection stays on the clip the user aimed at, not on the adjustment the effect physically
+    // lands on — clipToMap reports the linked adjustment's stack as the clip's own, so the
+    // inspector shows what they just added.
+    const QString clipId = m_project.tracks().at(trackIndex).clips.at(clipIndex).id;
+    const QString trackId = m_project.tracks().at(trackIndex).id;
+
+    int hostTrack = trackIndex;
+    int hostClip = clipIndex;
+    if (!redirectToEffectHost(&hostTrack, &hostClip, drift::AdjustmentKind::AudioEffects,
+                              /*create=*/true)) {
+        return;
+    }
+    m_project.tracks()[hostTrack].clips[hostClip].audioEffects.append(effect);
+
+    // Creating a lane inserts a track above the parent, so the indices the caller passed may
+    // have shifted underneath us.
+    const int selectedTrack = m_project.trackIndexById(trackId);
+    int selectedClip = -1;
+    if (selectedTrack >= 0) {
+        const drift::Track &owner = m_project.tracks().at(selectedTrack);
+        for (int c = 0; c < owner.clips.size(); ++c) {
+            if (owner.clips.at(c).id == clipId) {
+                selectedClip = c;
+                break;
+            }
+        }
+    }
+    if (selectedClip >= 0) {
+        m_selectedTrack = selectedTrack;
+        m_selectedClip = selectedClip;
+        m_selection = {qMakePair(selectedTrack, selectedClip)};
+    }
     pushProjectEdit(before, tr("Add audio effect"));
     finishEdit(tr("Audio effect added"));
 }
@@ -12703,6 +13429,11 @@ void AppController::removeAudioEffect(int trackIndex, int clipIndex, int effectI
 {
     if (trackIndex < 0 || trackIndex >= m_project.tracks().size())
         return;
+    // The stack lives on the adjustment linked to this clip, not on the clip.
+    if (!redirectToEffectHost(&trackIndex, &clipIndex, drift::AdjustmentKind::AudioEffects,
+                              /*create=*/false)) {
+        return;
+    }
 
     drift::Track &track = m_project.tracks()[trackIndex];
     if (clipIndex < 0 || clipIndex >= track.clips.size())
@@ -12722,6 +13453,11 @@ void AppController::setAudioEffectEnabled(int trackIndex, int clipIndex, int eff
 {
     if (trackIndex < 0 || trackIndex >= m_project.tracks().size())
         return;
+    // The stack lives on the adjustment linked to this clip, not on the clip.
+    if (!redirectToEffectHost(&trackIndex, &clipIndex, drift::AdjustmentKind::AudioEffects,
+                              /*create=*/false)) {
+        return;
+    }
 
     drift::Track &track = m_project.tracks()[trackIndex];
     if (clipIndex < 0 || clipIndex >= track.clips.size())
@@ -12745,6 +13481,11 @@ void AppController::moveAudioEffect(int trackIndex, int clipIndex, int fromIndex
 {
     if (trackIndex < 0 || trackIndex >= m_project.tracks().size())
         return;
+    // The stack lives on the adjustment linked to this clip, not on the clip.
+    if (!redirectToEffectHost(&trackIndex, &clipIndex, drift::AdjustmentKind::AudioEffects,
+                              /*create=*/false)) {
+        return;
+    }
 
     drift::Track &track = m_project.tracks()[trackIndex];
     if (clipIndex < 0 || clipIndex >= track.clips.size())
@@ -12768,6 +13509,11 @@ void AppController::previewSetAudioEffectParam(int trackIndex, int clipIndex, in
 {
     if (trackIndex < 0 || trackIndex >= m_project.tracks().size())
         return;
+    // The stack lives on the adjustment linked to this clip, not on the clip.
+    if (!redirectToEffectHost(&trackIndex, &clipIndex, drift::AdjustmentKind::AudioEffects,
+                              /*create=*/false)) {
+        return;
+    }
 
     drift::Track &track = m_project.tracks()[trackIndex];
     if (clipIndex < 0 || clipIndex >= track.clips.size())
@@ -12793,6 +13539,11 @@ void AppController::setAudioEffectParam(int trackIndex, int clipIndex, int effec
 {
     if (trackIndex < 0 || trackIndex >= m_project.tracks().size())
         return;
+    // The stack lives on the adjustment linked to this clip, not on the clip.
+    if (!redirectToEffectHost(&trackIndex, &clipIndex, drift::AdjustmentKind::AudioEffects,
+                              /*create=*/false)) {
+        return;
+    }
 
     drift::Track &track = m_project.tracks()[trackIndex];
     if (clipIndex < 0 || clipIndex >= track.clips.size())
@@ -12827,17 +13578,27 @@ drift::EffectStackPreset AppController::effectStackFor(int trackIndex, int clipI
     // that is always present beats a reader that has to ask why it is missing.
     stack.sourceDurationUs = clip.timelineDuration;
 
+    // The stacks live on the adjustments linked to this clip. Indices match what the inspector
+    // shows, because a clip has at most one linked adjustment per kind.
+    const drift::Clip *videoHost =
+        effectHostClip(trackIndex, clipIndex, drift::AdjustmentKind::VideoEffects);
+    const drift::Clip *audioHost =
+        effectHostClip(trackIndex, clipIndex, drift::AdjustmentKind::AudioEffects);
+    const QList<drift::Effect> videoEffects = videoHost ? videoHost->effects : clip.effects;
+    const QList<drift::Effect> audioEffects = audioHost ? audioHost->audioEffects
+                                                        : clip.audioEffects;
+
     // Both indices unset means the whole clip; otherwise exactly one effect, on its own side.
     const bool wholeClip = effectIndex < 0 && audioEffectIndex < 0;
     if (wholeClip) {
-        stack.effects = clip.effects;
-        stack.audioEffects = clip.audioEffects;
+        stack.effects = videoEffects;
+        stack.audioEffects = audioEffects;
         return stack;
     }
-    if (effectIndex >= 0 && effectIndex < clip.effects.size())
-        stack.effects.append(clip.effects.at(effectIndex));
-    if (audioEffectIndex >= 0 && audioEffectIndex < clip.audioEffects.size())
-        stack.audioEffects.append(clip.audioEffects.at(audioEffectIndex));
+    if (effectIndex >= 0 && effectIndex < videoEffects.size())
+        stack.effects.append(videoEffects.at(effectIndex));
+    if (audioEffectIndex >= 0 && audioEffectIndex < audioEffects.size())
+        stack.audioEffects.append(audioEffects.at(audioEffectIndex));
     return stack;
 }
 
@@ -12903,17 +13664,64 @@ void AppController::applyEffectStack(int trackIndex, int clipIndex,
     // Audio params are not keyframable, so only the video half moves.
     drift::rescaleEffectKeyframes(video, stack.sourceDurationUs, targetDurationUs);
 
+    m_project.ensureTrackIds();
+    const QString targetTrackId = m_project.tracks().at(trackIndex).id;
+    const QString targetClipId = m_project.tracks().at(trackIndex).clips.at(clipIndex).id;
+
     const drift::Project before = m_project;
-    // Indexed after the snapshot, not before: the non-const operator[] detaches each container on
-    // the way down, which is what keeps the append out of `before`.
-    drift::Clip &clip = m_project.tracks()[trackIndex].clips[clipIndex];
+
     // Append, never replace. Appending is also what lets the keyframe graph's hidden-property set
-    // stand: every existing "fx.<n>.<key>" still addresses the effect it did before.
-    clip.effects.append(video);
-    clip.audioEffects.append(audio);
-    m_selectedTrack = trackIndex;
-    m_selectedClip = clipIndex;
-    m_selection = {qMakePair(trackIndex, clipIndex)};
+    // stand: every existing "fx.<n>.<key>" still addresses the effect it did before. Each half
+    // goes to the adjustment linked to this clip for that kind, minted here if there is none.
+    if (!video.isEmpty()) {
+        int hostTrack = trackIndex;
+        int hostClip = clipIndex;
+        if (redirectToEffectHost(&hostTrack, &hostClip, drift::AdjustmentKind::VideoEffects,
+                                 /*create=*/true)) {
+            m_project.tracks()[hostTrack].clips[hostClip].effects.append(video);
+        }
+    }
+    if (!audio.isEmpty()) {
+        // Re-resolved from ids: minting the video host above may have inserted a track.
+        const int audioTrackIndex = m_project.trackIndexById(targetTrackId);
+        int audioClipIndex = -1;
+        if (audioTrackIndex >= 0) {
+            const drift::Track &owner = m_project.tracks().at(audioTrackIndex);
+            for (int c = 0; c < owner.clips.size(); ++c) {
+                if (owner.clips.at(c).id == targetClipId) {
+                    audioClipIndex = c;
+                    break;
+                }
+            }
+        }
+        if (audioClipIndex >= 0) {
+            int hostTrack = audioTrackIndex;
+            int hostClip = audioClipIndex;
+            if (redirectToEffectHost(&hostTrack, &hostClip, drift::AdjustmentKind::AudioEffects,
+                                     /*create=*/true)) {
+                m_project.tracks()[hostTrack].clips[hostClip].audioEffects.append(audio);
+            }
+        }
+    }
+
+    // Selection stays on the clip the stack was applied to, wherever it ended up after the lane
+    // inserts shifted the track list.
+    const int selectedTrack = m_project.trackIndexById(targetTrackId);
+    int selectedClip = -1;
+    if (selectedTrack >= 0) {
+        const drift::Track &owner = m_project.tracks().at(selectedTrack);
+        for (int c = 0; c < owner.clips.size(); ++c) {
+            if (owner.clips.at(c).id == targetClipId) {
+                selectedClip = c;
+                break;
+            }
+        }
+    }
+    if (selectedClip >= 0) {
+        m_selectedTrack = selectedTrack;
+        m_selectedClip = selectedClip;
+        m_selection = {qMakePair(selectedTrack, selectedClip)};
+    }
     pushProjectEdit(before, undoLabel);
     finishEdit(undoLabel);
 
@@ -13537,6 +14345,66 @@ void AppController::setTrackHeightScale(int trackIndex, double scale)
     emit tracksChanged();
 }
 
+int AppController::trackRowHeight(int trackIndex, const QVariantMap &metrics) const
+{
+    const auto metric = [&metrics](const char *key, double fallback) {
+        const QVariant value = metrics.value(QLatin1String(key));
+        return value.isValid() ? value.toDouble() : fallback;
+    };
+    const double baseVideo = metric("video", 65.0);
+
+    if (trackIndex < 0 || trackIndex >= m_project.tracks().size())
+        return qRound(baseVideo);
+
+    const drift::Track &track = m_project.tracks().at(trackIndex);
+    // A lane is drawn inside its parent's row, so it takes no row of its own. Returning 0 rather
+    // than filtering lanes out of the model is what keeps the flat (trackIndex, clipIndex)
+    // addressing the rest of the app is built on.
+    if (track.isAdjustmentLane())
+        return 0;
+
+    double base = baseVideo;
+    switch (track.type) {
+    case drift::TrackType::Audio:
+        base = metric("audio", 50.0);
+        break;
+    case drift::TrackType::Text:
+        base = metric("text", 25.0);
+        break;
+    case drift::TrackType::Subtitle:
+        base = metric("subtitle", 25.0);
+        break;
+    case drift::TrackType::Shape:
+        base = metric("shape", 50.0);
+        break;
+    case drift::TrackType::Adjustment:
+        // Nothing to show but the effects it carries, so it gets a label's worth of height
+        // rather than a video track's.
+        base = metric("adjustment", 28.0);
+        break;
+    case drift::TrackType::Video:
+        break;
+    }
+
+    const double scale = track.heightScale > 0 ? track.heightScale : 1.0;
+    const double lanes =
+        drift::adjustmentLaneIndexes(m_project, trackIndex).size() * metric("lane", 20.0);
+    return qRound(qMax(20.0, base * scale + lanes));
+}
+
+int AppController::adjustmentLaneCount(int trackIndex) const
+{
+    return drift::adjustmentLaneIndexes(m_project, trackIndex).size();
+}
+
+QVariantList AppController::adjustmentLanes(int trackIndex) const
+{
+    QVariantList out;
+    for (const int laneIndex : drift::adjustmentLaneIndexes(m_project, trackIndex))
+        out.append(laneIndex);
+    return out;
+}
+
 double AppController::trackHeightScale(int trackIndex) const
 {
     if (trackIndex < 0 || trackIndex >= m_project.tracks().size())
@@ -13606,26 +14474,19 @@ void AppController::moveTrack(int fromIndex, int toIndex)
         return;
 
     const drift::Project before = m_project;
+    m_project.ensureTrackIds();
+
+    // Captured by id, not remapped by index: normalizeAdjustmentLanes re-gathers each track's
+    // nested lanes around it afterwards, so the destination index no longer describes where any
+    // particular track ended up. Moving a track takes its lanes with it, which is the point.
+    const QList<QPair<QString, int>> selection = captureSelectionByTrackId();
+    const QString transitionTrackId = trackIdAt(m_selectedTransitionTrack);
+
     m_project.tracks().move(fromIndex, toIndex);
+    normalizeAdjustmentLanes(m_project);
 
-    auto remap = [fromIndex, toIndex](int index) -> int {
-        if (index < 0)
-            return index;
-        if (index == fromIndex)
-            return toIndex;
-        if (fromIndex < toIndex) {
-            if (index > fromIndex && index <= toIndex)
-                return index - 1;
-        } else if (index >= toIndex && index < fromIndex) {
-            return index + 1;
-        }
-        return index;
-    };
-
-    m_selectedTrack = remap(m_selectedTrack);
-    m_selectedTransitionTrack = remap(m_selectedTransitionTrack);
-    for (QPair<int, int> &pair : m_selection)
-        pair.first = remap(pair.first);
+    restoreSelectionByTrackId(selection);
+    m_selectedTransitionTrack = m_project.trackIndexById(transitionTrackId);
 
     pushProjectEdit(before, tr("Move track"));
     finishEdit(tr("Track moved"));
@@ -13637,35 +14498,26 @@ void AppController::removeTrack(int trackIndex)
         return;
 
     const drift::Project before = m_project;
-    m_project.tracks().removeAt(trackIndex);
+    m_project.ensureTrackIds();
 
-    // Indices at or after the removed track shift down by one; anything that
-    // pointed at the removed track itself is now dangling and gets cleared.
-    auto remap = [trackIndex](int index) -> int {
-        if (index < 0)
-            return index;
-        if (index == trackIndex)
-            return -1;
-        if (index > trackIndex)
-            return index - 1;
-        return index;
-    };
+    const QList<QPair<QString, int>> selection = captureSelectionByTrackId();
+    const QString transitionTrackId = trackIdAt(m_selectedTransitionTrack);
 
-    m_selectedTransitionTrack = remap(m_selectedTransitionTrack);
-    for (int i = m_selection.size() - 1; i >= 0; --i) {
-        const int mapped = remap(m_selection.at(i).first);
-        if (mapped < 0)
-            m_selection.removeAt(i);
-        else
-            m_selection[i].first = mapped;
+    // Nested lanes go with the track. They exist only to modify it, so leaving them behind would
+    // strand effects with nothing to apply to — and ensureTrackIds() would then quietly promote
+    // them to standalone adjustments affecting the whole canvas.
+    const QString removedId = m_project.tracks().at(trackIndex).id;
+    for (int i = m_project.tracks().size() - 1; i >= 0; --i) {
+        const drift::Track &track = m_project.tracks().at(i);
+        if (track.id == removedId
+            || (track.isAdjustmentLane() && track.parentTrackId == removedId)) {
+            m_project.tracks().removeAt(i);
+        }
     }
-    if (m_selection.isEmpty()) {
-        m_selectedTrack = -1;
-        m_selectedClip = -1;
-    } else {
-        m_selectedTrack = m_selection.constLast().first;
-        m_selectedClip = m_selection.constLast().second;
-    }
+    normalizeAdjustmentLanes(m_project);
+
+    restoreSelectionByTrackId(selection);
+    m_selectedTransitionTrack = m_project.trackIndexById(transitionTrackId);
 
     pushProjectEdit(before, tr("Delete track"));
     finishEdit(tr("Track deleted"));

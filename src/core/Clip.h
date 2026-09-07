@@ -22,6 +22,14 @@ enum class ClipType { Video, Audio, Image, Text, Subtitle, Shape, Adjustment };
 QString clipTypeToString(ClipType type);
 ClipType clipTypeFromString(const QString &type);
 
+// Which of an adjustment clip's payload members is the meaningful one. An adjustment carries
+// the same `effects` / `audioEffects` / `mask` members every clip has; the kind says which one
+// it is for, and drives the inspector tab and timeline tint.
+enum class AdjustmentKind { VideoEffects, AudioEffects, Mask };
+
+QString adjustmentKindToString(AdjustmentKind kind);
+AdjustmentKind adjustmentKindFromString(const QString &kind);
+
 enum class BlendMode { Normal, Multiply, Screen, Overlay, Add, Darken, Lighten };
 
 QString blendModeToString(BlendMode mode);
@@ -39,6 +47,15 @@ struct Clip
     // Shared by linked video/audio companions; empty when unlinked.
     QString linkId;
     ClipType type = ClipType::Video;
+
+    // Adjustment clips only.
+    AdjustmentKind adjustmentKind = AdjustmentKind::VideoEffects;
+    // Id of the media clip this adjustment is pinned to; empty when unlinked. While set, the
+    // adjustment's timeline extent mirrors that clip's and its edges are not draggable — the
+    // mirroring is enforced centrally so every move/trim/split path keeps it true.
+    // Directional, unlike `linkId`, which symmetrically pairs A/V companions.
+    QString linkedClipId;
+
     // When true, AudioMixer skips this video clip's embedded audio (companion audio track plays it).
     bool suppressEmbeddedAudio = false;
     // 0-based index among the audio streams in `path` (for multi-track video/audio files from OBS, etc.)

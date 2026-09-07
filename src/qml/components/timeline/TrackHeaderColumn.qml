@@ -99,25 +99,32 @@ Item {
         onRejected: root.pendingDeleteTrack = -1
     }
 
-    // Must stay in step with TimelinePanel's own height helpers, or the headers
-    // drift out of alignment with their rows.
-    function trackBaseHeight(type) {
-        if (type === "video") return Theme.trackHeightVideo;
-        if (type === "audio") return Theme.trackHeightAudio;
-        if (type === "shape") return Theme.trackHeightShape;
-        if (type === "subtitle") return Theme.trackHeightSubtitle;
-        return Theme.trackHeightText;
+    // The one definition of a row's height, shared with TimelinePanel and AndroidTimeline. It
+    // used to be duplicated in all three, which had to agree or the headers slid out of line
+    // with their rows; the nested-lane rule made keeping three copies in step untenable.
+    function trackHeight(index) {
+        // Reading `tracks` is what gives callers' bindings a dependency to re-evaluate on —
+        // EditorState.trackRowHeight is a plain call and carries none of its own.
+        const dep = tracks.length
+        return EditorState.trackRowHeight(index, {
+            "video": Theme.trackHeightVideo,
+            "audio": Theme.trackHeightAudio,
+            "text": Theme.trackHeightText,
+            "subtitle": Theme.trackHeightSubtitle,
+            "shape": Theme.trackHeightShape,
+            "adjustment": Theme.trackHeightAdjustment,
+            "lane": Theme.adjustmentLaneHeight
+        })
     }
 
-    function trackHeight(index) {
-        if (index < 0 || index >= tracks.length)
-            return Theme.trackHeightVideo
-        const track = tracks[index]
-        const scale = track.heightScale > 0 ? track.heightScale : 1
-        return Math.round(Math.max(20, trackBaseHeight(track.type) * scale))
+    // A nested lane has no header of its own: it belongs to the row above it, whose header
+    // already names it.
+    function trackOccupiesARow(index) {
+        return index >= 0 && index < tracks.length && !tracks[index].isAdjustmentLane
     }
 
     function trackTypeIcon(type) {
+        if (type === "adjustment") return Theme.icons.wand;
         if (type === "audio") return Theme.icons.music;
         if (type === "text") return Theme.icons.type;
         if (type === "subtitle") return Theme.icons.captions;
@@ -129,6 +136,7 @@ Item {
     // compact header. "V1"/"A2" is the fallback identification a phone gets until the track
     // has a custom name — see trackCompactLabel, which prefers that name when it's set.
     function trackTypeShortLabel(type) {
+        if (type === "adjustment") return qsTr("FX");
         if (type === "audio") return qsTr("A");
         if (type === "text") return qsTr("T");
         if (type === "subtitle") return qsTr("S");
@@ -138,6 +146,7 @@ Item {
 
     // Human label for a track type.
     function trackTypeLabel(type) {
+        if (type === "adjustment") return qsTr("Adjustment");
         if (type === "audio") return qsTr("Audio");
         if (type === "text") return qsTr("Text");
         if (type === "subtitle") return qsTr("Subtitle");
@@ -162,8 +171,11 @@ Item {
 
     function trackRowTop(index) {
         var cursor = 0
-        for (var i = 0; i < index && i < tracks.length; i++)
+        for (var i = 0; i < index && i < tracks.length; i++) {
+            if (!trackOccupiesARow(i))
+                continue
             cursor += trackHeight(i) + Theme.trackGap
+        }
         return cursor
     }
 
@@ -174,6 +186,8 @@ Item {
     function trackInsertSlotAtY(y) {
         var cursor = 0
         for (var i = 0; i < tracks.length; i++) {
+            if (!trackOccupiesARow(i))
+                continue
             const th = trackHeight(i)
             if (y < cursor + th / 2)
                 return i
@@ -221,6 +235,8 @@ Item {
                 : root.trackTypeShortLabel(root.tracks[index].type)
                   + root.trackTypeOrdinal(index)
             width: root.labelsWidth
+            // A lane draws inside its parent's row, so it gets no header of its own.
+            visible: root.trackOccupiesARow(index)
             height: root.trackHeight(index)
                     + (index < root.tracks.length - 1 ? Theme.trackGap : 0)
             // Follows the timeline's vertical scroll so labels stay
@@ -666,7 +682,9 @@ Item {
             if (slot < 0)
                 return 0
             if (slot >= root.tracks.length) {
-                const last = root.tracks.length - 1
+                var last = root.tracks.length - 1
+                while (last > 0 && !root.trackOccupiesARow(last))
+                    last--
                 return root.trackRowTop(last) + root.trackHeight(last)
                        - root.contentY - 1
             }

@@ -40,6 +40,28 @@ ClipType clipTypeFromString(const QString &type)
     return ClipType::Video;
 }
 
+QString adjustmentKindToString(AdjustmentKind kind)
+{
+    switch (kind) {
+    case AdjustmentKind::VideoEffects:
+        return QStringLiteral("videoEffects");
+    case AdjustmentKind::AudioEffects:
+        return QStringLiteral("audioEffects");
+    case AdjustmentKind::Mask:
+        return QStringLiteral("mask");
+    }
+    return QStringLiteral("videoEffects");
+}
+
+AdjustmentKind adjustmentKindFromString(const QString &kind)
+{
+    if (kind == QStringLiteral("audioEffects"))
+        return AdjustmentKind::AudioEffects;
+    if (kind == QStringLiteral("mask"))
+        return AdjustmentKind::Mask;
+    return AdjustmentKind::VideoEffects;
+}
+
 QString blendModeToString(BlendMode mode)
 {
     switch (mode) {

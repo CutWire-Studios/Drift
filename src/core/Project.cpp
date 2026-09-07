@@ -2,11 +2,13 @@
 
 #include "Clip.h"
 #include "SubtitleCue.h"
+#include "TimelineOps.h"
 
 #include <QCoreApplication>
 #include <QCryptographicHash>
 #include <QJsonArray>
 #include <QJsonDocument>
+#include <QSet>
 #include <QUuid>
 #include <QtMath>
 
@@ -207,6 +209,8 @@ QJsonObject clipToJson(const Clip &clip)
         {QStringLiteral("suppressEmbeddedAudio"), clip.suppressEmbeddedAudio},
         {QStringLiteral("audioStreamIndex"), clip.audioStreamIndex},
         {QStringLiteral("type"), clipTypeToString(clip.type)},
+        {QStringLiteral("adjustmentKind"), adjustmentKindToString(clip.adjustmentKind)},
+        {QStringLiteral("linkedClipId"), clip.linkedClipId},
         {QStringLiteral("name"), clip.name},
         {QStringLiteral("textContent"), clip.textContent},
         {QStringLiteral("textStyle"), textStyleToJson(clip.textStyle)},
@@ -303,6 +307,9 @@ Clip clipFromJsonV2(const QJsonObject &object, int canvasW = 1920, int canvasH =
     clip.suppressEmbeddedAudio = object.value(QStringLiteral("suppressEmbeddedAudio")).toBool(false);
     clip.audioStreamIndex = object.value(QStringLiteral("audioStreamIndex")).toInt(0);
     clip.type = clipTypeFromString(object.value(QStringLiteral("type")).toString());
+    clip.adjustmentKind =
+        adjustmentKindFromString(object.value(QStringLiteral("adjustmentKind")).toString());
+    clip.linkedClipId = object.value(QStringLiteral("linkedClipId")).toString();
     clip.name = object.value(QStringLiteral("name")).toString();
     clip.textContent = object.value(QStringLiteral("textContent")).toString();
     clip.textStyle = textStyleFromJson(object.value(QStringLiteral("textStyle")).toObject());
@@ -484,9 +491,44 @@ void Project::resetToDefaultTimeline()
     m_tracks = {
         {.type = TrackType::Video},
     };
+    ensureTrackIds();
     m_id = QUuid::createUuid().toString(QUuid::WithoutBraces);
     m_createdAt = QDateTime::currentDateTimeUtc();
     m_modifiedAt = m_createdAt;
+}
+
+void Project::ensureTrackIds()
+{
+    QSet<QString> seen;
+    for (Track &track : m_tracks) {
+        // A duplicated id is as bad as a missing one — a copy/paste of a whole track would
+        // otherwise give two tracks the same parent handle.
+        if (track.id.isEmpty() || seen.contains(track.id))
+            track.id = QUuid::createUuid().toString(QUuid::WithoutBraces);
+        seen.insert(track.id);
+    }
+
+    for (Track &track : m_tracks) {
+        if (track.parentTrackId.isEmpty())
+            continue;
+        // An orphaned lane becomes a standalone adjustment track rather than vanishing: losing
+        // the parent must not silently delete the user's effects.
+        if (!seen.contains(track.parentTrackId) || track.parentTrackId == track.id) {
+            track.parentTrackId.clear();
+            track.adjustmentScope = AdjustmentScope::AllBelow;
+        }
+    }
+}
+
+int Project::trackIndexById(const QString &id) const
+{
+    if (id.isEmpty())
+        return -1;
+    for (int i = 0; i < m_tracks.size(); ++i) {
+        if (m_tracks.at(i).id == id)
+            return i;
+    }
+    return -1;
 }
 
 TimeUs Project::durationUs() const
@@ -630,6 +672,10 @@ QString Project::binFolderIdAt(int index) const
     return m_binFolderOrder.at(index);
 }
 
+namespace {
+
+} // namespace
+
 Project Project::fromJson(const QJsonObject &object, QString *errorOut)
 {
     const auto fail = [errorOut](const QString &message) {
@@ -699,8 +745,12 @@ Project Project::fromJson(const QJsonObject &object, QString *errorOut)
         for (const QJsonValue &value : tracksArray) {
             const QJsonObject trackObject = value.toObject();
             Track track;
+            track.id = trackObject.value(QStringLiteral("id")).toString();
             track.type = trackTypeFromString(
                 trackObject.value(QStringLiteral("type")).toString(QStringLiteral("video")));
+            track.adjustmentScope = adjustmentScopeFromString(
+                trackObject.value(QStringLiteral("adjustmentScope")).toString());
+            track.parentTrackId = trackObject.value(QStringLiteral("parentTrackId")).toString();
             track.name = trackObject.value(QStringLiteral("name")).toString();
             track.muted = trackObject.value(QStringLiteral("muted")).toBool(false);
             track.hidden = trackObject.value(QStringLiteral("hidden")).toBool(false);
@@ -724,6 +774,16 @@ Project Project::fromJson(const QJsonObject &object, QString *errorOut)
 
             project.m_tracks.append(track);
         }
+    }
+
+    // Lanes address their parent by id, so ids must exist before the migration runs; the second
+    // pass covers the tracks the migration itself mints.
+    project.ensureTrackIds();
+    if (version < 4) {
+        liftAdjustmentClipsToOwnTracks(project);
+        // Same pass the editor runs after every edit, so load and runtime cannot drift apart on
+        // where a stack is allowed to live.
+        hoistClipEffectsToAdjustmentLanes(project);
     }
 
     project.m_bookmarks.clear();
@@ -800,7 +860,10 @@ QJsonObject Project::toJson() const
             transitionsArray.append(transitionToJson(transition));
 
         tracksArray.append(QJsonObject{
+            {QStringLiteral("id"), track.id},
             {QStringLiteral("type"), trackTypeToString(track.type)},
+            {QStringLiteral("adjustmentScope"), adjustmentScopeToString(track.adjustmentScope)},
+            {QStringLiteral("parentTrackId"), track.parentTrackId},
             {QStringLiteral("name"), track.name},
             {QStringLiteral("muted"), track.muted},
             {QStringLiteral("hidden"), track.hidden},

@@ -521,6 +521,8 @@ Item {
 
         var cursor = 0
         for (var i = 0; i < count; i++) {
+            if (!trackOccupiesARow(i))
+                continue
             const h = trackHeight(i)
             const rowEnd = cursor + h
             if (y < rowEnd + Theme.trackGap / 2) {
@@ -543,8 +545,11 @@ Item {
     // coordinates — where the ghost lane is drawn.
     function newTrackBoundaryY(insertIndex) {
         var cursor = 0
-        for (var i = 0; i < insertIndex && i < tracks.length; i++)
+        for (var i = 0; i < insertIndex && i < tracks.length; i++) {
+            if (!trackOccupiesARow(i))
+                continue
             cursor += trackHeight(i) + Theme.trackGap
+        }
         return Math.max(0, cursor - Theme.trackGap / 2)
     }
 
@@ -792,27 +797,58 @@ Item {
 
     function trackOffsetY(index) {
         var cursor = 0
-        for (var i = 0; i < index && i < tracks.length; i++)
+        for (var i = 0; i < index && i < tracks.length; i++) {
+            if (!trackOccupiesARow(i))
+                continue
             cursor += trackHeight(i) + Theme.trackGap
+        }
         return cursor
     }
 
-    function trackBaseHeight(type) {
-        if (type === "video") return Theme.trackHeightVideo
-        if (type === "audio") return Theme.trackHeightAudio
-        if (type === "shape") return Theme.trackHeightShape
-        if (type === "subtitle") return Theme.trackHeightSubtitle
-        return Theme.trackHeightText
-    }
-
+    // Shared with TimelinePanel and TrackHeaderColumn — see the note there on why the rule
+    // moved out of QML.
     function trackHeight(index) {
-        if (index < 0 || index >= tracks.length)
-            return Theme.trackHeightVideo
-        const track = tracks[index]
-        const scale = track.heightScale > 0 ? track.heightScale : 1
-        return Math.round(Math.max(20, trackBaseHeight(track.type) * scale))
+        const dep = tracks.length
+        return EditorState.trackRowHeight(index, {
+            "video": Theme.trackHeightVideo,
+            "audio": Theme.trackHeightAudio,
+            "text": Theme.trackHeightText,
+            "subtitle": Theme.trackHeightSubtitle,
+            "shape": Theme.trackHeightShape,
+            "adjustment": Theme.trackHeightAdjustment,
+            "lane": Theme.adjustmentLaneHeight
+        })
     }
 
+    // A nested lane is drawn inside its parent's row rather than taking one of its own, so it
+    // must not contribute a gap either.
+    function trackOccupiesARow(index) {
+        return index >= 0 && index < tracks.length && !tracks[index].isAdjustmentLane
+    }
+
+    // Track indices of the nested lanes belonging to `trackIndex`, topmost first. Derived from
+    // `tracks` rather than asked of EditorState so it re-evaluates on its own.
+    function adjustmentLanesFor(trackIndex) {
+        var out = []
+        if (trackIndex < 0 || trackIndex >= tracks.length)
+            return out
+        const parentId = tracks[trackIndex].id
+        if (!parentId)
+            return out
+        for (var i = 0; i < tracks.length; i++) {
+            if (tracks[i].isAdjustmentLane && tracks[i].parentTrackId === parentId)
+                out.push(i)
+        }
+        return out
+    }
+
+    // Adjustment layers are tinted by what they act on, so a glance at a lane says whether it is
+    // grading the picture, treating the audio, or cutting a mask.
+    function adjustmentColor(kind) {
+        if (kind === "audioEffects") return Theme.clipAdjustmentAudio
+        if (kind === "mask") return Theme.clipAdjustmentMask
+        return Theme.clipAdjustmentVideo
+    }
     function clipColor(type) {
         if (type === "text") return Theme.clipText
         if (type === "subtitle") return Theme.clipSubtitle
@@ -824,9 +860,13 @@ Item {
 
     function totalTracksHeight() {
         var h = 0
+        var rows = 0
         for (var i = 0; i < tracks.length; i++) {
+            if (!trackOccupiesARow(i))
+                continue
             h += trackHeight(i)
-            if (i > 0) h += Theme.trackGap
+            if (rows > 0) h += Theme.trackGap
+            rows++
         }
         return h
     }
@@ -864,6 +904,8 @@ Item {
     function trackIndexAtY(y) {
         var cursor = 0
         for (var i = 0; i < tracks.length; i++) {
+            if (!trackOccupiesARow(i))
+                continue
             const th = trackHeight(i)
             if (y >= cursor && y < cursor + th)
                 return i
@@ -1440,18 +1482,72 @@ Item {
                             delegate: Rectangle {
                                 id: trackRow
                                 property int trackIndex: index
+                                // A nested lane is drawn inside its parent's row, not given one
+                                // of its own. Column skips invisible children, so no gap either.
+                                visible: !root.tracks[trackIndex].isAdjustmentLane
                                 width: flick.contentWidth
                                 height: root.trackHeight(trackIndex)
                                 color: Qt.rgba(Theme.panelAccent.r, Theme.panelAccent.g,
                                                Theme.panelAccent.b, 0.22)
 
-                                Repeater {
-                                    model: root.tracks[trackRow.trackIndex].clips.length
-                                    delegate: TimelineClipItem {
-                                        panel: root
-                                        timelineColumn: trackColumn
-                                        trackIndex: trackRow.trackIndex
-                                        touchMode: true
+                                // Nested adjustment lanes as strips across the top of this row.
+                                Column {
+                                    id: adjustmentLaneStrips
+                                    width: trackRow.width
+                                    spacing: 0
+                                    z: 4
+
+                                    Repeater {
+                                        model: root.adjustmentLanesFor(trackRow.trackIndex)
+                                        delegate: Item {
+                                            id: laneStrip
+                                            required property var modelData
+                                            // See the desktop panel: this Item is what
+                                            // TimelineClipItem reads as its `trackRow`.
+                                            property int trackIndex: modelData
+                                            width: trackRow.width
+                                            height: Theme.adjustmentLaneHeight
+
+                                            Rectangle {
+                                                anchors.fill: parent
+                                                color: Qt.rgba(Theme.clipEffect.r, Theme.clipEffect.g,
+                                                               Theme.clipEffect.b, 0.12)
+                                            }
+
+                                            Repeater {
+                                                model: root.tracks[laneStrip.trackIndex].clips.length
+                                                delegate: TimelineClipItem {
+                                                    panel: root
+                                                    timelineColumn: trackColumn
+                                                    trackIndex: laneStrip.trackIndex
+                                                    touchMode: true
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+
+                                // The track's own clips sit below the strips. TimelineClipItem
+                                // takes its parent as `trackRow`, so they size themselves to
+                                // what is left without knowing lanes exist.
+                                Item {
+                                    id: trackClipArea
+                                    // Explicit for the same reason as the desktop panel: this
+                                    // Item becomes TimelineClipItem's `trackRow`, shadowing the
+                                    // outer id at the binding below.
+                                    property int trackIndex: trackRow.trackIndex
+                                    y: adjustmentLaneStrips.height
+                                    width: trackRow.width
+                                    height: Math.max(0, trackRow.height - adjustmentLaneStrips.height)
+
+                                    Repeater {
+                                        model: root.tracks[trackClipArea.trackIndex].clips.length
+                                        delegate: TimelineClipItem {
+                                            panel: root
+                                            timelineColumn: trackColumn
+                                            trackIndex: trackClipArea.trackIndex
+                                            touchMode: true
+                                        }
                                     }
                                 }
 
@@ -1746,9 +1842,14 @@ Item {
                     Item {
                         id: newTrackIndicator
                         visible: root.dropCreatesNewTrack
-                        readonly property real laneHeight:
-                            root.trackBaseHeight(EditorState.trackTypeForAsset(
-                                                     EditorState.draggingAssetIndex))
+                        readonly property real laneHeight: {
+                            const t = EditorState.trackTypeForAsset(EditorState.draggingAssetIndex)
+                            if (t === "video") return Theme.trackHeightVideo
+                            if (t === "audio") return Theme.trackHeightAudio
+                            if (t === "shape") return Theme.trackHeightShape
+                            if (t === "subtitle") return Theme.trackHeightSubtitle
+                            return Theme.trackHeightText
+                        }
                         x: 0
                         y: root.seekHeaderHeight
                            + root.newTrackBoundaryY(root.dropNewTrackIndex)

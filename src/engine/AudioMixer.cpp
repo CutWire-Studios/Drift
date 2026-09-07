@@ -4,6 +4,7 @@
 #include "ClipReaderPool.h"
 #include "TransitionCatalog.h"
 #include "core/Clip.h"
+#include "core/TimelineOps.h"
 #include "core/Transition.h"
 
 #include <QtMath>
@@ -180,7 +181,8 @@ namespace {
 void accumulateClipAudio(const drift::Clip &clip, const drift::Track &track, drift::TimeUs timelineStartUs,
                          int sampleCount, int sampleRate, float *mixBuffer,
                          QMutex &stateMutex,
-                         QHash<QString, std::shared_ptr<ClipAudioState>> &clipAudio)
+                         QHash<QString, std::shared_ptr<ClipAudioState>> &clipAudio,
+                         const QList<drift::Effect> &laneEffects = {})
 {
     if (clip.path.isEmpty())
         return;
@@ -221,15 +223,25 @@ void accumulateClipAudio(const drift::Clip &clip, const drift::Track &track, dri
     const quint64 streamId = ClipReaderPool::streamIdForClip(clip.id);
 
     QVector<float> chunk;
-    if (!clip.audioEffects.isEmpty()) {
+    // The clip's own stack plus whatever the nested audio lanes on its track contribute right
+    // now. A lane can begin and end part-way through a clip, so this list changes shape mid-clip
+    // — which is exactly the case the rebuild check below exists to cover.
+    QList<drift::Effect> effectChain = clip.audioEffects;
+    effectChain.append(laneEffects);
+
+    if (!effectChain.isEmpty()) {
         drift::AudioEffectRack &rack = state.rack;
 
         const drift::TimeUs lastEndUs = rack.lastTimelineEndUs();
         const bool continuous = lastEndUs >= 0
                                 && qAbs(timelineStartUs - lastEndUs) <= kTimelineGapToleranceUs;
 
-        const bool active = rack.configure(audioEffectSpecsFor(clip.audioEffects), sampleRate);
-        if (active && !continuous) {
+        // A rebuild means the stages themselves are new and hold no history, so it is as much a
+        // discontinuity as a seek. Without this, a lane starting mid-clip opens its tail cold.
+        bool rebuilt = false;
+        const bool active =
+            rack.configure(audioEffectSpecsFor(effectChain), sampleRate, &rebuilt);
+        if (active && (!continuous || rebuilt)) {
             rack.reset();
             // Warm the stages on the audio immediately before this block. That is what makes an
             // echo tail already present after a seek instead of fading in from silence, and what
@@ -293,6 +305,57 @@ void AudioMixer::resetClipAudioState()
     ClipReaderPool::instance().resetAudioStreams();
 }
 
+namespace {
+
+// Distinct from any clip id, which is always a UUID, so the bus can share the per-clip state hash
+// and be torn down by resetClipAudioState() on seek along with everything else.
+const QString kMasterBusStateKey = QStringLiteral("__master_bus__");
+
+// The audio-kind adjustments on the nested lanes of `trackIndex` that are live at this instant.
+// Their effects append to each of that track's clips, which is the audio mirror of how a video
+// lane folds into the clip's own layer pass.
+QList<drift::Effect> laneAudioEffects(const drift::Project &project, int trackIndex,
+                                      drift::TimeUs timelineUs)
+{
+    QList<drift::Effect> result;
+    for (const int laneIndex : drift::adjustmentLaneIndexes(project, trackIndex)) {
+        const drift::Track &lane = project.tracks().at(laneIndex);
+        if (lane.muted || lane.hidden)
+            continue;
+        for (const drift::Clip &adjustment : lane.clips) {
+            if (adjustment.adjustmentKind != drift::AdjustmentKind::AudioEffects)
+                continue;
+            if (!adjustment.containsTime(timelineUs))
+                continue;
+            result.append(adjustment.audioEffects);
+        }
+    }
+    return result;
+}
+
+// Standalone audio adjustments — the master bus. An audio track has no z-order, so "everything
+// below" simply means the whole mix, and every live one contributes to a single chain.
+QList<drift::Effect> masterBusEffects(const drift::Project &project, drift::TimeUs timelineUs)
+{
+    QList<drift::Effect> result;
+    for (const drift::Track &track : project.tracks()) {
+        if (!track.isAdjustment() || track.isAdjustmentLane())
+            continue;
+        if (track.muted || track.hidden)
+            continue;
+        for (const drift::Clip &adjustment : track.clips) {
+            if (adjustment.adjustmentKind != drift::AdjustmentKind::AudioEffects)
+                continue;
+            if (!adjustment.containsTime(timelineUs))
+                continue;
+            result.append(adjustment.audioEffects);
+        }
+    }
+    return result;
+}
+
+} // namespace
+
 void AudioMixer::mix(drift::TimeUs timelineStartUs, int sampleCount, int sampleRate,
                      float *interleavedStereoOut) const
 {
@@ -301,21 +364,65 @@ void AudioMixer::mix(drift::TimeUs timelineStartUs, int sampleCount, int sampleR
 
     std::memset(interleavedStereoOut, 0, static_cast<size_t>(sampleCount) * 2 * sizeof(float));
 
-    for (const drift::Track &track : m_project->tracks()) {
+    const QList<drift::Track> &tracks = m_project->tracks();
+    for (int ti = 0; ti < tracks.size(); ++ti) {
+        const drift::Track &track = tracks.at(ti);
         if (track.muted || track.hidden)
             continue;
+
+        // Adjustment tracks carry no audio of their own: a lane's effects reach the mix through
+        // the clips it modifies, a standalone one through the master bus below.
+        if (track.isAdjustment())
+            continue;
+
+        const QList<drift::Effect> laneEffects =
+            laneAudioEffects(*m_project, ti, timelineStartUs);
 
         if (track.type == drift::TrackType::Audio) {
             for (const drift::Clip &clip : track.clips)
                 accumulateClipAudio(clip, track, timelineStartUs, sampleCount, sampleRate,
-                                      interleavedStereoOut, m_clipAudioMutex, m_clipAudio);
+                                      interleavedStereoOut, m_clipAudioMutex, m_clipAudio,
+                                      laneEffects);
         } else if (track.type == drift::TrackType::Video) {
             for (const drift::Clip &clip : track.clips) {
                 if (clip.type == drift::ClipType::Video && !clip.suppressEmbeddedAudio)
                     accumulateClipAudio(clip, track, timelineStartUs, sampleCount, sampleRate,
-                                          interleavedStereoOut, m_clipAudioMutex, m_clipAudio);
+                                          interleavedStereoOut, m_clipAudioMutex, m_clipAudio,
+                                          laneEffects);
             }
         }
+    }
+
+    // The master bus runs on the summed mix, before the limiter — an adjustment that raises level
+    // must still be caught by the soft clip rather than sitting outside it.
+    const QList<drift::Effect> busEffects = masterBusEffects(*m_project, timelineStartUs);
+    if (!busEffects.isEmpty()) {
+        std::shared_ptr<ClipAudioState> statePtr;
+        {
+            // Keyed like a clip so resetClipAudioState() tears the bus down on seek along with
+            // everything else; the id cannot collide with a clip's UUID.
+            QMutexLocker locker(&m_clipAudioMutex);
+            statePtr = m_clipAudio.value(kMasterBusStateKey);
+            if (!statePtr) {
+                statePtr = std::make_shared<ClipAudioState>();
+                m_clipAudio.insert(kMasterBusStateKey, statePtr);
+            }
+        }
+        drift::AudioEffectRack &rack = statePtr->rack;
+
+        const drift::TimeUs lastEndUs = rack.lastTimelineEndUs();
+        const bool continuous = lastEndUs >= 0
+                                && qAbs(timelineStartUs - lastEndUs) <= kTimelineGapToleranceUs;
+
+        bool rebuilt = false;
+        const bool active = rack.configure(audioEffectSpecsFor(busEffects), sampleRate, &rebuilt);
+        // No preroll here, unlike a clip: the bus's input is the mix itself, which cannot be
+        // re-read for the window before this block without re-running every clip. A tail on the
+        // master therefore opens cold after a seek.
+        if (active && (!continuous || rebuilt))
+            rack.reset();
+        if (active)
+            rack.process(interleavedStereoOut, sampleCount);
     }
 
     for (int i = 0; i < sampleCount * 2; ++i)

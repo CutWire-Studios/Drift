@@ -12,8 +12,16 @@ Item {
 
     // Owning TimelinePanel (pxPerSecond, clipColor, trackIndexAtY, landing
     // preview + effect-drop state, tracks) and the enclosing column.
-    // trackRow is the Repeater parent (the track Rectangle) — do not take it as a
-    // property named trackRow or the call-site binding shadows the outer id.
+    //
+    // trackRow is whatever Item this delegate is parented to — the track row itself, or the
+    // clip-area / adjustment-lane wrapper inside it. Sizing off `parent` is what lets a clip in
+    // a nested lane fit its strip without knowing lanes exist.
+    //
+    // Because this property exists, `trackRow` inside a binding AT THE CALL SITE resolves to it
+    // and NOT to an enclosing `id: trackRow` — so a call site must never write
+    // `trackIndex: trackRow.trackIndex`. It reads as the row's index and silently yields 0 when
+    // the immediate parent is a wrapper, which renders every track's clips as track 0's. Bind
+    // through the wrapper's own id instead (see trackClipArea / laneStrip in TimelinePanel).
     property var panel
     readonly property var trackRow: parent
     property var timelineColumn
@@ -66,6 +74,21 @@ Item {
         }
         return names.join(" · ")
     }
+    // An adjustment is its stack — the name ("Adjustment Layer") says nothing the colour and
+    // lane do not already. So it shows the effects it carries, and falls back to naming its kind
+    // only while it is still empty.
+    readonly property string adjustmentLabelText: {
+        if (clipItem.effectsLabelText.length > 0)
+            return clipItem.effectsLabelText
+        // Nothing in it yet: a name the user gave it, else what kind of layer it is.
+        if (clipItem.clipData.name && clipItem.clipData.name.length > 0)
+            return clipItem.clipData.name
+        const kind = clipItem.clipData.adjustmentKind
+        if (kind === "audioEffects") return qsTr("Audio adjustment")
+        if (kind === "mask") return qsTr("Mask")
+        return qsTr("Adjustment")
+    }
+
     property bool effectDropTarget: panel.effectDropTrackIndex === trackIndex
                                     && panel.effectDropClipIndex === clipIndex
     // Subtitles keep cue-owned timing; text clips use the same edge fades as video.
@@ -120,11 +143,16 @@ Item {
             panel.setScrollLocked(false)
     }
 
+    // An adjustment pinned to a clip takes its extent from that clip, so its edges are not the
+    // user's to drag — unlink it first and they become live.
+    readonly property bool pinnedToClip: clipData.kind === "adjustment"
+                                         && !!clipData.linkedClipId
+
     // Trim handles stay on whenever selected.
     // Width is floored so the clip never becomes
     // an unusable sliver; at that floor both
     // edges stay trimmable and the middle moves.
-    readonly property bool showTrimHandles: selected
+    readonly property bool showTrimHandles: selected && !pinnedToClip
     readonly property real minDurationSeconds: Math.max(
         Theme.clipMinDurationSeconds,
         Theme.clipMinWidth / panel.pxPerSecond)
@@ -220,12 +248,9 @@ Item {
     // being hardcoded at three separate sites,
     // and clamped so it can never swallow a
     // short (25px) text or subtitle row.
-    readonly property real headerBandHeight: {
-        const wanted = clipItem.hasAnyEffects
-            ? Theme.clipHeaderBandHeight * 1.6
-            : Theme.clipHeaderBandHeight
-        return Math.min(wanted, Math.max(0, height * 0.5))
-    }
+    // One line now: the effect list that used to need a taller band moved to the lane.
+    readonly property real headerBandHeight:
+        Math.min(Theme.clipHeaderBandHeight, Math.max(0, height * 0.5))
 
     y: Theme.clipSelectionRingWidth
     // Floored so short clips stay visible and
@@ -308,7 +333,7 @@ Item {
         // in the clip reacted to the pointer.
         color: {
             if (clipItem.clipData.kind === "adjustment") {
-                const base = Theme.clipEffect
+                const base = panel.adjustmentColor(clipItem.clipData.adjustmentKind)
                 const lit = clipMouse.containsMouse || clipItem.lifted
                 return lit ? Qt.lighter(base, 1.15) : base
             }
@@ -481,36 +506,41 @@ Item {
             color: Theme.scrimColor
             z: 1
 
-            Column {
+            // Just the name. The effect stack used to be listed on a second line here, but it
+            // now lives on the clip's adjustment lane, which shows it in the row above — two
+            // copies of the same list, one of them detached from the thing you edit.
+            Text {
                 anchors.left: parent.left
                 anchors.right: parent.right
                 anchors.verticalCenter: parent.verticalCenter
                 anchors.leftMargin: 6
                 anchors.rightMargin: 6
-                spacing: 1
+                text: clipItem.clipData.name
+                color: Theme.onMedia
+                font.pixelSize: Theme.fontSizeTiny
+                font.family: Theme.fontFamily
+                elide: Text.ElideRight
+            }
+        }
 
-                Text {
-                    width: parent.width
-                    text: clipItem.clipData.name
-                    color: Theme.onMedia
-                    font.pixelSize: Theme.fontSizeTiny
-                    font.family: Theme.fontFamily
-                    elide: Text.ElideRight
-                }
+        // Adjustments get a single centred line rather than the scrim band above: a nested lane
+        // is a ~20px strip, and a band plus two text rows has nowhere to be legible.
+        Item {
+            visible: clipItem.clipData.kind === "adjustment"
+            anchors.fill: parent
+            z: 1
 
-                Text {
-                    width: parent.width
-                    visible: clipItem.hasAnyEffects
-                    text: clipItem.effectsLabelText
-                    // Amber-on-clip was 1.6-2.1:1. White at 0.85 clears 7:1 on every
-                    // clip fill; weight keeps it distinct from the name line above.
-                    color: Theme.onMedia
-                    opacity: 0.85
-                    font.pixelSize: Theme.fontSizeTiny
-                    font.weight: Font.DemiBold
-                    font.family: Theme.fontFamily
-                    elide: Text.ElideRight
-                }
+            Text {
+                anchors.left: parent.left
+                anchors.right: parent.right
+                anchors.verticalCenter: parent.verticalCenter
+                anchors.leftMargin: 6
+                anchors.rightMargin: 6
+                text: clipItem.adjustmentLabelText
+                color: Theme.onMedia
+                font.pixelSize: Theme.fontSizeTiny
+                font.family: Theme.fontFamily
+                elide: Text.ElideRight
             }
         }
 
@@ -539,15 +569,6 @@ Item {
                 elide: Text.ElideRight
             }
 
-            Text {
-                width: parent.width
-                visible: clipItem.hasAnyEffects
-                text: clipItem.effectsLabelText
-                color: Theme.panelSecondaryForeground
-                font.pixelSize: Theme.fontSizeTiny
-                font.family: Theme.fontFamily
-                elide: Text.ElideRight
-            }
         }
 
         // Waveform: only the slice of the clip that is on screen gets a Canvas, at 1:1 px,
@@ -908,6 +929,22 @@ Item {
                 onTriggered: clipItem.panel.requestSaveEffectPreset(clipItem.trackIndex,
                                                                      clipItem.clipIndex)
             }
+            ThemedMenuSeparator { visible: clipItem.clipData.kind === "adjustment" }
+            ThemedMenuItem {
+                text: qsTr("Unlink from clip")
+                icon.name: Theme.icons.unlink
+                visible: clipItem.pinnedToClip
+                onTriggered: EditorState.unlinkAdjustment(clipItem.trackIndex, clipItem.clipIndex)
+            }
+            ThemedMenuItem {
+                text: qsTr("Move to its own track")
+                icon.name: Theme.icons.layers
+                // Only meaningful for a nested one: a standalone adjustment already has one.
+                visible: clipItem.clipData.kind === "adjustment"
+                         && clipItem.panel.tracks[clipItem.trackIndex].isAdjustmentLane === true
+                onTriggered: EditorState.moveAdjustmentToOwnTrack(clipItem.trackIndex,
+                                                                  clipItem.clipIndex)
+            }
             ThemedMenuSeparator { }
             ThemedMenuItem {
                 text: qsTr("Delete")
@@ -939,14 +976,36 @@ Item {
             }
             const newStart = (clipItem.x - Theme.clipSelectionRingWidth) / panel.pxPerSecond
             const pos = clipItem.mapToItem(timelineColumn, clipItem.width / 2, clipItem.height / 2)
-            const targetTrack = panel.trackIndexAtY(pos.y)
+            const target = typeof panel.dropTargetAtY === "function"
+                         ? panel.dropTargetAtY(pos.y)
+                         : { "track": panel.trackIndexAtY(pos.y), "lane": -1 }
             clipItem.y = Theme.clipSelectionRingWidth
+            const isAdjustment = clipItem.clipData.kind === "adjustment"
+            const wasInLane = panel.tracks[originTrack].isAdjustmentLane === true
             // Use indices captured on press — after the model updates, clipIndex
             // on this delegate can already refer to a different clip.
-            if (targetTrack >= 0 && targetTrack !== originTrack)
-                EditorState.moveClipToTrack(originTrack, originClip, targetTrack, newStart)
-            else
+            if (isAdjustment && target.lane >= 0) {
+                // Released on a lane strip: an ordinary cross-track move onto that lane. Only an
+                // adjustment can land there — a media clip aimed at the strip falls through to
+                // the row's own clip area rather than snapping back from a rejected move.
+                if (target.lane !== originTrack)
+                    EditorState.moveClipToTrack(originTrack, originClip, target.lane, newStart)
+                else
+                    EditorState.moveClip(originTrack, originClip, newStart)
+            } else if (isAdjustment && target.track >= 0
+                       && panel.tracks[target.track].type !== "adjustment") {
+                // An adjustment released on a media track's body nests inside it: it stops
+                // applying to everything composited below and applies only to that track.
+                EditorState.moveAdjustmentToLane(originTrack, originClip, target.track, newStart)
+            } else if (isAdjustment && wasInLane && target.track < 0) {
+                // Dragged clear of every row: the inverse gesture, back to a track of its own
+                // affecting everything below it.
+                EditorState.moveAdjustmentToOwnTrack(originTrack, originClip, newStart)
+            } else if (target.track >= 0 && target.track !== originTrack) {
+                EditorState.moveClipToTrack(originTrack, originClip, target.track, newStart)
+            } else {
                 EditorState.moveClip(originTrack, originClip, newStart)
+            }
             // Closes the gesture pickUp opened, and clears the snap and lane latches the drag left
             // engaged.
             Haptics.drop()

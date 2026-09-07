@@ -67,8 +67,10 @@ AudioEffectRack::~AudioEffectRack() = default;
 AudioEffectRack::AudioEffectRack(AudioEffectRack &&other) noexcept = default;
 AudioEffectRack &AudioEffectRack::operator=(AudioEffectRack &&other) noexcept = default;
 
-bool AudioEffectRack::configure(const QVector<AudioEffectSpec> &specs, int sampleRate)
+bool AudioEffectRack::configure(const QVector<AudioEffectSpec> &specs, int sampleRate, bool *rebuilt)
 {
+    if (rebuilt)
+        *rebuilt = false;
     if (specs.isEmpty() || sampleRate <= 0) {
         reset();
         m_impl->chains.clear();
@@ -82,8 +84,10 @@ bool AudioEffectRack::configure(const QVector<AudioEffectSpec> &specs, int sampl
     for (const AudioEffectSpec &spec : specs)
         signature += QLatin1Char('|') + spec.processorId;
 
-    const bool rebuilt = signature != m_impl->signature;
-    if (rebuilt) {
+    const bool didRebuild = signature != m_impl->signature;
+    if (rebuilt)
+        *rebuilt = didRebuild;
+    if (didRebuild) {
         m_impl->chains.clear();
         m_impl->signature = signature;
         m_impl->sampleRate = sampleRate;
@@ -127,7 +131,7 @@ bool AudioEffectRack::configure(const QVector<AudioEffectSpec> &specs, int sampl
 
     // Stages were prepared before their values arrived, so a new chain would otherwise open by
     // gliding up from its defaults. Nothing to lose here: these chains have no state yet.
-    if (rebuilt) {
+    if (didRebuild) {
         for (auto &chain : m_impl->chains)
             chain->reset();
     }

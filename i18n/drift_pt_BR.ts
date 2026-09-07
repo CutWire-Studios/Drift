@@ -2121,6 +2121,54 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Add adjustment track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Adjustment track added</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add adjustment lane</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Adjustment lane added</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Nest adjustment in track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Adjustment nested</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Detach adjustment to its own track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Adjustment detached</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Unlink adjustment</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Adjustment unlinked</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Link adjustment to clip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Adjustment linked</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Install the emoji sticker pack to add emoji</source>
         <translation>Instale o pacote de adesivos de emoji para adicionar emojis</translation>
     </message>
@@ -5644,6 +5692,14 @@
         <translation>Gráfico</translation>
     </message>
     <message>
+        <source>Adjustment</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Audio adjustment</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>New track</source>
         <translation>Nova faixa</translation>
     </message>
@@ -8505,6 +8561,18 @@ Se a reprodução travar, experimente outro.</translation>
         <translation>%1 (desativado)</translation>
     </message>
     <message>
+        <source>Audio adjustment</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Mask</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Adjustment</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Subtitles</source>
         <translation>Legendas</translation>
     </message>
@@ -8563,6 +8631,14 @@ Se a reprodução travar, experimente outro.</translation>
     <message>
         <source>Save effects as preset…</source>
         <translation>Salvar efeitos como predefinição…</translation>
+    </message>
+    <message>
+        <source>Unlink from clip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move to its own track</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Delete</source>
@@ -8844,6 +8920,10 @@ Se a reprodução travar, experimente outro.</translation>
         <translation>Isso remove a faixa vazia. Você pode desfazer depois.</translation>
     </message>
     <message>
+        <source>FX</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>A</source>
         <translation>A</translation>
     </message>
@@ -8862,6 +8942,10 @@ Se a reprodução travar, experimente outro.</translation>
     <message>
         <source>V</source>
         <translation>V</translation>
+    </message>
+    <message>
+        <source>Adjustment</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Audio</source>

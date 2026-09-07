@@ -785,6 +785,30 @@ public:
     Q_INVOKABLE void addAdjustmentClip(double atSeconds = -1.0, double durationSeconds = -1.0);
     Q_INVOKABLE void addAdjustmentClipAt(int trackIndex, double atSeconds = -1.0, double durationSeconds = -1.0);
     Q_INVOKABLE void addAdjustmentClipWithEffect(const QString &effectId, int trackIndex = -1, double atSeconds = -1.0, double durationSeconds = -1.0);
+
+    // Adjustment tracks and lanes. `kind` is "videoEffects" | "audioEffects" | "mask".
+    //
+    // A standalone track applies to everything composited below it; a lane is nested in one
+    // track and applies only to that track's clips. Which of the two you get is the whole
+    // difference between the two placements, so they are separate calls rather than a flag.
+    Q_INVOKABLE void addAdjustmentTrack(const QString &kind);
+    // Index of a lane on `parentTrackIndex` able to hold `kind` over [atSeconds, +durationSeconds),
+    // creating one when every existing lane is occupied there. Returns -1 if the parent cannot
+    // take a lane. Note this shifts track indices when it inserts.
+    Q_INVOKABLE int ensureAdjustmentLane(int parentTrackIndex, const QString &kind,
+                                         double atSeconds = -1.0, double durationSeconds = -1.0);
+    // Move an adjustment clip between the two placements. Both unlink it first: a pinned
+    // adjustment belongs to its clip's track, so re-scoping it would leave the link meaningless.
+    // `atSeconds` < 0 keeps the adjustment where it is on the timeline; a drag passes the
+    // position it was released at.
+    Q_INVOKABLE void moveAdjustmentToLane(int fromTrack, int fromClip, int parentTrackIndex,
+                                          double atSeconds = -1.0);
+    Q_INVOKABLE void moveAdjustmentToOwnTrack(int fromTrack, int fromClip,
+                                              double atSeconds = -1.0);
+    // Release an adjustment from the clip it is pinned to, leaving it where it is. Its edges
+    // become draggable and it stops following the clip.
+    Q_INVOKABLE void unlinkAdjustment(int trackIndex, int clipIndex);
+    Q_INVOKABLE void relinkAdjustment(int trackIndex, int clipIndex, int mediaTrack, int mediaClip);
     Q_INVOKABLE void addStickerClip(const QString &stickerId, double atSeconds);
     Q_INVOKABLE QVariantList builtinStickers() const;
     Q_INVOKABLE QVariantList builtinStickerCategories() const;
@@ -1051,6 +1075,24 @@ public:
     Q_INVOKABLE void nudgeAllTrackHeightScales(int steps);
     bool canGrowTrackHeights() const;
     bool canShrinkTrackHeights() const;
+    // The row height the timeline should give a track, in pixels, including any nested
+    // adjustment lanes drawn inside it. A lane returns 0: it has no row of its own, it is drawn
+    // as a strip across the top of its parent's.
+    //
+    // This lives here rather than in QML because the rule stopped being a one-liner and was
+    // duplicated verbatim in TimelinePanel, TrackHeaderColumn and AndroidTimeline — three copies
+    // that had to agree or the headers would drift out of line with the rows.
+    //
+    // `metrics` carries Theme's row heights, so the numbers stay defined in one place there:
+    // keys "video", "audio", "text", "subtitle", "shape", "adjustment" and "lane". Named rather
+    // than positional because seven interchangeable doubles are silently mis-orderable.
+    Q_INVOKABLE int trackRowHeight(int trackIndex, const QVariantMap &metrics) const;
+
+    // How many nested lanes a track is carrying, so the delegate knows how many strips to draw.
+    Q_INVOKABLE int adjustmentLaneCount(int trackIndex) const;
+    // Track indices of those lanes, topmost first.
+    Q_INVOKABLE QVariantList adjustmentLanes(int trackIndex) const;
+
     Q_INVOKABLE double trackHeightScaleMin() const { return 0.6; }
     Q_INVOKABLE double trackHeightScaleMax() const { return 4.0; }
     Q_INVOKABLE void moveTrack(int fromIndex, int toIndex);
@@ -1473,7 +1515,56 @@ protected:
     void addImageOverlayClip(const QString &path, const QString &name, const QString &emoji,
                              double atSeconds, const QString &undoText);
 
-    QVariantMap clipToMap(const drift::Clip &clip) const;
+    // `effectHost` supplies the stack to report for a media clip, whose effects now live on the
+    // adjustment linked to it. Passing it in rather than looking it up keeps a tracks() rebuild
+    // linear — resolving per clip would make it quadratic.
+    QVariantMap clipToMap(const drift::Clip &clip, const drift::Clip *videoEffectHost = nullptr,
+                          const drift::Clip *audioEffectHost = nullptr) const;
+
+    // The clip whose `effects` / `audioEffects` list holds the stack for (trackIndex, clipIndex).
+    // An adjustment hosts its own; a media clip's lives on the adjustment linked to it in one of
+    // its track's lanes. `create` mints that lane and adjustment on demand, which is what lets
+    // addEffect() keep taking a plain (trackIndex, clipIndex). Returns {-1,-1} when there is no
+    // host and none was created. Creating INSERTS A TRACK, so indices captured earlier go stale.
+    drift::ClipRef effectHostRef(int trackIndex, int clipIndex, drift::AdjustmentKind kind,
+                                 bool create);
+    const drift::Clip *effectHostClip(int trackIndex, int clipIndex,
+                                      drift::AdjustmentKind kind) const;
+    drift::ClipRef createLinkedAdjustment(int trackIndex, int clipIndex, drift::AdjustmentKind kind);
+    int ensureAdjustmentLaneFor(int parentTrackIndex, drift::AdjustmentKind kind,
+                                drift::TimeUs startUs, drift::TimeUs durationUs);
+
+    // Rewrites (trackIndex, clipIndex) to the clip a property's keyframes actually live on:
+    // transform props stay put, "fx.<i>.<param>" follows the effects to the linked adjustment.
+    // A no-op when there is no such adjustment, so callers fail exactly as they did before.
+    void redirectToKeyframeHost(int *trackIndex, int *clipIndex, const QString &prop) const;
+
+    // In-place form of effectHostRef for the effect invokables, which all take a plain
+    // (trackIndex, clipIndex) from QML and MCP. False when the clip has no stack of that kind
+    // and none was created, in which case the caller should do nothing — the same outcome an
+    // out-of-range effectIndex has always produced.
+    bool redirectToEffectHost(int *trackIndex, int *clipIndex, drift::AdjustmentKind kind,
+                              bool create);
+
+    // Mirrors every pinned adjustment's span onto the clip it is linked to, and unlinks the ones
+    // whose clip is gone. Runs in finishEdit so moves, trims, splits and deletes all keep links
+    // true without every call site having to remember.
+    void syncLinkedAdjustments(drift::Project &project) const;
+    // Re-establishes the two structural invariants the adjustment model rests on: no stack sits
+    // on a media clip, and every lane is adjacent to and directly above its parent. Both passes
+    // can insert or reorder tracks, so the selection is carried across by id. Idempotent and
+    // cheap when nothing is out of place, which is why it can run on every edit.
+    void normalizeProjectStructure();
+
+    // Keeps each lane adjacent to and directly above its parent, and demotes lanes whose parent
+    // is no longer able to hold them.
+    void normalizeAdjustmentLanes(drift::Project &project) const;
+
+    // Selection survives a track-list reshuffle by id rather than index arithmetic: a move now
+    // drags a track's lanes with it, so the destination index no longer says where things landed.
+    QString trackIdAt(int trackIndex) const;
+    QList<QPair<QString, int>> captureSelectionByTrackId() const;
+    void restoreSelectionByTrackId(const QList<QPair<QString, int>> &captured);
     int assetIndexForClip(const drift::Clip &clip) const;
     drift::TimeUs clipDurationForAssetIndex(int assetIndex) const;
     drift::TimeUs sourceDurationForClip(const drift::Clip &clip) const;
