@@ -2421,6 +2421,14 @@
         <translation>ක්ලිප් පෙරළීම යාවත්කාලීන විය</translation>
     </message>
     <message>
+        <source>Pan changed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Clip pan updated</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Rotation snapped</source>
         <translation>භ්‍රමණය ස්නැප් විය</translation>
     </message>
@@ -3639,6 +3647,30 @@
     <message>
         <source>This clip has no audio track.</source>
         <translation>මෙම ක්ලිපයේ ශ්‍රව්‍ය ට්‍රැකයක් නැත.</translation>
+    </message>
+    <message>
+        <source>Pan</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>C</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>L %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>R %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Pan changed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Centre</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Audio track</source>
@@ -9132,6 +9164,14 @@ If playback stutters, try another.</source>
     <message>
         <source>Mute track</source>
         <translation>ට්‍රැකය නිහඬ කරන්න</translation>
+    </message>
+    <message>
+        <source>Show one combined waveform</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show each channel separately (%1)</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Show track</source>

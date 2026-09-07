@@ -9,6 +9,7 @@
 extern "C" {
 #include <libavcodec/avcodec.h>
 #include <libavformat/avformat.h>
+#include <libavutil/channel_layout.h>
 #include <libavutil/samplefmt.h>
 }
 
@@ -19,33 +20,55 @@ namespace {
 // per-window call overhead stays in the noise.
 constexpr int kVoiceChunkFrames = 1 << 18;
 
+// Planar formats index per channel, and frame->data holds only AV_NUM_DATA_POINTERS (8) of
+// them — a 7.1.4 layout has 12. extended_data is the array that always covers every channel
+// and aliases data for the first 8, so it is correct for both.
 float frameSampleAbs(const AVFrame *frame, int channels, int channel, int sample)
 {
     switch (frame->format) {
     case AV_SAMPLE_FMT_FLTP:
-        return qAbs(reinterpret_cast<const float *>(frame->data[channel])[sample]);
+        return qAbs(reinterpret_cast<const float *>(frame->extended_data[channel])[sample]);
     case AV_SAMPLE_FMT_FLT:
         return qAbs(reinterpret_cast<const float *>(frame->data[0])[sample * channels + channel]);
     case AV_SAMPLE_FMT_S16P:
-        return qAbs(reinterpret_cast<const int16_t *>(frame->data[channel])[sample]) / 32768.0f;
+        return qAbs(reinterpret_cast<const int16_t *>(frame->extended_data[channel])[sample])
+            / 32768.0f;
     case AV_SAMPLE_FMT_S16:
         return qAbs(reinterpret_cast<const int16_t *>(frame->data[0])[sample * channels + channel])
             / 32768.0f;
     case AV_SAMPLE_FMT_S32P:
-        return qAbs(reinterpret_cast<const int32_t *>(frame->data[channel])[sample])
+        return qAbs(reinterpret_cast<const int32_t *>(frame->extended_data[channel])[sample])
             / 2147483648.0f;
     case AV_SAMPLE_FMT_S32:
         return qAbs(reinterpret_cast<const int32_t *>(frame->data[0])[sample * channels + channel])
             / 2147483648.0f;
     case AV_SAMPLE_FMT_DBLP:
         return static_cast<float>(
-            qAbs(reinterpret_cast<const double *>(frame->data[channel])[sample]));
+            qAbs(reinterpret_cast<const double *>(frame->extended_data[channel])[sample]));
     case AV_SAMPLE_FMT_DBL:
         return static_cast<float>(
             qAbs(reinterpret_cast<const double *>(frame->data[0])[sample * channels + channel]));
     default:
         return 0.0f;
     }
+}
+
+// Short channel names for the timeline's per-channel lane labels. Layouts with no positional
+// order (AV_CHANNEL_ORDER_UNSPEC) have no name per channel, so those fall back to a 1-based
+// ordinal rather than an empty label.
+QStringList channelNamesOf(const AVChannelLayout *layout)
+{
+    QStringList names;
+    names.reserve(layout->nb_channels);
+    for (int c = 0; c < layout->nb_channels; ++c) {
+        char buf[64] = {};
+        const enum AVChannel ch = av_channel_layout_channel_from_index(layout, static_cast<unsigned>(c));
+        if (ch != AV_CHAN_NONE && av_channel_name(buf, sizeof(buf), ch) > 0)
+            names.append(QString::fromLatin1(buf));
+        else
+            names.append(QString::number(c + 1));
+    }
+    return names;
 }
 
 int64_t estimateDurationSamples(const AVFormatContext *fmt, const AVStream *stream, int sampleRate)
@@ -362,8 +385,32 @@ MediaWaveform::Dense MediaWaveform::densePeaks(const QString &sourcePath, int pe
     return result;
 }
 
+// The merged envelope every single-lane caller wants is the elementwise max over the
+// per-channel envelopes, and max is associative — so folding the per-channel decode gives
+// bit-identical output to maxing inside the sample loop, for one decode instead of two.
 QVector<float> MediaWaveform::peaksForRange(const QString &sourcePath, double startSeconds,
                                             double endSeconds, int peaksPerSecond, int streamOrdinal)
+{
+    const PerChannel perChannel =
+        peaksForRangePerChannel(sourcePath, startSeconds, endSeconds, peaksPerSecond, streamOrdinal);
+    if (perChannel.channels.isEmpty())
+        return {};
+
+    QVector<float> merged = perChannel.channels.first();
+    for (int c = 1; c < perChannel.channels.size(); ++c) {
+        const QVector<float> &channel = perChannel.channels.at(c);
+        const int n = qMin(merged.size(), channel.size());
+        for (int i = 0; i < n; ++i)
+            merged[i] = qMax(merged[i], channel.at(i));
+    }
+    return merged;
+}
+
+MediaWaveform::PerChannel MediaWaveform::peaksForRangePerChannel(const QString &sourcePath,
+                                                                 double startSeconds,
+                                                                 double endSeconds,
+                                                                 int peaksPerSecond,
+                                                                 int streamOrdinal)
 {
     if (peaksPerSecond <= 0 || endSeconds <= startSeconds)
         return {};
@@ -395,7 +442,15 @@ QVector<float> MediaWaveform::peaksForRange(const QString &sourcePath, double st
         return {};
     }
 
-    QVector<float> buckets(bucketCount, 0.0f);
+    const int channelCount = codecCtx->ch_layout.nb_channels;
+    if (channelCount <= 0) {
+        avcodec_free_context(&codecCtx);
+        avformat_close_input(&fmt);
+        return {};
+    }
+
+    QVector<QVector<float>> buckets(channelCount, QVector<float>(bucketCount, 0.0f));
+    const QStringList channelNames = channelNamesOf(&codecCtx->ch_layout);
 
     // Stream timestamps are offset by start_time in some containers (MPEG-TS especially), and
     // both the seek target and the decoded pts have to account for it or the whole range
@@ -455,10 +510,10 @@ QVector<float> MediaWaveform::peaksForRange(const QString &sourcePath, double st
             if (idx < 0 || idx >= bucketCount)
                 continue;
 
-            float peak = 0.0f;
-            for (int c = 0; c < channels; ++c)
-                peak = qMax(peak, frameSampleAbs(decoded, channels, c, s));
-            buckets[idx] = qMax(buckets[idx], peak);
+            for (int c = 0; c < channels && c < buckets.size(); ++c) {
+                float &bucket = buckets[c][idx];
+                bucket = qMax(bucket, frameSampleAbs(decoded, channels, c, s));
+            }
             anySample = true;
         }
     };
@@ -492,7 +547,11 @@ QVector<float> MediaWaveform::peaksForRange(const QString &sourcePath, double st
 
     if (!anySample)
         return {};
-    return buckets;
+
+    PerChannel result;
+    result.channels = buckets;
+    result.channelNames = channelNames;
+    return result;
 }
 
 QVariantList MediaWaveform::voicePeaks(qint64 totalFrames, int sampleRate, int buckets,

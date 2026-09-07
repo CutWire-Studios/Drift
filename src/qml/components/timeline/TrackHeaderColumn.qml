@@ -117,6 +117,24 @@ Item {
         })
     }
 
+    // Raise a row so N channel lanes each get a workable height. Only ever grows, and only
+    // on enable: silently shrinking a row the user has already tuned is worse than leaving it
+    // tall, and on disable they may well want the height they now have.
+    //
+    // Computed here rather than in C++ because the row-height metrics are owned by Theme and
+    // passed *into* trackRowHeight — C++ deliberately hardcodes none of them.
+    function growRowForChannelLanes(index, channels) {
+        if (channels < 2)
+            return
+        const base = tracks[index].type === "audio" ? Theme.trackHeightAudio
+                                                    : Theme.trackHeightVideo
+        // The waveform sits below the header band, inside the selection ring.
+        const chrome = Theme.clipHeaderBandHeight + 2 * Theme.clipSelectionRingWidth
+        const wanted = (16 * channels + chrome) / base
+        if (wanted > (tracks[index].heightScale || 1))
+            EditorState.setTrackHeightScale(index, wanted)
+    }
+
     // A nested lane has no header of its own: it belongs to the row above it, whose header
     // already names it.
     function trackOccupiesARow(index) {
@@ -399,6 +417,58 @@ Item {
                         onClicked: {
                             Haptics.toggle(!trackLabelRow.trackMuted)
                             EditorState.setTrackMuted(index, !trackLabelRow.trackMuted)
+                        }
+                    }
+                }
+
+                // Stacked per-channel waveforms. Offered only where there is something to
+                // split: mono and stereo-downmix material has one lane either way, and the
+                // channel count is known because an on-screen track has decoded a block.
+                IconGlyph {
+                    id: channelLanesToggle
+                    // trackMaxChannelCount has no notify of its own and the count only lands
+                    // once a block has decoded, so depend on `tracks` to re-evaluate then.
+                    readonly property int laneChannels: {
+                        const dep = root.tracks.length
+                        return EditorState.trackMaxChannelCount(index)
+                    }
+                    readonly property bool lanesOn:
+                        root.tracks[index].showChannelWaveforms === true
+
+                    visible: (root.tracks[index].type === "audio"
+                              || (root.tracks[index].type === "video"
+                                  && trackLabelRow.trackWaveform))
+                             && laneChannels > 1
+                    glyph: Theme.icons.split
+                    iconSize: 16
+                    iconColor: lanesOn ? Theme.primary : Theme.mutedForeground
+                    anchors.verticalCenter: parent.verticalCenter
+
+                    Behavior on iconColor {
+                        ColorAnimation { duration: Theme.durationFast; easing.type: Theme.easing }
+                    }
+
+                    ThemedToolTip {
+                        visible: channelLanesMouse.containsMouse
+                        text: channelLanesToggle.lanesOn
+                              ? qsTr("Show one combined waveform")
+                              : qsTr("Show each channel separately (%1)")
+                                    .arg(channelLanesToggle.laneChannels)
+                    }
+
+                    MouseArea {
+                        id: channelLanesMouse
+                        anchors.fill: parent
+                        anchors.margins: -4
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: {
+                            const on = !channelLanesToggle.lanesOn
+                            Haptics.toggle(on)
+                            EditorState.setTrackShowChannelWaveforms(index, on)
+                            if (on)
+                                root.growRowForChannelLanes(
+                                    index, channelLanesToggle.laneChannels)
                         }
                     }
                 }

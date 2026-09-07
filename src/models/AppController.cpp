@@ -77,6 +77,7 @@
 #include <QEventLoop>
 #include <QFile>
 #include <QFileInfo>
+#include <QMutex>
 #include <QGuiApplication>
 #include <QJsonArray>
 #include <QJsonDocument>
@@ -1270,6 +1271,7 @@ QVariantList AppController::tracks() const
             {QStringLiteral("muted"), track.muted},
             {QStringLiteral("hidden"), track.hidden},
             {QStringLiteral("showWaveform"), track.showWaveform},
+            {QStringLiteral("showChannelWaveforms"), track.showChannelWaveforms},
             {QStringLiteral("heightScale"), track.heightScale},
         });
     }
@@ -2180,13 +2182,56 @@ bool assetHasAudioStreams(const drift::Project &project, AssetLibrary *library, 
     return false;
 }
 
+// MediaProbe::audioStreams reopens the container and runs avformat_find_stream_info every call,
+// and the callers below include QML bindings that re-evaluate on any timeline change — a clip's
+// context menu was re-probing its file just to decide whether to show a menu item.
+//
+// Keyed on size and mtime as well as path, so a file replaced on disk re-probes rather than
+// serving stale streams. Mutexed because the detach helpers run on the GUI thread while the
+// asset probes do not, and this is cheap enough that proving which is which is not worth it.
+QList<StreamInfo> cachedAudioStreams(const QString &path)
+{
+    if (path.isEmpty())
+        return {};
+
+    struct Entry {
+        qint64 size = -1;
+        qint64 mtimeMs = -1;
+        QList<StreamInfo> streams;
+    };
+    static QHash<QString, Entry> cache;
+    static QMutex mutex;
+    // A project references a bounded set of media, but one-shot probes of files that never land
+    // on a timeline would otherwise accumulate for the life of the process.
+    constexpr int kMaxEntries = 256;
+
+    const QFileInfo info(path);
+    const qint64 size = info.size();
+    const qint64 mtimeMs = info.lastModified().toMSecsSinceEpoch();
+
+    {
+        QMutexLocker locker(&mutex);
+        const auto it = cache.constFind(path);
+        if (it != cache.constEnd() && it->size == size && it->mtimeMs == mtimeMs)
+            return it->streams;
+    }
+
+    const QList<StreamInfo> streams = MediaProbe::audioStreams(path);
+
+    QMutexLocker locker(&mutex);
+    if (cache.size() >= kMaxEntries)
+        cache.clear();
+    cache.insert(path, Entry{size, mtimeMs, streams});
+    return streams;
+}
+
 bool clipHasEmbeddedAudio(const drift::Project &project, AssetLibrary *library, const drift::Clip &clip)
 {
     if (clip.type != drift::ClipType::Video || clip.suppressEmbeddedAudio || clip.path.isEmpty())
         return false;
     if (!clip.assetId.isEmpty())
         return assetHasAudioStreams(project, library, clip.assetId);
-    return !MediaProbe::audioStreams(clip.path).isEmpty();
+    return !cachedAudioStreams(clip.path).isEmpty();
 }
 
 drift::Clip makeAudioCompanionFromVideo(const drift::Clip &videoClip, const QString &linkId = {},
@@ -2205,13 +2250,68 @@ drift::Clip makeAudioCompanionFromVideo(const drift::Clip &videoClip, const QStr
     audio.srcIn = videoClip.srcIn;
     audio.srcOut = videoClip.srcOut;
     audio.speed = videoClip.speed;
+    // Mirror the whole retiming, not just the scalar: a curve supersedes `speed` outright, so a
+    // companion without it plays the ramped source at a constant rate and drifts against the
+    // picture until the next edit runs it through syncLinkedTiming.
+    audio.speedCurve = videoClip.speedCurve;
     audio.reverse = videoClip.reverse;
     audio.fadeInUs = videoClip.fadeInUs;
     audio.fadeOutUs = videoClip.fadeOutUs;
     audio.fadeCurve = videoClip.fadeCurve;
     audio.fadeShape = videoClip.fadeShape;
     audio.volume = videoClip.volume;
+    audio.pan = videoClip.pan;
     return audio;
+}
+
+// Move the audio-effect adjustments pinned to a video clip onto a lane of the audio track that
+// has just taken over its audio.
+//
+// A lane's effects reach the mix through the clips of the track the lane hangs off
+// (AudioMixer's laneAudioEffects), and separating audio sets suppressEmbeddedAudio so the mixer
+// stops reading that video clip at all. Leaving the adjustments on the video track's lane would
+// therefore silently stop them applying: the video clip they modify no longer contributes audio,
+// and the freshly created audio track has no lanes of its own.
+void migrateAudioEffectsToCompanion(drift::Project &project, const QString &videoClipId,
+                                    const QString &audioClipId)
+{
+    int videoTrack = -1;
+    int videoClipIdx = -1;
+    if (!findClipById(project, videoClipId, &videoTrack, &videoClipIdx))
+        return;
+
+    QList<drift::Clip> moved;
+    for (const int laneIndex : drift::adjustmentLaneIndexes(project, videoTrack)) {
+        drift::Track &lane = project.tracks()[laneIndex];
+        for (int c = lane.clips.size() - 1; c >= 0; --c) {
+            const drift::Clip &adjustment = lane.clips.at(c);
+            if (adjustment.adjustmentKind == drift::AdjustmentKind::AudioEffects
+                && adjustment.linkedClipId == videoClipId) {
+                moved.prepend(lane.clips.takeAt(c));
+            }
+        }
+    }
+    if (moved.isEmpty())
+        return;
+
+    for (drift::Clip &adjustment : moved)
+        adjustment.linkedClipId = audioClipId;
+
+    // One at a time, re-resolving the audio track each round: ensureAdjustmentLane mints ids and
+    // may insert a lane, and it is also what puts two overlapping adjustments on separate lanes
+    // instead of stacking them into one.
+    for (const drift::Clip &adjustment : moved) {
+        int audioTrack = -1;
+        int audioClipIdx = -1;
+        if (!findClipById(project, audioClipId, &audioTrack, &audioClipIdx))
+            return;
+        const int laneIndex =
+            drift::ensureAdjustmentLane(project, audioTrack, drift::AdjustmentKind::AudioEffects,
+                                        adjustment.timelineStart, adjustment.timelineDuration);
+        if (laneIndex < 0)
+            return;
+        project.tracks()[laneIndex].clips.append(adjustment);
+    }
 }
 
 // Relative position of a video track inside the video-track group.
@@ -2367,6 +2467,7 @@ bool detachEmbeddedAudioFromVideo(drift::Project &project,
             videoClip,
             linkId,
             videoClip.audioStreamIndex);
+    const QString videoClipId = videoClip.id;
 
     const int insertAt =
         audioTrackInsertIndexForVideoTrack(
@@ -2378,6 +2479,8 @@ bool detachEmbeddedAudioFromVideo(drift::Project &project,
     audioTrack.clips.append(audioClip);
 
     project.tracks().insert(insertAt, audioTrack);
+
+    migrateAudioEffectsToCompanion(project, videoClipId, audioClip.id);
 
     return true;
 }
@@ -2406,7 +2509,7 @@ bool detachAllAudioTracksFromVideo(drift::Project &project,
         return false;
 
     const QList<StreamInfo> streams =
-        MediaProbe::audioStreams(videoClip.path);
+        cachedAudioStreams(videoClip.path);
 
     if (streams.isEmpty()) {
         return detachEmbeddedAudioFromVideo(
@@ -2423,6 +2526,11 @@ bool detachAllAudioTracksFromVideo(drift::Project &project,
 
     videoClip.linkId = linkId;
     videoClip.suppressEmbeddedAudio = true;
+
+    const QString videoClipId = videoClip.id;
+    // The effects were applied to the stream the clip was actually playing, so they follow that
+    // companion rather than whichever one happens to come first.
+    const int effectStreamIndex = videoClip.audioStreamIndex;
 
     QList<drift::Clip> companions;
     companions.reserve(streams.size());
@@ -2456,15 +2564,22 @@ bool detachAllAudioTracksFromVideo(drift::Project &project,
             project,
             videoTrackIndex);
 
+    QString effectCompanionId;
     for (int i = 0; i < companions.size(); ++i) {
         drift::Track audioTrack;
         audioTrack.type = drift::TrackType::Audio;
         audioTrack.clips.append(companions.at(i));
 
+        if (companions.at(i).audioStreamIndex == effectStreamIndex)
+            effectCompanionId = companions.at(i).id;
+
         project.tracks().insert(
             insertAt + i,
             audioTrack);
     }
+
+    if (!effectCompanionId.isEmpty())
+        migrateAudioEffectsToCompanion(project, videoClipId, effectCompanionId);
 
     return true;
 }
@@ -2700,6 +2815,7 @@ QVariantMap AppController::clipToMap(const drift::Clip &clip, const drift::Clip 
         {QStringLiteral("assetIndex"), assetIndexForClip(clip)},
         {QStringLiteral("linked"), !clip.linkId.isEmpty()},
         {QStringLiteral("audioStreamIndex"), clip.audioStreamIndex},
+        {QStringLiteral("pan"), clip.pan},
         {QStringLiteral("volume"), clip.volume.isEmpty() ? 1.0 : clip.volume.evaluateAt(0)},
         {QStringLiteral("fadeIn"), drift::usToSeconds(clip.fadeInUs)},
         {QStringLiteral("fadeOut"), drift::usToSeconds(clip.fadeOutUs)},
@@ -2749,9 +2865,15 @@ bool AppController::removeAsset(int assetIndex)
     if (!m_assetLibrary || clipCountForAsset(assetIndex) > 0)
         return false;
 
+    const QString removedPath =
+        m_assetLibrary->assetAt(assetIndex).value(QStringLiteral("path")).toString();
+
     const drift::Project before = m_project;
     if (!m_assetLibrary->removeAssetAt(assetIndex))
         return false;
+
+    if (!removedPath.isEmpty())
+        m_waveformBlocks.forgetSource(removedPath);
 
     // Rows after the removed one shift down, so any index captured at drag
     // start now points at the wrong asset.
@@ -2783,8 +2905,13 @@ int AppController::removeAssets(const QStringList &assetIds)
         const int index = m_assetLibrary->indexOfId(id);
         if (index < 0)
             continue;
-        if (m_assetLibrary->removeAssetAt(index))
+        const QString removedPath =
+            m_assetLibrary->assetAt(index).value(QStringLiteral("path")).toString();
+        if (m_assetLibrary->removeAssetAt(index)) {
             ++removed;
+            if (!removedPath.isEmpty())
+                m_waveformBlocks.forgetSource(removedPath);
+        }
     }
     if (removed == 0)
         return 0;
@@ -11264,6 +11391,43 @@ void AppController::setClipFlip(int trackIndex, int clipIndex, bool flipH, bool 
     finishEdit(tr("Clip flip updated"));
 }
 
+// Snapshot first, then index: Project's tracks deep-detach on copy (see drift::TrackList), so
+// aliasing a snapshot is no longer possible either way, but taking the reference after the copy
+// keeps that independent of the container's copy semantics.
+void AppController::previewSetClipPan(int trackIndex, int clipIndex, double pan)
+{
+    if (!isValidClipIndex(trackIndex, clipIndex))
+        return;
+    const drift::ClipType type = m_project.tracks().at(trackIndex).clips.at(clipIndex).type;
+    if (type != drift::ClipType::Video && type != drift::ClipType::Audio)
+        return;
+
+    if (!m_previewDragActive)
+        beginPreviewDrag(tr("Pan changed"));
+
+    m_project.tracks()[trackIndex].clips[clipIndex].pan = qBound(-1.0, pan, 1.0);
+    emitPreviewFrame();
+}
+
+void AppController::setClipPan(int trackIndex, int clipIndex, double pan)
+{
+    if (!isValidClipIndex(trackIndex, clipIndex))
+        return;
+
+    const drift::Clip &existing = m_project.tracks().at(trackIndex).clips.at(clipIndex);
+    if (existing.type != drift::ClipType::Video && existing.type != drift::ClipType::Audio)
+        return;
+
+    const double clamped = qBound(-1.0, pan, 1.0);
+    if (qFuzzyCompare(existing.pan + 2.0, clamped + 2.0))
+        return;
+
+    const drift::Project before = m_project;
+    m_project.tracks()[trackIndex].clips[clipIndex].pan = clamped;
+    pushProjectEdit(before, tr("Pan changed"));
+    finishEdit(tr("Clip pan updated"));
+}
+
 void AppController::setClipRotationSnap(int trackIndex, int clipIndex, double degrees)
 {
     if (trackIndex < 0 || trackIndex >= m_project.tracks().size())
@@ -11552,7 +11716,7 @@ QVariantList AppController::clipAudioStreams(int trackIndex, int clipIndex) cons
     if (clip.path.isEmpty())
         return {};
 
-    const QList<StreamInfo> streams = MediaProbe::audioStreams(clip.path);
+    const QList<StreamInfo> streams = cachedAudioStreams(clip.path);
     QVariantList out;
     for (int i = 0; i < streams.size(); ++i) {
         const StreamInfo &s = streams.at(i);
@@ -11594,7 +11758,7 @@ int AppController::clipAudioStreamCount(int trackIndex, int clipIndex) const
     const drift::Clip &clip = m_project.tracks().at(trackIndex).clips.at(clipIndex);
     if (clip.path.isEmpty())
         return 0;
-    return MediaProbe::audioStreams(clip.path).size();
+    return cachedAudioStreams(clip.path).size();
 }
 
 void AppController::setClipAudioStreamIndex(int trackIndex, int clipIndex, int streamIndex)
@@ -14888,6 +15052,25 @@ bool AppController::trackShowWaveform(int trackIndex) const
     return m_project.tracks().at(trackIndex).showWaveform;
 }
 
+void AppController::setTrackShowChannelWaveforms(int trackIndex, bool show)
+{
+    if (trackIndex < 0 || trackIndex >= m_project.tracks().size())
+        return;
+    if (m_project.tracks()[trackIndex].showChannelWaveforms == show)
+        return;
+
+    // View-only preference: mutate and refresh without an undo entry.
+    m_project.tracks()[trackIndex].showChannelWaveforms = show;
+    emit tracksChanged();
+}
+
+bool AppController::trackShowChannelWaveforms(int trackIndex) const
+{
+    if (trackIndex < 0 || trackIndex >= m_project.tracks().size())
+        return false;
+    return m_project.tracks().at(trackIndex).showChannelWaveforms;
+}
+
 void AppController::setTrackHeightScale(int trackIndex, double scale)
 {
     if (trackIndex < 0 || trackIndex >= m_project.tracks().size())
@@ -16007,6 +16190,83 @@ QVariantList AppController::waveformPeaksRange(const QString &path, double start
     return reduceDensePeaks(span, 0, span.size(), span.size());
 }
 
+QVariantMap AppController::waveformChannelPeaksRange(const QString &path, double startSeconds,
+                                                     double durSeconds, int buckets,
+                                                     int audioStreamIndex) const
+{
+    QVariantMap result;
+    result.insert(QStringLiteral("channels"), 0);
+    result.insert(QStringLiteral("buckets"), 0);
+    if (path.isEmpty() || durSeconds <= 0.0 || buckets <= 0)
+        return result;
+
+    const int channels = m_waveformBlocks.channelCount(path, audioStreamIndex);
+    if (channels <= 0) {
+        // Nothing decoded yet. Ask for the merged envelope anyway so the block gets queued and
+        // rangeReady() brings the caller back once the layout is known.
+        m_waveformBlocks.range(path, startSeconds, durSeconds, qBound(1, buckets, 4096),
+                               audioStreamIndex);
+        return result;
+    }
+
+    const int outCount = qBound(1, buckets, 4096);
+    QVariantList peaks;
+    peaks.reserve(channels * outCount);
+    int decodedBuckets = -1;
+    for (int c = 0; c < channels; ++c) {
+        const QVector<float> span =
+            m_waveformBlocks.range(path, startSeconds, durSeconds, outCount, audioStreamIndex, c);
+        // Same 48 dB display curve and visibility floor as the merged lane, deliberately not
+        // renormalized per channel: a silent surround has to read as quieter than the dialogue
+        // rather than being stretched to look like it.
+        const QVariantList reduced = reduceDensePeaks(span, 0, span.size(), span.size());
+        // The caller indexes this as peaks[c * buckets + b], which is only meaningful if every
+        // channel came back the same length. They always do — range() returns exactly outCount
+        // or nothing — but a ragged result would be read as garbage rather than as missing data.
+        if (decodedBuckets >= 0 && reduced.size() != decodedBuckets)
+            return result;
+        decodedBuckets = reduced.size();
+        peaks.append(reduced);
+    }
+
+    if (decodedBuckets <= 0)
+        return result;
+
+    result.insert(QStringLiteral("channels"), channels);
+    result.insert(QStringLiteral("buckets"), decodedBuckets);
+    result.insert(QStringLiteral("names"), m_waveformBlocks.channelNames(path, audioStreamIndex));
+    result.insert(QStringLiteral("peaks"), peaks);
+    return result;
+}
+
+int AppController::waveformChannelCount(const QString &path, int audioStreamIndex) const
+{
+    if (path.isEmpty())
+        return 0;
+    return m_waveformBlocks.channelCount(path, audioStreamIndex);
+}
+
+int AppController::trackMaxChannelCount(int trackIndex) const
+{
+    if (trackIndex < 0 || trackIndex >= m_project.tracks().size())
+        return 0;
+
+    int widest = 0;
+    for (const drift::Clip &clip : m_project.tracks().at(trackIndex).clips) {
+        if (clip.path.isEmpty())
+            continue;
+        // From the container's own metadata, not from the block cache: the cache only learns the
+        // layout once a block has decoded, which is after the header has already been built and
+        // is signalled by waveformRangeReady rather than tracksChanged — so a control bound to
+        // this would stay hidden until some unrelated edit happened to re-evaluate it. The probe
+        // is memoized, so asking per clip costs one container open per distinct file.
+        const QList<StreamInfo> streams = cachedAudioStreams(clip.path);
+        if (clip.audioStreamIndex >= 0 && clip.audioStreamIndex < streams.size())
+            widest = qMax(widest, streams.at(clip.audioStreamIndex).channels);
+    }
+    return widest;
+}
+
 QVariantList AppController::subtitleWaveformPeaks(double startSeconds, double durSeconds,
                                                   int sampleCount) const
 {
@@ -16077,7 +16337,7 @@ QByteArray AppController::audioLayoutFingerprint() const
             continue;
         hash.addData(track.muted ? "m" : "-");
         for (const drift::Clip &clip : track.clips) {
-            const QString row = QStringLiteral("%1|%2|%3|%4|%5|%6|%7|%8|%9")
+            const QString row = QStringLiteral("%1|%2|%3|%4|%5|%6|%7|%8|%9|%10")
                                     .arg(clip.assetId)
                                     .arg(clip.timelineStart)
                                     .arg(clip.timelineDuration)
@@ -16086,7 +16346,8 @@ QByteArray AppController::audioLayoutFingerprint() const
                                     .arg(clip.speed)
                                     .arg(clip.reverse ? 1 : 0)
                                     .arg(clip.suppressEmbeddedAudio ? 1 : 0)
-                                    .arg(clip.audioEffects.size());
+                                    .arg(clip.audioEffects.size())
+                                    .arg(clip.pan);
             hash.addData(row.toUtf8());
             // Tangents shape the volume ramp, so they belong in the digest alongside the values.
             for (const auto &kv : clip.volume.keyframes().asKeyValueRange()) {
@@ -16366,6 +16627,10 @@ void AppController::resetSessionState()
     clearBeatAnalysis();
     // Also drops the failed-source blacklist, so media that was missing gets another chance.
     m_filmstripTiles.clear();
+    // Blocks are keyed by source path, so they would not go stale across documents — this is
+    // about memory. Nothing else evicts them beyond the size budget, so a session that opens
+    // several projects in turn would otherwise hold the peaks of every source in all of them.
+    m_waveformBlocks.clear();
 
     m_replacingAssetId.clear();
     m_pendingEffectTemplate.reset();

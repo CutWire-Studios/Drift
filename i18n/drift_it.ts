@@ -2421,6 +2421,14 @@
         <translation>Capovolgimento clip aggiornato</translation>
     </message>
     <message>
+        <source>Pan changed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Clip pan updated</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Rotation snapped</source>
         <translation>Rotazione agganciata</translation>
     </message>
@@ -3639,6 +3647,30 @@
     <message>
         <source>This clip has no audio track.</source>
         <translation>Questa clip non ha una traccia audio.</translation>
+    </message>
+    <message>
+        <source>Pan</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>C</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>L %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>R %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Pan changed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Centre</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Audio track</source>
@@ -9132,6 +9164,14 @@ Se la riproduzione va a scatti, prova un&apos;altra opzione.</translation>
     <message>
         <source>Mute track</source>
         <translation>Disattiva audio traccia</translation>
+    </message>
+    <message>
+        <source>Show one combined waveform</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show each channel separately (%1)</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Show track</source>

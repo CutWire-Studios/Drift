@@ -2416,6 +2416,14 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Pan changed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Clip pan updated</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Rotation snapped</source>
         <translation type="unfinished"></translation>
     </message>
@@ -3621,6 +3629,30 @@
     </message>
     <message>
         <source>This clip has no audio track.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Pan</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>C</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>L %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>R %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Pan changed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Centre</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -9097,6 +9129,14 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Mute track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show one combined waveform</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show each channel separately (%1)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>

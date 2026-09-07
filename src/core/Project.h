@@ -12,6 +12,8 @@
 #include <QList>
 #include <QString>
 
+#include <initializer_list>
+
 namespace drift {
 
 struct Bookmark
@@ -28,6 +30,60 @@ struct Background
     BackgroundKind kind = BackgroundKind::Color;
     QColor color = Qt::black;    // used when kind == Color
     double blurStrength = 20.0;  // px blur radius; used when kind == Blur
+};
+
+// A track list that never shares its buffer with the list it was copied from.
+//
+// Project has value semantics on purpose: the undo stack and every edit path snapshot it by
+// copy and then keep mutating the original — very often through a `Track &` or `Clip &` that
+// was bound *before* the copy was taken. QList is copy-on-write, so a plain memberwise copy
+// leaves both lists pointing at one buffer, and a write through such a reference bypasses
+// QList's detach and lands in the snapshot as well as in the project. That silently broke undo
+// for most clip edits: the "before" state was mutated into the "after" state, so undoing
+// restored the value that had just been set.
+//
+// Detaching here, on the copy, is what fixes it: the copy gets its own buffers and the original
+// keeps sole ownership of its, so references into the original stay valid *and* private. Two
+// levels are needed and sufficient — the clip buffers are what those stale references point
+// into, and everything below a Clip is reached through a detaching accessor at write time.
+struct TrackList : QList<Track>
+{
+    using QList<Track>::QList;
+
+    TrackList() = default;
+    TrackList(const TrackList &other) : QList<Track>(other) { deepDetach(); }
+    TrackList(const QList<Track> &other) : QList<Track>(other) { deepDetach(); }
+    TrackList(TrackList &&) = default;
+
+    TrackList &operator=(const TrackList &other)
+    {
+        QList<Track>::operator=(other);
+        deepDetach();
+        return *this;
+    }
+    TrackList &operator=(const QList<Track> &other)
+    {
+        QList<Track>::operator=(other);
+        deepDetach();
+        return *this;
+    }
+    TrackList &operator=(TrackList &&) = default;
+    // Disambiguates `m_tracks = {...}`, which would otherwise match both the TrackList and the
+    // QList overloads above. A fresh list shares nothing, so there is nothing to detach.
+    TrackList &operator=(std::initializer_list<Track> items)
+    {
+        QList<Track>::operator=(items);
+        return *this;
+    }
+
+    void deepDetach()
+    {
+        detach();
+        for (Track &track : *this) {
+            track.clips.detach();
+            track.transitions.detach();
+        }
+    }
 };
 
 // Root project document: tracks, assets, output settings.
@@ -145,7 +201,7 @@ private:
     int m_width = 1920;
     int m_height = 1080;
     int m_sampleRate = 48000;
-    QList<Track> m_tracks;
+    TrackList m_tracks;
     QList<Bookmark> m_bookmarks;
     TimeUs m_workAreaInUs = -1;
     TimeUs m_workAreaOutUs = -1;

@@ -31,6 +31,7 @@
 #include "engine/DebugReport.h"
 #include "engine/Exporter.h"
 #include "engine/GpuCompositor.h"
+#include "engine/MediaWaveform.h"
 #include "playback/PlaybackDiagnostics.h"
 #include "playback/PlaybackStats.h"
 #include "engine/GpuStatus.h"
@@ -245,6 +246,8 @@ private slots:
     void mixerSurvivesConcurrentClipAudioReset();
     void retimedClipAudioIsNotSilent();
     void retimedAudioPreservesPitch();
+    void perChannelPeaksFoldToTheMergedEnvelope();
+    void panLawIsUnityAtCentreAndSilencesOneSide();
     void retimedAudioLengthTracksTimeline();
     void retimedAudioSurvivesBlockSizeChanges();
     void reversedRetimedAudioIsNotSilent();
@@ -288,6 +291,7 @@ private:
     static QString makeHdHalvesVideo(QTemporaryDir &dir);
     static QString makeAv1ColorVideo(QTemporaryDir &dir);
     static QString makeToneAudio(QTemporaryDir &dir);
+    static QString makeMultiChannelAudio(QTemporaryDir &dir);
     static QString makeSweepAudio(QTemporaryDir &dir);
     static QString makeLongGopVideo(QTemporaryDir &dir);
 };
@@ -3108,6 +3112,33 @@ QString EngineTest::makeToneAudio(QTemporaryDir &dir)
         QStringLiteral("-y"),
         QStringLiteral("-f"), QStringLiteral("lavfi"), QStringLiteral("-i"),
         QStringLiteral("sine=frequency=440:sample_rate=48000:duration=2"),
+        QStringLiteral("-c:a"), QStringLiteral("pcm_s16le"),
+        out,
+    };
+
+    QProcess proc;
+    proc.start(ffmpeg, args);
+    if (!proc.waitForFinished(30000) || proc.exitCode() != 0)
+        return {};
+    return QFileInfo::exists(out) ? out : QString{};
+}
+
+// Six channels carrying the same tone at strictly decreasing amplitude, so a per-channel
+// reader can be checked against a known ordering and the merged envelope against channel 0.
+QString EngineTest::makeMultiChannelAudio(QTemporaryDir &dir)
+{
+    const QString ffmpeg = QStandardPaths::findExecutable(QStringLiteral("ffmpeg"));
+    if (ffmpeg.isEmpty())
+        return {};
+
+    const QString out = dir.filePath(QStringLiteral("surround.wav"));
+    QStringList args{
+        QStringLiteral("-y"),
+        QStringLiteral("-f"), QStringLiteral("lavfi"), QStringLiteral("-i"),
+        QStringLiteral("sine=frequency=440:sample_rate=48000:duration=2"),
+        QStringLiteral("-af"),
+        QStringLiteral("pan=6c|c0=0.90*c0|c1=0.75*c0|c2=0.60*c0"
+                       "|c3=0.45*c0|c4=0.30*c0|c5=0.15*c0"),
         QStringLiteral("-c:a"), QStringLiteral("pcm_s16le"),
         out,
     };
@@ -7231,6 +7262,113 @@ void EngineTest::retimedAudioPreservesPitch()
         QVERIFY2(tone > 10.0 * goertzelMagnitude(collected, 220.0), qPrintable(QString::number(speed)));
         QVERIFY2(tone > 10.0 * goertzelMagnitude(collected, 880.0), qPrintable(QString::number(speed)));
     }
+}
+
+// peaksForRange is implemented as a fold over peaksForRangePerChannel, on the grounds that max
+// is associative. That is the invariant the whole single-decode design rests on: if it ever
+// drifts, turning the lanes on would silently change the merged waveform every other clip draws.
+void EngineTest::perChannelPeaksFoldToTheMergedEnvelope()
+{
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    const QString path = makeMultiChannelAudio(dir);
+    if (path.isEmpty())
+        QSKIP("ffmpeg not available to generate a multi-channel test clip");
+
+    constexpr int kPps = 100;
+    const MediaWaveform::PerChannel perChannel =
+        MediaWaveform::peaksForRangePerChannel(path, 0.0, 2.0, kPps);
+    QCOMPARE(perChannel.channels.size(), 6);
+    QCOMPARE(perChannel.channelNames.size(), 6);
+
+    const QVector<float> merged = MediaWaveform::peaksForRange(path, 0.0, 2.0, kPps);
+    QCOMPARE(merged.size(), perChannel.channels.first().size());
+
+    for (int i = 0; i < merged.size(); ++i) {
+        float expected = 0.0f;
+        for (const QVector<float> &channel : perChannel.channels)
+            expected = qMax(expected, channel.at(i));
+        QVERIFY2(qFuzzyCompare(merged.at(i) + 1.0f, expected + 1.0f),
+                 qPrintable(QStringLiteral("bucket %1: merged %2 != max %3")
+                                .arg(i).arg(merged.at(i)).arg(expected)));
+    }
+
+    // Each channel has to read its own plane, not alias channel 0. The fixture's gains
+    // descend, so the peaks must too — and their ratios to channel 0 must match the gains
+    // that built it. Ratios rather than absolute levels: ffmpeg's pan filter renormalises to
+    // avoid clipping, so the absolute figures are an ffmpeg detail, while the ratios are ours.
+    QList<double> peaks;
+    for (const QVector<float> &channel : perChannel.channels) {
+        double peak = 0.0;
+        for (const float v : channel)
+            peak = qMax(peak, static_cast<double>(v));
+        peaks.append(peak);
+    }
+    QVERIFY2(peaks.first() > 0.0, qPrintable(QString::number(peaks.first())));
+
+    const QList<double> gains{0.90, 0.75, 0.60, 0.45, 0.30, 0.15};
+    for (int c = 1; c < peaks.size(); ++c) {
+        QVERIFY2(peaks.at(c) < peaks.at(c - 1),
+                 qPrintable(QStringLiteral("channel %1 peak %2 not below %3")
+                                .arg(c).arg(peaks.at(c)).arg(peaks.at(c - 1))));
+        const double expected = gains.at(c) / gains.first();
+        const double actual = peaks.at(c) / peaks.first();
+        QVERIFY2(qAbs(actual - expected) < 0.05,
+                 qPrintable(QStringLiteral("channel %1 ratio %2, expected %3")
+                                .arg(c).arg(actual).arg(expected)));
+    }
+}
+
+// A balance law, not a constant-power pan: centre has to be exactly unity or every project that
+// predates the pan control would come back 3 dB quieter in the middle.
+void EngineTest::panLawIsUnityAtCentreAndSilencesOneSide()
+{
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    const QString path = makeToneAudio(dir);
+    if (path.isEmpty())
+        QSKIP("ffmpeg not available to generate a test clip");
+
+    constexpr int kFrames = 1024;
+    const auto sideEnergy = [&](double pan, double *left, double *right) {
+        drift::Project project = makeRetimedToneProject(path, 1.0, false);
+        project.tracks()[0].clips[0].pan = pan;
+        AudioMixer mixer;
+        mixer.setProject(&project);
+
+        QVector<float> collected;
+        mixBlockRms(mixer, 20, kFrames, &collected);
+        double sumL = 0.0;
+        double sumR = 0.0;
+        const int frames = collected.size() / 2;
+        for (int i = 0; i < frames; ++i) {
+            sumL += static_cast<double>(collected[i * 2]) * collected[i * 2];
+            sumR += static_cast<double>(collected[i * 2 + 1]) * collected[i * 2 + 1];
+        }
+        *left = std::sqrt(sumL / frames);
+        *right = std::sqrt(sumR / frames);
+    };
+
+    double centreL = 0.0;
+    double centreR = 0.0;
+    sideEnergy(0.0, &centreL, &centreR);
+    QVERIFY2(centreL > 0.05, qPrintable(QString::number(centreL)));
+    QVERIFY2(centreR > 0.05, qPrintable(QString::number(centreR)));
+
+    // Unity at centre: the panned-hard side must match what centre produced, not 0.707 of it.
+    double leftL = 0.0;
+    double leftR = 0.0;
+    sideEnergy(-1.0, &leftL, &leftR);
+    QVERIFY2(leftR < centreR * 0.001, qPrintable(QString::number(leftR)));
+    QVERIFY2(qAbs(leftL - centreL) < centreL * 0.001,
+             qPrintable(QStringLiteral("L %1 vs centre %2").arg(leftL).arg(centreL)));
+
+    double rightL = 0.0;
+    double rightR = 0.0;
+    sideEnergy(1.0, &rightL, &rightR);
+    QVERIFY2(rightL < centreL * 0.001, qPrintable(QString::number(rightL)));
+    QVERIFY2(qAbs(rightR - centreR) < centreR * 0.001,
+             qPrintable(QStringLiteral("R %1 vs centre %2").arg(rightR).arg(centreR)));
 }
 
 // The retimer walks the source itself, so a cursor that ran fast or slow would show up as audio

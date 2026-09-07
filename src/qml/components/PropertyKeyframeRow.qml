@@ -23,6 +23,11 @@ Column {
     property real sliderTo: 1
     property bool percent: false
     property string unit: "" // e.g. "°" — appended to the numeric readout
+    // Show the slider readout in decibels with the percentage after it, for gain properties
+    // where dB is the scale the value is actually read on. Only meaningful with `percent`,
+    // and deliberately display-only: the stored value, the slider taper and typed input all
+    // stay linear amplitude.
+    property bool decibels: false
 
     // An animated property is tinted with its curve colour so the row, its chip and its curve on
     // the keyframe strip read as one series. Clicking the label switches the animation off without
@@ -88,6 +93,21 @@ Column {
             return Math.round(v * 100) + "%"
         const body = Number(v).toFixed(propDef.decimals)
         return unit.length > 0 ? body + unit : body
+    }
+
+    function formatDb(v) {
+        if (v <= 0)
+            return "-∞ dB"
+        const db = 20 * Math.log10(v)
+        return (db > 0.05 ? "+" : "") + db.toFixed(1) + " dB"
+    }
+
+    // The slider's own readout. Kept separate from displayReadout because the typed-value
+    // popup uses that one for its range label, where "-∞ dB (0%)–+6.0 dB (200%)" is unreadable.
+    function sliderReadout(v) {
+        if (!decibels)
+            return displayReadout(v)
+        return formatDb(v) + " (" + Math.round(v * 100) + "%)"
     }
 
     // Asks the engine rather than reimplementing evaluateAt here. This used to be a JS mirror
@@ -453,7 +473,11 @@ Column {
             // value, so clicking it opens a small editor to type one.
             Item {
                 id: readoutBox
-                width: Math.max(48, readout.implicitWidth + Theme.spacingMd * 2)
+                // The dB readout's width swings with the value ("0.0 dB (100%)" vs "-∞ dB
+                // (0%)"), and the slider is sized off this — so hold a floor wide enough for
+                // the longest form, or the track resizes under the thumb mid-drag.
+                width: Math.max(root.decibels ? 112 : 48,
+                                readout.implicitWidth + Theme.spacingMd * 2)
                 height: Theme.controlHeightSm
                 anchors.verticalCenter: parent.verticalCenter
 
@@ -474,7 +498,7 @@ Column {
                     anchors.rightMargin: Theme.spacingMd
                     anchors.verticalCenter: parent.verticalCenter
                     horizontalAlignment: Text.AlignRight
-                    text: root.displayReadout(root.displayedValue)
+                    text: root.sliderReadout(root.displayedValue)
                     color: Theme.panelForeground
                     font.family: Theme.monoFontFamily
                     font.pixelSize: Theme.fontSizeSm

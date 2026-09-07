@@ -61,6 +61,77 @@ Item {
             sliderFrom: 0
             sliderTo: 2
             percent: true
+            decibels: true
+        }
+
+        // ----- Pan (stereo balance) ----------------------------------------
+        Column {
+            id: panSection
+            width: parent.width
+            spacing: Theme.spacingSm
+            visible: root.clipKind === "audio" || root.clipKind === "video"
+
+            readonly property real panValue: {
+                void root.clipDataRevision
+                return (root.clipData && root.clipData.pan !== undefined)
+                       ? root.clipData.pan : 0.0
+            }
+
+            Row {
+                width: parent.width
+
+                Text {
+                    width: parent.width / 2
+                    text: qsTr("Pan")
+                    color: Theme.mutedForeground
+                    font.family: Theme.fontFamily
+                    font.pixelSize: Theme.fontSizeXs
+                }
+
+                Text {
+                    width: parent.width / 2
+                    horizontalAlignment: Text.AlignRight
+                    // "L 50" / "C" / "R 50" reads faster than a signed fraction, and the
+                    // sign convention for pan is not something a user should have to recall.
+                    text: {
+                        const v = panSection.panValue
+                        if (Math.abs(v) < 0.005)
+                            return qsTr("C")
+                        return (v < 0 ? qsTr("L %1") : qsTr("R %1"))
+                                   .arg(Math.round(Math.abs(v) * 100))
+                    }
+                    color: Theme.panelForeground
+                    font.family: Theme.monoFontFamily
+                    font.pixelSize: Theme.fontSizeSm
+                }
+            }
+
+            ThemedSlider {
+                id: panSlider
+                label: qsTr("Pan")
+                width: parent.width
+                from: -1
+                to: 1
+                Binding on value {
+                    when: !panSlider.pressed
+                    value: panSection.panValue
+                }
+                onMoved: EditorState.previewSetClipPan(
+                             EditorState.selectedTrack, EditorState.selectedClip, value)
+                onPressedChanged: {
+                    if (pressed)
+                        EditorState.beginPreviewDrag(qsTr("Pan changed"))
+                    else
+                        EditorState.commitPreviewDrag()
+                }
+            }
+
+            ThemedButton {
+                text: qsTr("Centre")
+                enabled: Math.abs(panSection.panValue) >= 0.005
+                onClicked: EditorState.setClipPan(
+                               EditorState.selectedTrack, EditorState.selectedClip, 0)
+            }
         }
 
         // ----- Audio Track Selection (Multi-Track) -------------------------

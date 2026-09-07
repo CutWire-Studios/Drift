@@ -44,6 +44,16 @@ double volumeForClip(const drift::Clip &clip, drift::TimeUs timelineUs)
     return qBound(0.0, clip.volume.evaluateAt(relative), 2.0);
 }
 
+// Balance law: attenuate one side, leave the other alone. Unity at centre, unlike a
+// constant-power sin/cos pan, which would drop every existing clip's level by 3 dB the moment
+// this shipped.
+void panGainsForClip(const drift::Clip &clip, float *leftOut, float *rightOut)
+{
+    const double pan = qBound(-1.0, clip.pan, 1.0);
+    *leftOut = static_cast<float>(qMin(1.0, 1.0 - pan));
+    *rightOut = static_cast<float>(qMin(1.0, 1.0 + pan));
+}
+
 double transitionGainForClip(const drift::Track &track, const drift::Clip &clip, drift::TimeUs timelineUs)
 {
     drift::TimeUs windowStart = 0;
@@ -271,14 +281,18 @@ void accumulateClipAudio(const drift::Clip &clip, const drift::Track &track, dri
     }
 
     const int frames = qMin(sampleCount, chunk.size() / 2);
+    // Pan is a plain scalar, so it is constant across the block — hoisted out of the loop.
+    float panL = 1.0f;
+    float panR = 1.0f;
+    panGainsForClip(clip, &panL, &panR);
     for (int i = 0; i < frames; ++i) {
         const drift::TimeUs sampleTimeUs =
             timelineStartUs + static_cast<drift::TimeUs>((static_cast<int64_t>(i) * drift::kUsPerSecond) / sampleRate);
         const float gain = static_cast<float>(volumeForClip(clip, sampleTimeUs)
                                               * transitionGainForClip(track, clip, sampleTimeUs)
                                               * clip.fadeMultiplier(sampleTimeUs));
-        mixBuffer[i * 2] += chunk[i * 2] * gain;
-        mixBuffer[i * 2 + 1] += chunk[i * 2 + 1] * gain;
+        mixBuffer[i * 2] += chunk[i * 2] * gain * panL;
+        mixBuffer[i * 2 + 1] += chunk[i * 2 + 1] * gain * panR;
     }
 }
 

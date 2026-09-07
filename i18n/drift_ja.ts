@@ -2416,6 +2416,14 @@
         <translation>クリップの反転を更新しました</translation>
     </message>
     <message>
+        <source>Pan changed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Clip pan updated</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Rotation snapped</source>
         <translation>回転をスナップしました</translation>
     </message>
@@ -3622,6 +3630,30 @@
     <message>
         <source>This clip has no audio track.</source>
         <translation>このクリップにはオーディオトラックがありません。</translation>
+    </message>
+    <message>
+        <source>Pan</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>C</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>L %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>R %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Pan changed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Centre</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Audio track</source>
@@ -9105,6 +9137,14 @@ If playback stutters, try another.</source>
     <message>
         <source>Mute track</source>
         <translation>トラックをミュート</translation>
+    </message>
+    <message>
+        <source>Show one combined waveform</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show each channel separately (%1)</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Show track</source>

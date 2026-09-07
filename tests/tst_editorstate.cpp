@@ -47,6 +47,11 @@ private slots:
     void clipboardHasEffectsIgnoresOrdinaryText();
     void savedEffectPresetAppliesToAnotherClip();
     void multiTrackAudioSelectionAndExtraction();
+    void panAndChannelWaveformsPersistAndUndo();
+    void undoRevertsClipPropertyEdits();
+    void volumeIsAnAnimatedPropertyOnAudioClips();
+    void channelCountIsKnownBeforeAnythingDecodes();
+    void separateAudioCarriesAudioEffectsAndSpeedCurve();
     void addTextClip();
     void addTextClipEmptyUsesPlaceholder();
     void addTextClipWithTextDoesNotRequestEdit();
@@ -4503,6 +4508,331 @@ void EditorStateTest::multiTrackAudioSelectionAndExtraction()
     }
     QVERIFY(hasAudioTrack1);
     QVERIFY(hasAudioTrack2);
+}
+
+// Pan is a plain scalar rather than a keyframe track, so it has its own save/load and undo
+// path; showChannelWaveforms is view-only and takes no undo entry at all, which is the same
+// split showWaveform already has.
+void EditorStateTest::panAndChannelWaveformsPersistAndUndo()
+{
+    AssetLibrary library;
+    AppController state(&library);
+
+    drift::Clip clip;
+    clip.id = QStringLiteral("clip-pan");
+    clip.type = drift::ClipType::Audio;
+    clip.path = QStringLiteral("/nonexistent/tone.wav");
+    clip.timelineStart = 0;
+    clip.timelineDuration = drift::secondsToUs(2.0);
+    clip.srcIn = 0;
+    clip.srcOut = clip.timelineDuration;
+    state.project()->tracks().clear();
+    state.project()->tracks().append(drift::Track{.type = drift::TrackType::Audio});
+    state.project()->tracks()[0].clips.append(clip);
+    state.selectClip(0, 0);
+
+    QCOMPARE(state.clipAt(0, 0).value(QStringLiteral("pan")).toDouble(), 0.0);
+
+    state.setClipPan(0, 0, -0.6);
+    QCOMPARE(state.clipAt(0, 0).value(QStringLiteral("pan")).toDouble(), -0.6);
+
+    // Out of range is clamped rather than rejected, the way mcpSetClipVolume clamps.
+    state.setClipPan(0, 0, -4.0);
+    QCOMPARE(state.clipAt(0, 0).value(QStringLiteral("pan")).toDouble(), -1.0);
+
+    state.undo();
+    QCOMPARE(state.clipAt(0, 0).value(QStringLiteral("pan")).toDouble(), -0.6);
+    state.undo();
+    QCOMPARE(state.clipAt(0, 0).value(QStringLiteral("pan")).toDouble(), 0.0);
+    state.redo();
+    QCOMPARE(state.clipAt(0, 0).value(QStringLiteral("pan")).toDouble(), -0.6);
+
+    // View-only: no undo entry, so undoing after it must not switch it back off.
+    QVERIFY(!state.trackShowChannelWaveforms(0));
+    state.setTrackShowChannelWaveforms(0, true);
+    QVERIFY(state.trackShowChannelWaveforms(0));
+
+    QString error;
+    const drift::Project loaded =
+        drift::Project::fromJson(state.project()->toJson(), &error);
+    QVERIFY2(error.isEmpty(), qPrintable(error));
+    QCOMPARE(loaded.tracks().size(), 1);
+    QVERIFY(loaded.tracks().at(0).showChannelWaveforms);
+    QCOMPARE(loaded.tracks().at(0).clips.at(0).pan, -0.6);
+}
+
+// Every one of these edit paths binds a `Clip &` or `Track &` before snapshotting the project
+// for undo. Project's tracks deep-detach on copy so that the snapshot cannot alias the live
+// project — without that, the write through the already-bound reference goes into the snapshot
+// too, the "before" state becomes the "after" state, and undo restores the value just set.
+// This asserts the whole class at once, since a regression would be silent and reach every one
+// of them at the same time.
+void EditorStateTest::undoRevertsClipPropertyEdits()
+{
+    const auto fresh = [](AppController &state, drift::ClipType type) {
+        drift::Clip clip;
+        clip.id = QStringLiteral("c1");
+        clip.type = type;
+        clip.path = QStringLiteral("/nonexistent/v.mp4");
+        clip.name = QStringLiteral("orig");
+        clip.timelineStart = 0;
+        clip.timelineDuration = drift::secondsToUs(4.0);
+        clip.srcIn = 0;
+        clip.srcOut = clip.timelineDuration;
+        state.project()->tracks().clear();
+        state.project()->tracks().append(drift::Track{
+            .type = type == drift::ClipType::Audio ? drift::TrackType::Audio
+                                                   : drift::TrackType::Video});
+        state.project()->tracks()[0].clips.append(clip);
+        state.selectClip(0, 0);
+    };
+    const auto clip0 = [](AppController &s) { return s.project()->tracks().at(0).clips.at(0); };
+
+    {
+        AssetLibrary l; AppController s(&l); fresh(s, drift::ClipType::Video);
+        s.setClipSpeed(0, 0, 2.0);
+        QCOMPARE(clip0(s).speed, 2.0);
+        s.undo();
+        QCOMPARE(clip0(s).speed, 1.0);
+    }
+    {
+        AssetLibrary l; AppController s(&l); fresh(s, drift::ClipType::Audio);
+        s.setClipFade(0, 0, 1.0, 0.5);
+        QCOMPARE(clip0(s).fadeInUs, drift::secondsToUs(1.0));
+        s.undo();
+        QCOMPARE(clip0(s).fadeInUs, 0);
+    }
+    {
+        AssetLibrary l; AppController s(&l); fresh(s, drift::ClipType::Video);
+        s.setClipBlendMode(0, 0, QStringLiteral("multiply"));
+        QCOMPARE(clip0(s).blendMode, drift::BlendMode::Multiply);
+        s.undo();
+        QCOMPARE(clip0(s).blendMode, drift::BlendMode::Normal);
+    }
+    {
+        AssetLibrary l; AppController s(&l); fresh(s, drift::ClipType::Video);
+        s.setClipStart(0, 0, 3.0);
+        QCOMPARE(clip0(s).timelineStart, drift::secondsToUs(3.0));
+        s.undo();
+        QCOMPARE(clip0(s).timelineStart, 0);
+    }
+    {
+        AssetLibrary l; AppController s(&l); fresh(s, drift::ClipType::Video);
+        s.setClipFlip(0, 0, true, false);
+        QVERIFY(clip0(s).flipH);
+        s.undo();
+        QVERIFY(!clip0(s).flipH);
+    }
+    {
+        AssetLibrary l; AppController s(&l); fresh(s, drift::ClipType::Video);
+        s.setClipReverse(0, 0, true);
+        QVERIFY(clip0(s).reverse);
+        s.undo();
+        QVERIFY(!clip0(s).reverse);
+    }
+    {
+        AssetLibrary l; AppController s(&l); fresh(s, drift::ClipType::Video);
+        s.setClipTrim(0, 0, 1.0, 3.0);
+        QCOMPARE(clip0(s).timelineDuration, drift::secondsToUs(2.0));
+        s.undo();
+        QCOMPARE(clip0(s).timelineDuration, drift::secondsToUs(4.0));
+    }
+    {
+        AssetLibrary l; AppController s(&l); fresh(s, drift::ClipType::Video);
+        s.setClipStabilizeMode(0, 0, QStringLiteral("keyframes"));
+        QCOMPARE(clip0(s).stabilizeMode, drift::StabilizeMode::Keyframes);
+        s.undo();
+        QCOMPARE(clip0(s).stabilizeMode, drift::StabilizeMode::Bake);
+    }
+}
+
+// Audio effects live on an adjustment pinned to the clip, sitting on a lane of the clip's own
+// track, and a lane's effects reach the mix through that track's clips. Separating audio sets
+// suppressEmbeddedAudio, so the video clip stops contributing audio entirely — the adjustment
+// has to move to the new audio track's lane or it silently applies to nothing. The speed curve
+// has to come across for the same "still describes the same audio" reason.
+void EditorStateTest::separateAudioCarriesAudioEffectsAndSpeedCurve()
+{
+    const QString ffmpeg = QStandardPaths::findExecutable(QStringLiteral("ffmpeg"));
+    if (ffmpeg.isEmpty())
+        QSKIP("ffmpeg not available to generate a test clip");
+
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    const QString path = dir.filePath(QStringLiteral("av.mkv"));
+    QProcess make;
+    make.start(ffmpeg, {QStringLiteral("-y"),
+                        QStringLiteral("-f"), QStringLiteral("lavfi"), QStringLiteral("-i"),
+                        QStringLiteral("color=c=blue:s=64x32:r=25:d=2"),
+                        QStringLiteral("-f"), QStringLiteral("lavfi"), QStringLiteral("-i"),
+                        QStringLiteral("sine=frequency=440:d=2"),
+                        QStringLiteral("-c:v"), QStringLiteral("libx264"),
+                        QStringLiteral("-c:a"), QStringLiteral("aac"), path});
+    QVERIFY(make.waitForFinished(30000));
+    QCOMPARE(make.exitCode(), 0);
+
+    AssetLibrary library;
+    AppController state(&library);
+
+    drift::Clip clip;
+    clip.id = QStringLiteral("clip-av");
+    clip.type = drift::ClipType::Video;
+    clip.name = QStringLiteral("AV");
+    clip.path = path;
+    clip.timelineStart = 0;
+    clip.timelineDuration = drift::secondsToUs(2.0);
+    clip.srcIn = 0;
+    clip.srcOut = clip.timelineDuration;
+    clip.speedCurve = drift::SpeedCurve::flat(0.5);
+    clip.syncDurationFromSpeedCurve();
+    state.project()->tracks().clear();
+    state.project()->tracks().append(drift::Track{.type = drift::TrackType::Video});
+    state.project()->tracks()[0].clips.append(clip);
+    state.selectClip(0, 0);
+
+    // Lands on an audio-kind adjustment pinned to the clip, on a lane of the video track.
+    const QVariantList catalog = state.audioEffectCatalog();
+    QVERIFY(!catalog.isEmpty());
+    const QString effectId = catalog.first().toMap().value(QStringLiteral("id")).toString();
+    QVERIFY(!effectId.isEmpty());
+    state.addAudioEffect(0, 0, effectId);
+
+    const auto audioEffectAdjustments = [](const drift::Project &p) {
+        QList<QPair<QString, QString>> found; // parentTrackId, linkedClipId
+        for (const drift::Track &t : p.tracks()) {
+            if (!t.isAdjustmentLane())
+                continue;
+            for (const drift::Clip &c : t.clips) {
+                if (c.adjustmentKind == drift::AdjustmentKind::AudioEffects
+                    && !c.audioEffects.isEmpty())
+                    found.append({t.parentTrackId, c.linkedClipId});
+            }
+        }
+        return found;
+    };
+
+    QCOMPARE(audioEffectAdjustments(*state.project()).size(), 1);
+
+    int videoTrack = -1;
+    for (int t = 0; t < state.project()->tracks().size(); ++t) {
+        if (state.project()->tracks().at(t).type == drift::TrackType::Video)
+            videoTrack = t;
+    }
+    QVERIFY(videoTrack >= 0);
+    state.selectClip(videoTrack, 0);
+    state.separateAudioFromSelection();
+
+    // The companion exists and mirrors the whole retiming, curve included.
+    const drift::Clip *companion = nullptr;
+    QString audioTrackId;
+    for (const drift::Track &t : state.project()->tracks()) {
+        if (t.type != drift::TrackType::Audio)
+            continue;
+        for (const drift::Clip &c : t.clips) {
+            if (c.type == drift::ClipType::Audio) {
+                companion = &c;
+                audioTrackId = t.id;
+            }
+        }
+    }
+    QVERIFY(companion != nullptr);
+    QVERIFY(!companion->speedCurve.isEmpty());
+    QCOMPARE(companion->timelineDuration, clip.timelineDuration);
+
+    // Exactly one audio-effect adjustment, now hanging off the audio track and pinned to the
+    // companion — not left behind on the video track's lane.
+    const auto after = audioEffectAdjustments(*state.project());
+    QCOMPARE(after.size(), 1);
+    QVERIFY(!audioTrackId.isEmpty());
+    QCOMPARE(after.first().first, audioTrackId);
+    QCOMPARE(after.first().second, companion->id);
+}
+
+// The timeline's keyframe lane is populated from clipAnimatedProperties, and only opens when
+// that list is non-empty. Volume has to appear there for an audio clip or the lane stays shut on
+// the Audio tab no matter what the visibility gate allows.
+void EditorStateTest::volumeIsAnAnimatedPropertyOnAudioClips()
+{
+    AssetLibrary library;
+    AppController state(&library);
+
+    drift::Clip clip;
+    clip.id = QStringLiteral("clip-vol");
+    clip.type = drift::ClipType::Audio;
+    clip.path = QStringLiteral("/nonexistent/tone.wav");
+    clip.timelineStart = 0;
+    clip.timelineDuration = drift::secondsToUs(4.0);
+    clip.srcIn = 0;
+    clip.srcOut = clip.timelineDuration;
+    state.project()->tracks().clear();
+    state.project()->tracks().append(drift::Track{.type = drift::TrackType::Audio});
+    state.project()->tracks()[0].clips.append(clip);
+    state.selectClip(0, 0);
+
+    // Unkeyed, and a lone key at the origin, both read as "not animated" — that is the base
+    // value, not a curve, and it is the same rule every other property follows.
+    QVERIFY(!state.clipAnimatedProperties(0, 0).contains(QStringLiteral("volume")));
+    state.setClipKeyframe(0, 0, QStringLiteral("volume"), 0.0, 1.0);
+    QVERIFY(!state.clipAnimatedProperties(0, 0).contains(QStringLiteral("volume")));
+
+    // A second key is a real ramp, so the lane has something to draw.
+    state.setClipKeyframe(0, 0, QStringLiteral("volume"), 2.0, 0.25);
+    QVERIFY(state.clipAnimatedProperties(0, 0).contains(QStringLiteral("volume")));
+
+    const QVariantList points = state.clipKeyframes(0, 0, QStringLiteral("volume"));
+    QCOMPARE(points.size(), 2);
+    QCOMPARE(state.propertyValueAt(0, 0, QStringLiteral("volume"), 0.0, 1.0), 1.0);
+    QCOMPARE(state.propertyValueAt(0, 0, QStringLiteral("volume"), 2.0, 1.0), 0.25);
+}
+
+// The track header's per-channel toggle is bound to trackMaxChannelCount, and bindings in the
+// header re-evaluate on tracksChanged. Peak decoding reports through waveformRangeReady instead,
+// so anything sourcing the channel count from the decode cache is unavailable at the moment the
+// header is first built and only appears after some unrelated edit — which is exactly what a
+// mute/unmute is. The count therefore has to come from the container metadata, available with no
+// decode at all.
+void EditorStateTest::channelCountIsKnownBeforeAnythingDecodes()
+{
+    const QString ffmpeg = QStandardPaths::findExecutable(QStringLiteral("ffmpeg"));
+    if (ffmpeg.isEmpty())
+        QSKIP("ffmpeg not available to generate a multi-channel test clip");
+
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    const QString path = dir.filePath(QStringLiteral("surround.wav"));
+    QProcess make;
+    make.start(ffmpeg, {QStringLiteral("-y"),
+                        QStringLiteral("-f"), QStringLiteral("lavfi"), QStringLiteral("-i"),
+                        QStringLiteral("sine=frequency=440:sample_rate=48000:duration=1"),
+                        QStringLiteral("-af"), QStringLiteral("pan=6c|c0=c0|c1=c0|c2=c0"
+                                                              "|c3=c0|c4=c0|c5=c0"),
+                        QStringLiteral("-c:a"), QStringLiteral("pcm_s16le"), path});
+    QVERIFY(make.waitForFinished(30000));
+    QCOMPARE(make.exitCode(), 0);
+
+    AssetLibrary library;
+    AppController state(&library);
+
+    drift::Clip clip;
+    clip.id = QStringLiteral("clip-surround");
+    clip.type = drift::ClipType::Audio;
+    clip.path = path;
+    clip.timelineStart = 0;
+    clip.timelineDuration = drift::secondsToUs(1.0);
+    clip.srcIn = 0;
+    clip.srcOut = clip.timelineDuration;
+    state.project()->tracks().clear();
+    state.project()->tracks().append(drift::Track{.type = drift::TrackType::Audio});
+    state.project()->tracks()[0].clips.append(clip);
+
+    // No peaks have been requested, so nothing has decoded — the toggle's condition must hold
+    // anyway. waveformChannelCount is the decode-backed one and is expected to be 0 here.
+    QCOMPARE(state.waveformChannelCount(path, 0), 0);
+    QCOMPARE(state.trackMaxChannelCount(0), 6);
+
+    // Mono and missing sources give it nothing to split, so the toggle stays hidden.
+    state.project()->tracks()[0].clips[0].path = QStringLiteral("/nonexistent/none.wav");
+    QCOMPARE(state.trackMaxChannelCount(0), 0);
 }
 
 void EditorStateTest::adjustmentLayerCreationAndCompositing()

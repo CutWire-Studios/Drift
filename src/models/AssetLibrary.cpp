@@ -231,17 +231,23 @@ QString formatDuration(drift::TimeUs durationUs)
         .arg(seconds, 2, 10, QChar('0'));
 }
 
+// MediaAsset carries one sampleRate/channels pair for the whole file, so a multi-stream source
+// has to pick one. It describes the *first* audio stream, matching Clip::audioStreamIndex's
+// default of 0 and ensureAudioPresence(), which also breaks on the first. This used to keep
+// overwriting with each stream in turn and end up describing the last one, so the same asset
+// reported different channel counts depending on which path had populated it.
 void fillAudioPresence(drift::MediaAsset &asset, const MediaInfo &info)
 {
     bool hasAudio = false;
     for (const StreamInfo &stream : info.streams) {
-        if (stream.type == StreamInfo::Type::Audio) {
-            hasAudio = true;
-            asset.sampleRate = stream.sampleRate;
-            asset.channels = stream.channels;
-            if (asset.codecName.isEmpty())
-                asset.codecName = stream.codecName;
-        }
+        if (stream.type != StreamInfo::Type::Audio)
+            continue;
+        hasAudio = true;
+        asset.sampleRate = stream.sampleRate;
+        asset.channels = stream.channels;
+        if (asset.codecName.isEmpty())
+            asset.codecName = stream.codecName;
+        break;
     }
     asset.hasAudio = hasAudio;
     asset.hasAudioKnown = true;

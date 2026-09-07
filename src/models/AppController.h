@@ -943,6 +943,10 @@ public:
     Q_INVOKABLE void cancelReverseRender();
     Q_INVOKABLE bool clipHasReverseProxy(int trackIndex, int clipIndex) const;
     Q_INVOKABLE void setClipFlip(int trackIndex, int clipIndex, bool flipH, bool flipV);
+    // Stereo balance, -1..+1. previewSet* coalesces a slider drag into one undo entry the way
+    // previewSetClipSpeed does; setClipPan is the one-shot for typing or resetting to centre.
+    Q_INVOKABLE void previewSetClipPan(int trackIndex, int clipIndex, double pan);
+    Q_INVOKABLE void setClipPan(int trackIndex, int clipIndex, double pan);
     Q_INVOKABLE void setClipRotationSnap(int trackIndex, int clipIndex, double degrees);
     Q_INVOKABLE bool canMergeSelection() const;
     Q_INVOKABLE void mergeSelectedClips();
@@ -1101,6 +1105,8 @@ public:
     Q_INVOKABLE bool trackHidden(int trackIndex) const;
     Q_INVOKABLE void setTrackShowWaveform(int trackIndex, bool show);
     Q_INVOKABLE bool trackShowWaveform(int trackIndex) const;
+    Q_INVOKABLE void setTrackShowChannelWaveforms(int trackIndex, bool show);
+    Q_INVOKABLE bool trackShowChannelWaveforms(int trackIndex) const;
     // Per-track row height multiplier (DAW-style lane resize). Clamped to
     // trackHeightScaleMin()..trackHeightScaleMax().
     Q_INVOKABLE void setTrackHeightScale(int trackIndex, double scale);
@@ -1203,6 +1209,20 @@ public:
     Q_INVOKABLE QVariantList waveformPeaksRange(const QString &path, double startSeconds,
                                                 double durSeconds, int buckets,
                                                 int audioStreamIndex = 0) const;
+    // Every channel of the stream over the same window, for stacked per-channel lanes.
+    // Channel-major and flat — peaks[c * buckets + b] — so one array crosses into QML rather
+    // than one per channel, and the paint loop indexes it without unpacking.
+    // { "channels": int, "buckets": int, "names": QStringList, "peaks": QVariantList }.
+    // channels == 0 means nothing has decoded for this stream yet, not mono: until a block
+    // lands the caller keeps drawing the merged lane.
+    Q_INVOKABLE QVariantMap waveformChannelPeaksRange(const QString &path, double startSeconds,
+                                                      double durSeconds, int buckets,
+                                                      int audioStreamIndex = 0) const;
+    // Channels the decoder found for a source, 0 until a block has landed. Answered from the
+    // block cache — never probes the file, so it is safe from a binding or a menu.
+    Q_INVOKABLE int waveformChannelCount(const QString &path, int audioStreamIndex = 0) const;
+    // Widest channel count over a track's clips, for sizing the row when the lanes turn on.
+    Q_INVOKABLE int trackMaxChannelCount(int trackIndex) const;
     // title / author / description / createdAt / modifiedAt, for the properties dialog.
     QVariantMap projectMetadata() const;
     Q_INVOKABLE void setProjectMetadata(const QString &title, const QString &author,

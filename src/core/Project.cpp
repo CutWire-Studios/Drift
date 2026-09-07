@@ -320,6 +320,7 @@ QJsonObject clipToJson(const Clip &clip)
         {QStringLiteral("srcInUs"), static_cast<double>(clip.srcIn)},
         {QStringLiteral("srcOutUs"), static_cast<double>(clip.srcOut)},
         {QStringLiteral("volume"), keyframesToJson(clip.volume)},
+        {QStringLiteral("pan"), clip.pan},
         {QStringLiteral("opacity"), keyframesToJson(clip.opacity)},
         {QStringLiteral("x"), keyframesToJson(clip.transformX)},
         {QStringLiteral("y"), keyframesToJson(clip.transformY)},
@@ -433,6 +434,7 @@ Clip clipFromJsonV2(const QJsonObject &object, int canvasW = 1920, int canvasH =
     } else {
         clip.volume.setKeyframe(0, object.value(QStringLiteral("volume")).toDouble(1.0));
     }
+    clip.pan = object.value(QStringLiteral("pan")).toDouble(0.0);
     clip.opacity = keyframesFromJson(object.value(QStringLiteral("opacity")).toObject());
     clip.rotation = keyframesFromJson(object.value(QStringLiteral("rotation")).toObject());
     clip.effects = effectsFromJson(object.value(QStringLiteral("effects")).toArray());
@@ -829,6 +831,8 @@ Project Project::fromJson(const QJsonObject &object, QString *errorOut)
             track.hidden = trackObject.value(QStringLiteral("hidden")).toBool(false);
             track.locked = trackObject.value(QStringLiteral("locked")).toBool(false);
             track.showWaveform = trackObject.value(QStringLiteral("showWaveform")).toBool(false);
+            track.showChannelWaveforms =
+                trackObject.value(QStringLiteral("showChannelWaveforms")).toBool(false);
             track.heightScale = qBound(
                 0.6, trackObject.value(QStringLiteral("heightScale")).toDouble(1.0), 4.0);
 
@@ -947,6 +951,7 @@ QJsonObject Project::toJson() const
             {QStringLiteral("hidden"), track.hidden},
             {QStringLiteral("locked"), track.locked},
             {QStringLiteral("showWaveform"), track.showWaveform},
+            {QStringLiteral("showChannelWaveforms"), track.showChannelWaveforms},
             {QStringLiteral("heightScale"), track.heightScale},
             {QStringLiteral("clips"), clipsArray},
             {QStringLiteral("transitions"), transitionsArray},

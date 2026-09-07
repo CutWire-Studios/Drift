@@ -37,6 +37,10 @@ struct Track
     bool hidden = false;
     bool locked = false;
     bool showWaveform = false; // view-only: show audio waveform instead of filmstrip for this track's clips
+    // view-only: draw a multi-channel clip's waveform as one lane per source channel instead
+    // of the single max-across-channels envelope. Opt-in because a 5.1 clip in a standard row
+    // gives each lane a few pixels — pair it with heightScale.
+    bool showChannelWaveforms = false;
     // view-only: multiplies this track's base row height so a single lane can be
     // enlarged (waveform editing) without zooming the whole timeline.
     qreal heightScale = 1.0;

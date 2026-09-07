@@ -57,6 +57,7 @@ Item {
                              EditorState.selectionContains(trackIndex, clipIndex))
     property string trackType: panel.tracks[trackIndex].type
     property bool showWaveform: panel.tracks[trackIndex].showWaveform === true
+    property bool showChannelWaveforms: panel.tracks[trackIndex].showChannelWaveforms === true
     property var clipEffects: clipData.effects || []
     property var clipAudioEffects: clipData.audioEffects || []
     readonly property bool hasAnyEffects: clipEffects.length > 0 || clipAudioEffects.length > 0
@@ -586,6 +587,39 @@ Item {
             anchors.bottom: parent.bottom
             clip: true
 
+            // Bumped when an off-thread decode lands, to re-run the peaks and lane-count
+            // bindings. Lives on the host because the labels below need it too.
+            property int decodeRevision: 0
+
+            // Channels the decoder found, 0 until the first block lands — so a multi-channel
+            // clip draws the merged lane for one frame and then splits.
+            readonly property int sourceChannels: {
+                void decodeRevision
+                if (!clipItem.showChannelWaveforms || !clipItem.clipData.path)
+                    return 0
+                return EditorState.waveformChannelCount(
+                    clipItem.clipData.path, clipItem.clipData.audioStreamIndex || 0)
+            }
+
+            // Below this a lane is a grey smear rather than a waveform, so fall back to the
+            // single merged envelope instead of drawing something unreadable.
+            readonly property real minLaneHeight: 8
+
+            readonly property int laneCount: {
+                if (sourceChannels < 2)
+                    return 1
+                return (height / sourceChannels) >= minLaneHeight ? sourceChannels : 1
+            }
+            readonly property real laneHeight: height / Math.max(1, laneCount)
+
+            Connections {
+                target: EditorState
+                function onWaveformRangeReady(path) {
+                    if (path === clipItem.clipData.path)
+                        waveformHost.decodeRevision++
+                }
+            }
+
             Canvas {
                 id: waveformCanvas
 
@@ -614,12 +648,13 @@ Item {
                 width: Math.max(1, Math.min(4096, Math.floor(visibleRight - visibleLeft)))
                 height: waveformHost.height
 
-                // Bumped when the off-thread decode lands, to re-run the peaks binding.
-                property int decodeRevision: 0
-
                 property var peaks: {
-                    void decodeRevision
+                    void waveformHost.decodeRevision
                     if (!clipItem.clipData.path || srcPerPx <= 0)
+                        return []
+                    // The per-channel query covers this window already; asking for the merged
+                    // envelope as well would double the work for something nothing draws.
+                    if (waveformHost.laneCount > 1)
                         return []
                     return EditorState.waveformPeaksRange(
                         clipItem.clipData.path,
@@ -629,21 +664,96 @@ Item {
                         clipItem.clipData.audioStreamIndex || 0)
                 }
 
+                // { channels, buckets, names, peaks } with peaks channel-major and flat.
+                property var channelData: {
+                    void waveformHost.decodeRevision
+                    if (!clipItem.clipData.path || srcPerPx <= 0
+                            || waveformHost.laneCount <= 1)
+                        return null
+                    return EditorState.waveformChannelPeaksRange(
+                        clipItem.clipData.path,
+                        (clipItem.clipData.inPoint || 0) + x * srcPerPx,
+                        width * srcPerPx,
+                        Math.ceil(width),
+                        clipItem.clipData.audioStreamIndex || 0)
+                }
+
                 onPeaksChanged: requestPaint()
+                onChannelDataChanged: requestPaint()
                 onWidthChanged: requestPaint()
                 onHeightChanged: requestPaint()
 
-                Connections {
-                    target: EditorState
-                    function onWaveformRangeReady(path) {
-                        if (path === clipItem.clipData.path)
-                            waveformCanvas.decodeRevision++
+                // One lane per source channel. Drawn as a single filled path per lane rather
+                // than a rect per column: 8 lanes over a viewport-wide clip is tens of
+                // thousands of fillRect calls, which visibly hitches on repaint.
+                function paintLanes(ctx, data) {
+                    const channels = data.channels
+                    const buckets = data.buckets
+                    const values = data.peaks
+                    const w = Math.max(1, Math.floor(width))
+                    const laneH = height / channels
+
+                    ctx.fillStyle = Theme.waveformColor
+                    for (var c = 0; c < channels; c++) {
+                        const base = c * buckets
+                        const mid = c * laneH + laneH / 2
+                        const half = (laneH / 2) * 0.85
+                        ctx.beginPath()
+                        // Top edge left to right, then the mirrored bottom edge back, so the
+                        // lane closes into one shape.
+                        for (var x = 0; x < w; x++) {
+                            var i0 = base + Math.floor(x * buckets / w)
+                            var i1 = base + Math.floor((x + 1) * buckets / w)
+                            if (i1 <= i0)
+                                i1 = Math.min(base + buckets, i0 + 1)
+                            var peak = 0
+                            for (var i = i0; i < i1; i++) {
+                                if (values[i] > peak)
+                                    peak = values[i]
+                            }
+                            const amp = Math.max(0.5, peak * half)
+                            if (x === 0)
+                                ctx.moveTo(x, mid - amp)
+                            else
+                                ctx.lineTo(x, mid - amp)
+                            ctx.lineTo(x + 1, mid - amp)
+                        }
+                        for (var xb = w - 1; xb >= 0; xb--) {
+                            var j0 = base + Math.floor(xb * buckets / w)
+                            var j1 = base + Math.floor((xb + 1) * buckets / w)
+                            if (j1 <= j0)
+                                j1 = Math.min(base + buckets, j0 + 1)
+                            var peakB = 0
+                            for (var j = j0; j < j1; j++) {
+                                if (values[j] > peakB)
+                                    peakB = values[j]
+                            }
+                            const ampB = Math.max(0.5, peakB * half)
+                            ctx.lineTo(xb + 1, mid + ampB)
+                            ctx.lineTo(xb, mid + ampB)
+                        }
+                        ctx.closePath()
+                        ctx.fill()
                     }
+
+                    // Without a divider eight lanes read as one grey block. Inner edges only.
+                    ctx.fillStyle = Theme.panelBorder
+                    ctx.globalAlpha = 0.5
+                    for (var d = 1; d < channels; d++)
+                        ctx.fillRect(0, Math.round(d * laneH), w, 1)
+                    ctx.globalAlpha = 1.0
                 }
 
                 onPaint: {
                     var ctx = getContext("2d");
                     ctx.clearRect(0, 0, width, height);
+
+                    if (waveformHost.laneCount > 1 && channelData
+                            && channelData.channels > 1 && channelData.buckets > 0) {
+                        paintLanes(ctx, channelData);
+                        return;
+                    }
+
                     if (!peaks || peaks.length === 0)
                         return;
                     ctx.fillStyle = Theme.waveformColor;
@@ -664,6 +774,26 @@ Item {
                         if (amp > 0.5)
                             ctx.fillRect(x, mid - amp, 1, amp * 2);
                     }
+                }
+            }
+
+            // Channel labels. Pinned to the host, not drawn into the canvas: the canvas x
+            // tracks the viewport, so anything painted in its coordinates slides while you
+            // scroll. Hidden when a lane is too short for the glyph to fit.
+            Repeater {
+                model: waveformHost.laneCount > 1 ? waveformHost.laneCount : 0
+
+                Text {
+                    readonly property var names: waveformCanvas.channelData
+                                                 ? waveformCanvas.channelData.names : null
+                    x: 3
+                    y: index * waveformHost.laneHeight
+                       + (waveformHost.laneHeight - height) / 2
+                    visible: waveformHost.laneHeight >= 14
+                    text: (names && names[index]) ? names[index] : (index + 1)
+                    color: Theme.mutedForeground
+                    font.family: Theme.fontFamily
+                    font.pixelSize: Theme.fontSizeTiny
                 }
             }
         }

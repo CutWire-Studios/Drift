@@ -60,6 +60,10 @@ struct Clip
     bool suppressEmbeddedAudio = false;
     // 0-based index among the audio streams in `path` (for multi-track video/audio files from OBS, etc.)
     int audioStreamIndex = 0;
+    // Stereo balance: -1 hard left, 0 centre, +1 hard right. A balance law rather than a
+    // constant-power pan — it attenuates one side and is unity at centre, so the default
+    // leaves the mix bit-identical to a project that never set it.
+    double pan = 0.0;
 
     TimeUs timelineStart = 0;
     TimeUs timelineDuration = 0;
