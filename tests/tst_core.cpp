@@ -106,6 +106,7 @@ private slots:
     void retargetClipToSourceKeepsPlacementAndSyncsSource();
     void retargetClipToSourceClearsPerSourceState();
     void retargetClipToSourceKeepsAGeometricMask();
+    void legacyClipMaskMigratesToAnAdjustmentLane();
     void retargetClipToSourceShrinksWhenMediaRunsOut();
     void applyMulticamSwitchPunchesAndRecuts();
     void applyMulticamSwitchMergesAdjacentSameCamera();
@@ -2118,22 +2119,83 @@ void CoreTest::matteMaskSerialization()
     clip.type = drift::ClipType::Video;
     clip.timelineStart = 0;
     clip.timelineDuration = drift::secondsToUs(3.0);
-    clip.mask.shape = drift::MaskShape::Matte;
-    clip.mask.mattePath = QStringLiteral("/tmp/mattes/abc.mkv");
-    clip.mask.matteSrcOffsetUs = drift::secondsToUs(1.5);
-    clip.mask.invert = true;
     project.tracks()[0].clips.append(clip);
+
+    drift::Mask matte = drift::fullFrameMediaMask(QStringLiteral("/tmp/mattes/abc.mkv"),
+                                                  drift::secondsToUs(1.5));
+    matte.mediaFgrPath = QStringLiteral("/tmp/mattes/abc.fgr.mkv");
+    matte.invert = true;
+    matte.op = drift::MaskOp::Intersect;
+    matte.mediaChannel = drift::MaskMediaChannel::Alpha;
+    drift::setLinkedMask(project, 0, 0, matte);
 
     const QJsonObject json = project.toJson();
     QString error;
     const drift::Project loaded = drift::Project::fromJson(json, &error);
 
     QVERIFY(error.isEmpty());
-    const drift::Mask &mask = loaded.tracks()[0].clips[0].mask;
-    QCOMPARE(mask.shape, drift::MaskShape::Matte);
-    QCOMPARE(mask.mattePath, QStringLiteral("/tmp/mattes/abc.mkv"));
-    QCOMPARE(mask.matteSrcOffsetUs, drift::secondsToUs(1.5));
+    const QList<drift::LaneMask> masks = drift::laneMasksAt(loaded, 0, 0);
+    QCOMPARE(masks.size(), 1);
+    const drift::Mask &mask = masks.constFirst().mask;
+    QCOMPARE(mask.shape, drift::MaskShape::Media);
+    QCOMPARE(mask.mediaPath, QStringLiteral("/tmp/mattes/abc.mkv"));
+    QCOMPARE(mask.mediaFgrPath, QStringLiteral("/tmp/mattes/abc.fgr.mkv"));
+    QCOMPARE(mask.mediaSrcOffsetUs, drift::secondsToUs(1.5));
     QCOMPARE(mask.invert, true);
+    QCOMPARE(mask.op, drift::MaskOp::Intersect);
+    QCOMPARE(mask.mediaChannel, drift::MaskMediaChannel::Alpha);
+}
+
+// A pre-v5 project put one mask directly on the clip under the old "matte" spelling. It has to
+// come back as a Media mask on a linked adjustment, and — the part that is easy to get wrong —
+// full-frame: the old shape ignored its rect entirely, so the serialized w/h defaults of 0.6
+// would suddenly crop the cutout to 60% of the frame.
+void CoreTest::legacyClipMaskMigratesToAnAdjustmentLane()
+{
+    const QJsonObject clip{
+        {QStringLiteral("id"), QStringLiteral("clip-1")},
+        {QStringLiteral("type"), QStringLiteral("video")},
+        {QStringLiteral("timelineStartUs"), 0},
+        {QStringLiteral("timelineDurationUs"), qint64(drift::secondsToUs(3.0))},
+        {QStringLiteral("mask"),
+         QJsonObject{{QStringLiteral("shape"), QStringLiteral("matte")},
+                     {QStringLiteral("w"), 0.6},
+                     {QStringLiteral("h"), 0.6},
+                     {QStringLiteral("invert"), true},
+                     {QStringLiteral("mattePath"), QStringLiteral("/tmp/mattes/old.mkv")},
+                     {QStringLiteral("matteSrcOffsetUs"), qint64(drift::secondsToUs(2.0))}}},
+    };
+    const QJsonObject json{
+        {QStringLiteral("version"), 4},
+        {QStringLiteral("tracks"),
+         QJsonArray{QJsonObject{{QStringLiteral("type"), QStringLiteral("video")},
+                                {QStringLiteral("clips"), QJsonArray{clip}}}}},
+    };
+
+    QString error;
+    const drift::Project loaded = drift::Project::fromJson(json, &error);
+    QVERIFY(error.isEmpty());
+
+    // Nothing left on the clip; one lane carrying it instead.
+    QCOMPARE(loaded.tracks().at(0).clips.at(0).mask.shape, drift::MaskShape::None);
+    const QList<drift::LaneMask> masks =
+        drift::laneMasksAt(loaded, 0, drift::secondsToUs(1.0));
+    QCOMPARE(masks.size(), 1);
+    const drift::Mask &mask = masks.constFirst().mask;
+    QCOMPARE(mask.shape, drift::MaskShape::Media);
+    QCOMPARE(mask.mediaPath, QStringLiteral("/tmp/mattes/old.mkv"));
+    QCOMPARE(mask.mediaSrcOffsetUs, drift::secondsToUs(2.0));
+    QCOMPARE(mask.invert, true);
+    QCOMPARE(mask.w, 1.0);
+    QCOMPARE(mask.h, 1.0);
+
+    // Pinned to the clip, so every later move/trim keeps it aligned.
+    const QList<drift::ClipRef> pinned = drift::linkedMaskAdjustments(loaded, 0, 0);
+    QCOMPARE(pinned.size(), 1);
+    const drift::Clip &adjustment =
+        loaded.tracks().at(pinned.constFirst().trackIndex).clips.at(pinned.constFirst().clipIndex);
+    QCOMPARE(adjustment.linkedClipId, QStringLiteral("clip-1"));
+    QCOMPARE(adjustment.timelineDuration, drift::secondsToUs(3.0));
 }
 
 void CoreTest::faceTrackSerialization()
@@ -2740,10 +2802,6 @@ void CoreTest::retargetClipToSourceClearsPerSourceState()
     program.faceTrackSrcOffsetUs = drift::secondsToUs(5.0);
     program.speedCurve.setPoints({{0.0, 1.0}, {1.0, 2.0}});
     QVERIFY(program.hasSpeedCurve());
-    // Segmented out of cam1's pixels, and indexed by cam1's source time.
-    program.mask.shape = drift::MaskShape::Matte;
-    program.mask.mattePath = QStringLiteral("/cache/cam1.matte.mp4");
-    program.mask.matteSrcOffsetUs = drift::secondsToUs(2.0);
 
     const drift::Clip angle = makeAngleClip(QStringLiteral("cam2.mp4"), 0, drift::secondsToUs(10.0), 0);
     drift::retargetClipToSource(program, angle, drift::secondsToUs(10.0));
@@ -2753,28 +2811,42 @@ void CoreTest::retargetClipToSourceClearsPerSourceState()
     QVERIFY(program.faceTrackPath.isEmpty());
     QCOMPARE(program.faceTrackSrcOffsetUs, drift::TimeUs{0});
     QVERIFY(!program.hasSpeedCurve());
-    // Kept, the matte would cut cam2 to the silhouette segmented out of cam1.
-    QCOMPARE(program.mask.shape, drift::MaskShape::None);
-    QVERIFY(program.mask.mattePath.isEmpty());
-    QCOMPARE(program.mask.matteSrcOffsetUs, drift::TimeUs{0});
 }
 
-// The other half of the rule above: a mask that is a shape rather than baked pixels describes
-// the framing, not the footage, and belongs with the transform and effects that already survive.
+// Masks are not reachable from retargetClipToSource — they live on the adjustments pinned to the
+// clip — so the switch clears them separately, and only the baked ones. Media coverage is pixels
+// segmented out of cam1 and would cut cam2 to cam1's silhouette; a shape describes the framing,
+// not the footage, and belongs with the transform and effects that already survive.
 void CoreTest::retargetClipToSourceKeepsAGeometricMask()
 {
-    drift::Clip program = makeAngleClip(QStringLiteral("cam1.mp4"), drift::secondsToUs(1.0),
-                                        drift::secondsToUs(2.0), 0);
-    program.mask.shape = drift::MaskShape::Ellipse;
-    program.mask.x = 0.25;
-    program.mask.feather = 12.0;
+    drift::Project project;
+    project.tracks().clear();
+    project.tracks().append(drift::Track{.type = drift::TrackType::Video});
+    project.tracks()[0].clips.append(makeAngleClip(QStringLiteral("cam1.mp4"),
+                                                   drift::secondsToUs(1.0),
+                                                   drift::secondsToUs(2.0), 0));
 
-    const drift::Clip angle = makeAngleClip(QStringLiteral("cam2.mp4"), 0, drift::secondsToUs(10.0), 0);
-    drift::retargetClipToSource(program, angle, drift::secondsToUs(10.0));
+    drift::Mask ellipse;
+    ellipse.shape = drift::MaskShape::Ellipse;
+    ellipse.x = 0.25;
+    ellipse.feather = 12.0;
+    drift::setLinkedMask(project, 0, 0, ellipse);
+    QCOMPARE(drift::laneMasksAt(project, 0, drift::secondsToUs(1.5)).size(), 1);
 
-    QCOMPARE(program.mask.shape, drift::MaskShape::Ellipse);
-    QCOMPARE(program.mask.x, 0.25);
-    QCOMPARE(program.mask.feather, 12.0);
+    drift::clearLinkedMasks(project, 0, 0, /*mediaOnly=*/true);
+
+    const QList<drift::LaneMask> kept = drift::laneMasksAt(project, 0, drift::secondsToUs(1.5));
+    QCOMPARE(kept.size(), 1);
+    QCOMPARE(kept.constFirst().mask.shape, drift::MaskShape::Ellipse);
+    QCOMPARE(kept.constFirst().mask.x, 0.25);
+    QCOMPARE(kept.constFirst().mask.feather, 12.0);
+
+    // The same call does drop a matte, which is the half the multicam switch is there for.
+    drift::setLinkedMask(project, 0, 0,
+                         drift::fullFrameMediaMask(QStringLiteral("/cache/cam1.matte.mp4"),
+                                                   drift::secondsToUs(2.0)));
+    drift::clearLinkedMasks(project, 0, 0, /*mediaOnly=*/true);
+    QVERIFY(drift::laneMasksAt(project, 0, drift::secondsToUs(1.5)).isEmpty());
 }
 
 void CoreTest::retargetClipToSourceShrinksWhenMediaRunsOut()

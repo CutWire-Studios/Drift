@@ -2072,6 +2072,10 @@
         <translation>手ぶれ補正モードを変更</translation>
     </message>
     <message>
+        <source>Cutout</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source> (denoised)</source>
         <translation> (ノイズ除去済み)</translation>
     </message>
@@ -5283,8 +5287,12 @@
         <translation>フリーフォーム</translation>
     </message>
     <message>
-        <source>Remove cutout</source>
-        <translation>切り抜きを削除</translation>
+        <source>Remove cutout layer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Remove mask</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Center X</source>
@@ -6846,12 +6854,8 @@ If playback stutters, try another.</source>
         <translation>結果</translation>
     </message>
     <message>
-        <source>Two clips (subject + background)</source>
-        <translation>2つのクリップ (被写体 + 背景)</translation>
-    </message>
-    <message>
-        <source>Hide everything except the subject</source>
-        <translation>被写体以外をすべて非表示</translation>
+        <source>Adds a mask layer under the clip. The clip itself is left alone — flip it to the background, or remove it, from the Masks tab.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>The cutout is only for this effect — no extra tracks are added.</source>

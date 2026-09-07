@@ -1212,8 +1212,8 @@ QJsonObject McpDispatcher::applyOneExtended(const QString &tool, const QJsonObje
         const QString backend = argString(args, QStringLiteral("backend"));
         if (!backend.isEmpty())
             m_controller->setSegmentationBackend(backend);
-        m_controller->runSegmentationSession(output.isEmpty() ? QStringLiteral("clips") : output);
-        return ok({{QStringLiteral("output"), output.isEmpty() ? QStringLiteral("clips") : output},
+        m_controller->runSegmentationSession(output.isEmpty() ? QStringLiteral("adjustment") : output);
+        return ok({{QStringLiteral("output"), output.isEmpty() ? QStringLiteral("adjustment") : output},
                    {QStringLiteral("backend"), m_controller->segmentBackend()}});
     }
 
@@ -1229,8 +1229,8 @@ QJsonObject McpDispatcher::applyOneExtended(const QString &tool, const QJsonObje
             return err("bad_args", QStringLiteral("points required for the sam2 backend"));
         const QString output = argString(args, QStringLiteral("output"));
         m_controller->segmentClip(ref.track, ref.clip, segmentationPointsFromJson(pointArray),
-                                  output.isEmpty() ? QStringLiteral("clips") : output, backend);
-        return ok(clipFeedback(ref, {{QStringLiteral("output"), output.isEmpty() ? QStringLiteral("clips") : output},
+                                  output.isEmpty() ? QStringLiteral("adjustment") : output, backend);
+        return ok(clipFeedback(ref, {{QStringLiteral("output"), output.isEmpty() ? QStringLiteral("adjustment") : output},
                                      {QStringLiteral("backend"), rvm ? QStringLiteral("rvm") : QStringLiteral("sam2")}}));
     }
 

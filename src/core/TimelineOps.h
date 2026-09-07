@@ -38,6 +38,12 @@ TimeUs clampClipStartAgainstLeftNeighbors(const Track &track, const QSet<QString
 TimeUs clampClipEndNoOverlap(const Track &track, const QSet<QString> &excludeIds, TimeUs currentEnd,
                              TimeUs desiredEnd);
 
+struct ClipRef
+{
+    int trackIndex = -1;
+    int clipIndex = -1;
+};
+
 TrackType trackTypeForClipType(ClipType type);
 
 int defaultTrackForClipType(const Project &project, ClipType type);
@@ -50,6 +56,50 @@ QList<int> adjustmentLaneIndexes(const Project &project, int parentIndex);
 
 // Inverse: the track a lane is nested in, or -1 if `laneIndex` is not a lane.
 int adjustmentLaneParentIndex(const Project &project, int laneIndex);
+
+// Index of a nested lane on `parentIndex` that holds `kind` and has no clip overlapping
+// [startUs, startUs + durationUs), minting one when every existing lane is occupied over that
+// span. -1 when `parentIndex` is out of range or is itself an adjustment track (nesting a lane
+// inside a lane would give it two scopes at once).
+//
+// A lane holds one kind: a row mixing video and audio adjustments would have no unambiguous
+// colour or inspector. An empty lane takes anything. INSERTS TRACKS.
+int ensureAdjustmentLane(Project &project, int parentIndex, AdjustmentKind kind, TimeUs startUs,
+                         TimeUs durationUs);
+
+// A mask paired with the id of the adjustment clip carrying it. The compositor needs the id: the
+// reader pool keys its cursor by stream id, so a mask's media must not decode under the host
+// clip's id or the two fight over one cursor.
+struct LaneMask
+{
+    Mask mask;
+    QString adjustmentId;
+};
+
+// Every Mask-kind lane adjustment on `trackIndex` covering `timelineUs`, in stack order — lane
+// order first (lanes are listed parent-first, which is the order they were created in), then clip
+// order within a lane.
+QList<LaneMask> laneMasksAt(const Project &project, int trackIndex, TimeUs timelineUs);
+
+// The Mask-kind adjustments pinned to clips[clipIndex], as (trackIndex, clipIndex) pairs.
+QList<ClipRef> linkedMaskAdjustments(const Project &project, int trackIndex, int clipIndex);
+
+// Pin `mask` to clips[clipIndex] as a Mask-kind adjustment on one of `trackIndex`'s lanes,
+// replacing whatever mask was pinned there. A mask with shape None removes the pin instead.
+//
+// This is the only way a mask reaches a media clip: Clip::mask is meaningful on adjustment clips
+// alone. INSERTS TRACKS, so any index held across the call goes stale.
+void setLinkedMask(Project &project, int trackIndex, int clipIndex, const Mask &mask);
+
+// Drop the mask adjustments pinned to clips[clipIndex]. `mediaOnly` keeps parametric masks, which
+// is what a multicam switch wants: a matte describes the camera it was traced from, but a
+// geometric mask is treatment like the transform.
+void clearLinkedMasks(Project &project, int trackIndex, int clipIndex, bool mediaOnly = false);
+
+// Moves a mask still sitting directly on a media clip onto an adjustment linked to it. The v4->v5
+// counterpart of hoistClipEffectsToAdjustmentLanes, and load-only: unlike effects, nothing writes
+// Clip::mask on a media clip any more. INSERTS TRACKS.
+void migrateClipMasksToAdjustmentLanes(Project &project);
 
 // Moves any effect stack still sitting directly on a media clip onto an adjustment linked to it,
 // in one of its track's nested lanes, minting lanes as needed.
@@ -103,12 +153,6 @@ bool clipsCanMerge(const Clip &left, const Clip &right);
 
 // Merge abutting clips. Keeps left transforms/effects; takes right's fade-out.
 Clip mergeClips(const Clip &left, const Clip &right);
-
-struct ClipRef
-{
-    int trackIndex = -1;
-    int clipIndex = -1;
-};
 
 // All clips sharing `clip.linkId` (excluding `clip` itself).
 QList<ClipRef> linkedPartners(const Project &project, const Clip &clip);

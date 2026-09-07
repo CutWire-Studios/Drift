@@ -29,6 +29,7 @@
 #include "core/Clip.h"
 #include "core/EffectStackStore.h"
 #include "core/Project.h"
+#include "core/TimelineOps.h"
 #include "core/Track.h"
 
 class EditorStateTest : public QObject
@@ -142,6 +143,8 @@ private slots:
     void clipEffectsLiveOnALinkedAdjustmentLane();
     void linkedAdjustmentFollowsItsClip();
     void deletingAClipUnlinksRatherThanStrandsItsAdjustment();
+    void cutoutLandsAsAMaskLayerOnTheClipsOwnLane();
+    void maskRoundTripsThroughTheInspectorMap();
     void trackMovesAndDeletesCarryTheirAdjustmentLanes();
     void projectV3MigratesEffectsOntoAdjustmentLanes();
     void adjustmentMovesBetweenStandaloneAndNested();
@@ -1287,10 +1290,8 @@ void EditorStateTest::packagedProjectCarriesDerivedArtifacts()
     state.setProjectMetadata(QStringLiteral("Packaged"), QStringLiteral("Ada"),
                              QStringLiteral("With a matte"));
 
-    // No QML-facing setter carries a matte path; the segmentation job writes it directly.
-    drift::Clip &clip = state.project()->tracks()[0].clips[0];
-    clip.mask.shape = drift::MaskShape::Matte;
-    clip.mask.mattePath = mattePath;
+    // No QML-facing setter carries a media path; the segmentation job pins it directly.
+    drift::setLinkedMask(*state.project(), 0, 0, drift::fullFrameMediaMask(mattePath));
 
     QTemporaryDir out;
     QVERIFY(out.isValid());
@@ -1316,10 +1317,12 @@ void EditorStateTest::packagedProjectCarriesDerivedArtifacts()
     QCOMPARE(state.projectMetadata().value(QStringLiteral("author")).toString(),
              QStringLiteral("Ada"));
 
-    const drift::Clip &loaded = state.project()->tracks().at(0).clips.at(0);
-    QVERIFY(loaded.mask.mattePath != mattePath);
-    QVERIFY2(QFileInfo::exists(loaded.mask.mattePath), qPrintable(loaded.mask.mattePath));
-    QCOMPARE(QFileInfo(loaded.mask.mattePath).size(), 1024);
+    const QList<drift::LaneMask> masks = drift::laneMasksAt(*state.project(), 0, 0);
+    QCOMPARE(masks.size(), 1);
+    const QString loadedPath = masks.constFirst().mask.mediaPath;
+    QVERIFY(loadedPath != mattePath);
+    QVERIFY2(QFileInfo::exists(loadedPath), qPrintable(loadedPath));
+    QCOMPARE(QFileInfo(loadedPath).size(), 1024);
 }
 
 void EditorStateTest::projectPersistenceRoundTrip()
@@ -4723,6 +4726,111 @@ void EditorStateTest::linkedAdjustmentFollowsItsClip()
     // Once unlinked the stack is no longer reported as the clip's own — it is an independent
     // adjustment the user edits by selecting it.
     QCOMPARE(state.clipAt(0, 0).value(QStringLiteral("effects")).toList().size(), 0);
+}
+
+// The cutout feature: running segmentation adds one mask layer inside the clip's own track and
+// leaves the clip and the track list otherwise alone. It used to prepend two derived video
+// tracks, leaving the timeline holding three copies of one shot.
+void EditorStateTest::cutoutLandsAsAMaskLayerOnTheClipsOwnLane()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    appendTwoVideoClips(*state.project());
+
+    const int tracksBefore = state.project()->tracks().size();
+    const drift::Clip source = state.project()->tracks().at(0).clips.at(0);
+
+    state.finalizeSegmentation(source.id, QStringLiteral("/tmp/mattes/subject.mkv"),
+                               QStringLiteral("/tmp/mattes/subject.fgr.mkv"),
+                               drift::secondsToUs(0.5), QStringLiteral("adjustment"));
+
+    // Exactly one track added — the lane — and the original clip is byte-for-byte untouched.
+    QCOMPARE(state.project()->tracks().size(), tracksBefore + 1);
+    const drift::Clip &after = state.project()->tracks().at(0).clips.at(0);
+    QCOMPARE(after.id, source.id);
+    QCOMPARE(after.timelineStart, source.timelineStart);
+    QCOMPARE(after.timelineDuration, source.timelineDuration);
+    QCOMPARE(after.path, source.path);
+
+    const QList<drift::ClipRef> pinned = drift::linkedMaskAdjustments(*state.project(), 0, 0);
+    QCOMPARE(pinned.size(), 1);
+    const drift::Track &lane = state.project()->tracks().at(pinned.constFirst().trackIndex);
+    QVERIFY2(lane.isAdjustmentLane(), "a cutout must not become a canvas-wide adjustment track");
+
+    const drift::Clip &adjustment = lane.clips.at(pinned.constFirst().clipIndex);
+    QCOMPARE(adjustment.adjustmentKind, drift::AdjustmentKind::Mask);
+    QCOMPARE(adjustment.linkedClipId, source.id);
+    QCOMPARE(adjustment.mask.shape, drift::MaskShape::Media);
+    QCOMPARE(adjustment.mask.mediaPath, QStringLiteral("/tmp/mattes/subject.mkv"));
+    QCOMPARE(adjustment.mask.mediaFgrPath, QStringLiteral("/tmp/mattes/subject.fgr.mkv"));
+    QCOMPARE(adjustment.mask.mediaSrcOffsetUs, drift::secondsToUs(0.5));
+    // Full-frame, or the matte would be scaled to the parametric default and crop the subject.
+    QCOMPARE(adjustment.mask.w, 1.0);
+    QCOMPARE(adjustment.mask.h, 1.0);
+
+    // Pinned, so it tracks the clip through a trim like any other linked adjustment.
+    state.trimClipRight(0, 0, 1.5);
+    const QList<drift::ClipRef> stillPinned = drift::linkedMaskAdjustments(*state.project(), 0, 0);
+    QCOMPARE(stillPinned.size(), 1);
+    const drift::Clip &trimmedClip = state.project()->tracks().at(0).clips.at(0);
+    const drift::Clip &trimmedMask = state.project()
+                                         ->tracks()
+                                         .at(stillPinned.constFirst().trackIndex)
+                                         .clips.at(stillPinned.constFirst().clipIndex);
+    QCOMPARE(trimmedMask.timelineStart, trimmedClip.timelineStart);
+    QCOMPARE(trimmedMask.timelineDuration, trimmedClip.timelineDuration);
+}
+
+// The inspector edits a mask by copying the map clipAt() reports, changing one key and handing it
+// back. Anything the map drops is silently reset — which is how toggling Invert on a cutout used
+// to erase its media path and leave a mask pointing at nothing.
+void EditorStateTest::maskRoundTripsThroughTheInspectorMap()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    appendTwoVideoClips(*state.project());
+
+    const drift::Clip source = state.project()->tracks().at(0).clips.at(0);
+    state.finalizeSegmentation(source.id, QStringLiteral("/tmp/mattes/subject.mkv"),
+                               QStringLiteral("/tmp/mattes/subject.fgr.mkv"),
+                               drift::secondsToUs(0.5), QStringLiteral("adjustment"));
+
+    // The media clip reports the mask pinned to it, the way the Masks tab reads it.
+    QVariantMap mask = state.clipAt(0, 0).value(QStringLiteral("mask")).toMap();
+    QCOMPARE(mask.value(QStringLiteral("shape")).toString(), QStringLiteral("media"));
+    QCOMPARE(mask.value(QStringLiteral("mediaPath")).toString(),
+             QStringLiteral("/tmp/mattes/subject.mkv"));
+    QCOMPARE(mask.value(QStringLiteral("invert")).toBool(), false);
+
+    // Exactly what MasksInspector's Invert switch does.
+    mask.insert(QStringLiteral("invert"), true);
+    state.setClipMask(0, 0, mask);
+
+    const QVariantMap after = state.clipAt(0, 0).value(QStringLiteral("mask")).toMap();
+    QCOMPARE(after.value(QStringLiteral("invert")).toBool(), true);
+    QVERIFY2(after.value(QStringLiteral("mediaPath")).toString()
+                     == QStringLiteral("/tmp/mattes/subject.mkv"),
+             "toggling invert must not discard the cutout's media");
+    QCOMPARE(after.value(QStringLiteral("mediaFgrPath")).toString(),
+             QStringLiteral("/tmp/mattes/subject.fgr.mkv"));
+    QCOMPARE(drift::TimeUs(after.value(QStringLiteral("mediaSrcOffsetUs")).toLongLong()),
+             drift::secondsToUs(0.5));
+
+    // And it wrote through to the adjustment rather than onto the media clip.
+    QCOMPARE(state.project()->tracks().at(0).clips.at(0).mask.shape, drift::MaskShape::None);
+    const QList<drift::ClipRef> pinned = drift::linkedMaskAdjustments(*state.project(), 0, 0);
+    QCOMPARE(pinned.size(), 1);
+    QVERIFY(state.project()
+                ->tracks()
+                .at(pinned.constFirst().trackIndex)
+                .clips.at(pinned.constFirst().clipIndex)
+                .mask.invert);
+
+    // Removing it takes the adjustment away rather than leaving an inert row behind.
+    QVariantMap cleared = after;
+    cleared.insert(QStringLiteral("shape"), QStringLiteral("none"));
+    state.setClipMask(0, 0, cleared);
+    QVERIFY(drift::linkedMaskAdjustments(*state.project(), 0, 0).isEmpty());
 }
 
 // Deleting a clip must not silently promote its lane to a standalone adjustment, which would

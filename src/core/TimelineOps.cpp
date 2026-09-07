@@ -195,6 +195,195 @@ int adjustmentLaneParentIndex(const Project &project, int laneIndex)
     return project.trackIndexById(tracks.at(laneIndex).parentTrackId);
 }
 
+int ensureAdjustmentLane(Project &project, int parentIndex, AdjustmentKind kind, TimeUs startUs,
+                         TimeUs durationUs)
+{
+    if (parentIndex < 0 || parentIndex >= project.tracks().size())
+        return -1;
+    // A lane addresses its parent by id, so the parent needs one before it can be pointed at.
+    project.ensureTrackIds();
+
+    // Lanes nest in the tracks that carry clips. Nesting one inside another lane would give it
+    // two scopes at once.
+    if (project.tracks().at(parentIndex).isAdjustment())
+        return -1;
+
+    for (const int laneIndex : adjustmentLaneIndexes(project, parentIndex)) {
+        const Track &lane = project.tracks().at(laneIndex);
+        if (!lane.clips.isEmpty() && lane.clips.first().adjustmentKind != kind)
+            continue;
+        bool collides = false;
+        for (const Clip &existing : lane.clips) {
+            if (startUs < existing.timelineEnd() && existing.timelineStart < startUs + durationUs) {
+                collides = true;
+                break;
+            }
+        }
+        if (!collides)
+            return laneIndex;
+    }
+
+    // No room anywhere: a fresh lane just after the parent's existing ones, so those keep applying
+    // in the order they did.
+    //
+    // Stored *below* the parent, not above. A lane has no z-position of its own — it is drawn
+    // inside the parent's row either way — so the only thing array position decides is whose
+    // indices shift when one is created. Below leaves the parent and everything above it alone,
+    // which matters because adding an effect creates a lane, and the caller is usually holding
+    // the index of the very track it is editing.
+    Track lane;
+    lane.id = QUuid::createUuid().toString(QUuid::WithoutBraces);
+    lane.type = TrackType::Adjustment;
+    lane.adjustmentScope = AdjustmentScope::ParentTrack;
+    lane.parentTrackId = project.tracks().at(parentIndex).id;
+
+    const QList<int> existing = adjustmentLaneIndexes(project, parentIndex);
+    const int insertAt = existing.isEmpty() ? parentIndex + 1 : existing.constLast() + 1;
+    project.tracks().insert(insertAt, lane);
+    return insertAt;
+}
+
+QList<LaneMask> laneMasksAt(const Project &project, int trackIndex, TimeUs timelineUs)
+{
+    QList<LaneMask> result;
+    for (const int laneIndex : adjustmentLaneIndexes(project, trackIndex)) {
+        const Track &lane = project.tracks().at(laneIndex);
+        if (lane.hidden)
+            continue;
+        for (const Clip &adjustment : lane.clips) {
+            if (adjustment.adjustmentKind != AdjustmentKind::Mask)
+                continue;
+            if (!adjustment.containsTime(timelineUs))
+                continue;
+            if (!adjustment.mask.contributes())
+                continue;
+            result.append(LaneMask{adjustment.mask, adjustment.id});
+        }
+    }
+    return result;
+}
+
+QList<ClipRef> linkedMaskAdjustments(const Project &project, int trackIndex, int clipIndex)
+{
+    if (trackIndex < 0 || trackIndex >= project.tracks().size())
+        return {};
+    const Track &track = project.tracks().at(trackIndex);
+    if (clipIndex < 0 || clipIndex >= track.clips.size())
+        return {};
+    const QString clipId = track.clips.at(clipIndex).id;
+
+    QList<ClipRef> result;
+    for (const int laneIndex : adjustmentLaneIndexes(project, trackIndex)) {
+        const Track &lane = project.tracks().at(laneIndex);
+        for (int c = 0; c < lane.clips.size(); ++c) {
+            const Clip &adjustment = lane.clips.at(c);
+            if (adjustment.adjustmentKind == AdjustmentKind::Mask
+                && adjustment.linkedClipId == clipId) {
+                result.append(ClipRef{laneIndex, c});
+            }
+        }
+    }
+    return result;
+}
+
+void setLinkedMask(Project &project, int trackIndex, int clipIndex, const Mask &mask)
+{
+    if (trackIndex < 0 || trackIndex >= project.tracks().size())
+        return;
+    if (clipIndex < 0 || clipIndex >= project.tracks().at(trackIndex).clips.size())
+        return;
+
+    const QList<ClipRef> existing = linkedMaskAdjustments(project, trackIndex, clipIndex);
+    if (!existing.isEmpty()) {
+        // Write into the first one and drop the rest, so repeated edits do not stack up rows.
+        // Removals go back-to-front: each takeAt shifts the indices after it.
+        for (int i = existing.size() - 1; i >= 1; --i)
+            project.tracks()[existing.at(i).trackIndex].clips.removeAt(existing.at(i).clipIndex);
+
+        const ClipRef &first = existing.constFirst();
+        if (mask.contributes()) {
+            project.tracks()[first.trackIndex].clips[first.clipIndex].mask = mask;
+            return;
+        }
+        project.tracks()[first.trackIndex].clips.removeAt(first.clipIndex);
+        return;
+    }
+    if (!mask.contributes())
+        return;
+
+    const Clip source = project.tracks().at(trackIndex).clips.at(clipIndex);
+
+    Clip adjustment;
+    adjustment.id = QUuid::createUuid().toString(QUuid::WithoutBraces);
+    adjustment.type = ClipType::Adjustment;
+    adjustment.adjustmentKind = AdjustmentKind::Mask;
+    // Pinned: syncLinkedAdjustments mirrors the clip's span onto it through every
+    // move/trim/split/delete, so the mask cannot drift off the shot it was made for.
+    adjustment.linkedClipId = source.id;
+    adjustment.timelineStart = source.timelineStart;
+    adjustment.timelineDuration = source.timelineDuration;
+    adjustment.srcIn = 0;
+    adjustment.srcOut = source.timelineDuration;
+    adjustment.mask = mask;
+
+    const int laneIndex = ensureAdjustmentLane(project, trackIndex, AdjustmentKind::Mask,
+                                               adjustment.timelineStart,
+                                               adjustment.timelineDuration);
+    if (laneIndex < 0)
+        return;
+    project.tracks()[laneIndex].clips.append(adjustment);
+}
+
+void clearLinkedMasks(Project &project, int trackIndex, int clipIndex, bool mediaOnly)
+{
+    const QList<ClipRef> existing = linkedMaskAdjustments(project, trackIndex, clipIndex);
+    for (int i = existing.size() - 1; i >= 0; --i) {
+        const ClipRef &ref = existing.at(i);
+        const Clip &adjustment = project.tracks().at(ref.trackIndex).clips.at(ref.clipIndex);
+        if (mediaOnly && adjustment.mask.shape != MaskShape::Media)
+            continue;
+        project.tracks()[ref.trackIndex].clips.removeAt(ref.clipIndex);
+    }
+}
+
+void migrateClipMasksToAdjustmentLanes(Project &project)
+{
+    bool anyMaskOnAClip = false;
+    for (const Track &track : project.tracks()) {
+        if (track.isAdjustment())
+            continue;
+        for (const Clip &clip : track.clips) {
+            if (clip.type != ClipType::Adjustment && clip.mask.shape != MaskShape::None) {
+                anyMaskOnAClip = true;
+                break;
+            }
+        }
+        if (anyMaskOnAClip)
+            break;
+    }
+    if (!anyMaskOnAClip)
+        return;
+
+    project.ensureTrackIds();
+
+    QList<Track> &tracks = project.tracks();
+    // Bottom-to-top: setLinkedMask only ever inserts a lane below `i`, so every index the loop
+    // still has to visit stays valid.
+    for (int i = tracks.size() - 1; i >= 0; --i) {
+        if (tracks.at(i).isAdjustment())
+            continue;
+        for (int c = 0; c < tracks.at(i).clips.size(); ++c) {
+            if (tracks.at(i).clips.at(c).type == ClipType::Adjustment)
+                continue;
+            const Mask mask = tracks.at(i).clips.at(c).mask;
+            if (mask.shape == MaskShape::None)
+                continue;
+            tracks[i].clips[c].mask = Mask();
+            setLinkedMask(project, i, c, mask);
+        }
+    }
+}
+
 void liftAdjustmentClipsToOwnTracks(Project &project)
 {
     QList<Track> &tracks = project.tracks();
@@ -548,14 +737,14 @@ void retargetClipToSource(Clip &dst, const Clip &src, TimeUs srcMediaDurationUs)
     // The program clip is no longer the video half of whatever pair it was in; leaving the id
     // would have syncLinkedTiming drag the old companion around after it.
     dst.linkId.clear();
-    // Landmarks and mattes are baked against the outgoing media, indexed by its source time.
+    // Landmarks are baked against the outgoing media, indexed by its source time.
     dst.faceTrackPath.clear();
     dst.faceTrackSrcOffsetUs = 0;
-    // A matte is rendered pixels, so it only describes the camera it was segmented from; kept,
-    // it would cut the new angle to the old one's silhouette. Geometric masks are treatment
-    // like the transform and the effects, and stay.
-    if (dst.mask.shape == MaskShape::Matte)
-        dst.mask = Mask();
+    // Masks are not reachable from here: they live on the adjustments pinned to the clip, not on
+    // the clip. The caller must follow this with clearLinkedMasks(..., mediaOnly = true) — media
+    // coverage is rendered pixels describing only the camera it was traced from, and kept it
+    // would cut the new angle to the old one's silhouette. Geometric masks are treatment like the
+    // transform and the effects, and stay.
 
     // The frame `src` is showing where dst begins — this is the whole point of the operation.
     const TimeUs srcIn = qBound(TimeUs{0}, src.timelineToSourceUs(dst.timelineStart),

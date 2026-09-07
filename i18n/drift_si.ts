@@ -2077,6 +2077,10 @@
         <translation>ස්ථාවර කිරීමේ ප්‍රකාරය වෙනස් කරන්න</translation>
     </message>
     <message>
+        <source>Cutout</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source> (denoised)</source>
         <translation> (ඝෝෂා ඉවත් කළ)</translation>
     </message>
@@ -5301,8 +5305,12 @@
         <translation>නිදහස් හැඩය (Freeform)</translation>
     </message>
     <message>
-        <source>Remove cutout</source>
-        <translation>Cutout ඉවත් කරන්න</translation>
+        <source>Remove cutout layer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Remove mask</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Center X</source>
@@ -6871,12 +6879,8 @@ If playback stutters, try another.</source>
         <translation>ප්‍රතිඵලය</translation>
     </message>
     <message>
-        <source>Two clips (subject + background)</source>
-        <translation>ක්ලිප් දෙකක් (විෂයය + පසුබිම)</translation>
-    </message>
-    <message>
-        <source>Hide everything except the subject</source>
-        <translation>විෂයය හැර අන් සියල්ල සඟවන්න</translation>
+        <source>Adds a mask layer under the clip. The clip itself is left alone — flip it to the background, or remove it, from the Masks tab.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>The cutout is only for this effect — no extra tracks are added.</source>

@@ -2077,6 +2077,10 @@
         <translation>Alterar modo de estabilização</translation>
     </message>
     <message>
+        <source>Cutout</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source> (denoised)</source>
         <translation> (sem ruído)</translation>
     </message>
@@ -5301,8 +5305,12 @@
         <translation>Forma livre</translation>
     </message>
     <message>
-        <source>Remove cutout</source>
-        <translation>Remover recorte</translation>
+        <source>Remove cutout layer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Remove mask</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Center X</source>
@@ -6871,12 +6879,8 @@ Se a reprodução travar, experimente outro.</translation>
         <translation>Resultado</translation>
     </message>
     <message>
-        <source>Two clips (subject + background)</source>
-        <translation>Dois clipes (sujeito + fundo)</translation>
-    </message>
-    <message>
-        <source>Hide everything except the subject</source>
-        <translation>Ocultar tudo, exceto o sujeito</translation>
+        <source>Adds a mask layer under the clip. The clip itself is left alone — flip it to the background, or remove it, from the Masks tab.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>The cutout is only for this effect — no extra tracks are added.</source>

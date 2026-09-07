@@ -16,11 +16,15 @@ Item {
     readonly property string clipKind: hasSelection ? (clipData.kind || "") : ""
     readonly property bool isVisualClip: clipKind !== "audio" && clipKind !== "text"
                                          && clipKind !== "subtitle"
+    // The mask reported for the selected clip. For a media clip that is the mask on the adjustment
+    // pinned to it (clipToMap redirects); for a mask adjustment it is its own payload. Either way
+    // setClipMask writes back to the right place.
     readonly property string maskShape: (clipData.mask && clipData.mask.shape) || "none"
-    // A matte is a per-frame raster mask backed by a grayscale video (see core/Mask.h): none of
-    // the parametric geometry applies to it, and MaskApplier bails out before reading any of it.
-    // Only invert and removal mean anything, so only those are offered.
-    readonly property bool isMatte: maskShape === "matte"
+    // Media is a raster mask whose pixels are the coverage map (see core/Mask.h). The parametric
+    // geometry does place it, but a segmentation matte is full-frame by construction and nudging
+    // its rect only ever crops the subject, so the sliders stay hidden and invert plus removal
+    // are what is offered.
+    readonly property bool isMedia: maskShape === "media"
 
     height: contentCol.height
     implicitHeight: contentCol.height
@@ -152,7 +156,7 @@ Item {
             id: maskShapeBox
             // Hidden for a matte: "matte" is not one of the shapes below, so currentIndex would
             // clamp to 0 and the control would read "None" next to an applied cutout.
-            visible: root.isVisualClip && !root.isMatte
+            visible: root.isVisualClip && !root.isMedia
             width: parent.width
             // Shape masks are unfinished — keep the control in the layout so
             // the Cutouts tab still shows what is coming, but do not let it open.
@@ -182,7 +186,7 @@ Item {
         // "none" in the combo above.
         ThemedButton {
             visible: root.isVisualClip && root.maskShape !== "none"
-            text: qsTr("Remove cutout")
+            text: root.isMedia ? qsTr("Remove cutout layer") : qsTr("Remove mask")
             variant: "destructive"
             glyph: Theme.icons.trash
             onClicked: {
@@ -205,7 +209,7 @@ Item {
                 required property var modelData
                 width: parent.width
                 spacing: 4
-                visible: root.isVisualClip && !root.isMatte && root.maskShape !== "none"
+                visible: root.isVisualClip && !root.isMedia && root.maskShape !== "none"
                          && (modelData.key !== "rotation" || root.maskShape !== "bars")
 
                 Text {

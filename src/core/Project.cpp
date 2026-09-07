@@ -73,6 +73,9 @@ QJsonObject maskToJson(const Mask &m)
 
     return QJsonObject{
         {QStringLiteral("shape"), maskShapeToString(m.shape)},
+        {QStringLiteral("op"), maskOpToString(m.op)},
+        {QStringLiteral("enabled"), m.enabled},
+        {QStringLiteral("name"), m.name},
         {QStringLiteral("x"), m.x},
         {QStringLiteral("y"), m.y},
         {QStringLiteral("w"), m.w},
@@ -81,9 +84,12 @@ QJsonObject maskToJson(const Mask &m)
         {QStringLiteral("feather"), m.feather},
         {QStringLiteral("invert"), m.invert},
         {QStringLiteral("points"), points},
-        {QStringLiteral("mattePath"), m.mattePath},
-        {QStringLiteral("matteFgrPath"), m.matteFgrPath},
-        {QStringLiteral("matteSrcOffsetUs"), qint64(m.matteSrcOffsetUs)},
+        {QStringLiteral("mediaPath"), m.mediaPath},
+        {QStringLiteral("mediaFgrPath"), m.mediaFgrPath},
+        {QStringLiteral("mediaSrcOffsetUs"), qint64(m.mediaSrcOffsetUs)},
+        {QStringLiteral("mediaFit"), maskMediaFitToString(m.mediaFit)},
+        {QStringLiteral("mediaChannel"), maskMediaChannelToString(m.mediaChannel)},
+        {QStringLiteral("mediaLoop"), m.mediaLoop},
     };
 }
 
@@ -92,7 +98,8 @@ Mask maskFromJson(const QJsonObject &o)
     Mask m;
     if (o.isEmpty())
         return m;
-    m.shape = maskShapeFromString(o.value(QStringLiteral("shape")).toString());
+    const QString shapeName = o.value(QStringLiteral("shape")).toString();
+    m.shape = maskShapeFromString(shapeName);
     m.x = o.value(QStringLiteral("x")).toDouble(m.x);
     m.y = o.value(QStringLiteral("y")).toDouble(m.y);
     m.w = o.value(QStringLiteral("w")).toDouble(m.w);
@@ -100,15 +107,39 @@ Mask maskFromJson(const QJsonObject &o)
     m.rotation = o.value(QStringLiteral("rotation")).toDouble(m.rotation);
     m.feather = o.value(QStringLiteral("feather")).toDouble(m.feather);
     m.invert = o.value(QStringLiteral("invert")).toBool(m.invert);
-    m.mattePath = o.value(QStringLiteral("mattePath")).toString(m.mattePath);
-    m.matteFgrPath = o.value(QStringLiteral("matteFgrPath")).toString(m.matteFgrPath);
-    m.matteSrcOffsetUs =
-        TimeUs(o.value(QStringLiteral("matteSrcOffsetUs")).toInteger(m.matteSrcOffsetUs));
+    m.op = maskOpFromString(o.value(QStringLiteral("op")).toString());
+    m.enabled = o.value(QStringLiteral("enabled")).toBool(m.enabled);
+    m.name = o.value(QStringLiteral("name")).toString(m.name);
+    // Media was called "matte" before v5 and only ever backed a segmentation cutout, so the old
+    // keys map straight across.
+    m.mediaPath = o.value(QStringLiteral("mediaPath"))
+                      .toString(o.value(QStringLiteral("mattePath")).toString(m.mediaPath));
+    m.mediaFgrPath = o.value(QStringLiteral("mediaFgrPath"))
+                         .toString(o.value(QStringLiteral("matteFgrPath")).toString(m.mediaFgrPath));
+    m.mediaSrcOffsetUs = TimeUs(
+        o.value(QStringLiteral("mediaSrcOffsetUs"))
+            .toInteger(o.value(QStringLiteral("matteSrcOffsetUs")).toInteger(m.mediaSrcOffsetUs)));
+    m.mediaFit = maskMediaFitFromString(o.value(QStringLiteral("mediaFit")).toString());
+    m.mediaChannel = maskMediaChannelFromString(o.value(QStringLiteral("mediaChannel")).toString());
+    m.mediaLoop = o.value(QStringLiteral("mediaLoop")).toBool(m.mediaLoop);
     const QJsonArray points = o.value(QStringLiteral("points")).toArray();
     for (const QJsonValue &value : points) {
         const QJsonArray pair = value.toArray();
         if (pair.size() >= 2)
             m.points.append(QPointF(pair.at(0).toDouble(), pair.at(1).toDouble()));
+    }
+
+    // A pre-v5 "matte" had no geometry: every consumer bailed out before reading the rect and
+    // bound the coverage map over the whole frame. Media *is* placed by that rect, so the
+    // serialized defaults (w = h = 0.6) would suddenly shrink an old cutout to 60% and crop the
+    // subject. Full-frame is what it always rendered as.
+    if (shapeName == QStringLiteral("matte")) {
+        m.x = 0.5;
+        m.y = 0.5;
+        m.w = 1.0;
+        m.h = 1.0;
+        m.rotation = 0.0;
+        m.feather = 0.0;
     }
     return m;
 }
@@ -784,6 +815,11 @@ Project Project::fromJson(const QJsonObject &object, QString *errorOut)
         // Same pass the editor runs after every edit, so load and runtime cannot drift apart on
         // where a stack is allowed to live.
         hoistClipEffectsToAdjustmentLanes(project);
+    }
+    if (version < 5) {
+        // Masks moved off the clip onto their own adjustment lane, so they became timed and
+        // combinable. Runs after the v4 pass, which is what mints the track ids a lane needs.
+        migrateClipMasksToAdjustmentLanes(project);
     }
 
     project.m_bookmarks.clear();

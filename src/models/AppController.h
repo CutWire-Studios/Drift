@@ -55,6 +55,10 @@ class McpServer;
 // QML-facing controller over the core project model and undo stack.
 class AppController : public QObject
 {
+    // Segmentation completion is normally reached only through a finished worker, which needs a
+    // real backend installed. The test drives it directly instead.
+    friend class EditorStateTest;
+
     Q_OBJECT
 
     Q_PROPERTY(AssetLibrary *assetLibrary READ assetLibrary CONSTANT)
@@ -1487,6 +1491,9 @@ protected:
     // Publishes a finished scene analysis into m_scenes, shaped for QML.
     void applySceneAnalysis(const drift::SceneAnalysis &analysis, const QString &clipId,
                             const QString &clipPath);
+    // Completes a segmentation job: pins the matte to the clip as a Mask adjustment on its own
+    // lane. `outputMode` is kept only so the older "clips"/"mask" spellings stay accepted; all
+    // three now produce the same mask layer.
     void finalizeSegmentation(const QString &clipId, const QString &mattePath,
                               const QString &matteFgrPath,
                               drift::TimeUs matteSrcOffsetUs, const QString &outputMode);
@@ -1519,7 +1526,8 @@ protected:
     // adjustment linked to it. Passing it in rather than looking it up keeps a tracks() rebuild
     // linear — resolving per clip would make it quadratic.
     QVariantMap clipToMap(const drift::Clip &clip, const drift::Clip *videoEffectHost = nullptr,
-                          const drift::Clip *audioEffectHost = nullptr) const;
+                          const drift::Clip *audioEffectHost = nullptr,
+                          const drift::Clip *maskHost = nullptr) const;
 
     // The clip whose `effects` / `audioEffects` list holds the stack for (trackIndex, clipIndex).
     // An adjustment hosts its own; a media clip's lives on the adjustment linked to it in one of
@@ -1550,6 +1558,10 @@ protected:
     // whose clip is gone. Runs in finishEdit so moves, trims, splits and deletes all keep links
     // true without every call site having to remember.
     void syncLinkedAdjustments(drift::Project &project) const;
+
+    // Write a mask for (trackIndex, clipIndex), whether that names a mask adjustment (the mask is
+    // its payload) or a media clip (the mask is pinned to it through a lane). MAY INSERT TRACKS.
+    void writeClipMask(int trackIndex, int clipIndex, const drift::Mask &mask);
     // Re-establishes the two structural invariants the adjustment model rests on: no stack sits
     // on a media clip, and every lane is adjacent to and directly above its parent. Both passes
     // can insert or reorder tracks, so the selection is carried across by id. Idempotent and
@@ -1830,6 +1842,9 @@ protected:
         drift::Clip clip;
         drift::TrackType trackType = drift::TrackType::Video;
         QList<drift::Transition> transitions;
+        // Carried separately because a mask lives on the adjustments pinned to the clip, not on
+        // the clip: copying the Clip alone would silently drop it.
+        QList<drift::Mask> masks;
     };
     QList<ClipboardItem> m_clipboard;
 

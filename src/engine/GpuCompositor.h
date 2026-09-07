@@ -32,9 +32,14 @@ struct GpuLayer
     QImage source; // null => fully transparent layer (unless video is set)
     PreviewVideoFrame video;
     QList<drift::Effect> effects;
-    drift::Mask mask;
-    QImage matte; // MaskShape::Matte only: this frame's coverage map, decoded by FrameCompositor
-    QImage fgr;   // MaskShape::Matte only: the decontaminated foreground, when the matte has one
+    QList<drift::Mask> masks;
+    // Index-parallel with `masks`: this frame's decoded coverage map for each Media entry, null
+    // for parametric ones. Decoded by FrameCompositor, which is the only place that knows the time.
+    QList<QImage> maskMedia;
+    // The decontaminated foreground, when a lone media mask carries one. Single rather than
+    // index-parallel: it replaces the layer's colour outright, which only makes sense when one
+    // media mask owns the coverage — see soleMediaIndex.
+    QImage fgr;
     QRectF rect;             // destination rect on the canvas, in canvas pixels
     double rotation = 0.0;   // degrees, clockwise, about the rect centre
     bool flipH = false;

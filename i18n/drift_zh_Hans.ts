@@ -2072,6 +2072,10 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Cutout</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source> (denoised)</source>
         <translation type="unfinished"></translation>
     </message>
@@ -5283,7 +5287,11 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Remove cutout</source>
+        <source>Remove cutout layer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Remove mask</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -6839,11 +6847,7 @@ If playback stutters, try another.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Two clips (subject + background)</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Hide everything except the subject</source>
+        <source>Adds a mask layer under the clip. The clip itself is left alone — flip it to the background, or remove it, from the Masks tab.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>

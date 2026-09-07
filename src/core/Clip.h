@@ -90,6 +90,9 @@ struct Clip
     bool reverse = false; // play source range backward; speed still applies as magnitude
     bool flipH = false;
     bool flipV = false;
+    // Meaningful on a Mask-kind adjustment clip and nowhere else — a media clip's masks live on
+    // the adjustments pinned to it, which is what makes them timed, stackable and visible on the
+    // timeline. Reach them through drift::laneMasksAt / setLinkedMask, never through this.
     Mask mask;
 
     // Baked face landmarks driving the face warp effects, written once by the detect job and read

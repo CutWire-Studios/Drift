@@ -34,7 +34,7 @@ struct Background
 class Project
 {
 public:
-    static constexpr int kCurrentVersion = 4;
+    static constexpr int kCurrentVersion = 5;
 
     Project() { resetToDefaultTimeline(); }
 

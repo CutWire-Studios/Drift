@@ -299,17 +299,16 @@ Window {
 
                 ThemedLabel { text: qsTr("Result") }
 
-                ThemedComboBox {
-                    id: outputBox
+                // No mode to pick any more: the cutout always lands as a mask layer on the clip's
+                // own lane. Keeping the subject or the background is one Invert toggle in the
+                // Masks tab afterwards, rather than a choice that has to be made up front and
+                // redone from scratch if it was the wrong one.
+                ThemedLabel {
                     width: parent.width
+                    wrapMode: Text.WordWrap
                     visible: !EditorState.segmentationForTemplate
-                    enabled: !EditorState.segmenting
-                    textRole: "label"
-                    valueRole: "value"
-                    model: [
-                        { label: qsTr("Two clips (subject + background)"), value: "clips" },
-                        { label: qsTr("Hide everything except the subject"), value: "mask" }
-                    ]
+                    text: qsTr("Adds a mask layer under the clip. The clip itself is left alone — "
+                               + "flip it to the background, or remove it, from the Masks tab.")
                 }
 
                 ThemedLabel {
@@ -341,7 +340,7 @@ Window {
                           || EditorState.segmentPoints.length > 0)
                          && !EditorState.segmenting && !EditorState.segmentEncoding
                 onClicked: EditorState.runSegmentationSession(
-                    EditorState.segmentationForTemplate ? "template" : outputBox.currentValue)
+                    EditorState.segmentationForTemplate ? "template" : "adjustment")
             }
 
             Column {

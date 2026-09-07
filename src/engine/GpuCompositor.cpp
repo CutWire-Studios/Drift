@@ -122,6 +122,37 @@ void main() {
 }
 )";
 
+// Folds one mask entry's coverage into the running accumulator. Coverage rides in .r; the target
+// is RGBA so the blur shader (which is written for colour) can be reused for feather.
+// `u_seed` marks the first contributing entry, which has nothing to combine with and so replaces
+// the accumulator whatever its op says — starting from black would let a lone Subtract or
+// Intersect blank the clip.
+constexpr const char *kMaskFoldFragShader = R"(#version 330 core
+in vec2 v_texCoord;
+out vec4 fragColor;
+uniform sampler2D u_accum;
+uniform sampler2D u_cover;
+uniform float u_seed;
+uniform float u_invert;
+uniform float u_alphaChannel; // 1 => coverage is the media's alpha, not its luma
+uniform int u_op;             // 0 add, 1 subtract, 2 intersect
+void main() {
+    vec4 cover = texture(u_cover, v_texCoord);
+    // Parametric coverage is written to all three channels, so .r is the value either way.
+    // Media placed over black arrives premultiplied, which leaves .a usable for a cutout PNG.
+    float c = mix(cover.r, cover.a, u_alphaChannel);
+    c = mix(c, 1.0 - c, u_invert);
+    float o = c;
+    if (u_seed < 0.5) {
+        float a = texture(u_accum, v_texCoord).r;
+        if (u_op == 1) o = a * (1.0 - c);
+        else if (u_op == 2) o = a * c;
+        else o = max(a, c);
+    }
+    fragColor = vec4(o, o, o, 1.0);
+}
+)";
+
 // Cover-fit a texture over the canvas and blur it, for BackgroundKind::Blur.
 constexpr const char *kBlurFragShader = R"(#version 330 core
 in vec2 v_texCoord;
@@ -191,31 +222,44 @@ QMatrix4x4 modelMatrixFor(const GpuLayer &layer, const QSize &canvas)
     return m;
 }
 
-// Mask coverage maps only change when the mask or the size does, so they are
-// rasterized once and kept as GL textures.
-GLuint maskTexture(GlRuntime &rt, QOpenGLExtraFunctions *gl, const drift::Mask &mask, const QSize &size)
+QString maskCacheKey(const drift::Mask &mask)
 {
-    if (mask.shape == drift::MaskShape::None)
-        return 0;
+    // The point coordinates have to be in the key, not just the count: dragging a freeform vertex
+    // leaves the count alone and would otherwise keep hitting the stale texture.
+    const size_t pointsHash =
+        mask.points.isEmpty()
+            ? 0
+            : qHashBits(mask.points.constData(), size_t(mask.points.size()) * sizeof(QPointF));
 
-    const QString key = QStringLiteral("__mask__:%1:%2:%3:%4:%5:%6:%7:%8:%9:%10:%11")
-                            .arg(int(mask.shape))
-                            .arg(mask.x)
-                            .arg(mask.y)
-                            .arg(mask.w)
-                            .arg(mask.h)
-                            .arg(mask.rotation)
-                            .arg(mask.feather)
-                            .arg(mask.invert ? 1 : 0)
-                            .arg(mask.points.size())
-                            .arg(size.width())
-                            .arg(size.height());
+    return QStringLiteral("%1:%2:%3:%4:%5:%6:%7:%8:%9:%10:%11")
+        .arg(int(mask.shape))
+        .arg(int(mask.op))
+        .arg(mask.x)
+        .arg(mask.y)
+        .arg(mask.w)
+        .arg(mask.h)
+        .arg(mask.rotation)
+        .arg(mask.feather)
+        .arg(mask.invert ? 1 : 0)
+        .arg(mask.points.size())
+        .arg(quint64(pointsHash));
+}
+
+// Parametric coverage only changes when the stack or the size does, so it is rasterized once and
+// kept as a GL texture. Media entries are excluded by drift::maskAlphaMap — their pixels change
+// every frame, and caching them here would never evict.
+GLuint maskTexture(GlRuntime &rt, QOpenGLExtraFunctions *gl, const QList<drift::Mask> &masks,
+                   const QSize &size)
+{
+    QString key = QStringLiteral("__mask__:%1:%2").arg(size.width()).arg(size.height());
+    for (const drift::Mask &mask : masks)
+        key += QLatin1Char('|') + maskCacheKey(mask);
 
     const auto it = rt.staticTextures.find(key);
     if (it != rt.staticTextures.end())
         return it->second;
 
-    const QImage alpha = drift::maskAlphaMap(mask, size.width(), size.height());
+    const QImage alpha = drift::maskAlphaMap(masks, size.width(), size.height());
     if (alpha.isNull()) {
         rt.staticTextures[key] = 0;
         return 0;
@@ -349,6 +393,226 @@ GlTarget mipmappedLayerCopy(GlRuntime &rt, QOpenGLExtraFunctions *gl, const GlTa
     return copy;
 }
 
+// Index of the only contributing entry when it is a plain full-frame media mask, else -1. That is
+// exactly what a segmentation produces, and it can go straight to the layer shader with no
+// compose pass at all — worth the special case because every cutout hits it every frame. It is
+// also the condition for binding the decontaminated foreground, which only means anything when
+// one media mask owns the layer's coverage outright.
+//
+// Every condition here is load-bearing: anything that needs placing, feathering or a channel
+// other than luma has to go through composeMaskTarget, which is the only path that honours the
+// media's rect.
+int soleMediaIndex(const GpuLayer &layer)
+{
+    int found = -1;
+    for (int i = 0; i < layer.masks.size(); ++i) {
+        const drift::Mask &mask = layer.masks.at(i);
+        if (!mask.contributes())
+            continue;
+        const bool fullFrame = qFuzzyCompare(mask.x, 0.5) && qFuzzyCompare(mask.y, 0.5)
+                               && qFuzzyCompare(mask.w, 1.0) && qFuzzyCompare(mask.h, 1.0)
+                               && qFuzzyIsNull(mask.rotation);
+        const bool plainMedia = mask.shape == drift::MaskShape::Media && mask.feather <= 0.0
+                                && fullFrame && mask.mediaFit == drift::MaskMediaFit::Stretch
+                                && mask.mediaChannel == drift::MaskMediaChannel::Luma
+                                && i < layer.maskMedia.size() && !layer.maskMedia.at(i).isNull();
+        if (!plainMedia || found >= 0)
+            return -1;
+        found = i;
+    }
+    return found;
+}
+
+// Defined below; the mask compose pass reuses it to place media, and it in turn calls the compose
+// pass for the layer's own mask, so one of the two has to be declared ahead.
+void drawLayerOnCanvas(GlRuntime &rt, QOpenGLExtraFunctions *gl, GlTarget &canvas,
+                       const GlTarget &layerTarget, const GpuLayer &layer, drift::BlendMode blend,
+                       const QSize &canvasSize);
+
+// Where a media mask's pixels land inside the coverage target. The mask's rect is normalized to
+// the clip frame; the fit mode then decides what happens when the media's aspect differs from it.
+QRectF maskMediaRect(const drift::Mask &mask, const QSize &mediaSize, const QSize &target)
+{
+    const double w = mask.w * target.width();
+    const double h = mask.h * target.height();
+    const double cx = mask.x * target.width();
+    const double cy = mask.y * target.height();
+    const QRectF box(cx - w * 0.5, cy - h * 0.5, w, h);
+
+    if (mask.mediaFit == drift::MaskMediaFit::Stretch || mediaSize.isEmpty() || box.isEmpty())
+        return box;
+
+    const double sx = box.width() / mediaSize.width();
+    const double sy = box.height() / mediaSize.height();
+    const double scale = mask.mediaFit == drift::MaskMediaFit::Fill ? qMax(sx, sy) : qMin(sx, sy);
+    const double fw = mediaSize.width() * scale;
+    const double fh = mediaSize.height() * scale;
+    return QRectF(cx - fw * 0.5, cy - fh * 0.5, fw, fh);
+}
+
+// Separable feather over a coverage target, using the same 17-tap kernel as the background blur.
+// Doing it here rather than in maskAlphaMap is what keeps a large feather affordable: the CPU
+// rasterizer blurs a full-canvas map with a box filter per pass.
+void featherCoverage(GlRuntime &rt, QOpenGLExtraFunctions *gl, GlTarget &coverage, double feather,
+                     const QSize &size)
+{
+    QOpenGLShaderProgram *blur =
+        rt.builtinProgram(QStringLiteral("__mask_blur__"), kQuadVertexShader, kBlurFragShader);
+    if (!blur)
+        return;
+
+    GlTarget scratch = rt.acquireTarget(size.width(), size.height());
+    if (!scratch.isValid())
+        return;
+
+    const float radius = float(qBound(1.0, feather, 64.0));
+    const auto pass = [&](GlTarget &in, GlTarget &out, float dx, float dy) {
+        out.fbo->bind();
+        gl->glViewport(0, 0, out.width, out.height);
+        gl->glDisable(GL_BLEND);
+        blur->bind();
+        blur->setUniformValue("u_currentTexture", 0);
+        blur->setUniformValue("u_radius", radius);
+        blur->setUniformValue("u_texel", QVector2D(dx / size.width(), dy / size.height()));
+        gl->glActiveTexture(GL_TEXTURE0);
+        gl->glBindTexture(GL_TEXTURE_2D, in.texture());
+        bindQuad(rt, gl);
+        blur->release();
+        out.fbo->release();
+    };
+
+    pass(coverage, scratch, 1.f, 0.f);
+    pass(scratch, coverage, 0.f, 1.f);
+    rt.releaseTarget(std::move(scratch));
+}
+
+// Folds the whole stack into one coverage target on the GPU. Returns an invalid target when
+// nothing contributes, in which case the layer draws unmasked.
+//
+// Every early return has to recycle what it acquired: the target pool is bounded, and leaking
+// here stalls the compositor.
+GlTarget composeMaskTarget(GlRuntime &rt, QOpenGLExtraFunctions *gl, const GpuLayer &layer,
+                           const QSize &size)
+{
+    if (size.isEmpty())
+        return {};
+
+    QOpenGLShaderProgram *fold =
+        rt.builtinProgram(QStringLiteral("__mask_fold__"), kQuadVertexShader, kMaskFoldFragShader);
+    if (!fold)
+        return {};
+
+    const auto release = [&rt](GlTarget &t) {
+        if (t.isValid())
+            rt.releaseTarget(std::move(t));
+    };
+
+    GlTarget accum;
+    bool seeded = false;
+
+    for (int i = 0; i < layer.masks.size(); ++i) {
+        const drift::Mask &mask = layer.masks.at(i);
+        if (!mask.contributes())
+            continue;
+
+        // This entry's raw coverage, before feather and invert.
+        GlTarget coverage;
+        if (mask.shape == drift::MaskShape::Media) {
+            // Media whose frame failed to decode contributes nothing this frame; treating it as
+            // present would blank the clip.
+            if (i >= layer.maskMedia.size() || layer.maskMedia.at(i).isNull())
+                continue;
+            const QImage &media = layer.maskMedia.at(i);
+            GlTarget src = promoteImageToTargetCached(rt, gl, media, media.size());
+            if (!src.isValid())
+                continue;
+
+            // Place it: the media has its own rect, rotation and fit inside the clip frame, so it
+            // goes through the ordinary layer draw into a cleared full-size target rather than
+            // being stretched edge to edge by the fold's fullscreen quad.
+            coverage = rt.acquireTarget(size.width(), size.height());
+            if (!coverage.isValid()) {
+                release(src);
+                continue;
+            }
+            coverage.fbo->bind();
+            gl->glViewport(0, 0, coverage.width, coverage.height);
+            gl->glDisable(GL_BLEND);
+            gl->glClearColor(0.f, 0.f, 0.f, 0.f);
+            gl->glClear(GL_COLOR_BUFFER_BIT);
+            coverage.fbo->release();
+
+            GpuLayer placed;
+            placed.valid = true;
+            placed.opacity = 1.0;
+            placed.rotation = mask.rotation;
+            placed.rect = maskMediaRect(mask, media.size(), size);
+            drawLayerOnCanvas(rt, gl, coverage, src, placed, drift::BlendMode::Normal, size);
+            release(src);
+        } else {
+            // Feather and invert are applied below, so they are deliberately excluded from the
+            // rasterized (and therefore cached) shape.
+            drift::Mask flat = mask;
+            flat.feather = 0.0;
+            flat.invert = false;
+            const GLuint tex = maskTexture(rt, gl, {flat}, size);
+            if (!tex)
+                continue;
+            coverage = rt.acquireTarget(size.width(), size.height());
+            if (!coverage.isValid())
+                continue;
+            if (!blitTextureToTarget(rt, gl, tex, coverage)) {
+                release(coverage);
+                continue;
+            }
+        }
+        if (!coverage.isValid())
+            continue;
+
+        if (mask.feather > 0.0)
+            featherCoverage(rt, gl, coverage, mask.feather, size);
+
+        GlTarget next = rt.acquireTarget(size.width(), size.height());
+        if (!next.isValid()) {
+            release(coverage);
+            continue;
+        }
+
+        next.fbo->bind();
+        gl->glViewport(0, 0, next.width, next.height);
+        gl->glDisable(GL_BLEND);
+        fold->bind();
+        fold->setUniformValue("u_accum", 0);
+        fold->setUniformValue("u_cover", 1);
+        fold->setUniformValue("u_seed", seeded ? 0.f : 1.f);
+        fold->setUniformValue("u_invert", mask.invert ? 1.f : 0.f);
+        fold->setUniformValue("u_alphaChannel",
+                              mask.shape == drift::MaskShape::Media
+                                      && mask.mediaChannel == drift::MaskMediaChannel::Alpha
+                                  ? 1.f
+                                  : 0.f);
+        fold->setUniformValue("u_op", int(mask.op));
+        gl->glActiveTexture(GL_TEXTURE0);
+        gl->glBindTexture(GL_TEXTURE_2D, accum.isValid() ? accum.texture() : 0);
+        gl->glActiveTexture(GL_TEXTURE1);
+        gl->glBindTexture(GL_TEXTURE_2D, coverage.texture());
+        bindQuad(rt, gl);
+        fold->release();
+        next.fbo->release();
+
+        release(coverage);
+        release(accum);
+        accum = std::move(next);
+        seeded = true;
+    }
+
+    if (!seeded) {
+        release(accum);
+        return {};
+    }
+    return accum;
+}
+
 // Draw a prepared layer target onto the canvas with transform, opacity, mask and
 // blend mode. For non-fixed-function modes the canvas is ping-ponged.
 void drawLayerOnCanvas(GlRuntime &rt, QOpenGLExtraFunctions *gl, GlTarget &canvas,
@@ -360,42 +624,48 @@ void drawLayerOnCanvas(GlRuntime &rt, QOpenGLExtraFunctions *gl, GlTarget &canva
     if (layer.opacity <= 0.0)
         return;
 
-    // A matte changes every frame, so it goes through the recycled target pool rather than
+    // Media coverage changes every frame, so it goes through the recycled target pool rather than
     // maskTexture()'s static cache, which is keyed by mask parameters and would never evict.
-    // Invert cannot be baked in either: the foreground and background clips of a segmentation
-    // share one matte file and differ only by this flag.
-    GlTarget matteTarget;
+    GlTarget maskTarget;
     GlTarget fgrTarget;
     GLuint maskTex = 0;
     GLuint fgrTex = 0;
     float maskInvert = 0.f;
-    if (!layer.matte.isNull()) {
-        matteTarget = promoteImageToTargetCached(rt, gl, layer.matte, layer.matte.size());
-        maskTex = matteTarget.isValid() ? matteTarget.texture() : 0;
-        maskInvert = layer.mask.invert ? 1.f : 0.f;
+    if (const int sole = soleMediaIndex(layer); sole >= 0) {
+        // One plain full-frame media mask owns the coverage: bind it straight to the layer shader
+        // and skip the compose pass entirely. Invert stays a uniform rather than being baked in,
+        // because the same matte file backs both halves of a cutout and differs only by this flag.
+        const QImage &media = layer.maskMedia.at(sole);
+        maskTarget = promoteImageToTargetCached(rt, gl, media, media.size());
+        maskTex = maskTarget.isValid() ? maskTarget.texture() : 0;
+        maskInvert = layer.masks.at(sole).invert ? 1.f : 0.f;
+        // The decontaminated foreground only means anything on this path — with a stack there is
+        // no single entry whose colours the layer should take.
         if (!layer.fgr.isNull()) {
             fgrTarget = promoteImageToTargetCached(rt, gl, layer.fgr, layer.fgr.size());
             fgrTex = fgrTarget.isValid() ? fgrTarget.texture() : 0;
         }
-    } else {
-        maskTex = maskTexture(rt, gl, layer.mask, layerTarget.size());
+    } else if (!drift::masksAreInert(layer.masks)) {
+        // Feather, placement and the combine ops all live in the fold, which bakes invert in too.
+        maskTarget = composeMaskTarget(rt, gl, layer, layerTarget.size());
+        maskTex = maskTarget.isValid() ? maskTarget.texture() : 0;
     }
     const QMatrix4x4 model = modelMatrixFor(layer, canvasSize);
 
-    // Every return path below must recycle the matte targets.
-    struct MatteGuard
+    // Every return path below must recycle the mask targets.
+    struct MaskGuard
     {
         GlRuntime &rt;
-        GlTarget &matte;
+        GlTarget &mask;
         GlTarget &fgr;
-        ~MatteGuard()
+        ~MaskGuard()
         {
-            if (matte.isValid())
-                rt.releaseTarget(std::move(matte));
+            if (mask.isValid())
+                rt.releaseTarget(std::move(mask));
             if (fgr.isValid())
                 rt.releaseTarget(std::move(fgr));
         }
-    } matteGuard{rt, matteTarget, fgrTarget};
+    } maskGuard{rt, maskTarget, fgrTarget};
 
     // Only worth it when the quad is actually smaller than the texture; at ~1:1 the
     // single bilinear tap is already exact and the copy would be pure cost.

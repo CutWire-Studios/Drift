@@ -25,6 +25,7 @@
 
 #include "core/Clip.h"
 #include "core/Project.h"
+#include "core/TimelineOps.h"
 #include "engine/AudioMixer.h"
 #include "engine/ClipReader.h"
 #include "engine/DebugReport.h"
@@ -217,6 +218,11 @@ private slots:
     void textAnimationFadesAndSlides();
     void clipBodyAnimationFadeRampsOpacity();
     void maskApplierEllipseMasksCorners();
+    void maskApplierFoldsAStackByItsOps();
+    void maskAdjustmentLaneMasksItsParentsClips();
+    void maskLaneOpsCombineAcrossLanes();
+    void soleMediaMaskCarriesTheDecontaminatedForeground();
+    void aVideoEffectsAdjustmentKeepsItsOwnMask();
     void exporterProducesPlayableFileWithBackground();
     void exporterProducesAudioOnlyMp3();
     void exporterTagsSdrBt709ColorMetadata();
@@ -5700,6 +5706,290 @@ void EngineTest::maskApplierEllipseMasksCorners()
     const QImage masked = drift::applyMask(image, mask, 64, 64);
     QVERIFY(qAlpha(masked.pixel(32, 32)) > 200);
     QVERIFY(qAlpha(masked.pixel(0, 0)) < 20);
+}
+
+// The seed rule: the first contributing entry replaces the accumulator whatever its op says.
+// Without it a lone Subtract folds against black and blanks the clip outright.
+void EngineTest::maskApplierFoldsAStackByItsOps()
+{
+    const auto rect = [](double x, double w, drift::MaskOp op) {
+        drift::Mask mask;
+        mask.shape = drift::MaskShape::Rectangle;
+        mask.op = op;
+        mask.x = x;
+        mask.y = 0.5;
+        mask.w = w;
+        mask.h = 1.0;
+        return mask;
+    };
+
+    // Left half added, then the middle subtracted: the left quarter survives.
+    const QImage subtracted = drift::maskAlphaMap(
+        {rect(0.25, 0.5, drift::MaskOp::Add), rect(0.5, 0.25, drift::MaskOp::Subtract)}, 64, 64);
+    QVERIFY(!subtracted.isNull());
+    QCOMPARE(subtracted.format(), QImage::Format_Grayscale8);
+    QVERIFY(qGray(subtracted.pixel(8, 32)) > 200);   // inside the added half
+    QVERIFY(qGray(subtracted.pixel(32, 32)) < 40);   // carved out
+    QVERIFY(qGray(subtracted.pixel(56, 32)) < 40);   // never covered
+
+    // Left half intersected with the right half leaves only where they overlap: nothing.
+    const QImage intersected = drift::maskAlphaMap(
+        {rect(0.25, 0.5, drift::MaskOp::Add), rect(0.75, 0.5, drift::MaskOp::Intersect)}, 64, 64);
+    QVERIFY(!intersected.isNull());
+    QVERIFY(qGray(intersected.pixel(8, 32)) < 40);
+    QVERIFY(qGray(intersected.pixel(56, 32)) < 40);
+
+    // A lone Subtract seeds rather than folding against black, so it covers its own rect.
+    const QImage lone = drift::maskAlphaMap({rect(0.25, 0.5, drift::MaskOp::Subtract)}, 64, 64);
+    QVERIFY(!lone.isNull());
+    QVERIFY(qGray(lone.pixel(8, 32)) > 200);
+    QVERIFY(qGray(lone.pixel(56, 32)) < 40);
+
+    // Nothing contributing at all is null, which is the compositor's "draw unmasked" signal.
+    drift::Mask off;
+    off.shape = drift::MaskShape::Rectangle;
+    off.enabled = false;
+    const QList<drift::Mask> disabled{off};
+    QVERIFY(drift::maskAlphaMap(disabled, 64, 64).isNull());
+    QVERIFY(drift::masksAreInert(disabled));
+}
+
+// The bar the handover set for Phase 5: a model-level check passes while the picture is still
+// unmasked, so this renders and compares pixels. A mask on a nested lane must reach the clips of
+// the track it is nested in, and only for the span it covers.
+void EngineTest::maskAdjustmentLaneMasksItsParentsClips()
+{
+    if (!GpuCompositor::isAvailable())
+        QSKIP("No GPU compositor available");
+
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    const QString imagePath = dir.filePath(QStringLiteral("white.png"));
+    {
+        QImage image(64, 64, QImage::Format_RGBA8888);
+        image.fill(Qt::white);
+        QVERIFY(image.save(imagePath));
+    }
+
+    drift::Project project;
+    project.setResolution(64, 64);
+    project.tracks().clear();
+    project.tracks().append(drift::Track{.type = drift::TrackType::Video});
+
+    drift::Clip clip;
+    clip.id = QStringLiteral("c");
+    clip.type = drift::ClipType::Image;
+    clip.path = imagePath;
+    clip.timelineStart = 0;
+    clip.timelineDuration = drift::secondsToUs(4.0);
+    project.tracks()[0].clips.append(clip);
+
+    // Covers only the first two seconds of a four-second clip.
+    drift::Mask ellipse;
+    ellipse.shape = drift::MaskShape::Ellipse;
+    ellipse.x = 0.5;
+    ellipse.y = 0.5;
+    ellipse.w = 0.5;
+    ellipse.h = 0.5;
+    drift::setLinkedMask(project, 0, 0, ellipse);
+
+    const QList<drift::ClipRef> pinned = drift::linkedMaskAdjustments(project, 0, 0);
+    QCOMPARE(pinned.size(), 1);
+    // A lane, not a track of its own — otherwise it would mask the whole canvas.
+    QVERIFY(project.tracks().at(pinned.constFirst().trackIndex).isAdjustmentLane());
+    project.tracks()[pinned.constFirst().trackIndex].clips[pinned.constFirst().clipIndex]
+        .timelineDuration = drift::secondsToUs(2.0);
+
+    FrameCompositor compositor;
+    compositor.setProject(&project);
+
+    // Inside the mask's span: the corners are cut away, the centre survives.
+    const QImage masked = compositor.compositeAt(drift::secondsToUs(1.0));
+    QVERIFY(!masked.isNull());
+    QCOMPARE(masked.size(), QSize(64, 64));
+    QVERIFY2(qRed(masked.pixel(32, 32)) > 200, "centre should still show through");
+    QVERIFY2(qRed(masked.pixel(2, 2)) < 40, "corner should be masked away");
+
+    // Past its span the clip is untouched, which is what makes the bar on the lane mean the
+    // stretch of time it covers.
+    const QImage after = compositor.compositeAt(drift::secondsToUs(3.0));
+    QVERIFY(!after.isNull());
+    QVERIFY2(qRed(after.pixel(2, 2)) > 200, "outside the mask's span the clip is unmasked");
+}
+
+// Two lanes on one track fold in lane order, so Subtract is predictable.
+void EngineTest::maskLaneOpsCombineAcrossLanes()
+{
+    if (!GpuCompositor::isAvailable())
+        QSKIP("No GPU compositor available");
+
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    const QString imagePath = dir.filePath(QStringLiteral("white.png"));
+    {
+        QImage image(64, 64, QImage::Format_RGBA8888);
+        image.fill(Qt::white);
+        QVERIFY(image.save(imagePath));
+    }
+
+    drift::Project project;
+    project.setResolution(64, 64);
+    project.tracks().clear();
+    project.tracks().append(drift::Track{.type = drift::TrackType::Video});
+
+    drift::Clip clip;
+    clip.id = QStringLiteral("c");
+    clip.type = drift::ClipType::Image;
+    clip.path = imagePath;
+    clip.timelineStart = 0;
+    clip.timelineDuration = drift::secondsToUs(4.0);
+    project.tracks()[0].clips.append(clip);
+
+    // The whole frame, then a centred square taken back out of it.
+    drift::Mask whole;
+    whole.shape = drift::MaskShape::Rectangle;
+    whole.w = 1.0;
+    whole.h = 1.0;
+    drift::setLinkedMask(project, 0, 0, whole);
+
+    drift::Mask hole;
+    hole.shape = drift::MaskShape::Rectangle;
+    hole.op = drift::MaskOp::Subtract;
+    hole.w = 0.4;
+    hole.h = 0.4;
+    // setLinkedMask replaces the pinned mask, so the second entry goes on a lane of its own —
+    // which is also what exercises the cross-lane fold order.
+    const int lane = drift::ensureAdjustmentLane(project, 0, drift::AdjustmentKind::Mask,
+                                                 clip.timelineStart, clip.timelineDuration);
+    QVERIFY(lane >= 0);
+    drift::Clip second;
+    second.id = QStringLiteral("mask-2");
+    second.type = drift::ClipType::Adjustment;
+    second.adjustmentKind = drift::AdjustmentKind::Mask;
+    second.timelineStart = clip.timelineStart;
+    second.timelineDuration = clip.timelineDuration;
+    second.mask = hole;
+    project.tracks()[lane].clips.append(second);
+
+    QCOMPARE(drift::laneMasksAt(project, 0, drift::secondsToUs(1.0)).size(), 2);
+
+    FrameCompositor compositor;
+    compositor.setProject(&project);
+    const QImage frame = compositor.compositeAt(drift::secondsToUs(1.0));
+    QVERIFY(!frame.isNull());
+    QVERIFY2(qRed(frame.pixel(2, 2)) > 200, "outside the hole the full-frame mask shows through");
+    QVERIFY2(qRed(frame.pixel(32, 32)) < 40, "the subtracted square is carved out");
+}
+
+// The decontaminated foreground replaces the layer's colour, which only makes sense while one
+// media mask owns the coverage outright. Adding a second entry has to drop it — that is the
+// documented cost of keeping fgr a single image rather than one per entry.
+void EngineTest::soleMediaMaskCarriesTheDecontaminatedForeground()
+{
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    const QString imagePath = dir.filePath(QStringLiteral("white.png"));
+    const QString mattePath = dir.filePath(QStringLiteral("matte.png"));
+    const QString fgrPath = dir.filePath(QStringLiteral("fgr.png"));
+    {
+        QImage image(64, 64, QImage::Format_RGBA8888);
+        image.fill(Qt::white);
+        QVERIFY(image.save(imagePath));
+        QImage matte(64, 64, QImage::Format_RGBA8888);
+        matte.fill(Qt::white);
+        QVERIFY(matte.save(mattePath));
+        QImage fgr(64, 64, QImage::Format_RGBA8888);
+        fgr.fill(Qt::green);
+        QVERIFY(fgr.save(fgrPath));
+    }
+
+    drift::Project project;
+    project.setResolution(64, 64);
+    project.tracks().clear();
+    project.tracks().append(drift::Track{.type = drift::TrackType::Video});
+
+    drift::Clip clip;
+    clip.id = QStringLiteral("c");
+    clip.type = drift::ClipType::Image;
+    clip.path = imagePath;
+    clip.timelineStart = 0;
+    clip.timelineDuration = drift::secondsToUs(4.0);
+    project.tracks()[0].clips.append(clip);
+
+    drift::Mask matte = drift::fullFrameMediaMask(mattePath);
+    matte.mediaFgrPath = fgrPath;
+    drift::setLinkedMask(project, 0, 0, matte);
+
+    FrameCompositor compositor;
+    compositor.setProject(&project);
+
+    GpuScene scene;
+    QVERIFY(compositor.buildSceneAt(drift::secondsToUs(1.0), FrameCompositor::RenderOptions{},
+                                    &scene));
+    QCOMPARE(scene.items.size(), 1);
+    const GpuLayer &layer = scene.items.constFirst().layer;
+    QCOMPARE(layer.masks.size(), 1);
+    QVERIFY2(!layer.maskMedia.constFirst().isNull(),
+             "the media mask's coverage must reach the layer");
+    QVERIFY2(!layer.fgr.isNull(),
+             "a lone media mask carries its decontaminated foreground");
+
+    // A second entry, and the sidecar is dropped: with a stack there is no single mask whose
+    // colours the layer should take.
+    drift::Mask extra;
+    extra.shape = drift::MaskShape::Rectangle;
+    const int lane = drift::ensureAdjustmentLane(project, 0, drift::AdjustmentKind::Mask,
+                                                 clip.timelineStart, clip.timelineDuration);
+    QVERIFY(lane >= 0);
+    drift::Clip second;
+    second.id = QStringLiteral("mask-2");
+    second.type = drift::ClipType::Adjustment;
+    second.adjustmentKind = drift::AdjustmentKind::Mask;
+    second.timelineStart = clip.timelineStart;
+    second.timelineDuration = clip.timelineDuration;
+    second.mask = extra;
+    project.tracks()[lane].clips.append(second);
+
+    GpuScene stacked;
+    QVERIFY(compositor.buildSceneAt(drift::secondsToUs(1.0), FrameCompositor::RenderOptions{},
+                                    &stacked));
+    QCOMPARE(stacked.items.size(), 1);
+    QCOMPARE(stacked.items.constFirst().layer.masks.size(), 2);
+    QVERIFY2(stacked.items.constFirst().layer.fgr.isNull(),
+             "a stack drops the decontaminated foreground");
+}
+
+// A standalone video-effects adjustment can carry a mask to scope where its chain lands. That is
+// a separate thing from a Mask adjustment carrying one as its whole payload, and gating the
+// compositor on the kind would silently drop it.
+void EngineTest::aVideoEffectsAdjustmentKeepsItsOwnMask()
+{
+    drift::Project project;
+    project.setResolution(64, 64);
+    project.tracks().clear();
+    project.tracks().append(drift::Track{.type = drift::TrackType::Adjustment});
+
+    drift::Clip adjustment;
+    adjustment.id = QStringLiteral("adj");
+    adjustment.type = drift::ClipType::Adjustment;
+    adjustment.adjustmentKind = drift::AdjustmentKind::VideoEffects;
+    adjustment.timelineStart = 0;
+    adjustment.timelineDuration = drift::secondsToUs(4.0);
+    adjustment.mask.shape = drift::MaskShape::Ellipse;
+    adjustment.mask.w = 0.5;
+    adjustment.mask.h = 0.5;
+    project.tracks()[0].clips.append(adjustment);
+
+    FrameCompositor compositor;
+    compositor.setProject(&project);
+
+    GpuScene scene;
+    QVERIFY(compositor.buildSceneAt(drift::secondsToUs(1.0), FrameCompositor::RenderOptions{},
+                                    &scene));
+    QCOMPARE(scene.items.size(), 1);
+    QVERIFY(scene.items.constFirst().isAdjustment);
+    QCOMPARE(scene.items.constFirst().layer.masks.size(), 1);
+    QCOMPARE(scene.items.constFirst().layer.masks.constFirst().shape, drift::MaskShape::Ellipse);
 }
 
 void EngineTest::exporterProducesPlayableFileWithBackground()

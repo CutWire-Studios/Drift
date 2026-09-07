@@ -2083,6 +2083,10 @@
         <translation>Changer le mode de stabilisation</translation>
     </message>
     <message>
+        <source>Cutout</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source> (denoised)</source>
         <translation> (débruité)</translation>
     </message>
@@ -5304,8 +5308,12 @@
         <translation>Libre</translation>
     </message>
     <message>
-        <source>Remove cutout</source>
-        <translation>Supprimer la découpe</translation>
+        <source>Remove cutout layer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Remove mask</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Center X</source>
@@ -6874,12 +6882,8 @@ En cas de saccades à la lecture, essayez un autre mode.</translation>
         <translation>Résultat</translation>
     </message>
     <message>
-        <source>Two clips (subject + background)</source>
-        <translation>Deux clips (sujet + arrière-plan)</translation>
-    </message>
-    <message>
-        <source>Hide everything except the subject</source>
-        <translation>Masquer tout sauf le sujet</translation>
+        <source>Adds a mask layer under the clip. The clip itself is left alone — flip it to the background, or remove it, from the Masks tab.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>The cutout is only for this effect — no extra tracks are added.</source>

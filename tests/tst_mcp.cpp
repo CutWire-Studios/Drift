@@ -41,6 +41,7 @@ private slots:
     void aiCapabilitiesReportsMissingModels();
     void catalogOpsIncludeWhen();
     void toolboxDescriptionsIncludeWhen();
+    void segmentationOutputDefaultsToAdjustment();
     void toolboxAnnotationsPresent();
     void toolboxUnknownIsError();
     void toolboxReturnsSchemas();
@@ -205,6 +206,47 @@ void McpTest::catalogOpsIncludeWhen()
         QVERIFY(first.contains(QStringLiteral("name")));
         QVERIFY(first.contains(QStringLiteral("when")));
     }
+}
+
+// The cutout now always lands as a mask layer, so "adjustment" is the default. The two older
+// spellings stay in the enum: repointing them silently would change what every existing agent
+// call does, and dropping them would make previously valid calls fail.
+void McpTest::segmentationOutputDefaultsToAdjustment()
+{
+    const QJsonObject payload = drift::mcp::toolboxPayload(QStringLiteral("segmentation"));
+    const QJsonArray tools = payload.value(QStringLiteral("tools")).toArray();
+
+    int checked = 0;
+    for (const QJsonValue &v : tools) {
+        const QJsonObject tool = v.toObject();
+        const QString name = tool.value(QStringLiteral("name")).toString();
+        if (name != QLatin1String("segment_clip") && name != QLatin1String("run_segmentation"))
+            continue;
+
+        const QJsonObject output = tool.value(QStringLiteral("inputSchema"))
+                                       .toObject()
+                                       .value(QStringLiteral("properties"))
+                                       .toObject()
+                                       .value(QStringLiteral("output"))
+                                       .toObject();
+        QVERIFY2(!output.isEmpty(), qPrintable(name));
+        QCOMPARE(output.value(QStringLiteral("default")).toString(), QStringLiteral("adjustment"));
+
+        QStringList values;
+        for (const QJsonValue &e : output.value(QStringLiteral("enum")).toArray())
+            values.append(e.toString());
+        QVERIFY2(values.contains(QStringLiteral("adjustment")), qPrintable(name));
+        QVERIFY2(values.contains(QStringLiteral("clips")), qPrintable(name));
+        QVERIFY2(values.contains(QStringLiteral("mask")), qPrintable(name));
+
+        // The description must not still promise the old two-track behaviour.
+        QVERIFY2(!output.value(QStringLiteral("description"))
+                      .toString()
+                      .contains(QStringLiteral("splits the subject onto its own clip")),
+                 qPrintable(name));
+        ++checked;
+    }
+    QCOMPARE(checked, 2);
 }
 
 void McpTest::toolboxDescriptionsIncludeWhen()
