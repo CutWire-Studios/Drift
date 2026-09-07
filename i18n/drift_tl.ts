@@ -2813,35 +2813,35 @@
     </message>
     <message>
         <source>Pasted effects use “%1”, which isn’t installed — it won’t show. Open Extras to install it.</source>
-        <translation type="unfinished"></translation>
+        <translation>Ang nasabing grupo ng epekto ay gumagamit ng “%1”, na wala rito. Pindutin ang Extras para mag-install ng ganyan.</translation>
     </message>
     <message>
         <source>Pasted effects use %1 packs that aren’t installed — they won’t show. Open Extras to install them.</source>
-        <translation type="unfinished"></translation>
+        <translation>Ang nasabing grupo ng epekto ay gumagamit ng “%1” pakete, na wala rito. Pindutin ang Extras para mag-install ng ganyan.</translation>
     </message>
     <message>
         <source>There are no effects to save</source>
-        <translation type="unfinished"></translation>
+        <translation>Walang epekto para sa pakete ng epekto</translation>
     </message>
     <message>
         <source>Could not save the effect preset</source>
-        <translation type="unfinished"></translation>
+        <translation>Hindi nalikha ang pakete ng epekto</translation>
     </message>
     <message>
         <source>Effect preset saved</source>
-        <translation type="unfinished"></translation>
+        <translation>Nalikha ang pakete ng epekto</translation>
     </message>
     <message>
         <source>Apply effect preset</source>
-        <translation type="unfinished"></translation>
+        <translation>Gamitin ang pakete ng epekto</translation>
     </message>
     <message>
         <source>Could not rename the effect preset</source>
-        <translation type="unfinished"></translation>
+        <translation>Hindi napalitan ang pangalan ng pakete ng epekto</translation>
     </message>
     <message>
         <source>Effect preset renamed</source>
-        <translation type="unfinished"></translation>
+        <translation>Pinalitan ang pangalan ng pakete ng epekto</translation>
     </message>
     <message>
         <source>Could not delete the effect preset</source>
