@@ -10,6 +10,9 @@
 #include "core/PrprojReader.h"
 #include "core/MogrtReader.h"
 #include "core/KdenliveReader.h"
+#include "core/ResolveReader.h"
+#include "core/EdlReader.h"
+#include "core/OtioReader.h"
 #include "core/ShapePath.h"
 #include "core/SubtitleCue.h"
 #include "core/SrtIO.h"
@@ -17432,6 +17435,109 @@ void AppController::loadKdenliveProject(const QUrl &url)
     setLastMessage(tr("Kdenlive project imported: %1").arg(proj->name()), QStringLiteral("success"));
 }
 
+void AppController::loadResolveProject(const QUrl &url)
+{
+    const QString path = readTargetPath(url);
+    if (path.isEmpty()) {
+        setLastMessage(tr("That project location isn’t valid"), QStringLiteral("error"));
+        return;
+    }
+
+    QString readError;
+    const std::optional<drift::Project> proj = drift::resolve::readProject(path, &readError);
+    if (!proj) {
+        setLastMessage(readError.isEmpty() ? tr("Failed to open DaVinci Resolve project / timeline") : readError,
+                       QStringLiteral("error"));
+        return;
+    }
+
+    // Drop an in-flight bundle extract so it cannot land on top of this document.
+    ++m_loadGeneration;
+
+    const QByteArray data = QJsonDocument(proj->toJson()).toJson(QJsonDocument::Compact);
+
+    QString error;
+    if (!applyProjectJson(data, &error)) {
+        setLastMessage(error, QStringLiteral("error"));
+        return;
+    }
+
+    m_embeddedSources.clear();
+    setCurrentProjectPath(QString());
+    setDirty(true);
+    deleteRecoveryFile();
+    setProjectLayoutChosen(true);
+    setLastMessage(tr("DaVinci Resolve project imported: %1").arg(proj->name()), QStringLiteral("success"));
+}
+
+void AppController::loadEdlTimeline(const QUrl &url)
+{
+    const QString path = readTargetPath(url);
+    if (path.isEmpty()) {
+        setLastMessage(tr("That project location isn’t valid"), QStringLiteral("error"));
+        return;
+    }
+
+    QString readError;
+    const std::optional<drift::Project> proj = drift::edl::readProject(path, &readError);
+    if (!proj) {
+        setLastMessage(readError.isEmpty() ? tr("Failed to open Edit Decision List (.edl)") : readError,
+                       QStringLiteral("error"));
+        return;
+    }
+
+    ++m_loadGeneration;
+
+    const QByteArray data = QJsonDocument(proj->toJson()).toJson(QJsonDocument::Compact);
+
+    QString error;
+    if (!applyProjectJson(data, &error)) {
+        setLastMessage(error, QStringLiteral("error"));
+        return;
+    }
+
+    m_embeddedSources.clear();
+    setCurrentProjectPath(QString());
+    setDirty(true);
+    deleteRecoveryFile();
+    setProjectLayoutChosen(true);
+    setLastMessage(tr("EDL imported: %1").arg(proj->name()), QStringLiteral("success"));
+}
+
+void AppController::loadOtioTimeline(const QUrl &url)
+{
+    const QString path = readTargetPath(url);
+    if (path.isEmpty()) {
+        setLastMessage(tr("That project location isn’t valid"), QStringLiteral("error"));
+        return;
+    }
+
+    QString readError;
+    const std::optional<drift::Project> proj = drift::otio::readProject(path, &readError);
+    if (!proj) {
+        setLastMessage(readError.isEmpty() ? tr("Failed to open OpenTimelineIO (.otio) sequence") : readError,
+                       QStringLiteral("error"));
+        return;
+    }
+
+    ++m_loadGeneration;
+
+    const QByteArray data = QJsonDocument(proj->toJson()).toJson(QJsonDocument::Compact);
+
+    QString error;
+    if (!applyProjectJson(data, &error)) {
+        setLastMessage(error, QStringLiteral("error"));
+        return;
+    }
+
+    m_embeddedSources.clear();
+    setCurrentProjectPath(QString());
+    setDirty(true);
+    deleteRecoveryFile();
+    setProjectLayoutChosen(true);
+    setLastMessage(tr("OpenTimelineIO imported: %1").arg(proj->name()), QStringLiteral("success"));
+}
+
 void AppController::packageProject(const QUrl &url)
 {
     // The bundle writer needs a real file to seek in, so on Android this stages into app storage
@@ -17537,6 +17643,13 @@ void AppController::loadProject(const QUrl &url)
         return;
     }
 
+    if (path.endsWith(QLatin1String(".drp"), Qt::CaseInsensitive)
+        || path.endsWith(QLatin1String(".fcpxml"), Qt::CaseInsensitive)
+        || drift::resolve::isResolveProject(path)) {
+        loadResolveProject(url);
+        return;
+    }
+
     if (path.endsWith(QLatin1String(".mogrt"), Qt::CaseInsensitive)
         || drift::mogrt::isMogrtFile(path)) {
         importMogrt(url);
@@ -17547,6 +17660,18 @@ void AppController::loadProject(const QUrl &url)
         || path.endsWith(QLatin1String(".mlt"), Qt::CaseInsensitive)
         || drift::kdenlive::isKdenliveProject(path)) {
         loadKdenliveProject(url);
+        return;
+    }
+
+    if (path.endsWith(QLatin1String(".edl"), Qt::CaseInsensitive)
+        || drift::edl::isEdlTimeline(path)) {
+        loadEdlTimeline(url);
+        return;
+    }
+
+    if (path.endsWith(QLatin1String(".otio"), Qt::CaseInsensitive)
+        || drift::otio::isOtioTimeline(path)) {
+        loadOtioTimeline(url);
         return;
     }
 

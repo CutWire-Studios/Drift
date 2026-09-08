@@ -3073,6 +3073,30 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Failed to open DaVinci Resolve project / timeline</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>DaVinci Resolve project imported: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Failed to open Edit Decision List (.edl)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>EDL imported: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Failed to open OpenTimelineIO (.otio) sequence</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>OpenTimelineIO imported: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Exporting…</source>
         <translation>Exportation en cours…</translation>
     </message>
@@ -4267,7 +4291,19 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>DaVinci Resolve project (*.drp *.fcpxml)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Kdenlive &amp; Shotcut project (*.kdenlive *.mlt)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>OpenTimelineIO (*.otio)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Edit Decision List (*.edl)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -4327,6 +4363,30 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Import DaVinci Resolve Project / FCPXML</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>DaVinci Resolve project archive (*.drp)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Final Cut Pro X XML (*.fcpxml)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Import Edit Decision List (.edl)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Import OpenTimelineIO (.otio)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>OpenTimelineIO sequence (*.otio)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Save Shareable Copy</source>
         <translation>Enregistrer une copie partageable</translation>
     </message>
@@ -4378,6 +4438,10 @@
         <translation>Vidéo</translation>
     </message>
     <message>
+        <source>All Supported Projects (*.drift *.prproj *.xml *.fcpxml *.mogrt *.kdenlive *.mlt *.drp *.edl *.otio)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Video size and layout</source>
         <translation>Taille et disposition de la vidéo</translation>
     </message>
@@ -4420,10 +4484,6 @@
     <message>
         <source>Recommended packs and updates</source>
         <translation>extensions et mises à jour recommandées</translation>
-    </message>
-    <message>
-        <source>All Supported Projects (*.drift *.prproj *.xml *.mogrt *.kdenlive *.mlt)</source>
-        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Extras</source>
@@ -7185,6 +7245,34 @@ En cas de saccades à la lecture, essayez un autre mode.</translation>
         <source>Root element is not &lt;mlt&gt;</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>XML parse error at line %1, column %2: %3</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Root element is &lt;%1&gt;, expected &lt;fcpxml&gt;</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cannot open DaVinci Resolve project archive: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>DaVinci Resolve project archive is empty or invalid</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No edit events found in EDL</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Failed to parse OpenTimelineIO JSON: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Not an OpenTimelineIO Timeline or Stack (schema: %1)</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>RecentProjectsPopup</name>
@@ -7248,6 +7336,18 @@ En cas de saccades à la lecture, essayez un autre mode.</translation>
     </message>
     <message>
         <source>Import Kdenlive / Shotcut project…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Import DaVinci Resolve project / FCPXML…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Import Edit Decision List (.edl)…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Import OpenTimelineIO (.otio)…</source>
         <translation type="unfinished"></translation>
     </message>
     <message>

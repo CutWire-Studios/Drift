@@ -31,6 +31,9 @@
 #include "core/EffectStackStore.h"
 #include "core/MogrtReader.h"
 #include "core/KdenliveReader.h"
+#include "core/ResolveReader.h"
+#include "core/EdlReader.h"
+#include "core/OtioReader.h"
 #include "core/Project.h"
 #include "core/TimelineOps.h"
 #include "core/Track.h"
@@ -101,6 +104,10 @@ private slots:
     void mogrtImportTemplate();
     void mogrtImportIntoExistingProject();
     void kdenliveProjectImportMlt();
+    void resolveProjectImportDrp();
+    void resolveTimelineImportFcpxml();
+    void edlTimelineImport();
+    void otioTimelineImport();
     void newProjectClearsEverything();
     void projectSetupOnPristineProjectStaysClean();
     void projectFpsCanChangeAfterSetup();
@@ -2199,6 +2206,373 @@ void EditorStateTest::kdenliveProjectImportMlt()
     QCOMPARE(aClip1.timelineStart, 0LL);
     // 250 frames at 25 fps = 10.0s = 10,000,000 us
     QCOMPARE(aClip1.timelineDuration, 10000000LL);
+}
+
+void EditorStateTest::resolveProjectImportDrp()
+{
+    AssetLibrary library;
+    AppController state(&library);
+
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    const QString drpPath = dir.filePath(QStringLiteral("MyResolveProject.drp"));
+
+    const QString projectXml = QStringLiteral(
+        "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+        "<Project>\n"
+        "  <Name>Resolve Feature Project</Name>\n"
+        "  <TimelineResolutionWidth>3840</TimelineResolutionWidth>\n"
+        "  <TimelineResolutionHeight>2160</TimelineResolutionHeight>\n"
+        "  <TimelineFrameRate>24</TimelineFrameRate>\n"
+        "</Project>\n");
+
+    const QString mpFolderXml = QStringLiteral(
+        "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+        "<MpFolder>\n"
+        "  <Folder>\n"
+        "    <Id>folder-1</Id>\n"
+        "    <Name>A-Roll</Name>\n"
+        "  </Folder>\n"
+        "  <Clip>\n"
+        "    <Id>clip-1</Id>\n"
+        "    <Name>Interview.mov</Name>\n"
+        "    <FilePath>/media/Interview.mov</FilePath>\n"
+        "    <FolderId>folder-1</FolderId>\n"
+        "  </Clip>\n"
+        "</MpFolder>\n");
+
+    const QString seqXml = QStringLiteral(
+        "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+        "<SM_Sequence>\n"
+        "  <Name>Interview Edit</Name>\n"
+        "  <SM_Track type=\"video\">\n"
+        "    <SM_Clip>\n"
+        "      <Name>Interview.mov</Name>\n"
+        "      <MediaId>clip-1</MediaId>\n"
+        "      <StartFrame>0</StartFrame>\n"
+        "      <DurationFrame>120</DurationFrame>\n"
+        "      <InFrame>24</InFrame>\n"
+        "    </SM_Clip>\n"
+        "  </SM_Track>\n"
+        "  <SM_Track type=\"audio\">\n"
+        "    <SM_Clip>\n"
+        "      <Name>Interview.mov</Name>\n"
+        "      <MediaId>clip-1</MediaId>\n"
+        "      <StartFrame>0</StartFrame>\n"
+        "      <DurationFrame>120</DurationFrame>\n"
+        "      <InFrame>24</InFrame>\n"
+        "    </SM_Clip>\n"
+        "  </SM_Track>\n"
+        "</SM_Sequence>\n");
+
+    QList<QPair<QString, QByteArray>> files = {
+        {QStringLiteral("project.xml"), projectXml.toUtf8()},
+        {QStringLiteral("MediaPool/MpFolder.xml"), mpFolderXml.toUtf8()},
+        {QStringLiteral("SeqContainer/Timeline1.xml"), seqXml.toUtf8()}
+    };
+
+    QVERIFY(writeSimpleZipForTest(drpPath, files));
+    QVERIFY(drift::resolve::isResolveProject(drpPath));
+
+    state.loadProject(QUrl::fromLocalFile(drpPath));
+
+    QCOMPARE(state.project()->name(), QStringLiteral("Interview Edit"));
+    QCOMPARE(state.project()->width(), 3840);
+    QCOMPARE(state.project()->height(), 2160);
+    QCOMPARE(state.project()->fps(), 24);
+
+    // Bin folder
+    bool foundFolder = false;
+    for (const auto &f : state.project()->binFolders()) {
+        if (f.name == QStringLiteral("A-Roll"))
+            foundFolder = true;
+    }
+    QVERIFY(foundFolder);
+
+    // Assets
+    QCOMPARE(state.project()->assets().size(), 1);
+    QCOMPARE(state.project()->assets().constBegin()->name, QStringLiteral("Interview.mov"));
+
+    // Tracks: 1 video, 1 audio
+    QCOMPARE(state.project()->tracks().size(), 2);
+    const auto &vTrack = state.project()->tracks().at(0);
+    QCOMPARE(vTrack.type, drift::TrackType::Video);
+    QCOMPARE(vTrack.clips.size(), 1);
+    const auto &vClip = vTrack.clips.at(0);
+    QCOMPARE(vClip.timelineStart, 0LL);
+    // 120 frames at 24 fps = 5.0s = 5,000,000 us
+    QCOMPARE(vClip.timelineDuration, 5000000LL);
+    // 24 frames at 24 fps = 1.0s = 1,000,000 us
+    QCOMPARE(vClip.srcIn, 1000000LL);
+
+    const auto &aTrack = state.project()->tracks().at(1);
+    QCOMPARE(aTrack.type, drift::TrackType::Audio);
+    QCOMPARE(aTrack.clips.size(), 1);
+    const auto &aClip = aTrack.clips.at(0);
+    QCOMPARE(aClip.timelineStart, 0LL);
+    QCOMPARE(aClip.timelineDuration, 5000000LL);
+}
+
+void EditorStateTest::resolveTimelineImportFcpxml()
+{
+    AssetLibrary library;
+    AppController state(&library);
+
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    const QString fcpxmlPath = dir.filePath(QStringLiteral("resolve_export.fcpxml"));
+
+    const QString xml = QStringLiteral(
+        "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+        "<fcpxml version=\"1.9\">\n"
+        "  <resources>\n"
+        "    <format id=\"r1\" name=\"FFVideoFormat1080p25\" frameDuration=\"1/25s\" width=\"1920\" height=\"1080\"/>\n"
+        "    <asset id=\"r2\" name=\"B-Roll\" src=\"file:///media/broll.mp4\" duration=\"10s\" hasVideo=\"1\" hasAudio=\"1\"/>\n"
+        "  </resources>\n"
+        "  <library>\n"
+        "    <event name=\"Event\">\n"
+        "      <project name=\"Resolve FCPXML Sequence\">\n"
+        "        <sequence format=\"r1\">\n"
+        "          <spine>\n"
+        "            <asset-clip ref=\"r2\" offset=\"0s\" name=\"B-Roll\" start=\"0s\" duration=\"4s\"/>\n"
+        "            <gap offset=\"4s\" duration=\"2s\"/>\n"
+        "            <title ref=\"r3\" offset=\"6s\" duration=\"3s\" name=\"Lower Third\">\n"
+        "              <text><text-style font=\"Montserrat\" fontSize=\"72\" bold=\"1\" fontColor=\"1 0 0 1\">Breaking News</text-style></text>\n"
+        "            </title>\n"
+        "          </spine>\n"
+        "        </sequence>\n"
+        "      </project>\n"
+        "    </event>\n"
+        "  </library>\n"
+        "</fcpxml>\n");
+
+    {
+        QFile file(fcpxmlPath);
+        QVERIFY(file.open(QIODevice::WriteOnly));
+        file.write(xml.toUtf8());
+    }
+
+    QVERIFY(drift::resolve::isResolveProject(fcpxmlPath));
+
+    state.loadProject(QUrl::fromLocalFile(fcpxmlPath));
+
+    QCOMPARE(state.project()->name(), QStringLiteral("Resolve FCPXML Sequence"));
+    QCOMPARE(state.project()->width(), 1920);
+    QCOMPARE(state.project()->height(), 1080);
+    QCOMPARE(state.project()->fps(), 25);
+
+    // Video track
+    QVERIFY(!state.project()->tracks().isEmpty());
+    const auto &vTrack = state.project()->tracks().at(0);
+    QCOMPARE(vTrack.type, drift::TrackType::Video);
+    QCOMPARE(vTrack.clips.size(), 2);
+
+    // Clip 1: B-Roll (0s to 4s)
+    const auto &c1 = vTrack.clips.at(0);
+    QCOMPARE(c1.name, QStringLiteral("B-Roll"));
+    QCOMPARE(c1.timelineStart, 0LL);
+    QCOMPARE(c1.timelineDuration, 4000000LL);
+
+    // Clip 2: Title (6s to 9s, gap of 2s preserved)
+    const auto &c2 = vTrack.clips.at(1);
+    QCOMPARE(c2.type, drift::ClipType::Text);
+    QCOMPARE(c2.textContent, QStringLiteral("Breaking News"));
+    QCOMPARE(c2.timelineStart, 6000000LL);
+    QCOMPARE(c2.timelineDuration, 3000000LL);
+    QCOMPARE(c2.textStyle.fontFamily, QStringLiteral("Montserrat"));
+    QCOMPARE(c2.textStyle.pixelSize, 72);
+    QCOMPARE(c2.textStyle.color, QColor(255, 0, 0, 255));
+}
+
+void EditorStateTest::edlTimelineImport()
+{
+    AssetLibrary library;
+    AppController state(&library);
+
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    const QString edlPath = dir.filePath(QStringLiteral("commercial.edl"));
+
+    const QString edl = QStringLiteral(
+        "TITLE: Commercial Cut\n"
+        "FCM: NON-DROP FRAME\n"
+        "* TIMEBASE: 25\n"
+        "001  AX       V     C        00:00:01:00 00:00:06:00 01:00:00:00 01:00:05:00\n"
+        "* FROM CLIP NAME: scene1.mp4\n"
+        "002  BL       V     C        00:00:00:00 00:00:02:00 01:00:05:00 01:00:07:00\n"
+        "* FROM CLIP NAME: scene2.mp4\n"
+        "003  AX       A     C        00:00:01:00 00:00:08:00 01:00:00:00 01:00:07:00\n"
+        "* FROM CLIP NAME: audio.wav\n"
+        "* LOC: 01:00:02:00 GREEN Product reveal\n");
+
+    {
+        QFile file(edlPath);
+        QVERIFY(file.open(QIODevice::WriteOnly));
+        file.write(edl.toUtf8());
+    }
+
+    QVERIFY(drift::edl::isEdlTimeline(edlPath));
+
+    state.loadProject(QUrl::fromLocalFile(edlPath));
+
+    QCOMPARE(state.project()->name(), QStringLiteral("Commercial Cut"));
+    QCOMPARE(state.project()->fps(), 25);
+
+    // Normalized from 01:00:00:00 -> starts at 0
+    QCOMPARE(state.project()->tracks().size(), 2);
+    const auto &vTrack = state.project()->tracks().at(0);
+    QCOMPARE(vTrack.type, drift::TrackType::Video);
+    QCOMPARE(vTrack.clips.size(), 2);
+
+    // Event 1 in V1: 5s duration
+    const auto &vClip1 = vTrack.clips.at(0);
+    QCOMPARE(vClip1.timelineStart, 0LL);
+    QCOMPARE(vClip1.timelineDuration, 5000000LL);
+    QCOMPARE(vClip1.srcIn, 1000000LL); // 1.0s
+
+    // Event 2 in V1: 2s duration, starts at 5s
+    const auto &vClip2 = vTrack.clips.at(1);
+    QCOMPARE(vClip2.timelineStart, 5000000LL);
+    QCOMPARE(vClip2.timelineDuration, 2000000LL);
+
+    // Audio Track
+    const auto &aTrack = state.project()->tracks().at(1);
+    QCOMPARE(aTrack.type, drift::TrackType::Audio);
+    QCOMPARE(aTrack.clips.size(), 1);
+    const auto &aClip1 = aTrack.clips.at(0);
+    QCOMPARE(aClip1.timelineStart, 0LL);
+    QCOMPARE(aClip1.timelineDuration, 7000000LL);
+
+    // Marker locator at 01:00:02:00 -> normalized to 2.0s
+    QCOMPARE(state.project()->bookmarks().size(), 1);
+    const auto &bm = state.project()->bookmarks().at(0);
+    QCOMPARE(bm.label, QStringLiteral("Product reveal"));
+    QCOMPARE(bm.timeUs, 2000000LL);
+}
+
+void EditorStateTest::otioTimelineImport()
+{
+    AssetLibrary library;
+    AppController state(&library);
+
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    const QString otioPath = dir.filePath(QStringLiteral("doc.otio"));
+
+    const QString otio = QStringLiteral(
+        "{\n"
+        "  \"OTIO_SCHEMA\": \"Timeline.1\",\n"
+        "  \"name\": \"Documentary OTIO\",\n"
+        "  \"global_start_time\": {\n"
+        "    \"OTIO_SCHEMA\": \"RationalTime.1\",\n"
+        "    \"rate\": 24,\n"
+        "    \"value\": 0\n"
+        "  },\n"
+        "  \"tracks\": {\n"
+        "    \"OTIO_SCHEMA\": \"Stack.1\",\n"
+        "    \"children\": [\n"
+        "      {\n"
+        "        \"OTIO_SCHEMA\": \"Track.1\",\n"
+        "        \"name\": \"V1\",\n"
+        "        \"kind\": \"Video\",\n"
+        "        \"children\": [\n"
+        "          {\n"
+        "            \"OTIO_SCHEMA\": \"Clip.1\",\n"
+        "            \"name\": \"Interview\",\n"
+        "            \"source_range\": {\n"
+        "              \"OTIO_SCHEMA\": \"TimeRange.1\",\n"
+        "              \"start_time\": { \"value\": 24, \"rate\": 24 },\n"
+        "              \"duration\": { \"value\": 96, \"rate\": 24 }\n"
+        "            },\n"
+        "            \"media_reference\": {\n"
+        "              \"OTIO_SCHEMA\": \"ExternalReference.1\",\n"
+        "              \"target_url\": \"file:///media/interview.mov\"\n"
+        "            }\n"
+        "          },\n"
+        "          {\n"
+        "            \"OTIO_SCHEMA\": \"Gap.1\",\n"
+        "            \"source_range\": {\n"
+        "              \"OTIO_SCHEMA\": \"TimeRange.1\",\n"
+        "              \"duration\": { \"value\": 24, \"rate\": 24 }\n"
+        "            }\n"
+        "          },\n"
+        "          {\n"
+        "            \"OTIO_SCHEMA\": \"Clip.1\",\n"
+        "            \"name\": \"B-Roll\",\n"
+        "            \"source_range\": {\n"
+        "              \"OTIO_SCHEMA\": \"TimeRange.1\",\n"
+        "              \"start_time\": { \"value\": 0, \"rate\": 24 },\n"
+        "              \"duration\": { \"value\": 48, \"rate\": 24 }\n"
+        "            },\n"
+        "            \"media_reference\": {\n"
+        "              \"OTIO_SCHEMA\": \"ExternalReference.1\",\n"
+        "              \"target_url\": \"file:///media/broll.mov\"\n"
+        "            }\n"
+        "          }\n"
+        "        ]\n"
+        "      },\n"
+        "      {\n"
+        "        \"OTIO_SCHEMA\": \"Track.1\",\n"
+        "        \"name\": \"A1\",\n"
+        "        \"kind\": \"Audio\",\n"
+        "        \"children\": [\n"
+        "          {\n"
+        "            \"OTIO_SCHEMA\": \"Clip.1\",\n"
+        "            \"name\": \"Voiceover\",\n"
+        "            \"source_range\": {\n"
+        "              \"OTIO_SCHEMA\": \"TimeRange.1\",\n"
+        "              \"start_time\": { \"value\": 0, \"rate\": 24 },\n"
+        "              \"duration\": { \"value\": 168, \"rate\": 24 }\n"
+        "            },\n"
+        "            \"media_reference\": {\n"
+        "              \"OTIO_SCHEMA\": \"ExternalReference.1\",\n"
+        "              \"target_url\": \"file:///media/voiceover.wav\"\n"
+        "            }\n"
+        "          }\n"
+        "        ]\n"
+        "      }\n"
+        "    ]\n"
+        "  }\n"
+        "}\n");
+
+    {
+        QFile file(otioPath);
+        QVERIFY(file.open(QIODevice::WriteOnly));
+        file.write(otio.toUtf8());
+    }
+
+    QVERIFY(drift::otio::isOtioTimeline(otioPath));
+
+    state.loadProject(QUrl::fromLocalFile(otioPath));
+
+    QCOMPARE(state.project()->name(), QStringLiteral("Documentary OTIO"));
+    QCOMPARE(state.project()->fps(), 24);
+
+    QCOMPARE(state.project()->tracks().size(), 2);
+    const auto &vTrack = state.project()->tracks().at(0);
+    QCOMPARE(vTrack.type, drift::TrackType::Video);
+    QCOMPARE(vTrack.clips.size(), 2);
+
+    // Clip 1: Interview (4s duration, srcIn 1s)
+    const auto &c1 = vTrack.clips.at(0);
+    QCOMPARE(c1.name, QStringLiteral("Interview"));
+    QCOMPARE(c1.timelineStart, 0LL);
+    QCOMPARE(c1.timelineDuration, 4000000LL);
+    QCOMPARE(c1.srcIn, 1000000LL);
+
+    // Clip 2: B-Roll (starts at 5s = 4s + 1s gap, duration 2s)
+    const auto &c2 = vTrack.clips.at(1);
+    QCOMPARE(c2.name, QStringLiteral("B-Roll"));
+    QCOMPARE(c2.timelineStart, 5000000LL);
+    QCOMPARE(c2.timelineDuration, 2000000LL);
+
+    // Audio Track: Voiceover (7s duration)
+    const auto &aTrack = state.project()->tracks().at(1);
+    QCOMPARE(aTrack.type, drift::TrackType::Audio);
+    QCOMPARE(aTrack.clips.size(), 1);
+    const auto &ac1 = aTrack.clips.at(0);
+    QCOMPARE(ac1.timelineStart, 0LL);
+    QCOMPARE(ac1.timelineDuration, 7000000LL);
 }
 
 // resetToDefaultTimeline() only clears the tracks, so New Project used to keep the asset pool,
