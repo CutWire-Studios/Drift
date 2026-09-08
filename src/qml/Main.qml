@@ -38,8 +38,12 @@ ApplicationWindow {
     width: 1280
     height: 800
     // Below this the split minimums cannot all be satisfied and panels overlap.
+    // Left at the expanded-layout floor on purpose. Lowering it is a prerequisite for the
+    // single-pane collapse below 600dp, which is not built yet — until it is, a narrower window
+    // would only let the desktop arrangement be squashed into a size it cannot lay out in.
     minimumWidth: Theme.windowMinimumWidth
     minimumHeight: Theme.windowMinimumHeight
+
     // Shown from Component.onCompleted, once the stored geometry is in place:
     // assigning it to a window that is already up makes it jump across the screen,
     // and a session left maximized would flash at its windowed size first.
@@ -106,7 +110,12 @@ ApplicationWindow {
 
     onXChanged: geometrySettleTimer.restart()
     onYChanged: geometrySettleTimer.restart()
-    onWidthChanged: geometrySettleTimer.restart()
+    onWidthChanged: {
+        // Theme is a singleton and cannot see a window, so the size class it reports has to be
+        // fed from whichever root is live. Screen is the wrong source: it ignores tiling.
+        Theme.windowWidth = width
+        geometrySettleTimer.restart()
+    }
     onHeightChanged: geometrySettleTimer.restart()
 
     function restoreWindowGeometry() {
@@ -568,6 +577,7 @@ ApplicationWindow {
     }
 
     Component.onCompleted: {
+        Theme.windowWidth = window.width
         window.restoreWindowGeometry()
         window.beginStartupProject()
         // Last: the window is placed by now, and the startup flow keeps the ordering

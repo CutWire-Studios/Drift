@@ -586,199 +586,23 @@
 <context>
     <name>AndroidHome</name>
     <message>
-        <source>Create polished videos fast</source>
-        <translation>උසස් නිමාවකින් යුත් වීඩියෝ ඉක්මනින් සාදන්න</translation>
-    </message>
-    <message>
-        <source>Open</source>
-        <translation>විවෘත කරන්න</translation>
-    </message>
-    <message>
-        <source>More</source>
-        <translation>තවත්</translation>
-    </message>
-    <message>
-        <source>Light mode</source>
-        <translation>ලා තේමාව (Light mode)</translation>
-    </message>
-    <message>
-        <source>Dark mode</source>
-        <translation>අඳුරු තේමාව (Dark mode)</translation>
-    </message>
-    <message>
-        <source>Extras</source>
-        <translation>අමතර අංග</translation>
-    </message>
-    <message>
-        <source>Update available</source>
-        <translation>යාවත්කාලීනයක් පවතී</translation>
-    </message>
-    <message>
-        <source>Recent projects</source>
-        <translation>මෑත ව්‍යාපෘති</translation>
-    </message>
-    <message>
-        <source>Untitled</source>
-        <translation>නම් නොකළ</translation>
-    </message>
-    <message>
-        <source>That project file is missing.</source>
-        <translation>එම ව්‍යාපෘති ගොනුව නැත.</translation>
-    </message>
-    <message>
-        <source>Remove from recents</source>
-        <translation>මෑත දෑ වෙතින් ඉවත් කරන්න</translation>
-    </message>
-    <message>
-        <source>New project</source>
-        <translation>නව ව්‍යාපෘතිය</translation>
-    </message>
-    <message>
-        <source>Start with this layout</source>
-        <translation>මෙම පිරිසැලසුමෙන් ආරම්භ කරන්න</translation>
-    </message>
-    <message>
-        <source>Decide layout later</source>
-        <translation>පිරිසැලසුම පසුව තීරණය කරන්න</translation>
+        <source>Coming soon</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
-    <name>AndroidLayoutPicker</name>
+    <name>AndroidHomeNav</name>
     <message>
-        <source>YouTube</source>
-        <translation>YouTube</translation>
+        <source>Projects</source>
+        <translation type="unfinished">ව්‍යාපෘති</translation>
     </message>
     <message>
-        <source>Instagram</source>
-        <translation>Instagram</translation>
+        <source>Market</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Facebook</source>
-        <translation>Facebook</translation>
-    </message>
-    <message>
-        <source>TikTok</source>
-        <translation>TikTok</translation>
-    </message>
-    <message>
-        <source>More</source>
-        <translation>තවත්</translation>
-    </message>
-    <message>
-        <source>YT Video</source>
-        <translation>YT Video</translation>
-    </message>
-    <message>
-        <source>YT Short</source>
-        <translation>YT Short</translation>
-    </message>
-    <message>
-        <source>IG Reel</source>
-        <translation>IG Reel</translation>
-    </message>
-    <message>
-        <source>IG Story</source>
-        <translation>IG Story</translation>
-    </message>
-    <message>
-        <source>IG Post</source>
-        <translation>IG Post</translation>
-    </message>
-    <message>
-        <source>IG Feed</source>
-        <translation>IG Feed</translation>
-    </message>
-    <message>
-        <source>FB Reel</source>
-        <translation>FB Reel</translation>
-    </message>
-    <message>
-        <source>FB Video</source>
-        <translation>FB Video</translation>
-    </message>
-    <message>
-        <source>FB Story</source>
-        <translation>FB Story</translation>
-    </message>
-    <message>
-        <source>Snapchat</source>
-        <translation>Snapchat</translation>
-    </message>
-    <message>
-        <source>X / Twitter</source>
-        <translation>X / Twitter</translation>
-    </message>
-    <message>
-        <source>LinkedIn</source>
-        <translation>LinkedIn</translation>
-    </message>
-    <message>
-        <source>Square</source>
-        <translation>සමචතුරස්‍ර (Square)</translation>
-    </message>
-    <message>
-        <source>Landscape</source>
-        <translation>තිරස් (Landscape)</translation>
-    </message>
-    <message>
-        <source>Portrait</source>
-        <translation>සිරස් (Portrait)</translation>
-    </message>
-    <message>
-        <source>Classic</source>
-        <translation>සම්භාව්‍ය (Classic)</translation>
-    </message>
-    <message>
-        <source>Custom</source>
-        <translation>අභිරුචි</translation>
-    </message>
-    <message>
-        <source>Any size</source>
-        <translation>ඕනෑම ප්‍රමාණයක්</translation>
-    </message>
-    <message>
-        <source>4K</source>
-        <translation>4K</translation>
-    </message>
-    <message>
-        <source>1080p</source>
-        <translation>1080p</translation>
-    </message>
-    <message>
-        <source>720p</source>
-        <translation>720p</translation>
-    </message>
-    <message>
-        <source>Choose a layout for your video</source>
-        <translation>ඔබේ වීඩියෝව සඳහා පිරිසැලසුමක් තෝරන්න</translation>
-    </message>
-    <message>
-        <source>Template</source>
-        <translation>ආකෘතිය</translation>
-    </message>
-    <message>
-        <source>Width</source>
-        <translation>පළල</translation>
-    </message>
-    <message>
-        <source>Height</source>
-        <translation>උස</translation>
-    </message>
-    <message>
-        <source>Quality</source>
-        <translation>ගුණාත්මකභාවය</translation>
-    </message>
-    <message>
-        <source>Frames per second</source>
-        <translation>තත්පරයට රූපරාමු (fps)</translation>
-    </message>
-    <message>
-        <source>%1×%2 · %3 · %4 fps</source>
-        <translation>%1×%2 · %3 · %4 fps</translation>
-    </message>
-    <message>
-        <source>Preview shows the canvas aspect ratio</source>
-        <translation>පෙරදසුනෙන් කැන්වසයේ දර්ශන අනුපාතය පෙන්වයි</translation>
+        <source>Me</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -790,6 +614,10 @@
     <message>
         <source>Save Project</source>
         <translation>ව්‍යාපෘතිය සුරකින්න</translation>
+    </message>
+    <message>
+        <source>Canvas set to %1×%2 from your first clip.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Open Project</source>
@@ -838,6 +666,44 @@
     <message>
         <source>Imported from the marketplace.</source>
         <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>AndroidMePage</name>
+    <message>
+        <source>Me</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%n coin(s)</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Light mode</source>
+        <translation type="unfinished">ලා තේමාව (Light mode)</translation>
+    </message>
+    <message>
+        <source>Dark mode</source>
+        <translation type="unfinished">අඳුරු තේමාව (Dark mode)</translation>
+    </message>
+    <message>
+        <source>Settings</source>
+        <translation type="unfinished">සැකසීම්</translation>
+    </message>
+    <message>
+        <source>Extras</source>
+        <translation type="unfinished">අමතර අංග</translation>
+    </message>
+    <message>
+        <source>Update available</source>
+        <translation type="unfinished">යාවත්කාලීනයක් පවතී</translation>
+    </message>
+    <message>
+        <source>Debug info</source>
+        <translation type="unfinished">දෝෂහරණ තොරතුරු</translation>
     </message>
 </context>
 <context>
@@ -996,6 +862,49 @@
     <message>
         <source>Fullscreen preview</source>
         <translation>සම්පූර්ණ තිර පෙරදසුන</translation>
+    </message>
+</context>
+<context>
+    <name>AndroidProjectsPage</name>
+    <message>
+        <source>New project</source>
+        <translation type="unfinished">නව ව්‍යාපෘතිය</translation>
+    </message>
+    <message>
+        <source>Pick a clip to start</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open project</source>
+        <translation type="unfinished">ව්‍යාපෘතිය විවෘත කරන්න</translation>
+    </message>
+    <message>
+        <source>Continue a saved edit</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Create polished videos fast</source>
+        <translation type="unfinished">උසස් නිමාවකින් යුත් වීඩියෝ ඉක්මනින් සාදන්න</translation>
+    </message>
+    <message>
+        <source>Recent projects</source>
+        <translation type="unfinished">මෑත ව්‍යාපෘති</translation>
+    </message>
+    <message>
+        <source>Untitled</source>
+        <translation type="unfinished">නම් නොකළ</translation>
+    </message>
+    <message>
+        <source>That project file is missing.</source>
+        <translation type="unfinished">එම ව්‍යාපෘති ගොනුව නැත.</translation>
+    </message>
+    <message>
+        <source>Project actions</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Remove from recents</source>
+        <translation type="unfinished">මෑතකදී භාවිත කළ ඒවායින් ඉවත් කරන්න</translation>
     </message>
 </context>
 <context>
@@ -3233,14 +3142,6 @@
 <context>
     <name>AssetsPanel</name>
     <message>
-        <source>Imported %1 of %2 files. %3 could not be read.</source>
-        <translation>ගොනු %2කින් %1ක් ආයාත කරන ලදී. %3ක් කියවීමට නොහැකි විය.</translation>
-    </message>
-    <message>
-        <source>Could not import that file — the format may be unsupported.</source>
-        <translation>එම ගොනුව ආයාත කිරීමට නොහැකි විය — ආකෘතියට සහය නොදක්වයි විය හැක.</translation>
-    </message>
-    <message>
         <source>Remove this media?</source>
         <translation>මෙම මාධ්‍යය ඉවත් කරන්නද?</translation>
     </message>
@@ -3297,24 +3198,6 @@
         <translation>එම පින්තූරය නිර්යාත කිරීමට නොහැකි විය.</translation>
     </message>
     <message numerus="yes">
-        <source>Imported %n files.</source>
-        <translation>
-            <numerusform>ගොනු %nක් ආයාත කරන ලදී.</numerusform>
-            <numerusform>ගොනු %nක් ආයාත කරන ලදී.</numerusform>
-        </translation>
-    </message>
-    <message>
-        <source>An import is already running.</source>
-        <translation>දැනටමත් ආයාත කිරීමක් ක්‍රියාත්මක වේ.</translation>
-    </message>
-    <message numerus="yes">
-        <source>Could not import any of the %n selected files.</source>
-        <translation>
-            <numerusform>තෝරාගත් ගොනු %nන් කිසිවක් ආයාත කිරීමට නොහැකි විය.</numerusform>
-            <numerusform>තෝරාගත් ගොනු %nන් කිසිවක් ආයාත කිරීමට නොහැකි විය.</numerusform>
-        </translation>
-    </message>
-    <message numerus="yes">
         <source>Replaced with “%1”. %n clips were shortened to fit the new file.</source>
         <translation>
             <numerusform>“%1” සමඟ ප්‍රතිස්ථාපනය විය. නව ගොනුවට සරිලන සේ ක්ලිප් %nක් කෙටි කරන ලදී.</numerusform>
@@ -3336,26 +3219,6 @@
     <message>
         <source>Media</source>
         <translation>මාධ්‍ය</translation>
-    </message>
-    <message>
-        <source>Could not open that file. This package cannot read files dropped from other apps — use Import to pick them instead.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Could not open those files. This package cannot read files dropped from other apps — use Import to pick them instead.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Could not open that file. It may have been moved, or you may not have permission to read it.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Could not open any of the selected files.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Imported %1 of %2 files. The rest could not be opened — this package cannot read files dropped from other apps. Use Import instead.</source>
-        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>“%1” is used by 1 clip on the timeline. Removing this media will also remove that clip and any transitions connected to it. The file on disk is not deleted.</source>
@@ -5506,102 +5369,6 @@
         <translation>පසුව තීරණය කරන්න</translation>
     </message>
     <message>
-        <source>YouTube</source>
-        <translation>YouTube</translation>
-    </message>
-    <message>
-        <source>Instagram</source>
-        <translation>Instagram</translation>
-    </message>
-    <message>
-        <source>Facebook</source>
-        <translation>Facebook</translation>
-    </message>
-    <message>
-        <source>TikTok</source>
-        <translation>TikTok</translation>
-    </message>
-    <message>
-        <source>More</source>
-        <translation>තවත්</translation>
-    </message>
-    <message>
-        <source>YT Video</source>
-        <translation>YT වීඩියෝ</translation>
-    </message>
-    <message>
-        <source>YT Short</source>
-        <translation>YT Short</translation>
-    </message>
-    <message>
-        <source>IG Reel</source>
-        <translation>IG Reel</translation>
-    </message>
-    <message>
-        <source>IG Story</source>
-        <translation>IG Story</translation>
-    </message>
-    <message>
-        <source>IG Post</source>
-        <translation>IG Post</translation>
-    </message>
-    <message>
-        <source>IG Feed</source>
-        <translation>IG Feed</translation>
-    </message>
-    <message>
-        <source>FB Reel</source>
-        <translation>FB Reel</translation>
-    </message>
-    <message>
-        <source>FB Video</source>
-        <translation>FB වීඩියෝ</translation>
-    </message>
-    <message>
-        <source>FB Story</source>
-        <translation>FB Story</translation>
-    </message>
-    <message>
-        <source>Snapchat</source>
-        <translation>Snapchat</translation>
-    </message>
-    <message>
-        <source>X / Twitter</source>
-        <translation>X / Twitter</translation>
-    </message>
-    <message>
-        <source>LinkedIn</source>
-        <translation>LinkedIn</translation>
-    </message>
-    <message>
-        <source>Square</source>
-        <translation>සමචතුරස්‍රය</translation>
-    </message>
-    <message>
-        <source>Landscape</source>
-        <translation>තිරස් (Landscape)</translation>
-    </message>
-    <message>
-        <source>Portrait</source>
-        <translation>සිරස් (Portrait)</translation>
-    </message>
-    <message>
-        <source>4K</source>
-        <translation>4K</translation>
-    </message>
-    <message>
-        <source>1440p</source>
-        <translation>1440p</translation>
-    </message>
-    <message>
-        <source>1080p</source>
-        <translation>1080p</translation>
-    </message>
-    <message>
-        <source>720p</source>
-        <translation>720p</translation>
-    </message>
-    <message>
         <source>Pick a platform template and quality. This updates the project video size.</source>
         <translation>වේදිකා ආකෘතියක් සහ ගුණාත්මකභාවයක් තෝරන්න. මෙමඟින් ව්‍යාපෘති වීඩියෝ ප්‍රමාණය යාවත්කාලීන වේ.</translation>
     </message>
@@ -5624,6 +5391,117 @@
     <message>
         <source>Preview shows the canvas aspect ratio</source>
         <translation>පෙරදසුන මඟින් කැන්වසයේ දර්ශන අනුපාතය පෙන්වයි</translation>
+    </message>
+</context>
+<context>
+    <name>LayoutPresets</name>
+    <message>
+        <source>YouTube</source>
+        <translation type="unfinished">YouTube</translation>
+    </message>
+    <message>
+        <source>Instagram</source>
+        <translation type="unfinished">Instagram</translation>
+    </message>
+    <message>
+        <source>Facebook</source>
+        <translation type="unfinished">Facebook</translation>
+    </message>
+    <message>
+        <source>TikTok</source>
+        <translation type="unfinished">TikTok</translation>
+    </message>
+    <message>
+        <source>More</source>
+        <translation type="unfinished">තවත්</translation>
+    </message>
+    <message>
+        <source>YT Video</source>
+        <translation type="unfinished">YT Video</translation>
+    </message>
+    <message>
+        <source>YT Short</source>
+        <translation type="unfinished">YT Short</translation>
+    </message>
+    <message>
+        <source>IG Reel</source>
+        <translation type="unfinished">IG Reel</translation>
+    </message>
+    <message>
+        <source>IG Story</source>
+        <translation type="unfinished">IG Story</translation>
+    </message>
+    <message>
+        <source>IG Post</source>
+        <translation type="unfinished">IG Post</translation>
+    </message>
+    <message>
+        <source>IG Feed</source>
+        <translation type="unfinished">IG Feed</translation>
+    </message>
+    <message>
+        <source>FB Reel</source>
+        <translation type="unfinished">FB Reel</translation>
+    </message>
+    <message>
+        <source>FB Video</source>
+        <translation type="unfinished">FB Video</translation>
+    </message>
+    <message>
+        <source>FB Story</source>
+        <translation type="unfinished">FB Story</translation>
+    </message>
+    <message>
+        <source>Snapchat</source>
+        <translation type="unfinished">Snapchat</translation>
+    </message>
+    <message>
+        <source>X / Twitter</source>
+        <translation type="unfinished">X / Twitter</translation>
+    </message>
+    <message>
+        <source>LinkedIn</source>
+        <translation type="unfinished">LinkedIn</translation>
+    </message>
+    <message>
+        <source>Square</source>
+        <translation type="unfinished">සමචතුරස්‍රය</translation>
+    </message>
+    <message>
+        <source>Landscape</source>
+        <translation type="unfinished">තිරස් (Landscape)</translation>
+    </message>
+    <message>
+        <source>Portrait</source>
+        <translation type="unfinished">සිරස් (Portrait)</translation>
+    </message>
+    <message>
+        <source>Classic</source>
+        <translation type="unfinished">සම්භාව්‍ය (Classic)</translation>
+    </message>
+    <message>
+        <source>Custom</source>
+        <translation type="unfinished">අභිරුචි</translation>
+    </message>
+    <message>
+        <source>Any size</source>
+        <translation type="unfinished">ඕනෑම ප්‍රමාණයක්</translation>
+    </message>
+    <message>
+        <source>4K</source>
+        <translation type="unfinished">4K</translation>
+    </message>
+    <message>
+        <source>1440p</source>
+        <translation type="unfinished">1440p</translation>
+    </message>
+    <message>
+        <source>1080p</source>
+        <translation type="unfinished">1080p</translation>
+    </message>
+    <message>
+        <source>720p</source>
+        <translation type="unfinished">720p</translation>
     </message>
 </context>
 <context>
@@ -6218,6 +6096,59 @@
         <translation>
             <numerusform>අයිතම %n ක් ව්‍යාපෘතියෙන් ඉවත් කරන්න</numerusform>
             <numerusform>අයිතම %n ක් ව්‍යාපෘතියෙන් ඉවත් කරන්න</numerusform>
+        </translation>
+    </message>
+</context>
+<context>
+    <name>MediaImport</name>
+    <message>
+        <source>An import is already running.</source>
+        <translation type="unfinished">දැනටමත් ආයාත කිරීමක් ක්‍රියාත්මක වේ.</translation>
+    </message>
+    <message>
+        <source>Import Media</source>
+        <translation type="unfinished">මාධ්‍ය ආයාත කරන්න</translation>
+    </message>
+    <message>
+        <source>Could not open that file. This package cannot read files dropped from other apps — use Import to pick them instead.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Could not open those files. This package cannot read files dropped from other apps — use Import to pick them instead.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Could not open that file. It may have been moved, or you may not have permission to read it.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Could not open any of the selected files.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Imported %1 of %2 files. The rest could not be opened — this package cannot read files dropped from other apps. Use Import instead.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Imported %1 of %2 files. %3 could not be read.</source>
+        <translation type="unfinished">ගොනු %2කින් %1ක් ආයාත කරන ලදී. %3ක් කියවීමට නොහැකි විය.</translation>
+    </message>
+    <message numerus="yes">
+        <source>Imported %n files.</source>
+        <translation type="unfinished">
+            <numerusform>ගොනු %nක් ආයාත කරන ලදී.</numerusform>
+            <numerusform>ගොනු %nක් ආයාත කරන ලදී.</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Could not import that file — the format may be unsupported.</source>
+        <translation type="unfinished">එම ගොනුව ආයාත කිරීමට නොහැකි විය — ආකෘතියට සහය නොදක්වයි විය හැක.</translation>
+    </message>
+    <message numerus="yes">
+        <source>Could not import any of the %n selected files.</source>
+        <translation type="unfinished">
+            <numerusform>තෝරාගත් ගොනු %nන් කිසිවක් ආයාත කිරීමට නොහැකි විය.</numerusform>
+            <numerusform>තෝරාගත් ගොනු %nන් කිසිවක් ආයාත කිරීමට නොහැකි විය.</numerusform>
         </translation>
     </message>
 </context>
@@ -7917,6 +7848,30 @@ If playback stutters, try another.</source>
         <translation type="unfinished">ඔබ දැනටමත් ස්ථාපනය කර ඇති පැකේජ සඳහා යාවත්කාලීන ඇති විට අමතර අංග අයිකනය ස්පන්දනය කරන්න</translation>
     </message>
     <message>
+        <source>Agent access</source>
+        <translation type="unfinished">නියෝජිත (Agent) ප්‍රවේශය</translation>
+    </message>
+    <message>
+        <source>Allow for this session</source>
+        <translation type="unfinished">මෙම සැසිය සඳහා ඉඩ දෙන්න</translation>
+    </message>
+    <message>
+        <source>Let an assistant on this device edit this project until you turn it off or quit.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Listening on %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Copy setup command</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Copied for Claude</source>
+        <translation type="unfinished">Claude සඳහා පිටපත් කරන ලදී</translation>
+    </message>
+    <message>
         <source>Marketplace</source>
         <translation type="unfinished"></translation>
     </message>
@@ -9417,6 +9372,10 @@ If playback stutters, try another.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>%1, track %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Subtitles</source>
         <translation>උපසිරැසි</translation>
     </message>
@@ -10154,7 +10113,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Frames per second</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">තත්පරයට රාමු ගණන</translation>
     </message>
     <message>
         <source>Cancel crop</source>

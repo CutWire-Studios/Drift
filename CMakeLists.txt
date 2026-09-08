@@ -643,27 +643,34 @@ qt_add_executable(drift
     src/preview/PreviewItem.cpp
 )
 
-# MCP is a desktop agent protocol (stdio/HTTP). Skip it on Android APK builds.
+# The MCP server itself ships everywhere. On Android it listens on loopback like it does on
+# desktop, and an agent reaches it through `adb forward` — which is what makes the phone build
+# drivable by tooling instead of by blind coordinate taps.
+target_sources(drift PRIVATE
+    src/mcp/McpSession.h
+    src/mcp/McpSession.cpp
+    src/mcp/McpCatalog.h
+    src/mcp/McpCatalog.cpp
+    src/mcp/McpProtocol.h
+    src/mcp/McpProtocol.cpp
+    src/mcp/McpHttp.h
+    src/mcp/McpHttp.cpp
+    src/mcp/McpDispatcher.h
+    src/mcp/McpDispatcher.cpp
+    src/mcp/McpDispatcherExtended.cpp
+    src/mcp/McpServer.h
+    src/mcp/McpServer.cpp
+    src/mcp/McpJson.h
+)
+
+# The stdio transport and the headless entry point stay desktop-only: both are process entry
+# points driven from a terminal, which an APK has no equivalent of.
 if(NOT ANDROID)
     target_sources(drift PRIVATE
-        src/mcp/McpSession.h
-        src/mcp/McpSession.cpp
-        src/mcp/McpCatalog.h
-        src/mcp/McpCatalog.cpp
-        src/mcp/McpProtocol.h
-        src/mcp/McpProtocol.cpp
-        src/mcp/McpHttp.h
-        src/mcp/McpHttp.cpp
-        src/mcp/McpDispatcher.h
-        src/mcp/McpDispatcher.cpp
-        src/mcp/McpDispatcherExtended.cpp
-        src/mcp/McpServer.h
-        src/mcp/McpServer.cpp
         src/mcp/McpStdio.h
         src/mcp/McpStdio.cpp
         src/mcp/McpStdioServer.h
         src/mcp/McpStdioServer.cpp
-        src/mcp/McpJson.h
         src/HeadlessApp.h
         src/HeadlessApp.cpp
     )
@@ -723,6 +730,11 @@ qt_add_resources(drift "drift_diagnostics"
 )
 
 set_source_files_properties(src/qml/Theme.qml PROPERTIES QT_QML_SINGLETON_TYPE true)
+# Canvas preset catalog + the (template, quality) -> pixels arithmetic, shared by the desktop
+# layout dialog and the phone layout sheet so the two cannot drift apart again.
+set_source_files_properties(src/qml/LayoutPresets.qml PROPERTIES QT_QML_SINGLETON_TYPE true)
+# Import + reporting policy, needed by surfaces that have no AssetsPanel to borrow it from.
+set_source_files_properties(src/qml/MediaImport.qml PROPERTIES QT_QML_SINGLETON_TYPE true)
 # App-wide notification queue; the visual host is components/ToastHost.qml.
 set_source_files_properties(src/qml/Toasts.qml PROPERTIES QT_QML_SINGLETON_TYPE true)
 # In-flight lift-and-drop state for the phone asset sheet; the ghost is drawn by
@@ -737,14 +749,20 @@ qt_add_qml_module(drift
     URI Drift
     VERSION 1.0
     QML_FILES
+        src/qml/Shell.qml
+        src/qml/LayoutPresets.qml
+        src/qml/MediaImport.qml
         src/qml/Main.qml
+        src/qml/AndroidHomeNav.qml
+        src/qml/AndroidProjectsPage.qml
+        src/qml/AndroidMePage.qml
+        src/qml/components/NavRailButton.qml
         # Touch entry point, loaded instead of Main.qml on Android (see src/main.cpp).
         src/qml/AndroidMain.qml
         src/qml/AndroidHome.qml
         src/qml/AndroidEditor.qml
         src/qml/AndroidPreview.qml
         src/qml/AndroidTimeline.qml
-        src/qml/AndroidLayoutPicker.qml
         src/qml/AndroidTopBar.qml
         src/qml/AndroidBottomRail.qml
         src/qml/AndroidBottomSheet.qml

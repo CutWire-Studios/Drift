@@ -10,7 +10,8 @@
 set -euo pipefail
 
 ABI="${1:-arm64-v8a}"
-PKG="org.cutwire.drift"
+# Matches the local default in scripts/build.sh; override in step with it.
+PKG="${DRIFT_ANDROID_PACKAGE_NAME:-org.cutwire.drift.debug}"
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 APK="$ROOT/build/android-$ABI/android-build/drift.apk"

@@ -16,6 +16,11 @@ MenuItem {
     property bool sectionHeader: false
     enabled: !sectionHeader
 
+    // A section header is a label, not a target: giving it the MenuItem role would have
+    // assistive tooling and uiautomator offer it as something to activate.
+    Accessible.role: sectionHeader ? Accessible.StaticText : Accessible.MenuItem
+    Accessible.name: root.text
+
     // A Menu lays entries out in a ListView, which still reserves a row for a
     // hidden item, so conditional entries left blank gaps behind.
     implicitHeight: visible ? (sectionHeader ? Theme.controlHeightSm

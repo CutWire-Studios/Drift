@@ -586,199 +586,23 @@
 <context>
     <name>AndroidHome</name>
     <message>
-        <source>Create polished videos fast</source>
-        <translation>Crea video rifiniti rapidamente</translation>
-    </message>
-    <message>
-        <source>Open</source>
-        <translation>Apri</translation>
-    </message>
-    <message>
-        <source>More</source>
-        <translation>Altro</translation>
-    </message>
-    <message>
-        <source>Light mode</source>
-        <translation>Tema chiaro</translation>
-    </message>
-    <message>
-        <source>Dark mode</source>
-        <translation>Tema scuro</translation>
-    </message>
-    <message>
-        <source>Extras</source>
-        <translation>Extra</translation>
-    </message>
-    <message>
-        <source>Update available</source>
-        <translation>Aggiornamento disponibile</translation>
-    </message>
-    <message>
-        <source>Recent projects</source>
-        <translation>Progetti recenti</translation>
-    </message>
-    <message>
-        <source>Untitled</source>
-        <translation>Senza titolo</translation>
-    </message>
-    <message>
-        <source>That project file is missing.</source>
-        <translation>Il file di progetto è mancante.</translation>
-    </message>
-    <message>
-        <source>Remove from recents</source>
-        <translation>Rimuovi dai recenti</translation>
-    </message>
-    <message>
-        <source>New project</source>
-        <translation>Nuovo progetto</translation>
-    </message>
-    <message>
-        <source>Start with this layout</source>
-        <translation>Inizia con questo layout</translation>
-    </message>
-    <message>
-        <source>Decide layout later</source>
-        <translation>Decidi il layout più tardi</translation>
+        <source>Coming soon</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
-    <name>AndroidLayoutPicker</name>
+    <name>AndroidHomeNav</name>
     <message>
-        <source>YouTube</source>
-        <translation>YouTube</translation>
+        <source>Projects</source>
+        <translation type="unfinished">Progetti</translation>
     </message>
     <message>
-        <source>Instagram</source>
-        <translation>Instagram</translation>
+        <source>Market</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Facebook</source>
-        <translation>Facebook</translation>
-    </message>
-    <message>
-        <source>TikTok</source>
-        <translation>TikTok</translation>
-    </message>
-    <message>
-        <source>More</source>
-        <translation>Altro</translation>
-    </message>
-    <message>
-        <source>YT Video</source>
-        <translation>Video YT</translation>
-    </message>
-    <message>
-        <source>YT Short</source>
-        <translation>Short YT</translation>
-    </message>
-    <message>
-        <source>IG Reel</source>
-        <translation>Reel IG</translation>
-    </message>
-    <message>
-        <source>IG Story</source>
-        <translation>Storia IG</translation>
-    </message>
-    <message>
-        <source>IG Post</source>
-        <translation>Post IG</translation>
-    </message>
-    <message>
-        <source>IG Feed</source>
-        <translation>Feed IG</translation>
-    </message>
-    <message>
-        <source>FB Reel</source>
-        <translation>Reel FB</translation>
-    </message>
-    <message>
-        <source>FB Video</source>
-        <translation>Video FB</translation>
-    </message>
-    <message>
-        <source>FB Story</source>
-        <translation>Storia FB</translation>
-    </message>
-    <message>
-        <source>Snapchat</source>
-        <translation>Snapchat</translation>
-    </message>
-    <message>
-        <source>X / Twitter</source>
-        <translation>X / Twitter</translation>
-    </message>
-    <message>
-        <source>LinkedIn</source>
-        <translation>LinkedIn</translation>
-    </message>
-    <message>
-        <source>Square</source>
-        <translation>Quadrato</translation>
-    </message>
-    <message>
-        <source>Landscape</source>
-        <translation>Orizzontale</translation>
-    </message>
-    <message>
-        <source>Portrait</source>
-        <translation>Verticale</translation>
-    </message>
-    <message>
-        <source>Classic</source>
-        <translation>Classico</translation>
-    </message>
-    <message>
-        <source>Custom</source>
-        <translation>Personalizzato</translation>
-    </message>
-    <message>
-        <source>Any size</source>
-        <translation>Qualsiasi dimensione</translation>
-    </message>
-    <message>
-        <source>4K</source>
-        <translation>4K</translation>
-    </message>
-    <message>
-        <source>1080p</source>
-        <translation>1080p</translation>
-    </message>
-    <message>
-        <source>720p</source>
-        <translation>720p</translation>
-    </message>
-    <message>
-        <source>Choose a layout for your video</source>
-        <translation>Scegli un layout per il tuo video</translation>
-    </message>
-    <message>
-        <source>Template</source>
-        <translation>Modello</translation>
-    </message>
-    <message>
-        <source>Width</source>
-        <translation>Larghezza</translation>
-    </message>
-    <message>
-        <source>Height</source>
-        <translation>Altezza</translation>
-    </message>
-    <message>
-        <source>Quality</source>
-        <translation>Qualità</translation>
-    </message>
-    <message>
-        <source>Frames per second</source>
-        <translation>Fotogrammi al secondo</translation>
-    </message>
-    <message>
-        <source>%1×%2 · %3 · %4 fps</source>
-        <translation>%1×%2 · %3 · %4 fps</translation>
-    </message>
-    <message>
-        <source>Preview shows the canvas aspect ratio</source>
-        <translation>L&apos;anteprima mostra le proporzioni dell&apos;area di disegno</translation>
+        <source>Me</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -790,6 +614,10 @@
     <message>
         <source>Save Project</source>
         <translation>Salva progetto</translation>
+    </message>
+    <message>
+        <source>Canvas set to %1×%2 from your first clip.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Open Project</source>
@@ -838,6 +666,44 @@
     <message>
         <source>Imported from the marketplace.</source>
         <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>AndroidMePage</name>
+    <message>
+        <source>Me</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%n coin(s)</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Light mode</source>
+        <translation type="unfinished">Tema chiaro</translation>
+    </message>
+    <message>
+        <source>Dark mode</source>
+        <translation type="unfinished">Tema scuro</translation>
+    </message>
+    <message>
+        <source>Settings</source>
+        <translation type="unfinished">Impostazioni</translation>
+    </message>
+    <message>
+        <source>Extras</source>
+        <translation type="unfinished">Extra</translation>
+    </message>
+    <message>
+        <source>Update available</source>
+        <translation type="unfinished">Aggiornamento disponibile</translation>
+    </message>
+    <message>
+        <source>Debug info</source>
+        <translation type="unfinished">Informazioni di debug</translation>
     </message>
 </context>
 <context>
@@ -996,6 +862,49 @@
     <message>
         <source>Fullscreen preview</source>
         <translation>Anteprima a schermo intero</translation>
+    </message>
+</context>
+<context>
+    <name>AndroidProjectsPage</name>
+    <message>
+        <source>New project</source>
+        <translation type="unfinished">Nuovo progetto</translation>
+    </message>
+    <message>
+        <source>Pick a clip to start</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open project</source>
+        <translation type="unfinished">Apri progetto</translation>
+    </message>
+    <message>
+        <source>Continue a saved edit</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Create polished videos fast</source>
+        <translation type="unfinished">Crea video rifiniti rapidamente</translation>
+    </message>
+    <message>
+        <source>Recent projects</source>
+        <translation type="unfinished">Progetti recenti</translation>
+    </message>
+    <message>
+        <source>Untitled</source>
+        <translation type="unfinished">Senza titolo</translation>
+    </message>
+    <message>
+        <source>That project file is missing.</source>
+        <translation type="unfinished">Il file di progetto è mancante.</translation>
+    </message>
+    <message>
+        <source>Project actions</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Remove from recents</source>
+        <translation type="unfinished">Rimuovi dai recenti</translation>
     </message>
 </context>
 <context>
@@ -3233,14 +3142,6 @@
 <context>
     <name>AssetsPanel</name>
     <message>
-        <source>Imported %1 of %2 files. %3 could not be read.</source>
-        <translation>Importati %1 di %2 file. Impossibile leggere %3.</translation>
-    </message>
-    <message>
-        <source>Could not import that file — the format may be unsupported.</source>
-        <translation>Impossibile importare il file: il formato potrebbe non essere supportato.</translation>
-    </message>
-    <message>
         <source>Remove this media?</source>
         <translation>Rimuovere questo elemento multimediale?</translation>
     </message>
@@ -3297,24 +3198,6 @@
         <translation>Impossibile esportare l&apos;immagine.</translation>
     </message>
     <message numerus="yes">
-        <source>Imported %n files.</source>
-        <translation>
-            <numerusform>Importato %n file.</numerusform>
-            <numerusform>Importati %n file.</numerusform>
-        </translation>
-    </message>
-    <message>
-        <source>An import is already running.</source>
-        <translation>Un&apos;importazione è già in corso.</translation>
-    </message>
-    <message numerus="yes">
-        <source>Could not import any of the %n selected files.</source>
-        <translation>
-            <numerusform>Impossibile importare %n file selezionato.</numerusform>
-            <numerusform>Impossibile importare nessuno dei %n file selezionati.</numerusform>
-        </translation>
-    </message>
-    <message numerus="yes">
         <source>Replaced with “%1”. %n clips were shortened to fit the new file.</source>
         <translation>
             <numerusform>Sostituito con “%1”. %n clip è stata accorciata per adattarsi al nuovo file.</numerusform>
@@ -3336,26 +3219,6 @@
     <message>
         <source>Media</source>
         <translation>Elementi multimediali</translation>
-    </message>
-    <message>
-        <source>Could not open that file. This package cannot read files dropped from other apps — use Import to pick them instead.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Could not open those files. This package cannot read files dropped from other apps — use Import to pick them instead.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Could not open that file. It may have been moved, or you may not have permission to read it.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Could not open any of the selected files.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Imported %1 of %2 files. The rest could not be opened — this package cannot read files dropped from other apps. Use Import instead.</source>
-        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>“%1” is used by 1 clip on the timeline. Removing this media will also remove that clip and any transitions connected to it. The file on disk is not deleted.</source>
@@ -5506,102 +5369,6 @@
         <translation>Decidi più tardi</translation>
     </message>
     <message>
-        <source>YouTube</source>
-        <translation>YouTube</translation>
-    </message>
-    <message>
-        <source>Instagram</source>
-        <translation>Instagram</translation>
-    </message>
-    <message>
-        <source>Facebook</source>
-        <translation>Facebook</translation>
-    </message>
-    <message>
-        <source>TikTok</source>
-        <translation>TikTok</translation>
-    </message>
-    <message>
-        <source>More</source>
-        <translation>Altro</translation>
-    </message>
-    <message>
-        <source>YT Video</source>
-        <translation>Video YT</translation>
-    </message>
-    <message>
-        <source>YT Short</source>
-        <translation>Short YT</translation>
-    </message>
-    <message>
-        <source>IG Reel</source>
-        <translation>Reel IG</translation>
-    </message>
-    <message>
-        <source>IG Story</source>
-        <translation>Storia IG</translation>
-    </message>
-    <message>
-        <source>IG Post</source>
-        <translation>Post IG</translation>
-    </message>
-    <message>
-        <source>IG Feed</source>
-        <translation>Feed IG</translation>
-    </message>
-    <message>
-        <source>FB Reel</source>
-        <translation>Reel FB</translation>
-    </message>
-    <message>
-        <source>FB Video</source>
-        <translation>Video FB</translation>
-    </message>
-    <message>
-        <source>FB Story</source>
-        <translation>Storia FB</translation>
-    </message>
-    <message>
-        <source>Snapchat</source>
-        <translation>Snapchat</translation>
-    </message>
-    <message>
-        <source>X / Twitter</source>
-        <translation>X / Twitter</translation>
-    </message>
-    <message>
-        <source>LinkedIn</source>
-        <translation>LinkedIn</translation>
-    </message>
-    <message>
-        <source>Square</source>
-        <translation>Quadrato</translation>
-    </message>
-    <message>
-        <source>Landscape</source>
-        <translation>Orizzontale</translation>
-    </message>
-    <message>
-        <source>Portrait</source>
-        <translation>Verticale</translation>
-    </message>
-    <message>
-        <source>4K</source>
-        <translation>4K</translation>
-    </message>
-    <message>
-        <source>1440p</source>
-        <translation>1440p</translation>
-    </message>
-    <message>
-        <source>1080p</source>
-        <translation>1080p</translation>
-    </message>
-    <message>
-        <source>720p</source>
-        <translation>720p</translation>
-    </message>
-    <message>
         <source>Pick a platform template and quality. This updates the project video size.</source>
         <translation>Scegli un modello di piattaforma e la qualità. Questo aggiornerà le dimensioni video del progetto.</translation>
     </message>
@@ -5624,6 +5391,117 @@
     <message>
         <source>Preview shows the canvas aspect ratio</source>
         <translation>L&apos;anteprima mostra le proporzioni dell&apos;area di disegno</translation>
+    </message>
+</context>
+<context>
+    <name>LayoutPresets</name>
+    <message>
+        <source>YouTube</source>
+        <translation type="unfinished">YouTube</translation>
+    </message>
+    <message>
+        <source>Instagram</source>
+        <translation type="unfinished">Instagram</translation>
+    </message>
+    <message>
+        <source>Facebook</source>
+        <translation type="unfinished">Facebook</translation>
+    </message>
+    <message>
+        <source>TikTok</source>
+        <translation type="unfinished">TikTok</translation>
+    </message>
+    <message>
+        <source>More</source>
+        <translation type="unfinished">Altro</translation>
+    </message>
+    <message>
+        <source>YT Video</source>
+        <translation type="unfinished">Video YT</translation>
+    </message>
+    <message>
+        <source>YT Short</source>
+        <translation type="unfinished">Short YT</translation>
+    </message>
+    <message>
+        <source>IG Reel</source>
+        <translation type="unfinished">Reel IG</translation>
+    </message>
+    <message>
+        <source>IG Story</source>
+        <translation type="unfinished">Storia IG</translation>
+    </message>
+    <message>
+        <source>IG Post</source>
+        <translation type="unfinished">Post IG</translation>
+    </message>
+    <message>
+        <source>IG Feed</source>
+        <translation type="unfinished">Feed IG</translation>
+    </message>
+    <message>
+        <source>FB Reel</source>
+        <translation type="unfinished">Reel FB</translation>
+    </message>
+    <message>
+        <source>FB Video</source>
+        <translation type="unfinished">Video FB</translation>
+    </message>
+    <message>
+        <source>FB Story</source>
+        <translation type="unfinished">Storia FB</translation>
+    </message>
+    <message>
+        <source>Snapchat</source>
+        <translation type="unfinished">Snapchat</translation>
+    </message>
+    <message>
+        <source>X / Twitter</source>
+        <translation type="unfinished">X / Twitter</translation>
+    </message>
+    <message>
+        <source>LinkedIn</source>
+        <translation type="unfinished">LinkedIn</translation>
+    </message>
+    <message>
+        <source>Square</source>
+        <translation type="unfinished">Quadrato</translation>
+    </message>
+    <message>
+        <source>Landscape</source>
+        <translation type="unfinished">Orizzontale</translation>
+    </message>
+    <message>
+        <source>Portrait</source>
+        <translation type="unfinished">Verticale</translation>
+    </message>
+    <message>
+        <source>Classic</source>
+        <translation type="unfinished">Classico</translation>
+    </message>
+    <message>
+        <source>Custom</source>
+        <translation type="unfinished">Personalizzato</translation>
+    </message>
+    <message>
+        <source>Any size</source>
+        <translation type="unfinished">Qualsiasi dimensione</translation>
+    </message>
+    <message>
+        <source>4K</source>
+        <translation type="unfinished">4K</translation>
+    </message>
+    <message>
+        <source>1440p</source>
+        <translation type="unfinished">1440p</translation>
+    </message>
+    <message>
+        <source>1080p</source>
+        <translation type="unfinished">1080p</translation>
+    </message>
+    <message>
+        <source>720p</source>
+        <translation type="unfinished">720p</translation>
     </message>
 </context>
 <context>
@@ -6218,6 +6096,59 @@
         <translation>
             <numerusform>Rimuovi %n elemento dal progetto</numerusform>
             <numerusform>Rimuovi %n elementi dal progetto</numerusform>
+        </translation>
+    </message>
+</context>
+<context>
+    <name>MediaImport</name>
+    <message>
+        <source>An import is already running.</source>
+        <translation type="unfinished">Un&apos;importazione è già in corso.</translation>
+    </message>
+    <message>
+        <source>Import Media</source>
+        <translation type="unfinished">Importa elementi multimediali</translation>
+    </message>
+    <message>
+        <source>Could not open that file. This package cannot read files dropped from other apps — use Import to pick them instead.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Could not open those files. This package cannot read files dropped from other apps — use Import to pick them instead.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Could not open that file. It may have been moved, or you may not have permission to read it.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Could not open any of the selected files.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Imported %1 of %2 files. The rest could not be opened — this package cannot read files dropped from other apps. Use Import instead.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Imported %1 of %2 files. %3 could not be read.</source>
+        <translation type="unfinished">Importati %1 di %2 file. Impossibile leggere %3.</translation>
+    </message>
+    <message numerus="yes">
+        <source>Imported %n files.</source>
+        <translation type="unfinished">
+            <numerusform>Importato %n file.</numerusform>
+            <numerusform>Importati %n file.</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Could not import that file — the format may be unsupported.</source>
+        <translation type="unfinished">Impossibile importare il file: il formato potrebbe non essere supportato.</translation>
+    </message>
+    <message numerus="yes">
+        <source>Could not import any of the %n selected files.</source>
+        <translation type="unfinished">
+            <numerusform>Impossibile importare %n file selezionato.</numerusform>
+            <numerusform>Impossibile importare nessuno dei %n file selezionati.</numerusform>
         </translation>
     </message>
 </context>
@@ -7917,6 +7848,30 @@ Se la riproduzione va a scatti, prova un&apos;altra opzione.</translation>
         <translation type="unfinished">Fai pulsare l&apos;icona Extra quando sono disponibili aggiornamenti per i pacchetti già installati</translation>
     </message>
     <message>
+        <source>Agent access</source>
+        <translation type="unfinished">Accesso agente</translation>
+    </message>
+    <message>
+        <source>Allow for this session</source>
+        <translation type="unfinished">Consenti per questa sessione</translation>
+    </message>
+    <message>
+        <source>Let an assistant on this device edit this project until you turn it off or quit.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Listening on %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Copy setup command</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Copied for Claude</source>
+        <translation type="unfinished">Copiato per Claude</translation>
+    </message>
+    <message>
         <source>Marketplace</source>
         <translation type="unfinished"></translation>
     </message>
@@ -9414,6 +9369,10 @@ Se la riproduzione va a scatti, prova un&apos;altra opzione.</translation>
     </message>
     <message>
         <source>Adjustment</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1, track %2</source>
         <translation type="unfinished"></translation>
     </message>
     <message>

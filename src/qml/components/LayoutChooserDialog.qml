@@ -23,96 +23,22 @@ ThemedDialog {
     rejectText: fromSettings ? qsTr("Cancel") : qsTr("Decide later")
     closePolicy: fromSettings ? Popup.CloseOnEscape | Popup.CloseOnPressOutside : Popup.NoAutoClose
 
-    readonly property var categories: [
-        { id: "youtube", label: qsTr("YouTube"), icon: Theme.icons.brandYoutube },
-        { id: "instagram", label: qsTr("Instagram"), icon: Theme.icons.brandInstagram },
-        { id: "facebook", label: qsTr("Facebook"), icon: Theme.icons.brandFacebook },
-        { id: "tiktok", label: qsTr("TikTok"), icon: Theme.icons.brandTiktok },
-        { id: "more", label: qsTr("More"), icon: Theme.icons.grid }
-    ]
+    // Catalog and arithmetic live in the LayoutPresets singleton; this dialog is one of two
+    // views over them. Keeping the data here is what let the phone copy drift into a second,
+    // disagreeing answer set.
+    readonly property var categories: LayoutPresets.categories
+    readonly property var templates: LayoutPresets.templates
+    readonly property var qualities: LayoutPresets.qualities
 
-    // aspect: "9:16" | "16:9" | "1:1" | "4:5"
-    readonly property var templates: [
-        { id: "yt_video", category: "youtube", label: qsTr("YT Video"), detail: "16:9", aspect: "16:9", icon: Theme.icons.brandYoutube },
-        { id: "yt_short", category: "youtube", label: qsTr("YT Short"), detail: "9:16", aspect: "9:16", icon: Theme.icons.brandYoutube },
-        { id: "ig_reel", category: "instagram", label: qsTr("IG Reel"), detail: "9:16", aspect: "9:16", icon: Theme.icons.brandInstagram },
-        { id: "ig_story", category: "instagram", label: qsTr("IG Story"), detail: "9:16", aspect: "9:16", icon: Theme.icons.brandInstagram },
-        { id: "ig_post", category: "instagram", label: qsTr("IG Post"), detail: "1:1", aspect: "1:1", icon: Theme.icons.brandInstagram },
-        { id: "ig_feed", category: "instagram", label: qsTr("IG Feed"), detail: "4:5", aspect: "4:5", icon: Theme.icons.brandInstagram },
-        { id: "fb_reel", category: "facebook", label: qsTr("FB Reel"), detail: "9:16", aspect: "9:16", icon: Theme.icons.brandFacebook },
-        { id: "fb_video", category: "facebook", label: qsTr("FB Video"), detail: "16:9", aspect: "16:9", icon: Theme.icons.brandFacebook },
-        { id: "fb_story", category: "facebook", label: qsTr("FB Story"), detail: "9:16", aspect: "9:16", icon: Theme.icons.brandFacebook },
-        { id: "tiktok", category: "tiktok", label: qsTr("TikTok"), detail: "9:16", aspect: "9:16", icon: Theme.icons.brandTiktok },
-        { id: "snapchat", category: "more", label: qsTr("Snapchat"), detail: "9:16", aspect: "9:16", icon: Theme.icons.brandSnapchat },
-        { id: "x_video", category: "more", label: qsTr("X / Twitter"), detail: "16:9", aspect: "16:9", icon: Theme.icons.brandX },
-        { id: "linkedin", category: "more", label: qsTr("LinkedIn"), detail: "16:9", aspect: "16:9", icon: Theme.icons.brandLinkedin },
-        { id: "square", category: "more", label: qsTr("Square"), detail: "1:1", aspect: "1:1", icon: Theme.icons.square },
-        { id: "landscape", category: "more", label: qsTr("Landscape"), detail: "16:9", aspect: "16:9", icon: Theme.icons.monitor },
-        { id: "portrait", category: "more", label: qsTr("Portrait"), detail: "9:16", aspect: "9:16", icon: Theme.icons.smartphone }
-    ]
-
-    // shortEdge/longEdge are the two dimensions of a 16:9 frame at this quality;
-    // which one becomes width or height depends on the template's aspect.
-    readonly property var qualities: [
-        { id: "4k", label: qsTr("4K"), shortEdge: 2160, longEdge: 3840 },
-        { id: "1440p", label: qsTr("1440p"), shortEdge: 1440, longEdge: 2560 },
-        { id: "1080p", label: qsTr("1080p"), shortEdge: 1080, longEdge: 1920 },
-        { id: "720p", label: qsTr("720p"), shortEdge: 720, longEdge: 1280 }
-    ]
-
-    readonly property var categoryTemplates: {
-        const out = []
-        for (let i = 0; i < templates.length; ++i) {
-            if (templates[i].category === activeCategory)
-                out.push(templates[i])
-        }
-        return out
-    }
-
-    readonly property var selectedTemplate: {
-        for (let i = 0; i < templates.length; ++i) {
-            if (templates[i].id === templateId)
-                return templates[i]
-        }
-        return templates[0]
-    }
-
-    readonly property var selectedQuality: {
-        for (let i = 0; i < qualities.length; ++i) {
-            if (qualities[i].id === qualityId)
-                return qualities[i]
-        }
-        return qualities[0]
-    }
+    readonly property var categoryTemplates: LayoutPresets.templatesFor(activeCategory)
+    readonly property var selectedTemplate: LayoutPresets.templateById(templateId)
+    readonly property var selectedQuality: LayoutPresets.qualityById(qualityId)
 
     readonly property string aspect: selectedTemplate.aspect || "16:9"
-
+    readonly property var outSize: LayoutPresets.sizeFor(templateId, qualityId, 0, 0)
+    readonly property int outWidth: outSize.width
+    readonly property int outHeight: outSize.height
     readonly property int qualityEdge: selectedQuality.shortEdge
-
-    readonly property int outWidth: {
-        switch (aspect) {
-        case "9:16": return qualityEdge
-        case "4:5": return qualityEdge
-        case "1:1": return qualityEdge
-        case "16:9":
-        default:
-            return selectedQuality.longEdge
-        }
-    }
-
-    readonly property int outHeight: {
-        switch (aspect) {
-        case "9:16":
-            return selectedQuality.longEdge
-        case "4:5":
-            return Math.round(outWidth * 5 / 4)
-        case "1:1":
-            return outWidth
-        case "16:9":
-        default:
-            return qualityEdge
-        }
-    }
 
     readonly property real aspectBoxSize: 88
     readonly property real aspectScale: {
@@ -142,51 +68,11 @@ ThemedDialog {
     }
 
     function matchCurrentProject() {
-        const w = EditorState.projectWidth()
-        const h = EditorState.projectHeight()
-        let bestId = "yt_video"
-        let bestCat = "youtube"
-        let bestQuality = "1080p"
-        let bestScore = Number.MAX_VALUE
-
-        for (let i = 0; i < templates.length; ++i) {
-            const t = templates[i]
-            for (let q = 0; q < qualities.length; ++q) {
-                const edge = qualities[q].shortEdge
-                const longSide = qualities[q].longEdge
-                let tw = 0
-                let th = 0
-                switch (t.aspect) {
-                case "9:16":
-                    tw = edge
-                    th = longSide
-                    break
-                case "4:5":
-                    tw = edge
-                    th = Math.round(edge * 5 / 4)
-                    break
-                case "1:1":
-                    tw = edge
-                    th = edge
-                    break
-                default:
-                    tw = longSide
-                    th = edge
-                    break
-                }
-                const score = Math.abs(tw - w) + Math.abs(th - h)
-                if (score < bestScore) {
-                    bestScore = score
-                    bestId = t.id
-                    bestCat = t.category
-                    bestQuality = qualities[q].id
-                }
-            }
-        }
-
-        templateId = bestId
-        activeCategory = bestCat
-        qualityId = bestQuality
+        const match = LayoutPresets.matchProject(EditorState.projectWidth(),
+                                                 EditorState.projectHeight())
+        templateId = match.templateId
+        activeCategory = match.categoryId
+        qualityId = match.qualityId
     }
 
     function openChooser() {

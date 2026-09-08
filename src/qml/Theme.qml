@@ -336,7 +336,37 @@ QtObject {
     // sized for a mouse cursor is roughly a third of a fingertip, which made destructive
     // controls (Remove sitting beside Disable in the effects list) genuinely risky.
     // 44/36/40 are Android's minimum comfortable targets, not arbitrary bumps.
-    readonly property bool touchUi: Qt.platform.os === "android"
+    // Two independent axes, deliberately not one boolean.
+    //
+    //   sizeClass  — how much room there is. Drives which shell runs and whether a layout
+    //                collapses to a single pane. A narrow window on a desktop is "compact".
+    //   touchInput — what is pointing at it. Drives hit-target growth. A touchscreen laptop
+    //                at 1400dp is touch but not compact; a 500dp mouse-driven window is the
+    //                reverse. Conflating them is why touchUi ended up meaning three things.
+    //
+    // liftDragRequired is derived rather than a third axis: a platform DragHandler cannot
+    // leave a bottom sheet, and the sheet is a consequence of being compact, not of being
+    // touched — so a mouse user in the compact shell needs the lift gesture too.
+    property real windowWidth: 0                        // pushed by the root window
+    property string sizeClassOverride: ""               // "compact" | "medium" | "expanded"
+    property string inputModeOverride: ""               // "touch" | "pointer"
+
+    readonly property string sizeClass: sizeClassOverride.length > 0 ? sizeClassOverride
+                                      : windowWidth <= 0 ? (Qt.platform.os === "android" ? "compact" : "expanded")
+                                      : windowWidth < 600 ? "compact"
+                                      : windowWidth < 840 ? "medium"
+                                      : "expanded"
+    readonly property bool compact: sizeClass === "compact"
+
+    readonly property bool pointerPrimary: inputModeOverride.length > 0
+                                         ? inputModeOverride === "pointer"
+                                         : !(Qt.platform.os === "android" || Qt.platform.os === "ios")
+    readonly property bool touchInput: !pointerPrimary
+    readonly property bool liftDragRequired: touchInput || compact
+
+    // Retained as an alias so the ~25 existing call sites keep compiling while they are
+    // migrated to touchInput / compact / liftDragRequired one surface at a time.
+    readonly property bool touchUi: touchInput
     readonly property real controlHeight: touchUi ? 44 : 30
     readonly property real controlHeightSm: touchUi ? 36 : 26   // chips, segmented toggles
     readonly property real iconButtonSize: touchUi ? 40 : 28
@@ -493,6 +523,14 @@ QtObject {
     readonly property real androidTrimHotspotExtra: 14
     // Preview region cap so the timeline stays usable under a portrait canvas.
     readonly property real androidPreviewMaxScreenFraction: 0.42
+    // Compact-width layout margin. Deliberately NOT the shared pagePadding (12): raising that
+    // would move every desktop panel, and 16 is the Material compact figure.
+    readonly property real androidPagePadding: 16
+    // The 48dp floor and the 8dp separation rule, named so call sites state the intent rather
+    // than reaching for whichever spacing token happens to be the right number today.
+    readonly property real androidMinTouchTarget: 48
+    readonly property real androidTouchGap: 8
+    readonly property real androidHomeTileHeight: 96
     readonly property real androidHomeRecentCardWidth: 140
     readonly property real androidHomeRecentCardHeight: 96
 

@@ -234,6 +234,9 @@ Item {
         model: root.tracks.length
         delegate: Item {
             id: trackLabelRow
+
+            Accessible.role: Accessible.Row
+            Accessible.name: trackLabelRow.trackDisplayName
             // Read through root.tracks (not the EditorState
             // getters) so the toggles rebind on tracksChanged.
             readonly property bool trackMuted: root.tracks[index].muted === true
@@ -403,6 +406,13 @@ Item {
                     iconColor: trackLabelRow.trackMuted ? Theme.destructive : Theme.mutedForeground
                     anchors.verticalCenter: parent.verticalCenter
 
+                    // The tooltip above never renders on touch, so the same string has to
+                    // reach tooling and screen readers through the accessible name instead.
+                    Accessible.role: Accessible.CheckBox
+                    Accessible.name: trackLabelRow.trackMuted ? qsTr("Unmute track") : qsTr("Mute track")
+                    Accessible.checked: trackLabelRow.trackMuted
+                    Accessible.onToggleAction: muteMouse.clicked(null)
+
                     ThemedToolTip {
                         visible: muteMouse.containsMouse
                         text: trackLabelRow.trackMuted ? qsTr("Unmute track") : qsTr("Mute track")
@@ -487,6 +497,11 @@ Item {
                         visible: hideMouse.containsMouse
                         text: trackLabelRow.trackHidden ? qsTr("Show track") : qsTr("Hide track")
                     }
+
+                    Accessible.role: Accessible.CheckBox
+                    Accessible.name: trackLabelRow.trackHidden ? qsTr("Show track") : qsTr("Hide track")
+                    Accessible.checked: trackLabelRow.trackHidden
+                    Accessible.onToggleAction: hideMouse.clicked(null)
 
                     MouseArea {
                         id: hideMouse

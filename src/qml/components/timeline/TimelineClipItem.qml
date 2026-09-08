@@ -90,6 +90,19 @@ Item {
         return qsTr("Adjustment")
     }
 
+    // Named so tooling (and a screen reader) can address a clip by what the user sees on it
+    // rather than by pixel position. The timeline is the app's main interaction surface and had
+    // no accessible identity at all.
+    Accessible.role: Accessible.Button
+    Accessible.name: {
+        const label = clipItem.clipData.name && clipItem.clipData.name.length > 0
+                    ? clipItem.clipData.name
+                    : clipItem.adjustmentLabelText
+        return qsTr("%1, track %2").arg(label).arg(clipItem.trackIndex + 1)
+    }
+    Accessible.selected: clipItem.selected
+    Accessible.onPressAction: EditorState.selectClip(clipItem.trackIndex, clipItem.clipIndex)
+
     property bool effectDropTarget: panel.effectDropTrackIndex === trackIndex
                                     && panel.effectDropClipIndex === clipIndex
     // Subtitles keep cue-owned timing; text clips use the same edge fades as video.

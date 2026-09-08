@@ -43,11 +43,9 @@ struct EffectTemplateEntry;
 class QTimer;
 class AddonManager;
 
-#ifndef Q_OS_ANDROID
 namespace drift::mcp {
 class McpServer;
 }
-#endif
 
 #include "playback/ClipPreviewPlayer.h"
 #include "playback/PlaybackEngine.h"
@@ -461,11 +459,9 @@ public:
     void setVaapiZeroCopy(bool enabled);
     void setInvertTimelineScroll(bool enabled);
     Q_INVOKABLE void setMcpEnabled(bool enabled);
-#ifndef Q_OS_ANDROID
     // Headless wires transports onto the server itself, which the on/off switch above
-    // does not expose. Null on Android, where there is no MCP server.
+    // does not expose.
     drift::mcp::McpServer *mcpServer() const { return m_mcp.get(); }
-#endif
     bool mcpEnabled() const { return mcpRunning(); }
     bool mcpRunning() const;
     QString mcpUrl() const;
@@ -2025,9 +2021,7 @@ protected:
     // Launch layout picker / first-clip setup completed for this empty project.
     bool m_projectLayoutChosen = false;
 
-#ifndef Q_OS_ANDROID
     std::unique_ptr<drift::mcp::McpServer> m_mcp;
-#endif
     bool m_mcpUndoSuspended = false;
     int m_mcpBatchDepth = 0;
     drift::Project m_mcpBatchBefore;

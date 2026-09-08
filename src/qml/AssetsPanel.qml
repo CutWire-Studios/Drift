@@ -25,84 +25,11 @@ PanelFrame {
 
     // Imports and reports the outcome. `importUrls` skips anything it cannot
     // probe, so a bad file used to just never appear with no explanation at all.
-    // Comparing the row count before and after tells us how many were rejected.
-    // `fromDrop` is the Flatpak case: a drag hands us a host path the sandbox
-    // cannot open, which used to be reported as an unsupported format.
+    // Import policy lives in the MediaImport singleton so surfaces without an AssetsPanel —
+    // the home screen, the Android share target — can import too. Kept as a wrapper because
+    // several call sites and the DropArea below already speak this name.
     function importUrlsReporting(urls, fromDrop) {
-        if (!urls || urls.length === 0)
-            return
-
-        let mediaUrls = []
-        for (let i = 0; i < urls.length; ++i) {
-            const u = urls[i]
-            const str = (typeof u === "string" ? u : u.toString()).toLowerCase()
-            if (str.endsWith(".mogrt")) {
-                EditorState.importMogrt(u)
-            } else {
-                mediaUrls.push(u)
-            }
-        }
-        if (mediaUrls.length === 0)
-            return
-        urls = mediaUrls
-
-        // Async, because on Android reading a picked file means copying it out of the
-        // SAF stream first. Run inline, that copy blocked the GUI thread for the whole
-        // transfer — which also meant the "Importing…" overlay below was set and cleared
-        // inside one JS turn and never painted at all.
-        const before = AssetLibrary.count
-        if (!AssetLibrary.importUrlsAsync(urls)) {
-            Toasts.warning(qsTr("An import is already running."))
-            return
-        }
-        root._importRequested = urls.length
-        root._countBefore = before
-        root._importFromDrop = !!fromDrop
-    }
-
-    function importOpenFailedMessage(requested) {
-        if (root._importFromDrop && AssetLibrary.sandboxed) {
-            return requested === 1
-                ? qsTr("Could not open that file. This package cannot read files dropped from other apps — use Import to pick them instead.")
-                : qsTr("Could not open those files. This package cannot read files dropped from other apps — use Import to pick them instead.")
-        }
-        return requested === 1
-            ? qsTr("Could not open that file. It may have been moved, or you may not have permission to read it.")
-            : qsTr("Could not open any of the selected files.")
-    }
-
-    property int _importRequested: 0
-    property int _countBefore: 0
-    property bool _importFromDrop: false
-
-    Connections {
-        target: AssetLibrary
-        function onImportFinished(materialized, failed) {
-            const requested = root._importRequested
-            if (requested <= 0)
-                return
-            root._importRequested = 0
-            const added = AssetLibrary.count - root._countBefore
-            const skipped = requested - added
-            if (added > 0 && skipped > 0) {
-                if (root._importFromDrop && AssetLibrary.sandboxed)
-                    Toasts.warning(qsTr("Imported %1 of %2 files. The rest could not be opened — this package cannot read files dropped from other apps. Use Import instead.")
-                                   .arg(added).arg(requested))
-                else
-                    Toasts.warning(qsTr("Imported %1 of %2 files. %3 could not be read.")
-                                   .arg(added).arg(requested).arg(skipped))
-            } else if (added > 0) {
-                Toasts.success(qsTr("Imported %n files.", "", added))
-            } else if (failed > 0) {
-                Toasts.error(root.importOpenFailedMessage(requested))
-            } else if (materialized > 0) {
-                Toasts.success(qsTr("Imported %n files.", "", requested))
-            } else if (requested === 1) {
-                Toasts.error(qsTr("Could not import that file — the format may be unsupported."))
-            } else {
-                Toasts.error(qsTr("Could not import any of the %n selected files.", "", requested))
-            }
-        }
+        MediaImport.importUrls(urls, fromDrop)
     }
 
     // True while an import is running, so the panel can show progress. The folder walk counts:

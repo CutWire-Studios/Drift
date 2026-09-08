@@ -11,6 +11,10 @@ ApplicationWindow {
     color: Theme.appBackground
     title: "CutWire Drift"
 
+    // Theme is a singleton and cannot see a window, so the size class it reports has to be fed
+    // from whichever root is live. Screen is the wrong source: it ignores tiling and split view.
+    onWidthChanged: Theme.windowWidth = width
+
     // Qt creates some chrome itself — most visibly the Undo/Cut/Copy/Paste menu on every
     // TextField and TextArea (Basic/TextField.qml declares ContextMenu.menu). Drift styles
     // none of that, so it fell through to the palette the platform theme supplies and picked
@@ -93,12 +97,41 @@ ApplicationWindow {
         return !EditorState.hasUnsavedChanges
     }
 
+    // The canvas is inferred from the first clip instead of asked about. shouldConfigure...()
+    // returns false the moment projectLayoutChosen is set, so marking it here does not suppress
+    // a dialog — it answers the question the dialog would have asked. Every first-clip route on
+    // the phone goes through this one function, drop-on-timeline included, so they all inherit
+    // the behaviour without touching a single call site.
+    function applyInferredSetup(assetIndex) {
+        const setup = EditorState.suggestedProjectSetupForAsset(assetIndex)
+        if (!setup || !setup.width || !setup.height)
+            return false
+        EditorState.setProjectSetup(setup.width, setup.height, setup.fps)
+        EditorState.markProjectLayoutChosen()
+        Toasts.info(qsTr("Canvas set to %1×%2 from your first clip.")
+                    .arg(setup.width).arg(setup.height))
+        return true
+    }
+
     function configureAndAddAsset(assetIndex, runner) {
-        if (!EditorState.shouldConfigureProjectForAsset(assetIndex)) {
-            runner()
-            return
-        }
-        projectSetupDialog.openForAsset(assetIndex, runner)
+        if (EditorState.shouldConfigureProjectForAsset(assetIndex))
+            window.applyInferredSetup(assetIndex)
+        runner()
+    }
+
+    // "New project" goes straight to the picker: no dialog, no layout question. The canvas
+    // follows from whatever lands first.
+    function startNewProject() {
+        window.confirmIfDirty(function() {
+            EditorState.newProject()
+            MediaImport.pickAndImport(function(added) {
+                if (added > 0) {
+                    window.applyInferredSetup(AssetLibrary.count - added)
+                    EditorState.addClipFromAsset(AssetLibrary.count - added)
+                }
+                window.showEditor()
+            })
+        })
     }
 
     function openLayoutChooser() {
@@ -193,6 +226,10 @@ ApplicationWindow {
             // closing the window kills the worker part-way through a file. Swallow
             // Back — but say so, because a Back key that silently does nothing is
             // its own defect.
+            // Home owns a nav stack of its own now: a secondary destination, and any drill-down
+            // inside it, unwinds before Back means "leave".
+            if (!window.inEditor && window.homePage && window.homePage.handleBack())
+                return
             if (window.homePage && window.homePage.importOwned && AssetLibrary.importing) {
                 Toasts.info(qsTr("Import in progress…"))
                 return
@@ -205,7 +242,7 @@ ApplicationWindow {
     // without this Back left them on screen and walked out of the editor behind them.
     // Ordered by how they stack: newest-opened first.
     function closeTopModal() {
-        const modals = [projectSetupDialog, layoutChooserDialog, projectPropertiesDialog,
+        const modals = [layoutChooserDialog, projectPropertiesDialog,
                         recoveryDialog, unsavedDialog, addonStartupDialog, addonManagerDialog,
                         missingAddonsDialog, updateDialog, reverseProgressDialog,
                         subtitleProgressDialog]
@@ -259,7 +296,6 @@ ApplicationWindow {
         return false
     }
 
-    ProjectSetupDialog { id: projectSetupDialog }
     LanguageChooserDialog {
         id: languageChooserDialog
         onClosed: window.continueStartupAfterLanguage()
@@ -470,6 +506,7 @@ ApplicationWindow {
     }
 
     Component.onCompleted: {
+        Theme.windowWidth = window.width
         if (EditorState.needsUiLanguagePrompt) {
             languageChooserDialog.openChooser()
             return
@@ -741,6 +778,7 @@ ApplicationWindow {
             Component.onCompleted: window.homePage = this
             Component.onDestruction: if (window.homePage === this) window.homePage = null
             onEnterEditor: window.showEditor()
+            onNewProjectRequested: window.startNewProject()
             onOpenProjectRequested: window.openProjectFile()
             onOpenRecentRequested: (path) => window.openRecent(path)
         }

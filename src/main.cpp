@@ -515,9 +515,15 @@ int main(int argc, char *argv[])
 
     app.installEventFilter(new FileOpenFilter(&editorState, &marketClient, &app));
     {
-        QStringList forwarded = {app.arguments().constFirst()};
-        for (int i = 1; i < app.arguments().size(); ++i) {
-            const QString &arg = app.arguments().at(i);
+        // Hoisted deliberately: QCoreApplication::arguments() rebuilds and returns a QStringList
+        // BY VALUE on every call, so `const QString &arg = app.arguments().at(i)` bound a
+        // reference into a temporary that died at the end of the statement. Appending it then
+        // read freed memory — heap corruption that only surfaced when something else happened to
+        // reuse the block, which made it look intermittent and unrelated to this loop.
+        const QStringList args = app.arguments();
+        QStringList forwarded = {args.constFirst()};
+        for (int i = 1; i < args.size(); ++i) {
+            const QString &arg = args.at(i);
             const QUrl url(arg);
             if (!url.scheme().isEmpty() && marketClient.handleIncomingUrl(url))
                 continue;
@@ -538,13 +544,22 @@ int main(int argc, char *argv[])
     engine.addImageProvider(QStringLiteral("textstyle"), new TextStylePreviewImageProvider());
     QObject::connect(
         &engine, &QQmlApplicationEngine::objectCreationFailed, &app, [] { QGuiApplication::exit(-1); }, Qt::QueuedConnection);
-    // Main.qml is the desktop layout. AndroidMain.qml is the touch entry point; the desktop tree
-    // stays compiled so the touch port can reuse leaf components.
-#ifdef Q_OS_ANDROID
-    engine.loadFromModule("Drift", "AndroidMain");
-#else
-    engine.loadFromModule("Drift", "Main");
-#endif
+    // Shell.qml owns the choice between Main.qml (desktop) and AndroidMain.qml (touch) and can
+    // re-make it at runtime as the window crosses the compact breakpoint. Resolved here in one
+    // place, in a fixed precedence: explicit argument, then environment, then platform default.
+    const QStringList shellArgs = app.arguments();
+    QString shellPreference = QStringLiteral("auto");
+    if (shellArgs.contains(QStringLiteral("--shell=mobile")))
+        shellPreference = QStringLiteral("mobile");
+    else if (shellArgs.contains(QStringLiteral("--shell=desktop")))
+        shellPreference = QStringLiteral("desktop");
+    else if (qEnvironmentVariableIsSet("DRIFT_SHELL"))
+        shellPreference = qEnvironmentVariable("DRIFT_SHELL");
+    if (shellPreference != QLatin1String("mobile") && shellPreference != QLatin1String("desktop"))
+        shellPreference = QStringLiteral("auto");
+
+    engine.setInitialProperties({{QStringLiteral("shellPreference"), shellPreference}});
+    engine.loadFromModule("Drift", "Shell");
 
     return app.exec();
 }

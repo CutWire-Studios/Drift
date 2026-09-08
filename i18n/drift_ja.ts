@@ -586,199 +586,23 @@
 <context>
     <name>AndroidHome</name>
     <message>
-        <source>Create polished videos fast</source>
-        <translation>洗練されたビデオを素早く作成</translation>
-    </message>
-    <message>
-        <source>Open</source>
-        <translation>開く</translation>
-    </message>
-    <message>
-        <source>More</source>
-        <translation>その他</translation>
-    </message>
-    <message>
-        <source>Light mode</source>
-        <translation>ライトモード</translation>
-    </message>
-    <message>
-        <source>Dark mode</source>
-        <translation>ダークモード</translation>
-    </message>
-    <message>
-        <source>Extras</source>
-        <translation>拡張機能</translation>
-    </message>
-    <message>
-        <source>Update available</source>
-        <translation>アップデートが利用可能</translation>
-    </message>
-    <message>
-        <source>Recent projects</source>
-        <translation>最近のプロジェクト</translation>
-    </message>
-    <message>
-        <source>Untitled</source>
-        <translation>無題</translation>
-    </message>
-    <message>
-        <source>That project file is missing.</source>
-        <translation>そのプロジェクトファイルが見つかりません。</translation>
-    </message>
-    <message>
-        <source>Remove from recents</source>
-        <translation>最近使用した項目から削除</translation>
-    </message>
-    <message>
-        <source>New project</source>
-        <translation>新規プロジェクト</translation>
-    </message>
-    <message>
-        <source>Start with this layout</source>
-        <translation>このレイアウトで開始</translation>
-    </message>
-    <message>
-        <source>Decide layout later</source>
-        <translation>レイアウトは後で決める</translation>
+        <source>Coming soon</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
-    <name>AndroidLayoutPicker</name>
+    <name>AndroidHomeNav</name>
     <message>
-        <source>YouTube</source>
-        <translation>YouTube</translation>
+        <source>Projects</source>
+        <translation type="unfinished">プロジェクト</translation>
     </message>
     <message>
-        <source>Instagram</source>
-        <translation>Instagram</translation>
+        <source>Market</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Facebook</source>
-        <translation>Facebook</translation>
-    </message>
-    <message>
-        <source>TikTok</source>
-        <translation>TikTok</translation>
-    </message>
-    <message>
-        <source>More</source>
-        <translation>その他</translation>
-    </message>
-    <message>
-        <source>YT Video</source>
-        <translation>YT 動画</translation>
-    </message>
-    <message>
-        <source>YT Short</source>
-        <translation>YT ショート</translation>
-    </message>
-    <message>
-        <source>IG Reel</source>
-        <translation>IG リール</translation>
-    </message>
-    <message>
-        <source>IG Story</source>
-        <translation>IG ストーリー</translation>
-    </message>
-    <message>
-        <source>IG Post</source>
-        <translation>IG 投稿</translation>
-    </message>
-    <message>
-        <source>IG Feed</source>
-        <translation>IG フィード</translation>
-    </message>
-    <message>
-        <source>FB Reel</source>
-        <translation>FB リール</translation>
-    </message>
-    <message>
-        <source>FB Video</source>
-        <translation>FB 動画</translation>
-    </message>
-    <message>
-        <source>FB Story</source>
-        <translation>FB ストーリー</translation>
-    </message>
-    <message>
-        <source>Snapchat</source>
-        <translation>Snapchat</translation>
-    </message>
-    <message>
-        <source>X / Twitter</source>
-        <translation>X / Twitter</translation>
-    </message>
-    <message>
-        <source>LinkedIn</source>
-        <translation>LinkedIn</translation>
-    </message>
-    <message>
-        <source>Square</source>
-        <translation>正方形</translation>
-    </message>
-    <message>
-        <source>Landscape</source>
-        <translation>横向き</translation>
-    </message>
-    <message>
-        <source>Portrait</source>
-        <translation>縦向き</translation>
-    </message>
-    <message>
-        <source>Classic</source>
-        <translation>クラシック</translation>
-    </message>
-    <message>
-        <source>Custom</source>
-        <translation>カスタム</translation>
-    </message>
-    <message>
-        <source>Any size</source>
-        <translation>任意のサイズ</translation>
-    </message>
-    <message>
-        <source>4K</source>
-        <translation>4K</translation>
-    </message>
-    <message>
-        <source>1080p</source>
-        <translation>1080p</translation>
-    </message>
-    <message>
-        <source>720p</source>
-        <translation>720p</translation>
-    </message>
-    <message>
-        <source>Choose a layout for your video</source>
-        <translation>ビデオのレイアウトを選択</translation>
-    </message>
-    <message>
-        <source>Template</source>
-        <translation>テンプレート</translation>
-    </message>
-    <message>
-        <source>Width</source>
-        <translation>幅</translation>
-    </message>
-    <message>
-        <source>Height</source>
-        <translation>高さ</translation>
-    </message>
-    <message>
-        <source>Quality</source>
-        <translation>品質</translation>
-    </message>
-    <message>
-        <source>Frames per second</source>
-        <translation>フレーム/秒</translation>
-    </message>
-    <message>
-        <source>%1×%2 · %3 · %4 fps</source>
-        <translation>%1×%2 · %3 · %4 fps</translation>
-    </message>
-    <message>
-        <source>Preview shows the canvas aspect ratio</source>
-        <translation>プレビューはキャンバスのアスペクト比を表示</translation>
+        <source>Me</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -790,6 +614,10 @@
     <message>
         <source>Save Project</source>
         <translation>プロジェクトを保存</translation>
+    </message>
+    <message>
+        <source>Canvas set to %1×%2 from your first clip.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Open Project</source>
@@ -838,6 +666,43 @@
     <message>
         <source>Imported from the marketplace.</source>
         <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>AndroidMePage</name>
+    <message>
+        <source>Me</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%n coin(s)</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Light mode</source>
+        <translation type="unfinished">ライトモード</translation>
+    </message>
+    <message>
+        <source>Dark mode</source>
+        <translation type="unfinished">ダークモード</translation>
+    </message>
+    <message>
+        <source>Settings</source>
+        <translation type="unfinished">設定</translation>
+    </message>
+    <message>
+        <source>Extras</source>
+        <translation type="unfinished">拡張機能</translation>
+    </message>
+    <message>
+        <source>Update available</source>
+        <translation type="unfinished">アップデートが利用可能</translation>
+    </message>
+    <message>
+        <source>Debug info</source>
+        <translation type="unfinished">デバッグ情報</translation>
     </message>
 </context>
 <context>
@@ -996,6 +861,49 @@
     <message>
         <source>Fullscreen preview</source>
         <translation>フルスクリーンプレビュー</translation>
+    </message>
+</context>
+<context>
+    <name>AndroidProjectsPage</name>
+    <message>
+        <source>New project</source>
+        <translation type="unfinished">新規プロジェクト</translation>
+    </message>
+    <message>
+        <source>Pick a clip to start</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open project</source>
+        <translation type="unfinished">プロジェクトを開く</translation>
+    </message>
+    <message>
+        <source>Continue a saved edit</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Create polished videos fast</source>
+        <translation type="unfinished">洗練されたビデオを素早く作成</translation>
+    </message>
+    <message>
+        <source>Recent projects</source>
+        <translation type="unfinished">最近のプロジェクト</translation>
+    </message>
+    <message>
+        <source>Untitled</source>
+        <translation type="unfinished">無題</translation>
+    </message>
+    <message>
+        <source>That project file is missing.</source>
+        <translation type="unfinished">そのプロジェクトファイルが見つかりません。</translation>
+    </message>
+    <message>
+        <source>Project actions</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Remove from recents</source>
+        <translation type="unfinished">最近使用した項目から削除</translation>
     </message>
 </context>
 <context>
@@ -3224,14 +3132,6 @@
 <context>
     <name>AssetsPanel</name>
     <message>
-        <source>Imported %1 of %2 files. %3 could not be read.</source>
-        <translation>%2 個中 %1 個のファイルをインポートしました。%3 個は読み取れませんでした。</translation>
-    </message>
-    <message>
-        <source>Could not import that file — the format may be unsupported.</source>
-        <translation>そのファイルをインポートできませんでした — フォーマットがサポートされていない可能性があります。</translation>
-    </message>
-    <message>
         <source>Remove this media?</source>
         <translation>このメディアを削除しますか？</translation>
     </message>
@@ -3288,22 +3188,6 @@
         <translation>その画像をエクスポートできませんでした。</translation>
     </message>
     <message numerus="yes">
-        <source>Imported %n files.</source>
-        <translation>
-            <numerusform>%n 個のファイルをインポートしました。</numerusform>
-        </translation>
-    </message>
-    <message>
-        <source>An import is already running.</source>
-        <translation>インポートは既に実行中です。</translation>
-    </message>
-    <message numerus="yes">
-        <source>Could not import any of the %n selected files.</source>
-        <translation>
-            <numerusform>選択された %n 個のファイルはインポートできませんでした。</numerusform>
-        </translation>
-    </message>
-    <message numerus="yes">
         <source>Replaced with “%1”. %n clips were shortened to fit the new file.</source>
         <translation>
             <numerusform>「%1」に置き換えました。%n 個のクリップは新しいファイルに合わせて短縮されました。</numerusform>
@@ -3324,26 +3208,6 @@
     <message>
         <source>Media</source>
         <translation>メディア</translation>
-    </message>
-    <message>
-        <source>Could not open that file. This package cannot read files dropped from other apps — use Import to pick them instead.</source>
-        <translation>そのファイルを開けません。このパッケージは他のアプリからドロップされたファイルを読み取れません — 代わりにインポートを使用して選択してください。</translation>
-    </message>
-    <message>
-        <source>Could not open those files. This package cannot read files dropped from other apps — use Import to pick them instead.</source>
-        <translation>それらのファイルを開けません。このパッケージは他のアプリからドロップされたファイルを読み取れません — 代わりにインポートを使用して選択してください。</translation>
-    </message>
-    <message>
-        <source>Could not open that file. It may have been moved, or you may not have permission to read it.</source>
-        <translation>そのファイルを開けません。移動されたか、読み取り権限がない可能性があります。</translation>
-    </message>
-    <message>
-        <source>Could not open any of the selected files.</source>
-        <translation>選択されたファイルはいずれも開けませんでした。</translation>
-    </message>
-    <message>
-        <source>Imported %1 of %2 files. The rest could not be opened — this package cannot read files dropped from other apps. Use Import instead.</source>
-        <translation>%2 個中 %1 個のファイルをインポートしました。残りは開けませんでした — このパッケージは他のアプリからドロップされたファイルを読み取れません。代わりにインポートを使用してください。</translation>
     </message>
     <message>
         <source>“%1” is used by 1 clip on the timeline. Removing this media will also remove that clip and any transitions connected to it. The file on disk is not deleted.</source>
@@ -5484,102 +5348,6 @@
         <translation>後で決める</translation>
     </message>
     <message>
-        <source>YouTube</source>
-        <translation>YouTube</translation>
-    </message>
-    <message>
-        <source>Instagram</source>
-        <translation>Instagram</translation>
-    </message>
-    <message>
-        <source>Facebook</source>
-        <translation>Facebook</translation>
-    </message>
-    <message>
-        <source>TikTok</source>
-        <translation>TikTok</translation>
-    </message>
-    <message>
-        <source>More</source>
-        <translation>その他</translation>
-    </message>
-    <message>
-        <source>YT Video</source>
-        <translation>YT 動画</translation>
-    </message>
-    <message>
-        <source>YT Short</source>
-        <translation>YT ショート</translation>
-    </message>
-    <message>
-        <source>IG Reel</source>
-        <translation>IG リール</translation>
-    </message>
-    <message>
-        <source>IG Story</source>
-        <translation>IG ストーリー</translation>
-    </message>
-    <message>
-        <source>IG Post</source>
-        <translation>IG 投稿</translation>
-    </message>
-    <message>
-        <source>IG Feed</source>
-        <translation>IG フィード</translation>
-    </message>
-    <message>
-        <source>FB Reel</source>
-        <translation>FB リール</translation>
-    </message>
-    <message>
-        <source>FB Video</source>
-        <translation>FB 動画</translation>
-    </message>
-    <message>
-        <source>FB Story</source>
-        <translation>FB ストーリー</translation>
-    </message>
-    <message>
-        <source>Snapchat</source>
-        <translation>Snapchat</translation>
-    </message>
-    <message>
-        <source>X / Twitter</source>
-        <translation>X / Twitter</translation>
-    </message>
-    <message>
-        <source>LinkedIn</source>
-        <translation>LinkedIn</translation>
-    </message>
-    <message>
-        <source>Square</source>
-        <translation>正方形</translation>
-    </message>
-    <message>
-        <source>Landscape</source>
-        <translation>横向き</translation>
-    </message>
-    <message>
-        <source>Portrait</source>
-        <translation>縦向き</translation>
-    </message>
-    <message>
-        <source>4K</source>
-        <translation>4K</translation>
-    </message>
-    <message>
-        <source>1440p</source>
-        <translation>1440p</translation>
-    </message>
-    <message>
-        <source>1080p</source>
-        <translation>1080p</translation>
-    </message>
-    <message>
-        <source>720p</source>
-        <translation>720p</translation>
-    </message>
-    <message>
         <source>Pick a platform template and quality. This updates the project video size.</source>
         <translation>プラットフォームテンプレートと品質を選択します。これによりプロジェクトのビデオサイズが更新されます。</translation>
     </message>
@@ -5602,6 +5370,117 @@
     <message>
         <source>Preview shows the canvas aspect ratio</source>
         <translation>プレビューはキャンバスのアスペクト比を表示します</translation>
+    </message>
+</context>
+<context>
+    <name>LayoutPresets</name>
+    <message>
+        <source>YouTube</source>
+        <translation type="unfinished">YouTube</translation>
+    </message>
+    <message>
+        <source>Instagram</source>
+        <translation type="unfinished">Instagram</translation>
+    </message>
+    <message>
+        <source>Facebook</source>
+        <translation type="unfinished">Facebook</translation>
+    </message>
+    <message>
+        <source>TikTok</source>
+        <translation type="unfinished">TikTok</translation>
+    </message>
+    <message>
+        <source>More</source>
+        <translation type="unfinished">その他</translation>
+    </message>
+    <message>
+        <source>YT Video</source>
+        <translation type="unfinished">YT 動画</translation>
+    </message>
+    <message>
+        <source>YT Short</source>
+        <translation type="unfinished">YT ショート</translation>
+    </message>
+    <message>
+        <source>IG Reel</source>
+        <translation type="unfinished">IG リール</translation>
+    </message>
+    <message>
+        <source>IG Story</source>
+        <translation type="unfinished">IG ストーリー</translation>
+    </message>
+    <message>
+        <source>IG Post</source>
+        <translation type="unfinished">IG 投稿</translation>
+    </message>
+    <message>
+        <source>IG Feed</source>
+        <translation type="unfinished">IG フィード</translation>
+    </message>
+    <message>
+        <source>FB Reel</source>
+        <translation type="unfinished">FB リール</translation>
+    </message>
+    <message>
+        <source>FB Video</source>
+        <translation type="unfinished">FB 動画</translation>
+    </message>
+    <message>
+        <source>FB Story</source>
+        <translation type="unfinished">FB ストーリー</translation>
+    </message>
+    <message>
+        <source>Snapchat</source>
+        <translation type="unfinished">Snapchat</translation>
+    </message>
+    <message>
+        <source>X / Twitter</source>
+        <translation type="unfinished">X / Twitter</translation>
+    </message>
+    <message>
+        <source>LinkedIn</source>
+        <translation type="unfinished">LinkedIn</translation>
+    </message>
+    <message>
+        <source>Square</source>
+        <translation type="unfinished">正方形</translation>
+    </message>
+    <message>
+        <source>Landscape</source>
+        <translation type="unfinished">横向き</translation>
+    </message>
+    <message>
+        <source>Portrait</source>
+        <translation type="unfinished">縦向き</translation>
+    </message>
+    <message>
+        <source>Classic</source>
+        <translation type="unfinished">クラシック</translation>
+    </message>
+    <message>
+        <source>Custom</source>
+        <translation type="unfinished">カスタム</translation>
+    </message>
+    <message>
+        <source>Any size</source>
+        <translation type="unfinished">任意のサイズ</translation>
+    </message>
+    <message>
+        <source>4K</source>
+        <translation type="unfinished">4K</translation>
+    </message>
+    <message>
+        <source>1440p</source>
+        <translation type="unfinished">1440p</translation>
+    </message>
+    <message>
+        <source>1080p</source>
+        <translation type="unfinished">1080p</translation>
+    </message>
+    <message>
+        <source>720p</source>
+        <translation type="unfinished">720p</translation>
     </message>
 </context>
 <context>
@@ -6190,6 +6069,57 @@
         <source>Remove %n items from project</source>
         <translation>
             <numerusform>%n 個の項目をプロジェクトから削除</numerusform>
+        </translation>
+    </message>
+</context>
+<context>
+    <name>MediaImport</name>
+    <message>
+        <source>An import is already running.</source>
+        <translation type="unfinished">インポートは既に実行中です。</translation>
+    </message>
+    <message>
+        <source>Import Media</source>
+        <translation type="unfinished">メディアをインポート</translation>
+    </message>
+    <message>
+        <source>Could not open that file. This package cannot read files dropped from other apps — use Import to pick them instead.</source>
+        <translation type="unfinished">そのファイルを開けません。このパッケージは他のアプリからドロップされたファイルを読み取れません — 代わりにインポートを使用して選択してください。</translation>
+    </message>
+    <message>
+        <source>Could not open those files. This package cannot read files dropped from other apps — use Import to pick them instead.</source>
+        <translation type="unfinished">それらのファイルを開けません。このパッケージは他のアプリからドロップされたファイルを読み取れません — 代わりにインポートを使用して選択してください。</translation>
+    </message>
+    <message>
+        <source>Could not open that file. It may have been moved, or you may not have permission to read it.</source>
+        <translation type="unfinished">そのファイルを開けません。移動されたか、読み取り権限がない可能性があります。</translation>
+    </message>
+    <message>
+        <source>Could not open any of the selected files.</source>
+        <translation type="unfinished">選択されたファイルはいずれも開けませんでした。</translation>
+    </message>
+    <message>
+        <source>Imported %1 of %2 files. The rest could not be opened — this package cannot read files dropped from other apps. Use Import instead.</source>
+        <translation type="unfinished">%2 個中 %1 個のファイルをインポートしました。残りは開けませんでした — このパッケージは他のアプリからドロップされたファイルを読み取れません。代わりにインポートを使用してください。</translation>
+    </message>
+    <message>
+        <source>Imported %1 of %2 files. %3 could not be read.</source>
+        <translation type="unfinished">%2 個中 %1 個のファイルをインポートしました。%3 個は読み取れませんでした。</translation>
+    </message>
+    <message numerus="yes">
+        <source>Imported %n files.</source>
+        <translation type="unfinished">
+            <numerusform>%n 個のファイルをインポートしました。</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Could not import that file — the format may be unsupported.</source>
+        <translation type="unfinished">そのファイルをインポートできませんでした — フォーマットがサポートされていない可能性があります。</translation>
+    </message>
+    <message numerus="yes">
+        <source>Could not import any of the %n selected files.</source>
+        <translation type="unfinished">
+            <numerusform>選択された %n 個のファイルはインポートできませんでした。</numerusform>
         </translation>
     </message>
 </context>
@@ -7885,6 +7815,30 @@ If playback stutters, try another.</source>
         <translation>インストール済みのパックにアップデートが利用可能なときに拡張機能アイコンを点滅させる</translation>
     </message>
     <message>
+        <source>Agent access</source>
+        <translation type="unfinished">エージェントアクセス</translation>
+    </message>
+    <message>
+        <source>Allow for this session</source>
+        <translation type="unfinished">このセッションで許可</translation>
+    </message>
+    <message>
+        <source>Let an assistant on this device edit this project until you turn it off or quit.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Listening on %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Copy setup command</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Copied for Claude</source>
+        <translation type="unfinished">Claude 用にコピーしました</translation>
+    </message>
+    <message>
         <source>Marketplace</source>
         <translation type="unfinished"></translation>
     </message>
@@ -9382,6 +9336,10 @@ If playback stutters, try another.</source>
     <message>
         <source>Adjustment</source>
         <translation>調整</translation>
+    </message>
+    <message>
+        <source>%1, track %2</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Subtitles</source>
