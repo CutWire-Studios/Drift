@@ -1293,6 +1293,15 @@ public:
     // Unpacks and imports a Motion Graphics Template (.mogrt), extracting assets and mapping
     // editable text, colors, and media overlays onto the timeline and media library.
     Q_INVOKABLE void importMogrt(const QUrl &url);
+    // Imports a Kdenlive (.kdenlive) or Shotcut MLT (.mlt) project, mapping
+    // multitrack playlists, video/audio cuts, title text clips, and bin folders.
+    Q_INVOKABLE void loadKdenliveProject(const QUrl &url);
+    // Imports a DaVinci Resolve project (.drp) or Final Cut Pro X XML (.fcpxml).
+    Q_INVOKABLE void loadResolveProject(const QUrl &url);
+    // Imports a CMX 3600 Edit Decision List (.edl).
+    Q_INVOKABLE void loadEdlTimeline(const QUrl &url);
+    // Imports an OpenTimelineIO (.otio) sequence.
+    Q_INVOKABLE void loadOtioTimeline(const QUrl &url);
     Q_INVOKABLE void cancelPackage();
     Q_INVOKABLE void loadProject(const QUrl &url);
     Q_INVOKABLE void newProject();

@@ -3059,6 +3059,38 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Failed to open Kdenlive / MLT project</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Kdenlive project imported: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Failed to open DaVinci Resolve project / timeline</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>DaVinci Resolve project imported: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Failed to open Edit Decision List (.edl)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>EDL imported: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Failed to open OpenTimelineIO (.otio) sequence</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>OpenTimelineIO imported: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Exporting…</source>
         <translation>Esportazione in corso…</translation>
     </message>
@@ -4257,6 +4289,22 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>DaVinci Resolve project (*.drp *.fcpxml)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Kdenlive &amp; Shotcut project (*.kdenlive *.mlt)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>OpenTimelineIO (*.otio)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Edit Decision List (*.edl)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Motion Graphics Template (*.mogrt)</source>
         <translation type="unfinished"></translation>
     </message>
@@ -4298,6 +4346,42 @@
     </message>
     <message>
         <source>All Files (*)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Import Kdenlive / Shotcut Project</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Kdenlive project (*.kdenlive)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Shotcut project (*.mlt)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Import DaVinci Resolve Project / FCPXML</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>DaVinci Resolve project archive (*.drp)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Final Cut Pro X XML (*.fcpxml)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Import Edit Decision List (.edl)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Import OpenTimelineIO (.otio)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>OpenTimelineIO sequence (*.otio)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -4352,7 +4436,7 @@
         <translation>Video</translation>
     </message>
     <message>
-        <source>All Supported Projects (*.drift *.prproj *.xml *.mogrt)</source>
+        <source>All Supported Projects (*.drift *.prproj *.xml *.fcpxml *.mogrt *.kdenlive *.mlt *.drp *.edl *.otio)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -7142,6 +7226,50 @@ Se la riproduzione va a scatti, prova un&apos;altra opzione.</translation>
         <source>MOGRT archive is empty or invalid</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>Could not open file: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Invalid or corrupt MLT / Kdenlive project</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Failed to parse MLT XML document</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Root element is not &lt;mlt&gt;</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>XML parse error at line %1, column %2: %3</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Root element is &lt;%1&gt;, expected &lt;fcpxml&gt;</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cannot open DaVinci Resolve project archive: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>DaVinci Resolve project archive is empty or invalid</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No edit events found in EDL</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Failed to parse OpenTimelineIO JSON: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Not an OpenTimelineIO Timeline or Stack (schema: %1)</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>RecentProjectsPopup</name>
@@ -7201,6 +7329,22 @@ Se la riproduzione va a scatti, prova un&apos;altra opzione.</translation>
     </message>
     <message>
         <source>Import Motion Graphics (.mogrt)…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Import Kdenlive / Shotcut project…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Import DaVinci Resolve project / FCPXML…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Import Edit Decision List (.edl)…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Import OpenTimelineIO (.otio)…</source>
         <translation type="unfinished"></translation>
     </message>
     <message>

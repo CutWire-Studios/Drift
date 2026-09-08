@@ -428,13 +428,21 @@ bool isMogrtFile(const QString &filePath)
     const QString ext = QFileInfo(filePath).suffix().toLower();
     if (ext == QLatin1String("mogrt"))
         return true;
+    if (ext == QLatin1String("drp") || ext == QLatin1String("drift") || ext == QLatin1String("zip"))
+        return false;
 
     QFile file(filePath);
     if (!file.open(QIODevice::ReadOnly))
         return false;
 
-    const QByteArray magic = file.read(4);
-    return isMogrtData(magic);
+    const auto entries = readZipEntries(file, nullptr);
+    for (const auto &e : entries) {
+        if (e.path.endsWith(QLatin1String("definition.json"), Qt::CaseInsensitive)
+            || e.path.endsWith(QLatin1String("manifest.json"), Qt::CaseInsensitive)) {
+            return true;
+        }
+    }
+    return false;
 }
 
 bool isMogrtData(const QByteArray &data)

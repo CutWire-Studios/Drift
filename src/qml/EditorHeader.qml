@@ -17,9 +17,13 @@ Rectangle {
     property string projectName: EditorState.projectName
 
     readonly property var projectFilter: [
-        qsTr("All Supported Projects (*.drift *.prproj *.xml *.mogrt)"),
+        qsTr("All Supported Projects (*.drift *.prproj *.xml *.fcpxml *.mogrt *.kdenlive *.mlt *.drp *.edl *.otio)"),
         qsTr("Drift project (*.drift)"),
         qsTr("Premiere Pro project (*.prproj)"),
+        qsTr("DaVinci Resolve project (*.drp *.fcpxml)"),
+        qsTr("Kdenlive & Shotcut project (*.kdenlive *.mlt)"),
+        qsTr("OpenTimelineIO (*.otio)"),
+        qsTr("Edit Decision List (*.edl)"),
         qsTr("Motion Graphics Template (*.mogrt)"),
         qsTr("Final Cut Pro XML (*.xml)")
     ]
@@ -124,6 +128,50 @@ Rectangle {
                                        ["application/zip", "application/octet-stream"])
         if (url != "")
             EditorState.importMogrt(url)
+    }
+
+    function openKdenliveProject() {
+        root.confirmIfDirty(function () {
+            var url = FileDialogs.openFile(qsTr("Import Kdenlive / Shotcut Project"),
+                                           [qsTr("Kdenlive & Shotcut project (*.kdenlive *.mlt)"),
+                                            qsTr("Kdenlive project (*.kdenlive)"),
+                                            qsTr("Shotcut project (*.mlt)")],
+                                           ["application/xml", "text/xml", "application/x-kdenlive"])
+            if (url != "")
+                EditorState.loadKdenliveProject(url)
+        })
+    }
+
+    function openResolveProject() {
+        root.confirmIfDirty(function () {
+            var url = FileDialogs.openFile(qsTr("Import DaVinci Resolve Project / FCPXML"),
+                                           [qsTr("DaVinci Resolve project (*.drp *.fcpxml)"),
+                                            qsTr("DaVinci Resolve project archive (*.drp)"),
+                                            qsTr("Final Cut Pro X XML (*.fcpxml)")],
+                                           ["application/zip", "application/octet-stream", "application/xml", "text/xml"])
+            if (url != "")
+                EditorState.loadResolveProject(url)
+        })
+    }
+
+    function openEdlTimeline() {
+        root.confirmIfDirty(function () {
+            var url = FileDialogs.openFile(qsTr("Import Edit Decision List (.edl)"),
+                                           [qsTr("Edit Decision List (*.edl)")],
+                                           ["text/plain", "application/octet-stream"])
+            if (url != "")
+                EditorState.loadEdlTimeline(url)
+        })
+    }
+
+    function openOtioTimeline() {
+        root.confirmIfDirty(function () {
+            var url = FileDialogs.openFile(qsTr("Import OpenTimelineIO (.otio)"),
+                                           [qsTr("OpenTimelineIO sequence (*.otio)")],
+                                           ["application/json", "text/plain", "application/octet-stream"])
+            if (url != "")
+                EditorState.loadOtioTimeline(url)
+        })
     }
 
     // Save As with every source file copied in, so the result opens on a machine that has none of
@@ -321,6 +369,10 @@ Rectangle {
                     onOpenJsonRequested: root.openProjectJson()
                     onImportPremiereRequested: root.openPremiereProject()
                     onImportMogrtRequested: root.openMogrt()
+                    onImportKdenliveRequested: root.openKdenliveProject()
+                    onImportResolveRequested: root.openResolveProject()
+                    onImportEdlRequested: root.openEdlTimeline()
+                    onImportOtioRequested: root.openOtioTimeline()
                     onPropertiesRequested: projectPropertiesDialog.openDialog()
                 }
             }
