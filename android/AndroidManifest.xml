@@ -99,6 +99,21 @@
                 <data android:pathPattern=".*\\..*\\..*\\.drift" />
             </intent-filter>
 
+            <!-- Website-initiated marketplace account link. No in-app Sign in CTA;
+                 this only handles a redirect the user started on the site. -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="cutwire" android:host="market" android:pathPrefix="/auth/callback" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="https" android:host="market.cutwire.org" android:pathPrefix="/app/auth/callback" />
+            </intent-filter>
+
           <meta-data
                 android:name="android.app.lib_name"
                 android:value="-- %%INSERT_APP_LIB_NAME%% --" />

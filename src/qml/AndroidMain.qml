@@ -458,7 +458,7 @@ ApplicationWindow {
         // tried to load an empty URL, which failed with "That project location isn't valid" and
         // left the user in an empty editor instead of on the home screen.
         const launched = String(FileDialogs.takeLaunchUrl())
-        if (launched !== "") {
+        if (launched !== "" && !Market.handleIncomingUrl(launched)) {
             // Unless the previous session left a snapshot: loading the launched project
             // deletes it unasked, so park the URL and let the recovery prompt run first.
             if (EditorState.recoveryAvailable && !EditorState.reopenLastProject) {
@@ -567,6 +567,8 @@ ApplicationWindow {
     Connections {
         target: FileDialogs
         function onLaunchUrlReceived(url) {
+            if (Market.handleIncomingUrl(url))
+                return
             if (recoveryDialog.visible) {
                 window._pendingLaunchUrl = url
                 return
@@ -624,6 +626,24 @@ ApplicationWindow {
             if (reason === "Cancelled")
                 return
             Toasts.error(qsTr("Couldn’t install “%1”: %2").arg(id).arg(reason))
+        }
+    }
+
+    Connections {
+        target: Market
+        function onAuthFinished(ok, message) {
+            if (ok)
+                Toasts.success(message)
+            else
+                Toasts.error(message)
+        }
+        function onDownloadImported(itemId, name) {
+            Toasts.success(name.length > 0
+                           ? qsTr("Imported “%1”.").arg(name)
+                           : qsTr("Imported from the marketplace."))
+        }
+        function onDownloadFailed(itemId, code, message) {
+            Toasts.error(message)
         }
     }
 

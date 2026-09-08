@@ -691,6 +691,24 @@ ApplicationWindow {
         }
     }
 
+    Connections {
+        target: Market
+        function onAuthFinished(ok, message) {
+            if (ok)
+                Toasts.success(message)
+            else
+                Toasts.error(message)
+        }
+        function onDownloadImported(itemId, name) {
+            Toasts.success(name.length > 0
+                           ? qsTr("Imported “%1”.").arg(name)
+                           : qsTr("Imported from the marketplace."))
+        }
+        function onDownloadFailed(itemId, code, message) {
+            Toasts.error(message)
+        }
+    }
+
     // Shortcut is not an Item, so wrap each binding in a zero-size host.
     // Escape (clearSelection): CapCut-style — if a timeline cut tool is active,
     // first press returns to Select; only then does Escape clear the selection.

@@ -598,6 +598,8 @@ QtObject {
         shuffle: "shuffle",
         info: "info",
         package: "package",
+        store: "store",
+        gem: "gem",
         fileText: "file-text",
 
         // Status / feedback

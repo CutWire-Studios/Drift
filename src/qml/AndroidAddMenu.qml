@@ -44,6 +44,12 @@ AndroidBottomSheet {
             icon: Theme.icons.film
         },
         {
+            id: "market",
+            label: qsTr("Market"),
+            detail: qsTr("Stock photos, video and audio"),
+            icon: Theme.icons.store
+        },
+        {
             id: "text",
             label: qsTr("Text"),
             detail: qsTr("A title or caption you type"),

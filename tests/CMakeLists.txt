@@ -84,6 +84,18 @@ target_compile_definitions(tst_addonpackage PRIVATE
     DRIFT_TEST_DATA_DIR="${CMAKE_CURRENT_SOURCE_DIR}/data")
 add_test(NAME AddonPackage COMMAND tst_addonpackage)
 
+qt_add_executable(tst_marketidentity
+    tst_marketidentity.cpp
+    ../src/models/MarketIdentity.cpp
+)
+target_include_directories(tst_marketidentity PRIVATE ../src)
+target_link_libraries(tst_marketidentity PRIVATE Qt6::Test Qt6::Core)
+target_compile_definitions(tst_marketidentity PRIVATE
+    DRIFT_MARKET_API_URL=""
+    DRIFT_MARKET_CLIENT_KEY="test-key"
+    DRIFT_VERSION="0")
+add_test(NAME MarketIdentity COMMAND tst_marketidentity)
+
 qt_add_executable(tst_projectbundle tst_projectbundle.cpp)
 target_include_directories(tst_projectbundle PRIVATE ../src)
 # zstd directly: the test forges a manifest to exercise the format version gate.

@@ -623,7 +623,7 @@ PanelFrame {
         if (tabId === "text" || tabId === "subtitles" || tabId === "stickers" || tabId === "shapes"
                 || tabId === "effects" || tabId === "templates" || tabId === "adjustment"
                 || tabId === "sounds" || tabId === "transitions" || tabId === "masks"
-                || tabId === "shortcuts" || tabId === "scenes")
+                || tabId === "shortcuts" || tabId === "scenes" || tabId === "market")
             return false
         const kinds = kindsForTab(tabId)
         return kinds.length === 0 || kinds.indexOf(kind) >= 0
@@ -633,6 +633,7 @@ PanelFrame {
     // evaluated. Labels are translated via tabLabels below.
     property var tabLabels: ({
         "media": qsTr("Media"),
+        "market": qsTr("Market"),
         "text": qsTr("Text"),
         "subtitles": qsTr("Subtitles"),
         "stickers": qsTr("Stickers"),
@@ -651,7 +652,8 @@ PanelFrame {
     // tabId "sounds" is kept for favorites persistence (settings key).
     ListModel {
         id: tabsModel
-        ListElement { tabId: "media"; icon: 0; separatorAfter: true }
+        ListElement { tabId: "media"; icon: 0; separatorAfter: false }
+        ListElement { tabId: "market"; icon: 12; separatorAfter: true }
         ListElement { tabId: "text"; icon: 1; separatorAfter: false }
         ListElement { tabId: "subtitles"; icon: 2; separatorAfter: false }
         ListElement { tabId: "stickers"; icon: 3; separatorAfter: false }
@@ -676,7 +678,8 @@ PanelFrame {
         Theme.icons.audioLines,
         Theme.icons.keyboard,
         Theme.icons.listVideo,
-        Theme.icons.mask
+        Theme.icons.mask,
+        Theme.icons.store
     ]
     property int activeTab: 0
 
@@ -1401,6 +1404,13 @@ PanelFrame {
                 onMoveToFolderRequested: (assetIds) => root.requestMoveAssetToFolder(assetIds)
                 onFolderRenameRequested: (folderId, folderName) => root.requestRenameFolder(folderId, folderName)
                 onFolderMoveRequested: (folderId) => root.requestMoveFolder(folderId)
+            }
+
+            MarketTab {
+                visible: tabsModel.get(activeTab).tabId === "market"
+                width: parent.width
+                opacity: root.tabOpacity
+                height: parent.height - Theme.panelHeaderHeight
             }
         }
     }

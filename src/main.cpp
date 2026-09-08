@@ -14,6 +14,7 @@
 #include "models/FileDialogs.h"
 #include "models/Haptics.h"
 #include "models/LayoutStore.h"
+#include "models/MarketClient.h"
 #include "models/UpdateChecker.h"
 #include "engine/VaapiZeroCopy.h"
 #include "ClipPreviewImageProvider.h"
@@ -42,6 +43,7 @@
 #include <QSurfaceFormat>
 #include <QtQml/qqml.h>
 #include <QFile>
+#include <QUrl>
 
 #ifdef Q_OS_ANDROID
 #include "core/Project.h"
@@ -112,9 +114,10 @@ void applyLogLevel(bool verbose)
 class FileOpenFilter : public QObject
 {
 public:
-    explicit FileOpenFilter(AppController *controller, QObject *parent = nullptr)
+    explicit FileOpenFilter(AppController *controller, MarketClient *market, QObject *parent = nullptr)
         : QObject(parent)
         , m_controller(controller)
+        , m_market(market)
     {
     }
 
@@ -123,6 +126,8 @@ protected:
     {
         if (event->type() == QEvent::FileOpen) {
             const auto *open = static_cast<QFileOpenEvent *>(event);
+            if (m_market && m_market->handleIncomingUrl(open->url()))
+                return true;
             m_controller->queueExternalProject(open->url());
             return true;
         }
@@ -131,6 +136,7 @@ protected:
 
 private:
     AppController *m_controller = nullptr;
+    MarketClient *m_market = nullptr;
 };
 
 #ifdef Q_OS_ANDROID
@@ -462,23 +468,35 @@ int main(int argc, char *argv[])
     static EditorState editorState(&assetLibrary);
     static FileDialogs fileDialogs;
     static AddonManager addonManager;
+    static MarketClient marketClient;
     static UpdateChecker updateChecker;
     static LayoutStore layoutStore;
     static drift::Haptics haptics;
     editorState.setAddonManager(&addonManager);
+    marketClient.setAssetLibrary(&assetLibrary);
     qmlRegisterSingletonInstance("Drift", 1, 0, "AssetLibrary", &assetLibrary);
     qmlRegisterSingletonInstance("Drift", 1, 0, "BinFolderModel", editorState.binFolderModel());
     qmlRegisterSingletonInstance("Drift", 1, 0, "EditorState", &editorState);
     qmlRegisterSingletonInstance("Drift", 1, 0, "AppController", &editorState);
     qmlRegisterSingletonInstance("Drift", 1, 0, "FileDialogs", &fileDialogs);
     qmlRegisterSingletonInstance("Drift", 1, 0, "Addons", &addonManager);
+    qmlRegisterSingletonInstance("Drift", 1, 0, "Market", &marketClient);
     qmlRegisterSingletonInstance("Drift", 1, 0, "Updates", &updateChecker);
     qmlRegisterSingletonInstance("Drift", 1, 0, "LayoutMemory", &layoutStore);
     qmlRegisterSingletonInstance("Drift", 1, 0, "Haptics", &haptics);
 
-    app.installEventFilter(new FileOpenFilter(&editorState, &app));
-    editorState.queueExternalProject(
-        AppController::startupProjectUrlFromArguments(app.arguments()));
+    app.installEventFilter(new FileOpenFilter(&editorState, &marketClient, &app));
+    {
+        QStringList forwarded = {app.arguments().constFirst()};
+        for (int i = 1; i < app.arguments().size(); ++i) {
+            const QString &arg = app.arguments().at(i);
+            const QUrl url(arg);
+            if (!url.scheme().isEmpty() && marketClient.handleIncomingUrl(url))
+                continue;
+            forwarded.append(arg);
+        }
+        editorState.queueExternalProject(AppController::startupProjectUrlFromArguments(forwarded));
+    }
 
     QQmlApplicationEngine engine;
     QObject::connect(&editorState, &AppController::uiLanguageChanged,

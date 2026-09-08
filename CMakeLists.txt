@@ -62,6 +62,20 @@ set(DRIFT_ADDON_INDEX_URL "https://drift-addons.cutwire.org/v1/index"
 set(DRIFT_ADDON_CLIENT_TOKEN "79a388bba9301cacc81cc6eb0724c81e948e1b27c69aee1b"
     CACHE STRING "Client token sent to the addon service as X-Drift-Client")
 
+# --- Marketplace -----------------------------------------------------------
+# Stock catalog at market.cutwire.org. Empty URL or key disables the Market tab.
+# The HMAC key is not a user secret — it ships in the binary — and exists so requests can be
+# signed and a stable client id derived. See docs/marketplace/README.md.
+#
+#   cmake -B build -DDRIFT_MARKET_API_URL=https://market.example.com/api/v1 \
+#                  -DDRIFT_MARKET_CLIENT_KEY=...
+#
+#   cmake -B build -DDRIFT_MARKET_API_URL=      # no marketplace
+set(DRIFT_MARKET_API_URL "https://market.cutwire.org/api/v1"
+    CACHE STRING "Marketplace API base; empty disables the marketplace")
+set(DRIFT_MARKET_CLIENT_KEY "5409a0bebab4446f88e51d06024a5cf9a694ee141a6a1c6be7a49e45b6687438"
+    CACHE STRING "HMAC key for marketplace client identity and request signing")
+
 # --- Update check -----------------------------------------------------------
 # Where src/models/UpdateChecker looks for a newer release, once a day, to raise the badge in the
 # header. GitHub's releases/latest is the source of truth because the release tag already is: it
@@ -576,6 +590,11 @@ qt_add_executable(drift
     src/models/AddonEndpoint.h
     src/models/AddonManager.h
     src/models/AddonManager.cpp
+    src/models/MarketEndpoint.h
+    src/models/MarketIdentity.h
+    src/models/MarketIdentity.cpp
+    src/models/MarketClient.h
+    src/models/MarketClient.cpp
     src/models/VersionCompare.h
     src/models/UpdateChecker.h
     src/models/UpdateChecker.cpp
@@ -763,6 +782,7 @@ qt_add_qml_module(drift
         src/qml/components/assets/SoundsTab.qml
         src/qml/components/assets/ShortcutsTab.qml
         src/qml/components/assets/MediaAssetsTab.qml
+        src/qml/components/assets/MarketTab.qml
         src/qml/components/assets/BinBreadcrumb.qml
         src/qml/components/assets/AssetCategoryChips.qml
         src/qml/components/assets/EffectStacksSection.qml
@@ -1061,6 +1081,8 @@ endif()
 target_compile_definitions(drift PRIVATE
     DRIFT_ADDON_INDEX_URL="${DRIFT_ADDON_INDEX_URL}"
     DRIFT_ADDON_CLIENT_TOKEN="${DRIFT_ADDON_CLIENT_TOKEN}"
+    DRIFT_MARKET_API_URL="${DRIFT_MARKET_API_URL}"
+    DRIFT_MARKET_CLIENT_KEY="${DRIFT_MARKET_CLIENT_KEY}"
     DRIFT_UPDATE_FEED_URL="${DRIFT_UPDATE_FEED_URL}"
     DRIFT_VERSION="${PROJECT_VERSION}"
 )

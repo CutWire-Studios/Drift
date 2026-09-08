@@ -332,6 +332,14 @@
         <translation>මෙම උපාංගයේ ඇති වීඩියෝ, ඡායාරූප සහ ශ්‍රව්‍ය</translation>
     </message>
     <message>
+        <source>Market</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Stock photos, video and audio</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Text</source>
         <translation>පෙළ</translation>
     </message>
@@ -822,6 +830,14 @@
     <message>
         <source>Couldn’t install “%1”: %2</source>
         <translation>“%1” ස්ථාපනය කිරීමට නොහැකි විය: %2</translation>
+    </message>
+    <message>
+        <source>Imported “%1”.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Imported from the marketplace.</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -3327,6 +3343,10 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Market</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Text</source>
         <translation>පෙළ</translation>
     </message>
@@ -5409,6 +5429,225 @@
         <source>Couldn’t install “%1”: %2</source>
         <translation>“%1” ස්ථාපනය කිරීමට නොහැකි විය: %2</translation>
     </message>
+    <message>
+        <source>Imported “%1”.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Imported from the marketplace.</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>MarketClient</name>
+    <message>
+        <source>Marketplace is not available in this build.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Starting…</source>
+        <translation type="unfinished">ආරම්භ කරමින්…</translation>
+    </message>
+    <message>
+        <source>Preparing…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Could not connect the marketplace account.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Nothing is available from the marketplace right now.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Downloading…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Could not save that file.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The downloaded file did not match what the marketplace sent.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Importing…</source>
+        <translation type="unfinished">ආයාත කරමින්…</translation>
+    </message>
+    <message>
+        <source>Could not import that file.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Marketplace account connected.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Daily limit reached for this source. Try again later.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This item needs a connected account.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Not enough coins.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This source is temporarily unavailable.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>That item is no longer available.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Could not reach the marketplace.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Could not prepare that file.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Could not complete that request.</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>MarketTab</name>
+    <message>
+        <source>Marketplace unavailable</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This build does not include the marketplace.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Loading marketplace…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Fetching available sources.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Couldn’t reach the marketplace</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Try again</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Nothing listed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No sources are available right now.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Refresh</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Source</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>Filters — %n applied</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Filters</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%n remaining today</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Search or paste a link</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Search</source>
+        <translation type="unfinished">සොයන්න</translation>
+    </message>
+    <message>
+        <source>Paste a link</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Look up</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Looking up that link…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Couldn’t open that link</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Search failed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No results for “%1”</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Search this source</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Paste a page link from this source, then look it up.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Pick a source, then search for photos, video or audio.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Preview</source>
+        <translation type="unfinished">පෙරදසුන</translation>
+    </message>
+    <message>
+        <source>Working…</source>
+        <translation type="unfinished">ක්‍රියාත්මක වෙමින්…</translation>
+    </message>
+    <message>
+        <source>Download · %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Download</source>
+        <translation type="unfinished">බාගන්න</translation>
+    </message>
+    <message>
+        <source>Close</source>
+        <translation type="unfinished">වසන්න</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n coin(s)</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
 </context>
 <context>
     <name>MaskOverlay</name>
@@ -7333,6 +7572,26 @@ If playback stutters, try another.</source>
     <message>
         <source>Pulse the Extras icon when updates are available for packs you already have installed</source>
         <translation type="unfinished">ඔබ දැනටමත් ස්ථාපනය කර ඇති පැකේජ සඳහා යාවත්කාලීන ඇති විට අමතර අංග අයිකනය ස්පන්දනය කරන්න</translation>
+    </message>
+    <message>
+        <source>Marketplace</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Account connected (%1)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Marketplace account connected</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Disconnect</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Unlink the marketplace account from this device</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>

@@ -213,6 +213,19 @@ The token is not a secret — it ships in every binary. It exists so the bucket 
 
 These are CMake *cache* variables: changing the default in `CMakeLists.txt` does not affect an existing build directory, so pass `-D...` again or reconfigure from scratch.
 
+### Marketplace
+
+Stock media (photos, video, audio) is fetched from `https://market.cutwire.org/api/v1`. Drift has no per-store adapters; types and providers come from the catalog. Contract: [docs/marketplace/README.md](marketplace/README.md).
+
+```bash
+cmake -B build -DDRIFT_MARKET_API_URL=https://market.example.com/api/v1 \
+               -DDRIFT_MARKET_CLIENT_KEY=your-hmac-key
+
+cmake -B build -DDRIFT_MARKET_API_URL=      # build with no marketplace
+```
+
+The HMAC key is also not a user secret. It signs requests and derives a stable client id so wiping app data does not mint a new download quota. See the marketplace doc for the canonical string.
+
 ## Agent access (MCP)
 
 Optional, **off at every launch**. Settings → Agent access starts a localhost MCP server so Cursor or Claude Code can edit the open project (import media, place/trim clips, capture a still of the composition).

@@ -8,5 +8,5 @@ Icon=org.cutwire.Drift
 Terminal=false
 Categories=AudioVideo;Video;AudioVideoEditing;
 Keywords=video;editor;movie;clip;ffmpeg;subtitles;
-MimeType=application/x-drift-project;
+MimeType=application/x-drift-project;x-scheme-handler/cutwire;
 StartupWMClass=drift
