@@ -12,6 +12,7 @@
 #include <QTemporaryFile>
 #include <QUrl>
 #include <QByteArray>
+#include <QBuffer>
 
 #include <QScopeGuard>
 #include <QClipboard>
@@ -28,6 +29,7 @@
 
 #include "core/Clip.h"
 #include "core/EffectStackStore.h"
+#include "core/MogrtReader.h"
 #include "core/Project.h"
 #include "core/TimelineOps.h"
 #include "core/Track.h"
@@ -95,6 +97,8 @@ private slots:
     void projectJsonImportRejectsGarbageAndLeavesTimeline();
     void premiereProjectImportPrproj();
     void premiereProjectImportFcpXml();
+    void mogrtImportTemplate();
+    void mogrtImportIntoExistingProject();
     void newProjectClearsEverything();
     void projectSetupOnPristineProjectStaysClean();
     void projectFpsCanChangeAfterSetup();
@@ -1517,6 +1521,129 @@ QByteArray gzipCompressForTest(const QByteArray &data)
     deflateEnd(&strm);
     return out;
 }
+
+bool writeSimpleZipForTest(const QString &outPath, const QList<QPair<QString, QByteArray>> &files)
+{
+    QFile out(outPath);
+    if (!out.open(QIODevice::WriteOnly))
+        return false;
+
+    struct EntryRecord {
+        QString name;
+        quint32 crc = 0;
+        quint32 size = 0;
+        quint32 localOffset = 0;
+    };
+    QList<EntryRecord> records;
+
+    for (const auto &file : files) {
+        EntryRecord rec;
+        rec.name = file.first;
+        rec.size = static_cast<quint32>(file.second.size());
+        rec.crc = crc32(0L, reinterpret_cast<const Bytef *>(file.second.constData()), rec.size);
+        rec.localOffset = static_cast<quint32>(out.pos());
+
+        const QByteArray nameBytes = rec.name.toUtf8();
+        const quint16 nameLen = static_cast<quint16>(nameBytes.size());
+
+        QByteArray header(30, 0);
+        header[0] = 0x50; header[1] = 0x4b; header[2] = 0x03; header[3] = 0x04;
+        header[4] = 20; header[5] = 0;
+        header[6] = 0; header[7] = 0;
+        header[8] = 0; header[9] = 0;
+        header[10] = 0; header[11] = 0;
+        header[12] = 0; header[13] = 0;
+        header[14] = rec.crc & 0xff;
+        header[15] = (rec.crc >> 8) & 0xff;
+        header[16] = (rec.crc >> 16) & 0xff;
+        header[17] = (rec.crc >> 24) & 0xff;
+        header[18] = rec.size & 0xff;
+        header[19] = (rec.size >> 8) & 0xff;
+        header[20] = (rec.size >> 16) & 0xff;
+        header[21] = (rec.size >> 24) & 0xff;
+        header[22] = rec.size & 0xff;
+        header[23] = (rec.size >> 8) & 0xff;
+        header[24] = (rec.size >> 16) & 0xff;
+        header[25] = (rec.size >> 24) & 0xff;
+        header[26] = nameLen & 0xff;
+        header[27] = (nameLen >> 8) & 0xff;
+        header[28] = 0; header[29] = 0;
+
+        out.write(header);
+        out.write(nameBytes);
+        out.write(file.second);
+
+        records.append(rec);
+    }
+
+    const quint32 cdOffset = static_cast<quint32>(out.pos());
+    QByteArray cd;
+
+    for (const auto &rec : records) {
+        const QByteArray nameBytes = rec.name.toUtf8();
+        const quint16 nameLen = static_cast<quint16>(nameBytes.size());
+
+        QByteArray cdh(46, 0);
+        cdh[0] = 0x50; cdh[1] = 0x4b; cdh[2] = 0x01; cdh[3] = 0x02;
+        cdh[4] = 20; cdh[5] = 0;
+        cdh[6] = 20; cdh[7] = 0;
+        cdh[8] = 0; cdh[9] = 0;
+        cdh[10] = 0; cdh[11] = 0;
+        cdh[12] = 0; cdh[13] = 0;
+        cdh[14] = 0; cdh[15] = 0;
+        cdh[16] = rec.crc & 0xff;
+        cdh[17] = (rec.crc >> 8) & 0xff;
+        cdh[18] = (rec.crc >> 16) & 0xff;
+        cdh[19] = (rec.crc >> 24) & 0xff;
+        cdh[20] = rec.size & 0xff;
+        cdh[21] = (rec.size >> 8) & 0xff;
+        cdh[22] = (rec.size >> 16) & 0xff;
+        cdh[23] = (rec.size >> 24) & 0xff;
+        cdh[24] = rec.size & 0xff;
+        cdh[25] = (rec.size >> 8) & 0xff;
+        cdh[26] = (rec.size >> 16) & 0xff;
+        cdh[27] = (rec.size >> 24) & 0xff;
+        cdh[28] = nameLen & 0xff;
+        cdh[29] = (nameLen >> 8) & 0xff;
+        cdh[30] = 0; cdh[31] = 0;
+        cdh[32] = 0; cdh[33] = 0;
+        cdh[34] = 0; cdh[35] = 0;
+        cdh[36] = 0; cdh[37] = 0;
+        cdh[38] = 0; cdh[39] = 0; cdh[40] = 0; cdh[41] = 0;
+        cdh[42] = rec.localOffset & 0xff;
+        cdh[43] = (rec.localOffset >> 8) & 0xff;
+        cdh[44] = (rec.localOffset >> 16) & 0xff;
+        cdh[45] = (rec.localOffset >> 24) & 0xff;
+
+        cd.append(cdh);
+        cd.append(nameBytes);
+    }
+
+    const quint32 cdSize = static_cast<quint32>(cd.size());
+    out.write(cd);
+
+    QByteArray eocd(22, 0);
+    eocd[0] = 0x50; eocd[1] = 0x4b; eocd[2] = 0x05; eocd[3] = 0x06;
+    eocd[4] = 0; eocd[5] = 0;
+    eocd[6] = 0; eocd[7] = 0;
+    const quint16 recCount = static_cast<quint16>(records.size());
+    eocd[8] = recCount & 0xff;
+    eocd[9] = (recCount >> 8) & 0xff;
+    eocd[10] = recCount & 0xff;
+    eocd[11] = (recCount >> 8) & 0xff;
+    eocd[12] = cdSize & 0xff;
+    eocd[13] = (cdSize >> 8) & 0xff;
+    eocd[14] = (cdSize >> 16) & 0xff;
+    eocd[15] = (cdSize >> 24) & 0xff;
+    eocd[16] = cdOffset & 0xff;
+    eocd[17] = (cdOffset >> 8) & 0xff;
+    eocd[18] = (cdOffset >> 16) & 0xff;
+    eocd[19] = (cdOffset >> 24) & 0xff;
+    eocd[20] = 0; eocd[21] = 0;
+
+    out.write(eocd);
+    return true;
+}
 } // namespace
 
 void EditorStateTest::premiereProjectImportPrproj()
@@ -1754,6 +1881,203 @@ void EditorStateTest::premiereProjectImportFcpXml()
     QCOMPARE(aClips.size(), 1);
     QCOMPARE(aClips.at(0).toMap().value(QStringLiteral("duration")).toDouble(), 4.0);
     QCOMPARE(state.project()->tracks().at(1).clips.at(0).timelineDuration, 4000000LL);
+}
+
+void EditorStateTest::mogrtImportTemplate()
+{
+    AssetLibrary library;
+    AppController state(&library);
+
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    const QString mogrtPath = dir.filePath(QStringLiteral("lower_third.mogrt"));
+
+    QImage img(32, 32, QImage::Format_ARGB32_Premultiplied);
+    img.fill(Qt::cyan);
+    QByteArray pngData;
+    QBuffer buf(&pngData);
+    buf.open(QIODevice::WriteOnly);
+    img.save(&buf, "PNG");
+
+    const QByteArray defJson = QByteArray(
+        "{\n"
+        "  \"name\": \"Breaking News Lower Third\",\n"
+        "  \"author\": \"Drift\",\n"
+        "  \"sequence\": {\n"
+        "    \"width\": 1920,\n"
+        "    \"height\": 1080,\n"
+        "    \"fps\": 60,\n"
+        "    \"duration\": 4.0\n"
+        "  },\n"
+        "  \"properties\": [\n"
+        "    {\n"
+        "      \"id\": \"p1\",\n"
+        "      \"name\": \"Headline\",\n"
+        "      \"type\": \"text\",\n"
+        "      \"value\": \"BREAKING NEWS\",\n"
+        "      \"color\": \"#ffcc00\",\n"
+        "      \"fontFamily\": \"Inter\",\n"
+        "      \"fontSize\": 72\n"
+        "    },\n"
+        "    {\n"
+        "      \"id\": \"p2\",\n"
+        "      \"name\": \"Subline\",\n"
+        "      \"type\": \"text\",\n"
+        "      \"value\": \"Live Update\",\n"
+        "      \"color\": \"#ffffff\",\n"
+        "      \"fontSize\": 36\n"
+        "    },\n"
+        "    {\n"
+        "      \"id\": \"p3\",\n"
+        "      \"name\": \"Accent Color\",\n"
+        "      \"type\": \"color\",\n"
+        "      \"value\": \"#ff2200\"\n"
+        "    }\n"
+        "  ]\n"
+        "}");
+
+    const QList<QPair<QString, QByteArray>> files = {
+        {QStringLiteral("definition.json"), defJson},
+        {QStringLiteral("thumb.png"), pngData},
+        {QStringLiteral("assets/logo.png"), pngData}
+    };
+
+    QVERIFY(writeSimpleZipForTest(mogrtPath, files));
+    QVERIFY(drift::mogrt::isMogrtFile(mogrtPath));
+
+    // Load template via loadProject
+    state.loadProject(QUrl::fromLocalFile(mogrtPath));
+
+    // Project metadata adopted from template
+    QCOMPARE(state.project()->width(), 1920);
+    QCOMPARE(state.project()->height(), 1080);
+    QCOMPARE(state.project()->fps(), 60);
+
+    // Verify bin folders created
+    bool foundTemplatesFolder = false;
+    QString templateChildFolderId;
+    for (const auto &folder : state.project()->binFolders()) {
+        if (folder.name == QStringLiteral("Templates"))
+            foundTemplatesFolder = true;
+        if (folder.name == QStringLiteral("Breaking News Lower Third"))
+            templateChildFolderId = folder.id;
+    }
+    QVERIFY(foundTemplatesFolder);
+    QVERIFY(!templateChildFolderId.isEmpty());
+
+    // Verify media asset was imported into the template's bin folder
+    bool foundLogoAsset = false;
+    for (const auto &asset : state.project()->assets()) {
+        if (asset.name == QStringLiteral("logo.png")) {
+            foundLogoAsset = true;
+            QCOMPARE(asset.folderId, templateChildFolderId);
+            QCOMPARE(asset.kind, drift::MediaKind::Image);
+        }
+    }
+    QVERIFY(foundLogoAsset);
+
+    // Verify visual and text clips on timeline
+    bool foundLogoClip = false;
+    bool foundHeadlineClip = false;
+    bool foundSublineClip = false;
+
+    for (const auto &track : state.project()->tracks()) {
+        for (const auto &clip : track.clips) {
+            if (clip.name == QStringLiteral("logo.png")) {
+                foundLogoClip = true;
+                QCOMPARE(clip.timelineDuration, 4000000LL);
+            }
+            if (clip.type == drift::ClipType::Text) {
+                if (clip.textContent == QStringLiteral("BREAKING NEWS")) {
+                    foundHeadlineClip = true;
+                    QCOMPARE(clip.textStyle.fontFamily, QStringLiteral("Inter"));
+                    QCOMPARE(clip.textStyle.pixelSize, 72);
+                    QCOMPARE(clip.textStyle.color, QColor(QStringLiteral("#ffcc00")));
+                    QCOMPARE(clip.timelineDuration, 4000000LL);
+                } else if (clip.textContent == QStringLiteral("Live Update")) {
+                    foundSublineClip = true;
+                    QCOMPARE(clip.textStyle.pixelSize, 36);
+                    QCOMPARE(clip.textStyle.color, QColor(QStringLiteral("#ffffff")));
+                }
+            }
+        }
+    }
+
+    QVERIFY(foundLogoClip);
+    QVERIFY(foundHeadlineClip);
+    QVERIFY(foundSublineClip);
+
+    // Verify undo restores previous state
+    QVERIFY(state.undoAvailable());
+    state.undo();
+    QCOMPARE(state.project()->binFolders().size(), 0);
+    QCOMPARE(state.project()->assets().size(), 0);
+
+    // Redo restores template
+    QVERIFY(state.redoAvailable());
+    state.redo();
+    QVERIFY(state.project()->binFolders().size() >= 2);
+    QVERIFY(state.project()->assets().size() >= 1);
+}
+
+void EditorStateTest::mogrtImportIntoExistingProject()
+{
+    AssetLibrary library;
+    AppController state(&library);
+
+    // Add an initial text clip at 0
+    state.addTextClip(QStringLiteral("Existing Scene"), 0.0);
+    QCOMPARE(state.project()->tracks().at(0).clips.size(), 1);
+
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    const QString mogrtPath = dir.filePath(QStringLiteral("overlay.mogrt"));
+
+    const QByteArray defJson = QByteArray(
+        "{\n"
+        "  \"name\": \"Overlay Title\",\n"
+        "  \"sequence\": {\n"
+        "    \"duration\": 2.5\n"
+        "  },\n"
+        "  \"properties\": [\n"
+        "    {\n"
+        "      \"name\": \"Title\",\n"
+        "      \"type\": \"text\",\n"
+        "      \"value\": \"Chapter 2\"\n"
+        "    }\n"
+        "  ]\n"
+        "}");
+
+    const QList<QPair<QString, QByteArray>> files = {
+        {QStringLiteral("definition.json"), defJson}
+    };
+    QVERIFY(writeSimpleZipForTest(mogrtPath, files));
+
+    // Place playhead at 5.0 seconds (5,000,000 us)
+    state.setPlayheadUs(5000000LL);
+
+    // Import into existing project
+    state.importMogrt(QUrl::fromLocalFile(mogrtPath));
+
+    // Existing clip at 0 should be intact
+    bool foundExisting = false;
+    bool foundImported = false;
+    for (const auto &track : state.project()->tracks()) {
+        for (const auto &clip : track.clips) {
+            if (clip.textContent == QStringLiteral("Existing Scene")) {
+                foundExisting = true;
+                QCOMPARE(clip.timelineStart, 0LL);
+            }
+            if (clip.textContent == QStringLiteral("Chapter 2")) {
+                foundImported = true;
+                QCOMPARE(clip.timelineStart, 5000000LL);
+                QCOMPARE(clip.timelineDuration, 2500000LL);
+            }
+        }
+    }
+
+    QVERIFY(foundExisting);
+    QVERIFY(foundImported);
 }
 
 // resetToDefaultTimeline() only clears the tracks, so New Project used to keep the asset pool,

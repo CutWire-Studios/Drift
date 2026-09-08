@@ -3032,6 +3032,26 @@
         <translation>インポートされたPremiere Proプロジェクト : %1</translation>
     </message>
     <message>
+        <source>That template location isn’t valid</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Failed to unpack Motion Graphics Template</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Failed to apply template to project</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Import template: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Template imported: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Exporting…</source>
         <translation>エクスポート中…</translation>
     </message>
@@ -3322,6 +3342,14 @@
         <translation>
             <numerusform>%1 個のフォルダーに %n 個のファイルをインポートしました。</numerusform>
         </translation>
+    </message>
+    <message>
+        <source>Motion Graphics Template (*.mogrt)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>All Files (*)</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Import Folder</source>
@@ -4209,6 +4237,10 @@
         <translation>Premiere Pro プロジェクト (*.prproj)</translation>
     </message>
     <message>
+        <source>Motion Graphics Template (*.mogrt)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Final Cut Pro XML (*.xml)</source>
         <translation>Final Cut Pro XML (*.xml)</translation>
     </message>
@@ -4239,6 +4271,14 @@
     <message>
         <source>Premiere Pro project (*.prproj *.xml)</source>
         <translation>Premiere Pro プロジェクト (*.prproj *.xml)</translation>
+    </message>
+    <message>
+        <source>Import Motion Graphics Template</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>All Files (*)</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Save Shareable Copy</source>
@@ -4289,6 +4329,10 @@
     <message>
         <source>Video</source>
         <translation>ビデオ</translation>
+    </message>
+    <message>
+        <source>All Supported Projects (*.drift *.prproj *.xml *.mogrt)</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Video size and layout</source>
@@ -4369,10 +4413,6 @@
     <message>
         <source>Multicam</source>
         <translation>マルチカム</translation>
-    </message>
-    <message>
-        <source>All Supported Projects (*.drift *.prproj *.xml)</source>
-        <translation>サポートされているすべてのプロジェクト (*.drift *.prproj *.xml)</translation>
     </message>
     <message>
         <source>Workspace</source>
@@ -7062,6 +7102,14 @@ If playback stutters, try another.</source>
         <source>A%1</source>
         <translation>A%1</translation>
     </message>
+    <message>
+        <source>Not a valid ZIP archive</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>MOGRT archive is empty or invalid</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>RecentProjectsPopup</name>
@@ -7118,6 +7166,10 @@ If playback stutters, try another.</source>
     <message>
         <source>Import Premiere project…</source>
         <translation>Premiere プロジェクトをインポート...</translation>
+    </message>
+    <message>
+        <source>Import Motion Graphics (.mogrt)…</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Project properties…</source>

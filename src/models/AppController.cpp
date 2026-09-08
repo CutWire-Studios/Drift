@@ -8,6 +8,7 @@
 #include "core/SpeedCurve.h"
 #include "core/Stabilize.h"
 #include "core/PrprojReader.h"
+#include "core/MogrtReader.h"
 #include "core/ShapePath.h"
 #include "core/SubtitleCue.h"
 #include "core/SrtIO.h"
@@ -17340,6 +17341,60 @@ void AppController::loadPremiereProject(const QUrl &url)
     setLastMessage(tr("Premiere Pro project imported: %1").arg(proj->name()), QStringLiteral("success"));
 }
 
+void AppController::importMogrt(const QUrl &url)
+{
+    const QString path = readTargetPath(url);
+    if (path.isEmpty()) {
+        setLastMessage(tr("That template location isn’t valid"), QStringLiteral("error"));
+        return;
+    }
+
+    const QString base = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
+    const QString destDir =
+        QDir(base).filePath(QStringLiteral("templates/%1").arg(QUuid::createUuid().toString(QUuid::WithoutBraces)));
+    QDir().mkpath(destDir);
+
+    QString readError;
+    const std::optional<drift::mogrt::MogrtTemplate> tmpl = drift::mogrt::readTemplate(path, destDir, &readError);
+    if (!tmpl) {
+        setLastMessage(readError.isEmpty() ? tr("Failed to unpack Motion Graphics Template") : readError,
+                       QStringLiteral("error"));
+        return;
+    }
+
+    const drift::Project before = m_project;
+
+    // Insert at current playhead if project already has clips; otherwise at start (0).
+    drift::TimeUs insertTime = 0;
+    bool hasClips = false;
+    for (const drift::Track &t : m_project.tracks()) {
+        if (!t.clips.isEmpty()) {
+            hasClips = true;
+            break;
+        }
+    }
+    if (hasClips) {
+        insertTime = m_playheadUs;
+    }
+
+    QString applyError;
+    if (!drift::mogrt::applyTemplateToProject(*tmpl, m_project, insertTime, &applyError)) {
+        setLastMessage(applyError.isEmpty() ? tr("Failed to apply template to project") : applyError,
+                       QStringLiteral("error"));
+        return;
+    }
+
+    pushProjectEdit(before, tr("Import template: %1").arg(tmpl->title));
+
+    if (m_assetLibrary)
+        m_assetLibrary->setProject(&m_project);
+    m_binFolderModel.setProject(&m_project);
+
+    setDirty(true);
+    finishEdit(tr("Template imported: %1").arg(tmpl->title));
+    setLastMessage(tr("Template imported: %1").arg(tmpl->title), QStringLiteral("success"));
+}
+
 void AppController::packageProject(const QUrl &url)
 {
     // The bundle writer needs a real file to seek in, so on Android this stages into app storage
@@ -17442,6 +17497,12 @@ void AppController::loadProject(const QUrl &url)
         || path.endsWith(QLatin1String(".xml"), Qt::CaseInsensitive)
         || drift::prproj::isPremiereProject(path)) {
         loadPremiereProject(url);
+        return;
+    }
+
+    if (path.endsWith(QLatin1String(".mogrt"), Qt::CaseInsensitive)
+        || drift::mogrt::isMogrtFile(path)) {
+        importMogrt(url);
         return;
     }
 
