@@ -8,6 +8,9 @@ import "components"
 Rectangle {
     id: root
 
+    // Main owns the window; the header only asks for it.
+    signal downloadsRequested()
+
     height: Theme.headerHeight
     color: Theme.appBackground
 
@@ -343,6 +346,50 @@ Rectangle {
         Row {
             Layout.alignment: Qt.AlignVCenter
             spacing: Theme.spacingSm
+
+            Item {
+                id: downloadsButton
+                visible: Market.configured
+                implicitWidth: downloadsBtn.implicitWidth
+                implicitHeight: downloadsBtn.implicitHeight
+                width: visible ? implicitWidth : 0
+                height: implicitHeight
+                anchors.verticalCenter: parent.verticalCenter
+
+                IconButton {
+                    id: downloadsBtn
+                    anchors.fill: parent
+                    glyph: Theme.icons.download
+                    variant: "ghost"
+                    active: Market.activeDownloadCount > 0
+                    tooltip: Market.activeDownloadCount > 0
+                             ? qsTr("Downloads — %n running", "", Market.activeDownloadCount)
+                             : qsTr("Downloads")
+                    onClicked: root.downloadsRequested()
+                }
+
+                // Count rather than a plain dot: with a queue behind a three-at-a-time cap,
+                // how many are outstanding is the thing worth knowing at a glance.
+                Rectangle {
+                    visible: Market.activeDownloadCount > 0
+                    anchors.right: parent.right
+                    anchors.top: parent.top
+                    anchors.margins: Theme.spacingXs
+                    width: Math.max(Theme.spacingXl, downloadCount.implicitWidth + Theme.spacingSm)
+                    height: Theme.spacingXl
+                    radius: height / 2
+                    color: Theme.primary
+
+                    Text {
+                        id: downloadCount
+                        anchors.centerIn: parent
+                        text: String(Market.activeDownloadCount)
+                        color: Theme.primaryForeground
+                        font.family: Theme.fontFamily
+                        font.pixelSize: Theme.fontSizeXs
+                    }
+                }
+            }
 
             component HeaderSeparator: Item {
                 width: Theme.spacingLg + Theme.borderWidth

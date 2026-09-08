@@ -12,7 +12,7 @@ class TestMarketIdentity : public QObject
 private slots:
     void sha256OfEmptyBody();
     void hmacKnownVector();
-    void keyBytesFollowServerEncoding();
+    void keyIsTheConfiguredBytes();
     void canonicalStringFormat();
     void signatureCoversClientId();
     void pathAndQueryEncoding();
@@ -35,24 +35,15 @@ void TestMarketIdentity::hmacKnownVector()
              QStringLiteral("b0344c61d8db38535ca8afceaf0bf12b881dc200c9833da726e9376c2e32cff7"));
 }
 
-// The service hex-decodes a configured key that parses as hex and is at least 16 bytes, and
-// keeps the raw text otherwise. Signing with the other interpretation is a signature mismatch
-// on every request, which the API reports only as a flat "invalid client".
-void TestMarketIdentity::keyBytesFollowServerEncoding()
+// The key is whatever bytes the configured string holds. The test key is deliberately valid
+// hex: decoding it would halve it, which is exactly the mismatch that made every request fail
+// with a flat "invalid client" and no way to see why.
+void TestMarketIdentity::keyIsTheConfiguredBytes()
 {
-    const QString hexKey = QStringLiteral("5409a0be00000000000000000000000000000000000000000000000000007438");
-    QCOMPARE(keyBytesFromConfigured(hexKey), QByteArray::fromHex(hexKey.toLatin1()));
-    QCOMPARE(keyBytesFromConfigured(hexKey).size(), 32);
-
-    // Uppercase is still hex to the service's decoder.
-    QCOMPARE(keyBytesFromConfigured(hexKey.toUpper()), QByteArray::fromHex(hexKey.toLatin1()));
-
-    // Not hex, too short to decode, or an odd length: the raw text is the key.
-    const QString text = QStringLiteral("a-passphrase-that-is-not-hex-at-all");
-    QCOMPARE(keyBytesFromConfigured(text), text.toUtf8());
-    QCOMPARE(keyBytesFromConfigured(QStringLiteral("abcdef")), QByteArray("abcdef"));
-    const QString odd = hexKey.left(hexKey.size() - 1);
-    QCOMPARE(keyBytesFromConfigured(odd), odd.toUtf8());
+    const QByteArray configured(DRIFT_MARKET_CLIENT_KEY);
+    QCOMPARE(hmacKeyBytes(), configured);
+    QCOMPARE(hmacKeyBytes().size(), 64);
+    QVERIFY(hmacKeyBytes() != QByteArray::fromHex(configured));
 }
 
 void TestMarketIdentity::canonicalStringFormat()

@@ -37,7 +37,11 @@
 #include <QOffscreenSurface>
 #include <QOpenGLContext>
 #include <QOpenGLFunctions>
+#include <QNetworkAccessManager>
+#include <QNetworkDiskCache>
 #include <QQmlApplicationEngine>
+#include <QQmlNetworkAccessManagerFactory>
+#include <QStandardPaths>
 #include <QQmlEngine>
 #include <QQuickWindow>
 #include <QSurfaceFormat>
@@ -110,6 +114,30 @@ void applyLogLevel(bool verbose)
                                                           "*.info=false"));
     av_log_set_level(verbose ? AV_LOG_VERBOSE : AV_LOG_ERROR);
 }
+
+// QML's Image loads through the engine's own QNetworkAccessManager, not through any that a
+// model owns, and by default that one has no cache at all — so a server's Cache-Control was
+// ignored and every remote image was refetched whenever its decoded pixmap fell out of Qt's
+// in-memory cache. Scrolling the marketplace grid re-downloaded thumbnails it had already
+// fetched, and a restart refetched all of them.
+//
+// create() is documented as callable from more than one thread, so it must not hand out
+// shared state; each manager gets its own cache object over the same directory, which is how
+// QNetworkDiskCache is meant to be used.
+class CachedNetworkAccessManagerFactory : public QQmlNetworkAccessManagerFactory
+{
+public:
+    QNetworkAccessManager *create(QObject *parent) override
+    {
+        auto *manager = new QNetworkAccessManager(parent);
+        auto *cache = new QNetworkDiskCache(manager);
+        cache->setCacheDirectory(QStandardPaths::writableLocation(QStandardPaths::CacheLocation)
+                                 + QStringLiteral("/qml-http"));
+        cache->setMaximumCacheSize(256LL * 1024 * 1024);
+        manager->setCache(cache);
+        return manager;
+    }
+};
 
 class FileOpenFilter : public QObject
 {
@@ -499,6 +527,8 @@ int main(int argc, char *argv[])
     }
 
     QQmlApplicationEngine engine;
+    static CachedNetworkAccessManagerFactory networkFactory;
+    engine.setNetworkAccessManagerFactory(&networkFactory);
     QObject::connect(&editorState, &AppController::uiLanguageChanged,
                      &engine, &QQmlEngine::retranslate);
     engine.addImageProvider(QStringLiteral("drift"), new DriftImageProvider());

@@ -28,7 +28,7 @@ The HMAC key ships in official Drift binaries (`DRIFT_MARKET_CLIENT_KEY`). It is
 
 ### Key encoding
 
-`key` is the *bytes* the configured `DRIFT_MARKET_CLIENT_KEY` denotes, not the configured string. A value that parses as hex and decodes to at least 16 bytes is the hex encoding of the key; anything else is a passphrase and the key is its UTF-8 bytes. Both sides must apply this rule — signing a 64-character hex key as 64 ASCII bytes against a server that decoded it to 32 raw bytes mismatches every signature, and the API reports that only as `invalid_client`.
+`key` is the bytes of the configured `DRIFT_MARKET_CLIENT_KEY` string, with no interpretation — a 64-character hex value is 64 ASCII bytes, not the 32 bytes it encodes. Nothing on either side decodes it. The service hex-decoded it once, which made a hex-looking key silently a different key than the client signed with, and the API can only report that as `invalid_client`.
 
 ### Client id
 
@@ -109,14 +109,24 @@ Item ids are opaque. Drift treats them as strings and never parses provider pref
 
 ### Direct-link providers
 
-Some sources have no browsable catalog — YouTube, YouTube Music, Instagram, and
-Facebook only make sense when the user pastes a link. Those providers appear in
-the catalog with `capabilities: ["resolve"]` and return nothing from `/search`.
+Some sources have no browsable catalog — YouTube, YouTube Music, Instagram,
+Facebook, TikTok, Vimeo, X, and SoundCloud only make sense when the user pastes
+a link. Those providers appear in the catalog with `capabilities: ["resolve"]`
+and return nothing from `/search`.
 
-`POST /resolve` with `{ "url": "…" }` picks the owning provider and returns a
-normal `Item`. Its `id` goes straight to `POST /downloads` like any other
-listing, so nothing downstream is special-cased. When no enabled provider owns
-the URL, the response is `404` with code `not_found`.
+`POST /resolve` with `{ "url": "…" }` starts a job (`201`). Poll
+`GET /resolve/{id}` until `ready` or `failed` — the same shape as downloads.
+A ready job carries a normal `Item`. Its `id` goes straight to `POST /downloads`
+like any other listing, so nothing downstream is special-cased.
+
+A link nobody owns is `404` `not_found` on the POST. A link that *is* recognised
+but whose source this deployment cannot serve — the extractor is missing, or an
+operator turned the provider off — is `503` `provider_unavailable` on the POST,
+because the two are different problems and a client that retries later is right
+about the second and wrong about the first. A recognised link that then times
+out or fails during extraction lands on the job as `failed` with
+`provider_unavailable` / `source_timeout` (or the matching item `not_found`
+reason), so the client is not left with a bare HTTP timeout.
 
 Clients that only implement `/search` simply see these providers as empty; they
 are never a hard dependency.
@@ -148,6 +158,20 @@ RFC 7807 `application/problem+json` plus a stable `code` Drift switches on:
 | `download_failed` | 422 or 500 | Could not prepare that file. |
 
 Include `Retry-After` and/or `reset_at` on 429. Do not put `https://market.cutwire.org` in `detail` — Drift may show that string.
+
+### `reason`
+
+Responses may also carry a `reason`: a finer-grained cause than `code`, because one code has to cover failures that need different words — a removed video and a region-locked one are both `not_found`, and telling them apart is the difference between "try another link" and "this will never work here".
+
+`reason` is **additive and optional**. Every value maps onto one of the seven frozen codes, so a client that ignores it keeps working, and an unrecognised value must be treated as the bare `code`. Never switch on it without a fallback.
+
+| `code` | `reason` values |
+|---|---|
+| `provider_unavailable` | `source_blocked` (the source refused *us*, not the item), `source_unreachable`, `source_timeout`, `source_disabled`, `source_error` |
+| `not_found` | `item_removed`, `item_private`, `item_geoblocked`, `item_missing`, `link_no_media`, `link_unsupported` |
+| `download_failed` | `file_too_large`, `live_stream`, `download_error` |
+
+`detail` is still the sentence to show. `reason` is for deciding whether a retry is worth offering at all.
 
 ## Optional account
 

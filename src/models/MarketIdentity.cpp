@@ -8,8 +8,6 @@
 #include <QRandomGenerator>
 #include <QUrl>
 
-#include <algorithm>
-
 #ifdef Q_OS_WIN
 #include <QSettings>
 #endif
@@ -47,26 +45,9 @@ QString hexLower(const QByteArray &bytes)
 
 } // namespace
 
-QByteArray keyBytesFromConfigured(const QString &configured)
-{
-    // Mirrors config.secret() in the marketplace backend, which tries a hex decode first and
-    // keeps the raw text only when that fails. QByteArray::fromHex cannot stand in for the
-    // check: it skips characters it does not recognise instead of reporting failure, so
-    // "not-a-key" would decode to something rather than fall through.
-    const QByteArray raw = configured.toUtf8();
-    if (raw.size() >= 32 && raw.size() % 2 == 0) {
-        const bool isHex = std::all_of(raw.cbegin(), raw.cend(), [](char c) {
-            return (c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F');
-        });
-        if (isHex)
-            return QByteArray::fromHex(raw);
-    }
-    return raw;
-}
-
 QByteArray hmacKeyBytes()
 {
-    return keyBytesFromConfigured(kClientKey);
+    return kClientKey.toUtf8();
 }
 
 QString sha256Hex(const QByteArray &data)

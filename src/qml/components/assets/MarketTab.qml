@@ -12,6 +12,13 @@ Item {
 
     property var filterValues: ({})
     property bool filtersExpanded: false
+    property bool lastRequestWasResolve: false
+    // What was actually sent, not what is in the box. Since submitting is explicit these
+    // differ, and "No results for X" must only speak for a query that really ran.
+    property string submittedQuery: ""
+    // Seeds the next save prompt. Session-only on purpose: a remembered folder that no
+    // longer exists is worse than starting the picker where the user last was.
+    property url lastSaveDir
     property string previewId: ""
     readonly property var previewItem: {
         void Market.items
@@ -51,6 +58,8 @@ Item {
             return
         if (!Market.canSearch)
             return
+        root.lastRequestWasResolve = false
+        root.submittedQuery = root.query
         Market.search(root.query, root.filterValues)
     }
 
@@ -58,6 +67,8 @@ Item {
         const url = root.query
         if (!url)
             return
+        root.lastRequestWasResolve = true
+        root.submittedQuery = url
         Market.resolveUrl(url)
     }
 
@@ -70,14 +81,18 @@ Item {
             root.runSearch()
     }
 
-    function setFilter(id, value) {
+    // rerun=false records the value without asking for results — text filters pass it, so
+    // typing in one is as inert as typing in the query field. Chips and dropdowns are single
+    // deliberate clicks, so those still re-run.
+    function setFilter(id, value, rerun) {
         const next = Object.assign({}, root.filterValues)
         if (value === undefined || value === null || value === "" || value === false)
             delete next[id]
         else
             next[id] = value === true ? "1" : String(value)
         root.filterValues = next
-        searchDebounce.restart()
+        if (rerun !== false)
+            searchDebounce.restart()
     }
 
     function openPreview(itemId) {
@@ -99,6 +114,7 @@ Item {
         function onActiveProviderIdChanged() {
             root.filterValues = ({})
             root.filtersExpanded = false
+            root.submittedQuery = ""
             search.text = ""
             if (Market.canSearch && Market.items.length === 0)
                 searchDebounce.restart()
@@ -109,6 +125,9 @@ Item {
         }
     }
 
+    // Not a keystroke debounce any more: searching is explicit. This only defers the
+    // one-shot search that a provider swap, a filter click or opening the tab kicks off,
+    // so several of those landing together still cost one request.
     Timer {
         id: searchDebounce
         interval: 280
@@ -142,7 +161,10 @@ Item {
         glyph: Theme.icons.error
         title: qsTr("Couldn’t reach the marketplace")
         hint: Market.catalogError
-        actionText: qsTr("Try again")
+        // Offered only when trying again could actually differ. A signing mismatch or a
+        // switched-off source fails identically every time, and a button that always
+        // fails teaches the user the whole tab is broken.
+        actionText: Market.catalogErrorRetryable ? qsTr("Try again") : ""
         onActionTriggered: Market.refreshCatalog()
     }
 
@@ -295,24 +317,40 @@ Item {
                                  ? qsTr("Search or paste a link")
                                  : (Market.canSearch ? qsTr("Search") : qsTr("Paste a link"))
                 font.family: Theme.fontFamily
-                // A half-typed URL is not a search term: hold the debounce and wait for
-                // Look up rather than firing a query at every keystroke of a paste.
-                onTextChanged: {
-                    if (root.queryIsLink || !Market.canSearch)
-                        return
-                    searchDebounce.restart()
-                }
+                // No onTextChanged handler on purpose: typing never reaches the network.
+                // Enter still submits, routed by what the text looks like.
                 Keys.onReturnPressed: root.submitQuery()
                 Keys.onEnterPressed: root.submitQuery()
+            }
+
+            // Both actions are offered whenever the provider supports both, rather than one
+            // button that guesses from the text: the guess is a regex, and being unable to
+            // override it is worse than the extra button.
+            ThemedButton {
+                id: searchButton
+                text: qsTr("Search")
+                variant: "secondary"
+                visible: Market.canSearch && !Market.searching
+                onClicked: root.runSearch()
             }
 
             ThemedButton {
                 id: resolveButton
                 text: qsTr("Look up")
                 variant: "secondary"
-                visible: root.queryIsLink
-                enabled: !Market.searching
+                visible: Market.canResolve && !Market.searching
+                enabled: root.query.length > 0
                 onClicked: root.runResolve()
+            }
+
+            // Takes the place of both while a request is out: they are useless then, and a
+            // slow source used to leave nothing to do but wait out the timeout.
+            ThemedButton {
+                id: cancelButton
+                text: qsTr("Cancel")
+                variant: "secondary"
+                visible: Market.searching
+                onClicked: Market.cancelSearch()
             }
         }
 
@@ -376,7 +414,7 @@ Item {
                             readonly property var filter: filterRoot.modelData
                             width: 140
                             placeholderText: filter.label
-                            onTextChanged: root.setFilter(filter.id, text.trim())
+                            onTextChanged: root.setFilter(filter.id, text.trim(), false)
                         }
                     }
                 }
@@ -392,7 +430,7 @@ Item {
             EmptyState {
                 anchors.centerIn: parent
                 width: parent.width
-                visible: Market.searching && Market.items.length === 0 && root.queryIsLink
+                visible: Market.searching && Market.items.length === 0 && root.lastRequestWasResolve
                 glyph: Theme.icons.spinner
                 glyphSpinning: true
                 compact: true
@@ -404,7 +442,7 @@ Item {
                 anchors.fill: parent
                 anchors.margins: Theme.pagePadding
                 anchors.topMargin: Theme.spacingMd
-                visible: Market.searching && Market.items.length === 0 && !root.queryIsLink
+                visible: Market.searching && Market.items.length === 0 && !root.lastRequestWasResolve
                 columns: Math.max(1, Math.floor((width + Theme.assetCardGap)
                                                 / (Theme.assetCardWidth + Theme.assetCardGap)))
                 spacing: Theme.assetCardGap
@@ -425,12 +463,13 @@ Item {
                 visible: !Market.searching && Market.searchError.length > 0 && Market.items.length === 0
                 glyph: Theme.icons.error
                 compact: true
-                title: Market.canResolve && !Market.canSearch
+                title: root.lastRequestWasResolve
                        ? qsTr("Couldn’t open that link")
                        : qsTr("Search failed")
                 hint: Market.searchError
-                actionText: Market.canResolve && !Market.canSearch ? qsTr("Look up") : qsTr("Try again")
-                onActionTriggered: Market.canResolve && !Market.canSearch
+                actionText: !Market.searchErrorRetryable ? ""
+                            : (root.lastRequestWasResolve ? qsTr("Look up") : qsTr("Try again"))
+                onActionTriggered: root.lastRequestWasResolve
                                    ? root.runResolve()
                                    : root.runSearch()
             }
@@ -439,18 +478,21 @@ Item {
                 anchors.centerIn: parent
                 width: parent.width
                 visible: !Market.searching && Market.searchError.length === 0 && Market.items.length === 0
-                glyph: Market.canResolve && !Market.canSearch ? Theme.icons.linkTwo : Theme.icons.search
+                glyph: Market.canSearch ? Theme.icons.search : Theme.icons.linkTwo
                 compact: true
-                title: {
-                    if (Market.canResolve && !Market.canSearch)
-                        return qsTr("Paste a link")
-                    if (root.query.length > 0)
-                        return qsTr("No results for “%1”").arg(root.query)
-                    return qsTr("Search this source")
+                title: root.submittedQuery.length > 0
+                       ? qsTr("No results for “%1”").arg(root.submittedQuery)
+                       : (Market.canSearch ? qsTr("Search this source") : qsTr("Paste a link"))
+                // Spells out the button, because nothing happens while typing any more.
+                hint: {
+                    if (root.submittedQuery.length > 0)
+                        return qsTr("Try different words, or clear a filter.")
+                    if (Market.canSearch && Market.canResolve)
+                        return qsTr("Type what you are after and press Search, or paste a page link and press Look up.")
+                    if (Market.canSearch)
+                        return qsTr("Type what you are after, then press Search.")
+                    return qsTr("Paste a page link from this source, then press Look up.")
                 }
-                hint: Market.canResolve && !Market.canSearch
-                      ? qsTr("Paste a page link from this source, then look it up.")
-                      : qsTr("Pick a source, then search for photos, video or audio.")
             }
 
             GridView {
@@ -462,6 +504,9 @@ Item {
                 visible: Market.items.length > 0
                 cellWidth: Theme.assetCardWidth + Theme.assetCardGap
                 cellHeight: (Theme.assetCardWidth * 9 / 16) + Theme.spacing3xl + Theme.assetCardGap
+                // Keeps a screen's worth of delegates alive either side of the viewport, so
+                // a short scroll back does not destroy and rebuild the images it just had.
+                cacheBuffer: Math.max(0, Math.round(height))
                 clip: true
                 model: Market.items
                 ScrollBar.vertical: AppScrollBar { }
@@ -513,7 +558,8 @@ Item {
                         void Market.downloadsRevision
                         return Market.downloadInfo(modelData.id)
                     }
-                    readonly property bool busy: job.status === "queued"
+                    readonly property bool busy: job.status === "waiting"
+                                                 || job.status === "queued"
                                                  || job.status === "processing"
                                                  || job.status === "downloading"
                                                  || job.status === "importing"
@@ -568,6 +614,11 @@ Item {
                             fillMode: Image.PreserveAspectCrop
                             asynchronous: true
                             cache: true
+                            // Decode at the size actually drawn. The served thumbnail is
+                            // 480px wide against a 112px cell, so without this each one sat
+                            // in Qt's pixmap cache at ~18x its useful size, evicting others
+                            // and forcing a refetch on the way back up the grid.
+                            sourceSize.width: Math.max(1, Math.round(parent.width))
                             opacity: status === Image.Ready ? 1 : 0
 
                             Behavior on opacity {
@@ -613,16 +664,46 @@ Item {
                             }
                         }
 
+                        // A download had no way to stop: a job wedged on a slow source held
+                        // its card until the file timeout ran out ten minutes later.
                         Rectangle {
+                            id: busyOverlay
                             visible: card.busy
                             anchors.fill: parent
                             color: Theme.scrimStrong
+
                             CircularProgress {
                                 anchors.centerIn: parent
+                                visible: !busyHover.hovered
                                 value: Number(card.job.progress || 0)
                                 indeterminate: Number(card.job.progress || 0) <= 0
                                 size: Theme.spacing3xl
                                 progressColor: Theme.onMedia
+                            }
+
+                            IconGlyph {
+                                anchors.centerIn: parent
+                                visible: busyHover.hovered
+                                glyph: Theme.icons.x
+                                iconSize: Theme.iconSizeBase
+                                iconColor: Theme.onMedia
+                            }
+
+                            HoverHandler {
+                                id: busyHover
+                                cursorShape: Qt.PointingHandCursor
+                            }
+
+                            ThemedToolTip {
+                                text: qsTr("Cancel download")
+                                visible: busyHover.hovered
+                                y: parent.height + 4
+                            }
+
+                            // Sits above the card's own handler, so a busy card cancels
+                            // rather than reopening the preview behind the overlay.
+                            TapHandler {
+                                onTapped: Market.cancelDownload(card.modelData.id)
                             }
                         }
 
@@ -658,7 +739,7 @@ Item {
         preferredWidth: Theme.dialogWidthLg
         acceptText: {
             const job = Market.downloadInfo(root.previewId)
-            if (job.status === "queued" || job.status === "processing"
+            if (job.status === "waiting" || job.status === "queued" || job.status === "processing"
                     || job.status === "downloading" || job.status === "importing")
                 return qsTr("Working…")
             const price = Number(root.previewItem.price_coins || 0)
@@ -745,12 +826,27 @@ Item {
             previewPlayer.source = ""
             root.previewId = ""
         }
+        // The folder is asked for before the job is created, so a cancelled prompt leaves
+        // nothing behind in the manager. The last choice seeds the next prompt, since a
+        // session usually pulls several clips into the same place.
         onAccepted: {
             if (root.previewId.length === 0)
                 return
             if (root.previewItem.downloadable === false)
                 return
-            Market.download(root.previewId)
+            const title = root.previewItem.title || ""
+            const kind = root.previewItem.media_kind || root.previewItem.type || ""
+            // Android has no directory picker, and its empty result is indistinguishable
+            // from a cancelled prompt — so there the file goes to the app's own area.
+            if (!FileDialogs.supportsDirectoryPicker()) {
+                Market.download(root.previewId, "", "", title, kind)
+                return
+            }
+            const dir = FileDialogs.openDirectory(qsTr("Save download to"), root.lastSaveDir)
+            if (!dir || dir.toString() === "")
+                return
+            root.lastSaveDir = dir
+            Market.download(root.previewId, "", dir, title, kind)
         }
     }
 }

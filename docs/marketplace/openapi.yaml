@@ -111,15 +111,19 @@ paths:
     post:
       tags: [Search]
       operationId: resolveURL
-      summary: Turn a pasted page URL into a listing
+      summary: Start a pasted-URL lookup
       description: |
         For providers that declare the resolve capability and have no browsable
         catalog (YouTube, YouTube Music, Instagram, Facebook). The client sends a
         URL the user pasted; the backend picks the owning provider and returns a
-        normal Item whose id can be passed straight to POST /downloads.
+        job. Poll GET /resolve/{id} until status is ready or failed. A ready job
+        carries a normal Item whose id can be passed straight to POST /downloads.
 
-        404 not_found when no enabled provider owns the URL, or the URL owner
-        recognises it but the media is gone or private.
+        Fast failures stay on this POST: 400 when the body cannot be read, 404
+        not_found when no enabled provider owns the URL, 503 provider_unavailable
+        when the URL owner is compiled in but switched off. Extraction itself
+        (yt-dlp) runs in the background so a slow source cannot outlive the
+        client's HTTP timeout.
       requestBody:
         required: true
         content:
@@ -135,12 +139,33 @@ paths:
                   type: string
                   description: Optional catalog type hint when a URL could yield more than one.
       responses:
-        "200":
-          description: Resolved listing
+        "201":
+          description: Resolve job created
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Item"
+                $ref: "#/components/schemas/ResolveJob"
+        default:
+          $ref: "#/components/responses/Problem"
+
+  /resolve/{id}:
+    get:
+      tags: [Search]
+      operationId: getResolve
+      summary: Poll a pasted-URL lookup
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Job
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResolveJob"
         default:
           $ref: "#/components/responses/Problem"
 
@@ -337,6 +362,29 @@ components:
             - provider_unavailable
             - not_found
             - download_failed
+        reason:
+          type: string
+          description: >
+            Finer-grained cause than code, added in v1. Additive and optional:
+            every reason maps onto one of the frozen code values, so a client
+            that ignores this field keeps working. Treat an unrecognised value
+            as the bare code. Present on source and item failures; absent on
+            auth and payment ones, where the code already says everything.
+          enum:
+            - source_blocked
+            - source_unreachable
+            - source_timeout
+            - source_disabled
+            - source_error
+            - item_removed
+            - item_private
+            - item_geoblocked
+            - item_missing
+            - link_no_media
+            - link_unsupported
+            - file_too_large
+            - live_stream
+            - download_error
         reset_at:
           type: string
           format: date-time
@@ -545,6 +593,22 @@ components:
           type: string
         variant_id:
           type: string
+          nullable: true
+
+    ResolveJob:
+      type: object
+      required: [id, status]
+      properties:
+        id:
+          type: string
+        status:
+          type: string
+          enum: [queued, processing, ready, failed]
+        item:
+          $ref: "#/components/schemas/Item"
+          nullable: true
+        error:
+          $ref: "#/components/schemas/Problem"
           nullable: true
 
     DownloadJob:

@@ -92,7 +92,8 @@ target_include_directories(tst_marketidentity PRIVATE ../src)
 target_link_libraries(tst_marketidentity PRIVATE Qt6::Test Qt6::Core)
 target_compile_definitions(tst_marketidentity PRIVATE
     DRIFT_MARKET_API_URL=""
-    DRIFT_MARKET_CLIENT_KEY="test-key"
+    # Valid hex on purpose: it is the shape that used to be silently decoded.
+    DRIFT_MARKET_CLIENT_KEY="0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
     DRIFT_VERSION="0")
 add_test(NAME MarketIdentity COMMAND tst_marketidentity)
 

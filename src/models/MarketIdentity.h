@@ -14,12 +14,9 @@ class QUrl;
 
 namespace drift::market {
 
-// The HMAC key as bytes. The service hex-decodes a configured key that parses as hex and is at
-// least 16 bytes, and uses the raw text otherwise; both sides must agree or every signature
-// mismatches. Exposed as a pure function so tests can cover both branches — hmacKeyBytes()
-// applies it to the compile-time key.
-QByteArray keyBytesFromConfigured(const QString &configured);
-
+// The HMAC key as bytes: the configured string's own bytes, never decoded. A 64-character hex
+// key is 64 bytes here, not the 32 it encodes. The service applies the same rule; when the two
+// disagreed every signature mismatched, and the API can only report that as invalid_client.
 QByteArray hmacKeyBytes();
 
 QString sha256Hex(const QByteArray &data);

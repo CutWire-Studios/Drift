@@ -6,6 +6,7 @@
 
 #include <QCryptographicHash>
 #include <QDateTime>
+#include <QElapsedTimer>
 #include <QDir>
 #include <QFile>
 #include <QFileInfo>
@@ -32,6 +33,15 @@ namespace {
 constexpr int kApiTimeoutMs = 20000;
 constexpr int kFileTimeoutMs = 10 * 60 * 1000;
 constexpr int kPollIntervalMs = 1000;
+// Three at once: enough that a handful of clips do not run one behind the other, few enough
+// that a click-happy session does not open a dozen sockets against a source that is already
+// rate-limiting per client. The rest wait in "waiting" and start as slots free.
+constexpr int kMaxConcurrentDownloads = 3;
+// Speed is sampled rather than averaged over the whole transfer, so it tracks a source that
+// slows down instead of reporting the mean of a stall and a burst. The same tick throttles
+// the model rebuild: downloadProgress fires per network chunk, and rebuilding the job list
+// that often would have three transfers respinning it hundreds of times a second.
+constexpr int kSpeedSampleMs = 400;
 constexpr int kSearchLimit = 30;
 constexpr qint64 kTokenRefreshSkewSecs = 60;
 
@@ -86,14 +96,43 @@ struct MarketClient::Job
 {
     QString itemId;
     QString jobId;
+    QString title;
+    // video | audio | image, straight from the catalog item. Kept on the job because the
+    // manager outlives the search results the item came from.
+    QString mediaKind;
+    QString variantId;
+    QString destinationDir;
+    QString filePath;
+    // waiting -> queued/processing -> downloading -> importing -> done, or failed/cancelled.
+    // "waiting" is ours (behind the concurrency cap); the middle ones come from the service.
     QString status;
     double progress = 0;
     QString phase;
     QString errorCode;
     QString errorMessage;
+    qint64 bytesReceived = 0;
+    qint64 bytesTotal = 0;
+    double speedBytesPerSec = 0;
+    QDateTime startedAt;
+    QDateTime finishedAt;
+    // Sampling window for the speed readout.
+    QElapsedTimer sampleClock;
+    qint64 sampleBytes = 0;
     QPointer<QNetworkReply> reply;
     bool cancelled = false;
 };
+
+bool MarketClient::jobIsRunning(const Job &job)
+{
+    return job.status == QLatin1String("queued") || job.status == QLatin1String("processing")
+        || job.status == QLatin1String("downloading") || job.status == QLatin1String("importing");
+}
+
+bool MarketClient::jobIsFinished(const Job &job)
+{
+    return job.status == QLatin1String("done") || job.status == QLatin1String("failed")
+        || job.status == QLatin1String("cancelled");
+}
 
 MarketClient::MarketClient(QObject *parent)
     : QObject(parent)
@@ -108,6 +147,10 @@ MarketClient::MarketClient(QObject *parent)
 
     m_pollTimer->setInterval(kPollIntervalMs);
     connect(m_pollTimer, &QTimer::timeout, this, &MarketClient::pollJobs);
+
+    m_resolvePollTimer = new QTimer(this);
+    m_resolvePollTimer->setInterval(kPollIntervalMs);
+    connect(m_resolvePollTimer, &QTimer::timeout, this, &MarketClient::pollResolve);
 
     loadStoredAuth();
     if (configured()) {
@@ -165,11 +208,40 @@ bool MarketClient::canResolve() const
 
 void MarketClient::abortInFlightSearch()
 {
-    if (!m_searchReply)
-        return;
-    m_searchReply->abort();
-    m_searchReply->deleteLater();
+    // abort() emits finished() synchronously, and that handler clears m_searchReply — so
+    // touching the member again after the call dereferenced a null QPointer and took the
+    // whole app down. Switching type mid-search did exactly that, because setActiveTypeId
+    // lands here through setActiveProviderId. Detach first, then work from the local.
+    // A resolve in progress is a job on the server; stop chasing it before dropping the reply.
+    if (m_resolvePollTimer)
+        m_resolvePollTimer->stop();
+    m_resolveJobId.clear();
+
+    const QPointer<QNetworkReply> reply = m_searchReply;
     m_searchReply.clear();
+    if (!reply)
+        return;
+    // A transfer timeout is also delivered as OperationCanceledError, so the finished
+    // handler cannot tell a timeout from a cancellation by error code alone — and it used
+    // to treat both as ours and return silently, which left a timed-out search showing no
+    // results and no reason. Mark the ones we really do cancel.
+    reply->setProperty("driftAborted", true);
+    reply->abort();
+    if (reply)
+        reply->deleteLater();
+}
+
+void MarketClient::cancelSearch()
+{
+    // Between resolve poll ticks there is a job but no reply, and Cancel has to work then
+    // too — that gap is most of the wait on a slow extraction.
+    if (!m_searchReply && m_resolveJobId.isEmpty())
+        return;
+    abortInFlightSearch();
+    // The finished handler normally clears this, but it does not run when the reply was
+    // already gone, and a spinner left turning is worse than a redundant assignment.
+    setSearching(false);
+    setSearchError({});
 }
 
 void MarketClient::setActiveTypeId(const QString &id)
@@ -227,8 +299,13 @@ void MarketClient::refreshCatalog()
         setCatalogLoading(false);
         if (reply->error() != QNetworkReply::NoError) {
             QString code;
-            setCatalogError(parseProblem(reply->readAll(), reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt(),
-                                         &code));
+            QString reason;
+            bool retryable = true;
+            const QString message =
+                parseProblem(reply->readAll(),
+                             reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt(),
+                             &code, &reason, &retryable, int(reply->error()));
+            setCatalogError(message, retryable);
             return;
         }
         const QJsonObject root = QJsonDocument::fromJson(reply->readAll()).object();
@@ -271,20 +348,108 @@ void MarketClient::resolveUrl(const QString &url)
         reply->deleteLater();
         if (m_searchReply == reply)
             m_searchReply.clear();
-        setSearching(false);
-        if (reply->error() == QNetworkReply::OperationCanceledError)
+        if (reply->property("driftAborted").toBool()) {
+            setSearching(false);
             return;
+        }
         const int status = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
         const QByteArray payload = reply->readAll();
+        // Fast failures stay on the POST: a link nobody owns, or one whose provider is
+        // switched off. Those are answered here and never become a job.
         if (reply->error() != QNetworkReply::NoError) {
+            setSearching(false);
             QString code;
-            setSearchError(parseProblem(payload, status, &code));
+            QString reason;
+            bool retryable = true;
+            const QString message =
+                parseProblem(payload, status, &code, &reason, &retryable, int(reply->error()));
+            setSearchError(message, retryable);
             m_items.clear();
             m_itemIndex.clear();
             emit itemsChanged();
             return;
         }
-        applyResolvedItem(QJsonDocument::fromJson(payload).object());
+        const QJsonObject job = QJsonDocument::fromJson(payload).object();
+        m_resolveJobId = job.value(QStringLiteral("id")).toString();
+        if (m_resolveJobId.isEmpty()) {
+            setSearching(false);
+            setSearchError(fallbackMessageForCode(QStringLiteral("not_found")), false);
+            return;
+        }
+        // Extraction may already be done by the time the POST returns.
+        if (job.value(QStringLiteral("status")).toString() == QLatin1String("ready")) {
+            m_resolveJobId.clear();
+            setSearching(false);
+            applyResolvedItem(job.value(QStringLiteral("item")).toObject());
+            return;
+        }
+        m_resolvePollTimer->start();
+    });
+}
+
+void MarketClient::finishResolveFailure(const QJsonObject &problem)
+{
+    const QString code = problem.value(QStringLiteral("code")).toString();
+    const QString reason = problem.value(QStringLiteral("reason")).toString();
+    const QString detail = problem.value(QStringLiteral("detail")).toString().trimmed();
+    setSearchError(detail.isEmpty() ? fallbackMessageForCode(code) : detail,
+                   isRetryable(code, reason));
+    m_items.clear();
+    m_itemIndex.clear();
+    emit itemsChanged();
+}
+
+void MarketClient::pollResolve()
+{
+    if (m_resolveJobId.isEmpty()) {
+        m_resolvePollTimer->stop();
+        return;
+    }
+    // One request in flight at a time; a slow answer must not stack up behind the tick.
+    if (m_searchReply)
+        return;
+
+    QNetworkReply *reply = get(apiUrl(QStringLiteral("/resolve/") + m_resolveJobId));
+    m_searchReply = reply;
+    connect(reply, &QNetworkReply::finished, this, [this, reply] {
+        reply->deleteLater();
+        if (m_searchReply == reply)
+            m_searchReply.clear();
+        // Cancelling or switching provider aborts the poll; the job is then not ours.
+        if (reply->property("driftAborted").toBool())
+            return;
+        const int status = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
+        const QByteArray payload = reply->readAll();
+        if (reply->error() != QNetworkReply::NoError) {
+            m_resolvePollTimer->stop();
+            m_resolveJobId.clear();
+            setSearching(false);
+            QString code;
+            QString reason;
+            bool retryable = true;
+            const QString message =
+                parseProblem(payload, status, &code, &reason, &retryable, int(reply->error()));
+            setSearchError(message, retryable);
+            return;
+        }
+        const QJsonObject job = QJsonDocument::fromJson(payload).object();
+        const QString state = job.value(QStringLiteral("status")).toString();
+        if (state == QLatin1String("ready")) {
+            m_resolvePollTimer->stop();
+            m_resolveJobId.clear();
+            setSearching(false);
+            applyResolvedItem(job.value(QStringLiteral("item")).toObject());
+            return;
+        }
+        if (state == QLatin1String("failed")) {
+            m_resolvePollTimer->stop();
+            m_resolveJobId.clear();
+            setSearching(false);
+            // The job carries the same Problem shape the HTTP errors use, so a source that
+            // timed out during extraction reads as a reason rather than a bare failure.
+            finishResolveFailure(job.value(QStringLiteral("error")).toObject());
+            return;
+        }
     });
 }
 
@@ -295,18 +460,65 @@ void MarketClient::loadMore()
     startSearch(true);
 }
 
-void MarketClient::download(const QString &itemId, const QString &variantId)
+void MarketClient::download(const QString &itemId, const QString &variantId,
+                            const QUrl &destinationDir, const QString &title,
+                            const QString &mediaKind)
 {
     if (!configured() || itemId.isEmpty())
         return;
-    if (m_jobs.contains(itemId))
-        return;
+    // A finished job for the same item is history, not a conflict: replace it so the item
+    // can be fetched again. One still running is a genuine duplicate.
+    if (const auto existing = m_jobs.value(itemId)) {
+        if (!jobIsFinished(*existing) )
+            return;
+        m_jobs.remove(itemId);
+        m_jobOrder.removeAll(itemId);
+    }
 
     auto job = std::make_shared<Job>();
     job->itemId = itemId;
+    job->title = title;
+    job->mediaKind = mediaKind;
+    job->variantId = variantId;
+    // Anything that is not a local folder falls back to the app data area rather than
+    // being pasted into a filesystem path it is not.
+    job->destinationDir = destinationDir.isLocalFile() ? destinationDir.toLocalFile() : QString();
+    job->status = QStringLiteral("waiting");
+    job->phase = tr("Waiting…");
+    job->startedAt = QDateTime::currentDateTime();
+    m_jobs.insert(itemId, job);
+    m_jobOrder.append(itemId);
+    emit downloadStarted(itemId);
+    bumpDownloads();
+    emit downloadProgress(itemId, 0, job->phase);
+    pumpDownloadQueue();
+}
+
+void MarketClient::pumpDownloadQueue()
+{
+    int running = 0;
+    for (const auto &job : m_jobs) {
+        if (job && jobIsRunning(*job))
+            ++running;
+    }
+    // Oldest first, so the queue drains in the order the user asked for.
+    for (const QString &itemId : std::as_const(m_jobOrder)) {
+        if (running >= kMaxConcurrentDownloads)
+            return;
+        const auto job = m_jobs.value(itemId);
+        if (!job || job->status != QLatin1String("waiting") || job->cancelled)
+            continue;
+        beginJob(job);
+        ++running;
+    }
+}
+
+void MarketClient::beginJob(const std::shared_ptr<Job> &job)
+{
+    const QString itemId = job->itemId;
+    const QString variantId = job->variantId;
     job->status = QStringLiteral("queued");
     job->phase = tr("Starting…");
-    m_jobs.insert(itemId, job);
     bumpDownloads();
     emit downloadProgress(itemId, 0, job->phase);
 
@@ -328,7 +540,8 @@ void MarketClient::download(const QString &itemId, const QString &variantId)
         const QByteArray payload = reply->readAll();
         if (reply->error() != QNetworkReply::NoError && status != 201) {
             QString code;
-            failJob(itemId, code, parseProblem(payload, status, &code));
+            failJob(itemId, code,
+                    parseProblem(payload, status, &code, nullptr, nullptr, int(reply->error())));
             return;
         }
         const QJsonObject obj = QJsonDocument::fromJson(payload).object();
@@ -342,8 +555,9 @@ void MarketClient::download(const QString &itemId, const QString &variantId)
         }
         if (job->status == QLatin1String("failed")) {
             const QJsonObject err = obj.value(QStringLiteral("error")).toObject();
-            failJob(itemId, err.value(QStringLiteral("code")).toString(),
-                    err.value(QStringLiteral("detail")).toString());
+            const QString code = err.value(QStringLiteral("code")).toString();
+            const QString detail = err.value(QStringLiteral("detail")).toString().trimmed();
+            failJob(itemId, code, detail.isEmpty() ? fallbackMessageForCode(code) : detail);
             return;
         }
         job->phase = tr("Preparing…");
@@ -359,10 +573,110 @@ void MarketClient::cancelDownload(const QString &itemId)
     if (!job)
         return;
     job->cancelled = true;
+    job->status = QStringLiteral("cancelled");
+    job->phase = tr("Cancelled");
+    job->finishedAt = QDateTime::currentDateTime();
+    job->speedBytesPerSec = 0;
     if (job->reply)
         job->reply->abort();
-    m_jobs.remove(itemId);
     bumpDownloads();
+    pumpDownloadQueue();
+}
+
+int MarketClient::maxConcurrentDownloads() const
+{
+    return kMaxConcurrentDownloads;
+}
+
+int MarketClient::activeDownloadCount() const
+{
+    int n = 0;
+    for (const auto &job : m_jobs) {
+        // Waiting counts: from the user's side it is a download they asked for and have
+        // not got yet, and a badge that ignored the queue would undercount.
+        if (job && !jobIsFinished(*job))
+            ++n;
+    }
+    return n;
+}
+
+QVariantMap MarketClient::jobToMap(const Job &job) const
+{
+    return QVariantMap{
+        {QStringLiteral("itemId"), job.itemId},
+        {QStringLiteral("title"), job.title.isEmpty() ? job.itemId : job.title},
+        {QStringLiteral("mediaKind"), job.mediaKind},
+        {QStringLiteral("status"), job.status},
+        {QStringLiteral("phase"), job.phase},
+        {QStringLiteral("progress"), job.progress},
+        {QStringLiteral("bytesReceived"), job.bytesReceived},
+        {QStringLiteral("bytesTotal"), job.bytesTotal},
+        {QStringLiteral("speed"), job.speedBytesPerSec},
+        {QStringLiteral("filePath"), job.filePath},
+        {QStringLiteral("destinationDir"), job.destinationDir},
+        {QStringLiteral("errorCode"), job.errorCode},
+        {QStringLiteral("errorMessage"), job.errorMessage},
+        {QStringLiteral("startedAt"), job.startedAt},
+        {QStringLiteral("finishedAt"), job.finishedAt},
+        {QStringLiteral("running"), jobIsRunning(job)},
+        {QStringLiteral("finished"), jobIsFinished(job)},
+        // No reason is kept per job, so this is the code-level answer; isRetryable falls
+        // back to exactly that when a reason is absent.
+        {QStringLiteral("retryable"), job.status == QLatin1String("failed")
+                                      && isRetryable(job.errorCode, QString())},
+    };
+}
+
+QVariantList MarketClient::downloads() const
+{
+    QVariantList out;
+    out.reserve(m_jobOrder.size());
+    for (const QString &itemId : m_jobOrder) {
+        if (const auto job = m_jobs.value(itemId))
+            out.append(jobToMap(*job));
+    }
+    return out;
+}
+
+void MarketClient::clearFinishedDownloads()
+{
+    QStringList kept;
+    for (const QString &itemId : std::as_const(m_jobOrder)) {
+        const auto job = m_jobs.value(itemId);
+        if (job && jobIsFinished(*job)) {
+            m_jobs.remove(itemId);
+            continue;
+        }
+        kept.append(itemId);
+    }
+    if (kept.size() == m_jobOrder.size())
+        return;
+    m_jobOrder = kept;
+    bumpDownloads();
+}
+
+void MarketClient::retryDownload(const QString &itemId)
+{
+    const auto job = m_jobs.value(itemId);
+    if (!job || !jobIsFinished(*job))
+        return;
+    // Reuses the row rather than appending a second one for the same item, so a flaky
+    // source retried three times does not read as three separate downloads.
+    job->cancelled = false;
+    job->jobId.clear();
+    job->errorCode.clear();
+    job->errorMessage.clear();
+    job->progress = 0;
+    job->bytesReceived = 0;
+    job->bytesTotal = 0;
+    job->speedBytesPerSec = 0;
+    job->sampleClock.invalidate();
+    job->finishedAt = QDateTime();
+    job->startedAt = QDateTime::currentDateTime();
+    job->status = QStringLiteral("waiting");
+    job->phase = tr("Waiting…");
+    bumpDownloads();
+    pumpDownloadQueue();
 }
 
 QVariantMap MarketClient::downloadInfo(const QString &itemId) const
@@ -478,11 +792,12 @@ void MarketClient::setCatalogLoading(bool loading)
     emit catalogLoadingChanged();
 }
 
-void MarketClient::setCatalogError(const QString &error)
+void MarketClient::setCatalogError(const QString &error, bool retryable)
 {
-    if (m_catalogError == error)
+    if (m_catalogError == error && m_catalogErrorRetryable == retryable)
         return;
     m_catalogError = error;
+    m_catalogErrorRetryable = retryable;
     emit catalogErrorChanged();
 }
 
@@ -494,11 +809,12 @@ void MarketClient::setSearching(bool searching)
     emit searchingChanged();
 }
 
-void MarketClient::setSearchError(const QString &error)
+void MarketClient::setSearchError(const QString &error, bool retryable)
 {
-    if (m_searchError == error)
+    if (m_searchError == error && m_searchErrorRetryable == retryable)
         return;
     m_searchError = error;
+    m_searchErrorRetryable = retryable;
     emit searchErrorChanged();
 }
 
@@ -658,13 +974,17 @@ void MarketClient::startSearch(bool append)
         if (m_searchReply == reply)
             m_searchReply.clear();
         setSearching(false);
-        if (reply->error() == QNetworkReply::OperationCanceledError)
+        if (reply->property("driftAborted").toBool())
             return;
         const int status = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
         const QByteArray payload = reply->readAll();
         if (reply->error() != QNetworkReply::NoError) {
             QString code;
-            setSearchError(parseProblem(payload, status, &code));
+            QString reason;
+            bool retryable = true;
+            const QString message =
+                parseProblem(payload, status, &code, &reason, &retryable, int(reply->error()));
+            setSearchError(message, retryable);
             return;
         }
         applySearchPage(QJsonDocument::fromJson(payload).object(), append);
@@ -678,8 +998,14 @@ void MarketClient::pollJobs()
         const auto &job = it.value();
         if (!job || job->cancelled || job->jobId.isEmpty())
             continue;
-        if (job->status == QLatin1String("ready") || job->status == QLatin1String("failed")
-            || job->status == QLatin1String("downloading") || job->status == QLatin1String("importing"))
+        // Finished jobs stay in m_jobs now so the download manager can list them. They keep
+        // their jobId, so without this they stayed pollable: the service still answers
+        // "ready" for a completed job, and polling one re-ran finishJobFile, which fetched
+        // the file and imported it into the bin again on every tick.
+        if (jobIsFinished(*job))
+            continue;
+        if (job->status == QLatin1String("ready") || job->status == QLatin1String("downloading")
+            || job->status == QLatin1String("importing"))
             continue;
         any = true;
         if (job->reply)
@@ -697,7 +1023,8 @@ void MarketClient::pollJobs()
             const QByteArray payload = reply->readAll();
             if (reply->error() != QNetworkReply::NoError) {
                 QString code;
-                failJob(itemId, code, parseProblem(payload, status, &code));
+                failJob(itemId, code,
+                        parseProblem(payload, status, &code, nullptr, nullptr, int(reply->error())));
                 return;
             }
             const QJsonObject obj = QJsonDocument::fromJson(payload).object();
@@ -710,9 +1037,10 @@ void MarketClient::pollJobs()
             }
             if (job->status == QLatin1String("failed")) {
                 const QJsonObject err = obj.value(QStringLiteral("error")).toObject();
-                failJob(itemId,
-                        err.value(QStringLiteral("code")).toString(QStringLiteral("download_failed")),
-                        err.value(QStringLiteral("detail")).toString());
+                const QString code =
+                    err.value(QStringLiteral("code")).toString(QStringLiteral("download_failed"));
+                const QString detail = err.value(QStringLiteral("detail")).toString().trimmed();
+                failJob(itemId, code, detail.isEmpty() ? fallbackMessageForCode(code) : detail);
                 return;
             }
             job->phase = tr("Preparing…");
@@ -729,10 +1057,16 @@ void MarketClient::finishJobFile(Job *job, const QJsonObject &file, const QStrin
     Q_UNUSED(attribution);
     if (!job)
         return;
+    // Fetching the file is not idempotent — it writes to disk and imports into the bin — so
+    // it must not be re-entered for a job that is already past this point, whatever route
+    // asked for it.
+    if (job->status == QLatin1String("downloading") || job->status == QLatin1String("importing")
+        || jobIsFinished(*job))
+        return;
     const QString url = file.value(QStringLiteral("url")).toString();
     if (url.isEmpty()) {
         failJob(job->itemId, QStringLiteral("download_failed"),
-                userMessageForCode(QStringLiteral("download_failed"), {}));
+                fallbackMessageForCode(QStringLiteral("download_failed")));
         return;
     }
 
@@ -745,9 +1079,29 @@ void MarketClient::finishJobFile(Job *job, const QJsonObject &file, const QStrin
     QString name = sanitizeFileName(file.value(QStringLiteral("filename")).toString());
     if (QFileInfo(name).suffix().isEmpty())
         name += extensionForMime(file.value(QStringLiteral("mime")).toString());
-    const QString dir = downloadsRoot() + QLatin1Char('/') + job->itemId;
+    // A folder the user picked is written to directly; without one the file goes to the
+    // per-item app data area it always used.
+    const QString dir = job->destinationDir.isEmpty()
+                        ? downloadsRoot() + QLatin1Char('/') + job->itemId
+                        : job->destinationDir;
     QDir().mkpath(dir);
-    const QString path = dir + QLatin1Char('/') + name;
+    // Their own folder may already hold a file of this name, and silently writing over it
+    // would destroy something we did not put there.
+    QString path = dir + QLatin1Char('/') + name;
+    if (!job->destinationDir.isEmpty() && QFileInfo::exists(path)) {
+        const QString base = QFileInfo(name).completeBaseName();
+        const QString suffix = QFileInfo(name).suffix();
+        const QString dotted = suffix.isEmpty() ? QString() : QLatin1Char('.') + suffix;
+        for (int n = 2; n < 1000; ++n) {
+            const QString candidate =
+                QStringLiteral("%1/%2 (%3)%4").arg(dir, base, QString::number(n), dotted);
+            if (!QFileInfo::exists(candidate)) {
+                path = candidate;
+                break;
+            }
+        }
+    }
+    job->filePath = path;
     const QString expectedSha = file.value(QStringLiteral("sha256")).toString().trimmed().toLower();
 
     QNetworkRequest request{QUrl(url)};
@@ -772,10 +1126,28 @@ void MarketClient::finishJobFile(Job *job, const QJsonObject &file, const QStrin
     connect(reply, &QNetworkReply::downloadProgress, this,
             [this, itemId](qint64 received, qint64 total) {
                 const auto job = m_jobs.value(itemId);
-                if (!job || total <= 0)
+                if (!job)
                     return;
-                job->progress = double(received) / double(total);
+                job->bytesReceived = received;
+                job->bytesTotal = total;
+                // A source that sends no Content-Length leaves total at -1; the manager
+                // hides the bar rather than showing a wrong percentage.
+                job->progress = total > 0 ? double(received) / double(total) : 0;
                 emit downloadProgress(itemId, job->progress, job->phase);
+
+                if (!job->sampleClock.isValid()) {
+                    job->sampleClock.start();
+                    job->sampleBytes = received;
+                    return;
+                }
+                if (job->sampleClock.elapsed() < kSpeedSampleMs)
+                    return;
+                const qint64 delta = received - job->sampleBytes;
+                const qint64 ms = job->sampleClock.restart();
+                if (ms > 0 && delta >= 0)
+                    job->speedBytesPerSec = double(delta) * 1000.0 / double(ms);
+                job->sampleBytes = received;
+                bumpDownloads();
             });
     connect(reply, &QNetworkReply::finished, this,
             [this, itemId, reply, out, hasher, expectedSha, name, path] {
@@ -794,7 +1166,7 @@ void MarketClient::finishJobFile(Job *job, const QJsonObject &file, const QStrin
             delete out;
             delete hasher;
             failJob(itemId, QStringLiteral("download_failed"),
-                    userMessageForCode(QStringLiteral("download_failed"), {}));
+                    fallbackMessageForCode(QStringLiteral("download_failed")));
             return;
         }
         const QString actual = QString::fromLatin1(hasher->result().toHex());
@@ -820,14 +1192,18 @@ void MarketClient::failJob(const QString &itemId, const QString &code, const QSt
 {
     const auto job = m_jobs.value(itemId);
     const QString resolvedCode = code.isEmpty() ? QStringLiteral("download_failed") : code;
-    const QString resolved = userMessageForCode(resolvedCode, message);
+    const QString trimmed = message.trimmed();
+    const QString resolved = trimmed.isEmpty() ? fallbackMessageForCode(resolvedCode) : trimmed;
     if (job) {
         job->status = QStringLiteral("failed");
         job->errorCode = resolvedCode;
         job->errorMessage = resolved;
         job->phase = resolved;
+        job->finishedAt = QDateTime::currentDateTime();
+        job->speedBytesPerSec = 0;
     }
     bumpDownloads();
+    pumpDownloadQueue();
     emit downloadFailed(itemId, resolvedCode, resolved);
 }
 
@@ -846,13 +1222,24 @@ void MarketClient::importReadyFile(const QString &itemId, const QString &path,
         return;
     }
     const QStringList ids = m_library->importLocalPaths({path});
-    m_jobs.remove(itemId);
-    bumpDownloads();
     if (ids.isEmpty()) {
-        emit downloadFailed(itemId, QStringLiteral("download_failed"),
-                            tr("Could not import that file."));
+        failJob(itemId, QStringLiteral("download_failed"), tr("Could not import that file."));
+        pumpDownloadQueue();
         return;
     }
+    if (job) {
+        job->status = QStringLiteral("done");
+        job->phase = tr("In the media bin");
+        job->progress = 1;
+        job->filePath = path;
+        job->finishedAt = QDateTime::currentDateTime();
+        job->speedBytesPerSec = 0;
+        if (job->title.isEmpty())
+            job->title = displayName;
+    }
+    bumpDownloads();
+    // A finished job frees a slot for whatever is waiting behind it.
+    pumpDownloadQueue();
     emit downloadImported(itemId, displayName);
 }
 
@@ -923,7 +1310,8 @@ void MarketClient::exchangeCode(const QString &code, const QString &state)
         const QByteArray payload = reply->readAll();
         if (reply->error() != QNetworkReply::NoError) {
             QString errorCode;
-            emit authFinished(false, parseProblem(payload, status, &errorCode));
+            emit authFinished(false, parseProblem(payload, status, &errorCode, nullptr, nullptr,
+                                                  int(reply->error())));
             return;
         }
         const QJsonObject obj = QJsonDocument::fromJson(payload).object();
@@ -1008,7 +1396,7 @@ void MarketClient::fetchMe()
     go();
 }
 
-QString MarketClient::userMessageForCode(const QString &code, const QString &fallback)
+QString MarketClient::fallbackMessageForCode(const QString &code)
 {
     if (code == QLatin1String("rate_limited"))
         return tr("Daily limit reached for this source. Try again later.");
@@ -1024,17 +1412,57 @@ QString MarketClient::userMessageForCode(const QString &code, const QString &fal
         return tr("Could not reach the marketplace.");
     if (code == QLatin1String("download_failed"))
         return tr("Could not prepare that file.");
-    if (!fallback.isEmpty())
-        return fallback;
     return tr("Could not complete that request.");
 }
 
-QString MarketClient::parseProblem(const QByteArray &body, int httpStatus, QString *codeOut)
+bool MarketClient::isRetryable(const QString &code, const QString &reason)
+{
+    // Reason first: it is the finer cause, and one code covers both a transient source
+    // failure and a permanent one. An unrecognised reason falls through to the code, per
+    // the contract — a value added later must not be read as "never retry".
+    if (reason == QLatin1String("source_blocked") || reason == QLatin1String("source_unreachable")
+        || reason == QLatin1String("source_timeout") || reason == QLatin1String("source_error")
+        || reason == QLatin1String("download_error"))
+        return true;
+    // An operator switched the source off, the item is gone or was never fetchable, or the
+    // file cannot be produced at all. Retrying changes nothing.
+    if (reason == QLatin1String("source_disabled") || reason == QLatin1String("item_removed")
+        || reason == QLatin1String("item_private") || reason == QLatin1String("item_geoblocked")
+        || reason == QLatin1String("item_missing") || reason == QLatin1String("link_no_media")
+        || reason == QLatin1String("link_unsupported") || reason == QLatin1String("file_too_large")
+        || reason == QLatin1String("live_stream"))
+        return false;
+
+    // No reason, or one this build does not know.
+    if (code == QLatin1String("not_found"))
+        return false;
+    // Rate limits do lift, but not now, and a button that fails again on sight reads as
+    // broken. reset_at carries the real answer.
+    if (code == QLatin1String("rate_limited"))
+        return false;
+    // Signing is a build/deployment mismatch, and no account exists to spend or connect
+    // from this screen, so none of these change on a second press.
+    if (code == QLatin1String("invalid_client") || code == QLatin1String("auth_required")
+        || code == QLatin1String("payment_required"))
+        return false;
+    return true;
+}
+
+QString MarketClient::parseProblem(const QByteArray &body, int httpStatus, QString *codeOut,
+                                   QString *reasonOut, bool *retryableOut, int networkError)
 {
     const QJsonObject obj = QJsonDocument::fromJson(body).object();
     QString code = obj.value(QStringLiteral("code")).toString();
+    const QString reason = obj.value(QStringLiteral("reason")).toString();
+
+    // No HTTP status means the request never got an answer: DNS, TLS, refused, timed out.
+    // That is not a service failure and none of the service's codes describe it.
+    const bool transportFailure = httpStatus == 0 && networkError != 0;
+
     if (code.isEmpty()) {
-        if (httpStatus == 429)
+        if (transportFailure)
+            code = QStringLiteral("provider_unavailable");
+        else if (httpStatus == 429)
             code = QStringLiteral("rate_limited");
         else if (httpStatus == 401 || httpStatus == 403)
             code = QStringLiteral("auth_required");
@@ -1049,6 +1477,23 @@ QString MarketClient::parseProblem(const QByteArray &body, int httpStatus, QStri
     }
     if (codeOut)
         *codeOut = code;
-    const QString detail = obj.value(QStringLiteral("detail")).toString();
-    return userMessageForCode(code, detail);
+    if (reasonOut)
+        *reasonOut = reason;
+    if (retryableOut)
+        *retryableOut = transportFailure ? true : isRetryable(code, reason);
+
+    if (transportFailure) {
+        if (networkError == QNetworkReply::OperationCanceledError
+            || networkError == QNetworkReply::TimeoutError)
+            return tr("The marketplace took too long to answer. Try again.");
+        return tr("Couldn’t reach the marketplace. Check your connection and try again.");
+    }
+
+    // The service writes this sentence per reason and sanitizes it on the way out, so it
+    // is both more specific than anything derivable from the code and safe to show as-is.
+    const QString detail = obj.value(QStringLiteral("detail")).toString().trimmed();
+    if (!detail.isEmpty())
+        return detail;
+    return fallbackMessageForCode(code);
 }
+

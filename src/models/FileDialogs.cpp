@@ -157,14 +157,26 @@ QList<QUrl> FileDialogs::openFiles(const QString &title, const QStringList &name
     return dialog.selectedUrls();
 }
 
-QUrl FileDialogs::openDirectory(const QString &title) const
+bool FileDialogs::supportsDirectoryPicker() const
+{
+#ifdef Q_OS_ANDROID
+    return false;
+#else
+    return true;
+#endif
+}
+
+QUrl FileDialogs::openDirectory(const QString &title, const QUrl &startDir) const
 {
 #ifdef Q_OS_ANDROID
     Q_UNUSED(title);
+    Q_UNUSED(startDir);
     return {};
 #else
     QFileDialog dialog;
     dialog.setWindowTitle(title);
+    if (startDir.isValid() && !startDir.isEmpty())
+        dialog.setDirectoryUrl(startDir);
     dialog.setAcceptMode(QFileDialog::AcceptOpen);
     dialog.setFileMode(QFileDialog::Directory);
     dialog.setOption(QFileDialog::ShowDirsOnly, true);

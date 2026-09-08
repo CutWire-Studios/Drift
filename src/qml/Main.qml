@@ -427,6 +427,25 @@ ApplicationWindow {
         id: multicamWindow
     }
 
+    DownloadsWindow {
+        id: downloadsWindow
+
+        // Shows itself the first time a download starts, then stays out of the way:
+        // reopening on every later job would yank focus mid-edit for something the header
+        // badge already reports.
+        property bool shownOnce: false
+
+        Connections {
+            target: Market
+            function onDownloadStarted(itemId) {
+                if (downloadsWindow.shownOnce)
+                    return
+                downloadsWindow.shownOnce = true
+                downloadsWindow.show()
+            }
+        }
+    }
+
     DenoiseWindow {
         id: denoiseWindow
     }
@@ -807,6 +826,7 @@ ApplicationWindow {
             id: editorHeader
             width: parent.width
             visible: !window.previewFullscreen
+            onDownloadsRequested: downloadsWindow.show()
         }
 
         Item {

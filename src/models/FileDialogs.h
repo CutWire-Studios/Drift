@@ -24,7 +24,11 @@ public:
     // Native directory picker, for importing a folder's contents with its structure preserved.
     // Empty URL when cancelled. Not offered on Android: SAF's tree picker (ACTION_OPEN_DOCUMENT_TREE)
     // is a different flow than the document picker this class wraps, and isn't wired up.
-    Q_INVOKABLE QUrl openDirectory(const QString &title) const;
+    // startDir seeds the dialog's location; empty opens wherever the platform defaults to.
+    Q_INVOKABLE QUrl openDirectory(const QString &title, const QUrl &startDir = QUrl()) const;
+    // False where there is no directory picker at all (Android), so a caller can skip the
+    // prompt instead of reading its empty result as the user cancelling.
+    Q_INVOKABLE bool supportsDirectoryPicker() const;
     // `suffix` is appended to `suggestedName` for the picker's initial file name; the path the
     // dialog returns is used exactly as given. `initialDirectory` opens the picker in that folder
     // when it exists (e.g. the last export location). `mimeTypeFilters` are used when those types
