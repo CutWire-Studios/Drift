@@ -30,6 +30,7 @@
 #include "core/Clip.h"
 #include "core/EffectStackStore.h"
 #include "core/MogrtReader.h"
+#include "core/KdenliveReader.h"
 #include "core/Project.h"
 #include "core/TimelineOps.h"
 #include "core/Track.h"
@@ -99,6 +100,7 @@ private slots:
     void premiereProjectImportFcpXml();
     void mogrtImportTemplate();
     void mogrtImportIntoExistingProject();
+    void kdenliveProjectImportMlt();
     void newProjectClearsEverything();
     void projectSetupOnPristineProjectStaysClean();
     void projectFpsCanChangeAfterSetup();
@@ -2078,6 +2080,125 @@ void EditorStateTest::mogrtImportIntoExistingProject()
 
     QVERIFY(foundExisting);
     QVERIFY(foundImported);
+}
+
+void EditorStateTest::kdenliveProjectImportMlt()
+{
+    AssetLibrary library;
+    AppController state(&library);
+
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    const QString kdenlivePath = dir.filePath(QStringLiteral("project.kdenlive"));
+
+    const QString mltXml = QStringLiteral(
+        "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n"
+        "<mlt LC_NUMERIC=\"C\" version=\"7.12.0\" title=\"My Kdenlive Project\">\n"
+        "  <profile description=\"HD 1080p 25 fps\" width=\"1920\" height=\"1080\" progressive=\"1\"\n"
+        "           frame_rate_num=\"25\" frame_rate_den=\"1\"/>\n"
+        "  <property name=\"kdenlive:docproperties.documentid\">My Kdenlive Project</property>\n"
+        "  <property name=\"kdenlive:docproperties.folders\">1:Footage,2:Audio</property>\n"
+        "  <producer id=\"prod_video\" in=\"0\" out=\"499\">\n"
+        "    <property name=\"resource\">/media/video.mp4</property>\n"
+        "    <property name=\"kdenlive:clipname\">video.mp4</property>\n"
+        "    <property name=\"kdenlive:folderid\">1</property>\n"
+        "    <property name=\"length\">500</property>\n"
+        "  </producer>\n"
+        "  <producer id=\"prod_audio\" in=\"0\" out=\"749\">\n"
+        "    <property name=\"resource\">/media/music.mp3</property>\n"
+        "    <property name=\"kdenlive:clipname\">music.mp3</property>\n"
+        "    <property name=\"kdenlive:folderid\">2</property>\n"
+        "    <property name=\"video_index\">-1</property>\n"
+        "    <property name=\"length\">750</property>\n"
+        "  </producer>\n"
+        "  <producer id=\"prod_title\" in=\"0\" out=\"74\">\n"
+        "    <property name=\"kdenlive:clipname\">Intro Title</property>\n"
+        "    <property name=\"kdenlive:kdenlivetitle\">&lt;kdenlivetitle duration=&quot;75&quot; out=&quot;74&quot;&gt;&lt;item type=&quot;QGraphicsTextItem&quot;&gt;&lt;content font=&quot;Inter&quot; font-size=&quot;64&quot; font-weight=&quot;75&quot; font-color=&quot;255,255,0,255&quot;&gt;Kdenlive Rocks&lt;/content&gt;&lt;/item&gt;&lt;/kdenlivetitle&gt;</property>\n"
+        "  </producer>\n"
+        "  <playlist id=\"playlist_video\">\n"
+        "    <property name=\"kdenlive:track_name\">Video 1</property>\n"
+        "    <blank length=\"50\"/>\n"
+        "    <entry producer=\"prod_video\" in=\"25\" out=\"124\"/>\n"
+        "    <blank length=\"25\"/>\n"
+        "    <entry producer=\"prod_title\" in=\"0\" out=\"74\"/>\n"
+        "  </playlist>\n"
+        "  <playlist id=\"playlist_audio\">\n"
+        "    <property name=\"kdenlive:track_name\">Audio 1</property>\n"
+        "    <property name=\"kdenlive:audio_track\">1</property>\n"
+        "    <entry producer=\"prod_audio\" in=\"0\" out=\"249\"/>\n"
+        "  </playlist>\n"
+        "  <tractor id=\"maintractor\">\n"
+        "    <multitrack>\n"
+        "      <track producer=\"playlist_video\"/>\n"
+        "      <track producer=\"playlist_audio\"/>\n"
+        "    </multitrack>\n"
+        "  </tractor>\n"
+        "</mlt>\n");
+
+    {
+        QFile file(kdenlivePath);
+        QVERIFY(file.open(QIODevice::WriteOnly));
+        file.write(mltXml.toUtf8());
+    }
+
+    QVERIFY(drift::kdenlive::isKdenliveProject(kdenlivePath));
+
+    // Load via loadProject
+    state.loadProject(QUrl::fromLocalFile(kdenlivePath));
+
+    QCOMPARE(state.project()->name(), QStringLiteral("My Kdenlive Project"));
+    QCOMPARE(state.project()->width(), 1920);
+    QCOMPARE(state.project()->height(), 1080);
+    QCOMPARE(state.project()->fps(), 25);
+
+    // Verify bin folders created
+    bool foundFootage = false;
+    bool foundAudio = false;
+    for (const auto &f : state.project()->binFolders()) {
+        if (f.name == QStringLiteral("Footage"))
+            foundFootage = true;
+        if (f.name == QStringLiteral("Audio"))
+            foundAudio = true;
+    }
+    QVERIFY(foundFootage);
+    QVERIFY(foundAudio);
+
+    // Verify assets
+    QCOMPARE(state.project()->assets().size(), 2);
+
+    // Verify tracks (1 video track, 1 audio track)
+    QCOMPARE(state.project()->tracks().size(), 2);
+
+    const auto &vTrack = state.project()->tracks().at(0);
+    QCOMPARE(vTrack.type, drift::TrackType::Video);
+    QCOMPARE(vTrack.clips.size(), 2);
+
+    // Clip 1 in V1: blank of 50 frames (2.0s = 2,000,000 us), entry 100 frames (4.0s = 4,000,000 us)
+    const auto &vClip1 = vTrack.clips.at(0);
+    QCOMPARE(vClip1.timelineStart, 2000000LL);
+    QCOMPARE(vClip1.timelineDuration, 4000000LL);
+    QCOMPARE(vClip1.srcIn, 1000000LL); // 25 frames at 25 fps = 1.0s
+
+    // Clip 2 in V1: blank of 25 frames (1.0s) -> starts at 2.0s + 4.0s + 1.0s = 7.0s (7,000,000 us)
+    // Title clip duration 75 frames (3.0s = 3,000,000 us)
+    const auto &vClip2 = vTrack.clips.at(1);
+    QCOMPARE(vClip2.type, drift::ClipType::Text);
+    QCOMPARE(vClip2.textContent, QStringLiteral("Kdenlive Rocks"));
+    QCOMPARE(vClip2.timelineStart, 7000000LL);
+    QCOMPARE(vClip2.timelineDuration, 3000000LL);
+    QCOMPARE(vClip2.textStyle.fontFamily, QStringLiteral("Inter"));
+    QCOMPARE(vClip2.textStyle.pixelSize, 64);
+    QCOMPARE(vClip2.textStyle.color, QColor(255, 255, 0, 255));
+
+    // A1 track
+    const auto &aTrack = state.project()->tracks().at(1);
+    QCOMPARE(aTrack.type, drift::TrackType::Audio);
+    QCOMPARE(aTrack.clips.size(), 1);
+
+    const auto &aClip1 = aTrack.clips.at(0);
+    QCOMPARE(aClip1.timelineStart, 0LL);
+    // 250 frames at 25 fps = 10.0s = 10,000,000 us
+    QCOMPARE(aClip1.timelineDuration, 10000000LL);
 }
 
 // resetToDefaultTimeline() only clears the tracks, so New Project used to keep the asset pool,

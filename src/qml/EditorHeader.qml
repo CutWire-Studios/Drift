@@ -17,9 +17,10 @@ Rectangle {
     property string projectName: EditorState.projectName
 
     readonly property var projectFilter: [
-        qsTr("All Supported Projects (*.drift *.prproj *.xml *.mogrt)"),
+        qsTr("All Supported Projects (*.drift *.prproj *.xml *.mogrt *.kdenlive *.mlt)"),
         qsTr("Drift project (*.drift)"),
         qsTr("Premiere Pro project (*.prproj)"),
+        qsTr("Kdenlive & Shotcut project (*.kdenlive *.mlt)"),
         qsTr("Motion Graphics Template (*.mogrt)"),
         qsTr("Final Cut Pro XML (*.xml)")
     ]
@@ -124,6 +125,18 @@ Rectangle {
                                        ["application/zip", "application/octet-stream"])
         if (url != "")
             EditorState.importMogrt(url)
+    }
+
+    function openKdenliveProject() {
+        root.confirmIfDirty(function () {
+            var url = FileDialogs.openFile(qsTr("Import Kdenlive / Shotcut Project"),
+                                           [qsTr("Kdenlive & Shotcut project (*.kdenlive *.mlt)"),
+                                            qsTr("Kdenlive project (*.kdenlive)"),
+                                            qsTr("Shotcut project (*.mlt)")],
+                                           ["application/xml", "text/xml", "application/x-kdenlive"])
+            if (url != "")
+                EditorState.loadKdenliveProject(url)
+        })
     }
 
     // Save As with every source file copied in, so the result opens on a machine that has none of
@@ -321,6 +334,7 @@ Rectangle {
                     onOpenJsonRequested: root.openProjectJson()
                     onImportPremiereRequested: root.openPremiereProject()
                     onImportMogrtRequested: root.openMogrt()
+                    onImportKdenliveRequested: root.openKdenliveProject()
                     onPropertiesRequested: projectPropertiesDialog.openDialog()
                 }
             }

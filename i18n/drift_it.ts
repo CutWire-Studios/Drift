@@ -3059,6 +3059,14 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Failed to open Kdenlive / MLT project</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Kdenlive project imported: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Exporting…</source>
         <translation>Esportazione in corso…</translation>
     </message>
@@ -4257,6 +4265,10 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Kdenlive &amp; Shotcut project (*.kdenlive *.mlt)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Motion Graphics Template (*.mogrt)</source>
         <translation type="unfinished"></translation>
     </message>
@@ -4298,6 +4310,18 @@
     </message>
     <message>
         <source>All Files (*)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Import Kdenlive / Shotcut Project</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Kdenlive project (*.kdenlive)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Shotcut project (*.mlt)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -4352,10 +4376,6 @@
         <translation>Video</translation>
     </message>
     <message>
-        <source>All Supported Projects (*.drift *.prproj *.xml *.mogrt)</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Video size and layout</source>
         <translation>Dimensioni e layout video</translation>
     </message>
@@ -4398,6 +4418,10 @@
     <message>
         <source>Recommended packs and updates</source>
         <translation>Pacchetti consigliati e aggiornamenti</translation>
+    </message>
+    <message>
+        <source>All Supported Projects (*.drift *.prproj *.xml *.mogrt *.kdenlive *.mlt)</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Extras</source>
@@ -7142,6 +7166,22 @@ Se la riproduzione va a scatti, prova un&apos;altra opzione.</translation>
         <source>MOGRT archive is empty or invalid</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>Could not open file: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Invalid or corrupt MLT / Kdenlive project</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Failed to parse MLT XML document</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Root element is not &lt;mlt&gt;</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>RecentProjectsPopup</name>
@@ -7201,6 +7241,10 @@ Se la riproduzione va a scatti, prova un&apos;altra opzione.</translation>
     </message>
     <message>
         <source>Import Motion Graphics (.mogrt)…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Import Kdenlive / Shotcut project…</source>
         <translation type="unfinished"></translation>
     </message>
     <message>

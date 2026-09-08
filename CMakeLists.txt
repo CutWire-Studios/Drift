@@ -378,6 +378,8 @@ add_library(driftcore STATIC
     src/core/PrprojReader.cpp
     src/core/MogrtReader.h
     src/core/MogrtReader.cpp
+    src/core/KdenliveReader.h
+    src/core/KdenliveReader.cpp
     src/core/TimelineOps.h
     src/core/TimelineOps.cpp
     src/core/commands/ProjectCommands.h

@@ -1293,6 +1293,9 @@ public:
     // Unpacks and imports a Motion Graphics Template (.mogrt), extracting assets and mapping
     // editable text, colors, and media overlays onto the timeline and media library.
     Q_INVOKABLE void importMogrt(const QUrl &url);
+    // Imports a Kdenlive (.kdenlive) or Shotcut MLT (.mlt) project, mapping
+    // multitrack playlists, video/audio cuts, title text clips, and bin folders.
+    Q_INVOKABLE void loadKdenliveProject(const QUrl &url);
     Q_INVOKABLE void cancelPackage();
     Q_INVOKABLE void loadProject(const QUrl &url);
     Q_INVOKABLE void newProject();

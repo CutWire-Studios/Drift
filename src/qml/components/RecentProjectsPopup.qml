@@ -17,6 +17,7 @@ Popup {
     signal openJsonRequested()
     signal importPremiereRequested()
     signal importMogrtRequested()
+    signal importKdenliveRequested()
     signal propertiesRequested()
 
     component ActionRow: Rectangle {
@@ -430,6 +431,12 @@ Popup {
             glyph: Theme.icons.layers
             text: qsTr("Import Motion Graphics (.mogrt)…")
             onTriggered: root.importMogrtRequested()
+        }
+
+        ActionRow {
+            glyph: Theme.icons.film
+            text: qsTr("Import Kdenlive / Shotcut project…")
+            onTriggered: root.importKdenliveRequested()
         }
 
         ActionRow {
