@@ -122,6 +122,8 @@ private slots:
     void deleteLinkedPairTogetherAndUnlinkedClipAlone();
     void linkedFadeCurveSyncsPartner();
     void customFadeCurveSessionApplyAndCancel();
+    void bezierFadeCurveSessionKeepsItsMode();
+    void transitionCurveSessionApplyAndCancel();
     void keyframeGraphPropertySelection();
     void keyframesCanBeDisabledPerProperty();
     void effectParamKeyframes();
@@ -3078,6 +3080,89 @@ void EditorStateTest::linkedAudioUnlinkAndMove()
     state.moveClip(0, 0, 0.0);
     QCOMPARE(state.project()->tracks().at(0).clips.at(0).timelineStart, drift::secondsToUs(0.0));
     QCOMPARE(state.project()->tracks().at(1).clips.at(0).timelineStart, drift::secondsToUs(2.0));
+}
+
+// The editor drives one session for two different shapes, so the mode has to survive begin/apply
+// rather than being forced back to Custom the way it was before bezier existed.
+void EditorStateTest::bezierFadeCurveSessionKeepsItsMode()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    appendLinkedVideoAudioPair(*state.project());
+    state.setClipFade(0, 0, 1.0, 0.0);
+    state.setClipFadeCurve(0, 0, QStringLiteral("linear"));
+
+    state.beginFadeCurveSession(0, 0);
+    QCOMPARE(state.fadeCurveMode(), QStringLiteral("points"));
+
+    state.setFadeCurveHandles(0.42, 0.0, 1.0, 1.0);
+    QCOMPARE(state.fadeCurveMode(), QStringLiteral("bezier"));
+    QCOMPARE(state.project()->tracks().at(0).clips.at(0).fadeCurve, drift::FadeCurve::Bezier);
+    state.applyFadeCurve();
+    QVERIFY(!state.fadeCurveSessionActive());
+
+    const drift::Clip &clip = state.project()->tracks().at(0).clips.at(0);
+    QCOMPARE(clip.fadeCurve, drift::FadeCurve::Bezier);
+    QCOMPARE(clip.fadeShape.handle1(), QPointF(0.42, 0.0));
+    // Ease-in: the halfway gain sits below the diagonal.
+    QVERIFY(clip.fadeShape.bezierAt(0.5) < 0.5);
+    // The linked audio partner follows.
+    QCOMPARE(state.project()->tracks().at(1).clips.at(0).fadeCurve, drift::FadeCurve::Bezier);
+
+    // Reopening lands back in bezier rather than silently converting to a polyline.
+    state.beginFadeCurveSession(0, 0);
+    QCOMPARE(state.fadeCurveMode(), QStringLiteral("bezier"));
+    QCOMPARE(state.fadeCurveHandles().at(0).toDouble(), 0.42);
+
+    // Switching to points inside the same session commits the polyline instead.
+    state.setFadeCurvePoints(QVariantList{
+        QVariantMap{{QStringLiteral("t"), 0.0}, {QStringLiteral("g"), 0.0}},
+        QVariantMap{{QStringLiteral("t"), 0.5}, {QStringLiteral("g"), 0.9}},
+        QVariantMap{{QStringLiteral("t"), 1.0}, {QStringLiteral("g"), 1.0}},
+    });
+    QCOMPARE(state.fadeCurveMode(), QStringLiteral("points"));
+    state.applyFadeCurve();
+    QCOMPARE(state.project()->tracks().at(0).clips.at(0).fadeCurve, drift::FadeCurve::Custom);
+}
+
+void EditorStateTest::transitionCurveSessionApplyAndCancel()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    appendAdjacentShapeClips(*state.project(), 500);
+    state.selectClip(0, 0);
+    state.addTransition(0, 0, QStringLiteral("wipe_left"), 0.5);
+
+    const QString id = state.project()->tracks().at(0).transitions.at(0).id;
+    QCOMPARE(state.project()->tracks().at(0).transitions.at(0).easingCurve,
+             drift::FadeCurve::Linear);
+
+    // Cancelling puts the previous curve back.
+    state.beginTransitionCurveSession(0, id);
+    QVERIFY(state.transitionCurveSessionActive());
+    state.setTransitionCurveHandles(0.0, 0.0, 0.58, 1.0);
+    QCOMPARE(state.project()->tracks().at(0).transitions.at(0).easingCurve,
+             drift::FadeCurve::Bezier);
+    state.endTransitionCurveSession();
+    QCOMPARE(state.project()->tracks().at(0).transitions.at(0).easingCurve,
+             drift::FadeCurve::Linear);
+
+    // Applying keeps it, and the remap actually reaches transitionProgress.
+    state.beginTransitionCurveSession(0, id);
+    state.setTransitionCurveHandles(0.0, 0.0, 0.58, 1.0);
+    state.applyTransitionCurve();
+    QVERIFY(!state.transitionCurveSessionActive());
+
+    const drift::Transition &t = state.project()->tracks().at(0).transitions.at(0);
+    QCOMPARE(t.easingCurve, drift::FadeCurve::Bezier);
+    QVERIFY(drift::transitionProgress(t, 250'000, 0, 1'000'000) > 0.25); // ease-out starts fast
+    QCOMPARE(drift::transitionProgress(t, 0, 0, 1'000'000), 0.0);
+    QCOMPARE(drift::transitionProgress(t, 1'000'000, 0, 1'000'000), 1.0);
+
+    // A plain curve change is undoable and drops the handles.
+    state.setTransitionEasing(0, id, QStringLiteral("smooth"));
+    QCOMPARE(state.project()->tracks().at(0).transitions.at(0).easingCurve,
+             drift::FadeCurve::Smooth);
 }
 
 void EditorStateTest::addTransitionBetweenAdjacentClips()

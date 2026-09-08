@@ -68,11 +68,54 @@ carries state between frames would make export disagree with the preview. Concre
 `EngineTest::transitionRenderingIsDeterministic` renders a frame, jumps forward, scrubs back, and
 requires the two results to be bit-identical. It runs over every package in the catalog.
 
+## Easing
+
+`u_progress` is not necessarily the linear window position. Each transition *instance* carries an
+easing curve (`drift::Transition::easingCurve`, plus `easingShape` for the two hand-drawn modes)
+that remaps it — Linear, Smooth, Natural, or one of two shapes drawn in the curve editor: **Custom**,
+a polyline through any number of knots, and **Bezier**, a single cubic with its ends pinned and two
+handles, the same four numbers CSS `cubic-bezier()` takes. This is a property of
+the transition on the timeline, not of the package, so a shader neither sees nor needs to know
+about it.
+
+`drift::transitionProgress(transition, ...)` applies the remap. Use that overload, not the plain
+one: both the picture (`FrameCompositor`) and the audio ducking (`AudioMixer`) go through it, and
+calling the wrong one would let the sound drift out of step with the image. Endpoints stay pinned,
+so `u_progress` still reaches exactly 0 and 1.
+
+## Porting a gl-transition
+
+Upstream [gl-transitions](https://github.com/gl-transitions/gl-transitions) packages are converted
+by `recipes/import-gl-transitions.py` in the Drift-Addons repository — do not hand-port them. The
+generated preamble supplies upstream's `progress` / `ratio` / `getFromColor()` / `getToColor()`
+contract and flips between its bottom-left uv space and Drift's top-left `v_texCoord`.
+
+Four upstream quirks the converter repairs, all of which are easy to get wrong by hand:
+
+- `progress` and `ratio` are emitted as **mutable globals, not `#define`s** — `StereoViewer` takes
+  `float ratio` as a function parameter and `undulatingBurnOut` declares a local of that name, and
+  a macro turns both into a syntax error.
+- Ten upstream files initialise a global from a uniform, which GLSL 330 forbids. Those pass on
+  NVIDIA and **fail on Mesa and Android**, so the declaration is split from the assignment.
+- `#ifdef GL_ES / precision mediump float;` blocks are stripped; on GLES 3.00 they run after the
+  loader's `precision highp` and silently downgrade the rest of the shader.
+- `texture2D()` is rewritten to `texture()`.
+
+Drift binds only `float` and `bool` parameters by name, so upstream `int` / `ivec2` / `vec2` / `vec4`
+uniforms bind as floats under a mangled name and are `#define`d back to a primary expression
+(`#define steps int(p_steps)`). Rewriting the use sites instead would break `In ? a : b`, since a
+float is not a legal ternary condition. Colours ship in `fixedParams` rather than as an editable
+`color` parameter, because that type did not exist at `minAppVersion` 0.1.0 and an older build
+would bind `0.0` to the `vec3` and render black.
+
 ## Previews
 
 ```
 ./build/tools/transitionthumbs --transitions ./transitions --size 128 --frames 12
 ```
+
+Pass `--base-a` and `--base-b` two **different** images, or the strip shows a transition between
+identical frames and conveys nothing.
 
 Renders N frames across `p = 0..1` through the real GPU path and packs them into one horizontal
 strip. The browser rests on a mid frame and scrubs the strip on hover — a still at `p = 0.5` can't

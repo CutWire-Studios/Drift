@@ -188,7 +188,7 @@ QJsonObject transitionToJson(const Transition &t)
 
     // "kind" holds the transition package id. The pre-shader enum serialized the same strings,
     // so projects written by older builds keep loading.
-    return QJsonObject{
+    QJsonObject o{
         {QStringLiteral("id"), t.id},
         {QStringLiteral("fromClipId"), t.fromClipId},
         {QStringLiteral("toClipId"), t.toClipId},
@@ -196,6 +196,16 @@ QJsonObject transitionToJson(const Transition &t)
         {QStringLiteral("parameters"), params},
         {QStringLiteral("durationUs"), static_cast<double>(t.durationUs)},
     };
+    // Written only when set, so a project with no eased transition round-trips byte-identically
+    // to what older builds produced.
+    if (t.easingCurve != FadeCurve::Linear) {
+        o.insert(QStringLiteral("easingCurve"), fadeCurveToString(t.easingCurve));
+        if ((t.easingCurve == FadeCurve::Custom && !t.easingShape.isEmpty())
+            || t.easingCurve == FadeCurve::Bezier) {
+            o.insert(QStringLiteral("easingShape"), t.easingShape.toJson());
+        }
+    }
+    return o;
 }
 
 Transition transitionFromJson(const QJsonObject &o)
@@ -213,6 +223,9 @@ Transition transitionFromJson(const QJsonObject &o)
     for (auto it = params.constBegin(); it != params.constEnd(); ++it)
         t.parameters.insert(it.key(), it.value().toVariant());
     t.durationUs = static_cast<TimeUs>(o.value(QStringLiteral("durationUs")).toDouble(t.durationUs));
+    if (o.contains(QStringLiteral("easingCurve")))
+        t.easingCurve = fadeCurveFromString(o.value(QStringLiteral("easingCurve")).toString());
+    t.easingShape = FadeShape::fromJson(o.value(QStringLiteral("easingShape")));
     return t;
 }
 
@@ -422,7 +435,7 @@ Clip clipFromJsonV2(const QJsonObject &object, int canvasW = 1920, int canvasH =
     clip.fadeInUs = static_cast<TimeUs>(object.value(QStringLiteral("fadeInUs")).toDouble());
     clip.fadeOutUs = static_cast<TimeUs>(object.value(QStringLiteral("fadeOutUs")).toDouble());
     clip.fadeCurve = fadeCurveFromString(object.value(QStringLiteral("fadeCurve")).toString());
-    clip.fadeShape = FadeShape::fromJson(object.value(QStringLiteral("fadeShape")).toArray());
+    clip.fadeShape = FadeShape::fromJson(object.value(QStringLiteral("fadeShape")));
     clip.animIn = clipAnimationFromJson(object.value(QStringLiteral("animIn")).toObject());
     clip.animOut = clipAnimationFromJson(object.value(QStringLiteral("animOut")).toObject());
     clip.timelineStart = static_cast<TimeUs>(object.value(QStringLiteral("timelineStartUs")).toDouble());

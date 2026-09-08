@@ -62,7 +62,7 @@ double transitionGainForClip(const drift::Track &track, const drift::Clip &clip,
     if (!transition)
         return 1.0;
 
-    const double p = drift::transitionProgress(timelineUs, windowStart, windowEnd);
+    const double p = drift::transitionProgress(*transition, timelineUs, windowStart, windowEnd);
     const TransitionPresetEntry *def = transitionDefForId(transition->kindId);
     const QString curve = def ? def->audioCurve : QStringLiteral("crossfade");
     const drift::TransitionAudioGains gains = drift::transitionAudioGains(curve, p);

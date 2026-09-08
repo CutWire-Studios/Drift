@@ -103,6 +103,20 @@ Item {
             return t
         if (curve === "equalPower")
             return Math.sin(t * Math.PI * 0.5)
+        if (curve === "bezier") {
+            // Mirrors FadeShape::bezierAt — anchors pinned at (0,0)/(1,1), solve x for t.
+            const h = clipItem.clipData.fadeHandles || [0.42, 0.0, 0.58, 1.0]
+            let lo = 0, hi = 1
+            for (let i = 0; i < 24; ++i) {
+                const mid = (lo + hi) / 2
+                const mt = 1 - mid
+                const x = 3 * mt * mt * mid * h[0] + 3 * mt * mid * mid * h[2] + mid * mid * mid
+                if (x < t) lo = mid; else hi = mid
+            }
+            const u = (lo + hi) / 2
+            const mu = 1 - u
+            return 3 * mu * mu * u * h[1] + 3 * mu * u * u * h[3] + u * u * u
+        }
         if (curve === "custom") {
             const pts = clipItem.clipData.fadeShape || []
             if (pts.length < 2)

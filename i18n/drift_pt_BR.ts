@@ -1238,6 +1238,10 @@
         <translation>Personalizada</translation>
     </message>
     <message>
+        <source>Bezier</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Not available</source>
         <translation>Não disponível</translation>
     </message>
@@ -2042,6 +2046,26 @@
     </message>
     <message>
         <source>Clips moved</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Transition curve</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Transition curve updated</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>That transition is gone — open the custom curve again</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Custom transition curve</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Custom transition curve applied</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -4887,12 +4911,28 @@
         <translation>Curva personalizada</translation>
     </message>
     <message>
+        <source>Progress curve — %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Progress curve</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Fade shape — %1</source>
         <translation>Forma do fade — %1</translation>
     </message>
     <message>
         <source>Fade shape</source>
         <translation>Forma do fade</translation>
+    </message>
+    <message>
+        <source>Points</source>
+        <translation type="unfinished">Pontas</translation>
+    </message>
+    <message>
+        <source>Bezier</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Linear</source>
@@ -4903,8 +4943,24 @@
         <translation>Suave</translation>
     </message>
     <message>
+        <source>Ease</source>
+        <translation type="unfinished">Suave</translation>
+    </message>
+    <message>
         <source>Natural</source>
         <translation>Natural</translation>
+    </message>
+    <message>
+        <source>Ease In</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Ease Out</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Drag the two handles to shape the cubic. The ends stay pinned, and handles are held inside the box so the curve cannot fold back on itself.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Drag the middle points to shape the ramp (ends stay silent→full). Double-click to add a point; Delete removes the selection.</source>
@@ -9345,6 +9401,30 @@ Se a reprodução travar, experimente outro.</translation>
     <message>
         <source>Duration</source>
         <translation>Duração</translation>
+    </message>
+    <message>
+        <source>Curve</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Linear</source>
+        <translation type="unfinished">Linear</translation>
+    </message>
+    <message>
+        <source>Smooth</source>
+        <translation type="unfinished">Suave</translation>
+    </message>
+    <message>
+        <source>Natural</source>
+        <translation type="unfinished">Natural</translation>
+    </message>
+    <message>
+        <source>Custom</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Bezier</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>On</source>

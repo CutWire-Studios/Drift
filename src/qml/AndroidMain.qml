@@ -336,6 +336,10 @@ ApplicationWindow {
         fadeCurveWindow.openFor(track, clip)
     }
 
+    function openTransitionCurve(track, transitionId) {
+        fadeCurveWindow.openForTransition(track, transitionId)
+    }
+
     // Preview-and-edit is its own screen, not one of the Windows above: a secondary Window gets
     // no safe-area insets here (its header lands under the status bar) and a VideoOutput inside
     // one paints black. Pushed onto the stack rather than layered over it, because an item over

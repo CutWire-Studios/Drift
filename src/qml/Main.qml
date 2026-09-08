@@ -432,6 +432,10 @@ ApplicationWindow {
         fadeCurveWindow.openFor(track, clip)
     }
 
+    function openTransitionCurve(track, transitionId) {
+        fadeCurveWindow.openForTransition(track, transitionId)
+    }
+
     function openMediaPreview(assetIndex) {
         mediaPreviewWindow.openFor(assetIndex)
     }

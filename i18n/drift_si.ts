@@ -1238,6 +1238,10 @@
         <translation>අභිරුචි</translation>
     </message>
     <message>
+        <source>Bezier</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Not available</source>
         <translation>ලබාගත නොහැක</translation>
     </message>
@@ -2042,6 +2046,26 @@
     </message>
     <message>
         <source>Clips moved</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Transition curve</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Transition curve updated</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>That transition is gone — open the custom curve again</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Custom transition curve</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Custom transition curve applied</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -4887,12 +4911,28 @@
         <translation>අභිරුචි වක්‍රය</translation>
     </message>
     <message>
+        <source>Progress curve — %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Progress curve</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Fade shape — %1</source>
         <translation>Fade හැඩය — %1</translation>
     </message>
     <message>
         <source>Fade shape</source>
         <translation>Fade හැඩය</translation>
+    </message>
+    <message>
+        <source>Points</source>
+        <translation type="unfinished">ලක්ෂ්‍ය (Points)</translation>
+    </message>
+    <message>
+        <source>Bezier</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Linear</source>
@@ -4903,8 +4943,24 @@
         <translation>සුමට</translation>
     </message>
     <message>
+        <source>Ease</source>
+        <translation type="unfinished">Ease</translation>
+    </message>
+    <message>
         <source>Natural</source>
         <translation>ස්වභාවික</translation>
+    </message>
+    <message>
+        <source>Ease In</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Ease Out</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Drag the two handles to shape the cubic. The ends stay pinned, and handles are held inside the box so the curve cannot fold back on itself.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Drag the middle points to shape the ramp (ends stay silent→full). Double-click to add a point; Delete removes the selection.</source>
@@ -9345,6 +9401,30 @@ If playback stutters, try another.</source>
     <message>
         <source>Duration</source>
         <translation>කාලසීමාව</translation>
+    </message>
+    <message>
+        <source>Curve</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Linear</source>
+        <translation type="unfinished">රේඛීය</translation>
+    </message>
+    <message>
+        <source>Smooth</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Natural</source>
+        <translation type="unfinished">ස්වභාවික</translation>
+    </message>
+    <message>
+        <source>Custom</source>
+        <translation type="unfinished">අභිරුචි</translation>
+    </message>
+    <message>
+        <source>Bezier</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>On</source>

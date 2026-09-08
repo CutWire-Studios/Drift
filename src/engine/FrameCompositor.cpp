@@ -1107,7 +1107,8 @@ GpuScene buildGpuScene(const drift::Project &project, drift::TimeUs timelineUs, 
                 item.to = buildGpuLayer(*toClip, timelineUs, projectWidth, projectHeight, renderScale,
                                         width, height, fps, options.maxTimeEchoHistoryFrames,
                                         laneEffects, laneMasks);
-                item.progress = drift::transitionProgress(timelineUs, transitionStart, transitionEnd);
+                item.progress =
+                    drift::transitionProgress(*activeTransition, timelineUs, transitionStart, transitionEnd);
                 // Time is measured from the start of the transition window so a
                 // shader's u_time is a pure function of window position, like
                 // u_progress.

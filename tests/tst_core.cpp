@@ -95,6 +95,10 @@ private slots:
     void transitionParametersRoundTrip();
     void legacyTransitionJsonStillLoads();
     void transitionAudioCurves();
+    void transitionEasingCurveRoundTrips();
+    void transitionEasingRemapsProgress();
+    void bezierCurveShapesProgress();
+    void bezierShapeRoundTrips();
     void physicalOverlapTransitionWindow();
     void clampClipStartNoOverlapPushesPastBlockers();
     void clampTrimEdgesIgnoreExistingOverlaps();
@@ -2371,6 +2375,131 @@ void CoreTest::legacyTransitionJsonStillLoads()
     QVERIFY2(error.isEmpty(), qPrintable(error));
     QCOMPARE(loaded.tracks()[0].transitions[0].kindId, QStringLiteral("wipe_up"));
     QVERIFY(loaded.tracks()[0].transitions[0].parameters.isEmpty());
+}
+
+void CoreTest::transitionEasingCurveRoundTrips()
+{
+    drift::Project project = projectWithTransition(QStringLiteral("crossfade"));
+    drift::Transition &t = project.tracks()[0].transitions[0];
+    t.easingCurve = drift::FadeCurve::Custom;
+    drift::FadeShape shape;
+    shape.setPoints({QPointF(0.0, 0.0), QPointF(0.4, 0.1), QPointF(1.0, 1.0)});
+    t.easingShape = shape;
+
+    QString error;
+    const drift::Project loaded = drift::Project::fromJson(project.toJson(), &error);
+    QVERIFY2(error.isEmpty(), qPrintable(error));
+
+    const drift::Transition &out = loaded.tracks()[0].transitions[0];
+    QCOMPARE(out.easingCurve, drift::FadeCurve::Custom);
+    QCOMPARE(out.easingShape.points().size(), shape.points().size());
+    QCOMPARE(out.easingShape.gainAt(0.4), shape.gainAt(0.4));
+
+    // A transition that was never eased must serialize exactly as it did before the field
+    // existed, so projects written by older builds stay byte-identical on re-save.
+    const drift::Project plain = projectWithTransition(QStringLiteral("crossfade"));
+    const QJsonObject plainJson =
+        plain.toJson().value(QStringLiteral("tracks")).toArray().at(0).toObject()
+            .value(QStringLiteral("transitions")).toArray().at(0).toObject();
+    QVERIFY(!plainJson.contains(QStringLiteral("easingCurve")));
+    QVERIFY(!plainJson.contains(QStringLiteral("easingShape")));
+}
+
+void CoreTest::transitionEasingRemapsProgress()
+{
+    drift::Transition t;
+    const drift::TimeUs start = 0;
+    const drift::TimeUs end = 1'000'000;
+    const drift::TimeUs quarter = 250'000;
+
+    // Linear is the historical behaviour and must stay bit-identical to the plain overload.
+    QCOMPARE(drift::transitionProgress(t, quarter, start, end),
+             drift::transitionProgress(quarter, start, end));
+
+    t.easingCurve = drift::FadeCurve::Smooth;
+    const double eased = drift::transitionProgress(t, quarter, start, end);
+    QVERIFY(eased < 0.25);                                    // smoothstep starts slow
+    QCOMPARE(drift::transitionProgress(t, start, start, end), 0.0);
+    QCOMPARE(drift::transitionProgress(t, end, start, end), 1.0);
+
+    // Endpoints stay pinned for a custom shape too, or the transition would not resolve to the
+    // incoming clip.
+    t.easingCurve = drift::FadeCurve::Custom;
+    drift::FadeShape shape;
+    shape.setPoints({QPointF(0.0, 0.0), QPointF(0.5, 0.9), QPointF(1.0, 1.0)});
+    t.easingShape = shape;
+    QCOMPARE(drift::transitionProgress(t, start, start, end), 0.0);
+    QCOMPARE(drift::transitionProgress(t, end, start, end), 1.0);
+    QVERIFY(drift::transitionProgress(t, 500'000, start, end) > 0.8);
+}
+
+void CoreTest::bezierCurveShapesProgress()
+{
+    drift::FadeShape shape;
+    // CSS ease-in: slow to start, so the midpoint sits below the diagonal.
+    shape.setHandles(QPointF(0.42, 0.0), QPointF(1.0, 1.0));
+    QCOMPARE(shape.bezierAt(0.0), 0.0);
+    QCOMPARE(shape.bezierAt(1.0), 1.0);
+    QVERIFY(shape.bezierAt(0.5) < 0.5);
+
+    // Mirror it and the midpoint must rise above the diagonal.
+    drift::FadeShape out;
+    out.setHandles(QPointF(0.0, 0.0), QPointF(0.58, 1.0));
+    QVERIFY(out.bezierAt(0.5) > 0.5);
+
+    // Handles on the thirds are the identity cubic, so it must track linear closely.
+    drift::FadeShape straight;
+    straight.setHandles(QPointF(1.0 / 3.0, 1.0 / 3.0), QPointF(2.0 / 3.0, 2.0 / 3.0));
+    for (double t = 0.0; t <= 1.0; t += 0.1)
+        QVERIFY(qAbs(straight.bezierAt(t) - t) < 1e-6);
+
+    // Monotonic: a fold-back would make progress run backwards mid-transition.
+    double previous = -1.0;
+    for (int i = 0; i <= 100; ++i) {
+        const double v = shape.bezierAt(i / 100.0);
+        QVERIFY(v >= previous - 1e-9);
+        previous = v;
+    }
+
+    // Handles are clamped into the unit box on the way in.
+    drift::FadeShape clamped;
+    clamped.setHandles(QPointF(-2.0, 5.0), QPointF(3.0, -1.0));
+    QCOMPARE(clamped.handle1(), QPointF(0.0, 1.0));
+    QCOMPARE(clamped.handle2(), QPointF(1.0, 0.0));
+
+    // And it reaches shapedProgress under the Bezier curve, not the polyline.
+    drift::FadeShape eased;
+    eased.setHandles(QPointF(0.42, 0.0), QPointF(1.0, 1.0));
+    QCOMPARE(drift::shapedProgress(0.5, drift::FadeCurve::Bezier, eased), eased.bezierAt(0.5));
+    QCOMPARE(drift::shapedProgress(0.5, drift::FadeCurve::Linear, eased), 0.5);
+}
+
+void CoreTest::bezierShapeRoundTrips()
+{
+    drift::Project project = projectWithTransition(QStringLiteral("crossfade"));
+    drift::Transition &t = project.tracks()[0].transitions[0];
+    t.easingCurve = drift::FadeCurve::Bezier;
+    t.easingShape.setHandles(QPointF(0.17, 0.67), QPointF(0.83, 0.67));
+
+    QString error;
+    const drift::Project loaded = drift::Project::fromJson(project.toJson(), &error);
+    QVERIFY2(error.isEmpty(), qPrintable(error));
+    const drift::Transition &out = loaded.tracks()[0].transitions[0];
+    QCOMPARE(out.easingCurve, drift::FadeCurve::Bezier);
+    QCOMPARE(out.easingShape.handle1(), QPointF(0.17, 0.67));
+    QCOMPARE(out.easingShape.handle2(), QPointF(0.83, 0.67));
+
+    // A shape that was never given handles still writes the bare array older builds expect,
+    // rather than being promoted to the object form.
+    drift::FadeShape polyline;
+    polyline.setPoints({QPointF(0.0, 0.0), QPointF(0.5, 0.8), QPointF(1.0, 1.0)});
+    QVERIFY(!polyline.hasHandles());
+    QVERIFY(polyline.toJson().isArray());
+    QVERIFY(drift::FadeShape::fromJson(polyline.toJson()).gainAt(0.5) > 0.7);
+
+    drift::FadeShape bezier;
+    bezier.setHandles(QPointF(0.2, 0.1), QPointF(0.8, 0.9));
+    QVERIFY(bezier.toJson().isObject());
 }
 
 void CoreTest::transitionAudioCurves()
