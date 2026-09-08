@@ -3039,6 +3039,26 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>That template location isn’t valid</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Failed to unpack Motion Graphics Template</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Failed to apply template to project</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Import template: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Template imported: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Exporting…</source>
         <translation type="unfinished"></translation>
     </message>
@@ -3337,6 +3357,14 @@
             <numerusform></numerusform>
             <numerusform></numerusform>
         </translation>
+    </message>
+    <message>
+        <source>Motion Graphics Template (*.mogrt)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>All Files (*)</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Import Folder</source>
@@ -4229,6 +4257,10 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Motion Graphics Template (*.mogrt)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Final Cut Pro XML (*.xml)</source>
         <translation type="unfinished"></translation>
     </message>
@@ -4258,6 +4290,14 @@
     </message>
     <message>
         <source>Premiere Pro project (*.prproj *.xml)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Import Motion Graphics Template</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>All Files (*)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -4309,6 +4349,10 @@
     </message>
     <message>
         <source>Video</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>All Supported Projects (*.drift *.prproj *.xml *.mogrt)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -4389,10 +4433,6 @@
     </message>
     <message>
         <source>Multicam</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>All Supported Projects (*.drift *.prproj *.xml)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -7088,6 +7128,14 @@ If playback stutters, try another.</source>
         <source>A%1</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>Not a valid ZIP archive</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>MOGRT archive is empty or invalid</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>RecentProjectsPopup</name>
@@ -7142,6 +7190,10 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Import Premiere project…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Import Motion Graphics (.mogrt)…</source>
         <translation type="unfinished"></translation>
     </message>
     <message>

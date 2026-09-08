@@ -31,6 +31,21 @@ PanelFrame {
     function importUrlsReporting(urls, fromDrop) {
         if (!urls || urls.length === 0)
             return
+
+        let mediaUrls = []
+        for (let i = 0; i < urls.length; ++i) {
+            const u = urls[i]
+            const str = (typeof u === "string" ? u : u.toString()).toLowerCase()
+            if (str.endsWith(".mogrt")) {
+                EditorState.importMogrt(u)
+            } else {
+                mediaUrls.push(u)
+            }
+        }
+        if (mediaUrls.length === 0)
+            return
+        urls = mediaUrls
+
         // Async, because on Android reading a picked file means copying it out of the
         // SAF stream first. Run inline, that copy blocked the GUI thread for the whole
         // transfer — which also meant the "Importing…" overlay below was set and cleared
@@ -581,7 +596,10 @@ PanelFrame {
     }
 
     function importMedia() {
-        var urls = FileDialogs.openFiles(qsTr("Import Media"), [AssetLibrary.mediaNameFilter()])
+        var urls = FileDialogs.openFiles(qsTr("Import Media"),
+                                         [AssetLibrary.mediaNameFilter(),
+                                          qsTr("Motion Graphics Template (*.mogrt)"),
+                                          qsTr("All Files (*)")])
         root.importUrlsReporting(urls)
     }
 

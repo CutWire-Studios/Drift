@@ -16,6 +16,7 @@ Popup {
     signal saveJsonRequested()
     signal openJsonRequested()
     signal importPremiereRequested()
+    signal importMogrtRequested()
     signal propertiesRequested()
 
     component ActionRow: Rectangle {
@@ -423,6 +424,12 @@ Popup {
             glyph: Theme.icons.film
             text: qsTr("Import Premiere project…")
             onTriggered: root.importPremiereRequested()
+        }
+
+        ActionRow {
+            glyph: Theme.icons.layers
+            text: qsTr("Import Motion Graphics (.mogrt)…")
+            onTriggered: root.importMogrtRequested()
         }
 
         ActionRow {

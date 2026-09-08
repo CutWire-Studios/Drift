@@ -17,15 +17,18 @@ Rectangle {
     property string projectName: EditorState.projectName
 
     readonly property var projectFilter: [
-        qsTr("All Supported Projects (*.drift *.prproj *.xml)"),
+        qsTr("All Supported Projects (*.drift *.prproj *.xml *.mogrt)"),
         qsTr("Drift project (*.drift)"),
         qsTr("Premiere Pro project (*.prproj)"),
+        qsTr("Motion Graphics Template (*.mogrt)"),
         qsTr("Final Cut Pro XML (*.xml)")
     ]
     readonly property var projectMimeTypes: [
         "application/x-drift-project",
         "application/xml",
-        "text/xml"
+        "text/xml",
+        "application/zip",
+        "application/octet-stream"
     ]
 
     // Action to run after Save or Don't Save resolves. Null when idle.
@@ -112,6 +115,15 @@ Rectangle {
             if (url != "")
                 EditorState.loadPremiereProject(url)
         })
+    }
+
+    function openMogrt() {
+        var url = FileDialogs.openFile(qsTr("Import Motion Graphics Template"),
+                                       [qsTr("Motion Graphics Template (*.mogrt)"),
+                                        qsTr("All Files (*)")],
+                                       ["application/zip", "application/octet-stream"])
+        if (url != "")
+            EditorState.importMogrt(url)
     }
 
     // Save As with every source file copied in, so the result opens on a machine that has none of
@@ -308,6 +320,7 @@ Rectangle {
                     onSaveJsonRequested: root.saveProjectJson()
                     onOpenJsonRequested: root.openProjectJson()
                     onImportPremiereRequested: root.openPremiereProject()
+                    onImportMogrtRequested: root.openMogrt()
                     onPropertiesRequested: projectPropertiesDialog.openDialog()
                 }
             }
