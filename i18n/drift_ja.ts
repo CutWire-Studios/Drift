@@ -223,6 +223,97 @@
     </message>
 </context>
 <context>
+    <name>AgentAccessControls</name>
+    <message>
+        <source>Let Cursor or Claude edit this project for you — add clips, change the timeline, and check how it looks. Only programs on this device. Starts off each time you open Drift; turn it off when you finish.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Allow for this session</source>
+        <translation type="unfinished">このセッションで許可</translation>
+    </message>
+    <message>
+        <source>Let an assistant on this device edit this project until you turn it off or quit.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Turn this on, then copy the setup for Cursor or Claude and paste it into that app.</source>
+        <translation type="unfinished">これをオンにして、Cursor または Claude のセットアップをコピーし、そのアプリに貼り付けてください。</translation>
+    </message>
+    <message>
+        <source>Access is on</source>
+        <translation type="unfinished">アクセスがオンです</translation>
+    </message>
+    <message>
+        <source>Listening on %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Copy the setup for the assistant you use. You only need one.</source>
+        <translation type="unfinished">使用するアシスタントのセットアップをコピーしてください。いずれか 1つで十分です。</translation>
+    </message>
+    <message>
+        <source>Copy for Cursor</source>
+        <translation type="unfinished">Cursor 用にコピー</translation>
+    </message>
+    <message>
+        <source>Copy a setup snippet to paste into Cursor</source>
+        <translation type="unfinished">Cursor に貼り付けるセットアップスニペットをコピー</translation>
+    </message>
+    <message>
+        <source>Copied for Cursor</source>
+        <translation type="unfinished">Cursor 用にコピーしました</translation>
+    </message>
+    <message>
+        <source>Copy for Claude</source>
+        <translation type="unfinished">Claude 用にコピー</translation>
+    </message>
+    <message>
+        <source>Copy a command to paste into Claude Code</source>
+        <translation type="unfinished">Claude Code に貼り付けるコマンドをコピー</translation>
+    </message>
+    <message>
+        <source>Copied for Claude</source>
+        <translation type="unfinished">Claude 用にコピーしました</translation>
+    </message>
+    <message>
+        <source>Paste that into the assistant. To help it use this editor, copy the how-to next and paste it into the chat.</source>
+        <translation type="unfinished">それをアシスタントに貼り付けてください。このエディターの使い方をアシスタントに教えるには、次にある使い方をコピーしてチャットに貼り付けてください。</translation>
+    </message>
+    <message>
+        <source>Copy a how-to for the agent</source>
+        <translation type="unfinished">エージェント用の使い方をコピー</translation>
+    </message>
+    <message>
+        <source>A short list of what the agent can do here — paste it into the chat</source>
+        <translation type="unfinished">エージェントがここでできることの簡単なリスト — チャットに貼り付けてください</translation>
+    </message>
+    <message>
+        <source>Copied how-to</source>
+        <translation type="unfinished">使い方をコピーしました</translation>
+    </message>
+    <message>
+        <source>More options</source>
+        <translation type="unfinished">その他のオプション</translation>
+    </message>
+    <message>
+        <source>For a different assistant, copy a one-time setup. The address and key are already in the Cursor and Claude copies above.</source>
+        <translation type="unfinished">別のアシスタントの場合は、一回限りのセットアップをコピーしてください。アドレスとキーは既に上の Cursor と Claude のコピーに含まれています。</translation>
+    </message>
+    <message>
+        <source>Copy one-time setup</source>
+        <translation type="unfinished">一回限りのセットアップをコピー</translation>
+    </message>
+    <message>
+        <source>Add this once to the assistant’s config. Access still has to be turned on here.</source>
+        <translation type="unfinished">これをアシスタントの設定に一度追加してください。アクセスはここでオンにする必要があります。</translation>
+    </message>
+    <message>
+        <source>Copied one-time setup</source>
+        <translation type="unfinished">一回限りのセットアップをコピーしました</translation>
+    </message>
+</context>
+<context>
     <name>AgentAccessDialog</name>
     <message>
         <source>Agent access</source>
@@ -231,90 +322,6 @@
     <message>
         <source>Close</source>
         <translation>閉じる</translation>
-    </message>
-    <message>
-        <source>Let Cursor or Claude edit this project for you — add clips, change the timeline, and check how it looks. Only programs on this computer. Starts off each time you open Drift; turn it off when you finish.</source>
-        <translation>Cursor や Claude にこのプロジェクトの編集を任せられます — クリップの追加、タイムラインの変更、仕上がりの確認など。このコンピューター上のプログラムのみ対象です。Drift を開くたびにオフの状態から始まり、作業が終わったらオフにしてください。</translation>
-    </message>
-    <message>
-        <source>Allow for this session</source>
-        <translation>このセッションで許可</translation>
-    </message>
-    <message>
-        <source>Allows an assistant on this computer to edit this project until you turn it off or quit.</source>
-        <translation>このコンピューター上のアシスタントが、オフにするか終了するまでこのプロジェクトを編集できるようにします。</translation>
-    </message>
-    <message>
-        <source>Turn this on, then copy the setup for Cursor or Claude and paste it into that app.</source>
-        <translation>これをオンにして、Cursor または Claude のセットアップをコピーし、そのアプリに貼り付けてください。</translation>
-    </message>
-    <message>
-        <source>Access is on</source>
-        <translation>アクセスがオンです</translation>
-    </message>
-    <message>
-        <source>Copy the setup for the assistant you use. You only need one.</source>
-        <translation>使用するアシスタントのセットアップをコピーしてください。いずれか 1つで十分です。</translation>
-    </message>
-    <message>
-        <source>Copy for Cursor</source>
-        <translation>Cursor 用にコピー</translation>
-    </message>
-    <message>
-        <source>Copy a setup snippet to paste into Cursor</source>
-        <translation>Cursor に貼り付けるセットアップスニペットをコピー</translation>
-    </message>
-    <message>
-        <source>Copied for Cursor</source>
-        <translation>Cursor 用にコピーしました</translation>
-    </message>
-    <message>
-        <source>Copy for Claude</source>
-        <translation>Claude 用にコピー</translation>
-    </message>
-    <message>
-        <source>Copy a command to paste into Claude Code</source>
-        <translation>Claude Code に貼り付けるコマンドをコピー</translation>
-    </message>
-    <message>
-        <source>Copied for Claude</source>
-        <translation>Claude 用にコピーしました</translation>
-    </message>
-    <message>
-        <source>Paste that into the assistant. To help it use this editor, copy the how-to next and paste it into the chat.</source>
-        <translation>それをアシスタントに貼り付けてください。このエディターの使い方をアシスタントに教えるには、次にある使い方をコピーしてチャットに貼り付けてください。</translation>
-    </message>
-    <message>
-        <source>Copy a how-to for the agent</source>
-        <translation>エージェント用の使い方をコピー</translation>
-    </message>
-    <message>
-        <source>A short list of what the agent can do here — paste it into the chat</source>
-        <translation>エージェントがここでできることの簡単なリスト — チャットに貼り付けてください</translation>
-    </message>
-    <message>
-        <source>Copied how-to</source>
-        <translation>使い方をコピーしました</translation>
-    </message>
-    <message>
-        <source>More options</source>
-        <translation>その他のオプション</translation>
-    </message>
-    <message>
-        <source>For a different assistant, copy a one-time setup. The address and key are already in the Cursor and Claude copies above.</source>
-        <translation>別のアシスタントの場合は、一回限りのセットアップをコピーしてください。アドレスとキーは既に上の Cursor と Claude のコピーに含まれています。</translation>
-    </message>
-    <message>
-        <source>Copy one-time setup</source>
-        <translation>一回限りのセットアップをコピー</translation>
-    </message>
-    <message>
-        <source>Add this once to the assistant’s config. Access still has to be turned on here.</source>
-        <translation>これをアシスタントの設定に一度追加してください。アクセスはここでオンにする必要があります。</translation>
-    </message>
-    <message>
-        <source>Copied one-time setup</source>
-        <translation>一回限りのセットアップをコピーしました</translation>
     </message>
 </context>
 <context>
@@ -372,6 +379,22 @@
         <translation>四角、丸、線</translation>
     </message>
     <message>
+        <source>Effect templates</source>
+        <translation type="unfinished">エフェクトテンプレート</translation>
+    </message>
+    <message>
+        <source>Saved stacks of effects to drop on a clip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Scenes</source>
+        <translation type="unfinished">シーン</translation>
+    </message>
+    <message>
+        <source>Jump between the sections of this edit</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Masks</source>
         <translation>マスク</translation>
     </message>
@@ -399,6 +422,10 @@
         <translation>トランジション</translation>
     </message>
     <message>
+        <source>Tap a clip to edit it</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Add to timeline</source>
         <translation>タイムラインに追加</translation>
     </message>
@@ -412,6 +439,45 @@
     <message>
         <source>Close</source>
         <translation>閉じる</translation>
+    </message>
+</context>
+<context>
+    <name>AndroidClipToolbar</name>
+    <message>
+        <source>Duration</source>
+        <translation type="unfinished">長さ</translation>
+    </message>
+    <message>
+        <source>Curve</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Replace</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Delete</source>
+        <translation type="unfinished">削除</translation>
+    </message>
+    <message>
+        <source>Split</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Duplicate</source>
+        <translation type="unfinished">複製</translation>
+    </message>
+    <message>
+        <source>More</source>
+        <translation type="unfinished">その他</translation>
+    </message>
+    <message>
+        <source>Fit</source>
+        <translation type="unfinished">フィット</translation>
+    </message>
+    <message>
+        <source>Tap a clip to edit</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -434,121 +500,6 @@
     </message>
 </context>
 <context>
-    <name>AndroidEditActions</name>
-    <message>
-        <source>Select</source>
-        <translation>選択</translation>
-    </message>
-    <message>
-        <source>Blade — tap a clip to split</source>
-        <translation>ブレード — クリップをタップして分割</translation>
-    </message>
-    <message>
-        <source>Trim start — tap a clip to drop everything before the cut</source>
-        <translation>先頭トリム — クリップをタップしてカットより前を削除</translation>
-    </message>
-    <message>
-        <source>Trim end — tap a clip to drop everything after the cut</source>
-        <translation>終了トリム — クリップをタップしてカットより後を削除</translation>
-    </message>
-    <message>
-        <source>Paste at current time</source>
-        <translation>現在の時間に貼り付け</translation>
-    </message>
-    <message>
-        <source>Duplicate clip</source>
-        <translation>クリップを複製</translation>
-    </message>
-    <message>
-        <source>Merge adjacent clips</source>
-        <translation>隣接クリップを結合</translation>
-    </message>
-    <message>
-        <source>Close gap after clip</source>
-        <translation>クリップ後のギャップを埋める</translation>
-    </message>
-    <message>
-        <source>Freeze frame at current time</source>
-        <translation>現在の時間でフリーズフレーム</translation>
-    </message>
-    <message>
-        <source>Separate audio from video</source>
-        <translation>ビデオからオーディオを分離</translation>
-    </message>
-    <message>
-        <source>Delete</source>
-        <translation>削除</translation>
-    </message>
-    <message>
-        <source>Add or remove a bookmark here</source>
-        <translation>ここにブックマークを追加/削除</translation>
-    </message>
-    <message>
-        <source>Previous bookmark</source>
-        <translation>前のブックマーク</translation>
-    </message>
-    <message>
-        <source>Next bookmark</source>
-        <translation>次のブックマーク</translation>
-    </message>
-    <message>
-        <source>Mark work area in at current time</source>
-        <translation>現在の時間にワークエリアインをマーク</translation>
-    </message>
-    <message>
-        <source>Mark work area out at current time</source>
-        <translation>現在の時間にワークエリアアウトをマーク</translation>
-    </message>
-    <message>
-        <source>Go to work area in</source>
-        <translation>ワークエリアインへ移動</translation>
-    </message>
-    <message>
-        <source>Go to work area out</source>
-        <translation>ワークエリアアウトへ移動</translation>
-    </message>
-    <message>
-        <source>Clear work area</source>
-        <translation>ワークエリアをクリア</translation>
-    </message>
-    <message>
-        <source>Toggle snapping</source>
-        <translation>スナップの切り替え</translation>
-    </message>
-    <message>
-        <source>Analyzing…</source>
-        <translation>分析中…</translation>
-    </message>
-    <message>
-        <source>Hide beat markers</source>
-        <translation>ビートマーカーを非表示</translation>
-    </message>
-    <message>
-        <source>Find the beat and show markers</source>
-        <translation>ビートを検出してマーカーを表示</translation>
-    </message>
-    <message>
-        <source>Close gaps when trimming</source>
-        <translation>トリム時にギャップを埋める</translation>
-    </message>
-    <message>
-        <source>Allow clip overlap</source>
-        <translation>クリップの重複を許可</translation>
-    </message>
-    <message>
-        <source>Shorter layers</source>
-        <translation>レイヤーを短く</translation>
-    </message>
-    <message>
-        <source>Taller layers</source>
-        <translation>レイヤーを高く</translation>
-    </message>
-    <message>
-        <source>Fit timeline in view</source>
-        <translation>タイムラインをビューに合わせる</translation>
-    </message>
-</context>
-<context>
     <name>AndroidEditor</name>
     <message>
         <source>Drift project (*.drift)</source>
@@ -564,7 +515,7 @@
     </message>
     <message>
         <source>Open Project</source>
-        <translation>プロジェクトを開く</translation>
+        <translation type="unfinished">プロジェクトを開く</translation>
     </message>
     <message>
         <source>Your timeline is empty</source>
@@ -581,6 +532,10 @@
     <message>
         <source>Edit</source>
         <translation>編集</translation>
+    </message>
+    <message>
+        <source>Done</source>
+        <translation type="unfinished">完了</translation>
     </message>
 </context>
 <context>
@@ -603,6 +558,45 @@
     <message>
         <source>Me</source>
         <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>AndroidLayoutSheet</name>
+    <message>
+        <source>Canvas &amp; layout</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Custom</source>
+        <translation type="unfinished">カスタム</translation>
+    </message>
+    <message>
+        <source>Template</source>
+        <translation type="unfinished">テンプレート</translation>
+    </message>
+    <message>
+        <source>Width</source>
+        <translation type="unfinished">幅</translation>
+    </message>
+    <message>
+        <source>Height</source>
+        <translation type="unfinished">高さ</translation>
+    </message>
+    <message>
+        <source>Quality</source>
+        <translation type="unfinished">品質</translation>
+    </message>
+    <message>
+        <source>Frames per second</source>
+        <translation type="unfinished">フレーム/秒</translation>
+    </message>
+    <message>
+        <source>%1×%2 · %3 · %4 fps</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Done</source>
+        <translation type="unfinished">完了</translation>
     </message>
 </context>
 <context>
@@ -769,6 +763,165 @@
     </message>
 </context>
 <context>
+    <name>AndroidMoreToolsSheet</name>
+    <message>
+        <source>More tools</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Trim &amp; timing</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Trim start</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Drop everything before the playhead</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Trim end</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Drop everything after the playhead</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Speed</source>
+        <translation type="unfinished">速度</translation>
+    </message>
+    <message>
+        <source>Change how fast this clip plays</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Freeze frame</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Freeze frame at current time</source>
+        <translation type="unfinished">現在の時間でフリーズフレーム</translation>
+    </message>
+    <message>
+        <source>Merge</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Merge adjacent clips</source>
+        <translation type="unfinished">隣接クリップを結合</translation>
+    </message>
+    <message>
+        <source>Close gap</source>
+        <translation type="unfinished">ギャップを埋める</translation>
+    </message>
+    <message>
+        <source>Close gap after clip</source>
+        <translation type="unfinished">クリップ後のギャップを埋める</translation>
+    </message>
+    <message>
+        <source>Audio</source>
+        <translation type="unfinished">オーディオ</translation>
+    </message>
+    <message>
+        <source>Separate audio</source>
+        <translation type="unfinished">オーディオを分離</translation>
+    </message>
+    <message>
+        <source>Separate audio from video</source>
+        <translation type="unfinished">ビデオからオーディオを分離</translation>
+    </message>
+    <message>
+        <source>Timeline</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Snapping</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Line clip edges up with cuts and markers</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Ripple</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Close gaps when trimming</source>
+        <translation type="unfinished">トリム時にギャップを埋める</translation>
+    </message>
+    <message>
+        <source>Overlap</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Allow clip overlap</source>
+        <translation type="unfinished">クリップの重複を許可</translation>
+    </message>
+    <message>
+        <source>Beat markers</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Find the beat and show markers</source>
+        <translation type="unfinished">ビートを検出してマーカーを表示</translation>
+    </message>
+    <message>
+        <source>Markers &amp; view</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Paste</source>
+        <translation type="unfinished">貼り付け</translation>
+    </message>
+    <message>
+        <source>Paste at current time</source>
+        <translation type="unfinished">現在の時間に貼り付け</translation>
+    </message>
+    <message>
+        <source>Bookmark</source>
+        <translation type="unfinished">ブックマーク</translation>
+    </message>
+    <message>
+        <source>Add or remove a bookmark here</source>
+        <translation type="unfinished">ここにブックマークを追加/削除</translation>
+    </message>
+    <message>
+        <source>Work area in</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Mark work area in at current time</source>
+        <translation type="unfinished">現在の時間にワークエリアインをマーク</translation>
+    </message>
+    <message>
+        <source>Work area out</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Mark work area out at current time</source>
+        <translation type="unfinished">現在の時間にワークエリアアウトをマーク</translation>
+    </message>
+    <message>
+        <source>Clear work area</source>
+        <translation type="unfinished">ワークエリアをクリア</translation>
+    </message>
+    <message>
+        <source>Shorter layers</source>
+        <translation type="unfinished">レイヤーを短く</translation>
+    </message>
+    <message>
+        <source>Taller layers</source>
+        <translation type="unfinished">レイヤーを高く</translation>
+    </message>
+    <message>
+        <source>Analyzing…</source>
+        <translation type="unfinished">分析中…</translation>
+    </message>
+</context>
+<context>
     <name>AndroidPreview</name>
     <message>
         <source>Audio only</source>
@@ -861,6 +1014,69 @@
     <message>
         <source>Fullscreen preview</source>
         <translation>フルスクリーンプレビュー</translation>
+    </message>
+</context>
+<context>
+    <name>AndroidProjectSheet</name>
+    <message>
+        <source>Project</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Export</source>
+        <translation type="unfinished">エクスポート</translation>
+    </message>
+    <message>
+        <source>Render the finished video</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Save</source>
+        <translation type="unfinished">保存</translation>
+    </message>
+    <message>
+        <source>Keep this project on the device</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Share a copy</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>One file with the media packed inside</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Canvas &amp; layout</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Video size, aspect and frame rate</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Project properties</source>
+        <translation type="unfinished">プロジェクトプロパティ</translation>
+    </message>
+    <message>
+        <source>Name, resolution and timebase</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Multicam</source>
+        <translation type="unfinished">マルチカム</translation>
+    </message>
+    <message>
+        <source>Sync and switch between angles</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>App settings</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Appearance, extras and agent access</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -1014,6 +1230,10 @@
         <translation>戻る</translation>
     </message>
     <message>
+        <source>Project actions</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Untitled</source>
         <translation>無題</translation>
     </message>
@@ -1030,68 +1250,8 @@
         <translation>エクスポート</translation>
     </message>
     <message>
-        <source>More</source>
-        <translation>その他</translation>
-    </message>
-    <message>
-        <source>Save</source>
-        <translation>保存</translation>
-    </message>
-    <message>
-        <source>Shareable copy</source>
-        <translation>共有可能なコピー</translation>
-    </message>
-    <message>
-        <source>Open project</source>
-        <translation>プロジェクトを開く</translation>
-    </message>
-    <message>
-        <source>New project</source>
-        <translation>新規プロジェクト</translation>
-    </message>
-    <message>
-        <source>Choose layout</source>
-        <translation>レイアウトを選択</translation>
-    </message>
-    <message>
-        <source>Project properties</source>
-        <translation>プロジェクトプロパティ</translation>
-    </message>
-    <message>
-        <source>Effect templates</source>
-        <translation>エフェクトテンプレート</translation>
-    </message>
-    <message>
-        <source>Scenes</source>
-        <translation>シーン</translation>
-    </message>
-    <message>
-        <source>Settings</source>
-        <translation>設定</translation>
-    </message>
-    <message>
-        <source>Light mode</source>
-        <translation>ライトモード</translation>
-    </message>
-    <message>
-        <source>Dark mode</source>
-        <translation>ダークモード</translation>
-    </message>
-    <message>
-        <source>Extras</source>
-        <translation>拡張機能</translation>
-    </message>
-    <message>
-        <source>Multicam</source>
-        <translation>マルチカム</translation>
-    </message>
-    <message>
-        <source>Debug info</source>
-        <translation>デバッグ情報</translation>
-    </message>
-    <message>
-        <source>Update available</source>
-        <translation>アップデートが利用可能</translation>
+        <source>Show export progress</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -7817,26 +7977,6 @@ If playback stutters, try another.</source>
     <message>
         <source>Agent access</source>
         <translation type="unfinished">エージェントアクセス</translation>
-    </message>
-    <message>
-        <source>Allow for this session</source>
-        <translation type="unfinished">このセッションで許可</translation>
-    </message>
-    <message>
-        <source>Let an assistant on this device edit this project until you turn it off or quit.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Listening on %1</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Copy setup command</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Copied for Claude</source>
-        <translation type="unfinished">Claude 用にコピーしました</translation>
     </message>
     <message>
         <source>Marketplace</source>

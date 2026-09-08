@@ -360,7 +360,7 @@ ThemedDialog {
                     required property var modelData
                     text: modelData.label
                     selected: root.qualityId === modelData.id
-                    chipHeight: 28
+                    chipHeight: Theme.controlHeightSm
                     onClicked: root.qualityId = modelData.id
                 }
             }

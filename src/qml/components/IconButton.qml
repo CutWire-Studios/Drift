@@ -22,6 +22,10 @@ AbstractButton {
     // "auto" | "press" | "confirm" | "select" | "none". auto is a light press.
     property string haptic: "auto"
 
+    // Touch has no hover, so every tooltip on an icon-only button was text nobody on a
+    // phone could reach. A long press surfaces it; the latch clears when the press ends.
+    property bool pressAndHeld: false
+
     readonly property bool hasLabel: text.length > 0
     readonly property color _fg: active ? Theme.panelSecondaryForeground : Theme.mutedForeground
     readonly property color _labelFg: active ? Theme.panelSecondaryForeground : Theme.foreground
@@ -133,8 +137,13 @@ AbstractButton {
         // Shown on hover, and on keyboard focus so Tab users get the same labels.
         // Skip when the tooltip is just the visible label again.
         visible: root.tooltip.length > 0 && root.tooltip !== root.text
-                 && (root.hovered || root.visualFocus)
+                 && (root.hovered || root.visualFocus
+                     || (Theme.touchInput && root.pressAndHeld))
     }
+
+    onPressAndHold: root.pressAndHeld = true
+    onReleased: root.pressAndHeld = false
+    onCanceled: root.pressAndHeld = false
 
     onClicked: {
         if (haptic === "none")

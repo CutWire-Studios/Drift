@@ -223,6 +223,97 @@
     </message>
 </context>
 <context>
+    <name>AgentAccessControls</name>
+    <message>
+        <source>Let Cursor or Claude edit this project for you — add clips, change the timeline, and check how it looks. Only programs on this device. Starts off each time you open Drift; turn it off when you finish.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Allow for this session</source>
+        <translation type="unfinished">මෙම සැසිය සඳහා ඉඩ දෙන්න</translation>
+    </message>
+    <message>
+        <source>Let an assistant on this device edit this project until you turn it off or quit.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Turn this on, then copy the setup for Cursor or Claude and paste it into that app.</source>
+        <translation type="unfinished">මෙය ක්‍රියාත්මක කර Cursor හෝ Claude සඳහා සැකසුම පිටපත් කර එම යෙදුමට අලවන්න.</translation>
+    </message>
+    <message>
+        <source>Access is on</source>
+        <translation type="unfinished">ප්‍රවේශය ක්‍රියාත්මකයි</translation>
+    </message>
+    <message>
+        <source>Listening on %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Copy the setup for the assistant you use. You only need one.</source>
+        <translation type="unfinished">ඔබ භාවිත කරන සහායකයා සඳහා සැකසුම පිටපත් කරන්න. ඔබට අවශ්‍ය වන්නේ එකක් පමණි.</translation>
+    </message>
+    <message>
+        <source>Copy for Cursor</source>
+        <translation type="unfinished">Cursor සඳහා පිටපත් කරන්න</translation>
+    </message>
+    <message>
+        <source>Copy a setup snippet to paste into Cursor</source>
+        <translation type="unfinished">Cursor වෙත ඇලවීම සඳහා සැකසුම් snippet පිටපත් කරන්න</translation>
+    </message>
+    <message>
+        <source>Copied for Cursor</source>
+        <translation type="unfinished">Cursor සඳහා පිටපත් කරන ලදී</translation>
+    </message>
+    <message>
+        <source>Copy for Claude</source>
+        <translation type="unfinished">Claude සඳහා පිටපත් කරන්න</translation>
+    </message>
+    <message>
+        <source>Copy a command to paste into Claude Code</source>
+        <translation type="unfinished">Claude Code වෙත ඇලවීම සඳහා විධානය පිටපත් කරන්න</translation>
+    </message>
+    <message>
+        <source>Copied for Claude</source>
+        <translation type="unfinished">Claude සඳහා පිටපත් කරන ලදී</translation>
+    </message>
+    <message>
+        <source>Paste that into the assistant. To help it use this editor, copy the how-to next and paste it into the chat.</source>
+        <translation type="unfinished">එය සහායකයා වෙත අලවන්න. මෙම සංස්කාරකය භාවිත කිරීමට ඊට සහාය වීමට, ඊළඟට උපදෙස් පිටපත් කර කතාබහට (chat) අලවන්න.</translation>
+    </message>
+    <message>
+        <source>Copy a how-to for the agent</source>
+        <translation type="unfinished">නියෝජිතයා සඳහා උපදෙස් පිටපත් කරන්න</translation>
+    </message>
+    <message>
+        <source>A short list of what the agent can do here — paste it into the chat</source>
+        <translation type="unfinished">නියෝජිතයාට මෙහි කළ හැකි දේ පිළිබඳ කෙටි ලැයිස්තුවක් — එය කතාබහට (chat) අලවන්න</translation>
+    </message>
+    <message>
+        <source>Copied how-to</source>
+        <translation type="unfinished">උපදෙස් පිටපත් කරන ලදී</translation>
+    </message>
+    <message>
+        <source>More options</source>
+        <translation type="unfinished">තවත් විකල්ප</translation>
+    </message>
+    <message>
+        <source>For a different assistant, copy a one-time setup. The address and key are already in the Cursor and Claude copies above.</source>
+        <translation type="unfinished">වෙනත් සහායකයෙකු සඳහා, එක් වරක් කරන සැකසුම පිටපත් කරන්න. ලිපිනය සහ යතුර දැනටමත් ඉහත Cursor සහ Claude පිටපත්වල අඩංගු වේ.</translation>
+    </message>
+    <message>
+        <source>Copy one-time setup</source>
+        <translation type="unfinished">එක් වරක් කරන සැකසුම පිටපත් කරන්න</translation>
+    </message>
+    <message>
+        <source>Add this once to the assistant’s config. Access still has to be turned on here.</source>
+        <translation type="unfinished">මෙය සහායකයාගේ වින්‍යාසයට (config) එක් වරක් එක් කරන්න. ප්‍රවේශය තවමත් මෙහිදී ක්‍රියාත්මක කළ යුතුය.</translation>
+    </message>
+    <message>
+        <source>Copied one-time setup</source>
+        <translation type="unfinished">එක් වරක් කරන සැකසුම පිටපත් කරන ලදී</translation>
+    </message>
+</context>
+<context>
     <name>AgentAccessDialog</name>
     <message>
         <source>Agent access</source>
@@ -231,90 +322,6 @@
     <message>
         <source>Close</source>
         <translation>වසන්න</translation>
-    </message>
-    <message>
-        <source>Let Cursor or Claude edit this project for you — add clips, change the timeline, and check how it looks. Only programs on this computer. Starts off each time you open Drift; turn it off when you finish.</source>
-        <translation>Cursor හෝ Claude හට ඔබ වෙනුවෙන් මෙම ව්‍යාපෘතිය සංස්කරණය කිරීමට ඉඩ දෙන්න — ක්ලිප් එක් කරන්න, කාලරේඛාව වෙනස් කරන්න, සහ එය දිස්වන ආකාරය පරීක්ෂා කරන්න. මෙම පරිගණකයේ ඇති වැඩසටහන් සඳහා පමණි. ඔබ Drift විවෘත කරන සෑම විටම අක්‍රියව ආරම්භ වේ; ඔබ අවසන් වූ පසු එය අක්‍රිය කරන්න.</translation>
-    </message>
-    <message>
-        <source>Allow for this session</source>
-        <translation>මෙම සැසිය සඳහා ඉඩ දෙන්න</translation>
-    </message>
-    <message>
-        <source>Allows an assistant on this computer to edit this project until you turn it off or quit.</source>
-        <translation>ඔබ එය අක්‍රිය කරන තෙක් හෝ ඉවත් වන තෙක් මෙම පරිගණකයේ ඇති සහායකයෙකුට මෙම ව්‍යාපෘතිය සංස්කරණය කිරීමට ඉඩ සලසයි.</translation>
-    </message>
-    <message>
-        <source>Turn this on, then copy the setup for Cursor or Claude and paste it into that app.</source>
-        <translation>මෙය ක්‍රියාත්මක කර Cursor හෝ Claude සඳහා සැකසුම පිටපත් කර එම යෙදුමට අලවන්න.</translation>
-    </message>
-    <message>
-        <source>Access is on</source>
-        <translation>ප්‍රවේශය ක්‍රියාත්මකයි</translation>
-    </message>
-    <message>
-        <source>Copy the setup for the assistant you use. You only need one.</source>
-        <translation>ඔබ භාවිත කරන සහායකයා සඳහා සැකසුම පිටපත් කරන්න. ඔබට අවශ්‍ය වන්නේ එකක් පමණි.</translation>
-    </message>
-    <message>
-        <source>Copy for Cursor</source>
-        <translation>Cursor සඳහා පිටපත් කරන්න</translation>
-    </message>
-    <message>
-        <source>Copy a setup snippet to paste into Cursor</source>
-        <translation>Cursor වෙත ඇලවීම සඳහා සැකසුම් snippet පිටපත් කරන්න</translation>
-    </message>
-    <message>
-        <source>Copied for Cursor</source>
-        <translation>Cursor සඳහා පිටපත් කරන ලදී</translation>
-    </message>
-    <message>
-        <source>Copy for Claude</source>
-        <translation>Claude සඳහා පිටපත් කරන්න</translation>
-    </message>
-    <message>
-        <source>Copy a command to paste into Claude Code</source>
-        <translation>Claude Code වෙත ඇලවීම සඳහා විධානය පිටපත් කරන්න</translation>
-    </message>
-    <message>
-        <source>Copied for Claude</source>
-        <translation>Claude සඳහා පිටපත් කරන ලදී</translation>
-    </message>
-    <message>
-        <source>Paste that into the assistant. To help it use this editor, copy the how-to next and paste it into the chat.</source>
-        <translation>එය සහායකයා වෙත අලවන්න. මෙම සංස්කාරකය භාවිත කිරීමට ඊට සහාය වීමට, ඊළඟට උපදෙස් පිටපත් කර කතාබහට (chat) අලවන්න.</translation>
-    </message>
-    <message>
-        <source>Copy a how-to for the agent</source>
-        <translation>නියෝජිතයා සඳහා උපදෙස් පිටපත් කරන්න</translation>
-    </message>
-    <message>
-        <source>A short list of what the agent can do here — paste it into the chat</source>
-        <translation>නියෝජිතයාට මෙහි කළ හැකි දේ පිළිබඳ කෙටි ලැයිස්තුවක් — එය කතාබහට (chat) අලවන්න</translation>
-    </message>
-    <message>
-        <source>Copied how-to</source>
-        <translation>උපදෙස් පිටපත් කරන ලදී</translation>
-    </message>
-    <message>
-        <source>More options</source>
-        <translation>තවත් විකල්ප</translation>
-    </message>
-    <message>
-        <source>For a different assistant, copy a one-time setup. The address and key are already in the Cursor and Claude copies above.</source>
-        <translation>වෙනත් සහායකයෙකු සඳහා, එක් වරක් කරන සැකසුම පිටපත් කරන්න. ලිපිනය සහ යතුර දැනටමත් ඉහත Cursor සහ Claude පිටපත්වල අඩංගු වේ.</translation>
-    </message>
-    <message>
-        <source>Copy one-time setup</source>
-        <translation>එක් වරක් කරන සැකසුම පිටපත් කරන්න</translation>
-    </message>
-    <message>
-        <source>Add this once to the assistant’s config. Access still has to be turned on here.</source>
-        <translation>මෙය සහායකයාගේ වින්‍යාසයට (config) එක් වරක් එක් කරන්න. ප්‍රවේශය තවමත් මෙහිදී ක්‍රියාත්මක කළ යුතුය.</translation>
-    </message>
-    <message>
-        <source>Copied one-time setup</source>
-        <translation>එක් වරක් කරන සැකසුම පිටපත් කරන ලදී</translation>
     </message>
 </context>
 <context>
@@ -372,6 +379,22 @@
         <translation>කොටු, කව සහ රේඛා</translation>
     </message>
     <message>
+        <source>Effect templates</source>
+        <translation type="unfinished">ප්‍රයෝග ආකෘති</translation>
+    </message>
+    <message>
+        <source>Saved stacks of effects to drop on a clip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Scenes</source>
+        <translation type="unfinished">දර්ශන</translation>
+    </message>
+    <message>
+        <source>Jump between the sections of this edit</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Masks</source>
         <translation type="unfinished">ආවරණ</translation>
     </message>
@@ -399,6 +422,10 @@
         <translation>සංක්‍රාන්ති</translation>
     </message>
     <message>
+        <source>Tap a clip to edit it</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Add to timeline</source>
         <translation>කාලරේඛාවට එක් කරන්න</translation>
     </message>
@@ -412,6 +439,45 @@
     <message>
         <source>Close</source>
         <translation>වසන්න</translation>
+    </message>
+</context>
+<context>
+    <name>AndroidClipToolbar</name>
+    <message>
+        <source>Duration</source>
+        <translation type="unfinished">කාලසීමාව</translation>
+    </message>
+    <message>
+        <source>Curve</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Replace</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Delete</source>
+        <translation type="unfinished">මකන්න</translation>
+    </message>
+    <message>
+        <source>Split</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Duplicate</source>
+        <translation type="unfinished">අනුපිටපත් කරන්න</translation>
+    </message>
+    <message>
+        <source>More</source>
+        <translation type="unfinished">තවත්</translation>
+    </message>
+    <message>
+        <source>Fit</source>
+        <translation type="unfinished">සරිලන (Fit)</translation>
+    </message>
+    <message>
+        <source>Tap a clip to edit</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -434,121 +500,6 @@
     </message>
 </context>
 <context>
-    <name>AndroidEditActions</name>
-    <message>
-        <source>Select</source>
-        <translation>තෝරන්න</translation>
-    </message>
-    <message>
-        <source>Blade — tap a clip to split</source>
-        <translation>තලය — වෙන් කිරීමට ක්ලිප් එකක් තට්ටු කරන්න</translation>
-    </message>
-    <message>
-        <source>Trim start — tap a clip to drop everything before the cut</source>
-        <translation>ආරම්භය කප්පාදු කරන්න — කැපීමට පෙර ඇති සියල්ල ඉවත් කිරීමට ක්ලිප් එකක් තට්ටු කරන්න</translation>
-    </message>
-    <message>
-        <source>Trim end — tap a clip to drop everything after the cut</source>
-        <translation>අවසානය කප්පාදු කරන්න — කැපීමෙන් පසු ඇති සියල්ල ඉවත් කිරීමට ක්ලිප් එකක් තට්ටු කරන්න</translation>
-    </message>
-    <message>
-        <source>Paste at current time</source>
-        <translation>වත්මන් වේලාවට අලවන්න</translation>
-    </message>
-    <message>
-        <source>Duplicate clip</source>
-        <translation>ක්ලිප් එක අනුපිටපත් කරන්න</translation>
-    </message>
-    <message>
-        <source>Merge adjacent clips</source>
-        <translation>යාබද ක්ලිප් ඒකාබද්ධ කරන්න</translation>
-    </message>
-    <message>
-        <source>Close gap after clip</source>
-        <translation>ක්ලිප් එකට පසු හිඩැස වසන්න</translation>
-    </message>
-    <message>
-        <source>Freeze frame at current time</source>
-        <translation>වත්මන් වේලාවේ රූපරාමුව නවත්වන්න (Freeze frame)</translation>
-    </message>
-    <message>
-        <source>Separate audio from video</source>
-        <translation>වීඩියෝවෙන් ශ්‍රව්‍ය වෙන් කරන්න</translation>
-    </message>
-    <message>
-        <source>Delete</source>
-        <translation>මකන්න</translation>
-    </message>
-    <message>
-        <source>Add or remove a bookmark here</source>
-        <translation>මෙහි පොත් සලකුණක් එක් කරන්න හෝ ඉවත් කරන්න</translation>
-    </message>
-    <message>
-        <source>Previous bookmark</source>
-        <translation>පෙර පොත් සලකුණ</translation>
-    </message>
-    <message>
-        <source>Next bookmark</source>
-        <translation>මීළඟ පොත් සලකුණ</translation>
-    </message>
-    <message>
-        <source>Mark work area in at current time</source>
-        <translation>වත්මන් වේලාවේ කාර්ය ප්‍රදේශයේ ආරම්භය ලකුණු කරන්න</translation>
-    </message>
-    <message>
-        <source>Mark work area out at current time</source>
-        <translation>වත්මන් වේලාවේ කාර්ය ප්‍රදේශයේ අවසානය ලකුණු කරන්න</translation>
-    </message>
-    <message>
-        <source>Go to work area in</source>
-        <translation>කාර්ය ප්‍රදේශයේ ආරම්භය වෙත යන්න</translation>
-    </message>
-    <message>
-        <source>Go to work area out</source>
-        <translation>කාර්ය ප්‍රදේශයේ අවසානය වෙත යන්න</translation>
-    </message>
-    <message>
-        <source>Clear work area</source>
-        <translation>කාර්ය ප්‍රදේශය හිස් කරන්න</translation>
-    </message>
-    <message>
-        <source>Toggle snapping</source>
-        <translation>ස්නැපිං ක්‍රියාත්මක/අක්‍රිය කරන්න</translation>
-    </message>
-    <message>
-        <source>Analyzing…</source>
-        <translation>විශ්ලේෂණය කරමින්…</translation>
-    </message>
-    <message>
-        <source>Hide beat markers</source>
-        <translation>බීට් සලකුණු සඟවන්න</translation>
-    </message>
-    <message>
-        <source>Find the beat and show markers</source>
-        <translation>බීට් එක සොයා සලකුණු පෙන්වන්න</translation>
-    </message>
-    <message>
-        <source>Close gaps when trimming</source>
-        <translation>කප්පාදු කිරීමේදී හිඩැස් වසන්න</translation>
-    </message>
-    <message>
-        <source>Allow clip overlap</source>
-        <translation>ක්ලිප් එක මත එක වැටීමට ඉඩ දෙන්න</translation>
-    </message>
-    <message>
-        <source>Shorter layers</source>
-        <translation>කෙටි ස්තර</translation>
-    </message>
-    <message>
-        <source>Taller layers</source>
-        <translation>උස ස්තර</translation>
-    </message>
-    <message>
-        <source>Fit timeline in view</source>
-        <translation>කාලරේඛාව දසුනට සරිලන සේ සකසන්න</translation>
-    </message>
-</context>
-<context>
     <name>AndroidEditor</name>
     <message>
         <source>Drift project (*.drift)</source>
@@ -564,7 +515,7 @@
     </message>
     <message>
         <source>Open Project</source>
-        <translation>ව්‍යාපෘතිය විවෘත කරන්න</translation>
+        <translation type="unfinished">ව්‍යාපෘතිය විවෘත කරන්න</translation>
     </message>
     <message>
         <source>Your timeline is empty</source>
@@ -581,6 +532,10 @@
     <message>
         <source>Edit</source>
         <translation>සංස්කරණය</translation>
+    </message>
+    <message>
+        <source>Done</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -602,6 +557,45 @@
     </message>
     <message>
         <source>Me</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>AndroidLayoutSheet</name>
+    <message>
+        <source>Canvas &amp; layout</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Custom</source>
+        <translation type="unfinished">අභිරුචි</translation>
+    </message>
+    <message>
+        <source>Template</source>
+        <translation type="unfinished">ආකෘතිය</translation>
+    </message>
+    <message>
+        <source>Width</source>
+        <translation type="unfinished">පළල</translation>
+    </message>
+    <message>
+        <source>Height</source>
+        <translation type="unfinished">උස</translation>
+    </message>
+    <message>
+        <source>Quality</source>
+        <translation type="unfinished">ගුණාත්මකභාවය</translation>
+    </message>
+    <message>
+        <source>Frames per second</source>
+        <translation type="unfinished">තත්පරයට රාමු ගණන</translation>
+    </message>
+    <message>
+        <source>%1×%2 · %3 · %4 fps</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Done</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -770,6 +764,165 @@
     </message>
 </context>
 <context>
+    <name>AndroidMoreToolsSheet</name>
+    <message>
+        <source>More tools</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Trim &amp; timing</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Trim start</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Drop everything before the playhead</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Trim end</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Drop everything after the playhead</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Speed</source>
+        <translation type="unfinished">වේගය</translation>
+    </message>
+    <message>
+        <source>Change how fast this clip plays</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Freeze frame</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Freeze frame at current time</source>
+        <translation type="unfinished">වත්මන් වේලාවේ නිශ්චල රාමුවක් සකසන්න</translation>
+    </message>
+    <message>
+        <source>Merge</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Merge adjacent clips</source>
+        <translation type="unfinished">යාබද ක්ලිප් ඒකාබද්ධ කරන්න</translation>
+    </message>
+    <message>
+        <source>Close gap</source>
+        <translation type="unfinished">හිඩැස වසන්න</translation>
+    </message>
+    <message>
+        <source>Close gap after clip</source>
+        <translation type="unfinished">ක්ලිප් එකට පසු හිඩැස වසන්න</translation>
+    </message>
+    <message>
+        <source>Audio</source>
+        <translation type="unfinished">ශ්‍රව්‍ය</translation>
+    </message>
+    <message>
+        <source>Separate audio</source>
+        <translation type="unfinished">ශ්‍රව්‍ය වෙන් කරන්න</translation>
+    </message>
+    <message>
+        <source>Separate audio from video</source>
+        <translation type="unfinished">වීඩියෝවෙන් ශ්‍රව්‍ය වෙන් කරන්න</translation>
+    </message>
+    <message>
+        <source>Timeline</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Snapping</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Line clip edges up with cuts and markers</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Ripple</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Close gaps when trimming</source>
+        <translation type="unfinished">කප්පාදු කිරීමේදී හිඩැස් වසන්න</translation>
+    </message>
+    <message>
+        <source>Overlap</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Allow clip overlap</source>
+        <translation type="unfinished">ක්ලිප් අතිච්ඡාදනයට ඉඩ දෙන්න</translation>
+    </message>
+    <message>
+        <source>Beat markers</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Find the beat and show markers</source>
+        <translation type="unfinished">බීට් හඳුනාගෙන සලකුණු පෙන්වන්න</translation>
+    </message>
+    <message>
+        <source>Markers &amp; view</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Paste</source>
+        <translation type="unfinished">අලවන්න</translation>
+    </message>
+    <message>
+        <source>Paste at current time</source>
+        <translation type="unfinished">වත්මන් වේලාවේ අලවන්න</translation>
+    </message>
+    <message>
+        <source>Bookmark</source>
+        <translation type="unfinished">පොත් සලකුණ</translation>
+    </message>
+    <message>
+        <source>Add or remove a bookmark here</source>
+        <translation type="unfinished">මෙහි පොත් සලකුණක් එක් කරන්න හෝ ඉවත් කරන්න</translation>
+    </message>
+    <message>
+        <source>Work area in</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Mark work area in at current time</source>
+        <translation type="unfinished">වත්මන් වේලාවේ කාර්ය ප්‍රදේශයේ ආරම්භය ලකුණු කරන්න</translation>
+    </message>
+    <message>
+        <source>Work area out</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Mark work area out at current time</source>
+        <translation type="unfinished">වත්මන් වේලාවේ කාර්ය ප්‍රදේශයේ අවසානය ලකුණු කරන්න</translation>
+    </message>
+    <message>
+        <source>Clear work area</source>
+        <translation type="unfinished">වැඩ කලාපය හිස් කරන්න</translation>
+    </message>
+    <message>
+        <source>Shorter layers</source>
+        <translation type="unfinished">කෙටි ස්තර</translation>
+    </message>
+    <message>
+        <source>Taller layers</source>
+        <translation type="unfinished">උස ස්තර</translation>
+    </message>
+    <message>
+        <source>Analyzing…</source>
+        <translation type="unfinished">විශ්ලේෂණය කරමින්…</translation>
+    </message>
+</context>
+<context>
     <name>AndroidPreview</name>
     <message>
         <source>Audio only</source>
@@ -862,6 +1015,69 @@
     <message>
         <source>Fullscreen preview</source>
         <translation>සම්පූර්ණ තිර පෙරදසුන</translation>
+    </message>
+</context>
+<context>
+    <name>AndroidProjectSheet</name>
+    <message>
+        <source>Project</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Export</source>
+        <translation type="unfinished">නිර්යාත කරන්න</translation>
+    </message>
+    <message>
+        <source>Render the finished video</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Save</source>
+        <translation type="unfinished">සුරකින්න</translation>
+    </message>
+    <message>
+        <source>Keep this project on the device</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Share a copy</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>One file with the media packed inside</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Canvas &amp; layout</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Video size, aspect and frame rate</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Project properties</source>
+        <translation type="unfinished">ව්‍යාපෘති ගුණාංග</translation>
+    </message>
+    <message>
+        <source>Name, resolution and timebase</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Multicam</source>
+        <translation type="unfinished">බහු කැමරා</translation>
+    </message>
+    <message>
+        <source>Sync and switch between angles</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>App settings</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Appearance, extras and agent access</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -1016,6 +1232,10 @@
         <translation>ආපසු</translation>
     </message>
     <message>
+        <source>Project actions</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Untitled</source>
         <translation>නම් නොකළ</translation>
     </message>
@@ -1032,68 +1252,8 @@
         <translation>නිර්යාත කරන්න</translation>
     </message>
     <message>
-        <source>More</source>
-        <translation>තවත්</translation>
-    </message>
-    <message>
-        <source>Save</source>
-        <translation>සුරකින්න</translation>
-    </message>
-    <message>
-        <source>Shareable copy</source>
-        <translation>බෙදාගත හැකි පිටපත</translation>
-    </message>
-    <message>
-        <source>Open project</source>
-        <translation>ව්‍යාපෘතිය විවෘත කරන්න</translation>
-    </message>
-    <message>
-        <source>New project</source>
-        <translation>නව ව්‍යාපෘතිය</translation>
-    </message>
-    <message>
-        <source>Choose layout</source>
-        <translation>පිරිසැලසුම තෝරන්න</translation>
-    </message>
-    <message>
-        <source>Project properties</source>
-        <translation>ව්‍යාපෘති ගුණාංග</translation>
-    </message>
-    <message>
-        <source>Effect templates</source>
-        <translation>ප්‍රයෝග ආකෘති</translation>
-    </message>
-    <message>
-        <source>Scenes</source>
-        <translation>දර්ශන</translation>
-    </message>
-    <message>
-        <source>Settings</source>
-        <translation>සැකසීම්</translation>
-    </message>
-    <message>
-        <source>Light mode</source>
-        <translation>ලා තේමාව (Light mode)</translation>
-    </message>
-    <message>
-        <source>Dark mode</source>
-        <translation>අඳුරු තේමාව (Dark mode)</translation>
-    </message>
-    <message>
-        <source>Extras</source>
-        <translation>අමතර අංග</translation>
-    </message>
-    <message>
-        <source>Multicam</source>
-        <translation>බහු කැමරා (Multicam)</translation>
-    </message>
-    <message>
-        <source>Debug info</source>
-        <translation>දෝෂහරණ තොරතුරු</translation>
-    </message>
-    <message>
-        <source>Update available</source>
-        <translation>යාවත්කාලීනයක් පවතී</translation>
+        <source>Show export progress</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -7850,26 +8010,6 @@ If playback stutters, try another.</source>
     <message>
         <source>Agent access</source>
         <translation type="unfinished">නියෝජිත (Agent) ප්‍රවේශය</translation>
-    </message>
-    <message>
-        <source>Allow for this session</source>
-        <translation type="unfinished">මෙම සැසිය සඳහා ඉඩ දෙන්න</translation>
-    </message>
-    <message>
-        <source>Let an assistant on this device edit this project until you turn it off or quit.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Listening on %1</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Copy setup command</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Copied for Claude</source>
-        <translation type="unfinished">Claude සඳහා පිටපත් කරන ලදී</translation>
     </message>
     <message>
         <source>Marketplace</source>

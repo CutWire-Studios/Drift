@@ -372,47 +372,12 @@ Item {
                     text: qsTr("Agent access")
                 }
 
-                // The switch lives here rather than behind a button because this pane is already
-                // inside SettingsDialog, and opening the fuller AgentAccessDialog from it would
-                // stack one modal on another. Desktop still has the detailed dialog in the header.
-                ThemedSwitch {
-                    checked: EditorState.mcpEnabled
-                    text: qsTr("Allow for this session")
-                    tooltip: qsTr("Let an assistant on this device edit this project until you turn it off or quit.")
-                    onToggled: EditorState.mcpEnabled = checked
-                }
-
-                ThemedLabel {
+                // Shared with the header's AgentAccessDialog rather than restated: the
+                // cut-down copy that lived here offered only the Claude command, so a
+                // switch turned on from this pane could not be connected from Cursor.
+                AgentAccessControls {
                     width: parent.width
-                    size: "sm"
-                    wrapMode: Text.WordWrap
-                    color: Theme.mutedForeground
-                    visible: EditorState.mcpRunning && EditorState.mcpUrl.length > 0
-                    text: qsTr("Listening on %1").arg(EditorState.mcpUrl)
-                }
-
-                // The URL alone is not enough to connect — the server rejects any request without
-                // the session token — so the copyable setup command has to be here too, or the
-                // switch above is inert on a device with no header dialog to fall back on.
-                ThemedButton {
-                    width: parent.width
-                    variant: "secondary"
-                    glyph: Theme.icons.copy
-                    visible: EditorState.mcpRunning
-                    text: qsTr("Copy setup command")
-                    onClicked: {
-                        EditorState.copyMcpClaudeCommand()
-                        Toasts.success(qsTr("Copied for Claude"))
-                    }
-                }
-
-                ThemedLabel {
-                    width: parent.width
-                    size: "sm"
-                    wrapMode: Text.WordWrap
-                    color: Theme.destructive
-                    visible: EditorState.mcpError.length > 0
-                    text: EditorState.mcpError
+                    showIntro: false
                 }
             }
 

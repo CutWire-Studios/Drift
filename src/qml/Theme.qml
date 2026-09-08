@@ -274,6 +274,10 @@ QtObject {
     // thumbnail generation exists, use a fixed dark placeholder so the white filename
     // scrim stays legible in light mode too instead of following panelAccent.
     readonly property color clipVideoPlaceholder: "#2b2b2b"
+    // The band around a letterboxed preview canvas. Fixed dark in both themes: it frames
+    // photographic content, and following appBackground made it a white surround in light
+    // mode with the video floating in the middle of it.
+    readonly property color previewLetterbox: "#101010"
     // Style-pack thumbnails: most packs use white/light glyphs (and sit on video), so the
     // card canvas stays dark in both themes — panelSecondaryBg washes them out in light mode.
     readonly property color textStylePreviewBg: "#1c1c1c"
@@ -457,7 +461,9 @@ QtObject {
     // One nested adjustment lane, drawn as a strip across the top of its parent's row. Roughly
     // 30% of a video track, which is where a track with a single lane lands — a percentage per
     // lane instead would make a track with three of them nearly twice its natural height.
-    readonly property real adjustmentLaneHeight: 20
+    // 20px lanes came out at 12-14dp of usable strip on a phone once the row borders were
+    // taken off — under half the touch floor for the toggles that live in them.
+    readonly property real adjustmentLaneHeight: touchUi ? 24 : 20
     readonly property real trackGap: 6
     // Invisible hit area above tracks (no visible UI) for new-track drops when timeline has clips.
     readonly property real newTrackHitSlop: 24
@@ -494,13 +500,11 @@ QtObject {
     // Four destinations plus the centred Add button. Taller than the old scrolling
     // strip because the Add button is a 48dp target that has to sit inside it.
     readonly property real androidBottomRailHeight: 64
-    readonly property real androidEditActionsHeight: 56
+    // Contextual clip toolbar. Taller than the 56dp strip it replaces because its slots
+    // are glyph-over-caption, like the rail below it.
+    readonly property real androidClipToolbarHeight: 64
     readonly property real androidSplitterHeight: 32
-    readonly property real androidSheetHeightFraction: 0.55
-    // The Edit sheet carries a tab strip the browsers do not, and its content is
-    // rows of label-plus-slider rather than a scrollable grid — at 55% it opened on
-    // barely two properties.
-    readonly property real androidEditSheetHeightFraction: 0.64
+    readonly property real androidSheetHeightFraction: 0.50
     readonly property real androidSheetExpandedFraction: 0.92
     readonly property real androidSheetHeaderHeight: 56
     readonly property real androidSheetDismissFraction: 0.38
@@ -518,11 +522,18 @@ QtObject {
     // two toggles to sit a dead band apart without their hit areas reaching the type
     // caption on the left or the corner filmstrip toggle below it.
     readonly property real androidTrackLabelsWidth: 88
+    // The fixed centre line. Thinner than the desktop playhead: it is always on screen and
+    // always over content, so it marks the frame rather than announcing itself.
+    readonly property real androidPlayheadCentreWidth: 2
     readonly property real androidClipTrimHandleWidth: 20
     readonly property real androidClipEdgeMargin: 22
     readonly property real androidTrimHotspotExtra: 14
-    // Preview region cap so the timeline stays usable under a portrait canvas.
-    readonly property real androidPreviewMaxScreenFraction: 0.42
+    // Preview region held between a floor and a ceiling. The pane is sized from the project
+    // aspect, but only within this band: below the floor the canvas letterboxes inside the
+    // pane instead of the pane shrinking, so the transport row's y stays put between the
+    // editor, crop mode and a sheet being open.
+    readonly property real androidPreviewMaxScreenFraction: 0.50
+    readonly property real androidPreviewMinFraction: 0.34
     // Compact-width layout margin. Deliberately NOT the shared pagePadding (12): raising that
     // would move every desktop panel, and 16 is the Material compact figure.
     readonly property real androidPagePadding: 16
@@ -530,6 +541,10 @@ QtObject {
     // than reaching for whichever spacing token happens to be the right number today.
     readonly property real androidMinTouchTarget: 48
     readonly property real androidTouchGap: 8
+    // Template card in the canvas sheet. A portrait card so a 9:16 swatch — what most phone
+    // projects are — fills it rather than sitting as a sliver in a landscape box.
+    readonly property real androidLayoutCardWidth: 88
+    readonly property real androidLayoutCardHeight: 112
     readonly property real androidHomeTileHeight: 96
     readonly property real androidHomeRecentCardWidth: 140
     readonly property real androidHomeRecentCardHeight: 96

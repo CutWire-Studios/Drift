@@ -15,6 +15,9 @@ AbstractButton {
     // { id, label, icon }
     required property var entry
     property bool selected: false
+    // Glyph and label colour. Default follows nav selection; the clip toolbar overrides it
+    // so a destructive slot reads as one without a second copy of this control.
+    property color tint: root.selected ? Theme.accentOnPanel : Theme.mutedForeground
 
     hoverEnabled: true
 
@@ -38,6 +41,7 @@ AbstractButton {
 
     contentItem: Item {
         anchors.fill: parent
+        opacity: root.enabled ? 1 : 0.45
 
         Column {
             anchors.centerIn: parent
@@ -61,14 +65,14 @@ AbstractButton {
                     anchors.centerIn: parent
                     glyph: root.entry.icon
                     iconSize: Theme.iconSizeLg
-                    iconColor: root.selected ? Theme.accentOnPanel : Theme.mutedForeground
+                    iconColor: root.tint
                 }
             }
 
             Text {
                 anchors.horizontalCenter: parent.horizontalCenter
                 text: root.entry.label
-                color: root.selected ? Theme.accentOnPanel : Theme.mutedForeground
+                color: root.tint
                 font.family: Theme.fontFamily
                 font.pixelSize: Theme.fontSizeXs
                 font.weight: root.selected ? Font.Medium : Font.Normal

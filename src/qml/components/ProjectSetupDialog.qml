@@ -92,7 +92,7 @@ ThemedDialog {
                     required property var modelData
                     text: modelData.label
                     selected: root.aspectMode === modelData.id
-                    chipHeight: 28
+                    chipHeight: Theme.controlHeightSm
                     onClicked: root.applyAspectPreset(modelData.id)
                 }
             }

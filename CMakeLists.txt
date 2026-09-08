@@ -758,7 +758,10 @@ qt_add_qml_module(drift
         src/qml/AndroidMePage.qml
         src/qml/components/NavRailButton.qml
         # Touch entry point, loaded instead of Main.qml on Android (see src/main.cpp).
+        src/qml/AndroidLayoutSheet.qml
         src/qml/AndroidMain.qml
+        src/qml/AndroidMoreToolsSheet.qml
+        src/qml/AndroidProjectSheet.qml
         src/qml/AndroidHome.qml
         src/qml/AndroidEditor.qml
         src/qml/AndroidPreview.qml
@@ -767,7 +770,7 @@ qt_add_qml_module(drift
         src/qml/AndroidBottomRail.qml
         src/qml/AndroidBottomSheet.qml
         src/qml/AndroidAddMenu.qml
-        src/qml/AndroidEditActions.qml
+        src/qml/AndroidClipToolbar.qml
         src/qml/AndroidMediaPreview.qml
         src/qml/Theme.qml
         src/qml/Toasts.qml
@@ -862,11 +865,13 @@ qt_add_qml_module(drift
         src/qml/components/ProjectSetupDialog.qml
         src/qml/components/LayoutChooserDialog.qml
         src/qml/components/LanguageChooserDialog.qml
+        src/qml/components/AgentAccessControls.qml
         src/qml/components/AgentAccessDialog.qml
         src/qml/components/VideoSizeDialog.qml
         src/qml/components/VideoSizeControls.qml
         src/qml/components/ProjectPropertiesDialog.qml
         src/qml/components/SettingsPane.qml
+        src/qml/components/SheetActionRow.qml
         src/qml/components/SettingsDialog.qml
         src/qml/components/PasteAttributesDialog.qml
         src/qml/components/PackageProgressDialog.qml

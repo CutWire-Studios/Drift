@@ -10,9 +10,14 @@ Item {
     id: root
 
     signal backRequested()
-    signal goHomeRequested()
 
     property string sheetKind: "" // "" | "assets" | "properties"
+
+    // How much of the window bottom a sheet that does not blank the editor is covering.
+    // The canvas sheet is hosted by the window, the properties sheet by this page.
+    readonly property real nonBlockingSheetHeight: Math.max(
+        (propertiesSheet.opened && !propertiesSheet.blocking) ? propertiesSheet.panelHeight : 0,
+        Window.window.nonBlockingSheetHeight)
 
     // Fullscreen preview: the timeline pane, top bar and rail step aside and
     // AndroidPreview takes the page. Readable from outside so AndroidMain's Back
@@ -59,11 +64,24 @@ Item {
             assetsSheet.dismiss()
     }
 
+    // The toolbar's fourth slot. Clears the browsers first: the sheet is a peer of them,
+    // not something to stack on top.
+    function openMoreTools() {
+        if (assetsSheet.opened)
+            assetsSheet.dismiss()
+        if (propertiesSheet.opened)
+            propertiesSheet.dismiss()
+        if (!moreToolsSheet.opened)
+            moreToolsSheet.open()
+    }
+
     function closeSheets() {
         sheetKind = ""
         rail.activeId = ""
         if (addMenu.opened)
             addMenu.dismiss()
+        if (moreToolsSheet.opened)
+            moreToolsSheet.dismiss()
         if (assetsSheet.opened)
             assetsSheet.dismiss()
         if (propertiesSheet.opened)
@@ -73,10 +91,6 @@ Item {
     // Android Back, delegated from AndroidMain. Returns true when it consumed the press,
     // so a sheet or dialog closes instead of the editor being popped out from under it.
     function handleBack() {
-        if (topBar.menuOpen) {
-            topBar.closeMenu()
-            return true
-        }
         if (exportProgressDialog.visible) {
             exportProgressDialog.close()
             return true
@@ -87,6 +101,14 @@ Item {
         }
         if (packageProgressDialog.visible)
             return true // a package render is running; swallow rather than abandon it
+        if (projectSheet.opened) {
+            projectSheet.dismiss()
+            return true
+        }
+        if (moreToolsSheet.opened) {
+            moreToolsSheet.dismiss()
+            return true
+        }
         if (addMenu.opened) {
             addMenu.dismiss()
             return true
@@ -126,6 +148,8 @@ Item {
             EditorState.packageProject(url)
     }
 
+    // Reached from EditorState's own signals (desktop menus, launch intents), not from any
+    // phone control: Open and New are tiles on Home -> Projects now.
     function openProject() {
         Window.window.confirmIfDirty(function () {
             const url = FileDialogs.openFile(qsTr("Open Project"), root.projectFilter)
@@ -137,8 +161,42 @@ Item {
     function requestNewProject() {
         Window.window.confirmIfDirty(function () {
             EditorState.newProject()
-            root.goHomeRequested()
+            Window.window.showHome()
         })
+    }
+
+    // Everything the project title's sheet offers. Routed here rather than from the sheet
+    // itself because half of it is the editor's own (export, save, package) and half the
+    // window's, and the sheet should not have to know which is which.
+    function runProjectAction(actionId) {
+        switch (actionId) {
+        case "export":
+            if (EditorState.exportInProgress) {
+                exportProgressDialog.dismissed = false
+                exportProgressDialog.openDialog()
+            } else {
+                exportDialog.openDialog()
+            }
+            break
+        case "save":
+            root.saveProject()
+            break
+        case "package":
+            root.packageProject()
+            break
+        case "layout":
+            Window.window.openLayoutChooser()
+            break
+        case "properties":
+            Window.window.openProjectProperties()
+            break
+        case "multicam":
+            Window.window.openMulticam()
+            break
+        case "settings":
+            Window.window.openSettings()
+            break
+        }
     }
 
     Column {
@@ -155,12 +213,7 @@ Item {
                 exportProgressDialog.dismissed = false
                 exportProgressDialog.openDialog()
             }
-            onSaveRequested: root.saveProject()
-            onPackageRequested: root.packageProject()
-            onOpenRequested: root.openProject()
-            onNewRequested: root.requestNewProject()
-            onLayoutRequested: Window.window.openLayoutChooser()
-            onAssetsTabRequested: (tabId) => root.openAssetsTab(tabId)
+            onProjectMenuRequested: projectSheet.open()
         }
 
         SplitView {
@@ -183,7 +236,7 @@ Item {
             readonly property real budget: Math.max(
                 0, (sideBySide ? width : height) - Theme.androidSplitterHeight)
             readonly property real wantPreviewMin: Theme.androidPreviewTransportHeight + 72
-            readonly property real wantTimelineMin: Theme.androidEditActionsHeight + 120
+            readonly property real wantTimelineMin: Theme.androidClipToolbarHeight + 120
             // Side by side the axis being divided is width, and the two panes need very
             // different amounts of it: the preview's transport is a five-button row, the
             // timeline needs room for its track labels plus some visible seconds. Reusing
@@ -196,6 +249,25 @@ Item {
                                         : wantPreviewMin + wantTimelineMin
                 return want > 0 ? Math.min(1, budget / want) : 1
             }
+            // A non-blocking sheet covers the bottom of the window, the rail included; what
+            // is left of this split above it is all the preview may occupy. Sliced at the
+            // sheet edge a video frame reads as broken rather than as covered.
+            readonly property real coveredBySheet: Math.max(
+                0, root.nonBlockingSheetHeight - Theme.androidBottomRailHeight)
+            readonly property real uncoveredHeight: Math.max(0, height - coveredBySheet)
+
+            // Sized from the project aspect (preview.implicitHeight), then held inside a
+            // band so the transport row's y does not move between the editor, crop mode and
+            // a sheet being open. Below the floor the canvas letterboxes inside the pane
+            // instead of the pane shrinking to meet it.
+            readonly property real previewTarget: {
+                const wanted = Math.min(preview.implicitHeight,
+                                        height * Theme.androidPreviewMaxScreenFraction)
+                const held = Math.max(previewMin,
+                                      Math.max(height * Theme.androidPreviewMinFraction, wanted))
+                return Math.min(held, uncoveredHeight)
+            }
+
             readonly property real previewMin: wantPreviewMin * minScale
             readonly property real timelineMin: wantTimelineMin * minScale
             readonly property real previewMinW: wantPreviewMinW * minScale
@@ -215,9 +287,12 @@ Item {
                 Rectangle {
                     anchors.horizontalCenter: parent.horizontalCenter
                     anchors.verticalCenter: parent.verticalCenter
-                    width: editorSplit.sideBySide ? 4 : 40
-                    height: editorSplit.sideBySide ? 40 : 4
-                    radius: 2
+                    // 4x40 was a hairline on a phone: the one control between two panes
+                    // that both want to be bigger, and the hardest thing on the screen to
+                    // land a thumb on.
+                    width: editorSplit.sideBySide ? 6 : 48
+                    height: editorSplit.sideBySide ? 48 : 6
+                    radius: 3
                     color: T.SplitHandle.pressed ? Theme.primary : Theme.panelBorder
                 }
 
@@ -238,8 +313,7 @@ Item {
                 // Avoid fixed mins larger than the first layout pass (height may be 0).
                 SplitView.preferredHeight: root.previewFullscreen
                     ? editorSplit.height
-                    : Math.min(implicitHeight,
-                               Math.max(editorSplit.previewMin, editorSplit.height * 0.42))
+                    : editorSplit.previewTarget
                 SplitView.minimumHeight: root.previewFullscreen ? 0 : editorSplit.previewMin
                 SplitView.maximumHeight: root.previewFullscreen
                     ? editorSplit.height
@@ -263,17 +337,18 @@ Item {
                 SplitView.minimumHeight: editorSplit.timelineMin
                 SplitView.minimumWidth: editorSplit.timelineMinW
 
-                AndroidEditActions {
-                    id: editActions
+                AndroidClipToolbar {
+                    id: clipToolbar
                     anchors.top: parent.top
                     anchors.left: parent.left
                     anchors.right: parent.right
                     panel: timeline
+                    onMoreRequested: root.openMoreTools()
                 }
 
                 Item {
                     id: timelineHost
-                    anchors.top: editActions.bottom
+                    anchors.top: clipToolbar.bottom
                     anchors.left: parent.left
                     anchors.right: parent.right
                     anchors.bottom: parent.bottom
@@ -360,6 +435,16 @@ Item {
         onPicked: (tabId) => root.openAssetsTab(tabId)
     }
 
+    AndroidProjectSheet {
+        id: projectSheet
+        onPicked: (actionId) => root.runProjectAction(actionId)
+    }
+
+    AndroidMoreToolsSheet {
+        id: moreToolsSheet
+        panel: timeline
+    }
+
     AndroidBottomSheet {
         id: assetsSheet
         onClosed: {
@@ -383,7 +468,13 @@ Item {
     AndroidBottomSheet {
         id: propertiesSheet
         title: qsTr("Edit")
-        sheetHeightFraction: Theme.androidEditSheetHeightFraction
+        doneText: qsTr("Done")
+        // Edits here land on the timeline as they are made, so the sheet has to let you
+        // watch them: playback keeps running and the preview stays scrubbable behind it.
+        // The 0.64 detent this used to carry is gone with it — the common edits moved to
+        // the clip toolbar, so it no longer has to open on "barely two properties".
+        blocking: false
+        onDoneRequested: root.closeSheets()
         onClosed: {
             if (sheetKind === "properties") {
                 sheetKind = ""

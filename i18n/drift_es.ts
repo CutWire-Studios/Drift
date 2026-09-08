@@ -223,6 +223,97 @@
     </message>
 </context>
 <context>
+    <name>AgentAccessControls</name>
+    <message>
+        <source>Let Cursor or Claude edit this project for you — add clips, change the timeline, and check how it looks. Only programs on this device. Starts off each time you open Drift; turn it off when you finish.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Allow for this session</source>
+        <translation type="unfinished">Permitir durante esta sesión</translation>
+    </message>
+    <message>
+        <source>Let an assistant on this device edit this project until you turn it off or quit.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Turn this on, then copy the setup for Cursor or Claude and paste it into that app.</source>
+        <translation type="unfinished">Activa esto, luego copia la configuración para Cursor o Claude y pégala en esa aplicación.</translation>
+    </message>
+    <message>
+        <source>Access is on</source>
+        <translation type="unfinished">El acceso está activado</translation>
+    </message>
+    <message>
+        <source>Listening on %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Copy the setup for the assistant you use. You only need one.</source>
+        <translation type="unfinished">Copia la configuración para el asistente que uses. Solo necesitas una.</translation>
+    </message>
+    <message>
+        <source>Copy for Cursor</source>
+        <translation type="unfinished">Copiar para Cursor</translation>
+    </message>
+    <message>
+        <source>Copy a setup snippet to paste into Cursor</source>
+        <translation type="unfinished">Copiar un fragmento de configuración para pegar en Cursor</translation>
+    </message>
+    <message>
+        <source>Copied for Cursor</source>
+        <translation type="unfinished">Copiado para Cursor</translation>
+    </message>
+    <message>
+        <source>Copy for Claude</source>
+        <translation type="unfinished">Copiar para Claude</translation>
+    </message>
+    <message>
+        <source>Copy a command to paste into Claude Code</source>
+        <translation type="unfinished">Copiar un comando para pegar en Claude Code</translation>
+    </message>
+    <message>
+        <source>Copied for Claude</source>
+        <translation type="unfinished">Copiado para Claude</translation>
+    </message>
+    <message>
+        <source>Paste that into the assistant. To help it use this editor, copy the how-to next and paste it into the chat.</source>
+        <translation type="unfinished">Pega eso en el asistente. Para ayudarle a usar este editor, copia a continuación la guía y pégala en el chat.</translation>
+    </message>
+    <message>
+        <source>Copy a how-to for the agent</source>
+        <translation type="unfinished">Copiar guía para el agente</translation>
+    </message>
+    <message>
+        <source>A short list of what the agent can do here — paste it into the chat</source>
+        <translation type="unfinished">Una lista breve de lo que el agente puede hacer aquí — pégala en el chat</translation>
+    </message>
+    <message>
+        <source>Copied how-to</source>
+        <translation type="unfinished">Guía copiada</translation>
+    </message>
+    <message>
+        <source>More options</source>
+        <translation type="unfinished">Más opciones</translation>
+    </message>
+    <message>
+        <source>For a different assistant, copy a one-time setup. The address and key are already in the Cursor and Claude copies above.</source>
+        <translation type="unfinished">Para un asistente diferente, copia una configuración única. La dirección y la clave ya están en las copias de Cursor y Claude anteriores.</translation>
+    </message>
+    <message>
+        <source>Copy one-time setup</source>
+        <translation type="unfinished">Copiar configuración única</translation>
+    </message>
+    <message>
+        <source>Add this once to the assistant’s config. Access still has to be turned on here.</source>
+        <translation type="unfinished">Añade esto una sola vez a la configuración del asistente. El acceso todavía tiene que estar activado aquí.</translation>
+    </message>
+    <message>
+        <source>Copied one-time setup</source>
+        <translation type="unfinished">Configuración única copiada</translation>
+    </message>
+</context>
+<context>
     <name>AgentAccessDialog</name>
     <message>
         <source>Agent access</source>
@@ -231,90 +322,6 @@
     <message>
         <source>Close</source>
         <translation>Cerrar</translation>
-    </message>
-    <message>
-        <source>Let Cursor or Claude edit this project for you — add clips, change the timeline, and check how it looks. Only programs on this computer. Starts off each time you open Drift; turn it off when you finish.</source>
-        <translation>Deja que Cursor o Claude editen este proyecto por ti — añade clips, cambia la línea de tiempo y comprueba cómo se ve. Solo programas en este equipo. Se inicia desactivado cada vez que abres Drift; desactívalo cuando termines.</translation>
-    </message>
-    <message>
-        <source>Allow for this session</source>
-        <translation>Permitir durante esta sesión</translation>
-    </message>
-    <message>
-        <source>Allows an assistant on this computer to edit this project until you turn it off or quit.</source>
-        <translation>Permite que un asistente en este equipo edite este proyecto hasta que lo desactives o salgas.</translation>
-    </message>
-    <message>
-        <source>Turn this on, then copy the setup for Cursor or Claude and paste it into that app.</source>
-        <translation>Activa esto, luego copia la configuración para Cursor o Claude y pégala en esa aplicación.</translation>
-    </message>
-    <message>
-        <source>Access is on</source>
-        <translation>El acceso está activado</translation>
-    </message>
-    <message>
-        <source>Copy the setup for the assistant you use. You only need one.</source>
-        <translation>Copia la configuración para el asistente que uses. Solo necesitas una.</translation>
-    </message>
-    <message>
-        <source>Copy for Cursor</source>
-        <translation>Copiar para Cursor</translation>
-    </message>
-    <message>
-        <source>Copy a setup snippet to paste into Cursor</source>
-        <translation>Copiar un fragmento de configuración para pegar en Cursor</translation>
-    </message>
-    <message>
-        <source>Copied for Cursor</source>
-        <translation>Copiado para Cursor</translation>
-    </message>
-    <message>
-        <source>Copy for Claude</source>
-        <translation>Copiar para Claude</translation>
-    </message>
-    <message>
-        <source>Copy a command to paste into Claude Code</source>
-        <translation>Copiar un comando para pegar en Claude Code</translation>
-    </message>
-    <message>
-        <source>Copied for Claude</source>
-        <translation>Copiado para Claude</translation>
-    </message>
-    <message>
-        <source>Paste that into the assistant. To help it use this editor, copy the how-to next and paste it into the chat.</source>
-        <translation>Pega eso en el asistente. Para ayudarle a usar este editor, copia a continuación la guía y pégala en el chat.</translation>
-    </message>
-    <message>
-        <source>Copy a how-to for the agent</source>
-        <translation>Copiar guía para el agente</translation>
-    </message>
-    <message>
-        <source>A short list of what the agent can do here — paste it into the chat</source>
-        <translation>Una lista breve de lo que el agente puede hacer aquí — pégala en el chat</translation>
-    </message>
-    <message>
-        <source>Copied how-to</source>
-        <translation>Guía copiada</translation>
-    </message>
-    <message>
-        <source>More options</source>
-        <translation>Más opciones</translation>
-    </message>
-    <message>
-        <source>For a different assistant, copy a one-time setup. The address and key are already in the Cursor and Claude copies above.</source>
-        <translation>Para un asistente diferente, copia una configuración única. La dirección y la clave ya están en las copias de Cursor y Claude anteriores.</translation>
-    </message>
-    <message>
-        <source>Copy one-time setup</source>
-        <translation>Copiar configuración única</translation>
-    </message>
-    <message>
-        <source>Add this once to the assistant’s config. Access still has to be turned on here.</source>
-        <translation>Añade esto una sola vez a la configuración del asistente. El acceso todavía tiene que estar activado aquí.</translation>
-    </message>
-    <message>
-        <source>Copied one-time setup</source>
-        <translation>Configuración única copiada</translation>
     </message>
 </context>
 <context>
@@ -372,6 +379,22 @@
         <translation>Cuadros, círculos y líneas</translation>
     </message>
     <message>
+        <source>Effect templates</source>
+        <translation type="unfinished">Plantillas de efectos</translation>
+    </message>
+    <message>
+        <source>Saved stacks of effects to drop on a clip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Scenes</source>
+        <translation type="unfinished">Escenas</translation>
+    </message>
+    <message>
+        <source>Jump between the sections of this edit</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Masks</source>
         <translation type="unfinished">Máscaras</translation>
     </message>
@@ -399,6 +422,10 @@
         <translation>Transiciones</translation>
     </message>
     <message>
+        <source>Tap a clip to edit it</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Add to timeline</source>
         <translation>Añadir a la línea de tiempo</translation>
     </message>
@@ -412,6 +439,45 @@
     <message>
         <source>Close</source>
         <translation>Cerrar</translation>
+    </message>
+</context>
+<context>
+    <name>AndroidClipToolbar</name>
+    <message>
+        <source>Duration</source>
+        <translation type="unfinished">Duración</translation>
+    </message>
+    <message>
+        <source>Curve</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Replace</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Delete</source>
+        <translation type="unfinished">Eliminar</translation>
+    </message>
+    <message>
+        <source>Split</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Duplicate</source>
+        <translation type="unfinished">Duplicar</translation>
+    </message>
+    <message>
+        <source>More</source>
+        <translation type="unfinished">Más</translation>
+    </message>
+    <message>
+        <source>Fit</source>
+        <translation type="unfinished">Ajustar</translation>
+    </message>
+    <message>
+        <source>Tap a clip to edit</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -434,121 +500,6 @@
     </message>
 </context>
 <context>
-    <name>AndroidEditActions</name>
-    <message>
-        <source>Select</source>
-        <translation>Seleccionar</translation>
-    </message>
-    <message>
-        <source>Blade — tap a clip to split</source>
-        <translation>Cuchilla — toca un clip para dividirlo</translation>
-    </message>
-    <message>
-        <source>Trim start — tap a clip to drop everything before the cut</source>
-        <translation>Recortar inicio — toca un clip para descartar todo lo anterior al corte</translation>
-    </message>
-    <message>
-        <source>Trim end — tap a clip to drop everything after the cut</source>
-        <translation>Recortar final — toca un clip para descartar todo lo posterior al corte</translation>
-    </message>
-    <message>
-        <source>Paste at current time</source>
-        <translation>Pegar en la posición actual</translation>
-    </message>
-    <message>
-        <source>Duplicate clip</source>
-        <translation>Duplicar clip</translation>
-    </message>
-    <message>
-        <source>Merge adjacent clips</source>
-        <translation>Combinar clips adyacentes</translation>
-    </message>
-    <message>
-        <source>Close gap after clip</source>
-        <translation>Cerrar hueco después del clip</translation>
-    </message>
-    <message>
-        <source>Freeze frame at current time</source>
-        <translation>Congelar fotograma en la posición actual</translation>
-    </message>
-    <message>
-        <source>Separate audio from video</source>
-        <translation>Separar audio del vídeo</translation>
-    </message>
-    <message>
-        <source>Delete</source>
-        <translation>Eliminar</translation>
-    </message>
-    <message>
-        <source>Add or remove a bookmark here</source>
-        <translation>Añadir o eliminar un marcador aquí</translation>
-    </message>
-    <message>
-        <source>Previous bookmark</source>
-        <translation>Marcador anterior</translation>
-    </message>
-    <message>
-        <source>Next bookmark</source>
-        <translation>Marcador siguiente</translation>
-    </message>
-    <message>
-        <source>Mark work area in at current time</source>
-        <translation>Marcar entrada de área de trabajo en la posición actual</translation>
-    </message>
-    <message>
-        <source>Mark work area out at current time</source>
-        <translation>Marcar salida de área de trabajo en la posición actual</translation>
-    </message>
-    <message>
-        <source>Go to work area in</source>
-        <translation>Ir a la entrada del área de trabajo</translation>
-    </message>
-    <message>
-        <source>Go to work area out</source>
-        <translation>Ir a la salida del área de trabajo</translation>
-    </message>
-    <message>
-        <source>Clear work area</source>
-        <translation>Borrar área de trabajo</translation>
-    </message>
-    <message>
-        <source>Toggle snapping</source>
-        <translation>Alternar ajuste</translation>
-    </message>
-    <message>
-        <source>Analyzing…</source>
-        <translation>Analizando…</translation>
-    </message>
-    <message>
-        <source>Hide beat markers</source>
-        <translation>Ocultar marcadores de ritmo</translation>
-    </message>
-    <message>
-        <source>Find the beat and show markers</source>
-        <translation>Buscar el ritmo y mostrar marcadores</translation>
-    </message>
-    <message>
-        <source>Close gaps when trimming</source>
-        <translation>Cerrar huecos al recortar</translation>
-    </message>
-    <message>
-        <source>Allow clip overlap</source>
-        <translation>Permitir superposición de clips</translation>
-    </message>
-    <message>
-        <source>Shorter layers</source>
-        <translation>Capas más bajas</translation>
-    </message>
-    <message>
-        <source>Taller layers</source>
-        <translation>Capas más altas</translation>
-    </message>
-    <message>
-        <source>Fit timeline in view</source>
-        <translation>Ajustar línea de tiempo a la vista</translation>
-    </message>
-</context>
-<context>
     <name>AndroidEditor</name>
     <message>
         <source>Drift project (*.drift)</source>
@@ -564,7 +515,7 @@
     </message>
     <message>
         <source>Open Project</source>
-        <translation>Abrir proyecto</translation>
+        <translation type="unfinished">Abrir proyecto</translation>
     </message>
     <message>
         <source>Your timeline is empty</source>
@@ -581,6 +532,10 @@
     <message>
         <source>Edit</source>
         <translation>Editar</translation>
+    </message>
+    <message>
+        <source>Done</source>
+        <translation type="unfinished">Hecho</translation>
     </message>
 </context>
 <context>
@@ -603,6 +558,45 @@
     <message>
         <source>Me</source>
         <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>AndroidLayoutSheet</name>
+    <message>
+        <source>Canvas &amp; layout</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Custom</source>
+        <translation type="unfinished">Personalizado</translation>
+    </message>
+    <message>
+        <source>Template</source>
+        <translation type="unfinished">Plantilla</translation>
+    </message>
+    <message>
+        <source>Width</source>
+        <translation type="unfinished">Anchura</translation>
+    </message>
+    <message>
+        <source>Height</source>
+        <translation type="unfinished">Altura</translation>
+    </message>
+    <message>
+        <source>Quality</source>
+        <translation type="unfinished">Calidad</translation>
+    </message>
+    <message>
+        <source>Frames per second</source>
+        <translation type="unfinished">Fotogramas por segundo</translation>
+    </message>
+    <message>
+        <source>%1×%2 · %3 · %4 fps</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Done</source>
+        <translation type="unfinished">Hecho</translation>
     </message>
 </context>
 <context>
@@ -770,6 +764,165 @@
     </message>
 </context>
 <context>
+    <name>AndroidMoreToolsSheet</name>
+    <message>
+        <source>More tools</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Trim &amp; timing</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Trim start</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Drop everything before the playhead</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Trim end</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Drop everything after the playhead</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Speed</source>
+        <translation type="unfinished">Velocidad</translation>
+    </message>
+    <message>
+        <source>Change how fast this clip plays</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Freeze frame</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Freeze frame at current time</source>
+        <translation type="unfinished">Congelar fotograma en la posición actual</translation>
+    </message>
+    <message>
+        <source>Merge</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Merge adjacent clips</source>
+        <translation type="unfinished">Combinar clips adyacentes</translation>
+    </message>
+    <message>
+        <source>Close gap</source>
+        <translation type="unfinished">Cerrar hueco</translation>
+    </message>
+    <message>
+        <source>Close gap after clip</source>
+        <translation type="unfinished">Cerrar hueco después del clip</translation>
+    </message>
+    <message>
+        <source>Audio</source>
+        <translation type="unfinished">Audio</translation>
+    </message>
+    <message>
+        <source>Separate audio</source>
+        <translation type="unfinished">Separar audio</translation>
+    </message>
+    <message>
+        <source>Separate audio from video</source>
+        <translation type="unfinished">Separar audio del vídeo</translation>
+    </message>
+    <message>
+        <source>Timeline</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Snapping</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Line clip edges up with cuts and markers</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Ripple</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Close gaps when trimming</source>
+        <translation type="unfinished">Cerrar huecos al recortar</translation>
+    </message>
+    <message>
+        <source>Overlap</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Allow clip overlap</source>
+        <translation type="unfinished">Permitir superposición de clips</translation>
+    </message>
+    <message>
+        <source>Beat markers</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Find the beat and show markers</source>
+        <translation type="unfinished">Buscar el ritmo y mostrar marcadores</translation>
+    </message>
+    <message>
+        <source>Markers &amp; view</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Paste</source>
+        <translation type="unfinished">Pegar</translation>
+    </message>
+    <message>
+        <source>Paste at current time</source>
+        <translation type="unfinished">Pegar en la posición actual</translation>
+    </message>
+    <message>
+        <source>Bookmark</source>
+        <translation type="unfinished">Marcador</translation>
+    </message>
+    <message>
+        <source>Add or remove a bookmark here</source>
+        <translation type="unfinished">Añadir o eliminar un marcador aquí</translation>
+    </message>
+    <message>
+        <source>Work area in</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Mark work area in at current time</source>
+        <translation type="unfinished">Marcar entrada de área de trabajo en la posición actual</translation>
+    </message>
+    <message>
+        <source>Work area out</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Mark work area out at current time</source>
+        <translation type="unfinished">Marcar salida de área de trabajo en la posición actual</translation>
+    </message>
+    <message>
+        <source>Clear work area</source>
+        <translation type="unfinished">Borrar área de trabajo</translation>
+    </message>
+    <message>
+        <source>Shorter layers</source>
+        <translation type="unfinished">Capas más bajas</translation>
+    </message>
+    <message>
+        <source>Taller layers</source>
+        <translation type="unfinished">Capas más altas</translation>
+    </message>
+    <message>
+        <source>Analyzing…</source>
+        <translation type="unfinished">Analizando…</translation>
+    </message>
+</context>
+<context>
     <name>AndroidPreview</name>
     <message>
         <source>Audio only</source>
@@ -862,6 +1015,69 @@
     <message>
         <source>Fullscreen preview</source>
         <translation>Vista previa en pantalla completa</translation>
+    </message>
+</context>
+<context>
+    <name>AndroidProjectSheet</name>
+    <message>
+        <source>Project</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Export</source>
+        <translation type="unfinished">Exportar</translation>
+    </message>
+    <message>
+        <source>Render the finished video</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Save</source>
+        <translation type="unfinished">Guardar</translation>
+    </message>
+    <message>
+        <source>Keep this project on the device</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Share a copy</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>One file with the media packed inside</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Canvas &amp; layout</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Video size, aspect and frame rate</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Project properties</source>
+        <translation type="unfinished">Propiedades del proyecto</translation>
+    </message>
+    <message>
+        <source>Name, resolution and timebase</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Multicam</source>
+        <translation type="unfinished">Cámara múltiple</translation>
+    </message>
+    <message>
+        <source>Sync and switch between angles</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>App settings</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Appearance, extras and agent access</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -1016,6 +1232,10 @@
         <translation>Atrás</translation>
     </message>
     <message>
+        <source>Project actions</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Untitled</source>
         <translation>Sin título</translation>
     </message>
@@ -1032,68 +1252,8 @@
         <translation>Exportar</translation>
     </message>
     <message>
-        <source>More</source>
-        <translation>Más</translation>
-    </message>
-    <message>
-        <source>Save</source>
-        <translation>Guardar</translation>
-    </message>
-    <message>
-        <source>Shareable copy</source>
-        <translation>Copia para compartir</translation>
-    </message>
-    <message>
-        <source>Open project</source>
-        <translation>Abrir proyecto</translation>
-    </message>
-    <message>
-        <source>New project</source>
-        <translation>Nuevo proyecto</translation>
-    </message>
-    <message>
-        <source>Choose layout</source>
-        <translation>Elegir diseño</translation>
-    </message>
-    <message>
-        <source>Project properties</source>
-        <translation>Propiedades del proyecto</translation>
-    </message>
-    <message>
-        <source>Effect templates</source>
-        <translation>Plantillas de efectos</translation>
-    </message>
-    <message>
-        <source>Scenes</source>
-        <translation>Escenas</translation>
-    </message>
-    <message>
-        <source>Settings</source>
-        <translation>Ajustes</translation>
-    </message>
-    <message>
-        <source>Light mode</source>
-        <translation>Modo claro</translation>
-    </message>
-    <message>
-        <source>Dark mode</source>
-        <translation>Modo oscuro</translation>
-    </message>
-    <message>
-        <source>Extras</source>
-        <translation>Extras</translation>
-    </message>
-    <message>
-        <source>Multicam</source>
-        <translation>Cámara múltiple</translation>
-    </message>
-    <message>
-        <source>Debug info</source>
-        <translation>Información de depuración</translation>
-    </message>
-    <message>
-        <source>Update available</source>
-        <translation>Actualización disponible</translation>
+        <source>Show export progress</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -7850,26 +8010,6 @@ Si la reproducción se corta, prueba con otra opción.</translation>
     <message>
         <source>Agent access</source>
         <translation type="unfinished">Acceso de agente</translation>
-    </message>
-    <message>
-        <source>Allow for this session</source>
-        <translation type="unfinished">Permitir durante esta sesión</translation>
-    </message>
-    <message>
-        <source>Let an assistant on this device edit this project until you turn it off or quit.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Listening on %1</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Copy setup command</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Copied for Claude</source>
-        <translation type="unfinished">Copiado para Claude</translation>
     </message>
     <message>
         <source>Marketplace</source>

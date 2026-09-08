@@ -90,6 +90,13 @@ Item {
                                 - scrubBar.height)
             clip: true
 
+            // The band around the canvas. Fixed dark rather than the page background,
+            // which made it a white surround in light mode with the video floating in it.
+            Rectangle {
+                anchors.fill: parent
+                color: Theme.previewLetterbox
+            }
+
             Item {
                 id: viewport
                 anchors.fill: parent

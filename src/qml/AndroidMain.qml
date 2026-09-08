@@ -135,7 +135,7 @@ ApplicationWindow {
     }
 
     function openLayoutChooser() {
-        layoutChooserDialog.openFromSettings()
+        layoutSheet.openSheet()
     }
 
     function showHome() {
@@ -222,15 +222,15 @@ ApplicationWindow {
                 return
             if (window.editorPage && window.editorPage.handleBack())
                 return
-            // A SAF copy is running and AssetLibrary has no cancel entry point, so
-            // closing the window kills the worker part-way through a file. Swallow
-            // Back — but say so, because a Back key that silently does nothing is
-            // its own defect.
             // Home owns a nav stack of its own now: a secondary destination, and any drill-down
             // inside it, unwinds before Back means "leave".
             if (!window.inEditor && window.homePage && window.homePage.handleBack())
                 return
-            if (window.homePage && window.homePage.importOwned && AssetLibrary.importing) {
+            // A SAF copy is running and AssetLibrary has no cancel entry point, so
+            // closing the window kills the worker part-way through a file. Swallow
+            // Back — but say so, because a Back key that silently does nothing is
+            // its own defect.
+            if (AssetLibrary.importing) {
                 Toasts.info(qsTr("Import in progress…"))
                 return
             }
@@ -242,7 +242,15 @@ ApplicationWindow {
     // without this Back left them on screen and walked out of the editor behind them.
     // Ordered by how they stack: newest-opened first.
     function closeTopModal() {
-        const modals = [layoutChooserDialog, projectPropertiesDialog,
+        // Not in the list below: it is a sheet, so it goes out through dismiss() — close()
+        // would take the panel off screen in the frame Back is pressed instead of sliding it.
+        if (layoutSheet.opened) {
+            layoutSheet.dismiss()
+            return true
+        }
+        // debugInfoDialog before settingsDialog: it opens from inside Settings, so it is the
+        // one on top whenever both are up.
+        const modals = [debugInfoDialog, settingsDialog, projectPropertiesDialog,
                         recoveryDialog, unsavedDialog, addonStartupDialog, addonManagerDialog,
                         missingAddonsDialog, updateDialog, reverseProgressDialog,
                         subtitleProgressDialog]
@@ -300,7 +308,14 @@ ApplicationWindow {
         id: languageChooserDialog
         onClosed: window.continueStartupAfterLanguage()
     }
-    LayoutChooserDialog { id: layoutChooserDialog }
+    // The phone view over LayoutPresets. Hosted here rather than in the editor because
+    // Settings → Video reaches it through Window.window.openLayoutChooser() too.
+    AndroidLayoutSheet { id: layoutSheet }
+
+    // Read by the editor page: it binds the preview down by this so a sheet that keeps the
+    // editor live letterboxes the frame instead of cutting it in half.
+    readonly property real nonBlockingSheetHeight:
+        (layoutSheet.opened && !layoutSheet.blocking) ? layoutSheet.panelHeight : 0
 
     // Desktop reaches this from EditorHeader, which Android replaces with AndroidTopBar;
     // hosting it here is what gives that bar's overflow something to open.
@@ -802,11 +817,6 @@ ApplicationWindow {
             Component.onCompleted: window.editorPage = this
             Component.onDestruction: if (window.editorPage === this) window.editorPage = null
             onBackRequested: window.goBack()
-            onGoHomeRequested: {
-                window.inEditor = false
-                if (stack.depth > 1)
-                    stack.pop()
-            }
         }
     }
 
