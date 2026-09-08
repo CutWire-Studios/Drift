@@ -7,6 +7,34 @@ import "components"
 ApplicationWindow {
     id: window
 
+    // Qt creates some chrome itself — most visibly the Undo/Cut/Copy/Paste menu on every
+    // TextField and TextArea (Basic/TextField.qml declares ContextMenu.menu). Drift styles
+    // none of that, so it fell through to the palette the platform theme supplies and picked
+    // up the desktop's colour scheme: on a KDE session with a custom scheme the editing menu
+    // rendered in that scheme's colours next to Drift's own. Palette propagates down the item
+    // hierarchy, popups included, so setting the roles the Basic style reads brings Qt's own
+    // chrome under Theme — and binding them keeps it following the light/dark toggle.
+    palette.window: Theme.panelBackground
+    palette.windowText: Theme.panelForeground
+    palette.base: Theme.panelAccent
+    palette.text: Theme.panelForeground
+    palette.button: Theme.panelAccent
+    palette.buttonText: Theme.panelForeground
+    palette.placeholderText: Theme.mutedForeground
+    // Menu border and item states: dark draws the frame, light the hovered row,
+    // midlight the pressed one.
+    palette.dark: Theme.panelBorder
+    palette.mid: Theme.panelMuted
+    palette.midlight: Theme.panelAccent
+    palette.light: Theme.popoverHover
+    // Drawn at 12% and 50% alpha for the menu's drop shadow; appBackground would
+    // make that a white glow in light mode.
+    palette.shadow: "#000000"
+    palette.highlight: Theme.primary
+    palette.highlightedText: Theme.primaryForeground
+    palette.toolTipBase: Theme.panelBackground
+    palette.toolTipText: Theme.panelForeground
+
     width: 1280
     height: 800
     // Below this the split minimums cannot all be satisfied and panels overlap.
