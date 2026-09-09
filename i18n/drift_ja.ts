@@ -5946,6 +5946,41 @@
     </message>
 </context>
 <context>
+    <name>MarketConsentPanel</name>
+    <message>
+        <source>The marketplace is experimental</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This feature is still being built and can change or stop working at any time. Before you use it, please read what it can and cannot do.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>You get a limited number of downloads per day. The limit is small, may change without notice, and once it is used up you have to wait.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>We cannot guarantee that any source stays available. Sources can be removed, rate-limited or broken by the sites they pull from, at any time and without warning.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>We cannot guarantee that a download will succeed, finish, or give you the quality you picked. Some items will simply fail.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Everything here comes from third parties. Drift does not host, own or vet it — you are responsible for making sure you have the right to use whatever you download.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>I understand</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Continue to the marketplace</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>MarketTab</name>
     <message>
         <source>Marketplace unavailable</source>

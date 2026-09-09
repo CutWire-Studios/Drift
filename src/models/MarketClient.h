@@ -26,6 +26,7 @@ class MarketClient : public QObject
 {
     Q_OBJECT
     Q_PROPERTY(bool configured READ configured CONSTANT)
+    Q_PROPERTY(bool consented READ consented NOTIFY consentedChanged)
     Q_PROPERTY(bool catalogLoading READ catalogLoading NOTIFY catalogLoadingChanged)
     Q_PROPERTY(QString catalogError READ catalogError NOTIFY catalogErrorChanged)
     Q_PROPERTY(bool catalogErrorRetryable READ catalogErrorRetryable NOTIFY catalogErrorChanged)
@@ -66,6 +67,7 @@ public:
     void setAssetLibrary(AssetLibrary *library);
 
     bool configured() const;
+    bool consented() const { return m_consented; }
     bool catalogLoading() const { return m_catalogLoading; }
     QString catalogError() const { return m_catalogError; }
     bool catalogErrorRetryable() const { return m_catalogErrorRetryable; }
@@ -92,6 +94,11 @@ public:
     bool authenticated() const { return !m_accessToken.isEmpty(); }
     QString accountName() const { return m_accountName; }
     int coins() const { return m_coins; }
+
+    // The one-time opt-in gate. Nothing in the store — catalog, search, resolve or download —
+    // is offered until this has been given, so a user cannot reach a rate-limited third-party
+    // download without having read what it is.
+    Q_INVOKABLE void acceptTerms();
 
     Q_INVOKABLE void refreshCatalog();
     Q_INVOKABLE void search(const QString &query, const QVariantMap &filterValues = {});
@@ -120,6 +127,7 @@ public:
     Q_INVOKABLE void disconnectAccount();
 
 signals:
+    void consentedChanged();
     void catalogLoadingChanged();
     void catalogErrorChanged();
     void catalogChanged();
@@ -204,6 +212,7 @@ private:
     QNetworkAccessManager *m_network = nullptr;
     QTimer *m_pollTimer = nullptr;
 
+    bool m_consented = false;
     bool m_catalogLoading = false;
     QString m_catalogError;
     bool m_catalogErrorRetryable = true;

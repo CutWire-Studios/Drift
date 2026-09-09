@@ -116,7 +116,7 @@ Item {
     }
 
     onVisibleChanged: {
-        if (!visible || !Market.configured)
+        if (!visible || !Market.configured || !Market.consented)
             return
         if (Market.types.length === 0 && !Market.catalogLoading)
             Market.refreshCatalog()
@@ -158,10 +158,24 @@ Item {
         hint: qsTr("This build does not include the marketplace.")
     }
 
+    // The opt-in gate. Sits in front of the whole tab rather than over it: until it is
+    // accepted there is no catalog to dim behind it, because onVisibleChanged never asked
+    // for one.
+    MarketConsentPanel {
+        anchors.fill: parent
+        visible: Market.configured && !Market.consented
+        sideMargin: root.compact ? Theme.androidPagePadding : Theme.pagePadding
+        onAccepted: {
+            if (Market.types.length === 0 && !Market.catalogLoading)
+                Market.refreshCatalog()
+        }
+    }
+
     EmptyState {
         anchors.centerIn: parent
         width: parent.width
-        visible: Market.configured && Market.catalogLoading && Market.types.length === 0
+        visible: Market.configured && Market.consented && Market.catalogLoading
+                 && Market.types.length === 0
         glyph: Theme.icons.spinner
         glyphSpinning: true
         title: qsTr("Loading marketplace…")
@@ -171,8 +185,8 @@ Item {
     EmptyState {
         anchors.centerIn: parent
         width: parent.width
-        visible: Market.configured && !Market.catalogLoading && Market.catalogError.length > 0
-                 && Market.types.length === 0
+        visible: Market.configured && Market.consented && !Market.catalogLoading
+                 && Market.catalogError.length > 0 && Market.types.length === 0
         glyph: Theme.icons.error
         title: qsTr("Couldn’t reach the marketplace")
         hint: Market.catalogError
@@ -186,8 +200,8 @@ Item {
     EmptyState {
         anchors.centerIn: parent
         width: parent.width
-        visible: Market.configured && !Market.catalogLoading && Market.catalogError.length === 0
-                 && Market.types.length === 0
+        visible: Market.configured && Market.consented && !Market.catalogLoading
+                 && Market.catalogError.length === 0 && Market.types.length === 0
         glyph: Theme.icons.store
         title: qsTr("Nothing listed")
         hint: qsTr("No sources are available right now.")
@@ -197,7 +211,7 @@ Item {
 
     ColumnLayout {
         id: browser
-        visible: Market.configured && Market.types.length > 0
+        visible: Market.configured && Market.consented && Market.types.length > 0
         anchors.fill: parent
         spacing: Theme.spacingSm
 

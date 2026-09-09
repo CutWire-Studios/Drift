@@ -152,6 +152,8 @@ MarketClient::MarketClient(QObject *parent)
     m_resolvePollTimer->setInterval(kPollIntervalMs);
     connect(m_resolvePollTimer, &QTimer::timeout, this, &MarketClient::pollResolve);
 
+    m_consented = QSettings().value(settingsKey("consented"), false).toBool();
+
     loadStoredAuth();
     if (configured()) {
         QDir().mkpath(downloadsRoot());
@@ -161,6 +163,15 @@ MarketClient::MarketClient(QObject *parent)
 }
 
 MarketClient::~MarketClient() = default;
+
+void MarketClient::acceptTerms()
+{
+    if (m_consented)
+        return;
+    m_consented = true;
+    QSettings().setValue(settingsKey("consented"), true);
+    emit consentedChanged();
+}
 
 void MarketClient::setAssetLibrary(AssetLibrary *library)
 {
