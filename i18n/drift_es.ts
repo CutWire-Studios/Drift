@@ -519,7 +519,7 @@
     </message>
     <message>
         <source>Clear finished</source>
-        <translation type="unfinished"></translation>
+        <translation>Borrar completadas</translation>
     </message>
 </context>
 <context>
@@ -577,7 +577,7 @@
     </message>
     <message>
         <source>Market</source>
-        <translation type="unfinished"></translation>
+        <translation>Mercado</translation>
     </message>
     <message>
         <source>Me</source>
@@ -698,15 +698,15 @@
     </message>
     <message>
         <source>That share had no link in it.</source>
-        <translation type="unfinished"></translation>
+        <translation>Ese recurso compartido no tenía ningún enlace.</translation>
     </message>
     <message>
         <source>Links can’t be opened in this build.</source>
-        <translation type="unfinished"></translation>
+        <translation>Los enlaces no se pueden abrir en esta versión.</translation>
     </message>
     <message>
         <source>That download is no longer in your media.</source>
-        <translation type="unfinished"></translation>
+        <translation>Esa descarga ya no está en tu contenido multimedia.</translation>
     </message>
     <message>
         <source>Open Project</source>
