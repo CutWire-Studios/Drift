@@ -105,8 +105,8 @@ Item {
 
     property bool effectDropTarget: panel.effectDropTrackIndex === trackIndex
                                     && panel.effectDropClipIndex === clipIndex
-    // Subtitles keep cue-owned timing; text clips use the same edge fades as video.
-    readonly property bool timelineFadeHandles: trackType !== "subtitle"
+    // Only audio tracks show timeline corner fade dots; video clips stay clean like CapCut
+    readonly property bool timelineFadeHandles: trackType === "audio"
 
     // Gain along a fade ramp (progress 0..1). Mirrors Clip::shapeFade / FadeShape.
     function fadeGainAt(progress) {
@@ -372,8 +372,8 @@ Item {
         }
         border.width: clipItem.effectDropTarget
                       ? Theme.borderWidthFocus
-                      : (clipItem.selected ? Theme.clipSelectionRingWidth : 0)
-        border.color: clipItem.effectDropTarget ? Theme.clipEffect : Theme.primary
+                      : (clipItem.selected ? 2 : 0)
+        border.color: clipItem.effectDropTarget ? Theme.clipEffect : "#FFFFFF"
         clip: true
 
         Behavior on color {
@@ -606,13 +606,34 @@ Item {
             id: waveformHost
             visible: clipItem.trackType === "audio"
                      || (clipItem.trackType === "video"
-                         && clipItem.showWaveform)
+                         && clipItem.clipData.path
+                         && clipItem.clipData.path.length > 0)
             anchors.left: parent.left
             anchors.right: parent.right
-            anchors.top: parent.top
-            anchors.topMargin: clipItem.headerBandHeight
             anchors.bottom: parent.bottom
+            anchors.top: (clipItem.trackType === "video" && !clipItem.showWaveform)
+                         ? undefined : parent.top
+            anchors.topMargin: (clipItem.trackType === "video" && !clipItem.showWaveform)
+                               ? 0 : clipItem.headerBandHeight
+            height: (clipItem.trackType === "video" && !clipItem.showWaveform)
+                    ? Math.min(parent.height * 0.40, Math.max(18, parent.height - clipItem.headerBandHeight - 4))
+                    : undefined
             clip: true
+
+            // Scrim gradient on video clips to make waveform pop cleanly over thumbnails like CapCut
+            Rectangle {
+                anchors.fill: parent
+                visible: clipItem.trackType === "video"
+                         && !clipItem.showWaveform
+                         && waveformCanvas.peaks
+                         && waveformCanvas.peaks.length > 0
+                gradient: Gradient {
+                    GradientStop { position: 0.0; color: "#00000000" }
+                    GradientStop { position: 0.35; color: "#55000000" }
+                    GradientStop { position: 1.0; color: "#88000000" }
+                }
+                z: -1
+            }
 
             // Bumped when an off-thread decode lands, to re-run the peaks and lane-count
             // bindings. Lives on the host because the labels below need it too.
@@ -720,7 +741,8 @@ Item {
                     const w = Math.max(1, Math.floor(width))
                     const laneH = height / channels
 
-                    ctx.fillStyle = Theme.waveformColor
+                    ctx.fillStyle = (clipItem.trackType === "video" && !clipItem.showWaveform)
+                                    ? "#38bdf8" : Theme.waveformColor
                     for (var c = 0; c < channels; c++) {
                         const base = c * buckets
                         const mid = c * laneH + laneH / 2
@@ -783,7 +805,8 @@ Item {
 
                     if (!peaks || peaks.length === 0)
                         return;
-                    ctx.fillStyle = Theme.waveformColor;
+                    ctx.fillStyle = (clipItem.trackType === "video" && !clipItem.showWaveform)
+                                    ? "#38bdf8" : Theme.waveformColor;
                     var mid = height / 2;
                     var w = Math.max(1, Math.floor(width));
                     var n = peaks.length;
@@ -1383,25 +1406,28 @@ Item {
 
     Rectangle {
         id: leftTrimHandle
-        // Thin edge bar; hotspots still use the wide Theme width when idle.
-        width: (leftTrimMouse.containsMouse || leftTrimHover.hovered || leftTrimMouse.pressed)
-               ? Math.max(2, clipItem.trimHandleWidth * 0.35)
-               : clipItem.trimHandleWidth
+        width: 5
         anchors.left: clipBackground.left
         anchors.top: clipBackground.top
         anchors.bottom: clipBackground.bottom
-        color: clipItem.showTrimHandles ? Theme.primary : "transparent"
-        opacity: !clipItem.showTrimHandles ? 0
-                 : (leftTrimMouse.containsMouse || leftTrimHover.hovered || leftTrimMouse.pressed)
-                   ? 1.0 : 0.85
+        anchors.margins: 1
+        radius: 2
+        color: "#FFFFFF"
+        opacity: clipItem.showTrimHandles ? 1.0 : 0.0
+        visible: clipItem.showTrimHandles
+        z: 30
 
         Behavior on opacity {
-            enabled: clipItem.showTrimHandles
             NumberAnimation { duration: Theme.durationFast; easing.type: Theme.easing }
         }
-        Behavior on width {
-            enabled: clipItem.showTrimHandles
-            NumberAnimation { duration: Theme.durationFast; easing.type: Theme.easing }
+
+        // CapCut-style grip lines
+        Column {
+            anchors.centerIn: parent
+            spacing: 2
+            visible: parent.height >= 22
+            Rectangle { width: 1.5; height: 3; radius: 0.5; color: "#222222" }
+            Rectangle { width: 1.5; height: 3; radius: 0.5; color: "#222222" }
         }
 
         ThemedToolTip {
@@ -1410,29 +1436,24 @@ Item {
                      && (leftTrimMouse.containsMouse || leftTrimHover.hovered)
                      && !leftTrimMouse.pressed
         }
-        z: 30
 
         MouseArea {
             id: leftTrimMouse
             anchors.fill: parent
             anchors.leftMargin: -clipItem.trimHotspotExtra
-            anchors.rightMargin: -4
-            // Leave the top corner for the fade-in dot.
+            anchors.rightMargin: -6
+            // Leave the top corner for the fade-in dot on audio clips.
             anchors.topMargin: clipItem.timelineFadeHandles && clipItem.showTrimHandles
                                && !clipItem.touchMode ? (clipItem.height < 35 ? 10 : 16) : -6
             anchors.bottomMargin: -6
-            // Same reason as the move drag: these are ~38px strips at both edges of
-            // every clip and they hold the grab, so on touch they turned each clip
-            // boundary into another place the timeline could not be panned. Only the
-            // selected clip — the one actually showing trim handles — arms them.
             enabled: !clipItem.touchMode || clipItem.showTrimHandles
             preventStealing: true
             hoverEnabled: true
-            cursorShape: Qt.BlankCursor
+            cursorShape: Qt.SizeHorCursor
 
             HoverHandler {
                 id: leftTrimHover
-                cursorShape: Qt.BlankCursor
+                cursorShape: Qt.SizeHorCursor
             }
 
             onPressed: (mouse) => {
@@ -1448,19 +1469,12 @@ Item {
             onPositionChanged: (mouse) => {
                 if (!pressed)
                     return
-                // A vertical drag on this strip is someone reaching for another layer, not for
-                // this clip's in point.
                 if (clipItem.edgeGestureScrolled(leftTrimMouse, mouse))
                     return
                 const end = (clipItem.clipData.start || 0)
                             + (clipItem.clipData.duration || 0)
                 const raw = mapToItem(trackRow, mouse.x, mouse.y).x / panel.pxPerSecond
-                // Floor duration so the clip stays at least
-                // clipMinWidth; handles remain draggable to extend.
                 const newStart = Math.min(raw, end - clipItem.minDurationSeconds)
-                // The trim reports what it did rather than the caller guessing from the geometry:
-                // snapping and every limit that can stop this edge live inside it, and the one the
-                // user needs told — the source running out — has no cue on screen at all.
                 Haptics.trimStep(
                     EditorState.trimClipLeft(clipItem.trackIndex, clipItem.clipIndex,
                                              Math.max(0, newStart)))
@@ -1472,24 +1486,28 @@ Item {
 
     Rectangle {
         id: rightTrimHandle
-        width: (rightTrimMouse.containsMouse || rightTrimHover.hovered || rightTrimMouse.pressed)
-               ? Math.max(2, clipItem.trimHandleWidth * 0.35)
-               : clipItem.trimHandleWidth
+        width: 5
         anchors.right: clipBackground.right
         anchors.top: clipBackground.top
         anchors.bottom: clipBackground.bottom
-        color: clipItem.showTrimHandles ? Theme.primary : "transparent"
-        opacity: !clipItem.showTrimHandles ? 0
-                 : (rightTrimMouse.containsMouse || rightTrimHover.hovered || rightTrimMouse.pressed)
-                   ? 1.0 : 0.85
+        anchors.margins: 1
+        radius: 2
+        color: "#FFFFFF"
+        opacity: clipItem.showTrimHandles ? 1.0 : 0.0
+        visible: clipItem.showTrimHandles
+        z: 30
 
         Behavior on opacity {
-            enabled: clipItem.showTrimHandles
             NumberAnimation { duration: Theme.durationFast; easing.type: Theme.easing }
         }
-        Behavior on width {
-            enabled: clipItem.showTrimHandles
-            NumberAnimation { duration: Theme.durationFast; easing.type: Theme.easing }
+
+        // CapCut-style grip lines
+        Column {
+            anchors.centerIn: parent
+            spacing: 2
+            visible: parent.height >= 22
+            Rectangle { width: 1.5; height: 3; radius: 0.5; color: "#222222" }
+            Rectangle { width: 1.5; height: 3; radius: 0.5; color: "#222222" }
         }
 
         ThemedToolTip {
@@ -1498,29 +1516,24 @@ Item {
                      && (rightTrimMouse.containsMouse || rightTrimHover.hovered)
                      && !rightTrimMouse.pressed
         }
-        z: 30
 
         MouseArea {
             id: rightTrimMouse
             anchors.fill: parent
-            anchors.leftMargin: -4
+            anchors.leftMargin: -6
             anchors.rightMargin: -clipItem.trimHotspotExtra
-            // Leave the top corner for the fade-out dot.
+            // Leave the top corner for the fade-out dot on audio clips.
             anchors.topMargin: clipItem.timelineFadeHandles && clipItem.showTrimHandles
                                && !clipItem.touchMode ? (clipItem.height < 35 ? 10 : 16) : -6
             anchors.bottomMargin: -6
-            // Same reason as the move drag: these are ~38px strips at both edges of
-            // every clip and they hold the grab, so on touch they turned each clip
-            // boundary into another place the timeline could not be panned. Only the
-            // selected clip — the one actually showing trim handles — arms them.
             enabled: !clipItem.touchMode || clipItem.showTrimHandles
             preventStealing: true
             hoverEnabled: true
-            cursorShape: Qt.BlankCursor
+            cursorShape: Qt.SizeHorCursor
 
             HoverHandler {
                 id: rightTrimHover
-                cursorShape: Qt.BlankCursor
+                cursorShape: Qt.SizeHorCursor
             }
 
             onPressed: (mouse) => {
