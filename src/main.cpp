@@ -42,6 +42,7 @@
 #include <QQmlApplicationEngine>
 #include <QQmlNetworkAccessManagerFactory>
 #include <QStandardPaths>
+#include <QStringList>
 #include <QQmlEngine>
 #include <QQuickWindow>
 #include <QSurfaceFormat>
@@ -430,10 +431,27 @@ int main(int argc, char *argv[])
     drift::applyVaapiZeroCopyXcbEgl();
 
     QApplication app(argc, argv);
-    if (!QImageReader::supportedImageFormats().contains("svg")) {
-        qWarning("SVG icons will not display: Qt's SVG image plugin is missing or built "
-                 "for a different Qt version than this binary. Install a matching qt6-svg "
-                 "(same version as qt6-base).");
+    // A missing image plugin is silent everywhere else: the reader just returns a null QImage,
+    // so the bin card is blank and the clip renders as nothing with no hint why. On a released
+    // APK this line is the only way to tell that from a corrupt file, over adb logcat.
+    {
+        const QList<QByteArray> formats = QImageReader::supportedImageFormats();
+        if (!formats.contains("svg")) {
+            qWarning("SVG icons will not display: Qt's SVG image plugin is missing or built "
+                     "for a different Qt version than this binary. Install a matching qt6-svg "
+                     "(same version as qt6-base).");
+        }
+        QStringList missing;
+        for (const char *format : {"webp", "tiff"}) {
+            if (!formats.contains(QByteArray(format)))
+                missing.append(QString::fromLatin1(format));
+        }
+        if (!missing.isEmpty()) {
+            qWarning("Qt ImageFormats plugins missing (%s): those stills will not decode. "
+                     "Install qt6-imageformats, or add qtimageformats to the Qt kit this was "
+                     "built against.",
+                     qPrintable(missing.join(QStringLiteral(", "))));
+        }
     }
     // Associates the window with the installed .desktop entry so shells (notably
     // Wayland) can find its icon and app metadata.

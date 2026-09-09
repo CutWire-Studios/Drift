@@ -130,6 +130,9 @@ signals:
     // Result of startReplaceProbe. Nothing has been applied yet; the caller decides whether the
     // probed media is an acceptable stand-in and calls applyProbedSource if so.
     void assetSourceProbed(const QString &assetId, const drift::MediaAsset &filled, bool ok);
+    // A file that passed the suffix whitelist and then could not be read at all, so its bin row
+    // was withdrawn. Without this the row just disappears and the user is told nothing.
+    void assetImportFailed(const QString &name);
 
 private:
     // `sourceUris` maps an absolute path to the content:// URI it was materialized from, so the

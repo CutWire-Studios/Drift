@@ -14,6 +14,7 @@
 #include "PreviewVideoFrame.h"
 #include "core/Time.h"
 
+#include <QVector4D>
 #include <QByteArray>
 #include <QElapsedTimer>
 #include <QImage>
@@ -226,6 +227,11 @@ public:
     // `geom` may be nullptr. Cache key is `id` alone — do not reuse an id with different sources.
     QOpenGLShaderProgram *builtinProgram(const QString &id, const char *vertexSource,
                                          const char *fragmentSource, const char *geom);
+    // `fragmentExtensions` is a block of #extension directives injected ahead of the default
+    // precision qualifiers, which is the only legal place for them. nullptr for none.
+    QOpenGLShaderProgram *builtinProgram(const QString &id, const char *vertexSource,
+                                         const char *fragmentSource, const char *geom,
+                                         const char *fragmentExtensions);
 
     // Drop the recyclable GPU memory — the uploaded-image texture cache and the framebuffer pool —
     // without touching the context, the compiled programs or the live present ring. For the Android
@@ -237,7 +243,7 @@ public:
     void shutdown();
 
     // Last preview import path and VAAPI zero-copy rejection, for the debug report.
-    enum class PreviewUploadPath { None, CudaInterop, VaapiDmaBuf, CpuRoundTrip };
+    enum class PreviewUploadPath { None, CudaInterop, VaapiDmaBuf, MediaCodecImage, CpuRoundTrip };
     static PreviewUploadPath lastPreviewUploadPath();
     static QString lastVaapiImportReason();
 
@@ -265,6 +271,11 @@ private:
     // would glTexSubImage2D straight into the decoder's dma-buf.
     bool ensureImportTextureNames(QOpenGLExtraFunctions *gl);
     bool importVaapiNv12(QOpenGLExtraFunctions *gl, const AVFrame *frame);
+    // Binds a latched MediaCodec gralloc buffer as a GL external texture. Android only; false
+    // everywhere else and on any device whose EGL/GLES lacks the extensions. Writes the picture's
+    // sub-rectangle of the buffer into `crop` as (offsetU, offsetV, scaleU, scaleV).
+    bool importMediaCodecImage(QOpenGLExtraFunctions *gl, const AVFrame *frame, GLuint *texture,
+                               QVector4D *crop);
     AVFrame *ensureSoftwareNv12(const AVFrame *src);
 
     QMutex m_initMutex;
@@ -315,6 +326,13 @@ private:
     GLuint m_importY = 0;
     GLuint m_importUV = 0;
     bool m_vaapiImportFailed = false;
+#ifdef Q_OS_ANDROID
+    GLuint m_mcTexture = 0;
+    bool m_mcImportFailed = false;
+    // EGLImages keyed by AHardwareBuffer. Gralloc recycles a small fixed set of buffers, so the
+    // hit rate is effectively 1 and this saves a driver image allocation on every frame.
+    std::vector<std::pair<void *, void *>> m_mcImageCache;
+#endif
     // Auto-mode driver verdict: -1 unknown, 0 unverified, 1 verified. Cached because the
     // answer depends only on the driver, which does not change within a session.
     int m_vaapiAutoVerified = -1;

@@ -1,5 +1,7 @@
 #include "FrameCompositor.h"
 
+#include "StillImage.h"
+
 #include "ClipReaderPool.h"
 #include "CompositorFrameHistory.h"
 #include "EffectCatalog.h"
@@ -14,6 +16,7 @@
 #include "TransitionCatalog.h"
 #include "core/Clip.h"
 #include "core/ClipAnimation.h"
+#include "core/MediaAsset.h"
 #include "core/ShapePath.h"
 #include "core/SubtitleCue.h"
 #include "core/Time.h"
@@ -342,8 +345,7 @@ QImage decodedStillImage(const QString &path, int maxWidth, int maxHeight)
         }
     }
 
-    QImageReader reader(path);
-    QImage image = reader.read();
+    QImage image = drift::decodeStillImage(path);
     if (image.isNull())
         return {};
     image = image.convertToFormat(QImage::Format_RGBA8888)
@@ -735,10 +737,15 @@ void applyClipBodyAnimation(const drift::Clip &clip, drift::TimeUs timelineUs, d
 // header read on every one of them would cost more than the answer is worth.
 bool maskMediaIsStillImage(const QString &path)
 {
+    // Off the shared suffix list, not QImageReader::supportedImageFormats(). Deriving it from the
+    // deployed plugins meant a build without qtimageformats classified a .webp mask as *video* and
+    // handed it to FFmpeg — which decoded it, so masks quietly worked on exactly the builds where
+    // image clips rendered as nothing. Same answer everywhere now; decodedStillImage has its own
+    // FFmpeg fallback for the formats Qt cannot take.
     static const QSet<QString> suffixes = [] {
         QSet<QString> out;
-        for (const QByteArray &format : QImageReader::supportedImageFormats())
-            out.insert(QString::fromLatin1(format).toLower());
+        for (const QString &suffix : drift::imageExtensions())
+            out.insert(suffix.toLower());
         return out;
     }();
     const int dot = path.lastIndexOf(QLatin1Char('.'));

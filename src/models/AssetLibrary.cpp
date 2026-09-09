@@ -15,6 +15,8 @@
 #include <QFile>
 #include <QFileInfo>
 #include <QImageIOHandler>
+#include "engine/StillImage.h"
+
 #include <QImageReader>
 #include <QJsonObject>
 #include <QMetaObject>
@@ -174,14 +176,10 @@ const QStringList &audioExtensions()
     return extensions;
 }
 
+// Canonical list lives in core so the engine and the project importers can share it.
 const QStringList &imageExtensions()
 {
-    static const QStringList extensions = {
-        QStringLiteral("png"),  QStringLiteral("jpg"),  QStringLiteral("jpeg"),
-        QStringLiteral("gif"),  QStringLiteral("webp"), QStringLiteral("bmp"),
-        QStringLiteral("tiff"), QStringLiteral("tif"),  QStringLiteral("svg"),
-    };
-    return extensions;
+    return drift::imageExtensions();
 }
 
 drift::MediaKind kindFrom(const MediaInfo &info, const QString &path)
@@ -282,15 +280,21 @@ drift::MediaAsset buildProbedAsset(const QString &absolutePath, const QString &n
     return asset;
 }
 
-drift::MediaAsset buildImageAsset(const QString &absolutePath, const QString &name)
+// nullopt when neither Qt nor the FFmpeg fallback can read the file. The suffix is on the import
+// whitelist, so reaching that means a format Drift claims to support has no decoder here at all.
+// Returning a zero-sized asset instead, which is what this used to do, left a row in the bin that
+// silently rendered as nothing.
+std::optional<drift::MediaAsset> buildImageAsset(const QString &absolutePath, const QString &name)
 {
     const QString kindString = drift::mediaKindToString(drift::MediaKind::Image);
     const QString thumb = MediaThumbnail::generate(absolutePath, kindString);
-    QImageReader reader(absolutePath);
-    reader.setAutoTransform(true);
-    QSize size = reader.size();
-    if (reader.transformation() & QImageIOHandler::TransformationRotate90)
-        size.transpose();
+    const QSize size = drift::stillImageSize(absolutePath);
+
+    if (size.isEmpty()) {
+        qWarning("import: cannot read image %s. Qt decodes: %s", qPrintable(absolutePath),
+                 QImageReader::supportedImageFormats().join(", ").constData());
+        return std::nullopt;
+    }
 
     drift::MediaAsset asset;
     asset.name = name;
@@ -742,10 +746,13 @@ void AssetLibrary::applyImportResult(const QString &assetId, const drift::MediaA
         return;
 
     if (!ok) {
+        const drift::MediaAsset *failing = m_project->asset(assetId);
+        const QString name = failing ? failing->name : QString();
         beginRemoveRows({}, index, index);
         m_project->assets().remove(assetId);
         m_project->assetOrder().removeAll(assetId);
         endRemoveRows();
+        emit assetImportFailed(name);
         return;
     }
 

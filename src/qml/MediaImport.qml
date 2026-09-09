@@ -179,6 +179,19 @@ QtObject {
             : qsTr("Could not open any of the selected files.")
     }
 
+    // Lands after importFinished, not with it: the probe is async, so the row is added first and
+    // withdrawn later. The counts in onImportFinished have already been taken by then, which is
+    // why this needs its own toast rather than folding into the summary below.
+    property Connections _probeFailWatch: Connections {
+        target: AssetLibrary
+        function onAssetImportFailed(name) {
+            if (name)
+                Toasts.error(qsTr("Could not read %1 — that image format is not supported by this build.").arg(name))
+            else
+                Toasts.error(qsTr("Could not read that file — the format is not supported by this build."))
+        }
+    }
+
     property Connections _finishWatch: Connections {
         target: AssetLibrary
         function onImportFinished(materialized, failed) {

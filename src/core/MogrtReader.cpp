@@ -410,14 +410,17 @@ void parseManifestXml(const QByteArray &xmlData, MogrtTemplate &tmpl)
 
 bool isMediaExtension(const QString &ext)
 {
-    static const QSet<QString> kExtensions = {
-        QStringLiteral("png"), QStringLiteral("jpg"), QStringLiteral("jpeg"),
-        QStringLiteral("webp"), QStringLiteral("svg"), QStringLiteral("bmp"),
-        QStringLiteral("mp4"), QStringLiteral("mov"), QStringLiteral("mkv"),
-        QStringLiteral("webm"), QStringLiteral("avi"),
-        QStringLiteral("mp3"), QStringLiteral("wav"), QStringLiteral("aac"),
-        QStringLiteral("m4a"), QStringLiteral("flac"), QStringLiteral("ogg")
-    };
+    static const QSet<QString> kExtensions = [] {
+        QSet<QString> out = {
+            QStringLiteral("mp4"), QStringLiteral("mov"), QStringLiteral("mkv"),
+            QStringLiteral("webm"), QStringLiteral("avi"),
+            QStringLiteral("mp3"), QStringLiteral("wav"), QStringLiteral("aac"),
+            QStringLiteral("m4a"), QStringLiteral("flac"), QStringLiteral("ogg")
+        };
+        for (const QString &suffix : imageExtensions())
+            out.insert(suffix);
+        return out;
+    }();
     return kExtensions.contains(ext.toLower());
 }
 
@@ -585,8 +588,7 @@ bool applyTemplateToProject(const MogrtTemplate &tmpl,
         asset.folderId = templateFolderId;
         asset.durationUs = tmpl.durationUs;
 
-        if (ext == QLatin1String("png") || ext == QLatin1String("jpg") || ext == QLatin1String("jpeg")
-            || ext == QLatin1String("webp") || ext == QLatin1String("svg")) {
+        if (imageExtensions().contains(ext)) {
             asset.kind = MediaKind::Image;
         } else if (ext == QLatin1String("mp3") || ext == QLatin1String("wav") || ext == QLatin1String("aac")
                    || ext == QLatin1String("m4a") || ext == QLatin1String("ogg") || ext == QLatin1String("flac")) {
@@ -682,10 +684,7 @@ bool applyTemplateToProject(const MogrtTemplate &tmpl,
             clip.assetId = assetId;
             clip.name = QFileInfo(path).fileName();
             clip.path = path;
-            clip.type = (ext == QLatin1String("png") || ext == QLatin1String("jpg") || ext == QLatin1String("jpeg")
-                         || ext == QLatin1String("webp") || ext == QLatin1String("svg"))
-                ? ClipType::Image
-                : ClipType::Video;
+            clip.type = imageExtensions().contains(ext) ? ClipType::Image : ClipType::Video;
             clip.timelineStart = insertTimeUs;
             clip.timelineDuration = tmpl.durationUs;
             clip.srcIn = 0;

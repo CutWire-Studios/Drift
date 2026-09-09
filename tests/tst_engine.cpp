@@ -28,6 +28,7 @@
 #include "core/TimelineOps.h"
 #include "engine/AudioMixer.h"
 #include "engine/ClipReader.h"
+#include "engine/StillImage.h"
 #include "engine/DebugReport.h"
 #include "engine/Exporter.h"
 #include "engine/GpuCompositor.h"
@@ -108,6 +109,12 @@ private slots:
     void colorParametersParseAndResolve();
     void modelAssetLoadsCubeGlb();
     void modelAssetRejectsDraco();
+    void hwAccelDescribesEveryBackend();
+    void stillImageDecodesWebp();
+    void stillImageDecodesHeicAndAvifViaFfmpeg();
+    void stillImageFallsBackWhenQtCannotRead();
+    void stillImagePreservesAlpha();
+    void stillImageRejectsGarbage();
     void modelAssetRejectsCorrupt();
     void faceModelMvpIsResolutionIndependent();
     void faceModelMvpMapsUpToDecreasingNdcY();
@@ -8789,6 +8796,130 @@ void EngineTest::softwareRenderersAreRecognisedByName()
     info.minor = 0;
     info.renderer = QStringLiteral("llvmpipe");
     QCOMPARE(drift::gl::describeGl(info), QStringLiteral("OpenGL 3.0 — llvmpipe"));
+}
+
+
+// --- Still images -----------------------------------------------------------------------------
+// decodeStillImage is the single entry point the bin, the thumbnailer and the compositor share.
+// Qt handles most formats; FFmpeg is the fallback that covers HEIC/AVIF (no Qt plugin exists in
+// any official kit) and rescues webp/tiff when the build's Qt lacks qtimageformats.
+
+// decodeBackendOrder() only ever names this platform's backends, so the round-trip test above
+// cannot see an enumerator that belongs to another one — and a new Backend with a missing switch
+// arm compiles fine and returns "" or AV_HWDEVICE_TYPE_NONE at runtime. Cover them all here.
+void EngineTest::hwAccelDescribesEveryBackend()
+{
+    using drift::hwaccel::Backend;
+    for (const Backend backend : {Backend::Cuda, Backend::D3d11va, Backend::Vaapi,
+                                  Backend::VideoToolbox, Backend::MediaCodec}) {
+        const QString id = drift::hwaccel::id(backend);
+        QVERIFY2(!id.isEmpty(), qPrintable(QString::number(int(backend))));
+        QCOMPARE(drift::hwaccel::backendFromId(id), backend);
+        QVERIFY(drift::hwaccel::deviceType(backend) != AV_HWDEVICE_TYPE_NONE);
+        QVERIFY(qstrlen(drift::hwaccel::name(backend)) > 0);
+    }
+
+#ifndef Q_OS_ANDROID
+    // MediaCodec exists in the enum on every platform so the picker can name it, but it must
+    // never be offered off Android — and a settings file carried over from a phone has to
+    // resolve to something that works rather than to a mode that silently never engages.
+    QVERIFY(!drift::hwaccel::mediaCodecDecodeAvailable());
+    QVERIFY(!drift::hwaccel::availableDecodeBackends().contains(Backend::MediaCodec));
+    QVERIFY(!drift::hwaccel::decodeBackendOrder().contains(Backend::MediaCodec));
+#endif
+}
+
+void EngineTest::stillImageDecodesWebp()
+{
+    const QString path = QStringLiteral(DRIFT_TEST_DATA_DIR "/still.webp");
+    QVERIFY2(QFileInfo::exists(path), qPrintable(path));
+
+    const QImage image = drift::decodeStillImage(path);
+    QVERIFY(!image.isNull());
+    QCOMPARE(image.size(), QSize(64, 64));
+    QCOMPARE(drift::stillImageSize(path), QSize(64, 64));
+}
+
+void EngineTest::stillImageDecodesHeicAndAvifViaFfmpeg()
+{
+    // No Qt kit ships a qheif/qavif plugin, so on a user's machine these can only come from the
+    // FFmpeg fallback. A dev box with KDE's KImageFormats installed satisfies them through Qt
+    // instead and would prove nothing, so each is also decoded under a suffix no plugin claims,
+    // which leaves QImageReader with no handler to try and forces the fallback. libavformat
+    // sniffs the ftyp box, so the suffix never mattered to it.
+    // The fixtures are 64x64 for a reason: FFmpeg n7.1, which the desktop CI links, cannot
+    // parse a HEIC header below that and fails the whole file with "error reading header".
+    // FFmpeg 8.x (what Android ships) reads it at 32x32 fine. Real camera stills are
+    // megapixels, so this is a fixture constraint, not a user-facing limit.
+    QTemporaryDir tmp;
+    QVERIFY(tmp.isValid());
+
+    for (const char *name : {"still.heic", "still.avif"}) {
+        const QString path =
+            QStringLiteral(DRIFT_TEST_DATA_DIR "/") + QLatin1String(name);
+        QVERIFY2(QFileInfo::exists(path), qPrintable(path));
+        const QImage image = drift::decodeStillImage(path);
+        QVERIFY2(!image.isNull(), name);
+        QCOMPARE(image.size(), QSize(64, 64));
+
+        const QString disguised =
+            tmp.filePath(QLatin1String(name) + QStringLiteral(".drift-unknown"));
+        QVERIFY(QFile::copy(path, disguised));
+        QVERIFY(!drift::qtCanDecodeStill(disguised));
+        const QImage viaFfmpeg = drift::decodeStillImage(disguised);
+        QVERIFY2(!viaFfmpeg.isNull(), name);
+        QCOMPARE(viaFfmpeg.size(), QSize(64, 64));
+        QCOMPARE(drift::stillImageSize(disguised), QSize(64, 64));
+    }
+}
+
+void EngineTest::stillImageFallsBackWhenQtCannotRead()
+{
+    // CI installs qtimageformats, so a plain .webp would pass through Qt and prove nothing about
+    // the fallback. Copying it to a suffix no image plugin claims forces the FFmpeg branch:
+    // QImageReader has no handler to try, and libavformat sniffs the RIFF header regardless.
+    QTemporaryDir tmp;
+    QVERIFY(tmp.isValid());
+    const QString disguised = tmp.filePath(QStringLiteral("still.drift-unknown"));
+    QVERIFY(QFile::copy(QStringLiteral(DRIFT_TEST_DATA_DIR "/still.webp"), disguised));
+
+    QVERIFY(!drift::qtCanDecodeStill(disguised));
+    const QImage image = drift::decodeStillImage(disguised);
+    QVERIFY(!image.isNull());
+    QCOMPARE(image.size(), QSize(64, 64));
+}
+
+void EngineTest::stillImagePreservesAlpha()
+{
+    // The fixture is opaque red on its left half and fully transparent on its right. Losing that
+    // is invisible on a dark canvas, and the obvious FFmpeg helper to reuse (MediaThumbnail's)
+    // converts to RGB24 — flattening every transparent sticker and luma mask with no visible error.
+    QTemporaryDir tmp;
+    QVERIFY(tmp.isValid());
+    const QString disguised = tmp.filePath(QStringLiteral("alpha.drift-unknown"));
+    QVERIFY(QFile::copy(QStringLiteral(DRIFT_TEST_DATA_DIR "/still.webp"), disguised));
+
+    const QImage viaFfmpeg = drift::decodeStillImage(disguised);
+    QVERIFY(!viaFfmpeg.isNull());
+    QVERIFY(viaFfmpeg.hasAlphaChannel());
+    QCOMPARE(qAlpha(viaFfmpeg.pixel(8, 8)), 255);
+    QCOMPARE(qAlpha(viaFfmpeg.pixel(56, 56)), 0);
+}
+
+void EngineTest::stillImageRejectsGarbage()
+{
+    // Neither decoder can read this. The contract is a null QImage and an empty QSize, which is
+    // what makes the bin withdraw the row instead of keeping a 0x0 asset that renders as nothing.
+    QTemporaryDir tmp;
+    QVERIFY(tmp.isValid());
+    const QString path = tmp.filePath(QStringLiteral("truncated.png"));
+    QFile f(path);
+    QVERIFY(f.open(QIODevice::WriteOnly));
+    f.write(QByteArray("\x89PNG\r\n\x1a\n", 8) + QByteArray(64, '\0'));
+    f.close();
+
+    QVERIFY(drift::decodeStillImage(path).isNull());
+    QVERIFY(drift::stillImageSize(path).isEmpty());
 }
 
 QTEST_MAIN(EngineTest)

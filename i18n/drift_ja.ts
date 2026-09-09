@@ -6251,8 +6251,8 @@
         <translation>マスク画像または動画を選択してください</translation>
     </message>
     <message>
-        <source>Media files (*.png *.jpg *.jpeg *.webp *.mp4 *.mov *.mkv *.webm)</source>
-        <translation>メディアファイル (*.png *.jpg *.jpeg *.webp *.mp4 *.mov *.mkv *.webm)</translation>
+        <source>Media files (*.png *.jpg *.jpeg *.webp *.heic *.heif *.avif *.tif *.tiff *.bmp *.gif *.mp4 *.mov *.mkv *.webm)</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>All files (*)</source>
@@ -6421,6 +6421,14 @@
     <message>
         <source>Could not open any of the selected files.</source>
         <translation type="unfinished">選択されたファイルはいずれも開けませんでした。</translation>
+    </message>
+    <message>
+        <source>Could not read %1 — that image format is not supported by this build.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Could not read that file — the format is not supported by this build.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Imported %1 of %2 files. The rest could not be opened — this package cannot read files dropped from other apps. Use Import instead.</source>

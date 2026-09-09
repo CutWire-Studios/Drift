@@ -658,6 +658,11 @@ jobs:
       # Android kit Qt version — independent of the desktop QT_VERSION above. scripts/build.sh
       # pins the same number.
       QT_ANDROID_VERSION: 6.11.1
+      # qtshadertools builds the QuickEffects shaders; qtimageformats supplies the qwebp and qtiff
+      # plugins. Those plugins have no link-time reference, so nothing in the build fails without
+      # them — androiddeployqt simply bundles no qwebp and every .webp/.tiff still decodes to a null
+      # QImage on device. Keep this in sync with QT_MODULES for the desktop jobs.
+      QT_ANDROID_MODULES: "qtmultimedia qtshadertools qtimageformats"
       NDK_VERSION: 27.2.12479018
 
     steps:
@@ -699,9 +704,9 @@ jobs:
           pipx install aqtinstall
           export PATH="$HOME/.local/bin:$PATH"
           aqt install-qt linux desktop "$QT_ANDROID_VERSION" linux_gcc_64 \
-            -m qtmultimedia qtshadertools -O "$HOME/Qt"
+            -m $QT_ANDROID_MODULES -O "$HOME/Qt"
           aqt install-qt all_os android "$QT_ANDROID_VERSION" "${{ matrix.qt_arch }}" \
-            -m qtmultimedia qtshadertools -O "$HOME/Qt"
+            -m $QT_ANDROID_MODULES -O "$HOME/Qt"
           # Qt builds each Android kit on whichever host it happens to use — the ARMv7 one comes
           # from a Windows machine, and that 7z carries no POSIX permission bits, so every script
           # in the kit extracts non-executable and scripts/build.sh finds no runnable qt-cmake.

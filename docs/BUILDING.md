@@ -14,12 +14,25 @@ see is what you get.
 | CMake | ≥ 3.21 |
 | C++ compiler | C++20 |
 | Qt | 6.5+ (Quick, QuickControls2, Multimedia, Test, Concurrent, Widgets, OpenGL, Network, Svg, LinguistTools) |
+| Qt ImageFormats | runtime only — supplies the `qwebp` / `qtiff` plugins |
 | FFmpeg | 8.x (libavformat, libavcodec, libavutil, libswscale, libswresample, libavfilter) |
 | libzstd | any (addon package decompression) |
 | OpenSSL | 3.x, libcrypto only (addon signature verification) |
 | SoundTouch | any (pitch shifting behind the voice effects) |
 
 ONNX Runtime powers auto-subtitles (and related ML features). Drift does not link it — only its headers are needed to build, and the library itself is an addon the user installs from the Acceleration category, which is what makes the CPU / CUDA / WebGPU choice theirs rather than the packager's. The headers are downloaded automatically at configure time; pass `-DDRIFT_FETCH_ONNXRUNTIME=OFF` to use a system install instead. A development build also stages a CPU runtime into `<build>/onnxruntime` so it works before anything is installed — `-DDRIFT_BUNDLE_ONNXRUNTIME=OFF` (what the Flatpak manifests use) turns that off, and `DRIFT_ONNXRUNTIME_DIR` points at an extracted release instead.
+
+Qt ImageFormats is a **runtime** dependency: nothing links against it, so a build without it
+succeeds and then decodes every `.webp` and `.tiff` still to a null `QImage` — a blank bin card
+and a clip that renders as nothing. Install `qt6-imageformats` (Arch), `qt6-imageformats-dev`
+(Debian/Ubuntu), or add `qtimageformats` to the aqtinstall module list. For Android builds it
+must be present in the Qt kit that `QT_ANDROID_ROOT` points at, because `androiddeployqt` can
+only bundle plugins the kit actually has:
+
+```bash
+aqt install-qt all_os android 6.11.1 android_arm64_v8a \
+  -m qtmultimedia qtshadertools qtimageformats -O "$HOME/Qt"
+```
 
 On Debian/Ubuntu install `libzstd-dev`, `libssl-dev` and `libsoundtouch-dev`; on Arch, `zstd`, `openssl` and `soundtouch`; on macOS, `brew install qt ffmpeg zstd openssl@3 sound-touch` (see [macOS](#macos)). None of them has a download fallback — configure fails with a pkg-config error if the development headers are missing.
 

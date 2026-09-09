@@ -154,7 +154,7 @@ Item {
                 onClicked: {
                     const url = FileDialogs.openFile(
                         qsTr("Choose a mask image or video"),
-                        [qsTr("Media files (*.png *.jpg *.jpeg *.webp *.mp4 *.mov *.mkv *.webm)"),
+                        [qsTr("Media files (*.png *.jpg *.jpeg *.webp *.heic *.heif *.avif *.tif *.tiff *.bmp *.gif *.mp4 *.mov *.mkv *.webm)"),
                          qsTr("All files (*)")])
                     if (!url || url.toString() === "")
                         return

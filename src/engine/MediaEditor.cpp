@@ -8,7 +8,8 @@
 #include <QDir>
 #include <QFile>
 #include <QImage>
-#include <QImageReader>
+#include "StillImage.h"
+
 #include <QStandardPaths>
 #include <QTransform>
 #include <QUuid>
@@ -110,9 +111,7 @@ bool editImage(const MediaEditSpec &spec, QString *errorOut,
     if (cancelled(onProgress, 0.0))
         return fail(trEdit("Cancelled"));
 
-    QImageReader reader(spec.inputPath);
-    reader.setAutoTransform(true);
-    QImage image = reader.read();
+    const QImage image = drift::decodeStillImage(spec.inputPath);
     if (image.isNull())
         return fail(trEdit("Could not read that image"));
 

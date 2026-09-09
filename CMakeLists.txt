@@ -100,6 +100,43 @@ if(NOT _drift_qt_mm STREQUAL _drift_svg_mm)
         "Install a qt6-svg package built for the same Qt as qt6-base, or toolbar icons will not render.")
 endif()
 
+# qtimageformats supplies the qwebp and qtiff QImageReader plugins. Nothing links against them,
+# so without this check a kit missing the module configures, builds and packages cleanly, and
+# then every .webp/.tiff still decodes to a null QImage on the device: no thumbnail, a 0x0 asset,
+# and a clip that renders as nothing. That is exactly how it shipped in the Android packages —
+# the CI jobs installed only qtmultimedia and qtshadertools.
+#
+# The module declares no findable component, but it does install imported plugin targets that
+# Qt6Gui pulls in via __qt_internal_include_plugin_packages(), so the targets are the one thing
+# that can be tested at configure time. QT_SKIP_AUTO_PLUGIN_INCLUSION turns that inclusion off,
+# in which case the targets are absent for a reason that has nothing to do with the module.
+#
+# Fatal on Android only: there the plugin can come from nowhere but the kit, so a missing one is
+# a broken package. A desktop build can still pick it up from the system Qt at runtime.
+if(NOT QT_SKIP_AUTO_PLUGIN_INCLUSION)
+    set(_drift_missing_imageformats "")
+    if(NOT TARGET Qt6::QWebpPlugin)
+        list(APPEND _drift_missing_imageformats "qwebp (.webp)")
+    endif()
+    if(NOT TARGET Qt6::QTiffPlugin)
+        list(APPEND _drift_missing_imageformats "qtiff (.tiff)")
+    endif()
+    if(_drift_missing_imageformats)
+        string(JOIN ", " _drift_missing_list ${_drift_missing_imageformats})
+        set(_drift_imageformats_msg
+            "Qt ImageFormats is missing: ${_drift_missing_list}.\n"
+            "Those stills will import as 0x0 and render as nothing.\n"
+            "  aqtinstall: add qtimageformats to the -m module list\n"
+            "  Arch:       pacman -S qt6-imageformats\n"
+            "  Debian:     apt install qt6-imageformats-dev")
+        if(ANDROID)
+            message(FATAL_ERROR ${_drift_imageformats_msg})
+        else()
+            message(WARNING ${_drift_imageformats_msg})
+        endif()
+    endif()
+endif()
+
 # --- Android prebuilt dependencies -------------------------------------------
 # Cross-compiling to Android has no pkg-config and no system prefix, so FFmpeg, dav1d, zstd,
 # OpenSSL and SoundTouch come from static PIC archives under third_party/prebuilt/android/<abi>,
@@ -131,8 +168,10 @@ if(ANDROID)
         "${DRIFT_PREBUILT}/lib/libx264.a"
         # libavcodec's only software AV1 decoder — the native "av1" decoder needs a hwaccel.
         "${DRIFT_PREBUILT}/lib/libdav1d.a"
-        # mediandk resolves the AMediaCodec_*/AMediaFormat_* the --enable-mediacodec decoders call.
-        m z mediandk)
+        # mediandk resolves the AMediaCodec_*/AMediaFormat_* the --enable-mediacodec decoders call,
+        # plus the AImageReader_*/AImage_* the zero-copy preview surface is built on. android is
+        # for AHardwareBuffer_*, which lives in libandroid rather than libmediandk.
+        m z mediandk android)
 
     add_library(drift_zstd INTERFACE IMPORTED)
     target_include_directories(drift_zstd INTERFACE "${DRIFT_PREBUILT}/include")
@@ -449,6 +488,10 @@ add_library(driftengine STATIC
     src/engine/MediaProbe.cpp
     src/engine/MediaThumbnail.h
     src/engine/MediaThumbnail.cpp
+    src/engine/StillImage.h
+    src/engine/StillImage.cpp
+    src/engine/MediaCodecImagePool.h
+    src/engine/MediaCodecImagePool.cpp
     src/engine/FilmstripTileCache.h
     src/engine/FilmstripTileCache.cpp
     src/engine/MediaWaveform.h

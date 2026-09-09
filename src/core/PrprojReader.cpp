@@ -169,8 +169,7 @@ ClipType detectClipType(const QString &mediaPath, const QString &name, bool isAu
         || ext == QLatin1String("flac") || ext == QLatin1String("m4a") || ext == QLatin1String("ogg"))
         return ClipType::Audio;
 
-    if (ext == QLatin1String("png") || ext == QLatin1String("jpg") || ext == QLatin1String("jpeg")
-        || ext == QLatin1String("webp") || ext == QLatin1String("bmp") || ext == QLatin1String("svg"))
+    if (imageExtensions().contains(ext))
         return ClipType::Image;
 
     return ClipType::Video;

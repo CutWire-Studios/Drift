@@ -167,6 +167,16 @@ Item {
                     tooltip: qsTr("Can make playback smoother by keeping video on the graphics card. Turn it off if the picture looks wrong. Takes effect after restart.")
                     onToggled: EditorState.vaapiZeroCopy = checked
                 }
+
+                // Same wording as the VAAPI switch above: only one of the two is ever visible,
+                // since each is supported on exactly the platform the other is not.
+                ThemedSwitch {
+                    visible: EditorState.mediaCodecZeroCopySupported
+                    checked: EditorState.mediaCodecZeroCopy
+                    text: qsTr("Faster preview (experimental)")
+                    tooltip: qsTr("Can make playback smoother by keeping video on the graphics card. Turn it off if the picture looks wrong. Takes effect after restart.")
+                    onToggled: EditorState.mediaCodecZeroCopy = checked
+                }
             }
 
             SettingsSection {

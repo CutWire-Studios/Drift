@@ -451,11 +451,11 @@ QString gpuCompositorLabel()
 // offers whose device actually opens. ClipReader walks the same list per clip.
 drift::hwaccel::Backend activeDecodeBackend()
 {
-    for (const drift::hwaccel::Backend backend : drift::hwaccel::decodeBackendOrder()) {
-        if (drift::hwaccel::deviceAvailable(drift::hwaccel::deviceType(backend)))
-            return backend;
-    }
-    return drift::hwaccel::Backend::None;
+    // availableDecodeBackends() rather than a deviceAvailable() walk: MediaCodec needs a
+    // different probe (its device init succeeds with no decoder present), and that function is
+    // where that lives. It also keeps this in step with what the preview picker offers.
+    const QList<drift::hwaccel::Backend> available = drift::hwaccel::availableDecodeBackends();
+    return available.isEmpty() ? drift::hwaccel::Backend::None : available.first();
 }
 
 const AVCodec *findNamedEncoder(const char *const *names)
@@ -465,48 +465,6 @@ const AVCodec *findNamedEncoder(const char *const *names)
             return codec;
     }
     return nullptr;
-}
-
-// MediaCodec is Android's only hardware decode path — it is not one of HwAccel's device
-// backends (those are the desktop VAAPI/NVDEC/D3D11VA/VideoToolbox families), so it needs
-// its own probe purely for this report. ClipReader's own decode routing is unaffected.
-const AVCodec *findMediaCodecDecoder(AVCodecID id)
-{
-    const char *name = nullptr;
-    switch (id) {
-    case AV_CODEC_ID_H264:
-        name = "h264_mediacodec";
-        break;
-    case AV_CODEC_ID_HEVC:
-        name = "hevc_mediacodec";
-        break;
-    case AV_CODEC_ID_VP9:
-        name = "vp9_mediacodec";
-        break;
-    case AV_CODEC_ID_VP8:
-        name = "vp8_mediacodec";
-        break;
-    case AV_CODEC_ID_AV1:
-        name = "av1_mediacodec";
-        break;
-    default:
-        return nullptr;
-    }
-    return avcodec_find_decoder_by_name(name);
-}
-
-bool mediaCodecDecodeAvailable()
-{
-#if defined(Q_OS_ANDROID)
-    if (qEnvironmentVariableIsSet("DRIFT_NO_MEDIACODEC"))
-        return false;
-    return findMediaCodecDecoder(AV_CODEC_ID_H264) != nullptr
-           || findMediaCodecDecoder(AV_CODEC_ID_HEVC) != nullptr
-           || findMediaCodecDecoder(AV_CODEC_ID_VP9) != nullptr
-           || findMediaCodecDecoder(AV_CODEC_ID_AV1) != nullptr;
-#else
-    return false;
-#endif
 }
 
 QString decodeModeLabel()
@@ -527,7 +485,7 @@ QString decodeModeLabel()
 #if defined(Q_OS_ANDROID)
     // Auto on Android means the MediaCodec heuristic, not the HwAccel backend probe — naming it
     // is what distinguishes "no hardware path exists here" from "the heuristic declined".
-    if (mediaCodecDecodeAvailable())
+    if (drift::hwaccel::mediaCodecDecodeAvailable())
         return trReport("Auto (MediaCodec)");
 #endif
     return trReport("Auto");
@@ -629,10 +587,11 @@ QVariantMap DebugReport::collect()
     const QString package = packageKind();
     const drift::hwaccel::Backend backend = activeDecodeBackend();
     const AVHWDeviceType backendType = drift::hwaccel::deviceType(backend);
-    // HwAccel's backend list never includes MediaCodec, so on Android it always resolves to
-    // None here even when the device decodes in hardware — check that path separately.
-    const bool mediaCodecOk = mediaCodecDecodeAvailable();
-    const bool hwDecodeOk = backend != drift::hwaccel::Backend::None || mediaCodecOk;
+    // MediaCodec is in the backend list now, so `backend` names it directly on Android. Kept as
+    // its own flag because the per-codec probe below still has to ask for the *_mediacodec
+    // decoder by name — those are not reachable through a hardware device context.
+    const bool mediaCodecOk = backend == drift::hwaccel::Backend::MediaCodec;
+    const bool hwDecodeOk = backend != drift::hwaccel::Backend::None;
 
     struct CodecSpec {
         const char *name;
@@ -651,7 +610,7 @@ QVariantMap DebugReport::collect()
         const AVCodec *software = avcodec_find_decoder(spec.id);
         const AVCodec *hardware = drift::hwaccel::findDecoder(spec.id, backendType, nullptr);
         if (!hardware && mediaCodecOk)
-            hardware = findMediaCodecDecoder(spec.id);
+            hardware = drift::hwaccel::findMediaCodecDecoder(spec.id);
         QVariantMap row;
         row.insert(QStringLiteral("name"), QString::fromLatin1(spec.name));
         row.insert(QStringLiteral("software"), software != nullptr);

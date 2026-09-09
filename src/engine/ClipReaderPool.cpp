@@ -111,16 +111,20 @@ void ClipReaderPool::setReadAheadUs(drift::TimeUs readAheadUs)
     m_readAheadUs.store(qMax<drift::TimeUs>(0, readAheadUs), std::memory_order_relaxed);
 }
 
-void ClipReaderPool::setHardwareDecodeMode(ClipReader::HardwareDecodeMode mode,
-                                           drift::hwaccel::Backend backend)
+void ClipReaderPool::resetVideoDecoders()
 {
-    ClipReader::setHardwareDecodeMode(mode, backend);
-
     QMutexLocker lock(&m_mutex);
     for (auto &entry : m_videoWorkers) {
         QMetaObject::invokeMethod(entry.second->worker, "resetVideoDecoders",
                                   Qt::BlockingQueuedConnection);
     }
+}
+
+void ClipReaderPool::setHardwareDecodeMode(ClipReader::HardwareDecodeMode mode,
+                                           drift::hwaccel::Backend backend)
+{
+    ClipReader::setHardwareDecodeMode(mode, backend);
+    resetVideoDecoders();
 }
 
 void ClipReaderPool::warmVideoFrames(const QList<VideoRequest> &requests)
@@ -290,3 +294,23 @@ void ClipReaderPool::retainActivePaths(const QSet<QString> &videoPaths, const QS
     for (const std::unique_ptr<WorkerEntry> &entry : evicted)
         stopWorkerEntry(*entry);
 }
+
+namespace drift {
+
+MediaCodecSurfaceDecodeBlock::MediaCodecSurfaceDecodeBlock()
+{
+#ifdef Q_OS_ANDROID
+    ClipReader::setSurfaceDecodeAllowed(false);
+    ClipReaderPool::instance().resetVideoDecoders();
+#endif
+}
+
+MediaCodecSurfaceDecodeBlock::~MediaCodecSurfaceDecodeBlock()
+{
+#ifdef Q_OS_ANDROID
+    ClipReader::setSurfaceDecodeAllowed(true);
+    ClipReaderPool::instance().resetVideoDecoders();
+#endif
+}
+
+} // namespace drift

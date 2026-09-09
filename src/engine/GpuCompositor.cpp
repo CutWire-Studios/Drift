@@ -1034,6 +1034,8 @@ QString previewUploadPathId()
         return QStringLiteral("cuda-interop");
     case GlRuntime::PreviewUploadPath::VaapiDmaBuf:
         return QStringLiteral("vaapi-dmabuf");
+    case GlRuntime::PreviewUploadPath::MediaCodecImage:
+        return QStringLiteral("mediacodec-image");
     case GlRuntime::PreviewUploadPath::CpuRoundTrip:
         return QStringLiteral("cpu-roundtrip");
     case GlRuntime::PreviewUploadPath::None:

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "HwAccel.h"
+#include "MediaCodecImagePool.h"
 #include "PreviewVideoFrame.h"
 #include "core/Time.h"
 
@@ -101,6 +102,22 @@ public:
     // otherwise: the preview just gets slower and nothing says why.
     static quint64 hardwareFallbackCount();
 
+#ifdef Q_OS_ANDROID
+    // Called by the GL importer when a latched gralloc buffer cannot be bound. Process-wide and
+    // sticky: there is no CPU copy to fall back on for the frame in flight, so the only recovery
+    // is that every decoder opened afterwards skips the surface path.
+    static void noteMediaCodecImportFailure();
+    static bool mediaCodecImportFailed();
+
+    // Whether new decoders may render into an image surface. Export sets this false for its
+    // duration: a surface frame is sampled through samplerExternalOES, where the *driver*
+    // performs YUV->RGB from the buffer's dataspace, so the colour matrix is neither ours nor
+    // necessarily the one the desktop compositor uses. Fine for a preview, not for an encode
+    // that has to match every other platform. See drift::MediaCodecSurfaceDecodeBlock.
+    static void setSurfaceDecodeAllowed(bool allowed);
+    static bool surfaceDecodeAllowed();
+#endif
+
 private:
     bool ensureVideoDecoder();
     bool ensureAudioDecoder();
@@ -108,7 +125,10 @@ private:
     bool openHardwareDecoderWith(drift::hwaccel::Backend backend);
     bool tryOpenHardwareDecoder();
 #ifdef Q_OS_ANDROID
-    bool tryOpenMediaCodecDecoder();
+    bool tryOpenMediaCodecDecoder(HardwareDecodeMode mode);
+    // Renders one AV_PIX_FMT_MEDIACODEC frame to the image surface and leaves the result in
+    // m_mcLatched. False means the surface path has failed and the caller must fall back.
+    bool latchMediaCodecFrame(AVFrame *src);
 #endif
     bool hardwareDecodeIsWorthIt() const;
     void teardownVideoDecoder();
@@ -181,6 +201,18 @@ private:
     // legitimately return EAGAIN, and a decode error is recoverable by reopening in software.
     // Always false off Android.
     bool m_mediaCodecActive = false;
+#ifdef Q_OS_ANDROID
+    // Zero-copy MediaCodec: the decoder renders into m_mcImages' surface and every frame is
+    // latched out of it as a gralloc buffer, so nothing is ever copied to system memory.
+    // Opt-in (preview/mediaCodecZeroCopy) and preview-only — see tryOpenMediaCodecDecoder.
+    std::shared_ptr<drift::MediaCodecImagePool> m_mcImages;
+    // Scratch holding the most recently latched frame, so the decode loop can unref it exactly
+    // the way it unrefs a normally decoded one.
+    AVFrame *m_mcLatched = nullptr;
+    bool m_mcSurfaceMode = false;
+    // Sticky once this reader has had to serve a QImage, which a surface-mode decoder cannot do.
+    bool m_mcSurfaceDisabled = false;
+#endif
     drift::hwaccel::Backend m_hwBackend = drift::hwaccel::Backend::None;
     AVPixelFormat m_hwPixFmt = AV_PIX_FMT_NONE;
 

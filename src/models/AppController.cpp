@@ -933,6 +933,8 @@ AppController::AppController(AssetLibrary *assetLibrary, QObject *parent)
     // unchecked would contradict what the preview is actually doing. Unchecking writes an
     // explicit false, which turns it off everywhere.
     m_vaapiZeroCopy = drift::vaapiZeroCopyMode() != drift::VaapiZeroCopyMode::Off;
+    m_mediaCodecZeroCopy =
+        settings.value(QStringLiteral("preview/mediaCodecZeroCopy"), false).toBool();
     m_invertTimelineScroll = settings.value(QStringLiteral("timeline/invertScroll"), false).toBool();
     m_uiLanguage = storedUiLanguage();
     m_needsUiLanguagePrompt = needsFirstLaunchLanguagePrompt();
@@ -3961,6 +3963,29 @@ void AppController::setVaapiZeroCopy(bool enabled)
     emit vaapiZeroCopyChanged();
     setLastMessage(tr("Faster preview takes effect after you restart Drift."),
                    QStringLiteral("info"));
+}
+
+void AppController::setMediaCodecZeroCopy(bool enabled)
+{
+    if (m_mediaCodecZeroCopy == enabled)
+        return;
+    m_mediaCodecZeroCopy = enabled;
+    QSettings settings;
+    settings.setValue(QStringLiteral("preview/mediaCodecZeroCopy"), m_mediaCodecZeroCopy);
+    emit mediaCodecZeroCopyChanged();
+    // ClipReader reads the setting once and latches it, so a restart is not just conservative
+    // advice here — the running process really will not change behaviour.
+    setLastMessage(tr("Faster preview takes effect after you restart Drift."),
+                   QStringLiteral("info"));
+}
+
+bool AppController::mediaCodecZeroCopySupported() const
+{
+#if defined(Q_OS_ANDROID)
+    return drift::hwaccel::availableDecodeBackends().contains(drift::hwaccel::Backend::MediaCodec);
+#else
+    return false;
+#endif
 }
 
 bool AppController::vaapiZeroCopySupported() const

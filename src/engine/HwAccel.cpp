@@ -64,7 +64,9 @@ void setRenderVendor(const QString &vendor)
 
 QList<Backend> decodeBackendOrder()
 {
-#if defined(Q_OS_MACOS)
+#if defined(Q_OS_ANDROID)
+    return {Backend::MediaCodec};
+#elif defined(Q_OS_MACOS)
     return {Backend::VideoToolbox};
 #else
 #if defined(Q_OS_WIN)
@@ -99,7 +101,12 @@ QList<Backend> availableDecodeBackends()
 
     QList<Backend> out;
     for (const Backend backend : decodeBackendOrder()) {
-        if (deviceAvailable(deviceType(backend)))
+        // deviceAvailable() is the wrong question for MediaCodec: FFmpeg's device init returns
+        // success with a null surface on any Android build, so it would list the backend on a
+        // device with no usable decoder at all.
+        const bool ok = backend == Backend::MediaCodec ? mediaCodecDecodeAvailable()
+                                                       : deviceAvailable(deviceType(backend));
+        if (ok)
             out.append(backend);
     }
     return out;
@@ -116,6 +123,8 @@ AVHWDeviceType deviceType(Backend backend)
         return AV_HWDEVICE_TYPE_VAAPI;
     case Backend::VideoToolbox:
         return AV_HWDEVICE_TYPE_VIDEOTOOLBOX;
+    case Backend::MediaCodec:
+        return AV_HWDEVICE_TYPE_MEDIACODEC;
     case Backend::None:
         break;
     }
@@ -133,6 +142,8 @@ const char *name(Backend backend)
         return "VAAPI";
     case Backend::VideoToolbox:
         return "VideoToolbox";
+    case Backend::MediaCodec:
+        return "MediaCodec";
     case Backend::None:
         break;
     }
@@ -150,6 +161,8 @@ QString id(Backend backend)
         return QStringLiteral("vaapi");
     case Backend::VideoToolbox:
         return QStringLiteral("videotoolbox");
+    case Backend::MediaCodec:
+        return QStringLiteral("mediacodec");
     case Backend::None:
         break;
     }
@@ -158,8 +171,8 @@ QString id(Backend backend)
 
 Backend backendFromId(const QString &id)
 {
-    for (const Backend backend :
-         {Backend::Cuda, Backend::D3d11va, Backend::Vaapi, Backend::VideoToolbox}) {
+    for (const Backend backend : {Backend::Cuda, Backend::D3d11va, Backend::Vaapi,
+                                  Backend::VideoToolbox, Backend::MediaCodec}) {
         if (drift::hwaccel::id(backend) == id)
             return backend;
     }
@@ -175,6 +188,8 @@ const char *scaleFilter(Backend backend)
         return "scale_vaapi";
     case Backend::VideoToolbox:
         return "scale_vt";
+    // MediaCodec cannot downscale on the way out either, so the preview's sws pass stands.
+    case Backend::MediaCodec:
     case Backend::D3d11va:
     case Backend::None:
         break;
@@ -212,6 +227,41 @@ bool deviceAvailable(AVHWDeviceType type)
 bool disabledByEnv()
 {
     return qEnvironmentVariableIsSet("DRIFT_NO_HWACCEL");
+}
+
+const AVCodec *findMediaCodecDecoder(AVCodecID codecId)
+{
+#ifndef Q_OS_ANDROID
+    Q_UNUSED(codecId);
+    return nullptr;
+#else
+    const char *name = nullptr;
+    switch (codecId) {
+    case AV_CODEC_ID_H264: name = "h264_mediacodec"; break;
+    case AV_CODEC_ID_HEVC: name = "hevc_mediacodec"; break;
+    case AV_CODEC_ID_VP9:  name = "vp9_mediacodec";  break;
+    case AV_CODEC_ID_VP8:  name = "vp8_mediacodec";  break;
+    case AV_CODEC_ID_AV1:  name = "av1_mediacodec";  break;
+    default: return nullptr;
+    }
+    return avcodec_find_decoder_by_name(name);
+#endif
+}
+
+bool mediaCodecDecodeAvailable()
+{
+#ifndef Q_OS_ANDROID
+    return false;
+#else
+    if (disabledByEnv() || qEnvironmentVariableIsSet("DRIFT_NO_MEDIACODEC"))
+        return false;
+    for (const AVCodecID id : {AV_CODEC_ID_H264, AV_CODEC_ID_HEVC, AV_CODEC_ID_VP9,
+                               AV_CODEC_ID_VP8, AV_CODEC_ID_AV1}) {
+        if (findMediaCodecDecoder(id))
+            return true;
+    }
+    return false;
+#endif
 }
 
 const AVCodec *findDecoder(AVCodecID codecId, AVHWDeviceType type, AVPixelFormat *pixFmt)

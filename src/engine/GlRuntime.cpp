@@ -41,6 +41,27 @@ extern "C" {
 #include <unistd.h>
 #endif
 
+// MediaCodec zero-copy import: a gralloc buffer bound as a GL external texture. Android only,
+// and the mirror image of the VAAPI path above — same EGLImage mechanism, different source.
+#if defined(Q_OS_ANDROID)
+#define DRIFT_ANDROID_AHB_IMPORT 1
+#include <android/hardware_buffer.h>
+#include "ClipReader.h"
+#include "MediaCodecImagePool.h"
+#endif
+
+// GL_TEXTURE_EXTERNAL_OES and the EGL enums the AHardwareBuffer import needs. Qt for Android
+// builds against the GLES2 headers, which carry neither.
+#ifndef GL_TEXTURE_EXTERNAL_OES
+#define GL_TEXTURE_EXTERNAL_OES 0x8D65
+#endif
+#ifndef EGL_NATIVE_BUFFER_ANDROID
+#define EGL_NATIVE_BUFFER_ANDROID 0x3140
+#endif
+#ifndef EGL_IMAGE_PRESERVED_KHR
+#define EGL_IMAGE_PRESERVED_KHR 0x30D2
+#endif
+
 // Qt for Android is built against the GLES 2.0 headers so it can still run on ES2-only devices, and
 // qopengl.h includes <GLES2/gl2.h> accordingly. The ES 3.0 *functions* this file uses still resolve,
 // because QOpenGLExtraFunctions looks them up at runtime — but the ES 3.0 *enum constants* are
@@ -165,7 +186,12 @@ namespace {
 // Every shader in the project is written as `#version 330 core`. Android has no desktop GL, so the
 // version line is swapped for `#version 300 es` and the default precision qualifiers ES requires
 // are prepended. Done at the compile sites so package .frag files stay shared with desktop.
-QByteArray translateShaderSource(QByteArray body, bool fragment)
+// `extensions` is a newline-separated block of #extension directives, or nullptr. GLSL requires
+// them to precede every non-preprocessor token, and `precision` is one — so they cannot simply be
+// written at the top of the shader body, which is where they would naturally go. They have to be
+// injected between the version line and the precision block, which is why this is a parameter
+// rather than something the caller can do for itself.
+QByteArray translateShaderSource(QByteArray body, bool fragment, const char *extensions = nullptr)
 {
     if (body.startsWith("#version")) {
         const int newline = body.indexOf('\n');
@@ -173,20 +199,29 @@ QByteArray translateShaderSource(QByteArray body, bool fragment)
     }
 
     const QOpenGLContext *current = QOpenGLContext::currentContext();
-    if (!current || !current->isOpenGLES())
-        return QByteArray("#version 330 core\n") + body;
+    if (!current || !current->isOpenGLES()) {
+        QByteArray out("#version 330 core\n");
+        if (extensions)
+            out += extensions;
+        return out + body;
+    }
 
     QByteArray preamble("#version 300 es\n");
+    if (extensions)
+        preamble += extensions;
     preamble += "precision highp float;\n";
     preamble += "precision highp int;\n";
-    if (fragment)
+    if (fragment) {
         preamble += "precision highp sampler2D;\n";
+        if (extensions)
+            preamble += "precision mediump samplerExternalOES;\n";
+    }
     return preamble + body;
 }
 
-QByteArray translateShader(const char *source, bool fragment)
+QByteArray translateShader(const char *source, bool fragment, const char *extensions = nullptr)
 {
-    return translateShaderSource(QByteArray(source), fragment);
+    return translateShaderSource(QByteArray(source), fragment, extensions);
 }
 
 QByteArray translateShader(const QString &source, bool fragment)
@@ -225,6 +260,28 @@ void main() {
 
 // Premultiplied canvas RGBA → BT.709 limited luma. Matches libswscale
 // SWS_CS_ITU709 with full-range RGB source and limited-range YUV dest.
+// samplerExternalOES returns RGB — the driver performs the YUV conversion from the buffer's own
+// dataspace metadata, so u_yuvToRgb/u_yuvOffset/u_yuvScale have no meaning on this path and the
+// colour matrix is not ours to choose. That is exactly why zero-copy is preview-only: an export
+// has to match the desktop compositor bit for bit.
+//
+// u_crop maps the [0,1] quad onto the picture's sub-rectangle of the gralloc buffer, which is
+// normally larger than the picture (1088 rows for 1080p).
+constexpr const char *kMediaCodecFragShader = R"(#version 330 core
+in vec2 v_texCoord;
+out vec4 fragColor;
+uniform samplerExternalOES u_image;
+uniform mat3 u_texMap;
+uniform vec4 u_crop;
+void main() {
+    vec2 src = (u_texMap * vec3(v_texCoord, 1.0)).xy;
+    fragColor = vec4(texture(u_image, u_crop.xy + src * u_crop.zw).rgb, 1.0);
+}
+)";
+
+constexpr const char *kMediaCodecFragExtensions =
+    "#extension GL_OES_EGL_image_external_essl3 : require\n";
+
 constexpr const char *kRgbaToYFragShader = R"(#version 330 core
 in vec2 v_texCoord;
 out vec4 fragColor;
@@ -1435,6 +1492,73 @@ void GlRuntime::destroyImageUploadCache()
     m_imageUploadIndex.clear();
 }
 
+#if defined(DRIFT_ANDROID_AHB_IMPORT)
+namespace {
+
+// EGL for the AHardwareBuffer import. Deliberately not shared with the VAAPI block above: that
+// one is compiled out on Android, and reproducing three typedefs is cheaper than making a
+// Linux-only path build here. Entry points come from QOpenGLContext rather than a link against
+// libEGL, so nothing new is added to the .so's dependencies.
+using EglDisplay = void *;
+using EglImage = void *;
+using EglClientBuffer = void *;
+
+constexpr int kEglExtensionsQuery = 0x3055;
+constexpr int kEglNoneAttrib = 0x3038;
+
+struct AndroidEglApi
+{
+    bool ok = false;
+    EglDisplay (*eglGetCurrentDisplay)() = nullptr;
+    const char *(*eglQueryString)(EglDisplay, int) = nullptr;
+    EglClientBuffer (*eglGetNativeClientBufferANDROID)(const AHardwareBuffer *) = nullptr;
+    EglImage (*eglCreateImageKHR)(EglDisplay, void *, unsigned int, EglClientBuffer,
+                                  const int *) = nullptr;
+    unsigned int (*eglDestroyImageKHR)(EglDisplay, EglImage) = nullptr;
+    void (*glEGLImageTargetTexture2DOES)(unsigned int, EglImage) = nullptr;
+};
+
+const AndroidEglApi &androidEglApi()
+{
+    static AndroidEglApi api = [] {
+        AndroidEglApi out;
+        QOpenGLContext *ctx = QOpenGLContext::currentContext();
+        if (!ctx)
+            return out;
+        const auto resolve = [ctx](const char *name) { return ctx->getProcAddress(name); };
+        out.eglGetCurrentDisplay =
+            reinterpret_cast<decltype(out.eglGetCurrentDisplay)>(resolve("eglGetCurrentDisplay"));
+        out.eglQueryString =
+            reinterpret_cast<decltype(out.eglQueryString)>(resolve("eglQueryString"));
+        out.eglGetNativeClientBufferANDROID =
+            reinterpret_cast<decltype(out.eglGetNativeClientBufferANDROID)>(
+                resolve("eglGetNativeClientBufferANDROID"));
+        out.eglCreateImageKHR =
+            reinterpret_cast<decltype(out.eglCreateImageKHR)>(resolve("eglCreateImageKHR"));
+        out.eglDestroyImageKHR =
+            reinterpret_cast<decltype(out.eglDestroyImageKHR)>(resolve("eglDestroyImageKHR"));
+        out.glEGLImageTargetTexture2DOES =
+            reinterpret_cast<decltype(out.glEGLImageTargetTexture2DOES)>(
+                resolve("glEGLImageTargetTexture2DOES"));
+        out.ok = out.eglGetCurrentDisplay && out.eglQueryString
+            && out.eglGetNativeClientBufferANDROID && out.eglCreateImageKHR
+            && out.eglDestroyImageKHR && out.glEGLImageTargetTexture2DOES;
+        return out;
+    }();
+    return api;
+}
+
+void logMediaCodecImportOnce(const char *reason)
+{
+    static std::once_flag once;
+    std::call_once(once, [reason] {
+        qWarning("GlRuntime: MediaCodec zero-copy import unavailable (%s)", reason);
+    });
+}
+
+} // namespace
+#endif // DRIFT_ANDROID_AHB_IMPORT
+
 void GlRuntime::destroyVideoUploadState()
 {
     unregisterCudaResources();
@@ -1456,6 +1580,25 @@ void GlRuntime::destroyVideoUploadState()
             gl->glDeleteTextures(1, &m_importUV);
             m_importUV = 0;
         }
+#if defined(DRIFT_ANDROID_AHB_IMPORT)
+        if (m_mcTexture) {
+            gl->glDeleteTextures(1, &m_mcTexture);
+            m_mcTexture = 0;
+        }
+        // The EGLImages outlive the texture they were last bound to, so they are destroyed here
+        // rather than per frame. The gralloc buffers themselves belong to the AImages and go when
+        // the decoder's frames do.
+        if (!m_mcImageCache.empty()) {
+            const AndroidEglApi &api = androidEglApi();
+            if (api.ok) {
+                if (EglDisplay egl = api.eglGetCurrentDisplay()) {
+                    for (const auto &entry : m_mcImageCache)
+                        api.eglDestroyImageKHR(egl, entry.second);
+                }
+            }
+            m_mcImageCache.clear();
+        }
+#endif
         if (m_videoPbo[0] || m_videoPbo[1]) {
             gl->glDeleteBuffers(2, m_videoPbo);
             m_videoPbo[0] = m_videoPbo[1] = 0;
@@ -1682,6 +1825,115 @@ bool vaapiDriverIsVerified(VaEglApi &api, void *display, QOpenGLExtraFunctions *
 
 } // namespace
 #endif // DRIFT_VAAPI_IMPORT
+
+
+// Binds the gralloc buffer behind a latched MediaCodec frame as a GL external texture. No copy:
+// the same memory the video block wrote is the memory the shader samples.
+//
+// Every failure here is sticky and process-wide, which is stronger than the VAAPI path's
+// per-frame fallback — and it has to be. VAAPI can always fall back to ensureSoftwareNv12 for the
+// frame in flight; there is no equivalent for an opaque gralloc handle, so a frame that cannot be
+// imported is simply lost. The recovery is that ClipReader stops opening surface-mode decoders,
+// which costs one or two dropped preview frames on a device that cannot do this, once.
+bool GlRuntime::importMediaCodecImage(QOpenGLExtraFunctions *gl, const AVFrame *frame,
+                                      GLuint *texture, QVector4D *crop)
+{
+#ifndef DRIFT_ANDROID_AHB_IMPORT
+    Q_UNUSED(gl);
+    Q_UNUSED(frame);
+    Q_UNUSED(texture);
+    Q_UNUSED(crop);
+    return false;
+#else
+    const auto fail = [this](const char *why) {
+        logMediaCodecImportOnce(why);
+        m_mcImportFailed = true;
+        ClipReader::noteMediaCodecImportFailure();
+        return false;
+    };
+
+    if (m_mcImportFailed || !gl || !frame || !texture || !crop)
+        return false;
+    if (frame->format != AV_PIX_FMT_MEDIACODEC || !frame->buf[0])
+        return false;
+
+    auto *latched = reinterpret_cast<drift::LatchedMediaCodecImage *>(frame->buf[0]->data);
+    if (!latched || !latched->buffer)
+        return false;
+
+    const AndroidEglApi &api = androidEglApi();
+    if (!api.ok)
+        return fail("EGL/GLES entry points missing");
+
+    EglDisplay egl = api.eglGetCurrentDisplay();
+    if (!egl)
+        return fail("no current EGL display");
+
+    // ESSL1's GL_OES_EGL_image_external is not enough: the shader is #version 300 es, which needs
+    // the _essl3 variant. Some older Mali and Adreno drivers expose only the ESSL1 one, and
+    // declining there is correct rather than a bug.
+    static int extensionsOk = -1;
+    if (extensionsOk < 0) {
+        const char *glExts = reinterpret_cast<const char *>(gl->glGetString(GL_EXTENSIONS));
+        const char *eglExts = api.eglQueryString(egl, kEglExtensionsQuery);
+        extensionsOk = (glExts && strstr(glExts, "GL_OES_EGL_image_external_essl3") && eglExts
+                        && strstr(eglExts, "EGL_ANDROID_image_native_buffer")
+                        && strstr(eglExts, "EGL_ANDROID_get_native_client_buffer"))
+            ? 1
+            : 0;
+    }
+    if (extensionsOk == 0)
+        return fail("GL_OES_EGL_image_external_essl3 or EGL_ANDROID_image_native_buffer missing");
+
+    // Gralloc hands the same small set of buffers round, so this is a hit almost every frame and
+    // saves a driver image allocation each time.
+    EglImage image = nullptr;
+    for (const auto &entry : m_mcImageCache) {
+        if (entry.first == latched->buffer) {
+            image = entry.second;
+            break;
+        }
+    }
+    if (!image) {
+        EglClientBuffer client = api.eglGetNativeClientBufferANDROID(latched->buffer);
+        if (!client)
+            return fail("eglGetNativeClientBufferANDROID returned null");
+        const int attribs[] = {EGL_IMAGE_PRESERVED_KHR, 1, kEglNoneAttrib};
+        image = api.eglCreateImageKHR(egl, nullptr, EGL_NATIVE_BUFFER_ANDROID, client, attribs);
+        if (!image)
+            return fail("eglCreateImageKHR refused an AHardwareBuffer");
+        constexpr size_t kMaxCached = 12;
+        if (m_mcImageCache.size() >= kMaxCached) {
+            api.eglDestroyImageKHR(egl, m_mcImageCache.front().second);
+            m_mcImageCache.erase(m_mcImageCache.begin());
+        }
+        m_mcImageCache.emplace_back(latched->buffer, image);
+    }
+
+    if (!m_mcTexture)
+        gl->glGenTextures(1, &m_mcTexture);
+    gl->glBindTexture(GL_TEXTURE_EXTERNAL_OES, m_mcTexture);
+    // Mipmaps and REPEAT are illegal on an external texture; only these four states are.
+    gl->glTexParameteri(GL_TEXTURE_EXTERNAL_OES, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    gl->glTexParameteri(GL_TEXTURE_EXTERNAL_OES, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    gl->glTexParameteri(GL_TEXTURE_EXTERNAL_OES, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    gl->glTexParameteri(GL_TEXTURE_EXTERNAL_OES, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    api.glEGLImageTargetTexture2DOES(GL_TEXTURE_EXTERNAL_OES, image);
+
+    // The allocated buffer is normally taller than the picture (1088 rows for 1080p). Sampling
+    // the whole thing is the classic garbage-strip-along-the-bottom bug, so map the quad onto the
+    // picture's sub-rectangle. See MediaCodecImagePool::latch for the convention: width/height
+    // are the picture, crop_left/crop_top its offset within the buffer.
+    AHardwareBuffer_Desc desc{};
+    AHardwareBuffer_describe(latched->buffer, &desc);
+    const float bufW = desc.width > 0 ? float(desc.width) : float(frame->width);
+    const float bufH = desc.height > 0 ? float(desc.height) : float(frame->height);
+    *crop = QVector4D(float(frame->crop_left) / bufW, float(frame->crop_top) / bufH,
+                      float(frame->width) / bufW, float(frame->height) / bufH);
+    *texture = m_mcTexture;
+    return true;
+#endif
+}
 
 bool GlRuntime::importVaapiNv12(QOpenGLExtraFunctions *gl, const AVFrame *frame)
 {
@@ -2017,6 +2269,13 @@ QOpenGLShaderProgram *GlRuntime::builtinProgram(const QString &id, const char *v
 QOpenGLShaderProgram *GlRuntime::builtinProgram(const QString &id, const char *vertexSource,
                                                 const char *fragmentSource, const char *geom)
 {
+    return builtinProgram(id, vertexSource, fragmentSource, geom, nullptr);
+}
+
+QOpenGLShaderProgram *GlRuntime::builtinProgram(const QString &id, const char *vertexSource,
+                                                const char *fragmentSource, const char *geom,
+                                                const char *fragmentExtensions)
+{
     CompiledEffect &cached = programs[id];
     if (cached.ok)
         return cached.passes[0].program.get();
@@ -2029,8 +2288,8 @@ QOpenGLShaderProgram *GlRuntime::builtinProgram(const QString &id, const char *v
     if (!pass.program->addShaderFromSourceCode(QOpenGLShader::Vertex,
                                                translateShader(vertexSource, false))
         || (geom && !pass.program->addShaderFromSourceCode(QOpenGLShader::Geometry, geom))
-        || !pass.program->addShaderFromSourceCode(QOpenGLShader::Fragment,
-                                                  translateShader(fragmentSource, true))
+        || !pass.program->addShaderFromSourceCode(
+            QOpenGLShader::Fragment, translateShader(fragmentSource, true, fragmentExtensions))
         || !pass.program->link()) {
         qWarning("GlRuntime: builtin program '%s' failed: %s", qPrintable(id),
                  qPrintable(pass.program->log()));
@@ -2228,6 +2487,46 @@ GlTarget promoteImageToTargetCached(GlRuntime &rt, QOpenGLExtraFunctions *gl, co
     return target;
 }
 
+// The external-texture twin of the NV12 draw below. Separate because samplerExternalOES yields
+// RGB — the driver did the YUV conversion from the buffer's own dataspace, so there is no colour
+// matrix to apply and none to choose. That is the reason this path is preview-only: an export has
+// to produce the same pixels as the desktop compositor, and this cannot promise that.
+GlTarget drawMediaCodecImage(GlRuntime &rt, QOpenGLExtraFunctions *gl,
+                             const PreviewVideoFrame &frame, GLuint texture, const QVector4D &crop)
+{
+    const int destW = qMax(2, frame.displayWidth() & ~1);
+    const int destH = qMax(2, frame.displayHeight() & ~1);
+    GlTarget target = rt.acquireTarget(destW, destH);
+    if (!target.isValid())
+        return {};
+
+    QOpenGLShaderProgram *program =
+        rt.builtinProgram(QStringLiteral("__mediacodec__"), kQuadVertexShader,
+                          kMediaCodecFragShader, nullptr, kMediaCodecFragExtensions);
+    if (!program) {
+        rt.releaseTarget(std::move(target));
+        return {};
+    }
+
+    target.fbo->bind();
+    gl->glViewport(0, 0, destW, destH);
+    gl->glDisable(GL_BLEND);
+    gl->glClearColor(0.f, 0.f, 0.f, 0.f);
+    gl->glClear(GL_COLOR_BUFFER_BIT);
+    program->bind();
+    program->setUniformValue("u_image", 0);
+    program->setUniformValue("u_texMap", texMapForRotation(frame.rotation));
+    program->setUniformValue("u_crop", crop);
+    gl->glActiveTexture(GL_TEXTURE0);
+    gl->glBindTexture(GL_TEXTURE_EXTERNAL_OES, texture);
+    gl->glBindVertexArray(rt.vao);
+    gl->glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+    gl->glBindVertexArray(0);
+    program->release();
+    target.fbo->release();
+    return target;
+}
+
 GlTarget promoteVideoFrameToTarget(GlRuntime &rt, QOpenGLExtraFunctions *gl,
                                    const PreviewVideoFrame &frame)
 {
@@ -2261,6 +2560,15 @@ GlTarget promoteVideoFrameToTarget(GlRuntime &rt, QOpenGLExtraFunctions *gl,
         texY = rt.m_importY;
         texUV = rt.m_importUV;
         recordPreviewUploadPath(GlRuntime::PreviewUploadPath::VaapiDmaBuf);
+    }
+
+    // MediaCodec's external texture is already RGB, so it needs a different program and cannot
+    // share the NV12 draw below — handled and returned separately.
+    GLuint mcTexture = 0;
+    QVector4D mcCrop;
+    if (!uploaded && rt.importMediaCodecImage(gl, av, &mcTexture, &mcCrop)) {
+        recordPreviewUploadPath(GlRuntime::PreviewUploadPath::MediaCodecImage);
+        return drawMediaCodecImage(rt, gl, frame, mcTexture, mcCrop);
     }
     if (!uploaded) {
         AVFrame *nv12 = rt.ensureSoftwareNv12(av);

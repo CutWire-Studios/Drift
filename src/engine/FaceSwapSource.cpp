@@ -4,7 +4,8 @@
 #include "engine/FaceTrack.h"
 
 #include <QFile>
-#include <QImageReader>
+#include "StillImage.h"
+
 
 #include <algorithm>
 
@@ -15,11 +16,10 @@ QImage loadFaceSwapPhoto(const QString &path)
     if (path.isEmpty())
         return {};
 
-    QImageReader reader(path);
-    // Phone photos are usually stored unrotated with an EXIF orientation tag. Without this the
-    // ingest and the renderer would still agree with each other, but both would be sideways.
-    reader.setAutoTransform(true);
-    QImage image = reader.read();
+    // Phone photos are usually stored unrotated with an EXIF orientation tag; decodeStillImage
+    // applies it. Without that the ingest and the renderer would still agree with each other,
+    // but both would be sideways.
+    QImage image = drift::decodeStillImage(path);
     if (image.isNull())
         return {};
 

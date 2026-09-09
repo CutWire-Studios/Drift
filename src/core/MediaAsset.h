@@ -3,10 +3,20 @@
 #include "Time.h"
 
 #include <QString>
+#include <QStringList>
 
 namespace drift {
 
 enum class MediaKind { Video, Audio, Image, Other };
+
+// Suffixes Drift treats as still images. Lives in core rather than next to the other media lists
+// in AssetLibrary because the engine needs it too — FrameCompositor classifies mask media by it,
+// and the project importers decide clip types by it — and engine must not include models.
+//
+// HEIC/HEIF and AVIF have no Qt image plugin in any official kit; they decode through the FFmpeg
+// fallback in engine/StillImage.h. Everything else here Qt handles, given qtimageformats.
+const QStringList &imageExtensions();
+bool isImageSuffix(const QString &path);
 
 QString mediaKindToString(MediaKind kind);
 MediaKind mediaKindFromString(const QString &kind);

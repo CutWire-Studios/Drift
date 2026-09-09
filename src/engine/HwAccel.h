@@ -16,7 +16,11 @@ namespace drift::hwaccel {
 
 // Decode-side device backends. Exporter's HwBackend is a different axis — it names an
 // encoder vendor family, and maps AMF onto a D3D11VA device.
-enum class Backend { None, Cuda, D3d11va, Vaapi, VideoToolbox };
+// MediaCodec is Android's only hardware decoder and is unlike the rest: its decoders are picked
+// by name rather than through a hardware device context, so ClipReader opens it on a separate
+// path. It is in this enum anyway because that is what the preview's decode picker enumerates —
+// without it Android showed only "Auto" and "Software" and the hardware path was unselectable.
+enum class Backend { None, Cuda, D3d11va, Vaapi, VideoToolbox, MediaCodec };
 
 // Backends to try for decode on this platform, best first. CUDA leads where it exists
 // because it is the only one of the three with both a fast readback and a scaler.
@@ -54,6 +58,16 @@ bool deviceAvailable(AVHWDeviceType type);
 
 // DRIFT_NO_HWACCEL is the escape hatch for a driver that decodes garbage or crashes.
 bool disabledByEnv();
+
+// Whether this build can decode anything through MediaCodec: at least one *_mediacodec decoder
+// resolves and DRIFT_NO_MEDIACODEC is unset. Always false off Android. deviceAvailable() cannot
+// answer this — FFmpeg's MediaCodec device init succeeds with a null surface for backward
+// compatibility, so it reports true on every Android device whether or not a decoder exists.
+bool mediaCodecDecodeAvailable();
+
+// The *_mediacodec decoder for this codec, or nullptr when the build has none. Shared so the
+// decoder ClipReader opens and the one the debug report claims is available cannot disagree.
+const AVCodec *findMediaCodecDecoder(AVCodecID codecId);
 
 // The first decoder for codecId that can drive `type`. avcodec_find_decoder() returns the
 // preferred software decoder, which for AV1 is libdav1d — it has no hardware config at

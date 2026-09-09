@@ -510,8 +510,7 @@ std::optional<Project> readProjectData(const QByteArray &data, const QString &so
                 || ext == QLatin1String("mp3") || ext == QLatin1String("wav") || ext == QLatin1String("aac")
                 || ext == QLatin1String("m4a") || ext == QLatin1String("flac") || ext == QLatin1String("ogg")) {
                 prod.isAudioOnly = true;
-            } else if (ext == QLatin1String("png") || ext == QLatin1String("jpg") || ext == QLatin1String("jpeg")
-                       || ext == QLatin1String("webp") || ext == QLatin1String("svg") || ext == QLatin1String("bmp")) {
+            } else if (imageExtensions().contains(ext)) {
                 prod.isImage = true;
             }
 

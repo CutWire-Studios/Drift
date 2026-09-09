@@ -1,6 +1,7 @@
 #include "Exporter.h"
 
 #include "AudioMixer.h"
+#include "ClipReaderPool.h"
 #include "FrameCompositor.h"
 #include "GpuCompositor.h"
 #include "HwAccel.h"
@@ -1303,6 +1304,11 @@ bool runGifExport(const drift::Project &project, const ExportSettings &settings,
             goto cleanup;
         }
 
+        // Preview and export share ClipReaderPool's readers, so this is what keeps an
+        // Android encode off the MediaCodec surface path — where the driver, not Drift,
+        // decides the YUV->RGB matrix. Scoped to the whole encode; a no-op elsewhere.
+        drift::MediaCodecSurfaceDecodeBlock noSurfaceDecode;
+
         FrameCompositor compositor;
         compositor.setProject(&project);
 
@@ -2123,6 +2129,11 @@ bool Exporter::run(const drift::Project &project, const ExportSettings &settings
             error = QStringLiteral("Could not allocate the audio frame");
             goto cleanup;
         }
+
+        // Preview and export share ClipReaderPool's readers, so this is what keeps an
+        // Android encode off the MediaCodec surface path — where the driver, not Drift,
+        // decides the YUV->RGB matrix. Scoped to the whole encode; a no-op elsewhere.
+        drift::MediaCodecSurfaceDecodeBlock noSurfaceDecode;
 
         FrameCompositor compositor;
         compositor.setProject(&project);
