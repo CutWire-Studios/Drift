@@ -42,6 +42,12 @@ class MarketClient : public QObject
     Q_PROPERTY(bool searching READ searching NOTIFY searchingChanged)
     Q_PROPERTY(QString searchError READ searchError NOTIFY searchErrorChanged)
     Q_PROPERTY(bool searchErrorRetryable READ searchErrorRetryable NOTIFY searchErrorChanged)
+    // The frozen `code` behind searchError, or empty when the failure did not carry one. The
+    // message is what to show; this is for deciding what to *offer* alongside it, which differs
+    // per code — not_found can be opened in a browser, auth_required gets no call to action at
+    // all. `reason` is deliberately not exposed: it is additive and must degrade to the bare
+    // code, which isRetryable() already does in here.
+    Q_PROPERTY(QString searchErrorCode READ searchErrorCode NOTIFY searchErrorChanged)
     Q_PROPERTY(bool hasMore READ hasMore NOTIFY itemsChanged)
     Q_PROPERTY(int downloadsRevision READ downloadsRevision NOTIFY downloadsRevisionChanged)
     // Every job this session has seen, oldest first, finished ones included. The download
@@ -77,6 +83,7 @@ public:
     bool searching() const { return m_searching; }
     QString searchError() const { return m_searchError; }
     bool searchErrorRetryable() const { return m_searchErrorRetryable; }
+    QString searchErrorCode() const { return m_searchErrorCode; }
     bool hasMore() const { return !m_nextCursor.isEmpty(); }
     int downloadsRevision() const { return m_downloadsRevision; }
     QVariantList downloads() const;
@@ -145,7 +152,7 @@ private:
     void setCatalogLoading(bool loading);
     void setCatalogError(const QString &error, bool retryable = true);
     void setSearching(bool searching);
-    void setSearchError(const QString &error, bool retryable = true);
+    void setSearchError(const QString &error, bool retryable = true, const QString &code = {});
     void bumpDownloads();
     // Resolve is a job now, not a synchronous reply: extraction can outlive any sane HTTP
     // timeout, so the POST only creates it and this polls until it is ready or failed.
@@ -210,6 +217,7 @@ private:
     bool m_searching = false;
     QString m_searchError;
     bool m_searchErrorRetryable = true;
+    QString m_searchErrorCode;
     QString m_query;
     QVariantMap m_filterValues;
     QString m_nextCursor;

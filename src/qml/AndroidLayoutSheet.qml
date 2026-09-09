@@ -20,8 +20,14 @@ AndroidBottomSheet {
     // canvas re-lay-out behind the sheet as you choose; that only works without a scrim.
     blocking: false
 
+    // Distinguishes committing from dismissing. Closing the sheet any other way — X, Back, a
+    // drag down — leaves the project on whatever it already had, so a caller that is waiting to
+    // do something *because* a canvas was chosen must not hear about that.
+    signal applied()
+
     onDoneRequested: {
         root.apply()
+        root.applied()
         root.dismiss()
     }
 

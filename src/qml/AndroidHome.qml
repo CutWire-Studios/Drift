@@ -3,7 +3,6 @@ import QtQuick.Controls.Basic
 import QtQuick.Layouts
 import QtQuick.Window
 import Drift
-import "components"
 
 // The home shell: a bottom-nav host over three destinations.
 //
@@ -18,6 +17,7 @@ Item {
     signal openProjectRequested()
     signal openRecentRequested(string path)
     signal newProjectRequested()
+    signal quickEditRequested()
 
     readonly property string startDestination: "projects"
     property string current: "projects"
@@ -28,7 +28,27 @@ Item {
     }
 
     function showDestination(destinationId) {
+        if (destinationId === "market")
+            marketLoader.active = true
         root.current = destinationId
+    }
+
+    // A shared link. Switches to Market and hands the url to it — parked first, because the
+    // loader is asynchronous and on a cold start from a share the page does not exist yet.
+    property string _pendingLinkUrl: ""
+
+    function startLinkImport(url) {
+        root._pendingLinkUrl = url
+        root.showDestination("market")
+        root._flushPendingLink()
+    }
+
+    function _flushPendingLink() {
+        if (root._pendingLinkUrl === "" || !marketLoader.item)
+            return
+        const url = root._pendingLinkUrl
+        root._pendingLinkUrl = ""
+        marketLoader.item.startLinkImport(url)
     }
 
     // Android's convention: Back from a secondary destination returns to the start
@@ -59,24 +79,24 @@ Item {
 
         AndroidProjectsPage {
             onNewProjectRequested: root.newProjectRequested()
+            onQuickEditRequested: root.quickEditRequested()
             onOpenProjectRequested: root.openProjectRequested()
             onOpenRecentRequested: (path) => root.openRecentRequested(path)
         }
 
-        // Phase B fills this with AndroidMarket. Loaded lazily because the store is a
-        // network surface nobody has asked for until they select the destination.
+        // Lazy, because the store is a network surface nobody has asked for until they select
+        // the destination — but latched, not unloaded on the way out. Binding `active` straight
+        // to the current destination destroyed the page on every switch away, which threw out
+        // the results and re-fetched the catalog on the way back; the sibling destinations are
+        // kept alive by the StackLayout for exactly that reason, and this matches them.
         Loader {
             id: marketLoader
-            active: root.current === "market"
+            active: false
             asynchronous: true
 
-            sourceComponent: Item {
-                ThemedLabel {
-                    anchors.centerIn: parent
-                    text: qsTr("Coming soon")
-                    tone: "muted"
-                }
-            }
+            sourceComponent: AndroidMarket { }
+
+            onLoaded: root._flushPendingLink()
         }
 
         AndroidMePage { }

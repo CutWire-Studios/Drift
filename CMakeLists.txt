@@ -733,6 +733,9 @@ set_source_files_properties(src/qml/Theme.qml PROPERTIES QT_QML_SINGLETON_TYPE t
 # Canvas preset catalog + the (template, quality) -> pixels arithmetic, shared by the desktop
 # layout dialog and the phone layout sheet so the two cannot drift apart again.
 set_source_files_properties(src/qml/LayoutPresets.qml PROPERTIES QT_QML_SINGLETON_TYPE true)
+# How a download job renders as words, shared by the desktop DownloadsWindow and the phone
+# AndroidDownloadsSheet so the two hosts of the same jobs cannot word them differently.
+set_source_files_properties(src/qml/DownloadFormat.qml PROPERTIES QT_QML_SINGLETON_TYPE true)
 # Import + reporting policy, needed by surfaces that have no AssetsPanel to borrow it from.
 set_source_files_properties(src/qml/MediaImport.qml PROPERTIES QT_QML_SINGLETON_TYPE true)
 # App-wide notification queue; the visual host is components/ToastHost.qml.
@@ -756,6 +759,11 @@ qt_add_qml_module(drift
         src/qml/AndroidHomeNav.qml
         src/qml/AndroidProjectsPage.qml
         src/qml/AndroidMePage.qml
+        src/qml/AndroidMarket.qml
+        src/qml/AndroidShareTargetSheet.qml
+        src/qml/AndroidLinkImport.qml
+        src/qml/DownloadFormat.qml
+        src/qml/AndroidDownloadsSheet.qml
         src/qml/components/NavRailButton.qml
         # Touch entry point, loaded instead of Main.qml on Android (see src/main.cpp).
         src/qml/AndroidLayoutSheet.qml

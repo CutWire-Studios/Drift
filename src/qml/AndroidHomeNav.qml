@@ -22,11 +22,18 @@ Item {
     readonly property real leftInset: root.SafeArea.margins.left
     readonly property real rightInset: root.SafeArea.margins.right
 
-    readonly property var destinations: [
-        { id: "projects", label: qsTr("Projects"), icon: Theme.icons.film },
-        { id: "market", label: qsTr("Market"), icon: Theme.icons.store },
-        { id: "me", label: qsTr("Me"), icon: Theme.icons.settings }
-    ]
+    // Market drops out entirely in a build without a marketplace, rather than showing a
+    // destination whose only content is "unavailable". The slot width divides by this list's
+    // length, so the two that remain simply take half the bar each. AndroidHome keeps all three
+    // pages in its StackLayout so the indices behind `current` do not shift with it.
+    readonly property var destinations: {
+        const all = [
+            { id: "projects", label: qsTr("Projects"), icon: Theme.icons.film },
+            { id: "market", label: qsTr("Market"), icon: Theme.icons.store },
+            { id: "me", label: qsTr("Me"), icon: Theme.icons.settings }
+        ]
+        return Market.configured ? all : all.filter(d => d.id !== "market")
+    }
 
     implicitHeight: Theme.androidBottomRailHeight + bottomInset
 

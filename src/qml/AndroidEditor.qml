@@ -13,6 +13,17 @@ Item {
 
     property string sheetKind: "" // "" | "assets" | "properties"
 
+    // Bound to AndroidMain.quickMode by the component that hosts this page.
+    property bool quickMode: false
+
+    // Escalation. Every reduced surface below reads the same flag, so clearing it grows
+    // the editor back in place — same page, same timeline, same playhead, nothing reloaded
+    // and nothing to confirm. It is deliberately one-way: there is no "back to quick".
+    function exitQuickMode() {
+        Window.window.quickMode = false
+        Toasts.info(qsTr("Full editor"))
+    }
+
     // How much of the window bottom a sheet that does not blank the editor is covering.
     // The canvas sheet is hosted by the window, the properties sheet by this page.
     readonly property real nonBlockingSheetHeight: Math.max(
@@ -214,6 +225,10 @@ Item {
                 exportProgressDialog.openDialog()
             }
             onProjectMenuRequested: projectSheet.open()
+            quickMode: root.quickMode
+            // The overlay and the fullscreen handoff already exist; this only stops the
+            // one control that starts them from being buried.
+            onCropRequested: EditorState.canvasCropMode = true
         }
 
         SplitView {
@@ -343,6 +358,7 @@ Item {
                     anchors.left: parent.left
                     anchors.right: parent.right
                     panel: timeline
+                    compact: root.quickMode
                     onMoreRequested: root.openMoreTools()
                 }
 
@@ -424,9 +440,11 @@ Item {
             id: rail
             width: parent.width
             visible: !root.previewFullscreen
+            compact: root.quickMode
             onTabRequested: (tabId) => root.openAssetsTab(tabId)
             onEditRequested: root.openPropertiesSheet()
             onAddRequested: root.openAddMenu()
+            onFullEditorRequested: root.exitQuickMode()
         }
     }
 

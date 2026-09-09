@@ -1355,6 +1355,18 @@ public:
     // sheet. Deferred to this point rather than done as part of the export because it is a second
     // full copy of the video, and most exports are never shared. Android only; false/no-op elsewhere.
     Q_INVOKABLE void shareLastExport();
+    // Same publish-to-gallery step as shareLastExport, handed to a player instead of a share
+    // sheet. Shares the m_sharingExport guard, so the two cannot run the copy twice at once.
+    Q_INVOKABLE void playLastExport();
+    // Copies a file into the shared media collection (Movies/Music/Pictures under "Drift") so it
+    // outlives the app's own storage. Marketplace downloads land in AppDataLocation, which is gone
+    // on uninstall or a "clear data" and invisible to every file manager — for something the user
+    // spent quota on, that is a file they can lose without ever having seen it.
+    //
+    // Asynchronous: this is a second full copy of the media, and doing it inline is an ANR on
+    // anything long. Reports through savedToGallery. Android only; a no-op elsewhere, where the
+    // download already went somewhere the user picked.
+    Q_INVOKABLE void saveToGallery(const QString &filePath, const QString &displayName);
     Q_INVOKABLE QUrl fileUrl(const QString &path) const;
     Q_INVOKABLE QString imageUrl(const QString &path) const;
     // Same as imageUrl but requests a single frame of a filmstrip strip (see DriftImageProvider).
@@ -1399,6 +1411,9 @@ signals:
     void exportInProgressChanged();
     void exportProgressChanged();
     void canShareExportChanged();
+    // `location` is a human-readable folder ("Movies/Drift"), empty when ok is false.
+    void savedToGallery(const QString &displayName, bool ok, const QString &location,
+                        const QString &error);
     void subtitleGeneratingChanged();
     void subtitleGenProgressChanged();
     void subtitleGenStatusChanged();

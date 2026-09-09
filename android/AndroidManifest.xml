@@ -55,6 +55,11 @@
         android:largeScreens="true"
         android:normalScreens="true"
         android:smallScreens="true" />
+    <!-- enableOnBackInvokedCallback must stay false. Drift's entire Back story is one Shortcut
+         in AndroidMain.qml that dispatches six branches with side effects — a full-screen clip
+         tool, open menus, modals that deliberately refuse to close, a swallow during an import,
+         then the home/exit step. The predictive-back callback would hand the gesture to the
+         system before any of that ran. -->
     <application
         android:name="org.qtproject.qt.android.bindings.QtApplication"
         android:hardwareAccelerated="true"
@@ -97,6 +102,35 @@
                 <data android:pathPattern=".*\\.drift" />
                 <data android:pathPattern=".*\\..*\\.drift" />
                 <data android:pathPattern=".*\\..*\\..*\\.drift" />
+            </intent-filter>
+
+            <!-- Share targets. Separate filters on purpose: the VIEW filter above matches
+                 mimeType="*/*" so that .drift can be opened from anywhere, and adding media
+                 types to it would make Drift a candidate for opening every video file on the
+                 device. No BROWSABLE either — these are share-sheet destinations, not links.
+
+                 No new permissions: a shared content:// arrives with a transient read grant and
+                 the import copies the bytes out immediately. -->
+            <intent-filter>
+                <action android:name="android.intent.action.SEND" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="video/*" />
+                <data android:mimeType="image/*" />
+                <data android:mimeType="audio/*" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.SEND_MULTIPLE" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="video/*" />
+                <data android:mimeType="image/*" />
+                <data android:mimeType="audio/*" />
+            </intent-filter>
+            <!-- A pasted or shared page link. Resolved through the marketplace, so it degrades
+                 to a toast when there is no marketplace configured. -->
+            <intent-filter>
+                <action android:name="android.intent.action.SEND" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="text/plain" />
             </intent-filter>
 
             <!-- Website-initiated marketplace account link. No in-app Sign in CTA;

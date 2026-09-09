@@ -396,7 +396,7 @@ Popup {
                 color: Theme.panelBackground
             }
 
-            // Prominent drag header: handle + title + close.
+            // Prominent drag header: handle + title + one dismissal.
             Rectangle {
                 id: header
                 anchors.left: parent.left
@@ -422,7 +422,7 @@ Popup {
                     // without this the title ran under the notch on one rotation and
                     // the Close button under the nav bar on the other.
                     anchors.leftMargin: Theme.pagePadding + root.safeLeft
-                    anchors.right: closeBtn.left
+                    anchors.right: doneBtn.visible ? doneBtn.left : closeBtn.left
                     anchors.rightMargin: Theme.spacingMd
                     anchors.bottom: parent.bottom
                     anchors.bottomMargin: 10
@@ -446,12 +446,15 @@ Popup {
                     onClicked: root.doneRequested()
                 }
 
+                // Only when there is no Done. Two dismissals side by side asked the user to
+                // pick between them, and on the sheets that have both they do the same thing —
+                // Done commits and closes, X closes. Back, a drag down and a tap on the scrim
+                // all still dismiss, so nothing becomes unreachable by losing the button.
                 IconButton {
                     id: closeBtn
-                    anchors.right: doneBtn.visible ? doneBtn.left : parent.right
-                    anchors.rightMargin: doneBtn.visible
-                                         ? Theme.spacingSm
-                                         : Theme.spacingSm + root.safeRight
+                    visible: !doneBtn.visible
+                    anchors.right: parent.right
+                    anchors.rightMargin: Theme.spacingSm + root.safeRight
                     anchors.bottom: parent.bottom
                     anchors.bottomMargin: 4
                     buttonSize: Theme.androidIconButtonSize

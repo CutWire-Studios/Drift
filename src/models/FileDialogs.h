@@ -4,6 +4,7 @@
 #include <QObject>
 #include <QStringList>
 #include <QUrl>
+#include <QVariantMap>
 
 // QML-facing wrapper around QFileDialog so file pickers use the native
 // platform dialog (xdg-desktop-portal under Flatpak; Android Storage Access
@@ -45,10 +46,40 @@ public:
     // the sheet can only hand another app a URI it is allowed to read.
     Q_INVOKABLE bool shareFile(const QUrl &url, const QString &mimeType = QString()) const;
 
+    // Hands a content:// URI to whatever the device plays it with (ACTION_VIEW), as opposed to
+    // shareFile's ACTION_SEND. Same constraint and the same reason: only a content:// URI carries
+    // a grant the receiving app can act on. False on desktop.
+    Q_INVOKABLE bool viewFile(const QUrl &url, const QString &mimeType = QString()) const;
+
     // The file the app was launched with (ACTION_VIEW on a .drift project from a file manager),
     // or an empty URL. Consumed by the first call: the activity keeps its launch intent for the
     // life of the process, so an unconsumed one would reopen the project on every check.
     Q_INVOKABLE QUrl takeLaunchUrl();
+
+    // The launch intent in full, for the share targets. Same consume-once rule as
+    // takeLaunchUrl(), and the same empty result on desktop. Shape:
+    //
+    //   kind      "view" | "sendMedia" | "sendText"
+    //   urls      list of QUrl — one for VIEW and ACTION_SEND, several for SEND_MULTIPLE
+    //   text      the shared text, for "sendText" only
+    //   mimeType  the intent's type, or empty
+    //
+    // An empty map means there was nothing to act on. Every consumed extra is stripped from the
+    // activity's intent before returning: a configuration change re-reads getIntent(), and a
+    // SEND that still carried its payload would import the same clip again on every rotation.
+    Q_INVOKABLE QVariantMap takeLaunchIntent();
+
+    // Android 13+ photo picker (MediaStore.ACTION_PICK_IMAGES). Permission-free and scoped to
+    // what the user taps, like SAF, but a media grid rather than a file browser.
+    //
+    // Asynchronous, which is the whole reason it is not a drop-in for openFiles(): that one
+    // blocks on QFileDialog::exec() and returns the result, this one returns immediately and
+    // answers on visualMediaPicked. False means it could not be started at all — below API 33,
+    // or no activity — and the caller should fall back to openFiles().
+    //
+    // The grants it hands back are NOT persistable, so this cannot replace SAF everywhere: an
+    // asset that has to survive a restart still needs a document the app can re-acquire.
+    Q_INVOKABLE bool pickVisualMedia(bool allowMultiple = true);
 
 signals:
     // A .drift tapped in a file manager while this process was already running. Nothing polls
@@ -56,10 +87,19 @@ signals:
     // is pushed instead. Never emitted on desktop.
     void launchUrlReceived(const QUrl &url);
 
+    // The warm-start counterpart of takeLaunchIntent(): a share that arrived while the process
+    // was already running. Carries the same map. Never emitted on desktop.
+    void incomingIntent(const QVariantMap &intent);
+
+    // Result of pickVisualMedia(). An empty list means the user backed out.
+    void visualMediaPicked(const QList<QUrl> &urls);
+
 private:
 #ifdef Q_OS_ANDROID
     class NewIntentBridge;
     NewIntentBridge *m_newIntentBridge = nullptr;
+    class PickResultBridge;
+    PickResultBridge *m_pickBridge = nullptr;
     QUrl m_pendingLaunchUrl;
 #endif
 };

@@ -363,7 +363,7 @@ void MarketClient::resolveUrl(const QString &url)
             bool retryable = true;
             const QString message =
                 parseProblem(payload, status, &code, &reason, &retryable, int(reply->error()));
-            setSearchError(message, retryable);
+            setSearchError(message, retryable, code);
             m_items.clear();
             m_itemIndex.clear();
             emit itemsChanged();
@@ -373,7 +373,8 @@ void MarketClient::resolveUrl(const QString &url)
         m_resolveJobId = job.value(QStringLiteral("id")).toString();
         if (m_resolveJobId.isEmpty()) {
             setSearching(false);
-            setSearchError(fallbackMessageForCode(QStringLiteral("not_found")), false);
+            setSearchError(fallbackMessageForCode(QStringLiteral("not_found")), false,
+                           QStringLiteral("not_found"));
             return;
         }
         // Extraction may already be done by the time the POST returns.
@@ -393,7 +394,7 @@ void MarketClient::finishResolveFailure(const QJsonObject &problem)
     const QString reason = problem.value(QStringLiteral("reason")).toString();
     const QString detail = problem.value(QStringLiteral("detail")).toString().trimmed();
     setSearchError(detail.isEmpty() ? fallbackMessageForCode(code) : detail,
-                   isRetryable(code, reason));
+                   isRetryable(code, reason), code);
     m_items.clear();
     m_itemIndex.clear();
     emit itemsChanged();
@@ -429,7 +430,7 @@ void MarketClient::pollResolve()
             bool retryable = true;
             const QString message =
                 parseProblem(payload, status, &code, &reason, &retryable, int(reply->error()));
-            setSearchError(message, retryable);
+            setSearchError(message, retryable, code);
             return;
         }
         const QJsonObject job = QJsonDocument::fromJson(payload).object();
@@ -809,12 +810,13 @@ void MarketClient::setSearching(bool searching)
     emit searchingChanged();
 }
 
-void MarketClient::setSearchError(const QString &error, bool retryable)
+void MarketClient::setSearchError(const QString &error, bool retryable, const QString &code)
 {
-    if (m_searchError == error && m_searchErrorRetryable == retryable)
+    if (m_searchError == error && m_searchErrorRetryable == retryable && m_searchErrorCode == code)
         return;
     m_searchError = error;
     m_searchErrorRetryable = retryable;
+    m_searchErrorCode = code;
     emit searchErrorChanged();
 }
 
@@ -984,7 +986,7 @@ void MarketClient::startSearch(bool append)
             bool retryable = true;
             const QString message =
                 parseProblem(payload, status, &code, &reason, &retryable, int(reply->error()));
-            setSearchError(message, retryable);
+            setSearchError(message, retryable, code);
             return;
         }
         applySearchPage(QJsonDocument::fromJson(payload).object(), append);

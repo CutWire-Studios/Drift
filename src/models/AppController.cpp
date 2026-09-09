@@ -80,6 +80,7 @@
 #include <QEventLoop>
 #include <QFile>
 #include <QFileInfo>
+#include <QMimeDatabase>
 #include <QMutex>
 #include <QGuiApplication>
 #include <QJsonArray>
@@ -18497,6 +18498,72 @@ bool AppController::canShareExport() const
     return !m_lastExportUrl.isEmpty() && !m_sharingExport;
 #else
     return false;
+#endif
+}
+
+void AppController::saveToGallery(const QString &filePath, const QString &displayName)
+{
+#ifdef Q_OS_ANDROID
+    if (filePath.isEmpty())
+        return;
+
+    const QString name = displayName.isEmpty() ? QFileInfo(filePath).fileName() : displayName;
+    const QUrl source = QUrl::fromLocalFile(filePath);
+    const QString mime = QMimeDatabase().mimeTypeForFile(name, QMimeDatabase::MatchExtension).name();
+    const QString location = mime.startsWith(QLatin1String("audio/")) ? QStringLiteral("Music/Drift")
+                             : mime.startsWith(QLatin1String("image/"))
+                                 ? QStringLiteral("Pictures/Drift")
+                                 : QStringLiteral("Movies/Drift");
+
+    (void)QtConcurrent::run([this, source, name, location]() {
+        Exporter::BackgroundHold hold(QStringLiteral("Saving to gallery"));
+        QString error;
+        const QUrl published = Exporter::publishToGallery(source, name, &error);
+        const bool ok = !published.isEmpty();
+        QMetaObject::invokeMethod(
+            this,
+            [this, name, ok, location, error]() {
+                emit savedToGallery(name, ok, ok ? location : QString(), error);
+            },
+            Qt::QueuedConnection);
+    });
+#else
+    Q_UNUSED(filePath);
+    Q_UNUSED(displayName);
+#endif
+}
+
+void AppController::playLastExport()
+{
+#ifdef Q_OS_ANDROID
+    if (m_lastExportUrl.isEmpty() || m_sharingExport)
+        return;
+
+    m_sharingExport = true;
+    emit canShareExportChanged();
+    setLastMessage(tr("Opening your video…"));
+
+    const QUrl source = m_lastExportUrl;
+    const QString name = m_lastExportName;
+    (void)QtConcurrent::run([this, source, name]() {
+        Exporter::BackgroundHold hold(QStringLiteral("Preparing to play"));
+        QString error;
+        const QUrl published = Exporter::publishToGallery(source, name, &error);
+        QMetaObject::invokeMethod(
+            this,
+            [this, published, error]() {
+                m_sharingExport = false;
+                emit canShareExportChanged();
+                if (published.isEmpty()) {
+                    setLastMessage(error, QStringLiteral("error"));
+                    return;
+                }
+                if (!FileDialogs().viewFile(published))
+                    setLastMessage(tr("Nothing on this device can play that file"),
+                                   QStringLiteral("error"));
+            },
+            Qt::QueuedConnection);
+    });
 #endif
 }
 

@@ -422,6 +422,10 @@
         <translation>සංක්‍රාන්ති</translation>
     </message>
     <message>
+        <source>Full editor</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Tap a clip to edit it</source>
         <translation type="unfinished"></translation>
     </message>
@@ -500,7 +504,34 @@
     </message>
 </context>
 <context>
+    <name>AndroidDownloadsSheet</name>
+    <message>
+        <source>Downloads</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Nothing downloading right now.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cancel download</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Try again</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Clear finished</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>AndroidEditor</name>
+    <message>
+        <source>Full editor</source>
+        <translation type="unfinished"></translation>
+    </message>
     <message>
         <source>Drift project (*.drift)</source>
         <translation>Drift ව්‍යාපෘතිය (*.drift)</translation>
@@ -535,13 +566,6 @@
     </message>
     <message>
         <source>Done</source>
-        <translation type="unfinished"></translation>
-    </message>
-</context>
-<context>
-    <name>AndroidHome</name>
-    <message>
-        <source>Coming soon</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -600,6 +624,65 @@
     </message>
 </context>
 <context>
+    <name>AndroidLinkImport</name>
+    <message>
+        <source>Open link</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Couldn’t reach the marketplace.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>“%1” is ready.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Downloading…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No source in the marketplace can open links.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>That source didn’t recognise this link.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Which source should open this link?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Loading sources…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Asking that source…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Try again</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Pick another source</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open in browser</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add to timeline</source>
+        <translation type="unfinished">කාලරේඛාවට එක් කරන්න</translation>
+    </message>
+    <message>
+        <source>Keep browsing</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>AndroidMain</name>
     <message>
         <source>Drift project (*.drift)</source>
@@ -610,7 +693,19 @@
         <translation>ව්‍යාපෘතිය සුරකින්න</translation>
     </message>
     <message>
-        <source>Canvas set to %1×%2 from your first clip.</source>
+        <source>Canvas set to %1×%2 at %3 fps from your first clip.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>That share had no link in it.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Links can’t be opened in this build.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>That download is no longer in your media.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -620,6 +715,10 @@
     <message>
         <source>Import in progress…</source>
         <translation>ආයාත වෙමින් පවතී…</translation>
+    </message>
+    <message>
+        <source>Saved to %1</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Export finished.</source>
@@ -659,6 +758,17 @@
     </message>
     <message>
         <source>Imported from the marketplace.</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>AndroidMarket</name>
+    <message>
+        <source>Market</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Downloads</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -1083,19 +1193,19 @@
 <context>
     <name>AndroidProjectsPage</name>
     <message>
+        <source>Quick edit</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Pick a clip, start now</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>New project</source>
         <translation type="unfinished">නව ව්‍යාපෘතිය</translation>
     </message>
     <message>
-        <source>Pick a clip to start</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Open project</source>
-        <translation type="unfinished">ව්‍යාපෘතිය විවෘත කරන්න</translation>
-    </message>
-    <message>
-        <source>Continue a saved edit</source>
+        <source>Choose a canvas, start empty</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -1105,6 +1215,18 @@
     <message>
         <source>Recent projects</source>
         <translation type="unfinished">මෑත ව්‍යාපෘති</translation>
+    </message>
+    <message>
+        <source>Open</source>
+        <translation type="unfinished">විවෘත කරන්න</translation>
+    </message>
+    <message>
+        <source>Open a project from this device</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Nothing here yet — projects you save will show up in this list.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Untitled</source>
@@ -1121,6 +1243,29 @@
     <message>
         <source>Remove from recents</source>
         <translation type="unfinished">මෑතකදී භාවිත කළ ඒවායින් ඉවත් කරන්න</translation>
+    </message>
+</context>
+<context>
+    <name>AndroidShareTargetSheet</name>
+    <message>
+        <source>Add shared media</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add to this project</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Import at the playhead and stay here</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>New quick edit</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Start a new project from this clip</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -1238,6 +1383,10 @@
     <message>
         <source>Untitled</source>
         <translation>නම් නොකළ</translation>
+    </message>
+    <message>
+        <source>Crop</source>
+        <translation type="unfinished">කප්පාදු (Crop)</translation>
     </message>
     <message>
         <source>Undo</source>
@@ -3164,6 +3313,14 @@
         <translation>නිර්යාත කරමින්…</translation>
     </message>
     <message>
+        <source>Opening your video…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Nothing on this device can play that file</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Getting your video ready to share…</source>
         <translation>ඔබේ වීඩියෝව බෙදාගැනීමට සූදානම් කරමින්…</translation>
     </message>
@@ -4206,11 +4363,7 @@
     </message>
 </context>
 <context>
-    <name>DownloadsWindow</name>
-    <message>
-        <source>Downloads</source>
-        <translation type="unfinished"></translation>
-    </message>
+    <name>DownloadFormat</name>
     <message>
         <source>%1 B</source>
         <translation type="unfinished"></translation>
@@ -4263,6 +4416,13 @@
     </message>
     <message>
         <source>%1 of %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>DownloadsWindow</name>
+    <message>
+        <source>Downloads</source>
         <translation type="unfinished"></translation>
     </message>
     <message numerus="yes">
@@ -5177,6 +5337,14 @@
         <source>Export finished.</source>
         <translation>නිර්යාත කිරීම අවසන් විය.</translation>
     </message>
+    <message>
+        <source>Play</source>
+        <translation type="unfinished">ධාවනය කරන්න</translation>
+    </message>
+    <message>
+        <source>Share</source>
+        <translation type="unfinished">බෙදාගන්න</translation>
+    </message>
 </context>
 <context>
     <name>FadeCurveWindow</name>
@@ -5254,6 +5422,10 @@
     <message>
         <source>Untitled</source>
         <translation>නම් නොකළ</translation>
+    </message>
+    <message>
+        <source>Play</source>
+        <translation type="unfinished">ධාවනය කරන්න</translation>
     </message>
     <message>
         <source>Share</source>
@@ -5925,6 +6097,10 @@
     <message>
         <source>Cancel download</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Retry</source>
+        <translation type="unfinished">නැවත උත්සාහ කරන්න</translation>
     </message>
     <message>
         <source>Preview</source>

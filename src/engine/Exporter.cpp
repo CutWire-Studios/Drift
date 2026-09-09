@@ -2400,12 +2400,17 @@ QUrl Exporter::publishToGallery(const QUrl &source, const QString &displayName, 
     const QString mimeType =
         QMimeDatabase().mimeTypeForFile(displayName, QMimeDatabase::MatchExtension).name();
     const bool audio = mimeType.startsWith(QLatin1String("audio/"));
+    // Marketplace downloads reach this too, and those can be stills. An image inserted into the
+    // Video collection is a row the gallery will not show.
+    const bool image = mimeType.startsWith(QLatin1String("image/"));
 
     QJniObject context = QNativeInterface::QAndroidApplication::context();
     QJniObject resolver =
         context.callObjectMethod("getContentResolver", "()Landroid/content/ContentResolver;");
     QJniObject collection = QJniObject::getStaticObjectField(
-        audio ? "android/provider/MediaStore$Audio$Media" : "android/provider/MediaStore$Video$Media",
+        audio ? "android/provider/MediaStore$Audio$Media"
+              : image ? "android/provider/MediaStore$Images$Media"
+                      : "android/provider/MediaStore$Video$Media",
         "EXTERNAL_CONTENT_URI", "Landroid/net/Uri;");
     if (!resolver.isValid() || !collection.isValid()) {
         if (errorOut)
@@ -2431,7 +2436,8 @@ QUrl Exporter::publishToGallery(const QUrl &source, const QString &displayName, 
     putString(values, "_display_name", displayName);
     putString(values, "mime_type", mimeType);
     putString(values, "relative_path", audio ? QStringLiteral("Music/Drift")
-                                             : QStringLiteral("Movies/Drift"));
+                                       : image ? QStringLiteral("Pictures/Drift")
+                                               : QStringLiteral("Movies/Drift"));
     // Pending until the bytes are there, so the gallery never shows a half-written video.
     putInt(values, "is_pending", 1);
 

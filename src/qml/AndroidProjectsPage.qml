@@ -13,22 +13,26 @@ Item {
     id: root
 
     signal newProjectRequested()
+    signal quickEditRequested()
     signal openProjectRequested()
     signal openRecentRequested(string path)
 
-    // Phase B adds a "Quick edit" tile here; the tiles list is what it appends to.
+    // Quick edit leads: it is the same first two taps as New project, and the editor it
+    // lands in is the reduced one, so the shortest path is also the prominent one. New
+    // project keeps its own tile because escalating out of quick mode costs a tap, and
+    // starting a multi-clip edit should not have to pay it.
     readonly property var tiles: [
-        { id: "new", label: qsTr("New project"), detail: qsTr("Pick a clip to start"),
-          icon: Theme.icons.plus, primary: true },
-        { id: "open", label: qsTr("Open project"), detail: qsTr("Continue a saved edit"),
-          icon: Theme.icons.folder, primary: false }
+        { id: "quick", label: qsTr("Quick edit"), detail: qsTr("Pick a clip, start now"),
+          icon: Theme.icons.sparkles, primary: true },
+        { id: "new", label: qsTr("New project"), detail: qsTr("Choose a canvas, start empty"),
+          icon: Theme.icons.plus, primary: false }
     ]
 
     function triggerTile(tileId) {
-        if (tileId === "new")
+        if (tileId === "quick")
+            root.quickEditRequested()
+        else if (tileId === "new")
             root.newProjectRequested()
-        else if (tileId === "open")
-            root.openProjectRequested()
     }
 
     Flickable {
@@ -153,152 +157,182 @@ Item {
             }
 
             // --- Recent projects ----------------------------------------------
+            //
+            // A wrapping grid rather than the single horizontal strip this used to be. The strip
+            // showed two and a half cards and hid the rest behind a sideways flick with nothing
+            // saying so, which on the one screen whose whole job is "get back to your work" is
+            // the wrong trade. Opening a project from disk is the rarer case, so it loses its
+            // full-width tile and becomes the button beside this heading.
             Column {
                 width: pageColumn.contentWidth
                 spacing: Theme.spacingMd
-                visible: EditorState.recentProjects.length > 0
 
-                ThemedLabel {
-                    text: qsTr("Recent projects")
-                    tone: "default"
-                    size: "sm"
+                Item {
+                    width: parent.width
+                    height: Math.max(recentsLabel.implicitHeight, openButton.height)
+
+                    ThemedLabel {
+                        id: recentsLabel
+                        anchors.left: parent.left
+                        anchors.verticalCenter: parent.verticalCenter
+                        text: qsTr("Recent projects")
+                        tone: "default"
+                        size: "sm"
+                    }
+
+                    ThemedButton {
+                        id: openButton
+                        anchors.right: parent.right
+                        anchors.verticalCenter: parent.verticalCenter
+                        variant: "secondary"
+                        glyph: Theme.icons.folder
+                        text: qsTr("Open")
+                        tooltip: qsTr("Open a project from this device")
+                        onClicked: {
+                            Haptics.select()
+                            root.openProjectRequested()
+                        }
+                    }
                 }
 
-                Flickable {
+                ThemedLabel {
                     width: parent.width
-                    height: Theme.androidHomeRecentCardHeight
-                    contentWidth: recentRow.width
-                    clip: true
-                    boundsBehavior: Flickable.StopAtBounds
-                    flickableDirection: Flickable.HorizontalFlick
+                    visible: EditorState.recentProjects.length === 0
+                    wrapMode: Text.WordWrap
+                    text: qsTr("Nothing here yet — projects you save will show up in this list.")
+                }
 
-                    Row {
-                        id: recentRow
-                        spacing: Theme.spacingMd
-                        height: parent.height
+                Grid {
+                    id: recentGrid
+                    width: parent.width
+                    columns: 2
+                    spacing: Theme.spacingMd
+                    visible: EditorState.recentProjects.length > 0
 
-                        Repeater {
-                            model: EditorState.recentProjects
+                    readonly property real cellWidth:
+                        (width - spacing * (columns - 1)) / columns
 
-                            delegate: Rectangle {
-                                id: card
-                                required property var modelData
-                                width: Theme.androidHomeRecentCardWidth
-                                height: Theme.androidHomeRecentCardHeight
-                                radius: Theme.radiusMd
-                                color: Theme.panelBackground
-                                border.width: Theme.borderWidth
-                                border.color: Theme.panelBorder
-                                opacity: modelData.exists === false ? 0.55 : 1
+                    Repeater {
+                        model: EditorState.recentProjects
 
-                                Accessible.role: Accessible.Button
-                                Accessible.name: card.projectLabel
+                        delegate: Rectangle {
+                            id: card
+                            required property var modelData
+                            width: recentGrid.cellWidth
+                            height: Theme.androidHomeRecentCardHeight
+                            radius: Theme.radiusMd
+                            color: Theme.panelBackground
+                            border.width: Theme.borderWidth
+                            border.color: Theme.panelBorder
+                            opacity: modelData.exists === false ? 0.55 : 1
 
-                                readonly property string projectLabel: {
-                                    const n = card.modelData.name || ""
-                                    return n.replace(/\.drift$/i, "") || qsTr("Untitled")
-                                }
+                            Accessible.role: Accessible.Button
+                            Accessible.name: card.projectLabel
 
-                                Column {
-                                    anchors.fill: parent
-                                    anchors.margins: Theme.spacingLg
-                                    spacing: Theme.spacingSm
+                            readonly property string projectLabel: {
+                                const n = card.modelData.name || ""
+                                return n.replace(/\.drift$/i, "") || qsTr("Untitled")
+                            }
 
+                            Column {
+                                anchors.fill: parent
+                                anchors.margins: Theme.spacingLg
+                                spacing: Theme.spacingSm
+
+                                Rectangle {
+                                    width: parent.width
+                                    height: 32
+                                    radius: Theme.radiusSm
+                                    color: Theme.panelAccent
+
+                                    IconGlyph {
+                                        anchors.centerIn: parent
+                                        glyph: Theme.icons.film
+                                        iconSize: 18
+                                        iconColor: Theme.mutedForeground
+                                    }
+
+                                    // Same on-disk signal the desktop recents list carries;
+                                    // the card's dimming alone did not say what was wrong.
                                     Rectangle {
-                                        width: parent.width
-                                        height: 32
-                                        radius: Theme.radiusSm
-                                        color: Theme.panelAccent
-
-                                        IconGlyph {
-                                            anchors.centerIn: parent
-                                            glyph: Theme.icons.film
-                                            iconSize: 18
-                                            iconColor: Theme.mutedForeground
-                                        }
-
-                                        // Same on-disk signal the desktop recents list carries;
-                                        // the card's dimming alone did not say what was wrong.
-                                        Rectangle {
-                                            anchors.right: parent.right
-                                            anchors.top: parent.top
-                                            anchors.margins: 4
-                                            width: 8
-                                            height: 8
-                                            radius: 4
-                                            color: card.modelData.exists === false
-                                                   ? Theme.mutedForeground : Theme.constructive
-                                        }
-                                    }
-
-                                    Text {
-                                        width: parent.width
-                                        text: card.projectLabel
-                                        color: Theme.panelForeground
-                                        font.family: Theme.fontFamily
-                                        font.pixelSize: Theme.fontSizeXs
-                                        font.weight: Font.Medium
-                                        elide: Text.ElideMiddle
-                                    }
-
-                                    // Elided from the left: on a 140px card the tail — the folder
-                                    // and file name — is the half that tells two projects apart.
-                                    Text {
-                                        width: parent.width
-                                        text: card.modelData.path
-                                        color: Theme.mutedForeground
-                                        font.family: Theme.fontFamily
-                                        font.pixelSize: Theme.fontSizeXs
-                                        elide: Text.ElideLeft
+                                        anchors.right: parent.right
+                                        anchors.top: parent.top
+                                        anchors.margins: 4
+                                        width: 8
+                                        height: 8
+                                        radius: 4
+                                        color: card.modelData.exists === false
+                                               ? Theme.mutedForeground : Theme.constructive
                                     }
                                 }
 
-                                MouseArea {
-                                    anchors.fill: parent
-                                    pressAndHoldInterval: 450
-                                    property bool heldMenu: false
-                                    onPressed: heldMenu = false
-                                    onPressAndHold: {
-                                        heldMenu = true
-                                        Haptics.pickUp()
-                                        cardMenu.popup()
-                                    }
-                                    onClicked: {
-                                        if (heldMenu)
-                                            return
-                                        if (card.modelData.exists === false) {
-                                            Toasts.warning(qsTr("That project file is missing."))
-                                            return
-                                        }
-                                        Haptics.select()
-                                        root.openRecentRequested(card.modelData.path)
-                                    }
+                                Text {
+                                    width: parent.width
+                                    text: card.projectLabel
+                                    color: Theme.panelForeground
+                                    font.family: Theme.fontFamily
+                                    font.pixelSize: Theme.fontSizeXs
+                                    font.weight: Font.Medium
+                                    elide: Text.ElideMiddle
                                 }
 
-                                // Long-press was the only way to reach this, which is a gesture
-                                // with no visible equivalent — the one rule the rest of the rail
-                                // already follows. The button is the equivalent; the long-press
-                                // stays as an accelerator.
-                                IconButton {
-                                    anchors.right: parent.right
-                                    anchors.top: parent.top
-                                    anchors.margins: Theme.spacingXs
-                                    buttonSize: Theme.iconButtonSize
-                                    iconSize: Theme.iconSizeMd
-                                    glyph: Theme.icons.ellipsis
-                                    variant: "text"
-                                    tooltip: qsTr("Project actions")
-                                    onClicked: cardMenu.popup()
+                                // Elided from the left: on a narrow card the tail — the folder
+                                // and file name — is the half that tells two projects apart.
+                                Text {
+                                    width: parent.width
+                                    text: card.modelData.path
+                                    color: Theme.mutedForeground
+                                    font.family: Theme.fontFamily
+                                    font.pixelSize: Theme.fontSizeXs
+                                    elide: Text.ElideLeft
                                 }
+                            }
 
-                                ThemedContextMenu {
-                                    id: cardMenu
-
-                                    ThemedMenuItem {
-                                        text: qsTr("Remove from recents")
-                                        icon.name: Theme.icons.trash
-                                        onTriggered: EditorState.removeRecentProject(card.modelData.path)
+                            MouseArea {
+                                anchors.fill: parent
+                                pressAndHoldInterval: 450
+                                property bool heldMenu: false
+                                onPressed: heldMenu = false
+                                onPressAndHold: {
+                                    heldMenu = true
+                                    Haptics.pickUp()
+                                    cardMenu.popup()
+                                }
+                                onClicked: {
+                                    if (heldMenu)
+                                        return
+                                    if (card.modelData.exists === false) {
+                                        Toasts.warning(qsTr("That project file is missing."))
+                                        return
                                     }
+                                    Haptics.select()
+                                    root.openRecentRequested(card.modelData.path)
+                                }
+                            }
+
+                            // Long-press was the only way to reach this, which is a gesture
+                            // with no visible equivalent — the one rule the rest of the rail
+                            // already follows. The button is the equivalent; the long-press
+                            // stays as an accelerator.
+                            IconButton {
+                                anchors.right: parent.right
+                                anchors.top: parent.top
+                                anchors.margins: Theme.spacingXs
+                                buttonSize: Theme.iconButtonSize
+                                iconSize: Theme.iconSizeMd
+                                glyph: Theme.icons.ellipsis
+                                variant: "text"
+                                tooltip: qsTr("Project actions")
+                                onClicked: cardMenu.popup()
+                            }
+
+                            ThemedContextMenu {
+                                id: cardMenu
+
+                                ThemedMenuItem {
+                                    text: qsTr("Remove from recents")
+                                    icon.name: Theme.icons.trash
+                                    onTriggered: EditorState.removeRecentProject(card.modelData.path)
                                 }
                             }
                         }

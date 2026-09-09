@@ -47,5 +47,37 @@ ThemedDialog {
                   ? qsTr("Rendering your video. Close to keep editing, or cancel to stop.")
                   : qsTr("Export finished.")
         }
+
+        // The finished state used to be that sentence and nothing else — the file was on the
+        // device and every way to it was outside the app. Both actions publish to the gallery
+        // first, which is a second full copy of the video and the reason it is not done as part
+        // of the export.
+        //
+        // Bound to canShareExport rather than to "the export ended": the publish runs on a
+        // worker, so it is false again for as long as either button's copy is in flight, and
+        // that is exactly when neither should be pressable.
+        Row {
+            width: parent.width
+            spacing: Theme.androidTouchGap
+            visible: !EditorState.exportInProgress && EditorState.canShareExport
+
+            ThemedButton {
+                width: (parent.width - parent.spacing) / 2
+                height: Theme.androidMinTouchTarget
+                variant: "secondary"
+                glyph: Theme.icons.play
+                text: qsTr("Play")
+                onClicked: EditorState.playLastExport()
+            }
+
+            ThemedButton {
+                width: (parent.width - parent.spacing) / 2
+                height: Theme.androidMinTouchTarget
+                variant: "primary"
+                glyph: Theme.icons.upload
+                text: qsTr("Share")
+                onClicked: EditorState.shareLastExport()
+            }
+        }
     }
 }

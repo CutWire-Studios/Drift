@@ -68,6 +68,11 @@ ApplicationWindow {
         overlayModalCount = Math.max(0, overlayModalCount - 1)
     }
 
+    // Quick edit: the editor is up, but reduced to the handful of controls a one-clip
+    // trim needs. Held here rather than on the page so escalating out of it is a property
+    // change on the live editor instead of a reload — see AndroidEditor.exitQuickMode().
+    property bool quickMode: false
+
     // The live AndroidEditor instance, so Back can ask it to close a sheet first.
     property var editorPage: null
     // The live AndroidHome instance, so Back can refuse to leave mid-import.
@@ -103,13 +108,22 @@ ApplicationWindow {
     // the phone goes through this one function, drop-on-timeline included, so they all inherit
     // the behaviour without touching a single call site.
     function applyInferredSetup(assetIndex) {
+        // A source-derived canvas needs a probed source. The probe runs off-thread, so an asset
+        // that has not finished one reports 0x0 — and suggestedProjectSetupForAsset() then falls
+        // back to the *project defaults* rather than failing, which markProjectLayoutChosen()
+        // would lock in as though it had come from the clip. MediaImport holds its callback until
+        // the probe lands; this guards the case where it never does, and the audio-first case,
+        // where there are no dimensions to infer from at all.
+        const asset = AssetLibrary.assetAt(assetIndex)
+        if (!asset || !(asset.width > 0) || !(asset.height > 0))
+            return false
         const setup = EditorState.suggestedProjectSetupForAsset(assetIndex)
         if (!setup || !setup.width || !setup.height)
             return false
         EditorState.setProjectSetup(setup.width, setup.height, setup.fps)
         EditorState.markProjectLayoutChosen()
-        Toasts.info(qsTr("Canvas set to %1×%2 from your first clip.")
-                    .arg(setup.width).arg(setup.height))
+        Toasts.info(qsTr("Canvas set to %1×%2 at %3 fps from your first clip.")
+                    .arg(setup.width).arg(setup.height).arg(setup.fps))
         return true
     }
 
@@ -119,18 +133,47 @@ ApplicationWindow {
         runner()
     }
 
-    // "New project" goes straight to the picker: no dialog, no layout question. The canvas
-    // follows from whatever lands first.
+    // Run once the canvas sheet is committed with Done, and cleared if it is dismissed instead.
+    property var _afterLayoutChosen: null
+
+    // "New project" is the deliberate route: choose the canvas, then land in an empty editor and
+    // add media from there. Quick edit is the other half of the pair — it asks for a clip and
+    // infers the canvas from it — and between them neither path has to answer a question it does
+    // not care about.
     function startNewProject() {
+        window.quickMode = false
         window.confirmIfDirty(function() {
             EditorState.newProject()
-            MediaImport.pickAndImport(function(added) {
+            window._afterLayoutChosen = function() { window.showEditor() }
+            layoutSheet.openSheet()
+        })
+    }
+
+    // Home's "Quick edit" tile, and later the share targets: one clip, straight onto a
+    // fresh timeline, in the reduced editor. Zero dialogs on the way — applyInferredSetup()
+    // calls markProjectLayoutChosen(), which is what shouldConfigureProjectForAsset() reads,
+    // so the canvas question is answered rather than suppressed.
+    //
+    // Takes urls, not an asset index: newProject() swaps the whole document, asset pool
+    // included, so anything imported before it is gone by the time addClipFromAsset() would
+    // run. The import has to happen on the far side of the reset, which means the caller can
+    // only hand over something that survives it. Pass nothing to open the picker.
+    function beginQuickEdit(urls) {
+        window.confirmIfDirty(function() {
+            EditorState.newProject()
+            const landed = function(added) {
                 if (added > 0) {
-                    window.applyInferredSetup(AssetLibrary.count - added)
-                    EditorState.addClipFromAsset(AssetLibrary.count - added)
+                    const index = AssetLibrary.count - added
+                    window.applyInferredSetup(index)
+                    EditorState.addClipFromAsset(index)
                 }
+                window.quickMode = true
                 window.showEditor()
-            })
+            }
+            if (urls && urls.length > 0)
+                MediaImport.importUrls(urls, false, landed)
+            else
+                MediaImport.pickAndImport(landed)
         })
     }
 
@@ -141,6 +184,7 @@ ApplicationWindow {
     function showHome() {
         if (!window.inEditor)
             return
+        window.quickMode = false
         if (stack.depth > 1)
             stack.pop()
         window.inEditor = false
@@ -172,7 +216,106 @@ ApplicationWindow {
         }
     }
 
+    // A share that arrived from another app, cold or warm. Media goes onto a timeline; text is
+    // a link and belongs to the marketplace resolver, which step 6 fills in.
+    function routeIncomingIntent(intent) {
+        if (!intent || !intent.kind)
+            return
+        if (intent.kind === "view") {
+            const url = intent.urls && intent.urls.length > 0 ? String(intent.urls[0]) : ""
+            if (url === "" || Market.handleIncomingUrl(url))
+                return
+            window.confirmIfDirty(function () {
+                EditorState.loadProject(url)
+                Qt.callLater(window.showEditor)
+            })
+            return
+        }
+        if (intent.kind === "sendMedia") {
+            const urls = intent.urls || []
+            if (urls.length === 0)
+                return
+            // Already working on something: adding to it and starting fresh are both reasonable
+            // and only the user knows which, so ask rather than guess.
+            if (window.inEditor) {
+                shareTargetSheet.openFor(urls)
+                return
+            }
+            window.beginQuickEdit(urls)
+            return
+        }
+        if (intent.kind === "sendText")
+            window.routeSharedLink(intent.text || "")
+    }
+
+    // TikTok and Instagram share "Check this out … https://…", so the link is a token inside the
+    // text rather than the whole of it.
+    function routeSharedLink(text) {
+        const match = /https?:\/\/\S+/i.exec(String(text || ""))
+        if (!match) {
+            Toasts.warning(qsTr("That share had no link in it."))
+            return
+        }
+        window.openLinkImport(match[0])
+    }
+
+    // A shared link. The marketplace is what knows how to turn a page URL into media, so with no
+    // marketplace configured there is nothing to degrade to but saying so.
+    //
+    // Handled by the Market destination rather than by a sheet over whatever is on screen: it
+    // ends in a marketplace download and it asks the user to pick a catalog provider, so the
+    // store is where it belongs. Parked when Home is not built yet — a share can cold-start the
+    // app, and this runs from the window's own onCompleted.
+    property string pendingLinkUrl: ""
+
+    function openLinkImport(url) {
+        if (!Market.configured) {
+            Toasts.info(qsTr("Links can’t be opened in this build."))
+            return
+        }
+        window.pendingLinkUrl = url
+        window.deliverPendingLink()
+    }
+
+    // A marketplace download has landed in the current project's bin. That is invisible from the
+    // Market destination — the bin lives in the editor — which is why finishing there looked like
+    // nothing had happened at all. Put the clip on a timeline and show it.
+    //
+    // No newProject() here, unlike the picker path: the asset is already *in* this project, and
+    // replacing the document would throw it away. shouldConfigureProjectForAsset() is what
+    // decides whether this is the first clip and the canvas should follow it.
+    function openDownloadedAsset(assetId) {
+        const index = AssetLibrary.indexOfId(assetId)
+        if (index < 0) {
+            Toasts.warning(qsTr("That download is no longer in your media."))
+            return
+        }
+        // Freshly imported, so unprobed: its size, frame rate and duration are all still zero.
+        MediaImport.awaitProbes([assetId], function () {
+            const at = AssetLibrary.indexOfId(assetId)
+            if (at < 0)
+                return
+            window.configureAndAddAsset(at, function () {
+                EditorState.addClipFromAsset(at)
+                window.showEditor()
+            })
+        })
+    }
+
+    function deliverPendingLink() {
+        if (window.pendingLinkUrl === "")
+            return
+        if (window.inEditor)
+            window.showHome()
+        if (!window.homePage)
+            return
+        const url = window.pendingLinkUrl
+        window.pendingLinkUrl = ""
+        window.homePage.startLinkImport(url)
+    }
+
     function openProjectFile() {
+        window.quickMode = false
         confirmIfDirty(function () {
             const url = FileDialogs.openFile(qsTr("Open Project"), window.projectFilter)
             if (url !== "") {
@@ -183,6 +326,7 @@ ApplicationWindow {
     }
 
     function openRecent(path) {
+        window.quickMode = false
         confirmIfDirty(function () {
             EditorState.openRecentProject(path)
             showEditor()
@@ -310,7 +454,66 @@ ApplicationWindow {
     }
     // The phone view over LayoutPresets. Hosted here rather than in the editor because
     // Settings → Video reaches it through Window.window.openLayoutChooser() too.
-    AndroidLayoutSheet { id: layoutSheet }
+    // Every marketplace download, whichever surface started it, gets a durable copy.
+    //
+    // Without this a download lives only in AppDataLocation — wiped by an uninstall or a "clear
+    // data", and reachable from no file manager or gallery. The user paid quota for it and could
+    // lose it having never seen where it went. The copy is a second pass over the bytes, which is
+    // why it runs off the GUI thread and why nothing waits on it: the import has already happened
+    // and the clip is usable meanwhile.
+    Connections {
+        target: Market
+        function onDownloadImported(itemId, name) {
+            const job = Market.downloadInfo(itemId)
+            const path = job && job.filePath ? String(job.filePath) : ""
+            // A download the user steered to their own folder is already somewhere they chose.
+            if (path === "" || (job.destinationDir && String(job.destinationDir).length > 0))
+                return
+            EditorState.saveToGallery(path, name)
+        }
+    }
+
+    Connections {
+        target: EditorState
+        function onSavedToGallery(displayName, ok, location, error) {
+            if (ok)
+                Toasts.success(qsTr("Saved to %1").arg(location))
+            else if (error.length > 0)
+                Toasts.warning(error)
+        }
+    }
+
+    // Warm start: a share that landed while Drift was already running.
+    Connections {
+        target: FileDialogs
+        function onIncomingIntent(intent) {
+            if (intent && intent.kind !== "view")
+                window.routeIncomingIntent(intent)
+        }
+    }
+
+    AndroidShareTargetSheet {
+        id: shareTargetSheet
+        onAddToProject: (urls) => MediaImport.importUrls(urls, false, function (added) {
+            if (added > 0)
+                EditorState.addClipFromAsset(AssetLibrary.count - added)
+        })
+        onStartQuickEdit: (urls) => window.beginQuickEdit(urls)
+    }
+
+    AndroidLayoutSheet {
+        id: layoutSheet
+        onApplied: {
+            const next = window._afterLayoutChosen
+            window._afterLayoutChosen = null
+            if (next)
+                next()
+        }
+        // Dismissed rather than committed. The project has already been reset by then, so this
+        // leaves the user on Home with an empty project rather than pushing them into an editor
+        // for a canvas they declined to choose.
+        onClosed: window._afterLayoutChosen = null
+    }
 
     // Read by the editor page: it binds the preview down by this so a sheet that keeps the
     // editor live letterboxes the frame instead of cutting it in half.
@@ -537,7 +740,13 @@ ApplicationWindow {
         // string — so `launched !== ""` was true even for an empty one. Every cold start then
         // tried to load an empty URL, which failed with "That project location isn't valid" and
         // left the user in an empty editor instead of on the home screen.
-        const launched = String(FileDialogs.takeLaunchUrl())
+        const intent = FileDialogs.takeLaunchIntent()
+        if (intent && intent.kind && intent.kind !== "view") {
+            window.routeIncomingIntent(intent)
+            return
+        }
+        const launched = intent && intent.urls && intent.urls.length > 0
+                         ? String(intent.urls[0]) : ""
         if (launched !== "" && !Market.handleIncomingUrl(launched)) {
             // Unless the previous session left a snapshot: loading the launched project
             // deletes it unasked, so park the URL and let the recovery prompt run first.
@@ -790,10 +999,16 @@ ApplicationWindow {
     Component {
         id: homeComponent
         AndroidHome {
-            Component.onCompleted: window.homePage = this
+            // Also flushes a link shared into a cold start: openLinkImport() can run from the
+            // window's onCompleted, before this page exists to route it to.
+            Component.onCompleted: {
+                window.homePage = this
+                window.deliverPendingLink()
+            }
             Component.onDestruction: if (window.homePage === this) window.homePage = null
             onEnterEditor: window.showEditor()
             onNewProjectRequested: window.startNewProject()
+            onQuickEditRequested: window.beginQuickEdit(null)
             onOpenProjectRequested: window.openProjectFile()
             onOpenRecentRequested: (path) => window.openRecent(path)
         }
@@ -814,6 +1029,7 @@ ApplicationWindow {
     Component {
         id: editorComponent
         AndroidEditor {
+            quickMode: window.quickMode
             Component.onCompleted: window.editorPage = this
             Component.onDestruction: if (window.editorPage === this) window.editorPage = null
             onBackRequested: window.goBack()

@@ -73,7 +73,10 @@ public:
     Q_INVOKABLE QString mediaNameFilter() const;
     // Import local paths and return the asset ids involved (new or already-present).
     QStringList importLocalPaths(const QStringList &paths);
-    bool isImportPending(const QString &assetId) const;
+    // Q_INVOKABLE because QML has to know when a freshly imported row is still a placeholder:
+    // importFinished fires before the off-thread probe fills width/height/fps/duration, so
+    // anything sizing a canvas or a clip from a new asset must wait on this.
+    Q_INVOKABLE bool isImportPending(const QString &assetId) const;
     // Registers media the app rendered itself (freeze frames and the like). The asset is already
     // complete, so this skips the probe and thumbnail jobs the import path runs. Returns its id.
     QString addGeneratedAsset(drift::MediaAsset asset);

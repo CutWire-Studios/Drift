@@ -277,7 +277,12 @@ QtObject {
     // The band around a letterboxed preview canvas. Fixed dark in both themes: it frames
     // photographic content, and following appBackground made it a white surround in light
     // mode with the video floating in the middle of it.
-    readonly property color previewLetterbox: "#101010"
+    //
+    // Mid-grey rather than the near-black it was: an empty canvas, a letterboxed clip and a
+    // dark frame all render close to black, so at #101010 there was nothing on screen saying
+    // where the canvas ended and the surround began. Still dark enough to frame video without
+    // competing with it.
+    readonly property color previewLetterbox: "#333333"
     // Style-pack thumbnails: most packs use white/light glyphs (and sit on video), so the
     // card canvas stays dark in both themes — panelSecondaryBg washes them out in light mode.
     readonly property color textStylePreviewBg: "#1c1c1c"

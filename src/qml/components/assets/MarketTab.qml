@@ -10,6 +10,12 @@ import ".."
 Item {
     id: root
 
+    // Phone layout. Defaults to the window's own size class rather than being threaded in, so a
+    // narrow desktop window gets it too — which is what Theme.sizeClass already means. The host
+    // can still force it. Every guard below reads `compact ? … : <exactly the previous expression>`
+    // so the expanded path is bit-for-bit what it was.
+    property bool compact: Theme.compact
+
     property var filterValues: ({})
     property bool filtersExpanded: false
     property bool lastRequestWasResolve: false
@@ -98,6 +104,15 @@ Item {
     function openPreview(itemId) {
         root.previewId = itemId
         previewDialog.open()
+    }
+
+    // Android Back, forwarded by AndroidMarket. The preview is the only thing this tab stacks.
+    function handleBack() {
+        if (previewDialog.visible) {
+            previewDialog.close()
+            return true
+        }
+        return false
     }
 
     onVisibleChanged: {
@@ -218,12 +233,17 @@ Item {
 
         // Source and the filter disclosure lead; the quota is trailing status rather than a
         // control, so it sits at the far edge instead of between the two things you click.
-        RowLayout {
+        GridLayout {
             id: providerRow
             Layout.fillWidth: true
             Layout.leftMargin: Theme.pagePadding
             Layout.rightMargin: Theme.pagePadding
-            spacing: Theme.spacingSm
+            // Four across is the desktop row. On a phone the source combo, the filter button and
+            // "12 remaining today" cannot share 360dp, and the combo is the one that gets crushed
+            // — so the quota drops to its own line under them.
+            columns: root.compact ? 2 : 4
+            columnSpacing: Theme.spacingSm
+            rowSpacing: Theme.spacingSm
 
             ThemedComboBox {
                 id: providerCombo
@@ -279,11 +299,15 @@ Item {
                 }
             }
 
-            Item { Layout.fillWidth: true }
+            // Layouts skip invisible items entirely, so this leaves no empty cell in the
+            // two-column form.
+            Item { Layout.fillWidth: true; visible: !root.compact }
 
             ThemedLabel {
                 id: quotaLabel
-                horizontalAlignment: Text.AlignRight
+                Layout.fillWidth: true
+                Layout.columnSpan: root.compact ? 2 : 1
+                horizontalAlignment: root.compact ? Text.AlignLeft : Text.AlignRight
                 visible: {
                     const q = Market.quota
                     return q && q.limit !== undefined && q.limit !== null && Number(q.limit) >= 0
@@ -302,12 +326,17 @@ Item {
         // One input for both capabilities. A provider like YouTube advertises search *and*
         // resolve, which rendered two stacked full-width fields that read as duplicates;
         // recognising a pasted link switches this row into look-up mode instead.
-        RowLayout {
+        GridLayout {
             id: queryRow
             Layout.fillWidth: true
             Layout.leftMargin: Theme.pagePadding
             Layout.rightMargin: Theme.pagePadding
-            spacing: Theme.spacingSm
+            // Stacked on a phone rather than dropping one of the buttons. The comment on the two
+            // buttons below is the reason: which one to press is the user's call, not a regex's,
+            // and 360dp cannot hold a usable field plus both. Each becomes a full-width row.
+            columns: root.compact ? 1 : 4
+            columnSpacing: Theme.spacingSm
+            rowSpacing: Theme.spacingSm
             visible: Market.canSearch || Market.canResolve
 
             ThemedTextField {
@@ -328,6 +357,7 @@ Item {
             // override it is worse than the extra button.
             ThemedButton {
                 id: searchButton
+                Layout.fillWidth: root.compact
                 text: qsTr("Search")
                 variant: "secondary"
                 visible: Market.canSearch && !Market.searching
@@ -336,6 +366,7 @@ Item {
 
             ThemedButton {
                 id: resolveButton
+                Layout.fillWidth: root.compact
                 text: qsTr("Look up")
                 variant: "secondary"
                 visible: Market.canResolve && !Market.searching
@@ -347,6 +378,7 @@ Item {
             // slow source used to leave nothing to do but wait out the timeout.
             ThemedButton {
                 id: cancelButton
+                Layout.fillWidth: root.compact
                 text: qsTr("Cancel")
                 variant: "secondary"
                 visible: Market.searching
@@ -672,9 +704,15 @@ Item {
                             anchors.fill: parent
                             color: Theme.scrimStrong
 
+                            // Swapping the ring for the X on hover is a pointer idiom, and on a
+                            // touch screen it left cancel with no representation at all: nothing
+                            // hovers, so the X never appeared — while the whole-overlay tap
+                            // handler below still cancelled, so tapping a downloading tile
+                            // aborted it with nothing on screen having said so. On touch the ring
+                            // and a real button are both shown, and only the button cancels.
                             CircularProgress {
                                 anchors.centerIn: parent
-                                visible: !busyHover.hovered
+                                visible: root.compact || !busyHover.hovered
                                 value: Number(card.job.progress || 0)
                                 indeterminate: Number(card.job.progress || 0) <= 0
                                 size: Theme.spacing3xl
@@ -683,14 +721,28 @@ Item {
 
                             IconGlyph {
                                 anchors.centerIn: parent
-                                visible: busyHover.hovered
+                                visible: !root.compact && busyHover.hovered
                                 glyph: Theme.icons.x
                                 iconSize: Theme.iconSizeBase
                                 iconColor: Theme.onMedia
                             }
 
+                            IconButton {
+                                anchors.right: parent.right
+                                anchors.top: parent.top
+                                anchors.margins: Theme.spacingXs
+                                visible: root.compact
+                                buttonSize: Theme.androidMinTouchTarget
+                                iconSize: Theme.iconSizeMd
+                                glyph: Theme.icons.x
+                                variant: "text"
+                                tooltip: qsTr("Cancel download")
+                                onClicked: Market.cancelDownload(card.modelData.id)
+                            }
+
                             HoverHandler {
                                 id: busyHover
+                                enabled: !root.compact
                                 cursorShape: Qt.PointingHandCursor
                             }
 
@@ -703,8 +755,45 @@ Item {
                             // Sits above the card's own handler, so a busy card cancels
                             // rather than reopening the preview behind the overlay.
                             TapHandler {
+                                enabled: !root.compact
                                 onTapped: Market.cancelDownload(card.modelData.id)
                             }
+                        }
+
+                        // A failed download said so in a toast that was gone seconds later, and
+                        // the tile went back to looking untouched — so the only way to find out
+                        // was to press Download again. retryDownload() and the retryable flag
+                        // both already existed; nothing surfaced them.
+                        Rectangle {
+                            id: failedOverlay
+                            visible: card.job.status === "failed"
+                            anchors.fill: parent
+                            color: Theme.scrimStrong
+
+                            Column {
+                                anchors.centerIn: parent
+                                spacing: Theme.spacingSm
+                                width: parent.width - Theme.spacingLg * 2
+
+                                IconGlyph {
+                                    anchors.horizontalCenter: parent.horizontalCenter
+                                    glyph: Theme.icons.error
+                                    iconSize: Theme.iconSizeBase
+                                    iconColor: Theme.onMedia
+                                }
+
+                                ThemedButton {
+                                    anchors.horizontalCenter: parent.horizontalCenter
+                                    visible: card.job.retryable === true
+                                    variant: "secondary"
+                                    text: qsTr("Retry")
+                                    onClicked: Market.retryDownload(card.modelData.id)
+                                }
+                            }
+
+                            // Swallows the tap so a failed tile does not reopen the preview
+                            // behind the overlay; Retry is the one thing to press here.
+                            TapHandler { }
                         }
 
                         TapHandler {
