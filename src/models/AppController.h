@@ -10,7 +10,6 @@
 #include "engine/MediaWaveform.h"
 #include "engine/WaveformBlockCache.h"
 #include "engine/ProjectBundle.h"
-#include "engine/RvmMatter.h"
 #include "engine/Sam2Segmenter.h"
 #include "ClipListModel.h"
 #include "TimelineModel.h"
@@ -117,14 +116,9 @@ class AppController : public QObject
     // Opt-in VAAPI dma-buf preview import. Takes effect after restart; hidden when this
     // machine has no VAAPI decode backend.
     Q_PROPERTY(bool vaapiZeroCopy READ vaapiZeroCopy WRITE setVaapiZeroCopy NOTIFY vaapiZeroCopyChanged)
+    Q_PROPERTY(bool lowSpecMode READ lowSpecMode WRITE setLowSpecMode NOTIFY lowSpecModeChanged)
     Q_PROPERTY(bool playbackBenchmarkRunning READ playbackBenchmarkRunning NOTIFY playbackBenchmarkRunningChanged)
     Q_PROPERTY(bool vaapiZeroCopySupported READ vaapiZeroCopySupported CONSTANT)
-    // Android MediaCodec zero-copy preview. Same shape and the same caveat as the VAAPI pair
-    // above: a driver can import the surface and still sample it wrongly, which shows up as a
-    // corrupt preview with nothing to catch it — so it is opt-in and takes effect on restart.
-    Q_PROPERTY(bool mediaCodecZeroCopy READ mediaCodecZeroCopy WRITE setMediaCodecZeroCopy NOTIFY
-                   mediaCodecZeroCopyChanged)
-    Q_PROPERTY(bool mediaCodecZeroCopySupported READ mediaCodecZeroCopySupported CONSTANT)
     Q_PROPERTY(bool invertTimelineScroll READ invertTimelineScroll WRITE setInvertTimelineScroll
                    NOTIFY invertTimelineScrollChanged)
     // Session-only localhost MCP for agents. Never persisted. Off at every launch.
@@ -364,8 +358,8 @@ public:
     bool reopenLastProject() const { return m_reopenLastProject; }
     bool vaapiZeroCopy() const { return m_vaapiZeroCopy; }
     bool vaapiZeroCopySupported() const;
-    bool mediaCodecZeroCopy() const { return m_mediaCodecZeroCopy; }
-    bool mediaCodecZeroCopySupported() const;
+    bool lowSpecMode() const { return m_lowSpecMode; }
+    void setLowSpecMode(bool enabled);
     bool invertTimelineScroll() const { return m_invertTimelineScroll; }
     QString uiLanguage() const { return m_uiLanguage; }
     QVariantList uiLanguages() const;
@@ -465,7 +459,6 @@ public:
     void setAutoKeyEnabled(bool enabled);
     void setReopenLastProject(bool enabled);
     void setVaapiZeroCopy(bool enabled);
-    void setMediaCodecZeroCopy(bool enabled);
     void setInvertTimelineScroll(bool enabled);
     Q_INVOKABLE void setMcpEnabled(bool enabled);
     // Headless wires transports onto the server itself, which the on/off switch above
@@ -1405,7 +1398,7 @@ signals:
     void autoKeyEnabledChanged();
     void reopenLastProjectChanged();
     void vaapiZeroCopyChanged();
-    void mediaCodecZeroCopyChanged();
+    void lowSpecModeChanged();
     // Carries the finished benchmark, merged into whatever the dialog already collected.
     void playbackBenchmarkFinished(const QVariantMap &info);
     void playbackBenchmarkRunningChanged();
@@ -1806,7 +1799,7 @@ protected:
     bool m_autoKeyEnabled = false;
     bool m_reopenLastProject = false;
     bool m_vaapiZeroCopy = false;
-    bool m_mediaCodecZeroCopy = false;
+    bool m_lowSpecMode = false;
     // One benchmark at a time: it drives the shared decoders and the GL thread, and two
     // sweeps interleaved would measure each other rather than the pipeline.
     std::atomic<bool> m_benchmarkRunning{false};

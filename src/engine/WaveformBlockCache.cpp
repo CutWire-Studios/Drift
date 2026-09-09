@@ -216,9 +216,18 @@ QVector<float> WaveformBlockCache::range(const QString &sourcePath, double start
     return out;
 }
 
+void WaveformBlockCache::setSuspended(bool suspended)
+{
+    if (m_suspended == suspended)
+        return;
+    m_suspended = suspended;
+    if (!m_suspended)
+        scheduleBatch();
+}
+
 void WaveformBlockCache::scheduleBatch()
 {
-    if (m_busy || m_batchScheduled || m_queue.isEmpty())
+    if (m_suspended || m_busy || m_batchScheduled || m_queue.isEmpty())
         return;
 
     // Let the whole burst of requests from one layout pass land first, so the batch reflects

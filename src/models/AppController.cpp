@@ -25,6 +25,7 @@
 #include "engine/AudioMixer.h"
 #include "engine/ClipReaderPool.h"
 #include "engine/DebugReport.h"
+#include "engine/EditingProxyCache.h"
 #include "engine/HwAccel.h"
 #include "engine/ProjectDependencies.h"
 #include "engine/AudioEffectCatalog.h"
@@ -55,6 +56,7 @@
 #include "engine/FaceTrack.h"
 #include "engine/ModelAsset.h"
 #include "engine/ReverseProxyCache.h"
+#include "engine/RvmMatter.h"
 #include "engine/VaapiZeroCopy.h"
 #include "playback/PlaybackDiagnostics.h"
 #include "engine/ReverseRenderer.h"
@@ -842,7 +844,10 @@ AppController::AppController(AssetLibrary *assetLibrary, QObject *parent)
         emit playheadSecondsChanged();
     });
     connect(&m_playback, &PlaybackEngine::playingChanged, this, [this] {
-        if (!m_playback.isPlaying() && m_playing) {
+        const bool playing = m_playback.isPlaying();
+        m_filmstripTiles.setSuspended(playing);
+        m_waveformBlocks.setSuspended(playing);
+        if (!playing && m_playing) {
             m_playing = false;
             emit playingChanged();
         }
@@ -933,8 +938,12 @@ AppController::AppController(AssetLibrary *assetLibrary, QObject *parent)
     // unchecked would contradict what the preview is actually doing. Unchecking writes an
     // explicit false, which turns it off everywhere.
     m_vaapiZeroCopy = drift::vaapiZeroCopyMode() != drift::VaapiZeroCopyMode::Off;
-    m_mediaCodecZeroCopy =
-        settings.value(QStringLiteral("preview/mediaCodecZeroCopy"), false).toBool();
+    m_lowSpecMode = settings.value(QStringLiteral("performance/lowSpecMode"), false).toBool();
+    drift::EditingProxyCache::instance().setEnabled(m_lowSpecMode);
+    connect(&drift::EditingProxyCache::instance(), &drift::EditingProxyCache::proxyReady, this,
+            [this](const QString &, const QString &) {
+                m_playback.refreshFrame();
+            });
     m_invertTimelineScroll = settings.value(QStringLiteral("timeline/invertScroll"), false).toBool();
     m_uiLanguage = storedUiLanguage();
     m_needsUiLanguagePrompt = needsFirstLaunchLanguagePrompt();
@@ -3796,6 +3805,8 @@ void AppController::setPlaying(bool playing)
         return;
 
     m_playing = playing;
+    m_filmstripTiles.setSuspended(m_playing);
+    m_waveformBlocks.setSuspended(m_playing);
     if (m_playing) {
         const drift::TimeUs durationUs = m_project.durationUs();
         if (m_loopWorkAreaEnabled && m_project.hasWorkArea()) {
@@ -3965,29 +3976,6 @@ void AppController::setVaapiZeroCopy(bool enabled)
                    QStringLiteral("info"));
 }
 
-void AppController::setMediaCodecZeroCopy(bool enabled)
-{
-    if (m_mediaCodecZeroCopy == enabled)
-        return;
-    m_mediaCodecZeroCopy = enabled;
-    QSettings settings;
-    settings.setValue(QStringLiteral("preview/mediaCodecZeroCopy"), m_mediaCodecZeroCopy);
-    emit mediaCodecZeroCopyChanged();
-    // ClipReader reads the setting once and latches it, so a restart is not just conservative
-    // advice here — the running process really will not change behaviour.
-    setLastMessage(tr("Faster preview takes effect after you restart Drift."),
-                   QStringLiteral("info"));
-}
-
-bool AppController::mediaCodecZeroCopySupported() const
-{
-#if defined(Q_OS_ANDROID)
-    return drift::hwaccel::availableDecodeBackends().contains(drift::hwaccel::Backend::MediaCodec);
-#else
-    return false;
-#endif
-}
-
 bool AppController::vaapiZeroCopySupported() const
 {
 #if defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID)
@@ -3995,6 +3983,33 @@ bool AppController::vaapiZeroCopySupported() const
 #else
     return false;
 #endif
+}
+
+void AppController::setLowSpecMode(bool enabled)
+{
+    if (m_lowSpecMode == enabled)
+        return;
+
+    m_lowSpecMode = enabled;
+    QSettings settings;
+    settings.setValue(QStringLiteral("performance/lowSpecMode"), m_lowSpecMode);
+
+    drift::EditingProxyCache::instance().setEnabled(m_lowSpecMode);
+
+    if (m_lowSpecMode) {
+        for (const drift::Track &track : m_project.tracks()) {
+            for (const drift::Clip &clip : track.clips) {
+                if (clip.type == drift::ClipType::Video && !clip.path.isEmpty()) {
+                    drift::EditingProxyCache::instance().requestProxy(clip.path);
+                }
+            }
+        }
+        setLastMessage(tr("Low-Spec / Eco Mode enabled: background throttling and editing proxies active."),
+                       QStringLiteral("info"));
+    } else {
+        setLastMessage(tr("Low-Spec / Eco Mode disabled."), QStringLiteral("info"));
+    }
+    emit lowSpecModeChanged();
 }
 
 void AppController::setInvertTimelineScroll(bool enabled)

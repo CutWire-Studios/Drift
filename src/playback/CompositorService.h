@@ -102,6 +102,8 @@ public:
 
 signals:
     void frameReady(const GpuFrameTexture &frame);
+    // One per completed request, whether or not a frame was produced or shown.
+    void compositeFinished();
 
 private slots:
     void onWorkerFrameReady(const GpuFrameTexture &frame, drift::TimeUs timeUs,

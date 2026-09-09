@@ -40,7 +40,7 @@ FilmstripTileCache::FilmstripTileCache(QObject *parent)
     connect(&m_decodeThread, &QThread::finished, m_decodeContext, &QObject::deleteLater);
 
     m_decodeThread.setObjectName(QStringLiteral("drift-filmstrip"));
-    m_decodeThread.start();
+    m_decodeThread.start(QThread::LowPriority);
 }
 
 FilmstripTileCache::~FilmstripTileCache()
@@ -59,6 +59,15 @@ void FilmstripTileCache::clear()
     m_emptyBatches.clear();
     m_queued.clear();
     m_queue.clear();
+}
+
+void FilmstripTileCache::setSuspended(bool suspended)
+{
+    if (m_suspended == suspended)
+        return;
+    m_suspended = suspended;
+    if (!m_suspended)
+        scheduleBatch();
 }
 
 QString FilmstripTileCache::keyFor(const QString &sourcePath, int level, qint64 index)
@@ -103,7 +112,7 @@ QString FilmstripTileCache::tile(const QString &sourcePath, int level, qint64 in
 
 void FilmstripTileCache::scheduleBatch()
 {
-    if (m_busy || m_batchScheduled || m_queue.isEmpty())
+    if (m_suspended || m_busy || m_batchScheduled || m_queue.isEmpty())
         return;
 
     // Let the whole burst of requests from one layout pass land before picking a batch,

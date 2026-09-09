@@ -122,12 +122,13 @@ void CompositorService::setPlaybackActive(bool active)
     if (m_playbackActive == active)
         return;
     m_playbackActive = active;
-    // The scale itself survives across runs — a machine that could not keep up a
-    // moment ago still cannot, and relearning that on every play would drop the
-    // preview a second or two into each one. Only the streaks restart.
     m_lateStreak = 0;
     m_onTimeStreak = 0;
     m_warmupFramesLeft = active ? kWarmupFrames : 0;
+    if (!active) {
+        // Paused frame should not retain dropped adaptive resolution
+        m_adaptiveScale = 1.0;
+    }
 }
 
 void CompositorService::setLateFrameBudgetMs(int ms)
@@ -151,7 +152,7 @@ void CompositorService::resetAdaptiveState()
 FrameCompositor::RenderOptions CompositorService::effectiveOptions(
     FrameCompositor::RenderOptions options) const
 {
-    if (!m_adaptiveQuality)
+    if (!m_adaptiveQuality || !m_playbackActive)
         return options;
     options.previewScale = qBound(kMinPreviewScale, options.previewScale * m_adaptiveScale, 1.0);
     return options;
@@ -311,4 +312,8 @@ void CompositorService::onWorkerFrameReady(const GpuFrameTexture &frame, drift::
 
     // Keep the pipe full: a slot just freed up, so start whatever is newest and pending.
     dispatchPending();
+
+    // Last: a listener may start the next composite from here, and that request
+    // must not be overwritten by the catch-up dispatch above.
+    emit compositeFinished();
 }
