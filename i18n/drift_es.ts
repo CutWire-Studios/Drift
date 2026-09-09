@@ -226,7 +226,7 @@
     <name>AgentAccessControls</name>
     <message>
         <source>Let Cursor or Claude edit this project for you — add clips, change the timeline, and check how it looks. Only programs on this device. Starts off each time you open Drift; turn it off when you finish.</source>
-        <translation type="unfinished"></translation>
+        <translation>Deja que Cursor o Claude editen este proyecto por ti: pueden agregar clips, modificar la línea de tiempo y previsualizar el resultado. Solo se usan los programas instalados en este dispositivo. Esta función se activa cada vez que abres Drift; puedes desactivarla al terminar.</translation>
     </message>
     <message>
         <source>Allow for this session</source>
@@ -234,7 +234,7 @@
     </message>
     <message>
         <source>Let an assistant on this device edit this project until you turn it off or quit.</source>
-        <translation type="unfinished"></translation>
+        <translation>Deja que un asistente en este dispositivo edite este proyecto hasta que lo desactives o cierres.</translation>
     </message>
     <message>
         <source>Turn this on, then copy the setup for Cursor or Claude and paste it into that app.</source>
@@ -246,7 +246,7 @@
     </message>
     <message>
         <source>Listening on %1</source>
-        <translation type="unfinished"></translation>
+        <translation>Escuchando en %1</translation>
     </message>
     <message>
         <source>Copy the setup for the assistant you use. You only need one.</source>
@@ -340,11 +340,11 @@
     </message>
     <message>
         <source>Market</source>
-        <translation type="unfinished"></translation>
+        <translation>Mercado</translation>
     </message>
     <message>
         <source>Stock photos, video and audio</source>
-        <translation type="unfinished"></translation>
+        <translation>Fotos, video y audio de archivo</translation>
     </message>
     <message>
         <source>Text</source>
@@ -384,7 +384,7 @@
     </message>
     <message>
         <source>Saved stacks of effects to drop on a clip</source>
-        <translation type="unfinished"></translation>
+        <translation>Colecciones de efectos guardadas para aplicar a un clip</translation>
     </message>
     <message>
         <source>Scenes</source>
@@ -392,7 +392,7 @@
     </message>
     <message>
         <source>Jump between the sections of this edit</source>
-        <translation type="unfinished"></translation>
+        <translation>Salta entre las secciones de esta edición</translation>
     </message>
     <message>
         <source>Masks</source>
@@ -423,7 +423,7 @@
     </message>
     <message>
         <source>Tap a clip to edit it</source>
-        <translation type="unfinished"></translation>
+        <translation>Toca un clip para editarlo</translation>
     </message>
     <message>
         <source>Add to timeline</source>
@@ -449,11 +449,11 @@
     </message>
     <message>
         <source>Curve</source>
-        <translation type="unfinished"></translation>
+        <translation>Curva</translation>
     </message>
     <message>
         <source>Replace</source>
-        <translation type="unfinished"></translation>
+        <translation>Reemplazar</translation>
     </message>
     <message>
         <source>Delete</source>
@@ -461,7 +461,7 @@
     </message>
     <message>
         <source>Split</source>
-        <translation type="unfinished"></translation>
+        <translation>Dividir</translation>
     </message>
     <message>
         <source>Duplicate</source>
@@ -477,7 +477,7 @@
     </message>
     <message>
         <source>Tap a clip to edit</source>
-        <translation type="unfinished"></translation>
+        <translation>Toca un clip para editar</translation>
     </message>
 </context>
 <context>
@@ -503,19 +503,19 @@
     <name>AndroidDownloadsSheet</name>
     <message>
         <source>Downloads</source>
-        <translation type="unfinished"></translation>
+        <translation>Descargas</translation>
     </message>
     <message>
         <source>Nothing downloading right now.</source>
-        <translation type="unfinished"></translation>
+        <translation>No hay descargas en este momento.</translation>
     </message>
     <message>
         <source>Cancel download</source>
-        <translation type="unfinished"></translation>
+        <translation>Cancelar descarga</translation>
     </message>
     <message>
         <source>Try again</source>
-        <translation type="unfinished"></translation>
+        <translation>Intentar de nuevo</translation>
     </message>
     <message>
         <source>Clear finished</source>
