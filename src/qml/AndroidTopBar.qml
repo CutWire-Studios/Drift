@@ -14,12 +14,6 @@ Item {
     // The project title is the affordance: a wide, self-labelling target in the middle of
     // the bar rather than an unlabelled glyph in the corner.
     signal projectMenuRequested()
-    signal cropRequested()
-
-    // Quick edit promotes Crop into the bar. In the full editor it is a button inside the
-    // Settings tab's canvas section, which is the right home for a project-wide setting but
-    // four taps from a clip — and reframing a vertical clip is most of what a phone edit is.
-    property bool quickMode: false
 
     // Status bar / camera cutout. Without it the Back, Undo and Export buttons sat
     // underneath the system bar on every edge-to-edge device.
@@ -141,19 +135,6 @@ Item {
             anchors.rightMargin: Theme.spacingSm
             anchors.verticalCenter: parent.verticalCenter
             spacing: Theme.spacingXs
-
-            // Icon-only alongside Undo/Redo rather than a labelled pill: back, title,
-            // three icons and the Export pill already fill a 360dp bar, and a fourth
-            // labelled control would elide the project title to nothing.
-            IconButton {
-                buttonSize: Theme.androidIconButtonSize
-                iconSize: Theme.iconSizeLg
-                glyph: Theme.icons.crop
-                variant: "text"
-                visible: root.quickMode
-                tooltip: qsTr("Crop")
-                onClicked: root.cropRequested()
-            }
 
             // Undo/Redo stay icon-only — the one documented exception, and long-pressable
             // for a label now that IconButton shows its tooltip on touch.

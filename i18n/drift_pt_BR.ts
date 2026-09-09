@@ -422,10 +422,6 @@
         <translation>Transições</translation>
     </message>
     <message>
-        <source>Full editor</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Tap a clip to edit it</source>
         <translation type="unfinished"></translation>
     </message>
@@ -528,10 +524,6 @@
 </context>
 <context>
     <name>AndroidEditor</name>
-    <message>
-        <source>Full editor</source>
-        <translation type="unfinished"></translation>
-    </message>
     <message>
         <source>Drift project (*.drift)</source>
         <translation>Projeto do Drift (*.drift)</translation>
@@ -1047,14 +1039,6 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Fit</source>
-        <translation>Ajustar</translation>
-    </message>
-    <message>
-        <source>Fill</source>
-        <translation>Preencher</translation>
-    </message>
-    <message>
         <source>Full</source>
         <translation>Completo</translation>
     </message>
@@ -1067,16 +1051,16 @@
         <translation>Um quarto</translation>
     </message>
     <message>
+        <source>Auto</source>
+        <translation type="unfinished">Automático</translation>
+    </message>
+    <message>
         <source>Quality: %1</source>
         <translation>Qualidade: %1</translation>
     </message>
     <message>
-        <source>Fast</source>
-        <translation>Rápida</translation>
-    </message>
-    <message>
-        <source>Quality</source>
-        <translation>Qualidade</translation>
+        <source>Guides</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Seek</source>
@@ -1164,6 +1148,14 @@
     <message>
         <source>Video size, aspect and frame rate</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Crop video size</source>
+        <translation type="unfinished">Recortar tamanho do vídeo</translation>
+    </message>
+    <message>
+        <source>Drag the preview edges to change what’s included</source>
+        <translation type="unfinished">Arraste as bordas da pré-visualização para alterar o que está incluído</translation>
     </message>
     <message>
         <source>Project properties</source>
@@ -1383,10 +1375,6 @@
     <message>
         <source>Untitled</source>
         <translation>Sem título</translation>
-    </message>
-    <message>
-        <source>Crop</source>
-        <translation type="unfinished">Recortar</translation>
     </message>
     <message>
         <source>Undo</source>
@@ -8007,10 +7995,6 @@ Se a reprodução travar, experimente outro.</translation>
 </context>
 <context>
     <name>SettingsPane</name>
-    <message>
-        <source>Video</source>
-        <translation type="unfinished">Vídeo</translation>
-    </message>
     <message>
         <source>Preview</source>
         <translation type="unfinished">Pré-visualização</translation>

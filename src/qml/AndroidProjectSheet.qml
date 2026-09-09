@@ -56,6 +56,12 @@ AndroidBottomSheet {
             icon: Theme.icons.ratio
         },
         {
+            id: "crop",
+            label: qsTr("Crop video size"),
+            detail: qsTr("Drag the preview edges to change what’s included"),
+            icon: Theme.icons.crop
+        },
+        {
             id: "properties",
             label: qsTr("Project properties"),
             detail: qsTr("Name, resolution and timebase"),

@@ -111,7 +111,6 @@ Item {
                     const h = EditorState.projectHeight()
                     return (w > 0 && h > 0) ? (w / h) : (16 / 9)
                 }
-                property bool fitMode: true
                 // Crop mode pulls the canvas in so there is room around it to drag
                 // an edge outward and grow the frame.
                 property real cropZoom: EditorState.canvasCropMode ? 0.72 : 1.0
@@ -119,8 +118,8 @@ Item {
                 property real panX: 0
                 property real panY: 0
 
-                readonly property real baseWidth: fitMode ? Math.min(width, height * aspect) : width
-                readonly property real baseHeight: fitMode ? baseWidth / aspect : height
+                readonly property real baseWidth: Math.min(width, height * aspect)
+                readonly property real baseHeight: baseWidth / aspect
                 readonly property real fitWidth: baseWidth * cropZoom * userZoom
                 readonly property real fitHeight: baseHeight * cropZoom * userZoom
 
@@ -375,25 +374,23 @@ Item {
                     anchors.margins: Theme.spacingLg
                     spacing: Theme.spacingMd
 
+                    // The zoom readout, and the way back to 100% — the same pair
+                    // desktop's toolbar offers. It replaces a Fit/Fill toggle, which
+                    // only stretched the letterbox rect: PreviewItem aspect-fits the
+                    // frame inside it either way, so Fill changed nothing you could see.
                     ThemedChip {
-                        // Doubles as the "back to fit" control: once the canvas has
-                        // been pinched away from its resting position, getting it back
-                        // is the only thing this button could usefully do.
-                        selected: viewport.viewMoved || !viewport.fitMode
-                        text: viewport.viewMoved
-                              ? Math.round(viewport.userZoom * 100) + "%"
-                              : (viewport.fitMode ? qsTr("Fit") : qsTr("Fill"))
-                        onClicked: {
-                            if (viewport.viewMoved)
-                                viewport.resetView()
-                            else
-                                viewport.fitMode = !viewport.fitMode
-                        }
+                        selected: viewport.viewMoved
+                        text: Math.round(viewport.userZoom * 100) + "%"
+                        onClicked: viewport.resetView()
                     }
 
                     ThemedChip {
-                        readonly property var values: ["full", "half", "quarter"]
-                        readonly property var labels: [qsTr("Full"), qsTr("Half"), qsTr("Quarter")]
+                        // Same four the desktop quality combo offers, in the same
+                        // order — Auto is the engine's default, and cycling a list
+                        // that left it out mislabelled it as Full.
+                        readonly property var values: ["full", "half", "quarter", "auto"]
+                        readonly property var labels: [qsTr("Full"), qsTr("Half"),
+                                                       qsTr("Quarter"), qsTr("Auto")]
                         readonly property int currentIndex:
                             Math.max(0, values.indexOf(EditorState.playback.previewQuality))
                         text: qsTr("Quality: %1").arg(labels[currentIndex])
@@ -406,23 +403,30 @@ Item {
                         readonly property var labels: ["0.25×", "0.5×", "1×", "1.5×", "2×", "4×"]
                         readonly property int currentIndex:
                             Math.max(0, values.indexOf(EditorState.playback.playbackRate))
-                        // Quality mode steps one frame per completed render and never
-                        // opens the audio sink, so there is no real-time rate for a
-                        // speed to be a multiple of.
-                        enabled: EditorState.playback.playbackMode !== "quality"
                         text: labels[currentIndex]
                         onClicked: EditorState.playback.playbackRate =
                                    values[(currentIndex + 1) % values.length]
                     }
 
                     ThemedChip {
-                        readonly property var values: ["fast", "quality"]
-                        readonly property var labels: [qsTr("Fast"), qsTr("Quality")]
+                        // Populated from the engine, so the entries are the backends
+                        // whose device actually opens on this phone. Hidden when that
+                        // leaves nothing to choose between.
+                        readonly property var modes: EditorState.playback.decodeModes()
+                        readonly property var values:
+                            modes.map(function (m) { return m.id })
                         readonly property int currentIndex:
-                            Math.max(0, values.indexOf(EditorState.playback.playbackMode))
-                        text: labels[currentIndex]
-                        onClicked: EditorState.playback.playbackMode =
+                            Math.max(0, values.indexOf(EditorState.playback.decodeMode))
+                        visible: modes.length > 1
+                        text: modes[currentIndex].label
+                        onClicked: EditorState.playback.decodeMode =
                                    values[(currentIndex + 1) % values.length]
+                    }
+
+                    ThemedChip {
+                        selected: EditorState.guidesEnabled
+                        text: qsTr("Guides")
+                        onClicked: EditorState.guidesEnabled = !EditorState.guidesEnabled
                     }
                 }
             }

@@ -422,10 +422,6 @@
         <translation>සංක්‍රාන්ති</translation>
     </message>
     <message>
-        <source>Full editor</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Tap a clip to edit it</source>
         <translation type="unfinished"></translation>
     </message>
@@ -528,10 +524,6 @@
 </context>
 <context>
     <name>AndroidEditor</name>
-    <message>
-        <source>Full editor</source>
-        <translation type="unfinished"></translation>
-    </message>
     <message>
         <source>Drift project (*.drift)</source>
         <translation>Drift ව්‍යාපෘතිය (*.drift)</translation>
@@ -1047,14 +1039,6 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Fit</source>
-        <translation>සරිලන (Fit)</translation>
-    </message>
-    <message>
-        <source>Fill</source>
-        <translation>පිරවුම (Fill)</translation>
-    </message>
-    <message>
         <source>Full</source>
         <translation>සම්පූර්ණ (Full)</translation>
     </message>
@@ -1067,16 +1051,16 @@
         <translation>කාර්තුවක් (Quarter)</translation>
     </message>
     <message>
+        <source>Auto</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Quality: %1</source>
         <translation>ගුණාත්මකභාවය: %1</translation>
     </message>
     <message>
-        <source>Fast</source>
-        <translation>වේගවත්</translation>
-    </message>
-    <message>
-        <source>Quality</source>
-        <translation>ගුණාත්මකභාවය</translation>
+        <source>Guides</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Seek</source>
@@ -1164,6 +1148,14 @@
     <message>
         <source>Video size, aspect and frame rate</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Crop video size</source>
+        <translation type="unfinished">වීඩියෝ ප්‍රමාණය කප්පාදු කරන්න</translation>
+    </message>
+    <message>
+        <source>Drag the preview edges to change what’s included</source>
+        <translation type="unfinished">ඇතුළත් වන දේ වෙනස් කිරීමට පෙරදසුනේ දාර අදින්න</translation>
     </message>
     <message>
         <source>Project properties</source>
@@ -1383,10 +1375,6 @@
     <message>
         <source>Untitled</source>
         <translation>නම් නොකළ</translation>
-    </message>
-    <message>
-        <source>Crop</source>
-        <translation type="unfinished">කප්පාදු (Crop)</translation>
     </message>
     <message>
         <source>Undo</source>
@@ -8007,10 +7995,6 @@ If playback stutters, try another.</source>
 </context>
 <context>
     <name>SettingsPane</name>
-    <message>
-        <source>Video</source>
-        <translation type="unfinished">වීඩියෝ</translation>
-    </message>
     <message>
         <source>Preview</source>
         <translation type="unfinished">පෙරදසුන</translation>

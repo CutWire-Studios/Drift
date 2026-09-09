@@ -422,10 +422,6 @@
         <translation type="unfinished">Pagbabagong-kalagayan</translation>
     </message>
     <message>
-        <source>Full editor</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Tap a clip to edit it</source>
         <translation type="unfinished"></translation>
     </message>
@@ -528,10 +524,6 @@
 </context>
 <context>
     <name>AndroidEditor</name>
-    <message>
-        <source>Full editor</source>
-        <translation type="unfinished"></translation>
-    </message>
     <message>
         <source>Drift project (*.drift)</source>
         <translation type="unfinished"></translation>
@@ -1047,14 +1039,6 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Fit</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Fill</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Full</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1067,15 +1051,15 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Auto</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Quality: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Fast</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Quality</source>
+        <source>Guides</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -1163,6 +1147,14 @@
     </message>
     <message>
         <source>Video size, aspect and frame rate</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Crop video size</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Drag the preview edges to change what’s included</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -1382,10 +1374,6 @@
     </message>
     <message>
         <source>Untitled</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Crop</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -8000,10 +7988,6 @@ If playback stutters, try another.</source>
 </context>
 <context>
     <name>SettingsPane</name>
-    <message>
-        <source>Video</source>
-        <translation type="unfinished"></translation>
-    </message>
     <message>
         <source>Preview</source>
         <translation type="unfinished"></translation>

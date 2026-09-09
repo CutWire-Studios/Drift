@@ -1048,7 +1048,11 @@ Item {
             contentWidth: flick.contentWidth
         }
 
-        Row {
+        // Not a Row: a Row positioner assigns x to every child, which silently
+        // overwrote the playhead's centring binding and left it parked at the labels
+        // column's right edge — and pushed the Flickable a playhead-width past where
+        // its own width expected to start.
+        Item {
             width: parent.width
             height: Math.max(0, parent.height - laneBar.height - keyframeLane.height
                                 - subtitleLane.height)
@@ -1173,6 +1177,7 @@ Item {
 
             Flickable {
                 id: flick
+                x: root.labelsWidth
                 width: parent.width - root.labelsWidth
                 height: parent.height
                 contentWidth: Math.max(width, EditorState.durationSeconds * root.pxPerSecond

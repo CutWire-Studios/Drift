@@ -17,10 +17,9 @@ Item {
     signal openProjectRequested()
     signal openRecentRequested(string path)
 
-    // Quick edit leads: it is the same first two taps as New project, and the editor it
-    // lands in is the reduced one, so the shortest path is also the prominent one. New
-    // project keeps its own tile because escalating out of quick mode costs a tap, and
-    // starting a multi-clip edit should not have to pay it.
+    // Quick edit leads: same first two taps as New project, minus the canvas question,
+    // so the shortest path is also the prominent one. New project keeps its own tile for
+    // the edit that starts empty rather than from a clip.
     readonly property var tiles: [
         { id: "quick", label: qsTr("Quick edit"), detail: qsTr("Pick a clip, start now"),
           icon: Theme.icons.sparkles, primary: true },

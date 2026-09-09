@@ -3,9 +3,13 @@ import QtQuick.Controls.Basic
 import QtQuick.Window
 import Drift
 
-// Every editor and app preference, in one scrolling pane: this project’s canvas,
-// then the editor, then the app. Hosted by SettingsDialog; it used to be a tab in
-// the assets panel's rail.
+// Every editor and app preference, in one scrolling pane: the editor, then the app.
+// Hosted by SettingsDialog; it used to be a tab in the assets panel's rail.
+//
+// Canvas size, aspect and frame rate are not here. On the phone they belong to the
+// project rather than to preferences, and the project title's sheet already offers
+// them under Canvas & layout and Project properties; on desktop they are the
+// header's Video dialog. Both reach VideoSizeControls directly.
 Item {
     id: root
 
@@ -71,15 +75,6 @@ Item {
                         width: parent.width
                         spacing: Theme.spacingLg
                     }
-                }
-            }
-
-            SettingsSection {
-                title: qsTr("Video")
-                visible: Theme.touchUi
-
-                VideoSizeControls {
-                    width: parent.width
                 }
             }
 

@@ -422,10 +422,6 @@
         <translation>トランジション</translation>
     </message>
     <message>
-        <source>Full editor</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Tap a clip to edit it</source>
         <translation type="unfinished"></translation>
     </message>
@@ -528,10 +524,6 @@
 </context>
 <context>
     <name>AndroidEditor</name>
-    <message>
-        <source>Full editor</source>
-        <translation type="unfinished"></translation>
-    </message>
     <message>
         <source>Drift project (*.drift)</source>
         <translation>Drift プロジェクト (*.drift)</translation>
@@ -1046,14 +1038,6 @@
         <translation>GPUプレビューは利用できません</translation>
     </message>
     <message>
-        <source>Fit</source>
-        <translation>フィット</translation>
-    </message>
-    <message>
-        <source>Fill</source>
-        <translation>フィル</translation>
-    </message>
-    <message>
         <source>Full</source>
         <translation>フル</translation>
     </message>
@@ -1066,16 +1050,16 @@
         <translation>4分の1</translation>
     </message>
     <message>
+        <source>Auto</source>
+        <translation type="unfinished">自動</translation>
+    </message>
+    <message>
         <source>Quality: %1</source>
         <translation>品質 : %1</translation>
     </message>
     <message>
-        <source>Fast</source>
-        <translation>高速</translation>
-    </message>
-    <message>
-        <source>Quality</source>
-        <translation>品質</translation>
+        <source>Guides</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Seek</source>
@@ -1163,6 +1147,14 @@
     <message>
         <source>Video size, aspect and frame rate</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Crop video size</source>
+        <translation type="unfinished">ビデオサイズをクロップ</translation>
+    </message>
+    <message>
+        <source>Drag the preview edges to change what’s included</source>
+        <translation type="unfinished">プレビューの端をドラッグして含まれる範囲を変更</translation>
     </message>
     <message>
         <source>Project properties</source>
@@ -1381,10 +1373,6 @@
     <message>
         <source>Untitled</source>
         <translation>無題</translation>
-    </message>
-    <message>
-        <source>Crop</source>
-        <translation type="unfinished">クロップ</translation>
     </message>
     <message>
         <source>Undo</source>
@@ -7974,10 +7962,6 @@ If playback stutters, try another.</source>
 </context>
 <context>
     <name>SettingsPane</name>
-    <message>
-        <source>Video</source>
-        <translation>ビデオ</translation>
-    </message>
     <message>
         <source>Preview</source>
         <translation>プレビュー</translation>

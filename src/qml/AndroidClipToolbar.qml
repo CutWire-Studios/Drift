@@ -16,11 +16,6 @@ Item {
 
     property var panel: null
 
-    // Quick edit's reduced set. The three that survive are the ones a one-clip trim is
-    // actually made of; Duplicate is a multi-clip move, and More is kept because it is
-    // where Trim start/end live and they are the point of the whole mode.
-    property bool compact: false
-
     signal moreRequested()
 
     readonly property bool hasSelection: {
@@ -45,14 +40,6 @@ Item {
             ]
         }
         if (root.hasSelection) {
-            if (root.compact) {
-                return [
-                    { id: "split", label: qsTr("Split"), icon: Theme.icons.scissors },
-                    { id: "delete", label: qsTr("Delete"), icon: Theme.icons.trash,
-                      destructive: true, gutter: true },
-                    { id: "more", label: qsTr("More"), icon: Theme.icons.ellipsis }
-                ]
-            }
             return [
                 { id: "split", label: qsTr("Split"), icon: Theme.icons.scissors },
                 { id: "duplicate", label: qsTr("Duplicate"), icon: Theme.icons.copyPlus },

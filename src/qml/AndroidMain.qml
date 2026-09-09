@@ -68,11 +68,6 @@ ApplicationWindow {
         overlayModalCount = Math.max(0, overlayModalCount - 1)
     }
 
-    // Quick edit: the editor is up, but reduced to the handful of controls a one-clip
-    // trim needs. Held here rather than on the page so escalating out of it is a property
-    // change on the live editor instead of a reload — see AndroidEditor.exitQuickMode().
-    property bool quickMode: false
-
     // The live AndroidEditor instance, so Back can ask it to close a sheet first.
     property var editorPage: null
     // The live AndroidHome instance, so Back can refuse to leave mid-import.
@@ -141,7 +136,6 @@ ApplicationWindow {
     // infers the canvas from it — and between them neither path has to answer a question it does
     // not care about.
     function startNewProject() {
-        window.quickMode = false
         window.confirmIfDirty(function() {
             EditorState.newProject()
             window._afterLayoutChosen = function() { window.showEditor() }
@@ -150,7 +144,7 @@ ApplicationWindow {
     }
 
     // Home's "Quick edit" tile, and later the share targets: one clip, straight onto a
-    // fresh timeline, in the reduced editor. Zero dialogs on the way — applyInferredSetup()
+    // fresh timeline, in the ordinary editor. Zero dialogs on the way — applyInferredSetup()
     // calls markProjectLayoutChosen(), which is what shouldConfigureProjectForAsset() reads,
     // so the canvas question is answered rather than suppressed.
     //
@@ -167,7 +161,6 @@ ApplicationWindow {
                     window.applyInferredSetup(index)
                     EditorState.addClipFromAsset(index)
                 }
-                window.quickMode = true
                 window.showEditor()
             }
             if (urls && urls.length > 0)
@@ -184,7 +177,6 @@ ApplicationWindow {
     function showHome() {
         if (!window.inEditor)
             return
-        window.quickMode = false
         if (stack.depth > 1)
             stack.pop()
         window.inEditor = false
@@ -315,7 +307,6 @@ ApplicationWindow {
     }
 
     function openProjectFile() {
-        window.quickMode = false
         confirmIfDirty(function () {
             const url = FileDialogs.openFile(qsTr("Open Project"), window.projectFilter)
             if (url !== "") {
@@ -326,7 +317,6 @@ ApplicationWindow {
     }
 
     function openRecent(path) {
-        window.quickMode = false
         confirmIfDirty(function () {
             EditorState.openRecentProject(path)
             showEditor()
@@ -1029,7 +1019,6 @@ ApplicationWindow {
     Component {
         id: editorComponent
         AndroidEditor {
-            quickMode: window.quickMode
             Component.onCompleted: window.editorPage = this
             Component.onDestruction: if (window.editorPage === this) window.editorPage = null
             onBackRequested: window.goBack()

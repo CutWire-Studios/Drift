@@ -19,13 +19,8 @@ Item {
     // Add menu routes to — an open Media sheet still lights nothing here, which is
     // correct: it is not one of the four destinations.
     property string activeId: ""
-    // Quick edit's rail: Edit, Add, and the way out. The three browse destinations go,
-    // because quick edit is one clip and nothing to browse for yet — Full editor is how
-    // you get them back, and it is a labelled slot rather than a gesture.
-    property bool compact: false
     signal tabRequested(string tabId)
     signal editRequested()
-    signal fullEditorRequested()
 
     readonly property bool hasSelection: {
         void EditorState.selection
@@ -54,9 +49,6 @@ Item {
         { id: "transitions", label: qsTr("Transitions"), icon: Theme.icons.chevronsRight }
     ]
 
-    readonly property var fullEditorItem: ({ id: "full", label: qsTr("Full editor"),
-                                             icon: Theme.icons.maximize })
-
     Rectangle {
         anchors.fill: parent
         color: Theme.panelBackground
@@ -81,9 +73,8 @@ Item {
         anchors.rightMargin: root.rightInset
 
         // Five equal slots, so nothing scrolls off and every target is a fifth of
-        // the rail wide — far past the 48dp floor even on a 360dp phone. Compact
-        // divides the same width three ways, which only makes each target wider.
-        readonly property real slotWidth: width / (root.compact ? 3 : 5)
+        // the rail wide — far past the 48dp floor even on a 360dp phone.
+        readonly property real slotWidth: width / 5
 
         component RailButton: AbstractButton {
             id: railBtn
@@ -177,7 +168,6 @@ Item {
         RailButton {
             x: railBody.slotWidth
             width: railBody.slotWidth
-            visible: !root.compact
             entry: root.items[1]
             selected: root.activeId === entry.id
             onClicked: root.tabRequested(entry.id)
@@ -186,7 +176,7 @@ Item {
         // Centre slot: everything that puts a new clip on the timeline.
         AbstractButton {
             id: addButton
-            x: railBody.slotWidth * (root.compact ? 1 : 2)
+            x: railBody.slotWidth * 2
             width: railBody.slotWidth
             height: railBody.height
             hoverEnabled: true
@@ -238,7 +228,6 @@ Item {
         RailButton {
             x: railBody.slotWidth * 3
             width: railBody.slotWidth
-            visible: !root.compact
             entry: root.items[2]
             selected: root.activeId === entry.id
             onClicked: root.tabRequested(entry.id)
@@ -247,23 +236,9 @@ Item {
         RailButton {
             x: railBody.slotWidth * 4
             width: railBody.slotWidth
-            visible: !root.compact
             entry: root.items[3]
             selected: root.activeId === entry.id
             onClicked: root.tabRequested(entry.id)
-        }
-
-        // Escalation. Never selected: it is a one-way action, and the rail it is
-        // sitting in stops existing the moment it is tapped.
-        RailButton {
-            x: railBody.slotWidth * 2
-            width: railBody.slotWidth
-            visible: root.compact
-            entry: root.fullEditorItem
-            onClicked: {
-                Haptics.confirm()
-                root.fullEditorRequested()
-            }
         }
     }
 }
