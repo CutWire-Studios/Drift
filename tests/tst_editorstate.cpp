@@ -1,6 +1,7 @@
 #include <QtTest>
 
 #include <QDir>
+#include <QFile>
 #include <QFileInfo>
 #include <QImage>
 #include <QProcess>
@@ -37,6 +38,14 @@
 #include "core/Project.h"
 #include "core/TimelineOps.h"
 #include "core/Track.h"
+
+namespace {
+QByteArray readFile(const QString &path)
+{
+    QFile file(path);
+    return file.open(QIODevice::ReadOnly) ? file.readAll() : QByteArray();
+}
+} // namespace
 
 class EditorStateTest : public QObject
 {
@@ -97,6 +106,7 @@ private slots:
     void addTrackInsertsEmptyTrackByType();
     void renameTrackAndUndo();
     void projectPersistenceRoundTrip();
+    void saveProjectAsDuplicatesProject();
     void projectJsonExportImportRoundTrip();
     void projectJsonImportRejectsGarbageAndLeavesTimeline();
     void mogrtImportIntoExistingProject();
@@ -1371,6 +1381,62 @@ void EditorStateTest::projectPersistenceRoundTrip()
     QVERIFY(state.trackMuted(0));
     QCOMPARE(state.bookmarks().size(), 1);
     QCOMPARE(state.mediaGridMode(), false);
+}
+
+void EditorStateTest::saveProjectAsDuplicatesProject()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    state.addTextClip(QStringLiteral("Original"), 0.0);
+    state.setProjectMetadata(QStringLiteral("Wedding"), QStringLiteral("Ada"),
+                             QStringLiteral("First cut"));
+
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    const QString originalPath = dir.filePath(QStringLiteral("wedding.drift"));
+    const QString copyPath = dir.filePath(QStringLiteral("wedding-short.drift"));
+
+    state.saveProject(QUrl::fromLocalFile(originalPath));
+    QCOMPARE(state.currentProjectPath(), originalPath);
+    const QString originalId = state.project()->id();
+    const QByteArray originalBytes = readFile(originalPath);
+    QVERIFY(!originalBytes.isEmpty());
+
+    state.saveProjectAs(QUrl::fromLocalFile(copyPath));
+    QCOMPARE(state.lastMessage(), QStringLiteral("Saved a copy"));
+    QVERIFY(!state.hasUnsavedChanges());
+    // The session continues in the copy, and the copy is its own project.
+    QCOMPARE(state.currentProjectPath(), copyPath);
+    QVERIFY(state.project()->id() != originalId);
+    // Title follows the file name, so the header stops naming the project it came from.
+    QCOMPARE(state.projectName(), QStringLiteral("wedding-short"));
+    QCOMPARE(state.projectMetadata().value(QStringLiteral("author")).toString(),
+             QStringLiteral("Ada"));
+
+    // The whole point: the file it was copied from is byte-for-byte what it was.
+    QCOMPARE(readFile(originalPath), originalBytes);
+
+    // Editing the copy and saving must still leave the original alone.
+    state.addTextClip(QStringLiteral("Only in the copy"), 5.0);
+    state.saveProject(QUrl::fromLocalFile(copyPath));
+    QCOMPARE(readFile(originalPath), originalBytes);
+
+    const auto clipCount = [&state]() {
+        int n = 0;
+        for (const drift::Track &track : state.project()->tracks())
+            n += int(track.clips.size());
+        return n;
+    };
+
+    // And the original still opens as it was, under its own id and name.
+    state.loadProject(QUrl::fromLocalFile(originalPath));
+    QCOMPARE(state.project()->id(), originalId);
+    QCOMPARE(state.projectName(), QStringLiteral("Wedding"));
+    QCOMPARE(clipCount(), 1); // without the clip that was only ever added to the copy
+
+    state.loadProject(QUrl::fromLocalFile(copyPath));
+    QCOMPARE(state.projectName(), QStringLiteral("wedding-short"));
+    QCOMPARE(clipCount(), 2);
 }
 
 void EditorStateTest::projectJsonExportImportRoundTrip()

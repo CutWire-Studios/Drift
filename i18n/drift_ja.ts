@@ -533,6 +533,14 @@
         <translation>プロジェクトを保存</translation>
     </message>
     <message>
+        <source>Save Project As</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 copy</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Save Shareable Copy</source>
         <translation>共有可能なコピーを保存</translation>
     </message>
@@ -1130,6 +1138,14 @@
     </message>
     <message>
         <source>Keep this project on the device</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Save as</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Keep the original and carry on in a copy</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -2221,6 +2237,10 @@
         <translation>メディアを編集しました</translation>
     </message>
     <message>
+        <source>Save project as…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Paste attributes…</source>
         <translation>属性を貼り付け...</translation>
     </message>
@@ -3211,6 +3231,10 @@
         <translation>
             <numerusform>%n 個のクリップを貼り付けました</numerusform>
         </translation>
+    </message>
+    <message>
+        <source>Saved a copy</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Couldn’t write %1: %2</source>
@@ -4454,6 +4478,14 @@
     </message>
     <message>
         <source>All Files (*)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Save Project As</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 copy</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -7491,6 +7523,10 @@ If playback stutters, try another.</source>
     <message>
         <source>Open project…</source>
         <translation>プロジェクトを開く…</translation>
+    </message>
+    <message>
+        <source>Save as…</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Save with media…</source>

@@ -533,6 +533,14 @@
         <translation>Guardar proyecto</translation>
     </message>
     <message>
+        <source>Save Project As</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 copy</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Save Shareable Copy</source>
         <translation>Guardar copia para compartir</translation>
     </message>
@@ -1131,6 +1139,14 @@
     </message>
     <message>
         <source>Keep this project on the device</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Save as</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Keep the original and carry on in a copy</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -2227,6 +2243,10 @@
         <translation>Medio editado</translation>
     </message>
     <message>
+        <source>Save project as…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Paste attributes…</source>
         <translation type="unfinished"></translation>
     </message>
@@ -3219,6 +3239,10 @@
             <numerusform>Se pegó %n clip</numerusform>
             <numerusform>Se pegaron %n clips</numerusform>
         </translation>
+    </message>
+    <message>
+        <source>Saved a copy</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Couldn’t write %1: %2</source>
@@ -4473,6 +4497,14 @@
     </message>
     <message>
         <source>All Files (*)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Save Project As</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 copy</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -7524,6 +7556,10 @@ Si la reproducción se corta, prueba con otra opción.</translation>
     <message>
         <source>Open project…</source>
         <translation>Abrir proyecto…</translation>
+    </message>
+    <message>
+        <source>Save as…</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Save with media…</source>

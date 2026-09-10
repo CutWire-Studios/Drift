@@ -141,6 +141,18 @@ Item {
         return !EditorState.hasUnsavedChanges
     }
 
+    // Save As: the open project written to a second file, which the session then continues in.
+    // The file it came from is left as it was, which is the whole point — one project per
+    // variation. Suggests "<name> copy" so the default cannot land back on the original.
+    function saveProjectAs() {
+        const url = FileDialogs.saveFile(qsTr("Save Project As"), root.projectFilter,
+                                         qsTr("%1 copy").arg(EditorState.projectName), "drift")
+        if (url === "")
+            return false
+        EditorState.saveProjectAs(url)
+        return !EditorState.hasUnsavedChanges
+    }
+
     function packageProject() {
         const url = FileDialogs.saveFile(qsTr("Save Shareable Copy"), root.projectFilter,
                                          EditorState.projectName, "drift")
@@ -180,6 +192,9 @@ Item {
             break
         case "save":
             root.saveProject()
+            break
+        case "saveAs":
+            root.saveProjectAs()
             break
         case "package":
             root.packageProject()
@@ -532,6 +547,7 @@ Item {
         // menus. Open via the Edit rail; an already-open sheet still updates via
         // PropertiesPanel bindings.
         function onSaveRequested() { root.saveProject() }
+        function onSaveAsRequested() { root.saveProjectAs() }
         function onOpenRequested() { root.openProject() }
         function onNewProjectRequested() { root.requestNewProject() }
     }

@@ -83,6 +83,19 @@ Rectangle {
         return !EditorState.hasUnsavedChanges
     }
 
+    // Save As: writes the open project to a new .drift and keeps editing that one, leaving the
+    // file it came from exactly as it was on disk. The suggested name is the project's plus
+    // "copy", so accepting the picker's default cannot overwrite the original.
+    function saveProjectAs() {
+        var url = FileDialogs.saveFile(qsTr("Save Project As"), root.projectFilter,
+                                       qsTr("%1 copy").arg(EditorState.projectName), "drift", "",
+                                       root.projectMimeTypes)
+        if (url == "")
+            return false
+        EditorState.saveProjectAs(url)
+        return !EditorState.hasUnsavedChanges
+    }
+
     // Raw document JSON: an export, not a project file. Always asks for a path and leaves the
     // current .drift association untouched.
     function saveProjectJson() {
@@ -203,6 +216,7 @@ Rectangle {
             }
         }
         function onSaveRequested() { root.saveProject() }
+        function onSaveAsRequested() { root.saveProjectAs() }
         function onOpenRequested() { root.openProject() }
         function onNewProjectRequested() { root.requestNewProject() }
     }
@@ -365,6 +379,7 @@ Rectangle {
                     onOpenFileRequested: root.openProject()
                     onNewProjectRequested: root.requestNewProject()
                     onOpenRecentRequested: (path) => root.openRecent(path)
+                    onSaveAsRequested: root.saveProjectAs()
                     onPackageRequested: root.packageProject()
                     onSaveJsonRequested: root.saveProjectJson()
                     onOpenJsonRequested: root.openProjectJson()

@@ -1533,15 +1533,25 @@ QJsonObject McpDispatcher::opSetMetadata(const QJsonObject &args)
 
 QJsonObject McpDispatcher::opSaveProject(const QJsonObject &args)
 {
+    const bool saveAs = args.value(QStringLiteral("saveAs")).toBool();
     QString path = args.value(QStringLiteral("path")).toString();
-    if (path.isEmpty())
+    if (path.isEmpty() && !saveAs)
         path = m_controller->currentProjectPath();
     if (path.isEmpty())
-        return err("bad_args", QStringLiteral("path required — project has never been saved"));
+        return err("bad_args",
+                   saveAs ? QStringLiteral("path required with saveAs — it names the copy")
+                          : QStringLiteral("path required — project has never been saved"));
     const QFileInfo info(path);
     if (!info.absoluteDir().exists() && !QDir().mkpath(info.absolutePath()))
         return err("bad_args", QStringLiteral("Could not create parent folder"));
-    m_controller->saveProject(QUrl::fromLocalFile(path));
+    // Save As onto the open project would be a plain Save that also re-ids and renames it, which
+    // is the opposite of what the caller asked for.
+    if (saveAs && info.absoluteFilePath() == QFileInfo(m_controller->currentProjectPath()).absoluteFilePath())
+        return err("bad_args", QStringLiteral("saveAs path is the open project — pick another"));
+    if (saveAs)
+        m_controller->saveProjectAs(QUrl::fromLocalFile(path));
+    else
+        m_controller->saveProject(QUrl::fromLocalFile(path));
     return ok({{QStringLiteral("path"), path}});
 }
 

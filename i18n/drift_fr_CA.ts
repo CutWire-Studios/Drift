@@ -534,6 +534,14 @@
         <translation>Enregistrer le projet</translation>
     </message>
     <message>
+        <source>Save Project As</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 copy</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Save Shareable Copy</source>
         <translation>Enregistrer une copie partageable</translation>
     </message>
@@ -1132,6 +1140,14 @@
     </message>
     <message>
         <source>Keep this project on the device</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Save as</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Keep the original and carry on in a copy</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -2233,6 +2249,10 @@
         <translation>Média modifié</translation>
     </message>
     <message>
+        <source>Save project as…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Paste attributes…</source>
         <translation type="unfinished"></translation>
     </message>
@@ -3225,6 +3245,10 @@
             <numerusform>%n clip collé</numerusform>
             <numerusform>%n clips collés</numerusform>
         </translation>
+    </message>
+    <message>
+        <source>Saved a copy</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Couldn’t write %1: %2</source>
@@ -4475,6 +4499,14 @@
     </message>
     <message>
         <source>All Files (*)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Save Project As</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 copy</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -7527,6 +7559,10 @@ En cas de saccades à la lecture, essayez un autre mode.</translation>
     <message>
         <source>Open project…</source>
         <translation>Ouvrir un projet…</translation>
+    </message>
+    <message>
+        <source>Save as…</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Save with media…</source>

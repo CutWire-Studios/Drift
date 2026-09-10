@@ -587,6 +587,12 @@ void McpTest::inspectIsCompact()
 
 namespace {
 
+QByteArray readFile(const QString &path)
+{
+    QFile file(path);
+    return file.open(QIODevice::ReadOnly) ? file.readAll() : QByteArray();
+}
+
 QJsonObject firstItemOfKind(const QJsonObject &inspect, const QString &kind)
 {
     const QJsonArray tracks = inspect.value(QStringLiteral("tracks")).toArray();
@@ -1863,6 +1869,27 @@ void McpTest::saveProjectWithoutPathUsesCurrent()
     QVERIFY2(again.value(QStringLiteral("ok")).toBool(),
              qPrintable(QJsonDocument(again).toJson(QJsonDocument::Compact)));
     QCOMPARE(again.value(QStringLiteral("path")).toString(), path);
+
+    // saveAs has to name the copy: falling back to the current path would rewrite the project it
+    // was asked to leave alone.
+    const QJsonObject noPath = dispatcher.applyOne(QStringLiteral("save_project"),
+                                                  {{QStringLiteral("saveAs"), true}});
+    QCOMPARE(noPath.value(QStringLiteral("ok")).toBool(), false);
+    const QJsonObject samePath =
+        dispatcher.applyOne(QStringLiteral("save_project"),
+                            {{QStringLiteral("path"), path}, {QStringLiteral("saveAs"), true}});
+    QCOMPARE(samePath.value(QStringLiteral("ok")).toBool(), false);
+
+    const QByteArray originalBytes = readFile(path);
+    QVERIFY(!originalBytes.isEmpty());
+    const QString copyPath = dir.filePath(QStringLiteral("named-v2.drift"));
+    QVERIFY(dispatcher
+                .applyOne(QStringLiteral("save_project"),
+                          {{QStringLiteral("path"), copyPath}, {QStringLiteral("saveAs"), true}})
+                .value(QStringLiteral("ok"))
+                .toBool());
+    QCOMPARE(state.currentProjectPath(), copyPath);
+    QCOMPARE(readFile(path), originalBytes);
 }
 
 void McpTest::detectSilenceFindsInjectedGap()

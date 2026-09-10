@@ -44,6 +44,12 @@ AndroidBottomSheet {
             icon: Theme.icons.save
         },
         {
+            id: "saveAs",
+            label: qsTr("Save as"),
+            detail: qsTr("Keep the original and carry on in a copy"),
+            icon: Theme.icons.copy
+        },
+        {
             id: "package",
             label: qsTr("Share a copy"),
             detail: qsTr("One file with the media packed inside"),

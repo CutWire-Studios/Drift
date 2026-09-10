@@ -12,6 +12,7 @@ Popup {
     signal openFileRequested()
     signal newProjectRequested()
     signal openRecentRequested(string path)
+    signal saveAsRequested()
     signal packageRequested()
     signal saveJsonRequested()
     signal openJsonRequested()
@@ -408,6 +409,12 @@ Popup {
         }
 
         // --- Project utilities -----------------------------------------------
+        ActionRow {
+            glyph: Theme.icons.copy
+            text: qsTr("Save as…")
+            onTriggered: root.saveAsRequested()
+        }
+
         ActionRow {
             glyph: Theme.icons.package
             text: qsTr("Save with media…")

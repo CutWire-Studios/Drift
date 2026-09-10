@@ -1335,6 +1335,11 @@ public:
     // Writes a .drift bundle keeping each asset's current storage mode, so a referencing project
     // stays instant to save and a packaged one stays self-contained.
     Q_INVOKABLE void saveProject(const QUrl &url);
+    // Save As: the same write, but the copy gets its own project id and takes its title from the
+    // chosen file name, and the open document only adopts that identity once the write lands. The
+    // file it was opened from is never touched, so the original stays as it was on disk and the
+    // session carries on in the duplicate — which is the point of the command.
+    Q_INVOKABLE void saveProjectAs(const QUrl &url);
     // Same container, every source asset embedded. Runs off the GUI thread — it copies the media.
     Q_INVOKABLE void packageProject(const QUrl &url);
     // Export-only: the raw document JSON, no container and no media. Leaves the open project's
@@ -1591,6 +1596,7 @@ signals:
     void newProjectRequested();
     void openRequested();
     void saveRequested();
+    void saveAsRequested();
     void openPasteAttributesRequested();
 
 protected:
@@ -1793,6 +1799,16 @@ protected:
     // bundle; otherwise each keeps whatever mode it had, tracked in m_embeddedSources. GUI thread
     // only — packageProject builds the request here and hands the finished copy to its worker.
     drift::bundle::WriteRequest buildWriteRequest(bool embedSource) const;
+    // Who the document becomes when a Save As write succeeds. A fresh id keeps the copy from
+    // sharing the original's extraction and derived-media directory, both of which are keyed on it.
+    struct ProjectIdentity {
+        QString id;
+        QString name;
+    };
+    // Body of saveProject / saveProjectAs. `adopt` is empty for a plain Save; when set, the copy is
+    // written under that identity and the open project only takes it on once the bytes are down.
+    void writeProjectBundle(const QUrl &url, const std::optional<ProjectIdentity> &adopt);
+    void adoptProjectIdentity(const std::optional<ProjectIdentity> &adopt);
     void rememberEmbeddedSources(const QList<drift::bundle::MediaEntry> &media);
     // Persist the save-picker folder and encode/scale choices for the next Export dialog.
     // Empty `outputPath` updates settings only and leaves lastExportFolder unchanged.

@@ -502,6 +502,17 @@ QString projectLocation(const QUrl &url)
     return url.toLocalFile();
 }
 
+// The chosen document's name without its extension. Save As gives the copy this as its title, so
+// the header names the file you are now editing rather than the one it was copied from.
+QString projectNameForUrl(const QUrl &url)
+{
+#ifdef Q_OS_ANDROID
+    if (AndroidUri::isContentUri(url))
+        return QFileInfo(AndroidUri::displayName(url)).completeBaseName();
+#endif
+    return QFileInfo(url.toLocalFile()).completeBaseName();
+}
+
 // Whether a remembered project location still resolves. QFileInfo knows nothing about a document
 // id, so a SAF location has to be probed through the provider — the grant can also have lapsed
 // since it was stored, which is indistinguishable from the file being gone and is treated the same.
@@ -1014,6 +1025,23 @@ void AppController::sweepExtractionDirs()
 #ifdef Q_OS_ANDROID
     QSet<QString> liveFiles; // files outside any bundle that a known project still points at
 #endif
+
+    // A project's own id is not the only directory it depends on: a Save As copy gets a fresh id
+    // but inherits the original's freeze frames, captures and media edits, which stay where they
+    // were written. Liveness therefore follows the references as well, or the first sweep after
+    // the original left the recents list would take the copy's media with it.
+    const QString projectsRoot = QDir::cleanPath(QDir(base).filePath(QStringLiteral("projects")));
+    const auto keepOwnerOf = [&](const QString &path) {
+        if (path.isEmpty())
+            return;
+        const QString clean = QDir::cleanPath(path);
+        if (!clean.startsWith(projectsRoot + QLatin1Char('/')))
+            return;
+        const QString rest = clean.mid(projectsRoot.size() + 1);
+        const int slash = rest.indexOf(QLatin1Char('/'));
+        live.insert(slash < 0 ? rest : rest.left(slash));
+    };
+
     for (const QVariant &entry : recentProjects()) {
         const QString path = entry.toMap().value(QStringLiteral("path")).toString();
         QString error;
@@ -1021,6 +1049,12 @@ void AppController::sweepExtractionDirs()
         if (!info)
             continue;
         live.insert(info->projectId);
+        for (const drift::bundle::MediaEntry &media : info->media) {
+            // Only referencing entries name a path on this machine; an embedded one records where
+            // the file was on whatever machine packed it, and keepOwnerOf simply will not match.
+            if (!media.embedded)
+                keepOwnerOf(media.originalPath);
+        }
 #ifdef Q_OS_ANDROID
         for (const drift::bundle::MediaEntry &media : info->media)
             liveFiles.insert(media.originalPath);
@@ -2682,6 +2716,9 @@ QHash<QString, QString> defaultShortcuts()
         {QStringLiteral("newProject"), QStringLiteral("Ctrl+N")},
         {QStringLiteral("open"), QStringLiteral("Ctrl+O")},
         {QStringLiteral("save"), QStringLiteral("Ctrl+S")},
+        // Not the usual Ctrl+Shift+S — separateAudio has held that since before Save As existed,
+        // and moving a binding people already have in their fingers is the worse trade.
+        {QStringLiteral("saveAs"), QStringLiteral("Ctrl+Alt+S")},
         {QStringLiteral("playPause"), QStringLiteral("Space")},
         {QStringLiteral("delete"), QStringLiteral("Delete")},
         {QStringLiteral("undo"), QStringLiteral("Ctrl+Z")},
@@ -3731,6 +3768,7 @@ QVariantList AppController::actions() const
         action(QStringLiteral("newProject"), tr("New project")),
         action(QStringLiteral("open"), tr("Open project")),
         action(QStringLiteral("save"), tr("Save project")),
+        action(QStringLiteral("saveAs"), tr("Save project as…")),
         action(QStringLiteral("playPause"), tr("Play/Pause")),
         action(QStringLiteral("delete"), tr("Delete selection")),
         action(QStringLiteral("undo"), tr("Undo")),
@@ -16282,6 +16320,8 @@ void AppController::triggerAction(const QString &actionId)
         emit openRequested();
     else if (actionId == QStringLiteral("save"))
         emit saveRequested();
+    else if (actionId == QStringLiteral("saveAs"))
+        emit saveAsRequested();
     else if (actionId == QStringLiteral("playPause"))
         togglePlayback();
     else if (actionId == QStringLiteral("multicam"))
@@ -17133,6 +17173,39 @@ void AppController::rememberEmbeddedSources(const QList<drift::bundle::MediaEntr
 
 void AppController::saveProject(const QUrl &url)
 {
+    writeProjectBundle(url, std::nullopt);
+}
+
+void AppController::saveProjectAs(const QUrl &url)
+{
+    ProjectIdentity copy;
+    // A new id, because the extraction directory and the per-project derived-media directory are
+    // both named by it: leaving the two documents sharing one would have an edit to the duplicate
+    // write freeze frames and media edits into the original's folder, and a packaged copy unpack
+    // over the original's media. sweepExtractionDirs follows references rather than ids, so the
+    // derived files the duplicate inherits at the old id survive the original leaving recents.
+    copy.id = QUuid::createUuid().toString(QUuid::WithoutBraces);
+    // The header shows the project title, not the file name. Carrying the original's title into a
+    // copy made specifically to be a different version is how you end up editing the wrong one.
+    copy.name = projectNameForUrl(url);
+    if (copy.name.isEmpty())
+        copy.name = m_project.name();
+    writeProjectBundle(url, copy);
+}
+
+void AppController::adoptProjectIdentity(const std::optional<ProjectIdentity> &adopt)
+{
+    if (!adopt)
+        return;
+    m_project.setId(adopt->id);
+    if (m_project.name() != adopt->name) {
+        m_project.setName(adopt->name);
+        emit projectNameChanged();
+    }
+}
+
+void AppController::writeProjectBundle(const QUrl &url, const std::optional<ProjectIdentity> &adopt)
+{
     const QString path = writeTargetPath(url);
     if (path.isEmpty()) {
         setLastMessage(tr("That save location isn’t valid"), QStringLiteral("error"));
@@ -17147,7 +17220,14 @@ void AppController::saveProject(const QUrl &url)
 
     // Built up front on both paths: the worker the Android branch may hand this to must not be
     // reading the project while the timeline is free to change under it.
-    const drift::bundle::WriteRequest request = buildWriteRequest(/*embedSource=*/false);
+    drift::bundle::WriteRequest request = buildWriteRequest(/*embedSource=*/false);
+    // Save As writes the copy's identity into the file but leaves the open document alone until
+    // the write lands, so a failed one cannot strand the session under a name and an id that
+    // belong to a file that does not exist — with the original still one Ctrl+S away.
+    if (adopt) {
+        request.projectId = adopt->id;
+        request.title = adopt->name;
+    }
 
 #ifdef Q_OS_ANDROID
     // A project that arrived as a package keeps its media inside it (see buildWriteRequest), so a
@@ -17170,7 +17250,9 @@ void AppController::saveProject(const QUrl &url)
         emit packagingChanged();
         emit packageProgressChanged();
 
-        (void)QtConcurrent::run([this, path, url, request]() {
+        // `adopt` is captured by value on both hops: it is a reference parameter, and the identity
+        // has to outlive this call to reach the completion that applies it.
+        (void)QtConcurrent::run([this, path, url, request, adopt]() {
             Exporter::BackgroundHold hold(QStringLiteral("Saving project"));
             QString error;
             const auto progress = [this](qint64 done, qint64 total) {
@@ -17207,21 +17289,24 @@ void AppController::saveProject(const QUrl &url)
                 discardWriteTarget(path, url);
             QMetaObject::invokeMethod(
                 this,
-                [this, ok, written, error, url, request]() {
+                [this, ok, written, error, url, request, adopt]() {
                     m_packaging = false;
                     emit packagingChanged();
                     if (!ok) {
                         // Only a failed commit says anything about the document: a bundle
                         // writer failure is about the staging file. A commit most likely lost
                         // its write grant across a restart, so drop the association and let
-                        // the next Save ask for a location.
-                        if (written)
+                        // the next Save ask for a location. Not on Save As: the document that
+                        // failed is the copy, and the grant on it came from the picker moments
+                        // ago — the remembered path still names the original, which is fine.
+                        if (written && !adopt)
                             setCurrentProjectPath(QString());
                         setLastMessage(error, QStringLiteral("error"));
                         emit projectSaved(false);
                         return;
                     }
                     rememberEmbeddedSources(request.media);
+                    adoptProjectIdentity(adopt);
                     m_packageProgress = 1.0;
                     emit packageProgressChanged();
                     const QString location = projectLocation(url);
@@ -17230,7 +17315,8 @@ void AppController::saveProject(const QUrl &url)
                     setDirty(false);
                     deleteRecoveryFile();
                     emit projectMetadataChanged();
-                    setLastMessage(tr("Project saved"), QStringLiteral("success"));
+                    setLastMessage(adopt ? tr("Saved a copy") : tr("Project saved"),
+                                   QStringLiteral("success"));
                     emit projectSaved(true);
                 },
                 Qt::QueuedConnection);
@@ -17250,12 +17336,15 @@ void AppController::saveProject(const QUrl &url)
         discardWriteTarget(path, url);
         // Saving over the remembered document failed — most likely its write grant did not
         // survive the restart — so drop the association and let the next Save ask for a location.
-        setCurrentProjectPath(QString());
+        // A failed Save As says nothing about the original, so it keeps its path (see above).
+        if (!adopt)
+            setCurrentProjectPath(QString());
         setLastMessage(error, QStringLiteral("error"));
         emit projectSaved(false);
         return;
     }
     rememberEmbeddedSources(request.media);
+    adoptProjectIdentity(adopt);
 
     const QString location = projectLocation(url);
     setCurrentProjectPath(location);
@@ -17263,7 +17352,7 @@ void AppController::saveProject(const QUrl &url)
     setDirty(false);
     deleteRecoveryFile();
     emit projectMetadataChanged();
-    setLastMessage(tr("Project saved"), QStringLiteral("success"));
+    setLastMessage(adopt ? tr("Saved a copy") : tr("Project saved"), QStringLiteral("success"));
     emit projectSaved(true);
 }
 

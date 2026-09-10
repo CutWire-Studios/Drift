@@ -526,11 +526,16 @@ const QList<Op> &ops()
         { "save_project", "project", "Save the project file",
           "Save the open project. With path omitted, saves to the current project path (inspect.path); "
           "fails bad_args when the project has never been saved. With path given, writes a .drift "
-          "bundle there, creating parent folders as needed. Returns ok once the save is dispatched — "
+          "bundle there, creating parent folders as needed. saveAs:true duplicates instead: the copy "
+          "at path gets its own id and takes its title from the file name, the session continues in "
+          "it, and the file it was opened from is left untouched — path is required and must differ "
+          "from inspect.path. Returns ok once the save is dispatched — "
           "it does NOT report a failed write. Confirm with inspect: dirty should be false and path "
           "should match.",
           objectSchema({{QStringLiteral("path"),
-                         stringProp(QStringLiteral("Absolute .drift path; omit to save to the current path"))}}) },
+                         stringProp(QStringLiteral("Absolute .drift path; omit to save to the current path"))},
+                        {QStringLiteral("saveAs"),
+                         boolProp(QStringLiteral("Save a duplicate at path and keep editing it"))}}) },
         { "list_export_options", "project", "See codecs, scales, and fps choices",
           "Returns {scales:[{id,w,h}], fps:[{id}], video:[{id,label}], audio:[{id,label}], gif, folder} "
           "— only codecs available on this machine are listed. Does not list rate or preset values; "
