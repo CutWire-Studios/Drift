@@ -377,9 +377,15 @@ jobs:
       # No --target list any more: the tests have to be built here, and building everything is
       # what also gets tools/ compiled by MSVC. Until this job ran ctest, Windows was the one
       # desktop platform where nothing under tests/ was even known to compile.
+      #
+      # --parallel 2, not bare --parallel: tst_editorstate compiles AppController.cpp and the
+      # whole MCP layer into one translation unit, and on a 4-core/16 GB runner four of those
+      # alongside the QML cache TUs exhausted the compiler heap (C1060). The job has a 120
+      # minute budget and was failing 15 minutes in, so the headroom is worth more than the
+      # wall-clock. Raise it only with evidence from a green run.
       - name: Build
         shell: pwsh
-        run: cmake --build build --config Release --parallel
+        run: cmake --build build --config Release --parallel 2
 
       # Visual Studio is a multi-config generator, hence -C Release.
       #
