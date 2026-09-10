@@ -548,6 +548,8 @@ QString previewUploadLabel()
         return QStringLiteral("CUDA interop");
     case Path::VaapiDmaBuf:
         return QStringLiteral("VAAPI dma-buf");
+    case Path::MediaCodecImage:
+        return QStringLiteral("MediaCodec image");
     case Path::CpuRoundTrip:
         return QStringLiteral("CPU round-trip");
     case Path::None:

@@ -7,6 +7,7 @@
 #include <QHash>
 #include <QSet>
 #include <QStringList>
+#include <QThreadPool>
 #include <QUrl>
 
 namespace drift {
@@ -43,6 +44,7 @@ public:
     Q_ENUM(Role)
 
     explicit AssetLibrary(QObject *parent = nullptr);
+    ~AssetLibrary() override;
 
     void setProject(drift::Project *project);
     drift::Project *project() const { return m_project; }
@@ -175,4 +177,10 @@ private:
     QSet<QString> m_importPending;
     QSet<QString> m_thumbPending;
     QSet<QString> m_audioProbePending;
+    // Probe and thumbnail jobs run here rather than on the global pool, because the destructor
+    // has to be able to wait for them: each captures `this` and posts its result back with
+    // QMetaObject::invokeMethod(this, ...). Nothing joined them before, so a job outliving the
+    // object called into freed memory — the tests are where that bites, since AssetLibrary is a
+    // stack local per test function and the address is handed straight to the next one.
+    QThreadPool m_jobs;
 };

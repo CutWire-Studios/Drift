@@ -161,7 +161,7 @@ jobs:
           sudo apt-get install -y -o Acquire::Retries=3 \
             build-essential ninja-build pkg-config git xvfb \
             libgl1-mesa-dev libegl1-mesa-dev libglib2.0-dev libdbus-1-dev \
-            libzstd-dev libssl-dev libsoundtouch-dev \
+            libzstd-dev libssl-dev libsoundtouch-dev zlib1g-dev \
             libpulse-dev libasound2-dev \
             libva2 libva-drm2 libva-x11-2 \
             libfontconfig1-dev libfreetype6-dev libxkbcommon-dev libxkbcommon-x11-dev \
@@ -320,9 +320,11 @@ jobs:
           restore-keys: |
             vcpkg-bincache-win-
 
-      # zstd (addon package decompression), openssl (addon signature verification) and soundtouch
-      # (voice-effect pitch shifting) are the three non-Qt, non-FFmpeg libraries Drift links. All
-      # three ship a CMake config here, which is what lets the MSVC build work with no pkg-config.
+      # zstd (addon package decompression), openssl (addon signature verification), soundtouch
+      # (voice-effect pitch shifting) and zlib (the project-file importers' inflate) are the
+      # non-Qt, non-FFmpeg libraries Drift links. Windows is the only target with no ambient
+      # zlib — every other platform's SDK, base install or runtime already carries one — so it
+      # has to be named here or find_package(ZLIB REQUIRED) fails at configure.
       - name: Install vcpkg dependencies
         shell: pwsh
         env:
@@ -333,7 +335,7 @@ jobs:
             git clone --depth 1 https://github.com/microsoft/vcpkg.git vcpkg
             .\vcpkg\bootstrap-vcpkg.bat
           }
-          .\vcpkg\vcpkg.exe install zstd openssl soundtouch --triplet x64-windows
+          .\vcpkg\vcpkg.exe install zstd openssl soundtouch zlib --triplet x64-windows
 
       # Save even when a later step fails so the vcpkg build is not repeated on
       # the next run (actions/cache only saves on job success).
@@ -372,9 +374,30 @@ jobs:
             -DFETCHCONTENT_BASE_DIR=${{ env.FETCHCONTENT_BASE_DIR }} `
             -DDRIFT_BUNDLE_ONNXRUNTIME=OFF
 
+      # No --target list any more: the tests have to be built here, and building everything is
+      # what also gets tools/ compiled by MSVC. Until this job ran ctest, Windows was the one
+      # desktop platform where nothing under tests/ was even known to compile.
       - name: Build
         shell: pwsh
-        run: cmake --build build --config Release --target drift audiobackendcheck --parallel
+        run: cmake --build build --config Release --parallel
+
+      # Visual Studio is a multi-config generator, hence -C Release.
+      #
+      # .deps\ffmpeg\bin goes on PATH ahead of Qt's: Qt ships its own avcodec/avformat DLLs under
+      # the same names, and the suite has to run against the FFmpeg the binaries were built
+      # against, not Qt's copy. It also supplies the ffmpeg.exe that the tests which synthesize
+      # their clips through QProcess look for.
+      #
+      # Addon content (fonts, emoji font, effect catalogue) is deliberately not staged here the
+      # way tests.yml does it — that staging needs a symlink outside the workspace, which needs
+      # elevation on Windows. Roughly 16 tests QSKIP as a result; the rest is what this covers.
+      #
+      # Serial, not ctest -j: the suites share QStandardPaths::AppDataLocation test-mode state.
+      - name: Test
+        shell: pwsh
+        run: |
+          $env:PATH = "${{ github.workspace }}\.deps\ffmpeg\bin;${{ env.QT_ROOT_DIR }}\bin;$env:PATH"
+          ctest --test-dir build -C Release --output-on-failure
 
       - name: Stage runtime files
         shell: pwsh

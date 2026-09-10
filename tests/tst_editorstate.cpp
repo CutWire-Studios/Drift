@@ -3685,7 +3685,18 @@ void EditorStateTest::replaceAssetSourceRebindsClipsAndClampsTrim()
     state.addClipFromAsset(0);
     const int trackIndex = state.selectedTrack();
     const int clipIndex = state.selectedClip();
-    QVERIFY(trackIndex >= 0 && clipIndex >= 0);
+    // addClipFromAsset returns silently on several distinct conditions, and this assertion has
+    // failed on a macOS runner while passing everywhere else. Report the state that decides
+    // which branch was taken, so the next such failure names the cause instead of just the line.
+    QVERIFY2(trackIndex >= 0 && clipIndex >= 0,
+             qPrintable(QStringLiteral("no clip selected: track=%1 clip=%2 assets=%3 kind='%4' "
+                                       "path='%5' tracks=%6")
+                            .arg(trackIndex)
+                            .arg(clipIndex)
+                            .arg(library.count())
+                            .arg(library.assetAt(0).value(QStringLiteral("kind")).toString(),
+                                 library.assetAt(0).value(QStringLiteral("path")).toString())
+                            .arg(state.project()->tracks().size())));
 
     drift::Project &project = *state.project();
     // Trim to a window that only the 10s original can satisfy, and drop an effect on it so the
@@ -3770,8 +3781,13 @@ void EditorStateTest::replaceAssetSourceRefusesADifferentKind()
     QVERIFY(importAndAwait(library, video));
 
     state.addClipFromAsset(0);
+    // Asserted rather than assumed: both are dereferenced unguarded below, so a regression in
+    // addClipFromAsset would segfault here and take the rest of the suite with it.
+    const int trackIndex = state.selectedTrack();
+    QVERIFY(trackIndex >= 0);
     drift::Project &project = *state.project();
     const QString assetId = library.assetIdAt(0);
+    QVERIFY(project.asset(assetId));
     const QString originalPath = project.asset(assetId)->path;
 
     QSignalSpy undoStack(&state, &AppController::undoStackChanged);
@@ -3782,7 +3798,7 @@ void EditorStateTest::replaceAssetSourceRefusesADifferentKind()
     QVERIFY(!finished.at(0).at(1).toString().isEmpty());
 
     QCOMPARE(project.asset(assetId)->path, originalPath);
-    QCOMPARE(project.tracks().at(state.selectedTrack()).clips.at(0).path, originalPath);
+    QCOMPARE(project.tracks().at(trackIndex).clips.at(0).path, originalPath);
     // A refused swap must not leave an empty step on the stack for the user to undo.
     QCOMPARE(undoStack.count(), 0);
 }

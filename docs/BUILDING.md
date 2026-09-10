@@ -19,6 +19,7 @@ see is what you get.
 | libzstd | any (addon package decompression) |
 | OpenSSL | 3.x, libcrypto only (addon signature verification) |
 | SoundTouch | any (pitch shifting behind the voice effects) |
+| zlib | any (inflate for the Premiere / Kdenlive / Resolve / MOGRT project importers) |
 
 ONNX Runtime powers auto-subtitles (and related ML features). Drift does not link it — only its headers are needed to build, and the library itself is an addon the user installs from the Acceleration category, which is what makes the CPU / CUDA / WebGPU choice theirs rather than the packager's. The headers are downloaded automatically at configure time; pass `-DDRIFT_FETCH_ONNXRUNTIME=OFF` to use a system install instead. A development build also stages a CPU runtime into `<build>/onnxruntime` so it works before anything is installed — `-DDRIFT_BUNDLE_ONNXRUNTIME=OFF` (what the Flatpak manifests use) turns that off, and `DRIFT_ONNXRUNTIME_DIR` points at an extracted release instead.
 
@@ -34,7 +35,7 @@ aqt install-qt all_os android 6.11.1 android_arm64_v8a \
   -m qtmultimedia qtshadertools qtimageformats -O "$HOME/Qt"
 ```
 
-On Debian/Ubuntu install `libzstd-dev`, `libssl-dev` and `libsoundtouch-dev`; on Arch, `zstd`, `openssl` and `soundtouch`; on macOS, `brew install qt ffmpeg zstd openssl@3 sound-touch` (see [macOS](#macos)). None of them has a download fallback — configure fails with a pkg-config error if the development headers are missing.
+On Debian/Ubuntu install `libzstd-dev`, `libssl-dev`, `libsoundtouch-dev` and `zlib1g-dev`; on Arch, `zstd`, `openssl`, `soundtouch` and `zlib`; on macOS, `brew install qt ffmpeg zstd openssl@3 sound-touch` — zlib comes with the SDK there (see [macOS](#macos)). None of them has a download fallback — configure fails with a pkg-config error if the development headers are missing.
 
 Optional: OpenCV for experimental background-removal builds (`-DWITH_BGREMOVAL=ON`). Only `core`, `imgproc`, and `imgcodecs` are linked.
 

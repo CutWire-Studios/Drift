@@ -12,7 +12,7 @@ license=('GPL-3.0-or-later')
 depends=(
     'qt6-base' 'qt6-declarative' 'qt6-svg' 'qt6-multimedia' 'qt6-multimedia-ffmpeg'
     'qt6-imageformats'
-    'ffmpeg' 'zstd' 'openssl' 'soundtouch'
+    'ffmpeg' 'zstd' 'openssl' 'soundtouch' 'zlib'
 )
 # qt6-tools is LinguistTools (lupdate/lrelease): without it CMake skips qt_add_translations and
 # the binary ships English-only, then check()'s Translations test fails looking for

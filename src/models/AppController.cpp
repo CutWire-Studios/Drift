@@ -4574,9 +4574,14 @@ void AppController::addClipFromAsset(int assetIndex)
     applyAssetLayout(clip, asset, m_project.width(), m_project.height());
 
     track.clips.append(clip);
+    // Read the index out before the edit is pushed. ProjectSnapshotCommand::redo() assigns over
+    // m_project, and TrackList::operator= releases the buffer `track` points into before it
+    // detaches, so the reference dangles from there on. Every add-clip path below does the same,
+    // and addClipsFromAssets has always captured its indices this way.
+    const int newClipIndex = track.clips.size() - 1;
     pushProjectEdit(before, tr("Clip added"));
     finishEdit(tr("Clip added"));
-    selectClip(trackIndex, track.clips.size() - 1);
+    selectClip(trackIndex, newClipIndex);
 }
 
 void AppController::addClipsFromAssets(const QStringList &assetIds)
@@ -4716,9 +4721,10 @@ void AppController::addClipFromAssetOnNewTrackAt(int assetIndex, int insertIndex
     applyAssetLayout(clip, asset, m_project.width(), m_project.height());
 
     track.clips.append(clip);
+    const int newClipIndex = track.clips.size() - 1;
     pushProjectEdit(before, tr("Clip added on new track"));
     finishEdit(tr("Clip added on new track"));
-    selectClip(trackIndex, track.clips.size() - 1);
+    selectClip(trackIndex, newClipIndex);
 }
 
 void AppController::addClipFromAssetAt(int assetIndex, int trackIndex, double atSeconds)
@@ -4762,9 +4768,10 @@ void AppController::addClipFromAssetAt(int assetIndex, int trackIndex, double at
     applyAssetLayout(clip, asset, m_project.width(), m_project.height());
 
     track.clips.append(clip);
+    const int newClipIndex = track.clips.size() - 1;
     pushProjectEdit(before, tr("Clip added"));
     finishEdit(tr("Clip added"));
-    selectClip(trackIndex, track.clips.size() - 1);
+    selectClip(trackIndex, newClipIndex);
 }
 
 void AppController::selectClip(int trackIndex, int clipIndex)
@@ -5622,9 +5629,10 @@ void AppController::addSubtitleClip(double atSeconds)
     applyDefaultVisualLayout(clip, m_project.width(), m_project.height());
 
     track.clips.append(clip);
+    const int newClipIndex = track.clips.size() - 1;
     pushProjectEdit(before, tr("Subtitle clip added"));
     finishEdit(tr("Subtitle clip added"));
-    selectClip(trackIndex, track.clips.size() - 1);
+    selectClip(trackIndex, newClipIndex);
 }
 
 namespace {
@@ -5681,9 +5689,10 @@ bool AppController::importSubtitleFile(const QUrl &url, double atSeconds)
     applyDefaultVisualLayout(clip, m_project.width(), m_project.height());
 
     track.clips.append(clip);
+    const int newClipIndex = track.clips.size() - 1;
     pushProjectEdit(before, tr("Subtitles imported"));
     finishEdit(tr("Subtitles imported"));
-    selectClip(trackIndex, track.clips.size() - 1);
+    selectClip(trackIndex, newClipIndex);
     setLastMessage(tr("Imported %n subtitles", "", int(cues.size())));
     return true;
 }
@@ -9409,9 +9418,10 @@ void AppController::finalizeGeneratedSubtitles(drift::TimeUs timelineStart,
     clip.name = drift::subtitleClipName(cues);
 
     track.clips.append(clip);
+    const int newClipIndex = track.clips.size() - 1;
     pushProjectEdit(before, tr("Subtitles generated"));
     finishEdit(tr("Subtitles generated"));
-    selectClip(trackIndex, track.clips.size() - 1);
+    selectClip(trackIndex, newClipIndex);
     setLastMessage(tr("Subtitles generated"), QStringLiteral("success"));
     emit subtitleGenerationFinished(true, QStringLiteral("Subtitles generated"));
 }
@@ -10218,9 +10228,10 @@ void AppController::addImageOverlayClip(const QString &path, const QString &name
     applyDefaultVisualLayout(clip, m_project.width(), m_project.height());
 
     track.clips.append(clip);
+    const int newClipIndex = track.clips.size() - 1;
     pushProjectEdit(before, undoText);
     finishEdit(undoText);
-    selectClip(trackIndex, track.clips.size() - 1);
+    selectClip(trackIndex, newClipIndex);
 }
 
 QVariantList AppController::previewClipsAtPlayhead() const
@@ -15978,9 +15989,10 @@ void AppController::freezeFrameAtPlayhead()
                                       m_project.height());
 
                 track.clips.append(freezeClip);
+                const int newClipIndex = track.clips.size() - 1;
                 pushProjectEdit(before, tr("Freeze frame added"));
                 finishEdit(tr("Freeze frame added"));
-                selectClip(trackIndex, track.clips.size() - 1);
+                selectClip(trackIndex, newClipIndex);
             },
             Qt::QueuedConnection);
     });
