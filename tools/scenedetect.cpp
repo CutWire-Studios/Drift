@@ -7,7 +7,16 @@
 #include "engine/SceneDetect.h"
 #include "core/Time.h"
 
+// isatty: POSIX spells it in <unistd.h>, MSVC in <io.h> with a leading underscore.
+#if defined(_WIN32)
+#include <io.h>
+#define drift_isatty _isatty
+#define drift_fileno _fileno
+#else
 #include <unistd.h>
+#define drift_isatty isatty
+#define drift_fileno fileno
+#endif
 
 #include <QCoreApplication>
 #include <QElapsedTimer>
@@ -114,7 +123,7 @@ int main(int argc, char *argv[])
     QString error;
     // Progress goes to stderr so it never pollutes --csv on stdout, and only when that is a
     // terminal — redirected, the carriage returns would pile up into one unreadable line.
-    const bool showProgress = !csv && ::isatty(fileno(stderr));
+    const bool showProgress = !csv && drift_isatty(drift_fileno(stderr));
     int lastPercent = -1;
     const drift::SceneAnalysis analysis = fromCache ? cached : drift::detectScenes(
         request,

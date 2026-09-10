@@ -5358,9 +5358,10 @@ void AppController::duplicateSelectedClip()
         m_project, track, -1, original.timelineEnd(), original.timelineDuration, m_snapEnabled, m_playheadUs);
 
     track.clips.append(copy);
+    const int newClipIndex = track.clips.size() - 1;
     pushProjectEdit(before, tr("Clip duplicated"));
     finishEdit(tr("Clip duplicated"));
-    selectClip(m_selectedTrack, track.clips.size() - 1);
+    selectClip(m_selectedTrack, newClipIndex);
 }
 
 void AppController::alignSelectedClipLeft()
@@ -9585,9 +9586,10 @@ void AppController::addShapeClipAt(const QString &shapeId, int trackIndex, doubl
                              entry ? entry->aspect : 1.6);
 
     track.clips.append(clip);
+    const int newClipIndex = track.clips.size() - 1;
     pushProjectEdit(before, tr("Shape added"));
     finishEdit(tr("Shape added"));
-    selectClip(target, track.clips.size() - 1);
+    selectClip(target, newClipIndex);
 }
 
 int AppController::ensureAdjustmentLaneFor(int parentTrackIndex, drift::AdjustmentKind kind,
@@ -9947,9 +9949,10 @@ void AppController::addAdjustmentClipWithEffect(const QString &effectId, int tra
     }
 
     track.clips.append(clip);
+    const int newClipIndex = track.clips.size() - 1;
     pushProjectEdit(before, tr("Add adjustment layer"));
     finishEdit(tr("Adjustment layer added"));
-    selectClip(target, track.clips.size() - 1);
+    selectClip(target, newClipIndex);
 }
 
 namespace {
