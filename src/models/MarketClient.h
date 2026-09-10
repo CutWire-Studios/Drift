@@ -151,6 +151,7 @@ signals:
 private:
     struct Job;
 
+    static QString apiBase();
     QUrl apiUrl(const QString &path) const;
     QNetworkReply *get(const QUrl &url);
     QNetworkReply *post(const QUrl &url, const QByteArray &body);

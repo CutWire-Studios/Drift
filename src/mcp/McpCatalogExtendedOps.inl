@@ -963,4 +963,60 @@
           objectSchema({}) },
         { "save_multicam_combined", "multicam", "Bake a single program track",
           "Write the session as one combined program track and end it.",
-          objectSchema({}) }
+          objectSchema({}) },
+        { "market_status", "market", "Check the marketplace before searching it",
+          "Whether this build has a marketplace, whether the user has accepted its terms, the "
+          "account (if connected), and the catalog: types (video, photo, audio, …) with their "
+          "providers, each provider's capabilities (search, featured, resolve), filters and quota. "
+          "consented:false means every other market op will fail consent_required — the user "
+          "accepts in the app (Assets → Market); an agent cannot accept for them.",
+          objectSchema({}), true, false, true },
+        { "market_search", "market", "Find stock video, photos or audio to import",
+          "Search one provider of one type and return up to `limit` listings as {id, title, type, "
+          "provider, dur, w, h, coins?, by?, thumb?, variants?}. Omit q for a provider's featured "
+          "listing. filters takes the ids from market_status. more:true fetches the next page of "
+          "the previous search (has_more says whether there is one). Blocks until the service "
+          "answers. A resolve-only provider (no search capability) needs market_resolve instead. "
+          "thumb is a URL an agent can fetch with its own tools to look at the item.",
+          objectSchema({{QStringLiteral("q"), stringProp(QStringLiteral("Free-text query; empty = featured"))},
+                        {QStringLiteral("type"), stringProp(QStringLiteral("Type id from market_status (default: the current one)"))},
+                        {QStringLiteral("provider"), stringProp(QStringLiteral("Provider id from market_status (default: the current one)"))},
+                        {QStringLiteral("filters"), QJsonObject{{QStringLiteral("type"), QStringLiteral("object")}, {QStringLiteral("description"), QStringLiteral("Filter id → value, using the filters market_status lists for the provider")}}},
+                        {QStringLiteral("limit"), propWithDefault(integerProp(QStringLiteral("Max listings to return"), 1, 30), 30)},
+                        {QStringLiteral("more"), boolProp(QStringLiteral("Fetch the next page of the last search instead of a new one"))}}),
+          true, false, false },
+        { "market_resolve", "market", "Turn a pasted page URL into a downloadable listing",
+          "For providers that resolve links (YouTube-style) rather than search. Returns {item} "
+          "with variants; pass its id to market_download. Can take a while — it blocks up to 90 s.",
+          objectSchema({{QStringLiteral("url"), stringProp(QStringLiteral("Page URL the user pasted"))}},
+                       {QStringLiteral("url")}),
+          true, false, true },
+        { "market_item", "market", "Read one listing's variants and license",
+          "Full detail of an item from the last market_search or market_resolve result, including "
+          "variants:[{id, label, w, h, coins?}] for market_download and preview/license when present.",
+          objectSchema({{QStringLiteral("id"), stringProp(QStringLiteral("Item id from market_search or market_resolve"))}},
+                       {QStringLiteral("id")}),
+          true, false, true },
+        { "market_download", "market", "Fetch a listing into the media bin",
+          "Start downloading an item; when it finishes the file is imported and the job carries "
+          "its asset id, ready for place_clip. SPENDS the provider's per-machine quota (see "
+          "market_status) and cannot be undone. Async: returns the job at once; pass wait:<seconds> "
+          "to block until it finishes (max 600), or poll market_downloads. A job for an item that "
+          "is still running fails conflict.",
+          objectSchema({{QStringLiteral("id"), stringProp(QStringLiteral("Item id from market_search or market_resolve"))},
+                        {QStringLiteral("variant"), stringProp(QStringLiteral("Variant id from market_item (default: the provider's default)"))},
+                        {QStringLiteral("dir"), stringProp(QStringLiteral("Absolute folder to write the file into (default: Drift's own media area)"))},
+                        {QStringLiteral("wait"), propWithDefault(integerProp(QStringLiteral("Seconds to block for completion; 0 returns immediately"), 0, 600), 0)}},
+                       {QStringLiteral("id")}),
+          false, false, false },
+        { "market_downloads", "market", "Poll marketplace downloads",
+          "Every download this session as {id, title, kind, status, phase, progress, error?, path?, "
+          "asset?}. status runs waiting → queued/processing → downloading → importing → done, or "
+          "failed/cancelled; asset is the bin id once done. clear:true forgets finished jobs.",
+          objectSchema({{QStringLiteral("clear"), boolProp(QStringLiteral("Forget finished, failed and cancelled jobs"))}}),
+          true, false, true },
+        { "market_cancel_download", "market", "Stop a marketplace download",
+          "Cancel a running download by item id. Not undoable.",
+          objectSchema({{QStringLiteral("id"), stringProp(QStringLiteral("Item id of the running download"))}},
+                       {QStringLiteral("id")}),
+          false, true, true }

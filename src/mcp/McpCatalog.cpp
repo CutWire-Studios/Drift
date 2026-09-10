@@ -744,13 +744,14 @@ QStringList toolboxNames()
             QStringLiteral("project"),   QStringLiteral("keyframes"), QStringLiteral("speed"),
             QStringLiteral("ui"),        QStringLiteral("shapes"),   QStringLiteral("subtitles"),
             QStringLiteral("segmentation"), QStringLiteral("ai"),   QStringLiteral("audio"),
-            QStringLiteral("scene"),     QStringLiteral("multicam")};
+            QStringLiteral("scene"),     QStringLiteral("multicam"), QStringLiteral("market")};
 }
 
 QStringList undoExemptOps()
 {
     static const QStringList k = {
         QStringLiteral("import_media"),        QStringLiteral("import_media_bytes"),
+        QStringLiteral("market_download"),     QStringLiteral("market_cancel_download"),
         QStringLiteral("seek"),                QStringLiteral("play"),
         QStringLiteral("pause"),               QStringLiteral("undo"),
         QStringLiteral("redo"),                QStringLiteral("undo_to"),
@@ -898,6 +899,7 @@ QJsonObject catalogPayload(const QJsonObject &args)
         {"audio", "Waveforms, silence, loudness, ducking, beat detection, beat-synced cuts, clip volume."},
         {"scene", "Detect shots, read what is in them, and cut or assemble against them."},
         {"multicam", "Multi-camera session: set up angles, switch at the playhead, save separate or combined."},
+        {"market", "Stock media from the Cutwire marketplace: search or resolve a link, download into the bin. Needs the user's one-time consent in the app; downloads spend a per-machine quota."},
     };
 
     const bool brief = args.value(QStringLiteral("brief")).toBool();

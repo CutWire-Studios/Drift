@@ -520,6 +520,7 @@ int main(int argc, char *argv[])
     static drift::Haptics haptics;
     editorState.setAddonManager(&addonManager);
     marketClient.setAssetLibrary(&assetLibrary);
+    editorState.setMarketClient(&marketClient);
     qmlRegisterSingletonInstance("Drift", 1, 0, "AssetLibrary", &assetLibrary);
     qmlRegisterSingletonInstance("Drift", 1, 0, "BinFolderModel", editorState.binFolderModel());
     qmlRegisterSingletonInstance("Drift", 1, 0, "EditorState", &editorState);

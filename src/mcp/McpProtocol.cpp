@@ -46,8 +46,9 @@ QJsonObject initializeResult()
              "inspect is a summary; clips:true adds clip rows, detail:true expands them (defaults "
              "and empties are omitted; verbose:true keeps them), clip:<uuid>/track:<n> filter. Async "
              "jobs report under inspect({detail:true}).jobs and inspect().export. Selection-based ops "
-             "(separate_audio, merge_clips, copy_selection…) need select_clip first. Full guide: "
-             "catalog({guide:true}).")},
+             "(separate_audio, merge_clips, copy_selection…) need select_clip first. Stock media: "
+             "market_status → market_search → market_download (needs the user's consent in the app; "
+             "spends quota). Full guide: catalog({guide:true}).")},
     };
 }
 

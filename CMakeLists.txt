@@ -707,6 +707,7 @@ target_sources(drift PRIVATE
     src/mcp/McpDispatcherExtended.cpp
     src/mcp/McpValidate.h
     src/mcp/McpValidate.cpp
+    src/mcp/McpMarket.cpp
     src/mcp/McpServer.h
     src/mcp/McpServer.cpp
     src/mcp/McpJson.h

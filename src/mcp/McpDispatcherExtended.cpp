@@ -1,6 +1,7 @@
 #include "mcp/McpCatalog.h"
 #include "mcp/McpDispatcher.h"
 #include "mcp/McpJson.h"
+#include "mcp/McpMarket.h"
 
 #include "models/AppController.h"
 #include "models/AssetLibrary.h"
@@ -1910,6 +1911,24 @@ QJsonObject McpDispatcher::applyOneExtended(const QString &tool, const QJsonObje
     if (tool == QLatin1String("save_multicam_combined")) {
         m_controller->saveMulticamCombined();
         return ok({{QStringLiteral("active"), m_controller->multicamActive()}});
+    }
+
+    if (tool.startsWith(QLatin1String("market_"))) {
+        MarketClient *market = m_controller->marketClient();
+        if (tool == QLatin1String("market_status"))
+            return marketStatus(market);
+        if (tool == QLatin1String("market_search"))
+            return marketSearch(market, args);
+        if (tool == QLatin1String("market_resolve"))
+            return marketResolve(market, argString(args, QStringLiteral("url")));
+        if (tool == QLatin1String("market_item"))
+            return marketItem(market, argString(args, QStringLiteral("id")));
+        if (tool == QLatin1String("market_download"))
+            return marketDownload(market, args);
+        if (tool == QLatin1String("market_downloads"))
+            return marketDownloads(market, jsonBool(args.value(QStringLiteral("clear"))));
+        if (tool == QLatin1String("market_cancel_download"))
+            return marketCancelDownload(market, argString(args, QStringLiteral("id")));
     }
 
     return unknownOpError(tool);

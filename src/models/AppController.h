@@ -42,6 +42,7 @@ struct EffectTemplateEntry;
 
 class QTimer;
 class AddonManager;
+class MarketClient;
 
 namespace drift::mcp {
 class McpServer;
@@ -622,6 +623,8 @@ public:
     QJsonObject mcpCancelAddonInstall(const QString &id);
     QJsonObject mcpSetAcceleration(const QString &variant);
     void setAddonManager(AddonManager *manager) { m_addonManager = manager; }
+    void setMarketClient(MarketClient *client) { m_marketClient = client; }
+    MarketClient *marketClient() const { return m_marketClient; }
     AddonManager *addonManager() const { return m_addonManager; }
     void setUiLanguage(const QString &code);
     // First-launch chooser: persist the pick and never ask again. Settings uses setUiLanguage.
@@ -1823,6 +1826,7 @@ protected:
 
     AssetLibrary *m_assetLibrary = nullptr;
     AddonManager *m_addonManager = nullptr;
+    MarketClient *m_marketClient = nullptr;
     BinFolderListModel m_binFolderModel;
     QString m_currentBinFolderId;
     bool m_importingFolder = false;

@@ -3,6 +3,7 @@
 #include <QAbstractSocket>
 #include <QCoreApplication>
 #include <QCryptographicHash>
+#include <QDataStream>
 #include <QDir>
 #include <QEventLoop>
 #include <QFile>
@@ -14,7 +15,9 @@
 #include <QScopeGuard>
 #include <QSettings>
 #include <QStandardPaths>
+#include <QTcpServer>
 #include <QTcpSocket>
+#include <QHostAddress>
 #include <QImage>
 #include <QTemporaryDir>
 #include <QTimer>
@@ -28,7 +31,9 @@
 #include "engine/ObjectDetector.h"
 #include "models/AppController.h"
 #include "models/AssetLibrary.h"
+#include "models/MarketClient.h"
 
+#include <cmath>
 #include <cstdio>
 
 class McpTest : public QObject
@@ -97,6 +102,8 @@ private slots:
     void applyRejectsWaveformImage();
     void toolboxEndpointAllowsFramesAndActivity();
     void listScenesExposesThumb();
+    void marketOpsGateOnConsent();
+    void marketSearchAndDownloadImportsAsset();
     void sceneOpsAcceptClipRef();
     void addEffectReportsHost();
     void framesFlagsBeyondEnd();
@@ -202,7 +209,7 @@ void McpTest::catalogListsToolboxes()
     const QJsonObject cat = drift::mcp::catalogPayload();
     QVERIFY(cat.value(QStringLiteral("ok")).toBool());
     const QJsonArray boxes = cat.value(QStringLiteral("toolboxes")).toArray();
-    QCOMPARE(boxes.size(), 17);
+    QCOMPARE(boxes.size(), 18);
     QStringList names;
     for (const QJsonValue &v : boxes)
         names.append(v.toObject().value(QStringLiteral("name")).toString());
@@ -3088,6 +3095,237 @@ void McpTest::framesFlagsBeyondEnd()
     const QJsonArray frames = meta.value(QStringLiteral("frames")).toArray();
     QVERIFY(!frames.at(0).toObject().contains(QStringLiteral("beyond_end")));
     QVERIFY(frames.at(1).toObject().value(QStringLiteral("beyond_end")).toBool());
+}
+
+namespace {
+
+// Stands in for market.cutwire.org: enough of /api/v1 for a search, a download job that is
+// ready at once, and the file it points at.
+class FakeMarket : public QObject
+{
+public:
+    QTcpServer server;
+    int downloadsPosted = 0;
+
+    QString base() const { return QStringLiteral("http://127.0.0.1:%1").arg(server.serverPort()); }
+
+    bool start()
+    {
+        if (!server.listen(QHostAddress::LocalHost))
+            return false;
+        connect(&server, &QTcpServer::newConnection, this, [this] {
+            while (QTcpSocket *sock = server.nextPendingConnection()) {
+                connect(sock, &QTcpSocket::readyRead, this, [this, sock] { handle(sock); });
+                connect(sock, &QTcpSocket::disconnected, sock, &QObject::deleteLater);
+            }
+        });
+        return true;
+    }
+
+    static QByteArray toneWav()
+    {
+        const int rate = 8000;
+        const int frames = rate;
+        QByteArray pcm;
+        pcm.reserve(frames * 2);
+        for (int i = 0; i < frames; ++i) {
+            const qint16 v = qint16(12000.0 * std::sin(2.0 * M_PI * 440.0 * i / rate));
+            pcm.append(char(v & 0xff));
+            pcm.append(char((v >> 8) & 0xff));
+        }
+        QByteArray wav;
+        QDataStream out(&wav, QIODevice::WriteOnly);
+        out.setByteOrder(QDataStream::LittleEndian);
+        out.writeRawData("RIFF", 4);
+        out << quint32(36 + pcm.size());
+        out.writeRawData("WAVEfmt ", 8);
+        out << quint32(16) << quint16(1) << quint16(1) << quint32(rate) << quint32(rate * 2)
+            << quint16(2) << quint16(16);
+        out.writeRawData("data", 4);
+        out << quint32(pcm.size());
+        wav.append(pcm);
+        return wav;
+    }
+
+    void handle(QTcpSocket *sock)
+    {
+        QByteArray buf = sock->property("buf").toByteArray() + sock->readAll();
+        const int headerEnd = buf.indexOf("\r\n\r\n");
+        if (headerEnd < 0) {
+            sock->setProperty("buf", buf);
+            return;
+        }
+        const QByteArray header = buf.left(headerEnd);
+        int contentLength = 0;
+        for (const QByteArray &line : header.split('\n')) {
+            if (line.toLower().startsWith("content-length:"))
+                contentLength = line.mid(15).trimmed().toInt();
+        }
+        if (buf.size() < headerEnd + 4 + contentLength) {
+            sock->setProperty("buf", buf);
+            return;
+        }
+        const QList<QByteArray> requestLine = header.split('\n').first().trimmed().split(' ');
+        const QByteArray method = requestLine.value(0);
+        const QString path = QUrl::fromEncoded(requestLine.value(1)).path();
+
+        int status = 200;
+        QByteArray type = "application/json";
+        QByteArray body;
+        const QString fileUrl = base() + QStringLiteral("/file/tone.wav");
+        const QJsonObject item{{QStringLiteral("id"), QStringLiteral("tone-1")},
+                               {QStringLiteral("type"), QStringLiteral("audio")},
+                               {QStringLiteral("provider"), QStringLiteral("fake")},
+                               {QStringLiteral("title"), QStringLiteral("Test tone")},
+                               {QStringLiteral("duration_ms"), 1000},
+                               {QStringLiteral("price_coins"), 0},
+                               {QStringLiteral("creator"), QJsonObject{{QStringLiteral("name"), QStringLiteral("Drift")}}},
+                               {QStringLiteral("thumb_url"), base() + QStringLiteral("/thumb.jpg")},
+                               {QStringLiteral("variants"), QJsonArray{QJsonObject{{QStringLiteral("id"), QStringLiteral("wav")}, {QStringLiteral("label"), QStringLiteral("WAV")}}}}};
+        const QJsonObject quota{{QStringLiteral("limit"), 5}, {QStringLiteral("remaining"), 4}, {QStringLiteral("window"), QStringLiteral("day")}};
+        const QJsonObject readyJob{{QStringLiteral("id"), QStringLiteral("job-1")},
+                                   {QStringLiteral("status"), QStringLiteral("ready")},
+                                   {QStringLiteral("progress"), 1},
+                                   {QStringLiteral("file"), QJsonObject{{QStringLiteral("url"), fileUrl},
+                                                                        {QStringLiteral("filename"), QStringLiteral("tone.wav")},
+                                                                        {QStringLiteral("mime"), QStringLiteral("audio/wav")}}}};
+        if (path == QLatin1String("/api/v1/catalog")) {
+            body = QJsonDocument(QJsonObject{{QStringLiteral("types"), QJsonArray{QJsonObject{
+                {QStringLiteral("id"), QStringLiteral("audio")},
+                {QStringLiteral("label"), QStringLiteral("Audio")},
+                {QStringLiteral("delivery"), QStringLiteral("media")},
+                {QStringLiteral("providers"), QJsonArray{QJsonObject{
+                    {QStringLiteral("id"), QStringLiteral("fake")},
+                    {QStringLiteral("label"), QStringLiteral("Fake")},
+                    {QStringLiteral("capabilities"), QJsonArray{QStringLiteral("search")}},
+                    {QStringLiteral("filters"), QJsonArray{QJsonObject{{QStringLiteral("id"), QStringLiteral("mood")}, {QStringLiteral("type"), QStringLiteral("enum")}, {QStringLiteral("label"), QStringLiteral("Mood")},
+                                                                       {QStringLiteral("options"), QJsonArray{QJsonObject{{QStringLiteral("id"), QStringLiteral("calm")}, {QStringLiteral("label"), QStringLiteral("Calm")}}}}}}},
+                    {QStringLiteral("quota"), quota}}}}}}}}).toJson(QJsonDocument::Compact);
+        } else if (path == QLatin1String("/api/v1/search")) {
+            body = QJsonDocument(QJsonObject{{QStringLiteral("items"), QJsonArray{item}}, {QStringLiteral("quota"), quota}}).toJson(QJsonDocument::Compact);
+        } else if (path == QLatin1String("/api/v1/downloads") && method == "POST") {
+            ++downloadsPosted;
+            status = 201;
+            body = QJsonDocument(readyJob).toJson(QJsonDocument::Compact);
+        } else if (path == QLatin1String("/api/v1/downloads/job-1")) {
+            body = QJsonDocument(readyJob).toJson(QJsonDocument::Compact);
+        } else if (path == QLatin1String("/file/tone.wav")) {
+            type = "audio/wav";
+            body = toneWav();
+        } else {
+            status = 404;
+            body = QJsonDocument(QJsonObject{{QStringLiteral("code"), QStringLiteral("not_found")}, {QStringLiteral("detail"), QStringLiteral("no such route")}}).toJson(QJsonDocument::Compact);
+        }
+        QByteArray response = "HTTP/1.1 " + QByteArray::number(status) + (status == 200 ? " OK" : status == 201 ? " Created" : " Not Found")
+                              + "\r\nContent-Type: " + type + "\r\nContent-Length: " + QByteArray::number(body.size())
+                              + "\r\nConnection: close\r\n\r\n" + body;
+        sock->setProperty("buf", QByteArray());
+        sock->write(response);
+        sock->flush();
+        sock->disconnectFromHost();
+    }
+};
+
+} // namespace
+
+void McpTest::marketOpsGateOnConsent()
+{
+    QStandardPaths::setTestModeEnabled(true);
+    QSettings().remove(QStringLiteral("market/consented"));
+    AssetLibrary library;
+    AppController state(&library);
+    drift::mcp::McpDispatcher dispatcher(&state);
+
+    QJsonObject reply = dispatcher.applyOne(QStringLiteral("market_search"), {{QStringLiteral("q"), QStringLiteral("x")}});
+    QCOMPARE(reply.value(QStringLiteral("error")).toString(), QStringLiteral("market_unavailable"));
+    reply = dispatcher.applyOne(QStringLiteral("market_status"), {});
+    QVERIFY(reply.value(QStringLiteral("ok")).toBool());
+    QVERIFY(!reply.value(QStringLiteral("configured")).toBool());
+
+    qputenv("DRIFT_MARKET_API_URL", "http://127.0.0.1:9/api/v1");
+    const auto unset = qScopeGuard([] { qunsetenv("DRIFT_MARKET_API_URL"); });
+    MarketClient client;
+    client.setAssetLibrary(&library);
+    state.setMarketClient(&client);
+    QVERIFY(!client.consented());
+
+    reply = dispatcher.applyOne(QStringLiteral("market_status"), {});
+    QVERIFY(reply.value(QStringLiteral("configured")).toBool());
+    QVERIFY(!reply.value(QStringLiteral("consented")).toBool());
+    QVERIFY(reply.value(QStringLiteral("hint")).toString().contains(QStringLiteral("accept")));
+    for (const char *op : {"market_search", "market_resolve", "market_item", "market_download"}) {
+        reply = dispatcher.applyOne(QLatin1String(op), {{QStringLiteral("id"), QStringLiteral("x")}, {QStringLiteral("url"), QStringLiteral("http://x")}, {QStringLiteral("q"), QStringLiteral("x")}});
+        QCOMPARE(reply.value(QStringLiteral("error")).toString(), QStringLiteral("consent_required"));
+    }
+}
+
+void McpTest::marketSearchAndDownloadImportsAsset()
+{
+    QStandardPaths::setTestModeEnabled(true);
+    FakeMarket fake;
+    QVERIFY(fake.start());
+    qputenv("DRIFT_MARKET_API_URL", (fake.base() + QStringLiteral("/api/v1")).toUtf8());
+    const auto unset = qScopeGuard([] { qunsetenv("DRIFT_MARKET_API_URL"); });
+
+    AssetLibrary library;
+    AppController state(&library);
+    MarketClient client;
+    client.setAssetLibrary(&library);
+    client.acceptTerms();
+    state.setMarketClient(&client);
+    QSettings().remove(QStringLiteral("market/consented"));
+    drift::mcp::McpDispatcher dispatcher(&state);
+
+    const QJsonObject status = dispatcher.applyOne(QStringLiteral("market_status"), {});
+    QVERIFY2(status.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(status).toJson(QJsonDocument::Compact)));
+    QVERIFY(status.value(QStringLiteral("consented")).toBool());
+    const QJsonArray types = status.value(QStringLiteral("types")).toArray();
+    QCOMPARE(types.size(), 1);
+    const QJsonObject provider = types.at(0).toObject().value(QStringLiteral("providers")).toArray().at(0).toObject();
+    QCOMPARE(provider.value(QStringLiteral("id")).toString(), QStringLiteral("fake"));
+    QCOMPARE(provider.value(QStringLiteral("filters")).toArray().at(0).toObject().value(QStringLiteral("options")).toArray().at(0).toString(), QStringLiteral("calm"));
+    QCOMPARE(provider.value(QStringLiteral("quota")).toObject().value(QStringLiteral("remaining")).toInt(), 4);
+
+    const QJsonObject bad = dispatcher.applyOne(QStringLiteral("market_search"), {{QStringLiteral("type"), QStringLiteral("video")}});
+    QCOMPARE(bad.value(QStringLiteral("error")).toString(), QStringLiteral("bad_args"));
+    QVERIFY(bad.value(QStringLiteral("detail")).toString().contains(QStringLiteral("audio")));
+
+    const QJsonObject found = dispatcher.applyOne(QStringLiteral("market_search"), {{QStringLiteral("q"), QStringLiteral("tone")}});
+    QVERIFY2(found.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(found).toJson(QJsonDocument::Compact)));
+    const QJsonArray items = found.value(QStringLiteral("items")).toArray();
+    QCOMPARE(items.size(), 1);
+    const QJsonObject row = items.at(0).toObject();
+    QCOMPARE(row.value(QStringLiteral("id")).toString(), QStringLiteral("tone-1"));
+    QCOMPARE(row.value(QStringLiteral("dur")).toDouble(), 1.0);
+    QCOMPARE(row.value(QStringLiteral("by")).toString(), QStringLiteral("Drift"));
+    QVERIFY(!row.contains(QStringLiteral("coins")));
+    QCOMPARE(row.value(QStringLiteral("variants")).toInt(), 1);
+    QVERIFY(!found.value(QStringLiteral("has_more")).toBool());
+
+    const QJsonObject item = dispatcher.applyOne(QStringLiteral("market_item"), {{QStringLiteral("id"), QStringLiteral("tone-1")}});
+    QCOMPARE(item.value(QStringLiteral("item")).toObject().value(QStringLiteral("variants")).toArray().at(0).toObject().value(QStringLiteral("id")).toString(), QStringLiteral("wav"));
+
+    const QJsonObject job = dispatcher.applyOne(QStringLiteral("market_download"), {{QStringLiteral("id"), QStringLiteral("tone-1")}, {QStringLiteral("wait"), 30}});
+    QVERIFY2(job.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(job).toJson(QJsonDocument::Compact)));
+    QCOMPARE(job.value(QStringLiteral("status")).toString(), QStringLiteral("done"));
+    const QString asset = job.value(QStringLiteral("asset")).toString();
+    QVERIFY(!asset.isEmpty());
+    QVERIFY(QFile::exists(job.value(QStringLiteral("path")).toString()));
+    QCOMPARE(fake.downloadsPosted, 1);
+
+    const QJsonObject assets = dispatcher.applyOne(QStringLiteral("list_assets"), {});
+    bool inBin = false;
+    for (const QJsonValue &v : assets.value(QStringLiteral("assets")).toArray())
+        inBin = inBin || v.toObject().value(QStringLiteral("id")).toString() == asset;
+    QVERIFY(inBin);
+
+    const QJsonObject jobs = dispatcher.applyOne(QStringLiteral("market_downloads"), {});
+    QCOMPARE(jobs.value(QStringLiteral("n")).toInt(), 1);
+    QCOMPARE(jobs.value(QStringLiteral("active")).toInt(), 0);
+    const QJsonObject cancel = dispatcher.applyOne(QStringLiteral("market_cancel_download"), {{QStringLiteral("id"), QStringLiteral("tone-1")}});
+    QCOMPARE(cancel.value(QStringLiteral("error")).toString(), QStringLiteral("conflict"));
+    QCOMPARE(dispatcher.applyOne(QStringLiteral("market_downloads"), {{QStringLiteral("clear"), true}}).value(QStringLiteral("n")).toInt(), 0);
+    QFile::remove(job.value(QStringLiteral("path")).toString());
 }
 
 QTEST_MAIN(McpTest)

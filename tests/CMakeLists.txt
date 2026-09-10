@@ -36,6 +36,9 @@ qt_add_executable(tst_editorstate
     ../src/mcp/McpDispatcher.cpp
     ../src/mcp/McpDispatcherExtended.cpp
     ../src/mcp/McpValidate.cpp
+    ../src/mcp/McpMarket.cpp
+    ../src/models/MarketClient.cpp
+    ../src/models/MarketIdentity.cpp
     ../src/mcp/McpServer.cpp
     ../src/mcp/McpStdio.cpp
     ../src/mcp/McpStdioServer.cpp
@@ -156,6 +159,9 @@ qt_add_executable(tst_mcp
     ../src/mcp/McpDispatcher.cpp
     ../src/mcp/McpDispatcherExtended.cpp
     ../src/mcp/McpValidate.cpp
+    ../src/mcp/McpMarket.cpp
+    ../src/models/MarketClient.cpp
+    ../src/models/MarketIdentity.cpp
     ../src/mcp/McpServer.cpp
     ../src/mcp/McpStdio.cpp
     ../src/mcp/McpStdioServer.cpp

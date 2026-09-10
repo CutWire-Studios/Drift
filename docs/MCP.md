@@ -144,6 +144,7 @@ All return `{started:true}` immediately. Every field below except `export` lives
 | `scene` | Shot detection, what is in each shot, scene-synced cuts |
 | `ui` | Theme, shortcuts, editor preferences, guides |
 | `multicam` | Multi-camera session: set up, switch at the playhead, save |
+| `market` | Stock media from the Cutwire marketplace: status/consent, search, resolve a link, download into the bin |
 
 ### Working to the music
 
@@ -250,6 +251,30 @@ and what each piece unlocks; `list_addons` / `install_addon` can install a missi
 (`GX010023.mp4` in Downloads, “the wedding file”), glob or search with **your own filesystem
 tools**, pass the absolute path to `import_media`, and treat a non-empty `missing:[]` as
 “search again”, not as a bin problem.
+
+### Stock media from the marketplace
+
+The `market` toolbox wraps the same service the Assets → Market tab uses (`docs/marketplace`).
+It is gated twice: the build must ship a marketplace service (`market_status.configured`), and
+**the user must have accepted the marketplace terms in the app** (`market_status.consented`).
+Every other market op fails `consent_required` until then; there is deliberately no op to
+accept on the user's behalf, because downloads spend a per-machine quota.
+
+| Call | Effect |
+|---|---|
+| `market_status()` | Types → providers with capabilities (`search`, `featured`, `resolve`), filters (with option ids) and quota, plus account/coins when connected |
+| `market_search({q, type, provider, filters, limit})` | One page of listings `{id, title, type, provider, dur, w, h, coins?, by?, thumb?, variants?}`; `more:true` fetches the next page; `thumb` is a URL you can fetch with your own tools to look at the item |
+| `market_resolve({url})` | For resolve-only providers (pasted page links); blocks up to 90 s and returns one `item` |
+| `market_item({id})` | Variants, preview and license of a listing from the last search/resolve |
+| `market_download({id, variant, dir, wait})` | Starts the download, **spends quota**, imports the file into the bin when done and reports its `asset` id. `wait:<seconds>` blocks for completion; otherwise poll `market_downloads()` or `inspect({detail:true}).jobs.market` |
+| `market_downloads({clear})` / `market_cancel_download({id})` | Job list with status/progress/error/path/asset; cancel a running one |
+
+Errors: `market_unavailable`, `consent_required`, `market_error`, and the service's own codes
+(`rate_limited`, `auth_required`, `payment_required`, `provider_unavailable`, `not_found`,
+`download_failed`). Coin prices appear only when non-zero; nothing in the reply says "free".
+
+`DRIFT_MARKET_API_URL` in the environment points the client at another service (tests use a
+local fake) without rebuilding.
 
 ## Traps
 

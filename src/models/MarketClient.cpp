@@ -103,6 +103,7 @@ struct MarketClient::Job
     QString variantId;
     QString destinationDir;
     QString filePath;
+    QString assetId;
     // waiting -> queued/processing -> downloading -> importing -> done, or failed/cancelled.
     // "waiting" is ours (behind the concurrency cap); the middle ones come from the service.
     QString status;
@@ -178,9 +179,18 @@ void MarketClient::setAssetLibrary(AssetLibrary *library)
     m_library = library;
 }
 
+// DRIFT_MARKET_API_URL in the environment points the client at another service — a local
+// fake in tests, a staging deployment — without a rebuild. The compiled-in key still signs.
+QString MarketClient::apiBase()
+{
+    const QString override = qEnvironmentVariable("DRIFT_MARKET_API_URL");
+    return override.isEmpty() ? drift::market::kApiUrl : override;
+}
+
 bool MarketClient::configured() const
 {
-    return marketServiceConfigured();
+    return !apiBase().isEmpty() && (!drift::market::kClientKey.isEmpty()
+                                    || !qEnvironmentVariable("DRIFT_MARKET_API_URL").isEmpty());
 }
 
 QVariantList MarketClient::providers() const
@@ -625,6 +635,7 @@ QVariantMap MarketClient::jobToMap(const Job &job) const
         {QStringLiteral("bytesTotal"), job.bytesTotal},
         {QStringLiteral("speed"), job.speedBytesPerSec},
         {QStringLiteral("filePath"), job.filePath},
+        {QStringLiteral("assetId"), job.assetId},
         {QStringLiteral("destinationDir"), job.destinationDir},
         {QStringLiteral("errorCode"), job.errorCode},
         {QStringLiteral("errorMessage"), job.errorMessage},
@@ -744,7 +755,7 @@ void MarketClient::disconnectAccount()
 
 QUrl MarketClient::apiUrl(const QString &path) const
 {
-    QString base = kApiUrl;
+    QString base = apiBase();
     while (base.endsWith(QLatin1Char('/')))
         base.chop(1);
     QString rel = path;
@@ -1245,6 +1256,7 @@ void MarketClient::importReadyFile(const QString &itemId, const QString &path,
         job->phase = tr("In the media bin");
         job->progress = 1;
         job->filePath = path;
+        job->assetId = ids.first();
         job->finishedAt = QDateTime::currentDateTime();
         job->speedBytesPerSec = 0;
         if (job->title.isEmpty())

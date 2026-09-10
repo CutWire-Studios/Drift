@@ -2,6 +2,7 @@
 
 #include "AddonManager.h"
 #include "AssetLibrary.h"
+#include "MarketClient.h"
 #include "FileDialogs.h"
 #include "core/Clip.h"
 #include "core/Mask.h"
@@ -19160,6 +19161,10 @@ QJsonObject AppController::mcpInspect(const McpInspectOptions &options) const
                                     {QStringLiteral("status"), m_sceneDetectStatus},
                                     {QStringLiteral("clip"), m_sceneClipId},
                                     {QStringLiteral("scenes"), int(m_scenes.size())}});
+        }
+        if (m_marketClient && m_marketClient->activeDownloadCount() > 0) {
+            jobs.insert(QStringLiteral("market"),
+                        QJsonObject{{QStringLiteral("active"), m_marketClient->activeDownloadCount()}});
         }
         if (!jobs.isEmpty())
             extra.insert(QStringLiteral("jobs"), jobs);
