@@ -35,6 +35,7 @@ qt_add_executable(tst_editorstate
     ../src/mcp/McpHttp.cpp
     ../src/mcp/McpDispatcher.cpp
     ../src/mcp/McpDispatcherExtended.cpp
+    ../src/mcp/McpValidate.cpp
     ../src/mcp/McpServer.cpp
     ../src/mcp/McpStdio.cpp
     ../src/mcp/McpStdioServer.cpp
@@ -154,6 +155,7 @@ qt_add_executable(tst_mcp
     ../src/playback/ClipPreviewPlayer.cpp
     ../src/mcp/McpDispatcher.cpp
     ../src/mcp/McpDispatcherExtended.cpp
+    ../src/mcp/McpValidate.cpp
     ../src/mcp/McpServer.cpp
     ../src/mcp/McpStdio.cpp
     ../src/mcp/McpStdioServer.cpp

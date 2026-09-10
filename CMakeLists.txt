@@ -504,6 +504,10 @@ add_library(driftengine STATIC
     src/engine/AudioOnsets.cpp
     src/engine/SceneDetect.h
     src/engine/SceneDetect.cpp
+    src/engine/FrameSheet.h
+    src/engine/FrameSheet.cpp
+    src/engine/WaveformSheet.h
+    src/engine/WaveformSheet.cpp
     src/engine/ObjectDetector.h
     src/engine/ObjectDetector.cpp
     src/engine/Exporter.h
@@ -701,6 +705,8 @@ target_sources(drift PRIVATE
     src/mcp/McpDispatcher.h
     src/mcp/McpDispatcher.cpp
     src/mcp/McpDispatcherExtended.cpp
+    src/mcp/McpValidate.h
+    src/mcp/McpValidate.cpp
     src/mcp/McpServer.h
     src/mcp/McpServer.cpp
     src/mcp/McpJson.h

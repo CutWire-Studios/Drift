@@ -34,14 +34,20 @@ QJsonObject initializeResult()
                      {QStringLiteral("version"), QStringLiteral(DRIFT_VERSION)}}},
         {QStringLiteral("instructions"),
          QStringLiteral(
-             "Call catalog first, then toolbox({name}) for schemas, then apply({ops}) to mutate. "
-             "Homepage /mcp exposes catalog, toolbox, apply, inspect, capture. "
-             "Pinned /mcp/{toolbox} lists that toolbox's ops directly (no catalog/apply there). "
-             "Always prefer clip UUID from inspect({clips:true}). "
-             "inspect also returns path, dirty, background, and export progress. "
-             "capture() returns a composition still. Times are seconds. Track index 0 is top. "
-             "Clip overlap is off by default. export_video is async — poll inspect.export. "
-             "Toolboxes keyframes, speed, and ui cover animation, speed ramps, and editor preferences.")},
+             "Drift video editor. Workflow: catalog (or search({q}) by keyword) → toolbox({name}) or "
+             "toolbox({ops:[…]}) for schemas → apply({ops:[{tool,args}…]}) to edit; one batch is one undo "
+             "step. To see the footage: activity() finds where content/motion/audio change, frames() "
+             "renders a labelled contact sheet of distinct moments, capture({at}) gives one full still. "
+             "Clip refs: pass clip (uuid from inspect({clips:true})) or track+index; ops never fall back "
+             "to the selection. Times are seconds; track 0 is the top lane; overlap is off by default. "
+             "apply is not atomic: on failure done lists only the ops that ran. Args are validated "
+             "against the schema (bad_args, type_mismatch) and unknown keys come back as ignored. "
+             "Effect ids come from list_effects (compact by default; id/cat/q for params). "
+             "inspect is a summary; clips:true adds clip rows, detail:true expands them (defaults "
+             "and empties are omitted; verbose:true keeps them), clip:<uuid>/track:<n> filter. Async "
+             "jobs report under inspect({detail:true}).jobs and inspect().export. Selection-based ops "
+             "(separate_audio, merge_clips, copy_selection…) need select_clip first. Full guide: "
+             "catalog({guide:true}).")},
     };
 }
 
@@ -75,9 +81,11 @@ QJsonValue handleOne(const QJsonObject &req, const QString &toolbox, const ToolH
 
         const bool homepage = toolbox.isEmpty();
         if (homepage && !isHomepageTool(name) && !isKnownOp(name))
-            return jsonRpcOk(id, textResult(err("unknown_op", name), true));
+            return jsonRpcOk(id, textResult(unknownOpError(name), true));
         if (!homepage) {
-            if (isHomepageTool(name) && name != QLatin1String("inspect") && name != QLatin1String("capture"))
+            static const QStringList readTools = {QStringLiteral("inspect"), QStringLiteral("capture"),
+                                                  QStringLiteral("frames"), QStringLiteral("activity")};
+            if (isHomepageTool(name) && !readTools.contains(name))
                 return jsonRpcOk(id, textResult(err("wrong_endpoint", QStringLiteral("Use /mcp for %1").arg(name)), true));
             if (isKnownOp(name) && toolboxForOp(name) != toolbox)
                 return jsonRpcOk(id, textResult(err("wrong_toolbox", QStringLiteral("%1 belongs to %2").arg(name, toolboxForOp(name))), true));

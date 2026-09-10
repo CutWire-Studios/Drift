@@ -1,6 +1,10 @@
 #include "mcp/McpCatalog.h"
 #include "mcp/McpJson.h"
 
+#include <QHash>
+
+#include <algorithm>
+
 namespace drift::mcp {
 namespace {
 
@@ -26,9 +30,11 @@ QJsonObject clipRefProps()
 
 QJsonObject assetRefProp()
 {
-    return stringProp(QStringLiteral(
-        "Asset id, bin index as a string, or exact asset name (case-insensitive). A numeric string is "
-        "tried as a bin index first, so prefer the id from list_assets."));
+    QJsonObject prop = stringProp(QStringLiteral(
+        "Asset id, bin index (number or numeric string), or exact asset name (case-insensitive). A "
+        "numeric value is tried as a bin index first, so prefer the id from list_assets."));
+    prop.insert(QStringLiteral("type"), QJsonArray{QStringLiteral("string"), QStringLiteral("integer")});
+    return prop;
 }
 
 // Effect/audio-effect stack position. Repeated across ~10 ops, so the discovery path lives here.
@@ -76,16 +82,16 @@ QJsonObject beatUnitProp()
 
 QJsonObject maskSchema()
 {
-    return objectSchema({
+    QJsonObject s = objectSchema({
         {QStringLiteral("shape"),
          enumProp(QStringLiteral("Mask shape. Omitted or unrecognised = none, i.e. mask off."),
                   {QStringLiteral("none"), QStringLiteral("rectangle"), QStringLiteral("ellipse"),
                    QStringLiteral("star"), QStringLiteral("heart"), QStringLiteral("bars"),
                    QStringLiteral("freeform"), QStringLiteral("matte")})},
-        {QStringLiteral("x"), numberProp(QStringLiteral("Center x, 0..1 of canvas (default 0.5)"))},
-        {QStringLiteral("y"), numberProp(QStringLiteral("Center y, 0..1 (default 0.5)"))},
-        {QStringLiteral("w"), numberProp(QStringLiteral("Width, 0..1 (default 0.6)"))},
-        {QStringLiteral("h"), numberProp(QStringLiteral("Height, 0..1 (default 0.6)"))},
+        {QStringLiteral("x"), numberProp(QStringLiteral("Center x, fraction of canvas (default 0.5)"), 0, 1)},
+        {QStringLiteral("y"), numberProp(QStringLiteral("Center y, fraction of canvas (default 0.5)"), 0, 1)},
+        {QStringLiteral("w"), numberProp(QStringLiteral("Width, fraction of canvas (default 0.6)"), 0, 1)},
+        {QStringLiteral("h"), numberProp(QStringLiteral("Height, fraction of canvas (default 0.6)"), 0, 1)},
         {QStringLiteral("rotation"), numberProp(QStringLiteral("Degrees clockwise (default 0)"))},
         {QStringLiteral("feather"), numberProp(QStringLiteral("Alpha edge blur in pixels (default 0)"))},
         {QStringLiteral("invert"), boolProp(QStringLiteral("Invert coverage (default false)"))},
@@ -93,11 +99,14 @@ QJsonObject maskSchema()
          arrayProp({{QStringLiteral("type"), QStringLiteral("array")}},
                    QStringLiteral("freeform only: [[x,y], …] normalised 0..1"))},
     });
+    s.insert(QStringLiteral("description"),
+             QStringLiteral("The whole mask; every omitted key reverts to its default and omitting shape turns the mask off"));
+    return s;
 }
 
 QJsonObject shapeStyleSchema()
 {
-    return objectSchema({
+    QJsonObject s = objectSchema({
         {QStringLiteral("kind"), stringProp(QStringLiteral("Shape catalog id from list_shapes"))},
         {QStringLiteral("fillKind"),
          enumProp(QStringLiteral("Fill type"),
@@ -107,19 +116,22 @@ QJsonObject shapeStyleSchema()
         {QStringLiteral("fillSecondary"), stringProp(QStringLiteral("Gradient end stop color"))},
         {QStringLiteral("gradientAngle"), numberProp(QStringLiteral("Degrees; 0 = left to right"))},
         {QStringLiteral("stroke"), stringProp(QStringLiteral("Stroke color"))},
-        {QStringLiteral("strokeWidth"), numberProp(QStringLiteral("Stroke width px, clamped 0..200"))},
+        {QStringLiteral("strokeWidth"), numberProp(QStringLiteral("Stroke width px"), 0, 200)},
         {QStringLiteral("strokeStyle"),
          enumProp(QStringLiteral("Stroke dash pattern"),
                   {QStringLiteral("none"), QStringLiteral("solid"), QStringLiteral("dash"),
                    QStringLiteral("dot"), QStringLiteral("dashDot")})},
-        {QStringLiteral("cornerRadius"), numberProp(QStringLiteral("Rect family: px, clamped 0..2000"))},
-        {QStringLiteral("points"), integerProp(QStringLiteral("Star/polygon point count, clamped 3..60"))},
-        {QStringLiteral("innerRatio"), numberProp(QStringLiteral("Star inner radius, clamped 0.05..0.95"))},
-        {QStringLiteral("headSize"), numberProp(QStringLiteral("Arrow head size, clamped 0.05..0.9"))},
-        {QStringLiteral("thickness"), numberProp(QStringLiteral("Arrow/banner thickness, clamped 0.05..1"))},
-        {QStringLiteral("tailX"), numberProp(QStringLiteral("Bubble tail x, clamped 0.08..0.92"))},
-        {QStringLiteral("tailSize"), numberProp(QStringLiteral("Bubble tail size, clamped 0.05..0.5"))},
+        {QStringLiteral("cornerRadius"), numberProp(QStringLiteral("Rect family: corner px"), 0, 2000)},
+        {QStringLiteral("points"), integerProp(QStringLiteral("Star/polygon point count"), 3, 60)},
+        {QStringLiteral("innerRatio"), numberProp(QStringLiteral("Star inner radius"), 0.05, 0.95)},
+        {QStringLiteral("headSize"), numberProp(QStringLiteral("Arrow head size"), 0.05, 0.9)},
+        {QStringLiteral("thickness"), numberProp(QStringLiteral("Arrow/banner thickness"), 0.05, 1)},
+        {QStringLiteral("tailX"), numberProp(QStringLiteral("Bubble tail x"), 0.08, 0.92)},
+        {QStringLiteral("tailSize"), numberProp(QStringLiteral("Bubble tail size"), 0.05, 0.5)},
     });
+    s.insert(QStringLiteral("description"),
+             QStringLiteral("Partial style patch; only supplied keys change. Each geometry knob is read by a subset of shape kinds"));
+    return s;
 }
 
 QJsonObject mergeProps(QJsonObject a, const QJsonObject &b)
@@ -167,12 +179,13 @@ QJsonObject exportSettingsProps()
     return {
         {QStringLiteral("scale"), stringProp(QStringLiteral("Scale id from list_export_options"))},
         {QStringLiteral("height"), integerProp(QStringLiteral("Target height in pixels; 0 = project height"))},
-        {QStringLiteral("fps"), numberProp(QStringLiteral("Output fps; 0 = project rate. An fps id from list_export_options is also accepted as a string."))},
+        {QStringLiteral("fps"), QJsonObject{{QStringLiteral("type"), QJsonArray{QStringLiteral("number"), QStringLiteral("string")}},
+                                            {QStringLiteral("description"), QStringLiteral("Output fps; 0 = project rate. An fps id from list_export_options is also accepted as a string.")}}},
         {QStringLiteral("video"), stringProp(QStringLiteral("Video codec id from list_export_options.video (h264, hevc, …)"))},
         {QStringLiteral("audio"), stringProp(QStringLiteral("Audio codec id from list_export_options.audio (aac, opus, …)"))},
         {QStringLiteral("rate"), enumProp(QStringLiteral("Rate control mode — decides whether crf or bitrate is honoured. Defaults to crf. Not listed by list_export_options; crf is only applied by codecs that support it, otherwise the encoder falls back to bitrate."),
                                           {QStringLiteral("crf"), QStringLiteral("bitrate")})},
-        {QStringLiteral("crf"), integerProp(QStringLiteral("Quality when rate is crf (lower is better)"))},
+        {QStringLiteral("crf"), integerProp(QStringLiteral("Quality when rate is crf (lower is better)"), 0, 51)},
         {QStringLiteral("bitrate"), integerProp(QStringLiteral("Video kbps when rate is bitrate"))},
         {QStringLiteral("preset"), stringProp(QStringLiteral("Encoder speed/quality preset. Defaults to the codec's own default (medium for x264, p4 for NVENC)."))},
         {QStringLiteral("audio_bitrate"), integerProp(QStringLiteral("Audio kbps"))},
@@ -301,11 +314,13 @@ const QList<Op> &ops()
           "Redo the last undone edit. Fails bad_args when there is nothing to redo.",
           objectSchema({}) },
         { "list_history", "timeline", "Read the undo stack",
-          "Linear history (no branches). Returns {entries:[{index, label, hash, short, snapshot}], "
-          "current, hash, linear:true}. index 0 is Origin (empty/loaded project); each later entry is "
-          "one undo step. hash is SHA-256 of that version's compact project JSON — the same bytes "
-          "take_snapshot writes to <hash>.json. current is the HEAD index. Read-only.",
-          objectSchema({}), true, false, true },
+          "Linear history (no branches). Returns {entries:[{index, label, short, snapshot?}] newest "
+          "first, current, hash, short, total, linear:true}. index 0 is Origin (empty/loaded project); "
+          "each later entry is one undo step. short is the first 12 chars of that version's SHA-256 "
+          "(undo_to takes any ≥8-char prefix); hash is the full HEAD hash — the same bytes "
+          "take_snapshot writes to <hash>.json. Read-only.",
+          objectSchema({{QStringLiteral("limit"), propWithDefault(integerProp(QStringLiteral("Newest entries to return"), 1, 10000), 20)}}),
+          true, false, true },
         { "undo_to", "timeline", "Jump to a history version",
           "Restore the project to a linear history version. Pass index (from list_history) or hash "
           "(full SHA-256 or unique 8+ char prefix). Redo of later steps remains until the next edit, "
@@ -346,7 +361,7 @@ const QList<Op> &ops()
                                    {QStringLiteral("w"), numberProp(QStringLiteral("On-canvas width in pixels (not source resolution)"))},
                                    {QStringLiteral("h"), numberProp(QStringLiteral("On-canvas height in pixels"))},
                                    {QStringLiteral("rotation"), numberProp(QStringLiteral("Degrees clockwise"))},
-                                   {QStringLiteral("opacity"), numberProp(QStringLiteral("0..1"))}},
+                                   {QStringLiteral("opacity"), numberProp(QStringLiteral("Opacity"), 0, 1)}},
                                   clipRefProps())) },
         { "reset_transform", "canvas", "Reset a clip to fill the canvas",
           "Reset position, size, rotation, opacity, and flips to defaults.",
@@ -358,12 +373,12 @@ const QList<Op> &ops()
           "upsert_subtitle_cue, paste_at_playhead, and any add_* with `at` omitted.",
           objectSchema({{QStringLiteral("at"), numberProp(QStringLiteral("Seconds; clamped to the project duration"))}},
                        {QStringLiteral("at")}) },
-        { "play", "playback", "Start playback",
+        { "play", "playback", "Let the timeline run (loops the work area if set)",
           "Start playback from the current playhead, looping over the work area when one is set. "
           "Playback moves the playhead, which changes where playhead-based ops land — pause before "
           "editing. Returns {playing}.",
           objectSchema({}) },
-        { "pause", "playback", "Stop playback",
+        { "pause", "playback", "Freeze the playhead before playhead-based edits",
           "Pause playback, leaving the playhead where it stopped. Returns {playing}. capture pauses "
           "on its own.",
           objectSchema({}) },
@@ -393,22 +408,39 @@ const QList<Op> &ops()
                                   clipRefProps())) },
 
         { "list_effects", "effects", "See available video effects",
-          "The installable catalog, not what is on a clip. Returns "
-          "{effects:[{id, label, cat, params:[{key, type, default, min, max, bool}]}]}. Use id with "
-          "add_effect and param keys with set_effect_param. To see a clip's current stack use "
-          "inspect({clips:true,detail:true}).",
-          objectSchema({}), true, false, true },
+          "The installable catalog, not what is on a clip. Default reply is compact: "
+          "{cats:{<cat>:[{id, label}…]}, n}. Pass id for one effect with its params "
+          "[{key, type, default, min, max, bool}], cat for a whole category with params, or q for a "
+          "substring match (params included when ≤5 hits). Use id with add_effect and param keys with "
+          "set_effect_param. To see a clip's current stack use inspect({clips:true,detail:true}).",
+          objectSchema({{QStringLiteral("id"), stringProp(QStringLiteral("One effect id (aliases such as adjust_contrast resolve)"))},
+                        {QStringLiteral("cat"), stringProp(QStringLiteral("Category name from the default reply"))},
+                        {QStringLiteral("q"), stringProp(QStringLiteral("Case-insensitive substring over id/label/cat"))},
+                        {QStringLiteral("limit"), propWithDefault(integerProp(QStringLiteral("Max rows for q"), 1, 500), 50)}}),
+          true, false, true },
         { "list_audio_effects", "effects", "See available audio effects",
-          "The installable catalog, not what is on a clip. Returns {effects:[{id, label, cat, params:[…]}]}. "
-          "Use id with add_audio_effect.",
-          objectSchema({}), true, false, true },
+          "The installable catalog, not what is on a clip. Same shape and modes as list_effects: "
+          "compact {cats, n} by default; id, cat or q for params. Use id with add_audio_effect.",
+          objectSchema({{QStringLiteral("id"), stringProp(QStringLiteral("One audio effect id"))},
+                        {QStringLiteral("cat"), stringProp(QStringLiteral("Category name from the default reply"))},
+                        {QStringLiteral("q"), stringProp(QStringLiteral("Case-insensitive substring over id/label/cat"))},
+                        {QStringLiteral("limit"), propWithDefault(integerProp(QStringLiteral("Max rows for q"), 1, 500), 50)}}),
+          true, false, true },
         { "list_transitions", "effects", "See available transitions",
-          "Returns {transitions:[{id, label, cat, params:[…]}]}. Pass the id as `kind` to add_transition "
-          "(default crossfade).",
-          objectSchema({}), true, false, true },
+          "Same shape and modes as list_effects: compact {cats, n} by default; id, cat or q for "
+          "params. Pass the id as `kind` to add_transition (default crossfade).",
+          objectSchema({{QStringLiteral("id"), stringProp(QStringLiteral("One transition id"))},
+                        {QStringLiteral("cat"), stringProp(QStringLiteral("Category name from the default reply"))},
+                        {QStringLiteral("q"), stringProp(QStringLiteral("Case-insensitive substring over id/label/cat"))},
+                        {QStringLiteral("limit"), propWithDefault(integerProp(QStringLiteral("Max rows for q"), 1, 500), 50)}}),
+          true, false, true },
         { "add_effect", "effects", "Put a video effect on a clip",
           "Append a video effect to the end of the clip's stack. Returns index — its stack position, "
-          "which is what every other effect op takes. Fails not_found on an unknown effect id.",
+          "which is what every other effect op takes. Ids are matched case-insensitively with '.' and "
+          "'_' interchangeable; an unknown id fails not_found with the nearest ids. The stack is "
+          "stored on an adjustment clip linked to the target (created on its own lane the first "
+          "time, and reported as host:{track,index,clip}); keep addressing the original clip in "
+          "every effect op, and expect that extra lane in inspect.",
           objectSchema(mergeProps({{QStringLiteral("effect"), stringProp(QStringLiteral("Effect catalog id from list_effects"))}},
                                   clipRefProps()),
                        {QStringLiteral("effect")}) },
@@ -424,13 +456,14 @@ const QList<Op> &ops()
           "the result with inspect({clips:true,detail:true}). Use set_effect_color_param for colors.",
           objectSchema(mergeProps({{QStringLiteral("index"), effectIndexProp()},
                                    {QStringLiteral("key"), stringProp(QStringLiteral("Parameter key from the effect's params in list_effects"))},
-                                   {QStringLiteral("value"), numberProp(QStringLiteral("Value (booleans as 0/1)"))}},
+                                   {QStringLiteral("value"), numberProp(QStringLiteral("Value (booleans as 0/1); range from list_effects({id})"))}},
                                   clipRefProps()),
                        {QStringLiteral("index"), QStringLiteral("key"), QStringLiteral("value")}) },
         { "add_audio_effect", "effects", "Put an audio effect on a clip",
           "Append an audio effect to the clip's audio stack. Returns index — its stack position. The "
           "audio stack is numbered separately from the video effect stack. Fails not_found on an "
-          "unknown id.",
+          "unknown id. Like add_effect, the stack lives on a linked adjustment clip reported as "
+          "host; keep addressing the original clip.",
           objectSchema(mergeProps({{QStringLiteral("effect"), stringProp(QStringLiteral("Audio effect catalog id from list_audio_effects"))}},
                                   clipRefProps()),
                        {QStringLiteral("effect")}) },
@@ -446,7 +479,7 @@ const QList<Op> &ops()
           "inspect({clips:true,detail:true}).",
           objectSchema(mergeProps({{QStringLiteral("index"), effectIndexProp()},
                                    {QStringLiteral("key"), stringProp(QStringLiteral("Parameter key from list_audio_effects"))},
-                                   {QStringLiteral("value"), numberProp(QStringLiteral("Value"))}},
+                                   {QStringLiteral("value"), numberProp(QStringLiteral("Value (booleans as 0/1); range from list_audio_effects({id})"))}},
                                   clipRefProps()),
                        {QStringLiteral("index"), QStringLiteral("key"), QStringLiteral("value")}) },
         { "add_transition", "effects", "Bridge two adjacent clips",
@@ -458,7 +491,7 @@ const QList<Op> &ops()
           "remove_transition and set_transition_*.",
           objectSchema(mergeProps(
               {{QStringLiteral("kind"),
-                propWithDefault(stringProp(QStringLiteral("Transition id from list_transitions; unknown ids silently fall back to crossfade")),
+                propWithDefault(stringProp(QStringLiteral("Transition id from list_transitions; an unknown id fails not_found with the nearest ids")),
                                 QStringLiteral("crossfade"))},
                {QStringLiteral("duration"), numberProp(QStringLiteral("Seconds (ignored when clips already overlap)"))}},
               clipRefProps())) },
@@ -484,7 +517,7 @@ const QList<Op> &ops()
           objectSchema({{QStringLiteral("kind"), enumProp(QStringLiteral("Background kind"),
                                                           {QStringLiteral("color"), QStringLiteral("blur")})},
                         {QStringLiteral("color"), stringProp(QStringLiteral("Background color #AARRGGBB"))},
-                        {QStringLiteral("blurStrength"), numberProp(QStringLiteral("Blur amount 0..200"))}}) },
+                        {QStringLiteral("blurStrength"), numberProp(QStringLiteral("Blur amount"), 0, 200)}}) },
         { "set_metadata", "project", "Set project title and author",
           "Set project metadata. Omitted fields are left unchanged.",
           objectSchema({{QStringLiteral("title"), stringProp(QStringLiteral("Project title"))},
@@ -620,8 +653,9 @@ const QList<Op> &ops()
           objectSchema({{QStringLiteral("dark"), boolProp(QStringLiteral("true = dark, false = light"))}},
                        {QStringLiteral("dark")}) },
         { "list_shortcuts", "ui", "List action bindings",
-          "Returns {actions:[{id, label, shortcut}]} for every editor action.",
-          objectSchema({}), true, false, true },
+          "Returns {actions:[{id, label, shortcut}], n} for every editor action.",
+          objectSchema({{QStringLiteral("q"), stringProp(QStringLiteral("Case-insensitive substring over id/label/shortcut"))}}),
+          true, false, true },
         { "set_shortcut", "ui", "Rebind a shortcut",
           "Bind keys to an action id from list_shortcuts. An empty keys string clears the binding. On "
           "a clash the call FAILS with error \"conflict\" and the conflicting action's label in detail; "
@@ -655,6 +689,50 @@ QJsonArray endpointList()
             endpoints.append(QStringLiteral("/mcp/") + name);
     }
     return endpoints;
+}
+
+const QHash<QString, int> &opIndex()
+{
+    static const QHash<QString, int> k = [] {
+        QHash<QString, int> h;
+        const QList<Op> &all = ops();
+        for (int i = 0; i < all.size(); ++i)
+            h.insert(QString::fromUtf8(all.at(i).name), i);
+        return h;
+    }();
+    return k;
+}
+
+const Op *findOp(const QString &name)
+{
+    const int i = opIndex().value(name, -1);
+    return i < 0 ? nullptr : &ops().at(i);
+}
+
+QString matchKey(const QString &s)
+{
+    QString k = s.trimmed().toLower();
+    k.replace(QLatin1Char('-'), QLatin1Char('_'));
+    k.replace(QLatin1Char(' '), QLatin1Char('_'));
+    k.replace(QLatin1Char('.'), QLatin1Char('_'));
+    return k;
+}
+
+int levenshtein(const QString &a, const QString &b)
+{
+    QList<int> prev(b.size() + 1);
+    QList<int> cur(b.size() + 1);
+    for (int j = 0; j <= b.size(); ++j)
+        prev[j] = j;
+    for (int i = 1; i <= a.size(); ++i) {
+        cur[0] = i;
+        for (int j = 1; j <= b.size(); ++j) {
+            const int cost = a.at(i - 1) == b.at(j - 1) ? 0 : 1;
+            cur[j] = qMin(qMin(prev[j] + 1, cur[j - 1] + 1), prev[j - 1] + cost);
+        }
+        prev.swap(cur);
+    }
+    return prev[b.size()];
 }
 
 } // namespace
@@ -708,18 +786,19 @@ QString agentGuideText()
         "Drift MCP agent guide\n"
         "\n"
         "Workflow:\n"
-        "1. Call catalog on POST /mcp (homepage).\n"
-        "2. Call toolbox({name}) for JSON schemas of ops in that toolbox.\n"
+        "1. Call catalog on POST /mcp (homepage), or search({q}) to find an op by keyword.\n"
+        "2. Call toolbox({name}) or toolbox({ops:[…]}) for JSON schemas.\n"
         "3. Call apply({ops:[{tool, args}, …]}) to run one or many mutations in one undo step.\n"
         "4. Call inspect({clips:true, detail:true}) for clip UUIDs, effect stacks, mask/fade/speed, "
         "subtitle cues, face-track/stabilize fields, and job state. inspect always reports "
         "selection:{track,index,clip} (omitted when nothing is selected) and "
         "undo:{can,canRedo,depth,index,hash}. inspect({clips:true,cues:true}) adds subtitleCues without "
         "the rest of detail.\n"
-        "5. Call capture() for a composition still (JPEG by default).\n"
+        "5. To see the footage: activity() finds where things happen, frames() renders a contact\n"
+        "   sheet of distinct moments, capture() gives one full-size still.\n"
         "\n"
         "Pinned endpoints (/mcp/media, /mcp/timeline, …) list toolbox ops directly. "
-        "catalog, toolbox, and apply are only on /mcp; inspect and capture work on both. "
+        "catalog, toolbox, search, and apply are only on /mcp; inspect, capture, frames, and activity work on both. "
         "Toolbox ops may also be called by name directly on /mcp instead of through apply, but only "
         "apply gives you one undo step for a batch.\n"
         "\n"
@@ -734,7 +813,9 @@ QString agentGuideText()
         "  not_found, type_mismatch, unknown_op, unknown_toolbox, wrong_endpoint, wrong_toolbox,\n"
         "  apply_failed, import_failed, import_timeout, export_busy, export_failed, export_timeout,\n"
         "  capture_failed, conflict.\n"
-        "- apply is not atomic: on failure the ops before it stay applied. Check stopped/failed.\n"
+        "- apply is not atomic: on failure the ops before it stay applied; done lists only those.\n"
+        "- Args are validated against the schema: bad_args (missing/enum/range), type_mismatch;\n"
+        "  unknown keys come back as ignored:[…]. Numbers are rounded to 3 dp except fps/pos.\n"
         "\n"
         "Selection-based ops take no clip argument and act on the current selection — call\n"
         "select_clip or select_clips first: separate_audio, unlink_audio, merge_clips,\n"
@@ -767,6 +848,8 @@ QString agentGuideText()
         "inspect({detail:true}).beats.stale says whether what you have still describes the audio.\n"
         "\n"
         "Understanding the footage (scene toolbox):\n"
+        "0. activity → frames → capture shows you the pictures before any scan: activity for\n"
+        "   where content changes, frames for a labelled contact sheet, capture for one moment.\n"
         "1. detect_scenes({clip, with_objects:true}) starts a scan; poll\n"
         "   inspect({detail:true}).sceneDetect until active is false. A clip already scanned at\n"
         "   the same settings comes back {cached:true} straight away.\n"
@@ -790,7 +873,7 @@ QString agentGuideText()
         "shapes, subtitles, segmentation, ai, audio, scene, multicam.\n");
 }
 
-QJsonObject catalogPayload()
+QJsonObject catalogPayload(const QJsonObject &args)
 {
     struct Box {
         const char *name;
@@ -798,18 +881,15 @@ QJsonObject catalogPayload()
     };
     static const Box boxes[] = {
         {"media", "Import (absolute paths only — resolve fuzzy names with your own filesystem tools) "
-                   "and inspect the media bin before placing clips."},
+                   "and read the media bin before placing clips."},
         {"timeline", "Tracks, place/move/trim/split/delete clips, ripple/gap, overlap, selection, undo."},
-        {"canvas", "Transform, flip, blend, mask, fade, speed, reverse, animation, and stabilisation. "
-                   "Constant speed is set_clip_speed here; ramps are set_speed_curve in speed. "
-                   "Write fade curves with set_fade_curve here; read a custom curve with list_fade_curve in speed."},
-        {"playback", "Seek, play, pause, In/Out work area. Use capture (homepage) to see the frame."},
+        {"canvas", "Transform, flip, blend, mask, fade, constant speed, reverse, animation, stabilisation."},
+        {"playback", "Seek, play, pause, In/Out work area."},
         {"text", "Add and edit title/caption clips."},
         {"effects", "Video/audio effects and transitions."},
         {"project", "Canvas size, background, metadata, save, and export."},
         {"keyframes", "Animate clip and effect properties over time."},
-        {"speed", "Variable playback speed (retimed clips). Constant speed is set_clip_speed in canvas. "
-                  "list_fade_curve lives here; write fades with set_fade_curve in canvas."},
+        {"speed", "Speed ramps (retimed clips) and reading custom fade curves."},
         {"ui", "Editor theme and keyboard shortcuts."},
         {"shapes", "Builtin shapes, stickers, emoji, fonts."},
         {"subtitles", "Subtitle clips, import/export, Whisper generation."},
@@ -820,16 +900,17 @@ QJsonObject catalogPayload()
         {"multicam", "Multi-camera session: set up angles, switch at the playhead, save separate or combined."},
     };
 
+    const bool brief = args.value(QStringLiteral("brief")).toBool();
     QJsonArray toolboxes;
     for (const Box &box : boxes) {
         QJsonArray opEntries;
         for (const Op &op : ops()) {
-            if (qstrcmp(op.toolbox, box.name) == 0) {
-                opEntries.append(QJsonObject{
-                    {QStringLiteral("name"), QString::fromUtf8(op.name)},
-                    {QStringLiteral("when"), QString::fromUtf8(op.when)},
-                });
-            }
+            if (qstrcmp(op.toolbox, box.name) != 0)
+                continue;
+            if (brief)
+                opEntries.append(QString::fromUtf8(op.name));
+            else
+                opEntries.append(QStringLiteral("%1 — %2").arg(QString::fromUtf8(op.name), QString::fromUtf8(op.when)));
         }
         toolboxes.append(QJsonObject{
             {QStringLiteral("name"), QString::fromUtf8(box.name)},
@@ -838,108 +919,191 @@ QJsonObject catalogPayload()
         });
     }
 
-    return ok({
+    QJsonObject out = ok({
         {QStringLiteral("toolboxes"), toolboxes},
-        {QStringLiteral("endpoints"), endpointList()},
-        {QStringLiteral("units"),
-         QJsonObject{{QStringLiteral("time"), QStringLiteral("seconds")},
-                     {QStringLiteral("trackIndex"), QStringLiteral("0=top")},
-                     {QStringLiteral("clipId"), QStringLiteral("stable UUID")}}},
-        {QStringLiteral("workflow"),
-         QStringLiteral("catalog → toolbox({name}) → apply({ops:[{tool,args}…]})")},
-        {QStringLiteral("hint"),
-         QStringLiteral("toolbox({name}) then apply({ops:[{tool,args}…]}) for a batch. "
-                        "inspect({clips:true,detail:true}) for full clip rows: effect stacks, "
-                        "transitions, mask/fade/speed/reverse/animation, subtitleCues, volume, "
-                        "keyframes, hasFaceTrack, stabilize* fields, and async job state. "
-                        "inspect always includes selection and undo. capture() for a still.")},
         {QStringLiteral("limitations"),
          QJsonArray{
-             QStringLiteral("apply is not atomic — on failure the ops before it stay applied; check stopped/failed."),
-             QStringLiteral("apply cannot run catalog, toolbox, inspect, capture, or apply; call those directly on /mcp."),
-             QStringLiteral("Clip-ref ops need clip, or track+index — they never fall back to the current selection. Read the current selection from inspect.selection."),
-             QStringLiteral("Effect, transition, and bookmark indices/ids are only discoverable via inspect({clips:true,detail:true})."),
-             QStringLiteral("set_effect_param, set_audio_effect_param, and set_transition_param do not validate key or index; verify with inspect."),
+             QStringLiteral("apply is not atomic: on failure the ops before it stay applied; done lists only those, failed carries the error."),
+             QStringLiteral("apply cannot run catalog, toolbox, search, inspect, capture, frames, activity, or apply; call those directly."),
+             QStringLiteral("Clip-ref ops need clip (uuid) or track+index; they never fall back to the selection (read it from inspect.selection)."),
+             QStringLiteral("set_effect_param, set_audio_effect_param and set_transition_param do not validate key or index; verify with inspect."),
              QStringLiteral("set_transform writes at the playhead and becomes a keyframe when the property is animated or autoKey is on."),
-             QStringLiteral("set_mask replaces the whole mask; omitted keys revert to defaults. Read inspect({clips:true,detail:true}).tracks[].items[].mask first."),
-             QStringLiteral("set_subtitle_cues replaces every cue. Read inspect({clips:true,cues:true}) or detail rows' subtitleCues first."),
-             QStringLiteral("Segmentation, denoise, and face detection expose no progress field — diff inspect to detect completion."),
-             QStringLiteral("These ops sit outside the undo stack (and so do all read-only ops): %1. "
-                            "set_beat_layers is the dangerous one: it changes the user's own snapping and cannot be undone.")
+             QStringLiteral("set_mask and set_subtitle_cues replace the whole mask / cue list; read the current one from inspect first."),
+             QStringLiteral("Segmentation, denoise and face detection expose no progress field; diff inspect to detect completion."),
+             QStringLiteral("Outside the undo stack (as are all read-only ops): %1. set_beat_layers changes the user's own snapping and cannot be undone.")
                  .arg(undoExemptOps().join(QStringLiteral(", "))),
-             QStringLiteral("set_speed_curve returns a new clip id and the previous UUID stops resolving — end the apply batch after it."),
-             QStringLiteral("generate_subtitles must run AFTER remove_silence; silence removal shifts the timeline and would invalidate cue times."),
-             QStringLiteral("import_media takes absolute paths only. There is no directory listing — when the user names a file loosely, glob/search with your own filesystem tools, then import and check missing:[]."),
+             QStringLiteral("set_speed_curve returns a new clip id and the old UUID stops resolving; end the apply batch after it."),
+             QStringLiteral("generate_subtitles must run AFTER remove_silence, which shifts cue times."),
+             QStringLiteral("import_media takes absolute paths only; there is no directory listing, so find files with your own filesystem tools and check missing:[]."),
          }},
-        {QStringLiteral("guide"), agentGuideText()},
     });
+    if (args.value(QStringLiteral("endpoints")).toBool())
+        out.insert(QStringLiteral("endpoints"), endpointList());
+    if (args.value(QStringLiteral("guide")).toBool())
+        out.insert(QStringLiteral("guide"), agentGuideText());
+    return out;
 }
 
-QJsonObject toolboxPayload(const QString &name)
+QJsonObject toolboxPayload(const QString &name, const QStringList &only)
 {
     const QString key = name.trimmed().toLower();
-    if (!toolboxNames().contains(key))
+    if (!key.isEmpty() && !toolboxNames().contains(key))
         return err("unknown_toolbox", QStringLiteral("Known: %1").arg(toolboxNames().join(QLatin1Char(' '))));
+    if (key.isEmpty() && only.isEmpty())
+        return err("bad_args", QStringLiteral("name (toolbox) or ops (op names) required"));
 
     QJsonArray tools;
-    for (const Op &op : ops()) {
-        if (key == QLatin1String(op.toolbox))
-            tools.append(opTool(op));
+    QJsonArray unknown;
+    if (only.isEmpty()) {
+        for (const Op &op : ops()) {
+            if (key == QLatin1String(op.toolbox))
+                tools.append(opTool(op));
+        }
+    } else {
+        for (const QString &raw : only) {
+            const Op *op = findOp(raw.trimmed());
+            if (!op || (!key.isEmpty() && key != QLatin1String(op->toolbox))) {
+                unknown.append(raw);
+                continue;
+            }
+            tools.append(opTool(*op));
+        }
     }
-    return ok({{QStringLiteral("name"), key}, {QStringLiteral("tools"), tools}});
+    QJsonObject out = ok({{QStringLiteral("tools"), tools}, {QStringLiteral("n"), tools.size()}});
+    if (!key.isEmpty())
+        out.insert(QStringLiteral("name"), key);
+    if (!unknown.isEmpty())
+        out.insert(QStringLiteral("unknown"), unknown);
+    return out;
 }
 
 QJsonArray homepageTools()
 {
     const QStringList toolboxEnum = toolboxNames();
     QJsonArray tools;
-    tools.append(toolDef(QStringLiteral("catalog"),
-                         QStringLiteral("When: Start here. Returns toolboxes, per-op when hints, endpoints, units, and workflow (no schemas)."),
-                         objectSchema({}),
-                         toolAnnotations(true, false, true)));
+    tools.append(toolDef(
+        QStringLiteral("catalog"),
+        QStringLiteral("When: Start here. Returns every toolbox with its ops as \"name — when\" one-liners plus "
+                       "limitations (~3k tokens). brief:true = op names only; guide:true adds the agent guide; "
+                       "endpoints:true adds the pinned HTTP endpoints. Next: toolbox({name}) or toolbox({ops}) "
+                       "for schemas, or search({q}) to jump straight to an op."),
+        objectSchema({{QStringLiteral("brief"), boolProp(QStringLiteral("Op names only, no when hints"))},
+                      {QStringLiteral("guide"), boolProp(QStringLiteral("Include the agent guide prose"))},
+                      {QStringLiteral("endpoints"), boolProp(QStringLiteral("Include the pinned HTTP endpoints"))}}),
+        toolAnnotations(true, false, true)));
     tools.append(toolDef(
         QStringLiteral("toolbox"),
-        QStringLiteral("When: Load schemas. Returns full JSON schemas for one toolbox's ops. Then call those ops via apply."),
-        objectSchema({{QStringLiteral("name"), enumProp(QStringLiteral("Toolbox name"), toolboxEnum)}},
-                     {QStringLiteral("name")})));
+        QStringLiteral("When: Load schemas. Returns full JSON schemas for one toolbox's ops (name), or for just "
+                       "the named ops from any toolbox (ops). Then call those ops via apply."),
+        objectSchema({{QStringLiteral("name"), enumProp(QStringLiteral("Toolbox name"), toolboxEnum)},
+                      {QStringLiteral("ops"),
+                       arrayProp(stringProp(QStringLiteral("Op name")),
+                                 QStringLiteral("Only these ops, from any toolbox; name is then optional"))}}),
+        toolAnnotations(true, false, true)));
     tools.append(toolDef(
         QStringLiteral("inspect"),
-        QStringLiteral("When: Read state. Returns revision, name, w, h, fps, dur, playhead, playing, overlap, "
+        QStringLiteral("When: Read state. Summary: revision, name, w, h, fps, dur, playhead, playing, overlap, "
                        "clips (count), tracks, assets, path, dirty, background, export {active, progress}, "
-                       "selection {track, index, clip} (absent when nothing is selected), and "
-                       "undo {can, canRedo, depth, index, hash}. work_in/work_out appear only when a work area is set. "
-                       "clips=true adds per-clip rows (id, start, duration, trim) under tracks[].items. "
-                       "cues=true adds subtitleCues [{start,end,text}] to those rows without the rest of detail. "
-                       "detail=true is REQUIRED to see the full QML clip map: effect stacks, transition ids, "
-                       "per-track waveform/height, bookmarks, mask, fade/fadeCurve/fadeShape, speed, reverse, "
-                       "blend, animIn/animOut, volume, keyframes, subtitleCues, hasFaceTrack, "
-                       "stabilized/stabilizing/stabilizeMode/stabilizeSmoothing/stabilizeTripod/stabilizeStale/"
-                       "stabilizeProgress/stabilizeStatus, and the package/subtitleGen/reverseRender/sceneDetect/"
-                       "beats job state. since=<revision> returns {unchanged:true, revision} when nothing changed."),
+                       "selection (absent when none), undo {can, canRedo, depth, index, hash (12-char)}, "
+                       "work_in/work_out when set. clips=true adds compact rows under tracks[].items; "
+                       "cues=true adds subtitleCues to them. detail=true expands rows to the full clip map "
+                       "(effects, mask, fade, speed, keyframes, stabilize*, ...) minus what the kind cannot "
+                       "use or still sits at its default: an absent boolean is false; transform "
+                       "{x,y,w,h,rotation,opacity} is always present (values at the playhead) and "
+                       "animated lists the keyframed properties. verbose=true returns every field. "
+                       "clip=<uuid> returns just that clip (detail on); track=<n> just that track. "
+                       "Async jobs appear under jobs {package|subtitleGen|reverseRender|sceneDetect} only while "
+                       "active; beats only once analysed. since=<revision> returns {unchanged:true, revision}."),
         objectSchema({{QStringLiteral("clips"), boolProp(QStringLiteral("Include per-clip rows under tracks[].items"))},
                       {QStringLiteral("detail"),
-                       boolProp(QStringLiteral("Expand to full clip maps: effects, transitions, mask/fade/speed, "
-                                               "cues, face track, stabilize*, bookmarks, and async job state. Combine with clips=true."))},
+                       boolProp(QStringLiteral("Expand rows to the full clip map with kind-irrelevant and default-valued "
+                                               "fields omitted. Combine with clips=true."))},
+                      {QStringLiteral("verbose"),
+                       boolProp(QStringLiteral("With detail=true, return every field of the clip map, defaults included"))},
                       {QStringLiteral("cues"),
                        boolProp(QStringLiteral("Include subtitleCues on clip rows without requiring detail. Use this for an hour-long transcript index."))},
+                      {QStringLiteral("clip"),
+                       stringProp(QStringLiteral("Clip uuid: return only that clip's detail row (implies clips and detail)"))},
+                      {QStringLiteral("track"),
+                       integerProp(QStringLiteral("Track index: return only that track"))},
                       {QStringLiteral("since"),
                        integerProp(QStringLiteral("Revision from a prior inspect; returns {unchanged:true} when current"))}}),
         toolAnnotations(true, false, true)));
     tools.append(toolDef(
         QStringLiteral("apply"),
-        QStringLiteral("When: Mutate. Runs ops in order and stops at the first failure. NOT atomic — ops before the failure stay applied; the reply is {ok:false, error:\"apply_failed\", stopped:<index>, failed:<that op's error>, done:[results so far]}. On success: {ok:true, n, done}. Successful mutations collapse into a single undo step labelled from the op names, except the ops listed in catalog.limitations (import, save, playback, export, view-state toggles including set_beat_layers), which undo cannot revert. Only toolbox ops go here — catalog, toolbox, inspect, capture, and apply itself return unknown_op, so call those directly. An ops array cannot reference an id produced earlier in the same batch — end the batch after set_speed_curve or any op that mints a clip id you need next."),
+        QStringLiteral("When: Mutate. Runs ops in order and stops at the first failure. NOT atomic — ops before the failure stay applied; the reply is {ok:false, error:\"apply_failed\", stopped:<index>, tool, failed:<that op's error>, done:[results of the ops before it]}. On success: {ok:true, n, done}. Successful mutations collapse into a single undo step labelled from the op names, except the ops listed in catalog.limitations (import, save, playback, export, view-state toggles including set_beat_layers), which undo cannot revert. Only toolbox ops go here — catalog, toolbox, search, inspect, capture, frames, activity, and apply itself return unknown_op, so call those directly. Args are validated against the op schema (required, type, enum, min/max); unknown keys are reported back as ignored:[…]. An ops array cannot reference an id produced earlier in the same batch — end the batch after set_speed_curve or any op that mints a clip id you need next."),
         objectSchema({{QStringLiteral("ops"),
                        arrayProp(objectSchema({{QStringLiteral("tool"), stringProp(QStringLiteral("Toolbox op name, e.g. place_clip"))},
                                                {QStringLiteral("args"),
-                                                QJsonObject{{QStringLiteral("type"), QStringLiteral("object")}}}},
+                                                QJsonObject{{QStringLiteral("type"), QStringLiteral("object")},
+                                                            {QStringLiteral("description"), QStringLiteral("That op's arguments, per its inputSchema from toolbox")}}}},
                                               {QStringLiteral("tool")}),
                                  QStringLiteral("Sequential operations"))}},
                      {QStringLiteral("ops")})));
     tools.append(toolDef(
         QStringLiteral("capture"),
-        QStringLiteral("When: Verify visually. Still of the composition at `at`, defaulting to the playhead. Pauses playback first. By default returns an inline JPEG scaled to a 1280px long edge plus {at, w, h, full}; full=true instead writes a full-resolution PNG next to the project's frame captures and returns its path in the reply. Cannot be used inside apply."),
+        QStringLiteral("When: Verify visually. Still of the composition at `at`, defaulting to the playhead. Pauses playback first. By default returns an inline JPEG scaled to a 1280px long edge plus {at, w, h, full}; full=true instead writes a full-resolution PNG next to the project's frame captures and returns its path in the reply. beyond_end:true and dur are added when `at` is past the end of the timeline. Cannot be used inside apply."),
         objectSchema({{QStringLiteral("at"), numberProp(QStringLiteral("Timeline seconds (default: playhead)"))},
                       {QStringLiteral("full"), boolProp(QStringLiteral("Full-res PNG on disk instead of inline JPEG"))}}),
+        toolAnnotations(true, false, true)));
+    tools.append(toolDef(
+        QStringLiteral("frames"),
+        QStringLiteral("When: See many moments at once. One contact-sheet image of the timeline (or of one clip) "
+                       "instead of repeated capture calls — about the cost of a single capture. sample:changes "
+                       "(default) hashes candidate frames and keeps only the ones that look different; uniform "
+                       "spaces n evenly; scenes uses detect_scenes thumbnails; at:[…] renders exact times. Every "
+                       "tile has its time burned in AND listed in frames[].t, with diff = how different it is from "
+                       "the previous kept tile (in-shot motion ~5-10, a cut 30+). Times are timeline seconds, or source "
+                       "seconds when clip/track+index is given (tl is then the timeline time). Tiles past the "
+                       "end of the material render black and carry beyond_end:true. Cannot run inside "
+                       "apply. Follow up with capture({at}) for a full-size look."),
+        objectSchema(mergeProps(
+            {{QStringLiteral("start"), numberProp(QStringLiteral("Range start seconds (default: work area or 0)"))},
+             {QStringLiteral("end"), numberProp(QStringLiteral("Range end seconds (default: work area or timeline end)"))},
+             {QStringLiteral("at"), arrayProp(numberProp(QStringLiteral("Seconds")), QStringLiteral("Exact times to render, max 20; overrides sample"))},
+             {QStringLiteral("n"), propWithDefault(integerProp(QStringLiteral("Tiles to keep"), 1, 20), 12)},
+             {QStringLiteral("sample"),
+              propWithDefault(enumProp(QStringLiteral("changes keeps visually distinct frames; uniform spaces them evenly; scenes uses detect_scenes thumbnails"),
+                                       {QStringLiteral("changes"), QStringLiteral("uniform"), QStringLiteral("scenes")}),
+                              QStringLiteral("changes"))},
+             {QStringLiteral("min_change"), propWithDefault(integerProp(QStringLiteral("changes only: dHash bits (0..64) a frame must differ from the last kept frames by; in-shot motion scores ~5-10, a cut 30+"), 0, 64), 12)},
+             {QStringLiteral("cols"), integerProp(QStringLiteral("Grid columns; 0 = auto (3 when n ≤ 6, else 4)"), 0, 8)},
+             {QStringLiteral("tile"), integerProp(QStringLiteral("Tile width in pixels; 0 = auto so the sheet fits one vision image"), 0, 720)},
+             {QStringLiteral("label"), propWithDefault(boolProp(QStringLiteral("Burn the time into each tile")), true)},
+             {QStringLiteral("return"),
+              propWithDefault(enumProp(QStringLiteral("inline JPEG in the reply, or path to a JPEG next to the project's frame captures"),
+                                       {QStringLiteral("inline"), QStringLiteral("path")}),
+                              QStringLiteral("inline"))}},
+            clipRefProps())),
+        toolAnnotations(true, false, true)));
+    tools.append(toolDef(
+        QStringLiteral("activity"),
+        QStringLiteral("When: Find where something happens before looking at it. A cheap text profile over a "
+                       "range: per-sample content change (0..255, the same scale as detect_scenes.threshold 27), "
+                       "motion fraction and audio level (0..1), plus the strongest peaks. At coarse steps a fast "
+                       "pan scores like a cut, so these are peaks, not cuts — confirm with frames({at:[…]}). "
+                       "Timeline space by default, source space with clip/track+index. Cannot run inside apply."),
+        objectSchema(mergeProps(
+            {{QStringLiteral("start"), numberProp(QStringLiteral("Range start seconds (default: work area or 0)"))},
+             {QStringLiteral("end"), numberProp(QStringLiteral("Range end seconds (default: work area or timeline end)"))},
+             {QStringLiteral("samples"), propWithDefault(integerProp(QStringLiteral("Frames to score across the range"), 8, 600), 200)},
+             {QStringLiteral("peaks"), propWithDefault(integerProp(QStringLiteral("How many of the strongest content peaks to list"), 0, 30), 8)},
+             {QStringLiteral("audio"), propWithDefault(boolProp(QStringLiteral("Include the audio lane")), true)}},
+            clipRefProps())),
+        toolAnnotations(true, false, true)));
+    tools.append(toolDef(
+        QStringLiteral("search"),
+        QStringLiteral("When: You know what you want but not the op name. Find an op by keyword: effects, "
+                       "transitions, keyframes, animation, subtitles, captions, transcribe, beats, tempo, scenes, "
+                       "shots, silence, loudness, mask, fade, speed, reverse, crop, resize, export, render, "
+                       "import, undo, history, bookmark, stabilize, denoise, faces, emoji, fonts, shapes, "
+                       "stickers, multicam. Scores op names, toolbox, when hints, descriptions and argument names; "
+                       "returns hits:[{name, toolbox, when, args, required}]. schema:true inlines inputSchema when "
+                       "there are ≤3 hits, so you can go straight to apply."),
+        objectSchema({{QStringLiteral("q"), stringProp(QStringLiteral("Keywords, space separated"))},
+                      {QStringLiteral("limit"), propWithDefault(integerProp(QStringLiteral("Max hits"), 1, 50), 8)},
+                      {QStringLiteral("schema"), boolProp(QStringLiteral("Inline inputSchema when ≤3 hits"))}},
+                     {QStringLiteral("q")}),
         toolAnnotations(true, false, true)));
     return tools;
 }
@@ -959,57 +1123,180 @@ bool isHomepageTool(const QString &name)
 {
     static const QStringList k = {QStringLiteral("catalog"), QStringLiteral("toolbox"),
                                   QStringLiteral("inspect"), QStringLiteral("apply"),
-                                  QStringLiteral("capture")};
+                                  QStringLiteral("capture"), QStringLiteral("frames"),
+                                  QStringLiteral("activity"), QStringLiteral("search")};
     return k.contains(name);
 }
 
 bool isKnownOp(const QString &name)
 {
-    for (const Op &op : ops()) {
-        if (name == QLatin1String(op.name))
-            return true;
-    }
-    return false;
+    return opIndex().contains(name);
 }
 
 bool isReadOnlyOp(const QString &name)
 {
-    for (const Op &op : ops()) {
-        if (name == QLatin1String(op.name))
-            return op.readOnly;
-    }
-    return false;
+    const Op *op = findOp(name);
+    return op && op->readOnly;
 }
 
 QString toolboxForOp(const QString &name)
 {
-    for (const Op &op : ops()) {
-        if (name == QLatin1String(op.name))
-            return QString::fromUtf8(op.toolbox);
+    const Op *op = findOp(name);
+    return op ? QString::fromUtf8(op->toolbox) : QString();
+}
+
+QJsonObject opInputSchema(const QString &name)
+{
+    const Op *op = findOp(name);
+    return op ? op->schema : QJsonObject();
+}
+
+QStringList opNames()
+{
+    static const QStringList k = [] {
+        QStringList names;
+        for (const Op &op : ops())
+            names.append(QString::fromUtf8(op.name));
+        return names;
+    }();
+    return k;
+}
+
+QStringList nearestStrings(const QString &needle, const QStringList &pool, int max)
+{
+    const QString n = matchKey(needle);
+    if (n.isEmpty())
+        return {};
+    QList<QPair<int, QString>> scored;
+    for (const QString &candidate : pool) {
+        const QString k = matchKey(candidate);
+        const int d = levenshtein(n, k);
+        const bool related = d <= 3 || (n.size() >= 4 && (k.contains(n) || n.contains(k)));
+        if (related)
+            scored.append({d, candidate});
     }
-    return {};
+    std::stable_sort(scored.begin(), scored.end(),
+                     [](const QPair<int, QString> &a, const QPair<int, QString> &b) { return a.first < b.first; });
+    QStringList out;
+    for (const auto &entry : scored) {
+        if (out.size() >= max)
+            break;
+        out.append(entry.second);
+    }
+    return out;
+}
+
+QStringList nearestOps(const QString &name, int max)
+{
+    return nearestStrings(name, opNames(), max);
+}
+
+QJsonObject unknownOpError(const QString &name)
+{
+    if (name.trimmed().isEmpty())
+        return err("unknown_op", QStringLiteral("tool name required"));
+    if (isHomepageTool(name))
+        return err("unknown_op", QStringLiteral("%1 is a homepage tool; call it directly, not inside apply").arg(name));
+    QStringList suggestions;
+    for (const QString &op : nearestOps(name))
+        suggestions.append(QStringLiteral("%1 (%2)").arg(op, toolboxForOp(op)));
+    if (suggestions.isEmpty())
+        return err("unknown_op", QStringLiteral("unknown op %1; try search({q:\"…\"}) or catalog").arg(name));
+    return err("unknown_op", QStringLiteral("unknown op %1; did you mean %2?").arg(name, suggestions.join(QStringLiteral(", "))));
+}
+
+QJsonObject searchOps(const QString &q, int limit, bool schema)
+{
+    const QStringList tokens = q.toLower().split(QLatin1Char(' '), Qt::SkipEmptyParts);
+    if (tokens.isEmpty())
+        return err("bad_args", QStringLiteral("q required"));
+    limit = qBound(1, limit, 50);
+
+    QList<QPair<int, const Op *>> scored;
+    for (const Op &op : ops()) {
+        const QString name = QString::fromUtf8(op.name);
+        const QString toolbox = QString::fromUtf8(op.toolbox);
+        const QString when = QString::fromUtf8(op.when).toLower();
+        const QString description = QString::fromUtf8(op.description).toLower();
+        const QJsonObject props = op.schema.value(QStringLiteral("properties")).toObject();
+        int score = 0;
+        for (const QString &token : tokens) {
+            if (name == token)
+                score += 100;
+            else if (name.startsWith(token))
+                score += 50;
+            else if (name.contains(token))
+                score += 30;
+            if (toolbox == token)
+                score += 20;
+            if (when.contains(token))
+                score += 20;
+            if (description.contains(token))
+                score += 10;
+            bool inKeys = false;
+            bool inDescriptions = false;
+            for (auto it = props.begin(); it != props.end(); ++it) {
+                if (it.key().toLower().contains(token))
+                    inKeys = true;
+                if (it.value().toObject().value(QStringLiteral("description")).toString().toLower().contains(token))
+                    inDescriptions = true;
+            }
+            score += (inKeys ? 5 : 0) + (inDescriptions ? 5 : 0);
+        }
+        if (score > 0)
+            scored.append({score, &op});
+    }
+    std::stable_sort(scored.begin(), scored.end(),
+                     [](const QPair<int, const Op *> &a, const QPair<int, const Op *> &b) {
+                         if (a.first != b.first)
+                             return a.first > b.first;
+                         return qstrcmp(a.second->name, b.second->name) < 0;
+                     });
+
+    QJsonArray hits;
+    const bool inline_ = schema && scored.size() <= 3;
+    for (const auto &entry : scored) {
+        if (hits.size() >= limit)
+            break;
+        const Op &op = *entry.second;
+        QJsonArray args;
+        const QJsonObject props = op.schema.value(QStringLiteral("properties")).toObject();
+        for (auto it = props.begin(); it != props.end(); ++it)
+            args.append(it.key());
+        QJsonObject row{
+            {QStringLiteral("name"), QString::fromUtf8(op.name)},
+            {QStringLiteral("toolbox"), QString::fromUtf8(op.toolbox)},
+            {QStringLiteral("when"), QString::fromUtf8(op.when)},
+            {QStringLiteral("args"), args},
+            {QStringLiteral("required"), op.schema.value(QStringLiteral("required")).toArray()},
+        };
+        if (inline_)
+            row.insert(QStringLiteral("inputSchema"), op.schema);
+        hits.append(row);
+    }
+    return ok({{QStringLiteral("q"), q}, {QStringLiteral("hits"), hits}, {QStringLiteral("n"), hits.size()}});
 }
 
 QString homepageHtml()
 {
-    const QJsonObject cat = catalogPayload();
+    const QJsonObject cat = catalogPayload({{QStringLiteral("brief"), true}, {QStringLiteral("endpoints"), true}});
     QString body = QStringLiteral(
         "<!doctype html><meta charset=utf-8><title>Drift MCP</title>"
         "<body style='font:14px/1.45 system-ui;max-width:42rem;margin:2rem auto;padding:0 1rem'>"
         "<h1>Drift agent access</h1>"
         "<p>This editor is exposing an MCP server on localhost. Any local process with the "
         "session token can edit the open project and capture frames.</p>"
-        "<p><strong>Workflow:</strong> %1</p>"
+        "<p><strong>Workflow:</strong> catalog or search({q}) → toolbox({name}) → "
+        "apply({ops:[{tool,args}…]}); activity → frames → capture to see the footage.</p>"
         "<p>Agents: POST JSON-RPC to <code>/mcp</code> with "
         "<code>Authorization: Bearer …</code>.</p>"
-        "<h2>Toolboxes</h2><ul>")
-                    .arg(cat.value(QStringLiteral("workflow")).toString());
+        "<h2>Toolboxes</h2><ul>");
     const QJsonArray boxes = cat.value(QStringLiteral("toolboxes")).toArray();
     for (const QJsonValue &v : boxes) {
         const QJsonObject b = v.toObject();
         QStringList names;
         for (const QJsonValue &op : b.value(QStringLiteral("ops")).toArray())
-            names.append(op.toObject().value(QStringLiteral("name")).toString());
+            names.append(op.toString());
         body += QStringLiteral("<li><strong>%1</strong> — %2<br><code>%3</code></li>")
                     .arg(b.value(QStringLiteral("name")).toString(),
                          b.value(QStringLiteral("when")).toString(),

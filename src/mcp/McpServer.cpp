@@ -178,16 +178,30 @@ QJsonValue McpServer::handleRpc(const QString &toolbox, const QJsonValue &body)
 QJsonObject McpServer::dispatchTool(const QString &name, const QJsonObject &args)
 {
     if (name == QLatin1String("catalog"))
-        return textResult(catalogPayload());
-    if (name == QLatin1String("toolbox"))
-        return textResult(toolboxPayload(args.value(QStringLiteral("name")).toString()));
+        return textResult(catalogPayload(args));
+    if (name == QLatin1String("toolbox")) {
+        QStringList only;
+        for (const QJsonValue &v : args.value(QStringLiteral("ops")).toArray())
+            only.append(v.toString());
+        return textResult(toolboxPayload(args.value(QStringLiteral("name")).toString(), only));
+    }
+    if (name == QLatin1String("search")) {
+        return textResult(searchOps(args.value(QStringLiteral("q")).toString(),
+                                    args.value(QStringLiteral("limit")).toInt(8),
+                                    args.value(QStringLiteral("schema")).toBool()));
+    }
     if (name == QLatin1String("inspect"))
         return textResult(m_dispatcher->inspect(args));
     if (name == QLatin1String("apply"))
         return textResult(m_dispatcher->apply(args));
     if (name == QLatin1String("capture"))
         return m_dispatcher->capture(args);
-    return textResult(m_dispatcher->applyOne(name, args));
+    if (name == QLatin1String("frames"))
+        return m_dispatcher->frames(args);
+    if (name == QLatin1String("activity"))
+        return textResult(m_dispatcher->activity(args));
+    const QJsonObject result = m_dispatcher->applyOne(name, args);
+    return isRawResult(result) ? result : textResult(result);
 }
 
 } // namespace drift::mcp

@@ -85,23 +85,8 @@ QList<int> peaksAbove(const QList<double> &diffs, double threshold, int minGapSa
     return kept;
 }
 
-// A frame reduced to hue, saturation and value bytes, one triple per pixel. Keeping the
-// converted form means the per-frame conversion happens once rather than twice.
-struct HsvFrame
-{
-    QList<uchar> hsv; // h, s, v interleaved
-    int width = 0;
-    int height = 0;
+} // namespace
 
-    int pixelCount() const { return width * height; }
-    bool matches(const HsvFrame &other) const
-    {
-        return width == other.width && height == other.height && width > 0 && height > 0;
-    }
-};
-
-// RGB -> HSV with all three channels on the same 0..255 scale, so the per-channel deltas
-// below are directly comparable and can simply be averaged.
 void toHsv(const QImage &image, HsvFrame *out)
 {
     const QImage src = image.format() == QImage::Format_RGBA8888
@@ -142,15 +127,6 @@ void toHsv(const QImage &image, HsvFrame *out)
     }
 }
 
-struct FrameDelta
-{
-    double content = 0.0; // mean HSV delta, 0..255 — the cut metric
-    double motion = 0.0;  // fraction of pixels whose value changed appreciably, 0..1
-};
-
-// How much a pixel's value must move before it counts as motion, on the 0..255 scale.
-constexpr int kMotionPixelDelta = 12;
-
 FrameDelta compareFrames(const HsvFrame &a, const HsvFrame &b)
 {
     FrameDelta result;
@@ -190,8 +166,6 @@ FrameDelta compareFrames(const HsvFrame &a, const HsvFrame &b)
     result.motion = double(moved) / count;
     return result;
 }
-
-} // namespace
 
 double medianOf(QList<double> values)
 {

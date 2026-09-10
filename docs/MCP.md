@@ -72,17 +72,22 @@ projects — it says so on stderr, and only render, capture and export fail.
 
 ## Workflow
 
-1. **`catalog`** — toolboxes, per-op “when” hints, endpoints, units, limitations (no schemas).
-2. **`toolbox({name})`** — full JSON schemas for ops in that toolbox.
-3. **`apply({ops:[{tool, args}, …]})`** — run mutations in order; one undo step for the batch.
-4. **`inspect({clips:true, detail:true})`** — project state, clip UUIDs, effects, transitions, bookmarks, mask/fade/speed, subtitle cues, face track, stabilize*, async jobs, `selection`, `undo`.
-5. **`capture()`** — JPEG still of the composition (use to verify edits).
+The `initialize` reply carries a short `instructions` string with the essentials; the eight homepage tools are:
+
+1. **`catalog`** — toolboxes and their ops as `"name — when"` strings, plus limitations (~3k tokens). `catalog({brief:true})` is names only; `catalog({guide:true})` adds the long prose guide; `catalog({endpoints:true})` adds the HTTP endpoints.
+2. **`search({q})`** — find ops by keyword across names, when-hints, descriptions and argument names. Returns `hits:[{name, toolbox, when, args, required}]`; `schema:true` inlines the full schema when there are ≤3 hits. Use this instead of loading a whole toolbox.
+3. **`toolbox({name})`** or **`toolbox({ops:[…]})`** — full JSON schemas for a toolbox, or for just the named ops (any toolbox).
+4. **`apply({ops:[{tool, args}, …]})`** — run mutations in order; one undo step for the batch.
+5. **`inspect()`** — project summary; `clips:true` adds clip rows, `detail:true` expands them, `clip:<uuid>` / `track:<n>` filter, `since:<revision>` short-circuits.
+6. **`activity()`** — cheap text profile of visual change, motion and loudness over a range; tells you *where* to look.
+7. **`frames()`** — one labelled contact-sheet image of many moments; tells you *what* is there.
+8. **`capture({at})`** — one full-size JPEG still of the composition (use to verify edits).
 
 Homepage endpoint: `POST /mcp` with `Authorization: Bearer <token>`.
 
-Pinned endpoints (`/mcp/timeline`, `/mcp/project`, …) list that toolbox’s ops directly. `catalog`, `toolbox`, and `apply` are only on `/mcp`; `inspect` and `capture` work on both. Toolbox ops can also be called by name directly on `/mcp` instead of through `apply` — but only `apply` collapses a batch into one undo step.
+Pinned endpoints (`/mcp/timeline`, `/mcp/project`, …) list that toolbox’s ops directly. `catalog`, `search`, `toolbox`, and `apply` are only on `/mcp`; `inspect`, `capture`, `frames` and `activity` work on both. Toolbox ops can also be called by name directly on `/mcp` instead of through `apply` — but only `apply` collapses a batch into one undo step.
 
-`apply` takes **toolbox ops only**. `catalog`, `toolbox`, `inspect`, `capture`, and `apply` itself return `unknown_op` inside an `ops` array; call them directly.
+`apply` takes **toolbox ops only**. The eight homepage tools return `unknown_op` inside an `ops` array; call them directly. `get_waveform({image:true})` is also refused inside `apply`.
 
 ## Conventions
 
@@ -91,26 +96,30 @@ Pinned endpoints (`/mcp/timeline`, `/mcp/project`, …) list that toolbox’s op
 | Time | Seconds |
 | Clip reference | Prefer `clip` UUID from `inspect`; else `track` (0 = top) + `index`. One or the other is **required** — clip ops never fall back to the selection. Read the current selection from `inspect.selection` |
 | Selection ops | `separate_audio`, `unlink_audio`, `merge_clips`, `align_clip_left/right`, `copy_selection`, `cut_selection` take no clip argument — call `select_clip` first. `freeze_frame` and `paste_at_playhead` are playhead-based (seek first); they do not use the selection |
-| Discovery | Effect stack indices, transition ids, and bookmark indices exist **only** in `inspect({clips:true, detail:true})`. Subtitle cues: `inspect({clips:true, cues:true})` or the `subtitleCues` field of a detail row. Mask/fade/speed/volume/keyframes/`hasFaceTrack`/stabilize* are on the same detail rows |
+| Discovery | Effect stack indices, transition ids, and bookmark indices exist **only** in `inspect({clips:true, detail:true})`. Subtitle cues: `inspect({clips:true, cues:true})` or the `subtitleCues` field of a detail row. Mask/fade/speed/volume/keyframes/`hasFaceTrack`/stabilize* are on the same detail rows. **Detail rows omit what does not apply**: caption styling only on text/subtitle clips, shape styling only on shapes, `mask` only when one is set, `keyframes` only for animated properties (listed in `animated`), stabilize/animation blocks only when in use, fade fields only when a fade is set, empty arrays, false booleans and other defaults dropped (absent = default: no fade, `speed` 1, `volume` 1, unlinked). Every row carries `transform:{x,y,w,h,rotation,opacity}` at the playhead. `verbose:true` returns the raw untrimmed map |
+| Numbers | Every number in a reply is rounded to 3 decimals, except `fps` and speed-curve `pos` which keep 6 |
+| Validation | Args are checked against the op's schema before it runs: a missing required key → `bad_args` naming it; a wrong JSON type → `type_mismatch` (numeric strings like `"1"` are still accepted); an enum or declared min/max violation → `bad_args` listing the allowed values or range. Unknown keys are not errors; they come back as `ignored:[…]` on success. A clip-ref op with neither `clip` nor `track`+`index` gets `bad_args` saying so; a stale uuid gets `not_found` with a hint to re-read `inspect` |
+| Effects | `list_effects` / `list_audio_effects` / `list_transitions` are compact by default (`cats:{<cat>:[{id,label}]}`); pass `id`, `cat`, or `q` to get parameters. Ids are accepted with `.` or `_` interchangeably; an unknown id returns `not_found` with the closest matches. Effect stacks live on an **adjustment clip linked to the target**, created on its own lane the first time; `add_effect`/`add_audio_effect` report it as `host:{track,index,clip}`. Keep addressing the original clip in every effect op, and expect that extra lane in `inspect` |
+| Images | `capture`, `frames`, and `get_waveform({image:true})` return a text block (JSON meta) followed by an image block. Times are always in the text block; never rely on burned-in labels alone. Sheets fit one vision image (≤1456 px long edge) |
 | Overlap | Off by default — place/move snap to gaps unless `set_overlap` enables overlap; the reply reports `requested` vs `placed`. With overlap off, moving several clips toward zero must be sequenced **back-to-front**. `set_ripple` / `close_gap` close holes after a delete |
 | Export | `export_video` is async — poll `inspect().export` or `export_status`. The output path is normalised, so use the `path` echoed back. Named sizes: `list_export_presets` + `export_with_preset` |
-| Atomicity | `apply` is **not** atomic: on failure the ops before it stay applied. Check `stopped` / `failed` / `done`. An ops array cannot reference an id produced earlier in the same batch — end the batch after `set_speed_curve` |
-| Undo | One batch = one undo step. Linear history (no branches): `list_history` returns `{index, label, hash}` per version (index 0 = Origin). `undo_to({index})` or `undo_to({hash})` jumps; the next edit drops redo. `take_snapshot` writes compact project JSON named `<hash>.json` (file SHA-256 = history hash). Ops outside the stack (and all read-only ops): `import_media`, `import_media_bytes`, `seek`, `play`, `pause`, `undo`, `redo`, `undo_to`, `take_snapshot`, `restore_snapshot`, `set_overlap`, `set_ripple`, `set_snap`, `set_guides`, `set_loop_work_area`, `export_video`, `save_project`, `set_theme`, `set_shortcut`, `reset_shortcuts`, `set_beat_layers`, `detect_beats`, `list_speed_curve`, `list_fade_curve`, `install_addon`, `cancel_addon_install`, `set_acceleration`, `switch_angle`, `end_multicam`. **`set_beat_layers` changes the user's own snapping and cannot be undone** |
-| Errors | `{ok:false, error:<code>, detail:<text>}` — `bad_args`, `not_found`, `type_mismatch`, `unknown_op`, `unknown_toolbox`, `wrong_endpoint`, `wrong_toolbox`, `apply_failed`, `import_failed`, `import_timeout`, `export_busy`, `export_failed`, `export_timeout`, `capture_failed`, `conflict` |
+| Atomicity | `apply` is **not** atomic: on failure the ops before it stay applied. The failure reply is `{ok:false, error:"apply_failed", stopped:<index>, tool, failed:<that op's error>, done:[results of the ops that ran]}` — `done` never contains the failed op. An ops array cannot reference an id produced earlier in the same batch — end the batch after `set_speed_curve` |
+| Undo | One batch = one undo step. Linear history (no branches): `list_history({limit})` returns the newest `limit` (default 20) versions as `{index, label, short}` plus the HEAD `hash`/`short` and `total` (index 0 = Origin). `undo_to({index})` or `undo_to({hash})` jumps (a ≥8-char prefix such as `short` works); the next edit drops redo. `take_snapshot` writes compact project JSON named `<hash>.json` (file SHA-256 = history hash). Ops outside the stack (and all read-only ops): `import_media`, `import_media_bytes`, `seek`, `play`, `pause`, `undo`, `redo`, `undo_to`, `take_snapshot`, `restore_snapshot`, `set_overlap`, `set_ripple`, `set_snap`, `set_guides`, `set_loop_work_area`, `export_video`, `save_project`, `set_theme`, `set_shortcut`, `reset_shortcuts`, `set_beat_layers`, `detect_beats`, `list_speed_curve`, `list_fade_curve`, `install_addon`, `cancel_addon_install`, `set_acceleration`, `switch_angle`, `end_multicam`. **`set_beat_layers` changes the user's own snapping and cannot be undone** |
+| Errors | `{ok:false, error:<code>, detail:<text>}` — `bad_args`, `not_found`, `type_mismatch`, `unknown_op` (the detail suggests the nearest op names and their toolbox), `unknown_toolbox`, `wrong_endpoint`, `wrong_toolbox`, `apply_failed`, `import_failed`, `import_timeout`, `export_busy`, `export_failed`, `export_timeout`, `capture_failed`, `conflict` |
 | Change detection | Every `inspect` includes `revision`; pass `since:<revision>` to get `{unchanged:true}` when state is current |
 | Media import | Absolute paths or `file://`, or `import_media_bytes` (base64 — always pass an explicit `path`). **No directory listing.** If the user gave a fuzzy name (`GX010023.mp4` in Downloads), glob/search with **your own filesystem tools**, then pass the hits to `import_media` and confirm `missing:[]` is empty |
 
 ### Async jobs
 
-All return `{started:true}` immediately. Every field below except `export` needs `inspect({detail:true})`.
+All return `{started:true}` immediately. Every field below except `export` lives under `inspect({detail:true}).jobs`, which lists only the jobs that are running (the whole `jobs` key is absent when nothing is).
 
 | Started by | Poll |
 |---|---|
 | `export_video` | `export.{active, progress}` (or `export_status`) |
-| `package_project` | `package.{active, progress}` |
-| `generate_subtitles` | `subtitleGen.{active, progress, status}` |
-| `set_clip_reverse` (video) | `reverseRender.{active, progress, status}` |
-| `detect_scenes` | `sceneDetect.{active, progress, status, clip, scenes}` |
+| `package_project` | `jobs.package.{active, progress}` |
+| `generate_subtitles` | `jobs.subtitleGen.{active, progress, status}` |
+| `set_clip_reverse` (video) | `jobs.reverseRender.{active, progress, status}` |
+| `detect_scenes` | `jobs.sceneDetect.{active, progress, status, clip, scenes}` (also present, inactive, while a scan result is loaded) |
 | `run_segmentation`, `segment_clip`, `apply_denoise`, `detect_faces` | No progress field — re-read `inspect({clips:true, detail:true})` and compare |
 | `stabilize_clip` | Per-clip `stabilizing` / `stabilizeProgress` / `stabilizeStatus` on the detail clip row |
 
@@ -160,6 +169,50 @@ Then either drive edits from those exact times, or arm the grid and let snapping
 
 The analysis is **transient**: any edit that changes the mix drops it (`finishEdit` clears it when the audio fingerprint moves). `inspect({detail:true}).beats` reports `{active, analysed, bpm, confidence, rangeStart, rangeDuration, n, onsets, gridVisible, onsetsVisible, stale}` — check `stale` before trusting a grid you fetched a few ops ago, and re-run `detect_beats` when it is `true`.
 
+### Seeing the footage
+
+Agents cannot watch video, so the three read tools give a text-then-image path from “where does
+something happen” to “what is it”:
+
+1. **`activity({start, end})`** — text only. Samples the composition (default 200 frames across the
+   range, tiny render) and returns three arrays plus the strongest peaks:
+
+   ```json
+   {"ok":true,"space":"timeline","start":0,"end":12,"step":0.06,"n":200,"scan":[64,36],
+    "content":[0,1.2,0.9,…],"motion":[0,0.02,…],"audio":[0.41,…],
+    "peaks":[{"t":3,"content":69.8},{"t":6,"content":67}],"max":{"content":69.8,"motion":0.6,"audio":0.9}}
+   ```
+
+   `content` is the mean HSV change between consecutive samples on a 0..255 scale — the same
+   metric and scale as `detect_scenes` (27 is a cut at full frame rate). `motion` is the fraction
+   of pixels that moved, `audio` the mixed peak, both 0..1. At coarse steps a fast pan scores like
+   a cut, so these are *peaks*, not cuts.
+2. **`frames({…})`** — one JPEG contact sheet, about the cost of a single `capture`. Each tile has
+   its index and time burned in, and the same times come back in `frames[].t`.
+
+   | Mode | What it renders |
+   |---|---|
+   | `sample:"changes"` (default) | Up to `n` (12) visually distinct frames. Candidates are hashed (dHash) at ~4 per second, capped at 120; a frame is kept only if it differs from the last four kept by more than `min_change` bits (default 12; in-shot motion scores ~5–10, a cut 30+). `skipped` says how many looked the same; `next:{start,end}` appears when more distinct frames remained than `n` allowed |
+   | `sample:"uniform"` | `n` evenly spaced frames |
+   | `sample:"scenes"` | The `detect_scenes` thumbnail of every scanned shot in the range (`frames[].clip`, `frames[].scene`); unscanned clips contribute their first frame and are listed in `unscanned` |
+   | `at:[…]` | Exactly those times (max 20) |
+
+   Add `clip` (or `track`+`index`) to render one clip's **source** frames instead of the
+   composition: `t` is then source seconds and `tl` the timeline time. `return:"path"` writes the
+   sheet next to the project's frame captures instead of inlining it. `diff` on each frame is the
+   dHash distance to the previous kept tile. `dur` is the length of the material; a tile past it
+   renders black and carries `beyond_end:true` (the count is repeated at the top level).
+3. **`capture({at})`** — one 1280 px still for detail. `beyond_end:true` flags a time past the
+   timeline end.
+
+For audio, **`get_waveform({image:true, …})`** returns a PNG with a mixed-peaks lane, a
+speech-band lane, silent stretches shaded, onset ticks when `detect_beats` is current, an
+optional `spectrogram:true` lane, and a time axis — together with a `summary_buckets` (50)
+numeric summary and the `silence` ranges it found. In `clip` mode the image form is
+timeline-space (through the clip's volume and fades), unlike the numeric clip form.
+
+Typical recipe: `activity()` → `frames({at: peaks})` or `frames()` → edit → `capture({at})`.
+
 ### Understanding the footage
 
 `capture` shows one composited frame. The `scene` toolbox instead builds a **structured index
@@ -176,8 +229,8 @@ A clip already scanned at the same settings returns `{"cached": true}` and is re
 
 | Call | Effect |
 |---|---|
-| `describe_clip()` | One-call impression: shot count, shortest/longest, mean score, top shots, and labels ranked by **screen time** |
-| `list_scenes({sort:"score"})` | Every shot, with `timeline_start`/`timeline_end` already mapped through trim, speed and reverse |
+| `describe_clip({clip})` | One-call impression: shot count, shortest/longest, mean score, top shots, and labels ranked by **screen time**. `clip` (or `track`+`index`) reads any scanned clip's cache; omit it for the last scanned clip |
+| `list_scenes({clip, sort:"score"})` | Every shot, with `timeline_start`/`timeline_end` already mapped through trim, speed and reverse, and `thumb`/`timeline_thumb` for its representative frame. Takes the same optional clip ref as `describe_clip` |
 | `find_scenes({label:"person"})` | Searches **every scanned clip** on the timeline, best first — this is how you gather material |
 | `split_on_scenes({clip})` | Cuts at every boundary. One undo step |
 | `bookmark_scenes({clip})` | Marks the boundaries instead of cutting |
@@ -217,6 +270,10 @@ tools**, pass the absolute path to `import_media`, and treat a non-empty `missin
 - **There is no track volume.** `set_volume` is per clip; mute a whole lane with `set_track({muted:true})`.
 - **`generate_subtitles` after `remove_silence`.** Silence removal shifts the timeline; captions generated before it will be wrong.
 - **`apply_denoise` is noise, not reverb.** "Sounds like a bathroom" will not be fixed by denoise.
+- **`activity.content` at coarse steps reads pans as cuts.** Confirm a peak with `frames({at:[…]})` before cutting on it.
+- **`frames({clip})` times are source seconds.** Use `tl` for the timeline position.
+- **`get_waveform({image:true})` in clip mode is timeline-space**, while the numeric clip form reads the raw source file.
+- **`list_emoji` needs `q` or `group`** — the catalog is ~1900 entries; `add_emoji` takes the `id` (the character).
 
 ## Example
 
@@ -231,7 +288,7 @@ An `ops` array is submitted whole, so it cannot reference an id produced earlier
 }
 ```
 
-The reply carries each op's result in order — `done[1].result.id` is the new clip's UUID. Use it in the next call:
+The reply carries each op's result in order — `done[1].result.id` is the new clip's UUID. On failure `done` holds only the ops that ran and `failed` the error of the one at `stopped`. Use the id in the next call:
 
 ```json
 {
@@ -247,6 +304,13 @@ Then verify visually — `capture` is a homepage tool and returns `unknown_op` i
 ```json
 {"name": "capture", "arguments": {"at": 2.5}}
 ```
+
+## Measuring the surface
+
+`scripts/mcp-probe.py` starts `build/drift --headless`, synthesises a four-shot clip with ffmpeg,
+calls every read tool plus a sample of ops, and prints the reply size of each in characters
+(≈ tokens × 4). `--out DIR` saves the replies and returned images; `--calls FILE` runs your own
+list. Run it after touching the MCP layer to see what an agent will pay.
 
 ## Security
 

@@ -14,9 +14,13 @@ public:
 
     QJsonObject inspect(const QJsonObject &args) const;
     QJsonObject apply(const QJsonObject &args);
+    // Validates against the op schema, then runs; appends ignored:[unknown keys] on success.
     QJsonObject applyOne(const QString &tool, const QJsonObject &args);
+    QJsonObject applyOneUnchecked(const QString &tool, const QJsonObject &args);
     QJsonObject applyOneExtended(const QString &tool, const QJsonObject &args);
     QJsonObject capture(const QJsonObject &args);
+    QJsonObject frames(const QJsonObject &args);
+    QJsonObject activity(const QJsonObject &args);
 
 private:
     struct ClipRef {
@@ -29,6 +33,7 @@ private:
     ClipRef resolveClip(const QJsonObject &args) const;
     int resolveAsset(const QJsonValue &value) const;
     QJsonObject clipFeedback(const ClipRef &ref, const QJsonObject &extra = {}) const;
+    QJsonObject effectHost(const ClipRef &ref, QJsonObject extra) const;
     QJsonObject waitImport(const QStringList &ids);
     bool isUndoable(const QString &tool) const;
     void moveClipToRequested(const ClipRef &ref, double at);
@@ -59,9 +64,9 @@ private:
     QJsonObject opClearWorkArea();
     QJsonObject opAddText(const QJsonObject &args);
     QJsonObject opSetText(const QJsonObject &args);
-    QJsonObject opListEffects() const;
-    QJsonObject opListAudioEffects() const;
-    QJsonObject opListTransitions() const;
+    QJsonObject opListEffects(const QJsonObject &args) const;
+    QJsonObject opListAudioEffects(const QJsonObject &args) const;
+    QJsonObject opListTransitions(const QJsonObject &args) const;
     QJsonObject opAddEffect(const QJsonObject &args);
     QJsonObject opRemoveEffect(const QJsonObject &args);
     QJsonObject opSetEffectParam(const QJsonObject &args);
@@ -94,7 +99,7 @@ private:
     QJsonObject opSplitOnScenes(const QJsonObject &args);
     QJsonObject opGetUiPreferences() const;
     QJsonObject opSetTheme(const QJsonObject &args);
-    QJsonObject opListShortcuts() const;
+    QJsonObject opListShortcuts(const QJsonObject &args) const;
     QJsonObject opSetShortcut(const QJsonObject &args);
     QJsonObject opResetShortcuts();
 

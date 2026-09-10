@@ -504,11 +504,58 @@ public:
     QPair<int, int> mcpLocateClip(const QString &id) const;
     QString mcpClipId(int trackIndex, int clipIndex) const;
     QVariantMap mcpCompactClip(int trackIndex, int clipIndex, bool includeCanvas = true) const;
+    struct McpInspectOptions {
+        bool clips = false;
+        bool detail = false;
+        bool cues = false;
+        bool verbose = false;
+        int since = -1;
+        int track = -1;
+        QString clip;
+    };
+    QJsonObject mcpInspect(const McpInspectOptions &options) const;
     QJsonObject mcpInspect(bool includeClips, int sinceRevision = -1, bool detail = false,
-                           bool includeCues = false) const;
+                           bool includeCues = false) const
+    {
+        return mcpInspect(McpInspectOptions{includeClips, detail, includeCues, false, sinceRevision});
+    }
     int mcpRevision() const { return m_mcpEditRevision; }
     bool mcpSetClipCanvas(int trackIndex, int clipIndex, const QVariantMap &patch);
     QJsonObject mcpCaptureFrame(double atSeconds, bool full);
+
+    // Perception for agents: a labelled contact sheet, a text profile of change over time, and a
+    // waveform rendered as an image. All block on the mcpCaptureFrame pattern.
+    struct McpFrameSheetRequest {
+        double start = -1.0;
+        double end = -1.0;
+        QList<double> at;
+        QString sample = QStringLiteral("changes");
+        int n = 12;
+        int cols = 0;
+        int tileWidth = 0;
+        int minChange = 12;
+        bool label = true;
+        bool toPath = false;
+        int track = -1;
+        int clip = -1;
+    };
+    QJsonObject mcpFrameSheet(const McpFrameSheetRequest &request);
+
+    struct McpActivityRequest {
+        double start = -1.0;
+        double end = -1.0;
+        int samples = 200;
+        int peaks = 8;
+        bool audio = true;
+        int track = -1;
+        int clip = -1;
+    };
+    QJsonObject mcpActivity(const McpActivityRequest &request);
+
+    QJsonObject mcpWaveformImage(const QString &mode, int trackIndex, int clipIndex,
+                                 const QString &assetId, double startSeconds, double durSeconds,
+                                 int width, int height, bool spectrogram,
+                                 int summaryBuckets) const;
     bool mcpSetWorkArea(double inSeconds, double outSeconds);
 
     // Audio for agents. All of these block: the QML-facing waveform getters return empty on the
@@ -530,8 +577,11 @@ public:
     // The live analysis, filtered and shaped for MCP. Times are reported in both source and
     // timeline space so an agent never has to redo the trim/speed/reverse mapping itself.
     QJsonObject mcpListScenes(const QString &label, double minScore, const QString &sort,
-                              int limit) const;
-    QJsonObject mcpDescribeClip(int topCount) const;
+                              int limit, int trackIndex = -1, int clipIndex = -1) const;
+    // Rows for a clip's scene analysis: the live one when it is the last scanned clip, else the
+    // on-disk cache. Empty when it was never scanned.
+    QVariantList mcpSceneRows(int trackIndex, int clipIndex, const drift::Clip **clip) const;
+    QJsonObject mcpDescribeClip(int topCount, int trackIndex = -1, int clipIndex = -1) const;
     QJsonObject mcpFindScenes(const QString &label, double minScore, int trackIndex,
                               int limit) const;
     // Timeline seconds of every detected boundary inside the clip that was analysed.
@@ -549,7 +599,7 @@ public:
     void mcpRememberExportSettings(const QVariantMap &settings);
     void mcpBeginBatch();
     void mcpEndBatch(const QString &text, bool pushUndo);
-    QJsonObject mcpListHistory() const;
+    QJsonObject mcpListHistory(int limit = 20) const;
     QJsonObject mcpUndoTo(int index, const QString &hash);
     QJsonObject mcpTakeSnapshot(const QString &label);
     QJsonObject mcpListSnapshots() const;
