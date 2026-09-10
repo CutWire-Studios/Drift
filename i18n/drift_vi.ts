@@ -635,809 +635,807 @@
     </message>
     <message>
         <source>“%1” is ready.</source>
-        <translation type="unfinished"></translation>
+        <translation>“%1” đã sẵn sàng.</translation>
     </message>
     <message>
         <source>Downloading…</source>
-        <translation type="unfinished"></translation>
+        <translation>Đang tải xuống…</translation>
     </message>
     <message>
         <source>No source in the marketplace can open links.</source>
-        <translation type="unfinished"></translation>
+        <translation>Không có nguồn nào trên chợ ứng dụng có thể mở liên kết.</translation>
     </message>
     <message>
         <source>That source didn’t recognise this link.</source>
-        <translation type="unfinished"></translation>
+        <translation>Nguồn đó không nhận ra liên kết này.</translation>
     </message>
     <message>
         <source>Which source should open this link?</source>
-        <translation type="unfinished"></translation>
+        <translation>Nguồn nào nên mở liên kết này?</translation>
     </message>
     <message>
         <source>Loading sources…</source>
-        <translation type="unfinished"></translation>
+        <translation>Đang tải nguồn…</translation>
     </message>
     <message>
         <source>Asking that source…</source>
-        <translation type="unfinished"></translation>
+        <translation>Đang hỏi nguồn đó…</translation>
     </message>
     <message>
         <source>Try again</source>
-        <translation type="unfinished"></translation>
+        <translation>Thử lại</translation>
     </message>
     <message>
         <source>Pick another source</source>
-        <translation type="unfinished"></translation>
+        <translation>Chọn nguồn khác</translation>
     </message>
     <message>
         <source>Open in browser</source>
-        <translation type="unfinished"></translation>
+        <translation>Mở trong trình duyệt</translation>
     </message>
     <message>
         <source>Add to timeline</source>
-        <translation type="unfinished"></translation>
+        <translation>Thêm vào dòng thời gian</translation>
     </message>
     <message>
         <source>Keep browsing</source>
-        <translation type="unfinished"></translation>
+        <translation>Tiếp tục duyệt</translation>
     </message>
 </context>
 <context>
     <name>AndroidMain</name>
     <message>
         <source>Drift project (*.drift)</source>
-        <translation type="unfinished"></translation>
+        <translation>Dự án Drift (*.drift)</translation>
     </message>
     <message>
         <source>Save Project</source>
-        <translation type="unfinished"></translation>
+        <translation>Lưu dự án</translation>
     </message>
     <message>
         <source>Canvas set to %1×%2 at %3 fps from your first clip.</source>
-        <translation type="unfinished"></translation>
+        <translation>Khung hình đặt thành %1×%2 at %3 fps dựa theo clip đầu tiên của bạn.</translation>
     </message>
     <message>
         <source>That share had no link in it.</source>
-        <translation type="unfinished"></translation>
+        <translation>Chia sẻ đó không có liên kết trong đó.</translation>
     </message>
     <message>
         <source>Links can’t be opened in this build.</source>
-        <translation type="unfinished"></translation>
+        <translation>Không thể mở liên kết trong bản dựng này.</translation>
     </message>
     <message>
         <source>That download is no longer in your media.</source>
-        <translation type="unfinished"></translation>
+        <translation>Bản tải xuống đó không còn trong phương tiện truyền thông của bạn nữa.</translation>
     </message>
     <message>
         <source>Open Project</source>
-        <translation type="unfinished"></translation>
+        <translation>Mở dự án</translation>
     </message>
     <message>
         <source>Import in progress…</source>
-        <translation type="unfinished"></translation>
+        <translation>Đang nhập…</translation>
     </message>
     <message>
         <source>Saved to %1</source>
-        <translation type="unfinished"></translation>
+        <translation>Đã lưu vào %1</translation>
     </message>
     <message>
         <source>Export finished.</source>
-        <translation type="unfinished"></translation>
+        <translation>Đã xuất xong.</translation>
     </message>
     <message>
         <source>Export cancelled.</source>
-        <translation type="unfinished"></translation>
+        <translation>Xuất bị hủy bỏ.</translation>
     </message>
     <message>
         <source>Export failed. Check the save location and free space.</source>
-        <translation type="unfinished"></translation>
+        <translation>Xuất không thành công. Kiểm tra vị trí lưu và dung lượng trống.</translation>
     </message>
     <message>
         <source>Couldn&apos;t create the shareable copy: %1</source>
-        <translation type="unfinished"></translation>
+        <translation>Không thể tạo bản sao có thể chia sẻ: %1</translation>
     </message>
     <message>
         <source>Captions created.</source>
-        <translation type="unfinished"></translation>
+        <translation>Đã tạo phụ đề.</translation>
     </message>
     <message>
         <source>Couldn’t create captions: %1</source>
-        <translation type="unfinished"></translation>
+        <translation>Không thể tạo phụ đề: %1</translation>
     </message>
     <message>
         <source>Couldn’t create captions.</source>
-        <translation type="unfinished"></translation>
+        <translation>Không thể tạo phụ đề.</translation>
     </message>
     <message>
         <source>Couldn’t install “%1”: %2</source>
-        <translation type="unfinished"></translation>
+        <translation>Không thể cài đặt “%1”: %2</translation>
     </message>
     <message>
         <source>Imported “%1”.</source>
-        <translation type="unfinished"></translation>
+        <translation>Đã nhập “%1”.</translation>
     </message>
     <message>
         <source>Imported from the marketplace.</source>
-        <translation type="unfinished"></translation>
+        <translation>Được nhập từ chợ ứng dụng.</translation>
     </message>
 </context>
 <context>
     <name>AndroidMarket</name>
     <message>
         <source>Market</source>
-        <translation type="unfinished"></translation>
+        <translation>Chợ</translation>
     </message>
     <message>
         <source>Downloads</source>
-        <translation type="unfinished"></translation>
+        <translation>Tải xuống</translation>
     </message>
 </context>
 <context>
     <name>AndroidMePage</name>
     <message>
         <source>Me</source>
-        <translation type="unfinished"></translation>
+        <translation>Tôi</translation>
     </message>
     <message numerus="yes">
         <source>%n coin(s)</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>%n xu</numerusform>
         </translation>
     </message>
     <message>
         <source>Light mode</source>
-        <translation type="unfinished"></translation>
+        <translation>Chế độ sáng</translation>
     </message>
     <message>
         <source>Dark mode</source>
-        <translation type="unfinished"></translation>
+        <translation>Chế độ tối</translation>
     </message>
     <message>
         <source>Settings</source>
-        <translation type="unfinished"></translation>
+        <translation>Cài đặt</translation>
     </message>
     <message>
         <source>Extras</source>
-        <translation type="unfinished"></translation>
+        <translation>Bổ sung</translation>
     </message>
     <message>
         <source>Update available</source>
-        <translation type="unfinished"></translation>
+        <translation>Đã có bản cập nhật</translation>
     </message>
     <message>
         <source>Debug info</source>
-        <translation type="unfinished"></translation>
+        <translation>Thông tin gỡ lỗi</translation>
     </message>
 </context>
 <context>
     <name>AndroidMediaPreview</name>
     <message>
         <source>Back</source>
-        <translation type="unfinished"></translation>
+        <translation>Quay lại</translation>
     </message>
     <message>
         <source>Save</source>
-        <translation type="unfinished"></translation>
+        <translation>Lưu</translation>
     </message>
     <message>
         <source>Audio only — trim it below</source>
-        <translation type="unfinished"></translation>
+        <translation>Chỉ âm thanh - cắt ngắn nó bên dưới</translation>
     </message>
     <message>
         <source>Trim</source>
-        <translation type="unfinished"></translation>
+        <translation>Cắt ngắn</translation>
     </message>
     <message>
         <source>Crop</source>
-        <translation type="unfinished"></translation>
+        <translation>Cắt khung hình</translation>
     </message>
     <message>
         <source>Keeping %1 to %2  ·  %3s</source>
-        <translation type="unfinished"></translation>
+        <translation>Giữ %1 đến %2  ·  %3s</translation>
     </message>
     <message>
         <source>Start here</source>
-        <translation type="unfinished"></translation>
+        <translation>Bắt đầu tại đây</translation>
     </message>
     <message>
         <source>End here</source>
-        <translation type="unfinished"></translation>
+        <translation>Kết thúc tại đây</translation>
     </message>
     <message>
         <source>Undo trim</source>
-        <translation type="unfinished"></translation>
+        <translation>Hoàn tác cắt ngắn</translation>
     </message>
     <message>
         <source>Drag inside the box to move it, corners to resize</source>
-        <translation type="unfinished"></translation>
+        <translation>Kéo vào trong hộp để di chuyển, các góc để thay đổi kích thước</translation>
     </message>
     <message>
         <source>Undo crop</source>
-        <translation type="unfinished"></translation>
+        <translation>Hoàn tác cắt khung hình</translation>
     </message>
     <message>
         <source>Saving…</source>
-        <translation type="unfinished"></translation>
+        <translation>Đang lưu…</translation>
     </message>
     <message>
         <source>Save keeps your changes as a new file in this project.</source>
-        <translation type="unfinished"></translation>
+        <translation>Lưu giữ những thay đổi của bạn dưới dạng một tệp mới trong dự án này.</translation>
     </message>
     <message>
         <source>Nothing changed yet. Trim or crop above, or go back and drag this onto the timeline.</source>
-        <translation type="unfinished"></translation>
+        <translation>Vẫn chưa có gì thay đổi. Cắt ngắn hoặc cắt khung hình trên hoặc quay lại và kéo phần này vào dòng thời gian.</translation>
     </message>
     <message>
         <source>Cancel</source>
-        <translation type="unfinished"></translation>
+        <translation>Hủy bỏ</translation>
     </message>
 </context>
 <context>
     <name>AndroidMoreToolsSheet</name>
     <message>
         <source>More tools</source>
-        <translation type="unfinished"></translation>
+        <translation>Nhiều công cụ hơn</translation>
     </message>
     <message>
         <source>Trim &amp; timing</source>
-        <translation type="unfinished"></translation>
+        <translation>Cắt ngắn &amp; căn thời gian</translation>
     </message>
     <message>
         <source>Trim start</source>
-        <translation type="unfinished"></translation>
+        <translation>Cắt ngắn phần đầu</translation>
     </message>
     <message>
         <source>Drop everything before the playhead</source>
-        <translation type="unfinished"></translation>
+        <translation>Bỏ mọi thứ trước đầu phát</translation>
     </message>
     <message>
         <source>Trim end</source>
-        <translation type="unfinished"></translation>
+        <translation>Cắt ngắn phần cuối</translation>
     </message>
     <message>
         <source>Drop everything after the playhead</source>
-        <translation type="unfinished"></translation>
+        <translation>Bỏ mọi thứ sau đầu phát</translation>
     </message>
     <message>
         <source>Speed</source>
-        <translation type="unfinished"></translation>
+        <translation>Tốc độ</translation>
     </message>
     <message>
         <source>Change how fast this clip plays</source>
-        <translation type="unfinished"></translation>
+        <translation>Thay đổi tốc độ phát clip này</translation>
     </message>
     <message>
         <source>Freeze frame</source>
-        <translation type="unfinished"></translation>
+        <translation>Đóng băng khung hình</translation>
     </message>
     <message>
         <source>Freeze frame at current time</source>
-        <translation type="unfinished"></translation>
+        <translation>Đóng băng khung hình ở thời điểm hiện tại</translation>
     </message>
     <message>
         <source>Merge</source>
-        <translation type="unfinished"></translation>
+        <translation>Hợp nhất</translation>
     </message>
     <message>
         <source>Merge adjacent clips</source>
-        <translation type="unfinished"></translation>
+        <translation>Hợp nhất các clip liền kề</translation>
     </message>
     <message>
         <source>Close gap</source>
-        <translation type="unfinished"></translation>
+        <translation>Xóa khoảng trống</translation>
     </message>
     <message>
         <source>Close gap after clip</source>
-        <translation type="unfinished"></translation>
+        <translation>Xóa khoảng trống sau clip</translation>
     </message>
     <message>
         <source>Audio</source>
-        <translation type="unfinished"></translation>
+        <translation>Âm thanh</translation>
     </message>
     <message>
         <source>Separate audio</source>
-        <translation type="unfinished"></translation>
+        <translation>Tách âm thanh</translation>
     </message>
     <message>
         <source>Separate audio from video</source>
-        <translation type="unfinished"></translation>
+        <translation>Tách âm thanh khỏi video</translation>
     </message>
     <message>
         <source>Timeline</source>
-        <translation type="unfinished"></translation>
+        <translation>Dòng thời gian</translation>
     </message>
     <message>
         <source>Snapping</source>
-        <translation type="unfinished"></translation>
+        <translation>Bắt điểm</translation>
     </message>
     <message>
         <source>Line clip edges up with cuts and markers</source>
-        <translation type="unfinished"></translation>
+        <translation>Cắt các cạnh của đường kẻ bằng các vết cắt và điểm đánh dấu</translation>
     </message>
     <message>
         <source>Ripple</source>
-        <translation type="unfinished"></translation>
+        <translation>Cuộn đẩy</translation>
     </message>
     <message>
         <source>Close gaps when trimming</source>
-        <translation type="unfinished"></translation>
+        <translation>Xóa khoảng trống khi cắt ngắn</translation>
     </message>
     <message>
         <source>Overlap</source>
-        <translation type="unfinished"></translation>
+        <translation>Chồng lớp</translation>
     </message>
     <message>
         <source>Allow clip overlap</source>
-        <translation type="unfinished"></translation>
+        <translation>Cho phép chồng lớp clip</translation>
     </message>
     <message>
         <source>Beat markers</source>
-        <translation type="unfinished"></translation>
+        <translation>Mốc nhịp điệu</translation>
     </message>
     <message>
         <source>Find the beat and show markers</source>
-        <translation type="unfinished"></translation>
+        <translation>Tìm nhịp và hiển thị điểm đánh dấu</translation>
     </message>
     <message>
         <source>Markers &amp; view</source>
-        <translation type="unfinished"></translation>
+        <translation>Đánh dấu &amp; hiển thị</translation>
     </message>
     <message>
         <source>Paste</source>
-        <translation type="unfinished"></translation>
+        <translation>Dán</translation>
     </message>
     <message>
         <source>Paste at current time</source>
-        <translation type="unfinished"></translation>
+        <translation>Dán vào thời điểm hiện tại</translation>
     </message>
     <message>
         <source>Bookmark</source>
-        <translation type="unfinished"></translation>
+        <translation>Đánh dấu</translation>
     </message>
     <message>
         <source>Add or remove a bookmark here</source>
-        <translation type="unfinished"></translation>
+        <translation>Thêm hoặc xóa dấu trang ở đây</translation>
     </message>
     <message>
         <source>Work area in</source>
-        <translation type="unfinished"></translation>
+        <translation>Khu vực làm việc trong</translation>
     </message>
     <message>
         <source>Mark work area in at current time</source>
-        <translation type="unfinished"></translation>
+        <translation>Đánh dấu khu vực làm việc trong tại thời điểm hiện tại</translation>
     </message>
     <message>
         <source>Work area out</source>
-        <translation type="unfinished"></translation>
+        <translation>Khu vực làm việc ngoài</translation>
     </message>
     <message>
         <source>Mark work area out at current time</source>
-        <translation type="unfinished"></translation>
+        <translation>Đánh dấu khu vực làm việc ngoài vào thời điểm hiện tại</translation>
     </message>
     <message>
         <source>Clear work area</source>
-        <translation type="unfinished"></translation>
+        <translation>Xóa khu vực làm việc</translation>
     </message>
     <message>
         <source>Shorter layers</source>
-        <translation type="unfinished"></translation>
+        <translation>Lớp ngắn hơn</translation>
     </message>
     <message>
         <source>Taller layers</source>
-        <translation type="unfinished"></translation>
+        <translation>Lớp cao hơn</translation>
     </message>
     <message>
         <source>Analyzing…</source>
-        <translation type="unfinished"></translation>
+        <translation>Đang phân tích…</translation>
     </message>
 </context>
 <context>
     <name>AndroidPreview</name>
     <message>
         <source>Audio only</source>
-        <translation type="unfinished"></translation>
+        <translation>Chỉ âm thanh</translation>
     </message>
     <message>
         <source>No clip at the current time</source>
-        <translation type="unfinished"></translation>
+        <translation>Hiện tại chưa có clip</translation>
     </message>
     <message>
         <source>GPU preview unavailable</source>
-        <translation type="unfinished"></translation>
+        <translation>Xem trước GPU không có sẵn</translation>
     </message>
     <message>
         <source>Fit</source>
-        <translation type="unfinished"></translation>
+        <translation>Vừa</translation>
     </message>
     <message>
         <source>Fill</source>
-        <translation type="unfinished"></translation>
+        <translation>Đầy</translation>
     </message>
     <message>
         <source>Full</source>
-        <translation type="unfinished"></translation>
+        <translation>Toàn màn hình</translation>
     </message>
     <message>
         <source>Half</source>
-        <translation type="unfinished"></translation>
+        <translation>Phân nửa</translation>
     </message>
     <message>
         <source>Quarter</source>
-        <translation type="unfinished"></translation>
+        <translation>Một phần tư</translation>
     </message>
     <message>
         <source>Quality: %1</source>
-        <translation type="unfinished"></translation>
+        <translation>Chất lượng: %1</translation>
     </message>
     <message>
         <source>Fast</source>
-        <translation type="unfinished"></translation>
+        <translation>Nhanh</translation>
     </message>
     <message>
         <source>Quality</source>
-        <translation type="unfinished"></translation>
+        <translation>Chất lượng</translation>
     </message>
     <message>
         <source>Seek</source>
-        <translation type="unfinished"></translation>
+        <translation>Tua</translation>
     </message>
     <message>
         <source>Back 1 second</source>
-        <translation type="unfinished"></translation>
+        <translation>Quay lại 1 giây</translation>
     </message>
     <message>
         <source>Previous frame</source>
-        <translation type="unfinished"></translation>
+        <translation>Khung hình trước</translation>
     </message>
     <message>
         <source>Pause</source>
-        <translation type="unfinished"></translation>
+        <translation>Tạm dừng</translation>
     </message>
     <message>
         <source>Play</source>
-        <translation type="unfinished"></translation>
+        <translation>Phát</translation>
     </message>
     <message>
         <source>Next frame</source>
-        <translation type="unfinished"></translation>
+        <translation>Khung hình kế</translation>
     </message>
     <message>
         <source>Loop work area on — tap to turn off</source>
-        <translation type="unfinished"></translation>
+        <translation>Bật lặp vùng làm việc — chạm để tắt</translation>
     </message>
     <message>
         <source>Loop work area off — tap to turn on</source>
-        <translation type="unfinished"></translation>
+        <translation>Tắt lặp khu vực làm việc — chạm để bật</translation>
     </message>
     <message>
         <source>Forward 1 second</source>
-        <translation type="unfinished"></translation>
+        <translation>Chuyển tiếp 1 giây</translation>
     </message>
     <message>
         <source>View and playback settings</source>
-        <translation type="unfinished"></translation>
+        <translation>Cài đặt xem và phát lại</translation>
     </message>
     <message>
         <source>Exit fullscreen preview</source>
-        <translation type="unfinished"></translation>
+        <translation>Thoát xem trước toàn màn hình</translation>
     </message>
     <message>
         <source>Fullscreen preview</source>
-        <translation type="unfinished"></translation>
+        <translation>Xem trước toàn màn hình</translation>
     </message>
 </context>
 <context>
     <name>AndroidProjectSheet</name>
     <message>
         <source>Project</source>
-        <translation type="unfinished"></translation>
+        <translation>Dự án</translation>
     </message>
     <message>
         <source>Export</source>
-        <translation type="unfinished"></translation>
+        <translation>Xuất</translation>
     </message>
     <message>
         <source>Render the finished video</source>
-        <translation type="unfinished"></translation>
+        <translation>Kết xuất video đã hoàn thành</translation>
     </message>
     <message>
         <source>Save</source>
-        <translation type="unfinished"></translation>
+        <translation>Lưu</translation>
     </message>
     <message>
         <source>Keep this project on the device</source>
-        <translation type="unfinished"></translation>
+        <translation>Giữ dự án này trên thiết bị</translation>
     </message>
     <message>
         <source>Share a copy</source>
-        <translation type="unfinished"></translation>
+        <translation>Chia sẻ một bản sao</translation>
     </message>
     <message>
         <source>One file with the media packed inside</source>
-        <translation type="unfinished"></translation>
+        <translation>Một tệp chứa phương tiện được đóng gói bên trong</translation>
     </message>
     <message>
         <source>Canvas &amp; layout</source>
-        <translation type="unfinished"></translation>
+        <translation>Khung hình &amp; bố cục</translation>
     </message>
     <message>
         <source>Video size, aspect and frame rate</source>
-        <translation type="unfinished"></translation>
+        <translation>Kích thước, khung hình và tốc độ khung hình của video</translation>
     </message>
     <message>
         <source>Project properties</source>
-        <translation type="unfinished"></translation>
+        <translation>Thuộc tính dự án</translation>
     </message>
     <message>
         <source>Name, resolution and timebase</source>
-        <translation type="unfinished"></translation>
+        <translation>Tên, độ phân giải và cơ sở thời gian</translation>
     </message>
     <message>
         <source>Multicam</source>
-        <translation type="unfinished"></translation>
+        <translation>Đa góc quay</translation>
     </message>
     <message>
         <source>Sync and switch between angles</source>
-        <translation type="unfinished"></translation>
+        <translation>Đồng bộ hóa và chuyển đổi giữa các góc</translation>
     </message>
     <message>
         <source>App settings</source>
-        <translation type="unfinished"></translation>
+        <translation>Cài đặt ứng dụng</translation>
     </message>
     <message>
         <source>Appearance, extras and agent access</source>
-        <translation type="unfinished"></translation>
+        <translation>Giao diện, tính năng bổ sung và quyền truy cập trợ lý</translation>
     </message>
 </context>
 <context>
     <name>AndroidProjectsPage</name>
     <message>
         <source>Quick edit</source>
-        <translation type="unfinished"></translation>
+        <translation>Chỉnh sửa nhanh</translation>
     </message>
     <message>
         <source>Pick a clip, start now</source>
-        <translation type="unfinished"></translation>
+        <translation>Chọn một clip, bắt đầu ngay bây giờ</translation>
     </message>
     <message>
         <source>New project</source>
-        <translation type="unfinished"></translation>
+        <translation>Dự án mới</translation>
     </message>
     <message>
         <source>Choose a canvas, start empty</source>
-        <translation type="unfinished"></translation>
+        <translation>Chọn khung hình, bắt đầu dự án trống</translation>
     </message>
     <message>
         <source>Create polished videos fast</source>
-        <translation type="unfinished"></translation>
+        <translation>Tạo video ấn tượng nhanh</translation>
     </message>
     <message>
         <source>Recent projects</source>
-        <translation type="unfinished"></translation>
+        <translation>Dự án gần đây</translation>
     </message>
     <message>
         <source>Open</source>
-        <translation type="unfinished"></translation>
+        <translation>Mở</translation>
     </message>
     <message>
         <source>Open a project from this device</source>
-        <translation type="unfinished"></translation>
+        <translation>Mở một dự án từ thiết bị này</translation>
     </message>
     <message>
         <source>Nothing here yet — projects you save will show up in this list.</source>
-        <translation type="unfinished"></translation>
+        <translation>Chưa có gì ở đây - các dự án bạn lưu sẽ hiển thị trong danh sách này.</translation>
     </message>
     <message>
         <source>Untitled</source>
-        <translation type="unfinished"></translation>
+        <translation>Không có tiêu đề</translation>
     </message>
     <message>
         <source>That project file is missing.</source>
-        <translation type="unfinished"></translation>
+        <translation>Tệp dự án đó bị thiếu.</translation>
     </message>
     <message>
         <source>Project actions</source>
-        <translation type="unfinished"></translation>
+        <translation>Hành động dự án</translation>
     </message>
     <message>
         <source>Remove from recents</source>
-        <translation type="unfinished"></translation>
+        <translation>Xóa khỏi gần đây</translation>
     </message>
 </context>
 <context>
     <name>AndroidShareTargetSheet</name>
     <message>
         <source>Add shared media</source>
-        <translation type="unfinished"></translation>
+        <translation>Thêm phương tiện chia sẻ</translation>
     </message>
     <message>
         <source>Add to this project</source>
-        <translation type="unfinished"></translation>
+        <translation>Thêm vào dự án này</translation>
     </message>
     <message>
         <source>Import at the playhead and stay here</source>
-        <translation type="unfinished"></translation>
+        <translation>Nhập tại đầu phát và ở lại đây</translation>
     </message>
     <message>
         <source>New quick edit</source>
-        <translation type="unfinished"></translation>
+        <translation>Chỉnh sửa nhanh mới</translation>
     </message>
     <message>
         <source>Start a new project from this clip</source>
-        <translation type="unfinished"></translation>
+        <translation>Bắt đầu một dự án mới từ clip này</translation>
     </message>
 </context>
 <context>
     <name>AndroidTimeline</name>
     <message>
         <source>Save effect preset</source>
-        <translation type="unfinished"></translation>
+        <translation>Lưu cài đặt trước hiệu ứng</translation>
     </message>
     <message>
         <source>Rename clip</source>
-        <translation type="unfinished"></translation>
+        <translation>Đổi tên clip</translation>
     </message>
     <message>
         <source>Rename</source>
-        <translation type="unfinished"></translation>
+        <translation>Đổi tên</translation>
     </message>
     <message>
         <source>Name</source>
-        <translation type="unfinished"></translation>
+        <translation>Tên</translation>
     </message>
     <message>
         <source>Clip name</source>
-        <translation type="unfinished"></translation>
+        <translation>Tên clip</translation>
     </message>
     <message>
         <source>Rename bookmark</source>
-        <translation type="unfinished"></translation>
+        <translation>Đổi tên dấu trang</translation>
     </message>
     <message>
         <source>Label</source>
-        <translation type="unfinished"></translation>
+        <translation>Nhãn</translation>
     </message>
     <message>
         <source>Bookmark name</source>
-        <translation type="unfinished"></translation>
+        <translation>Tên dấu trang</translation>
     </message>
     <message>
         <source>Bookmark</source>
-        <translation type="unfinished"></translation>
+        <translation>Dấu trang</translation>
     </message>
     <message>
         <source>My look</source>
-        <translation type="unfinished"></translation>
+        <translation>Phong cách của tôi</translation>
     </message>
     <message>
         <source>Drop a transition where two clips meet.</source>
-        <translation type="unfinished"></translation>
+        <translation>Thả phần chuyển tiếp nơi hai clip gặp nhau.</translation>
     </message>
     <message>
         <source>Drop that onto a clip to apply it.</source>
-        <translation type="unfinished"></translation>
+        <translation>Thả nó vào một clip để áp dụng nó.</translation>
     </message>
     <message>
         <source>Keyframes</source>
-        <translation type="unfinished"></translation>
+        <translation>Khung hình khóa</translation>
     </message>
     <message numerus="yes">
         <source>%n clip(s)</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>%n clip</numerusform>
         </translation>
     </message>
     <message>
         <source>All</source>
-        <translation type="unfinished"></translation>
+        <translation>Tất cả</translation>
     </message>
     <message>
         <source>None</source>
-        <translation type="unfinished"></translation>
+        <translation>Không</translation>
     </message>
     <message>
         <source>Done</source>
-        <translation type="unfinished"></translation>
+        <translation>Đã xong</translation>
     </message>
     <message>
         <source>Add new track</source>
-        <translation type="unfinished"></translation>
+        <translation>Thêm bản nhạc mới</translation>
     </message>
     <message>
         <source>Go to bookmark</source>
-        <translation type="unfinished"></translation>
+        <translation>Đi đến dấu trang</translation>
     </message>
     <message>
         <source>Move to playhead</source>
-        <translation type="unfinished"></translation>
+        <translation>Di chuyển đến đầu phát</translation>
     </message>
     <message>
         <source>Rename…</source>
-        <translation type="unfinished"></translation>
+        <translation>Đổi tên…</translation>
     </message>
     <message>
         <source>Delete</source>
-        <translation type="unfinished"></translation>
+        <translation>Xóa</translation>
     </message>
     <message>
         <source>Close gap</source>
-        <translation type="unfinished"></translation>
+        <translation>Xóa khoảng trống</translation>
     </message>
     <message>
         <source>New track</source>
-        <translation type="unfinished"></translation>
+        <translation>Bài hát mới</translation>
     </message>
 </context>
 <context>
     <name>AndroidTopBar</name>
     <message>
         <source>Back</source>
-        <translation type="unfinished"></translation>
+        <translation>Quay lại</translation>
     </message>
     <message>
         <source>Project actions</source>
-        <translation type="unfinished"></translation>
+        <translation>Hành động dự án</translation>
     </message>
     <message>
         <source>Untitled</source>
-        <translation type="unfinished"></translation>
+        <translation>Không có tiêu đề</translation>
     </message>
     <message>
         <source>Crop</source>
-        <translation type="unfinished"></translation>
+        <translation>Cắt ngắn</translation>
     </message>
     <message>
         <source>Undo</source>
-        <translation type="unfinished"></translation>
+        <translation>Hoàn tác</translation>
     </message>
     <message>
         <source>Redo</source>
-        <translation type="unfinished"></translation>
+        <translation>Khôi phục</translation>
     </message>
     <message>
         <source>Export</source>
-        <translation type="unfinished"></translation>
+        <translation>Xuất</translation>
     </message>
     <message>
         <source>Show export progress</source>
-        <translation type="unfinished"></translation>
+        <translation>Hiển thị tiến trình xuất</translation>
     </message>
 </context>
 <context>
     <name>AnimationInspector</name>
     <message>
         <source>None</source>
-        <translation type="unfinished"></translation>
+        <translation>Không</translation>
     </message>
     <message>
         <source>Fade</source>
-        <translation type="unfinished"></translation>
+        <translation>Mờ</translation>
     </message>
     <message>
         <source>Slide up</source>
-        <translation type="unfinished"></translation>
+        <translation>Trượt lên</translation>
     </message>
     <message>
         <source>Slide down</source>
-        <translation type="unfinished"></translation>
+        <translation>Trượt xuống</translation>
     </message>
     <message>
         <source>Slide left</source>
-        <translation type="unfinished"></translation>
+        <translation>Trượt sang trái</translation>
     </message>
     <message>
         <source>Slide right</source>
-        <translation type="unfinished"></translation>
+        <translation>Trượt sang phải</translation>
     </message>
     <message>
         <source>Zoom in</source>
-        <translation type="unfinished"></translation>
+        <translation>Phóng to</translation>
     </message>
     <message>
         <source>Zoom out</source>
-        <translation type="unfinished"></translation>
+        <translation>Thu nhỏ</translation>
     </message>
     <message>
         <source>Pop</source>
@@ -1469,7 +1467,7 @@
     </message>
     <message>
         <source>Custom</source>
-        <translation type="unfinished"></translation>
+        <translation>Tùy chỉnh</translation>
     </message>
     <message>
         <source>Bezier</source>
@@ -1477,27 +1475,27 @@
     </message>
     <message>
         <source>Not available</source>
-        <translation type="unfinished"></translation>
+        <translation>Không khả dụng</translation>
     </message>
     <message>
         <source>Animation applies to video, image, shape, text, and audio.</source>
-        <translation type="unfinished"></translation>
+        <translation>Hiệu ứng áp dụng cho video, hình ảnh, hình khối, văn bản và âm thanh.</translation>
     </message>
     <message>
         <source>Fade in / out (volume)</source>
-        <translation type="unfinished"></translation>
+        <translation>Tăng dần vào / ra (âm lượng)</translation>
     </message>
     <message>
         <source>Style</source>
-        <translation type="unfinished"></translation>
+        <translation>Kiểu</translation>
     </message>
     <message>
         <source>Pick how the clip enters and leaves. Fade is one option — same style controls as slide or zoom.</source>
-        <translation type="unfinished"></translation>
+        <translation>Chọn cách clip đi vào và rời đi. Làm mờ là một tùy chọn — các điều khiển kiểu tương tự như trượt hoặc thu phóng.</translation>
     </message>
     <message>
         <source>Clear</source>
-        <translation type="unfinished"></translation>
+        <translation>Xóa</translation>
     </message>
     <message>
         <source>In</source>
@@ -1509,7 +1507,7 @@
     </message>
     <message>
         <source>Edit custom curve…</source>
-        <translation type="unfinished"></translation>
+        <translation>Chỉnh sửa đường cong tùy chỉnh…</translation>
     </message>
     <message>
         <source>Text tab has letter/word animations (typewriter, stagger). This moves the whole clip.</source>
