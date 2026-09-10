@@ -31,18 +31,12 @@ QtObject {
     function importUrls(urls, fromDrop, onFinished) {
         if (!urls || urls.length === 0)
             return false
-        // .mogrt is a template package, not media: it goes to the project rather than the
-        // asset bin and never reaches AssetLibrary. Split here rather than in AssetsPanel
-        // so the home screen and the share target route it the same way.
+        // Disabled: .mogrt template import needs more fixing. Treat it as ordinary media (the
+        // probe rejects it and the caller gets a "could not open" toast) until the reader is
+        // stable. Previously it was split out here so it went to the project rather than the bin.
         let media = []
-        for (let i = 0; i < urls.length; ++i) {
-            const u = urls[i]
-            const name = (typeof u === "string" ? u : u.toString()).toLowerCase()
-            if (name.endsWith(".mogrt"))
-                EditorState.importMogrt(u)
-            else
-                media.push(u)
-        }
+        for (let i = 0; i < urls.length; ++i)
+            media.push(urls[i])
         if (media.length === 0)
             return false
         urls = media

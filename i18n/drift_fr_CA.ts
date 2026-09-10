@@ -3561,10 +3561,6 @@
         </translation>
     </message>
     <message>
-        <source>Motion Graphics Template (*.mogrt)</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>All Files (*)</source>
         <translation type="unfinished"></translation>
     </message>
@@ -4458,34 +4454,6 @@
         <translation>Projet Drift (*.drift)</translation>
     </message>
     <message>
-        <source>Premiere Pro project (*.prproj)</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>DaVinci Resolve project (*.drp *.fcpxml)</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Kdenlive &amp; Shotcut project (*.kdenlive *.mlt)</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>OpenTimelineIO (*.otio)</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Edit Decision List (*.edl)</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Motion Graphics Template (*.mogrt)</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Final Cut Pro XML (*.xml)</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Open Project</source>
         <translation>Ouvrir le projet</translation>
     </message>
@@ -4506,55 +4474,7 @@
         <translation>Ouvrir projet JSON</translation>
     </message>
     <message>
-        <source>Import Premiere Pro Project</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Premiere Pro project (*.prproj *.xml)</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Import Motion Graphics Template</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>All Files (*)</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Import Kdenlive / Shotcut Project</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Kdenlive project (*.kdenlive)</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Shotcut project (*.mlt)</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Import DaVinci Resolve Project / FCPXML</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>DaVinci Resolve project archive (*.drp)</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Final Cut Pro X XML (*.fcpxml)</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Import Edit Decision List (.edl)</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Import OpenTimelineIO (.otio)</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>OpenTimelineIO sequence (*.otio)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -4607,10 +4527,6 @@
     <message>
         <source>Video</source>
         <translation>Vidéo</translation>
-    </message>
-    <message>
-        <source>All Supported Projects (*.drift *.prproj *.xml *.fcpxml *.mogrt *.kdenlive *.mlt *.drp *.edl *.otio)</source>
-        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Video size and layout</source>
@@ -7623,30 +7539,6 @@ En cas de saccades à la lecture, essayez un autre mode.</translation>
     <message>
         <source>Open JSON…</source>
         <translation>Ouvrir un fichier JSON…</translation>
-    </message>
-    <message>
-        <source>Import Premiere project…</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Import Motion Graphics (.mogrt)…</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Import Kdenlive / Shotcut project…</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Import DaVinci Resolve project / FCPXML…</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Import Edit Decision List (.edl)…</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Import OpenTimelineIO (.otio)…</source>
-        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Project properties…</source>

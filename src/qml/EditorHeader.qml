@@ -16,16 +16,13 @@ Rectangle {
 
     property string projectName: EditorState.projectName
 
+    // Disabled: external project imports (Premiere Pro, DaVinci Resolve/FCPXML, Kdenlive/Shotcut,
+    // .mogrt, EDL, OTIO) need more fixing before shipping. Uncomment these entries, the open*()
+    // functions below and the RecentProjectsPopup connections when the readers are stable.
     readonly property var projectFilter: [
-        qsTr("All Supported Projects (*.drift *.prproj *.xml *.fcpxml *.mogrt *.kdenlive *.mlt *.drp *.edl *.otio)"),
         qsTr("Drift project (*.drift)"),
-        qsTr("Premiere Pro project (*.prproj)"),
-        qsTr("DaVinci Resolve project (*.drp *.fcpxml)"),
-        qsTr("Kdenlive & Shotcut project (*.kdenlive *.mlt)"),
-        qsTr("OpenTimelineIO (*.otio)"),
-        qsTr("Edit Decision List (*.edl)"),
-        qsTr("Motion Graphics Template (*.mogrt)"),
-        qsTr("Final Cut Pro XML (*.xml)")
+        qsTr("JSON document (*.json)"),
+        qsTr("All Files (*)")
     ]
     readonly property var projectMimeTypes: [
         "application/x-drift-project",
@@ -109,70 +106,74 @@ Rectangle {
         })
     }
 
-    function openPremiereProject() {
-        root.confirmIfDirty(function () {
-            var url = FileDialogs.openFile(qsTr("Import Premiere Pro Project"),
-                                           [qsTr("Premiere Pro project (*.prproj *.xml)"),
-                                            qsTr("Premiere Pro project (*.prproj)"),
-                                            qsTr("Final Cut Pro XML (*.xml)")],
-                                           ["application/xml", "text/xml"])
-            if (url != "")
-                EditorState.loadPremiereProject(url)
-        })
-    }
-
-    function openMogrt() {
-        var url = FileDialogs.openFile(qsTr("Import Motion Graphics Template"),
-                                       [qsTr("Motion Graphics Template (*.mogrt)"),
-                                        qsTr("All Files (*)")],
-                                       ["application/zip", "application/octet-stream"])
-        if (url != "")
-            EditorState.importMogrt(url)
-    }
-
-    function openKdenliveProject() {
-        root.confirmIfDirty(function () {
-            var url = FileDialogs.openFile(qsTr("Import Kdenlive / Shotcut Project"),
-                                           [qsTr("Kdenlive & Shotcut project (*.kdenlive *.mlt)"),
-                                            qsTr("Kdenlive project (*.kdenlive)"),
-                                            qsTr("Shotcut project (*.mlt)")],
-                                           ["application/xml", "text/xml", "application/x-kdenlive"])
-            if (url != "")
-                EditorState.loadKdenliveProject(url)
-        })
-    }
-
-    function openResolveProject() {
-        root.confirmIfDirty(function () {
-            var url = FileDialogs.openFile(qsTr("Import DaVinci Resolve Project / FCPXML"),
-                                           [qsTr("DaVinci Resolve project (*.drp *.fcpxml)"),
-                                            qsTr("DaVinci Resolve project archive (*.drp)"),
-                                            qsTr("Final Cut Pro X XML (*.fcpxml)")],
-                                           ["application/zip", "application/octet-stream", "application/xml", "text/xml"])
-            if (url != "")
-                EditorState.loadResolveProject(url)
-        })
-    }
-
-    function openEdlTimeline() {
-        root.confirmIfDirty(function () {
-            var url = FileDialogs.openFile(qsTr("Import Edit Decision List (.edl)"),
-                                           [qsTr("Edit Decision List (*.edl)")],
-                                           ["text/plain", "application/octet-stream"])
-            if (url != "")
-                EditorState.loadEdlTimeline(url)
-        })
-    }
-
-    function openOtioTimeline() {
-        root.confirmIfDirty(function () {
-            var url = FileDialogs.openFile(qsTr("Import OpenTimelineIO (.otio)"),
-                                           [qsTr("OpenTimelineIO sequence (*.otio)")],
-                                           ["application/json", "text/plain", "application/octet-stream"])
-            if (url != "")
-                EditorState.loadOtioTimeline(url)
-        })
-    }
+    // Disabled: external project imports (Premiere Pro, DaVinci Resolve/FCPXML, Kdenlive/Shotcut,
+    // .mogrt, EDL, OTIO). Uncomment alongside the loadProject() routing in AppController once the
+    // readers are stable.
+    //
+    // function openPremiereProject() {
+    //     root.confirmIfDirty(function () {
+    //         var url = FileDialogs.openFile(qsTr("Import Premiere Pro Project"),
+    //                                        [qsTr("Premiere Pro project (*.prproj *.xml)"),
+    //                                         qsTr("Premiere Pro project (*.prproj)"),
+    //                                         qsTr("Final Cut Pro XML (*.xml)")],
+    //                                        ["application/xml", "text/xml"])
+    //         if (url != "")
+    //             EditorState.loadPremiereProject(url)
+    //     })
+    // }
+    //
+    // function openMogrt() {
+    //     var url = FileDialogs.openFile(qsTr("Import Motion Graphics Template"),
+    //                                    [qsTr("Motion Graphics Template (*.mogrt)"),
+    //                                     qsTr("All Files (*)")],
+    //                                    ["application/zip", "application/octet-stream"])
+    //     if (url != "")
+    //         EditorState.importMogrt(url)
+    // }
+    //
+    // function openKdenliveProject() {
+    //     root.confirmIfDirty(function () {
+    //         var url = FileDialogs.openFile(qsTr("Import Kdenlive / Shotcut Project"),
+    //                                        [qsTr("Kdenlive & Shotcut project (*.kdenlive *.mlt)"),
+    //                                         qsTr("Kdenlive project (*.kdenlive)"),
+    //                                         qsTr("Shotcut project (*.mlt)")],
+    //                                        ["application/xml", "text/xml", "application/x-kdenlive"])
+    //         if (url != "")
+    //             EditorState.loadKdenliveProject(url)
+    //     })
+    // }
+    //
+    // function openResolveProject() {
+    //     root.confirmIfDirty(function () {
+    //         var url = FileDialogs.openFile(qsTr("Import DaVinci Resolve Project / FCPXML"),
+    //                                        [qsTr("DaVinci Resolve project (*.drp *.fcpxml)"),
+    //                                         qsTr("DaVinci Resolve project archive (*.drp)"),
+    //                                         qsTr("Final Cut Pro X XML (*.fcpxml)")],
+    //                                        ["application/zip", "application/octet-stream", "application/xml", "text/xml"])
+    //         if (url != "")
+    //             EditorState.loadResolveProject(url)
+    //     })
+    // }
+    //
+    // function openEdlTimeline() {
+    //     root.confirmIfDirty(function () {
+    //         var url = FileDialogs.openFile(qsTr("Import Edit Decision List (.edl)"),
+    //                                        [qsTr("Edit Decision List (*.edl)")],
+    //                                        ["text/plain", "application/octet-stream"])
+    //         if (url != "")
+    //             EditorState.loadEdlTimeline(url)
+    //     })
+    // }
+    //
+    // function openOtioTimeline() {
+    //     root.confirmIfDirty(function () {
+    //         var url = FileDialogs.openFile(qsTr("Import OpenTimelineIO (.otio)"),
+    //                                        [qsTr("OpenTimelineIO sequence (*.otio)")],
+    //                                        ["application/json", "text/plain", "application/octet-stream"])
+    //         if (url != "")
+    //             EditorState.loadOtioTimeline(url)
+    //     })
+    // }
 
     // Save As with every source file copied in, so the result opens on a machine that has none of
     // the media. Always asks for a path: it is a different artefact from the working save.
@@ -367,12 +368,13 @@ Rectangle {
                     onPackageRequested: root.packageProject()
                     onSaveJsonRequested: root.saveProjectJson()
                     onOpenJsonRequested: root.openProjectJson()
-                    onImportPremiereRequested: root.openPremiereProject()
-                    onImportMogrtRequested: root.openMogrt()
-                    onImportKdenliveRequested: root.openKdenliveProject()
-                    onImportResolveRequested: root.openResolveProject()
-                    onImportEdlRequested: root.openEdlTimeline()
-                    onImportOtioRequested: root.openOtioTimeline()
+                    // Disabled: external project imports. Uncomment with the open*() functions above.
+                    // onImportPremiereRequested: root.openPremiereProject()
+                    // onImportMogrtRequested: root.openMogrt()
+                    // onImportKdenliveRequested: root.openKdenliveProject()
+                    // onImportResolveRequested: root.openResolveProject()
+                    // onImportEdlRequested: root.openEdlTimeline()
+                    // onImportOtioRequested: root.openOtioTimeline()
                     onPropertiesRequested: projectPropertiesDialog.openDialog()
                 }
             }

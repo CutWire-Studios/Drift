@@ -15,12 +15,14 @@ Popup {
     signal packageRequested()
     signal saveJsonRequested()
     signal openJsonRequested()
-    signal importPremiereRequested()
-    signal importMogrtRequested()
-    signal importKdenliveRequested()
-    signal importResolveRequested()
-    signal importEdlRequested()
-    signal importOtioRequested()
+    // Disabled: external project imports need more fixing before shipping. Re-enable the signals
+    // and ActionRows below together with the loadProject() routing in AppController.
+    // signal importPremiereRequested()
+    // signal importMogrtRequested()
+    // signal importKdenliveRequested()
+    // signal importResolveRequested()
+    // signal importEdlRequested()
+    // signal importOtioRequested()
     signal propertiesRequested()
 
     component ActionRow: Rectangle {
@@ -424,41 +426,43 @@ Popup {
             onTriggered: root.openJsonRequested()
         }
 
-        ActionRow {
-            glyph: Theme.icons.film
-            text: qsTr("Import Premiere project…")
-            onTriggered: root.importPremiereRequested()
-        }
-
-        ActionRow {
-            glyph: Theme.icons.layers
-            text: qsTr("Import Motion Graphics (.mogrt)…")
-            onTriggered: root.importMogrtRequested()
-        }
-
-        ActionRow {
-            glyph: Theme.icons.film
-            text: qsTr("Import Kdenlive / Shotcut project…")
-            onTriggered: root.importKdenliveRequested()
-        }
-
-        ActionRow {
-            glyph: Theme.icons.film
-            text: qsTr("Import DaVinci Resolve project / FCPXML…")
-            onTriggered: root.importResolveRequested()
-        }
-
-        ActionRow {
-            glyph: Theme.icons.list
-            text: qsTr("Import Edit Decision List (.edl)…")
-            onTriggered: root.importEdlRequested()
-        }
-
-        ActionRow {
-            glyph: Theme.icons.share2
-            text: qsTr("Import OpenTimelineIO (.otio)…")
-            onTriggered: root.importOtioRequested()
-        }
+        // Disabled: external project imports (Premiere Pro, DaVinci Resolve/FCPXML,
+        // Kdenlive/Shotcut, .mogrt, EDL, OTIO). Uncomment to re-enable once the readers are stable.
+        // ActionRow {
+        //     glyph: Theme.icons.film
+        //     text: qsTr("Import Premiere project…")
+        //     onTriggered: root.importPremiereRequested()
+        // }
+        //
+        // ActionRow {
+        //     glyph: Theme.icons.layers
+        //     text: qsTr("Import Motion Graphics (.mogrt)…")
+        //     onTriggered: root.importMogrtRequested()
+        // }
+        //
+        // ActionRow {
+        //     glyph: Theme.icons.film
+        //     text: qsTr("Import Kdenlive / Shotcut project…")
+        //     onTriggered: root.importKdenliveRequested()
+        // }
+        //
+        // ActionRow {
+        //     glyph: Theme.icons.film
+        //     text: qsTr("Import DaVinci Resolve project / FCPXML…")
+        //     onTriggered: root.importResolveRequested()
+        // }
+        //
+        // ActionRow {
+        //     glyph: Theme.icons.list
+        //     text: qsTr("Import Edit Decision List (.edl)…")
+        //     onTriggered: root.importEdlRequested()
+        // }
+        //
+        // ActionRow {
+        //     glyph: Theme.icons.share2
+        //     text: qsTr("Import OpenTimelineIO (.otio)…")
+        //     onTriggered: root.importOtioRequested()
+        // }
 
         ActionRow {
             glyph: Theme.icons.fileText

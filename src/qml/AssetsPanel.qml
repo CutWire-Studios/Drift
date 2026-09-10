@@ -525,7 +525,6 @@ PanelFrame {
     function importMedia() {
         var urls = FileDialogs.openFiles(qsTr("Import Media"),
                                          [AssetLibrary.mediaNameFilter(),
-                                          qsTr("Motion Graphics Template (*.mogrt)"),
                                           qsTr("All Files (*)")])
         root.importUrlsReporting(urls)
     }

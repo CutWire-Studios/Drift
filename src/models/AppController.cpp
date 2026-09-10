@@ -17656,44 +17656,47 @@ void AppController::loadProject(const QUrl &url)
         return;
     }
 
-    if (path.endsWith(QLatin1String(".prproj"), Qt::CaseInsensitive)
-        || path.endsWith(QLatin1String(".xml"), Qt::CaseInsensitive)
-        || drift::prproj::isPremiereProject(path)) {
-        loadPremiereProject(url);
-        return;
-    }
-
-    if (path.endsWith(QLatin1String(".drp"), Qt::CaseInsensitive)
-        || path.endsWith(QLatin1String(".fcpxml"), Qt::CaseInsensitive)
-        || drift::resolve::isResolveProject(path)) {
-        loadResolveProject(url);
-        return;
-    }
-
-    if (path.endsWith(QLatin1String(".mogrt"), Qt::CaseInsensitive)
-        || drift::mogrt::isMogrtFile(path)) {
-        importMogrt(url);
-        return;
-    }
-
-    if (path.endsWith(QLatin1String(".kdenlive"), Qt::CaseInsensitive)
-        || path.endsWith(QLatin1String(".mlt"), Qt::CaseInsensitive)
-        || drift::kdenlive::isKdenliveProject(path)) {
-        loadKdenliveProject(url);
-        return;
-    }
-
-    if (path.endsWith(QLatin1String(".edl"), Qt::CaseInsensitive)
-        || drift::edl::isEdlTimeline(path)) {
-        loadEdlTimeline(url);
-        return;
-    }
-
-    if (path.endsWith(QLatin1String(".otio"), Qt::CaseInsensitive)
-        || drift::otio::isOtioTimeline(path)) {
-        loadOtioTimeline(url);
-        return;
-    }
+    // Disabled: external project imports (Premiere Pro, DaVinci Resolve/FCPXML, Kdenlive/Shotcut,
+    // .mogrt, EDL, OTIO) landed in the last two weeks but need more fixing before they ship. Leave
+    // the branches commented out; uncomment to re-enable once the readers are stable.
+    // if (path.endsWith(QLatin1String(".prproj"), Qt::CaseInsensitive)
+    //     || path.endsWith(QLatin1String(".xml"), Qt::CaseInsensitive)
+    //     || drift::prproj::isPremiereProject(path)) {
+    //     loadPremiereProject(url);
+    //     return;
+    // }
+    //
+    // if (path.endsWith(QLatin1String(".drp"), Qt::CaseInsensitive)
+    //     || path.endsWith(QLatin1String(".fcpxml"), Qt::CaseInsensitive)
+    //     || drift::resolve::isResolveProject(path)) {
+    //     loadResolveProject(url);
+    //     return;
+    // }
+    //
+    // if (path.endsWith(QLatin1String(".mogrt"), Qt::CaseInsensitive)
+    //     || drift::mogrt::isMogrtFile(path)) {
+    //     importMogrt(url);
+    //     return;
+    // }
+    //
+    // if (path.endsWith(QLatin1String(".kdenlive"), Qt::CaseInsensitive)
+    //     || path.endsWith(QLatin1String(".mlt"), Qt::CaseInsensitive)
+    //     || drift::kdenlive::isKdenliveProject(path)) {
+    //     loadKdenliveProject(url);
+    //     return;
+    // }
+    //
+    // if (path.endsWith(QLatin1String(".edl"), Qt::CaseInsensitive)
+    //     || drift::edl::isEdlTimeline(path)) {
+    //     loadEdlTimeline(url);
+    //     return;
+    // }
+    //
+    // if (path.endsWith(QLatin1String(".otio"), Qt::CaseInsensitive)
+    //     || drift::otio::isOtioTimeline(path)) {
+    //     loadOtioTimeline(url);
+    //     return;
+    // }
 
     if (fileStartsWithJsonObject(path)) {
         loadProjectJson(url);
