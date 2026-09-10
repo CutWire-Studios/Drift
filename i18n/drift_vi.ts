@@ -1319,7 +1319,7 @@
     </message>
     <message>
         <source>Keyframes</source>
-        <translation>Khung hình khóa</translation>
+        <translation>Điểm mốc</translation>
     </message>
     <message numerus="yes">
         <source>%n clip(s)</source>
@@ -1443,11 +1443,11 @@
     </message>
     <message>
         <source>Spin CW</source>
-        <translation type="unfinished"></translation>
+        <translation>Xoay theo chiều kim đồng hồ</translation>
     </message>
     <message>
         <source>Spin CCW</source>
-        <translation type="unfinished"></translation>
+        <translation>Xoay ngược chiều kim đồng hồ</translation>
     </message>
     <message>
         <source>Bounce</source>
@@ -1463,7 +1463,7 @@
     </message>
     <message>
         <source>Natural</source>
-        <translation type="unfinished"></translation>
+        <translation>Tự nhiên</translation>
     </message>
     <message>
         <source>Custom</source>
@@ -1511,802 +1511,798 @@
     </message>
     <message>
         <source>Text tab has letter/word animations (typewriter, stagger). This moves the whole clip.</source>
-        <translation type="unfinished"></translation>
+        <translation>Tab văn bản có hiệu ứng ký tự (máy đánh chữ, nghịch đảo). Thao tác này sẽ di chuyển toàn bộ clip.</translation>
     </message>
 </context>
 <context>
     <name>AppController</name>
     <message>
         <source>Media removed</source>
-        <translation type="unfinished"></translation>
+        <translation>Đã xóa phương tiện</translation>
     </message>
     <message>
         <source>Rename media</source>
-        <translation type="unfinished"></translation>
+        <translation>Đổi tên phương tiện</translation>
     </message>
     <message>
         <source>Media renamed</source>
-        <translation type="unfinished"></translation>
+        <translation>Phương tiện đã được đổi tên</translation>
     </message>
     <message>
         <source>That file could not be read.</source>
-        <translation type="unfinished"></translation>
+        <translation>Tệp đó không thể đọc được.</translation>
     </message>
     <message>
         <source>That file is already in this project.</source>
-        <translation type="unfinished"></translation>
+        <translation>Tệp đó đã có trong dự án này.</translation>
     </message>
     <message>
         <source>That media is no longer in this project.</source>
-        <translation type="unfinished"></translation>
+        <translation>Phương tiện truyền thông đó không còn trong dự án này nữa.</translation>
     </message>
     <message>
         <source>“%1” is %2, but this slot holds %3.</source>
-        <translation type="unfinished"></translation>
+        <translation>“%1” là %2, nhưng khe này đang chứa %3.</translation>
     </message>
     <message>
         <source>Media replaced</source>
-        <translation type="unfinished"></translation>
+        <translation>Đã thay thế phương tiện</translation>
     </message>
     <message>
         <source>New project</source>
-        <translation type="unfinished"></translation>
+        <translation>Dự án mới</translation>
     </message>
     <message>
         <source>Open project</source>
-        <translation type="unfinished"></translation>
+        <translation>Mở dự án</translation>
     </message>
     <message>
         <source>Save project</source>
-        <translation type="unfinished"></translation>
+        <translation>Lưu dự án</translation>
     </message>
     <message>
         <source>Play/Pause</source>
-        <translation type="unfinished"></translation>
+        <translation>Phát/Tạm dừng</translation>
     </message>
     <message>
         <source>Delete selection</source>
-        <translation type="unfinished"></translation>
+        <translation>Xóa lựa chọn</translation>
     </message>
     <message>
         <source>Undo</source>
-        <translation type="unfinished"></translation>
+        <translation>Hoàn tác</translation>
     </message>
     <message>
         <source>Redo</source>
-        <translation type="unfinished"></translation>
+        <translation>Khôi phục</translation>
     </message>
     <message>
         <source>Copy selection</source>
-        <translation type="unfinished"></translation>
+        <translation>Sao chép lựa chọn</translation>
     </message>
     <message>
         <source>Cut selection</source>
-        <translation type="unfinished"></translation>
+        <translation>Cắt lựa chọn</translation>
     </message>
     <message>
         <source>Paste at current time</source>
-        <translation type="unfinished"></translation>
+        <translation>Dán tại thời điểm hiện tại</translation>
     </message>
     <message>
         <source>Duplicate selected clip</source>
-        <translation type="unfinished"></translation>
+        <translation>Nhân bản clip đã chọn</translation>
     </message>
     <message>
         <source>Split at current time</source>
-        <translation type="unfinished"></translation>
+        <translation>Tách ở điểm hiện tại</translation>
     </message>
     <message>
         <source>Merge adjacent clips</source>
-        <translation type="unfinished"></translation>
+        <translation>Hợp nhất các clip liền kề</translation>
     </message>
     <message>
         <source>Separate audio</source>
-        <translation type="unfinished"></translation>
+        <translation>Tách âm thanh</translation>
     </message>
     <message>
         <source>Unlink audio</source>
-        <translation type="unfinished"></translation>
+        <translation>Hủy liên kết âm thanh</translation>
     </message>
     <message>
         <source>Clear selection</source>
-        <translation type="unfinished"></translation>
+        <translation>Xóa lựa chọn</translation>
     </message>
     <message>
         <source>Select all clips</source>
-        <translation type="unfinished"></translation>
+        <translation>Chọn tất cả clip</translation>
     </message>
     <message>
         <source>Move selection left a little</source>
-        <translation type="unfinished"></translation>
+        <translation>Di chuyển lựa chọn sang trái một chút</translation>
     </message>
     <message>
         <source>Move selection right a little</source>
-        <translation type="unfinished"></translation>
+        <translation>Di chuyển lựa chọn sang phải một chút</translation>
     </message>
     <message>
         <source>Toggle guides</source>
-        <translation type="unfinished"></translation>
+        <translation>Chuyển đổi hướng dẫn</translation>
     </message>
     <message>
         <source>Add/remove bookmark at current time</source>
-        <translation type="unfinished"></translation>
+        <translation>Thêm/xóa dấu trang vào thời điểm hiện tại</translation>
     </message>
     <message>
         <source>Go to next bookmark</source>
-        <translation type="unfinished"></translation>
+        <translation>Đi tới dấu trang tiếp theo</translation>
     </message>
     <message>
         <source>Go to previous bookmark</source>
-        <translation type="unfinished"></translation>
+        <translation>Đi tới dấu trang trước đó</translation>
     </message>
     <message>
         <source>Mark work area in</source>
-        <translation type="unfinished"></translation>
+        <translation>Đánh dấu khu vực làm việc trong</translation>
     </message>
     <message>
         <source>Mark work area out</source>
-        <translation type="unfinished"></translation>
+        <translation>Đánh dấu khu vực làm việc ngoài</translation>
     </message>
     <message>
         <source>Go to work area in</source>
-        <translation type="unfinished"></translation>
+        <translation>Đến khu vực làm việc trong</translation>
     </message>
     <message>
         <source>Go to work area out</source>
-        <translation type="unfinished"></translation>
+        <translation>Đến khu vực làm việc ngoài</translation>
     </message>
     <message>
         <source>Clear work area</source>
-        <translation type="unfinished"></translation>
+        <translation>Xóa khu vực làm việc</translation>
     </message>
     <message>
         <source>Loop work area playback</source>
-        <translation type="unfinished"></translation>
+        <translation>Phát lặp vùng làm việc</translation>
     </message>
     <message>
         <source>Select tool</source>
-        <translation type="unfinished"></translation>
+        <translation>Chọn công cụ</translation>
     </message>
     <message>
         <source>Cut tool</source>
-        <translation type="unfinished"></translation>
+        <translation>Công cụ cắt</translation>
     </message>
     <message>
         <source>Faster preview takes effect after you restart Drift.</source>
-        <translation type="unfinished"></translation>
+        <translation>Bản xem trước nhanh hơn sẽ có hiệu lực sau khi bạn khởi động lại Drift.</translation>
     </message>
     <message>
         <source>System default</source>
-        <translation type="unfinished"></translation>
+        <translation>Mặc định hệ thống</translation>
     </message>
     <message>
         <source>Clip added</source>
-        <translation type="unfinished"></translation>
+        <translation>Đã thêm clip</translation>
     </message>
     <message>
         <source>Clip added on new track</source>
-        <translation type="unfinished"></translation>
+        <translation>Đã thêm clip vào bài hát mới</translation>
     </message>
     <message>
         <source>Clip deleted</source>
-        <translation type="unfinished"></translation>
+        <translation>Đã xóa clip</translation>
     </message>
     <message>
         <source>Clip moved</source>
-        <translation type="unfinished"></translation>
+        <translation>Đã di chuyển clip</translation>
     </message>
     <message>
         <source>Nothing to split here — move to a clip first</source>
-        <translation type="unfinished"></translation>
+        <translation>Không có gì để tách ở đây — trước tiên hãy chuyển đến một clip</translation>
     </message>
     <message>
         <source>Split clip</source>
-        <translation type="unfinished"></translation>
+        <translation>Tách clip</translation>
     </message>
     <message>
         <source>Split left</source>
-        <translation type="unfinished"></translation>
+        <translation>Tách bên trái</translation>
     </message>
     <message>
         <source>Split right</source>
-        <translation type="unfinished"></translation>
+        <translation>Tách bên phải</translation>
     </message>
     <message>
         <source>Trim updated</source>
-        <translation type="unfinished"></translation>
+        <translation>Đã cập nhật phần cắt</translation>
     </message>
     <message>
         <source>Clip duplicated</source>
-        <translation type="unfinished"></translation>
+        <translation>Clip trùng lặp</translation>
     </message>
     <message>
         <source>Your text here</source>
-        <translation type="unfinished"></translation>
+        <translation>Văn bản của bạn ở đây</translation>
     </message>
     <message>
         <source>Text clip added</source>
-        <translation type="unfinished"></translation>
+        <translation>Đã thêm văn bản clip</translation>
     </message>
     <message>
         <source>Subtitles</source>
-        <translation type="unfinished"></translation>
+        <translation>Phụ đề</translation>
     </message>
     <message>
         <source>Subtitle clip added</source>
-        <translation type="unfinished"></translation>
+        <translation>Đã thêm phụ đề clip</translation>
     </message>
     <message>
         <source>No subtitle file selected</source>
-        <translation type="unfinished"></translation>
+        <translation>Không có tệp phụ đề nào được chọn</translation>
     </message>
     <message>
         <source>Could not read subtitle file</source>
-        <translation type="unfinished"></translation>
+        <translation>Không đọc được tệp phụ đề</translation>
     </message>
     <message>
         <source>Subtitles imported</source>
-        <translation type="unfinished"></translation>
+        <translation>Phụ đề đã được nhập</translation>
     </message>
     <message>
         <source>Select a subtitle clip to import into</source>
-        <translation type="unfinished"></translation>
+        <translation>Chọn một phụ đề clip để nhập vào</translation>
     </message>
     <message>
         <source>Select a subtitle clip to export</source>
-        <translation type="unfinished"></translation>
+        <translation>Chọn một phụ đề clip để xuất ra</translation>
     </message>
     <message>
         <source>This subtitle clip has no captions</source>
-        <translation type="unfinished"></translation>
+        <translation>Phụ đề clip này không có chú thích</translation>
     </message>
     <message>
         <source>No save location selected</source>
-        <translation type="unfinished"></translation>
+        <translation>Không có vị trí lưu nào được chọn</translation>
     </message>
     <message>
         <source>Could not write subtitle file</source>
-        <translation type="unfinished"></translation>
+        <translation>Không thể ghi tệp phụ đề</translation>
     </message>
     <message>
         <source>Subtitles saved</source>
-        <translation type="unfinished"></translation>
+        <translation>Đã lưu phụ đề</translation>
     </message>
     <message>
         <source>Auto-detect</source>
-        <translation type="unfinished"></translation>
+        <translation>Tự động phát hiện</translation>
     </message>
     <message>
         <source>Subtitle generation already in progress</source>
-        <translation type="unfinished"></translation>
+        <translation>Đang tạo phụ đề</translation>
     </message>
     <message>
         <source>Select a video or audio clip to create captions</source>
-        <translation type="unfinished"></translation>
+        <translation>Chọn một đoạn video hoặc âm thanh để tạo chú thích</translation>
     </message>
     <message>
         <source>This clip has no sound</source>
-        <translation type="unfinished"></translation>
+        <translation>Clip này không có âm thanh</translation>
     </message>
     <message>
         <source>Starting…</source>
-        <translation type="unfinished"></translation>
+        <translation>Đang khởi động…</translation>
     </message>
     <message>
         <source>Done</source>
-        <translation type="unfinished"></translation>
+        <translation>Đã xong</translation>
     </message>
     <message>
         <source>Getting speech recognition ready…</source>
-        <translation type="unfinished"></translation>
+        <translation>Đang chuẩn bị nhận dạng giọng nói…</translation>
     </message>
     <message>
         <source>Reading audio…</source>
-        <translation type="unfinished"></translation>
+        <translation>Đang đọc âm thanh…</translation>
     </message>
     <message>
         <source>Subtitle generation cancelled</source>
-        <translation type="unfinished"></translation>
+        <translation>Việc tạo phụ đề đã bị hủy</translation>
     </message>
     <message>
         <source>Reading audio… %1%</source>
-        <translation type="unfinished"></translation>
+        <translation>Đang đọc âm thanh… %1%</translation>
     </message>
     <message>
         <source>No audio decoded</source>
-        <translation type="unfinished"></translation>
+        <translation>Không giải mã được âm thanh</translation>
     </message>
     <message>
         <source>Transcribing…</source>
-        <translation type="unfinished"></translation>
+        <translation>Đang chuyển âm…</translation>
     </message>
     <message>
         <source>Transcribing (%1)…</source>
-        <translation type="unfinished"></translation>
+        <translation>Đang chuyển âm (%1)…</translation>
     </message>
     <message>
         <source>Building caption track…</source>
-        <translation type="unfinished"></translation>
+        <translation>Đang tạo dải phụ đề…</translation>
     </message>
     <message>
         <source>No speech detected</source>
-        <translation type="unfinished"></translation>
+        <translation>Không phát hiện thấy giọng nói nào</translation>
     </message>
     <message>
         <source>Subtitles generated</source>
-        <translation type="unfinished"></translation>
+        <translation>Phụ đề đã được tạo</translation>
     </message>
     <message>
         <source>Select a video clip to cut out</source>
-        <translation type="unfinished"></translation>
+        <translation>Chọn một video clip để cắt ra</translation>
     </message>
     <message>
         <source>Custom speed works on video and audio clips</source>
-        <translation type="unfinished"></translation>
+        <translation>Tốc độ tùy chỉnh hoạt động trên các clip video và âm thanh</translation>
     </message>
     <message>
         <source>This clip has no media to speed up or slow down</source>
-        <translation type="unfinished"></translation>
+        <translation>Clip này không có phương tiện để tăng tốc hoặc giảm tốc độ</translation>
     </message>
     <message>
         <source>That clip moved — open Custom speed again</source>
-        <translation type="unfinished"></translation>
+        <translation>Clip đó đã được di chuyển — mở lại Tốc độ tùy chỉnh</translation>
     </message>
     <message>
         <source>Custom speed applied</source>
-        <translation type="unfinished"></translation>
+        <translation>Đã áp dụng tốc độ tùy chỉnh</translation>
     </message>
     <message>
         <source>Speed curve removed</source>
-        <translation type="unfinished"></translation>
+        <translation>Đã xóa đường cong tốc độ</translation>
     </message>
     <message>
         <source>That clip moved — open Custom fade again</source>
-        <translation type="unfinished"></translation>
+        <translation>Đã di chuyển clip — Hãy mở lại Tùy chỉnh làm mờ</translation>
     </message>
     <message>
         <source>Custom fade applied</source>
-        <translation type="unfinished"></translation>
+        <translation>Đã áp dụng độ mờ tùy chỉnh</translation>
     </message>
     <message>
         <source>Cutout is already running</source>
-        <translation type="unfinished"></translation>
+        <translation>Phần cắt ra đang chạy</translation>
     </message>
     <message>
         <source>This clip has no video to cut out</source>
-        <translation type="unfinished"></translation>
+        <translation>Clip này không có video để cắt</translation>
     </message>
     <message>
         <source>Click the subject first</source>
-        <translation type="unfinished"></translation>
+        <translation>Nhấn vào chủ đề đầu tiên</translation>
     </message>
     <message>
         <source>Getting ready…</source>
-        <translation type="unfinished"></translation>
+        <translation>Đang chuẩn bị…</translation>
     </message>
     <message>
         <source>Clip is too short to cut out</source>
-        <translation type="unfinished"></translation>
+        <translation>Clip quá ngắn để cắt ra</translation>
     </message>
     <message>
         <source>Could not create a cutout file</source>
-        <translation type="unfinished"></translation>
+        <translation>Không thể tạo tệp cắt</translation>
     </message>
     <message>
         <source>Cutout cancelled</source>
-        <translation type="unfinished"></translation>
+        <translation>Cắt đã bị hủy</translation>
     </message>
     <message>
         <source>Could not decode frame %1</source>
-        <translation type="unfinished"></translation>
+        <translation>Không thể giải mã khung %1</translation>
     </message>
     <message>
         <source>Processing frame %1 of %2…</source>
-        <translation type="unfinished"></translation>
+        <translation>Đang xử lý khung %1 của %2…</translation>
     </message>
     <message>
         <source>Cutout complete — subject cut out on %1 of %2 frames</source>
-        <translation type="unfinished"></translation>
+        <translation>Quá trình cắt hoàn tất - chủ đề bị cắt trên %1 của %2 khung</translation>
     </message>
     <message>
         <source>Cutout complete</source>
-        <translation type="unfinished"></translation>
+        <translation>Cắt hoàn tất</translation>
     </message>
     <message>
         <source>Clear Face Track</source>
-        <translation type="unfinished"></translation>
+        <translation>Xóa theo dõi khuôn mặt</translation>
     </message>
     <message>
         <source>Face detection already in progress</source>
-        <translation type="unfinished"></translation>
+        <translation>Đang tiến hành dò tìm khuôn mặt</translation>
     </message>
     <message>
         <source>Select a video clip to detect faces in</source>
-        <translation type="unfinished"></translation>
+        <translation>Chọn một video clip để phát hiện khuôn mặt</translation>
     </message>
     <message>
         <source>Clip has no video to scan</source>
-        <translation type="unfinished"></translation>
+        <translation>Clip không có video để quét</translation>
     </message>
     <message>
         <source>Clip is too short to scan</source>
-        <translation type="unfinished"></translation>
+        <translation>Clip quá ngắn để quét</translation>
     </message>
     <message>
         <source>Face detection cancelled</source>
-        <translation type="unfinished"></translation>
+        <translation>Đã hủy phát hiện khuôn mặt</translation>
     </message>
     <message>
         <source>Scanning frame %1 of %2…</source>
-        <translation type="unfinished"></translation>
+        <translation>Đang quét khung %1 của %2…</translation>
     </message>
     <message>
         <source>No faces found in this clip</source>
-        <translation type="unfinished"></translation>
+        <translation>Không tìm thấy khuôn mặt nào trong clip này</translation>
     </message>
     <message>
         <source>Could not write the face track</source>
-        <translation type="unfinished"></translation>
+        <translation>Không thể viết đường nét khuôn mặt</translation>
     </message>
     <message>
         <source>Face detection complete — a face was visible in %1 of %2 frames</source>
-        <translation type="unfinished"></translation>
+        <translation>Đã hoàn tất nhận diện khuôn mặt - một khuôn mặt được hiển thị trong %1 của %2 khung hình</translation>
     </message>
     <message>
         <source>Face detection complete</source>
-        <translation type="unfinished"></translation>
+        <translation>Nhận diện khuôn mặt hoàn tất</translation>
     </message>
     <message>
         <source>Scanned clip no longer exists</source>
-        <translation type="unfinished"></translation>
+        <translation>Clip đã quét không còn tồn tại</translation>
     </message>
     <message>
         <source>Detect Faces</source>
-        <translation type="unfinished"></translation>
+        <translation>Phát hiện khuôn mặt</translation>
     </message>
     <message>
         <source>That clip no longer exists</source>
-        <translation type="unfinished"></translation>
+        <translation>Clip đó không còn tồn tại</translation>
     </message>
     <message>
         <source>Cut out subject</source>
-        <translation type="unfinished"></translation>
+        <translation>Cắt bỏ chủ đề</translation>
     </message>
     <message>
         <source>Clip</source>
-        <translation type="unfinished"></translation>
+        <translation>Clip</translation>
     </message>
     <message>
         <source>Getting noise removal ready…</source>
-        <translation type="unfinished"></translation>
+        <translation>Đang chuẩn bị loại bỏ tiếng ồn…</translation>
     </message>
     <message>
         <source>Clip is too short to process</source>
-        <translation type="unfinished"></translation>
+        <translation>Clip quá ngắn để xử lý</translation>
     </message>
     <message>
         <source>Noise removal cancelled</source>
-        <translation type="unfinished"></translation>
+        <translation>Đã hủy loại bỏ tiếng ồn</translation>
     </message>
     <message>
         <source>Removing noise (left)…</source>
-        <translation type="unfinished"></translation>
+        <translation>Đang loại bỏ tiếng ồn (trái)…</translation>
     </message>
     <message>
         <source>Removing noise (right)…</source>
-        <translation type="unfinished"></translation>
+        <translation>Đang loại bỏ tiếng ồn (phải)…</translation>
     </message>
     <message>
         <source>Writing audio…</source>
-        <translation type="unfinished"></translation>
+        <translation>Đang ghi âm thanh…</translation>
     </message>
     <message>
         <source>Noise removal already in progress</source>
-        <translation type="unfinished"></translation>
+        <translation>Đang tiến hành loại bỏ tiếng ồn</translation>
     </message>
     <message>
         <source>Select a video or audio clip</source>
-        <translation type="unfinished"></translation>
+        <translation>Chọn một đoạn video hoặc âm thanh</translation>
     </message>
     <message>
         <source>Clip has no audio</source>
-        <translation type="unfinished"></translation>
+        <translation>Clip không có âm thanh</translation>
     </message>
     <message>
         <source>Could not create a preview file</source>
-        <translation type="unfinished"></translation>
+        <translation>Không thể tạo tệp xem trước</translation>
     </message>
     <message>
         <source>Ready</source>
-        <translation type="unfinished"></translation>
+        <translation>Sẵn sàng</translation>
     </message>
     <message numerus="yes">
         <source>Imported %n subtitles</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>Đã nhập %n phụ đề</numerusform>
         </translation>
     </message>
     <message>
         <source>No audio output devices were found, so playback will be silent.</source>
-        <translation type="unfinished"></translation>
+        <translation>Không tìm thấy thiết bị đầu ra âm thanh nào nên quá trình phát lại sẽ ở chế độ im lặng.</translation>
     </message>
     <message>
         <source>Multicam window</source>
-        <translation type="unfinished"></translation>
+        <translation>Cửa sổ đa góc quay</translation>
     </message>
     <message>
         <source>Creating captions…</source>
-        <translation type="unfinished"></translation>
+        <translation>Đang tạo phụ đề…</translation>
     </message>
     <message>
         <source>Angle %1</source>
-        <translation type="unfinished"></translation>
+        <translation>Góc %1</translation>
     </message>
     <message>
         <source>Set up multicam</source>
-        <translation type="unfinished"></translation>
+        <translation>Thiết lập đa góc quay</translation>
     </message>
     <message numerus="yes">
         <source>Multicam ready: %n camera(s) lined up at the start. Drag a clip to adjust its sync, then pick a shot.</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>Đa góc quay đã sẵn sàng: %n camera đã được xếp hàng khi bắt đầu. Kéo clip để điều chỉnh đồng bộ hóa, sau đó chọn một cảnh quay.</numerusform>
         </translation>
     </message>
     <message>
         <source>Select at least two video clips on different tracks.</source>
-        <translation type="unfinished"></translation>
+        <translation>Chọn ít nhất hai video clip trên các bản nhạc khác nhau.</translation>
     </message>
     <message>
         <source>Hardware decoding failed on this clip; using software decoding instead.</source>
-        <translation type="unfinished"></translation>
+        <translation>Giải mã phần cứng không thành công trên clip này; thay vào đó hãy sử dụng phần mềm giải mã.</translation>
     </message>
     <message>
         <source>%1 decoding failed on this clip; using software decoding instead.</source>
-        <translation type="unfinished"></translation>
+        <translation>Giải mã %1 không thành công trên clip này; thay vào đó hãy sử dụng phần mềm giải mã.</translation>
     </message>
     <message>
         <source>Copy effects from clip</source>
-        <translation type="unfinished"></translation>
+        <translation>Sao chép hiệu ứng từ clip</translation>
     </message>
     <message>
         <source>Paste effects onto clip</source>
-        <translation type="unfinished"></translation>
+        <translation>Dán hiệu ứng vào clip</translation>
     </message>
     <message>
         <source>That angle has nothing at the current time.</source>
-        <translation type="unfinished"></translation>
+        <translation>Góc đó không có gì ở thời điểm hiện tại.</translation>
     </message>
     <message>
         <source>Too close to the edge of the shot to cut here.</source>
-        <translation type="unfinished"></translation>
+        <translation>Quá gần mép ảnh để cắt ở đây.</translation>
     </message>
     <message>
         <source>Save multicam as separate tracks</source>
-        <translation type="unfinished"></translation>
+        <translation>Lưu đa góc quay thành các dải riêng</translation>
     </message>
     <message>
         <source>Save combined multicam</source>
-        <translation type="unfinished"></translation>
+        <translation>Lưu hợp nhất đa góc quay</translation>
     </message>
     <message>
         <source>Cutting out subject…</source>
-        <translation type="unfinished"></translation>
+        <translation>Đang cắt bỏ chủ đề…</translation>
     </message>
     <message>
         <source>Select a video clip to stabilize</source>
-        <translation type="unfinished"></translation>
+        <translation>Chọn một video clip để ổn định</translation>
     </message>
     <message>
         <source>Clip has no video file</source>
-        <translation type="unfinished"></translation>
+        <translation>Clip không có tệp video</translation>
     </message>
     <message>
         <source>Stabilization already in progress for this clip</source>
-        <translation type="unfinished"></translation>
+        <translation>Quá trình ổn định đang được tiến hành cho clip này</translation>
     </message>
     <message>
         <source>Could not create stabilization cache directory</source>
-        <translation type="unfinished"></translation>
+        <translation>Không thể tạo thư mục bộ đệm ổn định</translation>
     </message>
     <message>
         <source>ffmpeg executable not found in PATH</source>
-        <translation type="unfinished"></translation>
+        <translation>Không tìm thấy tệp thực thi ffmpeg trong ĐƯỜNG DẪN</translation>
     </message>
     <message>
         <source>Stabilize Video</source>
-        <translation type="unfinished"></translation>
+        <translation>Ổn định Video</translation>
     </message>
     <message>
         <source>Stabilization analysis failed or cancelled.</source>
-        <translation type="unfinished"></translation>
+        <translation>Phân tích độ ổn định không thành công hoặc bị hủy.</translation>
     </message>
     <message>
         <source>Video stabilized successfully!</source>
-        <translation type="unfinished"></translation>
+        <translation>Ổn định video thành công!</translation>
     </message>
     <message>
         <source>Stabilization rendering failed or cancelled.</source>
-        <translation type="unfinished"></translation>
+        <translation>Kết xuất ổn định không thành công hoặc bị hủy.</translation>
     </message>
     <message>
         <source>Remove Stabilization</source>
-        <translation type="unfinished"></translation>
+        <translation>Xóa tính năng ổn định</translation>
     </message>
     <message>
         <source>Change Stabilization Smoothing</source>
-        <translation type="unfinished"></translation>
+        <translation>Thay đổi độ mượt ổn định</translation>
     </message>
     <message>
         <source>Change Stabilization Tripod Mode</source>
-        <translation type="unfinished"></translation>
+        <translation>Thay đổi chế độ ổn định Tripod</translation>
     </message>
     <message>
         <source>Detecting faces…</source>
-        <translation type="unfinished"></translation>
+        <translation>Đang phát hiện khuôn mặt…</translation>
     </message>
     <message>
         <source>Already looking for scenes</source>
-        <translation type="unfinished"></translation>
+        <translation>Đang tìm kiếm phân cảnh…</translation>
     </message>
     <message>
         <source>Select a video clip to find scenes in</source>
-        <translation type="unfinished"></translation>
+        <translation>Chọn clip để dò phân cảnh</translation>
     </message>
     <message numerus="yes">
         <source>Found %n scene(s)</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>Đã tìm thấy %n phân cảnh</numerusform>
         </translation>
     </message>
     <message>
         <source>Looking for scenes…</source>
-        <translation type="unfinished"></translation>
+        <translation>Đang tìm kiếm phân cảnh…</translation>
     </message>
     <message>
         <source>Scene detection cancelled</source>
-        <translation type="unfinished"></translation>
+        <translation>Đã hủy phát hiện phân cảnh</translation>
     </message>
     <message>
         <source>Removing noise…</source>
-        <translation type="unfinished"></translation>
+        <translation>Đang khử tiếng ồn…</translation>
     </message>
     <message>
         <source>Could not create an output file</source>
-        <translation type="unfinished"></translation>
+        <translation>Không thể tạo tệp đầu ra</translation>
     </message>
     <message>
         <source>Media and referenced clips removed</source>
-        <translation type="unfinished"></translation>
+        <translation>Phương tiện và các clip tham chiếu đã bị xóa</translation>
     </message>
     <message numerus="yes">
         <source>%n media items and referenced clips removed</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>%n phương tiện và các clip được tham chiếu đã bị xóa</numerusform>
         </translation>
     </message>
     <message>
         <source>Media and referenced clip removed</source>
-        <translation type="unfinished"></translation>
+        <translation>Đã xóa phương tiện và clip tham chiếu</translation>
     </message>
     <message>
         <source>Your graphics driver is too old for the preview, which needs OpenGL 3.3. See Help → Debug info.</source>
-        <translation type="unfinished"></translation>
+        <translation>Driver đồ họa của bạn quá cũ để xem trước, cần có OpenGL 3.3. Xem Trợ giúp → Thông tin gỡ lỗi.</translation>
     </message>
     <message>
         <source>Your graphics driver only provides %1; the preview needs OpenGL 3.3. See Help → Debug info.</source>
-        <translation type="unfinished"></translation>
+        <translation>Driver đồ họa của bạn chỉ cung cấp %1; bản xem trước cần OpenGL 3.3. Xem Trợ giúp → Thông tin gỡ lỗi.</translation>
     </message>
     <message>
         <source>GPU preview rendering is unavailable on this machine. See Help → Debug info.</source>
-        <translation type="unfinished"></translation>
+        <translation>Kết xuất bản xem trước GPU không khả dụng trên máy này. Xem Trợ giúp → Thông tin gỡ lỗi.</translation>
     </message>
     <message>
         <source>An edit is already saving</source>
-        <translation type="unfinished"></translation>
+        <translation>Một bản chỉnh sửa đang được lưu</translation>
     </message>
     <message>
         <source>Could not open the media file</source>
-        <translation type="unfinished"></translation>
+        <translation>Không thể mở tệp phương tiện</translation>
     </message>
     <message>
         <source>Saving…</source>
-        <translation type="unfinished"></translation>
+        <translation>Đang lưu…</translation>
     </message>
     <message>
         <source>Saving media…</source>
-        <translation type="unfinished"></translation>
+        <translation>Đang lưu phương tiện…</translation>
     </message>
     <message>
         <source>Couldn’t save that edit</source>
-        <translation type="unfinished"></translation>
+        <translation>Không thể lưu bản chỉnh sửa đó</translation>
     </message>
     <message>
         <source>Updating the library…</source>
-        <translation type="unfinished"></translation>
+        <translation>Đang cập nhật thư viện…</translation>
     </message>
     <message>
         <source>Couldn’t update the library</source>
-        <translation type="unfinished"></translation>
+        <translation>Không thể cập nhật thư viện</translation>
     </message>
     <message>
         <source>Media edited</source>
-        <translation type="unfinished"></translation>
+        <translation>Đã chỉnh sửa phương tiện</translation>
     </message>
     <message>
         <source>Paste attributes…</source>
-        <translation type="unfinished"></translation>
+        <translation>Dán thuộc tính…</translation>
     </message>
     <message>
         <source>Go to previous cut point</source>
-        <translation type="unfinished"></translation>
+        <translation>Đi tới điểm cắt trước đó</translation>
     </message>
     <message>
         <source>Go to next cut point</source>
-        <translation type="unfinished"></translation>
+        <translation>Đi tới điểm cắt tiếp theo</translation>
     </message>
     <message>
         <source>Go to start of timeline</source>
-        <translation type="unfinished"></translation>
+        <translation>Đi đến đầu dòng thời gian</translation>
     </message>
     <message>
         <source>Delete left of the playhead</source>
-        <translation type="unfinished"></translation>
+        <translation>Xóa bên trái của đầu phát</translation>
     </message>
     <message>
         <source>Delete right of the playhead</source>
-        <translation type="unfinished"></translation>
+        <translation>Xóa bên phải của đầu phát</translation>
     </message>
     <message>
         <source>Increase playback speed</source>
-        <translation type="unfinished"></translation>
+        <translation>Tăng tốc độ phát lại</translation>
     </message>
     <message>
         <source>Decrease playback speed</source>
-        <translation type="unfinished"></translation>
+        <translation>Giảm tốc độ phát lại</translation>
     </message>
     <message>
         <source>Zoom in</source>
-        <translation type="unfinished"></translation>
+        <translation>Phóng to</translation>
     </message>
     <message>
         <source>Zoom out</source>
-        <translation type="unfinished"></translation>
+        <translation>Thu nhỏ</translation>
     </message>
     <message>
         <source>Clips moved</source>
-        <translation type="unfinished"></translation>
+        <translation>Đã di chuyển clip</translation>
     </message>
     <message>
         <source>Transition curve</source>
-        <translation type="unfinished"></translation>
+        <translation>Đường cong chuyển cảnh</translation>
     </message>
     <message>
         <source>Transition curve updated</source>
-        <translation type="unfinished"></translation>
+        <translation>Đã cập nhật đường cong chuyển cảnh</translation>
     </message>
     <message>
         <source>That transition is gone — open the custom curve again</source>
-        <translation type="unfinished"></translation>
+        <translation>Hiệu ứng chuyển cảnh đó đã bị mất — hãy mở lại đường cong tùy chỉnh</translation>
     </message>
     <message>
         <source>Custom transition curve</source>
-        <translation type="unfinished"></translation>
+        <translation>Đường cong chuyển cảnh tùy chỉnh</translation>
     </message>
     <message>
         <source>Custom transition curve applied</source>
-        <translation type="unfinished"></translation>
+        <translation>Đã áp dụng đường cong chuyển cảnh tùy chỉnh</translation>
     </message>
     <message>
         <source>Building keyframes…</source>
-        <translation type="unfinished"></translation>
+        <translation>Đang tạo điểm mốc…</translation>
     </message>
     <message>
         <source>Rendering stabilized video…</source>
-        <translation type="unfinished"></translation>
+        <translation>Đang kết xuất video ổn định…</translation>
     </message>
     <message>
         <source>Analyzing camera motion…</source>
@@ -2326,7 +2322,7 @@
     </message>
     <message>
         <source>Stabilize with Keyframes</source>
-        <translation type="unfinished"></translation>
+        <translation>Ổn định với Điểm mốc</translation>
     </message>
     <message>
         <source>Stabilization keyframes applied.</source>
@@ -2402,75 +2398,75 @@
     </message>
     <message>
         <source>Adjustment lane added</source>
-        <translation type="unfinished"></translation>
+        <translation>Đã thêm làn điều chỉnh</translation>
     </message>
     <message>
         <source>Nest adjustment in track</source>
-        <translation type="unfinished"></translation>
+        <translation>Lồng lớp điều chỉnh vào dải</translation>
     </message>
     <message>
         <source>Adjustment nested</source>
-        <translation type="unfinished"></translation>
+        <translation>Đã lồng điều chỉnh</translation>
     </message>
     <message>
         <source>Detach adjustment to its own track</source>
-        <translation type="unfinished"></translation>
+        <translation>Tách lớp điều chỉnh thành dải riêng</translation>
     </message>
     <message>
         <source>Adjustment detached</source>
-        <translation type="unfinished"></translation>
+        <translation>Đã tách lớp điều chỉnh</translation>
     </message>
     <message>
         <source>Unlink adjustment</source>
-        <translation type="unfinished"></translation>
+        <translation>Hủy liên kết lớp điều chỉnh</translation>
     </message>
     <message>
         <source>Adjustment unlinked</source>
-        <translation type="unfinished"></translation>
+        <translation>Đã hủy liên kết lớp điều chỉnh</translation>
     </message>
     <message>
         <source>Link adjustment to clip</source>
-        <translation type="unfinished"></translation>
+        <translation>Liên kết lớp điều chỉnh vào clip</translation>
     </message>
     <message>
         <source>Adjustment linked</source>
-        <translation type="unfinished"></translation>
+        <translation>Đã liên kết lớp điều chỉnh</translation>
     </message>
     <message>
         <source>Install the emoji sticker pack to add emoji</source>
-        <translation type="unfinished"></translation>
+        <translation>Cài đặt gói nhãn dán biểu tượng cảm xúc để thêm biểu tượng cảm xúc</translation>
     </message>
     <message>
         <source>Frame rate</source>
-        <translation type="unfinished"></translation>
+        <translation>Tốc độ khung hình</translation>
     </message>
     <message>
         <source>Project setup</source>
-        <translation type="unfinished"></translation>
+        <translation>Cài đặt dự án</translation>
     </message>
     <message>
         <source>Project setup updated</source>
-        <translation type="unfinished"></translation>
+        <translation>Đã cập nhật cài đặt dự án</translation>
     </message>
     <message>
         <source>Crop canvas</source>
-        <translation type="unfinished"></translation>
+        <translation>Xén khung hình</translation>
     </message>
     <message>
         <source>Video size cropped to %1×%2</source>
-        <translation type="unfinished"></translation>
+        <translation>Kích thước video được cắt thành %1×%2</translation>
     </message>
     <message>
         <source>Change background</source>
-        <translation type="unfinished"></translation>
+        <translation>Thay đổi nền</translation>
     </message>
     <message>
         <source>Background updated</source>
-        <translation type="unfinished"></translation>
+        <translation>Đã cập nhật nền</translation>
     </message>
     <message>
         <source>Edit clip</source>
-        <translation type="unfinished"></translation>
+        <translation>Chỉnh sửa clip</translation>
     </message>
     <message>
         <source>Turn on Auto keyframes to move this</source>
@@ -2478,7 +2474,7 @@
     </message>
     <message>
         <source>Move clip</source>
-        <translation type="unfinished"></translation>
+        <translation>Di chuyển clip</translation>
     </message>
     <message>
         <source>Turn on Auto keyframes to resize this</source>
@@ -2486,7 +2482,7 @@
     </message>
     <message>
         <source>Resize clip</source>
-        <translation type="unfinished"></translation>
+        <translation>Thay đổi kích thước clip</translation>
     </message>
     <message>
         <source>Turn on Auto keyframes to change this</source>
@@ -2494,7 +2490,7 @@
     </message>
     <message>
         <source>Transform clip</source>
-        <translation type="unfinished"></translation>
+        <translation>Chuyển đổi clip</translation>
     </message>
     <message>
         <source>Turn on Auto keyframes to rotate this</source>
@@ -2502,7 +2498,7 @@
     </message>
     <message>
         <source>Rotate clip</source>
-        <translation type="unfinished"></translation>
+        <translation>Xoay clip</translation>
     </message>
     <message>
         <source>Turn on Auto keyframes to edit this</source>
@@ -2510,171 +2506,171 @@
     </message>
     <message>
         <source>Edit keyframe</source>
-        <translation type="unfinished"></translation>
+        <translation>Chỉnh sửa điểm mốc</translation>
     </message>
     <message>
         <source>Edit effect</source>
-        <translation type="unfinished"></translation>
+        <translation>Chỉnh sửa hiệu ứng</translation>
     </message>
     <message>
         <source>Speed changed</source>
-        <translation type="unfinished"></translation>
+        <translation>Đã thay đổi tốc độ</translation>
     </message>
     <message>
         <source>Adjust fade</source>
-        <translation type="unfinished"></translation>
+        <translation>Điều chỉnh độ mờ</translation>
     </message>
     <message>
         <source>Mask changed</source>
-        <translation type="unfinished"></translation>
+        <translation>Mặt nạ đã thay đổi</translation>
     </message>
     <message>
         <source>Start updated</source>
-        <translation type="unfinished"></translation>
+        <translation>Đã cập nhật điểm đầu</translation>
     </message>
     <message>
         <source>Duration updated</source>
-        <translation type="unfinished"></translation>
+        <translation>Đã cập nhật thời lượng</translation>
     </message>
     <message>
         <source>Text updated</source>
-        <translation type="unfinished"></translation>
+        <translation>Đã cập nhật văn bản</translation>
     </message>
     <message>
         <source>Rename clip</source>
-        <translation type="unfinished"></translation>
+        <translation>Đổi tên clip</translation>
     </message>
     <message>
         <source>Clip renamed</source>
-        <translation type="unfinished"></translation>
+        <translation>Đã đổi tên clip</translation>
     </message>
     <message>
         <source>Edit text</source>
-        <translation type="unfinished"></translation>
+        <translation>Chỉnh sửa văn bản</translation>
     </message>
     <message>
         <source>Subtitles updated</source>
-        <translation type="unfinished"></translation>
+        <translation>Đã cập nhật phụ đề</translation>
     </message>
     <message>
         <source>Adjust subtitle timing</source>
-        <translation type="unfinished"></translation>
+        <translation>Điều chỉnh thời gian phụ đề</translation>
     </message>
     <message>
         <source>Subtitle cue updated</source>
-        <translation type="unfinished"></translation>
+        <translation>Đã cập nhật tín hiệu phụ đề</translation>
     </message>
     <message>
         <source>Edit text style</source>
-        <translation type="unfinished"></translation>
+        <translation>Chỉnh sửa kiểu văn bản</translation>
     </message>
     <message>
         <source>Text style updated</source>
-        <translation type="unfinished"></translation>
+        <translation>Đã cập nhật kiểu văn bản</translation>
     </message>
     <message>
         <source>Apply text preset</source>
-        <translation type="unfinished"></translation>
+        <translation>Áp dụng mẫu chữ</translation>
     </message>
     <message>
         <source>Text preset applied</source>
-        <translation type="unfinished"></translation>
+        <translation>Đã áp dụng mẫu chữ</translation>
     </message>
     <message>
         <source>Could not save the text style</source>
-        <translation type="unfinished"></translation>
+        <translation>Không thể lưu kiểu văn bản</translation>
     </message>
     <message>
         <source>Save text style</source>
-        <translation type="unfinished"></translation>
+        <translation>Lưu kiểu văn bản</translation>
     </message>
     <message>
         <source>Text style saved</source>
-        <translation type="unfinished"></translation>
+        <translation>Đã lưu kiểu văn bản</translation>
     </message>
     <message>
         <source>Could not rename the text style</source>
-        <translation type="unfinished"></translation>
+        <translation>Không thể đổi tên kiểu văn bản</translation>
     </message>
     <message>
         <source>Text style renamed</source>
-        <translation type="unfinished"></translation>
+        <translation>Kiểu văn bản đã được đổi tên</translation>
     </message>
     <message>
         <source>Could not delete the text style</source>
-        <translation type="unfinished"></translation>
+        <translation>Không thể xóa kiểu văn bản</translation>
     </message>
     <message>
         <source>Text style deleted</source>
-        <translation type="unfinished"></translation>
+        <translation>Đã xóa kiểu văn bản</translation>
     </message>
     <message>
         <source>Could not export the text style</source>
-        <translation type="unfinished"></translation>
+        <translation>Không thể xuất kiểu văn bản</translation>
     </message>
     <message>
         <source>Text style exported</source>
-        <translation type="unfinished"></translation>
+        <translation>Đã xuất kiểu văn bản</translation>
     </message>
     <message>
         <source>Could not import the text style</source>
-        <translation type="unfinished"></translation>
+        <translation>Không thể nhập kiểu văn bản</translation>
     </message>
     <message>
         <source>Text style imported</source>
-        <translation type="unfinished"></translation>
+        <translation>Kiểu văn bản đã được nhập</translation>
     </message>
     <message>
         <source>Resize text</source>
-        <translation type="unfinished"></translation>
+        <translation>Thay đổi kích thước văn bản</translation>
     </message>
     <message>
         <source>Blend mode changed</source>
-        <translation type="unfinished"></translation>
+        <translation>Chế độ trộn đã thay đổi</translation>
     </message>
     <message>
         <source>Blend mode updated</source>
-        <translation type="unfinished"></translation>
+        <translation>Đã cập nhật chế độ trộn</translation>
     </message>
     <message>
         <source>Clip speed updated</source>
-        <translation type="unfinished"></translation>
+        <translation>Đã cập nhật tốc độ clip</translation>
     </message>
     <message>
         <source>Reverse on</source>
-        <translation type="unfinished"></translation>
+        <translation>Bật đảo ngược</translation>
     </message>
     <message>
         <source>Reverse off</source>
-        <translation type="unfinished"></translation>
+        <translation>Tắt đảo ngược</translation>
     </message>
     <message>
         <source>Clip reversed</source>
-        <translation type="unfinished"></translation>
+        <translation>Clip đã đảo ngược</translation>
     </message>
     <message>
         <source>Clip forward</source>
-        <translation type="unfinished"></translation>
+        <translation>Chuyển tiếp clip</translation>
     </message>
     <message>
         <source>A clip is already being reversed</source>
-        <translation type="unfinished"></translation>
+        <translation>Một clip đang được đảo ngược</translation>
     </message>
     <message>
         <source>Could not create a reversed file</source>
-        <translation type="unfinished"></translation>
+        <translation>Không thể tạo tệp bị đảo ngược</translation>
     </message>
     <message>
         <source>Reversing video…</source>
-        <translation type="unfinished"></translation>
+        <translation>Đang đảo ngược video…</translation>
     </message>
     <message>
         <source>Flip changed</source>
-        <translation type="unfinished"></translation>
+        <translation>Lật đã thay đổi</translation>
     </message>
     <message>
         <source>Clip flip updated</source>
-        <translation type="unfinished"></translation>
+        <translation>Đã cập nhật lật clip</translation>
     </message>
     <message>
         <source>Pan changed</source>
@@ -2690,39 +2686,39 @@
     </message>
     <message>
         <source>Rotation set to %1°</source>
-        <translation type="unfinished"></translation>
+        <translation>Đã đặt chế độ xoay thành %1°</translation>
     </message>
     <message>
         <source>Clips merged</source>
-        <translation type="unfinished"></translation>
+        <translation>Đã hợp nhất các clip</translation>
     </message>
     <message>
         <source>Audio separated</source>
-        <translation type="unfinished"></translation>
+        <translation>Tách âm thanh</translation>
     </message>
     <message>
         <source>All audio tracks separated</source>
-        <translation type="unfinished"></translation>
+        <translation>Tất cả các bản âm thanh đã được tách</translation>
     </message>
     <message>
         <source>Change audio track</source>
-        <translation type="unfinished"></translation>
+        <translation>Thay đổi bản âm thanh</translation>
     </message>
     <message>
         <source>Clips unlinked</source>
-        <translation type="unfinished"></translation>
+        <translation>Đã hủy liên kết các clip</translation>
     </message>
     <message>
         <source>Audio unlinked</source>
-        <translation type="unfinished"></translation>
+        <translation>Đã hủy liên kết âm thanh</translation>
     </message>
     <message>
         <source>Fade updated</source>
-        <translation type="unfinished"></translation>
+        <translation>Đã cập nhật làm mờ</translation>
     </message>
     <message>
         <source>Fade curve changed</source>
-        <translation type="unfinished"></translation>
+        <translation>Đường cong làm mờ đã thay đổi</translation>
     </message>
     <message>
         <source>Fade curve updated</source>
