@@ -7489,6 +7489,10 @@ If playback stutters, try another.</source>
         <translation type="unfinished">ක්ලිප්</translation>
     </message>
     <message>
+        <source>Adjustment Layer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Cannot open file: %1</source>
         <translation type="unfinished"></translation>
     </message>
@@ -8023,6 +8027,25 @@ If playback stutters, try another.</source>
     <message>
         <source>Each moment is processed, so longer clips take longer.</source>
         <translation>සෑම මොහොතක්ම සකසනු ලබයි, එබැවින් දිගු ක්ලිප් සඳහා වැඩි කාලයක් ගත වේ.</translation>
+    </message>
+</context>
+<context>
+    <name>SequenceChooserDialog</name>
+    <message>
+        <source>Choose Sequence to Import</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Import</source>
+        <translation type="unfinished">ආයාත කරන්න</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation type="unfinished">අවලංගු කරන්න</translation>
+    </message>
+    <message>
+        <source>This Premiere Pro project contains multiple sequences. Select which sequence you want to import:</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>

@@ -7489,6 +7489,10 @@ Se a reprodução travar, experimente outro.</translation>
         <translation type="unfinished">Clipe</translation>
     </message>
     <message>
+        <source>Adjustment Layer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Cannot open file: %1</source>
         <translation type="unfinished"></translation>
     </message>
@@ -8023,6 +8027,25 @@ Se a reprodução travar, experimente outro.</translation>
     <message>
         <source>Each moment is processed, so longer clips take longer.</source>
         <translation>Cada momento é processado, então clipes mais longos levam mais tempo.</translation>
+    </message>
+</context>
+<context>
+    <name>SequenceChooserDialog</name>
+    <message>
+        <source>Choose Sequence to Import</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Import</source>
+        <translation type="unfinished">Importar</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation type="unfinished">Cancelar</translation>
+    </message>
+    <message>
+        <source>This Premiere Pro project contains multiple sequences. Select which sequence you want to import:</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>

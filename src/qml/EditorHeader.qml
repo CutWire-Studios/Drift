@@ -32,6 +32,9 @@ Rectangle {
         "application/xml",
         "text/xml",
         "application/zip",
+        "application/gzip",
+        "application/x-gzip",
+        "application/json",
         "application/octet-stream"
     ]
 
@@ -53,8 +56,17 @@ Rectangle {
         root.confirmIfDirty(function () {
             var url = FileDialogs.openFile(qsTr("Open Project"), root.projectFilter,
                                            root.projectMimeTypes)
-            if (url != "")
+            if (url != "") {
+                var str = url.toString().toLowerCase()
+                if (str.endsWith(".prproj") || str.endsWith(".xml")) {
+                    var seqs = EditorState.premiereProjectSequences(url)
+                    if (seqs && seqs.length > 1) {
+                        sequenceChooserDialog.openFor(url, seqs)
+                        return
+                    }
+                }
                 EditorState.loadProject(url)
+            }
         })
     }
 
@@ -115,9 +127,15 @@ Rectangle {
                                            [qsTr("Premiere Pro project (*.prproj *.xml)"),
                                             qsTr("Premiere Pro project (*.prproj)"),
                                             qsTr("Final Cut Pro XML (*.xml)")],
-                                           ["application/xml", "text/xml"])
-            if (url != "")
-                EditorState.loadPremiereProject(url)
+                                           ["application/gzip", "application/x-gzip", "application/xml", "text/xml", "application/octet-stream"])
+            if (url != "") {
+                var seqs = EditorState.premiereProjectSequences(url)
+                if (seqs && seqs.length > 1) {
+                    sequenceChooserDialog.openFor(url, seqs)
+                } else {
+                    EditorState.loadPremiereProject(url)
+                }
+            }
         })
     }
 
@@ -225,6 +243,10 @@ Rectangle {
 
     LanguageChooserDialog {
         id: languageChooserDialog
+    }
+
+    SequenceChooserDialog {
+        id: sequenceChooserDialog
     }
 
     AgentAccessDialog {

@@ -7456,6 +7456,10 @@ If playback stutters, try another.</source>
         <translation>クリップ</translation>
     </message>
     <message>
+        <source>Adjustment Layer</source>
+        <translation type="unfinished">調整レイヤー</translation>
+    </message>
+    <message>
         <source>Cannot open file: %1</source>
         <translation>%1 を開けません</translation>
     </message>
@@ -7990,6 +7994,25 @@ If playback stutters, try another.</source>
     <message>
         <source>Each moment is processed, so longer clips take longer.</source>
         <translation>各瞬間が処理されるため、長いクリップほど時間がかかります。</translation>
+    </message>
+</context>
+<context>
+    <name>SequenceChooserDialog</name>
+    <message>
+        <source>Choose Sequence to Import</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Import</source>
+        <translation type="unfinished">インポート</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation type="unfinished">キャンセル</translation>
+    </message>
+    <message>
+        <source>This Premiere Pro project contains multiple sequences. Select which sequence you want to import:</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>

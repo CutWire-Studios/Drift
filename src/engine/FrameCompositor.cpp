@@ -377,16 +377,66 @@ QImage decodedStillImage(const QString &path, int maxWidth, int maxHeight)
 
 // maxWidth/maxHeight bound the decode buffer. They are deliberately *not* the
 // clip's layout rect: the layout rect moves every frame under a scale keyframe,
-// and a changing decode size invalidates the decoder's frame cache and forces a
-// keyframe seek per frame. Decoding to a stable, canvas-bounded size and letting
-// the draw step scale is both stable and cheaper.
-QImage decodeClipMediaFrame(const drift::Clip &clip, drift::TimeUs timelineUs, int maxWidth, int maxHeight)
+static QString resolveImageSequenceFrame(const QString &basePath, drift::TimeUs sourceUs, int fps)
+{
+    if (basePath.isEmpty())
+        return basePath;
+
+    const int lastSlash = basePath.lastIndexOf(QLatin1Char('/'));
+    const QString fileName = lastSlash >= 0 ? basePath.mid(lastSlash + 1) : basePath;
+    const int dot = fileName.lastIndexOf(QLatin1Char('.'));
+    if (dot <= 0)
+        return basePath;
+
+    const QString stem = fileName.left(dot);
+    const QString ext = fileName.mid(dot + 1);
+
+    int digitCount = 0;
+    while (digitCount < stem.size() && stem.at(stem.size() - 1 - digitCount).isDigit()) {
+        ++digitCount;
+    }
+    if (digitCount == 0)
+        return basePath;
+
+    const QString prefix = basePath.left(basePath.size() - ext.size() - 1 - digitCount);
+    const QString digitsStr = stem.mid(stem.size() - digitCount);
+    bool ok = false;
+    const qint64 baseNum = digitsStr.toLongLong(&ok);
+    if (!ok)
+        return basePath;
+
+    const QString probeNext = QStringLiteral("%1%2.%3")
+        .arg(prefix)
+        .arg(baseNum + 1, digitCount, 10, QLatin1Char('0'))
+        .arg(ext);
+    if (!QFileInfo::exists(probeNext))
+        return basePath;
+
+    const int targetFps = fps > 0 ? fps : 30;
+    const qint64 frameOffset = (sourceUs * targetFps) / drift::kUsPerSecond;
+    const qint64 targetFrame = baseNum + frameOffset;
+
+    const QString targetPath = QStringLiteral("%1%2.%3")
+        .arg(prefix)
+        .arg(targetFrame, digitCount, 10, QLatin1Char('0'))
+        .arg(ext);
+
+    if (QFileInfo::exists(targetPath))
+        return targetPath;
+
+    return basePath;
+}
+
+QImage decodeClipMediaFrame(const drift::Clip &clip, drift::TimeUs timelineUs, int maxWidth, int maxHeight, int projectFps = 30)
 {
     if (clip.path.isEmpty())
         return {};
 
-    if (clip.type == drift::ClipType::Image)
-        return decodedStillImage(clip.path, maxWidth, maxHeight);
+    if (clip.type == drift::ClipType::Image) {
+        const drift::TimeUs sourceUs = clip.timelineToSourceUs(timelineUs);
+        const QString framePath = resolveImageSequenceFrame(clip.path, sourceUs, projectFps);
+        return decodedStillImage(framePath, maxWidth, maxHeight);
+    }
 
     if (clip.type == drift::ClipType::Video) {
         const drift::VideoRead read = drift::resolveVideoRead(clip, timelineUs);
@@ -436,7 +486,7 @@ QImage imageForClip(const drift::Clip &clip, const QList<drift::Mask> &laneMasks
         QList<QImage> samples;
         samples.reserve(frameCount + 1);
 
-        const QImage current = decodeClipMediaFrame(clip, timelineUs, maxWidth, maxHeight);
+        const QImage current = decodeClipMediaFrame(clip, timelineUs, maxWidth, maxHeight, projectFps);
         if (current.isNull())
             return {};
         samples.append(current);
@@ -446,14 +496,14 @@ QImage imageForClip(const drift::Clip &clip, const QList<drift::Mask> &laneMasks
             if (pastClipUs < 0)
                 break;
             const drift::TimeUs pastTimelineUs = clip.timelineStart + pastClipUs;
-            const QImage past = decodeClipMediaFrame(clip, pastTimelineUs, maxWidth, maxHeight);
+            const QImage past = decodeClipMediaFrame(clip, pastTimelineUs, maxWidth, maxHeight, projectFps);
             if (!past.isNull())
                 samples.append(past);
         }
 
         image = CompositorFrameHistory::applyTimeEcho(samples, decay, blendMode);
     } else {
-        image = decodeClipMediaFrame(clip, timelineUs, maxWidth, maxHeight);
+        image = decodeClipMediaFrame(clip, timelineUs, maxWidth, maxHeight, projectFps);
     }
 
     if (image.isNull())
@@ -629,7 +679,7 @@ QImage gpuSourceForClip(const drift::Clip &clip, drift::TimeUs timelineUs, int m
 
     const drift::Effect *timeEcho = findTimeEchoEffect(clip.effects);
     if (!timeEcho)
-        return decodeClipMediaFrame(clip, timelineUs, maxWidth, maxHeight);
+        return decodeClipMediaFrame(clip, timelineUs, maxWidth, maxHeight, projectFps);
 
     const EffectPresetEntry *def = effectDefForId(timeEcho->catalogId);
     if (!def)
@@ -649,7 +699,7 @@ QImage gpuSourceForClip(const drift::Clip &clip, drift::TimeUs timelineUs, int m
     QList<QImage> samples;
     samples.reserve(frameCount + 1);
 
-    const QImage current = decodeClipMediaFrame(clip, timelineUs, maxWidth, maxHeight);
+    const QImage current = decodeClipMediaFrame(clip, timelineUs, maxWidth, maxHeight, projectFps);
     if (current.isNull())
         return {};
     samples.append(current);
@@ -659,7 +709,7 @@ QImage gpuSourceForClip(const drift::Clip &clip, drift::TimeUs timelineUs, int m
         if (pastClipUs < 0)
             break;
         const QImage past =
-            decodeClipMediaFrame(clip, clip.timelineStart + pastClipUs, maxWidth, maxHeight);
+            decodeClipMediaFrame(clip, clip.timelineStart + pastClipUs, maxWidth, maxHeight, projectFps);
         if (!past.isNull())
             samples.append(past);
     }

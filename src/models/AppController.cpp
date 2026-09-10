@@ -17329,7 +17329,7 @@ void AppController::loadProjectJson(const QUrl &url)
     setLastMessage(tr("Project JSON loaded"), QStringLiteral("success"));
 }
 
-void AppController::loadPremiereProject(const QUrl &url)
+void AppController::loadPremiereProject(const QUrl &url, const QString &sequenceName)
 {
     const QString path = readTargetPath(url);
     if (path.isEmpty()) {
@@ -17338,7 +17338,7 @@ void AppController::loadPremiereProject(const QUrl &url)
     }
 
     QString readError;
-    const std::optional<drift::Project> proj = drift::prproj::readProject(path, &readError);
+    const std::optional<drift::Project> proj = drift::prproj::readProject(path, &readError, sequenceName);
     if (!proj) {
         setLastMessage(readError.isEmpty() ? tr("Failed to open Premiere Pro project") : readError,
                        QStringLiteral("error"));
@@ -17363,6 +17363,15 @@ void AppController::loadPremiereProject(const QUrl &url)
     deleteRecoveryFile();
     setProjectLayoutChosen(true);
     setLastMessage(tr("Premiere Pro project imported: %1").arg(proj->name()), QStringLiteral("success"));
+}
+
+QStringList AppController::premiereProjectSequences(const QUrl &url)
+{
+    const QString path = readTargetPath(url);
+    if (path.isEmpty()) {
+        return {};
+    }
+    return drift::prproj::listSequences(path);
 }
 
 void AppController::importMogrt(const QUrl &url)

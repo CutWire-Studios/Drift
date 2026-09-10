@@ -15,11 +15,17 @@ bool isPremiereProject(const QString &filePath);
 bool isPremiereData(const QByteArray &data);
 
 // Reads a Premiere Pro project (.prproj or .xml) from disk and imports it as a drift::Project.
-std::optional<Project> readProject(const QString &filePath, QString *error = nullptr);
+std::optional<Project> readProject(const QString &filePath, QString *error = nullptr,
+                                   const QString &sequenceName = QString());
 
 // Reads raw project data (either gzipped or uncompressed XML) and converts it to a drift::Project.
 // sourceDir is used to attempt relative media resolution if original absolute paths do not exist.
 std::optional<Project> readProjectData(const QByteArray &data, const QString &sourceDir = QString(),
-                                      QString *error = nullptr);
+                                       QString *error = nullptr,
+                                       const QString &sequenceName = QString());
+
+// Returns sequence names present in the project.
+QStringList listSequences(const QString &filePath, QString *error = nullptr);
+QStringList listSequencesData(const QByteArray &data, QString *error = nullptr);
 
 } // namespace drift::prproj

@@ -29,6 +29,7 @@
 
 #include "core/Clip.h"
 #include "core/EffectStackStore.h"
+#include "core/PrprojReader.h"
 #include "core/MogrtReader.h"
 #include "core/KdenliveReader.h"
 #include "core/ResolveReader.h"
@@ -1806,6 +1807,93 @@ void EditorStateTest::premiereProjectImportPrproj()
     // Imported project is dirty and untitled (needs Save As)
     QVERIFY(state.hasUnsavedChanges());
     QVERIFY(state.currentProjectPath().isEmpty());
+
+    const QString realPrproj = QStringLiteral("/home/sangeeth/Downloads/mixkit-particle-explosion-logo-508/508/Particle Burst Logo.prproj");
+    if (QFile::exists(realPrproj)) {
+        QStringList seqs = drift::prproj::listSequences(realPrproj);
+        qDebug() << "Available sequences:" << seqs;
+        QVERIFY(seqs.contains(QStringLiteral("01 FINAL Blue")));
+        QVERIFY(seqs.contains(QStringLiteral("02 FINAL Pnik")));
+        QVERIFY(seqs.contains(QStringLiteral("03 FINAL Green")));
+        QVERIFY(seqs.contains(QStringLiteral("04 FINAL Gold")));
+
+        QStringList controllerSeqs = state.premiereProjectSequences(QUrl::fromLocalFile(realPrproj));
+        QCOMPARE(controllerSeqs, seqs);
+
+        // Test loading Blue sequence default
+        QString err;
+        auto blueRes = drift::prproj::readProject(realPrproj, &err, QStringLiteral("01 FINAL Blue"));
+        QVERIFY(blueRes.has_value());
+        QVERIFY(blueRes->tracks().size() >= 12);
+        QCOMPARE(blueRes->tracks().first().name, QStringLiteral("V12"));
+        QCOMPARE(blueRes->tracks().at(11).name, QStringLiteral("V1"));
+        QVERIFY(!blueRes->tracks().at(11).clips.isEmpty());
+        QCOMPARE(blueRes->tracks().at(11).clips.first().name, QStringLiteral("BG"));
+
+        // Test loading Pink sequence
+        auto pinkRes = drift::prproj::readProject(realPrproj, &err, QStringLiteral("02 FINAL Pnik"));
+        QVERIFY(pinkRes.has_value());
+        QCOMPARE(pinkRes->name(), QStringLiteral("02 FINAL Pnik"));
+
+        // Render test frames to verify visual compositing
+        FrameCompositor compositor;
+        compositor.setProject(&blueRes.value());
+        const QImage frameAt25 = compositor.compositeAt(2500000);
+        QVERIFY(!frameAt25.isNull());
+        QCOMPARE(frameAt25.size(), QSize(1920, 1080));
+
+        FrameCompositor pinkCompositor;
+        pinkCompositor.setProject(&pinkRes.value());
+        const QImage pinkFrame = pinkCompositor.compositeAt(2500000);
+        QVERIFY(!pinkFrame.isNull());
+        QCOMPARE(pinkFrame.size(), QSize(1920, 1080));
+
+        // Verify that the adjustment layer with hue shift is present
+        bool foundPinkHue = false;
+        for (const auto &t : pinkRes->tracks()) {
+            for (const auto &c : t.clips) {
+                for (const auto &fx : c.effects) {
+                    if (fx.catalogId == QStringLiteral("adjust.hue") || fx.name == QStringLiteral("adjust.hue")) {
+                        foundPinkHue = true;
+                        qDebug() << "Found Pink adjust.hue in clip" << c.name << "params:" << fx.parameters;
+                    }
+                }
+            }
+        }
+        QVERIFY(foundPinkHue);
+
+        // Test loading Green sequence
+        auto greenRes = drift::prproj::readProject(realPrproj, &err, QStringLiteral("03 FINAL Green"));
+        QVERIFY(greenRes.has_value());
+        bool foundGreenHue = false;
+        for (const auto &t : greenRes->tracks()) {
+            for (const auto &c : t.clips) {
+                for (const auto &fx : c.effects) {
+                    if (fx.catalogId == QStringLiteral("adjust.hue") || fx.name == QStringLiteral("adjust.hue")) {
+                        foundGreenHue = true;
+                        qDebug() << "Found Green adjust.hue in clip" << c.name << "params:" << fx.parameters;
+                    }
+                }
+            }
+        }
+        QVERIFY(foundGreenHue);
+
+        // Test loading Gold sequence
+        auto goldRes = drift::prproj::readProject(realPrproj, &err, QStringLiteral("04 FINAL Gold"));
+        QVERIFY(goldRes.has_value());
+        bool foundGoldHue = false;
+        for (const auto &t : goldRes->tracks()) {
+            for (const auto &c : t.clips) {
+                for (const auto &fx : c.effects) {
+                    if (fx.catalogId == QStringLiteral("adjust.hue") || fx.name == QStringLiteral("adjust.hue")) {
+                        foundGoldHue = true;
+                        qDebug() << "Found Gold adjust.hue in clip" << c.name << "params:" << fx.parameters;
+                    }
+                }
+            }
+        }
+        QVERIFY(foundGoldHue);
+    }
 }
 
 void EditorStateTest::premiereProjectImportFcpXml()

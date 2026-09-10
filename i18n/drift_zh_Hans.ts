@@ -7450,6 +7450,10 @@ If playback stutters, try another.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Adjustment Layer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Cannot open file: %1</source>
         <translation type="unfinished"></translation>
     </message>
@@ -7982,6 +7986,25 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Each moment is processed, so longer clips take longer.</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>SequenceChooserDialog</name>
+    <message>
+        <source>Choose Sequence to Import</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Import</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation type="unfinished">取消</translation>
+    </message>
+    <message>
+        <source>This Premiere Pro project contains multiple sequences. Select which sequence you want to import:</source>
         <translation type="unfinished"></translation>
     </message>
 </context>

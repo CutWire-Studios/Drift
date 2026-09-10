@@ -240,6 +240,10 @@ namespace {
 void applyFilters(QFileDialog &dialog, const QStringList &nameFilters,
                   const QStringList &mimeTypeFilters)
 {
+    if (!nameFilters.isEmpty()) {
+        dialog.setNameFilters(nameFilters);
+        return;
+    }
     if (!mimeTypeFilters.isEmpty()) {
         QMimeDatabase db;
         bool allKnown = true;
@@ -254,8 +258,6 @@ void applyFilters(QFileDialog &dialog, const QStringList &nameFilters,
             return;
         }
     }
-    if (!nameFilters.isEmpty())
-        dialog.setNameFilters(nameFilters);
 }
 
 void applyOpenFilters(QFileDialog &dialog, const QStringList &nameFilters,

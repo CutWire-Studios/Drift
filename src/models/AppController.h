@@ -1294,7 +1294,9 @@ public:
     Q_INVOKABLE void loadProjectJson(const QUrl &url);
     // Imports an Adobe Premiere Pro project (.prproj) or Final Cut Pro XML (.xml),
     // mapping sequences, video/audio tracks, clips, in/out trimming, and media assets.
-    Q_INVOKABLE void loadPremiereProject(const QUrl &url);
+    Q_INVOKABLE void loadPremiereProject(const QUrl &url, const QString &sequenceName = QString());
+    // Returns sequence names in a Premiere Pro project.
+    Q_INVOKABLE QStringList premiereProjectSequences(const QUrl &url);
     // Unpacks and imports a Motion Graphics Template (.mogrt), extracting assets and mapping
     // editable text, colors, and media overlays onto the timeline and media library.
     Q_INVOKABLE void importMogrt(const QUrl &url);
