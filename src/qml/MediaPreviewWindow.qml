@@ -118,12 +118,12 @@ Window {
 
     // Steps the bin's rotation correction by 90° and keeps it — independent of crop/trim, which
     // still need Save. Kept only for video: image/audio clips have no lossless pixel-rotation
-    // path on the timeline (see AppController::applyAssetLayout / ClipReader::rotationOverride).
+    // path on the timeline (see AppController::applyAssetLayout / Clip::rotationCorrection).
     function rotate90() {
         if (root.assetIndex < 0 || !root.isVideo)
             return
         const next = (root.effectiveRotation + 90) % 360
-        if (AssetLibrary.setAssetRotation(root.assetIndex, next)) {
+        if (EditorState.setAssetRotation(root.assetIndex, next)) {
             root.rotationOverride = next
             root.effectiveRotation = next
         }
@@ -214,13 +214,19 @@ Window {
     }
 
     // The rotated thumbnail/filmstrip regenerate on a background job (MediaThumbnail::generate),
-    // so the strip below needs to pick up the new file once it lands.
+    // so the strip below needs to pick up the new file once it lands. The rotation itself is
+    // re-read too: an undo of the rotate while this window is open lands here as well.
     Connections {
         target: AssetLibrary
         function onAssetMetadataChanged(assetId) {
             if (assetId !== root.assetId)
                 return
             root.filmstripPath = AssetLibrary.filmstripAt(root.assetIndex)
+            const asset = AssetLibrary.assetAt(root.assetIndex)
+            if (!asset || asset.id !== root.assetId)
+                return
+            root.rotationOverride = asset.rotationOverride
+            root.effectiveRotation = asset.effectiveRotation
         }
     }
 
@@ -735,6 +741,7 @@ Window {
                     filmstripPath: root.filmstripPath
                     frameWidth: Math.max(1, width / frameCount)
                     sourcePath: root.sourcePath
+                    rotationCorrection: (root.effectiveRotation - root.rotationDegrees + 360) % 360
                     inPoint: 0
                     outPoint: root.durationSeconds
                     sourceDuration: root.durationSeconds

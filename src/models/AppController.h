@@ -275,6 +275,7 @@ class AppController : public QObject
     Q_PROPERTY(QString sceneClipId READ sceneClipId NOTIFY scenesChanged)
     // Source file the live analysis describes, so the panel can ask for thumbnails.
     Q_PROPERTY(QString sceneClipPath READ sceneClipPath NOTIFY scenesChanged)
+    Q_PROPERTY(int sceneClipRotationCorrection READ sceneClipRotationCorrection NOTIFY scenesChanged)
     Q_PROPERTY(bool sceneDetecting READ sceneDetecting NOTIFY sceneDetectingChanged)
     Q_PROPERTY(double sceneDetectProgress READ sceneDetectProgress NOTIFY sceneDetectProgressChanged)
     Q_PROPERTY(QString sceneDetectStatus READ sceneDetectStatus NOTIFY sceneDetectStatusChanged)
@@ -425,6 +426,7 @@ public:
     QVariantList scenes() const { return m_scenes; }
     QString sceneClipId() const { return m_sceneClipId; }
     QString sceneClipPath() const { return m_sceneClipPath; }
+    int sceneClipRotationCorrection() const { return m_sceneClipRotationCorrection; }
     bool sceneDetecting() const { return m_sceneDetecting; }
     double sceneDetectProgress() const { return m_sceneDetectProgress; }
     QString sceneDetectStatus() const { return m_sceneDetectStatus; }
@@ -675,6 +677,9 @@ public:
     Q_INVOKABLE int removeAssetsAndClips(const QStringList &assetIds);
     // Bin label only — does not rename the file on disk or rewrite clip names.
     Q_INVOKABLE bool renameAsset(int assetIndex, const QString &name);
+    // Bin-preview orientation for a video asset (absolute 0/90/180/270; -1 = the file's own tag),
+    // as one undoable edit — AssetLibrary::setAssetRotation on its own leaves no undo entry.
+    Q_INVOKABLE bool setAssetRotation(int assetIndex, int degrees);
     // Bin folder CRUD. parentId empty = bin root; nesting is arbitrary depth.
     Q_INVOKABLE QString createBinFolder(const QString &name, const QString &parentId);
     Q_INVOKABLE bool renameBinFolder(const QString &folderId, const QString &name);
@@ -1044,9 +1049,9 @@ public:
     Q_INVOKABLE void previewSetClipPan(int trackIndex, int clipIndex, double pan);
     Q_INVOKABLE void setClipPan(int trackIndex, int clipIndex, double pan);
     Q_INVOKABLE void setClipRotationSnap(int trackIndex, int clipIndex, double degrees);
-    // Discrete, lossless orientation correction (0/90/180/270) — distinct from the free decorative
-    // "Angle" above. Re-fits the clip's box for the new orientation and decodes losslessly; see
-    // drift::Clip::rotationOverride.
+    // Discrete, lossless orientation fix (absolute 0/90/180/270, as the inspector shows it) —
+    // distinct from the free decorative "Angle" above. Re-fits the clip's box for the new
+    // orientation and decodes losslessly; see drift::Clip::rotationCorrection.
     Q_INVOKABLE void setClipOrientation(int trackIndex, int clipIndex, int degrees);
     Q_INVOKABLE bool canMergeSelection() const;
     Q_INVOKABLE void mergeSelectedClips();
@@ -1450,7 +1455,8 @@ public:
     Q_INVOKABLE QString filmstripFrameUrl(const QString &path, int frame, int count) const;
     // Sharp on-demand frame for one filmstrip tile — see FilmstripTileCache. Empty until the
     // decode lands, at which point filmstripTileReady() fires for that source.
-    Q_INVOKABLE QString filmstripTileUrl(const QString &path, int level, double index) const;
+    Q_INVOKABLE QString filmstripTileUrl(const QString &path, int level, double index,
+                                         int rotationCorrection = 0) const;
 
 signals:
     // A text clip was added with no text; the preview should open its inline
@@ -1628,7 +1634,7 @@ protected:
     void finalizeAssetReplace(const QString &assetId, const drift::MediaAsset &filled, bool ok);
     // Moves every clip bound to `assetId` onto the replacement media. Returns how many had a
     // source range that no longer fitted and had to be pulled back to it.
-    int rebindClipsToAsset(const QString &assetId, const drift::MediaAsset &asset, int oldEffectiveRotation);
+    int rebindClipsToAsset(const QString &assetId, const drift::MediaAsset &asset, int oldBinCorrection);
     // Keeps the keyframe strip's index-addressed hidden series in sync after an effect is removed.
     void dropKeyframeGraphPropertiesForEffect(int removedIndex);
     // Same idea after a reorder: fx.N.* indices move with the effect.
@@ -1683,7 +1689,7 @@ protected:
                                               double minSceneSeconds) const;
     // Publishes a finished scene analysis into m_scenes, shaped for QML.
     void applySceneAnalysis(const drift::SceneAnalysis &analysis, const QString &clipId,
-                            const QString &clipPath);
+                            const QString &clipPath, int rotationCorrection);
     // Completes a segmentation job: pins the matte to the clip as a Mask adjustment on its own
     // lane. `outputMode` is kept only so the older "clips"/"mask" spellings stay accepted; all
     // three now produce the same mask layer.
@@ -1788,6 +1794,11 @@ protected:
     void restoreSelectionByTrackId(const QList<QPair<QString, int>> &captured);
     int assetIndexForClip(const drift::Clip &clip) const;
     drift::TimeUs clipDurationForAssetIndex(int assetIndex) const;
+    // The absolute orientation (0/90/180/270) a video clip's frames come out at: its file's own
+    // tag plus its rotationCorrection. setClipOrientationTo stores the correction that lands on
+    // `degrees`.
+    int clipOrientation(const drift::Clip &clip) const;
+    void setClipOrientationTo(drift::Clip &clip, int degrees);
     drift::TimeUs sourceDurationForClip(const drift::Clip &clip) const;
     void startReverseRender(const QString &sourcePath, drift::TimeUs coverInUs,
                             drift::TimeUs coverOutUs);
@@ -2021,6 +2032,7 @@ protected:
     QVariantList m_scenes;
     QString m_sceneClipId;
     QString m_sceneClipPath;
+    int m_sceneClipRotationCorrection = 0;
     bool m_sceneDetecting = false;
     double m_sceneDetectProgress = 0.0;
     QString m_sceneDetectStatus;

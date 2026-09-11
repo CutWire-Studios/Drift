@@ -711,15 +711,6 @@ AppController::AppController(AssetLibrary *assetLibrary, QObject *parent)
     if (m_assetLibrary) {
         connect(m_assetLibrary, &AssetLibrary::assetMetadataChanged, this,
                 &AppController::editCapabilitiesChanged);
-        // AssetLibrary has no AppController back-reference, so a bin-level edit that never goes
-        // through pushProjectEdit (setAssetRotation/setAssetTrim, called directly from QML) would
-        // otherwise leave m_dirty false — the project could be closed without a save prompt and
-        // the edit silently lost. assetUserEdited (not the broader assetMetadataChanged, which
-        // also covers a thumbnail/filmstrip landing or an audio-presence probe) fires only for
-        // those two actual user edits, so opening a project with missing cached thumbnails, or
-        // saving while one happens to regenerate, does not spuriously mark the project dirty.
-        connect(m_assetLibrary, &AssetLibrary::assetUserEdited, this,
-                [this]() { setDirty(true); });
     }
 
     connect(&m_filmstripTiles, &FilmstripTileCache::tileReady, this,
@@ -2218,13 +2209,13 @@ void applyAssetLayout(drift::Clip &clip, const QVariantMap &asset, int canvasW, 
     int mediaW = asset.value(QStringLiteral("width")).toInt();
     int mediaH = asset.value(QStringLiteral("height")).toInt();
     // "effectiveRotation" folds in any bin-preview override over the probed rotationDegrees
-    // (AssetLibrary::assetAt) — baking it onto the clip keeps the placed clip's orientation
-    // correct even if the bin asset's override changes later.
+    // (AssetLibrary::assetAt). The clip carries the bin's correction as its own from here on, so
+    // its orientation stays put even if the bin asset's override changes later.
     const int rotation = asset.value(QStringLiteral("effectiveRotation")).toInt();
     if (rotation == 90 || rotation == 270)
         std::swap(mediaW, mediaH);
     fitClipLayoutToCanvas(clip, mediaW, mediaH, canvasW, canvasH);
-    clip.rotationOverride = rotation;
+    clip.rotationCorrection = asset.value(QStringLiteral("rotationCorrection")).toInt();
 
     // A bin-preview trim is non-destructive (AssetLibrary::setAssetTrim never touches the file),
     // so a freshly placed clip has to start at that saved range itself rather than the caller's
@@ -2890,9 +2881,11 @@ QVariantMap AppController::clipToMap(const drift::Clip &clip, const drift::Clip 
         {QStringLiteral("reverse"), clip.reverse},
         {QStringLiteral("flipH"), clip.flipH},
         {QStringLiteral("flipV"), clip.flipV},
-        // Discrete lossless orientation correction, distinct from the free "rotation" keyframe
-        // track below — -1 means inherit the source file's own probed rotation.
-        {QStringLiteral("rotationOverride"), clip.rotationOverride},
+        // Discrete lossless orientation fix, distinct from the free "rotation" keyframe track
+        // below. "orientation" is the absolute result (what the inspector shows), the correction
+        // is what is stored — see drift::Clip::rotationCorrection.
+        {QStringLiteral("rotationCorrection"), clip.rotationCorrection},
+        {QStringLiteral("orientation"), clipOrientation(clip)},
         // Same redirect as the effect stacks above: a media clip's mask lives on the adjustment
         // pinned to it, but the inspector and the MCP tools still ask the clip for "its" mask.
         {QStringLiteral("mask"), maskToMap(maskHost ? maskHost->mask : clip.mask,
@@ -3133,6 +3126,19 @@ bool AppController::renameAsset(int assetIndex, const QString &name)
 
     pushProjectEdit(before, tr("Rename media"));
     finishEdit(tr("Media renamed"));
+    return true;
+}
+
+bool AppController::setAssetRotation(int assetIndex, int degrees)
+{
+    if (!m_assetLibrary)
+        return false;
+
+    const drift::Project before = m_project;
+    if (!m_assetLibrary->setAssetRotation(assetIndex, degrees))
+        return false;
+
+    pushProjectEdit(before, tr("Media rotated"));
     return true;
 }
 
@@ -3546,12 +3552,14 @@ bool AppController::saveAssetEdit(int assetIndex, double inSeconds, double outSe
     if (cropIsFull) {
         const drift::TimeUs trimIn = drift::secondsToUs(qMax(0.0, inSeconds));
         const drift::TimeUs trimOut = outSeconds < 0.0 ? -1 : drift::secondsToUs(outSeconds);
+        const drift::Project before = m_project;
         if (!m_assetLibrary->setAssetTrim(assetIndex, trimIn, trimOut)) {
             // Nothing actually changed (e.g. the range already matches what is stored) — that is
             // still a successful, no-op save from the dialog's point of view.
             emit assetEditFinished(true, QString());
             return true;
         }
+        pushProjectEdit(before, tr("Media trimmed"));
         setLastMessage(tr("Trim saved"));
         emit assetEditFinished(true, tr("Trim saved"));
         return true;
@@ -3702,9 +3710,8 @@ void AppController::finalizeAssetReplace(const QString &assetId, const drift::Me
     replacement.name = newName;
     replacement.sourceUri = replacementSourceUri;
     // Captured before applyProbedSource overwrites `current` in place — rebindClipsToAsset needs
-    // to know what the asset's rotation *was* to rebase each clip's override by how much it
-    // actually changed, not just overwrite it outright.
-    const int oldEffectiveRotation = drift::effectiveRotation(*current);
+    // to know what the bin's correction *was* to rebase each clip's own by how much it changed.
+    const int oldBinCorrection = drift::rotationCorrectionOf(*current);
     if (!m_assetLibrary->applyProbedSource(assetId, replacement)) {
         const QString message = tr("That media is no longer in this project.");
         finishEditJob(false, message);
@@ -3713,7 +3720,7 @@ void AppController::finalizeAssetReplace(const QString &assetId, const drift::Me
         return;
     }
 
-    const int adjusted = rebindClipsToAsset(assetId, replacement, oldEffectiveRotation);
+    const int adjusted = rebindClipsToAsset(assetId, replacement, oldBinCorrection);
     pushProjectEdit(before, fromEdit ? tr("Media edited") : tr("Media replaced"));
     finishEdit(fromEdit ? tr("Media edited") : tr("Media replaced"));
     finishEditJob(true, newName);
@@ -3722,9 +3729,9 @@ void AppController::finalizeAssetReplace(const QString &assetId, const drift::Me
 }
 
 int AppController::rebindClipsToAsset(const QString &assetId, const drift::MediaAsset &asset,
-                                      int oldEffectiveRotation)
+                                      int oldBinCorrection)
 {
-    const int newEffectiveRotation = drift::effectiveRotation(asset);
+    const int newBinCorrection = drift::rotationCorrectionOf(asset);
     int adjusted = 0;
     for (drift::Track &track : m_project.tracks()) {
         for (drift::Clip &clip : track.clips) {
@@ -3737,30 +3744,13 @@ int AppController::rebindClipsToAsset(const QString &assetId, const drift::Media
             clip.path = asset.path;
             clip.thumbnailPath = asset.thumbnailPath;
             clip.filmstripPath = asset.filmstripPath;
-            // An explicit override was baked in from whatever the asset's rotation was at add
-            // time (see applyAssetLayout), but may have since been corrected further and
-            // independently via the timeline's own "Fix orientation" control — overwriting it
-            // outright would discard that. Rebase by how much the asset's *own* rotation actually
-            // changed instead: most pointedly, a crop-save bakes any bin rotation correction into
-            // the re-encoded pixels themselves (the freshly probed `asset` here already has
-            // effectiveRotation 0/-1), and every clip's override has to drop that exact same
-            // amount too, or it applies the correction a second time on top of already-upright
-            // pixels — while a clip that was *additionally* corrected on the timeline keeps that
-            // extra correction relative to the asset's new baseline.
-            //
-            // -1 (inherit) is different in kind, not just value, and is left untouched rather
-            // than folded into the same delta: it means "whatever the file this clip now points
-            // at says its own rotation is" — a clip only ever reaches -1 by pre-dating this
-            // feature entirely (any inspector correction sets an explicit value and never goes
-            // back), so it was never coupled to the *bin's* rotation to begin with. clip.path is
-            // rewritten to `asset.path` below regardless, so leaving -1 alone already makes it
-            // read the replacement file's own tag — correct for a crop-save (which bakes rotation
-            // into pixels and leaves the output file's tag at 0, matching upright pixels exactly)
-            // and just as correct for a plain replace with an unrelated file of its own rotation.
-            if (clip.rotationOverride >= 0) {
-                const int extraCorrection = ((clip.rotationOverride - oldEffectiveRotation) % 360 + 360) % 360;
-                clip.rotationOverride = (newEffectiveRotation + extraCorrection) % 360;
-            }
+            // The clip's correction started as the bin's (applyAssetLayout) and may have been
+            // turned further on the timeline since. Keep that extra part and swap the bin's old
+            // share for its new one — most pointedly, a crop-save bakes the bin's correction into
+            // the re-encoded pixels, so the freshly probed `asset` has none left and every clip
+            // has to drop that same amount or it turns already-upright pixels a second time.
+            clip.rotationCorrection =
+                ((clip.rotationCorrection - oldBinCorrection + newBinCorrection) % 360 + 360) % 360;
             // Landmarks are baked against the old pixels. Left in place they would keep the face
             // warps tracking a face the new footage never had, and render without erroring.
             clip.faceTrackPath.clear();
@@ -4530,11 +4520,13 @@ QString AppController::filmstripFrameUrl(const QString &path, int frame, int cou
     return imageUrl(path) + QStringLiteral("?frame=%1&count=%2").arg(frame).arg(count);
 }
 
-QString AppController::filmstripTileUrl(const QString &path, int level, double index) const
+QString AppController::filmstripTileUrl(const QString &path, int level, double index,
+                                        int rotationCorrection) const
 {
     if (path.isEmpty())
         return {};
-    const QString tile = m_filmstripTiles.tile(path, level, static_cast<qint64>(index));
+    const QString tile =
+        m_filmstripTiles.tile(path, level, static_cast<qint64>(index), rotationCorrection);
     return tile.isEmpty() ? QString() : imageUrl(tile);
 }
 
@@ -6783,6 +6775,7 @@ void AppController::refreshMulticamTiles()
         QString path;
         quint64 streamId = 0;
         drift::TimeUs sourceUs = 0;
+        int rotationCorrection = 0;
     };
 
     QList<AngleRead> reads;
@@ -6796,7 +6789,7 @@ void AppController::refreshMulticamTiles()
         }
         reads.append(AngleRead{i, clip.path,
                                kMulticamStreamSalt ^ ClipReaderPool::streamIdForClip(clip.id),
-                               clip.timelineToSourceUs(m_playheadUs)});
+                               clip.timelineToSourceUs(m_playheadUs), clip.rotationCorrection});
     }
 
     // Angles with nothing under the playhead clear immediately; there is no decode to wait for.
@@ -6813,7 +6806,7 @@ void AppController::refreshMulticamTiles()
     requests.reserve(reads.size());
     for (const AngleRead &read : reads)
         requests.append(ClipReaderPool::VideoRequest{read.path, read.streamId, read.sourceUs,
-                                                     maxWidth, maxHeight});
+                                                     maxWidth, maxHeight, read.rotationCorrection});
 
     m_multicamRefreshing = true;
     const int generation = ++m_multicamGeneration;
@@ -6828,7 +6821,8 @@ void AppController::refreshMulticamTiles()
         for (const AngleRead &read : reads) {
             tiles.append(qMakePair(read.angle,
                                    ClipReaderPool::instance().readVideoFrame(
-                                       read.path, read.streamId, read.sourceUs, maxWidth, maxHeight)));
+                                       read.path, read.streamId, read.sourceUs, maxWidth, maxHeight,
+                                       QString(), 15, false, read.rotationCorrection)));
         }
 
         QMetaObject::invokeMethod(this, [this, tiles, generation]() {
@@ -6882,7 +6876,7 @@ void AppController::beginAssetPreview(int assetIndex)
     clip.srcOut = asset->durationUs;
     clip.timelineStart = 0;
     clip.timelineDuration = asset->durationUs;
-    clip.rotationOverride = asset->rotationOverride;
+    clip.rotationCorrection = drift::rotationCorrectionOf(*asset);
 
     m_assetPreviewIndex = assetIndex;
     m_assetPreviewActive = true;
@@ -7705,9 +7699,12 @@ void AppController::setSegmentationFrame(double seconds)
 
     // The model pass is the expensive half (seconds per frame for the SAM2 encoder on a CPU
     // provider), so it runs off the GUI thread. Decodes after this are milliseconds and stay inline.
-    (void)QtConcurrent::run([this, path, sourceUs, canvasW, canvasH, generation, rvm, quality]() {
-        const QImage frame = ClipReaderPool::instance().readVideoFrame(path, kSegmentEncodeStreamId,
-                                                                       sourceUs, canvasW, canvasH);
+    const int rotationCorrection = clip.rotationCorrection;
+    (void)QtConcurrent::run([this, path, sourceUs, canvasW, canvasH, generation, rvm, quality,
+                             rotationCorrection]() {
+        const QImage frame = ClipReaderPool::instance().readVideoFrame(
+            path, kSegmentEncodeStreamId, sourceUs, canvasW, canvasH, QString(), 15, false,
+            rotationCorrection);
         drift::Sam2Embedding embedding;
         QImage mask;
         QString error;
@@ -7941,8 +7938,11 @@ void AppController::segmentClip(int trackIndex, int clipIndex, const QVariantLis
     // runs, and stale indices would apply the matte to the wrong clip.
     const QString clipId = clip.id;
 
+    // Masks are traced against the frames the compositor shows, so they must decode at the same
+    // orientation or the matte lands transposed.
+    const int rotationCorrection = clip.rotationCorrection;
     (void)QtConcurrent::run([this, path, srcIn, srcOut, fps, canvasW, canvasH, normalized, mode,
-                             clipId, rvm, rvmQuality]() {
+                             clipId, rvm, rvmQuality, rotationCorrection]() {
         auto setProgress = [this](double fraction, const QString &status) {
             QMetaObject::invokeMethod(
                 this,
@@ -8064,7 +8064,8 @@ void AppController::segmentClip(int trackIndex, int clipIndex, const QVariantLis
 
             const drift::TimeUs sourceUs = srcIn + drift::TimeUs(i) * step;
             const QImage frame = ClipReaderPool::instance().readVideoFrame(
-                path, kCutoutRenderStreamId, sourceUs, canvasW, canvasH);
+                path, kCutoutRenderStreamId, sourceUs, canvasW, canvasH, QString(), 15, false,
+                rotationCorrection);
             if (frame.isNull()) {
                 abortAll();
                 finish(false, tr("Could not decode frame %1").arg(i), {});
@@ -8753,7 +8754,10 @@ void AppController::detectFacesForClip(int trackIndex, int clipIndex)
     // runs, and stale indices would attach the track to the wrong clip.
     const QString clipId = clip.id;
 
-    (void)QtConcurrent::run([this, path, srcIn, srcOut, fps, canvasW, canvasH, clipId]() {
+    // Landmarks are in frame pixels, so detect on frames oriented the way the compositor shows them.
+    const int rotationCorrection = clip.rotationCorrection;
+    (void)QtConcurrent::run([this, path, srcIn, srcOut, fps, canvasW, canvasH, clipId,
+                             rotationCorrection]() {
         auto setProgress = [this](double fraction, const QString &status) {
             QMetaObject::invokeMethod(
                 this,
@@ -8820,7 +8824,8 @@ void AppController::detectFacesForClip(int trackIndex, int clipIndex)
 
             const drift::TimeUs sourceUs = srcIn + drift::TimeUs(i) * step;
             const QImage frame = ClipReaderPool::instance().readVideoFrame(
-                path, kFaceDetectStreamId, sourceUs, canvasW, canvasH);
+                path, kFaceDetectStreamId, sourceUs, canvasW, canvasH, QString(), 15, false,
+                rotationCorrection);
             if (frame.isNull()) {
                 finish(false, tr("Could not decode frame %1").arg(i), {});
                 return;
@@ -9039,12 +9044,13 @@ QVariantList sceneRowsFromAnalysis(const drift::SceneAnalysis &analysis)
 } // namespace
 
 void AppController::applySceneAnalysis(const drift::SceneAnalysis &analysis, const QString &clipId,
-                                      const QString &clipPath)
+                                      const QString &clipPath, int rotationCorrection)
 {
     const QVariantList rows = sceneRowsFromAnalysis(analysis);
     m_scenes = rows;
     m_sceneClipId = clipId;
     m_sceneClipPath = clipPath;
+    m_sceneClipRotationCorrection = rotationCorrection;
     emit scenesChanged();
 }
 
@@ -9054,6 +9060,7 @@ drift::SceneDetectRequest AppController::sceneRequestFor(const drift::Clip &clip
 {
     drift::SceneDetectRequest request;
     request.path = clip.path;
+    request.rotationCorrection = clip.rotationCorrection;
     request.sourceIn = clip.srcIn;
     request.sourceOut = clip.srcOut;
     request.options.threshold = sceneThreshold();
@@ -9094,7 +9101,7 @@ void AppController::detectScenesForClip(int trackIndex, int clipIndex, bool with
     drift::SceneAnalysis cached;
     if (drift::loadCachedAnalysis(request, &cached)
         && (!withObjects || cached.objectsScanned)) {
-        applySceneAnalysis(cached, clip.id, clip.path);
+        applySceneAnalysis(cached, clip.id, clip.path, clip.rotationCorrection);
         setLastMessage(tr("Found %n scene(s)", nullptr, int(cached.scenes.size())));
         emit sceneDetectionFinished(true, QString());
         return;
@@ -9117,9 +9124,10 @@ void AppController::detectScenesForClip(int trackIndex, int clipIndex, bool with
     // job runs, and a stale index would attach the analysis to the wrong clip.
     const QString clipId = clip.id;
     const QString clipPath = clip.path;
+    const int rotationCorrection = clip.rotationCorrection;
     const quint64 generation = ++m_sceneGeneration;
 
-    (void)QtConcurrent::run([this, request, clipId, clipPath, generation]() {
+    (void)QtConcurrent::run([this, request, clipId, clipPath, rotationCorrection, generation]() {
         auto setProgress = [this, generation](double fraction, const QString &status) {
             QMetaObject::invokeMethod(
                 this,
@@ -9136,11 +9144,11 @@ void AppController::detectScenesForClip(int trackIndex, int clipIndex, bool with
                 Qt::QueuedConnection);
         };
 
-        auto finish = [this, clipId, clipPath, generation](bool ok, const QString &message,
-                                                          const drift::SceneAnalysis &analysis) {
+        auto finish = [this, clipId, clipPath, rotationCorrection, generation](
+                          bool ok, const QString &message, const drift::SceneAnalysis &analysis) {
             QMetaObject::invokeMethod(
                 this,
-                [this, ok, message, analysis, clipId, clipPath, generation]() {
+                [this, ok, message, analysis, clipId, clipPath, rotationCorrection, generation]() {
                     if (generation != m_sceneGeneration)
                         return; // superseded by a newer scan; this result is for nobody
                     m_sceneDetecting = false;
@@ -9155,7 +9163,7 @@ void AppController::detectScenesForClip(int trackIndex, int clipIndex, bool with
                         emit sceneDetectionFinished(false, message);
                         return;
                     }
-                    applySceneAnalysis(analysis, clipId, clipPath);
+                    applySceneAnalysis(analysis, clipId, clipPath, rotationCorrection);
                     setLastMessage(tr("Found %n scene(s)", nullptr, int(analysis.scenes.size())));
                     emit sceneDetectionFinished(true, QString());
                 },
@@ -11985,6 +11993,20 @@ void AppController::setClipRotationSnap(int trackIndex, int clipIndex, double de
     finishEdit(tr("Rotation set to %1°").arg(snapped, 0, 'f', 0));
 }
 
+int AppController::clipOrientation(const drift::Clip &clip) const
+{
+    const drift::MediaAsset *asset = m_project.asset(clip.assetId);
+    const int probed = asset ? asset->rotationDegrees : 0;
+    return ((probed + clip.rotationCorrection) % 360 + 360) % 360;
+}
+
+void AppController::setClipOrientationTo(drift::Clip &clip, int degrees)
+{
+    const drift::MediaAsset *asset = m_project.asset(clip.assetId);
+    const int probed = asset ? asset->rotationDegrees : 0;
+    clip.rotationCorrection = ((degrees - probed) % 360 + 360) % 360;
+}
+
 void AppController::setClipOrientation(int trackIndex, int clipIndex, int degrees)
 {
     if (trackIndex < 0 || trackIndex >= m_project.tracks().size())
@@ -12003,10 +12025,7 @@ void AppController::setClipOrientation(int trackIndex, int clipIndex, int degree
     int normalized = ((degrees % 360) + 360) % 360;
     normalized = ((normalized + 45) / 90 * 90) % 360;
 
-    const drift::MediaAsset *asset = m_project.asset(clip.assetId);
-    const int oldRotation = clip.rotationOverride >= 0
-        ? clip.rotationOverride
-        : (asset ? drift::effectiveRotation(*asset) : 0);
+    const int oldRotation = clipOrientation(clip);
     if (oldRotation == normalized)
         return;
 
@@ -12022,144 +12041,43 @@ void AppController::setClipOrientation(int trackIndex, int clipIndex, int degree
         // setClipLayoutPixels would collapse every track to one key sampled at time 0, destroying
         // any existing position/size animation. Width and height instead trade places outright —
         // new width is exactly the old height track and vice versa, so swapping the two
-        // KeyframeTrack objects wholesale carries every keyframe's time, tangents, hold flag and
-        // the track's enabled/disabled state across losslessly; nothing is resampled and nothing
-        // is lost, even for a disabled track holding keyframes past its frozen first one.
+        // KeyframeTrack objects wholesale carries every keyframe across untouched.
         const drift::KeyframeTrack<double> oldW = clip.transformW;
         const drift::KeyframeTrack<double> oldH = clip.transformH;
         std::swap(clip.transformW, clip.transformH);
 
-        // X/Y need their *values* recomputed (the box's center has to stay put under the new,
-        // transposed size) by (old width - old height)/2 (or the mirror for Y).
-        QSet<drift::TimeUs> sizeTimes;
-        for (auto it = oldW.keyframes().constBegin(); it != oldW.keyframes().constEnd(); ++it)
-            sizeTimes.insert(it.key());
-        for (auto it = oldH.keyframes().constBegin(); it != oldH.keyframes().constEnd(); ++it)
-            sizeTimes.insert(it.key());
-        // More than one keyframe on *either* track means width/height are independently animated,
-        // so the offset is itself a curve, not a constant. (Checking the union's size instead
-        // would be a false positive whenever width and height each hold just one keyframe, but at
-        // two different times — neither is actually animated, yet the union would have two.)
+        // X/Y shift so the box's centre stays put under the transposed size: by (w - h)/2 for X,
+        // the mirror for Y. Each existing key moves by the offset at its own time, which keeps
+        // its tangents, hold flag and the track's enabled state exactly as they were. When the
+        // size itself animates the offset is a curve, so keys are also added at width/height's
+        // key times to pin it there; between keys it is only approximated, which is the trade
+        // for not resampling the user's curve into something they no longer recognise.
         const bool sizeIsAnimated = oldW.keyframes().size() > 1 || oldH.keyframes().size() > 1;
-
-        auto retimeAxis = [&](drift::KeyframeTrack<double> &axis, bool axisIsX) {
+        auto offsetAt = [&](drift::TimeUs t, bool axisIsX) {
+            const double w = oldW.isEmpty() ? double(m_project.width()) : oldW.evaluateAt(t);
+            const double h = oldH.isEmpty() ? double(m_project.height()) : oldH.evaluateAt(t);
+            return axisIsX ? (w - h) * 0.5 : (h - w) * 0.5;
+        };
+        auto shiftAxis = [&](drift::KeyframeTrack<double> &axis, bool axisIsX) {
             if (axis.isEmpty())
                 return;
-            const QMap<drift::TimeUs, drift::Keyframe<double>> originalKeys = axis.keyframes();
-            auto offsetAt = [&](drift::TimeUs t) {
-                const double w = oldW.isEmpty() ? double(m_project.width()) : oldW.evaluateAt(t);
-                const double h = oldH.isEmpty() ? double(m_project.height()) : oldH.evaluateAt(t);
-                return axisIsX ? (w - h) * 0.5 : (h - w) * 0.5;
-            };
-
-            drift::KeyframeTrack<double> rebuilt;
-            if (!sizeIsAnimated) {
-                // The offset is one constant for the whole clip (even if width/height each hold a
-                // single, never-changing keyframe), so shifting every existing keyframe's value
-                // by it is exact — tangents, hold flags and the enabled/disabled state all carry
-                // over completely unchanged, whether this axis was enabled or not.
-                const double offset = offsetAt(0);
-                for (auto it = originalKeys.constBegin(); it != originalKeys.constEnd(); ++it) {
-                    drift::Keyframe<double> key = it.value();
-                    key.value += offset;
-                    rebuilt.setKeyframe(it.key(), key);
-                }
-                rebuilt.setEnabled(axis.enabled());
-                axis = rebuilt;
-                return;
+            const drift::KeyframeTrack<double> original = axis;
+            if (sizeIsAnimated && axis.enabled()) {
+                for (auto it = oldW.keyframes().constBegin(); it != oldW.keyframes().constEnd(); ++it)
+                    if (!original.keyframes().contains(it.key()))
+                        axis.setKeyframe(it.key(), original.evaluateAt(it.key()));
+                for (auto it = oldH.keyframes().constBegin(); it != oldH.keyframes().constEnd(); ++it)
+                    if (!original.keyframes().contains(it.key()))
+                        axis.setKeyframe(it.key(), original.evaluateAt(it.key()));
             }
-
-            // Width/height are genuinely animated, so the correction is a curve, not a constant —
-            // which a disabled axis (frozen at its first key regardless of time, by definition)
-            // cannot represent at all, whatever its own enabled state was: freezing it at one
-            // corrected value would hold that value right through the rest of the clip while the
-            // box keeps changing size underneath it, drifting off-center exactly as if no
-            // correction had been applied past that first instant. Getting the visible box right
-            // for the whole clip needs this axis to actually track the correction over time, so it
-            // has to become active — the same as an already-enabled axis needs to.
-            //
-            // Sample at every keyframe instant from this axis and from width/height's own tracks
-            // first — mandatory, not optional, since a fixed sample rate can step right over a
-            // short-lived spike between two close keyframes and miss it entirely (e.g. a width
-            // animated 100→200→100 across two 50ms segments, sampled only every 100ms, would see
-            // nothing but the unchanged endpoints). Extra samples are only inserted to fill long
-            // gaps between sparse keyframes, evenly spaced so the piecewise-linear approximation
-            // there does not get too coarse.
-            QSet<drift::TimeUs> mandatorySet = sizeTimes;
-            for (auto it = originalKeys.constBegin(); it != originalKeys.constEnd(); ++it)
-                mandatorySet.insert(it.key());
-            QList<drift::TimeUs> mandatory(mandatorySet.constBegin(), mandatorySet.constEnd());
-            std::sort(mandatory.begin(), mandatory.end());
-
-            // Whether `track` is provably unchanging from `t` up to whichever mandatory time
-            // comes next — either because it never changes at all (0 or 1 keyframe total) or
-            // because its governing keyframe at-or-before `t` is itself a hold. Since no track
-            // has a keyframe strictly between two adjacent mandatory times (if it did, that time
-            // would itself be mandatory), "constant at t" means constant for the whole segment.
-            auto isConstantFrom = [](const drift::KeyframeTrack<double> &track, drift::TimeUs t) {
-                const auto &keys = track.keyframes();
-                if (keys.size() <= 1)
-                    return true;
-                auto it = keys.upperBound(t);
-                if (it == keys.constBegin())
-                    return true; // t is before this track's first key — evaluateAt clamps flat
-                --it;
-                return it->hold;
-            };
-            // A sample only freezes the *combined* value if every contributor to it — this
-            // axis's own motion as much as width/height — is itself unchanging across the same
-            // span; a hold on just one of them must not suppress whichever of the others is still
-            // genuinely moving in that span.
-            auto sample = [&](drift::TimeUs t) {
-                drift::Keyframe<double> key;
-                key.value = axis.evaluateAt(t) + offsetAt(t);
-                key.hold = isConstantFrom(axis, t) && isConstantFrom(oldW, t) && isConstantFrom(oldH, t);
-                rebuilt.setKeyframe(t, key);
-            };
-
-            constexpr drift::TimeUs kMaxGapUs = 200'000; // 200ms
-            for (int i = 0; i < mandatory.size(); ++i) {
-                sample(mandatory.at(i));
-                if (i + 1 >= mandatory.size())
-                    continue;
-                const drift::TimeUs gap = mandatory.at(i + 1) - mandatory.at(i);
-                if (gap <= kMaxGapUs)
-                    continue;
-                const int steps = static_cast<int>(gap / kMaxGapUs);
-                for (int s = 1; s < steps; ++s)
-                    sample(mandatory.at(i) + s * (gap / steps));
-            }
-
-            // A mandatory point can be reached by one component jumping (held, then landing a
-            // new value right there) while another keeps moving continuously through the same
-            // instant — segmentIsConstant above correctly leaves that whole span un-held (since
-            // it is not *all* frozen), but plain linear interpolation between the span's start
-            // and this point then smears the jump backward across the entire span instead of
-            // holding it to the single instant it belongs to. Whenever the value actually
-            // discontinues at a mandatory point, insert one more sample a microsecond before it
-            // carrying the correct left-hand limit (the continuous part's value, still combined
-            // with whatever was frozen right up to the jump) — that isolates the jump to the
-            // last microsecond and lets the continuous portion interpolate correctly on its own.
-            for (int i = 1; i < mandatory.size(); ++i) {
-                const drift::TimeUs t = mandatory.at(i);
-                const drift::TimeUs before = t - 1;
-                if (before <= mandatory.at(i - 1))
-                    continue; // no room for a separate instant this close to the previous sample
-                const double atT = axis.evaluateAt(t) + offsetAt(t);
-                const double justBefore = axis.evaluateAt(before) + offsetAt(before);
-                if (qFuzzyCompare(atT + 1.0, justBefore + 1.0))
-                    continue;
-                rebuilt.setKeyframe(before, justBefore);
-            }
-
-            rebuilt.setEnabled(true);
-            axis = rebuilt;
+            for (const drift::TimeUs t : axis.keyframes().keys())
+                axis.keyframeRef(t)->value += offsetAt(t, axisIsX);
         };
-        retimeAxis(clip.transformX, true);
-        retimeAxis(clip.transformY, false);
+        shiftAxis(clip.transformX, true);
+        shiftAxis(clip.transformY, false);
     }
 
-    clip.rotationOverride = normalized;
+    setClipOrientationTo(clip, normalized);
     pushProjectEdit(before, tr("Orientation changed"));
     finishEdit(tr("Clip orientation set to %1°").arg(normalized));
 }
@@ -15358,10 +15276,10 @@ void AppController::pasteAttributes(const QVariantMap &options)
             targetClip.blendMode = sourceClip.blendMode;
             targetClip.flipH = sourceClip.flipH;
             targetClip.flipV = sourceClip.flipV;
-            // Keeps the pasted box paired with the orientation it was fit for; irrelevant to
-            // non-video targets, whose decode never consults it.
+            // Keeps the pasted box paired with the orientation it was fit for. The stored value
+            // is relative to each clip's own file, so match the visible result, not the number.
             if (targetClip.type == drift::ClipType::Video)
-                targetClip.rotationOverride = sourceClip.rotationOverride;
+                setClipOrientationTo(targetClip, clipOrientation(sourceClip));
             // Pinning a mask mints a lane, which inserts a track and invalidates `track` and
             // `targetClip`. Queued by id and applied once the loop is done.
             pendingMasks.append(qMakePair(targetClip.id, sourceItem.masks));
@@ -20209,7 +20127,7 @@ QJsonObject AppController::mcpDetectScenes(int trackIndex, int clipIndex, double
     // can carry straight on to list_scenes.
     drift::SceneAnalysis cached;
     if (drift::loadCachedAnalysis(request, &cached) && (!withObjects || cached.objectsScanned)) {
-        applySceneAnalysis(cached, clip.id, clip.path);
+        applySceneAnalysis(cached, clip.id, clip.path, clip.rotationCorrection);
         return ok({{QStringLiteral("cached"), true},
                    {QStringLiteral("clip"), clip.id},
                    {QStringLiteral("scenes"), int(cached.scenes.size())},
@@ -20891,6 +20809,7 @@ struct FrameSource
 {
     std::shared_ptr<const drift::Project> project;
     QString path;          // source mode when non-empty
+    int rotationCorrection = 0;
     bool source() const { return !path.isEmpty(); }
     int longEdge() const { return qMax(project->width(), project->height()); }
 
@@ -20898,7 +20817,8 @@ struct FrameSource
     {
         const drift::TimeUs us = qMax<drift::TimeUs>(0, drift::secondsToUs(seconds));
         if (source())
-            return ClipReaderPool::instance().readVideoFrame(path, kFrameSheetStreamId, us, maxW, maxH);
+            return ClipReaderPool::instance().readVideoFrame(path, kFrameSheetStreamId, us, maxW, maxH,
+                                                             QString(), 15, false, rotationCorrection);
         FrameCompositor::RenderOptions options;
         options.previewScale =
             qBound(kMinPreviewScale, double(maxW) / double(longEdge()), 1.0);
@@ -20977,6 +20897,7 @@ QJsonObject AppController::mcpFrameSheet(const McpFrameSheetRequest &request)
         if (clip.path.isEmpty() || clip.type != drift::ClipType::Video)
             return err("type_mismatch", QStringLiteral("clip has no video file; omit clip to render the composition"));
         src.path = clip.path;
+        src.rotationCorrection = clip.rotationCorrection;
     } else if (src.project->durationUs() <= 0) {
         return err("not_found", QStringLiteral("Timeline is empty"));
     }
@@ -21223,6 +21144,7 @@ QJsonObject AppController::mcpActivity(const McpActivityRequest &request)
         if (clip.path.isEmpty() || clip.type != drift::ClipType::Video)
             return err("type_mismatch", QStringLiteral("clip has no video file; omit clip to profile the composition"));
         src.path = clip.path;
+        src.rotationCorrection = clip.rotationCorrection;
     } else if (src.project->durationUs() <= 0) {
         return err("not_found", QStringLiteral("Timeline is empty"));
     }

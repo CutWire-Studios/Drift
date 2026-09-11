@@ -2209,12 +2209,24 @@
         <translation>メディアおよび参照されていたクリップを削除しました</translation>
     </message>
     <message>
+        <source>Media rotated</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>An edit is already saving</source>
         <translation>編集は既に保存中です</translation>
     </message>
     <message>
         <source>Could not open the media file</source>
         <translation>メディアファイルを開けませんでした</translation>
+    </message>
+    <message>
+        <source>Media trimmed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Trim saved</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Saving…</source>

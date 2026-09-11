@@ -68,14 +68,15 @@ public:
     // exist when clips cut from one file overlap; each still keeps a cache, so without this the
     // memory ceiling would multiply by the number of them.
     void setPreviewCacheShare(int shares) { m_previewCacheShares = qMax(1, shares); }
-    // Overrides the source's own probed display-matrix rotation for every subsequent decode
-    // (-1 = use the probed value). Applied per-call like setStabilizeParams, not gated behind
-    // open()'s reopen guard, so a change takes effect on the very next frame.
-    void setRotationOverride(int rotationOverride)
+    // Extra quarter-turns applied on top of the source's own probed display-matrix rotation for
+    // every subsequent decode (see Clip::rotationCorrection). Applied per-call like
+    // setStabilizeParams, not gated behind open()'s reopen guard, so a change takes effect on the
+    // very next frame.
+    void setRotationCorrection(int degrees)
     {
-        if (m_rotationOverride == rotationOverride)
+        if (m_rotationCorrection == degrees)
             return;
-        m_rotationOverride = rotationOverride;
+        m_rotationCorrection = degrees;
         // Cached frames are keyed by source PTS only, never by orientation. applyDecodeSize's
         // size-based invalidation happens to catch a 90<->270 swap (the decode target transposes)
         // but not a 0<->180 change (same size, still wrong-side-up) — clear both explicitly so
@@ -207,9 +208,8 @@ private:
     // Source display-matrix rotation (0/90/180/270), applied to every decoded frame
     // so everything downstream sees upright pixels.
     int m_sourceRotation = 0;
-    // -1 = none; otherwise takes precedence over m_sourceRotation. See effectiveRotation().
-    int m_rotationOverride = -1;
-    int effectiveRotation() const { return m_rotationOverride >= 0 ? m_rotationOverride : m_sourceRotation; }
+    int m_rotationCorrection = 0;
+    int effectiveRotation() const { return ((m_sourceRotation + m_rotationCorrection) % 360 + 360) % 360; }
     int m_outputSampleRate = 48000;
     bool m_hwAccelActive = false;
     bool m_hwAccelDisabled = false; // sticky after a failed hardware decode

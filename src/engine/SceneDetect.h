@@ -97,6 +97,7 @@ inline constexpr double kObjectWeight = 0.3;
 struct SceneDetectRequest
 {
     QString path;
+    int rotationCorrection = 0; // Clip::rotationCorrection; object boxes are in oriented pixels
     TimeUs sourceIn = 0;
     TimeUs sourceOut = 0;
     SceneDetectOptions options;

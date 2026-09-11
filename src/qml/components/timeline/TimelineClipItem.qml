@@ -511,6 +511,7 @@ Item {
             // Video only: on-demand tiles need a decodable video stream, and images/shapes
             // have a single poster frame that the strip already covers exactly.
             sourcePath: clipItem.clipData.kind === "video" ? (clipItem.clipData.path || "") : ""
+            rotationCorrection: clipItem.clipData.rotationCorrection || 0
             inPoint: clipItem.clipData.inPoint
             outPoint: clipItem.clipData.outPoint
             sourceDuration: clipItem.clipData.sourceDuration

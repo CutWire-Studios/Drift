@@ -2215,6 +2215,10 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Media rotated</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Folder moved</source>
         <translation type="unfinished"></translation>
     </message>
@@ -2224,6 +2228,14 @@
     </message>
     <message>
         <source>Could not open the media file</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Media trimmed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Trim saved</source>
         <translation type="unfinished"></translation>
     </message>
     <message>

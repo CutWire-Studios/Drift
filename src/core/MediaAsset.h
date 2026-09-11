@@ -74,4 +74,11 @@ inline int effectiveRotation(const MediaAsset &asset)
     return asset.rotationOverride >= 0 ? asset.rotationOverride : asset.rotationDegrees;
 }
 
+// How far the bin's correction turns this asset beyond its own tag — the Clip::rotationCorrection
+// a clip placed from it starts with.
+inline int rotationCorrectionOf(const MediaAsset &asset)
+{
+    return ((effectiveRotation(asset) - asset.rotationDegrees) % 360 + 360) % 360;
+}
+
 } // namespace drift

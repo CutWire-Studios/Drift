@@ -140,7 +140,9 @@ void ClipReaderPool::warmVideoFrames(const QList<VideoRequest> &requests)
         QMetaObject::invokeMethod(ensureWorker(m_videoWorkers, request.path).worker, "decodePreviewVideo",
                                   Qt::QueuedConnection,
                                   Q_ARG(quint64, request.streamId), Q_ARG(drift::TimeUs, request.sourceUs),
-                                  Q_ARG(int, request.maxWidth), Q_ARG(int, request.maxHeight));
+                                  Q_ARG(int, request.maxWidth), Q_ARG(int, request.maxHeight),
+                                  Q_ARG(QString, QString()), Q_ARG(int, 15), Q_ARG(bool, false),
+                                  Q_ARG(int, request.rotationCorrection));
     }
 }
 
@@ -163,7 +165,7 @@ qint64 ClipReaderPool::decodeWaitNs()
 
 QImage ClipReaderPool::readVideoFrame(const QString &path, quint64 streamId, drift::TimeUs sourceUs,
                                       int maxWidth, int maxHeight, const QString &stabilizePath,
-                                      int stabilizeSmoothing, bool stabilizeTripod, int rotationOverride)
+                                      int stabilizeSmoothing, bool stabilizeTripod, int rotationCorrection)
 {
     if (path.isEmpty())
         return {};
@@ -187,7 +189,7 @@ QImage ClipReaderPool::readVideoFrame(const QString &path, quint64 streamId, dri
                                Q_ARG(quint64, streamId), Q_ARG(drift::TimeUs, sourceUs),
                                Q_ARG(int, maxWidth), Q_ARG(int, maxHeight),
                                Q_ARG(QString, stabilizePath), Q_ARG(int, stabilizeSmoothing), Q_ARG(bool, stabilizeTripod),
-                               Q_ARG(int, rotationOverride));
+                               Q_ARG(int, rotationCorrection));
     t_decodeWaitNs += decodeWait.nsecsElapsed();
 
     // Decode one frame beyond the current position while the caller composites
@@ -205,7 +207,7 @@ PreviewVideoFrame ClipReaderPool::readPreviewVideoFrame(const QString &path, qui
                                                         drift::TimeUs sourceUs, int maxWidth, int maxHeight,
                                                         const QString &stabilizePath,
                                                         int stabilizeSmoothing, bool stabilizeTripod,
-                                                        int rotationOverride)
+                                                        int rotationCorrection)
 {
     if (path.isEmpty())
         return {};
@@ -226,7 +228,7 @@ PreviewVideoFrame ClipReaderPool::readPreviewVideoFrame(const QString &path, qui
                                Q_ARG(drift::TimeUs, sourceUs), Q_ARG(int, maxWidth),
                                Q_ARG(int, maxHeight),
                                Q_ARG(QString, stabilizePath), Q_ARG(int, stabilizeSmoothing),
-                               Q_ARG(bool, stabilizeTripod), Q_ARG(int, rotationOverride));
+                               Q_ARG(bool, stabilizeTripod), Q_ARG(int, rotationCorrection));
     t_decodeWaitNs += decodeWait.nsecsElapsed();
 
     worker->requestPrefetchPreview(streamId, maxWidth, maxHeight,

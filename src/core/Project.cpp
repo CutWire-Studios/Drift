@@ -340,7 +340,7 @@ QJsonObject clipToJson(const Clip &clip)
         {QStringLiteral("width"), keyframesToJson(clip.transformW)},
         {QStringLiteral("height"), keyframesToJson(clip.transformH)},
         {QStringLiteral("rotation"), keyframesToJson(clip.rotation)},
-        {QStringLiteral("rotationOverride"), clip.rotationOverride},
+        {QStringLiteral("rotationCorrection"), clip.rotationCorrection},
         {QStringLiteral("effects"), effectsToJson(clip.effects)},
         {QStringLiteral("audioEffects"), effectsToJson(clip.audioEffects)},
     };
@@ -451,7 +451,7 @@ Clip clipFromJsonV2(const QJsonObject &object, int canvasW = 1920, int canvasH =
     clip.pan = object.value(QStringLiteral("pan")).toDouble(0.0);
     clip.opacity = keyframesFromJson(object.value(QStringLiteral("opacity")).toObject());
     clip.rotation = keyframesFromJson(object.value(QStringLiteral("rotation")).toObject());
-    clip.rotationOverride = object.value(QStringLiteral("rotationOverride")).toInt(-1);
+    clip.rotationCorrection = object.value(QStringLiteral("rotationCorrection")).toInt(0);
     clip.effects = effectsFromJson(object.value(QStringLiteral("effects")).toArray());
     clip.audioEffects = effectsFromJson(object.value(QStringLiteral("audioEffects")).toArray());
 

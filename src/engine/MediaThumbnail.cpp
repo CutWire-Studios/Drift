@@ -401,14 +401,18 @@ QString MediaThumbnail::generateFilmstrip(const QString &sourcePath, const QStri
     return outPath;
 }
 
-QString MediaThumbnail::tilePath(const QString &sourcePath, int level, qint64 index)
+QString MediaThumbnail::tilePath(const QString &sourcePath, int level, qint64 index,
+                                 int rotationCorrection)
 {
     const QString absolutePath = QFileInfo(sourcePath).absoluteFilePath();
     if (absolutePath.isEmpty())
         return {};
 
-    return cacheDir() + QLatin1Char('/') + cacheKeyFor(absolutePath)
-           + QStringLiteral("_t%1_%2.jpg").arg(level).arg(index);
+    // The correction goes after the index so tileGlob()'s "_t*" still matches for pruning.
+    QString name = QStringLiteral("_t%1_%2").arg(level).arg(index);
+    if (rotationCorrection != 0)
+        name += QStringLiteral("_c%1").arg(rotationCorrection);
+    return cacheDir() + QLatin1Char('/') + cacheKeyFor(absolutePath) + name + QStringLiteral(".jpg");
 }
 
 MediaThumbnail::TileDecoder::~TileDecoder()
@@ -444,7 +448,8 @@ bool MediaThumbnail::TileDecoder::ensureOpen(const QString &absolutePath)
 }
 
 QList<qint64> MediaThumbnail::TileDecoder::generateTiles(const QString &sourcePath, int level,
-                                                         const QList<qint64> &indices)
+                                                         const QList<qint64> &indices,
+                                                         int rotationCorrection)
 {
     QList<qint64> produced;
     const QString absolutePath = QFileInfo(sourcePath).absoluteFilePath();
@@ -453,7 +458,7 @@ QList<qint64> MediaThumbnail::TileDecoder::generateTiles(const QString &sourcePa
 
     QList<qint64> todo;
     for (const qint64 index : indices) {
-        if (isValidCacheFile(tilePath(absolutePath, level, index)))
+        if (isValidCacheFile(tilePath(absolutePath, level, index, rotationCorrection)))
             produced.append(index);
         else
             todo.append(index);
@@ -466,13 +471,15 @@ QList<qint64> MediaThumbnail::TileDecoder::generateTiles(const QString &sourcePa
     if (!ensureOpen(absolutePath))
         return produced;
 
+    const int rotation =
+        ((displayRotationOf(m_fmt->streams[m_videoStreamIndex]) + rotationCorrection) % 360 + 360) % 360;
     for (const qint64 index : std::as_const(todo)) {
         const int64_t timeUs = static_cast<int64_t>(tileSeconds(level, index) * 1'000'000.0);
         QImage frame;
         if (!seekAndDecodeFrame(m_fmt, m_videoStreamIndex, m_codecCtx, timeUs, frame,
-                                kFilmstripFrameWidth, kFilmstripFrameHeight, &m_sws))
+                                kFilmstripFrameWidth, kFilmstripFrameHeight, &m_sws, rotation))
             continue;
-        if (frame.save(tilePath(absolutePath, level, index), "JPG", 85))
+        if (frame.save(tilePath(absolutePath, level, index, rotationCorrection), "JPG", 85))
             produced.append(index);
     }
 

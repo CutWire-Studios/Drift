@@ -229,6 +229,26 @@ QString formatDuration(drift::TimeUs durationUs)
         .arg(seconds, 2, 10, QChar('0'));
 }
 
+// The card's duration text: the file's full length, with the length a bin-preview trim actually
+// places on the timeline in parentheses when one is set.
+// What a bin-preview trim leaves of the file — the length a clip placed from this asset gets
+// (AppController::applyAssetLayout). The full duration when there is no trim.
+drift::TimeUs placedDurationUs(const drift::MediaAsset &asset)
+{
+    const drift::TimeUs trimOut = asset.trimOutUs < 0 ? asset.durationUs : asset.trimOutUs;
+    return trimOut - qBound<drift::TimeUs>(0, asset.trimInUs, trimOut);
+}
+
+// The card's duration text: the file's full length, with the placed length in parentheses when
+// a trim is set.
+QString durationLabelFor(const drift::MediaAsset &asset)
+{
+    const bool trimmed = asset.trimInUs > 0 || asset.trimOutUs >= 0;
+    if (asset.durationLabel.isEmpty() || !trimmed)
+        return asset.durationLabel;
+    return QStringLiteral("%1 (%2)").arg(asset.durationLabel, formatDuration(placedDurationUs(asset)));
+}
+
 // MediaAsset carries one sampleRate/channels pair for the whole file, so a multi-stream source
 // has to pick one. It describes the *first* audio stream, matching Clip::audioStreamIndex's
 // default of 0 and ensureAudioPresence(), which also breaks on the first. This used to keep
@@ -421,11 +441,30 @@ QList<QString> AssetLibrary::currentFolderIds() const
     return folderIds;
 }
 
+QList<QString> AssetLibrary::currentEdits() const
+{
+    if (!m_project)
+        return {};
+
+    QList<QString> edits;
+    edits.reserve(m_project->assetOrder().size());
+    for (const QString &id : m_project->assetOrder()) {
+        const drift::MediaAsset *asset = m_project->asset(id);
+        edits.append(asset ? QStringLiteral("%1|%2|%3")
+                                 .arg(asset->rotationOverride)
+                                 .arg(asset->trimInUs)
+                                 .arg(asset->trimOutUs)
+                           : QString{});
+    }
+    return edits;
+}
+
 void AssetLibrary::snapshotAssets()
 {
     m_syncedOrder = m_project ? m_project->assetOrder() : QList<QString>{};
     m_syncedPaths = currentPaths();
     m_syncedFolderIds = currentFolderIds();
+    m_syncedEdits = currentEdits();
 }
 
 void AssetLibrary::syncToProject()
@@ -447,26 +486,39 @@ void AssetLibrary::syncToProject()
     // data. Only the rows that actually changed are re-read.
     const QList<QString> paths = currentPaths();
     const QList<QString> folderIds = currentFolderIds();
-    if (paths == m_syncedPaths && folderIds == m_syncedFolderIds)
+    const QList<QString> edits = currentEdits();
+    if (paths == m_syncedPaths && folderIds == m_syncedFolderIds && edits == m_syncedEdits)
         return;
 
     for (int i = 0; i < paths.size(); ++i) {
         const bool pathChanged = i >= m_syncedPaths.size() || m_syncedPaths.at(i) != paths.at(i);
         const bool folderChanged =
             i >= m_syncedFolderIds.size() || m_syncedFolderIds.at(i) != folderIds.at(i);
-        if (!pathChanged && !folderChanged)
+        const bool editChanged = i >= m_syncedEdits.size() || m_syncedEdits.at(i) != edits.at(i);
+        if (!pathChanged && !folderChanged && !editChanged)
             continue;
         // Empty roles: every role may have moved with the file. A folder-only change only
         // touches FolderIdRole.
-        emitAssetRowChanged(i, pathChanged ? QList<int>{} : QList<int>{FolderIdRole});
-        if (pathChanged) {
-            const QString assetId = m_project->assetIdAt(i);
+        emitAssetRowChanged(i, pathChanged ? QList<int>{}
+                               : folderChanged ? QList<int>{FolderIdRole}
+                                               : QList<int>{DurationRole, ThumbnailPathRole, FilmstripPathRole});
+        const QString assetId = m_project->assetIdAt(i);
+        if (pathChanged || editChanged) {
             emit assetMetadataChanged(assetId);
             emit assetCardChanged(assetId);
+        }
+        // The snapshot an undo/redo restored was taken with the thumbnail for that rotation/trim
+        // still being generated (setAssetRotation/setAssetTrim clear it and kick a job), so it
+        // may well hold an empty path — nothing else will fill it in.
+        if (editChanged) {
+            const drift::MediaAsset *asset = m_project->asset(assetId);
+            if (asset && (asset->thumbnailPath.isEmpty() || asset->filmstripPath.isEmpty()))
+                startThumbJob(assetId);
         }
     }
     m_syncedPaths = paths;
     m_syncedFolderIds = folderIds;
+    m_syncedEdits = edits;
 }
 
 void AssetLibrary::setProject(drift::Project *project)
@@ -514,7 +566,7 @@ QVariant AssetLibrary::data(const QModelIndex &index, int role) const
     case KindRole:
         return drift::mediaKindToString(asset->kind);
     case DurationRole:
-        return asset->durationLabel;
+        return durationLabelFor(*asset);
     case DurationSecondsRole:
         return drift::usToSeconds(asset->durationUs);
     case PathRole:
@@ -525,8 +577,6 @@ QVariant AssetLibrary::data(const QModelIndex &index, int role) const
         return asset->filmstripPath;
     case FolderIdRole:
         return asset->folderId;
-    case RotationRole:
-        return drift::effectiveRotation(*asset);
     default:
         return {};
     }
@@ -544,7 +594,6 @@ QHash<int, QByteArray> AssetLibrary::roleNames() const
         {ThumbnailPathRole, "thumbnailPath"},
         {FilmstripPathRole, "filmstripPath"},
         {FolderIdRole, "folderId"},
-        {RotationRole, "rotation"},
     };
 }
 
@@ -839,8 +888,9 @@ QVariantMap AssetLibrary::assetAt(int index) const
         {QStringLiteral("id"), asset->id},
         {QStringLiteral("name"), asset->name},
         {QStringLiteral("kind"), drift::mediaKindToString(asset->kind)},
-        {QStringLiteral("duration"), asset->durationLabel},
+        {QStringLiteral("duration"), durationLabelFor(*asset)},
         {QStringLiteral("durationSeconds"), drift::usToSeconds(asset->durationUs)},
+        {QStringLiteral("placedDurationSeconds"), drift::usToSeconds(placedDurationUs(*asset))},
         {QStringLiteral("path"), asset->path},
         {QStringLiteral("width"), asset->width},
         {QStringLiteral("height"), asset->height},
@@ -848,6 +898,7 @@ QVariantMap AssetLibrary::assetAt(int index) const
         {QStringLiteral("rotationDegrees"), asset->rotationDegrees},
         {QStringLiteral("rotationOverride"), asset->rotationOverride},
         {QStringLiteral("effectiveRotation"), drift::effectiveRotation(*asset)},
+        {QStringLiteral("rotationCorrection"), drift::rotationCorrectionOf(*asset)},
         {QStringLiteral("trimInSeconds"), drift::usToSeconds(asset->trimInUs)},
         {QStringLiteral("trimOutSeconds"), asset->trimOutUs < 0 ? -1.0 : drift::usToSeconds(asset->trimOutUs)},
         {QStringLiteral("thumbnailPath"), asset->thumbnailPath},
@@ -1004,9 +1055,8 @@ bool AssetLibrary::setAssetRotation(int index, int degrees)
     // previous files simply stay on disk unreferenced — only the pointers need clearing here.
     asset->thumbnailPath.clear();
     asset->filmstripPath.clear();
-    emitAssetRowChanged(index, {RotationRole, ThumbnailPathRole, FilmstripPathRole});
+    emitAssetRowChanged(index, {ThumbnailPathRole, FilmstripPathRole});
     emit assetMetadataChanged(asset->id);
-    emit assetUserEdited(asset->id);
     startThumbJob(asset->id);
     snapshotAssets();
     return true;
@@ -1048,13 +1098,14 @@ bool AssetLibrary::setAssetTrim(int index, qint64 trimInUs, qint64 trimOutUs)
     // cover thumbnail is the frame at the trim's "Set In" point, which just moved.
     if (inPointMoved) {
         asset->thumbnailPath.clear();
-        emitAssetRowChanged(index, {ThumbnailPathRole});
+        emitAssetRowChanged(index, {ThumbnailPathRole, DurationRole});
         startThumbJob(asset->id);
     } else {
-        emitAssetRowChanged(index, {});
+        emitAssetRowChanged(index, {DurationRole});
     }
     emit assetMetadataChanged(asset->id);
-    emit assetUserEdited(asset->id);
+    // The card's duration text carries the trimmed length, so the grid's snapshot is stale.
+    emit assetCardChanged(asset->id);
     snapshotAssets();
     return true;
 }

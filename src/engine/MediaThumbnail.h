@@ -28,7 +28,10 @@ public:
     // clip repeats the same image for thousands of px; these fill in the real frame for a
     // given moment. A tile covers `2^level` source seconds starting at `index * 2^level`,
     // so zooming picks a finer level and panning reuses everything already cached.
-    static QString tilePath(const QString &sourcePath, int level, qint64 index);
+    // `rotationCorrection` is the clip's (Clip::rotationCorrection), applied on top of the
+    // file's own tag, so the strip shows frames the way the timeline does.
+    static QString tilePath(const QString &sourcePath, int level, qint64 index,
+                            int rotationCorrection = 0);
 
     // Drops the oldest tile files until the tile cache fits in `maxBytes`.
     static void pruneTileCache(qint64 maxBytes);
@@ -55,7 +58,7 @@ public:
         // near-sequential. Returns the indices that are now on disk. Reopens only when
         // `sourcePath` differs from the file already open.
         QList<qint64> generateTiles(const QString &sourcePath, int level,
-                                    const QList<qint64> &indices);
+                                    const QList<qint64> &indices, int rotationCorrection = 0);
 
         // Releases the decoder and its scaler. Safe to call when nothing is open; the next
         // generateTiles() reopens on demand.

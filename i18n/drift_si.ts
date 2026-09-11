@@ -2215,12 +2215,24 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Media rotated</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>An edit is already saving</source>
         <translation>දැනටමත් සංස්කරණයක් සුරැකෙමින් පවතී</translation>
     </message>
     <message>
         <source>Could not open the media file</source>
         <translation>මාධ්‍ය ගොනුව විවෘත කිරීමට නොහැකි විය</translation>
+    </message>
+    <message>
+        <source>Media trimmed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Trim saved</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Saving…</source>

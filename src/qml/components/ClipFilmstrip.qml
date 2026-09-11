@@ -18,6 +18,9 @@ Item {
     // Media file behind the strip. Set for video clips only; when present each tile also
     // requests its real frame on demand and fades it in over the coarse strip frame.
     property string sourcePath: ""
+    // The clip's lossless orientation fix (Clip::rotationCorrection), so on-demand tiles come
+    // out the way the preview shows the clip.
+    property int rotationCorrection: 0
 
     // Source window this clip covers, in seconds, plus the full source length. When set, each
     // tile maps to the source time it represents so the strip shows correct-timestamp frames and
@@ -124,7 +127,8 @@ Item {
         if (srcSec < 0 || srcSec >= sourceDuration)
             return ""
         var interval = Math.pow(2, tileLevel)
-        return EditorState.filmstripTileUrl(sourcePath, tileLevel, Math.floor(srcSec / interval))
+        return EditorState.filmstripTileUrl(sourcePath, tileLevel, Math.floor(srcSec / interval),
+                                            rotationCorrection)
     }
 
     function coarseUrlForTile(tileIndex) {

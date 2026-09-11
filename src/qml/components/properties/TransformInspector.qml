@@ -217,7 +217,7 @@ Item {
                         text: modelData + "°"
                         selected: {
                             void root.clipDataRevision
-                            return Number(root.clipData.rotationOverride) === modelData
+                            return Number(root.clipData.orientation) === modelData
                         }
                         onClicked: EditorState.setClipOrientation(
                                        EditorState.selectedTrack, EditorState.selectedClip,

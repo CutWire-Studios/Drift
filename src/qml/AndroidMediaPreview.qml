@@ -108,17 +108,26 @@ Item {
     }
 
     // Steps the bin's rotation correction by 90° and reopens the preview session so the player's
-    // decoder picks up the new rotationOverride. Video only: image/audio clips have no lossless
+    // decoder picks up the new correction. Video only: image/audio clips have no lossless
     // pixel-rotation path on the timeline (see AppController::applyAssetLayout).
     function rotate90() {
         if (root.assetIndex < 0 || !root.isVideo)
             return
+        EditorState.setAssetRotation(root.assetIndex, (root.effectiveRotation + 90) % 360)
+    }
+
+    // Picks up a rotation change from wherever it came from (the button above, or an undo) and
+    // reopens the preview session at the same spot so the decoder applies it.
+    function applyRotationFromAsset(asset) {
+        const nextOverride = (asset.rotationOverride === undefined || asset.rotationOverride === null)
+                              ? -1 : asset.rotationOverride
+        const next = (asset.effectiveRotation === undefined || asset.effectiveRotation === null)
+                      ? root.rotationDegrees : asset.effectiveRotation
+        if (nextOverride === root.rotationOverride && next === root.effectiveRotation)
+            return
         const wasPlaying = EditorState.assetPreviewPlaying
         const at = root.position
-        const next = (root.effectiveRotation + 90) % 360
-        if (!AssetLibrary.setAssetRotation(root.assetIndex, next))
-            return
-        root.rotationOverride = next
+        root.rotationOverride = nextOverride
         root.effectiveRotation = next
         EditorState.beginAssetPreview(root.assetIndex)
         root.seekTo(at)
@@ -205,6 +214,9 @@ Item {
             if (assetId !== root.assetId)
                 return
             root.filmstripPath = AssetLibrary.filmstripAt(root.assetIndex)
+            const asset = AssetLibrary.assetAt(root.assetIndex)
+            if (asset && asset.id === root.assetId)
+                root.applyRotationFromAsset(asset)
         }
     }
 
@@ -671,6 +683,7 @@ Item {
                     filmstripPath: root.filmstripPath
                     frameWidth: Math.max(1, width / frameCount)
                     sourcePath: root.sourcePath
+                    rotationCorrection: (root.effectiveRotation - root.rotationDegrees + 360) % 360
                     inPoint: 0
                     outPoint: root.durationSeconds
                     sourceDuration: root.durationSeconds
