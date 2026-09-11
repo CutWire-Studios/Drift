@@ -16,9 +16,11 @@ set(CMAKE_AUTORCC ON)
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
 
 option(WITH_BGREMOVAL "Enable OpenCV-based background removal" OFF)
-# Skia (Ganesh/GL) draws text, shapes and Lottie/SVG clips on the GPU. OFF keeps the QPainter
-# raster path; see third_party/build-skia.sh for producing the prebuilt it links.
-option(DRIFT_WITH_SKIA "Draw vector content (text, shapes, Lottie, SVG) with Skia" OFF)
+# Skia (Ganesh/GL) draws text, shapes and Lottie/SVG clips on the GPU; see
+# third_party/build-skia.sh for producing the prebuilt it links. OFF keeps the QPainter raster
+# path for text and shapes and drops Lottie/SVG support entirely — the fallback stays one
+# release while DRIFT_VECTOR_RENDERER=qt remains a runtime escape hatch.
+option(DRIFT_WITH_SKIA "Draw vector content (text, shapes, Lottie, SVG) with Skia" ON)
 set(DRIFT_SKIA_DIR "" CACHE PATH "Directory containing SkiaConfig.cmake (default: third_party/prebuilt/skia/<target>)")
 
 # Defaults off under CI so the Translations test still compares the committed catalogs.
