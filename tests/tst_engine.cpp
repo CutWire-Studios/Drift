@@ -2932,8 +2932,8 @@ void EngineTest::playbackDiagnosticsReportsStagesAndFindings()
     const QVariantMap bench = PlaybackDiagnostics::benchmarkClip(clip, QSize(320, 240));
     QVERIFY2(!bench.contains(QStringLiteral("error")),
              qPrintable(bench.value(QStringLiteral("error")).toString()));
-    QVERIFY(bench.value(QStringLiteral("decodeMedianMs")).toDouble() > 0.0);
-    QVERIFY(bench.value(QStringLiteral("readbackMedianMs")).toDouble() > 0.0);
+    QVERIFY(bench.value(QStringLiteral("decodePerFrameMs")).toDouble() > 0.0);
+    QVERIFY(bench.value(QStringLiteral("readbackPerFrameMs")).toDouble() > 0.0);
     QVERIFY(bench.value(QStringLiteral("sourceFps")).toDouble() > 0.0);
 }
 
