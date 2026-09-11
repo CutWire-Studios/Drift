@@ -183,11 +183,12 @@ Item {
             rightPadding: Theme.spacing2xl
             font.pixelSize: Theme.fontSizeXs
             // Display is capitalised; the engine stores the lowercase value.
-            readonly property var values: ["full", "half", "quarter", "auto"]
-            model: [qsTr("Full"), qsTr("Half"), qsTr("Quarter"), qsTr("Auto")]
+            readonly property var values: ["full", "half", "quarter", "eighth", "auto"]
+            model: [qsTr("Full"), qsTr("Half"), qsTr("Quarter"), qsTr("1/8 (Eco)"), qsTr("Auto")]
             tooltip: qsTr("Preview quality — lower is smoother while editing.\n"
-                          + "Full, Half and Quarter are fixed fractions of the project resolution: "
+                          + "Full, Half, Quarter and 1/8 are fixed fractions of the project resolution: "
                           + "Full composites exactly what an export would.\n"
+                          + "1/8 (Eco) is optimized for older laptops with integrated graphics.\n"
                           + "Auto renders only as many pixels as the preview actually shows, and "
                           + "lowers that further while playback cannot keep up.")
             currentIndex: Math.max(0, values.indexOf(EditorState.playback.previewQuality))
@@ -236,6 +237,15 @@ Item {
             height: Theme.iconSizeBase
             color: Theme.panelBorder
             anchors.verticalCenter: parent.verticalCenter
+        }
+
+        IconButton {
+            glyph: Theme.icons.gauge
+            variant: "text"
+            tooltip: qsTr("Low-Spec / Eco Mode — optimize for older laptops with 1/8 preview and editing proxies")
+            anchors.verticalCenter: parent.verticalCenter
+            active: EditorState.lowSpecMode
+            onClicked: EditorState.lowSpecMode = !EditorState.lowSpecMode
         }
 
         IconButton {

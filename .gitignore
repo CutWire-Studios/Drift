@@ -66,3 +66,7 @@ third_party/prebuilt/
 .env.*
 
 !resources/diagnostics/bench1080p60.mp4
+
+# Local clangd & compilation database
+.clangd
+compile_commands.json

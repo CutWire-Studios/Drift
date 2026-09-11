@@ -600,6 +600,8 @@ add_library(driftengine STATIC
     src/engine/MatteWriter.cpp
     src/engine/ReverseProxyCache.h
     src/engine/ReverseProxyCache.cpp
+    src/engine/EditingProxyCache.h
+    src/engine/EditingProxyCache.cpp
     src/engine/ReverseRenderer.h
     src/engine/ReverseRenderer.cpp
     src/engine/MediaEditor.h
