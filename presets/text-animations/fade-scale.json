@@ -1,0 +1,54 @@
+{
+  "format": 1,
+  "id": "fade-scale",
+  "label": "Fade zoom",
+  "category": "basic",
+  "sampleText": "Build",
+  "slots": [
+    "out"
+  ],
+  "order": 310,
+  "defaults": {
+    "unit": "block",
+    "duration": 0.5,
+    "ease": "easeIn"
+  },
+  "flags": {
+    "unitLocked": true,
+    "orderLocked": true
+  },
+  "params": [
+    {
+      "id": "to",
+      "type": "scalar",
+      "label": "To",
+      "unit": "%",
+      "min": 50,
+      "max": 300,
+      "step": 5,
+      "default": 130
+    },
+    {
+      "id": "blur",
+      "type": "scalar",
+      "label": "Blur",
+      "unit": "px",
+      "min": 0,
+      "max": 48,
+      "step": 1,
+      "default": 10
+    }
+  ],
+  "animators": [
+    {
+      "selectors": [
+        "stagger"
+      ],
+      "props": {
+        "scale": "{to}",
+        "opacity": 0,
+        "blur": "{blur}"
+      }
+    }
+  ]
+}

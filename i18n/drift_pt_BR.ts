@@ -1520,8 +1520,8 @@
         <translation>Editar curva personalizada…</translation>
     </message>
     <message>
-        <source>Text tab has letter/word animations (typewriter, stagger). This moves the whole clip.</source>
-        <translation>A aba Texto tem animações por letra/palavra (máquina de escrever, cascata). Esta move o clipe inteiro.</translation>
+        <source>Letter and word animations live in the Text tab, under Animate. This moves the whole clip.</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -2771,6 +2771,34 @@
         <translation>Estilo da forma atualizado</translation>
     </message>
     <message>
+        <source>Animation</source>
+        <translation type="unfinished">Animação</translation>
+    </message>
+    <message>
+        <source>Animation added</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Animation replaced</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Animation options</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Animation options updated</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Animation slot</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Animation slot updated</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Clip mask updated</source>
         <translation>Máscara do clipe atualizada</translation>
     </message>
@@ -3355,6 +3383,125 @@
     <message>
         <source>Nothing on this device can share that file</source>
         <translation>Nenhum aplicativo neste dispositivo pode compartilhar esse arquivo</translation>
+    </message>
+    <message>
+        <source>Add text layer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Layer added</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Remove text layer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Layer removed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Duplicate text layer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Layer duplicated</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Reorder text layers</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Layer moved</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Edit text layer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Edit text animation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Text animation updated</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Basic</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>By character</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>By word</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Kinetic</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Light</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Colour</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Hold</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Imported</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Apply text look</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Look applied</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Adjust text look</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Look updated</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Apply caption style</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>Applied to %n caption clip(s)</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Could not unpack the bundle</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Could not read %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Nothing to import</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Could not save the preset</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Nudge selection</source>
@@ -5498,6 +5645,109 @@
     </message>
 </context>
 <context>
+    <name>GradientStopEditor</name>
+    <message>
+        <source>Drag to move, tap for colour, hold or right-click to remove</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move gradient stop</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add a colour stop</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Presets</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Type</source>
+        <translation type="unfinished">Tipo</translation>
+    </message>
+    <message>
+        <source>Linear</source>
+        <translation type="unfinished">Linear</translation>
+    </message>
+    <message>
+        <source>Radial</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Sweep</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Angle</source>
+        <translation type="unfinished">Ângulo</translation>
+    </message>
+    <message>
+        <source>Map to</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>What one run of the gradient spans: the whole block, each line, word or glyph</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Block</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Line</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Word</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Glyph</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Accent run</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Offset</source>
+        <translation type="unfinished">Deslocamento</translation>
+    </message>
+    <message>
+        <source>Speed</source>
+        <translation type="unfinished">Velocidade</translation>
+    </message>
+    <message>
+        <source>Slides the gradient along its axis, in cycles per second</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Options</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Repeat</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Tile the gradient past its ends instead of clamping</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>OKLab</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Blend stops in OKLab for even, muddy-free transitions</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Stop colour</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>KeyframeGraph</name>
     <message>
         <source>X position</source>
@@ -7299,6 +7549,10 @@ Se a reprodução travar, experimente outro.</translation>
         <translation>Forma</translation>
     </message>
     <message>
+        <source>Motion</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Subtitles</source>
         <translation>Legendas</translation>
     </message>
@@ -9040,6 +9294,13 @@ Se a reprodução travar, experimente outro.</translation>
     </message>
 </context>
 <context>
+    <name>TextAnimPresetTile</name>
+    <message>
+        <source>None</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>TextAssetsTab</name>
     <message>
         <source>Drift text style (*.drifttextstyle)</source>
@@ -9103,10 +9364,61 @@ Se a reprodução travar, experimente outro.</translation>
     </message>
 </context>
 <context>
+    <name>TextEffects</name>
+    <message>
+        <source>Shine sweep</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Holographic shimmer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Neon pulse</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Glitch</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Chrome</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Dissolve</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>TextInspector</name>
     <message>
         <source>Content</source>
         <translation>Conteúdo</translation>
+    </message>
+    <message>
+        <source>Colour</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Choose the gradient&apos;s first colour</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Edits the first gradient stop</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Edit in Look</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The text is painted with an image; change it in the Look section</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The text is painted with an effect; change it in the Look section</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Style</source>
@@ -9115,6 +9427,70 @@ Se a reprodução travar, experimente outro.</translation>
     <message>
         <source>Style pack</source>
         <translation>Pacote de estilos</translation>
+    </message>
+    <message>
+        <source>Aa</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>None</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Whole block</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Character</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Word</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Line</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Forward</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Backward</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Center out</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Random</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Linear</source>
+        <translation type="unfinished">Linear</translation>
+    </message>
+    <message>
+        <source>Smooth</source>
+        <translation type="unfinished">Suave</translation>
+    </message>
+    <message>
+        <source>Snappy</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Back</source>
+        <translation type="unfinished">Voltar</translation>
+    </message>
+    <message>
+        <source>Bounce</source>
+        <translation type="unfinished">Quicar</translation>
+    </message>
+    <message>
+        <source>Template</source>
+        <translation type="unfinished">Modelo</translation>
     </message>
     <message>
         <source>Save style…</source>
@@ -9133,6 +9509,26 @@ Se a reprodução travar, experimente outro.</translation>
         <translation>Meu estilo %1</translation>
     </message>
     <message>
+        <source>Apply to all captions</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Copy this style to every other caption on this track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>…every track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Copy this style to every caption in the project</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Type</source>
+        <translation type="unfinished">Tipo</translation>
+    </message>
+    <message>
         <source>Font</source>
         <translation>Fonte</translation>
     </message>
@@ -9145,16 +9541,76 @@ Se a reprodução travar, experimente outro.</translation>
         <translation>Tamanho</translation>
     </message>
     <message>
-        <source>Color</source>
-        <translation>Cor</translation>
+        <source>Stroke</source>
+        <translation type="unfinished">Contorno</translation>
+    </message>
+    <message>
+        <source>Extrude</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No layers. Pick a look above or add a fill to start.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Decorations</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Boxes and rules drawn around the text rather than on it</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Animate</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>How the text enters, leaves and moves while it is on screen</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Phase</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Stagger</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Delay between one unit and the next along the cycle</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Delay between one unit starting and the next</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Order</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Ease</source>
+        <translation type="unfinished">Suave</translation>
+    </message>
+    <message>
+        <source>Advanced</source>
+        <translation type="unfinished">Avançado</translation>
+    </message>
+    <message>
+        <source>Custom animator (set via MCP). Preset controls are disabled.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Revert to preset</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Drop the custom animators and go back to picking presets</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Choose text colour</source>
         <translation>Escolher cor do texto</translation>
-    </message>
-    <message>
-        <source>Enter a color like #FF0000</source>
-        <translation>Digite uma cor como #FF0000</translation>
     </message>
     <message>
         <source>Italic</source>
@@ -9169,8 +9625,36 @@ Se a reprodução travar, experimente outro.</translation>
         <translation>%1 não tem variante itálica</translation>
     </message>
     <message>
-        <source>Layout</source>
-        <translation>Layout</translation>
+        <source>Look</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>One-tap recipes, and the layer stack they build</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Adjust text look</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Layers</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add layer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add a fill, stroke, shadow, glow or extrude layer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Fill</source>
+        <translation type="unfinished">Preenchimento</translation>
+    </message>
+    <message>
+        <source>Bend</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Align left</source>
@@ -9201,16 +9685,12 @@ Se a reprodução travar, experimente outro.</translation>
         <translation>Altura da linha</translation>
     </message>
     <message>
-        <source>Vertical spacing between lines, as a multiple of the font size</source>
-        <translation>Espaçamento vertical entre as linhas, como múltiplo do tamanho da fonte</translation>
-    </message>
-    <message>
         <source>Letter spacing</source>
         <translation>Espaçamento entre letras</translation>
     </message>
     <message>
-        <source>Extra space between characters, in pixels</source>
-        <translation>Espaço extra entre os caracteres, em pixels</translation>
+        <source>Wrapping</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Word wrap</source>
@@ -9221,60 +9701,12 @@ Se a reprodução travar, experimente outro.</translation>
         <translation>Quebra linhas longas dentro da caixa de texto em vez de transbordar</translation>
     </message>
     <message>
-        <source>Appearance</source>
-        <translation>Aparência</translation>
-    </message>
-    <message>
-        <source>Outline</source>
-        <translation>Contorno</translation>
-    </message>
-    <message>
-        <source>Outline around each letter</source>
-        <translation>Contorno ao redor de cada letra</translation>
-    </message>
-    <message>
-        <source>Draw an outline around each letter</source>
-        <translation>Desenha um contorno ao redor de cada letra</translation>
-    </message>
-    <message>
         <source>Width</source>
         <translation>Largura</translation>
     </message>
     <message>
-        <source>Choose outline colour</source>
-        <translation>Escolher cor do contorno</translation>
-    </message>
-    <message>
         <source>Shadow</source>
         <translation>Sombra</translation>
-    </message>
-    <message>
-        <source>Draw a drop shadow behind the text</source>
-        <translation>Desenha uma sombra projetada atrás do texto</translation>
-    </message>
-    <message>
-        <source>Offset X</source>
-        <translation>Deslocamento X</translation>
-    </message>
-    <message>
-        <source>Offset Y</source>
-        <translation>Deslocamento Y</translation>
-    </message>
-    <message>
-        <source>Blur</source>
-        <translation>Desfoque</translation>
-    </message>
-    <message>
-        <source>Opacity</source>
-        <translation>Opacidade</translation>
-    </message>
-    <message>
-        <source>Shadow colour</source>
-        <translation>Cor da sombra</translation>
-    </message>
-    <message>
-        <source>Choose shadow colour</source>
-        <translation>Escolher cor da sombra</translation>
     </message>
     <message>
         <source>Background</source>
@@ -9307,22 +9739,6 @@ Se a reprodução travar, experimente outro.</translation>
     <message>
         <source>Glow</source>
         <translation>Brilho</translation>
-    </message>
-    <message>
-        <source>Coloured bloom around the letters, with no offset</source>
-        <translation>Halo colorido ao redor das letras, sem deslocamento</translation>
-    </message>
-    <message>
-        <source>Radius</source>
-        <translation>Raio</translation>
-    </message>
-    <message>
-        <source>Glow colour</source>
-        <translation>Cor do brilho</translation>
-    </message>
-    <message>
-        <source>Choose glow colour</source>
-        <translation>Escolher cor do brilho</translation>
     </message>
     <message>
         <source>Word highlight</source>
@@ -9425,10 +9841,6 @@ Se a reprodução travar, experimente outro.</translation>
         <translation>Escolher cor do destaque da ênfase</translation>
     </message>
     <message>
-        <source>Animation</source>
-        <translation>Animação</translation>
-    </message>
-    <message>
         <source>In</source>
         <translation>Entrada</translation>
     </message>
@@ -9437,12 +9849,313 @@ Se a reprodução travar, experimente outro.</translation>
         <translation>Saída</translation>
     </message>
     <message>
+        <source>Loop</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Plays for every caption</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>All</source>
+        <translation type="unfinished">Todos</translation>
+    </message>
+    <message>
+        <source>Preview this animation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Period</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Duration</source>
+        <translation type="unfinished">Duração</translation>
+    </message>
+    <message>
+        <source>Edit text animation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>By</source>
         <translation>Por</translation>
     </message>
+</context>
+<context>
+    <name>TextLayerRow</name>
     <message>
-        <source>Select Color</source>
-        <translation>Selecionar cor</translation>
+        <source>Fill</source>
+        <translation type="unfinished">Preenchimento</translation>
+    </message>
+    <message>
+        <source>Stroke</source>
+        <translation type="unfinished">Contorno</translation>
+    </message>
+    <message>
+        <source>Shadow</source>
+        <translation type="unfinished">Sombra</translation>
+    </message>
+    <message>
+        <source>Glow</source>
+        <translation type="unfinished">Brilho</translation>
+    </message>
+    <message>
+        <source>Extrude</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Solid</source>
+        <translation type="unfinished">Sólido</translation>
+    </message>
+    <message>
+        <source>Gradient</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Texture</source>
+        <translation type="unfinished">Textura</translation>
+    </message>
+    <message>
+        <source>Effect</source>
+        <translation type="unfinished">Efeito</translation>
+    </message>
+    <message>
+        <source>Normal</source>
+        <translation type="unfinished">Normal</translation>
+    </message>
+    <message>
+        <source>Multiply</source>
+        <translation type="unfinished">Multiplicar</translation>
+    </message>
+    <message>
+        <source>Screen</source>
+        <translation type="unfinished">Divisão</translation>
+    </message>
+    <message>
+        <source>Overlay</source>
+        <translation type="unfinished">Sobreposição</translation>
+    </message>
+    <message>
+        <source>Add</source>
+        <translation type="unfinished">Adicionar</translation>
+    </message>
+    <message>
+        <source>Darken</source>
+        <translation type="unfinished">Escurecer</translation>
+    </message>
+    <message>
+        <source>Lighten</source>
+        <translation type="unfinished">Clarear</translation>
+    </message>
+    <message>
+        <source>Collapse layer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Expand layer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Bring forward</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Send backward</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Hide layer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show layer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Duplicate layer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Remove layer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Opacity</source>
+        <translation type="unfinished">Opacidade</translation>
+    </message>
+    <message>
+        <source>Blend</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Width</source>
+        <translation type="unfinished">Largura</translation>
+    </message>
+    <message>
+        <source>Placement</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Outside</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Grow the stroke outward so it never eats into the letter</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Colour</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Choose the layer colour</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Offset X</source>
+        <translation type="unfinished">Deslocamento X</translation>
+    </message>
+    <message>
+        <source>Offset Y</source>
+        <translation type="unfinished">Deslocamento Y</translation>
+    </message>
+    <message>
+        <source>Radius</source>
+        <translation type="unfinished">Raio</translation>
+    </message>
+    <message>
+        <source>Blur</source>
+        <translation type="unfinished">Desfoque</translation>
+    </message>
+    <message>
+        <source>Spread</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Depth</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Angle</source>
+        <translation type="unfinished">Ângulo</translation>
+    </message>
+    <message>
+        <source>How much the extruded side fades toward black</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Adjust extrude</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>TextPaintEditor</name>
+    <message>
+        <source>Texture Image</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Images (*.png *.jpg *.jpeg *.webp)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Paint</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Solid</source>
+        <translation type="unfinished">Sólido</translation>
+    </message>
+    <message>
+        <source>Gradient</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Texture</source>
+        <translation type="unfinished">Textura</translation>
+    </message>
+    <message>
+        <source>Effect</source>
+        <translation type="unfinished">Efeito</translation>
+    </message>
+    <message>
+        <source>Colour</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Choose the paint colour</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Change image…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Choose image…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No image</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Fit</source>
+        <translation type="unfinished">Ajustar</translation>
+    </message>
+    <message>
+        <source>Tile</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Repeat the image across the text</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cover</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Stretch one copy of the image over the text</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Scale</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Angle</source>
+        <translation type="unfinished">Ângulo</translation>
+    </message>
+    <message>
+        <source>Adjust paint effect</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>TextParamSlots</name>
+    <message>
+        <source>Reset</source>
+        <translation type="unfinished">Redefinir</translation>
+    </message>
+    <message>
+        <source>Text for this slot</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Change image…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Choose image…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Slot Image</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Images (*.png *.jpg *.jpeg *.webp)</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -9598,6 +10311,110 @@ Se a reprodução travar, experimente outro.</translation>
     <message>
         <source>Outline every other word</source>
         <translation>Contorne palavras alternadas</translation>
+    </message>
+    <message>
+        <source>Opacity</source>
+        <translation type="unfinished">Opacidade</translation>
+    </message>
+    <message>
+        <source>Offset X</source>
+        <translation type="unfinished">Deslocamento X</translation>
+    </message>
+    <message>
+        <source>Offset Y</source>
+        <translation type="unfinished">Deslocamento Y</translation>
+    </message>
+    <message>
+        <source>Blur</source>
+        <translation type="unfinished">Desfoque</translation>
+    </message>
+    <message>
+        <source>Width</source>
+        <translation type="unfinished">Largura</translation>
+    </message>
+    <message>
+        <source>Spread</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Red</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Green</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Blue</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Alpha</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Gradient angle</source>
+        <translation type="unfinished">Ângulo do gradiente</translation>
+    </message>
+    <message>
+        <source>Gradient offset</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Gradient scale</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Centre X</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Centre Y</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Stop %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Fill</source>
+        <translation type="unfinished">Preenchimento</translation>
+    </message>
+    <message>
+        <source>Stroke</source>
+        <translation type="unfinished">Contorno</translation>
+    </message>
+    <message>
+        <source>Shadow</source>
+        <translation type="unfinished">Sombra</translation>
+    </message>
+    <message>
+        <source>Glow</source>
+        <translation type="unfinished">Brilho</translation>
+    </message>
+    <message>
+        <source>Extrude</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Text size</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Letter spacing</source>
+        <translation type="unfinished">Espaçamento entre letras</translation>
+    </message>
+    <message>
+        <source>Line height</source>
+        <translation type="unfinished">Altura da linha</translation>
+    </message>
+    <message>
+        <source>Box padding</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Bend</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -10393,6 +11210,121 @@ Se a reprodução travar, experimente outro.</translation>
     </message>
 </context>
 <context>
+    <name>VectorInspector</name>
+    <message>
+        <source>Replace Animation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Lottie or SVG (*.json *.svg)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Could not load the document</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>SVG drawing</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Lottie animation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1×%2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 s at %2 fps</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>still</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>inline document</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Replace document…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Load another .json or .svg; position, length, fit and loop stay</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Playback</source>
+        <translation type="unfinished">Reprodução</translation>
+    </message>
+    <message>
+        <source>Fit</source>
+        <translation type="unfinished">Ajustar</translation>
+    </message>
+    <message>
+        <source>Contain</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cover</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Stretch</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>How the drawing fills the clip box</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>After the end</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Hold last frame</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Loop</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Ping-pong</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Hide</source>
+        <translation type="unfinished">Ocultar</translation>
+    </message>
+    <message>
+        <source>What plays once the animation has run its length</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Start offset</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Slots</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Template inputs the animation declares. Overrides are per clip.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Not rendered</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Expression on %1 (drawn static)</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>VideoSizeControls</name>
     <message>
         <source>Custom</source>
@@ -10452,6 +11384,69 @@ Se a reprodução travar, experimente outro.</translation>
     <message>
         <source>Close</source>
         <translation>Fechar</translation>
+    </message>
+</context>
+<context>
+    <name>drift</name>
+    <message>
+        <source>Plain</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Shadow</source>
+        <translation type="unfinished">Sombra</translation>
+    </message>
+    <message>
+        <source>Lift</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Hollow</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Splice</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Outline</source>
+        <translation type="unfinished">Contorno</translation>
+    </message>
+    <message>
+        <source>Echo</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Glitch</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Neon</source>
+        <translation type="unfinished">Neon</translation>
+    </message>
+    <message>
+        <source>Background</source>
+        <translation type="unfinished">Fundo</translation>
+    </message>
+    <message>
+        <source>Curve</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Gradient</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Shine</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Chrome</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Holographic</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>

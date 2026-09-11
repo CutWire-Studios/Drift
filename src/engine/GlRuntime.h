@@ -42,6 +42,10 @@ class QOffscreenSurface;
 class QOpenGLContext;
 struct SwsContext;
 
+namespace drift::skia {
+class SkiaRuntime;
+}
+
 namespace drift::gl {
 
 // A framebuffer plus its size. Owns the FBO; hand it back to GlRuntime with
@@ -125,6 +129,11 @@ public:
         float aspect = 1.f; // photo height / width, to turn width-normalized landmarks into uv
     };
     std::map<QString, FaceSwapPhotoGpu> faceSwapPhotos;
+
+    // Skia's Ganesh context, attached lazily by SkiaRuntime::acquire() and torn down first in
+    // shutdown() — it holds GL objects of its own. shared_ptr rather than unique_ptr so this
+    // header needs only the forward declaration. Null when DRIFT_WITH_SKIA is off.
+    std::shared_ptr<skia::SkiaRuntime> skia;
 
     // Face-prop GPU uploads. Bounded LRU; destroyed in shutdown() alongside staticTextures.
     struct ModelCache

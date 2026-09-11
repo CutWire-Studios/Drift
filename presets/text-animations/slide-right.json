@@ -1,0 +1,6 @@
+{
+  "format": 1, "id": "slide-right", "label": "Slide Right", "category": "basic", "sampleText": "Slide",
+  "slots": ["in", "out"], "order": 20,
+  "params": [ { "id": "distance", "type": "scalar", "label": "Distance", "unit": "box", "min": 0, "max": 2, "step": 0.05, "default": 0.35 } ],
+  "animators": [ { "selectors": ["stagger"], "props": { "position": { "x": {"$":"distance","mul":-1}, "y": 0, "unit": "box" }, "opacity": 0 } } ]
+}

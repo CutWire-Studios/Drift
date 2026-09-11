@@ -4,6 +4,8 @@
 
 #include "engine/MediaProbe.h"
 #include "engine/MediaThumbnail.h"
+#include "engine/VectorInspect.h"
+#include "core/DotLottie.h"
 
 #ifdef Q_OS_ANDROID
 #include "engine/AndroidUri.h"
@@ -200,6 +202,8 @@ drift::MediaKind kindFrom(const MediaInfo &info, const QString &path)
 
 drift::MediaKind provisionalKind(const QString &path)
 {
+    if (AssetLibrary::isVectorPath(path))
+        return drift::MediaKind::Vector;
     if (AssetLibrary::isImagePath(path))
         return drift::MediaKind::Image;
     if (AssetLibrary::isAudioPath(path))
@@ -329,11 +333,44 @@ std::optional<drift::MediaAsset> buildImageAsset(const QString &absolutePath, co
     return asset;
 }
 
+// A Lottie document: parsed by the vector renderer rather than probed by FFmpeg, which would
+// only report "unknown format" for a .json.
+std::optional<drift::MediaAsset> buildVectorAsset(const QString &absolutePath, const QString &name)
+{
+    drift::VectorSource source;
+    source.kind = drift::VectorKind::Lottie;
+    source.path = absolutePath;
+    QString error;
+    if (!drift::vec::probeVectorSource(source, &error)) {
+        qWarning("import: %s is not a Lottie document: %s", qPrintable(absolutePath), qPrintable(error));
+        return std::nullopt;
+    }
+    const QString thumb =
+        MediaThumbnail::generate(absolutePath, drift::mediaKindToString(drift::MediaKind::Vector));
+
+    drift::MediaAsset asset;
+    asset.name = source.title.isEmpty() ? name : source.title;
+    asset.path = absolutePath;
+    asset.kind = drift::MediaKind::Vector;
+    asset.width = source.width;
+    asset.height = source.height;
+    asset.fps = source.fps;
+    asset.durationUs = source.durationUs;
+    asset.durationLabel = formatDuration(source.durationUs);
+    asset.thumbnailPath = thumb;
+    asset.filmstripPath = thumb;
+    asset.hasAudio = false;
+    asset.hasAudioKnown = true;
+    return asset;
+}
+
 // Reads everything the bin needs about a file. Blocking, so it only ever runs on a worker
 // thread — shared by the import path and the replace path.
 std::optional<drift::MediaAsset> probeAsset(const QString &absolutePath, bool imageOnly)
 {
     const QString name = QFileInfo(absolutePath).fileName();
+    if (AssetLibrary::isVectorPath(absolutePath))
+        return buildVectorAsset(absolutePath, name);
     if (imageOnly)
         return buildImageAsset(absolutePath, name);
 
@@ -360,9 +397,19 @@ bool AssetLibrary::isImagePath(const QString &path)
     return imageExtensions().contains(QFileInfo(path).suffix().toLower());
 }
 
+// Lottie only: SVG stays an image (Qt rasterises it), which is what existing projects expect.
+// add_svg / addVectorClip put an SVG on the timeline as a vector clip without going through
+// the bin. A .lottie bundle is unpacked into plain .json on import (see importFilesReturningIds),
+// so it never reaches the probe under its own name.
+bool AssetLibrary::isVectorPath(const QString &path)
+{
+    return QFileInfo(path).suffix().compare(QLatin1String("json"), Qt::CaseInsensitive) == 0
+           || drift::isDotLottiePath(path);
+}
+
 bool AssetLibrary::isMediaPath(const QString &path)
 {
-    return isVideoPath(path) || isAudioPath(path) || isImagePath(path);
+    return isVideoPath(path) || isAudioPath(path) || isImagePath(path) || isVectorPath(path);
 }
 
 QString AssetLibrary::mediaNameFilter() const
@@ -373,6 +420,8 @@ QString AssetLibrary::mediaNameFilter() const
             for (const QString &extension : *group)
                 globs.append(QStringLiteral("*.") + extension);
         }
+        globs.append(QStringLiteral("*.json"));
+        globs.append(QStringLiteral("*.lottie"));
         return globs.join(QLatin1Char(' '));
     }();
     return tr("Media files (%1)").arg(pattern);
@@ -1482,7 +1531,24 @@ QStringList AssetLibrary::importFilesReturningIds(const QStringList &paths,
             ? destinationFolderId
             : QString();
 
+    // A .lottie bundle becomes one plain Lottie .json per animation it holds, unpacked once into
+    // app data (content-addressed, so the same bundle always maps to the same files).
+    QStringList expanded;
     for (const QString &path : paths) {
+        if (!drift::isDotLottiePath(path)) {
+            expanded.append(path);
+            continue;
+        }
+        QString error;
+        const QStringList animations = drift::unpackDotLottie(
+            path, QStandardPaths::writableLocation(QStandardPaths::AppDataLocation) + QStringLiteral("/lottie"),
+            &error);
+        if (animations.isEmpty())
+            qWarning("import: %s: %s", qPrintable(path), qPrintable(error));
+        expanded.append(animations);
+    }
+
+    for (const QString &path : std::as_const(expanded)) {
         const QFileInfo fileInfo(path);
         const QString absolutePath = fileInfo.absoluteFilePath();
         if (!fileInfo.isFile())

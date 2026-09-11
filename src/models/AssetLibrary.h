@@ -70,6 +70,7 @@ public:
     static bool isVideoPath(const QString &path);
     static bool isAudioPath(const QString &path);
     static bool isImagePath(const QString &path);
+    static bool isVectorPath(const QString &path);
     static bool isMediaPath(const QString &path);
     // The same set spelled as a QFileDialog name filter, e.g. "Media files (*.mp4 *.mov ...)".
     Q_INVOKABLE QString mediaNameFilter() const;

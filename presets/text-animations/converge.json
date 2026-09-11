@@ -1,0 +1,54 @@
+{
+  "format": 1,
+  "id": "converge",
+  "label": "Converge",
+  "category": "kinetic",
+  "sampleText": "Converge",
+  "slots": [
+    "in",
+    "out"
+  ],
+  "order": 210,
+  "defaults": {
+    "unit": "character",
+    "stagger": 0.02,
+    "duration": 0.6,
+    "ease": "easeOut",
+    "order": "centerOut"
+  },
+  "params": [
+    {
+      "id": "spread",
+      "type": "scalar",
+      "label": "Spread",
+      "unit": "em",
+      "min": 0,
+      "max": 4,
+      "step": 0.1,
+      "default": 1.0
+    },
+    {
+      "id": "blur",
+      "type": "scalar",
+      "label": "Blur",
+      "unit": "px",
+      "min": 0,
+      "max": 48,
+      "step": 1,
+      "default": 8
+    }
+  ],
+  "animators": [
+    {
+      "selectors": [
+        "stagger"
+      ],
+      "props": {
+        "tracking": "{spread}",
+        "trackingUnit": "em",
+        "blur": "{blur}",
+        "opacity": 0
+      }
+    }
+  ]
+}

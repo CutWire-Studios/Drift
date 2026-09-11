@@ -1,0 +1,55 @@
+{
+  "format": 1,
+  "id": "float",
+  "label": "Float",
+  "category": "word",
+  "sampleText": "Floating words",
+  "slots": [
+    "loop"
+  ],
+  "order": 420,
+  "params": [
+    {
+      "id": "amount",
+      "type": "scalar",
+      "label": "Amount",
+      "unit": "em",
+      "min": 0,
+      "max": 1,
+      "step": 0.01,
+      "default": 0.15
+    },
+    {
+      "id": "speed",
+      "type": "scalar",
+      "label": "Speed",
+      "unit": "Hz",
+      "min": 0.1,
+      "max": 3,
+      "step": 0.1,
+      "default": 0.5
+    }
+  ],
+  "animators": [
+    {
+      "selectors": [
+        {
+          "driver": "wiggle",
+          "domain": "word",
+          "wave": "sine",
+          "frequencyHz": "{speed}",
+          "spatialPhaseDeg": 60,
+          "minAmount": -100,
+          "maxAmount": 100
+        }
+      ],
+      "props": {
+        "position": {
+          "x": 0,
+          "y": "{amount}",
+          "unit": "em"
+        }
+      }
+    }
+  ]
+}

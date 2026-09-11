@@ -106,6 +106,7 @@ jobs:
             libpulse-dev libasound2-dev \
             libva2 libva-drm2 libva-x11-2 \
             libfontconfig1-dev libfreetype6-dev libxkbcommon-dev libxkbcommon-x11-dev \
+            clang-15 libharfbuzz-dev libicu-dev libexpat1-dev libpng-dev \
             libx11-dev libx11-xcb-dev libxext-dev libxfixes-dev libxi-dev libxrender-dev \
             libxcb1-dev libxcb-glx0-dev libxcb-keysyms1-dev libxcb-image0-dev libxcb-shm0-dev \
             libxcb-icccm4-dev libxcb-sync-dev libxcb-xfixes0-dev libxcb-shape0-dev \
@@ -141,6 +142,21 @@ jobs:
           key: ccache-tests-${{ github.sha }}
           restore-keys: ccache-tests-
 
+      # Same Skia build package.yml's Linux lane makes, minus SKIA_SYSTEM_ICU=0: nothing is
+      # bundled here, so the distro ICU is fine and the cache key stays separate on purpose.
+      - name: Restore Skia
+        id: skia-cache
+        uses: actions/cache@v4
+        with:
+          path: third_party/prebuilt/skia/linux-x64
+          key: skia-tests-linux-x64-${{ hashFiles('third_party/build-skia.sh') }}
+
+      - name: Build Skia
+        if: steps.skia-cache.outputs.cache-hit != 'true'
+        run: |
+          JOBS="$(nproc)" CC=clang-15 CXX=clang++-15 third_party/build-skia.sh linux-x64
+          rm -rf third_party/src
+
       - name: Fetch pinned FFmpeg
         shell: bash
         run: |
@@ -166,6 +182,7 @@ jobs:
             -DCMAKE_PREFIX_PATH="${QT_ROOT_DIR};${GITHUB_WORKSPACE}/.deps/ffmpeg" \
             -DFETCHCONTENT_BASE_DIR="${FETCHCONTENT_BASE_DIR}" \
             -DDRIFT_BUNDLE_ONNXRUNTIME=OFF \
+            -DDRIFT_WITH_SKIA=ON \
             -DCMAKE_C_COMPILER_LAUNCHER=ccache \
             -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
 
@@ -255,13 +272,30 @@ jobs:
           path: .deps
           key: deps-macos-${{ hashFiles('CMakeLists.txt') }}
 
+      # Skia for macOS is compiled here from the pinned commit (Homebrew has no Skia) and cached
+      # by script revision. HarfBuzz/ICU/FreeType are compiled in rather than taken from Homebrew,
+      # whose versions move under a pinned Skia.
+      - name: Restore Skia
+        id: skia-cache
+        uses: actions/cache@v4
+        with:
+          path: third_party/prebuilt/skia/mac-arm64
+          key: skia-mac-arm64-${{ hashFiles('third_party/build-skia.sh') }}
+
+      - name: Build Skia
+        if: steps.skia-cache.outputs.cache-hit != 'true'
+        run: |
+          JOBS="$(sysctl -n hw.ncpu)" third_party/build-skia.sh mac-arm64
+          rm -rf third_party/src
+
       - name: Configure
         run: |
           cmake -B build -G Ninja \
             -DCMAKE_BUILD_TYPE=Release \
             -DCMAKE_PREFIX_PATH="$(brew --prefix qt);$(brew --prefix openssl@3);$(brew --prefix)" \
             -DFETCHCONTENT_BASE_DIR="${FETCHCONTENT_BASE_DIR}" \
-            -DDRIFT_BUNDLE_ONNXRUNTIME=OFF
+            -DDRIFT_BUNDLE_ONNXRUNTIME=OFF \
+            -DDRIFT_WITH_SKIA=ON
 
       - name: Build
         run: cmake --build build --parallel

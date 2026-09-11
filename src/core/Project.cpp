@@ -282,7 +282,7 @@ QList<SubtitleCue> subtitleCuesFromJson(const QJsonArray &array)
 
 QJsonObject clipToJson(const Clip &clip)
 {
-    return QJsonObject{
+    QJsonObject json{
         {QStringLiteral("id"), clip.id},
         {QStringLiteral("assetId"), clip.assetId},
         {QStringLiteral("linkId"), clip.linkId},
@@ -344,6 +344,10 @@ QJsonObject clipToJson(const Clip &clip)
         {QStringLiteral("effects"), effectsToJson(clip.effects)},
         {QStringLiteral("audioEffects"), effectsToJson(clip.audioEffects)},
     };
+    // Only vector clips carry a document, and an inline one can run to megabytes.
+    if (clip.type == ClipType::Vector)
+        json.insert(QStringLiteral("vector"), clip.vector.toJson());
+    return json;
 }
 
 KeyframeTrack<double> singleKeyframe(double value)
@@ -397,6 +401,7 @@ Clip clipFromJsonV2(const QJsonObject &object, int canvasW = 1920, int canvasH =
     clip.textStyle = textStyleFromJson(object.value(QStringLiteral("textStyle")).toObject());
     clip.subtitleCues = subtitleCuesFromJson(object.value(QStringLiteral("subtitleCues")).toArray());
     clip.shapeStyle = shapeStyleFromJson(object.value(QStringLiteral("shapeStyle")).toObject());
+    clip.vector = VectorSource::fromJson(object.value(QStringLiteral("vector")).toObject());
     clip.path = object.value(QStringLiteral("path")).toString();
     clip.thumbnailPath = object.value(QStringLiteral("thumbnailPath")).toString();
     clip.filmstripPath = object.value(QStringLiteral("filmstripPath")).toString();
@@ -661,6 +666,10 @@ void detachClip(Clip &clip)
     for (auto it = clip.mask.keyframes.begin(); it != clip.mask.keyframes.end(); ++it)
         it.value().detachSharedData();
     clip.subtitleCues.detach();
+    clip.vector.slotValues.detach();
+    clip.textStyle.keyframes.detach();
+    for (auto it = clip.textStyle.keyframes.begin(); it != clip.textStyle.keyframes.end(); ++it)
+        it.value().detachSharedData();
     clip.effects.detach();
     for (Effect &effect : clip.effects)
         detachEffect(effect);
@@ -888,6 +897,10 @@ Project Project::fromJson(const QJsonObject &object, QString *errorOut)
         // combinable. Runs after the v4 pass, which is what mints the track ids a lane needs.
         migrateClipMasksToAdjustmentLanes(project);
     }
+    // Version 6 added ClipType::Vector. Nothing to migrate; the bump exists so an older build
+    // refuses the file instead of loading those clips as videos with no path.
+    // Version 7 turned the flat text look into shading layers and the animIn/animOut kinds into
+    // preset slots; textStyleFromJson migrates both in place.
 
     project.m_bookmarks.clear();
     const QJsonArray bookmarksArray = object.value(QStringLiteral("bookmarks")).toArray();

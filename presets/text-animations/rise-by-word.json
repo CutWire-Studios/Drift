@@ -1,0 +1,56 @@
+{
+  "format": 1,
+  "id": "rise-by-word",
+  "label": "Rise",
+  "category": "word",
+  "sampleText": "Animate your text",
+  "slots": [
+    "in",
+    "out"
+  ],
+  "order": 110,
+  "defaults": {
+    "unit": "word",
+    "stagger": 0.12,
+    "duration": 0.5,
+    "ease": "easeOut"
+  },
+  "params": [
+    {
+      "id": "rise",
+      "type": "scalar",
+      "label": "Rise",
+      "unit": "em",
+      "min": 0,
+      "max": 3,
+      "step": 0.05,
+      "default": 0.6
+    },
+    {
+      "id": "blur",
+      "type": "scalar",
+      "label": "Blur",
+      "unit": "px",
+      "min": 0,
+      "max": 48,
+      "step": 1,
+      "default": 8
+    }
+  ],
+  "animators": [
+    {
+      "selectors": [
+        "stagger"
+      ],
+      "props": {
+        "position": {
+          "x": 0,
+          "y": "{rise}",
+          "unit": "em"
+        },
+        "opacity": 0,
+        "blur": "{blur}"
+      }
+    }
+  ]
+}

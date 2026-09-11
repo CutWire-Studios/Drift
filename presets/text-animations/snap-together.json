@@ -1,0 +1,55 @@
+{
+  "format": 1,
+  "id": "snap-together",
+  "label": "Snap together",
+  "category": "kinetic",
+  "sampleText": "Boost your workflow",
+  "slots": [
+    "in"
+  ],
+  "order": 130,
+  "defaults": {
+    "unit": "block",
+    "duration": 0.6,
+    "ease": "easeOut"
+  },
+  "flags": {
+    "unitLocked": true,
+    "orderLocked": true
+  },
+  "params": [
+    {
+      "id": "spread",
+      "type": "scalar",
+      "label": "Spread",
+      "unit": "em",
+      "min": 0,
+      "max": 1,
+      "step": 0.01,
+      "default": 0.06
+    },
+    {
+      "id": "blur",
+      "type": "scalar",
+      "label": "Blur",
+      "unit": "px",
+      "min": 0,
+      "max": 48,
+      "step": 1,
+      "default": 6
+    }
+  ],
+  "animators": [
+    {
+      "selectors": [
+        "stagger"
+      ],
+      "props": {
+        "tracking": "{spread}",
+        "trackingUnit": "em",
+        "opacity": 0,
+        "blur": "{blur}"
+      }
+    }
+  ]
+}

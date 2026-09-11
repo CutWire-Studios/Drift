@@ -2,6 +2,10 @@ app-id: org.cutwire.Drift
 runtime: org.kde.Platform
 runtime-version: "6.11"
 sdk: org.kde.Sdk
+# clang for the Skia build: org.kde.Sdk ships gcc only, and Skia's GN toolchain files are written
+# for clang. The extension is build-time only; nothing from it ends up in /app.
+sdk-extensions:
+  - org.freedesktop.Sdk.Extension.llvm20
 command: drift
 
 finish-args:
@@ -71,26 +75,55 @@ modules:
         url: https://www.surina.net/soundtouch/soundtouch-2.4.1.tar.gz
         sha256: e07abf20ce8f95850c280132e1f61ad400fc1f4011b7fac698a503de6aab6733
 
+  # Skia's build generator. Not in the SDK and has no release tarballs, so it is built from source
+  # with the SDK's gcc. --allow-warnings: gn builds with -Werror and trips over gcc's newer
+  # warnings; the commit-position header is hand-written because there is no git metadata to
+  # derive it from inside the sandbox.
+  - name: gn
+    buildsystem: simple
+    build-commands:
+      - CC=gcc CXX=g++ python3 build/gen.py --no-last-commit-position --allow-warnings --out-path=out
+      - printf '#ifndef OUT_LAST_COMMIT_POSITION_H_\n#define OUT_LAST_COMMIT_POSITION_H_\n#define LAST_COMMIT_POSITION_NUM 0\n#define LAST_COMMIT_POSITION "0 (drift)"\n#endif\n' > out/last_commit_position.h
+      - ninja -C out -j${FLATPAK_BUILDER_N_JOBS} gn
+      - install -Dm755 out/gn ${FLATPAK_DEST}/bin/gn
+    sources:
+      - type: git
+        url: https://gn.googlesource.com/gn
+        commit: 0625da07ece7b1a374ec0719b6f40ebe3d0950c1
+
+  # buildsystem: simple rather than cmake-ninja because Skia has to be compiled first, from the
+  # script inside this very source tree (third_party/build-skia.sh), against the Skia tarball
+  # declared below — flatpak-builder has no hook for a pre-configure step.
   - name: drift
-    buildsystem: cmake-ninja
-    builddir: true
-    config-opts:
-      - -DCMAKE_BUILD_TYPE=Release
-      - -DDRIFT_FETCH_ONNXRUNTIME=OFF
-      - -DDRIFT_BUNDLE_ONNXRUNTIME=OFF
-      - -DONNXRUNTIME_ROOT=/app
-      # JUCE is checked out as a source below rather than fetched by CMake: the build runs with no
-      # network, so FetchContent would fail here.
-      - -DDRIFT_FETCH_JUCE=OFF
-      - -DDRIFT_JUCE_DIR=juce
-      # Flathub updates this build, so the in-app update check is compiled out: an app that nags
-      # about a version flatpak will fetch on its own is noise the user cannot act on.
-      - -DDRIFT_UPDATE_FEED_URL=
-      # A package build compiles the committed catalogs and never regenerates them. org.kde.Sdk's
-      # lupdate has no QML parser, so a refresh here strips every QML string from i18n/*.ts and
-      # ships .qm files that only translate the C++ side (#167). CMake also detects this on its
-      # own; the flag makes the intent explicit, since flatpak-builder hides CI from the sandbox.
-      - -DDRIFT_AUTO_UPDATE_TRANSLATIONS=OFF
+    buildsystem: simple
+    build-options:
+      append-path: /usr/lib/sdk/llvm20/bin
+    build-commands:
+      - case "$FLATPAK_ARCH" in x86_64) t=linux-x64 ;; aarch64) t=linux-arm64 ;; *) echo "no Skia target for $FLATPAK_ARCH" >&2; exit 1 ;; esac;
+        CC=clang CXX=clang++ JOBS=${FLATPAK_BUILDER_N_JOBS} third_party/build-skia.sh "$t"
+      - cmake -S . -B build -G Ninja -DCMAKE_INSTALL_PREFIX=/app -DCMAKE_INSTALL_LIBDIR=lib
+        -DCMAKE_BUILD_TYPE=Release
+        -DDRIFT_WITH_SKIA=ON
+        -DDRIFT_FETCH_ONNXRUNTIME=OFF
+        -DDRIFT_BUNDLE_ONNXRUNTIME=OFF
+        -DONNXRUNTIME_ROOT=/app
+        -DDRIFT_FETCH_JUCE=OFF
+        -DDRIFT_JUCE_DIR=juce
+        -DDRIFT_UPDATE_FEED_URL=
+        -DDRIFT_AUTO_UPDATE_TRANSLATIONS=OFF
+      - cmake --build build -j${FLATPAK_BUILDER_N_JOBS}
+      - cmake --install build
+    # Option notes:
+    #   DRIFT_FETCH_JUCE=OFF — JUCE is checked out as a source below rather than fetched by CMake:
+    #     the build runs with no network, so FetchContent would fail here.
+    #   DRIFT_UPDATE_FEED_URL= — Flathub updates this build, so the in-app update check is compiled
+    #     out: an app that nags about a version flatpak will fetch on its own is noise the user
+    #     cannot act on.
+    #   DRIFT_AUTO_UPDATE_TRANSLATIONS=OFF — a package build compiles the committed catalogs and
+    #     never regenerates them. org.kde.Sdk's lupdate has no QML parser, so a refresh here strips
+    #     every QML string from i18n/*.ts and ships .qm files that only translate the C++ side
+    #     (#167). CMake also detects this on its own; the flag makes the intent explicit, since
+    #     flatpak-builder hides CI from the sandbox.
     sources:
       - type: dir
         path: ..
@@ -100,10 +133,20 @@ modules:
           - flatpak/repo
           - flatpak/dist
           - build
+          - build-noskia
           - juce
+          # Local Skia checkouts and prebuilts (gitignored); the sandbox builds its own.
+          - third_party/src
+          - third_party/prebuilt
       # Audio effect DSP. Only juce_dsp and its dependencies are compiled; nothing GUI-facing.
       - type: git
         url: https://github.com/juce-framework/JUCE.git
         tag: 8.0.15
         commit: 91ad83ae34a81e0833b1a2b0866f54846370ae53
         dest: juce
+      # Skia at the commit third_party/build-skia.sh pins, unpacked where the script looks for it so
+      # it never reaches for the network. Keep url, sha256 and dest in step with the script.
+      - type: archive
+        url: https://github.com/google/skia/archive/e7c90ecca9444fe09598f1630ab7cee2c0ee027a.tar.gz
+        sha256: 7b5158952ebc4e2ce8de19f036b7613e266705003469579d9e98070ead62fc3b
+        dest: third_party/src/skia-e7c90ecca9444fe09598f1630ab7cee2c0ee027a

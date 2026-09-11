@@ -1,0 +1,52 @@
+{
+  "format": 1,
+  "id": "spin-in",
+  "label": "Spin",
+  "category": "character",
+  "sampleText": "Spin",
+  "slots": [
+    "in",
+    "out"
+  ],
+  "order": 190,
+  "defaults": {
+    "unit": "character",
+    "stagger": 0.04,
+    "duration": 0.5,
+    "ease": "back"
+  },
+  "params": [
+    {
+      "id": "angle",
+      "type": "scalar",
+      "label": "Angle",
+      "unit": "\u00b0",
+      "min": -360,
+      "max": 360,
+      "step": 5,
+      "default": -90
+    },
+    {
+      "id": "from",
+      "type": "scalar",
+      "label": "Scale",
+      "unit": "%",
+      "min": 0,
+      "max": 200,
+      "step": 5,
+      "default": 50
+    }
+  ],
+  "animators": [
+    {
+      "selectors": [
+        "stagger"
+      ],
+      "props": {
+        "rotation": "{angle}",
+        "scale": "{from}",
+        "opacity": 0
+      }
+    }
+  ]
+}

@@ -1,0 +1,83 @@
+{
+  "format": 1,
+  "id": "drop",
+  "label": "Drop",
+  "category": "word",
+  "sampleText": "Drop in",
+  "slots": [
+    "in"
+  ],
+  "order": 180,
+  "defaults": {
+    "unit": "word",
+    "stagger": 0.1,
+    "duration": 0.7,
+    "ease": "bounce"
+  },
+  "flags": {
+    "easeLocked": true
+  },
+  "params": [
+    {
+      "id": "height",
+      "type": "scalar",
+      "label": "Height",
+      "unit": "em",
+      "min": 0,
+      "max": 4,
+      "step": 0.1,
+      "default": 1.2
+    }
+  ],
+  "animators": [
+    {
+      "selectors": [
+        {
+          "driver": "stagger",
+          "domain": "{unit}",
+          "order": "{order}",
+          "staggerUs": {
+            "$": "stagger",
+            "mul": 1000000
+          },
+          "durationUs": {
+            "$": "duration",
+            "mul": 1000000
+          },
+          "ease": "bounce"
+        }
+      ],
+      "props": {
+        "position": {
+          "x": 0,
+          "y": {
+            "$": "height",
+            "mul": -1
+          },
+          "unit": "em"
+        }
+      }
+    },
+    {
+      "selectors": [
+        {
+          "driver": "stagger",
+          "domain": "{unit}",
+          "order": "{order}",
+          "staggerUs": {
+            "$": "stagger",
+            "mul": 1000000
+          },
+          "durationUs": {
+            "$": "duration",
+            "mul": 150000
+          },
+          "ease": "linear"
+        }
+      ],
+      "props": {
+        "opacity": 0
+      }
+    }
+  ]
+}

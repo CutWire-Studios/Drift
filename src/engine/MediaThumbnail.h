@@ -1,5 +1,7 @@
 #pragma once
 
+#include "core/VectorSource.h"
+
 #include <QList>
 #include <QString>
 
@@ -20,6 +22,8 @@ public:
     // before capturing the frame, so a trim's "Set In" point becomes the bin's cover image.
     static QString generate(const QString &sourcePath, const QString &kind, int rotationOverride = -1,
                             qint64 startUs = 0);
+    // A vector clip's poster frame, keyed by the file or, for an inline document, by its hash.
+    static QString generateVector(const drift::VectorSource &source);
     static QString generateFilmstrip(const QString &sourcePath, const QString &kind,
                                      int rotationOverride = -1);
     static QString generateAtTime(const QString &sourcePath, double sourceSeconds);

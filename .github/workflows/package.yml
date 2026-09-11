@@ -165,6 +165,7 @@ jobs:
             libpulse-dev libasound2-dev \
             libva2 libva-drm2 libva-x11-2 \
             libfontconfig1-dev libfreetype6-dev libxkbcommon-dev libxkbcommon-x11-dev \
+            clang-15 libharfbuzz-dev libexpat1-dev libpng-dev \
             libwayland-dev \
             libx11-dev libx11-xcb-dev libxext-dev libxfixes-dev libxi-dev libxrender-dev \
             libxcb1-dev libxcb-glx0-dev libxcb-keysyms1-dev libxcb-image0-dev libxcb-shm0-dev \
@@ -188,6 +189,24 @@ jobs:
           path: .deps
           key: deps-linux-${{ hashFiles('CMakeLists.txt') }}
 
+      # Skia is built once per script revision and cached: 15–20 minutes on a miss, seconds on a
+      # hit. clang-15 because Skia's GN toolchain files are written for clang and jammy's default
+      # `clang` is 14. SKIA_SYSTEM_ICU=0 compiles Skia's own ICU with embedded data instead of
+      # letting linuxdeploy bundle the distro's libicudata (~30 MB) next to the copy Qt already
+      # ships. The source tree goes straight after: ~1 GB the AppImage step has no use for.
+      - name: Restore Skia
+        id: skia-cache
+        uses: actions/cache@v4
+        with:
+          path: third_party/prebuilt/skia/linux-x64
+          key: skia-linux-x64-${{ hashFiles('third_party/build-skia.sh') }}
+
+      - name: Build Skia
+        if: steps.skia-cache.outputs.cache-hit != 'true'
+        run: |
+          JOBS="$(nproc)" CC=clang-15 CXX=clang++-15 SKIA_SYSTEM_ICU=0 third_party/build-skia.sh linux-x64
+          rm -rf third_party/src
+
       - name: Fetch pinned FFmpeg
         shell: bash
         run: |
@@ -206,7 +225,8 @@ jobs:
             -DCMAKE_BUILD_TYPE=Release \
             -DCMAKE_PREFIX_PATH="${QT_ROOT_DIR};${GITHUB_WORKSPACE}/.deps/ffmpeg" \
             -DFETCHCONTENT_BASE_DIR="${FETCHCONTENT_BASE_DIR}" \
-            -DDRIFT_BUNDLE_ONNXRUNTIME=OFF
+            -DDRIFT_BUNDLE_ONNXRUNTIME=OFF \
+            -DDRIFT_WITH_SKIA=ON
 
       - name: Build
         run: cmake --build build --parallel
@@ -296,7 +316,8 @@ jobs:
     name: Windows installer
     runs-on: windows-2022
     if: inputs.platforms == 'all' || inputs.platforms == 'windows'
-    timeout-minutes: 120
+    # 180, not 120: a cold vcpkg binary cache now also compiles Skia and a static ICU.
+    timeout-minutes: 180
     steps:
       - uses: actions/checkout@v4
 
@@ -311,12 +332,15 @@ jobs:
           cache: true
           add-tools-to-path: true
 
+      # The key covers this workflow too: the package list lives in the install step below, and
+      # actions/cache never re-saves on a hit, so a key blind to it would keep serving a cache
+      # that predates skia and rebuild it on every run.
       - name: Restore vcpkg binary cache
         id: vcpkg-cache
         uses: actions/cache/restore@v4
         with:
           path: ${{ github.workspace }}\vcpkg_bincache
-          key: vcpkg-bincache-win-${{ hashFiles('CMakeLists.txt') }}
+          key: vcpkg-bincache-win-${{ hashFiles('CMakeLists.txt', '.github/workflows/package.yml') }}
           restore-keys: |
             vcpkg-bincache-win-
 
@@ -336,6 +360,11 @@ jobs:
             .\vcpkg\bootstrap-vcpkg.bat
           }
           .\vcpkg\vcpkg.exe install zstd openssl soundtouch zlib --triplet x64-windows
+          # Skia comes from vcpkg here rather than third_party/build-skia.sh: the port pins the
+          # same Skia commit, and its static build turns Skottie/SVG/SkParagraph on by default.
+          # x64-windows-static-md, not x64-windows: Skottie needs a static Skia
+          # (skia_enable_skottie = !is_component_build), and -md keeps the dynamic CRT Qt uses.
+          .\vcpkg\vcpkg.exe install "skia[gl,harfbuzz,icu,freetype,png]" --triplet x64-windows-static-md
 
       # Save even when a later step fails so the vcpkg build is not repeated on
       # the next run (actions/cache only saves on job success).
@@ -344,7 +373,7 @@ jobs:
         uses: actions/cache/save@v4
         with:
           path: ${{ github.workspace }}\vcpkg_bincache
-          key: vcpkg-bincache-win-${{ hashFiles('CMakeLists.txt') }}
+          key: vcpkg-bincache-win-${{ hashFiles('CMakeLists.txt', '.github/workflows/package.yml') }}
 
       - name: Cache FetchContent dependencies
         uses: actions/cache@v4
@@ -370,9 +399,10 @@ jobs:
           cmake -B build -G "Visual Studio 17 2022" -A x64 `
             -DCMAKE_BUILD_TYPE=Release `
             -DCMAKE_TOOLCHAIN_FILE=${{ github.workspace }}\vcpkg\scripts\buildsystems\vcpkg.cmake `
-            -DCMAKE_PREFIX_PATH="${{ env.QT_ROOT_DIR }};${{ github.workspace }}\.deps\ffmpeg" `
+            -DCMAKE_PREFIX_PATH="${{ env.QT_ROOT_DIR }};${{ github.workspace }}\.deps\ffmpeg;${{ github.workspace }}\vcpkg\installed\x64-windows-static-md" `
             -DFETCHCONTENT_BASE_DIR=${{ env.FETCHCONTENT_BASE_DIR }} `
-            -DDRIFT_BUNDLE_ONNXRUNTIME=OFF
+            -DDRIFT_BUNDLE_ONNXRUNTIME=OFF `
+            -DDRIFT_WITH_SKIA=ON
 
       # No --target list any more: the tests have to be built here, and building everything is
       # what also gets tools/ compiled by MSVC. Until this job ran ctest, Windows was the one
@@ -523,13 +553,30 @@ jobs:
           brew update
           brew install qt ffmpeg zstd openssl@3 sound-touch ninja
 
+      # Skia for macOS is compiled here from the pinned commit (Homebrew has no Skia) and cached
+      # by script revision. HarfBuzz/ICU/FreeType are compiled in rather than taken from Homebrew,
+      # whose versions move under a pinned Skia.
+      - name: Restore Skia
+        id: skia-cache
+        uses: actions/cache@v4
+        with:
+          path: third_party/prebuilt/skia/mac-arm64
+          key: skia-mac-arm64-${{ hashFiles('third_party/build-skia.sh') }}
+
+      - name: Build Skia
+        if: steps.skia-cache.outputs.cache-hit != 'true'
+        run: |
+          JOBS="$(sysctl -n hw.ncpu)" third_party/build-skia.sh mac-arm64
+          rm -rf third_party/src
+
       - name: Configure
         run: |
           cmake -B build-macos -G Ninja \
             -DCMAKE_BUILD_TYPE=Release \
             -DCMAKE_PREFIX_PATH="$(brew --prefix qt);$(brew --prefix openssl@3);$(brew --prefix)" \
             -DFETCHCONTENT_BASE_DIR="${FETCHCONTENT_BASE_DIR}" \
-            -DDRIFT_BUNDLE_ONNXRUNTIME=OFF
+            -DDRIFT_BUNDLE_ONNXRUNTIME=OFF \
+            -DDRIFT_WITH_SKIA=ON
 
       - name: Build
         run: cmake --build build-macos --parallel
@@ -747,11 +794,16 @@ jobs:
         uses: actions/cache/restore@v4
         with:
           path: third_party/prebuilt
-          key: android-deps-${{ matrix.abi }}-${{ env.NDK_VERSION }}-${{ hashFiles('third_party/build-android.sh') }}
+          key: android-deps-${{ matrix.abi }}-${{ env.NDK_VERSION }}-${{ hashFiles('third_party/build-android.sh', 'third_party/build-skia.sh') }}
 
+      # Two scripts, one cache: both install under third_party/prebuilt, so a change to either
+      # rebuilds both. Skia cross-compiles with the NDK's clang and carries its own HarfBuzz, ICU,
+      # FreeType, expat, libpng and zlib — there are no system libraries on Android to lean on.
       - name: Build native dependencies
         if: steps.deps-cache.outputs.cache-hit != 'true'
-        run: ./third_party/build-android.sh "$ABI"
+        run: |
+          ./third_party/build-android.sh "$ABI"
+          JOBS="$(nproc)" ./third_party/build-skia.sh "android-$ABI"
 
       - name: Save prebuilt native dependencies
         if: steps.deps-cache.outputs.cache-hit != 'true'

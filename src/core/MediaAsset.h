@@ -7,7 +7,7 @@
 
 namespace drift {
 
-enum class MediaKind { Video, Audio, Image, Other };
+enum class MediaKind { Video, Audio, Image, Vector, Other };
 
 // Suffixes Drift treats as still images. Lives in core rather than next to the other media lists
 // in AssetLibrary because the engine needs it too — FrameCompositor classifies mask media by it,

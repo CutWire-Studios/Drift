@@ -1,0 +1,60 @@
+{
+  "format": 1,
+  "id": "rain",
+  "label": "Raining",
+  "category": "character",
+  "sampleText": "RAIN",
+  "slots": [
+    "in",
+    "out"
+  ],
+  "order": 200,
+  "defaults": {
+    "unit": "character",
+    "stagger": 0.03,
+    "duration": 0.6,
+    "ease": "easeOut",
+    "order": "random"
+  },
+  "params": [
+    {
+      "id": "height",
+      "type": "scalar",
+      "label": "Height",
+      "unit": "em",
+      "min": 0,
+      "max": 6,
+      "step": 0.1,
+      "default": 3
+    },
+    {
+      "id": "blur",
+      "type": "scalar",
+      "label": "Blur",
+      "unit": "px",
+      "min": 0,
+      "max": 48,
+      "step": 1,
+      "default": 6
+    }
+  ],
+  "animators": [
+    {
+      "selectors": [
+        "stagger"
+      ],
+      "props": {
+        "position": {
+          "x": 0,
+          "y": {
+            "$": "height",
+            "mul": -1
+          },
+          "unit": "em"
+        },
+        "blur": "{blur}",
+        "opacity": 0
+      }
+    }
+  ]
+}

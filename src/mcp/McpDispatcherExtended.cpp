@@ -1,5 +1,8 @@
 #include "mcp/McpCatalog.h"
 #include "mcp/McpDispatcher.h"
+
+#include "core/TextAnimationPreset.h"
+#include "core/TextLook.h"
 #include "mcp/McpJson.h"
 #include "mcp/McpMarket.h"
 
@@ -898,12 +901,273 @@ QJsonObject McpDispatcher::applyOneExtended(const QString &tool, const QJsonObje
         return ok(clipFeedback(ref, {{QStringLiteral("which"), which}}));
     }
 
+    if (tool == QLatin1String("add_text_layer")) {
+        const ClipRef ref = resolveClip(args);
+        if (!ref.valid())
+            return clipRefError(args);
+        const int at = args.contains(QStringLiteral("at")) ? int(jsonNumber(args.value(QStringLiteral("at")), -1)) : -1;
+        const QString id = m_controller->addTextLayer(ref.track, ref.clip, args.value(QStringLiteral("kind")).toString(), at);
+        if (id.isEmpty())
+            return err("bad_args", QStringLiteral("not a text clip"));
+        return ok(clipFeedback(ref, {{QStringLiteral("id"), id}}));
+    }
+
+    if (tool == QLatin1String("set_text_layer")) {
+        const ClipRef ref = resolveClip(args);
+        if (!ref.valid())
+            return clipRefError(args);
+        QVariantMap layer = args.value(QStringLiteral("layer")).toObject().toVariantMap();
+        if (args.contains(QStringLiteral("id")))
+            layer.insert(QStringLiteral("id"), args.value(QStringLiteral("id")).toString());
+        else if (args.contains(QStringLiteral("index")))
+            layer.insert(QStringLiteral("index"), int(jsonNumber(args.value(QStringLiteral("index")), 0)));
+        else
+            return err("bad_args", QStringLiteral("id or index required"));
+        m_controller->setTextStyle(ref.track, ref.clip, QVariantMap{{QStringLiteral("layer"), layer}});
+        return ok(clipFeedback(ref));
+    }
+
+    if (tool == QLatin1String("remove_text_layer")) {
+        const ClipRef ref = resolveClip(args);
+        if (!ref.valid())
+            return clipRefError(args);
+        if (!m_controller->removeTextLayer(ref.track, ref.clip, args.value(QStringLiteral("id")).toString()))
+            return err("bad_args", QStringLiteral("no such layer"));
+        return ok(clipFeedback(ref));
+    }
+
+    if (tool == QLatin1String("move_text_layer")) {
+        const ClipRef ref = resolveClip(args);
+        if (!ref.valid())
+            return clipRefError(args);
+        m_controller->moveTextLayer(ref.track, ref.clip, args.value(QStringLiteral("id")).toString(),
+                                    int(jsonNumber(args.value(QStringLiteral("to")), 0)));
+        return ok(clipFeedback(ref));
+    }
+
+    if (tool == QLatin1String("list_text_looks")) {
+        return ok({{QStringLiteral("looks"), QJsonArray::fromVariantList(m_controller->textLooks())}});
+    }
+
+    if (tool == QLatin1String("apply_text_look")) {
+        const ClipRef ref = resolveClip(args);
+        if (!ref.valid())
+            return clipRefError(args);
+        const QString look = args.value(QStringLiteral("look")).toString();
+        if (!drift::textLookForId(look))
+            return err("bad_args", QStringLiteral("unknown look '%1'").arg(look));
+        m_controller->applyTextLook(ref.track, ref.clip, look, args.value(QStringLiteral("params")).toObject().toVariantMap());
+        return ok(clipFeedback(ref, {{QStringLiteral("look"), look}}));
+    }
+
+    if (tool == QLatin1String("list_text_animations")) {
+        const QString q = args.value(QStringLiteral("q")).toString().trimmed().toLower();
+        QJsonArray presets;
+        for (const QVariant &v : m_controller->textAnimationPresets(args.value(QStringLiteral("which")).toString())) {
+            const QVariantMap m = v.toMap();
+            if (!q.isEmpty() && !m.value(QStringLiteral("id")).toString().contains(q)
+                && !m.value(QStringLiteral("label")).toString().toLower().contains(q))
+                continue;
+            presets.append(QJsonObject::fromVariantMap(m));
+        }
+        return ok({{QStringLiteral("presets"), presets}, {QStringLiteral("n"), presets.size()}});
+    }
+
+    if (tool == QLatin1String("set_text_animation")) {
+        const ClipRef ref = resolveClip(args);
+        if (!ref.valid())
+            return clipRefError(args);
+        const QString which = args.value(QStringLiteral("which")).toString().trimmed();
+        if (which != QLatin1String("in") && which != QLatin1String("out") && which != QLatin1String("loop"))
+            return err("bad_args", QStringLiteral("which must be in, out or loop"));
+        QVariantMap patch = args.toVariantMap();
+        patch.remove(QStringLiteral("which"));
+        patch.remove(QStringLiteral("clip"));
+        patch.remove(QStringLiteral("track"));
+        patch.remove(QStringLiteral("index"));
+        if (patch.contains(QStringLiteral("preset"))) {
+            const QString preset = patch.value(QStringLiteral("preset")).toString();
+            if (!preset.isEmpty() && preset != QLatin1String("none")
+                && !drift::TextAnimationPresetCatalog::instance().presetForId(preset))
+                return err("bad_args", QStringLiteral("unknown preset '%1'; see list_text_animations").arg(preset));
+        }
+        m_controller->setTextAnimationSlot(ref.track, ref.clip, which, patch);
+        return ok(clipFeedback(ref, {{QStringLiteral("which"), which}}));
+    }
+
+    if (tool == QLatin1String("clear_text_animation")) {
+        const ClipRef ref = resolveClip(args);
+        if (!ref.valid())
+            return clipRefError(args);
+        m_controller->clearTextAnimationSlot(ref.track, ref.clip, args.value(QStringLiteral("which")).toString());
+        return ok(clipFeedback(ref));
+    }
+
+    if (tool == QLatin1String("import_text_animation")) {
+        const QString path = args.value(QStringLiteral("path")).toString();
+        if (path.isEmpty())
+            return err("bad_args", QStringLiteral("path required"));
+        const QVariantMap result = m_controller->importTextAnimationPreset(QUrl::fromLocalFile(path),
+                                                                           args.value(QStringLiteral("which")).toString());
+        if (!result.value(QStringLiteral("ok")).toBool())
+            return err("bad_args", result.value(QStringLiteral("error")).toString());
+        return ok({{QStringLiteral("id"), result.value(QStringLiteral("id")).toString()},
+                   {QStringLiteral("unsupported"), QJsonArray::fromStringList(result.value(QStringLiteral("unsupported")).toStringList())}});
+    }
+
+    if (tool == QLatin1String("apply_text_style_to_all")) {
+        const ClipRef ref = resolveClip(args);
+        if (!ref.valid())
+            return clipRefError(args);
+        const int changed = m_controller->applyTextStyleToCaptions(ref.track, ref.clip,
+                                                                   args.value(QStringLiteral("scope")).toString(QStringLiteral("track")));
+        return ok(clipFeedback(ref, {{QStringLiteral("changed"), changed}}));
+    }
+
     if (tool == QLatin1String("set_shape_style")) {
         const ClipRef ref = resolveClip(args);
         if (!ref.valid())
             return clipRefError(args);
         m_controller->setShapeStyle(ref.track, ref.clip, args.value(QStringLiteral("style")).toObject().toVariantMap());
         return ok(clipFeedback(ref));
+    }
+
+    // --- motion (Lottie / SVG vector clips) ---
+    if (tool == QLatin1String("add_lottie") || tool == QLatin1String("add_svg")) {
+        const bool svg = tool == QLatin1String("add_svg");
+        const QString source = argString(args, svg ? QStringLiteral("svg") : QStringLiteral("json"));
+        if (source.isEmpty())
+            return err("bad_args", svg ? QStringLiteral("svg required") : QStringLiteral("json required"));
+        if (!m_controller->vectorSupportAvailable())
+            return err("unsupported", QStringLiteral("this build has no vector renderer"));
+        const double at = args.contains(QStringLiteral("at"))
+                              ? jsonNumber(args.value(QStringLiteral("at")), m_controller->playheadSeconds())
+                              : m_controller->playheadSeconds();
+        QVariantMap opts;
+        opts.insert(QStringLiteral("kind"), svg ? QStringLiteral("svg") : QStringLiteral("lottie"));
+        for (const char *key : {"duration", "fit", "loop", "offset", "name", "slots"}) {
+            if (args.contains(QLatin1String(key)))
+                opts.insert(QString::fromUtf8(key), args.value(QLatin1String(key)).toVariant());
+        }
+        const QVariantMap reply = m_controller->addVectorClip(
+            source, jsonInt(args.value(QStringLiteral("track"))), at, opts);
+        if (!reply.value(QStringLiteral("ok")).toBool())
+            return err("bad_args", reply.value(QStringLiteral("error")).toString());
+        QJsonObject out = QJsonObject::fromVariantMap(reply);
+        out.insert(QStringLiteral("n"), 1);
+        return out;
+    }
+
+    if (tool == QLatin1String("inspect_lottie")) {
+        if (args.contains(QStringLiteral("clip")) || args.contains(QStringLiteral("track"))
+            || args.contains(QStringLiteral("index"))) {
+            const ClipRef ref = resolveClip(args);
+            if (!ref.valid())
+                return clipRefError(args);
+            const QVariantMap report = m_controller->inspectVectorClip(ref.track, ref.clip);
+            if (!report.value(QStringLiteral("ok")).toBool())
+                return err("bad_args", report.value(QStringLiteral("error")).toString());
+            return QJsonObject::fromVariantMap(report);
+        }
+        QString source = argString(args, QStringLiteral("json"));
+        QString kind = QStringLiteral("lottie");
+        if (source.isEmpty()) {
+            source = argString(args, QStringLiteral("svg"));
+            kind = QStringLiteral("svg");
+        }
+        if (source.isEmpty()) {
+            source = argString(args, QStringLiteral("path"));
+            kind.clear();
+        }
+        if (source.isEmpty())
+            return err("bad_args", QStringLiteral("json, svg, path or clip required"));
+        const QVariantMap report = m_controller->inspectVector(source, kind);
+        if (!report.value(QStringLiteral("ok")).toBool())
+            return err("bad_args", report.value(QStringLiteral("error")).toString());
+        return QJsonObject::fromVariantMap(report);
+    }
+
+    if (tool == QLatin1String("set_lottie_source")) {
+        const ClipRef ref = resolveClip(args);
+        if (!ref.valid())
+            return clipRefError(args);
+        QString source = argString(args, QStringLiteral("json"));
+        QString kind = QStringLiteral("lottie");
+        if (source.isEmpty()) {
+            source = argString(args, QStringLiteral("svg"));
+            kind = QStringLiteral("svg");
+        }
+        if (source.isEmpty()) {
+            source = argString(args, QStringLiteral("path"));
+            kind.clear();
+        }
+        if (source.isEmpty())
+            return err("bad_args", QStringLiteral("json, svg or path required"));
+        const QVariantMap reply = m_controller->setVectorSource(ref.track, ref.clip, source,
+                                                                {{QStringLiteral("kind"), kind}});
+        if (!reply.value(QStringLiteral("ok")).toBool())
+            return err("bad_args", reply.value(QStringLiteral("error")).toString());
+        QJsonObject out = QJsonObject::fromVariantMap(reply);
+        out.insert(QStringLiteral("track"), ref.track);
+        out.insert(QStringLiteral("index"), ref.clip);
+        return out;
+    }
+
+    if (tool == QLatin1String("set_lottie_options")) {
+        const ClipRef ref = resolveClip(args);
+        if (!ref.valid())
+            return clipRefError(args);
+        QVariantMap opts;
+        for (const char *key : {"fit", "loop", "offset", "name"}) {
+            if (args.contains(QLatin1String(key)))
+                opts.insert(QString::fromUtf8(key), args.value(QLatin1String(key)).toVariant());
+        }
+        const QString error = m_controller->setVectorOptions(ref.track, ref.clip, opts);
+        if (!error.isEmpty())
+            return err("bad_args", error);
+        return ok(clipFeedback(ref));
+    }
+
+    if (tool == QLatin1String("set_lottie_slot")) {
+        const ClipRef ref = resolveClip(args);
+        if (!ref.valid())
+            return clipRefError(args);
+        const QString name = argString(args, QStringLiteral("name"));
+        if (name.isEmpty())
+            return err("bad_args", QStringLiteral("name required"));
+        const QJsonValue value = args.value(QStringLiteral("value"));
+        const QString error = m_controller->setVectorSlot(
+            ref.track, ref.clip, name, value.isUndefined() || value.isNull() ? QVariant() : value.toVariant());
+        if (!error.isEmpty())
+            return err("bad_args", error);
+        return ok(clipFeedback(ref, {{QStringLiteral("name"), name},
+                                     {QStringLiteral("cleared"), value.isUndefined() || value.isNull()}}));
+    }
+
+    if (tool == QLatin1String("list_lottie_slots")) {
+        const ClipRef ref = resolveClip(args);
+        if (!ref.valid())
+            return clipRefError(args);
+        if (m_controller->clipAt(ref.track, ref.clip).value(QStringLiteral("kind")).toString() != QLatin1String("vector"))
+            return err("bad_args", QStringLiteral("not a vector clip"));
+        const QVariantList rows = m_controller->vectorSlots(ref.track, ref.clip);
+        return ok({{QStringLiteral("slots"), QJsonArray::fromVariantList(rows)},
+                   {QStringLiteral("n"), rows.size()}});
+    }
+
+    if (tool == QLatin1String("get_lottie_source")) {
+        const ClipRef ref = resolveClip(args);
+        if (!ref.valid())
+            return clipRefError(args);
+        const QVariantMap clip = m_controller->clipAt(ref.track, ref.clip);
+        if (clip.value(QStringLiteral("kind")).toString() != QLatin1String("vector"))
+            return err("bad_args", QStringLiteral("not a vector clip"));
+        const QVariantMap vector = clip.value(QStringLiteral("vector")).toMap();
+        return ok({{QStringLiteral("kind"), vector.value(QStringLiteral("kind")).toString()},
+                   {QStringLiteral("inline"), vector.value(QStringLiteral("inline")).toBool()},
+                   {QStringLiteral("path"), vector.value(QStringLiteral("path")).toString()},
+                   {QStringLiteral("hash"), vector.value(QStringLiteral("hash")).toString()},
+                   {QStringLiteral("source"), m_controller->vectorSourceText(ref.track, ref.clip)}});
     }
 
     // --- shapes ---

@@ -1,4 +1,7 @@
 #include "GpuCompositor.h"
+#ifdef DRIFT_WITH_SKIA
+#include "SkiaRuntime.h"
+#endif
 
 #include "EffectCatalog.h"
 #include "FaceModelTransform.h"
@@ -283,7 +286,20 @@ GlTarget buildLayerTarget(GlRuntime &rt, QOpenGLExtraFunctions *gl, const GpuLay
     if (layer.video.isValid()) {
         target = promoteVideoFrameToTarget(rt, gl, layer.video);
     } else {
-        target = promoteImageToTargetCached(rt, gl, layer.source, layer.source.size());
+#ifdef DRIFT_WITH_SKIA
+        if (layer.vector) {
+            if (auto *sk = drift::skia::SkiaRuntime::acquire(rt))
+                target = sk->paintToTarget(rt, gl, *layer.vector);
+            // No Ganesh on this context: Skia's CPU raster keeps the layer visible.
+            if (!target.isValid() && layer.source.isNull()) {
+                const QImage raster = drift::skia::SkiaRuntime::rasterize(*layer.vector);
+                if (!raster.isNull())
+                    target = promoteImageToTarget(rt, gl, raster, raster.size());
+            }
+        }
+#endif
+        if (!target.isValid() && !layer.source.isNull())
+            target = promoteImageToTargetCached(rt, gl, layer.source, layer.source.size());
     }
     if (!target.isValid())
         return {};

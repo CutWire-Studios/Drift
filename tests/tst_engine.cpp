@@ -65,7 +65,12 @@
 #include "engine/FontCatalog.h"
 #include "engine/FrameCompositor.h"
 #include "engine/GpuCompositor.h"
-#include "engine/TextRaster.h"
+#include "core/TextAnimationPreset.h"
+#include "engine/TextLayout.h"
+#ifdef DRIFT_WITH_SKIA
+#include "engine/SkiaRuntime.h"
+#include "engine/SkiaTextPainter.h"
+#endif
 #include "engine/GpuEffectExecutor.h"
 #include "engine/GpuPackageParse.h"
 
@@ -5177,7 +5182,7 @@ void EngineTest::textClipRendersInsideTransition()
     text.timelineStart = 0;
     text.timelineDuration = drift::secondsToUs(2.0);
     text.textContent = QStringLiteral("HELLO");
-    text.textStyle.color = Qt::white;
+    drift::setSolidFill(text.textStyle, Qt::white);
     text.textStyle.pixelSize = 28;
 
     drift::Clip shape;
@@ -5263,6 +5268,35 @@ void EngineTest::transitionRenderingIsDeterministic()
 namespace {
 
 // The bundle is fetched, not committed, so an offline checkout legitimately has no fonts.
+
+namespace {
+
+// The text painter rasterised on the CPU, in the shape the raster tests were written against.
+struct TextRasterResult
+{
+    QImage image;
+    QRectF rect;
+};
+
+TextRasterResult rasterizeText(const drift::Clip &clip, const QString &text, const QRectF &rect, double scale,
+                               int word = -1)
+{
+#ifdef DRIFT_WITH_SKIA
+    const drift::skia::TextPainterResult painted = drift::skia::makeTextPainter(clip, text, rect, scale, word);
+    return {painted.painter ? drift::skia::SkiaRuntime::rasterize(*painted.painter) : QImage(), painted.rect};
+#else
+    Q_UNUSED(clip); Q_UNUSED(text); Q_UNUSED(rect); Q_UNUSED(scale); Q_UNUSED(word);
+    return {};
+#endif
+}
+
+TextRasterResult rasterizeText(const drift::Clip &clip, const QRectF &rect, double scale, int word = -1)
+{
+    return rasterizeText(clip, clip.textContent, rect, scale, word);
+}
+
+} // namespace
+
 #define SKIP_WITHOUT_FONTS()                                                                        \
     do {                                                                                            \
         if (fontCatalog().isEmpty())                                                                \
@@ -5384,24 +5418,35 @@ void EngineTest::fontForStyleResolvesRequestedFace()
 void EngineTest::textRasterIsCached()
 {
     SKIP_WITHOUT_FONTS();
-
+#ifndef DRIFT_WITH_SKIA
+    QSKIP("text needs Skia");
+#else
     const QRectF rect(0, 0, 400, 200);
     drift::Clip clip = makeTextClip(QStringLiteral("Cache me"), rect);
     clip.textStyle.fontFamily = QStringLiteral("Inter");
 
-    const TextRasterResult first = rasterizeText(clip, rect, 1.0);
-    const TextRasterResult second = rasterizeText(clip, rect, 1.0);
-    QVERIFY(!first.image.isNull());
-    // Same underlying QImage, so the second frame did no rasterization at all.
-    QCOMPARE(first.image.cacheKey(), second.image.cacheKey());
+    const auto first = drift::skia::makeTextPainter(clip, clip.textContent, rect, 1.0);
+    const auto second = drift::skia::makeTextPainter(clip, clip.textContent, rect, 1.0);
+    QVERIFY(first.painter && second.painter);
+    // Same key, so the GPU cache serves the second frame without a repaint.
+    QVERIFY(first.painter->cacheKey() != 0);
+    QCOMPARE(first.painter->cacheKey(), second.painter->cacheKey());
 
-    // The animation is applied to the layer, never to the pixels, so it must not evict the raster.
-    clip.textStyle.animIn = {drift::TextAnimKind::Fade, drift::secondsToUs(1.0), drift::TextEase::EaseOut};
-    const TextRasterResult animated = rasterizeText(clip, rect, 1.0);
-    QCOMPARE(animated.image.cacheKey(), first.image.cacheKey());
+    // A finished entrance holds still: the hold pose is cached like a static block.
+    clip.textStyle.animation.in = drift::legacyTextAnimationSlot(QStringLiteral("fade"), drift::secondsToUs(1.0),
+                                                                 QStringLiteral("easeOut"), QStringLiteral("block"), 60000,
+                                                                 QStringLiteral("forward"));
+    clip.timelineDuration = drift::secondsToUs(4.0);
+    const auto held = drift::skia::makeTextPainter(clip, clip.textContent, rect, 1.0, -1, drift::secondsToUs(3.0));
+    QVERIFY(held.painter->cacheKey() != 0);
+    // Mid-entrance it is redrawn every frame.
+    const auto moving = drift::skia::makeTextPainter(clip, clip.textContent, rect, 1.0, -1, drift::secondsToUs(0.5));
+    QCOMPARE(moving.painter->cacheKey(), quint64(0));
 
-    clip.textStyle.color = Qt::red;
-    QVERIFY(rasterizeText(clip, rect, 1.0).image.cacheKey() != first.image.cacheKey());
+    drift::setSolidFill(clip.textStyle, Qt::red);
+    QVERIFY(drift::skia::makeTextPainter(clip, clip.textContent, rect, 1.0, -1, drift::secondsToUs(3.0)).painter->cacheKey()
+            != held.painter->cacheKey());
+#endif
 }
 
 void EngineTest::textDecorationsAreNotCropped()
@@ -5416,11 +5461,8 @@ void EngineTest::textDecorationsAreNotCropped()
     const TextRasterResult plain = rasterizeText(clip, rect, 1.0);
     QVERIFY(!plain.image.isNull());
 
-    clip.textStyle.outlineWidth = 12.0;
-    clip.textStyle.outlineEnabled = true;
-    clip.textStyle.shadowEnabled = true;
-    clip.textStyle.shadowBlur = 10.0;
-    clip.textStyle.shadowOffsetY = 8.0;
+    clip.textStyle.layers = {drift::shadowLayer(Qt::black, 0.0, 8.0, 10.0, 0.6), drift::strokeLayer(12.0, Qt::black),
+                             drift::solidFillLayer(Qt::white)};
     const TextRasterResult decorated = rasterizeText(clip, rect, 1.0);
 
     // The raster grows past the layout rect on every side, so nothing is clipped at the edge...
@@ -5438,10 +5480,7 @@ void EngineTest::textDecorationsAreNotCropped()
 
     // The same has to hold for the decorations a style pack adds, which sit outside the glyphs:
     // a glow bleeds outward, a highlight pill sits behind the word and the rule sits under it.
-    clip.textStyle.outlineWidth = 0.0;
-    clip.textStyle.shadowEnabled = false;
-    clip.textStyle.glowEnabled = true;
-    clip.textStyle.glowRadius = 14.0;
+    clip.textStyle.layers = {drift::glowLayer(Qt::white, 14.0, 0.8), drift::solidFillLayer(Qt::white)};
     clip.textStyle.wordHighlight.enabled = true;
     clip.textStyle.wordHighlight.padding = 10.0;
     clip.textStyle.underlineEnabled = true;
@@ -5539,8 +5578,11 @@ void EngineTest::karaokeAccentFollowsThePlayhead()
     // Different word lit, so genuinely different pixels — not just a different cache slot.
     QVERIFY(first != third);
 
-    // The spoken word still only costs one raster: the same index hits the cache.
-    QCOMPARE(rasterizeText(clip, text, rect, 1.0, 0).image.cacheKey(), first.cacheKey());
+    // The spoken word still only costs one paint: the same index yields the same cache key.
+#ifdef DRIFT_WITH_SKIA
+    QCOMPARE(drift::skia::makeTextPainter(clip, text, rect, 1.0, 0).painter->cacheKey(),
+             drift::skia::makeTextPainter(clip, text, rect, 1.0, 0).painter->cacheKey());
+#endif
 }
 
 void EngineTest::accentSizeScaleWidensTheBlock()
@@ -5658,7 +5700,7 @@ void EngineTest::textClipCarriesGpuEffects()
     drift::Clip clip = makeTextClip(QStringLiteral("FX"), QRectF(0, 0, 128, 128));
     clip.textStyle.fontFamily = QStringLiteral("Anton");
     clip.textStyle.pixelSize = 48;
-    clip.textStyle.color = QColor(120, 120, 120);
+    drift::setSolidFill(clip.textStyle, QColor(120, 120, 120));
     project.tracks()[0].clips.append(clip);
 
     FrameCompositor compositor;
@@ -5690,7 +5732,9 @@ void EngineTest::textAnimationFadesAndSlides()
     drift::Clip clip = makeTextClip(QStringLiteral("IN"), QRectF(0, 0, 128, 128));
     clip.textStyle.fontFamily = QStringLiteral("Anton");
     clip.textStyle.pixelSize = 48;
-    clip.textStyle.animIn = {drift::TextAnimKind::Fade, drift::secondsToUs(1.0), drift::TextEase::Linear};
+    clip.textStyle.animation.in = drift::legacyTextAnimationSlot(QStringLiteral("fade"), drift::secondsToUs(1.0),
+                                                                 QStringLiteral("linear"), QStringLiteral("block"), 60000,
+                                                                 QStringLiteral("forward"));
     project.tracks()[0].clips.append(clip);
 
     FrameCompositor compositor;
@@ -5706,8 +5750,9 @@ void EngineTest::textAnimationFadesAndSlides()
     QVERIFY(qAbs(later - settled) < 0.5);
 
     // A slide-up entrance arrives from below, so the glyphs start lower than they finish.
-    project.tracks()[0].clips[0].textStyle.animIn = {drift::TextAnimKind::SlideUp,
-                                                     drift::secondsToUs(1.0), drift::TextEase::Linear};
+    project.tracks()[0].clips[0].textStyle.animation.in = drift::legacyTextAnimationSlot(
+        QStringLiteral("slideUp"), drift::secondsToUs(1.0), QStringLiteral("linear"), QStringLiteral("block"), 60000,
+        QStringLiteral("forward"));
     const double startY = litCentroidY(compositor.compositeAt(drift::secondsToUs(0.1)));
     const double endY = litCentroidY(compositor.compositeAt(drift::secondsToUs(2.0)));
     QVERIFY2(startY > endY + 1.0, "slide-up entrance did not travel upward");

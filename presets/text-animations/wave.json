@@ -1,0 +1,13 @@
+{
+  "format": 1, "id": "wave", "label": "Wave", "category": "kinetic", "sampleText": "wavy text",
+  "slots": ["loop"], "order": 40,
+  "params": [
+    { "id": "amount", "type": "scalar", "label": "Amount", "unit": "box", "min": 0, "max": 0.5, "step": 0.01, "default": 0.12 },
+    { "id": "frequency", "type": "scalar", "label": "Speed", "unit": "Hz", "min": 0.1, "max": 5, "step": 0.1, "default": 1.1 },
+    { "id": "phase", "type": "scalar", "label": "Wavelength", "unit": "°", "min": 0, "max": 180, "step": 1, "default": 34.4 }
+  ],
+  "animators": [ {
+    "selectors": [ { "driver": "wiggle", "domain": "character", "wave": "sine", "frequencyHz": "{frequency}", "spatialPhaseDeg": "{phase}" } ],
+    "props": { "position": { "x": 0, "y": "{amount}", "unit": "box", "maxPx": 36 } }
+  } ]
+}

@@ -9,22 +9,32 @@ license=('GPL-3.0-or-later')
 # qt6-imageformats supplies the qwebp and qtiff QImageReader plugins. Nothing links against
 # them, so a build without it succeeds and then decodes every .webp/.tiff still to a null QImage
 # — a blank bin card and a clip that renders as nothing. It is a runtime dependency only.
+# harfbuzz .. freetype2 are what the Skia archives built in build() link against at runtime; all
+# but icu and expat are already pulled in by qt6-base, they are listed so the ABI pin is explicit.
 depends=(
     'qt6-base' 'qt6-declarative' 'qt6-svg' 'qt6-multimedia' 'qt6-multimedia-ffmpeg'
     'qt6-imageformats'
     'ffmpeg' 'zstd' 'openssl' 'soundtouch' 'zlib'
+    'harfbuzz' 'icu' 'expat' 'libpng' 'fontconfig' 'freetype2'
 )
 # qt6-tools is LinguistTools (lupdate/lrelease): without it CMake skips qt_add_translations and
 # the binary ships English-only, then check()'s Translations test fails looking for
 # update_translations. xorg-server-xvfb is check()-only: the compositor tests need a real OpenGL
 # context, and Qt's offscreen platform plugin cannot provide one on a builder with no /dev/dri
 # (llvmpipe is fine, it just needs an X server to hand Qt a GL visual).
-makedepends=('cmake' 'ninja' 'git' 'pkgconf' 'qt6-tools' 'xorg-server-xvfb')
+# clang, gn and python drive third_party/build-skia.sh; Skia's GN toolchain files are written for
+# clang, so gcc is not an option there even though it builds Drift itself.
+makedepends=('cmake' 'ninja' 'git' 'pkgconf' 'qt6-tools' 'xorg-server-xvfb' 'clang' 'gn' 'python')
 # Defaults to the tagged release; CI overrides _commit (e.g. to $GITHUB_SHA)
 # to build the exact commit that triggered the workflow instead.
 _commit="${_commit:-v$pkgver}"
-source=("$pkgname::git+https://github.com/CutWire-Studios/Drift.git#commit=$_commit")
-sha256sums=('SKIP')
+# Must match SKIA_COMMIT / SKIA_SHA256 in third_party/build-skia.sh; the script is handed this
+# extracted tree so it never downloads anything during build().
+_skia_commit=e7c90ecca9444fe09598f1630ab7cee2c0ee027a
+source=("$pkgname::git+https://github.com/CutWire-Studios/Drift.git#commit=$_commit"
+        "skia-$_skia_commit.tar.gz::https://github.com/google/skia/archive/$_skia_commit.tar.gz")
+sha256sums=('SKIP'
+            '7b5158952ebc4e2ce8de19f036b7613e266705003469579d9e98070ead62fc3b')
 
 # ONNX Runtime is never linked and never shipped: Drift dlopens whichever build the user installs
 # from the Acceleration category (src/engine/OrtRuntime.cpp), so the CPU / CUDA / WebGPU choice
@@ -40,10 +50,13 @@ sha256sums=('SKIP')
 
 build() {
     cd "$pkgname"
+    CC=clang CXX=clang++ JOBS="$(nproc)" SKIA_SRC_DIR="$srcdir/skia-$_skia_commit" \
+        third_party/build-skia.sh linux-x64
     cmake -B build -G Ninja \
         -DCMAKE_BUILD_TYPE=Release \
         -DCMAKE_INSTALL_PREFIX=/usr \
         -DDRIFT_BUNDLE_ONNXRUNTIME=OFF \
+        -DDRIFT_WITH_SKIA=ON \
         -DDRIFT_UPDATE_FEED_URL=
     cmake --build build --parallel
 }
