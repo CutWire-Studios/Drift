@@ -2,6 +2,9 @@
 
 #include "GlModelRenderer.h"
 #include "VaapiZeroCopy.h"
+#ifdef DRIFT_WITH_SKIA
+#include "SkiaRuntime.h"
+#endif
 
 #include <QColor>
 #include <QCoreApplication>
@@ -1127,6 +1130,10 @@ void GlRuntime::releaseCaches()
     }
 
     exec([this] {
+#ifdef DRIFT_WITH_SKIA
+        if (skia)
+            skia->releaseCaches();
+#endif
         destroyImageUploadCache();
         destroyVideoUploadState();
         destroyExportNv12State();
@@ -1150,6 +1157,12 @@ void GlRuntime::shutdown()
         [this] {
             if (!context->makeCurrent(surface.get()))
                 return;
+#ifdef DRIFT_WITH_SKIA
+            if (skia) {
+                skia->shutdown();
+                skia.reset();
+            }
+#endif
             if (auto *gl = context->extraFunctions()) {
                 for (int i = 0; i < kPresentRingSize; ++i) {
                     if (m_presentFence[i]) {

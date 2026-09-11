@@ -16,6 +16,10 @@ set(CMAKE_AUTORCC ON)
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
 
 option(WITH_BGREMOVAL "Enable OpenCV-based background removal" OFF)
+# Skia (Ganesh/GL) draws text, shapes and Lottie/SVG clips on the GPU. OFF keeps the QPainter
+# raster path; see third_party/build-skia.sh for producing the prebuilt it links.
+option(DRIFT_WITH_SKIA "Draw vector content (text, shapes, Lottie, SVG) with Skia" OFF)
+set(DRIFT_SKIA_DIR "" CACHE PATH "Directory containing SkiaConfig.cmake (default: third_party/prebuilt/skia/<target>)")
 
 # Defaults off under CI so the Translations test still compares the committed catalogs.
 if(DEFINED ENV{CI})
@@ -623,6 +627,18 @@ if(WITH_BGREMOVAL)
     target_include_directories(driftengine PRIVATE ${OpenCV_INCLUDE_DIRS})
     target_link_libraries(driftengine PRIVATE ${OpenCV_LIBS})
     target_compile_definitions(driftengine PUBLIC DRIFT_WITH_BGREMOVAL)
+endif()
+
+if(DRIFT_WITH_SKIA)
+    find_package(Skia REQUIRED)
+    target_sources(driftengine PRIVATE
+        src/engine/SkiaRuntime.h
+        src/engine/SkiaRuntime.cpp
+    )
+    # PRIVATE: no header outside src/engine/Skia*.{h,cpp} includes Skia, so the defines and the
+    # include root stay out of the rest of the build.
+    target_link_libraries(driftengine PRIVATE Skia::Skia)
+    target_compile_definitions(driftengine PUBLIC DRIFT_WITH_SKIA)
 endif()
 
 # --- application ------------------------------------------------------------

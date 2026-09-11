@@ -134,6 +134,14 @@ add_test(NAME Engine COMMAND tst_engine)
 drift_copy_effects(tst_engine)
 drift_copy_transitions(tst_engine)
 
+if(DRIFT_WITH_SKIA)
+    qt_add_executable(tst_skia tst_skia.cpp)
+    target_include_directories(tst_skia PRIVATE ../src)
+    # Skia::Skia directly: the test's painters draw with SkCanvas themselves.
+    target_link_libraries(tst_skia PRIVATE Qt6::Test Qt6::Gui Qt6::OpenGL driftengine Skia::Skia)
+    add_test(NAME Skia COMMAND tst_skia)
+endif()
+
 qt_add_executable(tst_mcp
     tst_mcp.cpp
     ../src/mcp/McpSession.cpp
