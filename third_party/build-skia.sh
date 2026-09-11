@@ -232,9 +232,15 @@ mkdir -p "$OUT/lib" "$OUT/include"
 
 # Skia headers include each other by source-root-relative path ("include/core/SkCanvas.h",
 # "modules/skottie/include/Skottie.h", "modules/skcms/skcms.h"), so the install keeps that tree
-# with $OUT/include as the root. Only headers; src/ stays private.
+# with $OUT/include as the root. src/ stays private except for the few headers the public
+# Skottie/skresources/skshaper headers reach into (SkResources.h includes src/core/SkTHash.h);
+# without them nothing that includes Skottie.h compiles.
 ( cd "$SKIA_SRC" && find include modules -name '*.h' -print0 ) \
   | ( cd "$SKIA_SRC" && tar --null -cf - -T - ) | tar -xf - -C "$OUT/include"
+for h in src/base/SkMathPriv.h src/base/SkTLazy.h src/base/SkUTF.h src/core/SkChecksum.h src/core/SkTHash.h; do
+  mkdir -p "$OUT/include/$(dirname "$h")"
+  cp "$SKIA_SRC/$h" "$OUT/include/$h"
+done
 
 LIBS=()
 for t in "${SKIA_TARGETS[@]}"; do

@@ -16,6 +16,7 @@
 #include "ShapeRaster.h"
 #include "TextRaster.h"
 #include "TransitionCatalog.h"
+#include "VectorClipRenderer.h"
 #include "core/Clip.h"
 #include "core/ClipAnimation.h"
 #include "core/MediaAsset.h"
@@ -129,7 +130,8 @@ void collectActivePaths(const drift::Project *project, drift::TimeUs timelineUs,
 
             if (clip.path.isEmpty())
                 continue;
-            if (clip.type == drift::ClipType::Shape)
+            // A vector clip's path is a .json/.svg the decoders must never open.
+            if (clip.type == drift::ClipType::Shape || clip.type == drift::ClipType::Vector)
                 continue;
 
             if ((track.type == drift::TrackType::Video || track.type == drift::TrackType::Shape)
@@ -860,6 +862,15 @@ GpuLayer buildGpuLayer(const drift::Clip &clip, drift::TimeUs timelineUs, int pr
         else
 #endif
             layer.source = drift::rasterizeShape(clip.shapeStyle, layoutW, layoutH, renderScale);
+        layer.effects = resolvedClipEffects(clip, clipTimeUs);
+    } else if (clip.type == drift::ClipType::Vector) {
+        drift::vec::RenderRequest request;
+        request.source = clip.vector;
+        request.size = QSize(layoutW, layoutH);
+        // Speed, curves and reverse are the ordinary source remap; the renderer adds the
+        // start offset and folds by the loop mode.
+        request.animUs = clip.timelineToSourceUs(timelineUs) - clip.srcIn;
+        layer.vector = drift::vec::makePainter(request);
         layer.effects = resolvedClipEffects(clip, clipTimeUs);
     } else {
         // Bounded by the canvas, not the layout rect — see decodeClipMediaFrame.

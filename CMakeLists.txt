@@ -545,6 +545,10 @@ add_library(driftengine STATIC
     src/engine/ShapeRaster.cpp
     src/engine/RenderBackend.h
     src/engine/RenderBackend.cpp
+    src/engine/VectorClipRenderer.h
+    src/engine/VectorClipRenderer.cpp
+    src/engine/VectorInspect.h
+    src/engine/VectorInspect.cpp
     src/engine/EffectPackageLoader.h
     src/engine/EffectPackageLoader.cpp
     src/engine/TransitionCatalog.h
@@ -644,11 +648,32 @@ if(DRIFT_WITH_SKIA)
         src/engine/SkiaPath.cpp
         src/engine/SkiaShapePainter.h
         src/engine/SkiaShapePainter.cpp
+        src/engine/SkiaFonts.h
+        src/engine/SkiaFonts.cpp
+        src/engine/SkiaVectorResources.h
+        src/engine/SkiaVectorResources.cpp
+        src/engine/SkiaVectorObservers.h
+        src/engine/SkiaVectorObservers.cpp
     )
-    # PRIVATE: no header outside src/engine/Skia*.{h,cpp} includes Skia, so the defines and the
-    # include root stay out of the rest of the build.
+    # Skia's archives are built without RTTI, so a Drift class deriving from a Skia interface
+    # whose virtuals are defined out of line (ImageAsset, PropertyObserver) cannot link with RTTI
+    # on: its typeinfo references the base's, which does not exist. Only Skia*.cpp subclass Skia
+    # types, and only they are compiled to match.
+    set_source_files_properties(
+        src/engine/SkiaRuntime.cpp
+        src/engine/SkiaPath.cpp
+        src/engine/SkiaShapePainter.cpp
+        src/engine/SkiaFonts.cpp
+        src/engine/SkiaVectorResources.cpp
+        src/engine/SkiaVectorObservers.cpp
+        PROPERTIES COMPILE_OPTIONS "$<IF:$<CXX_COMPILER_ID:MSVC>,/GR-,-fno-rtti>")
+    # PRIVATE: no header outside src/engine/Skia*.h includes Skia (Vector*.cpp do, under
+    # DRIFT_WITH_SKIA), so the defines and the include root stay out of the rest of the build.
     target_link_libraries(driftengine PRIVATE Skia::Skia)
     target_compile_definitions(driftengine PUBLIC DRIFT_WITH_SKIA)
+    # Qt's `foreach` keyword macro collides with SkTHash::foreach(), which the Skottie headers
+    # pull in. Nothing in Drift writes foreach; Q_FOREACH stays available.
+    target_compile_definitions(driftengine PRIVATE QT_NO_FOREACH)
 endif()
 
 # --- application ------------------------------------------------------------

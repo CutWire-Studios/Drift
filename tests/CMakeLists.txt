@@ -140,6 +140,12 @@ if(DRIFT_WITH_SKIA)
     # Skia::Skia directly: the test's painters draw with SkCanvas themselves.
     target_link_libraries(tst_skia PRIVATE Qt6::Test Qt6::Gui Qt6::OpenGL driftengine Skia::Skia)
     add_test(NAME Skia COMMAND tst_skia)
+
+    qt_add_executable(tst_vector tst_vector.cpp)
+    target_include_directories(tst_vector PRIVATE ../src)
+    target_link_libraries(tst_vector PRIVATE Qt6::Test Qt6::Gui Qt6::OpenGL driftengine driftcore)
+    target_compile_definitions(tst_vector PRIVATE DRIFT_TEST_DATA_DIR="${CMAKE_CURRENT_SOURCE_DIR}/data")
+    add_test(NAME Vector COMMAND tst_vector)
 endif()
 
 qt_add_executable(tst_mcp
