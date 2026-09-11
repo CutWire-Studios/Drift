@@ -276,7 +276,8 @@ Item {
                                 ? ""
                                 : EditorState.filmstripTileUrl(
                                       EditorState.sceneClipPath, 0,
-                                      Math.floor(row.modelData.thumbnailSeconds))
+                                      Math.floor(row.modelData.thumbnailSeconds),
+                                      EditorState.sceneClipRotationCorrection)
                         }
                     }
                 }

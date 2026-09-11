@@ -48,10 +48,11 @@ public slots:
     void closePath();
     QImage decodeVideo(quint64 streamId, drift::TimeUs sourceUs, int maxWidth, int maxHeight,
                        const QString &stabilizePath = QString(), int stabilizeSmoothing = 15,
-                       bool stabilizeTripod = false);
+                       bool stabilizeTripod = false, int rotationCorrection = 0);
     PreviewVideoFrame decodePreviewVideo(quint64 streamId, drift::TimeUs sourceUs, int maxWidth,
                                          int maxHeight, const QString &stabilizePath = QString(),
-                                         int stabilizeSmoothing = 15, bool stabilizeTripod = false);
+                                         int stabilizeSmoothing = 15, bool stabilizeTripod = false,
+                                         int rotationCorrection = 0);
     int decodeAudio(quint64 streamId, drift::TimeUs sourceStartUs, int sampleCount,
                     int outputSampleRate, float *interleavedStereoOut, int audioStreamOrdinal = 0);
     void prefetchNextVideo(quint64 streamId, int maxWidth, int maxHeight);

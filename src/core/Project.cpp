@@ -340,6 +340,7 @@ QJsonObject clipToJson(const Clip &clip)
         {QStringLiteral("width"), keyframesToJson(clip.transformW)},
         {QStringLiteral("height"), keyframesToJson(clip.transformH)},
         {QStringLiteral("rotation"), keyframesToJson(clip.rotation)},
+        {QStringLiteral("rotationCorrection"), clip.rotationCorrection},
         {QStringLiteral("effects"), effectsToJson(clip.effects)},
         {QStringLiteral("audioEffects"), effectsToJson(clip.audioEffects)},
     };
@@ -450,6 +451,7 @@ Clip clipFromJsonV2(const QJsonObject &object, int canvasW = 1920, int canvasH =
     clip.pan = object.value(QStringLiteral("pan")).toDouble(0.0);
     clip.opacity = keyframesFromJson(object.value(QStringLiteral("opacity")).toObject());
     clip.rotation = keyframesFromJson(object.value(QStringLiteral("rotation")).toObject());
+    clip.rotationCorrection = object.value(QStringLiteral("rotationCorrection")).toInt(0);
     clip.effects = effectsFromJson(object.value(QStringLiteral("effects")).toArray());
     clip.audioEffects = effectsFromJson(object.value(QStringLiteral("audioEffects")).toArray());
 
@@ -505,6 +507,9 @@ QJsonObject assetToJson(const MediaAsset &asset)
         {QStringLiteral("height"), asset.height},
         {QStringLiteral("fps"), asset.fps},
         {QStringLiteral("rotationDegrees"), asset.rotationDegrees},
+        {QStringLiteral("rotationOverride"), asset.rotationOverride},
+        {QStringLiteral("trimInUs"), static_cast<double>(asset.trimInUs)},
+        {QStringLiteral("trimOutUs"), static_cast<double>(asset.trimOutUs)},
         {QStringLiteral("sampleRate"), asset.sampleRate},
         {QStringLiteral("channels"), asset.channels},
         {QStringLiteral("codecName"), asset.codecName},
@@ -536,6 +541,9 @@ MediaAsset assetFromJsonV2(const QJsonObject &object)
     asset.height = object.value(QStringLiteral("height")).toInt();
     asset.fps = object.value(QStringLiteral("fps")).toDouble();
     asset.rotationDegrees = object.value(QStringLiteral("rotationDegrees")).toInt();
+    asset.rotationOverride = object.value(QStringLiteral("rotationOverride")).toInt(-1);
+    asset.trimInUs = static_cast<TimeUs>(object.value(QStringLiteral("trimInUs")).toDouble(0));
+    asset.trimOutUs = static_cast<TimeUs>(object.value(QStringLiteral("trimOutUs")).toDouble(-1));
     asset.sampleRate = object.value(QStringLiteral("sampleRate")).toInt();
     asset.channels = object.value(QStringLiteral("channels")).toInt();
     asset.codecName = object.value(QStringLiteral("codecName")).toString();

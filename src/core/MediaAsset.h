@@ -39,6 +39,14 @@ struct MediaAsset
     int height = 0;
     double fps = 0.0;
     int rotationDegrees = 0;
+    // User-chosen correction from the bin preview; -1 = use the probed rotationDegrees as-is.
+    int rotationOverride = -1;
+
+    // Non-destructive bin-preview trim: applied to a fresh clip's srcIn/srcOut when the asset is
+    // added to the timeline. The source file itself is never re-encoded for a plain trim — only
+    // an actual crop still does that. -1 for trimOutUs = no trim (use the full duration).
+    TimeUs trimInUs = 0;
+    TimeUs trimOutUs = -1;
 
     int sampleRate = 0;
     int channels = 0;
@@ -58,5 +66,19 @@ struct MediaAsset
     // an asset between folders never touches anything on the timeline.
     QString folderId;
 };
+
+// The rotation to actually use for this asset: the user's bin-preview correction when set,
+// otherwise the value probed from the file's own display-matrix tag.
+inline int effectiveRotation(const MediaAsset &asset)
+{
+    return asset.rotationOverride >= 0 ? asset.rotationOverride : asset.rotationDegrees;
+}
+
+// How far the bin's correction turns this asset beyond its own tag — the Clip::rotationCorrection
+// a clip placed from it starts with.
+inline int rotationCorrectionOf(const MediaAsset &asset)
+{
+    return ((effectiveRotation(asset) - asset.rotationDegrees) % 360 + 360) % 360;
+}
 
 } // namespace drift
