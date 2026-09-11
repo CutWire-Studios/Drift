@@ -261,8 +261,10 @@ done
 # compiling the headers as SK_DEBUG against a release archive changes struct layouts.
 DEFINES="$(cd "$SKIA_SRC" && for t in "${SKIA_TARGETS[@]}"; do "$GN" desc "$BUILD" "$t" defines; done \
            | grep -v '_IMPLEMENTATION' | sed 's/^NDEBUG$/SK_RELEASE/' | sort -u)"
+# harfbuzz-subset is listed by Skia's system-harfbuzz target but only the PDF backend (off
+# above) calls into it; Ubuntu 22.04's libharfbuzz-dev has no libharfbuzz-subset.so to link.
 SYSLIBS="$(cd "$SKIA_SRC" && for t in "${SKIA_TARGETS[@]}"; do "$GN" desc "$BUILD" "$t" libs 2>/dev/null || true; done \
-           | sort -u)"
+           | grep -vx 'harfbuzz-subset' | sort -u)"
 # Apple frameworks arrive as "Foo.framework"; CMake wants "-framework Foo". gn prints an error
 # line instead of a list on targets that have none, hence the filter on the suffix.
 FRAMEWORKS="$(cd "$SKIA_SRC" && for t in "${SKIA_TARGETS[@]}"; do "$GN" desc "$BUILD" "$t" frameworks 2>/dev/null || true; done \
