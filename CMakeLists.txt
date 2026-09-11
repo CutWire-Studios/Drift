@@ -917,6 +917,7 @@ qt_add_qml_module(drift
         src/qml/components/properties/TransitionInspector.qml
         src/qml/components/properties/BlendingInspector.qml
         src/qml/components/properties/ShapeInspector.qml
+        src/qml/components/properties/VectorInspector.qml
         src/qml/components/properties/MasksInspector.qml
         src/qml/components/properties/EffectsInspector.qml
         src/qml/components/assets/TextAssetsTab.qml

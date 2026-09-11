@@ -89,6 +89,7 @@ PanelFrame {
         "general": qsTr("General"),
         "text": qsTr("Text"),
         "shape": qsTr("Shape"),
+        "vector": qsTr("Motion"),
         "subtitles": qsTr("Subtitles"),
         "transform": qsTr("Transform"),
         "stabilize": qsTr("Stabilization"),
@@ -111,6 +112,7 @@ PanelFrame {
         ListElement { tabId: "general"; icon: 0; group: 0 }
         ListElement { tabId: "text"; icon: 1; group: 0 }
         ListElement { tabId: "shape"; icon: 2; group: 0 }
+        ListElement { tabId: "vector"; icon: 14; group: 0 }
         ListElement { tabId: "subtitles"; icon: 3; group: 0 }
         ListElement { tabId: "transform"; icon: 4; group: 1 }
         ListElement { tabId: "stabilize"; icon: 5; group: 1 }
@@ -137,7 +139,8 @@ PanelFrame {
         Theme.icons.mask,
         Theme.icons.wand,
         Theme.icons.audioLines,
-        Theme.icons.chevronsRight
+        Theme.icons.chevronsRight,
+        Theme.icons.layers
     ]
 
     function tabVisible(tabId) {
@@ -160,12 +163,14 @@ PanelFrame {
             return root.clipKind === "subtitle"
         if (tabId === "shape")
             return root.clipKind === "shape"
+        if (tabId === "vector")
+            return root.clipKind === "vector"
         if (tabId === "text")
             return root.hasTextStyle
         if (tabId === "animation")
             return root.clipKind === "video" || root.clipKind === "image"
                    || root.clipKind === "shape" || root.clipKind === "text"
-                   || root.clipKind === "audio"
+                   || root.clipKind === "vector" || root.clipKind === "audio"
         if (tabId === "stabilize")
             return root.clipKind === "video"
         // Masks and effect stacks live on the adjustments pinned to a clip, and those adjustments
@@ -696,6 +701,11 @@ PanelFrame {
                 ShapeInspector {
                     width: tabColumn.width
                     visible: root.currentTabId === "shape"
+                }
+
+                VectorInspector {
+                    width: tabColumn.width
+                    visible: root.currentTabId === "vector"
                 }
 
                 MasksInspector {

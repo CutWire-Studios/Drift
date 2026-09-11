@@ -272,6 +272,40 @@ bool openVideoDecoder(const QString &absolutePath, AVFormatContext **fmtOut,
 
 } // namespace
 
+namespace {
+
+QString writeVectorStill(const drift::VectorSource &source, const QString &outPath)
+{
+    const QImage frame = drift::vec::renderThumbnail(source, {kThumbnailMaxEdge, kThumbnailMaxEdge * 9 / 16});
+    if (frame.isNull())
+        return {};
+    // JPEG has no alpha: flatten onto the bin's dark ground rather than onto black.
+    QImage flat(frame.size(), QImage::Format_RGB32);
+    flat.fill(QColor(34, 34, 38));
+    QPainter p(&flat);
+    p.drawImage(0, 0, frame);
+    p.end();
+    return flat.save(outPath, "JPG", 85) ? outPath : QString();
+}
+
+} // namespace
+
+QString MediaThumbnail::generateVector(const drift::VectorSource &source)
+{
+    if (source.isEmpty())
+        return {};
+    if (!source.isInline())
+        return generate(source.path, QStringLiteral("vector"));
+    const QString hash = source.hash.isEmpty() ? drift::vectorSourceHash(source.source.toUtf8()) : source.hash;
+    // Inline documents have no file to key on; the hash plays that part. Slot overrides are
+    // deliberately not part of it — a poster is for recognising the clip, not previewing it.
+    const QString outPath = cacheDir() + QLatin1String("/inline_") + hash.left(24) + QStringLiteral("_v")
+                            + QString::number(kThumbnailCacheVersion) + QStringLiteral(".jpg");
+    if (isValidCacheFile(outPath))
+        return outPath;
+    return writeVectorStill(source, outPath);
+}
+
 QString MediaThumbnail::generate(const QString &sourcePath, const QString &kind)
 {
     const QString absolutePath = QFileInfo(sourcePath).absoluteFilePath();
@@ -305,16 +339,7 @@ QString MediaThumbnail::generate(const QString &sourcePath, const QString &kind)
         drift::VectorSource source;
         source.path = absolutePath;
         source.kind = drift::vec::detectVectorKind(drift::vec::vectorSourceBytes(source));
-        const QImage frame = drift::vec::renderThumbnail(source, {kThumbnailMaxEdge, kThumbnailMaxEdge * 9 / 16});
-        if (frame.isNull())
-            return {};
-        // JPEG has no alpha: flatten onto the bin's dark ground rather than onto black.
-        QImage flat(frame.size(), QImage::Format_RGB32);
-        flat.fill(QColor(34, 34, 38));
-        QPainter p(&flat);
-        p.drawImage(0, 0, frame);
-        p.end();
-        return flat.save(outPath, "JPG", 85) ? outPath : QString();
+        return writeVectorStill(source, outPath);
     }
 
     if (kind != QStringLiteral("video"))

@@ -1718,8 +1718,8 @@ protected:
                              double progressFrom, double progressTo, QString *errorOut);
     // Defaulted severity so the existing call sites, which report ordinary status,
     // stay unchanged; pass "error"/"warning" explicitly where a failure is reported.
-    void setLastMessage(const QString &message,
-                        const QString &severity = QStringLiteral("info"));
+    Q_INVOKABLE void setLastMessage(const QString &message,
+                                    const QString &severity = QStringLiteral("info"));
     drift::TimeUs playheadUs() const { return m_playheadUs; }
     void setPlayheadUs(drift::TimeUs us);
 

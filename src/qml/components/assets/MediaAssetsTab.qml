@@ -534,6 +534,7 @@ Item {
                              && (thumbnailPath.length === 0 || gridThumb.status === Image.Error)
                     glyph: kind === "audio" ? Theme.icons.music
                             : kind === "image" ? Theme.icons.image
+                            : kind === "vector" ? Theme.icons.layers
                             : Theme.icons.film
                     iconSize: Theme.spacing3xl
                     iconColor: Theme.mutedForeground
@@ -703,6 +704,7 @@ Item {
                     thumbnail: thumbnailPath
                     glyph: kind === "audio" ? Theme.icons.music
                             : kind === "image" ? Theme.icons.image
+                            : kind === "vector" ? Theme.icons.layers
                             : Theme.icons.film
                     onLiftTapped: {
                         if (cardRoot.isFolder) {
@@ -909,7 +911,8 @@ Item {
                         visible: listRow.isFolder
                                     || thumbnailPath.length === 0 || listThumb.status === Image.Error
                         glyph: listRow.isFolder ? Theme.icons.folder
-                               : (kind === "audio" ? Theme.icons.music : Theme.icons.film)
+                               : (kind === "audio" ? Theme.icons.music
+                                  : kind === "vector" ? Theme.icons.layers : Theme.icons.film)
                         iconSize: Theme.iconSizeBase
                         iconColor: Theme.mutedForeground
                     }
@@ -1038,6 +1041,7 @@ Item {
                     thumbnail: thumbnailPath
                     glyph: kind === "audio" ? Theme.icons.music
                             : kind === "image" ? Theme.icons.image
+                            : kind === "vector" ? Theme.icons.layers
                             : Theme.icons.film
                     onLiftTapped: {
                         if (listRow.isFolder) {

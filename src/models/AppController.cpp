@@ -12738,6 +12738,8 @@ QVariantMap AppController::addVectorClip(const QString &source, int trackIndex, 
     clip.srcIn = 0;
     clip.srcOut = duration;
     applyVectorOptions(clip, opts);
+    clip.thumbnailPath = MediaThumbnail::generateVector(clip.vector);
+    clip.filmstripPath = clip.thumbnailPath;
     const QVariantMap overrides = opts.value(QStringLiteral("slots")).toMap();
     QStringList slotErrors;
     for (auto it = overrides.cbegin(); it != overrides.cend(); ++it) {
@@ -12805,6 +12807,8 @@ QVariantMap AppController::setVectorSource(int trackIndex, int clipIndex, const 
     drift::Clip &clip = m_project.tracks()[trackIndex].clips[clipIndex];
     clip.vector = vector;
     applyVectorOptions(clip, opts);
+    clip.thumbnailPath = MediaThumbnail::generateVector(clip.vector);
+    clip.filmstripPath = clip.thumbnailPath;
     pushProjectEdit(before, tr("Animation replaced"));
     finishEdit(tr("Animation replaced"));
 

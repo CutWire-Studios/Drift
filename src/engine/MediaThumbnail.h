@@ -1,5 +1,7 @@
 #pragma once
 
+#include "core/VectorSource.h"
+
 #include <QList>
 #include <QString>
 
@@ -15,6 +17,8 @@ public:
     static constexpr int kFilmstripFrameCount = 8;
 
     static QString generate(const QString &sourcePath, const QString &kind);
+    // A vector clip's poster frame, keyed by the file or, for an inline document, by its hash.
+    static QString generateVector(const drift::VectorSource &source);
     static QString generateFilmstrip(const QString &sourcePath, const QString &kind);
     static QString generateAtTime(const QString &sourcePath, double sourceSeconds);
 

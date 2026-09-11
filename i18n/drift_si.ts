@@ -7367,6 +7367,10 @@ If playback stutters, try another.</source>
         <translation>හැඩතල</translation>
     </message>
     <message>
+        <source>Motion</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Subtitles</source>
         <translation>උපසිරැසි</translation>
     </message>
@@ -10474,6 +10478,149 @@ If playback stutters, try another.</source>
     <message>
         <source>Opens the release page in your browser</source>
         <translation>ඔබේ බ්‍රවුසරයේ නිකුතු පිටුව විවෘත කරයි</translation>
+    </message>
+</context>
+<context>
+    <name>VectorInspector</name>
+    <message>
+        <source>Replace Animation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Lottie or SVG (*.json *.svg)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Could not load the document</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>SVG drawing</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Lottie animation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1×%2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 s at %2 fps</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>still</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>inline document</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Replace document…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Load another .json or .svg; position, length, fit and loop stay</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Playback</source>
+        <translation type="unfinished">ධාවනය</translation>
+    </message>
+    <message>
+        <source>Fit</source>
+        <translation type="unfinished">සරිලන (Fit)</translation>
+    </message>
+    <message>
+        <source>Contain</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cover</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Stretch</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>How the drawing fills the clip box</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>After the end</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Hold last frame</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Loop</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Ping-pong</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Hide</source>
+        <translation type="unfinished">සඟවන්න</translation>
+    </message>
+    <message>
+        <source>What plays once the animation has run its length</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Start offset</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Slots</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Template inputs the animation declares. Overrides are per clip.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Reset</source>
+        <translation type="unfinished">යළි සකසන්න</translation>
+    </message>
+    <message>
+        <source>Slot colour</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Text for this slot</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Change image…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Choose image…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Slot Image</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Images (*.png *.jpg *.jpeg *.webp)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Not rendered</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Expression on %1 (drawn static)</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
