@@ -47,10 +47,20 @@ QString cacheDir()
 constexpr int kThumbnailCacheVersion = 3;
 constexpr int kThumbnailMaxEdge = 320;
 
-QString cacheKeyFor(const QString &sourcePath)
+// `rotationOverride` (>= 0) distinguishes a user-corrected orientation from the auto-detected
+// cache entry, so switching back to auto still hits the original file's cached thumbnail.
+// `startUs` (cover thumbnail only) does the same for a trim's "Set In" point — note the `_s`
+// prefix rather than `_t`, which the on-demand filmstrip *tile* cache already uses (see
+// tilePath/tileGlob below) and whose pruning would otherwise sweep this file up as a stale tile.
+QString cacheKeyFor(const QString &sourcePath, int rotationOverride = -1, qint64 startUs = 0)
 {
-    return QString::number(qHash(QFileInfo(sourcePath).absoluteFilePath()))
-           + QStringLiteral("_v") + QString::number(kThumbnailCacheVersion);
+    QString key = QString::number(qHash(QFileInfo(sourcePath).absoluteFilePath()))
+                  + QStringLiteral("_v") + QString::number(kThumbnailCacheVersion);
+    if (rotationOverride >= 0)
+        key += QStringLiteral("_r%1").arg(rotationOverride);
+    if (startUs > 0)
+        key += QStringLiteral("_s%1").arg(startUs);
+    return key;
 }
 
 // Thumbnails keep the source display aspect (pixel aspect included) so the media
@@ -71,14 +81,16 @@ QSize thumbnailSizeFor(int codedWidth, int codedHeight, AVRational sampleAspect)
             std::max(2, static_cast<int>(std::lround(codedHeight * scale)))};
 }
 
-QString cachePathFor(const QString &sourcePath)
+QString cachePathFor(const QString &sourcePath, int rotationOverride = -1, qint64 startUs = 0)
 {
-    return cacheDir() + QLatin1Char('/') + cacheKeyFor(sourcePath) + QStringLiteral(".jpg");
+    return cacheDir() + QLatin1Char('/') + cacheKeyFor(sourcePath, rotationOverride, startUs)
+           + QStringLiteral(".jpg");
 }
 
-QString cacheStripPathFor(const QString &sourcePath)
+QString cacheStripPathFor(const QString &sourcePath, int rotationOverride = -1)
 {
-    return cacheDir() + QLatin1Char('/') + cacheKeyFor(sourcePath) + QStringLiteral("_strip.jpg");
+    return cacheDir() + QLatin1Char('/') + cacheKeyFor(sourcePath, rotationOverride)
+           + QStringLiteral("_strip.jpg");
 }
 
 bool isValidCacheFile(const QString &path)
@@ -141,7 +153,7 @@ QImage frameToImage(const AVFrame *frame, int width, int height, SwsContext **sw
 
 bool decodeNextVideoFrame(AVFormatContext *fmt, int videoStreamIndex, AVCodecContext *codecCtx,
                           AVPacket *packet, AVFrame *frame, QImage &outImage, int width, int height,
-                          SwsContext **swsCache)
+                          SwsContext **swsCache, int rotationOverride = -1)
 {
     while (av_read_frame(fmt, packet) >= 0) {
         if (packet->stream_index != videoStreamIndex) {
@@ -162,8 +174,9 @@ bool decodeNextVideoFrame(AVFormatContext *fmt, int videoStreamIndex, AVCodecCon
             if (rc < 0)
                 return false;
 
-            outImage = frameToImage(frame, width, height, swsCache,
-                                    displayRotationOf(fmt->streams[videoStreamIndex]));
+            const int rotation = rotationOverride >= 0 ? rotationOverride
+                                                        : displayRotationOf(fmt->streams[videoStreamIndex]);
+            outImage = frameToImage(frame, width, height, swsCache, rotation);
             return !outImage.isNull();
         }
     }
@@ -173,7 +186,7 @@ bool decodeNextVideoFrame(AVFormatContext *fmt, int videoStreamIndex, AVCodecCon
 
 bool seekAndDecodeFrame(AVFormatContext *fmt, int videoStreamIndex, AVCodecContext *codecCtx,
                         int64_t timeUs, QImage &outImage, int width, int height,
-                        SwsContext **swsCache)
+                        SwsContext **swsCache, int rotationOverride = -1)
 {
     AVStream *stream = fmt->streams[videoStreamIndex];
     const int64_t targetTs = av_rescale_q(timeUs, {1, AV_TIME_BASE}, stream->time_base);
@@ -184,7 +197,7 @@ bool seekAndDecodeFrame(AVFormatContext *fmt, int videoStreamIndex, AVCodecConte
     AVFrame *frame = av_frame_alloc();
     const bool ok = packet && frame
                     && decodeNextVideoFrame(fmt, videoStreamIndex, codecCtx, packet, frame,
-                                            outImage, width, height, swsCache);
+                                            outImage, width, height, swsCache, rotationOverride);
 
     av_frame_free(&frame);
     av_packet_free(&packet);
@@ -192,9 +205,17 @@ bool seekAndDecodeFrame(AVFormatContext *fmt, int videoStreamIndex, AVCodecConte
 }
 
 bool decodeFirstVideoFrame(AVFormatContext *fmt, int videoStreamIndex, AVCodecContext *codecCtx,
-                           const QString &outPath, int width, int height)
+                           const QString &outPath, int width, int height, int rotationOverride = -1,
+                           int64_t startUs = 0)
 {
     avcodec_flush_buffers(codecCtx);
+    if (startUs > 0) {
+        // The bin's cover thumbnail should show the frame a trim's "Set In" point actually lands
+        // on, not always the file's very first frame.
+        AVStream *stream = fmt->streams[videoStreamIndex];
+        const int64_t targetTs = av_rescale_q(startUs, {1, AV_TIME_BASE}, stream->time_base);
+        av_seek_frame(fmt, videoStreamIndex, targetTs, AVSEEK_FLAG_BACKWARD);
+    }
 
     AVPacket *packet = av_packet_alloc();
     AVFrame *frame = av_frame_alloc();
@@ -205,7 +226,7 @@ bool decodeFirstVideoFrame(AVFormatContext *fmt, int videoStreamIndex, AVCodecCo
 
     while (!saved && packetsRead < 400 && packet && frame) {
         if (!decodeNextVideoFrame(fmt, videoStreamIndex, codecCtx, packet, frame, image, width,
-                                  height, &sws))
+                                  height, &sws, rotationOverride))
             break;
         ++packetsRead;
         saved = image.save(outPath, "JPG", 85);
@@ -306,13 +327,14 @@ QString MediaThumbnail::generateVector(const drift::VectorSource &source)
     return writeVectorStill(source, outPath);
 }
 
-QString MediaThumbnail::generate(const QString &sourcePath, const QString &kind)
+QString MediaThumbnail::generate(const QString &sourcePath, const QString &kind, int rotationOverride,
+                                 qint64 startUs)
 {
     const QString absolutePath = QFileInfo(sourcePath).absoluteFilePath();
     if (absolutePath.isEmpty() || !QFile::exists(absolutePath))
         return {};
 
-    const QString outPath = cachePathFor(absolutePath);
+    const QString outPath = cachePathFor(absolutePath, rotationOverride, startUs);
     if (isValidCacheFile(outPath))
         return outPath;
 
@@ -354,11 +376,13 @@ QString MediaThumbnail::generate(const QString &sourcePath, const QString &kind)
     const AVCodecParameters *par = fmt->streams[videoStreamIndex]->codecpar;
     QSize target = thumbnailSizeFor(par->width, par->height, par->sample_aspect_ratio);
     // SAR applies to the coded width, so size the frame first and transpose after.
-    const int rotation = displayRotationOf(fmt->streams[videoStreamIndex]);
+    const int rotation = rotationOverride >= 0 ? rotationOverride
+                                                : displayRotationOf(fmt->streams[videoStreamIndex]);
     if (rotation == 90 || rotation == 270)
         target.transpose();
     const bool saved = decodeFirstVideoFrame(fmt, videoStreamIndex, codecCtx, outPath,
-                                             target.width(), target.height());
+                                             target.width(), target.height(), rotationOverride,
+                                             startUs);
 
     avcodec_free_context(&codecCtx);
     avformat_close_input(&fmt);
@@ -366,19 +390,20 @@ QString MediaThumbnail::generate(const QString &sourcePath, const QString &kind)
     return saved ? outPath : QString();
 }
 
-QString MediaThumbnail::generateFilmstrip(const QString &sourcePath, const QString &kind)
+QString MediaThumbnail::generateFilmstrip(const QString &sourcePath, const QString &kind,
+                                          int rotationOverride)
 {
     const QString absolutePath = QFileInfo(sourcePath).absoluteFilePath();
     if (absolutePath.isEmpty() || !QFile::exists(absolutePath))
         return {};
 
     if (kind == QStringLiteral("image"))
-        return generate(absolutePath, kind);
+        return generate(absolutePath, kind, rotationOverride);
 
     if (kind != QStringLiteral("video"))
         return {};
 
-    const QString outPath = cacheStripPathFor(absolutePath);
+    const QString outPath = cacheStripPathFor(absolutePath, rotationOverride);
     if (isValidCacheFile(outPath))
         return outPath;
 
@@ -402,7 +427,7 @@ QString MediaThumbnail::generateFilmstrip(const QString &sourcePath, const QStri
         const int64_t timeUs = durationUs > 0 ? (durationUs * i) / frameCount : 0;
         QImage frame;
         if (!seekAndDecodeFrame(fmt, videoStreamIndex, codecCtx, timeUs, frame, frameW, frameH,
-                                &sws))
+                                &sws, rotationOverride))
             continue;
 
         anyFrame = true;
@@ -420,14 +445,18 @@ QString MediaThumbnail::generateFilmstrip(const QString &sourcePath, const QStri
     return outPath;
 }
 
-QString MediaThumbnail::tilePath(const QString &sourcePath, int level, qint64 index)
+QString MediaThumbnail::tilePath(const QString &sourcePath, int level, qint64 index,
+                                 int rotationCorrection)
 {
     const QString absolutePath = QFileInfo(sourcePath).absoluteFilePath();
     if (absolutePath.isEmpty())
         return {};
 
-    return cacheDir() + QLatin1Char('/') + cacheKeyFor(absolutePath)
-           + QStringLiteral("_t%1_%2.jpg").arg(level).arg(index);
+    // The correction goes after the index so tileGlob()'s "_t*" still matches for pruning.
+    QString name = QStringLiteral("_t%1_%2").arg(level).arg(index);
+    if (rotationCorrection != 0)
+        name += QStringLiteral("_c%1").arg(rotationCorrection);
+    return cacheDir() + QLatin1Char('/') + cacheKeyFor(absolutePath) + name + QStringLiteral(".jpg");
 }
 
 MediaThumbnail::TileDecoder::~TileDecoder()
@@ -463,7 +492,8 @@ bool MediaThumbnail::TileDecoder::ensureOpen(const QString &absolutePath)
 }
 
 QList<qint64> MediaThumbnail::TileDecoder::generateTiles(const QString &sourcePath, int level,
-                                                         const QList<qint64> &indices)
+                                                         const QList<qint64> &indices,
+                                                         int rotationCorrection)
 {
     QList<qint64> produced;
     const QString absolutePath = QFileInfo(sourcePath).absoluteFilePath();
@@ -472,7 +502,7 @@ QList<qint64> MediaThumbnail::TileDecoder::generateTiles(const QString &sourcePa
 
     QList<qint64> todo;
     for (const qint64 index : indices) {
-        if (isValidCacheFile(tilePath(absolutePath, level, index)))
+        if (isValidCacheFile(tilePath(absolutePath, level, index, rotationCorrection)))
             produced.append(index);
         else
             todo.append(index);
@@ -485,13 +515,15 @@ QList<qint64> MediaThumbnail::TileDecoder::generateTiles(const QString &sourcePa
     if (!ensureOpen(absolutePath))
         return produced;
 
+    const int rotation =
+        ((displayRotationOf(m_fmt->streams[m_videoStreamIndex]) + rotationCorrection) % 360 + 360) % 360;
     for (const qint64 index : std::as_const(todo)) {
         const int64_t timeUs = static_cast<int64_t>(tileSeconds(level, index) * 1'000'000.0);
         QImage frame;
         if (!seekAndDecodeFrame(m_fmt, m_videoStreamIndex, m_codecCtx, timeUs, frame,
-                                kFilmstripFrameWidth, kFilmstripFrameHeight, &m_sws))
+                                kFilmstripFrameWidth, kFilmstripFrameHeight, &m_sws, rotation))
             continue;
-        if (frame.save(tilePath(absolutePath, level, index), "JPG", 85))
+        if (frame.save(tilePath(absolutePath, level, index, rotationCorrection), "JPG", 85))
             produced.append(index);
     }
 

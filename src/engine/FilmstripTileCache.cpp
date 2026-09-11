@@ -61,18 +61,20 @@ void FilmstripTileCache::clear()
     m_queue.clear();
 }
 
-QString FilmstripTileCache::keyFor(const QString &sourcePath, int level, qint64 index)
+QString FilmstripTileCache::keyFor(const QString &sourcePath, int level, qint64 index,
+                                   int rotationCorrection)
 {
     return sourcePath + QLatin1Char('|') + QString::number(level) + QLatin1Char('|')
-           + QString::number(index);
+           + QString::number(index) + QLatin1Char('|') + QString::number(rotationCorrection);
 }
 
-QString FilmstripTileCache::tile(const QString &sourcePath, int level, qint64 index)
+QString FilmstripTileCache::tile(const QString &sourcePath, int level, qint64 index,
+                                 int rotationCorrection)
 {
     if (sourcePath.isEmpty() || m_failed.contains(sourcePath))
         return {};
 
-    const QString key = keyFor(sourcePath, level, index);
+    const QString key = keyFor(sourcePath, level, index, rotationCorrection);
     const auto cached = m_ready.constFind(key);
     if (cached != m_ready.constEnd())
         return cached.value();
@@ -81,7 +83,7 @@ QString FilmstripTileCache::tile(const QString &sourcePath, int level, qint64 in
         return {};
 
     // A tile written by an earlier session is on disk but not in m_ready yet.
-    const QString path = MediaThumbnail::tilePath(sourcePath, level, index);
+    const QString path = MediaThumbnail::tilePath(sourcePath, level, index, rotationCorrection);
     if (QFileInfo::exists(path)) {
         if (m_ready.size() >= kMaxReadyEntries)
             m_ready.clear();
@@ -90,10 +92,10 @@ QString FilmstripTileCache::tile(const QString &sourcePath, int level, qint64 in
     }
 
     m_queued.insert(key);
-    m_queue.append({sourcePath, level, index});
+    m_queue.append({sourcePath, level, index, rotationCorrection});
     while (m_queue.size() > kMaxQueued) {
-        m_queued.remove(keyFor(m_queue.first().sourcePath, m_queue.first().level,
-                               m_queue.first().index));
+        const Request &first = m_queue.first();
+        m_queued.remove(keyFor(first.sourcePath, first.level, first.index, first.rotationCorrection));
         m_queue.removeFirst();
     }
 
@@ -123,7 +125,8 @@ void FilmstripTileCache::runBatch()
     QList<qint64> indices;
     for (int i = m_queue.size() - 1; i >= 0 && indices.size() < kBatchSize; --i) {
         const Request &request = m_queue.at(i);
-        if (request.sourcePath != newest.sourcePath || request.level != newest.level)
+        if (request.sourcePath != newest.sourcePath || request.level != newest.level
+            || request.rotationCorrection != newest.rotationCorrection)
             continue;
         indices.append(request.index);
         m_queue.removeAt(i);
@@ -134,35 +137,37 @@ void FilmstripTileCache::runBatch()
     m_busy = true;
     const QString sourcePath = newest.sourcePath;
     const int level = newest.level;
+    const int rotationCorrection = newest.rotationCorrection;
     QMetaObject::invokeMethod(
         m_decodeContext,
-        [this, sourcePath, level, indices] {
+        [this, sourcePath, level, rotationCorrection, indices] {
             m_idleTimer->stop();
-            const QList<qint64> produced = m_decoder.generateTiles(sourcePath, level, indices);
+            const QList<qint64> produced =
+                m_decoder.generateTiles(sourcePath, level, indices, rotationCorrection);
             m_idleTimer->start();
             QMetaObject::invokeMethod(
                 this,
-                [this, sourcePath, level, produced, indices] {
-                    applyBatch(sourcePath, level, produced, indices);
+                [this, sourcePath, level, rotationCorrection, produced, indices] {
+                    applyBatch(sourcePath, level, rotationCorrection, produced, indices);
                 },
                 Qt::QueuedConnection);
         },
         Qt::QueuedConnection);
 }
 
-void FilmstripTileCache::applyBatch(const QString &sourcePath, int level,
+void FilmstripTileCache::applyBatch(const QString &sourcePath, int level, int rotationCorrection,
                                     const QList<qint64> &produced, const QList<qint64> &requested)
 {
     m_busy = false;
 
     for (const qint64 index : requested)
-        m_queued.remove(keyFor(sourcePath, level, index));
+        m_queued.remove(keyFor(sourcePath, level, index, rotationCorrection));
 
     if (m_ready.size() + produced.size() > kMaxReadyEntries)
         m_ready.clear();
     for (const qint64 index : produced)
-        m_ready.insert(keyFor(sourcePath, level, index),
-                       MediaThumbnail::tilePath(sourcePath, level, index));
+        m_ready.insert(keyFor(sourcePath, level, index, rotationCorrection),
+                       MediaThumbnail::tilePath(sourcePath, level, index, rotationCorrection));
 
     if (produced.isEmpty()) {
         // Repeatedly empty means no video stream, or the file is gone. Stop asking; a single

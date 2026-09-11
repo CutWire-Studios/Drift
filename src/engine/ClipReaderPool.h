@@ -41,6 +41,10 @@ public:
         drift::TimeUs sourceUs = 0;
         int maxWidth = 0;
         int maxHeight = 0;
+        // Must match what the readVideoFrame/readPreviewVideoFrame that follows will pass: the
+        // reader clears its frame caches whenever this changes, so a warm at one value and a read
+        // at another would decode every frame twice and cache nothing.
+        int rotationCorrection = 0;
     };
 
     // Kick every request off on its own worker thread without waiting. Each path
@@ -71,14 +75,18 @@ public:
     void setHardwareDecodeMode(ClipReader::HardwareDecodeMode mode,
                                drift::hwaccel::Backend backend = drift::hwaccel::Backend::None);
 
+    // `rotationCorrection` (Clip::rotationCorrection) lets a clip's orientation fix reach the
+    // decoder losslessly.
     QImage readVideoFrame(const QString &path, quint64 streamId, drift::TimeUs sourceUs, int maxWidth,
                           int maxHeight, const QString &stabilizePath = QString(),
-                          int stabilizeSmoothing = 15, bool stabilizeTripod = false);
+                          int stabilizeSmoothing = 15, bool stabilizeTripod = false,
+                          int rotationCorrection = 0);
     // Preview path: AVFrame handle (hardware surfaces stay on the GPU). Empty when decode fails.
     PreviewVideoFrame readPreviewVideoFrame(const QString &path, quint64 streamId, drift::TimeUs sourceUs,
                                             int maxWidth, int maxHeight,
                                             const QString &stabilizePath = QString(),
-                                            int stabilizeSmoothing = 15, bool stabilizeTripod = false);
+                                            int stabilizeSmoothing = 15, bool stabilizeTripod = false,
+                                            int rotationCorrection = 0);
     int readAudioInterleaved(const QString &path, quint64 streamId, drift::TimeUs sourceStartUs,
                              int sampleCount, int outputSampleRate, float *interleavedStereoOut,
                              int audioStreamOrdinal = 0);

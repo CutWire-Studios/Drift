@@ -189,7 +189,8 @@ QList<ClipReaderPool::VideoRequest> collectVideoRequests(const drift::Project *p
             const drift::VideoRead read = drift::resolveVideoRead(clip, timelineUs);
             requests.append(ClipReaderPool::VideoRequest{read.path,
                                                         ClipReaderPool::streamIdForClip(clip.id),
-                                                        read.sourceUs, maxWidth, maxHeight});
+                                                        read.sourceUs, maxWidth, maxHeight,
+                                                        clip.rotationCorrection});
         }
     }
     return requests;
@@ -400,7 +401,8 @@ QImage decodeClipMediaFrame(const drift::Clip &clip, drift::TimeUs timelineUs, i
     if (clip.type == drift::ClipType::Video) {
         const drift::VideoRead read = drift::resolveVideoRead(clip, timelineUs);
         return ClipReaderPool::instance().readVideoFrame(
-            read.path, ClipReaderPool::streamIdForClip(clip.id), read.sourceUs, maxWidth, maxHeight);
+            read.path, ClipReaderPool::streamIdForClip(clip.id), read.sourceUs, maxWidth, maxHeight,
+            QString(), 15, false, clip.rotationCorrection);
     }
 
     return {};
@@ -601,7 +603,8 @@ void fillGpuLayerPixels(GpuLayer &layer, const drift::Clip &clip, drift::TimeUs 
     if (!timeEcho && clip.type == drift::ClipType::Video) {
         const drift::VideoRead read = drift::resolveVideoRead(clip, timelineUs);
         const PreviewVideoFrame video = ClipReaderPool::instance().readPreviewVideoFrame(
-            read.path, ClipReaderPool::streamIdForClip(clip.id), read.sourceUs, maxWidth, maxHeight);
+            read.path, ClipReaderPool::streamIdForClip(clip.id), read.sourceUs, maxWidth, maxHeight,
+            QString(), 15, false, clip.rotationCorrection);
         if (video.isValid()) {
             layer.video = video;
             return;

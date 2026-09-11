@@ -872,6 +872,10 @@
         <source>Cancel</source>
         <translation>Cancelar</translation>
     </message>
+    <message>
+        <source>Rotate</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>AndroidMoreToolsSheet</name>
@@ -2211,12 +2215,24 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Media rotated</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>An edit is already saving</source>
         <translation>Ya se está guardando una edición</translation>
     </message>
     <message>
         <source>Could not open the media file</source>
         <translation>No se pudo abrir el archivo de medios</translation>
+    </message>
+    <message>
+        <source>Media trimmed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Trim saved</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Saving…</source>
@@ -3588,6 +3604,14 @@
     <message>
         <source>Track renamed</source>
         <translation>Pista renombrada</translation>
+    </message>
+    <message>
+        <source>Orientation changed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Clip orientation set to %1°</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -6782,6 +6806,10 @@
     <message>
         <source>Save</source>
         <translation>Guardar</translation>
+    </message>
+    <message>
+        <source>Rotate</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -10988,6 +11016,14 @@ Si la reproducción se corta, prueba con otra opción.</translation>
     <message>
         <source>Reset position &amp; size</source>
         <translation>Restablecer posición y tamaño</translation>
+    </message>
+    <message>
+        <source>Fix orientation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Corrects the source&apos;s own rotation losslessly — unlike Angle above, this changes decoding, not just the on-screen box.</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>

@@ -23,13 +23,14 @@ constexpr quint64 kPreviewStreamSalt = 0x9E3779B97F4A7C15ull;
 } // namespace
 
 void ClipPreviewFrameWorker::decode(const QString &path, quint64 streamId, qint64 sourceUs,
-                                    int maxWidth, int maxHeight, quint64 token)
+                                    int maxWidth, int maxHeight, quint64 token, int rotationCorrection)
 {
     if (token < latestToken.load(std::memory_order_acquire))
         return; // a newer position arrived while this sat in the queue
 
     const QImage image = ClipReaderPool::instance().readVideoFrame(
-        path, streamId, static_cast<drift::TimeUs>(sourceUs), maxWidth, maxHeight);
+        path, streamId, static_cast<drift::TimeUs>(sourceUs), maxWidth, maxHeight,
+        QString(), 15, false, rotationCorrection);
     if (!image.isNull())
         emit decoded(image, token);
 }
@@ -234,6 +235,7 @@ void ClipPreviewPlayer::requestFrame(drift::TimeUs position)
     QString path;
     drift::TimeUs sourceUs = 0;
     quint64 streamId = 0;
+    int rotationCorrection = 0;
     {
         QMutexLocker lock(&m_clipMutex);
         if (m_clip.type == drift::ClipType::Audio || m_clip.path.isEmpty())
@@ -242,6 +244,7 @@ void ClipPreviewPlayer::requestFrame(drift::TimeUs position)
         path = read.path;
         sourceUs = read.sourceUs;
         streamId = kPreviewStreamSalt ^ ClipReaderPool::streamIdForClip(m_clip.id);
+        rotationCorrection = m_clip.rotationCorrection;
     }
 
     const quint64 token = ++m_frameToken;
@@ -249,7 +252,7 @@ void ClipPreviewPlayer::requestFrame(drift::TimeUs position)
     QMetaObject::invokeMethod(m_frameWorker, "decode", Qt::QueuedConnection, Q_ARG(QString, path),
                               Q_ARG(quint64, streamId), Q_ARG(qint64, static_cast<qint64>(sourceUs)),
                               Q_ARG(int, kFrameMaxWidth), Q_ARG(int, kFrameMaxHeight),
-                              Q_ARG(quint64, token));
+                              Q_ARG(quint64, token), Q_ARG(int, rotationCorrection));
 }
 
 void ClipPreviewPlayer::onDecoded(const QImage &image, quint64 token)

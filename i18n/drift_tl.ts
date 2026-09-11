@@ -872,6 +872,10 @@
         <source>Cancel</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>Rotate</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>AndroidMoreToolsSheet</name>
@@ -2211,6 +2215,10 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Media rotated</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Folder moved</source>
         <translation type="unfinished"></translation>
     </message>
@@ -2220,6 +2228,14 @@
     </message>
     <message>
         <source>Could not open the media file</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Media trimmed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Trim saved</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -3107,59 +3123,59 @@
     </message>
     <message>
         <source>Pasted effects use “%1”, which isn’t installed — it won’t show. Open Extras to install it.</source>
-        <translation type="unfinished"></translation>
+        <translation>Ang nasabing grupo ng epekto ay gumagamit ng “%1”, na wala rito. Pindutin ang Dagdag para mag-install ng ganyan.</translation>
     </message>
     <message>
         <source>Pasted effects use %1 packs that aren’t installed — they won’t show. Open Extras to install them.</source>
-        <translation type="unfinished"></translation>
+        <translation>Ang nasabing grupo ng epekto ay gumagamit ng “%1” pakete, na wala rito. Pindutin ang Dagdag para mag-install ng ganyan.</translation>
     </message>
     <message>
         <source>There are no effects to save</source>
-        <translation type="unfinished"></translation>
+        <translation>Walang epekto para sa pakete ng epekto</translation>
     </message>
     <message>
         <source>Could not save the effect preset</source>
-        <translation type="unfinished"></translation>
+        <translation>Hindi nalikha ang pakete ng epekto</translation>
     </message>
     <message>
         <source>Effect preset saved</source>
-        <translation type="unfinished"></translation>
+        <translation>Nalikha ang pakete ng epekto</translation>
     </message>
     <message>
         <source>Apply effect preset</source>
-        <translation type="unfinished"></translation>
+        <translation>Gamitin ang pakete ng epekto</translation>
     </message>
     <message>
         <source>Could not rename the effect preset</source>
-        <translation type="unfinished"></translation>
+        <translation>Hindi napalitan ang pangalan ng pakete ng epekto</translation>
     </message>
     <message>
         <source>Effect preset renamed</source>
-        <translation type="unfinished"></translation>
+        <translation>Pinalitan ang pangalan ng pakete ng epekto</translation>
     </message>
     <message>
         <source>Could not delete the effect preset</source>
-        <translation type="unfinished"></translation>
+        <translation>Hindi natanggal ang pakete ng epekto</translation>
     </message>
     <message>
         <source>Effect preset deleted</source>
-        <translation type="unfinished"></translation>
+        <translation>Natanggal ang pakete ng epekto</translation>
     </message>
     <message>
         <source>Could not export the effect preset</source>
-        <translation type="unfinished"></translation>
+        <translation>Hindi naluwas ang pakete ng epekto</translation>
     </message>
     <message>
         <source>Effect preset exported</source>
-        <translation type="unfinished"></translation>
+        <translation>Naluwas ang pakete ng epekto</translation>
     </message>
     <message>
         <source>Could not import the effect preset</source>
-        <translation type="unfinished"></translation>
+        <translation>Hindi naangkat ang pakete ng epekto</translation>
     </message>
     <message>
         <source>Effect preset imported</source>
-        <translation type="unfinished"></translation>
+        <translation>Naangkat ang pakete ng epekto</translation>
     </message>
     <message>
         <source>Track mute</source>
@@ -3587,6 +3603,14 @@
     </message>
     <message>
         <source>Clips added</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Orientation changed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Clip orientation set to %1°</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -6781,6 +6805,10 @@
     </message>
     <message>
         <source>Save</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Rotate</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -10980,6 +11008,14 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Reset position &amp; size</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Fix orientation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Corrects the source&apos;s own rotation losslessly — unlike Angle above, this changes decoding, not just the on-screen box.</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
