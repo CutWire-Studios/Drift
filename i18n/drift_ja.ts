@@ -4079,6 +4079,29 @@
     </message>
 </context>
 <context>
+    <name>ChromaKeyInspector</name>
+    <message>
+        <source>Pick the background colour to remove, then click Chroma to apply the key.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Background colour</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Pick the background colour</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Chroma</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Select a clip to use the chroma key.</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>ColorSwatchField</name>
     <message>
         <source>Choose colour</source>
@@ -7276,6 +7299,10 @@ If playback stutters, try another.</source>
     <message>
         <source>Audio FX</source>
         <translation>オーディオ FX</translation>
+    </message>
+    <message>
+        <source>Chroma</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Transition</source>

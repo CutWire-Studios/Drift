@@ -854,6 +854,7 @@ qt_add_qml_module(drift
         src/qml/components/properties/TextInspector.qml
         src/qml/components/properties/TransformInspector.qml
         src/qml/components/properties/StabilizeInspector.qml
+        src/qml/components/properties/ChromaKeyInspector.qml
         src/qml/components/properties/AudioInspector.qml
         src/qml/components/properties/AudioEffectsInspector.qml
         src/qml/components/properties/SpeedFadeInspector.qml
