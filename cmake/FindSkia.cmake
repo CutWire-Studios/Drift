@@ -63,7 +63,11 @@ find_package(unofficial-skia CONFIG QUIET)
 if(unofficial-skia_FOUND)
     add_library(Skia::Skia INTERFACE IMPORTED)
     target_link_libraries(Skia::Skia INTERFACE unofficial::skia::skia)
-    foreach(_mod skottie sksg skresources jsonreader svg skparagraph skshaper skunicode_icu skunicode_core)
+    # The port names a module target after its GN label: modules::skottie for
+    # //modules/skottie:skottie, but modules::skunicode::skunicode_icu where the target name
+    # differs from its directory.
+    foreach(_mod skottie sksg skresources jsonreader svg skparagraph skshaper
+                 skunicode::skunicode_icu skunicode::skunicode_core)
         if(TARGET unofficial::skia::modules::${_mod})
             target_link_libraries(Skia::Skia INTERFACE unofficial::skia::modules::${_mod})
         endif()

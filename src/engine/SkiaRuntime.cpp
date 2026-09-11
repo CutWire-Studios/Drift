@@ -37,8 +37,16 @@ void main() {
 }
 )";
 
+// Qt's GLES2 headers stop short of these ES 3.0 constants; the functions exist on every
+// context Drift creates.
 #ifndef GL_FRAMEBUFFER_SRGB
 #define GL_FRAMEBUFFER_SRGB 0x8DB9
+#endif
+#ifndef GL_UNPACK_ROW_LENGTH
+#define GL_UNPACK_ROW_LENGTH 0x0CF2
+#endif
+#ifndef GL_PACK_ROW_LENGTH
+#define GL_PACK_ROW_LENGTH 0x0D02
 #endif
 
 // Grayscale AA only: LCD subpixel coverage assumes an opaque background and produces colour

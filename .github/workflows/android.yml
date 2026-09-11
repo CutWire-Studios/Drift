@@ -92,11 +92,13 @@ jobs:
         uses: actions/cache/restore@v4
         with:
           path: third_party/prebuilt
-          key: android-deps-${{ env.ABI }}-${{ env.NDK_VERSION }}-${{ hashFiles('third_party/build-android.sh') }}
+          key: android-deps-${{ env.ABI }}-${{ env.NDK_VERSION }}-${{ hashFiles('third_party/build-android.sh', 'third_party/build-skia.sh') }}
 
       - name: Build native dependencies
         if: steps.deps-cache.outputs.cache-hit != 'true'
-        run: ./third_party/build-android.sh "$ABI"
+        run: |
+          ./third_party/build-android.sh "$ABI"
+          JOBS="$(nproc)" ./third_party/build-skia.sh "android-$ABI"
 
       # Saved before the app build so a compile failure does not throw away 45 minutes
       # of dependency work.

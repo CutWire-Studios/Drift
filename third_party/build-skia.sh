@@ -6,22 +6,34 @@
 # Why from source everywhere: Skia has no ABI stability and no official CMake build, Flatpak builds
 # with no network, Android needs the same NDK Qt was built with, and the prebuilts that exist
 # (vcpkg, JetBrains skia-pack) pick their own module set, ICU flavour and CRT. One pinned commit and
-# one GN argument list here means every platform renders identically.
+# one GN argument list here means every platform renders identically. Windows is the exception:
+# its CI lane already runs vcpkg, whose `skia` port pins this same commit, so it installs
+# skia[...]:x64-windows-static-md and FindSkia picks that up instead.
 #
 # SkiaConfig.cmake is generated from `gn desc` rather than written by hand because consumers must
 # compile with exactly the defines Skia was built with (SK_R32_SHIFT decides SkColor byte order,
 # SK_GANESH/SK_GL gate the GPU headers) — hand-maintaining that list is how ABI mismatches happen.
 #
 # Usage: third_party/build-skia.sh [target]
-#   target  linux-x64 (default) | android-arm64-v8a | android-armeabi-v7a | android-x86_64
+#   target  linux-x64 (default) | linux-arm64 | mac-arm64 | mac-x64
+#           | android-arm64-v8a | android-armeabi-v7a | android-x86_64
 #           Android targets need ANDROID_NDK_ROOT, as build-android.sh does.
+#
+# Environment:
+#   CC / CXX          host compiler for the linux/mac targets (default clang / clang++)
+#   JOBS              ninja parallelism (default 3 — unbounded OOMs a 15 GB machine)
+#   SKIA_SRC_DIR      an already-extracted Skia tree at the pinned commit; skips the download
+#                     (Flatpak and PKGBUILD hand the tarball over as a declared source)
+#   SKIA_OUT_DIR      install prefix (default third_party/prebuilt/skia/<target>)
+#   SKIA_SYSTEM_ICU   linux only, default 1. 0 compiles Skia's own ICU with embedded data, for
+#                     the AppImage: bundling the distro's libicudata costs ~30 MB, Skia's ~10 MB.
 set -euo pipefail
 
 TARGET="${1:-linux-x64}"
 
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 SRC="$HERE/src"
-OUT="$HERE/prebuilt/skia/$TARGET"
+OUT="${SKIA_OUT_DIR:-$HERE/prebuilt/skia/$TARGET}"
 
 # Milestone 148 — the same commit vcpkg's `skia` port pins, so a vcpkg build stays a drop-in
 # alternative on Windows. Bump one milestone at a time; headers move between them.
@@ -45,20 +57,26 @@ SKIA_TARGETS=(
 )
 
 mkdir -p "$SRC" "$OUT"
-JOBS="${JOBS:-3}"   # unbounded parallelism OOMs a 15 GB machine on Skia's larger TUs
+JOBS="${JOBS:-3}"
+
+sha256() {
+  if command -v sha256sum >/dev/null 2>&1; then sha256sum "$1" | cut -d' ' -f1
+  else shasum -a 256 "$1" | cut -d' ' -f1; fi
+}
 
 # --- source ------------------------------------------------------------------
-SKIA_SRC="$SRC/skia-$SKIA_COMMIT"
-if [ ! -f "$SKIA_SRC/BUILD.gn" ]; then
-  TARBALL="$SRC/skia-$SKIA_COMMIT.tar.gz"
-  [ -f "$TARBALL" ] || curl -fL --retry 3 -o "$TARBALL" \
-      "https://github.com/google/skia/archive/$SKIA_COMMIT.tar.gz"
-  if [ "$SKIA_SHA256" != "__SKIA_SHA256__" ]; then
-    echo "$SKIA_SHA256  $TARBALL" | sha256sum -c -
-  else
-    echo "NOTE: pin SKIA_SHA256=$(sha256sum "$TARBALL" | cut -d' ' -f1) in $0" >&2
+if [ -n "${SKIA_SRC_DIR:-}" ]; then
+  SKIA_SRC="$SKIA_SRC_DIR"
+  [ -f "$SKIA_SRC/BUILD.gn" ] || { echo "SKIA_SRC_DIR=$SKIA_SRC has no BUILD.gn" >&2; exit 1; }
+else
+  SKIA_SRC="$SRC/skia-$SKIA_COMMIT"
+  if [ ! -f "$SKIA_SRC/BUILD.gn" ]; then
+    TARBALL="$SRC/skia-$SKIA_COMMIT.tar.gz"
+    [ -f "$TARBALL" ] || curl -fL --retry 3 -o "$TARBALL" \
+        "https://github.com/google/skia/archive/$SKIA_COMMIT.tar.gz"
+    [ "$(sha256 "$TARBALL")" = "$SKIA_SHA256" ] || { echo "checksum mismatch for $TARBALL" >&2; exit 1; }
+    tar -xzf "$TARBALL" -C "$SRC"
   fi
-  tar -xzf "$TARBALL" -C "$SRC"
 fi
 
 # gn is not packaged on every distro; Skia's fetch-gn downloads the exact binary its BUILD files
@@ -69,6 +87,21 @@ else
   [ -x "$SKIA_SRC/bin/gn" ] || ( cd "$SKIA_SRC" && python3 bin/fetch-gn )
   GN="$SKIA_SRC/bin/gn"
 fi
+
+# tools/git-sync-deps has no filter and would clone every external (Dawn, Vulkan, ANGLE —
+# several GB). Hand it a DEPS file trimmed to the libraries the target has to carry itself.
+sync_externals() { # sync_externals <name>...
+  ( cd "$SKIA_SRC" && KEEP="$*" python3 - <<'PY'
+import os
+scope = {}
+scope["Var"] = lambda name: scope["vars"][name]
+exec(open("DEPS").read(), scope)
+keep = os.environ["KEEP"].split()
+sub = {k: v for k, v in scope["deps"].items() if k.rsplit("/", 1)[-1] in keep}
+open("DEPS.drift", "w").write("deps = " + repr(sub) + "\n")
+PY
+    GIT_SYNC_DEPS_PATH="$SKIA_SRC/DEPS.drift" GIT_SYNC_DEPS_SKIP_EMSDK=1 python3 tools/git-sync-deps )
+}
 
 # --- GN arguments --------------------------------------------------------------
 # is_official_build turns off tools/tests and defaults every skia_use_system_* to true; the
@@ -114,23 +147,48 @@ COMMON_ARGS=(
   skia_enable_spirv_validation=false
   skia_enable_fontmgr_custom_empty=true
   skia_enable_fontmgr_custom_directory=true
+  extra_cflags=[\"-fPIC\"]
 )
 
+HOST_CC="${CC:-clang}"
+HOST_CXX="${CXX:-clang++}"
+
 case "$TARGET" in
-  linux-x64)
+  linux-x64|linux-arm64)
     PLATFORM_ARGS=(
-      cc=\"clang\"
-      cxx=\"clang++\"
-      target_cpu=\"x64\"
+      cc=\"$HOST_CC\"
+      cxx=\"$HOST_CXX\"
+      target_cpu=\"${TARGET#linux-}\"
       skia_use_fontconfig=true
       skia_use_system_freetype2=true
       skia_use_system_harfbuzz=true
-      skia_use_system_icu=true
       skia_use_system_expat=true
       skia_use_system_libpng=true
       skia_use_system_zlib=true
-      extra_cflags=[\"-fPIC\"]
     )
+    if [ "${SKIA_SYSTEM_ICU:-1}" = "1" ]; then
+      PLATFORM_ARGS+=(skia_use_system_icu=true)
+    else
+      PLATFORM_ARGS+=(skia_use_system_icu=false)
+      sync_externals icu
+    fi
+    ;;
+  mac-arm64|mac-x64)
+    # Homebrew's harfbuzz/icu/freetype move underneath a pinned Skia; only zlib and expat come
+    # from the macOS SDK, everything else is compiled in.
+    PLATFORM_ARGS=(
+      cc=\"$HOST_CC\"
+      cxx=\"$HOST_CXX\"
+      target_cpu=\"${TARGET#mac-}\"
+      skia_use_fontconfig=false
+      skia_use_system_freetype2=false
+      skia_use_system_harfbuzz=false
+      skia_use_system_icu=false
+      skia_use_system_expat=true
+      skia_use_system_libpng=false
+      skia_use_system_zlib=true
+    )
+    sync_externals freetype harfbuzz icu libpng
     ;;
   android-*)
     : "${ANDROID_NDK_ROOT:?set ANDROID_NDK_ROOT to the NDK version Qt for Android was built against}"
@@ -141,7 +199,7 @@ case "$TARGET" in
       x86_64)      GN_CPU=x64 ;;
       *) echo "unsupported Android ABI: $ABI" >&2; exit 1 ;;
     esac
-    # Same API floor as build-android.sh / minSdk. Bundled externals need a full DEPS sync.
+    # Same API floor as build-android.sh / minSdk. No system libraries on Android at all.
     PLATFORM_ARGS=(
       ndk=\"$ANDROID_NDK_ROOT\"
       ndk_api=28
@@ -154,24 +212,13 @@ case "$TARGET" in
       skia_use_system_expat=false
       skia_use_system_libpng=false
       skia_use_system_zlib=false
-      extra_cflags=[\"-fPIC\"]
     )
-    # tools/git-sync-deps has no filter and would clone every external (Dawn, Vulkan, ANGLE —
-    # several GB). Hand it a DEPS file trimmed to the six libraries this configuration compiles.
-    ( cd "$SKIA_SRC" && python3 - <<'PY'
-scope = {}
-scope["Var"] = lambda name: scope["vars"][name]
-exec(open("DEPS").read(), scope)
-keep = ("expat", "freetype", "harfbuzz", "icu", "libpng", "zlib")
-sub = {k: v for k, v in scope["deps"].items() if k.rsplit("/", 1)[-1] in keep}
-open("DEPS.drift", "w").write("deps = " + repr(sub) + "\n")
-PY
-      GIT_SYNC_DEPS_PATH="$SKIA_SRC/DEPS.drift" GIT_SYNC_DEPS_SKIP_EMSDK=1 python3 tools/git-sync-deps )
+    sync_externals expat freetype harfbuzz icu libpng zlib
     ;;
   *) echo "unsupported target: $TARGET" >&2; exit 1 ;;
 esac
 
-BUILD="$SKIA_SRC/out/$TARGET"
+BUILD="${SKIA_BUILD_DIR:-$SKIA_SRC/out/$TARGET}"
 GN_ARGS="${COMMON_ARGS[*]} ${PLATFORM_ARGS[*]}"
 echo "==> gn gen $BUILD"
 ( cd "$SKIA_SRC" && "$GN" gen "$BUILD" --args="$GN_ARGS" )
@@ -210,6 +257,10 @@ DEFINES="$(cd "$SKIA_SRC" && for t in "${SKIA_TARGETS[@]}"; do "$GN" desc "$BUIL
            | grep -v '_IMPLEMENTATION' | sed 's/^NDEBUG$/SK_RELEASE/' | sort -u)"
 SYSLIBS="$(cd "$SKIA_SRC" && for t in "${SKIA_TARGETS[@]}"; do "$GN" desc "$BUILD" "$t" libs 2>/dev/null || true; done \
            | sort -u)"
+# Apple frameworks arrive as "Foo.framework"; CMake wants "-framework Foo". gn prints an error
+# line instead of a list on targets that have none, hence the filter on the suffix.
+FRAMEWORKS="$(cd "$SKIA_SRC" && for t in "${SKIA_TARGETS[@]}"; do "$GN" desc "$BUILD" "$t" frameworks 2>/dev/null || true; done \
+           | { grep '\.framework$' || true; } | sort -u | sed 's/\.framework$//; s/^/-framework /')"
 
 {
   echo "# Generated by third_party/build-skia.sh for $TARGET — do not edit."
@@ -224,6 +275,7 @@ SYSLIBS="$(cd "$SKIA_SRC" && for t in "${SKIA_TARGETS[@]}"; do "$GN" desc "$BUIL
   echo ")"
   echo "set(SKIA_SYSTEM_LIBRARIES"
   echo "$SYSLIBS" | sed '/^$/d; s/^/    "/; s/$/"/'
+  echo "$FRAMEWORKS" | sed '/^$/d; s/^/    "/; s/$/"/'
   echo ")"
 } > "$OUT/SkiaConfig.cmake"
 
