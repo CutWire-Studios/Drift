@@ -96,7 +96,7 @@ Pinned endpoints (`/mcp/timeline`, `/mcp/project`, …) list that toolbox’s op
 | Time | Seconds |
 | Clip reference | Prefer `clip` UUID from `inspect`; else `track` (0 = top) + `index`. One or the other is **required** — clip ops never fall back to the selection. Read the current selection from `inspect.selection` |
 | Selection ops | `separate_audio`, `unlink_audio`, `merge_clips`, `align_clip_left/right`, `copy_selection`, `cut_selection` take no clip argument — call `select_clip` first. `freeze_frame` and `paste_at_playhead` are playhead-based (seek first); they do not use the selection |
-| Discovery | Effect stack indices, transition ids, and bookmark indices exist **only** in `inspect({clips:true, detail:true})`. Subtitle cues: `inspect({clips:true, cues:true})` or the `subtitleCues` field of a detail row. Mask/fade/speed/volume/keyframes/`hasFaceTrack`/stabilize* are on the same detail rows. **Detail rows omit what does not apply**: caption styling only on text/subtitle clips, shape styling only on shapes, `mask` only when one is set, `keyframes` only for animated properties (listed in `animated`), stabilize/animation blocks only when in use, fade fields only when a fade is set, empty arrays, false booleans and other defaults dropped (absent = default: no fade, `speed` 1, `volume` 1, unlinked). Every row carries `transform:{x,y,w,h,rotation,opacity}` at the playhead. `verbose:true` returns the raw untrimmed map |
+| Discovery | Effect stack indices, transition ids, and bookmark indices exist **only** in `inspect({clips:true, detail:true})`. Subtitle cues: `inspect({clips:true, cues:true})` or the `subtitleCues` field of a detail row. Mask/fade/speed/volume/keyframes/`hasFaceTrack`/stabilize* are on the same detail rows. **Detail rows omit what does not apply**: caption styling only on text/subtitle clips, shape styling only on shapes, `vector` (document metadata, slot overrides — never the document text) only on Lottie/SVG clips, `mask` only when one is set, `keyframes` only for animated properties (listed in `animated`), stabilize/animation blocks only when in use, fade fields only when a fade is set, empty arrays, false booleans and other defaults dropped (absent = default: no fade, `speed` 1, `volume` 1, unlinked). Every row carries `transform:{x,y,w,h,rotation,opacity}` at the playhead. `verbose:true` returns the raw untrimmed map |
 | Numbers | Every number in a reply is rounded to 3 decimals, except `fps` and speed-curve `pos` which keep 6 |
 | Validation | Args are checked against the op's schema before it runs: a missing required key → `bad_args` naming it; a wrong JSON type → `type_mismatch` (numeric strings like `"1"` are still accepted); an enum or declared min/max violation → `bad_args` listing the allowed values or range. Unknown keys are not errors; they come back as `ignored:[…]` on success. A clip-ref op with neither `clip` nor `track`+`index` gets `bad_args` saying so; a stale uuid gets `not_found` with a hint to re-read `inspect` |
 | Effects | `list_effects` / `list_audio_effects` / `list_transitions` are compact by default (`cats:{<cat>:[{id,label}]}`); pass `id`, `cat`, or `q` to get parameters. Ids are accepted with `.` or `_` interchangeably; an unknown id returns `not_found` with the closest matches. Effect stacks live on an **adjustment clip linked to the target**, created on its own lane the first time; `add_effect`/`add_audio_effect` report it as `host:{track,index,clip}`. Keep addressing the original clip in every effect op, and expect that extra lane in `inspect` |
@@ -133,6 +133,7 @@ All return `{started:true}` immediately. Every field below except `export` lives
 | `playback` | Seek, play, pause, In/Out work area |
 | `text` | Title and caption clips, text presets |
 | `shapes` | Builtin shapes, stickers, emoji, fonts, text presets |
+| `motion` | Lottie animations and SVG drawings as vector clips: add, inspect, swap the document, re-theme through slots |
 | `subtitles` | Subtitle clips, cues, import/export, Whisper generation |
 | `effects` | Video/audio effects, transitions, templates, effect clipboard |
 | `project` | Open/new/save/package, canvas, background, metadata, export |
@@ -252,6 +253,29 @@ and what each piece unlocks; `list_addons` / `install_addon` can install a missi
 tools**, pass the absolute path to `import_media`, and treat a non-empty `missing:[]` as
 “search again”, not as a bin problem.
 
+### Motion graphics
+
+The `motion` toolbox puts Lottie (Bodymovin JSON) animations and SVG drawings on a graphic
+track as **vector clips**: they are drawn by Skia at whatever size the clip box has, follow the
+clip's speed/reverse, and take effects, masks and transitions like any other clip. Builds
+without the vector renderer fail every `add_*` op with `unsupported`.
+
+| Call | Effect |
+|---|---|
+| `add_lottie({json, at, track, duration, fit, loop, offset, slots, name})` | `json` is the document text (inline, ≤ 8 MB) or an absolute `.json` path. Plays once at its own length unless `duration` is set; `loop` (`hold` default, `loop`, `pingpong`, `hide`) decides what happens past the end; `fit` (`contain` default, `cover`, `stretch`) how it fills the box. Returns `{id, track, index}` plus the inspect summary |
+| `add_svg({svg, at, track, duration, fit, name})` | Same for an SVG still (default 5 s). SMIL animation and scripts are ignored and reported in `unsupported` |
+| `inspect_lottie({json \| svg \| path \| clip})` | Read-only. `{version, fps, durationSec, width, height, layers, slots, namedProperties, fonts, markers, expressions, unsupported, hints}` |
+| `set_lottie_source({clip, json \| svg \| path})` | Swap the document; position, length, fit and loop stay, slot overrides survive only where the new document declares the same slot with the same type |
+| `set_lottie_options({clip, fit, loop, offset, name})` | Playback options; only supplied keys change |
+| `set_lottie_slot({clip, name, value})` | Override one declared slot; `value:null` clears. Typed: color `"#rrggbb"`/`"#aarrggbb"`/name/`[r,g,b,a]` in 0..1, scalar number, vec2 `[x,y]`, text string, image path |
+| `list_lottie_slots({clip})` | Declared slots with current overrides |
+| `get_lottie_source({clip})` | The document text (can be large) — edit it and send it back with `set_lottie_source` when the animation has no slots |
+
+Slots are the templating mechanism: an animation exported with slots (Lottie ≥ 5.10, After
+Effects "Essential Properties") can be re-coloured or re-worded per clip without touching its
+JSON. `capture` / `frames` render vector clips like everything else, so check the result at two
+times before relying on an animation.
+
 ### Stock media from the marketplace
 
 The `market` toolbox wraps the same service the Assets → Market tab uses (`docs/marketplace`).
@@ -298,6 +322,9 @@ local fake) without rebuilding.
 - **`activity.content` at coarse steps reads pans as cuts.** Confirm a peak with `frames({at:[…]})` before cutting on it.
 - **`frames({clip})` times are source seconds.** Use `tl` for the timeline position.
 - **`get_waveform({image:true})` in clip mode is timeline-space**, while the numeric clip form reads the raw source file.
+- **Lottie expressions are not evaluated.** Skottie renders an expression-driven property at its static value. `inspect_lottie` (and every `add_lottie` reply) lists them under `expressions`; bake them to keyframes in the authoring tool before relying on the motion.
+- **`set_lottie_slot` is typed against the document.** An undeclared slot or a value of the wrong type fails `bad_args` — read the `slots` array from `add_lottie` or `list_lottie_slots` first. Documents with no slots can only be changed by editing the JSON (`get_lottie_source` → `set_lottie_source`).
+- **`add_lottie` with a `slots` map does not fail on a bad slot** — it places the clip and reports the rejected ones in `slotErrors`.
 - **`list_emoji` needs `q` or `group`** — the catalog is ~1900 entries; `add_emoji` takes the `id` (the character).
 
 ## Example

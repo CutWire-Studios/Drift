@@ -141,6 +141,37 @@ QJsonObject mergeProps(QJsonObject a, const QJsonObject &b)
     return a;
 }
 
+QJsonObject textHighlightSchema(const QString &description)
+{
+    QJsonObject s = objectSchema({{QStringLiteral("enabled"), boolProp(QStringLiteral("On/off"))},
+                                  {QStringLiteral("color"), stringProp(QStringLiteral("Pill colour"))},
+                                  {QStringLiteral("padding"), numberProp(QStringLiteral("Padding in px at pixelSize"))},
+                                  {QStringLiteral("radius"), numberProp(QStringLiteral("Corner radius in px"))}});
+    s.insert(QStringLiteral("description"), description);
+    return s;
+}
+
+// Enum spellings are TextStyle.cpp's; a misspelling silently falls back to the default.
+QJsonObject textAnimationSchema(const QString &description)
+{
+    QJsonObject s = objectSchema({
+        {QStringLiteral("kind"), enumProp(QStringLiteral("Motion"),
+                                          {QStringLiteral("none"), QStringLiteral("fade"), QStringLiteral("slideUp"), QStringLiteral("slideDown"),
+                                           QStringLiteral("slideLeft"), QStringLiteral("slideRight"), QStringLiteral("pop"), QStringLiteral("blur"),
+                                           QStringLiteral("typewriter"), QStringLiteral("rise"), QStringLiteral("bounce"), QStringLiteral("wave")})},
+        {QStringLiteral("duration"), numberProp(QStringLiteral("Seconds"), 0.0, 10.0)},
+        {QStringLiteral("ease"), enumProp(QStringLiteral("Easing"),
+                                          {QStringLiteral("linear"), QStringLiteral("easeOut"), QStringLiteral("easeInOut"), QStringLiteral("back")})},
+        {QStringLiteral("unit"), enumProp(QStringLiteral("What animates separately"),
+                                          {QStringLiteral("block"), QStringLiteral("word"), QStringLiteral("character"), QStringLiteral("line")})},
+        {QStringLiteral("stagger"), numberProp(QStringLiteral("Seconds between units"), 0.0, 2.0)},
+        {QStringLiteral("order"), enumProp(QStringLiteral("Unit order"),
+                                           {QStringLiteral("forward"), QStringLiteral("backward"), QStringLiteral("centerOut"), QStringLiteral("random")})},
+    });
+    s.insert(QStringLiteral("description"), description);
+    return s;
+}
+
 QJsonObject textStyleSchema()
 {
     return objectSchema({
@@ -158,6 +189,44 @@ QJsonObject textStyleSchema()
         {QStringLiteral("lineHeight"), numberProp(QStringLiteral("Line height multiplier"))},
         {QStringLiteral("letterSpacing"), numberProp(QStringLiteral("Letter spacing"))},
         {QStringLiteral("wordWrap"), boolProp(QStringLiteral("Wrap long lines"))},
+        {QStringLiteral("outlineEnabled"), boolProp(QStringLiteral("Stroke around each glyph"))},
+        {QStringLiteral("outlineWidth"), numberProp(QStringLiteral("Outline width in px at pixelSize"))},
+        {QStringLiteral("outlineColor"), stringProp(QStringLiteral("Outline colour"))},
+        {QStringLiteral("shadowEnabled"), boolProp(QStringLiteral("Drop shadow"))},
+        {QStringLiteral("shadowOffsetX"), numberProp(QStringLiteral("Shadow x offset in px"))},
+        {QStringLiteral("shadowOffsetY"), numberProp(QStringLiteral("Shadow y offset in px"))},
+        {QStringLiteral("shadowBlur"), numberProp(QStringLiteral("Shadow blur radius in px"))},
+        {QStringLiteral("shadowOpacity"), numberProp(QStringLiteral("Shadow opacity 0..1"))},
+        {QStringLiteral("shadowColor"), stringProp(QStringLiteral("Shadow colour"))},
+        {QStringLiteral("glowEnabled"), boolProp(QStringLiteral("Soft glow behind the glyphs"))},
+        {QStringLiteral("glowColor"), stringProp(QStringLiteral("Glow colour"))},
+        {QStringLiteral("glowRadius"), numberProp(QStringLiteral("Glow radius in px"))},
+        {QStringLiteral("glowOpacity"), numberProp(QStringLiteral("Glow opacity 0..1"))},
+        {QStringLiteral("boxEnabled"), boolProp(QStringLiteral("Filled box behind the block"))},
+        {QStringLiteral("boxColor"), stringProp(QStringLiteral("Box colour"))},
+        {QStringLiteral("boxPadding"), numberProp(QStringLiteral("Box padding in px"))},
+        {QStringLiteral("boxRadius"), numberProp(QStringLiteral("Box corner radius in px"))},
+        {QStringLiteral("underlineEnabled"), boolProp(QStringLiteral("Underline"))},
+        {QStringLiteral("underlineColor"), stringProp(QStringLiteral("Underline colour"))},
+        {QStringLiteral("underlineWidth"), numberProp(QStringLiteral("Underline thickness in px"))},
+        {QStringLiteral("underlineOffset"), numberProp(QStringLiteral("Underline distance below the baseline in px"))},
+        {QStringLiteral("wordHighlight"), textHighlightSchema(QStringLiteral("Filled pill behind every word"))},
+        {QStringLiteral("accent"),
+         objectSchema({{QStringLiteral("rule"), enumProp(QStringLiteral("Which words get the accent"),
+                                                         {QStringLiteral("none"), QStringLiteral("firstWord"), QStringLiteral("lastWord"),
+                                                          QStringLiteral("everyOther"), QStringLiteral("everyNth"), QStringLiteral("longestWord"),
+                                                          QStringLiteral("randomStable"), QStringLiteral("karaoke")})},
+                       {QStringLiteral("n"), integerProp(QStringLiteral("Stride for everyNth"))},
+                       {QStringLiteral("phase"), integerProp(QStringLiteral("Index of the first accented word"))},
+                       {QStringLiteral("colorEnabled"), boolProp(QStringLiteral("Recolour accented words"))},
+                       {QStringLiteral("color"), stringProp(QStringLiteral("Accent colour"))},
+                       {QStringLiteral("sizeScale"), numberProp(QStringLiteral("Accented word size relative to pixelSize"))},
+                       {QStringLiteral("outlineEnabled"), boolProp(QStringLiteral("Outline accented words"))},
+                       {QStringLiteral("outlineWidth"), numberProp(QStringLiteral("Accent outline width in px"))},
+                       {QStringLiteral("outlineColor"), stringProp(QStringLiteral("Accent outline colour"))},
+                       {QStringLiteral("highlight"), textHighlightSchema(QStringLiteral("Pill behind accented words"))}})},
+        {QStringLiteral("animIn"), textAnimationSchema(QStringLiteral("Entrance animation"))},
+        {QStringLiteral("animOut"), textAnimationSchema(QStringLiteral("Exit animation"))},
     });
 }
 
@@ -747,9 +816,10 @@ QStringList toolboxNames()
     return {QStringLiteral("media"),     QStringLiteral("timeline"), QStringLiteral("canvas"),
             QStringLiteral("playback"),  QStringLiteral("text"),     QStringLiteral("effects"),
             QStringLiteral("project"),   QStringLiteral("keyframes"), QStringLiteral("speed"),
-            QStringLiteral("ui"),        QStringLiteral("shapes"),   QStringLiteral("subtitles"),
-            QStringLiteral("segmentation"), QStringLiteral("ai"),   QStringLiteral("audio"),
-            QStringLiteral("scene"),     QStringLiteral("multicam"), QStringLiteral("market")};
+            QStringLiteral("ui"),        QStringLiteral("shapes"),   QStringLiteral("motion"),
+            QStringLiteral("subtitles"), QStringLiteral("segmentation"), QStringLiteral("ai"),
+            QStringLiteral("audio"),     QStringLiteral("scene"),    QStringLiteral("multicam"),
+            QStringLiteral("market")};
 }
 
 QStringList undoExemptOps()
@@ -876,7 +946,7 @@ QString agentGuideText()
         "missing:[] is empty.\n"
         "\n"
         "Toolboxes: media, timeline, canvas, playback, text, effects, project, keyframes, speed, ui, "
-        "shapes, subtitles, segmentation, ai, audio, scene, multicam.\n");
+        "shapes, motion, subtitles, segmentation, ai, audio, scene, multicam.\n");
 }
 
 QJsonObject catalogPayload(const QJsonObject &args)
@@ -898,6 +968,7 @@ QJsonObject catalogPayload(const QJsonObject &args)
         {"speed", "Speed ramps (retimed clips) and reading custom fade curves."},
         {"ui", "Editor theme and keyboard shortcuts."},
         {"shapes", "Builtin shapes, stickers, emoji, fonts."},
+        {"motion", "Lottie animations and SVG drawings as vector clips: add, inspect, re-theme through slots."},
         {"subtitles", "Subtitle clips, import/export, Whisper generation."},
         {"segmentation", "SAM-style cutout and mask output."},
         {"ai", "Denoise, face detection, auto-reframe, model add-ons (list/install), acceleration."},
@@ -1103,7 +1174,7 @@ QJsonArray homepageTools()
         QStringLiteral("When: You know what you want but not the op name. Find an op by keyword: effects, "
                        "transitions, keyframes, animation, subtitles, captions, transcribe, beats, tempo, scenes, "
                        "shots, silence, loudness, mask, fade, speed, reverse, crop, resize, export, render, "
-                       "import, undo, history, bookmark, stabilize, denoise, faces, emoji, fonts, shapes, "
+                       "import, undo, history, bookmark, stabilize, denoise, faces, emoji, fonts, shapes, lottie, "
                        "stickers, multicam. Scores op names, toolbox, when hints, descriptions and argument names; "
                        "returns hits:[{name, toolbox, when, args, required}]. schema:true inlines inputSchema when "
                        "there are ≤3 hits, so you can go straight to apply."),

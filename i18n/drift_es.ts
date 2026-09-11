@@ -2755,6 +2755,34 @@
         <translation>Estilo de forma actualizado</translation>
     </message>
     <message>
+        <source>Animation</source>
+        <translation type="unfinished">Animación</translation>
+    </message>
+    <message>
+        <source>Animation added</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Animation replaced</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Animation options</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Animation options updated</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Animation slot</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Animation slot updated</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Clip mask updated</source>
         <translation>Máscara del clip actualizada</translation>
     </message>

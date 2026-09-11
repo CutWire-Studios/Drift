@@ -1077,6 +1077,25 @@ public:
     Q_INVOKABLE QVariantMap maskEditorState() const;
     // Partial patch: only the keys present are applied, like setTextStyle.
     Q_INVOKABLE void setShapeStyle(int trackIndex, int clipIndex, const QVariantMap &style);
+
+    // Vector (Lottie / SVG) clips. `source` is the document text itself or a path to a .json/.svg
+    // file; opts keys: kind (lottie|svg, else detected), fit, loop, offset (seconds), slots
+    // ({id: value}), name, duration (seconds; default = the animation's own length, 5 s for a
+    // still). Every reply is {ok, error?} plus the inspect summary of the document.
+    Q_INVOKABLE bool vectorSupportAvailable() const;
+    Q_INVOKABLE QVariantMap addVectorClip(const QString &source, int trackIndex, double atSeconds,
+                                          const QVariantMap &opts = {});
+    Q_INVOKABLE QVariantMap setVectorSource(int trackIndex, int clipIndex, const QString &source,
+                                            const QVariantMap &opts = {});
+    Q_INVOKABLE QString setVectorOptions(int trackIndex, int clipIndex, const QVariantMap &opts);
+    // A null/invalid value removes the override. Returns an error string, empty on success.
+    Q_INVOKABLE QString setVectorSlot(int trackIndex, int clipIndex, const QString &name,
+                                      const QVariant &value);
+    // Declared slots with the clip's current overrides: [{id, type, value?}].
+    Q_INVOKABLE QVariantList vectorSlots(int trackIndex, int clipIndex) const;
+    Q_INVOKABLE QVariantMap inspectVector(const QString &source, const QString &kind = {}) const;
+    Q_INVOKABLE QVariantMap inspectVectorClip(int trackIndex, int clipIndex) const;
+    Q_INVOKABLE QString vectorSourceText(int trackIndex, int clipIndex) const;
     Q_INVOKABLE void setClipFade(int trackIndex, int clipIndex, double fadeInSeconds, double fadeOutSeconds);
     Q_INVOKABLE void setClipFadeCurve(int trackIndex, int clipIndex, const QString &curve);
     // which: "animIn" | "animOut". Partial patch: kind / duration / curve (or legacy ease).

@@ -1,5 +1,8 @@
 #include "MediaThumbnail.h"
 
+#include "VectorClipRenderer.h"
+#include "VectorInspect.h"
+
 #include "StillImage.h"
 
 #include "MediaProbe.h"
@@ -296,6 +299,22 @@ QString MediaThumbnail::generate(const QString &sourcePath, const QString &kind)
         if (!image.save(outPath, "JPG", 85))
             return {};
         return outPath;
+    }
+
+    if (kind == QStringLiteral("vector")) {
+        drift::VectorSource source;
+        source.path = absolutePath;
+        source.kind = drift::vec::detectVectorKind(drift::vec::vectorSourceBytes(source));
+        const QImage frame = drift::vec::renderThumbnail(source, {kThumbnailMaxEdge, kThumbnailMaxEdge * 9 / 16});
+        if (frame.isNull())
+            return {};
+        // JPEG has no alpha: flatten onto the bin's dark ground rather than onto black.
+        QImage flat(frame.size(), QImage::Format_RGB32);
+        flat.fill(QColor(34, 34, 38));
+        QPainter p(&flat);
+        p.drawImage(0, 0, frame);
+        p.end();
+        return flat.save(outPath, "JPG", 85) ? outPath : QString();
     }
 
     if (kind != QStringLiteral("video"))

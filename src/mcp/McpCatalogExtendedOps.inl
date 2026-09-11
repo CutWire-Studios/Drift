@@ -307,6 +307,90 @@
                         {QStringLiteral("at"), numberProp(QStringLiteral("Start seconds (default: playhead)"))}},
                        {QStringLiteral("emoji")}) },
 
+        { "add_lottie", "motion", "Place a Lottie animation",
+          "Add a Lottie (Bodymovin JSON) clip on a graphic track, creating one when needed. The "
+          "document is the JSON text itself (inline, up to 8 MB) or an absolute .json path. Plays "
+          "once at its own length unless duration is given; loop decides what happens past the "
+          "end. Returns {id, track, index} plus the inspect summary: durationSec, width, height, "
+          "fps, slots:[{id,type}], namedProperties, expressions, unsupported, hints. Read "
+          "unsupported and expressions — Skottie evaluates no expressions, so an animation that "
+          "relies on them renders static. A slot override that fails is reported in slotErrors "
+          "and does not fail the add.",
+          objectSchema({{QStringLiteral("json"), stringProp(QStringLiteral("Lottie JSON text, or an absolute path to a .json file"))},
+                        {QStringLiteral("at"), numberProp(QStringLiteral("Start seconds (default: playhead)"))},
+                        {QStringLiteral("track"), integerProp(QStringLiteral("Optional destination graphic track; omitted picks or creates one"))},
+                        {QStringLiteral("duration"), numberProp(QStringLiteral("Clip length in seconds (default: the animation's own length)"))},
+                        {QStringLiteral("fit"), enumProp(QStringLiteral("How the animation fills the clip box (default contain)"),
+                                                          {QStringLiteral("contain"), QStringLiteral("cover"), QStringLiteral("stretch")})},
+                        {QStringLiteral("loop"), enumProp(QStringLiteral("Past the animation's end: hold the last frame, loop, ping-pong, or hide (default hold)"),
+                                                           {QStringLiteral("hold"), QStringLiteral("loop"), QStringLiteral("pingpong"), QStringLiteral("hide")})},
+                        {QStringLiteral("offset"), numberProp(QStringLiteral("Seconds into the animation at the clip's start (default 0)"))},
+                        {QStringLiteral("slots"), QJsonObject{{QStringLiteral("type"), QStringLiteral("object")},
+                                                              {QStringLiteral("description"), QStringLiteral("Slot overrides {id: value}, typed as in set_lottie_slot")}}},
+                        {QStringLiteral("name"), stringProp(QStringLiteral("Clip name (default: the document's title)"))}},
+                       {QStringLiteral("json")}) },
+        { "add_svg", "motion", "Place an SVG as a vector still",
+          "Add an SVG clip on a graphic track, drawn as vectors at any size (unlike an image import, "
+          "which rasterises once). The document is the SVG text itself or an absolute .svg path. "
+          "SMIL animation and scripts are ignored and reported in unsupported. Returns {id, track, "
+          "index, width, height, unsupported, hints}.",
+          objectSchema({{QStringLiteral("svg"), stringProp(QStringLiteral("SVG text, or an absolute path to a .svg file"))},
+                        {QStringLiteral("at"), numberProp(QStringLiteral("Start seconds (default: playhead)"))},
+                        {QStringLiteral("track"), integerProp(QStringLiteral("Optional destination graphic track"))},
+                        {QStringLiteral("duration"), numberProp(QStringLiteral("Clip length in seconds (default 5)"))},
+                        {QStringLiteral("fit"), enumProp(QStringLiteral("How the drawing fills the clip box (default contain)"),
+                                                          {QStringLiteral("contain"), QStringLiteral("cover"), QStringLiteral("stretch")})},
+                        {QStringLiteral("name"), stringProp(QStringLiteral("Clip name"))}},
+                       {QStringLiteral("svg")}) },
+        { "inspect_lottie", "motion", "Check a Lottie/SVG before or after placing it",
+          "Parse a document and report what it declares and what this renderer will skip, without "
+          "touching the timeline: version, fps, durationSec, width, height, layers, slots, "
+          "namedProperties, fonts, markers, expressions (property paths that carry an expression — "
+          "these render as their static value), unsupported, hints. Give json, svg or path for a "
+          "document, or clip for one already on the timeline.",
+          objectSchema(mergeProps({{QStringLiteral("json"), stringProp(QStringLiteral("Lottie JSON text"))},
+                                   {QStringLiteral("svg"), stringProp(QStringLiteral("SVG text"))},
+                                   {QStringLiteral("path"), stringProp(QStringLiteral("Absolute .json or .svg path"))}},
+                                  clipRefProps())),
+          true, false, true },
+        { "set_lottie_source", "motion", "Swap the document under a vector clip",
+          "Replace the clip's Lottie/SVG document, keeping its position, length, fit and loop. Slot "
+          "overrides survive only for slots the new document declares with the same type. Returns "
+          "the inspect summary of the new document.",
+          objectSchema(mergeProps({{QStringLiteral("json"), stringProp(QStringLiteral("Lottie JSON text"))},
+                                   {QStringLiteral("svg"), stringProp(QStringLiteral("SVG text"))},
+                                   {QStringLiteral("path"), stringProp(QStringLiteral("Absolute .json or .svg path"))}},
+                                  clipRefProps())) },
+        { "set_lottie_options", "motion", "Fit, loop, offset or name of a vector clip",
+          "Change how a vector clip plays; only supplied keys change.",
+          objectSchema(mergeProps({{QStringLiteral("fit"), enumProp(QStringLiteral("contain | cover | stretch"),
+                                                                     {QStringLiteral("contain"), QStringLiteral("cover"), QStringLiteral("stretch")})},
+                                   {QStringLiteral("loop"), enumProp(QStringLiteral("hold | loop | pingpong | hide"),
+                                                                      {QStringLiteral("hold"), QStringLiteral("loop"), QStringLiteral("pingpong"), QStringLiteral("hide")})},
+                                   {QStringLiteral("offset"), numberProp(QStringLiteral("Seconds into the animation at the clip's start"))},
+                                   {QStringLiteral("name"), stringProp(QStringLiteral("Clip name"))}},
+                                  clipRefProps())) },
+        { "set_lottie_slot", "motion", "Override a Lottie slot (template input)",
+          "Set one of the animation's declared slots — see list_lottie_slots or the slots array "
+          "add_lottie returned. The value must match the slot's type: color takes \"#rrggbb\", "
+          "\"#aarrggbb\", a colour name or [r,g,b,a] in 0..1; scalar a number; vec2 [x,y]; text a "
+          "string; image an absolute image path. Pass value:null to remove the override. Fails "
+          "bad_args on an undeclared slot or a wrong type. Slots are the way to re-theme an "
+          "animation; documents without slots can only be edited as JSON and re-sent with "
+          "set_lottie_source.",
+          objectSchema(mergeProps({{QStringLiteral("name"), stringProp(QStringLiteral("Slot id"))},
+                                   {QStringLiteral("value"), QJsonObject{{QStringLiteral("description"), QStringLiteral("Typed value, or null to clear")}}}},
+                                  clipRefProps()),
+                       {QStringLiteral("name")}) },
+        { "list_lottie_slots", "motion", "Slots a vector clip's document declares",
+          "Returns {slots:[{id, type, value?}], n}: every declared slot with the clip's current "
+          "override where one is set.",
+          objectSchema(clipRefProps()), true, false, true },
+        { "get_lottie_source", "motion", "Read a vector clip's document",
+          "Returns {kind, inline, path, hash, source} — the full document text, which can be large. "
+          "Read it to edit a document that has no slots, then send it back with set_lottie_source.",
+          objectSchema(clipRefProps()), true, false, true },
+
         { "add_subtitle_clip", "subtitles", "Empty subtitle lane",
           "Add an empty subtitle clip, creating a subtitle track when needed. Returns {id, track, index}. "
           "Fill it with set_subtitle_cues or import_subtitle_into_clip.",

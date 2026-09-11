@@ -130,6 +130,13 @@ private slots:
     void detectSilenceFindsInjectedGap();
     void setEffectStringParamSetsFileParam();
     void addShapeReturnsMintedId();
+    void motionToolboxIsCatalogued();
+    void addLottieReportsDocument();
+    void setLottieSlotValidatesTypes();
+    void inspectLottieAddsNothing();
+    void addSvgShowsInCapture();
+    void lottieBatchUndoesAsOneStep();
+    void setTextStyleAcceptsAnimation();
     void historyEntriesHaveHashes();
     void undoToByHash();
     void snapshotFileHashMatchesHistory();
@@ -209,7 +216,7 @@ void McpTest::catalogListsToolboxes()
     const QJsonObject cat = drift::mcp::catalogPayload();
     QVERIFY(cat.value(QStringLiteral("ok")).toBool());
     const QJsonArray boxes = cat.value(QStringLiteral("toolboxes")).toArray();
-    QCOMPARE(boxes.size(), 18);
+    QCOMPARE(boxes.size(), 19);
     QStringList names;
     for (const QJsonValue &v : boxes)
         names.append(v.toObject().value(QStringLiteral("name")).toString());
@@ -1985,6 +1992,268 @@ void McpTest::addShapeReturnsMintedId()
              qPrintable(QJsonDocument(added).toJson(QJsonDocument::Compact)));
     QVERIFY(!added.value(QStringLiteral("id")).toString().isEmpty());
     QCOMPARE(added.value(QStringLiteral("n")).toInt(), 1);
+}
+
+namespace {
+
+QString lottieFixture()
+{
+    QFile file(QStringLiteral(DRIFT_TEST_DATA_DIR "/vector/slide.json"));
+    if (!file.open(QIODevice::ReadOnly))
+        return {};
+    return QString::fromUtf8(file.readAll());
+}
+
+int totalClips(AppController &s)
+{
+    int n = 0;
+    for (const QVariant &t : s.tracks())
+        n += t.toMap().value(QStringLiteral("clips")).toList().size();
+    return n;
+}
+
+} // namespace
+
+void McpTest::motionToolboxIsCatalogued()
+{
+    QVERIFY(drift::mcp::toolboxNames().contains(QStringLiteral("motion")));
+    for (const char *op : {"add_lottie", "add_svg", "inspect_lottie", "set_lottie_source", "set_lottie_options",
+                           "set_lottie_slot", "list_lottie_slots", "get_lottie_source"}) {
+        QVERIFY2(drift::mcp::isKnownOp(QLatin1String(op)), op);
+        QCOMPARE(drift::mcp::toolboxForOp(QLatin1String(op)), QStringLiteral("motion"));
+    }
+    QVERIFY(drift::mcp::isReadOnlyOp(QStringLiteral("inspect_lottie")));
+    QVERIFY(drift::mcp::isReadOnlyOp(QStringLiteral("list_lottie_slots")));
+    QVERIFY(drift::mcp::isReadOnlyOp(QStringLiteral("get_lottie_source")));
+    QVERIFY(!drift::mcp::isReadOnlyOp(QStringLiteral("add_lottie")));
+    const QJsonObject box = drift::mcp::toolboxPayload(QStringLiteral("motion"));
+    QVERIFY(box.value(QStringLiteral("ok")).toBool());
+}
+
+void McpTest::addLottieReportsDocument()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    if (!state.vectorSupportAvailable())
+        QSKIP("built without Skia");
+    drift::mcp::McpDispatcher dispatcher(&state);
+
+    const QJsonObject added = dispatcher.applyOne(
+        QStringLiteral("add_lottie"),
+        {{QStringLiteral("json"), lottieFixture()}, {QStringLiteral("at"), 1.0},
+         {QStringLiteral("loop"), QStringLiteral("loop")},
+         {QStringLiteral("slots"), QJsonObject{{QStringLiteral("accent"), QStringLiteral("#0000ff")}}}});
+    QVERIFY2(added.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(added).toJson(QJsonDocument::Compact)));
+    const QString id = added.value(QStringLiteral("id")).toString();
+    QVERIFY(!id.isEmpty());
+    QCOMPARE(added.value(QStringLiteral("durationSec")).toDouble(), 2.0);
+    QCOMPARE(added.value(QStringLiteral("width")).toInt(), 200);
+    QCOMPARE(added.value(QStringLiteral("height")).toInt(), 100);
+    QCOMPARE(added.value(QStringLiteral("fps")).toDouble(), 30.0);
+    QCOMPARE(added.value(QStringLiteral("slots")).toArray().size(), 1);
+    QCOMPARE(added.value(QStringLiteral("slots")).toArray().at(0).toObject().value(QStringLiteral("id")).toString(), QStringLiteral("accent"));
+    QVERIFY(added.value(QStringLiteral("unsupported")).toArray().isEmpty());
+    QVERIFY(!added.contains(QStringLiteral("slotErrors")));
+    QVERIFY(!added.contains(QStringLiteral("ignored")));
+
+    // The clip is on a graphic track, runs the animation's own length, and carries the override.
+    const QPair<int, int> loc = state.mcpLocateClip(id);
+    QVERIFY(loc.first >= 0);
+    const QVariantMap clip = state.clipAt(loc.first, loc.second);
+    QCOMPARE(clip.value(QStringLiteral("kind")).toString(), QStringLiteral("vector"));
+    QCOMPARE(clip.value(QStringLiteral("duration")).toDouble(), 2.0);
+    const QVariantMap vector = clip.value(QStringLiteral("vector")).toMap();
+    QCOMPARE(vector.value(QStringLiteral("loop")).toString(), QStringLiteral("loop"));
+    QVERIFY(vector.value(QStringLiteral("inline")).toBool());
+    QCOMPARE(vector.value(QStringLiteral("slots")).toMap().value(QStringLiteral("accent")).toString(), QStringLiteral("#ff0000ff"));
+
+    const QJsonObject listed = dispatcher.applyOne(QStringLiteral("list_lottie_slots"), {{QStringLiteral("clip"), id}});
+    QVERIFY(listed.value(QStringLiteral("ok")).toBool());
+    QCOMPARE(listed.value(QStringLiteral("n")).toInt(), 1);
+    QCOMPARE(listed.value(QStringLiteral("slots")).toArray().at(0).toObject().value(QStringLiteral("value")).toString(), QStringLiteral("#ff0000ff"));
+
+    const QJsonObject source = dispatcher.applyOne(QStringLiteral("get_lottie_source"), {{QStringLiteral("clip"), id}});
+    QVERIFY(source.value(QStringLiteral("ok")).toBool());
+    QVERIFY(source.value(QStringLiteral("source")).toString().contains(QStringLiteral("\"nm\": \"Slide\"")));
+    QCOMPARE(source.value(QStringLiteral("hash")).toString().size(), 64);
+
+    // Options patch, then an inspect through the clip reference.
+    const QJsonObject opts = dispatcher.applyOne(QStringLiteral("set_lottie_options"),
+                                                 {{QStringLiteral("clip"), id}, {QStringLiteral("fit"), QStringLiteral("cover")}, {QStringLiteral("offset"), 0.5}});
+    QVERIFY2(opts.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(opts).toJson(QJsonDocument::Compact)));
+    const QVariantMap after = state.clipAt(loc.first, loc.second).value(QStringLiteral("vector")).toMap();
+    QCOMPARE(after.value(QStringLiteral("fit")).toString(), QStringLiteral("cover"));
+    QCOMPARE(after.value(QStringLiteral("offset")).toDouble(), 0.5);
+    const QJsonObject inspected = dispatcher.applyOne(QStringLiteral("inspect_lottie"), {{QStringLiteral("clip"), id}});
+    QVERIFY(inspected.value(QStringLiteral("ok")).toBool());
+    QCOMPARE(inspected.value(QStringLiteral("layers")).toArray().size(), 1);
+
+    // Garbage is refused up front, not placed.
+    const int before = totalClips(state);
+    const QJsonObject bad = dispatcher.applyOne(QStringLiteral("add_lottie"), {{QStringLiteral("json"), QStringLiteral("{\"nope\":1}")}});
+    QVERIFY(!bad.value(QStringLiteral("ok")).toBool());
+    QCOMPARE(totalClips(state), before);
+}
+
+void McpTest::setLottieSlotValidatesTypes()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    if (!state.vectorSupportAvailable())
+        QSKIP("built without Skia");
+    drift::mcp::McpDispatcher dispatcher(&state);
+    const QJsonObject added = dispatcher.applyOne(QStringLiteral("add_lottie"),
+                                                  {{QStringLiteral("json"), lottieFixture()}, {QStringLiteral("at"), 0.0}});
+    QVERIFY(added.value(QStringLiteral("ok")).toBool());
+    const QString id = added.value(QStringLiteral("id")).toString();
+
+    QJsonObject r = dispatcher.applyOne(QStringLiteral("set_lottie_slot"),
+                                        {{QStringLiteral("clip"), id}, {QStringLiteral("name"), QStringLiteral("accent")}, {QStringLiteral("value"), 3.5}});
+    QVERIFY(!r.value(QStringLiteral("ok")).toBool());
+    QVERIFY(r.value(QStringLiteral("detail")).toString().contains(QStringLiteral("color")));
+
+    r = dispatcher.applyOne(QStringLiteral("set_lottie_slot"),
+                            {{QStringLiteral("clip"), id}, {QStringLiteral("name"), QStringLiteral("nosuch")}, {QStringLiteral("value"), QStringLiteral("#ff0000")}});
+    QVERIFY(!r.value(QStringLiteral("ok")).toBool());
+    QVERIFY(r.value(QStringLiteral("detail")).toString().contains(QStringLiteral("accent")));
+
+    r = dispatcher.applyOne(QStringLiteral("set_lottie_slot"),
+                            {{QStringLiteral("clip"), id}, {QStringLiteral("name"), QStringLiteral("accent")},
+                             {QStringLiteral("value"), QJsonArray{0.0, 1.0, 0.0}}});
+    QVERIFY2(r.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(r).toJson(QJsonDocument::Compact)));
+    const QPair<int, int> loc = state.mcpLocateClip(id);
+    QCOMPARE(state.clipAt(loc.first, loc.second).value(QStringLiteral("vector")).toMap()
+                 .value(QStringLiteral("slots")).toMap().value(QStringLiteral("accent")).toString(),
+             QStringLiteral("#ff00ff00"));
+
+    r = dispatcher.applyOne(QStringLiteral("set_lottie_slot"),
+                            {{QStringLiteral("clip"), id}, {QStringLiteral("name"), QStringLiteral("accent")}, {QStringLiteral("value"), QJsonValue::Null}});
+    QVERIFY(r.value(QStringLiteral("ok")).toBool());
+    QVERIFY(r.value(QStringLiteral("cleared")).toBool());
+    QVERIFY(state.clipAt(loc.first, loc.second).value(QStringLiteral("vector")).toMap()
+                .value(QStringLiteral("slots")).toMap().isEmpty());
+}
+
+void McpTest::inspectLottieAddsNothing()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    if (!state.vectorSupportAvailable())
+        QSKIP("built without Skia");
+    drift::mcp::McpDispatcher dispatcher(&state);
+    const int before = totalClips(state);
+    const bool undoBefore = state.undoAvailable();
+
+    const QJsonObject report = dispatcher.applyOne(QStringLiteral("inspect_lottie"), {{QStringLiteral("json"), lottieFixture()}});
+    QVERIFY2(report.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(report).toJson(QJsonDocument::Compact)));
+    QCOMPARE(report.value(QStringLiteral("durationSec")).toDouble(), 2.0);
+    QCOMPARE(report.value(QStringLiteral("markers")).toArray().size(), 2);
+    QCOMPARE(totalClips(state), before);
+    QCOMPARE(state.undoAvailable(), undoBefore);
+
+    const QJsonObject svg = dispatcher.applyOne(
+        QStringLiteral("inspect_lottie"),
+        {{QStringLiteral("svg"), QStringLiteral("<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 10 5\"><rect width=\"5\" height=\"5\"><animate attributeName=\"x\" to=\"5\" dur=\"1s\"/></rect></svg>")}});
+    QVERIFY(svg.value(QStringLiteral("ok")).toBool());
+    QCOMPARE(svg.value(QStringLiteral("kind")).toString(), QStringLiteral("svg"));
+    QCOMPARE(svg.value(QStringLiteral("unsupported")).toArray().size(), 1);
+
+    const QJsonObject bad = dispatcher.applyOne(QStringLiteral("inspect_lottie"), {{QStringLiteral("json"), QStringLiteral("nonsense")}});
+    QVERIFY(!bad.value(QStringLiteral("ok")).toBool());
+}
+
+void McpTest::addSvgShowsInCapture()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    if (!state.vectorSupportAvailable())
+        QSKIP("built without Skia");
+    state.setProjectResolution(160, 90);
+    drift::mcp::McpDispatcher dispatcher(&state);
+    const QJsonObject added = dispatcher.applyOne(
+        QStringLiteral("add_svg"),
+        {{QStringLiteral("svg"), QStringLiteral("<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"160\" height=\"90\"><rect width=\"160\" height=\"90\" fill=\"#00ff00\"/></svg>")},
+         {QStringLiteral("at"), 0.0}, {QStringLiteral("fit"), QStringLiteral("stretch")}});
+    QVERIFY2(added.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(added).toJson(QJsonDocument::Compact)));
+    QCOMPARE(added.value(QStringLiteral("kind")).toString(), QStringLiteral("svg"));
+    QCOMPARE(added.value(QStringLiteral("width")).toInt(), 160);
+
+    const QJsonObject capture = state.mcpCaptureFrame(0.5, false);
+    if (capture.value(QStringLiteral("isError")).toBool())
+        QSKIP("Compositor could not produce a frame in this environment");
+    QByteArray jpeg;
+    for (const QJsonValue &part : capture.value(QStringLiteral("content")).toArray()) {
+        if (part.toObject().value(QStringLiteral("type")).toString() == QLatin1String("image"))
+            jpeg = QByteArray::fromBase64(part.toObject().value(QStringLiteral("data")).toString().toLatin1());
+    }
+    QImage frame;
+    QVERIFY(frame.loadFromData(jpeg, "JPEG"));
+    const QRgb centre = frame.pixel(frame.width() / 2, frame.height() / 2);
+    QVERIFY2(qGreen(centre) > 180 && qRed(centre) < 80 && qBlue(centre) < 80,
+             qPrintable(QString::number(centre, 16)));
+}
+
+void McpTest::lottieBatchUndoesAsOneStep()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    if (!state.vectorSupportAvailable())
+        QSKIP("built without Skia");
+    drift::mcp::McpDispatcher dispatcher(&state);
+    const QJsonObject added = dispatcher.applyOne(QStringLiteral("add_lottie"),
+                                                  {{QStringLiteral("json"), lottieFixture()}, {QStringLiteral("at"), 0.0}});
+    QVERIFY(added.value(QStringLiteral("ok")).toBool());
+    const QString id = added.value(QStringLiteral("id")).toString();
+    const QPair<int, int> loc = state.mcpLocateClip(id);
+
+    const QJsonObject batch = dispatcher.apply(QJsonObject{
+        {QStringLiteral("ops"),
+         QJsonArray{
+             QJsonObject{{QStringLiteral("tool"), QStringLiteral("set_lottie_slot")},
+                         {QStringLiteral("args"), QJsonObject{{QStringLiteral("clip"), id}, {QStringLiteral("name"), QStringLiteral("accent")},
+                                                              {QStringLiteral("value"), QStringLiteral("#00ff00")}}}},
+             QJsonObject{{QStringLiteral("tool"), QStringLiteral("set_lottie_options")},
+                         {QStringLiteral("args"), QJsonObject{{QStringLiteral("clip"), id}, {QStringLiteral("loop"), QStringLiteral("pingpong")}}}},
+         }},
+    });
+    QVERIFY2(batch.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(batch).toJson(QJsonDocument::Compact)));
+    QVariantMap vector = state.clipAt(loc.first, loc.second).value(QStringLiteral("vector")).toMap();
+    QCOMPARE(vector.value(QStringLiteral("loop")).toString(), QStringLiteral("pingpong"));
+    QCOMPARE(vector.value(QStringLiteral("slots")).toMap().size(), 1);
+
+    state.undo();
+    vector = state.clipAt(loc.first, loc.second).value(QStringLiteral("vector")).toMap();
+    QCOMPARE(vector.value(QStringLiteral("loop")).toString(), QStringLiteral("hold"));
+    QVERIFY(vector.value(QStringLiteral("slots")).toMap().isEmpty());
+}
+
+// The style schema now spells out every key setTextStyle accepts, so an animation patch is
+// applied rather than listed under ignored.
+void McpTest::setTextStyleAcceptsAnimation()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    state.addTextClip(QStringLiteral("Hello"), 0.0);
+    const int track = state.selectedTrack();
+    const int clip = state.selectedClip();
+    const QString id = state.mcpCompactClip(track, clip).value(QStringLiteral("id")).toString();
+    drift::mcp::McpDispatcher dispatcher(&state);
+    const QJsonObject r = dispatcher.applyOne(
+        QStringLiteral("set_text"),
+        {{QStringLiteral("clip"), id},
+         {QStringLiteral("style"), QJsonObject{
+             {QStringLiteral("animIn"), QJsonObject{{QStringLiteral("kind"), QStringLiteral("slideUp")}, {QStringLiteral("duration"), 0.8},
+                                                     {QStringLiteral("unit"), QStringLiteral("word")}}},
+             {QStringLiteral("outlineEnabled"), true},
+             {QStringLiteral("outlineWidth"), 3.0},
+             {QStringLiteral("accent"), QJsonObject{{QStringLiteral("rule"), QStringLiteral("everyNth")}, {QStringLiteral("n"), 3}}}}}});
+    QVERIFY2(r.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(r).toJson(QJsonDocument::Compact)));
+    QVERIFY2(!r.contains(QStringLiteral("ignored")), qPrintable(QJsonDocument(r).toJson(QJsonDocument::Compact)));
+    const QVariantMap style = state.clipAt(track, clip).value(QStringLiteral("textStyle")).toMap();
+    QCOMPARE(style.value(QStringLiteral("animIn")).toMap().value(QStringLiteral("kind")).toString(), QStringLiteral("slideUp"));
+    QCOMPARE(style.value(QStringLiteral("animIn")).toMap().value(QStringLiteral("unit")).toString(), QStringLiteral("word"));
+    QCOMPARE(style.value(QStringLiteral("outlineWidth")).toDouble(), 3.0);
+    QCOMPARE(style.value(QStringLiteral("accent")).toMap().value(QStringLiteral("rule")).toString(), QStringLiteral("everyNth"));
 }
 
 void McpTest::historyEntriesHaveHashes()

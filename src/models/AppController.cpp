@@ -57,6 +57,8 @@
 #include "engine/ModelAsset.h"
 #include "engine/ReverseProxyCache.h"
 #include "engine/VaapiZeroCopy.h"
+#include "engine/VectorClipRenderer.h"
+#include "engine/VectorInspect.h"
 #include "playback/PlaybackDiagnostics.h"
 #include "engine/ReverseRenderer.h"
 #include "engine/Sam2Segmenter.h"
@@ -1514,6 +1516,155 @@ QVariantMap shapeStyleToMap(const drift::ShapeStyle &s)
     };
 }
 
+QVariant vectorSlotValueToVariant(const drift::VectorSlotValue &v)
+{
+    switch (v.type) {
+    case drift::VectorSlotValue::Type::Color:
+        return v.color.name(QColor::HexArgb);
+    case drift::VectorSlotValue::Type::Scalar:
+        return v.scalar;
+    case drift::VectorSlotValue::Type::Vec2:
+        return QVariantList{v.vec2.x(), v.vec2.y()};
+    case drift::VectorSlotValue::Type::Text:
+        return v.text;
+    case drift::VectorSlotValue::Type::Image:
+        return v.image;
+    }
+    return {};
+}
+
+// Metadata only: the document itself can run to megabytes and has its own getter.
+QVariantMap vectorSourceToMap(const drift::VectorSource &v)
+{
+    QVariantMap overrides;
+    for (auto it = v.slotValues.cbegin(); it != v.slotValues.cend(); ++it)
+        overrides.insert(it.key(), vectorSlotValueToVariant(it.value()));
+    return {
+        {QStringLiteral("kind"), drift::vectorKindToString(v.kind)},
+        {QStringLiteral("inline"), v.isInline()},
+        {QStringLiteral("path"), v.path},
+        {QStringLiteral("hash"), v.hash},
+        {QStringLiteral("width"), v.width},
+        {QStringLiteral("height"), v.height},
+        {QStringLiteral("fps"), v.fps},
+        {QStringLiteral("durationSec"), drift::usToSeconds(v.durationUs)},
+        {QStringLiteral("title"), v.title},
+        {QStringLiteral("fit"), drift::vectorFitToString(v.fit)},
+        {QStringLiteral("loop"), drift::vectorLoopToString(v.loop)},
+        {QStringLiteral("offset"), drift::usToSeconds(v.startOffsetUs)},
+        {QStringLiteral("slots"), overrides},
+    };
+}
+
+constexpr qint64 kMaxInlineVectorBytes = 8 * 1024 * 1024;
+
+// `source` is either the document text or a file path. Fills kind/source/path; the probe fills
+// the rest. Empty error on success.
+QString resolveVectorInput(const QString &source, const QString &kindHint, drift::VectorSource *out)
+{
+    const QString trimmed = source.trimmed();
+    if (trimmed.isEmpty())
+        return QStringLiteral("source required: the document text or a path to a .json/.svg file");
+    if (trimmed.startsWith(QLatin1Char('{')) || trimmed.startsWith(QLatin1Char('<'))) {
+        if (trimmed.size() > kMaxInlineVectorBytes)
+            return QStringLiteral("inline document exceeds 8 MB; import it as a file instead");
+        out->source = trimmed;
+        out->path.clear();
+    } else {
+        const QFileInfo info(trimmed);
+        if (!info.isFile())
+            return QStringLiteral("source is neither a document nor an existing file: ") + trimmed;
+        out->path = info.absoluteFilePath();
+        out->source.clear();
+    }
+    const QString kind = kindHint.trimmed().toLower();
+    if (kind == QLatin1String("svg"))
+        out->kind = drift::VectorKind::Svg;
+    else if (kind == QLatin1String("lottie") || kind == QLatin1String("json"))
+        out->kind = drift::VectorKind::Lottie;
+    else
+        out->kind = drift::vec::detectVectorKind(drift::vec::vectorSourceBytes(*out));
+    return {};
+}
+
+// fit / loop / offset / name applied from an options map; only present keys change.
+void applyVectorOptions(drift::Clip &clip, const QVariantMap &opts)
+{
+    drift::VectorSource &v = clip.vector;
+    if (opts.contains(QStringLiteral("fit")))
+        v.fit = drift::vectorFitFromString(opts.value(QStringLiteral("fit")).toString().toLower());
+    if (opts.contains(QStringLiteral("loop")))
+        v.loop = drift::vectorLoopFromString(opts.value(QStringLiteral("loop")).toString().toLower());
+    if (opts.contains(QStringLiteral("offset")))
+        v.startOffsetUs = drift::secondsToUs(opts.value(QStringLiteral("offset")).toDouble());
+    if (opts.contains(QStringLiteral("name")) && !opts.value(QStringLiteral("name")).toString().isEmpty())
+        clip.name = opts.value(QStringLiteral("name")).toString();
+}
+
+// Parses an agent-supplied value against the slot's declared type. Colours take "#rrggbb",
+// "#aarrggbb", a colour name or [r,g,b(,a)] in 0..1 (Lottie's own spelling); vec2 takes [x,y]
+// or {x,y}.
+QString parseVectorSlotValue(drift::VectorSlotValue::Type type, const QVariant &value,
+                             drift::VectorSlotValue *out)
+{
+    switch (type) {
+    case drift::VectorSlotValue::Type::Color: {
+        QColor color;
+        if (value.typeId() == QMetaType::QVariantList) {
+            const QVariantList c = value.toList();
+            if (c.size() < 3)
+                return QStringLiteral("color needs [r,g,b] or [r,g,b,a] in 0..1");
+            color = QColor::fromRgbF(qBound(0.0, c.at(0).toDouble(), 1.0), qBound(0.0, c.at(1).toDouble(), 1.0),
+                                     qBound(0.0, c.at(2).toDouble(), 1.0),
+                                     c.size() > 3 ? qBound(0.0, c.at(3).toDouble(), 1.0) : 1.0);
+        } else {
+            color = QColor(value.toString());
+        }
+        if (!color.isValid())
+            return QStringLiteral("not a colour: ") + value.toString();
+        *out = drift::VectorSlotValue::fromColor(color);
+        return {};
+    }
+    case drift::VectorSlotValue::Type::Scalar: {
+        bool ok = false;
+        const double d = value.toDouble(&ok);
+        if (!ok)
+            return QStringLiteral("scalar slot needs a number");
+        *out = drift::VectorSlotValue::fromScalar(d);
+        return {};
+    }
+    case drift::VectorSlotValue::Type::Vec2: {
+        if (value.typeId() == QMetaType::QVariantList && value.toList().size() >= 2) {
+            const QVariantList p = value.toList();
+            *out = drift::VectorSlotValue::fromVec2(QPointF(p.at(0).toDouble(), p.at(1).toDouble()));
+            return {};
+        }
+        if (value.typeId() == QMetaType::QVariantMap) {
+            const QVariantMap p = value.toMap();
+            if (p.contains(QStringLiteral("x")) && p.contains(QStringLiteral("y"))) {
+                *out = drift::VectorSlotValue::fromVec2(
+                    QPointF(p.value(QStringLiteral("x")).toDouble(), p.value(QStringLiteral("y")).toDouble()));
+                return {};
+            }
+        }
+        return QStringLiteral("vec2 slot needs [x,y] or {x,y}");
+    }
+    case drift::VectorSlotValue::Type::Text:
+        if (value.typeId() != QMetaType::QString)
+            return QStringLiteral("text slot needs a string");
+        *out = drift::VectorSlotValue::fromText(value.toString());
+        return {};
+    case drift::VectorSlotValue::Type::Image: {
+        const QString path = value.toString();
+        if (path.isEmpty() || !QFileInfo(path).isFile())
+            return QStringLiteral("image slot needs the path of an existing image file");
+        *out = drift::VectorSlotValue::fromImage(QFileInfo(path).absoluteFilePath());
+        return {};
+    }
+    }
+    return QStringLiteral("unknown slot type");
+}
+
 QVariantMap keyframeTrackToMap(const drift::KeyframeTrack<double> &track,
                                drift::TimeUs timelineStart);
 
@@ -1669,7 +1820,7 @@ bool isSyntheticTimelineClip(drift::ClipType type)
 {
     return type == drift::ClipType::Text || type == drift::ClipType::Subtitle
            || type == drift::ClipType::Shape || type == drift::ClipType::Image
-           || type == drift::ClipType::Adjustment;
+           || type == drift::ClipType::Vector || type == drift::ClipType::Adjustment;
 }
 
 drift::TimeUs syntheticClipMaxDurationUs()
@@ -1686,6 +1837,7 @@ void syncSyntheticSourceRange(drift::Clip &clip)
 bool clipAcceptsPreviewTransform(const drift::Clip &clip)
 {
     return clip.type == drift::ClipType::Shape || clip.type == drift::ClipType::Image
+           || clip.type == drift::ClipType::Vector
            || clip.type == drift::ClipType::Text || clip.type == drift::ClipType::Subtitle
            || clip.type == drift::ClipType::Video;
 }
@@ -2815,7 +2967,7 @@ QVariantMap AppController::clipToMap(const drift::Clip &clip, const drift::Clip 
     // the whole source, so tiles need the total to place srcIn/srcOut within it).
     const drift::MediaAsset *sourceAsset = m_project.asset(clip.assetId);
 
-    return {
+    QVariantMap map{
         {QStringLiteral("id"), clip.id},
         {QStringLiteral("name"), clip.name},
         {QStringLiteral("path"), clip.path},
@@ -2892,6 +3044,9 @@ QVariantMap AppController::clipToMap(const drift::Clip &clip, const drift::Clip 
         {QStringLiteral("audioEffects"), audioEffects},
         {QStringLiteral("keyframes"), keyframesToMap(clip)},
     };
+    if (clip.type == drift::ClipType::Vector)
+        map.insert(QStringLiteral("vector"), vectorSourceToMap(clip.vector));
+    return map;
 }
 
 int AppController::clipCountForAsset(int assetIndex) const
@@ -4612,6 +4767,11 @@ void AppController::addClipFromAsset(int assetIndex)
     clip.timelineDuration = duration;
     clip.srcIn = 0;
     clip.srcOut = duration;
+    if (clipType == drift::ClipType::Vector) {
+        clip.vector.kind = drift::VectorKind::Lottie;
+        clip.vector.path = clip.path;
+        drift::vec::probeVectorSource(clip.vector);
+    }
     applyAssetLayout(clip, asset, m_project.width(), m_project.height());
 
     track.clips.append(clip);
@@ -12431,6 +12591,245 @@ void AppController::setShapeStyle(int trackIndex, int clipIndex, const QVariantM
 
     pushProjectEdit(before, tr("Shape style changed"));
     finishEdit(tr("Shape style updated"));
+}
+
+bool AppController::vectorSupportAvailable() const
+{
+#ifdef DRIFT_WITH_SKIA
+    return true;
+#else
+    return false;
+#endif
+}
+
+QVariantMap AppController::inspectVector(const QString &source, const QString &kind) const
+{
+    drift::VectorSource probe;
+    const QString error = resolveVectorInput(source, kind, &probe);
+    if (!error.isEmpty())
+        return {{QStringLiteral("ok"), false}, {QStringLiteral("error"), error}};
+    return drift::vec::inspectVector(drift::vec::vectorSourceBytes(probe), probe.kind).toJson().toVariantMap();
+}
+
+QVariantMap AppController::inspectVectorClip(int trackIndex, int clipIndex) const
+{
+    if (!isValidClipIndex(trackIndex, clipIndex)
+        || m_project.tracks().at(trackIndex).clips.at(clipIndex).type != drift::ClipType::Vector) {
+        return {{QStringLiteral("ok"), false}, {QStringLiteral("error"), QStringLiteral("not a vector clip")}};
+    }
+    const drift::VectorSource &v = m_project.tracks().at(trackIndex).clips.at(clipIndex).vector;
+    return drift::vec::inspectVector(drift::vec::vectorSourceBytes(v), v.kind).toJson().toVariantMap();
+}
+
+QString AppController::vectorSourceText(int trackIndex, int clipIndex) const
+{
+    if (!isValidClipIndex(trackIndex, clipIndex)
+        || m_project.tracks().at(trackIndex).clips.at(clipIndex).type != drift::ClipType::Vector)
+        return {};
+    return QString::fromUtf8(
+        drift::vec::vectorSourceBytes(m_project.tracks().at(trackIndex).clips.at(clipIndex).vector));
+}
+
+QVariantMap AppController::addVectorClip(const QString &source, int trackIndex, double atSeconds,
+                                         const QVariantMap &opts)
+{
+    drift::VectorSource vector;
+    QString error = resolveVectorInput(source, opts.value(QStringLiteral("kind")).toString(), &vector);
+    if (error.isEmpty() && !drift::vec::probeVectorSource(vector, &error))
+        error = QStringLiteral("document did not parse: ") + error;
+    if (!error.isEmpty())
+        return {{QStringLiteral("ok"), false}, {QStringLiteral("error"), error}};
+    const drift::vec::InspectReport report =
+        drift::vec::inspectVector(drift::vec::vectorSourceBytes(vector), vector.kind);
+
+    const drift::Project before = m_project;
+    int target = trackIndex;
+    if (target < 0 || target >= m_project.tracks().size()
+        || !m_project.tracks().at(target).allowsClipType(drift::ClipType::Vector)) {
+        target = drift::ensureTrackForClipType(m_project, drift::ClipType::Vector, true);
+    }
+    if (target < 0)
+        return {{QStringLiteral("ok"), false}, {QStringLiteral("error"), QStringLiteral("no graphic track")}};
+
+    // Plays once by default; a still gets the image default.
+    drift::TimeUs duration = vector.durationUs > 0 ? vector.durationUs : drift::kImageClipDurationUs;
+    if (opts.value(QStringLiteral("duration")).toDouble() > 0.0)
+        duration = drift::secondsToUs(opts.value(QStringLiteral("duration")).toDouble());
+    duration = qMax(duration, drift::kMinClipDurationUs);
+
+    drift::Track &track = m_project.tracks()[target];
+    const drift::TimeUs startUs = atSeconds < 0.0 ? m_playheadUs : drift::secondsToUs(atSeconds);
+    const drift::TimeUs start = drift::resolveClipStart(m_project, track, -1, startUs, duration,
+                                                        m_snapEnabled, m_playheadUs);
+
+    drift::Clip clip;
+    clip.id = QUuid::createUuid().toString(QUuid::WithoutBraces);
+    clip.type = drift::ClipType::Vector;
+    clip.vector = vector;
+    clip.name = vector.title.isEmpty()
+                    ? (vector.isInline() ? tr("Animation") : QFileInfo(vector.path).completeBaseName())
+                    : vector.title;
+    clip.timelineStart = start;
+    clip.timelineDuration = duration;
+    clip.srcIn = 0;
+    clip.srcOut = duration;
+    applyVectorOptions(clip, opts);
+    const QVariantMap overrides = opts.value(QStringLiteral("slots")).toMap();
+    QStringList slotErrors;
+    for (auto it = overrides.cbegin(); it != overrides.cend(); ++it) {
+        const drift::vec::VectorSlotInfo *declared = nullptr;
+        for (const drift::vec::VectorSlotInfo &info : report.slotInfos) {
+            if (info.id == it.key())
+                declared = &info;
+        }
+        if (!declared) {
+            slotErrors.append(QStringLiteral("%1: no such slot").arg(it.key()));
+            continue;
+        }
+        drift::VectorSlotValue value;
+        const QString slotError = parseVectorSlotValue(declared->type, it.value(), &value);
+        if (!slotError.isEmpty()) {
+            slotErrors.append(QStringLiteral("%1: %2").arg(it.key(), slotError));
+            continue;
+        }
+        clip.vector.slotValues.insert(it.key(), value);
+    }
+    fitClipLayoutToCanvas(clip, vector.width, vector.height, m_project.width(), m_project.height());
+
+    track.clips.append(clip);
+    const int newClipIndex = track.clips.size() - 1;
+    pushProjectEdit(before, tr("Animation added"));
+    finishEdit(tr("Animation added"));
+    selectClip(target, newClipIndex);
+
+    QVariantMap out = report.toJson().toVariantMap();
+    out.insert(QStringLiteral("id"), clip.id);
+    out.insert(QStringLiteral("track"), target);
+    out.insert(QStringLiteral("index"), newClipIndex);
+    if (!slotErrors.isEmpty())
+        out.insert(QStringLiteral("slotErrors"), slotErrors);
+    return out;
+}
+
+QVariantMap AppController::setVectorSource(int trackIndex, int clipIndex, const QString &source,
+                                           const QVariantMap &opts)
+{
+    if (!isValidClipIndex(trackIndex, clipIndex)
+        || m_project.tracks().at(trackIndex).clips.at(clipIndex).type != drift::ClipType::Vector)
+        return {{QStringLiteral("ok"), false}, {QStringLiteral("error"), QStringLiteral("not a vector clip")}};
+
+    drift::VectorSource vector = m_project.tracks().at(trackIndex).clips.at(clipIndex).vector;
+    QString error = resolveVectorInput(source, opts.value(QStringLiteral("kind")).toString(), &vector);
+    if (error.isEmpty() && !drift::vec::probeVectorSource(vector, &error))
+        error = QStringLiteral("document did not parse: ") + error;
+    if (!error.isEmpty())
+        return {{QStringLiteral("ok"), false}, {QStringLiteral("error"), error}};
+    const drift::vec::InspectReport report =
+        drift::vec::inspectVector(drift::vec::vectorSourceBytes(vector), vector.kind);
+
+    // Overrides for slots the new document does not declare are dropped rather than carried.
+    QMap<QString, drift::VectorSlotValue> kept;
+    for (const drift::vec::VectorSlotInfo &info : report.slotInfos) {
+        auto it = vector.slotValues.constFind(info.id);
+        if (it != vector.slotValues.constEnd() && it->type == info.type)
+            kept.insert(info.id, *it);
+    }
+    vector.slotValues = kept;
+    vector.title = report.title;
+
+    const drift::Project before = m_project;
+    drift::Clip &clip = m_project.tracks()[trackIndex].clips[clipIndex];
+    clip.vector = vector;
+    applyVectorOptions(clip, opts);
+    pushProjectEdit(before, tr("Animation replaced"));
+    finishEdit(tr("Animation replaced"));
+
+    QVariantMap out = report.toJson().toVariantMap();
+    out.insert(QStringLiteral("id"), clip.id);
+    return out;
+}
+
+QString AppController::setVectorOptions(int trackIndex, int clipIndex, const QVariantMap &opts)
+{
+    if (!isValidClipIndex(trackIndex, clipIndex)
+        || m_project.tracks().at(trackIndex).clips.at(clipIndex).type != drift::ClipType::Vector)
+        return QStringLiteral("not a vector clip");
+    static const QStringList kKeys = {QStringLiteral("fit"), QStringLiteral("loop"),
+                                      QStringLiteral("offset"), QStringLiteral("name")};
+    bool any = false;
+    for (const QString &key : kKeys)
+        any = any || opts.contains(key);
+    if (!any)
+        return QStringLiteral("nothing to change: fit, loop, offset or name required");
+    const drift::Project before = m_project;
+    applyVectorOptions(m_project.tracks()[trackIndex].clips[clipIndex], opts);
+    pushProjectEdit(before, tr("Animation options"));
+    finishEdit(tr("Animation options updated"));
+    return {};
+}
+
+QString AppController::setVectorSlot(int trackIndex, int clipIndex, const QString &name,
+                                     const QVariant &value)
+{
+    if (!isValidClipIndex(trackIndex, clipIndex)
+        || m_project.tracks().at(trackIndex).clips.at(clipIndex).type != drift::ClipType::Vector)
+        return QStringLiteral("not a vector clip");
+    if (name.isEmpty())
+        return QStringLiteral("slot name required");
+
+    const drift::VectorSource &current = m_project.tracks().at(trackIndex).clips.at(clipIndex).vector;
+    const drift::vec::InspectReport report =
+        drift::vec::inspectVector(drift::vec::vectorSourceBytes(current), current.kind);
+    const drift::vec::VectorSlotInfo *declared = nullptr;
+    for (const drift::vec::VectorSlotInfo &info : report.slotInfos) {
+        if (info.id == name)
+            declared = &info;
+    }
+    if (!declared) {
+        QStringList ids;
+        for (const drift::vec::VectorSlotInfo &info : report.slotInfos)
+            ids.append(info.id);
+        return ids.isEmpty() ? QStringLiteral("the document declares no slots")
+                             : QStringLiteral("no slot named %1; declared: %2").arg(name, ids.join(QStringLiteral(", ")));
+    }
+
+    const bool clear = !value.isValid() || value.isNull();
+    drift::VectorSlotValue parsed;
+    if (!clear) {
+        const QString error = parseVectorSlotValue(declared->type, value, &parsed);
+        if (!error.isEmpty())
+            return QStringLiteral("%1 (%2 slot): %3").arg(name, drift::vectorSlotTypeToString(declared->type), error);
+    }
+
+    const drift::Project before = m_project;
+    drift::VectorSource &v = m_project.tracks()[trackIndex].clips[clipIndex].vector;
+    if (clear)
+        v.slotValues.remove(name);
+    else
+        v.slotValues.insert(name, parsed);
+    pushProjectEdit(before, tr("Animation slot"));
+    finishEdit(tr("Animation slot updated"));
+    return {};
+}
+
+QVariantList AppController::vectorSlots(int trackIndex, int clipIndex) const
+{
+    if (!isValidClipIndex(trackIndex, clipIndex)
+        || m_project.tracks().at(trackIndex).clips.at(clipIndex).type != drift::ClipType::Vector)
+        return {};
+    const drift::VectorSource &v = m_project.tracks().at(trackIndex).clips.at(clipIndex).vector;
+    const drift::vec::InspectReport report =
+        drift::vec::inspectVector(drift::vec::vectorSourceBytes(v), v.kind);
+    QVariantList out;
+    for (const drift::vec::VectorSlotInfo &info : report.slotInfos) {
+        QVariantMap row{{QStringLiteral("id"), info.id},
+                        {QStringLiteral("type"), drift::vectorSlotTypeToString(info.type)}};
+        auto it = v.slotValues.constFind(info.id);
+        if (it != v.slotValues.constEnd())
+            row.insert(QStringLiteral("value"), vectorSlotValueToVariant(*it));
+        out.append(row);
+    }
+    return out;
 }
 
 void AppController::setClipMask(int trackIndex, int clipIndex, const QVariantMap &maskMap)
