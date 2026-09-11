@@ -139,6 +139,9 @@ if(DRIFT_WITH_SKIA)
     target_include_directories(tst_skia PRIVATE ../src)
     # Skia::Skia directly: the test's painters draw with SkCanvas themselves.
     target_link_libraries(tst_skia PRIVATE Qt6::Test Qt6::Gui Qt6::OpenGL driftengine Skia::Skia)
+    target_compile_definitions(tst_skia PRIVATE
+        DRIFT_TEST_FONTS_DIR="${CMAKE_SOURCE_DIR}/fonts"
+        DRIFT_TEST_EMOJI_FONT_DIR="${CMAKE_SOURCE_DIR}/emoji-fonts")
     add_test(NAME Skia COMMAND tst_skia)
 
     qt_add_executable(tst_vector tst_vector.cpp)

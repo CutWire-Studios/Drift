@@ -7,10 +7,14 @@
 #include "engine/GlRuntime.h"
 #include "engine/GpuCompositor.h"
 #include "engine/GpuEffectExecutor.h"
+#include "engine/EmojiCatalog.h"
+#include "engine/FontCatalog.h"
 #include "engine/RenderBackend.h"
 #include "engine/ShapeRaster.h"
 #include "engine/SkiaRuntime.h"
 #include "engine/SkiaShapePainter.h"
+#include "engine/SkiaTextPainter.h"
+#include "engine/TextRaster.h"
 #include "engine/VectorPainter.h"
 
 #include "include/core/SkCanvas.h"
@@ -18,6 +22,8 @@
 #include "include/core/SkRect.h"
 
 using namespace drift;
+
+Q_DECLARE_METATYPE(drift::TextStyle)
 
 namespace {
 
@@ -169,6 +175,12 @@ private slots:
     void shapePainterMatchesQPainter();
     void shapePainterCacheKey();
     void backendSwitchSelectsShapeRenderer();
+    void textPainterMatchesQPainter_data();
+    void textPainterMatchesQPainter();
+    void textSpanPaintersMatchRasterSpans();
+    void textPainterCacheKeys();
+    void emojiTextMatchesQPainter();
+    void backendSwitchSelectsTextRenderer();
 };
 
 void SkiaTest::grContextAttaches()
@@ -491,6 +503,326 @@ void SkiaTest::backendSwitchSelectsShapeRenderer()
     QVERIFY(qtCount > 500);
     QVERIFY2(qAbs(qtCount - skiaCount) <= qtCount * 0.04,
              qPrintable(QStringLiteral("qt %1 skia %2").arg(qtCount).arg(skiaCount)));
+}
+
+namespace {
+
+// Lit-pixel bounding box, count and alpha-weighted mean colour of a straight-alpha image.
+struct Ink
+{
+    QRect bbox;
+    int count = 0;
+    double r = 0, g = 0, b = 0;
+};
+
+Ink inkOf(const QImage &image)
+{
+    Ink ink;
+    int minX = image.width(), minY = image.height(), maxX = -1, maxY = -1;
+    double mass = 0;
+    const QImage img = image.convertToFormat(QImage::Format_RGBA8888);
+    for (int y = 0; y < img.height(); ++y) {
+        const QRgb *row = reinterpret_cast<const QRgb *>(img.constScanLine(y));
+        for (int x = 0; x < img.width(); ++x) {
+            const int a = qAlpha(row[x]);
+            if (a < 16)
+                continue;
+            ++ink.count;
+            minX = qMin(minX, x);
+            minY = qMin(minY, y);
+            maxX = qMax(maxX, x);
+            maxY = qMax(maxY, y);
+            mass += a;
+            ink.r += qRed(row[x]) * a;
+            ink.g += qGreen(row[x]) * a;
+            ink.b += qBlue(row[x]) * a;
+        }
+    }
+    if (ink.count > 0) {
+        ink.bbox = QRect(QPoint(minX, minY), QPoint(maxX, maxY));
+        ink.r /= mass;
+        ink.g /= mass;
+        ink.b /= mass;
+    }
+    return ink;
+}
+
+QString describe(const Ink &a, const Ink &b)
+{
+    return QStringLiteral("qt n=%1 bbox=%2,%3 %4x%5 rgb=(%6,%7,%8) | skia n=%9 bbox=%10,%11 %12x%13 rgb=(%14,%15,%16)")
+        .arg(a.count).arg(a.bbox.x()).arg(a.bbox.y()).arg(a.bbox.width()).arg(a.bbox.height())
+        .arg(qRound(a.r)).arg(qRound(a.g)).arg(qRound(a.b))
+        .arg(b.count).arg(b.bbox.x()).arg(b.bbox.y()).arg(b.bbox.width()).arg(b.bbox.height())
+        .arg(qRound(b.r)).arg(qRound(b.g)).arg(qRound(b.b));
+}
+
+// Tolerances are wide enough for two antialiasers and a gaussian standing in for a triple box
+// blur, and narrow enough that a missing outline, a shifted block or a wrong colour fails.
+bool inkClose(const Ink &a, const Ink &b, QString *why)
+{
+    *why = describe(a, b);
+    if (a.count == 0 || b.count == 0)
+        return a.count == b.count;
+    const QRect da = a.bbox;
+    const QRect db = b.bbox;
+    if (qAbs(da.left() - db.left()) > 3 || qAbs(da.top() - db.top()) > 3
+        || qAbs(da.right() - db.right()) > 3 || qAbs(da.bottom() - db.bottom()) > 3)
+        return false;
+    if (qAbs(a.count - b.count) > qMax(40, int(a.count * 0.12)))
+        return false;
+    return qAbs(a.r - b.r) <= 16 && qAbs(a.g - b.g) <= 16 && qAbs(a.b - b.b) <= 16;
+}
+
+Clip textClip(const TextStyle &style, const QString &text)
+{
+    Clip clip;
+    clip.type = ClipType::Text;
+    clip.textContent = text;
+    clip.textStyle = style;
+    return clip;
+}
+
+QImage skiaText(const Clip &clip, const QString &text, const QRectF &rect, double scale, int word,
+                QRectF *outRect)
+{
+    const skia::TextPainterResult painted = skia::makeTextPainter(clip, text, rect, scale, word);
+    if (outRect)
+        *outRect = painted.rect;
+    return painted.painter ? skia::SkiaRuntime::rasterize(*painted.painter) : QImage();
+}
+
+} // namespace
+
+void SkiaTest::textPainterMatchesQPainter_data()
+{
+    QTest::addColumn<QString>("text");
+    QTest::addColumn<TextStyle>("style");
+    QTest::addColumn<int>("word");
+
+    TextStyle plain;
+    plain.fontFamily = QStringLiteral("Inter");
+    plain.pixelSize = 56;
+    plain.color = Qt::white;
+    QTest::newRow("plain") << QStringLiteral("Hello world") << plain << -1;
+
+    TextStyle outlined = plain;
+    outlined.color = QColor(250, 220, 40);
+    outlined.outlineEnabled = true;
+    outlined.outlineWidth = 4.0;
+    outlined.outlineColor = QColor(20, 20, 120);
+    outlined.shadowEnabled = true;
+    outlined.shadowOffsetX = 6.0;
+    outlined.shadowOffsetY = 6.0;
+    outlined.shadowBlur = 5.0;
+    outlined.shadowOpacity = 0.8;
+    outlined.shadowColor = Qt::black;
+    QTest::newRow("outline+shadow") << QStringLiteral("Outline shadow") << outlined << -1;
+
+    TextStyle glowing = plain;
+    glowing.glowEnabled = true;
+    glowing.glowColor = QColor(255, 60, 60);
+    glowing.glowRadius = 8.0;
+    glowing.glowOpacity = 0.9;
+    glowing.boxEnabled = true;
+    glowing.boxColor = QColor(0, 0, 0, 160);
+    glowing.boxPadding = 12.0;
+    glowing.boxRadius = 8.0;
+    QTest::newRow("glow+box") << QStringLiteral("Glow box") << glowing << -1;
+
+    TextStyle ruled = plain;
+    ruled.wordHighlight.enabled = true;
+    ruled.wordHighlight.color = QColor(40, 120, 220);
+    ruled.wordHighlight.padding = 6.0;
+    ruled.wordHighlight.radius = 4.0;
+    ruled.underlineEnabled = true;
+    ruled.underlineColor = QColor(255, 255, 0);
+    ruled.underlineWidth = 4.0;
+    ruled.underlineOffset = 8.0;
+    QTest::newRow("pills+underline") << QStringLiteral("Pills and rules") << ruled << -1;
+
+    TextStyle accented = plain;
+    accented.accent.rule = WordAccentRule::EveryNth;
+    accented.accent.n = 2;
+    accented.accent.colorEnabled = true;
+    accented.accent.color = QColor(255, 120, 0);
+    accented.accent.sizeScale = 1.3;
+    accented.accent.outlineEnabled = true;
+    accented.accent.outlineWidth = 2.0;
+    accented.accent.outlineColor = Qt::black;
+    QTest::newRow("accent") << QStringLiteral("one two three four") << accented << -1;
+
+    TextStyle karaoke = plain;
+    karaoke.accent.rule = WordAccentRule::Karaoke;
+    karaoke.accent.colorEnabled = true;
+    karaoke.accent.color = QColor(0, 255, 0);
+    karaoke.accent.highlight.enabled = true;
+    karaoke.accent.highlight.color = QColor(120, 0, 200);
+    QTest::newRow("karaoke") << QStringLiteral("sing along now") << karaoke << 1;
+
+    TextStyle wrapped = plain;
+    wrapped.wordWrap = true;
+    wrapped.align = TextAlign::Right;
+    wrapped.valign = TextVAlign::Bottom;
+    wrapped.lineHeight = 1.2;
+    wrapped.letterSpacing = 2.0;
+    wrapped.italic = true;
+    QTest::newRow("wrap+right+bottom") << QStringLiteral("the quick brown fox jumps over the lazy dog again") << wrapped << -1;
+}
+
+// Same layout, two painters: the block must land in the same place with the same amount of ink
+// and the same overall colour. Antialiasing and the gaussian-vs-box blur keep this from being a
+// pixel comparison.
+void SkiaTest::textPainterMatchesQPainter()
+{
+    QFETCH(QString, text);
+    QFETCH(TextStyle, style);
+    QFETCH(int, word);
+    reloadFontCatalog({QString::fromUtf8(DRIFT_TEST_FONTS_DIR)});
+
+    const Clip clip = textClip(style, text);
+    const QRectF layout(0, 0, 420, 160);
+    const double scale = 0.75;
+    const TextRasterResult qt = rasterizeText(clip, text, layout, scale, word);
+    QRectF skiaRect;
+    const QImage sk = skiaText(clip, text, layout, scale, word, &skiaRect);
+    QVERIFY(!qt.image.isNull());
+    QVERIFY(!sk.isNull());
+    QCOMPARE(sk.size(), qt.image.size());
+    QCOMPARE(skiaRect, qt.rect);
+
+    QString why;
+    QVERIFY2(inkClose(inkOf(qt.image), inkOf(sk), &why), qPrintable(why));
+}
+
+void SkiaTest::textSpanPaintersMatchRasterSpans()
+{
+    reloadFontCatalog({QString::fromUtf8(DRIFT_TEST_FONTS_DIR)});
+    TextStyle style;
+    style.fontFamily = QStringLiteral("Inter");
+    style.pixelSize = 48;
+    style.color = Qt::white;
+    style.outlineEnabled = true;
+    style.outlineWidth = 3.0;
+    style.boxEnabled = true;
+    style.boxColor = QColor(0, 0, 0, 180);
+    style.boxPadding = 10.0;
+    style.animIn.kind = TextAnimKind::SlideUp;
+    style.animIn.unit = TextAnimUnit::Word;
+    const QString text = QStringLiteral("stagger these words");
+    const Clip clip = textClip(style, text);
+    const QRectF layout(30, 20, 400, 120);
+
+    for (TextAnimUnit unit : {TextAnimUnit::Word, TextAnimUnit::Character, TextAnimUnit::Line}) {
+        const QList<TextSpanRaster> qt = rasterizeTextSpans(clip, text, layout, 1.0, unit);
+        const QList<skia::TextSpanPainter> sk = skia::makeTextSpanPainters(clip, text, layout, 1.0, unit);
+        QCOMPARE(sk.size(), qt.size());
+        for (int i = 0; i < qt.size(); ++i) {
+            QCOMPARE(sk[i].index, qt[i].index);
+            QCOMPARE(sk[i].count, qt[i].count);
+            QVERIFY2(qAbs(sk[i].rect.x() - qt[i].rect.x()) <= 2 && qAbs(sk[i].rect.y() - qt[i].rect.y()) <= 2
+                         && qAbs(sk[i].rect.width() - qt[i].rect.width()) <= 2
+                         && qAbs(sk[i].rect.height() - qt[i].rect.height()) <= 2,
+                     qPrintable(QStringLiteral("span %1: qt %2,%3 %4x%5 skia %6,%7 %8x%9").arg(i)
+                                    .arg(qt[i].rect.x()).arg(qt[i].rect.y()).arg(qt[i].rect.width()).arg(qt[i].rect.height())
+                                    .arg(sk[i].rect.x()).arg(sk[i].rect.y()).arg(sk[i].rect.width()).arg(sk[i].rect.height())));
+            const QImage image = skia::SkiaRuntime::rasterize(*sk[i].painter);
+            QCOMPARE(image.size(), qt[i].image.size());
+            QString why;
+            QVERIFY2(inkClose(inkOf(qt[i].image), inkOf(image), &why), qPrintable(QStringLiteral("span %1: %2").arg(i).arg(why)));
+        }
+    }
+    QVERIFY(skia::makeTextSpanPainters(clip, text, layout, 1.0, TextAnimUnit::Block).isEmpty());
+}
+
+void SkiaTest::textPainterCacheKeys()
+{
+    TextStyle style;
+    style.pixelSize = 40;
+    const Clip clip = textClip(style, QStringLiteral("cache me"));
+    const QRectF layout(0, 0, 300, 100);
+    const auto a = skia::makeTextPainter(clip, QStringLiteral("cache me"), layout, 1.0);
+    const auto b = skia::makeTextPainter(clip, QStringLiteral("cache me"), layout, 1.0);
+    QVERIFY(a.painter && b.painter);
+    QVERIFY(a.painter->cacheKey() != 0);
+    QCOMPARE(a.painter->cacheKey(), b.painter->cacheKey());
+    QVERIFY(skia::makeTextPainter(clip, QStringLiteral("cache you"), layout, 1.0).painter->cacheKey() != a.painter->cacheKey());
+    QVERIFY(skia::makeTextPainter(clip, QStringLiteral("cache me"), layout, 0.5).painter->cacheKey() != a.painter->cacheKey());
+    QVERIFY(skia::makeTextPainter(clip, QStringLiteral("cache me"), layout, 1.0, 0).painter->cacheKey() != a.painter->cacheKey());
+    Clip other = clip;
+    other.textStyle.color = Qt::red;
+    QVERIFY(skia::makeTextPainter(other, QStringLiteral("cache me"), layout, 1.0).painter->cacheKey() != a.painter->cacheKey());
+
+    const QList<skia::TextSpanPainter> spans =
+        skia::makeTextSpanPainters(clip, QStringLiteral("cache me"), layout, 1.0, TextAnimUnit::Word);
+    QCOMPARE(spans.size(), 2);
+    QVERIFY(spans[0].painter->cacheKey() != spans[1].painter->cacheKey());
+    QVERIFY(spans[0].painter->cacheKey() != 0);
+}
+
+void SkiaTest::emojiTextMatchesQPainter()
+{
+    reloadFontCatalog({QString::fromUtf8(DRIFT_TEST_FONTS_DIR)});
+    reloadEmojiCatalog({QString::fromUtf8(DRIFT_TEST_EMOJI_FONT_DIR)});
+    if (emojiFontFamily().isEmpty())
+        QSKIP("No emoji font available");
+    TextStyle style;
+    style.fontFamily = QStringLiteral("Inter");
+    style.pixelSize = 56;
+    style.color = Qt::white;
+    style.outlineEnabled = true;
+    style.outlineWidth = 3.0;
+    const QString text = QString::fromUtf8("Party \xF0\x9F\x8E\x89 time \xF0\x9F\x98\x80");
+    const Clip clip = textClip(style, text);
+    const QRectF layout(0, 0, 420, 120);
+    const TextRasterResult qt = rasterizeText(clip, text, layout, 1.0);
+    const QImage sk = skiaText(clip, text, layout, 1.0, -1, nullptr);
+    QVERIFY(!qt.image.isNull() && !sk.isNull());
+    QString why;
+    QVERIFY2(inkClose(inkOf(qt.image), inkOf(sk), &why), qPrintable(why));
+    QVERIFY(inkOf(sk).count > 500);
+}
+
+// DRIFT_VECTOR_RENDERER selects the text backend too; both composite to the same frame footprint.
+void SkiaTest::backendSwitchSelectsTextRenderer()
+{
+    if (!GpuCompositor::isAvailable())
+        QSKIP("GL unavailable");
+    reloadFontCatalog({QString::fromUtf8(DRIFT_TEST_FONTS_DIR)});
+    Project project;
+    project.setResolution(320, 120);
+    project.tracks().clear();
+    project.tracks().append(Track{.type = TrackType::Text});
+    Clip clip;
+    clip.id = QStringLiteral("t");
+    clip.type = ClipType::Text;
+    clip.textContent = QStringLiteral("Switch");
+    clip.textStyle.pixelSize = 64;
+    clip.textStyle.color = QColor(255, 0, 0);
+    clip.timelineStart = 0;
+    clip.timelineDuration = secondsToUs(2.0);
+    clip.transformX.setKeyframe(0, 0.0);
+    clip.transformY.setKeyframe(0, 0.0);
+    clip.transformW.setKeyframe(0, 320.0);
+    clip.transformH.setKeyframe(0, 120.0);
+    project.tracks()[0].clips.append(clip);
+    FrameCompositor compositor;
+    compositor.setProject(&project);
+
+    auto redCount = [](const QImage &img) {
+        int n = 0;
+        for (int y = 0; y < img.height(); ++y)
+            for (int x = 0; x < img.width(); ++x)
+                if (qRed(img.pixel(x, y)) > 180 && qGreen(img.pixel(x, y)) < 90 && qBlue(img.pixel(x, y)) < 90)
+                    ++n;
+        return n;
+    };
+    qputenv("DRIFT_VECTOR_RENDERER", "qt");
+    const int qt = redCount(compositor.compositeAt(secondsToUs(0.5)));
+    qputenv("DRIFT_VECTOR_RENDERER", "skia");
+    const int sk = redCount(compositor.compositeAt(secondsToUs(0.5)));
+    qunsetenv("DRIFT_VECTOR_RENDERER");
+    QVERIFY(qt > 300);
+    QVERIFY2(qAbs(qt - sk) <= qMax(40, int(qt * 0.12)), qPrintable(QStringLiteral("qt %1 skia %2").arg(qt).arg(sk)));
 }
 
 QTEST_MAIN(SkiaTest)

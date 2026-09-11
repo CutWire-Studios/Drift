@@ -541,6 +541,8 @@ add_library(driftengine STATIC
     src/engine/EmojiTable.cpp
     src/engine/TextRaster.h
     src/engine/TextRaster.cpp
+    src/engine/TextLayout.h
+    src/engine/TextLayout.cpp
     src/engine/ShapeRaster.h
     src/engine/ShapeRaster.cpp
     src/engine/RenderBackend.h
@@ -654,6 +656,8 @@ if(DRIFT_WITH_SKIA)
         src/engine/SkiaVectorResources.cpp
         src/engine/SkiaVectorObservers.h
         src/engine/SkiaVectorObservers.cpp
+        src/engine/SkiaTextPainter.h
+        src/engine/SkiaTextPainter.cpp
     )
     # Skia's archives are built without RTTI, so a Drift class deriving from a Skia interface
     # whose virtuals are defined out of line (ImageAsset, PropertyObserver) cannot link with RTTI
@@ -666,6 +670,7 @@ if(DRIFT_WITH_SKIA)
         src/engine/SkiaFonts.cpp
         src/engine/SkiaVectorResources.cpp
         src/engine/SkiaVectorObservers.cpp
+        src/engine/SkiaTextPainter.cpp
         PROPERTIES COMPILE_OPTIONS "$<IF:$<CXX_COMPILER_ID:MSVC>,/GR-,-fno-rtti>")
     # PRIVATE: no header outside src/engine/Skia*.h includes Skia (Vector*.cpp do, under
     # DRIFT_WITH_SKIA), so the defines and the include root stay out of the rest of the build.

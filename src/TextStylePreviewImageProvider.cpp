@@ -2,7 +2,12 @@
 
 #include "core/Clip.h"
 #include "core/TextStyle.h"
+#include "engine/RenderBackend.h"
 #include "engine/TextRaster.h"
+#ifdef DRIFT_WITH_SKIA
+#include "engine/SkiaRuntime.h"
+#include "engine/SkiaTextPainter.h"
+#endif
 
 #include <QPainter>
 
@@ -48,15 +53,31 @@ QImage TextStylePreviewImageProvider::requestImage(const QString &id, QSize *siz
     const QRectF layoutRect(0, 0, width, height);
     // A karaoke pack accents nothing at all without a playhead, so the card borrows the second word.
     const int activeWord = preset->style.accent.rule == drift::WordAccentRule::Karaoke ? 1 : -1;
-    const TextRasterResult raster =
-        rasterizeText(clip, sample, layoutRect, width / kReferenceWidth, activeWord);
+    const double scale = width / kReferenceWidth;
+    QImage raster;
+    QPointF origin;
+#ifdef DRIFT_WITH_SKIA
+    if (drift::vectorBackend() == drift::VectorBackend::Skia) {
+        // Same painter the compositor draws, rasterised on the CPU: no GL on the image provider.
+        const drift::skia::TextPainterResult painted =
+            drift::skia::makeTextPainter(clip, sample, layoutRect, scale, activeWord);
+        if (painted.painter)
+            raster = drift::skia::SkiaRuntime::rasterize(*painted.painter);
+        origin = painted.rect.topLeft();
+    } else
+#endif
+    {
+        const TextRasterResult result = rasterizeText(clip, sample, layoutRect, scale, activeWord);
+        raster = result.image;
+        origin = result.rect.topLeft();
+    }
 
     QImage card(width, height, QImage::Format_ARGB32_Premultiplied);
     card.fill(Qt::transparent);
-    if (!raster.image.isNull()) {
+    if (!raster.isNull()) {
         QPainter p(&card);
         p.setRenderHint(QPainter::SmoothPixmapTransform);
-        p.drawImage(raster.rect.topLeft(), raster.image);
+        p.drawImage(origin, raster);
     }
 
     if (size)

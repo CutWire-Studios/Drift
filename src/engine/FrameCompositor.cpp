@@ -27,6 +27,7 @@
 #include "core/Transition.h"
 #ifdef DRIFT_WITH_SKIA
 #include "SkiaShapePainter.h"
+#include "SkiaTextPainter.h"
 #endif
 
 #include <QBrush>
@@ -771,6 +772,25 @@ void fillGpuLayerMasks(GpuLayer &layer, const drift::Clip &host,
 // `laneMasks` is the whole mask stack the clip's track contributes at this instant. Masks live on
 // the track's lanes rather than on the clip, so one spanning a cut reaches both clips and each
 // rasterizes it in its own frame space.
+// The pixels of a text block: a Skia painter or a QPainter raster, by backend. Returns the
+// destination rect (layout rect grown by the bleed); the layer is left without pixels when
+// there is nothing to draw.
+QRectF fillTextLayer(GpuLayer &layer, const drift::Clip &clip, const QString &text,
+                     const QRectF &layoutRect, double renderScale, int activeWordIndex)
+{
+#ifdef DRIFT_WITH_SKIA
+    if (drift::vectorBackend() == drift::VectorBackend::Skia) {
+        const drift::skia::TextPainterResult painted =
+            drift::skia::makeTextPainter(clip, text, layoutRect, renderScale, activeWordIndex);
+        layer.vector = painted.painter;
+        return painted.rect;
+    }
+#endif
+    const TextRasterResult raster = rasterizeText(clip, text, layoutRect, renderScale, activeWordIndex);
+    layer.source = raster.image;
+    return raster.rect;
+}
+
 GpuLayer buildGpuLayer(const drift::Clip &clip, drift::TimeUs timelineUs, int projectWidth,
                        int projectHeight, double renderScale, int canvasWidth, int canvasHeight,
                        int projectFps, int maxTimeEchoHistoryFrames,
@@ -801,14 +821,14 @@ GpuLayer buildGpuLayer(const drift::Clip &clip, drift::TimeUs timelineUs, int pr
     if (clip.type == drift::ClipType::Text) {
         // The raster carries a bleed margin for the stroke, shadow and box, so its destination rect
         // is wider than the layout rect. Entrance/exit motion rides on the layer, not the pixels.
-        const TextRasterResult raster =
-            rasterizeText(clip, layoutRect, renderScale, karaokeWordIndex(clip, timelineUs));
+        const QRectF rasterRect =
+            fillTextLayer(layer, clip, clip.textContent.isEmpty() ? clip.name : clip.textContent,
+                          layoutRect, renderScale, karaokeWordIndex(clip, timelineUs));
         const TextAnimSample anim = sampleTextAnimation(clip, timelineUs, layoutRect, renderScale);
 
-        layer.source = raster.image;
         layer.effects = resolvedClipEffects(clip, clipTimeUs);
 
-        destRect = raster.rect.translated(anim.dx, anim.dy);
+        destRect = rasterRect.translated(anim.dx, anim.dy);
         if (!qFuzzyCompare(anim.scale, 1.0)) {
             const QPointF centre = destRect.center();
             destRect.setSize(destRect.size() * anim.scale);
@@ -828,20 +848,18 @@ GpuLayer buildGpuLayer(const drift::Clip &clip, drift::TimeUs timelineUs, int pr
         if (!cue || cue->text.trimmed().isEmpty())
             return layer;
 
-        const TextRasterResult raster =
-            rasterizeText(clip, cue->text, layoutRect, renderScale,
-                          karaokeWordIndex(clip, *cue, localUs));
-        if (raster.image.isNull())
+        const QRectF rasterRect = fillTextLayer(layer, clip, cue->text, layoutRect, renderScale,
+                                                karaokeWordIndex(clip, *cue, localUs));
+        if (!layer.hasPixels())
             return layer;
 
         // Each cue animates in and out on its own window, so cues play one after another.
         const TextAnimSample anim = sampleSubtitleCueAnimation(clip, *cue, timelineUs, layoutRect,
                                                                renderScale);
 
-        layer.source = raster.image;
         layer.effects = resolvedClipEffects(clip, clipTimeUs);
 
-        destRect = raster.rect.translated(anim.dx, anim.dy);
+        destRect = rasterRect.translated(anim.dx, anim.dy);
         if (!qFuzzyCompare(anim.scale, 1.0)) {
             const QPointF centre = destRect.center();
             destRect.setSize(destRect.size() * anim.scale);
@@ -929,25 +947,46 @@ QList<GpuItem> buildTextSpanItems(const drift::Clip &clip, drift::TimeUs timelin
     const QRectF layoutRect(x, y, w, h);
 
     const QString text = clip.textContent.isEmpty() ? clip.name : clip.textContent;
-    const QList<TextSpanRaster> spans = rasterizeTextSpans(clip, text, layoutRect, renderScale, unit,
-                                                           karaokeWordIndex(clip, timelineUs));
+    // One entry per span, either backend; only the pixel carrier differs.
+    struct Span
+    {
+        QImage image;
+        std::shared_ptr<const drift::skia::VectorPainter> painter;
+        QRectF rect;
+        int index = 0;
+        int count = 0;
+    };
+    QList<Span> spans;
+#ifdef DRIFT_WITH_SKIA
+    if (drift::vectorBackend() == drift::VectorBackend::Skia) {
+        for (const drift::skia::TextSpanPainter &s : drift::skia::makeTextSpanPainters(
+                 clip, text, layoutRect, renderScale, unit, karaokeWordIndex(clip, timelineUs)))
+            spans.append({QImage(), s.painter, s.rect, s.index, s.count});
+    } else
+#endif
+    {
+        for (const TextSpanRaster &s : rasterizeTextSpans(clip, text, layoutRect, renderScale, unit,
+                                                          karaokeWordIndex(clip, timelineUs)))
+            spans.append({s.image, nullptr, s.rect, s.index, s.count});
+    }
     if (spans.isEmpty())
         return items;
 
     const double clipOpacity = opacityForClip(clip, timelineUs);
     const QList<drift::Effect> baseEffects = resolvedClipEffects(clip, clipTimeUs);
     int spanCount = 0;
-    for (const TextSpanRaster &s : spans)
+    for (const Span &s : spans)
         spanCount = qMax(spanCount, s.count);
 
-    for (const TextSpanRaster &span : spans) {
-        if (span.image.isNull())
+    for (const Span &span : spans) {
+        if (span.image.isNull() && !span.painter)
             continue;
 
         GpuItem item;
         item.blend = clip.blendMode;
         GpuLayer &layer = item.layer;
         layer.source = span.image;
+        layer.vector = span.painter;
         layer.effects = baseEffects;
 
         QRectF destRect = span.rect;
