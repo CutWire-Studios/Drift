@@ -1,5 +1,6 @@
 import QtQuick
 import QtQuick.Controls.Basic
+import QtQuick.Window
 import Drift
 import ".."
 
@@ -236,6 +237,39 @@ Item {
                             return
                         EditorState.setTransitionDuration(
                             root.transitionEditTrack, root.activeTransition.id, v)
+                    }
+                }
+            }
+
+            // Remaps progress across the transition window. "Custom" hands off to the same
+            // curve editor the clip fades use, scoped to this transition.
+            Column {
+                width: parent.width
+                spacing: 4
+                Text {
+                    text: qsTr("Curve")
+                    color: Theme.mutedForeground
+                    font.family: Theme.fontFamily
+                    font.pixelSize: Theme.fontSizeXs
+                }
+                ThemedComboBox {
+                    id: transitionCurveBox
+                    width: parent.width
+                    readonly property var curveIds: ["linear", "smooth", "equalPower", "custom", "bezier"]
+                    model: [qsTr("Linear"), qsTr("Smooth"), qsTr("Natural"), qsTr("Custom"), qsTr("Bezier")]
+                    currentIndex: Math.max(0, curveIds.indexOf(
+                                               root.activeTransition.easingCurve || "linear"))
+                    onActivated: (index) => {
+                        if (!root.hasActiveTransition)
+                            return
+                        const id = transitionCurveBox.curveIds[index]
+                        if (id === "custom" || id === "bezier") {
+                            root.Window.window.openTransitionCurve(
+                                        root.transitionEditTrack, root.activeTransition.id)
+                            return
+                        }
+                        EditorState.setTransitionEasing(
+                                    root.transitionEditTrack, root.activeTransition.id, id)
                     }
                 }
             }

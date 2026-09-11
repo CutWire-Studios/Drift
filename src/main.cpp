@@ -4,6 +4,7 @@
 #include "engine/HwAccel.h"
 #include "engine/ReverseProxyCache.h"
 #ifndef Q_OS_ANDROID
+#include "HeadlessApp.h"
 #include "mcp/McpStdio.h"
 #endif
 #include "models/AddonManager.h"
@@ -13,6 +14,7 @@
 #include "models/FileDialogs.h"
 #include "models/Haptics.h"
 #include "models/LayoutStore.h"
+#include "models/MarketClient.h"
 #include "models/UpdateChecker.h"
 #include "engine/VaapiZeroCopy.h"
 #include "ClipPreviewImageProvider.h"
@@ -35,12 +37,18 @@
 #include <QOffscreenSurface>
 #include <QOpenGLContext>
 #include <QOpenGLFunctions>
+#include <QNetworkAccessManager>
+#include <QNetworkDiskCache>
 #include <QQmlApplicationEngine>
+#include <QQmlNetworkAccessManagerFactory>
+#include <QStandardPaths>
+#include <QStringList>
 #include <QQmlEngine>
 #include <QQuickWindow>
 #include <QSurfaceFormat>
 #include <QtQml/qqml.h>
 #include <QFile>
+#include <QUrl>
 
 #ifdef Q_OS_ANDROID
 #include "core/Project.h"
@@ -108,12 +116,37 @@ void applyLogLevel(bool verbose)
     av_log_set_level(verbose ? AV_LOG_VERBOSE : AV_LOG_ERROR);
 }
 
+// QML's Image loads through the engine's own QNetworkAccessManager, not through any that a
+// model owns, and by default that one has no cache at all — so a server's Cache-Control was
+// ignored and every remote image was refetched whenever its decoded pixmap fell out of Qt's
+// in-memory cache. Scrolling the marketplace grid re-downloaded thumbnails it had already
+// fetched, and a restart refetched all of them.
+//
+// create() is documented as callable from more than one thread, so it must not hand out
+// shared state; each manager gets its own cache object over the same directory, which is how
+// QNetworkDiskCache is meant to be used.
+class CachedNetworkAccessManagerFactory : public QQmlNetworkAccessManagerFactory
+{
+public:
+    QNetworkAccessManager *create(QObject *parent) override
+    {
+        auto *manager = new QNetworkAccessManager(parent);
+        auto *cache = new QNetworkDiskCache(manager);
+        cache->setCacheDirectory(QStandardPaths::writableLocation(QStandardPaths::CacheLocation)
+                                 + QStringLiteral("/qml-http"));
+        cache->setMaximumCacheSize(256LL * 1024 * 1024);
+        manager->setCache(cache);
+        return manager;
+    }
+};
+
 class FileOpenFilter : public QObject
 {
 public:
-    explicit FileOpenFilter(AppController *controller, QObject *parent = nullptr)
+    explicit FileOpenFilter(AppController *controller, MarketClient *market, QObject *parent = nullptr)
         : QObject(parent)
         , m_controller(controller)
+        , m_market(market)
     {
     }
 
@@ -122,6 +155,8 @@ protected:
     {
         if (event->type() == QEvent::FileOpen) {
             const auto *open = static_cast<QFileOpenEvent *>(event);
+            if (m_market && m_market->handleIncomingUrl(open->url()))
+                return true;
             m_controller->queueExternalProject(open->url());
             return true;
         }
@@ -130,6 +165,7 @@ protected:
 
 private:
     AppController *m_controller = nullptr;
+    MarketClient *m_market = nullptr;
 };
 
 #ifdef Q_OS_ANDROID
@@ -324,6 +360,12 @@ int main(int argc, char *argv[])
     applyLogLevel(verboseLoggingRequested(argc, argv));
 
 #ifndef Q_OS_ANDROID
+    // --headless is checked first: it also accepts --mcp-stdio, as the transport to serve
+    // rather than as a request to attach to an editor running elsewhere.
+    for (int i = 1; i < argc; ++i) {
+        if (qstrcmp(argv[i], "--headless") == 0)
+            return drift::runHeadless(argc, argv);
+    }
     for (int i = 1; i < argc; ++i) {
         if (qstrcmp(argv[i], "--mcp-stdio") == 0) {
             QCoreApplication app(argc, argv);
@@ -361,12 +403,6 @@ int main(int argc, char *argv[])
     QCoreApplication::setAttribute(Qt::AA_ShareOpenGLContexts);
 
 #ifdef Q_OS_WIN
-    // DirectWrite mis-maps glyphs in the qrc-embedded Inter used by Theme.fontFamily
-    // (neighbouring letters, stray diacritics). FreeType renders the same file correctly.
-    // An explicit QT_QPA_PLATFORM from the environment still wins.
-    if (qEnvironmentVariableIsEmpty("QT_QPA_PLATFORM"))
-        qputenv("QT_QPA_PLATFORM", "windows:fontengine=freetype");
-
     // Before allowing desktop OpenGL, Qt looks the GPU up in a blacklist keyed on
     // the vendor and device id it gets from Direct3D 9. When that probe fails the
     // ids come back 0x0000, which matches the list's "Standard VGA" entry, and Qt
@@ -395,10 +431,27 @@ int main(int argc, char *argv[])
     drift::applyVaapiZeroCopyXcbEgl();
 
     QApplication app(argc, argv);
-    if (!QImageReader::supportedImageFormats().contains("svg")) {
-        qWarning("SVG icons will not display: Qt's SVG image plugin is missing or built "
-                 "for a different Qt version than this binary. Install a matching qt6-svg "
-                 "(same version as qt6-base).");
+    // A missing image plugin is silent everywhere else: the reader just returns a null QImage,
+    // so the bin card is blank and the clip renders as nothing with no hint why. On a released
+    // APK this line is the only way to tell that from a corrupt file, over adb logcat.
+    {
+        const QList<QByteArray> formats = QImageReader::supportedImageFormats();
+        if (!formats.contains("svg")) {
+            qWarning("SVG icons will not display: Qt's SVG image plugin is missing or built "
+                     "for a different Qt version than this binary. Install a matching qt6-svg "
+                     "(same version as qt6-base).");
+        }
+        QStringList missing;
+        for (const char *format : {"webp", "tiff"}) {
+            if (!formats.contains(QByteArray(format)))
+                missing.append(QString::fromLatin1(format));
+        }
+        if (!missing.isEmpty()) {
+            qWarning("Qt ImageFormats plugins missing (%s): those stills will not decode. "
+                     "Install qt6-imageformats, or add qtimageformats to the Qt kit this was "
+                     "built against.",
+                     qPrintable(missing.join(QStringLiteral(", "))));
+        }
     }
     // Associates the window with the installed .desktop entry so shells (notably
     // Wayland) can find its icon and app metadata.
@@ -461,25 +514,46 @@ int main(int argc, char *argv[])
     static EditorState editorState(&assetLibrary);
     static FileDialogs fileDialogs;
     static AddonManager addonManager;
+    static MarketClient marketClient;
     static UpdateChecker updateChecker;
     static LayoutStore layoutStore;
     static drift::Haptics haptics;
     editorState.setAddonManager(&addonManager);
+    marketClient.setAssetLibrary(&assetLibrary);
+    editorState.setMarketClient(&marketClient);
     qmlRegisterSingletonInstance("Drift", 1, 0, "AssetLibrary", &assetLibrary);
     qmlRegisterSingletonInstance("Drift", 1, 0, "BinFolderModel", editorState.binFolderModel());
     qmlRegisterSingletonInstance("Drift", 1, 0, "EditorState", &editorState);
     qmlRegisterSingletonInstance("Drift", 1, 0, "AppController", &editorState);
     qmlRegisterSingletonInstance("Drift", 1, 0, "FileDialogs", &fileDialogs);
     qmlRegisterSingletonInstance("Drift", 1, 0, "Addons", &addonManager);
+    qmlRegisterSingletonInstance("Drift", 1, 0, "Market", &marketClient);
     qmlRegisterSingletonInstance("Drift", 1, 0, "Updates", &updateChecker);
     qmlRegisterSingletonInstance("Drift", 1, 0, "LayoutMemory", &layoutStore);
     qmlRegisterSingletonInstance("Drift", 1, 0, "Haptics", &haptics);
 
-    app.installEventFilter(new FileOpenFilter(&editorState, &app));
-    editorState.queueExternalProject(
-        AppController::startupProjectUrlFromArguments(app.arguments()));
+    app.installEventFilter(new FileOpenFilter(&editorState, &marketClient, &app));
+    {
+        // Hoisted deliberately: QCoreApplication::arguments() rebuilds and returns a QStringList
+        // BY VALUE on every call, so `const QString &arg = app.arguments().at(i)` bound a
+        // reference into a temporary that died at the end of the statement. Appending it then
+        // read freed memory — heap corruption that only surfaced when something else happened to
+        // reuse the block, which made it look intermittent and unrelated to this loop.
+        const QStringList args = app.arguments();
+        QStringList forwarded = {args.constFirst()};
+        for (int i = 1; i < args.size(); ++i) {
+            const QString &arg = args.at(i);
+            const QUrl url(arg);
+            if (!url.scheme().isEmpty() && marketClient.handleIncomingUrl(url))
+                continue;
+            forwarded.append(arg);
+        }
+        editorState.queueExternalProject(AppController::startupProjectUrlFromArguments(forwarded));
+    }
 
     QQmlApplicationEngine engine;
+    static CachedNetworkAccessManagerFactory networkFactory;
+    engine.setNetworkAccessManagerFactory(&networkFactory);
     QObject::connect(&editorState, &AppController::uiLanguageChanged,
                      &engine, &QQmlEngine::retranslate);
     engine.addImageProvider(QStringLiteral("drift"), new DriftImageProvider());
@@ -489,13 +563,22 @@ int main(int argc, char *argv[])
     engine.addImageProvider(QStringLiteral("textstyle"), new TextStylePreviewImageProvider());
     QObject::connect(
         &engine, &QQmlApplicationEngine::objectCreationFailed, &app, [] { QGuiApplication::exit(-1); }, Qt::QueuedConnection);
-    // Main.qml is the desktop layout. AndroidMain.qml is the touch entry point; the desktop tree
-    // stays compiled so the touch port can reuse leaf components.
-#ifdef Q_OS_ANDROID
-    engine.loadFromModule("Drift", "AndroidMain");
-#else
-    engine.loadFromModule("Drift", "Main");
-#endif
+    // Shell.qml owns the choice between Main.qml (desktop) and AndroidMain.qml (touch) and can
+    // re-make it at runtime as the window crosses the compact breakpoint. Resolved here in one
+    // place, in a fixed precedence: explicit argument, then environment, then platform default.
+    const QStringList shellArgs = app.arguments();
+    QString shellPreference = QStringLiteral("auto");
+    if (shellArgs.contains(QStringLiteral("--shell=mobile")))
+        shellPreference = QStringLiteral("mobile");
+    else if (shellArgs.contains(QStringLiteral("--shell=desktop")))
+        shellPreference = QStringLiteral("desktop");
+    else if (qEnvironmentVariableIsSet("DRIFT_SHELL"))
+        shellPreference = qEnvironmentVariable("DRIFT_SHELL");
+    if (shellPreference != QLatin1String("mobile") && shellPreference != QLatin1String("desktop"))
+        shellPreference = QStringLiteral("auto");
+
+    engine.setInitialProperties({{QStringLiteral("shellPreference"), shellPreference}});
+    engine.loadFromModule("Drift", "Shell");
 
     return app.exec();
 }

@@ -25,73 +25,16 @@ PanelFrame {
 
     // Imports and reports the outcome. `importUrls` skips anything it cannot
     // probe, so a bad file used to just never appear with no explanation at all.
-    // Comparing the row count before and after tells us how many were rejected.
-    // `fromDrop` is the Flatpak case: a drag hands us a host path the sandbox
-    // cannot open, which used to be reported as an unsupported format.
+    // Import policy lives in the MediaImport singleton so surfaces without an AssetsPanel —
+    // the home screen, the Android share target — can import too. Kept as a wrapper because
+    // several call sites and the DropArea below already speak this name.
     function importUrlsReporting(urls, fromDrop) {
-        if (!urls || urls.length === 0)
-            return
-        // Async, because on Android reading a picked file means copying it out of the
-        // SAF stream first. Run inline, that copy blocked the GUI thread for the whole
-        // transfer — which also meant the "Importing…" overlay below was set and cleared
-        // inside one JS turn and never painted at all.
-        const before = AssetLibrary.count
-        if (!AssetLibrary.importUrlsAsync(urls)) {
-            Toasts.warning(qsTr("An import is already running."))
-            return
-        }
-        root._importRequested = urls.length
-        root._countBefore = before
-        root._importFromDrop = !!fromDrop
+        MediaImport.importUrls(urls, fromDrop)
     }
 
-    function importOpenFailedMessage(requested) {
-        if (root._importFromDrop && AssetLibrary.sandboxed) {
-            return requested === 1
-                ? qsTr("Could not open that file. This package cannot read files dropped from other apps — use Import to pick them instead.")
-                : qsTr("Could not open those files. This package cannot read files dropped from other apps — use Import to pick them instead.")
-        }
-        return requested === 1
-            ? qsTr("Could not open that file. It may have been moved, or you may not have permission to read it.")
-            : qsTr("Could not open any of the selected files.")
-    }
-
-    property int _importRequested: 0
-    property int _countBefore: 0
-    property bool _importFromDrop: false
-
-    Connections {
-        target: AssetLibrary
-        function onImportFinished(materialized, failed) {
-            const requested = root._importRequested
-            if (requested <= 0)
-                return
-            root._importRequested = 0
-            const added = AssetLibrary.count - root._countBefore
-            const skipped = requested - added
-            if (added > 0 && skipped > 0) {
-                if (root._importFromDrop && AssetLibrary.sandboxed)
-                    Toasts.warning(qsTr("Imported %1 of %2 files. The rest could not be opened — this package cannot read files dropped from other apps. Use Import instead.")
-                                   .arg(added).arg(requested))
-                else
-                    Toasts.warning(qsTr("Imported %1 of %2 files. %3 could not be read.")
-                                   .arg(added).arg(requested).arg(skipped))
-            } else if (added > 0) {
-                Toasts.success(qsTr("Imported %n files.", "", added))
-            } else if (failed > 0) {
-                Toasts.error(root.importOpenFailedMessage(requested))
-            } else if (materialized > 0) {
-                Toasts.success(qsTr("Imported %n files.", "", requested))
-            } else if (requested === 1) {
-                Toasts.error(qsTr("Could not import that file — the format may be unsupported."))
-            } else {
-                Toasts.error(qsTr("Could not import any of the %n selected files.", "", requested))
-            }
-        }
-    }
-
-    // True while an import is running, so the panel can show progress.
-    readonly property bool importing: AssetLibrary.importing
+    // True while an import is running, so the panel can show progress. The folder walk counts:
+    // it is the half that can take a while on a deep tree or a sandboxed (portal) mount.
+    readonly property bool importing: AssetLibrary.importing || EditorState.importingFolder
 
     // A single id goes through the existing single-asset add so that case is byte-for-byte the
     // behavior it always was; only an actual multi-selection goes through the batch add, which
@@ -517,9 +460,7 @@ PanelFrame {
     // Points a bin row at a different file while every clip using it stays put, so a project set
     // up once — music, outro, CTA — can be re-pointed at the next video instead of rebuilt.
     function requestReplaceAsset(assetIndex) {
-        var url = FileDialogs.openFile(qsTr("Replace Media"), [
-            qsTr("Media files (*.mp4 *.mov *.mkv *.avi *.webm *.m4v *.mp3 *.wav *.aac *.flac *.ogg *.m4a *.png *.jpg *.jpeg *.gif *.webp *.bmp)")
-        ])
+        var url = FileDialogs.openFile(qsTr("Replace Media"), [AssetLibrary.mediaNameFilter()])
         if (!url || url.toString() === "")
             return
         EditorState.replaceAssetSource(assetIndex, url)
@@ -546,6 +487,20 @@ PanelFrame {
     Connections {
         target: EditorState
 
+        // Hitting the limit outranks the skipped count: the walk stopped early, so what it passed
+        // over is only part of the story and saying both would suggest otherwise.
+        function onFolderImportFinished(folders, files, skipped, truncated) {
+            if (folders === 0) {
+                Toasts.error(qsTr("Couldn’t import that folder."))
+            } else if (truncated) {
+                Toasts.warning(qsTr("Imported %n files into %1 folders — as many as one folder import takes. Import the remaining subfolders separately.", "", files).arg(folders))
+            } else if (skipped > 0) {
+                Toasts.warning(qsTr("Imported %n files into %1 folders. %2 files were skipped — Drift does not recognize their format. Drag them onto the bin to try anyway.", "", files).arg(folders).arg(skipped))
+            } else {
+                Toasts.success(qsTr("Imported %n files into %1 folders.", "", files).arg(folders))
+            }
+        }
+
         // The probe runs off-thread, so the outcome comes back here rather than from the call.
         function onAssetReplaceFinished(ok, message, adjustedClips) {
             if (!ok) {
@@ -568,10 +523,23 @@ PanelFrame {
     }
 
     function importMedia() {
-        var urls = FileDialogs.openFiles(qsTr("Import Media"), [
-            qsTr("Media files (*.mp4 *.mov *.mkv *.avi *.webm *.m4v *.mp3 *.wav *.aac *.flac *.ogg *.m4a *.png *.jpg *.jpeg *.gif *.webp *.bmp)")
-        ])
+        var urls = FileDialogs.openFiles(qsTr("Import Media"),
+                                         [AssetLibrary.mediaNameFilter(),
+                                          qsTr("All Files (*)")])
         root.importUrlsReporting(urls)
+    }
+
+    // Imports a whole directory: a new bin folder mirrors the picked folder (and everything
+    // nested under it), and every media file lands in the bin folder matching its containing
+    // directory. EditorState.importFolder does the walk synchronously — probing and
+    // thumbnailing each file still happens in the background the same as any other import.
+    function importFolder() {
+        var url = FileDialogs.openDirectory(qsTr("Import Folder"))
+        if (!url || url.toString() === "")
+            return
+        // The walk runs off-thread, so the outcome arrives as onFolderImportFinished below.
+        if (!EditorState.importFolder(url))
+            Toasts.error(qsTr("Couldn’t import that folder."))
     }
 
     // Selects a tab by id. Used by cross-panel jumps such as the properties
@@ -598,8 +566,8 @@ PanelFrame {
         const tabId = tabsModel.get(activeTab).tabId
         if (tabId === "text" || tabId === "subtitles" || tabId === "stickers" || tabId === "shapes"
                 || tabId === "effects" || tabId === "templates" || tabId === "adjustment"
-                || tabId === "settings" || tabId === "sounds" || tabId === "transitions"
-                || tabId === "shortcuts" || tabId === "scenes")
+                || tabId === "sounds" || tabId === "transitions" || tabId === "masks"
+                || tabId === "shortcuts" || tabId === "scenes" || tabId === "market")
             return false
         const kinds = kindsForTab(tabId)
         return kinds.length === 0 || kinds.indexOf(kind) >= 0
@@ -609,16 +577,17 @@ PanelFrame {
     // evaluated. Labels are translated via tabLabels below.
     property var tabLabels: ({
         "media": qsTr("Media"),
+        "market": qsTr("Market"),
         "text": qsTr("Text"),
         "subtitles": qsTr("Subtitles"),
         "stickers": qsTr("Stickers"),
         "shapes": qsTr("Shapes"),
         "scenes": qsTr("Scenes"),
+        "masks": qsTr("Masks"),
         "effects": qsTr("Effects"),
         "templates": qsTr("Templates"),
         "transitions": qsTr("Transitions"),
         "sounds": qsTr("Audio FX"),
-        "settings": qsTr("Settings"),
         "shortcuts": qsTr("Shortcuts")
     })
 
@@ -627,18 +596,19 @@ PanelFrame {
     // tabId "sounds" is kept for favorites persistence (settings key).
     ListModel {
         id: tabsModel
-        ListElement { tabId: "media"; icon: 0; separatorAfter: true }
+        ListElement { tabId: "media"; icon: 0; separatorAfter: false }
+        ListElement { tabId: "market"; icon: 12; separatorAfter: true }
         ListElement { tabId: "text"; icon: 1; separatorAfter: false }
         ListElement { tabId: "subtitles"; icon: 2; separatorAfter: false }
         ListElement { tabId: "stickers"; icon: 3; separatorAfter: false }
-        ListElement { tabId: "shapes"; icon: 4; separatorAfter: true }
-        ListElement { tabId: "scenes"; icon: 11; separatorAfter: true }
+        ListElement { tabId: "shapes"; icon: 4; separatorAfter: false }
+        ListElement { tabId: "masks"; icon: 11; separatorAfter: true }
+        ListElement { tabId: "scenes"; icon: 10; separatorAfter: true }
         ListElement { tabId: "effects"; icon: 5; separatorAfter: false }
         ListElement { tabId: "templates"; icon: 6; separatorAfter: false }
         ListElement { tabId: "transitions"; icon: 7; separatorAfter: false }
         ListElement { tabId: "sounds"; icon: 8; separatorAfter: true }
-        ListElement { tabId: "settings"; icon: 9; separatorAfter: false }
-        ListElement { tabId: "shortcuts"; icon: 10; separatorAfter: false }
+        ListElement { tabId: "shortcuts"; icon: 9; separatorAfter: false }
     }
     property var tabIcons: [
         Theme.icons.film,
@@ -650,12 +620,12 @@ PanelFrame {
         Theme.icons.layers,
         Theme.icons.chevronsRight,
         Theme.icons.audioLines,
-        Theme.icons.settings,
         Theme.icons.keyboard,
-        Theme.icons.listVideo
+        Theme.icons.listVideo,
+        Theme.icons.mask,
+        Theme.icons.store
     ]
     property int activeTab: 0
-    property bool sortByKind: false
 
     // Fades the tab body in on a tab change instead of hard-cutting to it. Driven
     // as one property the bodies share, rather than fading the whole content
@@ -829,7 +799,6 @@ PanelFrame {
             id: assetsContent
             width: parent.width - (root.sheetMode ? 0 : (Theme.tabRailWidth + Theme.borderWidth))
             height: parent.height
-            property bool gridMode: EditorState.mediaGridMode
 
             Rectangle {
                 width: parent.width
@@ -880,33 +849,6 @@ PanelFrame {
                     spacing: 6
                     visible: kindsForTab(tabsModel.get(root.activeTab).tabId).length > 0
 
-                    IconButton {
-                        glyph: Theme.icons.grid
-                        variant: "ghost"
-                        tooltip: qsTr("Grid view")
-                        active: assetsContent.gridMode
-                        onClicked: EditorState.mediaGridMode = true
-                    }
-                    IconButton {
-                        glyph: Theme.icons.list
-                        variant: "ghost"
-                        tooltip: qsTr("List view")
-                        active: !assetsContent.gridMode
-                        onClicked: EditorState.mediaGridMode = false
-                    }
-                    IconButton {
-                        glyph: root.sortByKind ? Theme.icons.sortByKind : Theme.icons.sortByName
-                        variant: "ghost"
-                        tooltip: root.sortByKind ? qsTr("Sort by name") : qsTr("Sort by type")
-                        onClicked: {
-                            if (root.sortByKind)
-                                AssetLibrary.sortByName()
-                            else
-                                AssetLibrary.sortByKind()
-                            root.sortByKind = !root.sortByKind
-                        }
-                    }
-
                     ThemedButton {
                         text: qsTr("New Folder")
                         variant: "ghost"
@@ -916,14 +858,82 @@ PanelFrame {
                         onClicked: newFolderDialog.open()
                     }
 
-                    ThemedButton {
-                        text: qsTr("Import")
-                        variant: "ghost"
-                        glyph: Theme.icons.upload
-                        tooltip: qsTr("Import video, audio or image files")
-                        enabled: !root.importing
+                    // Split button: the left half imports files, the chevron opens the
+                    // folder variant. Both halves share one bordered box so the header
+                    // reads as two actions, not three competing buttons.
+                    Rectangle {
+                        id: importSplit
                         anchors.verticalCenter: parent.verticalCenter
-                        onClicked: root.importMedia()
+                        width: importFilesHalf.width
+                               + (importMenuHalf.visible ? importSplitDivider.width + importMenuHalf.width : 0)
+                        height: Theme.controlHeight
+                        radius: Theme.radiusSm
+                        color: "transparent"
+                        border.width: Theme.borderWidth
+                        border.color: Theme.panelBorder
+                        opacity: root.importing ? 0.6 : 1
+
+                        Row {
+                            anchors.fill: parent
+                            spacing: 0
+
+                            ThemedButton {
+                                id: importFilesHalf
+                                text: qsTr("Import")
+                                variant: "ghost"
+                                flat: true
+                                radius: Theme.radiusXs
+                                glyph: Theme.icons.upload
+                                tooltip: qsTr("Import video, audio or image files")
+                                enabled: !root.importing
+                                height: parent.height - Theme.borderWidth * 2
+                                anchors.verticalCenter: parent.verticalCenter
+                                onClicked: root.importMedia()
+                            }
+
+                            Rectangle {
+                                id: importSplitDivider
+                                width: Theme.borderWidth
+                                height: parent.height - Theme.spacingLg
+                                anchors.verticalCenter: parent.verticalCenter
+                                color: Theme.panelBorder
+                                visible: importMenuHalf.visible
+                            }
+
+                            ThemedButton {
+                                id: importMenuHalf
+                                variant: "ghost"
+                                flat: true
+                                radius: Theme.radiusXs
+                                glyph: Theme.icons.chevronDown
+                                glyphSize: Theme.iconSizeSm
+                                leftPadding: Theme.spacingLg
+                                rightPadding: Theme.spacingLg
+                                tooltip: qsTr("More import options")
+                                enabled: !root.importing
+                                visible: !Theme.touchUi
+                                height: parent.height - Theme.borderWidth * 2
+                                anchors.verticalCenter: parent.verticalCenter
+                                onClicked: importMenu.popup(0, importSplit.height + Theme.spacingSm)
+                            }
+                        }
+
+                        ThemedContextMenu {
+                            id: importMenu
+                            implicitWidth: 220
+
+                            ThemedMenuItem {
+                                text: qsTr("Import Files…")
+                                icon.name: Theme.icons.upload
+                                onTriggered: root.importMedia()
+                            }
+
+                            ThemedMenuItem {
+                                text: qsTr("Import Folder…")
+                                icon.name: Theme.icons.folderInput
+                                onTriggered: root.importFolder()
+                            }
+                        }
                     }
                 }
             }
@@ -984,18 +994,19 @@ PanelFrame {
                 height: parent.height - Theme.panelHeaderHeight
             }
 
-            SettingsTab {
-                visible: tabsModel.get(activeTab).tabId === "settings"
-                width: parent.width
-                opacity: root.tabOpacity
-                height: parent.height - Theme.panelHeaderHeight
-            }
-
             ShortcutsTab {
                 visible: tabsModel.get(activeTab).tabId === "shortcuts"
                 width: parent.width
                 opacity: root.tabOpacity
                 height: parent.height - Theme.panelHeaderHeight
+            }
+
+            MasksTab {
+                visible: tabsModel.get(activeTab).tabId === "masks"
+                width: parent.width
+                opacity: root.tabOpacity
+                height: parent.height - Theme.panelHeaderHeight
+                onAdded: root.addCompleted()
             }
 
             // Effects browser
@@ -1322,7 +1333,6 @@ PanelFrame {
                 width: parent.width
                 opacity: root.tabOpacity
                 height: parent.height - Theme.panelHeaderHeight
-                gridMode: assetsContent.gridMode
                 importing: root.importing
                 assetVisibleFn: function(kind) { return root.assetVisible(kind) }
                 onPreviewRequested: (assetIndex) => {
@@ -1338,6 +1348,13 @@ PanelFrame {
                 onMoveToFolderRequested: (assetIds) => root.requestMoveAssetToFolder(assetIds)
                 onFolderRenameRequested: (folderId, folderName) => root.requestRenameFolder(folderId, folderName)
                 onFolderMoveRequested: (folderId) => root.requestMoveFolder(folderId)
+            }
+
+            MarketTab {
+                visible: tabsModel.get(activeTab).tabId === "market"
+                width: parent.width
+                opacity: root.tabOpacity
+                height: parent.height - Theme.panelHeaderHeight
             }
         }
     }

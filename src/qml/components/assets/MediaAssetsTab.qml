@@ -22,9 +22,39 @@ Item {
         }
     }
 
-    // Mirrors the header's view toggle, owned by the parent so the toolbar and
-    // grid stay in sync.
-    property bool gridMode: true
+    // "grid" | "list" | "tree", owned by EditorState so it saves with the project.
+    readonly property string viewMode: EditorState.mediaViewMode
+    readonly property bool gridMode: viewMode === "grid"
+    readonly property bool treeMode: viewMode === "tree"
+    // Sorting is a bin-wide reorder of AssetLibrary itself, so this only tracks
+    // which of the two orders the toolbar applied last.
+    property bool sortByKind: false
+
+    // Folder ids currently open in the tree. Pure view state: not saved with the
+    // project and not undoable, so it is a plain map rather than a model column.
+    property var expandedFolderIds: ({})
+
+    function toggleFolderExpanded(folderId) {
+        const next = Object.assign({}, root.expandedFolderIds)
+        if (next[folderId] === true)
+            delete next[folderId]
+        else
+            next[folderId] = true
+        root.expandedFolderIds = next
+    }
+
+    // Expands every folder in the bin, not just the ones under the tree's current
+    // root — ids outside it cost nothing and survive navigating up.
+    function expandAllFolders() {
+        const next = {}
+        for (let i = 0; i < BinFolderModel.count; ++i)
+            next[BinFolderModel.folderAt(i).id] = true
+        root.expandedFolderIds = next
+    }
+
+    function collapseAllFolders() {
+        root.expandedFolderIds = ({})
+    }
     // True while an import is running, so the empty state can step aside.
     property bool importing: false
     // Kind visibility filter supplied by the parent (depends on the active tab).
@@ -194,6 +224,116 @@ Item {
         function onAssetMetadataChanged(assetId) { refreshCoalesceTimer.restart() }
     }
 
+    // Tree view's flattened rows: the current folder's contents, with each open folder's
+    // own contents spliced in right after it. `folderCount`/`assetCount` are handed in
+    // rather than read here so the binding below registers a dependency on them — a
+    // function call gives it nothing to re-evaluate on by itself.
+    function _buildTree(rootFolderId, q, expanded, folderCount, assetCount) {
+        const items = []
+
+        // One pass over each model instead of a rescan per level.
+        const childFolders = {}
+        for (let j = 0; j < folderCount; ++j) {
+            const folder = BinFolderModel.folderAt(j)
+            if (!childFolders[folder.parentId])
+                childFolders[folder.parentId] = []
+            childFolders[folder.parentId].push(folder)
+        }
+        const childAssets = {}
+        for (let i = 0; i < assetCount; ++i) {
+            const asset = AssetLibrary.assetAt(i)
+            if (!root.assetVisibleFn(asset.kind))
+                continue
+            if (!childAssets[asset.folderId])
+                childAssets[asset.folderId] = []
+            childAssets[asset.folderId].push(asset)
+        }
+
+        // A folder stays in a search result when anything below it matches; otherwise a
+        // hit three levels down would have no visible path leading to it.
+        const subtreeHit = {}
+        function subtreeMatches(folderId, seen) {
+            if (subtreeHit[folderId] !== undefined)
+                return subtreeHit[folderId]
+            // Project deserialization doesn't reject a cycle in parentId, so guard the
+            // walk the same way BinBreadcrumb.qml guards its trail.
+            if (seen.has(folderId))
+                return false
+            seen.add(folderId)
+            let hit = false
+            const assets = childAssets[folderId] || []
+            for (let i = 0; i < assets.length && !hit; ++i)
+                hit = assets[i].name.toLowerCase().indexOf(q) >= 0
+            const folders = childFolders[folderId] || []
+            for (let j = 0; j < folders.length && !hit; ++j)
+                hit = folders[j].name.toLowerCase().indexOf(q) >= 0
+                      || subtreeMatches(folders[j].id, seen)
+            subtreeHit[folderId] = hit
+            return hit
+        }
+
+        function walk(parentId, depth, seen) {
+            if (seen.has(parentId))
+                return
+            seen.add(parentId)
+
+            const folders = childFolders[parentId] || []
+            for (const folder of folders) {
+                const deepHit = q.length > 0 && subtreeMatches(folder.id, new Set())
+                if (q.length > 0 && folder.name.toLowerCase().indexOf(q) < 0 && !deepHit)
+                    continue
+                const hasChildren = (childFolders[folder.id] || []).length > 0
+                                    || (childAssets[folder.id] || []).length > 0
+                // While searching, every folder on the path to a hit opens itself; the
+                // user's own expansion state is restored when the query clears.
+                const open = hasChildren && (q.length > 0 ? deepHit : expanded[folder.id] === true)
+                items.push({
+                    isFolder: true,
+                    folderId: folder.id,
+                    assetId: "",
+                    name: folder.name,
+                    assetIndex: -1,
+                    kind: "",
+                    duration: "",
+                    durationSeconds: 0,
+                    path: "",
+                    thumbnailPath: "",
+                    filmstripPath: "",
+                    depth: depth,
+                    expanded: open,
+                    expandable: hasChildren
+                })
+                if (open)
+                    walk(folder.id, depth + 1, seen)
+            }
+
+            const assets = childAssets[parentId] || []
+            for (const asset of assets) {
+                if (q.length > 0 && asset.name.toLowerCase().indexOf(q) < 0)
+                    continue
+                items.push({
+                    isFolder: false,
+                    folderId: "",
+                    assetId: asset.id,
+                    name: asset.name,
+                    assetIndex: asset.assetIndex,
+                    kind: asset.kind,
+                    duration: asset.duration,
+                    durationSeconds: asset.durationSeconds,
+                    path: asset.path,
+                    thumbnailPath: asset.thumbnailPath,
+                    filmstripPath: asset.filmstripPath,
+                    depth: depth,
+                    expanded: false,
+                    expandable: false
+                })
+            }
+        }
+
+        walk(rootFolderId, 0, new Set())
+        return items
+    }
+
     // Single source of truth for what's shown: folders in the current bin folder first, then
     // its media, one flat array — not two separately-scrolling views. Every entry carries the
     // same set of keys regardless of kind (folder rows get placeholder asset fields and vice
@@ -203,6 +343,10 @@ Item {
         const q = root.query
         const currentFolder = EditorState.currentBinFolderId
         const items = []
+
+        if (root.treeMode)
+            return root._buildTree(currentFolder, q, root.expandedFolderIds,
+                                   BinFolderModel.count, AssetLibrary.count)
 
         for (let j = 0; j < BinFolderModel.count; ++j) {
             const folder = BinFolderModel.folderAt(j)
@@ -221,7 +365,10 @@ Item {
                 durationSeconds: 0,
                 path: "",
                 thumbnailPath: "",
-                filmstripPath: ""
+                filmstripPath: "",
+                depth: 0,
+                expanded: false,
+                expandable: false
             })
         }
 
@@ -244,7 +391,10 @@ Item {
                 durationSeconds: asset.durationSeconds,
                 path: asset.path,
                 thumbnailPath: asset.thumbnailPath,
-                filmstripPath: asset.filmstripPath
+                filmstripPath: asset.filmstripPath,
+                depth: 0,
+                expanded: false,
+                expandable: false
             })
         }
 
@@ -693,6 +843,15 @@ Item {
             required property string duration
             required property string thumbnailPath
             required property int assetIndex
+            required property int depth
+            required property bool expanded
+            required property bool expandable
+
+            // Tree rows step in by depth, and every row leaves room for a disclosure
+            // arrow so names still line up under folders that have none.
+            readonly property real treeIndent: root.treeMode ? listRow.depth * Theme.spacing2xl : 0
+            readonly property real disclosureSpace: root.treeMode ? Theme.iconButtonSize : 0
+
             readonly property bool replaceBusy:
                 !isFolder && EditorState.replacingAssetId.length > 0
                 && EditorState.replacingAssetId === AssetLibrary.assetIdAt(assetIndex)
@@ -716,6 +875,7 @@ Item {
                 id: listRowContent
                 anchors.fill: parent
                 anchors.margins: Theme.spacingLg
+                anchors.leftMargin: Theme.spacingLg + listRow.treeIndent + listRow.disclosureSpace
                 spacing: Theme.spacingLg + Theme.spacingXs
 
                 Rectangle {
@@ -890,6 +1050,21 @@ Item {
                 }
             }
 
+            // Declared after the tap overlay above so it sits on top of it: the arrow has
+            // to take the press itself, or the overlay's handlers would swallow it and the
+            // row would only ever open on a double-click.
+            IconButton {
+                visible: root.treeMode && listRow.isFolder && listRow.expandable
+                x: Theme.spacingLg + listRow.treeIndent
+                anchors.verticalCenter: parent.verticalCenter
+                buttonSize: Theme.iconButtonSize
+                iconSize: Theme.iconSizeMd
+                variant: "ghost"
+                glyph: listRow.expanded ? Theme.icons.chevronDown : Theme.icons.chevronRight
+                tooltip: listRow.expanded ? qsTr("Collapse folder") : qsTr("Expand folder")
+                onClicked: root.toggleFolderExpanded(listRow.folderId)
+            }
+
             ThemedContextMenu {
                 id: rowMenu
 
@@ -983,27 +1158,118 @@ Item {
         onActionTriggered: root.importRequested()
     }
 
-    BinBreadcrumb {
-        id: breadcrumb
+    ThemedTextField {
+        id: search
         anchors.top: parent.top
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.margins: Theme.pagePadding
-        anchors.bottomMargin: 0
-        currentFolderId: EditorState.currentBinFolderId
-        onNavigate: (folderId) => EditorState.currentBinFolderId = folderId
-    }
-
-    ThemedTextField {
-        id: search
-        anchors.top: breadcrumb.visible ? breadcrumb.bottom : parent.top
-        anchors.topMargin: breadcrumb.visible ? Theme.spacingSm : 0
-        anchors.left: parent.left
-        anchors.right: parent.right
-        anchors.margins: Theme.pagePadding
+        // Shares its row with the view/sort toggles, which the panel header no
+        // longer has room for alongside the import actions.
+        anchors.rightMargin: Theme.pagePadding + viewControls.width + Theme.spacingMd
         visible: AssetLibrary.count > 0 || BinFolderModel.count > 0
         placeholderText: qsTr("Search media")
         font.family: Theme.fontFamily
+    }
+
+    Row {
+        id: viewControls
+        anchors.right: parent.right
+        anchors.rightMargin: Theme.pagePadding
+        anchors.verticalCenter: search.verticalCenter
+        spacing: Theme.spacingSm
+        visible: search.visible
+
+        IconButton {
+            glyph: Theme.icons.layoutGrid
+            variant: "ghost"
+            tooltip: qsTr("Grid view")
+            active: root.gridMode
+            onClicked: EditorState.mediaViewMode = "grid"
+        }
+
+        IconButton {
+            glyph: Theme.icons.list
+            variant: "ghost"
+            tooltip: qsTr("List view")
+            active: root.viewMode === "list"
+            onClicked: EditorState.mediaViewMode = "list"
+        }
+
+        IconButton {
+            glyph: Theme.icons.listTree
+            variant: "ghost"
+            tooltip: qsTr("Tree view")
+            active: root.treeMode
+            onClicked: EditorState.mediaViewMode = "tree"
+        }
+
+        IconButton {
+            glyph: root.sortByKind ? Theme.icons.sortByKind : Theme.icons.sortByName
+            variant: "ghost"
+            tooltip: root.sortByKind ? qsTr("Sort by name") : qsTr("Sort by type")
+            onClicked: {
+                if (root.sortByKind)
+                    AssetLibrary.sortByName()
+                else
+                    AssetLibrary.sortByKind()
+                root.sortByKind = !root.sortByKind
+            }
+        }
+    }
+
+    // Where you are in the bin, and — in tree view — what the whole tree does at once.
+    Item {
+        id: binNavRow
+        anchors.top: search.visible ? search.bottom : parent.top
+        anchors.topMargin: visible ? Theme.spacingSm : 0
+        anchors.left: parent.left
+        anchors.right: parent.right
+        anchors.leftMargin: Theme.pagePadding
+        anchors.rightMargin: Theme.pagePadding
+
+        // Derived from the same conditions the two children use rather than from their
+        // `visible`: Item.visible reads back the *effective* visibility, so keying the row
+        // off a child's would have been a loop through the child's own parent.
+        readonly property bool showBreadcrumb: BinFolderModel.count > 0
+                                               && EditorState.currentBinFolderId !== ""
+        readonly property bool showTreeActions: root.treeMode && BinFolderModel.count > 0
+
+        visible: showBreadcrumb || showTreeActions
+        // Collapses completely when empty so it doesn't push the items down for nothing.
+        height: visible ? Math.max(showBreadcrumb ? breadcrumb.implicitHeight : 0,
+                                   showTreeActions ? treeActions.implicitHeight : 0)
+                        : 0
+
+        BinBreadcrumb {
+            id: breadcrumb
+            anchors.left: parent.left
+            anchors.verticalCenter: parent.verticalCenter
+            currentFolderId: EditorState.currentBinFolderId
+            onNavigate: (folderId) => EditorState.currentBinFolderId = folderId
+        }
+
+        Row {
+            id: treeActions
+            anchors.right: parent.right
+            anchors.verticalCenter: parent.verticalCenter
+            spacing: Theme.spacingSm
+            visible: binNavRow.showTreeActions
+
+            IconButton {
+                glyph: Theme.icons.listChevronsUpDown
+                variant: "ghost"
+                tooltip: qsTr("Expand all")
+                onClicked: root.expandAllFolders()
+            }
+
+            IconButton {
+                glyph: Theme.icons.listChevronsDownUp
+                variant: "ghost"
+                tooltip: qsTr("Collapse all")
+                onClicked: root.collapseAllFolders()
+            }
+        }
     }
 
     // Search matched nothing in this folder.
@@ -1034,7 +1300,7 @@ Item {
         id: grid
         visible: root.gridMode && root.combinedItems.length > 0
 
-        anchors.top: search.bottom
+        anchors.top: binNavRow.bottom
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.bottom: parent.bottom
@@ -1057,7 +1323,7 @@ Item {
         id: listColumn
         visible: !root.gridMode && root.combinedItems.length > 0
 
-        anchors.top: search.bottom
+        anchors.top: binNavRow.bottom
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.bottom: parent.bottom

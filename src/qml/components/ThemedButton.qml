@@ -12,6 +12,9 @@ Button {
     property string glyph: ""
     property real glyphSize: Theme.iconSizeMd
     property string tooltip: ""
+    // Corner rounding of the background. Segments merged into one bordered group
+    // (the media bin's split Import button) tuck a smaller radius inside the box.
+    property real radius: Theme.radiusSm
     // "auto" | "press" | "confirm" | "select" | "none". auto is confirm for primary
     // and destructive (those commit something) and press for everything else.
     property string haptic: "auto"
@@ -75,8 +78,10 @@ Button {
         }
     }
 
-    readonly property bool _drawBorder: variant === "secondary" || variant === "ghost"
-                                        || variant === "destructive"
+    // Button.flat drops the border so the button can sit inside a shared bordered
+    // group without doubling the outline at the join.
+    readonly property bool _drawBorder: !flat && (variant === "secondary" || variant === "ghost"
+                                        || variant === "destructive")
 
     contentItem: Item {
         id: content
@@ -128,7 +133,7 @@ Button {
 
     background: Rectangle {
         implicitHeight: Theme.controlHeight
-        radius: Theme.radiusSm
+        radius: root.radius
         color: root._bg
         border.width: root._drawBorder ? Theme.borderWidth : 0
         border.color: Theme.panelBorder

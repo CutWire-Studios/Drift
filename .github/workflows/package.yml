@@ -161,7 +161,7 @@ jobs:
           sudo apt-get install -y -o Acquire::Retries=3 \
             build-essential ninja-build pkg-config git xvfb \
             libgl1-mesa-dev libegl1-mesa-dev libglib2.0-dev libdbus-1-dev \
-            libzstd-dev libssl-dev libsoundtouch-dev \
+            libzstd-dev libssl-dev libsoundtouch-dev zlib1g-dev \
             libpulse-dev libasound2-dev \
             libva2 libva-drm2 libva-x11-2 \
             libfontconfig1-dev libfreetype6-dev libxkbcommon-dev libxkbcommon-x11-dev \
@@ -320,9 +320,11 @@ jobs:
           restore-keys: |
             vcpkg-bincache-win-
 
-      # zstd (addon package decompression), openssl (addon signature verification) and soundtouch
-      # (voice-effect pitch shifting) are the three non-Qt, non-FFmpeg libraries Drift links. All
-      # three ship a CMake config here, which is what lets the MSVC build work with no pkg-config.
+      # zstd (addon package decompression), openssl (addon signature verification), soundtouch
+      # (voice-effect pitch shifting) and zlib (the project-file importers' inflate) are the
+      # non-Qt, non-FFmpeg libraries Drift links. Windows is the only target with no ambient
+      # zlib — every other platform's SDK, base install or runtime already carries one — so it
+      # has to be named here or find_package(ZLIB REQUIRED) fails at configure.
       - name: Install vcpkg dependencies
         shell: pwsh
         env:
@@ -333,7 +335,7 @@ jobs:
             git clone --depth 1 https://github.com/microsoft/vcpkg.git vcpkg
             .\vcpkg\bootstrap-vcpkg.bat
           }
-          .\vcpkg\vcpkg.exe install zstd openssl soundtouch --triplet x64-windows
+          .\vcpkg\vcpkg.exe install zstd openssl soundtouch zlib --triplet x64-windows
 
       # Save even when a later step fails so the vcpkg build is not repeated on
       # the next run (actions/cache only saves on job success).
@@ -372,9 +374,36 @@ jobs:
             -DFETCHCONTENT_BASE_DIR=${{ env.FETCHCONTENT_BASE_DIR }} `
             -DDRIFT_BUNDLE_ONNXRUNTIME=OFF
 
+      # No --target list any more: the tests have to be built here, and building everything is
+      # what also gets tools/ compiled by MSVC. Until this job ran ctest, Windows was the one
+      # desktop platform where nothing under tests/ was even known to compile.
+      #
+      # --parallel 2, not bare --parallel: tst_editorstate compiles AppController.cpp and the
+      # whole MCP layer into one translation unit, and on a 4-core/16 GB runner four of those
+      # alongside the QML cache TUs exhausted the compiler heap (C1060). The job has a 120
+      # minute budget and was failing 15 minutes in, so the headroom is worth more than the
+      # wall-clock. Raise it only with evidence from a green run.
       - name: Build
         shell: pwsh
-        run: cmake --build build --config Release --target drift audiobackendcheck --parallel
+        run: cmake --build build --config Release --parallel 2
+
+      # Visual Studio is a multi-config generator, hence -C Release.
+      #
+      # .deps\ffmpeg\bin goes on PATH ahead of Qt's: Qt ships its own avcodec/avformat DLLs under
+      # the same names, and the suite has to run against the FFmpeg the binaries were built
+      # against, not Qt's copy. It also supplies the ffmpeg.exe that the tests which synthesize
+      # their clips through QProcess look for.
+      #
+      # Addon content (fonts, emoji font, effect catalogue) is deliberately not staged here the
+      # way tests.yml does it — that staging needs a symlink outside the workspace, which needs
+      # elevation on Windows. Roughly 16 tests QSKIP as a result; the rest is what this covers.
+      #
+      # Serial, not ctest -j: the suites share QStandardPaths::AppDataLocation test-mode state.
+      - name: Test
+        shell: pwsh
+        run: |
+          $env:PATH = "${{ github.workspace }}\.deps\ffmpeg\bin;${{ env.QT_ROOT_DIR }}\bin;$env:PATH"
+          ctest --test-dir build -C Release --output-on-failure
 
       - name: Stage runtime files
         shell: pwsh
@@ -658,6 +687,11 @@ jobs:
       # Android kit Qt version — independent of the desktop QT_VERSION above. scripts/build.sh
       # pins the same number.
       QT_ANDROID_VERSION: 6.11.1
+      # qtshadertools builds the QuickEffects shaders; qtimageformats supplies the qwebp and qtiff
+      # plugins. Those plugins have no link-time reference, so nothing in the build fails without
+      # them — androiddeployqt simply bundles no qwebp and every .webp/.tiff still decodes to a null
+      # QImage on device. Keep this in sync with QT_MODULES for the desktop jobs.
+      QT_ANDROID_MODULES: "qtmultimedia qtshadertools qtimageformats"
       NDK_VERSION: 27.2.12479018
 
     steps:
@@ -699,9 +733,9 @@ jobs:
           pipx install aqtinstall
           export PATH="$HOME/.local/bin:$PATH"
           aqt install-qt linux desktop "$QT_ANDROID_VERSION" linux_gcc_64 \
-            -m qtmultimedia qtshadertools -O "$HOME/Qt"
+            -m $QT_ANDROID_MODULES -O "$HOME/Qt"
           aqt install-qt all_os android "$QT_ANDROID_VERSION" "${{ matrix.qt_arch }}" \
-            -m qtmultimedia qtshadertools -O "$HOME/Qt"
+            -m $QT_ANDROID_MODULES -O "$HOME/Qt"
           # Qt builds each Android kit on whichever host it happens to use — the ARMv7 one comes
           # from a Windows machine, and that 7z carries no POSIX permission bits, so every script
           # in the kit extracts non-executable and scripts/build.sh finds no runnable qt-cmake.

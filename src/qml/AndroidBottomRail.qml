@@ -21,6 +21,11 @@ Item {
     property string activeId: ""
     signal tabRequested(string tabId)
     signal editRequested()
+
+    readonly property bool hasSelection: {
+        void EditorState.selection
+        return EditorState.selectedTrack >= 0 && EditorState.selectedClip >= 0
+    }
     signal addRequested()
 
     // Clear the system gesture/nav bar without leaving a dead strip under the rail.
@@ -141,12 +146,23 @@ Item {
             }
         }
 
+        // Edit is the one slot that needs something selected. Dimmed and answered with a
+        // toast rather than silently opening an empty sheet: a rail slot that does nothing
+        // when tapped reads as a broken app.
         RailButton {
             x: 0
             width: railBody.slotWidth
             entry: root.items[0]
             selected: root.activeId === entry.id
-            onClicked: root.editRequested()
+            opacity: root.hasSelection ? 1 : 0.45
+            onClicked: {
+                Haptics.select()
+                if (!root.hasSelection) {
+                    Toasts.info(qsTr("Tap a clip to edit it"))
+                    return
+                }
+                root.editRequested()
+            }
         }
 
         RailButton {

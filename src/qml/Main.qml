@@ -7,11 +7,43 @@ import "components"
 ApplicationWindow {
     id: window
 
+    // Qt creates some chrome itself — most visibly the Undo/Cut/Copy/Paste menu on every
+    // TextField and TextArea (Basic/TextField.qml declares ContextMenu.menu). Drift styles
+    // none of that, so it fell through to the palette the platform theme supplies and picked
+    // up the desktop's colour scheme: on a KDE session with a custom scheme the editing menu
+    // rendered in that scheme's colours next to Drift's own. Palette propagates down the item
+    // hierarchy, popups included, so setting the roles the Basic style reads brings Qt's own
+    // chrome under Theme — and binding them keeps it following the light/dark toggle.
+    palette.window: Theme.panelBackground
+    palette.windowText: Theme.panelForeground
+    palette.base: Theme.panelAccent
+    palette.text: Theme.panelForeground
+    palette.button: Theme.panelAccent
+    palette.buttonText: Theme.panelForeground
+    palette.placeholderText: Theme.mutedForeground
+    // Menu border and item states: dark draws the frame, light the hovered row,
+    // midlight the pressed one.
+    palette.dark: Theme.panelBorder
+    palette.mid: Theme.panelMuted
+    palette.midlight: Theme.panelAccent
+    palette.light: Theme.popoverHover
+    // Drawn at 12% and 50% alpha for the menu's drop shadow; appBackground would
+    // make that a white glow in light mode.
+    palette.shadow: "#000000"
+    palette.highlight: Theme.primary
+    palette.highlightedText: Theme.primaryForeground
+    palette.toolTipBase: Theme.panelBackground
+    palette.toolTipText: Theme.panelForeground
+
     width: 1280
     height: 800
     // Below this the split minimums cannot all be satisfied and panels overlap.
+    // Left at the expanded-layout floor on purpose. Lowering it is a prerequisite for the
+    // single-pane collapse below 600dp, which is not built yet — until it is, a narrower window
+    // would only let the desktop arrangement be squashed into a size it cannot lay out in.
     minimumWidth: Theme.windowMinimumWidth
     minimumHeight: Theme.windowMinimumHeight
+
     // Shown from Component.onCompleted, once the stored geometry is in place:
     // assigning it to a window that is already up makes it jump across the screen,
     // and a session left maximized would flash at its windowed size first.
@@ -78,7 +110,12 @@ ApplicationWindow {
 
     onXChanged: geometrySettleTimer.restart()
     onYChanged: geometrySettleTimer.restart()
-    onWidthChanged: geometrySettleTimer.restart()
+    onWidthChanged: {
+        // Theme is a singleton and cannot see a window, so the size class it reports has to be
+        // fed from whichever root is live. Screen is the wrong source: it ignores tiling.
+        Theme.windowWidth = width
+        geometrySettleTimer.restart()
+    }
     onHeightChanged: geometrySettleTimer.restart()
 
     function restoreWindowGeometry() {
@@ -372,6 +409,10 @@ ApplicationWindow {
         id: debugInfoDialog
     }
 
+    SettingsDialog {
+        id: settingsDialog
+    }
+
     PasteAttributesDialog {
         id: pasteAttributesDialog
     }
@@ -393,6 +434,25 @@ ApplicationWindow {
     // Another view of the same timeline rather than an editor of its own — see MulticamWindow.
     MulticamWindow {
         id: multicamWindow
+    }
+
+    DownloadsWindow {
+        id: downloadsWindow
+
+        // Shows itself the first time a download starts, then stays out of the way:
+        // reopening on every later job would yank focus mid-edit for something the header
+        // badge already reports.
+        property bool shownOnce: false
+
+        Connections {
+            target: Market
+            function onDownloadStarted(itemId) {
+                if (downloadsWindow.shownOnce)
+                    return
+                downloadsWindow.shownOnce = true
+                downloadsWindow.show()
+            }
+        }
     }
 
     DenoiseWindow {
@@ -428,6 +488,10 @@ ApplicationWindow {
         fadeCurveWindow.openFor(track, clip)
     }
 
+    function openTransitionCurve(track, transitionId) {
+        fadeCurveWindow.openForTransition(track, transitionId)
+    }
+
     function openMediaPreview(assetIndex) {
         mediaPreviewWindow.openFor(assetIndex)
     }
@@ -436,6 +500,12 @@ ApplicationWindow {
     // not bound to one clip, so it survives any edit and only closes when the document does.
     function openMulticam() {
         multicamWindow.openSession()
+    }
+
+    // Opened from the header's Settings menu. Every preference lives here now; the
+    // assets rail no longer carries a settings tab.
+    function openSettings() {
+        settingsDialog.open()
     }
 
     // Opened from the header, and from every empty state that a missing addon causes.
@@ -507,6 +577,7 @@ ApplicationWindow {
     }
 
     Component.onCompleted: {
+        Theme.windowWidth = window.width
         window.restoreWindowGeometry()
         window.beginStartupProject()
         // Last: the window is placed by now, and the startup flow keeps the ordering
@@ -677,6 +748,24 @@ ApplicationWindow {
         }
     }
 
+    Connections {
+        target: Market
+        function onAuthFinished(ok, message) {
+            if (ok)
+                Toasts.success(message)
+            else
+                Toasts.error(message)
+        }
+        function onDownloadImported(itemId, name) {
+            Toasts.success(name.length > 0
+                           ? qsTr("Imported “%1”.").arg(name)
+                           : qsTr("Imported from the marketplace."))
+        }
+        function onDownloadFailed(itemId, code, message) {
+            Toasts.error(message)
+        }
+    }
+
     // Shortcut is not an Item, so wrap each binding in a zero-size host.
     // Escape (clearSelection): CapCut-style — if a timeline cut tool is active,
     // first press returns to Select; only then does Escape clear the selection.
@@ -704,6 +793,19 @@ ApplicationWindow {
                     }
                     if (modelData.id === "bladeTool") {
                         timelinePanel.timelineTool = "split"
+                        return
+                    }
+                    // Timeline zoom is QML state as well, and the 1.5 step matches the
+                    // toolbar buttons. setZoom clamps to minZoom/maxZoom and re-anchors on
+                    // the playhead, so holding the key walks to the end of the range and stops.
+                    if (modelData.id === "zoomIn") {
+                        if (timelinePanel.visible)
+                            timelinePanel.setZoom(timelinePanel.zoom * 1.5)
+                        return
+                    }
+                    if (modelData.id === "zoomOut") {
+                        if (timelinePanel.visible)
+                            timelinePanel.setZoom(timelinePanel.zoom / 1.5)
                         return
                     }
                     EditorState.triggerAction(modelData.id)
@@ -734,6 +836,7 @@ ApplicationWindow {
             id: editorHeader
             width: parent.width
             visible: !window.previewFullscreen
+            onDownloadsRequested: downloadsWindow.show()
         }
 
         Item {

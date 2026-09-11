@@ -11,9 +11,21 @@ import Drift
 MenuItem {
     id: root
 
+    // Group label for a menu that mixes several settings (the header's Settings
+    // menu). Not an entry: it never highlights and never takes a click.
+    property bool sectionHeader: false
+    enabled: !sectionHeader
+
+    // A section header is a label, not a target: giving it the MenuItem role would have
+    // assistive tooling and uiautomator offer it as something to activate.
+    Accessible.role: sectionHeader ? Accessible.StaticText : Accessible.MenuItem
+    Accessible.name: root.text
+
     // A Menu lays entries out in a ListView, which still reserves a row for a
     // hidden item, so conditional entries left blank gaps behind.
-    implicitHeight: visible ? Theme.controlHeightSm + Theme.spacingSm : 0
+    implicitHeight: visible ? (sectionHeader ? Theme.controlHeightSm
+                                             : Theme.controlHeightSm + Theme.spacingSm)
+                            : 0
     height: implicitHeight
     hoverEnabled: true
 
@@ -35,10 +47,12 @@ MenuItem {
         Text {
             anchors.verticalCenter: parent.verticalCenter
             text: root.text
-            color: Theme.panelForeground
-            opacity: root.enabled ? 1 : 0.5
+            color: root.sectionHeader ? Theme.mutedForeground : Theme.panelForeground
+            // A header is dimmer by design, so it must not also take the disabled dimming.
+            opacity: root.sectionHeader || root.enabled ? 1 : 0.5
             font.family: Theme.fontFamily
             font.pixelSize: Theme.fontSizeXs
+            font.weight: root.sectionHeader ? Font.DemiBold : Font.Normal
             elide: Text.ElideRight
         }
     }

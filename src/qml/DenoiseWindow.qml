@@ -43,6 +43,14 @@ Window {
         EditorState.previewDenoise(track, clip, 0)
     }
 
+    // Backgrounding on Android pauses every transport. This window owns its own audition
+    // player, which AndroidMain's application-state handler has no other route to; without
+    // this the call threw and took the rest of that handler — the recovery flush included —
+    // down with it.
+    function stopPlayback() {
+        player.pause()
+    }
+
     onClosing: {
         player.stop()
         if (EditorState.denoising)

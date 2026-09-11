@@ -95,6 +95,10 @@ private slots:
     void transitionParametersRoundTrip();
     void legacyTransitionJsonStillLoads();
     void transitionAudioCurves();
+    void transitionEasingCurveRoundTrips();
+    void transitionEasingRemapsProgress();
+    void bezierCurveShapesProgress();
+    void bezierShapeRoundTrips();
     void physicalOverlapTransitionWindow();
     void clampClipStartNoOverlapPushesPastBlockers();
     void clampTrimEdgesIgnoreExistingOverlaps();
@@ -106,6 +110,9 @@ private slots:
     void retargetClipToSourceKeepsPlacementAndSyncsSource();
     void retargetClipToSourceClearsPerSourceState();
     void retargetClipToSourceKeepsAGeometricMask();
+    void addLinkedMaskStacksRatherThanReplacing();
+    void laneMaskIsUnpinnedAndSurvivesTheLiftPass();
+    void legacyClipMaskMigratesToAnAdjustmentLane();
     void retargetClipToSourceShrinksWhenMediaRunsOut();
     void applyMulticamSwitchPunchesAndRecuts();
     void applyMulticamSwitchMergesAdjacentSameCamera();
@@ -2118,22 +2125,83 @@ void CoreTest::matteMaskSerialization()
     clip.type = drift::ClipType::Video;
     clip.timelineStart = 0;
     clip.timelineDuration = drift::secondsToUs(3.0);
-    clip.mask.shape = drift::MaskShape::Matte;
-    clip.mask.mattePath = QStringLiteral("/tmp/mattes/abc.mkv");
-    clip.mask.matteSrcOffsetUs = drift::secondsToUs(1.5);
-    clip.mask.invert = true;
     project.tracks()[0].clips.append(clip);
+
+    drift::Mask matte = drift::fullFrameMediaMask(QStringLiteral("/tmp/mattes/abc.mkv"),
+                                                  drift::secondsToUs(1.5));
+    matte.mediaFgrPath = QStringLiteral("/tmp/mattes/abc.fgr.mkv");
+    matte.invert = true;
+    matte.op = drift::MaskOp::Intersect;
+    matte.mediaChannel = drift::MaskMediaChannel::Alpha;
+    drift::setLinkedMask(project, 0, 0, matte);
 
     const QJsonObject json = project.toJson();
     QString error;
     const drift::Project loaded = drift::Project::fromJson(json, &error);
 
     QVERIFY(error.isEmpty());
-    const drift::Mask &mask = loaded.tracks()[0].clips[0].mask;
-    QCOMPARE(mask.shape, drift::MaskShape::Matte);
-    QCOMPARE(mask.mattePath, QStringLiteral("/tmp/mattes/abc.mkv"));
-    QCOMPARE(mask.matteSrcOffsetUs, drift::secondsToUs(1.5));
+    const QList<drift::LaneMask> masks = drift::laneMasksAt(loaded, 0, 0);
+    QCOMPARE(masks.size(), 1);
+    const drift::Mask &mask = masks.constFirst().mask;
+    QCOMPARE(mask.shape, drift::MaskShape::Media);
+    QCOMPARE(mask.mediaPath, QStringLiteral("/tmp/mattes/abc.mkv"));
+    QCOMPARE(mask.mediaFgrPath, QStringLiteral("/tmp/mattes/abc.fgr.mkv"));
+    QCOMPARE(mask.mediaSrcOffsetUs, drift::secondsToUs(1.5));
     QCOMPARE(mask.invert, true);
+    QCOMPARE(mask.op, drift::MaskOp::Intersect);
+    QCOMPARE(mask.mediaChannel, drift::MaskMediaChannel::Alpha);
+}
+
+// A pre-v5 project put one mask directly on the clip under the old "matte" spelling. It has to
+// come back as a Media mask on a linked adjustment, and — the part that is easy to get wrong —
+// full-frame: the old shape ignored its rect entirely, so the serialized w/h defaults of 0.6
+// would suddenly crop the cutout to 60% of the frame.
+void CoreTest::legacyClipMaskMigratesToAnAdjustmentLane()
+{
+    const QJsonObject clip{
+        {QStringLiteral("id"), QStringLiteral("clip-1")},
+        {QStringLiteral("type"), QStringLiteral("video")},
+        {QStringLiteral("timelineStartUs"), 0},
+        {QStringLiteral("timelineDurationUs"), qint64(drift::secondsToUs(3.0))},
+        {QStringLiteral("mask"),
+         QJsonObject{{QStringLiteral("shape"), QStringLiteral("matte")},
+                     {QStringLiteral("w"), 0.6},
+                     {QStringLiteral("h"), 0.6},
+                     {QStringLiteral("invert"), true},
+                     {QStringLiteral("mattePath"), QStringLiteral("/tmp/mattes/old.mkv")},
+                     {QStringLiteral("matteSrcOffsetUs"), qint64(drift::secondsToUs(2.0))}}},
+    };
+    const QJsonObject json{
+        {QStringLiteral("version"), 4},
+        {QStringLiteral("tracks"),
+         QJsonArray{QJsonObject{{QStringLiteral("type"), QStringLiteral("video")},
+                                {QStringLiteral("clips"), QJsonArray{clip}}}}},
+    };
+
+    QString error;
+    const drift::Project loaded = drift::Project::fromJson(json, &error);
+    QVERIFY(error.isEmpty());
+
+    // Nothing left on the clip; one lane carrying it instead.
+    QCOMPARE(loaded.tracks().at(0).clips.at(0).mask.shape, drift::MaskShape::None);
+    const QList<drift::LaneMask> masks =
+        drift::laneMasksAt(loaded, 0, drift::secondsToUs(1.0));
+    QCOMPARE(masks.size(), 1);
+    const drift::Mask &mask = masks.constFirst().mask;
+    QCOMPARE(mask.shape, drift::MaskShape::Media);
+    QCOMPARE(mask.mediaPath, QStringLiteral("/tmp/mattes/old.mkv"));
+    QCOMPARE(mask.mediaSrcOffsetUs, drift::secondsToUs(2.0));
+    QCOMPARE(mask.invert, true);
+    QCOMPARE(mask.w, 1.0);
+    QCOMPARE(mask.h, 1.0);
+
+    // Pinned to the clip, so every later move/trim keeps it aligned.
+    const QList<drift::ClipRef> pinned = drift::linkedMaskAdjustments(loaded, 0, 0);
+    QCOMPARE(pinned.size(), 1);
+    const drift::Clip &adjustment =
+        loaded.tracks().at(pinned.constFirst().trackIndex).clips.at(pinned.constFirst().clipIndex);
+    QCOMPARE(adjustment.linkedClipId, QStringLiteral("clip-1"));
+    QCOMPARE(adjustment.timelineDuration, drift::secondsToUs(3.0));
 }
 
 void CoreTest::faceTrackSerialization()
@@ -2307,6 +2375,131 @@ void CoreTest::legacyTransitionJsonStillLoads()
     QVERIFY2(error.isEmpty(), qPrintable(error));
     QCOMPARE(loaded.tracks()[0].transitions[0].kindId, QStringLiteral("wipe_up"));
     QVERIFY(loaded.tracks()[0].transitions[0].parameters.isEmpty());
+}
+
+void CoreTest::transitionEasingCurveRoundTrips()
+{
+    drift::Project project = projectWithTransition(QStringLiteral("crossfade"));
+    drift::Transition &t = project.tracks()[0].transitions[0];
+    t.easingCurve = drift::FadeCurve::Custom;
+    drift::FadeShape shape;
+    shape.setPoints({QPointF(0.0, 0.0), QPointF(0.4, 0.1), QPointF(1.0, 1.0)});
+    t.easingShape = shape;
+
+    QString error;
+    const drift::Project loaded = drift::Project::fromJson(project.toJson(), &error);
+    QVERIFY2(error.isEmpty(), qPrintable(error));
+
+    const drift::Transition &out = loaded.tracks()[0].transitions[0];
+    QCOMPARE(out.easingCurve, drift::FadeCurve::Custom);
+    QCOMPARE(out.easingShape.points().size(), shape.points().size());
+    QCOMPARE(out.easingShape.gainAt(0.4), shape.gainAt(0.4));
+
+    // A transition that was never eased must serialize exactly as it did before the field
+    // existed, so projects written by older builds stay byte-identical on re-save.
+    const drift::Project plain = projectWithTransition(QStringLiteral("crossfade"));
+    const QJsonObject plainJson =
+        plain.toJson().value(QStringLiteral("tracks")).toArray().at(0).toObject()
+            .value(QStringLiteral("transitions")).toArray().at(0).toObject();
+    QVERIFY(!plainJson.contains(QStringLiteral("easingCurve")));
+    QVERIFY(!plainJson.contains(QStringLiteral("easingShape")));
+}
+
+void CoreTest::transitionEasingRemapsProgress()
+{
+    drift::Transition t;
+    const drift::TimeUs start = 0;
+    const drift::TimeUs end = 1'000'000;
+    const drift::TimeUs quarter = 250'000;
+
+    // Linear is the historical behaviour and must stay bit-identical to the plain overload.
+    QCOMPARE(drift::transitionProgress(t, quarter, start, end),
+             drift::transitionProgress(quarter, start, end));
+
+    t.easingCurve = drift::FadeCurve::Smooth;
+    const double eased = drift::transitionProgress(t, quarter, start, end);
+    QVERIFY(eased < 0.25);                                    // smoothstep starts slow
+    QCOMPARE(drift::transitionProgress(t, start, start, end), 0.0);
+    QCOMPARE(drift::transitionProgress(t, end, start, end), 1.0);
+
+    // Endpoints stay pinned for a custom shape too, or the transition would not resolve to the
+    // incoming clip.
+    t.easingCurve = drift::FadeCurve::Custom;
+    drift::FadeShape shape;
+    shape.setPoints({QPointF(0.0, 0.0), QPointF(0.5, 0.9), QPointF(1.0, 1.0)});
+    t.easingShape = shape;
+    QCOMPARE(drift::transitionProgress(t, start, start, end), 0.0);
+    QCOMPARE(drift::transitionProgress(t, end, start, end), 1.0);
+    QVERIFY(drift::transitionProgress(t, 500'000, start, end) > 0.8);
+}
+
+void CoreTest::bezierCurveShapesProgress()
+{
+    drift::FadeShape shape;
+    // CSS ease-in: slow to start, so the midpoint sits below the diagonal.
+    shape.setHandles(QPointF(0.42, 0.0), QPointF(1.0, 1.0));
+    QCOMPARE(shape.bezierAt(0.0), 0.0);
+    QCOMPARE(shape.bezierAt(1.0), 1.0);
+    QVERIFY(shape.bezierAt(0.5) < 0.5);
+
+    // Mirror it and the midpoint must rise above the diagonal.
+    drift::FadeShape out;
+    out.setHandles(QPointF(0.0, 0.0), QPointF(0.58, 1.0));
+    QVERIFY(out.bezierAt(0.5) > 0.5);
+
+    // Handles on the thirds are the identity cubic, so it must track linear closely.
+    drift::FadeShape straight;
+    straight.setHandles(QPointF(1.0 / 3.0, 1.0 / 3.0), QPointF(2.0 / 3.0, 2.0 / 3.0));
+    for (double t = 0.0; t <= 1.0; t += 0.1)
+        QVERIFY(qAbs(straight.bezierAt(t) - t) < 1e-6);
+
+    // Monotonic: a fold-back would make progress run backwards mid-transition.
+    double previous = -1.0;
+    for (int i = 0; i <= 100; ++i) {
+        const double v = shape.bezierAt(i / 100.0);
+        QVERIFY(v >= previous - 1e-9);
+        previous = v;
+    }
+
+    // Handles are clamped into the unit box on the way in.
+    drift::FadeShape clamped;
+    clamped.setHandles(QPointF(-2.0, 5.0), QPointF(3.0, -1.0));
+    QCOMPARE(clamped.handle1(), QPointF(0.0, 1.0));
+    QCOMPARE(clamped.handle2(), QPointF(1.0, 0.0));
+
+    // And it reaches shapedProgress under the Bezier curve, not the polyline.
+    drift::FadeShape eased;
+    eased.setHandles(QPointF(0.42, 0.0), QPointF(1.0, 1.0));
+    QCOMPARE(drift::shapedProgress(0.5, drift::FadeCurve::Bezier, eased), eased.bezierAt(0.5));
+    QCOMPARE(drift::shapedProgress(0.5, drift::FadeCurve::Linear, eased), 0.5);
+}
+
+void CoreTest::bezierShapeRoundTrips()
+{
+    drift::Project project = projectWithTransition(QStringLiteral("crossfade"));
+    drift::Transition &t = project.tracks()[0].transitions[0];
+    t.easingCurve = drift::FadeCurve::Bezier;
+    t.easingShape.setHandles(QPointF(0.17, 0.67), QPointF(0.83, 0.67));
+
+    QString error;
+    const drift::Project loaded = drift::Project::fromJson(project.toJson(), &error);
+    QVERIFY2(error.isEmpty(), qPrintable(error));
+    const drift::Transition &out = loaded.tracks()[0].transitions[0];
+    QCOMPARE(out.easingCurve, drift::FadeCurve::Bezier);
+    QCOMPARE(out.easingShape.handle1(), QPointF(0.17, 0.67));
+    QCOMPARE(out.easingShape.handle2(), QPointF(0.83, 0.67));
+
+    // A shape that was never given handles still writes the bare array older builds expect,
+    // rather than being promoted to the object form.
+    drift::FadeShape polyline;
+    polyline.setPoints({QPointF(0.0, 0.0), QPointF(0.5, 0.8), QPointF(1.0, 1.0)});
+    QVERIFY(!polyline.hasHandles());
+    QVERIFY(polyline.toJson().isArray());
+    QVERIFY(drift::FadeShape::fromJson(polyline.toJson()).gainAt(0.5) > 0.7);
+
+    drift::FadeShape bezier;
+    bezier.setHandles(QPointF(0.2, 0.1), QPointF(0.8, 0.9));
+    QVERIFY(bezier.toJson().isObject());
 }
 
 void CoreTest::transitionAudioCurves()
@@ -2740,10 +2933,6 @@ void CoreTest::retargetClipToSourceClearsPerSourceState()
     program.faceTrackSrcOffsetUs = drift::secondsToUs(5.0);
     program.speedCurve.setPoints({{0.0, 1.0}, {1.0, 2.0}});
     QVERIFY(program.hasSpeedCurve());
-    // Segmented out of cam1's pixels, and indexed by cam1's source time.
-    program.mask.shape = drift::MaskShape::Matte;
-    program.mask.mattePath = QStringLiteral("/cache/cam1.matte.mp4");
-    program.mask.matteSrcOffsetUs = drift::secondsToUs(2.0);
 
     const drift::Clip angle = makeAngleClip(QStringLiteral("cam2.mp4"), 0, drift::secondsToUs(10.0), 0);
     drift::retargetClipToSource(program, angle, drift::secondsToUs(10.0));
@@ -2753,28 +2942,118 @@ void CoreTest::retargetClipToSourceClearsPerSourceState()
     QVERIFY(program.faceTrackPath.isEmpty());
     QCOMPARE(program.faceTrackSrcOffsetUs, drift::TimeUs{0});
     QVERIFY(!program.hasSpeedCurve());
-    // Kept, the matte would cut cam2 to the silhouette segmented out of cam1.
-    QCOMPARE(program.mask.shape, drift::MaskShape::None);
-    QVERIFY(program.mask.mattePath.isEmpty());
-    QCOMPARE(program.mask.matteSrcOffsetUs, drift::TimeUs{0});
 }
 
-// The other half of the rule above: a mask that is a shape rather than baked pixels describes
-// the framing, not the footage, and belongs with the transform and effects that already survive.
+// Masks are not reachable from retargetClipToSource — they live on the adjustments pinned to the
+// clip — so the switch clears them separately, and only the baked ones. Media coverage is pixels
+// segmented out of cam1 and would cut cam2 to cam1's silhouette; a shape describes the framing,
+// not the footage, and belongs with the transform and effects that already survive.
 void CoreTest::retargetClipToSourceKeepsAGeometricMask()
 {
-    drift::Clip program = makeAngleClip(QStringLiteral("cam1.mp4"), drift::secondsToUs(1.0),
-                                        drift::secondsToUs(2.0), 0);
-    program.mask.shape = drift::MaskShape::Ellipse;
-    program.mask.x = 0.25;
-    program.mask.feather = 12.0;
+    drift::Project project;
+    project.tracks().clear();
+    project.tracks().append(drift::Track{.type = drift::TrackType::Video});
+    project.tracks()[0].clips.append(makeAngleClip(QStringLiteral("cam1.mp4"),
+                                                   drift::secondsToUs(1.0),
+                                                   drift::secondsToUs(2.0), 0));
 
-    const drift::Clip angle = makeAngleClip(QStringLiteral("cam2.mp4"), 0, drift::secondsToUs(10.0), 0);
-    drift::retargetClipToSource(program, angle, drift::secondsToUs(10.0));
+    drift::Mask ellipse;
+    ellipse.shape = drift::MaskShape::Ellipse;
+    ellipse.x = 0.25;
+    ellipse.feather = 12.0;
+    drift::setLinkedMask(project, 0, 0, ellipse);
+    QCOMPARE(drift::laneMasksAt(project, 0, drift::secondsToUs(1.5)).size(), 1);
 
-    QCOMPARE(program.mask.shape, drift::MaskShape::Ellipse);
-    QCOMPARE(program.mask.x, 0.25);
-    QCOMPARE(program.mask.feather, 12.0);
+    drift::clearLinkedMasks(project, 0, 0, /*mediaOnly=*/true);
+
+    const QList<drift::LaneMask> kept = drift::laneMasksAt(project, 0, drift::secondsToUs(1.5));
+    QCOMPARE(kept.size(), 1);
+    QCOMPARE(kept.constFirst().mask.shape, drift::MaskShape::Ellipse);
+    QCOMPARE(kept.constFirst().mask.x, 0.25);
+    QCOMPARE(kept.constFirst().mask.feather, 12.0);
+
+    // The same call does drop a matte, which is the half the multicam switch is there for.
+    drift::setLinkedMask(project, 0, 0,
+                         drift::fullFrameMediaMask(QStringLiteral("/cache/cam1.matte.mp4"),
+                                                   drift::secondsToUs(2.0)));
+    drift::clearLinkedMasks(project, 0, 0, /*mediaOnly=*/true);
+    QVERIFY(drift::laneMasksAt(project, 0, drift::secondsToUs(1.5)).isEmpty());
+}
+
+// setLinkedMask replaces, which is what a full-replacement write (MCP, paste) means. Dropping a
+// second mask onto a clip means something else entirely, so it has its own call.
+void CoreTest::addLinkedMaskStacksRatherThanReplacing()
+{
+    drift::Project project;
+    project.tracks().clear();
+    project.tracks().append(drift::Track{.type = drift::TrackType::Video});
+    project.tracks()[0].clips.append(makeAngleClip(QStringLiteral("cam1.mp4"),
+                                                   drift::secondsToUs(1.0),
+                                                   drift::secondsToUs(2.0), 0));
+
+    drift::Mask ellipse;
+    ellipse.shape = drift::MaskShape::Ellipse;
+    const drift::ClipRef first = drift::addLinkedMask(project, 0, 0, ellipse);
+    QVERIFY(first.trackIndex >= 0);
+
+    drift::Mask star;
+    star.shape = drift::MaskShape::Star;
+    star.op = drift::MaskOp::Subtract;
+    // The clip has not moved: the lane goes in below it.
+    const drift::ClipRef second = drift::addLinkedMask(project, 0, 0, star);
+    QVERIFY(second.trackIndex >= 0);
+
+    const QList<drift::ClipRef> pinned = drift::linkedMaskAdjustments(project, 0, 0);
+    QCOMPARE(pinned.size(), 2);
+
+    // Both reach the compositor, in lane order, with their ops intact.
+    const QList<drift::LaneMask> stack = drift::laneMasksAt(project, 0, drift::secondsToUs(1.5));
+    QCOMPARE(stack.size(), 2);
+    QCOMPARE(stack.at(0).mask.shape, drift::MaskShape::Ellipse);
+    QCOMPARE(stack.at(1).mask.shape, drift::MaskShape::Star);
+    QCOMPARE(stack.at(1).mask.op, drift::MaskOp::Subtract);
+    // Distinct ids, or the reader pool would decode both under one cursor.
+    QVERIFY(stack.at(0).adjustmentId != stack.at(1).adjustmentId);
+
+    // The replacing call still collapses the stack to one, which is what it promises.
+    drift::Mask heart;
+    heart.shape = drift::MaskShape::Heart;
+    drift::setLinkedMask(project, 0, 0, heart);
+    QCOMPARE(drift::linkedMaskAdjustments(project, 0, 0).size(), 1);
+}
+
+// Dropping a mask on empty track space masks whatever the track shows over that span, so the
+// adjustment is pinned to nothing and keeps its own edges. liftAdjustmentClipsToOwnTracks must
+// leave it where it is — it only hoists adjustments sitting on a *video* track.
+void CoreTest::laneMaskIsUnpinnedAndSurvivesTheLiftPass()
+{
+    drift::Project project;
+    project.tracks().clear();
+    project.tracks().append(drift::Track{.type = drift::TrackType::Video});
+    project.tracks()[0].clips.append(makeAngleClip(QStringLiteral("cam1.mp4"),
+                                                   drift::secondsToUs(0.0),
+                                                   drift::secondsToUs(4.0), 0));
+
+    drift::Mask bars;
+    bars.shape = drift::MaskShape::Bars;
+    const drift::ClipRef ref = drift::addLaneMask(project, 0, bars, drift::secondsToUs(1.0),
+                                                  drift::secondsToUs(2.0));
+    QVERIFY(ref.trackIndex >= 0);
+    QVERIFY(project.tracks().at(ref.trackIndex).isAdjustmentLane());
+
+    const drift::Clip &adjustment = project.tracks().at(ref.trackIndex).clips.at(ref.clipIndex);
+    QVERIFY2(adjustment.linkedClipId.isEmpty(), "a lane mask must not pin itself to a clip");
+    QCOMPARE(adjustment.timelineStart, drift::secondsToUs(1.0));
+    QCOMPARE(adjustment.timelineDuration, drift::secondsToUs(2.0));
+
+    // It is not pinned, so it does not belong to a clip — only to the span.
+    QVERIFY(drift::linkedMaskAdjustments(project, 0, 0).isEmpty());
+    QVERIFY(drift::laneMasksAt(project, 0, drift::secondsToUs(0.5)).isEmpty());
+    QCOMPARE(drift::laneMasksAt(project, 0, drift::secondsToUs(2.0)).size(), 1);
+
+    drift::liftAdjustmentClipsToOwnTracks(project);
+    QVERIFY(project.tracks().at(ref.trackIndex).isAdjustmentLane());
+    QCOMPARE(drift::laneMasksAt(project, 0, drift::secondsToUs(2.0)).size(), 1);
 }
 
 void CoreTest::retargetClipToSourceShrinksWhenMediaRunsOut()

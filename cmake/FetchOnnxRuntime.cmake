@@ -32,9 +32,23 @@ elseif(CMAKE_SYSTEM_NAME STREQUAL "Linux")
         set(_onnxruntime_sha256 "547e40a48f1fe73e3f812d7c88a948612c23f896b91e4e2ee1e232d7b468246f")
     endif()
 elseif(APPLE)
-    if(CMAKE_SYSTEM_PROCESSOR MATCHES "arm64|aarch64|ARM64")
-        set(_onnxruntime_archive "onnxruntime-osx-arm64-${_onnxruntime_version}.tgz")
-        set(_onnxruntime_sha256 "545e81c58152353acb0d1e8bd6ce4b62f830c0961f5b3acfedc790ffd76e477a")
+    # Upstream stopped publishing an osx-x86_64 (and universal2) release; 1.27.0 ships arm64 only.
+    # An Intel Mac used to fall through to the FATAL_ERROR below and could not configure at all.
+    # The headers are identical across platforms and architectures — the same reason the Android
+    # branch above reads them out of the linux-x64 tarball — so the arm64 archive is a valid
+    # source for them here too. Its dylib is not: bundling is forced off rather than stage an
+    # arm64 runtime an x86_64 process would fail to dlopen with no explanation.
+    set(_onnxruntime_archive "onnxruntime-osx-arm64-${_onnxruntime_version}.tgz")
+    set(_onnxruntime_sha256 "545e81c58152353acb0d1e8bd6ce4b62f830c0961f5b3acfedc790ffd76e477a")
+    if(NOT CMAKE_SYSTEM_PROCESSOR MATCHES "arm64|aarch64|ARM64")
+        if(DRIFT_BUNDLE_ONNXRUNTIME)
+            message(STATUS
+                "ONNX Runtime publishes no x86_64 macOS build; taking headers from the arm64 "
+                "release and disabling DRIFT_BUNDLE_ONNXRUNTIME. Install an Acceleration addon, "
+                "or point DRIFT_ONNXRUNTIME_DIR at an x86_64 runtime.")
+        endif()
+        set(DRIFT_BUNDLE_ONNXRUNTIME OFF CACHE BOOL
+            "Stage a CPU ONNX Runtime into the build tree for development" FORCE)
     endif()
 elseif(WIN32)
     if(CMAKE_SYSTEM_PROCESSOR MATCHES "ARM64|aarch64")

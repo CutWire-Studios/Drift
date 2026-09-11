@@ -1,6 +1,7 @@
 #include "mcp/McpDispatcher.h"
 #include "mcp/McpCatalog.h"
 #include "mcp/McpJson.h"
+#include "mcp/McpValidate.h"
 
 #include "core/Time.h"
 #include "models/AppController.h"
@@ -138,6 +139,124 @@ QString findNewClipId(const QSet<QString> &before, const QSet<QString> &after)
             return id;
     }
     return {};
+}
+
+QString catalogKey(const QString &id)
+{
+    QString k = id.trimmed().toLower();
+    if (k.startsWith(QLatin1String("builtin.effects.")))
+        k.remove(0, 16);
+    k.replace(QLatin1Char('.'), QLatin1Char('_'));
+    return k;
+}
+
+QStringList catalogIds(const QVariantList &catalog)
+{
+    QStringList ids;
+    for (const QVariant &v : catalog)
+        ids.append(v.toMap().value(QStringLiteral("id")).toString());
+    return ids;
+}
+
+// Exact, then case-insensitive, then with '.'≡'_' and the builtin.effects. prefix dropped. On a
+// miss, *nearest gets the closest ids for the error message.
+QString resolveCatalogId(const QString &raw, const QStringList &ids, QStringList *nearest)
+{
+    if (ids.contains(raw))
+        return raw;
+    for (const QString &id : ids) {
+        if (id.compare(raw, Qt::CaseInsensitive) == 0)
+            return id;
+    }
+    const QString key = catalogKey(raw);
+    if (!key.isEmpty()) {
+        for (const QString &id : ids) {
+            if (catalogKey(id) == key)
+                return id;
+        }
+    }
+    if (nearest)
+        *nearest = nearestStrings(raw, ids, 3);
+    return {};
+}
+
+QJsonObject unknownCatalogId(const char *what, const QString &raw, const QStringList &nearest, const char *listOp)
+{
+    QString detail = QStringLiteral("Unknown %1 id \"%2\"").arg(QString::fromUtf8(what), raw);
+    if (!nearest.isEmpty())
+        detail += QStringLiteral("; did you mean %1?").arg(nearest.join(QStringLiteral(", ")));
+    detail += QStringLiteral(". Call %1({q:\"%2\"})").arg(QString::fromUtf8(listOp), raw);
+    return err("not_found", detail);
+}
+
+bool catalogItemMatches(const QVariantMap &item, const QString &q)
+{
+    for (auto it = item.begin(); it != item.end(); ++it) {
+        if (it.value().typeId() == QMetaType::QString && it.value().toString().contains(q, Qt::CaseInsensitive))
+            return true;
+    }
+    return false;
+}
+
+// Default: {cats:{cat:[{id,label}]}, n}. id → that item with params; cat → the category with
+// params; q → substring hits, with params when there are five or fewer.
+QJsonObject catalogListing(const QVariantList &catalog, const QJsonObject &args, const char *key, const char *what,
+                           const char *listOp)
+{
+    const QString id = args.value(QStringLiteral("id")).toString().trimmed();
+    const QString cat = args.value(QStringLiteral("cat")).toString().trimmed();
+    const QString q = args.value(QStringLiteral("q")).toString().trimmed();
+    const int limit = qBound(1, jsonInt(args.value(QStringLiteral("limit")), 50), 500);
+
+    if (!id.isEmpty()) {
+        QStringList nearest;
+        const QString canonical = resolveCatalogId(id, catalogIds(catalog), &nearest);
+        if (canonical.isEmpty())
+            return unknownCatalogId(what, id, nearest, listOp);
+        for (const QVariant &v : catalog) {
+            const QVariantMap item = v.toMap();
+            if (item.value(QStringLiteral("id")).toString() == canonical)
+                return ok({{QString::fromUtf8(key), QJsonArray{compactCatalogItem(item)}}, {QStringLiteral("n"), 1}});
+        }
+    }
+
+    if (!cat.isEmpty() || !q.isEmpty()) {
+        QList<QVariantMap> hits;
+        for (const QVariant &v : catalog) {
+            const QVariantMap item = v.toMap();
+            if (!cat.isEmpty() && item.value(QStringLiteral("category")).toString().compare(cat, Qt::CaseInsensitive) != 0)
+                continue;
+            if (!q.isEmpty() && !catalogItemMatches(item, q))
+                continue;
+            hits.append(item);
+        }
+        const bool withParams = !cat.isEmpty() || hits.size() <= 5;
+        QJsonArray items;
+        for (const QVariantMap &item : hits) {
+            if (items.size() >= limit)
+                break;
+            QJsonObject row = compactCatalogItem(item);
+            if (!withParams)
+                row.remove(QStringLiteral("params"));
+            items.append(row);
+        }
+        return ok({{QString::fromUtf8(key), items}, {QStringLiteral("n"), hits.size()}});
+    }
+
+    QJsonObject cats;
+    int n = 0;
+    for (const QVariant &v : catalog) {
+        const QVariantMap item = v.toMap();
+        QString category = item.value(QStringLiteral("category")).toString();
+        if (category.isEmpty())
+            category = QStringLiteral("other");
+        QJsonArray rows = cats.value(category).toArray();
+        rows.append(QJsonObject{{QStringLiteral("id"), item.value(QStringLiteral("id")).toString()},
+                                {QStringLiteral("label"), item.value(QStringLiteral("label")).toString()}});
+        cats.insert(category, rows);
+        ++n;
+    }
+    return ok({{QStringLiteral("cats"), cats}, {QStringLiteral("n"), n}});
 }
 
 QJsonArray compactAvailableCodecs(const QVariantList &list)
@@ -499,9 +618,17 @@ QJsonObject McpDispatcher::inspect(const QJsonObject &args) const
     const int since = args.contains(QStringLiteral("since"))
                           ? jsonInt(args.value(QStringLiteral("since")), -1)
                           : -1;
-    const bool detail = jsonBool(args.value(QStringLiteral("detail")));
-    const bool cues = jsonBool(args.value(QStringLiteral("cues")));
-    return m_controller->mcpInspect(jsonBool(args.value(QStringLiteral("clips"))), since, detail, cues);
+    AppController::McpInspectOptions options;
+    options.clips = jsonBool(args.value(QStringLiteral("clips")));
+    options.detail = jsonBool(args.value(QStringLiteral("detail")));
+    options.cues = jsonBool(args.value(QStringLiteral("cues")));
+    options.verbose = jsonBool(args.value(QStringLiteral("verbose")));
+    options.since = since;
+    options.track = args.contains(QStringLiteral("track"))
+                        ? jsonInt(args.value(QStringLiteral("track")), -1)
+                        : -1;
+    options.clip = args.value(QStringLiteral("clip")).toString();
+    return m_controller->mcpInspect(options);
 }
 
 bool McpDispatcher::isUndoable(const QString &tool) const
@@ -535,17 +662,21 @@ QJsonObject McpDispatcher::apply(const QJsonObject &args)
         const QJsonObject op = ops.at(i).toObject();
         const QString tool = op.value(QStringLiteral("tool")).toString();
         const QJsonObject opArgs = op.value(QStringLiteral("args")).toObject();
-        const QJsonObject one = applyOne(tool, opArgs);
-        results.append(QJsonObject{{QStringLiteral("tool"), tool}, {QStringLiteral("result"), one}});
+        const QJsonObject one =
+            tool == QLatin1String("get_waveform") && jsonBool(opArgs.value(QStringLiteral("image")))
+                ? err("bad_args", QStringLiteral("image:true cannot be batched — call get_waveform directly"))
+                : applyOne(tool, opArgs);
         if (!one.value(QStringLiteral("ok")).toBool()) {
             m_controller->mcpEndBatch(batchLabel(i),
                                       hadUndoable && i > 0);
             return {{QStringLiteral("ok"), false},
                     {QStringLiteral("error"), QStringLiteral("apply_failed")},
                     {QStringLiteral("stopped"), i},
+                    {QStringLiteral("tool"), tool},
                     {QStringLiteral("failed"), one},
                     {QStringLiteral("done"), results}};
         }
+        results.append(QJsonObject{{QStringLiteral("tool"), tool}, {QStringLiteral("result"), one}});
         if (isUndoable(tool))
             hadUndoable = true;
     }
@@ -554,6 +685,21 @@ QJsonObject McpDispatcher::apply(const QJsonObject &args)
 }
 
 QJsonObject McpDispatcher::applyOne(const QString &tool, const QJsonObject &args)
+{
+    if (!isKnownOp(tool))
+        return unknownOpError(tool);
+    QJsonObject checked = args;
+    QStringList ignored;
+    const QJsonObject invalid = validateArgs(tool, opInputSchema(tool), checked, &ignored);
+    if (!invalid.isEmpty())
+        return invalid;
+    QJsonObject result = applyOneUnchecked(tool, checked);
+    if (!ignored.isEmpty() && result.value(QStringLiteral("ok")).toBool())
+        result.insert(QStringLiteral("ignored"), QJsonArray::fromStringList(ignored));
+    return result;
+}
+
+QJsonObject McpDispatcher::applyOneUnchecked(const QString &tool, const QJsonObject &args)
 {
     if (tool == QLatin1String("import_media"))
         return opImportMedia(args);
@@ -608,11 +754,11 @@ QJsonObject McpDispatcher::applyOne(const QString &tool, const QJsonObject &args
     if (tool == QLatin1String("set_text"))
         return opSetText(args);
     if (tool == QLatin1String("list_effects"))
-        return opListEffects();
+        return opListEffects(args);
     if (tool == QLatin1String("list_audio_effects"))
-        return opListAudioEffects();
+        return opListAudioEffects(args);
     if (tool == QLatin1String("list_transitions"))
-        return opListTransitions();
+        return opListTransitions(args);
     if (tool == QLatin1String("add_effect"))
         return opAddEffect(args);
     if (tool == QLatin1String("remove_effect"))
@@ -670,7 +816,7 @@ QJsonObject McpDispatcher::applyOne(const QString &tool, const QJsonObject &args
     if (tool == QLatin1String("set_theme"))
         return opSetTheme(args);
     if (tool == QLatin1String("list_shortcuts"))
-        return opListShortcuts();
+        return opListShortcuts(args);
     if (tool == QLatin1String("set_shortcut"))
         return opSetShortcut(args);
     if (tool == QLatin1String("reset_shortcuts"))
@@ -678,7 +824,7 @@ QJsonObject McpDispatcher::applyOne(const QString &tool, const QJsonObject &args
     const QJsonObject extended = applyOneExtended(tool, args);
     if (!extended.value(QStringLiteral("error")).toString().startsWith(QLatin1String("unknown_op")))
         return extended;
-    return err("unknown_op", tool);
+    return unknownOpError(tool);
 }
 
 QJsonObject McpDispatcher::capture(const QJsonObject &args)
@@ -688,6 +834,52 @@ QJsonObject McpDispatcher::capture(const QJsonObject &args)
                           : -1.0;
     const bool full = jsonBool(args.value(QStringLiteral("full")));
     return m_controller->mcpCaptureFrame(at, full);
+}
+
+QJsonObject McpDispatcher::frames(const QJsonObject &args)
+{
+    AppController::McpFrameSheetRequest req;
+    req.start = jsonNumber(args.value(QStringLiteral("start")), -1.0);
+    req.end = jsonNumber(args.value(QStringLiteral("end")), -1.0);
+    for (const QJsonValue &v : args.value(QStringLiteral("at")).toArray())
+        req.at.append(jsonNumber(v, 0.0));
+    if (args.contains(QStringLiteral("sample")))
+        req.sample = args.value(QStringLiteral("sample")).toString();
+    req.n = jsonInt(args.value(QStringLiteral("n")), 12);
+    req.cols = jsonInt(args.value(QStringLiteral("cols")), 0);
+    req.tileWidth = jsonInt(args.value(QStringLiteral("tile")), 0);
+    req.minChange = jsonInt(args.value(QStringLiteral("min_change")), 12);
+    req.label = jsonBool(args.value(QStringLiteral("label")), true);
+    req.toPath = args.value(QStringLiteral("return")).toString() == QLatin1String("path");
+    if (args.contains(QStringLiteral("clip")) || args.contains(QStringLiteral("track"))
+        || args.contains(QStringLiteral("index"))) {
+        const ClipRef ref = resolveClip(args);
+        if (!ref.valid())
+            return textResult(clipRefError(args), true);
+        req.track = ref.track;
+        req.clip = ref.clip;
+    }
+    const QJsonObject result = m_controller->mcpFrameSheet(req);
+    return isRawResult(result) ? result : textResult(result);
+}
+
+QJsonObject McpDispatcher::activity(const QJsonObject &args)
+{
+    AppController::McpActivityRequest req;
+    req.start = jsonNumber(args.value(QStringLiteral("start")), -1.0);
+    req.end = jsonNumber(args.value(QStringLiteral("end")), -1.0);
+    req.samples = jsonInt(args.value(QStringLiteral("samples")), 200);
+    req.peaks = jsonInt(args.value(QStringLiteral("peaks")), 8);
+    req.audio = jsonBool(args.value(QStringLiteral("audio")), true);
+    if (args.contains(QStringLiteral("clip")) || args.contains(QStringLiteral("track"))
+        || args.contains(QStringLiteral("index"))) {
+        const ClipRef ref = resolveClip(args);
+        if (!ref.valid())
+            return clipRefError(args);
+        req.track = ref.track;
+        req.clip = ref.clip;
+    }
+    return m_controller->mcpActivity(req);
 }
 
 QJsonObject McpDispatcher::waitImport(const QStringList &ids)
@@ -890,7 +1082,7 @@ QJsonObject McpDispatcher::opMoveClip(const QJsonObject &args)
 {
     const ClipRef ref = resolveClip(args);
     if (!ref.valid())
-        return err("not_found", QStringLiteral("Unknown clip"));
+        return clipRefError(args);
     if (!args.contains(QStringLiteral("at")))
         return err("bad_args", QStringLiteral("at required"));
     const double requested = jsonNumber(args.value(QStringLiteral("at")), 0);
@@ -913,7 +1105,7 @@ QJsonObject McpDispatcher::opSetDuration(const QJsonObject &args)
 {
     const ClipRef ref = resolveClip(args);
     if (!ref.valid())
-        return err("not_found", QStringLiteral("Unknown clip"));
+        return clipRefError(args);
     const double requested = jsonNumber(args.value(QStringLiteral("duration")), -1);
     if (requested <= 0)
         return err("bad_args", QStringLiteral("duration must be > 0"));
@@ -929,7 +1121,7 @@ QJsonObject McpDispatcher::opSetTrim(const QJsonObject &args)
 {
     const ClipRef ref = resolveClip(args);
     if (!ref.valid())
-        return err("not_found", QStringLiteral("Unknown clip"));
+        return clipRefError(args);
     m_controller->setClipTrim(ref.track, ref.clip, jsonNumber(args.value(QStringLiteral("in")), 0),
                               jsonNumber(args.value(QStringLiteral("out")), 0));
     const ClipRef after = resolveClip(QJsonObject{{QStringLiteral("clip"), ref.id}});
@@ -940,7 +1132,7 @@ QJsonObject McpDispatcher::opMoveToTrack(const QJsonObject &args)
 {
     const ClipRef ref = resolveClip(args);
     if (!ref.valid())
-        return err("not_found", QStringLiteral("Unknown clip"));
+        return clipRefError(args);
     const int toTrack = jsonInt(args.value(QStringLiteral("to_track")));
     if (toTrack < 0 || toTrack >= m_controller->tracks().size())
         return err("not_found", QStringLiteral("No such track"));
@@ -961,10 +1153,13 @@ QJsonObject McpDispatcher::opSplitClip(const QJsonObject &args)
 {
     const ClipRef ref = resolveClip(args);
     if (!ref.valid())
-        return err("not_found", QStringLiteral("Unknown clip"));
+        return clipRefError(args);
     const double at = args.contains(QStringLiteral("at"))
                           ? jsonNumber(args.value(QStringLiteral("at")), m_controller->playheadSeconds())
                           : m_controller->playheadSeconds();
+    const QVariantMap clip = m_controller->mcpCompactClip(ref.track, ref.clip);
+    const double clipStart = clip.value(QStringLiteral("start")).toDouble();
+    const double clipEnd = clipStart + clip.value(QStringLiteral("duration")).toDouble();
     const QSet<QString> before = clipIdSet(m_controller);
     m_controller->splitClipAt(ref.track, ref.clip, at);
     const QSet<QString> afterIds = clipIdSet(m_controller);
@@ -975,7 +1170,7 @@ QJsonObject McpDispatcher::opSplitClip(const QJsonObject &args)
             ids.append(id);
     }
     if (ids.size() < 2)
-        return err("bad_args", QStringLiteral("Split needs a time inside the clip"));
+        return err("bad_args", QStringLiteral("at=%1 is outside clip [%2, %3)").arg(at).arg(clipStart).arg(clipEnd));
     return ok({{QStringLiteral("clips"), ids}, {QStringLiteral("at"), at}});
 }
 
@@ -983,7 +1178,7 @@ QJsonObject McpDispatcher::opDeleteClip(const QJsonObject &args)
 {
     const ClipRef ref = resolveClip(args);
     if (!ref.valid())
-        return err("not_found", QStringLiteral("Unknown clip"));
+        return clipRefError(args);
     m_controller->selectClip(ref.track, ref.clip);
     m_controller->deleteSelectedClip();
     if (m_controller->mcpLocateClip(ref.id).first >= 0)
@@ -995,7 +1190,7 @@ QJsonObject McpDispatcher::opDuplicateClip(const QJsonObject &args)
 {
     const ClipRef ref = resolveClip(args);
     if (!ref.valid())
-        return err("not_found", QStringLiteral("Unknown clip"));
+        return clipRefError(args);
     const QSet<QString> before = clipIdSet(m_controller);
     m_controller->selectClip(ref.track, ref.clip);
     m_controller->duplicateSelectedClip();
@@ -1034,7 +1229,7 @@ QJsonObject McpDispatcher::opSetTransform(const QJsonObject &args)
 {
     const ClipRef ref = resolveClip(args);
     if (!ref.valid())
-        return err("not_found", QStringLiteral("Unknown clip"));
+        return clipRefError(args);
     QVariantMap patch;
     for (const char *key : {"x", "y", "w", "h", "rotation", "opacity"}) {
         const QString k = QString::fromUtf8(key);
@@ -1053,7 +1248,7 @@ QJsonObject McpDispatcher::opResetTransform(const QJsonObject &args)
 {
     const ClipRef ref = resolveClip(args);
     if (!ref.valid())
-        return err("not_found", QStringLiteral("Unknown clip"));
+        return clipRefError(args);
     m_controller->resetClipTransform(ref.track, ref.clip);
     const ClipRef after = resolveClip(QJsonObject{{QStringLiteral("clip"), ref.id}});
     return ok(clipFeedback(after));
@@ -1121,7 +1316,7 @@ QJsonObject McpDispatcher::opSetText(const QJsonObject &args)
 {
     const ClipRef ref = resolveClip(args);
     if (!ref.valid())
-        return err("not_found", QStringLiteral("Unknown clip"));
+        return clipRefError(args);
     if (args.contains(QStringLiteral("text")))
         m_controller->setClipTextContent(ref.track, ref.clip, args.value(QStringLiteral("text")).toString());
     if (args.contains(QStringLiteral("style")))
@@ -1130,50 +1325,45 @@ QJsonObject McpDispatcher::opSetText(const QJsonObject &args)
     return ok(clipFeedback(after));
 }
 
-QJsonObject McpDispatcher::opListEffects() const
+QJsonObject McpDispatcher::opListEffects(const QJsonObject &args) const
 {
-    QJsonArray items;
-    for (const QVariant &v : m_controller->effectCatalog())
-        items.append(compactCatalogItem(v.toMap()));
-    return ok({{QStringLiteral("effects"), items}});
+    return catalogListing(m_controller->effectCatalog(), args, "effects", "effect", "list_effects");
 }
 
-QJsonObject McpDispatcher::opListAudioEffects() const
+QJsonObject McpDispatcher::opListAudioEffects(const QJsonObject &args) const
 {
-    QJsonArray items;
-    for (const QVariant &v : m_controller->audioEffectCatalog())
-        items.append(compactCatalogItem(v.toMap()));
-    return ok({{QStringLiteral("effects"), items}});
+    return catalogListing(m_controller->audioEffectCatalog(), args, "effects", "audio effect", "list_audio_effects");
 }
 
-QJsonObject McpDispatcher::opListTransitions() const
+QJsonObject McpDispatcher::opListTransitions(const QJsonObject &args) const
 {
-    QJsonArray items;
-    for (const QVariant &v : m_controller->transitionKinds())
-        items.append(compactCatalogItem(v.toMap()));
-    return ok({{QStringLiteral("transitions"), items}});
+    return catalogListing(m_controller->transitionKinds(), args, "transitions", "transition", "list_transitions");
 }
 
 QJsonObject McpDispatcher::opAddEffect(const QJsonObject &args)
 {
     const ClipRef ref = resolveClip(args);
     if (!ref.valid())
-        return err("not_found", QStringLiteral("Unknown clip"));
-    const QString effect = args.value(QStringLiteral("effect")).toString();
+        return clipRefError(args);
+    const QString raw = args.value(QStringLiteral("effect")).toString();
+    QStringList nearest;
+    const QString effect = resolveCatalogId(raw, catalogIds(m_controller->effectCatalog()), &nearest);
+    if (effect.isEmpty())
+        return unknownCatalogId("effect", raw, nearest, "list_effects");
     const QVariantList before = m_controller->clipAt(ref.track, ref.clip).value(QStringLiteral("effects")).toList();
     m_controller->addEffect(ref.track, ref.clip, effect);
     const QVariantList after = m_controller->clipAt(ref.track, ref.clip).value(QStringLiteral("effects")).toList();
     if (after.size() <= before.size())
         return err("not_found", QStringLiteral("Unknown effect id"));
-    return ok(clipFeedback(ref, {{QStringLiteral("index"), after.size() - 1},
-                                 {QStringLiteral("effect"), effect}}));
+    return ok(clipFeedback(ref, effectHost(ref, {{QStringLiteral("index"), after.size() - 1},
+                                                 {QStringLiteral("effect"), effect}})));
 }
 
 QJsonObject McpDispatcher::opRemoveEffect(const QJsonObject &args)
 {
     const ClipRef ref = resolveClip(args);
     if (!ref.valid())
-        return err("not_found", QStringLiteral("Unknown clip"));
+        return clipRefError(args);
     const int index = jsonInt(args.value(QStringLiteral("index")));
     const int before = m_controller->clipAt(ref.track, ref.clip).value(QStringLiteral("effects")).toList().size();
     m_controller->removeEffect(ref.track, ref.clip, index);
@@ -1187,7 +1377,7 @@ QJsonObject McpDispatcher::opSetEffectParam(const QJsonObject &args)
 {
     const ClipRef ref = resolveClip(args);
     if (!ref.valid())
-        return err("not_found", QStringLiteral("Unknown clip"));
+        return clipRefError(args);
     m_controller->setEffectParam(ref.track, ref.clip, jsonInt(args.value(QStringLiteral("index"))),
                                  args.value(QStringLiteral("key")).toString(),
                                  jsonNumber(args.value(QStringLiteral("value")), 0));
@@ -1198,8 +1388,12 @@ QJsonObject McpDispatcher::opAddAudioEffect(const QJsonObject &args)
 {
     const ClipRef ref = resolveClip(args);
     if (!ref.valid())
-        return err("not_found", QStringLiteral("Unknown clip"));
-    const QString effect = args.value(QStringLiteral("effect")).toString();
+        return clipRefError(args);
+    const QString raw = args.value(QStringLiteral("effect")).toString();
+    QStringList nearest;
+    const QString effect = resolveCatalogId(raw, catalogIds(m_controller->audioEffectCatalog()), &nearest);
+    if (effect.isEmpty())
+        return unknownCatalogId("audio effect", raw, nearest, "list_audio_effects");
     const int before =
         m_controller->clipAt(ref.track, ref.clip).value(QStringLiteral("audioEffects")).toList().size();
     m_controller->addAudioEffect(ref.track, ref.clip, effect);
@@ -1207,14 +1401,32 @@ QJsonObject McpDispatcher::opAddAudioEffect(const QJsonObject &args)
         m_controller->clipAt(ref.track, ref.clip).value(QStringLiteral("audioEffects")).toList().size();
     if (after <= before)
         return err("not_found", QStringLiteral("Unknown audio effect id"));
-    return ok(clipFeedback(ref, {{QStringLiteral("index"), after - 1}, {QStringLiteral("effect"), effect}}));
+    return ok(clipFeedback(ref, effectHost(ref, {{QStringLiteral("index"), after - 1},
+                                                 {QStringLiteral("effect"), effect}})));
+}
+
+// Effects live on an adjustment clip that hosts the target clip's stack (the app creates one on
+// its own lane the first time). Every effect op still addresses the original clip, but the
+// agent sees a new track and clip in inspect, so say where the stack went.
+QJsonObject McpDispatcher::effectHost(const ClipRef &ref, QJsonObject extra) const
+{
+    const int hostTrack = m_controller->selectedTrack();
+    const int hostClip = m_controller->selectedClip();
+    if (hostTrack >= 0 && hostClip >= 0 && (hostTrack != ref.track || hostClip != ref.clip)) {
+        extra.insert(QStringLiteral("host"),
+                     QJsonObject{{QStringLiteral("track"), hostTrack},
+                                 {QStringLiteral("index"), hostClip},
+                                 {QStringLiteral("clip"), m_controller->mcpClipId(hostTrack, hostClip)},
+                                 {QStringLiteral("kind"), QStringLiteral("adjustment")}});
+    }
+    return extra;
 }
 
 QJsonObject McpDispatcher::opRemoveAudioEffect(const QJsonObject &args)
 {
     const ClipRef ref = resolveClip(args);
     if (!ref.valid())
-        return err("not_found", QStringLiteral("Unknown clip"));
+        return clipRefError(args);
     const int index = jsonInt(args.value(QStringLiteral("index")));
     const int before =
         m_controller->clipAt(ref.track, ref.clip).value(QStringLiteral("audioEffects")).toList().size();
@@ -1230,7 +1442,7 @@ QJsonObject McpDispatcher::opSetAudioEffectParam(const QJsonObject &args)
 {
     const ClipRef ref = resolveClip(args);
     if (!ref.valid())
-        return err("not_found", QStringLiteral("Unknown clip"));
+        return clipRefError(args);
     m_controller->setAudioEffectParam(ref.track, ref.clip, jsonInt(args.value(QStringLiteral("index"))),
                                       args.value(QStringLiteral("key")).toString(),
                                       jsonNumber(args.value(QStringLiteral("value")), 0));
@@ -1241,13 +1453,19 @@ QJsonObject McpDispatcher::opAddTransition(const QJsonObject &args)
 {
     const ClipRef ref = resolveClip(args);
     if (!ref.valid())
-        return err("not_found", QStringLiteral("Unknown clip"));
-    const QString kind = args.value(QStringLiteral("kind")).toString();
+        return clipRefError(args);
+    const QString raw = args.value(QStringLiteral("kind")).toString().trimmed();
+    QString kind = QStringLiteral("crossfade");
+    if (!raw.isEmpty()) {
+        QStringList nearest;
+        kind = resolveCatalogId(raw, catalogIds(m_controller->transitionKinds()), &nearest);
+        if (kind.isEmpty())
+            return unknownCatalogId("transition", raw, nearest, "list_transitions");
+    }
     const double duration = args.contains(QStringLiteral("duration"))
                                 ? jsonNumber(args.value(QStringLiteral("duration")), 0.5)
                                 : 0.5;
-    m_controller->addTransition(ref.track, ref.clip, kind.isEmpty() ? QStringLiteral("crossfade") : kind,
-                                duration);
+    m_controller->addTransition(ref.track, ref.clip, kind, duration);
     const QVariantMap tr = m_controller->transitionBetweenClips(ref.track, ref.clip);
     if (tr.isEmpty())
         return err("bad_args", QStringLiteral("No neighbour clip for a transition"));
@@ -1315,15 +1533,25 @@ QJsonObject McpDispatcher::opSetMetadata(const QJsonObject &args)
 
 QJsonObject McpDispatcher::opSaveProject(const QJsonObject &args)
 {
+    const bool saveAs = args.value(QStringLiteral("saveAs")).toBool();
     QString path = args.value(QStringLiteral("path")).toString();
-    if (path.isEmpty())
+    if (path.isEmpty() && !saveAs)
         path = m_controller->currentProjectPath();
     if (path.isEmpty())
-        return err("bad_args", QStringLiteral("path required — project has never been saved"));
+        return err("bad_args",
+                   saveAs ? QStringLiteral("path required with saveAs — it names the copy")
+                          : QStringLiteral("path required — project has never been saved"));
     const QFileInfo info(path);
     if (!info.absoluteDir().exists() && !QDir().mkpath(info.absolutePath()))
         return err("bad_args", QStringLiteral("Could not create parent folder"));
-    m_controller->saveProject(QUrl::fromLocalFile(path));
+    // Save As onto the open project would be a plain Save that also re-ids and renames it, which
+    // is the opposite of what the caller asked for.
+    if (saveAs && info.absoluteFilePath() == QFileInfo(m_controller->currentProjectPath()).absoluteFilePath())
+        return err("bad_args", QStringLiteral("saveAs path is the open project — pick another"));
+    if (saveAs)
+        m_controller->saveProjectAs(QUrl::fromLocalFile(path));
+    else
+        m_controller->saveProject(QUrl::fromLocalFile(path));
     return ok({{QStringLiteral("path"), path}});
 }
 
@@ -1489,7 +1717,7 @@ QJsonObject McpDispatcher::opListAnimatedProperties(const QJsonObject &args) con
 {
     const ClipRef ref = resolveClip(args);
     if (!ref.valid())
-        return err("not_found", QStringLiteral("Unknown clip"));
+        return clipRefError(args);
     const QStringList props = m_controller->clipAnimatedProperties(ref.track, ref.clip);
     QJsonArray list;
     for (const QString &prop : props)
@@ -1501,7 +1729,7 @@ QJsonObject McpDispatcher::opListKeyframes(const QJsonObject &args) const
 {
     const ClipRef ref = resolveClip(args);
     if (!ref.valid())
-        return err("not_found", QStringLiteral("Unknown clip"));
+        return clipRefError(args);
     const QString prop = args.value(QStringLiteral("prop")).toString().trimmed();
     if (prop.isEmpty())
         return err("bad_args", QStringLiteral("prop required"));
@@ -1530,7 +1758,7 @@ QJsonObject McpDispatcher::opSetKeyframe(const QJsonObject &args)
 {
     const ClipRef ref = resolveClip(args);
     if (!ref.valid())
-        return err("not_found", QStringLiteral("Unknown clip"));
+        return clipRefError(args);
     const QString prop = args.value(QStringLiteral("prop")).toString().trimmed();
     if (prop.isEmpty())
         return err("bad_args", QStringLiteral("prop required"));
@@ -1547,7 +1775,7 @@ QJsonObject McpDispatcher::opRemoveKeyframe(const QJsonObject &args)
 {
     const ClipRef ref = resolveClip(args);
     if (!ref.valid())
-        return err("not_found", QStringLiteral("Unknown clip"));
+        return clipRefError(args);
     const QString prop = args.value(QStringLiteral("prop")).toString().trimmed();
     if (prop.isEmpty() || !args.contains(QStringLiteral("at")))
         return err("bad_args", QStringLiteral("prop and at required"));
@@ -1559,7 +1787,7 @@ QJsonObject McpDispatcher::opSetKeyframeInterpolation(const QJsonObject &args)
 {
     const ClipRef ref = resolveClip(args);
     if (!ref.valid())
-        return err("not_found", QStringLiteral("Unknown clip"));
+        return clipRefError(args);
     const QString prop = args.value(QStringLiteral("prop")).toString().trimmed();
     const QString mode = args.value(QStringLiteral("mode")).toString().trimmed().toLower();
     if (prop.isEmpty() || !args.contains(QStringLiteral("at")) || mode.isEmpty())
@@ -1574,7 +1802,7 @@ QJsonObject McpDispatcher::opSetKeyframeTangents(const QJsonObject &args)
 {
     const ClipRef ref = resolveClip(args);
     if (!ref.valid())
-        return err("not_found", QStringLiteral("Unknown clip"));
+        return clipRefError(args);
     const QString prop = args.value(QStringLiteral("prop")).toString().trimmed();
     if (prop.isEmpty() || !args.contains(QStringLiteral("at")))
         return err("bad_args", QStringLiteral("prop and at required"));
@@ -1592,7 +1820,7 @@ QJsonObject McpDispatcher::opSetKeyframeHold(const QJsonObject &args)
 {
     const ClipRef ref = resolveClip(args);
     if (!ref.valid())
-        return err("not_found", QStringLiteral("Unknown clip"));
+        return clipRefError(args);
     const QString prop = args.value(QStringLiteral("prop")).toString().trimmed();
     if (prop.isEmpty() || !args.contains(QStringLiteral("at")) || !args.contains(QStringLiteral("hold")))
         return err("bad_args", QStringLiteral("prop, at, and hold required"));
@@ -1605,7 +1833,7 @@ QJsonObject McpDispatcher::opSetPropertyKeyframesEnabled(const QJsonObject &args
 {
     const ClipRef ref = resolveClip(args);
     if (!ref.valid())
-        return err("not_found", QStringLiteral("Unknown clip"));
+        return clipRefError(args);
     const QString prop = args.value(QStringLiteral("prop")).toString().trimmed();
     if (prop.isEmpty() || !args.contains(QStringLiteral("enabled")))
         return err("bad_args", QStringLiteral("prop and enabled required"));
@@ -1620,7 +1848,7 @@ QJsonObject McpDispatcher::opListSpeedCurve(const QJsonObject &args)
 {
     const ClipRef ref = resolveClip(args);
     if (!ref.valid())
-        return err("not_found", QStringLiteral("Unknown clip"));
+        return clipRefError(args);
     if (m_controller->speedCurveSessionActive())
         m_controller->endSpeedCurveSession();
     m_controller->beginSpeedCurveSession(ref.track, ref.clip);
@@ -1640,7 +1868,7 @@ QJsonObject McpDispatcher::opSetSpeedCurve(const QJsonObject &args)
 {
     const ClipRef ref = resolveClip(args);
     if (!ref.valid())
-        return err("not_found", QStringLiteral("Unknown clip"));
+        return clipRefError(args);
     const QJsonArray pointArray = args.value(QStringLiteral("points")).toArray();
     if (pointArray.size() < 2)
         return err("bad_args", QStringLiteral("points needs at least two entries"));
@@ -1667,7 +1895,7 @@ QJsonObject McpDispatcher::opClearSpeedCurve(const QJsonObject &args)
 {
     const ClipRef ref = resolveClip(args);
     if (!ref.valid())
-        return err("not_found", QStringLiteral("Unknown clip"));
+        return clipRefError(args);
     m_controller->clearClipSpeedCurve(ref.track, ref.clip);
     const ClipRef after = resolveClip(QJsonObject{{QStringLiteral("clip"), ref.id}});
     return ok(clipFeedback(after));
@@ -1696,18 +1924,25 @@ QJsonObject McpDispatcher::opSetTheme(const QJsonObject &args)
     });
 }
 
-QJsonObject McpDispatcher::opListShortcuts() const
+QJsonObject McpDispatcher::opListShortcuts(const QJsonObject &args) const
 {
+    const QString q = args.value(QStringLiteral("q")).toString().trimmed();
     QJsonArray actions;
     for (const QVariant &entry : m_controller->actions()) {
         const QVariantMap map = entry.toMap();
+        const QString id = map.value(QStringLiteral("id")).toString();
+        const QString label = map.value(QStringLiteral("label")).toString();
+        const QString shortcut = map.value(QStringLiteral("shortcut")).toString();
+        if (!q.isEmpty() && !id.contains(q, Qt::CaseInsensitive) && !label.contains(q, Qt::CaseInsensitive)
+            && !shortcut.contains(q, Qt::CaseInsensitive))
+            continue;
         actions.append(QJsonObject{
-            {QStringLiteral("id"), map.value(QStringLiteral("id")).toString()},
-            {QStringLiteral("label"), map.value(QStringLiteral("label")).toString()},
-            {QStringLiteral("shortcut"), map.value(QStringLiteral("shortcut")).toString()},
+            {QStringLiteral("id"), id},
+            {QStringLiteral("label"), label},
+            {QStringLiteral("shortcut"), shortcut},
         });
     }
-    return ok({{QStringLiteral("actions"), actions}});
+    return ok({{QStringLiteral("actions"), actions}, {QStringLiteral("n"), actions.size()}});
 }
 
 QJsonObject McpDispatcher::opSetShortcut(const QJsonObject &args)

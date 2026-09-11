@@ -213,14 +213,30 @@ Column {
                             }
 
                             TapHandler {
-                                enabled: !presetDrag.active
+                                // Touch taps arrive through TouchLiftArea below, which
+                                // holds the grab this one would need.
+                                enabled: !presetDrag.active && !Theme.touchUi
                                 onTapped: root.applyPreset(presetCard.modelData.id)
                             }
 
                             DragHandler {
                                 id: presetDrag
                                 target: null
+                                // Touch lifts through TouchDrag instead: a platform
+                                // drag has no touch gesture and cannot leave the sheet.
+                                enabled: !Theme.touchUi
                                 acceptedButtons: Qt.LeftButton
+                            }
+
+                            // Hold to carry the preset onto a specific clip; tap still
+                            // applies it to the selection.
+                            TouchLiftArea {
+                                dragKind: "audioEffect"
+                                payload: presetCard.modelData.id
+                                label: presetCard.modelData.label
+                                thumbnail: presetCard.thumb
+                                glyph: presetCard.iconGlyph
+                                onLiftTapped: root.applyPreset(presetCard.modelData.id)
                             }
 
                             AssetFavoriteButton {

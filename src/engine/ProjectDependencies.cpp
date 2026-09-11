@@ -104,7 +104,9 @@ QList<MediaEntry> collectMedia(const Project &project, bool embedSource)
 
     for (const Track &track : project.tracks()) {
         for (const Clip &clip : track.clips) {
-            append(clip.mask.mattePath, MediaRole::Matte, true);
+            // Masks live on adjustment clips, which this flat walk already covers.
+            append(clip.mask.mediaPath, MediaRole::Matte, true);
+            append(clip.mask.mediaFgrPath, MediaRole::Matte, true);
             append(clip.faceTrackPath, MediaRole::FaceTrack, true);
             for (const Effect &effect : clip.effects) {
                 const EffectPresetEntry *def = effectDefForId(effect.catalogId);

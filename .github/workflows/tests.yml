@@ -2,8 +2,11 @@ name: Tests
 
 # Runs the CTest suites on every push and pull request. package.yml also runs them, but only
 # on a manual dispatch or a release tag — this is what keeps a regression from sitting on main
-# until release day. It builds the same way package.yml's linux job does and then stops: no
-# install tree, no AppImage, no artifacts.
+# until release day. Each job builds the same way package.yml's job for that platform does and
+# then stops: no install tree, no AppImage, no DMG, no artifacts.
+#
+# Two platforms, because one is not enough: allocator and toolchain differences mean a defect
+# can be reliably invisible on Linux and reliably fatal on macOS. See the macos job below.
 on:
   push:
   pull_request:
@@ -99,7 +102,7 @@ jobs:
           sudo apt-get install -y -o Acquire::Retries=3 \
             build-essential ninja-build pkg-config git xvfb ccache \
             libgl1-mesa-dev libegl1-mesa-dev libglib2.0-dev libdbus-1-dev \
-            libzstd-dev libssl-dev libsoundtouch-dev \
+            libzstd-dev libssl-dev libsoundtouch-dev zlib1g-dev \
             libpulse-dev libasound2-dev \
             libva2 libva-drm2 libva-x11-2 \
             libfontconfig1-dev libfreetype6-dev libxkbcommon-dev libxkbcommon-x11-dev \
@@ -193,3 +196,78 @@ jobs:
       - name: ccache statistics
         if: always()
         run: ccache --show-stats
+
+  # The macOS runner is the reason this job exists rather than trusting the Linux one. glibc's
+  # allocator leaves a freed block byte-identical, so a use-after-free through a stale
+  # `Track &`/`Clip &` reads back the right answer there and the suite stays green; macOS
+  # libmalloc scribbles and recycles freed blocks across threads and fails immediately. That
+  # exact bug shipped to main and only surfaced at release-packaging time.
+  #
+  # Not on every branch push: macOS runner minutes bill at a multiple of Linux, and a PR plus
+  # main is where a regression actually needs catching.
+  macos:
+    name: CTest (macOS)
+    if: github.event_name == 'pull_request' || github.ref == 'refs/heads/main'
+    runs-on: macos-15
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+
+      # Same content, same reason, same layout as the linux job above.
+      - name: Check out addon content
+        uses: actions/checkout@v4
+        with:
+          repository: CutWire-Studios/Drift-Addons
+          path: drift-addons
+          sparse-checkout: |
+            staging/fonts-essentials/fonts
+            staging/stickers-harmonyos/emoji-font
+            staging/effects-core/effects
+
+      - name: Stage addon content where the tests expect it
+        run: |
+          cp -r drift-addons/staging/fonts-essentials/fonts "${GITHUB_WORKSPACE}/fonts"
+          cp -r drift-addons/staging/stickers-harmonyos/emoji-font "${GITHUB_WORKSPACE}/emoji-fonts"
+          ln -s "${GITHUB_WORKSPACE}/drift-addons" "${GITHUB_WORKSPACE}/../drift-addons"
+          test -f "${GITHUB_WORKSPACE}/fonts/anton/family.json"
+          test -f "${GITHUB_WORKSPACE}/emoji-fonts/HarmonyOS_4.0.ttf"
+          test -f "${GITHUB_WORKSPACE}/../drift-addons/staging/effects-core/effects/turbulent_displace/effect.json"
+
+      # Homebrew, not install-qt-action, and not the pinned FFmpeg the Linux job uses: Homebrew's
+      # Qt links the same FFmpeg Drift does, so there is no second libavcodec in the process to
+      # keep ABI-compatible. This is what package.yml's macos job does; keep the two in step.
+      # Note the consequence — this job tests against Homebrew's FFmpeg 8.x while Linux tests
+      # against the n7.1 pin.
+      - name: Install dependencies
+        run: |
+          brew update
+          brew install qt ffmpeg zstd openssl@3 sound-touch ninja
+
+      # 16 tests synthesize their clips by shelling out to ffmpeg and QSKIP when they cannot find
+      # one. Asserted rather than assumed: without this the job could go green having tested
+      # nothing, which is the failure mode this whole job exists to prevent.
+      - name: Verify ffmpeg is on PATH
+        run: ffmpeg -hide_banner -encoders | grep -E "libx264|aac" | head -3
+
+      - name: Cache FetchContent dependencies
+        uses: actions/cache@v4
+        with:
+          path: .deps
+          key: deps-macos-${{ hashFiles('CMakeLists.txt') }}
+
+      - name: Configure
+        run: |
+          cmake -B build -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_PREFIX_PATH="$(brew --prefix qt);$(brew --prefix openssl@3);$(brew --prefix)" \
+            -DFETCHCONTENT_BASE_DIR="${FETCHCONTENT_BASE_DIR}" \
+            -DDRIFT_BUNDLE_ONNXRUNTIME=OFF
+
+      - name: Build
+        run: cmake --build build --parallel
+
+      # No xvfb and no QT_QPA_PLATFORM override: the runner has a real window server, so the
+      # compositor tests get a genuine OpenGL context. Serial for the same reason as the Linux
+      # job — the suites share QStandardPaths::AppDataLocation test-mode state.
+      - name: Test
+        run: ctest --test-dir build --output-on-failure

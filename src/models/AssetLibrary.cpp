@@ -15,6 +15,8 @@
 #include <QFile>
 #include <QFileInfo>
 #include <QImageIOHandler>
+#include "engine/StillImage.h"
+
 #include <QImageReader>
 #include <QJsonObject>
 #include <QMetaObject>
@@ -132,29 +134,57 @@ QString materializeImportUrl(const QUrl &url)
 
 #endif // Q_OS_ANDROID
 
-bool isImagePath(const QString &path)
+// The one place that decides what counts as media. The picker's name filter, the folder-import
+// walk and the provisional kind guess all read these lists, so a format can no longer be offered
+// by one entry point and skipped by another.
+// Containers FFmpeg demuxes, not everything it can be made to open: its own extension table is
+// no help here, since half of these demuxers probe instead of matching on a suffix (mpegts and
+// mpeg declare none at all) while the ones that do declare cover raw streams, subtitles and
+// tracker music. Anything not here can still be dragged onto the bin, where the probe decides.
+const QStringList &videoExtensions()
 {
     static const QStringList extensions = {
-        QStringLiteral("png"),  QStringLiteral("jpg"),  QStringLiteral("jpeg"),
-        QStringLiteral("gif"),  QStringLiteral("webp"), QStringLiteral("bmp"),
-        QStringLiteral("tiff"), QStringLiteral("tif"),  QStringLiteral("svg"),
+        // MP4 / QuickTime family
+        QStringLiteral("mp4"),  QStringLiteral("m4v"),  QStringLiteral("mov"),
+        QStringLiteral("3gp"),  QStringLiteral("3g2"),
+        // Matroska
+        QStringLiteral("mkv"),  QStringLiteral("webm"),
+        // AVI / ASF
+        QStringLiteral("avi"),  QStringLiteral("wmv"),  QStringLiteral("asf"),
+        QStringLiteral("divx"),
+        // Flash
+        QStringLiteral("flv"),  QStringLiteral("f4v"),
+        // MPEG program and transport streams
+        QStringLiteral("mpg"),  QStringLiteral("mpeg"), QStringLiteral("m2v"),
+        QStringLiteral("ts"),   QStringLiteral("m2ts"), QStringLiteral("mts"),
+        QStringLiteral("m2t"),  QStringLiteral("vob"),
+        // Ogg, RealMedia
+        QStringLiteral("ogv"),  QStringLiteral("rm"),   QStringLiteral("rmvb"),
+        // Broadcast and camera
+        QStringLiteral("mxf"),  QStringLiteral("dv"),   QStringLiteral("y4m"),
     };
-    return extensions.contains(QFileInfo(path).suffix().toLower());
+    return extensions;
 }
 
-bool isAudioPath(const QString &path)
+const QStringList &audioExtensions()
 {
     static const QStringList extensions = {
         QStringLiteral("mp3"),  QStringLiteral("wav"),  QStringLiteral("aac"),
         QStringLiteral("flac"), QStringLiteral("ogg"),  QStringLiteral("m4a"),
         QStringLiteral("wma"),  QStringLiteral("aiff"), QStringLiteral("aif"),
     };
-    return extensions.contains(QFileInfo(path).suffix().toLower());
+    return extensions;
+}
+
+// Canonical list lives in core so the engine and the project importers can share it.
+const QStringList &imageExtensions()
+{
+    return drift::imageExtensions();
 }
 
 drift::MediaKind kindFrom(const MediaInfo &info, const QString &path)
 {
-    if (isImagePath(path))
+    if (AssetLibrary::isImagePath(path))
         return drift::MediaKind::Image;
 
     for (const StreamInfo &stream : info.streams) {
@@ -170,9 +200,9 @@ drift::MediaKind kindFrom(const MediaInfo &info, const QString &path)
 
 drift::MediaKind provisionalKind(const QString &path)
 {
-    if (isImagePath(path))
+    if (AssetLibrary::isImagePath(path))
         return drift::MediaKind::Image;
-    if (isAudioPath(path))
+    if (AssetLibrary::isAudioPath(path))
         return drift::MediaKind::Audio;
     return drift::MediaKind::Video;
 }
@@ -199,17 +229,23 @@ QString formatDuration(drift::TimeUs durationUs)
         .arg(seconds, 2, 10, QChar('0'));
 }
 
+// MediaAsset carries one sampleRate/channels pair for the whole file, so a multi-stream source
+// has to pick one. It describes the *first* audio stream, matching Clip::audioStreamIndex's
+// default of 0 and ensureAudioPresence(), which also breaks on the first. This used to keep
+// overwriting with each stream in turn and end up describing the last one, so the same asset
+// reported different channel counts depending on which path had populated it.
 void fillAudioPresence(drift::MediaAsset &asset, const MediaInfo &info)
 {
     bool hasAudio = false;
     for (const StreamInfo &stream : info.streams) {
-        if (stream.type == StreamInfo::Type::Audio) {
-            hasAudio = true;
-            asset.sampleRate = stream.sampleRate;
-            asset.channels = stream.channels;
-            if (asset.codecName.isEmpty())
-                asset.codecName = stream.codecName;
-        }
+        if (stream.type != StreamInfo::Type::Audio)
+            continue;
+        hasAudio = true;
+        asset.sampleRate = stream.sampleRate;
+        asset.channels = stream.channels;
+        if (asset.codecName.isEmpty())
+            asset.codecName = stream.codecName;
+        break;
     }
     asset.hasAudio = hasAudio;
     asset.hasAudioKnown = true;
@@ -244,15 +280,21 @@ drift::MediaAsset buildProbedAsset(const QString &absolutePath, const QString &n
     return asset;
 }
 
-drift::MediaAsset buildImageAsset(const QString &absolutePath, const QString &name)
+// nullopt when neither Qt nor the FFmpeg fallback can read the file. The suffix is on the import
+// whitelist, so reaching that means a format Drift claims to support has no decoder here at all.
+// Returning a zero-sized asset instead, which is what this used to do, left a row in the bin that
+// silently rendered as nothing.
+std::optional<drift::MediaAsset> buildImageAsset(const QString &absolutePath, const QString &name)
 {
     const QString kindString = drift::mediaKindToString(drift::MediaKind::Image);
     const QString thumb = MediaThumbnail::generate(absolutePath, kindString);
-    QImageReader reader(absolutePath);
-    reader.setAutoTransform(true);
-    QSize size = reader.size();
-    if (reader.transformation() & QImageIOHandler::TransformationRotate90)
-        size.transpose();
+    const QSize size = drift::stillImageSize(absolutePath);
+
+    if (size.isEmpty()) {
+        qWarning("import: cannot read image %s. Qt decodes: %s", qPrintable(absolutePath),
+                 QImageReader::supportedImageFormats().join(", ").constData());
+        return std::nullopt;
+    }
 
     drift::MediaAsset asset;
     asset.name = name;
@@ -283,6 +325,39 @@ std::optional<drift::MediaAsset> probeAsset(const QString &absolutePath, bool im
 
 } // namespace
 
+bool AssetLibrary::isVideoPath(const QString &path)
+{
+    return videoExtensions().contains(QFileInfo(path).suffix().toLower());
+}
+
+bool AssetLibrary::isAudioPath(const QString &path)
+{
+    return audioExtensions().contains(QFileInfo(path).suffix().toLower());
+}
+
+bool AssetLibrary::isImagePath(const QString &path)
+{
+    return imageExtensions().contains(QFileInfo(path).suffix().toLower());
+}
+
+bool AssetLibrary::isMediaPath(const QString &path)
+{
+    return isVideoPath(path) || isAudioPath(path) || isImagePath(path);
+}
+
+QString AssetLibrary::mediaNameFilter() const
+{
+    static const QString pattern = [] {
+        QStringList globs;
+        for (const QStringList *group : {&videoExtensions(), &audioExtensions(), &imageExtensions()}) {
+            for (const QString &extension : *group)
+                globs.append(QStringLiteral("*.") + extension);
+        }
+        return globs.join(QLatin1Char(' '));
+    }();
+    return tr("Media files (%1)").arg(pattern);
+}
+
 bool AssetLibrary::sandboxed() const
 {
 #if defined(Q_OS_ANDROID)
@@ -305,6 +380,17 @@ AssetLibrary::AssetLibrary(QObject *parent)
     connect(this, &QAbstractItemModel::rowsInserted, this, &AssetLibrary::snapshotAssets);
     connect(this, &QAbstractItemModel::rowsRemoved, this, &AssetLibrary::snapshotAssets);
     connect(this, &QAbstractItemModel::modelReset, this, &AssetLibrary::snapshotAssets);
+}
+
+// Every probe and thumbnail job captures `this` and posts its result back to this object, so
+// none of them may outlive it. clear() drops the ones that have not started — an import of a
+// few hundred files leaves a long queue, and there is no reason to run it to completion just
+// to throw the answers away — and waitForDone() waits out the handful already running.
+// Results that did get posted are ordinary queued events, which ~QObject discards.
+AssetLibrary::~AssetLibrary()
+{
+    m_jobs.clear();
+    m_jobs.waitForDone();
 }
 
 QList<QString> AssetLibrary::currentPaths() const
@@ -522,7 +608,7 @@ void AssetLibrary::startThumbJob(const QString &assetId)
     const QString path = asset->path;
     const drift::MediaKind kind = asset->kind;
 
-    (void)QtConcurrent::run([this, assetId, path, kind, needThumb, needStrip]() {
+    (void)QtConcurrent::run(&m_jobs, [this, assetId, path, kind, needThumb, needStrip]() {
         const QString kindString = drift::mediaKindToString(kind);
         QString thumb;
         QString strip;
@@ -589,7 +675,7 @@ void AssetLibrary::startImportJob(const QString &assetId, const QString &absolut
 
     m_importPending.insert(assetId);
 
-    (void)QtConcurrent::run([this, assetId, absolutePath, imageOnly]() {
+    (void)QtConcurrent::run(&m_jobs, [this, assetId, absolutePath, imageOnly]() {
         const std::optional<drift::MediaAsset> probed = probeAsset(absolutePath, imageOnly);
         const drift::MediaAsset filled = probed.value_or(drift::MediaAsset{});
         const bool ok = probed.has_value();
@@ -614,7 +700,7 @@ bool AssetLibrary::startReplaceProbe(int index, const QString &absolutePath)
     m_importPending.insert(assetId);
     const bool imageOnly = isImagePath(absolutePath);
 
-    (void)QtConcurrent::run([this, assetId, absolutePath, imageOnly]() {
+    (void)QtConcurrent::run(&m_jobs, [this, assetId, absolutePath, imageOnly]() {
         const std::optional<drift::MediaAsset> probed = probeAsset(absolutePath, imageOnly);
         const drift::MediaAsset filled = probed.value_or(drift::MediaAsset{});
         const bool ok = probed.has_value();
@@ -671,10 +757,13 @@ void AssetLibrary::applyImportResult(const QString &assetId, const drift::MediaA
         return;
 
     if (!ok) {
+        const drift::MediaAsset *failing = m_project->asset(assetId);
+        const QString name = failing ? failing->name : QString();
         beginRemoveRows({}, index, index);
         m_project->assets().remove(assetId);
         m_project->assetOrder().removeAll(assetId);
         endRemoveRows();
+        emit assetImportFailed(name);
         return;
     }
 
@@ -773,7 +862,7 @@ void AssetLibrary::ensureAudioPresence(const QString &assetId)
     m_audioProbePending.insert(assetId);
     const QString path = asset->path;
 
-    (void)QtConcurrent::run([this, assetId, path]() {
+    (void)QtConcurrent::run(&m_jobs, [this, assetId, path]() {
         const MediaInfo info = MediaProbe::probe(path);
         bool hasAudio = false;
         int sampleRate = 0;

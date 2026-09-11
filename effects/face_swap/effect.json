@@ -12,7 +12,7 @@
       "type": "file",
       "defaultValue": "",
       "fileFilters": [
-        "Images (*.png *.jpg *.jpeg *.webp *.bmp)",
+        "Images (*.png *.jpg *.jpeg *.webp *.heic *.heif *.avif *.bmp)",
         "All files (*)"
       ]
     },

@@ -44,6 +44,12 @@ AndroidBottomSheet {
             icon: Theme.icons.film
         },
         {
+            id: "market",
+            label: qsTr("Market"),
+            detail: qsTr("Stock photos, video and audio"),
+            icon: Theme.icons.store
+        },
+        {
             id: "text",
             label: qsTr("Text"),
             detail: qsTr("A title or caption you type"),
@@ -66,6 +72,24 @@ AndroidBottomSheet {
             label: qsTr("Shapes"),
             detail: qsTr("Boxes, circles and lines"),
             icon: Theme.icons.shapes
+        },
+        {
+            id: "templates",
+            label: qsTr("Effect templates"),
+            detail: qsTr("Saved stacks of effects to drop on a clip"),
+            icon: Theme.icons.layers
+        },
+        {
+            id: "scenes",
+            label: qsTr("Scenes"),
+            detail: qsTr("Jump between the sections of this edit"),
+            icon: Theme.icons.listVideo
+        },
+        {
+            id: "masks",
+            label: qsTr("Masks"),
+            detail: qsTr("Cut a shape or a subject out of the selected clip"),
+            icon: Theme.icons.mask
         }
     ]
 
@@ -80,87 +104,19 @@ AndroidBottomSheet {
         Repeater {
             model: root.options
 
-            delegate: AbstractButton {
-                id: optionRow
+            delegate: SheetActionRow {
                 required property var modelData
                 width: optionColumn.width
-                // Comfortably past the 48dp floor, and wide enough that the whole
-                // row is the target rather than the glyph.
-                height: Theme.androidAddRowHeight
-                hoverEnabled: true
-
-                Accessible.role: Accessible.Button
-                Accessible.name: modelData.label
-                Accessible.description: modelData.detail
-
-                scale: optionRow.down ? Theme.pressScale : 1.0
-
-                Behavior on scale {
-                    NumberAnimation { duration: Theme.durationPress; easing.type: Theme.easing }
-                }
-
-                background: Rectangle {
-                    color: optionRow.down ? Theme.panelAccent : "transparent"
-
-                    Behavior on color {
-                        ColorAnimation { duration: Theme.durationFast; easing.type: Theme.easing }
-                    }
-                }
-
-                contentItem: Item {
-                    anchors.fill: parent
-
-                    Rectangle {
-                        id: optionIcon
-                        anchors.left: parent.left
-                        anchors.leftMargin: Theme.pagePadding + root.safeLeft
-                        anchors.verticalCenter: parent.verticalCenter
-                        width: 40
-                        height: 40
-                        radius: Theme.radiusMd
-                        color: Theme.panelAccent
-
-                        IconGlyph {
-                            anchors.centerIn: parent
-                            glyph: optionRow.modelData.icon
-                            iconSize: Theme.iconSizeLg
-                            iconColor: Theme.panelForeground
-                        }
-                    }
-
-                    Column {
-                        anchors.left: optionIcon.right
-                        anchors.leftMargin: Theme.spacing2xl - Theme.spacingSm
-                        anchors.right: parent.right
-                        anchors.rightMargin: Theme.pagePadding + root.safeRight
-                        anchors.verticalCenter: parent.verticalCenter
-                        spacing: 1
-
-                        Text {
-                            width: parent.width
-                            text: optionRow.modelData.label
-                            color: Theme.panelForeground
-                            font.family: Theme.fontFamily
-                            font.pixelSize: Theme.fontSizeBase
-                            font.weight: Font.Medium
-                            elide: Text.ElideRight
-                        }
-
-                        Text {
-                            width: parent.width
-                            text: optionRow.modelData.detail
-                            color: Theme.mutedForeground
-                            font.family: Theme.fontFamily
-                            font.pixelSize: Theme.fontSizeSm
-                            elide: Text.ElideRight
-                        }
-                    }
-                }
+                label: modelData.label
+                detail: modelData.detail
+                glyph: modelData.icon
+                sideInset: root.safeLeft
+                sideInsetRight: root.safeRight
 
                 onClicked: {
                     Haptics.select()
                     root.dismiss()
-                    root.picked(optionRow.modelData.id)
+                    root.picked(modelData.id)
                 }
             }
         }

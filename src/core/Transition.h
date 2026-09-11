@@ -1,5 +1,6 @@
 #pragma once
 
+#include "FadeShape.h"
 #include "Time.h"
 
 #include <QMap>
@@ -32,6 +33,10 @@ struct Transition
     QString kindId = QStringLiteral("crossfade");
     QMap<QString, QVariant> parameters; // instance overrides of the package's parameter defaults
     TimeUs durationUs = 500'000;        // 0.5s default
+    // Remaps the linear window position before it reaches the shader, so a transition can ease
+    // in or out instead of running at a constant rate. Linear is the historical behaviour.
+    FadeCurve easingCurve = FadeCurve::Linear;
+    FadeShape easingShape; // only consulted when easingCurve is Custom
 };
 
 const Clip *clipById(const Track &track, const QString &clipId);
@@ -41,6 +46,10 @@ TimeUs physicalOverlapDurationUs(const Clip &fromClip, const Clip &toClip);
 TimeUs transitionCenterUs(const Track &track, const Transition &transition);
 bool transitionWindow(const Track &track, const Transition &transition, TimeUs &startUs, TimeUs &endUs);
 double transitionProgress(TimeUs timelineUs, TimeUs windowStartUs, TimeUs windowEndUs);
+// Same, with the transition's easing curve applied. Both the picture and the audio ducking go
+// through this, so they cannot drift apart.
+double transitionProgress(const Transition &transition, TimeUs timelineUs, TimeUs windowStartUs,
+                          TimeUs windowEndUs);
 const Transition *activeTransitionAt(const Track &track, TimeUs timelineUs, TimeUs &windowStartUs,
                                      TimeUs &windowEndUs);
 

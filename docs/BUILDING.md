@@ -14,14 +14,28 @@ see is what you get.
 | CMake | ≥ 3.21 |
 | C++ compiler | C++20 |
 | Qt | 6.5+ (Quick, QuickControls2, Multimedia, Test, Concurrent, Widgets, OpenGL, Network, Svg, LinguistTools) |
+| Qt ImageFormats | runtime only — supplies the `qwebp` / `qtiff` plugins |
 | FFmpeg | 8.x (libavformat, libavcodec, libavutil, libswscale, libswresample, libavfilter) |
 | libzstd | any (addon package decompression) |
 | OpenSSL | 3.x, libcrypto only (addon signature verification) |
 | SoundTouch | any (pitch shifting behind the voice effects) |
+| zlib | any (inflate for the Premiere / Kdenlive / Resolve / MOGRT project importers) |
 
 ONNX Runtime powers auto-subtitles (and related ML features). Drift does not link it — only its headers are needed to build, and the library itself is an addon the user installs from the Acceleration category, which is what makes the CPU / CUDA / WebGPU choice theirs rather than the packager's. The headers are downloaded automatically at configure time; pass `-DDRIFT_FETCH_ONNXRUNTIME=OFF` to use a system install instead. A development build also stages a CPU runtime into `<build>/onnxruntime` so it works before anything is installed — `-DDRIFT_BUNDLE_ONNXRUNTIME=OFF` (what the Flatpak manifests use) turns that off, and `DRIFT_ONNXRUNTIME_DIR` points at an extracted release instead.
 
-On Debian/Ubuntu install `libzstd-dev`, `libssl-dev` and `libsoundtouch-dev`; on Arch, `zstd`, `openssl` and `soundtouch`; on macOS, `brew install qt ffmpeg zstd openssl@3 sound-touch` (see [macOS](#macos)). None of them has a download fallback — configure fails with a pkg-config error if the development headers are missing.
+Qt ImageFormats is a **runtime** dependency: nothing links against it, so a build without it
+succeeds and then decodes every `.webp` and `.tiff` still to a null `QImage` — a blank bin card
+and a clip that renders as nothing. Install `qt6-imageformats` (Arch), `qt6-imageformats-dev`
+(Debian/Ubuntu), or add `qtimageformats` to the aqtinstall module list. For Android builds it
+must be present in the Qt kit that `QT_ANDROID_ROOT` points at, because `androiddeployqt` can
+only bundle plugins the kit actually has:
+
+```bash
+aqt install-qt all_os android 6.11.1 android_arm64_v8a \
+  -m qtmultimedia qtshadertools qtimageformats -O "$HOME/Qt"
+```
+
+On Debian/Ubuntu install `libzstd-dev`, `libssl-dev`, `libsoundtouch-dev` and `zlib1g-dev`; on Arch, `zstd`, `openssl`, `soundtouch` and `zlib`; on macOS, `brew install qt ffmpeg zstd openssl@3 sound-touch` — zlib comes with the SDK there (see [macOS](#macos)). None of them has a download fallback — configure fails with a pkg-config error if the development headers are missing.
 
 Optional: OpenCV for experimental background-removal builds (`-DWITH_BGREMOVAL=ON`). Only `core`, `imgproc`, and `imgcodecs` are linked.
 
@@ -213,6 +227,19 @@ The token is not a secret — it ships in every binary. It exists so the bucket 
 
 These are CMake *cache* variables: changing the default in `CMakeLists.txt` does not affect an existing build directory, so pass `-D...` again or reconfigure from scratch.
 
+### Marketplace
+
+Stock media (photos, video, audio) is fetched from `https://market.cutwire.org/api/v1`. Drift has no per-store adapters; types and providers come from the catalog. Contract: [docs/marketplace/README.md](marketplace/README.md).
+
+```bash
+cmake -B build -DDRIFT_MARKET_API_URL=https://market.example.com/api/v1 \
+               -DDRIFT_MARKET_CLIENT_KEY=your-hmac-key
+
+cmake -B build -DDRIFT_MARKET_API_URL=      # build with no marketplace
+```
+
+The HMAC key is also not a user secret. It signs requests and derives a stable client id so wiping app data does not mint a new download quota. See the marketplace doc for the canonical string.
+
 ## Agent access (MCP)
 
 Optional, **off at every launch**. Settings → Agent access starts a localhost MCP server so Cursor or Claude Code can edit the open project (import media, place/trim clips, capture a still of the composition).
@@ -234,7 +261,9 @@ This is local process control of the editor, not a sandbox. Any process on the m
 }
 ```
 
-`drift --mcp-stdio` attaches to a running editor. If Agent access is off, it exits with a one-line error.
+`drift --mcp-stdio` attaches to a running editor, speaking newline-delimited JSON-RPC as the MCP stdio transport specifies. If Agent access is off it says so on stderr and answers each call with a JSON-RPC error rather than quitting, so switching Agent access on is enough to bring it to life.
+
+`drift --headless` instead runs the editor with no window and serves MCP itself — no editor, no token, no display needed for project edits. Rendering and export still want an OpenGL 3.3 context, so on a server run it as `QT_QPA_PLATFORM=xcb xvfb-run -a drift --headless`. See [MCP.md](MCP.md#headless) for the transports and flags.
 
 Agents should call `catalog`, then `toolbox`, then `apply` with a list of ops. `inspect({clips:true})` returns clip ids. `capture` returns a JPEG of the composition. See [AGENTS.md](../AGENTS.md) for the full agent guide. The `export` toolbox encodes the timeline (settings + `export({path})`).
 

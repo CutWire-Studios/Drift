@@ -1,0 +1,687 @@
+openapi: 3.1.0
+info:
+  title: Cutwire Marketplace API
+  version: 1.0.0
+  summary: Store-agnostic stock catalog, search, and normalized downloads for Drift.
+  description: |
+    Base URL: https://market.cutwire.org/api/v1
+
+    Drift does not know which stores exist. Types, providers, quotas, and prices
+    come from this API. See docs/marketplace/README.md for identity, HMAC
+    canonicalization, and client UX rules.
+  license:
+    name: GPLv3
+servers:
+  - url: https://market.cutwire.org/api/v1
+    description: Production
+security:
+  - ClientHmac: []
+  - ClientHmac: []
+    BearerAuth: []
+
+tags:
+  - name: Catalog
+  - name: Search
+  - name: Downloads
+  - name: Auth
+
+paths:
+  /catalog:
+    get:
+      tags: [Catalog]
+      operationId: getCatalog
+      summary: Types and providers this client may show
+      responses:
+        "200":
+          description: Catalog
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Catalog"
+        default:
+          $ref: "#/components/responses/Problem"
+
+  /search:
+    get:
+      tags: [Search]
+      operationId: searchItems
+      summary: Search one type at one provider
+      parameters:
+        - in: query
+          name: type
+          required: true
+          schema:
+            type: string
+          description: Catalog type id (video, photo, audio, greenscreen, …)
+        - in: query
+          name: provider
+          required: true
+          schema:
+            type: string
+          description: Provider id nested under that type
+        - in: query
+          name: q
+          schema:
+            type: string
+          description: Free-text query. Empty may return featured/popular if the provider supports it.
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 50
+            default: 30
+        - in: query
+          name: cursor
+          schema:
+            type: string
+          description: Opaque cursor from a previous next_cursor
+      responses:
+        "200":
+          description: Page of listings
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SearchPage"
+        default:
+          $ref: "#/components/responses/Problem"
+
+  /items/{id}:
+    get:
+      tags: [Search]
+      operationId: getItem
+      summary: Listing detail
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Item
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Item"
+        default:
+          $ref: "#/components/responses/Problem"
+
+  /resolve:
+    post:
+      tags: [Search]
+      operationId: resolveURL
+      summary: Start a pasted-URL lookup
+      description: |
+        For providers that declare the resolve capability and have no browsable
+        catalog (YouTube, YouTube Music, Instagram, Facebook). The client sends a
+        URL the user pasted; the backend picks the owning provider and returns a
+        job. Poll GET /resolve/{id} until status is ready or failed. A ready job
+        carries a normal Item whose id can be passed straight to POST /downloads.
+
+        Fast failures stay on this POST: 400 when the body cannot be read, 404
+        not_found when no enabled provider owns the URL, 503 provider_unavailable
+        when the URL owner is compiled in but switched off. Extraction itself
+        (yt-dlp) runs in the background so a slow source cannot outlive the
+        client's HTTP timeout.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [url]
+              properties:
+                url:
+                  type: string
+                  format: uri
+                type:
+                  type: string
+                  description: Optional catalog type hint when a URL could yield more than one.
+      responses:
+        "201":
+          description: Resolve job created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResolveJob"
+        default:
+          $ref: "#/components/responses/Problem"
+
+  /resolve/{id}:
+    get:
+      tags: [Search]
+      operationId: getResolve
+      summary: Poll a pasted-URL lookup
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Job
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResolveJob"
+        default:
+          $ref: "#/components/responses/Problem"
+
+  /downloads:
+    post:
+      tags: [Downloads]
+      operationId: createDownload
+      summary: Start a fulfillment job
+      description: |
+        Quota (and later coins) are consumed here, not on poll. Images may
+        return status ready immediately. Failed jobs must refund quota.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateDownloadRequest"
+      responses:
+        "201":
+          description: Job created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DownloadJob"
+        default:
+          $ref: "#/components/responses/Problem"
+
+  /downloads/{id}:
+    get:
+      tags: [Downloads]
+      operationId: getDownload
+      summary: Poll a fulfillment job
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Job
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DownloadJob"
+        default:
+          $ref: "#/components/responses/Problem"
+
+  /auth/token:
+    post:
+      tags: [Auth]
+      operationId: exchangeAuthCode
+      summary: Exchange a website redirect code for tokens
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [code]
+              properties:
+                code:
+                  type: string
+                state:
+                  type: string
+      responses:
+        "200":
+          description: Session
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TokenResponse"
+        default:
+          $ref: "#/components/responses/Problem"
+
+  /auth/refresh:
+    post:
+      tags: [Auth]
+      operationId: refreshAuthToken
+      summary: Rotate access token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [refresh_token]
+              properties:
+                refresh_token:
+                  type: string
+      responses:
+        "200":
+          description: Session
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TokenResponse"
+        default:
+          $ref: "#/components/responses/Problem"
+
+  /auth/logout:
+    post:
+      tags: [Auth]
+      operationId: logout
+      summary: Invalidate the refresh token
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                refresh_token:
+                  type: string
+      responses:
+        "204":
+          description: Logged out
+        default:
+          $ref: "#/components/responses/Problem"
+
+  /me:
+    get:
+      tags: [Auth]
+      operationId: getMe
+      summary: Linked account, if any
+      description: 401 with code auth_required is normal when the device is anonymous.
+      responses:
+        "200":
+          description: Account
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Account"
+        "401":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+
+components:
+  securitySchemes:
+    ClientHmac:
+      type: apiKey
+      in: header
+      name: X-Cutwire-Signature
+      description: |
+        Required on every /api/v1 call together with X-Cutwire-Client,
+        X-Cutwire-Timestamp, X-Cutwire-Nonce, and X-Cutwire-App.
+        See docs/marketplace/README.md for the canonical string.
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Optional. Present after a website-initiated device link.
+
+  headers:
+    RetryAfter:
+      description: Seconds until the quota window resets
+      schema:
+        type: integer
+
+  responses:
+    Problem:
+      description: Error
+      headers:
+        Retry-After:
+          $ref: "#/components/headers/RetryAfter"
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+
+  schemas:
+    Problem:
+      type: object
+      required: [code, title, status]
+      properties:
+        type:
+          type: string
+          format: uri
+          default: about:blank
+        title:
+          type: string
+        status:
+          type: integer
+        detail:
+          type: string
+          description: Safe to show. Must not contain marketplace URLs or sign-in CTAs.
+        code:
+          type: string
+          enum:
+            - invalid_client
+            - rate_limited
+            - auth_required
+            - payment_required
+            - provider_unavailable
+            - not_found
+            - download_failed
+        reason:
+          type: string
+          description: >
+            Finer-grained cause than code, added in v1. Additive and optional:
+            every reason maps onto one of the frozen code values, so a client
+            that ignores this field keeps working. Treat an unrecognised value
+            as the bare code. Present on source and item failures; absent on
+            auth and payment ones, where the code already says everything.
+          enum:
+            - source_blocked
+            - source_unreachable
+            - source_timeout
+            - source_disabled
+            - source_error
+            - item_removed
+            - item_private
+            - item_geoblocked
+            - item_missing
+            - link_no_media
+            - link_unsupported
+            - file_too_large
+            - live_stream
+            - download_error
+        reset_at:
+          type: string
+          format: date-time
+
+    Catalog:
+      type: object
+      required: [types]
+      properties:
+        types:
+          type: array
+          items:
+            $ref: "#/components/schemas/MediaType"
+
+    MediaType:
+      type: object
+      required: [id, label, delivery]
+      properties:
+        id:
+          type: string
+          examples: [video, photo, audio, greenscreen]
+        label:
+          type: string
+        delivery:
+          type: string
+          enum: [media, file]
+        media_kind:
+          type: string
+          enum: [video, audio, image]
+          description: Required when delivery is media. Maps to Drift MediaKind.
+        providers:
+          type: array
+          items:
+            $ref: "#/components/schemas/Provider"
+
+    Provider:
+      type: object
+      required: [id, label]
+      properties:
+        id:
+          type: string
+        label:
+          type: string
+        description:
+          type: string
+        capabilities:
+          type: array
+          items:
+            type: string
+            enum: [search, featured, resolve]
+          description: |
+            search   - free-text /search is supported.
+            featured - /search with an empty q returns a curated listing.
+            resolve  - the provider has no browsable catalog; the client sends a
+                       pasted page URL to POST /resolve instead of calling /search.
+        filters:
+          type: array
+          items:
+            $ref: "#/components/schemas/Filter"
+        quota:
+          $ref: "#/components/schemas/Quota"
+
+    Filter:
+      type: object
+      required: [id, type, label]
+      properties:
+        id:
+          type: string
+          description: Sent as a query parameter on /search
+        type:
+          type: string
+          enum: [enum, toggle, text]
+        label:
+          type: string
+        options:
+          type: array
+          description: Required when type is enum
+          items:
+            type: object
+            required: [id, label]
+            properties:
+              id:
+                type: string
+              label:
+                type: string
+
+    Quota:
+      type: object
+      properties:
+        scope:
+          type: string
+          enum: [client, account]
+        limit:
+          type: integer
+          minimum: 0
+        remaining:
+          type: integer
+          minimum: 0
+        window:
+          type: string
+          enum: [day, hour]
+        reset_at:
+          type: string
+          format: date-time
+
+    SearchPage:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/Item"
+        next_cursor:
+          type: string
+          description: Omit or empty when there is no further page
+        quota:
+          $ref: "#/components/schemas/Quota"
+
+    Item:
+      type: object
+      required: [id, type, provider, title]
+      properties:
+        id:
+          type: string
+          description: Opaque listing id
+        type:
+          type: string
+        provider:
+          type: string
+        title:
+          type: string
+        creator:
+          $ref: "#/components/schemas/Creator"
+        duration_ms:
+          type: integer
+          minimum: 0
+        width:
+          type: integer
+          minimum: 0
+        height:
+          type: integer
+          minimum: 0
+        thumb_url:
+          type: string
+          format: uri
+        preview_url:
+          type: string
+          format: uri
+          description: Playable or displayable preview hosted by the market
+        license:
+          $ref: "#/components/schemas/License"
+        price_coins:
+          type: integer
+          minimum: 0
+          default: 0
+          description: 0 or omitted means free. Clients must not show a Free label.
+        downloadable:
+          type: boolean
+          default: true
+        variants:
+          type: array
+          items:
+            $ref: "#/components/schemas/Variant"
+
+    Creator:
+      type: object
+      properties:
+        name:
+          type: string
+        url:
+          type: string
+          format: uri
+
+    License:
+      type: object
+      properties:
+        name:
+          type: string
+        url:
+          type: string
+          format: uri
+        attribution:
+          type: string
+
+    Variant:
+      type: object
+      required: [id, label]
+      properties:
+        id:
+          type: string
+        label:
+          type: string
+        width:
+          type: integer
+        height:
+          type: integer
+        price_coins:
+          type: integer
+          minimum: 0
+
+    CreateDownloadRequest:
+      type: object
+      required: [item_id]
+      properties:
+        item_id:
+          type: string
+        variant_id:
+          type: string
+          nullable: true
+
+    ResolveJob:
+      type: object
+      required: [id, status]
+      properties:
+        id:
+          type: string
+        status:
+          type: string
+          enum: [queued, processing, ready, failed]
+        item:
+          $ref: "#/components/schemas/Item"
+          nullable: true
+        error:
+          $ref: "#/components/schemas/Problem"
+          nullable: true
+
+    DownloadJob:
+      type: object
+      required: [id, status]
+      properties:
+        id:
+          type: string
+        status:
+          type: string
+          enum: [queued, processing, ready, failed]
+        progress:
+          type: number
+          minimum: 0
+          maximum: 1
+        file:
+          $ref: "#/components/schemas/DownloadFile"
+          nullable: true
+        error:
+          $ref: "#/components/schemas/Problem"
+          nullable: true
+        license:
+          $ref: "#/components/schemas/License"
+        attribution:
+          type: string
+
+    DownloadFile:
+      type: object
+      required: [filename, mime, url]
+      properties:
+        filename:
+          type: string
+        mime:
+          type: string
+        size:
+          type: integer
+          minimum: 0
+        url:
+          type: string
+          format: uri
+        expires_at:
+          type: string
+          format: date-time
+        sha256:
+          type: string
+          description: Lowercase hex SHA-256 of the file bytes
+
+    TokenResponse:
+      type: object
+      required: [access_token, token_type, expires_in]
+      properties:
+        access_token:
+          type: string
+        refresh_token:
+          type: string
+        token_type:
+          type: string
+          default: Bearer
+        expires_in:
+          type: integer
+          description: Access token lifetime in seconds
+        account:
+          $ref: "#/components/schemas/Account"
+
+    Account:
+      type: object
+      required: [id]
+      properties:
+        id:
+          type: string
+        display_name:
+          type: string
+        coins:
+          type: integer
+          minimum: 0
+          default: 0

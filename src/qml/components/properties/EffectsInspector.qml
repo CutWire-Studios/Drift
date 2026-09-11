@@ -46,62 +46,81 @@ Item {
         width: root.width
         spacing: Theme.spacingXl
 
-        // The face warp effects follow baked landmarks, so the clip has to be
-        // scanned before any of them do anything. This sits above the effect list
-        // because that ordering is the workflow: detect, then apply.
+        // The face warp effects follow baked landmarks and pass the frame through untouched
+        // without them, so the scan is offered here — beside the stack that needs it — rather
+        // than as a step on every clip. Adding a face effect starts the scan by itself
+        // (AppController::addEffect); this is what is left to say when that could not happen:
+        // the model is missing, the scan was cancelled, or the track predates what the effect
+        // reads. Hidden entirely when no face effect is in the stack.
         Column {
             id: faceSection
-            visible: root.clipKind === "video"
+            // Present whenever a face effect is, so re-detecting and clearing stay reachable;
+            // it is the warnings below that appear only when the track is missing or too old.
+            visible: faceSection.usesFaceEffect
             width: parent.width
             spacing: Theme.spacingSm
 
-            // The model is an addon, but it can equally come from a bundled
-            // models/face or DRIFT_FACE_MODEL_DIR, so ask the engine rather than
-            // the addon registry. That answer is not a binding, hence the reset
-            // below when an addon of this kind appears.
-            // Folded together because every control below is gated on the same
-            // answer; runtimeReady is kept apart only to say which half is missing.
+            // The model is an addon, but it can equally come from a bundled models/face or
+            // DRIFT_FACE_MODEL_DIR, so ask the engine rather than the addon registry. That answer
+            // is not a binding, hence the reset below when an addon of this kind appears.
+            // Folded together because every control below is gated on the same answer;
+            // runtimeReady is kept apart only to say which half is missing.
             property bool runtimeReady: Addons.runtimeAvailable()
             property bool faceReady: EditorState.faceDetectionAvailable()
                                      && Addons.runtimeAvailable()
+
+            // Landmarks are baked onto the media clip, and the selection here is the adjustment
+            // pinned to it — clipToMap reports the linked clip's state for exactly this.
+            property bool canTrack: {
+                void root.clipDataRevision
+                const data = EditorState.selectedClipData
+                return data && data.canFaceTrack === true
+            }
             property bool hasTrack: {
+                void root.clipDataRevision
                 const data = EditorState.selectedClipData
                 return data && data.hasFaceTrack === true
             }
             // A track baked before contours existed still drives the warps, so it is not stale in
             // general — only the Beauty effects have nothing to work with, and they pass through.
             property bool trackHasContours: {
+                void root.clipDataRevision
                 const data = EditorState.selectedClipData
                 return data && data.faceTrackHasContours === true
             }
             // Same idea as contours: a pre-mesh track still drives warps and makeup, but the 3D
             // Face Mesh effect has nothing to warp until the clip is scanned again.
             property bool trackHasMesh: {
+                void root.clipDataRevision
                 const data = EditorState.selectedClipData
                 return data && data.faceTrackHasMesh === true
             }
-            property bool usesBeautyEffect: {
-                root.clipDataRevision
-                const effects = EditorState.selectedClipEffects || []
-                for (let i = 0; i < effects.length; i++) {
-                    if ((effects[i].catalogId || "").indexOf("face_") === 0
-                            && beautyIds.indexOf(effects[i].catalogId) >= 0)
-                        return true
-                }
-                return false
-            }
-            property bool usesMeshEffect: {
-                root.clipDataRevision
-                const effects = EditorState.selectedClipEffects || []
-                for (let i = 0; i < effects.length; i++) {
-                    if ((effects[i].catalogId || "") === "face_mesh_3d")
-                        return true
-                }
-                return false
-            }
+
             readonly property var beautyIds: ["face_lipstick", "face_blush", "face_teeth_whiten",
                                               "face_eyeliner", "face_eyeshadow", "face_brow_tint",
                                               "face_eye_color", "face_beautify"]
+
+            // One pass over the stack for all three answers: whether anything here needs a track
+            // at all, and whether what needs it needs a *newer* one.
+            readonly property var faceUse: {
+                void root.clipDataRevision
+                const effects = EditorState.selectedClipEffects || []
+                let any = false
+                let beauty = false
+                let mesh = false
+                for (let i = 0; i < effects.length; i++) {
+                    const id = effects[i].catalogId || ""
+                    if (id.indexOf("face_") !== 0)
+                        continue
+                    any = true
+                    if (faceSection.beautyIds.indexOf(id) >= 0)
+                        beauty = true
+                    if (id === "face_mesh_3d")
+                        mesh = true
+                }
+                return { any: any, beauty: beauty, mesh: mesh }
+            }
+            readonly property bool usesFaceEffect: faceUse.any
 
             Connections {
                 target: Addons
@@ -122,13 +141,27 @@ Item {
                 font.pixelSize: Theme.fontSizeXs
             }
 
+            // A standalone adjustment layer covers everything below it, so there is no one clip
+            // whose faces could be traced. The effect is inert here and no scan would fix it.
             Text {
                 width: parent.width
                 wrapMode: Text.WordWrap
-                visible: faceSection.faceReady && !faceSection.hasTrack
+                visible: !faceSection.canTrack
+                text: qsTr("Face effects follow one clip's faces. Add this to a clip rather than to an adjustment layer.")
+                color: Theme.warning
+                font.family: Theme.fontFamily
+                font.pixelSize: Theme.fontSizeXs
+            }
+
+            // The effect is in the stack and doing nothing. Said as a warning, not a hint: the
+            // preview looks untouched and there is no other clue why.
+            Text {
+                width: parent.width
+                wrapMode: Text.WordWrap
+                visible: faceSection.canTrack && faceSection.faceReady && !faceSection.hasTrack
                          && !EditorState.faceDetecting
-                text: qsTr("Scan this clip once, then the Funny Face effects will follow the face through it.")
-                color: Theme.mutedForeground
+                text: qsTr("These effects follow a face, so the clip has to be scanned before they do anything.")
+                color: Theme.warning
                 font.family: Theme.fontFamily
                 font.pixelSize: Theme.fontSizeXs
             }
@@ -139,8 +172,8 @@ Item {
             Text {
                 width: parent.width
                 wrapMode: Text.WordWrap
-                visible: faceSection.faceReady && faceSection.hasTrack
-                         && !faceSection.trackHasContours && faceSection.usesBeautyEffect
+                visible: faceSection.canTrack && faceSection.faceReady && faceSection.hasTrack
+                         && !faceSection.trackHasContours && faceSection.faceUse.beauty
                          && !EditorState.faceDetecting
                 text: qsTr("This clip was scanned before makeup was supported. Re-detect faces to enable the Beauty effects.")
                 color: Theme.warning
@@ -154,8 +187,8 @@ Item {
             Text {
                 width: parent.width
                 wrapMode: Text.WordWrap
-                visible: faceSection.faceReady && faceSection.hasTrack
-                         && !faceSection.trackHasMesh && faceSection.usesMeshEffect
+                visible: faceSection.canTrack && faceSection.faceReady && faceSection.hasTrack
+                         && !faceSection.trackHasMesh && faceSection.faceUse.mesh
                          && !EditorState.faceDetecting
                 text: qsTr("This clip was scanned before 3D face mesh was supported. Re-detect faces to enable the 3D Face Mesh effect.")
                 color: Theme.warning
@@ -164,16 +197,16 @@ Item {
             }
 
             ThemedButton {
-                visible: faceSection.faceReady && !EditorState.faceDetecting
+                visible: faceSection.canTrack && faceSection.faceReady && !EditorState.faceDetecting
                 width: parent.width
-                text: faceSection.hasTrack ? qsTr("Re-detect faces") : qsTr("Detect faces…")
+                text: faceSection.hasTrack ? qsTr("Re-detect faces") : qsTr("Scan for faces…")
                 variant: faceSection.hasTrack ? "ghost" : "secondary"
                 onClicked: EditorState.detectFacesForClip(
                                EditorState.selectedTrack, EditorState.selectedClip)
             }
 
             ThemedButton {
-                visible: faceSection.faceReady && faceSection.hasTrack
+                visible: faceSection.canTrack && faceSection.faceReady && faceSection.hasTrack
                          && !EditorState.faceDetecting
                 width: parent.width
                 text: qsTr("Clear face track")
@@ -207,7 +240,7 @@ Item {
             }
 
             ThemedButton {
-                visible: !faceSection.faceReady
+                visible: faceSection.canTrack && !faceSection.faceReady
                 width: parent.width
                 text: faceSection.runtimeReady
                       ? qsTr("Download face detection (about 5 MB)")

@@ -89,6 +89,13 @@ bool transitionWindow(const Track &track, const Transition &transition, TimeUs &
     return true;
 }
 
+double transitionProgress(const Transition &transition, TimeUs timelineUs, TimeUs windowStartUs,
+                          TimeUs windowEndUs)
+{
+    const double linear = transitionProgress(timelineUs, windowStartUs, windowEndUs);
+    return shapedProgress(linear, transition.easingCurve, transition.easingShape);
+}
+
 double transitionProgress(TimeUs timelineUs, TimeUs windowStartUs, TimeUs windowEndUs)
 {
     if (windowEndUs <= windowStartUs)

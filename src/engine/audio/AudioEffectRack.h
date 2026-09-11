@@ -44,7 +44,11 @@ public:
     AudioEffectRack &operator=(const AudioEffectRack &) = delete;
 
     // Returns true when there is something to process.
-    bool configure(const QVector<AudioEffectSpec> &specs, int sampleRate);
+    // `rebuilt`, when given, reports that the *set* of effects changed and the chain was torn
+    // down and re-prepared. That is a discontinuity as real as a seek — the new stages have no
+    // history — so a caller that primes after a seek must prime here too, or a tail that appears
+    // part-way through a clip opens cold.
+    bool configure(const QVector<AudioEffectSpec> &specs, int sampleRate, bool *rebuilt = nullptr);
 
     // Frames of clip audio from *before* the block the caller should push through warmUp() after a
     // reset, so latent stages line up and stateful tails start warm instead of cold.

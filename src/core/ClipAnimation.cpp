@@ -117,6 +117,9 @@ ClipAnimEase clipAnimCurveToEase(FadeCurve curve)
         return ClipAnimEase::EaseOut;
     case FadeCurve::Custom:
         return ClipAnimEase::EaseInOut;
+    case FadeCurve::Bezier:
+        // The legacy ease enum predates both hand-drawn modes and has no member for either.
+        return ClipAnimEase::EaseInOut;
     }
     return ClipAnimEase::EaseOut;
 }
@@ -150,7 +153,7 @@ ClipAnimation clipAnimationFromJson(const QJsonObject &object)
         anim.curve = clipAnimEaseToCurve(anim.ease);
     }
     if (object.contains(QStringLiteral("shape")))
-        anim.shape = FadeShape::fromJson(object.value(QStringLiteral("shape")).toArray());
+        anim.shape = FadeShape::fromJson(object.value(QStringLiteral("shape")));
     anim.ease = clipAnimCurveToEase(anim.curve);
     return anim;
 }

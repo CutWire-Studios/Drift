@@ -4,6 +4,7 @@
 #include <QByteArray>
 #include <QJsonDocument>
 #include <QJsonObject>
+#include <QJsonValue>
 #include <QTcpSocket>
 
 #include <cstdio>
@@ -16,23 +17,30 @@
 namespace drift::mcp {
 namespace {
 
-void writeStdout(const QByteArray &payload)
+// The id to echo on a reply. Undefined means there is nobody to reply to — a
+// notification, or a batch whose failures cannot be attributed to one request.
+QJsonValue requestId(const QByteArray &message)
 {
-    const QByteArray header = "Content-Length: " + QByteArray::number(payload.size()) + "\r\n\r\n";
-    fwrite(header.constData(), 1, static_cast<size_t>(header.size()), stdout);
-    fwrite(payload.constData(), 1, static_cast<size_t>(payload.size()), stdout);
-    fflush(stdout);
+    const QJsonDocument doc = QJsonDocument::fromJson(message);
+    if (!doc.isObject())
+        return QJsonValue::Undefined;
+    return doc.object().value(QStringLiteral("id"));
 }
 
 void writeRpcError(const QJsonValue &id, int code, const QString &message)
 {
+    // JSON-RPC forbids responding to a notification, and a client cannot match an
+    // id-less error to anything it is waiting on. stderr already carried the reason.
+    if (id.isUndefined())
+        return;
+
     const QJsonObject body{
         {QStringLiteral("jsonrpc"), QStringLiteral("2.0")},
         {QStringLiteral("id"), id},
         {QStringLiteral("error"),
          QJsonObject{{QStringLiteral("code"), code}, {QStringLiteral("message"), message}}},
     };
-    writeStdout(QJsonDocument(body).toJson(QJsonDocument::Compact));
+    writeStdioMessage(stdout, QJsonDocument(body).toJson(QJsonDocument::Compact));
 }
 
 int httpStatus(const QByteArray &response)
@@ -83,42 +91,15 @@ QByteArray postJson(quint16 port, const QString &token, const QByteArray &body, 
     return response.mid(sep + 4);
 }
 
-QByteArray readStdinMessage()
+// The body of a Content-Length framed message, once its header block has been read.
+QByteArray readBody(std::FILE *in, int length)
 {
-    QByteArray header;
-    char ch;
-    while (fread(&ch, 1, 1, stdin) == 1) {
-        header.append(ch);
-        if (header.startsWith('{')) {
-            while (!header.contains('\n') && fread(&ch, 1, 1, stdin) == 1)
-                header.append(ch);
-            return header.trimmed();
-        }
-        // MCP stdio is HTTP-style: headers end at a blank line. Extra headers (e.g.
-        // Content-Type) are allowed — do not stop at the second newline of a header block.
-        if (header.endsWith("\r\n\r\n") || header.endsWith("\n\n"))
-            break;
-        if (header.size() > 64 * 1024)
-            return {};
-    }
-    if (header.isEmpty())
-        return {};
-
-    int length = 0;
-    const QByteArray lower = header.toLower();
-    const int at = lower.indexOf("content-length:");
-    if (at >= 0) {
-        int start = at + 15;
-        while (start < header.size() && (header.at(start) == ' ' || header.at(start) == '\t'))
-            ++start;
-        length = header.mid(start).toInt();
-    }
     QByteArray body;
     body.resize(length);
     int got = 0;
     while (got < length) {
         const int n = static_cast<int>(
-            fread(body.data() + got, 1, static_cast<size_t>(length - got), stdin));
+            std::fread(body.data() + got, 1, static_cast<size_t>(length - got), in));
         if (n <= 0)
             break;
         got += n;
@@ -129,6 +110,58 @@ QByteArray readStdinMessage()
 
 } // namespace
 
+QByteArray readStdioMessage(std::FILE *in)
+{
+    int contentLength = -1;
+    QByteArray line;
+    for (;;) {
+        const int ch = std::fgetc(in);
+        if (ch != EOF && ch != '\n') {
+            line.append(static_cast<char>(ch));
+            continue;
+        }
+        if (ch == EOF && line.isEmpty())
+            return {};
+
+        // A BOM can only lead the stream, but stripping it from every line costs nothing
+        // and saves tracking which line is the first. Windows clients do emit them.
+        if (line.startsWith("\xEF\xBB\xBF"))
+            line.remove(0, 3);
+        if (line.endsWith('\r'))
+            line.chop(1);
+
+        // Newline-delimited JSON: the line is the whole message. Checked before anything
+        // else so a leading blank line or BOM cannot push a valid request into the
+        // header-block branch below, where it would wait for a blank line that a
+        // newline-delimited client never sends.
+        if (line.startsWith('{') || line.startsWith('['))
+            return line;
+
+        // A blank line closes a Content-Length header block; anywhere else it is filler.
+        if (line.isEmpty() && contentLength > 0)
+            return readBody(in, contentLength);
+
+        const int at = line.toLower().indexOf("content-length:");
+        if (at >= 0)
+            contentLength = line.mid(at + 15).trimmed().toInt();
+        // Any other header — Content-Type, say — is ignored.
+
+        if (ch == EOF)
+            return {};
+        line.clear();
+    }
+}
+
+void writeStdioMessage(std::FILE *out, const QByteArray &json)
+{
+    // Recompacting is what enforces the one-line invariant: a newline inside a string
+    // comes back escaped, and any indentation collapses.
+    const QByteArray line = QJsonDocument::fromJson(json).toJson(QJsonDocument::Compact).trimmed();
+    std::fwrite(line.constData(), 1, static_cast<size_t>(line.size()), out);
+    std::fputc('\n', out);
+    std::fflush(out);
+}
+
 int runStdioAttach()
 {
 #ifdef Q_OS_WIN
@@ -136,44 +169,56 @@ int runStdioAttach()
     _setmode(_fileno(stdout), _O_BINARY);
 #endif
 
-    quint16 port = 0;
-    QString token;
-    QString error;
-    if (!readSessionFile(&port, &token, &error)) {
-        fprintf(stderr, "%s\n", qPrintable(error));
-        writeRpcError(QJsonValue::Null, -32000, error);
-        return 2;
+    // Say why up front for whoever ran this in a terminal, but keep serving: a client
+    // that spawned us before the editor was up, or before Agent access was switched on,
+    // gets a working bridge as soon as the user gets there. stderr only — the spec lets
+    // nothing but MCP messages onto stdout.
+    {
+        QString error;
+        if (!readSessionFile(nullptr, nullptr, &error))
+            fprintf(stderr, "%s\n", qPrintable(error));
     }
 
-    while (!feof(stdin)) {
-        const QByteArray message = readStdinMessage();
-        if (message.isEmpty()) {
-            if (feof(stdin))
-                break;
+    for (;;) {
+        const QByteArray message = readStdioMessage(stdin);
+        if (message.isEmpty())
+            return 0; // stdin closed
+
+        const QJsonValue id = requestId(message);
+
+        // Re-read per request rather than once at startup: the token rotates every time
+        // Agent access is toggled, and the old bridge died with HTTP 401 for the rest of
+        // its life the first time that happened.
+        quint16 port = 0;
+        QString token;
+        QString error;
+        if (!readSessionFile(&port, &token, &error)) {
+            fprintf(stderr, "%s\n", qPrintable(error));
+            writeRpcError(id, -32000, error);
             continue;
         }
+
         QString postError;
         int status = 0;
         const QByteArray reply = postJson(port, token, message, &postError, &status);
         if (!postError.isEmpty() && reply.isEmpty()) {
             fprintf(stderr, "%s\n", qPrintable(postError));
-            writeRpcError(QJsonValue::Null, -32000, postError);
-            return 3;
+            writeRpcError(id, -32000, postError);
+            continue;
         }
         if (status > 0 && (status < 200 || status >= 300)) {
             const QString msg = QStringLiteral("Drift MCP HTTP %1").arg(status);
             fprintf(stderr, "%s\n", qPrintable(msg));
-            writeRpcError(QJsonValue::Null, -32000, msg);
-            return 3;
+            writeRpcError(id, -32000, msg);
+            continue;
         }
         // JSON-RPC notifications (no id) must not get a response. The HTTP server
         // answers those with 202 and an empty body — forwarding that would break
         // stdio clients after `notifications/initialized`.
         if (status == 202 || reply.trimmed().isEmpty())
             continue;
-        writeStdout(reply.trimmed());
+        writeStdioMessage(stdout, reply);
     }
-    return 0;
 }
 
 } // namespace drift::mcp

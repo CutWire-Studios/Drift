@@ -76,7 +76,7 @@ bool McpServer::start()
         return true;
 
     m_error.clear();
-    m_token = makeToken();
+    m_token = m_fixedToken.isEmpty() ? makeToken() : m_fixedToken;
 
     m_thread = new QThread(this);
     m_http = new McpHttp;
@@ -117,7 +117,8 @@ bool McpServer::start()
             loop.quit();
         });
     QTimer::singleShot(3000, &loop, &QEventLoop::quit);
-    QMetaObject::invokeMethod(m_http, [this]() { m_http->listen(4731); }, Qt::QueuedConnection);
+    QMetaObject::invokeMethod(
+        m_http, [this]() { m_http->listen(m_requestedPort); }, Qt::QueuedConnection);
     loop.exec();
     QObject::disconnect(listeningConn);
     QObject::disconnect(failedConn);
@@ -130,7 +131,7 @@ bool McpServer::start()
         return false;
     }
     m_port = port;
-    writeSessionFile(port, m_token);
+    m_wroteSessionFile = writeSessionFile(port, m_token);
     m_running = true;
     emit runningChanged();
     return true;
@@ -138,7 +139,10 @@ bool McpServer::start()
 
 void McpServer::stop()
 {
-    removeSessionFile();
+    if (m_wroteSessionFile) {
+        removeSessionFile();
+        m_wroteSessionFile = false;
+    }
     if (m_http) {
         McpHttp *http = m_http;
         m_http = nullptr;
@@ -174,16 +178,30 @@ QJsonValue McpServer::handleRpc(const QString &toolbox, const QJsonValue &body)
 QJsonObject McpServer::dispatchTool(const QString &name, const QJsonObject &args)
 {
     if (name == QLatin1String("catalog"))
-        return textResult(catalogPayload());
-    if (name == QLatin1String("toolbox"))
-        return textResult(toolboxPayload(args.value(QStringLiteral("name")).toString()));
+        return textResult(catalogPayload(args));
+    if (name == QLatin1String("toolbox")) {
+        QStringList only;
+        for (const QJsonValue &v : args.value(QStringLiteral("ops")).toArray())
+            only.append(v.toString());
+        return textResult(toolboxPayload(args.value(QStringLiteral("name")).toString(), only));
+    }
+    if (name == QLatin1String("search")) {
+        return textResult(searchOps(args.value(QStringLiteral("q")).toString(),
+                                    args.value(QStringLiteral("limit")).toInt(8),
+                                    args.value(QStringLiteral("schema")).toBool()));
+    }
     if (name == QLatin1String("inspect"))
         return textResult(m_dispatcher->inspect(args));
     if (name == QLatin1String("apply"))
         return textResult(m_dispatcher->apply(args));
     if (name == QLatin1String("capture"))
         return m_dispatcher->capture(args);
-    return textResult(m_dispatcher->applyOne(name, args));
+    if (name == QLatin1String("frames"))
+        return m_dispatcher->frames(args);
+    if (name == QLatin1String("activity"))
+        return textResult(m_dispatcher->activity(args));
+    const QJsonObject result = m_dispatcher->applyOne(name, args);
+    return isRawResult(result) ? result : textResult(result);
 }
 
 } // namespace drift::mcp

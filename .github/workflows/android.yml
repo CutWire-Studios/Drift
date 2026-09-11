@@ -19,6 +19,11 @@ concurrency:
 
 env:
   QT_VERSION: 6.11.1
+  # qtshadertools builds the QuickEffects shaders; qtimageformats supplies the qwebp and qtiff
+  # plugins. Those plugins have no link-time reference, so nothing in the build fails without
+  # them — androiddeployqt simply bundles no qwebp and every .webp/.tiff still decodes to a null
+  # QImage on device. Keep this in sync with QT_MODULES for the desktop jobs.
+  QT_ANDROID_MODULES: "qtmultimedia qtshadertools qtimageformats"
   # The version every module manifest in the Qt kit names — see scripts/build.sh.
   NDK_VERSION: 27.2.12479018
 
@@ -76,9 +81,9 @@ jobs:
           pipx install aqtinstall
           export PATH="$HOME/.local/bin:$PATH"
           aqt install-qt linux desktop "$QT_VERSION" linux_gcc_64 \
-            -m qtmultimedia qtshadertools -O "$HOME/Qt"
+            -m $QT_ANDROID_MODULES -O "$HOME/Qt"
           aqt install-qt all_os android "$QT_VERSION" android_arm64_v8a \
-            -m qtmultimedia qtshadertools -O "$HOME/Qt"
+            -m $QT_ANDROID_MODULES -O "$HOME/Qt"
 
       # FFmpeg, x264, zstd, OpenSSL and SoundTouch cross-built for Android: ~45 min,
       # and they only change when the script that pins their tags does.

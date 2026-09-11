@@ -1,5 +1,7 @@
 #include "PrprojReader.h"
 
+#include "TimelineOps.h"
+
 #include "Clip.h"
 #include "MediaAsset.h"
 #include "Project.h"
@@ -167,8 +169,7 @@ ClipType detectClipType(const QString &mediaPath, const QString &name, bool isAu
         || ext == QLatin1String("flac") || ext == QLatin1String("m4a") || ext == QLatin1String("ogg"))
         return ClipType::Audio;
 
-    if (ext == QLatin1String("png") || ext == QLatin1String("jpg") || ext == QLatin1String("jpeg")
-        || ext == QLatin1String("webp") || ext == QLatin1String("bmp") || ext == QLatin1String("svg"))
+    if (imageExtensions().contains(ext))
         return ClipType::Image;
 
     return ClipType::Video;
@@ -721,6 +722,12 @@ std::optional<Project> readProjectData(const QByteArray &data, const QString &so
     if (project.tracks().isEmpty()) {
         project.resetToDefaultTimeline();
     }
+
+    // Premiere models an adjustment layer as a clip on a video track, which is the shape Drift
+    // used to have too. Reuse the same pass project load runs so an import lands in the current
+    // model rather than in a state the editor's invariants do not expect.
+    liftAdjustmentClipsToOwnTracks(project);
+    project.ensureTrackIds();
 
     return project;
 }

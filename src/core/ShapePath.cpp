@@ -290,9 +290,8 @@ QPainterPath shapePath(const ShapeStyle &style, const QRectF &bounds)
     return path;
 }
 
-QString shapeSvgPath(const ShapeStyle &style, const QRectF &bounds)
+QString painterPathToSvg(const QPainterPath &path)
 {
-    const QPainterPath path = shapePath(style, bounds);
     // QString::number keeps the C locale; arg() would emit commas under a European locale and QML
     // would silently render nothing.
     const auto num = [](double v) { return QString::number(v, 'f', 3); };
@@ -321,6 +320,11 @@ QString shapeSvgPath(const ShapeStyle &style, const QRectF &bounds)
         }
     }
     return out.trimmed();
+}
+
+QString shapeSvgPath(const ShapeStyle &style, const QRectF &bounds)
+{
+    return painterPathToSvg(shapePath(style, bounds));
 }
 
 } // namespace drift

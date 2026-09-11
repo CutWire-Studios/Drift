@@ -6,9 +6,13 @@ pkgdesc="Beginner-friendly open-source video editor built with Qt 6, QML and FFm
 arch=('x86_64')
 url="https://github.com/CutWire-Studios/Drift"
 license=('GPL-3.0-or-later')
+# qt6-imageformats supplies the qwebp and qtiff QImageReader plugins. Nothing links against
+# them, so a build without it succeeds and then decodes every .webp/.tiff still to a null QImage
+# — a blank bin card and a clip that renders as nothing. It is a runtime dependency only.
 depends=(
     'qt6-base' 'qt6-declarative' 'qt6-svg' 'qt6-multimedia' 'qt6-multimedia-ffmpeg'
-    'ffmpeg' 'zstd' 'openssl' 'soundtouch'
+    'qt6-imageformats'
+    'ffmpeg' 'zstd' 'openssl' 'soundtouch' 'zlib'
 )
 # qt6-tools is LinguistTools (lupdate/lrelease): without it CMake skips qt_add_translations and
 # the binary ships English-only, then check()'s Translations test fails looking for

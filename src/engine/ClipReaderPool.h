@@ -64,6 +64,10 @@ public:
 
     // Preview toolbar: Auto (per clip), Software, or Hardware on a named backend.
     // Drops every open video decoder so the next read opens on the chosen path.
+    // Drop every open video decoder so the next read reopens on whatever the current decode
+    // settings say. Blocking: it returns once every worker has actually let go.
+    void resetVideoDecoders();
+
     void setHardwareDecodeMode(ClipReader::HardwareDecodeMode mode,
                                drift::hwaccel::Backend backend = drift::hwaccel::Backend::None);
 
@@ -127,3 +131,20 @@ private:
     std::map<QString, std::unique_ptr<WorkerEntry>> m_videoWorkers;
     std::map<QString, std::unique_ptr<WorkerEntry>> m_audioWorkers;
 };
+
+// Blocks MediaCodec surface decoding for its lifetime, and resets every open video decoder on the
+// way in and out so a reader opened in surface mode for the preview is not reused underneath it.
+// Export scopes one of these around the whole encode: a surface frame's YUV->RGB is done by the
+// driver from the buffer's own dataspace, which is not necessarily the matrix the desktop
+// compositor uses, and an export has to match. A no-op off Android.
+namespace drift {
+class MediaCodecSurfaceDecodeBlock
+{
+public:
+    MediaCodecSurfaceDecodeBlock();
+    ~MediaCodecSurfaceDecodeBlock();
+
+    MediaCodecSurfaceDecodeBlock(const MediaCodecSurfaceDecodeBlock &) = delete;
+    MediaCodecSurfaceDecodeBlock &operator=(const MediaCodecSurfaceDecodeBlock &) = delete;
+};
+} // namespace drift

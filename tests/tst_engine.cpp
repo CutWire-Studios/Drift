@@ -25,11 +25,14 @@
 
 #include "core/Clip.h"
 #include "core/Project.h"
+#include "core/TimelineOps.h"
 #include "engine/AudioMixer.h"
 #include "engine/ClipReader.h"
+#include "engine/StillImage.h"
 #include "engine/DebugReport.h"
 #include "engine/Exporter.h"
 #include "engine/GpuCompositor.h"
+#include "engine/MediaWaveform.h"
 #include "playback/PlaybackDiagnostics.h"
 #include "playback/PlaybackStats.h"
 #include "engine/GpuStatus.h"
@@ -44,6 +47,8 @@
 #include "engine/AudioOnsets.h"
 #include "engine/ObjectDetector.h"
 #include "engine/SceneDetect.h"
+#include "engine/FrameSheet.h"
+#include "engine/WaveformSheet.h"
 #include "engine/DeepFilterDenoiser.h"
 #include "engine/EffectCatalog.h"
 #include "engine/EffectPackageLoader.h"
@@ -90,6 +95,8 @@ class EngineTest : public QObject
 private slots:
     void initTestCase();
     void matteWriterRoundTripsThroughClipReader();
+    void matteWriterPreservesSoftAlpha();
+    void matteWriterRoundTripsColourForeground();
     void reverseRendererPlaysSourceBackwards();
     void mediaEditorCropsAnImage();
     void reverseProxyLookupIsByContainmentAndSourceIdentity();
@@ -104,6 +111,12 @@ private slots:
     void colorParametersParseAndResolve();
     void modelAssetLoadsCubeGlb();
     void modelAssetRejectsDraco();
+    void hwAccelDescribesEveryBackend();
+    void stillImageDecodesWebp();
+    void stillImageDecodesHeicAndAvifViaFfmpeg();
+    void stillImageFallsBackWhenQtCannotRead();
+    void stillImagePreservesAlpha();
+    void stillImageRejectsGarbage();
     void modelAssetRejectsCorrupt();
     void faceModelMvpIsResolutionIndependent();
     void faceModelMvpMapsUpToDecreasingNdcY();
@@ -215,6 +228,13 @@ private slots:
     void textAnimationFadesAndSlides();
     void clipBodyAnimationFadeRampsOpacity();
     void maskApplierEllipseMasksCorners();
+    void maskApplierFoldsAStackByItsOps();
+    void maskShapesUseBothSizeAxes();
+    void starMaskRotatesOnceNotTwice();
+    void maskAdjustmentLaneMasksItsParentsClips();
+    void maskLaneOpsCombineAcrossLanes();
+    void soleMediaMaskCarriesTheDecontaminatedForeground();
+    void aVideoEffectsAdjustmentKeepsItsOwnMask();
     void exporterProducesPlayableFileWithBackground();
     void exporterProducesAudioOnlyMp3();
     void exporterTagsSdrBt709ColorMetadata();
@@ -235,6 +255,8 @@ private slots:
     void mixerSurvivesConcurrentClipAudioReset();
     void retimedClipAudioIsNotSilent();
     void retimedAudioPreservesPitch();
+    void perChannelPeaksFoldToTheMergedEnvelope();
+    void panLawIsUnityAtCentreAndSilencesOneSide();
     void retimedAudioLengthTracksTimeline();
     void retimedAudioSurvivesBlockSizeChanges();
     void reversedRetimedAudioIsNotSilent();
@@ -249,6 +271,8 @@ private slots:
     void audioEffectRackPrimingAlignsLatentStages();
     void pitchShiftMovesPitchInTheRightDirection();
     void audioEffectRackParameterChangeIsContinuous();
+    void audioAdjustmentLanesAndMasterBus();
+    void audioEffectRackReportsChainRebuilds();
     void onsetsDetectClickTrackTempo();
     void onsetsIgnoreSilence();
 
@@ -260,6 +284,13 @@ private slots:
     void sceneCutsRejectNoiseAndGrain();
     void scenesPartitionTheRange();
     void sceneLoudnessRanksAcrossTheClip();
+    void sceneDetectExportsFrameMetric();
+    void frameSheetDHashIsStableAndDiscriminates();
+    void frameSheetSelectChangesKeepsDistinctLooks();
+    void frameSheetLayoutRespectsCaps();
+    void frameSheetComposeBurnsLabels();
+    void waveformSheetRendersExpectedSize();
+    void waveformSheetSpectrogramSeparatesTones();
     void yoloxDecodeAppliesGridAndStride();
     void objectNmsIsPerClass();
     void denoiseAuxiliaryConstantsRoundTrip();
@@ -276,6 +307,7 @@ private:
     static QString makeHdHalvesVideo(QTemporaryDir &dir);
     static QString makeAv1ColorVideo(QTemporaryDir &dir);
     static QString makeToneAudio(QTemporaryDir &dir);
+    static QString makeMultiChannelAudio(QTemporaryDir &dir);
     static QString makeSweepAudio(QTemporaryDir &dir);
     static QString makeLongGopVideo(QTemporaryDir &dir);
 };
@@ -1774,6 +1806,93 @@ void EngineTest::matteWriterRoundTripsThroughClipReader()
     }
 }
 
+// A binary mask survives a limited-range round trip by accident: 0 and 255 clamp back to
+// themselves. A soft alpha does not — untagged, ClipReader expands 16..235 out to 0..255 and every
+// midtone shifts by about 7%. RVM's whole advantage over SAM2 is the soft edge, so the full-range
+// tagging is pinned here rather than left to whoever next touches the encoder settings.
+void EngineTest::matteWriterPreservesSoftAlpha()
+{
+    if (!Exporter::videoCodecById(QStringLiteral("h264")).value(QStringLiteral("available")).toBool())
+        QSKIP("No H.264 encoder available in this FFmpeg build");
+
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    const QString path = dir.filePath(QStringLiteral("soft.mp4"));
+    const QSize size(256, 64);
+
+    // One flat grey per 16-pixel column, covering the whole range including the ends.
+    const int levels[] = {0, 16, 32, 64, 96, 128, 160, 192, 224, 239, 255};
+
+    drift::MatteWriter writer;
+    QString error;
+    QVERIFY2(writer.open(path, size, 30, 1, &error), qPrintable(error));
+    QImage mask(size, QImage::Format_Grayscale8);
+    mask.fill(0);
+    for (int i = 0; i < int(std::size(levels)); ++i) {
+        QPainter p(&mask);
+        p.fillRect(QRect(i * 20, 0, 20, size.height()), QColor(levels[i], levels[i], levels[i]));
+        p.end();
+    }
+    QVERIFY2(writer.writeFrame(mask, &error), qPrintable(error));
+    QVERIFY2(writer.finish(&error), qPrintable(error));
+
+    const QImage frame = ClipReaderPool::instance().readVideoFrame(path, 1, 0, 0, 0);
+    QVERIFY(!frame.isNull());
+    QCOMPARE(frame.size(), size);
+
+    for (int i = 0; i < int(std::size(levels)); ++i) {
+        const int got = qRed(frame.pixel(i * 20 + 10, size.height() / 2));
+        QVERIFY2(qAbs(got - levels[i]) <= 2,
+                 qPrintable(QStringLiteral("alpha %1 came back as %2").arg(levels[i]).arg(got)));
+    }
+}
+
+// The foreground sidecar goes through a different path in the same writer: swscale rather than a
+// memcpy into luma, and crf rather than qp 0. Colour surviving at all is what this pins — a
+// mismatch between the swscale range and the stream tagging washes it out.
+void EngineTest::matteWriterRoundTripsColourForeground()
+{
+    if (!Exporter::videoCodecById(QStringLiteral("h264")).value(QStringLiteral("available")).toBool())
+        QSKIP("No H.264 encoder available in this FFmpeg build");
+
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    const QString path = dir.filePath(QStringLiteral("fgr.mp4"));
+    const QSize size(256, 64);
+
+    const QColor colours[] = {Qt::black, Qt::white, Qt::red, Qt::green, Qt::blue, QColor(128, 64, 32)};
+
+    drift::MatteWriter writer;
+    QString error;
+    QVERIFY2(writer.open(path, size, 30, 1, &error, drift::MatteWriter::Mode::Colour),
+             qPrintable(error));
+    QImage rgb(size, QImage::Format_RGB888);
+    rgb.fill(Qt::black);
+    for (int i = 0; i < int(std::size(colours)); ++i) {
+        QPainter p(&rgb);
+        p.fillRect(QRect(i * 40, 0, 40, size.height()), colours[i]);
+        p.end();
+    }
+    QVERIFY2(writer.writeFrame(rgb, &error), qPrintable(error));
+    QVERIFY2(writer.finish(&error), qPrintable(error));
+
+    const QImage frame = ClipReaderPool::instance().readVideoFrame(path, 1, 0, 0, 0);
+    QVERIFY(!frame.isNull());
+    QCOMPARE(frame.size(), size);
+
+    for (int i = 0; i < int(std::size(colours)); ++i) {
+        const QRgb got = frame.pixel(i * 40 + 20, size.height() / 2);
+        const QColor want = colours[i];
+        QVERIFY2(qAbs(qRed(got) - want.red()) <= 8 && qAbs(qGreen(got) - want.green()) <= 8
+                     && qAbs(qBlue(got) - want.blue()) <= 8,
+                 qPrintable(QStringLiteral("colour %1 came back as %2,%3,%4")
+                                .arg(want.name())
+                                .arg(qRed(got))
+                                .arg(qGreen(got))
+                                .arg(qBlue(got))));
+    }
+}
+
 // The whole point of a proxy is that reading it forwards shows the source backwards. An off-by-one
 // or a batch stitched together in the wrong order is invisible in a still and obvious in motion,
 // so the ordering is pinned here rather than left to the eye.
@@ -3009,6 +3128,33 @@ QString EngineTest::makeToneAudio(QTemporaryDir &dir)
         QStringLiteral("-y"),
         QStringLiteral("-f"), QStringLiteral("lavfi"), QStringLiteral("-i"),
         QStringLiteral("sine=frequency=440:sample_rate=48000:duration=2"),
+        QStringLiteral("-c:a"), QStringLiteral("pcm_s16le"),
+        out,
+    };
+
+    QProcess proc;
+    proc.start(ffmpeg, args);
+    if (!proc.waitForFinished(30000) || proc.exitCode() != 0)
+        return {};
+    return QFileInfo::exists(out) ? out : QString{};
+}
+
+// Six channels carrying the same tone at strictly decreasing amplitude, so a per-channel
+// reader can be checked against a known ordering and the merged envelope against channel 0.
+QString EngineTest::makeMultiChannelAudio(QTemporaryDir &dir)
+{
+    const QString ffmpeg = QStandardPaths::findExecutable(QStringLiteral("ffmpeg"));
+    if (ffmpeg.isEmpty())
+        return {};
+
+    const QString out = dir.filePath(QStringLiteral("surround.wav"));
+    QStringList args{
+        QStringLiteral("-y"),
+        QStringLiteral("-f"), QStringLiteral("lavfi"), QStringLiteral("-i"),
+        QStringLiteral("sine=frequency=440:sample_rate=48000:duration=2"),
+        QStringLiteral("-af"),
+        QStringLiteral("pan=6c|c0=0.90*c0|c1=0.75*c0|c2=0.60*c0"
+                       "|c3=0.45*c0|c4=0.30*c0|c5=0.15*c0"),
         QStringLiteral("-c:a"), QStringLiteral("pcm_s16le"),
         out,
     };
@@ -5611,6 +5757,360 @@ void EngineTest::maskApplierEllipseMasksCorners()
     QVERIFY(qAlpha(masked.pixel(0, 0)) < 20);
 }
 
+// The seed rule: the first contributing entry replaces the accumulator whatever its op says.
+// Without it a lone Subtract folds against black and blanks the clip outright.
+void EngineTest::maskApplierFoldsAStackByItsOps()
+{
+    const auto rect = [](double x, double w, drift::MaskOp op) {
+        drift::Mask mask;
+        mask.shape = drift::MaskShape::Rectangle;
+        mask.op = op;
+        mask.x = x;
+        mask.y = 0.5;
+        mask.w = w;
+        mask.h = 1.0;
+        return mask;
+    };
+
+    // Left half added, then the middle subtracted: the left quarter survives.
+    const QImage subtracted = drift::maskAlphaMap(
+        {rect(0.25, 0.5, drift::MaskOp::Add), rect(0.5, 0.25, drift::MaskOp::Subtract)}, 64, 64);
+    QVERIFY(!subtracted.isNull());
+    QCOMPARE(subtracted.format(), QImage::Format_Grayscale8);
+    QVERIFY(qGray(subtracted.pixel(8, 32)) > 200);   // inside the added half
+    QVERIFY(qGray(subtracted.pixel(32, 32)) < 40);   // carved out
+    QVERIFY(qGray(subtracted.pixel(56, 32)) < 40);   // never covered
+
+    // Left half intersected with the right half leaves only where they overlap: nothing.
+    const QImage intersected = drift::maskAlphaMap(
+        {rect(0.25, 0.5, drift::MaskOp::Add), rect(0.75, 0.5, drift::MaskOp::Intersect)}, 64, 64);
+    QVERIFY(!intersected.isNull());
+    QVERIFY(qGray(intersected.pixel(8, 32)) < 40);
+    QVERIFY(qGray(intersected.pixel(56, 32)) < 40);
+
+    // A lone Subtract seeds rather than folding against black, so it covers its own rect.
+    const QImage lone = drift::maskAlphaMap({rect(0.25, 0.5, drift::MaskOp::Subtract)}, 64, 64);
+    QVERIFY(!lone.isNull());
+    QVERIFY(qGray(lone.pixel(8, 32)) > 200);
+    QVERIFY(qGray(lone.pixel(56, 32)) < 40);
+
+    // Nothing contributing at all is null, which is the compositor's "draw unmasked" signal.
+    drift::Mask off;
+    off.shape = drift::MaskShape::Rectangle;
+    off.enabled = false;
+    const QList<drift::Mask> disabled{off};
+    QVERIFY(drift::maskAlphaMap(disabled, 64, 64).isNull());
+    QVERIFY(drift::masksAreInert(disabled));
+}
+
+// Star and heart were forced into a square of qMin(halfW, halfH), which quietly discarded
+// whichever of the two size sliders was larger. Both generators take a rect, so both axes count.
+void EngineTest::maskShapesUseBothSizeAxes()
+{
+    const auto coverageWidth = [](drift::MaskShape shape, double w, double h) {
+        drift::Mask mask;
+        mask.shape = shape;
+        mask.x = 0.5;
+        mask.y = 0.5;
+        mask.w = w;
+        mask.h = h;
+        const QImage alpha = drift::maskAlphaMap(mask, 128, 128);
+        if (alpha.isNull())
+            return 0;
+        // Widest covered run on the centre row.
+        int count = 0;
+        for (int x = 0; x < alpha.width(); ++x) {
+            if (qGray(alpha.pixel(x, 64)) > 128)
+                ++count;
+        }
+        return count;
+    };
+
+    for (const drift::MaskShape shape : {drift::MaskShape::Star, drift::MaskShape::Heart}) {
+        const int narrow = coverageWidth(shape, 0.3, 0.9);
+        const int wide = coverageWidth(shape, 0.9, 0.9);
+        QVERIFY2(narrow > 0 && wide > 0, "both should cover something on the centre row");
+        QVERIFY2(wide > narrow * 1.5,
+                 "widening the mask must widen the shape, not be capped by the height");
+    }
+}
+
+// regularPolygonPath bakes the angle into its vertices and maskAlphaMap rotates the finished path
+// about its centre as well; doing both turned a star twice as far as the slider said.
+void EngineTest::starMaskRotatesOnceNotTwice()
+{
+    const auto coverageAt = [](double rotation) {
+        drift::Mask mask;
+        mask.shape = drift::MaskShape::Star;
+        mask.x = 0.5;
+        mask.y = 0.5;
+        mask.w = 0.8;
+        mask.h = 0.8;
+        mask.rotation = rotation;
+        return drift::maskAlphaMap(mask, 128, 128);
+    };
+
+    // A pentagon has five-fold symmetry, so 72° is a full period: it must land back on itself.
+    const QImage base = coverageAt(0.0);
+    const QImage full = coverageAt(72.0);
+    QVERIFY(!base.isNull() && !full.isNull());
+
+    const auto differingPixels = [](const QImage &a, const QImage &b) {
+        int diff = 0;
+        for (int y = 0; y < a.height(); ++y) {
+            for (int x = 0; x < a.width(); ++x) {
+                if (qAbs(qGray(a.pixel(x, y)) - qGray(b.pixel(x, y))) > 96)
+                    ++diff;
+            }
+        }
+        return diff;
+    };
+
+    // Rotated twice it would have landed on 144°, which is not a symmetry of a pentagon.
+    QVERIFY2(differingPixels(base, full) < 64,
+             "72 degrees is a full period for a pentagon; a double rotation would miss it");
+    QVERIFY2(differingPixels(base, coverageAt(36.0)) > 200,
+             "half a period must visibly differ, or nothing is rotating at all");
+}
+
+// The bar the handover set for Phase 5: a model-level check passes while the picture is still
+// unmasked, so this renders and compares pixels. A mask on a nested lane must reach the clips of
+// the track it is nested in, and only for the span it covers.
+void EngineTest::maskAdjustmentLaneMasksItsParentsClips()
+{
+    if (!GpuCompositor::isAvailable())
+        QSKIP("No GPU compositor available");
+
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    const QString imagePath = dir.filePath(QStringLiteral("white.png"));
+    {
+        QImage image(64, 64, QImage::Format_RGBA8888);
+        image.fill(Qt::white);
+        QVERIFY(image.save(imagePath));
+    }
+
+    drift::Project project;
+    project.setResolution(64, 64);
+    project.tracks().clear();
+    project.tracks().append(drift::Track{.type = drift::TrackType::Video});
+
+    drift::Clip clip;
+    clip.id = QStringLiteral("c");
+    clip.type = drift::ClipType::Image;
+    clip.path = imagePath;
+    clip.timelineStart = 0;
+    clip.timelineDuration = drift::secondsToUs(4.0);
+    project.tracks()[0].clips.append(clip);
+
+    // Covers only the first two seconds of a four-second clip.
+    drift::Mask ellipse;
+    ellipse.shape = drift::MaskShape::Ellipse;
+    ellipse.x = 0.5;
+    ellipse.y = 0.5;
+    ellipse.w = 0.5;
+    ellipse.h = 0.5;
+    drift::setLinkedMask(project, 0, 0, ellipse);
+
+    const QList<drift::ClipRef> pinned = drift::linkedMaskAdjustments(project, 0, 0);
+    QCOMPARE(pinned.size(), 1);
+    // A lane, not a track of its own — otherwise it would mask the whole canvas.
+    QVERIFY(project.tracks().at(pinned.constFirst().trackIndex).isAdjustmentLane());
+    project.tracks()[pinned.constFirst().trackIndex].clips[pinned.constFirst().clipIndex]
+        .timelineDuration = drift::secondsToUs(2.0);
+
+    FrameCompositor compositor;
+    compositor.setProject(&project);
+
+    // Inside the mask's span: the corners are cut away, the centre survives.
+    const QImage masked = compositor.compositeAt(drift::secondsToUs(1.0));
+    QVERIFY(!masked.isNull());
+    QCOMPARE(masked.size(), QSize(64, 64));
+    QVERIFY2(qRed(masked.pixel(32, 32)) > 200, "centre should still show through");
+    QVERIFY2(qRed(masked.pixel(2, 2)) < 40, "corner should be masked away");
+
+    // Past its span the clip is untouched, which is what makes the bar on the lane mean the
+    // stretch of time it covers.
+    const QImage after = compositor.compositeAt(drift::secondsToUs(3.0));
+    QVERIFY(!after.isNull());
+    QVERIFY2(qRed(after.pixel(2, 2)) > 200, "outside the mask's span the clip is unmasked");
+}
+
+// Two lanes on one track fold in lane order, so Subtract is predictable.
+void EngineTest::maskLaneOpsCombineAcrossLanes()
+{
+    if (!GpuCompositor::isAvailable())
+        QSKIP("No GPU compositor available");
+
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    const QString imagePath = dir.filePath(QStringLiteral("white.png"));
+    {
+        QImage image(64, 64, QImage::Format_RGBA8888);
+        image.fill(Qt::white);
+        QVERIFY(image.save(imagePath));
+    }
+
+    drift::Project project;
+    project.setResolution(64, 64);
+    project.tracks().clear();
+    project.tracks().append(drift::Track{.type = drift::TrackType::Video});
+
+    drift::Clip clip;
+    clip.id = QStringLiteral("c");
+    clip.type = drift::ClipType::Image;
+    clip.path = imagePath;
+    clip.timelineStart = 0;
+    clip.timelineDuration = drift::secondsToUs(4.0);
+    project.tracks()[0].clips.append(clip);
+
+    // The whole frame, then a centred square taken back out of it.
+    drift::Mask whole;
+    whole.shape = drift::MaskShape::Rectangle;
+    whole.w = 1.0;
+    whole.h = 1.0;
+    drift::setLinkedMask(project, 0, 0, whole);
+
+    drift::Mask hole;
+    hole.shape = drift::MaskShape::Rectangle;
+    hole.op = drift::MaskOp::Subtract;
+    hole.w = 0.4;
+    hole.h = 0.4;
+    // setLinkedMask replaces the pinned mask, so the second entry goes on a lane of its own —
+    // which is also what exercises the cross-lane fold order.
+    const int lane = drift::ensureAdjustmentLane(project, 0, drift::AdjustmentKind::Mask,
+                                                 clip.timelineStart, clip.timelineDuration);
+    QVERIFY(lane >= 0);
+    drift::Clip second;
+    second.id = QStringLiteral("mask-2");
+    second.type = drift::ClipType::Adjustment;
+    second.adjustmentKind = drift::AdjustmentKind::Mask;
+    second.timelineStart = clip.timelineStart;
+    second.timelineDuration = clip.timelineDuration;
+    second.mask = hole;
+    project.tracks()[lane].clips.append(second);
+
+    QCOMPARE(drift::laneMasksAt(project, 0, drift::secondsToUs(1.0)).size(), 2);
+
+    FrameCompositor compositor;
+    compositor.setProject(&project);
+    const QImage frame = compositor.compositeAt(drift::secondsToUs(1.0));
+    QVERIFY(!frame.isNull());
+    QVERIFY2(qRed(frame.pixel(2, 2)) > 200, "outside the hole the full-frame mask shows through");
+    QVERIFY2(qRed(frame.pixel(32, 32)) < 40, "the subtracted square is carved out");
+}
+
+// The decontaminated foreground replaces the layer's colour, which only makes sense while one
+// media mask owns the coverage outright. Adding a second entry has to drop it — that is the
+// documented cost of keeping fgr a single image rather than one per entry.
+void EngineTest::soleMediaMaskCarriesTheDecontaminatedForeground()
+{
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    const QString imagePath = dir.filePath(QStringLiteral("white.png"));
+    const QString mattePath = dir.filePath(QStringLiteral("matte.png"));
+    const QString fgrPath = dir.filePath(QStringLiteral("fgr.png"));
+    {
+        QImage image(64, 64, QImage::Format_RGBA8888);
+        image.fill(Qt::white);
+        QVERIFY(image.save(imagePath));
+        QImage matte(64, 64, QImage::Format_RGBA8888);
+        matte.fill(Qt::white);
+        QVERIFY(matte.save(mattePath));
+        QImage fgr(64, 64, QImage::Format_RGBA8888);
+        fgr.fill(Qt::green);
+        QVERIFY(fgr.save(fgrPath));
+    }
+
+    drift::Project project;
+    project.setResolution(64, 64);
+    project.tracks().clear();
+    project.tracks().append(drift::Track{.type = drift::TrackType::Video});
+
+    drift::Clip clip;
+    clip.id = QStringLiteral("c");
+    clip.type = drift::ClipType::Image;
+    clip.path = imagePath;
+    clip.timelineStart = 0;
+    clip.timelineDuration = drift::secondsToUs(4.0);
+    project.tracks()[0].clips.append(clip);
+
+    drift::Mask matte = drift::fullFrameMediaMask(mattePath);
+    matte.mediaFgrPath = fgrPath;
+    drift::setLinkedMask(project, 0, 0, matte);
+
+    FrameCompositor compositor;
+    compositor.setProject(&project);
+
+    GpuScene scene;
+    QVERIFY(compositor.buildSceneAt(drift::secondsToUs(1.0), FrameCompositor::RenderOptions{},
+                                    &scene));
+    QCOMPARE(scene.items.size(), 1);
+    const GpuLayer &layer = scene.items.constFirst().layer;
+    QCOMPARE(layer.masks.size(), 1);
+    QVERIFY2(!layer.maskMedia.constFirst().isNull(),
+             "the media mask's coverage must reach the layer");
+    QVERIFY2(!layer.fgr.isNull(),
+             "a lone media mask carries its decontaminated foreground");
+
+    // A second entry, and the sidecar is dropped: with a stack there is no single mask whose
+    // colours the layer should take.
+    drift::Mask extra;
+    extra.shape = drift::MaskShape::Rectangle;
+    const int lane = drift::ensureAdjustmentLane(project, 0, drift::AdjustmentKind::Mask,
+                                                 clip.timelineStart, clip.timelineDuration);
+    QVERIFY(lane >= 0);
+    drift::Clip second;
+    second.id = QStringLiteral("mask-2");
+    second.type = drift::ClipType::Adjustment;
+    second.adjustmentKind = drift::AdjustmentKind::Mask;
+    second.timelineStart = clip.timelineStart;
+    second.timelineDuration = clip.timelineDuration;
+    second.mask = extra;
+    project.tracks()[lane].clips.append(second);
+
+    GpuScene stacked;
+    QVERIFY(compositor.buildSceneAt(drift::secondsToUs(1.0), FrameCompositor::RenderOptions{},
+                                    &stacked));
+    QCOMPARE(stacked.items.size(), 1);
+    QCOMPARE(stacked.items.constFirst().layer.masks.size(), 2);
+    QVERIFY2(stacked.items.constFirst().layer.fgr.isNull(),
+             "a stack drops the decontaminated foreground");
+}
+
+// A standalone video-effects adjustment can carry a mask to scope where its chain lands. That is
+// a separate thing from a Mask adjustment carrying one as its whole payload, and gating the
+// compositor on the kind would silently drop it.
+void EngineTest::aVideoEffectsAdjustmentKeepsItsOwnMask()
+{
+    drift::Project project;
+    project.setResolution(64, 64);
+    project.tracks().clear();
+    project.tracks().append(drift::Track{.type = drift::TrackType::Adjustment});
+
+    drift::Clip adjustment;
+    adjustment.id = QStringLiteral("adj");
+    adjustment.type = drift::ClipType::Adjustment;
+    adjustment.adjustmentKind = drift::AdjustmentKind::VideoEffects;
+    adjustment.timelineStart = 0;
+    adjustment.timelineDuration = drift::secondsToUs(4.0);
+    adjustment.mask.shape = drift::MaskShape::Ellipse;
+    adjustment.mask.w = 0.5;
+    adjustment.mask.h = 0.5;
+    project.tracks()[0].clips.append(adjustment);
+
+    FrameCompositor compositor;
+    compositor.setProject(&project);
+
+    GpuScene scene;
+    QVERIFY(compositor.buildSceneAt(drift::secondsToUs(1.0), FrameCompositor::RenderOptions{},
+                                    &scene));
+    QCOMPARE(scene.items.size(), 1);
+    QVERIFY(scene.items.constFirst().isAdjustment);
+    QCOMPARE(scene.items.constFirst().layer.masks.size(), 1);
+    QCOMPARE(scene.items.constFirst().layer.masks.constFirst().shape, drift::MaskShape::Ellipse);
+}
+
 void EngineTest::exporterProducesPlayableFileWithBackground()
 {
     QTemporaryDir dir;
@@ -6780,6 +7280,113 @@ void EngineTest::retimedAudioPreservesPitch()
     }
 }
 
+// peaksForRange is implemented as a fold over peaksForRangePerChannel, on the grounds that max
+// is associative. That is the invariant the whole single-decode design rests on: if it ever
+// drifts, turning the lanes on would silently change the merged waveform every other clip draws.
+void EngineTest::perChannelPeaksFoldToTheMergedEnvelope()
+{
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    const QString path = makeMultiChannelAudio(dir);
+    if (path.isEmpty())
+        QSKIP("ffmpeg not available to generate a multi-channel test clip");
+
+    constexpr int kPps = 100;
+    const MediaWaveform::PerChannel perChannel =
+        MediaWaveform::peaksForRangePerChannel(path, 0.0, 2.0, kPps);
+    QCOMPARE(perChannel.channels.size(), 6);
+    QCOMPARE(perChannel.channelNames.size(), 6);
+
+    const QVector<float> merged = MediaWaveform::peaksForRange(path, 0.0, 2.0, kPps);
+    QCOMPARE(merged.size(), perChannel.channels.first().size());
+
+    for (int i = 0; i < merged.size(); ++i) {
+        float expected = 0.0f;
+        for (const QVector<float> &channel : perChannel.channels)
+            expected = qMax(expected, channel.at(i));
+        QVERIFY2(qFuzzyCompare(merged.at(i) + 1.0f, expected + 1.0f),
+                 qPrintable(QStringLiteral("bucket %1: merged %2 != max %3")
+                                .arg(i).arg(merged.at(i)).arg(expected)));
+    }
+
+    // Each channel has to read its own plane, not alias channel 0. The fixture's gains
+    // descend, so the peaks must too — and their ratios to channel 0 must match the gains
+    // that built it. Ratios rather than absolute levels: ffmpeg's pan filter renormalises to
+    // avoid clipping, so the absolute figures are an ffmpeg detail, while the ratios are ours.
+    QList<double> peaks;
+    for (const QVector<float> &channel : perChannel.channels) {
+        double peak = 0.0;
+        for (const float v : channel)
+            peak = qMax(peak, static_cast<double>(v));
+        peaks.append(peak);
+    }
+    QVERIFY2(peaks.first() > 0.0, qPrintable(QString::number(peaks.first())));
+
+    const QList<double> gains{0.90, 0.75, 0.60, 0.45, 0.30, 0.15};
+    for (int c = 1; c < peaks.size(); ++c) {
+        QVERIFY2(peaks.at(c) < peaks.at(c - 1),
+                 qPrintable(QStringLiteral("channel %1 peak %2 not below %3")
+                                .arg(c).arg(peaks.at(c)).arg(peaks.at(c - 1))));
+        const double expected = gains.at(c) / gains.first();
+        const double actual = peaks.at(c) / peaks.first();
+        QVERIFY2(qAbs(actual - expected) < 0.05,
+                 qPrintable(QStringLiteral("channel %1 ratio %2, expected %3")
+                                .arg(c).arg(actual).arg(expected)));
+    }
+}
+
+// A balance law, not a constant-power pan: centre has to be exactly unity or every project that
+// predates the pan control would come back 3 dB quieter in the middle.
+void EngineTest::panLawIsUnityAtCentreAndSilencesOneSide()
+{
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    const QString path = makeToneAudio(dir);
+    if (path.isEmpty())
+        QSKIP("ffmpeg not available to generate a test clip");
+
+    constexpr int kFrames = 1024;
+    const auto sideEnergy = [&](double pan, double *left, double *right) {
+        drift::Project project = makeRetimedToneProject(path, 1.0, false);
+        project.tracks()[0].clips[0].pan = pan;
+        AudioMixer mixer;
+        mixer.setProject(&project);
+
+        QVector<float> collected;
+        mixBlockRms(mixer, 20, kFrames, &collected);
+        double sumL = 0.0;
+        double sumR = 0.0;
+        const int frames = collected.size() / 2;
+        for (int i = 0; i < frames; ++i) {
+            sumL += static_cast<double>(collected[i * 2]) * collected[i * 2];
+            sumR += static_cast<double>(collected[i * 2 + 1]) * collected[i * 2 + 1];
+        }
+        *left = std::sqrt(sumL / frames);
+        *right = std::sqrt(sumR / frames);
+    };
+
+    double centreL = 0.0;
+    double centreR = 0.0;
+    sideEnergy(0.0, &centreL, &centreR);
+    QVERIFY2(centreL > 0.05, qPrintable(QString::number(centreL)));
+    QVERIFY2(centreR > 0.05, qPrintable(QString::number(centreR)));
+
+    // Unity at centre: the panned-hard side must match what centre produced, not 0.707 of it.
+    double leftL = 0.0;
+    double leftR = 0.0;
+    sideEnergy(-1.0, &leftL, &leftR);
+    QVERIFY2(leftR < centreR * 0.001, qPrintable(QString::number(leftR)));
+    QVERIFY2(qAbs(leftL - centreL) < centreL * 0.001,
+             qPrintable(QStringLiteral("L %1 vs centre %2").arg(leftL).arg(centreL)));
+
+    double rightL = 0.0;
+    double rightR = 0.0;
+    sideEnergy(1.0, &rightL, &rightR);
+    QVERIFY2(rightL < centreL * 0.001, qPrintable(QString::number(rightL)));
+    QVERIFY2(qAbs(rightR - centreR) < centreR * 0.001,
+             qPrintable(QStringLiteral("R %1 vs centre %2").arg(rightR).arg(centreR)));
+}
+
 // The retimer walks the source itself, so a cursor that ran fast or slow would show up as audio
 // that ends early or keeps going past the clip.
 void EngineTest::retimedAudioLengthTracksTimeline()
@@ -6836,6 +7443,129 @@ void EngineTest::retimedAudioSurvivesBlockSizeChanges()
         }
         t += static_cast<drift::TimeUs>(frames) * drift::kUsPerSecond / kToneRate;
     }
+}
+
+// An audio adjustment on a nested lane reaches the mix through the clips it modifies, exactly the
+// way a video lane folds into a clip's layer pass. A standalone one is the master bus instead.
+void EngineTest::audioAdjustmentLanesAndMasterBus()
+{
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    const QString path = makeToneAudio(dir);
+    if (path.isEmpty())
+        QSKIP("ffmpeg not available to generate a test clip");
+
+    constexpr int kFrames = 1024;
+    const auto rmsOf = [](drift::Project &project) {
+        AudioMixer mixer;
+        mixer.setProject(&project);
+        QVector<float> buffer(kFrames * 2);
+        // A couple of blocks in, so the decoder and any rack priming have settled.
+        drift::TimeUs t = 0;
+        double rms = 0.0;
+        for (int b = 0; b < 4; ++b) {
+            mixer.mix(t, kFrames, kToneRate, buffer.data());
+            rms = blockRms(buffer, kFrames);
+            t += static_cast<drift::TimeUs>(kFrames) * drift::kUsPerSecond / kToneRate;
+        }
+        return rms;
+    };
+
+    drift::Project dry = makeRetimedToneProject(path, 1.0, false);
+    const double dryRms = rmsOf(dry);
+    QVERIFY2(dryRms > 0.02, qPrintable(QString::number(dryRms)));
+
+    // A quietening effect, so "did it reach the mix" is a level question rather than a
+    // spectral one.
+    drift::Effect quieter;
+    quieter.catalogId = QStringLiteral("transmission.muffled");
+    quieter.parameters.insert(QStringLiteral("cutoff"), 400.0);
+    quieter.parameters.insert(QStringLiteral("gain"), 0.15);
+
+    // --- nested lane: scoped to the audio track it is nested in -------------------------
+    {
+        drift::Project project = makeRetimedToneProject(path, 1.0, false);
+        project.ensureTrackIds();
+
+        drift::Track lane;
+        lane.type = drift::TrackType::Adjustment;
+        lane.adjustmentScope = drift::AdjustmentScope::ParentTrack;
+        lane.parentTrackId = project.tracks().at(0).id;
+
+        drift::Clip adjustment;
+        adjustment.id = QStringLiteral("lane-adjustment");
+        adjustment.type = drift::ClipType::Adjustment;
+        adjustment.adjustmentKind = drift::AdjustmentKind::AudioEffects;
+        adjustment.timelineStart = 0;
+        adjustment.timelineDuration = project.tracks().at(0).clips.at(0).timelineDuration;
+        adjustment.audioEffects.append(quieter);
+        lane.clips.append(adjustment);
+        project.tracks().append(lane);
+        project.ensureTrackIds();
+
+        const double wetRms = rmsOf(project);
+        QVERIFY2(wetRms < dryRms * 0.8,
+                 qPrintable(QStringLiteral("lane adjustment did not reach the mix: %1 vs %2")
+                                .arg(wetRms).arg(dryRms)));
+    }
+
+    // --- standalone: the master bus ------------------------------------------------------
+    {
+        drift::Project project = makeRetimedToneProject(path, 1.0, false);
+
+        drift::Track bus;
+        bus.type = drift::TrackType::Adjustment;
+        bus.adjustmentScope = drift::AdjustmentScope::AllBelow;
+
+        drift::Clip adjustment;
+        adjustment.id = QStringLiteral("bus-adjustment");
+        adjustment.type = drift::ClipType::Adjustment;
+        adjustment.adjustmentKind = drift::AdjustmentKind::AudioEffects;
+        adjustment.timelineStart = 0;
+        adjustment.timelineDuration = project.tracks().at(0).clips.at(0).timelineDuration;
+        adjustment.audioEffects.append(quieter);
+        bus.clips.append(adjustment);
+        project.tracks().prepend(bus);
+        project.ensureTrackIds();
+
+        const double wetRms = rmsOf(project);
+        QVERIFY2(wetRms < dryRms * 0.8,
+                 qPrintable(QStringLiteral("master bus did not reach the mix: %1 vs %2")
+                                .arg(wetRms).arg(dryRms)));
+    }
+}
+
+// A rebuilt chain has no history, so it is as much a discontinuity as a seek. Without treating it
+// as one, a lane that starts part-way through a clip opens its tail cold.
+void EngineTest::audioEffectRackReportsChainRebuilds()
+{
+    constexpr int kRate = 48000;
+
+    drift::Effect a;
+    a.catalogId = QStringLiteral("transmission.muffled");
+    a.parameters.insert(QStringLiteral("cutoff"), 4000.0);
+
+    drift::Effect b;
+    b.catalogId = QStringLiteral("space.autopan");
+
+    drift::AudioEffectRack rack;
+
+    bool rebuilt = false;
+    QVERIFY(rack.configure(audioEffectSpecsFor({a}), kRate, &rebuilt));
+    QVERIFY(rebuilt); // first build
+
+    rebuilt = false;
+    QVERIFY(rack.configure(audioEffectSpecsFor({a}), kRate, &rebuilt));
+    QVERIFY(!rebuilt); // same set: values are pushed into live stages, nothing is torn down
+
+    a.parameters.insert(QStringLiteral("cutoff"), 900.0);
+    rebuilt = false;
+    QVERIFY(rack.configure(audioEffectSpecsFor({a}), kRate, &rebuilt));
+    QVERIFY2(!rebuilt, "a parameter change must not tear the DSP down");
+
+    rebuilt = false;
+    QVERIFY(rack.configure(audioEffectSpecsFor({a, b}), kRate, &rebuilt));
+    QVERIFY2(rebuilt, "adding an effect changes the chain and must report a rebuild");
 }
 
 void EngineTest::reversedRetimedAudioIsNotSilent()
@@ -8075,6 +8805,346 @@ void EngineTest::softwareRenderersAreRecognisedByName()
     info.minor = 0;
     info.renderer = QStringLiteral("llvmpipe");
     QCOMPARE(drift::gl::describeGl(info), QStringLiteral("OpenGL 3.0 — llvmpipe"));
+}
+
+
+// --- Still images -----------------------------------------------------------------------------
+// decodeStillImage is the single entry point the bin, the thumbnailer and the compositor share.
+// Qt handles most formats; FFmpeg is the fallback that covers HEIC/AVIF (no Qt plugin exists in
+// any official kit) and rescues webp/tiff when the build's Qt lacks qtimageformats.
+
+// decodeBackendOrder() only ever names this platform's backends, so the round-trip test above
+// cannot see an enumerator that belongs to another one — and a new Backend with a missing switch
+// arm compiles fine and returns "" or AV_HWDEVICE_TYPE_NONE at runtime. Cover them all here.
+void EngineTest::hwAccelDescribesEveryBackend()
+{
+    using drift::hwaccel::Backend;
+    for (const Backend backend : {Backend::Cuda, Backend::D3d11va, Backend::Vaapi,
+                                  Backend::VideoToolbox, Backend::MediaCodec}) {
+        const QString id = drift::hwaccel::id(backend);
+        QVERIFY2(!id.isEmpty(), qPrintable(QString::number(int(backend))));
+        QCOMPARE(drift::hwaccel::backendFromId(id), backend);
+        QVERIFY(drift::hwaccel::deviceType(backend) != AV_HWDEVICE_TYPE_NONE);
+        QVERIFY(qstrlen(drift::hwaccel::name(backend)) > 0);
+    }
+
+#ifndef Q_OS_ANDROID
+    // MediaCodec exists in the enum on every platform so the picker can name it, but it must
+    // never be offered off Android — and a settings file carried over from a phone has to
+    // resolve to something that works rather than to a mode that silently never engages.
+    QVERIFY(!drift::hwaccel::mediaCodecDecodeAvailable());
+    QVERIFY(!drift::hwaccel::availableDecodeBackends().contains(Backend::MediaCodec));
+    QVERIFY(!drift::hwaccel::decodeBackendOrder().contains(Backend::MediaCodec));
+#endif
+}
+
+void EngineTest::stillImageDecodesWebp()
+{
+    const QString path = QStringLiteral(DRIFT_TEST_DATA_DIR "/still.webp");
+    QVERIFY2(QFileInfo::exists(path), qPrintable(path));
+
+    const QImage image = drift::decodeStillImage(path);
+    QVERIFY(!image.isNull());
+    QCOMPARE(image.size(), QSize(64, 64));
+    QCOMPARE(drift::stillImageSize(path), QSize(64, 64));
+}
+
+void EngineTest::stillImageDecodesHeicAndAvifViaFfmpeg()
+{
+    // No Qt kit ships a qheif/qavif plugin, so on a user's machine these can only come from the
+    // FFmpeg fallback. A dev box with KDE's KImageFormats installed satisfies them through Qt
+    // instead and would prove nothing, so each is also decoded under a suffix no plugin claims,
+    // which leaves QImageReader with no handler to try and forces the fallback. libavformat
+    // sniffs the ftyp box, so the suffix never mattered to it.
+    // The fixtures are 64x64 for a reason: FFmpeg n7.1, which the desktop CI links, cannot
+    // parse a HEIC header below that and fails the whole file with "error reading header".
+    // FFmpeg 8.x (what Android ships) reads it at 32x32 fine. Real camera stills are
+    // megapixels, so this is a fixture constraint, not a user-facing limit.
+    QTemporaryDir tmp;
+    QVERIFY(tmp.isValid());
+
+    for (const char *name : {"still.heic", "still.avif"}) {
+        const QString path =
+            QStringLiteral(DRIFT_TEST_DATA_DIR "/") + QLatin1String(name);
+        QVERIFY2(QFileInfo::exists(path), qPrintable(path));
+        const QImage image = drift::decodeStillImage(path);
+        QVERIFY2(!image.isNull(), name);
+        QCOMPARE(image.size(), QSize(64, 64));
+
+        const QString disguised =
+            tmp.filePath(QLatin1String(name) + QStringLiteral(".drift-unknown"));
+        QVERIFY(QFile::copy(path, disguised));
+        QVERIFY(!drift::qtCanDecodeStill(disguised));
+        const QImage viaFfmpeg = drift::decodeStillImage(disguised);
+        QVERIFY2(!viaFfmpeg.isNull(), name);
+        QCOMPARE(viaFfmpeg.size(), QSize(64, 64));
+        QCOMPARE(drift::stillImageSize(disguised), QSize(64, 64));
+    }
+}
+
+void EngineTest::stillImageFallsBackWhenQtCannotRead()
+{
+    // CI installs qtimageformats, so a plain .webp would pass through Qt and prove nothing about
+    // the fallback. Copying it to a suffix no image plugin claims forces the FFmpeg branch:
+    // QImageReader has no handler to try, and libavformat sniffs the RIFF header regardless.
+    QTemporaryDir tmp;
+    QVERIFY(tmp.isValid());
+    const QString disguised = tmp.filePath(QStringLiteral("still.drift-unknown"));
+    QVERIFY(QFile::copy(QStringLiteral(DRIFT_TEST_DATA_DIR "/still.webp"), disguised));
+
+    QVERIFY(!drift::qtCanDecodeStill(disguised));
+    const QImage image = drift::decodeStillImage(disguised);
+    QVERIFY(!image.isNull());
+    QCOMPARE(image.size(), QSize(64, 64));
+}
+
+void EngineTest::stillImagePreservesAlpha()
+{
+    // The fixture is opaque red on its left half and fully transparent on its right. Losing that
+    // is invisible on a dark canvas, and the obvious FFmpeg helper to reuse (MediaThumbnail's)
+    // converts to RGB24 — flattening every transparent sticker and luma mask with no visible error.
+    QTemporaryDir tmp;
+    QVERIFY(tmp.isValid());
+    const QString disguised = tmp.filePath(QStringLiteral("alpha.drift-unknown"));
+    QVERIFY(QFile::copy(QStringLiteral(DRIFT_TEST_DATA_DIR "/still.webp"), disguised));
+
+    const QImage viaFfmpeg = drift::decodeStillImage(disguised);
+    QVERIFY(!viaFfmpeg.isNull());
+    QVERIFY(viaFfmpeg.hasAlphaChannel());
+    QCOMPARE(qAlpha(viaFfmpeg.pixel(8, 8)), 255);
+    QCOMPARE(qAlpha(viaFfmpeg.pixel(56, 56)), 0);
+}
+
+void EngineTest::stillImageRejectsGarbage()
+{
+    // Neither decoder can read this. The contract is a null QImage and an empty QSize, which is
+    // what makes the bin withdraw the row instead of keeping a 0x0 asset that renders as nothing.
+    QTemporaryDir tmp;
+    QVERIFY(tmp.isValid());
+    const QString path = tmp.filePath(QStringLiteral("truncated.png"));
+    QFile f(path);
+    QVERIFY(f.open(QIODevice::WriteOnly));
+    f.write(QByteArray("\x89PNG\r\n\x1a\n", 8) + QByteArray(64, '\0'));
+    f.close();
+
+    QVERIFY(drift::decodeStillImage(path).isNull());
+    QVERIFY(drift::stillImageSize(path).isEmpty());
+}
+
+void EngineTest::sceneDetectExportsFrameMetric()
+{
+    QImage red(drift::kScanFrameWidth, drift::kScanFrameHeight, QImage::Format_RGBA8888);
+    red.fill(Qt::red);
+    QImage black(red.size(), QImage::Format_RGBA8888);
+    black.fill(Qt::black);
+
+    drift::HsvFrame a;
+    drift::HsvFrame b;
+    drift::toHsv(red, &a);
+    drift::toHsv(black, &b);
+    QVERIFY(a.matches(b));
+
+    const drift::FrameDelta cut = drift::compareFrames(a, b);
+    QVERIFY(cut.content > 27.0);
+    QCOMPARE(cut.motion, 1.0);
+
+    const drift::FrameDelta same = drift::compareFrames(a, a);
+    QCOMPARE(same.content, 0.0);
+    QCOMPARE(same.motion, 0.0);
+}
+
+void EngineTest::frameSheetDHashIsStableAndDiscriminates()
+{
+    using namespace drift::framesheet;
+
+    QImage gradient(160, 90, QImage::Format_RGB888);
+    for (int y = 0; y < gradient.height(); ++y) {
+        for (int x = 0; x < gradient.width(); ++x)
+            gradient.setPixel(x, y, qRgb(x * 255 / 159, x * 255 / 159, x * 255 / 159));
+    }
+    const quint64 h1 = dHash(gradient);
+    QCOMPARE(dHash(gradient), h1);
+    QCOMPARE(dHash(gradient.scaled(320, 180)), h1);
+    QCOMPARE(h1, quint64(0xFFFFFFFFFFFFFFFFull));
+
+    const quint64 flipped = dHash(gradient.flipped(Qt::Horizontal));
+    QCOMPARE(flipped, quint64(0));
+    QCOMPARE(hammingDistance(h1, flipped), 64);
+
+    QImage flat(160, 90, QImage::Format_RGB888);
+    flat.fill(Qt::gray);
+    QCOMPARE(dHash(flat), quint64(0));
+    QCOMPARE(dHash(QImage()), quint64(0));
+    QCOMPARE(hammingDistance(h1, h1), 0);
+    QCOMPARE(hammingDistance(0, 0xF), 4);
+}
+
+void EngineTest::frameSheetSelectChangesKeepsDistinctLooks()
+{
+    using namespace drift::framesheet;
+
+    const quint64 looks[4] = {0x0000000000000000ull, 0xFFFFFFFFFFFFFFFFull,
+                              0x00000000FFFFFFFFull, 0xF0F0F0F0F0F0F0F0ull};
+    QList<quint64> hashes;
+    for (int look = 0; look < 4; ++look) {
+        for (int r = 0; r < 12; ++r)
+            hashes.append(looks[look] ^ (r % 2 == 0 ? 0 : (quint64(1) << (r % 64))));
+    }
+    QCOMPARE(hashes.size(), 48);
+
+    const Selection sel = selectChanges(hashes, 6, 4, 12);
+    QCOMPARE(sel.kept.size(), 4);
+    QCOMPARE(sel.kept.first(), 0);
+    QCOMPARE(sel.kept, (QList<int>{0, 12, 24, 36}));
+    QCOMPARE(sel.skipped, 44);
+
+    const Selection capped = selectChanges(hashes, 6, 4, 2);
+    QCOMPARE(capped.kept.size(), 2);
+    QCOMPARE(capped.kept.first(), 0);
+    QVERIFY(capped.kept.at(1) > 0);
+    QCOMPARE(capped.skipped, 46);
+
+    QVERIFY(selectChanges({}, 6, 4, 12).kept.isEmpty());
+    QCOMPARE(selectUniform(48, 4), (QList<int>{0, 12, 24, 36}));
+    QCOMPARE(selectUniform(3, 10), (QList<int>{0, 1, 2}));
+}
+
+void EngineTest::frameSheetLayoutRespectsCaps()
+{
+    using namespace drift::framesheet;
+
+    const Layout twenty = layoutFor(20, 16.0 / 9.0, 4, 0);
+    QCOMPARE(twenty.cols, 4);
+    QCOMPARE(twenty.rows, 5);
+    QVERIFY(twenty.sheet.width() <= 1456);
+    QVERIFY(twenty.sheet.height() <= 1456);
+    QVERIFY(twenty.tokens <= 1568);
+    QCOMPARE(twenty.tokens,
+             ((twenty.sheet.width() + 27) / 28) * ((twenty.sheet.height() + 27) / 28));
+    QCOMPARE(twenty.sheet.width(), twenty.tile.width() * 4);
+
+    const Layout six = layoutFor(6, 16.0 / 9.0, 0, 0);
+    QCOMPARE(six.cols, 3);
+    QCOMPARE(six.rows, 2);
+    QVERIFY(six.sheet.width() <= 1456);
+    QVERIFY(six.tokens <= 1568);
+
+    QCOMPARE(layoutFor(12, 16.0 / 9.0, 0, 0).cols, 4);
+
+    const Layout wide = layoutFor(12, 16.0 / 9.0, 4, 720);
+    QVERIFY(wide.tile.width() < 720);
+    QVERIFY(wide.sheet.width() <= 1456);
+    QVERIFY(wide.tokens <= 1568);
+
+    const Layout two = layoutFor(2, 1.0, 0, 200);
+    QCOMPARE(two.cols, 2);
+    QCOMPARE(two.tile, QSize(200, 200));
+    QCOMPARE(two.sheet, QSize(400, 200));
+}
+
+void EngineTest::frameSheetComposeBurnsLabels()
+{
+    using namespace drift::framesheet;
+
+    const Layout layout = layoutFor(2, 16.0 / 9.0, 0, 320);
+    QImage blue(320, 180, QImage::Format_RGB888);
+    blue.fill(Qt::blue);
+    QImage green(320, 180, QImage::Format_RGB888);
+    green.fill(Qt::green);
+    const QList<Tile> tiles{{blue, QStringLiteral("0.00s")}, {green, QStringLiteral("1.50s")}};
+
+    const QImage plain = compose(layout, tiles, false);
+    QCOMPARE(plain.size(), layout.sheet);
+    QCOMPARE(plain.pixel(4, 4), QColor(Qt::blue).rgb());
+    QCOMPARE(plain.pixel(layout.tile.width() + 4, 4), QColor(Qt::green).rgb());
+
+    const QImage labelled = compose(layout, tiles, true);
+    QCOMPARE(labelled.size(), layout.sheet);
+    QCOMPARE(labelled.pixel(2, 2), QColor(Qt::black).rgb());
+    bool white = false;
+    for (int y = 0; y < 40 && !white; ++y) {
+        for (int x = 0; x < 80 && !white; ++x)
+            white = qRed(labelled.pixel(x, y)) > 200 && qGreen(labelled.pixel(x, y)) > 200;
+    }
+    QVERIFY(white);
+    QCOMPARE(labelled.pixel(layout.tile.width() / 2, layout.tile.height() / 2),
+             QColor(Qt::blue).rgb());
+}
+
+void EngineTest::waveformSheetRendersExpectedSize()
+{
+    using namespace drift::waveformsheet;
+
+    Input in;
+    in.startSeconds = 0.0;
+    in.durationSeconds = 4.0;
+    in.mixed.resize(50);
+    in.speech.resize(50);
+    for (int i = 0; i < 25; ++i) {
+        in.mixed[i] = 0.8f;
+        in.speech[i] = 0.5f;
+    }
+    in.silence.append({2.0, 4.0});
+    in.onsets.append(0.5);
+    in.beats.append(1.0);
+
+    const Options opt;
+    const QImage img = render(in, opt);
+    QCOMPARE(img.size(), QSize(1400, 300));
+
+    const int laneArea = 300 - opt.axisHeight;
+    QCOMPARE(img.pixel(1050, laneArea / 4), kSilenceShade);
+    QCOMPARE(img.pixel(1050, laneArea * 3 / 4), kSilenceShade);
+    QVERIFY(img.pixel(350, laneArea / 4) != kSilenceShade);
+    QVERIFY(img.pixel(350, int(laneArea * 0.55) / 2) != QColor(Qt::black).rgb());
+
+    in.spectrogram = QVector<QVector<float>>(10, QVector<float>(8, 0.5f));
+    QCOMPARE(render(in, opt).size(), QSize(1400, 300));
+
+    QCOMPARE(axisStepSeconds(4.0, 1400), 0.5);
+    QCOMPARE(axisStepSeconds(600.0, 1400), 60.0);
+    QCOMPARE(axisStepSeconds(30.0, 1400), 2.0);
+}
+
+void EngineTest::waveformSheetSpectrogramSeparatesTones()
+{
+    using namespace drift::waveformsheet;
+
+    const int rate = 16000;
+    QVector<float> mono(rate * 2);
+    for (int i = 0; i < rate; ++i)
+        mono[i] = 0.5f * std::sin(2.0 * M_PI * 440.0 * i / rate);
+    for (int i = rate; i < 2 * rate; ++i)
+        mono[i] = 0.5f * std::sin(2.0 * M_PI * 3000.0 * i / rate);
+
+    const int bins = 64;
+    const int columns = 40;
+    const QVector<QVector<float>> spec = spectrogram(mono.constData(), mono.size(), rate, bins,
+                                                     columns);
+    QCOMPARE(spec.size(), columns);
+    QCOMPARE(spec.first().size(), bins);
+
+    const auto loudestBin = [&](int from, int to) {
+        QVector<float> sum(bins, 0.0f);
+        for (int c = from; c < to; ++c) {
+            for (int b = 0; b < bins; ++b)
+                sum[b] += spec.at(c).at(b);
+        }
+        return int(std::max_element(sum.begin(), sum.end()) - sum.begin());
+    };
+    const int low = loudestBin(0, columns / 2 - 1);
+    const int high = loudestBin(columns / 2 + 1, columns);
+    QVERIFY2(low < high, qPrintable(QStringLiteral("%1 vs %2").arg(low).arg(high)));
+
+    float peak = 0.0f;
+    for (const QVector<float> &column : spec) {
+        for (float v : column) {
+            QVERIFY(v >= 0.0f && v <= 1.0f);
+            peak = std::max(peak, v);
+        }
+    }
+    QCOMPARE(peak, 1.0f);
+    QVERIFY(spectrogram(mono.constData(), 100, rate, bins, columns).isEmpty());
 }
 
 QTEST_MAIN(EngineTest)

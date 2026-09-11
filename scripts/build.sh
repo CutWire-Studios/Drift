@@ -14,8 +14,9 @@
 #   ANDROID_NDK_ROOT the NDK version the Qt kit was built against, NOT simply the newest installed.
 #                    Mixing NDK majors between Qt, FFmpeg and the app produces libc++ symbol
 #                    errors and dlopen failures that get misattributed to something else.
-#   DRIFT_ANDROID_PACKAGE_NAME  application id (default org.cutwire.drift; CI uses .ci)
-#   DRIFT_ANDROID_APP_NAME      launcher label (default Drift)
+#   DRIFT_ANDROID_PACKAGE_NAME  application id (default org.cutwire.drift.debug for a local
+#                               non-Release build, org.cutwire.drift for Release; CI uses .ci)
+#   DRIFT_ANDROID_APP_NAME      launcher label (default "Drift Debug" / "Drift", same rule)
 #   DRIFT_ANDROID_VERSION_CODE  optional Play-Store integer; unset → CMake derives from
 #                               PROJECT_VERSION (same semver as desktop)
 #   QT_ANDROID_ABIS             semicolon-separated ABI list packaged into the APK/AAB.
@@ -51,14 +52,23 @@ esac
 # The kit ships its own matching host Qt, which beats guessing at a distro layout.
 : "${QT_HOST_PATH:=$HOME/Qt/$QT_VERSION/gcc_64}"
 
-# Package identity. The defaults are the release app; CI overrides PACKAGE_NAME / APP_NAME so
-# test APKs install alongside a release build rather than being refused for a signature mismatch.
+# Package identity. CI overrides PACKAGE_NAME / APP_NAME so test APKs install alongside a
+# release build rather than being refused for a signature mismatch.
 # VERSION_CODE defaults in CMake from PROJECT_VERSION (same semver as desktop); set it only when
 # you need a different integer (e.g. github.run_number for successive CI side-loads).
 # SKIP_APK=1 builds the native library only — used by the push smoke test.
 # BUILD_AAB=1 is the Play Store package; QT_ANDROID_ABIS defaults to the abi argument.
-: "${DRIFT_ANDROID_PACKAGE_NAME:=org.cutwire.drift}"
-: "${DRIFT_ANDROID_APP_NAME:=Drift}"
+# A local build defaults to the .debug identity: it is debug-signed by scripts/deploy.sh, so
+# under the release application id the device refuses the update as a signature mismatch.
+# Both CI workflows set these explicitly, and a local `build.sh <abi> Release` still builds the
+# release identity.
+if [ "$BUILD_TYPE" = "Release" ]; then
+    : "${DRIFT_ANDROID_PACKAGE_NAME:=org.cutwire.drift}"
+    : "${DRIFT_ANDROID_APP_NAME:=Drift}"
+else
+    : "${DRIFT_ANDROID_PACKAGE_NAME:=org.cutwire.drift.debug}"
+    : "${DRIFT_ANDROID_APP_NAME:=Drift Debug}"
+fi
 : "${QT_ANDROID_ABIS:=$ABI}"
 : "${BUILD_AAB:=0}"
 : "${SKIP_APK:=0}"

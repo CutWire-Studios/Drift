@@ -99,25 +99,50 @@ Item {
         onRejected: root.pendingDeleteTrack = -1
     }
 
-    // Must stay in step with TimelinePanel's own height helpers, or the headers
-    // drift out of alignment with their rows.
-    function trackBaseHeight(type) {
-        if (type === "video") return Theme.trackHeightVideo;
-        if (type === "audio") return Theme.trackHeightAudio;
-        if (type === "shape") return Theme.trackHeightShape;
-        if (type === "subtitle") return Theme.trackHeightSubtitle;
-        return Theme.trackHeightText;
+    // The one definition of a row's height, shared with TimelinePanel and AndroidTimeline. It
+    // used to be duplicated in all three, which had to agree or the headers slid out of line
+    // with their rows; the nested-lane rule made keeping three copies in step untenable.
+    function trackHeight(index) {
+        // Reading `tracks` is what gives callers' bindings a dependency to re-evaluate on —
+        // EditorState.trackRowHeight is a plain call and carries none of its own.
+        const dep = tracks.length
+        return EditorState.trackRowHeight(index, {
+            "video": Theme.trackHeightVideo,
+            "audio": Theme.trackHeightAudio,
+            "text": Theme.trackHeightText,
+            "subtitle": Theme.trackHeightSubtitle,
+            "shape": Theme.trackHeightShape,
+            "adjustment": Theme.trackHeightAdjustment,
+            "lane": Theme.adjustmentLaneHeight
+        })
     }
 
-    function trackHeight(index) {
-        if (index < 0 || index >= tracks.length)
-            return Theme.trackHeightVideo
-        const track = tracks[index]
-        const scale = track.heightScale > 0 ? track.heightScale : 1
-        return Math.round(Math.max(20, trackBaseHeight(track.type) * scale))
+    // Raise a row so N channel lanes each get a workable height. Only ever grows, and only
+    // on enable: silently shrinking a row the user has already tuned is worse than leaving it
+    // tall, and on disable they may well want the height they now have.
+    //
+    // Computed here rather than in C++ because the row-height metrics are owned by Theme and
+    // passed *into* trackRowHeight — C++ deliberately hardcodes none of them.
+    function growRowForChannelLanes(index, channels) {
+        if (channels < 2)
+            return
+        const base = tracks[index].type === "audio" ? Theme.trackHeightAudio
+                                                    : Theme.trackHeightVideo
+        // The waveform sits below the header band, inside the selection ring.
+        const chrome = Theme.clipHeaderBandHeight + 2 * Theme.clipSelectionRingWidth
+        const wanted = (16 * channels + chrome) / base
+        if (wanted > (tracks[index].heightScale || 1))
+            EditorState.setTrackHeightScale(index, wanted)
+    }
+
+    // A nested lane has no header of its own: it belongs to the row above it, whose header
+    // already names it.
+    function trackOccupiesARow(index) {
+        return index >= 0 && index < tracks.length && !tracks[index].isAdjustmentLane
     }
 
     function trackTypeIcon(type) {
+        if (type === "adjustment") return Theme.icons.wand;
         if (type === "audio") return Theme.icons.music;
         if (type === "text") return Theme.icons.type;
         if (type === "subtitle") return Theme.icons.captions;
@@ -129,6 +154,7 @@ Item {
     // compact header. "V1"/"A2" is the fallback identification a phone gets until the track
     // has a custom name — see trackCompactLabel, which prefers that name when it's set.
     function trackTypeShortLabel(type) {
+        if (type === "adjustment") return qsTr("FX");
         if (type === "audio") return qsTr("A");
         if (type === "text") return qsTr("T");
         if (type === "subtitle") return qsTr("S");
@@ -138,6 +164,7 @@ Item {
 
     // Human label for a track type.
     function trackTypeLabel(type) {
+        if (type === "adjustment") return qsTr("Adjustment");
         if (type === "audio") return qsTr("Audio");
         if (type === "text") return qsTr("Text");
         if (type === "subtitle") return qsTr("Subtitle");
@@ -162,8 +189,11 @@ Item {
 
     function trackRowTop(index) {
         var cursor = 0
-        for (var i = 0; i < index && i < tracks.length; i++)
+        for (var i = 0; i < index && i < tracks.length; i++) {
+            if (!trackOccupiesARow(i))
+                continue
             cursor += trackHeight(i) + Theme.trackGap
+        }
         return cursor
     }
 
@@ -174,6 +204,8 @@ Item {
     function trackInsertSlotAtY(y) {
         var cursor = 0
         for (var i = 0; i < tracks.length; i++) {
+            if (!trackOccupiesARow(i))
+                continue
             const th = trackHeight(i)
             if (y < cursor + th / 2)
                 return i
@@ -202,6 +234,9 @@ Item {
         model: root.tracks.length
         delegate: Item {
             id: trackLabelRow
+
+            Accessible.role: Accessible.Row
+            Accessible.name: trackLabelRow.trackDisplayName
             // Read through root.tracks (not the EditorState
             // getters) so the toggles rebind on tracksChanged.
             readonly property bool trackMuted: root.tracks[index].muted === true
@@ -221,6 +256,8 @@ Item {
                 : root.trackTypeShortLabel(root.tracks[index].type)
                   + root.trackTypeOrdinal(index)
             width: root.labelsWidth
+            // A lane draws inside its parent's row, so it gets no header of its own.
+            visible: root.trackOccupiesARow(index)
             height: root.trackHeight(index)
                     + (index < root.tracks.length - 1 ? Theme.trackGap : 0)
             // Follows the timeline's vertical scroll so labels stay
@@ -369,6 +406,13 @@ Item {
                     iconColor: trackLabelRow.trackMuted ? Theme.destructive : Theme.mutedForeground
                     anchors.verticalCenter: parent.verticalCenter
 
+                    // The tooltip above never renders on touch, so the same string has to
+                    // reach tooling and screen readers through the accessible name instead.
+                    Accessible.role: Accessible.CheckBox
+                    Accessible.name: trackLabelRow.trackMuted ? qsTr("Unmute track") : qsTr("Mute track")
+                    Accessible.checked: trackLabelRow.trackMuted
+                    Accessible.onToggleAction: muteMouse.clicked(null)
+
                     ThemedToolTip {
                         visible: muteMouse.containsMouse
                         text: trackLabelRow.trackMuted ? qsTr("Unmute track") : qsTr("Mute track")
@@ -387,6 +431,58 @@ Item {
                     }
                 }
 
+                // Stacked per-channel waveforms. Offered only where there is something to
+                // split: mono and stereo-downmix material has one lane either way, and the
+                // channel count is known because an on-screen track has decoded a block.
+                IconGlyph {
+                    id: channelLanesToggle
+                    // trackMaxChannelCount has no notify of its own and the count only lands
+                    // once a block has decoded, so depend on `tracks` to re-evaluate then.
+                    readonly property int laneChannels: {
+                        const dep = root.tracks.length
+                        return EditorState.trackMaxChannelCount(index)
+                    }
+                    readonly property bool lanesOn:
+                        root.tracks[index].showChannelWaveforms === true
+
+                    visible: (root.tracks[index].type === "audio"
+                              || (root.tracks[index].type === "video"
+                                  && trackLabelRow.trackWaveform))
+                             && laneChannels > 1
+                    glyph: Theme.icons.split
+                    iconSize: 16
+                    iconColor: lanesOn ? Theme.primary : Theme.mutedForeground
+                    anchors.verticalCenter: parent.verticalCenter
+
+                    Behavior on iconColor {
+                        ColorAnimation { duration: Theme.durationFast; easing.type: Theme.easing }
+                    }
+
+                    ThemedToolTip {
+                        visible: channelLanesMouse.containsMouse
+                        text: channelLanesToggle.lanesOn
+                              ? qsTr("Show one combined waveform")
+                              : qsTr("Show each channel separately (%1)")
+                                    .arg(channelLanesToggle.laneChannels)
+                    }
+
+                    MouseArea {
+                        id: channelLanesMouse
+                        anchors.fill: parent
+                        anchors.margins: -4
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: {
+                            const on = !channelLanesToggle.lanesOn
+                            Haptics.toggle(on)
+                            EditorState.setTrackShowChannelWaveforms(index, on)
+                            if (on)
+                                root.growRowForChannelLanes(
+                                    index, channelLanesToggle.laneChannels)
+                        }
+                    }
+                }
+
                 IconGlyph {
                     visible: root.tracks[index].type === "video"
                              || root.tracks[index].type === "text"
@@ -401,6 +497,11 @@ Item {
                         visible: hideMouse.containsMouse
                         text: trackLabelRow.trackHidden ? qsTr("Show track") : qsTr("Hide track")
                     }
+
+                    Accessible.role: Accessible.CheckBox
+                    Accessible.name: trackLabelRow.trackHidden ? qsTr("Show track") : qsTr("Hide track")
+                    Accessible.checked: trackLabelRow.trackHidden
+                    Accessible.onToggleAction: hideMouse.clicked(null)
 
                     MouseArea {
                         id: hideMouse
@@ -666,7 +767,9 @@ Item {
             if (slot < 0)
                 return 0
             if (slot >= root.tracks.length) {
-                const last = root.tracks.length - 1
+                var last = root.tracks.length - 1
+                while (last > 0 && !root.trackOccupiesARow(last))
+                    last--
                 return root.trackRowTop(last) + root.trackHeight(last)
                        - root.contentY - 1
             }

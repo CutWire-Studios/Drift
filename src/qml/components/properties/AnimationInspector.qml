@@ -29,8 +29,8 @@ Item {
         qsTr("Slide left"), qsTr("Slide right"), qsTr("Zoom in"), qsTr("Zoom out"),
         qsTr("Pop"), qsTr("Spin CW"), qsTr("Spin CCW"), qsTr("Bounce")
     ]
-    readonly property var styleIds: ["linear", "smooth", "equalPower", "custom"]
-    readonly property var styleLabels: [qsTr("Linear"), qsTr("Smooth"), qsTr("Natural"), qsTr("Custom")]
+    readonly property var styleIds: ["linear", "smooth", "equalPower", "custom", "bezier"]
+    readonly property var styleLabels: [qsTr("Linear"), qsTr("Smooth"), qsTr("Natural"), qsTr("Custom"), qsTr("Bezier")]
 
     readonly property var animIn: {
         void clipDataRevision
@@ -66,8 +66,8 @@ Item {
 
     function setStyle(which, index) {
         const id = root.styleIds[index]
-        if (id === "custom") {
-            root.setAnim(which, { curve: "custom" })
+        if (id === "custom" || id === "bezier") {
+            root.setAnim(which, { curve: id })
             root.Window.window.openFadeCurve(EditorState.selectedTrack, EditorState.selectedClip)
             return
         }
@@ -167,7 +167,9 @@ Item {
             currentIndex: Math.max(0, root.styleIds.indexOf(root.clipData.fadeCurve || "smooth"))
             onActivated: (index) => {
                 const id = root.styleIds[index]
-                if (id === "custom") {
+                if (id === "custom" || id === "bezier") {
+                    EditorState.setClipFadeCurve(
+                                EditorState.selectedTrack, EditorState.selectedClip, id)
                     root.Window.window.openFadeCurve(
                                 EditorState.selectedTrack, EditorState.selectedClip)
                     return

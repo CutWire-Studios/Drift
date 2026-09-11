@@ -175,7 +175,7 @@ PlaybackEngine::PlaybackEngine(QObject *parent)
                                                      decodeBackendFromString(m_decodeMode));
     m_hwFallbackCount = ClipReader::hardwareFallbackCount();
 
-    m_compositor.setDropLateFrames(!isQualityMode());
+    m_compositor.setDropLateFrames(true);
     m_compositor.setAdaptiveQuality(isAutoQuality());
     m_compositor.setStats(&m_stats);
 
@@ -190,8 +190,6 @@ PlaybackEngine::PlaybackEngine(QObject *parent)
     connect(&m_playheadTimer, &QTimer::timeout, this, &PlaybackEngine::onPlayheadTick);
     connect(&m_compositeTimer, &QTimer::timeout, this, &PlaybackEngine::onCompositeTick);
     connect(&m_compositor, &CompositorService::frameReady, this, &PlaybackEngine::onFrameReady);
-    connect(&m_compositor, &CompositorService::compositeFinished, this,
-            &PlaybackEngine::onCompositeFinished);
 
     // The GPU compositor needs Qt Quick's global share context, which does not
     // exist until the first QQuickWindow initialises — after this constructor. So
@@ -245,9 +243,6 @@ void PlaybackEngine::onAudioSampleRateChanged()
     m_sampleRate = m_audio.sampleRate();
     m_mixer.resetClipAudioState();
     m_audioStreamGeneration.fetch_add(1, std::memory_order_release);
-    if (isQualityMode())
-        return;
-
     m_clock.reset(m_playheadUs, m_sampleRate);
     if (m_playing) {
         m_sinkPlayedUsOffset = m_audio.processedUSecs();
@@ -277,11 +272,9 @@ void PlaybackEngine::setPlayheadUs(drift::TimeUs us)
     m_lastRequestedFrameUs = -1;
     // reset() clears the running flag; resume the clock if we are still in play
     // so edits/seeks during playback don't freeze audio at one timeline spot.
-    // Quality mode has no clock — its loop picks the new playhead up on the next
-    // completed frame.
-    if (!m_playing)
+    if (!m_playing) {
         refreshFrame();
-    else if (!isQualityMode()) {
+    } else {
         m_sinkPlayedUsOffset = m_audio.processedUSecs();
         m_clock.start();
     }
@@ -329,35 +322,6 @@ void PlaybackEngine::setPreviewQuality(const QString &quality)
     refreshFrame();
 }
 
-QString PlaybackEngine::playbackMode() const
-{
-    return m_playbackMode;
-}
-
-void PlaybackEngine::setPlaybackMode(const QString &mode)
-{
-    const QString normalized = mode.toLower();
-    if (normalized != QStringLiteral("fast") && normalized != QStringLiteral("quality")) {
-        qWarning("PlaybackEngine: ignoring unknown playback mode '%s'", qPrintable(mode));
-        return;
-    }
-    if (m_playbackMode == normalized)
-        return;
-
-    m_playbackMode = normalized;
-    QSettings().setValue(QStringLiteral("preview/playbackMode"), m_playbackMode);
-    m_compositor.setDropLateFrames(!isQualityMode());
-    emit playbackModeChanged();
-
-    // The two modes drive the playhead from different sources and differ on
-    // whether the sink runs, so switching mid-playback restarts the transport
-    // from where it currently sits.
-    if (m_playing) {
-        pause();
-        play();
-    }
-}
-
 void PlaybackEngine::setPlaybackRate(double rate)
 {
     const auto match = std::find_if(kPlaybackRates.begin(), kPlaybackRates.end(),
@@ -383,6 +347,19 @@ void PlaybackEngine::setPlaybackRate(double rate)
 
     if (wasPlaying)
         play();
+}
+
+void PlaybackEngine::stepPlaybackRate(int direction)
+{
+    if (direction == 0)
+        return;
+
+    // m_playbackRate is only ever assigned from kPlaybackRates, so this always finds a match.
+    const auto current = std::find_if(kPlaybackRates.begin(), kPlaybackRates.end(),
+                                      [this](double candidate) { return qFuzzyCompare(candidate, m_playbackRate); });
+    const int index = static_cast<int>(std::distance(kPlaybackRates.begin(), current));
+    const int next = qBound(0, index + direction, static_cast<int>(kPlaybackRates.size()) - 1);
+    setPlaybackRate(kPlaybackRates[next]);
 }
 
 QString PlaybackEngine::decodeMode() const
@@ -533,18 +510,6 @@ void PlaybackEngine::play()
     // without touch input; no-op on desktop.
     drift::android::acquireKeepScreenOn();
 
-    if (isQualityMode()) {
-        // Quality mode is not realtime: the playhead steps one frame per
-        // completed composite, so there is no clock for audio to follow and the
-        // sink stays stopped. The loop re-arms itself from onCompositeFinished.
-        emit playingChanged();
-        m_qualityRequestUs = m_playheadUs;
-        m_compositor.requestComposite(m_playheadUs, playbackRenderOptions());
-        return;
-    }
-
-    // Only the realtime path makes sound — quality mode leaves the sink stopped — and taking
-    // focus for a silent render would interrupt whatever the user is listening to for nothing.
     requestAudioFocus();
     ensureAudioSink();
     m_sinkPlayedUsOffset = m_audio.processedUSecs();
@@ -567,7 +532,7 @@ void PlaybackEngine::play()
 
 void PlaybackEngine::syncDisplayCadence()
 {
-    if (!m_playing || isQualityMode())
+    if (!m_playing)
         return;
 
     const int fps = m_project ? qMax(1, m_project->fps()) : 30;
@@ -622,7 +587,7 @@ void PlaybackEngine::onFrameSwapped()
 void PlaybackEngine::onDisplayTick()
 {
     m_lastDisplayTickNs = PlaybackClock::nowNs();
-    if (!m_playing || !m_project || isQualityMode())
+    if (!m_playing || !m_project)
         return;
     requestFrameForPresentation();
 }
@@ -664,10 +629,7 @@ void PlaybackEngine::pause()
     m_playheadTimer.stop();
     m_compositeTimer.stop();
     m_clock.pause();
-    // In quality mode the frame loop owns the playhead; the clock never ran.
-    if (!isQualityMode())
-        m_playheadUs = m_clock.pausedAt();
-    m_qualityRequestUs = -1;
+    m_playheadUs = m_clock.pausedAt();
     m_mixer.resetClipAudioState();
     m_audioStreamGeneration.fetch_add(1, std::memory_order_release);
     m_audio.stop();
@@ -756,25 +718,6 @@ void PlaybackEngine::onCompositeTick()
     requestFrameForPresentation();
 }
 
-void PlaybackEngine::onCompositeFinished()
-{
-    if (!m_playing || !m_project || !isQualityMode())
-        return;
-
-    // Step forward only if the playhead is still where this frame was requested;
-    // a seek that arrived while it rendered is honoured instead of skipped past.
-    if (m_qualityRequestUs == m_playheadUs) {
-        m_playheadUs += frameStepUs();
-        emit playheadUsChanged(static_cast<quint64>(m_playheadUs));
-        checkEndOfTimeline(m_playheadUs);
-        if (m_playheadUs >= m_project->durationUs())
-            return;
-    }
-
-    m_qualityRequestUs = m_playheadUs;
-    m_compositor.requestComposite(m_playheadUs, playbackRenderOptions());
-}
-
 void PlaybackEngine::onFrameReady(const GpuFrameTexture &frame)
 {
     checkHardwareFallback();
@@ -812,15 +755,15 @@ FrameCompositor::RenderOptions PlaybackEngine::playbackRenderOptions() const
     }
     options.previewScale = qBound(kMinPreviewScale, fit * qualityFraction, 1.0);
 
-    // During fast playback, cap temporal history so time_echo cannot multiply
-    // decode work unboundedly. Paused, scrubbed and quality-mode frames keep the
-    // full history: those are exactly the cases where fidelity is the point.
-    options.maxTimeEchoHistoryFrames = m_playing && !isQualityMode() ? 12 : -1;
+    // During playback, cap temporal history so time_echo cannot multiply decode
+    // work unboundedly. Paused and scrubbed frames keep the full history: those
+    // are exactly the cases where fidelity is the point.
+    options.maxTimeEchoHistoryFrames = m_playing ? 12 : -1;
 
-    // Buffer decoded frames ahead of the playhead only while realtime playback is
-    // actually running: paused and quality-mode frames have no deadline to miss,
-    // and read-ahead during editing is thrown away by the next edit.
-    options.readAheadUs = m_playing && !isQualityMode() ? kReadAheadUs : 0;
+    // Buffer decoded frames ahead of the playhead only while playback is actually
+    // running: paused frames have no deadline to miss, and read-ahead during
+    // editing is thrown away by the next edit.
+    options.readAheadUs = m_playing ? kReadAheadUs : 0;
 
     // Hide the text clip being edited in place so the QML inline editor stands in
     // for it. Never applies while playing (no inline edit during playback).

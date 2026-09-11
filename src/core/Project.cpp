@@ -2,11 +2,13 @@
 
 #include "Clip.h"
 #include "SubtitleCue.h"
+#include "TimelineOps.h"
 
 #include <QCoreApplication>
 #include <QCryptographicHash>
 #include <QJsonArray>
 #include <QJsonDocument>
+#include <QSet>
 #include <QUuid>
 #include <QtMath>
 
@@ -69,8 +71,28 @@ QJsonObject maskToJson(const Mask &m)
     for (const QPointF &pt : m.points)
         points.append(QJsonArray{pt.x(), pt.y()});
 
+    QJsonObject maskKeyframesJson;
+    for (auto it = m.keyframes.constBegin(); it != m.keyframes.constEnd(); ++it) {
+        if (it->isEmpty())
+            continue;
+        maskKeyframesJson.insert(it.key(), keyframesToJson(it.value()));
+    }
+
+    // One entry per shape key: [timeUs, [[x, y], ...]]. An array rather than an object because
+    // the key is a time, and JSON object keys would force it through a string round trip.
+    QJsonArray pathKeys;
+    for (auto it = m.pathKeys.constBegin(); it != m.pathKeys.constEnd(); ++it) {
+        QJsonArray shape;
+        for (const QPointF &pt : it.value())
+            shape.append(QJsonArray{pt.x(), pt.y()});
+        pathKeys.append(QJsonArray{qint64(it.key()), shape});
+    }
+
     return QJsonObject{
         {QStringLiteral("shape"), maskShapeToString(m.shape)},
+        {QStringLiteral("op"), maskOpToString(m.op)},
+        {QStringLiteral("enabled"), m.enabled},
+        {QStringLiteral("name"), m.name},
         {QStringLiteral("x"), m.x},
         {QStringLiteral("y"), m.y},
         {QStringLiteral("w"), m.w},
@@ -79,8 +101,14 @@ QJsonObject maskToJson(const Mask &m)
         {QStringLiteral("feather"), m.feather},
         {QStringLiteral("invert"), m.invert},
         {QStringLiteral("points"), points},
-        {QStringLiteral("mattePath"), m.mattePath},
-        {QStringLiteral("matteSrcOffsetUs"), qint64(m.matteSrcOffsetUs)},
+        {QStringLiteral("mediaPath"), m.mediaPath},
+        {QStringLiteral("mediaFgrPath"), m.mediaFgrPath},
+        {QStringLiteral("mediaSrcOffsetUs"), qint64(m.mediaSrcOffsetUs)},
+        {QStringLiteral("mediaFit"), maskMediaFitToString(m.mediaFit)},
+        {QStringLiteral("mediaChannel"), maskMediaChannelToString(m.mediaChannel)},
+        {QStringLiteral("mediaLoop"), m.mediaLoop},
+        {QStringLiteral("keyframes"), maskKeyframesJson},
+        {QStringLiteral("pathKeys"), pathKeys},
     };
 }
 
@@ -89,7 +117,8 @@ Mask maskFromJson(const QJsonObject &o)
     Mask m;
     if (o.isEmpty())
         return m;
-    m.shape = maskShapeFromString(o.value(QStringLiteral("shape")).toString());
+    const QString shapeName = o.value(QStringLiteral("shape")).toString();
+    m.shape = maskShapeFromString(shapeName);
     m.x = o.value(QStringLiteral("x")).toDouble(m.x);
     m.y = o.value(QStringLiteral("y")).toDouble(m.y);
     m.w = o.value(QStringLiteral("w")).toDouble(m.w);
@@ -97,14 +126,56 @@ Mask maskFromJson(const QJsonObject &o)
     m.rotation = o.value(QStringLiteral("rotation")).toDouble(m.rotation);
     m.feather = o.value(QStringLiteral("feather")).toDouble(m.feather);
     m.invert = o.value(QStringLiteral("invert")).toBool(m.invert);
-    m.mattePath = o.value(QStringLiteral("mattePath")).toString(m.mattePath);
-    m.matteSrcOffsetUs =
-        TimeUs(o.value(QStringLiteral("matteSrcOffsetUs")).toInteger(m.matteSrcOffsetUs));
+    m.op = maskOpFromString(o.value(QStringLiteral("op")).toString());
+    m.enabled = o.value(QStringLiteral("enabled")).toBool(m.enabled);
+    m.name = o.value(QStringLiteral("name")).toString(m.name);
+    // Media was called "matte" before v5 and only ever backed a segmentation cutout, so the old
+    // keys map straight across.
+    m.mediaPath = o.value(QStringLiteral("mediaPath"))
+                      .toString(o.value(QStringLiteral("mattePath")).toString(m.mediaPath));
+    m.mediaFgrPath = o.value(QStringLiteral("mediaFgrPath"))
+                         .toString(o.value(QStringLiteral("matteFgrPath")).toString(m.mediaFgrPath));
+    m.mediaSrcOffsetUs = TimeUs(
+        o.value(QStringLiteral("mediaSrcOffsetUs"))
+            .toInteger(o.value(QStringLiteral("matteSrcOffsetUs")).toInteger(m.mediaSrcOffsetUs)));
+    m.mediaFit = maskMediaFitFromString(o.value(QStringLiteral("mediaFit")).toString());
+    m.mediaChannel = maskMediaChannelFromString(o.value(QStringLiteral("mediaChannel")).toString());
+    m.mediaLoop = o.value(QStringLiteral("mediaLoop")).toBool(m.mediaLoop);
     const QJsonArray points = o.value(QStringLiteral("points")).toArray();
     for (const QJsonValue &value : points) {
         const QJsonArray pair = value.toArray();
         if (pair.size() >= 2)
             m.points.append(QPointF(pair.at(0).toDouble(), pair.at(1).toDouble()));
+    }
+
+    const QJsonObject maskKeyframesJson = o.value(QStringLiteral("keyframes")).toObject();
+    for (auto it = maskKeyframesJson.constBegin(); it != maskKeyframesJson.constEnd(); ++it)
+        m.keyframes.insert(it.key(), keyframesFromJson(it.value().toObject()));
+
+    for (const QJsonValue &value : o.value(QStringLiteral("pathKeys")).toArray()) {
+        const QJsonArray entry = value.toArray();
+        if (entry.size() < 2)
+            continue;
+        QVector<QPointF> shape;
+        for (const QJsonValue &pointValue : entry.at(1).toArray()) {
+            const QJsonArray pair = pointValue.toArray();
+            if (pair.size() >= 2)
+                shape.append(QPointF(pair.at(0).toDouble(), pair.at(1).toDouble()));
+        }
+        m.pathKeys.insert(TimeUs(entry.at(0).toInteger()), shape);
+    }
+
+    // A pre-v5 "matte" had no geometry: every consumer bailed out before reading the rect and
+    // bound the coverage map over the whole frame. Media *is* placed by that rect, so the
+    // serialized defaults (w = h = 0.6) would suddenly shrink an old cutout to 60% and crop the
+    // subject. Full-frame is what it always rendered as.
+    if (shapeName == QStringLiteral("matte")) {
+        m.x = 0.5;
+        m.y = 0.5;
+        m.w = 1.0;
+        m.h = 1.0;
+        m.rotation = 0.0;
+        m.feather = 0.0;
     }
     return m;
 }
@@ -117,7 +188,7 @@ QJsonObject transitionToJson(const Transition &t)
 
     // "kind" holds the transition package id. The pre-shader enum serialized the same strings,
     // so projects written by older builds keep loading.
-    return QJsonObject{
+    QJsonObject o{
         {QStringLiteral("id"), t.id},
         {QStringLiteral("fromClipId"), t.fromClipId},
         {QStringLiteral("toClipId"), t.toClipId},
@@ -125,6 +196,16 @@ QJsonObject transitionToJson(const Transition &t)
         {QStringLiteral("parameters"), params},
         {QStringLiteral("durationUs"), static_cast<double>(t.durationUs)},
     };
+    // Written only when set, so a project with no eased transition round-trips byte-identically
+    // to what older builds produced.
+    if (t.easingCurve != FadeCurve::Linear) {
+        o.insert(QStringLiteral("easingCurve"), fadeCurveToString(t.easingCurve));
+        if ((t.easingCurve == FadeCurve::Custom && !t.easingShape.isEmpty())
+            || t.easingCurve == FadeCurve::Bezier) {
+            o.insert(QStringLiteral("easingShape"), t.easingShape.toJson());
+        }
+    }
+    return o;
 }
 
 Transition transitionFromJson(const QJsonObject &o)
@@ -142,6 +223,9 @@ Transition transitionFromJson(const QJsonObject &o)
     for (auto it = params.constBegin(); it != params.constEnd(); ++it)
         t.parameters.insert(it.key(), it.value().toVariant());
     t.durationUs = static_cast<TimeUs>(o.value(QStringLiteral("durationUs")).toDouble(t.durationUs));
+    if (o.contains(QStringLiteral("easingCurve")))
+        t.easingCurve = fadeCurveFromString(o.value(QStringLiteral("easingCurve")).toString());
+    t.easingShape = FadeShape::fromJson(o.value(QStringLiteral("easingShape")));
     return t;
 }
 
@@ -205,6 +289,8 @@ QJsonObject clipToJson(const Clip &clip)
         {QStringLiteral("suppressEmbeddedAudio"), clip.suppressEmbeddedAudio},
         {QStringLiteral("audioStreamIndex"), clip.audioStreamIndex},
         {QStringLiteral("type"), clipTypeToString(clip.type)},
+        {QStringLiteral("adjustmentKind"), adjustmentKindToString(clip.adjustmentKind)},
+        {QStringLiteral("linkedClipId"), clip.linkedClipId},
         {QStringLiteral("name"), clip.name},
         {QStringLiteral("textContent"), clip.textContent},
         {QStringLiteral("textStyle"), textStyleToJson(clip.textStyle)},
@@ -247,6 +333,7 @@ QJsonObject clipToJson(const Clip &clip)
         {QStringLiteral("srcInUs"), static_cast<double>(clip.srcIn)},
         {QStringLiteral("srcOutUs"), static_cast<double>(clip.srcOut)},
         {QStringLiteral("volume"), keyframesToJson(clip.volume)},
+        {QStringLiteral("pan"), clip.pan},
         {QStringLiteral("opacity"), keyframesToJson(clip.opacity)},
         {QStringLiteral("x"), keyframesToJson(clip.transformX)},
         {QStringLiteral("y"), keyframesToJson(clip.transformY)},
@@ -301,6 +388,9 @@ Clip clipFromJsonV2(const QJsonObject &object, int canvasW = 1920, int canvasH =
     clip.suppressEmbeddedAudio = object.value(QStringLiteral("suppressEmbeddedAudio")).toBool(false);
     clip.audioStreamIndex = object.value(QStringLiteral("audioStreamIndex")).toInt(0);
     clip.type = clipTypeFromString(object.value(QStringLiteral("type")).toString());
+    clip.adjustmentKind =
+        adjustmentKindFromString(object.value(QStringLiteral("adjustmentKind")).toString());
+    clip.linkedClipId = object.value(QStringLiteral("linkedClipId")).toString();
     clip.name = object.value(QStringLiteral("name")).toString();
     clip.textContent = object.value(QStringLiteral("textContent")).toString();
     clip.textStyle = textStyleFromJson(object.value(QStringLiteral("textStyle")).toObject());
@@ -345,7 +435,7 @@ Clip clipFromJsonV2(const QJsonObject &object, int canvasW = 1920, int canvasH =
     clip.fadeInUs = static_cast<TimeUs>(object.value(QStringLiteral("fadeInUs")).toDouble());
     clip.fadeOutUs = static_cast<TimeUs>(object.value(QStringLiteral("fadeOutUs")).toDouble());
     clip.fadeCurve = fadeCurveFromString(object.value(QStringLiteral("fadeCurve")).toString());
-    clip.fadeShape = FadeShape::fromJson(object.value(QStringLiteral("fadeShape")).toArray());
+    clip.fadeShape = FadeShape::fromJson(object.value(QStringLiteral("fadeShape")));
     clip.animIn = clipAnimationFromJson(object.value(QStringLiteral("animIn")).toObject());
     clip.animOut = clipAnimationFromJson(object.value(QStringLiteral("animOut")).toObject());
     clip.timelineStart = static_cast<TimeUs>(object.value(QStringLiteral("timelineStartUs")).toDouble());
@@ -357,6 +447,7 @@ Clip clipFromJsonV2(const QJsonObject &object, int canvasW = 1920, int canvasH =
     } else {
         clip.volume.setKeyframe(0, object.value(QStringLiteral("volume")).toDouble(1.0));
     }
+    clip.pan = object.value(QStringLiteral("pan")).toDouble(0.0);
     clip.opacity = keyframesFromJson(object.value(QStringLiteral("opacity")).toObject());
     clip.rotation = keyframesFromJson(object.value(QStringLiteral("rotation")).toObject());
     clip.effects = effectsFromJson(object.value(QStringLiteral("effects")).toArray());
@@ -482,9 +573,44 @@ void Project::resetToDefaultTimeline()
     m_tracks = {
         {.type = TrackType::Video},
     };
+    ensureTrackIds();
     m_id = QUuid::createUuid().toString(QUuid::WithoutBraces);
     m_createdAt = QDateTime::currentDateTimeUtc();
     m_modifiedAt = m_createdAt;
+}
+
+void Project::ensureTrackIds()
+{
+    QSet<QString> seen;
+    for (Track &track : m_tracks) {
+        // A duplicated id is as bad as a missing one — a copy/paste of a whole track would
+        // otherwise give two tracks the same parent handle.
+        if (track.id.isEmpty() || seen.contains(track.id))
+            track.id = QUuid::createUuid().toString(QUuid::WithoutBraces);
+        seen.insert(track.id);
+    }
+
+    for (Track &track : m_tracks) {
+        if (track.parentTrackId.isEmpty())
+            continue;
+        // An orphaned lane becomes a standalone adjustment track rather than vanishing: losing
+        // the parent must not silently delete the user's effects.
+        if (!seen.contains(track.parentTrackId) || track.parentTrackId == track.id) {
+            track.parentTrackId.clear();
+            track.adjustmentScope = AdjustmentScope::AllBelow;
+        }
+    }
+}
+
+int Project::trackIndexById(const QString &id) const
+{
+    if (id.isEmpty())
+        return -1;
+    for (int i = 0; i < m_tracks.size(); ++i) {
+        if (m_tracks.at(i).id == id)
+            return i;
+    }
+    return -1;
 }
 
 TimeUs Project::durationUs() const
@@ -520,6 +646,12 @@ void detachClip(Clip &clip)
     clip.volume.detachSharedData();
     clip.speedCurve.detachSharedData();
     clip.mask.points.detach();
+    clip.mask.pathKeys.detach();
+    for (auto it = clip.mask.pathKeys.begin(); it != clip.mask.pathKeys.end(); ++it)
+        it.value().detach();
+    clip.mask.keyframes.detach();
+    for (auto it = clip.mask.keyframes.begin(); it != clip.mask.keyframes.end(); ++it)
+        it.value().detachSharedData();
     clip.subtitleCues.detach();
     clip.effects.detach();
     for (Effect &effect : clip.effects)
@@ -628,6 +760,10 @@ QString Project::binFolderIdAt(int index) const
     return m_binFolderOrder.at(index);
 }
 
+namespace {
+
+} // namespace
+
 Project Project::fromJson(const QJsonObject &object, QString *errorOut)
 {
     const auto fail = [errorOut](const QString &message) {
@@ -697,13 +833,19 @@ Project Project::fromJson(const QJsonObject &object, QString *errorOut)
         for (const QJsonValue &value : tracksArray) {
             const QJsonObject trackObject = value.toObject();
             Track track;
+            track.id = trackObject.value(QStringLiteral("id")).toString();
             track.type = trackTypeFromString(
                 trackObject.value(QStringLiteral("type")).toString(QStringLiteral("video")));
+            track.adjustmentScope = adjustmentScopeFromString(
+                trackObject.value(QStringLiteral("adjustmentScope")).toString());
+            track.parentTrackId = trackObject.value(QStringLiteral("parentTrackId")).toString();
             track.name = trackObject.value(QStringLiteral("name")).toString();
             track.muted = trackObject.value(QStringLiteral("muted")).toBool(false);
             track.hidden = trackObject.value(QStringLiteral("hidden")).toBool(false);
             track.locked = trackObject.value(QStringLiteral("locked")).toBool(false);
             track.showWaveform = trackObject.value(QStringLiteral("showWaveform")).toBool(false);
+            track.showChannelWaveforms =
+                trackObject.value(QStringLiteral("showChannelWaveforms")).toBool(false);
             track.heightScale = qBound(
                 0.6, trackObject.value(QStringLiteral("heightScale")).toDouble(1.0), 4.0);
 
@@ -722,6 +864,21 @@ Project Project::fromJson(const QJsonObject &object, QString *errorOut)
 
             project.m_tracks.append(track);
         }
+    }
+
+    // Lanes address their parent by id, so ids must exist before the migration runs; the second
+    // pass covers the tracks the migration itself mints.
+    project.ensureTrackIds();
+    if (version < 4) {
+        liftAdjustmentClipsToOwnTracks(project);
+        // Same pass the editor runs after every edit, so load and runtime cannot drift apart on
+        // where a stack is allowed to live.
+        hoistClipEffectsToAdjustmentLanes(project);
+    }
+    if (version < 5) {
+        // Masks moved off the clip onto their own adjustment lane, so they became timed and
+        // combinable. Runs after the v4 pass, which is what mints the track ids a lane needs.
+        migrateClipMasksToAdjustmentLanes(project);
     }
 
     project.m_bookmarks.clear();
@@ -798,12 +955,16 @@ QJsonObject Project::toJson() const
             transitionsArray.append(transitionToJson(transition));
 
         tracksArray.append(QJsonObject{
+            {QStringLiteral("id"), track.id},
             {QStringLiteral("type"), trackTypeToString(track.type)},
+            {QStringLiteral("adjustmentScope"), adjustmentScopeToString(track.adjustmentScope)},
+            {QStringLiteral("parentTrackId"), track.parentTrackId},
             {QStringLiteral("name"), track.name},
             {QStringLiteral("muted"), track.muted},
             {QStringLiteral("hidden"), track.hidden},
             {QStringLiteral("locked"), track.locked},
             {QStringLiteral("showWaveform"), track.showWaveform},
+            {QStringLiteral("showChannelWaveforms"), track.showChannelWaveforms},
             {QStringLiteral("heightScale"), track.heightScale},
             {QStringLiteral("clips"), clipsArray},
             {QStringLiteral("transitions"), transitionsArray},

@@ -1,5 +1,7 @@
 #include "MediaThumbnail.h"
 
+#include "StillImage.h"
+
 #include "MediaProbe.h"
 
 #include <QDir>
@@ -285,6 +287,10 @@ QString MediaThumbnail::generate(const QString &sourcePath, const QString &kind)
         size.scale(kThumbnailMaxEdge, kThumbnailMaxEdge, Qt::KeepAspectRatio);
         reader.setScaledSize(size);
         QImage image = reader.read();
+        // Qt has no plugin for this format in this build (HEIC/AVIF always; webp/tiff when the
+        // kit was built without qtimageformats). Cost only lands on files Qt already refused.
+        if (image.isNull())
+            image = drift::decodeStillImage(absolutePath, kThumbnailMaxEdge, kThumbnailMaxEdge);
         if (image.isNull())
             return {};
         if (!image.save(outPath, "JPG", 85))

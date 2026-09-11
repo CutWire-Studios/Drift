@@ -62,6 +62,20 @@ set(DRIFT_ADDON_INDEX_URL "https://drift-addons.cutwire.org/v1/index"
 set(DRIFT_ADDON_CLIENT_TOKEN "79a388bba9301cacc81cc6eb0724c81e948e1b27c69aee1b"
     CACHE STRING "Client token sent to the addon service as X-Drift-Client")
 
+# --- Marketplace -----------------------------------------------------------
+# Stock catalog at market.cutwire.org. Empty URL or key disables the Market tab.
+# The HMAC key is not a user secret — it ships in the binary — and exists so requests can be
+# signed and a stable client id derived. See docs/marketplace/README.md.
+#
+#   cmake -B build -DDRIFT_MARKET_API_URL=https://market.example.com/api/v1 \
+#                  -DDRIFT_MARKET_CLIENT_KEY=...
+#
+#   cmake -B build -DDRIFT_MARKET_API_URL=      # no marketplace
+set(DRIFT_MARKET_API_URL "https://market.cutwire.org/api/v1"
+    CACHE STRING "Marketplace API base; empty disables the marketplace")
+set(DRIFT_MARKET_CLIENT_KEY "5409a0bebab4446f88e51d06024a5cf9a694ee141a6a1c6be7a49e45b6687438"
+    CACHE STRING "HMAC key for marketplace client identity and request signing")
+
 # --- Update check -----------------------------------------------------------
 # Where src/models/UpdateChecker looks for a newer release, once a day, to raise the badge in the
 # header. GitHub's releases/latest is the source of truth because the release tag already is: it
@@ -84,6 +98,43 @@ if(NOT _drift_qt_mm STREQUAL _drift_svg_mm)
     message(FATAL_ERROR
         "Qt SVG ${Qt6Svg_VERSION} does not match Qt ${Qt6_VERSION}. "
         "Install a qt6-svg package built for the same Qt as qt6-base, or toolbar icons will not render.")
+endif()
+
+# qtimageformats supplies the qwebp and qtiff QImageReader plugins. Nothing links against them,
+# so without this check a kit missing the module configures, builds and packages cleanly, and
+# then every .webp/.tiff still decodes to a null QImage on the device: no thumbnail, a 0x0 asset,
+# and a clip that renders as nothing. That is exactly how it shipped in the Android packages —
+# the CI jobs installed only qtmultimedia and qtshadertools.
+#
+# The module declares no findable component, but it does install imported plugin targets that
+# Qt6Gui pulls in via __qt_internal_include_plugin_packages(), so the targets are the one thing
+# that can be tested at configure time. QT_SKIP_AUTO_PLUGIN_INCLUSION turns that inclusion off,
+# in which case the targets are absent for a reason that has nothing to do with the module.
+#
+# Fatal on Android only: there the plugin can come from nowhere but the kit, so a missing one is
+# a broken package. A desktop build can still pick it up from the system Qt at runtime.
+if(NOT QT_SKIP_AUTO_PLUGIN_INCLUSION)
+    set(_drift_missing_imageformats "")
+    if(NOT TARGET Qt6::QWebpPlugin)
+        list(APPEND _drift_missing_imageformats "qwebp (.webp)")
+    endif()
+    if(NOT TARGET Qt6::QTiffPlugin)
+        list(APPEND _drift_missing_imageformats "qtiff (.tiff)")
+    endif()
+    if(_drift_missing_imageformats)
+        string(JOIN ", " _drift_missing_list ${_drift_missing_imageformats})
+        set(_drift_imageformats_msg
+            "Qt ImageFormats is missing: ${_drift_missing_list}.\n"
+            "Those stills will import as 0x0 and render as nothing.\n"
+            "  aqtinstall: add qtimageformats to the -m module list\n"
+            "  Arch:       pacman -S qt6-imageformats\n"
+            "  Debian:     apt install qt6-imageformats-dev")
+        if(ANDROID)
+            message(FATAL_ERROR ${_drift_imageformats_msg})
+        else()
+            message(WARNING ${_drift_imageformats_msg})
+        endif()
+    endif()
 endif()
 
 # --- Android prebuilt dependencies -------------------------------------------
@@ -117,8 +168,10 @@ if(ANDROID)
         "${DRIFT_PREBUILT}/lib/libx264.a"
         # libavcodec's only software AV1 decoder — the native "av1" decoder needs a hwaccel.
         "${DRIFT_PREBUILT}/lib/libdav1d.a"
-        # mediandk resolves the AMediaCodec_*/AMediaFormat_* the --enable-mediacodec decoders call.
-        m z mediandk)
+        # mediandk resolves the AMediaCodec_*/AMediaFormat_* the --enable-mediacodec decoders call,
+        # plus the AImageReader_*/AImage_* the zero-copy preview surface is built on. android is
+        # for AHardwareBuffer_*, which lives in libandroid rather than libmediandk.
+        m z mediandk android)
 
     add_library(drift_zstd INTERFACE IMPORTED)
     target_include_directories(drift_zstd INTERFACE "${DRIFT_PREBUILT}/include")
@@ -362,6 +415,16 @@ add_library(driftcore STATIC
     src/core/Project.cpp
     src/core/PrprojReader.h
     src/core/PrprojReader.cpp
+    src/core/MogrtReader.h
+    src/core/MogrtReader.cpp
+    src/core/KdenliveReader.h
+    src/core/KdenliveReader.cpp
+    src/core/ResolveReader.h
+    src/core/ResolveReader.cpp
+    src/core/EdlReader.h
+    src/core/EdlReader.cpp
+    src/core/OtioReader.h
+    src/core/OtioReader.cpp
     src/core/TimelineOps.h
     src/core/TimelineOps.cpp
     src/core/commands/ProjectCommands.h
@@ -425,6 +488,10 @@ add_library(driftengine STATIC
     src/engine/MediaProbe.cpp
     src/engine/MediaThumbnail.h
     src/engine/MediaThumbnail.cpp
+    src/engine/StillImage.h
+    src/engine/StillImage.cpp
+    src/engine/MediaCodecImagePool.h
+    src/engine/MediaCodecImagePool.cpp
     src/engine/FilmstripTileCache.h
     src/engine/FilmstripTileCache.cpp
     src/engine/MediaWaveform.h
@@ -437,6 +504,10 @@ add_library(driftengine STATIC
     src/engine/AudioOnsets.cpp
     src/engine/SceneDetect.h
     src/engine/SceneDetect.cpp
+    src/engine/FrameSheet.h
+    src/engine/FrameSheet.cpp
+    src/engine/WaveformSheet.h
+    src/engine/WaveformSheet.cpp
     src/engine/ObjectDetector.h
     src/engine/ObjectDetector.cpp
     src/engine/Exporter.h
@@ -503,6 +574,8 @@ add_library(driftengine STATIC
     src/engine/OrtRuntime.cpp
     src/engine/Sam2Segmenter.h
     src/engine/Sam2Segmenter.cpp
+    src/engine/RvmMatter.h
+    src/engine/RvmMatter.cpp
     src/engine/FaceLandmarker.h
     src/engine/FaceLandmarker.cpp
     src/engine/FaceTrack.h
@@ -574,6 +647,11 @@ qt_add_executable(drift
     src/models/AddonEndpoint.h
     src/models/AddonManager.h
     src/models/AddonManager.cpp
+    src/models/MarketEndpoint.h
+    src/models/MarketIdentity.h
+    src/models/MarketIdentity.cpp
+    src/models/MarketClient.h
+    src/models/MarketClient.cpp
     src/models/VersionCompare.h
     src/models/UpdateChecker.h
     src/models/UpdateChecker.cpp
@@ -612,25 +690,39 @@ qt_add_executable(drift
     src/preview/PreviewItem.cpp
 )
 
-# MCP is a desktop agent protocol (stdio/HTTP). Skip it on Android APK builds.
+# The MCP server itself ships everywhere. On Android it listens on loopback like it does on
+# desktop, and an agent reaches it through `adb forward` — which is what makes the phone build
+# drivable by tooling instead of by blind coordinate taps.
+target_sources(drift PRIVATE
+    src/mcp/McpSession.h
+    src/mcp/McpSession.cpp
+    src/mcp/McpCatalog.h
+    src/mcp/McpCatalog.cpp
+    src/mcp/McpProtocol.h
+    src/mcp/McpProtocol.cpp
+    src/mcp/McpHttp.h
+    src/mcp/McpHttp.cpp
+    src/mcp/McpDispatcher.h
+    src/mcp/McpDispatcher.cpp
+    src/mcp/McpDispatcherExtended.cpp
+    src/mcp/McpValidate.h
+    src/mcp/McpValidate.cpp
+    src/mcp/McpMarket.cpp
+    src/mcp/McpServer.h
+    src/mcp/McpServer.cpp
+    src/mcp/McpJson.h
+)
+
+# The stdio transport and the headless entry point stay desktop-only: both are process entry
+# points driven from a terminal, which an APK has no equivalent of.
 if(NOT ANDROID)
     target_sources(drift PRIVATE
-        src/mcp/McpSession.h
-        src/mcp/McpSession.cpp
-        src/mcp/McpCatalog.h
-        src/mcp/McpCatalog.cpp
-        src/mcp/McpProtocol.h
-        src/mcp/McpProtocol.cpp
-        src/mcp/McpHttp.h
-        src/mcp/McpHttp.cpp
-        src/mcp/McpDispatcher.h
-        src/mcp/McpDispatcher.cpp
-        src/mcp/McpDispatcherExtended.cpp
-        src/mcp/McpServer.h
-        src/mcp/McpServer.cpp
         src/mcp/McpStdio.h
         src/mcp/McpStdio.cpp
-        src/mcp/McpJson.h
+        src/mcp/McpStdioServer.h
+        src/mcp/McpStdioServer.cpp
+        src/HeadlessApp.h
+        src/HeadlessApp.cpp
     )
 endif()
 
@@ -688,6 +780,14 @@ qt_add_resources(drift "drift_diagnostics"
 )
 
 set_source_files_properties(src/qml/Theme.qml PROPERTIES QT_QML_SINGLETON_TYPE true)
+# Canvas preset catalog + the (template, quality) -> pixels arithmetic, shared by the desktop
+# layout dialog and the phone layout sheet so the two cannot drift apart again.
+set_source_files_properties(src/qml/LayoutPresets.qml PROPERTIES QT_QML_SINGLETON_TYPE true)
+# How a download job renders as words, shared by the desktop DownloadsWindow and the phone
+# AndroidDownloadsSheet so the two hosts of the same jobs cannot word them differently.
+set_source_files_properties(src/qml/DownloadFormat.qml PROPERTIES QT_QML_SINGLETON_TYPE true)
+# Import + reporting policy, needed by surfaces that have no AssetsPanel to borrow it from.
+set_source_files_properties(src/qml/MediaImport.qml PROPERTIES QT_QML_SINGLETON_TYPE true)
 # App-wide notification queue; the visual host is components/ToastHost.qml.
 set_source_files_properties(src/qml/Toasts.qml PROPERTIES QT_QML_SINGLETON_TYPE true)
 # In-flight lift-and-drop state for the phone asset sheet; the ghost is drawn by
@@ -702,19 +802,33 @@ qt_add_qml_module(drift
     URI Drift
     VERSION 1.0
     QML_FILES
+        src/qml/Shell.qml
+        src/qml/LayoutPresets.qml
+        src/qml/MediaImport.qml
         src/qml/Main.qml
+        src/qml/AndroidHomeNav.qml
+        src/qml/AndroidProjectsPage.qml
+        src/qml/AndroidMePage.qml
+        src/qml/AndroidMarket.qml
+        src/qml/AndroidShareTargetSheet.qml
+        src/qml/AndroidLinkImport.qml
+        src/qml/DownloadFormat.qml
+        src/qml/AndroidDownloadsSheet.qml
+        src/qml/components/NavRailButton.qml
         # Touch entry point, loaded instead of Main.qml on Android (see src/main.cpp).
+        src/qml/AndroidLayoutSheet.qml
         src/qml/AndroidMain.qml
+        src/qml/AndroidMoreToolsSheet.qml
+        src/qml/AndroidProjectSheet.qml
         src/qml/AndroidHome.qml
         src/qml/AndroidEditor.qml
         src/qml/AndroidPreview.qml
         src/qml/AndroidTimeline.qml
-        src/qml/AndroidLayoutPicker.qml
         src/qml/AndroidTopBar.qml
         src/qml/AndroidBottomRail.qml
         src/qml/AndroidBottomSheet.qml
         src/qml/AndroidAddMenu.qml
-        src/qml/AndroidEditActions.qml
+        src/qml/AndroidClipToolbar.qml
         src/qml/AndroidMediaPreview.qml
         src/qml/Theme.qml
         src/qml/Toasts.qml
@@ -724,12 +838,14 @@ qt_add_qml_module(drift
         src/qml/PreviewPanel.qml
         src/qml/components/preview/TransformOverlay.qml
         src/qml/components/preview/CropOverlay.qml
+        src/qml/components/preview/MaskOverlay.qml
         src/qml/components/preview/PreviewToolbar.qml
         src/qml/components/preview/AndroidTransformOverlay.qml
         src/qml/components/preview/AndroidCropOverlay.qml
         src/qml/SegmentationWindow.qml
         src/qml/MulticamWindow.qml
         src/qml/DenoiseWindow.qml
+        src/qml/DownloadsWindow.qml
         src/qml/SpeedCurveWindow.qml
         src/qml/FadeCurveWindow.qml
         src/qml/MediaPreviewWindow.qml
@@ -752,10 +868,12 @@ qt_add_qml_module(drift
         src/qml/components/assets/SubtitlesTab.qml
         src/qml/components/assets/StickersTab.qml
         src/qml/components/assets/ShapesTab.qml
+        src/qml/components/assets/MasksTab.qml
         src/qml/components/assets/SoundsTab.qml
-        src/qml/components/assets/SettingsTab.qml
         src/qml/components/assets/ShortcutsTab.qml
         src/qml/components/assets/MediaAssetsTab.qml
+        src/qml/components/assets/MarketConsentPanel.qml
+        src/qml/components/assets/MarketTab.qml
         src/qml/components/assets/BinBreadcrumb.qml
         src/qml/components/assets/AssetCategoryChips.qml
         src/qml/components/assets/EffectStacksSection.qml
@@ -806,10 +924,14 @@ qt_add_qml_module(drift
         src/qml/components/ProjectSetupDialog.qml
         src/qml/components/LayoutChooserDialog.qml
         src/qml/components/LanguageChooserDialog.qml
+        src/qml/components/AgentAccessControls.qml
         src/qml/components/AgentAccessDialog.qml
         src/qml/components/VideoSizeDialog.qml
         src/qml/components/VideoSizeControls.qml
         src/qml/components/ProjectPropertiesDialog.qml
+        src/qml/components/SettingsPane.qml
+        src/qml/components/SheetActionRow.qml
+        src/qml/components/SettingsDialog.qml
         src/qml/components/PasteAttributesDialog.qml
         src/qml/components/PackageProgressDialog.qml
         src/qml/components/ExportDialog.qml
@@ -836,7 +958,15 @@ qt_add_qml_module(drift
         src/qml/components/LabelledProgressRing.qml
     RESOURCES
         # UI chrome: interface font and Lucide SVG icons (always needed, including before addons).
-        resources/fonts/Inter.ttf
+        # Static instances rather than the variable Inter: on Windows Qt registers application
+        # fonts through GDI before converting them to a DirectWrite face, and GDI cannot express a
+        # variable instance, so the face Qt rasterised with stopped matching the glyph indices it
+        # had looked up (issues #115, #162). Regenerate with scripts/gen-ui-font.py.
+        resources/fonts/InterUI-Regular.ttf
+        resources/fonts/InterUI-Medium.ttf
+        resources/fonts/InterUI-SemiBold.ttf
+        resources/fonts/InterUI-Bold.ttf
+        resources/fonts/InterUI-Italic.ttf
         ${DRIFT_LUCIDE_ICONS}
 )
 
@@ -1045,6 +1175,8 @@ endif()
 target_compile_definitions(drift PRIVATE
     DRIFT_ADDON_INDEX_URL="${DRIFT_ADDON_INDEX_URL}"
     DRIFT_ADDON_CLIENT_TOKEN="${DRIFT_ADDON_CLIENT_TOKEN}"
+    DRIFT_MARKET_API_URL="${DRIFT_MARKET_API_URL}"
+    DRIFT_MARKET_CLIENT_KEY="${DRIFT_MARKET_CLIENT_KEY}"
     DRIFT_UPDATE_FEED_URL="${DRIFT_UPDATE_FEED_URL}"
     DRIFT_VERSION="${PROJECT_VERSION}"
 )

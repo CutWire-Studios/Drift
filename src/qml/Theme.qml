@@ -111,9 +111,15 @@ QtObject {
     }
 
 
-    property FontLoader _interLoader: FontLoader { source: "qrc:/qt/qml/Drift/resources/fonts/Inter.ttf" }
+    // One loader per file: the UI ships static Inter instances under the family "Inter UI",
+    // so the Essential Fonts addon's "Inter" cannot shadow them whichever registers last.
+    property FontLoader _interRegular: FontLoader { source: "qrc:/qt/qml/Drift/resources/fonts/InterUI-Regular.ttf" }
+    property FontLoader _interMedium: FontLoader { source: "qrc:/qt/qml/Drift/resources/fonts/InterUI-Medium.ttf" }
+    property FontLoader _interSemiBold: FontLoader { source: "qrc:/qt/qml/Drift/resources/fonts/InterUI-SemiBold.ttf" }
+    property FontLoader _interBold: FontLoader { source: "qrc:/qt/qml/Drift/resources/fonts/InterUI-Bold.ttf" }
+    property FontLoader _interItalic: FontLoader { source: "qrc:/qt/qml/Drift/resources/fonts/InterUI-Italic.ttf" }
 
-    readonly property string fontFamily: _interLoader.name || "sans-serif"
+    readonly property string fontFamily: _interRegular.name || "sans-serif"
     readonly property string monoFontFamily: "monospace"
 
     // --- Light/dark mode: follows the OS until the user picks a side -----------
@@ -248,6 +254,11 @@ QtObject {
     readonly property color clipAudio: "#8F5DBA"
     readonly property color clipGraphic: "#BA5D7A"
     readonly property color clipEffect: "#5d93ba"
+    // Adjustment layers, tinted by what they act on so a glance at the lane says which it is.
+    // The video one is clipEffect itself, which is the colour adjustments have always had.
+    readonly property color clipAdjustmentVideo: clipEffect
+    readonly property color clipAdjustmentAudio: "#9B6BC9"
+    readonly property color clipAdjustmentMask: "#BA9B5D"
     readonly property color transitionOverlap: "#9B5DE5"
     readonly property color waveformColor: "#ffffffb3" // rgba(255,255,255,0.7) — on dark clip chrome
     // Waveform drawn on panel surfaces (subtitle cue lane, etc.): follows light/dark FG.
@@ -263,6 +274,15 @@ QtObject {
     // thumbnail generation exists, use a fixed dark placeholder so the white filename
     // scrim stays legible in light mode too instead of following panelAccent.
     readonly property color clipVideoPlaceholder: "#2b2b2b"
+    // The band around a letterboxed preview canvas. Fixed dark in both themes: it frames
+    // photographic content, and following appBackground made it a white surround in light
+    // mode with the video floating in the middle of it.
+    //
+    // Mid-grey rather than the near-black it was: an empty canvas, a letterboxed clip and a
+    // dark frame all render close to black, so at #101010 there was nothing on screen saying
+    // where the canvas ended and the surround began. Still dark enough to frame video without
+    // competing with it.
+    readonly property color previewLetterbox: "#333333"
     // Style-pack thumbnails: most packs use white/light glyphs (and sit on video), so the
     // card canvas stays dark in both themes — panelSecondaryBg washes them out in light mode.
     readonly property color textStylePreviewBg: "#1c1c1c"
@@ -325,7 +345,37 @@ QtObject {
     // sized for a mouse cursor is roughly a third of a fingertip, which made destructive
     // controls (Remove sitting beside Disable in the effects list) genuinely risky.
     // 44/36/40 are Android's minimum comfortable targets, not arbitrary bumps.
-    readonly property bool touchUi: Qt.platform.os === "android"
+    // Two independent axes, deliberately not one boolean.
+    //
+    //   sizeClass  — how much room there is. Drives which shell runs and whether a layout
+    //                collapses to a single pane. A narrow window on a desktop is "compact".
+    //   touchInput — what is pointing at it. Drives hit-target growth. A touchscreen laptop
+    //                at 1400dp is touch but not compact; a 500dp mouse-driven window is the
+    //                reverse. Conflating them is why touchUi ended up meaning three things.
+    //
+    // liftDragRequired is derived rather than a third axis: a platform DragHandler cannot
+    // leave a bottom sheet, and the sheet is a consequence of being compact, not of being
+    // touched — so a mouse user in the compact shell needs the lift gesture too.
+    property real windowWidth: 0                        // pushed by the root window
+    property string sizeClassOverride: ""               // "compact" | "medium" | "expanded"
+    property string inputModeOverride: ""               // "touch" | "pointer"
+
+    readonly property string sizeClass: sizeClassOverride.length > 0 ? sizeClassOverride
+                                      : windowWidth <= 0 ? (Qt.platform.os === "android" ? "compact" : "expanded")
+                                      : windowWidth < 600 ? "compact"
+                                      : windowWidth < 840 ? "medium"
+                                      : "expanded"
+    readonly property bool compact: sizeClass === "compact"
+
+    readonly property bool pointerPrimary: inputModeOverride.length > 0
+                                         ? inputModeOverride === "pointer"
+                                         : !(Qt.platform.os === "android" || Qt.platform.os === "ios")
+    readonly property bool touchInput: !pointerPrimary
+    readonly property bool liftDragRequired: touchInput || compact
+
+    // Retained as an alias so the ~25 existing call sites keep compiling while they are
+    // migrated to touchInput / compact / liftDragRequired one surface at a time.
+    readonly property bool touchUi: touchInput
     readonly property real controlHeight: touchUi ? 44 : 30
     readonly property real controlHeightSm: touchUi ? 36 : 26   // chips, segmented toggles
     readonly property real iconButtonSize: touchUi ? 40 : 28
@@ -410,6 +460,15 @@ QtObject {
     readonly property real trackHeightText: touchUi ? 44 : 25
     readonly property real trackHeightSubtitle: touchUi ? 44 : 25
     readonly property real trackHeightShape: 50
+    // An adjustment carries no picture and no waveform — just the list of effects in it — so it
+    // needs a label's worth of room, not a video track's.
+    readonly property real trackHeightAdjustment: touchUi ? 40 : 28
+    // One nested adjustment lane, drawn as a strip across the top of its parent's row. Roughly
+    // 30% of a video track, which is where a track with a single lane lands — a percentage per
+    // lane instead would make a track with three of them nearly twice its natural height.
+    // 20px lanes came out at 12-14dp of usable strip on a phone once the row borders were
+    // taken off — under half the touch floor for the toggles that live in them.
+    readonly property real adjustmentLaneHeight: touchUi ? 24 : 20
     readonly property real trackGap: 6
     // Invisible hit area above tracks (no visible UI) for new-track drops when timeline has clips.
     readonly property real newTrackHitSlop: 24
@@ -446,13 +505,11 @@ QtObject {
     // Four destinations plus the centred Add button. Taller than the old scrolling
     // strip because the Add button is a 48dp target that has to sit inside it.
     readonly property real androidBottomRailHeight: 64
-    readonly property real androidEditActionsHeight: 56
+    // Contextual clip toolbar. Taller than the 56dp strip it replaces because its slots
+    // are glyph-over-caption, like the rail below it.
+    readonly property real androidClipToolbarHeight: 64
     readonly property real androidSplitterHeight: 32
-    readonly property real androidSheetHeightFraction: 0.55
-    // The Edit sheet carries a tab strip the browsers do not, and its content is
-    // rows of label-plus-slider rather than a scrollable grid — at 55% it opened on
-    // barely two properties.
-    readonly property real androidEditSheetHeightFraction: 0.64
+    readonly property real androidSheetHeightFraction: 0.50
     readonly property real androidSheetExpandedFraction: 0.92
     readonly property real androidSheetHeaderHeight: 56
     readonly property real androidSheetDismissFraction: 0.38
@@ -470,11 +527,30 @@ QtObject {
     // two toggles to sit a dead band apart without their hit areas reaching the type
     // caption on the left or the corner filmstrip toggle below it.
     readonly property real androidTrackLabelsWidth: 88
+    // The fixed centre line. Thinner than the desktop playhead: it is always on screen and
+    // always over content, so it marks the frame rather than announcing itself.
+    readonly property real androidPlayheadCentreWidth: 2
     readonly property real androidClipTrimHandleWidth: 20
     readonly property real androidClipEdgeMargin: 22
     readonly property real androidTrimHotspotExtra: 14
-    // Preview region cap so the timeline stays usable under a portrait canvas.
-    readonly property real androidPreviewMaxScreenFraction: 0.42
+    // Preview region held between a floor and a ceiling. The pane is sized from the project
+    // aspect, but only within this band: below the floor the canvas letterboxes inside the
+    // pane instead of the pane shrinking, so the transport row's y stays put between the
+    // editor, crop mode and a sheet being open.
+    readonly property real androidPreviewMaxScreenFraction: 0.50
+    readonly property real androidPreviewMinFraction: 0.34
+    // Compact-width layout margin. Deliberately NOT the shared pagePadding (12): raising that
+    // would move every desktop panel, and 16 is the Material compact figure.
+    readonly property real androidPagePadding: 16
+    // The 48dp floor and the 8dp separation rule, named so call sites state the intent rather
+    // than reaching for whichever spacing token happens to be the right number today.
+    readonly property real androidMinTouchTarget: 48
+    readonly property real androidTouchGap: 8
+    // Template card in the canvas sheet. A portrait card so a 9:16 swatch — what most phone
+    // projects are — fills it rather than sitting as a sliver in a landscape box.
+    readonly property real androidLayoutCardWidth: 88
+    readonly property real androidLayoutCardHeight: 112
+    readonly property real androidHomeTileHeight: 96
     readonly property real androidHomeRecentCardWidth: 140
     readonly property real androidHomeRecentCardHeight: 96
 
@@ -503,6 +579,7 @@ QtObject {
         repeat: "repeat",
         star: "star",
         layers: "layers",
+        split: "split",
         magnet: "magnet",
         linkTwo: "link-2",
         unlink: "unlink-2",
@@ -550,7 +627,11 @@ QtObject {
         moon: "moon",
         sun: "sun",
         grid: "grid-3x3",
+        // The media bin's grid toggle; grid-3x3 above still marks the layout
+        // pickers and the preview overlay's guide grid.
+        layoutGrid: "layout-grid",
         list: "list",
+        listTree: "list-tree",
         sortByName: "arrow-down-a-z",
         sortByKind: "tags",
         gripVertical: "grip-vertical",
@@ -575,6 +656,8 @@ QtObject {
         shuffle: "shuffle",
         info: "info",
         package: "package",
+        store: "store",
+        gem: "gem",
         fileText: "file-text",
 
         // Status / feedback

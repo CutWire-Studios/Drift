@@ -3,13 +3,24 @@ import QtQuick.Window
 import Drift 1.0
 import "components"
 
-// Unit gain curve editor for clip edge fades. X = progress through the fade,
-// Y = gain (silent at the bottom, full at the top). Shared by fade-in and fade-out.
+// Unit curve editor. X is always position through the effect; Y is what that position maps to.
+// Two modes share it: "fade" edits a clip's edge-fade gain (silent at the bottom, full at the
+// top) and "transition" edits a transition's progress curve. The geometry is identical, only the
+// session it drives differs, so the editor is parameterised rather than duplicated.
 Window {
     id: root
 
     property int trackIndex: -1
     property int clipIndex: -1
+    property string mode: "fade" // "fade" | "transition"
+    property string transitionId: ""
+    readonly property bool isTransition: root.mode === "transition"
+    // "points" = polyline through any number of knots; "bezier" = one cubic with pinned ends and
+    // two handles, i.e. CSS cubic-bezier(). Two different shapes, not two views of one.
+    property string shapeMode: "points"
+    readonly property bool isBezier: root.shapeMode === "bezier"
+    property var handles: [0.42, 0.0, 0.58, 1.0]
+    property int selectedHandle: -1
     property var points: []
     property int selectedPoint: -1
     property bool closingAfterApply: false
@@ -21,13 +32,124 @@ Window {
     title: qsTr("Custom curve")
     color: Theme.appBackground
 
+    // Which session the editor is driving. Everything below goes through these four.
+    function sessionPoints() {
+        return root.isTransition ? EditorState.transitionCurvePoints : EditorState.fadeCurvePoints
+    }
+
+    function sessionHandles() {
+        return root.isTransition ? EditorState.transitionCurveHandles : EditorState.fadeCurveHandles
+    }
+
+    function sessionMode() {
+        return root.isTransition ? EditorState.transitionCurveMode : EditorState.fadeCurveMode
+    }
+
+    function commitHandles(resync) {
+        const h = root.handles
+        if (root.isTransition)
+            EditorState.setTransitionCurveHandles(h[0], h[1], h[2], h[3])
+        else
+            EditorState.setFadeCurveHandles(h[0], h[1], h[2], h[3])
+        if (resync !== false) {
+            root.handles = root.sessionHandles()
+            curveCanvas.requestPaint()
+        }
+    }
+
+    // Switching mode is itself an edit: the session commits whichever shape is live, so moving to
+    // bezier pushes the current handles and moving back pushes the current points.
+    function setShapeMode(next) {
+        if (root.shapeMode === next)
+            return
+        root.shapeMode = next
+        root.selectedPoint = -1
+        root.selectedHandle = -1
+        if (next === "bezier")
+            root.commitHandles()
+        else
+            root.commit()
+        curveCanvas.requestPaint()
+    }
+
+    // Cubic with anchors pinned at (0,0) and (1,1); h is [c1x, c1y, c2x, c2y].
+    function bezierYAt(t) {
+        const h = root.handles
+        t = Math.max(0, Math.min(1, t))
+        let lo = 0, hi = 1
+        for (let i = 0; i < 24; ++i) {
+            const mid = (lo + hi) / 2
+            const mt = 1 - mid
+            const x = 3 * mt * mt * mid * h[0] + 3 * mt * mid * mid * h[2] + mid * mid * mid
+            if (x < t) lo = mid; else hi = mid
+        }
+        const u = (lo + hi) / 2
+        const mu = 1 - u
+        return 3 * mu * mu * u * h[1] + 3 * mu * u * u * h[3] + u * u * u
+    }
+
+    function sessionPreset(preset) {
+        if (root.isTransition)
+            EditorState.resetTransitionCurvePreset(preset)
+        else
+            EditorState.resetFadeCurvePreset(preset)
+    }
+
+    function sessionApply() {
+        if (root.isTransition)
+            EditorState.applyTransitionCurve()
+        else
+            EditorState.applyFadeCurve()
+    }
+
+    function sessionEnd() {
+        if (root.isTransition)
+            EditorState.endTransitionCurveSession()
+        else
+            EditorState.endFadeCurveSession()
+    }
+
+    function applyPreset(preset) {
+        root.sessionPreset(root.isBezier ? "bezier:" + preset : preset)
+        root.points = root.sessionPoints()
+        root.handles = root.sessionHandles()
+        root.selectedPoint = -1
+        root.selectedHandle = -1
+        root.ensureEditable()
+        curveCanvas.requestPaint()
+    }
+
+    function syncFromSession() {
+        root.points = root.sessionPoints()
+        root.handles = root.sessionHandles()
+        root.shapeMode = root.sessionMode()
+        root.selectedPoint = -1
+        root.selectedHandle = -1
+    }
+
     function openFor(track, clip) {
+        root.mode = "fade"
+        root.transitionId = ""
         root.trackIndex = track
         root.clipIndex = clip
-        root.selectedPoint = -1
         root.closingAfterApply = false
         EditorState.beginFadeCurveSession(track, clip)
-        root.points = EditorState.fadeCurvePoints
+        root.syncFromSession()
+        root.ensureEditable()
+        root.show()
+        root.raise()
+        root.requestActivate()
+        curveCanvas.requestPaint()
+    }
+
+    function openForTransition(track, transitionId) {
+        root.mode = "transition"
+        root.transitionId = transitionId
+        root.trackIndex = track
+        root.clipIndex = -1
+        root.closingAfterApply = false
+        EditorState.beginTransitionCurveSession(track, transitionId)
+        root.syncFromSession()
         root.ensureEditable()
         root.show()
         root.raise()
@@ -37,12 +159,20 @@ Window {
 
     onClosing: {
         if (!root.closingAfterApply)
-            EditorState.endFadeCurveSession()
+            root.sessionEnd()
     }
 
     Connections {
         target: EditorState
         function onFadeCurveApplied() {
+            if (root.isTransition)
+                return
+            root.closingAfterApply = true
+            root.close()
+        }
+        function onTransitionCurveApplied() {
+            if (!root.isTransition)
+                return
             root.closingAfterApply = true
             root.close()
         }
@@ -81,9 +211,12 @@ Window {
     // points back from C++ — only safe on drag release, or the knob will fight the
     // controller for the same values mid-drag.
     function commit(resync) {
-        EditorState.setFadeCurvePoints(root.points)
+        if (root.isTransition)
+            EditorState.setTransitionCurvePoints(root.points)
+        else
+            EditorState.setFadeCurvePoints(root.points)
         if (resync !== false) {
-            root.points = EditorState.fadeCurvePoints
+            root.points = root.sessionPoints()
             curveCanvas.requestPaint()
         }
     }
@@ -138,9 +271,13 @@ Window {
 
             Text {
                 anchors.verticalCenter: parent.verticalCenter
-                text: EditorState.fadeCurveClipName.length
-                      ? qsTr("Fade shape — %1").arg(EditorState.fadeCurveClipName)
-                      : qsTr("Fade shape")
+                text: root.isTransition
+                      ? (EditorState.transitionCurveName.length
+                         ? qsTr("Progress curve — %1").arg(EditorState.transitionCurveName)
+                         : qsTr("Progress curve"))
+                      : (EditorState.fadeCurveClipName.length
+                         ? qsTr("Fade shape — %1").arg(EditorState.fadeCurveClipName)
+                         : qsTr("Fade shape"))
                 color: Theme.panelForeground
                 font.family: Theme.fontFamily
                 font.pixelSize: Theme.fontSizeBase
@@ -155,39 +292,48 @@ Window {
                 anchors.verticalCenter: parent.verticalCenter
 
                 ThemedChip {
+                    text: qsTr("Points")
+                    selected: !root.isBezier
+                    onClicked: root.setShapeMode("points")
+                }
+                ThemedChip {
+                    text: qsTr("Bezier")
+                    selected: root.isBezier
+                    onClicked: root.setShapeMode("bezier")
+                }
+
+                Rectangle {
+                    width: Theme.borderWidth
+                    height: 18
+                    color: Theme.panelBorder
+                    anchors.verticalCenter: parent.verticalCenter
+                }
+
+                ThemedChip {
                     text: qsTr("Linear")
-                    onClicked: {
-                        EditorState.resetFadeCurvePreset("linear")
-                        root.points = EditorState.fadeCurvePoints
-                        root.selectedPoint = -1
-                        root.ensureEditable()
-                        curveCanvas.requestPaint()
-                    }
+                    onClicked: root.applyPreset("linear")
                 }
                 ThemedChip {
-                    text: qsTr("Smooth")
-                    onClicked: {
-                        EditorState.resetFadeCurvePreset("smooth")
-                        root.points = EditorState.fadeCurvePoints
-                        root.selectedPoint = -1
-                        curveCanvas.requestPaint()
-                    }
+                    text: root.isBezier ? qsTr("Ease") : qsTr("Smooth")
+                    onClicked: root.applyPreset(root.isBezier ? "ease" : "smooth")
                 }
                 ThemedChip {
-                    text: qsTr("Natural")
-                    onClicked: {
-                        EditorState.resetFadeCurvePreset("equalPower")
-                        root.points = EditorState.fadeCurvePoints
-                        root.selectedPoint = -1
-                        curveCanvas.requestPaint()
-                    }
+                    text: root.isBezier ? qsTr("Ease In") : qsTr("Natural")
+                    onClicked: root.applyPreset(root.isBezier ? "easeIn" : "equalPower")
+                }
+                ThemedChip {
+                    visible: root.isBezier
+                    text: qsTr("Ease Out")
+                    onClicked: root.applyPreset("easeOut")
                 }
             }
         }
 
         Text {
             width: parent.width
-            text: qsTr("Drag the middle points to shape the ramp (ends stay silent→full). Double-click to add a point; Delete removes the selection.")
+            text: root.isBezier
+                  ? qsTr("Drag the two handles to shape the cubic. The ends stay pinned, and handles are held inside the box so the curve cannot fold back on itself.")
+                  : qsTr("Drag the middle points to shape the ramp (ends stay silent→full). Double-click to add a point; Delete removes the selection.")
             color: Theme.mutedForeground
             font.family: Theme.fontFamily
             font.pixelSize: Theme.fontSizeXs
@@ -247,6 +393,40 @@ Window {
                     }
                     ctx.globalAlpha = 1
 
+                    if (root.isBezier) {
+                        const hd = root.handles
+                        const x1 = hd[0] * w, y1 = h * (1.0 - hd[1])
+                        const x2 = hd[2] * w, y2 = h * (1.0 - hd[3])
+
+                        const bfill = Theme.primary
+                        ctx.fillStyle = Qt.rgba(bfill.r, bfill.g, bfill.b, 0.18)
+                        ctx.beginPath()
+                        ctx.moveTo(0, h)
+                        ctx.lineTo(0, h)
+                        ctx.bezierCurveTo(x1, y1, x2, y2, w, 0)
+                        ctx.lineTo(w, h)
+                        ctx.closePath()
+                        ctx.fill()
+
+                        // Handle arms first, so the curve reads on top of them.
+                        ctx.strokeStyle = String(Theme.mutedForeground)
+                        ctx.lineWidth = 1
+                        ctx.beginPath()
+                        ctx.moveTo(0, h)
+                        ctx.lineTo(x1, y1)
+                        ctx.moveTo(w, 0)
+                        ctx.lineTo(x2, y2)
+                        ctx.stroke()
+
+                        ctx.strokeStyle = String(Theme.primary)
+                        ctx.lineWidth = 2
+                        ctx.beginPath()
+                        ctx.moveTo(0, h)
+                        ctx.bezierCurveTo(x1, y1, x2, y2, w, 0)
+                        ctx.stroke()
+                        return
+                    }
+
                     const pts = root.points
                     if (!pts || pts.length < 2)
                         return
@@ -279,6 +459,9 @@ Window {
                     target: root
                     function onPointsChanged() { curveCanvas.requestPaint() }
                     function onSelectedPointChanged() { curveCanvas.requestPaint() }
+                    function onHandlesChanged() { curveCanvas.requestPaint() }
+                    function onShapeModeChanged() { curveCanvas.requestPaint() }
+                    function onSelectedHandleChanged() { curveCanvas.requestPaint() }
                 }
             }
 
@@ -288,14 +471,20 @@ Window {
                 anchors.margins: plot.inset
                 z: 1
                 acceptedButtons: Qt.LeftButton
-                onDoubleClicked: (mouse) => root.addPointAt(mouse.x / plot.plotW)
-                onClicked: root.selectedPoint = -1
+                onDoubleClicked: (mouse) => {
+                    if (!root.isBezier)
+                        root.addPointAt(mouse.x / plot.plotW)
+                }
+                onClicked: {
+                    root.selectedPoint = -1
+                    root.selectedHandle = -1
+                }
             }
 
             // model is the count, not the array — replacing points mid-drag must not destroy the
             // knob that owns the active DragHandler (that was making manual edits jump/stick).
             Repeater {
-                model: root.points.length
+                model: root.isBezier ? 0 : root.points.length
 
                 delegate: Rectangle {
                     id: knob
@@ -355,6 +544,77 @@ Window {
                 }
             }
 
+            Repeater {
+                model: root.isBezier ? 2 : 0
+
+                delegate: Rectangle {
+                    id: handleKnob
+                    required property int index
+                    readonly property real hx: root.handles[index * 2]
+                    readonly property real hy: root.handles[index * 2 + 1]
+
+                    width: 14
+                    height: 14
+                    radius: 7
+                    z: 4
+                    color: root.selectedHandle === index ? Theme.primary : Theme.panelBackground
+                    border.width: 2
+                    border.color: Theme.primary
+                    x: plot.xForT(hx) - width / 2
+                    y: plot.yForG(hy) - height / 2
+
+                    property real baseX: 0
+                    property real baseY: 0
+
+                    TapHandler {
+                        onTapped: root.selectedHandle = handleKnob.index
+                    }
+
+                    DragHandler {
+                        target: null
+                        cursorShape: Qt.PointingHandCursor
+                        onActiveChanged: {
+                            if (active) {
+                                handleKnob.baseX = handleKnob.hx
+                                handleKnob.baseY = handleKnob.hy
+                                root.selectedHandle = handleKnob.index
+                            } else {
+                                root.commitHandles()
+                            }
+                        }
+                        onTranslationChanged: {
+                            if (!active)
+                                return
+                            // x stays inside [0,1] so the cubic remains single-valued; y likewise,
+                            // so a fade cannot exceed unity gain. C++ clamps again on receipt.
+                            const next = root.handles.slice()
+                            next[handleKnob.index * 2] = Math.max(0, Math.min(1,
+                                handleKnob.baseX + translation.x / plot.plotW))
+                            next[handleKnob.index * 2 + 1] = Math.max(0, Math.min(1,
+                                handleKnob.baseY - translation.y / plot.plotH))
+                            root.handles = next
+                            root.commitHandles(false)
+                        }
+                    }
+                }
+            }
+
+            // The pinned cubic anchors. Not draggable — shown so the handle arms have a visible
+            // origin rather than appearing to float.
+            Repeater {
+                model: root.isBezier ? 2 : 0
+                delegate: Rectangle {
+                    required property int index
+                    width: 9
+                    height: 9
+                    radius: 4.5
+                    z: 3
+                    color: Theme.primary
+                    x: plot.xForT(index === 0 ? 0.0 : 1.0) - width / 2
+                    y: plot.yForG(index === 0 ? 0.0 : 1.0) - height / 2
+                }
+            }
+
             Keys.onPressed: (event) => {
                 if (event.key === Qt.Key_Delete || event.key === Qt.Key_Backspace) {
                     root.removeSelected()
@@ -371,7 +631,7 @@ Window {
 
             ThemedButton {
                 text: qsTr("Apply")
-                onClicked: EditorState.applyFadeCurve()
+                onClicked: root.sessionApply()
             }
             ThemedButton {
                 text: qsTr("Cancel")

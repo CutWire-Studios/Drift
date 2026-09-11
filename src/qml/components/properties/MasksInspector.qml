@@ -1,6 +1,5 @@
 import QtQuick
 import QtQuick.Controls.Basic
-import QtQuick.Window
 import Drift
 import ".."
 
@@ -14,6 +13,15 @@ Item {
     }
     readonly property bool hasSelection: !!clipData && Object.keys(clipData).length > 0
     readonly property string clipKind: hasSelection ? (clipData.kind || "") : ""
+    // The tab is only offered for a mask adjustment (this is its payload) or a video-effects one
+    // (where a mask scopes where the chain lands). Masks are added from the assets panel and
+    // edited by selecting the mask clip, so a media clip never reaches here.
+    readonly property string maskShape: (clipData.mask && clipData.mask.shape) || "none"
+    // Media is a raster mask whose pixels are the coverage map (see core/Mask.h). The parametric
+    // geometry does place it, but a segmentation matte is full-frame by construction and nudging
+    // its rect only ever crops the subject, so the sliders stay hidden and invert plus removal
+    // are what is offered.
+    readonly property bool isMedia: maskShape === "media"
 
     height: contentCol.height
     implicitHeight: contentCol.height
@@ -32,106 +40,23 @@ Item {
         width: root.width
         spacing: Theme.spacingXl
 
-        EmptyState {
-            visible: root.clipKind === "audio" || root.clipKind === "text"
-                     || root.clipKind === "subtitle"
-            width: parent.width
-            compact: true
-            glyph: Theme.icons.mask
-            title: qsTr("Not available")
-            hint: qsTr("Cutouts apply to visual clips.")
-        }
-
-        // Segmentation produces a matte — a per-frame mask — so it belongs beside
-        // the parametric shapes rather than in a tab of its own. It needs a
-        // prompting surface, so it opens a window instead of running from here.
-        Column {
-            id: segmentSection
-            visible: root.clipKind === "video"
-            width: parent.width
-            spacing: Theme.spacingSm
-
-            // The model is an addon, but it can equally come from a bundled
-            // models/sam2 or DRIFT_SAM2_MODEL_DIR, so ask the engine rather than
-            // the addon registry. That answer is not a binding, hence the reset
-            // below when an addon of this kind appears.
-            property bool segmentReady: EditorState.segmentationAvailable()
-            property bool runtimeReady: Addons.runtimeAvailable()
-
-            Connections {
-                target: Addons
-                function onKindChanged(kind) {
-                    if (kind === "sam2-model")
-                        segmentSection.segmentReady = EditorState.segmentationAvailable()
-                    else if (kind === "onnxruntime")
-                        segmentSection.runtimeReady = Addons.runtimeAvailable()
-                }
-            }
-
-            Text {
-                width: parent.width
-                text: qsTr("Subject")
-                color: Theme.mutedForeground
-                font.family: Theme.fontFamily
-                font.pixelSize: Theme.fontSizeXs
-            }
-
-            ThemedButton {
-                visible: segmentSection.segmentReady && segmentSection.runtimeReady
-                width: parent.width
-                text: qsTr("Cut out subject…")
-                enabled: !EditorState.segmenting
-                onClicked: {
-                    const data = EditorState.selectedClipData
-                    root.Window.window.openSegmentation(
-                        EditorState.selectedTrack, EditorState.selectedClip,
-                        data.start !== undefined ? data.start : 0,
-                        data.duration !== undefined ? data.duration : 0)
-                }
-            }
-
-            ThemedButton {
-                visible: !segmentSection.segmentReady || !segmentSection.runtimeReady
-                width: parent.width
-                text: segmentSection.runtimeReady
-                      ? qsTr("Download cutout AI (about 190 MB)")
-                      : qsTr("Install AI engine first")
-                variant: "primary"
-                onClicked: root.Window.window.openAddonManager(
-                    segmentSection.runtimeReady ? "sam2-model" : "onnxruntime")
-            }
-        }
-
         // The tab used to open with a lone unlabelled combo box
         // and no explanation of what a mask does.
         Text {
             visible: maskShapeBox.visible
             width: parent.width
-            text: qsTr("Cutout shape")
+            text: qsTr("Shape")
             color: Theme.mutedForeground
             font.family: Theme.fontFamily
             font.pixelSize: Theme.fontSizeXs
-        }
-
-        Text {
-            visible: maskShapeBox.visible
-            width: parent.width
-            wrapMode: Text.WordWrap
-            text: qsTr("Coming soon — shape masks are still under development.")
-            color: Theme.mutedForeground
-            font.family: Theme.fontFamily
-            font.pixelSize: Theme.fontSizeXs
-            opacity: 0.8
         }
 
         ThemedComboBox {
             id: maskShapeBox
-            visible: root.clipKind !== "audio" && root.clipKind !== "text"
-                     && root.clipKind !== "subtitle"
+            // Hidden for a media mask: "media" is not one of the shapes below, so currentIndex
+            // would clamp to 0 and the control would read "None" next to an applied cutout.
+            visible: !root.isMedia
             width: parent.width
-            // Shape masks are unfinished — keep the control in the layout so
-            // the Cutouts tab still shows what is coming, but do not let it open.
-            enabled: false
             model: ["none", "rectangle", "ellipse", "star", "heart", "bars", "freeform"]
             // Human labels — the raw ids were shown to the user.
             readonly property var labels: ({
@@ -144,7 +69,6 @@ Item {
                 "freeform": qsTr("Freeform")
             })
             displayText: labels[model[currentIndex]] || model[currentIndex]
-            tooltip: qsTr("Shape masks are still under development")
             currentIndex: Math.max(0, model.indexOf((root.clipData.mask && root.clipData.mask.shape) || "none"))
             onActivated: {
                 const mask = Object.assign({}, root.clipData.mask || {})
@@ -153,12 +77,46 @@ Item {
             }
         }
 
+        // How this mask folds into the ones stacked before it on the same track. Only meaningful
+        // once there is more than one: the compositor ignores the first enabled entry's op and
+        // lets it seed the coverage, because a lone Subtract or Intersect would blank the layer.
+        Column {
+            visible: root.maskShape !== "none"
+            width: parent.width
+            spacing: Theme.spacingSm
+
+            Text {
+                width: parent.width
+                text: qsTr("Combine")
+                color: Theme.mutedForeground
+                font.family: Theme.fontFamily
+                font.pixelSize: Theme.fontSizeXs
+            }
+
+            ThemedComboBox {
+                id: maskOpBox
+                width: parent.width
+                model: ["add", "subtract", "intersect"]
+                readonly property var labels: ({
+                    "add": qsTr("Add"),
+                    "subtract": qsTr("Subtract"),
+                    "intersect": qsTr("Intersect")
+                })
+                displayText: labels[model[currentIndex]] || model[currentIndex]
+                currentIndex: Math.max(0, model.indexOf((root.clipData.mask && root.clipData.mask.op) || "add"))
+                onActivated: {
+                    const mask = Object.assign({}, root.clipData.mask || {})
+                    mask.op = model[currentIndex]
+                    EditorState.setClipMask(EditorState.selectedTrack, EditorState.selectedClip, mask)
+                }
+            }
+        }
+
         // Clearing a mask previously required knowing to reselect
         // "none" in the combo above.
         ThemedButton {
-            visible: maskShapeBox.visible
-                     && ((root.clipData.mask && root.clipData.mask.shape) || "none") !== "none"
-            text: qsTr("Remove cutout")
+            visible: root.maskShape !== "none"
+            text: root.isMedia ? qsTr("Remove cutout layer") : qsTr("Remove mask")
             variant: "destructive"
             glyph: Theme.icons.trash
             onClicked: {
@@ -168,63 +126,55 @@ Item {
             }
         }
 
+        // Mask scalars animate through the same generic keyframe API as a clip's transform, so
+        // they get the same row: diamond, prev/next key navigation, easing chips. The prop ids are
+        // "mask.<key>"; redirectToKeyframeHost is what walks from the selected media clip to the
+        // adjustment actually carrying the mask.
         Repeater {
+            // `shapes` is what the rasterizer actually reads for each shape (see
+            // MaskApplier::maskPath): Bars derives both bands from `h` alone and ignores the
+            // rest, and a Freeform's vertices *are* the shape, so its rect and rotation do
+            // nothing. Offering those sliders anyway just invites dragging something inert.
             model: [
-                { key: "x", label: qsTr("Center X"), min: 0, max: 1 },
-                { key: "y", label: qsTr("Center Y"), min: 0, max: 1 },
-                { key: "w", label: qsTr("Width"), min: 0.05, max: 1 },
-                { key: "h", label: qsTr("Height"), min: 0.05, max: 1 },
-                { key: "rotation", label: qsTr("Rotation"), min: -180, max: 180 },
-                { key: "feather", label: qsTr("Feather"), min: 0, max: 64 }
+                { key: "mask.x", label: qsTr("Center X"), def: 0.5, decimals: 3, min: 0, max: 1,
+                  shapes: ["rectangle", "ellipse", "star", "heart"] },
+                { key: "mask.y", label: qsTr("Center Y"), def: 0.5, decimals: 3, min: 0, max: 1,
+                  shapes: ["rectangle", "ellipse", "star", "heart"] },
+                { key: "mask.w", label: qsTr("Width"), def: 0.6, decimals: 3, min: 0.05, max: 1,
+                  shapes: ["rectangle", "ellipse", "star", "heart"] },
+                { key: "mask.h", label: qsTr("Height"), def: 0.6, decimals: 3, min: 0.05, max: 1,
+                  shapes: ["rectangle", "ellipse", "star", "heart", "bars"] },
+                { key: "mask.rotation", label: qsTr("Rotation"), def: 0, decimals: 1,
+                  min: -180, max: 180, unit: "°",
+                  shapes: ["rectangle", "ellipse", "star", "heart"] },
+                // Feather blurs the finished coverage map, so it applies to every shape.
+                { key: "mask.feather", label: qsTr("Feather"), def: 0, decimals: 0,
+                  min: 0, max: 64, unit: "px",
+                  shapes: ["rectangle", "ellipse", "star", "heart", "bars", "freeform"] }
             ]
-            delegate: Column {
+            delegate: PropertyKeyframeRow {
                 required property var modelData
                 width: parent.width
-                spacing: 4
-                visible: root.clipKind !== "audio" && root.clipKind !== "text"
-                     && root.clipKind !== "subtitle"
-                         && !!root.clipData.mask && root.clipData.mask.shape !== "none"
-                         && (modelData.key !== "rotation" || root.clipData.mask.shape !== "bars")
-
-                Text {
-                    text: modelData.label
-                    color: Theme.mutedForeground
-                    font.family: Theme.fontFamily
-                    font.pixelSize: Theme.fontSizeXs
+                visible: !root.isMedia
+                         && modelData.shapes.indexOf(root.maskShape) >= 0
+                propDef: modelData
+                // Key times come back on the timeline already, keyed by the bare scalar name.
+                keyframeList: {
+                    const keys = root.clipData.mask && root.clipData.mask.keyframes
+                    const entry = keys && keys[modelData.key.substring(5)]
+                    return (entry && entry.points) || []
                 }
-                ThemedSlider {
-                    id: maskParamSlider
-                    label: modelData.label
-                    width: parent.width
-                    from: modelData.min
-                    to: modelData.max
-                    stepSize: modelData.key === "feather" ? 1 : 0.01
-                    Binding on value {
-                        when: !maskParamSlider.pressed
-                        value: (root.clipData.mask && root.clipData.mask[modelData.key]) || 0
-                    }
-                    onMoved: {
-                        const mask = Object.assign({}, root.clipData.mask || {})
-                        mask[modelData.key] = value
-                        EditorState.previewSetClipMask(
-                            EditorState.selectedTrack, EditorState.selectedClip, mask)
-                    }
-                    onPressedChanged: {
-                        if (pressed)
-                            EditorState.beginPreviewDrag(qsTr("Mask changed"))
-                        else
-                            EditorState.commitPreviewDrag()
-                    }
-                }
+                useSlider: true
+                sliderFrom: modelData.min
+                sliderTo: modelData.max
+                unit: modelData.unit || ""
             }
         }
 
         Row {
             width: parent.width
             spacing: 8
-            visible: root.clipKind !== "audio" && root.clipKind !== "text"
-                     && root.clipKind !== "subtitle"
-                     && !!root.clipData.mask && root.clipData.mask.shape !== "none"
+            visible: root.maskShape !== "none"
             Text {
                 text: qsTr("Invert")
                 color: Theme.mutedForeground

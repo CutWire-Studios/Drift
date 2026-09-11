@@ -18,7 +18,11 @@ Item {
     }
     readonly property bool hasSelection: !!clipData && Object.keys(clipData).length > 0
     readonly property string clipKind: hasSelection ? (clipData.kind || "") : ""
+    // An audio-effects adjustment is the stack: it is not itself an audio clip, but the tab is
+    // only ever offered for one whose linked clip has audio, so there is nothing to gate on.
     readonly property bool hasAudio: clipKind === "audio" || clipKind === "video"
+                                     || (clipKind === "adjustment"
+                                         && clipData.adjustmentKind === "audioEffects")
     readonly property var selectedAudioEffects: EditorState.selectedClipAudioEffects
     readonly property var audioFxCatalog: hasAudio ? EditorState.audioEffectCatalog() : []
 

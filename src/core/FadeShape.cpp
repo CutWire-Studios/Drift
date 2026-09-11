@@ -1,5 +1,7 @@
 #include "FadeShape.h"
 
+#include "Bezier.h"
+
 #include <QJsonObject>
 
 #include <algorithm>
@@ -18,6 +20,8 @@ QString fadeCurveToString(FadeCurve curve)
         return QStringLiteral("equalPower");
     case FadeCurve::Custom:
         return QStringLiteral("custom");
+    case FadeCurve::Bezier:
+        return QStringLiteral("bezier");
     }
     return QStringLiteral("smooth");
 }
@@ -30,6 +34,8 @@ FadeCurve fadeCurveFromString(const QString &curve)
         return FadeCurve::EqualPower;
     if (curve == QStringLiteral("custom"))
         return FadeCurve::Custom;
+    if (curve == QStringLiteral("bezier"))
+        return FadeCurve::Bezier;
     return FadeCurve::Smooth;
 }
 
@@ -77,6 +83,30 @@ void FadeShape::setPoints(QList<QPointF> points)
 void FadeShape::clear()
 {
     m_points.clear();
+    m_c1 = QPointF(0.42, 0.0);
+    m_c2 = QPointF(0.58, 1.0);
+    m_hasHandles = false;
+}
+
+void FadeShape::setHandles(QPointF c1, QPointF c2)
+{
+    // x is clamped to [0,1] and kept ordered so the cubic stays single-valued: bezierParameterForX
+    // bisects on x and would not converge on a curve that folds back. y is clamped too, because a
+    // handle above 1 would push a fade's gain past unity and a transition's progress past its end.
+    c1.setX(qBound(0.0, c1.x(), 1.0));
+    c2.setX(qBound(0.0, c2.x(), 1.0));
+    c1.setY(qBound(0.0, c1.y(), 1.0));
+    c2.setY(qBound(0.0, c2.y(), 1.0));
+    m_c1 = c1;
+    m_c2 = c2;
+    m_hasHandles = true;
+}
+
+double FadeShape::bezierAt(double t) const
+{
+    t = qBound(0.0, t, 1.0);
+    const double u = bezierParameterForX(0.0, m_c1.x(), m_c2.x(), 1.0, t);
+    return qBound(0.0, cubicBezier(0.0, m_c1.y(), m_c2.y(), 1.0, u), 1.0);
 }
 
 double FadeShape::gainAt(double t) const
@@ -104,7 +134,9 @@ double FadeShape::gainAt(double t) const
     return m_points.last().y();
 }
 
-QJsonArray FadeShape::toJson() const
+// A shape with no handles still writes the bare point array every older build expects. Only a
+// shape that has been given handles is promoted to an object, and then only for that one field.
+QJsonValue FadeShape::toJson() const
 {
     QJsonArray array;
     for (const QPointF &p : m_points) {
@@ -113,20 +145,57 @@ QJsonArray FadeShape::toJson() const
             {QStringLiteral("g"), p.y()},
         });
     }
-    return array;
+    if (!m_hasHandles)
+        return array;
+
+    return QJsonObject{
+        {QStringLiteral("points"), array},
+        {QStringLiteral("c1"), QJsonArray{m_c1.x(), m_c1.y()}},
+        {QStringLiteral("c2"), QJsonArray{m_c2.x(), m_c2.y()}},
+    };
 }
 
-FadeShape FadeShape::fromJson(const QJsonArray &array)
+FadeShape FadeShape::fromJson(const QJsonValue &value)
 {
+    const QJsonObject obj = value.toObject();
+    const QJsonArray array = value.isArray() ? value.toArray()
+                                             : obj.value(QStringLiteral("points")).toArray();
+
     QList<QPointF> points;
     points.reserve(array.size());
-    for (const QJsonValue &value : array) {
-        const QJsonObject obj = value.toObject();
-        points.append(QPointF(obj.value(QStringLiteral("t")).toDouble(),
-                              obj.value(QStringLiteral("g")).toDouble()));
+    for (const QJsonValue &entry : array) {
+        const QJsonObject p = entry.toObject();
+        points.append(QPointF(p.value(QStringLiteral("t")).toDouble(),
+                              p.value(QStringLiteral("g")).toDouble()));
     }
     FadeShape shape;
     shape.setPoints(points);
+
+    if (!value.isArray() && obj.contains(QStringLiteral("c1"))) {
+        const QJsonArray c1 = obj.value(QStringLiteral("c1")).toArray();
+        const QJsonArray c2 = obj.value(QStringLiteral("c2")).toArray();
+        if (c1.size() == 2 && c2.size() == 2) {
+            shape.setHandles(QPointF(c1.at(0).toDouble(), c1.at(1).toDouble()),
+                             QPointF(c2.at(0).toDouble(), c2.at(1).toDouble()));
+        }
+    }
+    return shape;
+}
+
+// The CSS keywords, which is what people reach for and what the presets in the editor offer.
+FadeShape FadeShape::bezierPreset(const QString &name)
+{
+    FadeShape shape = FadeShape::linearPreset();
+    if (name == QStringLiteral("linear"))
+        shape.setHandles(QPointF(1.0 / 3.0, 1.0 / 3.0), QPointF(2.0 / 3.0, 2.0 / 3.0));
+    else if (name == QStringLiteral("easeIn"))
+        shape.setHandles(QPointF(0.42, 0.0), QPointF(1.0, 1.0));
+    else if (name == QStringLiteral("easeOut"))
+        shape.setHandles(QPointF(0.0, 0.0), QPointF(0.58, 1.0));
+    else if (name == QStringLiteral("ease"))
+        shape.setHandles(QPointF(0.25, 0.1), QPointF(0.25, 1.0));
+    else // easeInOut
+        shape.setHandles(QPointF(0.42, 0.0), QPointF(0.58, 1.0));
     return shape;
 }
 

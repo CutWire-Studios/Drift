@@ -311,8 +311,4 @@ void CompositorService::onWorkerFrameReady(const GpuFrameTexture &frame, drift::
 
     // Keep the pipe full: a slot just freed up, so start whatever is newest and pending.
     dispatchPending();
-
-    // Last: a listener may start the next composite from here, and that request
-    // must not be overwritten by the catch-up dispatch above.
-    emit compositeFinished();
 }

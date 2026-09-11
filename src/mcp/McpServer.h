@@ -30,6 +30,11 @@ public:
     QString cursorSnippet() const;
     QString claudeCommand() const;
 
+    // Headless overrides, applied by the next start(). The editor sets neither and keeps
+    // the defaults: a freshly generated token on port 4731.
+    void setToken(const QString &token) { m_fixedToken = token; }
+    void setPort(quint16 port) { m_requestedPort = port; }
+
 public slots:
     bool start();
     void stop();
@@ -48,8 +53,13 @@ private:
     QThread *m_thread = nullptr;
     McpHttp *m_http = nullptr;
     QString m_token;
+    QString m_fixedToken;
     QString m_error;
     quint16 m_port = 0;
+    quint16 m_requestedPort = 4731;
+    // stop() must not delete a session file this server never wrote: a headless instance
+    // serving only stdio would otherwise unregister a GUI editor running alongside it.
+    bool m_wroteSessionFile = false;
     bool m_running = false;
 };
 
