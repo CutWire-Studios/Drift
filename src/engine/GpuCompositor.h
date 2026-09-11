@@ -17,20 +17,28 @@
 #include <QVariant>
 
 #include <cstdint>
+#include <memory>
 
 namespace drift {
 struct GpuEffectDefinition;
 }
+namespace drift::skia {
+class VectorPainter;
+}
 
 // A single textured layer: the clip's source pixels plus everything needed to
 // place it on the canvas. Prefer `video` when set (hardware frames stay on the
-// GPU until the importer); otherwise `source` is CPU RGBA (still image, or a
-// QPainter raster of a text/shape clip). The GPU does the scaling, rotation,
-// masking and blending.
+// GPU until the importer); then `vector`, drawn by Skia straight into the layer
+// target; otherwise `source` is CPU RGBA (still image, or a QPainter raster of a
+// text/shape clip). The GPU does the scaling, rotation, masking and blending.
 struct GpuLayer
 {
-    QImage source; // null => fully transparent layer (unless video is set)
+    QImage source; // null => fully transparent layer (unless video or vector is set)
     PreviewVideoFrame video;
+    // Skia-drawn content (text, shapes, Lottie). Declared whether or not Skia is compiled in so
+    // the struct has one layout; without DRIFT_WITH_SKIA nothing ever sets it. When Skia cannot
+    // draw it, `source` is the fallback if the builder filled one.
+    std::shared_ptr<const drift::skia::VectorPainter> vector;
     QList<drift::Effect> effects;
     QList<drift::Mask> masks;
     // Index-parallel with `masks`: this frame's decoded coverage map for each Media entry, null
@@ -51,7 +59,7 @@ struct GpuLayer
     QList<drift::FaceAnchors> faceSlots;
     bool valid = false;
 
-    bool hasPixels() const { return video.isValid() || !source.isNull(); }
+    bool hasPixels() const { return video.isValid() || vector != nullptr || !source.isNull(); }
 };
 
 // One drawable in the scene: either a plain layer, or a transition that mixes

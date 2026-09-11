@@ -1,4 +1,7 @@
 #include "GpuCompositor.h"
+#ifdef DRIFT_WITH_SKIA
+#include "SkiaRuntime.h"
+#endif
 
 #include "EffectCatalog.h"
 #include "FaceModelTransform.h"
@@ -283,7 +286,14 @@ GlTarget buildLayerTarget(GlRuntime &rt, QOpenGLExtraFunctions *gl, const GpuLay
     if (layer.video.isValid()) {
         target = promoteVideoFrameToTarget(rt, gl, layer.video);
     } else {
-        target = promoteImageToTargetCached(rt, gl, layer.source, layer.source.size());
+#ifdef DRIFT_WITH_SKIA
+        if (layer.vector) {
+            if (auto *sk = drift::skia::SkiaRuntime::acquire(rt))
+                target = sk->paintToTarget(rt, gl, *layer.vector);
+        }
+#endif
+        if (!target.isValid() && !layer.source.isNull())
+            target = promoteImageToTargetCached(rt, gl, layer.source, layer.source.size());
     }
     if (!target.isValid())
         return {};

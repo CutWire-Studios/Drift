@@ -26,7 +26,9 @@ public:
     // Returns nullptr when Skia could not attach to this context (the caller falls back).
     static SkiaRuntime *acquire(gl::GlRuntime &rt);
 
-    // Paint into a fresh pooled, straight-alpha target of painter.size(). Invalid target on failure.
+    // Paint into a fresh pooled, straight-alpha target of painter.size() that the caller owns and
+    // may mutate. A non-zero cacheKey() is served from a GPU-resident LRU after the first paint, so
+    // static text and shapes cost one blit per frame rather than a redraw. Invalid target on failure.
     gl::GlTarget paintToTarget(gl::GlRuntime &rt, QOpenGLExtraFunctions *gl,
                                const VectorPainter &painter);
 
@@ -40,7 +42,9 @@ public:
 
     struct Stats
     {
-        quint64 paints = 0;
+        quint64 paints = 0;     // painter.paint() calls
+        quint64 cacheHits = 0;  // paintToTarget served from the LRU
+        quint64 cacheMisses = 0;// non-zero cacheKey() that had to be painted
     };
     Stats stats() const;
 

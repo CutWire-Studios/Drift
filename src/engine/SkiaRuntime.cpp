@@ -5,6 +5,9 @@
 #include <QOpenGLExtraFunctions>
 #include <QOpenGLShaderProgram>
 
+#include <list>
+#include <unordered_map>
+
 #include "include/core/SkCanvas.h"
 #include "include/core/SkColorSpace.h"
 #include "include/core/SkImageInfo.h"
@@ -58,10 +61,70 @@ SkSurfaceProps surfaceProps()
 
 } // namespace
 
+// Painted layers kept on the GPU by cacheKey(). Bounded by count and by bytes because a handful
+// of 4K text layers would otherwise pin more VRAM than the whole framebuffer pool. Entries hold
+// pooled targets and hand them back to GlRuntime on eviction.
+struct VectorCache
+{
+    struct Entry
+    {
+        quint64 key = 0;
+        gl::GlTarget target;
+    };
+    std::list<Entry> lru; // front = most recent
+    std::unordered_map<quint64, std::list<Entry>::iterator> index;
+    size_t bytes = 0;
+#ifdef Q_OS_ANDROID
+    static constexpr size_t kMaxEntries = 12;
+    static constexpr size_t kMaxBytes = 24ull * 1024 * 1024;
+#else
+    static constexpr size_t kMaxEntries = 32;
+    static constexpr size_t kMaxBytes = 96ull * 1024 * 1024;
+#endif
+
+    static size_t sizeOf(const gl::GlTarget &t) { return size_t(t.width) * size_t(t.height) * 4; }
+
+    gl::GlTarget *find(quint64 key)
+    {
+        auto it = index.find(key);
+        if (it == index.end())
+            return nullptr;
+        lru.splice(lru.begin(), lru, it->second);
+        return &lru.front().target;
+    }
+
+    void insert(gl::GlRuntime &rt, quint64 key, gl::GlTarget &&target)
+    {
+        bytes += sizeOf(target);
+        lru.push_front({key, std::move(target)});
+        index[key] = lru.begin();
+        while (lru.size() > kMaxEntries || bytes > kMaxBytes) {
+            Entry &victim = lru.back();
+            bytes -= sizeOf(victim.target);
+            index.erase(victim.key);
+            rt.releaseTarget(std::move(victim.target));
+            lru.pop_back();
+        }
+    }
+
+    void clear(gl::GlRuntime *rt)
+    {
+        for (Entry &e : lru) {
+            if (rt)
+                rt->releaseTarget(std::move(e.target));
+        }
+        lru.clear();
+        index.clear();
+        bytes = 0;
+    }
+};
+
 struct SkiaRuntime::Impl
 {
     sk_sp<GrDirectContext> ctx;
     Stats stats;
+    VectorCache cache;
+    gl::GlRuntime *rt = nullptr;
 };
 
 SkiaRuntime::SkiaRuntime(std::unique_ptr<Impl> impl) : d(std::move(impl)) {}
@@ -114,6 +177,7 @@ SkiaRuntime *SkiaRuntime::acquire(gl::GlRuntime &rt)
 
     auto impl = std::make_unique<Impl>();
     impl->ctx = std::move(ctx);
+    impl->rt = &rt;
     rt.skia = std::shared_ptr<SkiaRuntime>(new SkiaRuntime(std::move(impl)));
     return rt.skia.get();
 }
@@ -150,6 +214,19 @@ gl::GlTarget SkiaRuntime::paintToTarget(gl::GlRuntime &rt, QOpenGLExtraFunctions
     const QSize size = painter.size();
     if (size.isEmpty() || !d->ctx)
         return {};
+
+    const quint64 key = painter.cacheKey();
+    if (key != 0) {
+        if (gl::GlTarget *cached = d->cache.find(key)) {
+            ++d->stats.cacheHits;
+            gl::GlTarget copy = rt.acquireTarget(cached->width, cached->height);
+            if (copy.isValid() && gl::blitTextureToTarget(rt, gl, cached->texture(), copy))
+                return copy;
+            rt.releaseTarget(std::move(copy));
+            return {};
+        }
+        ++d->stats.cacheMisses;
+    }
 
     // Qt and our own passes changed GL state behind Skia's back since the last draw.
     d->ctx->resetContext();
@@ -205,17 +282,33 @@ gl::GlTarget SkiaRuntime::paintToTarget(gl::GlRuntime &rt, QOpenGLExtraFunctions
     gl->glBindTexture(GL_TEXTURE_2D, 0);
     program->release();
     target.fbo->release();
-    return target;
+
+    if (key == 0)
+        return target;
+
+    // The cache keeps this target; the caller gets a copy it is free to mutate and release.
+    gl::GlTarget copy = rt.acquireTarget(target.width, target.height);
+    const bool copied = copy.isValid() && gl::blitTextureToTarget(rt, gl, target.texture(), copy);
+    d->cache.insert(rt, key, std::move(target));
+    if (!copied) {
+        rt.releaseTarget(std::move(copy));
+        return {};
+    }
+    return copy;
 }
 
 void SkiaRuntime::releaseCaches()
 {
+    d->cache.clear(d->rt);
     if (d->ctx)
         d->ctx->freeGpuResources();
 }
 
 void SkiaRuntime::shutdown()
 {
+    // Cached targets go back to the pool GlRuntime is about to clear, while the context is
+    // still current; then Skia's own GL objects.
+    d->cache.clear(d->rt);
     if (!d->ctx)
         return;
     d->ctx->flushAndSubmit(GrSyncCpu::kYes);
