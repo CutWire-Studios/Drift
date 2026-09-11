@@ -1,0 +1,29 @@
+{
+  "format": 1,
+  "id": "shrink",
+  "label": "Shrink",
+  "category": "word",
+  "sampleText": "Shrink",
+  "slots": [
+    "out"
+  ],
+  "order": 330,
+  "defaults": {
+    "unit": "word",
+    "stagger": 0.06,
+    "duration": 0.35,
+    "ease": "easeIn"
+  },
+  "params": [],
+  "animators": [
+    {
+      "selectors": [
+        "stagger"
+      ],
+      "props": {
+        "scale": 0,
+        "opacity": 0
+      }
+    }
+  ]
+}

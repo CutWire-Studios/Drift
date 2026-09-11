@@ -24,6 +24,15 @@ Item {
     // the document.
     property var slotRows: []
     property var report: ({})
+    // The slot editor takes plain values keyed by id; a slot with no override stays absent.
+    readonly property var slotValues: {
+        const out = {}
+        for (let i = 0; i < root.slotRows.length; ++i) {
+            if (root.slotRows[i].value !== undefined)
+                out[root.slotRows[i].id] = root.slotRows[i].value
+        }
+        return out
+    }
 
     function refresh() {
         if (!root.hasVector) {
@@ -193,83 +202,13 @@ Item {
                 text: qsTr("Template inputs the animation declares. Overrides are per clip.")
             }
 
-            Repeater {
-                model: root.slotRows
-                delegate: Column {
-                    required property var modelData
-                    width: parent.width
-                    spacing: 4
-
-                    Row {
-                        width: parent.width
-                        spacing: 6
-                        Text {
-                            text: modelData.id + " · " + modelData.type
-                            color: Theme.mutedForeground
-                            font.pixelSize: Theme.fontSizeXs
-                            font.family: Theme.fontFamily
-                            anchors.verticalCenter: parent.verticalCenter
-                        }
-                        ThemedChip {
-                            visible: modelData.value !== undefined
-                            text: qsTr("Reset")
-                            onClicked: root.setSlot(modelData.id, null)
-                        }
-                    }
-
-                    ColorSwatchField {
-                        visible: modelData.type === "color"
-                        hex: modelData.value !== undefined ? modelData.value : "#ffffffff"
-                        tooltip: qsTr("Slot colour")
-                        onEdited: value => root.setSlot(modelData.id, value)
-                    }
-                    ThemedNumberField {
-                        visible: modelData.type === "scalar"
-                        width: parent.width
-                        decimals: 2
-                        step: 0.1
-                        value: modelData.value !== undefined ? Number(modelData.value) : 0
-                        onEdited: v => root.setSlot(modelData.id, v)
-                    }
-                    ThemedTextField {
-                        visible: modelData.type === "text"
-                        width: parent.width
-                        text: modelData.value !== undefined ? modelData.value : ""
-                        placeholderText: qsTr("Text for this slot")
-                        onEditingFinished: root.setSlot(modelData.id, text)
-                    }
-                    Row {
-                        visible: modelData.type === "vec2"
-                        width: parent.width
-                        spacing: 8
-                        ThemedNumberField {
-                            id: vecX
-                            width: (parent.width - parent.spacing) / 2
-                            decimals: 2
-                            step: 1
-                            value: modelData.value !== undefined ? Number(modelData.value[0]) : 0
-                            onEdited: v => root.setSlot(modelData.id, [v, vecY.value])
-                        }
-                        ThemedNumberField {
-                            id: vecY
-                            width: (parent.width - parent.spacing) / 2
-                            decimals: 2
-                            step: 1
-                            value: modelData.value !== undefined ? Number(modelData.value[1]) : 0
-                            onEdited: v => root.setSlot(modelData.id, [vecX.value, v])
-                        }
-                    }
-                    ThemedButton {
-                        visible: modelData.type === "image"
-                        text: modelData.value !== undefined ? qsTr("Change image…") : qsTr("Choose image…")
-                        onClicked: {
-                            const url = FileDialogs.openFile(qsTr("Slot Image"),
-                                                             [qsTr("Images (*.png *.jpg *.jpeg *.webp)")])
-                            if (url != "")
-                                root.setSlot(modelData.id, url.toString().replace(/^file:\/\//, ""))
-                        }
-                    }
-                }
+            TextParamSlots {
+                width: parent.width
+                specs: root.slotRows
+                values: root.slotValues
+                showReset: true
+                onChanged: (id, value) => root.setSlot(id, value)
+                onReset: id => root.setSlot(id, null)
             }
         }
 

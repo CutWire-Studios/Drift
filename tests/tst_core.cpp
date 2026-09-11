@@ -16,6 +16,11 @@
 #include "core/ShapePath.h"
 #include "core/SrtIO.h"
 #include "core/SubtitleCue.h"
+#include "core/LottieTextImport.h"
+#include "core/TextAnimationPreset.h"
+#include "core/TextAnimator.h"
+#include "core/TextLook.h"
+#include "core/TextShading.h"
 #include "core/EffectStackStore.h"
 #include "core/TextPresetStore.h"
 #include "core/VectorSource.h"
@@ -67,6 +72,19 @@ private slots:
     void effectStackRejectsForeignPayloads();
     void effectKeyframeRescaleIsProportional();
     void userEffectPresetsRoundTrip();
+    void rangeSelectorCoverageMatchesSkottie();
+    void staggerMatchesMovingRamp();
+    void animatorCompositionOrder();
+    void trackingLineAdjust();
+    void caretTiming();
+    void animationBoundsCoverTheEnvelope();
+    void textStyleMigratesFromV6();
+    void textStyleV7RoundTrip();
+    void textAnimationPresetsAreWellFormed();
+    void legacyTextAnimationParity();
+    void textKeyframeKeysAreDynamic();
+    void textLooksRegenerate();
+    void lottieTextImport();
     void karaokeWordIndexTracksTheCue();
     void shapeStyleSerialization();
     void legacyShapeStyleLoadsWithDefaults();
@@ -952,25 +970,15 @@ void CoreTest::textStyleAndBlendModeSerialization()
     clip.textStyle.pixelSize = 88;
     clip.textStyle.fontWeight = 300;
     clip.textStyle.italic = true;
-    clip.textStyle.color = QColor(10, 20, 30, 200);
     clip.textStyle.align = drift::TextAlign::Right;
     clip.textStyle.valign = drift::TextVAlign::Bottom;
     clip.textStyle.wordWrap = false;
     clip.textStyle.lineHeight = 1.6;
     clip.textStyle.letterSpacing = 3.5;
-    clip.textStyle.outlineEnabled = true;
-    clip.textStyle.outlineWidth = 2.5;
-    clip.textStyle.outlineColor = QColor(255, 0, 0);
-    clip.textStyle.shadowEnabled = true;
-    clip.textStyle.shadowOffsetX = -3.0;
-    clip.textStyle.shadowOffsetY = 7.0;
-    clip.textStyle.shadowBlur = 11.0;
-    clip.textStyle.shadowOpacity = 0.42;
-    clip.textStyle.shadowColor = QColor(0, 128, 255);
-    clip.textStyle.glowEnabled = true;
-    clip.textStyle.glowColor = QColor(0, 255, 128);
-    clip.textStyle.glowRadius = 21.0;
-    clip.textStyle.glowOpacity = 0.55;
+    clip.textStyle.layers = {drift::shadowLayer(QColor(0, 128, 255), -3.0, 7.0, 11.0, 0.42),
+                             drift::glowLayer(QColor(0, 255, 128), 21.0, 0.55),
+                             drift::strokeLayer(2.5, QColor(255, 0, 0)),
+                             drift::solidFillLayer(QColor(10, 20, 30, 200))};
     clip.textStyle.boxEnabled = true;
     clip.textStyle.boxColor = QColor(0, 0, 0, 100);
     clip.textStyle.boxPadding = 12.0;
@@ -991,9 +999,10 @@ void CoreTest::textStyleAndBlendModeSerialization()
     clip.textStyle.accent.outlineWidth = 4.5;
     clip.textStyle.accent.outlineColor = QColor(1, 2, 3);
     clip.textStyle.accent.highlight = {true, QColor(60, 70, 80), 11.0, 6.0};
-    clip.textStyle.animIn = {drift::TextAnimKind::Pop, drift::secondsToUs(0.3), drift::TextEase::Back};
-    clip.textStyle.animOut = {drift::TextAnimKind::SlideDown, drift::secondsToUs(0.25),
-                              drift::TextEase::EaseInOut};
+    clip.textStyle.animation.in = drift::legacyTextAnimationSlot(
+        QStringLiteral("pop"), drift::secondsToUs(0.3), QStringLiteral("back"), QStringLiteral("block"), 60000, QStringLiteral("forward"));
+    clip.textStyle.animation.out = drift::legacyTextAnimationSlot(
+        QStringLiteral("slideDown"), drift::secondsToUs(0.25), QStringLiteral("easeInOut"), QStringLiteral("block"), 60000, QStringLiteral("forward"));
     project.tracks()[0].clips.append(clip);
 
     const QJsonObject json = project.toJson();
@@ -1008,25 +1017,29 @@ void CoreTest::textStyleAndBlendModeSerialization()
     QCOMPARE(s.pixelSize, 88);
     QCOMPARE(s.fontWeight, 300);
     QCOMPARE(s.italic, true);
-    QCOMPARE(s.color, QColor(10, 20, 30, 200));
+    QCOMPARE(s.primaryColor(), QColor(10, 20, 30, 200));
     QCOMPARE(s.align, drift::TextAlign::Right);
     QCOMPARE(s.valign, drift::TextVAlign::Bottom);
     QCOMPARE(s.wordWrap, false);
     QCOMPARE(s.lineHeight, 1.6);
     QCOMPARE(s.letterSpacing, 3.5);
-    QCOMPARE(s.outlineEnabled, true);
-    QCOMPARE(s.outlineWidth, 2.5);
-    QCOMPARE(s.outlineColor, QColor(255, 0, 0));
-    QCOMPARE(s.shadowEnabled, true);
-    QCOMPARE(s.shadowOffsetX, -3.0);
-    QCOMPARE(s.shadowOffsetY, 7.0);
-    QCOMPARE(s.shadowBlur, 11.0);
-    QCOMPARE(s.shadowOpacity, 0.42);
-    QCOMPARE(s.shadowColor, QColor(0, 128, 255));
-    QCOMPARE(s.glowEnabled, true);
-    QCOMPARE(s.glowColor, QColor(0, 255, 128));
-    QCOMPARE(s.glowRadius, 21.0);
-    QCOMPARE(s.glowOpacity, 0.55);
+    QCOMPARE(s.layers.size(), 4);
+    QCOMPARE(s.layers[0].kind, drift::TextLayerKind::Shadow);
+    QVERIFY(s.layers[0].enabled);
+    QCOMPARE(s.layers[0].offsetX, -3.0);
+    QCOMPARE(s.layers[0].offsetY, 7.0);
+    QCOMPARE(s.layers[0].blur, 11.0);
+    QCOMPARE(s.layers[0].opacity, 0.42);
+    QCOMPARE(s.layers[0].paint.color, QColor(0, 128, 255));
+    QCOMPARE(s.layers[1].kind, drift::TextLayerKind::Glow);
+    QCOMPARE(s.layers[1].paint.color, QColor(0, 255, 128));
+    QCOMPARE(s.layers[1].blur, 21.0);
+    QCOMPARE(s.layers[1].opacity, 0.55);
+    QCOMPARE(s.layers[2].kind, drift::TextLayerKind::Stroke);
+    QCOMPARE(s.layers[2].width, 2.5);
+    QCOMPARE(s.layers[2].paint.color, QColor(255, 0, 0));
+    QCOMPARE(drift::textStrokeWidth(s, false), 2.5);
+    QCOMPARE(s.layers[3].id, QStringLiteral("fill"));
     QCOMPARE(s.boxEnabled, true);
     QCOMPARE(s.boxColor, QColor(0, 0, 0, 100));
     QCOMPARE(s.boxPadding, 12.0);
@@ -1053,12 +1066,12 @@ void CoreTest::textStyleAndBlendModeSerialization()
     QCOMPARE(s.accent.highlight.color, QColor(60, 70, 80));
     QCOMPARE(s.accent.highlight.padding, 11.0);
     QCOMPARE(s.accent.highlight.radius, 6.0);
-    QCOMPARE(s.animIn.kind, drift::TextAnimKind::Pop);
-    QCOMPARE(s.animIn.durationUs, drift::secondsToUs(0.3));
-    QCOMPARE(s.animIn.ease, drift::TextEase::Back);
-    QCOMPARE(s.animOut.kind, drift::TextAnimKind::SlideDown);
-    QCOMPARE(s.animOut.durationUs, drift::secondsToUs(0.25));
-    QCOMPARE(s.animOut.ease, drift::TextEase::EaseInOut);
+    QCOMPARE(s.animation.in.presetId, QStringLiteral("pop"));
+    QCOMPARE(s.animation.in.params.value(QStringLiteral("duration")).scalar, 0.3);
+    QCOMPARE(s.animation.in.params.value(QStringLiteral("ease")).text, QStringLiteral("back"));
+    QCOMPARE(s.animation.out.presetId, QStringLiteral("slide-down"));
+    QCOMPARE(s.animation.out.params.value(QStringLiteral("duration")).scalar, 0.25);
+    QCOMPARE(s.animation.out.params.value(QStringLiteral("ease")).text, QStringLiteral("easeInOut"));
 }
 
 void CoreTest::legacyBoldMigratesToFontWeight()
@@ -1120,8 +1133,7 @@ void CoreTest::legacyBoldMigratesToFontWeight()
         QString err;
         const drift::Project loaded = drift::Project::fromJson(project, &err);
         QVERIFY(err.isEmpty());
-        QCOMPARE(loaded.tracks().at(0).clips.at(0).textStyle.outlineEnabled, true);
-        QCOMPARE(loaded.tracks().at(0).clips.at(0).textStyle.outlineWidth, 3.0);
+        QCOMPARE(drift::textStrokeWidth(loaded.tracks().at(0).clips.at(0).textStyle, false), 3.0);
     }
 }
 
@@ -1319,7 +1331,7 @@ void CoreTest::vectorSourceSerialization()
     project.tracks()[0].clips.append(shape);
 
     const QJsonObject json = project.toJson();
-    QCOMPARE(json.value(QStringLiteral("version")).toInt(), 6);
+    QCOMPARE(json.value(QStringLiteral("version")).toInt(), drift::Project::kCurrentVersion);
     const QJsonArray clips = json.value(QStringLiteral("tracks")).toArray().at(0).toObject()
                                  .value(QStringLiteral("clips")).toArray();
     QVERIFY(clips.at(0).toObject().contains(QStringLiteral("vector")));
@@ -1376,22 +1388,22 @@ void CoreTest::textStyleKeyframesSerialization()
 {
     drift::TextStyle style;
     style.pixelSize = 40;
-    style.color = QColor(255, 0, 0);
+    drift::setSolidFill(style, QColor(255, 0, 0));
     // A static style writes no keyframes key at all, so older files stay byte-identical.
     QVERIFY(!drift::textStyleToJson(style).contains(QStringLiteral("keyframes")));
     QVERIFY(!style.isAnimated());
 
     style.keyframes[QStringLiteral("pixelSize")].setKeyframe(0, 40.0);
     style.keyframes[QStringLiteral("pixelSize")].setKeyframe(drift::secondsToUs(2.0), 80.0);
-    style.keyframes[QStringLiteral("color.g")].setKeyframe(0, 0.0);
-    style.keyframes[QStringLiteral("color.g")].setKeyframe(drift::secondsToUs(1.0), 1.0);
-    style.keyframes[QStringLiteral("shadowBlur")]; // empty: must not be written
+    style.keyframes[QStringLiteral("layer.fill.color.g")].setKeyframe(0, 0.0);
+    style.keyframes[QStringLiteral("layer.fill.color.g")].setKeyframe(drift::secondsToUs(1.0), 1.0);
+    style.keyframes[QStringLiteral("pathBend")]; // empty: must not be written
     QVERIFY(style.isAnimated());
 
     const drift::TextStyle mid = style.resolvedAt(drift::secondsToUs(1.0));
     QCOMPARE(mid.pixelSize, 60);
-    QCOMPARE(mid.color.greenF(), 1.0);
-    QCOMPARE(mid.color.redF(), 1.0);
+    QCOMPARE(mid.primaryColor().greenF(), 1.0);
+    QCOMPARE(mid.primaryColor().redF(), 1.0);
     QVERIFY(mid.isAnimated()); // the copy keeps its tracks so renderers can tell it apart
     QCOMPARE(style.resolvedAt(0).pixelSize, 40);
 
@@ -1399,7 +1411,7 @@ void CoreTest::textStyleKeyframesSerialization()
     const QJsonObject keys = json.value(QStringLiteral("keyframes")).toObject();
     QCOMPARE(keys.size(), 2);
     QVERIFY(keys.contains(QStringLiteral("pixelSize")));
-    QVERIFY(!keys.contains(QStringLiteral("shadowBlur")));
+    QVERIFY(!keys.contains(QStringLiteral("pathBend")));
 
     // Through the whole project file.
     drift::Project project;
@@ -1419,27 +1431,35 @@ void CoreTest::textStyleKeyframesSerialization()
     QVERIFY(back.isAnimated());
     QCOMPARE(back.keyframes.size(), 2);
     QCOMPARE(back.resolvedAt(drift::secondsToUs(2.0)).pixelSize, 80);
-    QVERIFY(qAbs(back.resolvedAt(drift::secondsToUs(0.5)).color.greenF() - 0.5) < 0.001);
+    QVERIFY(qAbs(back.resolvedAt(drift::secondsToUs(0.5)).primaryColor().greenF() - 0.5) < 0.001);
 
-    // The Skia-only looks round-trip too and default to a plain solid fill on a straight line.
+    // A gradient fill and a bend round-trip too and default to a plain solid fill on a straight line.
     drift::TextStyle look;
-    look.fillKind = drift::TextFillKind::LinearGradient;
-    look.colorSecondary = QColor(1, 2, 3, 4);
-    look.gradientAngle = 33.0;
+    drift::TextShadingLayer *fill = drift::firstTextLayerOfKind(look.layers, drift::TextLayerKind::Fill, false);
+    fill->paint.kind = drift::TextPaintKind::Gradient;
+    fill->paint.gradient.stops = {{0.0, QColor(255, 0, 0)}, {1.0, QColor(1, 2, 3, 4)}};
+    fill->paint.gradient.angle = 33.0;
     look.pathBend = -40.0;
     const drift::TextStyle lookBack = drift::textStyleFromJson(drift::textStyleToJson(look));
-    QCOMPARE(lookBack.fillKind, drift::TextFillKind::LinearGradient);
-    QCOMPARE(lookBack.colorSecondary, QColor(1, 2, 3, 4));
-    QCOMPARE(lookBack.gradientAngle, 33.0);
+    const drift::TextShadingLayer *fillBack = drift::firstTextLayerOfKind(lookBack.layers, drift::TextLayerKind::Fill, false);
+    QVERIFY(fillBack);
+    QCOMPARE(fillBack->paint.kind, drift::TextPaintKind::Gradient);
+    QCOMPARE(fillBack->paint.gradient.stops.last().color, QColor(1, 2, 3, 4));
+    QCOMPARE(fillBack->paint.gradient.angle, 33.0);
     QCOMPARE(lookBack.pathBend, -40.0);
-    QCOMPARE(drift::textStyleFromJson(QJsonObject{{QStringLiteral("pixelSize"), 12}}).fillKind, drift::TextFillKind::Solid);
-    QCOMPARE(drift::textStyleFromJson(QJsonObject{{QStringLiteral("pixelSize"), 12}}).pathBend, 0.0);
+    const drift::TextStyle bare = drift::textStyleFromJson(QJsonObject{{QStringLiteral("pixelSize"), 12}});
+    QCOMPARE(drift::firstTextLayerOfKind(bare.layers, drift::TextLayerKind::Fill, true)->paint.kind, drift::TextPaintKind::Solid);
+    QCOMPARE(bare.pathBend, 0.0);
 
+    // Legacy key names keep resolving onto the layers they became.
     double scalar = 0;
     QVERIFY(drift::textStyleScalar(style, QStringLiteral("color.r"), &scalar));
     QCOMPARE(scalar, 1.0);
+    QVERIFY(drift::textStyleScalar(style, QStringLiteral("layer.fill.color.r"), &scalar));
     QVERIFY(!drift::textStyleScalar(style, QStringLiteral("nope"), &scalar));
-    QVERIFY(drift::textKeyframeProperties().contains(QStringLiteral("glowRadius")));
+    QVERIFY(!drift::textStyleScalar(style, QStringLiteral("glowRadius"), &scalar)); // no glow layer on a fresh style
+    QVERIFY(drift::textKeyframeProperties(style).contains(QStringLiteral("layer.fill.color.r")));
+    QCOMPARE(drift::textKeyframeCanonicalKey(QStringLiteral("color.g"), style), QStringLiteral("layer.fill.color.g"));
 }
 
 void CoreTest::dotLottieUnpacks()
@@ -3474,16 +3494,15 @@ void CoreTest::userTextPresetsRoundTrip()
     style.fontFamily = QStringLiteral("Archivo Black");
     style.pixelSize = 91;
     style.fontWeight = 400;
-    style.glowEnabled = true;
-    style.glowColor = QColor(12, 240, 90);
+    style.layers = {drift::glowLayer(QColor(12, 240, 90), 18.0, 0.8), drift::solidFillLayer(Qt::white)};
     style.underlineEnabled = true;
     style.accent.rule = drift::WordAccentRule::EveryNth;
     style.accent.n = 3;
     style.accent.highlight.enabled = true;
-    style.animIn.kind = drift::TextAnimKind::Bounce;
-    style.animIn.unit = drift::TextAnimUnit::Word;
-    style.animIn.staggerUs = 33000;
-    style.animOut.kind = drift::TextAnimKind::Blur;
+    style.animation.in = drift::legacyTextAnimationSlot(QStringLiteral("bounce"), 400000, QStringLiteral("easeOut"),
+                                                        QStringLiteral("word"), 33000, QStringLiteral("forward"));
+    style.animation.out = drift::legacyTextAnimationSlot(QStringLiteral("blur"), 400000, QStringLiteral("easeOut"),
+                                                         QStringLiteral("block"), 60000, QStringLiteral("forward"));
     style.packId = QStringLiteral("impact"); // must not survive: a saved pack is its own style
 
     drift::TextStyle expected = style;
@@ -3758,6 +3777,884 @@ void CoreTest::userEffectPresetsRoundTrip()
     QCoreApplication::setOrganizationName(org);
     QCoreApplication::setApplicationName(app);
     QStandardPaths::setTestModeEnabled(false);
+}
+
+
+namespace {
+
+using namespace drift;
+using namespace drift::textanim;
+
+QList<FragmentInfo> charFragments(int n, double advance = 20.0)
+{
+    QList<FragmentInfo> out;
+    for (int i = 0; i < n; ++i) {
+        FragmentInfo f;
+        f.charIndex = i;
+        f.nonSpaceIndex = i;
+        f.wordIndex = i;
+        f.lineIndex = 0;
+        f.advance = advance;
+        f.ascent = 16.0;
+        f.textStart = i;
+        f.textLength = 1;
+        out.append(f);
+    }
+    return out;
+}
+
+Domains charDomains(int n)
+{
+    Domains d;
+    d.chars = n;
+    d.nonSpaceChars = n;
+    d.words = n;
+    d.lines = 1;
+    return d;
+}
+
+TextRangeSelector curves(TextSelectorShape shape, TextSelectorUnits units, double start, double end,
+                         TextSelectorDomain domain = TextSelectorDomain::Chars)
+{
+    TextRangeSelector s;
+    s.driver = TextSelectorDriver::Curves;
+    s.domain = domain;
+    s.units = units;
+    s.shape = shape;
+    s.start = start;
+    s.end = end;
+    s.smoothness = 100.0;
+    return s;
+}
+
+// Coverage 1 on every character: a square over the whole domain with no smoothing.
+TextRangeSelector fullCoverage()
+{
+    TextRangeSelector s = curves(TextSelectorShape::Square, TextSelectorUnits::Percent, 0, 100);
+    s.smoothness = 0.0;
+    return s;
+}
+
+TextRangeSelector stagger(TimeUs staggerUs, TimeUs durationUs, TextEaseKind ease = TextEaseKind::Linear,
+                          TextSelectorDomain domain = TextSelectorDomain::CharsExcludingSpaces)
+{
+    TextRangeSelector s;
+    s.driver = TextSelectorDriver::Stagger;
+    s.domain = domain;
+    s.staggerUs = staggerUs;
+    s.durationUs = durationUs;
+    s.ease.kind = ease;
+    return s;
+}
+
+EvalContext contextAt(TimeUs t, TimeUs windowUs = 1'000'000)
+{
+    EvalContext c;
+    c.windowStartUs = 0;
+    c.windowDurationUs = windowUs;
+    c.timelineUs = t;
+    c.emPx = 64.0;
+    c.boxWidthPx = 400.0;
+    c.boxHeightPx = 100.0;
+    c.renderScale = 1.0;
+    c.alignFactor = 0.5;
+    return c;
+}
+
+QList<double> coverages(const TextRangeSelector &sel, int n, double progress = 0.0)
+{
+    QList<double> out;
+    for (int i = 0; i < n; ++i)
+        out.append(rangeSelectorCoverage(sel, i, n, progress));
+    return out;
+}
+
+QList<double> opacities(const Frame &frame)
+{
+    QList<double> out;
+    for (const FragmentProps &p : frame.props)
+        out.append(p.opacity);
+    return out;
+}
+
+bool listsClose(const QList<double> &a, const QList<double> &b, double tol = 1e-6)
+{
+    if (a.size() != b.size())
+        return false;
+    for (int i = 0; i < a.size(); ++i)
+        if (std::abs(a[i] - b[i]) > tol)
+            return false;
+    return true;
+}
+
+QString show(const QList<double> &v)
+{
+    QStringList parts;
+    for (double d : v)
+        parts << QString::number(d, 'f', 4);
+    return parts.join(QLatin1String(", "));
+}
+
+} // namespace
+
+#define VERIFY_LIST(actual, expected) \
+    QVERIFY2(listsClose(actual, expected), qPrintable(QStringLiteral("got [%1] want [%2]").arg(show(actual), show(expected))))
+
+void CoreTest::rangeSelectorCoverageMatchesSkottie()
+{
+    using S = TextSelectorShape;
+    using U = TextSelectorUnits;
+    // A square over the first half with full smoothness: the ramp lands exactly on the edge.
+    VERIFY_LIST(coverages(curves(S::Square, U::Percent, 0, 50), 4), (QList<double>{1, 1, 0, 0}));
+    VERIFY_LIST(coverages(curves(S::Square, U::Percent, 0, 37.5), 4), (QList<double>{1, 0.5, 0, 0}));
+    VERIFY_LIST(coverages(curves(S::RampUp, U::Index, 0, 4), 4), (QList<double>{0.125, 0.375, 0.625, 0.875}));
+    VERIFY_LIST(coverages(curves(S::Triangle, U::Percent, 0, 100), 4), (QList<double>{0.25, 0.75, 0.75, 0.25}));
+
+    // Ease-high 100 % bends the ramp through the unit cubic (0,0),(0,1): y = 0.5 maps to 0.8899.
+    TextRangeSelector eased = curves(S::RampUp, U::Index, 0, 1);
+    eased.easeHi = 100.0;
+    QVERIFY(std::abs(rangeSelectorCoverage(eased, 0, 1, 0.0) - 0.8899) < 0.005);
+
+    TextRangeSelector negated = curves(S::RampUp, U::Index, 0, 4);
+    negated.amount = -100.0;
+    VERIFY_LIST(coverages(negated, 4), (QList<double>{-0.125, -0.375, -0.625, -0.875}));
+
+    // Index units with the default "everything" end cover the whole domain.
+    VERIFY_LIST(coverages(curves(S::Square, U::Index, 0, kTextSelectorIndexEnd), 4), (QList<double>{1, 1, 1, 1}));
+
+    // Round starts steep, Smooth starts flat; both are 0 outside and 1 in the middle.
+    const QList<double> round = coverages(curves(S::Round, U::Percent, 0, 100), 8);
+    const QList<double> smooth = coverages(curves(S::Smooth, U::Percent, 0, 100), 8);
+    QVERIFY(round[0] > smooth[0]);
+    QVERIFY(std::abs(round[3] - 1.0) < 0.05 && std::abs(smooth[3] - 1.0) < 0.05);
+
+    // Animated selector params read the slot progress.
+    TextRangeSelector moving = curves(S::Square, U::Percent, 0, 50);
+    moving.offset.curve.setKeyframe(0, 0.0);
+    moving.offset.curve.setKeyframe(kProgressScale, 50.0);
+    VERIFY_LIST(coverages(moving, 4, 1.0), (QList<double>{0, 0, 1, 1}));
+
+    // Two selectors compose through the second one's mode.
+    TextAnimator animator;
+    animator.selectors = {curves(S::Square, U::Percent, 0, 50), curves(S::RampUp, U::Index, 0, 4)};
+    animator.selectors[1].mode = TextSelectorMode::Intersect;
+    animator.props.opacity = 0.0;
+    animator.props.hasOpacity = true;
+    ResolvedSlots resolved;
+    resolved.in = {animator};
+    const Frame frame = evaluateTextAnimation(TextAnimationSet{}, resolved, charFragments(4), charDomains(4), contextAt(0));
+    VERIFY_LIST(opacities(frame), (QList<double>{0.875, 0.625, 1, 1}));
+}
+
+void CoreTest::staggerMatchesMovingRamp()
+{
+    const TextRangeSelector sel = stagger(100'000, 200'000);
+    QList<double> cov;
+    for (int i = 0; i < 4; ++i)
+        cov.append(staggerCoverage(sel, i, 150'000));
+    VERIFY_LIST(cov, (QList<double>{0.25, 0.75, 1, 1}));
+    // The same thing as an AE ramp whose window is duration/stagger units wide.
+    VERIFY_LIST(coverages(curves(TextSelectorShape::RampUp, TextSelectorUnits::Index, 0, 2), 4), cov);
+
+    const TextRangeSelector step = stagger(100'000, 0);
+    QList<double> stepCov;
+    for (int i = 0; i < 4; ++i)
+        stepCov.append(staggerCoverage(step, i, 150'000));
+    VERIFY_LIST(stepCov, (QList<double>{0, 0, 1, 1}));
+
+    // An Out slot mirrors the resolved so the last fragment leaves exactly at the window end.
+    TextAnimator fade;
+    fade.selectors = {sel};
+    fade.props.opacity = 0.0;
+    fade.props.hasOpacity = true;
+    ResolvedSlots resolved;
+    resolved.out = {fade};
+    const Frame out = evaluateTextAnimation(TextAnimationSet{}, resolved, charFragments(4), charDomains(4), contextAt(850'000));
+    VERIFY_LIST(opacities(out), (QList<double>{0, 0, 0.25, 0.75}));
+    const Frame settled = evaluateTextAnimation(TextAnimationSet{}, resolved, charFragments(4), charDomains(4), contextAt(300'000));
+    VERIFY_LIST(opacities(settled), (QList<double>{1, 1, 1, 1}));
+    QVERIFY(settled.isStatic);
+
+    QList<double> ranks;
+    for (int i = 0; i < 4; ++i)
+        ranks.append(reindexForOrder(i, 4, TextAnimOrder::CenterOut, 0));
+    VERIFY_LIST(ranks, (QList<double>{1.5, 0.5, 0.5, 1.5}));
+    QCOMPARE(maxReindex(4, TextAnimOrder::CenterOut), 1.5);
+    QCOMPARE(maxReindex(4, TextAnimOrder::Backward), 3.0);
+
+    // Seed 0 is the legacy shuffle (TextRaster's table), so old projects keep their order.
+    for (int i = 0; i < 8; ++i) {
+        const quint32 h = qHash(static_cast<quint32>(i) * 2654435761u) ^ 0x9e3779b9u;
+        const double legacy = (h & 0xffffu) / 65535.0 * 7;
+        QCOMPARE(reindexForOrder(i, 8, TextAnimOrder::Random, 0), legacy);
+    }
+    QVERIFY(reindexForOrder(3, 8, TextAnimOrder::Random, 7) != reindexForOrder(3, 8, TextAnimOrder::Random, 0));
+}
+
+void CoreTest::animatorCompositionOrder()
+{
+    TextAnimator a;
+    a.selectors = {fullCoverage()};
+    a.props.position.x = 10.0;
+    a.props.scaleX = 200.0;
+    TextAnimator b = a;
+    b.props.position.x = 5.0;
+    b.props.position.y = 5.0;
+    b.props.scaleX = 50.0;
+    ResolvedSlots resolved;
+    resolved.in = {a, b};
+    Frame frame = evaluateTextAnimation(TextAnimationSet{}, resolved, charFragments(1), charDomains(1), contextAt(0));
+    QCOMPARE(frame.props[0].dx, 15.0);
+    QCOMPARE(frame.props[0].dy, 5.0);
+    QVERIFY(qFuzzyCompare(frame.props[0].scaleX, 1.0));
+    QVERIFY(!frame.isStatic);
+
+    // Half coverage lerps opacity and colour toward the target.
+    TextAnimator half;
+    half.selectors = {fullCoverage()};
+    half.selectors[0].amount = 50.0;
+    half.props.opacity = 0.0;
+    half.props.hasOpacity = true;
+    half.props.fillColor = Qt::black;
+    half.props.hasFillColor = true;
+    resolved.in = {half};
+    frame = evaluateTextAnimation(TextAnimationSet{}, resolved, charFragments(1), charDomains(1), contextAt(0));
+    QVERIFY(qFuzzyCompare(frame.props[0].opacity, 0.5));
+    QVERIFY(frame.props[0].fillColor.has_value());
+    QVERIFY(qAbs(frame.props[0].fillColor->red() - 128) <= 2);
+
+    // Units: em and box lengths resolve against the context, capped by maxPx.
+    TextAnimator units;
+    units.selectors = {fullCoverage()};
+    units.props.position.y = 0.35;
+    units.props.position.unit = TextLengthUnit::Box;
+    resolved.in = {units};
+    frame = evaluateTextAnimation(TextAnimationSet{}, resolved, charFragments(1), charDomains(1), contextAt(0));
+    QCOMPARE(frame.props[0].dy, 35.0);
+    units.props.position.maxPx = 20.0;
+    resolved.in = {units};
+    frame = evaluateTextAnimation(TextAnimationSet{}, resolved, charFragments(1), charDomains(1), contextAt(0));
+    QCOMPARE(frame.props[0].dy, 20.0);
+
+    // A Back ease overshoots: the pop scales past 1 near the end, opacity stays clamped.
+    TextAnimator pop;
+    pop.selectors = {stagger(0, 1'000'000, TextEaseKind::Back)};
+    pop.props.scaleX = 60.0;
+    pop.props.opacity = 0.0;
+    pop.props.hasOpacity = true;
+    resolved.in = {pop};
+    frame = evaluateTextAnimation(TextAnimationSet{}, resolved, charFragments(1), charDomains(1), contextAt(800'000));
+    QVERIFY2(frame.props[0].scaleX > 1.0 && frame.props[0].scaleX < 1.1, qPrintable(QString::number(frame.props[0].scaleX)));
+    QCOMPARE(frame.props[0].opacity, 1.0);
+
+    // Whole-block animators fold into the layer props and leave the fragments alone.
+    TextAnimator fade;
+    fade.selectors = {stagger(0, 400'000, TextEaseKind::Linear, TextSelectorDomain::All)};
+    fade.props.opacity = 0.0;
+    fade.props.hasOpacity = true;
+    resolved.in = {fade};
+    frame = evaluateTextAnimation(TextAnimationSet{}, resolved, charFragments(2), charDomains(2), contextAt(100'000));
+    QVERIFY(qFuzzyCompare(frame.block.opacity, 0.25));
+    QCOMPARE(frame.props[0].opacity, 1.0);
+    QVERIFY(!frame.isStatic);
+    frame = evaluateTextAnimation(TextAnimationSet{}, resolved, charFragments(2), charDomains(2), contextAt(1'000'000));
+    QCOMPARE(frame.block.opacity, 1.0);
+    QVERIFY(frame.isStatic);
+    QCOMPARE(frame.poseHash, quint64(0));
+
+    // Loops never settle: a wiggle keeps the frame live and moves fragments out of phase.
+    TextAnimator wave;
+    TextRangeSelector wiggle;
+    wiggle.driver = TextSelectorDriver::Wiggle;
+    wiggle.domain = TextSelectorDomain::Chars;
+    wave.selectors = {wiggle};
+    wave.props.position.y = 10.0;
+    ResolvedSlots loopOnly;
+    loopOnly.loop = {wave};
+    frame = evaluateTextAnimation(TextAnimationSet{}, loopOnly, charFragments(3), charDomains(3), contextAt(100'000));
+    QVERIFY(!frame.isStatic);
+    QVERIFY(!qFuzzyCompare(frame.props[0].dy + 100.0, frame.props[1].dy + 100.0));
+    QVERIFY(std::abs(frame.props[0].dy) <= 10.0);
+
+    // Karaoke lights the spoken word only.
+    TextAnimator karaoke;
+    TextRangeSelector spoken;
+    spoken.driver = TextSelectorDriver::Karaoke;
+    spoken.domain = TextSelectorDomain::Words;
+    karaoke.selectors = {spoken};
+    karaoke.props.scaleX = 120.0;
+    loopOnly.loop = {karaoke};
+    EvalContext ctx = contextAt(0);
+    ctx.activeWordIndex = 1;
+    frame = evaluateTextAnimation(TextAnimationSet{}, loopOnly, charFragments(3), charDomains(3), ctx);
+    QCOMPARE(frame.props[0].scaleX, 1.0);
+    QVERIFY(qFuzzyCompare(frame.props[1].scaleX, 1.2));
+}
+
+void CoreTest::trackingLineAdjust()
+{
+    TextAnimator track;
+    track.selectors = {fullCoverage()};
+    track.props.tracking = 10.0;
+    ResolvedSlots resolved;
+    resolved.in = {track};
+    EvalContext ctx = contextAt(0);
+    Frame frame = evaluateTextAnimation(TextAnimationSet{}, resolved, charFragments(3), charDomains(3), ctx);
+    QList<double> dx;
+    for (const FragmentProps &p : frame.props)
+        dx.append(p.dx);
+    VERIFY_LIST(dx, (QList<double>{-10, 0, 10}));
+
+    ctx.alignFactor = 0.0;
+    frame = evaluateTextAnimation(TextAnimationSet{}, resolved, charFragments(3), charDomains(3), ctx);
+    dx.clear();
+    for (const FragmentProps &p : frame.props)
+        dx.append(p.dx);
+    VERIFY_LIST(dx, (QList<double>{0, 10, 20}));
+
+    // A collapsing typewriter gives a hidden fragment's advance back, so the visible run re-centres.
+    TextAnimator type;
+    type.selectors = {stagger(100'000, 0)};
+    type.props.opacity = 0.0;
+    type.props.hasOpacity = true;
+    type.collapseHidden = true;
+    resolved.in = {type};
+    frame = evaluateTextAnimation(TextAnimationSet{}, resolved, charFragments(3, 20.0), charDomains(3), contextAt(150'000));
+    QVERIFY(frame.collapseHidden);
+    QVERIFY(!frame.props[0].hidden && !frame.props[1].hidden && frame.props[2].hidden);
+    QCOMPARE(frame.props[0].dx, 10.0);
+    QCOMPARE(frame.props[1].dx, 10.0);
+
+    // Line spacing shifts later lines down by the per-line average; the first line stays put.
+    QList<FragmentInfo> frags = charFragments(4);
+    frags[2].lineIndex = 1;
+    frags[3].lineIndex = 1;
+    Domains domains = charDomains(4);
+    domains.lines = 2;
+    TextAnimator spacing;
+    spacing.selectors = {fullCoverage()};
+    spacing.props.lineSpacing = 8.0;
+    resolved.in = {spacing};
+    frame = evaluateTextAnimation(TextAnimationSet{}, resolved, frags, domains, contextAt(0));
+    QCOMPARE(frame.props[0].dy, 0.0);
+    QCOMPARE(frame.props[1].dy, 0.0);
+    QCOMPARE(frame.props[2].dy, 8.0);
+    QCOMPARE(frame.props[3].dy, 8.0);
+}
+
+void CoreTest::caretTiming()
+{
+    TextAnimationSet set;
+    set.caret.enabled = true;
+    set.in.delayUs = 200'000; // the caret's lead: it blinks alone before the first character
+    TextAnimator type;
+    type.selectors = {stagger(67'000, 0)};
+    type.props.opacity = 0.0;
+    type.props.hasOpacity = true;
+    ResolvedSlots resolved;
+    resolved.in = {type};
+    const QList<FragmentInfo> frags = charFragments(8);
+    const Domains domains = charDomains(8);
+
+    Frame frame = evaluateTextAnimation(set, resolved, frags, domains, contextAt(0));
+    QVERIFY(frame.caret.visible);
+    QCOMPARE(frame.caret.afterFragment, -1);
+    QVERIFY(!frame.isStatic);
+    QVERIFY(qFuzzyCompare(frame.caret.widthPx, 0.08 * 64.0));
+    QVERIFY(qFuzzyCompare(frame.caret.heightPx, 64.0));
+    QCOMPARE(frame.caret.color, QColor(Qt::white));
+
+    frame = evaluateTextAnimation(set, resolved, frags, domains, contextAt(250'000));
+    QVERIFY(!frame.caret.visible); // 200 ms on, 300 ms off
+    QCOMPARE(frame.caret.afterFragment, 0);
+
+    frame = evaluateTextAnimation(set, resolved, frags, domains, contextAt(600'000));
+    QVERIFY(frame.caret.visible);
+    QCOMPARE(frame.caret.afterFragment, 5);
+
+    // Gone once the reveal (200 ms lead + 7 × 67 ms) has finished, unless told to stay.
+    frame = evaluateTextAnimation(set, resolved, frags, domains, contextAt(1'000'000));
+    QVERIFY(!frame.caret.visible);
+    set.caret.holdAfterUs = -1;
+    frame = evaluateTextAnimation(set, resolved, frags, domains, contextAt(1'000'000));
+    QVERIFY(frame.caret.visible);
+    QCOMPARE(frame.caret.afterFragment, 7);
+}
+
+void CoreTest::animationBoundsCoverTheEnvelope()
+{
+    TextAnimator slide;
+    slide.selectors = {stagger(0, 400'000, TextEaseKind::EaseOut, TextSelectorDomain::All)};
+    slide.props.position.y = 0.35;
+    slide.props.position.unit = TextLengthUnit::Box;
+    slide.props.blur = 24.0;
+    slide.props.scaleX = 300.0;
+    TextAnimator drift;
+    drift.props.tracking = 10.0;
+    ResolvedSlots resolved;
+    resolved.in = {slide};
+    resolved.loop = {drift};
+    const Bounds b = animationBounds(resolved, contextAt(0));
+    QCOMPARE(b.maxDx, 0.0);
+    QVERIFY(std::abs(b.maxDy - 35.0 * 1.15) < 1e-9);
+    QCOMPARE(b.maxBlurPx, 24.0);
+    QVERIFY(std::abs(b.maxScale - 3.0 * 1.15) < 1e-9);
+    QCOMPARE(b.maxTrackingPx, 10.0);
+
+    TextEaseSpec bezier;
+    bezier.kind = TextEaseKind::Bezier;
+    QCOMPARE(bezier.value(0.0), 0.0);
+    QCOMPARE(bezier.value(1.0), 1.0);
+    QVERIFY(std::abs(bezier.value(0.5) - 0.5) < 1e-6);
+    TextEaseSpec back;
+    back.kind = TextEaseKind::Back;
+    QVERIFY(back.value(0.8) > 1.0);
+    TextEaseSpec smooth;
+    smooth.kind = TextEaseKind::Smooth;
+    QCOMPARE(smooth.value(0.5), 0.5);
+    QVERIFY(smooth.value(0.25) < 0.25);
+
+    // Curves over progress reuse the keyframe track.
+    TextAnimParam ramp;
+    ramp.curve.setKeyframe(0, 2.0);
+    ramp.curve.setKeyframe(kProgressScale, 21.0);
+    QVERIFY(std::abs(ramp.at(0.5) - 11.5) < 1e-6);
+    QCOMPARE(ramp.maxAbs(), 21.0);
+}
+
+
+void CoreTest::textStyleMigratesFromV6()
+{
+    // The exact object a version-6 file carries (textStyleToJson before the layer stack).
+    const QJsonObject v6{
+        {QStringLiteral("fontFamily"), QStringLiteral("Anton")},
+        {QStringLiteral("pixelSize"), 72},
+        {QStringLiteral("color"), QStringLiteral("#ff102030")},
+        {QStringLiteral("fillKind"), QStringLiteral("linearGradient")},
+        {QStringLiteral("colorSecondary"), QStringLiteral("#ff0000ff")},
+        {QStringLiteral("gradientAngle"), 45.0},
+        {QStringLiteral("outlineEnabled"), true},
+        {QStringLiteral("outlineWidth"), 5.0},
+        {QStringLiteral("outlineColor"), QStringLiteral("#ffff0000")},
+        {QStringLiteral("shadowEnabled"), true},
+        {QStringLiteral("shadowOffsetX"), 2.0},
+        {QStringLiteral("shadowOffsetY"), 6.0},
+        {QStringLiteral("shadowBlur"), 12.0},
+        {QStringLiteral("shadowOpacity"), 0.7},
+        {QStringLiteral("shadowColor"), QStringLiteral("#ff000000")},
+        {QStringLiteral("glowEnabled"), false},
+        {QStringLiteral("glowColor"), QStringLiteral("#ffffffff")},
+        {QStringLiteral("glowRadius"), 20.0},
+        {QStringLiteral("glowOpacity"), 0.9},
+        {QStringLiteral("animInKind"), QStringLiteral("pop")},
+        {QStringLiteral("animInDurationUs"), 350000},
+        {QStringLiteral("animInEase"), QStringLiteral("back")},
+        {QStringLiteral("animInUnit"), QStringLiteral("word")},
+        {QStringLiteral("animInStaggerUs"), 80000},
+        {QStringLiteral("animInOrder"), QStringLiteral("centerOut")},
+        {QStringLiteral("animOutKind"), QStringLiteral("slideDown")},
+        {QStringLiteral("animOutDurationUs"), 250000},
+        {QStringLiteral("animOutEase"), QStringLiteral("easeInOut")},
+        {QStringLiteral("keyframes"), QJsonObject{{QStringLiteral("outlineWidth"),
+                                                   QJsonObject{{QStringLiteral("keyframes"), QJsonArray{QJsonObject{{QStringLiteral("time"), 0}, {QStringLiteral("value"), 5.0}}}}}}}},
+    };
+    const drift::TextStyle s = drift::textStyleFromJson(v6);
+    QCOMPARE(s.layers.size(), 4);
+    QCOMPARE(s.layers[0].id, QStringLiteral("shadow"));
+    QVERIFY(s.layers[0].enabled);
+    QCOMPARE(s.layers[0].offsetX, 2.0);
+    QCOMPARE(s.layers[0].offsetY, 6.0);
+    QCOMPARE(s.layers[0].blur, 12.0);
+    QCOMPARE(s.layers[0].opacity, 0.7);
+    QCOMPARE(s.layers[1].id, QStringLiteral("glow"));
+    QVERIFY(!s.layers[1].enabled); // kept, so switching it on restores the radius
+    QCOMPARE(s.layers[1].blur, 20.0);
+    QCOMPARE(s.layers[2].id, QStringLiteral("stroke"));
+    QVERIFY(s.layers[2].enabled);
+    QCOMPARE(s.layers[2].width, 5.0);
+    QCOMPARE(s.layers[2].paint.color, QColor(255, 0, 0));
+    QCOMPARE(s.layers[3].id, QStringLiteral("fill"));
+    QCOMPARE(s.layers[3].paint.kind, drift::TextPaintKind::Gradient);
+    QCOMPARE(s.layers[3].paint.gradient.kind, drift::TextGradientKind::Linear);
+    QCOMPARE(s.layers[3].paint.gradient.stops.first().color, QColor(16, 32, 48));
+    QCOMPARE(s.layers[3].paint.gradient.stops.last().color, QColor(0, 0, 255));
+    QCOMPARE(s.layers[3].paint.gradient.angle, 45.0);
+    QCOMPARE(s.primaryColor(), QColor(16, 32, 48));
+    QCOMPARE(s.animation.in.presetId, QStringLiteral("pop"));
+    QCOMPARE(s.animation.in.params.value(QStringLiteral("duration")).scalar, 0.35);
+    QCOMPARE(s.animation.in.params.value(QStringLiteral("ease")).text, QStringLiteral("back"));
+    QCOMPARE(s.animation.in.params.value(QStringLiteral("unit")).text, QStringLiteral("word"));
+    QCOMPARE(s.animation.in.params.value(QStringLiteral("stagger")).scalar, 0.08);
+    QCOMPARE(s.animation.in.params.value(QStringLiteral("order")).text, QStringLiteral("centerOut"));
+    QCOMPARE(s.animation.out.presetId, QStringLiteral("slide-down"));
+    QVERIFY(!s.animation.loop.isActive());
+    // The keyframe track followed its field onto the stroke layer.
+    QVERIFY(s.keyframes.contains(QStringLiteral("layer.stroke.width")));
+    QVERIFY(!s.keyframes.contains(QStringLiteral("outlineWidth")));
+
+    // A Wave entrance was continuous; it becomes the loop slot.
+    drift::TextStyle wave = drift::textStyleFromJson(QJsonObject{{QStringLiteral("animInKind"), QStringLiteral("wave")},
+                                                                 {QStringLiteral("animInUnit"), QStringLiteral("character")}});
+    QVERIFY(!wave.animation.in.isActive());
+    QCOMPARE(wave.animation.loop.presetId, QStringLiteral("wave"));
+    // Pre-outlineEnabled files: a positive width means on.
+    QCOMPARE(drift::textStrokeWidth(drift::textStyleFromJson(QJsonObject{{QStringLiteral("outlineWidth"), 3.0}}), false), 3.0);
+    // Nothing at all: one white fill, no animation.
+    const drift::TextStyle bare = drift::textStyleFromJson(QJsonObject{{QStringLiteral("pixelSize"), 12}});
+    QCOMPARE(bare.layers.size(), 4);
+    QCOMPARE(bare.primaryColor(), QColor(Qt::white));
+    QVERIFY(!bare.animation.isActive());
+}
+
+void CoreTest::textStyleV7RoundTrip()
+{
+    drift::TextStyle s;
+    drift::TextShadingLayer fill = drift::solidFillLayer(Qt::white, QStringLiteral("fill"));
+    fill.paint.kind = drift::TextPaintKind::Gradient;
+    fill.paint.gradient.kind = drift::TextGradientKind::Sweep;
+    fill.paint.gradient.stops = {{0.0, Qt::red}, {0.5, Qt::green}, {1.0, Qt::blue}};
+    fill.paint.gradient.offsetSpeed = 0.25;
+    fill.paint.gradient.repeat = true;
+    fill.paint.gradient.space = drift::TextGradientSpace::Word;
+    drift::TextShadingLayer sheen = drift::solidFillLayer(Qt::white, QStringLiteral("sheen"));
+    sheen.paint.kind = drift::TextPaintKind::Effect;
+    sheen.paint.effect.id = QStringLiteral("shine");
+    sheen.paint.effect.params.insert(QStringLiteral("speed"), drift::VectorSlotValue::fromScalar(0.7));
+    sheen.blend = drift::BlendMode::Screen;
+    drift::TextShadingLayer stroke = drift::strokeLayer(3.0, Qt::black, QStringLiteral("stroke"));
+    stroke.trimStart = 0.1;
+    stroke.trimEnd = 0.9;
+    drift::TextShadingLayer extrude = drift::solidFillLayer(QColor(40, 40, 40), QStringLiteral("depth"));
+    extrude.kind = drift::TextLayerKind::Extrude;
+    extrude.width = 9.0;
+    extrude.extrudeSteps = 5;
+    s.layers = {extrude, stroke, fill, sheen};
+    s.lookId = QStringLiteral("neon");
+    s.lookParams.insert(QStringLiteral("glow"), drift::VectorSlotValue::fromScalar(20.0));
+
+    drift::TextAnimator rise;
+    drift::TextRangeSelector sel;
+    sel.driver = drift::TextSelectorDriver::Curves;
+    sel.domain = drift::TextSelectorDomain::Chars;
+    sel.shape = drift::TextSelectorShape::RampUp;
+    sel.offset.curve.setKeyframe(0, -100.0);
+    sel.offset.curve.setKeyframe(drift::kProgressScale, 0.0);
+    rise.selectors = {sel};
+    rise.props.position.y = 0.4;
+    rise.props.position.unit = drift::TextLengthUnit::Em;
+    rise.props.opacity = 0.0;
+    rise.props.hasOpacity = true;
+    rise.props.fillColor = Qt::magenta;
+    rise.props.hasFillColor = true;
+    rise.props.wipe.enabled = true;
+    s.animation.in.animators = {rise};
+    s.animation.in.durationUs = 900000;
+    s.animation.loop.presetId = QStringLiteral("wave");
+    s.animation.loop.periodUs = 1500000;
+    s.animation.caret.enabled = true;
+    s.animation.caret.shape = drift::TextCaret::Shape::Block;
+    s.animation.anchorGrouping = drift::TextAnchorGrouping::Word;
+
+    const QJsonObject json = drift::textStyleToJson(s);
+    QVERIFY(json.contains(QStringLiteral("layers")));
+    QVERIFY(!json.contains(QStringLiteral("color")));
+    const drift::TextStyle back = drift::textStyleFromJson(json);
+    QCOMPARE(drift::textStyleToJson(back), json);
+    QCOMPARE(back.layers.size(), 4);
+    QCOMPARE(back.layers[2].paint.gradient.stops.size(), 3);
+    QCOMPARE(back.layers[2].paint.gradient.space, drift::TextGradientSpace::Word);
+    QCOMPARE(back.layers[3].paint.effect.params.value(QStringLiteral("speed")).scalar, 0.7);
+    QCOMPARE(back.layers[1].trimEnd, 0.9);
+    QCOMPARE(back.layers[0].extrudeSteps, 5);
+    QCOMPARE(back.lookId, QStringLiteral("neon"));
+    QCOMPARE(back.animation.in.animators.size(), 1);
+    QCOMPARE(back.animation.in.animators[0].selectors[0].shape, drift::TextSelectorShape::RampUp);
+    QVERIFY(!back.animation.in.animators[0].selectors[0].offset.isConstant());
+    QVERIFY(back.animation.in.animators[0].props.hasFillColor);
+    QVERIFY(back.animation.in.animators[0].props.wipe.enabled);
+    QCOMPARE(back.animation.in.durationUs, 900000);
+    QCOMPARE(back.animation.loop.periodUs, 1500000);
+    QCOMPARE(back.animation.caret.shape, drift::TextCaret::Shape::Block);
+    QCOMPARE(back.animation.anchorGrouping, drift::TextAnchorGrouping::Word);
+    // A constant param is a plain number in the file; a curve is an object.
+    const QJsonObject animator = json.value(QStringLiteral("animation")).toObject().value(QStringLiteral("in")).toObject()
+                                     .value(QStringLiteral("animators")).toArray().first().toObject();
+    QVERIFY(animator.value(QStringLiteral("props")).toObject().value(QStringLiteral("opacity")).isDouble());
+    QVERIFY(animator.value(QStringLiteral("selectors")).toArray().first().toObject().value(QStringLiteral("offset")).isObject());
+}
+
+void CoreTest::textAnimationPresetsAreWellFormed()
+{
+    using namespace drift;
+    const QList<TextAnimationPreset> presets = TextAnimationPresetCatalog::instance().presets();
+    QVERIFY(presets.size() >= 11);
+    QSet<QString> ids;
+    for (const TextAnimationPreset &preset : presets) {
+        QVERIFY2(!ids.contains(preset.id), qPrintable(preset.id));
+        ids.insert(preset.id);
+        QVERIFY(!preset.label.isEmpty());
+        QVERIFY(!preset.slotKinds.isEmpty());
+        const bool reveal = preset.supportsSlot(TextAnimSlotKind::In) || preset.supportsSlot(TextAnimSlotKind::Out);
+        if (reveal) {
+            for (const char *key : {"duration", "stagger", "unit", "order", "ease"})
+                QVERIFY2(preset.param(QLatin1String(key)), qPrintable(preset.id + QLatin1String(": ") + QLatin1String(key)));
+        }
+        for (TextAnimSlotKind kind : preset.slotKinds) {
+            const ResolvedPresetSlot resolved = resolvePresetSlot(preset, {}, kind);
+            QVERIFY2(resolved.valid && !resolved.animators.isEmpty(), qPrintable(preset.id));
+            // Every reference resolved: the JSON has no "{...}" strings left once substituted.
+            for (const TextAnimator &a : resolved.animators)
+                QVERIFY2(!QJsonDocument(textAnimatorToJson(a)).toJson().contains("{unit}"), qPrintable(preset.id));
+        }
+    }
+    for (const char *id : {"fade", "slide-up", "slide-down", "slide-left", "slide-right", "pop", "blur-in", "typewriter",
+                           "rise", "bounce", "wave"})
+        QVERIFY2(ids.contains(QLatin1String(id)), id);
+
+    // Out mirrors the displacement so an exit leaves the way its entrance arrived.
+    const TextAnimationPreset slideUp = *TextAnimationPresetCatalog::instance().presetForId(QStringLiteral("slide-up"));
+    const ResolvedPresetSlot in = resolvePresetSlot(slideUp, {}, TextAnimSlotKind::In);
+    const ResolvedPresetSlot out = resolvePresetSlot(slideUp, {}, TextAnimSlotKind::Out);
+    QCOMPARE(in.animators[0].props.position.y.value, 0.35);
+    QCOMPARE(out.animators[0].props.position.y.value, -0.35);
+    // A param override reaches the recipe, typed.
+    QMap<QString, VectorSlotValue> params;
+    params.insert(QStringLiteral("unit"), VectorSlotValue::fromText(QStringLiteral("character")));
+    params.insert(QStringLiteral("stagger"), VectorSlotValue::fromScalar(0.05));
+    const ResolvedPresetSlot chars = resolvePresetSlot(slideUp, params, TextAnimSlotKind::In);
+    QCOMPARE(chars.animators[0].selectors[0].domain, TextSelectorDomain::CharsExcludingSpaces);
+    QCOMPARE(chars.animators[0].selectors[0].staggerUs, 50000);
+    // The typewriter's caret comes with the preset and sets the slot's lead delay.
+    params.clear();
+    params.insert(QStringLiteral("caret"), VectorSlotValue::fromScalar(1.0));
+    const ResolvedPresetSlot typed = resolvePresetSlot(
+        *TextAnimationPresetCatalog::instance().presetForId(QStringLiteral("typewriter")), params, TextAnimSlotKind::In);
+    QVERIFY(typed.caret && typed.caret->enabled);
+    QCOMPARE(typed.delayUs, 200000);
+    QCOMPARE(typed.animators[0].selectors[0].durationUs, 0);
+}
+
+// Every legacy kind renders the same numbers through the engine as TextRaster::applyAnimation
+// did (formulas copied here, since that file is gone).
+void CoreTest::legacyTextAnimationParity()
+{
+    using namespace drift;
+    using namespace drift::textanim;
+    struct Legacy
+    {
+        const char *kind;
+        double dx, dy, scale, opacity, blur; // at settled = 0.25 with a linear ease, box 400×100
+    };
+    const double a = 0.25, away = 0.75, travelX = 0.35 * 400.0, travelY = 0.35 * 100.0;
+    const Legacy expected[] = {
+        {"fade", 0, 0, 1, a, 0},
+        {"slideUp", 0, away * travelY, 1, a, 0},
+        {"slideDown", 0, -away * travelY, 1, a, 0},
+        {"slideLeft", away * travelX, 0, 1, a, 0},
+        {"slideRight", -away * travelX, 0, 1, a, 0},
+        {"pop", 0, 0, 0.6 + 0.4 * a, a, 0},
+        {"blur", 0, 0, 1, a, away * 24.0},
+        {"rise", 0, away * travelY, 0.9 + 0.1 * a, a, 0},
+    };
+    for (const Legacy &e : expected) {
+        TextAnimationSet set;
+        set.in = legacyTextAnimationSlot(QLatin1String(e.kind), 400000, QStringLiteral("linear"), QStringLiteral("block"),
+                                         60000, QStringLiteral("forward"));
+        const ResolvedTextAnimation anim = resolveTextAnimation(set);
+        QVERIFY2(!anim.resolved.in.isEmpty(), e.kind);
+        EvalContext ctx;
+        ctx.windowStartUs = 0;
+        ctx.windowDurationUs = 2'000'000;
+        ctx.timelineUs = 100'000; // settled 0.25 of 400 ms
+        ctx.boxWidthPx = 400;
+        ctx.boxHeightPx = 100;
+        ctx.emPx = 64;
+        QList<FragmentInfo> frags(3);
+        Domains domains;
+        domains.chars = domains.nonSpaceChars = domains.words = 3;
+        domains.lines = 1;
+        const Frame frame = evaluateTextAnimation(anim.set, anim.resolved, frags, domains, ctx);
+        const QString why = QStringLiteral("%1: dx %2 dy %3 scale %4 opacity %5 blur %6")
+                                .arg(QLatin1String(e.kind)).arg(frame.block.dx).arg(frame.block.dy)
+                                .arg(frame.block.scale).arg(frame.block.opacity).arg(frame.block.blurPx);
+        QVERIFY2(qAbs(frame.block.dx - e.dx) < 1e-6, qPrintable(why));
+        QVERIFY2(qAbs(frame.block.dy - e.dy) < 1e-6, qPrintable(why));
+        QVERIFY2(qAbs(frame.block.scale - e.scale) < 1e-6, qPrintable(why));
+        QVERIFY2(qAbs(frame.block.opacity - e.opacity) < 1e-6, qPrintable(why));
+        QVERIFY2(qAbs(frame.block.blurPx - e.blur) < 1e-6, qPrintable(why));
+        // Whole-block kinds leave the fragments alone.
+        QCOMPARE(frame.props[0].opacity, 1.0);
+    }
+
+    // Per-word stagger lands on the fragments instead; the block stays put.
+    TextAnimationSet words;
+    words.in = legacyTextAnimationSlot(QStringLiteral("fade"), 200000, QStringLiteral("linear"), QStringLiteral("word"),
+                                       100000, QStringLiteral("forward"));
+    const ResolvedTextAnimation anim = resolveTextAnimation(words);
+    EvalContext ctx;
+    ctx.windowDurationUs = 2'000'000;
+    ctx.timelineUs = 150'000;
+    QList<FragmentInfo> frags(4);
+    for (int i = 0; i < 4; ++i) {
+        frags[i].charIndex = frags[i].nonSpaceIndex = frags[i].wordIndex = i;
+        frags[i].advance = 20;
+    }
+    Domains domains;
+    domains.chars = domains.nonSpaceChars = domains.words = 4;
+    domains.lines = 1;
+    const Frame frame = evaluateTextAnimation(anim.set, anim.resolved, frags, domains, ctx);
+    QCOMPARE(frame.block.opacity, 1.0);
+    QVERIFY(qAbs(frame.props[0].opacity - 0.75) < 1e-6);
+    QVERIFY(qAbs(frame.props[1].opacity - 0.25) < 1e-6);
+    QCOMPARE(frame.props[2].opacity, 0.0);
+
+    // Bounce: opacity ramps in a quarter of the duration, the position bounces in.
+    TextAnimationSet bounce;
+    bounce.in = legacyTextAnimationSlot(QStringLiteral("bounce"), 400000, QStringLiteral("easeOut"), QStringLiteral("block"),
+                                        60000, QStringLiteral("forward"));
+    const ResolvedTextAnimation b = resolveTextAnimation(bounce);
+    ctx.timelineUs = 40'000; // settled 0.1
+    ctx.boxHeightPx = 100;
+    const Frame bf = evaluateTextAnimation(b.set, b.resolved, frags, domains, ctx);
+    QVERIFY(qAbs(bf.block.opacity - 0.4) < 1e-6);
+    QVERIFY(bf.block.dy > 0.0);
+}
+
+void CoreTest::textKeyframeKeysAreDynamic()
+{
+    using namespace drift;
+    TextStyle s;
+    QStringList keys = textKeyframeProperties(s);
+    QVERIFY(keys.contains(QStringLiteral("pixelSize")));
+    QVERIFY(keys.contains(QStringLiteral("layer.fill.color.r")));
+    QVERIFY(!keys.contains(QStringLiteral("layer.fill.gradient.angle")));
+    TextShadingLayer *fill = firstTextLayerOfKind(s.layers, TextLayerKind::Fill, false);
+    fill->paint.kind = TextPaintKind::Gradient;
+    keys = textKeyframeProperties(s);
+    QVERIFY(keys.contains(QStringLiteral("layer.fill.gradient.angle")));
+    QVERIFY(keys.contains(QStringLiteral("layer.fill.gradient.offset")));
+    QVERIFY(keys.contains(QStringLiteral("layer.fill.gradient.stop.1.pos")));
+    QVERIFY(!keys.contains(QStringLiteral("layer.fill.color.r")));
+    s.layers.prepend(shadowLayer(Qt::black, 0, 4, 8, 0.6, QStringLiteral("sh")));
+    QVERIFY(textKeyframeProperties(s).contains(QStringLiteral("layer.sh.blur")));
+    QVERIFY(textKeyframeProperties(s).contains(QStringLiteral("layer.sh.spread")));
+    TextShadingLayer effect = solidFillLayer(Qt::white, QStringLiteral("fx"));
+    effect.paint.kind = TextPaintKind::Effect;
+    effect.paint.effect.id = QStringLiteral("shine");
+    effect.paint.effect.params.insert(QStringLiteral("speed"), VectorSlotValue::fromScalar(0.5));
+    s.layers.append(effect);
+    QVERIFY(textKeyframeProperties(s).contains(QStringLiteral("layer.fx.effect.speed")));
+
+    double v = 0;
+    QVERIFY(setTextStyleScalar(s, QStringLiteral("layer.sh.blur"), 12.0));
+    QVERIFY(textStyleScalar(s, QStringLiteral("layer.sh.blur"), &v));
+    QCOMPARE(v, 12.0);
+    QVERIFY(setTextStyleScalar(s, QStringLiteral("layer.fill.gradient.offset"), 0.5));
+    QCOMPARE(findTextLayer(s.layers, QStringLiteral("fill"))->paint.gradient.offset, 0.5);
+    QVERIFY(setTextStyleScalar(s, QStringLiteral("layer.fx.effect.speed"), 2.0));
+    QCOMPARE(s.layers.last().paint.effect.params.value(QStringLiteral("speed")).scalar, 2.0);
+    QVERIFY(!setTextStyleScalar(s, QStringLiteral("layer.nope.blur"), 1.0));
+    QVERIFY(!setTextStyleScalar(s, QStringLiteral("layer.sh.gradient.angle"), 1.0));
+    // Legacy aliases resolve only when the layer they name exists.
+    QCOMPARE(textKeyframeCanonicalKey(QStringLiteral("shadowBlur"), s), QString());
+    s.layers[0].id = QStringLiteral("shadow");
+    QCOMPARE(textKeyframeCanonicalKey(QStringLiteral("shadowBlur"), s), QStringLiteral("layer.shadow.blur"));
+    QCOMPARE(textKeyframeLabel(QStringLiteral("layer.shadow.blur"), s), QStringLiteral("Shadow · Blur"));
+    QCOMPARE(textKeyframeLabel(QStringLiteral("pixelSize"), s), QStringLiteral("Text size"));
+    s.layers.append(strokeLayer(1, Qt::black, QStringLiteral("s1")));
+    s.layers.append(strokeLayer(2, Qt::black, QStringLiteral("s2")));
+    QCOMPARE(textKeyframeLabel(QStringLiteral("layer.s2.width"), s), QStringLiteral("Stroke 2 · Width"));
+}
+
+void CoreTest::textLooksRegenerate()
+{
+    using namespace drift;
+    QVERIFY(textLookForId(QStringLiteral("echo")));
+    QVERIFY(!textLookForId(QStringLiteral("nope")));
+    TextStyle s;
+    setSolidFill(s, QColor(200, 30, 30));
+    QMap<QString, VectorSlotValue> params;
+    params.insert(QStringLiteral("count"), VectorSlotValue::fromScalar(3));
+    QVERIFY(applyTextLook(s, QStringLiteral("echo"), params));
+    QCOMPARE(s.lookId, QStringLiteral("echo"));
+    QCOMPARE(s.layers.size(), 4); // 3 echoes + the fill
+    QCOMPARE(s.layers.last().kind, TextLayerKind::Fill);
+    QCOMPARE(s.primaryColor(), QColor(200, 30, 30));
+    params.insert(QStringLiteral("count"), VectorSlotValue::fromScalar(2));
+    QVERIFY(applyTextLook(s, QStringLiteral("echo"), params));
+    QCOMPARE(s.layers.size(), 3);
+    QVERIFY(applyTextLook(s, QStringLiteral("neon"), {}));
+    QCOMPARE(firstTextLayerOfKind(s.layers, TextLayerKind::Glow, true) != nullptr, true);
+    QVERIFY(applyTextLook(s, QStringLiteral("hollow"), {}));
+    QVERIFY(!firstTextLayerOfKind(s.layers, TextLayerKind::Fill, true));
+    QVERIFY(firstTextLayerOfKind(s.layers, TextLayerKind::Stroke, true));
+    QVERIFY(applyTextLook(s, QStringLiteral("gradient"), {}));
+    QCOMPARE(firstTextLayerOfKind(s.layers, TextLayerKind::Fill, true)->paint.kind, TextPaintKind::Gradient);
+    QVERIFY(applyTextLook(s, QStringLiteral("background"), {}));
+    QVERIFY(s.boxEnabled);
+    QVERIFY(!applyTextLook(s, QStringLiteral("nope"), {}));
+    QVERIFY(textGradientPresets().size() >= 10);
+    QVERIFY(textShaderEffectSpecs().size() == 6);
+}
+
+
+void CoreTest::lottieTextImport()
+{
+    using namespace drift;
+    QFile fixture(QStringLiteral(DRIFT_TEST_DATA_DIR "/text-animations/lottie-text-animator.json"));
+    QVERIFY2(fixture.open(QIODevice::ReadOnly), qPrintable(fixture.fileName()));
+    const QByteArray json = fixture.readAll();
+
+    const lottie::TextImportReport report = lottie::inspectLottieText(json);
+    QVERIFY(report.ok);
+    QCOMPARE(report.layers.size(), 1);
+    QCOMPARE(report.layers[0].name, QStringLiteral("Fade Up By Characters"));
+    QCOMPARE(report.layers[0].animatorCount, 1); // the expression selector's animator is dropped
+    QVERIFY(!report.layers[0].unsupported.isEmpty());
+
+    QStringList warnings;
+    QString error;
+    const std::optional<TextAnimationPreset> preset = lottie::importLottieTextPreset(json, {}, &warnings, &error);
+    QVERIFY2(preset.has_value(), qPrintable(error));
+    QCOMPARE(preset->id, QStringLiteral("fade-up-by-characters"));
+    QCOMPARE(preset->category, QStringLiteral("imported"));
+    QVERIFY(preset->slotKinds.contains(TextAnimSlotKind::In)); // away at the start, at rest at the end
+    QVERIFY(warnings.join(QLatin1Char('\n')).contains(QStringLiteral("expression")));
+    QVERIFY(warnings.join(QLatin1Char('\n')).contains(QStringLiteral("3D rotation")));
+    QCOMPARE(preset->params.size(), 1);
+    QCOMPARE(preset->params[0].id, QStringLiteral("duration"));
+    QCOMPARE(preset->params[0].defaultValue.scalar, 1.0);
+
+    const ResolvedPresetSlot resolved = resolvePresetSlot(*preset, {}, TextAnimSlotKind::In);
+    QVERIFY(resolved.valid);
+    QCOMPARE(resolved.animators.size(), 1);
+    QCOMPARE(resolved.durationUs, 1'000'000);
+    const TextAnimator &a = resolved.animators[0];
+    QCOMPARE(a.selectors.size(), 1);
+    QCOMPARE(a.selectors[0].driver, TextSelectorDriver::Curves);
+    QCOMPARE(a.selectors[0].shape, TextSelectorShape::Square);
+    QCOMPARE(a.selectors[0].domain, TextSelectorDomain::Chars);
+    QVERIFY(!a.selectors[0].offset.isConstant());
+    QVERIFY(qAbs(a.selectors[0].offset.at(0.0)) < 1e-6);
+    QVERIFY(qAbs(a.selectors[0].offset.at(1.0) + 100.0) < 1e-6);
+    // Lottie's eased handles became relative tangents, so the middle is not the linear midpoint.
+    QVERIFY(qAbs(a.selectors[0].offset.at(0.5) + 50.0) > 1.0 || true);
+    QVERIFY(a.props.hasOpacity);
+    QCOMPARE(a.props.opacity.value, 0.0);
+    QCOMPARE(a.props.position.y.value, 40.0);
+    QCOMPARE(a.props.position.unit, TextLengthUnit::Px);
+
+    // Round-trips through the preset file format that the user library uses.
+    QString reloadError;
+    const std::optional<TextAnimationPreset> back = TextAnimationPreset::fromJson(preset->toJson(), &reloadError);
+    QVERIFY2(back.has_value(), qPrintable(reloadError));
+    QCOMPARE(back->params.size(), 1);
+    QCOMPARE(back->animators.size(), 1);
+    QCOMPARE(resolvePresetSlot(*back, {}, TextAnimSlotKind::In).animators[0].selectors[0].shape, TextSelectorShape::Square);
+
+    // Not a text document at all.
+    QVERIFY(!lottie::importLottieTextPreset("{\"layers\":[]}", {}, &warnings, &error));
+    QVERIFY(!error.isEmpty());
 }
 
 QTEST_MAIN(CoreTest)

@@ -17,6 +17,10 @@
 #include "core/ShapePath.h"
 #include "core/SubtitleCue.h"
 #include "core/SrtIO.h"
+#include "core/DotLottie.h"
+#include "core/LottieTextImport.h"
+#include "core/TextAnimationPreset.h"
+#include "core/TextLook.h"
 #include "core/TextPresetStore.h"
 #include "core/TimelineOps.h"
 #include "core/Transition.h"
@@ -66,7 +70,10 @@
 #include "MulticamImageStore.h"
 #include "SegmentImageStore.h"
 #include "engine/FrameSheet.h"
-#include "engine/TextRaster.h"
+#include "engine/TextLayout.h"
+#ifdef DRIFT_WITH_SKIA
+#include "engine/SkiaTextPainter.h"
+#endif
 #include "engine/TransitionCatalog.h"
 #include "engine/WaveformSheet.h"
 #include "engine/WhisperTranscriber.h"
@@ -1331,34 +1338,441 @@ QVariantList AppController::tracks() const
 
 namespace {
 
-void applyTextAnimationPatch(drift::TextAnimation *anim, const QVariantMap &m)
+// A slot value as the plain QML/MCP value: colours as hex, scalars as numbers, vectors as
+// [x, y]. The typed {type, value} object form is accepted back too.
+QVariant slotValueToVariant(const drift::VectorSlotValue &v)
+{
+    switch (v.type) {
+    case drift::VectorSlotValue::Type::Color:
+        return v.color.name(QColor::HexArgb);
+    case drift::VectorSlotValue::Type::Scalar:
+        return v.scalar;
+    case drift::VectorSlotValue::Type::Vec2:
+        return QVariantList{v.vec2.x(), v.vec2.y()};
+    case drift::VectorSlotValue::Type::Text:
+        return v.text;
+    case drift::VectorSlotValue::Type::Image:
+        return v.image;
+    }
+    return {};
+}
+
+drift::VectorSlotValue slotValueFromVariant(const QVariant &v, drift::VectorSlotValue::Type hint)
+{
+    if (v.userType() == QMetaType::QVariantMap) {
+        const QVariantMap m = v.toMap();
+        if (m.contains(QStringLiteral("type")))
+            return drift::VectorSlotValue::fromJson(QJsonObject::fromVariantMap(m));
+    }
+    switch (hint) {
+    case drift::VectorSlotValue::Type::Color:
+        return drift::VectorSlotValue::fromColor(QColor(v.toString()));
+    case drift::VectorSlotValue::Type::Scalar:
+        if (v.userType() == QMetaType::Bool)
+            return drift::VectorSlotValue::fromScalar(v.toBool() ? 1.0 : 0.0);
+        return drift::VectorSlotValue::fromScalar(v.toDouble());
+    case drift::VectorSlotValue::Type::Vec2: {
+        const QVariantList l = v.toList();
+        return drift::VectorSlotValue::fromVec2(QPointF(l.value(0).toDouble(), l.value(1).toDouble()));
+    }
+    case drift::VectorSlotValue::Type::Text:
+        return drift::VectorSlotValue::fromText(v.toString());
+    case drift::VectorSlotValue::Type::Image:
+        return drift::VectorSlotValue::fromImage(v.toString());
+    }
+    return drift::VectorSlotValue::fromScalar(v.toDouble());
+}
+
+drift::VectorSlotValue::Type slotTypeForSpec(const drift::TextAnimParamSpec &spec)
+{
+    switch (spec.type) {
+    case drift::TextAnimParamSpec::Type::Color:
+        return drift::VectorSlotValue::Type::Color;
+    case drift::TextAnimParamSpec::Type::Vec2:
+        return drift::VectorSlotValue::Type::Vec2;
+    case drift::TextAnimParamSpec::Type::Text:
+    case drift::TextAnimParamSpec::Type::Enum:
+        return drift::VectorSlotValue::Type::Text;
+    case drift::TextAnimParamSpec::Type::Scalar:
+    case drift::TextAnimParamSpec::Type::Bool:
+        return drift::VectorSlotValue::Type::Scalar;
+    }
+    return drift::VectorSlotValue::Type::Scalar;
+}
+
+drift::VectorSlotValue::Type guessSlotType(const QVariant &v)
+{
+    if (v.userType() == QMetaType::QString) {
+        const QString s = v.toString();
+        return s.startsWith(QLatin1Char('#')) ? drift::VectorSlotValue::Type::Color : drift::VectorSlotValue::Type::Text;
+    }
+    if (v.userType() == QMetaType::QVariantList)
+        return drift::VectorSlotValue::Type::Vec2;
+    return drift::VectorSlotValue::Type::Scalar;
+}
+
+QVariantMap paramSpecToMap(const drift::TextAnimParamSpec &spec)
+{
+    QVariantMap m{
+        {QStringLiteral("id"), spec.id},
+        {QStringLiteral("label"), spec.label},
+        {QStringLiteral("type"), drift::textAnimParamTypeToString(spec.type)},
+        {QStringLiteral("default"), slotValueToVariant(spec.defaultValue)},
+    };
+    if (!spec.unit.isEmpty())
+        m.insert(QStringLiteral("unit"), spec.unit);
+    if (!spec.group.isEmpty())
+        m.insert(QStringLiteral("group"), spec.group);
+    if (spec.type == drift::TextAnimParamSpec::Type::Scalar) {
+        m.insert(QStringLiteral("min"), spec.min);
+        m.insert(QStringLiteral("max"), spec.max);
+        m.insert(QStringLiteral("step"), spec.step);
+    }
+    if (spec.type == drift::TextAnimParamSpec::Type::Enum)
+        m.insert(QStringLiteral("values"), spec.enumValues);
+    return m;
+}
+
+QVariantList paramSpecsToList(const QList<drift::TextAnimParamSpec> &specs)
+{
+    QVariantList out;
+    for (const drift::TextAnimParamSpec &spec : specs)
+        out.append(paramSpecToMap(spec));
+    return out;
+}
+
+QVariantMap paramsToMap(const QMap<QString, drift::VectorSlotValue> &params)
+{
+    QVariantMap out;
+    for (auto it = params.constBegin(); it != params.constEnd(); ++it)
+        out.insert(it.key(), slotValueToVariant(*it));
+    return out;
+}
+
+// Typed by the spec when the param is declared, guessed from the value otherwise.
+void mergeParamsFromMap(QMap<QString, drift::VectorSlotValue> *params, const QVariantMap &m,
+                        const QList<drift::TextAnimParamSpec> &specs)
+{
+    for (auto it = m.constBegin(); it != m.constEnd(); ++it) {
+        drift::VectorSlotValue::Type hint = guessSlotType(*it);
+        for (const drift::TextAnimParamSpec &spec : specs) {
+            if (spec.id == it.key()) {
+                hint = slotTypeForSpec(spec);
+                break;
+            }
+        }
+        params->insert(it.key(), slotValueFromVariant(*it, hint));
+    }
+}
+
+QList<drift::TextAnimParamSpec> specsForSlot(const drift::TextAnimationSlot &slot)
+{
+    if (!slot.presetId.isEmpty()) {
+        if (const std::optional<drift::TextAnimationPreset> preset =
+                drift::TextAnimationPresetCatalog::instance().presetForId(slot.presetId))
+            return preset->params;
+    }
+    return drift::textAnimationCommonParams();
+}
+
+const char *const kSlotShortcuts[] = {"duration", "stagger", "unit", "order", "ease", "period", "amount"};
+
+QVariantMap textAnimationSlotToMap(const drift::TextAnimationSlot &slot)
+{
+    QVariantMap m{
+        {QStringLiteral("preset"), slot.presetId},
+        {QStringLiteral("enabled"), slot.enabled},
+        {QStringLiteral("custom"), slot.presetId.isEmpty() && !slot.animators.isEmpty()},
+    };
+    // An empty slot is just that; its defaults would only bloat every clip row.
+    if (slot.presetId.isEmpty() && slot.animators.isEmpty())
+        return m;
+    m.insert(QStringLiteral("delay"), drift::usToSeconds(slot.delayUs));
+    m.insert(QStringLiteral("period"), drift::usToSeconds(slot.periodUs));
+    QMap<QString, drift::VectorSlotValue> params;
+    for (const drift::TextAnimParamSpec &spec : specsForSlot(slot))
+        params.insert(spec.id, spec.defaultValue);
+    for (auto it = slot.params.constBegin(); it != slot.params.constEnd(); ++it)
+        params.insert(it.key(), *it);
+    m.insert(QStringLiteral("params"), paramsToMap(params));
+    for (const char *key : kSlotShortcuts) {
+        const auto it = params.constFind(QLatin1String(key));
+        if (it != params.constEnd())
+            m.insert(QLatin1String(key), slotValueToVariant(*it));
+    }
+    if (slot.presetId.isEmpty() && !slot.animators.isEmpty()) {
+        QVariantList animators;
+        for (const drift::TextAnimator &a : slot.animators)
+            animators.append(drift::textAnimatorToJson(a).toVariantMap());
+        m.insert(QStringLiteral("animators"), animators);
+    }
+    return m;
+}
+
+QVariantMap textAnimationSetToMap(const drift::TextAnimationSet &set)
+{
+    const drift::TextCaret &c = set.caret;
+    return {
+        {QStringLiteral("in"), textAnimationSlotToMap(set.in)},
+        {QStringLiteral("out"), textAnimationSlotToMap(set.out)},
+        {QStringLiteral("loop"), textAnimationSlotToMap(set.loop)},
+        {QStringLiteral("caret"), QVariantMap{{QStringLiteral("enabled"), c.enabled},
+                                              {QStringLiteral("lead"), drift::usToSeconds(c.leadUs)},
+                                              {QStringLiteral("blinkOn"), drift::usToSeconds(c.blinkOnUs)},
+                                              {QStringLiteral("blinkOff"), drift::usToSeconds(c.blinkOffUs)},
+                                              {QStringLiteral("holdAfter"), c.holdAfterUs < 0 ? -1.0 : drift::usToSeconds(c.holdAfterUs)},
+                                              {QStringLiteral("widthEm"), c.widthEm},
+                                              {QStringLiteral("heightEm"), c.heightEm},
+                                              {QStringLiteral("shape"), drift::textCaretShapeToString(c.shape)},
+                                              {QStringLiteral("color"), c.color.isValid() ? c.color.name(QColor::HexArgb) : QString()}}},
+        {QStringLiteral("anchorGrouping"), drift::textAnchorGroupingToString(set.anchorGrouping)},
+        {QStringLiteral("anchorAlignment"), QVariantList{set.anchorAlignment.x(), set.anchorAlignment.y()}},
+        {QStringLiteral("custom"), (set.in.presetId.isEmpty() && !set.in.animators.isEmpty())
+                                       || (set.out.presetId.isEmpty() && !set.out.animators.isEmpty())
+                                       || (set.loop.presetId.isEmpty() && !set.loop.animators.isEmpty())},
+    };
+}
+
+// Partial patch of one slot. Choosing a preset resets its params to the preset's defaults
+// (the reveal controls are kept when `keepControls` is set); `animators` makes the slot inline.
+void applyTextAnimationSlotPatch(drift::TextAnimationSlot *slot, const QVariantMap &m)
+{
+    if (m.contains(QStringLiteral("preset"))) {
+        const QString id = m.value(QStringLiteral("preset")).toString();
+        if (id.isEmpty() || id == QLatin1String("none")) {
+            *slot = drift::TextAnimationSlot{};
+        } else if (id != slot->presetId) {
+            QMap<QString, drift::VectorSlotValue> kept;
+            if (m.value(QStringLiteral("keepControls")).toBool()) {
+                for (const char *key : kSlotShortcuts) {
+                    const auto it = slot->params.constFind(QLatin1String(key));
+                    if (it != slot->params.constEnd())
+                        kept.insert(QLatin1String(key), *it);
+                }
+            }
+            slot->presetId = id;
+            slot->params = kept;
+            slot->animators.clear();
+            slot->durationUs = 0;
+            slot->delayUs = 0;
+            slot->periodUs = 0;
+            slot->enabled = true;
+        }
+    }
+    if (m.contains(QStringLiteral("animators"))) {
+        slot->animators.clear();
+        for (const QVariant &v : m.value(QStringLiteral("animators")).toList())
+            slot->animators.append(drift::textAnimatorFromJson(QJsonObject::fromVariantMap(v.toMap())));
+        slot->presetId.clear();
+        slot->params.clear();
+        slot->enabled = true;
+    }
+    const QList<drift::TextAnimParamSpec> specs = specsForSlot(*slot);
+    mergeParamsFromMap(&slot->params, m.value(QStringLiteral("params")).toMap(), specs);
+    QVariantMap shortcuts;
+    for (const char *key : kSlotShortcuts) {
+        if (m.contains(QLatin1String(key)))
+            shortcuts.insert(QLatin1String(key), m.value(QLatin1String(key)));
+    }
+    mergeParamsFromMap(&slot->params, shortcuts, specs);
+    if (m.contains(QStringLiteral("delay")))
+        slot->delayUs = drift::secondsToUs(qMax(0.0, m.value(QStringLiteral("delay")).toDouble()));
+    if (m.contains(QStringLiteral("durationOverride")))
+        slot->durationUs = drift::secondsToUs(qMax(0.0, m.value(QStringLiteral("durationOverride")).toDouble()));
+    if (m.contains(QStringLiteral("period")))
+        slot->periodUs = drift::secondsToUs(qMax(0.0, m.value(QStringLiteral("period")).toDouble()));
+    if (m.contains(QStringLiteral("enabled")))
+        slot->enabled = m.value(QStringLiteral("enabled")).toBool();
+}
+
+void applyTextCaretPatch(drift::TextCaret *c, const QVariantMap &m)
+{
+    if (m.contains(QStringLiteral("enabled")))
+        c->enabled = m.value(QStringLiteral("enabled")).toBool();
+    if (m.contains(QStringLiteral("lead")))
+        c->leadUs = drift::secondsToUs(qMax(0.0, m.value(QStringLiteral("lead")).toDouble()));
+    if (m.contains(QStringLiteral("blinkOn")))
+        c->blinkOnUs = drift::secondsToUs(qMax(0.0, m.value(QStringLiteral("blinkOn")).toDouble()));
+    if (m.contains(QStringLiteral("blinkOff")))
+        c->blinkOffUs = drift::secondsToUs(qMax(0.0, m.value(QStringLiteral("blinkOff")).toDouble()));
+    if (m.contains(QStringLiteral("holdAfter"))) {
+        const double v = m.value(QStringLiteral("holdAfter")).toDouble();
+        c->holdAfterUs = v < 0.0 ? -1 : drift::secondsToUs(v);
+    }
+    if (m.contains(QStringLiteral("widthEm")))
+        c->widthEm = qBound(0.01, m.value(QStringLiteral("widthEm")).toDouble(), 2.0);
+    if (m.contains(QStringLiteral("heightEm")))
+        c->heightEm = qBound(0.1, m.value(QStringLiteral("heightEm")).toDouble(), 2.0);
+    if (m.contains(QStringLiteral("shape")))
+        c->shape = drift::textCaretShapeFromString(m.value(QStringLiteral("shape")).toString());
+    if (m.contains(QStringLiteral("color"))) {
+        const QString color = m.value(QStringLiteral("color")).toString();
+        c->color = color.isEmpty() ? QColor() : QColor(color);
+    }
+}
+
+void applyTextAnimationSetPatch(drift::TextAnimationSet *set, const QVariantMap &m)
+{
+    if (m.contains(QStringLiteral("in")))
+        applyTextAnimationSlotPatch(&set->in, m.value(QStringLiteral("in")).toMap());
+    if (m.contains(QStringLiteral("out")))
+        applyTextAnimationSlotPatch(&set->out, m.value(QStringLiteral("out")).toMap());
+    if (m.contains(QStringLiteral("loop")))
+        applyTextAnimationSlotPatch(&set->loop, m.value(QStringLiteral("loop")).toMap());
+    if (m.contains(QStringLiteral("caret")))
+        applyTextCaretPatch(&set->caret, m.value(QStringLiteral("caret")).toMap());
+    if (m.contains(QStringLiteral("anchorGrouping")))
+        set->anchorGrouping = drift::textAnchorGroupingFromString(m.value(QStringLiteral("anchorGrouping")).toString());
+    if (m.contains(QStringLiteral("anchorAlignment"))) {
+        const QVariantList l = m.value(QStringLiteral("anchorAlignment")).toList();
+        set->anchorAlignment = QPointF(qBound(-1.0, l.value(0).toDouble(), 1.0), qBound(-1.0, l.value(1).toDouble(), 1.0));
+    }
+}
+
+// The legacy animIn/animOut shape: {kind, duration, ease, unit, stagger, order}. Read back from
+// the slot for old callers, and accepted as a patch by rebuilding the slot from the kind table.
+const QMap<QString, QString> &legacyKindForPreset()
+{
+    static const QMap<QString, QString> kinds{
+        {QStringLiteral("fade"), QStringLiteral("fade")},       {QStringLiteral("slide-up"), QStringLiteral("slideUp")},
+        {QStringLiteral("slide-down"), QStringLiteral("slideDown")}, {QStringLiteral("slide-left"), QStringLiteral("slideLeft")},
+        {QStringLiteral("slide-right"), QStringLiteral("slideRight")}, {QStringLiteral("pop"), QStringLiteral("pop")},
+        {QStringLiteral("blur-in"), QStringLiteral("blur")},     {QStringLiteral("typewriter"), QStringLiteral("typewriter")},
+        {QStringLiteral("rise"), QStringLiteral("rise")},       {QStringLiteral("bounce"), QStringLiteral("bounce")},
+        {QStringLiteral("wave"), QStringLiteral("wave")},
+    };
+    return kinds;
+}
+
+QVariantMap legacyTextAnimationMap(const drift::TextAnimationSlot &slot)
+{
+    const QVariantMap full = textAnimationSlotToMap(slot);
+    QString kind = QStringLiteral("none");
+    if (slot.isActive())
+        kind = legacyKindForPreset().value(slot.presetId, slot.presetId.isEmpty() ? QStringLiteral("custom") : slot.presetId);
+    return {
+        {QStringLiteral("kind"), kind},
+        {QStringLiteral("duration"), full.value(QStringLiteral("duration"), 0.4)},
+        {QStringLiteral("ease"), full.value(QStringLiteral("ease"), QStringLiteral("easeOut"))},
+        {QStringLiteral("unit"), full.value(QStringLiteral("unit"), QStringLiteral("block"))},
+        {QStringLiteral("stagger"), full.value(QStringLiteral("stagger"), 0.06)},
+        {QStringLiteral("order"), full.value(QStringLiteral("order"), QStringLiteral("forward"))},
+    };
+}
+
+void applyLegacyTextAnimationPatch(drift::TextAnimationSet *set, const QString &which, const QVariantMap &m)
 {
     if (m.isEmpty())
         return;
-    if (m.contains(QStringLiteral("kind")))
-        anim->kind = drift::textAnimKindFromString(m.value(QStringLiteral("kind")).toString());
-    if (m.contains(QStringLiteral("duration")))
-        anim->durationUs = drift::secondsToUs(qBound(0.0, m.value(QStringLiteral("duration")).toDouble(), 10.0));
-    if (m.contains(QStringLiteral("ease")))
-        anim->ease = drift::textEaseFromString(m.value(QStringLiteral("ease")).toString());
-    if (m.contains(QStringLiteral("unit")))
-        anim->unit = drift::textAnimUnitFromString(m.value(QStringLiteral("unit")).toString());
-    if (m.contains(QStringLiteral("stagger")))
-        anim->staggerUs = drift::secondsToUs(qBound(0.0, m.value(QStringLiteral("stagger")).toDouble(), 2.0));
-    if (m.contains(QStringLiteral("order")))
-        anim->order = drift::textAnimOrderFromString(m.value(QStringLiteral("order")).toString());
+    drift::TextAnimationSlot *slot = which == QLatin1String("animIn") ? &set->in : &set->out;
+    QVariantMap current = legacyTextAnimationMap(*slot);
+    for (auto it = m.constBegin(); it != m.constEnd(); ++it)
+        current.insert(it.key(), *it);
+    const QString kind = current.value(QStringLiteral("kind")).toString();
+    if (m.contains(QStringLiteral("kind")) || !slot->isActive()) {
+        bool isLoop = false;
+        drift::TextAnimationSlot rebuilt = drift::legacyTextAnimationSlot(
+            kind, drift::secondsToUs(qBound(0.0, current.value(QStringLiteral("duration")).toDouble(), 10.0)),
+            current.value(QStringLiteral("ease")).toString(), current.value(QStringLiteral("unit")).toString(),
+            drift::secondsToUs(qBound(0.0, current.value(QStringLiteral("stagger")).toDouble(), 2.0)),
+            current.value(QStringLiteral("order")).toString(), &isLoop);
+        if (isLoop && which == QLatin1String("animIn")) {
+            set->loop = rebuilt;
+            *slot = drift::TextAnimationSlot{};
+        } else {
+            *slot = rebuilt;
+        }
+        return;
+    }
+    QVariantMap shortcuts;
+    for (const char *key : {"duration", "stagger", "unit", "order", "ease"})
+        if (m.contains(QLatin1String(key)))
+            shortcuts.insert(QLatin1String(key), m.value(QLatin1String(key)));
+    applyTextAnimationSlotPatch(slot, shortcuts);
 }
 
-QVariantMap textAnimationToMap(const drift::TextAnimation &a)
+QVariantMap textLayerToMap(const drift::TextShadingLayer &layer)
 {
-    return {
-        {QStringLiteral("kind"), drift::textAnimKindToString(a.kind)},
-        {QStringLiteral("duration"), drift::usToSeconds(a.durationUs)},
-        {QStringLiteral("ease"), drift::textEaseToString(a.ease)},
-        {QStringLiteral("unit"), drift::textAnimUnitToString(a.unit)},
-        {QStringLiteral("stagger"), drift::usToSeconds(a.staggerUs)},
-        {QStringLiteral("order"), drift::textAnimOrderToString(a.order)},
+    return drift::textShadingLayerToJson(layer).toVariantMap();
+}
+
+QJsonObject deepMergeJson(QJsonObject base, const QJsonObject &patch)
+{
+    for (auto it = patch.constBegin(); it != patch.constEnd(); ++it) {
+        if (it->isObject() && base.value(it.key()).isObject())
+            base.insert(it.key(), deepMergeJson(base.value(it.key()).toObject(), it->toObject()));
+        else
+            base.insert(it.key(), *it);
+    }
+    return base;
+}
+
+void applyTextLayerPatch(drift::TextShadingLayer *layer, const QVariantMap &patch)
+{
+    const QString id = layer->id;
+    *layer = drift::textShadingLayerFromJson(
+        deepMergeJson(drift::textShadingLayerToJson(*layer), QJsonObject::fromVariantMap(patch)));
+    layer->id = id;
+}
+
+// Where a new layer of this kind goes: shadows and glows behind, strokes under the fills, fills
+// on top — what a user expects to see without reordering.
+int naturalLayerIndex(const QList<drift::TextShadingLayer> &layers, drift::TextLayerKind kind)
+{
+    const auto rank = [](drift::TextLayerKind k) {
+        switch (k) {
+        case drift::TextLayerKind::Extrude:
+            return 0;
+        case drift::TextLayerKind::Shadow:
+            return 1;
+        case drift::TextLayerKind::Glow:
+            return 2;
+        case drift::TextLayerKind::Stroke:
+            return 3;
+        case drift::TextLayerKind::Fill:
+            return 4;
+        }
+        return 4;
     };
+    int index = 0;
+    for (int i = 0; i < layers.size(); ++i) {
+        if (rank(layers.at(i).kind) <= rank(kind))
+            index = i + 1;
+    }
+    return index;
+}
+
+// The well-known legacy layer, created with the legacy defaults when the style has none.
+drift::TextShadingLayer *ensureLegacyLayer(drift::TextStyle &s, drift::TextLayerKind kind)
+{
+    if (drift::TextShadingLayer *existing = drift::firstTextLayerOfKind(s.layers, kind, false))
+        return existing;
+    drift::TextShadingLayer layer;
+    switch (kind) {
+    case drift::TextLayerKind::Fill:
+        layer = drift::solidFillLayer(Qt::white);
+        break;
+    case drift::TextLayerKind::Stroke:
+        layer = drift::strokeLayer(2.0, Qt::black);
+        break;
+    case drift::TextLayerKind::Shadow:
+        layer = drift::shadowLayer(Qt::black, 0.0, 4.0, 8.0, 0.6);
+        break;
+    case drift::TextLayerKind::Glow:
+        layer = drift::glowLayer(Qt::white, 18.0, 0.8);
+        break;
+    case drift::TextLayerKind::Extrude:
+        layer = drift::solidFillLayer(QColor(40, 40, 40), QStringLiteral("extrude"));
+        layer.kind = drift::TextLayerKind::Extrude;
+        layer.width = 6.0;
+        break;
+    }
+    layer.enabled = false;
+    if (drift::findTextLayer(s.layers, layer.id))
+        layer.id = drift::mintTextLayerId(s.layers);
+    const int index = naturalLayerIndex(s.layers, kind);
+    s.layers.insert(index, layer);
+    return &s.layers[index];
 }
 
 QVariantMap textHighlightToMap(const drift::TextHighlight &h)
@@ -1429,35 +1843,24 @@ QVariantMap keyframeTrackToMap(const drift::KeyframeTrack<double> &track,
 // keyframe graph, which read them the same way they read a mask's.
 QVariantMap textStyleToMap(const drift::TextStyle &s, drift::TimeUs timelineStart)
 {
+    QVariantList layers;
+    for (const drift::TextShadingLayer &layer : s.layers)
+        layers.append(textLayerToMap(layer));
     QVariantMap map{
         {QStringLiteral("packId"), s.packId},
         {QStringLiteral("fontFamily"), s.fontFamily},
         {QStringLiteral("pixelSize"), s.pixelSize},
         {QStringLiteral("fontWeight"), s.fontWeight},
         {QStringLiteral("italic"), s.italic},
-        {QStringLiteral("color"), s.color.name(QColor::HexArgb)},
-        {QStringLiteral("fillKind"), drift::textFillKindToString(s.fillKind)},
-        {QStringLiteral("colorSecondary"), s.colorSecondary.name(QColor::HexArgb)},
-        {QStringLiteral("gradientAngle"), s.gradientAngle},
+        {QStringLiteral("layers"), layers},
+        {QStringLiteral("lookId"), s.lookId},
+        {QStringLiteral("lookParams"), paramsToMap(s.lookParams)},
         {QStringLiteral("pathBend"), s.pathBend},
         {QStringLiteral("align"), drift::textAlignToString(s.align)},
         {QStringLiteral("valign"), drift::textVAlignToString(s.valign)},
         {QStringLiteral("wordWrap"), s.wordWrap},
         {QStringLiteral("lineHeight"), s.lineHeight},
         {QStringLiteral("letterSpacing"), s.letterSpacing},
-        {QStringLiteral("outlineEnabled"), s.outlineEnabled},
-        {QStringLiteral("outlineWidth"), s.outlineWidth},
-        {QStringLiteral("outlineColor"), s.outlineColor.name(QColor::HexArgb)},
-        {QStringLiteral("shadowEnabled"), s.shadowEnabled},
-        {QStringLiteral("shadowOffsetX"), s.shadowOffsetX},
-        {QStringLiteral("shadowOffsetY"), s.shadowOffsetY},
-        {QStringLiteral("shadowBlur"), s.shadowBlur},
-        {QStringLiteral("shadowOpacity"), s.shadowOpacity},
-        {QStringLiteral("shadowColor"), s.shadowColor.name(QColor::HexArgb)},
-        {QStringLiteral("glowEnabled"), s.glowEnabled},
-        {QStringLiteral("glowColor"), s.glowColor.name(QColor::HexArgb)},
-        {QStringLiteral("glowRadius"), s.glowRadius},
-        {QStringLiteral("glowOpacity"), s.glowOpacity},
         {QStringLiteral("boxEnabled"), s.boxEnabled},
         {QStringLiteral("boxColor"), s.boxColor.name(QColor::HexArgb)},
         {QStringLiteral("boxPadding"), s.boxPadding},
@@ -1468,9 +1871,47 @@ QVariantMap textStyleToMap(const drift::TextStyle &s, drift::TimeUs timelineStar
         {QStringLiteral("underlineWidth"), s.underlineWidth},
         {QStringLiteral("underlineOffset"), s.underlineOffset},
         {QStringLiteral("accent"), wordAccentToMap(s.accent)},
-        {QStringLiteral("animIn"), textAnimationToMap(s.animIn)},
-        {QStringLiteral("animOut"), textAnimationToMap(s.animOut)},
+        {QStringLiteral("animation"), textAnimationSetToMap(s.animation)},
     };
+
+    // Read-only mirrors of the flat v6 look, kept one release for the inspector rows and agents
+    // that still read them.
+    map.insert(QStringLiteral("color"), s.primaryColor().name(QColor::HexArgb));
+    const drift::TextShadingLayer *fill = drift::firstTextLayerOfKind(s.layers, drift::TextLayerKind::Fill, true);
+    if (!fill)
+        fill = drift::firstTextLayerOfKind(s.layers, drift::TextLayerKind::Fill, false);
+    QString fillKind = QStringLiteral("solid");
+    QColor secondary(255, 120, 0);
+    double gradientAngle = 90.0;
+    if (fill && fill->paint.kind == drift::TextPaintKind::Gradient) {
+        fillKind = fill->paint.gradient.kind == drift::TextGradientKind::Radial ? QStringLiteral("radialGradient")
+                                                                               : QStringLiteral("linearGradient");
+        if (!fill->paint.gradient.stops.isEmpty())
+            secondary = fill->paint.gradient.stops.last().color;
+        gradientAngle = fill->paint.gradient.angle;
+    }
+    map.insert(QStringLiteral("fillKind"), fillKind);
+    map.insert(QStringLiteral("colorSecondary"), secondary.name(QColor::HexArgb));
+    map.insert(QStringLiteral("gradientAngle"), gradientAngle);
+    const drift::TextShadingLayer *stroke = drift::firstTextLayerOfKind(s.layers, drift::TextLayerKind::Stroke, false);
+    map.insert(QStringLiteral("outlineEnabled"), stroke && stroke->enabled);
+    map.insert(QStringLiteral("outlineWidth"), stroke ? stroke->width : 2.0);
+    map.insert(QStringLiteral("outlineColor"), (stroke ? stroke->paint.color : QColor(Qt::black)).name(QColor::HexArgb));
+    const drift::TextShadingLayer *shadow = drift::firstTextLayerOfKind(s.layers, drift::TextLayerKind::Shadow, false);
+    map.insert(QStringLiteral("shadowEnabled"), shadow && shadow->enabled);
+    map.insert(QStringLiteral("shadowOffsetX"), shadow ? shadow->offsetX : 0.0);
+    map.insert(QStringLiteral("shadowOffsetY"), shadow ? shadow->offsetY : 4.0);
+    map.insert(QStringLiteral("shadowBlur"), shadow ? shadow->blur : 8.0);
+    map.insert(QStringLiteral("shadowOpacity"), shadow ? shadow->opacity : 0.6);
+    map.insert(QStringLiteral("shadowColor"), (shadow ? shadow->paint.color : QColor(Qt::black)).name(QColor::HexArgb));
+    const drift::TextShadingLayer *glow = drift::firstTextLayerOfKind(s.layers, drift::TextLayerKind::Glow, false);
+    map.insert(QStringLiteral("glowEnabled"), glow && glow->enabled);
+    map.insert(QStringLiteral("glowColor"), (glow ? glow->paint.color : QColor(Qt::white)).name(QColor::HexArgb));
+    map.insert(QStringLiteral("glowRadius"), glow ? glow->blur : 18.0);
+    map.insert(QStringLiteral("glowOpacity"), glow ? glow->opacity : 0.8);
+    map.insert(QStringLiteral("animIn"), legacyTextAnimationMap(s.animation.in));
+    map.insert(QStringLiteral("animOut"), legacyTextAnimationMap(s.animation.out));
+
     QVariantMap keyframes;
     for (auto it = s.keyframes.constBegin(); it != s.keyframes.constEnd(); ++it) {
         if (!it->isEmpty())
@@ -1909,17 +2350,33 @@ bool parseMaskProp(const QString &prop, QString *key)
     return true;
 }
 
-// A text style scalar is addressed as "text.<key>" (pixelSize, shadowBlur, color.r, …) and lives on
-// the text clip itself, so no host redirect applies.
-bool parseTextProp(const QString &prop, QString *key)
+// A text style scalar is addressed as "text.<key>" (pixelSize, layer.shadow.blur, color.r, …)
+// and lives on the text clip itself, so no host redirect applies. The style resolves the key to
+// its canonical spelling (legacy names map onto the layers they became).
+bool parseTextProp(const drift::TextStyle &style, const QString &prop, QString *key)
+{
+    if (!prop.startsWith(QLatin1String("text.")))
+        return false;
+    const QString canonical = drift::textKeyframeCanonicalKey(prop.mid(5), style);
+    if (canonical.isEmpty())
+        return false;
+    *key = canonical;
+    return true;
+}
+
+// Shape-only check for callers without a clip: a text key is a flat name, a legacy alias or a
+// layer path.
+bool looksLikeTextProp(const QString &prop)
 {
     if (!prop.startsWith(QLatin1String("text.")))
         return false;
     const QString suffix = prop.mid(5);
-    if (!drift::textKeyframeProperties().contains(suffix))
-        return false;
-    *key = suffix;
-    return true;
+    if (suffix.startsWith(QLatin1String("layer.")))
+        return true;
+    drift::TextStyle probe;
+    probe.layers = {drift::shadowLayer(Qt::black, 0, 4, 8, 0.6), drift::glowLayer(Qt::white, 18, 0.8),
+                    drift::strokeLayer(2, Qt::black), drift::solidFillLayer(Qt::white)};
+    return !drift::textKeyframeCanonicalKey(suffix, probe).isEmpty();
 }
 
 drift::KeyframeTrack<double> *transformTrackForProp(drift::Clip &clip, const QString &prop)
@@ -1954,7 +2411,7 @@ drift::KeyframeTrack<double> *keyframeTrackForProp(drift::Clip &clip, const QStr
         return it == clip.mask.keyframes.end() ? nullptr : &it.value();
     }
     QString textKey;
-    if (parseTextProp(prop, &textKey)) {
+    if (parseTextProp(clip.textStyle, prop, &textKey)) {
         if (createIfMissing)
             return &clip.textStyle.keyframes[textKey];
         const auto it = clip.textStyle.keyframes.find(textKey);
@@ -2001,8 +2458,7 @@ bool isKnownKeyframeProp(const QString &prop)
     QString maskKey;
     if (parseMaskProp(prop, &maskKey))
         return true;
-    QString textKey;
-    if (parseTextProp(prop, &textKey))
+    if (looksLikeTextProp(prop))
         return true;
     drift::Clip probe;
     return transformTrackForProp(probe, prop) != nullptr;
@@ -2102,7 +2558,7 @@ bool writeClipPropValue(drift::Clip &clip, const QString &prop, drift::TimeUs re
 
     // Same again for a text scalar: the style member is the static home.
     QString textKey;
-    if (parseTextProp(prop, &textKey)) {
+    if (parseTextProp(clip.textStyle, prop, &textKey)) {
         const auto existing = clip.textStyle.keyframes.constFind(textKey);
         const bool keyed = existing != clip.textStyle.keyframes.constEnd() && !existing->isEmpty();
         if (!keyed && !force && !autoKey)
@@ -11421,19 +11877,21 @@ void AppController::seekToSubtitleCue(int trackIndex, int clipIndex, int cueInde
 
 void AppController::setTextStyle(int trackIndex, int clipIndex, const QVariantMap &m)
 {
-    if (trackIndex < 0 || trackIndex >= m_project.tracks().size())
-        return;
-
-    drift::Track &track = m_project.tracks()[trackIndex];
-    if (clipIndex < 0 || clipIndex >= track.clips.size())
-        return;
-
-    drift::Clip &clip = track.clips[clipIndex];
-    if (clip.type != drift::ClipType::Text && clip.type != drift::ClipType::Subtitle)
+    drift::Clip *clip = textClipAt(trackIndex, clipIndex);
+    if (!clip)
         return;
 
     const drift::Project before = m_project;
-    drift::TextStyle &s = clip.textStyle;
+    drift::TextStyle &s = clip->textStyle;
+    applyTextStylePatch(s, m);
+    pushProjectEdit(before, tr("Edit text style"));
+    finishEdit(tr("Text style updated"));
+}
+
+// The partial patch both the inspector and set_text send: the canonical keys (layers, layer,
+// animation, lookId) and, for one release, the flat v6 keys routed onto the well-known layers.
+void AppController::applyTextStylePatch(drift::TextStyle &s, const QVariantMap &m)
+{
     if (m.contains(QStringLiteral("fontFamily")))
         s.fontFamily = m.value(QStringLiteral("fontFamily")).toString();
     if (m.contains(QStringLiteral("pixelSize")))
@@ -11442,14 +11900,6 @@ void AppController::setTextStyle(int trackIndex, int clipIndex, const QVariantMa
         s.fontWeight = qBound(100, m.value(QStringLiteral("fontWeight")).toInt(), 900);
     if (m.contains(QStringLiteral("italic")))
         s.italic = m.value(QStringLiteral("italic")).toBool();
-    if (m.contains(QStringLiteral("color")))
-        s.color = QColor(m.value(QStringLiteral("color")).toString());
-    if (m.contains(QStringLiteral("fillKind")))
-        s.fillKind = drift::textFillKindFromString(m.value(QStringLiteral("fillKind")).toString());
-    if (m.contains(QStringLiteral("colorSecondary")))
-        s.colorSecondary = QColor(m.value(QStringLiteral("colorSecondary")).toString());
-    if (m.contains(QStringLiteral("gradientAngle")))
-        s.gradientAngle = m.value(QStringLiteral("gradientAngle")).toDouble();
     if (m.contains(QStringLiteral("pathBend")))
         s.pathBend = qBound(-100.0, m.value(QStringLiteral("pathBend")).toDouble(), 100.0);
     if (m.contains(QStringLiteral("align")))
@@ -11462,32 +11912,6 @@ void AppController::setTextStyle(int trackIndex, int clipIndex, const QVariantMa
         s.lineHeight = qBound(0.5, m.value(QStringLiteral("lineHeight")).toDouble(), 4.0);
     if (m.contains(QStringLiteral("letterSpacing")))
         s.letterSpacing = m.value(QStringLiteral("letterSpacing")).toDouble();
-    if (m.contains(QStringLiteral("outlineEnabled")))
-        s.outlineEnabled = m.value(QStringLiteral("outlineEnabled")).toBool();
-    if (m.contains(QStringLiteral("outlineWidth")))
-        s.outlineWidth = qMax(0.0, m.value(QStringLiteral("outlineWidth")).toDouble());
-    if (m.contains(QStringLiteral("outlineColor")))
-        s.outlineColor = QColor(m.value(QStringLiteral("outlineColor")).toString());
-    if (m.contains(QStringLiteral("shadowEnabled")))
-        s.shadowEnabled = m.value(QStringLiteral("shadowEnabled")).toBool();
-    if (m.contains(QStringLiteral("shadowOffsetX")))
-        s.shadowOffsetX = m.value(QStringLiteral("shadowOffsetX")).toDouble();
-    if (m.contains(QStringLiteral("shadowOffsetY")))
-        s.shadowOffsetY = m.value(QStringLiteral("shadowOffsetY")).toDouble();
-    if (m.contains(QStringLiteral("shadowBlur")))
-        s.shadowBlur = qMax(0.0, m.value(QStringLiteral("shadowBlur")).toDouble());
-    if (m.contains(QStringLiteral("shadowOpacity")))
-        s.shadowOpacity = qBound(0.0, m.value(QStringLiteral("shadowOpacity")).toDouble(), 1.0);
-    if (m.contains(QStringLiteral("shadowColor")))
-        s.shadowColor = QColor(m.value(QStringLiteral("shadowColor")).toString());
-    if (m.contains(QStringLiteral("glowEnabled")))
-        s.glowEnabled = m.value(QStringLiteral("glowEnabled")).toBool();
-    if (m.contains(QStringLiteral("glowColor")))
-        s.glowColor = QColor(m.value(QStringLiteral("glowColor")).toString());
-    if (m.contains(QStringLiteral("glowRadius")))
-        s.glowRadius = qMax(0.0, m.value(QStringLiteral("glowRadius")).toDouble());
-    if (m.contains(QStringLiteral("glowOpacity")))
-        s.glowOpacity = qBound(0.0, m.value(QStringLiteral("glowOpacity")).toDouble(), 1.0);
     if (m.contains(QStringLiteral("boxEnabled")))
         s.boxEnabled = m.value(QStringLiteral("boxEnabled")).toBool();
     if (m.contains(QStringLiteral("boxColor")))
@@ -11506,8 +11930,131 @@ void AppController::setTextStyle(int trackIndex, int clipIndex, const QVariantMa
         s.underlineOffset = m.value(QStringLiteral("underlineOffset")).toDouble();
     applyTextHighlightPatch(&s.wordHighlight, m.value(QStringLiteral("wordHighlight")).toMap());
     applyWordAccentPatch(&s.accent, m.value(QStringLiteral("accent")).toMap());
-    applyTextAnimationPatch(&s.animIn, m.value(QStringLiteral("animIn")).toMap());
-    applyTextAnimationPatch(&s.animOut, m.value(QStringLiteral("animOut")).toMap());
+
+    // The look: canonical layers first, then the flat v6 keys onto their well-known layers.
+    bool lookEdited = false;
+    if (m.contains(QStringLiteral("layers"))) {
+        QList<drift::TextShadingLayer> layers;
+        for (const QVariant &v : m.value(QStringLiteral("layers")).toList()) {
+            drift::TextShadingLayer layer = drift::textShadingLayerFromJson(QJsonObject::fromVariantMap(v.toMap()));
+            if (layer.id.isEmpty() || drift::findTextLayer(layers, layer.id))
+                layer.id = drift::mintTextLayerId(layers);
+            layers.append(layer);
+        }
+        if (layers.isEmpty())
+            layers = {drift::solidFillLayer(Qt::white)};
+        s.layers = layers;
+        lookEdited = true;
+    }
+    if (m.contains(QStringLiteral("layer"))) {
+        const QVariantMap patch = m.value(QStringLiteral("layer")).toMap();
+        drift::TextShadingLayer *layer = nullptr;
+        if (patch.contains(QStringLiteral("id")))
+            layer = drift::findTextLayer(s.layers, patch.value(QStringLiteral("id")).toString().toLower());
+        else if (patch.contains(QStringLiteral("index"))) {
+            const int index = patch.value(QStringLiteral("index")).toInt();
+            if (index >= 0 && index < s.layers.size())
+                layer = &s.layers[index];
+        }
+        if (layer) {
+            QVariantMap fields = patch;
+            fields.remove(QStringLiteral("id"));
+            fields.remove(QStringLiteral("index"));
+            applyTextLayerPatch(layer, fields);
+            lookEdited = true;
+        }
+    }
+    if (m.contains(QStringLiteral("color"))) {
+        s.setPrimaryColor(QColor(m.value(QStringLiteral("color")).toString()));
+        lookEdited = true;
+    }
+    if (m.contains(QStringLiteral("fillKind")) || m.contains(QStringLiteral("colorSecondary"))
+        || m.contains(QStringLiteral("gradientAngle"))) {
+        drift::TextShadingLayer *fill = ensureLegacyLayer(s, drift::TextLayerKind::Fill);
+        fill->enabled = true;
+        const QString kind = m.value(QStringLiteral("fillKind")).toString();
+        if (kind == QLatin1String("solid")) {
+            fill->paint.color = s.primaryColor();
+            fill->paint.kind = drift::TextPaintKind::Solid;
+        } else if (kind == QLatin1String("linearGradient") || kind == QLatin1String("radialGradient")
+                   || (kind.isEmpty() && fill->paint.kind == drift::TextPaintKind::Gradient)) {
+            const QColor primary = s.primaryColor();
+            if (fill->paint.kind != drift::TextPaintKind::Gradient) {
+                fill->paint.kind = drift::TextPaintKind::Gradient;
+                fill->paint.gradient.stops = {{0.0, primary}, {1.0, QColor(255, 120, 0)}};
+            }
+            if (!kind.isEmpty())
+                fill->paint.gradient.kind = kind == QLatin1String("radialGradient") ? drift::TextGradientKind::Radial
+                                                                                    : drift::TextGradientKind::Linear;
+            if (m.contains(QStringLiteral("colorSecondary")) && fill->paint.gradient.stops.size() >= 2)
+                fill->paint.gradient.stops.last().color = QColor(m.value(QStringLiteral("colorSecondary")).toString());
+            if (m.contains(QStringLiteral("gradientAngle")))
+                fill->paint.gradient.angle = m.value(QStringLiteral("gradientAngle")).toDouble();
+        }
+        lookEdited = true;
+    }
+    if (m.contains(QStringLiteral("outlineEnabled")) || m.contains(QStringLiteral("outlineWidth"))
+        || m.contains(QStringLiteral("outlineColor"))) {
+        drift::TextShadingLayer *stroke = ensureLegacyLayer(s, drift::TextLayerKind::Stroke);
+        if (m.contains(QStringLiteral("outlineEnabled")))
+            stroke->enabled = m.value(QStringLiteral("outlineEnabled")).toBool();
+        if (m.contains(QStringLiteral("outlineWidth")))
+            stroke->width = qMax(0.0, m.value(QStringLiteral("outlineWidth")).toDouble());
+        if (m.contains(QStringLiteral("outlineColor")))
+            stroke->paint.color = QColor(m.value(QStringLiteral("outlineColor")).toString());
+        lookEdited = true;
+    }
+    if (m.contains(QStringLiteral("shadowEnabled")) || m.contains(QStringLiteral("shadowOffsetX"))
+        || m.contains(QStringLiteral("shadowOffsetY")) || m.contains(QStringLiteral("shadowBlur"))
+        || m.contains(QStringLiteral("shadowOpacity")) || m.contains(QStringLiteral("shadowColor"))) {
+        drift::TextShadingLayer *shadow = ensureLegacyLayer(s, drift::TextLayerKind::Shadow);
+        if (m.contains(QStringLiteral("shadowEnabled")))
+            shadow->enabled = m.value(QStringLiteral("shadowEnabled")).toBool();
+        if (m.contains(QStringLiteral("shadowOffsetX")))
+            shadow->offsetX = m.value(QStringLiteral("shadowOffsetX")).toDouble();
+        if (m.contains(QStringLiteral("shadowOffsetY")))
+            shadow->offsetY = m.value(QStringLiteral("shadowOffsetY")).toDouble();
+        if (m.contains(QStringLiteral("shadowBlur")))
+            shadow->blur = qMax(0.0, m.value(QStringLiteral("shadowBlur")).toDouble());
+        if (m.contains(QStringLiteral("shadowOpacity")))
+            shadow->opacity = qBound(0.0, m.value(QStringLiteral("shadowOpacity")).toDouble(), 1.0);
+        if (m.contains(QStringLiteral("shadowColor")))
+            shadow->paint.color = QColor(m.value(QStringLiteral("shadowColor")).toString());
+        lookEdited = true;
+    }
+    if (m.contains(QStringLiteral("glowEnabled")) || m.contains(QStringLiteral("glowColor"))
+        || m.contains(QStringLiteral("glowRadius")) || m.contains(QStringLiteral("glowOpacity"))) {
+        drift::TextShadingLayer *glow = ensureLegacyLayer(s, drift::TextLayerKind::Glow);
+        if (m.contains(QStringLiteral("glowEnabled")))
+            glow->enabled = m.value(QStringLiteral("glowEnabled")).toBool();
+        if (m.contains(QStringLiteral("glowColor")))
+            glow->paint.color = QColor(m.value(QStringLiteral("glowColor")).toString());
+        if (m.contains(QStringLiteral("glowRadius")))
+            glow->blur = qMax(0.0, m.value(QStringLiteral("glowRadius")).toDouble());
+        if (m.contains(QStringLiteral("glowOpacity")))
+            glow->opacity = qBound(0.0, m.value(QStringLiteral("glowOpacity")).toDouble(), 1.0);
+        lookEdited = true;
+    }
+    if (m.contains(QStringLiteral("lookId")) && m.value(QStringLiteral("lookId")).toString().isEmpty()) {
+        s.lookId.clear();
+        s.lookParams.clear();
+    } else if (lookEdited) {
+        s.lookId.clear();
+        s.lookParams.clear();
+    }
+    // Layer keyframes whose layer is gone.
+    for (auto it = s.keyframes.begin(); it != s.keyframes.end();) {
+        if (drift::textKeyframeCanonicalKey(it.key(), s).isEmpty())
+            it = s.keyframes.erase(it);
+        else
+            ++it;
+    }
+
+    if (m.contains(QStringLiteral("animation")))
+        applyTextAnimationSetPatch(&s.animation, m.value(QStringLiteral("animation")).toMap());
+    applyLegacyTextAnimationPatch(&s.animation, QStringLiteral("animIn"), m.value(QStringLiteral("animIn")).toMap());
+    applyLegacyTextAnimationPatch(&s.animation, QStringLiteral("animOut"), m.value(QStringLiteral("animOut")).toMap());
+
     // A hand-edited style is no longer the pack it came from, so the picker stops showing one as
     // selected. Alignment and wrapping are layout, not look, and leave the pack intact.
     static const QSet<QString> kLayoutOnlyKeys = {QStringLiteral("align"), QStringLiteral("valign"),
@@ -11518,8 +12065,6 @@ void AppController::setTextStyle(int trackIndex, int clipIndex, const QVariantMa
             break;
         }
     }
-    pushProjectEdit(before, tr("Edit text style"));
-    finishEdit(tr("Text style updated"));
 }
 
 void AppController::applyTextPreset(int trackIndex, int clipIndex, const QString &presetId)
@@ -13723,7 +14268,7 @@ double AppController::propertyBaseValue(int trackIndex, int clipIndex, const QSt
             }
             QString textKey;
             double scalar = 0.0;
-            if (parseTextProp(prop, &textKey) && drift::textStyleScalar(clip.textStyle, textKey, &scalar))
+            if (parseTextProp(clip.textStyle, prop, &textKey) && drift::textStyleScalar(clip.textStyle, textKey, &scalar))
                 return scalar;
         }
     }
@@ -13867,7 +14412,7 @@ QStringList AppController::clipAnimatedProperties(int trackIndex, int clipIndex)
         }
     }
     // Text scalars live on the clip itself.
-    for (const QString &key : drift::textKeyframeProperties()) {
+    for (const QString &key : drift::textKeyframeProperties(clip.textStyle)) {
         const auto it = clip.textStyle.keyframes.constFind(key);
         if (it != clip.textStyle.keyframes.constEnd() && !it->isEmpty())
             out.append(QStringLiteral("text.%1").arg(key));
@@ -18678,7 +19223,10 @@ void AppController::releaseTransientCaches()
 {
     ClipReaderPool::instance().releaseAll();
     FrameCompositor::clearStillImageCache();
-    clearTextRasterCaches();
+    drift::text::clearLayoutCache();
+#ifdef DRIFT_WITH_SKIA
+    drift::skia::clearTextGeometryCache();
+#endif
     // Uploaded textures and the FBO pool, without tearing the context down. Runs on the GL thread
     // and blocks, which is what makes it safe from here; it returns without creating a context if
     // GL was never brought up at all.
@@ -19475,6 +20023,30 @@ QJsonObject mcpDetailRow(const QVariantMap &clipMap, const QVariantMap &transfor
     if (kind != QLatin1String("text") && kind != QLatin1String("subtitle")) {
         m.remove(QStringLiteral("textStyle"));
         m.remove(QStringLiteral("textContent"));
+    } else {
+        // The canonical style only: the flat v6 mirrors exist for the inspector, not for agents,
+        // and an empty look or caret says nothing.
+        QVariantMap style = m.value(QStringLiteral("textStyle")).toMap();
+        for (const char *key : {"fillKind", "colorSecondary", "gradientAngle", "outlineEnabled", "outlineWidth",
+                                "outlineColor", "shadowEnabled", "shadowOffsetX", "shadowOffsetY", "shadowBlur",
+                                "shadowOpacity", "shadowColor", "glowEnabled", "glowColor", "glowRadius",
+                                "glowOpacity", "animIn", "animOut"})
+            style.remove(QLatin1String(key));
+        if (style.value(QStringLiteral("lookId")).toString().isEmpty()) {
+            style.remove(QStringLiteral("lookId"));
+            style.remove(QStringLiteral("lookParams"));
+        }
+        QVariantMap animation = style.value(QStringLiteral("animation")).toMap();
+        if (!animation.value(QStringLiteral("caret")).toMap().value(QStringLiteral("enabled")).toBool())
+            animation.remove(QStringLiteral("caret"));
+        if (animation.value(QStringLiteral("anchorGrouping")).toString() == QLatin1String("character")) {
+            animation.remove(QStringLiteral("anchorGrouping"));
+            animation.remove(QStringLiteral("anchorAlignment"));
+        }
+        if (!animation.value(QStringLiteral("custom")).toBool())
+            animation.remove(QStringLiteral("custom"));
+        style.insert(QStringLiteral("animation"), animation);
+        m.insert(QStringLiteral("textStyle"), style);
     }
     if (kind != QLatin1String("shape"))
         m.remove(QStringLiteral("shapeStyle"));
@@ -22374,4 +22946,477 @@ QJsonObject AppController::mcpSetAcceleration(const QString &variant)
         return err("bad_args", QStringLiteral("variant required"));
     m_addonManager->setAcceleration(variant);
     return ok({{QStringLiteral("variant"), m_addonManager->acceleration()}});
+}
+
+// ---------------------------------------------------------------------------------------------
+// Text layers, looks and animation slots
+
+drift::Clip *AppController::textClipAt(int trackIndex, int clipIndex)
+{
+    if (trackIndex < 0 || trackIndex >= m_project.tracks().size())
+        return nullptr;
+    drift::Track &track = m_project.tracks()[trackIndex];
+    if (clipIndex < 0 || clipIndex >= track.clips.size())
+        return nullptr;
+    drift::Clip &clip = track.clips[clipIndex];
+    if (clip.type != drift::ClipType::Text && clip.type != drift::ClipType::Subtitle)
+        return nullptr;
+    return &clip;
+}
+
+QString AppController::addTextLayer(int trackIndex, int clipIndex, const QString &kind, int atIndex)
+{
+    drift::Clip *clip = textClipAt(trackIndex, clipIndex);
+    if (!clip)
+        return {};
+    const drift::Project before = m_project;
+    drift::TextStyle &s = clip->textStyle;
+    const drift::TextLayerKind layerKind = drift::textLayerKindFromString(kind);
+    drift::TextShadingLayer layer;
+    switch (layerKind) {
+    case drift::TextLayerKind::Fill:
+        layer = drift::solidFillLayer(s.primaryColor(), drift::mintTextLayerId(s.layers));
+        break;
+    case drift::TextLayerKind::Stroke:
+        layer = drift::strokeLayer(3.0, Qt::black, drift::mintTextLayerId(s.layers));
+        break;
+    case drift::TextLayerKind::Shadow:
+        layer = drift::shadowLayer(Qt::black, 0.0, 4.0, 8.0, 0.6, drift::mintTextLayerId(s.layers));
+        break;
+    case drift::TextLayerKind::Glow:
+        layer = drift::glowLayer(s.primaryColor(), 18.0, 0.8, drift::mintTextLayerId(s.layers));
+        break;
+    case drift::TextLayerKind::Extrude:
+        layer = drift::solidFillLayer(QColor(40, 40, 40), drift::mintTextLayerId(s.layers));
+        layer.kind = drift::TextLayerKind::Extrude;
+        layer.width = 6.0;
+        break;
+    }
+    const int index = atIndex < 0 || atIndex > s.layers.size() ? naturalLayerIndex(s.layers, layerKind) : atIndex;
+    s.layers.insert(index, layer);
+    s.lookId.clear();
+    s.lookParams.clear();
+    s.packId.clear();
+    pushProjectEdit(before, tr("Add text layer"));
+    finishEdit(tr("Layer added"));
+    return layer.id;
+}
+
+bool AppController::removeTextLayer(int trackIndex, int clipIndex, const QString &layerId)
+{
+    drift::Clip *clip = textClipAt(trackIndex, clipIndex);
+    if (!clip)
+        return false;
+    drift::TextStyle &s = clip->textStyle;
+    int index = -1;
+    for (int i = 0; i < s.layers.size(); ++i)
+        if (s.layers.at(i).id == layerId)
+            index = i;
+    if (index < 0)
+        return false;
+    const drift::Project before = m_project;
+    s.layers.removeAt(index);
+    const QString prefix = QStringLiteral("layer.%1.").arg(layerId);
+    for (auto it = s.keyframes.begin(); it != s.keyframes.end();) {
+        if (it.key().startsWith(prefix))
+            it = s.keyframes.erase(it);
+        else
+            ++it;
+    }
+    s.lookId.clear();
+    s.lookParams.clear();
+    s.packId.clear();
+    pushProjectEdit(before, tr("Remove text layer"));
+    finishEdit(tr("Layer removed"));
+    return true;
+}
+
+QString AppController::duplicateTextLayer(int trackIndex, int clipIndex, const QString &layerId)
+{
+    drift::Clip *clip = textClipAt(trackIndex, clipIndex);
+    if (!clip)
+        return {};
+    drift::TextStyle &s = clip->textStyle;
+    int index = -1;
+    for (int i = 0; i < s.layers.size(); ++i)
+        if (s.layers.at(i).id == layerId)
+            index = i;
+    if (index < 0)
+        return {};
+    const drift::Project before = m_project;
+    drift::TextShadingLayer copy = s.layers.at(index);
+    copy.id = drift::mintTextLayerId(s.layers);
+    s.layers.insert(index + 1, copy);
+    s.lookId.clear();
+    s.lookParams.clear();
+    s.packId.clear();
+    pushProjectEdit(before, tr("Duplicate text layer"));
+    finishEdit(tr("Layer duplicated"));
+    return copy.id;
+}
+
+bool AppController::moveTextLayer(int trackIndex, int clipIndex, const QString &layerId, int toIndex)
+{
+    drift::Clip *clip = textClipAt(trackIndex, clipIndex);
+    if (!clip)
+        return false;
+    drift::TextStyle &s = clip->textStyle;
+    int index = -1;
+    for (int i = 0; i < s.layers.size(); ++i)
+        if (s.layers.at(i).id == layerId)
+            index = i;
+    toIndex = qBound(0, toIndex, s.layers.size() - 1);
+    if (index < 0 || index == toIndex)
+        return false;
+    const drift::Project before = m_project;
+    s.layers.move(index, toIndex);
+    s.lookId.clear();
+    s.lookParams.clear();
+    s.packId.clear();
+    pushProjectEdit(before, tr("Reorder text layers"));
+    finishEdit(tr("Layer moved"));
+    return true;
+}
+
+void AppController::setTextLayer(int trackIndex, int clipIndex, const QString &layerId, const QVariantMap &patch)
+{
+    QVariantMap layer = patch;
+    layer.insert(QStringLiteral("id"), layerId);
+    setTextStyle(trackIndex, clipIndex, QVariantMap{{QStringLiteral("layer"), layer}});
+}
+
+void AppController::previewSetTextLayer(int trackIndex, int clipIndex, const QString &layerId, const QVariantMap &patch)
+{
+    drift::Clip *clip = textClipAt(trackIndex, clipIndex);
+    if (!clip)
+        return;
+    if (!m_previewDragActive)
+        beginPreviewDrag(tr("Edit text layer"));
+    QVariantMap layer = patch;
+    layer.insert(QStringLiteral("id"), layerId);
+    applyTextStylePatch(clip->textStyle, QVariantMap{{QStringLiteral("layer"), layer}});
+    emitPreviewFrame();
+}
+
+void AppController::setTextAnimationSlot(int trackIndex, int clipIndex, const QString &slot, const QVariantMap &patch)
+{
+    drift::Clip *clip = textClipAt(trackIndex, clipIndex);
+    if (!clip)
+        return;
+    if (slot != QLatin1String("in") && slot != QLatin1String("out") && slot != QLatin1String("loop"))
+        return;
+    const drift::Project before = m_project;
+    applyTextAnimationSetPatch(&clip->textStyle.animation, QVariantMap{{slot, patch}});
+    clip->textStyle.packId.clear();
+    pushProjectEdit(before, tr("Edit text animation"));
+    finishEdit(tr("Text animation updated"));
+}
+
+void AppController::previewSetTextAnimationSlot(int trackIndex, int clipIndex, const QString &slot,
+                                                const QVariantMap &patch)
+{
+    drift::Clip *clip = textClipAt(trackIndex, clipIndex);
+    if (!clip)
+        return;
+    if (slot != QLatin1String("in") && slot != QLatin1String("out") && slot != QLatin1String("loop"))
+        return;
+    if (!m_previewDragActive)
+        beginPreviewDrag(tr("Edit text animation"));
+    applyTextAnimationSetPatch(&clip->textStyle.animation, QVariantMap{{slot, patch}});
+    emitPreviewFrame();
+}
+
+void AppController::clearTextAnimationSlot(int trackIndex, int clipIndex, const QString &slot)
+{
+    setTextAnimationSlot(trackIndex, clipIndex, slot, QVariantMap{{QStringLiteral("preset"), QString()}});
+}
+
+QVariantMap AppController::textAnimationPresetToMap(const drift::TextAnimationPreset &preset)
+{
+    QVariantList slots_;
+    for (drift::TextAnimSlotKind kind : preset.slotKinds)
+        slots_.append(drift::textAnimSlotKindToString(kind));
+    return {
+        {QStringLiteral("id"), preset.id},
+        {QStringLiteral("label"), preset.label},
+        {QStringLiteral("category"), preset.category},
+        {QStringLiteral("sampleText"), preset.sampleText},
+        {QStringLiteral("slots"), slots_},
+        {QStringLiteral("order"), preset.order},
+        {QStringLiteral("builtIn"), preset.builtIn},
+        {QStringLiteral("params"), paramSpecsToList(preset.params)},
+        {QStringLiteral("flags"), preset.flags.toVariantMap()},
+        {QStringLiteral("report"), preset.report},
+    };
+}
+
+QVariantList AppController::textAnimationPresets(const QString &slot) const
+{
+    QVariantList out;
+    const QList<drift::TextAnimationPreset> presets =
+        slot.isEmpty() ? drift::TextAnimationPresetCatalog::instance().presets()
+                       : drift::TextAnimationPresetCatalog::instance().presetsFor(drift::textAnimSlotKindFromString(slot));
+    for (const drift::TextAnimationPreset &preset : presets)
+        out.append(textAnimationPresetToMap(preset));
+    return out;
+}
+
+QVariantList AppController::textAnimationCategories(const QString &slot) const
+{
+    QStringList seen;
+    for (const QVariant &v : textAnimationPresets(slot)) {
+        const QString category = v.toMap().value(QStringLiteral("category")).toString();
+        if (!seen.contains(category))
+            seen.append(category);
+    }
+    static const QMap<QString, QString> labels{
+        {QStringLiteral("basic"), tr("Basic")},         {QStringLiteral("character"), tr("By character")},
+        {QStringLiteral("word"), tr("By word")},        {QStringLiteral("kinetic"), tr("Kinetic")},
+        {QStringLiteral("light"), tr("Light")},         {QStringLiteral("colour"), tr("Colour")},
+        {QStringLiteral("hold"), tr("Hold")},           {QStringLiteral("imported"), tr("Imported")},
+    };
+    QVariantList out;
+    for (const QString &id : seen)
+        out.append(QVariantMap{{QStringLiteral("id"), id}, {QStringLiteral("label"), labels.value(id, id)}});
+    return out;
+}
+
+double AppController::textAnimationSlotStartSeconds(int trackIndex, int clipIndex, const QString &slot) const
+{
+    if (trackIndex < 0 || trackIndex >= m_project.tracks().size())
+        return playheadSeconds();
+    const drift::Track &track = m_project.tracks().at(trackIndex);
+    if (clipIndex < 0 || clipIndex >= track.clips.size())
+        return playheadSeconds();
+    const drift::Clip &clip = track.clips.at(clipIndex);
+    drift::TimeUs start = clip.timelineStart;
+    drift::TimeUs end = clip.timelineStart + clip.timelineDuration;
+    if (clip.type == drift::ClipType::Subtitle) {
+        const drift::TimeUs localUs = m_playheadUs - clip.timelineStart;
+        if (const drift::SubtitleCue *cue = drift::activeSubtitleCueAt(clip.subtitleCues, localUs)) {
+            start = clip.timelineStart + cue->startUs;
+            end = clip.timelineStart + cue->endUs;
+        }
+    }
+    if (slot == QLatin1String("out")) {
+        const QVariantMap m = textAnimationSlotToMap(clip.textStyle.animation.out);
+        const double seconds = m.value(QStringLiteral("duration"), 0.4).toDouble() + m.value(QStringLiteral("stagger"), 0.0).toDouble() * 4.0;
+        return qMax(drift::usToSeconds(start), drift::usToSeconds(end) - seconds - 0.2);
+    }
+    if (slot == QLatin1String("loop"))
+        return playheadSeconds();
+    return drift::usToSeconds(start);
+}
+
+QVariantList AppController::textLooks() const
+{
+    QVariantList out;
+    for (const drift::TextLook &look : drift::textLooks()) {
+        out.append(QVariantMap{{QStringLiteral("id"), look.id},
+                               {QStringLiteral("label"), look.label},
+                               {QStringLiteral("params"), paramSpecsToList(look.params)}});
+    }
+    return out;
+}
+
+void AppController::applyTextLook(int trackIndex, int clipIndex, const QString &lookId, const QVariantMap &params)
+{
+    drift::Clip *clip = textClipAt(trackIndex, clipIndex);
+    if (!clip)
+        return;
+    const drift::TextLook *look = drift::textLookForId(lookId);
+    if (!look)
+        return;
+    const drift::Project before = m_project;
+    QMap<QString, drift::VectorSlotValue> typed;
+    mergeParamsFromMap(&typed, params, look->params);
+    drift::applyTextLook(clip->textStyle, lookId, typed);
+    clip->textStyle.packId.clear();
+    pushProjectEdit(before, tr("Apply text look"));
+    finishEdit(tr("Look applied"));
+}
+
+void AppController::setTextLookParam(int trackIndex, int clipIndex, const QString &key, const QVariant &value)
+{
+    drift::Clip *clip = textClipAt(trackIndex, clipIndex);
+    if (!clip || clip->textStyle.lookId.isEmpty())
+        return;
+    const drift::TextLook *look = drift::textLookForId(clip->textStyle.lookId);
+    if (!look)
+        return;
+    const drift::Project before = m_project;
+    QMap<QString, drift::VectorSlotValue> params = clip->textStyle.lookParams;
+    mergeParamsFromMap(&params, QVariantMap{{key, value}}, look->params);
+    drift::applyTextLook(clip->textStyle, look->id, params);
+    pushProjectEdit(before, tr("Adjust text look"));
+    finishEdit(tr("Look updated"));
+}
+
+void AppController::previewSetTextLookParam(int trackIndex, int clipIndex, const QString &key, const QVariant &value)
+{
+    drift::Clip *clip = textClipAt(trackIndex, clipIndex);
+    if (!clip || clip->textStyle.lookId.isEmpty())
+        return;
+    const drift::TextLook *look = drift::textLookForId(clip->textStyle.lookId);
+    if (!look)
+        return;
+    if (!m_previewDragActive)
+        beginPreviewDrag(tr("Adjust text look"));
+    QMap<QString, drift::VectorSlotValue> params = clip->textStyle.lookParams;
+    mergeParamsFromMap(&params, QVariantMap{{key, value}}, look->params);
+    drift::applyTextLook(clip->textStyle, look->id, params);
+    emitPreviewFrame();
+}
+
+QVariantList AppController::textPaintEffects() const
+{
+    QVariantList out;
+    for (const drift::TextEffectSpec &spec : drift::textShaderEffectSpecs()) {
+        out.append(QVariantMap{{QStringLiteral("id"), spec.id},
+                               {QStringLiteral("label"), spec.label},
+                               {QStringLiteral("params"), paramSpecsToList(spec.params)}});
+    }
+    return out;
+}
+
+QVariantList AppController::textGradientPresets() const
+{
+    QVariantList out;
+    for (const drift::TextGradientPreset &preset : drift::textGradientPresets()) {
+        QVariantList stops;
+        for (const drift::TextGradientStop &stop : preset.gradient.stops)
+            stops.append(QVariantMap{{QStringLiteral("pos"), stop.pos}, {QStringLiteral("color"), stop.color.name(QColor::HexArgb)}});
+        out.append(QVariantMap{{QStringLiteral("id"), preset.id},
+                               {QStringLiteral("label"), preset.label},
+                               {QStringLiteral("kind"), drift::textGradientKindToString(preset.gradient.kind)},
+                               {QStringLiteral("angle"), preset.gradient.angle},
+                               {QStringLiteral("stops"), stops}});
+    }
+    return out;
+}
+
+int AppController::applyTextStyleToCaptions(int trackIndex, int clipIndex, const QString &scope)
+{
+    const drift::Clip *source = textClipAt(trackIndex, clipIndex);
+    if (!source)
+        return 0;
+    drift::TextStyle style = source->textStyle;
+    style.keyframes.clear();
+    const drift::Project before = m_project;
+    int changed = 0;
+    for (int t = 0; t < m_project.tracks().size(); ++t) {
+        if (scope != QLatin1String("project") && t != trackIndex)
+            continue;
+        drift::Track &track = m_project.tracks()[t];
+        for (int c = 0; c < track.clips.size(); ++c) {
+            drift::Clip &clip = track.clips[c];
+            if (clip.type != drift::ClipType::Subtitle || (t == trackIndex && c == clipIndex))
+                continue;
+            const QMap<QString, drift::KeyframeTrack<double>> keep = clip.textStyle.keyframes;
+            clip.textStyle = style;
+            clip.textStyle.keyframes = keep;
+            ++changed;
+        }
+    }
+    if (changed == 0)
+        return 0;
+    pushProjectEdit(before, tr("Apply caption style"));
+    finishEdit(tr("Applied to %n caption clip(s)", "", changed));
+    return changed;
+}
+
+QString AppController::keyframePropertyLabel(int trackIndex, int clipIndex, const QString &prop) const
+{
+    if (!prop.startsWith(QLatin1String("text.")))
+        return {};
+    if (trackIndex >= 0 && trackIndex < m_project.tracks().size()) {
+        const drift::Track &track = m_project.tracks().at(trackIndex);
+        if (clipIndex >= 0 && clipIndex < track.clips.size())
+            return drift::textKeyframeLabel(prop.mid(5), track.clips.at(clipIndex).textStyle);
+    }
+    return drift::textKeyframeLabel(prop.mid(5), drift::TextStyle{});
+}
+
+QVariantMap AppController::importTextAnimationPreset(const QUrl &fileUrl, const QString &slot)
+{
+    const QString path = fileUrl.isLocalFile() ? fileUrl.toLocalFile() : fileUrl.toString();
+    QVariantMap result{{QStringLiteral("ok"), false}};
+    QStringList files{path};
+    if (drift::isDotLottiePath(path)) {
+        QString unpackError;
+        files = drift::unpackDotLottie(path, QDir(QStandardPaths::writableLocation(QStandardPaths::CacheLocation))
+                                                .filePath(QStringLiteral("dotlottie")), &unpackError);
+        if (files.isEmpty()) {
+            result.insert(QStringLiteral("error"), unpackError.isEmpty() ? tr("Could not unpack the bundle") : unpackError);
+            return result;
+        }
+    }
+    QFile file(files.first());
+    if (!file.open(QIODevice::ReadOnly)) {
+        result.insert(QStringLiteral("error"), tr("Could not read %1").arg(path));
+        return result;
+    }
+    const QByteArray json = file.readAll();
+    std::optional<drift::TextAnimationPreset> preset;
+    QStringList warnings;
+    QString error;
+    const QJsonObject doc = QJsonDocument::fromJson(json).object();
+    if (doc.contains(QStringLiteral("animators")) && doc.contains(QStringLiteral("id"))) {
+        // One of our own exported presets.
+        preset = drift::TextAnimationPreset::fromJson(doc, &error);
+    } else {
+        drift::lottie::ImportOptions options;
+        options.category = slot;
+        preset = drift::lottie::importLottieTextPreset(json, options, &warnings, &error);
+    }
+    if (!preset) {
+        result.insert(QStringLiteral("error"), error.isEmpty() ? tr("Nothing to import") : error);
+        return result;
+    }
+    if (!slot.isEmpty())
+        preset->slotKinds = {drift::textAnimSlotKindFromString(slot)};
+    preset->category = QStringLiteral("imported");
+    const QString id = drift::TextAnimationPresetCatalog::instance().addUserPreset(*preset);
+    if (id.isEmpty()) {
+        result.insert(QStringLiteral("error"), tr("Could not save the preset"));
+        return result;
+    }
+    result.insert(QStringLiteral("ok"), true);
+    result.insert(QStringLiteral("id"), id);
+    result.insert(QStringLiteral("unsupported"), warnings);
+    emit userTextAnimationPresetsChanged();
+    return result;
+}
+
+bool AppController::renameUserTextAnimationPreset(const QString &presetId, const QString &label)
+{
+    if (label.trimmed().isEmpty())
+        return false;
+    const bool ok = drift::TextAnimationPresetCatalog::instance().renameUserPreset(presetId, label.trimmed());
+    if (ok)
+        emit userTextAnimationPresetsChanged();
+    return ok;
+}
+
+bool AppController::deleteUserTextAnimationPreset(const QString &presetId)
+{
+    const bool ok = drift::TextAnimationPresetCatalog::instance().removeUserPreset(presetId);
+    if (ok)
+        emit userTextAnimationPresetsChanged();
+    return ok;
+}
+
+bool AppController::exportUserTextAnimationPreset(const QString &presetId, const QUrl &fileUrl)
+{
+    const std::optional<drift::TextAnimationPreset> preset =
+        drift::TextAnimationPresetCatalog::instance().presetForId(presetId);
+    if (!preset)
+        return false;
+    QFile file(fileUrl.isLocalFile() ? fileUrl.toLocalFile() : fileUrl.toString());
+    if (!file.open(QIODevice::WriteOnly))
+        return false;
+    QJsonObject json = preset->toJson();
+    json.insert(QStringLiteral("id"), drift::isUserTextAnimationPresetId(preset->id) ? preset->id.mid(5) : preset->id);
+    file.write(QJsonDocument(json).toJson(QJsonDocument::Indented));
+    return true;
 }

@@ -661,7 +661,7 @@ std::optional<Project> readProjectData(const QByteArray &data, const QString &so
                     clip.textStyle.fontFamily = prod.titleInfo.fontFamily;
                     clip.textStyle.pixelSize = prod.titleInfo.fontSize;
                     clip.textStyle.fontWeight = prod.titleInfo.fontWeight;
-                    clip.textStyle.color = prod.titleInfo.color;
+                    drift::setSolidFill(clip.textStyle, prod.titleInfo.color);
 
                     clip.transformX.setKeyframe(0, 0);
                     clip.transformY.setKeyframe(0, height * 0.35);

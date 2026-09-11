@@ -5,6 +5,7 @@ add_test(NAME MediaProbe COMMAND tst_mediaprobe)
 qt_add_executable(tst_core tst_core.cpp)
 target_include_directories(tst_core PRIVATE ../src)
 target_link_libraries(tst_core PRIVATE Qt6::Test driftcore)
+target_compile_definitions(tst_core PRIVATE DRIFT_TEST_DATA_DIR="${CMAKE_CURRENT_SOURCE_DIR}/data")
 add_test(NAME Core COMMAND tst_core)
 
 qt_add_executable(tst_editorstate
@@ -130,6 +131,9 @@ target_compile_definitions(tst_engine PRIVATE
     # checkout without the model still passes.
     DRIFT_TEST_DENOISE_MODEL_DIR="${CMAKE_SOURCE_DIR}/models/deepfilternet3"
 )
+if(DRIFT_WITH_SKIA)
+    target_compile_definitions(tst_engine PRIVATE DRIFT_WITH_SKIA)
+endif()
 add_test(NAME Engine COMMAND tst_engine)
 drift_copy_effects(tst_engine)
 drift_copy_transitions(tst_engine)

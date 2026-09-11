@@ -16,7 +16,7 @@ namespace drift {
 namespace {
 
 const QString kIdPrefix = QStringLiteral("user:");
-constexpr int kFormatVersion = 1;
+constexpr int kFormatVersion = 2;
 
 QJsonObject presetToJson(const TextPreset &preset)
 {

@@ -61,23 +61,14 @@ Item {
         case "mask.h": return qsTr("Mask height")
         case "mask.rotation": return qsTr("Mask rotation")
         case "mask.feather": return qsTr("Mask feather")
-        case "text.pixelSize": return qsTr("Text size")
-        case "text.letterSpacing": return qsTr("Letter spacing")
-        case "text.lineHeight": return qsTr("Line height")
-        case "text.outlineWidth": return qsTr("Outline width")
-        case "text.shadowOffsetX": return qsTr("Shadow X")
-        case "text.shadowOffsetY": return qsTr("Shadow Y")
-        case "text.shadowBlur": return qsTr("Shadow blur")
-        case "text.shadowOpacity": return qsTr("Shadow opacity")
-        case "text.glowRadius": return qsTr("Glow radius")
-        case "text.glowOpacity": return qsTr("Glow opacity")
-        case "text.boxPadding": return qsTr("Box padding")
-        case "text.gradientAngle": return qsTr("Gradient angle")
-        case "text.pathBend": return qsTr("Text bend")
-        case "text.color.r": return qsTr("Text red")
-        case "text.color.g": return qsTr("Text green")
-        case "text.color.b": return qsTr("Text blue")
-        case "text.color.a": return qsTr("Text alpha")
+        }
+        // Text properties are named by the engine ("Shadow · Blur"): the layer stack is
+        // per clip, so no static table could spell them.
+        if (id.substring(0, 5) === "text.") {
+            const label = EditorState.keyframePropertyLabel(
+                            EditorState.selectedTrack, EditorState.selectedClip, id)
+            if (label.length > 0)
+                return label
         }
         const fx = effectParam(id)
         if (fx)

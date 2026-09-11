@@ -1,5 +1,7 @@
 #include <QtTest>
 
+#include <functional>
+
 #include <QOpenGLExtraFunctions>
 
 #include "core/Project.h"
@@ -14,12 +16,28 @@
 #include "engine/SkiaRuntime.h"
 #include "engine/SkiaShapePainter.h"
 #include "engine/SkiaTextPainter.h"
-#include "engine/TextRaster.h"
+#include "engine/SkiaTextEffects.h"
+#include "engine/TextLayout.h"
+#include "core/TextAnimationPreset.h"
+#include "core/TextLook.h"
 #include "engine/VectorPainter.h"
 
+#include "include/core/SkBlurTypes.h"
 #include "include/core/SkCanvas.h"
+#include "include/core/SkColor.h"
+#include "include/core/SkContourMeasure.h"
+#include "include/core/SkM44.h"
+#include "include/core/SkMaskFilter.h"
 #include "include/core/SkPaint.h"
+#include "include/core/SkPathBuilder.h"
+#include "include/core/SkPathEffect.h"
 #include "include/core/SkRect.h"
+#include "include/core/SkShader.h"
+#include "include/core/SkString.h"
+#include "include/effects/SkGradient.h"
+#include "include/effects/SkRuntimeEffect.h"
+#include "include/effects/SkShaderMaskFilter.h"
+#include "include/effects/SkTrimPathEffect.h"
 
 using namespace drift;
 
@@ -48,6 +66,89 @@ public:
 
 private:
     quint64 m_key;
+};
+
+
+// Every Skia primitive the text rework leans on, drawn side by side on one 320x80 canvas so the
+// CPU and Ganesh paths can be checked with the same pixel probes:
+//   A (10..70)   SkSL runtime shader over a child shader
+//   B (90..150)  shader mask filter: a horizontal alpha ramp
+//   C (170..230) stroked line trimmed to its first half
+//   D (260..300) outer-blur mask filter (hollow inside, halo outside)
+//   E (10..70, rows 2..12) OKLab-interpolated gradient
+//   F (90..150, rows 62..78) saveLayer whose paint carries a mask filter (probe only)
+class PrimitiveProbe : public skia::VectorPainter
+{
+public:
+    QSize size() const override { return QSize(320, 80); }
+    quint64 cacheKey() const override { return 0; }
+    void paint(SkCanvas &canvas) const override
+    {
+        static const char kSksl[] =
+            "uniform half4 uColor; uniform shader base;"
+            "half4 main(float2 p) { return base.eval(p) * uColor; }";
+        const SkRuntimeEffect::Result effect = SkRuntimeEffect::MakeForShader(SkString(kSksl));
+        if (effect.effect) {
+            SkRuntimeEffectBuilder builder(effect.effect);
+            builder.uniform("uColor") = SkV4{0.0f, 1.0f, 0.0f, 1.0f};
+            builder.child("base") = SkShaders::Color(SK_ColorWHITE);
+            SkPaint p;
+            p.setShader(builder.makeShader());
+            canvas.drawRect(SkRect::MakeXYWH(10, 20, 60, 40), p);
+        }
+
+        const SkPoint rampPts[2] = {{90, 0}, {150, 0}};
+        const SkColor4f rampColors[2] = {SkColors::kWhite, SkColors::kTransparent};
+        const float rampPos[2] = {0.0f, 1.0f};
+        const SkGradient::Colors rampStops{SkSpan<const SkColor4f>(rampColors, 2),
+                                           SkSpan<const float>(rampPos, 2), SkTileMode::kClamp};
+        const SkGradient ramp{rampStops, SkGradient::Interpolation{}};
+        {
+            SkPaint p;
+            p.setColor(SK_ColorRED);
+            p.setMaskFilter(SkShaderMaskFilter::Make(SkShaders::LinearGradient(rampPts, ramp)));
+            canvas.drawRect(SkRect::MakeXYWH(90, 20, 60, 40), p);
+        }
+        {
+            SkPathBuilder pb;
+            pb.moveTo(170, 40);
+            pb.lineTo(230, 40);
+            SkPaint p;
+            p.setColor(SK_ColorBLUE);
+            p.setStyle(SkPaint::kStroke_Style);
+            p.setStrokeWidth(8);
+            p.setPathEffect(SkTrimPathEffect::Make(0.0f, 0.5f));
+            canvas.drawPath(pb.detach(), p);
+        }
+        {
+            SkPaint p;
+            p.setColor(SK_ColorWHITE);
+            p.setMaskFilter(SkMaskFilter::MakeBlur(kOuter_SkBlurStyle, 4.0f));
+            canvas.drawRect(SkRect::MakeXYWH(260, 25, 40, 30), p);
+        }
+        {
+            const SkPoint pts[2] = {{10, 0}, {70, 0}};
+            const SkColor4f colors[2] = {SkColors::kRed, SkColors::kBlue};
+            const SkGradient::Colors stops{SkSpan<const SkColor4f>(colors, 2), SkSpan<const float>(rampPos, 2),
+                                           SkTileMode::kClamp};
+            SkGradient::Interpolation interp;
+            interp.fColorSpace = SkGradient::Interpolation::ColorSpace::kOKLab;
+            const SkGradient grad{stops, interp};
+            SkPaint p;
+            p.setShader(SkShaders::LinearGradient(pts, grad));
+            canvas.drawRect(SkRect::MakeXYWH(10, 2, 60, 10), p);
+        }
+        {
+            SkPaint layer;
+            layer.setMaskFilter(SkShaderMaskFilter::Make(SkShaders::LinearGradient(rampPts, ramp)));
+            const SkRect bounds = SkRect::MakeXYWH(90, 62, 60, 16);
+            canvas.saveLayer(&bounds, &layer);
+            SkPaint p;
+            p.setColor(SK_ColorWHITE);
+            canvas.drawRect(bounds, p);
+            canvas.restore();
+        }
+    }
 };
 
 GpuScene sceneWith(std::shared_ptr<const skia::VectorPainter> painter)
@@ -175,16 +276,20 @@ private slots:
     void shapePainterMatchesQPainter();
     void shapePainterCacheKey();
     void backendSwitchSelectsShapeRenderer();
-    void textPainterMatchesQPainter_data();
-    void textPainterMatchesQPainter();
-    void textSpanPaintersMatchRasterSpans();
     void textPainterCacheKeys();
-    void emojiTextMatchesQPainter();
-    void backendSwitchSelectsTextRenderer();
     void keyframedTextGrowsOverTime();
     void gradientFillSweepsTheBlock();
     void pathBendArchesTheLine();
     void emojiOutlineDrawsARing();
+    void textPrimitivesRender();
+    void fragmentAnimationRendersPerCharacter();
+    void bleedIsTimeInvariant();
+    void shadingLayersCompositeInOrder();
+    void gradientOffsetShiftsColour();
+    void wipeMaskRevealsBottomUp();
+    void caretDrawsAfterLastVisibleFragment();
+    void skslEffectsCompileAndRender();
+    void textLookRenders();
 };
 
 void SkiaTest::grContextAttaches()
@@ -597,147 +702,6 @@ QImage skiaText(const Clip &clip, const QString &text, const QRectF &rect, doubl
 
 } // namespace
 
-void SkiaTest::textPainterMatchesQPainter_data()
-{
-    QTest::addColumn<QString>("text");
-    QTest::addColumn<TextStyle>("style");
-    QTest::addColumn<int>("word");
-
-    TextStyle plain;
-    plain.fontFamily = QStringLiteral("Inter");
-    plain.pixelSize = 56;
-    plain.color = Qt::white;
-    QTest::newRow("plain") << QStringLiteral("Hello world") << plain << -1;
-
-    TextStyle outlined = plain;
-    outlined.color = QColor(250, 220, 40);
-    outlined.outlineEnabled = true;
-    outlined.outlineWidth = 4.0;
-    outlined.outlineColor = QColor(20, 20, 120);
-    outlined.shadowEnabled = true;
-    outlined.shadowOffsetX = 6.0;
-    outlined.shadowOffsetY = 6.0;
-    outlined.shadowBlur = 5.0;
-    outlined.shadowOpacity = 0.8;
-    outlined.shadowColor = Qt::black;
-    QTest::newRow("outline+shadow") << QStringLiteral("Outline shadow") << outlined << -1;
-
-    TextStyle glowing = plain;
-    glowing.glowEnabled = true;
-    glowing.glowColor = QColor(255, 60, 60);
-    glowing.glowRadius = 8.0;
-    glowing.glowOpacity = 0.9;
-    glowing.boxEnabled = true;
-    glowing.boxColor = QColor(0, 0, 0, 160);
-    glowing.boxPadding = 12.0;
-    glowing.boxRadius = 8.0;
-    QTest::newRow("glow+box") << QStringLiteral("Glow box") << glowing << -1;
-
-    TextStyle ruled = plain;
-    ruled.wordHighlight.enabled = true;
-    ruled.wordHighlight.color = QColor(40, 120, 220);
-    ruled.wordHighlight.padding = 6.0;
-    ruled.wordHighlight.radius = 4.0;
-    ruled.underlineEnabled = true;
-    ruled.underlineColor = QColor(255, 255, 0);
-    ruled.underlineWidth = 4.0;
-    ruled.underlineOffset = 8.0;
-    QTest::newRow("pills+underline") << QStringLiteral("Pills and rules") << ruled << -1;
-
-    TextStyle accented = plain;
-    accented.accent.rule = WordAccentRule::EveryNth;
-    accented.accent.n = 2;
-    accented.accent.colorEnabled = true;
-    accented.accent.color = QColor(255, 120, 0);
-    accented.accent.sizeScale = 1.3;
-    accented.accent.outlineEnabled = true;
-    accented.accent.outlineWidth = 2.0;
-    accented.accent.outlineColor = Qt::black;
-    QTest::newRow("accent") << QStringLiteral("one two three four") << accented << -1;
-
-    TextStyle karaoke = plain;
-    karaoke.accent.rule = WordAccentRule::Karaoke;
-    karaoke.accent.colorEnabled = true;
-    karaoke.accent.color = QColor(0, 255, 0);
-    karaoke.accent.highlight.enabled = true;
-    karaoke.accent.highlight.color = QColor(120, 0, 200);
-    QTest::newRow("karaoke") << QStringLiteral("sing along now") << karaoke << 1;
-
-    TextStyle wrapped = plain;
-    wrapped.wordWrap = true;
-    wrapped.align = TextAlign::Right;
-    wrapped.valign = TextVAlign::Bottom;
-    wrapped.lineHeight = 1.2;
-    wrapped.letterSpacing = 2.0;
-    wrapped.italic = true;
-    QTest::newRow("wrap+right+bottom") << QStringLiteral("the quick brown fox jumps over the lazy dog again") << wrapped << -1;
-}
-
-// Same layout, two painters: the block must land in the same place with the same amount of ink
-// and the same overall colour. Antialiasing and the gaussian-vs-box blur keep this from being a
-// pixel comparison.
-void SkiaTest::textPainterMatchesQPainter()
-{
-    QFETCH(QString, text);
-    QFETCH(TextStyle, style);
-    QFETCH(int, word);
-    reloadFontCatalog({QString::fromUtf8(DRIFT_TEST_FONTS_DIR)});
-
-    const Clip clip = textClip(style, text);
-    const QRectF layout(0, 0, 420, 160);
-    const double scale = 0.75;
-    const TextRasterResult qt = rasterizeText(clip, text, layout, scale, word);
-    QRectF skiaRect;
-    const QImage sk = skiaText(clip, text, layout, scale, word, &skiaRect);
-    QVERIFY(!qt.image.isNull());
-    QVERIFY(!sk.isNull());
-    QCOMPARE(sk.size(), qt.image.size());
-    QCOMPARE(skiaRect, qt.rect);
-
-    QString why;
-    QVERIFY2(inkClose(inkOf(qt.image), inkOf(sk), &why), qPrintable(why));
-}
-
-void SkiaTest::textSpanPaintersMatchRasterSpans()
-{
-    reloadFontCatalog({QString::fromUtf8(DRIFT_TEST_FONTS_DIR)});
-    TextStyle style;
-    style.fontFamily = QStringLiteral("Inter");
-    style.pixelSize = 48;
-    style.color = Qt::white;
-    style.outlineEnabled = true;
-    style.outlineWidth = 3.0;
-    style.boxEnabled = true;
-    style.boxColor = QColor(0, 0, 0, 180);
-    style.boxPadding = 10.0;
-    style.animIn.kind = TextAnimKind::SlideUp;
-    style.animIn.unit = TextAnimUnit::Word;
-    const QString text = QStringLiteral("stagger these words");
-    const Clip clip = textClip(style, text);
-    const QRectF layout(30, 20, 400, 120);
-
-    for (TextAnimUnit unit : {TextAnimUnit::Word, TextAnimUnit::Character, TextAnimUnit::Line}) {
-        const QList<TextSpanRaster> qt = rasterizeTextSpans(clip, text, layout, 1.0, unit);
-        const QList<skia::TextSpanPainter> sk = skia::makeTextSpanPainters(clip, text, layout, 1.0, unit);
-        QCOMPARE(sk.size(), qt.size());
-        for (int i = 0; i < qt.size(); ++i) {
-            QCOMPARE(sk[i].index, qt[i].index);
-            QCOMPARE(sk[i].count, qt[i].count);
-            QVERIFY2(qAbs(sk[i].rect.x() - qt[i].rect.x()) <= 2 && qAbs(sk[i].rect.y() - qt[i].rect.y()) <= 2
-                         && qAbs(sk[i].rect.width() - qt[i].rect.width()) <= 2
-                         && qAbs(sk[i].rect.height() - qt[i].rect.height()) <= 2,
-                     qPrintable(QStringLiteral("span %1: qt %2,%3 %4x%5 skia %6,%7 %8x%9").arg(i)
-                                    .arg(qt[i].rect.x()).arg(qt[i].rect.y()).arg(qt[i].rect.width()).arg(qt[i].rect.height())
-                                    .arg(sk[i].rect.x()).arg(sk[i].rect.y()).arg(sk[i].rect.width()).arg(sk[i].rect.height())));
-            const QImage image = skia::SkiaRuntime::rasterize(*sk[i].painter);
-            QCOMPARE(image.size(), qt[i].image.size());
-            QString why;
-            QVERIFY2(inkClose(inkOf(qt[i].image), inkOf(image), &why), qPrintable(QStringLiteral("span %1: %2").arg(i).arg(why)));
-        }
-    }
-    QVERIFY(skia::makeTextSpanPainters(clip, text, layout, 1.0, TextAnimUnit::Block).isEmpty());
-}
-
 void SkiaTest::textPainterCacheKeys()
 {
     TextStyle style;
@@ -753,80 +717,14 @@ void SkiaTest::textPainterCacheKeys()
     QVERIFY(skia::makeTextPainter(clip, QStringLiteral("cache me"), layout, 0.5).painter->cacheKey() != a.painter->cacheKey());
     QVERIFY(skia::makeTextPainter(clip, QStringLiteral("cache me"), layout, 1.0, 0).painter->cacheKey() != a.painter->cacheKey());
     Clip other = clip;
-    other.textStyle.color = Qt::red;
+    setSolidFill(other.textStyle, Qt::red);
     QVERIFY(skia::makeTextPainter(other, QStringLiteral("cache me"), layout, 1.0).painter->cacheKey() != a.painter->cacheKey());
-
-    const QList<skia::TextSpanPainter> spans =
-        skia::makeTextSpanPainters(clip, QStringLiteral("cache me"), layout, 1.0, TextAnimUnit::Word);
-    QCOMPARE(spans.size(), 2);
-    QVERIFY(spans[0].painter->cacheKey() != spans[1].painter->cacheKey());
-    QVERIFY(spans[0].painter->cacheKey() != 0);
-}
-
-void SkiaTest::emojiTextMatchesQPainter()
-{
-    reloadFontCatalog({QString::fromUtf8(DRIFT_TEST_FONTS_DIR)});
-    reloadEmojiCatalog({QString::fromUtf8(DRIFT_TEST_EMOJI_FONT_DIR)});
-    if (emojiFontFamily().isEmpty())
-        QSKIP("No emoji font available");
-    // Plain style: with an outline or shadow Skia treats emoji like glyphs (ring, silhouette in
-    // the shadow — see emojiOutlineDrawsARing) where QPainter leaves them bare.
-    TextStyle style;
-    style.fontFamily = QStringLiteral("Inter");
-    style.pixelSize = 56;
-    style.color = Qt::white;
-    const QString text = QString::fromUtf8("Party \xF0\x9F\x8E\x89 time \xF0\x9F\x98\x80");
-    const Clip clip = textClip(style, text);
-    const QRectF layout(0, 0, 420, 120);
-    const TextRasterResult qt = rasterizeText(clip, text, layout, 1.0);
-    const QImage sk = skiaText(clip, text, layout, 1.0, -1, nullptr);
-    QVERIFY(!qt.image.isNull() && !sk.isNull());
-    QString why;
-    QVERIFY2(inkClose(inkOf(qt.image), inkOf(sk), &why), qPrintable(why));
-    QVERIFY(inkOf(sk).count > 500);
-}
-
-// DRIFT_VECTOR_RENDERER selects the text backend too; both composite to the same frame footprint.
-void SkiaTest::backendSwitchSelectsTextRenderer()
-{
-    if (!GpuCompositor::isAvailable())
-        QSKIP("GL unavailable");
-    reloadFontCatalog({QString::fromUtf8(DRIFT_TEST_FONTS_DIR)});
-    Project project;
-    project.setResolution(320, 120);
-    project.tracks().clear();
-    project.tracks().append(Track{.type = TrackType::Text});
-    Clip clip;
-    clip.id = QStringLiteral("t");
-    clip.type = ClipType::Text;
-    clip.textContent = QStringLiteral("Switch");
-    clip.textStyle.pixelSize = 64;
-    clip.textStyle.color = QColor(255, 0, 0);
-    clip.timelineStart = 0;
-    clip.timelineDuration = secondsToUs(2.0);
-    clip.transformX.setKeyframe(0, 0.0);
-    clip.transformY.setKeyframe(0, 0.0);
-    clip.transformW.setKeyframe(0, 320.0);
-    clip.transformH.setKeyframe(0, 120.0);
-    project.tracks()[0].clips.append(clip);
-    FrameCompositor compositor;
-    compositor.setProject(&project);
-
-    auto redCount = [](const QImage &img) {
-        int n = 0;
-        for (int y = 0; y < img.height(); ++y)
-            for (int x = 0; x < img.width(); ++x)
-                if (qRed(img.pixel(x, y)) > 180 && qGreen(img.pixel(x, y)) < 90 && qBlue(img.pixel(x, y)) < 90)
-                    ++n;
-        return n;
-    };
-    qputenv("DRIFT_VECTOR_RENDERER", "qt");
-    const int qt = redCount(compositor.compositeAt(secondsToUs(0.5)));
-    qputenv("DRIFT_VECTOR_RENDERER", "skia");
-    const int sk = redCount(compositor.compositeAt(secondsToUs(0.5)));
-    qunsetenv("DRIFT_VECTOR_RENDERER");
-    QVERIFY(qt > 300);
-    QVERIFY2(qAbs(qt - sk) <= qMax(40, int(qt * 0.12)), qPrintable(QStringLiteral("qt %1 skia %2").arg(qt).arg(sk)));
+    // A moving gradient is time-driven: never cached.
+    Clip flowing = clip;
+    TextShadingLayer *fill = firstTextLayerOfKind(flowing.textStyle.layers, TextLayerKind::Fill, false);
+    fill->paint.kind = TextPaintKind::Gradient;
+    fill->paint.gradient.offsetSpeed = 0.5;
+    QCOMPARE(skia::makeTextPainter(flowing, QStringLiteral("cache me"), layout, 1.0).painter->cacheKey(), quint64(0));
 }
 
 // A keyframed pixelSize is baked per frame: the painter stops caching and the rendered block is
@@ -838,17 +736,14 @@ void SkiaTest::keyframedTextGrowsOverTime()
     clip.type = ClipType::Text;
     clip.textContent = QStringLiteral("Grow");
     clip.textStyle.pixelSize = 24;
-    clip.textStyle.color = QColor(255, 0, 0);
+    setSolidFill(clip.textStyle, QColor(255, 0, 0));
     clip.textStyle.keyframes[QStringLiteral("pixelSize")].setKeyframe(0, 24.0);
     clip.textStyle.keyframes[QStringLiteral("pixelSize")].setKeyframe(secondsToUs(2.0), 72.0);
     const QRectF layout(0, 0, 400, 160);
 
-    Clip t0 = clip;
-    t0.textStyle = clip.textStyle.resolvedAt(0);
-    Clip t2 = clip;
-    t2.textStyle = clip.textStyle.resolvedAt(secondsToUs(2.0));
-    const skia::TextPainterResult a = skia::makeTextPainter(t0, clip.textContent, layout, 1.0);
-    const skia::TextPainterResult b = skia::makeTextPainter(t2, clip.textContent, layout, 1.0);
+    clip.timelineDuration = secondsToUs(3.0);
+    const skia::TextPainterResult a = skia::makeTextPainter(clip, clip.textContent, layout, 1.0, -1, 0);
+    const skia::TextPainterResult b = skia::makeTextPainter(clip, clip.textContent, layout, 1.0, -1, secondsToUs(2.0));
     QVERIFY(a.painter && b.painter);
     QCOMPARE(a.painter->cacheKey(), quint64(0));
     QCOMPARE(b.painter->cacheKey(), quint64(0));
@@ -895,10 +790,10 @@ void SkiaTest::gradientFillSweepsTheBlock()
     TextStyle style;
     style.fontFamily = QStringLiteral("Inter");
     style.pixelSize = 90;
-    style.color = QColor(255, 0, 0);
-    style.colorSecondary = QColor(0, 0, 255);
-    style.fillKind = TextFillKind::LinearGradient;
-    style.gradientAngle = 90.0;
+    TextShadingLayer *gradientFill = firstTextLayerOfKind(style.layers, TextLayerKind::Fill, false);
+    gradientFill->paint.kind = TextPaintKind::Gradient;
+    gradientFill->paint.gradient.stops = {{0.0, QColor(255, 0, 0)}, {1.0, QColor(0, 0, 255)}};
+    gradientFill->paint.gradient.angle = 90.0;
     const QString text = QStringLiteral("HIGH");
     const Clip clip = textClip(style, text);
     const QRectF layout(0, 0, 400, 140);
@@ -926,13 +821,13 @@ void SkiaTest::gradientFillSweepsTheBlock()
     QVERIFY2(bottom.y() > 150 && bottom.x() < 110, qPrintable(QStringLiteral("bottom r=%1 b=%2").arg(bottom.x()).arg(bottom.y())));
 
     // The image size and placement are unchanged by the fill, so the layer still lands where the
-    // solid raster would.
+    // solid block would.
     Clip solid = clip;
-    solid.textStyle.fillKind = TextFillKind::Solid;
-    const TextRasterResult qt = rasterizeText(solid, text, layout, 1.0);
-    QCOMPARE(image.size(), qt.image.size());
+    setSolidFill(solid.textStyle, QColor(255, 0, 0));
+    const QImage plain = skiaText(solid, text, layout, 1.0, -1, nullptr);
+    QCOMPARE(image.size(), plain.size());
     QString why;
-    Ink a = inkOf(qt.image);
+    Ink a = inkOf(plain);
     Ink b = ink;
     a.r = a.g = a.b = b.r = b.g = b.b = 0; // colour deliberately differs
     QVERIFY2(inkClose(a, b, &why), qPrintable(why));
@@ -946,7 +841,7 @@ void SkiaTest::pathBendArchesTheLine()
     TextStyle style;
     style.fontFamily = QStringLiteral("Inter");
     style.pixelSize = 40;
-    style.color = Qt::white;
+    setSolidFill(style, Qt::white);
     style.wordWrap = false;
     const QString text = QStringLiteral("curve this line");
     const QRectF layout(0, 0, 420, 120);
@@ -1008,15 +903,13 @@ void SkiaTest::emojiOutlineDrawsARing()
         QSKIP("No emoji font available");
     TextStyle style;
     style.pixelSize = 72;
-    style.color = Qt::white;
+    setSolidFill(style, Qt::white);
     const QString text = QString::fromUtf8("\xF0\x9F\x98\x80");
     const QRectF layout(0, 0, 200, 120);
     const Ink plain = inkOf(skiaText(textClip(style, text), text, layout, 1.0, -1, nullptr));
     QVERIFY(plain.count > 300);
 
-    style.outlineEnabled = true;
-    style.outlineWidth = 6.0;
-    style.outlineColor = QColor(0, 255, 0);
+    style.layers = {strokeLayer(6.0, QColor(0, 255, 0)), solidFillLayer(Qt::white)};
     const QImage ringed = skiaText(textClip(style, text), text, layout, 1.0, -1, nullptr).convertToFormat(QImage::Format_RGBA8888);
     const Ink ring = inkOf(ringed);
     QVERIFY2(ring.count > plain.count * 1.25, qPrintable(describe(plain, ring)));
@@ -1031,13 +924,7 @@ void SkiaTest::emojiOutlineDrawsARing()
         }
     QVERIFY2(green > 5, qPrintable(QString::number(green)));
 
-    style.outlineEnabled = false;
-    style.shadowEnabled = true;
-    style.shadowOffsetX = 14.0;
-    style.shadowOffsetY = 0.0;
-    style.shadowBlur = 0.0;
-    style.shadowOpacity = 1.0;
-    style.shadowColor = QColor(0, 0, 255);
+    style.layers = {shadowLayer(QColor(0, 0, 255), 14.0, 0.0, 0.0, 1.0), solidFillLayer(Qt::white)};
     const QImage shadowed = skiaText(textClip(style, text), text, layout, 1.0, -1, nullptr).convertToFormat(QImage::Format_RGBA8888);
     const Ink shade = inkOf(shadowed);
     QVERIFY2(shade.bbox.right() >= plain.bbox.right() + 10, qPrintable(describe(plain, shade)));
@@ -1049,6 +936,389 @@ void SkiaTest::emojiOutlineDrawsARing()
                 ++blue;
         }
     QVERIFY2(blue > 5, qPrintable(QString::number(blue)));
+}
+
+
+namespace {
+
+// The probes PrimitiveProbe is checked against, shared by the CPU and GPU paths.
+void checkPrimitives(const QImage &img, const char *path)
+{
+    const auto at = [&](int x, int y) { return img.pixel(x, y); };
+    const auto info = [&](int x, int y) {
+        return qPrintable(QStringLiteral("%1 (%2,%3) = %4").arg(QLatin1String(path)).arg(x).arg(y)
+                              .arg(QString::number(at(x, y), 16)));
+    };
+    // A: the SkSL shader tinted its white child green.
+    QVERIFY2(qGreen(at(40, 40)) > 200 && qRed(at(40, 40)) < 20 && qAlpha(at(40, 40)) > 200, info(40, 40));
+    // B: the shader mask ramps alpha from opaque on the left to clear on the right.
+    QVERIFY2(qAlpha(at(93, 40)) > 200, info(93, 40));
+    QVERIFY2(qAlpha(at(147, 40)) < 70, info(147, 40));
+    QVERIFY2(qAlpha(at(93, 40)) > qAlpha(at(120, 40)) && qAlpha(at(120, 40)) > qAlpha(at(147, 40)), info(120, 40));
+    // C: the trim kept only the first half of the stroke.
+    QVERIFY2(qAlpha(at(180, 40)) > 200 && qBlue(at(180, 40)) > 200, info(180, 40));
+    QVERIFY2(qAlpha(at(220, 40)) < 16, info(220, 40));
+    // D: an outer blur is hollow inside the rect and glows just outside it.
+    QVERIFY2(qAlpha(at(280, 40)) < 16, info(280, 40));
+    QVERIFY2(qAlpha(at(257, 40)) > 10, info(257, 40));
+    // E: OKLab red→blue passes through a purple, not a dark desaturated grey.
+    QVERIFY2(qRed(at(40, 7)) > 60 && qBlue(at(40, 7)) > 60, info(40, 7));
+}
+
+} // namespace
+
+void SkiaTest::textPrimitivesRender()
+{
+    const QImage cpu = skia::SkiaRuntime::rasterize(PrimitiveProbe()).convertToFormat(QImage::Format_RGBA8888);
+    QCOMPARE(cpu.size(), QSize(320, 80));
+    checkPrimitives(cpu, "cpu");
+    // F is a probe, not a contract: Skia documents saveLayer as ignoring the paint's mask filter.
+    qInfo("saveLayer mask filter honoured on CPU: %s (alpha right edge %d)",
+          qAlpha(cpu.pixel(147, 70)) < 70 ? "yes" : "no", qAlpha(cpu.pixel(147, 70)));
+
+    // Text on a path: the contour measure of an arc places the midpoint at the apex, tangent flat.
+    SkPathBuilder pb;
+    pb.addArc(SkRect::MakeXYWH(0, 0, 100, 100), 180, 180);
+    SkContourMeasureIter iter(pb.detach(), false);
+    sk_sp<SkContourMeasure> arc = iter.next();
+    QVERIFY(arc);
+    SkMatrix m;
+    QVERIFY(arc->getMatrix(arc->length() / 2, &m));
+    QVERIFY2(qAbs(m.getTranslateX() - 50.0f) < 1.0f && qAbs(m.getTranslateY()) < 1.0f,
+             qPrintable(QStringLiteral("%1,%2").arg(m.getTranslateX()).arg(m.getTranslateY())));
+    QVERIFY(qAbs(qAbs(m.getScaleX()) - 1.0f) < 0.05f && qAbs(m.getSkewY()) < 0.05f);
+
+    if (!GpuEffectExecutor::instance().isAvailable())
+        QSKIP("GL unavailable");
+    QImage gpu;
+    gl::runtime().exec([&] {
+        gl::GlRuntime &rt = gl::runtime();
+        auto *sk = skia::SkiaRuntime::acquire(rt);
+        QVERIFY(sk);
+        gl::GlTarget target = sk->paintToTarget(rt, rt.functions(), PrimitiveProbe());
+        QVERIFY(target.isValid());
+        gpu = readStraight(rt.functions(), target);
+        rt.releaseTarget(std::move(target));
+    });
+    QCOMPARE(gpu.size(), QSize(320, 80));
+    checkPrimitives(gpu, "gpu");
+    qInfo("saveLayer mask filter honoured on GPU: %s (alpha right edge %d)",
+          qAlpha(gpu.pixel(147, 70)) < 70 ? "yes" : "no", qAlpha(gpu.pixel(147, 70)));
+}
+
+
+namespace {
+
+QImage skiaTextAt(const Clip &clip, const QString &text, const QRectF &rect, double scale, TimeUs clipTimeUs,
+                  QRectF *outRect = nullptr, quint64 *key = nullptr)
+{
+    const skia::TextPainterResult painted = skia::makeTextPainter(clip, text, rect, scale, -1, clipTimeUs);
+    if (outRect)
+        *outRect = painted.rect;
+    if (key)
+        *key = painted.painter ? painted.painter->cacheKey() : 0;
+    return painted.painter ? skia::SkiaRuntime::rasterize(*painted.painter) : QImage();
+}
+
+double centroidY(const QImage &image)
+{
+    double sum = 0, mass = 0;
+    for (int y = 0; y < image.height(); ++y)
+        for (int x = 0; x < image.width(); ++x) {
+            const int a = qAlpha(image.pixel(x, y));
+            sum += a * y;
+            mass += a;
+        }
+    return mass > 0 ? sum / mass : 0.0;
+}
+
+double centroidXOf(const QImage &image, const std::function<bool(QRgb)> &pick)
+{
+    double sum = 0, n = 0;
+    for (int y = 0; y < image.height(); ++y)
+        for (int x = 0; x < image.width(); ++x)
+            if (pick(image.pixel(x, y))) {
+                sum += x;
+                n += 1;
+            }
+    return n > 0 ? sum / n : -1.0;
+}
+
+Clip animatedClip(const TextStyle &style, const QString &text, TimeUs durationUs = secondsToUs(2.0))
+{
+    Clip clip = textClip(style, text);
+    clip.timelineDuration = durationUs;
+    return clip;
+}
+
+} // namespace
+
+// A staggered character reveal shows more glyphs as time goes on; a word rise starts below its
+// resting place and settles.
+void SkiaTest::fragmentAnimationRendersPerCharacter()
+{
+    reloadFontCatalog({QString::fromUtf8(DRIFT_TEST_FONTS_DIR)});
+    TextStyle style;
+    style.fontFamily = QStringLiteral("Inter");
+    style.pixelSize = 48;
+    style.animation.in = legacyTextAnimationSlot(QStringLiteral("typewriter"), 0, QStringLiteral("linear"),
+                                                 QStringLiteral("character"), 100000, QStringLiteral("forward"));
+    const QString text = QStringLiteral("abcdef");
+    const QRectF layout(0, 0, 400, 120);
+    const Clip clip = animatedClip(style, text);
+    const int atStart = inkOf(skiaTextAt(clip, text, layout, 1.0, 0)).count;
+    const int atQuarter = inkOf(skiaTextAt(clip, text, layout, 1.0, 250000)).count;
+    const int atEnd = inkOf(skiaTextAt(clip, text, layout, 1.0, secondsToUs(1.5))).count;
+    QVERIFY2(atStart > 0 && atStart < atQuarter && atQuarter < atEnd,
+             qPrintable(QStringLiteral("%1 %2 %3").arg(atStart).arg(atQuarter).arg(atEnd)));
+
+    TextStyle rise = style;
+    rise.animation.in = legacyTextAnimationSlot(QStringLiteral("rise"), 400000, QStringLiteral("linear"),
+                                                QStringLiteral("word"), 200000, QStringLiteral("forward"));
+    const Clip rising = animatedClip(rise, QStringLiteral("one two"));
+    const QImage early = skiaTextAt(rising, QStringLiteral("one two"), layout, 1.0, 100000);
+    const QImage settled = skiaTextAt(rising, QStringLiteral("one two"), layout, 1.0, secondsToUs(1.5));
+    QVERIFY(inkOf(early).count > 0);
+    QVERIFY2(centroidY(early) > centroidY(settled) + 5.0,
+             qPrintable(QStringLiteral("%1 vs %2").arg(centroidY(early)).arg(centroidY(settled))));
+    // Per-fragment motion changes the pixels, not the layer: both frames are the same image size.
+    QCOMPARE(early.size(), settled.size());
+}
+
+// The painter's image is sized for the whole animation up front, so its rect never moves while
+// the animation plays, and the held pose is cached while the moving frames are not.
+void SkiaTest::bleedIsTimeInvariant()
+{
+    reloadFontCatalog({QString::fromUtf8(DRIFT_TEST_FONTS_DIR)});
+    TextStyle style;
+    style.fontFamily = QStringLiteral("Inter");
+    style.pixelSize = 48;
+    style.animation.in = legacyTextAnimationSlot(QStringLiteral("rise"), 400000, QStringLiteral("easeOut"),
+                                                 QStringLiteral("word"), 100000, QStringLiteral("forward"));
+    const QString text = QStringLiteral("hold still");
+    const QRectF layout(0, 0, 400, 120);
+    const Clip clip = animatedClip(style, text, secondsToUs(3.0));
+    QRectF r0, r1, r2;
+    quint64 k0 = 0, k1 = 0, k2 = 0;
+    const QImage a = skiaTextAt(clip, text, layout, 1.0, 0, &r0, &k0);
+    const QImage b = skiaTextAt(clip, text, layout, 1.0, 200000, &r1, &k1);
+    const QImage c = skiaTextAt(clip, text, layout, 1.0, secondsToUs(2.0), &r2, &k2);
+    QCOMPARE(r0, r1);
+    QCOMPARE(r1, r2);
+    QCOMPARE(a.size(), c.size());
+    QCOMPARE(k0, quint64(0));
+    QCOMPARE(k1, quint64(0));
+    QVERIFY(k2 != 0);
+    // The rise reserved room: the image is taller than the plain block's.
+    Clip plain = clip;
+    plain.textStyle.animation = TextAnimationSet{};
+    QRectF plainRect;
+    skiaTextAt(plain, text, layout, 1.0, 0, &plainRect);
+    QVERIFY2(r0.height() > plainRect.height() + 10, qPrintable(QStringLiteral("%1 vs %2").arg(r0.height()).arg(plainRect.height())));
+}
+
+// An offset shadow layer under a white fill shows its colour on the far edge; a stroke layer
+// adds ink around every glyph.
+void SkiaTest::shadingLayersCompositeInOrder()
+{
+    reloadFontCatalog({QString::fromUtf8(DRIFT_TEST_FONTS_DIR)});
+    TextStyle style;
+    style.fontFamily = QStringLiteral("Inter");
+    style.pixelSize = 64;
+    const QString text = QStringLiteral("HELLO");
+    const QRectF layout(0, 0, 400, 120);
+    const Ink plain = inkOf(skiaText(textClip(style, text), text, layout, 1.0, -1, nullptr));
+    QVERIFY(plain.count > 500);
+
+    style.layers = {shadowLayer(QColor(0, 0, 255), 14.0, 0.0, 0.0, 1.0), solidFillLayer(Qt::white)};
+    const QImage shadowed = skiaText(textClip(style, text), text, layout, 1.0, -1, nullptr).convertToFormat(QImage::Format_RGBA8888);
+    const Ink shade = inkOf(shadowed);
+    QVERIFY2(shade.bbox.right() >= plain.bbox.right() + 10, qPrintable(describe(plain, shade)));
+    int blue = 0;
+    for (int x = shade.bbox.right() - 6; x <= shade.bbox.right(); ++x)
+        for (int y = shade.bbox.top(); y <= shade.bbox.bottom(); ++y) {
+            const QRgb p = shadowed.pixel(x, y);
+            if (qAlpha(p) > 100 && qBlue(p) > 180 && qRed(p) < 80)
+                ++blue;
+        }
+    QVERIFY2(blue > 5, qPrintable(QString::number(blue)));
+
+    style.layers = {strokeLayer(6.0, QColor(0, 255, 0)), solidFillLayer(Qt::white)};
+    const Ink stroked = inkOf(skiaText(textClip(style, text), text, layout, 1.0, -1, nullptr));
+    QVERIFY2(stroked.count > plain.count * 1.2, qPrintable(describe(plain, stroked)));
+    QVERIFY(stroked.bbox.width() >= plain.bbox.width() + 8);
+
+    // Layer order matters: the same stroke on top of the fill covers it (green-heavy ink).
+    style.layers = {solidFillLayer(Qt::white), strokeLayer(6.0, QColor(0, 255, 0))};
+    const Ink over = inkOf(skiaText(textClip(style, text), text, layout, 1.0, -1, nullptr));
+    QVERIFY2(over.r < stroked.r - 20 && over.b < stroked.b - 20, qPrintable(describe(stroked, over)));
+
+    // A hollow (knockout) fill leaves only the stroke.
+    TextShadingLayer hollow = solidFillLayer(Qt::white);
+    hollow.knockout = true;
+    style.layers = {strokeLayer(6.0, QColor(0, 255, 0)), hollow};
+    const Ink hollowed = inkOf(skiaText(textClip(style, text), text, layout, 1.0, -1, nullptr));
+    QVERIFY2(hollowed.count < stroked.count * 0.8 && hollowed.count > 0, qPrintable(describe(stroked, hollowed)));
+}
+
+// A repeating left→right gradient slides with its offset, and maps per word when asked.
+void SkiaTest::gradientOffsetShiftsColour()
+{
+    reloadFontCatalog({QString::fromUtf8(DRIFT_TEST_FONTS_DIR)});
+    TextStyle style;
+    style.fontFamily = QStringLiteral("Inter");
+    style.pixelSize = 72;
+    TextShadingLayer *fill = firstTextLayerOfKind(style.layers, TextLayerKind::Fill, false);
+    fill->paint.kind = TextPaintKind::Gradient;
+    fill->paint.gradient.stops = {{0.0, QColor(255, 0, 0)}, {1.0, QColor(0, 0, 255)}};
+    fill->paint.gradient.angle = 0.0;
+    fill->paint.gradient.repeat = true;
+    const QString text = QStringLiteral("WWWWWWWW");
+    const QRectF layout(0, 0, 600, 140);
+    const auto redX = [](const QImage &img) {
+        return centroidXOf(img, [](QRgb p) { return qAlpha(p) > 200 && qRed(p) > 150 && qBlue(p) < 100; });
+    };
+    const QImage at0 = skiaText(textClip(style, text), text, layout, 1.0, -1, nullptr).convertToFormat(QImage::Format_RGBA8888);
+    fill->paint.gradient.offset = 0.3;
+    const QImage at05 = skiaText(textClip(style, text), text, layout, 1.0, -1, nullptr).convertToFormat(QImage::Format_RGBA8888);
+    QVERIFY(redX(at0) >= 0 && redX(at05) >= 0);
+    QVERIFY2(qAbs(redX(at0) - redX(at05)) > 10.0, qPrintable(QStringLiteral("%1 vs %2").arg(redX(at0)).arg(redX(at05))));
+
+    // The same gradient driven by offsetSpeed moves with time and is never cached.
+    fill->paint.gradient.offset = 0.0;
+    fill->paint.gradient.offsetSpeed = 0.5;
+    const Clip flowing = animatedClip(style, text);
+    quint64 key = 1;
+    const QImage t0 = skiaTextAt(flowing, text, layout, 1.0, 0, nullptr, &key).convertToFormat(QImage::Format_RGBA8888);
+    QCOMPARE(key, quint64(0));
+    const QImage t1 = skiaTextAt(flowing, text, layout, 1.0, 600000).convertToFormat(QImage::Format_RGBA8888);
+    QVERIFY(qAbs(redX(t0) - redX(t1)) > 10.0);
+
+    // Mapped per word, every word starts red on its left edge.
+    fill->paint.gradient.offsetSpeed = 0.0;
+    fill->paint.gradient.repeat = false;
+    fill->paint.gradient.space = TextGradientSpace::Word;
+    const QString words = QStringLiteral("WW WW");
+    const QImage perWord = skiaText(textClip(style, words), words, layout, 1.0, -1, nullptr).convertToFormat(QImage::Format_RGBA8888);
+    const Ink ink = inkOf(perWord);
+    // Two red runs: one at the block's left edge and one past the middle.
+    int redLeft = 0, redRight = 0;
+    for (int y = ink.bbox.top(); y <= ink.bbox.bottom(); ++y)
+        for (int x = ink.bbox.left(); x <= ink.bbox.right(); ++x) {
+            const QRgb p = perWord.pixel(x, y);
+            if (qAlpha(p) > 200 && qRed(p) > 150 && qBlue(p) < 100)
+                (x < ink.bbox.center().x() ? redLeft : redRight)++;
+        }
+    QVERIFY2(redLeft > 20 && redRight > 20, qPrintable(QStringLiteral("%1 %2").arg(redLeft).arg(redRight)));
+}
+
+// An inline wipe animator reveals the block through a soft mask travelling upward.
+void SkiaTest::wipeMaskRevealsBottomUp()
+{
+    reloadFontCatalog({QString::fromUtf8(DRIFT_TEST_FONTS_DIR)});
+    TextStyle style;
+    style.fontFamily = QStringLiteral("Inter");
+    style.pixelSize = 72;
+    TextAnimator wipe;
+    TextRangeSelector sel;
+    sel.driver = TextSelectorDriver::Stagger;
+    sel.domain = TextSelectorDomain::All;
+    sel.staggerUs = 0;
+    sel.durationUs = secondsToUs(1.0);
+    sel.ease.kind = TextEaseKind::Linear;
+    wipe.selectors = {sel};
+    wipe.props.wipe.enabled = true;
+    wipe.props.wipe.angleDeg = -90.0;
+    wipe.props.wipe.softness = 0.1;
+    style.animation.in.animators = {wipe};
+    const QString text = QStringLiteral("WIPE");
+    const QRectF layout(0, 0, 400, 140);
+    const Clip clip = animatedClip(style, text, secondsToUs(3.0));
+    const QImage half = skiaTextAt(clip, text, layout, 1.0, secondsToUs(0.5));
+    const QImage full = skiaTextAt(clip, text, layout, 1.0, secondsToUs(2.0));
+    const Ink h = inkOf(half), f = inkOf(full);
+    QVERIFY2(h.count > f.count * 0.2 && h.count < f.count * 0.8, qPrintable(describe(h, f)));
+    // Bottom revealed first: the half-revealed ink sits lower than the whole block's.
+    QVERIFY2(centroidY(half) > centroidY(full) + 5.0, qPrintable(QStringLiteral("%1 vs %2").arg(centroidY(half)).arg(centroidY(full))));
+}
+
+// The typewriter caret appears after the last typed character and blinks.
+void SkiaTest::caretDrawsAfterLastVisibleFragment()
+{
+    reloadFontCatalog({QString::fromUtf8(DRIFT_TEST_FONTS_DIR)});
+    TextStyle style;
+    style.fontFamily = QStringLiteral("Inter");
+    style.pixelSize = 48;
+    style.animation.in = legacyTextAnimationSlot(QStringLiteral("typewriter"), 0, QStringLiteral("linear"),
+                                                 QStringLiteral("character"), 100000, QStringLiteral("forward"));
+    style.animation.in.params.insert(QStringLiteral("caret"), VectorSlotValue::fromScalar(1.0));
+    style.animation.in.params.insert(QStringLiteral("lead"), VectorSlotValue::fromScalar(0.0));
+    const QString text = QStringLiteral("type");
+    const QRectF layout(0, 0, 400, 120);
+    const Clip clip = animatedClip(style, text, secondsToUs(3.0));
+    TextStyle bare = style;
+    bare.animation.in.params.insert(QStringLiteral("caret"), VectorSlotValue::fromScalar(0.0));
+    const Clip noCaret = animatedClip(bare, text, secondsToUs(3.0));
+    // Blink phase 0 → on: the caret adds ink to the right of the first glyph.
+    const Ink withCaret = inkOf(skiaTextAt(clip, text, layout, 1.0, 0));
+    const Ink without = inkOf(skiaTextAt(noCaret, text, layout, 1.0, 0));
+    QVERIFY2(withCaret.count > without.count + 20, qPrintable(describe(without, withCaret)));
+    QVERIFY(withCaret.bbox.right() > without.bbox.right() + 2);
+    // 250 ms in the caret is off (200 on / 300 off).
+    const Ink off = inkOf(skiaTextAt(clip, text, layout, 1.0, 250000));
+    const Ink offBare = inkOf(skiaTextAt(noCaret, text, layout, 1.0, 250000));
+    QVERIFY2(qAbs(off.count - offBare.count) < 10, qPrintable(describe(offBare, off)));
+}
+
+// Every SkSL effect compiles, and a shine layer renders as ink over its base.
+void SkiaTest::skslEffectsCompileAndRender()
+{
+    for (const TextEffectSpec &spec : textShaderEffectSpecs())
+        QVERIFY2(skia::textEffectCompileError(spec.id).isEmpty(),
+                 qPrintable(spec.id + QLatin1String(": ") + skia::textEffectCompileError(spec.id)));
+    QVERIFY(!skia::textEffectCompileError(QStringLiteral("nope")).isEmpty());
+
+    reloadFontCatalog({QString::fromUtf8(DRIFT_TEST_FONTS_DIR)});
+    TextStyle style;
+    style.fontFamily = QStringLiteral("Inter");
+    style.pixelSize = 72;
+    const QString text = QStringLiteral("SHINE");
+    const QRectF layout(0, 0, 400, 140);
+    const Ink plain = inkOf(skiaText(textClip(style, text), text, layout, 1.0, -1, nullptr));
+    for (const TextEffectSpec &spec : textShaderEffectSpecs()) {
+        TextStyle fx = style;
+        TextShadingLayer *fill = firstTextLayerOfKind(fx.layers, TextLayerKind::Fill, false);
+        fill->paint.kind = TextPaintKind::Effect;
+        fill->paint.effect.id = spec.id;
+        const Ink ink = inkOf(skiaText(textClip(fx, text), text, layout, 1.0, -1, nullptr));
+        QVERIFY2(ink.count > plain.count * 0.5, qPrintable(spec.id + QLatin1String(": ") + describe(plain, ink)));
+    }
+    // An animated effect is time-driven, so the painter opts out of the cache.
+    TextStyle animated = style;
+    TextShadingLayer *fill = firstTextLayerOfKind(animated.layers, TextLayerKind::Fill, false);
+    fill->paint.kind = TextPaintKind::Effect;
+    fill->paint.effect.id = QStringLiteral("shine");
+    QCOMPARE(skia::makeTextPainter(textClip(animated, text), text, layout, 1.0).painter->cacheKey(), quint64(0));
+}
+
+// Every look renders something, and Neon glows outside the glyphs.
+void SkiaTest::textLookRenders()
+{
+    reloadFontCatalog({QString::fromUtf8(DRIFT_TEST_FONTS_DIR)});
+    TextStyle style;
+    style.fontFamily = QStringLiteral("Inter");
+    style.pixelSize = 64;
+    const QString text = QStringLiteral("Look");
+    const QRectF layout(0, 0, 400, 140);
+    const Ink plain = inkOf(skiaText(textClip(style, text), text, layout, 1.0, -1, nullptr));
+    for (const TextLook &look : textLooks()) {
+        TextStyle styled = style;
+        QVERIFY(applyTextLook(styled, look.id, {}));
+        const Ink ink = inkOf(skiaText(textClip(styled, text), text, layout, 1.0, -1, nullptr));
+        QVERIFY2(ink.count > 100, qPrintable(look.id));
+        if (look.id == QLatin1String("neon"))
+            QVERIFY2(ink.bbox.width() > plain.bbox.width() + 20, qPrintable(describe(plain, ink)));
+    }
 }
 
 QTEST_MAIN(SkiaTest)

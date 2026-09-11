@@ -891,6 +891,8 @@ Project Project::fromJson(const QJsonObject &object, QString *errorOut)
     }
     // Version 6 added ClipType::Vector. Nothing to migrate; the bump exists so an older build
     // refuses the file instead of loading those clips as videos with no path.
+    // Version 7 turned the flat text look into shading layers and the animIn/animOut kinds into
+    // preset slots; textStyleFromJson migrates both in place.
 
     project.m_bookmarks.clear();
     const QJsonArray bookmarksArray = object.value(QStringLiteral("bookmarks")).toArray();

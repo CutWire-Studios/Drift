@@ -2308,7 +2308,9 @@ void McpTest::textKeyframesThroughSetKeyframe()
     // Colour fan-out.
     state.setClipColorKeyframe(track, clip, QStringLiteral("text.color"), 1.0, QColor(0, 128, 255));
     QCOMPARE(state.propertyValueAt(track, clip, QStringLiteral("text.color.b"), 1.0, 0.0), 1.0);
-    QVERIFY(state.clipAnimatedProperties(track, clip).contains(QStringLiteral("text.color.r")));
+    // The legacy colour key lands on the fill layer's canonical track.
+    QVERIFY(state.clipAnimatedProperties(track, clip).contains(QStringLiteral("text.layer.fill.color.r")));
+    QCOMPARE(state.propertyValueAt(track, clip, QStringLiteral("text.layer.fill.color.b"), 1.0, 0.0), 1.0);
 }
 
 void McpTest::importMediaTakesLottieBundles()

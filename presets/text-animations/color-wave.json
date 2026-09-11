@@ -1,0 +1,81 @@
+{
+  "format": 1,
+  "id": "color-wave",
+  "label": "Colour wave",
+  "category": "colour",
+  "sampleText": "Focus on creativity",
+  "slots": [
+    "in"
+  ],
+  "order": 160,
+  "defaults": {
+    "unit": "word",
+    "stagger": 0.09,
+    "duration": 0.6,
+    "ease": "easeOut"
+  },
+  "params": [
+    {
+      "id": "arrive",
+      "type": "color",
+      "label": "Arrive colour",
+      "default": "#ffc52896"
+    },
+    {
+      "id": "decay",
+      "type": "scalar",
+      "label": "Decay",
+      "unit": "s",
+      "min": 0.05,
+      "max": 2,
+      "step": 0.05,
+      "default": 0.35
+    },
+    {
+      "id": "rise",
+      "type": "scalar",
+      "label": "Rise",
+      "unit": "em",
+      "min": 0,
+      "max": 2,
+      "step": 0.05,
+      "default": 0.3
+    }
+  ],
+  "animators": [
+    {
+      "selectors": [
+        "stagger"
+      ],
+      "props": {
+        "position": {
+          "x": 0,
+          "y": "{rise}",
+          "unit": "em"
+        },
+        "opacity": 0
+      }
+    },
+    {
+      "selectors": [
+        {
+          "driver": "stagger",
+          "domain": "{unit}",
+          "order": "{order}",
+          "staggerUs": {
+            "$": "stagger",
+            "mul": 1000000
+          },
+          "durationUs": {
+            "$": "decay",
+            "mul": 1000000
+          },
+          "ease": "linear"
+        }
+      ],
+      "props": {
+        "fillColor": "{arrive}"
+      }
+    }
+  ]
+}

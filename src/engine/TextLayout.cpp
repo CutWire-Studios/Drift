@@ -2,10 +2,11 @@
 
 #include "EmojiCatalog.h"
 #include "FontCatalog.h"
-#include "TextRaster.h"
 
 #include <QFontMetricsF>
-#include <QPainterPathStroker>
+#include <QCache>
+#include <QMutex>
+#include <QMutexLocker>
 #include <QRawFont>
 #include <QTextBoundaryFinder>
 #include <QTextLayout>
@@ -22,36 +23,33 @@ static quint64 highlightHash(const drift::TextHighlight &h)
     return qHashMulti(0, h.enabled, h.color.rgba(), h.padding, h.radius);
 }
 
-// Everything about a style that changes pixels. Shared by the block and span cache keys, which
-// would otherwise duplicate a 30-argument hash between them.
+// Everything about a style that changes pixels.
 quint64 styleHash(const drift::TextStyle &s)
 {
-    // Deliberately excludes the animation and the time: motion is applied to the layer, not the
-    // raster, so one texture serves every frame of an entrance or exit.
+    // Deliberately excludes the animation and the time: motion is applied per fragment at draw
+    // time, so the laid-out pieces serve every frame.
     const drift::WordAccent &a = s.accent;
-    return qHashMulti(0, s.fontFamily, s.pixelSize, s.fontWeight, s.italic, s.color.rgba(),
-                      static_cast<int>(s.fillKind), s.colorSecondary.rgba(), s.gradientAngle, s.pathBend,
-                      static_cast<int>(s.align), static_cast<int>(s.valign), s.wordWrap, s.lineHeight,
-                      s.letterSpacing, s.outlineEnabled, s.outlineWidth, s.outlineColor.rgba(),
-                      s.shadowEnabled,
-                      s.shadowOffsetX, s.shadowOffsetY, s.shadowBlur, s.shadowOpacity,
-                      s.shadowColor.rgba(), s.glowEnabled, s.glowColor.rgba(), s.glowRadius,
-                      s.glowOpacity, s.boxEnabled, s.boxColor.rgba(), s.boxPadding, s.boxRadius,
-                      highlightHash(s.wordHighlight), s.underlineEnabled, s.underlineColor.rgba(),
-                      s.underlineWidth, s.underlineOffset,
+    return qHashMulti(0, s.fontFamily, s.pixelSize, s.fontWeight, s.italic, drift::textLayersHash(s.layers),
+                      s.pathBend, static_cast<int>(s.align), static_cast<int>(s.valign), s.wordWrap,
+                      s.lineHeight, s.letterSpacing, s.boxEnabled, s.boxColor.rgba(), s.boxPadding,
+                      s.boxRadius, highlightHash(s.wordHighlight), s.underlineEnabled,
+                      s.underlineColor.rgba(), s.underlineWidth, s.underlineOffset,
                       qHashMulti(0, static_cast<int>(a.rule), a.n, a.phase, a.colorEnabled,
                                  a.color.rgba(), a.sizeScale, a.outlineEnabled, a.outlineWidth,
                                  a.outlineColor.rgba(), highlightHash(a.highlight)));
 }
 
-quint64 rasterKey(const QString &text, const drift::TextStyle &s, int imageW, int imageH,
-                  double renderScale, int activeWordIndex)
+// Only what moves glyphs: the look (colours, strokes) is painted, not laid out.
+quint64 layoutKey(const QString &text, const drift::TextStyle &s, double wrapWidth, double blockHeight,
+                  double renderScale, int activeWordIndex, WordSplit split)
 {
-    return qHashMulti(0, text, styleHash(s), imageW, imageH, qRound(renderScale * 1000.0),
-                      activeWordIndex);
+    const drift::WordAccent &a = s.accent;
+    return qHashMulti(0, text, s.fontFamily, s.pixelSize, s.fontWeight, s.italic, static_cast<int>(s.align),
+                      static_cast<int>(s.valign), s.wordWrap, s.lineHeight, s.letterSpacing,
+                      static_cast<int>(a.rule), a.n, a.phase, a.sizeScale, qRound(wrapWidth * 4.0),
+                      qRound(blockHeight * 4.0), qRound(renderScale * 1000.0), activeWordIndex,
+                      static_cast<int>(split));
 }
-
-
 
 // Colour emoji ship as a CBDT/CBLC bitmap face, which carries no glyph outlines for
 // QPainterPath::addText to take — laid out as a path they come out empty and vanish. They have
@@ -244,6 +242,18 @@ QList<StyledWord> layoutStyledText(const QString &text, const drift::TextStyle &
     else if (style.valign == drift::TextVAlign::Bottom)
         blockTop = blockHeight - totalH;
 
+    // Grapheme ordinal of every text position, spaces included, for the animator's character
+    // domain.
+    QList<int> graphemeAt(source.size() + 1, 0);
+    {
+        const QList<int> stops = graphemeBoundaries(source, 0, source.size());
+        int ordinal = 0;
+        for (int g = 0; g + 1 < stops.size(); ++g, ++ordinal)
+            for (int pos = stops.at(g); pos < stops.at(g + 1); ++pos)
+                graphemeAt[pos] = ordinal;
+        graphemeAt[source.size()] = ordinal;
+    }
+
     QList<StyledWord> words;
     double y = 0.0;
     for (int i = 0; i < lineCount; ++i) {
@@ -309,6 +319,10 @@ QList<StyledWord> layoutStyledText(const QString &text, const drift::TextStyle &
                 word.index = wi;
                 word.line = i;
                 word.accent = accentFlags.at(wi);
+                word.charIndex = graphemeAt.at(from);
+                word.nonSpaceIndex = words.size();
+                word.textStart = from;
+                word.textLength = to - from;
                 words.append(word);
             };
 
@@ -375,12 +389,24 @@ double bleedFor(const drift::TextStyle &style)
     const drift::WordAccent &accent = style.accent;
     const bool accented = accent.rule != drift::WordAccentRule::None;
 
-    double bleed = qMax(style.outlineEnabled ? style.outlineWidth : 0.0,
-                        accented && accent.outlineEnabled ? accent.outlineWidth : 0.0);
-    if (style.shadowEnabled)
-        bleed += style.shadowBlur * 2.0 + qMax(std::abs(style.shadowOffsetX), std::abs(style.shadowOffsetY));
-    if (style.glowEnabled)
-        bleed += style.glowRadius * 2.0;
+    // Layers do not compound: the widest one sets the margin, plus the stroke every one of them
+    // may be drawn over.
+    const double stroke = qMax(drift::textStrokeWidth(style, false),
+                               accented ? drift::textStrokeWidth(style, true) : 0.0);
+    double widest = 0.0;
+    for (const drift::TextShadingLayer &layer : style.layers) {
+        if (!layer.enabled)
+            continue;
+        double reach = qMax(std::abs(layer.offsetX), std::abs(layer.offsetY)) + layer.blur * 2.0 + qMax(0.0, layer.spread);
+        if (layer.kind == drift::TextLayerKind::Stroke)
+            reach += layer.width;
+        else if (layer.kind == drift::TextLayerKind::Extrude)
+            reach += layer.width;
+        else
+            reach += stroke;
+        widest = qMax(widest, reach);
+    }
+    double bleed = qMax(widest, stroke);
     if (style.boxEnabled)
         bleed += style.boxPadding + style.boxRadius;
     bleed += qMax(highlightBleed(style.wordHighlight),
@@ -390,48 +416,9 @@ double bleedFor(const drift::TextStyle &style)
     // A scaled accent word overshoots the block's line box on both sides.
     if (accented && accent.sizeScale > 1.0)
         bleed += style.pixelSize * (accent.sizeScale - 1.0);
-    if (style.animIn.kind == drift::TextAnimKind::Blur || style.animOut.kind == drift::TextAnimKind::Blur)
-        bleed += kTextBlurMaxPx;
     // A bent baseline lifts (or drops) the middle of the line by the arc's rise.
     bleed += textBendRise(style);
     return bleed;
-}
-
-// Grow the glyph path outward by the outline width. Shared by the box background (which sizes to its
-
-QPainterPath outlineShape(const QPainterPath &path, double outlineWidth, double renderScale)
-{
-    if (outlineWidth <= 0.0)
-        return path;
-    QPainterPathStroker stroker;
-    // The stroker is centred on the path, so doubling the width yields an outline that grows entirely
-    // outward and leaves the glyph shape intact.
-    stroker.setWidth(outlineWidth * renderScale * 2.0);
-    stroker.setJoinStyle(Qt::RoundJoin);
-    stroker.setCapStyle(Qt::RoundCap);
-    QPainterPath shape = stroker.createStroke(path).united(path);
-    shape.setFillRule(Qt::WindingFill);
-    return shape;
-}
-
-// The style a word is drawn with: the block's, with the pack's accent overrides folded in.
-double outlineWidthFor(const drift::TextStyle &style, bool accent)
-{
-    if (accent && style.accent.outlineEnabled)
-        return style.accent.outlineWidth;
-    if (!style.outlineEnabled)
-        return 0.0;
-    return style.outlineWidth;
-}
-
-QColor outlineColorFor(const drift::TextStyle &style, bool accent)
-{
-    return accent && style.accent.outlineEnabled ? style.accent.outlineColor : style.outlineColor;
-}
-
-QColor fillColorFor(const drift::TextStyle &style, bool accent)
-{
-    return accent && style.accent.colorEnabled ? style.accent.color : style.color;
 }
 
 const drift::TextHighlight *highlightFor(const drift::TextStyle &style, bool accent)
@@ -468,10 +455,8 @@ QRectF paintedBounds(const QList<StyledWord> &words, const drift::TextStyle &sty
     for (const StyledWord &word : words) {
         // An emoji has no path, so its cell is what the box background and the per-span ink test
         // have to size to — otherwise an emoji-only span is treated as empty and dropped.
-        QRectF piece =
-            word.emojiText.isEmpty()
-                ? outlineShape(word.path, outlineWidthFor(style, word.accent), renderScale).boundingRect()
-                : word.cellRect;
+        const double grow = drift::textStrokeWidth(style, word.accent) * renderScale;
+        QRectF piece = word.emojiText.isEmpty() ? word.inkRect.adjusted(-grow, -grow, grow, grow) : word.cellRect;
         if (const drift::TextHighlight *highlight = highlightFor(style, word.accent)) {
             const double pad = highlight->padding * renderScale;
             piece = piece.united(word.cellRect.adjusted(-pad, -pad, pad, pad));
@@ -481,28 +466,105 @@ QRectF paintedBounds(const QList<StyledWord> &words, const drift::TextStyle &sty
     return bounds;
 }
 
-// Group the laid-out pieces into the reveal spans the caller asked for. Word and Character spans
-// are one piece each (the layout already split them); Line spans gather a line's words so a mixed
-// accent line still animates as one unit.
-QList<QList<StyledWord>> groupSpans(const QList<StyledWord> &words, drift::TextAnimUnit unit)
+// ---------------------------------------------------------------------------------------------
+// Fragment sets
+
+namespace {
+
+QMutex g_layoutMutex;
+QCache<quint64, std::shared_ptr<const FragmentSet>> g_layoutCache(64);
+
+} // namespace
+
+std::shared_ptr<const FragmentSet> fragmentsFor(const QString &text, const drift::TextStyle &style, double wrapWidth,
+                                                double blockHeight, double renderScale, int activeWordIndex,
+                                                WordSplit split)
 {
-    QList<QList<StyledWord>> groups;
-    for (const StyledWord &word : words) {
-        if (unit == drift::TextAnimUnit::Line && !groups.isEmpty()
-            && groups.last().first().line == word.line)
-            groups.last().append(word);
-        else
-            groups.append(QList<StyledWord>{word});
+    const quint64 key = layoutKey(text, style, wrapWidth, blockHeight, renderScale, activeWordIndex, split);
+    {
+        QMutexLocker lock(&g_layoutMutex);
+        if (const auto *hit = g_layoutCache.object(key))
+            return *hit;
     }
-    return groups;
+    auto set = std::make_shared<FragmentSet>();
+    set->key = key;
+    set->split = split;
+    const StyleFonts fonts = fontsForStyle(style, renderScale);
+    set->frags = layoutStyledText(text, style, fonts.base, fonts.accent, wrapWidth, blockHeight, activeWordIndex, split);
+    set->infos.reserve(set->frags.size());
+    int lines = 0;
+    int words = 0;
+    for (const StyledWord &w : set->frags) {
+        drift::textanim::FragmentInfo info;
+        info.charIndex = w.charIndex;
+        info.nonSpaceIndex = w.nonSpaceIndex;
+        info.wordIndex = w.index;
+        info.lineIndex = w.line;
+        info.advance = w.cellRect.width();
+        info.ascent = w.baselineY - w.cellRect.top();
+        info.textStart = w.textStart;
+        info.textLength = w.textLength;
+        set->infos.append(info);
+        lines = qMax(lines, w.line + 1);
+        words = qMax(words, w.index + 1);
+    }
+    QString source = text;
+    source.replace(QLatin1Char('\n'), QChar::LineSeparator);
+    set->domains.chars = qMax(1, graphemeBoundaries(source, 0, source.size()).size() - 1);
+    set->domains.nonSpaceChars = set->frags.size();
+    set->domains.words = words;
+    set->domains.lines = lines;
+    set->ink = paintedBounds(set->frags, style, renderScale);
+    QMutexLocker lock(&g_layoutMutex);
+    g_layoutCache.insert(key, new std::shared_ptr<const FragmentSet>(set));
+    return set;
 }
 
-
-quint64 spanRasterKey(const QString &text, const drift::TextStyle &s, const QRectF &layoutRect,
-                      double renderScale, drift::TextAnimUnit unit, int activeWordIndex)
+void clearLayoutCache()
 {
-    return qHashMulti(0, text, styleHash(s), qRound(layoutRect.width()), qRound(layoutRect.height()),
-                      qRound(renderScale * 1000.0), static_cast<int>(unit), activeWordIndex);
+    QMutexLocker lock(&g_layoutMutex);
+    g_layoutCache.clear();
+}
+
+WordSplit splitFor(const drift::textanim::ResolvedSlots &resolved, const drift::TextStyle &style)
+{
+    if (textBendRise(style) > 0.0)
+        return WordSplit::Characters;
+    const auto perCharacter = [](const QList<drift::TextAnimator> &animators) {
+        for (const drift::TextAnimator &a : animators) {
+            if (!a.enabled)
+                continue;
+            for (const drift::TextRangeSelector &s : a.selectors) {
+                if (s.domain == drift::TextSelectorDomain::Chars
+                    || s.domain == drift::TextSelectorDomain::CharsExcludingSpaces)
+                    return true;
+            }
+        }
+        return false;
+    };
+    return perCharacter(resolved.in) || perCharacter(resolved.out) || perCharacter(resolved.loop)
+               ? WordSplit::Characters
+               : WordSplit::Whole;
+}
+
+drift::textanim::EvalContext evalContextFor(const drift::TextStyle &style, const QRectF &layoutRect,
+                                            double renderScale, drift::TimeUs windowStartUs,
+                                            drift::TimeUs windowDurationUs, drift::TimeUs timelineUs,
+                                            int activeWordIndex)
+{
+    drift::textanim::EvalContext ctx;
+    ctx.windowStartUs = windowStartUs;
+    ctx.windowDurationUs = windowDurationUs;
+    ctx.timelineUs = timelineUs;
+    ctx.emPx = style.pixelSize * renderScale;
+    ctx.boxWidthPx = layoutRect.width();
+    ctx.boxHeightPx = layoutRect.height();
+    ctx.renderScale = renderScale;
+    ctx.alignFactor = style.align == drift::TextAlign::Left ? 0.0 : (style.align == drift::TextAlign::Right ? 1.0 : 0.5);
+    ctx.activeWordIndex = activeWordIndex;
+    ctx.baseFillColor = drift::textFillColor(style, false);
+    ctx.baseStrokeColor = drift::textStrokeColor(style, false);
+    return ctx;
 }
 
 } // namespace drift::text

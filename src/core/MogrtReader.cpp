@@ -535,7 +535,7 @@ bool applyTemplateToProject(const MogrtTemplate &tmpl,
 
         textClip.textStyle.fontFamily = p.fontFamily.isEmpty() ? QStringLiteral("Inter") : p.fontFamily;
         textClip.textStyle.pixelSize = p.fontSize > 0 ? p.fontSize : ((textIndex == 0) ? 64 : 40);
-        textClip.textStyle.color = p.colorValue.isValid() ? p.colorValue : textColor;
+        drift::setSolidFill(textClip.textStyle, p.colorValue.isValid() ? p.colorValue : textColor);
         textClip.textStyle.fontWeight = (textIndex == 0) ? 700 : 400;
 
         const double yPos = (textCount <= 1)

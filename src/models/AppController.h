@@ -2,6 +2,7 @@
 
 #include "core/EffectStackStore.h"
 #include "core/Project.h"
+#include "core/TextAnimationPreset.h"
 #include "core/TimelineOps.h"
 #include "core/Time.h"
 #include "engine/AudioOnsets.h"
@@ -1007,6 +1008,40 @@ public:
     Q_INVOKABLE void upsertSubtitleCueAtPlayhead(int trackIndex, int clipIndex, const QString &text);
     Q_INVOKABLE void seekToSubtitleCue(int trackIndex, int clipIndex, int cueIndex);
     Q_INVOKABLE void setTextStyle(int trackIndex, int clipIndex, const QVariantMap &style);
+    // The shading stack: layers[0] is drawn first. Each call is one undo step; the preview
+    // variants coalesce into one through begin/commitPreviewDrag.
+    Q_INVOKABLE QString addTextLayer(int trackIndex, int clipIndex, const QString &kind, int atIndex = -1);
+    Q_INVOKABLE bool removeTextLayer(int trackIndex, int clipIndex, const QString &layerId);
+    Q_INVOKABLE QString duplicateTextLayer(int trackIndex, int clipIndex, const QString &layerId);
+    Q_INVOKABLE bool moveTextLayer(int trackIndex, int clipIndex, const QString &layerId, int toIndex);
+    Q_INVOKABLE void setTextLayer(int trackIndex, int clipIndex, const QString &layerId, const QVariantMap &patch);
+    Q_INVOKABLE void previewSetTextLayer(int trackIndex, int clipIndex, const QString &layerId, const QVariantMap &patch);
+    // In / Out / Loop animation slots: {preset, params, duration, stagger, unit, order, ease, …}.
+    Q_INVOKABLE void setTextAnimationSlot(int trackIndex, int clipIndex, const QString &slot, const QVariantMap &patch);
+    Q_INVOKABLE void previewSetTextAnimationSlot(int trackIndex, int clipIndex, const QString &slot, const QVariantMap &patch);
+    Q_INVOKABLE void clearTextAnimationSlot(int trackIndex, int clipIndex, const QString &slot);
+    Q_INVOKABLE QVariantList textAnimationPresets(const QString &slot = {}) const;
+    Q_INVOKABLE QVariantList textAnimationCategories(const QString &slot) const;
+    // Where to seek to preview the slot: the window start (In), before the exit (Out), the playhead (Loop).
+    Q_INVOKABLE double textAnimationSlotStartSeconds(int trackIndex, int clipIndex, const QString &slot) const;
+    // Looks: one-click recipes that rewrite the layer stack from a few params.
+    Q_INVOKABLE QVariantList textLooks() const;
+    Q_INVOKABLE void applyTextLook(int trackIndex, int clipIndex, const QString &lookId, const QVariantMap &params = {});
+    Q_INVOKABLE void setTextLookParam(int trackIndex, int clipIndex, const QString &key, const QVariant &value);
+    Q_INVOKABLE void previewSetTextLookParam(int trackIndex, int clipIndex, const QString &key, const QVariant &value);
+    Q_INVOKABLE QVariantList textPaintEffects() const;
+    Q_INVOKABLE QVariantList textGradientPresets() const;
+    // Copies this caption clip's style (not its keyframes) to every other subtitle clip on the
+    // track ("track") or in the project ("project"). Returns how many changed; one undo step.
+    Q_INVOKABLE int applyTextStyleToCaptions(int trackIndex, int clipIndex, const QString &scope = QStringLiteral("track"));
+    // Animation presets imported from Lottie (After Effects text animators) or exported earlier.
+    // Returns {ok, id, error, unsupported:[…]}; the preset lands in the slot's "Imported" category.
+    Q_INVOKABLE QVariantMap importTextAnimationPreset(const QUrl &fileUrl, const QString &slot = {});
+    Q_INVOKABLE bool renameUserTextAnimationPreset(const QString &presetId, const QString &label);
+    Q_INVOKABLE bool deleteUserTextAnimationPreset(const QString &presetId);
+    Q_INVOKABLE bool exportUserTextAnimationPreset(const QString &presetId, const QUrl &fileUrl);
+    // Human label for a text keyframe property ("Shadow · Blur"); empty for non-text props.
+    Q_INVOKABLE QString keyframePropertyLabel(int trackIndex, int clipIndex, const QString &prop) const;
     Q_INVOKABLE void applyTextPreset(int trackIndex, int clipIndex, const QString &presetId);
     Q_INVOKABLE QVariantList textPresets() const;
     // Style packs the user saved from the inspector. Kept out of textPresets() so the built-in
@@ -1466,6 +1501,8 @@ public:
     Q_INVOKABLE QString filmstripTileUrl(const QString &path, int level, double index) const;
 
 signals:
+    void userTextAnimationPresetsChanged();
+
     // A text clip was added with no text; the preview should open its inline
     // editor so the user can type straight onto the canvas.
     void inlineTextEditRequested(int trackIndex, int clipIndex);
@@ -2078,6 +2115,9 @@ protected:
     QString m_lastMessageSeverity = QStringLiteral("info");
     bool m_inlineTextEditing = false;
     bool m_previewDragActive = false;
+    drift::Clip *textClipAt(int trackIndex, int clipIndex);
+    static void applyTextStylePatch(drift::TextStyle &style, const QVariantMap &patch);
+    static QVariantMap textAnimationPresetToMap(const drift::TextAnimationPreset &preset);
     drift::Project m_previewDragBefore;
     QString m_previewDragText;
     void emitPreviewFrame();

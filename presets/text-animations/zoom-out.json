@@ -1,0 +1,55 @@
+{
+  "format": 1,
+  "id": "zoom-out",
+  "label": "Zoom out",
+  "category": "basic",
+  "sampleText": "Text",
+  "slots": [
+    "in",
+    "out"
+  ],
+  "order": 140,
+  "defaults": {
+    "unit": "block",
+    "duration": 0.7,
+    "ease": "smooth"
+  },
+  "flags": {
+    "unitLocked": true,
+    "orderLocked": true
+  },
+  "params": [
+    {
+      "id": "from",
+      "type": "scalar",
+      "label": "From",
+      "unit": "%",
+      "min": 100,
+      "max": 400,
+      "step": 5,
+      "default": 160
+    },
+    {
+      "id": "blur",
+      "type": "scalar",
+      "label": "Blur",
+      "unit": "px",
+      "min": 0,
+      "max": 48,
+      "step": 1,
+      "default": 12
+    }
+  ],
+  "animators": [
+    {
+      "selectors": [
+        "stagger"
+      ],
+      "props": {
+        "scale": "{from}",
+        "opacity": 0,
+        "blur": "{blur}"
+      }
+    }
+  ]
+}

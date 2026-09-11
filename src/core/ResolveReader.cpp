@@ -536,7 +536,7 @@ std::optional<Project> readFcpxmlData(const QByteArray &data, const QString &sou
                             const int g = qBound(0, qRound(parts[1].toDouble() * 255.0), 255);
                             const int b = qBound(0, qRound(parts[2].toDouble() * 255.0), 255);
                             const int a = (parts.size() >= 4) ? qBound(0, qRound(parts[3].toDouble() * 255.0), 255) : 255;
-                            clip.textStyle.color = QColor(r, g, b, a);
+                            drift::setSolidFill(clip.textStyle, QColor(r, g, b, a));
                         }
                     }
                 }

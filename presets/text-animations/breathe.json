@@ -1,0 +1,56 @@
+{
+  "format": 1,
+  "id": "breathe",
+  "label": "Breathe",
+  "category": "basic",
+  "sampleText": "Breathe",
+  "slots": [
+    "loop"
+  ],
+  "order": 410,
+  "params": [
+    {
+      "id": "amount",
+      "type": "scalar",
+      "label": "Amount",
+      "unit": "",
+      "min": 0,
+      "max": 1,
+      "step": 0.05,
+      "default": 0.3
+    },
+    {
+      "id": "speed",
+      "type": "scalar",
+      "label": "Speed",
+      "unit": "Hz",
+      "min": 0.05,
+      "max": 2,
+      "step": 0.05,
+      "default": 0.4
+    }
+  ],
+  "animators": [
+    {
+      "selectors": [
+        {
+          "driver": "wiggle",
+          "domain": "block",
+          "wave": "sine",
+          "frequencyHz": "{speed}",
+          "spatialPhaseDeg": 34.4,
+          "minAmount": 0,
+          "maxAmount": 100
+        }
+      ],
+      "props": {
+        "opacity": {
+          "$": "amount",
+          "mul": -100,
+          "add": 100
+        },
+        "scale": 98
+      }
+    }
+  ]
+}

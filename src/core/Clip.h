@@ -1,5 +1,6 @@
 #pragma once
 
+#include "BlendMode.h"
 #include "ClipAnimation.h"
 #include "Effect.h"
 #include "FadeShape.h"
@@ -32,11 +33,6 @@ enum class AdjustmentKind { VideoEffects, AudioEffects, Mask };
 
 QString adjustmentKindToString(AdjustmentKind kind);
 AdjustmentKind adjustmentKindFromString(const QString &kind);
-
-enum class BlendMode { Normal, Multiply, Screen, Overlay, Add, Darken, Lighten };
-
-QString blendModeToString(BlendMode mode);
-BlendMode blendModeFromString(const QString &mode);
 
 enum class StabilizeMode { Bake, Keyframes };
 

@@ -131,13 +131,13 @@ All return `{started:true}` immediately. Every field below except `export` lives
 | `timeline` | Tracks, clips, selection, ripple/gap, bookmarks, copy/paste, A/V link |
 | `canvas` | Transform, flip, blend, mask, fade, speed, reverse, animation, stabilisation |
 | `playback` | Seek, play, pause, In/Out work area |
-| `text` | Title and caption clips, text presets |
+| `text` | Title and caption clips, style packs, shading layers (fill/stroke/shadow/glow/extrude), looks, In/Out/Loop animation presets, Lottie preset import |
 | `shapes` | Builtin shapes, stickers, emoji, fonts, text presets |
 | `motion` | Lottie animations and SVG drawings as vector clips: add, inspect, swap the document, re-theme through slots |
 | `subtitles` | Subtitle clips, cues, import/export, Whisper generation |
 | `effects` | Video/audio effects, transitions, templates, effect clipboard |
 | `project` | Open/new/save/package, canvas, background, metadata, export |
-| `keyframes` | Property animation keys and tangents — clip transform, `fx.<i>.<param>`, `mask.<key>`, and on text/subtitle clips `text.<key>` (pixelSize, letterSpacing, lineHeight, outline/shadow/glow scalars, boxPadding, gradientAngle, pathBend, color.r/g/b/a) |
+| `keyframes` | Property animation keys and tangents — clip transform, `fx.<i>.<param>`, `mask.<key>`, and on text/subtitle clips `text.<key>` (pixelSize, letterSpacing, lineHeight, boxPadding, pathBend) or `text.layer.<id>.<field>` (opacity, offsetX, offsetY, blur, width, spread, color.r/g/b/a, gradient.angle/offset/scale); the old names outlineWidth, shadowBlur, glowRadius, gradientAngle, color.r… still resolve onto the stroke/shadow/glow/fill layers |
 | `speed` | Speed ramps; reading custom fade curves (write them with `set_fade_curve` in `canvas`) |
 | `segmentation` | SAM-style cutout (session or one-shot) |
 | `ai` | Denoise, face detection, auto-reframe, add-on install |
@@ -277,6 +277,30 @@ Effects "Essential Properties") can be re-coloured or re-worded per clip without
 JSON. `capture` / `frames` render vector clips like everything else, so check the result at two
 times before relying on an animation.
 
+### Text looks and animation
+
+A caption's look is an ordered **shading stack** (`textStyle.layers`, `layers[0]` drawn first):
+each layer is a `fill`, `stroke`, `shadow`, `glow` or `extrude` painted from a `solid` colour, a
+`gradient` (multi-stop; `space` block|line|word|glyph|accentRun; `offset` keyframable and
+`offsetSpeed` for a moving gradient), a `texture` (image path) or a shader `effect` (`shine`,
+`shimmer`, `neon-pulse`, `glitch`, `chrome`, `dissolve`). Motion is three **animation slots** —
+`in`, `out`, `loop` — each a preset id plus params, or an inline After Effects-style animator
+tree for experts.
+
+| Call | Effect |
+|---|---|
+| `set_text({clip, style})` | Partial patch. `layers` replaces the stack, `layer:{id\|index,…}` patches one, `color` edits the front-most fill, `animation:{in\|out\|loop:{preset, params, duration, stagger, unit, order, ease, period}}`. The flat v6 keys (`outline*`, `shadow*`, `glow*`, `fillKind`, `animIn`…) still work and land on the well-known layers |
+| `add_text_layer({clip, kind, at})` / `set_text_layer` / `remove_text_layer` / `move_text_layer` | Edit the stack one layer at a time; `add_text_layer` returns `{id}` |
+| `list_text_looks` / `apply_text_look({clip, look, params})` | One-click recipes (Shadow, Lift, Hollow, Splice, Outline, Echo, Glitch, Neon, Background, Curve, Gradient, Shine, Chrome, Holographic) that rewrite the stack; the style remembers the look so its params stay adjustable |
+| `list_text_animations({which, q})` | The In / Out / Loop presets with their typed params. Every reveal preset takes `duration`, `stagger`, `unit` (block\|character\|word\|line), `order`, `ease`; loops take `period` (0 = one pass over the clip: hold motion such as `tracking-drift`) |
+| `set_text_animation({clip, which, preset, …})` / `clear_text_animation` | Set or clear a slot. Picking a preset resets its params to the preset defaults; `animators:[…]` installs an inline animator tree instead |
+| `import_text_animation({path, which})` | A Lottie / `.lottie` text layer's animators (After Effects export) or a Drift preset file, saved as a user preset under the slot's `imported` category; `unsupported` lists what was dropped |
+| `apply_text_style_to_all({clip, scope})` | Copy a caption clip's style to the other subtitle clips on its track (or `project`) |
+
+Reel-style typography, for example: `set_text_animation({clip, which:"in", preset:"type-on-blur", stagger:0.05})`,
+`set_text_animation({clip, which:"loop", preset:"tracking-drift"})`,
+`apply_text_look({clip, look:"gradient", params:{preset:"berry", space:"word"}})`.
+
 ### Stock media from the marketplace
 
 The `market` toolbox wraps the same service the Assets → Market tab uses (`docs/marketplace`).
@@ -326,6 +350,9 @@ local fake) without rebuilding.
 - **Lottie expressions are not evaluated.** Skottie renders an expression-driven property at its static value. `inspect_lottie` (and every `add_lottie` reply) lists them under `expressions`; bake them to keyframes in the authoring tool before relying on the motion.
 - **`set_lottie_slot` is typed against the document.** An undeclared slot or a value of the wrong type fails `bad_args` — read the `slots` array from `add_lottie` or `list_lottie_slots` first. Documents with no slots can only be changed by editing the JSON (`get_lottie_source` → `set_lottie_source`).
 - **`add_lottie` with a `slots` map does not fail on a bad slot** — it places the clip and reports the rejected ones in `slotErrors`.
+- **`set_text.layers` replaces, `set_text.layer` patches.** Send the whole array only when you mean to rebuild the stack; layer ids are lowercase and keyframes on a removed layer are dropped.
+- **Picking a text animation preset resets its params.** Send `preset` and the tweaks in one `set_text_animation` call, or pass `keepControls:true` in `set_text` to keep duration/stagger/unit/order/ease across presets.
+- **Stagger `duration` is per unit.** A word-by-word reveal takes `duration + stagger × (words − 1)`; short subtitle cues can cut it off.
 - **`list_emoji` needs `q` or `group`** — the catalog is ~1900 entries; `add_emoji` takes the `id` (the character).
 
 ## Example

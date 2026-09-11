@@ -1,0 +1,7 @@
+{
+  "format": 1, "id": "blur-in", "label": "Blur", "category": "basic", "sampleText": "Focus",
+  "slots": ["in", "out"], "order": 40,
+  "defaults": { "duration": 0.7 },
+  "params": [ { "id": "blur", "type": "scalar", "label": "Blur", "unit": "px", "min": 0, "max": 48, "step": 1, "default": 24 } ],
+  "animators": [ { "selectors": ["stagger"], "props": { "blur": "{blur}", "opacity": 0 } } ]
+}

@@ -1516,8 +1516,8 @@
         <translation>අභිරුචි වක්‍රය සංස්කරණය කරන්න…</translation>
     </message>
     <message>
-        <source>Text tab has letter/word animations (typewriter, stagger). This moves the whole clip.</source>
-        <translation>පෙළ ටැබය තුළ අකුරු/වචන සජීවිකරණ (ටයිප්රයිටර්, stagger) ඇත. මෙමඟින් මුළු ක්ලිපයම චලනය කරයි.</translation>
+        <source>Letter and word animations live in the Text tab, under Animate. This moves the whole clip.</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -3367,6 +3367,125 @@
     <message>
         <source>Nothing on this device can share that file</source>
         <translation>මෙම උපාංගයේ එම ගොනුව බෙදාගත හැකි කිසිවක් නොමැත</translation>
+    </message>
+    <message>
+        <source>Add text layer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Layer added</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Remove text layer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Layer removed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Duplicate text layer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Layer duplicated</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Reorder text layers</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Layer moved</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Edit text layer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Edit text animation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Text animation updated</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Basic</source>
+        <translation type="unfinished">මූලික</translation>
+    </message>
+    <message>
+        <source>By character</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>By word</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Kinetic</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Light</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Colour</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Hold</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Imported</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Apply text look</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Look applied</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Adjust text look</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Look updated</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Apply caption style</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>Applied to %n caption clip(s)</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Could not unpack the bundle</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Could not read %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Nothing to import</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Could not save the preset</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Nudge selection</source>
@@ -5502,6 +5621,109 @@
     </message>
 </context>
 <context>
+    <name>GradientStopEditor</name>
+    <message>
+        <source>Drag to move, tap for colour, hold or right-click to remove</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move gradient stop</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add a colour stop</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Presets</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Type</source>
+        <translation type="unfinished">වර්ගය</translation>
+    </message>
+    <message>
+        <source>Linear</source>
+        <translation type="unfinished">රේඛීය</translation>
+    </message>
+    <message>
+        <source>Radial</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Sweep</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Angle</source>
+        <translation type="unfinished">කෝණය</translation>
+    </message>
+    <message>
+        <source>Map to</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>What one run of the gradient spans: the whole block, each line, word or glyph</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Block</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Line</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Word</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Glyph</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Accent run</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Offset</source>
+        <translation type="unfinished">විස්ථාපනය</translation>
+    </message>
+    <message>
+        <source>Speed</source>
+        <translation type="unfinished">වේගය</translation>
+    </message>
+    <message>
+        <source>Slides the gradient along its axis, in cycles per second</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Options</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Repeat</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Tile the gradient past its ends instead of clamping</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>OKLab</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Blend stops in OKLab for even, muddy-free transitions</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Stop colour</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>KeyframeGraph</name>
     <message>
         <source>X position</source>
@@ -5553,74 +5775,6 @@
     </message>
     <message>
         <source>Mask feather</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Text size</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Letter spacing</source>
-        <translation type="unfinished">අකුරු අතර පරතරය</translation>
-    </message>
-    <message>
-        <source>Line height</source>
-        <translation type="unfinished">පේළි උස</translation>
-    </message>
-    <message>
-        <source>Outline width</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Shadow X</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Shadow Y</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Shadow blur</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Shadow opacity</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Glow radius</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Glow opacity</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Box padding</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Gradient angle</source>
-        <translation type="unfinished">අනුක්‍රමණ කෝණය</translation>
-    </message>
-    <message>
-        <source>Text bend</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Text red</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Text green</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Text blue</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Text alpha</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -9112,6 +9266,13 @@ If playback stutters, try another.</source>
     </message>
 </context>
 <context>
+    <name>TextAnimPresetTile</name>
+    <message>
+        <source>None</source>
+        <translation type="unfinished">කිසිවක් නැත</translation>
+    </message>
+</context>
+<context>
     <name>TextAssetsTab</name>
     <message>
         <source>Drift text style (*.drifttextstyle)</source>
@@ -9175,10 +9336,61 @@ If playback stutters, try another.</source>
     </message>
 </context>
 <context>
+    <name>TextEffects</name>
+    <message>
+        <source>Shine sweep</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Holographic shimmer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Neon pulse</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Glitch</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Chrome</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Dissolve</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>TextInspector</name>
     <message>
         <source>Content</source>
         <translation>අන්තර්ගතය</translation>
+    </message>
+    <message>
+        <source>Colour</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Choose the gradient&apos;s first colour</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Edits the first gradient stop</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Edit in Look</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The text is painted with an image; change it in the Look section</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The text is painted with an effect; change it in the Look section</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Style</source>
@@ -9187,6 +9399,70 @@ If playback stutters, try another.</source>
     <message>
         <source>Style pack</source>
         <translation>විලාස පැකේජය</translation>
+    </message>
+    <message>
+        <source>Aa</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>None</source>
+        <translation type="unfinished">කිසිවක් නැත</translation>
+    </message>
+    <message>
+        <source>Whole block</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Character</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Word</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Line</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Forward</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Backward</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Center out</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Random</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Linear</source>
+        <translation type="unfinished">රේඛීය</translation>
+    </message>
+    <message>
+        <source>Smooth</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Snappy</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Back</source>
+        <translation type="unfinished">ආපසු</translation>
+    </message>
+    <message>
+        <source>Bounce</source>
+        <translation type="unfinished">ගැසීම (Bounce)</translation>
+    </message>
+    <message>
+        <source>Template</source>
+        <translation type="unfinished">ආකෘතිය</translation>
     </message>
     <message>
         <source>Save style…</source>
@@ -9205,6 +9481,26 @@ If playback stutters, try another.</source>
         <translation>මගේ විලාසය %1</translation>
     </message>
     <message>
+        <source>Apply to all captions</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Copy this style to every other caption on this track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>…every track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Copy this style to every caption in the project</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Type</source>
+        <translation type="unfinished">වර්ගය</translation>
+    </message>
+    <message>
         <source>Font</source>
         <translation>ෆොන්ට් (අකුරු)</translation>
     </message>
@@ -9217,16 +9513,76 @@ If playback stutters, try another.</source>
         <translation>ප්‍රමාණය</translation>
     </message>
     <message>
-        <source>Color</source>
-        <translation>වර්ණය</translation>
+        <source>Stroke</source>
+        <translation type="unfinished">දළ සටහන (Stroke)</translation>
+    </message>
+    <message>
+        <source>Extrude</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No layers. Pick a look above or add a fill to start.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Decorations</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Boxes and rules drawn around the text rather than on it</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Animate</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>How the text enters, leaves and moves while it is on screen</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Phase</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Stagger</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Delay between one unit and the next along the cycle</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Delay between one unit starting and the next</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Order</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Ease</source>
+        <translation type="unfinished">Ease</translation>
+    </message>
+    <message>
+        <source>Advanced</source>
+        <translation type="unfinished">උසස්</translation>
+    </message>
+    <message>
+        <source>Custom animator (set via MCP). Preset controls are disabled.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Revert to preset</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Drop the custom animators and go back to picking presets</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Choose text colour</source>
         <translation>පෙළ වර්ණය තෝරන්න</translation>
-    </message>
-    <message>
-        <source>Enter a color like #FF0000</source>
-        <translation>#FF0000 වැනි වර්ණ කේතයක් ඇතුළත් කරන්න</translation>
     </message>
     <message>
         <source>Italic</source>
@@ -9241,40 +9597,36 @@ If playback stutters, try another.</source>
         <translation>%1 හි ඇල අකුරු මුහුණතක් නැත</translation>
     </message>
     <message>
+        <source>Look</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>One-tap recipes, and the layer stack they build</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Adjust text look</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Layers</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add layer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add a fill, stroke, shadow, glow or extrude layer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Fill</source>
         <translation type="unfinished">පිරවුම (Fill)</translation>
     </message>
     <message>
-        <source>Solid</source>
-        <translation type="unfinished">තනි පැහැය (Solid)</translation>
-    </message>
-    <message>
-        <source>Linear gradient</source>
-        <translation type="unfinished">රේඛීය අනුක්‍රමණය (Linear gradient)</translation>
-    </message>
-    <message>
-        <source>Radial gradient</source>
-        <translation type="unfinished">අරීය අනුක්‍රමණය (Radial gradient)</translation>
-    </message>
-    <message>
-        <source>End colour</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Choose the gradient&apos;s end colour</source>
-        <translation type="unfinished">අනුක්‍රමණයේ අවසාන වර්ණය තෝරන්න</translation>
-    </message>
-    <message>
-        <source>Gradient angle</source>
-        <translation type="unfinished">අනුක්‍රමණ කෝණය</translation>
-    </message>
-    <message>
         <source>Bend</source>
         <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Layout</source>
-        <translation>පිරිසැලසුම</translation>
     </message>
     <message>
         <source>Align left</source>
@@ -9309,6 +9661,10 @@ If playback stutters, try another.</source>
         <translation>අකුරු අතර පරතරය</translation>
     </message>
     <message>
+        <source>Wrapping</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Word wrap</source>
         <translation>වචන එතීම (Word wrap)</translation>
     </message>
@@ -9317,60 +9673,12 @@ If playback stutters, try another.</source>
         <translation>පිටාර ගැලීම වෙනුවට පෙළ කොටුව තුළ දිගු පේළි පහළට ඔතන්න</translation>
     </message>
     <message>
-        <source>Appearance</source>
-        <translation>පෙනුම</translation>
-    </message>
-    <message>
-        <source>Outline</source>
-        <translation>දළ සටහන</translation>
-    </message>
-    <message>
-        <source>Outline around each letter</source>
-        <translation>සෑම අකුරක් වටාම දළ සටහන</translation>
-    </message>
-    <message>
-        <source>Draw an outline around each letter</source>
-        <translation>සෑම අකුරක් වටාම දළ සටහනක් අඳින්න</translation>
-    </message>
-    <message>
         <source>Width</source>
         <translation>පළල</translation>
     </message>
     <message>
-        <source>Choose outline colour</source>
-        <translation>දළ සටහනේ වර්ණය තෝරන්න</translation>
-    </message>
-    <message>
         <source>Shadow</source>
         <translation>සෙවණැල්ල</translation>
-    </message>
-    <message>
-        <source>Draw a drop shadow behind the text</source>
-        <translation>පෙළ පිටුපස සෙවණැල්ලක් අඳින්න</translation>
-    </message>
-    <message>
-        <source>Offset X</source>
-        <translation>විස්ථාපනය X</translation>
-    </message>
-    <message>
-        <source>Offset Y</source>
-        <translation>විස්ථාපනය Y</translation>
-    </message>
-    <message>
-        <source>Blur</source>
-        <translation>බොඳ කිරීම</translation>
-    </message>
-    <message>
-        <source>Opacity</source>
-        <translation>පාරාන්ධතාව</translation>
-    </message>
-    <message>
-        <source>Shadow colour</source>
-        <translation>සෙවණැලි වර්ණය</translation>
-    </message>
-    <message>
-        <source>Choose shadow colour</source>
-        <translation>සෙවණැලි වර්ණය තෝරන්න</translation>
     </message>
     <message>
         <source>Background</source>
@@ -9403,22 +9711,6 @@ If playback stutters, try another.</source>
     <message>
         <source>Glow</source>
         <translation>දීප්තිය (Glow)</translation>
-    </message>
-    <message>
-        <source>Coloured bloom around the letters, with no offset</source>
-        <translation>විස්ථාපනයකින් තොරව අකුරු වටා වර්ණවත් දීප්තියක්</translation>
-    </message>
-    <message>
-        <source>Radius</source>
-        <translation>අරය</translation>
-    </message>
-    <message>
-        <source>Glow colour</source>
-        <translation>දීප්ති වර්ණය</translation>
-    </message>
-    <message>
-        <source>Choose glow colour</source>
-        <translation>දීප්ති වර්ණය තෝරන්න</translation>
     </message>
     <message>
         <source>Word highlight</source>
@@ -9521,10 +9813,6 @@ If playback stutters, try another.</source>
         <translation>Accent උද්දීපන වර්ණය තෝරන්න</translation>
     </message>
     <message>
-        <source>Animation</source>
-        <translation>සජීවිකරණය</translation>
-    </message>
-    <message>
         <source>In</source>
         <translation>පිවිසුම (In)</translation>
     </message>
@@ -9533,12 +9821,313 @@ If playback stutters, try another.</source>
         <translation>පිටවීම (Out)</translation>
     </message>
     <message>
+        <source>Loop</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Plays for every caption</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>All</source>
+        <translation type="unfinished">සියල්ල</translation>
+    </message>
+    <message>
+        <source>Preview this animation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Period</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Duration</source>
+        <translation type="unfinished">කාලසීමාව</translation>
+    </message>
+    <message>
+        <source>Edit text animation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>By</source>
         <translation>මඟින් (By)</translation>
     </message>
+</context>
+<context>
+    <name>TextLayerRow</name>
     <message>
-        <source>Select Color</source>
-        <translation>වර්ණය තෝරන්න</translation>
+        <source>Fill</source>
+        <translation type="unfinished">පිරවුම (Fill)</translation>
+    </message>
+    <message>
+        <source>Stroke</source>
+        <translation type="unfinished">දළ සටහන (Stroke)</translation>
+    </message>
+    <message>
+        <source>Shadow</source>
+        <translation type="unfinished">සෙවණැල්ල</translation>
+    </message>
+    <message>
+        <source>Glow</source>
+        <translation type="unfinished">දීප්තිය (Glow)</translation>
+    </message>
+    <message>
+        <source>Extrude</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Solid</source>
+        <translation type="unfinished">තනි පැහැය (Solid)</translation>
+    </message>
+    <message>
+        <source>Gradient</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Texture</source>
+        <translation type="unfinished">වයනය (Texture)</translation>
+    </message>
+    <message>
+        <source>Effect</source>
+        <translation type="unfinished">ප්‍රයෝගය</translation>
+    </message>
+    <message>
+        <source>Normal</source>
+        <translation type="unfinished">Normal (සාමාන්‍ය)</translation>
+    </message>
+    <message>
+        <source>Multiply</source>
+        <translation type="unfinished">Multiply</translation>
+    </message>
+    <message>
+        <source>Screen</source>
+        <translation type="unfinished">Screen</translation>
+    </message>
+    <message>
+        <source>Overlay</source>
+        <translation type="unfinished">Overlay</translation>
+    </message>
+    <message>
+        <source>Add</source>
+        <translation type="unfinished">Add</translation>
+    </message>
+    <message>
+        <source>Darken</source>
+        <translation type="unfinished">Darken</translation>
+    </message>
+    <message>
+        <source>Lighten</source>
+        <translation type="unfinished">Lighten</translation>
+    </message>
+    <message>
+        <source>Collapse layer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Expand layer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Bring forward</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Send backward</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Hide layer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show layer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Duplicate layer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Remove layer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Opacity</source>
+        <translation type="unfinished">පාරාන්ධතාව</translation>
+    </message>
+    <message>
+        <source>Blend</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Width</source>
+        <translation type="unfinished">පළල</translation>
+    </message>
+    <message>
+        <source>Placement</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Outside</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Grow the stroke outward so it never eats into the letter</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Colour</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Choose the layer colour</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Offset X</source>
+        <translation type="unfinished">විස්ථාපනය X</translation>
+    </message>
+    <message>
+        <source>Offset Y</source>
+        <translation type="unfinished">විස්ථාපනය Y</translation>
+    </message>
+    <message>
+        <source>Radius</source>
+        <translation type="unfinished">අරය</translation>
+    </message>
+    <message>
+        <source>Blur</source>
+        <translation type="unfinished">බොඳ කිරීම</translation>
+    </message>
+    <message>
+        <source>Spread</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Depth</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Angle</source>
+        <translation type="unfinished">කෝණය</translation>
+    </message>
+    <message>
+        <source>How much the extruded side fades toward black</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Adjust extrude</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>TextPaintEditor</name>
+    <message>
+        <source>Texture Image</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Images (*.png *.jpg *.jpeg *.webp)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Paint</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Solid</source>
+        <translation type="unfinished">තනි පැහැය (Solid)</translation>
+    </message>
+    <message>
+        <source>Gradient</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Texture</source>
+        <translation type="unfinished">වයනය (Texture)</translation>
+    </message>
+    <message>
+        <source>Effect</source>
+        <translation type="unfinished">ප්‍රයෝගය</translation>
+    </message>
+    <message>
+        <source>Colour</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Choose the paint colour</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Change image…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Choose image…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No image</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Fit</source>
+        <translation type="unfinished">සරිලන (Fit)</translation>
+    </message>
+    <message>
+        <source>Tile</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Repeat the image across the text</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cover</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Stretch one copy of the image over the text</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Scale</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Angle</source>
+        <translation type="unfinished">කෝණය</translation>
+    </message>
+    <message>
+        <source>Adjust paint effect</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>TextParamSlots</name>
+    <message>
+        <source>Reset</source>
+        <translation type="unfinished">යළි සකසන්න</translation>
+    </message>
+    <message>
+        <source>Text for this slot</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Change image…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Choose image…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Slot Image</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Images (*.png *.jpg *.jpeg *.webp)</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -9694,6 +10283,110 @@ If playback stutters, try another.</source>
     <message>
         <source>Outline every other word</source>
         <translation>එකක් හැර එකක් වචනවල දළ සටහන අඳින්න</translation>
+    </message>
+    <message>
+        <source>Opacity</source>
+        <translation type="unfinished">පාරාන්ධතාව</translation>
+    </message>
+    <message>
+        <source>Offset X</source>
+        <translation type="unfinished">විස්ථාපනය X</translation>
+    </message>
+    <message>
+        <source>Offset Y</source>
+        <translation type="unfinished">විස්ථාපනය Y</translation>
+    </message>
+    <message>
+        <source>Blur</source>
+        <translation type="unfinished">බොඳ කිරීම</translation>
+    </message>
+    <message>
+        <source>Width</source>
+        <translation type="unfinished">පළල</translation>
+    </message>
+    <message>
+        <source>Spread</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Red</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Green</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Blue</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Alpha</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Gradient angle</source>
+        <translation type="unfinished">අනුක්‍රමණ කෝණය</translation>
+    </message>
+    <message>
+        <source>Gradient offset</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Gradient scale</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Centre X</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Centre Y</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Stop %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Fill</source>
+        <translation type="unfinished">පිරවුම (Fill)</translation>
+    </message>
+    <message>
+        <source>Stroke</source>
+        <translation type="unfinished">දළ සටහන (Stroke)</translation>
+    </message>
+    <message>
+        <source>Shadow</source>
+        <translation type="unfinished">සෙවණැල්ල</translation>
+    </message>
+    <message>
+        <source>Glow</source>
+        <translation type="unfinished">දීප්තිය (Glow)</translation>
+    </message>
+    <message>
+        <source>Extrude</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Text size</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Letter spacing</source>
+        <translation type="unfinished">අකුරු අතර පරතරය</translation>
+    </message>
+    <message>
+        <source>Line height</source>
+        <translation type="unfinished">පේළි උස</translation>
+    </message>
+    <message>
+        <source>Box padding</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Bend</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -10587,34 +11280,6 @@ If playback stutters, try another.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Reset</source>
-        <translation type="unfinished">යළි සකසන්න</translation>
-    </message>
-    <message>
-        <source>Slot colour</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Text for this slot</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Change image…</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Choose image…</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Slot Image</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Images (*.png *.jpg *.jpeg *.webp)</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Not rendered</source>
         <translation type="unfinished"></translation>
     </message>
@@ -10683,6 +11348,69 @@ If playback stutters, try another.</source>
     <message>
         <source>Close</source>
         <translation>වසන්න</translation>
+    </message>
+</context>
+<context>
+    <name>drift</name>
+    <message>
+        <source>Plain</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Shadow</source>
+        <translation type="unfinished">සෙවණැල්ල</translation>
+    </message>
+    <message>
+        <source>Lift</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Hollow</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Splice</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Outline</source>
+        <translation type="unfinished">දළ සටහන</translation>
+    </message>
+    <message>
+        <source>Echo</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Glitch</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Neon</source>
+        <translation type="unfinished">Neon</translation>
+    </message>
+    <message>
+        <source>Background</source>
+        <translation type="unfinished">පසුබිම</translation>
+    </message>
+    <message>
+        <source>Curve</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Gradient</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Shine</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Chrome</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Holographic</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>

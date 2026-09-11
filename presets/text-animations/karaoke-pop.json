@@ -1,0 +1,36 @@
+{
+  "format": 1,
+  "id": "karaoke-pop",
+  "label": "Karaoke pop",
+  "category": "word",
+  "sampleText": "Sing along",
+  "slots": [
+    "loop"
+  ],
+  "order": 490,
+  "params": [
+    {
+      "id": "scale",
+      "type": "scalar",
+      "label": "Scale",
+      "unit": "%",
+      "min": 100,
+      "max": 200,
+      "step": 1,
+      "default": 112
+    }
+  ],
+  "animators": [
+    {
+      "selectors": [
+        {
+          "driver": "karaoke",
+          "domain": "word"
+        }
+      ],
+      "props": {
+        "scale": "{scale}"
+      }
+    }
+  ]
+}
