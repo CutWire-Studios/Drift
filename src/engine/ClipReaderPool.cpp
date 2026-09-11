@@ -163,7 +163,7 @@ qint64 ClipReaderPool::decodeWaitNs()
 
 QImage ClipReaderPool::readVideoFrame(const QString &path, quint64 streamId, drift::TimeUs sourceUs,
                                       int maxWidth, int maxHeight, const QString &stabilizePath,
-                                      int stabilizeSmoothing, bool stabilizeTripod)
+                                      int stabilizeSmoothing, bool stabilizeTripod, int rotationOverride)
 {
     if (path.isEmpty())
         return {};
@@ -186,7 +186,8 @@ QImage ClipReaderPool::readVideoFrame(const QString &path, quint64 streamId, dri
     QMetaObject::invokeMethod(worker, "decodeVideo", Qt::BlockingQueuedConnection, Q_RETURN_ARG(QImage, frame),
                                Q_ARG(quint64, streamId), Q_ARG(drift::TimeUs, sourceUs),
                                Q_ARG(int, maxWidth), Q_ARG(int, maxHeight),
-                               Q_ARG(QString, stabilizePath), Q_ARG(int, stabilizeSmoothing), Q_ARG(bool, stabilizeTripod));
+                               Q_ARG(QString, stabilizePath), Q_ARG(int, stabilizeSmoothing), Q_ARG(bool, stabilizeTripod),
+                               Q_ARG(int, rotationOverride));
     t_decodeWaitNs += decodeWait.nsecsElapsed();
 
     // Decode one frame beyond the current position while the caller composites
@@ -203,7 +204,8 @@ QImage ClipReaderPool::readVideoFrame(const QString &path, quint64 streamId, dri
 PreviewVideoFrame ClipReaderPool::readPreviewVideoFrame(const QString &path, quint64 streamId,
                                                         drift::TimeUs sourceUs, int maxWidth, int maxHeight,
                                                         const QString &stabilizePath,
-                                                        int stabilizeSmoothing, bool stabilizeTripod)
+                                                        int stabilizeSmoothing, bool stabilizeTripod,
+                                                        int rotationOverride)
 {
     if (path.isEmpty())
         return {};
@@ -224,7 +226,7 @@ PreviewVideoFrame ClipReaderPool::readPreviewVideoFrame(const QString &path, qui
                                Q_ARG(drift::TimeUs, sourceUs), Q_ARG(int, maxWidth),
                                Q_ARG(int, maxHeight),
                                Q_ARG(QString, stabilizePath), Q_ARG(int, stabilizeSmoothing),
-                               Q_ARG(bool, stabilizeTripod));
+                               Q_ARG(bool, stabilizeTripod), Q_ARG(int, rotationOverride));
     t_decodeWaitNs += decodeWait.nsecsElapsed();
 
     worker->requestPrefetchPreview(streamId, maxWidth, maxHeight,

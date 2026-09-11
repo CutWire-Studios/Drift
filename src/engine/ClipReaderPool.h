@@ -71,14 +71,18 @@ public:
     void setHardwareDecodeMode(ClipReader::HardwareDecodeMode mode,
                                drift::hwaccel::Backend backend = drift::hwaccel::Backend::None);
 
+    // `rotationOverride` (0/90/180/270, or -1 to use the source file's own probed display-matrix
+    // rotation) lets a clip's chosen orientation correction reach the decoder losslessly.
     QImage readVideoFrame(const QString &path, quint64 streamId, drift::TimeUs sourceUs, int maxWidth,
                           int maxHeight, const QString &stabilizePath = QString(),
-                          int stabilizeSmoothing = 15, bool stabilizeTripod = false);
+                          int stabilizeSmoothing = 15, bool stabilizeTripod = false,
+                          int rotationOverride = -1);
     // Preview path: AVFrame handle (hardware surfaces stay on the GPU). Empty when decode fails.
     PreviewVideoFrame readPreviewVideoFrame(const QString &path, quint64 streamId, drift::TimeUs sourceUs,
                                             int maxWidth, int maxHeight,
                                             const QString &stabilizePath = QString(),
-                                            int stabilizeSmoothing = 15, bool stabilizeTripod = false);
+                                            int stabilizeSmoothing = 15, bool stabilizeTripod = false,
+                                            int rotationOverride = -1);
     int readAudioInterleaved(const QString &path, quint64 streamId, drift::TimeUs sourceStartUs,
                              int sampleCount, int outputSampleRate, float *interleavedStereoOut,
                              int audioStreamOrdinal = 0);

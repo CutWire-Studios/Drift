@@ -872,6 +872,10 @@
         <source>Cancel</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>Rotate</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>AndroidMoreToolsSheet</name>
@@ -3440,6 +3444,14 @@
     </message>
     <message>
         <source>Track renamed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Orientation changed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Clip orientation set to %1°</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -6531,6 +6543,10 @@
     </message>
     <message>
         <source>Save</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Rotate</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -10163,6 +10179,14 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Reset position &amp; size</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Fix orientation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Corrects the source&apos;s own rotation losslessly — unlike Angle above, this changes decoding, not just the on-screen box.</source>
         <translation type="unfinished"></translation>
     </message>
 </context>

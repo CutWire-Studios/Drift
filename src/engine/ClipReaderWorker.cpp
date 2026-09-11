@@ -52,12 +52,15 @@ ClipReader *ClipReaderWorker::readerFor(quint64 streamId, int audioStreamOrdinal
 }
 
 QImage ClipReaderWorker::decodeVideo(quint64 streamId, drift::TimeUs sourceUs, int maxWidth, int maxHeight,
-                                     const QString &stabilizePath, int stabilizeSmoothing, bool stabilizeTripod)
+                                     const QString &stabilizePath, int stabilizeSmoothing, bool stabilizeTripod,
+                                     int rotationOverride)
 {
     QMutexLocker lock(&m_mutex);
     ClipReader *reader = readerFor(streamId);
-    if (reader)
+    if (reader) {
         reader->setStabilizeParams(stabilizePath, stabilizeSmoothing, stabilizeTripod);
+        reader->setRotationOverride(rotationOverride);
+    }
     QImage frame;
     if (!reader || !reader->readVideoFrameAt(sourceUs, frame, maxWidth, maxHeight))
         return {};
@@ -67,12 +70,15 @@ QImage ClipReaderWorker::decodeVideo(quint64 streamId, drift::TimeUs sourceUs, i
 PreviewVideoFrame ClipReaderWorker::decodePreviewVideo(quint64 streamId, drift::TimeUs sourceUs,
                                                        int maxWidth, int maxHeight,
                                                        const QString &stabilizePath,
-                                                       int stabilizeSmoothing, bool stabilizeTripod)
+                                                       int stabilizeSmoothing, bool stabilizeTripod,
+                                                       int rotationOverride)
 {
     QMutexLocker lock(&m_mutex);
     ClipReader *reader = readerFor(streamId);
-    if (reader)
+    if (reader) {
         reader->setStabilizeParams(stabilizePath, stabilizeSmoothing, stabilizeTripod);
+        reader->setRotationOverride(rotationOverride);
+    }
     PreviewVideoFrame frame;
     if (!reader || !reader->readPreviewVideoFrame(sourceUs, frame, maxWidth, maxHeight))
         return {};

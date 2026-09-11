@@ -459,8 +459,11 @@ void AssetLibrary::syncToProject()
         // Empty roles: every role may have moved with the file. A folder-only change only
         // touches FolderIdRole.
         emitAssetRowChanged(i, pathChanged ? QList<int>{} : QList<int>{FolderIdRole});
-        if (pathChanged)
-            emit assetMetadataChanged(m_project->assetIdAt(i));
+        if (pathChanged) {
+            const QString assetId = m_project->assetIdAt(i);
+            emit assetMetadataChanged(assetId);
+            emit assetCardChanged(assetId);
+        }
     }
     m_syncedPaths = paths;
     m_syncedFolderIds = folderIds;
@@ -522,6 +525,8 @@ QVariant AssetLibrary::data(const QModelIndex &index, int role) const
         return asset->filmstripPath;
     case FolderIdRole:
         return asset->folderId;
+    case RotationRole:
+        return drift::effectiveRotation(*asset);
     default:
         return {};
     }
@@ -539,6 +544,7 @@ QHash<int, QByteArray> AssetLibrary::roleNames() const
         {ThumbnailPathRole, "thumbnailPath"},
         {FilmstripPathRole, "filmstripPath"},
         {FolderIdRole, "folderId"},
+        {RotationRole, "rotation"},
     };
 }
 
@@ -585,8 +591,17 @@ void AssetLibrary::emitAssetRowChanged(int index, const QList<int> &roles)
 
 void AssetLibrary::startThumbJob(const QString &assetId)
 {
-    if (!m_project || assetId.isEmpty() || m_thumbPending.contains(assetId))
+    if (!m_project || assetId.isEmpty())
         return;
+    if (m_thumbPending.contains(assetId)) {
+        // A rotation/trim change landed while the previous job for this asset was still running.
+        // That job was scheduled against the old settings, so its result (about to be accepted in
+        // applyThumbResult purely because the source path still matches) would otherwise become a
+        // permanently stale thumbnail with nothing left to trigger a redo. Remember to redo it
+        // the moment the in-flight job lands instead of just dropping this request.
+        m_thumbStale.insert(assetId);
+        return;
+    }
 
     drift::MediaAsset *asset = m_project->asset(assetId);
     if (!asset)
@@ -607,15 +622,19 @@ void AssetLibrary::startThumbJob(const QString &assetId)
     m_thumbPending.insert(assetId);
     const QString path = asset->path;
     const drift::MediaKind kind = asset->kind;
+    const int rotationOverride = asset->rotationOverride;
+    // The bin's cover thumbnail is the frame at a trim's "Set In" point, not always frame 0.
+    const qint64 trimInUs = asset->trimInUs;
 
-    (void)QtConcurrent::run(&m_jobs, [this, assetId, path, kind, needThumb, needStrip]() {
+    (void)QtConcurrent::run(&m_jobs, [this, assetId, path, kind, needThumb, needStrip, rotationOverride,
+                                      trimInUs]() {
         const QString kindString = drift::mediaKindToString(kind);
         QString thumb;
         QString strip;
         if (needThumb)
-            thumb = MediaThumbnail::generate(path, kindString);
+            thumb = MediaThumbnail::generate(path, kindString, rotationOverride, trimInUs);
         if (needStrip)
-            strip = MediaThumbnail::generateFilmstrip(path, kindString);
+            strip = MediaThumbnail::generateFilmstrip(path, kindString, rotationOverride);
         else if (!thumb.isEmpty() && kind != drift::MediaKind::Video)
             strip = thumb;
 
@@ -630,14 +649,28 @@ void AssetLibrary::applyThumbResult(const QString &assetId, const QString &sourc
                                     const QString &thumb, const QString &strip)
 {
     m_thumbPending.remove(assetId);
-    if (!m_project)
+    // A rotation/trim change arrived while this job was in flight, so this result reflects
+    // settings that are no longer current — apply it anyway (better than staying blank/stale a
+    // moment longer) but immediately redo it against whatever the asset's settings are now.
+    const bool wasStale = m_thumbStale.remove(assetId);
+
+    if (!m_project) {
         return;
+    }
 
     drift::MediaAsset *asset = m_project->asset(assetId);
     // The source was replaced while this job ran, so these frames are of a file the row no
     // longer points at.
-    if (!asset || asset->path != sourcePath)
+    if (!asset || asset->path != sourcePath) {
         return;
+    }
+
+    // Discard rather than apply-then-immediately-redo: this result was generated against
+    // settings that are already outdated, and briefly showing it would just be a flash.
+    if (wasStale) {
+        startThumbJob(assetId);
+        return;
+    }
 
     bool changed = false;
     if (!thumb.isEmpty() && asset->thumbnailPath != thumb) {
@@ -743,6 +776,7 @@ bool AssetLibrary::applyProbedSource(const QString &assetId, const drift::MediaA
                         {NameRole, KindRole, DurationRole, DurationSecondsRole, PathRole,
                          ThumbnailPathRole, FilmstripPathRole});
     emit assetMetadataChanged(assetId);
+    emit assetCardChanged(assetId);
     return true;
 }
 
@@ -792,6 +826,7 @@ void AssetLibrary::applyImportResult(const QString &assetId, const drift::MediaA
                         {NameRole, KindRole, DurationRole, DurationSecondsRole, PathRole,
                          ThumbnailPathRole, FilmstripPathRole});
     emit assetMetadataChanged(assetId);
+    emit assetCardChanged(assetId);
 }
 
 QVariantMap AssetLibrary::assetAt(int index) const
@@ -811,6 +846,10 @@ QVariantMap AssetLibrary::assetAt(int index) const
         {QStringLiteral("height"), asset->height},
         {QStringLiteral("fps"), asset->fps},
         {QStringLiteral("rotationDegrees"), asset->rotationDegrees},
+        {QStringLiteral("rotationOverride"), asset->rotationOverride},
+        {QStringLiteral("effectiveRotation"), drift::effectiveRotation(*asset)},
+        {QStringLiteral("trimInSeconds"), drift::usToSeconds(asset->trimInUs)},
+        {QStringLiteral("trimOutSeconds"), asset->trimOutUs < 0 ? -1.0 : drift::usToSeconds(asset->trimOutUs)},
         {QStringLiteral("thumbnailPath"), asset->thumbnailPath},
         {QStringLiteral("filmstripPath"), asset->filmstripPath},
         {QStringLiteral("assetIndex"), index},
@@ -943,6 +982,83 @@ bool AssetLibrary::setAssetName(int index, const QString &name)
     return true;
 }
 
+bool AssetLibrary::setAssetRotation(int index, int degrees)
+{
+    drift::MediaAsset *asset = assetAtIndex(index);
+    if (!asset)
+        return false;
+
+    // -1 resets to the file's own probed rotation; anything else snaps to the nearest
+    // quarter-turn, matching how the source display-matrix tag is normalized.
+    int normalized = -1;
+    if (degrees >= 0) {
+        normalized = (((degrees + 45) / 90) * 90) % 360;
+        if (normalized < 0)
+            normalized += 360;
+    }
+    if (asset->rotationOverride == normalized)
+        return false;
+
+    asset->rotationOverride = normalized;
+    // The cached thumbnail/filmstrip are keyed by rotation (see MediaThumbnail::generate), so the
+    // previous files simply stay on disk unreferenced — only the pointers need clearing here.
+    asset->thumbnailPath.clear();
+    asset->filmstripPath.clear();
+    emitAssetRowChanged(index, {RotationRole, ThumbnailPathRole, FilmstripPathRole});
+    emit assetMetadataChanged(asset->id);
+    emit assetUserEdited(asset->id);
+    startThumbJob(asset->id);
+    snapshotAssets();
+    return true;
+}
+
+bool AssetLibrary::setAssetTrim(int index, qint64 trimInUs, qint64 trimOutUs)
+{
+    drift::MediaAsset *asset = assetAtIndex(index);
+    if (!asset)
+        return false;
+
+    const drift::TimeUs wantedIn = static_cast<drift::TimeUs>(trimInUs);
+    const drift::TimeUs wantedOut = static_cast<drift::TimeUs>(trimOutUs);
+    drift::TimeUs normalizedIn =
+        qBound<drift::TimeUs>(static_cast<drift::TimeUs>(0), wantedIn, asset->durationUs);
+    // -1, or an out point spanning to (or past) the end of the file, is the "no explicit out"
+    // sentinel — "trim from normalizedIn to the end" is exactly what that means, and it must
+    // keep whatever in point was asked for (only a truly empty/degenerate selection collapses
+    // the in point too, below).
+    drift::TimeUs normalizedOut = wantedOut;
+    if (normalizedOut < 0 || normalizedOut >= asset->durationUs)
+        normalizedOut = -1;
+    else
+        normalizedOut = qBound<drift::TimeUs>(normalizedIn, normalizedOut, asset->durationUs);
+    // A degenerate (zero-length) selection is "no trim" at all — reset both to the defaults so a
+    // later re-open reads back a clean, unambiguous baseline.
+    if (normalizedOut >= 0 && normalizedOut <= normalizedIn) {
+        normalizedIn = 0;
+        normalizedOut = -1;
+    }
+
+    if (asset->trimInUs == normalizedIn && asset->trimOutUs == normalizedOut)
+        return false;
+
+    const bool inPointMoved = asset->trimInUs != normalizedIn;
+    asset->trimInUs = normalizedIn;
+    asset->trimOutUs = normalizedOut;
+    // The source file is untouched by a plain trim, so no re-encode is needed — but the bin's
+    // cover thumbnail is the frame at the trim's "Set In" point, which just moved.
+    if (inPointMoved) {
+        asset->thumbnailPath.clear();
+        emitAssetRowChanged(index, {ThumbnailPathRole});
+        startThumbJob(asset->id);
+    } else {
+        emitAssetRowChanged(index, {});
+    }
+    emit assetMetadataChanged(asset->id);
+    emit assetUserEdited(asset->id);
+    snapshotAssets();
+    return true;
+}
+
 bool AssetLibrary::moveAssetToFolder(int index, const QString &folderId)
 {
     drift::MediaAsset *asset = assetAtIndex(index);
@@ -1048,6 +1164,9 @@ QJsonArray AssetLibrary::toJsonArray() const
             {QStringLiteral("height"), asset->height},
             {QStringLiteral("fps"), asset->fps},
             {QStringLiteral("rotationDegrees"), asset->rotationDegrees},
+            {QStringLiteral("rotationOverride"), asset->rotationOverride},
+            {QStringLiteral("trimInUs"), static_cast<double>(asset->trimInUs)},
+            {QStringLiteral("trimOutUs"), static_cast<double>(asset->trimOutUs)},
             {QStringLiteral("sampleRate"), asset->sampleRate},
             {QStringLiteral("channels"), asset->channels},
             {QStringLiteral("codecName"), asset->codecName},
@@ -1090,6 +1209,9 @@ void AssetLibrary::loadFromJsonArray(const QJsonArray &assets)
         asset.height = object.value(QStringLiteral("height")).toInt();
         asset.fps = object.value(QStringLiteral("fps")).toDouble();
         asset.rotationDegrees = object.value(QStringLiteral("rotationDegrees")).toInt();
+        asset.rotationOverride = object.value(QStringLiteral("rotationOverride")).toInt(-1);
+        asset.trimInUs = static_cast<drift::TimeUs>(object.value(QStringLiteral("trimInUs")).toDouble(0));
+        asset.trimOutUs = static_cast<drift::TimeUs>(object.value(QStringLiteral("trimOutUs")).toDouble(-1));
         asset.sampleRate = object.value(QStringLiteral("sampleRate")).toInt();
         asset.channels = object.value(QStringLiteral("channels")).toInt();
         asset.codecName = object.value(QStringLiteral("codecName")).toString();

@@ -40,6 +40,7 @@ public:
         ThumbnailPathRole,
         FilmstripPathRole,
         FolderIdRole,
+        RotationRole,
     };
     Q_ENUM(Role)
 
@@ -93,6 +94,13 @@ public:
     Q_INVOKABLE void sortByKind();
     // Display name in the media bin. Does not rename the file on disk.
     Q_INVOKABLE bool setAssetName(int index, const QString &name);
+    // Bin-preview rotation correction, snapped to the nearest 90°; -1 resets to the file's own
+    // probed rotation. Forces the cached thumbnail/filmstrip to regenerate against it.
+    Q_INVOKABLE bool setAssetRotation(int index, int degrees);
+    // Non-destructive bin-preview trim (microseconds); trimOutUs < 0 resets to the full duration.
+    // Never touches the source file — applied to a clip's srcIn/srcOut when placed on the
+    // timeline (see AppController::applyAssetLayout).
+    Q_INVOKABLE bool setAssetTrim(int index, qint64 trimInUs, qint64 trimOutUs);
     int indexOfPath(const QString &path) const;
     // Drops the row from the project's asset table. Callers own the undo
     // snapshot and the in-use check; this only touches the bin.
@@ -129,6 +137,17 @@ signals:
     void importFinished(int materialized, int failed);
     // Fired when probe/thumb/audio metadata lands so unlink affordances can refresh.
     void assetMetadataChanged(const QString &assetId);
+    // Narrower than assetMetadataChanged: only for a change to a *card-level* field the bin grid
+    // snapshots (name/kind/duration/path — see MediaAssetsTab.qml's combinedItems), so its
+    // listener knows a real rebuild is warranted. A thumbnail-only change (rotate, a thumbnail
+    // regenerating) does not emit this — those refresh their own delegate's image in place.
+    void assetCardChanged(const QString &assetId);
+    // Fired only by an actual user-initiated bin edit (setAssetRotation, setAssetTrim) — never by
+    // a passive background update (a thumbnail/filmstrip landing, an audio-presence probe). The
+    // project's dirty flag listens to this one, not assetMetadataChanged: opening a project with
+    // missing cached thumbnails, or saving while one happens to regenerate, must not by itself
+    // produce an unsaved-changes prompt.
+    void assetUserEdited(const QString &assetId);
     // Result of startReplaceProbe. Nothing has been applied yet; the caller decides whether the
     // probed media is an acceptable stand-in and calls applyProbedSource if so.
     void assetSourceProbed(const QString &assetId, const drift::MediaAsset &filled, bool ok);
@@ -176,6 +195,10 @@ private:
     QString m_importFolderId;
     QSet<QString> m_importPending;
     QSet<QString> m_thumbPending;
+    // Asset ids whose settings (rotation/trim) changed again while a thumbnail job for them was
+    // already in flight — the in-flight job's result is stale the moment it lands, so its landing
+    // immediately kicks a fresh job rather than silently keeping the outdated image.
+    QSet<QString> m_thumbStale;
     QSet<QString> m_audioProbePending;
     // Probe and thumbnail jobs run here rather than on the global pool, because the destructor
     // has to be able to wait for them: each captures `this` and posts its result back with

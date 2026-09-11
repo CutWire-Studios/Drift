@@ -145,6 +145,10 @@ struct Clip
     KeyframeTrack<double> transformW;
     KeyframeTrack<double> transformH;
     KeyframeTrack<double> rotation;
+    // Discrete pixel-orientation correction (0/90/180/270), applied losslessly at decode time —
+    // distinct from `rotation` above, which is a free decorative spin effect. -1 = no override,
+    // fall back to the source file's own probed display-matrix rotation.
+    int rotationOverride = -1;
     KeyframeTrack<double> volume;
     QList<Effect> effects;
     QList<Effect> audioEffects; // libavfilter chains applied to this clip's audio in the mixer

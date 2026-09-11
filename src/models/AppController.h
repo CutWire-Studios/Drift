@@ -315,6 +315,10 @@ class AppController : public QObject
     // corrupt-project open rendered as a neutral info toast.
     Q_PROPERTY(QString lastMessageSeverity READ lastMessageSeverity NOTIFY lastMessageChanged)
     Q_PROPERTY(int draggingAssetIndex READ draggingAssetIndex WRITE setDraggingAssetIndex NOTIFY draggingAssetIndexChanged)
+    // Set by MediaPreviewWindow.qml/AndroidMediaPreview.qml while open, so the bin grid can defer
+    // rebuilding its delegate array (and the scroll-position flicker that causes) until the
+    // window closes rather than on every metadata change (rotate, trim, a probe landing) it emits.
+    Q_PROPERTY(bool assetPreviewWindowOpen READ assetPreviewWindowOpen WRITE setAssetPreviewWindowOpen NOTIFY assetPreviewWindowOpenChanged)
     Q_PROPERTY(bool hasUnsavedChanges READ hasUnsavedChanges NOTIFY dirtyChanged)
     Q_PROPERTY(QString currentProjectPath READ currentProjectPath NOTIFY currentProjectPathChanged)
     Q_PROPERTY(bool recoveryAvailable READ recoveryAvailable NOTIFY recoveryChanged)
@@ -448,6 +452,8 @@ public:
     QString lastMessageSeverity() const { return m_lastMessageSeverity; }
     int draggingAssetIndex() const { return m_draggingAssetIndex; }
     void setDraggingAssetIndex(int index);
+    bool assetPreviewWindowOpen() const { return m_assetPreviewWindowOpen; }
+    void setAssetPreviewWindowOpen(bool open);
     bool hasUnsavedChanges() const { return m_dirty; }
     QString currentProjectPath() const { return m_currentProjectPath; }
     bool recoveryAvailable() const { return m_recoveryAvailable; }
@@ -1038,6 +1044,10 @@ public:
     Q_INVOKABLE void previewSetClipPan(int trackIndex, int clipIndex, double pan);
     Q_INVOKABLE void setClipPan(int trackIndex, int clipIndex, double pan);
     Q_INVOKABLE void setClipRotationSnap(int trackIndex, int clipIndex, double degrees);
+    // Discrete, lossless orientation correction (0/90/180/270) — distinct from the free decorative
+    // "Angle" above. Re-fits the clip's box for the new orientation and decodes losslessly; see
+    // drift::Clip::rotationOverride.
+    Q_INVOKABLE void setClipOrientation(int trackIndex, int clipIndex, int degrees);
     Q_INVOKABLE bool canMergeSelection() const;
     Q_INVOKABLE void mergeSelectedClips();
     Q_INVOKABLE bool canSeparateAudioSelection() const;
@@ -1553,6 +1563,7 @@ signals:
     void missingAddons(const QVariantList &addons);
     void lastMessageChanged();
     void draggingAssetIndexChanged();
+    void assetPreviewWindowOpenChanged();
     void exportFinished(bool success);
     void projectMutated();
     void waveformReady(const QString &path);
@@ -1617,7 +1628,7 @@ protected:
     void finalizeAssetReplace(const QString &assetId, const drift::MediaAsset &filled, bool ok);
     // Moves every clip bound to `assetId` onto the replacement media. Returns how many had a
     // source range that no longer fitted and had to be pulled back to it.
-    int rebindClipsToAsset(const QString &assetId, const drift::MediaAsset &asset);
+    int rebindClipsToAsset(const QString &assetId, const drift::MediaAsset &asset, int oldEffectiveRotation);
     // Keeps the keyframe strip's index-addressed hidden series in sync after an effect is removed.
     void dropKeyframeGraphPropertiesForEffect(int removedIndex);
     // Same idea after a reorder: fx.N.* indices move with the effect.
@@ -2051,6 +2062,7 @@ protected:
     QHash<QString, QString> m_shortcuts;
     QHash<QString, QSet<QString>> m_assetFavorites;
     int m_draggingAssetIndex = -1;
+    bool m_assetPreviewWindowOpen = false;
     QString m_lastMessage;
     QString m_lastMessageSeverity = QStringLiteral("info");
     bool m_inlineTextEditing = false;

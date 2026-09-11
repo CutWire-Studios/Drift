@@ -188,6 +188,45 @@ Item {
             }
 
             Text {
+                visible: root.clipKind === "video"
+                text: qsTr("Fix orientation")
+                color: Theme.mutedForeground
+                font.family: Theme.fontFamily
+                font.pixelSize: Theme.fontSizeXs
+                font.weight: Font.Medium
+            }
+
+            Text {
+                visible: root.clipKind === "video"
+                width: parent.width
+                wrapMode: Text.WordWrap
+                text: qsTr("Corrects the source's own rotation losslessly — unlike Angle above, this changes decoding, not just the on-screen box.")
+                color: Theme.mutedForeground
+                font.family: Theme.fontFamily
+                font.pixelSize: Theme.fontSizeXs
+            }
+
+            Flow {
+                visible: root.clipKind === "video"
+                width: parent.width
+                spacing: 6
+                Repeater {
+                    model: [0, 90, 180, 270]
+                    delegate: ThemedChip {
+                        required property int modelData
+                        text: modelData + "°"
+                        selected: {
+                            void root.clipDataRevision
+                            return Number(root.clipData.rotationOverride) === modelData
+                        }
+                        onClicked: EditorState.setClipOrientation(
+                                       EditorState.selectedTrack, EditorState.selectedClip,
+                                       modelData)
+                    }
+                }
+            }
+
+            Text {
                 text: qsTr("Flip")
                 color: Theme.mutedForeground
                 font.family: Theme.fontFamily

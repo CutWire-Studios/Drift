@@ -872,6 +872,10 @@
         <source>Cancel</source>
         <translation>Cancelar</translation>
     </message>
+    <message>
+        <source>Rotate</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>AndroidMoreToolsSheet</name>
@@ -3441,6 +3445,14 @@
     <message>
         <source>Track renamed</source>
         <translation>Faixa renomeada</translation>
+    </message>
+    <message>
+        <source>Orientation changed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Clip orientation set to %1°</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -6532,6 +6544,10 @@
     <message>
         <source>Save</source>
         <translation>Salvar</translation>
+    </message>
+    <message>
+        <source>Rotate</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -10171,6 +10187,14 @@ Se a reprodução travar, experimente outro.</translation>
     <message>
         <source>Reset position &amp; size</source>
         <translation>Redefinir posição &amp; tamanho</translation>
+    </message>
+    <message>
+        <source>Fix orientation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Corrects the source&apos;s own rotation losslessly — unlike Angle above, this changes decoding, not just the on-screen box.</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>

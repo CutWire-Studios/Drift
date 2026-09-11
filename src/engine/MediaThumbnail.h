@@ -14,8 +14,14 @@ public:
     static constexpr int kFilmstripFrameHeight = 68;
     static constexpr int kFilmstripFrameCount = 8;
 
-    static QString generate(const QString &sourcePath, const QString &kind);
-    static QString generateFilmstrip(const QString &sourcePath, const QString &kind);
+    // `rotationOverride` (0/90/180/270, or -1 to use the file's own probed display-matrix
+    // rotation) lets a bin-level user correction land in the cached thumbnail/filmstrip.
+    // `startUs` (cover thumbnail only, ignored by generateFilmstrip) seeks to that source time
+    // before capturing the frame, so a trim's "Set In" point becomes the bin's cover image.
+    static QString generate(const QString &sourcePath, const QString &kind, int rotationOverride = -1,
+                            qint64 startUs = 0);
+    static QString generateFilmstrip(const QString &sourcePath, const QString &kind,
+                                     int rotationOverride = -1);
     static QString generateAtTime(const QString &sourcePath, double sourceSeconds);
 
     // On-demand filmstrip tiles. The coarse strip above only ever holds 8 frames, so a long

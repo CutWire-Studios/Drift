@@ -314,7 +314,8 @@ QSize ClipReader::decodeSizeFor(int maxWidth, int maxHeight) const
     // The caller's box is in display orientation but srcW/srcH are coded, and the
     // returned size is the sws target — so match the box to the source instead of
     // the other way round. The transpose happens after conversion.
-    if (m_sourceRotation == 90 || m_sourceRotation == 270)
+    const int rotation = effectiveRotation();
+    if (rotation == 90 || rotation == 270)
         std::swap(maxWidth, maxHeight);
 
     // Never decode larger than the source; scaling up is the compositor's job.
@@ -1344,7 +1345,7 @@ bool ClipReader::transferHwFrameToImage(const AVFrame *hwFrame, QImage &out, int
     if (!swFrame)
         return false;
 
-    const QImage image = frameToRgba(swFrame, m_sws, targetWidth, targetHeight, m_sourceRotation);
+    const QImage image = frameToRgba(swFrame, m_sws, targetWidth, targetHeight, effectiveRotation());
     if (image.isNull())
         return false;
 
@@ -1429,7 +1430,7 @@ bool ClipReader::convertFrame(const AVFrame *frame, QImage &out, int targetWidth
     if (isHardwarePixelFormat(static_cast<AVPixelFormat>(frame->format)))
         return transferHwFrameToImage(frame, out, targetWidth, targetHeight);
 
-    const QImage image = frameToRgba(frame, m_sws, targetWidth, targetHeight, m_sourceRotation);
+    const QImage image = frameToRgba(frame, m_sws, targetWidth, targetHeight, effectiveRotation());
     if (image.isNull())
         return false;
 
@@ -1450,7 +1451,7 @@ bool ClipReader::convertFramePreview(const AVFrame *frame, PreviewVideoFrame &ou
     if (m_mcSurfaceMode && frame->format == AV_PIX_FMT_MEDIACODEC) {
         Q_UNUSED(targetWidth);
         Q_UNUSED(targetHeight);
-        out = makePreviewFrame(frame, m_sourceRotation);
+        out = makePreviewFrame(frame, effectiveRotation());
         return out.isValid();
     }
 #endif
@@ -1459,14 +1460,14 @@ bool ClipReader::convertFramePreview(const AVFrame *frame, PreviewVideoFrame &ou
         || isHardwarePixelFormat(static_cast<AVPixelFormat>(frame->format));
     if (hw) {
         const AVFrame *scaled = scaleHwFrame(frame, targetWidth, targetHeight);
-        out = makePreviewFrame(scaled, m_sourceRotation);
+        out = makePreviewFrame(scaled, effectiveRotation());
         if (scaled == m_vppScaled)
             av_frame_unref(m_vppScaled);
         return out.isValid();
     }
 
     AVFrame *nv12 = softwareFrameToNv12(frame, m_swsNv12, targetWidth, targetHeight);
-    out = takePreviewFrame(nv12, m_sourceRotation);
+    out = takePreviewFrame(nv12, effectiveRotation());
     return out.isValid();
 }
 

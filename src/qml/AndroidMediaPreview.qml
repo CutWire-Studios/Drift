@@ -29,7 +29,11 @@ Item {
     property real durationSeconds: 0
     property int sourceWidth: 0
     property int sourceHeight: 0
+    // Native: the file's own probed display-matrix rotation. Override: the bin-preview
+    // correction, -1 when none. Effective is whichever of the two actually applies.
     property int rotationDegrees: 0
+    property int rotationOverride: -1
+    property int effectiveRotation: 0
 
     property real inSeconds: 0
     property real outSeconds: 0
@@ -37,6 +41,12 @@ Item {
     property real cropY: 0
     property real cropW: 1
     property real cropH: 1
+
+    // The trim already saved non-destructively on the asset (AssetLibrary::setAssetTrim) — the
+    // baseline "no edit yet" reverts to, since a plain trim never re-encodes the file and so is
+    // never reflected in durationSeconds the way an old encode-based save used to be.
+    property real persistedInSeconds: 0
+    property real persistedOutSeconds: 0
 
     // "trim" | "crop". Crop starts off: the handles used to be live over the picture the
     // moment the screen opened, with nothing saying what they were.
@@ -50,19 +60,19 @@ Item {
     readonly property bool canPlay: !isImage
 
     readonly property int displayW: {
-        const rot = Math.abs(root.rotationDegrees)
+        const rot = Math.abs(root.effectiveRotation)
         return (rot === 90 || rot === 270) ? root.sourceHeight : root.sourceWidth
     }
     readonly property int displayH: {
-        const rot = Math.abs(root.rotationDegrees)
+        const rot = Math.abs(root.effectiveRotation)
         return (rot === 90 || rot === 270) ? root.sourceWidth : root.sourceHeight
     }
 
     readonly property bool cropDirty: cropX > 0.001 || cropY > 0.001
                                       || cropW < 0.999 || cropH < 0.999
     readonly property bool trimDirty: canTrim
-                                      && (inSeconds > 0.02
-                                          || outSeconds < durationSeconds - 0.02)
+                                      && (Math.abs(inSeconds - persistedInSeconds) > 0.02
+                                          || Math.abs(outSeconds - persistedOutSeconds) > 0.02)
     readonly property bool dirty: cropDirty || trimDirty
     readonly property bool saving: EditorState.editingAsset
     readonly property real position: EditorState.assetPreviewPosition
@@ -73,6 +83,7 @@ Item {
             root.closed()
             return
         }
+        EditorState.assetPreviewWindowOpen = true
         root.assetIndex = index
         root.assetId = asset.id || ""
         root.kind = asset.kind || ""
@@ -83,21 +94,49 @@ Item {
         root.sourceWidth = asset.width || 0
         root.sourceHeight = asset.height || 0
         root.rotationDegrees = asset.rotationDegrees || 0
+        root.rotationOverride = (asset.rotationOverride === undefined || asset.rotationOverride === null)
+                                 ? -1 : asset.rotationOverride
+        root.effectiveRotation = (asset.effectiveRotation === undefined || asset.effectiveRotation === null)
+                                  ? root.rotationDegrees : asset.effectiveRotation
+        root.persistedInSeconds = asset.trimInSeconds || 0
+        root.persistedOutSeconds = (asset.trimOutSeconds === undefined || asset.trimOutSeconds === null
+                                     || asset.trimOutSeconds < 0)
+                                    ? root.durationSeconds : asset.trimOutSeconds
         root.mode = "trim"
         resetEdits()
         EditorState.beginAssetPreview(index)
+    }
+
+    // Steps the bin's rotation correction by 90° and reopens the preview session so the player's
+    // decoder picks up the new rotationOverride. Video only: image/audio clips have no lossless
+    // pixel-rotation path on the timeline (see AppController::applyAssetLayout).
+    function rotate90() {
+        if (root.assetIndex < 0 || !root.isVideo)
+            return
+        const wasPlaying = EditorState.assetPreviewPlaying
+        const at = root.position
+        const next = (root.effectiveRotation + 90) % 360
+        if (!AssetLibrary.setAssetRotation(root.assetIndex, next))
+            return
+        root.rotationOverride = next
+        root.effectiveRotation = next
+        EditorState.beginAssetPreview(root.assetIndex)
+        root.seekTo(at)
+        if (wasPlaying)
+            EditorState.playAssetPreview()
     }
 
     function close() {
         EditorState.pauseAssetPreview()
         EditorState.endAssetPreview()
         root.assetIndex = -1
+        EditorState.assetPreviewWindowOpen = false
         root.closed()
     }
 
     function resetEdits() {
-        root.inSeconds = 0
-        root.outSeconds = Math.max(0, root.durationSeconds)
+        root.inSeconds = root.persistedInSeconds
+        root.outSeconds = root.persistedOutSeconds
         root.cropX = 0
         root.cropY = 0
         root.cropW = 1
@@ -155,6 +194,17 @@ Item {
         }
         function onProjectReset() {
             root.close()
+        }
+    }
+
+    // The rotated thumbnail/filmstrip regenerate on a background job (MediaThumbnail::generate),
+    // so the strip below needs to pick up the new file once it lands.
+    Connections {
+        target: AssetLibrary
+        function onAssetMetadataChanged(assetId) {
+            if (assetId !== root.assetId)
+                return
+            root.filmstripPath = AssetLibrary.filmstripAt(root.assetIndex)
         }
     }
 
@@ -572,6 +622,16 @@ Item {
             }
         }
 
+        ThemedButton {
+            width: parent.width
+            height: Theme.controlHeight
+            visible: root.isVideo
+            variant: "secondary"
+            text: qsTr("Rotate")
+            enabled: !root.saving
+            onClicked: root.rotate90()
+        }
+
         // ----- Trim -------------------------------------------------------------------------
         Column {
             width: parent.width
@@ -753,9 +813,9 @@ Item {
                     text: qsTr("Undo trim")
                     enabled: root.trimDirty && !root.saving
                     onClicked: {
-                        root.inSeconds = 0
-                        root.outSeconds = Math.max(0, root.durationSeconds)
-                        root.seekTo(0)
+                        root.inSeconds = root.persistedInSeconds
+                        root.outSeconds = root.persistedOutSeconds
+                        root.seekTo(root.inSeconds)
                     }
                 }
             }

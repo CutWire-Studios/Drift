@@ -28,7 +28,7 @@ public:
 
 public slots:
     void decode(const QString &path, quint64 streamId, qint64 sourceUs, int maxWidth, int maxHeight,
-                quint64 token);
+                quint64 token, int rotationOverride = -1);
 
 signals:
     void decoded(const QImage &image, quint64 token);
