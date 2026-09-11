@@ -11,7 +11,9 @@
 #include "GpuEffectExecutor.h"
 #include "MaskApplier.h"
 #include "MediaProbe.h"
+#include "RenderBackend.h"
 #include "ReverseProxyCache.h"
+#include "ShapeRaster.h"
 #include "TextRaster.h"
 #include "TransitionCatalog.h"
 #include "core/Clip.h"
@@ -22,6 +24,9 @@
 #include "core/Time.h"
 #include "core/TimelineOps.h"
 #include "core/Transition.h"
+#ifdef DRIFT_WITH_SKIA
+#include "SkiaShapePainter.h"
+#endif
 
 #include <QBrush>
 #include <QColor>
@@ -397,8 +402,6 @@ QImage decodeClipMediaFrame(const drift::Clip &clip, drift::TimeUs timelineUs, i
     return {};
 }
 
-QImage shapeImageForClip(const drift::Clip &clip, int width, int height, double renderScale);
-
 // maxWidth/maxHeight bound the decoded frame; the returned image may be smaller
 // (source-limited) and is scaled to the clip's layout rect at draw time.
 // `laneMasks` is the mask stack the clip's track contributes at this instant; only the parametric
@@ -408,7 +411,7 @@ QImage imageForClip(const drift::Clip &clip, const QList<drift::Mask> &laneMasks
                     int projectFps, int maxTimeEchoHistoryFrames)
 {
     if (clip.type == drift::ClipType::Shape)
-        return shapeImageForClip(clip, maxWidth, maxHeight, 1.0);
+        return drift::rasterizeShape(clip.shapeStyle, maxWidth, maxHeight, 1.0);
 
     if (clip.path.isEmpty())
         return {};
@@ -472,91 +475,6 @@ QImage imageForClip(const drift::Clip &clip, const QList<drift::Mask> &laneMasks
     return image;
 }
 
-Qt::PenStyle penStyleFor(drift::ShapeStrokeStyle style)
-{
-    switch (style) {
-    case drift::ShapeStrokeStyle::None:
-        return Qt::NoPen;
-    case drift::ShapeStrokeStyle::Solid:
-        return Qt::SolidLine;
-    case drift::ShapeStrokeStyle::Dash:
-        return Qt::DashLine;
-    case drift::ShapeStrokeStyle::Dot:
-        return Qt::DotLine;
-    case drift::ShapeStrokeStyle::DashDot:
-        return Qt::DashDotLine;
-    }
-    return Qt::SolidLine;
-}
-
-QBrush shapeBrush(const drift::ShapeStyle &style, const QRectF &bounds)
-{
-    switch (style.fillKind) {
-    case drift::ShapeFillKind::None:
-        return Qt::NoBrush;
-    case drift::ShapeFillKind::Solid:
-        return style.fill;
-    case drift::ShapeFillKind::LinearGradient: {
-        // Angle sweeps the gradient axis across the shape's own bounding box, so the same angle
-        // reads the same whatever the clip is scaled to.
-        const double radians = qDegreesToRadians(style.gradientAngle);
-        const QPointF centre = bounds.center();
-        const QPointF half(qCos(radians) * bounds.width() / 2.0,
-                           qSin(radians) * bounds.height() / 2.0);
-        QLinearGradient gradient(centre - half, centre + half);
-        gradient.setColorAt(0.0, style.fill);
-        gradient.setColorAt(1.0, style.fillSecondary);
-        return gradient;
-    }
-    case drift::ShapeFillKind::RadialGradient: {
-        QRadialGradient gradient(bounds.center(),
-                                 qMax(bounds.width(), bounds.height()) / 2.0);
-        gradient.setColorAt(0.0, style.fill);
-        gradient.setColorAt(1.0, style.fillSecondary);
-        return gradient;
-    }
-    }
-    return style.fill;
-}
-
-// Rasterized at exactly the destination size: the GPU quad is the layout rect and samples this
-// texture 0..1, so anything smaller is upscaled and the stroke stretches with it.
-QImage shapeImageForClip(const drift::Clip &clip, int width, int height, double renderScale)
-{
-    if (clip.type != drift::ClipType::Shape)
-        return {};
-
-    const int w = qMax(1, width);
-    const int h = qMax(1, height);
-
-    QImage image(w, h, QImage::Format_RGBA8888);
-    image.fill(Qt::transparent);
-
-    QPainter p(&image);
-    p.setRenderHint(QPainter::Antialiasing);
-
-    const drift::ShapeStyle &style = clip.shapeStyle;
-    // Stroke width and corner radius are authored in project pixels, so they scale with the render
-    // just like the layout rect does — otherwise preview and export disagree.
-    const double strokeWidth =
-        style.strokeStyle == drift::ShapeStrokeStyle::None ? 0.0 : style.strokeWidth * renderScale;
-    const double inset = strokeWidth / 2.0;
-    const QRectF bounds =
-        QRectF(0, 0, w, h).adjusted(inset, inset, -inset, -inset).normalized();
-
-    drift::ShapeStyle scaled = style;
-    scaled.cornerRadius = style.cornerRadius * renderScale;
-
-    p.setBrush(shapeBrush(scaled, bounds));
-    p.setPen(strokeWidth <= 0.0
-                 ? QPen(Qt::NoPen)
-                 : QPen(style.stroke, strokeWidth, penStyleFor(style.strokeStyle), Qt::RoundCap,
-                        Qt::RoundJoin));
-    p.drawPath(drift::shapePath(scaled, bounds));
-
-    p.end();
-    return image;
-}
 
 double opacityForClip(const drift::Clip &clip, drift::TimeUs timelineUs)
 {
@@ -936,7 +854,12 @@ GpuLayer buildGpuLayer(const drift::Clip &clip, drift::TimeUs timelineUs, int pr
             layer.effects.append(blur);
         }
     } else if (clip.type == drift::ClipType::Shape) {
-        layer.source = shapeImageForClip(clip, layoutW, layoutH, renderScale);
+#ifdef DRIFT_WITH_SKIA
+        if (drift::vectorBackend() == drift::VectorBackend::Skia)
+            layer.vector = drift::skia::makeShapePainter(clip.shapeStyle, layoutW, layoutH, renderScale);
+        else
+#endif
+            layer.source = drift::rasterizeShape(clip.shapeStyle, layoutW, layoutH, renderScale);
         layer.effects = resolvedClipEffects(clip, clipTimeUs);
     } else {
         // Bounded by the canvas, not the layout rect — see decodeClipMediaFrame.

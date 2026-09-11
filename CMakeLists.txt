@@ -539,6 +539,10 @@ add_library(driftengine STATIC
     src/engine/EmojiTable.cpp
     src/engine/TextRaster.h
     src/engine/TextRaster.cpp
+    src/engine/ShapeRaster.h
+    src/engine/ShapeRaster.cpp
+    src/engine/RenderBackend.h
+    src/engine/RenderBackend.cpp
     src/engine/EffectPackageLoader.h
     src/engine/EffectPackageLoader.cpp
     src/engine/TransitionCatalog.h
@@ -634,6 +638,10 @@ if(DRIFT_WITH_SKIA)
     target_sources(driftengine PRIVATE
         src/engine/SkiaRuntime.h
         src/engine/SkiaRuntime.cpp
+        src/engine/SkiaPath.h
+        src/engine/SkiaPath.cpp
+        src/engine/SkiaShapePainter.h
+        src/engine/SkiaShapePainter.cpp
     )
     # PRIVATE: no header outside src/engine/Skia*.{h,cpp} includes Skia, so the defines and the
     # include root stay out of the rest of the build.

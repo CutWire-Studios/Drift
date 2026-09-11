@@ -290,6 +290,12 @@ GlTarget buildLayerTarget(GlRuntime &rt, QOpenGLExtraFunctions *gl, const GpuLay
         if (layer.vector) {
             if (auto *sk = drift::skia::SkiaRuntime::acquire(rt))
                 target = sk->paintToTarget(rt, gl, *layer.vector);
+            // No Ganesh on this context: Skia's CPU raster keeps the layer visible.
+            if (!target.isValid() && layer.source.isNull()) {
+                const QImage raster = drift::skia::SkiaRuntime::rasterize(*layer.vector);
+                if (!raster.isNull())
+                    target = promoteImageToTarget(rt, gl, raster, raster.size());
+            }
         }
 #endif
         if (!target.isValid() && !layer.source.isNull())
