@@ -1026,4 +1026,5 @@ ApplicationWindow {
     }
 
     ToastHost { parent: Overlay.overlay }
+    TransitionSelectionBanner { parent: Overlay.overlay }
 }
