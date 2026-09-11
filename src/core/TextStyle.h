@@ -16,6 +16,8 @@ namespace drift {
 
 enum class TextAlign { Left, Center, Right };
 enum class TextVAlign { Top, Middle, Bottom };
+// Glyph fill. Gradients sweep the block's painted bounds, like a shape's sweep its box.
+enum class TextFillKind { Solid, LinearGradient, RadialGradient };
 
 // Entrance / exit motion. Every kind is expressible as opacity + offset + scale + blur on the
 // finished text layer, which is what keeps the rasterized glyphs cacheable across frames.
@@ -44,6 +46,8 @@ TextAlign textAlignFromString(const QString &align);
 
 QString textVAlignToString(TextVAlign valign);
 TextVAlign textVAlignFromString(const QString &valign);
+QString textFillKindToString(TextFillKind kind);
+TextFillKind textFillKindFromString(const QString &kind);
 
 QString textAnimKindToString(TextAnimKind kind);
 TextAnimKind textAnimKindFromString(const QString &kind);
@@ -110,6 +114,13 @@ struct TextStyle
     int fontWeight = 700; // 100..900
     bool italic = false;
     QColor color = Qt::white;
+    // Skia-only looks (the QPainter fallback draws a solid fill on a straight baseline).
+    TextFillKind fillKind = TextFillKind::Solid;
+    QColor colorSecondary = QColor(255, 120, 0); // gradient end stop
+    double gradientAngle = 90.0;                // degrees; 0 = left → right, 90 = top → bottom
+    // Bends a single-line block along an arc: -100..100, the rise at the middle as a fraction of
+    // two em (positive arches upward). Multi-line blocks ignore it.
+    double pathBend = 0.0;
 
     TextAlign align = TextAlign::Center;
     TextVAlign valign = TextVAlign::Middle;

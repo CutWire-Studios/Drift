@@ -182,6 +182,9 @@ private slots:
     void emojiTextMatchesQPainter();
     void backendSwitchSelectsTextRenderer();
     void keyframedTextGrowsOverTime();
+    void gradientFillSweepsTheBlock();
+    void pathBendArchesTheLine();
+    void emojiOutlineDrawsARing();
 };
 
 void SkiaTest::grContextAttaches()
@@ -766,12 +769,12 @@ void SkiaTest::emojiTextMatchesQPainter()
     reloadEmojiCatalog({QString::fromUtf8(DRIFT_TEST_EMOJI_FONT_DIR)});
     if (emojiFontFamily().isEmpty())
         QSKIP("No emoji font available");
+    // Plain style: with an outline or shadow Skia treats emoji like glyphs (ring, silhouette in
+    // the shadow — see emojiOutlineDrawsARing) where QPainter leaves them bare.
     TextStyle style;
     style.fontFamily = QStringLiteral("Inter");
     style.pixelSize = 56;
     style.color = Qt::white;
-    style.outlineEnabled = true;
-    style.outlineWidth = 3.0;
     const QString text = QString::fromUtf8("Party \xF0\x9F\x8E\x89 time \xF0\x9F\x98\x80");
     const Clip clip = textClip(style, text);
     const QRectF layout(0, 0, 420, 120);
@@ -882,6 +885,170 @@ void SkiaTest::keyframedTextGrowsOverTime()
     const int early = redHeight(compositor.compositeAt(0));
     const int late = redHeight(compositor.compositeAt(secondsToUs(2.0)));
     QVERIFY2(early > 5 && late > early * 2, qPrintable(QStringLiteral("early %1 late %2").arg(early).arg(late)));
+}
+
+// A top→bottom gradient from red to blue: the upper rows of ink are red, the lower rows blue, and
+// the solid-fill raster of the same style stays all red.
+void SkiaTest::gradientFillSweepsTheBlock()
+{
+    reloadFontCatalog({QString::fromUtf8(DRIFT_TEST_FONTS_DIR)});
+    TextStyle style;
+    style.fontFamily = QStringLiteral("Inter");
+    style.pixelSize = 90;
+    style.color = QColor(255, 0, 0);
+    style.colorSecondary = QColor(0, 0, 255);
+    style.fillKind = TextFillKind::LinearGradient;
+    style.gradientAngle = 90.0;
+    const QString text = QStringLiteral("HIGH");
+    const Clip clip = textClip(style, text);
+    const QRectF layout(0, 0, 400, 140);
+    const QImage image = skiaText(clip, text, layout, 1.0, -1, nullptr).convertToFormat(QImage::Format_RGBA8888);
+    QVERIFY(!image.isNull());
+    const Ink ink = inkOf(image);
+    QVERIFY(ink.count > 500);
+    auto meanOf = [&](int y0, int y1) {
+        double r = 0, b = 0, n = 0;
+        for (int y = y0; y < y1; ++y)
+            for (int x = 0; x < image.width(); ++x) {
+                const QRgb p = image.pixel(x, y);
+                if (qAlpha(p) < 200)
+                    continue;
+                r += qRed(p);
+                b += qBlue(p);
+                n += 1;
+            }
+        return QPointF(n > 0 ? r / n : 0, n > 0 ? b / n : 0);
+    };
+    const int mid = ink.bbox.center().y();
+    const QPointF top = meanOf(ink.bbox.top(), ink.bbox.top() + (mid - ink.bbox.top()) / 2);
+    const QPointF bottom = meanOf(mid + (ink.bbox.bottom() - mid) / 2, ink.bbox.bottom() + 1);
+    QVERIFY2(top.x() > 150 && top.y() < 110, qPrintable(QStringLiteral("top r=%1 b=%2").arg(top.x()).arg(top.y())));
+    QVERIFY2(bottom.y() > 150 && bottom.x() < 110, qPrintable(QStringLiteral("bottom r=%1 b=%2").arg(bottom.x()).arg(bottom.y())));
+
+    // The image size and placement are unchanged by the fill, so the layer still lands where the
+    // solid raster would.
+    Clip solid = clip;
+    solid.textStyle.fillKind = TextFillKind::Solid;
+    const TextRasterResult qt = rasterizeText(solid, text, layout, 1.0);
+    QCOMPARE(image.size(), qt.image.size());
+    QString why;
+    Ink a = inkOf(qt.image);
+    Ink b = ink;
+    a.r = a.g = a.b = b.r = b.g = b.b = 0; // colour deliberately differs
+    QVERIFY2(inkClose(a, b, &why), qPrintable(why));
+}
+
+// A bent line rises above where the straight one sits, keeps every glyph, and reserves the rise
+// in the bleed so nothing is clipped.
+void SkiaTest::pathBendArchesTheLine()
+{
+    reloadFontCatalog({QString::fromUtf8(DRIFT_TEST_FONTS_DIR)});
+    TextStyle style;
+    style.fontFamily = QStringLiteral("Inter");
+    style.pixelSize = 40;
+    style.color = Qt::white;
+    style.wordWrap = false;
+    const QString text = QStringLiteral("curve this line");
+    const QRectF layout(0, 0, 420, 120);
+    const Clip flat = textClip(style, text);
+    QRectF flatRect;
+    const Ink straight = inkOf(skiaText(flat, text, layout, 1.0, -1, &flatRect));
+
+    Clip bent = flat;
+    bent.textStyle.pathBend = 60.0;
+    QRectF bentRect;
+    const QImage bentImage = skiaText(bent, text, layout, 1.0, -1, &bentRect);
+    const Ink arched = inkOf(bentImage);
+    QVERIFY(arched.count > straight.count * 0.8);
+    // The bleed grew by the rise (|60|/100 × 2 em = 48 px), on every side.
+    QVERIFY2(bentRect.top() < flatRect.top() - 40, qPrintable(QStringLiteral("%1 vs %2").arg(bentRect.top()).arg(flatRect.top())));
+    // The middle of the line is higher than its ends: sample the ink's top edge per column.
+    auto topAt = [&](int x0, int x1) {
+        int top = bentImage.height();
+        for (int x = x0; x < x1; ++x)
+            for (int y = 0; y < bentImage.height(); ++y)
+                if (qAlpha(bentImage.pixel(x, y)) > 60) {
+                    top = qMin(top, y);
+                    break;
+                }
+        return top;
+    };
+    const int leftTop = topAt(arched.bbox.left(), arched.bbox.left() + 30);
+    const int midTop = topAt(arched.bbox.center().x() - 15, arched.bbox.center().x() + 15);
+    const int rightTop = topAt(arched.bbox.right() - 30, arched.bbox.right() + 1);
+    QVERIFY2(midTop < leftTop - 15 && midTop < rightTop - 15,
+             qPrintable(QStringLiteral("left %1 mid %2 right %3").arg(leftTop).arg(midTop).arg(rightTop)));
+    QVERIFY(arched.bbox.top() >= 1 && arched.bbox.bottom() < bentImage.height() - 1);
+
+    // A downward bend mirrors it; a multi-line block ignores the bend.
+    bent.textStyle.pathBend = -60.0;
+    const Ink dipped = inkOf(skiaText(bent, text, layout, 1.0, -1, nullptr));
+    QVERIFY(qAbs(dipped.count - arched.count) < arched.count * 0.15);
+    Clip wrapped = bent;
+    wrapped.textStyle.wordWrap = true;
+    const QString two = QStringLiteral("first line\nsecond line");
+    const Ink multi = inkOf(skiaText(wrapped, two, layout, 1.0, -1, nullptr));
+    Clip wrappedFlat = wrapped;
+    wrappedFlat.textStyle.pathBend = 0.0;
+    QRectF r1, r2;
+    skiaText(wrapped, two, layout, 1.0, -1, &r1);
+    const Ink multiFlat = inkOf(skiaText(wrappedFlat, two, layout, 1.0, -1, &r2));
+    QVERIFY(multi.count > 0);
+    // Same glyphs at the same relative place (the bleed differs, so compare bbox size).
+    QVERIFY(qAbs(multi.bbox.height() - multiFlat.bbox.height()) <= 2);
+}
+
+// With the emoji-font addon, an outlined block draws a tinted ring around every colour emoji and
+// the shadow pass carries its silhouette.
+void SkiaTest::emojiOutlineDrawsARing()
+{
+    reloadFontCatalog({QString::fromUtf8(DRIFT_TEST_FONTS_DIR)});
+    reloadEmojiCatalog({QString::fromUtf8(DRIFT_TEST_EMOJI_FONT_DIR)});
+    if (emojiFontFamily().isEmpty())
+        QSKIP("No emoji font available");
+    TextStyle style;
+    style.pixelSize = 72;
+    style.color = Qt::white;
+    const QString text = QString::fromUtf8("\xF0\x9F\x98\x80");
+    const QRectF layout(0, 0, 200, 120);
+    const Ink plain = inkOf(skiaText(textClip(style, text), text, layout, 1.0, -1, nullptr));
+    QVERIFY(plain.count > 300);
+
+    style.outlineEnabled = true;
+    style.outlineWidth = 6.0;
+    style.outlineColor = QColor(0, 255, 0);
+    const QImage ringed = skiaText(textClip(style, text), text, layout, 1.0, -1, nullptr).convertToFormat(QImage::Format_RGBA8888);
+    const Ink ring = inkOf(ringed);
+    QVERIFY2(ring.count > plain.count * 1.25, qPrintable(describe(plain, ring)));
+    QVERIFY(ring.bbox.width() >= plain.bbox.width() + 8);
+    // Just outside the emoji's own edge the ring is the outline colour.
+    int green = 0;
+    for (int x = ring.bbox.left(); x < ring.bbox.left() + 4; ++x)
+        for (int y = ring.bbox.top(); y <= ring.bbox.bottom(); ++y) {
+            const QRgb p = ringed.pixel(x, y);
+            if (qAlpha(p) > 100 && qGreen(p) > 180 && qRed(p) < 80)
+                ++green;
+        }
+    QVERIFY2(green > 5, qPrintable(QString::number(green)));
+
+    style.outlineEnabled = false;
+    style.shadowEnabled = true;
+    style.shadowOffsetX = 14.0;
+    style.shadowOffsetY = 0.0;
+    style.shadowBlur = 0.0;
+    style.shadowOpacity = 1.0;
+    style.shadowColor = QColor(0, 0, 255);
+    const QImage shadowed = skiaText(textClip(style, text), text, layout, 1.0, -1, nullptr).convertToFormat(QImage::Format_RGBA8888);
+    const Ink shade = inkOf(shadowed);
+    QVERIFY2(shade.bbox.right() >= plain.bbox.right() + 10, qPrintable(describe(plain, shade)));
+    int blue = 0;
+    for (int x = shade.bbox.right() - 6; x <= shade.bbox.right(); ++x)
+        for (int y = shade.bbox.top(); y <= shade.bbox.bottom(); ++y) {
+            const QRgb p = shadowed.pixel(x, y);
+            if (qAlpha(p) > 100 && qBlue(p) > 180 && qRed(p) < 80)
+                ++blue;
+        }
+    QVERIFY2(blue > 5, qPrintable(QString::number(blue)));
 }
 
 QTEST_MAIN(SkiaTest)

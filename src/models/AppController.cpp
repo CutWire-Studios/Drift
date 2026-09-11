@@ -1436,6 +1436,10 @@ QVariantMap textStyleToMap(const drift::TextStyle &s, drift::TimeUs timelineStar
         {QStringLiteral("fontWeight"), s.fontWeight},
         {QStringLiteral("italic"), s.italic},
         {QStringLiteral("color"), s.color.name(QColor::HexArgb)},
+        {QStringLiteral("fillKind"), drift::textFillKindToString(s.fillKind)},
+        {QStringLiteral("colorSecondary"), s.colorSecondary.name(QColor::HexArgb)},
+        {QStringLiteral("gradientAngle"), s.gradientAngle},
+        {QStringLiteral("pathBend"), s.pathBend},
         {QStringLiteral("align"), drift::textAlignToString(s.align)},
         {QStringLiteral("valign"), drift::textVAlignToString(s.valign)},
         {QStringLiteral("wordWrap"), s.wordWrap},
@@ -11430,6 +11434,14 @@ void AppController::setTextStyle(int trackIndex, int clipIndex, const QVariantMa
         s.italic = m.value(QStringLiteral("italic")).toBool();
     if (m.contains(QStringLiteral("color")))
         s.color = QColor(m.value(QStringLiteral("color")).toString());
+    if (m.contains(QStringLiteral("fillKind")))
+        s.fillKind = drift::textFillKindFromString(m.value(QStringLiteral("fillKind")).toString());
+    if (m.contains(QStringLiteral("colorSecondary")))
+        s.colorSecondary = QColor(m.value(QStringLiteral("colorSecondary")).toString());
+    if (m.contains(QStringLiteral("gradientAngle")))
+        s.gradientAngle = m.value(QStringLiteral("gradientAngle")).toDouble();
+    if (m.contains(QStringLiteral("pathBend")))
+        s.pathBend = qBound(-100.0, m.value(QStringLiteral("pathBend")).toDouble(), 100.0);
     if (m.contains(QStringLiteral("align")))
         s.align = drift::textAlignFromString(m.value(QStringLiteral("align")).toString());
     if (m.contains(QStringLiteral("valign")))

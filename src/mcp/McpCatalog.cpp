@@ -65,8 +65,8 @@ QJsonObject animPropProp()
         "Animated property: x, y, width, height, rotation, opacity, volume, fx.<effectIndex>.<paramKey> "
         "(e.g. fx.0.amount), mask.<x|y|w|h|rotation|feather>, or on a text/subtitle clip text.<key> with "
         "key one of pixelSize, letterSpacing, lineHeight, outlineWidth, shadowOffsetX, shadowOffsetY, "
-        "shadowBlur, shadowOpacity, glowRadius, glowOpacity, boxPadding, color.r, color.g, color.b, "
-        "color.a (colour channels 0..1). Note width/height here vs w/h in set_transform. Spellings live in this "
+        "shadowBlur, shadowOpacity, glowRadius, glowOpacity, boxPadding, gradientAngle, pathBend, color.r, "
+        "color.g, color.b, color.a (colour channels 0..1). Note width/height here vs w/h in set_transform. Spellings live in this "
         "schema — list_animated_properties returns only properties that already have keys (empty on a "
         "fresh clip), so do not use it to learn names."));
 }
@@ -181,7 +181,12 @@ QJsonObject textStyleSchema()
         {QStringLiteral("fontFamily"), stringProp(QStringLiteral("Font family name"))},
         {QStringLiteral("fontWeight"), integerProp(QStringLiteral("Font weight (e.g. 400, 700)"))},
         {QStringLiteral("pixelSize"), numberProp(QStringLiteral("Font size in pixels"))},
-        {QStringLiteral("color"), stringProp(QStringLiteral("Text color (#RRGGBB or #AARRGGBB)"))},
+        {QStringLiteral("color"), stringProp(QStringLiteral("Text color (#RRGGBB or #AARRGGBB); the gradient's first stop"))},
+        {QStringLiteral("fillKind"), enumProp(QStringLiteral("Glyph fill: solid colour or a gradient from color to colorSecondary across the block"),
+                                              {QStringLiteral("solid"), QStringLiteral("linearGradient"), QStringLiteral("radialGradient")})},
+        {QStringLiteral("colorSecondary"), stringProp(QStringLiteral("Gradient end colour"))},
+        {QStringLiteral("gradientAngle"), numberProp(QStringLiteral("Linear gradient angle in degrees: 0 = left→right, 90 = top→bottom"))},
+        {QStringLiteral("pathBend"), numberProp(QStringLiteral("Arch a single-line block along an arc: -100..100, positive bends upward; ignored on multi-line blocks"), -100.0, 100.0)},
         {QStringLiteral("italic"), boolProp(QStringLiteral("Italic"))},
         {QStringLiteral("align"), enumProp(QStringLiteral("Horizontal alignment"),
                                           {QStringLiteral("left"), QStringLiteral("center"),

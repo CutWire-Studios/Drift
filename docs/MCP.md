@@ -137,7 +137,7 @@ All return `{started:true}` immediately. Every field below except `export` lives
 | `subtitles` | Subtitle clips, cues, import/export, Whisper generation |
 | `effects` | Video/audio effects, transitions, templates, effect clipboard |
 | `project` | Open/new/save/package, canvas, background, metadata, export |
-| `keyframes` | Property animation keys and tangents — clip transform, `fx.<i>.<param>`, `mask.<key>`, and on text/subtitle clips `text.<key>` (pixelSize, letterSpacing, lineHeight, outline/shadow/glow scalars, boxPadding, color.r/g/b/a) |
+| `keyframes` | Property animation keys and tangents — clip transform, `fx.<i>.<param>`, `mask.<key>`, and on text/subtitle clips `text.<key>` (pixelSize, letterSpacing, lineHeight, outline/shadow/glow scalars, boxPadding, gradientAngle, pathBend, color.r/g/b/a) |
 | `speed` | Speed ramps; reading custom fade curves (write them with `set_fade_curve` in `canvas`) |
 | `segmentation` | SAM-style cutout (session or one-shot) |
 | `ai` | Denoise, face detection, auto-reframe, add-on install |

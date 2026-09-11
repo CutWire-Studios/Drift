@@ -5600,6 +5600,14 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Gradient angle</source>
+        <translation type="unfinished">Ángulo del degradado</translation>
+    </message>
+    <message>
+        <source>Text bend</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Text red</source>
         <translation type="unfinished"></translation>
     </message>
@@ -9227,6 +9235,38 @@ Si la reproducción se corta, prueba con otra opción.</translation>
     <message>
         <source>%1 has no italic face</source>
         <translation>%1 no tiene variante en cursiva</translation>
+    </message>
+    <message>
+        <source>Fill</source>
+        <translation type="unfinished">Relleno</translation>
+    </message>
+    <message>
+        <source>Solid</source>
+        <translation type="unfinished">Sólido</translation>
+    </message>
+    <message>
+        <source>Linear gradient</source>
+        <translation type="unfinished">Degradado lineal</translation>
+    </message>
+    <message>
+        <source>Radial gradient</source>
+        <translation type="unfinished">Degradado radial</translation>
+    </message>
+    <message>
+        <source>End colour</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Choose the gradient&apos;s end colour</source>
+        <translation type="unfinished">Elegir color final del degradado</translation>
+    </message>
+    <message>
+        <source>Gradient angle</source>
+        <translation type="unfinished">Ángulo del degradado</translation>
+    </message>
+    <message>
+        <source>Bend</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Layout</source>

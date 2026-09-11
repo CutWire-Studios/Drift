@@ -4,6 +4,7 @@
 #include "SkiaVectorResources.h"
 #include "TextLayout.h"
 
+#include <QBrush>
 #include <QHash>
 #include <QPainter>
 #include <QtMath>
@@ -11,7 +12,9 @@
 #include <cmath>
 
 #include "include/core/SkCanvas.h"
+#include "include/core/SkColorFilter.h"
 #include "include/core/SkImage.h"
+#include "include/core/SkMatrix.h"
 #include "include/core/SkPaint.h"
 #include "include/core/SkRRect.h"
 #include "include/core/SkSamplingOptions.h"
@@ -26,6 +29,11 @@ SkRect toSkRect(const QRectF &r)
     return SkRect::MakeXYWH(float(r.x()), float(r.y()), float(r.width()), float(r.height()));
 }
 
+QRectF fromSkRect(const SkRect &r)
+{
+    return QRectF(r.left(), r.top(), r.width(), r.height());
+}
+
 // One laid-out piece with its geometry already in Skia form, so paint() only issues draws.
 struct Piece
 {
@@ -38,14 +46,16 @@ struct Piece
     bool accent = false;
     sk_sp<SkImage> emoji; // bitmap-face cluster, pre-drawn by Qt
     QPointF emojiOrigin;  // where the emoji image's top-left lands
+    SkMatrix emojiMatrix = SkMatrix::I(); // the bend, for the image draw
+    double outlinePx = 0.0;
 };
 
 // Colour emoji have no outlines: the CBDT face is drawn by Qt into a small premultiplied image
 // here on the scene thread, and blitted 1:1 at paint time. The cell is padded because a bitmap
-// glyph can overhang its advance.
-sk_sp<SkImage> renderEmoji(const text::StyledWord &word, QPointF *origin)
+// glyph can overhang its advance and because the outline dilation grows it.
+sk_sp<SkImage> renderEmoji(const text::StyledWord &word, double extra, QPointF *origin)
 {
-    const double pad = std::ceil(word.cellRect.height() * 0.25) + 1.0;
+    const double pad = std::ceil(word.cellRect.height() * 0.25 + extra) + 1.0;
     const int w = qMax(1, qCeil(word.cellRect.width() + pad * 2.0));
     const int h = qMax(1, qCeil(word.cellRect.height() + pad * 2.0));
     QImage image(w, h, QImage::Format_ARGB32_Premultiplied);
@@ -60,7 +70,73 @@ sk_sp<SkImage> renderEmoji(const text::StyledWord &word, QPointF *origin)
     return imageFromQImage(image);
 }
 
-QList<Piece> piecesFor(const QList<text::StyledWord> &words, const TextStyle &style, double renderScale)
+// The arc a bent single line sits on: chord = the line's extent, rise = textBendRise. Glyphs keep
+// their advances along the arc and the slack the longer arc leaves is split between the ends.
+struct Bend
+{
+    bool active = false;
+    double left = 0, width = 0, baseline = 0;
+    double radius = 0, sweep = 0, arcLen = 0;
+    bool up = true;
+    QPointF centre;
+
+    SkMatrix matrixFor(double x0, double baselineY) const
+    {
+        const double d = (x0 - left) + (arcLen - width) / 2.0;
+        const double phi = -sweep / 2.0 + d / radius;
+        QPointF pos;
+        double rot;
+        if (up) {
+            pos = centre + QPointF(radius * std::sin(phi), -radius * std::cos(phi));
+            rot = phi;
+        } else {
+            pos = centre + QPointF(radius * std::sin(phi), radius * std::cos(phi));
+            rot = -phi;
+        }
+        // The piece's own baseline offset from the line baseline (accent words sit on the same
+        // baseline, so this is normally zero).
+        SkMatrix m = SkMatrix::Translate(float(pos.x()), float(pos.y()));
+        m.preConcat(SkMatrix::RotateRad(float(rot)));
+        m.preConcat(SkMatrix::Translate(float(-x0), float(-baselineY)));
+        return m;
+    }
+};
+
+Bend bendFor(const QList<text::StyledWord> &words, const TextStyle &style, double renderScale)
+{
+    Bend bend;
+    const double rise = text::textBendRise(style) * renderScale;
+    if (rise < 0.5 || words.isEmpty())
+        return bend;
+    for (const text::StyledWord &word : words) {
+        if (word.line != words.first().line)
+            return bend; // multi-line blocks stay straight
+    }
+    double left = words.first().cellRect.left();
+    double right = words.first().cellRect.right();
+    for (const text::StyledWord &word : words) {
+        left = qMin(left, word.cellRect.left());
+        right = qMax(right, word.cellRect.right());
+    }
+    const double width = right - left;
+    if (width < 1.0)
+        return bend;
+    bend.active = true;
+    bend.up = style.pathBend > 0.0;
+    bend.left = left;
+    bend.width = width;
+    bend.baseline = words.first().baselineY;
+    bend.radius = (width * width / 4.0 + rise * rise) / (2.0 * rise);
+    bend.sweep = 2.0 * std::asin(qMin(1.0, width / (2.0 * bend.radius)));
+    bend.arcLen = bend.radius * bend.sweep;
+    const double mid = left + width / 2.0;
+    bend.centre = bend.up ? QPointF(mid, bend.baseline + (bend.radius - rise))
+                          : QPointF(mid, bend.baseline - (bend.radius - rise));
+    return bend;
+}
+
+QList<Piece> piecesFor(const QList<text::StyledWord> &words, const TextStyle &style, double renderScale,
+                       const Bend &bend)
 {
     QList<Piece> pieces;
     pieces.reserve(words.size());
@@ -70,27 +146,60 @@ QList<Piece> piecesFor(const QList<text::StyledWord> &words, const TextStyle &st
         piece.baselineY = word.baselineY;
         piece.line = word.line;
         piece.accent = word.accent;
+        piece.outlinePx = text::outlineWidthFor(style, word.accent) * renderScale;
+        const SkMatrix m = bend.active ? bend.matrixFor(word.cellRect.left(), word.baselineY) : SkMatrix::I();
         if (!word.emojiText.isEmpty()) {
-            piece.emoji = renderEmoji(word, &piece.emojiOrigin);
+            piece.emoji = renderEmoji(word, piece.outlinePx, &piece.emojiOrigin);
+            piece.emojiMatrix = m;
         } else {
             piece.glyphs = toSkPath(word.path);
             const double outline = text::outlineWidthFor(style, word.accent);
             piece.outlined = outline > 0.0;
             piece.shape = piece.outlined ? toSkPath(text::outlineShape(word.path, outline, renderScale))
                                          : piece.glyphs;
+            if (bend.active) {
+                piece.glyphs = piece.glyphs.makeTransform(m);
+                piece.shape = piece.outlined ? piece.shape.makeTransform(m) : piece.glyphs;
+            }
         }
         pieces.append(piece);
     }
     return pieces;
 }
 
+// The brush a gradient fill sweeps across the block's ink, built with the same angle maths as a
+// shape's so the two read alike.
+QBrush fillBrush(const TextStyle &style, const QRectF &bounds)
+{
+    switch (style.fillKind) {
+    case TextFillKind::Solid:
+        return style.color;
+    case TextFillKind::LinearGradient: {
+        const double radians = qDegreesToRadians(style.gradientAngle);
+        const QPointF centre = bounds.center();
+        const QPointF half(qCos(radians) * bounds.width() / 2.0, qSin(radians) * bounds.height() / 2.0);
+        QLinearGradient gradient(centre - half, centre + half);
+        gradient.setColorAt(0.0, style.color);
+        gradient.setColorAt(1.0, style.colorSecondary);
+        return gradient;
+    }
+    case TextFillKind::RadialGradient: {
+        QRadialGradient gradient(bounds.center(), qMax(bounds.width(), bounds.height()) / 2.0);
+        gradient.setColorAt(0.0, style.color);
+        gradient.setColorAt(1.0, style.colorSecondary);
+        return gradient;
+    }
+    }
+    return style.color;
+}
+
 class TextBlockPainter final : public VectorPainter
 {
 public:
     TextBlockPainter(QSize size, quint64 key, const TextStyle &style, double renderScale,
-                     QList<Piece> pieces, const QRectF &box)
+                     QList<Piece> pieces, const QRectF &box, const QRectF &ink, bool bent)
         : m_size(size), m_key(key == 0 ? 0 : (key | 1)), m_style(style), m_scale(renderScale),
-          m_pieces(std::move(pieces)), m_box(box)
+          m_pieces(std::move(pieces)), m_box(box), m_fill(fillBrush(style, ink)), m_bent(bent)
     {
     }
 
@@ -108,14 +217,17 @@ public:
             canvas.drawRoundRect(toSkRect(m_box), r, r, fill);
         }
 
-        for (const Piece &piece : m_pieces) {
-            const TextHighlight *highlight = text::highlightFor(m_style, piece.accent);
-            if (!highlight)
-                continue;
-            const double pad = highlight->padding * m_scale;
-            const float r = float(highlight->radius * m_scale);
-            fill.setColor(toSkColor(highlight->color));
-            canvas.drawRoundRect(toSkRect(piece.cellRect.adjusted(-pad, -pad, pad, pad)), r, r, fill);
+        // Pills and rules follow the straight cell geometry, which a bent line no longer has.
+        if (!m_bent) {
+            for (const Piece &piece : m_pieces) {
+                const TextHighlight *highlight = text::highlightFor(m_style, piece.accent);
+                if (!highlight)
+                    continue;
+                const double pad = highlight->padding * m_scale;
+                const float r = float(highlight->radius * m_scale);
+                fill.setColor(toSkColor(highlight->color));
+                canvas.drawRoundRect(toSkRect(piece.cellRect.adjusted(-pad, -pad, pad, pad)), r, r, fill);
+            }
         }
 
         if (m_style.shadowEnabled && m_style.shadowOpacity > 0.0) {
@@ -130,20 +242,34 @@ public:
                 continue;
             if (piece.outlined) { // behind the glyphs, never eating into them
                 fill.setColor(toSkColor(text::outlineColorFor(m_style, piece.accent)));
+                fill.setShader(nullptr);
                 canvas.drawPath(piece.shape, fill);
             }
-            fill.setColor(toSkColor(text::fillColorFor(m_style, piece.accent)));
+            glyphPaint(fill, piece.accent);
             canvas.drawPath(piece.glyphs, fill);
         }
 
         for (const Piece &piece : m_pieces) {
             if (!piece.emoji)
                 continue;
+            canvas.save();
+            canvas.concat(piece.emojiMatrix);
+            if (piece.outlinePx > 0.0) {
+                // The bitmap's alpha, dilated by the outline width and tinted: the same ring an
+                // outlined glyph gets, drawn underneath the emoji itself.
+                SkPaint ring;
+                ring.setImageFilter(SkImageFilters::ColorFilter(
+                    SkColorFilters::Blend(toSkColor(text::outlineColorFor(m_style, piece.accent)), SkBlendMode::kSrcIn),
+                    SkImageFilters::Dilate(float(piece.outlinePx), float(piece.outlinePx), nullptr)));
+                canvas.drawImage(piece.emoji.get(), float(piece.emojiOrigin.x()), float(piece.emojiOrigin.y()),
+                                 SkSamplingOptions(SkFilterMode::kLinear), &ring);
+            }
             canvas.drawImage(piece.emoji.get(), float(piece.emojiOrigin.x()), float(piece.emojiOrigin.y()),
                              SkSamplingOptions(SkFilterMode::kLinear));
+            canvas.restore();
         }
 
-        if (m_style.underlineEnabled && m_style.underlineWidth > 0.0) {
+        if (!m_bent && m_style.underlineEnabled && m_style.underlineWidth > 0.0) {
             QHash<int, QRectF> perLine;
             for (const Piece &piece : m_pieces) {
                 const QRectF rule(piece.cellRect.left(), piece.baselineY + m_style.underlineOffset * m_scale,
@@ -155,6 +281,7 @@ public:
                     *it = it->united(rule);
             }
             fill.setColor(toSkColor(m_style.underlineColor));
+            fill.setShader(nullptr);
             const float r = float(m_style.underlineWidth * m_scale * 0.5);
             for (const QRectF &rule : std::as_const(perLine))
                 canvas.drawRoundRect(toSkRect(rule), r, r, fill);
@@ -162,9 +289,20 @@ public:
     }
 
 private:
-    // Every piece's outline shape, filled in one colour and blurred as a layer. The QPainter
-    // raster runs a three-pass box blur of radius round(blur·scale); three boxes of radius r
-    // have the variance of a gaussian with sigma = r + 0.5.
+    // Solid accent colour when the pack overrides it, else the block's fill (solid or gradient).
+    void glyphPaint(SkPaint &paint, bool accent) const
+    {
+        if (accent && m_style.accent.colorEnabled) {
+            paint.setShader(nullptr);
+            paint.setColor(toSkColor(m_style.accent.color));
+            return;
+        }
+        applyBrush(paint, m_fill);
+    }
+
+    // Every piece's outline shape (and every emoji's silhouette), filled in one colour and blurred
+    // as a layer. The QPainter raster runs a three-pass box blur of radius round(blur·scale);
+    // three boxes of radius r have the variance of a gaussian with sigma = r + 0.5.
     void blurredShapes(SkCanvas &canvas, const QColor &color, double blurPx, double opacity,
                        const QPointF &offset) const
     {
@@ -181,8 +319,21 @@ private:
         fill.setAntiAlias(true);
         fill.setColor(toSkColor(color));
         for (const Piece &piece : m_pieces) {
-            if (!piece.emoji)
+            if (!piece.emoji) {
                 canvas.drawPath(piece.shape, fill);
+                continue;
+            }
+            SkPaint silhouette;
+            sk_sp<SkImageFilter> dilate =
+                piece.outlinePx > 0.0 ? SkImageFilters::Dilate(float(piece.outlinePx), float(piece.outlinePx), nullptr)
+                                      : nullptr;
+            silhouette.setImageFilter(SkImageFilters::ColorFilter(
+                SkColorFilters::Blend(toSkColor(color), SkBlendMode::kSrcIn), std::move(dilate)));
+            canvas.save();
+            canvas.concat(piece.emojiMatrix);
+            canvas.drawImage(piece.emoji.get(), float(piece.emojiOrigin.x()), float(piece.emojiOrigin.y()),
+                             SkSamplingOptions(SkFilterMode::kLinear), &silhouette);
+            canvas.restore();
         }
         canvas.restore();
     }
@@ -193,7 +344,30 @@ private:
     double m_scale;
     QList<Piece> m_pieces;
     QRectF m_box;
+    QBrush m_fill;
+    bool m_bent;
 };
+
+// What the pieces paint over. Straight blocks use the layout's own answer so the box matches the
+// QPainter raster; bent ones take the transformed shapes.
+QRectF inkBounds(const QList<Piece> &pieces, const QList<text::StyledWord> &words, const TextStyle &style,
+                 double renderScale, bool bent)
+{
+    if (!bent)
+        return text::paintedBounds(words, style, renderScale);
+    QRectF bounds;
+    for (const Piece &piece : pieces) {
+        QRectF r;
+        if (piece.emoji) {
+            const SkRect cell = piece.emojiMatrix.mapRect(toSkRect(piece.cellRect));
+            r = fromSkRect(cell);
+        } else {
+            r = fromSkRect(piece.shape.computeTightBounds());
+        }
+        bounds = bounds.isNull() ? r : bounds.united(r);
+    }
+    return bounds;
+}
 
 } // namespace
 
@@ -213,24 +387,30 @@ TextPainterResult makeTextPainter(const Clip &clip, const QString &textContent, 
     result.rect = QRectF(layoutRect.x() - bleed, layoutRect.y() - bleed, imageW, imageH);
 
     const text::StyleFonts fonts = text::fontsForStyle(style, renderScale);
+    // A bend places glyphs one at a time, so the layout has to hand them over one at a time.
+    const bool wantBend = text::textBendRise(style) * renderScale >= 0.5;
     const QList<text::StyledWord> words = text::translatedWords(
         text::layoutStyledText(textContent, style, fonts.base, fonts.accent, layoutRect.width(),
-                               layoutRect.height(), activeWordIndex, text::WordSplit::Whole),
+                               layoutRect.height(), activeWordIndex,
+                               wantBend ? text::WordSplit::Characters : text::WordSplit::Whole),
         bleed, bleed);
     if (words.isEmpty())
         return {};
 
+    const Bend bend = bendFor(words, style, renderScale);
+    QList<Piece> pieces = piecesFor(words, style, renderScale, bend);
+    const QRectF ink = inkBounds(pieces, words, style, renderScale, bend.active);
     QRectF box;
     if (style.boxEnabled) {
         const double padding = style.boxPadding * renderScale;
-        box = text::paintedBounds(words, style, renderScale).adjusted(-padding, -padding, padding, padding);
+        box = ink.adjusted(-padding, -padding, padding, padding);
     }
     // An animated style changes every frame; caching those would only churn the GPU LRU.
     const quint64 key = style.isAnimated()
                             ? 0
                             : text::rasterKey(textContent, style, imageW, imageH, renderScale, activeWordIndex);
     result.painter = std::make_shared<TextBlockPainter>(QSize(imageW, imageH), key, style, renderScale,
-                                                        piecesFor(words, style, renderScale), box);
+                                                        std::move(pieces), box, ink, bend.active);
     return result;
 }
 
@@ -258,22 +438,25 @@ QList<TextSpanPainter> makeTextSpanPainters(const Clip &clip, const QString &tex
         return {};
     const QList<QList<text::StyledWord>> groups = text::groupSpans(words, unit);
     const QPointF origin = layoutRect.topLeft();
+    // Spans are placed one by one, each in its own layer, so the gradient sweeps the whole
+    // block's ink and the bend is left to the whole-block path.
+    const QRectF blockInk = text::paintedBounds(words, style, renderScale);
+    const Bend straight;
 
     QList<TextSpanPainter> out;
     out.reserve(groups.size() + 1);
 
     // A single static box behind every span, so the background never staggers with the glyphs.
     if (style.boxEnabled) {
-        const QRectF blockInk = text::paintedBounds(words, style, renderScale);
         if (!blockInk.isEmpty()) {
             const double padding = style.boxPadding * renderScale;
             const QRectF boxLocal = blockInk.adjusted(-padding, -padding, padding, padding);
             const int bw = qMax(1, qCeil(boxLocal.width()));
             const int bh = qMax(1, qCeil(boxLocal.height()));
-            TextStyle boxOnly = style;
             TextSpanPainter box;
-            box.painter = std::make_shared<TextBlockPainter>(QSize(bw, bh), key ? qHashMulti(key, -1) : 0, boxOnly,
-                                                             renderScale, QList<Piece>(), QRectF(0, 0, bw, bh));
+            box.painter = std::make_shared<TextBlockPainter>(QSize(bw, bh), key ? qHashMulti(key, -1) : 0, style,
+                                                             renderScale, QList<Piece>(), QRectF(0, 0, bw, bh),
+                                                             QRectF(0, 0, bw, bh), false);
             box.rect = QRectF(boxLocal.x(), boxLocal.y(), bw, bh).translated(origin);
             box.index = -1;
             box.count = groups.size();
@@ -290,10 +473,12 @@ QList<TextSpanPainter> makeTextSpanPainters(const Clip &clip, const QString &tex
             continue;
         const int iw = qMax(1, qCeil(ink.width() + bleed * 2.0));
         const int ih = qMax(1, qCeil(ink.height() + bleed * 2.0));
-        const QList<text::StyledWord> local = text::translatedWords(groups.at(i), bleed - ink.x(), bleed - ink.y());
+        const QPointF shift(bleed - ink.x(), bleed - ink.y());
+        const QList<text::StyledWord> local = text::translatedWords(groups.at(i), shift.x(), shift.y());
         TextSpanPainter span;
-        span.painter = std::make_shared<TextBlockPainter>(QSize(iw, ih), key ? qHashMulti(key, i) : 0, spanStyle, renderScale,
-                                                          piecesFor(local, style, renderScale), QRectF());
+        span.painter = std::make_shared<TextBlockPainter>(QSize(iw, ih), key ? qHashMulti(key, i) : 0, spanStyle,
+                                                          renderScale, piecesFor(local, style, renderScale, straight),
+                                                          QRectF(), blockInk.translated(shift), false);
         span.rect = QRectF(ink.x() - bleed, ink.y() - bleed, iw, ih).translated(origin);
         span.index = i;
         span.count = groups.size();

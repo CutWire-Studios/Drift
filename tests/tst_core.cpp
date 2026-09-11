@@ -1416,6 +1416,20 @@ void CoreTest::textStyleKeyframesSerialization()
     QCOMPARE(back.resolvedAt(drift::secondsToUs(2.0)).pixelSize, 80);
     QVERIFY(qAbs(back.resolvedAt(drift::secondsToUs(0.5)).color.greenF() - 0.5) < 0.001);
 
+    // The Skia-only looks round-trip too and default to a plain solid fill on a straight line.
+    drift::TextStyle look;
+    look.fillKind = drift::TextFillKind::LinearGradient;
+    look.colorSecondary = QColor(1, 2, 3, 4);
+    look.gradientAngle = 33.0;
+    look.pathBend = -40.0;
+    const drift::TextStyle lookBack = drift::textStyleFromJson(drift::textStyleToJson(look));
+    QCOMPARE(lookBack.fillKind, drift::TextFillKind::LinearGradient);
+    QCOMPARE(lookBack.colorSecondary, QColor(1, 2, 3, 4));
+    QCOMPARE(lookBack.gradientAngle, 33.0);
+    QCOMPARE(lookBack.pathBend, -40.0);
+    QCOMPARE(drift::textStyleFromJson(QJsonObject{{QStringLiteral("pixelSize"), 12}}).fillKind, drift::TextFillKind::Solid);
+    QCOMPARE(drift::textStyleFromJson(QJsonObject{{QStringLiteral("pixelSize"), 12}}).pathBend, 0.0);
+
     double scalar = 0;
     QVERIFY(drift::textStyleScalar(style, QStringLiteral("color.r"), &scalar));
     QCOMPARE(scalar, 1.0);

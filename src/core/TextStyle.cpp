@@ -52,6 +52,28 @@ TextVAlign textVAlignFromString(const QString &valign)
     return TextVAlign::Middle;
 }
 
+QString textFillKindToString(TextFillKind kind)
+{
+    switch (kind) {
+    case TextFillKind::Solid:
+        return QStringLiteral("solid");
+    case TextFillKind::LinearGradient:
+        return QStringLiteral("linearGradient");
+    case TextFillKind::RadialGradient:
+        return QStringLiteral("radialGradient");
+    }
+    return QStringLiteral("solid");
+}
+
+TextFillKind textFillKindFromString(const QString &kind)
+{
+    if (kind == QStringLiteral("linearGradient"))
+        return TextFillKind::LinearGradient;
+    if (kind == QStringLiteral("radialGradient"))
+        return TextFillKind::RadialGradient;
+    return TextFillKind::Solid;
+}
+
 QString textAnimKindToString(TextAnimKind kind)
 {
     switch (kind) {
@@ -599,8 +621,9 @@ const QStringList &textKeyframeProperties()
         QStringLiteral("pixelSize"),     QStringLiteral("letterSpacing"), QStringLiteral("lineHeight"),
         QStringLiteral("outlineWidth"),  QStringLiteral("shadowOffsetX"), QStringLiteral("shadowOffsetY"),
         QStringLiteral("shadowBlur"),    QStringLiteral("shadowOpacity"), QStringLiteral("glowRadius"),
-        QStringLiteral("glowOpacity"),   QStringLiteral("boxPadding"),    QStringLiteral("color.r"),
-        QStringLiteral("color.g"),       QStringLiteral("color.b"),       QStringLiteral("color.a")};
+        QStringLiteral("glowOpacity"),   QStringLiteral("boxPadding"),    QStringLiteral("gradientAngle"),
+        QStringLiteral("pathBend"),      QStringLiteral("color.r"),       QStringLiteral("color.g"),
+        QStringLiteral("color.b"),       QStringLiteral("color.a")};
     return props;
 }
 
@@ -628,6 +651,10 @@ bool textStyleScalar(const TextStyle &s, const QString &key, double *out)
         *out = s.glowOpacity;
     else if (key == QStringLiteral("boxPadding"))
         *out = s.boxPadding;
+    else if (key == QStringLiteral("gradientAngle"))
+        *out = s.gradientAngle;
+    else if (key == QStringLiteral("pathBend"))
+        *out = s.pathBend;
     else if (key == QStringLiteral("color.r"))
         *out = s.color.redF();
     else if (key == QStringLiteral("color.g"))
@@ -665,6 +692,10 @@ bool setTextStyleScalar(TextStyle &s, const QString &key, double value)
         s.glowOpacity = qBound(0.0, value, 1.0);
     else if (key == QStringLiteral("boxPadding"))
         s.boxPadding = qMax(0.0, value);
+    else if (key == QStringLiteral("gradientAngle"))
+        s.gradientAngle = value;
+    else if (key == QStringLiteral("pathBend"))
+        s.pathBend = qBound(-100.0, value, 100.0);
     else if (key == QStringLiteral("color.r"))
         s.color.setRedF(qBound(0.0, value, 1.0));
     else if (key == QStringLiteral("color.g"))
@@ -711,6 +742,10 @@ QJsonObject textStyleToJson(const TextStyle &s)
         {QStringLiteral("fontWeight"), s.fontWeight},
         {QStringLiteral("italic"), s.italic},
         {QStringLiteral("color"), s.color.name(QColor::HexArgb)},
+        {QStringLiteral("fillKind"), textFillKindToString(s.fillKind)},
+        {QStringLiteral("colorSecondary"), s.colorSecondary.name(QColor::HexArgb)},
+        {QStringLiteral("gradientAngle"), s.gradientAngle},
+        {QStringLiteral("pathBend"), s.pathBend},
         {QStringLiteral("align"), textAlignToString(s.align)},
         {QStringLiteral("valign"), textVAlignToString(s.valign)},
         {QStringLiteral("wordWrap"), s.wordWrap},
@@ -773,6 +808,11 @@ TextStyle textStyleFromJson(const QJsonObject &o)
         s.fontWeight = o.value(QStringLiteral("bold")).toBool(true) ? 700 : 400;
     s.italic = o.value(QStringLiteral("italic")).toBool(s.italic);
     s.color = QColor(o.value(QStringLiteral("color")).toString(s.color.name(QColor::HexArgb)));
+    s.fillKind = textFillKindFromString(o.value(QStringLiteral("fillKind")).toString());
+    s.colorSecondary = QColor(
+        o.value(QStringLiteral("colorSecondary")).toString(s.colorSecondary.name(QColor::HexArgb)));
+    s.gradientAngle = o.value(QStringLiteral("gradientAngle")).toDouble(s.gradientAngle);
+    s.pathBend = o.value(QStringLiteral("pathBend")).toDouble(s.pathBend);
     s.align = textAlignFromString(o.value(QStringLiteral("align")).toString());
     s.valign = textVAlignFromString(o.value(QStringLiteral("valign")).toString());
     s.wordWrap = o.value(QStringLiteral("wordWrap")).toBool(s.wordWrap);

@@ -72,6 +72,8 @@ Item {
         case "text.glowRadius": return qsTr("Glow radius")
         case "text.glowOpacity": return qsTr("Glow opacity")
         case "text.boxPadding": return qsTr("Box padding")
+        case "text.gradientAngle": return qsTr("Gradient angle")
+        case "text.pathBend": return qsTr("Text bend")
         case "text.color.r": return qsTr("Text red")
         case "text.color.g": return qsTr("Text green")
         case "text.color.b": return qsTr("Text blue")

@@ -5580,6 +5580,14 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Gradient angle</source>
+        <translation type="unfinished">グラデーション角度</translation>
+    </message>
+    <message>
+        <source>Text bend</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Text red</source>
         <translation type="unfinished"></translation>
     </message>
@@ -9193,6 +9201,38 @@ If playback stutters, try another.</source>
     <message>
         <source>%1 has no italic face</source>
         <translation>%1 には斜体がありません</translation>
+    </message>
+    <message>
+        <source>Fill</source>
+        <translation type="unfinished">塗り</translation>
+    </message>
+    <message>
+        <source>Solid</source>
+        <translation type="unfinished">単色</translation>
+    </message>
+    <message>
+        <source>Linear gradient</source>
+        <translation type="unfinished">線形グラデーション</translation>
+    </message>
+    <message>
+        <source>Radial gradient</source>
+        <translation type="unfinished">円形グラデーション</translation>
+    </message>
+    <message>
+        <source>End colour</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Choose the gradient&apos;s end colour</source>
+        <translation type="unfinished">グラデーションの終了色を選択</translation>
+    </message>
+    <message>
+        <source>Gradient angle</source>
+        <translation type="unfinished">グラデーション角度</translation>
+    </message>
+    <message>
+        <source>Bend</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Layout</source>

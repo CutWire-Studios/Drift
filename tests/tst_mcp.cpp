@@ -2247,6 +2247,9 @@ void McpTest::setTextStyleAcceptsAnimation()
                                                      {QStringLiteral("unit"), QStringLiteral("word")}}},
              {QStringLiteral("outlineEnabled"), true},
              {QStringLiteral("outlineWidth"), 3.0},
+             {QStringLiteral("fillKind"), QStringLiteral("linearGradient")},
+             {QStringLiteral("colorSecondary"), QStringLiteral("#0000ff")},
+             {QStringLiteral("pathBend"), 25.0},
              {QStringLiteral("accent"), QJsonObject{{QStringLiteral("rule"), QStringLiteral("everyNth")}, {QStringLiteral("n"), 3}}}}}});
     QVERIFY2(r.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(r).toJson(QJsonDocument::Compact)));
     QVERIFY2(!r.contains(QStringLiteral("ignored")), qPrintable(QJsonDocument(r).toJson(QJsonDocument::Compact)));
@@ -2255,6 +2258,9 @@ void McpTest::setTextStyleAcceptsAnimation()
     QCOMPARE(style.value(QStringLiteral("animIn")).toMap().value(QStringLiteral("unit")).toString(), QStringLiteral("word"));
     QCOMPARE(style.value(QStringLiteral("outlineWidth")).toDouble(), 3.0);
     QCOMPARE(style.value(QStringLiteral("accent")).toMap().value(QStringLiteral("rule")).toString(), QStringLiteral("everyNth"));
+    QCOMPARE(style.value(QStringLiteral("fillKind")).toString(), QStringLiteral("linearGradient"));
+    QCOMPARE(style.value(QStringLiteral("colorSecondary")).toString(), QStringLiteral("#ff0000ff"));
+    QCOMPARE(style.value(QStringLiteral("pathBend")).toDouble(), 25.0);
 }
 
 void McpTest::textKeyframesThroughSetKeyframe()

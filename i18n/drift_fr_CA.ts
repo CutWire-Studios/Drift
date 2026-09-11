@@ -5603,6 +5603,14 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Gradient angle</source>
+        <translation type="unfinished">Angle du dégradé</translation>
+    </message>
+    <message>
+        <source>Text bend</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Text red</source>
         <translation type="unfinished"></translation>
     </message>
@@ -9232,6 +9240,38 @@ En cas de saccades à la lecture, essayez un autre mode.</translation>
     <message>
         <source>%1 has no italic face</source>
         <translation>%1 n&apos;a pas de forme italique</translation>
+    </message>
+    <message>
+        <source>Fill</source>
+        <translation type="unfinished">Remplissage</translation>
+    </message>
+    <message>
+        <source>Solid</source>
+        <translation type="unfinished">Uni</translation>
+    </message>
+    <message>
+        <source>Linear gradient</source>
+        <translation type="unfinished">Dégradé linéaire</translation>
+    </message>
+    <message>
+        <source>Radial gradient</source>
+        <translation type="unfinished">Dégradé radial</translation>
+    </message>
+    <message>
+        <source>End colour</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Choose the gradient&apos;s end colour</source>
+        <translation type="unfinished">Choisir la couleur finale du dégradé</translation>
+    </message>
+    <message>
+        <source>Gradient angle</source>
+        <translation type="unfinished">Angle du dégradé</translation>
+    </message>
+    <message>
+        <source>Bend</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Layout</source>

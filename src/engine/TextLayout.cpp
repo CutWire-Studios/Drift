@@ -30,6 +30,7 @@ quint64 styleHash(const drift::TextStyle &s)
     // raster, so one texture serves every frame of an entrance or exit.
     const drift::WordAccent &a = s.accent;
     return qHashMulti(0, s.fontFamily, s.pixelSize, s.fontWeight, s.italic, s.color.rgba(),
+                      static_cast<int>(s.fillKind), s.colorSecondary.rgba(), s.gradientAngle, s.pathBend,
                       static_cast<int>(s.align), static_cast<int>(s.valign), s.wordWrap, s.lineHeight,
                       s.letterSpacing, s.outlineEnabled, s.outlineWidth, s.outlineColor.rgba(),
                       s.shadowEnabled,
@@ -359,6 +360,11 @@ QList<StyledWord> translatedWords(const QList<StyledWord> &words, double dx, dou
     return out;
 }
 
+double textBendRise(const drift::TextStyle &style)
+{
+    return std::abs(qBound(-100.0, style.pathBend, 100.0)) / 100.0 * 2.0 * style.pixelSize;
+}
+
 double highlightBleed(const drift::TextHighlight &highlight)
 {
     return highlight.enabled ? highlight.padding + highlight.radius : 0.0;
@@ -386,6 +392,8 @@ double bleedFor(const drift::TextStyle &style)
         bleed += style.pixelSize * (accent.sizeScale - 1.0);
     if (style.animIn.kind == drift::TextAnimKind::Blur || style.animOut.kind == drift::TextAnimKind::Blur)
         bleed += kTextBlurMaxPx;
+    // A bent baseline lifts (or drops) the middle of the line by the arc's rise.
+    bleed += textBendRise(style);
     return bleed;
 }
 

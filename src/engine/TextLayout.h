@@ -57,8 +57,11 @@ QList<StyledWord> layoutStyledText(const QString &text, const TextStyle &style, 
 QList<StyledWord> translatedWords(const QList<StyledWord> &words, double dx, double dy);
 
 // Margin (project px) the style can paint outside the layout rect: outline, shadow, glow, box,
-// pills, underline, scaled accents and the entrance blur. The size authority for both backends.
+// pills, underline, scaled accents, the bend rise and the entrance blur. The size authority for
+// both backends.
 double bleedFor(const TextStyle &style);
+// How far (project px) pathBend lifts the middle of the line: |bend|/100 × 2 em.
+double textBendRise(const TextStyle &style);
 
 // The glyph path grown outward by the outline width (already includes the glyph).
 QPainterPath outlineShape(const QPainterPath &path, double outlineWidth, double renderScale);

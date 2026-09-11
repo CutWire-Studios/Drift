@@ -390,6 +390,75 @@ Item {
                     }
                 }
             }
+
+            // Gradient fill and arched baseline are drawn by the Skia backend; the QPainter
+            // fallback keeps a solid fill on a straight line.
+            Row {
+                width: parent.width
+                spacing: 8
+                visible: EditorState.vectorSupportAvailable()
+
+                Column {
+                    width: (parent.width - parent.spacing) / 2
+                    spacing: 4
+                    Text {
+                        text: qsTr("Fill")
+                        color: Theme.mutedForeground
+                        font.pixelSize: Theme.fontSizeXs
+                        font.family: Theme.fontFamily
+                    }
+                    ThemedComboBox {
+                        width: parent.width
+                        readonly property var kinds: ["solid", "linearGradient", "radialGradient"]
+                        model: [qsTr("Solid"), qsTr("Linear gradient"), qsTr("Radial gradient")]
+                        currentIndex: Math.max(0, kinds.indexOf(root.textStyle.fillKind || "solid"))
+                        onActivated: root.setTextStyleKey("fillKind", kinds[currentIndex])
+                    }
+                }
+
+                Column {
+                    width: (parent.width - parent.spacing) / 2
+                    spacing: 4
+                    visible: (root.textStyle.fillKind || "solid") !== "solid"
+                    Text {
+                        text: qsTr("End colour")
+                        color: Theme.mutedForeground
+                        font.pixelSize: Theme.fontSizeXs
+                        font.family: Theme.fontFamily
+                    }
+                    ColorSwatchField {
+                        hex: root.textStyle.colorSecondary
+                        tooltip: qsTr("Choose the gradient's end colour")
+                        onEdited: value => root.setTextStyleKey("colorSecondary", value)
+                    }
+                }
+            }
+
+            Row {
+                width: parent.width
+                spacing: 8
+                visible: EditorState.vectorSupportAvailable()
+
+                PropertyKeyframeRow {
+                    width: (parent.width - parent.spacing) / 2
+                    visible: root.textStyle.fillKind === "linearGradient"
+                    propDef: root.textProp("gradientAngle", qsTr("Gradient angle"), 0)
+                    keyframeList: root.textKeyframes("gradientAngle")
+                    useSlider: true
+                    sliderFrom: 0
+                    sliderTo: 360
+                    unit: "°"
+                }
+
+                PropertyKeyframeRow {
+                    width: (parent.width - parent.spacing) / 2
+                    propDef: root.textProp("pathBend", qsTr("Bend"), 0)
+                    keyframeList: root.textKeyframes("pathBend")
+                    useSlider: true
+                    sliderFrom: -100
+                    sliderTo: 100
+                }
+            }
         }
 
         CollapsibleSection {

@@ -5600,6 +5600,14 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Gradient angle</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Text bend</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Text red</source>
         <translation type="unfinished"></translation>
     </message>
@@ -9219,6 +9227,38 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>%1 has no italic face</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Fill</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Solid</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Linear gradient</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Radial gradient</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>End colour</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Choose the gradient&apos;s end colour</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Gradient angle</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Bend</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
