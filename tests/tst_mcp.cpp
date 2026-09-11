@@ -3217,17 +3217,29 @@ public:
                                                                         {QStringLiteral("filename"), QStringLiteral("tone.wav")},
                                                                         {QStringLiteral("mime"), QStringLiteral("audio/wav")}}}};
         if (path == QLatin1String("/api/v1/catalog")) {
-            body = QJsonDocument(QJsonObject{{QStringLiteral("types"), QJsonArray{QJsonObject{
-                {QStringLiteral("id"), QStringLiteral("audio")},
-                {QStringLiteral("label"), QStringLiteral("Audio")},
-                {QStringLiteral("delivery"), QStringLiteral("media")},
-                {QStringLiteral("providers"), QJsonArray{QJsonObject{
-                    {QStringLiteral("id"), QStringLiteral("fake")},
-                    {QStringLiteral("label"), QStringLiteral("Fake")},
-                    {QStringLiteral("capabilities"), QJsonArray{QStringLiteral("search")}},
-                    {QStringLiteral("filters"), QJsonArray{QJsonObject{{QStringLiteral("id"), QStringLiteral("mood")}, {QStringLiteral("type"), QStringLiteral("enum")}, {QStringLiteral("label"), QStringLiteral("Mood")},
-                                                                       {QStringLiteral("options"), QJsonArray{QJsonObject{{QStringLiteral("id"), QStringLiteral("calm")}, {QStringLiteral("label"), QStringLiteral("Calm")}}}}}}},
-                    {QStringLiteral("quota"), quota}}}}}}}}).toJson(QJsonDocument::Compact);
+            // A literal rather than nested QJsonObject{...} initialisers: seven levels of
+            // braced QJsonValue conversions is what exhausted MSVC's heap (C1060) on the
+            // Windows package job, with a single translation unit and no parallelism at all.
+            QJsonObject catalog = QJsonDocument::fromJson(R"({
+                "types": [{
+                    "id": "audio", "label": "Audio", "delivery": "media",
+                    "providers": [{
+                        "id": "fake", "label": "Fake", "capabilities": ["search"],
+                        "filters": [{"id": "mood", "type": "enum", "label": "Mood",
+                                     "options": [{"id": "calm", "label": "Calm"}]}]
+                    }]
+                }]
+            })").object();
+            QJsonArray types = catalog.value(QStringLiteral("types")).toArray();
+            QJsonObject audio = types.first().toObject();
+            QJsonArray providers = audio.value(QStringLiteral("providers")).toArray();
+            QJsonObject provider = providers.first().toObject();
+            provider.insert(QStringLiteral("quota"), quota);
+            providers[0] = provider;
+            audio.insert(QStringLiteral("providers"), providers);
+            types[0] = audio;
+            catalog.insert(QStringLiteral("types"), types);
+            body = QJsonDocument(catalog).toJson(QJsonDocument::Compact);
         } else if (path == QLatin1String("/api/v1/search")) {
             body = QJsonDocument(QJsonObject{{QStringLiteral("items"), QJsonArray{item}}, {QStringLiteral("quota"), quota}}).toJson(QJsonDocument::Compact);
         } else if (path == QLatin1String("/api/v1/downloads") && method == "POST") {
