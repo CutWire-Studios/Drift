@@ -146,6 +146,7 @@ TrackType trackTypeForClipType(ClipType type)
         return TrackType::Subtitle;
     case ClipType::Image:
     case ClipType::Shape:
+    case ClipType::Vector:
         return TrackType::Shape;
     case ClipType::Adjustment:
         return TrackType::Adjustment;
@@ -689,7 +690,8 @@ TimeUs sourceDurationForClip(const Project &project, const Clip &clip)
         }
     }
 
-    if (clip.type == ClipType::Image || clip.type == ClipType::Shape || clip.type == ClipType::Adjustment)
+    if (clip.type == ClipType::Image || clip.type == ClipType::Shape || clip.type == ClipType::Vector
+        || clip.type == ClipType::Adjustment)
         return kImageClipDurationUs;
 
     return qMax(clip.srcOut, clip.timelineDuration);

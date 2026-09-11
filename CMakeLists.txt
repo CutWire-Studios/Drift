@@ -413,6 +413,8 @@ add_library(driftcore STATIC
     src/core/ShapeStyle.cpp
     src/core/ShapePath.h
     src/core/ShapePath.cpp
+    src/core/VectorSource.h
+    src/core/VectorSource.cpp
     src/core/Track.h
     src/core/Track.cpp
     src/core/Project.h

@@ -18,6 +18,7 @@
 #include "core/SubtitleCue.h"
 #include "core/EffectStackStore.h"
 #include "core/TextPresetStore.h"
+#include "core/VectorSource.h"
 #include "core/TimelineOps.h"
 #include "core/Transition.h"
 
@@ -66,6 +67,10 @@ private slots:
     void shapeStyleSerialization();
     void legacyShapeStyleLoadsWithDefaults();
     void shapeCatalogPathsFitBounds();
+    void vectorSourceSerialization();
+    void vectorClipIsSyntheticOnGraphicTracks();
+    void foldVectorTimeTable_data();
+    void foldVectorTimeTable();
     void effectCatalogIdSerialization();
     void effectParamKeyframeSerialization();
     void detachedCopyIsolatesKeyframesFromLiveMutations();
@@ -737,6 +742,7 @@ void CoreTest::trackAllowsClipTypes()
     drift::Track shapeTrack{.type = drift::TrackType::Shape};
     QVERIFY(shapeTrack.allowsClipType(drift::ClipType::Image));
     QVERIFY(shapeTrack.allowsClipType(drift::ClipType::Shape));
+    QVERIFY(shapeTrack.allowsClipType(drift::ClipType::Vector));
     QVERIFY(!shapeTrack.allowsClipType(drift::ClipType::Video));
 
     drift::Track subtitleTrack{.type = drift::TrackType::Subtitle};
@@ -1266,6 +1272,163 @@ void CoreTest::legacyShapeStyleLoadsWithDefaults()
     QCOMPARE(style.cornerRadius, defaults.cornerRadius);
     QCOMPARE(style.points, defaults.points);
     QCOMPARE(style.innerRatio, defaults.innerRatio);
+}
+
+void CoreTest::vectorSourceSerialization()
+{
+    drift::Project project;
+    project.tracks().clear();
+    project.tracks().append(drift::Track{.type = drift::TrackType::Shape});
+
+    drift::Clip clip;
+    clip.id = QStringLiteral("clip-vector");
+    clip.type = drift::ClipType::Vector;
+    clip.name = QStringLiteral("Loader");
+    clip.timelineStart = 0;
+    clip.timelineDuration = drift::secondsToUs(3.0);
+    clip.speed = 2.0;
+    clip.reverse = true;
+    clip.vector.kind = drift::VectorKind::Lottie;
+    clip.vector.source = QStringLiteral("{\"v\":\"5.7.4\",\"fr\":30,\"ip\":0,\"op\":60,\"w\":200,\"h\":100,\"layers\":[]}");
+    clip.vector.hash = drift::vectorSourceHash(clip.vector.source.toUtf8());
+    clip.vector.width = 200;
+    clip.vector.height = 100;
+    clip.vector.fps = 30.0;
+    clip.vector.durationUs = drift::secondsToUs(2.0);
+    clip.vector.title = QStringLiteral("Spinner");
+    clip.vector.fit = drift::VectorFit::Cover;
+    clip.vector.loop = drift::VectorLoop::PingPong;
+    clip.vector.startOffsetUs = drift::secondsToUs(0.25);
+    clip.vector.slotValues.insert(QStringLiteral("accent"), drift::VectorSlotValue::fromColor(QColor(10, 20, 30, 200)));
+    clip.vector.slotValues.insert(QStringLiteral("speed"), drift::VectorSlotValue::fromScalar(1.5));
+    clip.vector.slotValues.insert(QStringLiteral("anchor"), drift::VectorSlotValue::fromVec2(QPointF(12.5, -3.0)));
+    clip.vector.slotValues.insert(QStringLiteral("label"), drift::VectorSlotValue::fromText(QStringLiteral("Hi \u00e9")));
+    clip.vector.slotValues.insert(QStringLiteral("logo"), drift::VectorSlotValue::fromImage(QStringLiteral("/tmp/logo.png")));
+    project.tracks()[0].clips.append(clip);
+
+    // Non-vector clips must not grow a document key.
+    drift::Clip shape;
+    shape.id = QStringLiteral("clip-shape");
+    shape.type = drift::ClipType::Shape;
+    project.tracks()[0].clips.append(shape);
+
+    const QJsonObject json = project.toJson();
+    QCOMPARE(json.value(QStringLiteral("version")).toInt(), 6);
+    const QJsonArray clips = json.value(QStringLiteral("tracks")).toArray().at(0).toObject()
+                                 .value(QStringLiteral("clips")).toArray();
+    QVERIFY(clips.at(0).toObject().contains(QStringLiteral("vector")));
+    QVERIFY(!clips.at(1).toObject().contains(QStringLiteral("vector")));
+
+    QString error;
+    const drift::Project loaded = drift::Project::fromJson(json, &error);
+    QVERIFY2(error.isEmpty(), qPrintable(error));
+    const drift::Clip &c = loaded.tracks()[0].clips[0];
+    QCOMPARE(c.type, drift::ClipType::Vector);
+    QCOMPARE(c.speed, 2.0);
+    QCOMPARE(c.reverse, true);
+    QCOMPARE(c.vector.kind, drift::VectorKind::Lottie);
+    QCOMPARE(c.vector.source, clip.vector.source);
+    QVERIFY(c.vector.isInline());
+    QCOMPARE(c.vector.hash, clip.vector.hash);
+    QCOMPARE(c.vector.hash.size(), 64);
+    QCOMPARE(c.vector.width, 200);
+    QCOMPARE(c.vector.height, 100);
+    QCOMPARE(c.vector.fps, 30.0);
+    QCOMPARE(c.vector.durationUs, drift::secondsToUs(2.0));
+    QCOMPARE(c.vector.title, QStringLiteral("Spinner"));
+    QCOMPARE(c.vector.fit, drift::VectorFit::Cover);
+    QCOMPARE(c.vector.loop, drift::VectorLoop::PingPong);
+    QCOMPARE(c.vector.startOffsetUs, drift::secondsToUs(0.25));
+    QCOMPARE(c.vector.slotValues.size(), 5);
+    QCOMPARE(c.vector.slotValues.value(QStringLiteral("accent")), drift::VectorSlotValue::fromColor(QColor(10, 20, 30, 200)));
+    QCOMPARE(c.vector.slotValues.value(QStringLiteral("speed")), drift::VectorSlotValue::fromScalar(1.5));
+    QCOMPARE(c.vector.slotValues.value(QStringLiteral("anchor")), drift::VectorSlotValue::fromVec2(QPointF(12.5, -3.0)));
+    QCOMPARE(c.vector.slotValues.value(QStringLiteral("label")), drift::VectorSlotValue::fromText(QStringLiteral("Hi \u00e9")));
+    QCOMPARE(c.vector.slotValues.value(QStringLiteral("logo")), drift::VectorSlotValue::fromImage(QStringLiteral("/tmp/logo.png")));
+    QVERIFY(c.vector.slotValues.value(QStringLiteral("speed")) != drift::VectorSlotValue::fromScalar(2.0));
+    QVERIFY(c.vector.slotValues.value(QStringLiteral("speed")) != drift::VectorSlotValue::fromText(QStringLiteral("1.5")));
+
+    // A file-backed source round-trips too and reads as not inline.
+    drift::VectorSource file;
+    file.kind = drift::VectorKind::Svg;
+    file.path = QStringLiteral("/media/icon.svg");
+    const drift::VectorSource fileLoaded = drift::VectorSource::fromJson(file.toJson());
+    QCOMPARE(fileLoaded.kind, drift::VectorKind::Svg);
+    QCOMPARE(fileLoaded.path, file.path);
+    QVERIFY(!fileLoaded.isInline());
+    QVERIFY(!fileLoaded.isEmpty());
+    QVERIFY(drift::VectorSource().isEmpty());
+    QCOMPARE(drift::VectorSource::fromJson(QJsonObject()).loop, drift::VectorLoop::Hold);
+
+    QCOMPARE(drift::clipTypeFromString(QStringLiteral("vector")), drift::ClipType::Vector);
+    QCOMPARE(drift::clipTypeToString(drift::ClipType::Vector), QStringLiteral("vector"));
+    QCOMPARE(drift::mediaKindFromString(QStringLiteral("vector")), drift::MediaKind::Vector);
+    QCOMPARE(drift::mediaKindToString(drift::MediaKind::Vector), QStringLiteral("vector"));
+}
+
+void CoreTest::vectorClipIsSyntheticOnGraphicTracks()
+{
+    QCOMPARE(drift::trackTypeForClipType(drift::ClipType::Vector), drift::TrackType::Shape);
+
+    drift::Project project;
+    drift::Clip clip;
+    clip.type = drift::ClipType::Vector;
+    clip.timelineDuration = drift::secondsToUs(12.0);
+    clip.srcOut = drift::secondsToUs(12.0);
+    // No media behind it: the source range is a convention, like an image's.
+    QCOMPARE(drift::sourceDurationForClip(project, clip), drift::kImageClipDurationUs);
+
+    // Speed and reverse are the ordinary clip remap; the vector renderer folds what comes out.
+    clip.timelineStart = drift::secondsToUs(1.0);
+    clip.timelineDuration = drift::secondsToUs(2.0);
+    clip.srcIn = 0;
+    clip.srcOut = drift::secondsToUs(4.0);
+    clip.speed = 2.0;
+    QCOMPARE(clip.timelineToSourceUs(drift::secondsToUs(1.5)), drift::secondsToUs(1.0));
+    clip.reverse = true;
+    QCOMPARE(clip.timelineToSourceUs(drift::secondsToUs(1.5)), drift::secondsToUs(3.0));
+}
+
+void CoreTest::foldVectorTimeTable_data()
+{
+    QTest::addColumn<qint64>("anim");
+    QTest::addColumn<qint64>("duration");
+    QTest::addColumn<int>("loop");
+    QTest::addColumn<bool>("visible");
+    QTest::addColumn<qint64>("expected");
+    const qint64 d = drift::secondsToUs(2.0);
+    const qint64 s = drift::kUsPerSecond;
+    using L = drift::VectorLoop;
+    QTest::newRow("still ignores loop") << 5 * s << qint64(0) << int(L::Loop) << true << qint64(0);
+    QTest::newRow("hold inside") << s << d << int(L::Hold) << true << s;
+    QTest::newRow("hold clamps end") << 5 * s << d << int(L::Hold) << true << d;
+    QTest::newRow("hold clamps start") << -s << d << int(L::Hold) << true << qint64(0);
+    QTest::newRow("loop inside") << s << d << int(L::Loop) << true << s;
+    QTest::newRow("loop wraps") << 5 * s << d << int(L::Loop) << true << s;
+    QTest::newRow("loop at boundary") << 4 * s << d << int(L::Loop) << true << qint64(0);
+    QTest::newRow("loop negative") << -s / 2 << d << int(L::Loop) << true << d - s / 2;
+    QTest::newRow("pingpong forward") << s / 2 << d << int(L::PingPong) << true << s / 2;
+    QTest::newRow("pingpong back") << 3 * s << d << int(L::PingPong) << true << s;
+    QTest::newRow("pingpong turn") << d << d << int(L::PingPong) << true << d;
+    QTest::newRow("pingpong second cycle") << 4 * s + s / 2 << d << int(L::PingPong) << true << s / 2;
+    QTest::newRow("pingpong negative") << -s / 2 << d << int(L::PingPong) << true << s / 2;
+    QTest::newRow("hide inside") << s << d << int(L::Hide) << true << s;
+    QTest::newRow("hide at end") << d << d << int(L::Hide) << true << d;
+    QTest::newRow("hide after") << d + 1 << d << int(L::Hide) << false << qint64(0);
+    QTest::newRow("hide before") << qint64(-1) << d << int(L::Hide) << false << qint64(0);
+}
+
+void CoreTest::foldVectorTimeTable()
+{
+    QFETCH(qint64, anim);
+    QFETCH(qint64, duration);
+    QFETCH(int, loop);
+    QFETCH(bool, visible);
+    QFETCH(qint64, expected);
+    drift::TimeUs out = -1;
+    QCOMPARE(drift::foldVectorTime(anim, duration, drift::VectorLoop(loop), &out), visible);
+    if (visible)
+        QCOMPARE(out, expected);
 }
 
 // Guards ~28 hand-written path formulas: a typo shows up as an empty path or one that escapes the
