@@ -140,7 +140,7 @@ PanelFrame {
         Theme.icons.wand,
         Theme.icons.audioLines,
         Theme.icons.chevronsRight,
-        Theme.icons.wand
+        Theme.icons.pipette
     ]
 
     function tabVisible(tabId) {
