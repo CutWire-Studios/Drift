@@ -14,9 +14,8 @@
 #include <QElapsedTimer>
 #include <QFile>
 #include <QStandardPaths>
+#include <cmath>
 
-#include <algorithm>
-#include <vector>
 
 namespace {
 
@@ -51,14 +50,6 @@ const StreamInfo *firstVideoStream(const MediaInfo &info)
             return &s;
     }
     return nullptr;
-}
-
-double medianOf(std::vector<double> &samples)
-{
-    if (samples.empty())
-        return 0.0;
-    std::sort(samples.begin(), samples.end());
-    return samples[samples.size() / 2];
 }
 
 // Decode the clip's own frame rate rather than the project's: the cost being measured is the
@@ -130,24 +121,30 @@ QVariantMap PlaybackDiagnostics::benchmarkClip(const QString &path, const QSize 
         return out;
     }
 
+    // Wall time per frame over the whole sweep, not a median of per-read times. Neither decoder
+    // hands frames back one read at a time: dav1d's frame threads release them in bursts and
+    // VAAPI returns before the GPU has finished, so most individual reads are cache hits or
+    // async submits that take microseconds, and a median of them reported 0.00 ms for a clip
+    // that costs several milliseconds a frame.
     auto sweep = [&](auto &&readOne) {
-        std::vector<double> samples;
-        samples.reserve(kBenchmarkFrames);
         drift::TimeUs at = 0;
+        int frames = 0;
+        qint64 elapsedNs = 0;
         for (int i = 0; i < kBenchmarkFrames + kBenchmarkWarmup; ++i) {
             if (duration > 0 && at >= duration)
                 at = 0; // loop rather than run off the end of a short clip
             QElapsedTimer t;
             t.start();
             const bool ok = readOne(at);
-            const double ms = double(t.nsecsElapsed()) / 1'000'000.0;
             // The first few pay for opening and seeking the decoder, which is not what
             // steady-state playback costs.
-            if (ok && i >= kBenchmarkWarmup)
-                samples.push_back(ms);
+            if (ok && i >= kBenchmarkWarmup) {
+                elapsedNs += t.nsecsElapsed();
+                ++frames;
+            }
             at += stepUs;
         }
-        return medianOf(samples);
+        return frames > 0 ? double(elapsedNs) / 1'000'000.0 / frames : 0.0;
     };
 
     // Stage 1: decode as the preview does. Hardware frames stay on the GPU here, so this is
@@ -165,8 +162,8 @@ QVariantMap PlaybackDiagnostics::benchmarkClip(const QString &path, const QSize 
         return reader.readVideoFrameAt(at, image, w, h);
     });
 
-    out.insert(QStringLiteral("decodeMedianMs"), previewMs);
-    out.insert(QStringLiteral("readbackMedianMs"), rgbaMs);
+    out.insert(QStringLiteral("decodePerFrameMs"), previewMs);
+    out.insert(QStringLiteral("readbackPerFrameMs"), rgbaMs);
     out.insert(QStringLiteral("readbackCostMs"), qMax(0.0, rgbaMs - previewMs));
     out.insert(QStringLiteral("hardware"), reader.hardwareAccelActive());
     out.insert(QStringLiteral("decoder"), reader.videoDecoderName());
@@ -196,7 +193,7 @@ QVariantMap PlaybackDiagnostics::benchmarkClip(const QString &path, const QSize 
         const double compositeMs = sweep([&](drift::TimeUs at) {
             return compositor.compositeToTextureAt(at, options).isValid();
         });
-        out.insert(QStringLiteral("compositeMedianMs"), compositeMs);
+        out.insert(QStringLiteral("compositePerFrameMs"), compositeMs);
         out.insert(QStringLiteral("compositeCostMs"), qMax(0.0, compositeMs - previewMs));
         // The budget this has to fit inside to play without dropping anything.
         out.insert(QStringLiteral("frameBudgetMs"), 1000.0 / fps);
@@ -368,13 +365,13 @@ QString PlaybackDiagnostics::formatPlainText(const QVariantMap &info)
         out += QStringLiteral("- Preview upload: %1\n")
                    .arg(b.value(QStringLiteral("uploadPath")).toString());
         out += QStringLiteral("- Decode: %1\n")
-                   .arg(msText(b.value(QStringLiteral("decodeMedianMs")).toDouble()));
+                   .arg(msText(b.value(QStringLiteral("decodePerFrameMs")).toDouble()));
         out += QStringLiteral("- Decode + readback to CPU: %1 (readback costs %2)\n")
-                   .arg(msText(b.value(QStringLiteral("readbackMedianMs")).toDouble()),
+                   .arg(msText(b.value(QStringLiteral("readbackPerFrameMs")).toDouble()),
                         msText(b.value(QStringLiteral("readbackCostMs")).toDouble()));
-        if (b.contains(QStringLiteral("compositeMedianMs"))) {
+        if (b.contains(QStringLiteral("compositePerFrameMs"))) {
             out += QStringLiteral("- Full composite: %1 (compositing costs %2)\n")
-                       .arg(msText(b.value(QStringLiteral("compositeMedianMs")).toDouble()),
+                       .arg(msText(b.value(QStringLiteral("compositePerFrameMs")).toDouble()),
                             msText(b.value(QStringLiteral("compositeCostMs")).toDouble()));
             out += QStringLiteral("- Frame budget at this rate: %1\n")
                        .arg(msText(b.value(QStringLiteral("frameBudgetMs")).toDouble()));

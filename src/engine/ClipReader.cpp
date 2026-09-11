@@ -753,6 +753,14 @@ bool ClipReader::hardwareDecodeIsWorthIt() const
     if (int64_t(par->width) * par->height >= 3840LL * 2160)
         return true;
 
+    // The bitrate and pixel-rate floors below were tuned against H.264, where a light stream
+    // really is cheaper on the CPU than the readback. AV1 is not that trade: dav1d spends
+    // several times the CPU per pixel, and a 2.4 Mbps 1080p30 phone clip that scored well under
+    // both floors stuttered in software and played cleanly on VAAPI. Same rule as the Android
+    // MediaCodec path, which has never applied a floor to AV1.
+    if (par->codec_id == AV_CODEC_ID_AV1)
+        return true;
+
     const AVRational rate = stream->avg_frame_rate;
     const double fps = (rate.num > 0 && rate.den > 0) ? double(rate.num) / double(rate.den) : 0.0;
 
