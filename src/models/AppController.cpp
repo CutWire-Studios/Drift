@@ -1422,9 +1422,14 @@ void applyWordAccentPatch(drift::WordAccent *accent, const QVariantMap &m)
     applyTextHighlightPatch(&accent->highlight, m.value(QStringLiteral("highlight")).toMap());
 }
 
-QVariantMap textStyleToMap(const drift::TextStyle &s)
+QVariantMap keyframeTrackToMap(const drift::KeyframeTrack<double> &track,
+                               drift::TimeUs timelineStart);
+
+// `timelineStart` places the keyframe times on the timeline for the inspector rows and the
+// keyframe graph, which read them the same way they read a mask's.
+QVariantMap textStyleToMap(const drift::TextStyle &s, drift::TimeUs timelineStart)
 {
-    return {
+    QVariantMap map{
         {QStringLiteral("packId"), s.packId},
         {QStringLiteral("fontFamily"), s.fontFamily},
         {QStringLiteral("pixelSize"), s.pixelSize},
@@ -1462,6 +1467,14 @@ QVariantMap textStyleToMap(const drift::TextStyle &s)
         {QStringLiteral("animIn"), textAnimationToMap(s.animIn)},
         {QStringLiteral("animOut"), textAnimationToMap(s.animOut)},
     };
+    QVariantMap keyframes;
+    for (auto it = s.keyframes.constBegin(); it != s.keyframes.constEnd(); ++it) {
+        if (!it->isEmpty())
+            keyframes.insert(it.key(), keyframeTrackToMap(it.value(), timelineStart));
+    }
+    if (!keyframes.isEmpty())
+        map.insert(QStringLiteral("keyframes"), keyframes);
+    return map;
 }
 
 QVariantList subtitleCuesToMap(const QList<drift::SubtitleCue> &cues)
@@ -1892,6 +1905,19 @@ bool parseMaskProp(const QString &prop, QString *key)
     return true;
 }
 
+// A text style scalar is addressed as "text.<key>" (pixelSize, shadowBlur, color.r, …) and lives on
+// the text clip itself, so no host redirect applies.
+bool parseTextProp(const QString &prop, QString *key)
+{
+    if (!prop.startsWith(QLatin1String("text.")))
+        return false;
+    const QString suffix = prop.mid(5);
+    if (!drift::textKeyframeProperties().contains(suffix))
+        return false;
+    *key = suffix;
+    return true;
+}
+
 drift::KeyframeTrack<double> *transformTrackForProp(drift::Clip &clip, const QString &prop)
 {
     if (prop == QStringLiteral("opacity"))
@@ -1922,6 +1948,13 @@ drift::KeyframeTrack<double> *keyframeTrackForProp(drift::Clip &clip, const QStr
             return &clip.mask.keyframes[maskKey];
         const auto it = clip.mask.keyframes.find(maskKey);
         return it == clip.mask.keyframes.end() ? nullptr : &it.value();
+    }
+    QString textKey;
+    if (parseTextProp(prop, &textKey)) {
+        if (createIfMissing)
+            return &clip.textStyle.keyframes[textKey];
+        const auto it = clip.textStyle.keyframes.find(textKey);
+        return it == clip.textStyle.keyframes.end() ? nullptr : &it.value();
     }
 
     int effectIndex = -1;
@@ -1964,6 +1997,9 @@ bool isKnownKeyframeProp(const QString &prop)
     QString maskKey;
     if (parseMaskProp(prop, &maskKey))
         return true;
+    QString textKey;
+    if (parseTextProp(prop, &textKey))
+        return true;
     drift::Clip probe;
     return transformTrackForProp(probe, prop) != nullptr;
 }
@@ -1973,9 +2009,12 @@ bool isKnownKeyframeProp(const QString &prop)
 // compound form must survive normalization untouched.
 QString normalizeKeyframeProp(const QString &prop)
 {
-    // "mask.<key>" needs no exemption: every mask key is already lower-case.
+    // "mask.<key>" needs no exemption: every mask key is already lower-case. Text keys are
+    // camelCase members ("text.pixelSize"), so they pass through like effect params.
     const QString trimmed = prop.trimmed();
-    return trimmed.startsWith(QLatin1String("fx.")) ? trimmed : trimmed.toLower();
+    return trimmed.startsWith(QLatin1String("fx.")) || trimmed.startsWith(QLatin1String("text."))
+               ? trimmed
+               : trimmed.toLower();
 }
 
 constexpr drift::TimeUs kKeyframeToleranceUs = drift::kUsPerSecond / 30;
@@ -2054,6 +2093,19 @@ bool writeClipPropValue(drift::Clip &clip, const QString &prop, drift::TimeUs re
         if (!writeKeyframeValue(clip.mask.keyframes[maskKey], relative, value, autoKey, force))
             return false;
         writeMaskScalar(clip.mask, maskKey, value);
+        return true;
+    }
+
+    // Same again for a text scalar: the style member is the static home.
+    QString textKey;
+    if (parseTextProp(prop, &textKey)) {
+        const auto existing = clip.textStyle.keyframes.constFind(textKey);
+        const bool keyed = existing != clip.textStyle.keyframes.constEnd() && !existing->isEmpty();
+        if (!keyed && !force && !autoKey)
+            return drift::setTextStyleScalar(clip.textStyle, textKey, value);
+        if (!writeKeyframeValue(clip.textStyle.keyframes[textKey], relative, value, autoKey, force))
+            return false;
+        drift::setTextStyleScalar(clip.textStyle, textKey, value);
         return true;
     }
 
@@ -2979,7 +3031,7 @@ QVariantMap AppController::clipToMap(const drift::Clip &clip, const drift::Clip 
         {QStringLiteral("thumbnailPath"), clip.thumbnailPath},
         {QStringLiteral("filmstripPath"), clip.filmstripPath},
         {QStringLiteral("textContent"), clip.textContent},
-        {QStringLiteral("textStyle"), textStyleToMap(clip.textStyle)},
+        {QStringLiteral("textStyle"), textStyleToMap(clip.textStyle, clip.timelineStart)},
         {QStringLiteral("subtitleCues"), subtitleCuesToMap(clip.subtitleCues)},
         {QStringLiteral("shapeStyle"), shapeStyleToMap(clip.shapeStyle)},
         {QStringLiteral("blendMode"), drift::blendModeToString(clip.blendMode)},
@@ -11479,7 +11531,7 @@ QVariantList AppController::textPresets() const
         out.append(QVariantMap{
             {QStringLiteral("id"), preset.id},
             {QStringLiteral("label"), preset.label},
-            {QStringLiteral("style"), textStyleToMap(preset.style)},
+            {QStringLiteral("style"), textStyleToMap(preset.style, 0)},
         });
     }
     return out;
@@ -11492,7 +11544,7 @@ QVariantList AppController::userTextPresets() const
         out.append(QVariantMap{
             {QStringLiteral("id"), preset.id},
             {QStringLiteral("label"), preset.label},
-            {QStringLiteral("style"), textStyleToMap(preset.style)},
+            {QStringLiteral("style"), textStyleToMap(preset.style, 0)},
         });
     }
     return out;
@@ -13462,6 +13514,25 @@ void AppController::setClipKeyframe(int trackIndex, int clipIndex, const QString
     finishEdit(tr("Keyframe set"));
 }
 
+void AppController::setClipColorKeyframe(int trackIndex, int clipIndex, const QString &prop,
+                                         double atSeconds, const QColor &color)
+{
+    if (!isValidClipIndex(trackIndex, clipIndex) || !color.isValid())
+        return;
+    drift::Clip &clip = m_project.tracks()[trackIndex].clips[clipIndex];
+    const drift::Project before = m_project;
+    const drift::TimeUs rel = qMax<drift::TimeUs>(0, drift::secondsToUs(atSeconds) - clip.timelineStart);
+    const double channels[4] = {color.redF(), color.greenF(), color.blueF(), color.alphaF()};
+    const char *suffixes[4] = {".r", ".g", ".b", ".a"};
+    bool any = false;
+    for (int i = 0; i < 4; ++i)
+        any = writeClipPropValue(clip, prop + QLatin1String(suffixes[i]), rel, channels[i], m_autoKeyEnabled, /*force=*/true) || any;
+    if (!any)
+        return;
+    pushProjectEdit(before, tr("Add keyframe"));
+    finishEdit(tr("Keyframe set"));
+}
+
 void AppController::removeClipKeyframe(int trackIndex, int clipIndex, const QString &prop, double atSeconds)
 {
     if (trackIndex < 0 || trackIndex >= m_project.tracks().size())
@@ -13624,6 +13695,10 @@ double AppController::propertyBaseValue(int trackIndex, int clipIndex, const QSt
                 flat.keyframes.clear();
                 return flat.valueAt(maskKey, 0);
             }
+            QString textKey;
+            double scalar = 0.0;
+            if (parseTextProp(prop, &textKey) && drift::textStyleScalar(clip.textStyle, textKey, &scalar))
+                return scalar;
         }
     }
     return fallback;
@@ -13764,6 +13839,12 @@ QStringList AppController::clipAnimatedProperties(int trackIndex, int clipIndex)
             if (it != maskHost->mask.keyframes.constEnd() && !it->isEmpty())
                 out.append(QStringLiteral("mask.%1").arg(key));
         }
+    }
+    // Text scalars live on the clip itself.
+    for (const QString &key : drift::textKeyframeProperties()) {
+        const auto it = clip.textStyle.keyframes.constFind(key);
+        if (it != clip.textStyle.keyframes.constEnd() && !it->isEmpty())
+            out.append(QStringLiteral("text.%1").arg(key));
     }
     return out;
 }

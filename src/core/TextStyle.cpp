@@ -1,5 +1,7 @@
 #include "TextStyle.h"
 
+#include "Effect.h"
+
 #include "TextPresetStore.h"
 
 #include <QCoreApplication>
@@ -591,9 +593,118 @@ WordAccent wordAccentFromJson(const QJsonObject &o)
     return a;
 }
 
+const QStringList &textKeyframeProperties()
+{
+    static const QStringList props{
+        QStringLiteral("pixelSize"),     QStringLiteral("letterSpacing"), QStringLiteral("lineHeight"),
+        QStringLiteral("outlineWidth"),  QStringLiteral("shadowOffsetX"), QStringLiteral("shadowOffsetY"),
+        QStringLiteral("shadowBlur"),    QStringLiteral("shadowOpacity"), QStringLiteral("glowRadius"),
+        QStringLiteral("glowOpacity"),   QStringLiteral("boxPadding"),    QStringLiteral("color.r"),
+        QStringLiteral("color.g"),       QStringLiteral("color.b"),       QStringLiteral("color.a")};
+    return props;
+}
+
+bool textStyleScalar(const TextStyle &s, const QString &key, double *out)
+{
+    if (key == QStringLiteral("pixelSize"))
+        *out = s.pixelSize;
+    else if (key == QStringLiteral("letterSpacing"))
+        *out = s.letterSpacing;
+    else if (key == QStringLiteral("lineHeight"))
+        *out = s.lineHeight;
+    else if (key == QStringLiteral("outlineWidth"))
+        *out = s.outlineWidth;
+    else if (key == QStringLiteral("shadowOffsetX"))
+        *out = s.shadowOffsetX;
+    else if (key == QStringLiteral("shadowOffsetY"))
+        *out = s.shadowOffsetY;
+    else if (key == QStringLiteral("shadowBlur"))
+        *out = s.shadowBlur;
+    else if (key == QStringLiteral("shadowOpacity"))
+        *out = s.shadowOpacity;
+    else if (key == QStringLiteral("glowRadius"))
+        *out = s.glowRadius;
+    else if (key == QStringLiteral("glowOpacity"))
+        *out = s.glowOpacity;
+    else if (key == QStringLiteral("boxPadding"))
+        *out = s.boxPadding;
+    else if (key == QStringLiteral("color.r"))
+        *out = s.color.redF();
+    else if (key == QStringLiteral("color.g"))
+        *out = s.color.greenF();
+    else if (key == QStringLiteral("color.b"))
+        *out = s.color.blueF();
+    else if (key == QStringLiteral("color.a"))
+        *out = s.color.alphaF();
+    else
+        return false;
+    return true;
+}
+
+bool setTextStyleScalar(TextStyle &s, const QString &key, double value)
+{
+    if (key == QStringLiteral("pixelSize"))
+        s.pixelSize = qMax(1, qRound(value));
+    else if (key == QStringLiteral("letterSpacing"))
+        s.letterSpacing = value;
+    else if (key == QStringLiteral("lineHeight"))
+        s.lineHeight = value;
+    else if (key == QStringLiteral("outlineWidth"))
+        s.outlineWidth = qMax(0.0, value);
+    else if (key == QStringLiteral("shadowOffsetX"))
+        s.shadowOffsetX = value;
+    else if (key == QStringLiteral("shadowOffsetY"))
+        s.shadowOffsetY = value;
+    else if (key == QStringLiteral("shadowBlur"))
+        s.shadowBlur = qMax(0.0, value);
+    else if (key == QStringLiteral("shadowOpacity"))
+        s.shadowOpacity = qBound(0.0, value, 1.0);
+    else if (key == QStringLiteral("glowRadius"))
+        s.glowRadius = qMax(0.0, value);
+    else if (key == QStringLiteral("glowOpacity"))
+        s.glowOpacity = qBound(0.0, value, 1.0);
+    else if (key == QStringLiteral("boxPadding"))
+        s.boxPadding = qMax(0.0, value);
+    else if (key == QStringLiteral("color.r"))
+        s.color.setRedF(qBound(0.0, value, 1.0));
+    else if (key == QStringLiteral("color.g"))
+        s.color.setGreenF(qBound(0.0, value, 1.0));
+    else if (key == QStringLiteral("color.b"))
+        s.color.setBlueF(qBound(0.0, value, 1.0));
+    else if (key == QStringLiteral("color.a"))
+        s.color.setAlphaF(qBound(0.0, value, 1.0));
+    else
+        return false;
+    return true;
+}
+
+bool TextStyle::isAnimated() const
+{
+    for (auto it = keyframes.constBegin(); it != keyframes.constEnd(); ++it) {
+        if (!it->isEmpty() && it->enabled())
+            return true;
+    }
+    return false;
+}
+
+TextStyle TextStyle::resolvedAt(TimeUs clipTimeUs) const
+{
+    TextStyle out = *this;
+    for (auto it = keyframes.constBegin(); it != keyframes.constEnd(); ++it) {
+        if (!it->isEmpty())
+            setTextStyleScalar(out, it.key(), it->evaluateAt(clipTimeUs));
+    }
+    return out;
+}
+
 QJsonObject textStyleToJson(const TextStyle &s)
 {
-    return QJsonObject{
+    QJsonObject keyframesJson;
+    for (auto it = s.keyframes.constBegin(); it != s.keyframes.constEnd(); ++it) {
+        if (!it->isEmpty())
+            keyframesJson.insert(it.key(), keyframesToJson(it.value()));
+    }
+    QJsonObject json{
         {QStringLiteral("packId"), s.packId},
         {QStringLiteral("fontFamily"), s.fontFamily},
         {QStringLiteral("pixelSize"), s.pixelSize},
@@ -641,6 +752,10 @@ QJsonObject textStyleToJson(const TextStyle &s)
         {QStringLiteral("animOutStaggerUs"), static_cast<qint64>(s.animOut.staggerUs)},
         {QStringLiteral("animOutOrder"), textAnimOrderToString(s.animOut.order)},
     };
+    // Only animated styles carry the key: projects without text animation stay byte-identical.
+    if (!keyframesJson.isEmpty())
+        json.insert(QStringLiteral("keyframes"), keyframesJson);
+    return json;
 }
 
 TextStyle textStyleFromJson(const QJsonObject &o)
@@ -705,6 +820,11 @@ TextStyle textStyleFromJson(const QJsonObject &o)
     s.animOut.unit = textAnimUnitFromString(o.value(QStringLiteral("animOutUnit")).toString());
     s.animOut.staggerUs = o.value(QStringLiteral("animOutStaggerUs")).toInteger(s.animOut.staggerUs);
     s.animOut.order = textAnimOrderFromString(o.value(QStringLiteral("animOutOrder")).toString());
+    const QJsonObject keyframesJson = o.value(QStringLiteral("keyframes")).toObject();
+    for (auto it = keyframesJson.constBegin(); it != keyframesJson.constEnd(); ++it) {
+        if (textKeyframeProperties().contains(it.key()))
+            s.keyframes.insert(it.key(), keyframesFromJson(it.value().toObject()));
+    }
     return s;
 }
 

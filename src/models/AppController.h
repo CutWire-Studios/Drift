@@ -1114,6 +1114,10 @@ public:
     Q_INVOKABLE QVariantList transitionCategories() const;
     Q_INVOKABLE void selectTransition(int trackIndex, int leftClipIndex);
     Q_INVOKABLE void clearTransitionSelection();
+    // A colour property ("text.color") fans out to its four channel tracks (<prop>.r/g/b/a) as
+    // one undo step. Clears every channel when the colour is invalid.
+    Q_INVOKABLE void setClipColorKeyframe(int trackIndex, int clipIndex, const QString &prop,
+                                          double atSeconds, const QColor &color);
     Q_INVOKABLE void setClipKeyframe(int trackIndex, int clipIndex, const QString &prop, double atSeconds,
                                      double value);
     Q_INVOKABLE void removeClipKeyframe(int trackIndex, int clipIndex, const QString &prop, double atSeconds);

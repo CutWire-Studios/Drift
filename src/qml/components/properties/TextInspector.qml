@@ -144,38 +144,31 @@ Item {
     height: contentCol.height
     implicitHeight: contentCol.height
 
+    // Keyframed style scalars ride the generic keyframe API as "text.<key>"; the key list comes
+    // back inside textStyle.keyframes with times already on the timeline, like a mask's. `def`
+    // tracks the static scalar so an unkeyed row shows the value the clip actually renders with.
+    function textKeyframes(key) {
+        const keys = root.textStyle && root.textStyle.keyframes
+        const entry = keys && keys[key]
+        return (entry && entry.points) || []
+    }
+    function textProp(key, label, decimals) {
+        return { "key": "text." + key, "label": label, "def": Number(root.textStyle[key]),
+                 "decimals": decimals }
+    }
+
     function refreshFields() {
         if (textContentField && !textContentField.activeFocus)
             textContentField.text = root.clipData.textContent || ""
         if (!root.hasTextStyle)
             return
         const s = root.textStyle
-        if (pixelSizeField && !pixelSizeField.activeFocus)
-            pixelSizeField.value = s.pixelSize
         if (textColorField && !textColorField.activeFocus)
             textColorField.text = s.color
-        if (lineHeightField && !lineHeightField.activeFocus)
-            lineHeightField.value = s.lineHeight
-        if (letterSpacingField && !letterSpacingField.activeFocus)
-            letterSpacingField.value = s.letterSpacing
-        if (outlineWidthField && !outlineWidthField.activeFocus)
-            outlineWidthField.value = s.outlineWidth
-        if (shadowOffsetXField && !shadowOffsetXField.activeFocus)
-            shadowOffsetXField.value = s.shadowOffsetX
-        if (shadowOffsetYField && !shadowOffsetYField.activeFocus)
-            shadowOffsetYField.value = s.shadowOffsetY
-        if (shadowBlurField && !shadowBlurField.activeFocus)
-            shadowBlurField.value = s.shadowBlur
-        if (shadowOpacityField && !shadowOpacityField.activeFocus)
-            shadowOpacityField.value = s.shadowOpacity
         if (boxPaddingField && !boxPaddingField.activeFocus)
             boxPaddingField.value = s.boxPadding
         if (boxRadiusField && !boxRadiusField.activeFocus)
             boxRadiusField.value = s.boxRadius
-        if (glowRadiusField && !glowRadiusField.activeFocus)
-            glowRadiusField.value = s.glowRadius
-        if (glowOpacityField && !glowOpacityField.activeFocus)
-            glowOpacityField.value = s.glowOpacity
         if (wordHighlightPaddingField && !wordHighlightPaddingField.activeFocus)
             wordHighlightPaddingField.value = s.wordHighlight.padding
         if (wordHighlightRadiusField && !wordHighlightRadiusField.activeFocus)
@@ -305,25 +298,14 @@ Item {
                     }
                 }
 
-                Column {
+                PropertyKeyframeRow {
                     width: (parent.width - parent.spacing) / 2
-                    spacing: 4
-                    Text {
-                        text: qsTr("Size")
-                        color: Theme.mutedForeground
-                        font.pixelSize: Theme.fontSizeXs
-                        font.family: Theme.fontFamily
-                    }
-                    ThemedNumberField {
-                        id: pixelSizeField
-                        unit: "px"
-                        width: parent.width
-                        decimals: 0
-                        step: 1
-                        from: 1
-                        to: 500
-                        onEdited: v => root.setTextStyleKey("pixelSize", v)
-                    }
+                    propDef: root.textProp("pixelSize", qsTr("Size"), 0)
+                    keyframeList: root.textKeyframes("pixelSize")
+                    useSlider: true
+                    sliderFrom: 1
+                    sliderTo: 500
+                    unit: "px"
                 }
             }
 
@@ -463,49 +445,23 @@ Item {
                 width: parent.width
                 spacing: 8
 
-                Column {
+                PropertyKeyframeRow {
                     width: (parent.width - parent.spacing) / 2
-                    spacing: 4
-                    Text {
-                        text: qsTr("Line height")
-                        HoverHandler { id: tipHover761 }
-                        ThemedToolTip { text: qsTr("Vertical spacing between lines, as a multiple of the font size"); visible: tipHover761.hovered }
-                        color: Theme.mutedForeground
-                        font.pixelSize: Theme.fontSizeXs
-                        font.family: Theme.fontFamily
-                    }
-                    ThemedNumberField {
-                        id: lineHeightField
-                        width: parent.width
-                        decimals: 2
-                        step: 0.05
-                        from: 0.5
-                        to: 4
-                        onEdited: v => root.setTextStyleKey("lineHeight", v)
-                    }
+                    propDef: root.textProp("lineHeight", qsTr("Line height"), 2)
+                    keyframeList: root.textKeyframes("lineHeight")
+                    useSlider: true
+                    sliderFrom: 0.5
+                    sliderTo: 4
                 }
 
-                Column {
+                PropertyKeyframeRow {
                     width: (parent.width - parent.spacing) / 2
-                    spacing: 4
-                    Text {
-                        text: qsTr("Letter spacing")
-                        HoverHandler { id: tipHover781 }
-                        ThemedToolTip { text: qsTr("Extra space between characters, in pixels"); visible: tipHover781.hovered }
-                        color: Theme.mutedForeground
-                        font.pixelSize: Theme.fontSizeXs
-                        font.family: Theme.fontFamily
-                    }
-                    ThemedNumberField {
-                        id: letterSpacingField
-                        to: 200
-                        from: -100
-                        unit: "px"
-                        width: parent.width
-                        decimals: 1
-                        step: 0.5
-                        onEdited: v => root.setTextStyleKey("letterSpacing", v)
-                    }
+                    propDef: root.textProp("letterSpacing", qsTr("Letter spacing"), 1)
+                    keyframeList: root.textKeyframes("letterSpacing")
+                    useSlider: true
+                    sliderFrom: -100
+                    sliderTo: 200
+                    unit: "px"
                 }
             }
 
@@ -539,25 +495,14 @@ Item {
                     width: parent.width
                     spacing: 8
 
-                    Column {
+                    PropertyKeyframeRow {
                         width: (parent.width - parent.spacing) / 2
-                        spacing: 4
-                        Text {
-                            text: qsTr("Width")
-                            color: Theme.mutedForeground
-                            font.pixelSize: Theme.fontSizeXs
-                            font.family: Theme.fontFamily
-                        }
-                        ThemedNumberField {
-                            id: outlineWidthField
-                            to: 100
-                            unit: "px"
-                            width: parent.width
-                            decimals: 1
-                            step: 0.5
-                            from: 0
-                            onEdited: v => root.setTextStyleKey("outlineWidth", v)
-                        }
+                        propDef: root.textProp("outlineWidth", qsTr("Width"), 1)
+                        keyframeList: root.textKeyframes("outlineWidth")
+                        useSlider: true
+                        sliderFrom: 0
+                        sliderTo: 100
+                        unit: "px"
                     }
 
                     Column {
@@ -593,46 +538,24 @@ Item {
                     width: parent.width
                     spacing: 8
 
-                    Column {
+                    PropertyKeyframeRow {
                         width: (parent.width - parent.spacing) / 2
-                        spacing: 4
-                        Text {
-                            text: qsTr("Offset X")
-                            color: Theme.mutedForeground
-                            font.pixelSize: Theme.fontSizeXs
-                            font.family: Theme.fontFamily
-                        }
-                        ThemedNumberField {
-                            id: shadowOffsetXField
-                            to: 500
-                            from: -500
-                            unit: "px"
-                            width: parent.width
-                            decimals: 1
-                            step: 1
-                            onEdited: v => root.setTextStyleKey("shadowOffsetX", v)
-                        }
+                        propDef: root.textProp("shadowOffsetX", qsTr("Offset X"), 1)
+                        keyframeList: root.textKeyframes("shadowOffsetX")
+                        useSlider: true
+                        sliderFrom: -500
+                        sliderTo: 500
+                        unit: "px"
                     }
 
-                    Column {
+                    PropertyKeyframeRow {
                         width: (parent.width - parent.spacing) / 2
-                        spacing: 4
-                        Text {
-                            text: qsTr("Offset Y")
-                            color: Theme.mutedForeground
-                            font.pixelSize: Theme.fontSizeXs
-                            font.family: Theme.fontFamily
-                        }
-                        ThemedNumberField {
-                            id: shadowOffsetYField
-                            to: 500
-                            from: -500
-                            unit: "px"
-                            width: parent.width
-                            decimals: 1
-                            step: 1
-                            onEdited: v => root.setTextStyleKey("shadowOffsetY", v)
-                        }
+                        propDef: root.textProp("shadowOffsetY", qsTr("Offset Y"), 1)
+                        keyframeList: root.textKeyframes("shadowOffsetY")
+                        useSlider: true
+                        sliderFrom: -500
+                        sliderTo: 500
+                        unit: "px"
                     }
                 }
 
@@ -640,45 +563,23 @@ Item {
                     width: parent.width
                     spacing: 8
 
-                    Column {
+                    PropertyKeyframeRow {
                         width: (parent.width - parent.spacing) / 2
-                        spacing: 4
-                        Text {
-                            text: qsTr("Blur")
-                            color: Theme.mutedForeground
-                            font.pixelSize: Theme.fontSizeXs
-                            font.family: Theme.fontFamily
-                        }
-                        ThemedNumberField {
-                            id: shadowBlurField
-                            to: 100
-                            unit: "px"
-                            width: parent.width
-                            decimals: 1
-                            step: 1
-                            from: 0
-                            onEdited: v => root.setTextStyleKey("shadowBlur", v)
-                        }
+                        propDef: root.textProp("shadowBlur", qsTr("Blur"), 1)
+                        keyframeList: root.textKeyframes("shadowBlur")
+                        useSlider: true
+                        sliderFrom: 0
+                        sliderTo: 100
+                        unit: "px"
                     }
 
-                    Column {
+                    PropertyKeyframeRow {
                         width: (parent.width - parent.spacing) / 2
-                        spacing: 4
-                        Text {
-                            text: qsTr("Opacity")
-                            color: Theme.mutedForeground
-                            font.pixelSize: Theme.fontSizeXs
-                            font.family: Theme.fontFamily
-                        }
-                        ThemedNumberField {
-                            id: shadowOpacityField
-                            width: parent.width
-                            decimals: 2
-                            step: 0.05
-                            from: 0
-                            to: 1
-                            onEdited: v => root.setTextStyleKey("shadowOpacity", v)
-                        }
+                        propDef: root.textProp("shadowOpacity", qsTr("Opacity"), 2)
+                        keyframeList: root.textKeyframes("shadowOpacity")
+                        useSlider: true
+                        sliderFrom: 0
+                        sliderTo: 1
                     }
                 }
 
@@ -783,45 +684,23 @@ Item {
                     width: parent.width
                     spacing: 8
 
-                    Column {
+                    PropertyKeyframeRow {
                         width: (parent.width - parent.spacing) / 2
-                        spacing: 4
-                        Text {
-                            text: qsTr("Radius")
-                            color: Theme.mutedForeground
-                            font.pixelSize: Theme.fontSizeXs
-                            font.family: Theme.fontFamily
-                        }
-                        ThemedNumberField {
-                            id: glowRadiusField
-                            to: 200
-                            unit: "px"
-                            width: parent.width
-                            decimals: 1
-                            step: 1
-                            from: 0
-                            onEdited: v => root.setTextStyleKey("glowRadius", v)
-                        }
+                        propDef: root.textProp("glowRadius", qsTr("Radius"), 1)
+                        keyframeList: root.textKeyframes("glowRadius")
+                        useSlider: true
+                        sliderFrom: 0
+                        sliderTo: 200
+                        unit: "px"
                     }
 
-                    Column {
+                    PropertyKeyframeRow {
                         width: (parent.width - parent.spacing) / 2
-                        spacing: 4
-                        Text {
-                            text: qsTr("Opacity")
-                            color: Theme.mutedForeground
-                            font.pixelSize: Theme.fontSizeXs
-                            font.family: Theme.fontFamily
-                        }
-                        ThemedNumberField {
-                            id: glowOpacityField
-                            to: 1
-                            width: parent.width
-                            decimals: 2
-                            step: 0.05
-                            from: 0
-                            onEdited: v => root.setTextStyleKey("glowOpacity", v)
-                        }
+                        propDef: root.textProp("glowOpacity", qsTr("Opacity"), 2)
+                        keyframeList: root.textKeyframes("glowOpacity")
+                        useSlider: true
+                        sliderFrom: 0
+                        sliderTo: 1
                     }
                 }
 

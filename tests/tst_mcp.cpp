@@ -137,6 +137,7 @@ private slots:
     void addSvgShowsInCapture();
     void lottieBatchUndoesAsOneStep();
     void setTextStyleAcceptsAnimation();
+    void textKeyframesThroughSetKeyframe();
     void historyEntriesHaveHashes();
     void undoToByHash();
     void snapshotFileHashMatchesHistory();
@@ -2254,6 +2255,52 @@ void McpTest::setTextStyleAcceptsAnimation()
     QCOMPARE(style.value(QStringLiteral("animIn")).toMap().value(QStringLiteral("unit")).toString(), QStringLiteral("word"));
     QCOMPARE(style.value(QStringLiteral("outlineWidth")).toDouble(), 3.0);
     QCOMPARE(style.value(QStringLiteral("accent")).toMap().value(QStringLiteral("rule")).toString(), QStringLiteral("everyNth"));
+}
+
+void McpTest::textKeyframesThroughSetKeyframe()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    state.addTextClip(QStringLiteral("Grow"), 0.0);
+    const int track = state.selectedTrack();
+    const int clip = state.selectedClip();
+    const QString id = state.mcpCompactClip(track, clip).value(QStringLiteral("id")).toString();
+    drift::mcp::McpDispatcher dispatcher(&state);
+
+    QJsonObject r = dispatcher.applyOne(QStringLiteral("set_keyframe"),
+                                        {{QStringLiteral("clip"), id}, {QStringLiteral("prop"), QStringLiteral("text.pixelSize")},
+                                         {QStringLiteral("at"), 0.0}, {QStringLiteral("value"), 30.0}});
+    QVERIFY2(r.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(r).toJson(QJsonDocument::Compact)));
+    r = dispatcher.applyOne(QStringLiteral("set_keyframe"),
+                            {{QStringLiteral("clip"), id}, {QStringLiteral("prop"), QStringLiteral("text.pixelSize")},
+                             {QStringLiteral("at"), 2.0}, {QStringLiteral("value"), 90.0}});
+    QVERIFY(r.value(QStringLiteral("ok")).toBool());
+    // camelCase survives normalisation: the key lands on the style, not on "text.pixelsize".
+    const QJsonObject listed = dispatcher.applyOne(QStringLiteral("list_keyframes"),
+                                                   {{QStringLiteral("clip"), id}, {QStringLiteral("prop"), QStringLiteral("text.pixelSize")}});
+    QVERIFY(listed.value(QStringLiteral("ok")).toBool());
+    QCOMPARE(listed.value(QStringLiteral("keys")).toArray().size(), 2);
+    QCOMPARE(state.propertyValueAt(track, clip, QStringLiteral("text.pixelSize"), 1.0, 0.0), 60.0);
+    QVERIFY(state.clipAnimatedProperties(track, clip).contains(QStringLiteral("text.pixelSize")));
+
+    const QVariantMap style = state.clipAt(track, clip).value(QStringLiteral("textStyle")).toMap();
+    QCOMPARE(style.value(QStringLiteral("keyframes")).toMap().value(QStringLiteral("pixelSize")).toMap()
+                 .value(QStringLiteral("points")).toList().size(), 2);
+    // The static scalar mirrors the last key written, so a detail row still reads sensibly.
+    QCOMPARE(style.value(QStringLiteral("pixelSize")).toInt(), 90);
+
+    // An unknown text key mints no track (set_keyframe answers ok for unknown props, as it always has).
+    dispatcher.applyOne(QStringLiteral("set_keyframe"),
+                        {{QStringLiteral("clip"), id}, {QStringLiteral("prop"), QStringLiteral("text.nope")},
+                         {QStringLiteral("at"), 0.0}, {QStringLiteral("value"), 1.0}});
+    QVERIFY(!state.clipAnimatedProperties(track, clip).contains(QStringLiteral("text.nope")));
+    QCOMPARE(state.clipAt(track, clip).value(QStringLiteral("textStyle")).toMap()
+                 .value(QStringLiteral("keyframes")).toMap().size(), 1);
+
+    // Colour fan-out.
+    state.setClipColorKeyframe(track, clip, QStringLiteral("text.color"), 1.0, QColor(0, 128, 255));
+    QCOMPARE(state.propertyValueAt(track, clip, QStringLiteral("text.color.b"), 1.0, 0.0), 1.0);
+    QVERIFY(state.clipAnimatedProperties(track, clip).contains(QStringLiteral("text.color.r")));
 }
 
 void McpTest::historyEntriesHaveHashes()

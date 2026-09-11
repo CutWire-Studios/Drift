@@ -62,8 +62,11 @@ QJsonObject transitionIdProp()
 QJsonObject animPropProp()
 {
     return stringProp(QStringLiteral(
-        "Animated property: x, y, width, height, rotation, opacity, volume, or fx.<effectIndex>.<paramKey> "
-        "(e.g. fx.0.amount). Note width/height here vs w/h in set_transform. Spellings live in this "
+        "Animated property: x, y, width, height, rotation, opacity, volume, fx.<effectIndex>.<paramKey> "
+        "(e.g. fx.0.amount), mask.<x|y|w|h|rotation|feather>, or on a text/subtitle clip text.<key> with "
+        "key one of pixelSize, letterSpacing, lineHeight, outlineWidth, shadowOffsetX, shadowOffsetY, "
+        "shadowBlur, shadowOpacity, glowRadius, glowOpacity, boxPadding, color.r, color.g, color.b, "
+        "color.a (colour channels 0..1). Note width/height here vs w/h in set_transform. Spellings live in this "
         "schema — list_animated_properties returns only properties that already have keys (empty on a "
         "fresh clip), so do not use it to learn names."));
 }

@@ -89,7 +89,7 @@ class TextBlockPainter final : public VectorPainter
 public:
     TextBlockPainter(QSize size, quint64 key, const TextStyle &style, double renderScale,
                      QList<Piece> pieces, const QRectF &box)
-        : m_size(size), m_key(key | 1), m_style(style), m_scale(renderScale),
+        : m_size(size), m_key(key == 0 ? 0 : (key | 1)), m_style(style), m_scale(renderScale),
           m_pieces(std::move(pieces)), m_box(box)
     {
     }
@@ -225,9 +225,12 @@ TextPainterResult makeTextPainter(const Clip &clip, const QString &textContent, 
         const double padding = style.boxPadding * renderScale;
         box = text::paintedBounds(words, style, renderScale).adjusted(-padding, -padding, padding, padding);
     }
-    result.painter = std::make_shared<TextBlockPainter>(
-        QSize(imageW, imageH), text::rasterKey(textContent, style, imageW, imageH, renderScale, activeWordIndex),
-        style, renderScale, piecesFor(words, style, renderScale), box);
+    // An animated style changes every frame; caching those would only churn the GPU LRU.
+    const quint64 key = style.isAnimated()
+                            ? 0
+                            : text::rasterKey(textContent, style, imageW, imageH, renderScale, activeWordIndex);
+    result.painter = std::make_shared<TextBlockPainter>(QSize(imageW, imageH), key, style, renderScale,
+                                                        piecesFor(words, style, renderScale), box);
     return result;
 }
 
@@ -241,7 +244,9 @@ QList<TextSpanPainter> makeTextSpanPainters(const Clip &clip, const QString &tex
         return {};
     const TextStyle &style = clip.textStyle;
     const double bleed = std::ceil(text::bleedFor(style) * renderScale) + 2.0;
-    const quint64 key = text::spanRasterKey(textContent, style, layoutRect, renderScale, unit, activeWordIndex);
+    const quint64 key = style.isAnimated()
+                            ? 0
+                            : text::spanRasterKey(textContent, style, layoutRect, renderScale, unit, activeWordIndex);
 
     const text::StyleFonts fonts = text::fontsForStyle(style, renderScale);
     const text::WordSplit split =
@@ -267,7 +272,7 @@ QList<TextSpanPainter> makeTextSpanPainters(const Clip &clip, const QString &tex
             const int bh = qMax(1, qCeil(boxLocal.height()));
             TextStyle boxOnly = style;
             TextSpanPainter box;
-            box.painter = std::make_shared<TextBlockPainter>(QSize(bw, bh), qHashMulti(key, -1), boxOnly,
+            box.painter = std::make_shared<TextBlockPainter>(QSize(bw, bh), key ? qHashMulti(key, -1) : 0, boxOnly,
                                                              renderScale, QList<Piece>(), QRectF(0, 0, bw, bh));
             box.rect = QRectF(boxLocal.x(), boxLocal.y(), bw, bh).translated(origin);
             box.index = -1;
@@ -287,7 +292,7 @@ QList<TextSpanPainter> makeTextSpanPainters(const Clip &clip, const QString &tex
         const int ih = qMax(1, qCeil(ink.height() + bleed * 2.0));
         const QList<text::StyledWord> local = text::translatedWords(groups.at(i), bleed - ink.x(), bleed - ink.y());
         TextSpanPainter span;
-        span.painter = std::make_shared<TextBlockPainter>(QSize(iw, ih), qHashMulti(key, i), spanStyle, renderScale,
+        span.painter = std::make_shared<TextBlockPainter>(QSize(iw, ih), key ? qHashMulti(key, i) : 0, spanStyle, renderScale,
                                                           piecesFor(local, style, renderScale), QRectF());
         span.rect = QRectF(ink.x() - bleed, ink.y() - bleed, iw, ih).translated(origin);
         span.index = i;

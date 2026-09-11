@@ -1,11 +1,14 @@
 #pragma once
 
+#include "Keyframe.h"
 #include "Time.h"
 
 #include <QColor>
 #include <QJsonObject>
 #include <QList>
+#include <QMap>
 #include <QString>
+#include <QStringList>
 
 #include <optional>
 
@@ -148,7 +151,26 @@ struct TextStyle
 
     TextAnimation animIn;
     TextAnimation animOut;
+
+    // Animated scalars keyed by textKeyframeProperties() names ("pixelSize", "shadowBlur",
+    // "color.r", …), key times relative to the clip's start. A non-empty, enabled track wins over
+    // the scalar above at render time; the scalar keeps the last static value, so clearing a track
+    // returns the property to a constant. Mirrors Mask::keyframes.
+    QMap<QString, KeyframeTrack<double>> keyframes;
+
+    bool isAnimated() const;
+    // A copy with every animated property baked down to its value at clipTimeUs. The renderers
+    // only ever see plain numbers; `keyframes` is kept on the copy so callers can still tell an
+    // animated style from a static one (cache keys).
+    TextStyle resolvedAt(TimeUs clipTimeUs) const;
 };
+
+// The scalars a text style can animate, in the order the inspector lists them.
+const QStringList &textKeyframeProperties();
+// The scalar a keyframe property reads/writes on the style; colour channels are 0..1. False for
+// an unknown key.
+bool textStyleScalar(const TextStyle &style, const QString &key, double *out);
+bool setTextStyleScalar(TextStyle &style, const QString &key, double value);
 
 struct TextPreset
 {

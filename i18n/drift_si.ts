@@ -5556,6 +5556,66 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Text size</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Letter spacing</source>
+        <translation type="unfinished">අකුරු අතර පරතරය</translation>
+    </message>
+    <message>
+        <source>Line height</source>
+        <translation type="unfinished">පේළි උස</translation>
+    </message>
+    <message>
+        <source>Outline width</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Shadow X</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Shadow Y</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Shadow blur</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Shadow opacity</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Glow radius</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Glow opacity</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Box padding</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Text red</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Text green</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Text blue</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Text alpha</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Keyframes</source>
         <translation>කීෆ්‍රේම</translation>
     </message>
@@ -9201,16 +9261,8 @@ If playback stutters, try another.</source>
         <translation>පේළි උස</translation>
     </message>
     <message>
-        <source>Vertical spacing between lines, as a multiple of the font size</source>
-        <translation>අකුරු ප්‍රමාණයේ ගුණාකාරයක් ලෙස පේළි අතර සිරස් පරතරය</translation>
-    </message>
-    <message>
         <source>Letter spacing</source>
         <translation>අකුරු අතර පරතරය</translation>
-    </message>
-    <message>
-        <source>Extra space between characters, in pixels</source>
-        <translation>අක්ෂර අතර අමතර ඉඩ, පික්සල වලින්</translation>
     </message>
     <message>
         <source>Word wrap</source>

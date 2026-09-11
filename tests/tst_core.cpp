@@ -68,6 +68,7 @@ private slots:
     void legacyShapeStyleLoadsWithDefaults();
     void shapeCatalogPathsFitBounds();
     void vectorSourceSerialization();
+    void textStyleKeyframesSerialization();
     void vectorClipIsSyntheticOnGraphicTracks();
     void foldVectorTimeTable_data();
     void foldVectorTimeTable();
@@ -1364,6 +1365,62 @@ void CoreTest::vectorSourceSerialization()
     QCOMPARE(drift::clipTypeToString(drift::ClipType::Vector), QStringLiteral("vector"));
     QCOMPARE(drift::mediaKindFromString(QStringLiteral("vector")), drift::MediaKind::Vector);
     QCOMPARE(drift::mediaKindToString(drift::MediaKind::Vector), QStringLiteral("vector"));
+}
+
+void CoreTest::textStyleKeyframesSerialization()
+{
+    drift::TextStyle style;
+    style.pixelSize = 40;
+    style.color = QColor(255, 0, 0);
+    // A static style writes no keyframes key at all, so older files stay byte-identical.
+    QVERIFY(!drift::textStyleToJson(style).contains(QStringLiteral("keyframes")));
+    QVERIFY(!style.isAnimated());
+
+    style.keyframes[QStringLiteral("pixelSize")].setKeyframe(0, 40.0);
+    style.keyframes[QStringLiteral("pixelSize")].setKeyframe(drift::secondsToUs(2.0), 80.0);
+    style.keyframes[QStringLiteral("color.g")].setKeyframe(0, 0.0);
+    style.keyframes[QStringLiteral("color.g")].setKeyframe(drift::secondsToUs(1.0), 1.0);
+    style.keyframes[QStringLiteral("shadowBlur")]; // empty: must not be written
+    QVERIFY(style.isAnimated());
+
+    const drift::TextStyle mid = style.resolvedAt(drift::secondsToUs(1.0));
+    QCOMPARE(mid.pixelSize, 60);
+    QCOMPARE(mid.color.greenF(), 1.0);
+    QCOMPARE(mid.color.redF(), 1.0);
+    QVERIFY(mid.isAnimated()); // the copy keeps its tracks so renderers can tell it apart
+    QCOMPARE(style.resolvedAt(0).pixelSize, 40);
+
+    const QJsonObject json = drift::textStyleToJson(style);
+    const QJsonObject keys = json.value(QStringLiteral("keyframes")).toObject();
+    QCOMPARE(keys.size(), 2);
+    QVERIFY(keys.contains(QStringLiteral("pixelSize")));
+    QVERIFY(!keys.contains(QStringLiteral("shadowBlur")));
+
+    // Through the whole project file.
+    drift::Project project;
+    project.tracks().clear();
+    project.tracks().append(drift::Track{.type = drift::TrackType::Text});
+    drift::Clip clip;
+    clip.id = QStringLiteral("t");
+    clip.type = drift::ClipType::Text;
+    clip.textContent = QStringLiteral("Grow");
+    clip.textStyle = style;
+    clip.timelineDuration = drift::secondsToUs(3.0);
+    project.tracks()[0].clips.append(clip);
+    QString error;
+    const drift::Project loaded = drift::Project::fromJson(project.toJson(), &error);
+    QVERIFY2(error.isEmpty(), qPrintable(error));
+    const drift::TextStyle &back = loaded.tracks()[0].clips[0].textStyle;
+    QVERIFY(back.isAnimated());
+    QCOMPARE(back.keyframes.size(), 2);
+    QCOMPARE(back.resolvedAt(drift::secondsToUs(2.0)).pixelSize, 80);
+    QVERIFY(qAbs(back.resolvedAt(drift::secondsToUs(0.5)).color.greenF() - 0.5) < 0.001);
+
+    double scalar = 0;
+    QVERIFY(drift::textStyleScalar(style, QStringLiteral("color.r"), &scalar));
+    QCOMPARE(scalar, 1.0);
+    QVERIFY(!drift::textStyleScalar(style, QStringLiteral("nope"), &scalar));
+    QVERIFY(drift::textKeyframeProperties().contains(QStringLiteral("glowRadius")));
 }
 
 void CoreTest::vectorClipIsSyntheticOnGraphicTracks()

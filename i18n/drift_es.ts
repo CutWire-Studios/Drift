@@ -5556,6 +5556,66 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Text size</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Letter spacing</source>
+        <translation type="unfinished">Espaciado entre letras</translation>
+    </message>
+    <message>
+        <source>Line height</source>
+        <translation type="unfinished">Altura de línea</translation>
+    </message>
+    <message>
+        <source>Outline width</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Shadow X</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Shadow Y</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Shadow blur</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Shadow opacity</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Glow radius</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Glow opacity</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Box padding</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Text red</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Text green</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Text blue</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Text alpha</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Keyframes</source>
         <translation>Fotogramas clave</translation>
     </message>
@@ -9201,16 +9261,8 @@ Si la reproducción se corta, prueba con otra opción.</translation>
         <translation>Altura de línea</translation>
     </message>
     <message>
-        <source>Vertical spacing between lines, as a multiple of the font size</source>
-        <translation>Espaciado vertical entre líneas, como múltiplo del tamaño de la fuente</translation>
-    </message>
-    <message>
         <source>Letter spacing</source>
         <translation>Espaciado entre letras</translation>
-    </message>
-    <message>
-        <source>Extra space between characters, in pixels</source>
-        <translation>Espacio adicional entre caracteres, en píxeles</translation>
     </message>
     <message>
         <source>Word wrap</source>

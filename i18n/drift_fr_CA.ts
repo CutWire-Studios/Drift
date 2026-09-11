@@ -5559,6 +5559,66 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Text size</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Letter spacing</source>
+        <translation type="unfinished">Interlettrage</translation>
+    </message>
+    <message>
+        <source>Line height</source>
+        <translation type="unfinished">Interligne</translation>
+    </message>
+    <message>
+        <source>Outline width</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Shadow X</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Shadow Y</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Shadow blur</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Shadow opacity</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Glow radius</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Glow opacity</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Box padding</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Text red</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Text green</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Text blue</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Text alpha</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Keyframes</source>
         <translation>Images clés</translation>
     </message>
@@ -9206,16 +9266,8 @@ En cas de saccades à la lecture, essayez un autre mode.</translation>
         <translation>Interligne</translation>
     </message>
     <message>
-        <source>Vertical spacing between lines, as a multiple of the font size</source>
-        <translation>Espacement vertical entre les lignes, exprimé en multiples de la taille de police</translation>
-    </message>
-    <message>
         <source>Letter spacing</source>
         <translation>Interlettrage</translation>
-    </message>
-    <message>
-        <source>Extra space between characters, in pixels</source>
-        <translation>Espace supplémentaire entre les caractères, en pixels</translation>
     </message>
     <message>
         <source>Word wrap</source>

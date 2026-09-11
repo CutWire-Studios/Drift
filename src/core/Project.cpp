@@ -659,6 +659,9 @@ void detachClip(Clip &clip)
         it.value().detachSharedData();
     clip.subtitleCues.detach();
     clip.vector.slotValues.detach();
+    clip.textStyle.keyframes.detach();
+    for (auto it = clip.textStyle.keyframes.begin(); it != clip.textStyle.keyframes.end(); ++it)
+        it.value().detachSharedData();
     clip.effects.detach();
     for (Effect &effect : clip.effects)
         detachEffect(effect);

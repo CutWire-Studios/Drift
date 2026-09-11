@@ -818,11 +818,21 @@ GpuLayer buildGpuLayer(const drift::Clip &clip, drift::TimeUs timelineUs, int pr
     QRectF destRect = layoutRect;
     double opacity = opacityForClip(clip, timelineUs);
 
+    // Keyframed style scalars are baked for this instant; the renderers only see numbers.
+    drift::Clip resolvedText;
+    const drift::Clip *textClip = &clip;
+    if ((clip.type == drift::ClipType::Text || clip.type == drift::ClipType::Subtitle)
+        && clip.textStyle.isAnimated()) {
+        resolvedText = clip;
+        resolvedText.textStyle = clip.textStyle.resolvedAt(clipTimeUs);
+        textClip = &resolvedText;
+    }
+
     if (clip.type == drift::ClipType::Text) {
         // The raster carries a bleed margin for the stroke, shadow and box, so its destination rect
         // is wider than the layout rect. Entrance/exit motion rides on the layer, not the pixels.
         const QRectF rasterRect =
-            fillTextLayer(layer, clip, clip.textContent.isEmpty() ? clip.name : clip.textContent,
+            fillTextLayer(layer, *textClip, clip.textContent.isEmpty() ? clip.name : clip.textContent,
                           layoutRect, renderScale, karaokeWordIndex(clip, timelineUs));
         const TextAnimSample anim = sampleTextAnimation(clip, timelineUs, layoutRect, renderScale);
 
@@ -848,7 +858,7 @@ GpuLayer buildGpuLayer(const drift::Clip &clip, drift::TimeUs timelineUs, int pr
         if (!cue || cue->text.trimmed().isEmpty())
             return layer;
 
-        const QRectF rasterRect = fillTextLayer(layer, clip, cue->text, layoutRect, renderScale,
+        const QRectF rasterRect = fillTextLayer(layer, *textClip, cue->text, layoutRect, renderScale,
                                                 karaokeWordIndex(clip, *cue, localUs));
         if (!layer.hasPixels())
             return layer;
@@ -947,6 +957,13 @@ QList<GpuItem> buildTextSpanItems(const drift::Clip &clip, drift::TimeUs timelin
     const QRectF layoutRect(x, y, w, h);
 
     const QString text = clip.textContent.isEmpty() ? clip.name : clip.textContent;
+    drift::Clip resolvedText;
+    const drift::Clip *textClip = &clip;
+    if (clip.textStyle.isAnimated()) {
+        resolvedText = clip;
+        resolvedText.textStyle = clip.textStyle.resolvedAt(clipTimeUs);
+        textClip = &resolvedText;
+    }
     // One entry per span, either backend; only the pixel carrier differs.
     struct Span
     {
@@ -960,12 +977,12 @@ QList<GpuItem> buildTextSpanItems(const drift::Clip &clip, drift::TimeUs timelin
 #ifdef DRIFT_WITH_SKIA
     if (drift::vectorBackend() == drift::VectorBackend::Skia) {
         for (const drift::skia::TextSpanPainter &s : drift::skia::makeTextSpanPainters(
-                 clip, text, layoutRect, renderScale, unit, karaokeWordIndex(clip, timelineUs)))
+                 *textClip, text, layoutRect, renderScale, unit, karaokeWordIndex(clip, timelineUs)))
             spans.append({QImage(), s.painter, s.rect, s.index, s.count});
     } else
 #endif
     {
-        for (const TextSpanRaster &s : rasterizeTextSpans(clip, text, layoutRect, renderScale, unit,
+        for (const TextSpanRaster &s : rasterizeTextSpans(*textClip, text, layoutRect, renderScale, unit,
                                                           karaokeWordIndex(clip, timelineUs)))
             spans.append({s.image, nullptr, s.rect, s.index, s.count});
     }

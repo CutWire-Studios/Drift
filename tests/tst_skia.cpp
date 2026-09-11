@@ -181,6 +181,7 @@ private slots:
     void textPainterCacheKeys();
     void emojiTextMatchesQPainter();
     void backendSwitchSelectsTextRenderer();
+    void keyframedTextGrowsOverTime();
 };
 
 void SkiaTest::grContextAttaches()
@@ -823,6 +824,64 @@ void SkiaTest::backendSwitchSelectsTextRenderer()
     qunsetenv("DRIFT_VECTOR_RENDERER");
     QVERIFY(qt > 300);
     QVERIFY2(qAbs(qt - sk) <= qMax(40, int(qt * 0.12)), qPrintable(QStringLiteral("qt %1 skia %2").arg(qt).arg(sk)));
+}
+
+// A keyframed pixelSize is baked per frame: the painter stops caching and the rendered block is
+// taller later in the clip.
+void SkiaTest::keyframedTextGrowsOverTime()
+{
+    reloadFontCatalog({QString::fromUtf8(DRIFT_TEST_FONTS_DIR)});
+    Clip clip;
+    clip.type = ClipType::Text;
+    clip.textContent = QStringLiteral("Grow");
+    clip.textStyle.pixelSize = 24;
+    clip.textStyle.color = QColor(255, 0, 0);
+    clip.textStyle.keyframes[QStringLiteral("pixelSize")].setKeyframe(0, 24.0);
+    clip.textStyle.keyframes[QStringLiteral("pixelSize")].setKeyframe(secondsToUs(2.0), 72.0);
+    const QRectF layout(0, 0, 400, 160);
+
+    Clip t0 = clip;
+    t0.textStyle = clip.textStyle.resolvedAt(0);
+    Clip t2 = clip;
+    t2.textStyle = clip.textStyle.resolvedAt(secondsToUs(2.0));
+    const skia::TextPainterResult a = skia::makeTextPainter(t0, clip.textContent, layout, 1.0);
+    const skia::TextPainterResult b = skia::makeTextPainter(t2, clip.textContent, layout, 1.0);
+    QVERIFY(a.painter && b.painter);
+    QCOMPARE(a.painter->cacheKey(), quint64(0));
+    QCOMPARE(b.painter->cacheKey(), quint64(0));
+    const Ink small = inkOf(skia::SkiaRuntime::rasterize(*a.painter));
+    const Ink big = inkOf(skia::SkiaRuntime::rasterize(*b.painter));
+    QVERIFY2(big.bbox.height() > small.bbox.height() * 2, qPrintable(describe(small, big)));
+
+    if (!GpuCompositor::isAvailable())
+        QSKIP("GL unavailable");
+    Project project;
+    project.setResolution(400, 160);
+    project.tracks().clear();
+    project.tracks().append(Track{.type = TrackType::Text});
+    clip.id = QStringLiteral("g");
+    clip.timelineStart = 0;
+    clip.timelineDuration = secondsToUs(3.0);
+    clip.transformX.setKeyframe(0, 0.0);
+    clip.transformY.setKeyframe(0, 0.0);
+    clip.transformW.setKeyframe(0, 400.0);
+    clip.transformH.setKeyframe(0, 160.0);
+    project.tracks()[0].clips.append(clip);
+    FrameCompositor compositor;
+    compositor.setProject(&project);
+    auto redHeight = [](const QImage &img) {
+        int minY = img.height(), maxY = -1;
+        for (int y = 0; y < img.height(); ++y)
+            for (int x = 0; x < img.width(); ++x)
+                if (qRed(img.pixel(x, y)) > 150 && qGreen(img.pixel(x, y)) < 100) {
+                    minY = qMin(minY, y);
+                    maxY = qMax(maxY, y);
+                }
+        return maxY - minY;
+    };
+    const int early = redHeight(compositor.compositeAt(0));
+    const int late = redHeight(compositor.compositeAt(secondsToUs(2.0)));
+    QVERIFY2(early > 5 && late > early * 2, qPrintable(QStringLiteral("early %1 late %2").arg(early).arg(late)));
 }
 
 QTEST_MAIN(SkiaTest)
