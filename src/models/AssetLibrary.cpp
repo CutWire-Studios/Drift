@@ -5,6 +5,7 @@
 #include "engine/MediaProbe.h"
 #include "engine/MediaThumbnail.h"
 #include "engine/VectorInspect.h"
+#include "core/DotLottie.h"
 
 #ifdef Q_OS_ANDROID
 #include "engine/AndroidUri.h"
@@ -378,10 +379,12 @@ bool AssetLibrary::isImagePath(const QString &path)
 
 // Lottie only: SVG stays an image (Qt rasterises it), which is what existing projects expect.
 // add_svg / addVectorClip put an SVG on the timeline as a vector clip without going through
-// the bin.
+// the bin. A .lottie bundle is unpacked into plain .json on import (see importFilesReturningIds),
+// so it never reaches the probe under its own name.
 bool AssetLibrary::isVectorPath(const QString &path)
 {
-    return QFileInfo(path).suffix().compare(QLatin1String("json"), Qt::CaseInsensitive) == 0;
+    return QFileInfo(path).suffix().compare(QLatin1String("json"), Qt::CaseInsensitive) == 0
+           || drift::isDotLottiePath(path);
 }
 
 bool AssetLibrary::isMediaPath(const QString &path)
@@ -398,6 +401,7 @@ QString AssetLibrary::mediaNameFilter() const
                 globs.append(QStringLiteral("*.") + extension);
         }
         globs.append(QStringLiteral("*.json"));
+        globs.append(QStringLiteral("*.lottie"));
         return globs.join(QLatin1Char(' '));
     }();
     return tr("Media files (%1)").arg(pattern);
@@ -1354,7 +1358,24 @@ QStringList AssetLibrary::importFilesReturningIds(const QStringList &paths,
             ? destinationFolderId
             : QString();
 
+    // A .lottie bundle becomes one plain Lottie .json per animation it holds, unpacked once into
+    // app data (content-addressed, so the same bundle always maps to the same files).
+    QStringList expanded;
     for (const QString &path : paths) {
+        if (!drift::isDotLottiePath(path)) {
+            expanded.append(path);
+            continue;
+        }
+        QString error;
+        const QStringList animations = drift::unpackDotLottie(
+            path, QStandardPaths::writableLocation(QStandardPaths::AppDataLocation) + QStringLiteral("/lottie"),
+            &error);
+        if (animations.isEmpty())
+            qWarning("import: %s: %s", qPrintable(path), qPrintable(error));
+        expanded.append(animations);
+    }
+
+    for (const QString &path : std::as_const(expanded)) {
         const QFileInfo fileInfo(path);
         const QString absolutePath = fileInfo.absoluteFilePath();
         if (!fileInfo.isFile())

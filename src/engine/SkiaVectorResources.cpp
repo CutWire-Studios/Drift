@@ -80,8 +80,11 @@ private:
         }
         if (m_baseDir.isEmpty())
             return {};
-        // Never above the document's own directory: the document is untrusted input.
-        const QString rel = QDir::cleanPath(QString::fromUtf8(resourcePath) + QLatin1Char('/') + name);
+        // Never above the document's own directory: the document is untrusted input. A leading
+        // slash (dotLottie writes "u":"/i/") is document-relative, not filesystem-absolute.
+        QString rel = QDir::cleanPath(QString::fromUtf8(resourcePath) + QLatin1Char('/') + name);
+        while (rel.startsWith(QLatin1Char('/')))
+            rel.remove(0, 1);
         if (rel.startsWith(QLatin1String("..")) || QFileInfo(rel).isAbsolute())
             return {};
         QFile file(QDir(m_baseDir).filePath(rel));

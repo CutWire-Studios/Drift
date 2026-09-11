@@ -262,6 +262,7 @@ without the vector renderer fail every `add_*` op with `unsupported`.
 
 | Call | Effect |
 |---|---|
+| `import_media({paths})` | Also takes Lottie `.json` files and `.lottie` bundles (unpacked into app data, one asset per animation); the asset then places like any other with `place_clip` |
 | `add_lottie({json, at, track, duration, fit, loop, offset, slots, name})` | `json` is the document text (inline, ≤ 8 MB) or an absolute `.json` path. Plays once at its own length unless `duration` is set; `loop` (`hold` default, `loop`, `pingpong`, `hide`) decides what happens past the end; `fit` (`contain` default, `cover`, `stretch`) how it fills the box. Returns `{id, track, index}` plus the inspect summary |
 | `add_svg({svg, at, track, duration, fit, name})` | Same for an SVG still (default 5 s). SMIL animation and scripts are ignored and reported in `unsupported` |
 | `inspect_lottie({json \| svg \| path \| clip})` | Read-only. `{version, fps, durationSec, width, height, layers, slots, namedProperties, fonts, markers, expressions, unsupported, hints}` |

@@ -19,6 +19,10 @@
 #include "core/EffectStackStore.h"
 #include "core/TextPresetStore.h"
 #include "core/VectorSource.h"
+#include "core/DotLottie.h"
+#include "TestZip.h"
+
+#include <QTemporaryDir>
 #include "core/TimelineOps.h"
 #include "core/Transition.h"
 
@@ -68,6 +72,7 @@ private slots:
     void legacyShapeStyleLoadsWithDefaults();
     void shapeCatalogPathsFitBounds();
     void vectorSourceSerialization();
+    void dotLottieUnpacks();
     void textStyleKeyframesSerialization();
     void vectorClipIsSyntheticOnGraphicTracks();
     void foldVectorTimeTable_data();
@@ -1435,6 +1440,49 @@ void CoreTest::textStyleKeyframesSerialization()
     QCOMPARE(scalar, 1.0);
     QVERIFY(!drift::textStyleScalar(style, QStringLiteral("nope"), &scalar));
     QVERIFY(drift::textKeyframeProperties().contains(QStringLiteral("glowRadius")));
+}
+
+void CoreTest::dotLottieUnpacks()
+{
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    const QByteArray anim = "{\"v\":\"5.7.4\",\"fr\":30,\"ip\":0,\"op\":30,\"w\":10,\"h\":10,\"layers\":[]}";
+    const QString bundle = dir.filePath("spinner.lottie");
+    QVERIFY(writeStoredZip(bundle, {
+        {QStringLiteral("manifest.json"), "{\"animations\":[{\"id\":\"b\"},{\"id\":\"a\"}]}"},
+        {QStringLiteral("animations/a.json"), anim},
+        {QStringLiteral("animations/b.json"), anim},
+        {QStringLiteral("images/img_0.png"), QByteArray("png-bytes")},
+    }));
+    QVERIFY(drift::isDotLottiePath(bundle));
+    QVERIFY(!drift::isDotLottiePath(dir.filePath("x.json")));
+
+    QString error;
+    const QStringList out = drift::unpackDotLottie(bundle, dir.filePath("unpacked"), &error);
+    QVERIFY2(error.isEmpty(), qPrintable(error));
+    QCOMPARE(out.size(), 2);
+    // Manifest order, named after the bundle plus the animation id.
+    QCOMPARE(QFileInfo(out[0]).fileName(), QStringLiteral("spinner-b.json"));
+    QCOMPARE(QFileInfo(out[1]).fileName(), QStringLiteral("spinner-a.json"));
+    QFile extracted(out[0]);
+    QVERIFY(extracted.open(QIODevice::ReadOnly));
+    QCOMPARE(extracted.readAll(), anim);
+    QVERIFY(QFile::exists(QFileInfo(out[0]).dir().filePath(QStringLiteral("images/img_0.png"))));
+    // Idempotent: the same bundle maps to the same files.
+    QCOMPARE(drift::unpackDotLottie(bundle, dir.filePath("unpacked"), &error), out);
+
+    // One animation keeps the bundle's own name; a broken bundle fails with a message.
+    const QString single = dir.filePath("hello.lottie");
+    QVERIFY(writeStoredZip(single, {{QStringLiteral("animations/anim.json"), anim}}));
+    const QStringList one = drift::unpackDotLottie(single, dir.filePath("unpacked"), &error);
+    QCOMPARE(one.size(), 1);
+    QCOMPARE(QFileInfo(one[0]).fileName(), QStringLiteral("hello.json"));
+    QFile junk(dir.filePath("junk.lottie"));
+    QVERIFY(junk.open(QIODevice::WriteOnly));
+    junk.write("not a zip");
+    junk.close();
+    QVERIFY(drift::unpackDotLottie(junk.fileName(), dir.filePath("unpacked"), &error).isEmpty());
+    QVERIFY(!error.isEmpty());
 }
 
 void CoreTest::vectorClipIsSyntheticOnGraphicTracks()

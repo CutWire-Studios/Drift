@@ -23,6 +23,10 @@ Item {
                                                                        "fontWeight": 700,
                                                                        "italic": false,
                                                                        "color": "#ffffffff",
+                                                                       "fillKind": "solid",
+                                                                       "colorSecondary": "#ffff7800",
+                                                                       "gradientAngle": 90,
+                                                                       "pathBend": 0,
                                                                        "align": "center",
                                                                        "valign": "middle",
                                                                        "wordWrap": true,
@@ -427,7 +431,7 @@ Item {
                         font.family: Theme.fontFamily
                     }
                     ColorSwatchField {
-                        hex: root.textStyle.colorSecondary
+                        hex: root.textStyle.colorSecondary || "#ffff7800"
                         tooltip: qsTr("Choose the gradient's end colour")
                         onEdited: value => root.setTextStyleKey("colorSecondary", value)
                     }

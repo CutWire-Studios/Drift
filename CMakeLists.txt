@@ -417,6 +417,10 @@ add_library(driftcore STATIC
     src/core/ShapePath.cpp
     src/core/VectorSource.h
     src/core/VectorSource.cpp
+    src/core/ZipArchive.h
+    src/core/ZipArchive.cpp
+    src/core/DotLottie.h
+    src/core/DotLottie.cpp
     src/core/Track.h
     src/core/Track.cpp
     src/core/Project.h

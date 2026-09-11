@@ -2384,6 +2384,17 @@ void fitClipLayoutToCanvas(drift::Clip &clip, int mediaW, int mediaH, int canvas
     setClipLayoutPixels(clip, 0, 0, mediaW * scale, mediaH * scale);
 }
 
+// A bin asset of kind vector is a Lottie .json on disk; the clip carries it by path and the
+// probe fills size, fps, duration and hash so the renderer and the inspector have them.
+void attachVectorSource(drift::Clip &clip)
+{
+    if (clip.type != drift::ClipType::Vector)
+        return;
+    clip.vector.kind = drift::VectorKind::Lottie;
+    clip.vector.path = clip.path;
+    drift::vec::probeVectorSource(clip.vector);
+}
+
 void applyAssetLayout(drift::Clip &clip, const QVariantMap &asset, int canvasW, int canvasH)
 {
     int mediaW = asset.value(QStringLiteral("width")).toInt();
@@ -4817,17 +4828,13 @@ void AppController::addClipFromAsset(int assetIndex)
     clip.type = clipType;
     clip.name = asset.value(QStringLiteral("name")).toString();
     clip.path = asset.value(QStringLiteral("path")).toString();
+    attachVectorSource(clip);
     clip.thumbnailPath = thumbnailPath;
     clip.filmstripPath = filmstripPath;
     clip.timelineStart = start;
     clip.timelineDuration = duration;
     clip.srcIn = 0;
     clip.srcOut = duration;
-    if (clipType == drift::ClipType::Vector) {
-        clip.vector.kind = drift::VectorKind::Lottie;
-        clip.vector.path = clip.path;
-        drift::vec::probeVectorSource(clip.vector);
-    }
     applyAssetLayout(clip, asset, m_project.width(), m_project.height());
 
     track.clips.append(clip);
@@ -4888,6 +4895,7 @@ void AppController::addClipsFromAssets(const QStringList &assetIds)
         clip.type = clipType;
         clip.name = asset.value(QStringLiteral("name")).toString();
         clip.path = asset.value(QStringLiteral("path")).toString();
+        attachVectorSource(clip);
         clip.thumbnailPath = thumbnailPath;
         clip.filmstripPath = filmstripPath;
         clip.timelineStart = start;
@@ -4969,6 +4977,7 @@ void AppController::addClipFromAssetOnNewTrackAt(int assetIndex, int insertIndex
     clip.type = clipType;
     clip.name = asset.value(QStringLiteral("name")).toString();
     clip.path = asset.value(QStringLiteral("path")).toString();
+    attachVectorSource(clip);
     clip.thumbnailPath = thumbnailPath;
     clip.filmstripPath = filmstripPath;
     clip.timelineStart = start;
@@ -5016,6 +5025,7 @@ void AppController::addClipFromAssetAt(int assetIndex, int trackIndex, double at
     clip.type = clipType;
     clip.name = asset.value(QStringLiteral("name")).toString();
     clip.path = asset.value(QStringLiteral("path")).toString();
+    attachVectorSource(clip);
     clip.thumbnailPath = thumbnailPath;
     clip.filmstripPath = filmstripPath;
     clip.timelineStart = start;

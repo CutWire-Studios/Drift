@@ -277,8 +277,8 @@ Item {
         Column {
             width: parent.width
             spacing: Theme.spacingXs
-            visible: (root.report.unsupported && root.report.unsupported.length > 0)
-                     || (root.report.expressions && root.report.expressions.length > 0)
+            visible: !!((root.report.unsupported && root.report.unsupported.length > 0)
+                        || (root.report.expressions && root.report.expressions.length > 0))
 
             ThemedLabel { text: qsTr("Not rendered") }
             Repeater {

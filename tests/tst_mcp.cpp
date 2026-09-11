@@ -30,6 +30,7 @@
 #include "mcp/McpStdio.h"
 #include "engine/ObjectDetector.h"
 #include "models/AppController.h"
+#include "TestZip.h"
 #include "models/AssetLibrary.h"
 #include "models/MarketClient.h"
 
@@ -138,6 +139,7 @@ private slots:
     void lottieBatchUndoesAsOneStep();
     void setTextStyleAcceptsAnimation();
     void textKeyframesThroughSetKeyframe();
+    void importMediaTakesLottieBundles();
     void historyEntriesHaveHashes();
     void undoToByHash();
     void snapshotFileHashMatchesHistory();
@@ -2307,6 +2309,47 @@ void McpTest::textKeyframesThroughSetKeyframe()
     state.setClipColorKeyframe(track, clip, QStringLiteral("text.color"), 1.0, QColor(0, 128, 255));
     QCOMPARE(state.propertyValueAt(track, clip, QStringLiteral("text.color.b"), 1.0, 0.0), 1.0);
     QVERIFY(state.clipAnimatedProperties(track, clip).contains(QStringLiteral("text.color.r")));
+}
+
+void McpTest::importMediaTakesLottieBundles()
+{
+    QStandardPaths::setTestModeEnabled(true);
+    const auto restore = qScopeGuard([] { QStandardPaths::setTestModeEnabled(false); });
+    AssetLibrary library;
+    AppController state(&library);
+    if (!state.vectorSupportAvailable())
+        QSKIP("built without Skia");
+    drift::mcp::McpDispatcher dispatcher(&state);
+
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    const QString bundle = dir.filePath("slide.lottie");
+    QVERIFY(writeStoredZip(bundle, {
+        {QStringLiteral("manifest.json"), "{\"animations\":[{\"id\":\"slide\"}]}"},
+        {QStringLiteral("animations/slide.json"), lottieFixture().toUtf8()},
+    }));
+    const QJsonObject imported = dispatcher.applyOne(QStringLiteral("import_media"),
+                                                     {{QStringLiteral("paths"), QJsonArray{bundle}}});
+    QVERIFY2(imported.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(imported).toJson(QJsonDocument::Compact)));
+    QVERIFY(!imported.contains(QStringLiteral("missing")));
+
+    const QJsonObject assets = dispatcher.applyOne(QStringLiteral("list_assets"), {});
+    const QJsonArray rows = assets.value(QStringLiteral("assets")).toArray();
+    QCOMPARE(rows.size(), 1);
+    const QJsonObject asset = rows.at(0).toObject();
+    QCOMPARE(asset.value(QStringLiteral("kind")).toString(), QStringLiteral("vector"));
+    QCOMPARE(asset.value(QStringLiteral("name")).toString(), QStringLiteral("Slide"));
+
+    // The bin asset places as a vector clip that runs the animation's own length.
+    const QJsonObject placed = dispatcher.applyOne(QStringLiteral("place_clip"),
+                                                   {{QStringLiteral("asset"), asset.value(QStringLiteral("id")).toString()}, {QStringLiteral("at"), 0.0}});
+    QVERIFY2(placed.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(placed).toJson(QJsonDocument::Compact)));
+    const QPair<int, int> loc = state.mcpLocateClip(placed.value(QStringLiteral("id")).toString());
+    const QVariantMap clip = state.clipAt(loc.first, loc.second);
+    QCOMPARE(clip.value(QStringLiteral("kind")).toString(), QStringLiteral("vector"));
+    QCOMPARE(clip.value(QStringLiteral("duration")).toDouble(), 2.0);
+    QVERIFY(!clip.value(QStringLiteral("vector")).toMap().value(QStringLiteral("inline")).toBool());
+    QCOMPARE(clip.value(QStringLiteral("vector")).toMap().value(QStringLiteral("width")).toInt(), 200);
 }
 
 void McpTest::historyEntriesHaveHashes()
