@@ -48,6 +48,10 @@ class SkiaRuntime;
 
 namespace drift::gl {
 
+#if defined(Q_OS_WIN)
+class D3d11GlInterop;
+#endif
+
 // A framebuffer plus its size. Owns the FBO; hand it back to GlRuntime with
 // releaseTarget() so it can be recycled rather than freed.
 struct GlTarget
@@ -251,10 +255,18 @@ public:
     // Tear down GL objects and stop the GL thread. Called at app exit.
     void shutdown();
 
-    // Last preview import path and VAAPI zero-copy rejection, for the debug report.
-    enum class PreviewUploadPath { None, CudaInterop, VaapiDmaBuf, MediaCodecImage, CpuRoundTrip };
+    // Last preview import path, and the latest reason a zero-copy importer (CUDA, VAAPI, D3D11)
+    // declined a frame, for the debug report.
+    enum class PreviewUploadPath {
+        None,
+        CudaInterop,
+        VaapiDmaBuf,
+        MediaCodecImage,
+        D3d11Interop,
+        CpuRoundTrip
+    };
     static PreviewUploadPath lastPreviewUploadPath();
-    static QString lastVaapiImportReason();
+    static QString lastZeroCopyDeclineReason();
 
     // Outcome of the last bring-up attempt. Safe from any thread, and never starts
     // one itself — call available() first if you want an attempt made rather than a
@@ -285,6 +297,11 @@ private:
     // sub-rectangle of the buffer into `crop` as (offsetU, offsetV, scaleU, scaleV).
     bool importMediaCodecImage(QOpenGLExtraFunctions *gl, const AVFrame *frame, GLuint *texture,
                                QVector4D *crop);
+    // D3D11VA surface through WGL_NV_DX_interop2 into a Y/UV texture pair for the convert shader.
+    // Windows only; false everywhere else. On true the textures stay locked for GL until
+    // unlockD3d11Import(), which has to follow the draw that samples them.
+    bool importD3d11Nv12(QOpenGLExtraFunctions *gl, const AVFrame *frame, GLuint *texY, GLuint *texUV);
+    void unlockD3d11Import();
     AVFrame *ensureSoftwareNv12(const AVFrame *src);
 
     QMutex m_initMutex;
@@ -332,9 +349,16 @@ private:
     int m_cudaTexW = 0;
     int m_cudaTexH = 0;
     bool m_cudaImportFailed = false;
+    // Whether this context's GL_VENDOR is NVIDIA: -1 not yet asked. CUDA interop is never
+    // attempted against any other GPU's context.
+    int m_cudaGlVendorOk = -1;
     GLuint m_importY = 0;
     GLuint m_importUV = 0;
     bool m_vaapiImportFailed = false;
+#if defined(Q_OS_WIN)
+    std::unique_ptr<D3d11GlInterop> m_d3d11;
+    bool m_d3d11ImportFailed = false;
+#endif
 #ifdef Q_OS_ANDROID
     GLuint m_mcTexture = 0;
     bool m_mcImportFailed = false;

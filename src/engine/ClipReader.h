@@ -103,6 +103,18 @@ public:
     // the distinction is visible, and it is the one place the auto-probe can pick the
     // worse of the two.
     enum class HardwareDecodeMode { Auto, Software, Hardware };
+
+    // What the hardware get_format callback is asked for, handed over through
+    // AVCodecContext::opaque. Public only so that callback, a free function, can name it.
+    struct HwFormatRequest
+    {
+        AVPixelFormat pixFmt = AV_PIX_FMT_NONE;
+        // A driver's hard limit on the whole surface pool; 0 when there is none.
+        int maxSurfaces = 0;
+        // Extra surfaces the capped pool actually got, -1 when no cap was applied. get_format
+        // runs on the thread that feeds the decoder, which is the thread that reads this.
+        int spareSurfaces = -1;
+    };
     static void setHardwareDecodeMode(HardwareDecodeMode mode,
                                       drift::hwaccel::Backend backend = drift::hwaccel::Backend::None);
     static HardwareDecodeMode hardwareDecodeMode();
@@ -117,6 +129,9 @@ public:
     // Times a reader gave up on hardware mid-decode and went sticky-software. Silent
     // otherwise: the preview just gets slower and nothing says why.
     static quint64 hardwareFallbackCount();
+    // Why the most recent of those happened: backend, codec, the failing call's error and the
+    // last error FFmpeg logged. Empty while nothing has fallen back.
+    static QString lastHardwareFailure();
 
 #ifdef Q_OS_ANDROID
     // Called by the GL importer when a latched gralloc buffer cannot be bound. Process-wide and
@@ -194,6 +209,9 @@ private:
     void trimPreviewCache();
     bool wantsMorePreviewReadAhead() const;
 
+    // Stores and logs why hardware decode is being abandoned; see lastHardwareFailure().
+    void recordHardwareFailure(const QString &what);
+
     QString m_path;
     struct AVFormatContext *m_fmt = nullptr;
     struct AVCodecContext *m_videoCtx = nullptr;
@@ -233,6 +251,7 @@ private:
 #endif
     drift::hwaccel::Backend m_hwBackend = drift::hwaccel::Backend::None;
     AVPixelFormat m_hwPixFmt = AV_PIX_FMT_NONE;
+    HwFormatRequest m_hwFormatRequest;
 
     // Surface-scaler graph, rebuilt when the decode size or the decoder's frame
     // pool changes. m_hwScalerFailed is sticky: a backend with no scaler, or a

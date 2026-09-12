@@ -4,6 +4,7 @@
 #include "Exporter.h"
 #include "GlRuntime.h"
 #include "GpuCompositor.h"
+#include "GpuPreference.h"
 #include "HwAccel.h"
 #include "OrtRuntime.h"
 #include "VaapiZeroCopy.h"
@@ -318,6 +319,17 @@ QList<GpuAdapter> enumerateGpus()
             continue;
         addGpu(gpuFromSysfsDevice(device.absoluteFilePath(), device.fileName()));
     }
+#elif defined(Q_OS_WIN)
+    for (const drift::gpu::Adapter &adapter : drift::gpu::hardwareAdapters()) {
+        GpuAdapter gpu;
+        // Slot rather than PCI ids as the key, so two identical cards still list twice.
+        gpu.slot = QStringLiteral("dxgi:%1").arg(adapter.index);
+        gpu.vendorId = adapter.vendorId;
+        gpu.deviceId = adapter.deviceId;
+        gpu.vendor = pciVendorName(adapter.vendorId);
+        gpu.model = adapter.name;
+        addGpu(std::move(gpu));
+    }
 #endif
     return gpus;
 }
@@ -504,7 +516,10 @@ QString activeDecodeLabel()
         : QString::fromLatin1(drift::hwaccel::name(*active));
     if (ClipReader::hardwareFallbackCount() == 0)
         return base;
-    return QStringLiteral("%1 — %2").arg(base, trReport("hardware decoding failed"));
+    const QString failed = trReport("hardware decoding failed");
+    const QString why = ClipReader::lastHardwareFailure();
+    return why.isEmpty() ? QStringLiteral("%1 — %2").arg(base, failed)
+                         : QStringLiteral("%1 — %2: %3").arg(base, failed, why);
 }
 
 QVariantMap systemRow(const QString &label, const QString &value)
@@ -550,6 +565,8 @@ QString previewUploadLabel()
         return QStringLiteral("VAAPI dma-buf");
     case Path::MediaCodecImage:
         return QStringLiteral("MediaCodec image");
+    case Path::D3d11Interop:
+        return QStringLiteral("D3D11 interop");
     case Path::CpuRoundTrip:
         return QStringLiteral("CPU round-trip");
     case Path::None:
@@ -560,12 +577,31 @@ QString previewUploadLabel()
 
 QString zeroCopyLabel()
 {
+    // What actually happened to the last frame, not what the setting allows: this row used to
+    // read "Active" whenever VAAPI was not switched off, including on Windows, where nothing had
+    // been imported at all.
+    using Path = drift::gl::GlRuntime::PreviewUploadPath;
+    switch (drift::gl::GlRuntime::lastPreviewUploadPath()) {
+    case Path::CudaInterop:
+    case Path::VaapiDmaBuf:
+    case Path::MediaCodecImage:
+    case Path::D3d11Interop:
+        return QStringLiteral("%1 (%2)").arg(trReport("Active"), previewUploadLabel());
+    case Path::CpuRoundTrip:
+    case Path::None:
+        break;
+    }
+    const QString reason = drift::gl::GlRuntime::lastZeroCopyDeclineReason();
+    if (!reason.isEmpty())
+        return reason;
+#if defined(Q_OS_WIN)
+    if (!drift::d3d11ZeroCopyEnabled())
+        return trReport("Off");
+#else
     if (drift::vaapiZeroCopyMode() == drift::VaapiZeroCopyMode::Off)
         return trReport("Off");
-    // Auto reports the same way: whether it actually engaged shows up as either "Active" or
-    // the reason the import declined, which is more useful in a bug report than the mode name.
-    const QString reason = drift::gl::GlRuntime::lastVaapiImportReason();
-    return reason.isEmpty() ? trReport("Active") : reason;
+#endif
+    return trReport("Not engaged");
 }
 
 QVariantMap hintRow(const QString &id, const QString &title, const QString &detail,
@@ -746,6 +782,22 @@ QVariantMap DebugReport::collect()
     }
     system.append(systemRow(trReport("Preview upload"), previewUploadLabel()));
     system.append(systemRow(trReport("Zero-copy"), zeroCopyLabel()));
+#if defined(Q_OS_WIN)
+    if (drift::gpu::preferenceSupported()) {
+        QString preference = trReport("Windows default");
+        switch (drift::gpu::storedPreference()) {
+        case drift::gpu::Preference::PowerSaving:
+            preference = trReport("Power saving");
+            break;
+        case drift::gpu::Preference::HighPerformance:
+            preference = trReport("High performance");
+            break;
+        case drift::gpu::Preference::Auto:
+            break;
+        }
+        system.append(systemRow(trReport("Preferred GPU"), preference));
+    }
+#endif
     system.append(systemRow(trReport("Locale"), QLocale::system().name()));
     if (drift::hwaccel::disabledByEnv())
         system.append(systemRow(QStringLiteral("DRIFT_NO_HWACCEL"), trReport("Set")));

@@ -135,7 +135,7 @@ bool isAvailable();
 drift::gl::GlStatusInfo status();
 
 // How the last preview video frame reached the GPU: "cuda-interop", "vaapi-dmabuf",
-// "cpu-roundtrip", or "none". A stable untranslated id, like drift::gl::statusId() — each
+// "d3d11-interop", "mediacodec-image", "cpu-roundtrip", or "none". A stable untranslated id, like drift::gl::statusId() — each
 // presentation site maps it to its own catalogue. Exposed here rather than from GlRuntime so
 // the playback layer can read it without pulling in the engine-private runtime header.
 QString previewUploadPathId();

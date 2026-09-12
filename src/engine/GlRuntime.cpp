@@ -2,6 +2,9 @@
 
 #include "GlModelRenderer.h"
 #include "VaapiZeroCopy.h"
+#if defined(Q_OS_WIN)
+#include "D3d11GlInterop.h"
+#endif
 #ifdef DRIFT_WITH_SKIA
 #include "SkiaRuntime.h"
 #endif
@@ -13,6 +16,7 @@
 #include <QMutexLocker>
 #include <QOffscreenSurface>
 #include <QOpenGLContext>
+#include <QScopeGuard>
 #include <QSettings>
 #include <QSurfaceFormat>
 #include <QVector2D>
@@ -164,6 +168,18 @@ VaapiZeroCopyMode vaapiZeroCopyMode()
         }
     });
     return mode;
+}
+
+bool d3d11ZeroCopyEnabled()
+{
+    if (qEnvironmentVariableIsSet("DRIFT_D3D11_ZEROCOPY"))
+        return qgetenv("DRIFT_D3D11_ZEROCOPY") != "0";
+    static bool enabled = true;
+    static std::once_flag once;
+    std::call_once(once, [] {
+        enabled = QSettings().value(QStringLiteral("preview/d3d11ZeroCopy"), true).toBool();
+    });
+    return enabled;
 }
 
 void applyVaapiZeroCopyXcbEgl()
@@ -561,7 +577,7 @@ bool copyCudaNv12ToTextures(CudaGlApi &api, CUstream stream, CUgraphicsResource 
 
 QMutex g_previewImportMutex;
 GlRuntime::PreviewUploadPath g_previewUploadPath = GlRuntime::PreviewUploadPath::None;
-QString g_vaapiImportReason;
+QString g_zeroCopyDeclineReason;
 
 // Its own mutex, not m_initMutex: initGlObjects() records the outcome while the
 // caller of ensureReady() still holds m_initMutex, and the debug report reads the
@@ -610,13 +626,17 @@ void recordPreviewUploadPath(GlRuntime::PreviewUploadPath path)
     g_previewUploadPath = path;
 }
 
+// The latest reason a zero-copy importer turned a frame away, for the debug report's zero-copy
+// row. Each importer decides for itself whether to log; this only remembers the text.
+void noteZeroCopyDecline(const QString &reason)
+{
+    QMutexLocker lock(&g_previewImportMutex);
+    g_zeroCopyDeclineReason = reason;
+}
+
 void logVaapiImportOnce(const QString &reason)
 {
-    {
-        QMutexLocker lock(&g_previewImportMutex);
-        if (g_vaapiImportReason.isEmpty())
-            g_vaapiImportReason = reason;
-    }
+    noteZeroCopyDecline(reason);
     static std::once_flag once;
     std::call_once(once, [reason] {
         qWarning("GlRuntime: VAAPI zero-copy import unavailable (%s)", qUtf8Printable(reason));
@@ -1577,6 +1597,10 @@ void GlRuntime::destroyVideoUploadState()
     unregisterCudaResources();
     auto *gl = functions();
     if (gl) {
+#if defined(Q_OS_WIN)
+        if (m_d3d11)
+            m_d3d11->release(gl);
+#endif
         if (m_videoY) {
             gl->glDeleteTextures(1, &m_videoY);
             m_videoY = 0;
@@ -1733,10 +1757,31 @@ bool GlRuntime::importCudaNv12(QOpenGLExtraFunctions *gl, const AVFrame *frame)
     Q_UNUSED(frame);
     return false;
 #else
-    if (m_cudaImportFailed || !frame || frame->format != AV_PIX_FMT_CUDA || !cudaSwFormatIsNv12(frame))
+    if (m_cudaImportFailed || !gl || !frame || frame->format != AV_PIX_FMT_CUDA
+        || !cudaSwFormatIsNv12(frame))
         return false;
+
+    // CUDA can only register GL textures that live on its own GPU. On a hybrid laptop compositing
+    // on the integrated GPU the registration below cannot succeed, and it would run inside FFmpeg's
+    // CUDA context — the one NVDEC is decoding on — so it is not attempted at all. Decided once:
+    // the GL context does not move between GPUs within a session.
+    if (m_cudaGlVendorOk < 0) {
+        const char *vendor = reinterpret_cast<const char *>(gl->glGetString(GL_VENDOR));
+        m_cudaGlVendorOk = (vendor && strstr(vendor, "NVIDIA")) ? 1 : 0;
+        if (!m_cudaGlVendorOk) {
+            noteZeroCopyDecline(
+                QStringLiteral("OpenGL renders on %1; CUDA interop needs OpenGL on the NVIDIA GPU")
+                    .arg(vendor ? QString::fromUtf8(vendor) : QStringLiteral("an unknown GPU")));
+        }
+    }
+    if (!m_cudaGlVendorOk) {
+        m_cudaImportFailed = true;
+        return false;
+    }
+
     CudaGlApi &api = cudaGlApi();
     if (!api.ok) {
+        noteZeroCopyDecline(QStringLiteral("the CUDA driver's GL interop entry points are unavailable"));
         m_cudaImportFailed = true;
         return false;
     }
@@ -1758,10 +1803,12 @@ bool GlRuntime::importCudaNv12(QOpenGLExtraFunctions *gl, const AVFrame *frame)
         unregisterCudaResources();
         CUgraphicsResource yRes = nullptr;
         CUgraphicsResource uvRes = nullptr;
-        if (api.cuGraphicsGLRegisterImage(&yRes, m_videoY, GL_TEXTURE_2D, kCuRegisterWriteDiscard)
-                == kCuSuccess
-            && api.cuGraphicsGLRegisterImage(&uvRes, m_videoUV, GL_TEXTURE_2D, kCuRegisterWriteDiscard)
-                == kCuSuccess) {
+        CUresult rc =
+            api.cuGraphicsGLRegisterImage(&yRes, m_videoY, GL_TEXTURE_2D, kCuRegisterWriteDiscard);
+        if (rc == kCuSuccess)
+            rc = api.cuGraphicsGLRegisterImage(&uvRes, m_videoUV, GL_TEXTURE_2D,
+                                               kCuRegisterWriteDiscard);
+        if (rc == kCuSuccess) {
             m_cudaYResource = yRes;
             m_cudaUvResource = uvRes;
             m_cudaTexW = w;
@@ -1771,6 +1818,8 @@ bool GlRuntime::importCudaNv12(QOpenGLExtraFunctions *gl, const AVFrame *frame)
                 api.cuGraphicsUnregisterResource(yRes);
             if (uvRes)
                 api.cuGraphicsUnregisterResource(uvRes);
+            noteZeroCopyDecline(
+                QStringLiteral("cuGraphicsGLRegisterImage failed (CUDA error %1)").arg(rc));
             m_cudaImportFailed = true;
         }
     }
@@ -1778,13 +1827,66 @@ bool GlRuntime::importCudaNv12(QOpenGLExtraFunctions *gl, const AVFrame *frame)
     if (m_cudaYResource && m_cudaUvResource) {
         ok = copyCudaNv12ToTextures(api, stream, static_cast<CUgraphicsResource>(m_cudaYResource),
                                     static_cast<CUgraphicsResource>(m_cudaUvResource), frame, w, h);
-        if (!ok)
+        if (!ok) {
+            noteZeroCopyDecline(QStringLiteral("copying the NVDEC surface into GL textures failed"));
             m_cudaImportFailed = true;
+        }
     }
 
     CUcontext popped = nullptr;
     api.cuCtxPopCurrent(&popped);
     return ok;
+#endif
+}
+
+// The Windows counterpart of the VAAPI import below: the D3D11-decoded frame goes GPU to GPU into
+// the Y/UV pair the convert shader samples, instead of av_hwframe_transfer_data plus a PBO upload.
+// See D3d11GlInterop for why it takes a copy and two tiny draws on the D3D11 side.
+bool GlRuntime::importD3d11Nv12(QOpenGLExtraFunctions *gl, const AVFrame *frame, GLuint *texY,
+                                GLuint *texUV)
+{
+#if !defined(Q_OS_WIN)
+    Q_UNUSED(gl);
+    Q_UNUSED(frame);
+    Q_UNUSED(texY);
+    Q_UNUSED(texUV);
+    return false;
+#else
+    if (m_d3d11ImportFailed || !gl || !frame || frame->format != AV_PIX_FMT_D3D11)
+        return false;
+    if (!drift::d3d11ZeroCopyEnabled()) {
+        noteZeroCopyDecline(QStringLiteral(
+            "D3D11 interop is turned off (preview/d3d11ZeroCopy or DRIFT_D3D11_ZEROCOPY)"));
+        return false;
+    }
+    if (!m_d3d11)
+        m_d3d11 = std::make_unique<D3d11GlInterop>();
+
+    QString why;
+    switch (m_d3d11->lock(gl, frame, texY, texUV, &why)) {
+    case D3d11GlInterop::Result::Locked:
+        return true;
+    case D3d11GlInterop::Result::Declined:
+        // A property of this frame, not of the machine: the next clip may import fine.
+        if (!why.isEmpty())
+            noteZeroCopyDecline(why);
+        return false;
+    case D3d11GlInterop::Result::Failed:
+        break;
+    }
+    noteZeroCopyDecline(why);
+    qWarning("GlRuntime: D3D11 zero-copy import unavailable (%s)", qUtf8Printable(why));
+    m_d3d11ImportFailed = true;
+    m_d3d11->release(gl);
+    return false;
+#endif
+}
+
+void GlRuntime::unlockD3d11Import()
+{
+#if defined(Q_OS_WIN)
+    if (m_d3d11)
+        m_d3d11->unlock();
 #endif
 }
 
@@ -2553,11 +2655,12 @@ GlTarget promoteVideoFrameToTarget(GlRuntime &rt, QOpenGLExtraFunctions *gl,
         return {};
 
     // CUDA copies into the pooled textures; VAAPI binds the decoder's own dma-buf into a
-    // separate pair, so the draw below has to be told which one holds this frame. Either way
-    // the frame never leaves the GPU. Anything neither takes falls through to a hardware
-    // transfer and a PBO upload.
+    // separate pair, and D3D11 hands back its interop pair, so the draw below has to be told
+    // which one holds this frame. Either way the frame never leaves the GPU. Anything none of
+    // them takes falls through to a hardware transfer and a PBO upload.
     GLuint texY = 0;
     GLuint texUV = 0;
+    bool d3d11Locked = false;
     bool uploaded = rt.importCudaNv12(gl, av);
     if (uploaded) {
         // Read the names back only now. importCudaNv12 allocates the pooled pair through
@@ -2573,7 +2676,17 @@ GlTarget promoteVideoFrameToTarget(GlRuntime &rt, QOpenGLExtraFunctions *gl,
         texY = rt.m_importY;
         texUV = rt.m_importUV;
         recordPreviewUploadPath(GlRuntime::PreviewUploadPath::VaapiDmaBuf);
+    } else if (rt.importD3d11Nv12(gl, av, &texY, &texUV)) {
+        uploaded = true;
+        d3d11Locked = true;
+        recordPreviewUploadPath(GlRuntime::PreviewUploadPath::D3d11Interop);
     }
+    // D3D11 cannot render the next frame into the interop textures while GL holds them, and GL may
+    // only sample them while it does — so every return below, drawn or not, unlocks.
+    const auto unlockD3d11 = qScopeGuard([&rt, d3d11Locked] {
+        if (d3d11Locked)
+            rt.unlockD3d11Import();
+    });
 
     // MediaCodec's external texture is already RGB, so it needs a different program and cannot
     // share the NV12 draw below — handled and returned separately.
@@ -2647,10 +2760,10 @@ GlRuntime::PreviewUploadPath GlRuntime::lastPreviewUploadPath()
     return g_previewUploadPath;
 }
 
-QString GlRuntime::lastVaapiImportReason()
+QString GlRuntime::lastZeroCopyDeclineReason()
 {
     QMutexLocker lock(&g_previewImportMutex);
-    return g_vaapiImportReason;
+    return g_zeroCopyDeclineReason;
 }
 
 void setPackageUniforms(QOpenGLShaderProgram *program, const QMap<QString, QVariant> &parameters,

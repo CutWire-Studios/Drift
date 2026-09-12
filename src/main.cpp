@@ -1,6 +1,7 @@
 #include "engine/AudioFileWriter.h"
 #include "engine/EmojiCatalog.h"
 #include "engine/FontCatalog.h"
+#include "engine/GpuPreference.h"
 #include "engine/HwAccel.h"
 #include "engine/ReverseProxyCache.h"
 #ifndef Q_OS_ANDROID
@@ -64,6 +65,17 @@
 extern "C" {
 #include <libavutil/log.h>
 }
+
+#ifdef Q_OS_WIN
+// Exports NVIDIA Optimus and AMD PowerXpress look up in the executable: 1 asks for the discrete
+// GPU. Variables rather than constants so main() can set them from the stored preference before
+// anything loads a graphics driver — Qt loads OpenGL lazily, at the first context. Zero leaves
+// the choice to the driver's own profile, which is also what an absent export means.
+extern "C" {
+__declspec(dllexport) unsigned long NvOptimusEnablement = 0;
+__declspec(dllexport) int AmdPowerXpressRequestHighPerformance = 0;
+}
+#endif
 
 namespace {
 
@@ -430,6 +442,15 @@ int main(int argc, char *argv[])
     // zero-copy sticky-disables. Only force EGL when the user opted in — default
     // X11 behaviour stays byte-identical. An explicit QT_XCB_GL_INTEGRATION still wins.
     drift::applyVaapiZeroCopyXcbEgl();
+
+#ifdef Q_OS_WIN
+    // Before QApplication, while no graphics driver is loaded and the GPU is still unchosen. The
+    // registry preference and the exports each cover drivers that ignore the other.
+    if (drift::gpu::applyStoredPreference() == drift::gpu::Preference::HighPerformance) {
+        NvOptimusEnablement = 1;
+        AmdPowerXpressRequestHighPerformance = 1;
+    }
+#endif
 
     QApplication app(argc, argv);
     // A missing image plugin is silent everywhere else: the reader just returns a null QImage,

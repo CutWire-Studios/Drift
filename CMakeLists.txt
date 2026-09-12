@@ -645,6 +645,8 @@ add_library(driftengine STATIC
     src/engine/ProjectBundle.cpp
     src/engine/ProjectDependencies.h
     src/engine/ProjectDependencies.cpp
+    src/engine/GpuPreference.h
+    src/engine/GpuPreference.cpp
 )
 target_include_directories(driftengine PUBLIC src)
 # cgltf is PRIVATE: ModelAsset.h exposes no cgltf type, so nothing outside ModelAsset.cpp includes it.
@@ -652,6 +654,15 @@ target_include_directories(driftengine SYSTEM PRIVATE ${CMAKE_SOURCE_DIR}/third_
 target_link_libraries(driftengine PUBLIC Qt6::Core Qt6::Gui Qt6::OpenGL FFmpeg::FFmpeg driftcore
     driftaudiodsp onnxruntime::headers)
 target_link_libraries(driftengine PRIVATE ${DRIFT_ZSTD_TARGET} OpenSSL::Crypto ${CMAKE_DL_LIBS})
+if(WIN32)
+    # Hybrid-graphics laptops: D3D11VA -> OpenGL preview interop, and DXGI adapter enumeration for
+    # the GPU preference and for opening D3D11VA on the GPU that renders.
+    target_sources(driftengine PRIVATE
+        src/engine/D3d11GlInterop.h
+        src/engine/D3d11GlInterop.cpp
+    )
+    target_link_libraries(driftengine PRIVATE d3d11 dxgi d3dcompiler opengl32)
+endif()
 target_compile_definitions(driftengine PRIVATE DRIFT_VERSION="${PROJECT_VERSION}")
 
 if(WITH_BGREMOVAL)

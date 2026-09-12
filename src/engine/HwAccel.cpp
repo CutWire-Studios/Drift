@@ -1,7 +1,9 @@
 #include "HwAccel.h"
 
 #include "GpuCompositor.h"
+#include "GpuPreference.h"
 
+#include <QByteArray>
 #include <QHash>
 #include <QMutex>
 #include <QMutexLocker>
@@ -42,6 +44,8 @@ namespace {
 QMutex g_renderVendorMutex;
 QString g_renderVendor;
 
+} // namespace
+
 QString renderVendor()
 {
     {
@@ -54,8 +58,6 @@ QString renderVendor()
     return GpuCompositor::status().vendor;
 }
 
-} // namespace
-
 void setRenderVendor(const QString &vendor)
 {
     QMutexLocker lock(&g_renderVendorMutex);
@@ -64,9 +66,49 @@ void setRenderVendor(const QString &vendor)
 
 QList<Backend> decodeBackendOrder()
 {
+    return decodeBackendOrderFor(renderVendor());
+}
+
+bool backendMatchesRenderer(Backend backend, const QString &vendor)
+{
+    if (vendor.isEmpty() || backend != Backend::Cuda)
+        return true;
+    return vendor.contains(QStringLiteral("NVIDIA"), Qt::CaseInsensitive);
+}
+
+QList<Backend> decodeAttemptOrder(Backend pinned, bool pinnedOnly, const QString &vendor)
+{
+    if (pinnedOnly && pinned != Backend::None)
+        return {pinned};
+    QList<Backend> order = decodeBackendOrderFor(vendor);
+    if (pinned != Backend::None && backendMatchesRenderer(pinned, vendor)) {
+        order.removeOne(pinned);
+        order.prepend(pinned);
+    }
+    return order;
+}
+
+QByteArray deviceString(AVHWDeviceType type)
+{
+#if defined(Q_OS_WIN)
+    if (type == AV_HWDEVICE_TYPE_D3D11VA) {
+        const int index = drift::gpu::adapterIndexForGlVendor(renderVendor());
+        if (index >= 0)
+            return QByteArray::number(index);
+    }
+#else
+    Q_UNUSED(type);
+#endif
+    return {};
+}
+
+QList<Backend> decodeBackendOrderFor(const QString &vendor)
+{
 #if defined(Q_OS_ANDROID)
+    Q_UNUSED(vendor);
     return {Backend::MediaCodec};
 #elif defined(Q_OS_MACOS)
+    Q_UNUSED(vendor);
     return {Backend::VideoToolbox};
 #else
 #if defined(Q_OS_WIN)
@@ -82,7 +124,6 @@ QList<Backend> decodeBackendOrder()
     // into system memory, and uploaded again to the integrated one: two bus crossings per
     // frame to reach a device that could have decoded it in place. Follow the renderer
     // instead, and leave the order alone when there is no GL context to ask yet.
-    const QString vendor = renderVendor();
     if (!vendor.isEmpty() && !vendor.contains(QStringLiteral("NVIDIA"), Qt::CaseInsensitive)) {
         order.removeOne(Backend::Cuda);
         order.append(Backend::Cuda);
@@ -205,22 +246,28 @@ bool deviceAvailable(AVHWDeviceType type)
     if (type == AV_HWDEVICE_TYPE_VAAPI && !vaapiLoadable())
         return false;
 #endif
+    // Keyed on the device string too: it follows the render vendor, which is only seeded once a
+    // GL context has been probed.
+    const QByteArray device = deviceString(type);
+    const QString key = QStringLiteral("%1:%2").arg(static_cast<int>(type)).arg(QString::fromLatin1(device));
+
     static QMutex mutex;
-    static QHash<int, bool> cache;
+    static QHash<QString, bool> cache;
     QMutexLocker lock(&mutex);
-    const auto it = cache.constFind(static_cast<int>(type));
+    const auto it = cache.constFind(key);
     if (it != cache.cend())
         return it.value();
 
     AVBufferRef *ctx = nullptr;
     const int previousLog = av_log_get_level();
     av_log_set_level(AV_LOG_QUIET);
-    const int err = av_hwdevice_ctx_create(&ctx, type, nullptr, nullptr, 0);
+    const int err = av_hwdevice_ctx_create(&ctx, type, device.isEmpty() ? nullptr : device.constData(),
+                                           nullptr, 0);
     av_log_set_level(previousLog);
     if (ctx)
         av_buffer_unref(&ctx);
     const bool ok = err >= 0;
-    cache.insert(static_cast<int>(type), ok);
+    cache.insert(key, ok);
     return ok;
 }
 

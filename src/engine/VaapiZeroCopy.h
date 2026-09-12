@@ -21,4 +21,10 @@ enum class VaapiZeroCopyMode {
 VaapiZeroCopyMode vaapiZeroCopyMode();
 void applyVaapiZeroCopyXcbEgl();
 
+// Preview zero-copy for D3D11VA on Windows. On unless DRIFT_D3D11_ZEROCOPY=0 (wins) or
+// preview/d3d11ZeroCopy is false. It needs no driver allow-list the way VAAPI's Auto does: the
+// planes stay YUV and go through Drift's own convert shader, so no driver colour conversion is
+// involved. The settings half is cached like vaapiZeroCopyMode()'s.
+bool d3d11ZeroCopyEnabled();
+
 } // namespace drift

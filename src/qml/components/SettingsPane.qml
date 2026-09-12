@@ -177,6 +177,32 @@ Item {
                     tooltip: qsTr("Can make playback smoother by keeping video on the graphics card. Turn it off if the picture looks wrong. Takes effect after restart.")
                     onToggled: EditorState.mediaCodecZeroCopy = checked
                 }
+
+                ThemedLabel {
+                    visible: EditorState.gpuPreferenceSupported
+                    text: qsTr("Graphics card")
+                }
+
+                ThemedComboBox {
+                    visible: EditorState.gpuPreferenceSupported
+                    width: parent.width
+                    textRole: "label"
+                    valueRole: "id"
+                    model: [
+                        { id: "auto", label: qsTr("Windows default") },
+                        { id: "integrated", label: qsTr("Power saving (integrated GPU)") },
+                        { id: "discrete", label: qsTr("High performance (discrete GPU)") }
+                    ]
+                    tooltip: qsTr("Which graphics card Drift runs on. High performance keeps video decoded on an NVIDIA card on that card; power saving uses less battery. Takes effect after restart.")
+                    currentIndex: {
+                        for (var i = 0; i < model.length; ++i) {
+                            if (model[i].id === EditorState.preferredGpu)
+                                return i
+                        }
+                        return 0
+                    }
+                    onActivated: EditorState.preferredGpu = model[currentIndex].id
+                }
             }
 
             SettingsSection {

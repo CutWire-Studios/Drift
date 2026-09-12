@@ -159,6 +159,9 @@ private slots:
     void decodeBackendOrderFollowsTheRenderGpu();
     void playbackDiagnosticsReportsStagesAndFindings();
     void cudaInteropUploadsAFrameWithoutBlanking();
+    void d3d11InteropUploadsAFrameWithoutBlanking();
+    void decodeAttemptOrderKeepsPinsOnTheRenderGpu();
+    void nvdecAv1StaysOnHardware();
     void reverseProxyKeepsDisplayRotation();
     void clipReaderAudioSequential();
     void audioStreamsAreIndependentPerStreamId();
@@ -2984,6 +2987,166 @@ void EngineTest::decodeBackendOrderFollowsTheRenderGpu()
         drift::hwaccel::setRenderVendor(live);
         QCOMPARE(unseeded, drift::hwaccel::decodeBackendOrder());
     }
+#endif
+}
+
+// A hybrid laptop drawing on the integrated GPU with NVDEC picked in the decoder menu. In Auto
+// the pin must not win — it would decode on the other card and pay two PCIe crossings per frame,
+// with no interop possible — while Hardware mode still honours it exactly.
+void EngineTest::decodeAttemptOrderKeepsPinsOnTheRenderGpu()
+{
+#if defined(Q_OS_MACOS) || defined(Q_OS_ANDROID)
+    QSKIP("one decode backend on this platform; there is no order to pick.");
+#else
+    using drift::hwaccel::Backend;
+    const QString intel = QStringLiteral("Intel");
+    const QString nvidia = QStringLiteral("NVIDIA Corporation");
+
+    QCOMPARE(drift::hwaccel::decodeAttemptOrder(Backend::Cuda, true, intel),
+             QList<Backend>{Backend::Cuda});
+
+    const QList<Backend> autoOnIntel = drift::hwaccel::decodeAttemptOrder(Backend::Cuda, false, intel);
+    QVERIFY(!autoOnIntel.isEmpty());
+    QVERIFY(autoOnIntel.first() != Backend::Cuda);
+    // Still reachable: Auto has to find something if CUDA is all that opens.
+    QVERIFY(autoOnIntel.contains(Backend::Cuda));
+    QCOMPARE(autoOnIntel, drift::hwaccel::decodeBackendOrderFor(intel));
+
+    QCOMPARE(drift::hwaccel::decodeAttemptOrder(Backend::Cuda, false, nvidia).first(), Backend::Cuda);
+    // A pin that is not vendor-bound leads on any renderer.
+    const Backend native = drift::hwaccel::decodeBackendOrderFor(intel).first();
+    QCOMPARE(drift::hwaccel::decodeAttemptOrder(native, false, nvidia).first(), native);
+
+    QCOMPARE(drift::hwaccel::decodeAttemptOrder(Backend::None, false, intel),
+             drift::hwaccel::decodeBackendOrderFor(intel));
+    // Nothing known about the renderer: the pin leads, as it always did.
+    QCOMPARE(drift::hwaccel::decodeAttemptOrder(Backend::Cuda, false, QString()).first(), Backend::Cuda);
+#endif
+}
+
+// NVDEC on Windows refuses to create a decoder with more than 32 surfaces, and the preview's extra
+// surfaces on top of AV1's own pool asked for 41: every AV1 clip failed on its first packet and
+// fell back to libdav1d. Decodes past the preview cache's depth too, so a pool capped too tightly
+// for the cache would show up here as a stall-induced fallback.
+void EngineTest::nvdecAv1StaysOnHardware()
+{
+    if (!drift::hwaccel::availableDecodeBackends().contains(drift::hwaccel::Backend::Cuda))
+        QSKIP("no CUDA decode device");
+    if (!drift::hwaccel::findDecoder(AV_CODEC_ID_AV1, AV_HWDEVICE_TYPE_CUDA, nullptr))
+        QSKIP("this FFmpeg build has no NVDEC AV1 decoder");
+
+    const QString ffmpeg = QStandardPaths::findExecutable(QStringLiteral("ffmpeg"));
+    if (ffmpeg.isEmpty())
+        QSKIP("ffmpeg not available to generate a test clip");
+
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    const QString path = dir.filePath(QStringLiteral("av1.mkv"));
+    QProcess enc;
+    enc.start(ffmpeg,
+              {QStringLiteral("-y"), QStringLiteral("-f"), QStringLiteral("lavfi"),
+               QStringLiteral("-i"), QStringLiteral("testsrc2=s=1280x720:r=30:d=1"),
+               QStringLiteral("-c:v"), QStringLiteral("libsvtav1"), QStringLiteral("-preset"),
+               QStringLiteral("10"), QStringLiteral("-pix_fmt"), QStringLiteral("yuv420p"), path});
+    QVERIFY(enc.waitForFinished(120000));
+    if (!QFileInfo::exists(path))
+        QSKIP("ffmpeg could not encode AV1 here");
+
+    const auto restore = qScopeGuard([] {
+        ClipReader::setHardwareDecodeMode(ClipReader::HardwareDecodeMode::Auto, {});
+    });
+    ClipReader::setHardwareDecodeMode(ClipReader::HardwareDecodeMode::Hardware,
+                                      drift::hwaccel::Backend::Cuda);
+
+    const quint64 fallbacksBefore = ClipReader::hardwareFallbackCount();
+    ClipReader reader;
+    QVERIFY(reader.open(path));
+    PreviewVideoFrame preview;
+    for (int i = 0; i < 20; ++i)
+        QVERIFY(reader.readPreviewVideoFrame(drift::TimeUs(i) * 33'333, preview, 1280, 720));
+
+    QVERIFY2(ClipReader::hardwareFallbackCount() == fallbacksBefore,
+             qPrintable(ClipReader::lastHardwareFailure()));
+    QVERIFY(reader.hardwareAccelActive());
+    QVERIFY(preview.isHardware());
+    QCOMPARE(reader.videoDecoderName(), QStringLiteral("av1"));
+}
+
+// The Windows counterpart of the CUDA test: a D3D11VA frame reaches the compositor through
+// WGL_NV_DX_interop2, and the picture is right. A solid red source that comes out red rules out
+// the plane split, the row order and the colour conversion all at once.
+void EngineTest::d3d11InteropUploadsAFrameWithoutBlanking()
+{
+#if !defined(Q_OS_WIN)
+    QSKIP("D3D11VA interop is Windows only");
+#else
+    if (!GpuCompositor::isAvailable())
+        QSKIP("no GPU compositor on this machine");
+    if (!drift::hwaccel::availableDecodeBackends().contains(drift::hwaccel::Backend::D3d11va))
+        QSKIP("no D3D11VA decode device");
+
+    const QString ffmpeg = QStandardPaths::findExecutable(QStringLiteral("ffmpeg"));
+    if (ffmpeg.isEmpty())
+        QSKIP("ffmpeg not available to generate a test clip");
+
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    const QString path = dir.filePath(QStringLiteral("solid.mp4"));
+    QProcess enc;
+    enc.start(ffmpeg,
+              {QStringLiteral("-y"), QStringLiteral("-f"), QStringLiteral("lavfi"),
+               QStringLiteral("-i"), QStringLiteral("color=c=red:s=640x480:d=1:r=30"),
+               QStringLiteral("-c:v"), QStringLiteral("libx264"), QStringLiteral("-pix_fmt"),
+               QStringLiteral("yuv420p"), path});
+    QVERIFY(enc.waitForFinished(30000));
+    QVERIFY(QFileInfo::exists(path));
+
+    const auto restore = qScopeGuard([] {
+        ClipReader::setHardwareDecodeMode(ClipReader::HardwareDecodeMode::Auto, {});
+    });
+    ClipReader::setHardwareDecodeMode(ClipReader::HardwareDecodeMode::Hardware,
+                                      drift::hwaccel::Backend::D3d11va);
+
+    ClipReader reader;
+    QVERIFY(reader.open(path));
+    PreviewVideoFrame preview;
+    QVERIFY(reader.readPreviewVideoFrame(500'000, preview, 640, 480));
+    QVERIFY(preview.isValid());
+    if (!preview.isHardware())
+        QSKIP("this build decoded in software; nothing to import");
+
+    drift::Project project;
+    project.setResolution(640, 480);
+    project.setFps(30);
+    project.tracks().clear();
+    project.tracks().append(drift::Track{.type = drift::TrackType::Video});
+
+    drift::Clip clip;
+    clip.id = QStringLiteral("d3d11");
+    clip.type = drift::ClipType::Video;
+    clip.path = path;
+    clip.timelineStart = 0;
+    clip.timelineDuration = drift::secondsToUs(1.0);
+    project.tracks()[0].clips.append(clip);
+
+    FrameCompositor compositor;
+    compositor.setProject(&project);
+    const QImage composited = compositor.compositeAt(500'000);
+    QVERIFY(!composited.isNull());
+
+    const QString reason = drift::gl::GlRuntime::lastZeroCopyDeclineReason();
+    if (GpuCompositor::previewUploadPathId() != QStringLiteral("d3d11-interop")
+        && reason.contains(QStringLiteral("WGL_NV_DX_interop2")))
+        QSKIP(qPrintable(reason));
+    QVERIFY2(GpuCompositor::previewUploadPathId() == QStringLiteral("d3d11-interop"),
+             qPrintable(reason));
+
+    const QRgb centre = composited.pixel(composited.width() / 2, composited.height() / 2);
+    QVERIFY2(qRed(centre) > 128, qPrintable(QStringLiteral("centre pixel was %1,%2,%3")
+                                                .arg(qRed(centre))
+                                                .arg(qGreen(centre))
+                                                .arg(qBlue(centre))));
+    QVERIFY(qRed(centre) > qGreen(centre) && qRed(centre) > qBlue(centre));
 #endif
 }
 

@@ -116,8 +116,8 @@ class AppController : public QObject
     Q_PROPERTY(bool autoKeyEnabled READ autoKeyEnabled WRITE setAutoKeyEnabled NOTIFY autoKeyEnabledChanged)
     // Opt-in: on launch, restore the last open project (saved .drift or unsaved recovery snapshot).
     Q_PROPERTY(bool reopenLastProject READ reopenLastProject WRITE setReopenLastProject NOTIFY reopenLastProjectChanged)
-    // Opt-in VAAPI dma-buf preview import. Takes effect after restart; hidden when this
-    // machine has no VAAPI decode backend.
+    // Preview zero-copy import: VAAPI dma-buf on Linux, D3D11 interop on Windows. Takes effect
+    // after restart; hidden when this machine has no decode backend for either.
     Q_PROPERTY(bool vaapiZeroCopy READ vaapiZeroCopy WRITE setVaapiZeroCopy NOTIFY vaapiZeroCopyChanged)
     Q_PROPERTY(bool playbackBenchmarkRunning READ playbackBenchmarkRunning NOTIFY playbackBenchmarkRunningChanged)
     Q_PROPERTY(bool vaapiZeroCopySupported READ vaapiZeroCopySupported CONSTANT)
@@ -127,6 +127,11 @@ class AppController : public QObject
     Q_PROPERTY(bool mediaCodecZeroCopy READ mediaCodecZeroCopy WRITE setMediaCodecZeroCopy NOTIFY
                    mediaCodecZeroCopyChanged)
     Q_PROPERTY(bool mediaCodecZeroCopySupported READ mediaCodecZeroCopySupported CONSTANT)
+    // Hybrid-graphics Windows laptops: which GPU Drift asks to run on — "auto", "integrated" or
+    // "discrete". The driver picks the GPU when it loads, so this takes effect on the next
+    // launch. Hidden on single-GPU machines and off Windows.
+    Q_PROPERTY(QString preferredGpu READ preferredGpu WRITE setPreferredGpu NOTIFY preferredGpuChanged)
+    Q_PROPERTY(bool gpuPreferenceSupported READ gpuPreferenceSupported CONSTANT)
     Q_PROPERTY(bool invertTimelineScroll READ invertTimelineScroll WRITE setInvertTimelineScroll
                    NOTIFY invertTimelineScrollChanged)
     // Session-only localhost MCP for agents. Never persisted. Off at every launch.
@@ -373,6 +378,8 @@ public:
     bool vaapiZeroCopySupported() const;
     bool mediaCodecZeroCopy() const { return m_mediaCodecZeroCopy; }
     bool mediaCodecZeroCopySupported() const;
+    QString preferredGpu() const { return m_preferredGpu; }
+    bool gpuPreferenceSupported() const;
     bool invertTimelineScroll() const { return m_invertTimelineScroll; }
     QString uiLanguage() const { return m_uiLanguage; }
     QVariantList uiLanguages() const;
@@ -476,6 +483,7 @@ public:
     void setReopenLastProject(bool enabled);
     void setVaapiZeroCopy(bool enabled);
     void setMediaCodecZeroCopy(bool enabled);
+    void setPreferredGpu(const QString &id);
     void setInvertTimelineScroll(bool enabled);
     Q_INVOKABLE void setMcpEnabled(bool enabled);
     // Headless wires transports onto the server itself, which the on/off switch above
@@ -1545,6 +1553,7 @@ signals:
     void reopenLastProjectChanged();
     void vaapiZeroCopyChanged();
     void mediaCodecZeroCopyChanged();
+    void preferredGpuChanged();
     // Carries the finished benchmark, merged into whatever the dialog already collected.
     void playbackBenchmarkFinished(const QVariantMap &info);
     void playbackBenchmarkRunningChanged();
@@ -1964,6 +1973,7 @@ protected:
     bool m_reopenLastProject = false;
     bool m_vaapiZeroCopy = false;
     bool m_mediaCodecZeroCopy = false;
+    QString m_preferredGpu = QStringLiteral("auto");
     // One benchmark at a time: it drives the shared decoders and the GL thread, and two
     // sweeps interleaved would measure each other rather than the pipeline.
     std::atomic<bool> m_benchmarkRunning{false};

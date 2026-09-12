@@ -43,6 +43,7 @@
 // caches have no other owner outside src/engine to ask. A one-line forwarder on GpuCompositor
 // would restore the boundary.
 #include "engine/GlRuntime.h"
+#include "engine/GpuPreference.h"
 #include "engine/MediaThumbnail.h"
 #include "engine/AudioFileWriter.h"
 #include "engine/DeepFilterDenoiser.h"
@@ -955,7 +956,13 @@ AppController::AppController(AssetLibrary *assetLibrary, QObject *parent)
     // will use zero-copy on drivers it has been verified against, so showing the box
     // unchecked would contradict what the preview is actually doing. Unchecking writes an
     // explicit false, which turns it off everywhere.
+#if defined(Q_OS_WIN)
+    // Same switch, Windows' import: on by default, so checked unless explicitly turned off.
+    m_vaapiZeroCopy = drift::d3d11ZeroCopyEnabled();
+#else
     m_vaapiZeroCopy = drift::vaapiZeroCopyMode() != drift::VaapiZeroCopyMode::Off;
+#endif
+    m_preferredGpu = drift::gpu::preferenceId(drift::gpu::storedPreference());
     m_mediaCodecZeroCopy =
         settings.value(QStringLiteral("preview/mediaCodecZeroCopy"), false).toBool();
     m_invertTimelineScroll = settings.value(QStringLiteral("timeline/invertScroll"), false).toBool();
@@ -4974,7 +4981,11 @@ void AppController::setVaapiZeroCopy(bool enabled)
         return;
     m_vaapiZeroCopy = enabled;
     QSettings settings;
+#if defined(Q_OS_WIN)
+    settings.setValue(QStringLiteral("preview/d3d11ZeroCopy"), m_vaapiZeroCopy);
+#else
     settings.setValue(QStringLiteral("preview/vaapiZeroCopy"), m_vaapiZeroCopy);
+#endif
     emit vaapiZeroCopyChanged();
     setLastMessage(tr("Faster preview takes effect after you restart Drift."),
                    QStringLiteral("info"));
@@ -5007,9 +5018,30 @@ bool AppController::vaapiZeroCopySupported() const
 {
 #if defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID)
     return drift::hwaccel::availableDecodeBackends().contains(drift::hwaccel::Backend::Vaapi);
+#elif defined(Q_OS_WIN)
+    return drift::hwaccel::availableDecodeBackends().contains(drift::hwaccel::Backend::D3d11va);
 #else
     return false;
 #endif
+}
+
+void AppController::setPreferredGpu(const QString &id)
+{
+    const drift::gpu::Preference preference = drift::gpu::preferenceFromId(id);
+    const QString normalized = drift::gpu::preferenceId(preference);
+    if (m_preferredGpu == normalized)
+        return;
+    m_preferredGpu = normalized;
+    drift::gpu::storePreference(preference);
+    emit preferredGpuChanged();
+    // Not conservative advice: the driver chose this process's GPU when it loaded.
+    setLastMessage(tr("The graphics card choice takes effect after you restart Drift."),
+                   QStringLiteral("info"));
+}
+
+bool AppController::gpuPreferenceSupported() const
+{
+    return drift::gpu::preferenceSupported();
 }
 
 void AppController::setInvertTimelineScroll(bool enabled)
