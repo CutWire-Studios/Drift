@@ -97,6 +97,9 @@ void TestAddonPackage::installsAndVerifies()
     QFile family(dest + QStringLiteral("/fonts/testfamily/family.json"));
     QVERIFY(family.open(QIODevice::ReadOnly));
     QCOMPARE(family.readAll(), QByteArray(R"({"id":"testfamily","family":"Test Family"})"));
+    // Closed before reinstalling: Windows refuses to unlink an open file, so holding this handle
+    // failed the reinstall below in removeRecursively() rather than in anything it means to test.
+    family.close();
 
     // Installing again over an existing directory must succeed, not trip over the leftovers.
     QVERIFY2(install(m_fixture, dest, {}, &info, &error), qPrintable(error));

@@ -438,8 +438,16 @@ jobs:
       # elevation on Windows. Roughly 16 tests QSKIP as a result; the rest is what this covers.
       #
       # Serial, not ctest -j: the suites share QStandardPaths::AppDataLocation test-mode state.
+      #
+      # QT_FORCE_STDERR_LOGGING is what makes a failure here legible at all. QPlainTestLogger
+      # diverts its whole stream to OutputDebugString when it is writing to stdout and stderr has
+      # no console attached (qplaintestlogger.cpp) — which is exactly ctest's pipe. Without it a
+      # failing suite reports only "***Failed" with not one FAIL! line to say which case or why,
+      # and qWarning/qFatal go the same way, so even a fatal startup error is invisible.
       - name: Test
         shell: pwsh
+        env:
+          QT_FORCE_STDERR_LOGGING: 1
         run: |
           $env:PATH = "${{ github.workspace }}\.deps\ffmpeg\bin;${{ env.QT_ROOT_DIR }}\bin;$env:PATH"
           ctest --test-dir build -C Release --output-on-failure
