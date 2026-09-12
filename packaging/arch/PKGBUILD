@@ -1,6 +1,6 @@
 # Maintainer: Suhas Dissanayake <suhasdissa@gmail.com>
 pkgname=drift
-pkgver=0.5.1
+pkgver=0.6.0
 pkgrel=1
 pkgdesc="Beginner-friendly open-source video editor built with Qt 6, QML and FFmpeg"
 arch=('x86_64')

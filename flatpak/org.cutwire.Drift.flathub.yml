@@ -134,11 +134,11 @@ modules:
     #     (#167). CMake also detects this on its own; the flag makes the intent explicit, since
     #     flatpak-builder hides CI from the sandbox.
     sources:
-      # TODO: fill in v0.5.1's commit sha before opening the PR. flatpak-builder requires it —
+      # TODO: fill in v0.6.0's commit sha before opening the PR. flatpak-builder requires it —
       # a tag alone is not a fixed input.
       - type: git
         url: https://github.com/CutWire-Studios/Drift.git
-        tag: v0.5.1
+        tag: v0.6.0
         commit: "0000000000000000000000000000000000000000"
       # Audio effect DSP. Only juce_dsp and its dependencies are compiled; nothing GUI-facing.
       - type: git

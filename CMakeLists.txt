@@ -6,7 +6,7 @@ set(CMAKE_OSX_DEPLOYMENT_TARGET "12.0" CACHE STRING "Oldest macOS release Drift 
 
 # C is enabled for JUCE only: its modules compile a handful of C sources (zlib, flac, oggvorbis)
 # and its CMake refuses to configure without it.
-project(Drift VERSION 0.5.1 LANGUAGES CXX C)
+project(Drift VERSION 0.6.0 LANGUAGES CXX C)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -1135,7 +1135,7 @@ if(ANDROID)
         "Launcher label")
     # versionName is PROJECT_VERSION — same string the desktop binary embeds as DRIFT_VERSION.
     # versionCode is the Play-Store integer; default tracks that semver so a desktop bump is an
-    # Android bump too (0.5.1 → 501). CI may override with -DDRIFT_ANDROID_VERSION_CODE=.
+    # Android bump too (0.6.0 → 600). CI may override with -DDRIFT_ANDROID_VERSION_CODE=.
     string(REGEX MATCH "^([0-9]+)\\.([0-9]+)\\.([0-9]+)" _drift_android_ver "${PROJECT_VERSION}")
     if(_drift_android_ver)
         math(EXPR _drift_android_version_code_default

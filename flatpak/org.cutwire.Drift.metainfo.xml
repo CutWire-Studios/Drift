@@ -89,6 +89,58 @@
     </screenshot>
   </screenshots>
   <releases>
+    <release version="0.6.0" date="2026-09-13">
+      <url type="details">https://github.com/CutWire-Studios/Drift/releases/tag/v0.6.0</url>
+      <description>
+        <p>Text and shapes are redrawn through Skia with layered styles, gradients and a new
+        animation engine, Lottie and SVG clips arrive on the timeline, over a hundred new
+        transitions land in the add-ons catalog, and Windows gets a Direct3D zero-copy path
+        with fixes for NVIDIA stutter.</p>
+        <ul>
+          <li>Text styles: fill, stroke, shadow, glow and extrude layers with solid, gradient,
+          texture or shader paints, a Looks gallery (Neon, Chrome, Holographic, Glitch, Outline,
+          Echo and more), curved baselines and keyframable size, tracking and layer settings</li>
+          <li>Text animations: per-character, word or line animators with In, Out and Loop
+          preset galleries — typewriter, type-on blur, rise by word, snap together, glitch,
+          flicker, colour wave, wipe, karaoke pop and bounce, and 40 more</li>
+          <li>Shapes share the same style stack: gradient fills, multiple strokes, shadows,
+          glows and dashes, all keyframable so shapes can animate</li>
+          <li>Lottie (.lottie, .json) and SVG files import as vector clips, with a Motion
+          inspector for editing slots, playback options and poster frames</li>
+          <li>100+ new GPU transitions ported from gl-transitions, available through the add-ons
+          catalog, plus easing curves for every transition</li>
+          <li>In-app Marketplace for browsing and downloading stock media, with a separate
+          download-queue window</li>
+          <li>Adjustment layers in the Effects tab; masks are now keyframeable adjustment layers
+          with on-canvas handles and their own Masks tab</li>
+          <li>Cutouts via Robust Video Matting, and Paste Attributes with selective picking
+          across multi-clip selections</li>
+          <li>Windows: Direct3D 11 zero-copy decoding and a GPU switcher for hybrid laptops;
+          fixed CUDA zero-copy and CUDA/OpenGL interop stutter on NVIDIA, hybrid-GPU decode,
+          display-cadence stutter and the black preview on software OpenGL; new playback
+          diagnostics and a warning for hardware-acceleration settings that will not work on
+          the current machine</li>
+          <li>Audio: multi-channel waveform view, decibel volume control, multi-track audio
+          extraction, and separate-audio / unlink actions on the timeline</li>
+          <li>Media bin: tree view, Import Folder, nested folder moves, multi-select with
+          Shift-click ranges and bulk actions, safe removal of in-use media, lossless 90°
+          rotation correction and non-destructive trimming from the bin</li>
+          <li>Android: hardware-accelerated video decoding and a reworked mobile layout</li>
+          <li>Save As, track renaming, select-all-and-move, keyboard delete, Shift+Arrow
+          frame-by-frame scrubbing, native shortcut labels on macOS, and settings moved into
+          a dialog</li>
+          <li>MCP: headless CLI mode, text, shape and motion-graphics tools, and lower token
+          usage</li>
+          <li>Translations: Tagalog and Vietnamese added; Japanese and Spanish updated</li>
+        </ul>
+        <p>Thanks to @jmn8718 for lossless rotation correction, Import Folder, track renaming
+        and the media bin multi-select and folder moves; to @gorio for safe media removal,
+        keyboard delete, separate-audio and unlink actions, track numbering and native macOS
+        shortcuts; to @TSFBCE24RhythmHeaveners for the Tagalog translation; to @tojidotakarin
+        for Vietnamese; to @coolvitto for Japanese; and to @angelreyesvelazquezjesus-gif for
+        Spanish.</p>
+      </description>
+    </release>
     <release version="0.5.1" date="2026-08-31">
       <url type="details">https://github.com/CutWire-Studios/Drift/releases/tag/v0.5.1</url>
       <description>
