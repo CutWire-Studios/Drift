@@ -41,6 +41,16 @@ using namespace drift;
 
 Q_DECLARE_METATYPE(drift::TextStyle)
 
+// fonts/ is addon content (gitignored; tests.yml stages it from Drift-Addons). A packaging
+// build such as the Arch PKGBUILD's check() has none, and then "Inter" resolves to whatever Qt
+// falls back to — placeholder boxes in a font-less container — which is not what these tests
+// measure. Same guard as tst_engine.
+#define SKIP_WITHOUT_FONTS()                                                                        \
+    do {                                                                                            \
+        if (fontCatalog().isEmpty())                                                                \
+            QSKIP("font bundle not present — see recipes/fetch-fonts.py in drift-addons");          \
+    } while (false)
+
 namespace {
 
 // An opaque red square at (10,10)-(30,30) and a half-transparent red one at (40,10)-(60,30).
@@ -904,6 +914,7 @@ void SkiaTest::textPainterCacheKeys()
 void SkiaTest::keyframedTextGrowsOverTime()
 {
     reloadFontCatalog({QString::fromUtf8(DRIFT_TEST_FONTS_DIR)});
+    SKIP_WITHOUT_FONTS();
     Clip clip;
     clip.type = ClipType::Text;
     clip.textContent = QStringLiteral("Grow");
@@ -959,6 +970,7 @@ void SkiaTest::keyframedTextGrowsOverTime()
 void SkiaTest::gradientFillSweepsTheBlock()
 {
     reloadFontCatalog({QString::fromUtf8(DRIFT_TEST_FONTS_DIR)});
+    SKIP_WITHOUT_FONTS();
     TextStyle style;
     style.fontFamily = QStringLiteral("Inter");
     style.pixelSize = 90;
@@ -1010,6 +1022,7 @@ void SkiaTest::gradientFillSweepsTheBlock()
 void SkiaTest::pathBendArchesTheLine()
 {
     reloadFontCatalog({QString::fromUtf8(DRIFT_TEST_FONTS_DIR)});
+    SKIP_WITHOUT_FONTS();
     TextStyle style;
     style.fontFamily = QStringLiteral("Inter");
     style.pixelSize = 40;
@@ -1070,6 +1083,7 @@ void SkiaTest::pathBendArchesTheLine()
 void SkiaTest::emojiOutlineDrawsARing()
 {
     reloadFontCatalog({QString::fromUtf8(DRIFT_TEST_FONTS_DIR)});
+    SKIP_WITHOUT_FONTS();
     reloadEmojiCatalog({QString::fromUtf8(DRIFT_TEST_EMOJI_FONT_DIR)});
     if (emojiFontFamily().isEmpty())
         QSKIP("No emoji font available");
@@ -1230,6 +1244,7 @@ Clip animatedClip(const TextStyle &style, const QString &text, TimeUs durationUs
 void SkiaTest::fragmentAnimationRendersPerCharacter()
 {
     reloadFontCatalog({QString::fromUtf8(DRIFT_TEST_FONTS_DIR)});
+    SKIP_WITHOUT_FONTS();
     TextStyle style;
     style.fontFamily = QStringLiteral("Inter");
     style.pixelSize = 48;
@@ -1262,6 +1277,7 @@ void SkiaTest::fragmentAnimationRendersPerCharacter()
 void SkiaTest::bleedIsTimeInvariant()
 {
     reloadFontCatalog({QString::fromUtf8(DRIFT_TEST_FONTS_DIR)});
+    SKIP_WITHOUT_FONTS();
     TextStyle style;
     style.fontFamily = QStringLiteral("Inter");
     style.pixelSize = 48;
@@ -1294,6 +1310,7 @@ void SkiaTest::bleedIsTimeInvariant()
 void SkiaTest::shadingLayersCompositeInOrder()
 {
     reloadFontCatalog({QString::fromUtf8(DRIFT_TEST_FONTS_DIR)});
+    SKIP_WITHOUT_FONTS();
     TextStyle style;
     style.fontFamily = QStringLiteral("Inter");
     style.pixelSize = 64;
@@ -1337,6 +1354,7 @@ void SkiaTest::shadingLayersCompositeInOrder()
 void SkiaTest::gradientOffsetShiftsColour()
 {
     reloadFontCatalog({QString::fromUtf8(DRIFT_TEST_FONTS_DIR)});
+    SKIP_WITHOUT_FONTS();
     TextStyle style;
     style.fontFamily = QStringLiteral("Inter");
     style.pixelSize = 72;
@@ -1388,6 +1406,7 @@ void SkiaTest::gradientOffsetShiftsColour()
 void SkiaTest::wipeMaskRevealsBottomUp()
 {
     reloadFontCatalog({QString::fromUtf8(DRIFT_TEST_FONTS_DIR)});
+    SKIP_WITHOUT_FONTS();
     TextStyle style;
     style.fontFamily = QStringLiteral("Inter");
     style.pixelSize = 72;
@@ -1418,6 +1437,7 @@ void SkiaTest::wipeMaskRevealsBottomUp()
 void SkiaTest::caretDrawsAfterLastVisibleFragment()
 {
     reloadFontCatalog({QString::fromUtf8(DRIFT_TEST_FONTS_DIR)});
+    SKIP_WITHOUT_FONTS();
     TextStyle style;
     style.fontFamily = QStringLiteral("Inter");
     style.pixelSize = 48;
@@ -1451,6 +1471,7 @@ void SkiaTest::skslEffectsCompileAndRender()
     QVERIFY(!skia::textEffectCompileError(QStringLiteral("nope")).isEmpty());
 
     reloadFontCatalog({QString::fromUtf8(DRIFT_TEST_FONTS_DIR)});
+    SKIP_WITHOUT_FONTS();
     TextStyle style;
     style.fontFamily = QStringLiteral("Inter");
     style.pixelSize = 72;
@@ -1477,6 +1498,7 @@ void SkiaTest::skslEffectsCompileAndRender()
 void SkiaTest::textLookRenders()
 {
     reloadFontCatalog({QString::fromUtf8(DRIFT_TEST_FONTS_DIR)});
+    SKIP_WITHOUT_FONTS();
     TextStyle style;
     style.fontFamily = QStringLiteral("Inter");
     style.pixelSize = 64;
@@ -1498,6 +1520,7 @@ void SkiaTest::textLookRenders()
 void SkiaTest::textPacksRender()
 {
     reloadFontCatalog({QString::fromUtf8(DRIFT_TEST_FONTS_DIR)});
+    SKIP_WITHOUT_FONTS();
     const QRectF layout(0, 0, 900, 300);
     for (const TextPreset &preset : textPresets()) {
         TextStyle style = preset.style;
