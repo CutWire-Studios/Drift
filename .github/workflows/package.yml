@@ -349,6 +349,11 @@ jobs:
       # non-Qt, non-FFmpeg libraries Drift links. Windows is the only target with no ambient
       # zlib — every other platform's SDK, base install or runtime already carries one — so it
       # has to be named here or find_package(ZLIB REQUIRED) fails at configure.
+      #
+      # zlib is installed static-md alongside Skia, not dynamic with the others: Skia's archives
+      # link the static-md zlib (zs.lib) themselves, and a second, dynamic zlib (z.lib) in the
+      # same executable is a multiply-defined inflate/crc32 (LNK2005). The Configure step points
+      # find_package(ZLIB) at that copy.
       - name: Install vcpkg dependencies
         shell: pwsh
         env:
@@ -359,12 +364,12 @@ jobs:
             git clone --depth 1 https://github.com/microsoft/vcpkg.git vcpkg
             .\vcpkg\bootstrap-vcpkg.bat
           }
-          .\vcpkg\vcpkg.exe install zstd openssl soundtouch zlib --triplet x64-windows
+          .\vcpkg\vcpkg.exe install zstd openssl soundtouch --triplet x64-windows
           # Skia comes from vcpkg here rather than third_party/build-skia.sh: the port pins the
           # same Skia commit, and its static build turns Skottie/SVG/SkParagraph on by default.
           # x64-windows-static-md, not x64-windows: Skottie needs a static Skia
           # (skia_enable_skottie = !is_component_build), and -md keeps the dynamic CRT Qt uses.
-          .\vcpkg\vcpkg.exe install "skia[gl,harfbuzz,icu,freetype,png]" --triplet x64-windows-static-md
+          .\vcpkg\vcpkg.exe install zlib "skia[gl,harfbuzz,icu,freetype,png]" --triplet x64-windows-static-md
 
       # Save even when a later step fails so the vcpkg build is not repeated on
       # the next run (actions/cache only saves on job success).
@@ -401,6 +406,8 @@ jobs:
             -DCMAKE_TOOLCHAIN_FILE=${{ github.workspace }}\vcpkg\scripts\buildsystems\vcpkg.cmake `
             -DCMAKE_PREFIX_PATH="${{ env.QT_ROOT_DIR }};${{ github.workspace }}\.deps\ffmpeg;${{ github.workspace }}\vcpkg\installed\x64-windows-static-md" `
             -DFETCHCONTENT_BASE_DIR=${{ env.FETCHCONTENT_BASE_DIR }} `
+            -DZLIB_ROOT=${{ github.workspace }}\vcpkg\installed\x64-windows-static-md `
+            -DZLIB_USE_STATIC_LIBS=ON `
             -DDRIFT_BUNDLE_ONNXRUNTIME=OFF `
             -DDRIFT_WITH_SKIA=ON
 

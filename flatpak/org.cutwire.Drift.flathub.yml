@@ -75,9 +75,13 @@ modules:
       - -DCMAKE_INSTALL_LIBDIR=lib
     sources:
       # Upstream's own release tarball rather than the Codeberg git repo: Codeberg 403s clones
-      # from CI runner IP ranges. Byte-identical to the 2.4.1 tag's tree.
+      # from CI runner IP ranges. Byte-identical to the 2.4.1 tag's tree. Fetched from our
+      # mirror first: www.surina.net times out from CI often enough to fail builds, and the
+      # sha256 is upstream's either way.
       - type: archive
-        url: https://www.surina.net/soundtouch/soundtouch-2.4.1.tar.gz
+        url: https://github.com/CutWire-Studios/SoundTouch-Builds/releases/download/2.4.1/soundtouch-2.4.1.tar.gz
+        mirror-urls:
+          - https://www.surina.net/soundtouch/soundtouch-2.4.1.tar.gz
         sha256: e07abf20ce8f95850c280132e1f61ad400fc1f4011b7fac698a503de6aab6733
 
   # Skia's build generator. Not in the SDK and has no release tarballs, so it is built from source

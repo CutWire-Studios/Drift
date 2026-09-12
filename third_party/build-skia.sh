@@ -148,6 +148,13 @@ COMMON_ARGS=(
   skia_enable_fontmgr_custom_empty=true
   skia_enable_fontmgr_custom_directory=true
   extra_cflags=[\"-fPIC\"]
+  # Skia hardcodes -fno-rtti (gn/skia:no_rtti). With the Itanium ABI a class's typeinfo is emitted
+  # once, beside its key function's vtable, so archives without RTTI cannot be subclassed from
+  # RTTI-on code: the derived typeinfo references a base typeinfo that exists nowhere. Compiling
+  # the subclassing files -fno-rtti too held until gcc's LTO devirtualisation re-emitted sksg
+  # vtables in an RTTI context (Arch, -flto=auto). extra_flags is the last default config, so this
+  # overrides the hardcoded flag. Costs ~1% of archive size; nothing in Drift uses it at runtime.
+  extra_cflags_cc=[\"-frtti\"]
 )
 
 HOST_CC="${CC:-clang}"

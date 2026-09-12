@@ -682,21 +682,10 @@ if(DRIFT_WITH_SKIA)
         src/engine/SkiaTextEffects.h
         src/engine/SkiaTextEffects.cpp
     )
-    # Skia's archives are built without RTTI, so a Drift class deriving from a Skia interface
-    # whose virtuals are defined out of line (ImageAsset, PropertyObserver) cannot link with RTTI
-    # on: its typeinfo references the base's, which does not exist. Only Skia*.cpp subclass Skia
-    # types, and only they are compiled to match.
-    set_source_files_properties(
-        src/engine/SkiaRuntime.cpp
-        src/engine/SkiaPath.cpp
-        src/engine/SkiaShading.cpp
-        src/engine/SkiaShapePainter.cpp
-        src/engine/SkiaFonts.cpp
-        src/engine/SkiaVectorResources.cpp
-        src/engine/SkiaVectorObservers.cpp
-        src/engine/SkiaTextPainter.cpp
-        src/engine/SkiaTextEffects.cpp
-        PROPERTIES COMPILE_OPTIONS "$<IF:$<CXX_COMPILER_ID:MSVC>,/GR-,-fno-rtti>")
+    # build-skia.sh compiles Skia with RTTI (see the extra_cflags_cc note there), so Drift classes
+    # may subclass Skia interfaces from any translation unit. vcpkg's port on Windows keeps /GR-,
+    # which is harmless: MSVC emits type descriptors as COMDAT wherever they are needed, so a
+    # derived class never depends on its base's archive carrying one.
     # PRIVATE: no header outside src/engine/Skia*.h includes Skia (Vector*.cpp do, under
     # DRIFT_WITH_SKIA), so the defines and the include root stay out of the rest of the build.
     target_link_libraries(driftengine PRIVATE Skia::Skia)

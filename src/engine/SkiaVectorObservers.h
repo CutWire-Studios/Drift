@@ -8,10 +8,8 @@
 #include "modules/skottie/include/Skottie.h"
 #include "modules/skottie/include/SkottieProperty.h"
 
-// Skottie build-time observers behind Drift-shaped accessors. They live in a Skia*.cpp because
-// those are compiled without RTTI like Skia itself: a class deriving from a Skia interface with
-// an out-of-line virtual (PropertyObserver, ImageAsset) needs the base's typeinfo, which Skia's
-// archives do not carry.
+// Skottie build-time observers behind Drift-shaped accessors, keeping the Skia subclasses out of
+// the Vector*.cpp callers.
 
 namespace drift::skia {
 
