@@ -663,7 +663,7 @@
     </message>
     <message>
         <source>Try again</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Intentar de nuevo</translation>
     </message>
     <message>
         <source>Pick another source</source>
@@ -765,11 +765,11 @@
     <name>AndroidMarket</name>
     <message>
         <source>Market</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Mercado</translation>
     </message>
     <message>
         <source>Downloads</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Descargas</translation>
     </message>
 </context>
 <context>
@@ -3787,7 +3787,7 @@
     </message>
     <message>
         <source>Market</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Mercado</translation>
     </message>
     <message>
         <source>Text</source>
@@ -4626,7 +4626,7 @@
     <name>DownloadsWindow</name>
     <message>
         <source>Downloads</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Descargas</translation>
     </message>
     <message numerus="yes">
         <source>%n active</source>
@@ -4645,7 +4645,7 @@
     </message>
     <message>
         <source>Clear finished</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Borrar completadas</translation>
     </message>
     <message>
         <source>Nothing downloaded yet</source>
@@ -4657,7 +4657,7 @@
     </message>
     <message>
         <source>Try again</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Intentar de nuevo</translation>
     </message>
     <message>
         <source>Cancel</source>
@@ -4747,7 +4747,7 @@
     </message>
     <message>
         <source>Downloads</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Descargas</translation>
     </message>
     <message>
         <source>Video</source>
@@ -6283,7 +6283,7 @@
     </message>
     <message>
         <source>Try again</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Intentar de nuevo</translation>
     </message>
     <message>
         <source>Nothing listed</source>
@@ -6377,7 +6377,7 @@
     </message>
     <message>
         <source>Cancel download</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Cancelar descarga</translation>
     </message>
     <message>
         <source>Retry</source>
@@ -11084,7 +11084,7 @@ Si la reproducción se corta, prueba con otra opción.</translation>
     </message>
     <message>
         <source>Curve</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Curva</translation>
     </message>
     <message>
         <source>Linear</source>
@@ -11524,7 +11524,7 @@ Si la reproducción se corta, prueba con otra opción.</translation>
     </message>
     <message>
         <source>Curve</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Curva</translation>
     </message>
     <message>
         <source>Gradient</source>
