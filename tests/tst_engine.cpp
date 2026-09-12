@@ -3530,6 +3530,9 @@ void EngineTest::clipReaderAudioSequential()
 
 void EngineTest::compositorDefaultRenderStaysFullResolution()
 {
+    if (!GpuCompositor::isAvailable())
+        QSKIP("No GPU compositor available");
+
     drift::Project project;
     project.setResolution(192, 108);
     project.tracks().clear();
@@ -3553,6 +3556,9 @@ void EngineTest::compositorDefaultRenderStaysFullResolution()
 
 void EngineTest::compositorPreviewScaleRendersLowerResolution()
 {
+    if (!GpuCompositor::isAvailable())
+        QSKIP("No GPU compositor available");
+
     drift::Project project;
     project.setResolution(192, 108);
     project.tracks().clear();
@@ -3582,6 +3588,9 @@ void EngineTest::compositorPreviewScaleRendersLowerResolution()
 
 void EngineTest::compositorPreviewScaleMapsProjectPixelLayout()
 {
+    if (!GpuCompositor::isAvailable())
+        QSKIP("No GPU compositor available");
+
     // Project-pixel layout must be scaled onto the preview canvas so WYSIWYG
     // handles (which map project px → widget) stay aligned with the frame.
     drift::Project project;
@@ -3622,6 +3631,9 @@ void EngineTest::compositorPreviewScaleMapsProjectPixelLayout()
 // compositor, which is what the preview uses.
 void EngineTest::compositorAppliesFaceWarpFromBakedTrack()
 {
+    if (!GpuCompositor::isAvailable())
+        QSKIP("No GPU compositor available");
+
     QTemporaryDir dir;
     QVERIFY(dir.isValid());
 
@@ -3713,6 +3725,9 @@ void EngineTest::compositorAppliesFaceWarpFromBakedTrack()
 
 void EngineTest::compositorAppliesMultiplyBlendMode()
 {
+    if (!GpuCompositor::isAvailable())
+        QSKIP("No GPU compositor available");
+
     QTemporaryDir dir;
     QVERIFY(dir.isValid());
 
@@ -3815,6 +3830,9 @@ void EngineTest::compositorAnimatesKeyedEffectParam()
 
 void EngineTest::compositorRendersShapeClip()
 {
+    if (!GpuCompositor::isAvailable())
+        QSKIP("No GPU compositor available");
+
     drift::Project project;
     project.setResolution(128, 128);
     project.tracks().clear();
@@ -3847,6 +3865,9 @@ void EngineTest::compositorRendersShapeClip()
 // editing on the preview, where the QML editor stands in for the baked raster.
 void EngineTest::compositorSkipsClipBeingEdited()
 {
+    if (!GpuCompositor::isAvailable())
+        QSKIP("No GPU compositor available");
+
     drift::Project project;
     project.setResolution(128, 128);
     project.tracks().clear();
@@ -4299,6 +4320,9 @@ void EngineTest::rgbSplitZeroAmountPassthrough()
 
 void EngineTest::rgbSplitShiftsColorChannels()
 {
+    if (!GpuEffectExecutor::instance().isAvailable())
+        QSKIP("GPU effect executor unavailable");
+
     const QImage image = makeRedBlueSplitTestImage();
 
     drift::Effect effect;
@@ -4369,6 +4393,9 @@ void EngineTest::blockGlitchDeterministicForSameTimeAndSeed()
 
 void EngineTest::blockGlitchChangesWithTimelineTime()
 {
+    if (!GpuEffectExecutor::instance().isAvailable())
+        QSKIP("GPU effect executor unavailable");
+
     const QImage image = makeBlockGlitchTestImage();
     const drift::Effect effect = makeBlockGlitchEffect();
 
@@ -4429,6 +4456,9 @@ void EngineTest::scanlineGlitchDeterministicAtFixedTime()
 
 void EngineTest::scanlineGlitchVisualChangeAtNonzeroSettings()
 {
+    if (!GpuEffectExecutor::instance().isAvailable())
+        QSKIP("GPU effect executor unavailable");
+
     const QImage image = makeBlockGlitchTestImage();
     const drift::Effect effect = makeScanlineGlitchEffect();
 
@@ -4482,6 +4512,9 @@ void EngineTest::vhsCrtZeroSettingsPassthrough()
 
 void EngineTest::vhsCrtNonzeroModifiesOutput()
 {
+    if (!GpuEffectExecutor::instance().isAvailable())
+        QSKIP("GPU effect executor unavailable");
+
     const QImage image = makeVhsCrtTestImage();
     const drift::Effect effect = makeVhsCrtEffect();
 
@@ -4496,6 +4529,9 @@ void EngineTest::vhsCrtNonzeroModifiesOutput()
 
 void EngineTest::vhsCrtDeterministicAtFixedTime()
 {
+    if (!GpuEffectExecutor::instance().isAvailable())
+        QSKIP("GPU effect executor unavailable");
+
     const QImage image = makeVhsCrtTestImage();
     const drift::Effect effect = makeVhsCrtEffect();
     constexpr drift::TimeUs timeUs = 420'000;
@@ -4609,6 +4645,9 @@ void EngineTest::rippleWaterZeroAmplitudePassthrough()
 
 void EngineTest::rippleWaterNonzeroDisplacementChangesOutput()
 {
+    if (!GpuEffectExecutor::instance().isAvailable())
+        QSKIP("GPU effect executor unavailable");
+
     const QImage image = makeBlockGlitchTestImage();
     const drift::Effect effect = makeRippleWaterEffect();
 
@@ -4659,6 +4698,9 @@ void EngineTest::edgeNeonZeroIntensityUnchanged()
 
 void EngineTest::edgeNeonHighContrastRectangleGlow()
 {
+    if (!GpuEffectExecutor::instance().isAvailable())
+        QSKIP("GPU effect executor unavailable");
+
     const QImage image = makeHighContrastRectangleImage();
     const drift::Effect effect = makeEdgeNeonEffect();
 
@@ -4707,6 +4749,9 @@ void EngineTest::digitalGlitchZeroIntensityUnchanged()
 
 void EngineTest::digitalGlitchDeterministicForFixedTimeAndSeed()
 {
+    if (!GpuEffectExecutor::instance().isAvailable())
+        QSKIP("GPU effect executor unavailable");
+
     const QImage image = makeBlockGlitchTestImage();
     const drift::Effect effect = makeDigitalGlitchEffect();
     constexpr drift::TimeUs timeUs = 620'000;
@@ -4753,6 +4798,9 @@ void EngineTest::filmBurnZeroIntensityUnchanged()
 
 void EngineTest::filmBurnAddsWarmLeakContribution()
 {
+    if (!GpuEffectExecutor::instance().isAvailable())
+        QSKIP("GPU effect executor unavailable");
+
     QImage image(64, 64, QImage::Format_RGBA8888);
     image.fill(QColor(20, 22, 35));
 
@@ -4830,6 +4878,9 @@ static drift::Effect makeTimeEchoEffect(const QString &blendMode = QStringLitera
 
 void EngineTest::timeEchoDeterministicAtFixedTimelineTime()
 {
+    if (!GpuCompositor::isAvailable())
+        QSKIP("No GPU compositor available");
+
     QTemporaryDir dir;
     QVERIFY(dir.isValid());
     const QString path = makeColorSegmentsVideo(dir);
@@ -4863,6 +4914,9 @@ void EngineTest::timeEchoDeterministicAtFixedTimelineTime()
 
 void EngineTest::timeEchoBlendsPriorVideoFrames()
 {
+    if (!GpuCompositor::isAvailable())
+        QSKIP("No GPU compositor available");
+
     QTemporaryDir dir;
     QVERIFY(dir.isValid());
     const QString path = makeColorSegmentsVideo(dir);
@@ -4930,6 +4984,9 @@ void EngineTest::shockwavePulseZeroStrengthPassthrough()
 
 void EngineTest::shockwavePulseChangesPixelsNearWavefront()
 {
+    if (!GpuEffectExecutor::instance().isAvailable())
+        QSKIP("GPU effect executor unavailable");
+
     const QImage image = makeBlockGlitchTestImage();
     const drift::Effect effect = makeShockwavePulseEffect();
 
@@ -4950,6 +5007,9 @@ void EngineTest::shockwavePulseChangesPixelsNearWavefront()
 
 void EngineTest::compositorCrossfadeBetweenShapeClips()
 {
+    if (!GpuCompositor::isAvailable())
+        QSKIP("No GPU compositor available");
+
     drift::Project project;
     project.setResolution(128, 128);
     project.tracks().clear();
@@ -5034,6 +5094,9 @@ static void appendRedBlueShapeTransition(drift::Project &project, const QString 
 
 void EngineTest::compositorDipToBlackMidpointIsBlack()
 {
+    if (!GpuCompositor::isAvailable())
+        QSKIP("No GPU compositor available");
+
     drift::Project project;
     appendRedBlueShapeTransition(project, QStringLiteral("dip"));
 
@@ -5050,6 +5113,9 @@ void EngineTest::compositorDipToBlackMidpointIsBlack()
 
 void EngineTest::compositorWipeRightRevealsIncomingClip()
 {
+    if (!GpuCompositor::isAvailable())
+        QSKIP("No GPU compositor available");
+
     drift::Project project;
     appendRedBlueShapeTransition(project, QStringLiteral("wipe_right"));
 
@@ -5132,6 +5198,9 @@ void EngineTest::gpuTransitionBindsBothSources()
 // A broken shader must fall back to a CPU crossfade, never to a black frame or to clip A alone.
 void EngineTest::brokenTransitionShaderFallsBackToCrossfade()
 {
+    if (!GpuCompositor::isAvailable())
+        QSKIP("No GPU compositor available");
+
     QTemporaryDir dir;
     QVERIFY(dir.isValid());
     const QString pkg = QDir(dir.path()).filePath(QStringLiteral("broken"));
@@ -5170,6 +5239,9 @@ void EngineTest::brokenTransitionShaderFallsBackToCrossfade()
 // Rendering each side into its own full-canvas layer routes text through the normal path.
 void EngineTest::textClipRendersInsideTransition()
 {
+    if (!GpuCompositor::isAvailable())
+        QSKIP("No GPU compositor available");
+
     drift::Project project;
     project.setResolution(128, 128);
     project.tracks().clear();
@@ -5759,6 +5831,9 @@ void EngineTest::textAnimationFadesAndSlides()
 
 void EngineTest::clipBodyAnimationFadeRampsOpacity()
 {
+    if (!GpuCompositor::isAvailable())
+        QSKIP("No GPU compositor available");
+
     drift::Project project;
     project.setResolution(128, 128);
     project.tracks().clear();
@@ -6157,6 +6232,11 @@ void EngineTest::aVideoEffectsAdjustmentKeepsItsOwnMask()
 
 void EngineTest::exporterProducesPlayableFileWithBackground()
 {
+    // The exporter composites every frame it writes, so with no GPU compositor this
+    // produces a file of identical blank frames rather than anything worth asserting on.
+    if (!GpuCompositor::isAvailable())
+        QSKIP("No GPU compositor available");
+
     QTemporaryDir dir;
     QVERIFY(dir.isValid());
 
@@ -6962,6 +7042,11 @@ void EngineTest::exporterSupportsNtscFrameRates()
 // export is exactly the ceiling and 240 fps is past it.
 void EngineTest::exporterFrameRateAddsRealDetailToSlowedClips()
 {
+    // The exporter composites every frame it writes, so with no GPU compositor this
+    // produces a file of identical blank frames rather than anything worth asserting on.
+    if (!GpuCompositor::isAvailable())
+        QSKIP("No GPU compositor available");
+
     QTemporaryDir dir;
     QVERIFY(dir.isValid());
     const QString source = makeHighRateVideo(dir);

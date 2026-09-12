@@ -29,6 +29,7 @@
 #include "mcp/McpProtocol.h"
 #include "mcp/McpSession.h"
 #include "mcp/McpStdio.h"
+#include "engine/GpuCompositor.h"
 #include "engine/ObjectDetector.h"
 #include "models/AppController.h"
 #include "TestZip.h"
@@ -3345,6 +3346,11 @@ void McpTest::framesUniformReturnsN()
 
 void McpTest::framesChangesDedupesFourShotClip()
 {
+    // The isError guard below is not enough here: a compositor that cannot draw still answers,
+    // with the same blank frame at every sample, and the changes sampler dedupes those down to
+    // the single frame this used to fail on. Nothing about dedupe is observable without one.
+    if (!GpuCompositor::isAvailable())
+        QSKIP("No GPU compositor available");
     if (ffmpegPath().isEmpty())
         QSKIP("ffmpeg not available to generate a test clip");
     QTemporaryDir dir;
