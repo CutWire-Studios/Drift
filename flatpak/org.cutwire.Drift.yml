@@ -86,6 +86,10 @@ modules:
       # Flathub updates this build, so the in-app update check is compiled out: an app that nags
       # about a version flatpak will fetch on its own is noise the user cannot act on.
       - -DDRIFT_UPDATE_FEED_URL=
+      # The build-time lupdate only sees the C++ sources, so with -no-obsolete it strips every
+      # QML string from the catalogs before lrelease runs and most of the UI ships untranslated.
+      # Ship the committed catalogs instead.
+      - -DDRIFT_AUTO_UPDATE_TRANSLATIONS=OFF
     sources:
       - type: dir
         path: ..

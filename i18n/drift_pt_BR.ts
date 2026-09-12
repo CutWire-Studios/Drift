@@ -1361,6 +1361,10 @@
         <translation>Desvincular áudio</translation>
     </message>
     <message>
+        <source>Link clips</source>
+        <translation>Vincular clipes</translation>
+    </message>
+    <message>
         <source>Clear selection</source>
         <translation>Limpar seleção</translation>
     </message>
@@ -1426,7 +1430,7 @@
     </message>
     <message>
         <source>Faster preview takes effect after you restart Drift.</source>
-        <translation type="unfinished"></translation>
+        <translation>A prévia mais rápida passa a valer depois que você reiniciar o Drift.</translation>
     </message>
     <message>
         <source>System default</source>
@@ -2286,6 +2290,10 @@
         <translation>Clipes desvinculados</translation>
     </message>
     <message>
+        <source>Clips linked</source>
+        <translation>Clipes vinculados</translation>
+    </message>
+    <message>
         <source>Audio unlinked</source>
         <translation>Áudio desvinculado</translation>
     </message>
@@ -2822,19 +2830,19 @@
     </message>
     <message>
         <source>Folder created</source>
-        <translation type="unfinished"></translation>
+        <translation>Pasta criada</translation>
     </message>
     <message>
         <source>Folder renamed</source>
-        <translation type="unfinished"></translation>
+        <translation>Pasta renomeada</translation>
     </message>
     <message>
         <source>Folder deleted</source>
-        <translation type="unfinished"></translation>
+        <translation>Pasta excluída</translation>
     </message>
     <message>
         <source>Media moved</source>
-        <translation type="unfinished"></translation>
+        <translation>Mídia movida</translation>
     </message>
 </context>
 <context>
@@ -2975,23 +2983,23 @@
     </message>
     <message>
         <source>Could not open that file. This package cannot read files dropped from other apps — use Import to pick them instead.</source>
-        <translation type="unfinished"></translation>
+        <translation>Não foi possível abrir esse arquivo. Este pacote não consegue ler arquivos arrastados de outros aplicativos. Use Importar para escolhê-los.</translation>
     </message>
     <message>
         <source>Could not open those files. This package cannot read files dropped from other apps — use Import to pick them instead.</source>
-        <translation type="unfinished"></translation>
+        <translation>Não foi possível abrir esses arquivos. Este pacote não consegue ler arquivos arrastados de outros aplicativos. Use Importar para escolhê-los.</translation>
     </message>
     <message>
         <source>Could not open that file. It may have been moved, or you may not have permission to read it.</source>
-        <translation type="unfinished"></translation>
+        <translation>Não foi possível abrir esse arquivo. Ele pode ter sido movido, ou você pode não ter permissão para lê-lo.</translation>
     </message>
     <message>
         <source>Could not open any of the selected files.</source>
-        <translation type="unfinished"></translation>
+        <translation>Não foi possível abrir nenhum dos arquivos selecionados.</translation>
     </message>
     <message>
         <source>Imported %1 of %2 files. The rest could not be opened — this package cannot read files dropped from other apps. Use Import instead.</source>
-        <translation type="unfinished"></translation>
+        <translation>Importados %1 de %2 arquivos. Os demais não puderam ser abertos, pois este pacote não consegue ler arquivos arrastados de outros aplicativos. Use Importar.</translation>
     </message>
     <message>
         <source>Text</source>
@@ -3135,31 +3143,31 @@
     </message>
     <message>
         <source>New folder</source>
-        <translation type="unfinished"></translation>
+        <translation>Nova pasta</translation>
     </message>
     <message>
         <source>Create</source>
-        <translation type="unfinished">Criar</translation>
+        <translation>Criar</translation>
     </message>
     <message>
         <source>Folder name</source>
-        <translation type="unfinished"></translation>
+        <translation>Nome da pasta</translation>
     </message>
     <message>
         <source>Rename folder</source>
-        <translation type="unfinished"></translation>
+        <translation>Renomear pasta</translation>
     </message>
     <message>
         <source>Move to folder</source>
-        <translation type="unfinished"></translation>
+        <translation>Mover para a pasta</translation>
     </message>
     <message>
         <source>New Folder</source>
-        <translation type="unfinished"></translation>
+        <translation>Nova pasta</translation>
     </message>
     <message>
         <source>Create a new folder here</source>
-        <translation type="unfinished"></translation>
+        <translation>Criar uma nova pasta aqui</translation>
     </message>
 </context>
 <context>
@@ -3389,7 +3397,7 @@
     <name>BinBreadcrumb</name>
     <message>
         <source>Media</source>
-        <translation type="unfinished">Mídia</translation>
+        <translation>Mídia</translation>
     </message>
 </context>
 <context>
@@ -5006,23 +5014,23 @@
     </message>
     <message>
         <source>Move to folder…</source>
-        <translation type="unfinished"></translation>
+        <translation>Mover para a pasta…</translation>
     </message>
     <message>
         <source>This folder is empty</source>
-        <translation type="unfinished"></translation>
+        <translation>Esta pasta está vazia</translation>
     </message>
     <message>
         <source>Drag media here, or import more.</source>
-        <translation type="unfinished"></translation>
+        <translation>Arraste mídias para cá ou importe mais.</translation>
     </message>
     <message>
         <source>Open</source>
-        <translation type="unfinished">Abrir</translation>
+        <translation>Abrir</translation>
     </message>
     <message>
         <source>Delete</source>
-        <translation type="unfinished">Excluir</translation>
+        <translation>Excluir</translation>
     </message>
 </context>
 <context>
@@ -6289,11 +6297,11 @@ Se a reprodução travar, experimente outro.</translation>
     </message>
     <message>
         <source>Haptic feedback</source>
-        <translation type="unfinished"></translation>
+        <translation>Resposta tátil</translation>
     </message>
     <message>
         <source>Vibrate on taps, snaps, and edits. Uses this device’s own haptic effects when it has them.</source>
-        <translation type="unfinished"></translation>
+        <translation>Vibra ao tocar, encaixar e editar. Usa os efeitos táteis do próprio aparelho quando ele os tem.</translation>
     </message>
     <message>
         <source>App</source>
@@ -6349,11 +6357,11 @@ Se a reprodução travar, experimente outro.</translation>
     </message>
     <message>
         <source>Faster preview (experimental)</source>
-        <translation type="unfinished"></translation>
+        <translation>Prévia mais rápida (experimental)</translation>
     </message>
     <message>
         <source>Can make playback smoother by keeping video on the graphics card. Turn it off if the picture looks wrong. Takes effect after restart.</source>
-        <translation type="unfinished"></translation>
+        <translation>Pode deixar a reprodução mais suave mantendo o vídeo na placa de vídeo. Desative se a imagem parecer errada. Passa a valer depois de reiniciar.</translation>
     </message>
     <message>
         <source>Makes buttons, text, and icons larger. This is extra scale on top of the size already set in your display settings. Takes effect after restart.</source>
@@ -7880,6 +7888,10 @@ Se a reprodução travar, experimente outro.</translation>
         <translation>Desvincular</translation>
     </message>
     <message>
+        <source>Link</source>
+        <translation>Vincular</translation>
+    </message>
+    <message>
         <source>Cut</source>
         <translation>Cortar</translation>
     </message>
@@ -8096,6 +8108,10 @@ Se a reprodução travar, experimente outro.</translation>
     <message>
         <source>Unlink video and audio</source>
         <translation>Desvincular vídeo e áudio</translation>
+    </message>
+    <message>
+        <source>Link selected clips</source>
+        <translation>Vincular clipes selecionados</translation>
     </message>
     <message>
         <source>Merge adjacent clips</source>
