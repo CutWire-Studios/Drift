@@ -87,6 +87,10 @@ user-facing surface is the Text tab (Type · Look · Animate) and the `text` MCP
 - **A preset**: drop a JSON file in `presets/text-animations/` (see `type-on-blur.json`); it is
   validated by `tst_core::textAnimationPresetsAreWellFormed`.
 - **A look**: add a row to `textLooks()` and a branch to `applyTextLook` (`TextLook.cpp`).
+- **A style pack**: add a block to `buildPresets()` (`TextStyle.cpp`) using the gradient / effect
+  / extrude layer helpers there; every pack carries In and Out slots and may carry a Loop.
+  `tst_core::textPresetsAreWellFormed` checks the slots resolve and no animator recolours a
+  gradient or effect fill; `tst_skia::textPacksRender` rasterises each one.
 - **A shader effect**: add its SkSL to `kEffects` in `SkiaTextEffects.cpp` and its params to
   `textShaderEffectSpecs()` in `TextShading.cpp`; `tst_skia::skslEffectsCompileAndRender` compiles
   every id on the CPU path and on Ganesh.

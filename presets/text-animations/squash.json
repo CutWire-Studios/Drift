@@ -1,0 +1,11 @@
+{
+  "format": 1, "id": "squash", "label": "Squash & stretch", "category": "kinetic", "sampleText": "Boing",
+  "slots": ["in"], "order": 240,
+  "defaults": { "unit": "word", "stagger": 0.08, "duration": 0.5, "ease": "back" },
+  "params": [
+    { "id": "stretch", "type": "scalar", "label": "Stretch", "unit": "%", "min": 100, "max": 400, "step": 10, "default": 260 }
+  ],
+  "animators": [
+    { "selectors": ["stagger"], "props": { "scaleX": 40, "scaleY": "{stretch}", "opacity": 0 } }
+  ]
+}

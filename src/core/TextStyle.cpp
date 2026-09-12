@@ -2,6 +2,7 @@
 
 #include "Effect.h"
 #include "TextAnimationPreset.h"
+#include "TextLook.h"
 #include "TextPresetStore.h"
 
 #include <QCoreApplication>
@@ -189,28 +190,90 @@ TextShadingLayer legacyStroke(double width, const QColor &color = QColor(Qt::bla
     return layer;
 }
 
-TextAnimationSlot presetSlot(const char *presetId, double durationS, const char *ease)
+TextShadingLayer gradientFillLayer(const char *gradientPresetId, double angle,
+                                   TextGradientSpace space = TextGradientSpace::Block, double offsetSpeed = 0.0,
+                                   bool repeat = false, const QString &id = QStringLiteral("fill"))
+{
+    TextShadingLayer layer = solidFillLayer(Qt::white, id);
+    layer.paint.kind = TextPaintKind::Gradient;
+    for (const TextGradientPreset &preset : textGradientPresets())
+        if (preset.id == QLatin1String(gradientPresetId))
+            layer.paint.gradient = preset.gradient;
+    layer.paint.gradient.angle = angle;
+    layer.paint.gradient.space = space;
+    layer.paint.gradient.offsetSpeed = offsetSpeed;
+    layer.paint.gradient.repeat = repeat;
+    return layer;
+}
+
+TextShadingLayer effectLayer(const char *effectId, const QMap<QString, VectorSlotValue> &params,
+                             const QColor &tint = Qt::white, BlendMode blend = BlendMode::Normal,
+                             const QString &id = QStringLiteral("fill"))
+{
+    TextShadingLayer layer = solidFillLayer(tint, id);
+    layer.paint.kind = TextPaintKind::Effect;
+    layer.paint.effect.id = QLatin1String(effectId);
+    layer.paint.effect.params = params;
+    layer.blend = blend;
+    return layer;
+}
+
+TextShadingLayer extrudeLayer(const QColor &color, double depth, double angle = 45.0, int steps = 8,
+                              double darken = 0.5)
+{
+    TextShadingLayer layer = solidFillLayer(color, QStringLiteral("extrude"));
+    layer.kind = TextLayerKind::Extrude;
+    layer.width = depth;
+    layer.extrudeSteps = steps;
+    layer.extrudeAngle = angle;
+    layer.extrudeDarken = darken;
+    return layer;
+}
+
+VectorSlotValue num(double v) { return VectorSlotValue::fromScalar(v); }
+VectorSlotValue txt(const char *v) { return VectorSlotValue::fromText(QLatin1String(v)); }
+VectorSlotValue col(const QColor &c) { return VectorSlotValue::fromColor(c); }
+
+TextAnimationSlot presetSlot(const char *presetId, double durationS, const char *ease,
+                             const QMap<QString, VectorSlotValue> &extra = {})
 {
     TextAnimationSlot slot;
     slot.presetId = QLatin1String(presetId);
-    slot.params.insert(QStringLiteral("duration"), VectorSlotValue::fromScalar(durationS));
-    slot.params.insert(QStringLiteral("ease"), VectorSlotValue::fromText(QLatin1String(ease)));
+    slot.params = extra;
+    slot.params.insert(QStringLiteral("duration"), num(durationS));
+    slot.params.insert(QStringLiteral("ease"), txt(ease));
+    return slot;
+}
+
+// Loop presets carry their own speed / amount params and no duration or ease.
+TextAnimationSlot loopSlot(const char *presetId, const QMap<QString, VectorSlotValue> &params = {})
+{
+    TextAnimationSlot slot;
+    slot.presetId = QLatin1String(presetId);
+    slot.params = params;
     return slot;
 }
 
 QList<TextPreset> buildPresets()
 {
     QList<TextPreset> presets;
+    const auto add = [&](const char *id, const char *label, const TextStyle &style, const char *sample) {
+        presets.append({QLatin1String(id), QCoreApplication::translate("TextStyle", label), style,
+                        QCoreApplication::translate("TextStyle", sample)});
+    };
+    const auto byWord = [] { return QMap<QString, VectorSlotValue>{{QStringLiteral("unit"), txt("word")}}; };
+    const auto byChar = [] { return QMap<QString, VectorSlotValue>{{QStringLiteral("unit"), txt("character")}}; };
 
     {
         TextStyle s;
         s.fontFamily = QStringLiteral("Montserrat");
         s.pixelSize = 96;
         s.fontWeight = 800;
-        s.layers = {legacyStroke(2.0), solidFillLayer(Qt::white)};
-        s.animation.in = presetSlot("fade", 0.4, "easeOut");
-        presets.append({QStringLiteral("title"), QCoreApplication::translate("TextStyle", "Title"), s,
-                        QCoreApplication::translate("TextStyle", "Main Title")});
+        s.layers = {legacyShadow(true, QColor(0, 0, 0), 0.0, 6.0, 16.0, 0.45), legacyStroke(2.0),
+                    gradientFillLayer("mono", 90.0)};
+        s.animation.in = presetSlot("rise", 0.5, "easeOut", byWord());
+        s.animation.out = presetSlot("fade-scale", 0.4, "easeIn");
+        add("title", "Title", s, "Main Title");
     }
     {
         TextStyle s;
@@ -222,8 +285,9 @@ QList<TextPreset> buildPresets()
         s.boxColor = QColor(0, 0, 0, 140);
         s.boxPadding = 10.0;
         s.boxRadius = 6.0;
-        presets.append({QStringLiteral("subtitle"), QCoreApplication::translate("TextStyle", "Subtitle"), s,
-                        QCoreApplication::translate("TextStyle", "A supporting line")});
+        s.animation.in = presetSlot("fade", 0.3, "easeOut");
+        s.animation.out = presetSlot("fade", 0.25, "easeIn");
+        add("subtitle", "Subtitle", s, "A supporting line");
     }
     {
         TextStyle s;
@@ -237,8 +301,7 @@ QList<TextPreset> buildPresets()
         s.boxPadding = 12.0;
         s.animation.in = presetSlot("slide-right", 0.5, "easeOut");
         s.animation.out = presetSlot("slide-left", 0.4, "easeInOut");
-        presets.append({QStringLiteral("lower-third"), QCoreApplication::translate("TextStyle", "Lower third"), s,
-                        QCoreApplication::translate("TextStyle", "Alex Rivera · Host")});
+        add("lower-third", "Lower third", s, "Alex Rivera · Host");
     }
     {
         TextStyle s;
@@ -247,8 +310,9 @@ QList<TextPreset> buildPresets()
         s.fontWeight = 600;
         s.valign = TextVAlign::Bottom;
         s.layers = {legacyShadow(), legacyStroke(3.0), solidFillLayer(Qt::white)};
-        presets.append({QStringLiteral("caption"), QCoreApplication::translate("TextStyle", "Caption"), s,
-                        QCoreApplication::translate("TextStyle", "Watch until the end")});
+        s.animation.in = presetSlot("pop", 0.25, "back", {{QStringLiteral("unit"), txt("word")}, {QStringLiteral("stagger"), num(0.03)}});
+        s.animation.out = presetSlot("fade", 0.15, "easeIn");
+        add("caption", "Caption", s, "Watch until the end");
     }
     {
         TextStyle s;
@@ -257,9 +321,10 @@ QList<TextPreset> buildPresets()
         s.fontWeight = 500;
         s.italic = true;
         s.lineHeight = 1.4;
-        s.animation.in = presetSlot("blur-in", 0.7, "easeOut");
-        presets.append({QStringLiteral("quote"), QCoreApplication::translate("TextStyle", "Quote"), s,
-                        QCoreApplication::translate("TextStyle", "Words worth keeping")});
+        s.layers = {legacyGlow(true, QColor(255, 255, 255), 14.0, 0.35), gradientFillLayer("mono", 90.0)};
+        s.animation.in = presetSlot("blur-in-words", 0.7, "easeOut");
+        s.animation.out = presetSlot("fade-shift", 0.5, "easeIn");
+        add("quote", "Quote", s, "Words worth keeping");
     }
     {
         TextStyle s;
@@ -267,21 +332,23 @@ QList<TextPreset> buildPresets()
         s.pixelSize = 120;
         s.fontWeight = 400;
         s.letterSpacing = 2.0;
-        s.layers = {legacyShadow(true, QColor(0, 0, 0), 0.0, 6.0, 12.0), legacyStroke(6.0), solidFillLayer(Qt::white)};
-        s.animation.in = presetSlot("pop", 0.35, "back");
-        presets.append({QStringLiteral("impact"), QCoreApplication::translate("TextStyle", "Impact"), s,
-                        QCoreApplication::translate("TextStyle", "STOP SCROLLING")});
+        s.layers = {legacyShadow(true, QColor(0, 0, 0), 0.0, 8.0, 14.0), extrudeLayer(QColor(30, 30, 30), 10.0),
+                    legacyStroke(4.0), gradientFillLayer("fire", 90.0)};
+        s.animation.in = presetSlot("stamp", 0.35, "easeIn");
+        s.animation.out = presetSlot("fade-scale", 0.4, "easeIn");
+        add("impact", "Impact", s, "STOP SCROLLING");
     }
     {
         TextStyle s;
         s.fontFamily = QStringLiteral("Fredoka");
         s.pixelSize = 80;
         s.fontWeight = 600;
-        s.layers = {legacyStroke(5.0), solidFillLayer(QColor(255, 214, 64))};
-        s.animation.in = presetSlot("pop", 0.45, "back");
-        s.animation.out = presetSlot("pop", 0.3, "easeInOut");
-        presets.append({QStringLiteral("pop"), QCoreApplication::translate("TextStyle", "Pop"), s,
-                        QCoreApplication::translate("TextStyle", "Big news!")});
+        TextShadingLayer outer = strokeLayer(9.0, Qt::black, QStringLiteral("outline"));
+        s.layers = {outer, strokeLayer(5.0, Qt::white), gradientFillLayer("candy", 0.0, TextGradientSpace::Word)};
+        s.animation.in = presetSlot("bounce", 0.6, "bounce", byChar());
+        s.animation.out = presetSlot("shrink", 0.3, "easeIn");
+        s.animation.loop = loopSlot("wave", {{QStringLiteral("amount"), num(0.04)}});
+        add("pop", "Pop", s, "Big news!");
     }
     {
         TextStyle s;
@@ -289,10 +356,15 @@ QList<TextPreset> buildPresets()
         s.pixelSize = 110;
         s.fontWeight = 400;
         s.letterSpacing = 4.0;
-        s.layers = {legacyShadow(true, QColor(0, 220, 255), 0.0, 0.0, 24.0, 0.9),
-                    legacyStroke(2.0, QColor(0, 90, 120)), solidFillLayer(QColor(120, 255, 245))};
-        presets.append({QStringLiteral("neon"), QCoreApplication::translate("TextStyle", "Neon"), s,
-                        QCoreApplication::translate("TextStyle", "NEON NIGHTS")});
+        const QColor cyan(0, 220, 255);
+        TextShadingLayer fill = effectLayer("neon-pulse", {{QStringLiteral("speed"), num(1.2)}, {QStringLiteral("intensity"), num(0.35)},
+                                                           {QStringLiteral("flicker"), num(0.25)}, {QStringLiteral("colorA"), col(cyan)}},
+                                            QColor(235, 255, 255));
+        s.layers = {glowLayer(cyan, 40.0, 0.5, QStringLiteral("glowouter")), glowLayer(cyan, 14.0, 0.9),
+                    strokeLayer(2.0, cyan), fill};
+        s.animation.in = presetSlot("flicker-in", 0.9, "linear");
+        s.animation.out = presetSlot("fade", 0.3, "easeIn");
+        add("neon", "Neon", s, "NEON NIGHTS");
     }
     {
         TextStyle s;
@@ -301,9 +373,9 @@ QList<TextPreset> buildPresets()
         s.fontWeight = 400;
         s.lineHeight = 1.35;
         s.layers = {legacyShadow(true, QColor(0, 0, 0), 0.0, 4.0, 6.0), solidFillLayer(Qt::white)};
-        s.animation.in = presetSlot("slide-up", 0.55, "easeOut");
-        presets.append({QStringLiteral("handwritten"), QCoreApplication::translate("TextStyle", "Handwritten"), s,
-                        QCoreApplication::translate("TextStyle", "With love")});
+        s.animation.in = presetSlot("typewriter", 0.4, "linear", {{QStringLiteral("stagger"), num(0.07)}});
+        s.animation.out = presetSlot("fade", 0.4, "easeIn");
+        add("handwritten", "Handwritten", s, "With love");
     }
 
     // Short-form caption packs. Unlike the presets above these carry a per-word accent rule, so the
@@ -317,8 +389,9 @@ QList<TextPreset> buildPresets()
         s.accent.rule = WordAccentRule::FirstWord;
         s.accent.colorEnabled = true;
         s.accent.color = QColor(255, 45, 45);
-        presets.append({QStringLiteral("hormozi"), QCoreApplication::translate("TextStyle", "Hormozi"), s,
-                        QCoreApplication::translate("TextStyle", "Stop wasting time")});
+        s.animation.in = presetSlot("pop", 0.3, "back", byWord());
+        s.animation.out = presetSlot("fade", 0.15, "easeIn");
+        add("hormozi", "Hormozi", s, "Stop wasting time");
     }
     {
         TextStyle s;
@@ -330,8 +403,9 @@ QList<TextPreset> buildPresets()
         s.accent.n = 3;
         s.accent.colorEnabled = true;
         s.accent.color = QColor(255, 59, 48);
-        presets.append({QStringLiteral("one-word-color"), QCoreApplication::translate("TextStyle", "One word colour"), s,
-                        QCoreApplication::translate("TextStyle", "Make every word count")});
+        s.animation.in = presetSlot("fade-up-char", 0.35, "easeOut");
+        s.animation.out = presetSlot("fade", 0.2, "easeIn");
+        add("one-word-color", "One word colour", s, "Make every word count");
     }
     {
         TextStyle s;
@@ -344,8 +418,9 @@ QList<TextPreset> buildPresets()
         s.accent.highlight.color = QColor(230, 40, 40);
         s.accent.highlight.padding = 8.0;
         s.accent.highlight.radius = 6.0;
-        presets.append({QStringLiteral("word-background"), QCoreApplication::translate("TextStyle", "Word background"), s,
-                        QCoreApplication::translate("TextStyle", "Highlight what matters most")});
+        s.animation.in = presetSlot("slide-up", 0.4, "easeOut", byWord());
+        s.animation.out = presetSlot("fade", 0.2, "easeIn");
+        add("word-background", "Word background", s, "Highlight what matters most");
     }
     {
         TextStyle s;
@@ -357,8 +432,9 @@ QList<TextPreset> buildPresets()
         s.boxColor = QColor(255, 196, 0);
         s.boxPadding = 14.0;
         s.boxRadius = 10.0;
-        presets.append({QStringLiteral("sentence-background"), QCoreApplication::translate("TextStyle", "Sentence background"), s,
-                        QCoreApplication::translate("TextStyle", "Read this carefully")});
+        s.animation.in = presetSlot("wipe", 0.4, "easeOut");
+        s.animation.out = presetSlot("wipe", 0.3, "easeIn");
+        add("sentence-background", "Sentence background", s, "Read this carefully");
     }
     {
         TextStyle s;
@@ -370,8 +446,10 @@ QList<TextPreset> buildPresets()
         s.accent.colorEnabled = true;
         s.accent.color = QColor(255, 212, 0);
         s.accent.sizeScale = 1.12;
-        presets.append({QStringLiteral("karaoke-pop"), QCoreApplication::translate("TextStyle", "Karaoke pop"), s,
-                        QCoreApplication::translate("TextStyle", "Sing along with me")});
+        s.animation.in = presetSlot("fade", 0.2, "easeOut");
+        s.animation.out = presetSlot("fade", 0.2, "easeIn");
+        s.animation.loop = loopSlot("karaoke-pop");
+        add("karaoke-pop", "Karaoke pop", s, "Sing along with me");
     }
     {
         TextStyle s;
@@ -384,8 +462,10 @@ QList<TextPreset> buildPresets()
         s.accent.highlight.color = QColor(34, 197, 94);
         s.accent.highlight.padding = 8.0;
         s.accent.highlight.radius = 8.0;
-        presets.append({QStringLiteral("karaoke-highlight"), QCoreApplication::translate("TextStyle", "Karaoke highlight"), s,
-                        QCoreApplication::translate("TextStyle", "Follow the bouncing words")});
+        s.animation.in = presetSlot("fade", 0.2, "easeOut");
+        s.animation.out = presetSlot("fade", 0.2, "easeIn");
+        s.animation.loop = loopSlot("karaoke-bounce");
+        add("karaoke-highlight", "Karaoke highlight", s, "Follow the bouncing words");
     }
     {
         TextStyle s;
@@ -393,9 +473,12 @@ QList<TextPreset> buildPresets()
         s.pixelSize = 76;
         s.fontWeight = 800;
         s.italic = true;
-        s.layers = {legacyGlow(true, QColor(255, 255, 255), 20.0, 0.9), solidFillLayer(Qt::white)};
-        presets.append({QStringLiteral("mirage"), QCoreApplication::translate("TextStyle", "Mirage"), s,
-                        QCoreApplication::translate("TextStyle", "Soft and dreamy")});
+        s.layers = {legacyGlow(true, QColor(255, 255, 255), 20.0, 0.9),
+                    gradientFillLayer("holo", 20.0, TextGradientSpace::Glyph, 0.15, true)};
+        s.animation.in = presetSlot("blur-in", 0.6, "easeOut");
+        s.animation.out = presetSlot("fade-scale", 0.5, "easeIn");
+        s.animation.loop = loopSlot("breathe");
+        add("mirage", "Mirage", s, "Soft and dreamy");
     }
     {
         TextStyle s;
@@ -407,8 +490,9 @@ QList<TextPreset> buildPresets()
         s.underlineColor = QColor(230, 40, 40);
         s.underlineWidth = 8.0;
         s.underlineOffset = 8.0;
-        presets.append({QStringLiteral("underline"), QCoreApplication::translate("TextStyle", "Underline"), s,
-                        QCoreApplication::translate("TextStyle", "Underline this line")});
+        s.animation.in = presetSlot("slide-right", 0.4, "easeOut");
+        s.animation.out = presetSlot("slide-left", 0.35, "easeIn");
+        add("underline", "Underline", s, "Underline this line");
     }
     {
         TextStyle s;
@@ -422,8 +506,9 @@ QList<TextPreset> buildPresets()
         s.wordHighlight.radius = 2.0;
         s.accent.rule = WordAccentRule::FirstWord;
         s.accent.sizeScale = 1.35;
-        presets.append({QStringLiteral("bulky"), QCoreApplication::translate("TextStyle", "Bulky"), s,
-                        QCoreApplication::translate("TextStyle", "Big first word")});
+        s.animation.in = presetSlot("drop", 0.5, "bounce");
+        s.animation.out = presetSlot("fall", 0.5, "easeIn");
+        add("bulky", "Bulky", s, "Big first word");
     }
     {
         TextStyle s;
@@ -435,8 +520,197 @@ QList<TextPreset> buildPresets()
         s.accent.rule = WordAccentRule::EveryOther;
         s.accent.colorEnabled = true;
         s.accent.color = QColor(255, 255, 255);
-        presets.append({QStringLiteral("word-outline"), QCoreApplication::translate("TextStyle", "Word outline"), s,
-                        QCoreApplication::translate("TextStyle", "Outline every other word")});
+        s.animation.in = presetSlot("converge", 0.6, "easeOut");
+        s.animation.out = presetSlot("fade-scale", 0.4, "easeIn");
+        add("word-outline", "Word outline", s, "Outline every other word");
+    }
+
+    // Showpiece packs: gradients, shader effects, extrusions and arcs on top of the layer stack.
+    {
+        TextStyle s;
+        s.fontFamily = QStringLiteral("Cinzel");
+        s.pixelSize = 84;
+        s.fontWeight = 700;
+        s.letterSpacing = 6.0;
+        TextShadingLayer sheen = effectLayer("shine", {{QStringLiteral("speed"), num(0.4)}, {QStringLiteral("width"), num(0.2)},
+                                                       {QStringLiteral("angle"), num(20.0)}, {QStringLiteral("intensity"), num(0.9)}},
+                                             QColor(0, 0, 0, 0), BlendMode::Screen, QStringLiteral("shine"));
+        s.layers = {legacyShadow(true, QColor(0, 0, 0), 0.0, 6.0, 14.0, 0.5), strokeLayer(1.0, QColor(120, 90, 20)),
+                    gradientFillLayer("gold", 90.0), sheen};
+        s.animation.in = presetSlot("fade", 0.6, "easeOut");
+        s.animation.out = presetSlot("fade", 0.5, "easeIn");
+        add("gold-luxe", "Gold", s, "GOLD STANDARD");
+    }
+    {
+        TextStyle s;
+        s.fontFamily = QStringLiteral("Rubik One");
+        s.pixelSize = 96;
+        s.fontWeight = 400;
+        s.layers = {legacyShadow(true, QColor(0, 0, 0), 0.0, 5.0, 8.0, 0.5), strokeLayer(1.0, QColor(42, 42, 42)),
+                    effectLayer("chrome", {{QStringLiteral("speed"), num(0.2)}, {QStringLiteral("bands"), num(2.0)},
+                                           {QStringLiteral("colorA"), col(QColor(240, 245, 255))},
+                                           {QStringLiteral("colorB"), col(QColor(40, 50, 70))}})};
+        s.animation.in = presetSlot("zoom-out", 0.5, "easeOut");
+        s.animation.out = presetSlot("fade-scale", 0.4, "easeIn");
+        add("chrome", "Chrome", s, "CHROME");
+    }
+    {
+        TextStyle s;
+        s.fontFamily = QStringLiteral("Rubik One");
+        s.pixelSize = 100;
+        s.fontWeight = 400;
+        s.layers = {extrudeLayer(QColor(60, 30, 90), 16.0), legacyStroke(3.0), gradientFillLayer("sunset", 90.0)};
+        s.animation.in = presetSlot("drop", 0.5, "bounce", byWord());
+        s.animation.out = presetSlot("fall", 0.5, "easeIn");
+        add("retro-3d", "Retro 3D", s, "TOTALLY RAD");
+    }
+    {
+        TextStyle s;
+        s.fontFamily = QStringLiteral("DM Sans");
+        s.pixelSize = 88;
+        s.fontWeight = 800;
+        TextShadingLayer a = solidFillLayer(QColor(255, 0, 255), QStringLiteral("glitcha"));
+        a.offsetX = -4.0;
+        a.blend = BlendMode::Screen;
+        a.opacity = 0.8;
+        TextShadingLayer b = solidFillLayer(QColor(0, 255, 255), QStringLiteral("glitchb"));
+        b.offsetX = 4.0;
+        b.blend = BlendMode::Screen;
+        b.opacity = 0.8;
+        s.layers = {a, b, effectLayer("glitch", {{QStringLiteral("speed"), num(6.0)}, {QStringLiteral("amount"), num(10.0)},
+                                                 {QStringLiteral("block"), num(8.0)}})};
+        s.animation.in = presetSlot("glitch-in", 0.3, "linear");
+        s.animation.out = presetSlot("glitch-in", 0.3, "linear");
+        s.animation.loop = loopSlot("jitter", {{QStringLiteral("amount"), num(0.8)}, {QStringLiteral("angle"), num(0.0)}});
+        add("glitch", "Glitch", s, "SIGNAL LOST");
+    }
+    {
+        TextStyle s;
+        s.fontFamily = QStringLiteral("Fredoka");
+        s.pixelSize = 92;
+        s.fontWeight = 700;
+        s.layers = {extrudeLayer(Qt::black, 8.0), strokeLayer(10.0, Qt::white, QStringLiteral("outline")),
+                    strokeLayer(6.0, Qt::black), solidFillLayer(QColor(255, 214, 64))};
+        s.animation.in = presetSlot("stamp", 0.35, "easeIn");
+        s.animation.out = presetSlot("pop", 0.3, "easeIn");
+        s.animation.loop = loopSlot("sway");
+        add("comic", "Comic", s, "KAPOW!");
+    }
+    {
+        TextStyle s;
+        s.fontFamily = QStringLiteral("Anton");
+        s.pixelSize = 110;
+        s.fontWeight = 400;
+        s.letterSpacing = 2.0;
+        s.layers = {glowLayer(QColor(255, 120, 0), 22.0, 0.8), gradientFillLayer("fire", 90.0)};
+        s.animation.in = presetSlot("rise", 0.5, "easeOut", {{QStringLiteral("unit"), txt("character")}, {QStringLiteral("order"), txt("random")}});
+        s.animation.out = presetSlot("fade-scale", 0.4, "easeIn");
+        s.animation.loop = loopSlot("flicker", {{QStringLiteral("intensity"), num(0.15)}});
+        add("fire", "Fire", s, "ON FIRE");
+    }
+    {
+        TextStyle s;
+        s.fontFamily = QStringLiteral("Bebas Neue");
+        s.pixelSize = 110;
+        s.fontWeight = 400;
+        s.letterSpacing = 4.0;
+        s.layers = {glowLayer(Qt::white, 18.0, 0.7), strokeLayer(2.0, QColor(140, 210, 255)), gradientFillLayer("ice", 90.0)};
+        s.animation.in = presetSlot("converge", 0.7, "easeOut");
+        s.animation.out = presetSlot("fade-scale", 0.5, "easeIn");
+        add("ice", "Ice", s, "FROZEN");
+    }
+    {
+        TextStyle s;
+        s.fontFamily = QStringLiteral("Fredoka");
+        s.pixelSize = 84;
+        s.fontWeight = 600;
+        s.layers = {strokeLayer(6.0, QColor(255, 110, 199)), gradientFillLayer("candy", 0.0, TextGradientSpace::Word)};
+        s.animation.in = presetSlot("bounce", 0.6, "bounce", byChar());
+        s.animation.out = presetSlot("shrink", 0.3, "easeIn");
+        s.animation.loop = loopSlot("wave", {{QStringLiteral("amount"), num(0.05)}});
+        add("candy", "Candy", s, "Sweet treats");
+    }
+    {
+        TextStyle s;
+        s.fontFamily = QStringLiteral("Plus Jakarta Sans");
+        s.pixelSize = 80;
+        s.fontWeight = 800;
+        s.pathBend = 30.0;
+        s.layers = {legacyShadow(true, QColor(0, 0, 0), 0.0, 4.0, 0.0, 0.35), strokeLayer(14.0, Qt::white, QStringLiteral("outline")),
+                    strokeLayer(4.0, QColor(255, 59, 48)), solidFillLayer(Qt::white)};
+        s.animation.in = presetSlot("spin-in", 0.5, "back");
+        s.animation.out = presetSlot("shrink", 0.3, "easeIn");
+        add("sticker", "Sticker", s, "Sticker!");
+    }
+    {
+        TextStyle s;
+        s.fontFamily = QStringLiteral("Poppins");
+        s.pixelSize = 92;
+        s.fontWeight = 900;
+        s.layers = {legacyStroke(3.0), gradientFillLayer("rainbow", 0.0, TextGradientSpace::Glyph, 0.25, true)};
+        s.animation.in = presetSlot("rain", 0.5, "easeOut");
+        s.animation.out = presetSlot("fade-scale", 0.4, "easeIn");
+        s.animation.loop = loopSlot("wave");
+        add("rainbow", "Rainbow wave", s, "Taste the rainbow");
+    }
+    {
+        TextStyle s;
+        s.fontFamily = QStringLiteral("Cormorant Garamond");
+        s.pixelSize = 72;
+        s.fontWeight = 500;
+        s.letterSpacing = 14.0;
+        s.layers = {legacyGlow(true, QColor(255, 255, 255), 12.0, 0.25), gradientFillLayer("mono", 90.0)};
+        s.animation.in = presetSlot("snap-together", 1.0, "easeOut");
+        s.animation.out = presetSlot("fade-scale", 0.8, "easeIn");
+        s.animation.loop = loopSlot("tracking-drift");
+        add("cinematic", "Cinematic", s, "THE BEGINNING");
+    }
+    {
+        TextStyle s;
+        s.fontFamily = QStringLiteral("Outfit");
+        s.pixelSize = 88;
+        s.fontWeight = 800;
+        TextShadingLayer shimmer = effectLayer("shimmer", {{QStringLiteral("speed"), num(0.3)}, {QStringLiteral("scale"), num(3.0)},
+                                                           {QStringLiteral("intensity"), num(0.6)}},
+                                               Qt::white, BlendMode::Screen, QStringLiteral("shimmer"));
+        shimmer.opacity = 0.7;
+        s.layers = {glowLayer(Qt::white, 10.0, 0.4), gradientFillLayer("holo", 20.0, TextGradientSpace::Glyph, 0.1, true), shimmer};
+        s.animation.in = presetSlot("flip", 0.45, "back");
+        s.animation.out = presetSlot("flip", 0.35, "easeIn");
+        s.animation.loop = loopSlot("float");
+        add("holo-shimmer", "Shimmer", s, "Shimmer");
+    }
+    {
+        TextStyle s;
+        s.fontFamily = QStringLiteral("Ubuntu");
+        s.pixelSize = 84;
+        s.fontWeight = 700;
+        TextShadingLayer stroke = strokeLayer(3.0, Qt::white);
+        stroke.sketchLength = 6.0;
+        stroke.sketchDeviation = 2.0;
+        stroke.dash = StrokeDash::Dash;
+        TextShadingLayer fill = solidFillLayer(Qt::white);
+        fill.enabled = false;
+        s.layers = {stroke, fill};
+        s.animation.in = presetSlot("typewriter", 0.4, "linear", {{QStringLiteral("stagger"), num(0.06)}});
+        s.animation.out = presetSlot("fade", 0.3, "easeIn");
+        s.animation.loop = loopSlot("jitter", {{QStringLiteral("amount"), num(0.5)}, {QStringLiteral("angle"), num(0.5)}, {QStringLiteral("speed"), num(6.0)}});
+        add("sketch", "Sketch", s, "Rough draft");
+    }
+    {
+        TextStyle s;
+        s.fontFamily = QStringLiteral("Bodoni Moda");
+        s.pixelSize = 80;
+        s.fontWeight = 600;
+        s.italic = true;
+        s.lineHeight = 1.3;
+        s.underlineEnabled = true;
+        s.underlineColor = QColor(255, 255, 255, 180);
+        s.underlineWidth = 2.0;
+        s.underlineOffset = 10.0;
+        s.animation.in = presetSlot("rise-by-word", 0.5, "easeOut");
+        s.animation.out = presetSlot("remove-by-word", 0.4, "easeIn");
+        add("editorial", "Editorial", s, "The quiet issue");
     }
 
     return presets;

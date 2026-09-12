@@ -1,0 +1,12 @@
+{
+  "format": 1, "id": "skew-slide", "label": "Skew slide", "category": "kinetic", "sampleText": "Fast lane",
+  "slots": ["in", "out"], "order": 235,
+  "defaults": { "unit": "word", "stagger": 0.06, "duration": 0.4, "ease": "easeOut" },
+  "params": [
+    { "id": "distance", "type": "scalar", "label": "Distance", "unit": "box", "min": 0, "max": 2, "step": 0.05, "default": 0.3 },
+    { "id": "skew", "type": "scalar", "label": "Skew", "unit": "°", "min": -60, "max": 60, "step": 1, "default": -20 }
+  ],
+  "animators": [
+    { "selectors": ["stagger"], "props": { "position": { "x": "{distance}", "y": 0, "unit": "box" }, "skew": "{skew}", "opacity": 0 } }
+  ]
+}

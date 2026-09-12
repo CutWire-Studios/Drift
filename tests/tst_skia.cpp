@@ -293,6 +293,7 @@ private slots:
     void caretDrawsAfterLastVisibleFragment();
     void skslEffectsCompileAndRender();
     void textLookRenders();
+    void textPacksRender();
 };
 
 void SkiaTest::grContextAttaches()
@@ -1489,6 +1490,21 @@ void SkiaTest::textLookRenders()
         QVERIFY2(ink.count > 100, qPrintable(look.id));
         if (look.id == QLatin1String("neon"))
             QVERIFY2(ink.bbox.width() > plain.bbox.width() + 20, qPrintable(describe(plain, ink)));
+    }
+}
+
+// Every built-in style pack rasterises its sample text once the In animation has settled: the
+// gradient, effect, extrude and arc layers all produce ink through the shared painter.
+void SkiaTest::textPacksRender()
+{
+    reloadFontCatalog({QString::fromUtf8(DRIFT_TEST_FONTS_DIR)});
+    const QRectF layout(0, 0, 900, 300);
+    for (const TextPreset &preset : textPresets()) {
+        TextStyle style = preset.style;
+        style.pixelSize = 48;
+        const Clip clip = animatedClip(style, preset.sampleText, secondsToUs(4.0));
+        const Ink ink = inkOf(skiaTextAt(clip, preset.sampleText, layout, 1.0, secondsToUs(2.0)));
+        QVERIFY2(ink.count > 100, qPrintable(preset.id + QStringLiteral(": %1").arg(ink.count)));
     }
 }
 

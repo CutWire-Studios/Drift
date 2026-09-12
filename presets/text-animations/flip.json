@@ -1,0 +1,8 @@
+{
+  "format": 1, "id": "flip", "label": "Flip", "category": "character", "sampleText": "Flip it",
+  "slots": ["in", "out"], "order": 200,
+  "defaults": { "unit": "word", "stagger": 0.08, "duration": 0.45, "ease": "back" },
+  "animators": [
+    { "selectors": ["stagger"], "props": { "scaleX": 0, "opacity": 0 } }
+  ]
+}

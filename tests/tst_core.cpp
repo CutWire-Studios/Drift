@@ -1169,6 +1169,39 @@ void CoreTest::textPresetsAreWellFormed()
             QVERIFY(accent.color.isValid());
         if (accent.highlight.enabled)
             QVERIFY(accent.highlight.color.isValid());
+
+        // The layer stack: unique ids, gradients with something to blend, effects the renderer knows.
+        QSet<QString> layerIds;
+        bool paintedFill = false;
+        for (const drift::TextShadingLayer &layer : preset.style.layers) {
+            QVERIFY2(!layerIds.contains(layer.id), qPrintable(preset.id + QLatin1Char(' ') + layer.id));
+            layerIds.insert(layer.id);
+            if (layer.paint.kind == drift::TextPaintKind::Gradient)
+                QVERIFY2(layer.paint.gradient.stops.size() >= 2, qPrintable(preset.id));
+            if (layer.paint.kind == drift::TextPaintKind::Effect)
+                QVERIFY2(drift::textShaderEffectSpec(layer.paint.effect.id), qPrintable(preset.id));
+            paintedFill = paintedFill || layer.paint.kind != drift::TextPaintKind::Solid;
+        }
+
+        // Every slot names a catalogue preset that offers that slot, and none of them recolours
+        // the fill (an animator fillColor would flatten a gradient or effect to a solid).
+        const drift::TextAnimationSet &anim = preset.style.animation;
+        QVERIFY2(anim.in.isActive() && anim.out.isActive(), qPrintable(preset.id));
+        const auto check = [&](const drift::TextAnimationSlot &slot, drift::TextAnimSlotKind kind) {
+            if (!slot.isActive())
+                return;
+            const std::optional<drift::TextAnimationPreset> ap =
+                drift::TextAnimationPresetCatalog::instance().presetForId(slot.presetId);
+            QVERIFY2(ap && ap->supportsSlot(kind), qPrintable(preset.id + QLatin1Char(' ') + slot.presetId));
+            const drift::ResolvedPresetSlot resolved = drift::resolvePresetSlot(*ap, slot.params, kind);
+            QVERIFY2(resolved.valid, qPrintable(preset.id + QLatin1Char(' ') + slot.presetId));
+            if (paintedFill)
+                for (const drift::TextAnimator &a : resolved.animators)
+                    QVERIFY2(!a.props.hasFillColor, qPrintable(preset.id + QLatin1Char(' ') + slot.presetId));
+        };
+        check(anim.in, drift::TextAnimSlotKind::In);
+        check(anim.out, drift::TextAnimSlotKind::Out);
+        check(anim.loop, drift::TextAnimSlotKind::Loop);
     }
     QVERIFY(!drift::textStyleForPresetId(QStringLiteral("nope")));
 }
@@ -4479,7 +4512,7 @@ void CoreTest::textAnimationPresetsAreWellFormed()
         }
     }
     for (const char *id : {"fade", "slide-up", "slide-down", "slide-left", "slide-right", "pop", "blur-in", "typewriter",
-                           "rise", "bounce", "wave"})
+                           "rise", "bounce", "wave", "glitch-in", "flip", "squash", "flicker-in", "sway", "skew-slide"})
         QVERIFY2(ids.contains(QLatin1String(id)), id);
 
     // Out mirrors the displacement so an exit leaves the way its entrance arrived.
@@ -4503,6 +4536,14 @@ void CoreTest::textAnimationPresetsAreWellFormed()
     QVERIFY(typed.caret && typed.caret->enabled);
     QCOMPARE(typed.delayUs, 200000);
     QCOMPARE(typed.animators[0].selectors[0].durationUs, 0);
+    // A curve-driven In (no selectors) reads its length from the duration param and ends settled.
+    const ResolvedPresetSlot flicker = resolvePresetSlot(
+        *TextAnimationPresetCatalog::instance().presetForId(QStringLiteral("flicker-in")), {}, TextAnimSlotKind::In);
+    QCOMPARE(flicker.durationUs, 900000);
+    QVERIFY(flicker.animators[0].selectors.isEmpty());
+    QCOMPARE(flicker.animators[0].props.opacity.at(0.0), 0.0);
+    QCOMPARE(flicker.animators[0].props.opacity.at(0.19), 0.0);
+    QCOMPARE(flicker.animators[0].props.opacity.at(1.0), 100.0);
 }
 
 // Every legacy kind renders the same numbers through the engine as TextRaster::applyAnimation

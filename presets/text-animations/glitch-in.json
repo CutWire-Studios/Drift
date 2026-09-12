@@ -1,0 +1,16 @@
+{
+  "format": 1, "id": "glitch-in", "label": "Glitch", "category": "kinetic", "sampleText": "GLITCH",
+  "slots": ["in", "out"], "order": 230,
+  "defaults": { "unit": "character", "order": "random", "stagger": 0.02, "duration": 0.3, "ease": "linear" },
+  "params": [
+    { "id": "offset", "type": "scalar", "label": "Offset", "unit": "box", "min": 0, "max": 1, "step": 0.05, "default": 0.3 },
+    { "id": "skew", "type": "scalar", "label": "Skew", "unit": "°", "min": -60, "max": 60, "step": 1, "default": 25 }
+  ],
+  "animators": [
+    { "selectors": ["stagger"], "props": { "position": { "x": "{offset}", "y": 0, "unit": "box" }, "skew": "{skew}", "blur": 4 } },
+    {
+      "selectors": [ { "driver": "stagger", "domain": "{unit}", "order": "{order}", "staggerUs": { "$": "stagger", "mul": 1000000 }, "durationUs": { "$": "duration", "mul": 200000 }, "ease": "linear" } ],
+      "props": { "opacity": 0 }
+    }
+  ]
+}

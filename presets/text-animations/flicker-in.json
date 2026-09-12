@@ -1,0 +1,31 @@
+{
+  "format": 1, "id": "flicker-in", "label": "Flicker on", "category": "light", "sampleText": "OPEN",
+  "slots": ["in"], "order": 455,
+  "defaults": { "unit": "block", "duration": 0.9, "ease": "linear" },
+  "flags": { "unitLocked": true, "orderLocked": true, "easeLocked": true },
+  "animators": [
+    {
+      "selectors": [],
+      "props": {
+        "opacity": {
+          "value": 100,
+          "curve": {
+            "keyframes": [
+              { "timeUs": 0, "value": 0, "hold": true },
+              { "timeUs": 120000, "value": 100, "hold": true },
+              { "timeUs": 180000, "value": 0, "hold": true },
+              { "timeUs": 320000, "value": 100, "hold": true },
+              { "timeUs": 380000, "value": 15, "hold": true },
+              { "timeUs": 460000, "value": 100, "hold": true },
+              { "timeUs": 560000, "value": 0, "hold": true },
+              { "timeUs": 620000, "value": 100, "hold": true },
+              { "timeUs": 760000, "value": 40, "hold": true },
+              { "timeUs": 820000, "value": 100, "hold": true },
+              { "timeUs": 1000000, "value": 100, "hold": true }
+            ]
+          }
+        }
+      }
+    }
+  ]
+}
