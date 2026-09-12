@@ -19,7 +19,11 @@ QByteArray fixture(const QString &name)
     QFile file(QStringLiteral(DRIFT_TEST_DATA_DIR "/vector/") + name);
     if (!file.open(QIODevice::ReadOnly))
         return {};
-    return file.readAll();
+    // Normalised rather than raw: inspectReportsExpressions patches the document by searching for
+    // a literal that spans a newline, and a CRLF working tree turns that into a silent no-op.
+    // .gitattributes pins these fixtures to LF now; this keeps the test honest in a checkout that
+    // predates it.
+    return file.readAll().replace("\r\n", "\n");
 }
 
 VectorSource slideSource()
