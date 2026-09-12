@@ -2269,6 +2269,14 @@
         <translation>次のカットポイントに移動</translation>
     </message>
     <message>
+        <source>Step back one frame</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Step forward one frame</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Go to start of timeline</source>
         <translation>タイムラインの先頭へ移動</translation>
     </message>
@@ -7286,6 +7294,10 @@
 </context>
 <context>
     <name>PreviewToolbar</name>
+    <message>
+        <source>%1 (%2)</source>
+        <translation type="unfinished">%1 (%2)</translation>
+    </message>
     <message>
         <source>Current time / total · %1 frames per second</source>
         <translation>現在の時間 / 合計 · %1 フレーム/秒</translation>

@@ -17,6 +17,11 @@ Item {
     property var panel
     property var previewViewport
 
+    function withShortcut(label, actionId) {
+        const key = EditorState.shortcutFor(actionId)
+        return key.length > 0 ? qsTr("%1 (%2)").arg(label).arg(key) : label
+    }
+
     width: parent.width
     height: Theme.previewToolbarPaddingTop + Theme.previewToolbarPaddingBottom
             + Theme.iconButtonSize
@@ -93,7 +98,7 @@ Item {
             anchors.verticalCenter: parent.verticalCenter
             glyph: Theme.icons.stepBack
             variant: "text"
-            tooltip: qsTr("Previous frame")
+            tooltip: toolbar.withShortcut(qsTr("Previous frame"), "stepBack")
             onClicked: EditorState.stepFrames(-1)
         }
 
@@ -109,7 +114,7 @@ Item {
             anchors.verticalCenter: parent.verticalCenter
             glyph: Theme.icons.stepForward
             variant: "text"
-            tooltip: qsTr("Next frame")
+            tooltip: toolbar.withShortcut(qsTr("Next frame"), "stepForward")
             onClicked: EditorState.stepFrames(1)
         }
 

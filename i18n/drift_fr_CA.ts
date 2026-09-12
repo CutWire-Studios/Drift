@@ -2281,6 +2281,14 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Step back one frame</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Step forward one frame</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Go to start of timeline</source>
         <translation type="unfinished"></translation>
     </message>
@@ -7323,6 +7331,10 @@
 </context>
 <context>
     <name>PreviewToolbar</name>
+    <message>
+        <source>%1 (%2)</source>
+        <translation type="unfinished">%1 (%2)</translation>
+    </message>
     <message>
         <source>Current time / total · %1 frames per second</source>
         <translation>Temps actuel / total · %1 images par seconde</translation>

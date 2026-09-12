@@ -3656,6 +3656,8 @@ QHash<QString, QString> defaultShortcuts()
         // and the list navigation in the font, track and asset pickers.
         {QStringLiteral("previousEdit"), QStringLiteral("Alt+Up")},
         {QStringLiteral("nextEdit"), QStringLiteral("Alt+Down")},
+        {QStringLiteral("stepBack"), QStringLiteral("Shift+Left")},
+        {QStringLiteral("stepForward"), QStringLiteral("Shift+Right")},
         {QStringLiteral("goToStart"), QStringLiteral("Home")},
         // Premiere's ripple-trim-to-playhead keys, which is exactly what these do.
         {QStringLiteral("deleteLeft"), QStringLiteral("Q")},
@@ -4760,6 +4762,8 @@ QVariantList AppController::actions() const
         action(QStringLiteral("nudgeRight"), tr("Move selection right a little")),
         action(QStringLiteral("previousEdit"), tr("Go to previous cut point")),
         action(QStringLiteral("nextEdit"), tr("Go to next cut point")),
+        action(QStringLiteral("stepBack"), tr("Step back one frame")),
+        action(QStringLiteral("stepForward"), tr("Step forward one frame")),
         action(QStringLiteral("goToStart"), tr("Go to start of timeline")),
         action(QStringLiteral("deleteLeft"), tr("Delete left of the playhead")),
         action(QStringLiteral("deleteRight"), tr("Delete right of the playhead")),
@@ -17885,6 +17889,10 @@ void AppController::triggerAction(const QString &actionId)
         goToPreviousEdit();
     else if (actionId == QStringLiteral("nextEdit"))
         goToNextEdit();
+    else if (actionId == QStringLiteral("stepBack"))
+        stepFrames(-1);
+    else if (actionId == QStringLiteral("stepForward"))
+        stepFrames(1);
     else if (actionId == QStringLiteral("goToStart"))
         setPlayheadUs(0);
     else if (actionId == QStringLiteral("deleteLeft"))
