@@ -4,6 +4,7 @@
 #include "Exporter.h"
 #include "GlRuntime.h"
 #include "GpuCompositor.h"
+#include "GpuDevice.h"
 #include "GpuPreference.h"
 #include "HwAccel.h"
 #include "OrtRuntime.h"
@@ -63,24 +64,6 @@ QString readKeyValueFile(const QString &path, const QString &key)
         return QString::fromUtf8(value);
     }
     return {};
-}
-
-QString readTrimmedFile(const QString &path)
-{
-    QFile file(path);
-    if (!file.open(QIODevice::ReadOnly | QIODevice::Text))
-        return {};
-    return QString::fromUtf8(file.readAll().trimmed());
-}
-
-quint32 readSysfsHex(const QString &path)
-{
-    QString text = readTrimmedFile(path);
-    if (text.startsWith(QLatin1String("0x"), Qt::CaseInsensitive))
-        text = text.mid(2);
-    bool ok = false;
-    const quint32 value = text.toUInt(&ok, 16);
-    return ok ? value : 0;
 }
 
 QString osReleasePretty(const QString &path)
@@ -168,73 +151,7 @@ QString osPretty()
     return QSysInfo::prettyProductName();
 }
 
-QString pciVendorName(quint16 id)
-{
-    switch (id) {
-    case 0x8086:
-        return QStringLiteral("Intel");
-    case 0x10de:
-        return QStringLiteral("NVIDIA");
-    case 0x1002:
-    case 0x1022:
-        return QStringLiteral("AMD");
-    case 0x14e4:
-        return QStringLiteral("Broadcom");
-    case 0x1af4:
-        return QStringLiteral("Virtio");
-    case 0x15ad:
-        return QStringLiteral("VMware");
-    case 0x1234:
-    case 0x1b36:
-        return QStringLiteral("QEMU");
-    case 0x13b5:
-        return QStringLiteral("ARM");
-    case 0x106b:
-        return QStringLiteral("Apple");
-    case 0x17cb:
-        return QStringLiteral("Qualcomm");
-    case 0x1414:
-        return QStringLiteral("Microsoft");
-    default:
-        return {};
-    }
-}
-
-QString driverNameAt(const QString &deviceDir)
-{
-    const QFileInfo link(deviceDir + QStringLiteral("/driver"));
-    if (!link.exists())
-        return {};
-    return QFileInfo(link.symLinkTarget()).fileName();
-}
-
-QString nvidiaModelForSlot(const QString &slot)
-{
-    QFile file(QStringLiteral("/proc/driver/nvidia/gpus/%1/information").arg(slot));
-    if (!file.open(QIODevice::ReadOnly | QIODevice::Text))
-        return {};
-    while (!file.atEnd()) {
-        const QByteArray line = file.readLine();
-        if (!line.startsWith("Model:"))
-            continue;
-        const int colon = line.indexOf(':');
-        if (colon < 0)
-            continue;
-        return QString::fromUtf8(line.mid(colon + 1).trimmed());
-    }
-    return {};
-}
-
-struct GpuAdapter {
-    QString slot;
-    QString vendor;
-    quint16 vendorId = 0;
-    quint16 deviceId = 0;
-    QString driver;
-    QString model;
-};
-
-QString pciIdString(const GpuAdapter &gpu)
+QString pciIdString(const drift::gpu::Adapter &gpu)
 {
     if (gpu.vendorId == 0 && gpu.deviceId == 0)
         return {};
@@ -244,9 +161,9 @@ QString pciIdString(const GpuAdapter &gpu)
         .toUpper();
 }
 
-QString formatGpu(const GpuAdapter &gpu)
+QString formatGpu(const drift::gpu::Adapter &gpu)
 {
-    QString head = gpu.model;
+    QString head = gpu.name;
     if (head.isEmpty() && !gpu.vendor.isEmpty())
         head = QStringLiteral("%1 Graphics").arg(gpu.vendor);
     if (head.isEmpty())
@@ -260,78 +177,6 @@ QString formatGpu(const GpuAdapter &gpu)
     if (bits.isEmpty())
         return head;
     return QStringLiteral("%1 (%2)").arg(head, bits.join(QStringLiteral(", ")));
-}
-
-GpuAdapter gpuFromSysfsDevice(const QString &deviceDir, const QString &slot)
-{
-    GpuAdapter gpu;
-    gpu.slot = slot;
-    gpu.vendorId = static_cast<quint16>(readSysfsHex(deviceDir + QStringLiteral("/vendor")));
-    gpu.deviceId = static_cast<quint16>(readSysfsHex(deviceDir + QStringLiteral("/device")));
-    gpu.vendor = pciVendorName(gpu.vendorId);
-    if (gpu.vendor.isEmpty() && gpu.vendorId)
-        gpu.vendor = QStringLiteral("PCI %1").arg(gpu.vendorId, 4, 16, QLatin1Char('0')).toUpper();
-    gpu.driver = driverNameAt(deviceDir);
-    if (const QString label = readTrimmedFile(deviceDir + QStringLiteral("/label")); !label.isEmpty())
-        gpu.model = label;
-    else if (const QString product = readTrimmedFile(deviceDir + QStringLiteral("/product_name"));
-             !product.isEmpty())
-        gpu.model = product;
-    if (gpu.model.isEmpty() && !slot.isEmpty())
-        gpu.model = nvidiaModelForSlot(slot);
-    return gpu;
-}
-
-QList<GpuAdapter> enumerateGpus()
-{
-    QList<GpuAdapter> gpus;
-    QSet<QString> seen;
-
-    const auto addGpu = [&](GpuAdapter gpu) {
-        const QString key = !gpu.slot.isEmpty() ? gpu.slot : pciIdString(gpu);
-        if (key.isEmpty() || seen.contains(key))
-            return;
-        if (gpu.vendorId == 0 && gpu.driver.isEmpty())
-            return;
-        seen.insert(key);
-        gpus.append(std::move(gpu));
-    };
-
-#if defined(Q_OS_LINUX)
-    const QDir drmDir(QStringLiteral("/sys/class/drm"));
-    const QRegularExpression cardRe(QStringLiteral("^card\\d+$"));
-    const QFileInfoList cards = drmDir.entryInfoList(QDir::Dirs | QDir::NoDotAndDotDot);
-    for (const QFileInfo &card : cards) {
-        if (!cardRe.match(card.fileName()).hasMatch())
-            continue;
-        const QString deviceDir = card.absoluteFilePath() + QStringLiteral("/device");
-        QString slot = QFileInfo(QFileInfo(deviceDir).canonicalFilePath()).fileName();
-        if (!slot.contains(QLatin1Char(':')))
-            slot.clear();
-        addGpu(gpuFromSysfsDevice(deviceDir, slot));
-    }
-
-    const QDir pciDir(QStringLiteral("/sys/bus/pci/devices"));
-    const QFileInfoList devices = pciDir.entryInfoList(QDir::Dirs | QDir::NoDotAndDotDot);
-    for (const QFileInfo &device : devices) {
-        const quint32 pciClass = readSysfsHex(device.absoluteFilePath() + QStringLiteral("/class"));
-        if ((pciClass >> 16) != 0x03)
-            continue;
-        addGpu(gpuFromSysfsDevice(device.absoluteFilePath(), device.fileName()));
-    }
-#elif defined(Q_OS_WIN)
-    for (const drift::gpu::Adapter &adapter : drift::gpu::hardwareAdapters()) {
-        GpuAdapter gpu;
-        // Slot rather than PCI ids as the key, so two identical cards still list twice.
-        gpu.slot = QStringLiteral("dxgi:%1").arg(adapter.index);
-        gpu.vendorId = adapter.vendorId;
-        gpu.deviceId = adapter.deviceId;
-        gpu.vendor = pciVendorName(adapter.vendorId);
-        gpu.model = adapter.name;
-        addGpu(std::move(gpu));
-    }
-#endif
-    return gpus;
 }
 
 struct OpenGlInfo
@@ -542,13 +387,13 @@ bool flatpakExtensionMounted(const QString &subdir)
     return false;
 }
 
-bool gpuIsNvidia(const GpuAdapter &gpu)
+bool gpuIsNvidia(const drift::gpu::Adapter &gpu)
 {
     return gpu.vendorId == 0x10de || gpu.driver == QLatin1String("nvidia")
            || gpu.vendor.compare(QLatin1String("NVIDIA"), Qt::CaseInsensitive) == 0;
 }
 
-bool gpuIsAmd(const GpuAdapter &gpu)
+bool gpuIsAmd(const drift::gpu::Adapter &gpu)
 {
     return gpu.vendorId == 0x1002 || gpu.vendorId == 0x1022
            || gpu.driver == QLatin1String("amdgpu") || gpu.driver == QLatin1String("radeon")
@@ -734,7 +579,7 @@ QVariantMap DebugReport::collect()
     system.append(systemRow(trReport("CPU"), cpuModel()));
     system.append(systemRow(trReport("CPU threads"), QString::number(QThread::idealThreadCount())));
 
-    const QList<GpuAdapter> gpus = enumerateGpus();
+    const QList<drift::gpu::Adapter> gpus = drift::gpu::enumerateAdapters();
     if (gpus.isEmpty()) {
         system.append(systemRow(trReport("GPU"), trReport("Unknown")));
     } else if (gpus.size() == 1) {
@@ -817,7 +662,7 @@ QVariantMap DebugReport::collect()
                 QStringLiteral("flatpak install org.freedesktop.Platform.codecs-extra")));
         }
         bool nvidia = false;
-        for (const GpuAdapter &gpu : gpus) {
+        for (const drift::gpu::Adapter &gpu : gpus) {
             if (gpuIsNvidia(gpu)) {
                 nvidia = true;
                 break;
@@ -833,7 +678,7 @@ QVariantMap DebugReport::collect()
         }
     }
     bool amd = false;
-    for (const GpuAdapter &gpu : gpus) {
+    for (const drift::gpu::Adapter &gpu : gpus) {
         if (gpuIsAmd(gpu)) {
             amd = true;
             break;

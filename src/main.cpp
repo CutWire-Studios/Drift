@@ -1,6 +1,7 @@
 #include "engine/AudioFileWriter.h"
 #include "engine/EmojiCatalog.h"
 #include "engine/FontCatalog.h"
+#include "engine/GpuDevice.h"
 #include "engine/GpuPreference.h"
 #include "engine/HwAccel.h"
 #include "engine/ReverseProxyCache.h"
@@ -278,6 +279,10 @@ bool probeOpenGl(const QSurfaceFormat &format, QSurfaceFormat *obtained = nullpt
                     *vendor = QString::fromUtf8(name);
             }
         }
+        // While a context is current: on EGL this is what names the DRM device Qt draws
+        // through, which is finer-grained than the vendor string and the only way to tell two
+        // GPUs of the same vendor apart.
+        drift::gpu::probeRenderDrmNode();
         ctx.doneCurrent();
     }
     return true;

@@ -25,18 +25,6 @@ QString settingsKey()
     return QStringLiteral("graphics/preferredGpu");
 }
 
-quint16 vendorIdForGlVendor(const QString &glVendor)
-{
-    // Case-sensitive on purpose for the short names: "Corporation" contains "ati".
-    if (glVendor.contains(QLatin1String("NVIDIA"), Qt::CaseInsensitive))
-        return 0x10de;
-    if (glVendor.contains(QLatin1String("Intel"), Qt::CaseInsensitive))
-        return 0x8086;
-    if (glVendor.contains(QLatin1String("AMD")) || glVendor.contains(QLatin1String("ATI")))
-        return 0x1002;
-    return 0;
-}
-
 #if defined(Q_OS_WIN)
 // Where Settings → System → Display → Graphics keeps its per-application choices: one REG_SZ per
 // executable path. Hybrid-graphics drivers consult it for OpenGL as well as Direct3D; the

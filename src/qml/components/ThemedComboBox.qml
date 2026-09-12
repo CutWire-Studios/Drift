@@ -188,6 +188,11 @@ ComboBox {
             return true
         }
 
+        // Objects may expose `warn: true` (a decoder that runs on the wrong GPU) to flag a row
+        // that works but costs something. Unlike `available` it leaves the row selectable.
+        readonly property bool warned: (modelData && modelData.warn === true)
+                                       || (model && model.warn === true)
+
         contentItem: Text {
             text: root.textRole ? (modelData[root.textRole] !== undefined
                                    ? modelData[root.textRole]
@@ -199,6 +204,18 @@ ComboBox {
             elide: Text.ElideRight
             verticalAlignment: Text.AlignVCenter
             leftPadding: Theme.spacingLg
+            rightPadding: comboDelegate.warned ? Theme.iconSizeSm + Theme.spacingLg * 2
+                                               : Theme.spacingLg
+        }
+
+        IconGlyph {
+            visible: comboDelegate.warned
+            glyph: Theme.icons.warning
+            iconSize: Theme.iconSizeSm
+            iconColor: Theme.warning
+            anchors.right: parent.right
+            anchors.rightMargin: Theme.spacingLg
+            anchors.verticalCenter: parent.verticalCenter
         }
 
         background: Rectangle {

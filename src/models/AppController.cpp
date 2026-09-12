@@ -825,6 +825,14 @@ AppController::AppController(AssetLibrary *assetLibrary, QObject *parent)
                                QStringLiteral("warning"));
             });
 
+    // Decoding on the wrong GPU is not a failure — the picture is correct, it is just paying a
+    // bus crossing per frame that the user did not knowingly ask for. Say so once.
+    connect(&m_playback, &PlaybackEngine::zeroCopyUnavailable, this,
+            [this](const QString &note, const QString &reason) {
+                qInfo("PlaybackEngine: preview zero-copy declined: %s", qPrintable(reason));
+                setLastMessage(note, QStringLiteral("warning"));
+            });
+
     // Unlike a decode fallback, nothing still works when this fires: the preview
     // panel is blank and used to blame the timeline for it. "error", not "warning".
     connect(&m_playback, &PlaybackEngine::gpuCompositorUnavailable, this,

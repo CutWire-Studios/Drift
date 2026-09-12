@@ -136,6 +136,24 @@ QString normalizeDecodeMode(const QString &mode)
     return {};
 }
 
+// The one sentence the picker row, the confirm dialog and the playback toast all say, so the
+// user meets the same explanation wherever they run into this.
+QString offGpuDecodeNote(drift::hwaccel::Backend backend,
+                         const drift::hwaccel::RenderMatchInfo &match)
+{
+    const QString name = QString::fromLatin1(drift::hwaccel::name(backend));
+    if (!match.decodeGpu.isEmpty() && !match.renderGpu.isEmpty()) {
+        return PlaybackEngine::tr("%1 decodes on %2, but Drift draws on %3. Every frame is copied "
+                                  "through system memory, which is slower than decoding on the "
+                                  "graphics card that draws.")
+            .arg(name, match.decodeGpu, match.renderGpu);
+    }
+    return PlaybackEngine::tr("%1 decodes on a different graphics card than the one Drift draws "
+                              "on. Every frame is copied through system memory, which is slower "
+                              "than decoding on the graphics card that draws.")
+        .arg(name);
+}
+
 ClipReader::HardwareDecodeMode decodeModeFromString(const QString &mode)
 {
     if (mode == QStringLiteral("software"))
@@ -370,15 +388,22 @@ QString PlaybackEngine::decodeMode() const
 QVariantList PlaybackEngine::decodeModes() const
 {
     QVariantList modes;
-    auto append = [&modes](const QString &id, const QString &label) {
-        modes.append(QVariantMap{{QStringLiteral("id"), id}, {QStringLiteral("label"), label}});
+    auto append = [&modes](const QString &id, const QString &label, bool warn = false,
+                           const QString &note = {}) {
+        modes.append(QVariantMap{{QStringLiteral("id"), id},
+                                 {QStringLiteral("label"), label},
+                                 {QStringLiteral("warn"), warn},
+                                 {QStringLiteral("note"), note}});
     };
     append(QStringLiteral("auto"), tr("Auto"));
     append(QStringLiteral("software"), tr("Software"));
     // Only backends whose device opens here, so every listed choice is one that runs.
     for (const drift::hwaccel::Backend backend : drift::hwaccel::availableDecodeBackends()) {
+        const drift::hwaccel::RenderMatchInfo match = drift::hwaccel::describeRenderMatch(backend);
+        const bool warn = match.match == drift::hwaccel::RenderMatch::Mismatch;
         append(kHwPrefix + drift::hwaccel::id(backend),
-               tr("Hardware (%1)").arg(QString::fromLatin1(drift::hwaccel::name(backend))));
+               tr("Hardware (%1)").arg(QString::fromLatin1(drift::hwaccel::name(backend))), warn,
+               warn ? offGpuDecodeNote(backend, match) : QString());
     }
     return modes;
 }
@@ -400,6 +425,7 @@ void PlaybackEngine::setDecodeMode(const QString &mode)
     // A new path gets a fresh benefit of the doubt: a fallback under the old one says
     // nothing about this one, and leaving the count behind would suppress the notice.
     m_hwFallbackCount = ClipReader::hardwareFallbackCount();
+    m_zeroCopyWarned = false;
     emit decodeModeChanged();
     refreshFrame();
 }
@@ -422,6 +448,28 @@ void PlaybackEngine::checkHardwareFallback()
                                     : QString::fromLatin1(drift::hwaccel::name(backend)));
 }
 
+// A pin that decodes on the wrong GPU still decodes — the frames just take the long way to
+// OpenGL, which looks like nothing at all until playback is measured. Called per composited
+// frame beside checkHardwareFallback(), and latched so it speaks once per choice.
+void PlaybackEngine::checkZeroCopyFallback()
+{
+    if (m_zeroCopyWarned || !m_decodeMode.startsWith(kHwPrefix))
+        return;
+    if (GpuCompositor::previewUploadPathId() != QStringLiteral("cpu-roundtrip"))
+        return;
+    // cpu-roundtrip is also the ordinary path for a frame no importer was ever offered — a
+    // software decode, or a surface format none of them take. Only a decline reason means an
+    // importer looked at this frame and turned it down.
+    const QString reason = GpuCompositor::zeroCopyDeclineReason();
+    if (reason.isEmpty())
+        return;
+
+    m_zeroCopyWarned = true;
+    const drift::hwaccel::Backend backend = decodeBackendFromString(m_decodeMode);
+    emit zeroCopyUnavailable(offGpuDecodeNote(backend, drift::hwaccel::describeRenderMatch(backend)),
+                             reason);
+}
+
 // Ask the GPU compositor whether it is up, and republish the answer when it
 // changes. Also the recovery path: the share context can appear after the
 // preview's one and only composite request has already failed, so a compositor
@@ -436,8 +484,12 @@ void PlaybackEngine::probeGpuCompositor()
     // The compositor's context is the one that actually draws, so its vendor is the
     // authoritative answer to "which GPU should be decoding". Startup seeds this from a
     // throwaway probe; this corrects it if the two ever disagree.
-    if (!info.vendor.isEmpty())
+    if (!info.vendor.isEmpty() && info.vendor != drift::hwaccel::renderVendor()) {
         drift::hwaccel::setRenderVendor(info.vendor);
+        // Which backends decode off the render GPU just changed with it, and the picker is
+        // usually already built by the time this runs.
+        emit decodeModesChanged();
+    }
 
     const QString id = QString::fromLatin1(drift::gl::statusId(info.status));
     const QString detail = drift::gl::describeGl(info);
@@ -721,6 +773,7 @@ void PlaybackEngine::onCompositeTick()
 void PlaybackEngine::onFrameReady(const GpuFrameTexture &frame)
 {
     checkHardwareFallback();
+    checkZeroCopyFallback();
 
     if (!frame.isValid())
         return;

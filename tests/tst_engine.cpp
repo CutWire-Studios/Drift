@@ -36,6 +36,7 @@
 #include "playback/PlaybackDiagnostics.h"
 #include "playback/PlaybackStats.h"
 #include "engine/GpuStatus.h"
+#include "engine/GpuDevice.h"
 #include "engine/HwAccel.h"
 #include "engine/OrtRuntime.h"
 #include "engine/CompositorFrameHistory.h"
@@ -161,6 +162,9 @@ private slots:
     void cudaInteropUploadsAFrameWithoutBlanking();
     void d3d11InteropUploadsAFrameWithoutBlanking();
     void decodeAttemptOrderKeepsPinsOnTheRenderGpu();
+    void describeRenderMatchFlagsCudaOffTheRenderGpu();
+    void pciIdForDrmNodeReadsSysfs();
+    void vaapiDeviceStringFollowsTheRenderNode();
     void nvdecAv1StaysOnHardware();
     void cudaInteropSurvivesTwoDecoders();
     void reverseProxyKeepsDisplayRotation();
@@ -3022,6 +3026,136 @@ void EngineTest::decodeAttemptOrderKeepsPinsOnTheRenderGpu()
              drift::hwaccel::decodeBackendOrderFor(intel));
     // Nothing known about the renderer: the pin leads, as it always did.
     QCOMPARE(drift::hwaccel::decodeAttemptOrder(Backend::Cuda, false, QString()).first(), Backend::Cuda);
+#endif
+}
+
+// What the decoder picker warns on. The verdict has to be Mismatch only when it is actually
+// known to be one: Unknown must stay as permissive as "no GL context yet", or a machine Drift
+// cannot identify would be told its hardware decoding is slow when it is not.
+void EngineTest::describeRenderMatchFlagsCudaOffTheRenderGpu()
+{
+#if defined(Q_OS_MACOS) || defined(Q_OS_ANDROID)
+    QSKIP("no hybrid-graphics decode picker on this platform.");
+#else
+    using drift::hwaccel::Backend;
+    using drift::hwaccel::RenderMatch;
+
+    QCOMPARE(drift::hwaccel::describeRenderMatch(Backend::Cuda, QStringLiteral("Intel")).match,
+             RenderMatch::Mismatch);
+    QCOMPARE(drift::hwaccel::describeRenderMatch(Backend::Cuda,
+                                                 QStringLiteral("NVIDIA Corporation")).match,
+             RenderMatch::Matches);
+    // A vendor string naming nothing recognisable is not evidence of a mismatch.
+    QCOMPARE(drift::hwaccel::describeRenderMatch(Backend::Cuda, QStringLiteral("Acme")).match,
+             RenderMatch::Unknown);
+
+    // Never a mismatch: these either follow the render device by construction or are the only
+    // device there is.
+    for (const Backend backend : {Backend::VideoToolbox, Backend::MediaCodec, Backend::None}) {
+        QCOMPARE(drift::hwaccel::describeRenderMatch(backend, QStringLiteral("Intel")).match,
+                 RenderMatch::Matches);
+    }
+
+    // The predicate the decode order runs on is the verdict with Unknown folded into "fine".
+    QVERIFY(!drift::hwaccel::backendMatchesRenderer(Backend::Cuda, QStringLiteral("Intel")));
+    QVERIFY(drift::hwaccel::backendMatchesRenderer(Backend::Cuda, QStringLiteral("Acme")));
+    QVERIFY(drift::hwaccel::backendMatchesRenderer(Backend::Cuda, QString()));
+#endif
+}
+
+// The sysfs half of the Linux device match, against a fixture tree rather than the real /sys —
+// the machine running the tests may have one GPU, none, or a driver that names nothing.
+void EngineTest::pciIdForDrmNodeReadsSysfs()
+{
+#if !defined(Q_OS_LINUX)
+    QSKIP("DRM nodes are a Linux concept.");
+#else
+    QTemporaryDir root;
+    QVERIFY(root.isValid());
+    const QString drm = root.path() + QStringLiteral("/class/drm");
+    QVERIFY(QDir().mkpath(drm + QStringLiteral("/renderD128/device")));
+    QVERIFY(QDir().mkpath(drm + QStringLiteral("/renderD129/device")));
+
+    const auto write = [](const QString &path, const char *text) {
+        QFile file(path);
+        QVERIFY(file.open(QIODevice::WriteOnly));
+        file.write(text);
+    };
+    write(drm + QStringLiteral("/renderD128/device/vendor"), "0x8086\n");
+    write(drm + QStringLiteral("/renderD128/device/device"), "0x3e92\n");
+    write(drm + QStringLiteral("/renderD129/device/vendor"), "0x10de\n");
+    write(drm + QStringLiteral("/renderD129/device/device"), "0x2484\n");
+
+    drift::gpu::setSysfsRootForTesting(root.path());
+    const auto restore = qScopeGuard([] { drift::gpu::setSysfsRootForTesting(QString()); });
+
+    const drift::gpu::PciId intel = drift::gpu::pciIdForDrmNode(QStringLiteral("/dev/dri/renderD128"));
+    QVERIFY(intel.isValid());
+    QCOMPARE(intel.vendor, quint16(0x8086));
+    QCOMPARE(intel.device, quint16(0x3e92));
+    // A bare node name resolves the same way as a full path.
+    QCOMPARE(drift::gpu::pciIdForDrmNode(QStringLiteral("renderD129")),
+             (drift::gpu::PciId{0x10de, 0x2484}));
+    QVERIFY(!drift::gpu::pciIdForDrmNode(QStringLiteral("renderD130")).isValid());
+
+    const QList<QPair<QString, drift::gpu::PciId>> nodes = drift::gpu::drmRenderNodes();
+    QCOMPARE(nodes.size(), 2);
+    QCOMPARE(nodes.first().first, QStringLiteral("/dev/dri/renderD128"));
+    QCOMPARE(nodes.at(1).second, (drift::gpu::PciId{0x10de, 0x2484}));
+#endif
+}
+
+// VAAPI has to open on the node the GPU drawing sits behind, the way D3D11VA already opens on
+// the rendering adapter. The regression this guards is the other half: when the render GPU has
+// no node of its own — an NVIDIA proprietary session — nothing may be pinned, because pinning a
+// node libva cannot open would drop VAAPI out of the picker rather than merely cost a copy.
+void EngineTest::vaapiDeviceStringFollowsTheRenderNode()
+{
+#if !defined(Q_OS_LINUX)
+    QSKIP("VAAPI device selection is a Linux concept.");
+#else
+    QTemporaryDir root;
+    QVERIFY(root.isValid());
+    const QString drm = root.path() + QStringLiteral("/class/drm");
+    const auto write = [](const QString &path, const char *text) {
+        QVERIFY(QDir().mkpath(QFileInfo(path).absolutePath()));
+        QFile file(path);
+        QVERIFY(file.open(QIODevice::WriteOnly));
+        file.write(text);
+    };
+    // A hybrid laptop: the Intel iGPU has a render node, the NVIDIA card has only a card node,
+    // which is what a proprietary-driver session with no nvidia-vaapi-driver looks like.
+    write(drm + QStringLiteral("/card0/device/vendor"), "0x8086\n");
+    write(drm + QStringLiteral("/card0/device/device"), "0x3e92\n");
+    write(drm + QStringLiteral("/renderD128/device/vendor"), "0x8086\n");
+    write(drm + QStringLiteral("/renderD128/device/device"), "0x3e92\n");
+    write(drm + QStringLiteral("/card1/device/vendor"), "0x10de\n");
+    write(drm + QStringLiteral("/card1/device/device"), "0x2484\n");
+
+    const QString liveVendor = drift::hwaccel::renderVendor();
+    drift::gpu::setSysfsRootForTesting(root.path());
+    const auto restore = qScopeGuard([liveVendor] {
+        drift::gpu::setSysfsRootForTesting(QString());
+        drift::hwaccel::setRenderVendor(liveVendor);
+    });
+
+    // Drawing on the iGPU: decode belongs on its node rather than on libva's default.
+    drift::hwaccel::setRenderVendor(QStringLiteral("Intel"));
+    QCOMPARE(drift::hwaccel::deviceString(AV_HWDEVICE_TYPE_VAAPI),
+             QByteArray("/dev/dri/renderD128"));
+    QCOMPARE(drift::hwaccel::describeRenderMatch(drift::hwaccel::Backend::Vaapi).match,
+             drift::hwaccel::RenderMatch::Matches);
+
+    // Drawing on the NVIDIA card, which has no render node here: nothing to pin, and the
+    // picker has to say so — libva will be decoding on the other GPU.
+    drift::hwaccel::setRenderVendor(QStringLiteral("NVIDIA Corporation"));
+    QVERIFY(drift::hwaccel::deviceString(AV_HWDEVICE_TYPE_VAAPI).isEmpty());
+    const drift::hwaccel::RenderMatchInfo nvidia =
+        drift::hwaccel::describeRenderMatch(drift::hwaccel::Backend::Vaapi);
+    QCOMPARE(nvidia.match, drift::hwaccel::RenderMatch::Mismatch);
+    // Both halves of the sentence the user is shown come out named.
+    QCOMPARE(nvidia.decodeGpu, QStringLiteral("Intel"));
+    QCOMPARE(nvidia.renderGpu, QStringLiteral("NVIDIA"));
 #endif
 }
 

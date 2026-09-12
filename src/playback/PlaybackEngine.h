@@ -39,6 +39,7 @@ class PlaybackEngine : public QObject
     Q_PROPERTY(QString previewQuality READ previewQuality WRITE setPreviewQuality NOTIFY previewQualityChanged)
     Q_PROPERTY(double playbackRate READ playbackRate WRITE setPlaybackRate NOTIFY playbackRateChanged)
     Q_PROPERTY(QString decodeMode READ decodeMode WRITE setDecodeMode NOTIFY decodeModeChanged)
+    Q_PROPERTY(QVariantList decodeModes READ decodeModes NOTIFY decodeModesChanged)
     // Live playback counters for the diagnostics report and the preview overlay. Constant
     // because the block itself is owned here for the engine's lifetime; its contents change.
     Q_PROPERTY(PlaybackStats *stats READ stats CONSTANT)
@@ -83,9 +84,11 @@ public:
     // clip. A backend this machine does not have resolves back to "auto".
     QString decodeMode() const;
     void setDecodeMode(const QString &mode);
-    // Picker model: {id, label} rows, hardware entries only for backends that open
-    // here. Not a constant — it depends on the GPU and driver the app started with.
-    Q_INVOKABLE QVariantList decodeModes() const;
+    // Picker model: {id, label, warn, note} rows, hardware entries only for backends that open
+    // here. `warn` marks a backend that decodes on a GPU other than the one drawing, and `note`
+    // is the sentence explaining it. A property rather than a plain call because the verdict
+    // needs the GL context, which may come up after the picker is built.
+    QVariantList decodeModes() const;
 
     PlaybackStats *stats() { return &m_stats; }
     const PlaybackStats *stats() const { return &m_stats; }
@@ -122,6 +125,10 @@ signals:
     // A reader hit a driver failure and went sticky-software. `backendName` is the
     // backend the user pinned, empty when Auto chose it.
     void hardwareDecodeFellBack(const QString &backendName);
+    // A pinned hardware backend is decoding, but its frames are reaching OpenGL through system
+    // memory rather than staying on the GPU. `note` explains why in the user's terms when the
+    // two GPUs could be named; `reason` is the importer's own words, for the debug report.
+    void zeroCopyUnavailable(const QString &note, const QString &reason);
     // The GPU compositor will not come up on this machine. Fires once per session;
     // `statusId` is drift::gl::statusId(), `detail` the raw GL version and renderer.
     void gpuCompositorUnavailable(const QString &statusId, const QString &detail);
@@ -132,6 +139,7 @@ signals:
     void previewQualityChanged();
     void playbackRateChanged();
     void decodeModeChanged();
+    void decodeModesChanged();
     void playheadUsChanged(quint64 us);
 
 private:
@@ -148,6 +156,7 @@ private:
     void onFrameReady(const GpuFrameTexture &frame);
     void checkEndOfTimeline(drift::TimeUs timeUs);
     void checkHardwareFallback();
+    void checkZeroCopyFallback();
     void probeGpuCompositor();
     bool isAutoQuality() const { return m_previewQuality == QStringLiteral("auto"); }
     bool shouldLoopWorkArea(drift::TimeUs *loopInOut, drift::TimeUs *loopOutOut) const;
@@ -181,6 +190,9 @@ private:
     // Baseline for ClipReader's process-wide fallback counter, so the notice fires on
     // a new fallback rather than on every frame after the first one.
     quint64 m_hwFallbackCount = 0;
+    // One zero-copy notice per decode-mode choice: the upload path is sampled per composited
+    // frame, and every frame after the first would say the same thing.
+    bool m_zeroCopyWarned = false;
     // Not persisted, unlike quality: a session left at 4x would otherwise come back at 4x
     // with nothing to explain why playback runs away.
     double m_playbackRate = 1.0;

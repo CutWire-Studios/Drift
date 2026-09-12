@@ -41,9 +41,24 @@ QString renderVendor();
 // decodeBackendOrder() for an explicit renderer rather than the seeded one.
 QList<Backend> decodeBackendOrderFor(const QString &renderVendor);
 
-// Whether frames decoded on `backend` start out on the GPU `renderVendor` names. CUDA is the one
-// backend bound to a vendor; D3D11VA is opened on the rendering adapter (see deviceString), and
-// VAAPI's render node cannot be told apart from here. An empty vendor matches everything.
+// Whether frames decoded on `backend` start out on the GPU `renderVendor` names. Mismatch is the
+// only answer that changes behaviour: Unknown has to stay as permissive as an empty vendor, or a
+// machine Drift cannot identify would lose hardware decode it can perfectly well do.
+enum class RenderMatch { Matches, Mismatch, Unknown };
+
+struct RenderMatchInfo
+{
+    RenderMatch match = RenderMatch::Unknown;
+    QString decodeGpu; // human-readable, empty when the GPU could not be named
+    QString renderGpu; // ditto
+};
+
+// The full verdict, with both GPUs named where they are known, for the picker and its warning.
+// `renderVendor` empty means "ask renderVendor()".
+RenderMatchInfo describeRenderMatch(Backend backend, const QString &renderVendor = {});
+
+// describeRenderMatch() reduced to the predicate the decode-order logic wants. An empty vendor,
+// and anything else this cannot pin down, matches everything.
 bool backendMatchesRenderer(Backend backend, const QString &renderVendor);
 
 // The backends ClipReader tries, in order. `pinnedOnly` is Hardware mode with a pin, which is

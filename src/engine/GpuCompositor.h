@@ -140,6 +140,12 @@ drift::gl::GlStatusInfo status();
 // the playback layer can read it without pulling in the engine-private runtime header.
 QString previewUploadPathId();
 
+// Why a zero-copy importer turned the last preview frame down, in the importer's own words, or
+// empty when none was asked. Paired with previewUploadPathId(): "cpu-roundtrip" with a reason
+// is an importer declining, without one it is simply a frame no importer was offered. Exposed
+// here for the same reason as the id above.
+QString zeroCopyDeclineReason();
+
 // How many preview composites may be in flight at once. The presentation ring holds one
 // target per in-flight frame plus the one the scene graph is still sampling, so this is the
 // ring depth less one — going past it would have a worker draw into the target on screen.

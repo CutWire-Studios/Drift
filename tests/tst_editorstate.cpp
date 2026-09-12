@@ -118,6 +118,7 @@ private slots:
     void uiLanguagePersistsAcrossSessions();
     void invertTimelineScrollPersistsAcrossSessions();
     void decodeModePickerListsOnlyWorkingBackends();
+    void decodeModePickerMarksOffGpuBackends();
     void exportFrameRatePersistsAcrossSessions();
     void lastExportSettingsNormalisesStringTypedValues();
     void textStyleBlendModeKeyframesAndEffects();
@@ -1903,6 +1904,36 @@ void EditorStateTest::decodeModePickerListsOnlyWorkingBackends()
     for (const QString &id : std::as_const(hardwareIds)) {
         playback->setDecodeMode(id);
         QCOMPARE(playback->decodeMode(), id);
+    }
+}
+
+// NVDEC while OpenGL draws on the integrated GPU: the row still has to be offered — the user
+// may want it for a codec the iGPU cannot decode — but it has to carry the flag and the
+// sentence the picker's warning glyph and its confirm dialog both read.
+void EditorStateTest::decodeModePickerMarksOffGpuBackends()
+{
+    const QString liveVendor = drift::hwaccel::renderVendor();
+    const auto restore = qScopeGuard([liveVendor] { drift::hwaccel::setRenderVendor(liveVendor); });
+    drift::hwaccel::setRenderVendor(QStringLiteral("Intel"));
+
+    AssetLibrary library;
+    AppController state(&library);
+    PlaybackEngine *playback = state.playback();
+
+    const QVariantList modes = playback->decodeModes();
+    QVERIFY(modes.size() >= 2);
+    // Auto and Software decode wherever they land; neither can be on the wrong GPU.
+    QVERIFY(!modes.at(0).toMap().value(QStringLiteral("warn")).toBool());
+    QVERIFY(!modes.at(1).toMap().value(QStringLiteral("warn")).toBool());
+
+    for (qsizetype i = 2; i < modes.size(); ++i) {
+        const QVariantMap row = modes.at(i).toMap();
+        const bool warn = row.value(QStringLiteral("warn")).toBool();
+        const QString note = row.value(QStringLiteral("note")).toString();
+        // NVDEC is the one backend bound to a vendor, so on an Intel renderer it is the one
+        // that must warn — and every warning has to come with something to show the user.
+        QCOMPARE(warn, row.value(QStringLiteral("id")).toString() == QStringLiteral("hw:nvdec"));
+        QCOMPARE(note.isEmpty(), !warn);
     }
 }
 

@@ -1,6 +1,7 @@
 #include "HwAccel.h"
 
 #include "GpuCompositor.h"
+#include "GpuDevice.h"
 #include "GpuPreference.h"
 
 #include <QByteArray>
@@ -69,11 +70,113 @@ QList<Backend> decodeBackendOrder()
     return decodeBackendOrderFor(renderVendor());
 }
 
+namespace {
+
+// Name of the first adapter from a PCI vendor, for the "decodes on ..." half of the warning.
+QString adapterNameForVendor(quint16 vendorId)
+{
+    for (const drift::gpu::Adapter &adapter : drift::gpu::enumerateAdapters()) {
+        if (adapter.vendorId != vendorId)
+            continue;
+        return adapter.name.isEmpty() ? adapter.vendor : adapter.name;
+    }
+    return {};
+}
+
+} // namespace
+
+namespace {
+
+// The DRM render node on the GPU `vendor` draws with, empty when that GPU has none — or when
+// nothing identifies it. Linux only.
+QByteArray renderGpuVaapiNode(const QString &vendor)
+{
+#if defined(Q_OS_LINUX)
+    const drift::gpu::PciId render = drift::gpu::renderPciId(vendor);
+    if (!render.isValid())
+        return {};
+    for (const auto &[node, id] : drift::gpu::drmRenderNodes()) {
+        if (id == render)
+            return node.toUtf8();
+    }
+#else
+    Q_UNUSED(vendor);
+#endif
+    return {};
+}
+
+} // namespace
+
+RenderMatchInfo describeRenderMatch(Backend backend, const QString &vendorIn)
+{
+    const QString vendor = vendorIn.isEmpty() ? renderVendor() : vendorIn;
+
+    RenderMatchInfo info;
+    info.renderGpu = drift::gpu::adapterName(drift::gpu::renderPciId(vendor));
+    if (info.renderGpu.isEmpty())
+        info.renderGpu = drift::gpu::pciVendorName(drift::gpu::vendorIdForGlVendor(vendor));
+
+    switch (backend) {
+    case Backend::Cuda: {
+        // CUDA only ever runs on NVIDIA, so the vendor string settles this without needing to
+        // identify either device — which is why this is the one verdict that works on GLX too.
+        const quint16 glVendor = drift::gpu::vendorIdForGlVendor(vendor);
+        if (glVendor == 0) {
+            info.match = RenderMatch::Unknown;
+            break;
+        }
+        info.decodeGpu = adapterNameForVendor(0x10de);
+        info.match = glVendor == 0x10de ? RenderMatch::Matches : RenderMatch::Mismatch;
+        break;
+    }
+    case Backend::D3d11va:
+#if defined(Q_OS_WIN)
+        // deviceString() opens D3D11VA on the adapter GL draws on, so these agree by
+        // construction — unless the GL vendor named no adapter, and then nothing is known.
+        info.match = drift::gpu::adapterIndexForGlVendor(vendor) >= 0 ? RenderMatch::Matches
+                                                                      : RenderMatch::Unknown;
+#else
+        info.match = RenderMatch::Matches;
+#endif
+        break;
+    case Backend::Vaapi: {
+#if defined(Q_OS_LINUX)
+        const QList<QPair<QString, drift::gpu::PciId>> nodes = drift::gpu::drmRenderNodes();
+        if (!drift::gpu::renderPciId(vendor).isValid() || nodes.isEmpty()) {
+            info.match = RenderMatch::Unknown;
+            break;
+        }
+        if (!renderGpuVaapiNode(vendor).isEmpty()) {
+            // deviceString() pins libva to that node, so the decoder lands on the render GPU.
+            info.match = RenderMatch::Matches;
+            info.decodeGpu = info.renderGpu;
+            break;
+        }
+        // The rendering GPU has no render node, so libva must be driving a different card.
+        // Note this is sysfs alone: a node that exists but that libva cannot open — an NVIDIA
+        // one without nvidia-vaapi-driver — still reads as a match here. That case shows up as
+        // a real cpu-roundtrip during playback, which is what the observed warning is for.
+        info.match = RenderMatch::Mismatch;
+        info.decodeGpu = drift::gpu::adapterName(nodes.first().second);
+#else
+        info.match = RenderMatch::Matches;
+#endif
+        break;
+    }
+    case Backend::VideoToolbox:
+    case Backend::MediaCodec:
+    case Backend::None:
+        info.match = RenderMatch::Matches;
+        break;
+    }
+    return info;
+}
+
 bool backendMatchesRenderer(Backend backend, const QString &vendor)
 {
-    if (vendor.isEmpty() || backend != Backend::Cuda)
+    if (vendor.isEmpty())
         return true;
-    return vendor.contains(QStringLiteral("NVIDIA"), Qt::CaseInsensitive);
+    return describeRenderMatch(backend, vendor).match != RenderMatch::Mismatch;
 }
 
 QList<Backend> decodeAttemptOrder(Backend pinned, bool pinnedOnly, const QString &vendor)
@@ -95,6 +198,15 @@ QByteArray deviceString(AVHWDeviceType type)
         const int index = drift::gpu::adapterIndexForGlVendor(renderVendor());
         if (index >= 0)
             return QByteArray::number(index);
+    }
+#elif defined(Q_OS_LINUX)
+    if (type == AV_HWDEVICE_TYPE_VAAPI) {
+        // Same reasoning as the D3D11VA branch: libva's default node is whichever card the
+        // system lists first, not the one drawing, and dma-buf import only works when the two
+        // are the same device. Empty when the render GPU has no node of its own — libva's
+        // default still decodes there, just on the other card, and saying nothing is better
+        // than pinning a node that would drop VAAPI out of the picker altogether.
+        return renderGpuVaapiNode(renderVendor());
     }
 #else
     Q_UNUSED(type);

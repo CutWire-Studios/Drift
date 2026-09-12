@@ -1,6 +1,7 @@
 #include "GlRuntime.h"
 
 #include "GlModelRenderer.h"
+#include "GpuDevice.h"
 #include "VaapiZeroCopy.h"
 #if defined(Q_OS_WIN)
 #include "D3d11GlInterop.h"
@@ -1060,6 +1061,9 @@ bool GlRuntime::initGlObjects()
     }
 
     setGlStatus(describeContext(context.get(), gl, drift::gl::GlStatus::Ready));
+    // Only EGL can say which DRM device a context draws through, and only while it is current.
+    // Record it here so the decode side can ask from any thread later.
+    drift::gpu::probeRenderDrmNode();
     context->doneCurrent();
     return true;
 }

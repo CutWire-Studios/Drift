@@ -267,17 +267,26 @@ QVariantMap PlaybackDiagnostics::collect(const PlaybackStats &stats, const drift
         }
     }
 
-    // Decode landing on the wrong GPU of a hybrid pair.
+    // Decode landing on the wrong GPU of a hybrid pair. The same verdict the decoder picker
+    // marks its rows with, rather than a second opinion: comparing "is it NVIDIA" on both sides
+    // also fired for D3D11VA on an NVIDIA renderer, which opens on the rendering adapter and so
+    // never mismatches.
     if (active && *active != drift::hwaccel::Backend::None && !gl.vendor.isEmpty()) {
-        const bool decodeIsNvidia = *active == drift::hwaccel::Backend::Cuda;
-        const bool renderIsNvidia = gl.vendor.contains(QStringLiteral("NVIDIA"), Qt::CaseInsensitive);
-        if (decodeIsNvidia != renderIsNvidia) {
+        const drift::hwaccel::RenderMatchInfo match =
+            drift::hwaccel::describeRenderMatch(*active, gl.vendor);
+        if (match.match == drift::hwaccel::RenderMatch::Mismatch) {
+            const QString detail = match.decodeGpu.isEmpty() || match.renderGpu.isEmpty()
+                ? trDiag("Frames decode on one GPU, cross the PCIe bus into system memory, and "
+                         "are uploaded to the other one to be drawn — twice per frame. Picking a "
+                         "decoder that matches the renderer in the preview toolbar avoids the "
+                         "round trip.")
+                : trDiag("Frames decode on %1, cross the PCIe bus into system memory, and are "
+                         "uploaded to %2 to be drawn — twice per frame. Picking a decoder that "
+                         "matches the renderer in the preview toolbar avoids the round trip.")
+                      .arg(match.decodeGpu, match.renderGpu);
             hints.append(hint(QStringLiteral("decode-gpu-mismatch"),
                               trDiag("Decoding and drawing are happening on different GPUs"),
-                              trDiag("Frames decode on one GPU, cross the PCIe bus into system "
-                                     "memory, and are uploaded to the other one to be drawn — "
-                                     "twice per frame. Picking a decoder that matches the "
-                                     "renderer in the preview toolbar avoids the round trip.")));
+                              detail));
         }
     }
 

@@ -1,21 +1,16 @@
 #pragma once
 
+#include "GpuDevice.h"
+
 #include <QList>
 #include <QString>
 
 // Which GPU the process runs on, for hybrid laptops. Windows only: on Linux that choice belongs to
 // whoever launches Drift (prime-run, DRI_PRIME), not to Drift itself, so everything here is a no-op
 // there and hardwareAdapters() is empty.
+//
+// GPU *identity* — what each adapter is, and which one OpenGL draws on — lives in GpuDevice.h.
 namespace drift::gpu {
-
-struct Adapter
-{
-    // DXGI enumeration index. FFmpeg's d3d11va device string is exactly this number.
-    int index = -1;
-    QString name;
-    quint16 vendorId = 0;
-    quint16 deviceId = 0;
-};
 
 // Hardware adapters in DXGI order, software rasterizers skipped. Cached for the process: the
 // set of GPUs does not change under a running app in any way the decoders could follow anyway.

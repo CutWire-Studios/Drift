@@ -1062,6 +1062,11 @@ QString previewUploadPathId()
     return QStringLiteral("none");
 }
 
+QString zeroCopyDeclineReason()
+{
+    return GlRuntime::lastZeroCopyDeclineReason();
+}
+
 QImage render(const GpuScene &scene)
 {
     if (scene.canvasSize.isEmpty())
