@@ -38,6 +38,9 @@ struct Clip
     QString assetId;
     // Shared by linked video/audio companions; empty when unlinked.
     QString linkId;
+    // A loose link (created by Link on unrelated clips) moves, splits, selects and deletes
+    // together with its partners but keeps its own duration, trim, speed and fades.
+    bool linkLoose = false;
     ClipType type = ClipType::Video;
     // When true, AudioMixer skips this video clip's embedded audio (companion audio track plays it).
     bool suppressEmbeddedAudio = false;

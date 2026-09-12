@@ -694,7 +694,7 @@ QStringList undoExemptOps()
 QStringList selectionBasedOps()
 {
     static const QStringList k = {
-        QStringLiteral("separate_audio"), QStringLiteral("unlink_audio"),
+        QStringLiteral("separate_audio"), QStringLiteral("unlink_audio"), QStringLiteral("link_clips"),
         QStringLiteral("merge_clips"),    QStringLiteral("align_clip_left"),
         QStringLiteral("align_clip_right"), QStringLiteral("copy_selection"),
         QStringLiteral("cut_selection"),
@@ -737,7 +737,7 @@ QString agentGuideText()
         "- apply is not atomic: on failure the ops before it stay applied. Check stopped/failed.\n"
         "\n"
         "Selection-based ops take no clip argument and act on the current selection — call\n"
-        "select_clip or select_clips first: separate_audio, unlink_audio, merge_clips,\n"
+        "select_clip or select_clips first: separate_audio, unlink_audio, link_clips, merge_clips,\n"
         "align_clip_left, align_clip_right, copy_selection, cut_selection.\n"
         "freeze_frame and paste_at_playhead are playhead-based, not selection-based — seek first.\n"
         "\n"

@@ -2035,9 +2035,12 @@ QList<QPair<int, int>> selectionWithLinkedPartners(const drift::Project &project
 void syncLinkedPartnersFrom(drift::Project &project, const drift::Clip &source,
                             const QSet<QString> &skipClipIds = {})
 {
+    // Loose links only travel together; their timing stays independent.
+    if (source.linkLoose)
+        return;
     for (const drift::ClipRef &ref : drift::linkedPartners(project, source)) {
         const drift::Clip &partner = project.tracks().at(ref.trackIndex).clips.at(ref.clipIndex);
-        if (skipClipIds.contains(partner.id))
+        if (skipClipIds.contains(partner.id) || partner.linkLoose)
             continue;
         drift::syncLinkedTiming(project.tracks()[ref.trackIndex].clips[ref.clipIndex], source);
     }
@@ -2110,6 +2113,7 @@ QHash<QString, QString> defaultShortcuts()
         {QStringLiteral("split"), QStringLiteral("S")},
         {QStringLiteral("merge"), QStringLiteral("Ctrl+M")},
         {QStringLiteral("unlink"), QStringLiteral("Ctrl+Shift+U")},
+        {QStringLiteral("link"), QStringLiteral("Ctrl+Shift+L")},
         {QStringLiteral("separateAudio"), QStringLiteral("Ctrl+Shift+S")},
         {QStringLiteral("copy"), QStringLiteral("Ctrl+C")},
         {QStringLiteral("cut"), QStringLiteral("Ctrl+X")},
@@ -2791,6 +2795,7 @@ QVariantList AppController::actions() const
         action(QStringLiteral("merge"), tr("Merge adjacent clips")),
         action(QStringLiteral("separateAudio"), tr("Separate audio")),
         action(QStringLiteral("unlink"), tr("Unlink audio")),
+        action(QStringLiteral("link"), tr("Link clips")),
         action(QStringLiteral("clearSelection"), tr("Clear selection")),
         action(QStringLiteral("selectAll"), tr("Select all clips")),
         action(QStringLiteral("nudgeLeft"), tr("Move selection left a little")),
@@ -3809,6 +3814,8 @@ void AppController::moveClip(int trackIndex, int clipIndex, double newStart)
     const QPair<int, int> requested(trackIndex, clipIndex);
     QList<QPair<int, int>> targets = m_selection.contains(requested) ? m_selection
                                                                       : QList<QPair<int, int>>{requested};
+    // Linked partners ride along by the same delta whether or not they are selected.
+    expandSelectionWithLinkedPartners(m_project, targets);
     const drift::Project before = m_project;
     const drift::TimeUs desiredUs = drift::secondsToUs(newStart);
     const drift::TimeUs baseUs = m_project.tracks().at(trackIndex).clips.at(clipIndex).timelineStart;
@@ -4314,6 +4321,15 @@ void AppController::moveClipToTrack(int trackIndex, int clipIndex, int newTrackI
     toTrack.clips.append(moved);
     const int newClipIndex = toTrack.clips.size() - 1;
 
+    if (moved.linkLoose) {
+        const drift::TimeUs delta = moved.timelineStart - clip.timelineStart;
+        if (delta != 0) {
+            for (const drift::ClipRef &ref : drift::linkedPartners(m_project, moved)) {
+                drift::Clip &partner = m_project.tracks()[ref.trackIndex].clips[ref.clipIndex];
+                partner.timelineStart = qMax<drift::TimeUs>(0, partner.timelineStart + delta);
+            }
+        }
+    }
     syncLinkedPartnersFrom(m_project, moved);
 
     // Selection follows the clip to its new track before tracksChanged fires.
@@ -9680,8 +9696,10 @@ void AppController::unlinkSelectedClips()
         clearedLinkIds.insert(clip.linkId);
         for (drift::Track &track : m_project.tracks()) {
             for (drift::Clip &candidate : track.clips) {
-                if (candidate.linkId == clip.linkId)
+                if (candidate.linkId == clip.linkId) {
                     candidate.linkId.clear();
+                    candidate.linkLoose = false;
+                }
             }
         }
         changed = true;
@@ -9695,6 +9713,49 @@ void AppController::unlinkSelectedClips()
 
     pushProjectEdit(before, tr("Clips unlinked"));
     finishEdit(tr("Audio unlinked"));
+}
+
+bool AppController::canLinkSelection() const
+{
+    // Two or more selected clips, none of them already part of a link.
+    QList<QPair<int, int>> pairs = m_selection;
+    if (pairs.isEmpty() && m_selectedTrack >= 0 && m_selectedClip >= 0)
+        pairs.append(qMakePair(m_selectedTrack, m_selectedClip));
+
+    int valid = 0;
+    for (const QPair<int, int> &pair : pairs) {
+        if (!isValidClipIndex(pair.first, pair.second))
+            continue;
+        if (!m_project.tracks().at(pair.first).clips.at(pair.second).linkId.isEmpty())
+            return false;
+        ++valid;
+    }
+    return valid >= 2;
+}
+
+void AppController::linkSelectedClips()
+{
+    if (!canLinkSelection())
+        return;
+
+    QList<QPair<int, int>> pairs = m_selection;
+    if (pairs.isEmpty() && m_selectedTrack >= 0 && m_selectedClip >= 0)
+        pairs.append(qMakePair(m_selectedTrack, m_selectedClip));
+
+    const drift::Project before = m_project;
+    const QString linkId = newClipId();
+    for (const QPair<int, int> &pair : pairs) {
+        if (!isValidClipIndex(pair.first, pair.second))
+            continue;
+        drift::Clip &clip = m_project.tracks()[pair.first].clips[pair.second];
+        clip.linkId = linkId;
+        // Manually linked clips usually come from different media, so the link is loose: it
+        // never copies one clip's duration, trim or speed onto the other.
+        clip.linkLoose = true;
+    }
+
+    pushProjectEdit(before, tr("Clips linked"));
+    finishEdit(tr("Clips linked"));
 }
 
 void AppController::setClipFade(int trackIndex, int clipIndex, double fadeInSeconds, double fadeOutSeconds)
@@ -12771,6 +12832,8 @@ void AppController::triggerAction(const QString &actionId)
         separateAudioFromSelection();
     else if (actionId == QStringLiteral("unlink"))
         unlinkSelectedClips();
+    else if (actionId == QStringLiteral("link"))
+        linkSelectedClips();
     else if (actionId == QStringLiteral("copy"))
         copySelection();
     else if (actionId == QStringLiteral("cut"))

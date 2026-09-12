@@ -197,6 +197,13 @@ Item {
             onClicked: EditorState.unlinkSelectedClips()
         }
         IconButton {
+            glyph: Theme.icons.link
+            variant: "text"
+            tooltip: toolbar.withShortcut(qsTr("Link selected clips"), "link")
+            enabled: EditorState.linkAvailable
+            onClicked: EditorState.linkSelectedClips()
+        }
+        IconButton {
             glyph: Theme.icons.linkTwo
             variant: "text"
             tooltip: toolbar.withShortcut(qsTr("Merge adjacent clips"), "merge")
@@ -268,6 +275,12 @@ Item {
                 icon.name: Theme.icons.unlink
                 enabled: EditorState.unlinkAvailable
                 onTriggered: EditorState.unlinkSelectedClips()
+            }
+            ThemedMenuItem {
+                text: qsTr("Link selected clips")
+                icon.name: Theme.icons.link
+                enabled: EditorState.linkAvailable
+                onTriggered: EditorState.linkSelectedClips()
             }
             ThemedMenuItem {
                 text: qsTr("Merge adjacent clips")
