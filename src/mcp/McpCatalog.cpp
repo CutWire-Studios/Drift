@@ -1,6 +1,8 @@
 #include "mcp/McpCatalog.h"
 #include "mcp/McpJson.h"
 
+#include "core/ShapeStyle.h"
+
 #include <QHash>
 
 #include <algorithm>
@@ -67,7 +69,7 @@ QJsonObject animPropProp()
         "key one of pixelSize, letterSpacing, lineHeight, boxPadding, pathBend, or a shading layer field "
         "text.layer.<layerId>.<opacity|offsetX|offsetY|blur|width|spread|trimStart|trimEnd|dashOffset|"
         "sketchLength|sketchDeviation|color.r|color.g|color.b|color.a|gradient.angle|gradient.offset|"
-        "gradient.scale|gradient.center.x|gradient.center.y|gradient.stop.<n>.pos> (the legacy names "
+        "gradient.scale|gradient.center.x|gradient.center.y|gradient.stop.<n>.pos|effect.<param>> (the legacy names "
         "outlineWidth, shadowBlur, glowRadius, gradientAngle, color.r… still map onto the "
         "stroke/shadow/glow/fill layers; colour channels 0..1). On a shape clip the same layer fields "
         "are shape.layer.<layerId>.<field> (a fresh shape's layers are \"fill\" and \"stroke\") and the "
@@ -98,7 +100,7 @@ QJsonObject maskSchema()
          enumProp(QStringLiteral("Mask shape. Omitted or unrecognised = none, i.e. mask off."),
                   {QStringLiteral("none"), QStringLiteral("rectangle"), QStringLiteral("ellipse"),
                    QStringLiteral("star"), QStringLiteral("heart"), QStringLiteral("bars"),
-                   QStringLiteral("freeform"), QStringLiteral("matte")})},
+                   QStringLiteral("freeform"), QStringLiteral("media"), QStringLiteral("matte")})},
         {QStringLiteral("x"), numberProp(QStringLiteral("Center x, fraction of canvas (default 0.5)"), 0, 1)},
         {QStringLiteral("y"), numberProp(QStringLiteral("Center y, fraction of canvas (default 0.5)"), 0, 1)},
         {QStringLiteral("w"), numberProp(QStringLiteral("Width, fraction of canvas (default 0.6)"), 0, 1)},
@@ -107,8 +109,20 @@ QJsonObject maskSchema()
         {QStringLiteral("feather"), numberProp(QStringLiteral("Alpha edge blur in pixels (default 0)"))},
         {QStringLiteral("invert"), boolProp(QStringLiteral("Invert coverage (default false)"))},
         {QStringLiteral("points"),
-         arrayProp({{QStringLiteral("type"), QStringLiteral("array")}},
-                   QStringLiteral("freeform only: [[x,y], …] normalised 0..1"))},
+         arrayProp({{QStringLiteral("type"), QJsonArray{QStringLiteral("array"), QStringLiteral("object")}}},
+                   QStringLiteral("freeform only: [{x,y}, …] as inspect emits it, or [[x,y], …]; normalised 0..1"))},
+        {QStringLiteral("op"), enumProp(QStringLiteral("How the mask combines (default add)"),
+                                        {QStringLiteral("add"), QStringLiteral("subtract"), QStringLiteral("intersect")})},
+        {QStringLiteral("enabled"), boolProp(QStringLiteral("Mask on/off without losing it (default true)"))},
+        {QStringLiteral("name"), stringProp(QStringLiteral("Display name"))},
+        {QStringLiteral("mediaPath"), stringProp(QStringLiteral("matte/media only: absolute path of the matte video or image"))},
+        {QStringLiteral("mediaFgrPath"), stringProp(QStringLiteral("matte/media only: foreground pass of a cutout, when one exists"))},
+        {QStringLiteral("mediaSrcOffsetUs"), integerProp(QStringLiteral("matte/media only: source offset in microseconds"))},
+        {QStringLiteral("mediaFit"), enumProp(QStringLiteral("matte/media only: how the matte fills the clip"),
+                                              {QStringLiteral("stretch"), QStringLiteral("fit"), QStringLiteral("fill")})},
+        {QStringLiteral("mediaChannel"), enumProp(QStringLiteral("matte/media only: which channel is the coverage"),
+                                                  {QStringLiteral("luma"), QStringLiteral("alpha")})},
+        {QStringLiteral("mediaLoop"), boolProp(QStringLiteral("matte/media only: loop a matte shorter than the clip"))},
     });
     s.insert(QStringLiteral("description"),
              QStringLiteral("The whole mask; every omitted key reverts to its default and omitting shape turns the mask off"));
@@ -158,7 +172,8 @@ QJsonObject legacyTextAnimationSchema(const QString &description)
 QJsonObject textAnimationSlotSchema(const QString &description)
 {
     QJsonObject s = objectSchema({
-        {QStringLiteral("preset"), stringProp(QStringLiteral("Preset id from list_text_animations; \"\" or \"none\" clears the slot. Picking a preset resets its params to the preset defaults."))},
+        {QStringLiteral("preset"), stringProp(QStringLiteral("Preset id from list_text_animations; \"\" or \"none\" clears the slot. Switching to a different preset resets its params to that preset's defaults (re-sending the current id keeps them)."))},
+        {QStringLiteral("keepControls"), boolProp(QStringLiteral("When switching preset, carry duration/stagger/unit/order/ease/period/amount over instead of resetting them"))},
         {QStringLiteral("params"), QJsonObject{{QStringLiteral("type"), QStringLiteral("object")},
                                                {QStringLiteral("description"), QStringLiteral("Preset param overrides {id: value}; ids and types come from the preset's params list")}}},
         {QStringLiteral("duration"), numberProp(QStringLiteral("Seconds per unit (In/Out)"), 0.0, 10.0)},
@@ -171,7 +186,9 @@ QJsonObject textAnimationSlotSchema(const QString &description)
                                           {QStringLiteral("linear"), QStringLiteral("easeIn"), QStringLiteral("easeOut"), QStringLiteral("easeInOut"),
                                            QStringLiteral("back"), QStringLiteral("bounce"), QStringLiteral("smooth")})},
         {QStringLiteral("period"), numberProp(QStringLiteral("Loop period in seconds; 0 = once over the whole clip (hold motion)"), 0.0, 60.0)},
+        {QStringLiteral("amount"), numberProp(QStringLiteral("Loop strength shortcut, for presets that declare an amount param"))},
         {QStringLiteral("delay"), numberProp(QStringLiteral("Seconds after the start (In) / before the end (Out)"), 0.0, 10.0)},
+        {QStringLiteral("durationOverride"), numberProp(QStringLiteral("Seconds: total length of the slot's motion, overriding the preset's own timing; 0 = preset default"), 0.0, 60.0)},
         {QStringLiteral("enabled"), boolProp(QStringLiteral("On/off without losing the preset"))},
         {QStringLiteral("animators"), QJsonObject{{QStringLiteral("type"), QStringLiteral("array")},
                                                   {QStringLiteral("description"), QStringLiteral("Inline AE-style animator tree (expert): [{selectors:[{driver, domain, …}], props:{position, scale, rotation, opacity, blur, tracking, fillColor, …}}]. Replaces the preset.")}}},
@@ -188,22 +205,28 @@ QJsonObject textLayerSchema(const QString &description)
         {QStringLiteral("color"), stringProp(QStringLiteral("Solid colour, or the tint for texture/effect"))},
         {QStringLiteral("gradient"), objectSchema({
              {QStringLiteral("kind"), enumProp(QStringLiteral("Gradient shape"), {QStringLiteral("linear"), QStringLiteral("radial"), QStringLiteral("sweep")})},
-             {QStringLiteral("stops"), QJsonObject{{QStringLiteral("type"), QStringLiteral("array")}, {QStringLiteral("description"), QStringLiteral("[{pos 0..1, color}]")}}},
+             {QStringLiteral("stops"), arrayProp(objectSchema({{QStringLiteral("pos"), numberProp(QStringLiteral("Position along the axis"), 0.0, 1.0)},
+                                                              {QStringLiteral("color"), stringProp(QStringLiteral("#RRGGBB or #AARRGGBB"))}}),
+                                                 QStringLiteral("Colour stops in order; list_gradient_presets has ready-made sets"))},
              {QStringLiteral("angle"), numberProp(QStringLiteral("Degrees: 0 = left→right, 90 = top→bottom"))},
+             {QStringLiteral("center"), arrayProp({{QStringLiteral("type"), QStringLiteral("number")}},
+                                                  QStringLiteral("[x, y] radial/sweep centre as box fractions (default [0.5, 0.5]; keyframable as gradient.center.x/y)"))},
              {QStringLiteral("offset"), numberProp(QStringLiteral("Shift along the axis in box widths (keyframable)"))},
              {QStringLiteral("offsetSpeed"), numberProp(QStringLiteral("Box widths per second: a moving gradient"))},
              {QStringLiteral("scale"), numberProp(QStringLiteral("Axis length multiplier"))},
              {QStringLiteral("repeat"), boolProp(QStringLiteral("Tile instead of clamp"))},
              {QStringLiteral("oklab"), boolProp(QStringLiteral("Interpolate in OKLab"))},
-             {QStringLiteral("space"), enumProp(QStringLiteral("Box the gradient maps onto"),
+             {QStringLiteral("space"), enumProp(QStringLiteral("Box the gradient maps onto (text only; a shape always uses its own box)"),
                                                 {QStringLiteral("block"), QStringLiteral("line"), QStringLiteral("word"), QStringLiteral("glyph"), QStringLiteral("accentRun")})}})},
         {QStringLiteral("texture"), objectSchema({{QStringLiteral("path"), stringProp(QStringLiteral("Absolute image path"))},
                                                   {QStringLiteral("scale"), numberProp(QStringLiteral("Scale"))},
                                                   {QStringLiteral("angle"), numberProp(QStringLiteral("Degrees"))},
+                                                  {QStringLiteral("offset"), arrayProp({{QStringLiteral("type"), QStringLiteral("number")}},
+                                                                                       QStringLiteral("[x, y] shift as box fractions"))},
                                                   {QStringLiteral("tile"), boolProp(QStringLiteral("Tile (else cover the block)"))}})},
-        {QStringLiteral("effect"), objectSchema({{QStringLiteral("id"), enumProp(QStringLiteral("Shader effect"),
+        {QStringLiteral("effect"), objectSchema({{QStringLiteral("id"), enumProp(QStringLiteral("Shader effect; list_text_effects has each one's params"),
                                                                                   {QStringLiteral("shine"), QStringLiteral("shimmer"), QStringLiteral("neon-pulse"), QStringLiteral("glitch"), QStringLiteral("chrome"), QStringLiteral("dissolve")})},
-                                                 {QStringLiteral("params"), QJsonObject{{QStringLiteral("type"), QStringLiteral("object")}, {QStringLiteral("description"), QStringLiteral("{id: {type, value}} typed params")}}}})},
+                                                 {QStringLiteral("params"), QJsonObject{{QStringLiteral("type"), QStringLiteral("object")}, {QStringLiteral("description"), QStringLiteral("{id: {type, value}} typed params — the type (scalar|color|text) and ids come from list_text_effects; a bare number is NOT accepted here. Scalar params keyframe as layer.<id>.effect.<param>")}}}})},
     });
     QJsonObject s = objectSchema({
         {QStringLiteral("id"), stringProp(QStringLiteral("Stable layer id (lowercase); minted when omitted"))},
@@ -219,7 +242,7 @@ QJsonObject textLayerSchema(const QString &description)
         {QStringLiteral("blur"), numberProp(QStringLiteral("Shadow blur / glow radius in px"))},
         {QStringLiteral("width"), numberProp(QStringLiteral("Stroke width or extrude depth in px"))},
         {QStringLiteral("spread"), numberProp(QStringLiteral("Shadow/glow dilation in px"))},
-        {QStringLiteral("strokeAlign"), enumProp(QStringLiteral("Where a stroke sits on the outline (default outside)"),
+        {QStringLiteral("strokeAlign"), enumProp(QStringLiteral("Where a stroke sits on the outline (default outside on text, inside on shapes)"),
                                                  {QStringLiteral("center"), QStringLiteral("outside"), QStringLiteral("inside")})},
         {QStringLiteral("dash"), enumProp(QStringLiteral("Stroke dash pattern"),
                                           {QStringLiteral("solid"), QStringLiteral("dash"), QStringLiteral("dot"), QStringLiteral("dashdot")})},
@@ -233,11 +256,19 @@ QJsonObject textLayerSchema(const QString &description)
         {QStringLiteral("extrudeSteps"), integerProp(QStringLiteral("Extrude copies"))},
         {QStringLiteral("extrudeAngle"), numberProp(QStringLiteral("Extrude direction in degrees"))},
         {QStringLiteral("extrudeDarken"), numberProp(QStringLiteral("How much the far end darkens 0..1"), 0.0, 1.0)},
-        {QStringLiteral("scope"), enumProp(QStringLiteral("Which words the layer paints"),
+        {QStringLiteral("scope"), enumProp(QStringLiteral("Which words the layer paints (text only)"),
                                            {QStringLiteral("all"), QStringLiteral("base"), QStringLiteral("accent")})},
     });
     s.insert(QStringLiteral("description"), description);
     return s;
+}
+
+QStringList shapeCatalogIds()
+{
+    QStringList ids;
+    for (const drift::ShapeCatalogEntry &entry : drift::shapeCatalog())
+        ids.append(entry.id);
+    return ids;
 }
 
 QJsonObject shapeStyleSchema()
@@ -247,7 +278,7 @@ QJsonObject shapeStyleSchema()
                       mergeProps(layerPatch.value(QStringLiteral("properties")).toObject(),
                                  {{QStringLiteral("index"), integerProp(QStringLiteral("Layer index, when no id"))}}));
     QJsonObject s = objectSchema({
-        {QStringLiteral("kind"), stringProp(QStringLiteral("Shape catalog id from list_shapes"))},
+        {QStringLiteral("kind"), enumProp(QStringLiteral("Shape catalog id (circle is an ellipse with a square box); changes the geometry, keeps the layers"), shapeCatalogIds())},
         {QStringLiteral("layers"), QJsonObject{{QStringLiteral("type"), QStringLiteral("array")},
                                                {QStringLiteral("items"), textLayerSchema(QStringLiteral("A shading layer"))},
                                                {QStringLiteral("description"), QStringLiteral("The whole shading stack, replaced as given; layers[0] is drawn first (back-most). A fresh shape has a fill (id \"fill\") under a stroke (id \"stroke\"). Use `layer` to patch one.")}}},
@@ -265,12 +296,12 @@ QJsonObject shapeStyleSchema()
                   {QStringLiteral("none"), QStringLiteral("solid"), QStringLiteral("dash"),
                    QStringLiteral("dot"), QStringLiteral("dashdot")})},
         {QStringLiteral("cornerRadius"), numberProp(QStringLiteral("Corner px: native on the rect family, rounds the corners of any other kind"), 0, 2000)},
-        {QStringLiteral("points"), integerProp(QStringLiteral("Star/polygon point count"), 3, 60)},
-        {QStringLiteral("innerRatio"), numberProp(QStringLiteral("Star inner radius"), 0.05, 0.95)},
-        {QStringLiteral("headSize"), numberProp(QStringLiteral("Arrow head size"), 0.05, 0.9)},
-        {QStringLiteral("thickness"), numberProp(QStringLiteral("Arrow/banner thickness"), 0.05, 1)},
-        {QStringLiteral("tailX"), numberProp(QStringLiteral("Bubble tail x"), 0.08, 0.92)},
-        {QStringLiteral("tailSize"), numberProp(QStringLiteral("Bubble tail size"), 0.05, 0.5)},
+        {QStringLiteral("points"), integerProp(QStringLiteral("Point count: star, burst"), 3, 60)},
+        {QStringLiteral("innerRatio"), numberProp(QStringLiteral("Inner radius: star, burst"), 0.05, 0.95)},
+        {QStringLiteral("headSize"), numberProp(QStringLiteral("Head size: arrow, double-arrow, block-arrow, chevron; banner notch"), 0.05, 0.9)},
+        {QStringLiteral("thickness"), numberProp(QStringLiteral("Shaft thickness: arrow, double-arrow, chevron, curved-arrow, cross"), 0.05, 1)},
+        {QStringLiteral("tailX"), numberProp(QStringLiteral("Tail x: speech-bubble, speech-bubble-rect, thought-bubble, callout"), 0.08, 0.92)},
+        {QStringLiteral("tailSize"), numberProp(QStringLiteral("Tail size: the same four bubbles"), 0.05, 0.5)},
     });
     s.insert(QStringLiteral("description"),
              QStringLiteral("Partial style patch; only supplied keys change. Each geometry knob is read by a subset of shape kinds"));
@@ -285,13 +316,15 @@ QJsonObject textStyleSchema()
                                  {{QStringLiteral("index"), integerProp(QStringLiteral("Layer index, when no id"))}}));
     return objectSchema({
         {QStringLiteral("fontFamily"), stringProp(QStringLiteral("Font family name"))},
-        {QStringLiteral("fontWeight"), integerProp(QStringLiteral("Font weight (e.g. 400, 700)"))},
-        {QStringLiteral("pixelSize"), numberProp(QStringLiteral("Font size in pixels"))},
+        {QStringLiteral("fontWeight"), integerProp(QStringLiteral("Font weight (e.g. 400, 700)"), 100, 900)},
+        {QStringLiteral("pixelSize"), numberProp(QStringLiteral("Font size in pixels"), 8, 800)},
         {QStringLiteral("layers"), QJsonObject{{QStringLiteral("type"), QStringLiteral("array")},
                                                {QStringLiteral("items"), textLayerSchema(QStringLiteral("A shading layer"))},
                                                {QStringLiteral("description"), QStringLiteral("The whole shading stack, replaced as given; layers[0] is drawn first (back-most). Use `layer` to patch one.")}}},
         {QStringLiteral("layer"), layerPatch},
-        {QStringLiteral("lookId"), stringProp(QStringLiteral("\"\" clears the look bookkeeping; use apply_text_look to apply one"))},
+        {QStringLiteral("lookId"), stringProp(QStringLiteral("\"\" clears the look bookkeeping (and the packId); any other value is ignored — use apply_text_look to apply one"))},
+        {QStringLiteral("lookParams"), QJsonObject{{QStringLiteral("type"), QStringLiteral("object")},
+                                                   {QStringLiteral("description"), QStringLiteral("Read-only in inspect: the current look's params. Change them by re-applying the look with apply_text_look({look, params})")}}},
         {QStringLiteral("color"), stringProp(QStringLiteral("Primary text colour (#RRGGBB or #AARRGGBB): edits the front-most fill layer"))},
         {QStringLiteral("fillKind"), enumProp(QStringLiteral("Legacy: solid, or a two-stop gradient on the fill layer"),
                                               {QStringLiteral("solid"), QStringLiteral("linearGradient"), QStringLiteral("radialGradient")})},
@@ -305,7 +338,7 @@ QJsonObject textStyleSchema()
         {QStringLiteral("valign"), enumProp(QStringLiteral("Vertical alignment"),
                                             {QStringLiteral("top"), QStringLiteral("center"),
                                              QStringLiteral("bottom")})},
-        {QStringLiteral("lineHeight"), numberProp(QStringLiteral("Line height multiplier"))},
+        {QStringLiteral("lineHeight"), numberProp(QStringLiteral("Line height multiplier"), 0.5, 4.0)},
         {QStringLiteral("letterSpacing"), numberProp(QStringLiteral("Letter spacing"))},
         {QStringLiteral("wordWrap"), boolProp(QStringLiteral("Wrap long lines"))},
         {QStringLiteral("outlineEnabled"), boolProp(QStringLiteral("Legacy: the stroke layer on/off"))},
@@ -335,11 +368,11 @@ QJsonObject textStyleSchema()
                                                          {QStringLiteral("none"), QStringLiteral("firstWord"), QStringLiteral("lastWord"),
                                                           QStringLiteral("everyOther"), QStringLiteral("everyNth"), QStringLiteral("longestWord"),
                                                           QStringLiteral("randomStable"), QStringLiteral("karaoke")})},
-                       {QStringLiteral("n"), integerProp(QStringLiteral("Stride for everyNth"))},
-                       {QStringLiteral("phase"), integerProp(QStringLiteral("Index of the first accented word"))},
+                       {QStringLiteral("n"), integerProp(QStringLiteral("Stride for everyNth"), 1, 16)},
+                       {QStringLiteral("phase"), integerProp(QStringLiteral("Index of the first accented word"), 0, 16)},
                        {QStringLiteral("colorEnabled"), boolProp(QStringLiteral("Recolour accented words"))},
                        {QStringLiteral("color"), stringProp(QStringLiteral("Accent colour"))},
-                       {QStringLiteral("sizeScale"), numberProp(QStringLiteral("Accented word size relative to pixelSize"))},
+                       {QStringLiteral("sizeScale"), numberProp(QStringLiteral("Accented word size relative to pixelSize"), 0.25, 4.0)},
                        {QStringLiteral("outlineEnabled"), boolProp(QStringLiteral("Outline accented words"))},
                        {QStringLiteral("outlineWidth"), numberProp(QStringLiteral("Accent outline width in px"))},
                        {QStringLiteral("outlineColor"), stringProp(QStringLiteral("Accent outline colour"))},
@@ -353,10 +386,14 @@ QJsonObject textStyleSchema()
                                                                {QStringLiteral("blinkOn"), numberProp(QStringLiteral("Seconds on"))},
                                                                {QStringLiteral("blinkOff"), numberProp(QStringLiteral("Seconds off"))},
                                                                {QStringLiteral("holdAfter"), numberProp(QStringLiteral("Seconds to keep blinking after the reveal; -1 = whole clip"))},
+                                                               {QStringLiteral("widthEm"), numberProp(QStringLiteral("Caret width in em"), 0.01, 2.0)},
+                                                               {QStringLiteral("heightEm"), numberProp(QStringLiteral("Caret height in em"), 0.1, 2.0)},
                                                                {QStringLiteral("shape"), enumProp(QStringLiteral("Caret shape"), {QStringLiteral("bar"), QStringLiteral("underscore"), QStringLiteral("block")})},
                                                                {QStringLiteral("color"), stringProp(QStringLiteral("Caret colour; \"\" = the text colour"))}})},
                        {QStringLiteral("anchorGrouping"), enumProp(QStringLiteral("What per-fragment scale/rotation pivots on"),
-                                                                    {QStringLiteral("character"), QStringLiteral("word"), QStringLiteral("line"), QStringLiteral("all")})}})},
+                                                                    {QStringLiteral("character"), QStringLiteral("word"), QStringLiteral("line"), QStringLiteral("all")})},
+                       {QStringLiteral("anchorAlignment"), arrayProp({{QStringLiteral("type"), QStringLiteral("number")}},
+                                                                     QStringLiteral("[x, y] pivot inside each group, -1..1 (0,0 = centre)"))}})},
         {QStringLiteral("animIn"), legacyTextAnimationSchema(QStringLiteral("Legacy entrance animation (maps onto animation.in)"))},
         {QStringLiteral("animOut"), legacyTextAnimationSchema(QStringLiteral("Legacy exit animation (maps onto animation.out)"))},
     });
@@ -395,6 +432,21 @@ QJsonObject exportSettingsProps()
         {QStringLiteral("work_area"), boolProp(QStringLiteral("Limit to the In/Out work area. Fails bad_args when no work area is set. Ignored when in/out are given."))},
         {QStringLiteral("in"), numberProp(QStringLiteral("Range start seconds. Overrides work_area."))},
         {QStringLiteral("out"), numberProp(QStringLiteral("Range end seconds; must be greater than in."))},
+        // The app's own settings-map spellings, accepted so a map read from list_export_presets or a
+        // saved profile can be sent back verbatim.
+        {QStringLiteral("scaleId"), stringProp(QStringLiteral("Alias of scale"))},
+        {QStringLiteral("targetHeight"), integerProp(QStringLiteral("Alias of height"))},
+        {QStringLiteral("fpsNum"), integerProp(QStringLiteral("Output fps numerator (with fpsDen); alias of fps"))},
+        {QStringLiteral("fpsDen"), integerProp(QStringLiteral("Output fps denominator"), 1, 1000)},
+        {QStringLiteral("videoCodecId"), stringProp(QStringLiteral("Alias of video"))},
+        {QStringLiteral("audioCodecId"), stringProp(QStringLiteral("Alias of audio"))},
+        {QStringLiteral("rateControl"), enumProp(QStringLiteral("Alias of rate"), {QStringLiteral("crf"), QStringLiteral("bitrate")})},
+        {QStringLiteral("videoBitrateKbps"), integerProp(QStringLiteral("Alias of bitrate"))},
+        {QStringLiteral("videoPreset"), stringProp(QStringLiteral("Alias of preset"))},
+        {QStringLiteral("audioBitrateKbps"), integerProp(QStringLiteral("Alias of audio_bitrate"))},
+        {QStringLiteral("audioOnly"), boolProp(QStringLiteral("Alias of audio_only"))},
+        {QStringLiteral("gifExport"), boolProp(QStringLiteral("Alias of gif"))},
+        {QStringLiteral("exportWorkAreaOnly"), boolProp(QStringLiteral("Alias of work_area"))},
     };
 }
 
@@ -760,7 +812,7 @@ const QList<Op> &ops()
         { "list_animated_properties", "keyframes", "See what already has keys",
           "Returns {props:[…]} — only the properties that already carry keyframes on this clip. Empty "
           "on a fresh clip. Property spellings live in the `prop` schema of the other keyframes ops "
-          "(x, y, width, height, rotation, opacity, volume, fx.<i>.<key>), not here.",
+          "(x, y, width, height, rotation, opacity, volume, fx.<i>.<key>, mask.<key>, text.<key>, shape.<key>, vector.svg.<key>), not here.",
           objectSchema(clipRefProps()), true, false, true },
         { "list_keyframes", "keyframes", "Read keys for one property",
           "Returns {prop, enabled, keys:[{seconds, value, inDx, inDy, outDx, outDy, corner, hold, "
@@ -772,7 +824,8 @@ const QList<Op> &ops()
           true, false, true },
         { "set_keyframe", "keyframes", "Add or update a key",
           "Add a keyframe, or overwrite the value of an existing one at that time. Creates the "
-          "animation if the property had no keys yet.",
+          "animation if the property had no keys yet. A prop the clip does not have (a text.* key "
+          "on a video clip, a misspelt layer id) fails bad_args.",
           objectSchema(mergeProps({{QStringLiteral("prop"), animPropProp()},
                                    {QStringLiteral("at"), numberProp(QStringLiteral("Timeline seconds"))},
                                    {QStringLiteral("value"), numberProp(QStringLiteral("Property value, in the property's own units (pixels, degrees, 0..1)"))}},
@@ -780,8 +833,8 @@ const QList<Op> &ops()
                        {QStringLiteral("prop"), QStringLiteral("at"), QStringLiteral("value")}) },
         { "remove_keyframe", "keyframes", "Delete a key",
           "Remove the keyframe NEAREST to `at` — there is no distance limit, so a time that misses "
-          "every key still deletes the closest one, and a no-op returns ok. Confirm the exact key time "
-          "with list_keyframes first.",
+          "every key still deletes the closest one. Confirm the exact key time with list_keyframes "
+          "first. A prop with no keys fails not_found (so do the other per-key ops).",
           objectSchema(mergeProps({{QStringLiteral("prop"), animPropProp()},
                                    {QStringLiteral("at"), numberProp(QStringLiteral("Timeline seconds of the key to delete"))}},
                                   clipRefProps()),
@@ -973,6 +1026,11 @@ QStringList undoExemptOps()
         QStringLiteral("install_addon"),       QStringLiteral("cancel_addon_install"),
         QStringLiteral("set_acceleration"),    QStringLiteral("switch_angle"),
         QStringLiteral("end_multicam"),
+        // Preset stores live on disk, outside the project and its history.
+        QStringLiteral("rename_user_text_preset"),      QStringLiteral("delete_user_text_preset"),
+        QStringLiteral("export_user_text_preset"),      QStringLiteral("import_user_text_preset"),
+        QStringLiteral("rename_text_animation_preset"), QStringLiteral("delete_text_animation_preset"),
+        QStringLiteral("export_text_animation_preset"),
     };
     return k;
 }
@@ -1018,12 +1076,14 @@ QString agentGuideText()
         "- Clip overlap is off by default (place/move snap to the next gap; the reply reports\n"
         "  requested vs placed).\n"
         "- Every op returns {ok:true, …} or {ok:false, error:<code>, detail:<text>}. Codes: bad_args,\n"
-        "  not_found, type_mismatch, unknown_op, unknown_toolbox, wrong_endpoint, wrong_toolbox,\n"
-        "  apply_failed, import_failed, import_timeout, export_busy, export_failed, export_timeout,\n"
-        "  capture_failed, conflict.\n"
+        "  not_found, type_mismatch (also: wrong clip kind for the op), unknown_op, unknown_toolbox,\n"
+        "  wrong_endpoint, wrong_toolbox, apply_failed, import_failed, import_timeout, export_busy,\n"
+        "  export_failed, export_timeout, capture_failed, conflict, unsupported (no vector renderer\n"
+        "  in this build), market_unavailable, consent_required, market_error, download_failed.\n"
         "- apply is not atomic: on failure the ops before it stay applied; done lists only those.\n"
-        "- Args are validated against the schema: bad_args (missing/enum/range), type_mismatch;\n"
-        "  unknown keys come back as ignored:[…]. Numbers are rounded to 3 dp except fps/pos.\n"
+        "- Toolbox op args are validated against the schema: bad_args (missing/enum/range),\n"
+        "  type_mismatch; unknown keys come back as ignored:[…]. inspect, capture, frames and\n"
+        "  activity are not schema-checked. Numbers are rounded to 3 dp except fps/pos.\n"
         "\n"
         "Selection-based ops take no clip argument and act on the current selection — call\n"
         "select_clip or select_clips first: separate_audio, unlink_audio, merge_clips,\n"
@@ -1039,12 +1099,13 @@ QString agentGuideText()
         "Async jobs return {started:true} immediately. Poll these fields, all of which need\n"
         "inspect({detail:true}) except export:\n"
         "- export_video      -> export.{active,progress}      (or export_status)\n"
-        "- package_project   -> package.{active,progress}\n"
-        "- generate_subtitles-> subtitleGen.{active,progress,status}\n"
-        "- detect_scenes     -> sceneDetect.{active,progress,status}\n"
-        "- set_clip_reverse  -> reverseRender.{active,progress,status}\n"
-        "Segmentation, denoise, and face detection report through the app's status only; re-read\n"
-        "inspect({clips:true,detail:true}) and compare to detect completion.\n"
+        "- package_project   -> jobs.package.{active,progress}\n"
+        "- generate_subtitles-> jobs.subtitleGen.{active,progress,status}\n"
+        "- detect_scenes     -> jobs.sceneDetect.{active,progress,status}\n"
+        "- set_clip_reverse  -> jobs.reverseRender.{active,progress,status}\n"
+        "- market_download   -> jobs.market.active (count), or market_downloads for per-job status\n"
+        "jobs.* keys exist only while a job runs. Segmentation, denoise, and face detection report\n"
+        "through the app's status only; re-read inspect({clips:true,detail:true}) and compare.\n"
         "\n"
         "Working to the music (audio toolbox):\n"
         "1. detect_beats({start, duration}) blocks and returns bpm plus exact beat and onset times.\n"
@@ -1075,10 +1136,26 @@ QString agentGuideText()
         "Finding media: import_media takes absolute paths only. Drift will not list folders. When\n"
         "the user gives a partial name, glob or search the host with YOUR own tools (find, ls,\n"
         "whatever the client exposes), then pass those absolute paths to import_media and confirm\n"
-        "missing:[] is empty.\n"
+        "missing:[] is empty. Stock footage comes from the market toolbox (market_status first —\n"
+        "the user must have accepted the terms in the app).\n"
+        "\n"
+        "Titles and captions (text toolbox):\n"
+        "1. list_text_presets, then add_text({text, preset}) or apply_text_preset on an existing\n"
+        "   clip — a pack sets font, shading layers AND in/out/loop animation in one go.\n"
+        "2. Refine: set_text({style}) for font/size/align/box/accent; apply_text_look for a one-click\n"
+        "   look (neon, gradient, chrome…); add/set/remove/move/duplicate_text_layer to edit the\n"
+        "   shading stack (fill/stroke/shadow/glow/extrude, each solid/gradient/texture/effect —\n"
+        "   list_gradient_presets and list_text_effects give the ready-made paints).\n"
+        "3. Motion: list_text_animations, then set_text_animation({which:in|out|loop, preset, …}).\n"
+        "4. Keyframe text.<key> and text.layer.<id>.<field> with set_keyframe; capture to check.\n"
+        "\n"
+        "Shapes (shapes + canvas toolboxes):\n"
+        "list_shapes → add_shape({shape}) → set_shape_style({style:{kind, layers|layer, cornerRadius,\n"
+        "points, …}}); the same *_shape_layer ops as text edit its stack; keyframe shape.<key> and\n"
+        "shape.layer.<id>.<field>. A fresh shape has layers \"fill\" and \"stroke\".\n"
         "\n"
         "Toolboxes: media, timeline, canvas, playback, text, effects, project, keyframes, speed, ui, "
-        "shapes, motion, subtitles, segmentation, ai, audio, scene, multicam.\n");
+        "shapes, motion, subtitles, segmentation, ai, audio, scene, multicam, market.\n");
 }
 
 QJsonObject catalogPayload(const QJsonObject &args)
@@ -1088,18 +1165,18 @@ QJsonObject catalogPayload(const QJsonObject &args)
         const char *when;
     };
     static const Box boxes[] = {
-        {"media", "Import (absolute paths only — resolve fuzzy names with your own filesystem tools) "
-                   "and read the media bin before placing clips."},
+        {"media", "Import (absolute paths only — resolve fuzzy names with your own filesystem tools), "
+                   "read the media bin before placing clips, fix a sideways asset."},
         {"timeline", "Tracks, place/move/trim/split/delete clips, ripple/gap, overlap, selection, undo."},
-        {"canvas", "Transform, flip, blend, mask, fade, constant speed, reverse, animation, stabilisation."},
+        {"canvas", "Transform, flip, blend, mask, fade, constant speed, reverse, animation, stabilisation, orientation, shape styling (layers, geometry)."},
         {"playback", "Seek, play, pause, In/Out work area."},
-        {"text", "Add and edit title/caption clips."},
+        {"text", "Title/caption clips: style packs, shading layers, looks, gradients/effects, in/out/loop animation presets, fonts."},
         {"effects", "Video/audio effects and transitions."},
         {"project", "Canvas size, background, metadata, save, and export."},
         {"keyframes", "Animate clip and effect properties over time."},
         {"speed", "Speed ramps (retimed clips) and reading custom fade curves."},
         {"ui", "Editor theme and keyboard shortcuts."},
-        {"shapes", "Builtin shapes, stickers, emoji, fonts."},
+        {"shapes", "Builtin shapes, stickers, emoji."},
         {"motion", "Lottie animations and SVG drawings as vector clips: add, inspect, re-theme through slots."},
         {"subtitles", "Subtitle clips, import/export, Whisper generation."},
         {"segmentation", "SAM-style cutout and mask output."},
@@ -1222,7 +1299,7 @@ QJsonArray homepageTools()
                        "{x,y,w,h,rotation,opacity} is always present (values at the playhead) and "
                        "animated lists the keyframed properties. verbose=true returns every field. "
                        "clip=<uuid> returns just that clip (detail on); track=<n> just that track. "
-                       "Async jobs appear under jobs {package|subtitleGen|reverseRender|sceneDetect} only while "
+                       "Async jobs appear under jobs {package|subtitleGen|reverseRender|sceneDetect|market} only while "
                        "active; beats only once analysed. since=<revision> returns {unchanged:true, revision}."),
         objectSchema({{QStringLiteral("clips"), boolProp(QStringLiteral("Include per-clip rows under tracks[].items"))},
                       {QStringLiteral("detail"),
@@ -1307,7 +1384,7 @@ QJsonArray homepageTools()
                        "transitions, keyframes, animation, subtitles, captions, transcribe, beats, tempo, scenes, "
                        "shots, silence, loudness, mask, fade, speed, reverse, crop, resize, export, render, "
                        "import, undo, history, bookmark, stabilize, denoise, faces, emoji, fonts, shapes, lottie, "
-                       "stickers, multicam. Scores op names, toolbox, when hints, descriptions and argument names; "
+                       "stickers, multicam, gradient, glow, neon, style pack, look, rotation, stock, marketplace. Scores op names, toolbox, when hints, descriptions and argument names; "
                        "returns hits:[{name, toolbox, when, args, required}]. schema:true inlines inputSchema when "
                        "there are ≤3 hits, so you can go straight to apply."),
         objectSchema({{QStringLiteral("q"), stringProp(QStringLiteral("Keywords, space separated"))},

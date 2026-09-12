@@ -12380,6 +12380,7 @@ QVariantList AppController::textPresets() const
         out.append(QVariantMap{
             {QStringLiteral("id"), preset.id},
             {QStringLiteral("label"), preset.label},
+            {QStringLiteral("sampleText"), preset.sampleText},
             {QStringLiteral("style"), textStyleToMap(preset.style, 0)},
         });
     }

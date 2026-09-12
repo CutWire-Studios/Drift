@@ -1,7 +1,10 @@
 #include "mcp/McpCatalog.h"
 #include "mcp/McpDispatcher.h"
 
+#include "core/ShapeStyle.h"
 #include "core/TextAnimationPreset.h"
+#include "core/TextPresetStore.h"
+#include "core/TextStyle.h"
 #include "core/TextLook.h"
 #include "mcp/McpJson.h"
 #include "mcp/McpMarket.h"
@@ -27,6 +30,30 @@
 
 namespace drift::mcp {
 namespace {
+
+QJsonObject unknownShapeId(const QString &raw)
+{
+    QStringList ids;
+    for (const drift::ShapeCatalogEntry &entry : drift::shapeCatalog())
+        ids.append(entry.id);
+    const QStringList nearest = nearestStrings(raw, ids, 3);
+    return err("not_found", QStringLiteral("Unknown shape id \"%1\"%2. Call list_shapes")
+                                .arg(raw, nearest.isEmpty() ? QString()
+                                                            : QStringLiteral("; did you mean %1?").arg(nearest.join(QStringLiteral(", ")))));
+}
+
+QJsonObject unknownTextPresetId(AppController *controller, const QString &raw)
+{
+    QStringList ids;
+    for (const drift::TextPreset &preset : drift::textPresets())
+        ids.append(preset.id);
+    for (const QVariant &v : controller->userTextPresets())
+        ids.append(v.toMap().value(QStringLiteral("id")).toString());
+    const QStringList nearest = nearestStrings(raw, ids, 3);
+    return err("not_found", QStringLiteral("Unknown text preset \"%1\"%2. Call list_text_presets or list_user_text_presets")
+                                .arg(raw, nearest.isEmpty() ? QString()
+                                                            : QStringLiteral("; did you mean %1?").arg(nearest.join(QStringLiteral(", ")))));
+}
 
 int jsonInt(const QJsonValue &v, int fallback = -1)
 {
@@ -194,6 +221,39 @@ QJsonObject compactEmojiItem(const QVariantMap &item)
     return {{QStringLiteral("id"), item.value(QStringLiteral("emoji")).toString()},
             {QStringLiteral("label"), item.value(QStringLiteral("name")).toString()},
             {QStringLiteral("cat"), item.value(QStringLiteral("group")).toString()}};
+}
+
+// list_shapes keeps the geometry facts add_shape / set_shape_style care about.
+QJsonObject compactShapeItem(const QVariantMap &item)
+{
+    QJsonObject o = compactCatalogItem(item);
+    o.insert(QStringLiteral("kind"), item.value(QStringLiteral("kind")).toString());
+    o.insert(QStringLiteral("aspect"), item.value(QStringLiteral("aspect")).toDouble());
+    return o;
+}
+
+// list_text_presets: enough of the pack to tell "hormozi" from "title" without applying it.
+QJsonObject compactTextPresetItem(const QVariantMap &item)
+{
+    QJsonObject o = compactCatalogItem(item);
+    const QVariantMap style = item.value(QStringLiteral("style")).toMap();
+    const QString sample = item.value(QStringLiteral("sampleText")).toString();
+    if (!sample.isEmpty())
+        o.insert(QStringLiteral("sampleText"), sample);
+    o.insert(QStringLiteral("font"), style.value(QStringLiteral("fontFamily")).toString());
+    const QString accent = style.value(QStringLiteral("accent")).toMap().value(QStringLiteral("rule")).toString();
+    if (!accent.isEmpty() && accent != QLatin1String("none"))
+        o.insert(QStringLiteral("accent"), accent);
+    QJsonObject anim;
+    const QVariantMap animation = style.value(QStringLiteral("animation")).toMap();
+    for (const char *slot : {"in", "out", "loop"}) {
+        const QString preset = animation.value(QLatin1String(slot)).toMap().value(QStringLiteral("preset")).toString();
+        if (!preset.isEmpty())
+            anim.insert(QLatin1String(slot), preset);
+    }
+    if (!anim.isEmpty())
+        o.insert(QStringLiteral("anim"), anim);
+    return o;
 }
 
 QJsonObject compactFontItem(const QVariantMap &item)
@@ -756,12 +816,16 @@ QJsonObject McpDispatcher::applyOneExtended(const QString &tool, const QJsonObje
         const int index = jsonInt(args.value(QStringLiteral("index")));
         if (index < 0)
             return err("bad_args", QStringLiteral("index required"));
+        const QVariantList marks = m_controller->bookmarks();
+        if (index >= marks.size())
+            return err("not_found", QStringLiteral("No bookmark at index %1 (%2 bookmarks)").arg(index).arg(marks.size()));
+        const QVariantMap current = marks.at(index).toMap();
         const double at = args.contains(QStringLiteral("at"))
                               ? jsonNumber(args.value(QStringLiteral("at")), 0)
-                              : m_controller->bookmarks().at(index).toMap().value(QStringLiteral("at")).toDouble();
+                              : current.value(QStringLiteral("seconds")).toDouble();
         const QString label = args.contains(QStringLiteral("label"))
                                   ? args.value(QStringLiteral("label")).toString()
-                                  : m_controller->bookmarks().at(index).toMap().value(QStringLiteral("label")).toString();
+                                  : current.value(QStringLiteral("label")).toString();
         m_controller->updateBookmark(index, at, label);
         return ok({{QStringLiteral("index"), index}, {QStringLiteral("at"), at}, {QStringLiteral("label"), label}});
     }
@@ -964,10 +1028,21 @@ QJsonObject McpDispatcher::applyOneExtended(const QString &tool, const QJsonObje
         const ClipRef ref = resolveClip(args);
         if (!ref.valid())
             return clipRefError(args);
+        if (const QJsonObject wrong = requireKind(ref, {QStringLiteral("text"), QStringLiteral("subtitle")}, "apply_text_look"); !wrong.isEmpty())
+            return wrong;
         const QString look = args.value(QStringLiteral("look")).toString();
         if (!drift::textLookForId(look))
             return err("bad_args", QStringLiteral("unknown look '%1'").arg(look));
-        m_controller->applyTextLook(ref.track, ref.clip, look, args.value(QStringLiteral("params")).toObject().toVariantMap());
+        const QVariantMap params = args.value(QStringLiteral("params")).toObject().toVariantMap();
+        const QVariantMap current = m_controller->clipAt(ref.track, ref.clip).value(QStringLiteral("textStyle")).toMap();
+        // Re-applying the look the clip already wears adjusts it: the params merge over the
+        // current ones like the inspector's sliders, instead of resetting every other param.
+        if (!params.isEmpty() && current.value(QStringLiteral("lookId")).toString() == look) {
+            for (auto it = params.constBegin(); it != params.constEnd(); ++it)
+                m_controller->setTextLookParam(ref.track, ref.clip, it.key(), it.value());
+        } else {
+            m_controller->applyTextLook(ref.track, ref.clip, look, params);
+        }
         return ok(clipFeedback(ref, {{QStringLiteral("look"), look}}));
     }
 
@@ -988,6 +1063,8 @@ QJsonObject McpDispatcher::applyOneExtended(const QString &tool, const QJsonObje
         const ClipRef ref = resolveClip(args);
         if (!ref.valid())
             return clipRefError(args);
+        if (const QJsonObject wrong = requireKind(ref, {QStringLiteral("text"), QStringLiteral("subtitle")}, "set_text_animation"); !wrong.isEmpty())
+            return wrong;
         const QString which = args.value(QStringLiteral("which")).toString().trimmed();
         if (which != QLatin1String("in") && which != QLatin1String("out") && which != QLatin1String("loop"))
             return err("bad_args", QStringLiteral("which must be in, out or loop"));
@@ -1010,6 +1087,8 @@ QJsonObject McpDispatcher::applyOneExtended(const QString &tool, const QJsonObje
         const ClipRef ref = resolveClip(args);
         if (!ref.valid())
             return clipRefError(args);
+        if (const QJsonObject wrong = requireKind(ref, {QStringLiteral("text"), QStringLiteral("subtitle")}, "clear_text_animation"); !wrong.isEmpty())
+            return wrong;
         m_controller->clearTextAnimationSlot(ref.track, ref.clip, args.value(QStringLiteral("which")).toString());
         return ok(clipFeedback(ref));
     }
@@ -1030,6 +1109,8 @@ QJsonObject McpDispatcher::applyOneExtended(const QString &tool, const QJsonObje
         const ClipRef ref = resolveClip(args);
         if (!ref.valid())
             return clipRefError(args);
+        if (const QJsonObject wrong = requireKind(ref, {QStringLiteral("text"), QStringLiteral("subtitle")}, "apply_text_style_to_all"); !wrong.isEmpty())
+            return wrong;
         const int changed = m_controller->applyTextStyleToCaptions(ref.track, ref.clip,
                                                                    args.value(QStringLiteral("scope")).toString(QStringLiteral("track")));
         return ok(clipFeedback(ref, {{QStringLiteral("changed"), changed}}));
@@ -1039,7 +1120,15 @@ QJsonObject McpDispatcher::applyOneExtended(const QString &tool, const QJsonObje
         const ClipRef ref = resolveClip(args);
         if (!ref.valid())
             return clipRefError(args);
-        m_controller->setShapeStyle(ref.track, ref.clip, args.value(QStringLiteral("style")).toObject().toVariantMap());
+        if (const QJsonObject wrong = requireKind(ref, {QStringLiteral("shape")}, "set_shape_style"); !wrong.isEmpty())
+            return wrong;
+        const QVariantMap style = args.value(QStringLiteral("style")).toObject().toVariantMap();
+        if (style.contains(QStringLiteral("kind"))) {
+            const QString kind = style.value(QStringLiteral("kind")).toString();
+            if (!drift::shapeCatalogEntry(kind) && drift::shapeKindToString(drift::shapeKindFromString(kind)) != kind)
+                return unknownShapeId(kind);
+        }
+        m_controller->setShapeStyle(ref.track, ref.clip, style);
         return ok(clipFeedback(ref));
     }
 
@@ -1183,7 +1272,7 @@ QJsonObject McpDispatcher::applyOneExtended(const QString &tool, const QJsonObje
 
     // --- shapes ---
     if (tool == QLatin1String("list_shapes"))
-        return filterCatalog(m_controller->builtinShapes(), argString(args, QStringLiteral("q")), 0, "shapes");
+        return filterCatalog(m_controller->builtinShapes(), argString(args, QStringLiteral("q")), 0, "shapes", compactShapeItem);
 
     if (tool == QLatin1String("list_stickers"))
         return filterCatalog(m_controller->builtinStickers(), argString(args, QStringLiteral("q")), 0, "stickers");
@@ -1205,8 +1294,143 @@ QJsonObject McpDispatcher::applyOneExtended(const QString &tool, const QJsonObje
         return out;
     }
 
-    if (tool == QLatin1String("list_text_presets"))
-        return filterCatalog(m_controller->textPresets(), argString(args, QStringLiteral("q")), 0, "presets");
+    if (tool == QLatin1String("list_text_presets")) {
+        // Flatten the searchable facts so q can match the font or an animation id too.
+        QVariantList rows;
+        for (const QVariant &v : m_controller->textPresets()) {
+            QVariantMap row = v.toMap();
+            const QVariantMap style = row.value(QStringLiteral("style")).toMap();
+            row.insert(QStringLiteral("font"), style.value(QStringLiteral("fontFamily")));
+            row.insert(QStringLiteral("accentRule"), style.value(QStringLiteral("accent")).toMap().value(QStringLiteral("rule")));
+            rows.append(row);
+        }
+        return filterCatalog(rows, argString(args, QStringLiteral("q")), 0, "presets", compactTextPresetItem);
+    }
+
+    if (tool == QLatin1String("list_gradient_presets")) {
+        const QString q = argString(args, QStringLiteral("q"));
+        QJsonArray presets;
+        for (const QVariant &v : m_controller->textGradientPresets()) {
+            const QVariantMap m = v.toMap();
+            if (!q.isEmpty() && !m.value(QStringLiteral("id")).toString().contains(q, Qt::CaseInsensitive)
+                && !m.value(QStringLiteral("label")).toString().contains(q, Qt::CaseInsensitive))
+                continue;
+            presets.append(QJsonObject::fromVariantMap(m));
+        }
+        return ok({{QStringLiteral("presets"), presets}, {QStringLiteral("n"), presets.size()}});
+    }
+
+    if (tool == QLatin1String("list_text_effects")) {
+        const QJsonArray effects = QJsonArray::fromVariantList(m_controller->textPaintEffects());
+        return ok({{QStringLiteral("effects"), effects}, {QStringLiteral("n"), effects.size()}});
+    }
+
+    if (tool == QLatin1String("duplicate_text_layer") || tool == QLatin1String("duplicate_shape_layer")) {
+        const ClipRef ref = resolveClip(args);
+        if (!ref.valid())
+            return clipRefError(args);
+        const QString id = m_controller->duplicateStyleLayer(ref.track, ref.clip, args.value(QStringLiteral("id")).toString());
+        if (id.isEmpty())
+            return err("bad_args", QStringLiteral("no such layer, or not a text or shape clip"));
+        return ok(clipFeedback(ref, {{QStringLiteral("layerId"), id}}));
+    }
+
+    if (tool == QLatin1String("rename_user_text_preset") || tool == QLatin1String("delete_user_text_preset")
+        || tool == QLatin1String("export_user_text_preset")) {
+        const QString preset = argString(args, QStringLiteral("preset"));
+        if (!drift::isUserTextPresetId(preset) || !drift::textPresetForId(preset))
+            return err("not_found", QStringLiteral("No user text preset \"%1\"; see list_user_text_presets").arg(preset));
+        if (tool == QLatin1String("rename_user_text_preset")) {
+            const QString label = argString(args, QStringLiteral("label"));
+            if (label.isEmpty())
+                return err("bad_args", QStringLiteral("label required"));
+            if (!m_controller->renameUserTextPreset(preset, label))
+                return err("bad_args", QStringLiteral("Could not rename the preset"));
+            return ok({{QStringLiteral("id"), preset}, {QStringLiteral("label"), label}});
+        }
+        if (tool == QLatin1String("delete_user_text_preset")) {
+            if (!m_controller->deleteUserTextPreset(preset))
+                return err("bad_args", QStringLiteral("Could not delete the preset"));
+            return ok({{QStringLiteral("id"), preset}, {QStringLiteral("deleted"), true}});
+        }
+        const QString path = localPath(argString(args, QStringLiteral("path")));
+        if (path.isEmpty() || !QDir::isAbsolutePath(path))
+            return err("bad_args", QStringLiteral("path must be absolute"));
+        if (!m_controller->exportUserTextPreset(preset, QUrl::fromLocalFile(path)))
+            return err("bad_args", QStringLiteral("Could not write %1").arg(path));
+        return ok({{QStringLiteral("id"), preset}, {QStringLiteral("path"), path}});
+    }
+
+    if (tool == QLatin1String("import_user_text_preset")) {
+        const QString path = localPath(argString(args, QStringLiteral("path")));
+        if (path.isEmpty() || !QDir::isAbsolutePath(path))
+            return err("bad_args", QStringLiteral("path must be absolute"));
+        if (!QFileInfo::exists(path))
+            return err("not_found", QStringLiteral("%1 does not exist").arg(path));
+        QSet<QString> before;
+        for (const QVariant &v : m_controller->userTextPresets())
+            before.insert(v.toMap().value(QStringLiteral("id")).toString());
+        if (!m_controller->importUserTextPreset(QUrl::fromLocalFile(path)))
+            return err("bad_args", QStringLiteral("%1 is not a text preset file").arg(path));
+        for (const QVariant &v : m_controller->userTextPresets()) {
+            const QVariantMap m = v.toMap();
+            const QString id = m.value(QStringLiteral("id")).toString();
+            if (!before.contains(id))
+                return ok({{QStringLiteral("id"), id}, {QStringLiteral("label"), m.value(QStringLiteral("label")).toString()}});
+        }
+        return ok({{QStringLiteral("replaced"), true}});
+    }
+
+    if (tool == QLatin1String("rename_text_animation_preset") || tool == QLatin1String("delete_text_animation_preset")
+        || tool == QLatin1String("export_text_animation_preset")) {
+        const QString preset = argString(args, QStringLiteral("preset"));
+        const std::optional<drift::TextAnimationPreset> found = drift::TextAnimationPresetCatalog::instance().presetForId(preset);
+        if (!found || !preset.startsWith(QLatin1String("user:")))
+            return err("not_found", QStringLiteral("No user animation preset \"%1\"; user: ids come from import_text_animation").arg(preset));
+        if (tool == QLatin1String("rename_text_animation_preset")) {
+            const QString label = argString(args, QStringLiteral("label"));
+            if (label.isEmpty())
+                return err("bad_args", QStringLiteral("label required"));
+            if (!m_controller->renameUserTextAnimationPreset(preset, label))
+                return err("bad_args", QStringLiteral("Could not rename the preset"));
+            return ok({{QStringLiteral("id"), preset}, {QStringLiteral("label"), label}});
+        }
+        if (tool == QLatin1String("delete_text_animation_preset")) {
+            if (!m_controller->deleteUserTextAnimationPreset(preset))
+                return err("bad_args", QStringLiteral("Could not delete the preset"));
+            return ok({{QStringLiteral("id"), preset}, {QStringLiteral("deleted"), true}});
+        }
+        const QString path = localPath(argString(args, QStringLiteral("path")));
+        if (path.isEmpty() || !QDir::isAbsolutePath(path))
+            return err("bad_args", QStringLiteral("path must be absolute"));
+        if (!m_controller->exportUserTextAnimationPreset(preset, QUrl::fromLocalFile(path)))
+            return err("bad_args", QStringLiteral("Could not write %1").arg(path));
+        return ok({{QStringLiteral("id"), preset}, {QStringLiteral("path"), path}});
+    }
+
+    if (tool == QLatin1String("set_asset_rotation")) {
+        const int index = resolveAsset(args.value(QStringLiteral("asset")));
+        if (index < 0)
+            return err("not_found", QStringLiteral("No such asset"));
+        const int degrees = jsonInt(args.value(QStringLiteral("degrees")), 0);
+        const bool changed = m_controller->setAssetRotation(index, degrees);
+        const QVariantMap asset = m_controller->assetLibrary()->assetAt(index);
+        return ok({{QStringLiteral("asset"), asset.value(QStringLiteral("id")).toString()},
+                   {QStringLiteral("index"), index}, {QStringLiteral("degrees"), degrees},
+                   {QStringLiteral("changed"), changed}});
+    }
+
+    if (tool == QLatin1String("set_clip_orientation")) {
+        const ClipRef ref = resolveClip(args);
+        if (!ref.valid())
+            return clipRefError(args);
+        if (const QJsonObject wrong = requireKind(ref, {QStringLiteral("video")}, "set_clip_orientation"); !wrong.isEmpty())
+            return wrong;
+        m_controller->setClipOrientation(ref.track, ref.clip, jsonInt(args.value(QStringLiteral("degrees")), 0));
+        const QVariantMap clip = m_controller->clipAt(ref.track, ref.clip);
+        return ok(clipFeedback(ref, {{QStringLiteral("orientation"), clip.value(QStringLiteral("orientation")).toInt()},
+                                     {QStringLiteral("rotationCorrection"), clip.value(QStringLiteral("rotationCorrection")).toInt()}}));
+    }
 
     if (tool == QLatin1String("list_fonts"))
         return filterCatalog(m_controller->fontCatalog(), argString(args, QStringLiteral("q")),
@@ -1216,6 +1440,8 @@ QJsonObject McpDispatcher::applyOneExtended(const QString &tool, const QJsonObje
         const QString shapeId = argString(args, QStringLiteral("shape"));
         if (shapeId.isEmpty())
             return err("bad_args", QStringLiteral("shape required"));
+        if (!drift::shapeCatalogEntry(shapeId))
+            return unknownShapeId(shapeId);
         const double at = args.contains(QStringLiteral("at"))
                               ? jsonNumber(args.value(QStringLiteral("at")), m_controller->playheadSeconds())
                               : m_controller->playheadSeconds();
@@ -1419,9 +1645,23 @@ QJsonObject McpDispatcher::applyOneExtended(const QString &tool, const QJsonObje
     if (tool == QLatin1String("set_transition_kind")) {
         const int track = jsonInt(args.value(QStringLiteral("track")));
         const QString id = args.value(QStringLiteral("id")).toString().trimmed();
-        const QString kind = args.value(QStringLiteral("kind")).toString().trimmed();
-        if (track < 0 || id.isEmpty() || kind.isEmpty())
+        const QString raw = args.value(QStringLiteral("kind")).toString().trimmed();
+        if (track < 0 || id.isEmpty() || raw.isEmpty())
             return err("bad_args", QStringLiteral("track, id, and kind required"));
+        QStringList kinds;
+        for (const QVariant &v : transitionCatalog())
+            kinds.append(v.toMap().value(QStringLiteral("id")).toString());
+        QString kind;
+        for (const QString &known : kinds) {
+            if (known.compare(raw, Qt::CaseInsensitive) == 0)
+                kind = known;
+        }
+        if (kind.isEmpty()) {
+            const QStringList nearest = nearestStrings(raw, kinds, 3);
+            return err("not_found", QStringLiteral("Unknown transition id \"%1\"%2; see list_transitions")
+                                        .arg(raw, nearest.isEmpty() ? QString()
+                                                                    : QStringLiteral(" — did you mean %1?").arg(nearest.join(QStringLiteral(", ")))));
+        }
         m_controller->setTransitionKind(track, id, kind);
         return ok({{QStringLiteral("track"), track}, {QStringLiteral("id"), id}, {QStringLiteral("kind"), kind}});
     }
@@ -1916,9 +2156,13 @@ QJsonObject McpDispatcher::applyOneExtended(const QString &tool, const QJsonObje
         const ClipRef ref = resolveClip(args);
         if (!ref.valid())
             return clipRefError(args);
+        if (const QJsonObject wrong = requireKind(ref, {QStringLiteral("text"), QStringLiteral("subtitle")}, "apply_text_preset"); !wrong.isEmpty())
+            return wrong;
         const QString preset = argString(args, QStringLiteral("preset"));
         if (preset.isEmpty())
             return err("bad_args", QStringLiteral("preset required"));
+        if (!drift::textStyleForPresetId(preset))
+            return unknownTextPresetId(m_controller, preset);
         m_controller->applyTextPreset(ref.track, ref.clip, preset);
         return ok(clipFeedback(ref, {{QStringLiteral("preset"), preset}}));
     }

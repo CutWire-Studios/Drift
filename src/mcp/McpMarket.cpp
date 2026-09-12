@@ -2,6 +2,7 @@
 #include "mcp/McpJson.h"
 #include "models/MarketClient.h"
 
+#include <QDir>
 #include <QElapsedTimer>
 #include <QEventLoop>
 #include <QJsonArray>
@@ -158,22 +159,26 @@ QStringList idsOf(const QVariantList &rows)
     return ids;
 }
 
-QJsonObject searchOutcome(MarketClient *client, int limit)
+// `offset` is where this page starts in the client's accumulated result list: loadMore appends,
+// so a more:true reply must skip everything the earlier replies already showed.
+QJsonObject searchOutcome(MarketClient *client, int offset, int limit)
 {
     if (!client->searchError().isEmpty()) {
         const QString code = client->searchErrorCode();
         return err(code.isEmpty() ? "market_error" : code.toUtf8().constData(), client->searchError());
     }
+    const QVariantList rows = client->items();
     QJsonArray items;
-    for (const QVariant &row : client->items()) {
+    for (int i = offset; i < rows.size(); ++i) {
         if (limit > 0 && items.size() >= limit)
             break;
-        items.append(compactItem(row.toMap(), false));
+        items.append(compactItem(rows.at(i).toMap(), false));
     }
     QJsonObject out = ok({{QStringLiteral("type"), client->activeTypeId()},
                           {QStringLiteral("provider"), client->activeProviderId()},
                           {QStringLiteral("items"), items},
                           {QStringLiteral("n"), items.size()},
+                          {QStringLiteral("offset"), offset},
                           {QStringLiteral("has_more"), client->hasMore()}});
     const QJsonObject quota = quotaJson(client->quota());
     if (!quota.isEmpty())
@@ -261,9 +266,11 @@ QJsonObject marketSearch(MarketClient *client, const QJsonObject &args)
 
     const bool more = args.value(QStringLiteral("more")).toBool();
     const int limit = args.value(QStringLiteral("limit")).toInt(30);
+    int offset = 0;
     if (more) {
         if (!client->hasMore())
             return err("not_found", QStringLiteral("No more results for the last search"));
+        offset = client->items().size();
         client->loadMore();
     } else {
         const QString type = args.value(QStringLiteral("type")).toString();
@@ -294,7 +301,7 @@ QJsonObject marketSearch(MarketClient *client, const QJsonObject &args)
         client->cancelSearch();
         return err("market_error", QStringLiteral("The marketplace did not answer in time"));
     }
-    return searchOutcome(client, limit);
+    return searchOutcome(client, offset, limit);
 }
 
 QJsonObject marketResolve(MarketClient *client, const QString &url)
@@ -343,13 +350,19 @@ QJsonObject marketDownload(MarketClient *client, const QJsonObject &args)
     if (id.isEmpty())
         return err("bad_args", QStringLiteral("id required — an item id from market_search or market_resolve"));
     const QVariantMap item = client->itemById(id);
+    if (item.isEmpty())
+        return err("not_found", QStringLiteral("Item %1 is not in the last market_search / market_resolve result").arg(id));
     if (item.contains(QStringLiteral("downloadable")) && !item.value(QStringLiteral("downloadable")).toBool())
         return err("bad_args", QStringLiteral("Item %1 is not downloadable").arg(id));
     const QVariantMap running = client->downloadInfo(id);
     if (!jobFinished(running))
         return err("conflict", QStringLiteral("Item %1 is already downloading").arg(id));
 
-    const QString dir = args.value(QStringLiteral("dir")).toString();
+    QString dir = args.value(QStringLiteral("dir")).toString();
+    if (dir.startsWith(QLatin1String("file://")))
+        dir = QUrl(dir).toLocalFile();
+    if (!dir.isEmpty() && !QDir::isAbsolutePath(dir))
+        return err("bad_args", QStringLiteral("dir must be an absolute path"));
     client->download(id, args.value(QStringLiteral("variant")).toString(),
                      dir.isEmpty() ? QUrl() : QUrl::fromLocalFile(dir),
                      item.value(QStringLiteral("title")).toString(),
@@ -366,6 +379,17 @@ QJsonObject marketDownload(MarketClient *client, const QJsonObject &args)
             info = row.toMap();
     }
     QJsonObject out = compactJob(info);
+    const QString status = info.value(QStringLiteral("status")).toString();
+    if (waitSeconds > 0 && (status == QLatin1String("failed") || status == QLatin1String("cancelled"))) {
+        out.insert(QStringLiteral("ok"), false);
+        const QString code = info.value(QStringLiteral("errorCode")).toString();
+        out.insert(QStringLiteral("error"), status == QLatin1String("cancelled") ? QStringLiteral("cancelled")
+                                            : code.isEmpty()                     ? QStringLiteral("download_failed")
+                                                                                 : code);
+        out.insert(QStringLiteral("detail"), info.value(QStringLiteral("errorMessage")).toString());
+        out.insert(QStringLiteral("job"), compactJob(info));
+        return out;
+    }
     out.insert(QStringLiteral("ok"), true);
     out.insert(QStringLiteral("started"), true);
     return out;

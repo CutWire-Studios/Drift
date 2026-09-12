@@ -70,6 +70,11 @@ Mesa's llvmpipe covers 3.3 in software; a GPU host can use an EGL platform plugi
 instead. Started without a usable context, Drift still serves MCP and still edits
 projects — it says so on stderr, and only render, capture and export fail.
 
+**Marketplace consent is granted in the GUI only.** A headless instance answers every
+`market` op with `consent_required` unless the same settings profile already carries
+`market/consented=true` from a GUI session that accepted the terms — there is deliberately
+no op that accepts them.
+
 ## Workflow
 
 The `initialize` reply carries a short `instructions` string with the essentials; the eight homepage tools are:
@@ -98,14 +103,14 @@ Pinned endpoints (`/mcp/timeline`, `/mcp/project`, …) list that toolbox’s op
 | Selection ops | `separate_audio`, `unlink_audio`, `merge_clips`, `align_clip_left/right`, `copy_selection`, `cut_selection` take no clip argument — call `select_clip` first. `freeze_frame` and `paste_at_playhead` are playhead-based (seek first); they do not use the selection |
 | Discovery | Effect stack indices, transition ids, and bookmark indices exist **only** in `inspect({clips:true, detail:true})`. Subtitle cues: `inspect({clips:true, cues:true})` or the `subtitleCues` field of a detail row. Mask/fade/speed/volume/keyframes/`hasFaceTrack`/stabilize* are on the same detail rows. **Detail rows omit what does not apply**: caption styling only on text/subtitle clips, shape styling only on shapes, `vector` (document metadata, slot overrides — never the document text) only on Lottie/SVG clips, `mask` only when one is set, `keyframes` only for animated properties (listed in `animated`), stabilize/animation blocks only when in use, fade fields only when a fade is set, empty arrays, false booleans and other defaults dropped (absent = default: no fade, `speed` 1, `volume` 1, unlinked). Every row carries `transform:{x,y,w,h,rotation,opacity}` at the playhead. `verbose:true` returns the raw untrimmed map |
 | Numbers | Every number in a reply is rounded to 3 decimals, except `fps` and speed-curve `pos` which keep 6 |
-| Validation | Args are checked against the op's schema before it runs: a missing required key → `bad_args` naming it; a wrong JSON type → `type_mismatch` (numeric strings like `"1"` are still accepted); an enum or declared min/max violation → `bad_args` listing the allowed values or range. Unknown keys are not errors; they come back as `ignored:[…]` on success. A clip-ref op with neither `clip` nor `track`+`index` gets `bad_args` saying so; a stale uuid gets `not_found` with a hint to re-read `inspect` |
+| Validation | Toolbox op args are checked against the op's schema before it runs (the homepage tools `inspect`, `capture`, `frames`, `activity` are not): a missing required key → `bad_args` naming it; a wrong JSON type → `type_mismatch` (numeric strings like `"1"` are still accepted); an enum or declared min/max violation → `bad_args` listing the allowed values or range. Unknown keys are not errors; they come back as `ignored:[…]` on success. A clip-ref op with neither `clip` nor `track`+`index` gets `bad_args` saying so; a stale uuid gets `not_found` with a hint to re-read `inspect` |
 | Effects | `list_effects` / `list_audio_effects` / `list_transitions` are compact by default (`cats:{<cat>:[{id,label}]}`); pass `id`, `cat`, or `q` to get parameters. Ids are accepted with `.` or `_` interchangeably; an unknown id returns `not_found` with the closest matches. Effect stacks live on an **adjustment clip linked to the target**, created on its own lane the first time; `add_effect`/`add_audio_effect` report it as `host:{track,index,clip}`. Keep addressing the original clip in every effect op, and expect that extra lane in `inspect` |
 | Images | `capture`, `frames`, and `get_waveform({image:true})` return a text block (JSON meta) followed by an image block. Times are always in the text block; never rely on burned-in labels alone. Sheets fit one vision image (≤1456 px long edge) |
 | Overlap | Off by default — place/move snap to gaps unless `set_overlap` enables overlap; the reply reports `requested` vs `placed`. With overlap off, moving several clips toward zero must be sequenced **back-to-front**. `set_ripple` / `close_gap` close holes after a delete |
 | Export | `export_video` is async — poll `inspect().export` or `export_status`. The output path is normalised, so use the `path` echoed back. Named sizes: `list_export_presets` + `export_with_preset` |
 | Atomicity | `apply` is **not** atomic: on failure the ops before it stay applied. The failure reply is `{ok:false, error:"apply_failed", stopped:<index>, tool, failed:<that op's error>, done:[results of the ops that ran]}` — `done` never contains the failed op. An ops array cannot reference an id produced earlier in the same batch — end the batch after `set_speed_curve` |
-| Undo | One batch = one undo step. Linear history (no branches): `list_history({limit})` returns the newest `limit` (default 20) versions as `{index, label, short}` plus the HEAD `hash`/`short` and `total` (index 0 = Origin). `undo_to({index})` or `undo_to({hash})` jumps (a ≥8-char prefix such as `short` works); the next edit drops redo. `take_snapshot` writes compact project JSON named `<hash>.json` (file SHA-256 = history hash). Ops outside the stack (and all read-only ops): `import_media`, `import_media_bytes`, `seek`, `play`, `pause`, `undo`, `redo`, `undo_to`, `take_snapshot`, `restore_snapshot`, `set_overlap`, `set_ripple`, `set_snap`, `set_guides`, `set_loop_work_area`, `export_video`, `save_project`, `set_theme`, `set_shortcut`, `reset_shortcuts`, `set_beat_layers`, `detect_beats`, `list_speed_curve`, `list_fade_curve`, `install_addon`, `cancel_addon_install`, `set_acceleration`, `switch_angle`, `end_multicam`. **`set_beat_layers` changes the user's own snapping and cannot be undone** |
-| Errors | `{ok:false, error:<code>, detail:<text>}` — `bad_args`, `not_found`, `type_mismatch`, `unknown_op` (the detail suggests the nearest op names and their toolbox), `unknown_toolbox`, `wrong_endpoint`, `wrong_toolbox`, `apply_failed`, `import_failed`, `import_timeout`, `export_busy`, `export_failed`, `export_timeout`, `capture_failed`, `conflict` |
+| Undo | One batch = one undo step. Linear history (no branches): `list_history({limit})` returns the newest `limit` (default 20) versions as `{index, label, short}` plus the HEAD `hash`/`short` and `total` (index 0 = Origin). `undo_to({index})` or `undo_to({hash})` jumps (a ≥8-char prefix such as `short` works); the next edit drops redo. `take_snapshot` writes compact project JSON named `<hash>.json` (file SHA-256 = history hash). Ops outside the stack (and all read-only ops): `import_media`, `import_media_bytes`, `seek`, `play`, `pause`, `undo`, `redo`, `undo_to`, `take_snapshot`, `restore_snapshot`, `set_overlap`, `set_ripple`, `set_snap`, `set_guides`, `set_loop_work_area`, `export_video`, `save_project`, `set_theme`, `set_shortcut`, `reset_shortcuts`, `set_beat_layers`, `detect_beats`, `list_speed_curve`, `list_fade_curve`, `install_addon`, `cancel_addon_install`, `set_acceleration`, `switch_angle`, `end_multicam`, `market_download`, `market_cancel_download`, and the preset-store ops `rename/delete/export/import_user_text_preset`, `rename/delete/export_text_animation_preset`. **`set_beat_layers` changes the user's own snapping and cannot be undone** |
+| Errors | `{ok:false, error:<code>, detail:<text>}` — `bad_args`, `not_found`, `type_mismatch`, `unknown_op` (the detail suggests the nearest op names and their toolbox), `unknown_toolbox`, `wrong_endpoint`, `wrong_toolbox`, `apply_failed`, `import_failed`, `import_timeout`, `export_busy`, `export_failed`, `export_timeout`, `capture_failed`, `conflict`, `unsupported` (a build without the vector renderer), and from the market toolbox `market_unavailable`, `consent_required`, `market_error`, `download_failed`. `type_mismatch` is also the answer when an op gets the wrong **kind** of clip (a shape to `apply_text_preset`, a title to `set_shape_style`, an image to `set_clip_orientation`) |
 | Change detection | Every `inspect` includes `revision`; pass `since:<revision>` to get `{unchanged:true}` when state is current |
 | Media import | Absolute paths or `file://`, or `import_media_bytes` (base64 — always pass an explicit `path`). **No directory listing.** If the user gave a fuzzy name (`GX010023.mp4` in Downloads), glob/search with **your own filesystem tools**, then pass the hits to `import_media` and confirm `missing:[]` is empty |
 
@@ -119,6 +124,7 @@ All return `{started:true}` immediately. Every field below except `export` lives
 | `package_project` | `jobs.package.{active, progress}` |
 | `generate_subtitles` | `jobs.subtitleGen.{active, progress, status}` |
 | `set_clip_reverse` (video) | `jobs.reverseRender.{active, progress, status}` |
+| `market_download` | `jobs.market.active` (count of running downloads); per-job status, progress, error, path and asset from `market_downloads` |
 | `detect_scenes` | `jobs.sceneDetect.{active, progress, status, clip, scenes}` (also present, inactive, while a scan result is loaded) |
 | `run_segmentation`, `segment_clip`, `apply_denoise`, `detect_faces` | No progress field — re-read `inspect({clips:true, detail:true})` and compare |
 | `stabilize_clip` | Per-clip `stabilizing` / `stabilizeProgress` / `stabilizeStatus` on the detail clip row |
@@ -127,17 +133,17 @@ All return `{started:true}` immediately. Every field below except `export` lives
 
 | Toolbox | When to use |
 |---------|-------------|
-| `media` | Import (paths/bytes), list, rename, remove, replace, export still |
+| `media` | Import (paths/bytes), list, rename, remove, replace, export still, `set_asset_rotation` (lossless orientation override for a sideways video) |
 | `timeline` | Tracks, clips, selection, ripple/gap, bookmarks, copy/paste, A/V link |
-| `canvas` | Transform, flip, blend, mask, fade, speed, reverse, animation, stabilisation, shape styling (`set_shape_style`: the same shading-layer stack captions have — `layers` / `layer` patches, `add_shape_layer` … — plus geometry knobs; the legacy flat `fill`/`stroke` keys still land on the `fill`/`stroke` layers) |
+| `canvas` | Transform, flip, blend, mask, fade, speed, reverse, animation, stabilisation, `set_clip_orientation` (lossless 0/90/180/270 for a video clip), shape styling (`set_shape_style`: the same shading-layer stack captions have — `layers` / `layer` patches, `add_shape_layer` … — plus geometry knobs; the legacy flat `fill`/`stroke` keys still land on the `fill`/`stroke` layers) — see [Shapes](#shapes) |
 | `playback` | Seek, play, pause, In/Out work area |
-| `text` | Title and caption clips, style packs, shading layers (fill/stroke/shadow/glow/extrude), looks, In/Out/Loop animation presets, Lottie preset import |
-| `shapes` | Builtin shapes, stickers, emoji, fonts, text presets |
+| `text` | Title and caption clips, style packs (`list_text_presets`, user presets), fonts, shading layers (fill/stroke/shadow/glow/extrude), gradient presets and shader effects, looks, In/Out/Loop animation presets, Lottie preset import |
+| `shapes` | Builtin shapes, stickers, emoji |
 | `motion` | Lottie animations and SVG drawings as vector clips: add, inspect, swap the document, re-theme through slots or the `svg.*` element overrides |
 | `subtitles` | Subtitle clips, cues, import/export, Whisper generation |
 | `effects` | Video/audio effects, transitions, templates, effect clipboard |
 | `project` | Open/new/save/package, canvas, background, metadata, export |
-| `keyframes` | Property animation keys and tangents — clip transform, `fx.<i>.<param>`, `mask.<key>`, on text/subtitle clips `text.<key>` (pixelSize, letterSpacing, lineHeight, boxPadding, pathBend) or `text.layer.<id>.<field>` (opacity, offsetX, offsetY, blur, width, spread, trimStart, trimEnd, dashOffset, sketchLength, sketchDeviation, color.r/g/b/a, gradient.angle/offset/scale/center.x/y, gradient.stop.n.pos); the old names outlineWidth, shadowBlur, glowRadius, gradientAngle, color.r… still resolve onto the stroke/shadow/glow/fill layers. On shape clips the same layer fields as `shape.layer.<id>.<field>` (a fresh shape's layers are `fill` and `stroke`) plus `shape.<cornerRadius|points|innerRatio|headSize|thickness|tailX|tailSize>`; on SVG clips `vector.svg.…` (see Motion) |
+| `keyframes` | Property animation keys and tangents — clip transform, `fx.<i>.<param>`, `mask.<key>`, on text/subtitle clips `text.<key>` (pixelSize, letterSpacing, lineHeight, boxPadding, pathBend) or `text.layer.<id>.<field>` (opacity, offsetX, offsetY, blur, width, spread, trimStart, trimEnd, dashOffset, sketchLength, sketchDeviation, color.r/g/b/a, gradient.angle/offset/scale/center.x/y, gradient.stop.n.pos, effect.<param> for an effect paint's scalar params); the old names outlineWidth, shadowBlur, glowRadius, gradientAngle, color.r… still resolve onto the stroke/shadow/glow/fill layers. On shape clips the same layer fields as `shape.layer.<id>.<field>` (a fresh shape's layers are `fill` and `stroke`) plus `shape.<cornerRadius|points|innerRatio|headSize|thickness|tailX|tailSize>`; on SVG clips `vector.svg.…` (see Motion). `set_keyframe` on a property the clip does not have fails `bad_args` |
 | `speed` | Speed ramps; reading custom fade curves (write them with `set_fade_curve` in `canvas`) |
 | `segmentation` | SAM-style cutout (session or one-shot) |
 | `ai` | Denoise, face detection, auto-reframe, add-on install |
@@ -282,9 +288,9 @@ An SVG declares no slots; it is restyled through reserved keys instead. `svg.fil
 replace paints the file already has, so a `fill="none"` outline stays hollow and no stroke is
 added where the file drew none. `svg.<elementId>.<fill|stroke|strokeWidth|opacity|visible>` act on
 one element from `elements` (ids are case-sensitive; `visible` is 0/1). Everything but `visible`
-keyframes as `vector.svg.…` — scalars directly, colours per channel (`vector.svg.logo.fill.r`),
-or through the colour helpers. An `.svg` dropped in the bin (`import_media`) is a vector asset
-and places as a vector clip.
+keyframes as `vector.svg.…` — scalars directly, colours per channel (`vector.svg.logo.fill.r`,
+one `set_keyframe` per channel, 0..1). An `.svg` dropped in the bin (`import_media`) is a vector
+asset and places as a vector clip.
 
 ### Text looks and animation
 
@@ -298,17 +304,47 @@ tree for experts.
 
 | Call | Effect |
 |---|---|
+| `list_text_presets({q})` / `add_text({text, preset})` / `apply_text_preset({clip, preset})` | The 33 built-in style packs (`title`, `subtitle`, `lower-third`, `caption`, `quote`, `impact`, `pop`, `neon`, `handwritten`, `hormozi`, `one-word-color`, `word-background`, `sentence-background`, `karaoke-pop`, `karaoke-highlight`, `mirage`, `underline`, `bulky`, `word-outline`, `gold-luxe`, `chrome`, `retro-3d`, `glitch`, `comic`, `fire`, `ice`, `candy`, `sticker`, `rainbow`, `cinematic`, `holo-shimmer`, `sketch`, `editorial`). The list carries each pack's `font`, `accent` rule and `anim:{in,out,loop}` preset ids so you can choose without applying. A pack replaces the **whole** style — layers and all three animation slots — and is remembered as `packId`. Unknown ids fail `not_found` |
+| `save_text_preset({clip, label})` / `list_user_text_presets` / `apply_user_text_preset` / `rename_user_text_preset` / `delete_user_text_preset` / `export_user_text_preset({preset, path})` / `import_user_text_preset({path})` | User packs (`user:` ids) on disk; `apply_text_preset` accepts them too. Not project edits, so outside undo |
+| `list_gradient_presets` / `list_text_effects` | The ready-made paints: 12 gradient stop sets (`sunset`, `ocean`, `candy`, `gold`, `chrome`, `rainbow`, `fire`, `ice`, `mono`, `holo`, `mint`, `berry` — copy `stops`/`kind`/`angle` into a layer's `paint.gradient`) and the six shader effects with their typed params (`shine`, `shimmer`, `neon-pulse`, `glitch`, `chrome`, `dissolve` — `paint:{kind:"effect", effect:{id, params:{<id>:{type, value}}}}`) |
 | `set_text({clip, style})` | Partial patch. `layers` replaces the stack, `layer:{id\|index,…}` patches one, `color` edits the front-most fill, `animation:{in\|out\|loop:{preset, params, duration, stagger, unit, order, ease, period}}`. The flat v6 keys (`outline*`, `shadow*`, `glow*`, `fillKind`, `animIn`…) still work and land on the well-known layers |
-| `add_text_layer({clip, kind, at})` / `set_text_layer` / `remove_text_layer` / `move_text_layer` | Edit the stack one layer at a time; `add_text_layer` returns `{layerId}`. Strokes take `strokeAlign` center\|outside\|inside, `dash` solid\|dash\|dot\|dashdot with `dashOffset`, `trimStart/trimEnd` for a write-on and `sketchLength/sketchDeviation/sketchSeed` for a hand-drawn wobble (fills take the sketch too). The same four tools also edit a shape clip's stack (`add_shape_layer` … are aliases) |
-| `list_text_looks` / `apply_text_look({clip, look, params})` | One-click recipes (Shadow, Lift, Hollow, Splice, Outline, Echo, Glitch, Neon, Background, Curve, Gradient, Shine, Chrome, Holographic) that rewrite the stack; the style remembers the look so its params stay adjustable |
-| `list_text_animations({which, q})` | The In / Out / Loop presets with their typed params. Every reveal preset takes `duration`, `stagger`, `unit` (block\|character\|word\|line), `order`, `ease`; loops take `period` (0 = one pass over the clip: hold motion such as `tracking-drift`) |
-| `set_text_animation({clip, which, preset, …})` / `clear_text_animation` | Set or clear a slot. Picking a preset resets its params to the preset defaults; `animators:[…]` installs an inline animator tree instead |
+| `add_text_layer({clip, kind, at})` / `set_text_layer` / `remove_text_layer` / `move_text_layer` / `duplicate_text_layer` | Edit the stack one layer at a time; `add_text_layer` returns `{layerId}`. Strokes take `strokeAlign` center\|outside\|inside, `dash` solid\|dash\|dot\|dashdot with `dashOffset`, `trimStart/trimEnd` for a write-on and `sketchLength/sketchDeviation/sketchSeed` for a hand-drawn wobble (fills take the sketch too). The same four tools also edit a shape clip's stack (`add_shape_layer` … are aliases) |
+| `list_text_looks` / `apply_text_look({clip, look, params})` | One-click recipes (Plain, Shadow, Lift, Hollow, Splice, Outline, Echo, Glitch, Neon, Background, Curve, Gradient, Shine, Chrome, Holographic) that rewrite the stack; the style remembers the look, and re-applying the **same** look with `params` adjusts just those params (a different look starts from its defaults) |
+| `list_text_animations({which, q})` | The In / Out / Loop presets with their typed params and `flags` (`unitLocked`, `orderLocked`, `easeLocked`, `durationLocked` say which controls the preset ignores; `mirrorForOut`, `mode`). Every reveal preset takes `duration`, `stagger`, `unit` (block\|character\|word\|line), `order`, `ease`; loops take `period` (0 = one pass over the clip: hold motion such as `tracking-drift`) and `amount` |
+| `set_text_animation({clip, which, preset, …})` / `clear_text_animation` | Set or clear a slot. Switching to a different preset resets its params to that preset's defaults unless `keepControls:true`; `durationOverride` sets the slot's total length; `animators:[…]` installs an inline animator tree instead |
 | `import_text_animation({path, which})` | A Lottie / `.lottie` text layer's animators (After Effects export) or a Drift preset file, saved as a user preset under the slot's `imported` category; `unsupported` lists what was dropped |
 | `apply_text_style_to_all({clip, scope})` | Copy a caption clip's style to the other subtitle clips on its track (or `project`) |
 
 Reel-style typography, for example: `set_text_animation({clip, which:"in", preset:"type-on-blur", stagger:0.05})`,
 `set_text_animation({clip, which:"loop", preset:"tracking-drift"})`,
 `apply_text_look({clip, look:"gradient", params:{preset:"berry", space:"word"}})`.
+
+Every text op fails `type_mismatch` on a clip that is not a text or subtitle clip.
+
+### Shapes
+
+`list_shapes` → `add_shape({shape, at, track})` → `set_shape_style({clip, style})`. The 29 catalog
+ids (`list_shapes` rows carry `kind` and the default box `aspect`): basic `rectangle`,
+`rounded-rectangle`, `square`, `circle` (an `ellipse` with a square box), `ellipse`, `triangle`,
+`right-triangle`, `diamond`, `pentagon`, `hexagon`, `octagon`, `parallelogram`, `trapezoid`; arrows
+`arrow`, `double-arrow`, `block-arrow`, `curved-arrow`, `chevron`; bubbles `speech-bubble`,
+`speech-bubble-rect`, `thought-bubble`, `callout`; fun `star`, `lightning-bolt`, `cloud`, `heart`,
+`cross`, `burst`, `banner`. An unknown id fails `not_found`.
+
+| `style` key | Read by |
+|---|---|
+| `kind` | any — swaps the geometry, keeps the layers |
+| `layers` / `layer` | the shading stack, exactly as on captions (a fresh shape has `fill` under `stroke`; shape strokes default to `strokeAlign:"inside"`); `scope` and `gradient.space` are text-only and do nothing here |
+| `cornerRadius` | native on `rounded-rectangle`, `speech-bubble-rect`, `callout`; rounds the corners of every other kind |
+| `points`, `innerRatio` | `star`, `burst` |
+| `headSize` | `arrow`, `double-arrow`, `block-arrow`, `chevron`, the `banner` notch |
+| `thickness` | `arrow`, `double-arrow`, `chevron`, `curved-arrow`, `cross` |
+| `tailX`, `tailSize` | the four bubbles |
+
+`add_shape_layer` / `set_shape_layer` / `remove_shape_layer` / `move_shape_layer` /
+`duplicate_shape_layer` are the text layer tools under another name. Animate with
+`set_keyframe({prop:"shape.cornerRadius"})` or `shape.layer.<id>.<field>`. Looks and style packs
+are text-only; build a shape's look from `list_gradient_presets` / `list_text_effects`.
 
 ### Stock media from the marketplace
 
@@ -321,10 +357,10 @@ accept on the user's behalf, because downloads spend a per-machine quota.
 | Call | Effect |
 |---|---|
 | `market_status()` | Types → providers with capabilities (`search`, `featured`, `resolve`), filters (with option ids) and quota, plus account/coins when connected |
-| `market_search({q, type, provider, filters, limit})` | One page of listings `{id, title, type, provider, dur, w, h, coins?, by?, thumb?, variants?}`; `more:true` fetches the next page; `thumb` is a URL you can fetch with your own tools to look at the item |
+| `market_search({q, type, provider, filters, limit})` | One page of listings `{id, title, type, provider, dur, w, h, coins?, by?, thumb?, variants?}` plus `offset` and `has_more`; `more:true` fetches the **next** page (earlier ids stay valid for `market_item`/`market_download`); `thumb` is a URL you can fetch with your own tools to look at the item |
 | `market_resolve({url})` | For resolve-only providers (pasted page links); blocks up to 90 s and returns one `item` |
 | `market_item({id})` | Variants, preview and license of a listing from the last search/resolve |
-| `market_download({id, variant, dir, wait})` | Starts the download, **spends quota**, imports the file into the bin when done and reports its `asset` id. `wait:<seconds>` blocks for completion; otherwise poll `market_downloads()` or `inspect({detail:true}).jobs.market` |
+| `market_download({id, variant, dir, wait})` | Starts the download, **spends quota**, imports the file into the bin when done and reports its `asset` id. `id` must come from the last search/resolve (`not_found` otherwise); `dir` must be absolute. `wait:<seconds>` blocks for completion and turns a `failed`/`cancelled` job into `{ok:false, error, detail, job}`; otherwise poll `market_downloads()` or `inspect({detail:true}).jobs.market` |
 | `market_downloads({clear})` / `market_cancel_download({id})` | Job list with status/progress/error/path/asset; cancel a running one |
 
 Errors: `market_unavailable`, `consent_required`, `market_error`, and the service's own codes
@@ -337,7 +373,7 @@ local fake) without rebuilding.
 ## Traps
 
 - **`set_transform` writes at the playhead.** If the property is keyframed, or `autoKey` is on, it creates a keyframe there instead of a constant value. Seek first, or mute the animation with `set_property_keyframes_enabled(false)`.
-- **`set_mask` replaces the whole mask.** Omitted keys revert to defaults and omitting `shape` turns the mask off. Read the current mask from `inspect({clips:true, detail:true}).tracks[].items[].mask` and send it back merged.
+- **`set_mask` replaces the whole mask.** Omitted keys revert to defaults and omitting `shape` turns the mask off. Read the current mask from `inspect({clips:true, detail:true}).tracks[].items[].mask` and send it back merged (its `points` come as `[{x,y}]`, which the schema accepts alongside `[[x,y]]`; drop the read-only `animated`/`keyframes`).
 - **`set_subtitle_cues` replaces every cue.** Read `inspect({clips:true, cues:true})` (or a detail row's `subtitleCues`), merge, send.
 - **`set_effect_param`, `set_audio_effect_param`, `set_transition_param` do not validate.** A wrong key or index still returns `ok`. Verify with `inspect({clips:true, detail:true})`.
 - **`set_speed_curve` returns a new clip id.** The old UUID stops resolving. End the apply batch after it — an ops array cannot reference an id produced earlier in the same batch.
@@ -360,7 +396,8 @@ local fake) without rebuilding.
 - **`set_lottie_slot` is typed against the document.** An undeclared slot or a value of the wrong type fails `bad_args` — read the `slots` array from `add_lottie` or `list_lottie_slots` first. Documents with no slots can only be changed by editing the JSON (`get_lottie_source` → `set_lottie_source`).
 - **`add_lottie` with a `slots` map does not fail on a bad slot** — it places the clip and reports the rejected ones in `slotErrors`.
 - **`set_text.layers` replaces, `set_text.layer` patches.** Send the whole array only when you mean to rebuild the stack; layer ids are lowercase and keyframes on a removed layer are dropped.
-- **Picking a text animation preset resets its params.** Send `preset` and the tweaks in one `set_text_animation` call, or pass `keepControls:true` in `set_text` to keep duration/stagger/unit/order/ease across presets.
+- **Switching a text animation preset resets its params.** Send `preset` and the tweaks in one `set_text_animation` call, or add `keepControls:true` (in `set_text_animation`, or inside the slot object of `set_text.style.animation`) to keep duration/stagger/unit/order/ease/period/amount across presets. Re-sending the current preset id keeps everything.
+- **`apply_text_look` with a different look starts from that look's defaults.** Only re-applying the clip's current look merges `params`.
 - **Stagger `duration` is per unit.** A word-by-word reveal takes `duration + stagger × (words − 1)`; short subtitle cues can cut it off.
 - **`list_emoji` needs `q` or `group`** — the catalog is ~1900 entries; `add_emoji` takes the `id` (the character).
 
