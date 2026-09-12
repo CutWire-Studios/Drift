@@ -352,8 +352,10 @@ jobs:
       #
       # zlib is installed static-md alongside Skia, not dynamic with the others: Skia's archives
       # link the static-md zlib (zs.lib) themselves, and a second, dynamic zlib (z.lib) in the
-      # same executable is a multiply-defined inflate/crc32 (LNK2005). The Configure step points
-      # find_package(ZLIB) at that copy.
+      # same executable is a multiply-defined inflate/crc32 (LNK2005). The Configure step hands
+      # find_package(ZLIB) that copy by path: zlib 1.3.2 names its static library zs.lib, which
+      # the runner's CMake 3.31 FindZLIB does not know (zs joined its name list in a later
+      # release), so ZLIB_ROOT alone finds the header and not the library.
       - name: Install vcpkg dependencies
         shell: pwsh
         env:
@@ -406,8 +408,8 @@ jobs:
             -DCMAKE_TOOLCHAIN_FILE=${{ github.workspace }}\vcpkg\scripts\buildsystems\vcpkg.cmake `
             -DCMAKE_PREFIX_PATH="${{ env.QT_ROOT_DIR }};${{ github.workspace }}\.deps\ffmpeg;${{ github.workspace }}\vcpkg\installed\x64-windows-static-md" `
             -DFETCHCONTENT_BASE_DIR=${{ env.FETCHCONTENT_BASE_DIR }} `
-            -DZLIB_ROOT=${{ github.workspace }}\vcpkg\installed\x64-windows-static-md `
-            -DZLIB_USE_STATIC_LIBS=ON `
+            -DZLIB_INCLUDE_DIR=${{ github.workspace }}\vcpkg\installed\x64-windows-static-md\include `
+            -DZLIB_LIBRARY=${{ github.workspace }}\vcpkg\installed\x64-windows-static-md\lib\zs.lib `
             -DDRIFT_BUNDLE_ONNXRUNTIME=OFF `
             -DDRIFT_WITH_SKIA=ON
 
