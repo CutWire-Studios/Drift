@@ -24,6 +24,18 @@ Item {
     // the document.
     property var slotRows: []
     property var report: ({})
+    readonly property bool isSvg: root.vector.kind === "svg"
+    // SVG appearance: which element the rows edit ("" = the whole drawing).
+    property string svgTarget: ""
+    readonly property var svgElements: (root.isSvg && root.report.elements) ? root.report.elements : []
+    readonly property var svgElement: {
+        for (let i = 0; i < root.svgElements.length; ++i)
+            if (root.svgElements[i].id === root.svgTarget)
+                return root.svgElements[i]
+        return null
+    }
+    readonly property var svgSlots: (root.vector && root.vector.slots) || ({})
+    readonly property var svgKeyframes: (root.vector && root.vector.keyframes) || ({})
     // The slot editor takes plain values keyed by id; a slot with no override stays absent.
     readonly property var slotValues: {
         const out = {}
@@ -56,6 +68,124 @@ Item {
         const error = EditorState.setVectorSlot(EditorState.selectedTrack, EditorState.selectedClip, id, value)
         if (error.length > 0)
             EditorState.setLastMessage(error, "error")
+    }
+    function svgSlotKey(prop) {
+        return "svg." + (root.svgTarget.length > 0 ? root.svgTarget + "." : "") + prop
+    }
+    function svgKeyframeList(prop, channel) {
+        const entry = root.svgKeyframes[root.svgSlotKey(prop) + (channel ? "." + channel : "")]
+        return (entry && entry.points) || []
+    }
+    // The element's own attribute as written, for the row's fallback when nothing overrides it.
+    function svgDocumentValue(attr) {
+        return root.svgElement ? String(root.svgElement[attr] || "") : ""
+    }
+    function resetSvgTarget() {
+        const prefix = root.svgSlotKey("")
+        for (const key in root.svgSlots) {
+            if (key.startsWith(prefix) && key.substring(prefix.length).indexOf(".") < 0)
+                root.setSlot(key, null)
+        }
+    }
+    function resetSvgAll() {
+        for (const key in root.svgSlots) {
+            if (key.startsWith("svg."))
+                root.setSlot(key, null)
+        }
+    }
+
+    // A colour override row: swatch, keyframe diamond and reset. The four channel tracks are one
+    // series to the user, so the diamond lights when any of them has keys.
+    component SvgColorRow: Column {
+        id: colorRow
+        property string prop: "fill"
+        property string label: ""
+        readonly property string slotKey: root.svgSlotKey(prop)
+        readonly property string keyframeKey: "vector." + slotKey
+        readonly property bool animated: ["r", "g", "b", "a"].some(c => root.svgKeyframeList(prop, c).length > 0)
+        readonly property bool keysEnabled: {
+            void root.clipDataRevision
+            return !animated || EditorState.clipPropertyKeyframesEnabled(EditorState.selectedTrack, EditorState.selectedClip,
+                                                                         keyframeKey + ".r")
+        }
+        readonly property bool overridden: root.svgSlots[slotKey] !== undefined
+        readonly property string hex: {
+            void root.clipDataRevision
+            void EditorState.playheadSeconds
+            if (animated) {
+                const ch = c => EditorState.propertyValueAt(EditorState.selectedTrack, EditorState.selectedClip,
+                                                            keyframeKey + "." + c, EditorState.playheadSeconds, 0)
+                return Qt.rgba(ch("r"), ch("g"), ch("b"), ch("a")).toString()
+            }
+            if (overridden)
+                return String(root.svgSlots[slotKey])
+            const own = root.svgDocumentValue(prop)
+            return own.length > 0 && own !== "none" && own.indexOf("url(") < 0 ? own : "#ff000000"
+        }
+        width: parent.width
+        spacing: 4
+
+        function commit(value) {
+            if (colorRow.animated || EditorState.autoKeyEnabled) {
+                EditorState.showKeyframeGraphProperty(colorRow.keyframeKey + ".r")
+                EditorState.setClipColorKeyframe(EditorState.selectedTrack, EditorState.selectedClip, colorRow.keyframeKey,
+                                                 EditorState.playheadSeconds, value)
+            } else {
+                root.setSlot(colorRow.slotKey, value)
+            }
+        }
+
+        Row {
+            width: parent.width
+            spacing: 4
+            KeyframeDiamond {
+                anchors.verticalCenter: parent.verticalCenter
+                accentColor: Theme.keyframeCurveColor(colorRow.keyframeKey)
+                animated: colorRow.animated
+                keysEnabled: colorRow.keysEnabled
+                tooltip: colorRow.animated ? qsTr("Toggle %1's keyframes").arg(colorRow.label)
+                                           : qsTr("Key %1 at the playhead").arg(colorRow.label)
+                onToggled: {
+                    if (colorRow.animated) {
+                        for (const c of ["r", "g", "b", "a"])
+                            EditorState.toggleClipPropertyKeyframesEnabled(EditorState.selectedTrack, EditorState.selectedClip,
+                                                                           colorRow.keyframeKey + "." + c)
+                    } else {
+                        EditorState.setClipColorKeyframe(EditorState.selectedTrack, EditorState.selectedClip,
+                                                         colorRow.keyframeKey, EditorState.playheadSeconds, colorRow.hex)
+                    }
+                }
+            }
+            Text {
+                anchors.verticalCenter: parent.verticalCenter
+                text: colorRow.label
+                color: colorRow.overridden || colorRow.animated ? Theme.panelForeground : Theme.mutedForeground
+                font.pixelSize: Theme.fontSizeXs
+                font.family: Theme.fontFamily
+            }
+            Item { width: 1; height: 1 }
+        }
+        Row {
+            width: parent.width
+            spacing: 4
+            ColorSwatchField {
+                width: parent.width - resetButton.width - parent.spacing
+                hex: colorRow.hex
+                tooltip: qsTr("Override the %1 colour").arg(colorRow.label.toLowerCase())
+                onEdited: value => colorRow.commit(value)
+            }
+            IconButton {
+                id: resetButton
+                glyph: Theme.icons.x
+                variant: "ghost"
+                buttonSize: Theme.controlHeightSm
+                iconSize: 12
+                anchors.verticalCenter: parent.verticalCenter
+                enabled: colorRow.overridden || colorRow.animated
+                tooltip: qsTr("Back to the drawing's own %1").arg(colorRow.label.toLowerCase())
+                onClicked: root.setSlot(colorRow.slotKey, null)
+            }
+        }
     }
 
     function replaceDocument() {
@@ -189,11 +319,107 @@ Item {
             }
         }
 
-        // ----- Slots -------------------------------------------------------
+        // ----- Appearance (SVG) -------------------------------------------
+        Column {
+            width: parent.width
+            spacing: Theme.spacingMd
+            visible: root.isSvg
+
+            ThemedLabel { text: qsTr("Appearance") }
+            ThemedLabel {
+                width: parent.width
+                opacity: 0.8
+                wrapMode: Text.Wrap
+                text: qsTr("Recolour the whole drawing, or one element the file names by id. Drawing-wide colours replace paints the file already has; outlines drawn with no fill stay hollow.")
+            }
+
+            Column {
+                width: parent.width
+                spacing: 4
+                Text {
+                    text: qsTr("Target")
+                    color: Theme.mutedForeground
+                    font.pixelSize: Theme.fontSizeXs
+                    font.family: Theme.fontFamily
+                }
+                ThemedComboBox {
+                    id: svgTargetBox
+                    width: parent.width
+                    readonly property var ids: [""].concat(root.svgElements.map(e => e.id))
+                    model: [qsTr("Whole drawing")].concat(root.svgElements.map(e => {
+                        const classes = e.classes && e.classes.length > 0 ? " ." + e.classes.join(" .") : ""
+                        return "#" + e.id + " · " + e.tag + classes + (e.inDefs ? qsTr(" (defs)") : "")
+                    }))
+                    tooltip: qsTr("Which part of the drawing the rows below restyle")
+                    currentIndex: Math.max(0, ids.indexOf(root.svgTarget))
+                    onActivated: root.svgTarget = ids[currentIndex]
+                }
+            }
+
+            SvgColorRow { prop: "fill"; label: qsTr("Fill") }
+            SvgColorRow { prop: "stroke"; label: qsTr("Stroke") }
+
+            Row {
+                width: parent.width
+                spacing: 8
+
+                PropertyKeyframeRow {
+                    width: (parent.width - parent.spacing) / 2
+                    propDef: { "key": "vector." + root.svgSlotKey("strokeWidth"), "label": qsTr("Stroke width"),
+                               "def": root.svgSlots[root.svgSlotKey("strokeWidth")] !== undefined
+                                      ? Number(root.svgSlots[root.svgSlotKey("strokeWidth")])
+                                      : (parseFloat(root.svgDocumentValue("strokeWidth")) || 1),
+                               "decimals": 1 }
+                    keyframeList: root.svgKeyframeList("strokeWidth", "")
+                    useSlider: true
+                    sliderFrom: 0
+                    sliderTo: 50
+                }
+                PropertyKeyframeRow {
+                    width: (parent.width - parent.spacing) / 2
+                    propDef: { "key": "vector." + root.svgSlotKey("opacity"), "label": qsTr("Opacity"),
+                               "def": root.svgSlots[root.svgSlotKey("opacity")] !== undefined
+                                      ? Number(root.svgSlots[root.svgSlotKey("opacity")])
+                                      : (root.svgDocumentValue("opacity").length > 0 ? parseFloat(root.svgDocumentValue("opacity")) : 1),
+                               "decimals": 2 }
+                    keyframeList: root.svgKeyframeList("opacity", "")
+                    useSlider: true
+                    sliderFrom: 0
+                    sliderTo: 1
+                    percent: true
+                }
+            }
+
+            Row {
+                width: parent.width
+                spacing: 8
+
+                ThemedCheckBox {
+                    visible: root.svgTarget.length > 0
+                    text: qsTr("Visible")
+                    checked: root.svgSlots[root.svgSlotKey("visible")] === undefined
+                             || Number(root.svgSlots[root.svgSlotKey("visible")]) >= 0.5
+                    onToggled: root.setSlot(root.svgSlotKey("visible"), checked ? 1 : 0)
+                }
+                ThemedButton {
+                    variant: "secondary"
+                    text: root.svgTarget.length > 0 ? qsTr("Reset element") : qsTr("Reset drawing")
+                    tooltip: qsTr("Drop every override on this target")
+                    onClicked: root.resetSvgTarget()
+                }
+                ThemedButton {
+                    variant: "secondary"
+                    text: qsTr("Reset all")
+                    onClicked: root.resetSvgAll()
+                }
+            }
+        }
+
+        // ----- Slots (Lottie) ---------------------------------------------
         Column {
             width: parent.width
             spacing: Theme.spacingSm
-            visible: root.slotRows.length > 0
+            visible: !root.isSvg && root.slotRows.length > 0
 
             ThemedLabel { text: qsTr("Slots") }
             ThemedLabel {

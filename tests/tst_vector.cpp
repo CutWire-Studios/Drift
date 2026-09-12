@@ -85,6 +85,10 @@ private slots:
     void fitModes();
     void loopModes();
     void svgStillRenders();
+    void svgScanListsElementsAndMintsIds();
+    void svgOverridesRecolour();
+    void svgOverridesShareDocument();
+    void svgOverrideKeyframes();
     void concurrentRenders();
     void thumbnailIsMidAnimation();
     void compositorRendersVectorClip();
@@ -313,6 +317,213 @@ void VectorTest::svgStillRenders()
     const QImage square = renderAt(source, 0.0, QSize(100, 100));
     QVERIFY(isColor(square.pixel(25, 50), 0, 255, 0));
     QVERIFY(qAlpha(square.pixel(25, 10)) == 0);
+}
+
+namespace {
+
+Project vectorProject(VectorSource source, double speed, bool reverse);
+
+VectorSource styledSource()
+{
+    VectorSource source;
+    source.kind = VectorKind::Svg;
+    source.path = QStringLiteral(DRIFT_TEST_DATA_DIR "/vector/styled.svg");
+    return source;
+}
+
+} // namespace
+
+// The scan lists the ids the file names (not the <symbol>, which Skia drops) with their own
+// paints, and the rewritten document carries a minted id on every id-less paintable element so
+// the renderer can reach them all.
+void VectorTest::svgScanListsElementsAndMintsIds()
+{
+    const QByteArray data = fixture(QStringLiteral("styled.svg"));
+    const vec::SvgScan scan = vec::scanSvg(data);
+    QStringList ids;
+    for (const vec::VectorSvgElement &e : scan.elements)
+        ids.append(e.id);
+    QCOMPARE(ids, (QStringList{QStringLiteral("unit"), QStringLiteral("hidden-symbol"), QStringLiteral("left"),
+                               QStringLiteral("group"), QStringLiteral("outline"), QStringLiteral("stamp")}));
+    QCOMPARE(scan.elements[0].inDefs, true);
+    QCOMPARE(scan.elements[2].tag, QStringLiteral("rect"));
+    QCOMPARE(scan.elements[2].classes, (QStringList{QStringLiteral("panel"), QStringLiteral("primary")}));
+    QCOMPARE(scan.elements[2].fill, QStringLiteral("#00ff00"));
+    QCOMPARE(scan.elements[3].fill, QStringLiteral("#ff0000")); // from style=""
+    QCOMPARE(scan.elements[4].fill, QStringLiteral("none"));
+    QCOMPARE(scan.elements[4].strokeWidth, QStringLiteral("4"));
+    // The blue rect, the two grouped rects and the symbol's circle had no id.
+    QCOMPARE(scan.injectedIds.size(), 4);
+    QVERIFY(scan.rewritten.contains("r=\"5\" id=\"drift-1\"/>"));
+    QVERIFY(scan.rewritten.contains("width=\"60\" height=\"100\" fill=\"#0000ff\" id=\"drift-2\"/>"));
+    QVERIFY(vec::inspectVector(scan.rewritten, VectorKind::Svg).ok);
+
+    // inspect keeps only what the DOM can find: the symbol's id is gone.
+    const vec::InspectReport report = vec::inspectVector(data, VectorKind::Svg);
+    QVERIFY2(report.ok, qPrintable(report.error));
+    QStringList reported;
+    for (const vec::VectorSvgElement &e : report.svgElements)
+        reported.append(e.id);
+    QVERIFY(reported.contains(QStringLiteral("left")));
+    QVERIFY(reported.contains(QStringLiteral("group")));
+    QVERIFY(!reported.contains(QStringLiteral("hidden-symbol")));
+    QVERIFY(report.toJson().value(QStringLiteral("elements")).toArray().size() == report.svgElements.size());
+}
+
+// Drawing-wide colours recolour every painted shape but leave a fill="none" outline hollow;
+// element overrides hit their element only; alpha in an override colour comes through.
+void VectorTest::svgOverridesRecolour()
+{
+    VectorSource plain = styledSource();
+    const QImage original = renderAt(plain, 0.0, QSize(200, 100));
+    QVERIFY(isColor(original.pixel(30, 50), 0, 255, 0));
+    QVERIFY(isColor(original.pixel(90, 50), 0, 0, 255));
+    QVERIFY(isColor(original.pixel(140, 25), 255, 0, 0));
+    QVERIFY(qAlpha(original.pixel(180, 50)) == 0); // hollow outline interior
+    QVERIFY(isColor(original.pixel(166, 50), 0, 0, 0)); // its stroke
+
+    VectorSource recoloured = plain;
+    recoloured.slotValues.insert(QStringLiteral("svg.fill"), VectorSlotValue::fromColor(QColor(255, 0, 255)));
+    const QImage magenta = renderAt(recoloured, 0.0, QSize(200, 100));
+    QVERIFY(isColor(magenta.pixel(30, 50), 255, 0, 255));
+    QVERIFY(isColor(magenta.pixel(90, 50), 255, 0, 255));
+    QVERIFY(isColor(magenta.pixel(140, 25), 255, 0, 255));
+    QVERIFY(isColor(magenta.pixel(140, 75), 255, 0, 255));
+    QVERIFY(qAlpha(magenta.pixel(180, 50)) == 0);
+    QVERIFY(isColor(magenta.pixel(166, 50), 0, 0, 0));
+
+    VectorSource strokes = plain;
+    strokes.slotValues.insert(QStringLiteral("svg.stroke"), VectorSlotValue::fromColor(QColor(0, 255, 255)));
+    strokes.slotValues.insert(QStringLiteral("svg.strokeWidth"), VectorSlotValue::fromScalar(12.0));
+    const QImage cyan = renderAt(strokes, 0.0, QSize(200, 100));
+    QVERIFY(isColor(cyan.pixel(166, 50), 0, 255, 255));
+    QVERIFY(isColor(cyan.pixel(170, 50), 0, 255, 255)); // wider than 4 now
+    QVERIFY(isColor(cyan.pixel(30, 50), 0, 255, 0));     // no stroke was added to the plain rect
+
+    VectorSource element = plain;
+    element.slotValues.insert(QStringLiteral("svg.left.fill"), VectorSlotValue::fromColor(QColor(255, 255, 0)));
+    element.slotValues.insert(QStringLiteral("svg.group.opacity"), VectorSlotValue::fromScalar(0.5));
+    element.slotValues.insert(QStringLiteral("svg.outline.fill"), VectorSlotValue::fromColor(QColor(0, 0, 255)));
+    const QImage picked = renderAt(element, 0.0, QSize(200, 100));
+    QVERIFY(isColor(picked.pixel(30, 50), 255, 255, 0));
+    QVERIFY(isColor(picked.pixel(90, 50), 0, 0, 255));
+    QVERIFY2(qAbs(qAlpha(picked.pixel(140, 25)) - 128) <= 3, qPrintable(QString::number(qAlpha(picked.pixel(140, 25)))));
+    QVERIFY(isColor(picked.pixel(180, 50), 0, 0, 255)); // an element override does fill the outline
+
+    VectorSource hidden = plain;
+    hidden.slotValues.insert(QStringLiteral("svg.group.visible"), VectorSlotValue::fromScalar(0.0));
+    const QImage gone = renderAt(hidden, 0.0, QSize(200, 100));
+    QVERIFY(qAlpha(gone.pixel(140, 25)) == 0);
+    QVERIFY(qAlpha(gone.pixel(140, 75)) == 0);
+    QVERIFY(isColor(gone.pixel(30, 50), 0, 255, 0));
+
+    VectorSource translucent = plain;
+    translucent.slotValues.insert(QStringLiteral("svg.left.fill"), VectorSlotValue::fromColor(QColor(255, 0, 0, 128)));
+    const QImage half = renderAt(translucent, 0.0, QSize(200, 100));
+    QVERIFY2(qAbs(qAlpha(half.pixel(30, 50)) - 128) <= 3, qPrintable(QString::number(qAlpha(half.pixel(30, 50)))));
+
+    // The document was shared and mutated in place; the plain source still draws the original.
+    QCOMPARE(renderAt(plain, 0.0, QSize(200, 100)), original);
+
+    // Distinct override sets are distinct cache entries; the same set is one.
+    vec::RenderRequest a;
+    a.source = recoloured;
+    a.size = QSize(200, 100);
+    vec::RenderRequest b = a;
+    b.source = element;
+    vec::RenderRequest c = a;
+    c.source = plain;
+    QVERIFY(vec::makePainter(a)->cacheKey() != 0);
+    QVERIFY(vec::makePainter(a)->cacheKey() != vec::makePainter(b)->cacheKey());
+    QVERIFY(vec::makePainter(a)->cacheKey() != vec::makePainter(c)->cacheKey());
+    QCOMPARE(vec::makePainter(a)->cacheKey(), vec::makePainter(a)->cacheKey());
+}
+
+// Two clips of the same SVG with different overrides share one parsed document; each paint
+// re-establishes its own overrides under the lock, so eight threads alternating between them
+// always get their own colours.
+void VectorTest::svgOverridesShareDocument()
+{
+    VectorSource red = styledSource();
+    red.slotValues.insert(QStringLiteral("svg.fill"), VectorSlotValue::fromColor(QColor(255, 0, 0)));
+    VectorSource blue = styledSource();
+    blue.slotValues.insert(QStringLiteral("svg.left.fill"), VectorSlotValue::fromColor(QColor(0, 0, 255)));
+    const QImage expectRed = renderAt(red, 0.0, QSize(200, 100));
+    const QImage expectBlue = renderAt(blue, 0.0, QSize(200, 100));
+    QVERIFY(isColor(expectRed.pixel(30, 50), 255, 0, 0));
+    QVERIFY(isColor(expectBlue.pixel(30, 50), 0, 0, 255));
+    QVERIFY(isColor(expectBlue.pixel(90, 50), 0, 0, 255));
+    QVector<QThread *> threads;
+    std::atomic<int> failures{0};
+    for (int i = 0; i < 8; ++i) {
+        QThread *thread = QThread::create([&, i] {
+            for (int n = 0; n < 20; ++n) {
+                const bool odd = (i + n) % 2 == 1;
+                const QImage got = renderAt(odd ? blue : red, 0.0, QSize(200, 100));
+                if (got != (odd ? expectBlue : expectRed))
+                    ++failures;
+            }
+        });
+        threads.append(thread);
+        thread->start();
+    }
+    for (QThread *thread : threads) {
+        thread->wait();
+        delete thread;
+    }
+    QCOMPARE(failures.load(), 0);
+}
+
+// Keyframed overrides resolve per instant, round-trip through JSON, and drive the compositor.
+void VectorTest::svgOverrideKeyframes()
+{
+    VectorSource source = styledSource();
+    source.keyframes[QStringLiteral("svg.left.fill.r")].setKeyframe(0, 0.0);
+    source.keyframes[QStringLiteral("svg.left.fill.r")].setKeyframe(secondsToUs(1.0), 1.0);
+    source.keyframes[QStringLiteral("svg.left.fill.g")].setKeyframe(0, 0.0);
+    source.keyframes[QStringLiteral("svg.left.fill.b")].setKeyframe(0, 0.0);
+    source.keyframes[QStringLiteral("svg.left.fill.a")].setKeyframe(0, 1.0);
+    source.keyframes[QStringLiteral("svg.strokeWidth")].setKeyframe(0, 4.0);
+    source.keyframes[QStringLiteral("svg.strokeWidth")].setKeyframe(secondsToUs(1.0), 20.0);
+    QVERIFY(source.isAnimated());
+
+    const VectorSource mid = source.resolvedAt(secondsToUs(0.5));
+    double r = 0.0;
+    QVERIFY(vectorSlotScalar(mid, QStringLiteral("svg.left.fill.r"), &r));
+    QVERIFY2(qAbs(r - 0.5) < 0.02, qPrintable(QString::number(r)));
+    QCOMPARE(mid.slotValues.value(QStringLiteral("svg.strokeWidth")).scalar, 12.0);
+    QVERIFY(mid.keyframes.isEmpty());
+    const VectorSource end = source.resolvedAt(secondsToUs(1.0));
+    QVERIFY(isColor(renderAt(end, 0.0, QSize(200, 100)).pixel(30, 50), 255, 0, 0));
+    QVERIFY(isColor(renderAt(source.resolvedAt(0), 0.0, QSize(200, 100)).pixel(30, 50), 0, 0, 0));
+
+    const VectorSource loaded = VectorSource::fromJson(source.toJson());
+    QCOMPARE(loaded.keyframes.size(), source.keyframes.size());
+    QCOMPARE(loaded.keyframes.value(QStringLiteral("svg.strokeWidth")).evaluateAt(secondsToUs(1.0)), 20.0);
+    QVERIFY(!VectorSource::fromJson(styledSource().toJson()).isAnimated());
+    QVERIFY(!styledSource().toJson().contains(QStringLiteral("keyframes")));
+
+    // Unknown keys and the non-scalar visible are refused.
+    double probe = 0.0;
+    QVERIFY(!vectorSlotScalar(source, QStringLiteral("svg.left.fill"), &probe));
+    QVERIFY(!vectorSlotScalar(source, QStringLiteral("svg.left.visible"), &probe));
+    QVERIFY(!vectorSlotScalar(source, QStringLiteral("svg.left.nope.r"), &probe));
+    QVERIFY(vectorSlotScalar(source, QStringLiteral("svg.opacity"), &probe));
+    SvgOverrideKey key;
+    QVERIFY(parseSvgOverrideKey(QStringLiteral("svg.a.b.c.fill"), &key));
+    QCOMPARE(key.elementId, QStringLiteral("a.b.c"));
+    QVERIFY(!parseSvgOverrideKey(QStringLiteral("svg.visible"), &key));
+    QVERIFY(!parseSvgOverrideKey(QStringLiteral("accent"), &key));
+
+    if (!GpuCompositor::isAvailable())
+        QSKIP("GL unavailable");
+    const Project project = vectorProject(source, 1.0, false);
+    FrameCompositor compositor;
+    compositor.setProject(&project);
+    const QImage t0 = compositor.compositeAt(0);
+    const QImage t1 = compositor.compositeAt(secondsToUs(1.0) - 1);
+    QVERIFY(isColor(t0.pixel(30, 50) | 0xff000000u, 0, 0, 0, 12));
+    QVERIFY(isColor(t1.pixel(30, 50) | 0xff000000u, 255, 0, 0, 12));
 }
 
 // Skottie animations are not thread-safe; the renderer serialises per document. Eight threads

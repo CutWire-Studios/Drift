@@ -90,7 +90,7 @@ struct TrackList : QList<Track>
 class Project
 {
 public:
-    static constexpr int kCurrentVersion = 7;
+    static constexpr int kCurrentVersion = 8;
 
     Project() { resetToDefaultTimeline(); }
 

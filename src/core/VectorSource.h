@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Keyframe.h"
 #include "Time.h"
 
 #include <QByteArray>
@@ -74,14 +75,43 @@ struct VectorSource
     VectorLoop loop = VectorLoop::Hold;
     // Added to the clip's source time before folding, so an animation can start mid-way.
     TimeUs startOffsetUs = 0;
-    QMap<QString, VectorSlotValue> slotValues; // keyed by slot id; not `slots`, which Qt macros away
+    // Keyed by slot id; not `slots`, which Qt macros away. Lottie slots are the animation's
+    // declared inputs; an SVG has none, and instead takes the reserved svg.* override keys (see
+    // parseSvgOverrideKey).
+    QMap<QString, VectorSlotValue> slotValues;
+    // Keyed by slot key plus an optional colour channel ("svg.logo.fill.r", "svg.strokeWidth");
+    // times are relative to the clip start. Baked into slotValues by resolvedAt().
+    QMap<QString, KeyframeTrack<double>> keyframes;
 
     bool isInline() const { return !source.isEmpty(); }
     bool isEmpty() const { return source.isEmpty() && path.isEmpty(); }
+    bool isAnimated() const;
+    VectorSource resolvedAt(TimeUs clipTimeUs) const;
 
     QJsonObject toJson() const;
     static VectorSource fromJson(const QJsonObject &o);
 };
+
+// An SVG clip is restyled through reserved slot keys:
+//   svg.fill / svg.stroke (Color), svg.strokeWidth / svg.opacity (Scalar)   — the whole document
+//   svg.<id>.fill / .stroke (Color), svg.<id>.strokeWidth / .opacity / .visible (Scalar) — one element
+// where <id> is an element id from the document (ids may contain dots: the property is the last
+// segment). visible takes 0 or 1 and is not keyframable.
+struct SvgOverrideKey
+{
+    QString elementId; // empty for the whole document
+    QString prop;      // fill | stroke | strokeWidth | opacity | visible
+};
+bool parseSvgOverrideKey(const QString &slot, SvgOverrideKey *out);
+VectorSlotValue::Type svgOverrideType(const QString &prop);
+// "Fill", "#logo · Stroke width"
+QString svgOverrideLabel(const SvgOverrideKey &key);
+
+// A slot scalar by keyframe key: the slot itself for a Scalar, or one of the .r/.g/.b/.a channels
+// (0..1) of a Color. Setting creates the slot when it is missing so a keyed value always has a
+// static home. False for an unknown key, a Text/Image/Vec2 slot, or visible.
+bool vectorSlotScalar(const VectorSource &source, const QString &key, double *out);
+bool setVectorSlotScalar(VectorSource &source, const QString &key, double value);
 
 // Hex SHA-256 of the document bytes.
 QString vectorSourceHash(const QByteArray &data);

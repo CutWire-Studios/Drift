@@ -2,13 +2,17 @@ import QtQuick
 import Drift
 import ".."
 
-// One row of the text shading stack. The list is shown front-most first, so `position` counts
-// from the front while the stored order (what moveTextLayer takes) counts from the back.
+// One row of a text or shape clip's shading stack. The list is shown front-most first, so
+// `position` counts from the front while the stored order (what moveStyleLayer takes) counts
+// from the back.
 Column {
     id: row
 
     property var layerData: ({})
-    property var textStyle: ({})
+    // The style map the layer belongs to; its `keyframes` feed the diamonds.
+    property var styleData: ({})
+    // "text" or "shape": the keyframe prop prefix the clip's style answers to.
+    property string keyPrefix: "text"
     property int position: 0
     property int count: 0
     // Owned by the inspector, keyed by layer id, so it survives reorders and delegate rebuilds.
@@ -32,20 +36,26 @@ Column {
     readonly property var blendModes: ["normal", "multiply", "screen", "overlay", "add", "darken", "lighten"]
     readonly property var blendLabels: [qsTr("Normal"), qsTr("Multiply"), qsTr("Screen"), qsTr("Overlay"),
                                         qsTr("Add"), qsTr("Darken"), qsTr("Lighten")]
+    readonly property var strokeAligns: ["center", "outside", "inside"]
+    readonly property var strokeAlignLabels: [qsTr("Centre"), qsTr("Outside"), qsTr("Inside")]
+    readonly property var dashes: ["solid", "dash", "dot", "dashdot"]
+    readonly property var dashLabels: [qsTr("Solid"), qsTr("Dashed"), qsTr("Dotted"), qsTr("Dash-dot")]
+    readonly property bool sketchy: Number(row.layerData.sketchLength) > 0 || Number(row.layerData.sketchDeviation) > 0
+    property bool sketchExpanded: false
 
     width: parent ? parent.width : 200
     spacing: 6
 
     function setLayer(patch) {
-        EditorState.setTextLayer(EditorState.selectedTrack, EditorState.selectedClip, row.layerId, patch)
+        EditorState.setStyleLayer(EditorState.selectedTrack, EditorState.selectedClip, row.layerId, patch)
     }
     function keyframes(field) {
-        const keys = row.textStyle && row.textStyle.keyframes
+        const keys = row.styleData && row.styleData.keyframes
         const entry = keys && keys["layer." + row.layerId + "." + field]
         return (entry && entry.points) || []
     }
     function prop(field, label, decimals) {
-        return { "key": "text.layer." + row.layerId + "." + field, "label": label,
+        return { "key": row.keyPrefix + ".layer." + row.layerId + "." + field, "label": label,
                  "def": Number(row.layerData[field]) || 0, "decimals": decimals }
     }
 
@@ -101,7 +111,7 @@ Column {
                 iconSize: 12
                 enabled: row.position > 0
                 tooltip: qsTr("Bring forward")
-                onClicked: EditorState.moveTextLayer(EditorState.selectedTrack, EditorState.selectedClip,
+                onClicked: EditorState.moveStyleLayer(EditorState.selectedTrack, EditorState.selectedClip,
                                                      row.layerId, row.storedIndex + 1)
             }
             IconButton {
@@ -111,7 +121,7 @@ Column {
                 iconSize: 12
                 enabled: row.position < row.count - 1
                 tooltip: qsTr("Send backward")
-                onClicked: EditorState.moveTextLayer(EditorState.selectedTrack, EditorState.selectedClip,
+                onClicked: EditorState.moveStyleLayer(EditorState.selectedTrack, EditorState.selectedClip,
                                                      row.layerId, row.storedIndex - 1)
             }
             IconButton {
@@ -128,7 +138,7 @@ Column {
                 buttonSize: 22
                 iconSize: 12
                 tooltip: qsTr("Duplicate layer")
-                onClicked: EditorState.duplicateTextLayer(EditorState.selectedTrack, EditorState.selectedClip,
+                onClicked: EditorState.duplicateStyleLayer(EditorState.selectedTrack, EditorState.selectedClip,
                                                           row.layerId)
             }
             IconButton {
@@ -137,7 +147,7 @@ Column {
                 buttonSize: 22
                 iconSize: 12
                 tooltip: qsTr("Remove layer")
-                onClicked: EditorState.removeTextLayer(EditorState.selectedTrack, EditorState.selectedClip,
+                onClicked: EditorState.removeStyleLayer(EditorState.selectedTrack, EditorState.selectedClip,
                                                        row.layerId)
             }
         }
@@ -183,12 +193,13 @@ Column {
         }
 
         // Fill and stroke carry a full paint; the back layers are colour only.
-        TextPaintEditor {
+        PaintEditor {
             width: parent.width - parent.leftPadding - parent.rightPadding
             visible: row.kind === "fill" || row.kind === "stroke"
             layerId: row.layerId
             paint: row.paint
-            textStyle: row.textStyle
+            styleData: row.styleData
+            keyPrefix: row.keyPrefix
         }
 
         Row {
@@ -215,11 +226,154 @@ Column {
                     font.pixelSize: Theme.fontSizeXs
                     font.family: Theme.fontFamily
                 }
-                ThemedToggleButton {
-                    text: qsTr("Outside")
-                    checked: row.layerData.strokeOutside === true
-                    tooltip: qsTr("Grow the stroke outward so it never eats into the letter")
-                    onClicked: row.setLayer({ "strokeOutside": !(row.layerData.strokeOutside === true) })
+                ThemedComboBox {
+                    width: parent.width
+                    model: row.strokeAlignLabels
+                    tooltip: qsTr("Centre the stroke on the outline, grow it outward, or keep it inside")
+                    currentIndex: Math.max(0, row.strokeAligns.indexOf(row.layerData.strokeAlign || "outside"))
+                    onActivated: row.setLayer({ "strokeAlign": row.strokeAligns[currentIndex] })
+                }
+            }
+        }
+
+        Row {
+            width: parent.width - parent.leftPadding - parent.rightPadding
+            spacing: 8
+            visible: row.kind === "stroke"
+
+            Column {
+                width: (parent.width - parent.spacing) / 2
+                spacing: 4
+                Text {
+                    text: qsTr("Dash")
+                    color: Theme.mutedForeground
+                    font.pixelSize: Theme.fontSizeXs
+                    font.family: Theme.fontFamily
+                }
+                ThemedComboBox {
+                    width: parent.width
+                    model: row.dashLabels
+                    currentIndex: Math.max(0, row.dashes.indexOf(row.layerData.dash || "solid"))
+                    onActivated: row.setLayer({ "dash": row.dashes[currentIndex] })
+                }
+            }
+
+            PropertyKeyframeRow {
+                width: (parent.width - parent.spacing) / 2
+                visible: (row.layerData.dash || "solid") !== "solid"
+                propDef: row.prop("dashOffset", qsTr("Dash offset"), 2)
+                keyframeList: row.keyframes("dashOffset")
+                useSlider: true
+                sliderFrom: -20
+                sliderTo: 20
+            }
+        }
+
+        Row {
+            width: parent.width - parent.leftPadding - parent.rightPadding
+            spacing: 8
+            visible: row.kind === "stroke"
+
+            PropertyKeyframeRow {
+                width: (parent.width - parent.spacing) / 2
+                propDef: row.prop("trimStart", qsTr("Trim start"), 2)
+                keyframeList: row.keyframes("trimStart")
+                useSlider: true
+                sliderFrom: 0
+                sliderTo: 1
+                percent: true
+            }
+            PropertyKeyframeRow {
+                width: (parent.width - parent.spacing) / 2
+                propDef: { "key": row.keyPrefix + ".layer." + row.layerId + ".trimEnd", "label": qsTr("Trim end"),
+                           "def": row.layerData.trimEnd !== undefined ? Number(row.layerData.trimEnd) : 1, "decimals": 2 }
+                keyframeList: row.keyframes("trimEnd")
+                useSlider: true
+                sliderFrom: 0
+                sliderTo: 1
+                percent: true
+            }
+        }
+
+        // Hand-drawn jitter on the outline, for fills and strokes.
+        Column {
+            width: parent.width - parent.leftPadding - parent.rightPadding
+            spacing: Theme.spacingSm
+            visible: row.kind === "stroke" || row.kind === "fill"
+
+            Row {
+                spacing: 4
+                IconButton {
+                    glyph: row.sketchExpanded || row.sketchy ? Theme.icons.chevronDown : Theme.icons.chevronRight
+                    variant: "ghost"
+                    buttonSize: 20
+                    iconSize: 11
+                    anchors.verticalCenter: parent.verticalCenter
+                    onClicked: row.sketchExpanded = !row.sketchExpanded
+                }
+                Text {
+                    text: qsTr("Sketchy")
+                    anchors.verticalCenter: parent.verticalCenter
+                    color: row.sketchy ? Theme.panelForeground : Theme.mutedForeground
+                    font.pixelSize: Theme.fontSizeXs
+                    font.family: Theme.fontFamily
+                    MouseArea {
+                        anchors.fill: parent
+                        onClicked: row.sketchExpanded = !row.sketchExpanded
+                    }
+                }
+            }
+
+            Column {
+                width: parent.width
+                spacing: Theme.spacingMd
+                visible: row.sketchExpanded || row.sketchy
+
+                Row {
+                    width: parent.width
+                    spacing: 8
+                    PropertyKeyframeRow {
+                        width: (parent.width - parent.spacing) / 2
+                        propDef: row.prop("sketchLength", qsTr("Segment"), 1)
+                        keyframeList: row.keyframes("sketchLength")
+                        useSlider: true
+                        sliderFrom: 0
+                        sliderTo: 60
+                        unit: "px"
+                    }
+                    PropertyKeyframeRow {
+                        width: (parent.width - parent.spacing) / 2
+                        propDef: row.prop("sketchDeviation", qsTr("Wobble"), 1)
+                        keyframeList: row.keyframes("sketchDeviation")
+                        useSlider: true
+                        sliderFrom: 0
+                        sliderTo: 30
+                        unit: "px"
+                    }
+                }
+
+                Column {
+                    width: (parent.width - 8) / 2
+                    spacing: 4
+                    Text {
+                        text: qsTr("Seed")
+                        color: Theme.mutedForeground
+                        font.pixelSize: Theme.fontSizeXs
+                        font.family: Theme.fontFamily
+                    }
+                    ThemedNumberField {
+                        id: sketchSeedField
+                        width: parent.width
+                        decimals: 0
+                        step: 1
+                        from: 0
+                        to: 9999
+                        Binding on value {
+                            when: !sketchSeedField.activeFocus
+                            value: Number(row.layerData.sketchSeed) || 0
+                        }
+                        onEdited: v => row.setLayer({ "sketchSeed": Math.round(v) })
+                    }
                 }
             }
         }
@@ -360,7 +514,7 @@ Column {
                 }
                 onMoved: {
                     if (pressed)
-                        EditorState.previewSetTextLayer(EditorState.selectedTrack, EditorState.selectedClip,
+                        EditorState.previewSetStyleLayer(EditorState.selectedTrack, EditorState.selectedClip,
                                                         row.layerId, { "extrudeDarken": value })
                     else
                         row.setLayer({ "extrudeDarken": value })

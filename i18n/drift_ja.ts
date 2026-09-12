@@ -3377,7 +3377,23 @@
         <translation>このデバイスではそのファイルを共有できません</translation>
     </message>
     <message>
-        <source>Add text layer</source>
+        <source>Add layer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Remove layer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Duplicate layer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Reorder layers</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Edit layer</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -3385,15 +3401,7 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Remove text layer</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Layer removed</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Duplicate text layer</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -3401,15 +3409,7 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Reorder text layers</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Layer moved</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Edit text layer</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -3477,6 +3477,22 @@
         <translation type="unfinished">
             <numerusform></numerusform>
         </translation>
+    </message>
+    <message>
+        <source>Red</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Green</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Blue</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Alpha</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Could not unpack the bundle</source>
@@ -6978,6 +6994,89 @@
     </message>
 </context>
 <context>
+    <name>PaintEditor</name>
+    <message>
+        <source>Texture Image</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Images (*.png *.jpg *.jpeg *.webp)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Paint</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Solid</source>
+        <translation type="unfinished">単色</translation>
+    </message>
+    <message>
+        <source>Gradient</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Texture</source>
+        <translation type="unfinished">テクスチャ</translation>
+    </message>
+    <message>
+        <source>Effect</source>
+        <translation type="unfinished">エフェクト</translation>
+    </message>
+    <message>
+        <source>Colour</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Choose the paint colour</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Change image…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Choose image…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No image</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Fit</source>
+        <translation type="unfinished">フィット</translation>
+    </message>
+    <message>
+        <source>Tile</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Repeat the image across the layer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cover</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Stretch one copy of the image over the layer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Scale</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Angle</source>
+        <translation type="unfinished">角度</translation>
+    </message>
+    <message>
+        <source>Adjust paint effect</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>PasteAttributesDialog</name>
     <message>
         <source>Paste Attributes</source>
@@ -8424,14 +8523,229 @@ If playback stutters, try another.</source>
     </message>
 </context>
 <context>
+    <name>ShadingLayerRow</name>
+    <message>
+        <source>Fill</source>
+        <translation type="unfinished">塗り</translation>
+    </message>
+    <message>
+        <source>Stroke</source>
+        <translation type="unfinished">線</translation>
+    </message>
+    <message>
+        <source>Shadow</source>
+        <translation type="unfinished">シャドウ</translation>
+    </message>
+    <message>
+        <source>Glow</source>
+        <translation type="unfinished">グロー</translation>
+    </message>
+    <message>
+        <source>Extrude</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Solid</source>
+        <translation type="unfinished">単色</translation>
+    </message>
+    <message>
+        <source>Gradient</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Texture</source>
+        <translation type="unfinished">テクスチャ</translation>
+    </message>
+    <message>
+        <source>Effect</source>
+        <translation type="unfinished">エフェクト</translation>
+    </message>
+    <message>
+        <source>Normal</source>
+        <translation type="unfinished">ノーマル</translation>
+    </message>
+    <message>
+        <source>Multiply</source>
+        <translation type="unfinished">乗算</translation>
+    </message>
+    <message>
+        <source>Screen</source>
+        <translation type="unfinished">スクリーン</translation>
+    </message>
+    <message>
+        <source>Overlay</source>
+        <translation type="unfinished">オーバーレイ</translation>
+    </message>
+    <message>
+        <source>Add</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Darken</source>
+        <translation type="unfinished">比較 (暗)</translation>
+    </message>
+    <message>
+        <source>Lighten</source>
+        <translation type="unfinished">比較 (明)</translation>
+    </message>
+    <message>
+        <source>Centre</source>
+        <translation type="unfinished">中央</translation>
+    </message>
+    <message>
+        <source>Outside</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Inside</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Dashed</source>
+        <translation type="unfinished">破線</translation>
+    </message>
+    <message>
+        <source>Dotted</source>
+        <translation type="unfinished">点線</translation>
+    </message>
+    <message>
+        <source>Dash-dot</source>
+        <translation type="unfinished">一点鎖線</translation>
+    </message>
+    <message>
+        <source>Collapse layer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Expand layer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Bring forward</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Send backward</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Hide layer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show layer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Duplicate layer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Remove layer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Opacity</source>
+        <translation type="unfinished">不透明度</translation>
+    </message>
+    <message>
+        <source>Blend</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Width</source>
+        <translation type="unfinished">幅</translation>
+    </message>
+    <message>
+        <source>Placement</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Centre the stroke on the outline, grow it outward, or keep it inside</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Dash</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Dash offset</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Trim start</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Trim end</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Sketchy</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Segment</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Wobble</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Seed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Colour</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Choose the layer colour</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Offset X</source>
+        <translation type="unfinished">オフセット X</translation>
+    </message>
+    <message>
+        <source>Offset Y</source>
+        <translation type="unfinished">オフセット Y</translation>
+    </message>
+    <message>
+        <source>Radius</source>
+        <translation type="unfinished">半径</translation>
+    </message>
+    <message>
+        <source>Blur</source>
+        <translation type="unfinished">ブラー</translation>
+    </message>
+    <message>
+        <source>Spread</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Depth</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Angle</source>
+        <translation type="unfinished">角度</translation>
+    </message>
+    <message>
+        <source>How much the extruded side fades toward black</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Adjust extrude</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>ShapeInspector</name>
     <message>
         <source>Shape</source>
         <translation>シェイプ</translation>
-    </message>
-    <message>
-        <source>Swapping the shape keeps its position, size and effects.</source>
-        <translation>シェイプを変更しても位置、サイズ、エフェクトは維持されます。</translation>
     </message>
     <message>
         <source>Shape drawn by this clip</source>
@@ -8442,68 +8756,44 @@ If playback stutters, try another.</source>
         <translation>塗り</translation>
     </message>
     <message>
-        <source>None</source>
-        <translation>なし</translation>
-    </message>
-    <message>
-        <source>Solid</source>
-        <translation>単色</translation>
-    </message>
-    <message>
-        <source>Linear gradient</source>
-        <translation>線形グラデーション</translation>
-    </message>
-    <message>
-        <source>Radial gradient</source>
-        <translation>円形グラデーション</translation>
-    </message>
-    <message>
-        <source>How the shape&apos;s interior is painted</source>
-        <translation>シェイプの内部の塗り方</translation>
-    </message>
-    <message>
-        <source>Choose fill colour</source>
-        <translation>塗りの色を選択</translation>
-    </message>
-    <message>
-        <source>Choose the gradient&apos;s start colour</source>
-        <translation>グラデーションの開始色を選択</translation>
-    </message>
-    <message>
-        <source>Choose the gradient&apos;s end colour</source>
-        <translation>グラデーションの終了色を選択</translation>
-    </message>
-    <message>
-        <source>Gradient angle</source>
-        <translation>グラデーション角度</translation>
-    </message>
-    <message>
         <source>Stroke</source>
         <translation>線</translation>
     </message>
     <message>
-        <source>Dashed</source>
-        <translation>破線</translation>
+        <source>Swapping the shape keeps its position, size, style and effects.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Dotted</source>
-        <translation>点線</translation>
+        <source>Layers</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Dash-dot</source>
-        <translation>一点鎖線</translation>
+        <source>Add layer</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Outline style</source>
-        <translation>アウトラインスタイル</translation>
+        <source>Add a fill, stroke, shadow, glow or extrude layer</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Choose stroke colour</source>
-        <translation>線の色を選択</translation>
+        <source>Shadow</source>
+        <translation type="unfinished">シャドウ</translation>
     </message>
     <message>
-        <source>Stroke width</source>
-        <translation>線の太さ</translation>
+        <source>Glow</source>
+        <translation type="unfinished">グロー</translation>
+    </message>
+    <message>
+        <source>Extrude</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No layers. Add a fill to start.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Geometry</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Corner radius</source>
@@ -8518,14 +8808,6 @@ If playback stutters, try another.</source>
         <translation>内側の半径</translation>
     </message>
     <message>
-        <source>How deep the notches cut between the points.</source>
-        <translation>ポイント間の切り込みの深さ。</translation>
-    </message>
-    <message>
-        <source>Shape style changed</source>
-        <translation>シェイプスタイルを変更しました</translation>
-    </message>
-    <message>
         <source>Head size</source>
         <translation>矢印の頭のサイズ</translation>
     </message>
@@ -8536,10 +8818,6 @@ If playback stutters, try another.</source>
     <message>
         <source>Tail position</source>
         <translation>しっぽの位置</translation>
-    </message>
-    <message>
-        <source>Where the tail meets the bottom of the bubble.</source>
-        <translation>しっぽが吹き出しの下部と接する位置。</translation>
     </message>
     <message>
         <source>Tail size</source>
@@ -8679,6 +8957,34 @@ If playback stutters, try another.</source>
     <message>
         <source>Fun</source>
         <translation>ファン</translation>
+    </message>
+    <message>
+        <source>Corner radius</source>
+        <translation type="unfinished">角の丸み</translation>
+    </message>
+    <message>
+        <source>Inner radius</source>
+        <translation type="unfinished">内側の半径</translation>
+    </message>
+    <message>
+        <source>Head size</source>
+        <translation type="unfinished">矢印の頭のサイズ</translation>
+    </message>
+    <message>
+        <source>Thickness</source>
+        <translation type="unfinished">太さ</translation>
+    </message>
+    <message>
+        <source>Tail position</source>
+        <translation type="unfinished">しっぽの位置</translation>
+    </message>
+    <message>
+        <source>Tail size</source>
+        <translation type="unfinished">しっぽのサイズ</translation>
+    </message>
+    <message>
+        <source>Points</source>
+        <translation type="unfinished">ポイント数</translation>
     </message>
 </context>
 <context>
@@ -9879,173 +10185,6 @@ If playback stutters, try another.</source>
     </message>
 </context>
 <context>
-    <name>TextLayerRow</name>
-    <message>
-        <source>Fill</source>
-        <translation type="unfinished">塗り</translation>
-    </message>
-    <message>
-        <source>Stroke</source>
-        <translation type="unfinished">線</translation>
-    </message>
-    <message>
-        <source>Shadow</source>
-        <translation type="unfinished">シャドウ</translation>
-    </message>
-    <message>
-        <source>Glow</source>
-        <translation type="unfinished">グロー</translation>
-    </message>
-    <message>
-        <source>Extrude</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Solid</source>
-        <translation type="unfinished">単色</translation>
-    </message>
-    <message>
-        <source>Gradient</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Texture</source>
-        <translation type="unfinished">テクスチャ</translation>
-    </message>
-    <message>
-        <source>Effect</source>
-        <translation type="unfinished">エフェクト</translation>
-    </message>
-    <message>
-        <source>Normal</source>
-        <translation type="unfinished">ノーマル</translation>
-    </message>
-    <message>
-        <source>Multiply</source>
-        <translation type="unfinished">乗算</translation>
-    </message>
-    <message>
-        <source>Screen</source>
-        <translation type="unfinished">スクリーン</translation>
-    </message>
-    <message>
-        <source>Overlay</source>
-        <translation type="unfinished">オーバーレイ</translation>
-    </message>
-    <message>
-        <source>Add</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Darken</source>
-        <translation type="unfinished">比較 (暗)</translation>
-    </message>
-    <message>
-        <source>Lighten</source>
-        <translation type="unfinished">比較 (明)</translation>
-    </message>
-    <message>
-        <source>Collapse layer</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Expand layer</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Bring forward</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Send backward</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Hide layer</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Show layer</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Duplicate layer</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Remove layer</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Opacity</source>
-        <translation type="unfinished">不透明度</translation>
-    </message>
-    <message>
-        <source>Blend</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Width</source>
-        <translation type="unfinished">幅</translation>
-    </message>
-    <message>
-        <source>Placement</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Outside</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Grow the stroke outward so it never eats into the letter</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Colour</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Choose the layer colour</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Offset X</source>
-        <translation type="unfinished">オフセット X</translation>
-    </message>
-    <message>
-        <source>Offset Y</source>
-        <translation type="unfinished">オフセット Y</translation>
-    </message>
-    <message>
-        <source>Radius</source>
-        <translation type="unfinished">半径</translation>
-    </message>
-    <message>
-        <source>Blur</source>
-        <translation type="unfinished">ブラー</translation>
-    </message>
-    <message>
-        <source>Spread</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Depth</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Angle</source>
-        <translation type="unfinished">角度</translation>
-    </message>
-    <message>
-        <source>How much the extruded side fades toward black</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Adjust extrude</source>
-        <translation type="unfinished"></translation>
-    </message>
-</context>
-<context>
     <name>TextLookPicker</name>
     <message>
         <source>Custom</source>
@@ -10062,89 +10201,6 @@ If playback stutters, try another.</source>
     <message>
         <source>Close</source>
         <translation type="unfinished">閉じる</translation>
-    </message>
-</context>
-<context>
-    <name>TextPaintEditor</name>
-    <message>
-        <source>Texture Image</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Images (*.png *.jpg *.jpeg *.webp)</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Paint</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Solid</source>
-        <translation type="unfinished">単色</translation>
-    </message>
-    <message>
-        <source>Gradient</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Texture</source>
-        <translation type="unfinished">テクスチャ</translation>
-    </message>
-    <message>
-        <source>Effect</source>
-        <translation type="unfinished">エフェクト</translation>
-    </message>
-    <message>
-        <source>Colour</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Choose the paint colour</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Change image…</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Choose image…</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>No image</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Fit</source>
-        <translation type="unfinished">フィット</translation>
-    </message>
-    <message>
-        <source>Tile</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Repeat the image across the text</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Cover</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Stretch one copy of the image over the text</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Scale</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Angle</source>
-        <translation type="unfinished">角度</translation>
-    </message>
-    <message>
-        <source>Adjust paint effect</source>
-        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -10350,6 +10406,26 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Spread</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Trim start</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Trim end</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Dash offset</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Sketch length</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Sketch deviation</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -11235,6 +11311,22 @@ If playback stutters, try another.</source>
 <context>
     <name>VectorInspector</name>
     <message>
+        <source>Toggle %1&apos;s keyframes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Key %1 at the playhead</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Override the %1 colour</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Back to the drawing&apos;s own %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Replace Animation</source>
         <translation type="unfinished"></translation>
     </message>
@@ -11331,6 +11423,66 @@ If playback stutters, try another.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Appearance</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Recolour the whole drawing, or one element the file names by id. Drawing-wide colours replace paints the file already has; outlines drawn with no fill stay hollow.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Target</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Whole drawing</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source> (defs)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Which part of the drawing the rows below restyle</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Fill</source>
+        <translation type="unfinished">塗り</translation>
+    </message>
+    <message>
+        <source>Stroke</source>
+        <translation type="unfinished">線</translation>
+    </message>
+    <message>
+        <source>Stroke width</source>
+        <translation type="unfinished">線の太さ</translation>
+    </message>
+    <message>
+        <source>Opacity</source>
+        <translation type="unfinished">不透明度</translation>
+    </message>
+    <message>
+        <source>Visible</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Reset element</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Reset drawing</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Drop every override on this target</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Reset all</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Slots</source>
         <translation type="unfinished"></translation>
     </message>
@@ -11344,6 +11496,29 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Expression on %1 (drawn static)</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>VectorSource</name>
+    <message>
+        <source>Fill</source>
+        <translation type="unfinished">塗り</translation>
+    </message>
+    <message>
+        <source>Stroke</source>
+        <translation type="unfinished">線</translation>
+    </message>
+    <message>
+        <source>Stroke width</source>
+        <translation type="unfinished">線の太さ</translation>
+    </message>
+    <message>
+        <source>Opacity</source>
+        <translation type="unfinished">不透明度</translation>
+    </message>
+    <message>
+        <source>Visible</source>
         <translation type="unfinished"></translation>
     </message>
 </context>

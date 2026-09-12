@@ -62,9 +62,9 @@ Item {
         case "mask.rotation": return qsTr("Mask rotation")
         case "mask.feather": return qsTr("Mask feather")
         }
-        // Text properties are named by the engine ("Shadow · Blur"): the layer stack is
-        // per clip, so no static table could spell them.
-        if (id.substring(0, 5) === "text.") {
+        // Text and shape properties are named by the engine ("Shadow · Blur"): the layer stack
+        // is per clip, so no static table could spell them.
+        if (id.substring(0, 5) === "text." || id.substring(0, 6) === "shape.") {
             const label = EditorState.keyframePropertyLabel(
                             EditorState.selectedTrack, EditorState.selectedClip, id)
             if (label.length > 0)

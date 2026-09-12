@@ -129,15 +129,15 @@ All return `{started:true}` immediately. Every field below except `export` lives
 |---------|-------------|
 | `media` | Import (paths/bytes), list, rename, remove, replace, export still |
 | `timeline` | Tracks, clips, selection, ripple/gap, bookmarks, copy/paste, A/V link |
-| `canvas` | Transform, flip, blend, mask, fade, speed, reverse, animation, stabilisation |
+| `canvas` | Transform, flip, blend, mask, fade, speed, reverse, animation, stabilisation, shape styling (`set_shape_style`: the same shading-layer stack captions have — `layers` / `layer` patches, `add_shape_layer` … — plus geometry knobs; the legacy flat `fill`/`stroke` keys still land on the `fill`/`stroke` layers) |
 | `playback` | Seek, play, pause, In/Out work area |
 | `text` | Title and caption clips, style packs, shading layers (fill/stroke/shadow/glow/extrude), looks, In/Out/Loop animation presets, Lottie preset import |
 | `shapes` | Builtin shapes, stickers, emoji, fonts, text presets |
-| `motion` | Lottie animations and SVG drawings as vector clips: add, inspect, swap the document, re-theme through slots |
+| `motion` | Lottie animations and SVG drawings as vector clips: add, inspect, swap the document, re-theme through slots or the `svg.*` element overrides |
 | `subtitles` | Subtitle clips, cues, import/export, Whisper generation |
 | `effects` | Video/audio effects, transitions, templates, effect clipboard |
 | `project` | Open/new/save/package, canvas, background, metadata, export |
-| `keyframes` | Property animation keys and tangents — clip transform, `fx.<i>.<param>`, `mask.<key>`, and on text/subtitle clips `text.<key>` (pixelSize, letterSpacing, lineHeight, boxPadding, pathBend) or `text.layer.<id>.<field>` (opacity, offsetX, offsetY, blur, width, spread, color.r/g/b/a, gradient.angle/offset/scale); the old names outlineWidth, shadowBlur, glowRadius, gradientAngle, color.r… still resolve onto the stroke/shadow/glow/fill layers |
+| `keyframes` | Property animation keys and tangents — clip transform, `fx.<i>.<param>`, `mask.<key>`, on text/subtitle clips `text.<key>` (pixelSize, letterSpacing, lineHeight, boxPadding, pathBend) or `text.layer.<id>.<field>` (opacity, offsetX, offsetY, blur, width, spread, trimStart, trimEnd, dashOffset, sketchLength, sketchDeviation, color.r/g/b/a, gradient.angle/offset/scale/center.x/y, gradient.stop.n.pos); the old names outlineWidth, shadowBlur, glowRadius, gradientAngle, color.r… still resolve onto the stroke/shadow/glow/fill layers. On shape clips the same layer fields as `shape.layer.<id>.<field>` (a fresh shape's layers are `fill` and `stroke`) plus `shape.<cornerRadius|points|innerRatio|headSize|thickness|tailX|tailSize>`; on SVG clips `vector.svg.…` (see Motion) |
 | `speed` | Speed ramps; reading custom fade curves (write them with `set_fade_curve` in `canvas`) |
 | `segmentation` | SAM-style cutout (session or one-shot) |
 | `ai` | Denoise, face detection, auto-reframe, add-on install |
@@ -264,18 +264,27 @@ without the vector renderer fail every `add_*` op with `unsupported`.
 |---|---|
 | `import_media({paths})` | Also takes Lottie `.json` files and `.lottie` bundles (unpacked into app data, one asset per animation); the asset then places like any other with `place_clip` |
 | `add_lottie({json, at, track, duration, fit, loop, offset, slots, name})` | `json` is the document text (inline, ≤ 8 MB) or an absolute `.json` path. Plays once at its own length unless `duration` is set; `loop` (`hold` default, `loop`, `pingpong`, `hide`) decides what happens past the end; `fit` (`contain` default, `cover`, `stretch`) how it fills the box. Returns `{id, track, index}` plus the inspect summary |
-| `add_svg({svg, at, track, duration, fit, name})` | Same for an SVG still (default 5 s). SMIL animation and scripts are ignored and reported in `unsupported` |
-| `inspect_lottie({json \| svg \| path \| clip})` | Read-only. `{version, fps, durationSec, width, height, layers, slots, namedProperties, fonts, markers, expressions, unsupported, hints}` |
+| `add_svg({svg, at, track, duration, fit, slots, name})` | Same for an SVG still (default 5 s). SMIL animation and scripts are ignored and reported in `unsupported`. Returns `elements:[{id, tag, classes, inDefs, fill, stroke, strokeWidth, opacity}]`, the ids the `svg.<id>.*` overrides address |
+| `inspect_lottie({json \| svg \| path \| clip})` | Read-only. `{version, fps, durationSec, width, height, layers, slots, namedProperties, fonts, markers, expressions, unsupported, hints}`; for an SVG also `elements` |
 | `set_lottie_source({clip, json \| svg \| path})` | Swap the document; position, length, fit and loop stay, slot overrides survive only where the new document declares the same slot with the same type |
 | `set_lottie_options({clip, fit, loop, offset, name})` | Playback options; only supplied keys change |
-| `set_lottie_slot({clip, name, value})` | Override one declared slot; `value:null` clears. Typed: color `"#rrggbb"`/`"#aarrggbb"`/name/`[r,g,b,a]` in 0..1, scalar number, vec2 `[x,y]`, text string, image path |
-| `list_lottie_slots({clip})` | Declared slots with current overrides |
+| `set_lottie_slot({clip, name, value})` | Override one declared slot; `value:null` clears (and drops its keyframes). Typed: color `"#rrggbb"`/`"#aarrggbb"`/name/`[r,g,b,a]` in 0..1, scalar number, vec2 `[x,y]`, text string, image path. On an SVG the names are the reserved override keys below |
+| `list_lottie_slots({clip})` | Declared slots with current overrides; for an SVG the four drawing-wide keys plus the element overrides that are set |
 | `get_lottie_source({clip})` | The document text (can be large) — edit it and send it back with `set_lottie_source` when the animation has no slots |
 
 Slots are the templating mechanism: an animation exported with slots (Lottie ≥ 5.10, After
 Effects "Essential Properties") can be re-coloured or re-worded per clip without touching its
 JSON. `capture` / `frames` render vector clips like everything else, so check the result at two
 times before relying on an animation.
+
+An SVG declares no slots; it is restyled through reserved keys instead. `svg.fill`, `svg.stroke`
+(colour), `svg.strokeWidth`, `svg.opacity` (number) act on the whole drawing — drawing-wide colours
+replace paints the file already has, so a `fill="none"` outline stays hollow and no stroke is
+added where the file drew none. `svg.<elementId>.<fill|stroke|strokeWidth|opacity|visible>` act on
+one element from `elements` (ids are case-sensitive; `visible` is 0/1). Everything but `visible`
+keyframes as `vector.svg.…` — scalars directly, colours per channel (`vector.svg.logo.fill.r`),
+or through the colour helpers. An `.svg` dropped in the bin (`import_media`) is a vector asset
+and places as a vector clip.
 
 ### Text looks and animation
 
@@ -290,7 +299,7 @@ tree for experts.
 | Call | Effect |
 |---|---|
 | `set_text({clip, style})` | Partial patch. `layers` replaces the stack, `layer:{id\|index,…}` patches one, `color` edits the front-most fill, `animation:{in\|out\|loop:{preset, params, duration, stagger, unit, order, ease, period}}`. The flat v6 keys (`outline*`, `shadow*`, `glow*`, `fillKind`, `animIn`…) still work and land on the well-known layers |
-| `add_text_layer({clip, kind, at})` / `set_text_layer` / `remove_text_layer` / `move_text_layer` | Edit the stack one layer at a time; `add_text_layer` returns `{id}` |
+| `add_text_layer({clip, kind, at})` / `set_text_layer` / `remove_text_layer` / `move_text_layer` | Edit the stack one layer at a time; `add_text_layer` returns `{layerId}`. Strokes take `strokeAlign` center\|outside\|inside, `dash` solid\|dash\|dot\|dashdot with `dashOffset`, `trimStart/trimEnd` for a write-on and `sketchLength/sketchDeviation/sketchSeed` for a hand-drawn wobble (fills take the sketch too). The same four tools also edit a shape clip's stack (`add_shape_layer` … are aliases) |
 | `list_text_looks` / `apply_text_look({clip, look, params})` | One-click recipes (Shadow, Lift, Hollow, Splice, Outline, Echo, Glitch, Neon, Background, Curve, Gradient, Shine, Chrome, Holographic) that rewrite the stack; the style remembers the look so its params stay adjustable |
 | `list_text_animations({which, q})` | The In / Out / Loop presets with their typed params. Every reveal preset takes `duration`, `stagger`, `unit` (block\|character\|word\|line), `order`, `ease`; loops take `period` (0 = one pass over the clip: hold motion such as `tracking-drift`) |
 | `set_text_animation({clip, which, preset, …})` / `clear_text_animation` | Set or clear a slot. Picking a preset resets its params to the preset defaults; `animators:[…]` installs an inline animator tree instead |

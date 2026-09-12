@@ -3391,7 +3391,23 @@
         <translation>Aucune application sur cet appareil ne peut partager ce fichier</translation>
     </message>
     <message>
-        <source>Add text layer</source>
+        <source>Add layer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Remove layer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Duplicate layer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Reorder layers</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Edit layer</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -3399,15 +3415,7 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Remove text layer</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Layer removed</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Duplicate text layer</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -3415,15 +3423,7 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Reorder text layers</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Layer moved</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Edit text layer</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -3492,6 +3492,22 @@
             <numerusform></numerusform>
             <numerusform></numerusform>
         </translation>
+    </message>
+    <message>
+        <source>Red</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Green</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Blue</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Alpha</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Could not unpack the bundle</source>
@@ -7011,6 +7027,89 @@
     </message>
 </context>
 <context>
+    <name>PaintEditor</name>
+    <message>
+        <source>Texture Image</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Images (*.png *.jpg *.jpeg *.webp)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Paint</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Solid</source>
+        <translation type="unfinished">Uni</translation>
+    </message>
+    <message>
+        <source>Gradient</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Texture</source>
+        <translation type="unfinished">Texture</translation>
+    </message>
+    <message>
+        <source>Effect</source>
+        <translation type="unfinished">Effet</translation>
+    </message>
+    <message>
+        <source>Colour</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Choose the paint colour</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Change image…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Choose image…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No image</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Fit</source>
+        <translation type="unfinished">Ajuster</translation>
+    </message>
+    <message>
+        <source>Tile</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Repeat the image across the layer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cover</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Stretch one copy of the image over the layer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Scale</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Angle</source>
+        <translation type="unfinished">Angle</translation>
+    </message>
+    <message>
+        <source>Adjust paint effect</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>PasteAttributesDialog</name>
     <message>
         <source>Paste Attributes</source>
@@ -8461,14 +8560,229 @@ En cas de saccades à la lecture, essayez un autre mode.</translation>
     </message>
 </context>
 <context>
+    <name>ShadingLayerRow</name>
+    <message>
+        <source>Fill</source>
+        <translation type="unfinished">Remplissage</translation>
+    </message>
+    <message>
+        <source>Stroke</source>
+        <translation type="unfinished">Contour</translation>
+    </message>
+    <message>
+        <source>Shadow</source>
+        <translation type="unfinished">Ombre</translation>
+    </message>
+    <message>
+        <source>Glow</source>
+        <translation type="unfinished">Lueur</translation>
+    </message>
+    <message>
+        <source>Extrude</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Solid</source>
+        <translation type="unfinished">Uni</translation>
+    </message>
+    <message>
+        <source>Gradient</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Texture</source>
+        <translation type="unfinished">Texture</translation>
+    </message>
+    <message>
+        <source>Effect</source>
+        <translation type="unfinished">Effet</translation>
+    </message>
+    <message>
+        <source>Normal</source>
+        <translation type="unfinished">Normal</translation>
+    </message>
+    <message>
+        <source>Multiply</source>
+        <translation type="unfinished">Multiplier</translation>
+    </message>
+    <message>
+        <source>Screen</source>
+        <translation type="unfinished">Écran</translation>
+    </message>
+    <message>
+        <source>Overlay</source>
+        <translation type="unfinished">Superposition</translation>
+    </message>
+    <message>
+        <source>Add</source>
+        <translation type="unfinished">Ajouter</translation>
+    </message>
+    <message>
+        <source>Darken</source>
+        <translation type="unfinished">Assombrir</translation>
+    </message>
+    <message>
+        <source>Lighten</source>
+        <translation type="unfinished">Éclaircir</translation>
+    </message>
+    <message>
+        <source>Centre</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Outside</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Inside</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Dashed</source>
+        <translation type="unfinished">Tiretée</translation>
+    </message>
+    <message>
+        <source>Dotted</source>
+        <translation type="unfinished">Pointillée</translation>
+    </message>
+    <message>
+        <source>Dash-dot</source>
+        <translation type="unfinished">Tiret-point</translation>
+    </message>
+    <message>
+        <source>Collapse layer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Expand layer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Bring forward</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Send backward</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Hide layer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show layer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Duplicate layer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Remove layer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Opacity</source>
+        <translation type="unfinished">Opacité</translation>
+    </message>
+    <message>
+        <source>Blend</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Width</source>
+        <translation type="unfinished">Largeur</translation>
+    </message>
+    <message>
+        <source>Placement</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Centre the stroke on the outline, grow it outward, or keep it inside</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Dash</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Dash offset</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Trim start</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Trim end</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Sketchy</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Segment</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Wobble</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Seed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Colour</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Choose the layer colour</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Offset X</source>
+        <translation type="unfinished">Décalage X</translation>
+    </message>
+    <message>
+        <source>Offset Y</source>
+        <translation type="unfinished">Décalage Y</translation>
+    </message>
+    <message>
+        <source>Radius</source>
+        <translation type="unfinished">Rayon</translation>
+    </message>
+    <message>
+        <source>Blur</source>
+        <translation type="unfinished">Flou</translation>
+    </message>
+    <message>
+        <source>Spread</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Depth</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Angle</source>
+        <translation type="unfinished">Angle</translation>
+    </message>
+    <message>
+        <source>How much the extruded side fades toward black</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Adjust extrude</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>ShapeInspector</name>
     <message>
         <source>Shape</source>
         <translation>Forme</translation>
-    </message>
-    <message>
-        <source>Swapping the shape keeps its position, size and effects.</source>
-        <translation>Échanger la forme conserve sa position, sa taille et ses effets.</translation>
     </message>
     <message>
         <source>Shape drawn by this clip</source>
@@ -8479,68 +8793,44 @@ En cas de saccades à la lecture, essayez un autre mode.</translation>
         <translation>Remplissage</translation>
     </message>
     <message>
-        <source>None</source>
-        <translation>Aucun</translation>
-    </message>
-    <message>
-        <source>Solid</source>
-        <translation>Uni</translation>
-    </message>
-    <message>
-        <source>Linear gradient</source>
-        <translation>Dégradé linéaire</translation>
-    </message>
-    <message>
-        <source>Radial gradient</source>
-        <translation>Dégradé radial</translation>
-    </message>
-    <message>
-        <source>How the shape&apos;s interior is painted</source>
-        <translation>Mode de remplissage intérieur</translation>
-    </message>
-    <message>
-        <source>Choose fill colour</source>
-        <translation>Choisir la couleur de remplissage</translation>
-    </message>
-    <message>
-        <source>Choose the gradient&apos;s start colour</source>
-        <translation>Choisir la couleur de départ du dégradé</translation>
-    </message>
-    <message>
-        <source>Choose the gradient&apos;s end colour</source>
-        <translation>Choisir la couleur finale du dégradé</translation>
-    </message>
-    <message>
-        <source>Gradient angle</source>
-        <translation>Angle du dégradé</translation>
-    </message>
-    <message>
         <source>Stroke</source>
         <translation>Contour</translation>
     </message>
     <message>
-        <source>Dashed</source>
-        <translation>Tiretée</translation>
+        <source>Swapping the shape keeps its position, size, style and effects.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Dotted</source>
-        <translation>Pointillée</translation>
+        <source>Layers</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Dash-dot</source>
-        <translation>Tiret-point</translation>
+        <source>Add layer</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Outline style</source>
-        <translation>Style de contour</translation>
+        <source>Add a fill, stroke, shadow, glow or extrude layer</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Choose stroke colour</source>
-        <translation>Choisir la couleur du contour</translation>
+        <source>Shadow</source>
+        <translation type="unfinished">Ombre</translation>
     </message>
     <message>
-        <source>Stroke width</source>
-        <translation>Épaisseur du trait</translation>
+        <source>Glow</source>
+        <translation type="unfinished">Lueur</translation>
+    </message>
+    <message>
+        <source>Extrude</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No layers. Add a fill to start.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Geometry</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Corner radius</source>
@@ -8555,14 +8845,6 @@ En cas de saccades à la lecture, essayez un autre mode.</translation>
         <translation>Rayon intérieur</translation>
     </message>
     <message>
-        <source>How deep the notches cut between the points.</source>
-        <translation>Profondeur des entailles entre les points.</translation>
-    </message>
-    <message>
-        <source>Shape style changed</source>
-        <translation>Style de forme modifié</translation>
-    </message>
-    <message>
         <source>Head size</source>
         <translation>Taille de la tête</translation>
     </message>
@@ -8573,10 +8855,6 @@ En cas de saccades à la lecture, essayez un autre mode.</translation>
     <message>
         <source>Tail position</source>
         <translation>Position de la queue</translation>
-    </message>
-    <message>
-        <source>Where the tail meets the bottom of the bubble.</source>
-        <translation>Où la queue rejoint le bas de la bulle.</translation>
     </message>
     <message>
         <source>Tail size</source>
@@ -8716,6 +8994,34 @@ En cas de saccades à la lecture, essayez un autre mode.</translation>
     <message>
         <source>Fun</source>
         <translation>Amusant</translation>
+    </message>
+    <message>
+        <source>Corner radius</source>
+        <translation type="unfinished">Rayon des coins</translation>
+    </message>
+    <message>
+        <source>Inner radius</source>
+        <translation type="unfinished">Rayon intérieur</translation>
+    </message>
+    <message>
+        <source>Head size</source>
+        <translation type="unfinished">Taille de la tête</translation>
+    </message>
+    <message>
+        <source>Thickness</source>
+        <translation type="unfinished">Épaisseur</translation>
+    </message>
+    <message>
+        <source>Tail position</source>
+        <translation type="unfinished">Position de la queue</translation>
+    </message>
+    <message>
+        <source>Tail size</source>
+        <translation type="unfinished">Taille de la queue</translation>
+    </message>
+    <message>
+        <source>Points</source>
+        <translation type="unfinished">Points</translation>
     </message>
 </context>
 <context>
@@ -9919,173 +10225,6 @@ En cas de saccades à la lecture, essayez un autre mode.</translation>
     </message>
 </context>
 <context>
-    <name>TextLayerRow</name>
-    <message>
-        <source>Fill</source>
-        <translation type="unfinished">Remplissage</translation>
-    </message>
-    <message>
-        <source>Stroke</source>
-        <translation type="unfinished">Contour</translation>
-    </message>
-    <message>
-        <source>Shadow</source>
-        <translation type="unfinished">Ombre</translation>
-    </message>
-    <message>
-        <source>Glow</source>
-        <translation type="unfinished">Lueur</translation>
-    </message>
-    <message>
-        <source>Extrude</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Solid</source>
-        <translation type="unfinished">Uni</translation>
-    </message>
-    <message>
-        <source>Gradient</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Texture</source>
-        <translation type="unfinished">Texture</translation>
-    </message>
-    <message>
-        <source>Effect</source>
-        <translation type="unfinished">Effet</translation>
-    </message>
-    <message>
-        <source>Normal</source>
-        <translation type="unfinished">Normal</translation>
-    </message>
-    <message>
-        <source>Multiply</source>
-        <translation type="unfinished">Multiplier</translation>
-    </message>
-    <message>
-        <source>Screen</source>
-        <translation type="unfinished">Écran</translation>
-    </message>
-    <message>
-        <source>Overlay</source>
-        <translation type="unfinished">Superposition</translation>
-    </message>
-    <message>
-        <source>Add</source>
-        <translation type="unfinished">Ajouter</translation>
-    </message>
-    <message>
-        <source>Darken</source>
-        <translation type="unfinished">Assombrir</translation>
-    </message>
-    <message>
-        <source>Lighten</source>
-        <translation type="unfinished">Éclaircir</translation>
-    </message>
-    <message>
-        <source>Collapse layer</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Expand layer</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Bring forward</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Send backward</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Hide layer</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Show layer</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Duplicate layer</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Remove layer</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Opacity</source>
-        <translation type="unfinished">Opacité</translation>
-    </message>
-    <message>
-        <source>Blend</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Width</source>
-        <translation type="unfinished">Largeur</translation>
-    </message>
-    <message>
-        <source>Placement</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Outside</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Grow the stroke outward so it never eats into the letter</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Colour</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Choose the layer colour</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Offset X</source>
-        <translation type="unfinished">Décalage X</translation>
-    </message>
-    <message>
-        <source>Offset Y</source>
-        <translation type="unfinished">Décalage Y</translation>
-    </message>
-    <message>
-        <source>Radius</source>
-        <translation type="unfinished">Rayon</translation>
-    </message>
-    <message>
-        <source>Blur</source>
-        <translation type="unfinished">Flou</translation>
-    </message>
-    <message>
-        <source>Spread</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Depth</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Angle</source>
-        <translation type="unfinished">Angle</translation>
-    </message>
-    <message>
-        <source>How much the extruded side fades toward black</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Adjust extrude</source>
-        <translation type="unfinished"></translation>
-    </message>
-</context>
-<context>
     <name>TextLookPicker</name>
     <message>
         <source>Custom</source>
@@ -10102,89 +10241,6 @@ En cas de saccades à la lecture, essayez un autre mode.</translation>
     <message>
         <source>Close</source>
         <translation type="unfinished">Fermer</translation>
-    </message>
-</context>
-<context>
-    <name>TextPaintEditor</name>
-    <message>
-        <source>Texture Image</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Images (*.png *.jpg *.jpeg *.webp)</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Paint</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Solid</source>
-        <translation type="unfinished">Uni</translation>
-    </message>
-    <message>
-        <source>Gradient</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Texture</source>
-        <translation type="unfinished">Texture</translation>
-    </message>
-    <message>
-        <source>Effect</source>
-        <translation type="unfinished">Effet</translation>
-    </message>
-    <message>
-        <source>Colour</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Choose the paint colour</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Change image…</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Choose image…</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>No image</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Fit</source>
-        <translation type="unfinished">Ajuster</translation>
-    </message>
-    <message>
-        <source>Tile</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Repeat the image across the text</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Cover</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Stretch one copy of the image over the text</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Scale</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Angle</source>
-        <translation type="unfinished">Angle</translation>
-    </message>
-    <message>
-        <source>Adjust paint effect</source>
-        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -10390,6 +10446,26 @@ En cas de saccades à la lecture, essayez un autre mode.</translation>
     </message>
     <message>
         <source>Spread</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Trim start</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Trim end</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Dash offset</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Sketch length</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Sketch deviation</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -11276,6 +11352,22 @@ En cas de saccades à la lecture, essayez un autre mode.</translation>
 <context>
     <name>VectorInspector</name>
     <message>
+        <source>Toggle %1&apos;s keyframes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Key %1 at the playhead</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Override the %1 colour</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Back to the drawing&apos;s own %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Replace Animation</source>
         <translation type="unfinished"></translation>
     </message>
@@ -11372,6 +11464,66 @@ En cas de saccades à la lecture, essayez un autre mode.</translation>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Appearance</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Recolour the whole drawing, or one element the file names by id. Drawing-wide colours replace paints the file already has; outlines drawn with no fill stay hollow.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Target</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Whole drawing</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source> (defs)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Which part of the drawing the rows below restyle</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Fill</source>
+        <translation type="unfinished">Remplissage</translation>
+    </message>
+    <message>
+        <source>Stroke</source>
+        <translation type="unfinished">Contour</translation>
+    </message>
+    <message>
+        <source>Stroke width</source>
+        <translation type="unfinished">Épaisseur du trait</translation>
+    </message>
+    <message>
+        <source>Opacity</source>
+        <translation type="unfinished">Opacité</translation>
+    </message>
+    <message>
+        <source>Visible</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Reset element</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Reset drawing</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Drop every override on this target</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Reset all</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Slots</source>
         <translation type="unfinished"></translation>
     </message>
@@ -11385,6 +11537,29 @@ En cas de saccades à la lecture, essayez un autre mode.</translation>
     </message>
     <message>
         <source>Expression on %1 (drawn static)</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>VectorSource</name>
+    <message>
+        <source>Fill</source>
+        <translation type="unfinished">Remplissage</translation>
+    </message>
+    <message>
+        <source>Stroke</source>
+        <translation type="unfinished">Contour</translation>
+    </message>
+    <message>
+        <source>Stroke width</source>
+        <translation type="unfinished">Épaisseur du trait</translation>
+    </message>
+    <message>
+        <source>Opacity</source>
+        <translation type="unfinished">Opacité</translation>
+    </message>
+    <message>
+        <source>Visible</source>
         <translation type="unfinished"></translation>
     </message>
 </context>

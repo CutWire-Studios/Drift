@@ -808,11 +808,11 @@ Item {
                 // is walked from the back so the front-most layer sits on top.
                 Repeater {
                     model: root.layers.length
-                    delegate: TextLayerRow {
+                    delegate: ShadingLayerRow {
                         required property int index
                         width: parent.width
                         layerData: root.layers[root.layers.length - 1 - index] || ({})
-                        textStyle: root.textStyle
+                        styleData: root.textStyle
                         position: index
                         count: root.layers.length
                         expanded: root.expandedLayerIds[layerId] === true

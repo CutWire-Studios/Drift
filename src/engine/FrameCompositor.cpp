@@ -11,9 +11,7 @@
 #include "GpuEffectExecutor.h"
 #include "MaskApplier.h"
 #include "MediaProbe.h"
-#include "RenderBackend.h"
 #include "ReverseProxyCache.h"
-#include "ShapeRaster.h"
 #include "TextLayout.h"
 #include "core/TextAnimationPreset.h"
 #include "TransitionCatalog.h"
@@ -416,9 +414,6 @@ QImage imageForClip(const drift::Clip &clip, const QList<drift::Mask> &laneMasks
                     drift::TimeUs timelineUs, int maxWidth, int maxHeight,
                     int projectFps, int maxTimeEchoHistoryFrames)
 {
-    if (clip.type == drift::ClipType::Shape)
-        return drift::rasterizeShape(clip.shapeStyle, maxWidth, maxHeight, 1.0);
-
     if (clip.path.isEmpty())
         return {};
 
@@ -908,15 +903,29 @@ GpuLayer buildGpuLayer(const drift::Clip &clip, drift::TimeUs timelineUs, int pr
         applyTextBlockMotion(layer, block, &destRect, &opacity, &rotation);
     } else if (clip.type == drift::ClipType::Shape) {
 #ifdef DRIFT_WITH_SKIA
-        if (drift::vectorBackend() == drift::VectorBackend::Skia)
-            layer.vector = drift::skia::makeShapePainter(clip.shapeStyle, layoutW, layoutH, renderScale);
-        else
+        // The painter's image carries a bleed margin for strokes, shadows and glows, so its
+        // destination rect is wider than the layout rect.
+        drift::skia::ShapePaintRequest request;
+        request.style = clip.shapeStyle.isAnimated() ? clip.shapeStyle.resolvedAt(clipTimeUs) : clip.shapeStyle;
+        request.layoutRect = layoutRect;
+        request.renderScale = renderScale;
+        request.timeSec = drift::usToSeconds(qMax<drift::TimeUs>(0, clipTimeUs));
+        const drift::skia::ShapePainterResult painted = drift::skia::makeShapePainter(request);
+        layer.vector = painted.painter;
+        destRect = painted.rect;
+#else
+        static bool warned = false;
+        if (!warned) {
+            warned = true;
+            qWarning("shape clips need DRIFT_WITH_SKIA; nothing drawn");
+        }
 #endif
-            layer.source = drift::rasterizeShape(clip.shapeStyle, layoutW, layoutH, renderScale);
         layer.effects = resolvedClipEffects(clip, clipTimeUs);
     } else if (clip.type == drift::ClipType::Vector) {
         drift::vec::RenderRequest request;
-        request.source = clip.vector;
+        // Keyframed SVG overrides are baked for this instant; the renderer only sees values.
+        request.keyframed = clip.vector.isAnimated();
+        request.source = request.keyframed ? clip.vector.resolvedAt(clipTimeUs) : clip.vector;
         request.size = QSize(layoutW, layoutH);
         // Speed, curves and reverse are the ordinary source remap; the renderer adds the
         // start offset and folds by the loop mode.

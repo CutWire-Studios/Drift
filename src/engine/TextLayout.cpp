@@ -397,9 +397,12 @@ double bleedFor(const drift::TextStyle &style)
     for (const drift::TextShadingLayer &layer : style.layers) {
         if (!layer.enabled)
             continue;
-        double reach = qMax(std::abs(layer.offsetX), std::abs(layer.offsetY)) + layer.blur * 2.0 + qMax(0.0, layer.spread);
+        double reach = qMax(std::abs(layer.offsetX), std::abs(layer.offsetY)) + layer.blur * 2.0 + qMax(0.0, layer.spread)
+                       + layer.sketchDeviation;
         if (layer.kind == drift::TextLayerKind::Stroke)
-            reach += layer.width;
+            reach += layer.strokeAlign == drift::StrokeAlign::Inside    ? 0.0
+                     : layer.strokeAlign == drift::StrokeAlign::Center ? layer.width * 0.5
+                                                                        : layer.width;
         else if (layer.kind == drift::TextLayerKind::Extrude)
             reach += layer.width;
         else

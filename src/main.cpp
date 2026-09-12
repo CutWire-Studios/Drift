@@ -21,6 +21,7 @@
 #include "DriftImageProvider.h"
 #include "MulticamImageProvider.h"
 #include "SegmentImageProvider.h"
+#include "ShapePreviewImageProvider.h"
 #include "TextStylePreviewImageProvider.h"
 #include "preview/PreviewItem.h"
 
@@ -561,6 +562,7 @@ int main(int argc, char *argv[])
     engine.addImageProvider(QStringLiteral("clippreview"), new ClipPreviewImageProvider());
     engine.addImageProvider(QStringLiteral("multicam"), new MulticamImageProvider());
     engine.addImageProvider(QStringLiteral("textstyle"), new TextStylePreviewImageProvider());
+    engine.addImageProvider(QStringLiteral("shape"), new ShapePreviewImageProvider());
     engine.addImageProvider(QStringLiteral("textanim"), new TextAnimPreviewImageProvider());
     engine.addImageProvider(QStringLiteral("textlook"), new TextLookPreviewImageProvider());
     QObject::connect(

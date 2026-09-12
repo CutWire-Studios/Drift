@@ -65,10 +65,16 @@ QJsonObject animPropProp()
         "Animated property: x, y, width, height, rotation, opacity, volume, fx.<effectIndex>.<paramKey> "
         "(e.g. fx.0.amount), mask.<x|y|w|h|rotation|feather>, or on a text/subtitle clip text.<key> with "
         "key one of pixelSize, letterSpacing, lineHeight, boxPadding, pathBend, or a shading layer field "
-        "text.layer.<layerId>.<opacity|offsetX|offsetY|blur|width|spread|color.r|color.g|color.b|color.a|"
-        "gradient.angle|gradient.offset|gradient.scale> (the legacy names outlineWidth, shadowBlur, "
-        "glowRadius, gradientAngle, color.r… still map onto the stroke/shadow/glow/fill layers; colour "
-        "channels 0..1). Note width/height here vs w/h in set_transform. Spellings live in this "
+        "text.layer.<layerId>.<opacity|offsetX|offsetY|blur|width|spread|trimStart|trimEnd|dashOffset|"
+        "sketchLength|sketchDeviation|color.r|color.g|color.b|color.a|gradient.angle|gradient.offset|"
+        "gradient.scale|gradient.center.x|gradient.center.y|gradient.stop.<n>.pos> (the legacy names "
+        "outlineWidth, shadowBlur, glowRadius, gradientAngle, color.r… still map onto the "
+        "stroke/shadow/glow/fill layers; colour channels 0..1). On a shape clip the same layer fields "
+        "are shape.layer.<layerId>.<field> (a fresh shape's layers are \"fill\" and \"stroke\") and the "
+        "geometry knobs shape.<cornerRadius|points|innerRatio|headSize|thickness|tailX|tailSize>. On "
+        "an SVG vector clip the svg.* overrides: vector.svg.<strokeWidth|opacity>, "
+        "vector.svg.<fill|stroke>.<r|g|b|a>, or the same under vector.svg.<elementId>. "
+        "Note width/height here vs w/h in set_transform. Spellings live in this "
 "schema — list_animated_properties returns only properties that already have keys (empty on a "
         "fresh clip), so do not use it to learn names."));
 }
@@ -106,36 +112,6 @@ QJsonObject maskSchema()
     });
     s.insert(QStringLiteral("description"),
              QStringLiteral("The whole mask; every omitted key reverts to its default and omitting shape turns the mask off"));
-    return s;
-}
-
-QJsonObject shapeStyleSchema()
-{
-    QJsonObject s = objectSchema({
-        {QStringLiteral("kind"), stringProp(QStringLiteral("Shape catalog id from list_shapes"))},
-        {QStringLiteral("fillKind"),
-         enumProp(QStringLiteral("Fill type"),
-                  {QStringLiteral("none"), QStringLiteral("solid"), QStringLiteral("linearGradient"),
-                   QStringLiteral("radialGradient")})},
-        {QStringLiteral("fill"), stringProp(QStringLiteral("Fill color #RRGGBB or #AARRGGBB"))},
-        {QStringLiteral("fillSecondary"), stringProp(QStringLiteral("Gradient end stop color"))},
-        {QStringLiteral("gradientAngle"), numberProp(QStringLiteral("Degrees; 0 = left to right"))},
-        {QStringLiteral("stroke"), stringProp(QStringLiteral("Stroke color"))},
-        {QStringLiteral("strokeWidth"), numberProp(QStringLiteral("Stroke width px"), 0, 200)},
-        {QStringLiteral("strokeStyle"),
-         enumProp(QStringLiteral("Stroke dash pattern"),
-                  {QStringLiteral("none"), QStringLiteral("solid"), QStringLiteral("dash"),
-                   QStringLiteral("dot"), QStringLiteral("dashDot")})},
-        {QStringLiteral("cornerRadius"), numberProp(QStringLiteral("Rect family: corner px"), 0, 2000)},
-        {QStringLiteral("points"), integerProp(QStringLiteral("Star/polygon point count"), 3, 60)},
-        {QStringLiteral("innerRatio"), numberProp(QStringLiteral("Star inner radius"), 0.05, 0.95)},
-        {QStringLiteral("headSize"), numberProp(QStringLiteral("Arrow head size"), 0.05, 0.9)},
-        {QStringLiteral("thickness"), numberProp(QStringLiteral("Arrow/banner thickness"), 0.05, 1)},
-        {QStringLiteral("tailX"), numberProp(QStringLiteral("Bubble tail x"), 0.08, 0.92)},
-        {QStringLiteral("tailSize"), numberProp(QStringLiteral("Bubble tail size"), 0.05, 0.5)},
-    });
-    s.insert(QStringLiteral("description"),
-             QStringLiteral("Partial style patch; only supplied keys change. Each geometry knob is read by a subset of shape kinds"));
     return s;
 }
 
@@ -243,7 +219,14 @@ QJsonObject textLayerSchema(const QString &description)
         {QStringLiteral("blur"), numberProp(QStringLiteral("Shadow blur / glow radius in px"))},
         {QStringLiteral("width"), numberProp(QStringLiteral("Stroke width or extrude depth in px"))},
         {QStringLiteral("spread"), numberProp(QStringLiteral("Shadow/glow dilation in px"))},
-        {QStringLiteral("strokeOutside"), boolProp(QStringLiteral("Stroke grows outward only (default true)"))},
+        {QStringLiteral("strokeAlign"), enumProp(QStringLiteral("Where a stroke sits on the outline (default outside)"),
+                                                 {QStringLiteral("center"), QStringLiteral("outside"), QStringLiteral("inside")})},
+        {QStringLiteral("dash"), enumProp(QStringLiteral("Stroke dash pattern"),
+                                          {QStringLiteral("solid"), QStringLiteral("dash"), QStringLiteral("dot"), QStringLiteral("dashdot")})},
+        {QStringLiteral("dashOffset"), numberProp(QStringLiteral("Dash phase in stroke widths (keyframe for marching ants)"))},
+        {QStringLiteral("sketchLength"), numberProp(QStringLiteral("Hand-drawn jitter segment length in px; 0 = off"))},
+        {QStringLiteral("sketchDeviation"), numberProp(QStringLiteral("Hand-drawn jitter amount in px"))},
+        {QStringLiteral("sketchSeed"), integerProp(QStringLiteral("Jitter seed"))},
         {QStringLiteral("knockout"), boolProp(QStringLiteral("A fill that punches through the layers beneath (hollow)"))},
         {QStringLiteral("trimStart"), numberProp(QStringLiteral("Stroke write-on start 0..1"), 0.0, 1.0)},
         {QStringLiteral("trimEnd"), numberProp(QStringLiteral("Stroke write-on end 0..1"), 0.0, 1.0)},
@@ -254,6 +237,43 @@ QJsonObject textLayerSchema(const QString &description)
                                            {QStringLiteral("all"), QStringLiteral("base"), QStringLiteral("accent")})},
     });
     s.insert(QStringLiteral("description"), description);
+    return s;
+}
+
+QJsonObject shapeStyleSchema()
+{
+    QJsonObject layerPatch = textLayerSchema(QStringLiteral("Partial patch of one existing layer, addressed by id or index"));
+    layerPatch.insert(QStringLiteral("properties"),
+                      mergeProps(layerPatch.value(QStringLiteral("properties")).toObject(),
+                                 {{QStringLiteral("index"), integerProp(QStringLiteral("Layer index, when no id"))}}));
+    QJsonObject s = objectSchema({
+        {QStringLiteral("kind"), stringProp(QStringLiteral("Shape catalog id from list_shapes"))},
+        {QStringLiteral("layers"), QJsonObject{{QStringLiteral("type"), QStringLiteral("array")},
+                                               {QStringLiteral("items"), textLayerSchema(QStringLiteral("A shading layer"))},
+                                               {QStringLiteral("description"), QStringLiteral("The whole shading stack, replaced as given; layers[0] is drawn first (back-most). A fresh shape has a fill (id \"fill\") under a stroke (id \"stroke\"). Use `layer` to patch one.")}}},
+        {QStringLiteral("layer"), layerPatch},
+        {QStringLiteral("fillKind"),
+         enumProp(QStringLiteral("Legacy: none hides the fill layer; solid / linear / radial set its paint"),
+                  {QStringLiteral("none"), QStringLiteral("solid"), QStringLiteral("linear"), QStringLiteral("radial")})},
+        {QStringLiteral("fill"), stringProp(QStringLiteral("Legacy: fill layer colour #RRGGBB or #AARRGGBB (also the first gradient stop)"))},
+        {QStringLiteral("fillSecondary"), stringProp(QStringLiteral("Legacy: gradient end stop colour"))},
+        {QStringLiteral("gradientAngle"), numberProp(QStringLiteral("Legacy: degrees; 0 = left to right"))},
+        {QStringLiteral("stroke"), stringProp(QStringLiteral("Legacy: stroke layer colour"))},
+        {QStringLiteral("strokeWidth"), numberProp(QStringLiteral("Legacy: stroke width px; 0 hides the stroke"), 0, 200)},
+        {QStringLiteral("strokeStyle"),
+         enumProp(QStringLiteral("Legacy: stroke dash pattern; none hides the stroke"),
+                  {QStringLiteral("none"), QStringLiteral("solid"), QStringLiteral("dash"),
+                   QStringLiteral("dot"), QStringLiteral("dashdot")})},
+        {QStringLiteral("cornerRadius"), numberProp(QStringLiteral("Corner px: native on the rect family, rounds the corners of any other kind"), 0, 2000)},
+        {QStringLiteral("points"), integerProp(QStringLiteral("Star/polygon point count"), 3, 60)},
+        {QStringLiteral("innerRatio"), numberProp(QStringLiteral("Star inner radius"), 0.05, 0.95)},
+        {QStringLiteral("headSize"), numberProp(QStringLiteral("Arrow head size"), 0.05, 0.9)},
+        {QStringLiteral("thickness"), numberProp(QStringLiteral("Arrow/banner thickness"), 0.05, 1)},
+        {QStringLiteral("tailX"), numberProp(QStringLiteral("Bubble tail x"), 0.08, 0.92)},
+        {QStringLiteral("tailSize"), numberProp(QStringLiteral("Bubble tail size"), 0.05, 0.5)},
+    });
+    s.insert(QStringLiteral("description"),
+             QStringLiteral("Partial style patch; only supplied keys change. Each geometry knob is read by a subset of shape kinds"));
     return s;
 }
 

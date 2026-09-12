@@ -3541,7 +3541,7 @@ void EngineTest::compositorDefaultRenderStaysFullResolution()
     clip.timelineStart = 0;
     clip.timelineDuration = drift::secondsToUs(1.0);
     clip.shapeStyle.kind = drift::ShapeKind::Rectangle;
-    clip.shapeStyle.fill = Qt::red;
+    clip.shapeStyle.setSolidFill(Qt::red);
     project.tracks()[0].clips.append(clip);
 
     FrameCompositor compositor;
@@ -3564,7 +3564,7 @@ void EngineTest::compositorPreviewScaleRendersLowerResolution()
     clip.timelineStart = 0;
     clip.timelineDuration = drift::secondsToUs(1.0);
     clip.shapeStyle.kind = drift::ShapeKind::Rectangle;
-    clip.shapeStyle.fill = Qt::red;
+    clip.shapeStyle.setSolidFill(Qt::red);
     project.tracks()[0].clips.append(clip);
 
     FrameCompositor compositor;
@@ -3595,8 +3595,8 @@ void EngineTest::compositorPreviewScaleMapsProjectPixelLayout()
     clip.timelineStart = 0;
     clip.timelineDuration = drift::secondsToUs(1.0);
     clip.shapeStyle.kind = drift::ShapeKind::Rectangle;
-    clip.shapeStyle.fill = Qt::red;
-    clip.shapeStyle.strokeWidth = 0.0;
+    clip.shapeStyle.setSolidFill(Qt::red);
+    clip.shapeStyle.setStroke(0.0);
     clip.transformX.setKeyframe(0, 40.0);
     clip.transformY.setKeyframe(0, 20.0);
     clip.transformW.setKeyframe(0, 80.0);
@@ -3827,9 +3827,8 @@ void EngineTest::compositorRendersShapeClip()
     clip.timelineStart = 0;
     clip.timelineDuration = drift::secondsToUs(1.0);
     clip.shapeStyle.kind = drift::ShapeKind::Triangle;
-    clip.shapeStyle.fill = QColor(255, 0, 0);
-    clip.shapeStyle.stroke = Qt::white;
-    clip.shapeStyle.strokeWidth = 2.0;
+    clip.shapeStyle.setSolidFill(QColor(255, 0, 0));
+    clip.shapeStyle.setStroke(2.0, Qt::white);
     clip.transformX.setKeyframe(0, 32.0);
     clip.transformY.setKeyframe(0, 32.0);
     clip.transformW.setKeyframe(0, 64.0);
@@ -3859,7 +3858,7 @@ void EngineTest::compositorSkipsClipBeingEdited()
     clip.timelineStart = 0;
     clip.timelineDuration = drift::secondsToUs(1.0);
     clip.shapeStyle.kind = drift::ShapeKind::Rectangle;
-    clip.shapeStyle.fill = QColor(255, 0, 0);
+    clip.shapeStyle.setSolidFill(QColor(255, 0, 0));
     clip.transformX.setKeyframe(0, 32.0);
     clip.transformY.setKeyframe(0, 32.0);
     clip.transformW.setKeyframe(0, 64.0);
@@ -4962,7 +4961,7 @@ void EngineTest::compositorCrossfadeBetweenShapeClips()
     clipA.timelineStart = 0;
     clipA.timelineDuration = drift::secondsToUs(2.0);
     clipA.shapeStyle.kind = drift::ShapeKind::Rectangle;
-    clipA.shapeStyle.fill = Qt::red;
+    clipA.shapeStyle.setSolidFill(Qt::red);
 
     drift::Clip clipB;
     clipB.id = QStringLiteral("b");
@@ -4970,7 +4969,7 @@ void EngineTest::compositorCrossfadeBetweenShapeClips()
     clipB.timelineStart = drift::secondsToUs(2.0);
     clipB.timelineDuration = drift::secondsToUs(2.0);
     clipB.shapeStyle.kind = drift::ShapeKind::Rectangle;
-    clipB.shapeStyle.fill = Qt::blue;
+    clipB.shapeStyle.setSolidFill(Qt::blue);
 
     project.tracks()[0].clips.append(clipA);
     project.tracks()[0].clips.append(clipB);
@@ -5011,7 +5010,7 @@ static void appendRedBlueShapeTransition(drift::Project &project, const QString 
     clipA.timelineStart = 0;
     clipA.timelineDuration = drift::secondsToUs(2.0);
     clipA.shapeStyle.kind = drift::ShapeKind::Rectangle;
-    clipA.shapeStyle.fill = Qt::red;
+    clipA.shapeStyle.setSolidFill(Qt::red);
 
     drift::Clip clipB;
     clipB.id = QStringLiteral("b");
@@ -5019,7 +5018,7 @@ static void appendRedBlueShapeTransition(drift::Project &project, const QString 
     clipB.timelineStart = drift::secondsToUs(2.0);
     clipB.timelineDuration = drift::secondsToUs(2.0);
     clipB.shapeStyle.kind = drift::ShapeKind::Rectangle;
-    clipB.shapeStyle.fill = Qt::blue;
+    clipB.shapeStyle.setSolidFill(Qt::blue);
 
     project.tracks()[0].clips.append(clipA);
     project.tracks()[0].clips.append(clipB);
@@ -5191,7 +5190,7 @@ void EngineTest::textClipRendersInsideTransition()
     shape.timelineStart = drift::secondsToUs(2.0);
     shape.timelineDuration = drift::secondsToUs(2.0);
     shape.shapeStyle.kind = drift::ShapeKind::Rectangle;
-    shape.shapeStyle.fill = Qt::blue;
+    shape.shapeStyle.setSolidFill(Qt::blue);
 
     project.tracks()[0].clips.append(text);
     project.tracks()[0].clips.append(shape);
@@ -5771,7 +5770,7 @@ void EngineTest::clipBodyAnimationFadeRampsOpacity()
     clip.timelineStart = 0;
     clip.timelineDuration = drift::secondsToUs(2.0);
     clip.shapeStyle.kind = drift::ShapeKind::Rectangle;
-    clip.shapeStyle.fill = Qt::white;
+    clip.shapeStyle.setSolidFill(Qt::white);
     clip.animIn = {drift::ClipAnimKind::Fade, drift::secondsToUs(1.0), drift::ClipAnimEase::Linear,
                    drift::FadeCurve::Linear};
     project.tracks()[0].clips.append(clip);
@@ -6174,8 +6173,8 @@ void EngineTest::exporterProducesPlayableFileWithBackground()
     clip.timelineStart = 0;
     clip.timelineDuration = drift::secondsToUs(1.0);
     clip.shapeStyle.kind = drift::ShapeKind::Rectangle;
-    clip.shapeStyle.fill = Qt::red;
-    clip.shapeStyle.strokeWidth = 0.0;
+    clip.shapeStyle.setSolidFill(Qt::red);
+    clip.shapeStyle.setStroke(0.0);
     clip.transformX.setKeyframe(0, 70.0);
     clip.transformY.setKeyframe(0, 35.0);
     clip.transformW.setKeyframe(0, 20.0);
@@ -6267,7 +6266,7 @@ void EngineTest::exporterProducesAudioOnlyMp3()
     clip.timelineStart = 0;
     clip.timelineDuration = drift::secondsToUs(1.0);
     clip.shapeStyle.kind = drift::ShapeKind::Rectangle;
-    clip.shapeStyle.fill = Qt::red;
+    clip.shapeStyle.setSolidFill(Qt::red);
     project.tracks()[0].clips.append(clip);
 
     ExportSettings settings = Exporter::defaultSettings();
@@ -6309,7 +6308,7 @@ void EngineTest::exporterTagsSdrBt709ColorMetadata()
     clip.timelineStart = 0;
     clip.timelineDuration = drift::secondsToUs(0.5);
     clip.shapeStyle.kind = drift::ShapeKind::Rectangle;
-    clip.shapeStyle.fill = Qt::green;
+    clip.shapeStyle.setSolidFill(Qt::green);
     project.tracks()[0].clips.append(clip);
 
     ExportSettings settings = Exporter::defaultSettings();
@@ -6562,8 +6561,8 @@ void EngineTest::exporterHardwareEncodeProducesPlayableFile()
     clip.timelineStart = 0;
     clip.timelineDuration = drift::secondsToUs(1.0);
     clip.shapeStyle.kind = drift::ShapeKind::Rectangle;
-    clip.shapeStyle.fill = Qt::red;
-    clip.shapeStyle.strokeWidth = 0.0;
+    clip.shapeStyle.setSolidFill(Qt::red);
+    clip.shapeStyle.setStroke(0.0);
     clip.transformX.setKeyframe(0, 70.0);
     clip.transformY.setKeyframe(0, 35.0);
     clip.transformW.setKeyframe(0, 20.0);
@@ -6612,8 +6611,8 @@ drift::Project frameRateTestProject(int projectFps)
     clip.timelineStart = 0;
     clip.timelineDuration = drift::secondsToUs(1.0);
     clip.shapeStyle.kind = drift::ShapeKind::Rectangle;
-    clip.shapeStyle.fill = Qt::red;
-    clip.shapeStyle.strokeWidth = 0.0;
+    clip.shapeStyle.setSolidFill(Qt::red);
+    clip.shapeStyle.setStroke(0.0);
     clip.transformX.setKeyframe(0, 70.0);
     clip.transformY.setKeyframe(0, 35.0);
     clip.transformW.setKeyframe(0, 20.0);

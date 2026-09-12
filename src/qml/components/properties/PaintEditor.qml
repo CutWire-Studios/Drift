@@ -2,14 +2,15 @@ import QtQuick
 import Drift
 import ".."
 
-// Paint editor for a fill or stroke layer: solid colour, gradient, image texture or a shader
-// effect. Every write goes through setTextLayer with a partial paint patch.
+// Paint editor for a fill or stroke layer of a text or shape clip: solid colour, gradient, image
+// texture or a shader effect. Every write goes through setStyleLayer with a partial paint patch.
 Column {
     id: root
 
     property string layerId: ""
     property var paint: ({})
-    property var textStyle: ({})
+    property var styleData: ({})
+    property string keyPrefix: "text"
 
     readonly property string kind: (paint && paint.kind) || "solid"
     readonly property var effects: EditorState.textPaintEffects()
@@ -36,12 +37,12 @@ Column {
     spacing: Theme.spacingMd
 
     function setPaint(patch) {
-        EditorState.setTextLayer(EditorState.selectedTrack, EditorState.selectedClip, root.layerId,
-                                 { "paint": patch })
+        EditorState.setStyleLayer(EditorState.selectedTrack, EditorState.selectedClip, root.layerId,
+                                  { "paint": patch })
     }
     function previewPaint(patch) {
-        EditorState.previewSetTextLayer(EditorState.selectedTrack, EditorState.selectedClip, root.layerId,
-                                        { "paint": patch })
+        EditorState.previewSetStyleLayer(EditorState.selectedTrack, EditorState.selectedClip, root.layerId,
+                                         { "paint": patch })
     }
     function effectParamPatch(id, value) {
         let type = "scalar"
@@ -106,7 +107,8 @@ Column {
         visible: root.kind === "gradient"
         layerId: root.layerId
         gradient: (root.paint && root.paint.gradient) || ({})
-        textStyle: root.textStyle
+        styleData: root.styleData
+        keyPrefix: root.keyPrefix
     }
 
     Column {
@@ -151,13 +153,13 @@ Column {
                     ThemedToggleButton {
                         text: qsTr("Tile")
                         checked: root.texture.tile === true
-                        tooltip: qsTr("Repeat the image across the text")
+                        tooltip: qsTr("Repeat the image across the layer")
                         onClicked: root.setPaint({ "texture": { "tile": true } })
                     }
                     ThemedToggleButton {
                         text: qsTr("Cover")
                         checked: root.texture.tile !== true
-                        tooltip: qsTr("Stretch one copy of the image over the text")
+                        tooltip: qsTr("Stretch one copy of the image over the layer")
                         onClicked: root.setPaint({ "texture": { "tile": false } })
                     }
                 }

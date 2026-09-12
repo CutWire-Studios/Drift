@@ -140,15 +140,30 @@ Item {
                             height: Theme.assetCardWidth
                             radius: Theme.radiusSm
                             color: shapeHover.hovered ? Theme.popoverHover : Theme.panelAccent
+                            border.width: 1
+                            border.color: shapeHover.hovered ? Theme.accent : "transparent"
 
                             Behavior on color {
                                 ColorAnimation { duration: Theme.durationFast; easing.type: Theme.easing }
                             }
+                            Behavior on border.color {
+                                ColorAnimation { duration: Theme.durationFast; easing.type: Theme.easing }
+                            }
 
-                            ShapePreview {
+                            // The catalog entry drawn with its real default style, so the card
+                            // shows what lands on the timeline.
+                            Image {
                                 anchors.fill: parent
                                 anchors.margins: Theme.pagePadding
-                                shapeKind: shapeCard.modelData.id
+                                source: "image://shape/" + shapeCard.modelData.id
+                                sourceSize: Qt.size(Theme.assetCardWidth * 2, Theme.assetCardWidth * 2)
+                                fillMode: Image.PreserveAspectFit
+                                asynchronous: true
+                                cache: true
+                                scale: shapeTap.pressed ? 0.94 : shapeHover.hovered ? 1.06 : 1.0
+                                Behavior on scale {
+                                    NumberAnimation { duration: Theme.durationFast; easing.type: Theme.easing }
+                                }
                             }
 
                             HoverHandler {
@@ -162,6 +177,7 @@ Item {
                             }
 
                             TapHandler {
+                                id: shapeTap
                                 onTapped: {
                                     EditorState.addShapeClip(shapeCard.modelData.id, -1)
                                     root.added()

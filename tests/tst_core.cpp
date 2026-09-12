@@ -1211,13 +1211,20 @@ void CoreTest::shapeStyleSerialization()
     clip.timelineStart = 0;
     clip.timelineDuration = drift::kImageClipDurationUs;
     clip.shapeStyle.kind = drift::ShapeKind::Hexagon;
-    clip.shapeStyle.fillKind = drift::ShapeFillKind::LinearGradient;
-    clip.shapeStyle.fill = QColor(10, 20, 30, 200);
-    clip.shapeStyle.fillSecondary = QColor(40, 50, 60, 128);
-    clip.shapeStyle.gradientAngle = 35.0;
-    clip.shapeStyle.stroke = QColor(255, 255, 255);
-    clip.shapeStyle.strokeWidth = 6.0;
-    clip.shapeStyle.strokeStyle = drift::ShapeStrokeStyle::DashDot;
+    clip.shapeStyle.layers = drift::defaultShapeLayers(QColor(10, 20, 30, 200), QColor(40, 50, 60, 128), Qt::white, 6.0);
+    drift::TextShadingLayer &fill = clip.shapeStyle.layers[0];
+    fill.paint.kind = drift::TextPaintKind::Gradient;
+    fill.paint.gradient.angle = 35.0;
+    fill.paint.gradient.offsetSpeed = 0.25;
+    drift::TextShadingLayer &stroke = clip.shapeStyle.layers[1];
+    stroke.dash = drift::StrokeDash::DashDot;
+    stroke.dashOffset = 1.5;
+    stroke.strokeAlign = drift::StrokeAlign::Center;
+    stroke.trimEnd = 0.6;
+    stroke.sketchLength = 8.0;
+    stroke.sketchDeviation = 2.0;
+    stroke.sketchSeed = 7;
+    clip.shapeStyle.layers.append(drift::shadowLayer(Qt::black, 3.0, 5.0, 10.0, 0.5, QStringLiteral("shadow")));
     clip.shapeStyle.cornerRadius = 18.0;
     clip.shapeStyle.points = 9;
     clip.shapeStyle.innerRatio = 0.33;
@@ -1225,6 +1232,10 @@ void CoreTest::shapeStyleSerialization()
     clip.shapeStyle.thickness = 0.22;
     clip.shapeStyle.tailX = 0.7;
     clip.shapeStyle.tailSize = 0.15;
+    clip.shapeStyle.keyframes[QStringLiteral("cornerRadius")].setKeyframe(0, 0.0);
+    clip.shapeStyle.keyframes[QStringLiteral("cornerRadius")].setKeyframe(drift::kUsPerSecond, 40.0);
+    clip.shapeStyle.keyframes[QStringLiteral("layer.stroke.width")].setKeyframe(0, 2.0);
+    clip.shapeStyle.keyframes[QStringLiteral("layer.stroke.width")].setKeyframe(drift::kUsPerSecond, 12.0);
     clip.transformX.setKeyframe(0, 100.0);
     clip.transformY.setKeyframe(0, 200.0);
     project.tracks()[0].clips.append(clip);
@@ -1236,60 +1247,121 @@ void CoreTest::shapeStyleSerialization()
     QVERIFY(error.isEmpty());
     const drift::Clip &loadedClip = loaded.tracks()[0].clips[0];
     QCOMPARE(loadedClip.type, drift::ClipType::Shape);
-    QCOMPARE(loadedClip.shapeStyle.kind, drift::ShapeKind::Hexagon);
-    QCOMPARE(loadedClip.shapeStyle.fillKind, drift::ShapeFillKind::LinearGradient);
-    QCOMPARE(loadedClip.shapeStyle.fill, QColor(10, 20, 30, 200));
-    QCOMPARE(loadedClip.shapeStyle.fillSecondary, QColor(40, 50, 60, 128));
-    QCOMPARE(loadedClip.shapeStyle.gradientAngle, 35.0);
-    QCOMPARE(loadedClip.shapeStyle.stroke, QColor(255, 255, 255));
-    QCOMPARE(loadedClip.shapeStyle.strokeWidth, 6.0);
-    QCOMPARE(loadedClip.shapeStyle.strokeStyle, drift::ShapeStrokeStyle::DashDot);
-    QCOMPARE(loadedClip.shapeStyle.cornerRadius, 18.0);
-    QCOMPARE(loadedClip.shapeStyle.points, 9);
-    QCOMPARE(loadedClip.shapeStyle.innerRatio, 0.33);
-    QCOMPARE(loadedClip.shapeStyle.headSize, 0.55);
-    QCOMPARE(loadedClip.shapeStyle.thickness, 0.22);
-    QCOMPARE(loadedClip.shapeStyle.tailX, 0.7);
-    QCOMPARE(loadedClip.shapeStyle.tailSize, 0.15);
+    const drift::ShapeStyle &style = loadedClip.shapeStyle;
+    QCOMPARE(style.kind, drift::ShapeKind::Hexagon);
+    QCOMPARE(style.layers.size(), 3);
+    QCOMPARE(style.layers[0].id, QStringLiteral("fill"));
+    QCOMPARE(style.layers[0].kind, drift::TextLayerKind::Fill);
+    QCOMPARE(style.layers[0].paint.kind, drift::TextPaintKind::Gradient);
+    QCOMPARE(style.layers[0].paint.gradient.stops.size(), 2);
+    QCOMPARE(style.layers[0].paint.gradient.stops[0].color, QColor(10, 20, 30, 200));
+    QCOMPARE(style.layers[0].paint.gradient.stops[1].color, QColor(40, 50, 60, 128));
+    QCOMPARE(style.layers[0].paint.gradient.angle, 35.0);
+    QCOMPARE(style.layers[0].paint.gradient.offsetSpeed, 0.25);
+    QCOMPARE(style.layers[1].id, QStringLiteral("stroke"));
+    QCOMPARE(style.layers[1].kind, drift::TextLayerKind::Stroke);
+    QCOMPARE(style.layers[1].width, 6.0);
+    QCOMPARE(style.layers[1].paint.color, QColor(255, 255, 255));
+    QCOMPARE(style.layers[1].dash, drift::StrokeDash::DashDot);
+    QCOMPARE(style.layers[1].dashOffset, 1.5);
+    QCOMPARE(style.layers[1].strokeAlign, drift::StrokeAlign::Center);
+    QCOMPARE(style.layers[1].trimEnd, 0.6);
+    QCOMPARE(style.layers[1].sketchLength, 8.0);
+    QCOMPARE(style.layers[1].sketchDeviation, 2.0);
+    QCOMPARE(style.layers[1].sketchSeed, 7);
+    QCOMPARE(style.layers[2].kind, drift::TextLayerKind::Shadow);
+    QCOMPARE(style.layers[2].offsetY, 5.0);
+    QCOMPARE(style.cornerRadius, 18.0);
+    QCOMPARE(style.points, 9);
+    QCOMPARE(style.innerRatio, 0.33);
+    QCOMPARE(style.headSize, 0.55);
+    QCOMPARE(style.thickness, 0.22);
+    QCOMPARE(style.tailX, 0.7);
+    QCOMPARE(style.tailSize, 0.15);
+    QCOMPARE(style.keyframes.size(), 2);
+    QVERIFY(style.isAnimated());
+    const drift::ShapeStyle mid = style.resolvedAt(drift::kUsPerSecond / 2);
+    QVERIFY(mid.cornerRadius > 10.0 && mid.cornerRadius < 30.0);
+    QVERIFY(mid.layers[1].width > 4.0 && mid.layers[1].width < 10.0);
     QCOMPARE(loadedClip.transformX.evaluateAt(0), 100.0);
     QCOMPARE(loadedClip.transformY.evaluateAt(0), 200.0);
+    QCOMPARE(json.value(QStringLiteral("version")).toInt(), 8);
 }
 
-// A project saved before shapes gained gradients, dash styles and geometry knobs carries only the
-// original four keys, and must still load with the new fields at their defaults.
+// A project saved before format 8 carries the flat fill/stroke keys — possibly only the original
+// four — and must load as the equivalent layer stack: a fill under an inside stroke, both with
+// the stable ids the catalog uses.
 void CoreTest::legacyShapeStyleLoadsWithDefaults()
 {
-    const QJsonObject json{
-        {QStringLiteral("version"), drift::Project::kCurrentVersion},
-        {QStringLiteral("tracks"),
-         QJsonArray{QJsonObject{
-             {QStringLiteral("type"), QStringLiteral("shape")},
-             {QStringLiteral("clips"),
-              QJsonArray{QJsonObject{
-                  {QStringLiteral("id"), QStringLiteral("legacy-shape")},
-                  {QStringLiteral("type"), QStringLiteral("shape")},
-                  {QStringLiteral("timelineDurationUs"), qint64(drift::kImageClipDurationUs)},
-                  {QStringLiteral("shapeStyle"),
-                   QJsonObject{{QStringLiteral("kind"), QStringLiteral("pentagon")},
-                               {QStringLiteral("fill"), QStringLiteral("#ffa060ff")},
-                               {QStringLiteral("stroke"), QStringLiteral("#ffffffff")},
-                               {QStringLiteral("strokeWidth"), 4.0}}}}}}}}}};
+    const auto load = [](const QJsonObject &shapeStyle) {
+        const QJsonObject json{
+            {QStringLiteral("version"), 7},
+            {QStringLiteral("tracks"),
+             QJsonArray{QJsonObject{
+                 {QStringLiteral("type"), QStringLiteral("shape")},
+                 {QStringLiteral("clips"),
+                  QJsonArray{QJsonObject{
+                      {QStringLiteral("id"), QStringLiteral("legacy-shape")},
+                      {QStringLiteral("type"), QStringLiteral("shape")},
+                      {QStringLiteral("timelineDurationUs"), qint64(drift::kImageClipDurationUs)},
+                      {QStringLiteral("shapeStyle"), shapeStyle}}}}}}}};
+        QString error;
+        const drift::Project loaded = drift::Project::fromJson(json, &error);
+        if (!error.isEmpty())
+            qWarning() << error;
+        return loaded.tracks()[0].clips[0].shapeStyle;
+    };
 
-    QString error;
-    const drift::Project loaded = drift::Project::fromJson(json, &error);
-    QVERIFY(error.isEmpty());
-
-    const drift::ShapeStyle &style = loaded.tracks()[0].clips[0].shapeStyle;
+    const drift::ShapeStyle minimal = load({{QStringLiteral("kind"), QStringLiteral("pentagon")},
+                                           {QStringLiteral("fill"), QStringLiteral("#ffa060ff")},
+                                           {QStringLiteral("stroke"), QStringLiteral("#ffffffff")},
+                                           {QStringLiteral("strokeWidth"), 4.0}});
     const drift::ShapeStyle defaults;
-    QCOMPARE(style.kind, drift::ShapeKind::Pentagon);
-    QCOMPARE(style.fill, QColor(160, 96, 255));
-    QCOMPARE(style.fillKind, defaults.fillKind);
-    QCOMPARE(style.fillSecondary, defaults.fillSecondary);
-    QCOMPARE(style.gradientAngle, defaults.gradientAngle);
-    QCOMPARE(style.strokeStyle, defaults.strokeStyle);
-    QCOMPARE(style.cornerRadius, defaults.cornerRadius);
-    QCOMPARE(style.points, defaults.points);
-    QCOMPARE(style.innerRatio, defaults.innerRatio);
+    QCOMPARE(minimal.kind, drift::ShapeKind::Pentagon);
+    QCOMPARE(minimal.layers.size(), 2);
+    QCOMPARE(minimal.layers[0].id, QStringLiteral("fill"));
+    QCOMPARE(minimal.layers[0].kind, drift::TextLayerKind::Fill);
+    QVERIFY(minimal.layers[0].enabled);
+    QCOMPARE(minimal.layers[0].paint.kind, drift::TextPaintKind::Solid);
+    QCOMPARE(minimal.layers[0].paint.color, QColor(160, 96, 255));
+    QCOMPARE(minimal.primaryColor(), QColor(160, 96, 255));
+    QCOMPARE(minimal.layers[1].id, QStringLiteral("stroke"));
+    QCOMPARE(minimal.layers[1].kind, drift::TextLayerKind::Stroke);
+    QVERIFY(minimal.layers[1].enabled);
+    QCOMPARE(minimal.layers[1].width, 4.0);
+    QCOMPARE(minimal.layers[1].paint.color, QColor(Qt::white));
+    QCOMPARE(minimal.layers[1].strokeAlign, drift::StrokeAlign::Inside);
+    QCOMPARE(minimal.layers[1].dash, drift::StrokeDash::Solid);
+    QCOMPARE(minimal.cornerRadius, defaults.cornerRadius);
+    QCOMPARE(minimal.points, defaults.points);
+    QCOMPARE(minimal.innerRatio, defaults.innerRatio);
+    QVERIFY(minimal.keyframes.isEmpty());
+
+    const drift::ShapeStyle gradient = load({{QStringLiteral("kind"), QStringLiteral("star")},
+                                            {QStringLiteral("fillKind"), QStringLiteral("linear")},
+                                            {QStringLiteral("fill"), QStringLiteral("#ff102030")},
+                                            {QStringLiteral("fillSecondary"), QStringLiteral("#ff405060")},
+                                            {QStringLiteral("gradientAngle"), 35.0},
+                                            {QStringLiteral("strokeStyle"), QStringLiteral("dashdot")},
+                                            {QStringLiteral("strokeWidth"), 6.0},
+                                            {QStringLiteral("points"), 7}});
+    QCOMPARE(gradient.layers[0].paint.kind, drift::TextPaintKind::Gradient);
+    QCOMPARE(gradient.layers[0].paint.gradient.kind, drift::TextGradientKind::Linear);
+    QCOMPARE(gradient.layers[0].paint.gradient.angle, 35.0);
+    QCOMPARE(gradient.layers[0].paint.gradient.stops.size(), 2);
+    QCOMPARE(gradient.layers[0].paint.gradient.stops[0].color, QColor(16, 32, 48));
+    QCOMPARE(gradient.layers[0].paint.gradient.stops[1].color, QColor(64, 80, 96));
+    QCOMPARE(gradient.layers[1].dash, drift::StrokeDash::DashDot);
+    QCOMPARE(gradient.layers[1].width, 6.0);
+    QCOMPARE(gradient.points, 7);
+
+    const drift::ShapeStyle hollow = load({{QStringLiteral("kind"), QStringLiteral("ellipse")},
+                                          {QStringLiteral("fillKind"), QStringLiteral("none")},
+                                          {QStringLiteral("fill"), QStringLiteral("#ff00ff00")},
+                                          {QStringLiteral("strokeStyle"), QStringLiteral("none")}});
+    QVERIFY(!hollow.layers[0].enabled);
+    QCOMPARE(hollow.layers[0].paint.color, QColor(0, 255, 0));
+    QVERIFY(!hollow.layers[1].enabled);
 }
 
 void CoreTest::vectorSourceSerialization()
@@ -1588,7 +1660,6 @@ void CoreTest::shapeCatalogPathsFitBounds()
         QVERIFY2(box.width() > bounds.width() * 0.3, qPrintable(entry.id));
         QVERIFY2(box.height() > bounds.height() * 0.3, qPrintable(entry.id));
 
-        QVERIFY2(!drift::shapeSvgPath(entry.style, bounds).isEmpty(), qPrintable(entry.id));
         // Ids are what QML and the drag mime data carry, so every one must resolve.
         QVERIFY2(drift::shapeCatalogEntry(entry.id) != nullptr, qPrintable(entry.id));
     }

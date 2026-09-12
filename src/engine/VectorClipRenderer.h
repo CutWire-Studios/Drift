@@ -23,6 +23,9 @@ struct RenderRequest
     // folded by the source's loop mode against the parsed document's duration.
     TimeUs animUs = 0;
     QSize size; // layer size in device pixels; the document is fitted into it per source.fit
+    // The source's slot values were resolved from keyframes for this instant, so the painter
+    // must redraw every frame rather than cache a still per override set.
+    bool keyframed = false;
 };
 
 // Painter for the GPU path. Null when nothing should be drawn: Hide outside the animation, an

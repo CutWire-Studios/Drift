@@ -931,8 +931,6 @@ public:
     Q_INVOKABLE void addEmojiClip(const QString &emoji, const QString &name, double atSeconds);
     Q_INVOKABLE QVariantList builtinShapes() const;
     Q_INVOKABLE QVariantList builtinShapeCategories() const;
-    // SVG "d" string for the assets-panel thumbnail, on the 0..100 grid ShapePreview.qml uses.
-    Q_INVOKABLE QString shapeSvgPath(const QString &shapeId) const;
     Q_INVOKABLE QVariantList previewClipsAtPlayhead() const;
     Q_INVOKABLE void beginPreviewDrag(const QString &undoText = {});
     Q_INVOKABLE void previewSetClipPosition(int trackIndex, int clipIndex, double xPixels, double yPixels);
@@ -1019,8 +1017,15 @@ public:
     Q_INVOKABLE void upsertSubtitleCueAtPlayhead(int trackIndex, int clipIndex, const QString &text);
     Q_INVOKABLE void seekToSubtitleCue(int trackIndex, int clipIndex, int cueIndex);
     Q_INVOKABLE void setTextStyle(int trackIndex, int clipIndex, const QVariantMap &style);
-    // The shading stack: layers[0] is drawn first. Each call is one undo step; the preview
-    // variants coalesce into one through begin/commitPreviewDrag.
+    // The shading stack of a text, subtitle or shape clip: layers[0] is drawn first. Each call
+    // is one undo step; the preview variants coalesce into one through begin/commitPreviewDrag.
+    Q_INVOKABLE QString addStyleLayer(int trackIndex, int clipIndex, const QString &kind, int atIndex = -1);
+    Q_INVOKABLE bool removeStyleLayer(int trackIndex, int clipIndex, const QString &layerId);
+    Q_INVOKABLE QString duplicateStyleLayer(int trackIndex, int clipIndex, const QString &layerId);
+    Q_INVOKABLE bool moveStyleLayer(int trackIndex, int clipIndex, const QString &layerId, int toIndex);
+    Q_INVOKABLE void setStyleLayer(int trackIndex, int clipIndex, const QString &layerId, const QVariantMap &patch);
+    Q_INVOKABLE void previewSetStyleLayer(int trackIndex, int clipIndex, const QString &layerId, const QVariantMap &patch);
+    // The text-only spellings, kept for the MCP tools and scripts that use them.
     Q_INVOKABLE QString addTextLayer(int trackIndex, int clipIndex, const QString &kind, int atIndex = -1);
     Q_INVOKABLE bool removeTextLayer(int trackIndex, int clipIndex, const QString &layerId);
     Q_INVOKABLE QString duplicateTextLayer(int trackIndex, int clipIndex, const QString &layerId);
@@ -1104,7 +1109,7 @@ public:
     // The mask shapes the assets panel offers as cards: {id, label} per entry. A "media" mask is
     // not here — it needs a file, so the panel asks for one and calls addMediaMaskToClip.
     Q_INVOKABLE QVariantList maskCatalog() const;
-    // The shape as an SVG "d" string on the 0..100 grid ShapePreview.qml scales from, for the
+    // The mask as an SVG "d" string on the 0..100 grid MasksTab.qml scales from, for the
     // asset cards. Serialized from the same drift::maskPath the compositor rasterizes.
     Q_INVOKABLE QString maskShapeSvgPath(const QString &shape) const;
     // Pin a new mask to a clip, stacking on any already there rather than replacing them, and
@@ -2140,6 +2145,8 @@ protected:
     bool m_inlineTextEditing = false;
     bool m_previewDragActive = false;
     drift::Clip *textClipAt(int trackIndex, int clipIndex);
+    // A text, subtitle or shape clip: anything that carries a shading stack.
+    drift::Clip *styledClipAt(int trackIndex, int clipIndex, bool textOnly = false);
     static void applyTextStylePatch(drift::TextStyle &style, const QVariantMap &patch);
     static QVariantMap textAnimationPresetToMap(const drift::TextAnimationPreset &preset);
     drift::Project m_previewDragBefore;

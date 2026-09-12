@@ -901,18 +901,21 @@ QJsonObject McpDispatcher::applyOneExtended(const QString &tool, const QJsonObje
         return ok(clipFeedback(ref, {{QStringLiteral("which"), which}}));
     }
 
-    if (tool == QLatin1String("add_text_layer")) {
+    // The *_text_layer and *_shape_layer spellings are one set of tools: the shading stack is
+    // the same on both clip kinds, and the controller dispatches on the clip.
+    if (tool == QLatin1String("add_text_layer") || tool == QLatin1String("add_shape_layer")) {
         const ClipRef ref = resolveClip(args);
         if (!ref.valid())
             return clipRefError(args);
         const int at = args.contains(QStringLiteral("at")) ? int(jsonNumber(args.value(QStringLiteral("at")), -1)) : -1;
-        const QString id = m_controller->addTextLayer(ref.track, ref.clip, args.value(QStringLiteral("kind")).toString(), at);
+        const QString id = m_controller->addStyleLayer(ref.track, ref.clip, args.value(QStringLiteral("kind")).toString(), at);
         if (id.isEmpty())
-            return err("bad_args", QStringLiteral("not a text clip"));
-        return ok(clipFeedback(ref, {{QStringLiteral("id"), id}}));
+            return err("bad_args", QStringLiteral("not a text or shape clip"));
+        // `id` in the feedback is the clip's; the new layer's goes under its own key.
+        return ok(clipFeedback(ref, {{QStringLiteral("layerId"), id}}));
     }
 
-    if (tool == QLatin1String("set_text_layer")) {
+    if (tool == QLatin1String("set_text_layer") || tool == QLatin1String("set_shape_layer")) {
         const ClipRef ref = resolveClip(args);
         if (!ref.valid())
             return clipRefError(args);
@@ -923,25 +926,33 @@ QJsonObject McpDispatcher::applyOneExtended(const QString &tool, const QJsonObje
             layer.insert(QStringLiteral("index"), int(jsonNumber(args.value(QStringLiteral("index")), 0)));
         else
             return err("bad_args", QStringLiteral("id or index required"));
-        m_controller->setTextStyle(ref.track, ref.clip, QVariantMap{{QStringLiteral("layer"), layer}});
+        const QString id = layer.value(QStringLiteral("id")).toString();
+        if (!id.isEmpty()) {
+            layer.remove(QStringLiteral("id"));
+            m_controller->setStyleLayer(ref.track, ref.clip, id, layer);
+        } else if (m_controller->clipAt(ref.track, ref.clip).value(QStringLiteral("kind")).toString() == QLatin1String("shape")) {
+            m_controller->setShapeStyle(ref.track, ref.clip, QVariantMap{{QStringLiteral("layer"), layer}});
+        } else {
+            m_controller->setTextStyle(ref.track, ref.clip, QVariantMap{{QStringLiteral("layer"), layer}});
+        }
         return ok(clipFeedback(ref));
     }
 
-    if (tool == QLatin1String("remove_text_layer")) {
+    if (tool == QLatin1String("remove_text_layer") || tool == QLatin1String("remove_shape_layer")) {
         const ClipRef ref = resolveClip(args);
         if (!ref.valid())
             return clipRefError(args);
-        if (!m_controller->removeTextLayer(ref.track, ref.clip, args.value(QStringLiteral("id")).toString()))
+        if (!m_controller->removeStyleLayer(ref.track, ref.clip, args.value(QStringLiteral("id")).toString()))
             return err("bad_args", QStringLiteral("no such layer"));
         return ok(clipFeedback(ref));
     }
 
-    if (tool == QLatin1String("move_text_layer")) {
+    if (tool == QLatin1String("move_text_layer") || tool == QLatin1String("move_shape_layer")) {
         const ClipRef ref = resolveClip(args);
         if (!ref.valid())
             return clipRefError(args);
-        m_controller->moveTextLayer(ref.track, ref.clip, args.value(QStringLiteral("id")).toString(),
-                                    int(jsonNumber(args.value(QStringLiteral("to")), 0)));
+        m_controller->moveStyleLayer(ref.track, ref.clip, args.value(QStringLiteral("id")).toString(),
+                                     int(jsonNumber(args.value(QStringLiteral("to")), 0)));
         return ok(clipFeedback(ref));
     }
 

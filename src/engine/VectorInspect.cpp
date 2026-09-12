@@ -4,6 +4,8 @@
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QRegularExpression>
+#include <QSet>
+#include <QXmlStreamReader>
 
 #ifdef DRIFT_WITH_SKIA
 #include "SkiaFonts.h"
@@ -188,11 +190,120 @@ void inspectSvg(const QByteArray &data, InspectReport *report)
         report->hints.append(QStringLiteral("SVG renders as a still; use a Lottie document for motion."));
     if (report->width <= 0 || report->height <= 0)
         report->hints.append(QStringLiteral("No intrinsic size or viewBox; the drawing stretches to the clip."));
+
+    // Only ids the parsed DOM can find are reported: Skia drops <symbol>, <style> and the like
+    // with their subtrees.
+    for (const VectorSvgElement &element : scanSvg(data).elements) {
+        if (dom->findNodeById(element.id.toUtf8().constData()))
+            report->svgElements.append(element);
+    }
+    if (!report->svgElements.isEmpty())
+        report->hints.append(QStringLiteral("Elements with ids can be restyled per clip through the svg.<id>.<fill|stroke|strokeWidth|opacity|visible> slots; svg.fill / svg.stroke / svg.strokeWidth / svg.opacity restyle the whole drawing."));
 }
 
 #endif // DRIFT_WITH_SKIA
 
 } // namespace
+
+namespace {
+
+bool paintableSvgTag(QStringView tag)
+{
+    static const QStringList tags{QStringLiteral("path"), QStringLiteral("rect"), QStringLiteral("circle"),
+                                  QStringLiteral("ellipse"), QStringLiteral("line"), QStringLiteral("polyline"),
+                                  QStringLiteral("polygon"), QStringLiteral("text"), QStringLiteral("g"),
+                                  QStringLiteral("use")};
+    return tags.contains(tag.toString());
+}
+
+// A presentation attribute as written, from the attribute or the style="" declaration list.
+QString svgPresentation(const QXmlStreamAttributes &attrs, const QString &name)
+{
+    if (attrs.hasAttribute(name))
+        return attrs.value(name).toString().trimmed();
+    const QString style = attrs.value(QStringLiteral("style")).toString();
+    for (const QString &decl : style.split(QLatin1Char(';'), Qt::SkipEmptyParts)) {
+        const int colon = decl.indexOf(QLatin1Char(':'));
+        if (colon > 0 && decl.left(colon).trimmed() == name)
+            return decl.mid(colon + 1).trimmed();
+    }
+    return {};
+}
+
+} // namespace
+
+SvgScan scanSvg(const QByteArray &data)
+{
+    SvgScan scan;
+    const QString text = QString::fromUtf8(data);
+
+    QSet<QString> taken;
+    {
+        QXmlStreamReader probe(text);
+        while (!probe.atEnd()) {
+            if (probe.readNext() == QXmlStreamReader::StartElement && probe.attributes().hasAttribute(QStringLiteral("id")))
+                taken.insert(probe.attributes().value(QStringLiteral("id")).toString());
+        }
+    }
+
+    // Insertion points: the closing bracket of each id-less paintable start tag, found from the
+    // reader's offset after the tag so attribute values holding '>' cannot mislead.
+    QList<QPair<int, QString>> insertions;
+    int minted = 0;
+    int defsDepth = 0;
+    QXmlStreamReader reader(text);
+    while (!reader.atEnd()) {
+        const QXmlStreamReader::TokenType token = reader.readNext();
+        if (token == QXmlStreamReader::EndElement) {
+            if (reader.name() == QLatin1String("defs"))
+                --defsDepth;
+            continue;
+        }
+        if (token != QXmlStreamReader::StartElement)
+            continue;
+        const QString tag = reader.name().toString();
+        if (tag == QLatin1String("defs"))
+            ++defsDepth;
+        const QXmlStreamAttributes attrs = reader.attributes();
+        const QString id = attrs.value(QStringLiteral("id")).toString();
+        if (!id.isEmpty()) {
+            VectorSvgElement element;
+            element.id = id;
+            element.tag = tag;
+            element.classes = attrs.value(QStringLiteral("class")).toString().split(QLatin1Char(' '), Qt::SkipEmptyParts);
+            element.inDefs = defsDepth > 0;
+            element.fill = svgPresentation(attrs, QStringLiteral("fill"));
+            element.stroke = svgPresentation(attrs, QStringLiteral("stroke"));
+            element.strokeWidth = svgPresentation(attrs, QStringLiteral("stroke-width"));
+            element.opacity = svgPresentation(attrs, QStringLiteral("opacity"));
+            scan.elements.append(element);
+            continue;
+        }
+        if (!paintableSvgTag(tag))
+            continue;
+        QString fresh;
+        do {
+            fresh = QStringLiteral("drift-%1").arg(++minted);
+        } while (taken.contains(fresh));
+        int close = int(reader.characterOffset()) - 1;
+        while (close > 0 && text.at(close) != QLatin1Char('>'))
+            --close;
+        if (close > 0 && text.at(close - 1) == QLatin1Char('/'))
+            --close;
+        insertions.append({close, fresh});
+        scan.injectedIds.append(fresh);
+    }
+    if (reader.hasError()) {
+        scan.rewritten = data;
+        scan.injectedIds.clear();
+        return scan;
+    }
+    QString rewritten = text;
+    for (int i = insertions.size() - 1; i >= 0; --i)
+        rewritten.insert(insertions.at(i).first, QStringLiteral(" id=\"%1\"").arg(insertions.at(i).second));
+    scan.rewritten = rewritten.toUtf8();
+    return scan;
+}
 
 QJsonObject InspectReport::toJson() const
 {
@@ -241,6 +352,20 @@ QJsonObject InspectReport::toJson() const
     o.insert(QStringLiteral("expressions"), toJsonArray(expressions));
     o.insert(QStringLiteral("unsupported"), toJsonArray(unsupported));
     o.insert(QStringLiteral("hints"), toJsonArray(hints));
+    if (kind == VectorKind::Svg) {
+        QJsonArray elementArray;
+        for (const VectorSvgElement &e : svgElements) {
+            elementArray.append(QJsonObject{{QStringLiteral("id"), e.id},
+                                            {QStringLiteral("tag"), e.tag},
+                                            {QStringLiteral("classes"), toJsonArray(e.classes)},
+                                            {QStringLiteral("inDefs"), e.inDefs},
+                                            {QStringLiteral("fill"), e.fill},
+                                            {QStringLiteral("stroke"), e.stroke},
+                                            {QStringLiteral("strokeWidth"), e.strokeWidth},
+                                            {QStringLiteral("opacity"), e.opacity}});
+        }
+        o.insert(QStringLiteral("elements"), elementArray);
+    }
     return o;
 }
 

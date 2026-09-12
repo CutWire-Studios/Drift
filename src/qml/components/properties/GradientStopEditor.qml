@@ -3,16 +3,18 @@ import QtQuick.Dialogs
 import Drift
 import ".."
 
-// Gradient paint editor for one text layer: a live preview bar, draggable stop chips, a preset
-// strip and the mapping controls. Stop drags stream through previewSetTextLayer and are closed
-// as a single undo step; everything else commits directly.
+// Gradient paint editor for one shading layer of a text or shape clip: a live preview bar,
+// draggable stop chips, a preset strip and the mapping controls. Stop drags stream through
+// previewSetStyleLayer and are closed as a single undo step; everything else commits directly.
 Column {
     id: root
 
     property string layerId: ""
     property var gradient: ({})
-    // The whole style, for the keyframe rows (their points live in textStyle.keyframes).
-    property var textStyle: ({})
+    // The whole style, for the keyframe rows (their points live in styleData.keyframes).
+    property var styleData: ({})
+    // "text" or "shape": the keyframe prop prefix the clip's style answers to.
+    property string keyPrefix: "text"
 
     readonly property var stops: (gradient && gradient.stops) || []
     readonly property var presets: EditorState.textGradientPresets()
@@ -26,24 +28,24 @@ Column {
     spacing: Theme.spacingMd
 
     function keyframes(field) {
-        const keys = root.textStyle && root.textStyle.keyframes
+        const keys = root.styleData && root.styleData.keyframes
         const entry = keys && keys["layer." + root.layerId + ".gradient." + field]
         return (entry && entry.points) || []
     }
     function prop(field, label, decimals) {
-        return { "key": "text.layer." + root.layerId + ".gradient." + field, "label": label,
+        return { "key": root.keyPrefix + ".layer." + root.layerId + ".gradient." + field, "label": label,
                  "def": Number(root.gradient[field]) || 0, "decimals": decimals }
     }
     function cloneStops(list) {
         return list.map(s => ({ "pos": Number(s.pos), "color": String(s.color) }))
     }
     function commitGradient(patch) {
-        EditorState.setTextLayer(EditorState.selectedTrack, EditorState.selectedClip, root.layerId,
-                                 { "paint": { "gradient": patch } })
+        EditorState.setStyleLayer(EditorState.selectedTrack, EditorState.selectedClip, root.layerId,
+                                  { "paint": { "gradient": patch } })
     }
     function previewGradient(patch) {
-        EditorState.previewSetTextLayer(EditorState.selectedTrack, EditorState.selectedClip, root.layerId,
-                                        { "paint": { "gradient": patch } })
+        EditorState.previewSetStyleLayer(EditorState.selectedTrack, EditorState.selectedClip, root.layerId,
+                                         { "paint": { "gradient": patch } })
     }
     function toQtColor(hex) {
         const h = String(hex).replace("#", "")
@@ -330,6 +332,7 @@ Column {
         Column {
             width: (parent.width - parent.spacing) / 2
             spacing: 4
+            visible: root.keyPrefix === "text"
             Text {
                 text: qsTr("Map to")
                 HoverHandler { id: mapHover }

@@ -561,221 +561,13 @@ const QMap<QString, QString> &legacyKeyAliases()
     return aliases;
 }
 
-struct LayerKeyPath
-{
-    QString layerId;
-    QString field; // "opacity", "color.r", "gradient.stop.2.pos", "effect.speed"
-};
-
-bool parseLayerKey(const QString &key, LayerKeyPath *out)
-{
-    if (!key.startsWith(QLatin1String("layer.")))
-        return false;
-    const int dot = key.indexOf(QLatin1Char('.'), 6);
-    if (dot < 0)
-        return false;
-    out->layerId = key.mid(6, dot - 6);
-    out->field = key.mid(dot + 1);
-    return !out->layerId.isEmpty() && !out->field.isEmpty();
-}
-
-// The fields a layer of this kind / paint exposes to keyframes, in inspector order.
-QStringList layerKeyframeFields(const TextShadingLayer &layer)
-{
-    QStringList fields{QStringLiteral("opacity"), QStringLiteral("offsetX"), QStringLiteral("offsetY"),
-                       QStringLiteral("blur")};
-    if (layer.kind == TextLayerKind::Stroke || layer.kind == TextLayerKind::Extrude)
-        fields.append(QStringLiteral("width"));
-    if (layer.kind == TextLayerKind::Shadow || layer.kind == TextLayerKind::Glow)
-        fields.append(QStringLiteral("spread"));
-    switch (layer.paint.kind) {
-    case TextPaintKind::Solid:
-    case TextPaintKind::Texture:
-        fields << QStringLiteral("color.r") << QStringLiteral("color.g") << QStringLiteral("color.b") << QStringLiteral("color.a");
-        break;
-    case TextPaintKind::Gradient:
-        fields << QStringLiteral("gradient.angle") << QStringLiteral("gradient.offset") << QStringLiteral("gradient.scale")
-               << QStringLiteral("gradient.center.x") << QStringLiteral("gradient.center.y");
-        for (int i = 0; i < layer.paint.gradient.stops.size(); ++i)
-            fields.append(QStringLiteral("gradient.stop.%1.pos").arg(i));
-        break;
-    case TextPaintKind::Effect:
-        fields << QStringLiteral("color.r") << QStringLiteral("color.g") << QStringLiteral("color.b") << QStringLiteral("color.a");
-        for (auto it = layer.paint.effect.params.constBegin(); it != layer.paint.effect.params.constEnd(); ++it) {
-            if (it->type == VectorSlotValue::Type::Scalar)
-                fields.append(QStringLiteral("effect.%1").arg(it.key()));
-        }
-        break;
-    }
-    return fields;
-}
-
-// Paint-specific fields only exist for the paint kind that owns them, so a stray key on the
-// wrong layer is unknown rather than silently absorbed.
-bool fieldMatchesPaint(const TextShadingLayer &l, const QString &field)
-{
-    if (field.startsWith(QLatin1String("gradient.")))
-        return l.paint.kind == TextPaintKind::Gradient;
-    if (field.startsWith(QLatin1String("effect.")))
-        return l.paint.kind == TextPaintKind::Effect;
-    if (field.startsWith(QLatin1String("color.")))
-        return l.paint.kind != TextPaintKind::Gradient;
-    return true;
-}
-
-bool layerScalar(const TextShadingLayer &l, const QString &field, double *out)
-{
-    if (!fieldMatchesPaint(l, field))
-        return false;
-    if (field == QLatin1String("opacity"))
-        *out = l.opacity;
-    else if (field == QLatin1String("offsetX"))
-        *out = l.offsetX;
-    else if (field == QLatin1String("offsetY"))
-        *out = l.offsetY;
-    else if (field == QLatin1String("blur"))
-        *out = l.blur;
-    else if (field == QLatin1String("width"))
-        *out = l.width;
-    else if (field == QLatin1String("spread"))
-        *out = l.spread;
-    else if (field == QLatin1String("color.r"))
-        *out = l.paint.color.redF();
-    else if (field == QLatin1String("color.g"))
-        *out = l.paint.color.greenF();
-    else if (field == QLatin1String("color.b"))
-        *out = l.paint.color.blueF();
-    else if (field == QLatin1String("color.a"))
-        *out = l.paint.color.alphaF();
-    else if (field == QLatin1String("gradient.angle"))
-        *out = l.paint.gradient.angle;
-    else if (field == QLatin1String("gradient.offset"))
-        *out = l.paint.gradient.offset;
-    else if (field == QLatin1String("gradient.scale"))
-        *out = l.paint.gradient.scale;
-    else if (field == QLatin1String("gradient.center.x"))
-        *out = l.paint.gradient.center.x();
-    else if (field == QLatin1String("gradient.center.y"))
-        *out = l.paint.gradient.center.y();
-    else if (field.startsWith(QLatin1String("gradient.stop."))) {
-        const QStringList parts = field.split(QLatin1Char('.'));
-        const int i = parts.size() == 4 ? parts.at(2).toInt() : -1;
-        if (i < 0 || i >= l.paint.gradient.stops.size() || parts.at(3) != QLatin1String("pos"))
-            return false;
-        *out = l.paint.gradient.stops.at(i).pos;
-    } else if (field.startsWith(QLatin1String("effect."))) {
-        const auto it = l.paint.effect.params.constFind(field.mid(7));
-        if (it == l.paint.effect.params.constEnd() || it->type != VectorSlotValue::Type::Scalar)
-            return false;
-        *out = it->scalar;
-    } else
-        return false;
-    return true;
-}
-
-bool setLayerScalar(TextShadingLayer &l, const QString &field, double value)
-{
-    if (!fieldMatchesPaint(l, field))
-        return false;
-    if (field == QLatin1String("opacity"))
-        l.opacity = qBound(0.0, value, 1.0);
-    else if (field == QLatin1String("offsetX"))
-        l.offsetX = value;
-    else if (field == QLatin1String("offsetY"))
-        l.offsetY = value;
-    else if (field == QLatin1String("blur"))
-        l.blur = qMax(0.0, value);
-    else if (field == QLatin1String("width"))
-        l.width = qMax(0.0, value);
-    else if (field == QLatin1String("spread"))
-        l.spread = value;
-    else if (field == QLatin1String("color.r"))
-        l.paint.color.setRedF(qBound(0.0, value, 1.0));
-    else if (field == QLatin1String("color.g"))
-        l.paint.color.setGreenF(qBound(0.0, value, 1.0));
-    else if (field == QLatin1String("color.b"))
-        l.paint.color.setBlueF(qBound(0.0, value, 1.0));
-    else if (field == QLatin1String("color.a"))
-        l.paint.color.setAlphaF(qBound(0.0, value, 1.0));
-    else if (field == QLatin1String("gradient.angle"))
-        l.paint.gradient.angle = value;
-    else if (field == QLatin1String("gradient.offset"))
-        l.paint.gradient.offset = value;
-    else if (field == QLatin1String("gradient.scale"))
-        l.paint.gradient.scale = qMax(0.01, value);
-    else if (field == QLatin1String("gradient.center.x"))
-        l.paint.gradient.center.setX(value);
-    else if (field == QLatin1String("gradient.center.y"))
-        l.paint.gradient.center.setY(value);
-    else if (field.startsWith(QLatin1String("gradient.stop."))) {
-        const QStringList parts = field.split(QLatin1Char('.'));
-        const int i = parts.size() == 4 ? parts.at(2).toInt() : -1;
-        if (i < 0 || i >= l.paint.gradient.stops.size() || parts.at(3) != QLatin1String("pos"))
-            return false;
-        l.paint.gradient.stops[i].pos = qBound(0.0, value, 1.0);
-    } else if (field.startsWith(QLatin1String("effect."))) {
-        const auto it = l.paint.effect.params.find(field.mid(7));
-        if (it == l.paint.effect.params.end() || it->type != VectorSlotValue::Type::Scalar)
-            return false;
-        it->scalar = value;
-    } else
-        return false;
-    return true;
-}
-
-QString fieldLabel(const QString &field)
-{
-    static const QMap<QString, QString> labels{
-        {QStringLiteral("opacity"), QCoreApplication::translate("TextStyle", "Opacity")},
-        {QStringLiteral("offsetX"), QCoreApplication::translate("TextStyle", "Offset X")},
-        {QStringLiteral("offsetY"), QCoreApplication::translate("TextStyle", "Offset Y")},
-        {QStringLiteral("blur"), QCoreApplication::translate("TextStyle", "Blur")},
-        {QStringLiteral("width"), QCoreApplication::translate("TextStyle", "Width")},
-        {QStringLiteral("spread"), QCoreApplication::translate("TextStyle", "Spread")},
-        {QStringLiteral("color.r"), QCoreApplication::translate("TextStyle", "Red")},
-        {QStringLiteral("color.g"), QCoreApplication::translate("TextStyle", "Green")},
-        {QStringLiteral("color.b"), QCoreApplication::translate("TextStyle", "Blue")},
-        {QStringLiteral("color.a"), QCoreApplication::translate("TextStyle", "Alpha")},
-        {QStringLiteral("gradient.angle"), QCoreApplication::translate("TextStyle", "Gradient angle")},
-        {QStringLiteral("gradient.offset"), QCoreApplication::translate("TextStyle", "Gradient offset")},
-        {QStringLiteral("gradient.scale"), QCoreApplication::translate("TextStyle", "Gradient scale")},
-        {QStringLiteral("gradient.center.x"), QCoreApplication::translate("TextStyle", "Centre X")},
-        {QStringLiteral("gradient.center.y"), QCoreApplication::translate("TextStyle", "Centre Y")},
-    };
-    const auto it = labels.constFind(field);
-    if (it != labels.constEnd())
-        return *it;
-    if (field.startsWith(QLatin1String("gradient.stop.")))
-        return QCoreApplication::translate("TextStyle", "Stop %1").arg(field.section(QLatin1Char('.'), 2, 2).toInt() + 1);
-    if (field.startsWith(QLatin1String("effect.")))
-        return field.mid(7);
-    return field;
-}
-
-QString kindLabel(TextLayerKind kind)
-{
-    switch (kind) {
-    case TextLayerKind::Fill:
-        return QCoreApplication::translate("TextStyle", "Fill");
-    case TextLayerKind::Stroke:
-        return QCoreApplication::translate("TextStyle", "Stroke");
-    case TextLayerKind::Shadow:
-        return QCoreApplication::translate("TextStyle", "Shadow");
-    case TextLayerKind::Glow:
-        return QCoreApplication::translate("TextStyle", "Glow");
-    case TextLayerKind::Extrude:
-        return QCoreApplication::translate("TextStyle", "Extrude");
-    }
-    return {};
-}
-
 } // namespace
 
 QStringList textKeyframeProperties(const TextStyle &s)
 {
     QStringList out = flatKeyframeKeys();
     for (const TextShadingLayer &layer : s.layers) {
-        for (const QString &field : layerKeyframeFields(layer))
+        for (const QString &field : shadingLayerKeyframeFields(layer))
             out.append(QStringLiteral("layer.%1.%2").arg(layer.id, field));
     }
     return out;
@@ -796,7 +588,7 @@ QString textKeyframeCanonicalKey(const QString &key, const TextStyle &s)
     if (!layer)
         return {};
     double probe = 0.0;
-    return layerScalar(*layer, path.field, &probe) ? candidate : QString();
+    return shadingLayerScalar(*layer, path.field, &probe) ? candidate : QString();
 }
 
 QString textKeyframeLabel(const QString &key, const TextStyle &s)
@@ -812,24 +604,7 @@ QString textKeyframeLabel(const QString &key, const TextStyle &s)
         return QCoreApplication::translate("TextStyle", "Box padding");
     if (canonical == QLatin1String("pathBend"))
         return QCoreApplication::translate("TextStyle", "Bend");
-    LayerKeyPath path;
-    if (!parseLayerKey(canonical, &path))
-        return key;
-    const TextShadingLayer *layer = findTextLayer(s.layers, path.layerId);
-    if (!layer)
-        return key;
-    int ordinal = 0, sameKind = 0;
-    for (const TextShadingLayer &other : s.layers) {
-        if (other.kind != layer->kind)
-            continue;
-        ++sameKind;
-        if (&other == layer)
-            ordinal = sameKind;
-    }
-    QString name = kindLabel(layer->kind);
-    if (sameKind > 1)
-        name += QStringLiteral(" %1").arg(ordinal);
-    return name + QStringLiteral(" · ") + fieldLabel(path.field);
+    return shadingLayerKeyframeLabel(s.layers, canonical.isEmpty() ? key : canonical);
 }
 
 bool textStyleScalar(const TextStyle &s, const QString &rawKey, double *out)
@@ -850,7 +625,7 @@ bool textStyleScalar(const TextStyle &s, const QString &rawKey, double *out)
     else {
         LayerKeyPath path;
         parseLayerKey(key, &path);
-        return layerScalar(*findTextLayer(s.layers, path.layerId), path.field, out);
+        return shadingLayerScalar(*findTextLayer(s.layers, path.layerId), path.field, out);
     }
     return true;
 }
@@ -873,7 +648,7 @@ bool setTextStyleScalar(TextStyle &s, const QString &rawKey, double value)
     else {
         LayerKeyPath path;
         parseLayerKey(key, &path);
-        return setLayerScalar(*findTextLayer(s.layers, path.layerId), path.field, value);
+        return setShadingLayerScalar(*findTextLayer(s.layers, path.layerId), path.field, value);
     }
     return true;
 }

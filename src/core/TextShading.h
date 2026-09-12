@@ -1,6 +1,7 @@
 #pragma once
 
 #include "BlendMode.h"
+#include "Keyframe.h"
 #include "TextParamSpec.h"
 #include "VectorSource.h"
 
@@ -11,10 +12,12 @@
 #include <QPointF>
 #include <QString>
 
-// The look of a text block as an ordered stack of shading layers (Resolve's "shading elements"):
-// each layer is a fill, stroke, shadow, glow or extrude painted from a solid colour, a gradient,
-// an image texture or a shader effect. layers[0] is drawn first (back-most). Box, pills, underline
-// and the word accent stay geometry decorations on TextStyle, not layers.
+// The look of a text block or a shape as an ordered stack of shading layers (Resolve's "shading
+// elements"): each layer is a fill, stroke, shadow, glow or extrude painted from a solid colour, a
+// gradient, an image texture or a shader effect. layers[0] is drawn first (back-most). Box, pills,
+// underline and the word accent stay geometry decorations on TextStyle, not layers.
+//
+// The `Text` prefix on the type names is historical: the same stack is what ShapeStyle carries.
 
 namespace drift {
 
@@ -28,6 +31,9 @@ enum class TextGradientKind { Linear, Radial, Sweep };
 // words the piece belongs to (a gradient on the highlighted words only).
 enum class TextGradientSpace { Block, Line, Word, Glyph, AccentRun };
 enum class TextLayerScope { All, Base, Accent };
+// Where a stroke sits relative to the outline: centred on it, grown outward only, or kept inside.
+enum class StrokeAlign { Center, Outside, Inside };
+enum class StrokeDash { Solid, Dash, Dot, DashDot };
 
 QString textLayerKindToString(TextLayerKind kind);
 TextLayerKind textLayerKindFromString(const QString &kind);
@@ -39,6 +45,12 @@ QString textGradientSpaceToString(TextGradientSpace space);
 TextGradientSpace textGradientSpaceFromString(const QString &space);
 QString textLayerScopeToString(TextLayerScope scope);
 TextLayerScope textLayerScopeFromString(const QString &scope);
+QString strokeAlignToString(StrokeAlign align);
+StrokeAlign strokeAlignFromString(const QString &align);
+QString strokeDashToString(StrokeDash dash);
+StrokeDash strokeDashFromString(const QString &dash);
+// On/off run lengths in stroke widths; empty for Solid.
+QList<double> strokeDashIntervals(StrokeDash dash);
 
 struct TextGradientStop
 {
@@ -100,10 +112,15 @@ struct TextShadingLayer
     double blur = 0.0;    // shadow blur / glow radius / soft fill, px
     double width = 2.0;   // stroke width | extrude depth, px
     double spread = 0.0;  // shadow / glow dilation, px
-    bool strokeOutside = true; // stroke grows outward only (the legacy outline)
+    StrokeAlign strokeAlign = StrokeAlign::Outside; // the legacy outline grew outward only
+    StrokeDash dash = StrokeDash::Solid;
+    double dashOffset = 0.0;   // dash phase in stroke widths (keyframable → marching ants)
     bool knockout = false;     // a fill that punches through the layers beneath (hollow text)
     double trimStart = 0.0;    // stroke write-on
     double trimEnd = 1.0;
+    double sketchLength = 0.0;    // SkDiscretePathEffect segment length, px; 0 = off
+    double sketchDeviation = 0.0; // px
+    int sketchSeed = 0;
     int extrudeSteps = 8;
     double extrudeAngle = 45.0;
     double extrudeDarken = 0.5;
@@ -124,6 +141,26 @@ const TextShadingLayer *firstTextLayerOfKind(const QList<TextShadingLayer> &laye
 TextShadingLayer *firstTextLayerOfKind(QList<TextShadingLayer> &layers, TextLayerKind kind, bool enabledOnly = true);
 // Everything about the stack that changes pixels (cache keys).
 quint64 textLayersHash(const QList<TextShadingLayer> &layers);
+
+// Keyframe addressing inside a layer stack. Keys are "layer.<id>.<field>" where field is one of
+// shadingLayerKeyframeFields(): "opacity", "color.r", "gradient.stop.2.pos", "effect.speed", …
+struct LayerKeyPath
+{
+    QString layerId;
+    QString field;
+};
+bool parseLayerKey(const QString &key, LayerKeyPath *out);
+// The fields a layer of this kind / paint exposes to keyframes, in inspector order.
+QStringList shadingLayerKeyframeFields(const TextShadingLayer &layer);
+bool shadingLayerScalar(const TextShadingLayer &layer, const QString &field, double *out);
+bool setShadingLayerScalar(TextShadingLayer &layer, const QString &field, double value);
+QString shadingLayerFieldLabel(const QString &field);
+QString shadingLayerKindLabel(TextLayerKind kind);
+// "Stroke · Width", or "Stroke 2 · Width" when the stack holds several strokes; the raw key when
+// the layer is unknown.
+QString shadingLayerKeyframeLabel(const QList<TextShadingLayer> &layers, const QString &key);
+// Drops every "layer.<id>.*" track a removed layer owned.
+void eraseLayerKeyframes(QMap<QString, KeyframeTrack<double>> &keyframes, const QString &layerId);
 
 // The shader effects a paint can pick, with the params the inspector renders. Ids match the
 // renderer's SkSL registry.

@@ -16,55 +16,6 @@ namespace drift {
 
 namespace {
 
-QJsonObject shapeStyleToJson(const ShapeStyle &s)
-{
-    return QJsonObject{
-        {QStringLiteral("kind"), shapeKindToString(s.kind)},
-        {QStringLiteral("fillKind"), shapeFillKindToString(s.fillKind)},
-        {QStringLiteral("fill"), s.fill.name(QColor::HexArgb)},
-        {QStringLiteral("fillSecondary"), s.fillSecondary.name(QColor::HexArgb)},
-        {QStringLiteral("gradientAngle"), s.gradientAngle},
-        {QStringLiteral("stroke"), s.stroke.name(QColor::HexArgb)},
-        {QStringLiteral("strokeWidth"), s.strokeWidth},
-        {QStringLiteral("strokeStyle"), shapeStrokeStyleToString(s.strokeStyle)},
-        {QStringLiteral("cornerRadius"), s.cornerRadius},
-        {QStringLiteral("points"), s.points},
-        {QStringLiteral("innerRatio"), s.innerRatio},
-        {QStringLiteral("headSize"), s.headSize},
-        {QStringLiteral("thickness"), s.thickness},
-        {QStringLiteral("tailX"), s.tailX},
-        {QStringLiteral("tailSize"), s.tailSize},
-    };
-}
-
-ShapeStyle shapeStyleFromJson(const QJsonObject &o)
-{
-    ShapeStyle s;
-    if (o.isEmpty())
-        return s;
-    s.kind = shapeKindFromString(o.value(QStringLiteral("kind")).toString());
-    // Everything below defaults to the struct value, so a project saved before shapes gained
-    // gradients, dashes and geometry knobs still loads.
-    s.fillKind = shapeFillKindFromString(
-        o.value(QStringLiteral("fillKind")).toString(shapeFillKindToString(s.fillKind)));
-    s.fill = QColor(o.value(QStringLiteral("fill")).toString(s.fill.name(QColor::HexArgb)));
-    s.fillSecondary = QColor(
-        o.value(QStringLiteral("fillSecondary")).toString(s.fillSecondary.name(QColor::HexArgb)));
-    s.gradientAngle = o.value(QStringLiteral("gradientAngle")).toDouble(s.gradientAngle);
-    s.stroke = QColor(o.value(QStringLiteral("stroke")).toString(s.stroke.name(QColor::HexArgb)));
-    s.strokeWidth = o.value(QStringLiteral("strokeWidth")).toDouble(s.strokeWidth);
-    s.strokeStyle = shapeStrokeStyleFromString(
-        o.value(QStringLiteral("strokeStyle")).toString(shapeStrokeStyleToString(s.strokeStyle)));
-    s.cornerRadius = o.value(QStringLiteral("cornerRadius")).toDouble(s.cornerRadius);
-    s.points = o.value(QStringLiteral("points")).toInt(s.points);
-    s.innerRatio = o.value(QStringLiteral("innerRatio")).toDouble(s.innerRatio);
-    s.headSize = o.value(QStringLiteral("headSize")).toDouble(s.headSize);
-    s.thickness = o.value(QStringLiteral("thickness")).toDouble(s.thickness);
-    s.tailX = o.value(QStringLiteral("tailX")).toDouble(s.tailX);
-    s.tailSize = o.value(QStringLiteral("tailSize")).toDouble(s.tailSize);
-    return s;
-}
-
 QJsonObject maskToJson(const Mask &m)
 {
     QJsonArray points;
@@ -667,8 +618,15 @@ void detachClip(Clip &clip)
         it.value().detachSharedData();
     clip.subtitleCues.detach();
     clip.vector.slotValues.detach();
+    clip.vector.keyframes.detach();
+    for (auto it = clip.vector.keyframes.begin(); it != clip.vector.keyframes.end(); ++it)
+        it.value().detachSharedData();
     clip.textStyle.keyframes.detach();
     for (auto it = clip.textStyle.keyframes.begin(); it != clip.textStyle.keyframes.end(); ++it)
+        it.value().detachSharedData();
+    clip.shapeStyle.layers.detach();
+    clip.shapeStyle.keyframes.detach();
+    for (auto it = clip.shapeStyle.keyframes.begin(); it != clip.shapeStyle.keyframes.end(); ++it)
         it.value().detachSharedData();
     clip.effects.detach();
     for (Effect &effect : clip.effects)
@@ -901,6 +859,9 @@ Project Project::fromJson(const QJsonObject &object, QString *errorOut)
     // refuses the file instead of loading those clips as videos with no path.
     // Version 7 turned the flat text look into shading layers and the animIn/animOut kinds into
     // preset slots; textStyleFromJson migrates both in place.
+    // Version 8 did the same for shapes: the flat fill/stroke became the shading stack and the
+    // stroke moved from a half-width inset to an Inside layer, so a translucent stroke now sits
+    // over the fill instead of beside it. shapeStyleFromJson migrates in place.
 
     project.m_bookmarks.clear();
     const QJsonArray bookmarksArray = object.value(QStringLiteral("bookmarks")).toArray();

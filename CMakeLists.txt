@@ -17,9 +17,8 @@ list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
 
 option(WITH_BGREMOVAL "Enable OpenCV-based background removal" OFF)
 # Skia (Ganesh/GL) draws text, shapes and Lottie/SVG clips on the GPU; see
-# third_party/build-skia.sh for producing the prebuilt it links. OFF keeps the QPainter raster
-# path for text and shapes and drops Lottie/SVG support entirely — the fallback stays one
-# release while DRIFT_VECTOR_RENDERER=qt remains a runtime escape hatch.
+# third_party/build-skia.sh for producing the prebuilt it links. OFF builds a video/image/audio
+# only editor: text, shapes and Lottie/SVG clips draw nothing.
 option(DRIFT_WITH_SKIA "Draw vector content (text, shapes, Lottie, SVG) with Skia" ON)
 set(DRIFT_SKIA_DIR "" CACHE PATH "Directory containing SkiaConfig.cmake (default: third_party/prebuilt/skia/<target>)")
 
@@ -567,10 +566,6 @@ add_library(driftengine STATIC
     src/engine/EmojiTable.cpp
     src/engine/TextLayout.h
     src/engine/TextLayout.cpp
-    src/engine/ShapeRaster.h
-    src/engine/ShapeRaster.cpp
-    src/engine/RenderBackend.h
-    src/engine/RenderBackend.cpp
     src/engine/VectorClipRenderer.h
     src/engine/VectorClipRenderer.cpp
     src/engine/VectorInspect.h
@@ -672,6 +667,8 @@ if(DRIFT_WITH_SKIA)
         src/engine/SkiaRuntime.cpp
         src/engine/SkiaPath.h
         src/engine/SkiaPath.cpp
+        src/engine/SkiaShading.h
+        src/engine/SkiaShading.cpp
         src/engine/SkiaShapePainter.h
         src/engine/SkiaShapePainter.cpp
         src/engine/SkiaFonts.h
@@ -692,6 +689,7 @@ if(DRIFT_WITH_SKIA)
     set_source_files_properties(
         src/engine/SkiaRuntime.cpp
         src/engine/SkiaPath.cpp
+        src/engine/SkiaShading.cpp
         src/engine/SkiaShapePainter.cpp
         src/engine/SkiaFonts.cpp
         src/engine/SkiaVectorResources.cpp
@@ -727,6 +725,8 @@ qt_add_executable(drift
     src/MulticamImageStore.cpp
     src/TextStylePreviewImageProvider.h
     src/TextStylePreviewImageProvider.cpp
+    src/ShapePreviewImageProvider.h
+    src/ShapePreviewImageProvider.cpp
     src/models/AddonEndpoint.h
     src/models/AddonManager.h
     src/models/AddonManager.cpp
@@ -936,9 +936,9 @@ qt_add_qml_module(drift
         src/qml/components/properties/GeneralInspector.qml
         src/qml/components/properties/TextInspector.qml
         src/qml/components/properties/TextParamSlots.qml
-        src/qml/components/properties/TextPaintEditor.qml
+        src/qml/components/properties/PaintEditor.qml
         src/qml/components/properties/GradientStopEditor.qml
-        src/qml/components/properties/TextLayerRow.qml
+        src/qml/components/properties/ShadingLayerRow.qml
         src/qml/components/properties/TextAnimPresetTile.qml
         src/qml/components/properties/TextLookPicker.qml
         src/qml/components/properties/TransformInspector.qml
@@ -983,7 +983,6 @@ qt_add_qml_module(drift
         src/qml/components/KeyframeGraph.qml
         src/qml/components/SubtitleCueLane.qml
         src/qml/components/ShortcutCaptureField.qml
-        src/qml/components/ShapePreview.qml
         src/qml/components/ColorSwatchField.qml
         src/qml/components/EffectBrowser.qml
         src/qml/components/AudioEffectBrowser.qml

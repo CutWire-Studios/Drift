@@ -148,6 +148,7 @@ private slots:
     void waveformPeaksForSourceRangeSlicesToTheTrimmedWindow();
     void speedCurveSessionExposesTrimmedSourceWindow();
     void shapeStylePartialUpdateAndUndo();
+    void shapeLayersAndKeyframes();
     void replaceAssetSourceRebindsClipsAndClampsTrim();
     void replaceAssetSourceRefusesADifferentKind();
     void exportAssetImageWritesPngAndJpeg();
@@ -3472,21 +3473,46 @@ void EditorStateTest::shapeStylePartialUpdateAndUndo()
     QVERIFY(track >= 0);
     QVERIFY(clip >= 0);
 
+    const auto layerNamed = [&](const QString &id) {
+        const QVariantList layers = state.selectedClipData().value(QStringLiteral("shapeStyle")).toMap()
+                                        .value(QStringLiteral("layers")).toList();
+        for (const QVariant &v : layers)
+            if (v.toMap().value(QStringLiteral("id")).toString() == id)
+                return v.toMap();
+        return QVariantMap();
+    };
+
     QVariantMap style = state.selectedClipData().value(QStringLiteral("shapeStyle")).toMap();
     QCOMPARE(style.value(QStringLiteral("kind")).toString(), QStringLiteral("ellipse"));
+    QCOMPARE(style.value(QStringLiteral("layers")).toList().size(), 2);
     QCOMPARE(state.selectedClipData().value(QStringLiteral("width")).toDouble(),
              state.selectedClipData().value(QStringLiteral("height")).toDouble());
 
-    // Partial update only touches the given keys.
+    // The legacy flat keys still land on the well-known layers, touching only what they name.
     state.setShapeStyle(track, clip,
                         QVariantMap{{"fillKind", QStringLiteral("linear")},
                                     {"fill", QStringLiteral("#ff00ff00")},
                                     {"strokeStyle", QStringLiteral("dash")}});
-    style = state.selectedClipData().value(QStringLiteral("shapeStyle")).toMap();
-    QCOMPARE(style.value(QStringLiteral("fillKind")).toString(), QStringLiteral("linear"));
-    QCOMPARE(style.value(QStringLiteral("fill")).toString(), QStringLiteral("#ff00ff00"));
-    QCOMPARE(style.value(QStringLiteral("strokeStyle")).toString(), QStringLiteral("dash"));
-    QCOMPARE(style.value(QStringLiteral("strokeWidth")).toDouble(), 4.0); // untouched
+    QVariantMap fill = layerNamed(QStringLiteral("fill"));
+    QVariantMap stroke = layerNamed(QStringLiteral("stroke"));
+    QCOMPARE(fill.value(QStringLiteral("paint")).toMap().value(QStringLiteral("kind")).toString(), QStringLiteral("gradient"));
+    QCOMPARE(fill.value(QStringLiteral("paint")).toMap().value(QStringLiteral("color")).toString(), QStringLiteral("#ff00ff00"));
+    QCOMPARE(stroke.value(QStringLiteral("dash")).toString(), QStringLiteral("dash"));
+    QCOMPARE(stroke.value(QStringLiteral("width")).toDouble(), 4.0); // untouched
+
+    // A layer patch by id merges into that layer only.
+    state.setShapeStyle(track, clip,
+                        QVariantMap{{"layer", QVariantMap{{"id", QStringLiteral("stroke")},
+                                                          {"strokeAlign", QStringLiteral("center")},
+                                                          {"width", 9.0},
+                                                          {"paint", QVariantMap{{"color", QStringLiteral("#ff0000ff")}}}}}});
+    stroke = layerNamed(QStringLiteral("stroke"));
+    QCOMPARE(stroke.value(QStringLiteral("strokeAlign")).toString(), QStringLiteral("center"));
+    QCOMPARE(stroke.value(QStringLiteral("width")).toDouble(), 9.0);
+    QCOMPARE(stroke.value(QStringLiteral("paint")).toMap().value(QStringLiteral("color")).toString(), QStringLiteral("#ff0000ff"));
+    QCOMPARE(stroke.value(QStringLiteral("dash")).toString(), QStringLiteral("dash"));
+    QCOMPARE(layerNamed(QStringLiteral("fill")).value(QStringLiteral("paint")).toMap().value(QStringLiteral("kind")).toString(),
+             QStringLiteral("gradient"));
 
     // Out-of-range values are clamped rather than stored.
     state.setShapeStyle(track, clip, QVariantMap{{"points", 900}, {"innerRatio", -3.0}});
@@ -3498,11 +3524,78 @@ void EditorStateTest::shapeStylePartialUpdateAndUndo()
     state.undo();
     style = state.selectedClipData().value(QStringLiteral("shapeStyle")).toMap();
     QCOMPARE(style.value(QStringLiteral("points")).toInt(), 5);
-    QCOMPARE(style.value(QStringLiteral("fillKind")).toString(), QStringLiteral("linear"));
+    QCOMPARE(layerNamed(QStringLiteral("stroke")).value(QStringLiteral("width")).toDouble(), 9.0);
 
     state.undo();
-    style = state.selectedClipData().value(QStringLiteral("shapeStyle")).toMap();
-    QCOMPARE(style.value(QStringLiteral("fillKind")).toString(), QStringLiteral("solid"));
+    QCOMPARE(layerNamed(QStringLiteral("stroke")).value(QStringLiteral("width")).toDouble(), 4.0);
+    QCOMPARE(layerNamed(QStringLiteral("fill")).value(QStringLiteral("paint")).toMap().value(QStringLiteral("kind")).toString(),
+             QStringLiteral("gradient"));
+
+    state.undo();
+    QCOMPARE(layerNamed(QStringLiteral("fill")).value(QStringLiteral("paint")).toMap().value(QStringLiteral("kind")).toString(),
+             QStringLiteral("solid"));
+}
+
+// The generic layer ops work on a shape the way they do on a caption, and a shape's style
+// scalars are keyframable under the "shape." prefix.
+void EditorStateTest::shapeLayersAndKeyframes()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    state.addShapeClip(QStringLiteral("star"), 0.0);
+    const int track = state.selectedTrack();
+    const int clip = state.selectedClip();
+    QVERIFY(track >= 0);
+
+    const auto layers = [&] {
+        return state.selectedClipData().value(QStringLiteral("shapeStyle")).toMap().value(QStringLiteral("layers")).toList();
+    };
+    QCOMPARE(layers().size(), 2);
+
+    const QString shadowId = state.addStyleLayer(track, clip, QStringLiteral("shadow"));
+    QVERIFY(!shadowId.isEmpty());
+    QCOMPARE(layers().size(), 3);
+    // Shadows go behind everything.
+    QCOMPARE(layers().first().toMap().value(QStringLiteral("id")).toString(), shadowId);
+
+    QVERIFY(state.moveStyleLayer(track, clip, shadowId, 2));
+    QCOMPARE(layers().last().toMap().value(QStringLiteral("id")).toString(), shadowId);
+    state.undo();
+    QCOMPARE(layers().first().toMap().value(QStringLiteral("id")).toString(), shadowId);
+
+    // Keyframes: a geometry knob and a layer field, listed, labelled and evaluated.
+    state.setClipKeyframe(track, clip, QStringLiteral("shape.cornerRadius"), 0.0, 0.0);
+    state.setClipKeyframe(track, clip, QStringLiteral("shape.cornerRadius"), 1.0, 40.0);
+    state.setClipKeyframe(track, clip, QStringLiteral("shape.layer.stroke.width"), 0.0, 2.0);
+    state.setClipKeyframe(track, clip, QStringLiteral("shape.layer.stroke.width"), 1.0, 12.0);
+    state.setClipKeyframe(track, clip, QStringLiteral("shape.layer.") + shadowId + QStringLiteral(".blur"), 0.5, 9.0);
+    const QStringList animated = state.clipAnimatedProperties(track, clip);
+    QVERIFY(animated.contains(QStringLiteral("shape.cornerRadius")));
+    QVERIFY(animated.contains(QStringLiteral("shape.layer.stroke.width")));
+    QVERIFY(animated.contains(QStringLiteral("shape.layer.") + shadowId + QStringLiteral(".blur")));
+    QVERIFY(!animated.contains(QStringLiteral("shape.points")));
+    QCOMPARE(state.keyframePropertyLabel(track, clip, QStringLiteral("shape.cornerRadius")), QStringLiteral("Corner radius"));
+    QCOMPARE(state.keyframePropertyLabel(track, clip, QStringLiteral("shape.layer.stroke.width")), QStringLiteral("Stroke · Width"));
+    QVERIFY(qAbs(state.propertyValueAt(track, clip, QStringLiteral("shape.cornerRadius"), 0.5, -1.0) - 20.0) < 1.0);
+    const QVariantMap keyframes = state.selectedClipData().value(QStringLiteral("shapeStyle")).toMap()
+                                      .value(QStringLiteral("keyframes")).toMap();
+    QCOMPARE(keyframes.value(QStringLiteral("layer.stroke.width")).toMap().value(QStringLiteral("points")).toList().size(), 2);
+
+    // An unknown layer field is refused rather than stored.
+    QVERIFY(!state.clipAnimatedProperties(track, clip).contains(QStringLiteral("shape.layer.stroke.nope")));
+    state.setClipKeyframe(track, clip, QStringLiteral("shape.layer.stroke.nope"), 0.0, 1.0);
+    QVERIFY(!state.clipAnimatedProperties(track, clip).contains(QStringLiteral("shape.layer.stroke.nope")));
+
+    // Removing a layer drops its tracks; the others stay.
+    QVERIFY(state.removeStyleLayer(track, clip, shadowId));
+    QCOMPARE(layers().size(), 2);
+    QVERIFY(!state.clipAnimatedProperties(track, clip).contains(QStringLiteral("shape.layer.") + shadowId + QStringLiteral(".blur")));
+    QVERIFY(state.clipAnimatedProperties(track, clip).contains(QStringLiteral("shape.layer.stroke.width")));
+
+    // The text-only spelling refuses a shape; a caption goes through the generic ops too.
+    QVERIFY(state.addTextLayer(track, clip, QStringLiteral("glow")).isEmpty());
+    state.addTextClip(QStringLiteral("Hi"), 2.0);
+    QVERIFY(!state.addStyleLayer(state.selectedTrack(), state.selectedClip(), QStringLiteral("glow")).isEmpty());
 }
 
 // A ramp on an audio clip goes through exactly the same session, apply and replace flow a video

@@ -252,10 +252,14 @@
                                               QStringLiteral("equalPower"), QStringLiteral("custom")})}},
                                   clipRefProps()),
                        {QStringLiteral("which")}) },
-        { "set_shape_style", "canvas", "Recolour or restyle a shape clip's fill, stroke, geometry",
-          "Patch the fill, stroke, and geometry of a shape clip. Only supplied keys change. Applies to "
-          "shape clips only — silently does nothing on any other clip type. Numeric fields are validated "
-          "against the ranges in the schema, and each geometry knob is read by a subset of shape kinds only.",
+        { "set_shape_style", "canvas", "Restyle a shape clip's shading layers or geometry",
+          "Patch a shape clip. A shape's look is a shading stack like a caption's (fill / stroke / "
+          "shadow / glow / extrude layers, each solid, gradient, texture or effect painted): replace it "
+          "with `layers`, patch one with `layer`, or use the legacy flat fill/stroke keys, which land on "
+          "the \"fill\" and \"stroke\" layers. Only supplied keys change. Applies to shape clips only — "
+          "silently does nothing on any other clip type. Numeric fields are validated against the ranges "
+          "in the schema, and each geometry knob is read by a subset of shape kinds only. Every layer "
+          "field and geometry knob is keyframable as shape.<key> (see set_keyframe).",
           objectSchema(mergeProps({{QStringLiteral("style"), shapeStyleSchema()}},
                                   clipRefProps()),
                        {QStringLiteral("style")}) },
@@ -310,27 +314,56 @@
         { "add_text_layer", "text", "Add a fill / stroke / shadow / glow / extrude layer to a caption",
           "Append a shading layer to the clip's text look, at its natural place in the stack "
           "(shadows behind, strokes under the fills, fills on top) unless `at` is given. Returns "
-          "{id}. Adjust it with set_text_layer; inspect the stack via clip.textStyle.layers.",
+          "{layerId}. Adjust it with set_text_layer; inspect the stack via clip.textStyle.layers. Also "
+          "accepts a shape clip (its stack is clip.shapeStyle.layers); add_shape_layer is the same tool.",
           objectSchema(mergeProps({{QStringLiteral("kind"), enumProp(QStringLiteral("Layer kind"),
                                                                       {QStringLiteral("fill"), QStringLiteral("stroke"), QStringLiteral("shadow"), QStringLiteral("glow"), QStringLiteral("extrude")})},
                                    {QStringLiteral("at"), integerProp(QStringLiteral("Insert index (0 = back-most); omitted = natural position"))}},
                                   clipRefProps()),
                        {QStringLiteral("kind")}) },
-        { "set_text_layer", "text", "Change one shading layer of a caption",
+        { "set_text_layer", "text", "Change one shading layer of a caption or shape",
           "Partial patch of one layer by id (or index). Nested objects (paint, paint.gradient, "
           "paint.effect) merge key by key. Paint kinds: solid, gradient (multi-stop, animatable "
           "offset, offsetSpeed for a moving gradient, space block|line|word|glyph|accentRun), "
-          "texture (image path), effect (shine, shimmer, neon-pulse, glitch, chrome, dissolve).",
+          "texture (image path), effect (shine, shimmer, neon-pulse, glitch, chrome, dissolve). "
+          "Strokes take strokeAlign center|outside|inside, a dash pattern with dashOffset, trimStart/"
+          "trimEnd for a write-on, and sketchLength/sketchDeviation for a hand-drawn wobble. "
+          "set_shape_layer is the same tool.",
           objectSchema(mergeProps({{QStringLiteral("id"), stringProp(QStringLiteral("Layer id"))},
                                    {QStringLiteral("index"), integerProp(QStringLiteral("Layer index, when no id"))},
                                    {QStringLiteral("layer"), textLayerSchema(QStringLiteral("Fields to change"))}},
                                   clipRefProps()),
                        {QStringLiteral("layer")}) },
         { "remove_text_layer", "text", "Delete a shading layer",
-          "Remove the layer and any keyframes on it.",
+          "Remove the layer and any keyframes on it. Works on text and shape clips.",
           objectSchema(mergeProps({{QStringLiteral("id"), stringProp(QStringLiteral("Layer id"))}}, clipRefProps()),
                        {QStringLiteral("id")}) },
         { "move_text_layer", "text", "Reorder shading layers",
+          "Move the layer to index `to` (0 = back-most, drawn first). Works on text and shape clips.",
+          objectSchema(mergeProps({{QStringLiteral("id"), stringProp(QStringLiteral("Layer id"))},
+                                   {QStringLiteral("to"), integerProp(QStringLiteral("Destination index"))}},
+                                  clipRefProps()),
+                       {QStringLiteral("id"), QStringLiteral("to")}) },
+        { "add_shape_layer", "canvas", "Add a fill / stroke / shadow / glow / extrude layer to a shape",
+          "Same as add_text_layer, on a shape clip: returns {layerId}; a fresh shape already has layers "
+          "\"fill\" and \"stroke\". Inspect the stack via clip.shapeStyle.layers.",
+          objectSchema(mergeProps({{QStringLiteral("kind"), enumProp(QStringLiteral("Layer kind"),
+                                                                      {QStringLiteral("fill"), QStringLiteral("stroke"), QStringLiteral("shadow"), QStringLiteral("glow"), QStringLiteral("extrude")})},
+                                   {QStringLiteral("at"), integerProp(QStringLiteral("Insert index (0 = back-most); omitted = natural position"))}},
+                                  clipRefProps()),
+                       {QStringLiteral("kind")}) },
+        { "set_shape_layer", "canvas", "Change one shading layer of a shape",
+          "Same as set_text_layer, on a shape clip: partial patch of one layer by id (or index).",
+          objectSchema(mergeProps({{QStringLiteral("id"), stringProp(QStringLiteral("Layer id"))},
+                                   {QStringLiteral("index"), integerProp(QStringLiteral("Layer index, when no id"))},
+                                   {QStringLiteral("layer"), textLayerSchema(QStringLiteral("Fields to change"))}},
+                                  clipRefProps()),
+                       {QStringLiteral("layer")}) },
+        { "remove_shape_layer", "canvas", "Delete a shape's shading layer",
+          "Remove the layer and any keyframes on it.",
+          objectSchema(mergeProps({{QStringLiteral("id"), stringProp(QStringLiteral("Layer id"))}}, clipRefProps()),
+                       {QStringLiteral("id")}) },
+        { "move_shape_layer", "canvas", "Reorder a shape's shading layers",
           "Move the layer to index `to` (0 = back-most, drawn first).",
           objectSchema(mergeProps({{QStringLiteral("id"), stringProp(QStringLiteral("Layer id"))},
                                    {QStringLiteral("to"), integerProp(QStringLiteral("Destination index"))}},
@@ -430,21 +463,31 @@
           "Add an SVG clip on a graphic track, drawn as vectors at any size (unlike an image import, "
           "which rasterises once). The document is the SVG text itself or an absolute .svg path. "
           "SMIL animation and scripts are ignored and reported in unsupported. Returns {id, track, "
-          "index, width, height, unsupported, hints}.",
+          "index, width, height, elements:[{id, tag, classes, inDefs, fill, stroke, strokeWidth, "
+          "opacity}], unsupported, hints}. Restyle it through slots: svg.fill, svg.stroke, "
+          "svg.strokeWidth, svg.opacity for the whole drawing (drawing-wide colours replace paints "
+          "the file already has, so fill=\"none\" outlines stay hollow and no stroke is added), or "
+          "svg.<elementId>.<fill|stroke|strokeWidth|opacity|visible> for one element from "
+          "`elements`. Colour and scalar overrides are keyframable as vector.svg.<…> (colour "
+          "channels .r/.g/.b/.a in 0..1); visible takes 0/1 and is not.",
           objectSchema({{QStringLiteral("svg"), stringProp(QStringLiteral("SVG text, or an absolute path to a .svg file"))},
                         {QStringLiteral("at"), numberProp(QStringLiteral("Start seconds (default: playhead)"))},
                         {QStringLiteral("track"), integerProp(QStringLiteral("Optional destination graphic track"))},
                         {QStringLiteral("duration"), numberProp(QStringLiteral("Clip length in seconds (default 5)"))},
                         {QStringLiteral("fit"), enumProp(QStringLiteral("How the drawing fills the clip box (default contain)"),
                                                           {QStringLiteral("contain"), QStringLiteral("cover"), QStringLiteral("stretch")})},
+                        {QStringLiteral("slots"), QJsonObject{{QStringLiteral("type"), QStringLiteral("object")},
+                                                              {QStringLiteral("description"), QStringLiteral("Overrides {key: value}: svg.fill / svg.stroke (colour), svg.strokeWidth / svg.opacity (number), svg.<id>.<fill|stroke|strokeWidth|opacity|visible>")}}},
                         {QStringLiteral("name"), stringProp(QStringLiteral("Clip name"))}},
                        {QStringLiteral("svg")}) },
         { "inspect_lottie", "motion", "Check a Lottie/SVG before or after placing it",
           "Parse a document and report what it declares and what this renderer will skip, without "
           "touching the timeline: version, fps, durationSec, width, height, layers, slots, "
           "namedProperties, fonts, markers, expressions (property paths that carry an expression — "
-          "these render as their static value), unsupported, hints. Give json, svg or path for a "
-          "document, or clip for one already on the timeline.",
+          "these render as their static value), unsupported, hints; for an SVG also elements:[{id, "
+          "tag, classes, inDefs, fill, stroke, strokeWidth, opacity}], the ids set_lottie_slot's "
+          "svg.<id>.* keys address. Give json, svg or path for a document, or clip for one already "
+          "on the timeline.",
           objectSchema(mergeProps({{QStringLiteral("json"), stringProp(QStringLiteral("Lottie JSON text"))},
                                    {QStringLiteral("svg"), stringProp(QStringLiteral("SVG text"))},
                                    {QStringLiteral("path"), stringProp(QStringLiteral("Absolute .json or .svg path"))}},
@@ -471,17 +514,20 @@
           "Set one of the animation's declared slots — see list_lottie_slots or the slots array "
           "add_lottie returned. The value must match the slot's type: color takes \"#rrggbb\", "
           "\"#aarrggbb\", a colour name or [r,g,b,a] in 0..1; scalar a number; vec2 [x,y]; text a "
-          "string; image an absolute image path. Pass value:null to remove the override. Fails "
-          "bad_args on an undeclared slot or a wrong type. Slots are the way to re-theme an "
-          "animation; documents without slots can only be edited as JSON and re-sent with "
-          "set_lottie_source.",
+          "string; image an absolute image path. Pass value:null to remove the override (and any "
+          "keyframes on it). Fails bad_args on an undeclared slot or a wrong type. Slots are the way "
+          "to re-theme an animation; documents without slots can only be edited as JSON and re-sent "
+          "with set_lottie_source. An SVG declares no slots and takes the svg.* override keys "
+          "instead (see add_svg): svg.fill, svg.stroke, svg.strokeWidth, svg.opacity, or "
+          "svg.<elementId>.<fill|stroke|strokeWidth|opacity|visible>.",
           objectSchema(mergeProps({{QStringLiteral("name"), stringProp(QStringLiteral("Slot id"))},
                                    {QStringLiteral("value"), QJsonObject{{QStringLiteral("description"), QStringLiteral("Typed value, or null to clear")}}}},
                                   clipRefProps()),
                        {QStringLiteral("name")}) },
         { "list_lottie_slots", "motion", "Slots a vector clip's document declares",
           "Returns {slots:[{id, type, value?}], n}: every declared slot with the clip's current "
-          "override where one is set.",
+          "override where one is set. For an SVG: the four whole-drawing svg.* keys plus whichever "
+          "element overrides are set.",
           objectSchema(clipRefProps()), true, false, true },
         { "get_lottie_source", "motion", "Read a vector clip's document",
           "Returns {kind, inline, path, hash, source} — the full document text, which can be large. "

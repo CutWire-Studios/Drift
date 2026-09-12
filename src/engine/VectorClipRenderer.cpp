@@ -24,8 +24,13 @@
 #include "modules/skottie/include/Skottie.h"
 #include "modules/skottie/include/SlotManager.h"
 #include "modules/svg/include/SkSVGDOM.h"
+#include "modules/svg/include/SkSVGNode.h"
 #include "modules/svg/include/SkSVGRenderContext.h"
 #include "modules/svg/include/SkSVGSVG.h"
+#include "modules/svg/include/SkSVGTypes.h"
+
+#include <optional>
+#include <vector>
 #endif
 
 namespace drift::vec {
@@ -33,6 +38,19 @@ namespace drift::vec {
 #ifdef DRIFT_WITH_SKIA
 
 namespace {
+
+// One SVG node the overrides can touch, with the presentation attributes it was parsed with so
+// a later paint with different overrides can put them back.
+struct SvgNode
+{
+    QString id;
+    SkSVGNode *node = nullptr;
+    SkSVGProperty<SkSVGPaint, true> fill;
+    SkSVGProperty<SkSVGPaint, true> stroke;
+    SkSVGProperty<SkSVGLength, true> strokeWidth;
+    SkSVGProperty<SkSVGNumberType, false> opacity;
+    SkSVGProperty<SkSVGDisplay, false> display;
+};
 
 struct Document
 {
@@ -44,7 +62,117 @@ struct Document
     double durationSec = 0;  // 0 for a still
     quint64 key = 0;         // cache key, folded into painter keys
     QMutex mutex;            // seek + render are one critical section
+    // SVG: the root and every element with an id (the document's own and the ones scanSvg
+    // minted), and which override set is currently written into the tree.
+    std::vector<SvgNode> svgNodes;
+    QHash<QString, size_t> svgNodeIndex;
+    QByteArray svgAppliedKey;
 };
+
+// The svg.* slots of a source in applied form, plus a canonical key for cache lookups.
+struct SvgOverrides
+{
+    struct Element
+    {
+        std::optional<QColor> fill;
+        std::optional<QColor> stroke;
+        std::optional<double> strokeWidth;
+        std::optional<double> opacity;
+        std::optional<bool> visible;
+    };
+    Element document;
+    QMap<QString, Element> elements;
+    QByteArray key;
+
+    bool isEmpty() const { return key.isEmpty(); }
+
+    static SvgOverrides fromSource(const VectorSource &source)
+    {
+        SvgOverrides out;
+        QJsonObject json;
+        for (auto it = source.slotValues.cbegin(); it != source.slotValues.cend(); ++it) {
+            SvgOverrideKey parsed;
+            if (!parseSvgOverrideKey(it.key(), &parsed) || it->type != svgOverrideType(parsed.prop))
+                continue;
+            Element &e = parsed.elementId.isEmpty() ? out.document : out.elements[parsed.elementId];
+            if (parsed.prop == QLatin1String("fill"))
+                e.fill = it->color;
+            else if (parsed.prop == QLatin1String("stroke"))
+                e.stroke = it->color;
+            else if (parsed.prop == QLatin1String("strokeWidth"))
+                e.strokeWidth = qMax(0.0, it->scalar);
+            else if (parsed.prop == QLatin1String("opacity"))
+                e.opacity = qBound(0.0, it->scalar, 1.0);
+            else if (parsed.prop == QLatin1String("visible"))
+                e.visible = it->scalar >= 0.5;
+            json.insert(it.key(), it->toJson());
+        }
+        if (!json.isEmpty())
+            out.key = QJsonDocument(json).toJson(QJsonDocument::Compact);
+        return out;
+    }
+};
+
+SkSVGProperty<SkSVGPaint, true> svgPaintFor(const QColor &c)
+{
+    return SkSVGProperty<SkSVGPaint, true>(
+        SkSVGPaint(SkSVGColor(SkColorSetARGB(c.alpha(), c.red(), c.green(), c.blue()))));
+}
+
+// Writes one element's overrides onto its node. The whole-document colours only replace a paint
+// the node already has (a fill="none" outline stays hollow, a stroke is never added), so a
+// recoloured icon keeps its structure; an element's own overrides are unconditional.
+void applySvgElement(const SvgNode &n, const SvgOverrides::Element &e, bool wholeDocument)
+{
+    const auto hasPaint = [](const SkSVGProperty<SkSVGPaint, true> &p) {
+        return p.isValue() && p->type() != SkSVGPaint::Type::kNone;
+    };
+    if (e.fill && (!wholeDocument || hasPaint(n.fill)))
+        n.node->setFill(svgPaintFor(*e.fill));
+    if (e.stroke && (!wholeDocument || hasPaint(n.stroke)))
+        n.node->setStroke(svgPaintFor(*e.stroke));
+    if (e.strokeWidth && (!wholeDocument || n.strokeWidth.isValue()))
+        n.node->setStrokeWidth(SkSVGProperty<SkSVGLength, true>(SkSVGLength(float(*e.strokeWidth))));
+    if (e.opacity && !wholeDocument)
+        n.node->setOpacity(SkSVGProperty<SkSVGNumberType, false>(float(*e.opacity)));
+    if (e.visible && !wholeDocument)
+        n.node->setDisplay(SkSVGProperty<SkSVGDisplay, false>(*e.visible ? SkSVGDisplay::kInline : SkSVGDisplay::kNone));
+}
+
+// Puts the parsed attributes back on every node, then writes the given overrides. Runs under
+// the document mutex: the tree is shared by every clip drawing this document.
+void applySvgOverrides(Document &doc, const SvgOverrides &overrides)
+{
+    if (doc.svgAppliedKey == overrides.key)
+        return;
+    for (const SvgNode &n : doc.svgNodes) {
+        n.node->setFill(n.fill);
+        n.node->setStroke(n.stroke);
+        n.node->setStrokeWidth(n.strokeWidth);
+        n.node->setOpacity(n.opacity);
+        n.node->setDisplay(n.display);
+    }
+    if (!overrides.isEmpty()) {
+        const SvgOverrides::Element &d = overrides.document;
+        // An unset root fill is the default black every unstyled shape inherits; the root is
+        // also where a document-wide opacity and stroke width land.
+        SvgNode &root = doc.svgNodes.front();
+        if (d.fill && !root.fill.isValue())
+            root.node->setFill(svgPaintFor(*d.fill));
+        if (d.strokeWidth && !root.strokeWidth.isValue())
+            root.node->setStrokeWidth(SkSVGProperty<SkSVGLength, true>(SkSVGLength(float(*d.strokeWidth))));
+        if (d.opacity)
+            root.node->setOpacity(SkSVGProperty<SkSVGNumberType, false>(float(*d.opacity)));
+        for (const SvgNode &n : doc.svgNodes)
+            applySvgElement(n, d, true);
+        for (auto it = overrides.elements.cbegin(); it != overrides.elements.cend(); ++it) {
+            const auto index = doc.svgNodeIndex.constFind(it.key());
+            if (index != doc.svgNodeIndex.constEnd())
+                applySvgElement(doc.svgNodes[*index], it.value(), false);
+        }
+    }
+    doc.svgAppliedKey = overrides.key;
+}
 
 // Parsed documents by hash + slot overrides. Small: each holds a whole scene graph, and a
 // timeline rarely has more than a handful of distinct animations in play.
@@ -93,13 +221,15 @@ public:
 private:
     static constexpr size_t kMaxEntries = 8;
 
+    // Lottie slots are baked into the parsed animation, so they are part of the key; SVG
+    // overrides are written onto the shared tree at paint time and are not.
     static QString cacheKey(const VectorSource &source)
     {
         QString hash = source.hash;
         if (hash.isEmpty())
             hash = vectorSourceHash(vectorSourceBytes(source));
         QString key = hash;
-        if (!source.slotValues.isEmpty()) {
+        if (source.kind != VectorKind::Svg && !source.slotValues.isEmpty()) {
             QJsonObject slotJson;
             for (auto it = source.slotValues.cbegin(); it != source.slotValues.cend(); ++it)
                 slotJson.insert(it.key(), it.value().toJson());
@@ -147,14 +277,36 @@ private:
         doc->kind = source.kind;
 
         if (source.kind == VectorKind::Svg) {
-            SkMemoryStream stream(data.constData(), size_t(data.size()), false);
+            const SvgScan scan = scanSvg(data);
+            SkMemoryStream stream(scan.rewritten.constData(), size_t(scan.rewritten.size()), false);
             doc->svg = SkSVGDOM::Builder()
                            .setFontManager(drift::skia::systemFontMgr())
                            .setResourceProvider(drift::skia::makeVectorResourceProvider(baseDir))
                            .make(stream);
             if (!doc->svg || !doc->svg->getRoot())
                 return nullptr;
-            const SkSVGSVG *root = doc->svg->getRoot();
+            SkSVGSVG *root = doc->svg->getRoot();
+            const auto remember = [&](const QString &id, SkSVGNode *node) {
+                SvgNode n;
+                n.id = id;
+                n.node = node;
+                n.fill = node->getFill();
+                n.stroke = node->getStroke();
+                n.strokeWidth = node->getStrokeWidth();
+                n.opacity = node->getOpacity();
+                n.display = node->getDisplay();
+                doc->svgNodeIndex.insert(id, doc->svgNodes.size());
+                doc->svgNodes.push_back(n);
+            };
+            remember(QString(), root);
+            QStringList ids = scan.injectedIds;
+            for (const VectorSvgElement &element : scan.elements)
+                ids.append(element.id);
+            for (const QString &id : ids) {
+                if (sk_sp<SkSVGNode> *node = doc->svg->findNodeById(id.toUtf8().constData()); node && *node
+                    && node->get() != root)
+                    remember(id, node->get());
+            }
             const SkSize intrinsic = root->intrinsicSize(SkSVGLengthContext(SkSize::Make(0, 0)));
             if (intrinsic.width() > 0 && intrinsic.height() > 0)
                 doc->size = QSizeF(intrinsic.width(), intrinsic.height());
@@ -204,19 +356,22 @@ QRectF fitRect(const QSizeF &doc, const QSize &layer, VectorFit fit)
 class DocumentPainter final : public skia::VectorPainter
 {
 public:
-    DocumentPainter(std::shared_ptr<Document> doc, double timeSec, const QSize &size, VectorFit fit)
-        : m_doc(std::move(doc)), m_timeSec(timeSec), m_size(size), m_fit(fit)
+    DocumentPainter(std::shared_ptr<Document> doc, double timeSec, const QSize &size, VectorFit fit,
+                    SvgOverrides overrides, bool keyframed)
+        : m_doc(std::move(doc)), m_timeSec(timeSec), m_size(size), m_fit(fit), m_overrides(std::move(overrides)),
+          m_keyframed(keyframed)
     {
     }
 
     QSize size() const override { return m_size; }
 
-    // Animations redraw every frame; a still is drawn once per size and served from the GPU cache.
+    // Animations and keyframed overrides redraw every frame; a still is drawn once per size and
+    // override set and served from the GPU cache.
     quint64 cacheKey() const override
     {
-        if (m_doc->animation)
+        if (m_doc->animation || m_keyframed)
             return 0;
-        return qHashMulti(m_doc->key, m_size.width(), m_size.height(), int(m_fit)) | 1;
+        return qHashMulti(m_doc->key, m_size.width(), m_size.height(), int(m_fit), qHash(m_overrides.key)) | 1;
     }
 
     void paint(SkCanvas &canvas) const override
@@ -235,6 +390,7 @@ public:
             return;
         }
         canvas.translate(float(dst.x()), float(dst.y()));
+        applySvgOverrides(*m_doc, m_overrides);
         m_doc->svg->setContainerSize(SkSize::Make(float(dst.width()), float(dst.height())));
         m_doc->svg->render(&canvas);
         canvas.restore();
@@ -245,6 +401,8 @@ private:
     double m_timeSec;
     QSize m_size;
     VectorFit m_fit;
+    SvgOverrides m_overrides;
+    bool m_keyframed;
 };
 
 } // namespace
@@ -260,8 +418,11 @@ std::shared_ptr<const skia::VectorPainter> makePainter(const RenderRequest &requ
     if (!foldVectorTime(request.animUs + request.source.startOffsetUs, secondsToUs(doc->durationSec),
                         request.source.loop, &folded))
         return nullptr;
+    SvgOverrides overrides;
+    if (request.source.kind == VectorKind::Svg)
+        overrides = SvgOverrides::fromSource(request.source);
     return std::make_shared<DocumentPainter>(std::move(doc), usToSeconds(folded), request.size,
-                                             request.source.fit);
+                                             request.source.fit, std::move(overrides), request.keyframed);
 }
 
 QImage renderToImage(const RenderRequest &request)

@@ -137,6 +137,70 @@ TextLayerScope textLayerScopeFromString(const QString &scope)
     return TextLayerScope::All;
 }
 
+QString strokeAlignToString(StrokeAlign align)
+{
+    switch (align) {
+    case StrokeAlign::Center:
+        return QStringLiteral("center");
+    case StrokeAlign::Outside:
+        return QStringLiteral("outside");
+    case StrokeAlign::Inside:
+        return QStringLiteral("inside");
+    }
+    return QStringLiteral("outside");
+}
+
+StrokeAlign strokeAlignFromString(const QString &align)
+{
+    if (align == QStringLiteral("center") || align == QStringLiteral("centre"))
+        return StrokeAlign::Center;
+    if (align == QStringLiteral("inside"))
+        return StrokeAlign::Inside;
+    return StrokeAlign::Outside;
+}
+
+QString strokeDashToString(StrokeDash dash)
+{
+    switch (dash) {
+    case StrokeDash::Solid:
+        return QStringLiteral("solid");
+    case StrokeDash::Dash:
+        return QStringLiteral("dash");
+    case StrokeDash::Dot:
+        return QStringLiteral("dot");
+    case StrokeDash::DashDot:
+        return QStringLiteral("dashdot");
+    }
+    return QStringLiteral("solid");
+}
+
+StrokeDash strokeDashFromString(const QString &dash)
+{
+    if (dash == QStringLiteral("dash"))
+        return StrokeDash::Dash;
+    if (dash == QStringLiteral("dot"))
+        return StrokeDash::Dot;
+    if (dash == QStringLiteral("dashdot") || dash == QStringLiteral("dashDot"))
+        return StrokeDash::DashDot;
+    return StrokeDash::Solid;
+}
+
+QList<double> strokeDashIntervals(StrokeDash dash)
+{
+    // Qt's pen patterns, so a migrated shape stroke keeps its look.
+    switch (dash) {
+    case StrokeDash::Solid:
+        return {};
+    case StrokeDash::Dash:
+        return {4.0, 2.0};
+    case StrokeDash::Dot:
+        return {1.0, 2.0};
+    case StrokeDash::DashDot:
+        return {4.0, 2.0, 1.0, 2.0};
+    }
+    return {};
+}
+
 TextShadingLayer solidFillLayer(const QColor &color, const QString &id)
 {
     TextShadingLayer layer;
@@ -307,8 +371,10 @@ quint64 textLayersHash(const QList<TextShadingLayer> &layers)
         if (!l.enabled)
             continue;
         h = qHashMulti(h, l.id, static_cast<int>(l.kind), paintHash(l.paint), l.opacity, static_cast<int>(l.blend),
-                       l.offsetX, l.offsetY, l.blur, l.width, l.spread, l.strokeOutside, l.knockout, l.trimStart,
-                       l.trimEnd, l.extrudeSteps, l.extrudeAngle, l.extrudeDarken, static_cast<int>(l.scope));
+                       l.offsetX, l.offsetY, l.blur, l.width, l.spread, static_cast<int>(l.strokeAlign),
+                       static_cast<int>(l.dash), l.dashOffset, l.knockout, l.trimStart, l.trimEnd, l.sketchLength,
+                       l.sketchDeviation, l.sketchSeed, l.extrudeSteps, l.extrudeAngle, l.extrudeDarken,
+                       static_cast<int>(l.scope));
     }
     return h;
 }
@@ -451,8 +517,16 @@ QJsonObject textShadingLayerToJson(const TextShadingLayer &l)
         {QStringLiteral("spread"), l.spread},
         {QStringLiteral("scope"), textLayerScopeToString(l.scope)},
     };
-    if (!l.strokeOutside)
-        o.insert(QStringLiteral("strokeOutside"), false);
+    if (l.kind == TextLayerKind::Stroke) {
+        o.insert(QStringLiteral("strokeAlign"), strokeAlignToString(l.strokeAlign));
+        o.insert(QStringLiteral("dash"), strokeDashToString(l.dash));
+        o.insert(QStringLiteral("dashOffset"), l.dashOffset);
+    }
+    if (l.sketchLength > 0.0 || l.sketchDeviation > 0.0) {
+        o.insert(QStringLiteral("sketchLength"), l.sketchLength);
+        o.insert(QStringLiteral("sketchDeviation"), l.sketchDeviation);
+        o.insert(QStringLiteral("sketchSeed"), l.sketchSeed);
+    }
     if (l.knockout)
         o.insert(QStringLiteral("knockout"), true);
     if (!qFuzzyIsNull(l.trimStart) || !qFuzzyCompare(l.trimEnd, 1.0)) {
@@ -481,7 +555,15 @@ TextShadingLayer textShadingLayerFromJson(const QJsonObject &o)
     l.blur = o.value(QStringLiteral("blur")).toDouble(0.0);
     l.width = o.value(QStringLiteral("width")).toDouble(2.0);
     l.spread = o.value(QStringLiteral("spread")).toDouble(0.0);
-    l.strokeOutside = o.value(QStringLiteral("strokeOutside")).toBool(true);
+    if (o.contains(QStringLiteral("strokeAlign")))
+        l.strokeAlign = strokeAlignFromString(o.value(QStringLiteral("strokeAlign")).toString());
+    else
+        l.strokeAlign = o.value(QStringLiteral("strokeOutside")).toBool(true) ? StrokeAlign::Outside : StrokeAlign::Center;
+    l.dash = strokeDashFromString(o.value(QStringLiteral("dash")).toString());
+    l.dashOffset = o.value(QStringLiteral("dashOffset")).toDouble(0.0);
+    l.sketchLength = o.value(QStringLiteral("sketchLength")).toDouble(0.0);
+    l.sketchDeviation = o.value(QStringLiteral("sketchDeviation")).toDouble(0.0);
+    l.sketchSeed = o.value(QStringLiteral("sketchSeed")).toInt(0);
     l.knockout = o.value(QStringLiteral("knockout")).toBool(false);
     l.trimStart = o.value(QStringLiteral("trimStart")).toDouble(0.0);
     l.trimEnd = o.value(QStringLiteral("trimEnd")).toDouble(1.0);
@@ -490,6 +572,276 @@ TextShadingLayer textShadingLayerFromJson(const QJsonObject &o)
     l.extrudeDarken = o.value(QStringLiteral("extrudeDarken")).toDouble(0.5);
     l.scope = textLayerScopeFromString(o.value(QStringLiteral("scope")).toString());
     return l;
+}
+
+// ---------------------------------------------------------------------------------------------
+// Keyframe fields
+
+bool parseLayerKey(const QString &key, LayerKeyPath *out)
+{
+    if (!key.startsWith(QLatin1String("layer.")))
+        return false;
+    const int dot = key.indexOf(QLatin1Char('.'), 6);
+    if (dot < 0)
+        return false;
+    out->layerId = key.mid(6, dot - 6);
+    out->field = key.mid(dot + 1);
+    return !out->layerId.isEmpty() && !out->field.isEmpty();
+}
+
+QStringList shadingLayerKeyframeFields(const TextShadingLayer &layer)
+{
+    QStringList fields{QStringLiteral("opacity"), QStringLiteral("offsetX"), QStringLiteral("offsetY"),
+                       QStringLiteral("blur")};
+    if (layer.kind == TextLayerKind::Stroke || layer.kind == TextLayerKind::Extrude)
+        fields.append(QStringLiteral("width"));
+    if (layer.kind == TextLayerKind::Shadow || layer.kind == TextLayerKind::Glow)
+        fields.append(QStringLiteral("spread"));
+    if (layer.kind == TextLayerKind::Stroke)
+        fields << QStringLiteral("trimStart") << QStringLiteral("trimEnd") << QStringLiteral("dashOffset");
+    if (layer.kind == TextLayerKind::Stroke || layer.kind == TextLayerKind::Fill)
+        fields << QStringLiteral("sketchLength") << QStringLiteral("sketchDeviation");
+    switch (layer.paint.kind) {
+    case TextPaintKind::Solid:
+    case TextPaintKind::Texture:
+        fields << QStringLiteral("color.r") << QStringLiteral("color.g") << QStringLiteral("color.b") << QStringLiteral("color.a");
+        break;
+    case TextPaintKind::Gradient:
+        fields << QStringLiteral("gradient.angle") << QStringLiteral("gradient.offset") << QStringLiteral("gradient.scale")
+               << QStringLiteral("gradient.center.x") << QStringLiteral("gradient.center.y");
+        for (int i = 0; i < layer.paint.gradient.stops.size(); ++i)
+            fields.append(QStringLiteral("gradient.stop.%1.pos").arg(i));
+        break;
+    case TextPaintKind::Effect:
+        fields << QStringLiteral("color.r") << QStringLiteral("color.g") << QStringLiteral("color.b") << QStringLiteral("color.a");
+        for (auto it = layer.paint.effect.params.constBegin(); it != layer.paint.effect.params.constEnd(); ++it) {
+            if (it->type == VectorSlotValue::Type::Scalar)
+                fields.append(QStringLiteral("effect.%1").arg(it.key()));
+        }
+        break;
+    }
+    return fields;
+}
+
+namespace {
+
+// Paint-specific fields only exist for the paint kind that owns them, so a stray key on the
+// wrong layer is unknown rather than silently absorbed.
+bool fieldMatchesPaint(const TextShadingLayer &l, const QString &field)
+{
+    if (field.startsWith(QLatin1String("gradient.")))
+        return l.paint.kind == TextPaintKind::Gradient;
+    if (field.startsWith(QLatin1String("effect.")))
+        return l.paint.kind == TextPaintKind::Effect;
+    if (field.startsWith(QLatin1String("color.")))
+        return l.paint.kind != TextPaintKind::Gradient;
+    return true;
+}
+
+} // namespace
+
+bool shadingLayerScalar(const TextShadingLayer &l, const QString &field, double *out)
+{
+    if (!fieldMatchesPaint(l, field))
+        return false;
+    if (field == QLatin1String("opacity"))
+        *out = l.opacity;
+    else if (field == QLatin1String("offsetX"))
+        *out = l.offsetX;
+    else if (field == QLatin1String("offsetY"))
+        *out = l.offsetY;
+    else if (field == QLatin1String("blur"))
+        *out = l.blur;
+    else if (field == QLatin1String("width"))
+        *out = l.width;
+    else if (field == QLatin1String("spread"))
+        *out = l.spread;
+    else if (field == QLatin1String("trimStart"))
+        *out = l.trimStart;
+    else if (field == QLatin1String("trimEnd"))
+        *out = l.trimEnd;
+    else if (field == QLatin1String("dashOffset"))
+        *out = l.dashOffset;
+    else if (field == QLatin1String("sketchLength"))
+        *out = l.sketchLength;
+    else if (field == QLatin1String("sketchDeviation"))
+        *out = l.sketchDeviation;
+    else if (field == QLatin1String("color.r"))
+        *out = l.paint.color.redF();
+    else if (field == QLatin1String("color.g"))
+        *out = l.paint.color.greenF();
+    else if (field == QLatin1String("color.b"))
+        *out = l.paint.color.blueF();
+    else if (field == QLatin1String("color.a"))
+        *out = l.paint.color.alphaF();
+    else if (field == QLatin1String("gradient.angle"))
+        *out = l.paint.gradient.angle;
+    else if (field == QLatin1String("gradient.offset"))
+        *out = l.paint.gradient.offset;
+    else if (field == QLatin1String("gradient.scale"))
+        *out = l.paint.gradient.scale;
+    else if (field == QLatin1String("gradient.center.x"))
+        *out = l.paint.gradient.center.x();
+    else if (field == QLatin1String("gradient.center.y"))
+        *out = l.paint.gradient.center.y();
+    else if (field.startsWith(QLatin1String("gradient.stop."))) {
+        const QStringList parts = field.split(QLatin1Char('.'));
+        const int i = parts.size() == 4 ? parts.at(2).toInt() : -1;
+        if (i < 0 || i >= l.paint.gradient.stops.size() || parts.at(3) != QLatin1String("pos"))
+            return false;
+        *out = l.paint.gradient.stops.at(i).pos;
+    } else if (field.startsWith(QLatin1String("effect."))) {
+        const auto it = l.paint.effect.params.constFind(field.mid(7));
+        if (it == l.paint.effect.params.constEnd() || it->type != VectorSlotValue::Type::Scalar)
+            return false;
+        *out = it->scalar;
+    } else
+        return false;
+    return true;
+}
+
+bool setShadingLayerScalar(TextShadingLayer &l, const QString &field, double value)
+{
+    if (!fieldMatchesPaint(l, field))
+        return false;
+    if (field == QLatin1String("opacity"))
+        l.opacity = qBound(0.0, value, 1.0);
+    else if (field == QLatin1String("offsetX"))
+        l.offsetX = value;
+    else if (field == QLatin1String("offsetY"))
+        l.offsetY = value;
+    else if (field == QLatin1String("blur"))
+        l.blur = qMax(0.0, value);
+    else if (field == QLatin1String("width"))
+        l.width = qMax(0.0, value);
+    else if (field == QLatin1String("spread"))
+        l.spread = value;
+    else if (field == QLatin1String("trimStart"))
+        l.trimStart = qBound(0.0, value, 1.0);
+    else if (field == QLatin1String("trimEnd"))
+        l.trimEnd = qBound(0.0, value, 1.0);
+    else if (field == QLatin1String("dashOffset"))
+        l.dashOffset = value;
+    else if (field == QLatin1String("sketchLength"))
+        l.sketchLength = qMax(0.0, value);
+    else if (field == QLatin1String("sketchDeviation"))
+        l.sketchDeviation = qMax(0.0, value);
+    else if (field == QLatin1String("color.r"))
+        l.paint.color.setRedF(qBound(0.0, value, 1.0));
+    else if (field == QLatin1String("color.g"))
+        l.paint.color.setGreenF(qBound(0.0, value, 1.0));
+    else if (field == QLatin1String("color.b"))
+        l.paint.color.setBlueF(qBound(0.0, value, 1.0));
+    else if (field == QLatin1String("color.a"))
+        l.paint.color.setAlphaF(qBound(0.0, value, 1.0));
+    else if (field == QLatin1String("gradient.angle"))
+        l.paint.gradient.angle = value;
+    else if (field == QLatin1String("gradient.offset"))
+        l.paint.gradient.offset = value;
+    else if (field == QLatin1String("gradient.scale"))
+        l.paint.gradient.scale = qMax(0.01, value);
+    else if (field == QLatin1String("gradient.center.x"))
+        l.paint.gradient.center.setX(value);
+    else if (field == QLatin1String("gradient.center.y"))
+        l.paint.gradient.center.setY(value);
+    else if (field.startsWith(QLatin1String("gradient.stop."))) {
+        const QStringList parts = field.split(QLatin1Char('.'));
+        const int i = parts.size() == 4 ? parts.at(2).toInt() : -1;
+        if (i < 0 || i >= l.paint.gradient.stops.size() || parts.at(3) != QLatin1String("pos"))
+            return false;
+        l.paint.gradient.stops[i].pos = qBound(0.0, value, 1.0);
+    } else if (field.startsWith(QLatin1String("effect."))) {
+        const auto it = l.paint.effect.params.find(field.mid(7));
+        if (it == l.paint.effect.params.end() || it->type != VectorSlotValue::Type::Scalar)
+            return false;
+        it->scalar = value;
+    } else
+        return false;
+    return true;
+}
+
+QString shadingLayerFieldLabel(const QString &field)
+{
+    static const QMap<QString, QString> labels{
+        {QStringLiteral("opacity"), QCoreApplication::translate("TextStyle", "Opacity")},
+        {QStringLiteral("offsetX"), QCoreApplication::translate("TextStyle", "Offset X")},
+        {QStringLiteral("offsetY"), QCoreApplication::translate("TextStyle", "Offset Y")},
+        {QStringLiteral("blur"), QCoreApplication::translate("TextStyle", "Blur")},
+        {QStringLiteral("width"), QCoreApplication::translate("TextStyle", "Width")},
+        {QStringLiteral("spread"), QCoreApplication::translate("TextStyle", "Spread")},
+        {QStringLiteral("trimStart"), QCoreApplication::translate("TextStyle", "Trim start")},
+        {QStringLiteral("trimEnd"), QCoreApplication::translate("TextStyle", "Trim end")},
+        {QStringLiteral("dashOffset"), QCoreApplication::translate("TextStyle", "Dash offset")},
+        {QStringLiteral("sketchLength"), QCoreApplication::translate("TextStyle", "Sketch length")},
+        {QStringLiteral("sketchDeviation"), QCoreApplication::translate("TextStyle", "Sketch deviation")},
+        {QStringLiteral("color.r"), QCoreApplication::translate("TextStyle", "Red")},
+        {QStringLiteral("color.g"), QCoreApplication::translate("TextStyle", "Green")},
+        {QStringLiteral("color.b"), QCoreApplication::translate("TextStyle", "Blue")},
+        {QStringLiteral("color.a"), QCoreApplication::translate("TextStyle", "Alpha")},
+        {QStringLiteral("gradient.angle"), QCoreApplication::translate("TextStyle", "Gradient angle")},
+        {QStringLiteral("gradient.offset"), QCoreApplication::translate("TextStyle", "Gradient offset")},
+        {QStringLiteral("gradient.scale"), QCoreApplication::translate("TextStyle", "Gradient scale")},
+        {QStringLiteral("gradient.center.x"), QCoreApplication::translate("TextStyle", "Centre X")},
+        {QStringLiteral("gradient.center.y"), QCoreApplication::translate("TextStyle", "Centre Y")},
+    };
+    const auto it = labels.constFind(field);
+    if (it != labels.constEnd())
+        return *it;
+    if (field.startsWith(QLatin1String("gradient.stop.")))
+        return QCoreApplication::translate("TextStyle", "Stop %1").arg(field.section(QLatin1Char('.'), 2, 2).toInt() + 1);
+    if (field.startsWith(QLatin1String("effect.")))
+        return field.mid(7);
+    return field;
+}
+
+QString shadingLayerKindLabel(TextLayerKind kind)
+{
+    switch (kind) {
+    case TextLayerKind::Fill:
+        return QCoreApplication::translate("TextStyle", "Fill");
+    case TextLayerKind::Stroke:
+        return QCoreApplication::translate("TextStyle", "Stroke");
+    case TextLayerKind::Shadow:
+        return QCoreApplication::translate("TextStyle", "Shadow");
+    case TextLayerKind::Glow:
+        return QCoreApplication::translate("TextStyle", "Glow");
+    case TextLayerKind::Extrude:
+        return QCoreApplication::translate("TextStyle", "Extrude");
+    }
+    return {};
+}
+
+QString shadingLayerKeyframeLabel(const QList<TextShadingLayer> &layers, const QString &key)
+{
+    LayerKeyPath path;
+    if (!parseLayerKey(key, &path))
+        return key;
+    const TextShadingLayer *layer = findTextLayer(layers, path.layerId);
+    if (!layer)
+        return key;
+    int ordinal = 0, sameKind = 0;
+    for (const TextShadingLayer &other : layers) {
+        if (other.kind != layer->kind)
+            continue;
+        ++sameKind;
+        if (&other == layer)
+            ordinal = sameKind;
+    }
+    QString name = shadingLayerKindLabel(layer->kind);
+    if (sameKind > 1)
+        name += QStringLiteral(" %1").arg(ordinal);
+    return name + QStringLiteral(" · ") + shadingLayerFieldLabel(path.field);
+}
+
+void eraseLayerKeyframes(QMap<QString, KeyframeTrack<double>> &keyframes, const QString &layerId)
+{
+    const QString prefix = QStringLiteral("layer.") + layerId + QLatin1Char('.');
+    for (auto it = keyframes.begin(); it != keyframes.end();) {
+        if (it.key().startsWith(prefix))
+            it = keyframes.erase(it);
+        else
+            ++it;
+    }
 }
 
 } // namespace drift

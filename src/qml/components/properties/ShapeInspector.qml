@@ -3,6 +3,8 @@ import QtQuick.Controls.Basic
 import Drift
 import ".."
 
+// The shape clip's inspector: which shape, its shading stack (the same layer rows text uses,
+// keyed "shape.layer.<id>.<field>") and the keyframable geometry knobs.
 Item {
     id: root
 
@@ -17,13 +19,7 @@ Item {
     readonly property bool hasShapeStyle: hasSelection && clipKind === "shape" && !!clipData.shapeStyle
     readonly property var shapeStyle: hasShapeStyle ? clipData.shapeStyle : ({
                                                                        "kind": "rectangle",
-                                                                       "fillKind": "solid",
-                                                                       "fill": "#ff00b4ff",
-                                                                       "fillSecondary": "#ff7a00ff",
-                                                                       "gradientAngle": 90,
-                                                                       "stroke": "#ffffffff",
-                                                                       "strokeWidth": 4,
-                                                                       "strokeStyle": "solid",
+                                                                       "layers": [],
                                                                        "cornerRadius": 0,
                                                                        "points": 5,
                                                                        "innerRatio": 0.5,
@@ -32,12 +28,14 @@ Item {
                                                                        "tailX": 0.25,
                                                                        "tailSize": 0.2
                                                                    })
+    readonly property var layers: (shapeStyle && shapeStyle.layers) || []
     readonly property var shapeCatalog: EditorState.builtinShapes()
+    // Which rows are open, keyed by layer id so it survives reorders and delegate rebuilds.
+    property var expandedLayerIds: ({})
 
     // Which geometry controls apply to the selected kind. The catalog id and the stored kind are
     // not always the same word ("circle" is an ellipse), so match on the stored kind.
     readonly property var shapeFamilies: ({
-        "corner": ["rounded-rectangle", "speech-bubble-rect", "callout"],
         "star": ["star", "burst"],
         "arrow": ["arrow", "double-arrow", "block-arrow", "chevron", "banner"],
         "shaft": ["arrow", "double-arrow", "chevron", "cross", "curved-arrow"],
@@ -52,32 +50,37 @@ Item {
         patch[key] = value
         EditorState.setShapeStyle(EditorState.selectedTrack, EditorState.selectedClip, patch)
     }
+    function knob(key, label, decimals) {
+        return { "key": "shape." + key, "label": label, "def": Number(root.shapeStyle[key]) || 0, "decimals": decimals }
+    }
+    function knobKeyframes(key) {
+        const keys = root.shapeStyle && root.shapeStyle.keyframes
+        const entry = keys && keys[key]
+        return (entry && entry.points) || []
+    }
+    function setLayerExpanded(id, on) {
+        const next = Object.assign({}, root.expandedLayerIds)
+        if (on)
+            next[id] = true
+        else
+            delete next[id]
+        root.expandedLayerIds = next
+    }
+    function addLayer(kind) {
+        const id = EditorState.addStyleLayer(EditorState.selectedTrack, EditorState.selectedClip, kind)
+        if (id && id.length > 0)
+            root.setLayerExpanded(id, true)
+    }
 
     height: shapeTabColumn.height
     implicitHeight: shapeTabColumn.height
 
-    function refreshFields() {
-        if (!root.hasShapeStyle)
-            return
-        const sh = root.shapeStyle
-        if (gradientAngleField && !gradientAngleField.activeFocus)
-            gradientAngleField.value = sh.gradientAngle
-        if (strokeWidthField && !strokeWidthField.activeFocus)
-            strokeWidthField.value = sh.strokeWidth
-        if (cornerRadiusField && !cornerRadiusField.activeFocus)
-            cornerRadiusField.value = sh.cornerRadius
-        if (shapePointsField && !shapePointsField.activeFocus)
-            shapePointsField.value = sh.points
-    }
-
     Connections {
         target: EditorState
-        function onSelectionChanged() { root.clipDataRevision++; root.refreshFields() }
-        function onSelectedClipDataChanged() { root.clipDataRevision++; root.refreshFields() }
-        function onTracksChanged() { root.clipDataRevision++; root.refreshFields() }
+        function onSelectionChanged() { root.clipDataRevision++ }
+        function onSelectedClipDataChanged() { root.clipDataRevision++ }
+        function onTracksChanged() { root.clipDataRevision++ }
     }
-
-    Component.onCompleted: refreshFields()
 
     Column {
         id: shapeTabColumn
@@ -108,7 +111,7 @@ Item {
             ThemedLabel {
                 width: parent.width
                 opacity: 0.8
-                text: qsTr("Swapping the shape keeps its position, size and effects.")
+                text: qsTr("Swapping the shape keeps its position, size, style and effects.")
             }
 
             ThemedComboBox {
@@ -130,291 +133,165 @@ Item {
             }
         }
 
-        // ----- Fill -------------------------------------------------------
+        // ----- Layers -----------------------------------------------------
         Column {
             width: parent.width
-            spacing: Theme.spacingSm
+            spacing: Theme.spacingMd
 
-            ThemedLabel { text: qsTr("Fill") }
-
-            ThemedComboBox {
-                id: fillKindBox
+            Row {
                 width: parent.width
-                model: ["none", "solid", "linear", "radial"]
-                readonly property var labels: ({
-                    "none": qsTr("None"),
-                    "solid": qsTr("Solid"),
-                    "linear": qsTr("Linear gradient"),
-                    "radial": qsTr("Radial gradient")
-                })
-                displayText: labels[model[currentIndex]] || model[currentIndex]
-                tooltip: qsTr("How the shape's interior is painted")
-                currentIndex: Math.max(0, model.indexOf(root.shapeStyle.fillKind))
-                onActivated: root.setShapeKey("fillKind", model[currentIndex])
-            }
+                spacing: Theme.spacingSm
 
-            ColorSwatchField {
-                visible: root.shapeStyle.fillKind !== "none"
-                hex: root.shapeStyle.fill
-                tooltip: root.shapeStyle.fillKind === "solid"
-                         ? qsTr("Choose fill colour")
-                         : qsTr("Choose the gradient's start colour")
-                onEdited: value => root.setShapeKey("fill", value)
-            }
+                Text {
+                    width: parent.width - addLayerButton.width - parent.spacing
+                    anchors.verticalCenter: parent.verticalCenter
+                    text: qsTr("Layers")
+                    color: Theme.panelForeground
+                    font.family: Theme.fontFamily
+                    font.pixelSize: Theme.fontSizeSm
+                    font.weight: Font.DemiBold
+                }
+                ThemedButton {
+                    id: addLayerButton
+                    variant: "secondary"
+                    glyph: Theme.icons.plus
+                    text: qsTr("Add layer")
+                    tooltip: qsTr("Add a fill, stroke, shadow, glow or extrude layer")
+                    onClicked: addLayerMenu.popup()
 
-            ColorSwatchField {
-                visible: root.shapeStyle.fillKind === "linear"
-                         || root.shapeStyle.fillKind === "radial"
-                hex: root.shapeStyle.fillSecondary
-                tooltip: qsTr("Choose the gradient's end colour")
-                onEdited: value => root.setShapeKey("fillSecondary", value)
-            }
-
-            Column {
-                visible: root.shapeStyle.fillKind === "linear"
-                width: parent.width
-                spacing: Theme.spacingXs
-
-                ThemedLabel { text: qsTr("Gradient angle") }
-
-                ThemedNumberField {
-                    id: gradientAngleField
-                    width: parent.width
-                    unit: "°"
-                    decimals: 0
-                    step: 15
-                    from: -360
-                    to: 360
-                    onEdited: v => root.setShapeKey("gradientAngle", v)
+                    ThemedContextMenu {
+                        id: addLayerMenu
+                        ThemedMenuItem { text: qsTr("Fill"); onTriggered: root.addLayer("fill") }
+                        ThemedMenuItem { text: qsTr("Stroke"); onTriggered: root.addLayer("stroke") }
+                        ThemedMenuItem { text: qsTr("Shadow"); onTriggered: root.addLayer("shadow") }
+                        ThemedMenuItem { text: qsTr("Glow"); onTriggered: root.addLayer("glow") }
+                        ThemedMenuItem { text: qsTr("Extrude"); onTriggered: root.addLayer("extrude") }
+                    }
                 }
             }
-        }
 
-        // ----- Stroke -----------------------------------------------------
-        Column {
-            width: parent.width
-            spacing: Theme.spacingSm
-
-            ThemedLabel { text: qsTr("Stroke") }
-
-            ThemedComboBox {
-                id: strokeStyleBox
+            Text {
+                visible: root.layers.length === 0
                 width: parent.width
-                model: ["none", "solid", "dash", "dot", "dashdot"]
-                readonly property var labels: ({
-                    "none": qsTr("None"),
-                    "solid": qsTr("Solid"),
-                    "dash": qsTr("Dashed"),
-                    "dot": qsTr("Dotted"),
-                    "dashdot": qsTr("Dash-dot")
-                })
-                displayText: labels[model[currentIndex]] || model[currentIndex]
-                tooltip: qsTr("Outline style")
-                currentIndex: Math.max(0, model.indexOf(root.shapeStyle.strokeStyle))
-                onActivated: root.setShapeKey("strokeStyle", model[currentIndex])
+                wrapMode: Text.WordWrap
+                text: qsTr("No layers. Add a fill to start.")
+                color: Theme.mutedForeground
+                font.family: Theme.fontFamily
+                font.pixelSize: Theme.fontSizeXs
             }
 
-            ColorSwatchField {
-                visible: root.shapeStyle.strokeStyle !== "none"
-                hex: root.shapeStyle.stroke
-                tooltip: qsTr("Choose stroke colour")
-                onEdited: value => root.setShapeKey("stroke", value)
-            }
-
-            Column {
-                visible: root.shapeStyle.strokeStyle !== "none"
-                width: parent.width
-                spacing: Theme.spacingXs
-
-                ThemedLabel { text: qsTr("Stroke width") }
-
-                ThemedNumberField {
-                    id: strokeWidthField
+            // Integer model so rows survive the fresh QVariantList every edit produces; the list
+            // is walked from the back so the front-most layer sits on top.
+            Repeater {
+                model: root.layers.length
+                delegate: ShadingLayerRow {
+                    required property int index
                     width: parent.width
-                    unit: "px"
-                    decimals: 0
-                    step: 1
-                    from: 0
-                    to: 200
-                    onEdited: v => root.setShapeKey("strokeWidth", v)
+                    layerData: root.layers[root.layers.length - 1 - index] || ({})
+                    styleData: root.shapeStyle
+                    keyPrefix: "shape"
+                    position: index
+                    count: root.layers.length
+                    expanded: root.expandedLayerIds[layerId] === true
+                    onToggleRequested: root.setLayerExpanded(layerId, !expanded)
                 }
             }
         }
 
         // ----- Geometry ---------------------------------------------------
-        Column {
-            visible: root.shapeHas("corner")
+        CollapsibleSection {
             width: parent.width
-            spacing: Theme.spacingXs
+            title: qsTr("Geometry")
 
-            ThemedLabel { text: qsTr("Corner radius") }
-
-            ThemedNumberField {
-                id: cornerRadiusField
+            Column {
                 width: parent.width
-                unit: "px"
-                decimals: 0
-                step: 4
-                from: 0
-                to: 2000
-                onEdited: v => root.setShapeKey("cornerRadius", v)
-            }
-        }
+                spacing: Theme.spacingMd
 
-        Column {
-            visible: root.shapeHas("star")
-            width: parent.width
-            spacing: Theme.spacingSm
-
-            ThemedLabel { text: qsTr("Points") }
-
-            ThemedNumberField {
-                id: shapePointsField
-                width: parent.width
-                decimals: 0
-                step: 1
-                from: 3
-                to: 60
-                onEdited: v => root.setShapeKey("points", v)
-            }
-
-            ThemedLabel { text: qsTr("Inner radius") }
-
-            ThemedLabel {
-                width: parent.width
-                opacity: 0.8
-                text: qsTr("How deep the notches cut between the points.")
-            }
-
-            ThemedSlider {
-                id: innerRatioSlider
-                label: qsTr("Inner radius")
-                width: parent.width
-                from: 0.05
-                to: 0.95
-                stepSize: 0.01
-                Binding on value {
-                    when: !innerRatioSlider.pressed
-                    value: root.shapeStyle.innerRatio
+                PropertyKeyframeRow {
+                    width: parent.width
+                    visible: root.shapeStyle.kind !== "ellipse"
+                    propDef: root.knob("cornerRadius", qsTr("Corner radius"), 0)
+                    keyframeList: root.knobKeyframes("cornerRadius")
+                    useSlider: true
+                    sliderFrom: 0
+                    sliderTo: 400
+                    unit: "px"
                 }
-                onMoved: root.setShapeKey("innerRatio", value)
-                onPressedChanged: {
-                    if (pressed)
-                        EditorState.beginPreviewDrag(qsTr("Shape style changed"))
-                    else
-                        EditorState.commitPreviewDrag()
+
+                Row {
+                    width: parent.width
+                    spacing: 8
+                    visible: root.shapeHas("star")
+
+                    PropertyKeyframeRow {
+                        width: (parent.width - parent.spacing) / 2
+                        propDef: root.knob("points", qsTr("Points"), 0)
+                        keyframeList: root.knobKeyframes("points")
+                        useSlider: true
+                        sliderFrom: 3
+                        sliderTo: 60
+                    }
+                    PropertyKeyframeRow {
+                        width: (parent.width - parent.spacing) / 2
+                        propDef: root.knob("innerRatio", qsTr("Inner radius"), 2)
+                        keyframeList: root.knobKeyframes("innerRatio")
+                        useSlider: true
+                        sliderFrom: 0.05
+                        sliderTo: 0.95
+                        percent: true
+                    }
                 }
-            }
-        }
 
-        Column {
-            visible: root.shapeHas("arrow")
-            width: parent.width
-            spacing: Theme.spacingXs
+                Row {
+                    width: parent.width
+                    spacing: 8
+                    visible: root.shapeHas("arrow") || root.shapeHas("shaft")
 
-            ThemedLabel { text: qsTr("Head size") }
-
-            ThemedSlider {
-                id: headSizeSlider
-                label: qsTr("Head size")
-                width: parent.width
-                from: 0.05
-                to: 0.9
-                stepSize: 0.01
-                Binding on value {
-                    when: !headSizeSlider.pressed
-                    value: root.shapeStyle.headSize
+                    PropertyKeyframeRow {
+                        width: (parent.width - parent.spacing) / 2
+                        visible: root.shapeHas("arrow")
+                        propDef: root.knob("headSize", qsTr("Head size"), 2)
+                        keyframeList: root.knobKeyframes("headSize")
+                        useSlider: true
+                        sliderFrom: 0.05
+                        sliderTo: 0.9
+                        percent: true
+                    }
+                    PropertyKeyframeRow {
+                        width: (parent.width - parent.spacing) / 2
+                        visible: root.shapeHas("shaft")
+                        propDef: root.knob("thickness", qsTr("Thickness"), 2)
+                        keyframeList: root.knobKeyframes("thickness")
+                        useSlider: true
+                        sliderFrom: 0.05
+                        sliderTo: 1
+                        percent: true
+                    }
                 }
-                onMoved: root.setShapeKey("headSize", value)
-                onPressedChanged: {
-                    if (pressed)
-                        EditorState.beginPreviewDrag(qsTr("Shape style changed"))
-                    else
-                        EditorState.commitPreviewDrag()
-                }
-            }
-        }
 
-        Column {
-            visible: root.shapeHas("shaft")
-            width: parent.width
-            spacing: Theme.spacingXs
+                Row {
+                    width: parent.width
+                    spacing: 8
+                    visible: root.shapeHas("bubble")
 
-            ThemedLabel { text: qsTr("Thickness") }
-
-            ThemedSlider {
-                id: thicknessSlider
-                label: qsTr("Thickness")
-                width: parent.width
-                from: 0.05
-                to: 1.0
-                stepSize: 0.01
-                Binding on value {
-                    when: !thicknessSlider.pressed
-                    value: root.shapeStyle.thickness
-                }
-                onMoved: root.setShapeKey("thickness", value)
-                onPressedChanged: {
-                    if (pressed)
-                        EditorState.beginPreviewDrag(qsTr("Shape style changed"))
-                    else
-                        EditorState.commitPreviewDrag()
-                }
-            }
-        }
-
-        Column {
-            visible: root.shapeHas("bubble")
-            width: parent.width
-            spacing: Theme.spacingSm
-
-            ThemedLabel { text: qsTr("Tail position") }
-
-            ThemedLabel {
-                width: parent.width
-                opacity: 0.8
-                text: qsTr("Where the tail meets the bottom of the bubble.")
-            }
-
-            ThemedSlider {
-                id: tailXSlider
-                label: qsTr("Tail position")
-                width: parent.width
-                from: 0.08
-                to: 0.92
-                stepSize: 0.01
-                Binding on value {
-                    when: !tailXSlider.pressed
-                    value: root.shapeStyle.tailX
-                }
-                onMoved: root.setShapeKey("tailX", value)
-                onPressedChanged: {
-                    if (pressed)
-                        EditorState.beginPreviewDrag(qsTr("Shape style changed"))
-                    else
-                        EditorState.commitPreviewDrag()
-                }
-            }
-
-            ThemedLabel { text: qsTr("Tail size") }
-
-            ThemedSlider {
-                id: tailSizeSlider
-                label: qsTr("Tail size")
-                width: parent.width
-                from: 0.05
-                to: 0.5
-                stepSize: 0.01
-                Binding on value {
-                    when: !tailSizeSlider.pressed
-                    value: root.shapeStyle.tailSize
-                }
-                onMoved: root.setShapeKey("tailSize", value)
-                onPressedChanged: {
-                    if (pressed)
-                        EditorState.beginPreviewDrag(qsTr("Shape style changed"))
-                    else
-                        EditorState.commitPreviewDrag()
+                    PropertyKeyframeRow {
+                        width: (parent.width - parent.spacing) / 2
+                        propDef: root.knob("tailX", qsTr("Tail position"), 2)
+                        keyframeList: root.knobKeyframes("tailX")
+                        useSlider: true
+                        sliderFrom: 0.08
+                        sliderTo: 0.92
+                        percent: true
+                    }
+                    PropertyKeyframeRow {
+                        width: (parent.width - parent.spacing) / 2
+                        propDef: root.knob("tailSize", qsTr("Tail size"), 2)
+                        keyframeList: root.knobKeyframes("tailSize")
+                        useSlider: true
+                        sliderFrom: 0.05
+                        sliderTo: 0.5
+                        percent: true
+                    }
                 }
             }
         }

@@ -42,6 +42,31 @@ struct VectorMarker
     double t1 = 0;
 };
 
+// An SVG element the user can address by id (see parseSvgOverrideKey). The paint fields are the
+// element's own attributes as written (or from its style=""), empty when it has none.
+struct VectorSvgElement
+{
+    QString id;
+    QString tag;
+    QStringList classes;
+    bool inDefs = false;
+    QString fill;
+    QString stroke;
+    QString strokeWidth;
+    QString opacity;
+};
+
+// What one pass over an SVG's XML yields: the elements carrying an id, and the same document
+// with an id minted onto every paintable element that had none, so the renderer can reach all
+// of them through SkSVGDOM::findNodeById (Skia keeps no other handle on a node).
+struct SvgScan
+{
+    QList<VectorSvgElement> elements; // user ids only
+    QStringList injectedIds;
+    QByteArray rewritten;
+};
+SvgScan scanSvg(const QByteArray &data);
+
 struct InspectReport
 {
     bool ok = false;
@@ -61,6 +86,7 @@ struct InspectReport
     QStringList expressions; // property paths carrying an expression Skottie will ignore
     QStringList unsupported; // parser warnings, deduplicated
     QStringList hints;
+    QList<VectorSvgElement> svgElements; // SVG only: elements with an id the renderer can find
 
     QJsonObject toJson() const;
 };

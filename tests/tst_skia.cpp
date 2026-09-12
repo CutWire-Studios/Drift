@@ -11,8 +11,6 @@
 #include "engine/GpuEffectExecutor.h"
 #include "engine/EmojiCatalog.h"
 #include "engine/FontCatalog.h"
-#include "engine/RenderBackend.h"
-#include "engine/ShapeRaster.h"
 #include "engine/SkiaRuntime.h"
 #include "engine/SkiaShapePainter.h"
 #include "engine/SkiaTextPainter.h"
@@ -197,7 +195,7 @@ Coverage coverageOf(const QImage &image)
 {
     Coverage c;
     double sx = 0, sy = 0;
-    const QImage img = image.convertToFormat(QImage::Format_RGBA8888);
+    const QImage img = image.convertToFormat(QImage::Format_ARGB32);
     for (int y = 0; y < img.height(); ++y) {
         const QRgb *row = reinterpret_cast<const QRgb *>(img.constScanLine(y));
         for (int x = 0; x < img.width(); ++x) {
@@ -272,10 +270,15 @@ private slots:
     void cacheServesStaticPainters();
     void compositorRendersVectorLayer();
     void sceneUnchangedAfterSkiaUse();
-    void shapePainterMatchesQPainter_data();
-    void shapePainterMatchesQPainter();
+    void allShapeKindsRasterize_data();
+    void allShapeKindsRasterize();
     void shapePainterCacheKey();
-    void backendSwitchSelectsShapeRenderer();
+    void shapeStrokeAlignAndBleed();
+    void shapeCornerRadiusRoundsAnyKind();
+    void shapeTrimAndDashRemoveMass();
+    void shapeShadowOffsetsSilhouette();
+    void keyframedShapeStrokeGrowsOverTime();
+    void compositorDrawsShapeThroughSkia();
     void textPainterCacheKeys();
     void keyframedTextGrowsOverTime();
     void gradientFillSweepsTheBlock();
@@ -467,107 +470,287 @@ void SkiaTest::sceneUnchangedAfterSkiaUse()
     QCOMPARE(after, before);
 }
 
-// Every ShapeKind × fill × stroke, Skia's CPU raster against the QPainter reference. The two
-// rasterizers differ per pixel — Skia quantizes edge coverage where QPainter is exact-area, and
-// Qt flattens curved stroke outlines to chords — so the comparison is on coverage: alpha mass,
-// centroid and mean colour. Fills agree to 0.1 %; thin stroke-only rings are where the noise
-// peaks (about 5 % of mass, 0.9 px of centroid). A wrong dash unit, cap, gradient axis or path
-// fill rule moves those well past the tolerances.
-void SkiaTest::shapePainterMatchesQPainter_data()
+namespace {
+
+// A shape with one fill and one stroke layer, the way the catalog builds them.
+ShapeStyle shapeStyleWith(ShapeKind kind, const QColor &fill, double strokeWidth = 5.0,
+                          const QColor &stroke = QColor(20, 200, 60))
+{
+    ShapeStyle style;
+    style.kind = kind;
+    style.layers = defaultShapeLayers(fill, QColor(40, 40, 220), stroke, strokeWidth);
+    return style;
+}
+
+QImage rasterShape(const ShapeStyle &style, int w, int h, double scale = 1.0, double timeSec = 0.0)
+{
+    const skia::ShapePainterResult painted = skia::makeShapePainter(style, w, h, scale, timeSec);
+    return skia::SkiaRuntime::rasterize(*painted.painter);
+}
+
+// Alpha mass inside / outside a rect of the raster.
+double massInside(const QImage &image, const QRect &rect)
+{
+    double mass = 0;
+    const QImage img = image.convertToFormat(QImage::Format_ARGB32);
+    for (int y = 0; y < img.height(); ++y) {
+        const QRgb *row = reinterpret_cast<const QRgb *>(img.constScanLine(y));
+        for (int x = 0; x < img.width(); ++x)
+            if (rect.contains(x, y))
+                mass += qAlpha(row[x]) / 255.0;
+    }
+    return mass;
+}
+
+} // namespace
+
+// Every ShapeKind × paint variant rasterizes to something: a solid fill, a gradient fill, a
+// dashed stroke and a soft shadow all leave ink, and all of it inside the painter's image.
+void SkiaTest::allShapeKindsRasterize_data()
 {
     QTest::addColumn<int>("kind");
-    QTest::addColumn<int>("fill");
-    QTest::addColumn<int>("stroke");
-    const ShapeFillKind fills[] = {ShapeFillKind::None, ShapeFillKind::Solid,
-                                   ShapeFillKind::LinearGradient, ShapeFillKind::RadialGradient};
-    const ShapeStrokeStyle strokes[] = {ShapeStrokeStyle::None, ShapeStrokeStyle::Solid,
-                                        ShapeStrokeStyle::Dash, ShapeStrokeStyle::Dot,
-                                        ShapeStrokeStyle::DashDot};
+    QTest::addColumn<QString>("variant");
     for (ShapeKind kind : allShapeKinds()) {
-        for (ShapeFillKind fill : fills) {
-            for (ShapeStrokeStyle stroke : strokes) {
-                if (fill == ShapeFillKind::None && stroke == ShapeStrokeStyle::None)
-                    continue;
-                const QByteArray name = shapeKindToString(kind).toUtf8() + "/"
-                    + shapeFillKindToString(fill).toUtf8() + "/"
-                    + shapeStrokeStyleToString(stroke).toUtf8();
-                QTest::newRow(name.constData()) << int(kind) << int(fill) << int(stroke);
-            }
+        for (const char *variant : {"solid", "gradient", "dash", "shadow"}) {
+            const QByteArray name = shapeKindToString(kind).toUtf8() + "/" + variant;
+            QTest::newRow(name.constData()) << int(kind) << QString::fromLatin1(variant);
         }
     }
 }
 
-void SkiaTest::shapePainterMatchesQPainter()
+void SkiaTest::allShapeKindsRasterize()
 {
     QFETCH(int, kind);
-    QFETCH(int, fill);
-    QFETCH(int, stroke);
+    QFETCH(QString, variant);
 
-    ShapeStyle style;
-    style.kind = ShapeKind(kind);
-    style.fillKind = ShapeFillKind(fill);
-    style.strokeStyle = ShapeStrokeStyle(stroke);
-    style.fill = QColor(220, 40, 40);
-    style.fillSecondary = QColor(40, 40, 220);
-    style.gradientAngle = 30.0;
-    style.stroke = QColor(20, 200, 60);
-    style.strokeWidth = 5.0;
+    ShapeStyle style = shapeStyleWith(ShapeKind(kind), QColor(220, 40, 40));
     style.cornerRadius = 12.0;
+    if (variant == QLatin1String("gradient")) {
+        style.layers[0].paint.kind = TextPaintKind::Gradient;
+        style.layers[0].paint.gradient.angle = 30.0;
+        style.layers[1].enabled = false;
+    } else if (variant == QLatin1String("dash")) {
+        style.layers[0].enabled = false;
+        style.layers[1].dash = StrokeDash::Dash;
+        style.layers[1].strokeAlign = StrokeAlign::Center;
+    } else if (variant == QLatin1String("shadow")) {
+        style.layers.prepend(shadowLayer(Qt::black, 6.0, 6.0, 8.0, 0.8));
+    }
 
     const int w = 150;
     const int h = 110;
-    const double scale = 0.8;
-    const QImage reference = rasterizeShape(style, w, h, scale);
-    const QImage skiaImage = skia::SkiaRuntime::rasterize(*skia::makeShapePainter(style, w, h, scale));
-    QCOMPARE(skiaImage.size(), reference.size());
-
-    const Coverage a = coverageOf(reference);
-    const Coverage b = coverageOf(skiaImage);
-    QVERIFY(a.mass > 100);
-    const QString info = QStringLiteral("qt mass %1 centroid (%2,%3) rgb (%4,%5,%6) | skia mass %7 "
-                                        "centroid (%8,%9) rgb (%10,%11,%12)")
-                             .arg(a.mass).arg(a.centroid.x()).arg(a.centroid.y())
-                             .arg(a.r).arg(a.g).arg(a.b)
-                             .arg(b.mass).arg(b.centroid.x()).arg(b.centroid.y())
-                             .arg(b.r).arg(b.g).arg(b.b);
-    QVERIFY2(qAbs(a.mass - b.mass) <= a.mass * 0.06, qPrintable(info));
-    QVERIFY2(qAbs(a.centroid.x() - b.centroid.x()) <= 1.5, qPrintable(info));
-    QVERIFY2(qAbs(a.centroid.y() - b.centroid.y()) <= 1.5, qPrintable(info));
-    QVERIFY2(qAbs(a.r - b.r) <= 6 && qAbs(a.g - b.g) <= 6 && qAbs(a.b - b.b) <= 6, qPrintable(info));
+    const skia::ShapePainterResult painted = skia::makeShapePainter(style, w, h, 0.8);
+    QVERIFY(painted.painter);
+    QVERIFY(painted.rect.width() > w && painted.rect.height() > h);
+    QCOMPARE(painted.painter->size(), painted.rect.size().toSize());
+    const QImage image = skia::SkiaRuntime::rasterize(*painted.painter);
+    const Coverage c = coverageOf(image);
+    QVERIFY2(c.mass > 100, qPrintable(QStringLiteral("mass %1").arg(c.mass)));
+    if (variant == QLatin1String("solid"))
+        QVERIFY2(c.r > c.g && c.r > c.b, qPrintable(QStringLiteral("rgb %1 %2 %3").arg(c.r).arg(c.g).arg(c.b)));
+    if (variant == QLatin1String("gradient")) // red → blue
+        QVERIFY2(c.r > c.g && c.b > c.g, qPrintable(QStringLiteral("rgb %1 %2 %3").arg(c.r).arg(c.g).arg(c.b)));
+    if (variant == QLatin1String("dash"))
+        QVERIFY2(c.g > c.r, qPrintable(QStringLiteral("rgb %1 %2 %3").arg(c.r).arg(c.g).arg(c.b)));
+    // Nothing touches the outermost pixel ring: the bleed is wide enough.
+    QCOMPARE(massInside(image, QRect(0, 0, image.width(), 1)), 0.0);
+    QCOMPARE(massInside(image, QRect(0, image.height() - 1, image.width(), 1)), 0.0);
 }
 
 void SkiaTest::shapePainterCacheKey()
 {
-    ShapeStyle style;
-    style.kind = ShapeKind::Star;
+    ShapeStyle style = shapeStyleWith(ShapeKind::Star, QColor(220, 40, 40));
     const auto a = skia::makeShapePainter(style, 100, 80, 1.0);
     const auto b = skia::makeShapePainter(style, 100, 80, 1.0);
-    QVERIFY(a->cacheKey() != 0);
-    QCOMPARE(a->cacheKey(), b->cacheKey());
-    QCOMPARE(a->size(), QSize(100, 80));
+    QVERIFY(a.painter->cacheKey() != 0);
+    QCOMPARE(a.painter->cacheKey(), b.painter->cacheKey());
+    QCOMPARE(a.rect, b.rect);
 
-    QVERIFY(skia::makeShapePainter(style, 100, 80, 0.5)->cacheKey() != a->cacheKey());
-    QVERIFY(skia::makeShapePainter(style, 101, 80, 1.0)->cacheKey() != a->cacheKey());
+    QVERIFY(skia::makeShapePainter(style, 100, 80, 0.5).painter->cacheKey() != a.painter->cacheKey());
+    QVERIFY(skia::makeShapePainter(style, 101, 80, 1.0).painter->cacheKey() != a.painter->cacheKey());
     style.points = 7;
-    QVERIFY(skia::makeShapePainter(style, 100, 80, 1.0)->cacheKey() != a->cacheKey());
-    style.fill = Qt::green;
-    const quint64 green = skia::makeShapePainter(style, 100, 80, 1.0)->cacheKey();
-    style.strokeStyle = ShapeStrokeStyle::Dash;
-    QVERIFY(skia::makeShapePainter(style, 100, 80, 1.0)->cacheKey() != green);
+    QVERIFY(skia::makeShapePainter(style, 100, 80, 1.0).painter->cacheKey() != a.painter->cacheKey());
+    style.layers[0].paint.color = Qt::green;
+    const quint64 green = skia::makeShapePainter(style, 100, 80, 1.0).painter->cacheKey();
+    style.layers[1].dash = StrokeDash::Dash;
+    const quint64 dashed = skia::makeShapePainter(style, 100, 80, 1.0).painter->cacheKey();
+    QVERIFY(dashed != green);
+    style.cornerRadius = 9.0;
+    QVERIFY(skia::makeShapePainter(style, 100, 80, 1.0).painter->cacheKey() != dashed);
+
+    // Anything time-varying redraws every frame instead of filling the GPU cache.
+    ShapeStyle moving = style;
+    moving.layers[0].paint.kind = TextPaintKind::Gradient;
+    moving.layers[0].paint.gradient.offsetSpeed = 0.5;
+    QCOMPARE(skia::makeShapePainter(moving, 100, 80, 1.0).painter->cacheKey(), quint64(0));
+    ShapeStyle keyed = style;
+    keyed.keyframes[QStringLiteral("layer.stroke.width")].setKeyframe(0, 2.0);
+    keyed.keyframes[QStringLiteral("layer.stroke.width")].setKeyframe(secondsToUs(1.0), 9.0);
+    QCOMPARE(skia::makeShapePainter(keyed, 100, 80, 1.0).painter->cacheKey(), quint64(0));
 }
 
-// DRIFT_VECTOR_RENDERER picks which backend builds the shape layer. Both must produce the same
-// composited frame (coverage-wise), and only the Skia one touches the Skia paint counter.
-void SkiaTest::backendSwitchSelectsShapeRenderer()
+// Inside strokes never leave the layout rect; centred ones straddle it; outside ones sit wholly
+// in the bleed ring. The bleed grows with the stroke's reach.
+void SkiaTest::shapeStrokeAlignAndBleed()
+{
+    ShapeStyle style = shapeStyleWith(ShapeKind::Rectangle, QColor(220, 40, 40), 10.0);
+    style.layers[0].enabled = false;
+    const int w = 100;
+    const int h = 80;
+
+    style.layers[1].strokeAlign = StrokeAlign::Inside;
+    const double insideBleed = skia::shapeBleedFor(style);
+    QVERIFY(insideBleed < 4.0);
+    {
+        const skia::ShapePainterResult painted = skia::makeShapePainter(style, w, h, 1.0);
+        const QImage image = skia::SkiaRuntime::rasterize(*painted.painter);
+        const int bleed = qRound(-painted.rect.x());
+        const QRect layout(bleed, bleed, w, h);
+        const double inside = massInside(image, layout);
+        const double total = coverageOf(image).mass;
+        QVERIFY2(inside > 1500 && total - inside < 1.0, qPrintable(QStringLiteral("inside %1 total %2").arg(inside).arg(total)));
+    }
+
+    style.layers[1].strokeAlign = StrokeAlign::Outside;
+    const double outsideBleed = skia::shapeBleedFor(style);
+    QVERIFY(outsideBleed >= insideBleed + 10.0);
+    {
+        const skia::ShapePainterResult painted = skia::makeShapePainter(style, w, h, 1.0);
+        const QImage image = skia::SkiaRuntime::rasterize(*painted.painter);
+        const int bleed = qRound(-painted.rect.x());
+        const QRect layout(bleed, bleed, w, h);
+        const double inside = massInside(image, layout);
+        const double total = coverageOf(image).mass;
+        QVERIFY2(total > 1500 && inside < total * 0.05, qPrintable(QStringLiteral("inside %1 total %2").arg(inside).arg(total)));
+    }
+
+    style.layers[1].strokeAlign = StrokeAlign::Center;
+    {
+        const skia::ShapePainterResult painted = skia::makeShapePainter(style, w, h, 1.0);
+        const QImage image = skia::SkiaRuntime::rasterize(*painted.painter);
+        const int bleed = qRound(-painted.rect.x());
+        const QRect layout(bleed, bleed, w, h);
+        const double inside = massInside(image, layout);
+        const double total = coverageOf(image).mass;
+        QVERIFY2(inside > total * 0.35 && inside < total * 0.65, qPrintable(QStringLiteral("inside %1 total %2").arg(inside).arg(total)));
+    }
+}
+
+// A triangle with rounded corners loses its three tips: less ink than the sharp one. A star
+// rounds its inner corners too (which adds ink back), so there the raster merely has to change.
+// An ellipse has no corners and is left alone.
+void SkiaTest::shapeCornerRadiusRoundsAnyKind()
+{
+    ShapeStyle sharp = shapeStyleWith(ShapeKind::Triangle, QColor(220, 40, 40), 0.0);
+    ShapeStyle rounded = sharp;
+    rounded.cornerRadius = 20.0;
+    const double sharpMass = coverageOf(rasterShape(sharp, 160, 160)).mass;
+    const double roundedMass = coverageOf(rasterShape(rounded, 160, 160)).mass;
+    QVERIFY2(roundedMass < sharpMass * 0.995 && roundedMass > sharpMass * 0.5,
+             qPrintable(QStringLiteral("sharp %1 rounded %2").arg(sharpMass).arg(roundedMass)));
+
+    ShapeStyle star = shapeStyleWith(ShapeKind::Star, QColor(220, 40, 40), 0.0);
+    ShapeStyle starRounded = star;
+    starRounded.cornerRadius = 20.0;
+    QVERIFY(rasterShape(starRounded, 160, 160) != rasterShape(star, 160, 160));
+
+    ShapeStyle circle = shapeStyleWith(ShapeKind::Ellipse, QColor(220, 40, 40), 0.0);
+    ShapeStyle circleRounded = circle;
+    circleRounded.cornerRadius = 20.0;
+    QCOMPARE(coverageOf(rasterShape(circleRounded, 160, 160)).mass, coverageOf(rasterShape(circle, 160, 160)).mass);
+}
+
+// Trimming a stroke to its first half and dashing it both take ink away from the solid ring.
+void SkiaTest::shapeTrimAndDashRemoveMass()
+{
+    ShapeStyle style = shapeStyleWith(ShapeKind::Ellipse, QColor(220, 40, 40), 6.0);
+    style.layers[0].enabled = false;
+    style.layers[1].strokeAlign = StrokeAlign::Center;
+    const double full = coverageOf(rasterShape(style, 140, 140)).mass;
+
+    ShapeStyle trimmed = style;
+    trimmed.layers[1].trimEnd = 0.5;
+    const double half = coverageOf(rasterShape(trimmed, 140, 140)).mass;
+    QVERIFY2(half > full * 0.4 && half < full * 0.6, qPrintable(QStringLiteral("full %1 half %2").arg(full).arg(half)));
+
+    ShapeStyle dashed = style;
+    dashed.layers[1].dash = StrokeDash::Dash;
+    const double dashedMass = coverageOf(rasterShape(dashed, 140, 140)).mass;
+    // 4-on / 2-off, plus the round caps each dash grows: about five sixths of the ring.
+    QVERIFY2(dashedMass > full * 0.5 && dashedMass < full * 0.9,
+             qPrintable(QStringLiteral("full %1 dashed %2").arg(full).arg(dashedMass)));
+
+    // Shifting the dash phase moves the runs without changing how much ink there is.
+    ShapeStyle shifted = dashed;
+    shifted.layers[1].dashOffset = 3.0;
+    const QImage a = rasterShape(dashed, 140, 140);
+    const QImage b = rasterShape(shifted, 140, 140);
+    QVERIFY(a != b);
+    QVERIFY(qAbs(coverageOf(b).mass - dashedMass) < dashedMass * 0.1);
+
+    ShapeStyle sketchy = style;
+    sketchy.layers[1].sketchLength = 6.0;
+    sketchy.layers[1].sketchDeviation = 3.0;
+    QVERIFY(rasterShape(sketchy, 140, 140) != rasterShape(style, 140, 140));
+}
+
+// A shadow layer behind the fill is the fill's silhouette pushed along its offset: the ink's
+// centroid moves that way and the image carries black where the fill does not cover it.
+void SkiaTest::shapeShadowOffsetsSilhouette()
+{
+    ShapeStyle plain = shapeStyleWith(ShapeKind::Rectangle, QColor(255, 0, 0), 0.0);
+    ShapeStyle shadowed = plain;
+    shadowed.layers.prepend(shadowLayer(Qt::black, 14.0, 10.0, 0.0, 1.0));
+    const Coverage a = coverageOf(rasterShape(plain, 120, 90));
+    const Coverage b = coverageOf(rasterShape(shadowed, 120, 90));
+    QVERIFY2(b.mass > a.mass * 1.15, qPrintable(QStringLiteral("plain %1 shadowed %2").arg(a.mass).arg(b.mass)));
+    QVERIFY(b.centroid.x() > a.centroid.x() + 2.0);
+    QVERIFY(b.centroid.y() > a.centroid.y() + 1.0);
+    QVERIFY(b.r < a.r);
+}
+
+// A keyframed stroke width resolves per frame through the compositor: the ring is thicker later.
+void SkiaTest::keyframedShapeStrokeGrowsOverTime()
+{
+    ShapeStyle style = shapeStyleWith(ShapeKind::Ellipse, QColor(255, 0, 0), 2.0, Qt::green);
+    style.layers[0].enabled = false;
+    style.layers[1].strokeAlign = StrokeAlign::Inside;
+    style.keyframes[QStringLiteral("layer.stroke.width")].setKeyframe(0, 2.0);
+    style.keyframes[QStringLiteral("layer.stroke.width")].setKeyframe(secondsToUs(1.0), 20.0);
+    const ShapeStyle early = style.resolvedAt(0);
+    const ShapeStyle late = style.resolvedAt(secondsToUs(1.0));
+    QCOMPARE(early.layers[1].width, 2.0);
+    QCOMPARE(late.layers[1].width, 20.0);
+    const double thin = coverageOf(rasterShape(early, 120, 100)).mass;
+    const double thick = coverageOf(rasterShape(late, 120, 100)).mass;
+    QVERIFY2(thick > thin * 3.0, qPrintable(QStringLiteral("thin %1 thick %2").arg(thin).arg(thick)));
+
+    if (!GpuCompositor::isAvailable())
+        QSKIP("GL unavailable");
+    const Project project = shapeProject(style);
+    FrameCompositor compositor;
+    compositor.setProject(&project);
+    auto greenPixels = [](const QImage &img) {
+        int n = 0;
+        for (int y = 0; y < img.height(); ++y)
+            for (int x = 0; x < img.width(); ++x)
+                if (qGreen(img.pixel(x, y)) > 150 && qRed(img.pixel(x, y)) < 100)
+                    ++n;
+        return n;
+    };
+    const int first = greenPixels(compositor.compositeAt(0));
+    const int last = greenPixels(compositor.compositeAt(secondsToUs(1.0) - 1));
+    QVERIFY2(first > 50 && last > first * 3, qPrintable(QStringLiteral("first %1 last %2").arg(first).arg(last)));
+}
+
+// A static shape paints once and is served from the GPU cache afterwards; the composited fill
+// lands inside the clip's layout rect.
+void SkiaTest::compositorDrawsShapeThroughSkia()
 {
     if (!GpuCompositor::isAvailable())
         QSKIP("GL unavailable");
 
-    ShapeStyle style;
-    style.kind = ShapeKind::Heart;
-    style.fill = QColor(200, 30, 90);
-    style.stroke = Qt::white;
-    style.strokeWidth = 4.0;
+    ShapeStyle style = shapeStyleWith(ShapeKind::Heart, QColor(200, 30, 90), 4.0, Qt::white);
     const Project project = shapeProject(style);
     FrameCompositor compositor;
     compositor.setProject(&project);
@@ -581,37 +764,25 @@ void SkiaTest::backendSwitchSelectsShapeRenderer()
         return n;
     };
 
-    qputenv("DRIFT_VECTOR_RENDERER", "qt");
-    QCOMPARE(vectorBackend(), VectorBackend::Qt);
     const quint64 before = paints();
-    const QImage qtFrame = compositor.compositeAt(0);
-    QCOMPARE(paints(), before);
-
-    qputenv("DRIFT_VECTOR_RENDERER", "skia");
-    QCOMPARE(vectorBackend(), VectorBackend::Skia);
-    const QImage skiaFrame = compositor.compositeAt(0);
+    const QImage frame = compositor.compositeAt(0);
     QCOMPARE(paints(), before + 1);
     // Same painter key: the second frame comes from the GPU cache, not a repaint.
     QVERIFY(!compositor.compositeAt(0).isNull());
     QCOMPARE(paints(), before + 1);
-    qunsetenv("DRIFT_VECTOR_RENDERER");
 
-    QCOMPARE(qtFrame.size(), skiaFrame.size());
-    // Composited over a background, so compare the shape's colour footprint rather than alpha:
-    // count pixels that are clearly the fill colour.
-    auto fillPixels = [](const QImage &img) {
-        int n = 0;
-        for (int y = 0; y < img.height(); ++y)
-            for (int x = 0; x < img.width(); ++x)
-                if (near(img.pixel(x, y) | 0xff000000u, qRgb(200, 30, 90), 12))
-                    ++n;
-        return n;
-    };
-    const int qtCount = fillPixels(qtFrame);
-    const int skiaCount = fillPixels(skiaFrame);
-    QVERIFY(qtCount > 500);
-    QVERIFY2(qAbs(qtCount - skiaCount) <= qtCount * 0.04,
-             qPrintable(QStringLiteral("qt %1 skia %2").arg(qtCount).arg(skiaCount)));
+    int inside = 0, outside = 0;
+    for (int y = 0; y < frame.height(); ++y) {
+        for (int x = 0; x < frame.width(); ++x) {
+            if (!near(frame.pixel(x, y) | 0xff000000u, qRgb(200, 30, 90), 12))
+                continue;
+            if (QRect(20, 10, 120, 100).contains(x, y))
+                ++inside;
+            else
+                ++outside;
+        }
+    }
+    QVERIFY2(inside > 500 && outside == 0, qPrintable(QStringLiteral("inside %1 outside %2").arg(inside).arg(outside)));
 }
 
 namespace {

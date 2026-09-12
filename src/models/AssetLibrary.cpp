@@ -333,16 +333,16 @@ std::optional<drift::MediaAsset> buildImageAsset(const QString &absolutePath, co
     return asset;
 }
 
-// A Lottie document: parsed by the vector renderer rather than probed by FFmpeg, which would
-// only report "unknown format" for a .json.
+// A Lottie or SVG document: parsed by the vector renderer rather than probed by FFmpeg, which
+// would only report "unknown format" for a .json.
 std::optional<drift::MediaAsset> buildVectorAsset(const QString &absolutePath, const QString &name)
 {
     drift::VectorSource source;
-    source.kind = drift::VectorKind::Lottie;
     source.path = absolutePath;
+    source.kind = drift::vec::detectVectorKind(drift::vec::vectorSourceBytes(source));
     QString error;
     if (!drift::vec::probeVectorSource(source, &error)) {
-        qWarning("import: %s is not a Lottie document: %s", qPrintable(absolutePath), qPrintable(error));
+        qWarning("import: %s is not a Lottie/SVG document: %s", qPrintable(absolutePath), qPrintable(error));
         return std::nullopt;
     }
     const QString thumb =
@@ -397,14 +397,14 @@ bool AssetLibrary::isImagePath(const QString &path)
     return imageExtensions().contains(QFileInfo(path).suffix().toLower());
 }
 
-// Lottie only: SVG stays an image (Qt rasterises it), which is what existing projects expect.
-// add_svg / addVectorClip put an SVG on the timeline as a vector clip without going through
-// the bin. A .lottie bundle is unpacked into plain .json on import (see importFilesReturningIds),
-// so it never reaches the probe under its own name.
+// Lottie and SVG. An asset's kind is persisted, so a project whose SVG was imported while it
+// still counted as an image keeps its image clips; only new imports and relinks become vector
+// clips, which is what gives them the svg.* restyling. A .lottie bundle is unpacked into plain
+// .json on import (see importFilesReturningIds), so it never reaches the probe under its own name.
 bool AssetLibrary::isVectorPath(const QString &path)
 {
-    return QFileInfo(path).suffix().compare(QLatin1String("json"), Qt::CaseInsensitive) == 0
-           || drift::isDotLottiePath(path);
+    const QString suffix = QFileInfo(path).suffix().toLower();
+    return suffix == QLatin1String("json") || suffix == QLatin1String("svg") || drift::isDotLottiePath(path);
 }
 
 bool AssetLibrary::isMediaPath(const QString &path)

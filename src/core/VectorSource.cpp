@@ -1,5 +1,8 @@
 #include "VectorSource.h"
 
+#include "Effect.h"
+
+#include <QCoreApplication>
 #include <QCryptographicHash>
 #include <QJsonArray>
 
@@ -215,7 +218,7 @@ QJsonObject VectorSource::toJson() const
     QJsonObject slotsJson;
     for (auto it = slotValues.cbegin(); it != slotValues.cend(); ++it)
         slotsJson.insert(it.key(), it.value().toJson());
-    return QJsonObject{
+    QJsonObject o{
         {QStringLiteral("kind"), vectorKindToString(kind)},
         {QStringLiteral("source"), source},
         {QStringLiteral("path"), path},
@@ -230,6 +233,15 @@ QJsonObject VectorSource::toJson() const
         {QStringLiteral("startOffsetUs"), static_cast<double>(startOffsetUs)},
         {QStringLiteral("slots"), slotsJson},
     };
+    QJsonObject keyframesJson;
+    for (auto it = keyframes.cbegin(); it != keyframes.cend(); ++it) {
+        if (!it->isEmpty())
+            keyframesJson.insert(it.key(), keyframesToJson(it.value()));
+    }
+    // Only animated sources carry the key, so projects without one stay byte-identical.
+    if (!keyframesJson.isEmpty())
+        o.insert(QStringLiteral("keyframes"), keyframesJson);
+    return o;
 }
 
 VectorSource VectorSource::fromJson(const QJsonObject &o)
@@ -252,7 +264,187 @@ VectorSource VectorSource::fromJson(const QJsonObject &o)
     const QJsonObject slotsJson = o.value(QStringLiteral("slots")).toObject();
     for (auto it = slotsJson.constBegin(); it != slotsJson.constEnd(); ++it)
         v.slotValues.insert(it.key(), VectorSlotValue::fromJson(it.value().toObject()));
+    const QJsonObject keyframesJson = o.value(QStringLiteral("keyframes")).toObject();
+    for (auto it = keyframesJson.constBegin(); it != keyframesJson.constEnd(); ++it)
+        v.keyframes.insert(it.key(), keyframesFromJson(it.value().toObject()));
     return v;
+}
+
+bool VectorSource::isAnimated() const
+{
+    for (auto it = keyframes.constBegin(); it != keyframes.constEnd(); ++it) {
+        if (!it->isEmpty() && it->enabled())
+            return true;
+    }
+    return false;
+}
+
+VectorSource VectorSource::resolvedAt(TimeUs clipTimeUs) const
+{
+    VectorSource out = *this;
+    for (auto it = keyframes.constBegin(); it != keyframes.constEnd(); ++it) {
+        if (!it->isEmpty())
+            setVectorSlotScalar(out, it.key(), it->evaluateAt(clipTimeUs));
+    }
+    out.keyframes.clear();
+    return out;
+}
+
+// ---------------------------------------------------------------------------------------------
+// SVG overrides
+
+namespace {
+
+const QStringList &svgOverrideProps()
+{
+    static const QStringList props{QStringLiteral("fill"), QStringLiteral("stroke"), QStringLiteral("strokeWidth"),
+                                   QStringLiteral("opacity"), QStringLiteral("visible")};
+    return props;
+}
+
+} // namespace
+
+bool parseSvgOverrideKey(const QString &slot, SvgOverrideKey *out)
+{
+    if (!slot.startsWith(QLatin1String("svg.")))
+        return false;
+    const int dot = slot.lastIndexOf(QLatin1Char('.'));
+    const QString prop = slot.mid(dot + 1);
+    if (!svgOverrideProps().contains(prop))
+        return false;
+    const QString elementId = dot > 3 ? slot.mid(4, dot - 4) : QString();
+    if (elementId.isEmpty() && prop == QLatin1String("visible"))
+        return false;
+    out->elementId = elementId;
+    out->prop = prop;
+    return true;
+}
+
+VectorSlotValue::Type svgOverrideType(const QString &prop)
+{
+    return prop == QLatin1String("fill") || prop == QLatin1String("stroke") ? VectorSlotValue::Type::Color
+                                                                              : VectorSlotValue::Type::Scalar;
+}
+
+QString svgOverrideLabel(const SvgOverrideKey &key)
+{
+    QString prop;
+    if (key.prop == QLatin1String("fill"))
+        prop = QCoreApplication::translate("VectorSource", "Fill");
+    else if (key.prop == QLatin1String("stroke"))
+        prop = QCoreApplication::translate("VectorSource", "Stroke");
+    else if (key.prop == QLatin1String("strokeWidth"))
+        prop = QCoreApplication::translate("VectorSource", "Stroke width");
+    else if (key.prop == QLatin1String("opacity"))
+        prop = QCoreApplication::translate("VectorSource", "Opacity");
+    else if (key.prop == QLatin1String("visible"))
+        prop = QCoreApplication::translate("VectorSource", "Visible");
+    else
+        prop = key.prop;
+    return key.elementId.isEmpty() ? prop : QStringLiteral("#%1 · %2").arg(key.elementId, prop);
+}
+
+namespace {
+
+// Splits "svg.logo.fill.r" into the slot key and the channel; channel is empty for a scalar.
+bool splitSlotChannel(const VectorSource &source, const QString &key, QString *slot, QChar *channel)
+{
+    static const QString channels = QStringLiteral("rgba");
+    SvgOverrideKey parsed;
+    if (parseSvgOverrideKey(key, &parsed)) {
+        if (parsed.prop == QLatin1String("visible"))
+            return false;
+        if (svgOverrideType(parsed.prop) == VectorSlotValue::Type::Color)
+            return false; // a colour needs a channel
+        *slot = key;
+        *channel = QChar();
+        return true;
+    }
+    const int dot = key.lastIndexOf(QLatin1Char('.'));
+    if (dot < 0 || dot + 2 != key.size() || !channels.contains(key.at(dot + 1)))
+        return false;
+    const QString base = key.left(dot);
+    VectorSlotValue::Type type;
+    if (parseSvgOverrideKey(base, &parsed)) {
+        type = svgOverrideType(parsed.prop);
+    } else {
+        const auto it = source.slotValues.constFind(base);
+        if (it == source.slotValues.constEnd())
+            return false;
+        type = it->type;
+    }
+    if (type != VectorSlotValue::Type::Color)
+        return false;
+    *slot = base;
+    *channel = key.at(dot + 1);
+    return true;
+}
+
+} // namespace
+
+bool vectorSlotScalar(const VectorSource &source, const QString &key, double *out)
+{
+    QString slot;
+    QChar channel;
+    if (!splitSlotChannel(source, key, &slot, &channel))
+        return false;
+    const auto it = source.slotValues.constFind(slot);
+    if (channel.isNull()) {
+        if (it != source.slotValues.constEnd() && it->type != VectorSlotValue::Type::Scalar)
+            return false;
+        *out = it == source.slotValues.constEnd() ? 0.0 : it->scalar;
+        return true;
+    }
+    const QColor c = it == source.slotValues.constEnd() ? QColor(Qt::black) : it->color;
+    switch (channel.toLatin1()) {
+    case 'r':
+        *out = c.redF();
+        break;
+    case 'g':
+        *out = c.greenF();
+        break;
+    case 'b':
+        *out = c.blueF();
+        break;
+    default:
+        *out = c.alphaF();
+        break;
+    }
+    return true;
+}
+
+bool setVectorSlotScalar(VectorSource &source, const QString &key, double value)
+{
+    QString slot;
+    QChar channel;
+    if (!splitSlotChannel(source, key, &slot, &channel))
+        return false;
+    if (channel.isNull()) {
+        VectorSlotValue &v = source.slotValues[slot];
+        if (v.type != VectorSlotValue::Type::Scalar)
+            v = VectorSlotValue::fromScalar(0.0);
+        v.scalar = value;
+        return true;
+    }
+    VectorSlotValue &v = source.slotValues[slot];
+    if (v.type != VectorSlotValue::Type::Color)
+        v = VectorSlotValue::fromColor(Qt::black);
+    const double clamped = qBound(0.0, value, 1.0);
+    switch (channel.toLatin1()) {
+    case 'r':
+        v.color.setRedF(clamped);
+        break;
+    case 'g':
+        v.color.setGreenF(clamped);
+        break;
+    case 'b':
+        v.color.setBlueF(clamped);
+        break;
+    default:
+        v.color.setAlphaF(clamped);
+        break;
+    }
+    return true;
 }
 
 QString vectorSourceHash(const QByteArray &data)

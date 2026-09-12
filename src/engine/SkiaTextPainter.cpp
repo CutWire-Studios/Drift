@@ -1,6 +1,7 @@
 #include "SkiaTextPainter.h"
 
 #include "SkiaPath.h"
+#include "SkiaShading.h"
 #include "SkiaTextEffects.h"
 #include "SkiaVectorResources.h"
 #include "core/TextAnimationPreset.h"
@@ -30,7 +31,6 @@
 #include "include/effects/SkGradient.h"
 #include "include/effects/SkImageFilters.h"
 #include "include/effects/SkShaderMaskFilter.h"
-#include "include/effects/SkTrimPathEffect.h"
 
 namespace drift::skia {
 
@@ -44,27 +44,6 @@ SkRect toSkRect(const QRectF &r)
 QRectF fromSkRect(const SkRect &r)
 {
     return QRectF(r.left(), r.top(), r.width(), r.height());
-}
-
-SkBlendMode toSkBlendMode(BlendMode mode)
-{
-    switch (mode) {
-    case BlendMode::Normal:
-        return SkBlendMode::kSrcOver;
-    case BlendMode::Multiply:
-        return SkBlendMode::kMultiply;
-    case BlendMode::Screen:
-        return SkBlendMode::kScreen;
-    case BlendMode::Overlay:
-        return SkBlendMode::kOverlay;
-    case BlendMode::Add:
-        return SkBlendMode::kPlus;
-    case BlendMode::Darken:
-        return SkBlendMode::kDarken;
-    case BlendMode::Lighten:
-        return SkBlendMode::kLighten;
-    }
-    return SkBlendMode::kSrcOver;
 }
 
 // One laid-out piece with its geometry already in Skia form, so paint() only issues draws.
@@ -485,30 +464,8 @@ private:
             return;
         }
         const TextPaint &tp = layer.paint;
-        switch (tp.kind) {
-        case TextPaintKind::Solid:
-            paint.setColor(toSkColor(withAlpha(tp.color, alpha)));
-            break;
-        case TextPaintKind::Gradient:
-            paint.setColor(SkColorSetARGB(qRound(alpha * 255.0), 0, 0, 0));
-            paint.setShader(gradientShaderFor(tp.gradient, paintBoxFor(tp.gradient.space, i), m_timeSec));
-            break;
-        case TextPaintKind::Texture:
-            paint.setColor(SkColorSetARGB(qRound(alpha * 255.0), 0, 0, 0));
-            paint.setShader(textureShaderFor(tp.texture, paintBoxFor(TextGradientSpace::Block, i)));
-            if (!paint.getShader())
-                paint.setColor(toSkColor(withAlpha(tp.color, alpha)));
-            break;
-        case TextPaintKind::Effect: {
-            paint.setColor(SkColorSetARGB(qRound(alpha * 255.0), 0, 0, 0));
-            sk_sp<SkShader> base = SkShaders::Color(toSkColor(tp.color));
-            paint.setShader(effectShaderFor(tp.effect, std::move(base), paintBoxFor(TextGradientSpace::Block, i),
-                                            m_timeSec, m_frame.block.wipeProgress));
-            if (!paint.getShader())
-                paint.setColor(toSkColor(withAlpha(tp.color, alpha)));
-            break;
-        }
-        }
+        const QRectF box = paintBoxFor(tp.kind == TextPaintKind::Gradient ? tp.gradient.space : TextGradientSpace::Block, i);
+        applyShadingPaint(paint, tp, box, m_timeSec, alpha, m_frame.block.wipeProgress);
     }
 
     void applyFragmentWipe(SkPaint &paint, int i) const
@@ -533,27 +490,7 @@ private:
         if (scoped.isEmpty())
             return;
 
-        const bool blurred = layer.blur > 0.0 && layer.kind != TextLayerKind::Stroke && layer.kind != TextLayerKind::Extrude;
-        const bool needsLayer = blurred || layer.opacity < 1.0 || layer.blend != BlendMode::Normal || layer.spread > 0.0
-                                || layer.knockout;
-        if (needsLayer) {
-            SkPaint lp;
-            lp.setAlphaf(float(layer.opacity));
-            lp.setBlendMode(layer.knockout ? SkBlendMode::kDstOut : toSkBlendMode(layer.blend));
-            sk_sp<SkImageFilter> filter;
-            if (layer.spread > 0.0) {
-                const float r = float(layer.spread * m_scale);
-                filter = SkImageFilters::Dilate(r, r, nullptr);
-            }
-            if (blurred) {
-                // The legacy raster ran a three-pass box blur of radius round(blur·scale); three
-                // boxes of radius r have the variance of a gaussian with sigma = r + 0.5.
-                const float sigma = float(qRound(layer.blur * m_scale)) + 0.5f;
-                filter = SkImageFilters::Blur(sigma, sigma, std::move(filter));
-            }
-            lp.setImageFilter(std::move(filter));
-            canvas.saveLayer(nullptr, &lp);
-        }
+        const ShadingLayerGroup group = beginShadingLayer(canvas, layer, m_scale);
         canvas.translate(float(layer.offsetX * m_scale), float(layer.offsetY * m_scale));
 
         // Bucket by the animator's per-fragment blur (quantised to half a pixel).
@@ -574,8 +511,7 @@ private:
         }
 
         canvas.translate(float(-layer.offsetX * m_scale), float(-layer.offsetY * m_scale));
-        if (needsLayer)
-            canvas.restore();
+        endShadingLayer(canvas, group);
     }
 
     void drawPiece(SkCanvas &canvas, const TextShadingLayer &layer, int i, double alpha) const
@@ -590,10 +526,12 @@ private:
         case TextLayerKind::Fill:
             layerPaint(paint, layer, i, alpha);
             applyFragmentWipe(paint, i);
-            if (piece.emoji)
+            if (piece.emoji) {
                 drawEmoji(canvas, piece, paint.getMaskFilter() ? &paint : nullptr);
-            else
+            } else {
+                paint.setPathEffect(fillPathEffectFor(layer, m_scale));
                 canvas.drawPath(piece.glyphs, paint);
+            }
             break;
         case TextLayerKind::Stroke: {
             double width = (piece.accent && m_style.accent.outlineEnabled ? m_style.accent.outlineWidth : layer.width)
@@ -616,13 +554,20 @@ private:
             }
             paint.setStyle(SkPaint::kStroke_Style);
             // A centred stroke of twice the width grows entirely outward when the fill is drawn
-            // over it, which is what the legacy outline did.
-            paint.setStrokeWidth(float(layer.strokeOutside ? width * 2.0 : width));
+            // over it, which is what the legacy outline did; Inside clips the same stroke to the
+            // glyph instead.
+            paint.setStrokeWidth(float(layer.strokeAlign != StrokeAlign::Center ? width * 2.0 : width));
             paint.setStrokeJoin(SkPaint::kRound_Join);
             paint.setStrokeCap(SkPaint::kRound_Cap);
-            if (!qFuzzyIsNull(layer.trimStart) || !qFuzzyCompare(layer.trimEnd, 1.0))
-                paint.setPathEffect(SkTrimPathEffect::Make(float(layer.trimStart), float(layer.trimEnd)));
-            canvas.drawPath(piece.glyphs, paint);
+            paint.setPathEffect(strokePathEffectFor(layer, width, m_scale));
+            if (layer.strokeAlign == StrokeAlign::Inside) {
+                canvas.save();
+                canvas.clipPath(piece.glyphs, SkClipOp::kIntersect, true);
+                canvas.drawPath(piece.glyphs, paint);
+                canvas.restore();
+            } else {
+                canvas.drawPath(piece.glyphs, paint);
+            }
             break;
         }
         case TextLayerKind::Shadow:

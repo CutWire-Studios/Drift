@@ -322,9 +322,4 @@ QString painterPathToSvg(const QPainterPath &path)
     return out.trimmed();
 }
 
-QString shapeSvgPath(const ShapeStyle &style, const QRectF &bounds)
-{
-    return painterPathToSvg(shapePath(style, bounds));
-}
-
 } // namespace drift
