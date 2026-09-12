@@ -5600,7 +5600,15 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Clip name</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Untitled clip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Rename clip</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -5621,6 +5629,10 @@
     </message>
     <message>
         <source>To</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Rename</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -9386,10 +9398,6 @@ If playback stutters, try another.</source>
 <context>
     <name>TextInspector</name>
     <message>
-        <source>Content</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Colour</source>
         <translation type="unfinished"></translation>
     </message>
@@ -9402,23 +9410,7 @@ If playback stutters, try another.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Edit in Look</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>The text is painted with an image; change it in the Look section</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>The text is painted with an effect; change it in the Look section</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Style</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Style pack</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -9482,15 +9474,7 @@ If playback stutters, try another.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Template</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Save style…</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Save this text&apos;s look as a reusable style</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -9518,10 +9502,6 @@ If playback stutters, try another.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Type</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Font</source>
         <translation type="unfinished"></translation>
     </message>
@@ -9542,10 +9522,6 @@ If playback stutters, try another.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>No layers. Pick a look above or add a fill to start.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Decorations</source>
         <translation type="unfinished"></translation>
     </message>
@@ -9555,10 +9531,6 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Animate</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>How the text enters, leaves and moves while it is on screen</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -9615,14 +9587,6 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>%1 has no italic face</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Look</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>One-tap recipes, and the layer stack they build</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -9731,6 +9695,74 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Glow</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Text</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Type your text…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Apply</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Apply the text to this clip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Edit in Style</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The text is painted with an image; change it on the Style page</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The text is painted with an effect; change it on the Style page</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Spacing</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Line height, letter spacing, wrapping and bend</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Preset</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>A whole text style — font, colour and effect — applied in one tap</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Font, colour and effect in one tap. Save your own to reuse it.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Save this text&apos;s style as a reusable preset</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Effect</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Shadow, outline, neon and friends — a recipe that builds the layers below</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Shadow, outline, neon… built as layers you can fine-tune below.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No layers. Pick an effect above or add a fill to start.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -10038,6 +10070,25 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Adjust extrude</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>TextLookPicker</name>
+    <message>
+        <source>Custom</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Aa</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Text effect</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Close</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -10414,6 +10465,14 @@ If playback stutters, try another.</source>
     <name>TextStylePackPicker</name>
     <message>
         <source>Custom</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Text preset</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Close</source>
         <translation type="unfinished"></translation>
     </message>
     <message>

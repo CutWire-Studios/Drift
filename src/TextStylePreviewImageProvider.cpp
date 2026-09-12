@@ -76,9 +76,27 @@ QImage renderTextCard(const drift::Clip &clip, const QString &text, const QSize 
     const drift::skia::TextPainterResult painted =
         drift::skia::makeTextPainter(clip, text, layoutRect, renderScale, activeWordIndex, clipTimeUs);
     if (painted.painter) {
-        const QImage raster = drift::skia::SkiaRuntime::rasterize(*painted.painter);
+        QImage raster = drift::skia::SkiaRuntime::rasterize(*painted.painter);
+        // The whole-block motion (fade, slide, pop, zoom...) rides on the GPU layer in playback;
+        // a card has no layer, so it applies the same offset/scale/rotation/opacity here. Blur
+        // is approximated by a down/up-scale, which is all a thumbnail needs.
+        const drift::textanim::BlockProps &block = painted.block;
+        if (block.opacity <= 0.001)
+            return card;
+        if (block.blurPx > 0.5 && !raster.isNull()) {
+            const double shrink = 1.0 + block.blurPx / 2.0;
+            const QSize small(qMax(1, int(raster.width() / shrink)), qMax(1, int(raster.height() / shrink)));
+            raster = raster.scaled(small, Qt::IgnoreAspectRatio, Qt::SmoothTransformation)
+                         .scaled(raster.size(), Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
+        }
         QPainter p(&card);
         p.setRenderHint(QPainter::SmoothPixmapTransform);
+        p.setOpacity(block.opacity);
+        const QPointF centre = painted.rect.center() + QPointF(block.dx, block.dy);
+        p.translate(centre);
+        p.rotate(block.rotation);
+        p.scale(block.scale, block.scale);
+        p.translate(-painted.rect.center());
         p.drawImage(painted.rect.topLeft(), raster);
     }
 #else
@@ -141,6 +159,8 @@ QImage TextAnimPreviewImageProvider::requestImage(const QString &id, QSize *size
     const int frameW = qBound(16, query.queryItemValue(QStringLiteral("w")).toInt(), 512);
     const int frameH = qBound(16, query.queryItemValue(QStringLiteral("h")).toInt(), 512);
     const int frames = qBound(1, query.queryItemValue(QStringLiteral("frames")).toInt(), 60);
+    // `still` asks for the gallery's parked pose instead of a sprite sheet.
+    const bool still = query.hasQueryItem(QStringLiteral("still"));
     const int columns = qMin(6, frames);
     const int rows = (frames + columns - 1) / columns;
 
@@ -194,10 +214,21 @@ QImage TextAnimPreviewImageProvider::requestImage(const QString &id, QSize *size
     else
         clip.textStyle.animation.in = animation;
 
+    const double scale = frameH / kTileReferenceHeight;
+    if (still) {
+        // Text fully in for an entrance; not yet leaving for an exit; the rest pose for a loop.
+        const bool settledAtEnd = slot != QLatin1String("out") && slot != QLatin1String("loop");
+        const QImage frame = renderTextCard(clip, sample, QSize(frameW, frameH), scale,
+                                            drift::secondsToUs(settledAtEnd ? t1 : t0));
+        storeCard(key, frame);
+        if (size)
+            *size = frame.size();
+        return frame;
+    }
+
     QImage sheet(frameW * columns, frameH * rows, QImage::Format_ARGB32_Premultiplied);
     sheet.fill(Qt::transparent);
     QPainter p(&sheet);
-    const double scale = frameH / kTileReferenceHeight;
     for (int i = 0; i < frames; ++i) {
         const double t = frames > 1 ? t0 + (t1 - t0) * i / (frames - 1) : t0;
         const QImage frame = renderTextCard(clip, sample, QSize(frameW, frameH), scale, drift::secondsToUs(t));

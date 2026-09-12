@@ -781,6 +781,7 @@ TextPainterResult makeTextPainter(const TextPaintRequest &request)
 
     TextPainterResult result;
     result.rect = QRectF(request.layoutRect.x() - bleed, request.layoutRect.y() - bleed, imageW, imageH);
+    result.block = request.frame.block;
 
     std::shared_ptr<const BlockGeometry> geometry = geometryFor(*request.set, widestStroke(style) * scale);
     const Bend bend = bendFor(request.set->frags, style, scale);

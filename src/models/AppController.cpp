@@ -11885,19 +11885,12 @@ void AppController::endTextEdit()
 
 void AppController::syncTextOverlaySkip()
 {
-    // Inline edit owns the skip id until it ends; then keep the composited raster
-    // hidden for the selected text clip so the QML overlay stays crisp (the baked
-    // preview texture is downscaled and looks soft when upscaled).
+    // Inline edit owns the skip id until it ends. Outside of it the composited
+    // raster is always shown: the QML stand-in the preview used to draw for the
+    // selected text clip never matched the engine's layout.
     if (m_inlineTextEditing)
         return;
-
-    QString id;
-    if (!m_playing && isValidClipIndex(m_selectedTrack, m_selectedClip)) {
-        const drift::Clip &clip = m_project.tracks().at(m_selectedTrack).clips.at(m_selectedClip);
-        if (clip.type == drift::ClipType::Text && clip.containsTime(m_playheadUs))
-            id = clip.id;
-    }
-    m_playback.setEditingClipId(id);
+    m_playback.setEditingClipId(QString());
 }
 
 void AppController::setSubtitleCues(int trackIndex, int clipIndex, const QVariantList &cues)

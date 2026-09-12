@@ -5600,8 +5600,16 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Clip name</source>
+        <translation type="unfinished">Nome clip</translation>
+    </message>
+    <message>
         <source>Untitled clip</source>
         <translation>Clip senza titolo</translation>
+    </message>
+    <message>
+        <source>Rename clip</source>
+        <translation type="unfinished">Rinomina clip</translation>
     </message>
     <message>
         <source>Type</source>
@@ -5622,6 +5630,10 @@
     <message>
         <source>To</source>
         <translation>A</translation>
+    </message>
+    <message>
+        <source>Rename</source>
+        <translation type="unfinished">Rinomina</translation>
     </message>
     <message>
         <source>Trim</source>
@@ -9393,10 +9405,6 @@ Se la riproduzione va a scatti, prova un&apos;altra opzione.</translation>
 <context>
     <name>TextInspector</name>
     <message>
-        <source>Content</source>
-        <translation>Contenuto</translation>
-    </message>
-    <message>
         <source>Colour</source>
         <translation type="unfinished"></translation>
     </message>
@@ -9409,24 +9417,8 @@ Se la riproduzione va a scatti, prova un&apos;altra opzione.</translation>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Edit in Look</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>The text is painted with an image; change it in the Look section</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>The text is painted with an effect; change it in the Look section</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Style</source>
         <translation>Stile</translation>
-    </message>
-    <message>
-        <source>Style pack</source>
-        <translation>Pacchetto stili</translation>
     </message>
     <message>
         <source>Aa</source>
@@ -9489,16 +9481,8 @@ Se la riproduzione va a scatti, prova un&apos;altra opzione.</translation>
         <translation type="unfinished">Rimbalzo</translation>
     </message>
     <message>
-        <source>Template</source>
-        <translation type="unfinished">Modello</translation>
-    </message>
-    <message>
         <source>Save style…</source>
         <translation>Salva stile…</translation>
-    </message>
-    <message>
-        <source>Save this text&apos;s look as a reusable style</source>
-        <translation>Salva l&apos;aspetto di questo testo come stile riutilizzabile</translation>
     </message>
     <message>
         <source>Save text style</source>
@@ -9525,10 +9509,6 @@ Se la riproduzione va a scatti, prova un&apos;altra opzione.</translation>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Type</source>
-        <translation type="unfinished">Tipo</translation>
-    </message>
-    <message>
         <source>Font</source>
         <translation>Carattere</translation>
     </message>
@@ -9549,10 +9529,6 @@ Se la riproduzione va a scatti, prova un&apos;altra opzione.</translation>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>No layers. Pick a look above or add a fill to start.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Decorations</source>
         <translation type="unfinished"></translation>
     </message>
@@ -9562,10 +9538,6 @@ Se la riproduzione va a scatti, prova un&apos;altra opzione.</translation>
     </message>
     <message>
         <source>Animate</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>How the text enters, leaves and moves while it is on screen</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -9623,14 +9595,6 @@ Se la riproduzione va a scatti, prova un&apos;altra opzione.</translation>
     <message>
         <source>%1 has no italic face</source>
         <translation>%1 non ha una variante corsiva</translation>
-    </message>
-    <message>
-        <source>Look</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>One-tap recipes, and the layer stack they build</source>
-        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Adjust text look</source>
@@ -9739,6 +9703,74 @@ Se la riproduzione va a scatti, prova un&apos;altra opzione.</translation>
     <message>
         <source>Glow</source>
         <translation>Bagliore</translation>
+    </message>
+    <message>
+        <source>Text</source>
+        <translation type="unfinished">Testo</translation>
+    </message>
+    <message>
+        <source>Type your text…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Apply</source>
+        <translation type="unfinished">Applica</translation>
+    </message>
+    <message>
+        <source>Apply the text to this clip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Edit in Style</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The text is painted with an image; change it on the Style page</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The text is painted with an effect; change it on the Style page</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Spacing</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Line height, letter spacing, wrapping and bend</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Preset</source>
+        <translation type="unfinished">Predefinito</translation>
+    </message>
+    <message>
+        <source>A whole text style — font, colour and effect — applied in one tap</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Font, colour and effect in one tap. Save your own to reuse it.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Save this text&apos;s style as a reusable preset</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Effect</source>
+        <translation type="unfinished">Effetto</translation>
+    </message>
+    <message>
+        <source>Shadow, outline, neon and friends — a recipe that builds the layers below</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Shadow, outline, neon… built as layers you can fine-tune below.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No layers. Pick an effect above or add a fill to start.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Word highlight</source>
@@ -10046,6 +10078,25 @@ Se la riproduzione va a scatti, prova un&apos;altra opzione.</translation>
     <message>
         <source>Adjust extrude</source>
         <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>TextLookPicker</name>
+    <message>
+        <source>Custom</source>
+        <translation type="unfinished">Personalizzato</translation>
+    </message>
+    <message>
+        <source>Aa</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Text effect</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Close</source>
+        <translation type="unfinished">Chiudi</translation>
     </message>
 </context>
 <context>
@@ -10422,6 +10473,14 @@ Se la riproduzione va a scatti, prova un&apos;altra opzione.</translation>
     <message>
         <source>Custom</source>
         <translation>Personalizzato</translation>
+    </message>
+    <message>
+        <source>Text preset</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Close</source>
+        <translation type="unfinished">Chiudi</translation>
     </message>
     <message>
         <source>My styles</source>

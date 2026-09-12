@@ -21,6 +21,9 @@ struct TextPainterResult
 {
     std::shared_ptr<const VectorPainter> painter; // null when there is nothing to draw
     QRectF rect;                                  // destination in canvas px, bleed included
+    // Whole-block motion the painter leaves to its host: the compositor puts it on the GPU
+    // layer, a CPU card has to apply it itself.
+    textanim::BlockProps block;
 };
 
 struct TextPaintRequest

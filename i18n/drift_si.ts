@@ -5600,8 +5600,16 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Clip name</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Untitled clip</source>
         <translation>නම් නොකළ ක්ලිපය</translation>
+    </message>
+    <message>
+        <source>Rename clip</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Type</source>
@@ -5622,6 +5630,10 @@
     <message>
         <source>To</source>
         <translation>දක්වා</translation>
+    </message>
+    <message>
+        <source>Rename</source>
+        <translation type="unfinished">නම වෙනස් කරන්න</translation>
     </message>
     <message>
         <source>Trim</source>
@@ -9393,10 +9405,6 @@ If playback stutters, try another.</source>
 <context>
     <name>TextInspector</name>
     <message>
-        <source>Content</source>
-        <translation>අන්තර්ගතය</translation>
-    </message>
-    <message>
         <source>Colour</source>
         <translation type="unfinished"></translation>
     </message>
@@ -9409,24 +9417,8 @@ If playback stutters, try another.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Edit in Look</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>The text is painted with an image; change it in the Look section</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>The text is painted with an effect; change it in the Look section</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Style</source>
         <translation>විලාසය</translation>
-    </message>
-    <message>
-        <source>Style pack</source>
-        <translation>විලාස පැකේජය</translation>
     </message>
     <message>
         <source>Aa</source>
@@ -9489,16 +9481,8 @@ If playback stutters, try another.</source>
         <translation type="unfinished">ගැසීම (Bounce)</translation>
     </message>
     <message>
-        <source>Template</source>
-        <translation type="unfinished">ආකෘතිය</translation>
-    </message>
-    <message>
         <source>Save style…</source>
         <translation>විලාසය සුරකින්න…</translation>
-    </message>
-    <message>
-        <source>Save this text&apos;s look as a reusable style</source>
-        <translation>මෙම පෙළෙහි පෙනුම නැවත භාවිත කළ හැකි විලාසයක් ලෙස සුරකින්න</translation>
     </message>
     <message>
         <source>Save text style</source>
@@ -9525,10 +9509,6 @@ If playback stutters, try another.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Type</source>
-        <translation type="unfinished">වර්ගය</translation>
-    </message>
-    <message>
         <source>Font</source>
         <translation>ෆොන්ට් (අකුරු)</translation>
     </message>
@@ -9549,10 +9529,6 @@ If playback stutters, try another.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>No layers. Pick a look above or add a fill to start.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Decorations</source>
         <translation type="unfinished"></translation>
     </message>
@@ -9562,10 +9538,6 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Animate</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>How the text enters, leaves and moves while it is on screen</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -9623,14 +9595,6 @@ If playback stutters, try another.</source>
     <message>
         <source>%1 has no italic face</source>
         <translation>%1 හි ඇල අකුරු මුහුණතක් නැත</translation>
-    </message>
-    <message>
-        <source>Look</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>One-tap recipes, and the layer stack they build</source>
-        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Adjust text look</source>
@@ -9739,6 +9703,74 @@ If playback stutters, try another.</source>
     <message>
         <source>Glow</source>
         <translation>දීප්තිය (Glow)</translation>
+    </message>
+    <message>
+        <source>Text</source>
+        <translation type="unfinished">පෙළ</translation>
+    </message>
+    <message>
+        <source>Type your text…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Apply</source>
+        <translation type="unfinished">යොදන්න</translation>
+    </message>
+    <message>
+        <source>Apply the text to this clip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Edit in Style</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The text is painted with an image; change it on the Style page</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The text is painted with an effect; change it on the Style page</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Spacing</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Line height, letter spacing, wrapping and bend</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Preset</source>
+        <translation type="unfinished">පෙරසැකසුම</translation>
+    </message>
+    <message>
+        <source>A whole text style — font, colour and effect — applied in one tap</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Font, colour and effect in one tap. Save your own to reuse it.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Save this text&apos;s style as a reusable preset</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Effect</source>
+        <translation type="unfinished">ප්‍රයෝගය</translation>
+    </message>
+    <message>
+        <source>Shadow, outline, neon and friends — a recipe that builds the layers below</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Shadow, outline, neon… built as layers you can fine-tune below.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No layers. Pick an effect above or add a fill to start.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Word highlight</source>
@@ -10046,6 +10078,25 @@ If playback stutters, try another.</source>
     <message>
         <source>Adjust extrude</source>
         <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>TextLookPicker</name>
+    <message>
+        <source>Custom</source>
+        <translation type="unfinished">අභිරුචි</translation>
+    </message>
+    <message>
+        <source>Aa</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Text effect</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Close</source>
+        <translation type="unfinished">වසන්න</translation>
     </message>
 </context>
 <context>
@@ -10422,6 +10473,14 @@ If playback stutters, try another.</source>
     <message>
         <source>Custom</source>
         <translation>අභිරුචි</translation>
+    </message>
+    <message>
+        <source>Text preset</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Close</source>
+        <translation type="unfinished">වසන්න</translation>
     </message>
     <message>
         <source>My styles</source>

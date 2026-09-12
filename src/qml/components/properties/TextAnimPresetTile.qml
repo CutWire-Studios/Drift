@@ -2,12 +2,12 @@ import QtQuick
 import Drift
 import ".."
 
-// One preset in the Animate gallery: a looping sprite sheet of the preset playing on sample
-// text, with its label under it. An empty presetId is the "None" tile.
+// One preset in the Animate gallery: the preset's settled pose on sample text, with its label
+// under it, that plays as a looping sprite sheet while `playing`. An empty presetId is the
+// "None" tile.
 //
-// The sprite only runs while `active` — the owner gates that on the section being open, the
-// tile sitting inside the scroll viewport and the transport being stopped, so a long gallery
-// does not burn a dozen frame timers off-screen.
+// The owner drives `playing` — hover on a desktop, the selected tile on a phone — so at most
+// one sprite runs at a time and the gallery never burns a dozen frame timers.
 Column {
     id: tile
 
@@ -15,25 +15,11 @@ Column {
     property string presetId: ""
     property string label: qsTr("None")
     property bool selected: false
-    property bool active: false
+    property bool playing: false
     property real tileWidth: 104
-    // The scroll viewport this tile lives in, plus a counter the owner bumps whenever the
-    // viewport moves so the (non-reactive) mapToItem is re-run.
-    property var viewport: null
-    property int viewportRevision: 0
+    readonly property alias hovered: tileHover.hovered
 
     signal clicked()
-
-    readonly property bool inViewport: {
-        void tile.viewportRevision
-        void tile.y
-        if (!tile.viewport || !tile.viewport.contentItem)
-            return true
-        const p = tile.mapToItem(tile.viewport.contentItem, 0, 0)
-        const top = tile.viewport.contentY
-        const bottom = top + tile.viewport.height
-        return p.y + tile.height > top - 20 && p.y < bottom + 20
-    }
 
     width: tileWidth
     spacing: 4
@@ -53,20 +39,31 @@ Column {
             ColorAnimation { duration: Theme.durationFast; easing.type: Theme.easing }
         }
 
+        readonly property string spriteBase: tile.presetId.length > 0
+                                             ? "image://textanim/" + tile.slot + "/" + tile.presetId + "?w=104&h=58"
+                                             : ""
+
+        Image {
+            anchors.fill: parent
+            anchors.margins: 1
+            visible: tile.presetId.length > 0 && !tile.playing
+            source: frame.spriteBase.length > 0 ? frame.spriteBase + "&still=1" : ""
+            fillMode: Image.PreserveAspectFit
+            asynchronous: true
+        }
+
         AnimatedSprite {
             anchors.fill: parent
             anchors.margins: 1
-            visible: tile.presetId.length > 0
-            source: tile.presetId.length > 0
-                    ? "image://textanim/" + tile.slot + "/" + tile.presetId + "?w=104&h=58&frames=24"
-                    : ""
+            visible: tile.playing
+            source: frame.spriteBase.length > 0 ? frame.spriteBase + "&frames=24" : ""
             frameCount: 24
             frameWidth: 104
             frameHeight: 58
             frameRate: 12
             loops: AnimatedSprite.Infinite
             interpolate: false
-            running: tile.active && tile.inViewport && tile.presetId.length > 0
+            running: tile.playing
         }
 
         Text {
@@ -78,7 +75,8 @@ Column {
             font.pixelSize: Theme.fontSizeXs
         }
 
-        HoverHandler { id: tileHover }
+        // A tap synthesises hover on a phone, so hover only means anything with a pointer.
+        HoverHandler { id: tileHover; enabled: !Theme.touchUi }
 
         MouseArea {
             anchors.fill: parent

@@ -528,6 +528,11 @@ Item {
 
     Connections {
         target: EditorState
+        // A text clip added with no text is edited in the properties sheet, which the assets
+        // sheet it was added from is covering.
+        function onInlineTextEditRequested() {
+            root.openPropertiesSheet()
+        }
         function onExportInProgressChanged() {
             if (EditorState.exportInProgress) {
                 exportProgressDialog.dismissed = false

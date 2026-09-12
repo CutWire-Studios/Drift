@@ -2,8 +2,8 @@ import QtQuick
 import QtQuick.Controls.Basic
 import Drift
 
-// Compact style-pack selector for the properties Text tab: shows the active pack
-// and opens a popup grid to switch. Hand-edited styles (empty packId) show as Custom.
+// Compact style-pack selector for the properties Style page: shows the active pack
+// and opens a dialog grid to switch. Hand-edited styles (empty packId) show as Custom.
 Item {
     id: root
 
@@ -42,19 +42,12 @@ Item {
     implicitHeight: 56
     implicitWidth: 200
 
-    Keys.onEscapePressed: (event) => {
-        if (popup.visible) {
-            popup.close()
-            event.accepted = true
-        }
-    }
-
     Rectangle {
         id: trigger
         anchors.fill: parent
         radius: Theme.radiusSm
         color: Theme.panelAccent
-        border.width: (popup.visible || root.activeFocus) ? 1 : 0
+        border.width: (dialog.visible || root.activeFocus) ? 1 : 0
         border.color: root.activeFocus ? Theme.primary : Theme.panelSecondaryBorder
 
         TextStylePackThumb {
@@ -89,7 +82,7 @@ Item {
             anchors.right: parent.right
             anchors.rightMargin: 8
             anchors.verticalCenter: parent.verticalCenter
-            glyph: Theme.icons.chevronDown
+            glyph: Theme.icons.chevronRight
             iconSize: 12
             iconColor: Theme.mutedForeground
         }
@@ -103,10 +96,7 @@ Item {
             cursorShape: Qt.PointingHandCursor
             onClicked: {
                 root.forceActiveFocus()
-                if (popup.visible)
-                    popup.close()
-                else
-                    popup.open()
+                dialog.open()
             }
         }
     }
@@ -119,20 +109,11 @@ Item {
             required property var modelData
             readonly property bool selected: root.packId === modelData.id
             width: packColumn.cellWidth
-            spacing: 3
-
-            Text {
-                width: parent.width
-                text: packCard.modelData.label
-                elide: Text.ElideRight
-                color: packCard.selected ? Theme.primary : Theme.panelForeground
-                font.family: Theme.fontFamily
-                font.pixelSize: Theme.fontSizeXs
-            }
+            spacing: 4
 
             TextStylePackThumb {
                 width: parent.width
-                height: Math.round(width * 0.48)
+                height: Math.round(width * 0.56)
                 presetId: packCard.modelData.id
                 selected: packCard.selected
                 hovered: packHover.hovered
@@ -145,33 +126,37 @@ Item {
                     anchors.fill: parent
                     cursorShape: Qt.PointingHandCursor
                     onClicked: {
+                        Haptics.select()
                         root.packPicked(packCard.modelData.id)
-                        popup.close()
+                        dialog.close()
                     }
                 }
+            }
+
+            Text {
+                width: parent.width
+                text: packCard.modelData.label
+                elide: Text.ElideRight
+                horizontalAlignment: Text.AlignHCenter
+                color: packCard.selected ? Theme.primary : Theme.panelForeground
+                font.family: Theme.fontFamily
+                font.pixelSize: Theme.fontSizeXs
             }
         }
     }
 
-    Popup {
-        id: popup
-        y: root.height + 2
-        width: Math.max(root.width, 260)
-        padding: 8
-        closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
-
-        background: Rectangle {
-            radius: Theme.radiusMd
-            color: Theme.panelBackground
-            border.width: Theme.borderWidth
-            border.color: Theme.panelBorder
-        }
+    ThemedDialog {
+        id: dialog
+        title: qsTr("Text preset")
+        preferredWidth: Theme.dialogWidthLg
+        showAccept: false
+        rejectText: qsTr("Close")
 
         contentItem: Flickable {
             id: flick
             clip: true
-            implicitWidth: popup.width - popup.padding * 2
-            implicitHeight: Math.min(320, packColumn.height)
+            implicitWidth: parent ? parent.width : 320
+            implicitHeight: Math.min(dialog.availableContentHeight, packColumn.height)
             contentHeight: packColumn.height
             ScrollBar.vertical: AppScrollBar { }
 
@@ -181,8 +166,8 @@ Item {
                 spacing: 8
                 // Both grids are the same shape, so the cell size is computed once here rather
                 // than per grid — the shared delegate has one thing to bind to.
-                readonly property int columns: 2
-                readonly property real gridSpacing: 8
+                readonly property real gridSpacing: Theme.spacingLg
+                readonly property int columns: Math.max(2, Math.floor((width + gridSpacing) / (150 + gridSpacing)))
                 readonly property real cellWidth:
                     (width - gridSpacing * (columns - 1)) / columns
 

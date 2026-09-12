@@ -77,6 +77,15 @@ PanelFrame {
         function onTracksChanged() {
             root.clipDataRevision++
         }
+        // A text clip added with no text lands in its content field. addTextClip has already
+        // selected it, so the Text tab exists; callLater lets the tab switch settle before the
+        // focus lands on a child of the page that was hidden a moment ago.
+        function onInlineTextEditRequested(trackIndex, clipIndex) {
+            if (root.textTabIndex < 0 || !root.tabVisible("text"))
+                return
+            root.activeTab = root.textTabIndex
+            Qt.callLater(textInspector.focusContent)
+        }
     }
 
     Component.onCompleted: {
@@ -658,6 +667,7 @@ PanelFrame {
                 }
 
                 TextInspector {
+                    id: textInspector
                     width: tabColumn.width
                     visible: root.currentTabId === "text"
                 }
