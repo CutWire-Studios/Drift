@@ -467,6 +467,27 @@ void installRecordingLogCallback()
     std::call_once(once, [] { av_log_set_callback(recordingLogCallback); });
 }
 
+// One CUDA device for every reader. Each av_hwdevice_ctx_create makes a CUDA context of its own,
+// and a preview frame's surface belongs to the context of the reader that decoded it — while
+// GlRuntime's interop textures are registered with exactly one. Two hardware clips on a timeline,
+// or the diagnostics benchmark running beside one, made every switch between them fail to map with
+// CUDA_ERROR_INVALID_HANDLE. A context per reader also cost VRAM for nothing: NVDEC decoders share
+// a context without trouble.
+//
+// Never released. Tearing a CUDA context down once the driver has begun its own exit teardown
+// aborts the process (see FaceLandmarker), and the OS reclaims it anyway.
+AVBufferRef *sharedCudaDevice()
+{
+    static QMutex mutex;
+    static AVBufferRef *device = nullptr;
+    QMutexLocker lock(&mutex);
+    if (!device && av_hwdevice_ctx_create(&device, AV_HWDEVICE_TYPE_CUDA, nullptr, nullptr, 0) < 0) {
+        av_buffer_unref(&device);
+        return nullptr;
+    }
+    return av_buffer_ref(device);
+}
+
 QString avErrorText(int rc)
 {
     char buf[AV_ERROR_MAX_STRING_SIZE] = {};
@@ -928,12 +949,19 @@ bool ClipReader::openHardwareDecoderWith(drift::hwaccel::Backend backend)
         return false;
 
     installRecordingLogCallback();
-    const QByteArray device = drift::hwaccel::deviceString(type);
-    if (av_hwdevice_ctx_create(&m_hwDeviceCtx, type, device.isEmpty() ? nullptr : device.constData(),
-                               nullptr, 0) < 0) {
-        if (m_hwDeviceCtx)
-            av_buffer_unref(&m_hwDeviceCtx);
-        return false;
+    if (type == AV_HWDEVICE_TYPE_CUDA) {
+        m_hwDeviceCtx = sharedCudaDevice();
+        if (!m_hwDeviceCtx)
+            return false;
+    } else {
+        const QByteArray device = drift::hwaccel::deviceString(type);
+        if (av_hwdevice_ctx_create(&m_hwDeviceCtx, type,
+                                   device.isEmpty() ? nullptr : device.constData(), nullptr, 0)
+            < 0) {
+            if (m_hwDeviceCtx)
+                av_buffer_unref(&m_hwDeviceCtx);
+            return false;
+        }
     }
 
     m_videoCtx = avcodec_alloc_context3(codec);

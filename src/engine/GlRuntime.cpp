@@ -520,8 +520,8 @@ bool cudaSwFormatIsNv12(const AVFrame *frame)
     return fc && fc->sw_format == AV_PIX_FMT_NV12;
 }
 
-bool queueCudaPlaneCopy(CudaGlApi &api, CUstream stream, CUarray dst, CUdeviceptr src,
-                        size_t srcPitch, size_t widthBytes, size_t height)
+CUresult queueCudaPlaneCopy(CudaGlApi &api, CUstream stream, CUarray dst, CUdeviceptr src,
+                            size_t srcPitch, size_t widthBytes, size_t height)
 {
     CudaMemcpy2D op{};
     op.srcMemoryType = kCuMemoryDevice;
@@ -535,32 +535,48 @@ bool queueCudaPlaneCopy(CudaGlApi &api, CUstream stream, CUarray dst, CUdevicept
     // CU_STREAM_NON_BLOCKING, which by definition does not synchronise against the legacy
     // null stream — so a copy issued there was unordered with respect to the map and unmap
     // around it, and GL could sample the WRITE_DISCARD textures before the pixels arrived.
-    return api.cuMemcpy2DAsync(&op, stream) == kCuSuccess;
+    return api.cuMemcpy2DAsync(&op, stream);
 }
 
 // Both NV12 planes in one map/unmap pair and one stream wait, rather than a pair each: the
 // two copies are independent, and the only thing that has to be true before GL samples is
 // that both have landed.
+// On failure `why` names the CUDA call that refused and its error code: "failed" alone told a
+// Windows bug report nothing about which of the five steps to look at.
 bool copyCudaNv12ToTextures(CudaGlApi &api, CUstream stream, CUgraphicsResource yRes,
-                            CUgraphicsResource uvRes, const AVFrame *frame, int width, int height)
+                            CUgraphicsResource uvRes, const AVFrame *frame, int width, int height,
+                            QString *why)
 {
-    CUgraphicsResource resources[2] = {yRes, uvRes};
-    if (api.cuGraphicsMapResources(2, resources, stream) != kCuSuccess)
+    const auto fail = [why](const char *call, CUresult rc) {
+        *why = QStringLiteral("%1 returned CUDA error %2").arg(QLatin1String(call)).arg(rc);
         return false;
+    };
+
+    CUgraphicsResource resources[2] = {yRes, uvRes};
+    CUresult rc = api.cuGraphicsMapResources(2, resources, stream);
+    if (rc != kCuSuccess)
+        return fail("cuGraphicsMapResources", rc);
 
     CUarray yArray = nullptr;
     CUarray uvArray = nullptr;
-    bool ok = api.cuGraphicsSubResourceGetMappedArray(&yArray, yRes, 0, 0) == kCuSuccess && yArray
-        && api.cuGraphicsSubResourceGetMappedArray(&uvArray, uvRes, 0, 0) == kCuSuccess && uvArray;
+    bool ok = true;
+    rc = api.cuGraphicsSubResourceGetMappedArray(&yArray, yRes, 0, 0);
+    if (rc == kCuSuccess)
+        rc = api.cuGraphicsSubResourceGetMappedArray(&uvArray, uvRes, 0, 0);
+    if (rc != kCuSuccess || !yArray || !uvArray)
+        ok = fail("cuGraphicsSubResourceGetMappedArray", rc);
 
     if (ok) {
         // The interleaved UV plane is full-width in bytes over half the rows: width/2 texels
         // of two bytes each.
-        ok = queueCudaPlaneCopy(api, stream, yArray, frame->data[0],
-                                size_t(qMax(0, frame->linesize[0])), size_t(width), size_t(height))
-            && queueCudaPlaneCopy(api, stream, uvArray, frame->data[1],
-                                  size_t(qMax(0, frame->linesize[1])), size_t(width),
-                                  size_t(height / 2));
+        rc = queueCudaPlaneCopy(api, stream, yArray, frame->data[0],
+                                size_t(qMax(0, frame->linesize[0])), size_t(width), size_t(height));
+        if (rc == kCuSuccess)
+            rc = queueCudaPlaneCopy(api, stream, uvArray, frame->data[1],
+                                    size_t(qMax(0, frame->linesize[1])), size_t(width),
+                                    size_t(height / 2));
+        if (rc != kCuSuccess)
+            ok = fail("cuMemcpy2DAsync", rc);
     }
 
     api.cuGraphicsUnmapResources(2, resources, stream);
@@ -569,8 +585,19 @@ bool copyCudaNv12ToTextures(CudaGlApi &api, CUstream stream, CUgraphicsResource 
     // it is the sync point that makes the textures safe for the convert shader. One wait on
     // one stream per frame, against a full hardware-transfer download plus PBO upload if this
     // path is not taken.
-    if (ok && api.cuStreamSynchronize(stream) != kCuSuccess)
-        ok = false;
+    if (ok) {
+        rc = api.cuStreamSynchronize(stream);
+        if (rc != kCuSuccess)
+            ok = fail("cuStreamSynchronize", rc);
+    }
+    if (!ok) {
+        *why += QStringLiteral(" (%1x%2, pitch %3/%4, stream %5)")
+                    .arg(width)
+                    .arg(height)
+                    .arg(frame->linesize[0])
+                    .arg(frame->linesize[1])
+                    .arg(stream ? QStringLiteral("set") : QStringLiteral("null"));
+    }
     return ok;
 }
 #endif
@@ -1727,16 +1754,29 @@ void GlRuntime::unregisterCudaResources()
 {
 #if !defined(Q_OS_MACOS)
     CudaGlApi &api = cudaGlApi();
-    if (!api.ok)
-        return;
-    if (m_cudaYResource) {
-        api.cuGraphicsUnregisterResource(static_cast<CUgraphicsResource>(m_cudaYResource));
-        m_cudaYResource = nullptr;
+    if (api.ok && (m_cudaYResource || m_cudaUvResource)) {
+        // From the context they were registered in. Callers may have another one current —
+        // importCudaNv12 has the incoming frame's pushed — and CUDA refuses an unregister from the
+        // wrong context, which would leak the registration.
+        CUcontext owner = nullptr;
+        if (m_cudaResourceDevice) {
+            const auto *device = reinterpret_cast<const AVHWDeviceContext *>(m_cudaResourceDevice->data);
+            if (device && device->hwctx)
+                owner = *reinterpret_cast<CUcontext const *>(device->hwctx);
+        }
+        const bool pushed = owner && api.cuCtxPushCurrent(owner) == kCuSuccess;
+        if (m_cudaYResource)
+            api.cuGraphicsUnregisterResource(static_cast<CUgraphicsResource>(m_cudaYResource));
+        if (m_cudaUvResource)
+            api.cuGraphicsUnregisterResource(static_cast<CUgraphicsResource>(m_cudaUvResource));
+        if (pushed) {
+            CUcontext popped = nullptr;
+            api.cuCtxPopCurrent(&popped);
+        }
     }
-    if (m_cudaUvResource) {
-        api.cuGraphicsUnregisterResource(static_cast<CUgraphicsResource>(m_cudaUvResource));
-        m_cudaUvResource = nullptr;
-    }
+    m_cudaYResource = nullptr;
+    m_cudaUvResource = nullptr;
+    av_buffer_unref(&m_cudaResourceDevice);
     m_cudaTexW = 0;
     m_cudaTexH = 0;
 #endif
@@ -1798,8 +1838,18 @@ bool GlRuntime::importCudaNv12(QOpenGLExtraFunctions *gl, const AVFrame *frame)
     if (api.cuCtxPushCurrent(ctx) != kCuSuccess)
         return false;
 
+    // ClipReader shares one CUDA device between readers, so this normally never changes. When it
+    // does — an exporter's device, or a device recreated after a failure — the registrations made
+    // under the old context cannot be mapped from this one (CUDA_ERROR_INVALID_HANDLE), which is
+    // exactly what used to switch interop off for the whole session.
+    const AVBufferRef *frameDevice =
+        reinterpret_cast<const AVHWFramesContext *>(frame->hw_frames_ctx->data)->device_ref;
+    const bool deviceChanged =
+        m_cudaResourceDevice && frameDevice && m_cudaResourceDevice->data != frameDevice->data;
+
     bool ok = false;
-    if (m_cudaTexW != w || m_cudaTexH != h || !m_cudaYResource || !m_cudaUvResource) {
+    if (deviceChanged || m_cudaTexW != w || m_cudaTexH != h || !m_cudaYResource
+        || !m_cudaUvResource) {
         unregisterCudaResources();
         CUgraphicsResource yRes = nullptr;
         CUgraphicsResource uvRes = nullptr;
@@ -1811,6 +1861,7 @@ bool GlRuntime::importCudaNv12(QOpenGLExtraFunctions *gl, const AVFrame *frame)
         if (rc == kCuSuccess) {
             m_cudaYResource = yRes;
             m_cudaUvResource = uvRes;
+            m_cudaResourceDevice = frameDevice ? av_buffer_ref(frameDevice) : nullptr;
             m_cudaTexW = w;
             m_cudaTexH = h;
         } else {
@@ -1825,10 +1876,14 @@ bool GlRuntime::importCudaNv12(QOpenGLExtraFunctions *gl, const AVFrame *frame)
     }
 
     if (m_cudaYResource && m_cudaUvResource) {
+        QString why;
         ok = copyCudaNv12ToTextures(api, stream, static_cast<CUgraphicsResource>(m_cudaYResource),
-                                    static_cast<CUgraphicsResource>(m_cudaUvResource), frame, w, h);
+                                    static_cast<CUgraphicsResource>(m_cudaUvResource), frame, w, h,
+                                    &why);
         if (!ok) {
-            noteZeroCopyDecline(QStringLiteral("copying the NVDEC surface into GL textures failed"));
+            noteZeroCopyDecline(
+                QStringLiteral("copying the NVDEC surface into GL textures failed: %1").arg(why));
+            qWarning("GlRuntime: CUDA interop copy failed: %s", qUtf8Printable(why));
             m_cudaImportFailed = true;
         }
     }

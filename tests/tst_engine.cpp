@@ -162,6 +162,7 @@ private slots:
     void d3d11InteropUploadsAFrameWithoutBlanking();
     void decodeAttemptOrderKeepsPinsOnTheRenderGpu();
     void nvdecAv1StaysOnHardware();
+    void cudaInteropSurvivesTwoDecoders();
     void reverseProxyKeepsDisplayRotation();
     void clipReaderAudioSequential();
     void audioStreamsAreIndependentPerStreamId();
@@ -3022,6 +3023,83 @@ void EngineTest::decodeAttemptOrderKeepsPinsOnTheRenderGpu()
     // Nothing known about the renderer: the pin leads, as it always did.
     QCOMPARE(drift::hwaccel::decodeAttemptOrder(Backend::Cuda, false, QString()).first(), Backend::Cuda);
 #endif
+}
+
+// Two clips from two files are two ClipReaders, and each used to open its own CUDA device. The
+// interop textures were registered under whichever context imported first, so the first frame
+// from the other reader could not map them — and the failure is sticky, so zero-copy stayed off
+// for the session. A single-clip test never sees it; a real timeline, or the diagnostics
+// benchmark running beside one, always did.
+void EngineTest::cudaInteropSurvivesTwoDecoders()
+{
+    if (!GpuCompositor::isAvailable())
+        QSKIP("no GPU compositor on this machine");
+    if (!GpuCompositor::status().vendor.contains(QStringLiteral("NVIDIA"), Qt::CaseInsensitive))
+        QSKIP("GL is not on the NVIDIA GPU; CUDA-GL interop cannot apply here");
+    if (!drift::hwaccel::availableDecodeBackends().contains(drift::hwaccel::Backend::Cuda))
+        QSKIP("no CUDA decode device");
+
+    const QString ffmpeg = QStandardPaths::findExecutable(QStringLiteral("ffmpeg"));
+    if (ffmpeg.isEmpty())
+        QSKIP("ffmpeg not available to generate a test clip");
+
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    const auto makeClip = [&](const char *colour, const QString &name) {
+        const QString path = dir.filePath(name);
+        QProcess enc;
+        enc.start(ffmpeg,
+                  {QStringLiteral("-y"), QStringLiteral("-f"), QStringLiteral("lavfi"),
+                   QStringLiteral("-i"),
+                   QStringLiteral("color=c=%1:s=640x480:d=1:r=30").arg(QLatin1String(colour)),
+                   QStringLiteral("-c:v"), QStringLiteral("libx264"), QStringLiteral("-pix_fmt"),
+                   QStringLiteral("yuv420p"), path});
+        enc.waitForFinished(30000);
+        return path;
+    };
+    const QString red = makeClip("red", QStringLiteral("red.mp4"));
+    const QString blue = makeClip("blue", QStringLiteral("blue.mp4"));
+    QVERIFY(QFileInfo::exists(red) && QFileInfo::exists(blue));
+
+    const auto restore = qScopeGuard([] {
+        ClipReader::setHardwareDecodeMode(ClipReader::HardwareDecodeMode::Auto, {});
+    });
+    ClipReader::setHardwareDecodeMode(ClipReader::HardwareDecodeMode::Hardware,
+                                      drift::hwaccel::Backend::Cuda);
+
+    drift::Project project;
+    project.setResolution(640, 480);
+    project.setFps(30);
+    project.tracks().clear();
+    project.tracks().append(drift::Track{.type = drift::TrackType::Video});
+    for (int i = 0; i < 2; ++i) {
+        drift::Clip clip;
+        clip.id = QStringLiteral("clip%1").arg(i);
+        clip.type = drift::ClipType::Video;
+        clip.path = i == 0 ? red : blue;
+        clip.timelineStart = drift::secondsToUs(double(i));
+        clip.timelineDuration = drift::secondsToUs(1.0);
+        project.tracks()[0].clips.append(clip);
+    }
+
+    FrameCompositor compositor;
+    compositor.setProject(&project);
+    // Red, blue, red again: every switch hands the importer a frame from the other reader.
+    const struct { drift::TimeUs at; bool red; } samples[] = {
+        {300'000, true}, {1'300'000, false}, {500'000, true}, {1'500'000, false}};
+    for (const auto &sample : samples) {
+        const QImage composited = compositor.compositeAt(sample.at);
+        QVERIFY(!composited.isNull());
+        QVERIFY2(GpuCompositor::previewUploadPathId() == QStringLiteral("cuda-interop"),
+                 qPrintable(drift::gl::GlRuntime::lastZeroCopyDeclineReason()));
+        const QRgb centre = composited.pixel(composited.width() / 2, composited.height() / 2);
+        const int wanted = sample.red ? qRed(centre) : qBlue(centre);
+        QVERIFY2(wanted > 128, qPrintable(QStringLiteral("at %1 us centre was %2,%3,%4")
+                                              .arg(sample.at)
+                                              .arg(qRed(centre))
+                                              .arg(qGreen(centre))
+                                              .arg(qBlue(centre))));
+    }
 }
 
 // NVDEC on Windows refuses to create a decoder with more than 32 surfaces, and the preview's extra

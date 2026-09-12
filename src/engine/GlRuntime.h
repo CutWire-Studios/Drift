@@ -346,6 +346,10 @@ private:
     ::SwsContext *m_importSws = nullptr;
     void *m_cudaYResource = nullptr;
     void *m_cudaUvResource = nullptr;
+    // The CUDA device the two resources were registered under. Registrations belong to its
+    // context, so a frame from any other device means registering again; holding the reference
+    // keeps that context alive long enough to unregister from it.
+    AVBufferRef *m_cudaResourceDevice = nullptr;
     int m_cudaTexW = 0;
     int m_cudaTexH = 0;
     bool m_cudaImportFailed = false;
