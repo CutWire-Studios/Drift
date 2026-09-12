@@ -6595,8 +6595,36 @@
         <translation>Nenhuma mídia ainda</translation>
     </message>
     <message>
+        <source>Import files or drop them here, then drag them onto the timeline. Right-click a clip to preview and trim it first.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Import media</source>
         <translation>Importar mídia</translation>
+    </message>
+    <message>
+        <source>Import folder</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Supported formats</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Video</source>
+        <translation type="unfinished">Vídeo</translation>
+    </message>
+    <message>
+        <source>Audio</source>
+        <translation type="unfinished">Áudio</translation>
+    </message>
+    <message>
+        <source>Images</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Vector</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Search media</source>
@@ -6669,10 +6697,6 @@
     <message>
         <source>Expand folder</source>
         <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Import video, audio or images, then drag them onto the timeline. Right-click a clip to preview and trim it first.</source>
-        <translation>Importe vídeo, áudio ou imagens e arraste-os para a linha do tempo. Clique com o botão direito em um clipe para pré-visualizar e aparar antes.</translation>
     </message>
     <message>
         <source>Move to folder…</source>

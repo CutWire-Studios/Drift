@@ -79,6 +79,9 @@ Item {
     signal exportRequested(int assetIndex)
     // Emitted when the empty-state action asks to import media.
     signal importRequested()
+    // Emitted when the empty-state action asks to import a whole folder. The parent owns the
+    // directory picker and the tree walk.
+    signal importFolderRequested()
     // Emitted from the card/row context menu — the only way to move an asset into a folder;
     // there is no drag-onto-a-folder-tile path on desktop or touch. Carries every selected
     // asset's id, not just the one clicked — see selectedAssetIds below. The parent owns the
@@ -1211,17 +1214,151 @@ Item {
 
     // First-run screen for a project with no media at all — folders included. This area used
     // to render as a blank rectangle, with no hint that the panel accepts drops or that an
-    // Import button exists.
-    EmptyState {
-        width: parent.width
-        height: parent.height
+    // Import button exists. Hand-built rather than the shared EmptyState: it carries two
+    // actions and the supported-format table, which no other empty state needs, and it
+    // centres in the whole panel instead of sitting against the top edge.
+    Item {
+        id: mediaEmptyState
+        anchors.fill: parent
         visible: AssetLibrary.count === 0 && BinFolderModel.count === 0 && !root.importing
-        glyph: Theme.icons.film
-        title: qsTr("No media yet")
-        hint: qsTr("Import video, audio or images, then drag them onto the timeline. Right-click a clip to preview and trim it first.")
-        actionText: qsTr("Import media")
-        actionVariant: "primary"
-        onActionTriggered: root.importRequested()
+
+        Column {
+            anchors.centerIn: parent
+            width: Math.min(parent.width - Theme.spacing3xl * 2, 300)
+            spacing: Theme.spacingXl
+
+            Rectangle {
+                anchors.horizontalCenter: parent.horizontalCenter
+                width: 48
+                height: 48
+                radius: Theme.radiusMd
+                color: Theme.panelAccent
+
+                IconGlyph {
+                    anchors.centerIn: parent
+                    glyph: Theme.icons.film
+                    iconSize: Theme.iconSizeXl
+                    iconColor: Theme.mutedForeground
+                }
+            }
+
+            Text {
+                width: parent.width
+                text: qsTr("No media yet")
+                color: Theme.panelForeground
+                font.family: Theme.fontFamily
+                font.pixelSize: Theme.fontSizeSm
+                font.weight: Font.Medium
+                horizontalAlignment: Text.AlignHCenter
+                wrapMode: Text.WordWrap
+            }
+
+            Text {
+                width: parent.width
+                // The formats table below now carries the kind list, so the hint only has to
+                // say how media gets in and what to do with it once it is here.
+                text: qsTr("Import files or drop them here, then drag them onto the timeline. Right-click a clip to preview and trim it first.")
+                color: Theme.mutedForeground
+                font.family: Theme.fontFamily
+                font.pixelSize: Theme.fontSizeXs
+                horizontalAlignment: Text.AlignHCenter
+                wrapMode: Text.WordWrap
+            }
+
+            Row {
+                anchors.horizontalCenter: parent.horizontalCenter
+                spacing: Theme.spacingLg
+
+                ThemedButton {
+                    text: qsTr("Import media")
+                    variant: "primary"
+                    glyph: Theme.icons.upload
+                    onClicked: root.importRequested()
+                }
+
+                ThemedButton {
+                    text: qsTr("Import folder")
+                    glyph: Theme.icons.folderInput
+                    onClicked: root.importFolderRequested()
+                }
+            }
+
+            Rectangle {
+                width: parent.width
+                height: formatColumn.height + Theme.spacingXl * 2
+                radius: Theme.radiusMd
+                color: "transparent"
+                border.width: Theme.borderWidth
+                border.color: Theme.panelBorder
+
+                Column {
+                    id: formatColumn
+                    anchors.centerIn: parent
+                    width: parent.width - Theme.spacingXl * 2
+                    spacing: Theme.spacingMd
+
+                    Text {
+                        width: parent.width
+                        text: qsTr("Supported formats")
+                        color: Theme.mutedForeground
+                        font.family: Theme.fontFamily
+                        font.pixelSize: Theme.fontSizeTiny
+                        font.weight: Font.Medium
+                        font.capitalization: Font.AllUppercase
+                        font.letterSpacing: 0.5
+                    }
+
+                    Repeater {
+                        model: [
+                            { glyph: Theme.icons.video, label: qsTr("Video"),
+                              formats: "MP4 · MOV · MKV · WEBM · AVI" },
+                            { glyph: Theme.icons.music, label: qsTr("Audio"),
+                              formats: "MP3 · WAV · FLAC · AAC · OGG" },
+                            { glyph: Theme.icons.image, label: qsTr("Images"),
+                              formats: "PNG · JPG · WEBP · HEIC · GIF" },
+                            { glyph: Theme.icons.shapes, label: qsTr("Vector"),
+                              formats: "SVG · Lottie (.json, .lottie)" }
+                        ]
+
+                        delegate: Row {
+                            id: formatRow
+                            required property var modelData
+
+                            width: formatColumn.width
+                            spacing: Theme.spacingMd
+
+                            IconGlyph {
+                                anchors.verticalCenter: parent.verticalCenter
+                                glyph: formatRow.modelData.glyph
+                                iconSize: Theme.iconSizeSm
+                                iconColor: Theme.mutedForeground
+                            }
+
+                            Text {
+                                anchors.verticalCenter: parent.verticalCenter
+                                width: 48
+                                text: formatRow.modelData.label
+                                color: Theme.panelForeground
+                                font.family: Theme.fontFamily
+                                font.pixelSize: Theme.fontSizeXs
+                                elide: Text.ElideRight
+                            }
+
+                            Text {
+                                anchors.verticalCenter: parent.verticalCenter
+                                width: formatColumn.width - Theme.iconSizeSm - 48
+                                       - Theme.spacingMd * 2
+                                text: formatRow.modelData.formats
+                                color: Theme.mutedForeground
+                                font.family: Theme.fontFamily
+                                font.pixelSize: Theme.fontSizeTiny
+                                elide: Text.ElideRight
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
 
     ThemedTextField {
