@@ -400,7 +400,7 @@
     </message>
     <message>
         <source>Cut a shape or a subject out of the selected clip</source>
-        <translation type="unfinished"></translation>
+        <translation>Recorta una forma o un objeto del clip seleccionado</translation>
     </message>
 </context>
 <context>
@@ -534,11 +534,11 @@
     </message>
     <message>
         <source>Save Project As</source>
-        <translation type="unfinished"></translation>
+        <translation>Guardar proyecto como</translation>
     </message>
     <message>
         <source>%1 copy</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 copia</translation>
     </message>
     <message>
         <source>Save Shareable Copy</source>
@@ -581,14 +581,14 @@
     </message>
     <message>
         <source>Me</source>
-        <translation type="unfinished"></translation>
+        <translation>Yo</translation>
     </message>
 </context>
 <context>
     <name>AndroidLayoutSheet</name>
     <message>
         <source>Canvas &amp; layout</source>
-        <translation type="unfinished"></translation>
+        <translation>Lienzo y diseño</translation>
     </message>
     <message>
         <source>Custom</source>
@@ -627,39 +627,39 @@
     <name>AndroidLinkImport</name>
     <message>
         <source>Open link</source>
-        <translation type="unfinished"></translation>
+        <translation>Abrir enlace</translation>
     </message>
     <message>
         <source>Couldn’t reach the marketplace.</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">No pude acceder a la Marketplace.</translation>
     </message>
     <message>
         <source>“%1” is ready.</source>
-        <translation type="unfinished"></translation>
+        <translation>&quot;%1&quot; ya está listo.</translation>
     </message>
     <message>
         <source>Downloading…</source>
-        <translation type="unfinished"></translation>
+        <translation>Descargando…</translation>
     </message>
     <message>
         <source>No source in the marketplace can open links.</source>
-        <translation type="unfinished"></translation>
+        <translation>Ninguna fuente de la marketplace puede abrir enlaces.</translation>
     </message>
     <message>
         <source>That source didn’t recognise this link.</source>
-        <translation type="unfinished"></translation>
+        <translation>Esa fuente no reconoció este enlace.</translation>
     </message>
     <message>
         <source>Which source should open this link?</source>
-        <translation type="unfinished"></translation>
+        <translation>¿Qué fuente debería abrir este enlace?</translation>
     </message>
     <message>
         <source>Loading sources…</source>
-        <translation type="unfinished"></translation>
+        <translation>Cargando fuentes…</translation>
     </message>
     <message>
         <source>Asking that source…</source>
-        <translation type="unfinished"></translation>
+        <translation>Preguntándole a esa fuente…</translation>
     </message>
     <message>
         <source>Try again</source>
@@ -667,11 +667,11 @@
     </message>
     <message>
         <source>Pick another source</source>
-        <translation type="unfinished"></translation>
+        <translation>Elige otra fuente</translation>
     </message>
     <message>
         <source>Open in browser</source>
-        <translation type="unfinished"></translation>
+        <translation>Abrir en el navegador</translation>
     </message>
     <message>
         <source>Add to timeline</source>
@@ -679,7 +679,7 @@
     </message>
     <message>
         <source>Keep browsing</source>
-        <translation type="unfinished"></translation>
+        <translation>Sigue navegando</translation>
     </message>
 </context>
 <context>
@@ -694,7 +694,7 @@
     </message>
     <message>
         <source>Canvas set to %1×%2 at %3 fps from your first clip.</source>
-        <translation type="unfinished"></translation>
+        <translation>El lienzo se ha configurado en %1 × %2 a %3 fps a partir de tu primer clip.</translation>
     </message>
     <message>
         <source>That share had no link in it.</source>
@@ -718,7 +718,7 @@
     </message>
     <message>
         <source>Saved to %1</source>
-        <translation type="unfinished"></translation>
+        <translation>Guardado en %1</translation>
     </message>
     <message>
         <source>Export finished.</source>
@@ -754,11 +754,11 @@
     </message>
     <message>
         <source>Imported “%1”.</source>
-        <translation type="unfinished"></translation>
+        <translation>Se importó «%1».</translation>
     </message>
     <message>
         <source>Imported from the marketplace.</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Importado del mercado.</translation>
     </message>
 </context>
 <context>
@@ -776,13 +776,13 @@
     <name>AndroidMePage</name>
     <message>
         <source>Me</source>
-        <translation type="unfinished"></translation>
+        <translation>Yo</translation>
     </message>
     <message numerus="yes">
         <source>%n coin(s)</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>%n moneda</numerusform>
+            <numerusform>%n monedas</numerusform>
         </translation>
     </message>
     <message>
@@ -874,34 +874,34 @@
     </message>
     <message>
         <source>Rotate</source>
-        <translation type="unfinished"></translation>
+        <translation>Rotar</translation>
     </message>
 </context>
 <context>
     <name>AndroidMoreToolsSheet</name>
     <message>
         <source>More tools</source>
-        <translation type="unfinished"></translation>
+        <translation>Más herramientas</translation>
     </message>
     <message>
         <source>Trim &amp; timing</source>
-        <translation type="unfinished"></translation>
+        <translation>Recorte y tiempo</translation>
     </message>
     <message>
         <source>Trim start</source>
-        <translation type="unfinished"></translation>
+        <translation>Inicio del recorte</translation>
     </message>
     <message>
         <source>Drop everything before the playhead</source>
-        <translation type="unfinished"></translation>
+        <translation>Elimina todo lo que haya antes del indicador de reproducción</translation>
     </message>
     <message>
         <source>Trim end</source>
-        <translation type="unfinished"></translation>
+        <translation>Final del recorte</translation>
     </message>
     <message>
         <source>Drop everything after the playhead</source>
-        <translation type="unfinished"></translation>
+        <translation>Elimina todo lo que haya después del indicador de reproducción</translation>
     </message>
     <message>
         <source>Speed</source>
