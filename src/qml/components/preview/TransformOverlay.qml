@@ -247,9 +247,12 @@ Item {
             height: Math.max(24, layoutH * sy)
             // Front-most track (lowest index) sits on top so it
             // wins click hit-testing over boxes behind it. The clip
-            // being edited jumps above everything so its editor and
-            // the click-away catcher order correctly.
-            z: handle.editing ? 1000 : -modelData.track
+            // selected on the timeline is raised above all of them, so a
+            // box that lies under a full-frame clip on an upper track is
+            // still the one the pointer reaches. The clip being edited
+            // jumps above everything so its editor and the click-away
+            // catcher order correctly.
+            z: handle.editing ? 1000 : handle.selected ? 900 : -modelData.track
             transformOrigin: Item.Center
             rotation: liveRotation < 1e8 ? liveRotation : modelData.rotation
 
@@ -394,10 +397,13 @@ Item {
             DragHandler {
                 id: bodyDrag
                 target: null
-                // Off while a grip is held: a handler on the parent item can
+                // Only the clip selected on the timeline moves: dragging a box
+                // that merely happens to be under the pointer used to shift the
+                // wrong clip, so an unselected box is tap-to-select only.
+                // Off while a grip is held too: a handler on the parent item can
                 // otherwise take the grab from the grip once the drag threshold
                 // is passed, turning a resize into a move.
-                enabled: !handle.editing && !handle.resizing
+                enabled: handle.selected && !handle.editing && !handle.resizing
                 cursorShape: Qt.SizeAllCursor
 
                 // Press point in overlay coordinates. The box rides the cursor as
