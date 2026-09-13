@@ -275,12 +275,12 @@ jobs:
           # playable only on GPUs whose VAAPI/NVDEC covers it and black everywhere else.
           export LD_LIBRARY_PATH="${GITHUB_WORKSPACE}/.deps/ffmpeg/lib:${QT_ROOT_DIR}/lib:${LD_LIBRARY_PATH:-}"
           export EXTRA_PLATFORM_PLUGINS="libqwayland.so"
-          # waylandclient as well as waylandcompositor: the client half is what brings
-          # wayland-graphics-integration-client, and without its EGL plugin QtWayland
-          # cannot hand out an offscreen surface — the compositor then falls back to a
-          # hidden QWindow it is not allowed to create off the GUI thread, and the
-          # preview goes black on Wayland while X11 is fine.
-          export EXTRA_QT_MODULES="waylandcompositor waylandclient"
+          # waylandcompositor is the only module whose deployer ships
+          # wayland-graphics-integration-client. Without its EGL plugin QtWayland has no client
+          # buffer integration, so no OpenGL context can be created on Wayland at all.
+          # The plugin splits this list on ';' — a space-separated list matches nothing and
+          # silently deploys no extra modules (the 0.6.0 AppImage shipped that way).
+          export EXTRA_QT_MODULES="waylandcompositor"
           #
           # The -l lines are libraries dlopened by soname, so linuxdeploy sees no NEEDED entry
           # to follow: OpenSSL is Qt's ossl TLS backend — without it the AppImage ships the
