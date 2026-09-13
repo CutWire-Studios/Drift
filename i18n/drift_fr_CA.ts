@@ -7732,7 +7732,7 @@ En cas de saccades à la lecture, essayez un autre mode.</translation>
     </message>
     <message>
         <source>Motion</source>
-        <translation type="unfinished"></translation>
+        <translation>Mouvement</translation>
     </message>
     <message>
         <source>Subtitles</source>
@@ -7898,87 +7898,87 @@ En cas de saccades à la lecture, essayez un autre mode.</translation>
     </message>
     <message>
         <source>Clip</source>
-        <translation type="unfinished">Clip</translation>
+        <translation>Clip</translation>
     </message>
     <message>
         <source>Cannot open file: %1</source>
-        <translation type="unfinished"></translation>
+        <translation>Impossible d&apos;ouvrir le fichier : %1</translation>
     </message>
     <message>
         <source>File is empty</source>
-        <translation type="unfinished"></translation>
+        <translation>Le fichier est vide</translation>
     </message>
     <message>
         <source>Failed to decompress Premiere project archive</source>
-        <translation type="unfinished"></translation>
+        <translation>Échec de la décompression de l&apos;archive du projet Premiere</translation>
     </message>
     <message>
         <source>XML parse error at line %1: %2</source>
-        <translation type="unfinished"></translation>
+        <translation>Erreur d&apos;analyse XML à la ligne %1 : %2</translation>
     </message>
     <message>
         <source>Imported Premiere Project</source>
-        <translation type="unfinished"></translation>
+        <translation>Projet Premiere importé</translation>
     </message>
     <message>
         <source>V%1</source>
-        <translation type="unfinished"></translation>
+        <translation>V%1</translation>
     </message>
     <message>
         <source>A%1</source>
-        <translation type="unfinished"></translation>
+        <translation>A%1</translation>
     </message>
     <message>
         <source>Not a valid ZIP archive</source>
-        <translation type="unfinished"></translation>
+        <translation>Ce fichier n&apos;est pas une archive ZIP valide</translation>
     </message>
     <message>
         <source>MOGRT archive is empty or invalid</source>
-        <translation type="unfinished"></translation>
+        <translation>L&apos;archive MOGRT est vide ou invalide</translation>
     </message>
     <message>
         <source>Could not open file: %1</source>
-        <translation type="unfinished"></translation>
+        <translation>Impossible d&apos;ouvrir le fichier : %1</translation>
     </message>
     <message>
         <source>Invalid or corrupt MLT / Kdenlive project</source>
-        <translation type="unfinished"></translation>
+        <translation>Projet MLT ou Kdenlive non valide ou corrompu</translation>
     </message>
     <message>
         <source>Failed to parse MLT XML document</source>
-        <translation type="unfinished"></translation>
+        <translation>Échec de l&apos;analyse du document XML MLT</translation>
     </message>
     <message>
         <source>Root element is not &lt;mlt&gt;</source>
-        <translation type="unfinished"></translation>
+        <translation>L&apos;élément racine n&apos;est pas &lt;mlt&gt;</translation>
     </message>
     <message>
         <source>XML parse error at line %1, column %2: %3</source>
-        <translation type="unfinished"></translation>
+        <translation>Erreur d&apos;analyse XML à la ligne %1, colonne %2 : %3</translation>
     </message>
     <message>
         <source>Root element is &lt;%1&gt;, expected &lt;fcpxml&gt;</source>
-        <translation type="unfinished"></translation>
+        <translation>L&apos;élément racine est &lt;%1&gt;, mais &lt;fcpxml&gt; était attendu</translation>
     </message>
     <message>
         <source>Cannot open DaVinci Resolve project archive: %1</source>
-        <translation type="unfinished"></translation>
+        <translation>Impossible d&apos;ouvrir l&apos;archive de projet DaVinci Resolve : %1</translation>
     </message>
     <message>
         <source>DaVinci Resolve project archive is empty or invalid</source>
-        <translation type="unfinished"></translation>
+        <translation>L&apos;archive de projet DaVinci Resolve est vide ou non valide</translation>
     </message>
     <message>
         <source>No edit events found in EDL</source>
-        <translation type="unfinished"></translation>
+        <translation>Aucun événement de montage trouvé dans l&apos;EDL</translation>
     </message>
     <message>
         <source>Failed to parse OpenTimelineIO JSON: %1</source>
-        <translation type="unfinished"></translation>
+        <translation>Échec de l&apos;analyse du fichier JSON OpenTimelineIO : %1</translation>
     </message>
     <message>
         <source>Not an OpenTimelineIO Timeline or Stack (schema: %1)</source>
-        <translation type="unfinished"></translation>
+        <translation>Il ne s&apos;agit pas d&apos;une séquence ni d&apos;une pile OpenTimelineIO (schéma : %1)</translation>
     </message>
 </context>
 <context>
@@ -8023,7 +8023,7 @@ En cas de saccades à la lecture, essayez un autre mode.</translation>
     </message>
     <message>
         <source>Save as…</source>
-        <translation type="unfinished"></translation>
+        <translation>Enregistrer sous…</translation>
     </message>
     <message>
         <source>Save with media…</source>
@@ -8031,7 +8031,7 @@ En cas de saccades à la lecture, essayez un autre mode.</translation>
     </message>
     <message>
         <source>Save as JSON…</source>
-        <translation>Enregistrer comme fichier JSON...</translation>
+        <translation>Enregistrer comme fichier JSON…</translation>
     </message>
     <message>
         <source>Open JSON…</source>
@@ -8334,19 +8334,19 @@ En cas de saccades à la lecture, essayez un autre mode.</translation>
     </message>
     <message>
         <source>Anything (click to pick)</source>
-        <translation type="unfinished"></translation>
+        <translation>Tout (cliquer pour sélectionner)</translation>
     </message>
     <message>
         <source>People (automatic)</source>
-        <translation type="unfinished"></translation>
+        <translation>Personnes (automatique)</translation>
     </message>
     <message>
         <source>Best quality (slower)</source>
-        <translation type="unfinished"></translation>
+        <translation>Meilleure qualité (plus lent)</translation>
     </message>
     <message>
         <source>Fast</source>
-        <translation type="unfinished">Rapide</translation>
+        <translation>Rapide</translation>
     </message>
     <message>
         <source>Looking at this moment…</source>
@@ -8366,15 +8366,15 @@ En cas de saccades à la lecture, essayez un autre mode.</translation>
     </message>
     <message>
         <source>Everyone in the shot is cut out automatically — there is nothing to click.</source>
-        <translation type="unfinished"></translation>
+        <translation>Chaque personne du plan est détourée automatiquement — il n&apos;y a rien à cliquer.</translation>
     </message>
     <message>
         <source>Cut out</source>
-        <translation type="unfinished"></translation>
+        <translation>Détourer</translation>
     </message>
     <message>
         <source>Quality</source>
-        <translation type="unfinished">Qualité</translation>
+        <translation>Qualité</translation>
     </message>
     <message>
         <source>AI: %1</source>
@@ -8390,7 +8390,7 @@ En cas de saccades à la lecture, essayez un autre mode.</translation>
     </message>
     <message>
         <source>Adds a mask layer under the clip. The clip itself is left alone — flip it to the background, or remove it, from the Masks tab.</source>
-        <translation type="unfinished"></translation>
+        <translation>Ajoute un calque de masque sous le clip. Le clip lui-même reste inchangé — inversez-le avec l&apos;arrière-plan ou supprimez-le à partir de l&apos;onglet Masques.</translation>
     </message>
     <message>
         <source>The cutout is only for this effect — no extra tracks are added.</source>
@@ -8421,249 +8421,249 @@ En cas de saccades à la lecture, essayez un autre mode.</translation>
     <name>SettingsDialog</name>
     <message>
         <source>Settings</source>
-        <translation type="unfinished">Paramètres</translation>
+        <translation>Paramètres</translation>
     </message>
     <message>
         <source>Done</source>
-        <translation type="unfinished">Terminé</translation>
+        <translation>Terminé</translation>
     </message>
 </context>
 <context>
     <name>SettingsPane</name>
     <message>
         <source>Preview</source>
-        <translation type="unfinished">Aperçu</translation>
+        <translation>Aperçu</translation>
     </message>
     <message>
         <source>Show guides</source>
-        <translation type="unfinished">Afficher les guides</translation>
+        <translation>Afficher les guides</translation>
     </message>
     <message>
         <source>Show alignment guides over the preview</source>
-        <translation type="unfinished">Afficher les guides d’alignement sur l’aperçu</translation>
+        <translation>Afficher les guides d’alignement sur l’aperçu</translation>
     </message>
     <message>
         <source>Rule of thirds</source>
-        <translation type="unfinished">Règle des tiers</translation>
+        <translation>Règle des tiers</translation>
     </message>
     <message>
         <source>Center cross</source>
-        <translation type="unfinished">Croix centrale</translation>
+        <translation>Croix centrale</translation>
     </message>
     <message>
         <source>Safe margins</source>
-        <translation type="unfinished">Marges sûres</translation>
+        <translation>Marges sûres</translation>
     </message>
     <message>
         <source>Which guide to show</source>
-        <translation type="unfinished">Quel guide afficher</translation>
+        <translation>Quel guide afficher</translation>
     </message>
     <message>
         <source>Background</source>
-        <translation type="unfinished">Arrière-plan</translation>
+        <translation>Arrière-plan</translation>
     </message>
     <message>
         <source>Solid color</source>
-        <translation type="unfinished">Couleur unie</translation>
+        <translation>Couleur unie</translation>
     </message>
     <message>
         <source>Blur</source>
-        <translation type="unfinished">Flou</translation>
+        <translation>Flou</translation>
     </message>
     <message>
         <source>Fill behind clips that don’t cover the whole screen</source>
-        <translation type="unfinished">Remplir derrière les clips qui ne couvrent pas tout l&apos;écran</translation>
+        <translation>Remplir derrière les clips qui ne couvrent pas tout l&apos;écran</translation>
     </message>
     <message>
         <source>Choose background colour</source>
-        <translation type="unfinished">Choisir la couleur de fond</translation>
+        <translation>Choisir la couleur de fond</translation>
     </message>
     <message>
         <source>Blur strength</source>
-        <translation type="unfinished">Intensité du flou</translation>
+        <translation>Intensité du flou</translation>
     </message>
     <message>
         <source>Faster preview (experimental)</source>
-        <translation type="unfinished"></translation>
+        <translation>Aperçu plus rapide (expérimental)</translation>
     </message>
     <message>
         <source>Can make playback smoother by keeping video on the graphics card. Turn it off if the picture looks wrong. Takes effect after restart.</source>
-        <translation type="unfinished"></translation>
+        <translation>Peut rendre la lecture plus fluide en conservant la vidéo sur la carte graphique. Désactivez-le si l&apos;image s&apos;affiche mal. S&apos;applique après le redémarrage.</translation>
     </message>
     <message>
         <source>Graphics card</source>
-        <translation type="unfinished"></translation>
+        <translation>Carte graphique</translation>
     </message>
     <message>
         <source>Windows default</source>
-        <translation type="unfinished"></translation>
+        <translation>Par défaut de Windows</translation>
     </message>
     <message>
         <source>Power saving (integrated GPU)</source>
-        <translation type="unfinished"></translation>
+        <translation>Économie d&apos;énergie (GPU intégré)</translation>
     </message>
     <message>
         <source>High performance (discrete GPU)</source>
-        <translation type="unfinished"></translation>
+        <translation>Haute performance (GPU dédié)</translation>
     </message>
     <message>
         <source>Which graphics card Drift runs on. High performance keeps video decoded on an NVIDIA card on that card; power saving uses less battery. Takes effect after restart.</source>
-        <translation type="unfinished"></translation>
+        <translation>Définit la carte graphique utilisée par Drift. Le mode Haute performance conserve les vidéos décodées par une carte NVIDIA sur cette même carte ; le mode Économie d&apos;énergie réduit la consommation de la batterie. S&apos;applique après le redémarrage.</translation>
     </message>
     <message>
         <source>Playback</source>
-        <translation type="unfinished">Lecture</translation>
+        <translation>Lecture</translation>
     </message>
     <message>
         <source>Audio output</source>
-        <translation type="unfinished">Sortie audio</translation>
+        <translation>Sortie audio</translation>
     </message>
     <message>
         <source>Where playback is heard. “System default” follows whatever your computer is set to, including when that changes.</source>
-        <translation type="unfinished">Où le son est entendu. « Par défaut du système » suit ce que votre ordinateur a configuré, y compris lorsqu’il change.</translation>
+        <translation>Où le son est entendu. « Par défaut du système » suit ce que votre ordinateur a configuré, y compris lorsqu’il change.</translation>
     </message>
     <message>
         <source>Interface</source>
-        <translation type="unfinished">Interface</translation>
+        <translation>Interface</translation>
     </message>
     <message>
         <source>Size</source>
-        <translation type="unfinished">Taille</translation>
+        <translation>Taille</translation>
     </message>
     <message>
         <source>100% (system)</source>
-        <translation type="unfinished">100% (système)</translation>
+        <translation>100% (système)</translation>
     </message>
     <message>
         <source>Makes buttons, text, and icons larger. This is extra scale on top of the size already set in your display settings. Takes effect after restart.</source>
-        <translation type="unfinished">Agrandit les boutons, le texte et les icônes. Cette échelle s&apos;ajoute à celle déjà définie dans vos paramètres d&apos;affichage. Prend effet après le redémarrage.</translation>
+        <translation>Agrandit les boutons, le texte et les icônes. Cette échelle s&apos;ajoute à celle déjà définie dans vos paramètres d&apos;affichage. Prend effet après le redémarrage.</translation>
     </message>
     <message>
         <source>Restart Drift to apply this size.</source>
-        <translation type="unfinished">Redémarrer Drift pour appliquer cette échelle.</translation>
+        <translation>Redémarrer Drift pour appliquer cette échelle.</translation>
     </message>
     <message>
         <source>Horizontal mouse-wheel pan</source>
-        <translation type="unfinished">Déplacement horizontal avec la molette de la souris</translation>
+        <translation>Déplacement horizontal avec la molette de la souris</translation>
     </message>
     <message>
         <source>Scroll pans left and right along the timeline. Shift+scroll moves between tracks. Middle-click drag also pans.</source>
-        <translation type="unfinished">Le défilement déplace la vue vers la gauche et la droite sur la timeline. Maj+défilement navigue entre les pistes. Glisser avec le clic du milieu déplace également la vue.</translation>
+        <translation>Le défilement déplace la vue vers la gauche et la droite sur la timeline. Maj+défilement navigue entre les pistes. Glisser avec le clic du milieu déplace également la vue.</translation>
     </message>
     <message>
         <source>Haptic feedback</source>
-        <translation type="unfinished"></translation>
+        <translation>Retour haptique</translation>
     </message>
     <message>
         <source>Vibrate on taps, snaps, and edits. Uses this device’s own haptic effects when it has them.</source>
-        <translation type="unfinished"></translation>
+        <translation>Vibre lors des appuis, de l&apos;aimantage et des coupes. Utilise les effets haptiques propres à cet appareil lorsqu&apos;ils sont disponibles.</translation>
     </message>
     <message>
         <source>Language</source>
-        <translation type="unfinished">Langue</translation>
+        <translation>Langue</translation>
     </message>
     <message>
         <source>Language for menus and labels. Takes effect immediately.</source>
-        <translation type="unfinished">Langue des menus et des libellés. Prise en compte immédiate.</translation>
+        <translation>Langue des menus et des libellés. Prise en compte immédiate.</translation>
     </message>
     <message>
         <source>App</source>
-        <translation type="unfinished">Application</translation>
+        <translation>Application</translation>
     </message>
     <message>
         <source>Reopen last project on startup</source>
-        <translation type="unfinished">Rouvrir le dernier projet au démarrage</translation>
+        <translation>Rouvrir le dernier projet au démarrage</translation>
     </message>
     <message>
         <source>Automatically restore the last open project on startup. Closing still asks you to save; a crash snapshot never overwrites your save file.</source>
-        <translation type="unfinished">Rouvre automatiquement le dernier projet ouvert au démarrage. La fermeture demande toujours d&apos;enregistrer les modifications ; une capture en cas de plantage n&apos;écrase jamais votre fichier sauvegardé.</translation>
+        <translation>Rouvre automatiquement le dernier projet ouvert au démarrage. La fermeture demande toujours d&apos;enregistrer les modifications ; une capture en cas de plantage n&apos;écrase jamais votre fichier sauvegardé.</translation>
     </message>
     <message>
         <source>Updates</source>
-        <translation type="unfinished">Mises à jour</translation>
+        <translation>Mises à jour</translation>
     </message>
     <message>
         <source>Check on startup</source>
-        <translation type="unfinished">Vérifier au démarrage</translation>
+        <translation>Vérifier au démarrage</translation>
     </message>
     <message>
         <source>Ask GitHub once a day whether a newer Drift has been released</source>
-        <translation type="unfinished">Demander à GitHub une fois par jour si une nouvelle version de Drift est disponible</translation>
+        <translation>Demander à GitHub une fois par jour si une nouvelle version de Drift est disponible</translation>
     </message>
     <message>
         <source>Checking…</source>
-        <translation type="unfinished">Vérification…</translation>
+        <translation>Vérification…</translation>
     </message>
     <message>
         <source>Check now</source>
-        <translation type="unfinished">Vérifier maintenant</translation>
+        <translation>Vérifier maintenant</translation>
     </message>
     <message>
         <source>Drift %1</source>
-        <translation type="unfinished">Drift %1</translation>
+        <translation>Drift %1</translation>
     </message>
     <message>
         <source>Extra packs</source>
-        <translation type="unfinished">extensions supplémentaires</translation>
+        <translation>Extensions supplémentaires</translation>
     </message>
     <message>
         <source>Remind about essential packs</source>
-        <translation type="unfinished">Rappeler les extensions essentielles</translation>
+        <translation>Rappeler les extensions essentielles</translation>
     </message>
     <message>
         <source>Pulse the Extras icon when the video, transitions, and audio packs are not installed</source>
-        <translation type="unfinished">Faire pulser l’icône Extras quand les extensions vidéo, transitions et audio ne sont pas installées</translation>
+        <translation>Faire pulser l’icône Extras quand les extensions vidéo, transitions et audio ne sont pas installées</translation>
     </message>
     <message>
         <source>Remind about pack updates</source>
-        <translation type="unfinished">Rappeler les mises à jour des extensions</translation>
+        <translation>Rappeler les mises à jour des extensions</translation>
     </message>
     <message>
         <source>Pulse the Extras icon when updates are available for packs you already have installed</source>
-        <translation type="unfinished">Faire pulser l’icône Extras lorsqu’il y a des mises à jour disponibles pour les extensions déjà installées</translation>
+        <translation>Faire pulser l’icône Extras lorsqu’il y a des mises à jour disponibles pour les extensions déjà installées</translation>
     </message>
     <message>
         <source>Agent access</source>
-        <translation type="unfinished">Accès aux agents</translation>
+        <translation>Accès aux agents</translation>
     </message>
     <message>
         <source>Marketplace</source>
-        <translation type="unfinished"></translation>
+        <translation>Marché</translation>
     </message>
     <message>
         <source>Account connected (%1)</source>
-        <translation type="unfinished"></translation>
+        <translation>Compte connecté (%1)</translation>
     </message>
     <message>
         <source>Marketplace account connected</source>
-        <translation type="unfinished"></translation>
+        <translation>Compte de marché connecté</translation>
     </message>
     <message>
         <source>Disconnect</source>
-        <translation type="unfinished"></translation>
+        <translation>Déconnecter</translation>
     </message>
     <message>
         <source>Unlink the marketplace account from this device</source>
-        <translation type="unfinished"></translation>
+        <translation>Dissocier le compte du marché de cet appareil</translation>
     </message>
 </context>
 <context>
     <name>ShadingLayerRow</name>
     <message>
         <source>Fill</source>
-        <translation type="unfinished">Remplissage</translation>
+        <translation>Remplissage</translation>
     </message>
     <message>
         <source>Stroke</source>
-        <translation type="unfinished">Contour</translation>
+        <translation>Contour</translation>
     </message>
     <message>
         <source>Shadow</source>
-        <translation type="unfinished">Ombre</translation>
+        <translation>Ombre</translation>
     </message>
     <message>
         <source>Glow</source>
-        <translation type="unfinished">Lueur</translation>
+        <translation>Lueur</translation>
     </message>
     <message>
         <source>Extrude</source>
@@ -8671,191 +8671,191 @@ En cas de saccades à la lecture, essayez un autre mode.</translation>
     </message>
     <message>
         <source>Solid</source>
-        <translation type="unfinished">Uni</translation>
+        <translation>Uni</translation>
     </message>
     <message>
         <source>Gradient</source>
-        <translation type="unfinished"></translation>
+        <translation>Dégradé</translation>
     </message>
     <message>
         <source>Texture</source>
-        <translation type="unfinished">Texture</translation>
+        <translation>Texture</translation>
     </message>
     <message>
         <source>Effect</source>
-        <translation type="unfinished">Effet</translation>
+        <translation>Effet</translation>
     </message>
     <message>
         <source>Normal</source>
-        <translation type="unfinished">Normal</translation>
+        <translation>Normal</translation>
     </message>
     <message>
         <source>Multiply</source>
-        <translation type="unfinished">Multiplier</translation>
+        <translation>Multiplier</translation>
     </message>
     <message>
         <source>Screen</source>
-        <translation type="unfinished">Écran</translation>
+        <translation>Écran</translation>
     </message>
     <message>
         <source>Overlay</source>
-        <translation type="unfinished">Superposition</translation>
+        <translation>Superposition</translation>
     </message>
     <message>
         <source>Add</source>
-        <translation type="unfinished">Ajouter</translation>
+        <translation>Ajouter</translation>
     </message>
     <message>
         <source>Darken</source>
-        <translation type="unfinished">Assombrir</translation>
+        <translation>Assombrir</translation>
     </message>
     <message>
         <source>Lighten</source>
-        <translation type="unfinished">Éclaircir</translation>
+        <translation>Éclaircir</translation>
     </message>
     <message>
         <source>Centre</source>
-        <translation type="unfinished"></translation>
+        <translation>Centre</translation>
     </message>
     <message>
         <source>Outside</source>
-        <translation type="unfinished"></translation>
+        <translation>Extérieur</translation>
     </message>
     <message>
         <source>Inside</source>
-        <translation type="unfinished"></translation>
+        <translation>Intérieur</translation>
     </message>
     <message>
         <source>Dashed</source>
-        <translation type="unfinished">Tiretée</translation>
+        <translation>Tiretée</translation>
     </message>
     <message>
         <source>Dotted</source>
-        <translation type="unfinished">Pointillée</translation>
+        <translation>Pointillée</translation>
     </message>
     <message>
         <source>Dash-dot</source>
-        <translation type="unfinished">Tiret-point</translation>
+        <translation>Tiret-point</translation>
     </message>
     <message>
         <source>Collapse layer</source>
-        <translation type="unfinished"></translation>
+        <translation>Réduire le calque</translation>
     </message>
     <message>
         <source>Expand layer</source>
-        <translation type="unfinished"></translation>
+        <translation>Développer le calque</translation>
     </message>
     <message>
         <source>Bring forward</source>
-        <translation type="unfinished"></translation>
+        <translation>Avancer d&apos;un rang</translation>
     </message>
     <message>
         <source>Send backward</source>
-        <translation type="unfinished"></translation>
+        <translation>Reculer d&apos;un rang</translation>
     </message>
     <message>
         <source>Hide layer</source>
-        <translation type="unfinished"></translation>
+        <translation>Masquer le calque</translation>
     </message>
     <message>
         <source>Show layer</source>
-        <translation type="unfinished"></translation>
+        <translation>Afficher le calque</translation>
     </message>
     <message>
         <source>Duplicate layer</source>
-        <translation type="unfinished"></translation>
+        <translation>Dupliquer le calque</translation>
     </message>
     <message>
         <source>Remove layer</source>
-        <translation type="unfinished"></translation>
+        <translation>Supprimer le calque</translation>
     </message>
     <message>
         <source>Opacity</source>
-        <translation type="unfinished">Opacité</translation>
+        <translation>Opacité</translation>
     </message>
     <message>
         <source>Blend</source>
-        <translation type="unfinished"></translation>
+        <translation>Mélange</translation>
     </message>
     <message>
         <source>Width</source>
-        <translation type="unfinished">Largeur</translation>
+        <translation>Largeur</translation>
     </message>
     <message>
         <source>Placement</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Disposition</translation>
     </message>
     <message>
         <source>Centre the stroke on the outline, grow it outward, or keep it inside</source>
-        <translation type="unfinished"></translation>
+        <translation>Centrer le contour sur le tracé, l&apos;étendre vers l&apos;extérieur ou le maintenir à l&apos;intérieur</translation>
     </message>
     <message>
         <source>Dash</source>
-        <translation type="unfinished"></translation>
+        <translation>Tiret</translation>
     </message>
     <message>
         <source>Dash offset</source>
-        <translation type="unfinished"></translation>
+        <translation>Décalage des tirets</translation>
     </message>
     <message>
         <source>Trim start</source>
-        <translation type="unfinished"></translation>
+        <translation>Rogner le début</translation>
     </message>
     <message>
         <source>Trim end</source>
-        <translation type="unfinished"></translation>
+        <translation>Rogner la fin</translation>
     </message>
     <message>
         <source>Sketchy</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Esquisse</translation>
     </message>
     <message>
         <source>Segment</source>
-        <translation type="unfinished"></translation>
+        <translation>Ségment</translation>
     </message>
     <message>
         <source>Wobble</source>
-        <translation type="unfinished"></translation>
+        <translation>Oscillation</translation>
     </message>
     <message>
         <source>Seed</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Graine</translation>
     </message>
     <message>
         <source>Colour</source>
-        <translation type="unfinished"></translation>
+        <translation>Couleur</translation>
     </message>
     <message>
         <source>Choose the layer colour</source>
-        <translation type="unfinished"></translation>
+        <translation>Choisissez la couleur du calque</translation>
     </message>
     <message>
         <source>Offset X</source>
-        <translation type="unfinished">Décalage X</translation>
+        <translation>Décalage X</translation>
     </message>
     <message>
         <source>Offset Y</source>
-        <translation type="unfinished">Décalage Y</translation>
+        <translation>Décalage Y</translation>
     </message>
     <message>
         <source>Radius</source>
-        <translation type="unfinished">Rayon</translation>
+        <translation>Rayon</translation>
     </message>
     <message>
         <source>Blur</source>
-        <translation type="unfinished">Flou</translation>
+        <translation>Flou</translation>
     </message>
     <message>
         <source>Spread</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Étalement</translation>
     </message>
     <message>
         <source>Depth</source>
-        <translation type="unfinished"></translation>
+        <translation>Profondeur</translation>
     </message>
     <message>
         <source>Angle</source>
-        <translation type="unfinished">Angle</translation>
+        <translation>Angle</translation>
     </message>
     <message>
         <source>How much the extruded side fades toward black</source>
@@ -8890,11 +8890,11 @@ En cas de saccades à la lecture, essayez un autre mode.</translation>
     </message>
     <message>
         <source>Layers</source>
-        <translation type="unfinished"></translation>
+        <translation>Calques</translation>
     </message>
     <message>
         <source>Add layer</source>
-        <translation type="unfinished"></translation>
+        <translation>Ajouter un calque</translation>
     </message>
     <message>
         <source>Add a fill, stroke, shadow, glow or extrude layer</source>
@@ -8902,15 +8902,15 @@ En cas de saccades à la lecture, essayez un autre mode.</translation>
     </message>
     <message>
         <source>Shadow</source>
-        <translation type="unfinished">Ombre</translation>
+        <translation>Ombre</translation>
     </message>
     <message>
         <source>Glow</source>
-        <translation type="unfinished">Lueur</translation>
+        <translation>Lueur</translation>
     </message>
     <message>
         <source>Extrude</source>
-        <translation type="unfinished"></translation>
+        <translation>Extruder</translation>
     </message>
     <message>
         <source>No layers. Add a fill to start.</source>
@@ -9085,31 +9085,31 @@ En cas de saccades à la lecture, essayez un autre mode.</translation>
     </message>
     <message>
         <source>Corner radius</source>
-        <translation type="unfinished">Rayon des coins</translation>
+        <translation>Rayon des coins</translation>
     </message>
     <message>
         <source>Inner radius</source>
-        <translation type="unfinished">Rayon intérieur</translation>
+        <translation>Rayon intérieur</translation>
     </message>
     <message>
         <source>Head size</source>
-        <translation type="unfinished">Taille de la tête</translation>
+        <translation>Taille de la tête</translation>
     </message>
     <message>
         <source>Thickness</source>
-        <translation type="unfinished">Épaisseur</translation>
+        <translation>Épaisseur</translation>
     </message>
     <message>
         <source>Tail position</source>
-        <translation type="unfinished">Position de la queue</translation>
+        <translation>Position de la queue</translation>
     </message>
     <message>
         <source>Tail size</source>
-        <translation type="unfinished">Taille de la queue</translation>
+        <translation>Taille de la queue</translation>
     </message>
     <message>
         <source>Points</source>
-        <translation type="unfinished">Points</translation>
+        <translation>Points</translation>
     </message>
 </context>
 <context>
