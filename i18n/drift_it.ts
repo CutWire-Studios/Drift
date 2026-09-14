@@ -845,6 +845,14 @@
         <translation>Solo audio — ritaglialo qui sotto</translation>
     </message>
     <message>
+        <source>Unlock source frame ratio</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Lock source frame ratio</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Trim</source>
         <translation>Ritaglia</translation>
     </message>
@@ -883,6 +891,10 @@
     <message>
         <source>Save keeps your changes as a new file in this project.</source>
         <translation>Salva mantiene le modifiche come nuovo file in questo progetto.</translation>
+    </message>
+    <message>
+        <source>Save keeps the original video and stores this framing.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Nothing changed yet. Trim or crop above, or go back and drag this onto the timeline.</source>
@@ -3149,6 +3161,18 @@
     <message>
         <source>%1 (off)</source>
         <translation type="unfinished">%1 (disattivo)</translation>
+    </message>
+    <message>
+        <source>Frame video</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Video framing saved</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Frame source video</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Custom guides</source>
@@ -6352,6 +6376,34 @@
         <translation>Tipo</translation>
     </message>
     <message>
+        <source>Original dimensions: %1 × %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Source frame box</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Unlock source frame ratio</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Lock source frame ratio</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Width</source>
+        <translation type="unfinished">Larghezza</translation>
+    </message>
+    <message>
+        <source>Height</source>
+        <translation type="unfinished">Altezza</translation>
+    </message>
+    <message>
+        <source>Edit source frame…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Starts at</source>
         <translation>Inizia a</translation>
     </message>
@@ -7816,8 +7868,8 @@
         <translation>Trascina il riquadro per ritagliare. Salva sostituisce questo elemento nella cartella multimediale — quindi trascinalo sulla timeline.</translation>
     </message>
     <message>
-        <source>Play, crop, and drag the ends to keep a range. Save replaces this item in the media bin — then drag it onto the timeline.</source>
-        <translation>Riproduci, ritaglia e trascina le estremità per mantenere un intervallo. Salva sostituisce questo elemento nella cartella multimediale — quindi trascinalo sulla timeline.</translation>
+        <source>Drag the frame to choose the area to use. The original video stays available for reframing.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Pause</source>
@@ -7836,6 +7888,18 @@
         <translation>Imposta Out</translation>
     </message>
     <message>
+        <source>Original: %1×%2 • Frame: %3×%4</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Unlock source frame ratio</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Lock source frame ratio</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Reset</source>
         <translation>Reimposta</translation>
     </message>
@@ -7848,8 +7912,16 @@
         <translation>Salva sovrascrive questo elemento con un nuovo file nella cartella multimediale.</translation>
     </message>
     <message>
+        <source>Save keeps the original video and stores this framing.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Nothing to save — drag this item onto the timeline when you are ready.</source>
         <translation>Niente da salvare — trascina questo elemento sulla timeline quando sei pronto.</translation>
+    </message>
+    <message>
+        <source>Adjust the frame or Reset to restore the full image.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Cancel</source>

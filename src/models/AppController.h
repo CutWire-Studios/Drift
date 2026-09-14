@@ -935,6 +935,7 @@ public:
     // Rewrites the bin row: trim [inSeconds, outSeconds] and crop in display-normalized 0..1.
     // outSeconds < 0 means through the end. The original name is kept. Asynchronous; the
     // outcome arrives as assetEditFinished, and the row is then rebound via replace.
+    Q_INVOKABLE bool setClipSourceFrame(const QString &clipId, double x, double y, double w, double h);
     Q_INVOKABLE bool saveAssetEdit(int assetIndex, double inSeconds, double outSeconds,
                                    double cropX, double cropY, double cropW, double cropH);
     Q_INVOKABLE void cancelAssetEdit();

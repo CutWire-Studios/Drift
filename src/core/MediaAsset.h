@@ -2,11 +2,34 @@
 
 #include "Time.h"
 
+#include <QJsonArray>
 #include <QJsonObject>
+#include <QRectF>
+#include <cmath>
 #include <QString>
 #include <QStringList>
 
 namespace drift {
+
+// Normalized framing in the displayed (rotation-corrected) original source.
+inline QRectF normalizedSourceFrame(double x, double y, double w, double h)
+{
+    if (!std::isfinite(x) || !std::isfinite(y) || !std::isfinite(w) || !std::isfinite(h))
+        return {0, 0, 1, 1};
+    w = qBound(0.001, w, 1.0);
+    h = qBound(0.001, h, 1.0);
+    return {qBound(0.0, x, 1.0 - w), qBound(0.0, y, 1.0 - h), w, h};
+}
+inline QJsonArray sourceFrameToJson(const QRectF &r)
+{
+    return {r.x(), r.y(), r.width(), r.height()};
+}
+inline QRectF sourceFrameFromJson(const QJsonArray &a)
+{
+    return a.size() == 4 ? normalizedSourceFrame(a[0].toDouble(), a[1].toDouble(),
+                                                a[2].toDouble(), a[3].toDouble())
+                         : QRectF(0, 0, 1, 1);
+}
 
 // Composite has no file: it is the bin entry for a nested timeline (sequenceId).
 enum class MediaKind { Video, Audio, Image, Vector, Model3d, Composite, Other };
@@ -36,6 +59,10 @@ struct MediaAsset
     QString name;
     MediaKind kind = MediaKind::Other;
     TimeUs durationUs = 0;
+
+    QRectF sourceFrame{0, 0, 1, 1};
+    double frameInSeconds = 0;
+    double frameOutSeconds = -1;
 
     int width = 0;
     int height = 0;

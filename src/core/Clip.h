@@ -82,6 +82,8 @@ struct Clip
     // "Separate audio" splits off it.
     QString sequenceId;
 
+    QRectF sourceFrame{0, 0, 1, 1};
+
     QString path;
     QString thumbnailPath;
     QString filmstripPath;

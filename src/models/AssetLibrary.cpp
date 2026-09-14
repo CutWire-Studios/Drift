@@ -1318,6 +1318,9 @@ QVariantMap AssetLibrary::assetAt(int index) const
         {QStringLiteral("durationSeconds"), drift::usToSeconds(asset->durationUs)},
         {QStringLiteral("placedDurationSeconds"), drift::usToSeconds(placedDurationUs(*asset))},
         {QStringLiteral("path"), asset->path},
+        {QStringLiteral("sourceFrame"), asset->sourceFrame},
+        {QStringLiteral("frameInSeconds"), asset->frameInSeconds},
+        {QStringLiteral("frameOutSeconds"), asset->frameOutSeconds},
         {QStringLiteral("width"), asset->width},
         {QStringLiteral("height"), asset->height},
         {QStringLiteral("fps"), asset->fps},
@@ -1638,6 +1641,9 @@ QJsonArray AssetLibrary::toJsonArray() const
             {QStringLiteral("durationUs"), static_cast<double>(asset->durationUs)},
             {QStringLiteral("duration"), asset->durationLabel},
             {QStringLiteral("path"), asset->path},
+            {QStringLiteral("sourceFrame"), drift::sourceFrameToJson(asset->sourceFrame)},
+            {QStringLiteral("frameInSeconds"), asset->frameInSeconds},
+            {QStringLiteral("frameOutSeconds"), asset->frameOutSeconds},
             {QStringLiteral("width"), asset->width},
             {QStringLiteral("height"), asset->height},
             {QStringLiteral("fps"), asset->fps},
@@ -1683,6 +1689,9 @@ void AssetLibrary::loadFromJsonArray(const QJsonArray &assets)
             asset.durationUs = drift::secondsToUs(object.value(QStringLiteral("durationSeconds")).toDouble());
         }
         asset.path = object.value(QStringLiteral("path")).toString();
+        asset.sourceFrame = drift::sourceFrameFromJson(object.value(QStringLiteral("sourceFrame")).toArray());
+        asset.frameInSeconds = object.value(QStringLiteral("frameInSeconds")).toDouble();
+        asset.frameOutSeconds = object.value(QStringLiteral("frameOutSeconds")).toDouble(-1);
         asset.width = object.value(QStringLiteral("width")).toInt();
         asset.height = object.value(QStringLiteral("height")).toInt();
         asset.fps = object.value(QStringLiteral("fps")).toDouble();

@@ -3487,6 +3487,15 @@ void applyAssetLayout(drift::Clip &clip, const QVariantMap &asset, int canvasW, 
     const int rotation = asset.value(QStringLiteral("effectiveRotation")).toInt();
     if (rotation == 90 || rotation == 270)
         std::swap(mediaW, mediaH);
+    if (clip.type == drift::ClipType::Video) {
+        clip.sourceFrame = asset.value(QStringLiteral("sourceFrame"), QRectF(0, 0, 1, 1)).toRectF();
+        clip.srcIn = drift::secondsToUs(asset.value(QStringLiteral("frameInSeconds")).toDouble());
+        clip.srcOut = clip.srcIn + clip.timelineDuration;
+        if (mediaW > 0 && mediaH > 0) {
+            mediaW = qMax(1, qRound(mediaW * clip.sourceFrame.width()));
+            mediaH = qMax(1, qRound(mediaH * clip.sourceFrame.height()));
+        }
+    }
     fitClipLayoutToCanvas(clip, mediaW, mediaH, canvasW, canvasH);
     clip.rotationCorrection = asset.value(QStringLiteral("rotationCorrection")).toInt();
 
@@ -4260,6 +4269,10 @@ QVariantMap AppController::clipToMap(const drift::Clip &clip, const drift::Clip 
         {QStringLiteral("id"), clip.id},
         {QStringLiteral("name"), clip.name},
         {QStringLiteral("path"), clip.path},
+        {QStringLiteral("sourceFrame"), clip.sourceFrame},
+        {QStringLiteral("sourceWidth"), sourceAsset ? sourceAsset->width : 0},
+        {QStringLiteral("sourceHeight"), sourceAsset ? sourceAsset->height : 0},
+        {QStringLiteral("sourceRotation"), sourceAsset ? sourceAsset->rotationDegrees : 0},
         {QStringLiteral("kind"), drift::clipTypeToString(clip.type)},
         // The nested timeline a composite (or the audio separated from one) plays.
         {QStringLiteral("sequenceId"), clip.sequenceId},
@@ -5170,6 +5183,58 @@ void AppController::cancelAssetEdit()
         m_assetEditCancel.storeRelaxed(1);
 }
 
+bool AppController::setClipSourceFrame(const QString &clipId, double x, double y, double w, double h)
+{
+    const QRectF frame = drift::normalizedSourceFrame(x, y, w, h);
+    for (int t = 0; t < m_project.tracks().size(); ++t) {
+        for (int c = 0; c < m_project.tracks().at(t).clips.size(); ++c) {
+            const auto &old = m_project.tracks().at(t).clips.at(c);
+            if (old.id != clipId || old.type != drift::ClipType::Video)
+                continue;
+            if (old.sourceFrame == frame)
+                return true;
+            const QRectF previousFrame = old.sourceFrame;
+            const drift::Project before = m_project.detachedCopy();
+            auto &clip = m_project.tracks()[t].clips[c];
+            clip.sourceFrame = frame;
+            if (const auto *asset = m_project.asset(clip.assetId)) {
+                int sw = asset->width, sh = asset->height;
+                if (qAbs(asset->rotationDegrees) % 180 == 90)
+                    std::swap(sw, sh);
+                if (sw > 0 && sh > 0) {
+                    const auto fittedSize = [&](const QRectF &r) {
+                        QSizeF size(sw * r.width(), sh * r.height());
+                        size.scale(QSizeF(m_project.width(), m_project.height()), Qt::KeepAspectRatio);
+                        return size;
+                    };
+                    const QSizeF previous = fittedSize(previousFrame), next = fittedSize(frame);
+                    const auto scaleTrack = [](drift::KeyframeTrack<double> &track, double ratio,
+                                               double fallback) {
+                        if (track.isEmpty()) {
+                            track.setKeyframe(0, fallback);
+                            return;
+                        }
+                        const auto keys = track.keyframes();
+                        for (auto it = keys.cbegin(); it != keys.cend(); ++it) {
+                            auto key = it.value();
+                            key.value *= ratio;
+                            key.inDy *= ratio;
+                            key.outDy *= ratio;
+                            track.setKeyframe(it.key(), key);
+                        }
+                    };
+                    scaleTrack(clip.transformW, next.width() / previous.width(), next.width());
+                    scaleTrack(clip.transformH, next.height() / previous.height(), next.height());
+                }
+            }
+            pushProjectEdit(before, tr("Frame video"));
+            finishEdit(tr("Video framing saved"));
+            return true;
+        }
+    }
+    return false;
+}
+
 bool AppController::saveAssetEdit(int assetIndex, double inSeconds, double outSeconds,
                                   double cropX, double cropY, double cropW, double cropH)
 {
@@ -5191,6 +5256,22 @@ bool AppController::saveAssetEdit(int assetIndex, double inSeconds, double outSe
     if (path.isEmpty() || assetId.isEmpty() || !QFileInfo(path).isFile()) {
         setLastMessage(tr("Could not open the media file"), QStringLiteral("error"));
         return false;
+    }
+
+    if (kind == QStringLiteral("video")) {
+        const double duration = asset.value(QStringLiteral("durationSeconds")).toDouble();
+        if (!std::isfinite(inSeconds) || !std::isfinite(outSeconds) || duration <= 0)
+            return false;
+        const drift::Project before = m_project.detachedCopy();
+        auto *media = m_project.asset(assetId);
+        media->sourceFrame = drift::normalizedSourceFrame(cropX, cropY, cropW, cropH);
+        media->frameInSeconds = qBound(0.0, inSeconds, qMax(0.0, duration - 0.05));
+        media->frameOutSeconds = qBound(media->frameInSeconds + 0.001,
+                                        outSeconds < 0 ? duration : outSeconds, duration);
+        pushProjectEdit(before, tr("Frame source video"));
+        finishEdit(tr("Video framing saved"));
+        emit assetEditFinished(true, QString());
+        return true;
     }
 
     // A plain trim with no real crop needs no re-encode at all: it is stored on the asset the
@@ -6893,7 +6974,10 @@ drift::TimeUs AppController::clipDurationForAssetIndex(int assetIndex) const
 {
     if (!m_assetLibrary)
         return drift::kImageClipDurationUs;
-    return drift::clipDurationForAsset(m_project.asset(m_assetLibrary->assetIdAt(assetIndex)));
+    const auto *asset = m_project.asset(m_assetLibrary->assetIdAt(assetIndex));
+    if (asset && asset->kind == drift::MediaKind::Video && asset->frameOutSeconds >= 0)
+        return qMax(drift::TimeUs{1}, drift::secondsToUs(asset->frameOutSeconds - asset->frameInSeconds));
+    return drift::clipDurationForAsset(asset);
 }
 
 drift::TimeUs AppController::sourceDurationForClip(const drift::Clip &clip) const
