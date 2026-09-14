@@ -3662,6 +3662,15 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Apply transition to selection</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>Transition applied to %n clip(s)</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
         <source>Orientation changed</source>
         <translation type="unfinished"></translation>
     </message>
@@ -11418,6 +11427,24 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Remove transition</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>TransitionSelectionBanner</name>
+    <message numerus="yes">
+        <source>Apply this transition to the other %n selected clip(s)?</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Apply to All</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Dismiss</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
