@@ -225,8 +225,8 @@
 <context>
     <name>AgentAccessControls</name>
     <message>
-        <source>Let Cursor or Claude edit this project for you — add clips, change the timeline, and check how it looks. Only programs on this device. Starts off each time you open Drift; turn it off when you finish.</source>
-        <translation>Hãy để Cursor hoặc Claude chỉnh sửa dự án này cho bạn — thêm clip, thay đổi dòng thời gian và kiểm tra xem nó trông như thế nào. Chỉ các chương trình trên thiết bị này. Bắt đầu mỗi khi bạn mở Drift; tắt nó đi khi bạn hoàn thành.</translation>
+        <source>Let Cursor or Claude edit this project for you — add clips, change the timeline, and check how it looks. Only programs on this device. Starts off each time you open Drift; turn it off when you finish. The key stays the same between sessions, so a setup you pasted once keeps working.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Allow for this session</source>
@@ -247,6 +247,18 @@
     <message>
         <source>Listening on %1</source>
         <translation>Đang nghe trên %1</translation>
+    </message>
+    <message>
+        <source>New key</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Replace the key. Every assistant set up with the old one stops working until you copy the setup again.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>New key made — copy the setup again</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Copy the setup for the assistant you use. You only need one.</source>

@@ -31,9 +31,13 @@ public:
     QString claudeCommand() const;
 
     // Headless overrides, applied by the next start(). The editor sets neither and keeps
-    // the defaults: a freshly generated token on port 4731.
+    // the defaults: the token persisted in QSettings (generated on first start) on port 4731.
     void setToken(const QString &token) { m_fixedToken = token; }
     void setPort(quint16 port) { m_requestedPort = port; }
+
+    // Replaces the persisted token, live if the server is running. Every assistant set up
+    // with the old one has to be re-pointed; that is the point.
+    void rotateToken();
 
 public slots:
     bool start();
@@ -42,10 +46,12 @@ public slots:
 
 signals:
     void runningChanged();
+    void tokenChanged();
     void errorChanged();
 
 private:
     QString makeToken() const;
+    QString persistedToken() const;
     QJsonObject dispatchTool(const QString &name, const QJsonObject &args);
 
     AppController *m_controller = nullptr;

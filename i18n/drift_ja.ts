@@ -225,8 +225,8 @@
 <context>
     <name>AgentAccessControls</name>
     <message>
-        <source>Let Cursor or Claude edit this project for you — add clips, change the timeline, and check how it looks. Only programs on this device. Starts off each time you open Drift; turn it off when you finish.</source>
-        <translation>Cursor や Claude にこのプロジェクトの編集を任せましょう。クリップの追加やタイムラインの変更を行い、仕上がりを確認できます。このデバイス上のプログラムのみ対象です。Drift を起動するたびに自動的に開始されますので、作業が終わったらオフにしてください。</translation>
+        <source>Let Cursor or Claude edit this project for you — add clips, change the timeline, and check how it looks. Only programs on this device. Starts off each time you open Drift; turn it off when you finish. The key stays the same between sessions, so a setup you pasted once keeps working.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Allow for this session</source>
@@ -247,6 +247,18 @@
     <message>
         <source>Listening on %1</source>
         <translation>%1 で待機中</translation>
+    </message>
+    <message>
+        <source>New key</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Replace the key. Every assistant set up with the old one stops working until you copy the setup again.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>New key made — copy the setup again</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Copy the setup for the assistant you use. You only need one.</source>
