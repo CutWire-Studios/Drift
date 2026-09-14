@@ -75,7 +75,10 @@ QJsonObject animPropProp()
         "are shape.layer.<layerId>.<field> (a fresh shape's layers are \"fill\" and \"stroke\") and the "
         "geometry knobs shape.<cornerRadius|points|innerRatio|headSize|thickness|tailX|tailSize>. On "
         "an SVG vector clip the svg.* overrides: vector.svg.<strokeWidth|opacity>, "
-        "vector.svg.<fill|stroke>.<r|g|b|a>, or the same under vector.svg.<elementId>. "
+        "vector.svg.<fill|stroke>.<r|g|b|a>, or the same under vector.svg.<elementId>. On a 3D "
+        "model clip model3d.<scale|depth|rotX|rotY|rotZ|lightYaw|lightPitch|lightIntensity|ambient> "
+        "(rotations are about the model's own axes, X then Y then Z; keyframe model3d.rotY to spin a "
+        "tilted model about its own axis). "
         "Note width/height here vs w/h in set_transform. Spellings live in this "
 "schema — list_animated_properties returns only properties that already have keys (empty on a "
         "fresh clip), so do not use it to learn names."));
@@ -812,7 +815,7 @@ const QList<Op> &ops()
         { "list_animated_properties", "keyframes", "See what already has keys",
           "Returns {props:[…]} — only the properties that already carry keyframes on this clip. Empty "
           "on a fresh clip. Property spellings live in the `prop` schema of the other keyframes ops "
-          "(x, y, width, height, rotation, opacity, volume, fx.<i>.<key>, mask.<key>, text.<key>, shape.<key>, vector.svg.<key>), not here.",
+          "(x, y, width, height, rotation, opacity, volume, fx.<i>.<key>, mask.<key>, text.<key>, shape.<key>, vector.svg.<key>, model3d.<key>), not here.",
           objectSchema(clipRefProps()), true, false, true },
         { "list_keyframes", "keyframes", "Read keys for one property",
           "Returns {prop, enabled, keys:[{seconds, value, inDx, inDy, outDx, outDy, corner, hold, "
@@ -1002,7 +1005,7 @@ QStringList toolboxNames()
             QStringLiteral("playback"),  QStringLiteral("text"),     QStringLiteral("effects"),
             QStringLiteral("project"),   QStringLiteral("keyframes"), QStringLiteral("speed"),
             QStringLiteral("ui"),        QStringLiteral("shapes"),   QStringLiteral("motion"),
-            QStringLiteral("subtitles"), QStringLiteral("segmentation"), QStringLiteral("ai"),
+            QStringLiteral("model3d"),   QStringLiteral("subtitles"), QStringLiteral("segmentation"), QStringLiteral("ai"),
             QStringLiteral("audio"),     QStringLiteral("scene"),    QStringLiteral("multicam"),
             QStringLiteral("market")};
 }
@@ -1155,7 +1158,7 @@ QString agentGuideText()
         "shape.layer.<id>.<field>. A fresh shape has layers \"fill\" and \"stroke\".\n"
         "\n"
         "Toolboxes: media, timeline, canvas, playback, text, effects, project, keyframes, speed, ui, "
-        "shapes, motion, subtitles, segmentation, ai, audio, scene, multicam, market.\n");
+        "shapes, motion, model3d, subtitles, segmentation, ai, audio, scene, multicam, market.\n");
 }
 
 QJsonObject catalogPayload(const QJsonObject &args)
@@ -1178,6 +1181,7 @@ QJsonObject catalogPayload(const QJsonObject &args)
         {"ui", "Editor theme and keyboard shortcuts."},
         {"shapes", "Builtin shapes, stickers, emoji."},
         {"motion", "Lottie animations and SVG drawings as vector clips: add, inspect, re-theme through slots."},
+        {"model3d", "3D models (.glb) as model clips: add, inspect, pick the animation, pose and light them."},
         {"subtitles", "Subtitle clips, import/export, Whisper generation."},
         {"segmentation", "SAM-style cutout and mask output."},
         {"ai", "Denoise, face detection, auto-reframe, model add-ons (list/install), acceleration."},
@@ -1383,7 +1387,7 @@ QJsonArray homepageTools()
         QStringLiteral("When: You know what you want but not the op name. Find an op by keyword: effects, "
                        "transitions, keyframes, animation, subtitles, captions, transcribe, beats, tempo, scenes, "
                        "shots, silence, loudness, mask, fade, speed, reverse, crop, resize, export, render, "
-                       "import, undo, history, bookmark, stabilize, denoise, faces, emoji, fonts, shapes, lottie, "
+                       "import, undo, history, bookmark, stabilize, denoise, faces, emoji, fonts, shapes, lottie, glb, model3d, "
                        "stickers, multicam, gradient, glow, neon, style pack, look, rotation, stock, marketplace. Scores op names, toolbox, when hints, descriptions and argument names; "
                        "returns hits:[{name, toolbox, when, args, required}]. schema:true inlines inputSchema when "
                        "there are ≤3 hits, so you can go straight to apply."),

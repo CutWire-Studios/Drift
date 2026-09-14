@@ -1270,6 +1270,81 @@ QJsonObject McpDispatcher::applyOneExtended(const QString &tool, const QJsonObje
                    {QStringLiteral("source"), m_controller->vectorSourceText(ref.track, ref.clip)}});
     }
 
+    // --- model3d (glTF binary clips) ---
+    if (tool == QLatin1String("add_model3d")) {
+        const QString path = argString(args, QStringLiteral("path"));
+        if (path.isEmpty())
+            return err("bad_args", QStringLiteral("path required"));
+        const double at = args.contains(QStringLiteral("at"))
+                              ? jsonNumber(args.value(QStringLiteral("at")), m_controller->playheadSeconds())
+                              : m_controller->playheadSeconds();
+        QVariantMap opts;
+        for (const char *key : {"duration", "animation", "loop", "offset", "name", "scale", "depth", "rotX",
+                                "rotY", "rotZ", "lightYaw", "lightPitch", "lightIntensity", "ambient"}) {
+            if (args.contains(QLatin1String(key)))
+                opts.insert(QString::fromUtf8(key), args.value(QLatin1String(key)).toVariant());
+        }
+        const QVariantMap reply = m_controller->addModel3dClip(
+            path, jsonInt(args.value(QStringLiteral("track"))), at, opts);
+        if (!reply.value(QStringLiteral("ok")).toBool())
+            return err("bad_args", reply.value(QStringLiteral("error")).toString());
+        QJsonObject out = QJsonObject::fromVariantMap(reply);
+        out.insert(QStringLiteral("n"), 1);
+        return out;
+    }
+
+    if (tool == QLatin1String("inspect_model3d")) {
+        if (args.contains(QStringLiteral("clip")) || args.contains(QStringLiteral("track"))
+            || args.contains(QStringLiteral("index"))) {
+            const ClipRef ref = resolveClip(args);
+            if (!ref.valid())
+                return clipRefError(args);
+            const QVariantMap report = m_controller->inspectModel3dClip(ref.track, ref.clip);
+            if (!report.value(QStringLiteral("ok")).toBool())
+                return err("bad_args", report.value(QStringLiteral("error")).toString());
+            return QJsonObject::fromVariantMap(report);
+        }
+        const QString path = argString(args, QStringLiteral("path"));
+        if (path.isEmpty())
+            return err("bad_args", QStringLiteral("path or clip required"));
+        const QVariantMap report = m_controller->inspectModel3d(path);
+        if (!report.value(QStringLiteral("ok")).toBool())
+            return err("bad_args", report.value(QStringLiteral("error")).toString());
+        return QJsonObject::fromVariantMap(report);
+    }
+
+    if (tool == QLatin1String("set_model3d_source")) {
+        const ClipRef ref = resolveClip(args);
+        if (!ref.valid())
+            return clipRefError(args);
+        const QString path = argString(args, QStringLiteral("path"));
+        if (path.isEmpty())
+            return err("bad_args", QStringLiteral("path required"));
+        const QVariantMap reply = m_controller->setModel3dSource(ref.track, ref.clip, path);
+        if (!reply.value(QStringLiteral("ok")).toBool())
+            return err("bad_args", reply.value(QStringLiteral("error")).toString());
+        QJsonObject out = QJsonObject::fromVariantMap(reply);
+        out.insert(QStringLiteral("track"), ref.track);
+        out.insert(QStringLiteral("index"), ref.clip);
+        return out;
+    }
+
+    if (tool == QLatin1String("set_model3d_options")) {
+        const ClipRef ref = resolveClip(args);
+        if (!ref.valid())
+            return clipRefError(args);
+        QVariantMap opts;
+        for (const char *key : {"animation", "loop", "offset", "name", "scale", "depth", "rotX", "rotY", "rotZ",
+                                "lightYaw", "lightPitch", "lightIntensity", "ambient"}) {
+            if (args.contains(QLatin1String(key)))
+                opts.insert(QString::fromUtf8(key), args.value(QLatin1String(key)).toVariant());
+        }
+        const QString error = m_controller->setModel3dOptions(ref.track, ref.clip, opts);
+        if (!error.isEmpty())
+            return err("bad_args", error);
+        return ok(clipFeedback(ref));
+    }
+
     // --- shapes ---
     if (tool == QLatin1String("list_shapes"))
         return filterCatalog(m_controller->builtinShapes(), argString(args, QStringLiteral("q")), 0, "shapes", compactShapeItem);

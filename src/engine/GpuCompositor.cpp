@@ -283,7 +283,9 @@ GlTarget buildLayerTarget(GlRuntime &rt, QOpenGLExtraFunctions *gl, const GpuLay
         return {};
 
     GlTarget target;
-    if (layer.video.isValid()) {
+    if (layer.model3d) {
+        target = drift::gl::drawModelClip(rt, gl, *layer.model3d, canvasSize);
+    } else if (layer.video.isValid()) {
         target = promoteVideoFrameToTarget(rt, gl, layer.video);
     } else {
 #ifdef DRIFT_WITH_SKIA

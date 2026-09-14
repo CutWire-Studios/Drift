@@ -99,6 +99,7 @@ PanelFrame {
         "text": qsTr("Text"),
         "shape": qsTr("Shape"),
         "vector": qsTr("Motion"),
+        "model3d": qsTr("3D Model"),
         "subtitles": qsTr("Subtitles"),
         "transform": qsTr("Transform"),
         "stabilize": qsTr("Stabilization"),
@@ -122,6 +123,7 @@ PanelFrame {
         ListElement { tabId: "text"; icon: 1; group: 0 }
         ListElement { tabId: "shape"; icon: 2; group: 0 }
         ListElement { tabId: "vector"; icon: 14; group: 0 }
+        ListElement { tabId: "model3d"; icon: 15; group: 0 }
         ListElement { tabId: "subtitles"; icon: 3; group: 0 }
         ListElement { tabId: "transform"; icon: 4; group: 1 }
         ListElement { tabId: "stabilize"; icon: 5; group: 1 }
@@ -149,7 +151,8 @@ PanelFrame {
         Theme.icons.wand,
         Theme.icons.audioLines,
         Theme.icons.chevronsRight,
-        Theme.icons.layers
+        Theme.icons.layers,
+        Theme.icons.box
     ]
 
     function tabVisible(tabId) {
@@ -174,6 +177,8 @@ PanelFrame {
             return root.clipKind === "shape"
         if (tabId === "vector")
             return root.clipKind === "vector"
+        if (tabId === "model3d")
+            return root.clipKind === "model3d"
         if (tabId === "text")
             return root.hasTextStyle
         if (tabId === "animation")
@@ -716,6 +721,11 @@ PanelFrame {
                 VectorInspector {
                     width: tabColumn.width
                     visible: root.currentTabId === "vector"
+                }
+
+                Model3DInspector {
+                    width: tabColumn.width
+                    visible: root.currentTabId === "model3d"
                 }
 
                 MasksInspector {

@@ -429,6 +429,8 @@ add_library(driftcore STATIC
     src/core/ShapePath.cpp
     src/core/VectorSource.h
     src/core/VectorSource.cpp
+    src/core/Model3dSource.h
+    src/core/Model3dSource.cpp
     src/core/ZipArchive.h
     src/core/ZipArchive.cpp
     src/core/DotLottie.h
@@ -617,6 +619,12 @@ add_library(driftengine STATIC
     src/engine/FaceTrack.cpp
     src/engine/FaceModelTransform.h
     src/engine/FaceModelTransform.cpp
+    src/engine/ModelAnimation.h
+    src/engine/ModelAnimation.cpp
+    src/engine/ModelClipTransform.h
+    src/engine/ModelClipTransform.cpp
+    src/engine/ModelClipRenderer.h
+    src/engine/ModelClipRenderer.cpp
     src/engine/FaceMesh.h
     src/engine/FaceMesh.cpp
     src/engine/ModelAsset.h
@@ -953,6 +961,7 @@ qt_add_qml_module(drift
         src/qml/components/properties/BlendingInspector.qml
         src/qml/components/properties/ShapeInspector.qml
         src/qml/components/properties/VectorInspector.qml
+        src/qml/components/properties/Model3DInspector.qml
         src/qml/components/properties/MasksInspector.qml
         src/qml/components/properties/EffectsInspector.qml
         src/qml/components/assets/TextAssetsTab.qml

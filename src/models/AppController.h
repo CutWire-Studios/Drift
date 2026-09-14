@@ -1160,6 +1160,18 @@ public:
     Q_INVOKABLE QVariantMap inspectVector(const QString &source, const QString &kind = {}) const;
     Q_INVOKABLE QVariantMap inspectVectorClip(int trackIndex, int clipIndex) const;
     Q_INVOKABLE QString vectorSourceText(int trackIndex, int clipIndex) const;
+    // 3D model (.glb) clips. opts keys: animation (index), loop, offset (seconds), name, duration
+    // (seconds; default = the first animation's length, 5 s for a static model), and the pose /
+    // light statics (scale, depth, rotX, rotY, rotZ, lightYaw, lightPitch, lightIntensity,
+    // ambient) as plain values — keyframe them through setClipKeyframe with "model3d.<key>".
+    Q_INVOKABLE QVariantMap addModel3dClip(const QString &path, int trackIndex, double atSeconds,
+                                           const QVariantMap &opts = {});
+    Q_INVOKABLE QVariantMap setModel3dSource(int trackIndex, int clipIndex, const QString &path,
+                                             const QVariantMap &opts = {});
+    // Returns an error string, empty on success.
+    Q_INVOKABLE QString setModel3dOptions(int trackIndex, int clipIndex, const QVariantMap &opts);
+    Q_INVOKABLE QVariantMap inspectModel3d(const QString &path) const;
+    Q_INVOKABLE QVariantMap inspectModel3dClip(int trackIndex, int clipIndex) const;
     Q_INVOKABLE void setClipFade(int trackIndex, int clipIndex, double fadeInSeconds, double fadeOutSeconds);
     Q_INVOKABLE void setClipFadeCurve(int trackIndex, int clipIndex, const QString &curve);
     // which: "animIn" | "animOut". Partial patch: kind / duration / curve (or legacy ease).

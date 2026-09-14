@@ -140,10 +140,11 @@ All return `{started:true}` immediately. Every field below except `export` lives
 | `text` | Title and caption clips, style packs (`list_text_presets`, user presets), fonts, shading layers (fill/stroke/shadow/glow/extrude), gradient presets and shader effects, looks, In/Out/Loop animation presets, Lottie preset import |
 | `shapes` | Builtin shapes, stickers, emoji |
 | `motion` | Lottie animations and SVG drawings as vector clips: add, inspect, swap the document, re-theme through slots or the `svg.*` element overrides |
+| `model3d` | 3D models (glTF binary `.glb`) as model clips: add, inspect, pick the animation, pose and light them — see [3D models](#3d-models) |
 | `subtitles` | Subtitle clips, cues, import/export, Whisper generation |
 | `effects` | Video/audio effects, transitions, templates, effect clipboard |
 | `project` | Open/new/save/package, canvas, background, metadata, export |
-| `keyframes` | Property animation keys and tangents — clip transform, `fx.<i>.<param>`, `mask.<key>`, on text/subtitle clips `text.<key>` (pixelSize, letterSpacing, lineHeight, boxPadding, pathBend) or `text.layer.<id>.<field>` (opacity, offsetX, offsetY, blur, width, spread, trimStart, trimEnd, dashOffset, sketchLength, sketchDeviation, color.r/g/b/a, gradient.angle/offset/scale/center.x/y, gradient.stop.n.pos, effect.<param> for an effect paint's scalar params); the old names outlineWidth, shadowBlur, glowRadius, gradientAngle, color.r… still resolve onto the stroke/shadow/glow/fill layers. On shape clips the same layer fields as `shape.layer.<id>.<field>` (a fresh shape's layers are `fill` and `stroke`) plus `shape.<cornerRadius|points|innerRatio|headSize|thickness|tailX|tailSize>`; on SVG clips `vector.svg.…` (see Motion). `set_keyframe` on a property the clip does not have fails `bad_args` |
+| `keyframes` | Property animation keys and tangents — clip transform, `fx.<i>.<param>`, `mask.<key>`, on text/subtitle clips `text.<key>` (pixelSize, letterSpacing, lineHeight, boxPadding, pathBend) or `text.layer.<id>.<field>` (opacity, offsetX, offsetY, blur, width, spread, trimStart, trimEnd, dashOffset, sketchLength, sketchDeviation, color.r/g/b/a, gradient.angle/offset/scale/center.x/y, gradient.stop.n.pos, effect.<param> for an effect paint's scalar params); the old names outlineWidth, shadowBlur, glowRadius, gradientAngle, color.r… still resolve onto the stroke/shadow/glow/fill layers. On shape clips the same layer fields as `shape.layer.<id>.<field>` (a fresh shape's layers are `fill` and `stroke`) plus `shape.<cornerRadius|points|innerRatio|headSize|thickness|tailX|tailSize>`; on SVG clips `vector.svg.…` (see Motion); on 3D model clips `model3d.<scale\|depth\|rotX\|rotY\|rotZ\|lightYaw\|lightPitch\|lightIntensity\|ambient>` (see 3D models). `set_keyframe` on a property the clip does not have fails `bad_args` |
 | `speed` | Speed ramps; reading custom fade curves (write them with `set_fade_curve` in `canvas`) |
 | `segmentation` | SAM-style cutout (session or one-shot) |
 | `ai` | Denoise, face detection, auto-reframe, add-on install |
@@ -291,6 +292,42 @@ one element from `elements` (ids are case-sensitive; `visible` is 0/1). Everythi
 keyframes as `vector.svg.…` — scalars directly, colours per channel (`vector.svg.logo.fill.r`,
 one `set_keyframe` per channel, 0..1). An `.svg` dropped in the bin (`import_media`) is a vector
 asset and places as a vector clip.
+
+### 3D models
+
+The `model3d` toolbox puts a glTF binary (`.glb` only — a `.gltf` with sidecar files would not
+survive bundling) on a graphic track as a **model clip**. The clip is a full-canvas layer: the
+model is drawn by its own camera into it, so it is never clipped by a box edge, and it takes
+opacity, fades, blend modes, effects, masks and transitions like any other clip. Track order
+alone decides stacking; `depth` is perspective, never z-order.
+
+| Call | Effect |
+|---|---|
+| `import_media({paths})` | Also takes `.glb` files; the asset places with `place_clip` like any other (its duration is the first animation's length, 5 s for a static model) |
+| `add_model3d({path, at, track, duration, animation, loop, offset, scale, depth, rotX, rotY, rotZ, lightYaw, lightPitch, lightIntensity, ambient, name})` | Absolute `.glb` path. Returns `{id, track, index, animations:[{name, durationSec}], vertexCount, warning?, model3d:{…}}` |
+| `inspect_model3d({path \| clip})` | Read-only. `{animations, vertexCount, primitiveCount, materialCount, textureCount, warning}` — `warning` says what the loader skipped (Draco compression, extra material textures, morph targets) |
+| `set_model3d_source({clip, path})` | Swap the file; position, length, pose, lighting and keyframes stay, the animation index clamps to the new file |
+| `set_model3d_options({clip, animation, loop, offset, scale, depth, rotX, rotY, rotZ, lightYaw, lightPitch, lightIntensity, ambient, name})` | Plain (non-keyed) values; only supplied keys change |
+
+Placement and pose: the model sits at the clip's `x`/`y` (top-left of the full-canvas layer, so
+`0,0` is centred; move it with `set_transform x/y` or `x`/`y` keyframes — `w`, `h` and
+`rotation` are ignored for this kind, and `set_transform` still reports the canvas size for
+them). `scale` is the fraction of canvas height the model's largest extent spans; `depth` 0..1
+goes from flat (orthographic) to strong foreshortening without changing the on-screen size.
+`rotX`/`rotY`/`rotZ` are degrees about the **model's own axes** (intrinsic), applied X, then Y,
+then Z, each following the earlier ones: X tilts, Y spins about the model's up axis *as tilted by
+X*, Z rolls about its forward axis after both. So to spin a tilted globe about its own axis, set
+`rotX` for the tilt and keyframe `rotY`; to stand up a model exported on its side, `rotX: -90`
+then turntable it with `rotZ` (its original up). Lighting is one key light
+(`lightYaw`/`lightPitch` degrees, `lightIntensity`) plus `ambient` 0..1. All nine keyframe as
+`model3d.<key>`. Shading is a simple Blinn-Phong on the base colour — normal, roughness and
+occlusion maps are ignored, so a model reads flatter than in a PBR viewer.
+
+An animated file lists its clips in `animations`; `animation` picks one by index, the clip's
+speed/reverse and `offset` remap into it, and `loop` (`loop` default, `hold`, `pingpong`, `hide`)
+decides what happens past its end. Node (rigid) animation and skeletal skinning play; morph
+targets do not (reported in `warning`). `capture` / `frames` render model clips like everything
+else.
 
 ### Text looks and animation
 

@@ -141,6 +141,9 @@ private slots:
     void addSvgShowsInCapture();
     void svgOverridesThroughMcp();
     void importSvgBecomesVectorAsset();
+    void model3dToolboxIsCatalogued();
+    void importGlbBecomesModel3dAsset();
+    void model3dKeyframesAndOptions();
     void lottieBatchUndoesAsOneStep();
     void setTextStyleAcceptsAnimation();
     void textKeyframesThroughSetKeyframe();
@@ -233,7 +236,7 @@ void McpTest::catalogListsToolboxes()
     const QJsonObject cat = drift::mcp::catalogPayload();
     QVERIFY(cat.value(QStringLiteral("ok")).toBool());
     const QJsonArray boxes = cat.value(QStringLiteral("toolboxes")).toArray();
-    QCOMPARE(boxes.size(), 19);
+    QCOMPARE(boxes.size(), 20);
     QStringList names;
     for (const QJsonValue &v : boxes)
         names.append(v.toObject().value(QStringLiteral("name")).toString());
@@ -2413,6 +2416,169 @@ void McpTest::importSvgBecomesVectorAsset()
     QCOMPARE(clip.value(QStringLiteral("vector")).toMap().value(QStringLiteral("kind")).toString(), QStringLiteral("svg"));
     QCOMPARE(clip.value(QStringLiteral("vector")).toMap().value(QStringLiteral("width")).toInt(), 120);
     QCOMPARE(clip.value(QStringLiteral("duration")).toDouble(), drift::usToSeconds(drift::kImageClipDurationUs));
+}
+
+void McpTest::model3dToolboxIsCatalogued()
+{
+    QVERIFY(drift::mcp::toolboxNames().contains(QStringLiteral("model3d")));
+    for (const char *op : {"add_model3d", "inspect_model3d", "set_model3d_source", "set_model3d_options"}) {
+        QVERIFY2(drift::mcp::isKnownOp(QLatin1String(op)), op);
+        QCOMPARE(drift::mcp::toolboxForOp(QLatin1String(op)), QStringLiteral("model3d"));
+    }
+    QVERIFY(drift::mcp::isReadOnlyOp(QStringLiteral("inspect_model3d")));
+    QVERIFY(!drift::mcp::isReadOnlyOp(QStringLiteral("add_model3d")));
+    const QJsonObject box = drift::mcp::toolboxPayload(QStringLiteral("model3d"));
+    QVERIFY(box.value(QStringLiteral("ok")).toBool());
+}
+
+void McpTest::importGlbBecomesModel3dAsset()
+{
+    QStandardPaths::setTestModeEnabled(true);
+    const auto restore = qScopeGuard([] { QStandardPaths::setTestModeEnabled(false); });
+    AssetLibrary library;
+    AppController state(&library);
+    drift::mcp::McpDispatcher dispatcher(&state);
+
+    const QString path = QStringLiteral(DRIFT_TEST_DATA_DIR "/cube.glb");
+    QVERIFY(QFileInfo::exists(path));
+    const QJsonObject imported = dispatcher.applyOne(QStringLiteral("import_media"),
+                                                     {{QStringLiteral("paths"), QJsonArray{path}}});
+    QVERIFY2(imported.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(imported).toJson(QJsonDocument::Compact)));
+    const QJsonArray rows = dispatcher.applyOne(QStringLiteral("list_assets"), {}).value(QStringLiteral("assets")).toArray();
+    QCOMPARE(rows.size(), 1);
+    QCOMPARE(rows.at(0).toObject().value(QStringLiteral("kind")).toString(), QStringLiteral("model3d"));
+
+    const QJsonObject placed = dispatcher.applyOne(QStringLiteral("place_clip"),
+                                                   {{QStringLiteral("asset"), rows.at(0).toObject().value(QStringLiteral("id")).toString()},
+                                                    {QStringLiteral("at"), 0.0}});
+    QVERIFY2(placed.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(placed).toJson(QJsonDocument::Compact)));
+    const QPair<int, int> loc = state.mcpLocateClip(placed.value(QStringLiteral("id")).toString());
+    const QVariantMap clip = state.clipAt(loc.first, loc.second);
+    QCOMPARE(clip.value(QStringLiteral("kind")).toString(), QStringLiteral("model3d"));
+    const QVariantMap model = clip.value(QStringLiteral("model3d")).toMap();
+    QCOMPARE(model.value(QStringLiteral("path")).toString(), path);
+    QCOMPARE(model.value(QStringLiteral("scale")).toDouble(), 0.5);
+    QCOMPARE(model.value(QStringLiteral("loop")).toString(), QStringLiteral("loop"));
+    QVERIFY(model.value(QStringLiteral("animations")).toList().isEmpty());
+    QCOMPARE(clip.value(QStringLiteral("duration")).toDouble(), drift::usToSeconds(drift::kImageClipDurationUs));
+    // The overlay box is the projected model, centred on the canvas; the anchor is the clip's x/y.
+    bool found = false;
+    for (const QVariant &entry : state.previewClipsAtPlayhead()) {
+        const QVariantMap m = entry.toMap();
+        if (m.value(QStringLiteral("kind")).toString() != QLatin1String("model3d"))
+            continue;
+        found = true;
+        QCOMPARE(m.value(QStringLiteral("anchorX")).toDouble(), 0.0);
+        QCOMPARE(m.value(QStringLiteral("anchorY")).toDouble(), 0.0);
+        const double cx = m.value(QStringLiteral("x")).toDouble() + m.value(QStringLiteral("width")).toDouble() / 2.0;
+        const double cy = m.value(QStringLiteral("y")).toDouble() + m.value(QStringLiteral("height")).toDouble() / 2.0;
+        QVERIFY(std::abs(cx - state.projectWidth() / 2.0) < 1.0);
+        QVERIFY(std::abs(cy - state.projectHeight() / 2.0) < 1.0);
+        QVERIFY(m.value(QStringLiteral("height")).toDouble() > state.projectHeight() * 0.3);
+        QVERIFY(m.value(QStringLiteral("height")).toDouble() < state.projectHeight() * 0.8);
+    }
+    QVERIFY(found);
+
+    const QJsonObject inspected = dispatcher.applyOne(QStringLiteral("inspect_model3d"),
+                                                      {{QStringLiteral("clip"), placed.value(QStringLiteral("id")).toString()}});
+    QVERIFY2(inspected.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(inspected).toJson(QJsonDocument::Compact)));
+    QCOMPARE(inspected.value(QStringLiteral("vertexCount")).toInt(), 8);
+    QVERIFY(inspected.contains(QStringLiteral("model3d")));
+}
+
+void McpTest::model3dKeyframesAndOptions()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    drift::mcp::McpDispatcher dispatcher(&state);
+
+    const QString path = QStringLiteral(DRIFT_TEST_DATA_DIR "/cube.glb");
+    const QJsonObject missing = dispatcher.applyOne(QStringLiteral("add_model3d"),
+                                                    {{QStringLiteral("path"), QStringLiteral("/nope/none.glb")}});
+    QVERIFY(!missing.value(QStringLiteral("ok")).toBool());
+
+    const QJsonObject added = dispatcher.applyOne(QStringLiteral("add_model3d"),
+                                                  {{QStringLiteral("path"), path}, {QStringLiteral("at"), 0.0},
+                                                   {QStringLiteral("rotY"), 30.0}, {QStringLiteral("loop"), QStringLiteral("hold")},
+                                                   {QStringLiteral("duration"), 4.0}});
+    QVERIFY2(added.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(added).toJson(QJsonDocument::Compact)));
+    const QString id = added.value(QStringLiteral("id")).toString();
+    const QPair<int, int> loc = state.mcpLocateClip(id);
+    const int track = loc.first;
+    const int clip = loc.second;
+    QVariantMap model = state.clipAt(track, clip).value(QStringLiteral("model3d")).toMap();
+    QCOMPARE(model.value(QStringLiteral("rotY")).toDouble(), 30.0);
+    QCOMPARE(model.value(QStringLiteral("loop")).toString(), QStringLiteral("hold"));
+    QCOMPARE(state.clipAt(track, clip).value(QStringLiteral("duration")).toDouble(), 4.0);
+
+    QJsonObject r = dispatcher.applyOne(QStringLiteral("set_keyframe"),
+                                        {{QStringLiteral("clip"), id}, {QStringLiteral("prop"), QStringLiteral("model3d.rotY")},
+                                         {QStringLiteral("at"), 0.0}, {QStringLiteral("value"), 0.0}});
+    QVERIFY2(r.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(r).toJson(QJsonDocument::Compact)));
+    r = dispatcher.applyOne(QStringLiteral("set_keyframe"),
+                            {{QStringLiteral("clip"), id}, {QStringLiteral("prop"), QStringLiteral("model3d.rotY")},
+                             {QStringLiteral("at"), 2.0}, {QStringLiteral("value"), 180.0}});
+    QVERIFY(r.value(QStringLiteral("ok")).toBool());
+    // camelCase survives normalisation: the key lands on the clip, not on "model3d.roty".
+    QCOMPARE(state.propertyValueAt(track, clip, QStringLiteral("model3d.rotY"), 1.0, 0.0), 90.0);
+    QVERIFY(state.clipAnimatedProperties(track, clip).contains(QStringLiteral("model3d.rotY")));
+    QCOMPARE(state.keyframePropertyLabel(track, clip, QStringLiteral("model3d.rotY")), QStringLiteral("Rotation Y"));
+    model = state.clipAt(track, clip).value(QStringLiteral("model3d")).toMap();
+    QCOMPARE(model.value(QStringLiteral("keyframes")).toMap().value(QStringLiteral("rotY")).toMap()
+                 .value(QStringLiteral("points")).toList().size(), 2);
+
+    const QJsonObject nope = dispatcher.applyOne(QStringLiteral("set_keyframe"),
+                                                 {{QStringLiteral("clip"), id}, {QStringLiteral("prop"), QStringLiteral("model3d.nope")},
+                                                  {QStringLiteral("at"), 0.0}, {QStringLiteral("value"), 1.0}});
+    QVERIFY(!nope.value(QStringLiteral("ok")).toBool());
+    QCOMPARE(nope.value(QStringLiteral("error")).toString(), QStringLiteral("bad_args"));
+
+    // Options: the schema bounds depth before the clamp ever sees it.
+    r = dispatcher.applyOne(QStringLiteral("set_model3d_options"),
+                            {{QStringLiteral("clip"), id}, {QStringLiteral("depth"), 3.0}});
+    QVERIFY(!r.value(QStringLiteral("ok")).toBool());
+    QCOMPARE(r.value(QStringLiteral("error")).toString(), QStringLiteral("bad_args"));
+    // A plain value write, and the animation index clamps on a static file.
+    r = dispatcher.applyOne(QStringLiteral("set_model3d_options"),
+                            {{QStringLiteral("clip"), id}, {QStringLiteral("scale"), 0.8}, {QStringLiteral("animation"), 5}});
+    QVERIFY2(r.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(r).toJson(QJsonDocument::Compact)));
+    model = state.clipAt(track, clip).value(QStringLiteral("model3d")).toMap();
+    QCOMPARE(model.value(QStringLiteral("scale")).toDouble(), 0.8);
+    QCOMPARE(model.value(QStringLiteral("animation")).toInt(), 0);
+    QCOMPARE(state.setModel3dOptions(track, clip, {{QStringLiteral("depth"), 3.0}}), QString());
+    QCOMPARE(state.clipAt(track, clip).value(QStringLiteral("model3d")).toMap().value(QStringLiteral("depth")).toDouble(), 1.0);
+    QVERIFY(!state.setModel3dOptions(track, clip, {{QStringLiteral("nope"), 1.0}}).isEmpty());
+    state.undo();
+    state.undo();
+    model = state.clipAt(track, clip).value(QStringLiteral("model3d")).toMap();
+    QCOMPARE(model.value(QStringLiteral("scale")).toDouble(), 0.5);
+
+    // The canvas grips never resize or spin this kind; the anchor still moves.
+    state.previewSetClipRect(track, clip, 10.0, 20.0, 300.0, 200.0);
+    state.previewSetClipRotation(track, clip, 45.0);
+    state.previewSetClipPosition(track, clip, 10.0, 20.0);
+    state.commitPreviewDrag();
+    QCOMPARE(state.propertyValueAt(track, clip, QStringLiteral("rotation"), 0.0, 0.0), 0.0);
+    QCOMPARE(state.propertyValueAt(track, clip, QStringLiteral("width"), 0.0, 0.0), double(state.projectWidth()));
+    QCOMPARE(state.propertyValueAt(track, clip, QStringLiteral("height"), 0.0, 0.0), double(state.projectHeight()));
+    QCOMPARE(state.propertyValueAt(track, clip, QStringLiteral("x"), 0.0, 0.0), 10.0);
+    QCOMPARE(state.propertyValueAt(track, clip, QStringLiteral("y"), 0.0, 0.0), 20.0);
+
+    // set_transform writes w/h through the generic path; the overlay box (and the render, which
+    // shares the formula) is anchored on x/y alone, so a size write cannot shift the model.
+    auto overlayCentreX = [&]() {
+        for (const QVariant &entry : state.previewClipsAtPlayhead()) {
+            const QVariantMap m = entry.toMap();
+            if (m.value(QStringLiteral("track")).toInt() == track && m.value(QStringLiteral("clip")).toInt() == clip)
+                return m.value(QStringLiteral("x")).toDouble() + m.value(QStringLiteral("width")).toDouble() / 2.0;
+        }
+        return -1.0;
+    };
+    const double centreBefore = overlayCentreX();
+    r = dispatcher.applyOne(QStringLiteral("set_transform"),
+                            {{QStringLiteral("clip"), id}, {QStringLiteral("w"), 300.0}, {QStringLiteral("h"), 200.0}});
+    QVERIFY2(r.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(r).toJson(QJsonDocument::Compact)));
+    QCOMPARE(overlayCentreX(), centreBefore);
 }
 
 void McpTest::lottieBatchUndoesAsOneStep()

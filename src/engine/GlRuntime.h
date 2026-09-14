@@ -82,6 +82,13 @@ struct GlModelGpu
     QVector<GLuint> textures; // parallel to ModelAsset::images
     std::shared_ptr<const ModelAsset> cpu;
     size_t vramBytes = 0;
+    // The unbaked rig (ModelAsset::rig), uploaded on the first model-clip draw of an animated
+    // file: 16-float vertices plus a 4×N RGBA32F palette texture the skinning shader reads.
+    GLuint rigVao = 0;
+    GLuint rigVbo = 0;
+    GLuint rigIbo = 0;
+    GLuint paletteTex = 0;
+    int paletteRows = 0;
 };
 
 struct CompiledPass

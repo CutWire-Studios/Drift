@@ -13,6 +13,9 @@ Item {
     }
     readonly property bool hasSelection: !!clipData && Object.keys(clipData).length > 0
     readonly property string clipKind: hasSelection ? (clipData.kind || "") : ""
+    // A model clip is a full-canvas layer placed by its camera: x/y shift the model, the box
+    // size and spin mean nothing (its own size and rotation live on the 3D Model tab).
+    readonly property bool isModel3d: clipKind === "model3d"
     readonly property int canvasW: {
         void EditorState.tracks
         return Math.max(1, EditorState.projectWidth())
@@ -76,7 +79,7 @@ Item {
             }
 
             Text {
-                text: qsTr("Position (px)")
+                text: root.isModel3d ? qsTr("Offset (px)") : qsTr("Position (px)")
                 color: Theme.mutedForeground
                 font.family: Theme.fontFamily
                 font.pixelSize: Theme.fontSizeXs
@@ -103,6 +106,7 @@ Item {
             }
 
             Text {
+                visible: !root.isModel3d
                 text: qsTr("Size (px)")
                 color: Theme.mutedForeground
                 font.family: Theme.fontFamily
@@ -111,6 +115,7 @@ Item {
             }
 
             PropertyKeyframeRow {
+                visible: !root.isModel3d
                 width: parent.width
                 propDef: root.propWidth
                 keyframeList: (root.clipData.keyframes && root.clipData.keyframes.width && root.clipData.keyframes.width.points) || []
@@ -120,6 +125,7 @@ Item {
                 unit: "px"
             }
             PropertyKeyframeRow {
+                visible: !root.isModel3d
                 width: parent.width
                 propDef: root.propHeight
                 keyframeList: (root.clipData.keyframes && root.clipData.keyframes.height && root.clipData.keyframes.height.points) || []
@@ -130,7 +136,7 @@ Item {
             }
 
             Text {
-                text: qsTr("Opacity & rotation")
+                text: root.isModel3d ? qsTr("Opacity") : qsTr("Opacity & rotation")
                 color: Theme.mutedForeground
                 font.family: Theme.fontFamily
                 font.pixelSize: Theme.fontSizeXs
@@ -148,6 +154,7 @@ Item {
             }
 
             PropertyKeyframeRow {
+                visible: !root.isModel3d
                 width: parent.width
                 propDef: root.propRotation
                 keyframeList: (root.clipData.keyframes && root.clipData.keyframes.rotation && root.clipData.keyframes.rotation.points) || []
@@ -158,6 +165,7 @@ Item {
             }
 
             Text {
+                visible: !root.isModel3d
                 text: qsTr("Rotate 90°")
                 color: Theme.mutedForeground
                 font.family: Theme.fontFamily
@@ -166,6 +174,7 @@ Item {
             }
 
             Flow {
+                visible: !root.isModel3d
                 width: parent.width
                 spacing: 6
                 Repeater {
@@ -260,7 +269,7 @@ Item {
             }
 
             ThemedButton {
-                text: qsTr("Reset position & size")
+                text: root.isModel3d ? qsTr("Reset position") : qsTr("Reset position & size")
                 onClicked: EditorState.resetClipTransform(
                                EditorState.selectedTrack, EditorState.selectedClip)
             }

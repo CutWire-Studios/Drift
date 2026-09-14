@@ -12,6 +12,7 @@
 #include "SubtitleCue.h"
 #include "TextStyle.h"
 #include "Time.h"
+#include "Model3dSource.h"
 #include "VectorSource.h"
 
 #include <QList>
@@ -19,9 +20,9 @@
 
 namespace drift {
 
-// Vector is a Lottie animation or SVG document; like Image and Shape it has no media file behind
-// its source range, so it is synthetic and unbounded.
-enum class ClipType { Video, Audio, Image, Text, Subtitle, Shape, Adjustment, Vector };
+// Vector is a Lottie animation or SVG document and Model3d a glTF binary; like Image and Shape
+// they have no media file behind their source range, so they are synthetic and unbounded.
+enum class ClipType { Video, Audio, Image, Text, Subtitle, Shape, Adjustment, Vector, Model3d };
 
 QString clipTypeToString(ClipType type);
 ClipType clipTypeFromString(const QString &type);
@@ -75,6 +76,7 @@ struct Clip
     QList<SubtitleCue> subtitleCues; // only meaningful when type == Subtitle
     ShapeStyle shapeStyle; // only meaningful when type == Shape
     VectorSource vector;   // only meaningful when type == Vector
+    Model3dSource model3d; // only meaningful when type == Model3d
 
     QString path;
     QString thumbnailPath;

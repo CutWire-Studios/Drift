@@ -15,6 +15,7 @@
 #include "TextLayout.h"
 #include "core/TextAnimationPreset.h"
 #include "TransitionCatalog.h"
+#include "ModelClipRenderer.h"
 #include "VectorClipRenderer.h"
 #include "core/Clip.h"
 #include "core/ClipAnimation.h"
@@ -130,8 +131,10 @@ void collectActivePaths(const drift::Project *project, drift::TimeUs timelineUs,
 
             if (clip.path.isEmpty())
                 continue;
-            // A vector clip's path is a .json/.svg the decoders must never open.
-            if (clip.type == drift::ClipType::Shape || clip.type == drift::ClipType::Vector)
+            // A vector clip's path is a .json/.svg and a model clip's a .glb the decoders must
+            // never open.
+            if (clip.type == drift::ClipType::Shape || clip.type == drift::ClipType::Vector
+                || clip.type == drift::ClipType::Model3d)
                 continue;
 
             if ((track.type == drift::TrackType::Video || track.type == drift::TrackType::Shape)
@@ -932,6 +935,20 @@ GpuLayer buildGpuLayer(const drift::Clip &clip, drift::TimeUs timelineUs, int pr
         request.animUs = clip.timelineToSourceUs(timelineUs) - clip.srcIn;
         layer.vector = drift::vec::makePainter(request);
         layer.effects = resolvedClipEffects(clip, clipTimeUs);
+    } else if (clip.type == drift::ClipType::Model3d) {
+        drift::model3d::RenderRequest request;
+        request.path = clip.path;
+        request.source = clip.model3d.isAnimated() ? clip.model3d.resolvedAt(clipTimeUs) : clip.model3d;
+        request.animUs = clip.timelineToSourceUs(timelineUs) - clip.srcIn;
+        // x/y offset the model from the canvas centre; the size tracks play no part, so a
+        // set_transform w/h (or a width key) cannot shift it.
+        request.centre = QPointF(0.5 + x / canvasWidth, 0.5 + y / canvasHeight);
+        layer.model3d = drift::model3d::makeDrawRequest(request);
+        layer.effects = resolvedClipEffects(clip, clipTimeUs);
+        // The model is placed by its camera, so the layer is the whole canvas: nothing can be
+        // clipped at a rect edge, and the layer rotation stays off (rotZ is the model's own spin).
+        destRect = QRectF(0, 0, canvasWidth, canvasHeight);
+        rotation = 0.0;
     } else {
         // Bounded by the canvas, not the layout rect — see decodeClipMediaFrame.
         fillGpuLayerPixels(layer, clip, timelineUs, canvasWidth, canvasHeight, projectFps,

@@ -145,6 +145,11 @@ Item {
             readonly property bool selected: EditorState.selectedTrack === modelData.track
                                                     && EditorState.selectedClip === modelData.clip
             readonly property bool isText: modelData.kind === "text"
+            // A 3D model: the box is the projected model, not the clip's layout rect, so a drag
+            // moves the clip anchor by the box delta and there is nothing to resize or spin.
+            readonly property bool isModel3d: modelData.kind === "model3d"
+            readonly property real anchorOffsetX: modelData.anchorX !== undefined ? modelData.anchorX - modelData.x : 0
+            readonly property real anchorOffsetY: modelData.anchorY !== undefined ? modelData.anchorY - modelData.y : 0
             readonly property bool editing: root.editingKey
                                                     === (modelData.track + ":" + modelData.clip)
             // True when this clip was just added with no text and should
@@ -305,8 +310,8 @@ Item {
                 EditorState.previewSetClipPosition(
                     handle.modelData.track,
                     handle.modelData.clip,
-                    handle.modelData.x + dx,
-                    handle.modelData.y + dy)
+                    handle.modelData.x + handle.anchorOffsetX + dx,
+                    handle.modelData.y + handle.anchorOffsetY + dy)
                 EditorState.commitPreviewDrag()
                 event.accepted = true
             }
@@ -463,9 +468,22 @@ Item {
                     EditorState.previewSetClipPosition(
                         handle.modelData.track,
                         handle.modelData.clip,
-                        xPx,
-                        yPx)
+                        xPx + handle.anchorOffsetX,
+                        yPx + handle.anchorOffsetY)
                 }
+            }
+
+            // The single move handle of a 3D model: an affordance at the box centre (the whole
+            // box drags), where the corner and rotation grips would otherwise invite resizing.
+            Rectangle {
+                visible: handle.selected && handle.isModel3d && !handle.editing
+                anchors.centerIn: parent
+                width: 14
+                height: 14
+                radius: 7
+                color: Theme.primary
+                border.width: Theme.borderWidth
+                border.color: Theme.onMedia
             }
 
             // Resize grips: 4 edges then 4 corners, the same frame the canvas
@@ -473,7 +491,7 @@ Item {
             // (-1 = left/top, +1 = right/bottom, 0 = stays put). The opposite
             // edge or corner is the anchor and does not move.
             Repeater {
-                model: (handle.selected && !handle.editing)
+                model: (handle.selected && !handle.editing && !handle.isModel3d)
                        ? [
                            { dx: -1, dy:  0, cursor: Qt.SizeHorCursor },
                            { dx:  1, dy:  0, cursor: Qt.SizeHorCursor },
@@ -728,7 +746,7 @@ Item {
 
             // Rotation handle above the box
             Item {
-                visible: handle.selected && !handle.editing
+                visible: handle.selected && !handle.editing && !handle.isModel3d
                 width: 14
                 height: 14
                 x: handle.width / 2 - width / 2

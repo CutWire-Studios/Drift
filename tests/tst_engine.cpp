@@ -58,6 +58,9 @@
 #include "engine/FaceMesh.h"
 #include "engine/FaceModelTransform.h"
 #include "engine/ModelAsset.h"
+#include "engine/ModelAnimation.h"
+#include "engine/ModelClipRenderer.h"
+#include "engine/ModelClipTransform.h"
 #include "engine/GlFaceSwapRenderer.h"
 #include "engine/FaceSwapSource.h"
 #include "engine/GlModelRenderer.h"
@@ -127,6 +130,18 @@ private slots:
     void faceModelMvpIsResolutionIndependent();
     void faceModelMvpMapsUpToDecreasingNdcY();
     void faceModelDoesNotLeakGlState();
+    void modelAssetCubeHasNoRig();
+    void modelAssetParsesBoxAnimated();
+    void modelAssetParsesRiggedSimple();
+    void modelAnimSamplerInterpolates();
+    void modelPoseHierarchyAndSkinning();
+    void modelClipCameraIsAspectOnly();
+    void modelClipScreenRectMatchesMvp();
+    void modelClipDrawRequestFollowsLoopMode();
+    void modelClipRendersCube();
+    void modelClipRigRenders();
+    void compositorRendersModelClip();
+    void modelClipDoesNotLeakGlState();
     void faceModelFillWireDoesNotLeakGlState();
     void faceMesh3dEffectPackageLoads();
     void faceMeshRestLoadsAndWarps();
@@ -1044,6 +1059,624 @@ void EngineTest::faceModelDoesNotLeakGlState()
     const QImage out = EffectProcessor::applyEffects(source, {brightness}, 0, {});
     QVERIFY(!out.isNull());
     QVERIFY(out.pixelColor(32, 32).red() != 100);
+}
+
+void EngineTest::modelAssetCubeHasNoRig()
+{
+    const auto asset = drift::loadModelAssetCached(QStringLiteral(DRIFT_TEST_DATA_DIR "/cube.glb"));
+    QVERIFY(asset);
+    QVERIFY(!asset->rig);
+    QVERIFY(asset->animations.isEmpty());
+    QVERIFY(asset->warning.isEmpty());
+    QVector3D lo, hi;
+    drift::modelClipBounds(*asset, &lo, &hi);
+    QCOMPARE(lo, asset->aabbMin);
+    QCOMPARE(hi, asset->aabbMax);
+}
+
+void EngineTest::modelAssetParsesBoxAnimated()
+{
+    const QString path = QStringLiteral(DRIFT_TEST_DATA_DIR "/model/BoxAnimated.glb");
+    QVERIFY2(QFileInfo::exists(path), qPrintable(path));
+    QString warning;
+    const auto asset = drift::loadModelAsset(path, &warning);
+    QVERIFY2(asset, qPrintable(warning));
+
+    // The baked buffer is untouched by the rig: same geometry the face effect has always drawn.
+    QVERIFY(asset->vertexCount() > 0);
+    QCOMPARE(asset->aabbMax.x() - asset->aabbMin.x(), 1.0f);
+
+    QCOMPARE(asset->animations.size(), 1);
+    QVERIFY(asset->animations.first().durationUs > drift::secondsToUs(3.7)
+            && asset->animations.first().durationUs < drift::secondsToUs(3.72));
+
+    QVERIFY(asset->rig);
+    const drift::ModelRig &rig = *asset->rig;
+    QCOMPARE(rig.nodes.size(), 4);
+    QVERIFY(rig.skins.isEmpty());
+    QCOMPARE(rig.paletteSize, 4);
+    QCOMPARE(rig.animations.size(), 1);
+    QCOMPARE(rig.animations.first().channels.size(), 2);
+    QCOMPARE(rig.animations.first().samplers.size(), 2);
+    QVERIFY(std::abs(rig.animations.first().durationSec - 3.7083) < 1e-3);
+    // Parents precede children.
+    for (int i = 0; i < rig.nodes.size(); ++i)
+        QVERIFY(rig.nodes[i].parent < i);
+    // Every vertex is rigid here: its own node's row at weight one.
+    QVERIFY(rig.vertexCount() > 0);
+    QCOMPARE(rig.vertices.size(), rig.vertexCount() * drift::kRigVertStride);
+    for (int i = 0; i < rig.vertexCount(); ++i) {
+        const float *v = rig.vertices.constData() + i * drift::kRigVertStride;
+        QCOMPARE(v[12], 1.f);
+        QCOMPARE(v[13], 0.f);
+        QVERIFY(int(v[8]) >= 0 && int(v[8]) < rig.nodes.size());
+    }
+    for (const drift::ModelPrimitive &prim : rig.primitives)
+        QVERIFY(prim.node >= 0 && prim.node < rig.nodes.size());
+    // Rest bounds are normalised: centred, largest axis one unit.
+    const QVector3D extent = rig.restAabbMax - rig.restAabbMin;
+    QVERIFY(std::abs(std::max({extent.x(), extent.y(), extent.z()}) - 1.0f) < 1e-4f);
+    QVERIFY((rig.restAabbMin + rig.restAabbMax).length() < 1e-4f);
+
+    // The lid moves: a posed vertex differs between t=0 and mid-animation.
+    const drift::ModelPose rest = drift::evaluateModelPose(rig, 0, 0.0);
+    const drift::ModelPose mid = drift::evaluateModelPose(rig, 0, 1.8);
+    QCOMPARE(rest.palette.size(), rig.paletteSize);
+    bool moved = false;
+    for (int i = 0; i < rig.paletteSize && !moved; ++i)
+        moved = rest.palette[i] != mid.palette[i];
+    QVERIFY(moved);
+    // But the rest pose at animation index -1 equals the file's own node transforms at t=0
+    // for the untouched nodes.
+    const drift::ModelPose bare = drift::evaluateModelPose(rig, -1, 0.0);
+    QCOMPARE(bare.palette.size(), rig.paletteSize);
+}
+
+void EngineTest::modelAssetParsesRiggedSimple()
+{
+    const QString path = QStringLiteral(DRIFT_TEST_DATA_DIR "/model/RiggedSimple.glb");
+    QVERIFY2(QFileInfo::exists(path), qPrintable(path));
+    QString warning;
+    const auto asset = drift::loadModelAsset(path, &warning);
+    QVERIFY2(asset, qPrintable(warning));
+    // The rig takes over skinning, so the bind-pose note must not be raised.
+    QVERIFY2(!asset->warning.contains(QStringLiteral("bind pose")), qPrintable(asset->warning));
+
+    QVERIFY(asset->rig);
+    const drift::ModelRig &rig = *asset->rig;
+    QCOMPARE(rig.nodes.size(), 5);
+    QCOMPARE(rig.skins.size(), 1);
+    QCOMPARE(rig.skins.first().joints.size(), 2);
+    QCOMPARE(rig.skins.first().inverseBind.size(), 2);
+    QCOMPARE(rig.skins.first().paletteBase, 5);
+    QCOMPARE(rig.paletteSize, 7);
+    QCOMPARE(rig.animations.size(), 1);
+    QCOMPARE(rig.animations.first().channels.size(), 3);
+    // Skinned vertices point at absolute palette rows past the node rows, and blend to one.
+    int skinnedVerts = 0;
+    for (int i = 0; i < rig.vertexCount(); ++i) {
+        const float *v = rig.vertices.constData() + i * drift::kRigVertStride;
+        const float sum = v[12] + v[13] + v[14] + v[15];
+        QVERIFY(std::abs(sum - 1.f) < 1e-3f);
+        for (int k = 0; k < 4; ++k) {
+            if (v[12 + k] > 0.f && int(v[8 + k]) >= 5)
+                ++skinnedVerts;
+        }
+    }
+    QVERIFY(skinnedVerts > 0);
+    // The inverse bind matrices are not identity (the bones sit away from the origin).
+    QVERIFY(rig.skins.first().inverseBind.first() != QMatrix4x4());
+
+    // Skinned rest bounds are normalised too, and the animation bends the cylinder.
+    const QVector3D extent = rig.restAabbMax - rig.restAabbMin;
+    QVERIFY(std::abs(std::max({extent.x(), extent.y(), extent.z()}) - 1.0f) < 1e-4f);
+    const drift::ModelPose a = drift::evaluateModelPose(rig, 0, 0.0);
+    const drift::ModelPose b = drift::evaluateModelPose(rig, 0, 1.0);
+    QVERIFY(a.palette[6] != b.palette[6]);
+}
+
+void EngineTest::modelAnimSamplerInterpolates()
+{
+    drift::ModelAnimSampler s;
+    s.components = 3;
+    s.times = {0.f, 1.f, 3.f};
+    s.values = {0.f, 0.f, 0.f, 2.f, 4.f, 6.f, 4.f, 4.f, 4.f};
+    float v[4];
+
+    s.interp = drift::ModelAnimSampler::Interp::Linear;
+    drift::sampleModelAnimSampler(s, 0.5, v);
+    QCOMPARE(v[0], 1.f);
+    QCOMPARE(v[1], 2.f);
+    QCOMPARE(v[2], 3.f);
+    drift::sampleModelAnimSampler(s, 2.0, v);
+    QCOMPARE(v[0], 3.f);
+    // Clamped outside the range.
+    drift::sampleModelAnimSampler(s, -5.0, v);
+    QCOMPARE(v[1], 0.f);
+    drift::sampleModelAnimSampler(s, 9.0, v);
+    QCOMPARE(v[1], 4.f);
+
+    s.interp = drift::ModelAnimSampler::Interp::Step;
+    drift::sampleModelAnimSampler(s, 0.99, v);
+    QCOMPARE(v[0], 0.f);
+    drift::sampleModelAnimSampler(s, 1.0, v);
+    QCOMPARE(v[0], 2.f);
+
+    // CubicSpline with zero tangents is a smoothstep between the keys.
+    drift::ModelAnimSampler c;
+    c.components = 1;
+    c.interp = drift::ModelAnimSampler::Interp::CubicSpline;
+    c.times = {0.f, 2.f};
+    c.values = {0.f, 0.f, 0.f, 0.f, 10.f, 0.f}; // in, value, out per key
+    drift::sampleModelAnimSampler(c, 1.0, v);
+    QCOMPARE(v[0], 5.f);
+    drift::sampleModelAnimSampler(c, 0.5, v);
+    QVERIFY(v[0] > 0.f && v[0] < 2.5f);
+
+    // Rotations slerp the short way and come out unit length.
+    drift::ModelAnimSampler q;
+    q.components = 4;
+    q.interp = drift::ModelAnimSampler::Interp::Linear;
+    q.times = {0.f, 1.f};
+    const float h = std::sqrt(0.5f);
+    q.values = {0.f, 0.f, 0.f, 1.f, 0.f, 0.f, h, h}; // identity → 90° about z
+    drift::sampleModelAnimSampler(q, 0.5, v);
+    const QQuaternion mid(v[3], v[0], v[1], v[2]);
+    QVERIFY(std::abs(mid.length() - 1.f) < 1e-5f);
+    const QVector3D turned = mid.rotatedVector(QVector3D(1.f, 0.f, 0.f));
+    QVERIFY(std::abs(turned.x() - h) < 1e-4f && std::abs(turned.y() - h) < 1e-4f);
+    // Flipping the sign of the second key must not change the path.
+    q.values = {0.f, 0.f, 0.f, 1.f, 0.f, 0.f, -h, -h};
+    drift::sampleModelAnimSampler(q, 0.5, v);
+    const QVector3D turned2 = QQuaternion(v[3], v[0], v[1], v[2]).rotatedVector(QVector3D(1.f, 0.f, 0.f));
+    QVERIFY(std::abs(turned2.x() - h) < 1e-4f && std::abs(turned2.y() - h) < 1e-4f);
+}
+
+void EngineTest::modelPoseHierarchyAndSkinning()
+{
+    drift::ModelRig rig;
+    drift::ModelNode root;
+    root.translation = QVector3D(1.f, 0.f, 0.f);
+    drift::ModelNode child;
+    child.parent = 0;
+    child.rotation = QQuaternion::fromAxisAndAngle(0.f, 0.f, 1.f, 90.f);
+    rig.nodes = {root, child};
+    drift::ModelSkin skin;
+    skin.joints = {1};
+    QMatrix4x4 ibm;
+    ibm.translate(0.f, -2.f, 0.f);
+    skin.inverseBind = {ibm};
+    skin.paletteBase = 2;
+    rig.skins = {skin};
+    rig.paletteSize = 3;
+    rig.restCentre = QVector3D(0.f, 0.f, 0.f);
+    rig.restInvScale = 1.f;
+
+    const drift::ModelPose pose = drift::evaluateModelPose(rig, -1, 0.0);
+    QCOMPARE(pose.palette.size(), 3);
+    // Child world = T(1,0,0) * Rz(90): the point (1,0,0) lands at (1,1,0).
+    const QVector3D p = pose.palette[1].map(QVector3D(1.f, 0.f, 0.f));
+    QVERIFY((p - QVector3D(1.f, 1.f, 0.f)).length() < 1e-5f);
+    // Joint row = world * IBM: (0,2,0) is first brought to the origin, then posed.
+    const QVector3D j = pose.palette[2].map(QVector3D(0.f, 2.f, 0.f));
+    QVERIFY((j - QVector3D(1.f, 0.f, 0.f)).length() < 1e-5f);
+
+    // Normalisation folds into every row.
+    rig.restCentre = QVector3D(1.f, 0.f, 0.f);
+    rig.restInvScale = 0.5f;
+    const drift::ModelPose normed = drift::evaluateModelPose(rig, -1, 0.0);
+    const QVector3D pn = normed.palette[1].map(QVector3D(1.f, 0.f, 0.f));
+    QVERIFY((pn - QVector3D(0.f, 0.5f, 0.f)).length() < 1e-5f);
+
+    // A channel on the root moves the whole subtree; a matrix node ignores channels.
+    drift::ModelAnimation anim;
+    drift::ModelAnimSampler s;
+    s.components = 3;
+    s.times = {0.f, 1.f};
+    s.values = {1.f, 0.f, 0.f, 1.f, 0.f, 5.f};
+    anim.samplers = {s};
+    drift::ModelAnimChannel ch;
+    ch.node = 0;
+    ch.sampler = 0;
+    ch.path = drift::ModelAnimChannel::Path::Translation;
+    anim.channels = {ch};
+    rig.animations = {anim};
+    rig.restCentre = QVector3D();
+    rig.restInvScale = 1.f;
+    const drift::ModelPose moved = drift::evaluateModelPose(rig, 0, 1.0);
+    QVERIFY((moved.palette[1].map(QVector3D(1.f, 0.f, 0.f)) - QVector3D(1.f, 1.f, 5.f)).length() < 1e-5f);
+    rig.nodes[0].hasMatrix = true;
+    rig.nodes[0].matrix.setToIdentity();
+    const drift::ModelPose fixed = drift::evaluateModelPose(rig, 0, 1.0);
+    QVERIFY((fixed.palette[1].map(QVector3D(1.f, 0.f, 0.f)) - QVector3D(0.f, 1.f, 0.f)).length() < 1e-5f);
+
+    QCOMPARE(drift::modelAnimationDurationUs(drift::ModelAsset(), 0), 0);
+}
+
+void EngineTest::modelClipCameraIsAspectOnly()
+{
+    const QVector3D aabbMin(-0.5f, -0.5f, -0.5f);
+    const QVector3D aabbMax(0.5f, 0.5f, 0.5f);
+    drift::ModelClipParams params;
+    params.scale = 0.5;
+
+    for (const double depth : {0.0, 0.5, 1.0}) {
+        params.depth = depth;
+        const double aspect = 9.0 / 16.0;
+        const QMatrix4x4 a = drift::modelClipCamera(params, aabbMin, aabbMax, aspect).mvp;
+        const QMatrix4x4 b = drift::modelClipCamera(params, aabbMin, aabbMax, aspect).mvp;
+        for (int i = 0; i < 16; ++i)
+            QCOMPARE(a.data()[i], b.data()[i]);
+
+        // Size compensation: the unit extent at the model-centre plane spans 2*scale NDC
+        // vertically whatever the depth, so the depth slider never changes the on-screen size.
+        const QVector4D top = a * QVector4D(0.f, 0.5f, 0.f, 1.f);
+        const QVector4D bottom = a * QVector4D(0.f, -0.5f, 0.f, 1.f);
+        const double span = double(top.y() / top.w()) - double(bottom.y() / bottom.w());
+        QVERIFY2(std::abs(span - 1.0) < 1e-4,
+                 qPrintable(QStringLiteral("depth %1: span %2").arg(depth).arg(span)));
+        // And the horizontal extent honours the aspect: a unit width spans 2*scale*aspect.
+        const QVector4D left = a * QVector4D(-0.5f, 0.f, 0.f, 1.f);
+        const QVector4D right = a * QVector4D(0.5f, 0.f, 0.f, 1.f);
+        const double hspan = double(right.x() / right.w()) - double(left.x() / left.w());
+        QVERIFY2(std::abs(hspan - aspect) < 1e-4,
+                 qPrintable(QStringLiteral("depth %1: hspan %2").arg(depth).arg(hspan)));
+    }
+
+    // Perspective: at depth 1 a point nearer the camera (+z) projects larger than one behind.
+    params.depth = 1.0;
+    const QMatrix4x4 persp = drift::modelClipCamera(params, aabbMin, aabbMax, 1.0).mvp;
+    const QVector4D nearPt = persp * QVector4D(0.5f, 0.f, 0.5f, 1.f);
+    const QVector4D farPt = persp * QVector4D(0.5f, 0.f, -0.5f, 1.f);
+    QVERIFY(nearPt.x() / nearPt.w() > farPt.x() / farPt.w());
+    // Orthographic at depth 0: both project to the same x.
+    params.depth = 0.0;
+    const QMatrix4x4 ortho = drift::modelClipCamera(params, aabbMin, aabbMax, 1.0).mvp;
+    const QVector4D nearO = ortho * QVector4D(0.5f, 0.f, 0.5f, 1.f);
+    const QVector4D farO = ortho * QVector4D(0.5f, 0.f, -0.5f, 1.f);
+    QCOMPARE(nearO.x() / nearO.w(), farO.x() / farO.w());
+    // Nearer surfaces win GL_LESS in both modes.
+    QVERIFY(nearO.z() / nearO.w() < farO.z() / farO.w());
+    QVERIFY(nearPt.z() / nearPt.w() < farPt.z() / farPt.w());
+
+    // Rotations are about the model's own axes: with the model tilted by X, spinning Y keeps
+    // the model's up axis where the tilt put it (the spin is about that axis), where a world-axis
+    // Y spin would swing it around.
+    {
+        drift::ModelClipParams tilted;
+        tilted.scale = 0.5;
+        tilted.depth = 0.0;
+        tilted.rotX = 90.0;
+        QVector3D upAt0;
+        for (const double spin : {0.0, 45.0, 90.0, 180.0}) {
+            tilted.rotY = spin;
+            const drift::ModelClipCamera cam = drift::modelClipCamera(tilted, aabbMin, aabbMax, 1.0);
+            const QVector3D up = cam.modelView.mapVector(QVector3D(0.f, 1.f, 0.f)).normalized();
+            if (spin == 0.0)
+                upAt0 = up;
+            QVERIFY2((up - upAt0).length() < 1e-4f,
+                     qPrintable(QStringLiteral("rotY %1 moved the up axis to %2,%3,%4")
+                                    .arg(spin).arg(up.x()).arg(up.y()).arg(up.z())));
+        }
+        // And Z rolls about the model's forward axis after both: with X = 90, model +Z (its
+        // forward) now points down (−Y in view), and rolling Z leaves it there.
+        tilted.rotY = 0.0;
+        for (const double roll : {0.0, 60.0}) {
+            tilted.rotZ = roll;
+            const drift::ModelClipCamera cam = drift::modelClipCamera(tilted, aabbMin, aabbMax, 1.0);
+            const QVector3D fwd = cam.modelView.mapVector(QVector3D(0.f, 0.f, 1.f)).normalized();
+            QVERIFY((fwd - QVector3D(0.f, -1.f, 0.f)).length() < 1e-4f);
+        }
+    }
+
+    // The centre lands where the clip's x/y put it, as a sticker (independent of depth).
+    params.depth = 0.7;
+    params.centreX = 0.25;
+    params.centreY = 0.75;
+    const QMatrix4x4 moved = drift::modelClipCamera(params, aabbMin, aabbMax, 1.0).mvp;
+    const QVector4D centre = moved * QVector4D(0.f, 0.f, 0.f, 1.f);
+    QVERIFY(std::abs(double(centre.x() / centre.w()) - (2.0 * 0.25 - 1.0)) < 1e-5);
+    QVERIFY(std::abs(double(centre.y() / centre.w()) - (1.0 - 2.0 * 0.75)) < 1e-5);
+}
+
+void EngineTest::modelClipScreenRectMatchesMvp()
+{
+    const QVector3D aabbMin(-0.5f, -0.25f, -0.125f);
+    const QVector3D aabbMax(0.5f, 0.25f, 0.125f);
+    drift::ModelClipParams params;
+    params.scale = 0.4;
+    params.depth = 0.0;
+    params.centreX = 0.5;
+    params.centreY = 0.5;
+    const double aspect = 9.0 / 16.0;
+    // Orthographic and unrotated: the largest axis (x) spans 0.4 of the height, i.e.
+    // 0.4 * aspect of the width, centred.
+    const QRectF rect = drift::modelClipScreenRect(params, aabbMin, aabbMax, aspect);
+    QVERIFY(std::abs(rect.width() - 0.4 * aspect) < 1e-4);
+    QVERIFY(std::abs(rect.height() - 0.2) < 1e-4);
+    QVERIFY(std::abs(rect.center().x() - 0.5) < 1e-4);
+    QVERIFY(std::abs(rect.center().y() - 0.5) < 1e-4);
+
+    // Every projected corner lies inside the rect (top-left origin, y down) under perspective.
+    params.depth = 1.0;
+    params.rotY = 35.0;
+    params.rotX = -20.0;
+    const QRectF r2 = drift::modelClipScreenRect(params, aabbMin, aabbMax, aspect);
+    const QMatrix4x4 mvp = drift::modelClipCamera(params, aabbMin, aabbMax, aspect).mvp;
+    for (int i = 0; i < 8; ++i) {
+        const QVector4D c = mvp * QVector4D((i & 1) ? aabbMax.x() : aabbMin.x(),
+                                            (i & 2) ? aabbMax.y() : aabbMin.y(),
+                                            (i & 4) ? aabbMax.z() : aabbMin.z(), 1.f);
+        const QPointF p((c.x() / c.w() + 1.0) * 0.5, (1.0 - c.y() / c.w()) * 0.5);
+        QVERIFY2(r2.adjusted(-1e-5, -1e-5, 1e-5, 1e-5).contains(p),
+                 qPrintable(QStringLiteral("corner %1 (%2, %3) outside %4,%5 %6x%7")
+                                .arg(i).arg(p.x()).arg(p.y())
+                                .arg(r2.x()).arg(r2.y()).arg(r2.width()).arg(r2.height())));
+    }
+}
+
+void EngineTest::modelClipDrawRequestFollowsLoopMode()
+{
+    const QString path = QStringLiteral(DRIFT_TEST_DATA_DIR "/cube.glb");
+    drift::model3d::RenderRequest request;
+    request.path = path;
+    request.centre = QPointF(0.5, 0.5);
+    request.source.path = path;
+    request.source.scale = 0.3;
+    request.source.rotY = 45.0;
+
+    const auto draw = drift::model3d::makeDrawRequest(request);
+    QVERIFY(draw);
+    QVERIFY(draw->asset);
+    QCOMPARE(draw->params.scale, 0.3);
+    QCOMPARE(draw->params.rotY, 45.0);
+    QCOMPARE(draw->params.centreX, 0.5);
+
+    request.path = QStringLiteral(DRIFT_TEST_DATA_DIR "/does-not-exist.glb");
+    QVERIFY(!drift::model3d::makeDrawRequest(request));
+}
+
+namespace {
+
+GpuScene modelClipScene(const QString &path, int size, double rotY = 0.0, double lightPitch = 20.0,
+                        double depth = 0.5)
+{
+    drift::model3d::RenderRequest request;
+    request.path = path;
+    request.centre = QPointF(0.5, 0.5);
+    request.source.path = path;
+    request.source.scale = 0.5;
+    request.source.depth = depth;
+    request.source.rotY = rotY;
+    request.source.rotX = 20.0;
+    request.source.lightPitch = lightPitch;
+
+    GpuLayer layer;
+    layer.model3d = drift::model3d::makeDrawRequest(request);
+    layer.rect = QRectF(0, 0, size, size);
+    layer.valid = true;
+
+    GpuItem item;
+    item.layer = layer;
+
+    GpuScene scene;
+    scene.canvasSize = QSize(size, size);
+    scene.backgroundColor = Qt::black;
+    scene.items.append(item);
+    return scene;
+}
+
+} // namespace
+
+void EngineTest::modelClipRendersCube()
+{
+    if (!GpuCompositor::isAvailable())
+        QSKIP("OpenGL offscreen context unavailable");
+    const QString path = QStringLiteral(DRIFT_TEST_DATA_DIR "/cube.glb");
+
+    const QImage out = GpuCompositor::render(modelClipScene(path, 64));
+    QVERIFY(!out.isNull());
+    QCOMPARE(out.size(), QSize(64, 64));
+    // The cube covers the middle and leaves the corners to the background.
+    const QRgb centre = out.pixel(32, 32);
+    QVERIFY2(qRed(centre) + qGreen(centre) + qBlue(centre) > 60,
+             qPrintable(QStringLiteral("centre #%1").arg(centre, 8, 16, QLatin1Char('0'))));
+    const QRgb corner = out.pixel(2, 2);
+    QVERIFY2(qRed(corner) + qGreen(corner) + qBlue(corner) < 30,
+             qPrintable(QStringLiteral("corner #%1").arg(corner, 8, 16, QLatin1Char('0'))));
+    // Rows are flipped in the resolve so v=0 is the image top: rotX tips the cube's top toward
+    // the camera, so under perspective the top of the picture is the wider (nearer) end. The
+    // cube's shared vertices have no per-face normals, so lighting cannot tell faces apart.
+    const QImage tipped = GpuCompositor::render(modelClipScene(path, 64, 0.0, 20.0, 1.0));
+    QVERIFY(!tipped.isNull());
+    auto coveredWidth = [&](int y) {
+        int n = 0;
+        for (int x = 0; x < 64; ++x)
+            n += qGray(tipped.pixel(x, y)) > 20 ? 1 : 0;
+        return n;
+    };
+    const int upperWidth = coveredWidth(22);
+    const int lowerWidth = coveredWidth(42);
+    QVERIFY2(upperWidth > lowerWidth + 2,
+             qPrintable(QStringLiteral("upper %1 lower %2").arg(upperWidth).arg(lowerWidth)));
+
+    // A spin changes the picture.
+    const QImage spun = GpuCompositor::render(modelClipScene(path, 64, 60.0));
+    QVERIFY(!spun.isNull());
+    int diff = 0;
+    for (int y = 0; y < 64; ++y)
+        for (int x = 0; x < 64; ++x)
+            diff += std::abs(qGray(out.pixel(x, y)) - qGray(spun.pixel(x, y)));
+    QVERIFY(diff > 0);
+
+    // WYSIWYG: the same scene at twice the size downsamples to roughly the same picture.
+    const QImage big = GpuCompositor::render(modelClipScene(path, 128))
+                           .scaled(64, 64, Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
+    QVERIFY(!big.isNull());
+    long total = 0;
+    for (int y = 0; y < 64; ++y)
+        for (int x = 0; x < 64; ++x)
+            total += std::abs(qGray(out.pixel(x, y)) - qGray(big.pixel(x, y)));
+    QVERIFY2(total / (64 * 64) < 12, qPrintable(QStringLiteral("mean diff %1").arg(total / (64.0 * 64.0))));
+}
+
+namespace {
+
+GpuScene modelClipSceneAt(const QString &path, int size, drift::TimeUs animUs, drift::VectorLoop loop)
+{
+    drift::model3d::RenderRequest request;
+    request.path = path;
+    request.centre = QPointF(0.5, 0.5);
+    request.source.path = path;
+    request.source.scale = 0.6;
+    request.source.depth = 0.3;
+    request.source.rotX = 25.0;
+    request.source.rotY = 30.0;
+    request.source.loop = loop;
+    request.animUs = animUs;
+
+    GpuLayer layer;
+    layer.model3d = drift::model3d::makeDrawRequest(request);
+    layer.rect = QRectF(0, 0, size, size);
+    layer.valid = layer.model3d != nullptr;
+
+    GpuItem item;
+    item.layer = layer;
+
+    GpuScene scene;
+    scene.canvasSize = QSize(size, size);
+    scene.backgroundColor = Qt::black;
+    scene.items.append(item);
+    return scene;
+}
+
+long imageDifference(const QImage &a, const QImage &b)
+{
+    long diff = 0;
+    for (int y = 0; y < a.height(); ++y)
+        for (int x = 0; x < a.width(); ++x)
+            diff += std::abs(qGray(a.pixel(x, y)) - qGray(b.pixel(x, y)));
+    return diff;
+}
+
+} // namespace
+
+void EngineTest::modelClipRigRenders()
+{
+    if (!GpuCompositor::isAvailable())
+        QSKIP("OpenGL offscreen context unavailable");
+
+    for (const char *file : {"BoxAnimated.glb", "RiggedSimple.glb"}) {
+        const QString path = QStringLiteral(DRIFT_TEST_DATA_DIR "/model/") + QLatin1String(file);
+        const QImage t0 = GpuCompositor::render(modelClipSceneAt(path, 96, 0, drift::VectorLoop::Loop));
+        QVERIFY2(!t0.isNull(), file);
+        int lit = 0;
+        for (int y = 0; y < 96; ++y)
+            for (int x = 0; x < 96; ++x)
+                lit += qGray(t0.pixel(x, y)) > 20 ? 1 : 0;
+        // RiggedSimple is a thin cylinder, so only a few percent of the canvas is covered.
+        QVERIFY2(lit > 96 * 96 / 40, qPrintable(QStringLiteral("%1: %2 lit pixels").arg(file).arg(lit)));
+
+        // Mid-animation the picture changes; a Loop past the end wraps back to the start.
+        const drift::TimeUs mid = drift::secondsToUs(1.2);
+        const QImage tMid = GpuCompositor::render(modelClipSceneAt(path, 96, mid, drift::VectorLoop::Loop));
+        QVERIFY2(imageDifference(t0, tMid) > 500, file);
+        const auto asset = drift::loadModelAssetCached(path);
+        QVERIFY(asset && !asset->animations.isEmpty());
+        const drift::TimeUs len = asset->animations.first().durationUs;
+        const QImage wrapped = GpuCompositor::render(modelClipSceneAt(path, 96, len + mid, drift::VectorLoop::Loop));
+        QVERIFY2(imageDifference(tMid, wrapped) < 200, file);
+        // Hide past the end draws nothing at all.
+        const GpuScene hidden = modelClipSceneAt(path, 96, len + mid, drift::VectorLoop::Hide);
+        QVERIFY2(!hidden.items.first().layer.model3d, file);
+    }
+}
+
+void EngineTest::compositorRendersModelClip()
+{
+    if (!GpuCompositor::isAvailable())
+        QSKIP("OpenGL offscreen context unavailable");
+
+    drift::Project project;
+    project.setResolution(200, 100);
+    project.tracks().clear();
+    project.tracks().append(drift::Track{.type = drift::TrackType::Shape});
+    drift::Clip clip;
+    clip.id = QStringLiteral("model");
+    clip.type = drift::ClipType::Model3d;
+    clip.path = QStringLiteral(DRIFT_TEST_DATA_DIR "/model/BoxAnimated.glb");
+    clip.model3d.path = clip.path;
+    clip.model3d.scale = 0.4;
+    clip.model3d.depth = 0.0;
+    clip.model3d.loop = drift::VectorLoop::Hold;
+    clip.timelineStart = 0;
+    clip.timelineDuration = drift::secondsToUs(4.0);
+    clip.srcIn = 0;
+    clip.srcOut = drift::secondsToUs(4.0);
+    // Off-centre: x/y shift the model, and the size keys are ignored.
+    clip.transformX.setKeyframe(0, -50.0);
+    clip.transformY.setKeyframe(0, 0.0);
+    clip.transformW.setKeyframe(0, 200.0);
+    clip.transformH.setKeyframe(0, 100.0);
+    // A rotY key animates the pose from the clip's own keyframes.
+    clip.model3d.keyframes[QStringLiteral("rotY")].setKeyframe(0, 0.0);
+    clip.model3d.keyframes[QStringLiteral("rotY")].setKeyframe(drift::secondsToUs(2.0), 90.0);
+    project.tracks()[0].clips.append(clip);
+
+    FrameCompositor compositor;
+    compositor.setProject(&project);
+    const QImage t0 = compositor.compositeAt(0).convertToFormat(QImage::Format_RGBA8888);
+    QCOMPARE(t0.size(), QSize(200, 100));
+    // Covered pixels sit left of centre (the model centre is at x = 100 − 50 = 50).
+    long sumX = 0;
+    long count = 0;
+    for (int y = 0; y < 100; ++y)
+        for (int x = 0; x < 200; ++x) {
+            if (qGray(t0.pixel(x, y)) > 20) {
+                sumX += x;
+                ++count;
+            }
+        }
+    QVERIFY(count > 200);
+    const double meanX = double(sumX) / double(count);
+    QVERIFY2(std::abs(meanX - 50.0) < 6.0, qPrintable(QString::number(meanX)));
+    // Nothing spills past the canvas midline: scale 0.4 of a 100 px height is a 40 px box.
+    for (int y = 0; y < 100; ++y)
+        QVERIFY(qGray(t0.pixel(150, y)) <= 20);
+
+    // Turned by the keyframe and moved by the file's animation, the frame differs at t=1.
+    const QImage t1 = compositor.compositeAt(drift::secondsToUs(1.0)).convertToFormat(QImage::Format_RGBA8888);
+    long diff = 0;
+    for (int y = 0; y < 100; ++y)
+        for (int x = 0; x < 200; ++x)
+            diff += std::abs(qGray(t0.pixel(x, y)) - qGray(t1.pixel(x, y)));
+    QVERIFY(diff > 1000);
+}
+
+void EngineTest::modelClipDoesNotLeakGlState()
+{
+    if (!GpuCompositor::isAvailable())
+        QSKIP("OpenGL offscreen context unavailable");
+    const QString path = QStringLiteral(DRIFT_TEST_DATA_DIR "/cube.glb");
+    QVERIFY(!GpuCompositor::render(modelClipScene(path, 64)).isNull());
+
+    // A plain image layer after a model draw must still land: a leaked depth test or cull
+    // would drop the fullscreen quad.
+    QImage source(64, 64, QImage::Format_RGBA8888);
+    source.fill(QColor(200, 30, 30));
+    GpuLayer layer;
+    layer.source = source;
+    layer.rect = QRectF(0, 0, 64, 64);
+    layer.valid = true;
+    GpuItem item;
+    item.layer = layer;
+    GpuScene scene;
+    scene.canvasSize = QSize(64, 64);
+    scene.backgroundColor = Qt::black;
+    scene.items.append(item);
+    const QImage out = GpuCompositor::render(scene);
+    QVERIFY(!out.isNull());
+    QVERIFY(qRed(out.pixel(32, 32)) > 150);
 }
 
 void EngineTest::faceModelFillWireDoesNotLeakGlState()

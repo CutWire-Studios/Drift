@@ -588,6 +588,7 @@ Item {
                     glyph: kind === "audio" ? Theme.icons.music
                             : kind === "image" ? Theme.icons.image
                             : kind === "vector" ? Theme.icons.layers
+                            : kind === "model3d" ? Theme.icons.box
                             : Theme.icons.film
                     iconSize: Theme.spacing3xl
                     iconColor: Theme.mutedForeground
@@ -758,6 +759,7 @@ Item {
                     glyph: kind === "audio" ? Theme.icons.music
                             : kind === "image" ? Theme.icons.image
                             : kind === "vector" ? Theme.icons.layers
+                            : kind === "model3d" ? Theme.icons.box
                             : Theme.icons.film
                     onLiftTapped: {
                         if (cardRoot.isFolder) {
@@ -977,7 +979,8 @@ Item {
                                     || listRow._liveThumbnailPath.length === 0 || listThumb.status === Image.Error
                         glyph: listRow.isFolder ? Theme.icons.folder
                                : (kind === "audio" ? Theme.icons.music
-                                  : kind === "vector" ? Theme.icons.layers : Theme.icons.film)
+                                  : kind === "vector" ? Theme.icons.layers
+                                  : kind === "model3d" ? Theme.icons.box : Theme.icons.film)
                         iconSize: Theme.iconSizeBase
                         iconColor: Theme.mutedForeground
                     }
@@ -1107,6 +1110,7 @@ Item {
                     glyph: kind === "audio" ? Theme.icons.music
                             : kind === "image" ? Theme.icons.image
                             : kind === "vector" ? Theme.icons.layers
+                            : kind === "model3d" ? Theme.icons.box
                             : Theme.icons.film
                     onLiftTapped: {
                         if (listRow.isFolder) {
@@ -1317,7 +1321,9 @@ Item {
                             { glyph: Theme.icons.image, label: qsTr("Images"),
                               formats: "PNG · JPG · WEBP · HEIC · GIF" },
                             { glyph: Theme.icons.shapes, label: qsTr("Vector"),
-                              formats: "SVG · Lottie (.json, .lottie)" }
+                              formats: "SVG · Lottie (.json, .lottie)" },
+                            { glyph: Theme.icons.box, label: qsTr("3D"),
+                              formats: "glTF binary (.glb)" }
                         ]
 
                         delegate: Row {

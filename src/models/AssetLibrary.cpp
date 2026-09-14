@@ -4,6 +4,7 @@
 
 #include "engine/MediaProbe.h"
 #include "engine/MediaThumbnail.h"
+#include "engine/ModelAsset.h"
 #include "engine/VectorInspect.h"
 #include "core/DotLottie.h"
 
@@ -202,6 +203,8 @@ drift::MediaKind kindFrom(const MediaInfo &info, const QString &path)
 
 drift::MediaKind provisionalKind(const QString &path)
 {
+    if (AssetLibrary::isModelPath(path))
+        return drift::MediaKind::Model3d;
     if (AssetLibrary::isVectorPath(path))
         return drift::MediaKind::Vector;
     if (AssetLibrary::isImagePath(path))
@@ -364,11 +367,33 @@ std::optional<drift::MediaAsset> buildVectorAsset(const QString &absolutePath, c
     return asset;
 }
 
+// A glTF binary: parsed by the model loader. No thumbnail — the bin shows a placeholder icon.
+std::optional<drift::MediaAsset> buildModelAsset(const QString &absolutePath, const QString &name)
+{
+    const auto model = drift::loadModelAssetCached(absolutePath);
+    if (!model) {
+        qWarning("import: %s is not a usable glTF binary: %s", qPrintable(absolutePath),
+                 qPrintable(drift::modelAssetWarning(absolutePath)));
+        return std::nullopt;
+    }
+    drift::MediaAsset asset;
+    asset.name = name;
+    asset.path = absolutePath;
+    asset.kind = drift::MediaKind::Model3d;
+    asset.durationUs = model->animations.isEmpty() ? 0 : model->animations.first().durationUs;
+    asset.durationLabel = formatDuration(asset.durationUs);
+    asset.hasAudio = false;
+    asset.hasAudioKnown = true;
+    return asset;
+}
+
 // Reads everything the bin needs about a file. Blocking, so it only ever runs on a worker
 // thread — shared by the import path and the replace path.
 std::optional<drift::MediaAsset> probeAsset(const QString &absolutePath, bool imageOnly)
 {
     const QString name = QFileInfo(absolutePath).fileName();
+    if (AssetLibrary::isModelPath(absolutePath))
+        return buildModelAsset(absolutePath, name);
     if (AssetLibrary::isVectorPath(absolutePath))
         return buildVectorAsset(absolutePath, name);
     if (imageOnly)
@@ -407,9 +432,17 @@ bool AssetLibrary::isVectorPath(const QString &path)
     return suffix == QLatin1String("json") || suffix == QLatin1String("svg") || drift::isDotLottiePath(path);
 }
 
+// Only the binary container: a .gltf references sidecar .bin/texture files that bundling and
+// relink would not carry along.
+bool AssetLibrary::isModelPath(const QString &path)
+{
+    return QFileInfo(path).suffix().toLower() == QLatin1String("glb");
+}
+
 bool AssetLibrary::isMediaPath(const QString &path)
 {
-    return isVideoPath(path) || isAudioPath(path) || isImagePath(path) || isVectorPath(path);
+    return isVideoPath(path) || isAudioPath(path) || isImagePath(path) || isVectorPath(path)
+        || isModelPath(path);
 }
 
 QString AssetLibrary::mediaNameFilter() const
@@ -422,6 +455,7 @@ QString AssetLibrary::mediaNameFilter() const
         }
         globs.append(QStringLiteral("*.json"));
         globs.append(QStringLiteral("*.lottie"));
+        globs.append(QStringLiteral("*.glb"));
         return globs.join(QLatin1Char(' '));
     }();
     return tr("Media files (%1)").arg(pattern);

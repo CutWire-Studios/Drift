@@ -298,6 +298,8 @@ QJsonObject clipToJson(const Clip &clip)
     // Only vector clips carry a document, and an inline one can run to megabytes.
     if (clip.type == ClipType::Vector)
         json.insert(QStringLiteral("vector"), clip.vector.toJson());
+    if (clip.type == ClipType::Model3d)
+        json.insert(QStringLiteral("model3d"), clip.model3d.toJson());
     return json;
 }
 
@@ -353,6 +355,7 @@ Clip clipFromJsonV2(const QJsonObject &object, int canvasW = 1920, int canvasH =
     clip.subtitleCues = subtitleCuesFromJson(object.value(QStringLiteral("subtitleCues")).toArray());
     clip.shapeStyle = shapeStyleFromJson(object.value(QStringLiteral("shapeStyle")).toObject());
     clip.vector = VectorSource::fromJson(object.value(QStringLiteral("vector")).toObject());
+    clip.model3d = Model3dSource::fromJson(object.value(QStringLiteral("model3d")).toObject());
     clip.path = object.value(QStringLiteral("path")).toString();
     clip.thumbnailPath = object.value(QStringLiteral("thumbnailPath")).toString();
     clip.filmstripPath = object.value(QStringLiteral("filmstripPath")).toString();
@@ -621,6 +624,10 @@ void detachClip(Clip &clip)
     clip.vector.keyframes.detach();
     for (auto it = clip.vector.keyframes.begin(); it != clip.vector.keyframes.end(); ++it)
         it.value().detachSharedData();
+    clip.model3d.animations.detach();
+    clip.model3d.keyframes.detach();
+    for (auto it = clip.model3d.keyframes.begin(); it != clip.model3d.keyframes.end(); ++it)
+        it.value().detachSharedData();
     clip.textStyle.keyframes.detach();
     for (auto it = clip.textStyle.keyframes.begin(); it != clip.textStyle.keyframes.end(); ++it)
         it.value().detachSharedData();
@@ -862,6 +869,7 @@ Project Project::fromJson(const QJsonObject &object, QString *errorOut)
     // Version 8 did the same for shapes: the flat fill/stroke became the shading stack and the
     // stroke moved from a half-width inset to an Inside layer, so a translucent stroke now sits
     // over the fill instead of beside it. shapeStyleFromJson migrates in place.
+    // Version 9 added ClipType::Model3d. Nothing to migrate; same reasoning as version 6.
 
     project.m_bookmarks.clear();
     const QJsonArray bookmarksArray = object.value(QStringLiteral("bookmarks")).toArray();

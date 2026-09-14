@@ -558,7 +558,7 @@ PanelFrame {
     }
 
     function kindsForTab(tabId) {
-        if (tabId === "media") return ["video", "image", "audio", "vector"]
+        if (tabId === "media") return ["video", "image", "audio", "vector", "model3d"]
         return []
     }
 

@@ -550,6 +550,72 @@
           "Read it to edit a document that has no slots, then send it back with set_lottie_source.",
           objectSchema(clipRefProps()), true, false, true },
 
+        { "add_model3d", "model3d", "Place a 3D model (.glb)",
+          "Add a glTF binary as a model clip on a graphic track, creating one when needed. The clip "
+          "is a full-canvas layer; the model sits at the clip's x/y centre (move it with "
+          "set_transform x/y or the keyframes ops — w/h/rotation are ignored for this kind). scale "
+          "is the fraction of canvas height the model spans, depth 0..1 is how much perspective "
+          "foreshortening there is (size never changes with it), rotX/rotY/rotZ are degrees about "
+          "the MODEL'S OWN axes (intrinsic, applied X then Y then Z: Y spins about the model's up "
+          "axis as tilted by X, Z rolls about its forward axis after both — so a keyframed rotY "
+          "spins a tilted model about its own axis rather than wobbling it around the world's), "
+          "and lightYaw/lightPitch/lightIntensity/ambient light it. All nine are keyframable as "
+          "model3d.<key>. An animated file plays its first animation at its own length unless "
+          "duration is given; loop decides what happens past the end. Returns {id, track, index, "
+          "animations:[{name, durationSec}], vertexCount, warning?, model3d:{…}}.",
+          objectSchema({{QStringLiteral("path"), stringProp(QStringLiteral("Absolute path to a .glb file"))},
+                        {QStringLiteral("at"), numberProp(QStringLiteral("Start seconds (default: playhead)"))},
+                        {QStringLiteral("track"), integerProp(QStringLiteral("Optional destination graphic track; omitted picks or creates one"))},
+                        {QStringLiteral("duration"), numberProp(QStringLiteral("Clip length in seconds (default: the first animation's length, 5 s for a static model)"))},
+                        {QStringLiteral("animation"), integerProp(QStringLiteral("Index into the file's animations (default 0)"))},
+                        {QStringLiteral("loop"), enumProp(QStringLiteral("Past the animation's end: hold the last frame, loop, ping-pong, or hide (default loop)"),
+                                                           {QStringLiteral("hold"), QStringLiteral("loop"), QStringLiteral("pingpong"), QStringLiteral("hide")})},
+                        {QStringLiteral("offset"), numberProp(QStringLiteral("Seconds into the animation at the clip's start (default 0)"))},
+                        {QStringLiteral("scale"), numberProp(QStringLiteral("Fraction of canvas height the model spans (default 0.5)"), 0.01, 10.0)},
+                        {QStringLiteral("depth"), numberProp(QStringLiteral("Perspective strength 0 (flat) .. 1 (strong); default 0.5"), 0.0, 1.0)},
+                        {QStringLiteral("rotX"), numberProp(QStringLiteral("Degrees about the model's own X axis (tilt; applied first)"))},
+                        {QStringLiteral("rotY"), numberProp(QStringLiteral("Degrees about the model's own Y axis after the X tilt (turntable / spin)"))},
+                        {QStringLiteral("rotZ"), numberProp(QStringLiteral("Degrees about the model's own Z axis after X and Y (roll)"))},
+                        {QStringLiteral("lightYaw"), numberProp(QStringLiteral("Key light direction, degrees (default 30)"))},
+                        {QStringLiteral("lightPitch"), numberProp(QStringLiteral("Key light elevation, degrees (default 20)"))},
+                        {QStringLiteral("lightIntensity"), numberProp(QStringLiteral("Key light strength (default 1)"), 0.0, 10.0)},
+                        {QStringLiteral("ambient"), numberProp(QStringLiteral("Ambient light 0..1 (default 0.35)"), 0.0, 1.0)},
+                        {QStringLiteral("name"), stringProp(QStringLiteral("Clip name (default: the file name)"))}},
+                       {QStringLiteral("path")}) },
+        { "inspect_model3d", "model3d", "Check a .glb before or after placing it",
+          "Parse a model and report what it carries without touching the timeline: animations:[{name, "
+          "durationSec}], vertexCount, primitiveCount, materialCount, textureCount, warning (what "
+          "the loader had to skip — Draco compression, extra material textures, …). Give path for a "
+          "file, or clip for one already on the timeline (adds its model3d options).",
+          objectSchema(mergeProps({{QStringLiteral("path"), stringProp(QStringLiteral("Absolute .glb path"))}},
+                                  clipRefProps())),
+          true, false, true },
+        { "set_model3d_source", "model3d", "Swap the file under a model clip",
+          "Replace the clip's .glb, keeping its position, length, pose, lighting and keyframes; the "
+          "animation index is clamped to the new file. Returns the inspect summary of the new file.",
+          objectSchema(mergeProps({{QStringLiteral("path"), stringProp(QStringLiteral("Absolute .glb path"))}},
+                                  clipRefProps()),
+                       {QStringLiteral("path")}) },
+        { "set_model3d_options", "model3d", "Animation, loop, pose or lighting of a model clip",
+          "Change how a model clip plays and looks; only supplied keys change. Pose and light values "
+          "set here are plain (non-keyed) values — use set_keyframe with model3d.<key> to animate them. "
+          "Rotations are about the model's own axes, applied X then Y then Z (see add_model3d).",
+          objectSchema(mergeProps({{QStringLiteral("animation"), integerProp(QStringLiteral("Index into the file's animations"))},
+                                   {QStringLiteral("loop"), enumProp(QStringLiteral("hold | loop | pingpong | hide"),
+                                                                      {QStringLiteral("hold"), QStringLiteral("loop"), QStringLiteral("pingpong"), QStringLiteral("hide")})},
+                                   {QStringLiteral("offset"), numberProp(QStringLiteral("Seconds into the animation at the clip's start"))},
+                                   {QStringLiteral("scale"), numberProp(QStringLiteral("Fraction of canvas height the model spans"), 0.01, 10.0)},
+                                   {QStringLiteral("depth"), numberProp(QStringLiteral("Perspective strength 0..1"), 0.0, 1.0)},
+                                   {QStringLiteral("rotX"), numberProp(QStringLiteral("Degrees about the model's own X axis (tilt; applied first)"))},
+                                   {QStringLiteral("rotY"), numberProp(QStringLiteral("Degrees about the model's own Y axis after the X tilt (turntable / spin)"))},
+                                   {QStringLiteral("rotZ"), numberProp(QStringLiteral("Degrees about the model's own Z axis after X and Y (roll)"))},
+                                   {QStringLiteral("lightYaw"), numberProp(QStringLiteral("Key light direction, degrees"))},
+                                   {QStringLiteral("lightPitch"), numberProp(QStringLiteral("Key light elevation, degrees"))},
+                                   {QStringLiteral("lightIntensity"), numberProp(QStringLiteral("Key light strength"), 0.0, 10.0)},
+                                   {QStringLiteral("ambient"), numberProp(QStringLiteral("Ambient light 0..1"), 0.0, 1.0)},
+                                   {QStringLiteral("name"), stringProp(QStringLiteral("Clip name"))}},
+                                  clipRefProps())) },
+
         { "add_subtitle_clip", "subtitles", "Empty subtitle lane",
           "Add an empty subtitle clip, creating a subtitle track when needed. Returns {id, track, index}. "
           "Fill it with set_subtitle_cues or import_subtitle_into_clip.",

@@ -515,8 +515,9 @@ Item {
             inPoint: clipItem.clipData.inPoint
             outPoint: clipItem.clipData.outPoint
             sourceDuration: clipItem.clipData.sourceDuration
-            // Image and vector "strips" are a single poster frame.
-            frameCount: (clipItem.clipData.kind === "image" || clipItem.clipData.kind === "vector") ? 1 : 8
+            // Image, vector and model "strips" are a single poster frame.
+            frameCount: (clipItem.clipData.kind === "image" || clipItem.clipData.kind === "vector"
+                         || clipItem.clipData.kind === "model3d") ? 1 : 8
             // Viewport-cull tiles so multi-hour clips don't spawn thousands of Images.
             worldX: clipItem.x
             viewX: panel.timelineViewX

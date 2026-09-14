@@ -23,6 +23,7 @@
 #include "core/TextShading.h"
 #include "core/EffectStackStore.h"
 #include "core/TextPresetStore.h"
+#include "core/Model3dSource.h"
 #include "core/VectorSource.h"
 #include "core/DotLottie.h"
 #include "TestZip.h"
@@ -93,6 +94,8 @@ private slots:
     void dotLottieUnpacks();
     void textStyleKeyframesSerialization();
     void vectorClipIsSyntheticOnGraphicTracks();
+    void model3dSourceSerialization();
+    void model3dScalarClampsAndResolves();
     void foldVectorTimeTable_data();
     void foldVectorTimeTable();
     void effectCatalogIdSerialization();
@@ -1318,7 +1321,7 @@ void CoreTest::shapeStyleSerialization()
     QVERIFY(mid.layers[1].width > 4.0 && mid.layers[1].width < 10.0);
     QCOMPARE(loadedClip.transformX.evaluateAt(0), 100.0);
     QCOMPARE(loadedClip.transformY.evaluateAt(0), 200.0);
-    QCOMPARE(json.value(QStringLiteral("version")).toInt(), 8);
+    QCOMPARE(json.value(QStringLiteral("version")).toInt(), 9);
 }
 
 // A project saved before format 8 carries the flat fill/stroke keys — possibly only the original
@@ -1631,6 +1634,149 @@ void CoreTest::vectorClipIsSyntheticOnGraphicTracks()
     QCOMPARE(clip.timelineToSourceUs(drift::secondsToUs(1.5)), drift::secondsToUs(1.0));
     clip.reverse = true;
     QCOMPARE(clip.timelineToSourceUs(drift::secondsToUs(1.5)), drift::secondsToUs(3.0));
+}
+
+void CoreTest::model3dSourceSerialization()
+{
+    drift::Project project;
+    project.tracks().clear();
+    project.tracks().append(drift::Track{.type = drift::TrackType::Shape});
+
+    drift::Clip clip;
+    clip.id = QStringLiteral("clip-model");
+    clip.type = drift::ClipType::Model3d;
+    clip.name = QStringLiteral("Robot");
+    clip.path = QStringLiteral("/media/robot.glb");
+    clip.timelineDuration = drift::secondsToUs(3.0);
+    clip.model3d.path = clip.path;
+    clip.model3d.animations = {{QStringLiteral("Idle"), drift::secondsToUs(2.0)},
+                               {QString(), drift::secondsToUs(0.5)}};
+    clip.model3d.aabbMin = QVector3D(-0.5f, -0.25f, -0.125f);
+    clip.model3d.aabbMax = QVector3D(0.5f, 0.25f, 0.125f);
+    clip.model3d.animation = 1;
+    clip.model3d.loop = drift::VectorLoop::PingPong;
+    clip.model3d.startOffsetUs = drift::secondsToUs(0.25);
+    clip.model3d.scale = 0.75;
+    clip.model3d.depth = 0.2;
+    clip.model3d.rotX = 10.0;
+    clip.model3d.rotY = -45.0;
+    clip.model3d.rotZ = 5.0;
+    clip.model3d.lightYaw = 60.0;
+    clip.model3d.lightPitch = -10.0;
+    clip.model3d.lightIntensity = 1.5;
+    clip.model3d.ambient = 0.1;
+    clip.model3d.keyframes[QStringLiteral("rotY")].setKeyframe(0, 0.0);
+    clip.model3d.keyframes[QStringLiteral("rotY")].setKeyframe(drift::secondsToUs(2.0), 360.0);
+    project.tracks()[0].clips.append(clip);
+
+    // Non-model clips must not grow a model3d key.
+    drift::Clip shape;
+    shape.id = QStringLiteral("clip-shape");
+    shape.type = drift::ClipType::Shape;
+    project.tracks()[0].clips.append(shape);
+
+    const QJsonObject json = project.toJson();
+    QCOMPARE(json.value(QStringLiteral("version")).toInt(), drift::Project::kCurrentVersion);
+    const QJsonArray clips = json.value(QStringLiteral("tracks")).toArray().at(0).toObject()
+                                 .value(QStringLiteral("clips")).toArray();
+    QVERIFY(clips.at(0).toObject().contains(QStringLiteral("model3d")));
+    QVERIFY(!clips.at(1).toObject().contains(QStringLiteral("model3d")));
+
+    QString error;
+    const drift::Project loaded = drift::Project::fromJson(json, &error);
+    QVERIFY2(error.isEmpty(), qPrintable(error));
+    const drift::Clip &c = loaded.tracks()[0].clips[0];
+    QCOMPARE(c.type, drift::ClipType::Model3d);
+    QCOMPARE(c.path, clip.path);
+    QCOMPARE(c.model3d.path, clip.path);
+    QCOMPARE(c.model3d.animations.size(), 2);
+    QCOMPARE(c.model3d.animations.at(0).name, QStringLiteral("Idle"));
+    QCOMPARE(c.model3d.animations.at(0).durationUs, drift::secondsToUs(2.0));
+    QCOMPARE(c.model3d.animations.at(1).durationUs, drift::secondsToUs(0.5));
+    QCOMPARE(c.model3d.aabbMin, clip.model3d.aabbMin);
+    QCOMPARE(c.model3d.aabbMax, clip.model3d.aabbMax);
+    QVERIFY(c.model3d.hasAabb());
+    QCOMPARE(c.model3d.animation, 1);
+    QCOMPARE(c.model3d.animationDurationUs(), drift::secondsToUs(0.5));
+    QCOMPARE(c.model3d.loop, drift::VectorLoop::PingPong);
+    QCOMPARE(c.model3d.startOffsetUs, drift::secondsToUs(0.25));
+    QCOMPARE(c.model3d.scale, 0.75);
+    QCOMPARE(c.model3d.depth, 0.2);
+    QCOMPARE(c.model3d.rotX, 10.0);
+    QCOMPARE(c.model3d.rotY, -45.0);
+    QCOMPARE(c.model3d.rotZ, 5.0);
+    QCOMPARE(c.model3d.lightYaw, 60.0);
+    QCOMPARE(c.model3d.lightPitch, -10.0);
+    QCOMPARE(c.model3d.lightIntensity, 1.5);
+    QCOMPARE(c.model3d.ambient, 0.1);
+    QCOMPARE(c.model3d.keyframes.size(), 1);
+    QCOMPARE(c.model3d.keyframes.value(QStringLiteral("rotY")).evaluateAt(drift::secondsToUs(1.0)), 180.0);
+    QVERIFY(c.model3d.isAnimated());
+
+    QCOMPARE(drift::Model3dSource::fromJson(QJsonObject()).loop, drift::VectorLoop::Loop);
+    QVERIFY(drift::Model3dSource().isEmpty());
+    QVERIFY(!drift::Model3dSource().hasAabb());
+    QCOMPARE(drift::Model3dSource().animationDurationUs(), 0);
+
+    QCOMPARE(drift::clipTypeFromString(QStringLiteral("model3d")), drift::ClipType::Model3d);
+    QCOMPARE(drift::clipTypeToString(drift::ClipType::Model3d), QStringLiteral("model3d"));
+    QCOMPARE(drift::mediaKindFromString(QStringLiteral("model3d")), drift::MediaKind::Model3d);
+    QCOMPARE(drift::mediaKindToString(drift::MediaKind::Model3d), QStringLiteral("model3d"));
+
+    QCOMPARE(drift::trackTypeForClipType(drift::ClipType::Model3d), drift::TrackType::Shape);
+    drift::Track shapeTrack{.type = drift::TrackType::Shape};
+    QVERIFY(shapeTrack.allowsClipType(drift::ClipType::Model3d));
+    drift::Track videoTrack{.type = drift::TrackType::Video};
+    QVERIFY(!videoTrack.allowsClipType(drift::ClipType::Model3d));
+    drift::Clip synthetic;
+    synthetic.type = drift::ClipType::Model3d;
+    synthetic.timelineDuration = drift::secondsToUs(12.0);
+    synthetic.srcOut = drift::secondsToUs(12.0);
+    QCOMPARE(drift::sourceDurationForClip(project, synthetic), drift::kImageClipDurationUs);
+}
+
+void CoreTest::model3dScalarClampsAndResolves()
+{
+    drift::Model3dSource m;
+    QCOMPARE(drift::model3dKeyframeProperties().size(), 9);
+    for (const QString &key : drift::model3dKeyframeProperties()) {
+        double v = -1.0;
+        QVERIFY2(drift::model3dScalar(m, key, &v), qPrintable(key));
+    }
+    QVERIFY(!drift::model3dScalar(m, QStringLiteral("nope"), nullptr));
+    QVERIFY(!drift::setModel3dScalar(m, QStringLiteral("nope"), 1.0));
+
+    QVERIFY(drift::setModel3dScalar(m, QStringLiteral("scale"), -3.0));
+    QCOMPARE(m.scale, 0.01);
+    QVERIFY(drift::setModel3dScalar(m, QStringLiteral("depth"), 4.0));
+    QCOMPARE(m.depth, 1.0);
+    QVERIFY(drift::setModel3dScalar(m, QStringLiteral("ambient"), -1.0));
+    QCOMPARE(m.ambient, 0.0);
+    QVERIFY(drift::setModel3dScalar(m, QStringLiteral("lightIntensity"), -1.0));
+    QCOMPARE(m.lightIntensity, 0.0);
+    QVERIFY(drift::setModel3dScalar(m, QStringLiteral("rotY"), 720.0));
+    QCOMPARE(m.rotY, 720.0);
+
+    QVERIFY(!m.isAnimated());
+    m.keyframes[QStringLiteral("scale")].setKeyframe(0, 0.2);
+    m.keyframes[QStringLiteral("scale")].setKeyframe(drift::secondsToUs(1.0), 0.6);
+    QVERIFY(m.isAnimated());
+    const drift::Model3dSource baked = m.resolvedAt(drift::secondsToUs(0.5));
+    QCOMPARE(baked.scale, 0.4);
+    QVERIFY(baked.keyframes.isEmpty());
+    QVERIFY(!baked.isAnimated());
+    QCOMPARE(baked.rotY, 720.0);
+
+    // A disabled track leaves the static value alone.
+    m.keyframes[QStringLiteral("scale")].setEnabled(false);
+    QVERIFY(!m.isAnimated());
+    QCOMPARE(m.resolvedAt(drift::secondsToUs(0.5)).scale, 0.01);
+
+    m.animations = {{QStringLiteral("a"), drift::secondsToUs(1.0)}};
+    m.animation = 5;
+    QCOMPARE(m.animationDurationUs(), 0);
+    m.animation = 0;
+    QCOMPARE(m.animationDurationUs(), drift::secondsToUs(1.0));
 }
 
 void CoreTest::foldVectorTimeTable_data()
