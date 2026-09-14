@@ -68,6 +68,22 @@ public:
     // exist when clips cut from one file overlap; each still keeps a cache, so without this the
     // memory ceiling would multiply by the number of them.
     void setPreviewCacheShare(int shares) { m_previewCacheShares = qMax(1, shares); }
+    // Extra quarter-turns applied on top of the source's own probed display-matrix rotation for
+    // every subsequent decode (see Clip::rotationCorrection). Applied per-call like
+    // setStabilizeParams, not gated behind open()'s reopen guard, so a change takes effect on the
+    // very next frame.
+    void setRotationCorrection(int degrees)
+    {
+        if (m_rotationCorrection == degrees)
+            return;
+        m_rotationCorrection = degrees;
+        // Cached frames are keyed by source PTS only, never by orientation. applyDecodeSize's
+        // size-based invalidation happens to catch a 90<->270 swap (the decode target transposes)
+        // but not a 0<->180 change (same size, still wrong-side-up) — clear both explicitly so
+        // every rotation change is covered, not just the ones that also happen to resize.
+        m_videoCache.clear();
+        m_previewCache.clear();
+    }
 
     // Diagnostics, summed over every reader in this process. A reader asked for a position its
     // cursor is not near has to decode its way there from the preceding keyframe, so this is what
@@ -87,6 +103,18 @@ public:
     // the distinction is visible, and it is the one place the auto-probe can pick the
     // worse of the two.
     enum class HardwareDecodeMode { Auto, Software, Hardware };
+
+    // What the hardware get_format callback is asked for, handed over through
+    // AVCodecContext::opaque. Public only so that callback, a free function, can name it.
+    struct HwFormatRequest
+    {
+        AVPixelFormat pixFmt = AV_PIX_FMT_NONE;
+        // A driver's hard limit on the whole surface pool; 0 when there is none.
+        int maxSurfaces = 0;
+        // Extra surfaces the capped pool actually got, -1 when no cap was applied. get_format
+        // runs on the thread that feeds the decoder, which is the thread that reads this.
+        int spareSurfaces = -1;
+    };
     static void setHardwareDecodeMode(HardwareDecodeMode mode,
                                       drift::hwaccel::Backend backend = drift::hwaccel::Backend::None);
     static HardwareDecodeMode hardwareDecodeMode();
@@ -101,6 +129,9 @@ public:
     // Times a reader gave up on hardware mid-decode and went sticky-software. Silent
     // otherwise: the preview just gets slower and nothing says why.
     static quint64 hardwareFallbackCount();
+    // Why the most recent of those happened: backend, codec, the failing call's error and the
+    // last error FFmpeg logged. Empty while nothing has fallen back.
+    static QString lastHardwareFailure();
 
 #ifdef Q_OS_ANDROID
     // Called by the GL importer when a latched gralloc buffer cannot be bound. Process-wide and
@@ -178,6 +209,9 @@ private:
     void trimPreviewCache();
     bool wantsMorePreviewReadAhead() const;
 
+    // Stores and logs why hardware decode is being abandoned; see lastHardwareFailure().
+    void recordHardwareFailure(const QString &what);
+
     QString m_path;
     struct AVFormatContext *m_fmt = nullptr;
     struct AVCodecContext *m_videoCtx = nullptr;
@@ -192,6 +226,8 @@ private:
     // Source display-matrix rotation (0/90/180/270), applied to every decoded frame
     // so everything downstream sees upright pixels.
     int m_sourceRotation = 0;
+    int m_rotationCorrection = 0;
+    int effectiveRotation() const { return ((m_sourceRotation + m_rotationCorrection) % 360 + 360) % 360; }
     int m_outputSampleRate = 48000;
     bool m_hwAccelActive = false;
     bool m_hwAccelDisabled = false; // sticky after a failed hardware decode
@@ -215,6 +251,7 @@ private:
 #endif
     drift::hwaccel::Backend m_hwBackend = drift::hwaccel::Backend::None;
     AVPixelFormat m_hwPixFmt = AV_PIX_FMT_NONE;
+    HwFormatRequest m_hwFormatRequest;
 
     // Surface-scaler graph, rebuilt when the decode size or the decoder's frame
     // pool changes. m_hwScalerFailed is sticky: a backend with no scaler, or a

@@ -34,6 +34,10 @@ Dialog {
         0, (Overlay.overlay ? Overlay.overlay.height : 720) - safeTop - safeBottom)
 
     modal: true
+    // A popup positions itself relative to the item it is declared in, so a dialog owned by
+    // a panel deep in a scrolled column lands wherever that item is — off-screen, with only
+    // the scrim showing. Parent every dialog to the overlay so x/y below mean window space.
+    parent: Overlay.overlay
     // Centred in the safe area rather than in the window. Popup.anchors carries `centerIn`
     // and nothing else — no offsets — so the position is computed instead: the insets are
     // rarely equal, and a window-centred dialog at full clamped height still ran under

@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="200" height="100" viewBox="0 0 200 100">
+  <defs>
+    <rect id="unit" width="20" height="20"/>
+    <symbol id="hidden-symbol"><circle cx="5" cy="5" r="5"/></symbol>
+  </defs>
+  <rect id="left" class="panel primary" x="0" y="0" width="60" height="100" fill="#00ff00"/>
+  <rect x="60" y="0" width="60" height="100" fill="#0000ff"/>
+  <g id="group" style="fill:#ff0000">
+    <rect x="120" y="0" width="40" height="50"/>
+    <rect x="120" y="50" width="40" height="50"/>
+  </g>
+  <rect id="outline" x="165" y="10" width="30" height="80" fill="none" stroke="#000000" stroke-width="4"/>
+  <use id="stamp" xlink:href="#unit" x="0" y="0" fill="#ffff00"/>
+</svg>

@@ -12,8 +12,10 @@
 #include "MaskApplier.h"
 #include "MediaProbe.h"
 #include "ReverseProxyCache.h"
-#include "TextRaster.h"
+#include "TextLayout.h"
+#include "core/TextAnimationPreset.h"
 #include "TransitionCatalog.h"
+#include "VectorClipRenderer.h"
 #include "core/Clip.h"
 #include "core/ClipAnimation.h"
 #include "core/MediaAsset.h"
@@ -22,6 +24,10 @@
 #include "core/Time.h"
 #include "core/TimelineOps.h"
 #include "core/Transition.h"
+#ifdef DRIFT_WITH_SKIA
+#include "SkiaShapePainter.h"
+#include "SkiaTextPainter.h"
+#endif
 
 #include <QBrush>
 #include <QColor>
@@ -124,7 +130,8 @@ void collectActivePaths(const drift::Project *project, drift::TimeUs timelineUs,
 
             if (clip.path.isEmpty())
                 continue;
-            if (clip.type == drift::ClipType::Shape)
+            // A vector clip's path is a .json/.svg the decoders must never open.
+            if (clip.type == drift::ClipType::Shape || clip.type == drift::ClipType::Vector)
                 continue;
 
             if ((track.type == drift::TrackType::Video || track.type == drift::TrackType::Shape)
@@ -180,7 +187,8 @@ QList<ClipReaderPool::VideoRequest> collectVideoRequests(const drift::Project *p
             const drift::VideoRead read = drift::resolveVideoRead(clip, timelineUs);
             requests.append(ClipReaderPool::VideoRequest{read.path,
                                                         ClipReaderPool::streamIdForClip(clip.id),
-                                                        read.sourceUs, maxWidth, maxHeight});
+                                                        read.sourceUs, maxWidth, maxHeight,
+                                                        clip.rotationCorrection});
         }
     }
     return requests;
@@ -391,13 +399,12 @@ QImage decodeClipMediaFrame(const drift::Clip &clip, drift::TimeUs timelineUs, i
     if (clip.type == drift::ClipType::Video) {
         const drift::VideoRead read = drift::resolveVideoRead(clip, timelineUs);
         return ClipReaderPool::instance().readVideoFrame(
-            read.path, ClipReaderPool::streamIdForClip(clip.id), read.sourceUs, maxWidth, maxHeight);
+            read.path, ClipReaderPool::streamIdForClip(clip.id), read.sourceUs, maxWidth, maxHeight,
+            QString(), 15, false, clip.rotationCorrection);
     }
 
     return {};
 }
-
-QImage shapeImageForClip(const drift::Clip &clip, int width, int height, double renderScale);
 
 // maxWidth/maxHeight bound the decoded frame; the returned image may be smaller
 // (source-limited) and is scaled to the clip's layout rect at draw time.
@@ -407,9 +414,6 @@ QImage imageForClip(const drift::Clip &clip, const QList<drift::Mask> &laneMasks
                     drift::TimeUs timelineUs, int maxWidth, int maxHeight,
                     int projectFps, int maxTimeEchoHistoryFrames)
 {
-    if (clip.type == drift::ClipType::Shape)
-        return shapeImageForClip(clip, maxWidth, maxHeight, 1.0);
-
     if (clip.path.isEmpty())
         return {};
 
@@ -472,91 +476,6 @@ QImage imageForClip(const drift::Clip &clip, const QList<drift::Mask> &laneMasks
     return image;
 }
 
-Qt::PenStyle penStyleFor(drift::ShapeStrokeStyle style)
-{
-    switch (style) {
-    case drift::ShapeStrokeStyle::None:
-        return Qt::NoPen;
-    case drift::ShapeStrokeStyle::Solid:
-        return Qt::SolidLine;
-    case drift::ShapeStrokeStyle::Dash:
-        return Qt::DashLine;
-    case drift::ShapeStrokeStyle::Dot:
-        return Qt::DotLine;
-    case drift::ShapeStrokeStyle::DashDot:
-        return Qt::DashDotLine;
-    }
-    return Qt::SolidLine;
-}
-
-QBrush shapeBrush(const drift::ShapeStyle &style, const QRectF &bounds)
-{
-    switch (style.fillKind) {
-    case drift::ShapeFillKind::None:
-        return Qt::NoBrush;
-    case drift::ShapeFillKind::Solid:
-        return style.fill;
-    case drift::ShapeFillKind::LinearGradient: {
-        // Angle sweeps the gradient axis across the shape's own bounding box, so the same angle
-        // reads the same whatever the clip is scaled to.
-        const double radians = qDegreesToRadians(style.gradientAngle);
-        const QPointF centre = bounds.center();
-        const QPointF half(qCos(radians) * bounds.width() / 2.0,
-                           qSin(radians) * bounds.height() / 2.0);
-        QLinearGradient gradient(centre - half, centre + half);
-        gradient.setColorAt(0.0, style.fill);
-        gradient.setColorAt(1.0, style.fillSecondary);
-        return gradient;
-    }
-    case drift::ShapeFillKind::RadialGradient: {
-        QRadialGradient gradient(bounds.center(),
-                                 qMax(bounds.width(), bounds.height()) / 2.0);
-        gradient.setColorAt(0.0, style.fill);
-        gradient.setColorAt(1.0, style.fillSecondary);
-        return gradient;
-    }
-    }
-    return style.fill;
-}
-
-// Rasterized at exactly the destination size: the GPU quad is the layout rect and samples this
-// texture 0..1, so anything smaller is upscaled and the stroke stretches with it.
-QImage shapeImageForClip(const drift::Clip &clip, int width, int height, double renderScale)
-{
-    if (clip.type != drift::ClipType::Shape)
-        return {};
-
-    const int w = qMax(1, width);
-    const int h = qMax(1, height);
-
-    QImage image(w, h, QImage::Format_RGBA8888);
-    image.fill(Qt::transparent);
-
-    QPainter p(&image);
-    p.setRenderHint(QPainter::Antialiasing);
-
-    const drift::ShapeStyle &style = clip.shapeStyle;
-    // Stroke width and corner radius are authored in project pixels, so they scale with the render
-    // just like the layout rect does — otherwise preview and export disagree.
-    const double strokeWidth =
-        style.strokeStyle == drift::ShapeStrokeStyle::None ? 0.0 : style.strokeWidth * renderScale;
-    const double inset = strokeWidth / 2.0;
-    const QRectF bounds =
-        QRectF(0, 0, w, h).adjusted(inset, inset, -inset, -inset).normalized();
-
-    drift::ShapeStyle scaled = style;
-    scaled.cornerRadius = style.cornerRadius * renderScale;
-
-    p.setBrush(shapeBrush(scaled, bounds));
-    p.setPen(strokeWidth <= 0.0
-                 ? QPen(Qt::NoPen)
-                 : QPen(style.stroke, strokeWidth, penStyleFor(style.strokeStyle), Qt::RoundCap,
-                        Qt::RoundJoin));
-    p.drawPath(drift::shapePath(scaled, bounds));
-
-    p.end();
-    return image;
-}
 
 double opacityForClip(const drift::Clip &clip, drift::TimeUs timelineUs)
 {
@@ -679,7 +598,8 @@ void fillGpuLayerPixels(GpuLayer &layer, const drift::Clip &clip, drift::TimeUs 
     if (!timeEcho && clip.type == drift::ClipType::Video) {
         const drift::VideoRead read = drift::resolveVideoRead(clip, timelineUs);
         const PreviewVideoFrame video = ClipReaderPool::instance().readPreviewVideoFrame(
-            read.path, ClipReaderPool::streamIdForClip(clip.id), read.sourceUs, maxWidth, maxHeight);
+            read.path, ClipReaderPool::streamIdForClip(clip.id), read.sourceUs, maxWidth, maxHeight,
+            QString(), 15, false, clip.rotationCorrection);
         if (video.isValid()) {
             layer.video = video;
             return;
@@ -851,6 +771,71 @@ void fillGpuLayerMasks(GpuLayer &layer, const drift::Clip &host,
 // `laneMasks` is the whole mask stack the clip's track contributes at this instant. Masks live on
 // the track's lanes rather than on the clip, so one spanning a cut reaches both clips and each
 // rasterizes it in its own frame space.
+// The pixels of a text block at this instant: the layout's fragments, the animator engine's
+// frame for them and the Skia painter. Returns the destination rect (layout rect grown by the
+// bleed) and the whole-block motion that rides on the layer; the layer is left without pixels
+// when there is nothing to draw. `windowStart/Duration` is the clip, or the cue for subtitles.
+QRectF fillTextLayer(GpuLayer &layer, const drift::TextStyle &style, const QString &text,
+                     const QRectF &layoutRect, double renderScale, int activeWordIndex,
+                     drift::TimeUs windowStartUs, drift::TimeUs windowDurationUs, drift::TimeUs timelineUs,
+                     drift::textanim::BlockProps *block)
+{
+    *block = drift::textanim::BlockProps{};
+#ifdef DRIFT_WITH_SKIA
+    const drift::ResolvedTextAnimation anim = drift::resolveTextAnimation(style.animation);
+    drift::skia::TextPaintRequest request;
+    request.style = style;
+    request.set = drift::text::fragmentsFor(text, style, layoutRect.width(), layoutRect.height(), renderScale,
+                                            activeWordIndex, drift::text::splitFor(anim.resolved, style));
+    if (!request.set || request.set->frags.isEmpty())
+        return {};
+    const drift::textanim::EvalContext ctx = drift::text::evalContextFor(
+        style, layoutRect, renderScale, windowStartUs, windowDurationUs, timelineUs, activeWordIndex);
+    request.frame = drift::textanim::evaluateTextAnimation(anim.set, anim.resolved, request.set->infos,
+                                                           request.set->domains, ctx);
+    request.envelope = drift::textanim::animationBounds(anim.resolved, ctx);
+    request.layoutRect = layoutRect;
+    request.renderScale = renderScale;
+    request.timeSec = drift::usToSeconds(qMax<drift::TimeUs>(0, timelineUs - windowStartUs));
+    request.anchorGrouping = anim.set.anchorGrouping;
+    request.anchorAlignment = anim.set.anchorAlignment;
+    *block = request.frame.block;
+    const drift::skia::TextPainterResult painted = drift::skia::makeTextPainter(request);
+    layer.vector = painted.painter;
+    return painted.rect;
+#else
+    Q_UNUSED(layer); Q_UNUSED(style); Q_UNUSED(text); Q_UNUSED(layoutRect); Q_UNUSED(renderScale);
+    Q_UNUSED(activeWordIndex); Q_UNUSED(windowStartUs); Q_UNUSED(windowDurationUs); Q_UNUSED(timelineUs);
+    static bool warned = false;
+    if (!warned) {
+        warned = true;
+        qWarning("text clips need DRIFT_WITH_SKIA; nothing drawn");
+    }
+    return {};
+#endif
+}
+
+// Whole-block motion (opacity, offset, scale, rotation, blur) rides on the GPU layer, never on
+// the pixels, so the painter's image stays the same size for every frame.
+void applyTextBlockMotion(GpuLayer &layer, const drift::textanim::BlockProps &block, QRectF *destRect,
+                          double *opacity, double *rotation)
+{
+    destRect->translate(block.dx, block.dy);
+    if (!qFuzzyCompare(block.scale, 1.0)) {
+        const QPointF centre = destRect->center();
+        destRect->setSize(destRect->size() * block.scale);
+        destRect->moveCenter(centre);
+    }
+    *opacity *= block.opacity;
+    *rotation += block.rotation;
+    if (block.blurPx > 0.5) {
+        drift::Effect blur;
+        blur.catalogId = QStringLiteral("builtin.effects.gaussian_blur");
+        blur.parameters.insert(QStringLiteral("u_blurRadius"), block.blurPx);
+        layer.effects.append(blur);
+    }
+}
+
 GpuLayer buildGpuLayer(const drift::Clip &clip, drift::TimeUs timelineUs, int projectWidth,
                        int projectHeight, double renderScale, int canvasWidth, int canvasHeight,
                        int projectFps, int maxTimeEchoHistoryFrames,
@@ -878,65 +863,74 @@ GpuLayer buildGpuLayer(const drift::Clip &clip, drift::TimeUs timelineUs, int pr
     QRectF destRect = layoutRect;
     double opacity = opacityForClip(clip, timelineUs);
 
+    // Keyframed style scalars are baked for this instant; the renderers only see numbers.
+    drift::Clip resolvedText;
+    const drift::Clip *textClip = &clip;
+    if ((clip.type == drift::ClipType::Text || clip.type == drift::ClipType::Subtitle)
+        && clip.textStyle.isAnimated()) {
+        resolvedText = clip;
+        resolvedText.textStyle = clip.textStyle.resolvedAt(clipTimeUs);
+        textClip = &resolvedText;
+    }
+
     if (clip.type == drift::ClipType::Text) {
-        // The raster carries a bleed margin for the stroke, shadow and box, so its destination rect
-        // is wider than the layout rect. Entrance/exit motion rides on the layer, not the pixels.
-        const TextRasterResult raster =
-            rasterizeText(clip, layoutRect, renderScale, karaokeWordIndex(clip, timelineUs));
-        const TextAnimSample anim = sampleTextAnimation(clip, timelineUs, layoutRect, renderScale);
-
-        layer.source = raster.image;
+        // The painter's image carries a bleed margin for the strokes, shadows, box and the
+        // animation envelope, so its destination rect is wider than the layout rect.
+        drift::textanim::BlockProps block;
+        const QRectF rasterRect =
+            fillTextLayer(layer, textClip->textStyle, clip.textContent.isEmpty() ? clip.name : clip.textContent,
+                          layoutRect, renderScale, karaokeWordIndex(clip, timelineUs), clip.timelineStart,
+                          clip.timelineDuration, timelineUs, &block);
         layer.effects = resolvedClipEffects(clip, clipTimeUs);
-
-        destRect = raster.rect.translated(anim.dx, anim.dy);
-        if (!qFuzzyCompare(anim.scale, 1.0)) {
-            const QPointF centre = destRect.center();
-            destRect.setSize(destRect.size() * anim.scale);
-            destRect.moveCenter(centre);
-        }
-        opacity *= anim.opacity;
-
-        if (anim.blurPx > 0.5) {
-            drift::Effect blur;
-            blur.catalogId = QStringLiteral("builtin.effects.gaussian_blur");
-            blur.parameters.insert(QStringLiteral("u_blurRadius"), anim.blurPx);
-            layer.effects.append(blur);
-        }
+        destRect = rasterRect;
+        applyTextBlockMotion(layer, block, &destRect, &opacity, &rotation);
     } else if (clip.type == drift::ClipType::Subtitle) {
         const drift::TimeUs localUs = timelineUs - clip.timelineStart;
         const drift::SubtitleCue *cue = activeSubtitleCueAt(clip.subtitleCues, localUs);
         if (!cue || cue->text.trimmed().isEmpty())
             return layer;
 
-        const TextRasterResult raster =
-            rasterizeText(clip, cue->text, layoutRect, renderScale,
-                          karaokeWordIndex(clip, *cue, localUs));
-        if (raster.image.isNull())
-            return layer;
-
         // Each cue animates in and out on its own window, so cues play one after another.
-        const TextAnimSample anim = sampleSubtitleCueAnimation(clip, *cue, timelineUs, layoutRect,
-                                                               renderScale);
-
-        layer.source = raster.image;
+        drift::textanim::BlockProps block;
+        const QRectF rasterRect =
+            fillTextLayer(layer, textClip->textStyle, cue->text, layoutRect, renderScale,
+                          karaokeWordIndex(clip, *cue, localUs), clip.timelineStart + cue->startUs,
+                          cue->endUs - cue->startUs, timelineUs, &block);
+        if (!layer.hasPixels())
+            return layer;
         layer.effects = resolvedClipEffects(clip, clipTimeUs);
-
-        destRect = raster.rect.translated(anim.dx, anim.dy);
-        if (!qFuzzyCompare(anim.scale, 1.0)) {
-            const QPointF centre = destRect.center();
-            destRect.setSize(destRect.size() * anim.scale);
-            destRect.moveCenter(centre);
-        }
-        opacity *= anim.opacity;
-
-        if (anim.blurPx > 0.5) {
-            drift::Effect blur;
-            blur.catalogId = QStringLiteral("builtin.effects.gaussian_blur");
-            blur.parameters.insert(QStringLiteral("u_blurRadius"), anim.blurPx);
-            layer.effects.append(blur);
-        }
+        destRect = rasterRect;
+        applyTextBlockMotion(layer, block, &destRect, &opacity, &rotation);
     } else if (clip.type == drift::ClipType::Shape) {
-        layer.source = shapeImageForClip(clip, layoutW, layoutH, renderScale);
+#ifdef DRIFT_WITH_SKIA
+        // The painter's image carries a bleed margin for strokes, shadows and glows, so its
+        // destination rect is wider than the layout rect.
+        drift::skia::ShapePaintRequest request;
+        request.style = clip.shapeStyle.isAnimated() ? clip.shapeStyle.resolvedAt(clipTimeUs) : clip.shapeStyle;
+        request.layoutRect = layoutRect;
+        request.renderScale = renderScale;
+        request.timeSec = drift::usToSeconds(qMax<drift::TimeUs>(0, clipTimeUs));
+        const drift::skia::ShapePainterResult painted = drift::skia::makeShapePainter(request);
+        layer.vector = painted.painter;
+        destRect = painted.rect;
+#else
+        static bool warned = false;
+        if (!warned) {
+            warned = true;
+            qWarning("shape clips need DRIFT_WITH_SKIA; nothing drawn");
+        }
+#endif
+        layer.effects = resolvedClipEffects(clip, clipTimeUs);
+    } else if (clip.type == drift::ClipType::Vector) {
+        drift::vec::RenderRequest request;
+        // Keyframed SVG overrides are baked for this instant; the renderer only sees values.
+        request.keyframed = clip.vector.isAnimated();
+        request.source = request.keyframed ? clip.vector.resolvedAt(clipTimeUs) : clip.vector;
+        request.size = QSize(layoutW, layoutH);
+        // Speed, curves and reverse are the ordinary source remap; the renderer adds the
+        // start offset and folds by the loop mode.
+        request.animUs = clip.timelineToSourceUs(timelineUs) - clip.srcIn;
+        layer.vector = drift::vec::makePainter(request);
         layer.effects = resolvedClipEffects(clip, clipTimeUs);
     } else {
         // Bounded by the canvas, not the layout rect — see decodeClipMediaFrame.
@@ -963,102 +957,6 @@ GpuLayer buildGpuLayer(const drift::Clip &clip, drift::TimeUs timelineUs, int pr
     layer.faceSlots = faceSlotsForClip(clip, layer.effects, timelineUs);
     layer.valid = true;
     return layer;
-}
-
-// The reveal granularity in effect for a text clip: the entrance's unit, or the exit's if the
-// entrance is whole-block. TextAnimUnit::Block means the whole-layer path (buildGpuLayer) is used.
-drift::TextAnimUnit activeSpanUnit(const drift::TextStyle &style)
-{
-    if (style.animIn.kind != drift::TextAnimKind::None && style.animIn.unit != drift::TextAnimUnit::Block)
-        return style.animIn.unit;
-    if (style.animOut.kind != drift::TextAnimKind::None && style.animOut.unit != drift::TextAnimUnit::Block)
-        return style.animOut.unit;
-    return drift::TextAnimUnit::Block;
-}
-
-// Build one GpuItem per reveal span (character / word / line) of a text clip, so the entrance/exit
-// staggers across the block. Mirrors the text branch of buildGpuLayer, but each span is its own
-// layer carrying its own sampled transform. Returns empty for whole-block text (use buildGpuLayer).
-QList<GpuItem> buildTextSpanItems(const drift::Clip &clip, drift::TimeUs timelineUs, int projectWidth,
-                                  int projectHeight, double renderScale, drift::TextAnimUnit unit,
-                                  const QList<drift::Effect> &laneEffects = {})
-{
-    QList<GpuItem> items;
-
-    const drift::TimeUs clipTimeUs = timelineUs - clip.timelineStart;
-
-    double x = 0.0, y = 0.0, w = 0.0, h = 0.0, rotation = 0.0;
-    layoutRectForClip(clip, timelineUs, projectWidth, projectHeight, renderScale, 1.0, &x, &y, &w, &h,
-                      &rotation);
-    if (w <= 0.5 || h <= 0.5)
-        return items;
-    const QRectF layoutRect(x, y, w, h);
-
-    const QString text = clip.textContent.isEmpty() ? clip.name : clip.textContent;
-    const QList<TextSpanRaster> spans = rasterizeTextSpans(clip, text, layoutRect, renderScale, unit,
-                                                           karaokeWordIndex(clip, timelineUs));
-    if (spans.isEmpty())
-        return items;
-
-    const double clipOpacity = opacityForClip(clip, timelineUs);
-    const QList<drift::Effect> baseEffects = resolvedClipEffects(clip, clipTimeUs);
-    int spanCount = 0;
-    for (const TextSpanRaster &s : spans)
-        spanCount = qMax(spanCount, s.count);
-
-    for (const TextSpanRaster &span : spans) {
-        if (span.image.isNull())
-            continue;
-
-        GpuItem item;
-        item.blend = clip.blendMode;
-        GpuLayer &layer = item.layer;
-        layer.source = span.image;
-        layer.effects = baseEffects;
-
-        QRectF destRect = span.rect;
-        double opacity = clipOpacity;
-
-        // index == -1 is the static box background: no per-span motion, always visible behind glyphs.
-        if (span.index >= 0) {
-            const TextAnimSample anim =
-                sampleTextSpanAnimation(clip, timelineUs, span.index, spanCount, layoutRect, renderScale);
-            destRect.translate(anim.dx, anim.dy);
-            if (!qFuzzyCompare(anim.scale, 1.0)) {
-                const QPointF centre = destRect.center();
-                destRect.setSize(destRect.size() * anim.scale);
-                destRect.moveCenter(centre);
-            }
-            opacity *= anim.opacity;
-            if (anim.blurPx > 0.5) {
-                drift::Effect blur;
-                blur.catalogId = QStringLiteral("builtin.effects.gaussian_blur");
-                blur.parameters.insert(QStringLiteral("u_blurRadius"), anim.blurPx);
-                layer.effects.append(blur);
-            }
-            if (opacity <= 0.001)
-                continue; // a span that has not entered (or has fully exited) draws nothing
-        }
-
-        double spanRotation = rotation;
-        applyClipBodyAnimation(clip, timelineUs, w, h, &destRect, &opacity, &spanRotation);
-        if (opacity <= 0.001)
-            continue;
-
-        // Clip masks are layer-relative, so applying one here would stamp the whole shape onto every
-        // span. Kinetic text + mask is rare; spans are left unmasked rather than mask each glyph.
-        layer.rect = destRect;
-        layer.rotation = spanRotation;
-        layer.flipH = clip.flipH;
-        layer.flipV = clip.flipV;
-        layer.opacity = opacity;
-        layer.clipTimeUs = clipTimeUs;
-        layer.effects.append(laneEffects);
-        layer.faceSlots = faceSlotsForClip(clip, layer.effects, timelineUs);
-        layer.valid = true;
-        items.append(item);
-    }
-    return items;
 }
 
 GpuScene buildGpuScene(const drift::Project &project, drift::TimeUs timelineUs, int width, int height,
@@ -1140,17 +1038,6 @@ GpuScene buildGpuScene(const drift::Project &project, drift::TimeUs timelineUs, 
             // QML inline editor shows in its stead (true WYSIWYG, single path).
             if (!options.skipClipId.isEmpty() && clip.id == options.skipClipId)
                 continue;
-
-            // Text with a per-span reveal expands into one layer per character/word/line so the
-            // entrance/exit can stagger across the block; everything else is a single layer.
-            if (clip.type == drift::ClipType::Text) {
-                const drift::TextAnimUnit unit = activeSpanUnit(clip.textStyle);
-                if (unit != drift::TextAnimUnit::Block) {
-                    scene.items.append(buildTextSpanItems(clip, timelineUs, projectWidth, projectHeight,
-                                                          renderScale, unit, laneEffects));
-                    continue;
-                }
-            }
 
             if (clip.type == drift::ClipType::Adjustment) {
                 // An audio adjustment shares the timeline with the visual ones but belongs to the

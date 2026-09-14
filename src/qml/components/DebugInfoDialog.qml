@@ -646,7 +646,7 @@ ThemedDialog {
                                 }
                                 BenchRow {
                                     label: qsTr("Decode")
-                                    value: root.ms(benchSection.b.decodeMedianMs)
+                                    value: root.ms(benchSection.b.decodePerFrameMs)
                                 }
                                 BenchRow {
                                     label: qsTr("Readback to CPU costs")
@@ -658,7 +658,7 @@ ThemedDialog {
                                 }
                                 BenchRow {
                                     label: qsTr("Total per frame")
-                                    value: root.ms(benchSection.b.compositeMedianMs)
+                                    value: root.ms(benchSection.b.compositePerFrameMs)
                                     emphasis: true
                                 }
                                 BenchRow {

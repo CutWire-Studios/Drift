@@ -32,6 +32,8 @@ QString mediaKindToString(MediaKind kind)
         return QStringLiteral("audio");
     case MediaKind::Image:
         return QStringLiteral("image");
+    case MediaKind::Vector:
+        return QStringLiteral("vector");
     case MediaKind::Other:
         break;
     }
@@ -46,6 +48,8 @@ MediaKind mediaKindFromString(const QString &kind)
         return MediaKind::Audio;
     if (kind == QStringLiteral("image"))
         return MediaKind::Image;
+    if (kind == QStringLiteral("vector"))
+        return MediaKind::Vector;
     return MediaKind::Other;
 }
 

@@ -16,7 +16,7 @@ namespace drift {
 namespace {
 
 const QString kIdPrefix = QStringLiteral("user:");
-constexpr int kFormatVersion = 1;
+constexpr int kFormatVersion = 2;
 
 QJsonObject presetToJson(const TextPreset &preset)
 {
@@ -41,6 +41,7 @@ TextPreset presetFromJson(const QJsonObject &o, bool keepId)
     // A saved pack is the style itself; a stale packId pointing at whatever clip it came from
     // would make the picker claim the wrong parent pack.
     preset.style.packId.clear();
+    preset.style.keyframes.clear();
     return preset;
 }
 
@@ -152,6 +153,8 @@ QString TextPresetStore::add(const QString &label, const TextStyle &style,
     preset.label = trimmed;
     preset.style = style;
     preset.style.packId.clear();
+    // A pack is a look, not a motion: keys belong to the clip they were authored on.
+    preset.style.keyframes.clear();
     preset.sampleText = sampleText.trimmed().isEmpty() ? trimmed : sampleText.trimmed();
 
     m_presets.prepend(preset);

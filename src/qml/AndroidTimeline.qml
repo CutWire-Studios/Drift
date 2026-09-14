@@ -487,7 +487,8 @@ Item {
             return 5.0
         if (asset.kind === "image" || !(asset.durationSeconds > 0))
             return 5.0
-        return asset.durationSeconds
+        // A bin-preview trim shortens what actually lands, so the landing preview matches it.
+        return asset.placedDurationSeconds
     }
 
     function timelineHasClips() {

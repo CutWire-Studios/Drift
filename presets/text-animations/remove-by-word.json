@@ -1,0 +1,56 @@
+{
+  "format": 1,
+  "id": "remove-by-word",
+  "label": "Remove by word",
+  "category": "word",
+  "sampleText": "titles, ads, social",
+  "slots": [
+    "out"
+  ],
+  "order": 320,
+  "defaults": {
+    "unit": "word",
+    "stagger": 0.1,
+    "duration": 0.4,
+    "ease": "easeIn",
+    "order": "backward"
+  },
+  "params": [
+    {
+      "id": "drop",
+      "type": "scalar",
+      "label": "Drop",
+      "unit": "em",
+      "min": -3,
+      "max": 3,
+      "step": 0.05,
+      "default": 0.4
+    },
+    {
+      "id": "blur",
+      "type": "scalar",
+      "label": "Blur",
+      "unit": "px",
+      "min": 0,
+      "max": 48,
+      "step": 1,
+      "default": 6
+    }
+  ],
+  "animators": [
+    {
+      "selectors": [
+        "stagger"
+      ],
+      "props": {
+        "position": {
+          "x": 0,
+          "y": "{drop}",
+          "unit": "em"
+        },
+        "opacity": 0,
+        "blur": "{blur}"
+      }
+    }
+  ]
+}

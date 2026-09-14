@@ -41,8 +41,6 @@ Item {
     function refreshFields() {
         if (!root.hasSelection)
             return
-        if (nameField && !nameField.activeFocus)
-            nameField.text = root.clipData.name || ""
         if (startField && !startField.activeFocus)
             startField.value = root.clipData.start
         if (durationField && !durationField.activeFocus)
@@ -67,20 +65,38 @@ Item {
         width: root.width
         spacing: Theme.spacingXl
 
-        ThemedTextField {
-            id: nameField
-            width: parent.width
-            font.family: Theme.fontFamily
-            font.pixelSize: Theme.fontSizeBase
-            font.weight: Font.Medium
-            placeholderText: qsTr("Untitled clip")
-            onEditingFinished: {
-                const label = text.trim()
-                if (label.length === 0 || !root.hasSelection)
-                    return
-                if (label === (root.clipData.name || ""))
-                    return
-                EditorState.setClipName(EditorState.selectedTrack, EditorState.selectedClip, label)
+        // Read-only name plus a rename dialog: an editable field at the top of the panel kept
+        // being mistaken for the text clip's content box.
+        Column {
+            width: root.width
+            spacing: 4
+            Text {
+                text: qsTr("Clip name")
+                color: Theme.mutedForeground
+                font.family: Theme.fontFamily
+                font.pixelSize: Theme.fontSizeXs
+            }
+            Row {
+                width: parent.width
+                spacing: Theme.spacingSm
+                Text {
+                    width: parent.width - renameButton.width - parent.spacing
+                    anchors.verticalCenter: parent.verticalCenter
+                    text: (root.hasSelection && root.clipData.name) || qsTr("Untitled clip")
+                    color: root.hasSelection && root.clipData.name ? Theme.panelForeground : Theme.mutedForeground
+                    font.family: Theme.fontFamily
+                    font.pixelSize: Theme.fontSizeBase
+                    font.weight: Font.Medium
+                    elide: Text.ElideRight
+                }
+                IconButton {
+                    id: renameButton
+                    glyph: Theme.icons.pencil
+                    variant: "ghost"
+                    buttonSize: Theme.controlHeightSm
+                    tooltip: qsTr("Rename clip")
+                    onClicked: renameDialog.openWith(qsTr("Rename clip"), root.clipData.name || "")
+                }
             }
         }
 
@@ -253,5 +269,12 @@ Item {
                 }
             }
         }
+    }
+
+    NameDialog {
+        id: renameDialog
+        acceptText: qsTr("Rename")
+        placeholder: qsTr("Clip name")
+        onSubmitted: name => EditorState.setClipName(EditorState.selectedTrack, EditorState.selectedClip, name)
     }
 }

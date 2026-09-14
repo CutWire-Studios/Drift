@@ -1,5 +1,6 @@
 #pragma once
 
+#include "BlendMode.h"
 #include "ClipAnimation.h"
 #include "Effect.h"
 #include "FadeShape.h"
@@ -11,13 +12,16 @@
 #include "SubtitleCue.h"
 #include "TextStyle.h"
 #include "Time.h"
+#include "VectorSource.h"
 
 #include <QList>
 #include <QString>
 
 namespace drift {
 
-enum class ClipType { Video, Audio, Image, Text, Subtitle, Shape, Adjustment };
+// Vector is a Lottie animation or SVG document; like Image and Shape it has no media file behind
+// its source range, so it is synthetic and unbounded.
+enum class ClipType { Video, Audio, Image, Text, Subtitle, Shape, Adjustment, Vector };
 
 QString clipTypeToString(ClipType type);
 ClipType clipTypeFromString(const QString &type);
@@ -29,11 +33,6 @@ enum class AdjustmentKind { VideoEffects, AudioEffects, Mask };
 
 QString adjustmentKindToString(AdjustmentKind kind);
 AdjustmentKind adjustmentKindFromString(const QString &kind);
-
-enum class BlendMode { Normal, Multiply, Screen, Overlay, Add, Darken, Lighten };
-
-QString blendModeToString(BlendMode mode);
-BlendMode blendModeFromString(const QString &mode);
 
 enum class StabilizeMode { Bake, Keyframes };
 
@@ -75,6 +74,7 @@ struct Clip
     TextStyle textStyle; // meaningful when type == Text or Subtitle
     QList<SubtitleCue> subtitleCues; // only meaningful when type == Subtitle
     ShapeStyle shapeStyle; // only meaningful when type == Shape
+    VectorSource vector;   // only meaningful when type == Vector
 
     QString path;
     QString thumbnailPath;
@@ -145,6 +145,13 @@ struct Clip
     KeyframeTrack<double> transformW;
     KeyframeTrack<double> transformH;
     KeyframeTrack<double> rotation;
+    // Discrete pixel-orientation correction (0/90/180/270), applied losslessly at decode time —
+    // distinct from `rotation` above, which is a free decorative spin effect. Relative, not
+    // absolute: added on top of whatever display-matrix rotation the file actually being decoded
+    // carries. That is what lets one value stay right across every file a clip can read from —
+    // the original, a reverse proxy (tag preserved) or a vidstab bake (ffmpeg autorotated the
+    // pixels and dropped the tag). 0 = show the file as its own tag says.
+    int rotationCorrection = 0;
     KeyframeTrack<double> volume;
     QList<Effect> effects;
     QList<Effect> audioEffects; // libavfilter chains applied to this clip's audio in the mixer

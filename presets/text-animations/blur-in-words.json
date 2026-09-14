@@ -1,0 +1,41 @@
+{
+  "format": 1,
+  "id": "blur-in-words",
+  "label": "Blur by word",
+  "category": "word",
+  "sampleText": "Blur in",
+  "slots": [
+    "in",
+    "out"
+  ],
+  "order": 230,
+  "defaults": {
+    "unit": "word",
+    "stagger": 0.08,
+    "duration": 0.5,
+    "ease": "easeOut"
+  },
+  "params": [
+    {
+      "id": "blur",
+      "type": "scalar",
+      "label": "Blur",
+      "unit": "px",
+      "min": 0,
+      "max": 48,
+      "step": 1,
+      "default": 20
+    }
+  ],
+  "animators": [
+    {
+      "selectors": [
+        "stagger"
+      ],
+      "props": {
+        "blur": "{blur}",
+        "opacity": 0
+      }
+    }
+  ]
+}

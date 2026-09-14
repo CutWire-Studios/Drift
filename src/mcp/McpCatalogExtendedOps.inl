@@ -42,12 +42,12 @@
           objectSchema({}), false, true },
         { "package_project", "project", "Save bundled copy",
           "Write a copy of the project with all media embedded. Async: returns {started:true, path} "
-          "immediately — poll inspect({detail:true}).package.{active,progress} until active is false.",
+          "immediately — poll inspect({detail:true}).jobs.package.{active,progress} until active is false.",
           objectSchema({{QStringLiteral("path"), stringProp(QStringLiteral("Absolute output .drift path"))}},
                        {QStringLiteral("path")}) },
         { "cancel_package", "project", "Abort a running package_project",
           "Cancel an in-flight package job. Returns ok even when nothing was running; confirm with "
-          "inspect({detail:true}).package.active.",
+          "inspect({detail:true}).jobs.package.active.",
           objectSchema({}) },
         { "cancel_export", "project", "Abort a running export_video",
           "Cancel an in-flight export. Returns ok even when nothing was running; confirm with "
@@ -218,14 +218,14 @@
                        {QStringLiteral("speed")}) },
         { "set_clip_reverse", "canvas", "Play a clip backwards",
           "Play the clip backwards. For video this kicks off an async proxy render — poll "
-          "inspect({detail:true}).reverseRender.{active,progress,status} until active is false before "
+          "inspect({detail:true}).jobs.reverseRender.{active,progress,status} until active is false before "
           "exporting, and cancel it with cancel_reverse_render.",
           objectSchema(mergeProps({{QStringLiteral("reverse"), boolProp(QStringLiteral("Reversed"))}},
                                   clipRefProps()),
                        {QStringLiteral("reverse")}) },
         { "cancel_reverse_render", "canvas", "Stop reverse proxy",
           "Cancel the in-flight reverse proxy render. Returns ok even when nothing was running; "
-          "confirm with inspect({detail:true}).reverseRender.active.",
+          "confirm with inspect({detail:true}).jobs.reverseRender.active.",
           objectSchema({}) },
         { "set_animation", "canvas", "Slide/zoom/pop a clip on entrance or exit",
           "Set the clip's entrance (animIn) or exit (animOut) animation. Only the supplied fields "
@@ -252,16 +252,21 @@
                                               QStringLiteral("equalPower"), QStringLiteral("custom")})}},
                                   clipRefProps()),
                        {QStringLiteral("which")}) },
-        { "set_shape_style", "canvas", "Recolour or restyle a shape clip's fill, stroke, geometry",
-          "Patch the fill, stroke, and geometry of a shape clip. Only supplied keys change. Applies to "
-          "shape clips only — silently does nothing on any other clip type. Numeric fields are validated "
-          "against the ranges in the schema, and each geometry knob is read by a subset of shape kinds only.",
+        { "set_shape_style", "canvas", "Restyle a shape clip's shading layers or geometry",
+          "Patch a shape clip. A shape's look is a shading stack like a caption's (fill / stroke / "
+          "shadow / glow / extrude layers, each solid, gradient, texture or effect painted): replace it "
+          "with `layers`, patch one with `layer`, or use the legacy flat fill/stroke keys, which land on "
+          "the \"fill\" and \"stroke\" layers. Only supplied keys change. Applies to shape clips only — "
+          "silently does nothing on any other clip type. Numeric fields are validated against the ranges "
+          "in the schema, and each geometry knob is read by a subset of shape kinds only. Every layer "
+          "field and geometry knob is keyframable as shape.<key> (see set_keyframe).",
           objectSchema(mergeProps({{QStringLiteral("style"), shapeStyleSchema()}},
                                   clipRefProps()),
                        {QStringLiteral("style")}) },
 
         { "list_shapes", "shapes", "Find a shape id before add_shape",
-          "Returns {shapes:[{id, label, cat}], n}. Use id with add_shape or as shape_style.kind.",
+          "Returns {shapes:[{id, label, cat, kind, aspect}], n} — cat is basic|arrows|bubbles|fun, "
+          "aspect the default box width/height. Use id with add_shape or as set_shape_style style.kind.",
           objectSchema({{QStringLiteral("q"), stringProp(QStringLiteral("Case-insensitive substring over id/label/cat"))}}),
           true, false, true },
         { "list_stickers", "shapes", "Find a sticker id before add_sticker",
@@ -276,20 +281,24 @@
                         {QStringLiteral("group"), stringProp(QStringLiteral("Exact group name from the groups list"))},
                         {QStringLiteral("limit"), propWithDefault(integerProp(QStringLiteral("Max rows"), 1, 2000), 50)}}),
           true, false, true },
-        { "list_text_presets", "shapes", "Text style packs",
-          "Returns {presets:[{id, label}], n}. Use id as the preset argument to add_text or "
-          "apply_text_preset.",
+        { "list_text_presets", "text", "Text style packs",
+          "Returns {presets:[{id, label, sampleText, font, accent?, anim:{in?, out?, loop?}}], n} "
+          "— accent is the word-accent rule of caption packs, anim the pack's animation preset ids. "
+          "Use id as the preset argument to add_text or apply_text_preset. q also matches font and "
+          "accent.",
           objectSchema({{QStringLiteral("q"), stringProp(QStringLiteral("Case-insensitive substring over id/label"))}}),
           true, false, true },
-        { "list_fonts", "shapes", "Find a font family for set_text style.fontFamily",
+        { "list_fonts", "text", "Find a font family for set_text style.fontFamily",
           "Returns {fonts:[{id, label, cat}], n} for fonts available on this machine. label is the "
           "family name — use it as style.fontFamily in set_text.",
           objectSchema({{QStringLiteral("q"), stringProp(QStringLiteral("Case-insensitive substring over id/label/cat"))},
                         {QStringLiteral("limit"), propWithDefault(integerProp(QStringLiteral("Max rows"), 1, 2000), 100)}}),
           true, false, true },
         { "add_shape", "shapes", "Place a shape",
-          "Add a builtin shape clip, creating a shape track when needed. Returns {id, track, index}. "
-          "Style it afterwards with set_shape_style.",
+          "Add a builtin shape clip (5 s, centred), creating a shape track when needed. Returns "
+          "{id, track, index}; an unknown id fails not_found. Style it afterwards with "
+          "set_shape_style (layers fill + stroke, geometry knobs) and animate with set_keyframe "
+          "shape.<key>.",
           objectSchema({{QStringLiteral("shape"), stringProp(QStringLiteral("Shape id from list_shapes"))},
                         {QStringLiteral("at"), numberProp(QStringLiteral("Start seconds (default: playhead)"))},
                         {QStringLiteral("track"), integerProp(QStringLiteral("Optional destination track; omitted picks or creates one"))}},
@@ -306,6 +315,240 @@
                         {QStringLiteral("name"), stringProp(QStringLiteral("Optional display name for the clip"))},
                         {QStringLiteral("at"), numberProp(QStringLiteral("Start seconds (default: playhead)"))}},
                        {QStringLiteral("emoji")}) },
+
+        { "add_text_layer", "text", "Add a fill / stroke / shadow / glow / extrude layer to a caption",
+          "Append a shading layer to the clip's text look, at its natural place in the stack "
+          "(shadows behind, strokes under the fills, fills on top) unless `at` is given. Returns "
+          "{layerId}. Adjust it with set_text_layer; inspect the stack via clip.textStyle.layers. Also "
+          "accepts a shape clip (its stack is clip.shapeStyle.layers); add_shape_layer is the same tool.",
+          objectSchema(mergeProps({{QStringLiteral("kind"), enumProp(QStringLiteral("Layer kind"),
+                                                                      {QStringLiteral("fill"), QStringLiteral("stroke"), QStringLiteral("shadow"), QStringLiteral("glow"), QStringLiteral("extrude")})},
+                                   {QStringLiteral("at"), integerProp(QStringLiteral("Insert index (0 = back-most); omitted = natural position"))}},
+                                  clipRefProps()),
+                       {QStringLiteral("kind")}) },
+        { "set_text_layer", "text", "Change one shading layer of a caption or shape",
+          "Partial patch of one layer by id (or index). Nested objects (paint, paint.gradient, "
+          "paint.effect) merge key by key. Paint kinds: solid, gradient (multi-stop, animatable "
+          "offset, offsetSpeed for a moving gradient, space block|line|word|glyph|accentRun), "
+          "texture (image path), effect (shine, shimmer, neon-pulse, glitch, chrome, dissolve). "
+          "Strokes take strokeAlign center|outside|inside, a dash pattern with dashOffset, trimStart/"
+          "trimEnd for a write-on, and sketchLength/sketchDeviation for a hand-drawn wobble. "
+          "set_shape_layer is the same tool.",
+          objectSchema(mergeProps({{QStringLiteral("id"), stringProp(QStringLiteral("Layer id"))},
+                                   {QStringLiteral("index"), integerProp(QStringLiteral("Layer index, when no id"))},
+                                   {QStringLiteral("layer"), textLayerSchema(QStringLiteral("Fields to change"))}},
+                                  clipRefProps()),
+                       {QStringLiteral("layer")}) },
+        { "remove_text_layer", "text", "Delete a shading layer",
+          "Remove the layer and any keyframes on it. Works on text and shape clips.",
+          objectSchema(mergeProps({{QStringLiteral("id"), stringProp(QStringLiteral("Layer id"))}}, clipRefProps()),
+                       {QStringLiteral("id")}) },
+        { "move_text_layer", "text", "Reorder shading layers",
+          "Move the layer to index `to` (0 = back-most, drawn first). Works on text and shape clips.",
+          objectSchema(mergeProps({{QStringLiteral("id"), stringProp(QStringLiteral("Layer id"))},
+                                   {QStringLiteral("to"), integerProp(QStringLiteral("Destination index"))}},
+                                  clipRefProps()),
+                       {QStringLiteral("id"), QStringLiteral("to")}) },
+        { "add_shape_layer", "canvas", "Add a fill / stroke / shadow / glow / extrude layer to a shape",
+          "Same as add_text_layer, on a shape clip: returns {layerId}; a fresh shape already has layers "
+          "\"fill\" and \"stroke\". Inspect the stack via clip.shapeStyle.layers.",
+          objectSchema(mergeProps({{QStringLiteral("kind"), enumProp(QStringLiteral("Layer kind"),
+                                                                      {QStringLiteral("fill"), QStringLiteral("stroke"), QStringLiteral("shadow"), QStringLiteral("glow"), QStringLiteral("extrude")})},
+                                   {QStringLiteral("at"), integerProp(QStringLiteral("Insert index (0 = back-most); omitted = natural position"))}},
+                                  clipRefProps()),
+                       {QStringLiteral("kind")}) },
+        { "set_shape_layer", "canvas", "Change one shading layer of a shape",
+          "Same as set_text_layer, on a shape clip: partial patch of one layer by id (or index).",
+          objectSchema(mergeProps({{QStringLiteral("id"), stringProp(QStringLiteral("Layer id"))},
+                                   {QStringLiteral("index"), integerProp(QStringLiteral("Layer index, when no id"))},
+                                   {QStringLiteral("layer"), textLayerSchema(QStringLiteral("Fields to change"))}},
+                                  clipRefProps()),
+                       {QStringLiteral("layer")}) },
+        { "remove_shape_layer", "canvas", "Delete a shape's shading layer",
+          "Remove the layer and any keyframes on it.",
+          objectSchema(mergeProps({{QStringLiteral("id"), stringProp(QStringLiteral("Layer id"))}}, clipRefProps()),
+                       {QStringLiteral("id")}) },
+        { "move_shape_layer", "canvas", "Reorder a shape's shading layers",
+          "Move the layer to index `to` (0 = back-most, drawn first).",
+          objectSchema(mergeProps({{QStringLiteral("id"), stringProp(QStringLiteral("Layer id"))},
+                                   {QStringLiteral("to"), integerProp(QStringLiteral("Destination index"))}},
+                                  clipRefProps()),
+                       {QStringLiteral("id"), QStringLiteral("to")}) },
+        { "list_text_looks", "text", "One-click text looks",
+          "Returns {looks:[{id, label, params:[{id,type,label,default,min,max}]}]}: Plain, Shadow, "
+          "Lift, Hollow, Splice, Outline, Echo, Glitch, Neon, Background, Curve, Gradient, Shine, "
+          "Chrome, Holographic. apply_text_look rewrites the layer stack from one.",
+          objectSchema({}), true, false, true },
+        { "apply_text_look", "text", "Give a caption a look (Neon, Shadow, Gradient…)",
+          "Rewrite the clip's shading stack from the look's recipe and its params. The style keeps "
+          "the look id: re-applying the SAME look with params adjusts just those params (the rest "
+          "stay as they are), a different look starts from its defaults. Editing a layer by hand "
+          "detaches the look. Clears packId. Fails type_mismatch on a non-text clip.",
+          objectSchema(mergeProps({{QStringLiteral("look"), stringProp(QStringLiteral("Look id from list_text_looks"))},
+                                   {QStringLiteral("params"), QJsonObject{{QStringLiteral("type"), QStringLiteral("object")},
+                                                                          {QStringLiteral("description"), QStringLiteral("Param overrides {id: value}")}}}},
+                                  clipRefProps()),
+                       {QStringLiteral("look")}) },
+        { "list_text_animations", "text", "In / Out / Loop text animation presets",
+          "Returns {presets:[{id, label, category, slots:[in|out|loop], sampleText, params:[…], "
+          "flags:{unitLocked, orderLocked, easeLocked, durationLocked, mirrorForOut, mode}, builtIn, "
+          "order}]}. `which` filters to one slot. Every In/Out preset takes duration, stagger, unit "
+          "(block|character|word|line), order and ease plus its own params, except the controls its "
+          "flags lock; Loop presets take period and amount. Categories: basic, character, word, "
+          "kinetic, light, colour, hold, imported (user: ids from import_text_animation).",
+          objectSchema({{QStringLiteral("which"), enumProp(QStringLiteral("Slot to list for (default all)"),
+                                                            {QStringLiteral("in"), QStringLiteral("out"), QStringLiteral("loop")})},
+                        {QStringLiteral("q"), stringProp(QStringLiteral("Filter by id/label substring"))}}),
+          true, false, true },
+        { "set_text_animation", "text", "Animate a caption in, out, or while on screen",
+          "Set one of the three animation slots. `preset` picks a preset (a different id resets the "
+          "params to its defaults unless keepControls is true; \"none\" clears). `duration`, "
+          "`stagger`, `unit`, `order`, `ease` and `params` then fine-tune it — check the preset's "
+          "flags from list_text_animations first: unitLocked/orderLocked/easeLocked/durationLocked "
+          "mean that control is ignored. `animators` installs an inline AE-style animator tree "
+          "instead of a preset (expert). Loop slots take `period` (0 = one pass over the whole clip: "
+          "hold motion like tracking-drift) and `amount`. Fails type_mismatch on a non-text clip.",
+          objectSchema(mergeProps({{QStringLiteral("which"), enumProp(QStringLiteral("Slot"),
+                                                                       {QStringLiteral("in"), QStringLiteral("out"), QStringLiteral("loop")})},
+                                   {QStringLiteral("preset"), stringProp(QStringLiteral("Preset id, or none"))},
+                                   {QStringLiteral("params"), QJsonObject{{QStringLiteral("type"), QStringLiteral("object")},
+                                                                          {QStringLiteral("description"), QStringLiteral("Preset params {id: value}")}}},
+                                   {QStringLiteral("duration"), numberProp(QStringLiteral("Seconds per unit"), 0.0, 10.0)},
+                                   {QStringLiteral("stagger"), numberProp(QStringLiteral("Seconds between units"), 0.0, 2.0)},
+                                   {QStringLiteral("unit"), enumProp(QStringLiteral("Unit"),
+                                                                     {QStringLiteral("block"), QStringLiteral("character"), QStringLiteral("word"), QStringLiteral("line")})},
+                                   {QStringLiteral("order"), enumProp(QStringLiteral("Order"),
+                                                                      {QStringLiteral("forward"), QStringLiteral("backward"), QStringLiteral("centerOut"), QStringLiteral("random")})},
+                                   {QStringLiteral("ease"), enumProp(QStringLiteral("Ease"),
+                                                                     {QStringLiteral("linear"), QStringLiteral("easeIn"), QStringLiteral("easeOut"), QStringLiteral("easeInOut"), QStringLiteral("back"), QStringLiteral("bounce"), QStringLiteral("smooth")})},
+                                   {QStringLiteral("period"), numberProp(QStringLiteral("Loop period seconds"), 0.0, 60.0)},
+                                   {QStringLiteral("amount"), numberProp(QStringLiteral("Loop strength shortcut, for presets with an amount param"))},
+                                   {QStringLiteral("delay"), numberProp(QStringLiteral("Seconds"), 0.0, 10.0)},
+                                   {QStringLiteral("durationOverride"), numberProp(QStringLiteral("Seconds: total motion length overriding the preset's timing; 0 = preset default"), 0.0, 60.0)},
+                                   {QStringLiteral("keepControls"), boolProp(QStringLiteral("When switching preset, keep duration/stagger/unit/order/ease/period/amount"))},
+                                   {QStringLiteral("enabled"), boolProp(QStringLiteral("On/off"))},
+                                   {QStringLiteral("animators"), QJsonObject{{QStringLiteral("type"), QStringLiteral("array")},
+                                                                             {QStringLiteral("description"), QStringLiteral("Inline animator tree (expert)")}}}},
+                                  clipRefProps()),
+                       {QStringLiteral("which")}) },
+        { "clear_text_animation", "text", "Remove a caption's in/out/loop animation",
+          "Empties the slot.",
+          objectSchema(mergeProps({{QStringLiteral("which"), enumProp(QStringLiteral("Slot"),
+                                                                       {QStringLiteral("in"), QStringLiteral("out"), QStringLiteral("loop")})}},
+                                  clipRefProps()),
+                       {QStringLiteral("which")}) },
+        { "import_text_animation", "text", "Import an After Effects / Lottie text animation as a preset",
+          "Reads a Lottie JSON (or .lottie) whose text layer carries animators, or a Drift preset "
+          "file, and saves it as a user preset in the given slot's Imported category. Returns {id, "
+          "unsupported:[…]} — the list says what the importer had to drop (expressions, 3D rotation…).",
+          objectSchema({{QStringLiteral("path"), stringProp(QStringLiteral("Absolute path to a .json / .lottie / .drifttextanim file"))},
+                        {QStringLiteral("which"), enumProp(QStringLiteral("Slot to file it under (default: guessed from the motion)"),
+                                                            {QStringLiteral("in"), QStringLiteral("out"), QStringLiteral("loop")})}},
+                       {QStringLiteral("path")}) },
+        { "apply_text_style_to_all", "text", "Copy a caption's style to every other subtitle clip",
+          "Copies this clip's style (layers, look, animation; not its keyframes) to every other "
+          "SUBTITLE clip on its track, or in the project with scope project — title (text) clips "
+          "are left alone. Returns {changed}.",
+          objectSchema(mergeProps({{QStringLiteral("scope"), enumProp(QStringLiteral("track (default) or project"),
+                                                                       {QStringLiteral("track"), QStringLiteral("project")})}},
+                                  clipRefProps())) },
+
+        { "add_lottie", "motion", "Place a Lottie animation",
+          "Add a Lottie (Bodymovin JSON) clip on a graphic track, creating one when needed. The "
+          "document is the JSON text itself (inline, up to 8 MB) or an absolute .json path. Plays "
+          "once at its own length unless duration is given; loop decides what happens past the "
+          "end. Returns {id, track, index} plus the inspect summary: durationSec, width, height, "
+          "fps, slots:[{id,type}], namedProperties, expressions, unsupported, hints. Read "
+          "unsupported and expressions — Skottie evaluates no expressions, so an animation that "
+          "relies on them renders static. A slot override that fails is reported in slotErrors "
+          "and does not fail the add.",
+          objectSchema({{QStringLiteral("json"), stringProp(QStringLiteral("Lottie JSON text, or an absolute path to a .json file"))},
+                        {QStringLiteral("at"), numberProp(QStringLiteral("Start seconds (default: playhead)"))},
+                        {QStringLiteral("track"), integerProp(QStringLiteral("Optional destination graphic track; omitted picks or creates one"))},
+                        {QStringLiteral("duration"), numberProp(QStringLiteral("Clip length in seconds (default: the animation's own length)"))},
+                        {QStringLiteral("fit"), enumProp(QStringLiteral("How the animation fills the clip box (default contain)"),
+                                                          {QStringLiteral("contain"), QStringLiteral("cover"), QStringLiteral("stretch")})},
+                        {QStringLiteral("loop"), enumProp(QStringLiteral("Past the animation's end: hold the last frame, loop, ping-pong, or hide (default hold)"),
+                                                           {QStringLiteral("hold"), QStringLiteral("loop"), QStringLiteral("pingpong"), QStringLiteral("hide")})},
+                        {QStringLiteral("offset"), numberProp(QStringLiteral("Seconds into the animation at the clip's start (default 0)"))},
+                        {QStringLiteral("slots"), QJsonObject{{QStringLiteral("type"), QStringLiteral("object")},
+                                                              {QStringLiteral("description"), QStringLiteral("Slot overrides {id: value}, typed as in set_lottie_slot")}}},
+                        {QStringLiteral("name"), stringProp(QStringLiteral("Clip name (default: the document's title)"))}},
+                       {QStringLiteral("json")}) },
+        { "add_svg", "motion", "Place an SVG as a vector still",
+          "Add an SVG clip on a graphic track, drawn as vectors at any size (unlike an image import, "
+          "which rasterises once). The document is the SVG text itself or an absolute .svg path. "
+          "SMIL animation and scripts are ignored and reported in unsupported. Returns {id, track, "
+          "index, width, height, elements:[{id, tag, classes, inDefs, fill, stroke, strokeWidth, "
+          "opacity}], unsupported, hints}. Restyle it through slots: svg.fill, svg.stroke, "
+          "svg.strokeWidth, svg.opacity for the whole drawing (drawing-wide colours replace paints "
+          "the file already has, so fill=\"none\" outlines stay hollow and no stroke is added), or "
+          "svg.<elementId>.<fill|stroke|strokeWidth|opacity|visible> for one element from "
+          "`elements`. Colour and scalar overrides are keyframable as vector.svg.<…> (colour "
+          "channels .r/.g/.b/.a in 0..1); visible takes 0/1 and is not.",
+          objectSchema({{QStringLiteral("svg"), stringProp(QStringLiteral("SVG text, or an absolute path to a .svg file"))},
+                        {QStringLiteral("at"), numberProp(QStringLiteral("Start seconds (default: playhead)"))},
+                        {QStringLiteral("track"), integerProp(QStringLiteral("Optional destination graphic track"))},
+                        {QStringLiteral("duration"), numberProp(QStringLiteral("Clip length in seconds (default 5)"))},
+                        {QStringLiteral("fit"), enumProp(QStringLiteral("How the drawing fills the clip box (default contain)"),
+                                                          {QStringLiteral("contain"), QStringLiteral("cover"), QStringLiteral("stretch")})},
+                        {QStringLiteral("slots"), QJsonObject{{QStringLiteral("type"), QStringLiteral("object")},
+                                                              {QStringLiteral("description"), QStringLiteral("Overrides {key: value}: svg.fill / svg.stroke (colour), svg.strokeWidth / svg.opacity (number), svg.<id>.<fill|stroke|strokeWidth|opacity|visible>")}}},
+                        {QStringLiteral("name"), stringProp(QStringLiteral("Clip name"))}},
+                       {QStringLiteral("svg")}) },
+        { "inspect_lottie", "motion", "Check a Lottie/SVG before or after placing it",
+          "Parse a document and report what it declares and what this renderer will skip, without "
+          "touching the timeline: version, fps, durationSec, width, height, layers, slots, "
+          "namedProperties, fonts, markers, expressions (property paths that carry an expression — "
+          "these render as their static value), unsupported, hints; for an SVG also elements:[{id, "
+          "tag, classes, inDefs, fill, stroke, strokeWidth, opacity}], the ids set_lottie_slot's "
+          "svg.<id>.* keys address. Give json, svg or path for a document, or clip for one already "
+          "on the timeline.",
+          objectSchema(mergeProps({{QStringLiteral("json"), stringProp(QStringLiteral("Lottie JSON text"))},
+                                   {QStringLiteral("svg"), stringProp(QStringLiteral("SVG text"))},
+                                   {QStringLiteral("path"), stringProp(QStringLiteral("Absolute .json or .svg path"))}},
+                                  clipRefProps())),
+          true, false, true },
+        { "set_lottie_source", "motion", "Swap the document under a vector clip",
+          "Replace the clip's Lottie/SVG document, keeping its position, length, fit and loop. Slot "
+          "overrides survive only for slots the new document declares with the same type. Returns "
+          "the inspect summary of the new document.",
+          objectSchema(mergeProps({{QStringLiteral("json"), stringProp(QStringLiteral("Lottie JSON text"))},
+                                   {QStringLiteral("svg"), stringProp(QStringLiteral("SVG text"))},
+                                   {QStringLiteral("path"), stringProp(QStringLiteral("Absolute .json or .svg path"))}},
+                                  clipRefProps())) },
+        { "set_lottie_options", "motion", "Fit, loop, offset or name of a vector clip",
+          "Change how a vector clip plays; only supplied keys change.",
+          objectSchema(mergeProps({{QStringLiteral("fit"), enumProp(QStringLiteral("contain | cover | stretch"),
+                                                                     {QStringLiteral("contain"), QStringLiteral("cover"), QStringLiteral("stretch")})},
+                                   {QStringLiteral("loop"), enumProp(QStringLiteral("hold | loop | pingpong | hide"),
+                                                                      {QStringLiteral("hold"), QStringLiteral("loop"), QStringLiteral("pingpong"), QStringLiteral("hide")})},
+                                   {QStringLiteral("offset"), numberProp(QStringLiteral("Seconds into the animation at the clip's start"))},
+                                   {QStringLiteral("name"), stringProp(QStringLiteral("Clip name"))}},
+                                  clipRefProps())) },
+        { "set_lottie_slot", "motion", "Override a Lottie slot (template input)",
+          "Set one of the animation's declared slots — see list_lottie_slots or the slots array "
+          "add_lottie returned. The value must match the slot's type: color takes \"#rrggbb\", "
+          "\"#aarrggbb\", a colour name or [r,g,b,a] in 0..1; scalar a number; vec2 [x,y]; text a "
+          "string; image an absolute image path. Pass value:null to remove the override (and any "
+          "keyframes on it). Fails bad_args on an undeclared slot or a wrong type. Slots are the way "
+          "to re-theme an animation; documents without slots can only be edited as JSON and re-sent "
+          "with set_lottie_source. An SVG declares no slots and takes the svg.* override keys "
+          "instead (see add_svg): svg.fill, svg.stroke, svg.strokeWidth, svg.opacity, or "
+          "svg.<elementId>.<fill|stroke|strokeWidth|opacity|visible>.",
+          objectSchema(mergeProps({{QStringLiteral("name"), stringProp(QStringLiteral("Slot id"))},
+                                   {QStringLiteral("value"), QJsonObject{{QStringLiteral("description"), QStringLiteral("Typed value, or null to clear")}}}},
+                                  clipRefProps()),
+                       {QStringLiteral("name")}) },
+        { "list_lottie_slots", "motion", "Slots a vector clip's document declares",
+          "Returns {slots:[{id, type, value?}], n}: every declared slot with the clip's current "
+          "override where one is set. For an SVG: the four whole-drawing svg.* keys plus whichever "
+          "element overrides are set.",
+          objectSchema(clipRefProps()), true, false, true },
+        { "get_lottie_source", "motion", "Read a vector clip's document",
+          "Returns {kind, inline, path, hash, source} — the full document text, which can be large. "
+          "Read it to edit a document that has no slots, then send it back with set_lottie_source.",
+          objectSchema(clipRefProps()), true, false, true },
 
         { "add_subtitle_clip", "subtitles", "Empty subtitle lane",
           "Add an empty subtitle clip, creating a subtitle track when needed. Returns {id, track, index}. "
@@ -352,7 +595,7 @@
         { "generate_subtitles", "subtitles", "Auto transcribe, including word-by-word captions",
           "Transcribe a clip's audio with Whisper into a new subtitle clip. Async: returns "
           "{started:true} immediately — poll "
-          "inspect({detail:true}).subtitleGen.{active,progress,status} until active is false. Cancel "
+          "inspect({detail:true}).jobs.subtitleGen.{active,progress,status} until active is false. Cancel "
           "with cancel_subtitle_generation. For word-by-word captions pass max_words_per_cue:1. Run "
           "this AFTER remove_silence — silence removal shifts the timeline and would invalidate cue "
           "times.",
@@ -361,7 +604,7 @@
                                   clipRefProps())) },
         { "cancel_subtitle_generation", "subtitles", "Abort a running generate_subtitles",
           "Cancel in-flight subtitle generation. Returns ok even when nothing was running; confirm "
-          "with inspect({detail:true}).subtitleGen.active.",
+          "with inspect({detail:true}).jobs.subtitleGen.active.",
           objectSchema({}) },
 
         { "set_effect_enabled", "effects", "Bypass a video effect without losing its settings",
@@ -665,7 +908,7 @@
         // --- scene ---
         { "detect_scenes", "scene", "Find the shots in a clip",
           "Scan a video clip for shot boundaries and rank each shot by how much is happening. "
-          "ASYNC: returns {started:true} immediately — poll inspect({detail:true}).sceneDetect "
+          "ASYNC: returns {started:true} immediately — poll inspect({detail:true}).jobs.sceneDetect "
           "{active, progress, status} until active is false, then read the result with "
           "list_scenes or describe_clip. Returns {cached:true} instead when this clip and these "
           "settings were already scanned, in which case the result is ready at once.\n"
@@ -799,7 +1042,10 @@
                                   clipRefProps()),
                        {QStringLiteral("index"), QStringLiteral("key"), QStringLiteral("value")}) },
         { "apply_text_preset", "text", "Restyle an existing title",
-          "Apply a builtin text style pack from list_text_presets to an existing text or subtitle clip.",
+          "Apply a text style pack (builtin from list_text_presets, or a user: id from "
+          "list_user_text_presets) to a text or subtitle clip. Replaces the whole style — font, "
+          "layers AND the in/out/loop animation slots — and records it as packId. Unknown id fails "
+          "not_found; a non-text clip fails type_mismatch.",
           objectSchema(mergeProps({{QStringLiteral("preset"), stringProp(QStringLiteral("Preset id from list_text_presets"))}},
                                   clipRefProps()),
                        {QStringLiteral("preset")}) },
@@ -816,6 +1062,80 @@
           objectSchema(mergeProps({{QStringLiteral("label"), stringProp(QStringLiteral("Preset name"))}},
                                   clipRefProps()),
                        {QStringLiteral("label")}) },
+        { "rename_user_text_preset", "text", "Rename a saved text style",
+          "Rename a user text preset. Not a project edit, so not undoable.",
+          objectSchema({{QStringLiteral("preset"), stringProp(QStringLiteral("user: id from list_user_text_presets"))},
+                        {QStringLiteral("label"), stringProp(QStringLiteral("New name"))}},
+                       {QStringLiteral("preset"), QStringLiteral("label")}) },
+        { "delete_user_text_preset", "text", "Delete a saved text style",
+          "Delete a user text preset from disk. Clips that used it keep their style. Not undoable.",
+          objectSchema({{QStringLiteral("preset"), stringProp(QStringLiteral("user: id from list_user_text_presets"))}},
+                       {QStringLiteral("preset")}),
+          false, true, true },
+        { "export_user_text_preset", "text", "Write a saved text style to a file",
+          "Export a user text preset as a .drifttext JSON file. Returns {path}.",
+          objectSchema({{QStringLiteral("preset"), stringProp(QStringLiteral("user: id from list_user_text_presets"))},
+                        {QStringLiteral("path"), stringProp(QStringLiteral("Absolute destination path"))}},
+                       {QStringLiteral("preset"), QStringLiteral("path")}),
+          false, false, true },
+        { "import_user_text_preset", "text", "Load a text style file as a user preset",
+          "Import a .drifttext file exported by export_user_text_preset. Returns {id, label}. Not undoable.",
+          objectSchema({{QStringLiteral("path"), stringProp(QStringLiteral("Absolute path to the file"))}},
+                       {QStringLiteral("path")}) },
+        { "rename_text_animation_preset", "text", "Rename an imported animation preset",
+          "Rename a user: animation preset from import_text_animation. Not undoable.",
+          objectSchema({{QStringLiteral("preset"), stringProp(QStringLiteral("user: id from list_text_animations"))},
+                        {QStringLiteral("label"), stringProp(QStringLiteral("New name"))}},
+                       {QStringLiteral("preset"), QStringLiteral("label")}) },
+        { "delete_text_animation_preset", "text", "Delete an imported animation preset",
+          "Delete a user: animation preset from disk. Slots that use it fall back to no motion. Not undoable.",
+          objectSchema({{QStringLiteral("preset"), stringProp(QStringLiteral("user: id from list_text_animations"))}},
+                       {QStringLiteral("preset")}),
+          false, true, true },
+        { "export_text_animation_preset", "text", "Write an imported animation preset to a file",
+          "Export a user: animation preset as a .drifttextanim JSON file. Returns {path}.",
+          objectSchema({{QStringLiteral("preset"), stringProp(QStringLiteral("user: id from list_text_animations"))},
+                        {QStringLiteral("path"), stringProp(QStringLiteral("Absolute destination path"))}},
+                       {QStringLiteral("preset"), QStringLiteral("path")}),
+          false, false, true },
+        { "list_gradient_presets", "text", "Ready-made gradient stop sets",
+          "Returns {presets:[{id, label, kind, angle, stops:[{pos, color}]}], n}: sunset, ocean, "
+          "candy, gold, chrome, rainbow, fire, ice, mono, holo, mint, berry. Copy stops/kind/angle "
+          "into a layer's paint.gradient (set_text_layer / set_shape_layer), or pass the id as the "
+          "gradient look's preset param.",
+          objectSchema({{QStringLiteral("q"), stringProp(QStringLiteral("Case-insensitive substring over id/label"))}}),
+          true, false, true },
+        { "list_text_effects", "text", "Shader effects a fill can be painted with",
+          "Returns {effects:[{id, label, params:[{id, type, label, default, min, max, options?}]}], "
+          "n}: shine, shimmer, neon-pulse, glitch, chrome, dissolve. Use as paint:{kind:\"effect\", "
+          "effect:{id, params:{<id>:{type, value}}}} on a text or shape layer; scalar params keyframe "
+          "as layer.<layerId>.effect.<param>.",
+          objectSchema({}), true, false, true },
+        { "duplicate_text_layer", "text", "Copy a shading layer in place",
+          "Insert a copy of the layer right above it. Returns {layerId}. Works on text and shape "
+          "clips; duplicate_shape_layer is the same tool.",
+          objectSchema(mergeProps({{QStringLiteral("id"), stringProp(QStringLiteral("Layer id"))}}, clipRefProps()),
+                       {QStringLiteral("id")}) },
+        { "duplicate_shape_layer", "canvas", "Copy a shape's shading layer in place",
+          "Same as duplicate_text_layer, on a shape clip: returns {layerId}.",
+          objectSchema(mergeProps({{QStringLiteral("id"), stringProp(QStringLiteral("Layer id"))}}, clipRefProps()),
+                       {QStringLiteral("id")}) },
+        { "set_asset_rotation", "media", "Fix a sideways video in the bin",
+          "Override the bin asset's orientation losslessly (the decoder rotates; nothing is "
+          "re-encoded). degrees is absolute 0/90/180/270; -1 returns to the file's own rotation "
+          "tag. Clips already on the timeline keep their own correction — use set_clip_orientation "
+          "for those. Returns {asset, degrees, changed}.",
+          objectSchema({{QStringLiteral("asset"), assetRefProp()},
+                        {QStringLiteral("degrees"), integerProp(QStringLiteral("0, 90, 180, 270, or -1 for the file's tag"), -1, 359)}},
+                       {QStringLiteral("asset"), QStringLiteral("degrees")}) },
+        { "set_clip_orientation", "canvas", "Fix a sideways video clip",
+          "Set a video clip's absolute orientation (0/90/180/270, snapped to the nearest quarter "
+          "turn) as a lossless decode-time correction; the clip box is re-fitted when the aspect "
+          "flips. inspect detail rows show it as orientation (absolute) and rotationCorrection "
+          "(stored delta). Video clips only — fails type_mismatch otherwise.",
+          objectSchema(mergeProps({{QStringLiteral("degrees"), integerProp(QStringLiteral("Absolute orientation in degrees"), 0, 359)}},
+                                  clipRefProps()),
+                       {QStringLiteral("degrees")}) },
         { "list_user_effect_presets", "effects", "User-saved effect stacks",
           "Returns {presets:[{id, label, effectCount, audioEffectCount, labels}]}.",
           objectSchema({}), true, false, true },
@@ -975,8 +1295,9 @@
           "Search one provider of one type and return up to `limit` listings as {id, title, type, "
           "provider, dur, w, h, coins?, by?, thumb?, variants?}. Omit q for a provider's featured "
           "listing. filters takes the ids from market_status. more:true fetches the next page of "
-          "the previous search (has_more says whether there is one). Blocks until the service "
-          "answers. A resolve-only provider (no search capability) needs market_resolve instead. "
+          "the previous search (has_more says whether there is one; offset is where the page starts "
+          "in the accumulated results, so market_item still resolves earlier ids). Blocks until the "
+          "service answers. A resolve-only provider (no search capability) needs market_resolve instead. "
           "thumb is a URL an agent can fetch with its own tools to look at the item.",
           objectSchema({{QStringLiteral("q"), stringProp(QStringLiteral("Free-text query; empty = featured"))},
                         {QStringLiteral("type"), stringProp(QStringLiteral("Type id from market_status (default: the current one)"))},
@@ -990,7 +1311,7 @@
           "with variants; pass its id to market_download. Can take a while — it blocks up to 90 s.",
           objectSchema({{QStringLiteral("url"), stringProp(QStringLiteral("Page URL the user pasted"))}},
                        {QStringLiteral("url")}),
-          true, false, true },
+          true, false, false },
         { "market_item", "market", "Read one listing's variants and license",
           "Full detail of an item from the last market_search or market_resolve result, including "
           "variants:[{id, label, w, h, coins?}] for market_download and preview/license when present.",
@@ -1001,8 +1322,10 @@
           "Start downloading an item; when it finishes the file is imported and the job carries "
           "its asset id, ready for place_clip. SPENDS the provider's per-machine quota (see "
           "market_status) and cannot be undone. Async: returns the job at once; pass wait:<seconds> "
-          "to block until it finishes (max 600), or poll market_downloads. A job for an item that "
-          "is still running fails conflict.",
+          "to block until it finishes (max 600), or poll market_downloads. With wait, a job that "
+          "ends failed or cancelled comes back {ok:false, error, detail, job}. A job for an item "
+          "that is still running fails conflict; an id not in the last search/resolve result fails "
+          "not_found.",
           objectSchema({{QStringLiteral("id"), stringProp(QStringLiteral("Item id from market_search or market_resolve"))},
                         {QStringLiteral("variant"), stringProp(QStringLiteral("Variant id from market_item (default: the provider's default)"))},
                         {QStringLiteral("dir"), stringProp(QStringLiteral("Absolute folder to write the file into (default: Drift's own media area)"))},

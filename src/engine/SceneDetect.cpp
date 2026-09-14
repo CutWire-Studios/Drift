@@ -349,6 +349,7 @@ QString cacheDigest(const SceneDetectRequest &request)
     hash.addData(QByteArray::number(info.size()));
     hash.addData(QByteArray::number(request.sourceIn));
     hash.addData(QByteArray::number(request.sourceOut));
+    hash.addData(QByteArray::number(request.rotationCorrection));
     hash.addData(QByteArray::number(o.threshold, 'g', 10));
     hash.addData(QByteArray::number(o.minSceneSeconds, 'g', 10));
     hash.addData(QByteArray::number(o.adaptiveZ, 'g', 10));
@@ -461,7 +462,8 @@ void applyObjectLabels(const SceneDetectRequest &request, SceneAnalysis *analysi
             const TimeUs at = scene.sourceIn + TimeUs(double(scene.duration()) * through);
 
             const QImage frame = ClipReaderPool::instance().readVideoFrame(
-                request.path, kSceneScanStreamId, at, 0, 0);
+                request.path, kSceneScanStreamId, at, 0, 0, QString(), 15, false,
+                request.rotationCorrection);
             if (frame.isNull())
                 continue;
 
@@ -704,7 +706,8 @@ SceneAnalysis detectScenes(const SceneDetectRequest &request, const SceneProgres
     for (int i = 0; i < sampleCount; ++i) {
         const TimeUs sourceUs = request.sourceIn + TimeUs(std::llround(double(i) * intervalUs));
         const QImage frame = ClipReaderPool::instance().readVideoFrame(
-            request.path, kSceneScanStreamId, sourceUs, kScanFrameWidth, kScanFrameHeight);
+            request.path, kSceneScanStreamId, sourceUs, kScanFrameWidth, kScanFrameHeight,
+            QString(), 15, false, request.rotationCorrection);
         if (frame.isNull())
             return fail(QObject::tr("Could not decode frame %1").arg(i + 1));
 

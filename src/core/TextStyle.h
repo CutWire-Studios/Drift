@@ -1,11 +1,16 @@
 #pragma once
 
+#include "Keyframe.h"
+#include "TextAnimator.h"
+#include "TextShading.h"
 #include "Time.h"
 
 #include <QColor>
 #include <QJsonObject>
 #include <QList>
+#include <QMap>
 #include <QString>
+#include <QStringList>
 
 #include <optional>
 
@@ -14,24 +19,8 @@ namespace drift {
 enum class TextAlign { Left, Center, Right };
 enum class TextVAlign { Top, Middle, Bottom };
 
-// Entrance / exit motion. Every kind is expressible as opacity + offset + scale + blur on the
-// finished text layer, which is what keeps the rasterized glyphs cacheable across frames.
-// Typewriter is a hard binary reveal; Rise/Bounce add per-span overshoot; Wave is continuous
-// (it oscillates for the whole clip rather than settling), and only ever reads with a per-span unit.
-enum class TextAnimKind {
-    None, Fade, SlideUp, SlideDown, SlideLeft, SlideRight, Pop, Blur, Typewriter, Rise, Bounce, Wave
-};
-enum class TextEase { Linear, EaseOut, EaseInOut, Back };
-
-// Reveal granularity: Block animates the whole text at once (the original behaviour); the others
-// stagger the entrance/exit across characters, words or lines for kinetic-typography reveals.
-enum class TextAnimUnit { Block, Word, Character, Line };
-
-// Order the staggered spans fire in.
-enum class TextAnimOrder { Forward, Backward, CenterOut, Random };
-
-// Which words a style pack accents. The positional rules are time-independent, so the raster
-// stays cacheable for the whole cue; Karaoke follows the word being spoken and re-rasterizes as
+// Which words a style pack accents. The positional rules are time-independent, so the layout
+// stays cacheable for the whole cue; Karaoke follows the word being spoken and re-lays-out as
 // the playhead crosses each word.
 enum class WordAccentRule { None, FirstWord, LastWord, EveryOther, EveryNth, LongestWord,
                             RandomStable, Karaoke };
@@ -42,33 +31,8 @@ TextAlign textAlignFromString(const QString &align);
 QString textVAlignToString(TextVAlign valign);
 TextVAlign textVAlignFromString(const QString &valign);
 
-QString textAnimKindToString(TextAnimKind kind);
-TextAnimKind textAnimKindFromString(const QString &kind);
-
-QString textEaseToString(TextEase ease);
-TextEase textEaseFromString(const QString &ease);
-
-QString textAnimUnitToString(TextAnimUnit unit);
-TextAnimUnit textAnimUnitFromString(const QString &unit);
-
-QString textAnimOrderToString(TextAnimOrder order);
-TextAnimOrder textAnimOrderFromString(const QString &order);
-
 QString wordAccentRuleToString(WordAccentRule rule);
 WordAccentRule wordAccentRuleFromString(const QString &rule);
-
-struct TextAnimation
-{
-    TextAnimKind kind = TextAnimKind::None;
-    TimeUs durationUs = 400000;
-    TextEase ease = TextEase::EaseOut;
-
-    // Per-span reveal. Block (the default) keeps the original whole-layer motion; the other units
-    // stagger the spans by staggerUs, ordered per `order`.
-    TextAnimUnit unit = TextAnimUnit::Block;
-    TimeUs staggerUs = 60000;
-    TextAnimOrder order = TextAnimOrder::Forward;
-};
 
 // Rounded pill drawn behind a word. Used both for "every word" backgrounds and for the
 // accent-only highlight a pack paints under its chosen words.
@@ -106,31 +70,23 @@ struct TextStyle
     int pixelSize = 64; // at project height
     int fontWeight = 700; // 100..900
     bool italic = false;
-    QColor color = Qt::white;
+
+    // The look: an ordered shading stack, layers[0] drawn first. A fresh style is one solid
+    // white fill. `lookId` names the Looks-gallery recipe the stack came from (cleared on a hand
+    // edit) and `lookParams` its slider values, so the look stays regenerable.
+    QList<TextShadingLayer> layers = {solidFillLayer(Qt::white)};
+    QString lookId;
+    QMap<QString, VectorSlotValue> lookParams;
+
+    // Bends a single-line block along an arc: -100..100, the rise at the middle as a fraction of
+    // two em (positive arches upward). Multi-line blocks ignore it.
+    double pathBend = 0.0;
 
     TextAlign align = TextAlign::Center;
     TextVAlign valign = TextVAlign::Middle;
     bool wordWrap = true;
     double lineHeight = 1.2; // multiple of the font's natural line spacing
     double letterSpacing = 0.0; // px at pixelSize
-
-    bool outlineEnabled = false;
-    double outlineWidth = 2.0; // px; kept while disabled so toggling back restores it
-    QColor outlineColor = Qt::black;
-
-    bool shadowEnabled = false;
-    double shadowOffsetX = 0.0;
-    double shadowOffsetY = 4.0;
-    double shadowBlur = 8.0;
-    double shadowOpacity = 0.6;
-    QColor shadowColor = QColor(0, 0, 0);
-
-    // Offsetless coloured bloom. Separate from the shadow because the packs that use it want both
-    // at once — a glow for the look and a shadow for legibility.
-    bool glowEnabled = false;
-    QColor glowColor = QColor(255, 255, 255);
-    double glowRadius = 18.0;
-    double glowOpacity = 0.8;
 
     bool boxEnabled = false; // filled background behind the whole block
     QColor boxColor = QColor(0, 0, 0, 128);
@@ -146,9 +102,47 @@ struct TextStyle
 
     WordAccent accent;
 
-    TextAnimation animIn;
-    TextAnimation animOut;
+    // In / Out / Loop motion (presets or inline animators) evaluated per fragment.
+    TextAnimationSet animation;
+
+    // Animated scalars keyed by textKeyframeProperties() names ("pixelSize", "layer.shadow.blur",
+    // …), key times relative to the clip's start. A non-empty, enabled track wins over the scalar
+    // at render time; the scalar keeps the last static value, so clearing a track returns the
+    // property to a constant. Mirrors Mask::keyframes.
+    QMap<QString, KeyframeTrack<double>> keyframes;
+
+    bool isAnimated() const; // has enabled keyframe tracks
+    bool hasFragmentAnimation() const { return animation.isActive(); }
+    // A copy with every keyframed property baked down to its value at clipTimeUs. The renderers
+    // only ever see plain numbers; `keyframes` is kept on the copy so callers can still tell an
+    // animated style from a static one (cache keys).
+    TextStyle resolvedAt(TimeUs clipTimeUs) const;
+
+    // The colour of the text as a user thinks of it: the front-most enabled fill's solid colour
+    // (or first gradient stop). Setting it edits that fill.
+    QColor primaryColor() const;
+    void setPrimaryColor(const QColor &color);
 };
+
+// Convenience accessors the layout and painters use so nobody spells out layer lookups.
+QColor textFillColor(const TextStyle &style, bool accent);
+double textStrokeWidth(const TextStyle &style, bool accent);
+QColor textStrokeColor(const TextStyle &style, bool accent);
+// Sets the front-most fill to a solid colour (importers).
+void setSolidFill(TextStyle &style, const QColor &color);
+
+// The scalars a text style can animate, in inspector order: the flat ones then one group per
+// layer. Keys are canonical ("layer.<id>.<field>").
+QStringList textKeyframeProperties(const TextStyle &style);
+// Canonical spelling of a keyframe key: the key itself when valid on this style, the layer path
+// for a legacy alias ("outlineWidth" → "layer.stroke.width"), or empty when unknown.
+QString textKeyframeCanonicalKey(const QString &key, const TextStyle &style);
+// Human label for a key ("Shadow · Blur").
+QString textKeyframeLabel(const QString &key, const TextStyle &style);
+// The scalar a keyframe property reads/writes on the style; colour channels are 0..1. False for
+// an unknown key. Legacy aliases are accepted.
+bool textStyleScalar(const TextStyle &style, const QString &key, double *out);
+bool setTextStyleScalar(TextStyle &style, const QString &key, double value);
 
 struct TextPreset
 {
@@ -175,6 +169,7 @@ TextHighlight textHighlightFromJson(const QJsonObject &o, const TextHighlight &f
 QJsonObject wordAccentToJson(const WordAccent &a);
 WordAccent wordAccentFromJson(const QJsonObject &o);
 QJsonObject textStyleToJson(const TextStyle &s);
+// Reads both the v7 layered form and the flat v6 form (migrated into layers and preset slots).
 TextStyle textStyleFromJson(const QJsonObject &o);
 
 } // namespace drift

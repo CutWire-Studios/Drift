@@ -1,0 +1,5 @@
+{
+  "format": 1, "id": "fade", "label": "Fade", "category": "basic", "sampleText": "Fade in",
+  "slots": ["in", "out"], "order": 10,
+  "animators": [ { "selectors": ["stagger"], "props": { "opacity": 0 } } ]
+}

@@ -35,7 +35,7 @@ body:
     attributes:
       label: Drift version
       description: Use the release tag / package version you installed.
-      placeholder: e.g. 0.5.1
+      placeholder: e.g. 0.6.0
     validations:
       required: true
 
@@ -79,8 +79,8 @@ body:
       description: |
         Some bugs only show up in one package (e.g. Flatpak but not AppImage). List anything else you tested, or write "only tried this one".
       placeholder: |
-        e.g. Broken on Flatpak 0.5.1, works on AppImage 0.5.1
-        or: Only tested Flatpak 0.5.1
+        e.g. Broken on Flatpak 0.6.0, works on AppImage 0.6.0
+        or: Only tested Flatpak 0.6.0
     validations:
       required: false
 

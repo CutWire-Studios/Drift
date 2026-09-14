@@ -2,6 +2,7 @@
 
 #include "core/EffectStackStore.h"
 #include "core/Project.h"
+#include "core/TextAnimationPreset.h"
 #include "core/TimelineOps.h"
 #include "core/Time.h"
 #include "engine/AudioOnsets.h"
@@ -115,8 +116,8 @@ class AppController : public QObject
     Q_PROPERTY(bool autoKeyEnabled READ autoKeyEnabled WRITE setAutoKeyEnabled NOTIFY autoKeyEnabledChanged)
     // Opt-in: on launch, restore the last open project (saved .drift or unsaved recovery snapshot).
     Q_PROPERTY(bool reopenLastProject READ reopenLastProject WRITE setReopenLastProject NOTIFY reopenLastProjectChanged)
-    // Opt-in VAAPI dma-buf preview import. Takes effect after restart; hidden when this
-    // machine has no VAAPI decode backend.
+    // Preview zero-copy import: VAAPI dma-buf on Linux, D3D11 interop on Windows. Takes effect
+    // after restart; hidden when this machine has no decode backend for either.
     Q_PROPERTY(bool vaapiZeroCopy READ vaapiZeroCopy WRITE setVaapiZeroCopy NOTIFY vaapiZeroCopyChanged)
     Q_PROPERTY(bool playbackBenchmarkRunning READ playbackBenchmarkRunning NOTIFY playbackBenchmarkRunningChanged)
     Q_PROPERTY(bool vaapiZeroCopySupported READ vaapiZeroCopySupported CONSTANT)
@@ -126,6 +127,11 @@ class AppController : public QObject
     Q_PROPERTY(bool mediaCodecZeroCopy READ mediaCodecZeroCopy WRITE setMediaCodecZeroCopy NOTIFY
                    mediaCodecZeroCopyChanged)
     Q_PROPERTY(bool mediaCodecZeroCopySupported READ mediaCodecZeroCopySupported CONSTANT)
+    // Hybrid-graphics Windows laptops: which GPU Drift asks to run on — "auto", "integrated" or
+    // "discrete". The driver picks the GPU when it loads, so this takes effect on the next
+    // launch. Hidden on single-GPU machines and off Windows.
+    Q_PROPERTY(QString preferredGpu READ preferredGpu WRITE setPreferredGpu NOTIFY preferredGpuChanged)
+    Q_PROPERTY(bool gpuPreferenceSupported READ gpuPreferenceSupported CONSTANT)
     Q_PROPERTY(bool invertTimelineScroll READ invertTimelineScroll WRITE setInvertTimelineScroll
                    NOTIFY invertTimelineScrollChanged)
     // Session-only localhost MCP for agents. Never persisted. Off at every launch.
@@ -275,6 +281,7 @@ class AppController : public QObject
     Q_PROPERTY(QString sceneClipId READ sceneClipId NOTIFY scenesChanged)
     // Source file the live analysis describes, so the panel can ask for thumbnails.
     Q_PROPERTY(QString sceneClipPath READ sceneClipPath NOTIFY scenesChanged)
+    Q_PROPERTY(int sceneClipRotationCorrection READ sceneClipRotationCorrection NOTIFY scenesChanged)
     Q_PROPERTY(bool sceneDetecting READ sceneDetecting NOTIFY sceneDetectingChanged)
     Q_PROPERTY(double sceneDetectProgress READ sceneDetectProgress NOTIFY sceneDetectProgressChanged)
     Q_PROPERTY(QString sceneDetectStatus READ sceneDetectStatus NOTIFY sceneDetectStatusChanged)
@@ -315,6 +322,10 @@ class AppController : public QObject
     // corrupt-project open rendered as a neutral info toast.
     Q_PROPERTY(QString lastMessageSeverity READ lastMessageSeverity NOTIFY lastMessageChanged)
     Q_PROPERTY(int draggingAssetIndex READ draggingAssetIndex WRITE setDraggingAssetIndex NOTIFY draggingAssetIndexChanged)
+    // Set by MediaPreviewWindow.qml/AndroidMediaPreview.qml while open, so the bin grid can defer
+    // rebuilding its delegate array (and the scroll-position flicker that causes) until the
+    // window closes rather than on every metadata change (rotate, trim, a probe landing) it emits.
+    Q_PROPERTY(bool assetPreviewWindowOpen READ assetPreviewWindowOpen WRITE setAssetPreviewWindowOpen NOTIFY assetPreviewWindowOpenChanged)
     Q_PROPERTY(bool hasUnsavedChanges READ hasUnsavedChanges NOTIFY dirtyChanged)
     Q_PROPERTY(QString currentProjectPath READ currentProjectPath NOTIFY currentProjectPathChanged)
     Q_PROPERTY(bool recoveryAvailable READ recoveryAvailable NOTIFY recoveryChanged)
@@ -367,6 +378,8 @@ public:
     bool vaapiZeroCopySupported() const;
     bool mediaCodecZeroCopy() const { return m_mediaCodecZeroCopy; }
     bool mediaCodecZeroCopySupported() const;
+    QString preferredGpu() const { return m_preferredGpu; }
+    bool gpuPreferenceSupported() const;
     bool invertTimelineScroll() const { return m_invertTimelineScroll; }
     QString uiLanguage() const { return m_uiLanguage; }
     QVariantList uiLanguages() const;
@@ -421,6 +434,7 @@ public:
     QVariantList scenes() const { return m_scenes; }
     QString sceneClipId() const { return m_sceneClipId; }
     QString sceneClipPath() const { return m_sceneClipPath; }
+    int sceneClipRotationCorrection() const { return m_sceneClipRotationCorrection; }
     bool sceneDetecting() const { return m_sceneDetecting; }
     double sceneDetectProgress() const { return m_sceneDetectProgress; }
     QString sceneDetectStatus() const { return m_sceneDetectStatus; }
@@ -448,6 +462,8 @@ public:
     QString lastMessageSeverity() const { return m_lastMessageSeverity; }
     int draggingAssetIndex() const { return m_draggingAssetIndex; }
     void setDraggingAssetIndex(int index);
+    bool assetPreviewWindowOpen() const { return m_assetPreviewWindowOpen; }
+    void setAssetPreviewWindowOpen(bool open);
     bool hasUnsavedChanges() const { return m_dirty; }
     QString currentProjectPath() const { return m_currentProjectPath; }
     bool recoveryAvailable() const { return m_recoveryAvailable; }
@@ -467,6 +483,7 @@ public:
     void setReopenLastProject(bool enabled);
     void setVaapiZeroCopy(bool enabled);
     void setMediaCodecZeroCopy(bool enabled);
+    void setPreferredGpu(const QString &id);
     void setInvertTimelineScroll(bool enabled);
     Q_INVOKABLE void setMcpEnabled(bool enabled);
     // Headless wires transports onto the server itself, which the on/off switch above
@@ -669,6 +686,9 @@ public:
     Q_INVOKABLE int removeAssetsAndClips(const QStringList &assetIds);
     // Bin label only — does not rename the file on disk or rewrite clip names.
     Q_INVOKABLE bool renameAsset(int assetIndex, const QString &name);
+    // Bin-preview orientation for a video asset (absolute 0/90/180/270; -1 = the file's own tag),
+    // as one undoable edit — AssetLibrary::setAssetRotation on its own leaves no undo entry.
+    Q_INVOKABLE bool setAssetRotation(int assetIndex, int degrees);
     // Bin folder CRUD. parentId empty = bin root; nesting is arbitrary depth.
     Q_INVOKABLE QString createBinFolder(const QString &name, const QString &parentId);
     Q_INVOKABLE bool renameBinFolder(const QString &folderId, const QString &name);
@@ -919,8 +939,6 @@ public:
     Q_INVOKABLE void addEmojiClip(const QString &emoji, const QString &name, double atSeconds);
     Q_INVOKABLE QVariantList builtinShapes() const;
     Q_INVOKABLE QVariantList builtinShapeCategories() const;
-    // SVG "d" string for the assets-panel thumbnail, on the 0..100 grid ShapePreview.qml uses.
-    Q_INVOKABLE QString shapeSvgPath(const QString &shapeId) const;
     Q_INVOKABLE QVariantList previewClipsAtPlayhead() const;
     Q_INVOKABLE void beginPreviewDrag(const QString &undoText = {});
     Q_INVOKABLE void previewSetClipPosition(int trackIndex, int clipIndex, double xPixels, double yPixels);
@@ -1007,6 +1025,47 @@ public:
     Q_INVOKABLE void upsertSubtitleCueAtPlayhead(int trackIndex, int clipIndex, const QString &text);
     Q_INVOKABLE void seekToSubtitleCue(int trackIndex, int clipIndex, int cueIndex);
     Q_INVOKABLE void setTextStyle(int trackIndex, int clipIndex, const QVariantMap &style);
+    // The shading stack of a text, subtitle or shape clip: layers[0] is drawn first. Each call
+    // is one undo step; the preview variants coalesce into one through begin/commitPreviewDrag.
+    Q_INVOKABLE QString addStyleLayer(int trackIndex, int clipIndex, const QString &kind, int atIndex = -1);
+    Q_INVOKABLE bool removeStyleLayer(int trackIndex, int clipIndex, const QString &layerId);
+    Q_INVOKABLE QString duplicateStyleLayer(int trackIndex, int clipIndex, const QString &layerId);
+    Q_INVOKABLE bool moveStyleLayer(int trackIndex, int clipIndex, const QString &layerId, int toIndex);
+    Q_INVOKABLE void setStyleLayer(int trackIndex, int clipIndex, const QString &layerId, const QVariantMap &patch);
+    Q_INVOKABLE void previewSetStyleLayer(int trackIndex, int clipIndex, const QString &layerId, const QVariantMap &patch);
+    // The text-only spellings, kept for the MCP tools and scripts that use them.
+    Q_INVOKABLE QString addTextLayer(int trackIndex, int clipIndex, const QString &kind, int atIndex = -1);
+    Q_INVOKABLE bool removeTextLayer(int trackIndex, int clipIndex, const QString &layerId);
+    Q_INVOKABLE QString duplicateTextLayer(int trackIndex, int clipIndex, const QString &layerId);
+    Q_INVOKABLE bool moveTextLayer(int trackIndex, int clipIndex, const QString &layerId, int toIndex);
+    Q_INVOKABLE void setTextLayer(int trackIndex, int clipIndex, const QString &layerId, const QVariantMap &patch);
+    Q_INVOKABLE void previewSetTextLayer(int trackIndex, int clipIndex, const QString &layerId, const QVariantMap &patch);
+    // In / Out / Loop animation slots: {preset, params, duration, stagger, unit, order, ease, …}.
+    Q_INVOKABLE void setTextAnimationSlot(int trackIndex, int clipIndex, const QString &slot, const QVariantMap &patch);
+    Q_INVOKABLE void previewSetTextAnimationSlot(int trackIndex, int clipIndex, const QString &slot, const QVariantMap &patch);
+    Q_INVOKABLE void clearTextAnimationSlot(int trackIndex, int clipIndex, const QString &slot);
+    Q_INVOKABLE QVariantList textAnimationPresets(const QString &slot = {}) const;
+    Q_INVOKABLE QVariantList textAnimationCategories(const QString &slot) const;
+    // Where to seek to preview the slot: the window start (In), before the exit (Out), the playhead (Loop).
+    Q_INVOKABLE double textAnimationSlotStartSeconds(int trackIndex, int clipIndex, const QString &slot) const;
+    // Looks: one-click recipes that rewrite the layer stack from a few params.
+    Q_INVOKABLE QVariantList textLooks() const;
+    Q_INVOKABLE void applyTextLook(int trackIndex, int clipIndex, const QString &lookId, const QVariantMap &params = {});
+    Q_INVOKABLE void setTextLookParam(int trackIndex, int clipIndex, const QString &key, const QVariant &value);
+    Q_INVOKABLE void previewSetTextLookParam(int trackIndex, int clipIndex, const QString &key, const QVariant &value);
+    Q_INVOKABLE QVariantList textPaintEffects() const;
+    Q_INVOKABLE QVariantList textGradientPresets() const;
+    // Copies this caption clip's style (not its keyframes) to every other subtitle clip on the
+    // track ("track") or in the project ("project"). Returns how many changed; one undo step.
+    Q_INVOKABLE int applyTextStyleToCaptions(int trackIndex, int clipIndex, const QString &scope = QStringLiteral("track"));
+    // Animation presets imported from Lottie (After Effects text animators) or exported earlier.
+    // Returns {ok, id, error, unsupported:[…]}; the preset lands in the slot's "Imported" category.
+    Q_INVOKABLE QVariantMap importTextAnimationPreset(const QUrl &fileUrl, const QString &slot = {});
+    Q_INVOKABLE bool renameUserTextAnimationPreset(const QString &presetId, const QString &label);
+    Q_INVOKABLE bool deleteUserTextAnimationPreset(const QString &presetId);
+    Q_INVOKABLE bool exportUserTextAnimationPreset(const QString &presetId, const QUrl &fileUrl);
+    // Human label for a text keyframe property ("Shadow · Blur"); empty for non-text props.
+    Q_INVOKABLE QString keyframePropertyLabel(int trackIndex, int clipIndex, const QString &prop) const;
     Q_INVOKABLE void applyTextPreset(int trackIndex, int clipIndex, const QString &presetId);
     Q_INVOKABLE QVariantList textPresets() const;
     // Style packs the user saved from the inspector. Kept out of textPresets() so the built-in
@@ -1038,6 +1097,10 @@ public:
     Q_INVOKABLE void previewSetClipPan(int trackIndex, int clipIndex, double pan);
     Q_INVOKABLE void setClipPan(int trackIndex, int clipIndex, double pan);
     Q_INVOKABLE void setClipRotationSnap(int trackIndex, int clipIndex, double degrees);
+    // Discrete, lossless orientation fix (absolute 0/90/180/270, as the inspector shows it) —
+    // distinct from the free decorative "Angle" above. Re-fits the clip's box for the new
+    // orientation and decodes losslessly; see drift::Clip::rotationCorrection.
+    Q_INVOKABLE void setClipOrientation(int trackIndex, int clipIndex, int degrees);
     Q_INVOKABLE bool canMergeSelection() const;
     Q_INVOKABLE void mergeSelectedClips();
     Q_INVOKABLE bool canSeparateAudioSelection() const;
@@ -1054,7 +1117,7 @@ public:
     // The mask shapes the assets panel offers as cards: {id, label} per entry. A "media" mask is
     // not here — it needs a file, so the panel asks for one and calls addMediaMaskToClip.
     Q_INVOKABLE QVariantList maskCatalog() const;
-    // The shape as an SVG "d" string on the 0..100 grid ShapePreview.qml scales from, for the
+    // The mask as an SVG "d" string on the 0..100 grid MasksTab.qml scales from, for the
     // asset cards. Serialized from the same drift::maskPath the compositor rasterizes.
     Q_INVOKABLE QString maskShapeSvgPath(const QString &shape) const;
     // Pin a new mask to a clip, stacking on any already there rather than replacing them, and
@@ -1077,6 +1140,25 @@ public:
     Q_INVOKABLE QVariantMap maskEditorState() const;
     // Partial patch: only the keys present are applied, like setTextStyle.
     Q_INVOKABLE void setShapeStyle(int trackIndex, int clipIndex, const QVariantMap &style);
+
+    // Vector (Lottie / SVG) clips. `source` is the document text itself or a path to a .json/.svg
+    // file; opts keys: kind (lottie|svg, else detected), fit, loop, offset (seconds), slots
+    // ({id: value}), name, duration (seconds; default = the animation's own length, 5 s for a
+    // still). Every reply is {ok, error?} plus the inspect summary of the document.
+    Q_INVOKABLE bool vectorSupportAvailable() const;
+    Q_INVOKABLE QVariantMap addVectorClip(const QString &source, int trackIndex, double atSeconds,
+                                          const QVariantMap &opts = {});
+    Q_INVOKABLE QVariantMap setVectorSource(int trackIndex, int clipIndex, const QString &source,
+                                            const QVariantMap &opts = {});
+    Q_INVOKABLE QString setVectorOptions(int trackIndex, int clipIndex, const QVariantMap &opts);
+    // A null/invalid value removes the override. Returns an error string, empty on success.
+    Q_INVOKABLE QString setVectorSlot(int trackIndex, int clipIndex, const QString &name,
+                                      const QVariant &value);
+    // Declared slots with the clip's current overrides: [{id, type, value?}].
+    Q_INVOKABLE QVariantList vectorSlots(int trackIndex, int clipIndex) const;
+    Q_INVOKABLE QVariantMap inspectVector(const QString &source, const QString &kind = {}) const;
+    Q_INVOKABLE QVariantMap inspectVectorClip(int trackIndex, int clipIndex) const;
+    Q_INVOKABLE QString vectorSourceText(int trackIndex, int clipIndex) const;
     Q_INVOKABLE void setClipFade(int trackIndex, int clipIndex, double fadeInSeconds, double fadeOutSeconds);
     Q_INVOKABLE void setClipFadeCurve(int trackIndex, int clipIndex, const QString &curve);
     // which: "animIn" | "animOut". Partial patch: kind / duration / curve (or legacy ease).
@@ -1103,6 +1185,10 @@ public:
     Q_INVOKABLE QVariantList transitionCategories() const;
     Q_INVOKABLE void selectTransition(int trackIndex, int leftClipIndex);
     Q_INVOKABLE void clearTransitionSelection();
+    // A colour property ("text.color") fans out to its four channel tracks (<prop>.r/g/b/a) as
+    // one undo step. Clears every channel when the colour is invalid.
+    Q_INVOKABLE void setClipColorKeyframe(int trackIndex, int clipIndex, const QString &prop,
+                                          double atSeconds, const QColor &color);
     Q_INVOKABLE void setClipKeyframe(int trackIndex, int clipIndex, const QString &prop, double atSeconds,
                                      double value);
     Q_INVOKABLE void removeClipKeyframe(int trackIndex, int clipIndex, const QString &prop, double atSeconds);
@@ -1448,9 +1534,12 @@ public:
     Q_INVOKABLE QString filmstripFrameUrl(const QString &path, int frame, int count) const;
     // Sharp on-demand frame for one filmstrip tile — see FilmstripTileCache. Empty until the
     // decode lands, at which point filmstripTileReady() fires for that source.
-    Q_INVOKABLE QString filmstripTileUrl(const QString &path, int level, double index) const;
+    Q_INVOKABLE QString filmstripTileUrl(const QString &path, int level, double index,
+                                         int rotationCorrection = 0) const;
 
 signals:
+    void userTextAnimationPresetsChanged();
+
     // A text clip was added with no text; the preview should open its inline
     // editor so the user can type straight onto the canvas.
     void inlineTextEditRequested(int trackIndex, int clipIndex);
@@ -1472,6 +1561,7 @@ signals:
     void reopenLastProjectChanged();
     void vaapiZeroCopyChanged();
     void mediaCodecZeroCopyChanged();
+    void preferredGpuChanged();
     // Carries the finished benchmark, merged into whatever the dialog already collected.
     void playbackBenchmarkFinished(const QVariantMap &info);
     void playbackBenchmarkRunningChanged();
@@ -1561,6 +1651,7 @@ signals:
     void missingAddons(const QVariantList &addons);
     void lastMessageChanged();
     void draggingAssetIndexChanged();
+    void assetPreviewWindowOpenChanged();
     void exportFinished(bool success);
     void projectMutated();
     void waveformReady(const QString &path);
@@ -1630,7 +1721,7 @@ protected:
     void finalizeAssetReplace(const QString &assetId, const drift::MediaAsset &filled, bool ok);
     // Moves every clip bound to `assetId` onto the replacement media. Returns how many had a
     // source range that no longer fitted and had to be pulled back to it.
-    int rebindClipsToAsset(const QString &assetId, const drift::MediaAsset &asset);
+    int rebindClipsToAsset(const QString &assetId, const drift::MediaAsset &asset, int oldBinCorrection);
     // Keeps the keyframe strip's index-addressed hidden series in sync after an effect is removed.
     void dropKeyframeGraphPropertiesForEffect(int removedIndex);
     // Same idea after a reorder: fx.N.* indices move with the effect.
@@ -1690,7 +1781,7 @@ protected:
                                               double minSceneSeconds) const;
     // Publishes a finished scene analysis into m_scenes, shaped for QML.
     void applySceneAnalysis(const drift::SceneAnalysis &analysis, const QString &clipId,
-                            const QString &clipPath);
+                            const QString &clipPath, int rotationCorrection);
     // Completes a segmentation job: pins the matte to the clip as a Mask adjustment on its own
     // lane. `outputMode` is kept only so the older "clips"/"mask" spellings stay accepted; all
     // three now produce the same mask layer.
@@ -1713,8 +1804,8 @@ protected:
                              double progressFrom, double progressTo, QString *errorOut);
     // Defaulted severity so the existing call sites, which report ordinary status,
     // stay unchanged; pass "error"/"warning" explicitly where a failure is reported.
-    void setLastMessage(const QString &message,
-                        const QString &severity = QStringLiteral("info"));
+    Q_INVOKABLE void setLastMessage(const QString &message,
+                                    const QString &severity = QStringLiteral("info"));
     drift::TimeUs playheadUs() const { return m_playheadUs; }
     void setPlayheadUs(drift::TimeUs us);
 
@@ -1795,6 +1886,11 @@ protected:
     void restoreSelectionByTrackId(const QList<QPair<QString, int>> &captured);
     int assetIndexForClip(const drift::Clip &clip) const;
     drift::TimeUs clipDurationForAssetIndex(int assetIndex) const;
+    // The absolute orientation (0/90/180/270) a video clip's frames come out at: its file's own
+    // tag plus its rotationCorrection. setClipOrientationTo stores the correction that lands on
+    // `degrees`.
+    int clipOrientation(const drift::Clip &clip) const;
+    void setClipOrientationTo(drift::Clip &clip, int degrees);
     drift::TimeUs sourceDurationForClip(const drift::Clip &clip) const;
     void startReverseRender(const QString &sourcePath, drift::TimeUs coverInUs,
                             drift::TimeUs coverOutUs);
@@ -1895,6 +1991,7 @@ protected:
     bool m_reopenLastProject = false;
     bool m_vaapiZeroCopy = false;
     bool m_mediaCodecZeroCopy = false;
+    QString m_preferredGpu = QStringLiteral("auto");
     // One benchmark at a time: it drives the shared decoders and the GL thread, and two
     // sweeps interleaved would measure each other rather than the pipeline.
     std::atomic<bool> m_benchmarkRunning{false};
@@ -2028,6 +2125,7 @@ protected:
     QVariantList m_scenes;
     QString m_sceneClipId;
     QString m_sceneClipPath;
+    int m_sceneClipRotationCorrection = 0;
     bool m_sceneDetecting = false;
     double m_sceneDetectProgress = 0.0;
     QString m_sceneDetectStatus;
@@ -2069,10 +2167,16 @@ protected:
     QHash<QString, QString> m_shortcuts;
     QHash<QString, QSet<QString>> m_assetFavorites;
     int m_draggingAssetIndex = -1;
+    bool m_assetPreviewWindowOpen = false;
     QString m_lastMessage;
     QString m_lastMessageSeverity = QStringLiteral("info");
     bool m_inlineTextEditing = false;
     bool m_previewDragActive = false;
+    drift::Clip *textClipAt(int trackIndex, int clipIndex);
+    // A text, subtitle or shape clip: anything that carries a shading stack.
+    drift::Clip *styledClipAt(int trackIndex, int clipIndex, bool textOnly = false);
+    static void applyTextStylePatch(drift::TextStyle &style, const QVariantMap &patch);
+    static QVariantMap textAnimationPresetToMap(const drift::TextAnimationPreset &preset);
     drift::Project m_previewDragBefore;
     QString m_previewDragText;
     void emitPreviewFrame();

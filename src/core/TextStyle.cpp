@@ -1,8 +1,12 @@
 #include "TextStyle.h"
 
+#include "Effect.h"
+#include "TextAnimationPreset.h"
+#include "TextLook.h"
 #include "TextPresetStore.h"
 
 #include <QCoreApplication>
+#include <QJsonArray>
 
 namespace drift {
 
@@ -36,9 +40,9 @@ QString textVAlignToString(TextVAlign valign)
     case TextVAlign::Bottom:
         return QStringLiteral("bottom");
     case TextVAlign::Middle:
-        return QStringLiteral("middle");
+        return QStringLiteral("center");
     }
-    return QStringLiteral("middle");
+    return QStringLiteral("center");
 }
 
 TextVAlign textVAlignFromString(const QString &valign)
@@ -48,142 +52,6 @@ TextVAlign textVAlignFromString(const QString &valign)
     if (valign == QStringLiteral("bottom"))
         return TextVAlign::Bottom;
     return TextVAlign::Middle;
-}
-
-QString textAnimKindToString(TextAnimKind kind)
-{
-    switch (kind) {
-    case TextAnimKind::None:
-        return QStringLiteral("none");
-    case TextAnimKind::Fade:
-        return QStringLiteral("fade");
-    case TextAnimKind::SlideUp:
-        return QStringLiteral("slideUp");
-    case TextAnimKind::SlideDown:
-        return QStringLiteral("slideDown");
-    case TextAnimKind::SlideLeft:
-        return QStringLiteral("slideLeft");
-    case TextAnimKind::SlideRight:
-        return QStringLiteral("slideRight");
-    case TextAnimKind::Pop:
-        return QStringLiteral("pop");
-    case TextAnimKind::Blur:
-        return QStringLiteral("blur");
-    case TextAnimKind::Typewriter:
-        return QStringLiteral("typewriter");
-    case TextAnimKind::Rise:
-        return QStringLiteral("rise");
-    case TextAnimKind::Bounce:
-        return QStringLiteral("bounce");
-    case TextAnimKind::Wave:
-        return QStringLiteral("wave");
-    }
-    return QStringLiteral("none");
-}
-
-TextAnimKind textAnimKindFromString(const QString &kind)
-{
-    if (kind == QStringLiteral("fade"))
-        return TextAnimKind::Fade;
-    if (kind == QStringLiteral("slideUp"))
-        return TextAnimKind::SlideUp;
-    if (kind == QStringLiteral("slideDown"))
-        return TextAnimKind::SlideDown;
-    if (kind == QStringLiteral("slideLeft"))
-        return TextAnimKind::SlideLeft;
-    if (kind == QStringLiteral("slideRight"))
-        return TextAnimKind::SlideRight;
-    if (kind == QStringLiteral("pop"))
-        return TextAnimKind::Pop;
-    if (kind == QStringLiteral("blur"))
-        return TextAnimKind::Blur;
-    if (kind == QStringLiteral("typewriter"))
-        return TextAnimKind::Typewriter;
-    if (kind == QStringLiteral("rise"))
-        return TextAnimKind::Rise;
-    if (kind == QStringLiteral("bounce"))
-        return TextAnimKind::Bounce;
-    if (kind == QStringLiteral("wave"))
-        return TextAnimKind::Wave;
-    return TextAnimKind::None;
-}
-
-QString textEaseToString(TextEase ease)
-{
-    switch (ease) {
-    case TextEase::Linear:
-        return QStringLiteral("linear");
-    case TextEase::EaseInOut:
-        return QStringLiteral("easeInOut");
-    case TextEase::Back:
-        return QStringLiteral("back");
-    case TextEase::EaseOut:
-        return QStringLiteral("easeOut");
-    }
-    return QStringLiteral("easeOut");
-}
-
-TextEase textEaseFromString(const QString &ease)
-{
-    if (ease == QStringLiteral("linear"))
-        return TextEase::Linear;
-    if (ease == QStringLiteral("easeInOut"))
-        return TextEase::EaseInOut;
-    if (ease == QStringLiteral("back"))
-        return TextEase::Back;
-    return TextEase::EaseOut;
-}
-
-QString textAnimUnitToString(TextAnimUnit unit)
-{
-    switch (unit) {
-    case TextAnimUnit::Word:
-        return QStringLiteral("word");
-    case TextAnimUnit::Character:
-        return QStringLiteral("character");
-    case TextAnimUnit::Line:
-        return QStringLiteral("line");
-    case TextAnimUnit::Block:
-        return QStringLiteral("block");
-    }
-    return QStringLiteral("block");
-}
-
-TextAnimUnit textAnimUnitFromString(const QString &unit)
-{
-    if (unit == QStringLiteral("word"))
-        return TextAnimUnit::Word;
-    if (unit == QStringLiteral("character"))
-        return TextAnimUnit::Character;
-    if (unit == QStringLiteral("line"))
-        return TextAnimUnit::Line;
-    return TextAnimUnit::Block;
-}
-
-QString textAnimOrderToString(TextAnimOrder order)
-{
-    switch (order) {
-    case TextAnimOrder::Backward:
-        return QStringLiteral("backward");
-    case TextAnimOrder::CenterOut:
-        return QStringLiteral("centerOut");
-    case TextAnimOrder::Random:
-        return QStringLiteral("random");
-    case TextAnimOrder::Forward:
-        return QStringLiteral("forward");
-    }
-    return QStringLiteral("forward");
-}
-
-TextAnimOrder textAnimOrderFromString(const QString &order)
-{
-    if (order == QStringLiteral("backward"))
-        return TextAnimOrder::Backward;
-    if (order == QStringLiteral("centerOut"))
-        return TextAnimOrder::CenterOut;
-    if (order == QStringLiteral("random"))
-        return TextAnimOrder::Random;
-    return TextAnimOrder::Forward;
 }
 
 QString wordAccentRuleToString(WordAccentRule rule)
@@ -228,22 +96,184 @@ WordAccentRule wordAccentRuleFromString(const QString &rule)
     return WordAccentRule::None;
 }
 
+// ---------------------------------------------------------------------------------------------
+// Accessors
+
+QColor TextStyle::primaryColor() const
+{
+    const TextShadingLayer *fill = firstTextLayerOfKind(layers, TextLayerKind::Fill, true);
+    if (!fill)
+        fill = firstTextLayerOfKind(layers, TextLayerKind::Fill, false);
+    if (!fill)
+        return Qt::white;
+    if (fill->paint.kind == TextPaintKind::Gradient && !fill->paint.gradient.stops.isEmpty())
+        return fill->paint.gradient.stops.first().color;
+    return fill->paint.color;
+}
+
+void TextStyle::setPrimaryColor(const QColor &color)
+{
+    TextShadingLayer *fill = firstTextLayerOfKind(layers, TextLayerKind::Fill, true);
+    if (!fill)
+        fill = firstTextLayerOfKind(layers, TextLayerKind::Fill, false);
+    if (!fill) {
+        layers.append(solidFillLayer(color, mintTextLayerId(layers)));
+        return;
+    }
+    if (fill->paint.kind == TextPaintKind::Gradient && !fill->paint.gradient.stops.isEmpty())
+        fill->paint.gradient.stops.first().color = color;
+    else
+        fill->paint.color = color;
+}
+
+QColor textFillColor(const TextStyle &style, bool accent)
+{
+    if (accent && style.accent.colorEnabled)
+        return style.accent.color;
+    return style.primaryColor();
+}
+
+double textStrokeWidth(const TextStyle &style, bool accent)
+{
+    if (accent && style.accent.outlineEnabled)
+        return style.accent.outlineWidth;
+    const TextShadingLayer *stroke = firstTextLayerOfKind(style.layers, TextLayerKind::Stroke, true);
+    return stroke ? stroke->width : 0.0;
+}
+
+QColor textStrokeColor(const TextStyle &style, bool accent)
+{
+    if (accent && style.accent.outlineEnabled)
+        return style.accent.outlineColor;
+    const TextShadingLayer *stroke = firstTextLayerOfKind(style.layers, TextLayerKind::Stroke, true);
+    return stroke ? stroke->paint.color : QColor(Qt::black);
+}
+
+void setSolidFill(TextStyle &style, const QColor &color)
+{
+    TextShadingLayer *fill = firstTextLayerOfKind(style.layers, TextLayerKind::Fill, false);
+    if (!fill) {
+        style.layers.append(solidFillLayer(color, mintTextLayerId(style.layers)));
+        return;
+    }
+    fill->enabled = true;
+    fill->paint = TextPaint{};
+    fill->paint.color = color;
+}
+
+// ---------------------------------------------------------------------------------------------
+// Built-in packs
+
 namespace {
+
+// The legacy decorations as layers, in the order they were painted: shadow, glow, outline, fill.
+TextShadingLayer legacyShadow(bool enabled = true, const QColor &color = QColor(0, 0, 0), double offsetX = 0.0,
+                              double offsetY = 4.0, double blur = 8.0, double opacity = 0.6)
+{
+    TextShadingLayer layer = shadowLayer(color, offsetX, offsetY, blur, opacity);
+    layer.enabled = enabled;
+    return layer;
+}
+
+TextShadingLayer legacyGlow(bool enabled = true, const QColor &color = QColor(255, 255, 255), double radius = 18.0,
+                            double opacity = 0.8)
+{
+    TextShadingLayer layer = glowLayer(color, radius, opacity);
+    layer.enabled = enabled;
+    return layer;
+}
+
+TextShadingLayer legacyStroke(double width, const QColor &color = QColor(Qt::black), bool enabled = true)
+{
+    TextShadingLayer layer = strokeLayer(width, color);
+    layer.enabled = enabled;
+    return layer;
+}
+
+TextShadingLayer gradientFillLayer(const char *gradientPresetId, double angle,
+                                   TextGradientSpace space = TextGradientSpace::Block, double offsetSpeed = 0.0,
+                                   bool repeat = false, const QString &id = QStringLiteral("fill"))
+{
+    TextShadingLayer layer = solidFillLayer(Qt::white, id);
+    layer.paint.kind = TextPaintKind::Gradient;
+    for (const TextGradientPreset &preset : textGradientPresets())
+        if (preset.id == QLatin1String(gradientPresetId))
+            layer.paint.gradient = preset.gradient;
+    layer.paint.gradient.angle = angle;
+    layer.paint.gradient.space = space;
+    layer.paint.gradient.offsetSpeed = offsetSpeed;
+    layer.paint.gradient.repeat = repeat;
+    return layer;
+}
+
+TextShadingLayer effectLayer(const char *effectId, const QMap<QString, VectorSlotValue> &params,
+                             const QColor &tint = Qt::white, BlendMode blend = BlendMode::Normal,
+                             const QString &id = QStringLiteral("fill"))
+{
+    TextShadingLayer layer = solidFillLayer(tint, id);
+    layer.paint.kind = TextPaintKind::Effect;
+    layer.paint.effect.id = QLatin1String(effectId);
+    layer.paint.effect.params = params;
+    layer.blend = blend;
+    return layer;
+}
+
+TextShadingLayer extrudeLayer(const QColor &color, double depth, double angle = 45.0, int steps = 8,
+                              double darken = 0.5)
+{
+    TextShadingLayer layer = solidFillLayer(color, QStringLiteral("extrude"));
+    layer.kind = TextLayerKind::Extrude;
+    layer.width = depth;
+    layer.extrudeSteps = steps;
+    layer.extrudeAngle = angle;
+    layer.extrudeDarken = darken;
+    return layer;
+}
+
+VectorSlotValue num(double v) { return VectorSlotValue::fromScalar(v); }
+VectorSlotValue txt(const char *v) { return VectorSlotValue::fromText(QLatin1String(v)); }
+VectorSlotValue col(const QColor &c) { return VectorSlotValue::fromColor(c); }
+
+TextAnimationSlot presetSlot(const char *presetId, double durationS, const char *ease,
+                             const QMap<QString, VectorSlotValue> &extra = {})
+{
+    TextAnimationSlot slot;
+    slot.presetId = QLatin1String(presetId);
+    slot.params = extra;
+    slot.params.insert(QStringLiteral("duration"), num(durationS));
+    slot.params.insert(QStringLiteral("ease"), txt(ease));
+    return slot;
+}
+
+// Loop presets carry their own speed / amount params and no duration or ease.
+TextAnimationSlot loopSlot(const char *presetId, const QMap<QString, VectorSlotValue> &params = {})
+{
+    TextAnimationSlot slot;
+    slot.presetId = QLatin1String(presetId);
+    slot.params = params;
+    return slot;
+}
 
 QList<TextPreset> buildPresets()
 {
     QList<TextPreset> presets;
+    const auto add = [&](const char *id, const char *label, const TextStyle &style, const char *sample) {
+        presets.append({QLatin1String(id), QCoreApplication::translate("TextStyle", label), style,
+                        QCoreApplication::translate("TextStyle", sample)});
+    };
+    const auto byWord = [] { return QMap<QString, VectorSlotValue>{{QStringLiteral("unit"), txt("word")}}; };
+    const auto byChar = [] { return QMap<QString, VectorSlotValue>{{QStringLiteral("unit"), txt("character")}}; };
 
     {
         TextStyle s;
         s.fontFamily = QStringLiteral("Montserrat");
         s.pixelSize = 96;
         s.fontWeight = 800;
-        s.outlineWidth = 2.0;
-        s.outlineEnabled = true;
-        s.animIn = {TextAnimKind::Fade, 400000, TextEase::EaseOut};
-        presets.append({QStringLiteral("title"), QCoreApplication::translate("TextStyle", "Title"), s,
-                        QCoreApplication::translate("TextStyle", "Main Title")});
+        s.layers = {legacyShadow(true, QColor(0, 0, 0), 0.0, 6.0, 16.0, 0.45), legacyStroke(2.0),
+                    gradientFillLayer("mono", 90.0)};
+        s.animation.in = presetSlot("rise", 0.5, "easeOut", byWord());
+        s.animation.out = presetSlot("fade-scale", 0.4, "easeIn");
+        add("title", "Title", s, "Main Title");
     }
     {
         TextStyle s;
@@ -255,8 +285,9 @@ QList<TextPreset> buildPresets()
         s.boxColor = QColor(0, 0, 0, 140);
         s.boxPadding = 10.0;
         s.boxRadius = 6.0;
-        presets.append({QStringLiteral("subtitle"), QCoreApplication::translate("TextStyle", "Subtitle"), s,
-                        QCoreApplication::translate("TextStyle", "A supporting line")});
+        s.animation.in = presetSlot("fade", 0.3, "easeOut");
+        s.animation.out = presetSlot("fade", 0.25, "easeIn");
+        add("subtitle", "Subtitle", s, "A supporting line");
     }
     {
         TextStyle s;
@@ -268,10 +299,9 @@ QList<TextPreset> buildPresets()
         s.boxEnabled = true;
         s.boxColor = QColor(0, 0, 0, 160);
         s.boxPadding = 12.0;
-        s.animIn = {TextAnimKind::SlideRight, 500000, TextEase::EaseOut};
-        s.animOut = {TextAnimKind::SlideLeft, 400000, TextEase::EaseInOut};
-        presets.append({QStringLiteral("lower-third"), QCoreApplication::translate("TextStyle", "Lower third"), s,
-                        QCoreApplication::translate("TextStyle", "Alex Rivera · Host")});
+        s.animation.in = presetSlot("slide-right", 0.5, "easeOut");
+        s.animation.out = presetSlot("slide-left", 0.4, "easeInOut");
+        add("lower-third", "Lower third", s, "Alex Rivera · Host");
     }
     {
         TextStyle s;
@@ -279,11 +309,10 @@ QList<TextPreset> buildPresets()
         s.pixelSize = 44;
         s.fontWeight = 600;
         s.valign = TextVAlign::Bottom;
-        s.outlineWidth = 3.0;
-        s.outlineEnabled = true;
-        s.shadowEnabled = true;
-        presets.append({QStringLiteral("caption"), QCoreApplication::translate("TextStyle", "Caption"), s,
-                        QCoreApplication::translate("TextStyle", "Watch until the end")});
+        s.layers = {legacyShadow(), legacyStroke(3.0), solidFillLayer(Qt::white)};
+        s.animation.in = presetSlot("pop", 0.25, "back", {{QStringLiteral("unit"), txt("word")}, {QStringLiteral("stagger"), num(0.03)}});
+        s.animation.out = presetSlot("fade", 0.15, "easeIn");
+        add("caption", "Caption", s, "Watch until the end");
     }
     {
         TextStyle s;
@@ -292,9 +321,10 @@ QList<TextPreset> buildPresets()
         s.fontWeight = 500;
         s.italic = true;
         s.lineHeight = 1.4;
-        s.animIn = {TextAnimKind::Blur, 700000, TextEase::EaseOut};
-        presets.append({QStringLiteral("quote"), QCoreApplication::translate("TextStyle", "Quote"), s,
-                        QCoreApplication::translate("TextStyle", "Words worth keeping")});
+        s.layers = {legacyGlow(true, QColor(255, 255, 255), 14.0, 0.35), gradientFillLayer("mono", 90.0)};
+        s.animation.in = presetSlot("blur-in-words", 0.7, "easeOut");
+        s.animation.out = presetSlot("fade-shift", 0.5, "easeIn");
+        add("quote", "Quote", s, "Words worth keeping");
     }
     {
         TextStyle s;
@@ -302,27 +332,23 @@ QList<TextPreset> buildPresets()
         s.pixelSize = 120;
         s.fontWeight = 400;
         s.letterSpacing = 2.0;
-        s.outlineWidth = 6.0;
-        s.outlineEnabled = true;
-        s.shadowEnabled = true;
-        s.shadowBlur = 12.0;
-        s.shadowOffsetY = 6.0;
-        s.animIn = {TextAnimKind::Pop, 350000, TextEase::Back};
-        presets.append({QStringLiteral("impact"), QCoreApplication::translate("TextStyle", "Impact"), s,
-                        QCoreApplication::translate("TextStyle", "STOP SCROLLING")});
+        s.layers = {legacyShadow(true, QColor(0, 0, 0), 0.0, 8.0, 14.0), extrudeLayer(QColor(30, 30, 30), 10.0),
+                    legacyStroke(4.0), gradientFillLayer("fire", 90.0)};
+        s.animation.in = presetSlot("stamp", 0.35, "easeIn");
+        s.animation.out = presetSlot("fade-scale", 0.4, "easeIn");
+        add("impact", "Impact", s, "STOP SCROLLING");
     }
     {
         TextStyle s;
         s.fontFamily = QStringLiteral("Fredoka");
         s.pixelSize = 80;
         s.fontWeight = 600;
-        s.color = QColor(255, 214, 64);
-        s.outlineWidth = 5.0;
-        s.outlineEnabled = true;
-        s.animIn = {TextAnimKind::Pop, 450000, TextEase::Back};
-        s.animOut = {TextAnimKind::Pop, 300000, TextEase::EaseInOut};
-        presets.append({QStringLiteral("pop"), QCoreApplication::translate("TextStyle", "Pop"), s,
-                        QCoreApplication::translate("TextStyle", "Big news!")});
+        TextShadingLayer outer = strokeLayer(9.0, Qt::black, QStringLiteral("outline"));
+        s.layers = {outer, strokeLayer(5.0, Qt::white), gradientFillLayer("candy", 0.0, TextGradientSpace::Word)};
+        s.animation.in = presetSlot("bounce", 0.6, "bounce", byChar());
+        s.animation.out = presetSlot("shrink", 0.3, "easeIn");
+        s.animation.loop = loopSlot("wave", {{QStringLiteral("amount"), num(0.04)}});
+        add("pop", "Pop", s, "Big news!");
     }
     {
         TextStyle s;
@@ -330,18 +356,15 @@ QList<TextPreset> buildPresets()
         s.pixelSize = 110;
         s.fontWeight = 400;
         s.letterSpacing = 4.0;
-        s.color = QColor(120, 255, 245);
-        s.outlineWidth = 2.0;
-        s.outlineEnabled = true;
-        s.outlineColor = QColor(0, 90, 120);
-        s.shadowEnabled = true;
-        s.shadowColor = QColor(0, 220, 255);
-        s.shadowBlur = 24.0;
-        s.shadowOffsetX = 0.0;
-        s.shadowOffsetY = 0.0;
-        s.shadowOpacity = 0.9;
-        presets.append({QStringLiteral("neon"), QCoreApplication::translate("TextStyle", "Neon"), s,
-                        QCoreApplication::translate("TextStyle", "NEON NIGHTS")});
+        const QColor cyan(0, 220, 255);
+        TextShadingLayer fill = effectLayer("neon-pulse", {{QStringLiteral("speed"), num(1.2)}, {QStringLiteral("intensity"), num(0.35)},
+                                                           {QStringLiteral("flicker"), num(0.25)}, {QStringLiteral("colorA"), col(cyan)}},
+                                            QColor(235, 255, 255));
+        s.layers = {glowLayer(cyan, 40.0, 0.5, QStringLiteral("glowouter")), glowLayer(cyan, 14.0, 0.9),
+                    strokeLayer(2.0, cyan), fill};
+        s.animation.in = presetSlot("flicker-in", 0.9, "linear");
+        s.animation.out = presetSlot("fade", 0.3, "easeIn");
+        add("neon", "Neon", s, "NEON NIGHTS");
     }
     {
         TextStyle s;
@@ -349,11 +372,10 @@ QList<TextPreset> buildPresets()
         s.pixelSize = 72;
         s.fontWeight = 400;
         s.lineHeight = 1.35;
-        s.shadowEnabled = true;
-        s.shadowBlur = 6.0;
-        s.animIn = {TextAnimKind::SlideUp, 550000, TextEase::EaseOut};
-        presets.append({QStringLiteral("handwritten"), QCoreApplication::translate("TextStyle", "Handwritten"), s,
-                        QCoreApplication::translate("TextStyle", "With love")});
+        s.layers = {legacyShadow(true, QColor(0, 0, 0), 0.0, 4.0, 6.0), solidFillLayer(Qt::white)};
+        s.animation.in = presetSlot("typewriter", 0.4, "linear", {{QStringLiteral("stagger"), num(0.07)}});
+        s.animation.out = presetSlot("fade", 0.4, "easeIn");
+        add("handwritten", "Handwritten", s, "With love");
     }
 
     // Short-form caption packs. Unlike the presets above these carry a per-word accent rule, so the
@@ -363,89 +385,87 @@ QList<TextPreset> buildPresets()
         s.fontFamily = QStringLiteral("Anton");
         s.pixelSize = 96;
         s.fontWeight = 400;
-        s.outlineWidth = 5.0;
-        s.outlineEnabled = true;
-        s.shadowEnabled = true;
-        s.shadowBlur = 10.0;
-        s.shadowOffsetY = 6.0;
+        s.layers = {legacyShadow(true, QColor(0, 0, 0), 0.0, 6.0, 10.0), legacyStroke(5.0), solidFillLayer(Qt::white)};
         s.accent.rule = WordAccentRule::FirstWord;
         s.accent.colorEnabled = true;
         s.accent.color = QColor(255, 45, 45);
-        presets.append({QStringLiteral("hormozi"), QCoreApplication::translate("TextStyle", "Hormozi"), s,
-                        QCoreApplication::translate("TextStyle", "Stop wasting time")});
+        s.animation.in = presetSlot("pop", 0.3, "back", byWord());
+        s.animation.out = presetSlot("fade", 0.15, "easeIn");
+        add("hormozi", "Hormozi", s, "Stop wasting time");
     }
     {
         TextStyle s;
         s.fontFamily = QStringLiteral("Montserrat");
         s.pixelSize = 84;
         s.fontWeight = 800;
-        s.outlineWidth = 3.0;
-        s.outlineEnabled = true;
-        s.shadowEnabled = true;
+        s.layers = {legacyShadow(), legacyStroke(3.0), solidFillLayer(Qt::white)};
         s.accent.rule = WordAccentRule::EveryNth;
         s.accent.n = 3;
         s.accent.colorEnabled = true;
         s.accent.color = QColor(255, 59, 48);
-        presets.append({QStringLiteral("one-word-color"), QCoreApplication::translate("TextStyle", "One word colour"), s,
-                        QCoreApplication::translate("TextStyle", "Make every word count")});
+        s.animation.in = presetSlot("fade-up-char", 0.35, "easeOut");
+        s.animation.out = presetSlot("fade", 0.2, "easeIn");
+        add("one-word-color", "One word colour", s, "Make every word count");
     }
     {
         TextStyle s;
         s.fontFamily = QStringLiteral("Inter");
         s.pixelSize = 80;
         s.fontWeight = 800;
-        s.outlineWidth = 2.0;
-        s.outlineEnabled = true;
+        s.layers = {legacyStroke(2.0), solidFillLayer(Qt::white)};
         s.accent.rule = WordAccentRule::EveryOther;
         s.accent.highlight.enabled = true;
         s.accent.highlight.color = QColor(230, 40, 40);
         s.accent.highlight.padding = 8.0;
         s.accent.highlight.radius = 6.0;
-        presets.append({QStringLiteral("word-background"), QCoreApplication::translate("TextStyle", "Word background"), s,
-                        QCoreApplication::translate("TextStyle", "Highlight what matters most")});
+        s.animation.in = presetSlot("slide-up", 0.4, "easeOut", byWord());
+        s.animation.out = presetSlot("fade", 0.2, "easeIn");
+        add("word-background", "Word background", s, "Highlight what matters most");
     }
     {
         TextStyle s;
         s.fontFamily = QStringLiteral("Montserrat");
         s.pixelSize = 76;
         s.fontWeight = 800;
-        s.color = QColor(20, 20, 20);
+        s.layers = {solidFillLayer(QColor(20, 20, 20))};
         s.boxEnabled = true;
         s.boxColor = QColor(255, 196, 0);
         s.boxPadding = 14.0;
         s.boxRadius = 10.0;
-        presets.append({QStringLiteral("sentence-background"), QCoreApplication::translate("TextStyle", "Sentence background"), s,
-                        QCoreApplication::translate("TextStyle", "Read this carefully")});
+        s.animation.in = presetSlot("wipe", 0.4, "easeOut");
+        s.animation.out = presetSlot("wipe", 0.3, "easeIn");
+        add("sentence-background", "Sentence background", s, "Read this carefully");
     }
     {
         TextStyle s;
         s.fontFamily = QStringLiteral("League Spartan");
         s.pixelSize = 88;
         s.fontWeight = 900;
-        s.outlineWidth = 4.0;
-        s.outlineEnabled = true;
-        s.shadowEnabled = true;
+        s.layers = {legacyShadow(), legacyStroke(4.0), solidFillLayer(Qt::white)};
         s.accent.rule = WordAccentRule::Karaoke;
         s.accent.colorEnabled = true;
         s.accent.color = QColor(255, 212, 0);
         s.accent.sizeScale = 1.12;
-        presets.append({QStringLiteral("karaoke-pop"), QCoreApplication::translate("TextStyle", "Karaoke pop"), s,
-                        QCoreApplication::translate("TextStyle", "Sing along with me")});
+        s.animation.in = presetSlot("fade", 0.2, "easeOut");
+        s.animation.out = presetSlot("fade", 0.2, "easeIn");
+        s.animation.loop = loopSlot("karaoke-pop");
+        add("karaoke-pop", "Karaoke pop", s, "Sing along with me");
     }
     {
         TextStyle s;
         s.fontFamily = QStringLiteral("Inter");
         s.pixelSize = 78;
         s.fontWeight = 800;
-        s.outlineWidth = 2.0;
-        s.outlineEnabled = true;
+        s.layers = {legacyStroke(2.0), solidFillLayer(Qt::white)};
         s.accent.rule = WordAccentRule::Karaoke;
         s.accent.highlight.enabled = true;
         s.accent.highlight.color = QColor(34, 197, 94);
         s.accent.highlight.padding = 8.0;
         s.accent.highlight.radius = 8.0;
-        presets.append({QStringLiteral("karaoke-highlight"), QCoreApplication::translate("TextStyle", "Karaoke highlight"), s,
-                        QCoreApplication::translate("TextStyle", "Follow the bouncing words")});
+        s.animation.in = presetSlot("fade", 0.2, "easeOut");
+        s.animation.out = presetSlot("fade", 0.2, "easeIn");
+        s.animation.loop = loopSlot("karaoke-bounce");
+        add("karaoke-highlight", "Karaoke highlight", s, "Follow the bouncing words");
     }
     {
         TextStyle s;
@@ -453,26 +473,26 @@ QList<TextPreset> buildPresets()
         s.pixelSize = 76;
         s.fontWeight = 800;
         s.italic = true;
-        s.glowEnabled = true;
-        s.glowColor = QColor(255, 255, 255);
-        s.glowRadius = 20.0;
-        s.glowOpacity = 0.9;
-        presets.append({QStringLiteral("mirage"), QCoreApplication::translate("TextStyle", "Mirage"), s,
-                        QCoreApplication::translate("TextStyle", "Soft and dreamy")});
+        s.layers = {legacyGlow(true, QColor(255, 255, 255), 20.0, 0.9),
+                    gradientFillLayer("holo", 20.0, TextGradientSpace::Glyph, 0.15, true)};
+        s.animation.in = presetSlot("blur-in", 0.6, "easeOut");
+        s.animation.out = presetSlot("fade-scale", 0.5, "easeIn");
+        s.animation.loop = loopSlot("breathe");
+        add("mirage", "Mirage", s, "Soft and dreamy");
     }
     {
         TextStyle s;
         s.fontFamily = QStringLiteral("Archivo Black");
         s.pixelSize = 80;
         s.fontWeight = 400;
-        s.outlineWidth = 2.0;
-        s.outlineEnabled = true;
+        s.layers = {legacyStroke(2.0), solidFillLayer(Qt::white)};
         s.underlineEnabled = true;
         s.underlineColor = QColor(230, 40, 40);
         s.underlineWidth = 8.0;
         s.underlineOffset = 8.0;
-        presets.append({QStringLiteral("underline"), QCoreApplication::translate("TextStyle", "Underline"), s,
-                        QCoreApplication::translate("TextStyle", "Underline this line")});
+        s.animation.in = presetSlot("slide-right", 0.4, "easeOut");
+        s.animation.out = presetSlot("slide-left", 0.35, "easeIn");
+        add("underline", "Underline", s, "Underline this line");
     }
     {
         TextStyle s;
@@ -486,23 +506,211 @@ QList<TextPreset> buildPresets()
         s.wordHighlight.radius = 2.0;
         s.accent.rule = WordAccentRule::FirstWord;
         s.accent.sizeScale = 1.35;
-        presets.append({QStringLiteral("bulky"), QCoreApplication::translate("TextStyle", "Bulky"), s,
-                        QCoreApplication::translate("TextStyle", "Big first word")});
+        s.animation.in = presetSlot("drop", 0.5, "bounce");
+        s.animation.out = presetSlot("fall", 0.5, "easeIn");
+        add("bulky", "Bulky", s, "Big first word");
     }
     {
         TextStyle s;
         s.fontFamily = QStringLiteral("Montserrat");
         s.pixelSize = 82;
         s.fontWeight = 900;
-        s.color = QColor(255, 255, 255, 0); // hollow by default; the accent words are the solid ones
-        s.outlineWidth = 3.0;
-        s.outlineEnabled = true;
-        s.outlineColor = QColor(255, 255, 255);
+        // Hollow by default; the accent words are the solid ones.
+        s.layers = {legacyStroke(3.0, QColor(255, 255, 255)), solidFillLayer(QColor(255, 255, 255, 0))};
         s.accent.rule = WordAccentRule::EveryOther;
         s.accent.colorEnabled = true;
         s.accent.color = QColor(255, 255, 255);
-        presets.append({QStringLiteral("word-outline"), QCoreApplication::translate("TextStyle", "Word outline"), s,
-                        QCoreApplication::translate("TextStyle", "Outline every other word")});
+        s.animation.in = presetSlot("converge", 0.6, "easeOut");
+        s.animation.out = presetSlot("fade-scale", 0.4, "easeIn");
+        add("word-outline", "Word outline", s, "Outline every other word");
+    }
+
+    // Showpiece packs: gradients, shader effects, extrusions and arcs on top of the layer stack.
+    {
+        TextStyle s;
+        s.fontFamily = QStringLiteral("Cinzel");
+        s.pixelSize = 84;
+        s.fontWeight = 700;
+        s.letterSpacing = 6.0;
+        TextShadingLayer sheen = effectLayer("shine", {{QStringLiteral("speed"), num(0.4)}, {QStringLiteral("width"), num(0.2)},
+                                                       {QStringLiteral("angle"), num(20.0)}, {QStringLiteral("intensity"), num(0.9)}},
+                                             QColor(0, 0, 0, 0), BlendMode::Screen, QStringLiteral("shine"));
+        s.layers = {legacyShadow(true, QColor(0, 0, 0), 0.0, 6.0, 14.0, 0.5), strokeLayer(1.0, QColor(120, 90, 20)),
+                    gradientFillLayer("gold", 90.0), sheen};
+        s.animation.in = presetSlot("fade", 0.6, "easeOut");
+        s.animation.out = presetSlot("fade", 0.5, "easeIn");
+        add("gold-luxe", "Gold", s, "GOLD STANDARD");
+    }
+    {
+        TextStyle s;
+        s.fontFamily = QStringLiteral("Rubik One");
+        s.pixelSize = 96;
+        s.fontWeight = 400;
+        s.layers = {legacyShadow(true, QColor(0, 0, 0), 0.0, 5.0, 8.0, 0.5), strokeLayer(1.0, QColor(42, 42, 42)),
+                    effectLayer("chrome", {{QStringLiteral("speed"), num(0.2)}, {QStringLiteral("bands"), num(2.0)},
+                                           {QStringLiteral("colorA"), col(QColor(240, 245, 255))},
+                                           {QStringLiteral("colorB"), col(QColor(40, 50, 70))}})};
+        s.animation.in = presetSlot("zoom-out", 0.5, "easeOut");
+        s.animation.out = presetSlot("fade-scale", 0.4, "easeIn");
+        add("chrome", "Chrome", s, "CHROME");
+    }
+    {
+        TextStyle s;
+        s.fontFamily = QStringLiteral("Rubik One");
+        s.pixelSize = 100;
+        s.fontWeight = 400;
+        s.layers = {extrudeLayer(QColor(60, 30, 90), 16.0), legacyStroke(3.0), gradientFillLayer("sunset", 90.0)};
+        s.animation.in = presetSlot("drop", 0.5, "bounce", byWord());
+        s.animation.out = presetSlot("fall", 0.5, "easeIn");
+        add("retro-3d", "Retro 3D", s, "TOTALLY RAD");
+    }
+    {
+        TextStyle s;
+        s.fontFamily = QStringLiteral("DM Sans");
+        s.pixelSize = 88;
+        s.fontWeight = 800;
+        TextShadingLayer a = solidFillLayer(QColor(255, 0, 255), QStringLiteral("glitcha"));
+        a.offsetX = -4.0;
+        a.blend = BlendMode::Screen;
+        a.opacity = 0.8;
+        TextShadingLayer b = solidFillLayer(QColor(0, 255, 255), QStringLiteral("glitchb"));
+        b.offsetX = 4.0;
+        b.blend = BlendMode::Screen;
+        b.opacity = 0.8;
+        s.layers = {a, b, effectLayer("glitch", {{QStringLiteral("speed"), num(6.0)}, {QStringLiteral("amount"), num(10.0)},
+                                                 {QStringLiteral("block"), num(8.0)}})};
+        s.animation.in = presetSlot("glitch-in", 0.3, "linear");
+        s.animation.out = presetSlot("glitch-in", 0.3, "linear");
+        s.animation.loop = loopSlot("jitter", {{QStringLiteral("amount"), num(0.8)}, {QStringLiteral("angle"), num(0.0)}});
+        add("glitch", "Glitch", s, "SIGNAL LOST");
+    }
+    {
+        TextStyle s;
+        s.fontFamily = QStringLiteral("Fredoka");
+        s.pixelSize = 92;
+        s.fontWeight = 700;
+        s.layers = {extrudeLayer(Qt::black, 8.0), strokeLayer(10.0, Qt::white, QStringLiteral("outline")),
+                    strokeLayer(6.0, Qt::black), solidFillLayer(QColor(255, 214, 64))};
+        s.animation.in = presetSlot("stamp", 0.35, "easeIn");
+        s.animation.out = presetSlot("pop", 0.3, "easeIn");
+        s.animation.loop = loopSlot("sway");
+        add("comic", "Comic", s, "KAPOW!");
+    }
+    {
+        TextStyle s;
+        s.fontFamily = QStringLiteral("Anton");
+        s.pixelSize = 110;
+        s.fontWeight = 400;
+        s.letterSpacing = 2.0;
+        s.layers = {glowLayer(QColor(255, 120, 0), 22.0, 0.8), gradientFillLayer("fire", 90.0)};
+        s.animation.in = presetSlot("rise", 0.5, "easeOut", {{QStringLiteral("unit"), txt("character")}, {QStringLiteral("order"), txt("random")}});
+        s.animation.out = presetSlot("fade-scale", 0.4, "easeIn");
+        s.animation.loop = loopSlot("flicker", {{QStringLiteral("intensity"), num(0.15)}});
+        add("fire", "Fire", s, "ON FIRE");
+    }
+    {
+        TextStyle s;
+        s.fontFamily = QStringLiteral("Bebas Neue");
+        s.pixelSize = 110;
+        s.fontWeight = 400;
+        s.letterSpacing = 4.0;
+        s.layers = {glowLayer(Qt::white, 18.0, 0.7), strokeLayer(2.0, QColor(140, 210, 255)), gradientFillLayer("ice", 90.0)};
+        s.animation.in = presetSlot("converge", 0.7, "easeOut");
+        s.animation.out = presetSlot("fade-scale", 0.5, "easeIn");
+        add("ice", "Ice", s, "FROZEN");
+    }
+    {
+        TextStyle s;
+        s.fontFamily = QStringLiteral("Fredoka");
+        s.pixelSize = 84;
+        s.fontWeight = 600;
+        s.layers = {strokeLayer(6.0, QColor(255, 110, 199)), gradientFillLayer("candy", 0.0, TextGradientSpace::Word)};
+        s.animation.in = presetSlot("bounce", 0.6, "bounce", byChar());
+        s.animation.out = presetSlot("shrink", 0.3, "easeIn");
+        s.animation.loop = loopSlot("wave", {{QStringLiteral("amount"), num(0.05)}});
+        add("candy", "Candy", s, "Sweet treats");
+    }
+    {
+        TextStyle s;
+        s.fontFamily = QStringLiteral("Plus Jakarta Sans");
+        s.pixelSize = 80;
+        s.fontWeight = 800;
+        s.pathBend = 30.0;
+        s.layers = {legacyShadow(true, QColor(0, 0, 0), 0.0, 4.0, 0.0, 0.35), strokeLayer(14.0, Qt::white, QStringLiteral("outline")),
+                    strokeLayer(4.0, QColor(255, 59, 48)), solidFillLayer(Qt::white)};
+        s.animation.in = presetSlot("spin-in", 0.5, "back");
+        s.animation.out = presetSlot("shrink", 0.3, "easeIn");
+        add("sticker", "Sticker", s, "Sticker!");
+    }
+    {
+        TextStyle s;
+        s.fontFamily = QStringLiteral("Poppins");
+        s.pixelSize = 92;
+        s.fontWeight = 900;
+        s.layers = {legacyStroke(3.0), gradientFillLayer("rainbow", 0.0, TextGradientSpace::Glyph, 0.25, true)};
+        s.animation.in = presetSlot("rain", 0.5, "easeOut");
+        s.animation.out = presetSlot("fade-scale", 0.4, "easeIn");
+        s.animation.loop = loopSlot("wave");
+        add("rainbow", "Rainbow wave", s, "Taste the rainbow");
+    }
+    {
+        TextStyle s;
+        s.fontFamily = QStringLiteral("Cormorant Garamond");
+        s.pixelSize = 72;
+        s.fontWeight = 500;
+        s.letterSpacing = 14.0;
+        s.layers = {legacyGlow(true, QColor(255, 255, 255), 12.0, 0.25), gradientFillLayer("mono", 90.0)};
+        s.animation.in = presetSlot("snap-together", 1.0, "easeOut");
+        s.animation.out = presetSlot("fade-scale", 0.8, "easeIn");
+        s.animation.loop = loopSlot("tracking-drift");
+        add("cinematic", "Cinematic", s, "THE BEGINNING");
+    }
+    {
+        TextStyle s;
+        s.fontFamily = QStringLiteral("Outfit");
+        s.pixelSize = 88;
+        s.fontWeight = 800;
+        TextShadingLayer shimmer = effectLayer("shimmer", {{QStringLiteral("speed"), num(0.3)}, {QStringLiteral("scale"), num(3.0)},
+                                                           {QStringLiteral("intensity"), num(0.6)}},
+                                               Qt::white, BlendMode::Screen, QStringLiteral("shimmer"));
+        shimmer.opacity = 0.7;
+        s.layers = {glowLayer(Qt::white, 10.0, 0.4), gradientFillLayer("holo", 20.0, TextGradientSpace::Glyph, 0.1, true), shimmer};
+        s.animation.in = presetSlot("flip", 0.45, "back");
+        s.animation.out = presetSlot("flip", 0.35, "easeIn");
+        s.animation.loop = loopSlot("float");
+        add("holo-shimmer", "Shimmer", s, "Shimmer");
+    }
+    {
+        TextStyle s;
+        s.fontFamily = QStringLiteral("Ubuntu");
+        s.pixelSize = 84;
+        s.fontWeight = 700;
+        TextShadingLayer stroke = strokeLayer(3.0, Qt::white);
+        stroke.sketchLength = 6.0;
+        stroke.sketchDeviation = 2.0;
+        stroke.dash = StrokeDash::Dash;
+        TextShadingLayer fill = solidFillLayer(Qt::white);
+        fill.enabled = false;
+        s.layers = {stroke, fill};
+        s.animation.in = presetSlot("typewriter", 0.4, "linear", {{QStringLiteral("stagger"), num(0.06)}});
+        s.animation.out = presetSlot("fade", 0.3, "easeIn");
+        s.animation.loop = loopSlot("jitter", {{QStringLiteral("amount"), num(0.5)}, {QStringLiteral("angle"), num(0.5)}, {QStringLiteral("speed"), num(6.0)}});
+        add("sketch", "Sketch", s, "Rough draft");
+    }
+    {
+        TextStyle s;
+        s.fontFamily = QStringLiteral("Bodoni Moda");
+        s.pixelSize = 80;
+        s.fontWeight = 600;
+        s.italic = true;
+        s.lineHeight = 1.3;
+        s.underlineEnabled = true;
+        s.underlineColor = QColor(255, 255, 255, 180);
+        s.underlineWidth = 2.0;
+        s.underlineOffset = 10.0;
+        s.animation.in = presetSlot("rise-by-word", 0.5, "easeOut");
+        s.animation.out = presetSlot("remove-by-word", 0.4, "easeIn");
+        add("editorial", "Editorial", s, "The quiet issue");
     }
 
     return presets;
@@ -534,6 +742,9 @@ std::optional<TextStyle> textStyleForPresetId(const QString &id)
         return std::nullopt;
     return preset->style;
 }
+
+// ---------------------------------------------------------------------------------------------
+// Highlight / accent JSON
 
 QJsonObject textHighlightToJson(const TextHighlight &h)
 {
@@ -591,33 +802,179 @@ WordAccent wordAccentFromJson(const QJsonObject &o)
     return a;
 }
 
+// ---------------------------------------------------------------------------------------------
+// Keyframe keys
+
+namespace {
+
+const QStringList &flatKeyframeKeys()
+{
+    static const QStringList keys{QStringLiteral("pixelSize"), QStringLiteral("letterSpacing"),
+                                  QStringLiteral("lineHeight"), QStringLiteral("boxPadding"),
+                                  QStringLiteral("pathBend")};
+    return keys;
+}
+
+// Legacy flat names → the layer path they map to on a migrated style.
+const QMap<QString, QString> &legacyKeyAliases()
+{
+    static const QMap<QString, QString> aliases{
+        {QStringLiteral("outlineWidth"), QStringLiteral("layer.stroke.width")},
+        {QStringLiteral("shadowOffsetX"), QStringLiteral("layer.shadow.offsetX")},
+        {QStringLiteral("shadowOffsetY"), QStringLiteral("layer.shadow.offsetY")},
+        {QStringLiteral("shadowBlur"), QStringLiteral("layer.shadow.blur")},
+        {QStringLiteral("shadowOpacity"), QStringLiteral("layer.shadow.opacity")},
+        {QStringLiteral("glowRadius"), QStringLiteral("layer.glow.blur")},
+        {QStringLiteral("glowOpacity"), QStringLiteral("layer.glow.opacity")},
+        {QStringLiteral("gradientAngle"), QStringLiteral("layer.fill.gradient.angle")},
+        {QStringLiteral("color.r"), QStringLiteral("layer.fill.color.r")},
+        {QStringLiteral("color.g"), QStringLiteral("layer.fill.color.g")},
+        {QStringLiteral("color.b"), QStringLiteral("layer.fill.color.b")},
+        {QStringLiteral("color.a"), QStringLiteral("layer.fill.color.a")},
+    };
+    return aliases;
+}
+
+} // namespace
+
+QStringList textKeyframeProperties(const TextStyle &s)
+{
+    QStringList out = flatKeyframeKeys();
+    for (const TextShadingLayer &layer : s.layers) {
+        for (const QString &field : shadingLayerKeyframeFields(layer))
+            out.append(QStringLiteral("layer.%1.%2").arg(layer.id, field));
+    }
+    return out;
+}
+
+QString textKeyframeCanonicalKey(const QString &key, const TextStyle &s)
+{
+    if (flatKeyframeKeys().contains(key))
+        return key;
+    QString candidate = key;
+    const auto alias = legacyKeyAliases().constFind(key);
+    if (alias != legacyKeyAliases().constEnd())
+        candidate = *alias;
+    LayerKeyPath path;
+    if (!parseLayerKey(candidate, &path))
+        return {};
+    const TextShadingLayer *layer = findTextLayer(s.layers, path.layerId);
+    if (!layer)
+        return {};
+    double probe = 0.0;
+    return shadingLayerScalar(*layer, path.field, &probe) ? candidate : QString();
+}
+
+QString textKeyframeLabel(const QString &key, const TextStyle &s)
+{
+    const QString canonical = textKeyframeCanonicalKey(key, s);
+    if (canonical == QLatin1String("pixelSize"))
+        return QCoreApplication::translate("TextStyle", "Text size");
+    if (canonical == QLatin1String("letterSpacing"))
+        return QCoreApplication::translate("TextStyle", "Letter spacing");
+    if (canonical == QLatin1String("lineHeight"))
+        return QCoreApplication::translate("TextStyle", "Line height");
+    if (canonical == QLatin1String("boxPadding"))
+        return QCoreApplication::translate("TextStyle", "Box padding");
+    if (canonical == QLatin1String("pathBend"))
+        return QCoreApplication::translate("TextStyle", "Bend");
+    return shadingLayerKeyframeLabel(s.layers, canonical.isEmpty() ? key : canonical);
+}
+
+bool textStyleScalar(const TextStyle &s, const QString &rawKey, double *out)
+{
+    const QString key = textKeyframeCanonicalKey(rawKey, s);
+    if (key.isEmpty())
+        return false;
+    if (key == QStringLiteral("pixelSize"))
+        *out = s.pixelSize;
+    else if (key == QStringLiteral("letterSpacing"))
+        *out = s.letterSpacing;
+    else if (key == QStringLiteral("lineHeight"))
+        *out = s.lineHeight;
+    else if (key == QStringLiteral("boxPadding"))
+        *out = s.boxPadding;
+    else if (key == QStringLiteral("pathBend"))
+        *out = s.pathBend;
+    else {
+        LayerKeyPath path;
+        parseLayerKey(key, &path);
+        return shadingLayerScalar(*findTextLayer(s.layers, path.layerId), path.field, out);
+    }
+    return true;
+}
+
+bool setTextStyleScalar(TextStyle &s, const QString &rawKey, double value)
+{
+    const QString key = textKeyframeCanonicalKey(rawKey, s);
+    if (key.isEmpty())
+        return false;
+    if (key == QStringLiteral("pixelSize"))
+        s.pixelSize = qMax(1, qRound(value));
+    else if (key == QStringLiteral("letterSpacing"))
+        s.letterSpacing = value;
+    else if (key == QStringLiteral("lineHeight"))
+        s.lineHeight = value;
+    else if (key == QStringLiteral("boxPadding"))
+        s.boxPadding = qMax(0.0, value);
+    else if (key == QStringLiteral("pathBend"))
+        s.pathBend = qBound(-100.0, value, 100.0);
+    else {
+        LayerKeyPath path;
+        parseLayerKey(key, &path);
+        return setShadingLayerScalar(*findTextLayer(s.layers, path.layerId), path.field, value);
+    }
+    return true;
+}
+
+bool TextStyle::isAnimated() const
+{
+    for (auto it = keyframes.constBegin(); it != keyframes.constEnd(); ++it) {
+        if (!it->isEmpty() && it->enabled())
+            return true;
+    }
+    return false;
+}
+
+TextStyle TextStyle::resolvedAt(TimeUs clipTimeUs) const
+{
+    TextStyle out = *this;
+    for (auto it = keyframes.constBegin(); it != keyframes.constEnd(); ++it) {
+        if (!it->isEmpty())
+            setTextStyleScalar(out, it.key(), it->evaluateAt(clipTimeUs));
+    }
+    return out;
+}
+
+// ---------------------------------------------------------------------------------------------
+// JSON
+
 QJsonObject textStyleToJson(const TextStyle &s)
 {
-    return QJsonObject{
+    QJsonObject keyframesJson;
+    for (auto it = s.keyframes.constBegin(); it != s.keyframes.constEnd(); ++it) {
+        if (!it->isEmpty())
+            keyframesJson.insert(it.key(), keyframesToJson(it.value()));
+    }
+    QJsonArray layers;
+    for (const TextShadingLayer &layer : s.layers)
+        layers.append(textShadingLayerToJson(layer));
+    QJsonObject lookParams;
+    for (auto it = s.lookParams.constBegin(); it != s.lookParams.constEnd(); ++it)
+        lookParams.insert(it.key(), it->toJson());
+    QJsonObject json{
         {QStringLiteral("packId"), s.packId},
         {QStringLiteral("fontFamily"), s.fontFamily},
         {QStringLiteral("pixelSize"), s.pixelSize},
         {QStringLiteral("fontWeight"), s.fontWeight},
         {QStringLiteral("italic"), s.italic},
-        {QStringLiteral("color"), s.color.name(QColor::HexArgb)},
+        {QStringLiteral("layers"), layers},
+        {QStringLiteral("pathBend"), s.pathBend},
         {QStringLiteral("align"), textAlignToString(s.align)},
         {QStringLiteral("valign"), textVAlignToString(s.valign)},
         {QStringLiteral("wordWrap"), s.wordWrap},
         {QStringLiteral("lineHeight"), s.lineHeight},
         {QStringLiteral("letterSpacing"), s.letterSpacing},
-        {QStringLiteral("outlineEnabled"), s.outlineEnabled},
-        {QStringLiteral("outlineWidth"), s.outlineWidth},
-        {QStringLiteral("outlineColor"), s.outlineColor.name(QColor::HexArgb)},
-        {QStringLiteral("shadowEnabled"), s.shadowEnabled},
-        {QStringLiteral("shadowOffsetX"), s.shadowOffsetX},
-        {QStringLiteral("shadowOffsetY"), s.shadowOffsetY},
-        {QStringLiteral("shadowBlur"), s.shadowBlur},
-        {QStringLiteral("shadowOpacity"), s.shadowOpacity},
-        {QStringLiteral("shadowColor"), s.shadowColor.name(QColor::HexArgb)},
-        {QStringLiteral("glowEnabled"), s.glowEnabled},
-        {QStringLiteral("glowColor"), s.glowColor.name(QColor::HexArgb)},
-        {QStringLiteral("glowRadius"), s.glowRadius},
-        {QStringLiteral("glowOpacity"), s.glowOpacity},
         {QStringLiteral("boxEnabled"), s.boxEnabled},
         {QStringLiteral("boxColor"), s.boxColor.name(QColor::HexArgb)},
         {QStringLiteral("boxPadding"), s.boxPadding},
@@ -628,20 +985,80 @@ QJsonObject textStyleToJson(const TextStyle &s)
         {QStringLiteral("underlineWidth"), s.underlineWidth},
         {QStringLiteral("underlineOffset"), s.underlineOffset},
         {QStringLiteral("accent"), wordAccentToJson(s.accent)},
-        {QStringLiteral("animInKind"), textAnimKindToString(s.animIn.kind)},
-        {QStringLiteral("animInDurationUs"), static_cast<qint64>(s.animIn.durationUs)},
-        {QStringLiteral("animInEase"), textEaseToString(s.animIn.ease)},
-        {QStringLiteral("animInUnit"), textAnimUnitToString(s.animIn.unit)},
-        {QStringLiteral("animInStaggerUs"), static_cast<qint64>(s.animIn.staggerUs)},
-        {QStringLiteral("animInOrder"), textAnimOrderToString(s.animIn.order)},
-        {QStringLiteral("animOutKind"), textAnimKindToString(s.animOut.kind)},
-        {QStringLiteral("animOutDurationUs"), static_cast<qint64>(s.animOut.durationUs)},
-        {QStringLiteral("animOutEase"), textEaseToString(s.animOut.ease)},
-        {QStringLiteral("animOutUnit"), textAnimUnitToString(s.animOut.unit)},
-        {QStringLiteral("animOutStaggerUs"), static_cast<qint64>(s.animOut.staggerUs)},
-        {QStringLiteral("animOutOrder"), textAnimOrderToString(s.animOut.order)},
+        {QStringLiteral("animation"), textAnimationSetToJson(s.animation)},
     };
+    if (!s.lookId.isEmpty()) {
+        json.insert(QStringLiteral("lookId"), s.lookId);
+        json.insert(QStringLiteral("lookParams"), lookParams);
+    }
+    // Only animated styles carry the key: projects without text animation stay byte-identical.
+    if (!keyframesJson.isEmpty())
+        json.insert(QStringLiteral("keyframes"), keyframesJson);
+    return json;
 }
+
+namespace {
+
+// The v6 flat look, migrated into the four well-known layers in their painting order. Disabled
+// layers are still created so toggling one back on restores the old width or blur.
+QList<TextShadingLayer> legacyLayersFromJson(const QJsonObject &o)
+{
+    const auto color = [&](const char *key, const QColor &fallback) {
+        return QColor(o.value(QLatin1String(key)).toString(fallback.name(QColor::HexArgb)));
+    };
+    const auto number = [&](const char *key, double fallback) { return o.value(QLatin1String(key)).toDouble(fallback); };
+
+    TextShadingLayer shadow = shadowLayer(color("shadowColor", QColor(0, 0, 0)), number("shadowOffsetX", 0.0),
+                                          number("shadowOffsetY", 4.0), number("shadowBlur", 8.0),
+                                          number("shadowOpacity", 0.6));
+    shadow.enabled = o.value(QStringLiteral("shadowEnabled")).toBool(false);
+
+    TextShadingLayer glow = glowLayer(color("glowColor", QColor(255, 255, 255)), number("glowRadius", 18.0),
+                                      number("glowOpacity", 0.8));
+    glow.enabled = o.value(QStringLiteral("glowEnabled")).toBool(false);
+
+    TextShadingLayer stroke = strokeLayer(number("outlineWidth", 2.0), color("outlineColor", QColor(Qt::black)));
+    // Projects written before outlineEnabled treated any positive width as on.
+    stroke.enabled = o.contains(QStringLiteral("outlineEnabled")) ? o.value(QStringLiteral("outlineEnabled")).toBool()
+                                                                  : stroke.width > 0.0;
+
+    TextShadingLayer fill = solidFillLayer(color("color", QColor(Qt::white)));
+    const QString fillKind = o.value(QStringLiteral("fillKind")).toString();
+    if (fillKind == QLatin1String("linearGradient") || fillKind == QLatin1String("radialGradient")) {
+        fill.paint.kind = TextPaintKind::Gradient;
+        fill.paint.gradient.kind = fillKind == QLatin1String("radialGradient") ? TextGradientKind::Radial
+                                                                                : TextGradientKind::Linear;
+        fill.paint.gradient.stops = {{0.0, fill.paint.color}, {1.0, color("colorSecondary", QColor(255, 120, 0))}};
+        fill.paint.gradient.angle = number("gradientAngle", 90.0);
+    }
+    return {shadow, glow, stroke, fill};
+}
+
+TextAnimationSet legacyAnimationFromJson(const QJsonObject &o)
+{
+    TextAnimationSet set;
+    bool inIsLoop = false;
+    const TextAnimationSlot in = legacyTextAnimationSlot(
+        o.value(QStringLiteral("animInKind")).toString(), o.value(QStringLiteral("animInDurationUs")).toInteger(400000),
+        o.value(QStringLiteral("animInEase")).toString(), o.value(QStringLiteral("animInUnit")).toString(),
+        o.value(QStringLiteral("animInStaggerUs")).toInteger(60000), o.value(QStringLiteral("animInOrder")).toString(),
+        &inIsLoop);
+    if (inIsLoop)
+        set.loop = in;
+    else
+        set.in = in;
+    bool outIsLoop = false;
+    const TextAnimationSlot out = legacyTextAnimationSlot(
+        o.value(QStringLiteral("animOutKind")).toString(), o.value(QStringLiteral("animOutDurationUs")).toInteger(400000),
+        o.value(QStringLiteral("animOutEase")).toString(), o.value(QStringLiteral("animOutUnit")).toString(),
+        o.value(QStringLiteral("animOutStaggerUs")).toInteger(60000), o.value(QStringLiteral("animOutOrder")).toString(),
+        &outIsLoop);
+    if (!outIsLoop) // an exiting Wave was never drawn
+        set.out = out;
+    return set;
+}
+
+} // namespace
 
 TextStyle textStyleFromJson(const QJsonObject &o)
 {
@@ -657,29 +1074,12 @@ TextStyle textStyleFromJson(const QJsonObject &o)
     else
         s.fontWeight = o.value(QStringLiteral("bold")).toBool(true) ? 700 : 400;
     s.italic = o.value(QStringLiteral("italic")).toBool(s.italic);
-    s.color = QColor(o.value(QStringLiteral("color")).toString(s.color.name(QColor::HexArgb)));
+    s.pathBend = o.value(QStringLiteral("pathBend")).toDouble(s.pathBend);
     s.align = textAlignFromString(o.value(QStringLiteral("align")).toString());
     s.valign = textVAlignFromString(o.value(QStringLiteral("valign")).toString());
     s.wordWrap = o.value(QStringLiteral("wordWrap")).toBool(s.wordWrap);
     s.lineHeight = o.value(QStringLiteral("lineHeight")).toDouble(s.lineHeight);
     s.letterSpacing = o.value(QStringLiteral("letterSpacing")).toDouble(s.letterSpacing);
-    s.outlineWidth = o.value(QStringLiteral("outlineWidth")).toDouble(s.outlineWidth);
-    s.outlineColor = QColor(o.value(QStringLiteral("outlineColor")).toString(s.outlineColor.name(QColor::HexArgb)));
-    // Projects written before outlineEnabled treated any positive width as on.
-    if (o.contains(QStringLiteral("outlineEnabled")))
-        s.outlineEnabled = o.value(QStringLiteral("outlineEnabled")).toBool(s.outlineEnabled);
-    else
-        s.outlineEnabled = s.outlineWidth > 0.0;
-    s.shadowEnabled = o.value(QStringLiteral("shadowEnabled")).toBool(s.shadowEnabled);
-    s.shadowOffsetX = o.value(QStringLiteral("shadowOffsetX")).toDouble(s.shadowOffsetX);
-    s.shadowOffsetY = o.value(QStringLiteral("shadowOffsetY")).toDouble(s.shadowOffsetY);
-    s.shadowBlur = o.value(QStringLiteral("shadowBlur")).toDouble(s.shadowBlur);
-    s.shadowOpacity = o.value(QStringLiteral("shadowOpacity")).toDouble(s.shadowOpacity);
-    s.shadowColor = QColor(o.value(QStringLiteral("shadowColor")).toString(s.shadowColor.name(QColor::HexArgb)));
-    s.glowEnabled = o.value(QStringLiteral("glowEnabled")).toBool(s.glowEnabled);
-    s.glowColor = QColor(o.value(QStringLiteral("glowColor")).toString(s.glowColor.name(QColor::HexArgb)));
-    s.glowRadius = o.value(QStringLiteral("glowRadius")).toDouble(s.glowRadius);
-    s.glowOpacity = o.value(QStringLiteral("glowOpacity")).toDouble(s.glowOpacity);
     s.boxEnabled = o.value(QStringLiteral("boxEnabled")).toBool(s.boxEnabled);
     s.boxColor = QColor(o.value(QStringLiteral("boxColor")).toString(s.boxColor.name(QColor::HexArgb)));
     s.boxPadding = o.value(QStringLiteral("boxPadding")).toDouble(s.boxPadding);
@@ -691,20 +1091,35 @@ TextStyle textStyleFromJson(const QJsonObject &o)
     s.underlineWidth = o.value(QStringLiteral("underlineWidth")).toDouble(s.underlineWidth);
     s.underlineOffset = o.value(QStringLiteral("underlineOffset")).toDouble(s.underlineOffset);
     s.accent = wordAccentFromJson(o.value(QStringLiteral("accent")).toObject());
-    s.animIn.kind = textAnimKindFromString(o.value(QStringLiteral("animInKind")).toString());
-    s.animIn.durationUs = o.value(QStringLiteral("animInDurationUs")).toInteger(s.animIn.durationUs);
-    s.animIn.ease = textEaseFromString(o.value(QStringLiteral("animInEase")).toString());
-    // Missing keys keep the Block/default reveal, so projects predating per-span animation are
-    // deserialized identically to how they render today.
-    s.animIn.unit = textAnimUnitFromString(o.value(QStringLiteral("animInUnit")).toString());
-    s.animIn.staggerUs = o.value(QStringLiteral("animInStaggerUs")).toInteger(s.animIn.staggerUs);
-    s.animIn.order = textAnimOrderFromString(o.value(QStringLiteral("animInOrder")).toString());
-    s.animOut.kind = textAnimKindFromString(o.value(QStringLiteral("animOutKind")).toString());
-    s.animOut.durationUs = o.value(QStringLiteral("animOutDurationUs")).toInteger(s.animOut.durationUs);
-    s.animOut.ease = textEaseFromString(o.value(QStringLiteral("animOutEase")).toString());
-    s.animOut.unit = textAnimUnitFromString(o.value(QStringLiteral("animOutUnit")).toString());
-    s.animOut.staggerUs = o.value(QStringLiteral("animOutStaggerUs")).toInteger(s.animOut.staggerUs);
-    s.animOut.order = textAnimOrderFromString(o.value(QStringLiteral("animOutOrder")).toString());
+
+    if (o.contains(QStringLiteral("layers"))) {
+        s.layers.clear();
+        for (const QJsonValue &v : o.value(QStringLiteral("layers")).toArray())
+            s.layers.append(textShadingLayerFromJson(v.toObject()));
+        if (s.layers.isEmpty())
+            s.layers = {solidFillLayer(Qt::white)};
+        for (TextShadingLayer &layer : s.layers) {
+            if (layer.id.isEmpty())
+                layer.id = mintTextLayerId(s.layers);
+        }
+        s.lookId = o.value(QStringLiteral("lookId")).toString();
+        const QJsonObject lookParams = o.value(QStringLiteral("lookParams")).toObject();
+        for (auto it = lookParams.constBegin(); it != lookParams.constEnd(); ++it)
+            s.lookParams.insert(it.key(), VectorSlotValue::fromJson(it->toObject()));
+        s.animation = textAnimationSetFromJson(o.value(QStringLiteral("animation")).toObject());
+    } else {
+        // Version 6 and older: the flat look and the animIn/animOut kinds. Kept for good — the
+        // user preset library and exported style files share this reader.
+        s.layers = legacyLayersFromJson(o);
+        s.animation = legacyAnimationFromJson(o);
+    }
+
+    const QJsonObject keyframesJson = o.value(QStringLiteral("keyframes")).toObject();
+    for (auto it = keyframesJson.constBegin(); it != keyframesJson.constEnd(); ++it) {
+        const QString canonical = textKeyframeCanonicalKey(it.key(), s);
+        if (!canonical.isEmpty())
+            s.keyframes.insert(canonical, keyframesFromJson(it.value().toObject()));
+    }
     return s;
 }
 

@@ -2,6 +2,7 @@
 
 #include <QJsonObject>
 #include <QString>
+#include <QVariantList>
 
 class AppController;
 
@@ -31,7 +32,13 @@ private:
     };
 
     ClipRef resolveClip(const QJsonObject &args) const;
+    // "video", "audio", "image", "text", "subtitle", "shape", "adjustment", "vector".
+    QString clipKind(const ClipRef &ref) const;
+    // type_mismatch unless the clip's kind is one of `kinds`; empty when it is.
+    QJsonObject requireKind(const ClipRef &ref, const QStringList &kinds, const char *what) const;
     int resolveAsset(const QJsonValue &value) const;
+    // transitionKinds() rows carry their id under "kind"; the catalog helpers key on "id".
+    QVariantList transitionCatalog() const;
     QJsonObject clipFeedback(const ClipRef &ref, const QJsonObject &extra = {}) const;
     QJsonObject effectHost(const ClipRef &ref, QJsonObject extra) const;
     QJsonObject waitImport(const QStringList &ids);

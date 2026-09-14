@@ -1,0 +1,52 @@
+{
+  "format": 1,
+  "id": "type-on-blur",
+  "label": "Type-on blur",
+  "category": "character",
+  "sampleText": "Text Animation",
+  "slots": [
+    "in",
+    "out"
+  ],
+  "order": 100,
+  "defaults": {
+    "unit": "character",
+    "stagger": 0.04,
+    "duration": 0.35,
+    "ease": "smooth"
+  },
+  "params": [
+    {
+      "id": "blur",
+      "type": "scalar",
+      "label": "Blur",
+      "unit": "px",
+      "min": 0,
+      "max": 48,
+      "step": 1,
+      "default": 12
+    },
+    {
+      "id": "scale",
+      "type": "scalar",
+      "label": "Scale",
+      "unit": "%",
+      "min": 50,
+      "max": 200,
+      "step": 1,
+      "default": 115
+    }
+  ],
+  "animators": [
+    {
+      "selectors": [
+        "stagger"
+      ],
+      "props": {
+        "opacity": 0,
+        "blur": "{blur}",
+        "scale": "{scale}"
+      }
+    }
+  ]
+}

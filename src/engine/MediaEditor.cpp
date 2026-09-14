@@ -777,7 +777,7 @@ bool editVideo(const MediaEditSpec &spec, QString *errorOut,
         return fail(trEdit("The video has no usable size"));
     }
 
-    const int rotation = displayRotationOf(vStream);
+    const int rotation = spec.rotationOverride >= 0 ? spec.rotationOverride : displayRotationOf(vStream);
     int displayW = vDec->width;
     int displayH = vDec->height;
     if (rotation == 90 || rotation == 270)

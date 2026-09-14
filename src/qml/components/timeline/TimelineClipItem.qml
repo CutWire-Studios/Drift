@@ -511,11 +511,12 @@ Item {
             // Video only: on-demand tiles need a decodable video stream, and images/shapes
             // have a single poster frame that the strip already covers exactly.
             sourcePath: clipItem.clipData.kind === "video" ? (clipItem.clipData.path || "") : ""
+            rotationCorrection: clipItem.clipData.rotationCorrection || 0
             inPoint: clipItem.clipData.inPoint
             outPoint: clipItem.clipData.outPoint
             sourceDuration: clipItem.clipData.sourceDuration
-            // Image "strips" are a single poster frame.
-            frameCount: clipItem.clipData.kind === "image" ? 1 : 8
+            // Image and vector "strips" are a single poster frame.
+            frameCount: (clipItem.clipData.kind === "image" || clipItem.clipData.kind === "vector") ? 1 : 8
             // Viewport-cull tiles so multi-hour clips don't spawn thousands of Images.
             worldX: clipItem.x
             viewX: panel.timelineViewX
