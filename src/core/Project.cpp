@@ -248,6 +248,7 @@ QJsonObject clipToJson(const Clip &clip)
         {QStringLiteral("subtitleCues"), subtitleCuesToJson(clip.subtitleCues)},
         {QStringLiteral("shapeStyle"), shapeStyleToJson(clip.shapeStyle)},
         {QStringLiteral("path"), clip.path},
+        {QStringLiteral("sourceFrame"), drift::sourceFrameToJson(clip.sourceFrame)},
         {QStringLiteral("thumbnailPath"), clip.thumbnailPath},
         {QStringLiteral("filmstripPath"), clip.filmstripPath},
         {QStringLiteral("emoji"), clip.emoji},
@@ -354,6 +355,7 @@ Clip clipFromJsonV2(const QJsonObject &object, int canvasW = 1920, int canvasH =
     clip.shapeStyle = shapeStyleFromJson(object.value(QStringLiteral("shapeStyle")).toObject());
     clip.vector = VectorSource::fromJson(object.value(QStringLiteral("vector")).toObject());
     clip.path = object.value(QStringLiteral("path")).toString();
+    clip.sourceFrame = drift::sourceFrameFromJson(object.value(QStringLiteral("sourceFrame")).toArray());
     clip.thumbnailPath = object.value(QStringLiteral("thumbnailPath")).toString();
     clip.filmstripPath = object.value(QStringLiteral("filmstripPath")).toString();
     clip.emoji = object.value(QStringLiteral("emoji")).toString();
@@ -434,6 +436,7 @@ Clip clipFromJsonV1(const QJsonObject &object, const QList<QString> &assetOrder)
     clip.id = QUuid::createUuid().toString(QUuid::WithoutBraces);
     clip.name = object.value(QStringLiteral("name")).toString();
     clip.path = object.value(QStringLiteral("path")).toString();
+    clip.sourceFrame = drift::sourceFrameFromJson(object.value(QStringLiteral("sourceFrame")).toArray());
     clip.type = clipTypeFromString(object.value(QStringLiteral("kind")).toString());
     clip.textContent = object.value(QStringLiteral("textContent")).toString();
     clip.thumbnailPath = object.value(QStringLiteral("thumbnailPath")).toString();
@@ -459,6 +462,9 @@ QJsonObject assetToJson(const MediaAsset &asset)
         {QStringLiteral("durationUs"), static_cast<double>(asset.durationUs)},
         {QStringLiteral("duration"), asset.durationLabel},
         {QStringLiteral("path"), asset.path},
+        {QStringLiteral("sourceFrame"), drift::sourceFrameToJson(asset.sourceFrame)},
+        {QStringLiteral("frameInSeconds"), asset.frameInSeconds},
+        {QStringLiteral("frameOutSeconds"), asset.frameOutSeconds},
         {QStringLiteral("width"), asset.width},
         {QStringLiteral("height"), asset.height},
         {QStringLiteral("fps"), asset.fps},
@@ -492,6 +498,9 @@ MediaAsset assetFromJsonV2(const QJsonObject &object)
     asset.durationUs = static_cast<TimeUs>(object.value(QStringLiteral("durationUs")).toDouble());
     asset.durationLabel = object.value(QStringLiteral("duration")).toString();
     asset.path = object.value(QStringLiteral("path")).toString();
+    asset.sourceFrame = drift::sourceFrameFromJson(object.value(QStringLiteral("sourceFrame")).toArray());
+    asset.frameInSeconds = object.value(QStringLiteral("frameInSeconds")).toDouble();
+    asset.frameOutSeconds = object.value(QStringLiteral("frameOutSeconds")).toDouble(-1);
     asset.sourceUri = object.value(QStringLiteral("sourceUri")).toString();
     asset.width = object.value(QStringLiteral("width")).toInt();
     asset.height = object.value(QStringLiteral("height")).toInt();
@@ -525,6 +534,9 @@ MediaAsset assetFromJsonV1(const QJsonObject &object)
     asset.durationLabel = object.value(QStringLiteral("duration")).toString();
     asset.durationUs = secondsToUs(object.value(QStringLiteral("durationSeconds")).toDouble());
     asset.path = object.value(QStringLiteral("path")).toString();
+    asset.sourceFrame = drift::sourceFrameFromJson(object.value(QStringLiteral("sourceFrame")).toArray());
+    asset.frameInSeconds = object.value(QStringLiteral("frameInSeconds")).toDouble();
+    asset.frameOutSeconds = object.value(QStringLiteral("frameOutSeconds")).toDouble(-1);
     asset.thumbnailPath = object.value(QStringLiteral("thumbnailPath")).toString();
     asset.filmstripPath = object.value(QStringLiteral("filmstripPath")).toString();
     return asset;

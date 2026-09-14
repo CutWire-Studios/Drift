@@ -4,12 +4,11 @@ import QtMultimedia
 import Drift 1.0
 import "components"
 
-// Preview and light edit for one bin row: watch it, crop the picture, pick the in/out
-// range, then save. Saving rewrites that row in the media bin; the timeline is untouched
-// until the user drags the result onto it.
+// Video framing is stored in the project and always previews the original source.
 Window {
     id: root
 
+    property string clipId: ""
     property int assetIndex: -1
     property string assetId: ""
     property string kind: ""
@@ -35,6 +34,12 @@ Window {
     property real cropY: 0
     property real cropW: 1
     property real cropH: 1
+    // A full-size frame is normally clean, but Reset must still be savable so it can replace a
+    // previously stored crop with the original source frame.
+    property bool frameResetPending: false
+    // Crop framing starts constrained to the source video ratio. Turning the lock back on uses
+    // the current width and updates height immediately.
+    property bool cropRatioLocked: true
 
     // The trim already saved non-destructively on the asset (AssetLibrary::setAssetTrim) — the
     // baseline "no edit yet" reverts to, since a plain trim never re-encodes the file and so is
@@ -46,7 +51,16 @@ Window {
     readonly property bool isAudio: kind === "audio"
     readonly property bool isVideo: kind === "video"
     readonly property bool canCrop: !isAudio
-    readonly property bool canTrim: !isImage && durationSeconds > 0.05
+    readonly property bool canTrim: clipId.length === 0 && !isImage && durationSeconds > 0.05
+    // Timeline clips cannot be trimmed from this source-frame editor, but they still need the
+    // filmstrip/ruler so the user can scrub to the exact source frame being reframed.
+    readonly property bool canScrub: !isImage && durationSeconds > 0.05
+    // The source-frame editor presents a selected interval, whether it comes from a bin trim or
+    // a placed timeline clip. Transport time is therefore relative to that interval, never the
+    // source file's absolute/project timestamp.
+    readonly property real mediaRangeStart: canScrub ? inSeconds : 0
+    readonly property real mediaRangeDuration: canScrub
+                                           ? Math.max(0, outSeconds - inSeconds) : 0
 
     readonly property int displayW: {
         const rot = Math.abs(root.effectiveRotation)
@@ -62,7 +76,7 @@ Window {
     readonly property bool trimDirty: canTrim
                                       && (Math.abs(inSeconds - persistedInSeconds) > 0.02
                                           || Math.abs(outSeconds - persistedOutSeconds) > 0.02)
-    readonly property bool dirty: cropDirty || trimDirty
+    readonly property bool dirty: cropDirty || trimDirty || frameResetPending
     readonly property bool saving: EditorState.editingAsset
 
     width: 920
@@ -90,6 +104,7 @@ Window {
         // seekTo(root.inSeconds) a second time — snapping the position back to the start on every
         // seek instead of holding wherever the user put it.
         root._kickedForCurrentSource = false
+        root.clipId = ""
         root.assetIndex = index
         root.assetId = asset.id || ""
         root.kind = asset.kind || ""
@@ -109,6 +124,16 @@ Window {
                                      || asset.trimOutSeconds < 0)
                                     ? root.durationSeconds : asset.trimOutSeconds
         resetEdits()
+        if (root.isVideo) {
+            const frame = asset.sourceFrame
+            if (frame) {
+                root.cropX = frame.x; root.cropY = frame.y
+                root.cropW = frame.width; root.cropH = frame.height
+            }
+            root.inSeconds = asset.frameInSeconds || 0
+            root.outSeconds = asset.frameOutSeconds >= 0 ? asset.frameOutSeconds : root.durationSeconds
+        }
+        root.frameResetPending = false
         root.show()
         root.raise()
         root.requestActivate()
@@ -130,13 +155,55 @@ Window {
     }
 
     function resetEdits() {
-        root.inSeconds = root.persistedInSeconds
-        root.outSeconds = root.persistedOutSeconds
         root.cropX = 0
         root.cropY = 0
         root.cropW = 1
         root.cropH = 1
+        root.frameResetPending = true
     }
+
+    function lockCropRatioFromWidth() {
+        // cropW/cropH are normalized against the same source, so a frame with the source's
+        // original ratio has equal normalized width and height.
+        const size = Math.max(0.08, Math.min(1, root.cropW))
+        root.cropX = Math.max(0, Math.min(1 - size, root.cropX))
+        root.cropY = Math.max(0, Math.min(1 - size, root.cropY))
+        root.cropW = size
+        root.cropH = size
+    }
+
+    function openClip(track, index) {
+        const clip = EditorState.clipAt(track, index)
+        if (!clip || clip.kind !== "video")
+            return
+        player.stop()
+        player.source = ""
+        root._kickedForCurrentSource = false
+        root.clipId = clip.id
+        root.assetIndex = -1
+        root.kind = "video"
+        root.sourcePath = clip.path
+        root.assetName = clip.name
+        root.sourceWidth = clip.sourceWidth
+        root.sourceHeight = clip.sourceHeight
+        root.rotationDegrees = clip.sourceRotation
+        root.rotationOverride = -1
+        root.effectiveRotation = clip.sourceRotation
+        root.durationSeconds = clip.sourceDuration
+        root.filmstripPath = clip.filmstripPath || ""
+        root.inSeconds = clip.inPoint
+        root.outSeconds = clip.outPoint
+        const frame = clip.sourceFrame
+        root.cropX = frame.x; root.cropY = frame.y
+        root.cropW = frame.width; root.cropH = frame.height
+        root.frameResetPending = false
+        player.source = EditorState.fileUrl(root.sourcePath)
+        root.show()
+        root.raise()
+        root.requestActivate()
+        root.seekTo(root.inSeconds)
+    }
+
 
     function formatTime(seconds) {
         const s = Math.max(0, seconds)
@@ -306,7 +373,7 @@ Window {
                   ? qsTr("Play the clip and drag the ends to keep only the part you want. Save replaces this item in the media bin.")
                   : root.isImage
                     ? qsTr("Drag the frame to crop. Save replaces this item in the media bin — then drag it onto the timeline.")
-                    : qsTr("Play, crop, and drag the ends to keep a range. Save replaces this item in the media bin — then drag it onto the timeline.")
+                    : qsTr("Drag the frame to choose the area to use. The original video stays available for reframing.")
         }
 
         Rectangle {
@@ -318,7 +385,7 @@ Window {
                 // stripBlock, not strip: the ruler above the filmstrip strip is part of the same
                 // visible block now and has to come out of this budget too, or its extra height
                 // overflows into the transport row above and the footer below.
-                if (root.canTrim)
+                if (root.canScrub)
                     h -= stripBlock.height + Theme.spacingLg
                 return Math.max(80, h)
             }
@@ -510,29 +577,49 @@ Window {
                                 startY = root.cropY
                                 startW = root.cropW
                                 startH = root.cropH
-                                origX = mouseX
-                                origY = mouseY
+                                const pos = mapToItem(cropHost, mouseX, mouseY)
+                                origX = pos.x
+                                origY = pos.y
                             }
                             onPositionChanged: {
                                 if (!pressed || cropHost.width <= 0)
                                     return
-                                const dx = (mouseX - origX) / cropHost.width
-                                const dy = (mouseY - origY) / cropHost.height
+                                const pos = mapToItem(cropHost, mouseX, mouseY)
+                                const dx = (pos.x - origX) / cropHost.width
+                                const dy = (pos.y - origY) / cropHost.height
                                 let nx = startX
                                 let ny = startY
                                 let nw = startW
                                 let nh = startH
+                                if (root.cropRatioLocked) {
+                                    let size
+                                    if (modelData.dx !== 0 && modelData.dy !== 0)
+                                        size = Math.abs(dx) >= Math.abs(dy)
+                                               ? startW + modelData.dx * dx
+                                               : startH + modelData.dy * dy
+                                    else if (modelData.dx !== 0)
+                                        size = startW + modelData.dx * dx
+                                    else
+                                        size = startH + modelData.dy * dy
+                                    size = Math.max(cropHost.minFrac, Math.min(1, size))
+                                    nx = modelData.dx < 0 ? startX + startW - size
+                                       : modelData.dx > 0 ? startX : startX + (startW - size) / 2
+                                    ny = modelData.dy < 0 ? startY + startH - size
+                                       : modelData.dy > 0 ? startY : startY + (startH - size) / 2
+                                    cropHost.setCrop(nx, ny, size, size)
+                                    return
+                                }
                                 if (modelData.dx < 0) {
-                                    nx = startX + dx
-                                    nw = startW - dx
+                                    nx = Math.max(0, Math.min(startX + startW - cropHost.minFrac, startX + dx))
+                                    nw = startX + startW - nx
                                 } else if (modelData.dx > 0) {
-                                    nw = startW + dx
+                                    nw = Math.max(cropHost.minFrac, Math.min(1 - startX, startW + dx))
                                 }
                                 if (modelData.dy < 0) {
-                                    ny = startY + dy
-                                    nh = startH - dy
+                                    ny = Math.max(0, Math.min(startY + startH - cropHost.minFrac, startY + dy))
+                                    nh = startY + startH - ny
                                 } else if (modelData.dy > 0) {
-                                    nh = startH + dy
+                                    nh = Math.max(cropHost.minFrac, Math.min(1 - startY, startH + dy))
                                 }
                                 cropHost.setCrop(nx, ny, nw, nh)
                             }
@@ -541,28 +628,6 @@ Window {
                 }
             }
 
-            Rectangle {
-                visible: root.canCrop
-                anchors.left: parent.left
-                anchors.bottom: parent.bottom
-                anchors.margins: Theme.spacingMd
-                color: Theme.scrimStrong
-                radius: Theme.radiusSm
-                width: cropSizeLabel.implicitWidth + Theme.spacingLg
-                height: cropSizeLabel.implicitHeight + Theme.spacingSm
-                Text {
-                    id: cropSizeLabel
-                    anchors.centerIn: parent
-                    color: Theme.onMedia
-                    font.family: Theme.monoFontFamily
-                    font.pixelSize: Theme.fontSizeXs
-                    text: {
-                        const w = Math.max(1, Math.round(root.displayW * root.cropW))
-                        const h = Math.max(1, Math.round(root.displayH * root.cropH))
-                        return w + "×" + h
-                    }
-                }
-            }
         }
 
         Row {
@@ -571,6 +636,7 @@ Window {
             spacing: Theme.spacingMd
 
             IconButton {
+                id: playButton
                 visible: !root.isImage
                 width: visible ? implicitWidth : 0
                 anchors.verticalCenter: parent.verticalCenter
@@ -582,16 +648,18 @@ Window {
             }
 
             ThemedLabel {
+                id: timeLabel
                 visible: !root.isImage
                 width: visible ? implicitWidth : 0
                 anchors.verticalCenter: parent.verticalCenter
-                text: root.formatTime(player.position / 1000) + "  /  "
-                      + root.formatTime(root.outSeconds - root.inSeconds)
+                text: root.formatTime(Math.max(0, player.position / 1000 - root.mediaRangeStart))
+                      + "  /  " + root.formatTime(root.mediaRangeDuration)
                 size: "sm"
                 tone: "default"
             }
 
             ThemedButton {
+                id: setInButton
                 visible: root.canTrim
                 width: visible ? implicitWidth : 0
                 variant: "ghost"
@@ -604,6 +672,7 @@ Window {
                 }
             }
             ThemedButton {
+                id: setOutButton
                 visible: root.canTrim
                 width: visible ? implicitWidth : 0
                 variant: "ghost"
@@ -616,16 +685,52 @@ Window {
                 }
             }
 
-            ThemedButton {
+            // Keep source information and frame controls at the far end of the transport row.
+            Item {
+                height: 1
+                width: Math.max(0, parent.width - playButton.width - timeLabel.width
+                                - setInButton.width - setOutButton.width
+                                - frameSizeLabel.implicitWidth - frameRatioLock.width
+                                - resetButton.implicitWidth - parent.spacing * 7)
+            }
+
+            ThemedLabel {
+                id: frameSizeLabel
                 visible: root.isVideo
-                width: visible ? implicitWidth : 0
+                anchors.verticalCenter: parent.verticalCenter
+                font.family: Theme.monoFontFamily
+                size: "xs"
+                tone: "muted"
+                text: {
+                    const w = Math.max(1, Math.round(root.displayW * root.cropW))
+                    const h = Math.max(1, Math.round(root.displayH * root.cropH))
+                    return qsTr("Original: %1×%2 • Frame: %3×%4")
+                           .arg(root.displayW).arg(root.displayH).arg(w).arg(h)
+                }
+            }
+
+            IconButton {
+                id: frameRatioLock
+                visible: root.isVideo
+                width: visible ? buttonSize : 0
+                anchors.verticalCenter: parent.verticalCenter
+                glyph: root.cropRatioLocked ? Theme.icons.lock : Theme.icons.lockOpen
+                tooltip: root.cropRatioLocked
+                         ? qsTr("Unlock source frame ratio")
+                         : qsTr("Lock source frame ratio")
+                active: root.cropRatioLocked
+                buttonSize: 30
+                iconSize: Theme.iconSizeSm
                 variant: "ghost"
-                text: qsTr("Rotate")
-                enabled: !root.saving
-                onClicked: root.rotate90()
+                onClicked: {
+                    root.cropRatioLocked = !root.cropRatioLocked
+                    if (root.cropRatioLocked)
+                        root.lockCropRatioFromWidth()
+                }
             }
 
             ThemedButton {
+                id: resetButton
                 variant: "ghost"
                 text: qsTr("Reset")
                 enabled: root.dirty && !root.saving
@@ -635,13 +740,17 @@ Window {
 
         Column {
             id: stripBlock
-            visible: root.canTrim
+            visible: root.canScrub
             width: parent.width
             spacing: 2
 
-            readonly property real dur: Math.max(0.001, root.durationSeconds)
+            // A source-frame edit from the timeline is deliberately restricted to that clip's
+            // source interval. Bin preview retains the full source range for trim editing.
+            readonly property real rangeStart: root.clipId.length > 0 ? root.inSeconds : 0
+            readonly property real rangeEnd: root.clipId.length > 0 ? root.outSeconds : root.durationSeconds
+            readonly property real dur: Math.max(0.001, rangeEnd - rangeStart)
             readonly property real pxPerSecond: width / dur
-            readonly property real playX: (player.position / 1000) * pxPerSecond
+            readonly property real playX: ((player.position / 1000) - rangeStart) * pxPerSecond
 
             // Ticks stay legible regardless of the clip's length: the smallest "nice" step from
             // this list whose label spacing is still wide enough not to overlap the next one —
@@ -684,8 +793,8 @@ Window {
                     model: Math.floor(stripBlock.dur / stripBlock.tickStep) + 1
                     Item {
                         required property int index
-                        readonly property real tSeconds: index * stripBlock.tickStep
-                        x: tSeconds * stripBlock.pxPerSecond
+                        readonly property real tSeconds: stripBlock.rangeStart + index * stripBlock.tickStep
+                        x: (tSeconds - stripBlock.rangeStart) * stripBlock.pxPerSecond
                         width: 1
                         height: parent.height
 
@@ -742,13 +851,13 @@ Window {
                     frameWidth: Math.max(1, width / frameCount)
                     sourcePath: root.sourcePath
                     rotationCorrection: (root.effectiveRotation - root.rotationDegrees + 360) % 360
-                    inPoint: 0
-                    outPoint: root.durationSeconds
+                    inPoint: stripBlock.rangeStart
+                    outPoint: stripBlock.rangeEnd
                     sourceDuration: root.durationSeconds
                 }
 
-                readonly property real inX: (root.inSeconds / stripBlock.dur) * width
-                readonly property real outX: (root.outSeconds / stripBlock.dur) * width
+                readonly property real inX: ((root.inSeconds - stripBlock.rangeStart) / stripBlock.dur) * width
+                readonly property real outX: ((root.outSeconds - stripBlock.rangeStart) / stripBlock.dur) * width
 
                 Rectangle {
                     width: strip.inX
@@ -782,7 +891,8 @@ Window {
                 enabled: !root.saving
                 cursorShape: Qt.PointingHandCursor
                 onPressed: (mouse) => {
-                    const t = (mouse.x / Math.max(1, width)) * root.durationSeconds
+                    const t = stripBlock.rangeStart
+                              + (mouse.x / Math.max(1, width)) * stripBlock.dur
                     root.seekTo(t)
                     if (player.playbackState !== MediaPlayer.PlayingState)
                         player.pause()
@@ -790,8 +900,9 @@ Window {
                 onPositionChanged: (mouse) => {
                     if (!pressed)
                         return
-                    const t = (mouse.x / Math.max(1, width)) * root.durationSeconds
-                    root.seekTo(Math.max(0, Math.min(root.durationSeconds, t)))
+                    const t = stripBlock.rangeStart
+                              + (mouse.x / Math.max(1, width)) * stripBlock.dur
+                    root.seekTo(Math.max(stripBlock.rangeStart, Math.min(stripBlock.rangeEnd, t)))
                 }
             }
 
@@ -802,6 +913,7 @@ Window {
                 ]
                 Rectangle {
                     required property var modelData
+                    visible: root.canTrim
                     width: Theme.touchUi ? 14 : 8
                     height: parent.height
                     x: (modelData.edge === "in" ? strip.inX : strip.outX) - width / 2
@@ -851,8 +963,8 @@ Window {
                      ? EditorState.assetEditStatus
                      : qsTr("Saving…"))
                   : root.dirty
-                    ? qsTr("Save writes a new file over this item in the bin.")
-                    : qsTr("Nothing to save — drag this item onto the timeline when you are ready.")
+                    ? (root.isVideo ? qsTr("Save keeps the original video and stores this framing.") : qsTr("Save writes a new file over this item in the bin."))
+                    : (root.clipId.length > 0 ? qsTr("Adjust the frame or Reset to restore the full image.") : qsTr("Nothing to save — drag this item onto the timeline when you are ready."))
         }
 
         ThemedButton {
@@ -871,9 +983,16 @@ Window {
             id: saveBtn
             variant: "primary"
             text: qsTr("Save")
-            enabled: root.dirty && !root.saving && root.assetIndex >= 0
+            enabled: root.dirty && !root.saving && (root.assetIndex >= 0 || root.clipId.length > 0)
             onClicked: {
                 player.pause()
+                if (root.clipId.length > 0) {
+                    if (EditorState.setClipSourceFrame(root.clipId, root.cropX, root.cropY, root.cropW, root.cropH))
+                        root.close()
+                    return
+                }
+                if (AssetLibrary.assetAt(root.assetIndex).id !== root.assetId)
+                    return
                 EditorState.saveAssetEdit(root.assetIndex, root.inSeconds,
                                           root.canTrim ? root.outSeconds : -1,
                                           root.cropX, root.cropY, root.cropW, root.cropH)

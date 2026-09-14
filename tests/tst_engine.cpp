@@ -173,6 +173,7 @@ private slots:
     void audioStreamResetRepositionsShortForwardSeek();
     void audioMixerOverlappingSameFileClips();
     void videoStreamsDoNotReseekPerFrame();
+    void compositorFramesOriginalVideoBeforeScaling();
     void compositorDefaultRenderStaysFullResolution();
     void compositorPreviewScaleRendersLowerResolution();
     void compositorPreviewScaleMapsProjectPixelLayout();
@@ -3901,6 +3902,47 @@ void EngineTest::clipReaderAudioSequential()
         err += d * d;
     }
     QVERIFY(std::sqrt(err / cmp) < 0.02);
+}
+
+void EngineTest::compositorFramesOriginalVideoBeforeScaling()
+{
+    const QString ffmpeg = QStandardPaths::findExecutable(QStringLiteral("ffmpeg"));
+    if (ffmpeg.isEmpty())
+        QSKIP("ffmpeg unavailable");
+    QTemporaryDir dir;
+    const QString path = dir.filePath(QStringLiteral("framing.mkv"));
+    QProcess proc;
+    proc.start(ffmpeg, {QStringLiteral("-y"), QStringLiteral("-f"), QStringLiteral("lavfi"),
+        QStringLiteral("-i"), QStringLiteral("color=red:s=384x216:d=1,drawbox=x=192:y=0:w=192:h=216:color=blue:t=fill"),
+        QStringLiteral("-c:v"), QStringLiteral("ffv1"), path});
+    QVERIFY(proc.waitForFinished(30000));
+    QCOMPARE(proc.exitCode(), 0);
+    drift::Project project;
+    project.setResolution(96, 108);
+    drift::Clip clip;
+    clip.id = QStringLiteral("framed");
+    clip.path = path;
+    clip.type = drift::ClipType::Video;
+    clip.timelineDuration = drift::secondsToUs(1);
+    clip.srcOut = clip.timelineDuration;
+    clip.sourceFrame = QRectF(0.5, 0, 0.5, 1);
+    project.tracks()[0].clips.append(clip);
+    FrameCompositor compositor;
+    compositor.setProject(&project);
+    GpuScene scene;
+    QVERIFY(compositor.buildSceneAt(0, {}, &scene));
+    QCOMPARE(scene.items.size(), 1);
+    const QImage pixels = scene.items.first().layer.source;
+    QVERIFY(!pixels.isNull());
+    QVERIFY(pixels.width() >= 96);
+    QVERIFY(pixels.height() >= 108);
+    const QColor blue = pixels.pixelColor(pixels.width() / 4, pixels.height() / 2);
+    QVERIFY(blue.blue() > 200 && blue.red() < 30);
+    project.tracks()[0].clips[0].sourceFrame = QRectF(0, 0, 0.5, 1);
+    QVERIFY(compositor.buildSceneAt(0, {}, &scene));
+    const QImage left = scene.items.first().layer.source;
+    const QColor red = left.pixelColor(left.width() / 2, left.height() / 2);
+    QVERIFY(red.red() > 200 && red.blue() < 30);
 }
 
 void EngineTest::compositorDefaultRenderStaysFullResolution()
@@ -9471,7 +9513,7 @@ void EngineTest::frameSheetDHashIsStableAndDiscriminates()
     QCOMPARE(dHash(gradient.scaled(320, 180)), h1);
     QCOMPARE(h1, quint64(0xFFFFFFFFFFFFFFFFull));
 
-    const quint64 flipped = dHash(gradient.flipped(Qt::Horizontal));
+    const quint64 flipped = dHash(gradient.mirrored(true, false));
     QCOMPARE(flipped, quint64(0));
     QCOMPARE(hammingDistance(h1, flipped), 64);
 

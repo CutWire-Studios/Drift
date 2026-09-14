@@ -467,6 +467,8 @@ ApplicationWindow {
         id: fadeCurveWindow
     }
 
+    function openSourceFrame(track, clip) { mediaPreviewWindow.openClip(track, clip) }
+
     MediaPreviewWindow {
         id: mediaPreviewWindow
     }
