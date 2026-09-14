@@ -187,7 +187,9 @@ QList<ClipReaderPool::VideoRequest> collectVideoRequests(const drift::Project *p
             const drift::VideoRead read = drift::resolveVideoRead(clip, timelineUs);
             requests.append(ClipReaderPool::VideoRequest{read.path,
                                                         ClipReaderPool::streamIdForClip(clip.id),
-                                                        read.sourceUs, maxWidth, maxHeight,
+                                                        read.sourceUs,
+                                                        qCeil(maxWidth / clip.sourceFrame.width()),
+                                                        qCeil(maxHeight / clip.sourceFrame.height()),
                                                         clip.rotationCorrection});
         }
     }
@@ -398,9 +400,21 @@ QImage decodeClipMediaFrame(const drift::Clip &clip, drift::TimeUs timelineUs, i
 
     if (clip.type == drift::ClipType::Video) {
         const drift::VideoRead read = drift::resolveVideoRead(clip, timelineUs);
-        return ClipReaderPool::instance().readVideoFrame(
-            read.path, ClipReaderPool::streamIdForClip(clip.id), read.sourceUs, maxWidth, maxHeight,
+        const QRectF crop = clip.sourceFrame;
+        const bool framed = crop != QRectF(0, 0, 1, 1);
+        QImage image = ClipReaderPool::instance().readVideoFrame(
+            read.path, ClipReaderPool::streamIdForClip(clip.id), read.sourceUs,
+            framed ? qCeil(maxWidth / crop.width()) : maxWidth,
+            framed ? qCeil(maxHeight / crop.height()) : maxHeight,
             QString(), 15, false, clip.rotationCorrection);
+        if (framed && !image.isNull()) {
+            const int left = qBound(0, qRound(crop.x() * image.width()), image.width() - 1);
+            const int top = qBound(0, qRound(crop.y() * image.height()), image.height() - 1);
+            image = image.copy(left, top,
+                               qBound(1, qRound(crop.width() * image.width()), image.width() - left),
+                               qBound(1, qRound(crop.height() * image.height()), image.height() - top));
+        }
+        return image;
     }
 
     return {};
@@ -595,7 +609,8 @@ void fillGpuLayerPixels(GpuLayer &layer, const drift::Clip &clip, drift::TimeUs 
         return;
 
     const drift::Effect *timeEcho = findTimeEchoEffect(clip.effects);
-    if (!timeEcho && clip.type == drift::ClipType::Video) {
+    if (!timeEcho && clip.type == drift::ClipType::Video
+        && clip.sourceFrame == QRectF(0, 0, 1, 1)) {
         const drift::VideoRead read = drift::resolveVideoRead(clip, timelineUs);
         const PreviewVideoFrame video = ClipReaderPool::instance().readPreviewVideoFrame(
             read.path, ClipReaderPool::streamIdForClip(clip.id), read.sourceUs, maxWidth, maxHeight,
@@ -1171,4 +1186,3 @@ bool FrameCompositor::buildSceneAt(drift::TimeUs timelineUs, const RenderOptions
     double renderScale = 1.0;
     return prepare(timelineUs, options, sceneOut, &width, &height, &renderScale);
 }
-

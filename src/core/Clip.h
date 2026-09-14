@@ -76,6 +76,8 @@ struct Clip
     ShapeStyle shapeStyle; // only meaningful when type == Shape
     VectorSource vector;   // only meaningful when type == Vector
 
+    QRectF sourceFrame{0, 0, 1, 1};
+
     QString path;
     QString thumbnailPath;
     QString filmstripPath;

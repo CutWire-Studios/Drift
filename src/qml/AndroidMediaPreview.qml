@@ -41,6 +41,7 @@ Item {
     property real cropY: 0
     property real cropW: 1
     property real cropH: 1
+    property bool cropRatioLocked: true
 
     // The trim already saved non-destructively on the asset (AssetLibrary::setAssetTrim) — the
     // baseline "no edit yet" reverts to, since a plain trim never re-encodes the file and so is
@@ -104,6 +105,15 @@ Item {
                                     ? root.durationSeconds : asset.trimOutSeconds
         root.mode = "trim"
         resetEdits()
+        if (root.isVideo) {
+            const frame = asset.sourceFrame
+            if (frame) {
+                root.cropX = frame.x; root.cropY = frame.y
+                root.cropW = frame.width; root.cropH = frame.height
+            }
+            root.inSeconds = asset.frameInSeconds || 0
+            root.outSeconds = asset.frameOutSeconds >= 0 ? asset.frameOutSeconds : root.durationSeconds
+        }
         EditorState.beginAssetPreview(index)
     }
 
@@ -150,6 +160,14 @@ Item {
         root.cropY = 0
         root.cropW = 1
         root.cropH = 1
+    }
+
+    function lockCropRatioFromWidth() {
+        const size = Math.max(0.08, Math.min(1, root.cropW))
+        root.cropX = Math.max(0, Math.min(1 - size, root.cropX))
+        root.cropY = Math.max(0, Math.min(1 - size, root.cropY))
+        root.cropW = size
+        root.cropH = size
     }
 
     function formatTime(seconds) {
@@ -510,6 +528,24 @@ Item {
                             let ny = startY
                             let nw = startW
                             let nh = startH
+                            if (root.cropRatioLocked) {
+                                let size
+                                if (modelData.dx !== 0 && modelData.dy !== 0)
+                                    size = Math.abs(dx) >= Math.abs(dy)
+                                           ? startW + modelData.dx * dx
+                                           : startH + modelData.dy * dy
+                                else if (modelData.dx !== 0)
+                                    size = startW + modelData.dx * dx
+                                else
+                                    size = startH + modelData.dy * dy
+                                size = Math.max(cropHost.minFrac, Math.min(1, size))
+                                nx = modelData.dx < 0 ? startX + startW - size
+                                   : modelData.dx > 0 ? startX : startX + (startW - size) / 2
+                                ny = modelData.dy < 0 ? startY + startH - size
+                                   : modelData.dy > 0 ? startY : startY + (startH - size) / 2
+                                cropHost.setCrop(nx, ny, size, size)
+                                return
+                            }
                             if (modelData.dx < 0) {
                                 nx = startX + dx
                                 nw = startW - dx
@@ -528,6 +564,27 @@ Item {
                         onCanceled: Haptics.drop()
                     }
                 }
+            }
+        }
+
+        IconButton {
+            anchors.top: parent.top
+            anchors.right: parent.right
+            anchors.margins: Theme.spacingSm
+            z: 4
+            visible: root.isVideo && root.mode === "crop"
+            glyph: root.cropRatioLocked ? Theme.icons.lock : Theme.icons.lockOpen
+            tooltip: root.cropRatioLocked
+                     ? qsTr("Unlock source frame ratio")
+                     : qsTr("Lock source frame ratio")
+            active: root.cropRatioLocked
+            buttonSize: 36
+            iconSize: Theme.iconSizeSm
+            variant: "ghost"
+            onClicked: {
+                root.cropRatioLocked = !root.cropRatioLocked
+                if (root.cropRatioLocked)
+                    root.lockCropRatioFromWidth()
             }
         }
 
@@ -873,7 +930,7 @@ Item {
                   ? (EditorState.assetEditStatus.length > 0
                      ? EditorState.assetEditStatus : qsTr("Saving…"))
                   : root.dirty
-                    ? qsTr("Save keeps your changes as a new file in this project.")
+                    ? (root.isVideo ? qsTr("Save keeps the original video and stores this framing.") : qsTr("Save keeps your changes as a new file in this project."))
                     : qsTr("Nothing changed yet. Trim or crop above, or go back and drag this onto the timeline.")
         }
     }

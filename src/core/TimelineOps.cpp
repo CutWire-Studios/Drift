@@ -771,6 +771,7 @@ void retargetClipToSource(Clip &dst, const Clip &src, TimeUs srcMediaDurationUs)
     // Media identity.
     dst.assetId = src.assetId;
     dst.path = src.path;
+    dst.sourceFrame = src.sourceFrame;
     dst.type = src.type;
     dst.name = src.name;
     dst.thumbnailPath = src.thumbnailPath;
