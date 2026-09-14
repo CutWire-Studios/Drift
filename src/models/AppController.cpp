@@ -19508,6 +19508,9 @@ void AppController::remapProjectPaths(const QHash<QString, QString> &remap)
                 // restoreFilmstripsAfterLoad regenerate them for the new one.
                 clip.thumbnailPath.clear();
                 clip.filmstripPath.clear();
+                // The renderer reads the vector document via clip.vector, not clip.path.
+                if (clip.type == drift::ClipType::Vector && !clip.vector.isInline())
+                    clip.vector.path = clip.path;
             }
         }
     }

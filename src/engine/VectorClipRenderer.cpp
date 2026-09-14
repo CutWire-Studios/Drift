@@ -191,8 +191,11 @@ public:
         lock.unlock();
 
         std::shared_ptr<Document> doc = build(source);
-        if (doc)
-            doc->key = qHash(key) | 1;
+        // A failed load (file missing or unreadable mid-relink) must not be pinned under the
+        // content hash, or the animation stays blank until the file is next parsed anew.
+        if (!doc)
+            return nullptr;
+        doc->key = qHash(key) | 1;
 
         lock.relock();
         // Another thread may have built the same document meanwhile; theirs wins so both
