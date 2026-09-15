@@ -1042,6 +1042,7 @@ qt_add_qml_module(drift
         src/qml/components/RecoveryDialog.qml
         src/qml/components/UnsavedChangesDialog.qml
         src/qml/components/RecentProjectsPopup.qml
+        src/qml/components/StartScreen.qml
         src/qml/components/NewTrackMenu.qml
         src/qml/components/ToastHost.qml
         src/qml/components/EmptyState.qml

@@ -19299,19 +19299,51 @@ bool fileStartsWithJsonObject(const QString &path)
 
 } // namespace
 
+bool AppController::beginProjectLoad()
+{
+    if (m_projectLoadPending)
+        return false;
+    m_projectLoadPending = true;
+    emit projectLoadPendingChanged();
+    return true;
+}
+
+void AppController::finishProjectLoad(bool ok, const QString &message)
+{
+    // Only the call that actually acquired the flag (beginProjectLoad() returned true)
+    // reaches here — a rejected request returns before ever calling this — so it is
+    // always safe to release: nothing else can be mid-load while we are.
+    m_projectLoadPending = false;
+    emit projectLoadPendingChanged();
+    emit projectLoadFinished(ok, message);
+}
+
 void AppController::loadProjectJson(const QUrl &url)
+{
+    if (!beginProjectLoad()) {
+        setLastMessage(tr("Still opening a project — try again in a moment."),
+                       QStringLiteral("warning"));
+        return;
+    }
+    loadProjectJsonInternal(url);
+}
+
+void AppController::loadProjectJsonInternal(const QUrl &url)
 {
     const QString path = AndroidUri::filePath(url);
     if (path.isEmpty()) {
-        setLastMessage(tr("That project location isn’t valid"), QStringLiteral("error"));
+        const QString message = tr("That project location isn’t valid");
+        setLastMessage(message, QStringLiteral("error"));
+        finishProjectLoad(false, message);
         return;
     }
 
     QFile file(path);
     if (!file.open(QIODevice::ReadOnly)) {
-        setLastMessage(tr("Couldn’t read %1: %2").arg(QFileInfo(path).fileName(),
-                                                      file.errorString()),
-                       QStringLiteral("error"));
+        const QString message = tr("Couldn’t read %1: %2").arg(QFileInfo(path).fileName(),
+                                                               file.errorString());
+        setLastMessage(message, QStringLiteral("error"));
+        finishProjectLoad(false, message);
         return;
     }
 
@@ -19324,6 +19356,7 @@ void AppController::loadProjectJson(const QUrl &url)
     QString error;
     if (!applyProjectJson(data, &error)) {
         setLastMessage(error, QStringLiteral("error"));
+        finishProjectLoad(false, error);
         return;
     }
 
@@ -19335,7 +19368,9 @@ void AppController::loadProjectJson(const QUrl &url)
     setDirty(true);
     deleteRecoveryFile();
     setProjectLayoutChosen(true);
-    setLastMessage(tr("Project JSON loaded"), QStringLiteral("success"));
+    const QString message = tr("Project JSON loaded");
+    setLastMessage(message, QStringLiteral("success"));
+    finishProjectLoad(true, message);
 }
 
 void AppController::loadPremiereProject(const QUrl &url)
@@ -19657,11 +19692,19 @@ void AppController::cancelPackage()
 
 void AppController::loadProject(const QUrl &url)
 {
+    if (!beginProjectLoad()) {
+        setLastMessage(tr("Still opening a project — try again in a moment."),
+                       QStringLiteral("warning"));
+        return;
+    }
+
     // The bundle reader seeks through its input and hands media paths to FFmpeg, so a SAF document
     // is staged to a real file first. The JSON branch below needs no such thing and takes the URL.
     const QString path = readTargetPath(url);
     if (path.isEmpty()) {
-        setLastMessage(tr("That project location isn’t valid"), QStringLiteral("error"));
+        const QString message = tr("That project location isn’t valid");
+        setLastMessage(message, QStringLiteral("error"));
+        finishProjectLoad(false, message);
         return;
     }
 
@@ -19708,7 +19751,10 @@ void AppController::loadProject(const QUrl &url)
     // }
 
     if (fileStartsWithJsonObject(path)) {
-        loadProjectJson(url);
+        // Not loadProjectJson(): this call already owns the pending flag via the
+        // beginProjectLoad() above, and loadProjectJson()'s own gate would see it
+        // already held and reject its own request.
+        loadProjectJsonInternal(url);
         return;
     }
 
@@ -19717,6 +19763,7 @@ void AppController::loadProject(const QUrl &url)
         drift::bundle::readManifest(path, &error);
     if (!info) {
         setLastMessage(error, QStringLiteral("error"));
+        finishProjectLoad(false, error);
         return;
     }
 
@@ -19735,6 +19782,7 @@ void AppController::loadProject(const QUrl &url)
             return;
         if (!extractOk) {
             setLastMessage(extractError, QStringLiteral("error"));
+            finishProjectLoad(false, extractError);
             return;
         }
 
@@ -19744,6 +19792,7 @@ void AppController::loadProject(const QUrl &url)
                               &applyError)) {
             m_pendingPathRemap.clear();
             setLastMessage(applyError, QStringLiteral("error"));
+            finishProjectLoad(false, applyError);
             return;
         }
 
@@ -19761,8 +19810,10 @@ void AppController::loadProject(const QUrl &url)
         addRecentProject(location);
         deleteRecoveryFile();
         setProjectLayoutChosen(true);
-        setLastMessage(tr("Project loaded"), QStringLiteral("success"));
+        const QString message = tr("Project loaded");
+        setLastMessage(message, QStringLiteral("success"));
         reportMissingAddons(bundle.addons);
+        finishProjectLoad(true, message);
     };
 
     if (bundle.embeddedBytes <= 0) {
@@ -19920,7 +19971,7 @@ void AppController::rehydrateMissingSources()
 #endif
 }
 
-void AppController::newProject()
+void AppController::newProject(bool silent)
 {
     setPlaying(false);
     resetSessionState();
@@ -19961,7 +20012,8 @@ void AppController::newProject()
     emit projectNameChanged();
     emit projectMetadataChanged();
     emit backgroundChanged();
-    setLastMessage(tr("New project"));
+    if (!silent)
+        setLastMessage(tr("New project"));
 }
 
 void AppController::openRecentProject(const QString &path)
