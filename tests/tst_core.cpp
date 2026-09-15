@@ -132,6 +132,7 @@ private slots:
     void bezierCurveShapesProgress();
     void bezierShapeRoundTrips();
     void physicalOverlapTransitionWindow();
+    void adjacentTransitionWindowClampsToClipExtents();
     void clampClipStartNoOverlapPushesPastBlockers();
     void clampTrimEdgesIgnoreExistingOverlaps();
     void backgroundSerialization();
@@ -3105,6 +3106,39 @@ void CoreTest::physicalOverlapTransitionWindow()
     QVERIFY(drift::transitionWindow(track, transition, startUs, endUs));
     QCOMPARE(startUs, drift::secondsToUs(1.5));
     QCOMPARE(endUs, drift::secondsToUs(2.0));
+}
+
+void CoreTest::adjacentTransitionWindowClampsToClipExtents()
+{
+    drift::Track track;
+    track.type = drift::TrackType::Video;
+
+    drift::Clip clipA;
+    clipA.id = QStringLiteral("a");
+    clipA.timelineStart = 0;
+    clipA.timelineDuration = drift::secondsToUs(6.9);
+
+    drift::Clip clipB;
+    clipB.id = QStringLiteral("b");
+    clipB.timelineStart = drift::secondsToUs(6.9);
+    clipB.timelineDuration = drift::secondsToUs(12.0);
+
+    track.clips.append(clipA);
+    track.clips.append(clipB);
+
+    drift::Transition transition;
+    transition.fromClipId = clipA.id;
+    transition.toClipId = clipB.id;
+    transition.durationUs = drift::secondsToUs(23.6);
+
+    drift::TimeUs startUs = 0;
+    drift::TimeUs endUs = 0;
+    QVERIFY(drift::transitionWindow(track, transition, startUs, endUs));
+    // Unclamped this is −4.9s … 18.7s (cut 6.9s ± 11.8s). The window must stay inside the clips.
+    QCOMPARE(startUs, clipA.timelineStart);
+    QVERIFY(startUs >= 0);
+    QVERIFY(endUs <= clipB.timelineEnd());
+    QCOMPARE(endUs, clipA.timelineEnd() + transition.durationUs / 2);
 }
 
 void CoreTest::clampClipStartNoOverlapPushesPastBlockers()

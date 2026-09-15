@@ -1229,62 +1229,36 @@ bool trackAllowsTransitions(drift::TrackType type)
 
 void syncOverlapTransitions(drift::Project &project)
 {
+    constexpr drift::TimeUs kDefaultAdjacentDurationUs = drift::secondsToUs(0.5);
+
     for (drift::Track &track : project.tracks()) {
         if (!trackAllowsTransitions(track.type))
             continue;
 
-        QList<int> order;
-        order.reserve(track.clips.size());
-        for (int i = 0; i < track.clips.size(); ++i)
-            order.append(i);
-        std::sort(order.begin(), order.end(), [&track](int a, int b) {
-            const drift::Clip &ca = track.clips.at(a);
-            const drift::Clip &cb = track.clips.at(b);
-            if (ca.timelineStart != cb.timelineStart)
-                return ca.timelineStart < cb.timelineStart;
-            return ca.id < cb.id;
-        });
-
-        for (int i = 0; i + 1 < order.size(); ++i) {
-            const int fromIndex = order.at(i);
-            const int toIndex = order.at(i + 1);
-            const drift::Clip &fromClip = track.clips.at(fromIndex);
-            const drift::Clip &toClip = track.clips.at(toIndex);
-            if (!drift::clipsPhysicallyOverlap(fromClip, toClip))
-                continue;
-
-            const drift::TimeUs overlapUs = drift::physicalOverlapDurationUs(fromClip, toClip);
-            if (overlapUs < drift::secondsToUs(0.05))
-                continue;
-
-            drift::Transition *existing = nullptr;
-            for (drift::Transition &transition : track.transitions) {
-                if (transition.fromClipId == fromClip.id && transition.toClipId == toClip.id) {
-                    existing = &transition;
-                    break;
-                }
-            }
-
-            if (existing) {
-                existing->durationUs = overlapUs;
-                continue;
-            }
-
-            drift::Transition transition;
-            transition.id = QUuid::createUuid().toString(QUuid::WithoutBraces);
-            transition.fromClipId = fromClip.id;
-            transition.toClipId = toClip.id;
-            transition.kindId = QStringLiteral("crossfade");
-            transition.durationUs = overlapUs;
-            track.transitions.append(transition);
-        }
-
+        // Overlap is stacking, not an implicit fade. Only keep and retune transitions the
+        // user (or MCP) actually added.
         for (int i = track.transitions.size() - 1; i >= 0; --i) {
-            const drift::Transition &transition = track.transitions.at(i);
+            drift::Transition &transition = track.transitions[i];
             const drift::Clip *fromClip = drift::clipById(track, transition.fromClipId);
             const drift::Clip *toClip = drift::clipById(track, transition.toClipId);
-            if (!fromClip || !toClip || !drift::clipsEligibleForTransition(*fromClip, *toClip))
+            if (!fromClip || !toClip || !drift::clipsEligibleForTransition(*fromClip, *toClip)) {
                 track.transitions.removeAt(i);
+                continue;
+            }
+
+            if (drift::clipsPhysicallyOverlap(*fromClip, *toClip)) {
+                const drift::TimeUs overlapUs = drift::physicalOverlapDurationUs(*fromClip, *toClip);
+                if (overlapUs > 0)
+                    transition.durationUs = overlapUs;
+                continue;
+            }
+
+            // Adjacent: a leftover overlap duration can be longer than either clip, which
+            // would paint a virtual window from before t=0. Explicit 0.75s fades stay put.
+            const drift::TimeUs shorter =
+                qMin(fromClip->timelineDuration, toClip->timelineDuration);
+            if (transition.durationUs > shorter)
+                transition.durationUs = qMin(kDefaultAdjacentDurationUs, shorter);
         }
     }
 }
@@ -14640,18 +14614,6 @@ void AppController::removeTransition(int trackIndex, const QString &transitionId
             if (transition.fromClipId == fromId)
                 clearTransitionSelection();
         }
-
-        // Physical overlaps auto-sync a crossfade; separate the clips so removal sticks.
-        drift::Clip *fromClip = nullptr;
-        drift::Clip *toClip = nullptr;
-        for (drift::Clip &clip : track.clips) {
-            if (clip.id == transition.fromClipId)
-                fromClip = &clip;
-            else if (clip.id == transition.toClipId)
-                toClip = &clip;
-        }
-        if (fromClip && toClip && drift::clipsPhysicallyOverlap(*fromClip, *toClip))
-            toClip->timelineStart = fromClip->timelineEnd();
 
         track.transitions.removeAt(i);
         pushProjectEdit(before, tr("Remove transition"));

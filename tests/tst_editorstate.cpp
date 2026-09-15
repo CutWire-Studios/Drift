@@ -131,7 +131,9 @@ private slots:
     void clipAnimationUndoRestoresKind();
     void setTransitionKindAndDurationPersist();
     void replaceTransitionOnDrop();
-    void overlapAutoAppliesCrossfade();
+    void overlapDoesNotAutoApplyCrossfade();
+    void trimmingOverlapClampsStaleTransitionDuration();
+    void removeTransitionDoesNotMoveOverlappingClips();
     void separateAudioFromCombinedClip();
     void separatedAudioTracksMirrorVideoHierarchy();
     void linkedAudioUnlinkAndMove();
@@ -3297,27 +3299,89 @@ void EditorStateTest::replaceTransitionOnDrop()
     QCOMPARE(state.project()->tracks().at(0).transitions.size(), 1);
 }
 
-void EditorStateTest::overlapAutoAppliesCrossfade()
+void EditorStateTest::overlapDoesNotAutoApplyCrossfade()
 {
     AssetLibrary library;
     AppController state(&library);
     appendAdjacentShapeClips(*state.project(), -drift::secondsToUs(0.5)); // 0.5s physical overlap
 
-    // Overlap is off by default; keep it on so the no-op move below does not push the
-    // already-overlapping clips apart before sync can create the crossfade.
     state.setAllowClipOverlap(true);
-    // Overlap sync runs on finishEdit; nudge via a no-op-ish move to trigger it.
     state.moveClip(0, 1, drift::usToSeconds(state.project()->tracks().at(0).clips.at(1).timelineStart));
 
-    const QVariantMap transition = state.transitionBetweenClips(0, 0);
-    QVERIFY(!transition.isEmpty());
-    QCOMPARE(transition.value(QStringLiteral("kind")).toString(), QStringLiteral("crossfade"));
-    QCOMPARE(transition.value(QStringLiteral("overlapping")).toBool(), true);
-    QCOMPARE(transition.value(QStringLiteral("duration")).toDouble(), 0.5);
+    QVERIFY(state.transitionBetweenClips(0, 0).isEmpty());
+    QCOMPARE(state.project()->tracks().at(0).transitions.size(), 0);
 
     state.addTransition(0, 0, QStringLiteral("dip"), 0.5);
     QCOMPARE(state.transitionBetweenClips(0, 0).value(QStringLiteral("kind")).toString(),
              QStringLiteral("dip"));
+}
+
+void EditorStateTest::trimmingOverlapClampsStaleTransitionDuration()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    state.setAllowClipOverlap(true);
+    state.setSnapEnabled(false);
+
+    state.project()->tracks().clear();
+    state.project()->tracks().append(drift::Track{.type = drift::TrackType::Video});
+
+    drift::Clip clipA;
+    clipA.id = QStringLiteral("clip-a");
+    clipA.type = drift::ClipType::Shape;
+    clipA.timelineStart = 0;
+    clipA.timelineDuration = drift::secondsToUs(24.0);
+
+    drift::Clip clipB;
+    clipB.id = QStringLiteral("clip-b");
+    clipB.type = drift::ClipType::Shape;
+    clipB.timelineStart = drift::secondsToUs(2.0);
+    clipB.timelineDuration = drift::secondsToUs(20.0);
+
+    state.project()->tracks()[0].clips.append(clipA);
+    state.project()->tracks()[0].clips.append(clipB);
+
+    state.addTransition(0, 0, QStringLiteral("crossfade"), 0.5);
+    const QVariantMap overlapping = state.transitionBetweenClips(0, 0);
+    QVERIFY(!overlapping.isEmpty());
+    QVERIFY(overlapping.value(QStringLiteral("duration")).toDouble() > 20.0);
+
+    state.trimClipRight(0, 0, 2.0);
+
+    const QVariantMap adjacent = state.transitionBetweenClips(0, 0);
+    QVERIFY(!adjacent.isEmpty());
+    QCOMPARE(adjacent.value(QStringLiteral("duration")).toDouble(), 0.5);
+    QVERIFY(adjacent.value(QStringLiteral("start")).toDouble() >= 0.0);
+}
+
+void EditorStateTest::removeTransitionDoesNotMoveOverlappingClips()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    state.setAllowClipOverlap(true);
+    state.setSnapEnabled(false);
+
+    state.addTextClip(QStringLiteral("One"), 0.0);
+    state.setClipDuration(0, 0, 20.0);
+    state.addTextClip(QStringLiteral("Two"), 20.0);
+    state.setClipDuration(0, 1, 18.5);
+    state.moveClip(0, 1, 0.0);
+
+    QCOMPARE(state.project()->tracks().at(0).clips.at(0).timelineStart, drift::TimeUs{0});
+    QCOMPARE(state.project()->tracks().at(0).clips.at(1).timelineStart, drift::TimeUs{0});
+
+    state.addTransition(0, 0, QStringLiteral("crossfade"), 0.5);
+    const QVariantMap transition = state.transitionBetweenClips(0, 0);
+    QVERIFY(!transition.isEmpty());
+    const QString id = transition.value(QStringLiteral("id")).toString();
+    const double durationBefore = state.durationSeconds();
+
+    state.removeTransition(0, id);
+
+    QCOMPARE(state.project()->tracks().at(0).transitions.size(), 0);
+    QCOMPARE(state.project()->tracks().at(0).clips.at(0).timelineStart, drift::TimeUs{0});
+    QCOMPARE(state.project()->tracks().at(0).clips.at(1).timelineStart, drift::TimeUs{0});
+    QCOMPARE(state.durationSeconds(), durationBefore);
 }
 
 void EditorStateTest::keyframeGraphPropertySelection()
