@@ -7,9 +7,10 @@ class MarketClient;
 
 namespace drift::mcp {
 
-// The `market` toolbox: stock media from market.cutwire.org for agents. Every op except
-// marketStatus refuses to run until the user has accepted the marketplace terms in the app —
-// downloads consume a per-machine quota, so an agent must never be the one to opt in.
+// The `market` toolbox: stock media from market.cutwire.org for agents. Search, resolve, item
+// and download refuse to run until the user has accepted the marketplace terms in the app —
+// downloads consume a per-machine quota, so an agent must never be the one to opt in. Status
+// reports the gate; the job list and cancel only need a configured service.
 // The client is asynchronous over the network; these block on a nested event loop the way
 // capture does, so one call returns the answer.
 QJsonObject marketStatus(MarketClient *client);

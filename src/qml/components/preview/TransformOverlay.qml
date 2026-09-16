@@ -3,8 +3,9 @@ import QtQuick.Controls.Basic
 import Drift
 import ".."
 
-// Transform overlay: resize/rotate grips and the in-place text editor for the
-// clips visible at the playhead. Sits outside the (clipped) canvas rect,
+// Transform overlay: resize/rotate grips for the clips visible at the playhead.
+// (The in-place text editor is still wired up but no longer reachable: the
+// properties panel owns text editing until the editor matches the render.) Sits outside the (clipped) canvas rect,
 // mirroring its geometry, so grips on a clip that runs past a canvas edge stay
 // drawn and grabbable instead of being cut away with the frame. Geometry
 // (x/y/width/height/z/visible) is driven by the owning PreviewPanel.
@@ -28,7 +29,7 @@ Item {
     property string pendingEditKey: ""
 
     // True when two overlay models describe the same boxes. Text/name
-    // updates still reach delegates via liveStyle/liveText, so rebuilding
+    // updates still reach delegates via liveStyle, so rebuilding
     // for every keystroke is unnecessary — and recreating a selected
     // handle with focus:true steals focus from the properties panel.
     function clipsOverlayEqual(a, b) {
@@ -132,10 +133,6 @@ Item {
             if (!EditorState.playing)
                 root.refreshOverlay()
         }
-        function onInlineTextEditRequested(trackIndex, clipIndex) {
-            root.pendingEditKey = trackIndex + ":" + clipIndex
-            root.refreshOverlay()
-        }
     }
 
     Repeater {
@@ -148,6 +145,11 @@ Item {
             readonly property bool selected: EditorState.selectedTrack === modelData.track
                                                     && EditorState.selectedClip === modelData.clip
             readonly property bool isText: modelData.kind === "text"
+            // A 3D model: the box is the projected model, not the clip's layout rect, so a drag
+            // moves the clip anchor by the box delta and there is nothing to resize or spin.
+            readonly property bool isModel3d: modelData.kind === "model3d"
+            readonly property real anchorOffsetX: modelData.anchorX !== undefined ? modelData.anchorX - modelData.x : 0
+            readonly property real anchorOffsetY: modelData.anchorY !== undefined ? modelData.anchorY - modelData.y : 0
             readonly property bool editing: root.editingKey
                                                     === (modelData.track + ":" + modelData.clip)
             // True when this clip was just added with no text and should
@@ -164,7 +166,6 @@ Item {
                 void EditorState.tracks
                 return EditorState.clipAt(modelData.track, modelData.clip)
             }
-            readonly property string liveText: liveClip ? (liveClip.textContent || "") : ""
 
             function enterEdit() {
                 root.editingKey = modelData.track + ":" + modelData.clip
@@ -251,9 +252,12 @@ Item {
             height: Math.max(24, layoutH * sy)
             // Front-most track (lowest index) sits on top so it
             // wins click hit-testing over boxes behind it. The clip
-            // being edited jumps above everything so its editor and
-            // the click-away catcher order correctly.
-            z: handle.editing ? 1000 : -modelData.track
+            // selected on the timeline is raised above all of them, so a
+            // box that lies under a full-frame clip on an upper track is
+            // still the one the pointer reaches. The clip being edited
+            // jumps above everything so its editor and the click-away
+            // catcher order correctly.
+            z: handle.editing ? 1000 : handle.selected ? 900 : -modelData.track
             transformOrigin: Item.Center
             rotation: liveRotation < 1e8 ? liveRotation : modelData.rotation
 
@@ -306,8 +310,8 @@ Item {
                 EditorState.previewSetClipPosition(
                     handle.modelData.track,
                     handle.modelData.clip,
-                    handle.modelData.x + dx,
-                    handle.modelData.y + dy)
+                    handle.modelData.x + handle.anchorOffsetX + dx,
+                    handle.modelData.y + handle.anchorOffsetY + dy)
                 EditorState.commitPreviewDrag()
                 event.accepted = true
             }
@@ -324,56 +328,6 @@ Item {
                     if (editor.text !== next)
                         editor.text = next
                 }
-            }
-
-            Rectangle {
-                anchors.fill: parent
-                visible: handle.isText && (handle.selected || handle.editing)
-                         && handle.liveStyle && handle.liveStyle.boxEnabled
-                color: handle.liveStyle ? handle.liveStyle.boxColor : "transparent"
-                radius: handle.liveStyle ? handle.liveStyle.boxRadius * handle.sy : 0
-            }
-
-            // A plain Text item cannot show per-word accents, highlight pills or
-            // underlines, so styles that use them fall back to the composited raster
-            // rather than preview something the export will not match.
-            readonly property bool plainStyle: !handle.liveStyle
-                    || ((!handle.liveStyle.accent || handle.liveStyle.accent.rule === "none")
-                        && !(handle.liveStyle.wordHighlight
-                             && handle.liveStyle.wordHighlight.enabled)
-                        && !handle.liveStyle.underlineEnabled)
-
-            // Crisp vector text while the clip is selected. The composited
-            // raster is downscaled for preview and looks soft when upscaled.
-            Text {
-                anchors.fill: parent
-                visible: handle.isText && handle.selected && !handle.editing
-                         && handle.plainStyle
-                text: handle.liveText
-                renderType: Text.NativeRendering
-                color: handle.liveStyle ? handle.liveStyle.color : "white"
-                font.family: handle.liveStyle ? handle.liveStyle.fontFamily : Theme.fontFamily
-                font.pixelSize: handle.liveStyle
-                                ? Math.max(1, Math.round(handle.liveStyle.pixelSize * handle.sy))
-                                : 16
-                font.weight: handle.liveStyle ? handle.liveStyle.fontWeight : Font.Normal
-                font.italic: handle.liveStyle ? handle.liveStyle.italic : false
-                font.letterSpacing: handle.liveStyle ? handle.liveStyle.letterSpacing * handle.sy : 0
-                wrapMode: (handle.liveStyle && handle.liveStyle.wordWrap === false)
-                          ? Text.NoWrap : Text.WordWrap
-                horizontalAlignment: !handle.liveStyle ? Text.AlignHCenter
-                                     : handle.liveStyle.align === "left" ? Text.AlignLeft
-                                     : handle.liveStyle.align === "right" ? Text.AlignRight
-                                     : Text.AlignHCenter
-                verticalAlignment: !handle.liveStyle ? Text.AlignVCenter
-                                   : handle.liveStyle.valign === "top" ? Text.AlignTop
-                                   : handle.liveStyle.valign === "bottom" ? Text.AlignBottom
-                                   : Text.AlignVCenter
-                leftPadding: handle.liveStyle && handle.liveStyle.boxEnabled
-                             ? Math.max(0, handle.liveStyle.boxPadding * handle.sy) : 0
-                rightPadding: leftPadding
-                topPadding: leftPadding
-                bottomPadding: leftPadding
             }
 
             Rectangle {
@@ -443,16 +397,18 @@ Item {
                     EditorState.selectClip(handle.modelData.track, handle.modelData.clip)
                     handle.forceActiveFocus()
                 }
-                onDoubleTapped: if (handle.isText) handle.enterEdit()
             }
 
             DragHandler {
                 id: bodyDrag
                 target: null
-                // Off while a grip is held: a handler on the parent item can
+                // Only the clip selected on the timeline moves: dragging a box
+                // that merely happens to be under the pointer used to shift the
+                // wrong clip, so an unselected box is tap-to-select only.
+                // Off while a grip is held too: a handler on the parent item can
                 // otherwise take the grab from the grip once the drag threshold
                 // is passed, turning a resize into a move.
-                enabled: !handle.editing && !handle.resizing
+                enabled: handle.selected && !handle.editing && !handle.resizing
                 cursorShape: Qt.SizeAllCursor
 
                 // Press point in overlay coordinates. The box rides the cursor as
@@ -512,9 +468,22 @@ Item {
                     EditorState.previewSetClipPosition(
                         handle.modelData.track,
                         handle.modelData.clip,
-                        xPx,
-                        yPx)
+                        xPx + handle.anchorOffsetX,
+                        yPx + handle.anchorOffsetY)
                 }
+            }
+
+            // The single move handle of a 3D model: an affordance at the box centre (the whole
+            // box drags), where the corner and rotation grips would otherwise invite resizing.
+            Rectangle {
+                visible: handle.selected && handle.isModel3d && !handle.editing
+                anchors.centerIn: parent
+                width: 14
+                height: 14
+                radius: 7
+                color: Theme.primary
+                border.width: Theme.borderWidth
+                border.color: Theme.onMedia
             }
 
             // Resize grips: 4 edges then 4 corners, the same frame the canvas
@@ -522,7 +491,7 @@ Item {
             // (-1 = left/top, +1 = right/bottom, 0 = stays put). The opposite
             // edge or corner is the anchor and does not move.
             Repeater {
-                model: (handle.selected && !handle.editing)
+                model: (handle.selected && !handle.editing && !handle.isModel3d)
                        ? [
                            { dx: -1, dy:  0, cursor: Qt.SizeHorCursor },
                            { dx:  1, dy:  0, cursor: Qt.SizeHorCursor },
@@ -777,7 +746,7 @@ Item {
 
             // Rotation handle above the box
             Item {
-                visible: handle.selected && !handle.editing
+                visible: handle.selected && !handle.editing && !handle.isModel3d
                 width: 14
                 height: 14
                 x: handle.width / 2 - width / 2

@@ -1,0 +1,14 @@
+# Windows checkouts default to core.autocrlf=true, which rewrites every text file's line endings
+# on the way out of git. Two kinds of file here are byte-compared against what a tool writes, and
+# those tools emit LF on every platform:
+#
+#   * i18n/*.ts — the Translations test runs lupdate and compares the result against the
+#     checkout. lupdate opens the catalog without QIODevice::Text, so it writes LF on Windows
+#     too, which made every catalog look stale there however recently it had been regenerated.
+#   * tests/data/** — fixtures matched against literals containing "\n"; tst_vector patches
+#     slide.json by searching for one, and silently found nothing to replace.
+#
+# Nothing in this tree wants CRLF, so normalise all of it rather than listing the tripwires.
+# No tracked text file carries a CR today, so this changes no committed bytes, and text=auto
+# leaves git's binary detection in charge of the fixtures that must not be rewritten at all.
+* text=auto eol=lf

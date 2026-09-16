@@ -1,0 +1,74 @@
+{
+  "format": 1,
+  "id": "stamp",
+  "label": "Rubber stamp",
+  "category": "kinetic",
+  "sampleText": "STAMP",
+  "slots": [
+    "in"
+  ],
+  "order": 220,
+  "defaults": {
+    "unit": "block",
+    "duration": 0.35,
+    "ease": "easeIn"
+  },
+  "flags": {
+    "unitLocked": true,
+    "orderLocked": true
+  },
+  "params": [
+    {
+      "id": "from",
+      "type": "scalar",
+      "label": "From",
+      "unit": "%",
+      "min": 100,
+      "max": 500,
+      "step": 10,
+      "default": 250
+    },
+    {
+      "id": "tilt",
+      "type": "scalar",
+      "label": "Tilt",
+      "unit": "\u00b0",
+      "min": -45,
+      "max": 45,
+      "step": 1,
+      "default": -8
+    }
+  ],
+  "animators": [
+    {
+      "selectors": [
+        "stagger"
+      ],
+      "props": {
+        "scale": "{from}",
+        "rotation": "{tilt}"
+      }
+    },
+    {
+      "selectors": [
+        {
+          "driver": "stagger",
+          "domain": "{unit}",
+          "order": "{order}",
+          "staggerUs": {
+            "$": "stagger",
+            "mul": 1000000
+          },
+          "durationUs": {
+            "$": "duration",
+            "mul": 300000
+          },
+          "ease": "linear"
+        }
+      ],
+      "props": {
+        "opacity": 0
+      }
+    }
+  ]
+}

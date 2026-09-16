@@ -19,6 +19,10 @@ struct MediaEditSpec
     double cropY = 0;
     double cropW = 1;
     double cropH = 1;
+    // -1 = derive rotation from the source file's own display-matrix tag, as before. Set this to
+    // a bin-preview rotation override (0/90/180/270) so the crop rectangle — drawn in the QML
+    // preview against that corrected orientation — lands on the same pixels here.
+    int rotationOverride = -1;
 };
 
 // Rewrites `inputPath` into `outputPath` with the requested trim and crop. Images become PNG,

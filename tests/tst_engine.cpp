@@ -36,6 +36,7 @@
 #include "playback/PlaybackDiagnostics.h"
 #include "playback/PlaybackStats.h"
 #include "engine/GpuStatus.h"
+#include "engine/GpuDevice.h"
 #include "engine/HwAccel.h"
 #include "engine/OrtRuntime.h"
 #include "engine/CompositorFrameHistory.h"
@@ -57,6 +58,9 @@
 #include "engine/FaceMesh.h"
 #include "engine/FaceModelTransform.h"
 #include "engine/ModelAsset.h"
+#include "engine/ModelAnimation.h"
+#include "engine/ModelClipRenderer.h"
+#include "engine/ModelClipTransform.h"
 #include "engine/GlFaceSwapRenderer.h"
 #include "engine/FaceSwapSource.h"
 #include "engine/GlModelRenderer.h"
@@ -65,7 +69,12 @@
 #include "engine/FontCatalog.h"
 #include "engine/FrameCompositor.h"
 #include "engine/GpuCompositor.h"
-#include "engine/TextRaster.h"
+#include "core/TextAnimationPreset.h"
+#include "engine/TextLayout.h"
+#ifdef DRIFT_WITH_SKIA
+#include "engine/SkiaRuntime.h"
+#include "engine/SkiaTextPainter.h"
+#endif
 #include "engine/GpuEffectExecutor.h"
 #include "engine/GpuPackageParse.h"
 
@@ -121,6 +130,18 @@ private slots:
     void faceModelMvpIsResolutionIndependent();
     void faceModelMvpMapsUpToDecreasingNdcY();
     void faceModelDoesNotLeakGlState();
+    void modelAssetCubeHasNoRig();
+    void modelAssetParsesBoxAnimated();
+    void modelAssetParsesRiggedSimple();
+    void modelAnimSamplerInterpolates();
+    void modelPoseHierarchyAndSkinning();
+    void modelClipCameraIsAspectOnly();
+    void modelClipScreenRectMatchesMvp();
+    void modelClipDrawRequestFollowsLoopMode();
+    void modelClipRendersCube();
+    void modelClipRigRenders();
+    void compositorRendersModelClip();
+    void modelClipDoesNotLeakGlState();
     void faceModelFillWireDoesNotLeakGlState();
     void faceMesh3dEffectPackageLoads();
     void faceMeshRestLoadsAndWarps();
@@ -154,6 +175,13 @@ private slots:
     void decodeBackendOrderFollowsTheRenderGpu();
     void playbackDiagnosticsReportsStagesAndFindings();
     void cudaInteropUploadsAFrameWithoutBlanking();
+    void d3d11InteropUploadsAFrameWithoutBlanking();
+    void decodeAttemptOrderKeepsPinsOnTheRenderGpu();
+    void describeRenderMatchFlagsCudaOffTheRenderGpu();
+    void pciIdForDrmNodeReadsSysfs();
+    void vaapiDeviceStringFollowsTheRenderNode();
+    void nvdecAv1StaysOnHardware();
+    void cudaInteropSurvivesTwoDecoders();
     void reverseProxyKeepsDisplayRotation();
     void clipReaderAudioSequential();
     void audioStreamsAreIndependentPerStreamId();
@@ -1031,6 +1059,624 @@ void EngineTest::faceModelDoesNotLeakGlState()
     const QImage out = EffectProcessor::applyEffects(source, {brightness}, 0, {});
     QVERIFY(!out.isNull());
     QVERIFY(out.pixelColor(32, 32).red() != 100);
+}
+
+void EngineTest::modelAssetCubeHasNoRig()
+{
+    const auto asset = drift::loadModelAssetCached(QStringLiteral(DRIFT_TEST_DATA_DIR "/cube.glb"));
+    QVERIFY(asset);
+    QVERIFY(!asset->rig);
+    QVERIFY(asset->animations.isEmpty());
+    QVERIFY(asset->warning.isEmpty());
+    QVector3D lo, hi;
+    drift::modelClipBounds(*asset, &lo, &hi);
+    QCOMPARE(lo, asset->aabbMin);
+    QCOMPARE(hi, asset->aabbMax);
+}
+
+void EngineTest::modelAssetParsesBoxAnimated()
+{
+    const QString path = QStringLiteral(DRIFT_TEST_DATA_DIR "/model/BoxAnimated.glb");
+    QVERIFY2(QFileInfo::exists(path), qPrintable(path));
+    QString warning;
+    const auto asset = drift::loadModelAsset(path, &warning);
+    QVERIFY2(asset, qPrintable(warning));
+
+    // The baked buffer is untouched by the rig: same geometry the face effect has always drawn.
+    QVERIFY(asset->vertexCount() > 0);
+    QCOMPARE(asset->aabbMax.x() - asset->aabbMin.x(), 1.0f);
+
+    QCOMPARE(asset->animations.size(), 1);
+    QVERIFY(asset->animations.first().durationUs > drift::secondsToUs(3.7)
+            && asset->animations.first().durationUs < drift::secondsToUs(3.72));
+
+    QVERIFY(asset->rig);
+    const drift::ModelRig &rig = *asset->rig;
+    QCOMPARE(rig.nodes.size(), 4);
+    QVERIFY(rig.skins.isEmpty());
+    QCOMPARE(rig.paletteSize, 4);
+    QCOMPARE(rig.animations.size(), 1);
+    QCOMPARE(rig.animations.first().channels.size(), 2);
+    QCOMPARE(rig.animations.first().samplers.size(), 2);
+    QVERIFY(std::abs(rig.animations.first().durationSec - 3.7083) < 1e-3);
+    // Parents precede children.
+    for (int i = 0; i < rig.nodes.size(); ++i)
+        QVERIFY(rig.nodes[i].parent < i);
+    // Every vertex is rigid here: its own node's row at weight one.
+    QVERIFY(rig.vertexCount() > 0);
+    QCOMPARE(rig.vertices.size(), rig.vertexCount() * drift::kRigVertStride);
+    for (int i = 0; i < rig.vertexCount(); ++i) {
+        const float *v = rig.vertices.constData() + i * drift::kRigVertStride;
+        QCOMPARE(v[12], 1.f);
+        QCOMPARE(v[13], 0.f);
+        QVERIFY(int(v[8]) >= 0 && int(v[8]) < rig.nodes.size());
+    }
+    for (const drift::ModelPrimitive &prim : rig.primitives)
+        QVERIFY(prim.node >= 0 && prim.node < rig.nodes.size());
+    // Rest bounds are normalised: centred, largest axis one unit.
+    const QVector3D extent = rig.restAabbMax - rig.restAabbMin;
+    QVERIFY(std::abs(std::max({extent.x(), extent.y(), extent.z()}) - 1.0f) < 1e-4f);
+    QVERIFY((rig.restAabbMin + rig.restAabbMax).length() < 1e-4f);
+
+    // The lid moves: a posed vertex differs between t=0 and mid-animation.
+    const drift::ModelPose rest = drift::evaluateModelPose(rig, 0, 0.0);
+    const drift::ModelPose mid = drift::evaluateModelPose(rig, 0, 1.8);
+    QCOMPARE(rest.palette.size(), rig.paletteSize);
+    bool moved = false;
+    for (int i = 0; i < rig.paletteSize && !moved; ++i)
+        moved = rest.palette[i] != mid.palette[i];
+    QVERIFY(moved);
+    // But the rest pose at animation index -1 equals the file's own node transforms at t=0
+    // for the untouched nodes.
+    const drift::ModelPose bare = drift::evaluateModelPose(rig, -1, 0.0);
+    QCOMPARE(bare.palette.size(), rig.paletteSize);
+}
+
+void EngineTest::modelAssetParsesRiggedSimple()
+{
+    const QString path = QStringLiteral(DRIFT_TEST_DATA_DIR "/model/RiggedSimple.glb");
+    QVERIFY2(QFileInfo::exists(path), qPrintable(path));
+    QString warning;
+    const auto asset = drift::loadModelAsset(path, &warning);
+    QVERIFY2(asset, qPrintable(warning));
+    // The rig takes over skinning, so the bind-pose note must not be raised.
+    QVERIFY2(!asset->warning.contains(QStringLiteral("bind pose")), qPrintable(asset->warning));
+
+    QVERIFY(asset->rig);
+    const drift::ModelRig &rig = *asset->rig;
+    QCOMPARE(rig.nodes.size(), 5);
+    QCOMPARE(rig.skins.size(), 1);
+    QCOMPARE(rig.skins.first().joints.size(), 2);
+    QCOMPARE(rig.skins.first().inverseBind.size(), 2);
+    QCOMPARE(rig.skins.first().paletteBase, 5);
+    QCOMPARE(rig.paletteSize, 7);
+    QCOMPARE(rig.animations.size(), 1);
+    QCOMPARE(rig.animations.first().channels.size(), 3);
+    // Skinned vertices point at absolute palette rows past the node rows, and blend to one.
+    int skinnedVerts = 0;
+    for (int i = 0; i < rig.vertexCount(); ++i) {
+        const float *v = rig.vertices.constData() + i * drift::kRigVertStride;
+        const float sum = v[12] + v[13] + v[14] + v[15];
+        QVERIFY(std::abs(sum - 1.f) < 1e-3f);
+        for (int k = 0; k < 4; ++k) {
+            if (v[12 + k] > 0.f && int(v[8 + k]) >= 5)
+                ++skinnedVerts;
+        }
+    }
+    QVERIFY(skinnedVerts > 0);
+    // The inverse bind matrices are not identity (the bones sit away from the origin).
+    QVERIFY(rig.skins.first().inverseBind.first() != QMatrix4x4());
+
+    // Skinned rest bounds are normalised too, and the animation bends the cylinder.
+    const QVector3D extent = rig.restAabbMax - rig.restAabbMin;
+    QVERIFY(std::abs(std::max({extent.x(), extent.y(), extent.z()}) - 1.0f) < 1e-4f);
+    const drift::ModelPose a = drift::evaluateModelPose(rig, 0, 0.0);
+    const drift::ModelPose b = drift::evaluateModelPose(rig, 0, 1.0);
+    QVERIFY(a.palette[6] != b.palette[6]);
+}
+
+void EngineTest::modelAnimSamplerInterpolates()
+{
+    drift::ModelAnimSampler s;
+    s.components = 3;
+    s.times = {0.f, 1.f, 3.f};
+    s.values = {0.f, 0.f, 0.f, 2.f, 4.f, 6.f, 4.f, 4.f, 4.f};
+    float v[4];
+
+    s.interp = drift::ModelAnimSampler::Interp::Linear;
+    drift::sampleModelAnimSampler(s, 0.5, v);
+    QCOMPARE(v[0], 1.f);
+    QCOMPARE(v[1], 2.f);
+    QCOMPARE(v[2], 3.f);
+    drift::sampleModelAnimSampler(s, 2.0, v);
+    QCOMPARE(v[0], 3.f);
+    // Clamped outside the range.
+    drift::sampleModelAnimSampler(s, -5.0, v);
+    QCOMPARE(v[1], 0.f);
+    drift::sampleModelAnimSampler(s, 9.0, v);
+    QCOMPARE(v[1], 4.f);
+
+    s.interp = drift::ModelAnimSampler::Interp::Step;
+    drift::sampleModelAnimSampler(s, 0.99, v);
+    QCOMPARE(v[0], 0.f);
+    drift::sampleModelAnimSampler(s, 1.0, v);
+    QCOMPARE(v[0], 2.f);
+
+    // CubicSpline with zero tangents is a smoothstep between the keys.
+    drift::ModelAnimSampler c;
+    c.components = 1;
+    c.interp = drift::ModelAnimSampler::Interp::CubicSpline;
+    c.times = {0.f, 2.f};
+    c.values = {0.f, 0.f, 0.f, 0.f, 10.f, 0.f}; // in, value, out per key
+    drift::sampleModelAnimSampler(c, 1.0, v);
+    QCOMPARE(v[0], 5.f);
+    drift::sampleModelAnimSampler(c, 0.5, v);
+    QVERIFY(v[0] > 0.f && v[0] < 2.5f);
+
+    // Rotations slerp the short way and come out unit length.
+    drift::ModelAnimSampler q;
+    q.components = 4;
+    q.interp = drift::ModelAnimSampler::Interp::Linear;
+    q.times = {0.f, 1.f};
+    const float h = std::sqrt(0.5f);
+    q.values = {0.f, 0.f, 0.f, 1.f, 0.f, 0.f, h, h}; // identity → 90° about z
+    drift::sampleModelAnimSampler(q, 0.5, v);
+    const QQuaternion mid(v[3], v[0], v[1], v[2]);
+    QVERIFY(std::abs(mid.length() - 1.f) < 1e-5f);
+    const QVector3D turned = mid.rotatedVector(QVector3D(1.f, 0.f, 0.f));
+    QVERIFY(std::abs(turned.x() - h) < 1e-4f && std::abs(turned.y() - h) < 1e-4f);
+    // Flipping the sign of the second key must not change the path.
+    q.values = {0.f, 0.f, 0.f, 1.f, 0.f, 0.f, -h, -h};
+    drift::sampleModelAnimSampler(q, 0.5, v);
+    const QVector3D turned2 = QQuaternion(v[3], v[0], v[1], v[2]).rotatedVector(QVector3D(1.f, 0.f, 0.f));
+    QVERIFY(std::abs(turned2.x() - h) < 1e-4f && std::abs(turned2.y() - h) < 1e-4f);
+}
+
+void EngineTest::modelPoseHierarchyAndSkinning()
+{
+    drift::ModelRig rig;
+    drift::ModelNode root;
+    root.translation = QVector3D(1.f, 0.f, 0.f);
+    drift::ModelNode child;
+    child.parent = 0;
+    child.rotation = QQuaternion::fromAxisAndAngle(0.f, 0.f, 1.f, 90.f);
+    rig.nodes = {root, child};
+    drift::ModelSkin skin;
+    skin.joints = {1};
+    QMatrix4x4 ibm;
+    ibm.translate(0.f, -2.f, 0.f);
+    skin.inverseBind = {ibm};
+    skin.paletteBase = 2;
+    rig.skins = {skin};
+    rig.paletteSize = 3;
+    rig.restCentre = QVector3D(0.f, 0.f, 0.f);
+    rig.restInvScale = 1.f;
+
+    const drift::ModelPose pose = drift::evaluateModelPose(rig, -1, 0.0);
+    QCOMPARE(pose.palette.size(), 3);
+    // Child world = T(1,0,0) * Rz(90): the point (1,0,0) lands at (1,1,0).
+    const QVector3D p = pose.palette[1].map(QVector3D(1.f, 0.f, 0.f));
+    QVERIFY((p - QVector3D(1.f, 1.f, 0.f)).length() < 1e-5f);
+    // Joint row = world * IBM: (0,2,0) is first brought to the origin, then posed.
+    const QVector3D j = pose.palette[2].map(QVector3D(0.f, 2.f, 0.f));
+    QVERIFY((j - QVector3D(1.f, 0.f, 0.f)).length() < 1e-5f);
+
+    // Normalisation folds into every row.
+    rig.restCentre = QVector3D(1.f, 0.f, 0.f);
+    rig.restInvScale = 0.5f;
+    const drift::ModelPose normed = drift::evaluateModelPose(rig, -1, 0.0);
+    const QVector3D pn = normed.palette[1].map(QVector3D(1.f, 0.f, 0.f));
+    QVERIFY((pn - QVector3D(0.f, 0.5f, 0.f)).length() < 1e-5f);
+
+    // A channel on the root moves the whole subtree; a matrix node ignores channels.
+    drift::ModelAnimation anim;
+    drift::ModelAnimSampler s;
+    s.components = 3;
+    s.times = {0.f, 1.f};
+    s.values = {1.f, 0.f, 0.f, 1.f, 0.f, 5.f};
+    anim.samplers = {s};
+    drift::ModelAnimChannel ch;
+    ch.node = 0;
+    ch.sampler = 0;
+    ch.path = drift::ModelAnimChannel::Path::Translation;
+    anim.channels = {ch};
+    rig.animations = {anim};
+    rig.restCentre = QVector3D();
+    rig.restInvScale = 1.f;
+    const drift::ModelPose moved = drift::evaluateModelPose(rig, 0, 1.0);
+    QVERIFY((moved.palette[1].map(QVector3D(1.f, 0.f, 0.f)) - QVector3D(1.f, 1.f, 5.f)).length() < 1e-5f);
+    rig.nodes[0].hasMatrix = true;
+    rig.nodes[0].matrix.setToIdentity();
+    const drift::ModelPose fixed = drift::evaluateModelPose(rig, 0, 1.0);
+    QVERIFY((fixed.palette[1].map(QVector3D(1.f, 0.f, 0.f)) - QVector3D(0.f, 1.f, 0.f)).length() < 1e-5f);
+
+    QCOMPARE(drift::modelAnimationDurationUs(drift::ModelAsset(), 0), 0);
+}
+
+void EngineTest::modelClipCameraIsAspectOnly()
+{
+    const QVector3D aabbMin(-0.5f, -0.5f, -0.5f);
+    const QVector3D aabbMax(0.5f, 0.5f, 0.5f);
+    drift::ModelClipParams params;
+    params.scale = 0.5;
+
+    for (const double depth : {0.0, 0.5, 1.0}) {
+        params.depth = depth;
+        const double aspect = 9.0 / 16.0;
+        const QMatrix4x4 a = drift::modelClipCamera(params, aabbMin, aabbMax, aspect).mvp;
+        const QMatrix4x4 b = drift::modelClipCamera(params, aabbMin, aabbMax, aspect).mvp;
+        for (int i = 0; i < 16; ++i)
+            QCOMPARE(a.data()[i], b.data()[i]);
+
+        // Size compensation: the unit extent at the model-centre plane spans 2*scale NDC
+        // vertically whatever the depth, so the depth slider never changes the on-screen size.
+        const QVector4D top = a * QVector4D(0.f, 0.5f, 0.f, 1.f);
+        const QVector4D bottom = a * QVector4D(0.f, -0.5f, 0.f, 1.f);
+        const double span = double(top.y() / top.w()) - double(bottom.y() / bottom.w());
+        QVERIFY2(std::abs(span - 1.0) < 1e-4,
+                 qPrintable(QStringLiteral("depth %1: span %2").arg(depth).arg(span)));
+        // And the horizontal extent honours the aspect: a unit width spans 2*scale*aspect.
+        const QVector4D left = a * QVector4D(-0.5f, 0.f, 0.f, 1.f);
+        const QVector4D right = a * QVector4D(0.5f, 0.f, 0.f, 1.f);
+        const double hspan = double(right.x() / right.w()) - double(left.x() / left.w());
+        QVERIFY2(std::abs(hspan - aspect) < 1e-4,
+                 qPrintable(QStringLiteral("depth %1: hspan %2").arg(depth).arg(hspan)));
+    }
+
+    // Perspective: at depth 1 a point nearer the camera (+z) projects larger than one behind.
+    params.depth = 1.0;
+    const QMatrix4x4 persp = drift::modelClipCamera(params, aabbMin, aabbMax, 1.0).mvp;
+    const QVector4D nearPt = persp * QVector4D(0.5f, 0.f, 0.5f, 1.f);
+    const QVector4D farPt = persp * QVector4D(0.5f, 0.f, -0.5f, 1.f);
+    QVERIFY(nearPt.x() / nearPt.w() > farPt.x() / farPt.w());
+    // Orthographic at depth 0: both project to the same x.
+    params.depth = 0.0;
+    const QMatrix4x4 ortho = drift::modelClipCamera(params, aabbMin, aabbMax, 1.0).mvp;
+    const QVector4D nearO = ortho * QVector4D(0.5f, 0.f, 0.5f, 1.f);
+    const QVector4D farO = ortho * QVector4D(0.5f, 0.f, -0.5f, 1.f);
+    QCOMPARE(nearO.x() / nearO.w(), farO.x() / farO.w());
+    // Nearer surfaces win GL_LESS in both modes.
+    QVERIFY(nearO.z() / nearO.w() < farO.z() / farO.w());
+    QVERIFY(nearPt.z() / nearPt.w() < farPt.z() / farPt.w());
+
+    // Rotations are about the model's own axes: with the model tilted by X, spinning Y keeps
+    // the model's up axis where the tilt put it (the spin is about that axis), where a world-axis
+    // Y spin would swing it around.
+    {
+        drift::ModelClipParams tilted;
+        tilted.scale = 0.5;
+        tilted.depth = 0.0;
+        tilted.rotX = 90.0;
+        QVector3D upAt0;
+        for (const double spin : {0.0, 45.0, 90.0, 180.0}) {
+            tilted.rotY = spin;
+            const drift::ModelClipCamera cam = drift::modelClipCamera(tilted, aabbMin, aabbMax, 1.0);
+            const QVector3D up = cam.modelView.mapVector(QVector3D(0.f, 1.f, 0.f)).normalized();
+            if (spin == 0.0)
+                upAt0 = up;
+            QVERIFY2((up - upAt0).length() < 1e-4f,
+                     qPrintable(QStringLiteral("rotY %1 moved the up axis to %2,%3,%4")
+                                    .arg(spin).arg(up.x()).arg(up.y()).arg(up.z())));
+        }
+        // And Z rolls about the model's forward axis after both: with X = 90, model +Z (its
+        // forward) now points down (−Y in view), and rolling Z leaves it there.
+        tilted.rotY = 0.0;
+        for (const double roll : {0.0, 60.0}) {
+            tilted.rotZ = roll;
+            const drift::ModelClipCamera cam = drift::modelClipCamera(tilted, aabbMin, aabbMax, 1.0);
+            const QVector3D fwd = cam.modelView.mapVector(QVector3D(0.f, 0.f, 1.f)).normalized();
+            QVERIFY((fwd - QVector3D(0.f, -1.f, 0.f)).length() < 1e-4f);
+        }
+    }
+
+    // The centre lands where the clip's x/y put it, as a sticker (independent of depth).
+    params.depth = 0.7;
+    params.centreX = 0.25;
+    params.centreY = 0.75;
+    const QMatrix4x4 moved = drift::modelClipCamera(params, aabbMin, aabbMax, 1.0).mvp;
+    const QVector4D centre = moved * QVector4D(0.f, 0.f, 0.f, 1.f);
+    QVERIFY(std::abs(double(centre.x() / centre.w()) - (2.0 * 0.25 - 1.0)) < 1e-5);
+    QVERIFY(std::abs(double(centre.y() / centre.w()) - (1.0 - 2.0 * 0.75)) < 1e-5);
+}
+
+void EngineTest::modelClipScreenRectMatchesMvp()
+{
+    const QVector3D aabbMin(-0.5f, -0.25f, -0.125f);
+    const QVector3D aabbMax(0.5f, 0.25f, 0.125f);
+    drift::ModelClipParams params;
+    params.scale = 0.4;
+    params.depth = 0.0;
+    params.centreX = 0.5;
+    params.centreY = 0.5;
+    const double aspect = 9.0 / 16.0;
+    // Orthographic and unrotated: the largest axis (x) spans 0.4 of the height, i.e.
+    // 0.4 * aspect of the width, centred.
+    const QRectF rect = drift::modelClipScreenRect(params, aabbMin, aabbMax, aspect);
+    QVERIFY(std::abs(rect.width() - 0.4 * aspect) < 1e-4);
+    QVERIFY(std::abs(rect.height() - 0.2) < 1e-4);
+    QVERIFY(std::abs(rect.center().x() - 0.5) < 1e-4);
+    QVERIFY(std::abs(rect.center().y() - 0.5) < 1e-4);
+
+    // Every projected corner lies inside the rect (top-left origin, y down) under perspective.
+    params.depth = 1.0;
+    params.rotY = 35.0;
+    params.rotX = -20.0;
+    const QRectF r2 = drift::modelClipScreenRect(params, aabbMin, aabbMax, aspect);
+    const QMatrix4x4 mvp = drift::modelClipCamera(params, aabbMin, aabbMax, aspect).mvp;
+    for (int i = 0; i < 8; ++i) {
+        const QVector4D c = mvp * QVector4D((i & 1) ? aabbMax.x() : aabbMin.x(),
+                                            (i & 2) ? aabbMax.y() : aabbMin.y(),
+                                            (i & 4) ? aabbMax.z() : aabbMin.z(), 1.f);
+        const QPointF p((c.x() / c.w() + 1.0) * 0.5, (1.0 - c.y() / c.w()) * 0.5);
+        QVERIFY2(r2.adjusted(-1e-5, -1e-5, 1e-5, 1e-5).contains(p),
+                 qPrintable(QStringLiteral("corner %1 (%2, %3) outside %4,%5 %6x%7")
+                                .arg(i).arg(p.x()).arg(p.y())
+                                .arg(r2.x()).arg(r2.y()).arg(r2.width()).arg(r2.height())));
+    }
+}
+
+void EngineTest::modelClipDrawRequestFollowsLoopMode()
+{
+    const QString path = QStringLiteral(DRIFT_TEST_DATA_DIR "/cube.glb");
+    drift::model3d::RenderRequest request;
+    request.path = path;
+    request.centre = QPointF(0.5, 0.5);
+    request.source.path = path;
+    request.source.scale = 0.3;
+    request.source.rotY = 45.0;
+
+    const auto draw = drift::model3d::makeDrawRequest(request);
+    QVERIFY(draw);
+    QVERIFY(draw->asset);
+    QCOMPARE(draw->params.scale, 0.3);
+    QCOMPARE(draw->params.rotY, 45.0);
+    QCOMPARE(draw->params.centreX, 0.5);
+
+    request.path = QStringLiteral(DRIFT_TEST_DATA_DIR "/does-not-exist.glb");
+    QVERIFY(!drift::model3d::makeDrawRequest(request));
+}
+
+namespace {
+
+GpuScene modelClipScene(const QString &path, int size, double rotY = 0.0, double lightPitch = 20.0,
+                        double depth = 0.5)
+{
+    drift::model3d::RenderRequest request;
+    request.path = path;
+    request.centre = QPointF(0.5, 0.5);
+    request.source.path = path;
+    request.source.scale = 0.5;
+    request.source.depth = depth;
+    request.source.rotY = rotY;
+    request.source.rotX = 20.0;
+    request.source.lightPitch = lightPitch;
+
+    GpuLayer layer;
+    layer.model3d = drift::model3d::makeDrawRequest(request);
+    layer.rect = QRectF(0, 0, size, size);
+    layer.valid = true;
+
+    GpuItem item;
+    item.layer = layer;
+
+    GpuScene scene;
+    scene.canvasSize = QSize(size, size);
+    scene.backgroundColor = Qt::black;
+    scene.items.append(item);
+    return scene;
+}
+
+} // namespace
+
+void EngineTest::modelClipRendersCube()
+{
+    if (!GpuCompositor::isAvailable())
+        QSKIP("OpenGL offscreen context unavailable");
+    const QString path = QStringLiteral(DRIFT_TEST_DATA_DIR "/cube.glb");
+
+    const QImage out = GpuCompositor::render(modelClipScene(path, 64));
+    QVERIFY(!out.isNull());
+    QCOMPARE(out.size(), QSize(64, 64));
+    // The cube covers the middle and leaves the corners to the background.
+    const QRgb centre = out.pixel(32, 32);
+    QVERIFY2(qRed(centre) + qGreen(centre) + qBlue(centre) > 60,
+             qPrintable(QStringLiteral("centre #%1").arg(centre, 8, 16, QLatin1Char('0'))));
+    const QRgb corner = out.pixel(2, 2);
+    QVERIFY2(qRed(corner) + qGreen(corner) + qBlue(corner) < 30,
+             qPrintable(QStringLiteral("corner #%1").arg(corner, 8, 16, QLatin1Char('0'))));
+    // Rows are flipped in the resolve so v=0 is the image top: rotX tips the cube's top toward
+    // the camera, so under perspective the top of the picture is the wider (nearer) end. The
+    // cube's shared vertices have no per-face normals, so lighting cannot tell faces apart.
+    const QImage tipped = GpuCompositor::render(modelClipScene(path, 64, 0.0, 20.0, 1.0));
+    QVERIFY(!tipped.isNull());
+    auto coveredWidth = [&](int y) {
+        int n = 0;
+        for (int x = 0; x < 64; ++x)
+            n += qGray(tipped.pixel(x, y)) > 20 ? 1 : 0;
+        return n;
+    };
+    const int upperWidth = coveredWidth(22);
+    const int lowerWidth = coveredWidth(42);
+    QVERIFY2(upperWidth > lowerWidth + 2,
+             qPrintable(QStringLiteral("upper %1 lower %2").arg(upperWidth).arg(lowerWidth)));
+
+    // A spin changes the picture.
+    const QImage spun = GpuCompositor::render(modelClipScene(path, 64, 60.0));
+    QVERIFY(!spun.isNull());
+    int diff = 0;
+    for (int y = 0; y < 64; ++y)
+        for (int x = 0; x < 64; ++x)
+            diff += std::abs(qGray(out.pixel(x, y)) - qGray(spun.pixel(x, y)));
+    QVERIFY(diff > 0);
+
+    // WYSIWYG: the same scene at twice the size downsamples to roughly the same picture.
+    const QImage big = GpuCompositor::render(modelClipScene(path, 128))
+                           .scaled(64, 64, Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
+    QVERIFY(!big.isNull());
+    long total = 0;
+    for (int y = 0; y < 64; ++y)
+        for (int x = 0; x < 64; ++x)
+            total += std::abs(qGray(out.pixel(x, y)) - qGray(big.pixel(x, y)));
+    QVERIFY2(total / (64 * 64) < 12, qPrintable(QStringLiteral("mean diff %1").arg(total / (64.0 * 64.0))));
+}
+
+namespace {
+
+GpuScene modelClipSceneAt(const QString &path, int size, drift::TimeUs animUs, drift::VectorLoop loop)
+{
+    drift::model3d::RenderRequest request;
+    request.path = path;
+    request.centre = QPointF(0.5, 0.5);
+    request.source.path = path;
+    request.source.scale = 0.6;
+    request.source.depth = 0.3;
+    request.source.rotX = 25.0;
+    request.source.rotY = 30.0;
+    request.source.loop = loop;
+    request.animUs = animUs;
+
+    GpuLayer layer;
+    layer.model3d = drift::model3d::makeDrawRequest(request);
+    layer.rect = QRectF(0, 0, size, size);
+    layer.valid = layer.model3d != nullptr;
+
+    GpuItem item;
+    item.layer = layer;
+
+    GpuScene scene;
+    scene.canvasSize = QSize(size, size);
+    scene.backgroundColor = Qt::black;
+    scene.items.append(item);
+    return scene;
+}
+
+long imageDifference(const QImage &a, const QImage &b)
+{
+    long diff = 0;
+    for (int y = 0; y < a.height(); ++y)
+        for (int x = 0; x < a.width(); ++x)
+            diff += std::abs(qGray(a.pixel(x, y)) - qGray(b.pixel(x, y)));
+    return diff;
+}
+
+} // namespace
+
+void EngineTest::modelClipRigRenders()
+{
+    if (!GpuCompositor::isAvailable())
+        QSKIP("OpenGL offscreen context unavailable");
+
+    for (const char *file : {"BoxAnimated.glb", "RiggedSimple.glb"}) {
+        const QString path = QStringLiteral(DRIFT_TEST_DATA_DIR "/model/") + QLatin1String(file);
+        const QImage t0 = GpuCompositor::render(modelClipSceneAt(path, 96, 0, drift::VectorLoop::Loop));
+        QVERIFY2(!t0.isNull(), file);
+        int lit = 0;
+        for (int y = 0; y < 96; ++y)
+            for (int x = 0; x < 96; ++x)
+                lit += qGray(t0.pixel(x, y)) > 20 ? 1 : 0;
+        // RiggedSimple is a thin cylinder, so only a few percent of the canvas is covered.
+        QVERIFY2(lit > 96 * 96 / 40, qPrintable(QStringLiteral("%1: %2 lit pixels").arg(file).arg(lit)));
+
+        // Mid-animation the picture changes; a Loop past the end wraps back to the start.
+        const drift::TimeUs mid = drift::secondsToUs(1.2);
+        const QImage tMid = GpuCompositor::render(modelClipSceneAt(path, 96, mid, drift::VectorLoop::Loop));
+        QVERIFY2(imageDifference(t0, tMid) > 500, file);
+        const auto asset = drift::loadModelAssetCached(path);
+        QVERIFY(asset && !asset->animations.isEmpty());
+        const drift::TimeUs len = asset->animations.first().durationUs;
+        const QImage wrapped = GpuCompositor::render(modelClipSceneAt(path, 96, len + mid, drift::VectorLoop::Loop));
+        QVERIFY2(imageDifference(tMid, wrapped) < 200, file);
+        // Hide past the end draws nothing at all.
+        const GpuScene hidden = modelClipSceneAt(path, 96, len + mid, drift::VectorLoop::Hide);
+        QVERIFY2(!hidden.items.first().layer.model3d, file);
+    }
+}
+
+void EngineTest::compositorRendersModelClip()
+{
+    if (!GpuCompositor::isAvailable())
+        QSKIP("OpenGL offscreen context unavailable");
+
+    drift::Project project;
+    project.setResolution(200, 100);
+    project.tracks().clear();
+    project.tracks().append(drift::Track{.type = drift::TrackType::Shape});
+    drift::Clip clip;
+    clip.id = QStringLiteral("model");
+    clip.type = drift::ClipType::Model3d;
+    clip.path = QStringLiteral(DRIFT_TEST_DATA_DIR "/model/BoxAnimated.glb");
+    clip.model3d.path = clip.path;
+    clip.model3d.scale = 0.4;
+    clip.model3d.depth = 0.0;
+    clip.model3d.loop = drift::VectorLoop::Hold;
+    clip.timelineStart = 0;
+    clip.timelineDuration = drift::secondsToUs(4.0);
+    clip.srcIn = 0;
+    clip.srcOut = drift::secondsToUs(4.0);
+    // Off-centre: x/y shift the model, and the size keys are ignored.
+    clip.transformX.setKeyframe(0, -50.0);
+    clip.transformY.setKeyframe(0, 0.0);
+    clip.transformW.setKeyframe(0, 200.0);
+    clip.transformH.setKeyframe(0, 100.0);
+    // A rotY key animates the pose from the clip's own keyframes.
+    clip.model3d.keyframes[QStringLiteral("rotY")].setKeyframe(0, 0.0);
+    clip.model3d.keyframes[QStringLiteral("rotY")].setKeyframe(drift::secondsToUs(2.0), 90.0);
+    project.tracks()[0].clips.append(clip);
+
+    FrameCompositor compositor;
+    compositor.setProject(&project);
+    const QImage t0 = compositor.compositeAt(0).convertToFormat(QImage::Format_RGBA8888);
+    QCOMPARE(t0.size(), QSize(200, 100));
+    // Covered pixels sit left of centre (the model centre is at x = 100 − 50 = 50).
+    long sumX = 0;
+    long count = 0;
+    for (int y = 0; y < 100; ++y)
+        for (int x = 0; x < 200; ++x) {
+            if (qGray(t0.pixel(x, y)) > 20) {
+                sumX += x;
+                ++count;
+            }
+        }
+    QVERIFY(count > 200);
+    const double meanX = double(sumX) / double(count);
+    QVERIFY2(std::abs(meanX - 50.0) < 6.0, qPrintable(QString::number(meanX)));
+    // Nothing spills past the canvas midline: scale 0.4 of a 100 px height is a 40 px box.
+    for (int y = 0; y < 100; ++y)
+        QVERIFY(qGray(t0.pixel(150, y)) <= 20);
+
+    // Turned by the keyframe and moved by the file's animation, the frame differs at t=1.
+    const QImage t1 = compositor.compositeAt(drift::secondsToUs(1.0)).convertToFormat(QImage::Format_RGBA8888);
+    long diff = 0;
+    for (int y = 0; y < 100; ++y)
+        for (int x = 0; x < 200; ++x)
+            diff += std::abs(qGray(t0.pixel(x, y)) - qGray(t1.pixel(x, y)));
+    QVERIFY(diff > 1000);
+}
+
+void EngineTest::modelClipDoesNotLeakGlState()
+{
+    if (!GpuCompositor::isAvailable())
+        QSKIP("OpenGL offscreen context unavailable");
+    const QString path = QStringLiteral(DRIFT_TEST_DATA_DIR "/cube.glb");
+    QVERIFY(!GpuCompositor::render(modelClipScene(path, 64)).isNull());
+
+    // A plain image layer after a model draw must still land: a leaked depth test or cull
+    // would drop the fullscreen quad.
+    QImage source(64, 64, QImage::Format_RGBA8888);
+    source.fill(QColor(200, 30, 30));
+    GpuLayer layer;
+    layer.source = source;
+    layer.rect = QRectF(0, 0, 64, 64);
+    layer.valid = true;
+    GpuItem item;
+    item.layer = layer;
+    GpuScene scene;
+    scene.canvasSize = QSize(64, 64);
+    scene.backgroundColor = Qt::black;
+    scene.items.append(item);
+    const QImage out = GpuCompositor::render(scene);
+    QVERIFY(!out.isNull());
+    QVERIFY(qRed(out.pixel(32, 32)) > 150);
 }
 
 void EngineTest::faceModelFillWireDoesNotLeakGlState()
@@ -2982,6 +3628,373 @@ void EngineTest::decodeBackendOrderFollowsTheRenderGpu()
 #endif
 }
 
+// A hybrid laptop drawing on the integrated GPU with NVDEC picked in the decoder menu. In Auto
+// the pin must not win — it would decode on the other card and pay two PCIe crossings per frame,
+// with no interop possible — while Hardware mode still honours it exactly.
+void EngineTest::decodeAttemptOrderKeepsPinsOnTheRenderGpu()
+{
+#if defined(Q_OS_MACOS) || defined(Q_OS_ANDROID)
+    QSKIP("one decode backend on this platform; there is no order to pick.");
+#else
+    using drift::hwaccel::Backend;
+    const QString intel = QStringLiteral("Intel");
+    const QString nvidia = QStringLiteral("NVIDIA Corporation");
+
+    QCOMPARE(drift::hwaccel::decodeAttemptOrder(Backend::Cuda, true, intel),
+             QList<Backend>{Backend::Cuda});
+
+    const QList<Backend> autoOnIntel = drift::hwaccel::decodeAttemptOrder(Backend::Cuda, false, intel);
+    QVERIFY(!autoOnIntel.isEmpty());
+    QVERIFY(autoOnIntel.first() != Backend::Cuda);
+    // Still reachable: Auto has to find something if CUDA is all that opens.
+    QVERIFY(autoOnIntel.contains(Backend::Cuda));
+    QCOMPARE(autoOnIntel, drift::hwaccel::decodeBackendOrderFor(intel));
+
+    QCOMPARE(drift::hwaccel::decodeAttemptOrder(Backend::Cuda, false, nvidia).first(), Backend::Cuda);
+    // A pin that is not vendor-bound leads on any renderer.
+    const Backend native = drift::hwaccel::decodeBackendOrderFor(intel).first();
+    QCOMPARE(drift::hwaccel::decodeAttemptOrder(native, false, nvidia).first(), native);
+
+    QCOMPARE(drift::hwaccel::decodeAttemptOrder(Backend::None, false, intel),
+             drift::hwaccel::decodeBackendOrderFor(intel));
+    // Nothing known about the renderer: the pin leads, as it always did.
+    QCOMPARE(drift::hwaccel::decodeAttemptOrder(Backend::Cuda, false, QString()).first(), Backend::Cuda);
+#endif
+}
+
+// What the decoder picker warns on. The verdict has to be Mismatch only when it is actually
+// known to be one: Unknown must stay as permissive as "no GL context yet", or a machine Drift
+// cannot identify would be told its hardware decoding is slow when it is not.
+void EngineTest::describeRenderMatchFlagsCudaOffTheRenderGpu()
+{
+#if defined(Q_OS_MACOS) || defined(Q_OS_ANDROID)
+    QSKIP("no hybrid-graphics decode picker on this platform.");
+#else
+    using drift::hwaccel::Backend;
+    using drift::hwaccel::RenderMatch;
+
+    QCOMPARE(drift::hwaccel::describeRenderMatch(Backend::Cuda, QStringLiteral("Intel")).match,
+             RenderMatch::Mismatch);
+    QCOMPARE(drift::hwaccel::describeRenderMatch(Backend::Cuda,
+                                                 QStringLiteral("NVIDIA Corporation")).match,
+             RenderMatch::Matches);
+    // A vendor string naming nothing recognisable is not evidence of a mismatch.
+    QCOMPARE(drift::hwaccel::describeRenderMatch(Backend::Cuda, QStringLiteral("Acme")).match,
+             RenderMatch::Unknown);
+
+    // Never a mismatch: these either follow the render device by construction or are the only
+    // device there is.
+    for (const Backend backend : {Backend::VideoToolbox, Backend::MediaCodec, Backend::None}) {
+        QCOMPARE(drift::hwaccel::describeRenderMatch(backend, QStringLiteral("Intel")).match,
+                 RenderMatch::Matches);
+    }
+
+    // The predicate the decode order runs on is the verdict with Unknown folded into "fine".
+    QVERIFY(!drift::hwaccel::backendMatchesRenderer(Backend::Cuda, QStringLiteral("Intel")));
+    QVERIFY(drift::hwaccel::backendMatchesRenderer(Backend::Cuda, QStringLiteral("Acme")));
+    QVERIFY(drift::hwaccel::backendMatchesRenderer(Backend::Cuda, QString()));
+#endif
+}
+
+// The sysfs half of the Linux device match, against a fixture tree rather than the real /sys —
+// the machine running the tests may have one GPU, none, or a driver that names nothing.
+void EngineTest::pciIdForDrmNodeReadsSysfs()
+{
+#if !defined(Q_OS_LINUX)
+    QSKIP("DRM nodes are a Linux concept.");
+#else
+    QTemporaryDir root;
+    QVERIFY(root.isValid());
+    const QString drm = root.path() + QStringLiteral("/class/drm");
+    QVERIFY(QDir().mkpath(drm + QStringLiteral("/renderD128/device")));
+    QVERIFY(QDir().mkpath(drm + QStringLiteral("/renderD129/device")));
+
+    const auto write = [](const QString &path, const char *text) {
+        QFile file(path);
+        QVERIFY(file.open(QIODevice::WriteOnly));
+        file.write(text);
+    };
+    write(drm + QStringLiteral("/renderD128/device/vendor"), "0x8086\n");
+    write(drm + QStringLiteral("/renderD128/device/device"), "0x3e92\n");
+    write(drm + QStringLiteral("/renderD129/device/vendor"), "0x10de\n");
+    write(drm + QStringLiteral("/renderD129/device/device"), "0x2484\n");
+
+    drift::gpu::setSysfsRootForTesting(root.path());
+    const auto restore = qScopeGuard([] { drift::gpu::setSysfsRootForTesting(QString()); });
+
+    const drift::gpu::PciId intel = drift::gpu::pciIdForDrmNode(QStringLiteral("/dev/dri/renderD128"));
+    QVERIFY(intel.isValid());
+    QCOMPARE(intel.vendor, quint16(0x8086));
+    QCOMPARE(intel.device, quint16(0x3e92));
+    // A bare node name resolves the same way as a full path.
+    QCOMPARE(drift::gpu::pciIdForDrmNode(QStringLiteral("renderD129")),
+             (drift::gpu::PciId{0x10de, 0x2484}));
+    QVERIFY(!drift::gpu::pciIdForDrmNode(QStringLiteral("renderD130")).isValid());
+
+    const QList<QPair<QString, drift::gpu::PciId>> nodes = drift::gpu::drmRenderNodes();
+    QCOMPARE(nodes.size(), 2);
+    QCOMPARE(nodes.first().first, QStringLiteral("/dev/dri/renderD128"));
+    QCOMPARE(nodes.at(1).second, (drift::gpu::PciId{0x10de, 0x2484}));
+#endif
+}
+
+// VAAPI has to open on the node the GPU drawing sits behind, the way D3D11VA already opens on
+// the rendering adapter. The regression this guards is the other half: when the render GPU has
+// no node of its own — an NVIDIA proprietary session — nothing may be pinned, because pinning a
+// node libva cannot open would drop VAAPI out of the picker rather than merely cost a copy.
+void EngineTest::vaapiDeviceStringFollowsTheRenderNode()
+{
+#if !defined(Q_OS_LINUX)
+    QSKIP("VAAPI device selection is a Linux concept.");
+#else
+    QTemporaryDir root;
+    QVERIFY(root.isValid());
+    const QString drm = root.path() + QStringLiteral("/class/drm");
+    const auto write = [](const QString &path, const char *text) {
+        QVERIFY(QDir().mkpath(QFileInfo(path).absolutePath()));
+        QFile file(path);
+        QVERIFY(file.open(QIODevice::WriteOnly));
+        file.write(text);
+    };
+    // A hybrid laptop: the Intel iGPU has a render node, the NVIDIA card has only a card node,
+    // which is what a proprietary-driver session with no nvidia-vaapi-driver looks like.
+    write(drm + QStringLiteral("/card0/device/vendor"), "0x8086\n");
+    write(drm + QStringLiteral("/card0/device/device"), "0x3e92\n");
+    write(drm + QStringLiteral("/renderD128/device/vendor"), "0x8086\n");
+    write(drm + QStringLiteral("/renderD128/device/device"), "0x3e92\n");
+    write(drm + QStringLiteral("/card1/device/vendor"), "0x10de\n");
+    write(drm + QStringLiteral("/card1/device/device"), "0x2484\n");
+
+    const QString liveVendor = drift::hwaccel::renderVendor();
+    drift::gpu::setSysfsRootForTesting(root.path());
+    const auto restore = qScopeGuard([liveVendor] {
+        drift::gpu::setSysfsRootForTesting(QString());
+        drift::hwaccel::setRenderVendor(liveVendor);
+    });
+
+    // Drawing on the iGPU: decode belongs on its node rather than on libva's default.
+    drift::hwaccel::setRenderVendor(QStringLiteral("Intel"));
+    QCOMPARE(drift::hwaccel::deviceString(AV_HWDEVICE_TYPE_VAAPI),
+             QByteArray("/dev/dri/renderD128"));
+    QCOMPARE(drift::hwaccel::describeRenderMatch(drift::hwaccel::Backend::Vaapi).match,
+             drift::hwaccel::RenderMatch::Matches);
+
+    // Drawing on the NVIDIA card, which has no render node here: nothing to pin, and the
+    // picker has to say so — libva will be decoding on the other GPU.
+    drift::hwaccel::setRenderVendor(QStringLiteral("NVIDIA Corporation"));
+    QVERIFY(drift::hwaccel::deviceString(AV_HWDEVICE_TYPE_VAAPI).isEmpty());
+    const drift::hwaccel::RenderMatchInfo nvidia =
+        drift::hwaccel::describeRenderMatch(drift::hwaccel::Backend::Vaapi);
+    QCOMPARE(nvidia.match, drift::hwaccel::RenderMatch::Mismatch);
+    // Both halves of the sentence the user is shown come out named.
+    QCOMPARE(nvidia.decodeGpu, QStringLiteral("Intel"));
+    QCOMPARE(nvidia.renderGpu, QStringLiteral("NVIDIA"));
+#endif
+}
+
+// Two clips from two files are two ClipReaders, and each used to open its own CUDA device. The
+// interop textures were registered under whichever context imported first, so the first frame
+// from the other reader could not map them — and the failure is sticky, so zero-copy stayed off
+// for the session. A single-clip test never sees it; a real timeline, or the diagnostics
+// benchmark running beside one, always did.
+void EngineTest::cudaInteropSurvivesTwoDecoders()
+{
+    if (!GpuCompositor::isAvailable())
+        QSKIP("no GPU compositor on this machine");
+    if (!GpuCompositor::status().vendor.contains(QStringLiteral("NVIDIA"), Qt::CaseInsensitive))
+        QSKIP("GL is not on the NVIDIA GPU; CUDA-GL interop cannot apply here");
+    if (!drift::hwaccel::availableDecodeBackends().contains(drift::hwaccel::Backend::Cuda))
+        QSKIP("no CUDA decode device");
+
+    const QString ffmpeg = QStandardPaths::findExecutable(QStringLiteral("ffmpeg"));
+    if (ffmpeg.isEmpty())
+        QSKIP("ffmpeg not available to generate a test clip");
+
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    const auto makeClip = [&](const char *colour, const QString &name) {
+        const QString path = dir.filePath(name);
+        QProcess enc;
+        enc.start(ffmpeg,
+                  {QStringLiteral("-y"), QStringLiteral("-f"), QStringLiteral("lavfi"),
+                   QStringLiteral("-i"),
+                   QStringLiteral("color=c=%1:s=640x480:d=1:r=30").arg(QLatin1String(colour)),
+                   QStringLiteral("-c:v"), QStringLiteral("libx264"), QStringLiteral("-pix_fmt"),
+                   QStringLiteral("yuv420p"), path});
+        enc.waitForFinished(30000);
+        return path;
+    };
+    const QString red = makeClip("red", QStringLiteral("red.mp4"));
+    const QString blue = makeClip("blue", QStringLiteral("blue.mp4"));
+    QVERIFY(QFileInfo::exists(red) && QFileInfo::exists(blue));
+
+    const auto restore = qScopeGuard([] {
+        ClipReader::setHardwareDecodeMode(ClipReader::HardwareDecodeMode::Auto, {});
+    });
+    ClipReader::setHardwareDecodeMode(ClipReader::HardwareDecodeMode::Hardware,
+                                      drift::hwaccel::Backend::Cuda);
+
+    drift::Project project;
+    project.setResolution(640, 480);
+    project.setFps(30);
+    project.tracks().clear();
+    project.tracks().append(drift::Track{.type = drift::TrackType::Video});
+    for (int i = 0; i < 2; ++i) {
+        drift::Clip clip;
+        clip.id = QStringLiteral("clip%1").arg(i);
+        clip.type = drift::ClipType::Video;
+        clip.path = i == 0 ? red : blue;
+        clip.timelineStart = drift::secondsToUs(double(i));
+        clip.timelineDuration = drift::secondsToUs(1.0);
+        project.tracks()[0].clips.append(clip);
+    }
+
+    FrameCompositor compositor;
+    compositor.setProject(&project);
+    // Red, blue, red again: every switch hands the importer a frame from the other reader.
+    const struct { drift::TimeUs at; bool red; } samples[] = {
+        {300'000, true}, {1'300'000, false}, {500'000, true}, {1'500'000, false}};
+    for (const auto &sample : samples) {
+        const QImage composited = compositor.compositeAt(sample.at);
+        QVERIFY(!composited.isNull());
+        QVERIFY2(GpuCompositor::previewUploadPathId() == QStringLiteral("cuda-interop"),
+                 qPrintable(drift::gl::GlRuntime::lastZeroCopyDeclineReason()));
+        const QRgb centre = composited.pixel(composited.width() / 2, composited.height() / 2);
+        const int wanted = sample.red ? qRed(centre) : qBlue(centre);
+        QVERIFY2(wanted > 128, qPrintable(QStringLiteral("at %1 us centre was %2,%3,%4")
+                                              .arg(sample.at)
+                                              .arg(qRed(centre))
+                                              .arg(qGreen(centre))
+                                              .arg(qBlue(centre))));
+    }
+}
+
+// NVDEC on Windows refuses to create a decoder with more than 32 surfaces, and the preview's extra
+// surfaces on top of AV1's own pool asked for 41: every AV1 clip failed on its first packet and
+// fell back to libdav1d. Decodes past the preview cache's depth too, so a pool capped too tightly
+// for the cache would show up here as a stall-induced fallback.
+void EngineTest::nvdecAv1StaysOnHardware()
+{
+    if (!drift::hwaccel::availableDecodeBackends().contains(drift::hwaccel::Backend::Cuda))
+        QSKIP("no CUDA decode device");
+    if (!drift::hwaccel::findDecoder(AV_CODEC_ID_AV1, AV_HWDEVICE_TYPE_CUDA, nullptr))
+        QSKIP("this FFmpeg build has no NVDEC AV1 decoder");
+
+    const QString ffmpeg = QStandardPaths::findExecutable(QStringLiteral("ffmpeg"));
+    if (ffmpeg.isEmpty())
+        QSKIP("ffmpeg not available to generate a test clip");
+
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    const QString path = dir.filePath(QStringLiteral("av1.mkv"));
+    QProcess enc;
+    enc.start(ffmpeg,
+              {QStringLiteral("-y"), QStringLiteral("-f"), QStringLiteral("lavfi"),
+               QStringLiteral("-i"), QStringLiteral("testsrc2=s=1280x720:r=30:d=1"),
+               QStringLiteral("-c:v"), QStringLiteral("libsvtav1"), QStringLiteral("-preset"),
+               QStringLiteral("10"), QStringLiteral("-pix_fmt"), QStringLiteral("yuv420p"), path});
+    QVERIFY(enc.waitForFinished(120000));
+    if (!QFileInfo::exists(path))
+        QSKIP("ffmpeg could not encode AV1 here");
+
+    const auto restore = qScopeGuard([] {
+        ClipReader::setHardwareDecodeMode(ClipReader::HardwareDecodeMode::Auto, {});
+    });
+    ClipReader::setHardwareDecodeMode(ClipReader::HardwareDecodeMode::Hardware,
+                                      drift::hwaccel::Backend::Cuda);
+
+    const quint64 fallbacksBefore = ClipReader::hardwareFallbackCount();
+    ClipReader reader;
+    QVERIFY(reader.open(path));
+    PreviewVideoFrame preview;
+    for (int i = 0; i < 20; ++i)
+        QVERIFY(reader.readPreviewVideoFrame(drift::TimeUs(i) * 33'333, preview, 1280, 720));
+
+    QVERIFY2(ClipReader::hardwareFallbackCount() == fallbacksBefore,
+             qPrintable(ClipReader::lastHardwareFailure()));
+    QVERIFY(reader.hardwareAccelActive());
+    QVERIFY(preview.isHardware());
+    QCOMPARE(reader.videoDecoderName(), QStringLiteral("av1"));
+}
+
+// The Windows counterpart of the CUDA test: a D3D11VA frame reaches the compositor through
+// WGL_NV_DX_interop2, and the picture is right. A solid red source that comes out red rules out
+// the plane split, the row order and the colour conversion all at once.
+void EngineTest::d3d11InteropUploadsAFrameWithoutBlanking()
+{
+#if !defined(Q_OS_WIN)
+    QSKIP("D3D11VA interop is Windows only");
+#else
+    if (!GpuCompositor::isAvailable())
+        QSKIP("no GPU compositor on this machine");
+    if (!drift::hwaccel::availableDecodeBackends().contains(drift::hwaccel::Backend::D3d11va))
+        QSKIP("no D3D11VA decode device");
+
+    const QString ffmpeg = QStandardPaths::findExecutable(QStringLiteral("ffmpeg"));
+    if (ffmpeg.isEmpty())
+        QSKIP("ffmpeg not available to generate a test clip");
+
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    const QString path = dir.filePath(QStringLiteral("solid.mp4"));
+    QProcess enc;
+    enc.start(ffmpeg,
+              {QStringLiteral("-y"), QStringLiteral("-f"), QStringLiteral("lavfi"),
+               QStringLiteral("-i"), QStringLiteral("color=c=red:s=640x480:d=1:r=30"),
+               QStringLiteral("-c:v"), QStringLiteral("libx264"), QStringLiteral("-pix_fmt"),
+               QStringLiteral("yuv420p"), path});
+    QVERIFY(enc.waitForFinished(30000));
+    QVERIFY(QFileInfo::exists(path));
+
+    const auto restore = qScopeGuard([] {
+        ClipReader::setHardwareDecodeMode(ClipReader::HardwareDecodeMode::Auto, {});
+    });
+    ClipReader::setHardwareDecodeMode(ClipReader::HardwareDecodeMode::Hardware,
+                                      drift::hwaccel::Backend::D3d11va);
+
+    ClipReader reader;
+    QVERIFY(reader.open(path));
+    PreviewVideoFrame preview;
+    QVERIFY(reader.readPreviewVideoFrame(500'000, preview, 640, 480));
+    QVERIFY(preview.isValid());
+    if (!preview.isHardware())
+        QSKIP("this build decoded in software; nothing to import");
+
+    drift::Project project;
+    project.setResolution(640, 480);
+    project.setFps(30);
+    project.tracks().clear();
+    project.tracks().append(drift::Track{.type = drift::TrackType::Video});
+
+    drift::Clip clip;
+    clip.id = QStringLiteral("d3d11");
+    clip.type = drift::ClipType::Video;
+    clip.path = path;
+    clip.timelineStart = 0;
+    clip.timelineDuration = drift::secondsToUs(1.0);
+    project.tracks()[0].clips.append(clip);
+
+    FrameCompositor compositor;
+    compositor.setProject(&project);
+    const QImage composited = compositor.compositeAt(500'000);
+    QVERIFY(!composited.isNull());
+
+    const QString reason = drift::gl::GlRuntime::lastZeroCopyDeclineReason();
+    if (GpuCompositor::previewUploadPathId() != QStringLiteral("d3d11-interop")
+        && reason.contains(QStringLiteral("WGL_NV_DX_interop2")))
+        QSKIP(qPrintable(reason));
+    QVERIFY2(GpuCompositor::previewUploadPathId() == QStringLiteral("d3d11-interop"),
+             qPrintable(reason));
+
+    const QRgb centre = composited.pixel(composited.width() / 2, composited.height() / 2);
+    QVERIFY2(qRed(centre) > 128, qPrintable(QStringLiteral("centre pixel was %1,%2,%3")
+                                                .arg(qRed(centre))
+                                                .arg(qGreen(centre))
+                                                .arg(qBlue(centre))));
+    QVERIFY(qRed(centre) > qGreen(centre) && qRed(centre) > qBlue(centre));
+#endif
+}
+
 void EngineTest::debugReportListsCommonCodecs()
 {
     const QVariantMap info = DebugReport::collect();
@@ -3525,6 +4538,9 @@ void EngineTest::clipReaderAudioSequential()
 
 void EngineTest::compositorDefaultRenderStaysFullResolution()
 {
+    if (!GpuCompositor::isAvailable())
+        QSKIP("No GPU compositor available");
+
     drift::Project project;
     project.setResolution(192, 108);
     project.tracks().clear();
@@ -3536,7 +4552,7 @@ void EngineTest::compositorDefaultRenderStaysFullResolution()
     clip.timelineStart = 0;
     clip.timelineDuration = drift::secondsToUs(1.0);
     clip.shapeStyle.kind = drift::ShapeKind::Rectangle;
-    clip.shapeStyle.fill = Qt::red;
+    clip.shapeStyle.setSolidFill(Qt::red);
     project.tracks()[0].clips.append(clip);
 
     FrameCompositor compositor;
@@ -3548,6 +4564,9 @@ void EngineTest::compositorDefaultRenderStaysFullResolution()
 
 void EngineTest::compositorPreviewScaleRendersLowerResolution()
 {
+    if (!GpuCompositor::isAvailable())
+        QSKIP("No GPU compositor available");
+
     drift::Project project;
     project.setResolution(192, 108);
     project.tracks().clear();
@@ -3559,7 +4578,7 @@ void EngineTest::compositorPreviewScaleRendersLowerResolution()
     clip.timelineStart = 0;
     clip.timelineDuration = drift::secondsToUs(1.0);
     clip.shapeStyle.kind = drift::ShapeKind::Rectangle;
-    clip.shapeStyle.fill = Qt::red;
+    clip.shapeStyle.setSolidFill(Qt::red);
     project.tracks()[0].clips.append(clip);
 
     FrameCompositor compositor;
@@ -3577,6 +4596,9 @@ void EngineTest::compositorPreviewScaleRendersLowerResolution()
 
 void EngineTest::compositorPreviewScaleMapsProjectPixelLayout()
 {
+    if (!GpuCompositor::isAvailable())
+        QSKIP("No GPU compositor available");
+
     // Project-pixel layout must be scaled onto the preview canvas so WYSIWYG
     // handles (which map project px → widget) stay aligned with the frame.
     drift::Project project;
@@ -3590,8 +4612,8 @@ void EngineTest::compositorPreviewScaleMapsProjectPixelLayout()
     clip.timelineStart = 0;
     clip.timelineDuration = drift::secondsToUs(1.0);
     clip.shapeStyle.kind = drift::ShapeKind::Rectangle;
-    clip.shapeStyle.fill = Qt::red;
-    clip.shapeStyle.strokeWidth = 0.0;
+    clip.shapeStyle.setSolidFill(Qt::red);
+    clip.shapeStyle.setStroke(0.0);
     clip.transformX.setKeyframe(0, 40.0);
     clip.transformY.setKeyframe(0, 20.0);
     clip.transformW.setKeyframe(0, 80.0);
@@ -3617,6 +4639,9 @@ void EngineTest::compositorPreviewScaleMapsProjectPixelLayout()
 // compositor, which is what the preview uses.
 void EngineTest::compositorAppliesFaceWarpFromBakedTrack()
 {
+    if (!GpuCompositor::isAvailable())
+        QSKIP("No GPU compositor available");
+
     QTemporaryDir dir;
     QVERIFY(dir.isValid());
 
@@ -3708,6 +4733,9 @@ void EngineTest::compositorAppliesFaceWarpFromBakedTrack()
 
 void EngineTest::compositorAppliesMultiplyBlendMode()
 {
+    if (!GpuCompositor::isAvailable())
+        QSKIP("No GPU compositor available");
+
     QTemporaryDir dir;
     QVERIFY(dir.isValid());
 
@@ -3810,6 +4838,9 @@ void EngineTest::compositorAnimatesKeyedEffectParam()
 
 void EngineTest::compositorRendersShapeClip()
 {
+    if (!GpuCompositor::isAvailable())
+        QSKIP("No GPU compositor available");
+
     drift::Project project;
     project.setResolution(128, 128);
     project.tracks().clear();
@@ -3822,9 +4853,8 @@ void EngineTest::compositorRendersShapeClip()
     clip.timelineStart = 0;
     clip.timelineDuration = drift::secondsToUs(1.0);
     clip.shapeStyle.kind = drift::ShapeKind::Triangle;
-    clip.shapeStyle.fill = QColor(255, 0, 0);
-    clip.shapeStyle.stroke = Qt::white;
-    clip.shapeStyle.strokeWidth = 2.0;
+    clip.shapeStyle.setSolidFill(QColor(255, 0, 0));
+    clip.shapeStyle.setStroke(2.0, Qt::white);
     clip.transformX.setKeyframe(0, 32.0);
     clip.transformY.setKeyframe(0, 32.0);
     clip.transformW.setKeyframe(0, 64.0);
@@ -3843,6 +4873,9 @@ void EngineTest::compositorRendersShapeClip()
 // editing on the preview, where the QML editor stands in for the baked raster.
 void EngineTest::compositorSkipsClipBeingEdited()
 {
+    if (!GpuCompositor::isAvailable())
+        QSKIP("No GPU compositor available");
+
     drift::Project project;
     project.setResolution(128, 128);
     project.tracks().clear();
@@ -3854,7 +4887,7 @@ void EngineTest::compositorSkipsClipBeingEdited()
     clip.timelineStart = 0;
     clip.timelineDuration = drift::secondsToUs(1.0);
     clip.shapeStyle.kind = drift::ShapeKind::Rectangle;
-    clip.shapeStyle.fill = QColor(255, 0, 0);
+    clip.shapeStyle.setSolidFill(QColor(255, 0, 0));
     clip.transformX.setKeyframe(0, 32.0);
     clip.transformY.setKeyframe(0, 32.0);
     clip.transformW.setKeyframe(0, 64.0);
@@ -4295,6 +5328,9 @@ void EngineTest::rgbSplitZeroAmountPassthrough()
 
 void EngineTest::rgbSplitShiftsColorChannels()
 {
+    if (!GpuEffectExecutor::instance().isAvailable())
+        QSKIP("GPU effect executor unavailable");
+
     const QImage image = makeRedBlueSplitTestImage();
 
     drift::Effect effect;
@@ -4365,6 +5401,9 @@ void EngineTest::blockGlitchDeterministicForSameTimeAndSeed()
 
 void EngineTest::blockGlitchChangesWithTimelineTime()
 {
+    if (!GpuEffectExecutor::instance().isAvailable())
+        QSKIP("GPU effect executor unavailable");
+
     const QImage image = makeBlockGlitchTestImage();
     const drift::Effect effect = makeBlockGlitchEffect();
 
@@ -4425,6 +5464,9 @@ void EngineTest::scanlineGlitchDeterministicAtFixedTime()
 
 void EngineTest::scanlineGlitchVisualChangeAtNonzeroSettings()
 {
+    if (!GpuEffectExecutor::instance().isAvailable())
+        QSKIP("GPU effect executor unavailable");
+
     const QImage image = makeBlockGlitchTestImage();
     const drift::Effect effect = makeScanlineGlitchEffect();
 
@@ -4478,6 +5520,9 @@ void EngineTest::vhsCrtZeroSettingsPassthrough()
 
 void EngineTest::vhsCrtNonzeroModifiesOutput()
 {
+    if (!GpuEffectExecutor::instance().isAvailable())
+        QSKIP("GPU effect executor unavailable");
+
     const QImage image = makeVhsCrtTestImage();
     const drift::Effect effect = makeVhsCrtEffect();
 
@@ -4492,6 +5537,9 @@ void EngineTest::vhsCrtNonzeroModifiesOutput()
 
 void EngineTest::vhsCrtDeterministicAtFixedTime()
 {
+    if (!GpuEffectExecutor::instance().isAvailable())
+        QSKIP("GPU effect executor unavailable");
+
     const QImage image = makeVhsCrtTestImage();
     const drift::Effect effect = makeVhsCrtEffect();
     constexpr drift::TimeUs timeUs = 420'000;
@@ -4605,6 +5653,9 @@ void EngineTest::rippleWaterZeroAmplitudePassthrough()
 
 void EngineTest::rippleWaterNonzeroDisplacementChangesOutput()
 {
+    if (!GpuEffectExecutor::instance().isAvailable())
+        QSKIP("GPU effect executor unavailable");
+
     const QImage image = makeBlockGlitchTestImage();
     const drift::Effect effect = makeRippleWaterEffect();
 
@@ -4655,6 +5706,9 @@ void EngineTest::edgeNeonZeroIntensityUnchanged()
 
 void EngineTest::edgeNeonHighContrastRectangleGlow()
 {
+    if (!GpuEffectExecutor::instance().isAvailable())
+        QSKIP("GPU effect executor unavailable");
+
     const QImage image = makeHighContrastRectangleImage();
     const drift::Effect effect = makeEdgeNeonEffect();
 
@@ -4703,6 +5757,9 @@ void EngineTest::digitalGlitchZeroIntensityUnchanged()
 
 void EngineTest::digitalGlitchDeterministicForFixedTimeAndSeed()
 {
+    if (!GpuEffectExecutor::instance().isAvailable())
+        QSKIP("GPU effect executor unavailable");
+
     const QImage image = makeBlockGlitchTestImage();
     const drift::Effect effect = makeDigitalGlitchEffect();
     constexpr drift::TimeUs timeUs = 620'000;
@@ -4749,6 +5806,9 @@ void EngineTest::filmBurnZeroIntensityUnchanged()
 
 void EngineTest::filmBurnAddsWarmLeakContribution()
 {
+    if (!GpuEffectExecutor::instance().isAvailable())
+        QSKIP("GPU effect executor unavailable");
+
     QImage image(64, 64, QImage::Format_RGBA8888);
     image.fill(QColor(20, 22, 35));
 
@@ -4826,6 +5886,9 @@ static drift::Effect makeTimeEchoEffect(const QString &blendMode = QStringLitera
 
 void EngineTest::timeEchoDeterministicAtFixedTimelineTime()
 {
+    if (!GpuCompositor::isAvailable())
+        QSKIP("No GPU compositor available");
+
     QTemporaryDir dir;
     QVERIFY(dir.isValid());
     const QString path = makeColorSegmentsVideo(dir);
@@ -4859,6 +5922,9 @@ void EngineTest::timeEchoDeterministicAtFixedTimelineTime()
 
 void EngineTest::timeEchoBlendsPriorVideoFrames()
 {
+    if (!GpuCompositor::isAvailable())
+        QSKIP("No GPU compositor available");
+
     QTemporaryDir dir;
     QVERIFY(dir.isValid());
     const QString path = makeColorSegmentsVideo(dir);
@@ -4926,6 +5992,9 @@ void EngineTest::shockwavePulseZeroStrengthPassthrough()
 
 void EngineTest::shockwavePulseChangesPixelsNearWavefront()
 {
+    if (!GpuEffectExecutor::instance().isAvailable())
+        QSKIP("GPU effect executor unavailable");
+
     const QImage image = makeBlockGlitchTestImage();
     const drift::Effect effect = makeShockwavePulseEffect();
 
@@ -4946,6 +6015,9 @@ void EngineTest::shockwavePulseChangesPixelsNearWavefront()
 
 void EngineTest::compositorCrossfadeBetweenShapeClips()
 {
+    if (!GpuCompositor::isAvailable())
+        QSKIP("No GPU compositor available");
+
     drift::Project project;
     project.setResolution(128, 128);
     project.tracks().clear();
@@ -4957,7 +6029,7 @@ void EngineTest::compositorCrossfadeBetweenShapeClips()
     clipA.timelineStart = 0;
     clipA.timelineDuration = drift::secondsToUs(2.0);
     clipA.shapeStyle.kind = drift::ShapeKind::Rectangle;
-    clipA.shapeStyle.fill = Qt::red;
+    clipA.shapeStyle.setSolidFill(Qt::red);
 
     drift::Clip clipB;
     clipB.id = QStringLiteral("b");
@@ -4965,7 +6037,7 @@ void EngineTest::compositorCrossfadeBetweenShapeClips()
     clipB.timelineStart = drift::secondsToUs(2.0);
     clipB.timelineDuration = drift::secondsToUs(2.0);
     clipB.shapeStyle.kind = drift::ShapeKind::Rectangle;
-    clipB.shapeStyle.fill = Qt::blue;
+    clipB.shapeStyle.setSolidFill(Qt::blue);
 
     project.tracks()[0].clips.append(clipA);
     project.tracks()[0].clips.append(clipB);
@@ -5006,7 +6078,7 @@ static void appendRedBlueShapeTransition(drift::Project &project, const QString 
     clipA.timelineStart = 0;
     clipA.timelineDuration = drift::secondsToUs(2.0);
     clipA.shapeStyle.kind = drift::ShapeKind::Rectangle;
-    clipA.shapeStyle.fill = Qt::red;
+    clipA.shapeStyle.setSolidFill(Qt::red);
 
     drift::Clip clipB;
     clipB.id = QStringLiteral("b");
@@ -5014,7 +6086,7 @@ static void appendRedBlueShapeTransition(drift::Project &project, const QString 
     clipB.timelineStart = drift::secondsToUs(2.0);
     clipB.timelineDuration = drift::secondsToUs(2.0);
     clipB.shapeStyle.kind = drift::ShapeKind::Rectangle;
-    clipB.shapeStyle.fill = Qt::blue;
+    clipB.shapeStyle.setSolidFill(Qt::blue);
 
     project.tracks()[0].clips.append(clipA);
     project.tracks()[0].clips.append(clipB);
@@ -5030,6 +6102,9 @@ static void appendRedBlueShapeTransition(drift::Project &project, const QString 
 
 void EngineTest::compositorDipToBlackMidpointIsBlack()
 {
+    if (!GpuCompositor::isAvailable())
+        QSKIP("No GPU compositor available");
+
     drift::Project project;
     appendRedBlueShapeTransition(project, QStringLiteral("dip"));
 
@@ -5046,6 +6121,9 @@ void EngineTest::compositorDipToBlackMidpointIsBlack()
 
 void EngineTest::compositorWipeRightRevealsIncomingClip()
 {
+    if (!GpuCompositor::isAvailable())
+        QSKIP("No GPU compositor available");
+
     drift::Project project;
     appendRedBlueShapeTransition(project, QStringLiteral("wipe_right"));
 
@@ -5128,6 +6206,9 @@ void EngineTest::gpuTransitionBindsBothSources()
 // A broken shader must fall back to a CPU crossfade, never to a black frame or to clip A alone.
 void EngineTest::brokenTransitionShaderFallsBackToCrossfade()
 {
+    if (!GpuCompositor::isAvailable())
+        QSKIP("No GPU compositor available");
+
     QTemporaryDir dir;
     QVERIFY(dir.isValid());
     const QString pkg = QDir(dir.path()).filePath(QStringLiteral("broken"));
@@ -5166,6 +6247,9 @@ void EngineTest::brokenTransitionShaderFallsBackToCrossfade()
 // Rendering each side into its own full-canvas layer routes text through the normal path.
 void EngineTest::textClipRendersInsideTransition()
 {
+    if (!GpuCompositor::isAvailable())
+        QSKIP("No GPU compositor available");
+
     drift::Project project;
     project.setResolution(128, 128);
     project.tracks().clear();
@@ -5177,7 +6261,7 @@ void EngineTest::textClipRendersInsideTransition()
     text.timelineStart = 0;
     text.timelineDuration = drift::secondsToUs(2.0);
     text.textContent = QStringLiteral("HELLO");
-    text.textStyle.color = Qt::white;
+    drift::setSolidFill(text.textStyle, Qt::white);
     text.textStyle.pixelSize = 28;
 
     drift::Clip shape;
@@ -5186,7 +6270,7 @@ void EngineTest::textClipRendersInsideTransition()
     shape.timelineStart = drift::secondsToUs(2.0);
     shape.timelineDuration = drift::secondsToUs(2.0);
     shape.shapeStyle.kind = drift::ShapeKind::Rectangle;
-    shape.shapeStyle.fill = Qt::blue;
+    shape.shapeStyle.setSolidFill(Qt::blue);
 
     project.tracks()[0].clips.append(text);
     project.tracks()[0].clips.append(shape);
@@ -5263,6 +6347,35 @@ void EngineTest::transitionRenderingIsDeterministic()
 namespace {
 
 // The bundle is fetched, not committed, so an offline checkout legitimately has no fonts.
+
+namespace {
+
+// The text painter rasterised on the CPU, in the shape the raster tests were written against.
+struct TextRasterResult
+{
+    QImage image;
+    QRectF rect;
+};
+
+TextRasterResult rasterizeText(const drift::Clip &clip, const QString &text, const QRectF &rect, double scale,
+                               int word = -1)
+{
+#ifdef DRIFT_WITH_SKIA
+    const drift::skia::TextPainterResult painted = drift::skia::makeTextPainter(clip, text, rect, scale, word);
+    return {painted.painter ? drift::skia::SkiaRuntime::rasterize(*painted.painter) : QImage(), painted.rect};
+#else
+    Q_UNUSED(clip); Q_UNUSED(text); Q_UNUSED(rect); Q_UNUSED(scale); Q_UNUSED(word);
+    return {};
+#endif
+}
+
+TextRasterResult rasterizeText(const drift::Clip &clip, const QRectF &rect, double scale, int word = -1)
+{
+    return rasterizeText(clip, clip.textContent, rect, scale, word);
+}
+
+} // namespace
+
 #define SKIP_WITHOUT_FONTS()                                                                        \
     do {                                                                                            \
         if (fontCatalog().isEmpty())                                                                \
@@ -5384,24 +6497,35 @@ void EngineTest::fontForStyleResolvesRequestedFace()
 void EngineTest::textRasterIsCached()
 {
     SKIP_WITHOUT_FONTS();
-
+#ifndef DRIFT_WITH_SKIA
+    QSKIP("text needs Skia");
+#else
     const QRectF rect(0, 0, 400, 200);
     drift::Clip clip = makeTextClip(QStringLiteral("Cache me"), rect);
     clip.textStyle.fontFamily = QStringLiteral("Inter");
 
-    const TextRasterResult first = rasterizeText(clip, rect, 1.0);
-    const TextRasterResult second = rasterizeText(clip, rect, 1.0);
-    QVERIFY(!first.image.isNull());
-    // Same underlying QImage, so the second frame did no rasterization at all.
-    QCOMPARE(first.image.cacheKey(), second.image.cacheKey());
+    const auto first = drift::skia::makeTextPainter(clip, clip.textContent, rect, 1.0);
+    const auto second = drift::skia::makeTextPainter(clip, clip.textContent, rect, 1.0);
+    QVERIFY(first.painter && second.painter);
+    // Same key, so the GPU cache serves the second frame without a repaint.
+    QVERIFY(first.painter->cacheKey() != 0);
+    QCOMPARE(first.painter->cacheKey(), second.painter->cacheKey());
 
-    // The animation is applied to the layer, never to the pixels, so it must not evict the raster.
-    clip.textStyle.animIn = {drift::TextAnimKind::Fade, drift::secondsToUs(1.0), drift::TextEase::EaseOut};
-    const TextRasterResult animated = rasterizeText(clip, rect, 1.0);
-    QCOMPARE(animated.image.cacheKey(), first.image.cacheKey());
+    // A finished entrance holds still: the hold pose is cached like a static block.
+    clip.textStyle.animation.in = drift::legacyTextAnimationSlot(QStringLiteral("fade"), drift::secondsToUs(1.0),
+                                                                 QStringLiteral("easeOut"), QStringLiteral("block"), 60000,
+                                                                 QStringLiteral("forward"));
+    clip.timelineDuration = drift::secondsToUs(4.0);
+    const auto held = drift::skia::makeTextPainter(clip, clip.textContent, rect, 1.0, -1, drift::secondsToUs(3.0));
+    QVERIFY(held.painter->cacheKey() != 0);
+    // Mid-entrance it is redrawn every frame.
+    const auto moving = drift::skia::makeTextPainter(clip, clip.textContent, rect, 1.0, -1, drift::secondsToUs(0.5));
+    QCOMPARE(moving.painter->cacheKey(), quint64(0));
 
-    clip.textStyle.color = Qt::red;
-    QVERIFY(rasterizeText(clip, rect, 1.0).image.cacheKey() != first.image.cacheKey());
+    drift::setSolidFill(clip.textStyle, Qt::red);
+    QVERIFY(drift::skia::makeTextPainter(clip, clip.textContent, rect, 1.0, -1, drift::secondsToUs(3.0)).painter->cacheKey()
+            != held.painter->cacheKey());
+#endif
 }
 
 void EngineTest::textDecorationsAreNotCropped()
@@ -5416,11 +6540,8 @@ void EngineTest::textDecorationsAreNotCropped()
     const TextRasterResult plain = rasterizeText(clip, rect, 1.0);
     QVERIFY(!plain.image.isNull());
 
-    clip.textStyle.outlineWidth = 12.0;
-    clip.textStyle.outlineEnabled = true;
-    clip.textStyle.shadowEnabled = true;
-    clip.textStyle.shadowBlur = 10.0;
-    clip.textStyle.shadowOffsetY = 8.0;
+    clip.textStyle.layers = {drift::shadowLayer(Qt::black, 0.0, 8.0, 10.0, 0.6), drift::strokeLayer(12.0, Qt::black),
+                             drift::solidFillLayer(Qt::white)};
     const TextRasterResult decorated = rasterizeText(clip, rect, 1.0);
 
     // The raster grows past the layout rect on every side, so nothing is clipped at the edge...
@@ -5438,10 +6559,7 @@ void EngineTest::textDecorationsAreNotCropped()
 
     // The same has to hold for the decorations a style pack adds, which sit outside the glyphs:
     // a glow bleeds outward, a highlight pill sits behind the word and the rule sits under it.
-    clip.textStyle.outlineWidth = 0.0;
-    clip.textStyle.shadowEnabled = false;
-    clip.textStyle.glowEnabled = true;
-    clip.textStyle.glowRadius = 14.0;
+    clip.textStyle.layers = {drift::glowLayer(Qt::white, 14.0, 0.8), drift::solidFillLayer(Qt::white)};
     clip.textStyle.wordHighlight.enabled = true;
     clip.textStyle.wordHighlight.padding = 10.0;
     clip.textStyle.underlineEnabled = true;
@@ -5539,8 +6657,11 @@ void EngineTest::karaokeAccentFollowsThePlayhead()
     // Different word lit, so genuinely different pixels — not just a different cache slot.
     QVERIFY(first != third);
 
-    // The spoken word still only costs one raster: the same index hits the cache.
-    QCOMPARE(rasterizeText(clip, text, rect, 1.0, 0).image.cacheKey(), first.cacheKey());
+    // The spoken word still only costs one paint: the same index yields the same cache key.
+#ifdef DRIFT_WITH_SKIA
+    QCOMPARE(drift::skia::makeTextPainter(clip, text, rect, 1.0, 0).painter->cacheKey(),
+             drift::skia::makeTextPainter(clip, text, rect, 1.0, 0).painter->cacheKey());
+#endif
 }
 
 void EngineTest::accentSizeScaleWidensTheBlock()
@@ -5658,7 +6779,7 @@ void EngineTest::textClipCarriesGpuEffects()
     drift::Clip clip = makeTextClip(QStringLiteral("FX"), QRectF(0, 0, 128, 128));
     clip.textStyle.fontFamily = QStringLiteral("Anton");
     clip.textStyle.pixelSize = 48;
-    clip.textStyle.color = QColor(120, 120, 120);
+    drift::setSolidFill(clip.textStyle, QColor(120, 120, 120));
     project.tracks()[0].clips.append(clip);
 
     FrameCompositor compositor;
@@ -5690,7 +6811,9 @@ void EngineTest::textAnimationFadesAndSlides()
     drift::Clip clip = makeTextClip(QStringLiteral("IN"), QRectF(0, 0, 128, 128));
     clip.textStyle.fontFamily = QStringLiteral("Anton");
     clip.textStyle.pixelSize = 48;
-    clip.textStyle.animIn = {drift::TextAnimKind::Fade, drift::secondsToUs(1.0), drift::TextEase::Linear};
+    clip.textStyle.animation.in = drift::legacyTextAnimationSlot(QStringLiteral("fade"), drift::secondsToUs(1.0),
+                                                                 QStringLiteral("linear"), QStringLiteral("block"), 60000,
+                                                                 QStringLiteral("forward"));
     project.tracks()[0].clips.append(clip);
 
     FrameCompositor compositor;
@@ -5706,8 +6829,9 @@ void EngineTest::textAnimationFadesAndSlides()
     QVERIFY(qAbs(later - settled) < 0.5);
 
     // A slide-up entrance arrives from below, so the glyphs start lower than they finish.
-    project.tracks()[0].clips[0].textStyle.animIn = {drift::TextAnimKind::SlideUp,
-                                                     drift::secondsToUs(1.0), drift::TextEase::Linear};
+    project.tracks()[0].clips[0].textStyle.animation.in = drift::legacyTextAnimationSlot(
+        QStringLiteral("slideUp"), drift::secondsToUs(1.0), QStringLiteral("linear"), QStringLiteral("block"), 60000,
+        QStringLiteral("forward"));
     const double startY = litCentroidY(compositor.compositeAt(drift::secondsToUs(0.1)));
     const double endY = litCentroidY(compositor.compositeAt(drift::secondsToUs(2.0)));
     QVERIFY2(startY > endY + 1.0, "slide-up entrance did not travel upward");
@@ -5715,6 +6839,9 @@ void EngineTest::textAnimationFadesAndSlides()
 
 void EngineTest::clipBodyAnimationFadeRampsOpacity()
 {
+    if (!GpuCompositor::isAvailable())
+        QSKIP("No GPU compositor available");
+
     drift::Project project;
     project.setResolution(128, 128);
     project.tracks().clear();
@@ -5726,7 +6853,7 @@ void EngineTest::clipBodyAnimationFadeRampsOpacity()
     clip.timelineStart = 0;
     clip.timelineDuration = drift::secondsToUs(2.0);
     clip.shapeStyle.kind = drift::ShapeKind::Rectangle;
-    clip.shapeStyle.fill = Qt::white;
+    clip.shapeStyle.setSolidFill(Qt::white);
     clip.animIn = {drift::ClipAnimKind::Fade, drift::secondsToUs(1.0), drift::ClipAnimEase::Linear,
                    drift::FadeCurve::Linear};
     project.tracks()[0].clips.append(clip);
@@ -6113,6 +7240,11 @@ void EngineTest::aVideoEffectsAdjustmentKeepsItsOwnMask()
 
 void EngineTest::exporterProducesPlayableFileWithBackground()
 {
+    // The exporter composites every frame it writes, so with no GPU compositor this
+    // produces a file of identical blank frames rather than anything worth asserting on.
+    if (!GpuCompositor::isAvailable())
+        QSKIP("No GPU compositor available");
+
     QTemporaryDir dir;
     QVERIFY(dir.isValid());
 
@@ -6129,8 +7261,8 @@ void EngineTest::exporterProducesPlayableFileWithBackground()
     clip.timelineStart = 0;
     clip.timelineDuration = drift::secondsToUs(1.0);
     clip.shapeStyle.kind = drift::ShapeKind::Rectangle;
-    clip.shapeStyle.fill = Qt::red;
-    clip.shapeStyle.strokeWidth = 0.0;
+    clip.shapeStyle.setSolidFill(Qt::red);
+    clip.shapeStyle.setStroke(0.0);
     clip.transformX.setKeyframe(0, 70.0);
     clip.transformY.setKeyframe(0, 35.0);
     clip.transformW.setKeyframe(0, 20.0);
@@ -6222,7 +7354,7 @@ void EngineTest::exporterProducesAudioOnlyMp3()
     clip.timelineStart = 0;
     clip.timelineDuration = drift::secondsToUs(1.0);
     clip.shapeStyle.kind = drift::ShapeKind::Rectangle;
-    clip.shapeStyle.fill = Qt::red;
+    clip.shapeStyle.setSolidFill(Qt::red);
     project.tracks()[0].clips.append(clip);
 
     ExportSettings settings = Exporter::defaultSettings();
@@ -6264,7 +7396,7 @@ void EngineTest::exporterTagsSdrBt709ColorMetadata()
     clip.timelineStart = 0;
     clip.timelineDuration = drift::secondsToUs(0.5);
     clip.shapeStyle.kind = drift::ShapeKind::Rectangle;
-    clip.shapeStyle.fill = Qt::green;
+    clip.shapeStyle.setSolidFill(Qt::green);
     project.tracks()[0].clips.append(clip);
 
     ExportSettings settings = Exporter::defaultSettings();
@@ -6517,8 +7649,8 @@ void EngineTest::exporterHardwareEncodeProducesPlayableFile()
     clip.timelineStart = 0;
     clip.timelineDuration = drift::secondsToUs(1.0);
     clip.shapeStyle.kind = drift::ShapeKind::Rectangle;
-    clip.shapeStyle.fill = Qt::red;
-    clip.shapeStyle.strokeWidth = 0.0;
+    clip.shapeStyle.setSolidFill(Qt::red);
+    clip.shapeStyle.setStroke(0.0);
     clip.transformX.setKeyframe(0, 70.0);
     clip.transformY.setKeyframe(0, 35.0);
     clip.transformW.setKeyframe(0, 20.0);
@@ -6567,8 +7699,8 @@ drift::Project frameRateTestProject(int projectFps)
     clip.timelineStart = 0;
     clip.timelineDuration = drift::secondsToUs(1.0);
     clip.shapeStyle.kind = drift::ShapeKind::Rectangle;
-    clip.shapeStyle.fill = Qt::red;
-    clip.shapeStyle.strokeWidth = 0.0;
+    clip.shapeStyle.setSolidFill(Qt::red);
+    clip.shapeStyle.setStroke(0.0);
     clip.transformX.setKeyframe(0, 70.0);
     clip.transformY.setKeyframe(0, 35.0);
     clip.transformW.setKeyframe(0, 20.0);
@@ -6918,6 +8050,11 @@ void EngineTest::exporterSupportsNtscFrameRates()
 // export is exactly the ceiling and 240 fps is past it.
 void EngineTest::exporterFrameRateAddsRealDetailToSlowedClips()
 {
+    // The exporter composites every frame it writes, so with no GPU compositor this
+    // produces a file of identical blank frames rather than anything worth asserting on.
+    if (!GpuCompositor::isAvailable())
+        QSKIP("No GPU compositor available");
+
     QTemporaryDir dir;
     QVERIFY(dir.isValid());
     const QString source = makeHighRateVideo(dir);

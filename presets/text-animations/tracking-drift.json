@@ -1,0 +1,95 @@
+{
+  "format": 1,
+  "id": "tracking-drift",
+  "label": "Tracking drift",
+  "category": "hold",
+  "sampleText": "DRIFT",
+  "slots": [
+    "loop"
+  ],
+  "order": 470,
+  "flags": {
+    "mode": "hold"
+  },
+  "params": [
+    {
+      "id": "from",
+      "type": "scalar",
+      "label": "From",
+      "unit": "%",
+      "min": -20,
+      "max": 50,
+      "step": 0.5,
+      "default": 2
+    },
+    {
+      "id": "to",
+      "type": "scalar",
+      "label": "To",
+      "unit": "%",
+      "min": -20,
+      "max": 50,
+      "step": 0.5,
+      "default": 21
+    },
+    {
+      "id": "zoom",
+      "type": "scalar",
+      "label": "Zoom",
+      "unit": "%",
+      "min": 90,
+      "max": 130,
+      "step": 0.5,
+      "default": 100
+    }
+  ],
+  "animators": [
+    {
+      "selectors": [],
+      "props": {
+        "tracking": {
+          "value": 0,
+          "curve": {
+            "keyframes": [
+              {
+                "timeUs": 0,
+                "value": {
+                  "$": "from",
+                  "mul": 0.01
+                }
+              },
+              {
+                "timeUs": 1000000,
+                "value": {
+                  "$": "to",
+                  "mul": 0.01
+                }
+              }
+            ]
+          }
+        },
+        "trackingUnit": "em"
+      }
+    },
+    {
+      "selectors": [],
+      "props": {
+        "scale": {
+          "value": 0,
+          "curve": {
+            "keyframes": [
+              {
+                "timeUs": 0,
+                "value": 100
+              },
+              {
+                "timeUs": 1000000,
+                "value": "{zoom}"
+              }
+            ]
+          }
+        }
+      }
+    }
+  ]
+}

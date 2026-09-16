@@ -1,6 +1,9 @@
 #include "ShapeStyle.h"
 
+#include "Effect.h"
+
 #include <QCoreApplication>
+#include <QJsonArray>
 #include <algorithm>
 
 namespace drift {
@@ -49,8 +52,7 @@ ShapeStyle makeStyle(ShapeKind kind, const QColor &fill, const QColor &fillSecon
 {
     ShapeStyle style;
     style.kind = kind;
-    style.fill = fill;
-    style.fillSecondary = fillSecondary;
+    style.layers = defaultShapeLayers(fill, fillSecondary);
     return style;
 }
 
@@ -188,62 +190,6 @@ ShapeKind shapeKindFromString(const QString &kind)
     return ShapeKind::Rectangle;
 }
 
-QString shapeFillKindToString(ShapeFillKind kind)
-{
-    switch (kind) {
-    case ShapeFillKind::None:
-        return QStringLiteral("none");
-    case ShapeFillKind::Solid:
-        return QStringLiteral("solid");
-    case ShapeFillKind::LinearGradient:
-        return QStringLiteral("linear");
-    case ShapeFillKind::RadialGradient:
-        return QStringLiteral("radial");
-    }
-    return QStringLiteral("solid");
-}
-
-ShapeFillKind shapeFillKindFromString(const QString &kind)
-{
-    if (kind == QStringLiteral("none"))
-        return ShapeFillKind::None;
-    if (kind == QStringLiteral("linear"))
-        return ShapeFillKind::LinearGradient;
-    if (kind == QStringLiteral("radial"))
-        return ShapeFillKind::RadialGradient;
-    return ShapeFillKind::Solid;
-}
-
-QString shapeStrokeStyleToString(ShapeStrokeStyle style)
-{
-    switch (style) {
-    case ShapeStrokeStyle::None:
-        return QStringLiteral("none");
-    case ShapeStrokeStyle::Solid:
-        return QStringLiteral("solid");
-    case ShapeStrokeStyle::Dash:
-        return QStringLiteral("dash");
-    case ShapeStrokeStyle::Dot:
-        return QStringLiteral("dot");
-    case ShapeStrokeStyle::DashDot:
-        return QStringLiteral("dashdot");
-    }
-    return QStringLiteral("solid");
-}
-
-ShapeStrokeStyle shapeStrokeStyleFromString(const QString &style)
-{
-    if (style == QStringLiteral("none"))
-        return ShapeStrokeStyle::None;
-    if (style == QStringLiteral("dash"))
-        return ShapeStrokeStyle::Dash;
-    if (style == QStringLiteral("dot"))
-        return ShapeStrokeStyle::Dot;
-    if (style == QStringLiteral("dashdot"))
-        return ShapeStrokeStyle::DashDot;
-    return ShapeStrokeStyle::Solid;
-}
-
 const QList<ShapeCatalogEntry> &shapeCatalog()
 {
     static const QList<ShapeCatalogEntry> catalog = buildCatalog();
@@ -266,6 +212,307 @@ QList<ShapeCategory> shapeCategories()
         {QStringLiteral("bubbles"), QCoreApplication::translate("ShapeStyle", "Bubbles")},
         {QStringLiteral("fun"), QCoreApplication::translate("ShapeStyle", "Fun")},
     };
+}
+
+// ---------------------------------------------------------------------------------------------
+// Layers
+
+QList<TextShadingLayer> defaultShapeLayers(const QColor &fill, const QColor &fillDeep, const QColor &stroke,
+                                           double strokeWidth)
+{
+    TextShadingLayer fillLayer = solidFillLayer(fill, QStringLiteral("fill"));
+    fillLayer.paint.gradient.stops = {{0.0, fill}, {1.0, fillDeep.isValid() ? fillDeep : fill.darker(160)}};
+    TextShadingLayer strokeLayer_ = strokeLayer(qMax(0.0, strokeWidth), stroke, QStringLiteral("stroke"));
+    strokeLayer_.strokeAlign = StrokeAlign::Inside;
+    strokeLayer_.enabled = strokeWidth > 0.0;
+    return {fillLayer, strokeLayer_};
+}
+
+QColor ShapeStyle::primaryColor() const
+{
+    if (const TextShadingLayer *fill = firstTextLayerOfKind(layers, TextLayerKind::Fill))
+        return fill->paint.kind == TextPaintKind::Gradient && !fill->paint.gradient.stops.isEmpty()
+                   ? fill->paint.gradient.stops.first().color
+                   : fill->paint.color;
+    return QColor(0, 180, 255);
+}
+
+void ShapeStyle::setPrimaryColor(const QColor &color)
+{
+    if (TextShadingLayer *fill = firstTextLayerOfKind(layers, TextLayerKind::Fill, false)) {
+        fill->paint.color = color;
+        if (!fill->paint.gradient.stops.isEmpty())
+            fill->paint.gradient.stops.first().color = color;
+        return;
+    }
+    layers.prepend(solidFillLayer(color, QStringLiteral("fill")));
+}
+
+void ShapeStyle::setSolidFill(const QColor &color)
+{
+    const TextShadingLayer *stroke = firstTextLayerOfKind(layers, TextLayerKind::Stroke, false);
+    layers = defaultShapeLayers(color, QColor(), stroke ? stroke->paint.color : QColor(Qt::white),
+                                stroke && stroke->enabled ? stroke->width : 0.0);
+}
+
+void ShapeStyle::setStroke(double width, const QColor &color)
+{
+    TextShadingLayer *stroke = firstTextLayerOfKind(layers, TextLayerKind::Stroke, false);
+    if (!stroke) {
+        TextShadingLayer layer = strokeLayer(width, color, QStringLiteral("stroke"));
+        layer.strokeAlign = StrokeAlign::Inside;
+        layers.append(layer);
+        stroke = &layers.last();
+    }
+    stroke->width = qMax(0.0, width);
+    stroke->paint.color = color;
+    stroke->enabled = width > 0.0;
+}
+
+// ---------------------------------------------------------------------------------------------
+// Keyframes
+
+namespace {
+
+struct KnobField
+{
+    const char *key;
+    const char *label;
+    double ShapeStyle::*field;
+    double min;
+    double max;
+};
+
+// points is an int and handled apart from the doubles.
+constexpr KnobField kKnobs[] = {
+    {"cornerRadius", QT_TRANSLATE_NOOP("ShapeStyle", "Corner radius"), &ShapeStyle::cornerRadius, 0.0, 2000.0},
+    {"innerRatio", QT_TRANSLATE_NOOP("ShapeStyle", "Inner radius"), &ShapeStyle::innerRatio, 0.05, 0.95},
+    {"headSize", QT_TRANSLATE_NOOP("ShapeStyle", "Head size"), &ShapeStyle::headSize, 0.05, 0.9},
+    {"thickness", QT_TRANSLATE_NOOP("ShapeStyle", "Thickness"), &ShapeStyle::thickness, 0.05, 1.0},
+    {"tailX", QT_TRANSLATE_NOOP("ShapeStyle", "Tail position"), &ShapeStyle::tailX, 0.08, 0.92},
+    {"tailSize", QT_TRANSLATE_NOOP("ShapeStyle", "Tail size"), &ShapeStyle::tailSize, 0.05, 0.5},
+};
+
+const KnobField *knobFor(const QString &key)
+{
+    for (const KnobField &knob : kKnobs)
+        if (key == QLatin1String(knob.key))
+            return &knob;
+    return nullptr;
+}
+
+} // namespace
+
+QStringList shapeKeyframeProperties(const ShapeStyle &style)
+{
+    QStringList out;
+    for (const KnobField &knob : kKnobs)
+        out.append(QLatin1String(knob.key));
+    out.append(QStringLiteral("points"));
+    for (const TextShadingLayer &layer : style.layers) {
+        for (const QString &field : shadingLayerKeyframeFields(layer))
+            out.append(QStringLiteral("layer.%1.%2").arg(layer.id, field));
+    }
+    return out;
+}
+
+QString shapeKeyframeCanonicalKey(const QString &key, const ShapeStyle &style)
+{
+    if (knobFor(key) || key == QLatin1String("points"))
+        return key;
+    LayerKeyPath path;
+    if (!parseLayerKey(key, &path))
+        return {};
+    const TextShadingLayer *layer = findTextLayer(style.layers, path.layerId);
+    if (!layer)
+        return {};
+    double probe = 0.0;
+    return shadingLayerScalar(*layer, path.field, &probe) ? key : QString();
+}
+
+QString shapeKeyframeLabel(const QString &key, const ShapeStyle &style)
+{
+    if (const KnobField *knob = knobFor(key))
+        return QCoreApplication::translate("ShapeStyle", knob->label);
+    if (key == QLatin1String("points"))
+        return QCoreApplication::translate("ShapeStyle", "Points");
+    return shadingLayerKeyframeLabel(style.layers, key);
+}
+
+bool shapeStyleScalar(const ShapeStyle &style, const QString &key, double *out)
+{
+    if (const KnobField *knob = knobFor(key)) {
+        *out = style.*(knob->field);
+        return true;
+    }
+    if (key == QLatin1String("points")) {
+        *out = style.points;
+        return true;
+    }
+    LayerKeyPath path;
+    if (!parseLayerKey(key, &path))
+        return false;
+    const TextShadingLayer *layer = findTextLayer(style.layers, path.layerId);
+    return layer && shadingLayerScalar(*layer, path.field, out);
+}
+
+bool setShapeStyleScalar(ShapeStyle &style, const QString &key, double value)
+{
+    if (const KnobField *knob = knobFor(key)) {
+        style.*(knob->field) = qBound(knob->min, value, knob->max);
+        return true;
+    }
+    if (key == QLatin1String("points")) {
+        style.points = qBound(3, qRound(value), 60);
+        return true;
+    }
+    LayerKeyPath path;
+    if (!parseLayerKey(key, &path))
+        return false;
+    TextShadingLayer *layer = findTextLayer(style.layers, path.layerId);
+    return layer && setShadingLayerScalar(*layer, path.field, value);
+}
+
+bool ShapeStyle::isAnimated() const
+{
+    for (auto it = keyframes.constBegin(); it != keyframes.constEnd(); ++it) {
+        if (!it->isEmpty() && it->enabled())
+            return true;
+    }
+    return false;
+}
+
+ShapeStyle ShapeStyle::resolvedAt(TimeUs clipTimeUs) const
+{
+    ShapeStyle out = *this;
+    for (auto it = keyframes.constBegin(); it != keyframes.constEnd(); ++it) {
+        if (!it->isEmpty())
+            setShapeStyleScalar(out, it.key(), it->evaluateAt(clipTimeUs));
+    }
+    return out;
+}
+
+quint64 shapeStyleHash(const ShapeStyle &style)
+{
+    return qHashMulti(0, static_cast<int>(style.kind), textLayersHash(style.layers), style.cornerRadius, style.points,
+                      style.innerRatio, style.headSize, style.thickness, style.tailX, style.tailSize);
+}
+
+bool shapeTimeDrivenPaint(const ShapeStyle &style)
+{
+    for (const TextShadingLayer &layer : style.layers) {
+        if (!layer.enabled)
+            continue;
+        if (layer.paint.kind == TextPaintKind::Gradient && !qFuzzyIsNull(layer.paint.gradient.offsetSpeed))
+            return true;
+        if (layer.paint.kind == TextPaintKind::Effect) {
+            const TextEffectSpec *spec = textShaderEffectSpec(layer.paint.effect.id);
+            if (spec && spec->timeDriven)
+                return true;
+        }
+    }
+    return false;
+}
+
+// ---------------------------------------------------------------------------------------------
+// JSON
+
+QJsonObject shapeStyleToJson(const ShapeStyle &s)
+{
+    QJsonArray layers;
+    for (const TextShadingLayer &layer : s.layers)
+        layers.append(textShadingLayerToJson(layer));
+    QJsonObject o{
+        {QStringLiteral("kind"), shapeKindToString(s.kind)},
+        {QStringLiteral("layers"), layers},
+        {QStringLiteral("cornerRadius"), s.cornerRadius},
+        {QStringLiteral("points"), s.points},
+        {QStringLiteral("innerRatio"), s.innerRatio},
+        {QStringLiteral("headSize"), s.headSize},
+        {QStringLiteral("thickness"), s.thickness},
+        {QStringLiteral("tailX"), s.tailX},
+        {QStringLiteral("tailSize"), s.tailSize},
+    };
+    QJsonObject keyframesJson;
+    for (auto it = s.keyframes.constBegin(); it != s.keyframes.constEnd(); ++it) {
+        if (!it->isEmpty())
+            keyframesJson.insert(it.key(), keyframesToJson(it.value()));
+    }
+    if (!keyframesJson.isEmpty())
+        o.insert(QStringLiteral("keyframes"), keyframesJson);
+    return o;
+}
+
+namespace {
+
+// The flat look projects before format 8 wrote: one fill (none / solid / two-stop linear or
+// radial gradient) under one stroke. Disabled layers are still created so toggling one back on
+// restores the old colour or width. The old stroke was inset by half its width so it stayed
+// inside the layout rect, which is what Inside reproduces.
+QList<TextShadingLayer> legacyShapeLayersFromJson(const QJsonObject &o)
+{
+    const auto color = [&](const char *key, const QColor &fallback) {
+        return QColor(o.value(QLatin1String(key)).toString(fallback.name(QColor::HexArgb)));
+    };
+    const QColor fill = color("fill", QColor(0, 180, 255));
+    const QColor secondary = color("fillSecondary", QColor(122, 0, 255));
+    const QString fillKind = o.value(QStringLiteral("fillKind")).toString(QStringLiteral("solid"));
+    const QString strokeStyle = o.value(QStringLiteral("strokeStyle")).toString(QStringLiteral("solid"));
+
+    QList<TextShadingLayer> layers = defaultShapeLayers(fill, secondary, color("stroke", Qt::white),
+                                                        o.value(QStringLiteral("strokeWidth")).toDouble(4.0));
+    TextShadingLayer &fillLayer = layers[0];
+    TextShadingLayer &strokeLayer_ = layers[1];
+    fillLayer.paint.gradient.angle = o.value(QStringLiteral("gradientAngle")).toDouble(90.0);
+    if (fillKind == QLatin1String("none")) {
+        fillLayer.enabled = false;
+    } else if (fillKind == QLatin1String("linear") || fillKind == QLatin1String("radial")) {
+        fillLayer.paint.kind = TextPaintKind::Gradient;
+        fillLayer.paint.gradient.kind = fillKind == QLatin1String("radial") ? TextGradientKind::Radial
+                                                                            : TextGradientKind::Linear;
+    }
+    if (strokeStyle == QLatin1String("none"))
+        strokeLayer_.enabled = false;
+    else
+        strokeLayer_.dash = strokeDashFromString(strokeStyle);
+    return layers;
+}
+
+} // namespace
+
+ShapeStyle shapeStyleFromJson(const QJsonObject &o)
+{
+    ShapeStyle s;
+    if (o.isEmpty())
+        return s;
+    s.kind = shapeKindFromString(o.value(QStringLiteral("kind")).toString());
+    if (o.contains(QStringLiteral("layers"))) {
+        s.layers.clear();
+        for (const QJsonValue &v : o.value(QStringLiteral("layers")).toArray())
+            s.layers.append(textShadingLayerFromJson(v.toObject()));
+        for (TextShadingLayer &layer : s.layers) {
+            if (layer.id.isEmpty())
+                layer.id = mintTextLayerId(s.layers);
+        }
+    } else {
+        s.layers = legacyShapeLayersFromJson(o);
+    }
+    // Geometry knobs default to the struct value, so a project saved before shapes gained them
+    // still loads.
+    s.cornerRadius = o.value(QStringLiteral("cornerRadius")).toDouble(s.cornerRadius);
+    s.points = o.value(QStringLiteral("points")).toInt(s.points);
+    s.innerRatio = o.value(QStringLiteral("innerRatio")).toDouble(s.innerRatio);
+    s.headSize = o.value(QStringLiteral("headSize")).toDouble(s.headSize);
+    s.thickness = o.value(QStringLiteral("thickness")).toDouble(s.thickness);
+    s.tailX = o.value(QStringLiteral("tailX")).toDouble(s.tailX);
+    s.tailSize = o.value(QStringLiteral("tailSize")).toDouble(s.tailSize);
+    const QJsonObject keyframesJson = o.value(QStringLiteral("keyframes")).toObject();
+    for (auto it = keyframesJson.constBegin(); it != keyframesJson.constEnd(); ++it) {
+        const QString canonical = shapeKeyframeCanonicalKey(it.key(), s);
+        if (!canonical.isEmpty())
+            s.keyframes.insert(canonical, keyframesFromJson(it.value().toObject()));
+    }
+    return s;
 }
 
 } // namespace drift

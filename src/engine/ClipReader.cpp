@@ -12,9 +12,13 @@
 #include <QUuid>
 #include <QTextStream>
 #include <QStandardPaths>
+#include <QMutex>
+#include <QMutexLocker>
 
 #include <atomic>
+#include <cstdarg>
 #include <cmath>
+#include <mutex>
 #include <cstring>
 #include <limits>
 #include <utility>
@@ -26,7 +30,9 @@ extern "C" {
 #include <libavfilter/buffersink.h>
 #include <libavfilter/buffersrc.h>
 #include <libavformat/avformat.h>
+#include <libavutil/error.h>
 #include <libavutil/hwcontext.h>
+#include <libavutil/log.h>
 #ifdef Q_OS_ANDROID
 #include <libavutil/hwcontext_mediacodec.h>
 #endif
@@ -140,14 +146,58 @@ int swsFlagsForResize(int srcW, int srcH, int dstW, int dstH)
 // Prefer the hardware surface format when the decoder offers it; otherwise pick the
 // first software format so get_format never hard-fails with AV_PIX_FMT_NONE
 // (that path leaves the hwaccel decoder in a half-initialized state).
+// Builds the decoder's surface pool here rather than letting libavcodec do it, so the extra
+// surfaces the preview cache wants are fitted under a driver's hard cap instead of added on top of
+// it. Otherwise this is what libavcodec does by itself: avcodec_get_hw_frames_parameters, then the
+// three work surfaces ff_decode_get_hw_frames_ctx adds. Anything unexpected leaves hw_frames_ctx
+// unset, which is simply the uncapped default.
+void fitHwSurfacePool(AVCodecContext *ctx, AVPixelFormat format, ClipReader::HwFormatRequest *request)
+{
+    // get_format runs again on every reinit (a mid-stream resolution change), and a pool built
+    // for the previous stream must not be reused for the new one. Frames still out in the cache
+    // hold their own references to it.
+    av_buffer_unref(&ctx->hw_frames_ctx);
+    request->spareSurfaces = -1;
+    if (!ctx->hw_device_ctx)
+        return;
+
+    const int wantedExtra = qMax(0, ctx->extra_hw_frames);
+    ctx->extra_hw_frames = 0;
+    AVBufferRef *frames = nullptr;
+    const int rc = avcodec_get_hw_frames_parameters(ctx, ctx->hw_device_ctx, format, &frames);
+    ctx->extra_hw_frames = wantedExtra;
+    if (rc < 0 || !frames)
+        return;
+
+    auto *framesCtx = reinterpret_cast<AVHWFramesContext *>(frames->data);
+    if (framesCtx->initial_pool_size <= 0) {
+        // A dynamically growing pool has no fixed size to cap.
+        av_buffer_unref(&frames);
+        return;
+    }
+    const int base = framesCtx->initial_pool_size + 3;
+    const int spare = qBound(0, request->maxSurfaces - base, wantedExtra);
+    framesCtx->initial_pool_size = base + spare;
+    if (av_hwframe_ctx_init(frames) < 0) {
+        av_buffer_unref(&frames);
+        return;
+    }
+    ctx->hw_frames_ctx = frames;
+    request->spareSurfaces = spare;
+}
+
 AVPixelFormat hwGetFormat(AVCodecContext *ctx, const AVPixelFormat *pixFmts)
 {
-    const AVPixelFormat prefer =
-        ctx && ctx->opaque ? *static_cast<const AVPixelFormat *>(ctx->opaque) : AV_PIX_FMT_NONE;
+    auto *request =
+        ctx && ctx->opaque ? static_cast<ClipReader::HwFormatRequest *>(ctx->opaque) : nullptr;
+    const AVPixelFormat prefer = request ? request->pixFmt : AV_PIX_FMT_NONE;
 
     for (const AVPixelFormat *p = pixFmts; *p != AV_PIX_FMT_NONE; ++p) {
-        if (*p == prefer)
+        if (*p == prefer) {
+            if (request->maxSurfaces > 0)
+                fitHwSurfacePool(ctx, *p, request);
             return *p;
+        }
     }
 
     for (const AVPixelFormat *p = pixFmts; *p != AV_PIX_FMT_NONE; ++p) {
@@ -293,6 +343,7 @@ void ClipReader::teardownVideoDecoder()
 #endif
     m_hwBackend = drift::hwaccel::Backend::None;
     m_hwPixFmt = AV_PIX_FMT_NONE;
+    m_hwFormatRequest = {};
     m_videoPositioned = false;
     m_lastVideoPtsUs = 0;
     m_decodeW = 0;
@@ -314,7 +365,8 @@ QSize ClipReader::decodeSizeFor(int maxWidth, int maxHeight) const
     // The caller's box is in display orientation but srcW/srcH are coded, and the
     // returned size is the sws target — so match the box to the source instead of
     // the other way round. The transpose happens after conversion.
-    if (m_sourceRotation == 90 || m_sourceRotation == 270)
+    const int rotation = effectiveRotation();
+    if (rotation == 90 || rotation == 270)
         std::swap(maxWidth, maxHeight);
 
     // Never decode larger than the source; scaling up is the compositor's job.
@@ -379,6 +431,69 @@ bool mediaCodecZeroCopyEnabled()
 }
 #endif
 std::atomic<quint64> g_hwFallbackCount{0};
+
+// Why the last reader gave up on hardware, for the debug report. The count alone says that it
+// happened, which is not the half a bug report needs.
+QMutex g_hwFailureMutex;
+QString g_lastHwFailure;
+// The most recent error FFmpeg logged. A hwaccel usually explains itself only there ("Failed
+// setup for format", a CUDA error name) while the call that fails returns a bare EINVAL or
+// AVERROR_EXTERNAL, and on Windows the log itself goes nowhere anyone would look.
+QString g_lastFfmpegError;
+
+void recordingLogCallback(void *avcl, int level, const char *fmt, va_list vl)
+{
+    // Only while errors are being logged at all: HwAccel's device probes drop the level to
+    // AV_LOG_QUIET, and what they complain about is not a decode failure.
+    if (level <= AV_LOG_ERROR && av_log_get_level() >= AV_LOG_ERROR) {
+        va_list copy;
+        va_copy(copy, vl);
+        char line[512];
+        int printPrefix = 1;
+        av_log_format_line2(avcl, level, fmt, copy, line, sizeof(line), &printPrefix);
+        va_end(copy);
+        const QString text = QString::fromUtf8(line).trimmed();
+        if (!text.isEmpty()) {
+            QMutexLocker lock(&g_hwFailureMutex);
+            g_lastFfmpegError = text;
+        }
+    }
+    av_log_default_callback(avcl, level, fmt, vl);
+}
+
+void installRecordingLogCallback()
+{
+    static std::once_flag once;
+    std::call_once(once, [] { av_log_set_callback(recordingLogCallback); });
+}
+
+// One CUDA device for every reader. Each av_hwdevice_ctx_create makes a CUDA context of its own,
+// and a preview frame's surface belongs to the context of the reader that decoded it — while
+// GlRuntime's interop textures are registered with exactly one. Two hardware clips on a timeline,
+// or the diagnostics benchmark running beside one, made every switch between them fail to map with
+// CUDA_ERROR_INVALID_HANDLE. A context per reader also cost VRAM for nothing: NVDEC decoders share
+// a context without trouble.
+//
+// Never released. Tearing a CUDA context down once the driver has begun its own exit teardown
+// aborts the process (see FaceLandmarker), and the OS reclaims it anyway.
+AVBufferRef *sharedCudaDevice()
+{
+    static QMutex mutex;
+    static AVBufferRef *device = nullptr;
+    QMutexLocker lock(&mutex);
+    if (!device && av_hwdevice_ctx_create(&device, AV_HWDEVICE_TYPE_CUDA, nullptr, nullptr, 0) < 0) {
+        av_buffer_unref(&device);
+        return nullptr;
+    }
+    return av_buffer_ref(device);
+}
+
+QString avErrorText(int rc)
+{
+    char buf[AV_ERROR_MAX_STRING_SIZE] = {};
+    av_strerror(rc, buf, sizeof(buf));
+    return QString::fromUtf8(buf);
+}
 } // namespace
 
 quint64 ClipReader::videoFramesDecoded()
@@ -421,6 +536,27 @@ std::optional<drift::hwaccel::Backend> ClipReader::activeDecodeBackend()
 quint64 ClipReader::hardwareFallbackCount()
 {
     return g_hwFallbackCount.load(std::memory_order_relaxed);
+}
+
+QString ClipReader::lastHardwareFailure()
+{
+    QMutexLocker lock(&g_hwFailureMutex);
+    return g_lastHwFailure;
+}
+
+void ClipReader::recordHardwareFailure(const QString &what)
+{
+    const QString backend = m_mediaCodecActive ? QStringLiteral("MediaCodec")
+                                               : QString::fromLatin1(drift::hwaccel::name(m_hwBackend));
+    const QString codec = QString::fromUtf8(m_videoCtx && m_videoCtx->codec ? m_videoCtx->codec->name : "?");
+    QString text = QStringLiteral("%1 %2: %3").arg(backend, codec, what);
+    {
+        QMutexLocker lock(&g_hwFailureMutex);
+        if (!g_lastFfmpegError.isEmpty())
+            text += QStringLiteral(" (FFmpeg: %1)").arg(g_lastFfmpegError);
+        g_lastHwFailure = text;
+    }
+    qWarning("ClipReader: hardware decode failed, falling back to software: %s", qUtf8Printable(text));
 }
 
 void ClipReader::resetVideoDecoder()
@@ -536,7 +672,12 @@ int ClipReader::previewCacheCapacity() const
                             static_cast<int>(kHwPreviewReadAheadUs / m_sourceFrameDurationUs),
                             kMaxHwCachedFrames);
         }
-        return qMax(2, frames / m_previewCacheShares);
+        frames = qMax(2, frames / m_previewCacheShares);
+        // A pool fitted under a driver's surface cap has fewer spare surfaces than kHwExtraFrames
+        // promises, and cover and peek still hold one each. Caching past that starves the decoder.
+        if (m_hwFormatRequest.spareSurfaces >= 0)
+            frames = qMin(frames, qMax(1, m_hwFormatRequest.spareSurfaces - 2));
+        return frames;
     }
 
     if (m_readAheadUs <= 0 || m_sourceFrameDurationUs <= 0)
@@ -807,10 +948,20 @@ bool ClipReader::openHardwareDecoderWith(drift::hwaccel::Backend backend)
     if (!codec)
         return false;
 
-    if (av_hwdevice_ctx_create(&m_hwDeviceCtx, type, nullptr, nullptr, 0) < 0) {
-        if (m_hwDeviceCtx)
-            av_buffer_unref(&m_hwDeviceCtx);
-        return false;
+    installRecordingLogCallback();
+    if (type == AV_HWDEVICE_TYPE_CUDA) {
+        m_hwDeviceCtx = sharedCudaDevice();
+        if (!m_hwDeviceCtx)
+            return false;
+    } else {
+        const QByteArray device = drift::hwaccel::deviceString(type);
+        if (av_hwdevice_ctx_create(&m_hwDeviceCtx, type,
+                                   device.isEmpty() ? nullptr : device.constData(), nullptr, 0)
+            < 0) {
+            if (m_hwDeviceCtx)
+                av_buffer_unref(&m_hwDeviceCtx);
+            return false;
+        }
     }
 
     m_videoCtx = avcodec_alloc_context3(codec);
@@ -827,7 +978,17 @@ bool ClipReader::openHardwareDecoderWith(drift::hwaccel::Backend backend)
 
     m_hwPixFmt = pixFmt;
     m_videoCtx->hw_device_ctx = av_buffer_ref(m_hwDeviceCtx);
-    m_videoCtx->opaque = &m_hwPixFmt;
+    m_hwFormatRequest = {};
+    m_hwFormatRequest.pixFmt = pixFmt;
+#if defined(Q_OS_WIN)
+    // NVDEC on Windows will not create a decoder with more than 32 surfaces: cuvidCreateDecoder
+    // fails with CUDA_ERROR_INVALID_VALUE at any resolution. AV1's own pool is already 21 or so,
+    // so kHwExtraFrames on top of it failed every AV1 clip on the first packet and dropped it to
+    // libdav1d. The Linux driver has taken the uncapped pool, so it keeps it.
+    if (backend == drift::hwaccel::Backend::Cuda)
+        m_hwFormatRequest.maxSurfaces = 32;
+#endif
+    m_videoCtx->opaque = &m_hwFormatRequest;
     m_videoCtx->get_format = hwGetFormat;
     // Preview caches a short ring of hardware surfaces. Without extra pool slots
     // the decoder stalls once those refs are outstanding.
@@ -843,6 +1004,11 @@ bool ClipReader::openHardwareDecoderWith(drift::hwaccel::Backend backend)
     m_hwBackend = backend;
     m_hwAccelActive = true;
     g_activeDecodeBackend.store(static_cast<int>(backend), std::memory_order_relaxed);
+    {
+        // Whatever was logged before a decoder that opened cleanly is not why a later one fails.
+        QMutexLocker lock(&g_hwFailureMutex);
+        g_lastFfmpegError.clear();
+    }
     return true;
 }
 
@@ -877,21 +1043,16 @@ bool ClipReader::tryOpenHardwareDecoder()
 #else
     // An explicit pick is honoured on its own: falling back to a backend the user did
     // not choose would hide exactly the problem they picked around.
+    // Auto tries a pin first and then the rest of the order — its promise is that it still finds
+    // something, not that it ignores the preference — unless the pin decodes on a different GPU
+    // than the one drawing. See decodeAttemptOrder.
     const drift::hwaccel::Backend pinned = pinnedDecodeBackend();
-    if (mode == HardwareDecodeMode::Hardware && pinned != drift::hwaccel::Backend::None) {
-        if (openHardwareDecoderWith(pinned))
+    const bool pinnedOnly =
+        mode == HardwareDecodeMode::Hardware && pinned != drift::hwaccel::Backend::None;
+    for (const drift::hwaccel::Backend backend :
+         drift::hwaccel::decodeAttemptOrder(pinned, pinnedOnly, drift::hwaccel::renderVendor())) {
+        if (openHardwareDecoderWith(backend))
             return true;
-    } else {
-        // Auto used to ignore the pin entirely and always take the first backend that
-        // opened, so choosing one in the picker changed nothing unless Hardware was also
-        // forced. Try it first here, then fall through to the rest of the order — Auto's
-        // promise is that it still finds something, not that it ignores the preference.
-        if (pinned != drift::hwaccel::Backend::None && openHardwareDecoderWith(pinned))
-            return true;
-        for (const drift::hwaccel::Backend backend : drift::hwaccel::decodeBackendOrder()) {
-            if (backend != pinned && openHardwareDecoderWith(backend))
-                return true;
-        }
     }
 
     // Nothing here takes this stream. Sticky so every later frame of this clip does
@@ -1352,7 +1513,7 @@ bool ClipReader::transferHwFrameToImage(const AVFrame *hwFrame, QImage &out, int
     if (!swFrame)
         return false;
 
-    const QImage image = frameToRgba(swFrame, m_sws, targetWidth, targetHeight, m_sourceRotation);
+    const QImage image = frameToRgba(swFrame, m_sws, targetWidth, targetHeight, effectiveRotation());
     if (image.isNull())
         return false;
 
@@ -1437,7 +1598,7 @@ bool ClipReader::convertFrame(const AVFrame *frame, QImage &out, int targetWidth
     if (isHardwarePixelFormat(static_cast<AVPixelFormat>(frame->format)))
         return transferHwFrameToImage(frame, out, targetWidth, targetHeight);
 
-    const QImage image = frameToRgba(frame, m_sws, targetWidth, targetHeight, m_sourceRotation);
+    const QImage image = frameToRgba(frame, m_sws, targetWidth, targetHeight, effectiveRotation());
     if (image.isNull())
         return false;
 
@@ -1458,7 +1619,7 @@ bool ClipReader::convertFramePreview(const AVFrame *frame, PreviewVideoFrame &ou
     if (m_mcSurfaceMode && frame->format == AV_PIX_FMT_MEDIACODEC) {
         Q_UNUSED(targetWidth);
         Q_UNUSED(targetHeight);
-        out = makePreviewFrame(frame, m_sourceRotation);
+        out = makePreviewFrame(frame, effectiveRotation());
         return out.isValid();
     }
 #endif
@@ -1467,14 +1628,14 @@ bool ClipReader::convertFramePreview(const AVFrame *frame, PreviewVideoFrame &ou
         || isHardwarePixelFormat(static_cast<AVPixelFormat>(frame->format));
     if (hw) {
         const AVFrame *scaled = scaleHwFrame(frame, targetWidth, targetHeight);
-        out = makePreviewFrame(scaled, m_sourceRotation);
+        out = makePreviewFrame(scaled, effectiveRotation());
         if (scaled == m_vppScaled)
             av_frame_unref(m_vppScaled);
         return out.isValid();
     }
 
     AVFrame *nv12 = softwareFrameToNv12(frame, m_swsNv12, targetWidth, targetHeight);
-    out = takePreviewFrame(nv12, m_sourceRotation);
+    out = takePreviewFrame(nv12, effectiveRotation());
     return out.isValid();
 }
 
@@ -1639,8 +1800,10 @@ bool ClipReader::advanceVideoTo(drift::TimeUs sourceUs, int maxWidth, int maxHei
     bool sawHwFailure = false;
     bool droppedPacket = false;
 
-    auto markHwFailure = [&]() {
+    auto markHwFailure = [&](const QString &what) {
         if (m_hwAccelActive || m_mediaCodecActive) {
+            if (!sawHwFailure)
+                recordHardwareFailure(what);
             sawHwFailure = true;
             done = true;
         }
@@ -1656,7 +1819,7 @@ bool ClipReader::advanceVideoTo(drift::TimeUs sourceUs, int maxWidth, int maxHei
                 // decode picture". The frame may be partially initialized —
                 // unref before any further use or free.
                 av_frame_unref(frame);
-                markHwFailure();
+                markHwFailure(QStringLiteral("receiving a frame failed: %1").arg(avErrorText(rc)));
                 break;
             }
 
@@ -1671,7 +1834,7 @@ bool ClipReader::advanceVideoTo(drift::TimeUs sourceUs, int maxWidth, int maxHei
                 const bool latched = latchMediaCodecFrame(frame);
                 av_frame_unref(frame);
                 if (!latched) {
-                    markHwFailure();
+                    markHwFailure(QStringLiteral("latching a MediaCodec output buffer failed"));
                     break;
                 }
                 decoded = m_mcLatched;
@@ -1739,7 +1902,7 @@ bool ClipReader::advanceVideoTo(drift::TimeUs sourceUs, int maxWidth, int maxHei
             // Decoder is full; drain below then retry is handled by the next read.
             // Fall through to receive.
         } else if (sendRc < 0) {
-            markHwFailure();
+            markHwFailure(QStringLiteral("sending a packet failed: %1").arg(avErrorText(sendRc)));
             continue;
         }
 
@@ -1811,6 +1974,7 @@ bool ClipReader::decodeVideoFrameAtOnce(drift::TimeUs sourceUs, QImage &out, int
         if (m_hwAccelActive
             && (m_coverFrame->format == m_hwPixFmt
                 || isHardwarePixelFormat(static_cast<AVPixelFormat>(m_coverFrame->format)))) {
+            recordHardwareFailure(QStringLiteral("reading the decoded surface back failed"));
             if (hwFailure)
                 *hwFailure = true;
             m_videoPositioned = false;
@@ -1879,6 +2043,7 @@ bool ClipReader::decodePreviewVideoFrameAtOnce(drift::TimeUs sourceUs, PreviewVi
         if (m_hwAccelActive
             && (m_coverFrame->format == m_hwPixFmt
                 || isHardwarePixelFormat(static_cast<AVPixelFormat>(m_coverFrame->format)))) {
+            recordHardwareFailure(QStringLiteral("handing the decoded surface to the preview failed"));
             if (hwFailure)
                 *hwFailure = true;
             m_videoPositioned = false;

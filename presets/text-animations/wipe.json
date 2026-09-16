@@ -1,0 +1,58 @@
+{
+  "format": 1,
+  "id": "wipe",
+  "label": "Wipe",
+  "category": "kinetic",
+  "sampleText": "Type",
+  "slots": [
+    "in",
+    "out"
+  ],
+  "order": 170,
+  "defaults": {
+    "unit": "block",
+    "duration": 0.6,
+    "ease": "easeOut"
+  },
+  "flags": {
+    "unitLocked": true,
+    "orderLocked": true,
+    "mirrorForOut": false
+  },
+  "params": [
+    {
+      "id": "angle",
+      "type": "scalar",
+      "label": "Direction",
+      "unit": "\u00b0",
+      "min": -180,
+      "max": 180,
+      "step": 15,
+      "default": -90
+    },
+    {
+      "id": "softness",
+      "type": "scalar",
+      "label": "Softness",
+      "unit": "",
+      "min": 0,
+      "max": 1,
+      "step": 0.05,
+      "default": 0.3
+    }
+  ],
+  "animators": [
+    {
+      "selectors": [
+        "stagger"
+      ],
+      "props": {
+        "wipe": {
+          "enabled": true,
+          "angleDeg": "{angle}",
+          "softness": "{softness}"
+        }
+      }
+    }
+  ]
+}

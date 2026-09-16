@@ -1,0 +1,7 @@
+{
+  "format": 1, "id": "pop", "label": "Pop", "category": "basic", "sampleText": "Pop!",
+  "slots": ["in", "out"], "order": 30,
+  "defaults": { "duration": 0.35, "ease": "back" },
+  "params": [ { "id": "from", "type": "scalar", "label": "From", "unit": "%", "min": 0, "max": 200, "step": 1, "default": 60 } ],
+  "animators": [ { "selectors": ["stagger"], "props": { "scale": "{from}", "opacity": 0 } } ]
+}

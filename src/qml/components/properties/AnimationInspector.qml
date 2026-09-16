@@ -305,7 +305,7 @@ Item {
             visible: root.supportsBodyAnim && root.clipKind === "text"
             width: parent.width
             wrapMode: Text.WordWrap
-            text: qsTr("Text tab has letter/word animations (typewriter, stagger). This moves the whole clip.")
+            text: qsTr("Letter and word animations live in the Text tab, under Animate. This moves the whole clip.")
             color: Theme.mutedForeground
             font.family: Theme.fontFamily
             font.pixelSize: Theme.fontSizeXs

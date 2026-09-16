@@ -118,6 +118,7 @@ private slots:
     void uiLanguagePersistsAcrossSessions();
     void invertTimelineScrollPersistsAcrossSessions();
     void decodeModePickerListsOnlyWorkingBackends();
+    void decodeModePickerMarksOffGpuBackends();
     void exportFrameRatePersistsAcrossSessions();
     void lastExportSettingsNormalisesStringTypedValues();
     void textStyleBlendModeKeyframesAndEffects();
@@ -130,7 +131,9 @@ private slots:
     void clipAnimationUndoRestoresKind();
     void setTransitionKindAndDurationPersist();
     void replaceTransitionOnDrop();
-    void overlapAutoAppliesCrossfade();
+    void overlapDoesNotAutoApplyCrossfade();
+    void trimmingOverlapClampsStaleTransitionDuration();
+    void removeTransitionDoesNotMoveOverlappingClips();
     void separateAudioFromCombinedClip();
     void separatedAudioTracksMirrorVideoHierarchy();
     void linkedAudioUnlinkAndMove();
@@ -148,6 +151,7 @@ private slots:
     void waveformPeaksForSourceRangeSlicesToTheTrimmedWindow();
     void speedCurveSessionExposesTrimmedSourceWindow();
     void shapeStylePartialUpdateAndUndo();
+    void shapeLayersAndKeyframes();
     void replaceAssetSourceRebindsClipsAndClampsTrim();
     void replaceAssetSourceRefusesADifferentKind();
     void exportAssetImageWritesPngAndJpeg();
@@ -1905,6 +1909,36 @@ void EditorStateTest::decodeModePickerListsOnlyWorkingBackends()
     }
 }
 
+// NVDEC while OpenGL draws on the integrated GPU: the row still has to be offered — the user
+// may want it for a codec the iGPU cannot decode — but it has to carry the flag and the
+// sentence the picker's warning glyph and its confirm dialog both read.
+void EditorStateTest::decodeModePickerMarksOffGpuBackends()
+{
+    const QString liveVendor = drift::hwaccel::renderVendor();
+    const auto restore = qScopeGuard([liveVendor] { drift::hwaccel::setRenderVendor(liveVendor); });
+    drift::hwaccel::setRenderVendor(QStringLiteral("Intel"));
+
+    AssetLibrary library;
+    AppController state(&library);
+    PlaybackEngine *playback = state.playback();
+
+    const QVariantList modes = playback->decodeModes();
+    QVERIFY(modes.size() >= 2);
+    // Auto and Software decode wherever they land; neither can be on the wrong GPU.
+    QVERIFY(!modes.at(0).toMap().value(QStringLiteral("warn")).toBool());
+    QVERIFY(!modes.at(1).toMap().value(QStringLiteral("warn")).toBool());
+
+    for (qsizetype i = 2; i < modes.size(); ++i) {
+        const QVariantMap row = modes.at(i).toMap();
+        const bool warn = row.value(QStringLiteral("warn")).toBool();
+        const QString note = row.value(QStringLiteral("note")).toString();
+        // NVDEC is the one backend bound to a vendor, so on an Intel renderer it is the one
+        // that must warn — and every warning has to come with something to show the user.
+        QCOMPARE(warn, row.value(QStringLiteral("id")).toString() == QStringLiteral("hw:nvdec"));
+        QCOMPARE(note.isEmpty(), !warn);
+    }
+}
+
 void EditorStateTest::darkModePreferencePersistsAcrossSessions()
 {
     QStandardPaths::setTestModeEnabled(true);
@@ -3265,27 +3299,89 @@ void EditorStateTest::replaceTransitionOnDrop()
     QCOMPARE(state.project()->tracks().at(0).transitions.size(), 1);
 }
 
-void EditorStateTest::overlapAutoAppliesCrossfade()
+void EditorStateTest::overlapDoesNotAutoApplyCrossfade()
 {
     AssetLibrary library;
     AppController state(&library);
     appendAdjacentShapeClips(*state.project(), -drift::secondsToUs(0.5)); // 0.5s physical overlap
 
-    // Overlap is off by default; keep it on so the no-op move below does not push the
-    // already-overlapping clips apart before sync can create the crossfade.
     state.setAllowClipOverlap(true);
-    // Overlap sync runs on finishEdit; nudge via a no-op-ish move to trigger it.
     state.moveClip(0, 1, drift::usToSeconds(state.project()->tracks().at(0).clips.at(1).timelineStart));
 
-    const QVariantMap transition = state.transitionBetweenClips(0, 0);
-    QVERIFY(!transition.isEmpty());
-    QCOMPARE(transition.value(QStringLiteral("kind")).toString(), QStringLiteral("crossfade"));
-    QCOMPARE(transition.value(QStringLiteral("overlapping")).toBool(), true);
-    QCOMPARE(transition.value(QStringLiteral("duration")).toDouble(), 0.5);
+    QVERIFY(state.transitionBetweenClips(0, 0).isEmpty());
+    QCOMPARE(state.project()->tracks().at(0).transitions.size(), 0);
 
     state.addTransition(0, 0, QStringLiteral("dip"), 0.5);
     QCOMPARE(state.transitionBetweenClips(0, 0).value(QStringLiteral("kind")).toString(),
              QStringLiteral("dip"));
+}
+
+void EditorStateTest::trimmingOverlapClampsStaleTransitionDuration()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    state.setAllowClipOverlap(true);
+    state.setSnapEnabled(false);
+
+    state.project()->tracks().clear();
+    state.project()->tracks().append(drift::Track{.type = drift::TrackType::Video});
+
+    drift::Clip clipA;
+    clipA.id = QStringLiteral("clip-a");
+    clipA.type = drift::ClipType::Shape;
+    clipA.timelineStart = 0;
+    clipA.timelineDuration = drift::secondsToUs(24.0);
+
+    drift::Clip clipB;
+    clipB.id = QStringLiteral("clip-b");
+    clipB.type = drift::ClipType::Shape;
+    clipB.timelineStart = drift::secondsToUs(2.0);
+    clipB.timelineDuration = drift::secondsToUs(20.0);
+
+    state.project()->tracks()[0].clips.append(clipA);
+    state.project()->tracks()[0].clips.append(clipB);
+
+    state.addTransition(0, 0, QStringLiteral("crossfade"), 0.5);
+    const QVariantMap overlapping = state.transitionBetweenClips(0, 0);
+    QVERIFY(!overlapping.isEmpty());
+    QVERIFY(overlapping.value(QStringLiteral("duration")).toDouble() > 20.0);
+
+    state.trimClipRight(0, 0, 2.0);
+
+    const QVariantMap adjacent = state.transitionBetweenClips(0, 0);
+    QVERIFY(!adjacent.isEmpty());
+    QCOMPARE(adjacent.value(QStringLiteral("duration")).toDouble(), 0.5);
+    QVERIFY(adjacent.value(QStringLiteral("start")).toDouble() >= 0.0);
+}
+
+void EditorStateTest::removeTransitionDoesNotMoveOverlappingClips()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    state.setAllowClipOverlap(true);
+    state.setSnapEnabled(false);
+
+    state.addTextClip(QStringLiteral("One"), 0.0);
+    state.setClipDuration(0, 0, 20.0);
+    state.addTextClip(QStringLiteral("Two"), 20.0);
+    state.setClipDuration(0, 1, 18.5);
+    state.moveClip(0, 1, 0.0);
+
+    QCOMPARE(state.project()->tracks().at(0).clips.at(0).timelineStart, drift::TimeUs{0});
+    QCOMPARE(state.project()->tracks().at(0).clips.at(1).timelineStart, drift::TimeUs{0});
+
+    state.addTransition(0, 0, QStringLiteral("crossfade"), 0.5);
+    const QVariantMap transition = state.transitionBetweenClips(0, 0);
+    QVERIFY(!transition.isEmpty());
+    const QString id = transition.value(QStringLiteral("id")).toString();
+    const double durationBefore = state.durationSeconds();
+
+    state.removeTransition(0, id);
+
+    QCOMPARE(state.project()->tracks().at(0).transitions.size(), 0);
+    QCOMPARE(state.project()->tracks().at(0).clips.at(0).timelineStart, drift::TimeUs{0});
+    QCOMPARE(state.project()->tracks().at(0).clips.at(1).timelineStart, drift::TimeUs{0});
+    QCOMPARE(state.durationSeconds(), durationBefore);
 }
 
 void EditorStateTest::keyframeGraphPropertySelection()
@@ -3472,21 +3568,46 @@ void EditorStateTest::shapeStylePartialUpdateAndUndo()
     QVERIFY(track >= 0);
     QVERIFY(clip >= 0);
 
+    const auto layerNamed = [&](const QString &id) {
+        const QVariantList layers = state.selectedClipData().value(QStringLiteral("shapeStyle")).toMap()
+                                        .value(QStringLiteral("layers")).toList();
+        for (const QVariant &v : layers)
+            if (v.toMap().value(QStringLiteral("id")).toString() == id)
+                return v.toMap();
+        return QVariantMap();
+    };
+
     QVariantMap style = state.selectedClipData().value(QStringLiteral("shapeStyle")).toMap();
     QCOMPARE(style.value(QStringLiteral("kind")).toString(), QStringLiteral("ellipse"));
+    QCOMPARE(style.value(QStringLiteral("layers")).toList().size(), 2);
     QCOMPARE(state.selectedClipData().value(QStringLiteral("width")).toDouble(),
              state.selectedClipData().value(QStringLiteral("height")).toDouble());
 
-    // Partial update only touches the given keys.
+    // The legacy flat keys still land on the well-known layers, touching only what they name.
     state.setShapeStyle(track, clip,
                         QVariantMap{{"fillKind", QStringLiteral("linear")},
                                     {"fill", QStringLiteral("#ff00ff00")},
                                     {"strokeStyle", QStringLiteral("dash")}});
-    style = state.selectedClipData().value(QStringLiteral("shapeStyle")).toMap();
-    QCOMPARE(style.value(QStringLiteral("fillKind")).toString(), QStringLiteral("linear"));
-    QCOMPARE(style.value(QStringLiteral("fill")).toString(), QStringLiteral("#ff00ff00"));
-    QCOMPARE(style.value(QStringLiteral("strokeStyle")).toString(), QStringLiteral("dash"));
-    QCOMPARE(style.value(QStringLiteral("strokeWidth")).toDouble(), 4.0); // untouched
+    QVariantMap fill = layerNamed(QStringLiteral("fill"));
+    QVariantMap stroke = layerNamed(QStringLiteral("stroke"));
+    QCOMPARE(fill.value(QStringLiteral("paint")).toMap().value(QStringLiteral("kind")).toString(), QStringLiteral("gradient"));
+    QCOMPARE(fill.value(QStringLiteral("paint")).toMap().value(QStringLiteral("color")).toString(), QStringLiteral("#ff00ff00"));
+    QCOMPARE(stroke.value(QStringLiteral("dash")).toString(), QStringLiteral("dash"));
+    QCOMPARE(stroke.value(QStringLiteral("width")).toDouble(), 4.0); // untouched
+
+    // A layer patch by id merges into that layer only.
+    state.setShapeStyle(track, clip,
+                        QVariantMap{{"layer", QVariantMap{{"id", QStringLiteral("stroke")},
+                                                          {"strokeAlign", QStringLiteral("center")},
+                                                          {"width", 9.0},
+                                                          {"paint", QVariantMap{{"color", QStringLiteral("#ff0000ff")}}}}}});
+    stroke = layerNamed(QStringLiteral("stroke"));
+    QCOMPARE(stroke.value(QStringLiteral("strokeAlign")).toString(), QStringLiteral("center"));
+    QCOMPARE(stroke.value(QStringLiteral("width")).toDouble(), 9.0);
+    QCOMPARE(stroke.value(QStringLiteral("paint")).toMap().value(QStringLiteral("color")).toString(), QStringLiteral("#ff0000ff"));
+    QCOMPARE(stroke.value(QStringLiteral("dash")).toString(), QStringLiteral("dash"));
+    QCOMPARE(layerNamed(QStringLiteral("fill")).value(QStringLiteral("paint")).toMap().value(QStringLiteral("kind")).toString(),
+             QStringLiteral("gradient"));
 
     // Out-of-range values are clamped rather than stored.
     state.setShapeStyle(track, clip, QVariantMap{{"points", 900}, {"innerRatio", -3.0}});
@@ -3498,11 +3619,78 @@ void EditorStateTest::shapeStylePartialUpdateAndUndo()
     state.undo();
     style = state.selectedClipData().value(QStringLiteral("shapeStyle")).toMap();
     QCOMPARE(style.value(QStringLiteral("points")).toInt(), 5);
-    QCOMPARE(style.value(QStringLiteral("fillKind")).toString(), QStringLiteral("linear"));
+    QCOMPARE(layerNamed(QStringLiteral("stroke")).value(QStringLiteral("width")).toDouble(), 9.0);
 
     state.undo();
-    style = state.selectedClipData().value(QStringLiteral("shapeStyle")).toMap();
-    QCOMPARE(style.value(QStringLiteral("fillKind")).toString(), QStringLiteral("solid"));
+    QCOMPARE(layerNamed(QStringLiteral("stroke")).value(QStringLiteral("width")).toDouble(), 4.0);
+    QCOMPARE(layerNamed(QStringLiteral("fill")).value(QStringLiteral("paint")).toMap().value(QStringLiteral("kind")).toString(),
+             QStringLiteral("gradient"));
+
+    state.undo();
+    QCOMPARE(layerNamed(QStringLiteral("fill")).value(QStringLiteral("paint")).toMap().value(QStringLiteral("kind")).toString(),
+             QStringLiteral("solid"));
+}
+
+// The generic layer ops work on a shape the way they do on a caption, and a shape's style
+// scalars are keyframable under the "shape." prefix.
+void EditorStateTest::shapeLayersAndKeyframes()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    state.addShapeClip(QStringLiteral("star"), 0.0);
+    const int track = state.selectedTrack();
+    const int clip = state.selectedClip();
+    QVERIFY(track >= 0);
+
+    const auto layers = [&] {
+        return state.selectedClipData().value(QStringLiteral("shapeStyle")).toMap().value(QStringLiteral("layers")).toList();
+    };
+    QCOMPARE(layers().size(), 2);
+
+    const QString shadowId = state.addStyleLayer(track, clip, QStringLiteral("shadow"));
+    QVERIFY(!shadowId.isEmpty());
+    QCOMPARE(layers().size(), 3);
+    // Shadows go behind everything.
+    QCOMPARE(layers().first().toMap().value(QStringLiteral("id")).toString(), shadowId);
+
+    QVERIFY(state.moveStyleLayer(track, clip, shadowId, 2));
+    QCOMPARE(layers().last().toMap().value(QStringLiteral("id")).toString(), shadowId);
+    state.undo();
+    QCOMPARE(layers().first().toMap().value(QStringLiteral("id")).toString(), shadowId);
+
+    // Keyframes: a geometry knob and a layer field, listed, labelled and evaluated.
+    state.setClipKeyframe(track, clip, QStringLiteral("shape.cornerRadius"), 0.0, 0.0);
+    state.setClipKeyframe(track, clip, QStringLiteral("shape.cornerRadius"), 1.0, 40.0);
+    state.setClipKeyframe(track, clip, QStringLiteral("shape.layer.stroke.width"), 0.0, 2.0);
+    state.setClipKeyframe(track, clip, QStringLiteral("shape.layer.stroke.width"), 1.0, 12.0);
+    state.setClipKeyframe(track, clip, QStringLiteral("shape.layer.") + shadowId + QStringLiteral(".blur"), 0.5, 9.0);
+    const QStringList animated = state.clipAnimatedProperties(track, clip);
+    QVERIFY(animated.contains(QStringLiteral("shape.cornerRadius")));
+    QVERIFY(animated.contains(QStringLiteral("shape.layer.stroke.width")));
+    QVERIFY(animated.contains(QStringLiteral("shape.layer.") + shadowId + QStringLiteral(".blur")));
+    QVERIFY(!animated.contains(QStringLiteral("shape.points")));
+    QCOMPARE(state.keyframePropertyLabel(track, clip, QStringLiteral("shape.cornerRadius")), QStringLiteral("Corner radius"));
+    QCOMPARE(state.keyframePropertyLabel(track, clip, QStringLiteral("shape.layer.stroke.width")), QStringLiteral("Stroke · Width"));
+    QVERIFY(qAbs(state.propertyValueAt(track, clip, QStringLiteral("shape.cornerRadius"), 0.5, -1.0) - 20.0) < 1.0);
+    const QVariantMap keyframes = state.selectedClipData().value(QStringLiteral("shapeStyle")).toMap()
+                                      .value(QStringLiteral("keyframes")).toMap();
+    QCOMPARE(keyframes.value(QStringLiteral("layer.stroke.width")).toMap().value(QStringLiteral("points")).toList().size(), 2);
+
+    // An unknown layer field is refused rather than stored.
+    QVERIFY(!state.clipAnimatedProperties(track, clip).contains(QStringLiteral("shape.layer.stroke.nope")));
+    state.setClipKeyframe(track, clip, QStringLiteral("shape.layer.stroke.nope"), 0.0, 1.0);
+    QVERIFY(!state.clipAnimatedProperties(track, clip).contains(QStringLiteral("shape.layer.stroke.nope")));
+
+    // Removing a layer drops its tracks; the others stay.
+    QVERIFY(state.removeStyleLayer(track, clip, shadowId));
+    QCOMPARE(layers().size(), 2);
+    QVERIFY(!state.clipAnimatedProperties(track, clip).contains(QStringLiteral("shape.layer.") + shadowId + QStringLiteral(".blur")));
+    QVERIFY(state.clipAnimatedProperties(track, clip).contains(QStringLiteral("shape.layer.stroke.width")));
+
+    // The text-only spelling refuses a shape; a caption goes through the generic ops too.
+    QVERIFY(state.addTextLayer(track, clip, QStringLiteral("glow")).isEmpty());
+    state.addTextClip(QStringLiteral("Hi"), 2.0);
+    QVERIFY(!state.addStyleLayer(state.selectedTrack(), state.selectedClip(), QStringLiteral("glow")).isEmpty());
 }
 
 // A ramp on an audio clip goes through exactly the same session, apply and replace flow a video

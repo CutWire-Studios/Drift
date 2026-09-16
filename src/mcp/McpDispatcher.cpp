@@ -3,6 +3,7 @@
 #include "mcp/McpJson.h"
 #include "mcp/McpValidate.h"
 
+#include "core/TextStyle.h"
 #include "core/Time.h"
 #include "models/AppController.h"
 #include "models/AssetLibrary.h"
@@ -1292,16 +1293,37 @@ QJsonObject McpDispatcher::opClearWorkArea()
     return ok({{QStringLiteral("cleared"), true}});
 }
 
+QString McpDispatcher::clipKind(const ClipRef &ref) const
+{
+    return m_controller->clipAt(ref.track, ref.clip).value(QStringLiteral("kind")).toString();
+}
+
+QJsonObject McpDispatcher::requireKind(const ClipRef &ref, const QStringList &kinds, const char *what) const
+{
+    const QString kind = clipKind(ref);
+    if (kinds.contains(kind))
+        return {};
+    return err("type_mismatch", QStringLiteral("%1 needs a %2 clip; %3 is a %4 clip")
+                                    .arg(QString::fromUtf8(what), kinds.join(QStringLiteral(" or ")), ref.id, kind));
+}
+
 QJsonObject McpDispatcher::opAddText(const QJsonObject &args)
 {
     QString text = args.value(QStringLiteral("text")).toString();
     if (text.trimmed().isEmpty())
         text = QStringLiteral("Text");
+    const QString preset = args.value(QStringLiteral("preset")).toString();
+    if (!preset.isEmpty() && !drift::textStyleForPresetId(preset)) {
+        QStringList ids;
+        for (const drift::TextPreset &p : drift::textPresets())
+            ids.append(p.id);
+        return unknownCatalogId("text preset", preset, nearestStrings(preset, ids, 3), "list_text_presets");
+    }
     const double at = args.contains(QStringLiteral("at"))
                           ? jsonNumber(args.value(QStringLiteral("at")), m_controller->playheadSeconds())
                           : m_controller->playheadSeconds();
     const QSet<QString> before = clipIdSet(m_controller);
-    m_controller->addTextClip(text, at, args.value(QStringLiteral("preset")).toString());
+    m_controller->addTextClip(text, at, preset);
     const QString newId = findNewClipId(before, clipIdSet(m_controller));
     if (newId.isEmpty())
         return err("bad_args", QStringLiteral("Text clip not added"));
@@ -1317,6 +1339,8 @@ QJsonObject McpDispatcher::opSetText(const QJsonObject &args)
     const ClipRef ref = resolveClip(args);
     if (!ref.valid())
         return clipRefError(args);
+    if (const QJsonObject wrong = requireKind(ref, {QStringLiteral("text"), QStringLiteral("subtitle")}, "set_text"); !wrong.isEmpty())
+        return wrong;
     if (args.contains(QStringLiteral("text")))
         m_controller->setClipTextContent(ref.track, ref.clip, args.value(QStringLiteral("text")).toString());
     if (args.contains(QStringLiteral("style")))
@@ -1335,9 +1359,20 @@ QJsonObject McpDispatcher::opListAudioEffects(const QJsonObject &args) const
     return catalogListing(m_controller->audioEffectCatalog(), args, "effects", "audio effect", "list_audio_effects");
 }
 
+QVariantList McpDispatcher::transitionCatalog() const
+{
+    QVariantList out;
+    for (const QVariant &v : m_controller->transitionKinds()) {
+        QVariantMap row = v.toMap();
+        row.insert(QStringLiteral("id"), row.value(QStringLiteral("kind")));
+        out.append(row);
+    }
+    return out;
+}
+
 QJsonObject McpDispatcher::opListTransitions(const QJsonObject &args) const
 {
-    return catalogListing(m_controller->transitionKinds(), args, "transitions", "transition", "list_transitions");
+    return catalogListing(transitionCatalog(), args, "transitions", "transition", "list_transitions");
 }
 
 QJsonObject McpDispatcher::opAddEffect(const QJsonObject &args)
@@ -1458,7 +1493,7 @@ QJsonObject McpDispatcher::opAddTransition(const QJsonObject &args)
     QString kind = QStringLiteral("crossfade");
     if (!raw.isEmpty()) {
         QStringList nearest;
-        kind = resolveCatalogId(raw, catalogIds(m_controller->transitionKinds()), &nearest);
+        kind = resolveCatalogId(raw, catalogIds(transitionCatalog()), &nearest);
         if (kind.isEmpty())
             return unknownCatalogId("transition", raw, nearest, "list_transitions");
     }
@@ -1767,6 +1802,11 @@ QJsonObject McpDispatcher::opSetKeyframe(const QJsonObject &args)
     const double at = jsonNumber(args.value(QStringLiteral("at")), 0);
     const double value = jsonNumber(args.value(QStringLiteral("value")), 0);
     m_controller->setClipKeyframe(ref.track, ref.clip, prop, at, value);
+    // The controller drops keys on a property the clip does not have without a word.
+    if (m_controller->clipKeyframes(ref.track, ref.clip, prop).isEmpty()) {
+        return err("bad_args", QStringLiteral("%1 has no property \"%2\"; the spellings are in the set_keyframe schema")
+                                   .arg(ref.id, prop));
+    }
     const ClipRef after = resolveClip(QJsonObject{{QStringLiteral("clip"), ref.id}});
     return ok(clipFeedback(after, {{QStringLiteral("prop"), prop}, {QStringLiteral("at"), at}}));
 }
@@ -1779,6 +1819,8 @@ QJsonObject McpDispatcher::opRemoveKeyframe(const QJsonObject &args)
     const QString prop = args.value(QStringLiteral("prop")).toString().trimmed();
     if (prop.isEmpty() || !args.contains(QStringLiteral("at")))
         return err("bad_args", QStringLiteral("prop and at required"));
+    if (m_controller->clipKeyframes(ref.track, ref.clip, prop).isEmpty())
+        return err("not_found", QStringLiteral("%1 has no keyframes on \"%2\"").arg(ref.id, prop));
     m_controller->removeClipKeyframe(ref.track, ref.clip, prop, jsonNumber(args.value(QStringLiteral("at")), 0));
     return ok({{QStringLiteral("prop"), prop}});
 }
@@ -1792,6 +1834,8 @@ QJsonObject McpDispatcher::opSetKeyframeInterpolation(const QJsonObject &args)
     const QString mode = args.value(QStringLiteral("mode")).toString().trimmed().toLower();
     if (prop.isEmpty() || !args.contains(QStringLiteral("at")) || mode.isEmpty())
         return err("bad_args", QStringLiteral("prop, at, and mode required"));
+    if (m_controller->clipKeyframes(ref.track, ref.clip, prop).isEmpty())
+        return err("not_found", QStringLiteral("%1 has no keyframes on \"%2\"").arg(ref.id, prop));
     const double at = jsonNumber(args.value(QStringLiteral("at")), 0);
     m_controller->setPlayheadSeconds(at);
     m_controller->setKeyframeInterpolation(ref.track, ref.clip, prop, mode);
@@ -1806,6 +1850,8 @@ QJsonObject McpDispatcher::opSetKeyframeTangents(const QJsonObject &args)
     const QString prop = args.value(QStringLiteral("prop")).toString().trimmed();
     if (prop.isEmpty() || !args.contains(QStringLiteral("at")))
         return err("bad_args", QStringLiteral("prop and at required"));
+    if (m_controller->clipKeyframes(ref.track, ref.clip, prop).isEmpty())
+        return err("not_found", QStringLiteral("%1 has no keyframes on \"%2\"").arg(ref.id, prop));
     const double at = jsonNumber(args.value(QStringLiteral("at")), 0);
     m_controller->setKeyframeTangents(ref.track, ref.clip, prop, at,
                                     jsonNumber(args.value(QStringLiteral("inDx")), 0),
@@ -1824,6 +1870,8 @@ QJsonObject McpDispatcher::opSetKeyframeHold(const QJsonObject &args)
     const QString prop = args.value(QStringLiteral("prop")).toString().trimmed();
     if (prop.isEmpty() || !args.contains(QStringLiteral("at")) || !args.contains(QStringLiteral("hold")))
         return err("bad_args", QStringLiteral("prop, at, and hold required"));
+    if (m_controller->clipKeyframes(ref.track, ref.clip, prop).isEmpty())
+        return err("not_found", QStringLiteral("%1 has no keyframes on \"%2\"").arg(ref.id, prop));
     m_controller->setKeyframeHold(ref.track, ref.clip, prop, jsonNumber(args.value(QStringLiteral("at")), 0),
                                   jsonBool(args.value(QStringLiteral("hold"))));
     return ok({{QStringLiteral("prop"), prop}});

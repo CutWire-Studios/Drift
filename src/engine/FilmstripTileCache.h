@@ -35,7 +35,7 @@ public:
 
     // Cached tile file for `2^level`-second tile number `index` of `sourcePath`, or an empty
     // string if it still needs decoding — tileReady() fires for the source when it lands.
-    QString tile(const QString &sourcePath, int level, qint64 index);
+    QString tile(const QString &sourcePath, int level, qint64 index, int rotationCorrection = 0);
 
     // Forgets everything: memoized paths, the failure blacklist and anything still queued.
     // Call when the timeline's sources change wholesale — a new project, or a relink — so a
@@ -52,14 +52,15 @@ private:
         QString sourcePath;
         int level = 0;
         qint64 index = 0;
+        int rotationCorrection = 0;
     };
 
     void scheduleBatch();
     void runBatch();
-    void applyBatch(const QString &sourcePath, int level, const QList<qint64> &produced,
-                    const QList<qint64> &requested);
+    void applyBatch(const QString &sourcePath, int level, int rotationCorrection,
+                    const QList<qint64> &produced, const QList<qint64> &requested);
 
-    static QString keyFor(const QString &sourcePath, int level, qint64 index);
+    static QString keyFor(const QString &sourcePath, int level, qint64 index, int rotationCorrection);
 
     QHash<QString, QString> m_ready;
     // Sources whose decode failed, so a broken or audio-only file isn't retried every repaint.

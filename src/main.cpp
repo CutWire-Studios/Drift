@@ -1,6 +1,8 @@
 #include "engine/AudioFileWriter.h"
 #include "engine/EmojiCatalog.h"
 #include "engine/FontCatalog.h"
+#include "engine/GpuDevice.h"
+#include "engine/GpuPreference.h"
 #include "engine/HwAccel.h"
 #include "engine/ReverseProxyCache.h"
 #ifndef Q_OS_ANDROID
@@ -21,6 +23,7 @@
 #include "DriftImageProvider.h"
 #include "MulticamImageProvider.h"
 #include "SegmentImageProvider.h"
+#include "ShapePreviewImageProvider.h"
 #include "TextStylePreviewImageProvider.h"
 #include "preview/PreviewItem.h"
 
@@ -63,6 +66,17 @@
 extern "C" {
 #include <libavutil/log.h>
 }
+
+#ifdef Q_OS_WIN
+// Exports NVIDIA Optimus and AMD PowerXpress look up in the executable: 1 asks for the discrete
+// GPU. Variables rather than constants so main() can set them from the stored preference before
+// anything loads a graphics driver — Qt loads OpenGL lazily, at the first context. Zero leaves
+// the choice to the driver's own profile, which is also what an absent export means.
+extern "C" {
+__declspec(dllexport) unsigned long NvOptimusEnablement = 0;
+__declspec(dllexport) int AmdPowerXpressRequestHighPerformance = 0;
+}
+#endif
 
 namespace {
 
@@ -265,6 +279,10 @@ bool probeOpenGl(const QSurfaceFormat &format, QSurfaceFormat *obtained = nullpt
                     *vendor = QString::fromUtf8(name);
             }
         }
+        // While a context is current: on EGL this is what names the DRM device Qt draws
+        // through, which is finer-grained than the vendor string and the only way to tell two
+        // GPUs of the same vendor apart.
+        drift::gpu::probeRenderDrmNode();
         ctx.doneCurrent();
     }
     return true;
@@ -430,6 +448,15 @@ int main(int argc, char *argv[])
     // X11 behaviour stays byte-identical. An explicit QT_XCB_GL_INTEGRATION still wins.
     drift::applyVaapiZeroCopyXcbEgl();
 
+#ifdef Q_OS_WIN
+    // Before QApplication, while no graphics driver is loaded and the GPU is still unchosen. The
+    // registry preference and the exports each cover drivers that ignore the other.
+    if (drift::gpu::applyStoredPreference() == drift::gpu::Preference::HighPerformance) {
+        NvOptimusEnablement = 1;
+        AmdPowerXpressRequestHighPerformance = 1;
+    }
+#endif
+
     QApplication app(argc, argv);
     // A missing image plugin is silent everywhere else: the reader just returns a null QImage,
     // so the bin card is blank and the clip renders as nothing with no hint why. On a released
@@ -561,6 +588,9 @@ int main(int argc, char *argv[])
     engine.addImageProvider(QStringLiteral("clippreview"), new ClipPreviewImageProvider());
     engine.addImageProvider(QStringLiteral("multicam"), new MulticamImageProvider());
     engine.addImageProvider(QStringLiteral("textstyle"), new TextStylePreviewImageProvider());
+    engine.addImageProvider(QStringLiteral("shape"), new ShapePreviewImageProvider());
+    engine.addImageProvider(QStringLiteral("textanim"), new TextAnimPreviewImageProvider());
+    engine.addImageProvider(QStringLiteral("textlook"), new TextLookPreviewImageProvider());
     QObject::connect(
         &engine, &QQmlApplicationEngine::objectCreationFailed, &app, [] { QGuiApplication::exit(-1); }, Qt::QueuedConnection);
     // Shell.qml owns the choice between Main.qml (desktop) and AndroidMain.qml (touch) and can

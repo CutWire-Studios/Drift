@@ -412,7 +412,7 @@ Item {
                         // Populated from the engine, so the entries are the backends
                         // whose device actually opens on this phone. Hidden when that
                         // leaves nothing to choose between.
-                        readonly property var modes: EditorState.playback.decodeModes()
+                        readonly property var modes: EditorState.playback.decodeModes
                         readonly property var values:
                             modes.map(function (m) { return m.id })
                         readonly property int currentIndex:

@@ -579,6 +579,7 @@ QtObject {
         repeat: "repeat",
         star: "star",
         layers: "layers",
+        box: "box",
         split: "split",
         magnet: "magnet",
         linkTwo: "link-2",

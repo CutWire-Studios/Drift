@@ -1,0 +1,40 @@
+{
+  "format": 1,
+  "id": "zoom-in",
+  "label": "Zoom in",
+  "category": "basic",
+  "sampleText": "Zoom",
+  "slots": [
+    "in",
+    "out"
+  ],
+  "order": 150,
+  "defaults": {
+    "unit": "block",
+    "duration": 0.5,
+    "ease": "easeOut"
+  },
+  "params": [
+    {
+      "id": "from",
+      "type": "scalar",
+      "label": "From",
+      "unit": "%",
+      "min": 0,
+      "max": 100,
+      "step": 5,
+      "default": 50
+    }
+  ],
+  "animators": [
+    {
+      "selectors": [
+        "stagger"
+      ],
+      "props": {
+        "scale": "{from}",
+        "opacity": 0
+      }
+    }
+  ]
+}

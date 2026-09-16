@@ -6,7 +6,7 @@ set(CMAKE_OSX_DEPLOYMENT_TARGET "12.0" CACHE STRING "Oldest macOS release Drift 
 
 # C is enabled for JUCE only: its modules compile a handful of C sources (zlib, flac, oggvorbis)
 # and its CMake refuses to configure without it.
-project(Drift VERSION 0.5.1 LANGUAGES CXX C)
+project(Drift VERSION 0.6.0 LANGUAGES CXX C)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -16,6 +16,11 @@ set(CMAKE_AUTORCC ON)
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
 
 option(WITH_BGREMOVAL "Enable OpenCV-based background removal" OFF)
+# Skia (Ganesh/GL) draws text, shapes and Lottie/SVG clips on the GPU; see
+# third_party/build-skia.sh for producing the prebuilt it links. OFF builds a video/image/audio
+# only editor: text, shapes and Lottie/SVG clips draw nothing.
+option(DRIFT_WITH_SKIA "Draw vector content (text, shapes, Lottie, SVG) with Skia" ON)
+set(DRIFT_SKIA_DIR "" CACHE PATH "Directory containing SkiaConfig.cmake (default: third_party/prebuilt/skia/<target>)")
 
 # Defaults off under CI so the Translations test still compares the committed catalogs.
 if(DEFINED ENV{CI})
@@ -380,6 +385,7 @@ add_library(driftcore STATIC
     src/core/BinFolder.h
     src/core/MediaAsset.h
     src/core/MediaAsset.cpp
+    src/core/BlendMode.h
     src/core/Clip.h
     src/core/Clip.cpp
     src/core/Stabilize.h
@@ -399,6 +405,18 @@ add_library(driftcore STATIC
     src/core/Mask.cpp
     src/core/Transition.h
     src/core/Transition.cpp
+    src/core/TextParamSpec.h
+    src/core/TextParamSpec.cpp
+    src/core/LottieTextImport.h
+    src/core/LottieTextImport.cpp
+    src/core/TextLook.h
+    src/core/TextLook.cpp
+    src/core/TextShading.h
+    src/core/TextShading.cpp
+    src/core/TextAnimationPreset.h
+    src/core/TextAnimationPreset.cpp
+    src/core/TextAnimator.h
+    src/core/TextAnimator.cpp
     src/core/TextStyle.h
     src/core/TextStyle.cpp
     src/core/TextPresetStore.h
@@ -409,6 +427,14 @@ add_library(driftcore STATIC
     src/core/ShapeStyle.cpp
     src/core/ShapePath.h
     src/core/ShapePath.cpp
+    src/core/VectorSource.h
+    src/core/VectorSource.cpp
+    src/core/Model3dSource.h
+    src/core/Model3dSource.cpp
+    src/core/ZipArchive.h
+    src/core/ZipArchive.cpp
+    src/core/DotLottie.h
+    src/core/DotLottie.cpp
     src/core/Track.h
     src/core/Track.cpp
     src/core/Project.h
@@ -432,6 +458,13 @@ add_library(driftcore STATIC
 )
 target_include_directories(driftcore PUBLIC src)
 target_link_libraries(driftcore PUBLIC Qt6::Core Qt6::Gui Qt6::Xml ZLIB::ZLIB)
+
+file(GLOB DRIFT_TEXT_ANIMATION_FILES CONFIGURE_DEPENDS "${CMAKE_SOURCE_DIR}/presets/text-animations/*.json")
+qt_add_resources(driftcore "drift_text_animations"
+    PREFIX "/text-animations"
+    BASE "${CMAKE_SOURCE_DIR}/presets/text-animations"
+    FILES ${DRIFT_TEXT_ANIMATION_FILES}
+)
 
 # Audio effect DSP. JUCE modules compile into whatever target links them, so keeping them in a
 # library of their own is what stops JUCE's headers, its compile definitions and its build time
@@ -533,8 +566,12 @@ add_library(driftengine STATIC
     src/engine/EmojiCatalog.cpp
     src/engine/EmojiTable.h
     src/engine/EmojiTable.cpp
-    src/engine/TextRaster.h
-    src/engine/TextRaster.cpp
+    src/engine/TextLayout.h
+    src/engine/TextLayout.cpp
+    src/engine/VectorClipRenderer.h
+    src/engine/VectorClipRenderer.cpp
+    src/engine/VectorInspect.h
+    src/engine/VectorInspect.cpp
     src/engine/EffectPackageLoader.h
     src/engine/EffectPackageLoader.cpp
     src/engine/TransitionCatalog.h
@@ -582,6 +619,12 @@ add_library(driftengine STATIC
     src/engine/FaceTrack.cpp
     src/engine/FaceModelTransform.h
     src/engine/FaceModelTransform.cpp
+    src/engine/ModelAnimation.h
+    src/engine/ModelAnimation.cpp
+    src/engine/ModelClipTransform.h
+    src/engine/ModelClipTransform.cpp
+    src/engine/ModelClipRenderer.h
+    src/engine/ModelClipRenderer.cpp
     src/engine/FaceMesh.h
     src/engine/FaceMesh.cpp
     src/engine/ModelAsset.h
@@ -610,6 +653,10 @@ add_library(driftengine STATIC
     src/engine/ProjectBundle.cpp
     src/engine/ProjectDependencies.h
     src/engine/ProjectDependencies.cpp
+    src/engine/GpuPreference.h
+    src/engine/GpuPreference.cpp
+    src/engine/GpuDevice.h
+    src/engine/GpuDevice.cpp
 )
 target_include_directories(driftengine PUBLIC src)
 # cgltf is PRIVATE: ModelAsset.h exposes no cgltf type, so nothing outside ModelAsset.cpp includes it.
@@ -617,12 +664,56 @@ target_include_directories(driftengine SYSTEM PRIVATE ${CMAKE_SOURCE_DIR}/third_
 target_link_libraries(driftengine PUBLIC Qt6::Core Qt6::Gui Qt6::OpenGL FFmpeg::FFmpeg driftcore
     driftaudiodsp onnxruntime::headers)
 target_link_libraries(driftengine PRIVATE ${DRIFT_ZSTD_TARGET} OpenSSL::Crypto ${CMAKE_DL_LIBS})
+if(WIN32)
+    # Hybrid-graphics laptops: D3D11VA -> OpenGL preview interop, and DXGI adapter enumeration for
+    # the GPU preference and for opening D3D11VA on the GPU that renders.
+    target_sources(driftengine PRIVATE
+        src/engine/D3d11GlInterop.h
+        src/engine/D3d11GlInterop.cpp
+    )
+    target_link_libraries(driftengine PRIVATE d3d11 dxgi d3dcompiler opengl32)
+endif()
 target_compile_definitions(driftengine PRIVATE DRIFT_VERSION="${PROJECT_VERSION}")
 
 if(WITH_BGREMOVAL)
     target_include_directories(driftengine PRIVATE ${OpenCV_INCLUDE_DIRS})
     target_link_libraries(driftengine PRIVATE ${OpenCV_LIBS})
     target_compile_definitions(driftengine PUBLIC DRIFT_WITH_BGREMOVAL)
+endif()
+
+if(DRIFT_WITH_SKIA)
+    find_package(Skia REQUIRED)
+    target_sources(driftengine PRIVATE
+        src/engine/SkiaRuntime.h
+        src/engine/SkiaRuntime.cpp
+        src/engine/SkiaPath.h
+        src/engine/SkiaPath.cpp
+        src/engine/SkiaShading.h
+        src/engine/SkiaShading.cpp
+        src/engine/SkiaShapePainter.h
+        src/engine/SkiaShapePainter.cpp
+        src/engine/SkiaFonts.h
+        src/engine/SkiaFonts.cpp
+        src/engine/SkiaVectorResources.h
+        src/engine/SkiaVectorResources.cpp
+        src/engine/SkiaVectorObservers.h
+        src/engine/SkiaVectorObservers.cpp
+        src/engine/SkiaTextPainter.h
+        src/engine/SkiaTextPainter.cpp
+        src/engine/SkiaTextEffects.h
+        src/engine/SkiaTextEffects.cpp
+    )
+    # build-skia.sh compiles Skia with RTTI (see the extra_cflags_cc note there), so Drift classes
+    # may subclass Skia interfaces from any translation unit. vcpkg's port on Windows keeps /GR-,
+    # which is harmless: MSVC emits type descriptors as COMDAT wherever they are needed, so a
+    # derived class never depends on its base's archive carrying one.
+    # PRIVATE: no header outside src/engine/Skia*.h includes Skia (Vector*.cpp do, under
+    # DRIFT_WITH_SKIA), so the defines and the include root stay out of the rest of the build.
+    target_link_libraries(driftengine PRIVATE Skia::Skia)
+    target_compile_definitions(driftengine PUBLIC DRIFT_WITH_SKIA)
+    # Qt's `foreach` keyword macro collides with SkTHash::foreach(), which the Skottie headers
+    # pull in. Nothing in Drift writes foreach; Q_FOREACH stays available.
+    target_compile_definitions(driftengine PRIVATE QT_NO_FOREACH)
 endif()
 
 # --- application ------------------------------------------------------------
@@ -644,6 +735,8 @@ qt_add_executable(drift
     src/MulticamImageStore.cpp
     src/TextStylePreviewImageProvider.h
     src/TextStylePreviewImageProvider.cpp
+    src/ShapePreviewImageProvider.h
+    src/ShapePreviewImageProvider.cpp
     src/models/AddonEndpoint.h
     src/models/AddonManager.h
     src/models/AddonManager.cpp
@@ -852,6 +945,12 @@ qt_add_qml_module(drift
         src/qml/PropertiesPanel.qml
         src/qml/components/properties/GeneralInspector.qml
         src/qml/components/properties/TextInspector.qml
+        src/qml/components/properties/TextParamSlots.qml
+        src/qml/components/properties/PaintEditor.qml
+        src/qml/components/properties/GradientStopEditor.qml
+        src/qml/components/properties/ShadingLayerRow.qml
+        src/qml/components/properties/TextAnimPresetTile.qml
+        src/qml/components/properties/TextLookPicker.qml
         src/qml/components/properties/TransformInspector.qml
         src/qml/components/properties/StabilizeInspector.qml
         src/qml/components/properties/ChromaKeyInspector.qml
@@ -862,6 +961,8 @@ qt_add_qml_module(drift
         src/qml/components/properties/TransitionInspector.qml
         src/qml/components/properties/BlendingInspector.qml
         src/qml/components/properties/ShapeInspector.qml
+        src/qml/components/properties/VectorInspector.qml
+        src/qml/components/properties/Model3DInspector.qml
         src/qml/components/properties/MasksInspector.qml
         src/qml/components/properties/EffectsInspector.qml
         src/qml/components/assets/TextAssetsTab.qml
@@ -894,7 +995,6 @@ qt_add_qml_module(drift
         src/qml/components/KeyframeGraph.qml
         src/qml/components/SubtitleCueLane.qml
         src/qml/components/ShortcutCaptureField.qml
-        src/qml/components/ShapePreview.qml
         src/qml/components/ColorSwatchField.qml
         src/qml/components/EffectBrowser.qml
         src/qml/components/AudioEffectBrowser.qml
@@ -1045,7 +1145,7 @@ if(ANDROID)
         "Launcher label")
     # versionName is PROJECT_VERSION — same string the desktop binary embeds as DRIFT_VERSION.
     # versionCode is the Play-Store integer; default tracks that semver so a desktop bump is an
-    # Android bump too (0.5.1 → 501). CI may override with -DDRIFT_ANDROID_VERSION_CODE=.
+    # Android bump too (0.6.0 → 600). CI may override with -DDRIFT_ANDROID_VERSION_CODE=.
     string(REGEX MATCH "^([0-9]+)\\.([0-9]+)\\.([0-9]+)" _drift_android_ver "${PROJECT_VERSION}")
     if(_drift_android_ver)
         math(EXPR _drift_android_version_code_default

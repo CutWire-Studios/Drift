@@ -9,6 +9,7 @@
 #include <QEventLoop>
 #include <QMetaObject>
 #include <QRandomGenerator>
+#include <QSettings>
 #include <QThread>
 #include <QTimer>
 
@@ -70,13 +71,42 @@ QString McpServer::makeToken() const
     return token;
 }
 
+// A token that changed on every launch meant re-pasting the Cursor/Claude setup each
+// session, so the first generated one is kept until rotateToken().
+QString McpServer::persistedToken() const
+{
+    QSettings settings;
+    const QString key = QStringLiteral("mcp/token");
+    QString token = settings.value(key).toString();
+    if (token.isEmpty()) {
+        token = makeToken();
+        settings.setValue(key, token);
+    }
+    return token;
+}
+
+void McpServer::rotateToken()
+{
+    const QString token = makeToken();
+    QSettings().setValue(QStringLiteral("mcp/token"), token);
+    if (!m_running)
+        return;
+    m_token = token;
+    // m_http reads its token on its own thread.
+    QMetaObject::invokeMethod(
+        m_http, [this, token]() { m_http->setToken(token); }, Qt::BlockingQueuedConnection);
+    if (m_wroteSessionFile)
+        writeSessionFile(m_port, m_token);
+    emit tokenChanged();
+}
+
 bool McpServer::start()
 {
     if (m_running)
         return true;
 
     m_error.clear();
-    m_token = m_fixedToken.isEmpty() ? makeToken() : m_fixedToken;
+    m_token = m_fixedToken.isEmpty() ? persistedToken() : m_fixedToken;
 
     m_thread = new QThread(this);
     m_http = new McpHttp;

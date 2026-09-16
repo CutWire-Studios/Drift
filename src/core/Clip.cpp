@@ -19,6 +19,10 @@ QString clipTypeToString(ClipType type)
         return QStringLiteral("shape");
     case ClipType::Adjustment:
         return QStringLiteral("adjustment");
+    case ClipType::Vector:
+        return QStringLiteral("vector");
+    case ClipType::Model3d:
+        return QStringLiteral("model3d");
     }
     return QStringLiteral("video");
 }
@@ -37,6 +41,10 @@ ClipType clipTypeFromString(const QString &type)
         return ClipType::Shape;
     if (type == QStringLiteral("adjustment"))
         return ClipType::Adjustment;
+    if (type == QStringLiteral("vector"))
+        return ClipType::Vector;
+    if (type == QStringLiteral("model3d"))
+        return ClipType::Model3d;
     return ClipType::Video;
 }
 

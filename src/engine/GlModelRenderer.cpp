@@ -1,5 +1,9 @@
 #include "GlModelRenderer.h"
 
+#include "ModelAnimation.h"
+#include "ModelClipRenderer.h"
+#include "ModelClipTransform.h"
+
 #include "FaceMesh.h"
 #include "ModelAsset.h"
 
@@ -15,6 +19,12 @@
 #include <cstring>
 #include <list>
 #include <unordered_map>
+
+// Qt's GLES2 headers stop short of these ES 3.0 constants; the functions exist on every context
+// Drift creates.
+#ifndef GL_RGBA32F
+#define GL_RGBA32F 0x8814
+#endif
 #include <vector>
 
 namespace drift::gl {
@@ -38,6 +48,38 @@ void main() {
     v_uv = a_uv;
     gl_Position = u_mvp * vec4(a_pos, 1.0);
     gl_Position.z *= u_flipDepth;
+}
+)";
+
+// Skinned variant for model clips: every vertex blends up to four palette rows (a rigid vertex
+// has one row at weight one), read from a 4×N RGBA32F texture so the joint count is bounded by
+// texture height rather than the vertex uniform budget. `highp` on the sampler is explicit:
+// ESSL defaults vertex-stage samplers to lowp, and the ES preamble only patches fragment shaders.
+constexpr const char *kModelSkinVert = R"(#version 330 core
+layout(location = 0) in vec3 a_pos;
+layout(location = 1) in vec3 a_nrm;
+layout(location = 2) in vec2 a_uv;
+layout(location = 3) in vec4 a_joints;
+layout(location = 4) in vec4 a_weights;
+uniform mat4 u_post;          // projection * view * user transform, applied after skinning
+uniform mat3 u_normalMatrix;  // mat3(view * user transform)
+uniform highp sampler2D u_palette;
+out vec3 v_nrm;
+out vec2 v_uv;
+mat4 paletteRow(int i) {
+    return mat4(texelFetch(u_palette, ivec2(0, i), 0),
+                texelFetch(u_palette, ivec2(1, i), 0),
+                texelFetch(u_palette, ivec2(2, i), 0),
+                texelFetch(u_palette, ivec2(3, i), 0));
+}
+void main() {
+    mat4 skin = a_weights.x * paletteRow(int(a_joints.x + 0.5))
+              + a_weights.y * paletteRow(int(a_joints.y + 0.5))
+              + a_weights.z * paletteRow(int(a_joints.z + 0.5))
+              + a_weights.w * paletteRow(int(a_joints.w + 0.5));
+    v_nrm = normalize(u_normalMatrix * (mat3(skin) * a_nrm));
+    v_uv = a_uv;
+    gl_Position = u_post * (skin * vec4(a_pos, 1.0));
 }
 )";
 
@@ -249,15 +291,192 @@ QVector3D screenLightDir(double yawDeg, double pitchDeg)
     return d.normalized();
 }
 
+// Shared by the face-prop effect and the model clip. The GL call order here is what the face
+// effect has always emitted; keep it, the effect's output must stay bit-identical.
+void bindModelMaterial(QOpenGLExtraFunctions *gl, QOpenGLShaderProgram *prog,
+                       const ModelMaterial &mat, const QVector<GLuint> *textures, bool depthWrite,
+                       bool forceBlend)
+{
+    prog->setUniformValue("u_baseColorFactor", mat.baseColorFactor);
+    prog->setUniformValue("u_metallic", mat.metallicFactor);
+    prog->setUniformValue("u_roughness", mat.roughnessFactor);
+    prog->setUniformValue("u_emissive", mat.emissiveFactor);
+    prog->setUniformValue("u_alphaCutoff", mat.alphaCutoff);
+    float mode = 0.f;
+    if (mat.alphaMode == ModelMaterial::AlphaMode::Mask)
+        mode = 1.f;
+    else if (mat.alphaMode == ModelMaterial::AlphaMode::Blend)
+        mode = 2.f;
+    prog->setUniformValue("u_alphaMode", mode);
+
+    const bool hasTex =
+        textures && mat.baseColorTexture >= 0 && mat.baseColorTexture < textures->size();
+    prog->setUniformValue("u_hasBaseColorTexture", hasTex ? 1.f : 0.f);
+    gl->glActiveTexture(GL_TEXTURE0);
+    gl->glBindTexture(GL_TEXTURE_2D, hasTex ? textures->at(mat.baseColorTexture) : 0);
+
+    if (mat.doubleSided)
+        gl->glDisable(GL_CULL_FACE);
+    else
+        gl->glEnable(GL_CULL_FACE);
+
+    gl->glDepthMask(depthWrite ? GL_TRUE : GL_FALSE);
+    if (forceBlend || mat.alphaMode == ModelMaterial::AlphaMode::Blend) {
+        gl->glEnable(GL_BLEND);
+        gl->glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+    } else {
+        gl->glDisable(GL_BLEND);
+    }
+}
+
+// Caller binds the VAO. Opaque / MASK first (depth write), then BLEND (depth test, no write).
+void drawModelPrimitives(QOpenGLExtraFunctions *gl, QOpenGLShaderProgram *prog,
+                         const QList<ModelPrimitive> &primitives,
+                         const QList<ModelMaterial> &materials, const QVector<GLuint> *textures,
+                         bool forceBlend)
+{
+    auto drawPrim = [&](const ModelPrimitive &prim, bool depthWrite) {
+        const ModelMaterial &mat = materials.at(qBound(0, prim.material, materials.size() - 1));
+        bindModelMaterial(gl, prog, mat, textures, depthWrite, forceBlend);
+        gl->glDrawElements(GL_TRIANGLES, prim.indexCount, GL_UNSIGNED_INT,
+                           reinterpret_cast<void *>(qint64(prim.firstIndex) * sizeof(uint32_t)));
+    };
+
+    if (forceBlend) {
+        for (const ModelPrimitive &prim : primitives)
+            drawPrim(prim, false);
+        return;
+    }
+    for (const ModelPrimitive &prim : primitives) {
+        const ModelMaterial &mat = materials.at(qBound(0, prim.material, materials.size() - 1));
+        if (mat.alphaMode != ModelMaterial::AlphaMode::Blend)
+            drawPrim(prim, true);
+    }
+    for (const ModelPrimitive &prim : primitives) {
+        const ModelMaterial &mat = materials.at(qBound(0, prim.material, materials.size() - 1));
+        if (mat.alphaMode == ModelMaterial::AlphaMode::Blend)
+            drawPrim(prim, false);
+    }
+}
+
+// Resolve for the model clip: flip rows (the draw is +y up, the compositor wants v=0 on top),
+// box-filter when supersampled, and unpremultiply because layer targets carry straight alpha.
+constexpr const char *kModelClipResolveFrag = R"(#version 330 core
+in vec2 v_texCoord;
+out vec4 fragColor;
+uniform sampler2D u_currentTexture;
+uniform vec2 u_texel;  // 1/srcSize
+uniform float u_taps;  // 1 = single sample, 2 = 2x2 box
+void main() {
+    vec2 uv = vec2(v_texCoord.x, 1.0 - v_texCoord.y);
+    vec4 c;
+    if (u_taps > 1.5) {
+        c  = texture(u_currentTexture, uv + u_texel * vec2(-0.5, -0.5));
+        c += texture(u_currentTexture, uv + u_texel * vec2( 0.5, -0.5));
+        c += texture(u_currentTexture, uv + u_texel * vec2(-0.5,  0.5));
+        c += texture(u_currentTexture, uv + u_texel * vec2( 0.5,  0.5));
+        c *= 0.25;
+    } else {
+        c = texture(u_currentTexture, uv);
+    }
+    fragColor = vec4(c.a > 0.0 ? c.rgb / c.a : vec3(0.0), c.a);
+}
+)";
+
+} // namespace
+
+namespace {
+
+void deleteRigGpu(QOpenGLExtraFunctions *gl, GlModelGpu &m)
+{
+    if (m.rigVao)
+        gl->glDeleteVertexArrays(1, &m.rigVao);
+    if (m.rigVbo)
+        gl->glDeleteBuffers(1, &m.rigVbo);
+    if (m.rigIbo)
+        gl->glDeleteBuffers(1, &m.rigIbo);
+    if (m.paletteTex)
+        gl->glDeleteTextures(1, &m.paletteTex);
+    m.rigVao = m.rigVbo = m.rigIbo = m.paletteTex = 0;
+    m.paletteRows = 0;
+}
+
+// Uploads the rig's vertex streams and allocates the palette texture the first time an animated
+// file is drawn as a clip. The face effect never reaches this, so it never pays for it.
+bool ensureRigGpu(GlRuntime &rt, QOpenGLExtraFunctions *gl, GlModelGpu &m)
+{
+    if (m.rigVao)
+        return true;
+    if (!m.cpu || !m.cpu->rig)
+        return false;
+    const ModelRig &rig = *m.cpu->rig;
+
+    gl->glGenVertexArrays(1, &m.rigVao);
+    gl->glGenBuffers(1, &m.rigVbo);
+    gl->glGenBuffers(1, &m.rigIbo);
+    gl->glBindVertexArray(m.rigVao);
+    gl->glBindBuffer(GL_ARRAY_BUFFER, m.rigVbo);
+    gl->glBufferData(GL_ARRAY_BUFFER, rig.vertices.size() * int(sizeof(float)),
+                     rig.vertices.constData(), GL_STATIC_DRAW);
+    gl->glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m.rigIbo);
+    gl->glBufferData(GL_ELEMENT_ARRAY_BUFFER, rig.indices.size() * int(sizeof(uint32_t)),
+                     rig.indices.constData(), GL_STATIC_DRAW);
+    const int stride = kRigVertStride * int(sizeof(float));
+    const int sizes[5] = {3, 3, 2, 4, 4};
+    int offset = 0;
+    for (int i = 0; i < 5; ++i) {
+        gl->glEnableVertexAttribArray(GLuint(i));
+        gl->glVertexAttribPointer(GLuint(i), sizes[i], GL_FLOAT, GL_FALSE, stride,
+                                  reinterpret_cast<void *>(qintptr(offset) * qintptr(sizeof(float))));
+        offset += sizes[i];
+    }
+    gl->glBindVertexArray(0);
+
+    m.paletteRows = rig.paletteSize;
+    gl->glGenTextures(1, &m.paletteTex);
+    gl->glBindTexture(GL_TEXTURE_2D, m.paletteTex);
+    gl->glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, 4, m.paletteRows, 0, GL_RGBA, GL_FLOAT, nullptr);
+    gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    gl->glBindTexture(GL_TEXTURE_2D, 0);
+
+    const size_t bytes = size_t(rig.vertices.size()) * sizeof(float)
+                         + size_t(rig.indices.size()) * sizeof(uint32_t)
+                         + size_t(m.paletteRows) * 4 * 16;
+    m.vramBytes += bytes;
+    rt.models.totalBytes += bytes;
+    return true;
+}
+
+// Each palette row is one mat4, column by column — QMatrix4x4::constData() is column-major, so
+// the sixteen floats map straight onto the four texels.
+void uploadPalette(QOpenGLExtraFunctions *gl, const GlModelGpu &m, const QVector<QMatrix4x4> &palette)
+{
+    const int rows = std::min(m.paletteRows, int(palette.size()));
+    if (rows <= 0)
+        return;
+    QVector<float> texels(rows * 16);
+    for (int r = 0; r < rows; ++r)
+        std::memcpy(texels.data() + r * 16, palette[r].constData(), 16 * sizeof(float));
+    gl->glBindTexture(GL_TEXTURE_2D, m.paletteTex);
+    gl->glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 4, rows, GL_RGBA, GL_FLOAT, texels.constData());
+}
+
 } // namespace
 
 GlModelGpu *acquireGlModel(GlRuntime &rt, QOpenGLExtraFunctions *gl, const QString &path)
 {
     if (path.isEmpty())
         return nullptr;
+    return acquireGlModel(rt, gl, path, loadModelAssetCached(path));
+}
 
-    auto cpu = loadModelAssetCached(path);
-    if (!cpu)
+GlModelGpu *acquireGlModel(GlRuntime &rt, QOpenGLExtraFunctions *gl, const QString &path,
+                           std::shared_ptr<const ModelAsset> cpu)
+{
+    if (path.isEmpty() || !cpu)
         return nullptr;
 
     const QFileInfo info(path);
@@ -340,6 +559,7 @@ GlModelGpu *acquireGlModel(GlRuntime &rt, QOpenGLExtraFunctions *gl, const QStri
             for (GLuint t : last->textures)
                 gl->glDeleteTextures(1, &t);
         }
+        deleteRigGpu(gl, *last);
         cache.totalBytes -= last->vramBytes;
         cache.index.erase(last->key);
         cache.lru.erase(last);
@@ -360,6 +580,7 @@ void destroyGlModels(GlRuntime &rt, QOpenGLExtraFunctions *gl)
                 gl->glDeleteBuffers(1, &m.ibo);
             for (GLuint t : m.textures)
                 gl->glDeleteTextures(1, &t);
+            deleteRigGpu(gl, m);
         }
         if (rt.headProxy.vao) {
             gl->glDeleteVertexArrays(1, &rt.headProxy.vao);
@@ -617,66 +838,13 @@ GlTarget drawFaceModelEffect(GlRuntime &rt, QOpenGLExtraFunctions *gl, const Fac
 
     auto bindMaterial = [&](const ModelMaterial &mat, const QVector<GLuint> *textures,
                             bool depthWrite) {
-        prog->setUniformValue("u_baseColorFactor", mat.baseColorFactor);
-        prog->setUniformValue("u_metallic", mat.metallicFactor);
-        prog->setUniformValue("u_roughness", mat.roughnessFactor);
-        prog->setUniformValue("u_emissive", mat.emissiveFactor);
-        prog->setUniformValue("u_alphaCutoff", mat.alphaCutoff);
-        float mode = 0.f;
-        if (mat.alphaMode == ModelMaterial::AlphaMode::Mask)
-            mode = 1.f;
-        else if (mat.alphaMode == ModelMaterial::AlphaMode::Blend)
-            mode = 2.f;
-        prog->setUniformValue("u_alphaMode", mode);
-
-        const bool hasTex =
-            textures && mat.baseColorTexture >= 0 && mat.baseColorTexture < textures->size();
-        prog->setUniformValue("u_hasBaseColorTexture", hasTex ? 1.f : 0.f);
-        gl->glActiveTexture(GL_TEXTURE0);
-        gl->glBindTexture(GL_TEXTURE_2D, hasTex ? textures->at(mat.baseColorTexture) : 0);
-
-        if (mat.doubleSided)
-            gl->glDisable(GL_CULL_FACE);
-        else
-            gl->glEnable(GL_CULL_FACE);
-
-        gl->glDepthMask(depthWrite ? GL_TRUE : GL_FALSE);
-        if (forceBlend || mat.alphaMode == ModelMaterial::AlphaMode::Blend) {
-            gl->glEnable(GL_BLEND);
-            gl->glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
-        } else {
-            gl->glDisable(GL_BLEND);
-        }
+        bindModelMaterial(gl, prog, mat, textures, depthWrite, forceBlend);
     };
 
     if (model) {
         gl->glBindVertexArray(model->vao);
-        auto drawPrim = [&](const ModelPrimitive &prim, bool depthWrite) {
-            const ModelMaterial &mat = model->cpu->materials.at(
-                qBound(0, prim.material, model->cpu->materials.size() - 1));
-            bindMaterial(mat, &model->textures, depthWrite);
-            gl->glDrawElements(GL_TRIANGLES, prim.indexCount, GL_UNSIGNED_INT,
-                               reinterpret_cast<void *>(qint64(prim.firstIndex) * sizeof(uint32_t)));
-        };
-
-        if (forceBlend) {
-            for (const ModelPrimitive &prim : model->cpu->primitives)
-                drawPrim(prim, false);
-        } else {
-            // Opaque / MASK first (depth write), then BLEND (depth test, no write).
-            for (const ModelPrimitive &prim : model->cpu->primitives) {
-                const ModelMaterial &mat = model->cpu->materials.at(
-                    qBound(0, prim.material, model->cpu->materials.size() - 1));
-                if (mat.alphaMode != ModelMaterial::AlphaMode::Blend)
-                    drawPrim(prim, true);
-            }
-            for (const ModelPrimitive &prim : model->cpu->primitives) {
-                const ModelMaterial &mat = model->cpu->materials.at(
-                    qBound(0, prim.material, model->cpu->materials.size() - 1));
-                if (mat.alphaMode == ModelMaterial::AlphaMode::Blend)
-                    drawPrim(prim, false);
-            }
-        }
+        drawModelPrimitives(gl, prog, model->cpu->primitives, model->cpu->materials,
+                            &model->textures, forceBlend);
     } else {
         ModelMaterial meshMat;
         meshMat.metallicFactor = 0.f;
@@ -778,6 +946,123 @@ GlTarget resolveFaceOverlay(GlRuntime &rt, QOpenGLExtraFunctions *gl, GlTarget &
     result.fbo->release();
 
     rt.releaseTarget(std::move(overlayFull));
+    return result;
+}
+
+GlTarget drawModelClip(GlRuntime &rt, QOpenGLExtraFunctions *gl,
+                       const model3d::ModelDrawRequest &request, const QSize &canvasSize)
+{
+    if (!gl || !request.asset || canvasSize.isEmpty())
+        return {};
+
+    GlModelGpu *model = acquireGlModel(rt, gl, request.path, request.asset);
+    if (!model || !model->cpu)
+        return {};
+
+    const int outW = canvasSize.width();
+    const int outH = canvasSize.height();
+    const bool supersample = (qint64(outW) * outH) <= (1920LL * 1080LL);
+    const int drawW = supersample ? outW * 2 : outW;
+    const int drawH = supersample ? outH * 2 : outH;
+    const double aspect = double(outH) / double(outW);
+
+    GlTarget scratch = rt.acquireTarget(drawW, drawH, /*wantDepth=*/true);
+    if (!scratch.isValid())
+        return {};
+
+    // Animated files draw through the rig with a palette; a static file (or a rig the GPU cannot
+    // take) draws the baked buffer with the face effect's program.
+    const bool useRig = model->cpu->rig && ensureRigGpu(rt, gl, *model);
+    QOpenGLShaderProgram *prog =
+        useRig ? rt.builtinProgram(QStringLiteral("model_clip_skin"), kModelSkinVert, kModelFrag)
+               : rt.builtinProgram(QStringLiteral("face_model"), kModelVert, kModelFrag);
+    if (!prog && useRig)
+        prog = rt.builtinProgram(QStringLiteral("face_model"), kModelVert, kModelFrag);
+    QOpenGLShaderProgram *resolve = rt.builtinProgram(QStringLiteral("model_clip_resolve"),
+                                                      kQuadVertexShader, kModelClipResolveFrag);
+    if (!prog || !resolve) {
+        rt.releaseTarget(std::move(scratch));
+        return {};
+    }
+    const bool skinning = useRig && prog->programId() != 0
+                          && prog->uniformLocation("u_palette") >= 0;
+
+    {
+        GlStateGuard guard(gl);
+        scratch.fbo->bind();
+        gl->glViewport(0, 0, drawW, drawH);
+        gl->glClearColor(0.f, 0.f, 0.f, 0.f);
+        gl->glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        gl->glEnable(GL_DEPTH_TEST);
+        gl->glDepthFunc(GL_LESS);
+        gl->glEnable(GL_CULL_FACE);
+        gl->glCullFace(GL_BACK);
+        gl->glFrontFace(GL_CCW);
+
+        const ModelAsset &cpu = *model->cpu;
+        QVector3D aabbMin;
+        QVector3D aabbMax;
+        if (skinning)
+            modelClipBounds(cpu, &aabbMin, &aabbMax);
+        else {
+            aabbMin = cpu.aabbMin;
+            aabbMax = cpu.aabbMax;
+        }
+        const ModelClipCamera cam = modelClipCamera(request.params, aabbMin, aabbMax, aspect);
+
+        prog->bind();
+        if (skinning) {
+            const QVector<QMatrix4x4> &palette =
+                request.pose ? request.pose->palette : evaluateModelPose(*cpu.rig, -1, 0.0).palette;
+            gl->glActiveTexture(GL_TEXTURE1);
+            uploadPalette(gl, *model, palette);
+            prog->setUniformValue("u_palette", 1);
+            prog->setUniformValue("u_post", cam.mvp);
+        } else {
+            prog->setUniformValue("u_mvp", cam.mvp);
+            prog->setUniformValue("u_flipDepth", 1.f);
+        }
+        prog->setUniformValue("u_normalMatrix", cam.normalMatrix);
+        prog->setUniformValue("u_lightDir",
+                              screenLightDir(request.params.lightYaw, request.params.lightPitch));
+        prog->setUniformValue("u_lightIntensity", float(request.params.lightIntensity));
+        prog->setUniformValue("u_ambient", float(request.params.ambient));
+        prog->setUniformValue("u_baseColorTexture", 0);
+
+        gl->glBindVertexArray(skinning ? model->rigVao : model->vao);
+        drawModelPrimitives(gl, prog, skinning ? cpu.rig->primitives : cpu.primitives,
+                            cpu.materials, &model->textures, /*forceBlend=*/false);
+        gl->glBindVertexArray(0);
+        gl->glActiveTexture(GL_TEXTURE1);
+        gl->glBindTexture(GL_TEXTURE_2D, 0);
+        gl->glActiveTexture(GL_TEXTURE0);
+        prog->release();
+        gl->glDepthMask(GL_TRUE);
+        gl->glDisable(GL_DEPTH_TEST);
+        gl->glDisable(GL_CULL_FACE);
+        gl->glDisable(GL_BLEND);
+        scratch.fbo->release();
+    }
+
+    GlTarget result = rt.acquireTarget(outW, outH);
+    if (!result.isValid()) {
+        rt.releaseTarget(std::move(scratch));
+        return {};
+    }
+    result.fbo->bind();
+    gl->glViewport(0, 0, outW, outH);
+    resolve->bind();
+    resolve->setUniformValue("u_currentTexture", 0);
+    resolve->setUniformValue("u_texel", QVector2D(1.f / float(drawW), 1.f / float(drawH)));
+    resolve->setUniformValue("u_taps", supersample ? 2.f : 1.f);
+    gl->glActiveTexture(GL_TEXTURE0);
+    gl->glBindTexture(GL_TEXTURE_2D, scratch.texture());
+    gl->glBindVertexArray(rt.vao);
+    gl->glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+    gl->glBindVertexArray(0);
+    resolve->release();
+    result.fbo->release();
+    rt.releaseTarget(std::move(scratch));
     return result;
 }
 

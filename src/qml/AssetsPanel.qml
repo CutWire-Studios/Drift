@@ -558,7 +558,7 @@ PanelFrame {
     }
 
     function kindsForTab(tabId) {
-        if (tabId === "media") return ["video", "image", "audio"]
+        if (tabId === "media") return ["video", "image", "audio", "vector", "model3d"]
         return []
     }
 
@@ -1345,6 +1345,7 @@ PanelFrame {
                 onRenameRequested: (assetIndex) => root.requestRenameAsset(assetIndex)
                 onExportRequested: (assetIndex) => root.requestExportAsset(assetIndex)
                 onImportRequested: root.importMedia()
+                onImportFolderRequested: root.importFolder()
                 onMoveToFolderRequested: (assetIds) => root.requestMoveAssetToFolder(assetIds)
                 onFolderRenameRequested: (folderId, folderName) => root.requestRenameFolder(folderId, folderName)
                 onFolderMoveRequested: (folderId) => root.requestMoveFolder(folderId)

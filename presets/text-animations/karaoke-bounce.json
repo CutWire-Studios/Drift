@@ -1,0 +1,54 @@
+{
+  "format": 1,
+  "id": "karaoke-bounce",
+  "label": "Karaoke bounce",
+  "category": "word",
+  "sampleText": "Bounce along",
+  "slots": [
+    "loop"
+  ],
+  "order": 500,
+  "params": [
+    {
+      "id": "lift",
+      "type": "scalar",
+      "label": "Lift",
+      "unit": "em",
+      "min": 0,
+      "max": 1,
+      "step": 0.01,
+      "default": 0.1
+    },
+    {
+      "id": "scale",
+      "type": "scalar",
+      "label": "Scale",
+      "unit": "%",
+      "min": 100,
+      "max": 200,
+      "step": 1,
+      "default": 110
+    }
+  ],
+  "animators": [
+    {
+      "selectors": [
+        {
+          "driver": "karaoke",
+          "domain": "word"
+        }
+      ],
+      "props": {
+        "position": {
+          "x": 0,
+          "y": {
+            "$": "lift",
+            "mul": -1
+          },
+          "unit": "em"
+        },
+        "scale": "{scale}"
+      }
+    }
+  ]
+}

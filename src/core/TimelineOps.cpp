@@ -146,6 +146,8 @@ TrackType trackTypeForClipType(ClipType type)
         return TrackType::Subtitle;
     case ClipType::Image:
     case ClipType::Shape:
+    case ClipType::Vector:
+    case ClipType::Model3d:
         return TrackType::Shape;
     case ClipType::Adjustment:
         return TrackType::Adjustment;
@@ -689,7 +691,8 @@ TimeUs sourceDurationForClip(const Project &project, const Clip &clip)
         }
     }
 
-    if (clip.type == ClipType::Image || clip.type == ClipType::Shape || clip.type == ClipType::Adjustment)
+    if (clip.type == ClipType::Image || clip.type == ClipType::Shape || clip.type == ClipType::Vector
+        || clip.type == ClipType::Model3d || clip.type == ClipType::Adjustment)
         return kImageClipDurationUs;
 
     return qMax(clip.srcOut, clip.timelineDuration);
@@ -781,6 +784,8 @@ void retargetClipToSource(Clip &dst, const Clip &src, TimeUs srcMediaDurationUs)
     dst.reverse = src.reverse;
     dst.flipH = src.flipH;
     dst.flipV = src.flipV;
+    // Belongs to the angle's media, not the slot: it is what makes that file decode upright.
+    dst.rotationCorrection = src.rotationCorrection;
 
     // A ramp is normalised over the clip's own source range and decides its timeline duration.
     // dst's duration is fixed by the slot it occupies, so there is no range for a ramp to

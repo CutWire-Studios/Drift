@@ -3,6 +3,8 @@
 
 #include "ModelAsset.h"
 
+#include "ModelAnimation.h"
+
 #include <QByteArray>
 #include <QDateTime>
 #include <QDir>
@@ -61,6 +63,14 @@ size_t estimateBytes(const ModelAsset *a)
                + size_t(a->primitives.size()) * 16;
     for (const QImage &img : a->images)
         n += size_t(img.width()) * size_t(img.height()) * 4;
+    if (a->rig) {
+        n += size_t(a->rig->vertices.size()) * sizeof(float)
+             + size_t(a->rig->indices.size()) * sizeof(uint32_t)
+             + size_t(a->rig->nodes.size()) * sizeof(ModelNode);
+        for (const ModelAnimation &anim : a->rig->animations)
+            for (const ModelAnimSampler &sampler : anim.samplers)
+                n += size_t(sampler.times.size() + sampler.values.size()) * sizeof(float);
+    }
     return n;
 }
 
@@ -223,6 +233,364 @@ bool readVec2(const cgltf_accessor *acc, cgltf_size index, float out[2])
     return true;
 }
 
+// cgltf hands matrices out column-major; QMatrix4x4's float constructor wants row-major.
+QMatrix4x4 matrixFromColumnMajor(const float *m)
+{
+    QMatrix4x4 out;
+    for (int c = 0; c < 4; ++c)
+        for (int r = 0; r < 4; ++r)
+            out(r, c) = m[c * 4 + r];
+    return out;
+}
+
+// Builds the unbaked scene for a file with animations or skins. Null (with a note) when the file
+// has neither, or when it exceeds what the palette texture can hold — the baked buffer then
+// stands in and the model renders static.
+std::shared_ptr<ModelRig> buildRig(const cgltf_data *data,
+                                   const QHash<const cgltf_material *, int> &materialIndex,
+                                   const QList<ModelMaterial> &materials, QStringList *notes)
+{
+    if (data->animations_count == 0 && data->skins_count == 0)
+        return nullptr;
+    if (data->nodes_count == 0)
+        return nullptr;
+
+    // Node order: DFS pre-order from the scene roots so parents precede children, then any
+    // subtree the scene does not reference.
+    std::vector<int> remap(data->nodes_count, -1);
+    std::vector<const cgltf_node *> ordered;
+    ordered.reserve(data->nodes_count);
+    const auto visit = [&](const cgltf_node *root) {
+        std::vector<const cgltf_node *> stack;
+        stack.push_back(root);
+        while (!stack.empty()) {
+            const cgltf_node *node = stack.back();
+            stack.pop_back();
+            if (!node)
+                continue;
+            const cgltf_size idx = cgltf_size(node - data->nodes);
+            if (idx >= data->nodes_count || remap[idx] >= 0)
+                continue;
+            remap[idx] = int(ordered.size());
+            ordered.push_back(node);
+            for (cgltf_size c = node->children_count; c > 0; --c)
+                stack.push_back(node->children[c - 1]);
+        }
+    };
+    if (data->scene) {
+        for (cgltf_size i = 0; i < data->scene->nodes_count; ++i)
+            visit(data->scene->nodes[i]);
+    }
+    for (cgltf_size i = 0; i < data->nodes_count; ++i) {
+        if (remap[i] < 0 && !data->nodes[i].parent)
+            visit(&data->nodes[i]);
+    }
+    for (cgltf_size i = 0; i < data->nodes_count; ++i) {
+        if (remap[i] < 0)
+            visit(&data->nodes[i]);
+    }
+
+    auto rig = std::make_shared<ModelRig>();
+    for (const cgltf_node *node : ordered) {
+        ModelNode out;
+        if (node->parent) {
+            const cgltf_size pi = cgltf_size(node->parent - data->nodes);
+            if (pi < data->nodes_count)
+                out.parent = remap[pi];
+        }
+        out.name = node->name ? QString::fromUtf8(node->name) : QString();
+        if (node->has_matrix) {
+            out.hasMatrix = true;
+            out.matrix = matrixFromColumnMajor(node->matrix);
+        } else {
+            if (node->has_translation)
+                out.translation = QVector3D(node->translation[0], node->translation[1], node->translation[2]);
+            if (node->has_rotation)
+                out.rotation = QQuaternion(node->rotation[3], node->rotation[0], node->rotation[1], node->rotation[2]);
+            if (node->has_scale)
+                out.scale = QVector3D(node->scale[0], node->scale[1], node->scale[2]);
+        }
+        rig->nodes.append(out);
+    }
+    const auto nodeIndex = [&](const cgltf_node *node) -> int {
+        if (!node)
+            return -1;
+        const cgltf_size idx = cgltf_size(node - data->nodes);
+        return idx < data->nodes_count ? remap[idx] : -1;
+    };
+
+    // Skins: rows after the per-node ones.
+    QHash<const cgltf_skin *, int> skinIndex;
+    int paletteRows = rig->nodes.size();
+    for (cgltf_size si = 0; si < data->skins_count; ++si) {
+        const cgltf_skin *skin = &data->skins[si];
+        ModelSkin out;
+        out.paletteBase = paletteRows;
+        for (cgltf_size j = 0; j < skin->joints_count; ++j)
+            out.joints.append(nodeIndex(skin->joints[j]));
+        if (skin->inverse_bind_matrices && skin->inverse_bind_matrices->count >= skin->joints_count) {
+            std::vector<float> ibm(16 * skin->joints_count);
+            if (cgltf_accessor_unpack_floats(skin->inverse_bind_matrices, ibm.data(), ibm.size())
+                == ibm.size()) {
+                for (cgltf_size j = 0; j < skin->joints_count; ++j)
+                    out.inverseBind.append(matrixFromColumnMajor(ibm.data() + 16 * j));
+            }
+        }
+        paletteRows += out.joints.size();
+        skinIndex.insert(skin, rig->skins.size());
+        rig->skins.append(out);
+    }
+    if (paletteRows > kMaxModelPaletteRows) {
+        notes->append(QStringLiteral("too many joints to animate; rendered static"));
+        return nullptr;
+    }
+    rig->paletteSize = paletteRows;
+
+    // Animations.
+    for (cgltf_size ai = 0; ai < data->animations_count; ++ai) {
+        const cgltf_animation *anim = &data->animations[ai];
+        ModelAnimation out;
+        out.name = anim->name ? QString::fromUtf8(anim->name) : QString();
+        for (cgltf_size si = 0; si < anim->samplers_count; ++si) {
+            const cgltf_animation_sampler *src = &anim->samplers[si];
+            ModelAnimSampler sampler;
+            switch (src->interpolation) {
+            case cgltf_interpolation_type_step:
+                sampler.interp = ModelAnimSampler::Interp::Step;
+                break;
+            case cgltf_interpolation_type_cubic_spline:
+                sampler.interp = ModelAnimSampler::Interp::CubicSpline;
+                break;
+            default:
+                sampler.interp = ModelAnimSampler::Interp::Linear;
+                break;
+            }
+            if (src->input && src->output && src->input->count > 0) {
+                const int keys = int(src->input->count);
+                const int perKey = sampler.interp == ModelAnimSampler::Interp::CubicSpline ? 3 : 1;
+                const int comps = int(src->output->count) / std::max(1, keys * perKey);
+                sampler.components = std::max(1, comps) * int(cgltf_num_components(src->output->type));
+                sampler.times.resize(keys);
+                sampler.values.resize(keys * perKey * sampler.components);
+                const bool okIn = cgltf_accessor_unpack_floats(src->input, sampler.times.data(),
+                                                               cgltf_size(sampler.times.size()))
+                                  == cgltf_size(sampler.times.size());
+                const bool okOut = cgltf_accessor_unpack_floats(src->output, sampler.values.data(),
+                                                                cgltf_size(sampler.values.size()))
+                                   == cgltf_size(sampler.values.size());
+                if (!okIn || !okOut) {
+                    sampler.times.clear();
+                    sampler.values.clear();
+                    notes->append(QStringLiteral("animation sampler could not be read"));
+                } else if (!sampler.times.isEmpty()) {
+                    out.durationSec = std::max(out.durationSec, double(sampler.times.last()));
+                }
+            }
+            out.samplers.append(sampler);
+        }
+        for (cgltf_size ci = 0; ci < anim->channels_count; ++ci) {
+            const cgltf_animation_channel *src = &anim->channels[ci];
+            ModelAnimChannel ch;
+            ch.node = nodeIndex(src->target_node);
+            ch.sampler = src->sampler ? int(src->sampler - anim->samplers) : -1;
+            switch (src->target_path) {
+            case cgltf_animation_path_type_translation:
+                ch.path = ModelAnimChannel::Path::Translation;
+                break;
+            case cgltf_animation_path_type_rotation:
+                ch.path = ModelAnimChannel::Path::Rotation;
+                break;
+            case cgltf_animation_path_type_scale:
+                ch.path = ModelAnimChannel::Path::Scale;
+                break;
+            case cgltf_animation_path_type_weights:
+                ch.path = ModelAnimChannel::Path::Weights;
+                notes->append(QStringLiteral("morph targets are not animated"));
+                break;
+            default:
+                continue;
+            }
+            if (ch.node < 0 || ch.sampler < 0 || ch.sampler >= out.samplers.size())
+                continue;
+            out.channels.append(ch);
+        }
+        rig->animations.append(out);
+    }
+
+    // Geometry, node-local, every vertex with joint rows.
+    struct PendingPrim
+    {
+        ModelPrimitive prim;
+        ModelMaterial::AlphaMode mode;
+    };
+    std::vector<PendingPrim> opaquePrims;
+    std::vector<PendingPrim> blendPrims;
+    bool overflow = false;
+
+    for (int ni = 0; ni < int(ordered.size()) && !overflow; ++ni) {
+        const cgltf_node *node = ordered[ni];
+        if (!node->mesh)
+            continue;
+        const cgltf_mesh *mesh = node->mesh;
+        const int skinSlot = node->skin ? skinIndex.value(node->skin, -1) : -1;
+        const int skinBase = skinSlot >= 0 ? rig->skins[skinSlot].paletteBase : 0;
+        const int skinJoints = skinSlot >= 0 ? rig->skins[skinSlot].joints.size() : 0;
+
+        for (cgltf_size pi = 0; pi < mesh->primitives_count; ++pi) {
+            const cgltf_primitive *prim = &mesh->primitives[pi];
+            if (prim->type != cgltf_primitive_type_triangles)
+                continue;
+            const cgltf_accessor *posAcc = nullptr;
+            const cgltf_accessor *nrmAcc = nullptr;
+            const cgltf_accessor *uvAcc = nullptr;
+            const cgltf_accessor *jointAcc = nullptr;
+            const cgltf_accessor *weightAcc = nullptr;
+            for (cgltf_size a = 0; a < prim->attributes_count; ++a) {
+                const cgltf_attribute *attr = &prim->attributes[a];
+                if (attr->type == cgltf_attribute_type_position)
+                    posAcc = attr->data;
+                else if (attr->type == cgltf_attribute_type_normal)
+                    nrmAcc = attr->data;
+                else if (attr->type == cgltf_attribute_type_texcoord && attr->index == 0)
+                    uvAcc = attr->data;
+                else if (attr->type == cgltf_attribute_type_joints && attr->index == 0)
+                    jointAcc = attr->data;
+                else if (attr->type == cgltf_attribute_type_weights && attr->index == 0)
+                    weightAcc = attr->data;
+            }
+            if (!posAcc || posAcc->count == 0)
+                continue;
+            const int baseVertex = rig->vertexCount();
+            if (baseVertex + int(posAcc->count) > kMaxModelVertices) {
+                overflow = true;
+                break;
+            }
+            const bool skinned = skinSlot >= 0 && jointAcc && weightAcc;
+
+            rig->vertices.reserve(rig->vertices.size() + int(posAcc->count) * kRigVertStride);
+            for (cgltf_size vi = 0; vi < posAcc->count; ++vi) {
+                float p[3] = {0, 0, 0};
+                readVec3(posAcc, vi, p);
+                float n[3] = {0, 0, 1};
+                if (nrmAcc)
+                    readVec3(nrmAcc, vi, n);
+                float uv[2] = {0, 0};
+                if (uvAcc)
+                    readVec2(uvAcc, vi, uv);
+                float joints[4] = {float(ni), 0.f, 0.f, 0.f};
+                float weights[4] = {1.f, 0.f, 0.f, 0.f};
+                if (skinned) {
+                    cgltf_uint j[4] = {0, 0, 0, 0};
+                    float w[4] = {0, 0, 0, 0};
+                    if (cgltf_accessor_read_uint(jointAcc, vi, j, 4)
+                        && cgltf_accessor_read_float(weightAcc, vi, w, 4)
+                        && (w[0] + w[1] + w[2] + w[3]) > 1e-6f) {
+                        for (int k = 0; k < 4; ++k) {
+                            const bool valid = int(j[k]) < skinJoints;
+                            joints[k] = valid ? float(skinBase + int(j[k])) : float(ni);
+                            weights[k] = valid ? w[k] : 0.f;
+                        }
+                    }
+                }
+                rig->vertices << p[0] << p[1] << p[2] << n[0] << n[1] << n[2] << uv[0] << uv[1]
+                              << joints[0] << joints[1] << joints[2] << joints[3] << weights[0]
+                              << weights[1] << weights[2] << weights[3];
+            }
+
+            ModelPrimitive outPrim;
+            outPrim.firstIndex = rig->indices.size();
+            outPrim.node = ni;
+            outPrim.material = 0;
+            if (prim->material) {
+                const auto it = materialIndex.constFind(prim->material);
+                if (it != materialIndex.cend())
+                    outPrim.material = it.value();
+            }
+            const int vertCount = rig->vertexCount() - baseVertex;
+            if (prim->indices) {
+                std::vector<cgltf_uint> unpacked(prim->indices->count);
+                if (!cgltf_accessor_unpack_indices(prim->indices, unpacked.data(), sizeof(cgltf_uint),
+                                                   prim->indices->count)) {
+                    rig->vertices.resize(baseVertex * kRigVertStride);
+                    continue;
+                }
+                bool bad = false;
+                for (const cgltf_uint idx : unpacked) {
+                    if (idx >= cgltf_uint(vertCount)) {
+                        bad = true;
+                        break;
+                    }
+                    rig->indices.append(uint32_t(baseVertex) + uint32_t(idx));
+                }
+                if (bad) {
+                    rig->indices.resize(outPrim.firstIndex);
+                    rig->vertices.resize(baseVertex * kRigVertStride);
+                    continue;
+                }
+                outPrim.indexCount = int(prim->indices->count);
+            } else {
+                for (int i = 0; i < vertCount; ++i)
+                    rig->indices.append(uint32_t(baseVertex + i));
+                outPrim.indexCount = vertCount;
+            }
+            if (outPrim.indexCount <= 0)
+                continue;
+            PendingPrim pending;
+            pending.prim = outPrim;
+            pending.mode = materials.at(outPrim.material).alphaMode;
+            if (pending.mode == ModelMaterial::AlphaMode::Blend)
+                blendPrims.push_back(pending);
+            else
+                opaquePrims.push_back(pending);
+        }
+    }
+    if (overflow) {
+        notes->append(QStringLiteral("model exceeds the vertex limit when unbaked; rendered static"));
+        return nullptr;
+    }
+    if (rig->vertexCount() == 0 || rig->indices.isEmpty())
+        return nullptr;
+    for (const PendingPrim &p : opaquePrims)
+        rig->primitives.append(p.prim);
+    for (const PendingPrim &p : blendPrims)
+        rig->primitives.append(p.prim);
+
+    // Rest pose → bounds → normalisation. Skinned vertices are posed through their joints, as
+    // the shader will do, so a rig whose bind pose sits away from the origin still centres.
+    rig->restCentre = QVector3D();
+    rig->restInvScale = 1.f;
+    const ModelPose rest = evaluateModelPose(*rig, -1, 0.0);
+    QVector3D bmin(1e30f, 1e30f, 1e30f);
+    QVector3D bmax(-1e30f, -1e30f, -1e30f);
+    for (int i = 0; i < rig->vertexCount(); ++i) {
+        const float *v = rig->vertices.constData() + i * kRigVertStride;
+        const QVector4D local(v[0], v[1], v[2], 1.f);
+        QVector4D posed;
+        for (int k = 0; k < 4; ++k) {
+            const int row = int(v[8 + k]);
+            const float w = v[12 + k];
+            if (w <= 0.f || row < 0 || row >= rest.palette.size())
+                continue;
+            posed += (rest.palette[row] * local) * w;
+        }
+        bmin.setX(std::min(bmin.x(), posed.x()));
+        bmin.setY(std::min(bmin.y(), posed.y()));
+        bmin.setZ(std::min(bmin.z(), posed.z()));
+        bmax.setX(std::max(bmax.x(), posed.x()));
+        bmax.setY(std::max(bmax.y(), posed.y()));
+        bmax.setZ(std::max(bmax.z(), posed.z()));
+    }
+    const QVector3D extent = bmax - bmin;
+    const float maxExtent = std::max({extent.x(), extent.y(), extent.z()});
+    if (!(maxExtent > 1e-8f))
+        return nullptr;
+    rig->restCentre = (bmin + bmax) * 0.5f;
+    rig->restInvScale = 1.f / maxExtent;
+    rig->restAabbMin = (bmin - rig->restCentre) * rig->restInvScale;
+    rig->restAabbMax = (bmax - rig->restCentre) * rig->restInvScale;
+    return rig;
+}
+
 } // namespace
 
 std::shared_ptr<const ModelAsset> loadModelAsset(const QString &path, QString *warningOut)
@@ -311,6 +679,20 @@ std::shared_ptr<const ModelAsset> loadModelAsset(const QString &path, QString *w
 
     if (data->skins_count > 0)
         notes.append(QStringLiteral("skinned mesh rendered in bind pose"));
+
+    for (cgltf_size ai = 0; ai < data->animations_count; ++ai) {
+        const cgltf_animation *anim = &data->animations[ai];
+        ModelAnimationInfo info;
+        info.name = anim->name ? QString::fromUtf8(anim->name) : QString();
+        double maxSec = 0.0;
+        for (cgltf_size si = 0; si < anim->samplers_count; ++si) {
+            const cgltf_accessor *input = anim->samplers[si].input;
+            if (input && input->has_max)
+                maxSec = std::max(maxSec, double(input->max[0]));
+        }
+        info.durationUs = qint64(std::llround(maxSec * 1'000'000.0));
+        asset->animations.append(info);
+    }
 
     const QString baseDir = info.absolutePath();
 
@@ -630,11 +1012,26 @@ std::shared_ptr<const ModelAsset> loadModelAsset(const QString &path, QString *w
     asset->aabbMin = bmin;
     asset->aabbMax = bmax;
 
+    asset->rig = buildRig(data, materialIndex, asset->materials, &notes);
+    if (asset->rig && data->skins_count > 0)
+        notes.removeAll(QStringLiteral("skinned mesh rendered in bind pose"));
+
     notes.removeDuplicates();
     asset->warning = notes.join(QLatin1String("; "));
     if (warningOut && !asset->warning.isEmpty())
         *warningOut = asset->warning;
     return asset;
+}
+
+void modelClipBounds(const ModelAsset &asset, QVector3D *aabbMin, QVector3D *aabbMax)
+{
+    if (asset.rig) {
+        *aabbMin = asset.rig->restAabbMin;
+        *aabbMax = asset.rig->restAabbMax;
+    } else {
+        *aabbMin = asset.aabbMin;
+        *aabbMax = asset.aabbMax;
+    }
 }
 
 std::shared_ptr<const ModelAsset> loadModelAssetCached(const QString &path)

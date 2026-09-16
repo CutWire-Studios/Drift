@@ -101,6 +101,10 @@ for _abi in "${_abis[@]}"; do
         echo "==> no prebuilt dependencies for $_abi; building them first"
         "$ROOT/third_party/build-android.sh" "$_abi"
     fi
+    if [ ! -f "$ROOT/third_party/prebuilt/skia/android-$_abi/SkiaConfig.cmake" ]; then
+        echo "==> no prebuilt Skia for $_abi; building it first"
+        "$ROOT/third_party/build-skia.sh" "android-$_abi"
+    fi
 done
 
 # --- configure and build -----------------------------------------------------
@@ -112,6 +116,7 @@ CMAKE_ARGS=(
     -DANDROID_NDK_ROOT="$ANDROID_NDK_ROOT"
     -DQT_ANDROID_ABIS="$QT_ANDROID_ABIS"
     -DDRIFT_BUNDLE_ONNXRUNTIME=OFF
+    -DDRIFT_WITH_SKIA=ON
     -DDRIFT_ANDROID_PACKAGE_NAME="$DRIFT_ANDROID_PACKAGE_NAME"
     -DDRIFT_ANDROID_APP_NAME="$DRIFT_ANDROID_APP_NAME"
 )

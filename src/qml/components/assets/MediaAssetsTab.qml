@@ -79,6 +79,9 @@ Item {
     signal exportRequested(int assetIndex)
     // Emitted when the empty-state action asks to import media.
     signal importRequested()
+    // Emitted when the empty-state action asks to import a whole folder. The parent owns the
+    // directory picker and the tree walk.
+    signal importFolderRequested()
     // Emitted from the card/row context menu — the only way to move an asset into a folder;
     // there is no drag-onto-a-folder-tile path on desktop or touch. Carries every selected
     // asset's id, not just the one clicked — see selectedAssetIds below. The parent owns the
@@ -210,18 +213,53 @@ Item {
     // down and rebuilt once per signal — quadratic work, and a chance of destroying a delegate
     // out from under a card that owns an active drag or has its context menu open.
     property int _refreshTick: 0
+    // Set instead of restarting the timer while a preview window has a metadata edit in flight
+    // (rotate, trim) — nothing behind that modal-ish window needs to reflect the change until it
+    // closes, and rebuilding while it's open is a visible, pointless flicker for the user.
+    property bool _refreshPending: false
     Timer {
         id: refreshCoalesceTimer
         interval: 100
-        onTriggered: root._refreshTick++
+        onTriggered: {
+            // Reassigning a freshly-built array to `model:` below is exactly the "different
+            // model, not an in-place update" case GridView/ListView cannot tell apart from a
+            // real reset, so it snaps contentY back to the top on every coalesced rebuild —
+            // disruptive when a metadata edit (rotate, trim, a probe landing) fires while the
+            // user is scrolled down. Save/restore across it instead of trying to avoid the
+            // rebuild; the restore is deferred a couple of turns so it runs after the view has
+            // actually relaid out its delegates against the new model.
+            const gridY = grid.contentY
+            const listY = listColumn.contentY
+            root._refreshTick++
+            Qt.callLater(() => Qt.callLater(() => {
+                grid.contentY = Math.min(gridY, Math.max(0, grid.contentHeight - grid.height))
+                listColumn.contentY =
+                    Math.min(listY, Math.max(0, listColumn.contentHeight - listColumn.height))
+            }))
+        }
+    }
+    function _requestRefresh() {
+        if (EditorState.assetPreviewWindowOpen)
+            root._refreshPending = true
+        else
+            refreshCoalesceTimer.restart()
     }
     Connections {
         target: EditorState
-        function onUndoStackChanged() { refreshCoalesceTimer.restart() }
+        function onUndoStackChanged() { root._requestRefresh() }
+        function onAssetPreviewWindowOpenChanged() {
+            if (!EditorState.assetPreviewWindowOpen && root._refreshPending) {
+                root._refreshPending = false
+                refreshCoalesceTimer.restart()
+            }
+        }
     }
     Connections {
         target: AssetLibrary
-        function onAssetMetadataChanged(assetId) { refreshCoalesceTimer.restart() }
+        // Only a card-level field (name/kind/duration/path) warrants rebuilding combinedItems;
+        // a thumbnail-only change (rotate, a thumbnail regenerating) refreshes its own delegate
+        // directly instead (see cardRoot/listRow's own Connections below) with no rebuild at all.
+        function onAssetCardChanged(assetId) { root._requestRefresh() }
     }
 
     // Tree view's flattened rows: the current folder's contents, with each open folder's
@@ -429,6 +467,20 @@ Item {
 
             readonly property bool selected: !isFolder && root.isAssetSelected(assetId)
 
+            // Bound to the model snapshot by default, but re-readable in place: a rotate/trim
+            // edit only ever changes this one card's thumbnail, so refreshing it directly here
+            // avoids MediaAssetsTab's full combinedItems rebuild (and the scroll-position
+            // flicker that comes with reassigning a GridView's whole model) for what is really a
+            // single-image update.
+            property string _liveThumbnailPath: thumbnailPath
+            Connections {
+                target: AssetLibrary
+                function onAssetMetadataChanged(assetId) {
+                    if (!cardRoot.isFolder && assetId === cardRoot.assetId)
+                        cardRoot._liveThumbnailPath = AssetLibrary.thumbnailAt(cardRoot.assetIndex)
+                }
+            }
+
             // Lift on grab: dims and grows slightly, so the card reads as
             // picked up rather than just sitting there while a ghost moves.
             opacity: assetDrag.active ? 0.85 : 1
@@ -506,15 +558,16 @@ Item {
                 SkeletonBox {
                     anchors.fill: parent
                     radius: parent.radius
-                    visible: !cardRoot.isFolder && thumbnailPath.length > 0
+                    visible: !cardRoot.isFolder && cardRoot._liveThumbnailPath.length > 0
                                 && gridThumb.status === Image.Loading
                 }
 
                 Image {
                     id: gridThumb
                     anchors.fill: parent
-                    visible: !cardRoot.isFolder && thumbnailPath.length > 0 && status === Image.Ready
-                    source: !cardRoot.isFolder && thumbnailPath.length > 0 ? EditorState.imageUrl(thumbnailPath) : ""
+                    visible: !cardRoot.isFolder && cardRoot._liveThumbnailPath.length > 0 && status === Image.Ready
+                    source: !cardRoot.isFolder && cardRoot._liveThumbnailPath.length > 0
+                            ? EditorState.imageUrl(cardRoot._liveThumbnailPath) : ""
                     fillMode: Image.PreserveAspectFit
                     asynchronous: true
                     // Fades in rather than popping at full opacity.
@@ -531,9 +584,11 @@ Item {
                     // thumbnail file falls back to the kind icon
                     // instead of staying blank forever.
                     visible: !cardRoot.isFolder
-                             && (thumbnailPath.length === 0 || gridThumb.status === Image.Error)
+                             && (cardRoot._liveThumbnailPath.length === 0 || gridThumb.status === Image.Error)
                     glyph: kind === "audio" ? Theme.icons.music
                             : kind === "image" ? Theme.icons.image
+                            : kind === "vector" ? Theme.icons.layers
+                            : kind === "model3d" ? Theme.icons.box
                             : Theme.icons.film
                     iconSize: Theme.spacing3xl
                     iconColor: Theme.mutedForeground
@@ -703,6 +758,8 @@ Item {
                     thumbnail: thumbnailPath
                     glyph: kind === "audio" ? Theme.icons.music
                             : kind === "image" ? Theme.icons.image
+                            : kind === "vector" ? Theme.icons.layers
+                            : kind === "model3d" ? Theme.icons.box
                             : Theme.icons.film
                     onLiftTapped: {
                         if (cardRoot.isFolder) {
@@ -857,6 +914,17 @@ Item {
                 && EditorState.replacingAssetId === AssetLibrary.assetIdAt(assetIndex)
             readonly property bool selected: !isFolder && root.isAssetSelected(assetId)
 
+            // See the matching property on gridDelegate's cardRoot: lets a rotate/trim edit
+            // refresh just this row's thumbnail without MediaAssetsTab rebuilding the whole list.
+            property string _liveThumbnailPath: thumbnailPath
+            Connections {
+                target: AssetLibrary
+                function onAssetMetadataChanged(assetId) {
+                    if (!listRow.isFolder && assetId === listRow.assetId)
+                        listRow._liveThumbnailPath = AssetLibrary.thumbnailAt(listRow.assetIndex)
+                }
+            }
+
             Drag.active: !isFolder && rowDrag.active
             Drag.dragType: Drag.Automatic
             Drag.supportedActions: Qt.CopyAction
@@ -889,15 +957,16 @@ Item {
                     SkeletonBox {
                         anchors.fill: parent
                         radius: parent.radius
-                        visible: !listRow.isFolder && thumbnailPath.length > 0
+                        visible: !listRow.isFolder && listRow._liveThumbnailPath.length > 0
                                     && listThumb.status === Image.Loading
                     }
 
                     Image {
                         id: listThumb
                         anchors.fill: parent
-                        visible: !listRow.isFolder && thumbnailPath.length > 0 && status === Image.Ready
-                        source: !listRow.isFolder && thumbnailPath.length > 0 ? EditorState.imageUrl(thumbnailPath) : ""
+                        visible: !listRow.isFolder && listRow._liveThumbnailPath.length > 0 && status === Image.Ready
+                        source: !listRow.isFolder && listRow._liveThumbnailPath.length > 0
+                                ? EditorState.imageUrl(listRow._liveThumbnailPath) : ""
                         fillMode: Image.PreserveAspectFit
                         // Was missing, so list thumbnails decoded
                         // on the UI thread and stalled scrolling.
@@ -907,9 +976,11 @@ Item {
                     IconGlyph {
                         anchors.centerIn: parent
                         visible: listRow.isFolder
-                                    || thumbnailPath.length === 0 || listThumb.status === Image.Error
+                                    || listRow._liveThumbnailPath.length === 0 || listThumb.status === Image.Error
                         glyph: listRow.isFolder ? Theme.icons.folder
-                               : (kind === "audio" ? Theme.icons.music : Theme.icons.film)
+                               : (kind === "audio" ? Theme.icons.music
+                                  : kind === "vector" ? Theme.icons.layers
+                                  : kind === "model3d" ? Theme.icons.box : Theme.icons.film)
                         iconSize: Theme.iconSizeBase
                         iconColor: Theme.mutedForeground
                     }
@@ -1038,6 +1109,8 @@ Item {
                     thumbnail: thumbnailPath
                     glyph: kind === "audio" ? Theme.icons.music
                             : kind === "image" ? Theme.icons.image
+                            : kind === "vector" ? Theme.icons.layers
+                            : kind === "model3d" ? Theme.icons.box
                             : Theme.icons.film
                     onLiftTapped: {
                         if (listRow.isFolder) {
@@ -1145,17 +1218,153 @@ Item {
 
     // First-run screen for a project with no media at all — folders included. This area used
     // to render as a blank rectangle, with no hint that the panel accepts drops or that an
-    // Import button exists.
-    EmptyState {
-        width: parent.width
-        height: parent.height
+    // Import button exists. Hand-built rather than the shared EmptyState: it carries two
+    // actions and the supported-format table, which no other empty state needs, and it
+    // centres in the whole panel instead of sitting against the top edge.
+    Item {
+        id: mediaEmptyState
+        anchors.fill: parent
         visible: AssetLibrary.count === 0 && BinFolderModel.count === 0 && !root.importing
-        glyph: Theme.icons.film
-        title: qsTr("No media yet")
-        hint: qsTr("Import video, audio or images, then drag them onto the timeline. Right-click a clip to preview and trim it first.")
-        actionText: qsTr("Import media")
-        actionVariant: "primary"
-        onActionTriggered: root.importRequested()
+
+        Column {
+            anchors.centerIn: parent
+            width: Math.min(parent.width - Theme.spacing3xl * 2, 300)
+            spacing: Theme.spacingXl
+
+            Rectangle {
+                anchors.horizontalCenter: parent.horizontalCenter
+                width: 48
+                height: 48
+                radius: Theme.radiusMd
+                color: Theme.panelAccent
+
+                IconGlyph {
+                    anchors.centerIn: parent
+                    glyph: Theme.icons.film
+                    iconSize: Theme.iconSizeXl
+                    iconColor: Theme.mutedForeground
+                }
+            }
+
+            Text {
+                width: parent.width
+                text: qsTr("No media yet")
+                color: Theme.panelForeground
+                font.family: Theme.fontFamily
+                font.pixelSize: Theme.fontSizeSm
+                font.weight: Font.Medium
+                horizontalAlignment: Text.AlignHCenter
+                wrapMode: Text.WordWrap
+            }
+
+            Text {
+                width: parent.width
+                // The formats table below now carries the kind list, so the hint only has to
+                // say how media gets in and what to do with it once it is here.
+                text: qsTr("Import files or drop them here, then drag them onto the timeline. Right-click a clip to preview and trim it first.")
+                color: Theme.mutedForeground
+                font.family: Theme.fontFamily
+                font.pixelSize: Theme.fontSizeXs
+                horizontalAlignment: Text.AlignHCenter
+                wrapMode: Text.WordWrap
+            }
+
+            Row {
+                anchors.horizontalCenter: parent.horizontalCenter
+                spacing: Theme.spacingLg
+
+                ThemedButton {
+                    text: qsTr("Import media")
+                    variant: "primary"
+                    glyph: Theme.icons.upload
+                    onClicked: root.importRequested()
+                }
+
+                ThemedButton {
+                    text: qsTr("Import folder")
+                    glyph: Theme.icons.folderInput
+                    onClicked: root.importFolderRequested()
+                }
+            }
+
+            Rectangle {
+                width: parent.width
+                height: formatColumn.height + Theme.spacingXl * 2
+                radius: Theme.radiusMd
+                color: "transparent"
+                border.width: Theme.borderWidth
+                border.color: Theme.panelBorder
+
+                Column {
+                    id: formatColumn
+                    anchors.centerIn: parent
+                    width: parent.width - Theme.spacingXl * 2
+                    spacing: Theme.spacingMd
+
+                    Text {
+                        width: parent.width
+                        text: qsTr("Supported formats")
+                        color: Theme.mutedForeground
+                        font.family: Theme.fontFamily
+                        font.pixelSize: Theme.fontSizeTiny
+                        font.weight: Font.Medium
+                        font.capitalization: Font.AllUppercase
+                        font.letterSpacing: 0.5
+                    }
+
+                    Repeater {
+                        model: [
+                            { glyph: Theme.icons.video, label: qsTr("Video"),
+                              formats: "MP4 · MOV · MKV · WEBM · AVI" },
+                            { glyph: Theme.icons.music, label: qsTr("Audio"),
+                              formats: "MP3 · WAV · FLAC · AAC · OGG" },
+                            { glyph: Theme.icons.image, label: qsTr("Images"),
+                              formats: "PNG · JPG · WEBP · HEIC · GIF" },
+                            { glyph: Theme.icons.shapes, label: qsTr("Vector"),
+                              formats: "SVG · Lottie (.json, .lottie)" },
+                            { glyph: Theme.icons.box, label: qsTr("3D"),
+                              formats: "glTF binary (.glb)" }
+                        ]
+
+                        delegate: Row {
+                            id: formatRow
+                            required property var modelData
+
+                            width: formatColumn.width
+                            spacing: Theme.spacingMd
+
+                            IconGlyph {
+                                anchors.verticalCenter: parent.verticalCenter
+                                glyph: formatRow.modelData.glyph
+                                iconSize: Theme.iconSizeSm
+                                iconColor: Theme.mutedForeground
+                            }
+
+                            Text {
+                                anchors.verticalCenter: parent.verticalCenter
+                                width: 48
+                                text: formatRow.modelData.label
+                                color: Theme.panelForeground
+                                font.family: Theme.fontFamily
+                                font.pixelSize: Theme.fontSizeXs
+                                elide: Text.ElideRight
+                            }
+
+                            Text {
+                                anchors.verticalCenter: parent.verticalCenter
+                                width: formatColumn.width - Theme.iconSizeSm - 48
+                                       - Theme.spacingMd * 2
+                                text: formatRow.modelData.formats
+                                color: Theme.mutedForeground
+                                font.family: Theme.fontFamily
+                                font.pixelSize: Theme.fontSizeTiny
+                                elide: Text.ElideRight
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
 
     ThemedTextField {

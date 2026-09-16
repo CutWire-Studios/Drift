@@ -2,8 +2,9 @@ import QtQuick
 import QtQuick.Controls.Basic
 import Drift
 
-// Session-only localhost MCP, written for the person connecting an assistant rather than
-// for someone reading a protocol spec.
+// Localhost MCP, written for the person connecting an assistant rather than for someone
+// reading a protocol spec. Access is per session; the key persists so a pasted setup keeps
+// working across launches.
 //
 // One surface, two hosts: AgentAccessDialog (the desktop header button) and the Agent
 // access section of SettingsPane, which is where the phone reaches it. Phase 0 added a
@@ -25,7 +26,7 @@ Column {
         size: "sm"
         wrapMode: Text.WordWrap
         visible: root.showIntro
-        text: qsTr("Let Cursor or Claude edit this project for you — add clips, change the timeline, and check how it looks. Only programs on this device. Starts off each time you open Drift; turn it off when you finish.")
+        text: qsTr("Let Cursor or Claude edit this project for you — add clips, change the timeline, and check how it looks. Only programs on this device. Starts off each time you open Drift; turn it off when you finish. The key stays the same between sessions, so a setup you pasted once keeps working.")
     }
 
     ThemedSwitch {
@@ -82,6 +83,17 @@ Column {
             visible: EditorState.mcpUrl.length > 0
             size: "sm"
             text: qsTr("Listening on %1").arg(EditorState.mcpUrl)
+        }
+
+        ThemedButton {
+            variant: "ghost"
+            glyph: Theme.icons.refresh
+            text: qsTr("New key")
+            tooltip: qsTr("Replace the key. Every assistant set up with the old one stops working until you copy the setup again.")
+            onClicked: {
+                EditorState.rotateMcpToken()
+                Toasts.success(qsTr("New key made — copy the setup again"))
+            }
         }
 
         ThemedLabel {

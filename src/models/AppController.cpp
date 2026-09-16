@@ -17,6 +17,10 @@
 #include "core/ShapePath.h"
 #include "core/SubtitleCue.h"
 #include "core/SrtIO.h"
+#include "core/DotLottie.h"
+#include "core/LottieTextImport.h"
+#include "core/TextAnimationPreset.h"
+#include "core/TextLook.h"
 #include "core/TextPresetStore.h"
 #include "core/TimelineOps.h"
 #include "core/Transition.h"
@@ -39,6 +43,7 @@
 // caches have no other owner outside src/engine to ask. A one-line forwarder on GpuCompositor
 // would restore the boundary.
 #include "engine/GlRuntime.h"
+#include "engine/GpuPreference.h"
 #include "engine/MediaThumbnail.h"
 #include "engine/AudioFileWriter.h"
 #include "engine/DeepFilterDenoiser.h"
@@ -55,8 +60,11 @@
 #include "engine/FaceSwapSource.h"
 #include "engine/FaceTrack.h"
 #include "engine/ModelAsset.h"
+#include "engine/ModelClipTransform.h"
 #include "engine/ReverseProxyCache.h"
 #include "engine/VaapiZeroCopy.h"
+#include "engine/VectorClipRenderer.h"
+#include "engine/VectorInspect.h"
 #include "playback/PlaybackDiagnostics.h"
 #include "engine/ReverseRenderer.h"
 #include "engine/Sam2Segmenter.h"
@@ -64,7 +72,10 @@
 #include "MulticamImageStore.h"
 #include "SegmentImageStore.h"
 #include "engine/FrameSheet.h"
-#include "engine/TextRaster.h"
+#include "engine/TextLayout.h"
+#ifdef DRIFT_WITH_SKIA
+#include "engine/SkiaTextPainter.h"
+#endif
 #include "engine/TransitionCatalog.h"
 #include "engine/WaveformSheet.h"
 #include "engine/WhisperTranscriber.h"
@@ -728,6 +739,10 @@ AppController::AppController(AssetLibrary *assetLibrary, QObject *parent)
     m_mcp = std::make_unique<drift::mcp::McpServer>(this);
     connect(m_mcp.get(), &drift::mcp::McpServer::runningChanged, this,
             &AppController::mcpRunningChanged);
+    // The token, URL and setup snippets all notify on mcpRunningChanged; a rotation
+    // changes the same set.
+    connect(m_mcp.get(), &drift::mcp::McpServer::tokenChanged, this,
+            &AppController::mcpRunningChanged);
     connect(m_mcp.get(), &drift::mcp::McpServer::errorChanged, this, &AppController::mcpErrorChanged);
     connect(&m_undoStack, &QUndoStack::indexChanged, this, &AppController::undoStackChanged);
     connect(&m_undoStack, &QUndoStack::indexChanged, this, [this] {
@@ -813,6 +828,14 @@ AppController::AppController(AssetLibrary *assetLibrary, QObject *parent)
                                         "instead.")
                                          .arg(backendName),
                                QStringLiteral("warning"));
+            });
+
+    // Decoding on the wrong GPU is not a failure — the picture is correct, it is just paying a
+    // bus crossing per frame that the user did not knowingly ask for. Say so once.
+    connect(&m_playback, &PlaybackEngine::zeroCopyUnavailable, this,
+            [this](const QString &note, const QString &reason) {
+                qInfo("PlaybackEngine: preview zero-copy declined: %s", qPrintable(reason));
+                setLastMessage(note, QStringLiteral("warning"));
             });
 
     // Unlike a decode fallback, nothing still works when this fires: the preview
@@ -946,7 +969,13 @@ AppController::AppController(AssetLibrary *assetLibrary, QObject *parent)
     // will use zero-copy on drivers it has been verified against, so showing the box
     // unchecked would contradict what the preview is actually doing. Unchecking writes an
     // explicit false, which turns it off everywhere.
+#if defined(Q_OS_WIN)
+    // Same switch, Windows' import: on by default, so checked unless explicitly turned off.
+    m_vaapiZeroCopy = drift::d3d11ZeroCopyEnabled();
+#else
     m_vaapiZeroCopy = drift::vaapiZeroCopyMode() != drift::VaapiZeroCopyMode::Off;
+#endif
+    m_preferredGpu = drift::gpu::preferenceId(drift::gpu::storedPreference());
     m_mediaCodecZeroCopy =
         settings.value(QStringLiteral("preview/mediaCodecZeroCopy"), false).toBool();
     m_invertTimelineScroll = settings.value(QStringLiteral("timeline/invertScroll"), false).toBool();
@@ -1200,62 +1229,36 @@ bool trackAllowsTransitions(drift::TrackType type)
 
 void syncOverlapTransitions(drift::Project &project)
 {
+    constexpr drift::TimeUs kDefaultAdjacentDurationUs = drift::secondsToUs(0.5);
+
     for (drift::Track &track : project.tracks()) {
         if (!trackAllowsTransitions(track.type))
             continue;
 
-        QList<int> order;
-        order.reserve(track.clips.size());
-        for (int i = 0; i < track.clips.size(); ++i)
-            order.append(i);
-        std::sort(order.begin(), order.end(), [&track](int a, int b) {
-            const drift::Clip &ca = track.clips.at(a);
-            const drift::Clip &cb = track.clips.at(b);
-            if (ca.timelineStart != cb.timelineStart)
-                return ca.timelineStart < cb.timelineStart;
-            return ca.id < cb.id;
-        });
-
-        for (int i = 0; i + 1 < order.size(); ++i) {
-            const int fromIndex = order.at(i);
-            const int toIndex = order.at(i + 1);
-            const drift::Clip &fromClip = track.clips.at(fromIndex);
-            const drift::Clip &toClip = track.clips.at(toIndex);
-            if (!drift::clipsPhysicallyOverlap(fromClip, toClip))
-                continue;
-
-            const drift::TimeUs overlapUs = drift::physicalOverlapDurationUs(fromClip, toClip);
-            if (overlapUs < drift::secondsToUs(0.05))
-                continue;
-
-            drift::Transition *existing = nullptr;
-            for (drift::Transition &transition : track.transitions) {
-                if (transition.fromClipId == fromClip.id && transition.toClipId == toClip.id) {
-                    existing = &transition;
-                    break;
-                }
-            }
-
-            if (existing) {
-                existing->durationUs = overlapUs;
-                continue;
-            }
-
-            drift::Transition transition;
-            transition.id = QUuid::createUuid().toString(QUuid::WithoutBraces);
-            transition.fromClipId = fromClip.id;
-            transition.toClipId = toClip.id;
-            transition.kindId = QStringLiteral("crossfade");
-            transition.durationUs = overlapUs;
-            track.transitions.append(transition);
-        }
-
+        // Overlap is stacking, not an implicit fade. Only keep and retune transitions the
+        // user (or MCP) actually added.
         for (int i = track.transitions.size() - 1; i >= 0; --i) {
-            const drift::Transition &transition = track.transitions.at(i);
+            drift::Transition &transition = track.transitions[i];
             const drift::Clip *fromClip = drift::clipById(track, transition.fromClipId);
             const drift::Clip *toClip = drift::clipById(track, transition.toClipId);
-            if (!fromClip || !toClip || !drift::clipsEligibleForTransition(*fromClip, *toClip))
+            if (!fromClip || !toClip || !drift::clipsEligibleForTransition(*fromClip, *toClip)) {
                 track.transitions.removeAt(i);
+                continue;
+            }
+
+            if (drift::clipsPhysicallyOverlap(*fromClip, *toClip)) {
+                const drift::TimeUs overlapUs = drift::physicalOverlapDurationUs(*fromClip, *toClip);
+                if (overlapUs > 0)
+                    transition.durationUs = overlapUs;
+                continue;
+            }
+
+            // Adjacent: a leftover overlap duration can be longer than either clip, which
+            // would paint a virtual window from before t=0. Explicit 0.75s fades stay put.
+            const drift::TimeUs shorter =
+                qMin(fromClip->timelineDuration, toClip->timelineDuration);
+            if (transition.durationUs > shorter)
+                transition.durationUs = qMin(kDefaultAdjacentDurationUs, shorter);
         }
     }
 }
@@ -1329,34 +1332,481 @@ QVariantList AppController::tracks() const
 
 namespace {
 
-void applyTextAnimationPatch(drift::TextAnimation *anim, const QVariantMap &m)
+// A slot value as the plain QML/MCP value: colours as hex, scalars as numbers, vectors as
+// [x, y]. The typed {type, value} object form is accepted back too.
+QVariant slotValueToVariant(const drift::VectorSlotValue &v)
+{
+    switch (v.type) {
+    case drift::VectorSlotValue::Type::Color:
+        return v.color.name(QColor::HexArgb);
+    case drift::VectorSlotValue::Type::Scalar:
+        return v.scalar;
+    case drift::VectorSlotValue::Type::Vec2:
+        return QVariantList{v.vec2.x(), v.vec2.y()};
+    case drift::VectorSlotValue::Type::Text:
+        return v.text;
+    case drift::VectorSlotValue::Type::Image:
+        return v.image;
+    }
+    return {};
+}
+
+drift::VectorSlotValue slotValueFromVariant(const QVariant &v, drift::VectorSlotValue::Type hint)
+{
+    if (v.userType() == QMetaType::QVariantMap) {
+        const QVariantMap m = v.toMap();
+        if (m.contains(QStringLiteral("type")))
+            return drift::VectorSlotValue::fromJson(QJsonObject::fromVariantMap(m));
+    }
+    switch (hint) {
+    case drift::VectorSlotValue::Type::Color:
+        return drift::VectorSlotValue::fromColor(QColor(v.toString()));
+    case drift::VectorSlotValue::Type::Scalar:
+        if (v.userType() == QMetaType::Bool)
+            return drift::VectorSlotValue::fromScalar(v.toBool() ? 1.0 : 0.0);
+        return drift::VectorSlotValue::fromScalar(v.toDouble());
+    case drift::VectorSlotValue::Type::Vec2: {
+        const QVariantList l = v.toList();
+        return drift::VectorSlotValue::fromVec2(QPointF(l.value(0).toDouble(), l.value(1).toDouble()));
+    }
+    case drift::VectorSlotValue::Type::Text:
+        return drift::VectorSlotValue::fromText(v.toString());
+    case drift::VectorSlotValue::Type::Image:
+        return drift::VectorSlotValue::fromImage(v.toString());
+    }
+    return drift::VectorSlotValue::fromScalar(v.toDouble());
+}
+
+drift::VectorSlotValue::Type slotTypeForSpec(const drift::TextAnimParamSpec &spec)
+{
+    switch (spec.type) {
+    case drift::TextAnimParamSpec::Type::Color:
+        return drift::VectorSlotValue::Type::Color;
+    case drift::TextAnimParamSpec::Type::Vec2:
+        return drift::VectorSlotValue::Type::Vec2;
+    case drift::TextAnimParamSpec::Type::Text:
+    case drift::TextAnimParamSpec::Type::Enum:
+        return drift::VectorSlotValue::Type::Text;
+    case drift::TextAnimParamSpec::Type::Scalar:
+    case drift::TextAnimParamSpec::Type::Bool:
+        return drift::VectorSlotValue::Type::Scalar;
+    }
+    return drift::VectorSlotValue::Type::Scalar;
+}
+
+drift::VectorSlotValue::Type guessSlotType(const QVariant &v)
+{
+    if (v.userType() == QMetaType::QString) {
+        const QString s = v.toString();
+        return s.startsWith(QLatin1Char('#')) ? drift::VectorSlotValue::Type::Color : drift::VectorSlotValue::Type::Text;
+    }
+    if (v.userType() == QMetaType::QVariantList)
+        return drift::VectorSlotValue::Type::Vec2;
+    return drift::VectorSlotValue::Type::Scalar;
+}
+
+QVariantMap paramSpecToMap(const drift::TextAnimParamSpec &spec)
+{
+    QVariantMap m{
+        {QStringLiteral("id"), spec.id},
+        {QStringLiteral("label"), spec.label},
+        {QStringLiteral("type"), drift::textAnimParamTypeToString(spec.type)},
+        {QStringLiteral("default"), slotValueToVariant(spec.defaultValue)},
+    };
+    if (!spec.unit.isEmpty())
+        m.insert(QStringLiteral("unit"), spec.unit);
+    if (!spec.group.isEmpty())
+        m.insert(QStringLiteral("group"), spec.group);
+    if (spec.type == drift::TextAnimParamSpec::Type::Scalar) {
+        m.insert(QStringLiteral("min"), spec.min);
+        m.insert(QStringLiteral("max"), spec.max);
+        m.insert(QStringLiteral("step"), spec.step);
+    }
+    if (spec.type == drift::TextAnimParamSpec::Type::Enum)
+        m.insert(QStringLiteral("values"), spec.enumValues);
+    return m;
+}
+
+QVariantList paramSpecsToList(const QList<drift::TextAnimParamSpec> &specs)
+{
+    QVariantList out;
+    for (const drift::TextAnimParamSpec &spec : specs)
+        out.append(paramSpecToMap(spec));
+    return out;
+}
+
+QVariantMap paramsToMap(const QMap<QString, drift::VectorSlotValue> &params)
+{
+    QVariantMap out;
+    for (auto it = params.constBegin(); it != params.constEnd(); ++it)
+        out.insert(it.key(), slotValueToVariant(*it));
+    return out;
+}
+
+// Typed by the spec when the param is declared, guessed from the value otherwise.
+void mergeParamsFromMap(QMap<QString, drift::VectorSlotValue> *params, const QVariantMap &m,
+                        const QList<drift::TextAnimParamSpec> &specs)
+{
+    for (auto it = m.constBegin(); it != m.constEnd(); ++it) {
+        drift::VectorSlotValue::Type hint = guessSlotType(*it);
+        for (const drift::TextAnimParamSpec &spec : specs) {
+            if (spec.id == it.key()) {
+                hint = slotTypeForSpec(spec);
+                break;
+            }
+        }
+        params->insert(it.key(), slotValueFromVariant(*it, hint));
+    }
+}
+
+QList<drift::TextAnimParamSpec> specsForSlot(const drift::TextAnimationSlot &slot)
+{
+    if (!slot.presetId.isEmpty()) {
+        if (const std::optional<drift::TextAnimationPreset> preset =
+                drift::TextAnimationPresetCatalog::instance().presetForId(slot.presetId))
+            return preset->params;
+    }
+    return drift::textAnimationCommonParams();
+}
+
+const char *const kSlotShortcuts[] = {"duration", "stagger", "unit", "order", "ease", "period", "amount"};
+
+QVariantMap textAnimationSlotToMap(const drift::TextAnimationSlot &slot)
+{
+    QVariantMap m{
+        {QStringLiteral("preset"), slot.presetId},
+        {QStringLiteral("enabled"), slot.enabled},
+        {QStringLiteral("custom"), slot.presetId.isEmpty() && !slot.animators.isEmpty()},
+    };
+    // An empty slot is just that; its defaults would only bloat every clip row.
+    if (slot.presetId.isEmpty() && slot.animators.isEmpty())
+        return m;
+    m.insert(QStringLiteral("delay"), drift::usToSeconds(slot.delayUs));
+    m.insert(QStringLiteral("period"), drift::usToSeconds(slot.periodUs));
+    QMap<QString, drift::VectorSlotValue> params;
+    for (const drift::TextAnimParamSpec &spec : specsForSlot(slot))
+        params.insert(spec.id, spec.defaultValue);
+    for (auto it = slot.params.constBegin(); it != slot.params.constEnd(); ++it)
+        params.insert(it.key(), *it);
+    m.insert(QStringLiteral("params"), paramsToMap(params));
+    for (const char *key : kSlotShortcuts) {
+        const auto it = params.constFind(QLatin1String(key));
+        if (it != params.constEnd())
+            m.insert(QLatin1String(key), slotValueToVariant(*it));
+    }
+    if (slot.presetId.isEmpty() && !slot.animators.isEmpty()) {
+        QVariantList animators;
+        for (const drift::TextAnimator &a : slot.animators)
+            animators.append(drift::textAnimatorToJson(a).toVariantMap());
+        m.insert(QStringLiteral("animators"), animators);
+    }
+    return m;
+}
+
+QVariantMap textAnimationSetToMap(const drift::TextAnimationSet &set)
+{
+    const drift::TextCaret &c = set.caret;
+    return {
+        {QStringLiteral("in"), textAnimationSlotToMap(set.in)},
+        {QStringLiteral("out"), textAnimationSlotToMap(set.out)},
+        {QStringLiteral("loop"), textAnimationSlotToMap(set.loop)},
+        {QStringLiteral("caret"), QVariantMap{{QStringLiteral("enabled"), c.enabled},
+                                              {QStringLiteral("lead"), drift::usToSeconds(c.leadUs)},
+                                              {QStringLiteral("blinkOn"), drift::usToSeconds(c.blinkOnUs)},
+                                              {QStringLiteral("blinkOff"), drift::usToSeconds(c.blinkOffUs)},
+                                              {QStringLiteral("holdAfter"), c.holdAfterUs < 0 ? -1.0 : drift::usToSeconds(c.holdAfterUs)},
+                                              {QStringLiteral("widthEm"), c.widthEm},
+                                              {QStringLiteral("heightEm"), c.heightEm},
+                                              {QStringLiteral("shape"), drift::textCaretShapeToString(c.shape)},
+                                              {QStringLiteral("color"), c.color.isValid() ? c.color.name(QColor::HexArgb) : QString()}}},
+        {QStringLiteral("anchorGrouping"), drift::textAnchorGroupingToString(set.anchorGrouping)},
+        {QStringLiteral("anchorAlignment"), QVariantList{set.anchorAlignment.x(), set.anchorAlignment.y()}},
+        {QStringLiteral("custom"), (set.in.presetId.isEmpty() && !set.in.animators.isEmpty())
+                                       || (set.out.presetId.isEmpty() && !set.out.animators.isEmpty())
+                                       || (set.loop.presetId.isEmpty() && !set.loop.animators.isEmpty())},
+    };
+}
+
+// Partial patch of one slot. Choosing a preset resets its params to the preset's defaults
+// (the reveal controls are kept when `keepControls` is set); `animators` makes the slot inline.
+void applyTextAnimationSlotPatch(drift::TextAnimationSlot *slot, const QVariantMap &m)
+{
+    if (m.contains(QStringLiteral("preset"))) {
+        const QString id = m.value(QStringLiteral("preset")).toString();
+        if (id.isEmpty() || id == QLatin1String("none")) {
+            *slot = drift::TextAnimationSlot{};
+        } else if (id != slot->presetId) {
+            QMap<QString, drift::VectorSlotValue> kept;
+            if (m.value(QStringLiteral("keepControls")).toBool()) {
+                for (const char *key : kSlotShortcuts) {
+                    const auto it = slot->params.constFind(QLatin1String(key));
+                    if (it != slot->params.constEnd())
+                        kept.insert(QLatin1String(key), *it);
+                }
+            }
+            slot->presetId = id;
+            slot->params = kept;
+            slot->animators.clear();
+            slot->durationUs = 0;
+            slot->delayUs = 0;
+            slot->periodUs = 0;
+            slot->enabled = true;
+        }
+    }
+    if (m.contains(QStringLiteral("animators"))) {
+        slot->animators.clear();
+        for (const QVariant &v : m.value(QStringLiteral("animators")).toList())
+            slot->animators.append(drift::textAnimatorFromJson(QJsonObject::fromVariantMap(v.toMap())));
+        slot->presetId.clear();
+        slot->params.clear();
+        slot->enabled = true;
+    }
+    const QList<drift::TextAnimParamSpec> specs = specsForSlot(*slot);
+    mergeParamsFromMap(&slot->params, m.value(QStringLiteral("params")).toMap(), specs);
+    QVariantMap shortcuts;
+    for (const char *key : kSlotShortcuts) {
+        if (m.contains(QLatin1String(key)))
+            shortcuts.insert(QLatin1String(key), m.value(QLatin1String(key)));
+    }
+    mergeParamsFromMap(&slot->params, shortcuts, specs);
+    if (m.contains(QStringLiteral("delay")))
+        slot->delayUs = drift::secondsToUs(qMax(0.0, m.value(QStringLiteral("delay")).toDouble()));
+    if (m.contains(QStringLiteral("durationOverride")))
+        slot->durationUs = drift::secondsToUs(qMax(0.0, m.value(QStringLiteral("durationOverride")).toDouble()));
+    if (m.contains(QStringLiteral("period")))
+        slot->periodUs = drift::secondsToUs(qMax(0.0, m.value(QStringLiteral("period")).toDouble()));
+    if (m.contains(QStringLiteral("enabled")))
+        slot->enabled = m.value(QStringLiteral("enabled")).toBool();
+}
+
+void applyTextCaretPatch(drift::TextCaret *c, const QVariantMap &m)
+{
+    if (m.contains(QStringLiteral("enabled")))
+        c->enabled = m.value(QStringLiteral("enabled")).toBool();
+    if (m.contains(QStringLiteral("lead")))
+        c->leadUs = drift::secondsToUs(qMax(0.0, m.value(QStringLiteral("lead")).toDouble()));
+    if (m.contains(QStringLiteral("blinkOn")))
+        c->blinkOnUs = drift::secondsToUs(qMax(0.0, m.value(QStringLiteral("blinkOn")).toDouble()));
+    if (m.contains(QStringLiteral("blinkOff")))
+        c->blinkOffUs = drift::secondsToUs(qMax(0.0, m.value(QStringLiteral("blinkOff")).toDouble()));
+    if (m.contains(QStringLiteral("holdAfter"))) {
+        const double v = m.value(QStringLiteral("holdAfter")).toDouble();
+        c->holdAfterUs = v < 0.0 ? -1 : drift::secondsToUs(v);
+    }
+    if (m.contains(QStringLiteral("widthEm")))
+        c->widthEm = qBound(0.01, m.value(QStringLiteral("widthEm")).toDouble(), 2.0);
+    if (m.contains(QStringLiteral("heightEm")))
+        c->heightEm = qBound(0.1, m.value(QStringLiteral("heightEm")).toDouble(), 2.0);
+    if (m.contains(QStringLiteral("shape")))
+        c->shape = drift::textCaretShapeFromString(m.value(QStringLiteral("shape")).toString());
+    if (m.contains(QStringLiteral("color"))) {
+        const QString color = m.value(QStringLiteral("color")).toString();
+        c->color = color.isEmpty() ? QColor() : QColor(color);
+    }
+}
+
+void applyTextAnimationSetPatch(drift::TextAnimationSet *set, const QVariantMap &m)
+{
+    if (m.contains(QStringLiteral("in")))
+        applyTextAnimationSlotPatch(&set->in, m.value(QStringLiteral("in")).toMap());
+    if (m.contains(QStringLiteral("out")))
+        applyTextAnimationSlotPatch(&set->out, m.value(QStringLiteral("out")).toMap());
+    if (m.contains(QStringLiteral("loop")))
+        applyTextAnimationSlotPatch(&set->loop, m.value(QStringLiteral("loop")).toMap());
+    if (m.contains(QStringLiteral("caret")))
+        applyTextCaretPatch(&set->caret, m.value(QStringLiteral("caret")).toMap());
+    if (m.contains(QStringLiteral("anchorGrouping")))
+        set->anchorGrouping = drift::textAnchorGroupingFromString(m.value(QStringLiteral("anchorGrouping")).toString());
+    if (m.contains(QStringLiteral("anchorAlignment"))) {
+        const QVariantList l = m.value(QStringLiteral("anchorAlignment")).toList();
+        set->anchorAlignment = QPointF(qBound(-1.0, l.value(0).toDouble(), 1.0), qBound(-1.0, l.value(1).toDouble(), 1.0));
+    }
+}
+
+// The legacy animIn/animOut shape: {kind, duration, ease, unit, stagger, order}. Read back from
+// the slot for old callers, and accepted as a patch by rebuilding the slot from the kind table.
+const QMap<QString, QString> &legacyKindForPreset()
+{
+    static const QMap<QString, QString> kinds{
+        {QStringLiteral("fade"), QStringLiteral("fade")},       {QStringLiteral("slide-up"), QStringLiteral("slideUp")},
+        {QStringLiteral("slide-down"), QStringLiteral("slideDown")}, {QStringLiteral("slide-left"), QStringLiteral("slideLeft")},
+        {QStringLiteral("slide-right"), QStringLiteral("slideRight")}, {QStringLiteral("pop"), QStringLiteral("pop")},
+        {QStringLiteral("blur-in"), QStringLiteral("blur")},     {QStringLiteral("typewriter"), QStringLiteral("typewriter")},
+        {QStringLiteral("rise"), QStringLiteral("rise")},       {QStringLiteral("bounce"), QStringLiteral("bounce")},
+        {QStringLiteral("wave"), QStringLiteral("wave")},
+    };
+    return kinds;
+}
+
+QVariantMap legacyTextAnimationMap(const drift::TextAnimationSlot &slot)
+{
+    const QVariantMap full = textAnimationSlotToMap(slot);
+    QString kind = QStringLiteral("none");
+    if (slot.isActive())
+        kind = legacyKindForPreset().value(slot.presetId, slot.presetId.isEmpty() ? QStringLiteral("custom") : slot.presetId);
+    return {
+        {QStringLiteral("kind"), kind},
+        {QStringLiteral("duration"), full.value(QStringLiteral("duration"), 0.4)},
+        {QStringLiteral("ease"), full.value(QStringLiteral("ease"), QStringLiteral("easeOut"))},
+        {QStringLiteral("unit"), full.value(QStringLiteral("unit"), QStringLiteral("block"))},
+        {QStringLiteral("stagger"), full.value(QStringLiteral("stagger"), 0.06)},
+        {QStringLiteral("order"), full.value(QStringLiteral("order"), QStringLiteral("forward"))},
+    };
+}
+
+void applyLegacyTextAnimationPatch(drift::TextAnimationSet *set, const QString &which, const QVariantMap &m)
 {
     if (m.isEmpty())
         return;
-    if (m.contains(QStringLiteral("kind")))
-        anim->kind = drift::textAnimKindFromString(m.value(QStringLiteral("kind")).toString());
-    if (m.contains(QStringLiteral("duration")))
-        anim->durationUs = drift::secondsToUs(qBound(0.0, m.value(QStringLiteral("duration")).toDouble(), 10.0));
-    if (m.contains(QStringLiteral("ease")))
-        anim->ease = drift::textEaseFromString(m.value(QStringLiteral("ease")).toString());
-    if (m.contains(QStringLiteral("unit")))
-        anim->unit = drift::textAnimUnitFromString(m.value(QStringLiteral("unit")).toString());
-    if (m.contains(QStringLiteral("stagger")))
-        anim->staggerUs = drift::secondsToUs(qBound(0.0, m.value(QStringLiteral("stagger")).toDouble(), 2.0));
-    if (m.contains(QStringLiteral("order")))
-        anim->order = drift::textAnimOrderFromString(m.value(QStringLiteral("order")).toString());
+    drift::TextAnimationSlot *slot = which == QLatin1String("animIn") ? &set->in : &set->out;
+    QVariantMap current = legacyTextAnimationMap(*slot);
+    for (auto it = m.constBegin(); it != m.constEnd(); ++it)
+        current.insert(it.key(), *it);
+    const QString kind = current.value(QStringLiteral("kind")).toString();
+    if (m.contains(QStringLiteral("kind")) || !slot->isActive()) {
+        bool isLoop = false;
+        drift::TextAnimationSlot rebuilt = drift::legacyTextAnimationSlot(
+            kind, drift::secondsToUs(qBound(0.0, current.value(QStringLiteral("duration")).toDouble(), 10.0)),
+            current.value(QStringLiteral("ease")).toString(), current.value(QStringLiteral("unit")).toString(),
+            drift::secondsToUs(qBound(0.0, current.value(QStringLiteral("stagger")).toDouble(), 2.0)),
+            current.value(QStringLiteral("order")).toString(), &isLoop);
+        if (isLoop && which == QLatin1String("animIn")) {
+            set->loop = rebuilt;
+            *slot = drift::TextAnimationSlot{};
+        } else {
+            *slot = rebuilt;
+        }
+        return;
+    }
+    QVariantMap shortcuts;
+    for (const char *key : {"duration", "stagger", "unit", "order", "ease"})
+        if (m.contains(QLatin1String(key)))
+            shortcuts.insert(QLatin1String(key), m.value(QLatin1String(key)));
+    applyTextAnimationSlotPatch(slot, shortcuts);
 }
 
-QVariantMap textAnimationToMap(const drift::TextAnimation &a)
+QVariantMap textLayerToMap(const drift::TextShadingLayer &layer)
 {
-    return {
-        {QStringLiteral("kind"), drift::textAnimKindToString(a.kind)},
-        {QStringLiteral("duration"), drift::usToSeconds(a.durationUs)},
-        {QStringLiteral("ease"), drift::textEaseToString(a.ease)},
-        {QStringLiteral("unit"), drift::textAnimUnitToString(a.unit)},
-        {QStringLiteral("stagger"), drift::usToSeconds(a.staggerUs)},
-        {QStringLiteral("order"), drift::textAnimOrderToString(a.order)},
+    return drift::textShadingLayerToJson(layer).toVariantMap();
+}
+
+QJsonObject deepMergeJson(QJsonObject base, const QJsonObject &patch)
+{
+    for (auto it = patch.constBegin(); it != patch.constEnd(); ++it) {
+        if (it->isObject() && base.value(it.key()).isObject())
+            base.insert(it.key(), deepMergeJson(base.value(it.key()).toObject(), it->toObject()));
+        else
+            base.insert(it.key(), *it);
+    }
+    return base;
+}
+
+void applyTextLayerPatch(drift::TextShadingLayer *layer, const QVariantMap &patch)
+{
+    const QString id = layer->id;
+    *layer = drift::textShadingLayerFromJson(
+        deepMergeJson(drift::textShadingLayerToJson(*layer), QJsonObject::fromVariantMap(patch)));
+    layer->id = id;
+}
+
+// The "layers" (replace the stack) and "layer" (patch one, by id or index) keys a style patch
+// may carry. Returns true when either applied.
+bool applyLayerStackPatch(QList<drift::TextShadingLayer> &stack, const QVariantMap &m,
+                          const drift::TextShadingLayer &fallback)
+{
+    bool edited = false;
+    if (m.contains(QStringLiteral("layers"))) {
+        QList<drift::TextShadingLayer> layers;
+        for (const QVariant &v : m.value(QStringLiteral("layers")).toList()) {
+            drift::TextShadingLayer layer = drift::textShadingLayerFromJson(QJsonObject::fromVariantMap(v.toMap()));
+            if (layer.id.isEmpty() || drift::findTextLayer(layers, layer.id))
+                layer.id = drift::mintTextLayerId(layers);
+            layers.append(layer);
+        }
+        if (layers.isEmpty())
+            layers = {fallback};
+        stack = layers;
+        edited = true;
+    }
+    if (m.contains(QStringLiteral("layer"))) {
+        const QVariantMap patch = m.value(QStringLiteral("layer")).toMap();
+        drift::TextShadingLayer *layer = nullptr;
+        if (patch.contains(QStringLiteral("id")))
+            layer = drift::findTextLayer(stack, patch.value(QStringLiteral("id")).toString().toLower());
+        else if (patch.contains(QStringLiteral("index"))) {
+            const int index = patch.value(QStringLiteral("index")).toInt();
+            if (index >= 0 && index < stack.size())
+                layer = &stack[index];
+        }
+        if (layer) {
+            QVariantMap fields = patch;
+            fields.remove(QStringLiteral("id"));
+            fields.remove(QStringLiteral("index"));
+            applyTextLayerPatch(layer, fields);
+            edited = true;
+        }
+    }
+    return edited;
+}
+
+// Where a new layer of this kind goes: shadows and glows behind, strokes under the fills, fills
+// on top — what a user expects to see without reordering.
+int naturalLayerIndex(const QList<drift::TextShadingLayer> &layers, drift::TextLayerKind kind)
+{
+    const auto rank = [](drift::TextLayerKind k) {
+        switch (k) {
+        case drift::TextLayerKind::Extrude:
+            return 0;
+        case drift::TextLayerKind::Shadow:
+            return 1;
+        case drift::TextLayerKind::Glow:
+            return 2;
+        case drift::TextLayerKind::Stroke:
+            return 3;
+        case drift::TextLayerKind::Fill:
+            return 4;
+        }
+        return 4;
     };
+    int index = 0;
+    for (int i = 0; i < layers.size(); ++i) {
+        if (rank(layers.at(i).kind) <= rank(kind))
+            index = i + 1;
+    }
+    return index;
+}
+
+// The well-known legacy layer, created with the legacy defaults when the style has none.
+drift::TextShadingLayer *ensureLegacyLayer(drift::TextStyle &s, drift::TextLayerKind kind)
+{
+    if (drift::TextShadingLayer *existing = drift::firstTextLayerOfKind(s.layers, kind, false))
+        return existing;
+    drift::TextShadingLayer layer;
+    switch (kind) {
+    case drift::TextLayerKind::Fill:
+        layer = drift::solidFillLayer(Qt::white);
+        break;
+    case drift::TextLayerKind::Stroke:
+        layer = drift::strokeLayer(2.0, Qt::black);
+        break;
+    case drift::TextLayerKind::Shadow:
+        layer = drift::shadowLayer(Qt::black, 0.0, 4.0, 8.0, 0.6);
+        break;
+    case drift::TextLayerKind::Glow:
+        layer = drift::glowLayer(Qt::white, 18.0, 0.8);
+        break;
+    case drift::TextLayerKind::Extrude:
+        layer = drift::solidFillLayer(QColor(40, 40, 40), QStringLiteral("extrude"));
+        layer.kind = drift::TextLayerKind::Extrude;
+        layer.width = 6.0;
+        break;
+    }
+    layer.enabled = false;
+    if (drift::findTextLayer(s.layers, layer.id))
+        layer.id = drift::mintTextLayerId(s.layers);
+    const int index = naturalLayerIndex(s.layers, kind);
+    s.layers.insert(index, layer);
+    return &s.layers[index];
 }
 
 QVariantMap textHighlightToMap(const drift::TextHighlight &h)
@@ -1420,33 +1870,31 @@ void applyWordAccentPatch(drift::WordAccent *accent, const QVariantMap &m)
     applyTextHighlightPatch(&accent->highlight, m.value(QStringLiteral("highlight")).toMap());
 }
 
-QVariantMap textStyleToMap(const drift::TextStyle &s)
+QVariantMap keyframeTrackToMap(const drift::KeyframeTrack<double> &track,
+                               drift::TimeUs timelineStart);
+
+// `timelineStart` places the keyframe times on the timeline for the inspector rows and the
+// keyframe graph, which read them the same way they read a mask's.
+QVariantMap textStyleToMap(const drift::TextStyle &s, drift::TimeUs timelineStart)
 {
-    return {
+    QVariantList layers;
+    for (const drift::TextShadingLayer &layer : s.layers)
+        layers.append(textLayerToMap(layer));
+    QVariantMap map{
         {QStringLiteral("packId"), s.packId},
         {QStringLiteral("fontFamily"), s.fontFamily},
         {QStringLiteral("pixelSize"), s.pixelSize},
         {QStringLiteral("fontWeight"), s.fontWeight},
         {QStringLiteral("italic"), s.italic},
-        {QStringLiteral("color"), s.color.name(QColor::HexArgb)},
+        {QStringLiteral("layers"), layers},
+        {QStringLiteral("lookId"), s.lookId},
+        {QStringLiteral("lookParams"), paramsToMap(s.lookParams)},
+        {QStringLiteral("pathBend"), s.pathBend},
         {QStringLiteral("align"), drift::textAlignToString(s.align)},
         {QStringLiteral("valign"), drift::textVAlignToString(s.valign)},
         {QStringLiteral("wordWrap"), s.wordWrap},
         {QStringLiteral("lineHeight"), s.lineHeight},
         {QStringLiteral("letterSpacing"), s.letterSpacing},
-        {QStringLiteral("outlineEnabled"), s.outlineEnabled},
-        {QStringLiteral("outlineWidth"), s.outlineWidth},
-        {QStringLiteral("outlineColor"), s.outlineColor.name(QColor::HexArgb)},
-        {QStringLiteral("shadowEnabled"), s.shadowEnabled},
-        {QStringLiteral("shadowOffsetX"), s.shadowOffsetX},
-        {QStringLiteral("shadowOffsetY"), s.shadowOffsetY},
-        {QStringLiteral("shadowBlur"), s.shadowBlur},
-        {QStringLiteral("shadowOpacity"), s.shadowOpacity},
-        {QStringLiteral("shadowColor"), s.shadowColor.name(QColor::HexArgb)},
-        {QStringLiteral("glowEnabled"), s.glowEnabled},
-        {QStringLiteral("glowColor"), s.glowColor.name(QColor::HexArgb)},
-        {QStringLiteral("glowRadius"), s.glowRadius},
-        {QStringLiteral("glowOpacity"), s.glowOpacity},
         {QStringLiteral("boxEnabled"), s.boxEnabled},
         {QStringLiteral("boxColor"), s.boxColor.name(QColor::HexArgb)},
         {QStringLiteral("boxPadding"), s.boxPadding},
@@ -1457,9 +1905,55 @@ QVariantMap textStyleToMap(const drift::TextStyle &s)
         {QStringLiteral("underlineWidth"), s.underlineWidth},
         {QStringLiteral("underlineOffset"), s.underlineOffset},
         {QStringLiteral("accent"), wordAccentToMap(s.accent)},
-        {QStringLiteral("animIn"), textAnimationToMap(s.animIn)},
-        {QStringLiteral("animOut"), textAnimationToMap(s.animOut)},
+        {QStringLiteral("animation"), textAnimationSetToMap(s.animation)},
     };
+
+    // Read-only mirrors of the flat v6 look, kept one release for the inspector rows and agents
+    // that still read them.
+    map.insert(QStringLiteral("color"), s.primaryColor().name(QColor::HexArgb));
+    const drift::TextShadingLayer *fill = drift::firstTextLayerOfKind(s.layers, drift::TextLayerKind::Fill, true);
+    if (!fill)
+        fill = drift::firstTextLayerOfKind(s.layers, drift::TextLayerKind::Fill, false);
+    QString fillKind = QStringLiteral("solid");
+    QColor secondary(255, 120, 0);
+    double gradientAngle = 90.0;
+    if (fill && fill->paint.kind == drift::TextPaintKind::Gradient) {
+        fillKind = fill->paint.gradient.kind == drift::TextGradientKind::Radial ? QStringLiteral("radialGradient")
+                                                                               : QStringLiteral("linearGradient");
+        if (!fill->paint.gradient.stops.isEmpty())
+            secondary = fill->paint.gradient.stops.last().color;
+        gradientAngle = fill->paint.gradient.angle;
+    }
+    map.insert(QStringLiteral("fillKind"), fillKind);
+    map.insert(QStringLiteral("colorSecondary"), secondary.name(QColor::HexArgb));
+    map.insert(QStringLiteral("gradientAngle"), gradientAngle);
+    const drift::TextShadingLayer *stroke = drift::firstTextLayerOfKind(s.layers, drift::TextLayerKind::Stroke, false);
+    map.insert(QStringLiteral("outlineEnabled"), stroke && stroke->enabled);
+    map.insert(QStringLiteral("outlineWidth"), stroke ? stroke->width : 2.0);
+    map.insert(QStringLiteral("outlineColor"), (stroke ? stroke->paint.color : QColor(Qt::black)).name(QColor::HexArgb));
+    const drift::TextShadingLayer *shadow = drift::firstTextLayerOfKind(s.layers, drift::TextLayerKind::Shadow, false);
+    map.insert(QStringLiteral("shadowEnabled"), shadow && shadow->enabled);
+    map.insert(QStringLiteral("shadowOffsetX"), shadow ? shadow->offsetX : 0.0);
+    map.insert(QStringLiteral("shadowOffsetY"), shadow ? shadow->offsetY : 4.0);
+    map.insert(QStringLiteral("shadowBlur"), shadow ? shadow->blur : 8.0);
+    map.insert(QStringLiteral("shadowOpacity"), shadow ? shadow->opacity : 0.6);
+    map.insert(QStringLiteral("shadowColor"), (shadow ? shadow->paint.color : QColor(Qt::black)).name(QColor::HexArgb));
+    const drift::TextShadingLayer *glow = drift::firstTextLayerOfKind(s.layers, drift::TextLayerKind::Glow, false);
+    map.insert(QStringLiteral("glowEnabled"), glow && glow->enabled);
+    map.insert(QStringLiteral("glowColor"), (glow ? glow->paint.color : QColor(Qt::white)).name(QColor::HexArgb));
+    map.insert(QStringLiteral("glowRadius"), glow ? glow->blur : 18.0);
+    map.insert(QStringLiteral("glowOpacity"), glow ? glow->opacity : 0.8);
+    map.insert(QStringLiteral("animIn"), legacyTextAnimationMap(s.animation.in));
+    map.insert(QStringLiteral("animOut"), legacyTextAnimationMap(s.animation.out));
+
+    QVariantMap keyframes;
+    for (auto it = s.keyframes.constBegin(); it != s.keyframes.constEnd(); ++it) {
+        if (!it->isEmpty())
+            keyframes.insert(it.key(), keyframeTrackToMap(it.value(), timelineStart));
+    }
+    if (!keyframes.isEmpty())
+        map.insert(QStringLiteral("keyframes"), keyframes);
+    return map;
 }
 
 QVariantList subtitleCuesToMap(const QList<drift::SubtitleCue> &cues)
@@ -1493,17 +1987,14 @@ QList<drift::SubtitleCue> subtitleCuesFromMap(const QVariantList &list)
 
 constexpr drift::TimeUs kDefaultSubtitleCueDurationUs = 3 * drift::kUsPerSecond;
 
-QVariantMap shapeStyleToMap(const drift::ShapeStyle &s)
+QVariantMap shapeStyleToMap(const drift::ShapeStyle &s, drift::TimeUs timelineStart)
 {
-    return {
+    QVariantList layers;
+    for (const drift::TextShadingLayer &layer : s.layers)
+        layers.append(textLayerToMap(layer));
+    QVariantMap map{
         {QStringLiteral("kind"), drift::shapeKindToString(s.kind)},
-        {QStringLiteral("fillKind"), drift::shapeFillKindToString(s.fillKind)},
-        {QStringLiteral("fill"), s.fill.name(QColor::HexArgb)},
-        {QStringLiteral("fillSecondary"), s.fillSecondary.name(QColor::HexArgb)},
-        {QStringLiteral("gradientAngle"), s.gradientAngle},
-        {QStringLiteral("stroke"), s.stroke.name(QColor::HexArgb)},
-        {QStringLiteral("strokeWidth"), s.strokeWidth},
-        {QStringLiteral("strokeStyle"), drift::shapeStrokeStyleToString(s.strokeStyle)},
+        {QStringLiteral("layers"), layers},
         {QStringLiteral("cornerRadius"), s.cornerRadius},
         {QStringLiteral("points"), s.points},
         {QStringLiteral("innerRatio"), s.innerRatio},
@@ -1512,6 +2003,310 @@ QVariantMap shapeStyleToMap(const drift::ShapeStyle &s)
         {QStringLiteral("tailX"), s.tailX},
         {QStringLiteral("tailSize"), s.tailSize},
     };
+    QVariantMap keyframes;
+    for (auto it = s.keyframes.constBegin(); it != s.keyframes.constEnd(); ++it) {
+        if (!it->isEmpty())
+            keyframes.insert(it.key(), keyframeTrackToMap(it.value(), timelineStart));
+    }
+    if (!keyframes.isEmpty())
+        map.insert(QStringLiteral("keyframes"), keyframes);
+    return map;
+}
+
+QVariant vectorSlotValueToVariant(const drift::VectorSlotValue &v)
+{
+    switch (v.type) {
+    case drift::VectorSlotValue::Type::Color:
+        return v.color.name(QColor::HexArgb);
+    case drift::VectorSlotValue::Type::Scalar:
+        return v.scalar;
+    case drift::VectorSlotValue::Type::Vec2:
+        return QVariantList{v.vec2.x(), v.vec2.y()};
+    case drift::VectorSlotValue::Type::Text:
+        return v.text;
+    case drift::VectorSlotValue::Type::Image:
+        return v.image;
+    }
+    return {};
+}
+
+// Metadata only: the document itself can run to megabytes and has its own getter.
+QVariantMap vectorSourceToMap(const drift::VectorSource &v, drift::TimeUs timelineStart)
+{
+    QVariantMap overrides;
+    for (auto it = v.slotValues.cbegin(); it != v.slotValues.cend(); ++it)
+        overrides.insert(it.key(), vectorSlotValueToVariant(it.value()));
+    QVariantMap keyframes;
+    for (auto it = v.keyframes.cbegin(); it != v.keyframes.cend(); ++it) {
+        if (!it->isEmpty())
+            keyframes.insert(it.key(), keyframeTrackToMap(it.value(), timelineStart));
+    }
+    QVariantMap map{
+        {QStringLiteral("kind"), drift::vectorKindToString(v.kind)},
+        {QStringLiteral("inline"), v.isInline()},
+        {QStringLiteral("path"), v.path},
+        {QStringLiteral("hash"), v.hash},
+        {QStringLiteral("width"), v.width},
+        {QStringLiteral("height"), v.height},
+        {QStringLiteral("fps"), v.fps},
+        {QStringLiteral("durationSec"), drift::usToSeconds(v.durationUs)},
+        {QStringLiteral("title"), v.title},
+        {QStringLiteral("fit"), drift::vectorFitToString(v.fit)},
+        {QStringLiteral("loop"), drift::vectorLoopToString(v.loop)},
+        {QStringLiteral("offset"), drift::usToSeconds(v.startOffsetUs)},
+        {QStringLiteral("slots"), overrides},
+    };
+    if (!keyframes.isEmpty())
+        map.insert(QStringLiteral("keyframes"), keyframes);
+    return map;
+}
+
+QVariantMap model3dSourceToMap(const drift::Model3dSource &m, drift::TimeUs timelineStart)
+{
+    QVariantList animations;
+    for (const drift::Model3dAnimationRef &a : m.animations) {
+        animations.append(QVariantMap{
+            {QStringLiteral("name"), a.name},
+            {QStringLiteral("durationSec"), drift::usToSeconds(a.durationUs)},
+        });
+    }
+    QVariantMap keyframes;
+    for (auto it = m.keyframes.cbegin(); it != m.keyframes.cend(); ++it) {
+        if (!it->isEmpty())
+            keyframes.insert(it.key(), keyframeTrackToMap(it.value(), timelineStart));
+    }
+    QVariantMap map{
+        {QStringLiteral("path"), m.path},
+        {QStringLiteral("animations"), animations},
+        {QStringLiteral("animation"), m.animation},
+        {QStringLiteral("loop"), drift::vectorLoopToString(m.loop)},
+        {QStringLiteral("offset"), drift::usToSeconds(m.startOffsetUs)},
+    };
+    for (const QString &key : drift::model3dKeyframeProperties()) {
+        double v = 0.0;
+        drift::model3dScalar(m, key, &v);
+        map.insert(key, v);
+    }
+    if (!keyframes.isEmpty())
+        map.insert(QStringLiteral("keyframes"), keyframes);
+    const QString warning = drift::modelAssetWarning(m.path);
+    if (!warning.isEmpty())
+        map.insert(QStringLiteral("warning"), warning);
+    return map;
+}
+
+// The type a slot name takes on this document: a Lottie slot the animation declares, or one of
+// the reserved svg.* override keys whose element the SVG carries. Empty error on success.
+QString resolveVectorSlotType(const drift::vec::InspectReport &report, drift::VectorKind kind, const QString &name,
+                              drift::VectorSlotValue::Type *type)
+{
+    if (kind == drift::VectorKind::Svg) {
+        drift::SvgOverrideKey key;
+        if (!drift::parseSvgOverrideKey(name, &key)) {
+            return QStringLiteral("an SVG takes svg.<fill|stroke|strokeWidth|opacity> for the whole drawing or "
+                                  "svg.<elementId>.<fill|stroke|strokeWidth|opacity|visible> for one element; "
+                                  "not %1").arg(name);
+        }
+        if (!key.elementId.isEmpty()) {
+            bool found = false;
+            QStringList ids;
+            for (const drift::vec::VectorSvgElement &element : report.svgElements) {
+                ids.append(element.id);
+                found = found || element.id == key.elementId;
+            }
+            if (!found) {
+                return ids.isEmpty() ? QStringLiteral("no element has an id; only the whole-drawing svg.* keys apply")
+                                     : QStringLiteral("no element with id %1; ids: %2").arg(key.elementId, ids.join(QStringLiteral(", ")));
+            }
+        }
+        *type = drift::svgOverrideType(key.prop);
+        return {};
+    }
+    for (const drift::vec::VectorSlotInfo &info : report.slotInfos) {
+        if (info.id == name) {
+            *type = info.type;
+            return {};
+        }
+    }
+    QStringList ids;
+    for (const drift::vec::VectorSlotInfo &info : report.slotInfos)
+        ids.append(info.id);
+    return ids.isEmpty() ? QStringLiteral("the document declares no slots")
+                         : QStringLiteral("no slot named %1; declared: %2").arg(name, ids.join(QStringLiteral(", ")));
+}
+
+// Drops the keyframe tracks riding on a slot (the slot itself or one of its colour channels).
+void eraseVectorSlotKeyframes(drift::VectorSource &v, const QString &name)
+{
+    for (auto it = v.keyframes.begin(); it != v.keyframes.end();) {
+        if (it.key() == name || it.key().startsWith(name + QLatin1Char('.')))
+            it = v.keyframes.erase(it);
+        else
+            ++it;
+    }
+}
+
+constexpr qint64 kMaxInlineVectorBytes = 8 * 1024 * 1024;
+
+// `source` is either the document text or a file path. Fills kind/source/path; the probe fills
+// the rest. Empty error on success.
+QString resolveVectorInput(const QString &source, const QString &kindHint, drift::VectorSource *out)
+{
+    const QString trimmed = source.trimmed();
+    if (trimmed.isEmpty())
+        return QStringLiteral("source required: the document text or a path to a .json/.svg file");
+    if (trimmed.startsWith(QLatin1Char('{')) || trimmed.startsWith(QLatin1Char('<'))) {
+        if (trimmed.size() > kMaxInlineVectorBytes)
+            return QStringLiteral("inline document exceeds 8 MB; import it as a file instead");
+        out->source = trimmed;
+        out->path.clear();
+    } else {
+        const QFileInfo info(trimmed);
+        if (!info.isFile())
+            return QStringLiteral("source is neither a document nor an existing file: ") + trimmed;
+        out->path = info.absoluteFilePath();
+        out->source.clear();
+    }
+    const QString kind = kindHint.trimmed().toLower();
+    if (kind == QLatin1String("svg"))
+        out->kind = drift::VectorKind::Svg;
+    else if (kind == QLatin1String("lottie") || kind == QLatin1String("json"))
+        out->kind = drift::VectorKind::Lottie;
+    else
+        out->kind = drift::vec::detectVectorKind(drift::vec::vectorSourceBytes(*out));
+    return {};
+}
+
+// fit / loop / offset / name applied from an options map; only present keys change.
+void applyVectorOptions(drift::Clip &clip, const QVariantMap &opts)
+{
+    drift::VectorSource &v = clip.vector;
+    if (opts.contains(QStringLiteral("fit")))
+        v.fit = drift::vectorFitFromString(opts.value(QStringLiteral("fit")).toString().toLower());
+    if (opts.contains(QStringLiteral("loop")))
+        v.loop = drift::vectorLoopFromString(opts.value(QStringLiteral("loop")).toString().toLower());
+    if (opts.contains(QStringLiteral("offset")))
+        v.startOffsetUs = drift::secondsToUs(opts.value(QStringLiteral("offset")).toDouble());
+    if (opts.contains(QStringLiteral("name")) && !opts.value(QStringLiteral("name")).toString().isEmpty())
+        clip.name = opts.value(QStringLiteral("name")).toString();
+}
+
+// Non-keyed model options plus the pose/light statics as plain writes (keyframed ones go
+// through setClipKeyframe). Returns the keys it did not understand.
+QStringList applyModel3dOptions(drift::Clip &clip, const QVariantMap &opts)
+{
+    drift::Model3dSource &m = clip.model3d;
+    QStringList unknown;
+    for (auto it = opts.cbegin(); it != opts.cend(); ++it) {
+        const QString &key = it.key();
+        if (key == QStringLiteral("animation")) {
+            m.animation = qBound(0, it->toInt(), qMax(0, m.animations.size() - 1));
+        } else if (key == QStringLiteral("loop")) {
+            m.loop = drift::vectorLoopFromString(it->toString().toLower());
+        } else if (key == QStringLiteral("offset")) {
+            m.startOffsetUs = drift::secondsToUs(it->toDouble());
+        } else if (key == QStringLiteral("name")) {
+            if (!it->toString().isEmpty())
+                clip.name = it->toString();
+        } else if (!drift::setModel3dScalar(m, key, it->toDouble())) {
+            unknown.append(key);
+        }
+    }
+    return unknown;
+}
+
+QVariantMap inspectModel3dPath(const QString &path)
+{
+    const auto asset = drift::loadModelAssetCached(path);
+    if (!asset) {
+        QString error = drift::modelAssetWarning(path);
+        if (error.isEmpty())
+            error = QStringLiteral("could not load model");
+        return {{QStringLiteral("ok"), false}, {QStringLiteral("error"), error}};
+    }
+    QVariantList animations;
+    for (const drift::ModelAnimationInfo &info : asset->animations) {
+        animations.append(QVariantMap{
+            {QStringLiteral("name"), info.name},
+            {QStringLiteral("durationSec"), drift::usToSeconds(info.durationUs)},
+        });
+    }
+    QVariantMap out{
+        {QStringLiteral("ok"), true},
+        {QStringLiteral("path"), path},
+        {QStringLiteral("animations"), animations},
+        {QStringLiteral("vertexCount"), asset->vertexCount()},
+        {QStringLiteral("primitiveCount"), asset->primitives.size()},
+        {QStringLiteral("materialCount"), asset->materials.size()},
+        {QStringLiteral("textureCount"), asset->images.size()},
+    };
+    if (!asset->warning.isEmpty())
+        out.insert(QStringLiteral("warning"), asset->warning);
+    return out;
+}
+
+// Parses an agent-supplied value against the slot's declared type. Colours take "#rrggbb",
+// "#aarrggbb", a colour name or [r,g,b(,a)] in 0..1 (Lottie's own spelling); vec2 takes [x,y]
+// or {x,y}.
+QString parseVectorSlotValue(drift::VectorSlotValue::Type type, const QVariant &value,
+                             drift::VectorSlotValue *out)
+{
+    switch (type) {
+    case drift::VectorSlotValue::Type::Color: {
+        QColor color;
+        if (value.typeId() == QMetaType::QVariantList) {
+            const QVariantList c = value.toList();
+            if (c.size() < 3)
+                return QStringLiteral("color needs [r,g,b] or [r,g,b,a] in 0..1");
+            color = QColor::fromRgbF(qBound(0.0, c.at(0).toDouble(), 1.0), qBound(0.0, c.at(1).toDouble(), 1.0),
+                                     qBound(0.0, c.at(2).toDouble(), 1.0),
+                                     c.size() > 3 ? qBound(0.0, c.at(3).toDouble(), 1.0) : 1.0);
+        } else {
+            color = QColor(value.toString());
+        }
+        if (!color.isValid())
+            return QStringLiteral("not a colour: ") + value.toString();
+        *out = drift::VectorSlotValue::fromColor(color);
+        return {};
+    }
+    case drift::VectorSlotValue::Type::Scalar: {
+        bool ok = false;
+        const double d = value.toDouble(&ok);
+        if (!ok)
+            return QStringLiteral("scalar slot needs a number");
+        *out = drift::VectorSlotValue::fromScalar(d);
+        return {};
+    }
+    case drift::VectorSlotValue::Type::Vec2: {
+        if (value.typeId() == QMetaType::QVariantList && value.toList().size() >= 2) {
+            const QVariantList p = value.toList();
+            *out = drift::VectorSlotValue::fromVec2(QPointF(p.at(0).toDouble(), p.at(1).toDouble()));
+            return {};
+        }
+        if (value.typeId() == QMetaType::QVariantMap) {
+            const QVariantMap p = value.toMap();
+            if (p.contains(QStringLiteral("x")) && p.contains(QStringLiteral("y"))) {
+                *out = drift::VectorSlotValue::fromVec2(
+                    QPointF(p.value(QStringLiteral("x")).toDouble(), p.value(QStringLiteral("y")).toDouble()));
+                return {};
+            }
+        }
+        return QStringLiteral("vec2 slot needs [x,y] or {x,y}");
+    }
+    case drift::VectorSlotValue::Type::Text:
+        if (value.typeId() != QMetaType::QString)
+            return QStringLiteral("text slot needs a string");
+        *out = drift::VectorSlotValue::fromText(value.toString());
+        return {};
+    case drift::VectorSlotValue::Type::Image: {
+        const QString path = value.toString();
+        if (path.isEmpty() || !QFileInfo(path).isFile())
+            return QStringLiteral("image slot needs the path of an existing image file");
+        *out = drift::VectorSlotValue::fromImage(QFileInfo(path).absoluteFilePath());
+        return {};
+    }
+    }
+    return QStringLiteral("unknown slot type");
 }
 
 QVariantMap keyframeTrackToMap(const drift::KeyframeTrack<double> &track,
@@ -1669,6 +2464,7 @@ bool isSyntheticTimelineClip(drift::ClipType type)
 {
     return type == drift::ClipType::Text || type == drift::ClipType::Subtitle
            || type == drift::ClipType::Shape || type == drift::ClipType::Image
+           || type == drift::ClipType::Vector || type == drift::ClipType::Model3d
            || type == drift::ClipType::Adjustment;
 }
 
@@ -1686,6 +2482,7 @@ void syncSyntheticSourceRange(drift::Clip &clip)
 bool clipAcceptsPreviewTransform(const drift::Clip &clip)
 {
     return clip.type == drift::ClipType::Shape || clip.type == drift::ClipType::Image
+           || clip.type == drift::ClipType::Vector || clip.type == drift::ClipType::Model3d
            || clip.type == drift::ClipType::Text || clip.type == drift::ClipType::Subtitle
            || clip.type == drift::ClipType::Video;
 }
@@ -1740,6 +2537,105 @@ bool parseMaskProp(const QString &prop, QString *key)
     return true;
 }
 
+// A text style scalar is addressed as "text.<key>" (pixelSize, layer.shadow.blur, color.r, …)
+// and lives on the text clip itself, so no host redirect applies. The style resolves the key to
+// its canonical spelling (legacy names map onto the layers they became).
+bool parseTextProp(const drift::TextStyle &style, const QString &prop, QString *key)
+{
+    if (!prop.startsWith(QLatin1String("text.")))
+        return false;
+    const QString canonical = drift::textKeyframeCanonicalKey(prop.mid(5), style);
+    if (canonical.isEmpty())
+        return false;
+    *key = canonical;
+    return true;
+}
+
+// Shape-only check for callers without a clip: a text key is a flat name, a legacy alias or a
+// layer path.
+bool looksLikeTextProp(const QString &prop)
+{
+    if (!prop.startsWith(QLatin1String("text.")))
+        return false;
+    const QString suffix = prop.mid(5);
+    if (suffix.startsWith(QLatin1String("layer.")))
+        return true;
+    drift::TextStyle probe;
+    probe.layers = {drift::shadowLayer(Qt::black, 0, 4, 8, 0.6), drift::glowLayer(Qt::white, 18, 0.8),
+                    drift::strokeLayer(2, Qt::black), drift::solidFillLayer(Qt::white)};
+    return !drift::textKeyframeCanonicalKey(suffix, probe).isEmpty();
+}
+
+// A shape style scalar is addressed as "shape.<key>" (cornerRadius, layer.stroke.width, …) and
+// lives on the shape clip itself.
+bool parseShapeProp(const drift::Clip &clip, const QString &prop, QString *key)
+{
+    if (clip.type != drift::ClipType::Shape || !prop.startsWith(QLatin1String("shape.")))
+        return false;
+    const QString canonical = drift::shapeKeyframeCanonicalKey(prop.mid(6), clip.shapeStyle);
+    if (canonical.isEmpty())
+        return false;
+    *key = canonical;
+    return true;
+}
+
+bool looksLikeShapeProp(const QString &prop)
+{
+    if (!prop.startsWith(QLatin1String("shape.")))
+        return false;
+    const QString suffix = prop.mid(6);
+    if (suffix.startsWith(QLatin1String("layer.")))
+        return true;
+    drift::ShapeStyle probe;
+    return !drift::shapeKeyframeCanonicalKey(suffix, probe).isEmpty();
+}
+
+// An SVG override scalar is addressed as "vector.<slot>[.r|.g|.b|.a]" ("vector.svg.logo.fill.r",
+// "vector.svg.strokeWidth") and lives on the vector clip itself. Only the svg.* keys are
+// keyframable: Lottie slots are baked into the parsed animation.
+bool parseVectorProp(const drift::Clip &clip, const QString &prop, QString *key)
+{
+    if (clip.type != drift::ClipType::Vector || !prop.startsWith(QLatin1String("vector.svg.")))
+        return false;
+    const QString candidate = prop.mid(7);
+    double probe = 0.0;
+    if (!drift::vectorSlotScalar(clip.vector, candidate, &probe))
+        return false;
+    *key = candidate;
+    return true;
+}
+
+bool looksLikeVectorProp(const QString &prop)
+{
+    if (!prop.startsWith(QLatin1String("vector.svg.")))
+        return false;
+    drift::VectorSource probe;
+    double value = 0.0;
+    return drift::vectorSlotScalar(probe, prop.mid(7), &value);
+}
+
+// A model pose/light scalar is addressed as "model3d.<key>" ("model3d.rotY", "model3d.scale").
+bool parseModel3dProp(const drift::Clip &clip, const QString &prop, QString *key)
+{
+    if (clip.type != drift::ClipType::Model3d || !prop.startsWith(QLatin1String("model3d.")))
+        return false;
+    const QString candidate = prop.mid(8);
+    double probe = 0.0;
+    if (!drift::model3dScalar(clip.model3d, candidate, &probe))
+        return false;
+    *key = candidate;
+    return true;
+}
+
+bool looksLikeModel3dProp(const QString &prop)
+{
+    if (!prop.startsWith(QLatin1String("model3d.")))
+        return false;
+    drift::Model3dSource probe;
+    double value = 0.0;
+    return drift::model3dScalar(probe, prop.mid(8), &value);
+}
+
 drift::KeyframeTrack<double> *transformTrackForProp(drift::Clip &clip, const QString &prop)
 {
     if (prop == QStringLiteral("opacity"))
@@ -1770,6 +2666,34 @@ drift::KeyframeTrack<double> *keyframeTrackForProp(drift::Clip &clip, const QStr
             return &clip.mask.keyframes[maskKey];
         const auto it = clip.mask.keyframes.find(maskKey);
         return it == clip.mask.keyframes.end() ? nullptr : &it.value();
+    }
+    QString textKey;
+    if (parseTextProp(clip.textStyle, prop, &textKey)) {
+        if (createIfMissing)
+            return &clip.textStyle.keyframes[textKey];
+        const auto it = clip.textStyle.keyframes.find(textKey);
+        return it == clip.textStyle.keyframes.end() ? nullptr : &it.value();
+    }
+    QString shapeKey;
+    if (parseShapeProp(clip, prop, &shapeKey)) {
+        if (createIfMissing)
+            return &clip.shapeStyle.keyframes[shapeKey];
+        const auto it = clip.shapeStyle.keyframes.find(shapeKey);
+        return it == clip.shapeStyle.keyframes.end() ? nullptr : &it.value();
+    }
+    QString vectorKey;
+    if (parseVectorProp(clip, prop, &vectorKey)) {
+        if (createIfMissing)
+            return &clip.vector.keyframes[vectorKey];
+        const auto it = clip.vector.keyframes.find(vectorKey);
+        return it == clip.vector.keyframes.end() ? nullptr : &it.value();
+    }
+    QString modelKey;
+    if (parseModel3dProp(clip, prop, &modelKey)) {
+        if (createIfMissing)
+            return &clip.model3d.keyframes[modelKey];
+        const auto it = clip.model3d.keyframes.find(modelKey);
+        return it == clip.model3d.keyframes.end() ? nullptr : &it.value();
     }
 
     int effectIndex = -1;
@@ -1812,6 +2736,9 @@ bool isKnownKeyframeProp(const QString &prop)
     QString maskKey;
     if (parseMaskProp(prop, &maskKey))
         return true;
+    if (looksLikeTextProp(prop) || looksLikeShapeProp(prop) || looksLikeVectorProp(prop)
+        || looksLikeModel3dProp(prop))
+        return true;
     drift::Clip probe;
     return transformTrackForProp(probe, prop) != nullptr;
 }
@@ -1821,9 +2748,15 @@ bool isKnownKeyframeProp(const QString &prop)
 // compound form must survive normalization untouched.
 QString normalizeKeyframeProp(const QString &prop)
 {
-    // "mask.<key>" needs no exemption: every mask key is already lower-case.
+    // "mask.<key>" needs no exemption: every mask key is already lower-case. Text and shape keys
+    // are camelCase members ("text.pixelSize", "shape.cornerRadius") and SVG element ids are
+    // case-sensitive, so they pass through like effect params.
     const QString trimmed = prop.trimmed();
-    return trimmed.startsWith(QLatin1String("fx.")) ? trimmed : trimmed.toLower();
+    return trimmed.startsWith(QLatin1String("fx.")) || trimmed.startsWith(QLatin1String("text."))
+                   || trimmed.startsWith(QLatin1String("shape.")) || trimmed.startsWith(QLatin1String("vector."))
+                   || trimmed.startsWith(QLatin1String("model3d."))
+               ? trimmed
+               : trimmed.toLower();
 }
 
 constexpr drift::TimeUs kKeyframeToleranceUs = drift::kUsPerSecond / 30;
@@ -1902,6 +2835,53 @@ bool writeClipPropValue(drift::Clip &clip, const QString &prop, drift::TimeUs re
         if (!writeKeyframeValue(clip.mask.keyframes[maskKey], relative, value, autoKey, force))
             return false;
         writeMaskScalar(clip.mask, maskKey, value);
+        return true;
+    }
+
+    // Same again for a text scalar: the style member is the static home.
+    QString textKey;
+    if (parseTextProp(clip.textStyle, prop, &textKey)) {
+        const auto existing = clip.textStyle.keyframes.constFind(textKey);
+        const bool keyed = existing != clip.textStyle.keyframes.constEnd() && !existing->isEmpty();
+        if (!keyed && !force && !autoKey)
+            return drift::setTextStyleScalar(clip.textStyle, textKey, value);
+        if (!writeKeyframeValue(clip.textStyle.keyframes[textKey], relative, value, autoKey, force))
+            return false;
+        drift::setTextStyleScalar(clip.textStyle, textKey, value);
+        return true;
+    }
+
+    QString shapeKey;
+    if (parseShapeProp(clip, prop, &shapeKey)) {
+        const auto existing = clip.shapeStyle.keyframes.constFind(shapeKey);
+        const bool keyed = existing != clip.shapeStyle.keyframes.constEnd() && !existing->isEmpty();
+        if (!keyed && !force && !autoKey)
+            return drift::setShapeStyleScalar(clip.shapeStyle, shapeKey, value);
+        if (!writeKeyframeValue(clip.shapeStyle.keyframes[shapeKey], relative, value, autoKey, force))
+            return false;
+        drift::setShapeStyleScalar(clip.shapeStyle, shapeKey, value);
+        return true;
+    }
+    QString vectorKey;
+    if (parseVectorProp(clip, prop, &vectorKey)) {
+        const auto existing = clip.vector.keyframes.constFind(vectorKey);
+        const bool keyed = existing != clip.vector.keyframes.constEnd() && !existing->isEmpty();
+        if (!keyed && !force && !autoKey)
+            return drift::setVectorSlotScalar(clip.vector, vectorKey, value);
+        if (!writeKeyframeValue(clip.vector.keyframes[vectorKey], relative, value, autoKey, force))
+            return false;
+        drift::setVectorSlotScalar(clip.vector, vectorKey, value);
+        return true;
+    }
+    QString modelKey;
+    if (parseModel3dProp(clip, prop, &modelKey)) {
+        const auto existing = clip.model3d.keyframes.constFind(modelKey);
+        const bool keyed = existing != clip.model3d.keyframes.constEnd() && !existing->isEmpty();
+        if (!keyed && !force && !autoKey)
+            return drift::setModel3dScalar(clip.model3d, modelKey, value);
+        if (!writeKeyframeValue(clip.model3d.keyframes[modelKey], relative, value, autoKey, force))
+            return false;
+        drift::setModel3dScalar(clip.model3d, modelKey, value);
         return true;
     }
 
@@ -2176,14 +3156,91 @@ void fitClipLayoutToCanvas(drift::Clip &clip, int mediaW, int mediaH, int canvas
     setClipLayoutPixels(clip, 0, 0, mediaW * scale, mediaH * scale);
 }
 
+// Fills what the inspector and the overlay need from the .glb (animation list, rest bounds) so
+// neither ever parses on the GUI thread; the loader's cache makes this a hit after the first.
+void probeModel3dSource(drift::Model3dSource &source)
+{
+    source.animations.clear();
+    source.aabbMin = {};
+    source.aabbMax = {};
+    const auto asset = drift::loadModelAssetCached(source.path);
+    if (!asset)
+        return;
+    for (const drift::ModelAnimationInfo &info : asset->animations)
+        source.animations.append({info.name, info.durationUs});
+    drift::modelClipBounds(*asset, &source.aabbMin, &source.aabbMax);
+    source.animation = qBound(0, source.animation, qMax(0, source.animations.size() - 1));
+}
+
+// A bin asset of kind vector is a Lottie .json on disk and one of kind model3d a .glb; the clip
+// carries either by path and the probe fills what the renderer and the inspector need.
+void attachAssetSource(drift::Clip &clip)
+{
+    if (clip.type == drift::ClipType::Model3d) {
+        clip.model3d.path = clip.path;
+        probeModel3dSource(clip.model3d);
+        return;
+    }
+    if (clip.type != drift::ClipType::Vector)
+        return;
+    clip.vector.path = clip.path;
+    clip.vector.kind = drift::vec::detectVectorKind(drift::vec::vectorSourceBytes(clip.vector));
+    drift::vec::probeVectorSource(clip.vector);
+}
+
+// Whether `asset` carries a bin-preview trim at all (AssetLibrary::setAssetTrim) — trimOutSeconds
+// < 0 alone does not mean "no trim": an in-only trim (start moved, end left alone) stores exactly
+// that, so a bare "is there an out point" check drops it. Shared by every place below that needs
+// to agree on what a trimmed asset's clip duration actually is.
+bool assetHasTrim(const QVariantMap &asset)
+{
+    return asset.value(QStringLiteral("trimInSeconds"), 0.0).toDouble() > 0.0
+           || asset.value(QStringLiteral("trimOutSeconds"), -1.0).toDouble() >= 0.0;
+}
+
+// The clip duration a bin-preview trim actually produces out of `fullDurationUs` — needed both by
+// applyAssetLayout (to set srcIn/srcOut) and by placement math (resolveClipStart, the batch
+// cursor) *before* the clip exists for applyAssetLayout to derive it the usual way. One function
+// so every add-from-asset site agrees with applyAssetLayout on what "the duration" means.
+drift::TimeUs trimmedClipDurationUs(const QVariantMap &asset, drift::TimeUs fullDurationUs)
+{
+    if (!assetHasTrim(asset))
+        return fullDurationUs;
+    const drift::TimeUs trimIn = qBound<drift::TimeUs>(
+        0, drift::secondsToUs(asset.value(QStringLiteral("trimInSeconds"), 0.0).toDouble()), fullDurationUs);
+    const double trimOutSeconds = asset.value(QStringLiteral("trimOutSeconds"), -1.0).toDouble();
+    const drift::TimeUs trimOut =
+        trimOutSeconds < 0.0
+            ? fullDurationUs
+            : qBound<drift::TimeUs>(trimIn + 1, drift::secondsToUs(trimOutSeconds), fullDurationUs);
+    return trimOut - trimIn;
+}
+
 void applyAssetLayout(drift::Clip &clip, const QVariantMap &asset, int canvasW, int canvasH)
 {
     int mediaW = asset.value(QStringLiteral("width")).toInt();
     int mediaH = asset.value(QStringLiteral("height")).toInt();
-    const int rotation = asset.value(QStringLiteral("rotationDegrees")).toInt();
+    // "effectiveRotation" folds in any bin-preview override over the probed rotationDegrees
+    // (AssetLibrary::assetAt). The clip carries the bin's correction as its own from here on, so
+    // its orientation stays put even if the bin asset's override changes later.
+    const int rotation = asset.value(QStringLiteral("effectiveRotation")).toInt();
     if (rotation == 90 || rotation == 270)
         std::swap(mediaW, mediaH);
     fitClipLayoutToCanvas(clip, mediaW, mediaH, canvasW, canvasH);
+    clip.rotationCorrection = asset.value(QStringLiteral("rotationCorrection")).toInt();
+
+    // A bin-preview trim is non-destructive (AssetLibrary::setAssetTrim never touches the file),
+    // so a freshly placed clip has to start at that saved range itself rather than the caller's
+    // default full-source srcIn/srcOut — the same idea as the rotation bake-in just above.
+    if (assetHasTrim(asset)) {
+        const drift::TimeUs durationUs =
+            drift::secondsToUs(asset.value(QStringLiteral("durationSeconds")).toDouble());
+        const drift::TimeUs trimIn = qBound<drift::TimeUs>(
+            0, drift::secondsToUs(asset.value(QStringLiteral("trimInSeconds"), 0.0).toDouble()), durationUs);
+        clip.timelineDuration = trimmedClipDurationUs(asset, durationUs);
+        clip.srcIn = trimIn;
+        clip.srcOut = trimIn + clip.timelineDuration;
+    }
 }
 
 // shapeAspect is the catalog's default width/height for the shape being added; a square shape must
@@ -2745,6 +3802,8 @@ QHash<QString, QString> defaultShortcuts()
         // and the list navigation in the font, track and asset pickers.
         {QStringLiteral("previousEdit"), QStringLiteral("Alt+Up")},
         {QStringLiteral("nextEdit"), QStringLiteral("Alt+Down")},
+        {QStringLiteral("stepBack"), QStringLiteral("Shift+Left")},
+        {QStringLiteral("stepForward"), QStringLiteral("Shift+Right")},
         {QStringLiteral("goToStart"), QStringLiteral("Home")},
         // Premiere's ripple-trim-to-playhead keys, which is exactly what these do.
         {QStringLiteral("deleteLeft"), QStringLiteral("Q")},
@@ -2815,7 +3874,7 @@ QVariantMap AppController::clipToMap(const drift::Clip &clip, const drift::Clip 
     // the whole source, so tiles need the total to place srcIn/srcOut within it).
     const drift::MediaAsset *sourceAsset = m_project.asset(clip.assetId);
 
-    return {
+    QVariantMap map{
         {QStringLiteral("id"), clip.id},
         {QStringLiteral("name"), clip.name},
         {QStringLiteral("path"), clip.path},
@@ -2827,15 +3886,20 @@ QVariantMap AppController::clipToMap(const drift::Clip &clip, const drift::Clip 
         {QStringLiteral("thumbnailPath"), clip.thumbnailPath},
         {QStringLiteral("filmstripPath"), clip.filmstripPath},
         {QStringLiteral("textContent"), clip.textContent},
-        {QStringLiteral("textStyle"), textStyleToMap(clip.textStyle)},
+        {QStringLiteral("textStyle"), textStyleToMap(clip.textStyle, clip.timelineStart)},
         {QStringLiteral("subtitleCues"), subtitleCuesToMap(clip.subtitleCues)},
-        {QStringLiteral("shapeStyle"), shapeStyleToMap(clip.shapeStyle)},
+        {QStringLiteral("shapeStyle"), shapeStyleToMap(clip.shapeStyle, clip.timelineStart)},
         {QStringLiteral("blendMode"), drift::blendModeToString(clip.blendMode)},
         {QStringLiteral("speed"), clip.speed},
         {QStringLiteral("hasSpeedCurve"), clip.hasSpeedCurve()},
         {QStringLiteral("reverse"), clip.reverse},
         {QStringLiteral("flipH"), clip.flipH},
         {QStringLiteral("flipV"), clip.flipV},
+        // Discrete lossless orientation fix, distinct from the free "rotation" keyframe track
+        // below. "orientation" is the absolute result (what the inspector shows), the correction
+        // is what is stored — see drift::Clip::rotationCorrection.
+        {QStringLiteral("rotationCorrection"), clip.rotationCorrection},
+        {QStringLiteral("orientation"), clipOrientation(clip)},
         // Same redirect as the effect stacks above: a media clip's mask lives on the adjustment
         // pinned to it, but the inspector and the MCP tools still ask the clip for "its" mask.
         {QStringLiteral("mask"), maskToMap(maskHost ? maskHost->mask : clip.mask,
@@ -2892,6 +3956,11 @@ QVariantMap AppController::clipToMap(const drift::Clip &clip, const drift::Clip 
         {QStringLiteral("audioEffects"), audioEffects},
         {QStringLiteral("keyframes"), keyframesToMap(clip)},
     };
+    if (clip.type == drift::ClipType::Vector)
+        map.insert(QStringLiteral("vector"), vectorSourceToMap(clip.vector, clip.timelineStart));
+    if (clip.type == drift::ClipType::Model3d)
+        map.insert(QStringLiteral("model3d"), model3dSourceToMap(clip.model3d, clip.timelineStart));
+    return map;
 }
 
 int AppController::clipCountForAsset(int assetIndex) const
@@ -3076,6 +4145,19 @@ bool AppController::renameAsset(int assetIndex, const QString &name)
 
     pushProjectEdit(before, tr("Rename media"));
     finishEdit(tr("Media renamed"));
+    return true;
+}
+
+bool AppController::setAssetRotation(int assetIndex, int degrees)
+{
+    if (!m_assetLibrary)
+        return false;
+
+    const drift::Project before = m_project;
+    if (!m_assetLibrary->setAssetRotation(assetIndex, degrees))
+        return false;
+
+    pushProjectEdit(before, tr("Media rotated"));
     return true;
 }
 
@@ -3480,6 +4562,28 @@ bool AppController::saveAssetEdit(int assetIndex, double inSeconds, double outSe
         return false;
     }
 
+    // A plain trim with no real crop needs no re-encode at all: it is stored on the asset the
+    // same non-destructive way a placed clip's srcIn/srcOut already works, and the original file
+    // is left untouched — mirroring how trimming a clip already on the timeline never re-encodes.
+    constexpr double kFullCropEps = 0.001;
+    const bool cropIsFull = cropX <= kFullCropEps && cropY <= kFullCropEps
+                            && cropW >= 1.0 - kFullCropEps && cropH >= 1.0 - kFullCropEps;
+    if (cropIsFull) {
+        const drift::TimeUs trimIn = drift::secondsToUs(qMax(0.0, inSeconds));
+        const drift::TimeUs trimOut = outSeconds < 0.0 ? -1 : drift::secondsToUs(outSeconds);
+        const drift::Project before = m_project;
+        if (!m_assetLibrary->setAssetTrim(assetIndex, trimIn, trimOut)) {
+            // Nothing actually changed (e.g. the range already matches what is stored) — that is
+            // still a successful, no-op save from the dialog's point of view.
+            emit assetEditFinished(true, QString());
+            return true;
+        }
+        pushProjectEdit(before, tr("Media trimmed"));
+        setLastMessage(tr("Trim saved"));
+        emit assetEditFinished(true, tr("Trim saved"));
+        return true;
+    }
+
     const QString outPath = drift::newEditedMediaPath(m_project.id(), kind);
     if (outPath.isEmpty()) {
         setLastMessage(tr("Could not create an output file"), QStringLiteral("error"));
@@ -3507,6 +4611,10 @@ bool AppController::saveAssetEdit(int assetIndex, double inSeconds, double outSe
     spec.cropY = cropY;
     spec.cropW = cropW;
     spec.cropH = cropH;
+    // The crop rectangle above is drawn in the preview against effectiveRotation, so the encoder
+    // has to rotate against that same correction — not the file's own tag — or the region it
+    // crops will not be the one the user saw and dragged a box around.
+    spec.rotationOverride = asset.value(QStringLiteral("effectiveRotation"), -1).toInt();
 
     (void)QtConcurrent::run([this, spec, assetIndex]() {
         QString error;
@@ -3620,6 +4728,9 @@ void AppController::finalizeAssetReplace(const QString &assetId, const drift::Me
     drift::MediaAsset replacement = filled;
     replacement.name = newName;
     replacement.sourceUri = replacementSourceUri;
+    // Captured before applyProbedSource overwrites `current` in place — rebindClipsToAsset needs
+    // to know what the bin's correction *was* to rebase each clip's own by how much it changed.
+    const int oldBinCorrection = drift::rotationCorrectionOf(*current);
     if (!m_assetLibrary->applyProbedSource(assetId, replacement)) {
         const QString message = tr("That media is no longer in this project.");
         finishEditJob(false, message);
@@ -3628,7 +4739,7 @@ void AppController::finalizeAssetReplace(const QString &assetId, const drift::Me
         return;
     }
 
-    const int adjusted = rebindClipsToAsset(assetId, replacement);
+    const int adjusted = rebindClipsToAsset(assetId, replacement, oldBinCorrection);
     pushProjectEdit(before, fromEdit ? tr("Media edited") : tr("Media replaced"));
     finishEdit(fromEdit ? tr("Media edited") : tr("Media replaced"));
     finishEditJob(true, newName);
@@ -3636,8 +4747,10 @@ void AppController::finalizeAssetReplace(const QString &assetId, const drift::Me
         emit assetReplaceFinished(true, newName, adjusted);
 }
 
-int AppController::rebindClipsToAsset(const QString &assetId, const drift::MediaAsset &asset)
+int AppController::rebindClipsToAsset(const QString &assetId, const drift::MediaAsset &asset,
+                                      int oldBinCorrection)
 {
+    const int newBinCorrection = drift::rotationCorrectionOf(asset);
     int adjusted = 0;
     for (drift::Track &track : m_project.tracks()) {
         for (drift::Clip &clip : track.clips) {
@@ -3650,6 +4763,13 @@ int AppController::rebindClipsToAsset(const QString &assetId, const drift::Media
             clip.path = asset.path;
             clip.thumbnailPath = asset.thumbnailPath;
             clip.filmstripPath = asset.filmstripPath;
+            // The clip's correction started as the bin's (applyAssetLayout) and may have been
+            // turned further on the timeline since. Keep that extra part and swap the bin's old
+            // share for its new one — most pointedly, a crop-save bakes the bin's correction into
+            // the re-encoded pixels, so the freshly probed `asset` has none left and every clip
+            // has to drop that same amount or it turns already-upright pixels a second time.
+            clip.rotationCorrection =
+                ((clip.rotationCorrection - oldBinCorrection + newBinCorrection) % 360 + 360) % 360;
             // Landmarks are baked against the old pixels. Left in place they would keep the face
             // warps tracking a face the new footage never had, and render without erroring.
             clip.faceTrackPath.clear();
@@ -3790,6 +4910,8 @@ QVariantList AppController::actions() const
         action(QStringLiteral("nudgeRight"), tr("Move selection right a little")),
         action(QStringLiteral("previousEdit"), tr("Go to previous cut point")),
         action(QStringLiteral("nextEdit"), tr("Go to next cut point")),
+        action(QStringLiteral("stepBack"), tr("Step back one frame")),
+        action(QStringLiteral("stepForward"), tr("Step forward one frame")),
         action(QStringLiteral("goToStart"), tr("Go to start of timeline")),
         action(QStringLiteral("deleteLeft"), tr("Delete left of the playhead")),
         action(QStringLiteral("deleteRight"), tr("Delete right of the playhead")),
@@ -4000,7 +5122,11 @@ void AppController::setVaapiZeroCopy(bool enabled)
         return;
     m_vaapiZeroCopy = enabled;
     QSettings settings;
+#if defined(Q_OS_WIN)
+    settings.setValue(QStringLiteral("preview/d3d11ZeroCopy"), m_vaapiZeroCopy);
+#else
     settings.setValue(QStringLiteral("preview/vaapiZeroCopy"), m_vaapiZeroCopy);
+#endif
     emit vaapiZeroCopyChanged();
     setLastMessage(tr("Faster preview takes effect after you restart Drift."),
                    QStringLiteral("info"));
@@ -4033,9 +5159,30 @@ bool AppController::vaapiZeroCopySupported() const
 {
 #if defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID)
     return drift::hwaccel::availableDecodeBackends().contains(drift::hwaccel::Backend::Vaapi);
+#elif defined(Q_OS_WIN)
+    return drift::hwaccel::availableDecodeBackends().contains(drift::hwaccel::Backend::D3d11va);
 #else
     return false;
 #endif
+}
+
+void AppController::setPreferredGpu(const QString &id)
+{
+    const drift::gpu::Preference preference = drift::gpu::preferenceFromId(id);
+    const QString normalized = drift::gpu::preferenceId(preference);
+    if (m_preferredGpu == normalized)
+        return;
+    m_preferredGpu = normalized;
+    drift::gpu::storePreference(preference);
+    emit preferredGpuChanged();
+    // Not conservative advice: the driver chose this process's GPU when it loaded.
+    setLastMessage(tr("The graphics card choice takes effect after you restart Drift."),
+                   QStringLiteral("info"));
+}
+
+bool AppController::gpuPreferenceSupported() const
+{
+    return drift::gpu::preferenceSupported();
 }
 
 void AppController::setInvertTimelineScroll(bool enabled)
@@ -4283,6 +5430,14 @@ void AppController::setDraggingAssetIndex(int index)
     emit draggingAssetIndexChanged();
 }
 
+void AppController::setAssetPreviewWindowOpen(bool open)
+{
+    if (m_assetPreviewWindowOpen == open)
+        return;
+    m_assetPreviewWindowOpen = open;
+    emit assetPreviewWindowOpenChanged();
+}
+
 void AppController::setProjectName(const QString &name)
 {
     if (m_project.name() == name)
@@ -4411,11 +5566,13 @@ QString AppController::filmstripFrameUrl(const QString &path, int frame, int cou
     return imageUrl(path) + QStringLiteral("?frame=%1&count=%2").arg(frame).arg(count);
 }
 
-QString AppController::filmstripTileUrl(const QString &path, int level, double index) const
+QString AppController::filmstripTileUrl(const QString &path, int level, double index,
+                                        int rotationCorrection) const
 {
     if (path.isEmpty())
         return {};
-    const QString tile = m_filmstripTiles.tile(path, level, static_cast<qint64>(index));
+    const QString tile =
+        m_filmstripTiles.tile(path, level, static_cast<qint64>(index), rotationCorrection);
     return tile.isEmpty() ? QString() : imageUrl(tile);
 }
 
@@ -4597,8 +5754,13 @@ void AppController::addClipFromAsset(int assetIndex)
         return;
 
     const drift::TimeUs duration = clipDurationForAssetIndex(assetIndex);
-    const drift::TimeUs start = drift::resolveClipStart(m_project, track, -1, m_playheadUs, duration, m_snapEnabled,
-                                                        m_playheadUs);
+    // A bin-preview trim shortens what actually lands on the timeline (applyAssetLayout below
+    // applies it), so collision/gap placement has to size itself against that, not the asset's
+    // full duration, or a trimmed clip gets pushed out past a neighbour it would easily fit next
+    // to.
+    const drift::TimeUs placementDuration = trimmedClipDurationUs(asset, duration);
+    const drift::TimeUs start = drift::resolveClipStart(m_project, track, -1, m_playheadUs,
+                                                        placementDuration, m_snapEnabled, m_playheadUs);
 
     drift::Clip clip;
     clip.id = QUuid::createUuid().toString(QUuid::WithoutBraces);
@@ -4606,10 +5768,11 @@ void AppController::addClipFromAsset(int assetIndex)
     clip.type = clipType;
     clip.name = asset.value(QStringLiteral("name")).toString();
     clip.path = asset.value(QStringLiteral("path")).toString();
+    attachAssetSource(clip);
     clip.thumbnailPath = thumbnailPath;
     clip.filmstripPath = filmstripPath;
     clip.timelineStart = start;
-    clip.timelineDuration = duration;
+    clip.timelineDuration = placementDuration;
     clip.srcIn = 0;
     clip.srcOut = duration;
     applyAssetLayout(clip, asset, m_project.width(), m_project.height());
@@ -4663,8 +5826,11 @@ void AppController::addClipsFromAssets(const QStringList &assetIds)
         const QString thumbnailPath = m_assetLibrary->thumbnailAt(assetIndex);
         const QString filmstripPath = m_assetLibrary->filmstripAt(assetIndex);
         const drift::TimeUs duration = clipDurationForAssetIndex(assetIndex);
-        const drift::TimeUs start =
-            drift::resolveClipStart(m_project, track, -1, cursor, duration, m_snapEnabled, cursor);
+        // See addClipFromAsset: placement must size against the trimmed length, not the asset's
+        // full duration, or a trimmed clip gets pushed past a neighbour it would fit next to.
+        const drift::TimeUs placementDuration = trimmedClipDurationUs(asset, duration);
+        const drift::TimeUs start = drift::resolveClipStart(m_project, track, -1, cursor,
+                                                            placementDuration, m_snapEnabled, cursor);
 
         drift::Clip clip;
         clip.id = QUuid::createUuid().toString(QUuid::WithoutBraces);
@@ -4672,10 +5838,11 @@ void AppController::addClipsFromAssets(const QStringList &assetIds)
         clip.type = clipType;
         clip.name = asset.value(QStringLiteral("name")).toString();
         clip.path = asset.value(QStringLiteral("path")).toString();
+        attachAssetSource(clip);
         clip.thumbnailPath = thumbnailPath;
         clip.filmstripPath = filmstripPath;
         clip.timelineStart = start;
-        clip.timelineDuration = duration;
+        clip.timelineDuration = placementDuration;
         clip.srcIn = 0;
         clip.srcOut = duration;
         applyAssetLayout(clip, asset, m_project.width(), m_project.height());
@@ -4683,7 +5850,10 @@ void AppController::addClipsFromAssets(const QStringList &assetIds)
         track.clips.append(clip);
         lastTrackIndex = trackIndex;
         lastClipIndex = track.clips.size() - 1;
-        cursor = start + duration;
+        // Not `duration`: applyAssetLayout above may have shortened clip.timelineDuration to a
+        // bin-preview trim, and the cursor has to advance by what actually got placed or the
+        // next clip lands after a gap the size of the trimmed-off tail.
+        cursor = start + clip.timelineDuration;
     }
 
     if (lastTrackIndex < 0)
@@ -4744,8 +5914,11 @@ void AppController::addClipFromAssetOnNewTrackAt(int assetIndex, int insertIndex
 
     drift::Track &track = m_project.tracks()[trackIndex];
     const drift::TimeUs duration = clipDurationForAssetIndex(assetIndex);
+    // See addClipFromAsset: placement must size against the trimmed length, not the asset's full
+    // duration.
+    const drift::TimeUs placementDuration = trimmedClipDurationUs(asset, duration);
     const drift::TimeUs start = drift::resolveClipStart(m_project, track, -1, drift::secondsToUs(atSeconds),
-                                                        duration, m_snapEnabled, m_playheadUs);
+                                                        placementDuration, m_snapEnabled, m_playheadUs);
 
     drift::Clip clip;
     clip.id = QUuid::createUuid().toString(QUuid::WithoutBraces);
@@ -4753,10 +5926,11 @@ void AppController::addClipFromAssetOnNewTrackAt(int assetIndex, int insertIndex
     clip.type = clipType;
     clip.name = asset.value(QStringLiteral("name")).toString();
     clip.path = asset.value(QStringLiteral("path")).toString();
+    attachAssetSource(clip);
     clip.thumbnailPath = thumbnailPath;
     clip.filmstripPath = filmstripPath;
     clip.timelineStart = start;
-    clip.timelineDuration = duration;
+    clip.timelineDuration = placementDuration;
     clip.srcIn = 0;
     clip.srcOut = duration;
     applyAssetLayout(clip, asset, m_project.width(), m_project.height());
@@ -4791,8 +5965,11 @@ void AppController::addClipFromAssetAt(int assetIndex, int trackIndex, double at
     const drift::Project before = m_project;
     drift::Track &track = m_project.tracks()[trackIndex];
     const drift::TimeUs duration = clipDurationForAssetIndex(assetIndex);
+    // See addClipFromAsset: placement must size against the trimmed length, not the asset's full
+    // duration.
+    const drift::TimeUs placementDuration = trimmedClipDurationUs(asset, duration);
     const drift::TimeUs start = drift::resolveClipStart(m_project, track, -1, drift::secondsToUs(atSeconds),
-                                                        duration, m_snapEnabled, m_playheadUs);
+                                                        placementDuration, m_snapEnabled, m_playheadUs);
 
     drift::Clip clip;
     clip.id = QUuid::createUuid().toString(QUuid::WithoutBraces);
@@ -4800,10 +5977,11 @@ void AppController::addClipFromAssetAt(int assetIndex, int trackIndex, double at
     clip.type = clipType;
     clip.name = asset.value(QStringLiteral("name")).toString();
     clip.path = asset.value(QStringLiteral("path")).toString();
+    attachAssetSource(clip);
     clip.thumbnailPath = thumbnailPath;
     clip.filmstripPath = filmstripPath;
     clip.timelineStart = start;
-    clip.timelineDuration = duration;
+    clip.timelineDuration = placementDuration;
     clip.srcIn = 0;
     clip.srcOut = duration;
     applyAssetLayout(clip, asset, m_project.width(), m_project.height());
@@ -6647,6 +7825,7 @@ void AppController::refreshMulticamTiles()
         QString path;
         quint64 streamId = 0;
         drift::TimeUs sourceUs = 0;
+        int rotationCorrection = 0;
     };
 
     QList<AngleRead> reads;
@@ -6660,7 +7839,7 @@ void AppController::refreshMulticamTiles()
         }
         reads.append(AngleRead{i, clip.path,
                                kMulticamStreamSalt ^ ClipReaderPool::streamIdForClip(clip.id),
-                               clip.timelineToSourceUs(m_playheadUs)});
+                               clip.timelineToSourceUs(m_playheadUs), clip.rotationCorrection});
     }
 
     // Angles with nothing under the playhead clear immediately; there is no decode to wait for.
@@ -6677,7 +7856,7 @@ void AppController::refreshMulticamTiles()
     requests.reserve(reads.size());
     for (const AngleRead &read : reads)
         requests.append(ClipReaderPool::VideoRequest{read.path, read.streamId, read.sourceUs,
-                                                     maxWidth, maxHeight});
+                                                     maxWidth, maxHeight, read.rotationCorrection});
 
     m_multicamRefreshing = true;
     const int generation = ++m_multicamGeneration;
@@ -6692,7 +7871,8 @@ void AppController::refreshMulticamTiles()
         for (const AngleRead &read : reads) {
             tiles.append(qMakePair(read.angle,
                                    ClipReaderPool::instance().readVideoFrame(
-                                       read.path, read.streamId, read.sourceUs, maxWidth, maxHeight)));
+                                       read.path, read.streamId, read.sourceUs, maxWidth, maxHeight,
+                                       QString(), 15, false, read.rotationCorrection)));
         }
 
         QMetaObject::invokeMethod(this, [this, tiles, generation]() {
@@ -6746,6 +7926,7 @@ void AppController::beginAssetPreview(int assetIndex)
     clip.srcOut = asset->durationUs;
     clip.timelineStart = 0;
     clip.timelineDuration = asset->durationUs;
+    clip.rotationCorrection = drift::rotationCorrectionOf(*asset);
 
     m_assetPreviewIndex = assetIndex;
     m_assetPreviewActive = true;
@@ -7568,9 +8749,12 @@ void AppController::setSegmentationFrame(double seconds)
 
     // The model pass is the expensive half (seconds per frame for the SAM2 encoder on a CPU
     // provider), so it runs off the GUI thread. Decodes after this are milliseconds and stay inline.
-    (void)QtConcurrent::run([this, path, sourceUs, canvasW, canvasH, generation, rvm, quality]() {
-        const QImage frame = ClipReaderPool::instance().readVideoFrame(path, kSegmentEncodeStreamId,
-                                                                       sourceUs, canvasW, canvasH);
+    const int rotationCorrection = clip.rotationCorrection;
+    (void)QtConcurrent::run([this, path, sourceUs, canvasW, canvasH, generation, rvm, quality,
+                             rotationCorrection]() {
+        const QImage frame = ClipReaderPool::instance().readVideoFrame(
+            path, kSegmentEncodeStreamId, sourceUs, canvasW, canvasH, QString(), 15, false,
+            rotationCorrection);
         drift::Sam2Embedding embedding;
         QImage mask;
         QString error;
@@ -7804,8 +8988,11 @@ void AppController::segmentClip(int trackIndex, int clipIndex, const QVariantLis
     // runs, and stale indices would apply the matte to the wrong clip.
     const QString clipId = clip.id;
 
+    // Masks are traced against the frames the compositor shows, so they must decode at the same
+    // orientation or the matte lands transposed.
+    const int rotationCorrection = clip.rotationCorrection;
     (void)QtConcurrent::run([this, path, srcIn, srcOut, fps, canvasW, canvasH, normalized, mode,
-                             clipId, rvm, rvmQuality]() {
+                             clipId, rvm, rvmQuality, rotationCorrection]() {
         auto setProgress = [this](double fraction, const QString &status) {
             QMetaObject::invokeMethod(
                 this,
@@ -7927,7 +9114,8 @@ void AppController::segmentClip(int trackIndex, int clipIndex, const QVariantLis
 
             const drift::TimeUs sourceUs = srcIn + drift::TimeUs(i) * step;
             const QImage frame = ClipReaderPool::instance().readVideoFrame(
-                path, kCutoutRenderStreamId, sourceUs, canvasW, canvasH);
+                path, kCutoutRenderStreamId, sourceUs, canvasW, canvasH, QString(), 15, false,
+                rotationCorrection);
             if (frame.isNull()) {
                 abortAll();
                 finish(false, tr("Could not decode frame %1").arg(i), {});
@@ -8616,7 +9804,10 @@ void AppController::detectFacesForClip(int trackIndex, int clipIndex)
     // runs, and stale indices would attach the track to the wrong clip.
     const QString clipId = clip.id;
 
-    (void)QtConcurrent::run([this, path, srcIn, srcOut, fps, canvasW, canvasH, clipId]() {
+    // Landmarks are in frame pixels, so detect on frames oriented the way the compositor shows them.
+    const int rotationCorrection = clip.rotationCorrection;
+    (void)QtConcurrent::run([this, path, srcIn, srcOut, fps, canvasW, canvasH, clipId,
+                             rotationCorrection]() {
         auto setProgress = [this](double fraction, const QString &status) {
             QMetaObject::invokeMethod(
                 this,
@@ -8683,7 +9874,8 @@ void AppController::detectFacesForClip(int trackIndex, int clipIndex)
 
             const drift::TimeUs sourceUs = srcIn + drift::TimeUs(i) * step;
             const QImage frame = ClipReaderPool::instance().readVideoFrame(
-                path, kFaceDetectStreamId, sourceUs, canvasW, canvasH);
+                path, kFaceDetectStreamId, sourceUs, canvasW, canvasH, QString(), 15, false,
+                rotationCorrection);
             if (frame.isNull()) {
                 finish(false, tr("Could not decode frame %1").arg(i), {});
                 return;
@@ -8902,12 +10094,13 @@ QVariantList sceneRowsFromAnalysis(const drift::SceneAnalysis &analysis)
 } // namespace
 
 void AppController::applySceneAnalysis(const drift::SceneAnalysis &analysis, const QString &clipId,
-                                      const QString &clipPath)
+                                      const QString &clipPath, int rotationCorrection)
 {
     const QVariantList rows = sceneRowsFromAnalysis(analysis);
     m_scenes = rows;
     m_sceneClipId = clipId;
     m_sceneClipPath = clipPath;
+    m_sceneClipRotationCorrection = rotationCorrection;
     emit scenesChanged();
 }
 
@@ -8917,6 +10110,7 @@ drift::SceneDetectRequest AppController::sceneRequestFor(const drift::Clip &clip
 {
     drift::SceneDetectRequest request;
     request.path = clip.path;
+    request.rotationCorrection = clip.rotationCorrection;
     request.sourceIn = clip.srcIn;
     request.sourceOut = clip.srcOut;
     request.options.threshold = sceneThreshold();
@@ -8957,7 +10151,7 @@ void AppController::detectScenesForClip(int trackIndex, int clipIndex, bool with
     drift::SceneAnalysis cached;
     if (drift::loadCachedAnalysis(request, &cached)
         && (!withObjects || cached.objectsScanned)) {
-        applySceneAnalysis(cached, clip.id, clip.path);
+        applySceneAnalysis(cached, clip.id, clip.path, clip.rotationCorrection);
         setLastMessage(tr("Found %n scene(s)", nullptr, int(cached.scenes.size())));
         emit sceneDetectionFinished(true, QString());
         return;
@@ -8980,9 +10174,10 @@ void AppController::detectScenesForClip(int trackIndex, int clipIndex, bool with
     // job runs, and a stale index would attach the analysis to the wrong clip.
     const QString clipId = clip.id;
     const QString clipPath = clip.path;
+    const int rotationCorrection = clip.rotationCorrection;
     const quint64 generation = ++m_sceneGeneration;
 
-    (void)QtConcurrent::run([this, request, clipId, clipPath, generation]() {
+    (void)QtConcurrent::run([this, request, clipId, clipPath, rotationCorrection, generation]() {
         auto setProgress = [this, generation](double fraction, const QString &status) {
             QMetaObject::invokeMethod(
                 this,
@@ -8999,11 +10194,11 @@ void AppController::detectScenesForClip(int trackIndex, int clipIndex, bool with
                 Qt::QueuedConnection);
         };
 
-        auto finish = [this, clipId, clipPath, generation](bool ok, const QString &message,
-                                                          const drift::SceneAnalysis &analysis) {
+        auto finish = [this, clipId, clipPath, rotationCorrection, generation](
+                          bool ok, const QString &message, const drift::SceneAnalysis &analysis) {
             QMetaObject::invokeMethod(
                 this,
-                [this, ok, message, analysis, clipId, clipPath, generation]() {
+                [this, ok, message, analysis, clipId, clipPath, rotationCorrection, generation]() {
                     if (generation != m_sceneGeneration)
                         return; // superseded by a newer scan; this result is for nobody
                     m_sceneDetecting = false;
@@ -9018,7 +10213,7 @@ void AppController::detectScenesForClip(int trackIndex, int clipIndex, bool with
                         emit sceneDetectionFinished(false, message);
                         return;
                     }
-                    applySceneAnalysis(analysis, clipId, clipPath);
+                    applySceneAnalysis(analysis, clipId, clipPath, rotationCorrection);
                     setLastMessage(tr("Found %n scene(s)", nullptr, int(analysis.scenes.size())));
                     emit sceneDetectionFinished(true, QString());
                 },
@@ -9549,6 +10744,7 @@ QVariantList AppController::builtinShapes() const
             {QStringLiteral("category"), entry.category},
             // Several ids share a kind, so the inspector matches a clip's stored kind on this.
             {QStringLiteral("kind"), drift::shapeKindToString(entry.style.kind)},
+            {QStringLiteral("aspect"), entry.aspect},
         });
     }
     return out;
@@ -9564,27 +10760,6 @@ QVariantList AppController::builtinShapeCategories() const
         });
     }
     return out;
-}
-
-QString AppController::shapeSvgPath(const QString &shapeId) const
-{
-    const drift::ShapeCatalogEntry *entry = drift::shapeCatalogEntry(shapeId);
-    drift::ShapeStyle style = entry ? entry->style : shapeStyleForKind(shapeId);
-    const double aspect = entry ? entry->aspect : 1.0;
-
-    // Thumbnails are authored on the 0..100 grid ShapePreview.qml scales from, inset so the 2px
-    // preview stroke is not clipped by the item edge.
-    constexpr double kGrid = 100.0;
-    constexpr double kInset = 3.0;
-    const double boxW = aspect >= 1.0 ? kGrid : kGrid * aspect;
-    const double boxH = aspect >= 1.0 ? kGrid / aspect : kGrid;
-    const QRectF bounds =
-        QRectF((kGrid - boxW) / 2.0, (kGrid - boxH) / 2.0, boxW, boxH)
-            .adjusted(kInset, kInset, -kInset, -kInset);
-
-    // Corner radius is in project pixels; on a 100-unit grid a 32px radius would swallow the shape.
-    style.cornerRadius = style.cornerRadius > 0.0 ? 12.0 : 0.0;
-    return drift::shapeSvgPath(style, bounds);
 }
 
 void AppController::addShapeClip(const QString &shapeKind, double atSeconds)
@@ -10316,7 +11491,7 @@ QVariantList AppController::previewClipsAtPlayhead() const
             const double h = clipTransformValue(clip.transformH, relative, static_cast<double>(canvasHeight));
             const double rotation = clipTransformValue(clip.rotation, relative, 0.0);
 
-            out.append(QVariantMap{
+            QVariantMap entry{
                 {QStringLiteral("track"), trackIndex},
                 {QStringLiteral("clip"), clipIndex},
                 {QStringLiteral("kind"), drift::clipTypeToString(clip.type)},
@@ -10329,7 +11504,29 @@ QVariantList AppController::previewClipsAtPlayhead() const
                 {QStringLiteral("rotation"), rotation},
                 {QStringLiteral("canvasWidth"), canvasWidth},
                 {QStringLiteral("canvasHeight"), canvasHeight},
-            });
+            };
+            if (clip.type == drift::ClipType::Model3d) {
+                // The layer is the whole canvas; the box the overlay shows is the model's
+                // projected rest bounds, and anchorX/Y is what previewSetClipPosition takes.
+                const drift::Model3dSource resolved =
+                    clip.model3d.isAnimated() ? clip.model3d.resolvedAt(relative) : clip.model3d;
+                const double cx = 0.5 + x / canvasWidth;
+                const double cy = 0.5 + y / canvasHeight;
+                QRectF box(cx - 0.05, cy - 0.05, 0.1, 0.1);
+                if (resolved.hasAabb()) {
+                    box = drift::modelClipScreenRect(
+                        drift::modelClipParamsFromSource(resolved, cx, cy), resolved.aabbMin,
+                        resolved.aabbMax, double(canvasHeight) / double(canvasWidth));
+                }
+                entry.insert(QStringLiteral("anchorX"), x);
+                entry.insert(QStringLiteral("anchorY"), y);
+                entry.insert(QStringLiteral("x"), box.x() * canvasWidth);
+                entry.insert(QStringLiteral("y"), box.y() * canvasHeight);
+                entry.insert(QStringLiteral("width"), box.width() * canvasWidth);
+                entry.insert(QStringLiteral("height"), box.height() * canvasHeight);
+                entry.insert(QStringLiteral("rotation"), 0.0);
+            }
+            out.append(entry);
         }
     }
     return out;
@@ -10555,7 +11752,7 @@ QVariantMap AppController::suggestedProjectSetupForAsset(int assetIndex) const
 
     int w = asset.value(QStringLiteral("width")).toInt();
     int h = asset.value(QStringLiteral("height")).toInt();
-    const int rotation = asset.value(QStringLiteral("rotationDegrees")).toInt();
+    const int rotation = asset.value(QStringLiteral("effectiveRotation")).toInt();
     if (rotation == 90 || rotation == 270)
         std::swap(w, h);
     if (w > 0 && h > 0) {
@@ -10631,6 +11828,9 @@ void AppController::previewSetClipSize(int trackIndex, int clipIndex, double wid
         return;
 
     drift::Clip &clip = track.clips[clipIndex];
+    // A model clip is placed by its camera; its box has no size or spin of its own.
+    if (clip.type == drift::ClipType::Model3d)
+        return;
     const drift::TimeUs relative = qMax<drift::TimeUs>(0, m_playheadUs - clip.timelineStart);
     const bool wroteW =
         writeKeyframeValue(clip.transformW, relative, qMax(1.0, widthPixels), m_autoKeyEnabled, false);
@@ -10658,6 +11858,9 @@ void AppController::previewSetClipRect(int trackIndex, int clipIndex, double xPi
         return;
 
     drift::Clip &clip = track.clips[clipIndex];
+    // A model clip is placed by its camera; its box has no size or spin of its own.
+    if (clip.type == drift::ClipType::Model3d)
+        return;
     const drift::TimeUs relative = qMax<drift::TimeUs>(0, m_playheadUs - clip.timelineStart);
     bool wrote = false;
     wrote = writeKeyframeValue(clip.transformX, relative, xPixels, m_autoKeyEnabled, false) || wrote;
@@ -10687,6 +11890,9 @@ void AppController::previewSetClipRotation(int trackIndex, int clipIndex, double
         return;
 
     drift::Clip &clip = track.clips[clipIndex];
+    // A model clip is placed by its camera; its box has no size or spin of its own.
+    if (clip.type == drift::ClipType::Model3d)
+        return;
     const drift::TimeUs relative = qMax<drift::TimeUs>(0, m_playheadUs - clip.timelineStart);
     if (!writeKeyframeValue(clip.rotation, relative, degrees, m_autoKeyEnabled, false)) {
         emit transformBlocked(tr("Turn on Auto keyframes to rotate this"));
@@ -11058,19 +12264,12 @@ void AppController::endTextEdit()
 
 void AppController::syncTextOverlaySkip()
 {
-    // Inline edit owns the skip id until it ends; then keep the composited raster
-    // hidden for the selected text clip so the QML overlay stays crisp (the baked
-    // preview texture is downscaled and looks soft when upscaled).
+    // Inline edit owns the skip id until it ends. Outside of it the composited
+    // raster is always shown: the QML stand-in the preview used to draw for the
+    // selected text clip never matched the engine's layout.
     if (m_inlineTextEditing)
         return;
-
-    QString id;
-    if (!m_playing && isValidClipIndex(m_selectedTrack, m_selectedClip)) {
-        const drift::Clip &clip = m_project.tracks().at(m_selectedTrack).clips.at(m_selectedClip);
-        if (clip.type == drift::ClipType::Text && clip.containsTime(m_playheadUs))
-            id = clip.id;
-    }
-    m_playback.setEditingClipId(id);
+    m_playback.setEditingClipId(QString());
 }
 
 void AppController::setSubtitleCues(int trackIndex, int clipIndex, const QVariantList &cues)
@@ -11195,19 +12394,21 @@ void AppController::seekToSubtitleCue(int trackIndex, int clipIndex, int cueInde
 
 void AppController::setTextStyle(int trackIndex, int clipIndex, const QVariantMap &m)
 {
-    if (trackIndex < 0 || trackIndex >= m_project.tracks().size())
-        return;
-
-    drift::Track &track = m_project.tracks()[trackIndex];
-    if (clipIndex < 0 || clipIndex >= track.clips.size())
-        return;
-
-    drift::Clip &clip = track.clips[clipIndex];
-    if (clip.type != drift::ClipType::Text && clip.type != drift::ClipType::Subtitle)
+    drift::Clip *clip = textClipAt(trackIndex, clipIndex);
+    if (!clip)
         return;
 
     const drift::Project before = m_project;
-    drift::TextStyle &s = clip.textStyle;
+    drift::TextStyle &s = clip->textStyle;
+    applyTextStylePatch(s, m);
+    pushProjectEdit(before, tr("Edit text style"));
+    finishEdit(tr("Text style updated"));
+}
+
+// The partial patch both the inspector and set_text send: the canonical keys (layers, layer,
+// animation, lookId) and, for one release, the flat v6 keys routed onto the well-known layers.
+void AppController::applyTextStylePatch(drift::TextStyle &s, const QVariantMap &m)
+{
     if (m.contains(QStringLiteral("fontFamily")))
         s.fontFamily = m.value(QStringLiteral("fontFamily")).toString();
     if (m.contains(QStringLiteral("pixelSize")))
@@ -11216,8 +12417,8 @@ void AppController::setTextStyle(int trackIndex, int clipIndex, const QVariantMa
         s.fontWeight = qBound(100, m.value(QStringLiteral("fontWeight")).toInt(), 900);
     if (m.contains(QStringLiteral("italic")))
         s.italic = m.value(QStringLiteral("italic")).toBool();
-    if (m.contains(QStringLiteral("color")))
-        s.color = QColor(m.value(QStringLiteral("color")).toString());
+    if (m.contains(QStringLiteral("pathBend")))
+        s.pathBend = qBound(-100.0, m.value(QStringLiteral("pathBend")).toDouble(), 100.0);
     if (m.contains(QStringLiteral("align")))
         s.align = drift::textAlignFromString(m.value(QStringLiteral("align")).toString());
     if (m.contains(QStringLiteral("valign")))
@@ -11228,32 +12429,6 @@ void AppController::setTextStyle(int trackIndex, int clipIndex, const QVariantMa
         s.lineHeight = qBound(0.5, m.value(QStringLiteral("lineHeight")).toDouble(), 4.0);
     if (m.contains(QStringLiteral("letterSpacing")))
         s.letterSpacing = m.value(QStringLiteral("letterSpacing")).toDouble();
-    if (m.contains(QStringLiteral("outlineEnabled")))
-        s.outlineEnabled = m.value(QStringLiteral("outlineEnabled")).toBool();
-    if (m.contains(QStringLiteral("outlineWidth")))
-        s.outlineWidth = qMax(0.0, m.value(QStringLiteral("outlineWidth")).toDouble());
-    if (m.contains(QStringLiteral("outlineColor")))
-        s.outlineColor = QColor(m.value(QStringLiteral("outlineColor")).toString());
-    if (m.contains(QStringLiteral("shadowEnabled")))
-        s.shadowEnabled = m.value(QStringLiteral("shadowEnabled")).toBool();
-    if (m.contains(QStringLiteral("shadowOffsetX")))
-        s.shadowOffsetX = m.value(QStringLiteral("shadowOffsetX")).toDouble();
-    if (m.contains(QStringLiteral("shadowOffsetY")))
-        s.shadowOffsetY = m.value(QStringLiteral("shadowOffsetY")).toDouble();
-    if (m.contains(QStringLiteral("shadowBlur")))
-        s.shadowBlur = qMax(0.0, m.value(QStringLiteral("shadowBlur")).toDouble());
-    if (m.contains(QStringLiteral("shadowOpacity")))
-        s.shadowOpacity = qBound(0.0, m.value(QStringLiteral("shadowOpacity")).toDouble(), 1.0);
-    if (m.contains(QStringLiteral("shadowColor")))
-        s.shadowColor = QColor(m.value(QStringLiteral("shadowColor")).toString());
-    if (m.contains(QStringLiteral("glowEnabled")))
-        s.glowEnabled = m.value(QStringLiteral("glowEnabled")).toBool();
-    if (m.contains(QStringLiteral("glowColor")))
-        s.glowColor = QColor(m.value(QStringLiteral("glowColor")).toString());
-    if (m.contains(QStringLiteral("glowRadius")))
-        s.glowRadius = qMax(0.0, m.value(QStringLiteral("glowRadius")).toDouble());
-    if (m.contains(QStringLiteral("glowOpacity")))
-        s.glowOpacity = qBound(0.0, m.value(QStringLiteral("glowOpacity")).toDouble(), 1.0);
     if (m.contains(QStringLiteral("boxEnabled")))
         s.boxEnabled = m.value(QStringLiteral("boxEnabled")).toBool();
     if (m.contains(QStringLiteral("boxColor")))
@@ -11272,8 +12447,100 @@ void AppController::setTextStyle(int trackIndex, int clipIndex, const QVariantMa
         s.underlineOffset = m.value(QStringLiteral("underlineOffset")).toDouble();
     applyTextHighlightPatch(&s.wordHighlight, m.value(QStringLiteral("wordHighlight")).toMap());
     applyWordAccentPatch(&s.accent, m.value(QStringLiteral("accent")).toMap());
-    applyTextAnimationPatch(&s.animIn, m.value(QStringLiteral("animIn")).toMap());
-    applyTextAnimationPatch(&s.animOut, m.value(QStringLiteral("animOut")).toMap());
+
+    // The look: canonical layers first, then the flat v6 keys onto their well-known layers.
+    bool lookEdited = applyLayerStackPatch(s.layers, m, drift::solidFillLayer(Qt::white));
+    if (m.contains(QStringLiteral("color"))) {
+        s.setPrimaryColor(QColor(m.value(QStringLiteral("color")).toString()));
+        lookEdited = true;
+    }
+    if (m.contains(QStringLiteral("fillKind")) || m.contains(QStringLiteral("colorSecondary"))
+        || m.contains(QStringLiteral("gradientAngle"))) {
+        drift::TextShadingLayer *fill = ensureLegacyLayer(s, drift::TextLayerKind::Fill);
+        fill->enabled = true;
+        const QString kind = m.value(QStringLiteral("fillKind")).toString();
+        if (kind == QLatin1String("solid")) {
+            fill->paint.color = s.primaryColor();
+            fill->paint.kind = drift::TextPaintKind::Solid;
+        } else if (kind == QLatin1String("linearGradient") || kind == QLatin1String("radialGradient")
+                   || (kind.isEmpty() && fill->paint.kind == drift::TextPaintKind::Gradient)) {
+            const QColor primary = s.primaryColor();
+            if (fill->paint.kind != drift::TextPaintKind::Gradient) {
+                fill->paint.kind = drift::TextPaintKind::Gradient;
+                fill->paint.gradient.stops = {{0.0, primary}, {1.0, QColor(255, 120, 0)}};
+            }
+            if (!kind.isEmpty())
+                fill->paint.gradient.kind = kind == QLatin1String("radialGradient") ? drift::TextGradientKind::Radial
+                                                                                    : drift::TextGradientKind::Linear;
+            if (m.contains(QStringLiteral("colorSecondary")) && fill->paint.gradient.stops.size() >= 2)
+                fill->paint.gradient.stops.last().color = QColor(m.value(QStringLiteral("colorSecondary")).toString());
+            if (m.contains(QStringLiteral("gradientAngle")))
+                fill->paint.gradient.angle = m.value(QStringLiteral("gradientAngle")).toDouble();
+        }
+        lookEdited = true;
+    }
+    if (m.contains(QStringLiteral("outlineEnabled")) || m.contains(QStringLiteral("outlineWidth"))
+        || m.contains(QStringLiteral("outlineColor"))) {
+        drift::TextShadingLayer *stroke = ensureLegacyLayer(s, drift::TextLayerKind::Stroke);
+        if (m.contains(QStringLiteral("outlineEnabled")))
+            stroke->enabled = m.value(QStringLiteral("outlineEnabled")).toBool();
+        if (m.contains(QStringLiteral("outlineWidth")))
+            stroke->width = qMax(0.0, m.value(QStringLiteral("outlineWidth")).toDouble());
+        if (m.contains(QStringLiteral("outlineColor")))
+            stroke->paint.color = QColor(m.value(QStringLiteral("outlineColor")).toString());
+        lookEdited = true;
+    }
+    if (m.contains(QStringLiteral("shadowEnabled")) || m.contains(QStringLiteral("shadowOffsetX"))
+        || m.contains(QStringLiteral("shadowOffsetY")) || m.contains(QStringLiteral("shadowBlur"))
+        || m.contains(QStringLiteral("shadowOpacity")) || m.contains(QStringLiteral("shadowColor"))) {
+        drift::TextShadingLayer *shadow = ensureLegacyLayer(s, drift::TextLayerKind::Shadow);
+        if (m.contains(QStringLiteral("shadowEnabled")))
+            shadow->enabled = m.value(QStringLiteral("shadowEnabled")).toBool();
+        if (m.contains(QStringLiteral("shadowOffsetX")))
+            shadow->offsetX = m.value(QStringLiteral("shadowOffsetX")).toDouble();
+        if (m.contains(QStringLiteral("shadowOffsetY")))
+            shadow->offsetY = m.value(QStringLiteral("shadowOffsetY")).toDouble();
+        if (m.contains(QStringLiteral("shadowBlur")))
+            shadow->blur = qMax(0.0, m.value(QStringLiteral("shadowBlur")).toDouble());
+        if (m.contains(QStringLiteral("shadowOpacity")))
+            shadow->opacity = qBound(0.0, m.value(QStringLiteral("shadowOpacity")).toDouble(), 1.0);
+        if (m.contains(QStringLiteral("shadowColor")))
+            shadow->paint.color = QColor(m.value(QStringLiteral("shadowColor")).toString());
+        lookEdited = true;
+    }
+    if (m.contains(QStringLiteral("glowEnabled")) || m.contains(QStringLiteral("glowColor"))
+        || m.contains(QStringLiteral("glowRadius")) || m.contains(QStringLiteral("glowOpacity"))) {
+        drift::TextShadingLayer *glow = ensureLegacyLayer(s, drift::TextLayerKind::Glow);
+        if (m.contains(QStringLiteral("glowEnabled")))
+            glow->enabled = m.value(QStringLiteral("glowEnabled")).toBool();
+        if (m.contains(QStringLiteral("glowColor")))
+            glow->paint.color = QColor(m.value(QStringLiteral("glowColor")).toString());
+        if (m.contains(QStringLiteral("glowRadius")))
+            glow->blur = qMax(0.0, m.value(QStringLiteral("glowRadius")).toDouble());
+        if (m.contains(QStringLiteral("glowOpacity")))
+            glow->opacity = qBound(0.0, m.value(QStringLiteral("glowOpacity")).toDouble(), 1.0);
+        lookEdited = true;
+    }
+    if (m.contains(QStringLiteral("lookId")) && m.value(QStringLiteral("lookId")).toString().isEmpty()) {
+        s.lookId.clear();
+        s.lookParams.clear();
+    } else if (lookEdited) {
+        s.lookId.clear();
+        s.lookParams.clear();
+    }
+    // Layer keyframes whose layer is gone.
+    for (auto it = s.keyframes.begin(); it != s.keyframes.end();) {
+        if (drift::textKeyframeCanonicalKey(it.key(), s).isEmpty())
+            it = s.keyframes.erase(it);
+        else
+            ++it;
+    }
+
+    if (m.contains(QStringLiteral("animation")))
+        applyTextAnimationSetPatch(&s.animation, m.value(QStringLiteral("animation")).toMap());
+    applyLegacyTextAnimationPatch(&s.animation, QStringLiteral("animIn"), m.value(QStringLiteral("animIn")).toMap());
+    applyLegacyTextAnimationPatch(&s.animation, QStringLiteral("animOut"), m.value(QStringLiteral("animOut")).toMap());
+
     // A hand-edited style is no longer the pack it came from, so the picker stops showing one as
     // selected. Alignment and wrapping are layout, not look, and leave the pack intact.
     static const QSet<QString> kLayoutOnlyKeys = {QStringLiteral("align"), QStringLiteral("valign"),
@@ -11284,8 +12551,6 @@ void AppController::setTextStyle(int trackIndex, int clipIndex, const QVariantMa
             break;
         }
     }
-    pushProjectEdit(before, tr("Edit text style"));
-    finishEdit(tr("Text style updated"));
 }
 
 void AppController::applyTextPreset(int trackIndex, int clipIndex, const QString &presetId)
@@ -11319,7 +12584,8 @@ QVariantList AppController::textPresets() const
         out.append(QVariantMap{
             {QStringLiteral("id"), preset.id},
             {QStringLiteral("label"), preset.label},
-            {QStringLiteral("style"), textStyleToMap(preset.style)},
+            {QStringLiteral("sampleText"), preset.sampleText},
+            {QStringLiteral("style"), textStyleToMap(preset.style, 0)},
         });
     }
     return out;
@@ -11332,7 +12598,7 @@ QVariantList AppController::userTextPresets() const
         out.append(QVariantMap{
             {QStringLiteral("id"), preset.id},
             {QStringLiteral("label"), preset.label},
-            {QStringLiteral("style"), textStyleToMap(preset.style)},
+            {QStringLiteral("style"), textStyleToMap(preset.style, 0)},
         });
     }
     return out;
@@ -11846,6 +13112,95 @@ void AppController::setClipRotationSnap(int trackIndex, int clipIndex, double de
     clip.rotation.setKeyframe(0, snapped);
     pushProjectEdit(before, tr("Rotation snapped"));
     finishEdit(tr("Rotation set to %1°").arg(snapped, 0, 'f', 0));
+}
+
+int AppController::clipOrientation(const drift::Clip &clip) const
+{
+    const drift::MediaAsset *asset = m_project.asset(clip.assetId);
+    const int probed = asset ? asset->rotationDegrees : 0;
+    return ((probed + clip.rotationCorrection) % 360 + 360) % 360;
+}
+
+void AppController::setClipOrientationTo(drift::Clip &clip, int degrees)
+{
+    const drift::MediaAsset *asset = m_project.asset(clip.assetId);
+    const int probed = asset ? asset->rotationDegrees : 0;
+    clip.rotationCorrection = ((degrees - probed) % 360 + 360) % 360;
+}
+
+void AppController::setClipOrientation(int trackIndex, int clipIndex, int degrees)
+{
+    if (trackIndex < 0 || trackIndex >= m_project.tracks().size())
+        return;
+
+    drift::Track &track = m_project.tracks()[trackIndex];
+    if (clipIndex < 0 || clipIndex >= track.clips.size())
+        return;
+
+    drift::Clip &clip = track.clips[clipIndex];
+    // Images and text/shape clips do not carry a source display-matrix rotation to correct — only
+    // a decoded video frame does.
+    if (clip.type != drift::ClipType::Video)
+        return;
+
+    int normalized = ((degrees % 360) + 360) % 360;
+    normalized = ((normalized + 45) / 90 * 90) % 360;
+
+    const int oldRotation = clipOrientation(clip);
+    if (oldRotation == normalized)
+        return;
+
+    const drift::Project before = m_project;
+
+    // Only the aspect category (portrait-swapped vs not) needs the box to change — going from,
+    // say, 90 to 270 spins the same content inside the same box. Transposing whatever box the
+    // clip currently has (not re-deriving one from the source media) preserves any manual
+    // resize/reposition the user already made, and needs no canvas or media-size lookup at all.
+    const bool oldSwapped = (oldRotation == 90 || oldRotation == 270);
+    const bool newSwapped = (normalized == 90 || normalized == 270);
+    if (oldSwapped != newSwapped) {
+        // setClipLayoutPixels would collapse every track to one key sampled at time 0, destroying
+        // any existing position/size animation. Width and height instead trade places outright —
+        // new width is exactly the old height track and vice versa, so swapping the two
+        // KeyframeTrack objects wholesale carries every keyframe across untouched.
+        const drift::KeyframeTrack<double> oldW = clip.transformW;
+        const drift::KeyframeTrack<double> oldH = clip.transformH;
+        std::swap(clip.transformW, clip.transformH);
+
+        // X/Y shift so the box's centre stays put under the transposed size: by (w - h)/2 for X,
+        // the mirror for Y. Each existing key moves by the offset at its own time, which keeps
+        // its tangents, hold flag and the track's enabled state exactly as they were. When the
+        // size itself animates the offset is a curve, so keys are also added at width/height's
+        // key times to pin it there; between keys it is only approximated, which is the trade
+        // for not resampling the user's curve into something they no longer recognise.
+        const bool sizeIsAnimated = oldW.keyframes().size() > 1 || oldH.keyframes().size() > 1;
+        auto offsetAt = [&](drift::TimeUs t, bool axisIsX) {
+            const double w = oldW.isEmpty() ? double(m_project.width()) : oldW.evaluateAt(t);
+            const double h = oldH.isEmpty() ? double(m_project.height()) : oldH.evaluateAt(t);
+            return axisIsX ? (w - h) * 0.5 : (h - w) * 0.5;
+        };
+        auto shiftAxis = [&](drift::KeyframeTrack<double> &axis, bool axisIsX) {
+            if (axis.isEmpty())
+                return;
+            const drift::KeyframeTrack<double> original = axis;
+            if (sizeIsAnimated && axis.enabled()) {
+                for (auto it = oldW.keyframes().constBegin(); it != oldW.keyframes().constEnd(); ++it)
+                    if (!original.keyframes().contains(it.key()))
+                        axis.setKeyframe(it.key(), original.evaluateAt(it.key()));
+                for (auto it = oldH.keyframes().constBegin(); it != oldH.keyframes().constEnd(); ++it)
+                    if (!original.keyframes().contains(it.key()))
+                        axis.setKeyframe(it.key(), original.evaluateAt(it.key()));
+            }
+            for (const drift::TimeUs t : axis.keyframes().keys())
+                axis.keyframeRef(t)->value += offsetAt(t, axisIsX);
+        };
+        shiftAxis(clip.transformX, true);
+        shiftAxis(clip.transformY, false);
+    }
+
+    setClipOrientationTo(clip, normalized);
+    pushProjectEdit(before, tr("Orientation changed"));
+    finishEdit(tr("Clip orientation set to %1°").arg(normalized));
 }
 
 bool AppController::canMergeSelection() const
@@ -12370,6 +13725,86 @@ void AppController::setClipAnimation(int trackIndex, int clipIndex, const QStrin
     finishEdit(tr("Clip animation updated"));
 }
 
+// The layered patch, then the flat keys projects before format 8 and older agents still send:
+// fill / fillKind / fillSecondary / gradientAngle land on the front-most fill layer, stroke /
+// strokeWidth / strokeStyle on the first stroke layer, either created when missing.
+static void applyShapeStylePatch(drift::ShapeStyle &s, const QVariantMap &m)
+{
+    applyLayerStackPatch(s.layers, m, drift::solidFillLayer(QColor(0, 180, 255), QStringLiteral("fill")));
+
+    const auto fillLayer = [&]() -> drift::TextShadingLayer * {
+        if (drift::TextShadingLayer *fill = drift::firstTextLayerOfKind(s.layers, drift::TextLayerKind::Fill, false))
+            return fill;
+        s.layers.prepend(drift::solidFillLayer(s.primaryColor(), QStringLiteral("fill")));
+        return &s.layers.first();
+    };
+    const auto strokeLayer = [&]() -> drift::TextShadingLayer * {
+        if (drift::TextShadingLayer *stroke = drift::firstTextLayerOfKind(s.layers, drift::TextLayerKind::Stroke, false))
+            return stroke;
+        s.setStroke(0.0);
+        return drift::firstTextLayerOfKind(s.layers, drift::TextLayerKind::Stroke, false);
+    };
+
+    if (m.contains(QStringLiteral("fill"))) {
+        drift::TextShadingLayer *fill = fillLayer();
+        const QColor color(m.value(QStringLiteral("fill")).toString());
+        fill->paint.color = color;
+        if (!fill->paint.gradient.stops.isEmpty())
+            fill->paint.gradient.stops.first().color = color;
+    }
+    if (m.contains(QStringLiteral("fillSecondary"))) {
+        drift::TextShadingLayer *fill = fillLayer();
+        const QColor color(m.value(QStringLiteral("fillSecondary")).toString());
+        if (fill->paint.gradient.stops.size() < 2)
+            fill->paint.gradient.stops = {{0.0, fill->paint.color}, {1.0, color}};
+        else
+            fill->paint.gradient.stops.last().color = color;
+    }
+    if (m.contains(QStringLiteral("gradientAngle")))
+        fillLayer()->paint.gradient.angle = m.value(QStringLiteral("gradientAngle")).toDouble();
+    if (m.contains(QStringLiteral("fillKind"))) {
+        drift::TextShadingLayer *fill = fillLayer();
+        const QString kind = m.value(QStringLiteral("fillKind")).toString();
+        fill->enabled = kind != QLatin1String("none");
+        if (kind == QLatin1String("solid")) {
+            fill->paint.kind = drift::TextPaintKind::Solid;
+        } else if (kind == QLatin1String("linear") || kind == QLatin1String("radial")) {
+            fill->paint.kind = drift::TextPaintKind::Gradient;
+            fill->paint.gradient.kind = kind == QLatin1String("radial") ? drift::TextGradientKind::Radial
+                                                                        : drift::TextGradientKind::Linear;
+        }
+    }
+    if (m.contains(QStringLiteral("stroke")))
+        strokeLayer()->paint.color = QColor(m.value(QStringLiteral("stroke")).toString());
+    if (m.contains(QStringLiteral("strokeWidth"))) {
+        drift::TextShadingLayer *stroke = strokeLayer();
+        stroke->width = qBound(0.0, m.value(QStringLiteral("strokeWidth")).toDouble(), 200.0);
+        stroke->enabled = stroke->width > 0.0;
+    }
+    if (m.contains(QStringLiteral("strokeStyle"))) {
+        drift::TextShadingLayer *stroke = strokeLayer();
+        const QString style = m.value(QStringLiteral("strokeStyle")).toString();
+        stroke->enabled = style != QLatin1String("none") && stroke->width > 0.0;
+        if (style != QLatin1String("none"))
+            stroke->dash = drift::strokeDashFromString(style);
+    }
+
+    if (m.contains(QStringLiteral("cornerRadius")))
+        s.cornerRadius = qBound(0.0, m.value(QStringLiteral("cornerRadius")).toDouble(), 2000.0);
+    if (m.contains(QStringLiteral("points")))
+        s.points = qBound(3, m.value(QStringLiteral("points")).toInt(), 60);
+    if (m.contains(QStringLiteral("innerRatio")))
+        s.innerRatio = qBound(0.05, m.value(QStringLiteral("innerRatio")).toDouble(), 0.95);
+    if (m.contains(QStringLiteral("headSize")))
+        s.headSize = qBound(0.05, m.value(QStringLiteral("headSize")).toDouble(), 0.9);
+    if (m.contains(QStringLiteral("thickness")))
+        s.thickness = qBound(0.05, m.value(QStringLiteral("thickness")).toDouble(), 1.0);
+    if (m.contains(QStringLiteral("tailX")))
+        s.tailX = qBound(0.08, m.value(QStringLiteral("tailX")).toDouble(), 0.92);
+    if (m.contains(QStringLiteral("tailSize")))
+        s.tailSize = qBound(0.05, m.value(QStringLiteral("tailSize")).toDouble(), 0.5);
+}
+
 void AppController::setShapeStyle(int trackIndex, int clipIndex, const QVariantMap &m)
 {
     if (trackIndex < 0 || trackIndex >= m_project.tracks().size())
@@ -12392,35 +13827,7 @@ void AppController::setShapeStyle(int trackIndex, int clipIndex, const QVariantM
         if (const drift::ShapeCatalogEntry *entry = drift::shapeCatalogEntry(id))
             clip.name = entry->label;
     }
-    if (m.contains(QStringLiteral("fillKind")))
-        s.fillKind = drift::shapeFillKindFromString(m.value(QStringLiteral("fillKind")).toString());
-    if (m.contains(QStringLiteral("fill")))
-        s.fill = QColor(m.value(QStringLiteral("fill")).toString());
-    if (m.contains(QStringLiteral("fillSecondary")))
-        s.fillSecondary = QColor(m.value(QStringLiteral("fillSecondary")).toString());
-    if (m.contains(QStringLiteral("gradientAngle")))
-        s.gradientAngle = m.value(QStringLiteral("gradientAngle")).toDouble();
-    if (m.contains(QStringLiteral("stroke")))
-        s.stroke = QColor(m.value(QStringLiteral("stroke")).toString());
-    if (m.contains(QStringLiteral("strokeWidth")))
-        s.strokeWidth = qBound(0.0, m.value(QStringLiteral("strokeWidth")).toDouble(), 200.0);
-    if (m.contains(QStringLiteral("strokeStyle")))
-        s.strokeStyle =
-            drift::shapeStrokeStyleFromString(m.value(QStringLiteral("strokeStyle")).toString());
-    if (m.contains(QStringLiteral("cornerRadius")))
-        s.cornerRadius = qBound(0.0, m.value(QStringLiteral("cornerRadius")).toDouble(), 2000.0);
-    if (m.contains(QStringLiteral("points")))
-        s.points = qBound(3, m.value(QStringLiteral("points")).toInt(), 60);
-    if (m.contains(QStringLiteral("innerRatio")))
-        s.innerRatio = qBound(0.05, m.value(QStringLiteral("innerRatio")).toDouble(), 0.95);
-    if (m.contains(QStringLiteral("headSize")))
-        s.headSize = qBound(0.05, m.value(QStringLiteral("headSize")).toDouble(), 0.9);
-    if (m.contains(QStringLiteral("thickness")))
-        s.thickness = qBound(0.05, m.value(QStringLiteral("thickness")).toDouble(), 1.0);
-    if (m.contains(QStringLiteral("tailX")))
-        s.tailX = qBound(0.08, m.value(QStringLiteral("tailX")).toDouble(), 0.92);
-    if (m.contains(QStringLiteral("tailSize")))
-        s.tailSize = qBound(0.05, m.value(QStringLiteral("tailSize")).toDouble(), 0.5);
+    applyShapeStylePatch(s, m);
 
     // Slider drags wrap their stream of updates in beginPreviewDrag/commitPreviewDrag, which
     // already holds the "before" snapshot — pushing here too would give one undo step per frame.
@@ -12431,6 +13838,400 @@ void AppController::setShapeStyle(int trackIndex, int clipIndex, const QVariantM
 
     pushProjectEdit(before, tr("Shape style changed"));
     finishEdit(tr("Shape style updated"));
+}
+
+bool AppController::vectorSupportAvailable() const
+{
+#ifdef DRIFT_WITH_SKIA
+    return true;
+#else
+    return false;
+#endif
+}
+
+QVariantMap AppController::inspectVector(const QString &source, const QString &kind) const
+{
+    drift::VectorSource probe;
+    const QString error = resolveVectorInput(source, kind, &probe);
+    if (!error.isEmpty())
+        return {{QStringLiteral("ok"), false}, {QStringLiteral("error"), error}};
+    return drift::vec::inspectVector(drift::vec::vectorSourceBytes(probe), probe.kind).toJson().toVariantMap();
+}
+
+QVariantMap AppController::inspectVectorClip(int trackIndex, int clipIndex) const
+{
+    if (!isValidClipIndex(trackIndex, clipIndex)
+        || m_project.tracks().at(trackIndex).clips.at(clipIndex).type != drift::ClipType::Vector) {
+        return {{QStringLiteral("ok"), false}, {QStringLiteral("error"), QStringLiteral("not a vector clip")}};
+    }
+    const drift::VectorSource &v = m_project.tracks().at(trackIndex).clips.at(clipIndex).vector;
+    return drift::vec::inspectVector(drift::vec::vectorSourceBytes(v), v.kind).toJson().toVariantMap();
+}
+
+QString AppController::vectorSourceText(int trackIndex, int clipIndex) const
+{
+    if (!isValidClipIndex(trackIndex, clipIndex)
+        || m_project.tracks().at(trackIndex).clips.at(clipIndex).type != drift::ClipType::Vector)
+        return {};
+    return QString::fromUtf8(
+        drift::vec::vectorSourceBytes(m_project.tracks().at(trackIndex).clips.at(clipIndex).vector));
+}
+
+QVariantMap AppController::inspectModel3d(const QString &path) const
+{
+    if (path.isEmpty() || !QFileInfo::exists(path))
+        return {{QStringLiteral("ok"), false}, {QStringLiteral("error"), QStringLiteral("file not found")}};
+    return inspectModel3dPath(path);
+}
+
+QVariantMap AppController::inspectModel3dClip(int trackIndex, int clipIndex) const
+{
+    if (!isValidClipIndex(trackIndex, clipIndex)
+        || m_project.tracks().at(trackIndex).clips.at(clipIndex).type != drift::ClipType::Model3d) {
+        return {{QStringLiteral("ok"), false}, {QStringLiteral("error"), QStringLiteral("not a 3D model clip")}};
+    }
+    const drift::Clip &clip = m_project.tracks().at(trackIndex).clips.at(clipIndex);
+    QVariantMap out = inspectModel3dPath(clip.model3d.path);
+    out.insert(QStringLiteral("model3d"), model3dSourceToMap(clip.model3d, clip.timelineStart));
+    return out;
+}
+
+QVariantMap AppController::addModel3dClip(const QString &path, int trackIndex, double atSeconds,
+                                          const QVariantMap &opts)
+{
+    if (path.isEmpty() || !QFileInfo::exists(path))
+        return {{QStringLiteral("ok"), false}, {QStringLiteral("error"), QStringLiteral("file not found")}};
+    if (!AssetLibrary::isModelPath(path))
+        return {{QStringLiteral("ok"), false}, {QStringLiteral("error"), QStringLiteral("only .glb files are supported")}};
+    drift::Model3dSource model;
+    model.path = QFileInfo(path).absoluteFilePath();
+    probeModel3dSource(model);
+    if (!model.hasAabb()) {
+        QString error = drift::modelAssetWarning(model.path);
+        if (error.isEmpty())
+            error = QStringLiteral("could not load model");
+        return {{QStringLiteral("ok"), false}, {QStringLiteral("error"), error}};
+    }
+
+    const drift::Project before = m_project;
+    int target = trackIndex;
+    if (target < 0 || target >= m_project.tracks().size()
+        || !m_project.tracks().at(target).allowsClipType(drift::ClipType::Model3d)) {
+        target = drift::ensureTrackForClipType(m_project, drift::ClipType::Model3d, true);
+    }
+    if (target < 0)
+        return {{QStringLiteral("ok"), false}, {QStringLiteral("error"), QStringLiteral("no graphic track")}};
+
+    drift::TimeUs duration =
+        model.animationDurationUs() > 0 ? model.animationDurationUs() : drift::kImageClipDurationUs;
+    if (opts.value(QStringLiteral("duration")).toDouble() > 0.0)
+        duration = drift::secondsToUs(opts.value(QStringLiteral("duration")).toDouble());
+    duration = qMax(duration, drift::kMinClipDurationUs);
+
+    drift::Track &track = m_project.tracks()[target];
+    const drift::TimeUs startUs = atSeconds < 0.0 ? m_playheadUs : drift::secondsToUs(atSeconds);
+    const drift::TimeUs start = drift::resolveClipStart(m_project, track, -1, startUs, duration,
+                                                        m_snapEnabled, m_playheadUs);
+
+    drift::Clip clip;
+    clip.id = QUuid::createUuid().toString(QUuid::WithoutBraces);
+    clip.type = drift::ClipType::Model3d;
+    clip.path = model.path;
+    clip.model3d = model;
+    clip.name = QFileInfo(model.path).completeBaseName();
+    clip.timelineStart = start;
+    clip.timelineDuration = duration;
+    clip.srcIn = 0;
+    clip.srcOut = duration;
+    QVariantMap options = opts;
+    options.remove(QStringLiteral("duration"));
+    const QStringList unknown = applyModel3dOptions(clip, options);
+    fitClipLayoutToCanvas(clip, 0, 0, m_project.width(), m_project.height());
+
+    track.clips.append(clip);
+    const int newClipIndex = track.clips.size() - 1;
+    pushProjectEdit(before, tr("3D model added"));
+    finishEdit(tr("3D model added"));
+    selectClip(target, newClipIndex);
+
+    QVariantMap out = inspectModel3dPath(clip.model3d.path);
+    out.insert(QStringLiteral("id"), clip.id);
+    out.insert(QStringLiteral("track"), target);
+    out.insert(QStringLiteral("index"), newClipIndex);
+    out.insert(QStringLiteral("model3d"), model3dSourceToMap(clip.model3d, clip.timelineStart));
+    if (!unknown.isEmpty())
+        out.insert(QStringLiteral("unknownOptions"), unknown);
+    return out;
+}
+
+QVariantMap AppController::setModel3dSource(int trackIndex, int clipIndex, const QString &path,
+                                            const QVariantMap &opts)
+{
+    if (!isValidClipIndex(trackIndex, clipIndex)
+        || m_project.tracks().at(trackIndex).clips.at(clipIndex).type != drift::ClipType::Model3d)
+        return {{QStringLiteral("ok"), false}, {QStringLiteral("error"), QStringLiteral("not a 3D model clip")}};
+    if (path.isEmpty() || !QFileInfo::exists(path))
+        return {{QStringLiteral("ok"), false}, {QStringLiteral("error"), QStringLiteral("file not found")}};
+    if (!AssetLibrary::isModelPath(path))
+        return {{QStringLiteral("ok"), false}, {QStringLiteral("error"), QStringLiteral("only .glb files are supported")}};
+
+    // Pose, light and keyframes carry over; the animation index is clamped to the new file.
+    drift::Model3dSource model = m_project.tracks().at(trackIndex).clips.at(clipIndex).model3d;
+    model.path = QFileInfo(path).absoluteFilePath();
+    probeModel3dSource(model);
+    if (!model.hasAabb()) {
+        QString error = drift::modelAssetWarning(model.path);
+        if (error.isEmpty())
+            error = QStringLiteral("could not load model");
+        return {{QStringLiteral("ok"), false}, {QStringLiteral("error"), error}};
+    }
+
+    const drift::Project before = m_project;
+    drift::Clip &clip = m_project.tracks()[trackIndex].clips[clipIndex];
+    clip.path = model.path;
+    clip.model3d = model;
+    const QStringList unknown = applyModel3dOptions(clip, opts);
+    pushProjectEdit(before, tr("3D model replaced"));
+    finishEdit(tr("3D model replaced"));
+
+    QVariantMap out = inspectModel3dPath(clip.model3d.path);
+    out.insert(QStringLiteral("id"), clip.id);
+    out.insert(QStringLiteral("model3d"), model3dSourceToMap(clip.model3d, clip.timelineStart));
+    if (!unknown.isEmpty())
+        out.insert(QStringLiteral("unknownOptions"), unknown);
+    return out;
+}
+
+QString AppController::setModel3dOptions(int trackIndex, int clipIndex, const QVariantMap &opts)
+{
+    if (!isValidClipIndex(trackIndex, clipIndex)
+        || m_project.tracks().at(trackIndex).clips.at(clipIndex).type != drift::ClipType::Model3d)
+        return QStringLiteral("not a 3D model clip");
+    if (opts.isEmpty())
+        return QStringLiteral("nothing to change");
+    const drift::Project before = m_project;
+    const QStringList unknown = applyModel3dOptions(m_project.tracks()[trackIndex].clips[clipIndex], opts);
+    if (unknown.size() == opts.size()) {
+        m_project = before;
+        return QStringLiteral("unknown option: %1").arg(unknown.join(QStringLiteral(", ")));
+    }
+    pushProjectEdit(before, tr("3D model options"));
+    finishEdit(tr("3D model options updated"));
+    if (!unknown.isEmpty())
+        return QStringLiteral("unknown option: %1").arg(unknown.join(QStringLiteral(", ")));
+    return {};
+}
+
+QVariantMap AppController::addVectorClip(const QString &source, int trackIndex, double atSeconds,
+                                         const QVariantMap &opts)
+{
+    drift::VectorSource vector;
+    QString error = resolveVectorInput(source, opts.value(QStringLiteral("kind")).toString(), &vector);
+    if (error.isEmpty() && !drift::vec::probeVectorSource(vector, &error))
+        error = QStringLiteral("document did not parse: ") + error;
+    if (!error.isEmpty())
+        return {{QStringLiteral("ok"), false}, {QStringLiteral("error"), error}};
+    const drift::vec::InspectReport report =
+        drift::vec::inspectVector(drift::vec::vectorSourceBytes(vector), vector.kind);
+
+    const drift::Project before = m_project;
+    int target = trackIndex;
+    if (target < 0 || target >= m_project.tracks().size()
+        || !m_project.tracks().at(target).allowsClipType(drift::ClipType::Vector)) {
+        target = drift::ensureTrackForClipType(m_project, drift::ClipType::Vector, true);
+    }
+    if (target < 0)
+        return {{QStringLiteral("ok"), false}, {QStringLiteral("error"), QStringLiteral("no graphic track")}};
+
+    // Plays once by default; a still gets the image default.
+    drift::TimeUs duration = vector.durationUs > 0 ? vector.durationUs : drift::kImageClipDurationUs;
+    if (opts.value(QStringLiteral("duration")).toDouble() > 0.0)
+        duration = drift::secondsToUs(opts.value(QStringLiteral("duration")).toDouble());
+    duration = qMax(duration, drift::kMinClipDurationUs);
+
+    drift::Track &track = m_project.tracks()[target];
+    const drift::TimeUs startUs = atSeconds < 0.0 ? m_playheadUs : drift::secondsToUs(atSeconds);
+    const drift::TimeUs start = drift::resolveClipStart(m_project, track, -1, startUs, duration,
+                                                        m_snapEnabled, m_playheadUs);
+
+    drift::Clip clip;
+    clip.id = QUuid::createUuid().toString(QUuid::WithoutBraces);
+    clip.type = drift::ClipType::Vector;
+    clip.vector = vector;
+    clip.name = vector.title.isEmpty()
+                    ? (vector.isInline() ? tr("Animation") : QFileInfo(vector.path).completeBaseName())
+                    : vector.title;
+    clip.timelineStart = start;
+    clip.timelineDuration = duration;
+    clip.srcIn = 0;
+    clip.srcOut = duration;
+    applyVectorOptions(clip, opts);
+    clip.thumbnailPath = MediaThumbnail::generateVector(clip.vector);
+    clip.filmstripPath = clip.thumbnailPath;
+    const QVariantMap overrides = opts.value(QStringLiteral("slots")).toMap();
+    QStringList slotErrors;
+    for (auto it = overrides.cbegin(); it != overrides.cend(); ++it) {
+        drift::VectorSlotValue::Type type;
+        const QString typeError = resolveVectorSlotType(report, vector.kind, it.key(), &type);
+        if (!typeError.isEmpty()) {
+            slotErrors.append(QStringLiteral("%1: %2").arg(it.key(), typeError));
+            continue;
+        }
+        drift::VectorSlotValue value;
+        const QString slotError = parseVectorSlotValue(type, it.value(), &value);
+        if (!slotError.isEmpty()) {
+            slotErrors.append(QStringLiteral("%1: %2").arg(it.key(), slotError));
+            continue;
+        }
+        clip.vector.slotValues.insert(it.key(), value);
+    }
+    fitClipLayoutToCanvas(clip, vector.width, vector.height, m_project.width(), m_project.height());
+
+    track.clips.append(clip);
+    const int newClipIndex = track.clips.size() - 1;
+    pushProjectEdit(before, tr("Animation added"));
+    finishEdit(tr("Animation added"));
+    selectClip(target, newClipIndex);
+
+    QVariantMap out = report.toJson().toVariantMap();
+    out.insert(QStringLiteral("id"), clip.id);
+    out.insert(QStringLiteral("track"), target);
+    out.insert(QStringLiteral("index"), newClipIndex);
+    if (!slotErrors.isEmpty())
+        out.insert(QStringLiteral("slotErrors"), slotErrors);
+    return out;
+}
+
+QVariantMap AppController::setVectorSource(int trackIndex, int clipIndex, const QString &source,
+                                           const QVariantMap &opts)
+{
+    if (!isValidClipIndex(trackIndex, clipIndex)
+        || m_project.tracks().at(trackIndex).clips.at(clipIndex).type != drift::ClipType::Vector)
+        return {{QStringLiteral("ok"), false}, {QStringLiteral("error"), QStringLiteral("not a vector clip")}};
+
+    drift::VectorSource vector = m_project.tracks().at(trackIndex).clips.at(clipIndex).vector;
+    QString error = resolveVectorInput(source, opts.value(QStringLiteral("kind")).toString(), &vector);
+    if (error.isEmpty() && !drift::vec::probeVectorSource(vector, &error))
+        error = QStringLiteral("document did not parse: ") + error;
+    if (!error.isEmpty())
+        return {{QStringLiteral("ok"), false}, {QStringLiteral("error"), error}};
+    const drift::vec::InspectReport report =
+        drift::vec::inspectVector(drift::vec::vectorSourceBytes(vector), vector.kind);
+
+    // Overrides for slots the new document does not declare are dropped rather than carried,
+    // along with the keyframes riding on them.
+    QMap<QString, drift::VectorSlotValue> kept;
+    for (auto it = vector.slotValues.cbegin(); it != vector.slotValues.cend(); ++it) {
+        drift::VectorSlotValue::Type type;
+        if (resolveVectorSlotType(report, vector.kind, it.key(), &type).isEmpty() && it->type == type)
+            kept.insert(it.key(), *it);
+        else
+            eraseVectorSlotKeyframes(vector, it.key());
+    }
+    vector.slotValues = kept;
+    vector.title = report.title;
+
+    const drift::Project before = m_project;
+    drift::Clip &clip = m_project.tracks()[trackIndex].clips[clipIndex];
+    clip.vector = vector;
+    applyVectorOptions(clip, opts);
+    clip.thumbnailPath = MediaThumbnail::generateVector(clip.vector);
+    clip.filmstripPath = clip.thumbnailPath;
+    pushProjectEdit(before, tr("Animation replaced"));
+    finishEdit(tr("Animation replaced"));
+
+    QVariantMap out = report.toJson().toVariantMap();
+    out.insert(QStringLiteral("id"), clip.id);
+    return out;
+}
+
+QString AppController::setVectorOptions(int trackIndex, int clipIndex, const QVariantMap &opts)
+{
+    if (!isValidClipIndex(trackIndex, clipIndex)
+        || m_project.tracks().at(trackIndex).clips.at(clipIndex).type != drift::ClipType::Vector)
+        return QStringLiteral("not a vector clip");
+    static const QStringList kKeys = {QStringLiteral("fit"), QStringLiteral("loop"),
+                                      QStringLiteral("offset"), QStringLiteral("name")};
+    bool any = false;
+    for (const QString &key : kKeys)
+        any = any || opts.contains(key);
+    if (!any)
+        return QStringLiteral("nothing to change: fit, loop, offset or name required");
+    const drift::Project before = m_project;
+    applyVectorOptions(m_project.tracks()[trackIndex].clips[clipIndex], opts);
+    pushProjectEdit(before, tr("Animation options"));
+    finishEdit(tr("Animation options updated"));
+    return {};
+}
+
+QString AppController::setVectorSlot(int trackIndex, int clipIndex, const QString &name,
+                                     const QVariant &value)
+{
+    if (!isValidClipIndex(trackIndex, clipIndex)
+        || m_project.tracks().at(trackIndex).clips.at(clipIndex).type != drift::ClipType::Vector)
+        return QStringLiteral("not a vector clip");
+    if (name.isEmpty())
+        return QStringLiteral("slot name required");
+
+    const drift::VectorSource &current = m_project.tracks().at(trackIndex).clips.at(clipIndex).vector;
+    const drift::vec::InspectReport report =
+        drift::vec::inspectVector(drift::vec::vectorSourceBytes(current), current.kind);
+    drift::VectorSlotValue::Type type;
+    const QString typeError = resolveVectorSlotType(report, current.kind, name, &type);
+    if (!typeError.isEmpty())
+        return typeError;
+
+    const bool clear = !value.isValid() || value.isNull();
+    drift::VectorSlotValue parsed;
+    if (!clear) {
+        const QString error = parseVectorSlotValue(type, value, &parsed);
+        if (!error.isEmpty())
+            return QStringLiteral("%1 (%2 slot): %3").arg(name, drift::vectorSlotTypeToString(type), error);
+    }
+
+    const drift::Project before = m_project;
+    drift::VectorSource &v = m_project.tracks()[trackIndex].clips[clipIndex].vector;
+    if (clear) {
+        v.slotValues.remove(name);
+        eraseVectorSlotKeyframes(v, name);
+    } else {
+        v.slotValues.insert(name, parsed);
+    }
+    pushProjectEdit(before, tr("Animation slot"));
+    finishEdit(tr("Animation slot updated"));
+    return {};
+}
+
+QVariantList AppController::vectorSlots(int trackIndex, int clipIndex) const
+{
+    if (!isValidClipIndex(trackIndex, clipIndex)
+        || m_project.tracks().at(trackIndex).clips.at(clipIndex).type != drift::ClipType::Vector)
+        return {};
+    const drift::VectorSource &v = m_project.tracks().at(trackIndex).clips.at(clipIndex).vector;
+    const drift::vec::InspectReport report =
+        drift::vec::inspectVector(drift::vec::vectorSourceBytes(v), v.kind);
+    QVariantList out;
+    const auto row = [&](const QString &id, drift::VectorSlotValue::Type type) {
+        QVariantMap entry{{QStringLiteral("id"), id}, {QStringLiteral("type"), drift::vectorSlotTypeToString(type)}};
+        auto it = v.slotValues.constFind(id);
+        if (it != v.slotValues.constEnd())
+            entry.insert(QStringLiteral("value"), vectorSlotValueToVariant(*it));
+        out.append(entry);
+    };
+    if (v.kind == drift::VectorKind::Svg) {
+        // The whole-drawing keys always, then whichever element overrides are set.
+        for (const char *prop : {"fill", "stroke", "strokeWidth", "opacity"})
+            row(QStringLiteral("svg.") + QLatin1String(prop), drift::svgOverrideType(QLatin1String(prop)));
+        for (auto it = v.slotValues.cbegin(); it != v.slotValues.cend(); ++it) {
+            drift::SvgOverrideKey key;
+            if (drift::parseSvgOverrideKey(it.key(), &key) && !key.elementId.isEmpty())
+                row(it.key(), drift::svgOverrideType(key.prop));
+        }
+        return out;
+    }
+    for (const drift::vec::VectorSlotInfo &info : report.slotInfos)
+        row(info.id, info.type);
+    return out;
 }
 
 void AppController::setClipMask(int trackIndex, int clipIndex, const QVariantMap &maskMap)
@@ -12516,7 +14317,7 @@ QString AppController::maskShapeSvgPath(const QString &shape) const
     if (mask.shape == drift::MaskShape::None)
         return {};
 
-    // Thumbnails are authored on the 0..100 grid ShapePreview.qml scales from. The mask rect is
+    // Thumbnails are authored on the 0..100 grid MasksTab.qml scales from. The mask rect is
     // normalized, so widening it here is what fills the card rather than sitting at the 60% the
     // timeline default would give. Bars spans the full width by construction and is left alone.
     if (mask.shape != drift::MaskShape::Bars) {
@@ -12814,18 +14615,6 @@ void AppController::removeTransition(int trackIndex, const QString &transitionId
                 clearTransitionSelection();
         }
 
-        // Physical overlaps auto-sync a crossfade; separate the clips so removal sticks.
-        drift::Clip *fromClip = nullptr;
-        drift::Clip *toClip = nullptr;
-        for (drift::Clip &clip : track.clips) {
-            if (clip.id == transition.fromClipId)
-                fromClip = &clip;
-            else if (clip.id == transition.toClipId)
-                toClip = &clip;
-        }
-        if (fromClip && toClip && drift::clipsPhysicallyOverlap(*fromClip, *toClip))
-            toClip->timelineStart = fromClip->timelineEnd();
-
         track.transitions.removeAt(i);
         pushProjectEdit(before, tr("Remove transition"));
         finishEdit(tr("Transition removed"));
@@ -13063,6 +14852,25 @@ void AppController::setClipKeyframe(int trackIndex, int clipIndex, const QString
     finishEdit(tr("Keyframe set"));
 }
 
+void AppController::setClipColorKeyframe(int trackIndex, int clipIndex, const QString &prop,
+                                         double atSeconds, const QColor &color)
+{
+    if (!isValidClipIndex(trackIndex, clipIndex) || !color.isValid())
+        return;
+    drift::Clip &clip = m_project.tracks()[trackIndex].clips[clipIndex];
+    const drift::Project before = m_project;
+    const drift::TimeUs rel = qMax<drift::TimeUs>(0, drift::secondsToUs(atSeconds) - clip.timelineStart);
+    const double channels[4] = {color.redF(), color.greenF(), color.blueF(), color.alphaF()};
+    const char *suffixes[4] = {".r", ".g", ".b", ".a"};
+    bool any = false;
+    for (int i = 0; i < 4; ++i)
+        any = writeClipPropValue(clip, prop + QLatin1String(suffixes[i]), rel, channels[i], m_autoKeyEnabled, /*force=*/true) || any;
+    if (!any)
+        return;
+    pushProjectEdit(before, tr("Add keyframe"));
+    finishEdit(tr("Keyframe set"));
+}
+
 void AppController::removeClipKeyframe(int trackIndex, int clipIndex, const QString &prop, double atSeconds)
 {
     if (trackIndex < 0 || trackIndex >= m_project.tracks().size())
@@ -13225,6 +15033,19 @@ double AppController::propertyBaseValue(int trackIndex, int clipIndex, const QSt
                 flat.keyframes.clear();
                 return flat.valueAt(maskKey, 0);
             }
+            QString textKey;
+            double scalar = 0.0;
+            if (parseTextProp(clip.textStyle, prop, &textKey) && drift::textStyleScalar(clip.textStyle, textKey, &scalar))
+                return scalar;
+            QString shapeKey;
+            if (parseShapeProp(clip, prop, &shapeKey) && drift::shapeStyleScalar(clip.shapeStyle, shapeKey, &scalar))
+                return scalar;
+            QString vectorKey;
+            if (parseVectorProp(clip, prop, &vectorKey) && drift::vectorSlotScalar(clip.vector, vectorKey, &scalar))
+                return scalar;
+            QString modelKey;
+            if (parseModel3dProp(clip, prop, &modelKey) && drift::model3dScalar(clip.model3d, modelKey, &scalar))
+                return scalar;
         }
     }
     return fallback;
@@ -13364,6 +15185,32 @@ QStringList AppController::clipAnimatedProperties(int trackIndex, int clipIndex)
             const auto it = maskHost->mask.keyframes.constFind(key);
             if (it != maskHost->mask.keyframes.constEnd() && !it->isEmpty())
                 out.append(QStringLiteral("mask.%1").arg(key));
+        }
+    }
+    // Text and shape scalars live on the clip itself.
+    for (const QString &key : drift::textKeyframeProperties(clip.textStyle)) {
+        const auto it = clip.textStyle.keyframes.constFind(key);
+        if (it != clip.textStyle.keyframes.constEnd() && !it->isEmpty())
+            out.append(QStringLiteral("text.%1").arg(key));
+    }
+    if (clip.type == drift::ClipType::Shape) {
+        for (const QString &key : drift::shapeKeyframeProperties(clip.shapeStyle)) {
+            const auto it = clip.shapeStyle.keyframes.constFind(key);
+            if (it != clip.shapeStyle.keyframes.constEnd() && !it->isEmpty())
+                out.append(QStringLiteral("shape.%1").arg(key));
+        }
+    }
+    if (clip.type == drift::ClipType::Vector) {
+        for (auto it = clip.vector.keyframes.constBegin(); it != clip.vector.keyframes.constEnd(); ++it) {
+            if (!it->isEmpty())
+                out.append(QStringLiteral("vector.%1").arg(it.key()));
+        }
+    }
+    if (clip.type == drift::ClipType::Model3d) {
+        for (const QString &key : drift::model3dKeyframeProperties()) {
+            const auto it = clip.model3d.keyframes.constFind(key);
+            if (it != clip.model3d.keyframes.constEnd() && !it->isEmpty())
+                out.append(QStringLiteral("model3d.%1").arg(key));
         }
     }
     return out;
@@ -15042,6 +16889,10 @@ void AppController::pasteAttributes(const QVariantMap &options)
             targetClip.blendMode = sourceClip.blendMode;
             targetClip.flipH = sourceClip.flipH;
             targetClip.flipV = sourceClip.flipV;
+            // Keeps the pasted box paired with the orientation it was fit for. The stored value
+            // is relative to each clip's own file, so match the visible result, not the number.
+            if (targetClip.type == drift::ClipType::Video)
+                setClipOrientationTo(targetClip, clipOrientation(sourceClip));
             // Pinning a mask mints a lane, which inserts a track and invalidates `track` and
             // `targetClip`. Queued by id and applied once the loop is done.
             pendingMasks.append(qMakePair(targetClip.id, sourceItem.masks));
@@ -16386,6 +18237,10 @@ void AppController::triggerAction(const QString &actionId)
         goToPreviousEdit();
     else if (actionId == QStringLiteral("nextEdit"))
         goToNextEdit();
+    else if (actionId == QStringLiteral("stepBack"))
+        stepFrames(-1);
+    else if (actionId == QStringLiteral("stepForward"))
+        stepFrames(1);
     else if (actionId == QStringLiteral("goToStart"))
         setPlayheadUs(0);
     else if (actionId == QStringLiteral("deleteLeft"))
@@ -17960,6 +19815,11 @@ void AppController::remapProjectPaths(const QHash<QString, QString> &remap)
                 // restoreFilmstripsAfterLoad regenerate them for the new one.
                 clip.thumbnailPath.clear();
                 clip.filmstripPath.clear();
+                // The renderer reads the vector document via clip.vector, not clip.path.
+                if (clip.type == drift::ClipType::Vector && !clip.vector.isInline())
+                    clip.vector.path = clip.path;
+                if (clip.type == drift::ClipType::Model3d)
+                    clip.model3d.path = clip.path;
             }
         }
     }
@@ -18172,7 +20032,10 @@ void AppController::releaseTransientCaches()
 {
     ClipReaderPool::instance().releaseAll();
     FrameCompositor::clearStillImageCache();
-    clearTextRasterCaches();
+    drift::text::clearLayoutCache();
+#ifdef DRIFT_WITH_SKIA
+    drift::skia::clearTextGeometryCache();
+#endif
     // Uploaded textures and the FBO pool, without tearing the context down. Runs on the GL thread
     // and blocks, which is what makes it safe from here; it returns without creating a context if
     // GL was never brought up at all.
@@ -18806,6 +20669,12 @@ void AppController::setMcpEnabled(bool enabled)
         m_mcp->stop();
 }
 
+void AppController::rotateMcpToken()
+{
+    if (m_mcp)
+        m_mcp->rotateToken();
+}
+
 namespace {
 
 void copyToClipboard(const QString &text)
@@ -18969,6 +20838,30 @@ QJsonObject mcpDetailRow(const QVariantMap &clipMap, const QVariantMap &transfor
     if (kind != QLatin1String("text") && kind != QLatin1String("subtitle")) {
         m.remove(QStringLiteral("textStyle"));
         m.remove(QStringLiteral("textContent"));
+    } else {
+        // The canonical style only: the flat v6 mirrors exist for the inspector, not for agents,
+        // and an empty look or caret says nothing.
+        QVariantMap style = m.value(QStringLiteral("textStyle")).toMap();
+        for (const char *key : {"fillKind", "colorSecondary", "gradientAngle", "outlineEnabled", "outlineWidth",
+                                "outlineColor", "shadowEnabled", "shadowOffsetX", "shadowOffsetY", "shadowBlur",
+                                "shadowOpacity", "shadowColor", "glowEnabled", "glowColor", "glowRadius",
+                                "glowOpacity", "animIn", "animOut"})
+            style.remove(QLatin1String(key));
+        if (style.value(QStringLiteral("lookId")).toString().isEmpty()) {
+            style.remove(QStringLiteral("lookId"));
+            style.remove(QStringLiteral("lookParams"));
+        }
+        QVariantMap animation = style.value(QStringLiteral("animation")).toMap();
+        if (!animation.value(QStringLiteral("caret")).toMap().value(QStringLiteral("enabled")).toBool())
+            animation.remove(QStringLiteral("caret"));
+        if (animation.value(QStringLiteral("anchorGrouping")).toString() == QLatin1String("character")) {
+            animation.remove(QStringLiteral("anchorGrouping"));
+            animation.remove(QStringLiteral("anchorAlignment"));
+        }
+        if (!animation.value(QStringLiteral("custom")).toBool())
+            animation.remove(QStringLiteral("custom"));
+        style.insert(QStringLiteral("animation"), animation);
+        m.insert(QStringLiteral("textStyle"), style);
     }
     if (kind != QLatin1String("shape"))
         m.remove(QStringLiteral("shapeStyle"));
@@ -19889,7 +21782,7 @@ QJsonObject AppController::mcpDetectScenes(int trackIndex, int clipIndex, double
     // can carry straight on to list_scenes.
     drift::SceneAnalysis cached;
     if (drift::loadCachedAnalysis(request, &cached) && (!withObjects || cached.objectsScanned)) {
-        applySceneAnalysis(cached, clip.id, clip.path);
+        applySceneAnalysis(cached, clip.id, clip.path, clip.rotationCorrection);
         return ok({{QStringLiteral("cached"), true},
                    {QStringLiteral("clip"), clip.id},
                    {QStringLiteral("scenes"), int(cached.scenes.size())},
@@ -20571,6 +22464,7 @@ struct FrameSource
 {
     std::shared_ptr<const drift::Project> project;
     QString path;          // source mode when non-empty
+    int rotationCorrection = 0;
     bool source() const { return !path.isEmpty(); }
     int longEdge() const { return qMax(project->width(), project->height()); }
 
@@ -20578,7 +22472,8 @@ struct FrameSource
     {
         const drift::TimeUs us = qMax<drift::TimeUs>(0, drift::secondsToUs(seconds));
         if (source())
-            return ClipReaderPool::instance().readVideoFrame(path, kFrameSheetStreamId, us, maxW, maxH);
+            return ClipReaderPool::instance().readVideoFrame(path, kFrameSheetStreamId, us, maxW, maxH,
+                                                             QString(), 15, false, rotationCorrection);
         FrameCompositor::RenderOptions options;
         options.previewScale =
             qBound(kMinPreviewScale, double(maxW) / double(longEdge()), 1.0);
@@ -20657,6 +22552,7 @@ QJsonObject AppController::mcpFrameSheet(const McpFrameSheetRequest &request)
         if (clip.path.isEmpty() || clip.type != drift::ClipType::Video)
             return err("type_mismatch", QStringLiteral("clip has no video file; omit clip to render the composition"));
         src.path = clip.path;
+        src.rotationCorrection = clip.rotationCorrection;
     } else if (src.project->durationUs() <= 0) {
         return err("not_found", QStringLiteral("Timeline is empty"));
     }
@@ -20903,6 +22799,7 @@ QJsonObject AppController::mcpActivity(const McpActivityRequest &request)
         if (clip.path.isEmpty() || clip.type != drift::ClipType::Video)
             return err("type_mismatch", QStringLiteral("clip has no video file; omit clip to profile the composition"));
         src.path = clip.path;
+        src.rotationCorrection = clip.rotationCorrection;
     } else if (src.project->durationUs() <= 0) {
         return err("not_found", QStringLiteral("Timeline is empty"));
     }
@@ -21868,4 +23765,581 @@ QJsonObject AppController::mcpSetAcceleration(const QString &variant)
         return err("bad_args", QStringLiteral("variant required"));
     m_addonManager->setAcceleration(variant);
     return ok({{QStringLiteral("variant"), m_addonManager->acceleration()}});
+}
+
+// ---------------------------------------------------------------------------------------------
+// Text layers, looks and animation slots
+
+drift::Clip *AppController::textClipAt(int trackIndex, int clipIndex)
+{
+    if (trackIndex < 0 || trackIndex >= m_project.tracks().size())
+        return nullptr;
+    drift::Track &track = m_project.tracks()[trackIndex];
+    if (clipIndex < 0 || clipIndex >= track.clips.size())
+        return nullptr;
+    drift::Clip &clip = track.clips[clipIndex];
+    if (clip.type != drift::ClipType::Text && clip.type != drift::ClipType::Subtitle)
+        return nullptr;
+    return &clip;
+}
+
+drift::Clip *AppController::styledClipAt(int trackIndex, int clipIndex, bool textOnly)
+{
+    if (drift::Clip *text = textClipAt(trackIndex, clipIndex))
+        return text;
+    if (textOnly || trackIndex < 0 || trackIndex >= m_project.tracks().size())
+        return nullptr;
+    drift::Track &track = m_project.tracks()[trackIndex];
+    if (clipIndex < 0 || clipIndex >= track.clips.size())
+        return nullptr;
+    drift::Clip &clip = track.clips[clipIndex];
+    return clip.type == drift::ClipType::Shape ? &clip : nullptr;
+}
+
+namespace {
+
+// The stack, its keyframes and the colour a new fill or glow borrows, whichever style the clip
+// carries. A text edit also drops the look/preset the stack came from.
+struct LayerStack
+{
+    QList<drift::TextShadingLayer> *layers = nullptr;
+    QMap<QString, drift::KeyframeTrack<double>> *keyframes = nullptr;
+    QColor primaryColor;
+    drift::TextStyle *text = nullptr;
+};
+
+LayerStack layerStackFor(drift::Clip &clip)
+{
+    LayerStack stack;
+    if (clip.type == drift::ClipType::Shape) {
+        stack.layers = &clip.shapeStyle.layers;
+        stack.keyframes = &clip.shapeStyle.keyframes;
+        stack.primaryColor = clip.shapeStyle.primaryColor();
+    } else {
+        stack.layers = &clip.textStyle.layers;
+        stack.keyframes = &clip.textStyle.keyframes;
+        stack.primaryColor = clip.textStyle.primaryColor();
+        stack.text = &clip.textStyle;
+    }
+    return stack;
+}
+
+void detachFromLook(const LayerStack &stack)
+{
+    if (!stack.text)
+        return;
+    stack.text->lookId.clear();
+    stack.text->lookParams.clear();
+    stack.text->packId.clear();
+}
+
+int layerIndexOf(const QList<drift::TextShadingLayer> &layers, const QString &layerId)
+{
+    for (int i = 0; i < layers.size(); ++i)
+        if (layers.at(i).id == layerId)
+            return i;
+    return -1;
+}
+
+} // namespace
+
+QString AppController::addStyleLayer(int trackIndex, int clipIndex, const QString &kind, int atIndex)
+{
+    drift::Clip *clip = styledClipAt(trackIndex, clipIndex);
+    if (!clip)
+        return {};
+    const drift::Project before = m_project;
+    const LayerStack stack = layerStackFor(*clip);
+    QList<drift::TextShadingLayer> &layers = *stack.layers;
+    const bool shape = clip->type == drift::ClipType::Shape;
+    const drift::TextLayerKind layerKind = drift::textLayerKindFromString(kind);
+    drift::TextShadingLayer layer;
+    switch (layerKind) {
+    case drift::TextLayerKind::Fill:
+        layer = drift::solidFillLayer(stack.primaryColor, drift::mintTextLayerId(layers));
+        break;
+    case drift::TextLayerKind::Stroke:
+        layer = drift::strokeLayer(shape ? 4.0 : 3.0, shape ? QColor(Qt::white) : QColor(Qt::black),
+                                   drift::mintTextLayerId(layers));
+        if (shape)
+            layer.strokeAlign = drift::StrokeAlign::Inside;
+        break;
+    case drift::TextLayerKind::Shadow:
+        layer = drift::shadowLayer(Qt::black, 0.0, 4.0, 8.0, 0.6, drift::mintTextLayerId(layers));
+        break;
+    case drift::TextLayerKind::Glow:
+        layer = drift::glowLayer(stack.primaryColor, 18.0, 0.8, drift::mintTextLayerId(layers));
+        break;
+    case drift::TextLayerKind::Extrude:
+        layer = drift::solidFillLayer(QColor(40, 40, 40), drift::mintTextLayerId(layers));
+        layer.kind = drift::TextLayerKind::Extrude;
+        layer.width = 6.0;
+        break;
+    }
+    const int index = atIndex < 0 || atIndex > layers.size() ? naturalLayerIndex(layers, layerKind) : atIndex;
+    layers.insert(index, layer);
+    detachFromLook(stack);
+    pushProjectEdit(before, tr("Add layer"));
+    finishEdit(tr("Layer added"));
+    return layer.id;
+}
+
+bool AppController::removeStyleLayer(int trackIndex, int clipIndex, const QString &layerId)
+{
+    drift::Clip *clip = styledClipAt(trackIndex, clipIndex);
+    if (!clip)
+        return false;
+    const LayerStack stack = layerStackFor(*clip);
+    const int index = layerIndexOf(*stack.layers, layerId);
+    if (index < 0)
+        return false;
+    const drift::Project before = m_project;
+    stack.layers->removeAt(index);
+    drift::eraseLayerKeyframes(*stack.keyframes, layerId);
+    detachFromLook(stack);
+    pushProjectEdit(before, tr("Remove layer"));
+    finishEdit(tr("Layer removed"));
+    return true;
+}
+
+QString AppController::duplicateStyleLayer(int trackIndex, int clipIndex, const QString &layerId)
+{
+    drift::Clip *clip = styledClipAt(trackIndex, clipIndex);
+    if (!clip)
+        return {};
+    const LayerStack stack = layerStackFor(*clip);
+    const int index = layerIndexOf(*stack.layers, layerId);
+    if (index < 0)
+        return {};
+    const drift::Project before = m_project;
+    drift::TextShadingLayer copy = stack.layers->at(index);
+    copy.id = drift::mintTextLayerId(*stack.layers);
+    stack.layers->insert(index + 1, copy);
+    detachFromLook(stack);
+    pushProjectEdit(before, tr("Duplicate layer"));
+    finishEdit(tr("Layer duplicated"));
+    return copy.id;
+}
+
+bool AppController::moveStyleLayer(int trackIndex, int clipIndex, const QString &layerId, int toIndex)
+{
+    drift::Clip *clip = styledClipAt(trackIndex, clipIndex);
+    if (!clip)
+        return false;
+    const LayerStack stack = layerStackFor(*clip);
+    const int index = layerIndexOf(*stack.layers, layerId);
+    toIndex = qBound(0, toIndex, stack.layers->size() - 1);
+    if (index < 0 || index == toIndex)
+        return false;
+    const drift::Project before = m_project;
+    stack.layers->move(index, toIndex);
+    detachFromLook(stack);
+    pushProjectEdit(before, tr("Reorder layers"));
+    finishEdit(tr("Layer moved"));
+    return true;
+}
+
+void AppController::setStyleLayer(int trackIndex, int clipIndex, const QString &layerId, const QVariantMap &patch)
+{
+    drift::Clip *clip = styledClipAt(trackIndex, clipIndex);
+    if (!clip)
+        return;
+    QVariantMap layer = patch;
+    layer.insert(QStringLiteral("id"), layerId);
+    if (clip->type == drift::ClipType::Shape)
+        setShapeStyle(trackIndex, clipIndex, QVariantMap{{QStringLiteral("layer"), layer}});
+    else
+        setTextStyle(trackIndex, clipIndex, QVariantMap{{QStringLiteral("layer"), layer}});
+}
+
+void AppController::previewSetStyleLayer(int trackIndex, int clipIndex, const QString &layerId, const QVariantMap &patch)
+{
+    drift::Clip *clip = styledClipAt(trackIndex, clipIndex);
+    if (!clip)
+        return;
+    if (!m_previewDragActive)
+        beginPreviewDrag(tr("Edit layer"));
+    QVariantMap layer = patch;
+    layer.insert(QStringLiteral("id"), layerId);
+    if (clip->type == drift::ClipType::Shape)
+        applyShapeStylePatch(clip->shapeStyle, QVariantMap{{QStringLiteral("layer"), layer}});
+    else
+        applyTextStylePatch(clip->textStyle, QVariantMap{{QStringLiteral("layer"), layer}});
+    emitPreviewFrame();
+}
+
+QString AppController::addTextLayer(int trackIndex, int clipIndex, const QString &kind, int atIndex)
+{
+    return textClipAt(trackIndex, clipIndex) ? addStyleLayer(trackIndex, clipIndex, kind, atIndex) : QString();
+}
+
+bool AppController::removeTextLayer(int trackIndex, int clipIndex, const QString &layerId)
+{
+    return textClipAt(trackIndex, clipIndex) && removeStyleLayer(trackIndex, clipIndex, layerId);
+}
+
+QString AppController::duplicateTextLayer(int trackIndex, int clipIndex, const QString &layerId)
+{
+    return textClipAt(trackIndex, clipIndex) ? duplicateStyleLayer(trackIndex, clipIndex, layerId) : QString();
+}
+
+bool AppController::moveTextLayer(int trackIndex, int clipIndex, const QString &layerId, int toIndex)
+{
+    return textClipAt(trackIndex, clipIndex) && moveStyleLayer(trackIndex, clipIndex, layerId, toIndex);
+}
+
+void AppController::setTextLayer(int trackIndex, int clipIndex, const QString &layerId, const QVariantMap &patch)
+{
+    if (textClipAt(trackIndex, clipIndex))
+        setStyleLayer(trackIndex, clipIndex, layerId, patch);
+}
+
+void AppController::previewSetTextLayer(int trackIndex, int clipIndex, const QString &layerId, const QVariantMap &patch)
+{
+    if (textClipAt(trackIndex, clipIndex))
+        previewSetStyleLayer(trackIndex, clipIndex, layerId, patch);
+}
+
+void AppController::setTextAnimationSlot(int trackIndex, int clipIndex, const QString &slot, const QVariantMap &patch)
+{
+    drift::Clip *clip = textClipAt(trackIndex, clipIndex);
+    if (!clip)
+        return;
+    if (slot != QLatin1String("in") && slot != QLatin1String("out") && slot != QLatin1String("loop"))
+        return;
+    const drift::Project before = m_project;
+    applyTextAnimationSetPatch(&clip->textStyle.animation, QVariantMap{{slot, patch}});
+    clip->textStyle.packId.clear();
+    pushProjectEdit(before, tr("Edit text animation"));
+    finishEdit(tr("Text animation updated"));
+}
+
+void AppController::previewSetTextAnimationSlot(int trackIndex, int clipIndex, const QString &slot,
+                                                const QVariantMap &patch)
+{
+    drift::Clip *clip = textClipAt(trackIndex, clipIndex);
+    if (!clip)
+        return;
+    if (slot != QLatin1String("in") && slot != QLatin1String("out") && slot != QLatin1String("loop"))
+        return;
+    if (!m_previewDragActive)
+        beginPreviewDrag(tr("Edit text animation"));
+    applyTextAnimationSetPatch(&clip->textStyle.animation, QVariantMap{{slot, patch}});
+    emitPreviewFrame();
+}
+
+void AppController::clearTextAnimationSlot(int trackIndex, int clipIndex, const QString &slot)
+{
+    setTextAnimationSlot(trackIndex, clipIndex, slot, QVariantMap{{QStringLiteral("preset"), QString()}});
+}
+
+QVariantMap AppController::textAnimationPresetToMap(const drift::TextAnimationPreset &preset)
+{
+    QVariantList slots_;
+    for (drift::TextAnimSlotKind kind : preset.slotKinds)
+        slots_.append(drift::textAnimSlotKindToString(kind));
+    return {
+        {QStringLiteral("id"), preset.id},
+        {QStringLiteral("label"), preset.label},
+        {QStringLiteral("category"), preset.category},
+        {QStringLiteral("sampleText"), preset.sampleText},
+        {QStringLiteral("slots"), slots_},
+        {QStringLiteral("order"), preset.order},
+        {QStringLiteral("builtIn"), preset.builtIn},
+        {QStringLiteral("params"), paramSpecsToList(preset.params)},
+        {QStringLiteral("flags"), preset.flags.toVariantMap()},
+        {QStringLiteral("report"), preset.report},
+    };
+}
+
+QVariantList AppController::textAnimationPresets(const QString &slot) const
+{
+    QVariantList out;
+    const QList<drift::TextAnimationPreset> presets =
+        slot.isEmpty() ? drift::TextAnimationPresetCatalog::instance().presets()
+                       : drift::TextAnimationPresetCatalog::instance().presetsFor(drift::textAnimSlotKindFromString(slot));
+    for (const drift::TextAnimationPreset &preset : presets)
+        out.append(textAnimationPresetToMap(preset));
+    return out;
+}
+
+QVariantList AppController::textAnimationCategories(const QString &slot) const
+{
+    QStringList seen;
+    for (const QVariant &v : textAnimationPresets(slot)) {
+        const QString category = v.toMap().value(QStringLiteral("category")).toString();
+        if (!seen.contains(category))
+            seen.append(category);
+    }
+    static const QMap<QString, QString> labels{
+        {QStringLiteral("basic"), tr("Basic")},         {QStringLiteral("character"), tr("By character")},
+        {QStringLiteral("word"), tr("By word")},        {QStringLiteral("kinetic"), tr("Kinetic")},
+        {QStringLiteral("light"), tr("Light")},         {QStringLiteral("colour"), tr("Colour")},
+        {QStringLiteral("hold"), tr("Hold")},           {QStringLiteral("imported"), tr("Imported")},
+    };
+    QVariantList out;
+    for (const QString &id : seen)
+        out.append(QVariantMap{{QStringLiteral("id"), id}, {QStringLiteral("label"), labels.value(id, id)}});
+    return out;
+}
+
+double AppController::textAnimationSlotStartSeconds(int trackIndex, int clipIndex, const QString &slot) const
+{
+    if (trackIndex < 0 || trackIndex >= m_project.tracks().size())
+        return playheadSeconds();
+    const drift::Track &track = m_project.tracks().at(trackIndex);
+    if (clipIndex < 0 || clipIndex >= track.clips.size())
+        return playheadSeconds();
+    const drift::Clip &clip = track.clips.at(clipIndex);
+    drift::TimeUs start = clip.timelineStart;
+    drift::TimeUs end = clip.timelineStart + clip.timelineDuration;
+    if (clip.type == drift::ClipType::Subtitle) {
+        const drift::TimeUs localUs = m_playheadUs - clip.timelineStart;
+        if (const drift::SubtitleCue *cue = drift::activeSubtitleCueAt(clip.subtitleCues, localUs)) {
+            start = clip.timelineStart + cue->startUs;
+            end = clip.timelineStart + cue->endUs;
+        }
+    }
+    if (slot == QLatin1String("out")) {
+        const QVariantMap m = textAnimationSlotToMap(clip.textStyle.animation.out);
+        const double seconds = m.value(QStringLiteral("duration"), 0.4).toDouble() + m.value(QStringLiteral("stagger"), 0.0).toDouble() * 4.0;
+        return qMax(drift::usToSeconds(start), drift::usToSeconds(end) - seconds - 0.2);
+    }
+    if (slot == QLatin1String("loop"))
+        return playheadSeconds();
+    return drift::usToSeconds(start);
+}
+
+QVariantList AppController::textLooks() const
+{
+    QVariantList out;
+    for (const drift::TextLook &look : drift::textLooks()) {
+        out.append(QVariantMap{{QStringLiteral("id"), look.id},
+                               {QStringLiteral("label"), look.label},
+                               {QStringLiteral("params"), paramSpecsToList(look.params)}});
+    }
+    return out;
+}
+
+void AppController::applyTextLook(int trackIndex, int clipIndex, const QString &lookId, const QVariantMap &params)
+{
+    drift::Clip *clip = textClipAt(trackIndex, clipIndex);
+    if (!clip)
+        return;
+    const drift::TextLook *look = drift::textLookForId(lookId);
+    if (!look)
+        return;
+    const drift::Project before = m_project;
+    QMap<QString, drift::VectorSlotValue> typed;
+    mergeParamsFromMap(&typed, params, look->params);
+    drift::applyTextLook(clip->textStyle, lookId, typed);
+    clip->textStyle.packId.clear();
+    pushProjectEdit(before, tr("Apply text look"));
+    finishEdit(tr("Look applied"));
+}
+
+void AppController::setTextLookParam(int trackIndex, int clipIndex, const QString &key, const QVariant &value)
+{
+    drift::Clip *clip = textClipAt(trackIndex, clipIndex);
+    if (!clip || clip->textStyle.lookId.isEmpty())
+        return;
+    const drift::TextLook *look = drift::textLookForId(clip->textStyle.lookId);
+    if (!look)
+        return;
+    const drift::Project before = m_project;
+    QMap<QString, drift::VectorSlotValue> params = clip->textStyle.lookParams;
+    mergeParamsFromMap(&params, QVariantMap{{key, value}}, look->params);
+    drift::applyTextLook(clip->textStyle, look->id, params);
+    pushProjectEdit(before, tr("Adjust text look"));
+    finishEdit(tr("Look updated"));
+}
+
+void AppController::previewSetTextLookParam(int trackIndex, int clipIndex, const QString &key, const QVariant &value)
+{
+    drift::Clip *clip = textClipAt(trackIndex, clipIndex);
+    if (!clip || clip->textStyle.lookId.isEmpty())
+        return;
+    const drift::TextLook *look = drift::textLookForId(clip->textStyle.lookId);
+    if (!look)
+        return;
+    if (!m_previewDragActive)
+        beginPreviewDrag(tr("Adjust text look"));
+    QMap<QString, drift::VectorSlotValue> params = clip->textStyle.lookParams;
+    mergeParamsFromMap(&params, QVariantMap{{key, value}}, look->params);
+    drift::applyTextLook(clip->textStyle, look->id, params);
+    emitPreviewFrame();
+}
+
+QVariantList AppController::textPaintEffects() const
+{
+    QVariantList out;
+    for (const drift::TextEffectSpec &spec : drift::textShaderEffectSpecs()) {
+        out.append(QVariantMap{{QStringLiteral("id"), spec.id},
+                               {QStringLiteral("label"), spec.label},
+                               {QStringLiteral("params"), paramSpecsToList(spec.params)}});
+    }
+    return out;
+}
+
+QVariantList AppController::textGradientPresets() const
+{
+    QVariantList out;
+    for (const drift::TextGradientPreset &preset : drift::textGradientPresets()) {
+        QVariantList stops;
+        for (const drift::TextGradientStop &stop : preset.gradient.stops)
+            stops.append(QVariantMap{{QStringLiteral("pos"), stop.pos}, {QStringLiteral("color"), stop.color.name(QColor::HexArgb)}});
+        out.append(QVariantMap{{QStringLiteral("id"), preset.id},
+                               {QStringLiteral("label"), preset.label},
+                               {QStringLiteral("kind"), drift::textGradientKindToString(preset.gradient.kind)},
+                               {QStringLiteral("angle"), preset.gradient.angle},
+                               {QStringLiteral("stops"), stops}});
+    }
+    return out;
+}
+
+int AppController::applyTextStyleToCaptions(int trackIndex, int clipIndex, const QString &scope)
+{
+    const drift::Clip *source = textClipAt(trackIndex, clipIndex);
+    if (!source)
+        return 0;
+    drift::TextStyle style = source->textStyle;
+    style.keyframes.clear();
+    const drift::Project before = m_project;
+    int changed = 0;
+    for (int t = 0; t < m_project.tracks().size(); ++t) {
+        if (scope != QLatin1String("project") && t != trackIndex)
+            continue;
+        drift::Track &track = m_project.tracks()[t];
+        for (int c = 0; c < track.clips.size(); ++c) {
+            drift::Clip &clip = track.clips[c];
+            if (clip.type != drift::ClipType::Subtitle || (t == trackIndex && c == clipIndex))
+                continue;
+            const QMap<QString, drift::KeyframeTrack<double>> keep = clip.textStyle.keyframes;
+            clip.textStyle = style;
+            clip.textStyle.keyframes = keep;
+            ++changed;
+        }
+    }
+    if (changed == 0)
+        return 0;
+    pushProjectEdit(before, tr("Apply caption style"));
+    finishEdit(tr("Applied to %n caption clip(s)", "", changed));
+    return changed;
+}
+
+QString AppController::keyframePropertyLabel(int trackIndex, int clipIndex, const QString &prop) const
+{
+    const drift::Clip *clip = nullptr;
+    if (trackIndex >= 0 && trackIndex < m_project.tracks().size()) {
+        const drift::Track &track = m_project.tracks().at(trackIndex);
+        if (clipIndex >= 0 && clipIndex < track.clips.size())
+            clip = &track.clips.at(clipIndex);
+    }
+    if (prop.startsWith(QLatin1String("text.")))
+        return drift::textKeyframeLabel(prop.mid(5), clip ? clip->textStyle : drift::TextStyle{});
+    if (prop.startsWith(QLatin1String("shape.")))
+        return drift::shapeKeyframeLabel(prop.mid(6), clip ? clip->shapeStyle : drift::ShapeStyle{});
+    if (prop.startsWith(QLatin1String("model3d.")))
+        return drift::model3dKeyframeLabel(prop.mid(8));
+    if (prop.startsWith(QLatin1String("vector."))) {
+        QString key = prop.mid(7);
+        QString channel;
+        drift::SvgOverrideKey parsed;
+        if (!drift::parseSvgOverrideKey(key, &parsed)) {
+            const int dot = key.lastIndexOf(QLatin1Char('.'));
+            if (dot < 0 || !drift::parseSvgOverrideKey(key.left(dot), &parsed))
+                return {};
+            static const QMap<QString, QString> channels{
+                {QStringLiteral("r"), tr("Red")}, {QStringLiteral("g"), tr("Green")},
+                {QStringLiteral("b"), tr("Blue")}, {QStringLiteral("a"), tr("Alpha")}};
+            channel = channels.value(key.mid(dot + 1));
+        }
+        const QString label = drift::svgOverrideLabel(parsed);
+        return channel.isEmpty() ? label : label + QStringLiteral(" · ") + channel;
+    }
+    return {};
+}
+
+QVariantMap AppController::importTextAnimationPreset(const QUrl &fileUrl, const QString &slot)
+{
+    const QString path = fileUrl.isLocalFile() ? fileUrl.toLocalFile() : fileUrl.toString();
+    QVariantMap result{{QStringLiteral("ok"), false}};
+    QStringList files{path};
+    if (drift::isDotLottiePath(path)) {
+        QString unpackError;
+        files = drift::unpackDotLottie(path, QDir(QStandardPaths::writableLocation(QStandardPaths::CacheLocation))
+                                                .filePath(QStringLiteral("dotlottie")), &unpackError);
+        if (files.isEmpty()) {
+            result.insert(QStringLiteral("error"), unpackError.isEmpty() ? tr("Could not unpack the bundle") : unpackError);
+            return result;
+        }
+    }
+    QFile file(files.first());
+    if (!file.open(QIODevice::ReadOnly)) {
+        result.insert(QStringLiteral("error"), tr("Could not read %1").arg(path));
+        return result;
+    }
+    const QByteArray json = file.readAll();
+    std::optional<drift::TextAnimationPreset> preset;
+    QStringList warnings;
+    QString error;
+    const QJsonObject doc = QJsonDocument::fromJson(json).object();
+    if (doc.contains(QStringLiteral("animators")) && doc.contains(QStringLiteral("id"))) {
+        // One of our own exported presets.
+        preset = drift::TextAnimationPreset::fromJson(doc, &error);
+    } else {
+        drift::lottie::ImportOptions options;
+        options.category = slot;
+        preset = drift::lottie::importLottieTextPreset(json, options, &warnings, &error);
+    }
+    if (!preset) {
+        result.insert(QStringLiteral("error"), error.isEmpty() ? tr("Nothing to import") : error);
+        return result;
+    }
+    if (!slot.isEmpty())
+        preset->slotKinds = {drift::textAnimSlotKindFromString(slot)};
+    preset->category = QStringLiteral("imported");
+    const QString id = drift::TextAnimationPresetCatalog::instance().addUserPreset(*preset);
+    if (id.isEmpty()) {
+        result.insert(QStringLiteral("error"), tr("Could not save the preset"));
+        return result;
+    }
+    result.insert(QStringLiteral("ok"), true);
+    result.insert(QStringLiteral("id"), id);
+    result.insert(QStringLiteral("unsupported"), warnings);
+    emit userTextAnimationPresetsChanged();
+    return result;
+}
+
+bool AppController::renameUserTextAnimationPreset(const QString &presetId, const QString &label)
+{
+    if (label.trimmed().isEmpty())
+        return false;
+    const bool ok = drift::TextAnimationPresetCatalog::instance().renameUserPreset(presetId, label.trimmed());
+    if (ok)
+        emit userTextAnimationPresetsChanged();
+    return ok;
+}
+
+bool AppController::deleteUserTextAnimationPreset(const QString &presetId)
+{
+    const bool ok = drift::TextAnimationPresetCatalog::instance().removeUserPreset(presetId);
+    if (ok)
+        emit userTextAnimationPresetsChanged();
+    return ok;
+}
+
+bool AppController::exportUserTextAnimationPreset(const QString &presetId, const QUrl &fileUrl)
+{
+    const std::optional<drift::TextAnimationPreset> preset =
+        drift::TextAnimationPresetCatalog::instance().presetForId(presetId);
+    if (!preset)
+        return false;
+    QFile file(fileUrl.isLocalFile() ? fileUrl.toLocalFile() : fileUrl.toString());
+    if (!file.open(QIODevice::WriteOnly))
+        return false;
+    QJsonObject json = preset->toJson();
+    json.insert(QStringLiteral("id"), drift::isUserTextAnimationPresetId(preset->id) ? preset->id.mid(5) : preset->id);
+    file.write(QJsonDocument(json).toJson(QJsonDocument::Indented));
+    return true;
 }

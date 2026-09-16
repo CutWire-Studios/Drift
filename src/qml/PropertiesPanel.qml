@@ -77,6 +77,15 @@ PanelFrame {
         function onTracksChanged() {
             root.clipDataRevision++
         }
+        // A text clip added with no text lands in its content field. addTextClip has already
+        // selected it, so the Text tab exists; callLater lets the tab switch settle before the
+        // focus lands on a child of the page that was hidden a moment ago.
+        function onInlineTextEditRequested(trackIndex, clipIndex) {
+            if (root.textTabIndex < 0 || !root.tabVisible("text"))
+                return
+            root.activeTab = root.textTabIndex
+            Qt.callLater(textInspector.focusContent)
+        }
     }
 
     Component.onCompleted: {
@@ -89,6 +98,8 @@ PanelFrame {
         "general": qsTr("General"),
         "text": qsTr("Text"),
         "shape": qsTr("Shape"),
+        "vector": qsTr("Motion"),
+        "model3d": qsTr("3D Model"),
         "subtitles": qsTr("Subtitles"),
         "transform": qsTr("Transform"),
         "stabilize": qsTr("Stabilization"),
@@ -112,6 +123,8 @@ PanelFrame {
         ListElement { tabId: "general"; icon: 0; group: 0 }
         ListElement { tabId: "text"; icon: 1; group: 0 }
         ListElement { tabId: "shape"; icon: 2; group: 0 }
+        ListElement { tabId: "vector"; icon: 14; group: 0 }
+        ListElement { tabId: "model3d"; icon: 15; group: 0 }
         ListElement { tabId: "subtitles"; icon: 3; group: 0 }
         ListElement { tabId: "transform"; icon: 4; group: 1 }
         ListElement { tabId: "stabilize"; icon: 5; group: 1 }
@@ -141,6 +154,8 @@ PanelFrame {
         Theme.icons.audioLines,
         Theme.icons.chevronsRight,
         Theme.icons.pipette
+        Theme.icons.layers,
+        Theme.icons.box
     ]
 
     function tabVisible(tabId) {
@@ -163,12 +178,16 @@ PanelFrame {
             return root.clipKind === "subtitle"
         if (tabId === "shape")
             return root.clipKind === "shape"
+        if (tabId === "vector")
+            return root.clipKind === "vector"
+        if (tabId === "model3d")
+            return root.clipKind === "model3d"
         if (tabId === "text")
             return root.hasTextStyle
         if (tabId === "animation")
             return root.clipKind === "video" || root.clipKind === "image"
                    || root.clipKind === "shape" || root.clipKind === "text"
-                   || root.clipKind === "audio"
+                   || root.clipKind === "vector" || root.clipKind === "audio"
         if (tabId === "stabilize")
             return root.clipKind === "video"
         if (tabId === "chroma")
@@ -658,6 +677,7 @@ PanelFrame {
                 }
 
                 TextInspector {
+                    id: textInspector
                     width: tabColumn.width
                     visible: root.currentTabId === "text"
                 }
@@ -701,6 +721,16 @@ PanelFrame {
                 ShapeInspector {
                     width: tabColumn.width
                     visible: root.currentTabId === "shape"
+                }
+
+                VectorInspector {
+                    width: tabColumn.width
+                    visible: root.currentTabId === "vector"
+                }
+
+                Model3DInspector {
+                    width: tabColumn.width
+                    visible: root.currentTabId === "model3d"
                 }
 
                 MasksInspector {

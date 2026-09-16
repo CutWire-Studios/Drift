@@ -1,0 +1,48 @@
+{
+  "format": 1,
+  "id": "slow-zoom",
+  "label": "Slow zoom",
+  "category": "hold",
+  "sampleText": "Zoom",
+  "slots": [
+    "loop"
+  ],
+  "order": 480,
+  "flags": {
+    "mode": "hold"
+  },
+  "params": [
+    {
+      "id": "to",
+      "type": "scalar",
+      "label": "To",
+      "unit": "%",
+      "min": 50,
+      "max": 200,
+      "step": 1,
+      "default": 108
+    }
+  ],
+  "animators": [
+    {
+      "selectors": [],
+      "props": {
+        "scale": {
+          "value": 0,
+          "curve": {
+            "keyframes": [
+              {
+                "timeUs": 0,
+                "value": 100
+              },
+              {
+                "timeUs": 1000000,
+                "value": "{to}"
+              }
+            ]
+          }
+        }
+      }
+    }
+  ]
+}
