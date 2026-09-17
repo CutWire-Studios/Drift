@@ -324,6 +324,14 @@
         <source>Copied one-time setup</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>Start agent on startup</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Skip the manual toggle next time you open Drift. Turning access off resets this.</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>AgentAccessDialog</name>

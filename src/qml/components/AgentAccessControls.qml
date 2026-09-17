@@ -36,6 +36,18 @@ Column {
         onToggled: EditorState.mcpEnabled = checked
     }
 
+    // Visible whenever there is something to act on: normally that means access is
+    // currently on, but a start-on-launch attempt that failed leaves mcpStartOnLaunch
+    // set and mcpRunning false — the switch has to stay reachable then too, or turning
+    // it back off (to stop the next launch from trying again) has nowhere to happen.
+    ThemedSwitch {
+        visible: EditorState.mcpRunning || EditorState.mcpStartOnLaunch
+        checked: EditorState.mcpStartOnLaunch
+        text: qsTr("Start agent on startup")
+        tooltip: qsTr("Skip the manual toggle next time you open Drift. Turning access off resets this.")
+        onToggled: EditorState.mcpStartOnLaunch = checked
+    }
+
     ThemedLabel {
         width: parent.width
         visible: EditorState.mcpError.length > 0

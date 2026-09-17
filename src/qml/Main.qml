@@ -580,6 +580,9 @@ ApplicationWindow {
         Theme.windowWidth = window.width
         window.restoreWindowGeometry()
         window.beginStartupProject()
+        // Independent of the project-restore sequence above — it neither gates nor is
+        // gated by it, so ordering here doesn't matter.
+        EditorState.applyMcpStartOnLaunch()
         // Last: the window is placed by now, and the startup flow keeps the ordering
         // it had when the window was shown at the end of completion.
         window.showRestored()

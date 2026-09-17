@@ -744,6 +744,15 @@ AppController::AppController(AssetLibrary *assetLibrary, QObject *parent)
     connect(m_mcp.get(), &drift::mcp::McpServer::tokenChanged, this,
             &AppController::mcpRunningChanged);
     connect(m_mcp.get(), &drift::mcp::McpServer::errorChanged, this, &AppController::mcpErrorChanged);
+    // Loaded here so the property already reads correctly for anything constructed on
+    // this object, but NOT acted on here — headless mode constructs the same
+    // AppController/EditorState and configures the MCP server itself from CLI args
+    // (port, token, transport); starting it early with the defaults would make that
+    // later start() a no-op against the wrong port/token, and would start HTTP even
+    // for a stdio-only headless run. applyMcpStartOnLaunch() is the GUI-only opt-in,
+    // called once from Main.qml's own startup sequence.
+    m_mcpStartOnLaunch =
+        QSettings().value(QStringLiteral("mcp/startOnLaunch"), false).toBool();
     connect(&m_undoStack, &QUndoStack::indexChanged, this, &AppController::undoStackChanged);
     connect(&m_undoStack, &QUndoStack::indexChanged, this, [this] {
         m_timelineModel.refresh();
@@ -20663,16 +20672,40 @@ void AppController::setMcpEnabled(bool enabled)
 {
     if (!m_mcp)
         return;
-    if (enabled)
+    if (enabled) {
         m_mcp->start();
-    else
+    } else {
         m_mcp->stop();
+        // Turning access off is the security-relevant choice; carrying "start on
+        // launch" past it would silently reopen access next launch that nobody
+        // asked for at the time. Only a manual disable resets it — an error-driven
+        // stop from inside McpServer never reaches this branch.
+        setMcpStartOnLaunch(false);
+    }
 }
 
 void AppController::rotateMcpToken()
 {
     if (m_mcp)
         m_mcp->rotateToken();
+}
+
+void AppController::setMcpStartOnLaunch(bool enabled)
+{
+    if (m_mcpStartOnLaunch == enabled)
+        return;
+    m_mcpStartOnLaunch = enabled;
+    QSettings().setValue(QStringLiteral("mcp/startOnLaunch"), enabled);
+    emit mcpStartOnLaunchChanged();
+}
+
+// GUI-only: called once from Main.qml's own startup sequence, never from headless
+// (which configures and starts the server itself from CLI args). Keeping this out of
+// the constructor is what stops the two from racing over the same server instance.
+void AppController::applyMcpStartOnLaunch()
+{
+    if (m_mcpStartOnLaunch && m_mcp)
+        m_mcp->start();
 }
 
 namespace {
