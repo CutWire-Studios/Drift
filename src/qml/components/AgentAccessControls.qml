@@ -26,7 +26,7 @@ Column {
         size: "sm"
         wrapMode: Text.WordWrap
         visible: root.showIntro
-        text: qsTr("Let Cursor or Claude edit this project for you — add clips, change the timeline, and check how it looks. Only programs on this device. Starts off each time you open Drift; turn it off when you finish. The key stays the same between sessions, so a setup you pasted once keeps working.")
+        text: qsTr("Let Cursor or Claude edit this project for you — add clips, change the timeline, and check how it looks. Only programs on this device. Off by default each time you open Drift, unless you turn on “Start agent on startup” below; turn it off here when you finish. The key stays the same between sessions, so a setup you pasted once keeps working.")
     }
 
     ThemedSwitch {
