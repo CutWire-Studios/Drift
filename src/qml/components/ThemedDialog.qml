@@ -24,10 +24,15 @@ Dialog {
     // the window and does carry them. Without this a full-height dialog on a phone still
     // ran under the status bar at the top and the gesture pill at the bottom, which is
     // where the footer buttons are.
-    readonly property real safeTop: Overlay.overlay ? Overlay.overlay.SafeArea.margins.top : 0
-    readonly property real safeBottom: Overlay.overlay ? Overlay.overlay.SafeArea.margins.bottom : 0
-    readonly property real safeLeft: Overlay.overlay ? Overlay.overlay.SafeArea.margins.left : 0
-    readonly property real safeRight: Overlay.overlay ? Overlay.overlay.SafeArea.margins.right : 0
+    // Overlay.overlay is non-null once the dialog is parented, but SafeArea itself is only
+    // populated once that overlay is actually attached to a window — briefly undefined for
+    // every dialog preloaded at startup, before any window is shown.
+    readonly property var _safeMargins: (Overlay.overlay && Overlay.overlay.SafeArea)
+                                         ? Overlay.overlay.SafeArea.margins : undefined
+    readonly property real safeTop: _safeMargins ? _safeMargins.top : 0
+    readonly property real safeBottom: _safeMargins ? _safeMargins.bottom : 0
+    readonly property real safeLeft: _safeMargins ? _safeMargins.left : 0
+    readonly property real safeRight: _safeMargins ? _safeMargins.right : 0
     readonly property real safeWidth: Math.max(
         0, (Overlay.overlay ? Overlay.overlay.width : preferredWidth) - safeLeft - safeRight)
     readonly property real safeHeight: Math.max(
