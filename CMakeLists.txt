@@ -981,6 +981,7 @@ qt_add_qml_module(drift
         src/qml/components/assets/AssetFavoriteButton.qml
         src/qml/TimelinePanel.qml
         src/qml/components/timeline/TimelineToolbar.qml
+        src/qml/components/timeline/TimelineOverview.qml
         src/qml/components/timeline/TrackHeaderColumn.qml
         src/qml/components/timeline/TimelineClipItem.qml
         src/qml/components/IconGlyph.qml
