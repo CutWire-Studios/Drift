@@ -328,6 +328,12 @@ class AppController : public QObject
     // to regex the prose, and none of the real failure strings matched, so a
     // corrupt-project open rendered as a neutral info toast.
     Q_PROPERTY(QString lastMessageSeverity READ lastMessageSeverity NOTIFY lastMessageChanged)
+    // True from the moment loadProject()/loadProjectJson() is called — by the header,
+    // the start screen, an external open, or a startup restore — until projectLoadFinished
+    // fires. Tracked here rather than by each QML call site so a load kicked off from C++
+    // (consumeStartupProject, restoreLastSessionIfEnabled) is just as visible as one QML
+    // started itself; nothing else may replace the document while this is true.
+    Q_PROPERTY(bool projectLoadPending READ projectLoadPending NOTIFY projectLoadPendingChanged)
     Q_PROPERTY(int draggingAssetIndex READ draggingAssetIndex WRITE setDraggingAssetIndex NOTIFY draggingAssetIndexChanged)
     // Set by MediaPreviewWindow.qml/AndroidMediaPreview.qml while open, so the bin grid can defer
     // rebuilding its delegate array (and the scroll-position flicker that causes) until the
@@ -467,6 +473,7 @@ public:
     QString projectName() const;
     QString lastMessage() const { return m_lastMessage; }
     QString lastMessageSeverity() const { return m_lastMessageSeverity; }
+    bool projectLoadPending() const { return m_projectLoadPending; }
     int draggingAssetIndex() const { return m_draggingAssetIndex; }
     void setDraggingAssetIndex(int index);
     bool assetPreviewWindowOpen() const { return m_assetPreviewWindowOpen; }
@@ -1479,7 +1486,10 @@ public:
     Q_INVOKABLE void loadOtioTimeline(const QUrl &url);
     Q_INVOKABLE void cancelPackage();
     Q_INVOKABLE void loadProject(const QUrl &url);
-    Q_INVOKABLE void newProject();
+    // silent skips the "New project" status message — used by Close Project, which
+    // reuses this reset but reports its own "Project closed" message instead; setting
+    // lastMessage twice would queue two toasts, since each change is its own toast.
+    Q_INVOKABLE void newProject(bool silent = false);
     Q_INVOKABLE void openRecentProject(const QString &path);
     Q_INVOKABLE void clearRecentProjects();
     // Removes one path from the recents list without deleting the file on disk.
@@ -1668,6 +1678,14 @@ signals:
     // Addons the freshly opened project needs but that are not installed. Each entry is
     // id / name / version / kinds, for MissingAddonsDialog.
     void missingAddons(const QVariantList &addons);
+    // Terminal result of loadProject()/loadProjectJson(): exactly one per call that
+    // reaches a load generation still current when it finishes. A bundle with embedded
+    // media raises the "Unpacking project media…" lastMessage first and this only once
+    // extraction and apply are done — QML waiting to know whether an open landed (e.g.
+    // to dismiss a "pick a project" screen) needs this rather than lastMessageChanged,
+    // which fires for that progress message too.
+    void projectLoadFinished(bool ok, const QString &message);
+    void projectLoadPendingChanged();
     void lastMessageChanged();
     void draggingAssetIndexChanged();
     void assetPreviewWindowOpenChanged();
@@ -1918,6 +1936,18 @@ protected:
 
     QByteArray serializeProjectJson() const;
     bool applyProjectJson(const QByteArray &data, QString *error);
+    // Bracket every loadProject()/loadProjectJson() call, sync or async, success or
+    // failure, so projectLoadPending is accurate regardless of what triggered the load.
+    // beginProjectLoad() returns false (and acquires nothing) when a load already owns
+    // the flag — the caller must bail out without touching m_projectLoadPending itself,
+    // so a second, unrelated request can never clear the first one's pending state.
+    bool beginProjectLoad();
+    void finishProjectLoad(bool ok, const QString &message);
+    // The actual body of loadProjectJson(), run once beginProjectLoad() has succeeded.
+    // loadProject() delegates here directly for a JSON file — it already owns the
+    // pending flag from its own beginProjectLoad(), so the JSON path must not try to
+    // acquire it again (that would just no-op) nor release it early on failure.
+    void loadProjectJsonInternal(const QUrl &url);
     // Shared by saveProject and packageProject. `embedSource` forces every source asset into the
     // bundle; otherwise each keeps whatever mode it had, tracked in m_embeddedSources. GUI thread
     // only — packageProject builds the request here and hands the finished copy to its worker.
@@ -2156,6 +2186,7 @@ protected:
     int m_segSeedGeneration = 0; // bumped per seed preview; stale masks are dropped
     bool m_segSeedRunning = false;
     int m_loadGeneration = 0; // bumped per loadProject; stale extracts are dropped
+    bool m_projectLoadPending = false;
     QImage m_segFrame;
     drift::Sam2Embedding m_segEmbedding;
     // "sam2" or "rvm". Persists across sessions so the window reopens on the last choice.

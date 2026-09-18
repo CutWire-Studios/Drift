@@ -11,6 +11,7 @@ Popup {
 
     signal openFileRequested()
     signal newProjectRequested()
+    signal closeProjectRequested()
     signal openRecentRequested(string path)
     signal saveAsRequested()
     signal packageRequested()
@@ -475,6 +476,22 @@ Popup {
             glyph: Theme.icons.fileText
             text: qsTr("Project properties…")
             onTriggered: root.propertiesRequested()
+        }
+
+        Rectangle {
+            width: parent.width
+            height: Theme.borderWidth
+            color: Theme.panelBorder
+            opacity: 0.5
+        }
+
+        // --- Close --------------------------------------------------------
+        // Same confirm-if-dirty gate as New / Open, but lands on the start screen
+        // instead of picking a replacement project for you.
+        ActionRow {
+            glyph: Theme.icons.x
+            text: qsTr("Close project")
+            onTriggered: root.closeProjectRequested()
         }
     }
 }

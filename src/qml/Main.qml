@@ -285,7 +285,7 @@ ApplicationWindow {
 
     Shortcut {
         sequence: "Esc"
-        enabled: window.previewFullscreen
+        enabled: window.previewFullscreen && !window.showStartScreen
         onActivated: window.togglePreviewFullscreen()
     }
 
@@ -324,6 +324,11 @@ ApplicationWindow {
     // matching projectLayoutChosen itself.
     property bool layoutPromptDismissed: false
 
+    // True only during the startup window where continueStartupAfterLanguage() has
+    // decided to ask which project to open, rather than settle on one itself.
+    // Cleared for good once that choice is made.
+    property bool showStartScreen: false
+
     // Header Extras icon pulses while true; never auto-opens a dialog.
     readonly property alias addonAttentionNeeded: addonStartupDialog.needsAttention
 
@@ -342,6 +347,10 @@ ApplicationWindow {
         if (EditorState.recoveryAvailable || EditorState.projectLayoutChosen)
             return
         if (window.layoutPromptDismissed)
+            return
+        // The start screen is its own waiting room: land there and let the user pick
+        // New / Open / a recent project rather than racing them with this dialog too.
+        if (window.showStartScreen)
             return
         if (layoutChooserDialog.visible || recoveryDialog.visible)
             return
@@ -508,6 +517,82 @@ ApplicationWindow {
         settingsDialog.open()
     }
 
+    // ── Project lifecycle: New / Open / Open recent / Close ─────────────────────
+    // The single gate for every entry point that starts, opens, or discards a
+    // project — Ctrl+N/Ctrl+O, the header's Projects menu, the start screen's own
+    // tiles, and an externally requested open (double-click a .drift, launch args)
+    // all call these rather than keeping their own copy of the confirm-if-dirty
+    // check and the showStartScreen bookkeeping.
+
+    // Whether a load is in flight lives on EditorState (AppController::projectLoadPending),
+    // not as a flag one of these functions sets — loadProject()/loadProjectJson() can be
+    // reached from C++ too (consumeStartupProject, restoreLastSessionIfEnabled), and a
+    // QML-only flag would miss those, letting Close/New race a startup load that is still
+    // unpacking a bundle in the background.
+    //
+    // A second New/Open/Close while a load is still in flight has nowhere good to go:
+    // loadProject()'s own generation counter guards against a *stale* extraction landing
+    // on top of a *newer* one, but nothing invalidates one that is discarded by New/Close.
+    // Simplest correct fix: only one project action in flight at a time.
+    function rejectIfProjectOpenPending() {
+        if (!EditorState.projectLoadPending)
+            return false
+        Toasts.info(qsTr("Still opening a project — try again in a moment."))
+        return true
+    }
+
+    function requestNewProject() {
+        if (window.rejectIfProjectOpenPending())
+            return
+        editorHeader.confirmIfDirty(function () {
+            EditorState.newProject()
+            window.showStartScreen = false
+            window.promptLayoutChooserIfNeeded()
+        })
+    }
+
+    function requestOpenProjectDialog() {
+        if (window.rejectIfProjectOpenPending())
+            return
+        editorHeader.confirmIfDirty(function () {
+            var url = FileDialogs.openFile(qsTr("Open Project"), editorHeader.projectFilter,
+                                           editorHeader.projectMimeTypes)
+            if (url == "")
+                return
+            EditorState.loadProject(url)
+        })
+    }
+
+    function requestOpenRecentProject(path) {
+        if (window.rejectIfProjectOpenPending())
+            return
+        if (!path || path.length === 0)
+            return
+        editorHeader.confirmIfDirty(function () {
+            EditorState.openRecentProject(path)
+        })
+    }
+
+    // Header's "Close project". Confirms like every action above, then discards the
+    // document the same way New Project does — just landing on the start screen
+    // afterwards instead of an empty one.
+    function requestCloseProject() {
+        if (window.rejectIfProjectOpenPending())
+            return
+        editorHeader.confirmIfDirty(function () {
+            // Set before newProject(): it resets projectLayoutChosen, which a
+            // Connections handler below reacts to by reopening the layout chooser —
+            // the start screen needs to already be up so promptLayoutChooserIfNeeded()
+            // defers to it instead.
+            window.showStartScreen = true
+            // silent: newProject()'s own "New project" toast is right for the header's
+            // New Project action, wrong here — setting lastMessage again afterwards
+            // would not replace it, since every change queues its own toast.
+            EditorState.newProject(true)
+            EditorState.setLastMessage(qsTr("Project closed"))
+        })
+    }
+
     // Opened from the header, and from every empty state that a missing addon causes.
     function openAddonManager(kind) {
         if (kind === undefined)
@@ -602,10 +687,17 @@ ApplicationWindow {
         // Opt-in: restore unsaved recovery or the last clean project silently.
         if (EditorState.restoreLastSessionIfEnabled())
             return
-        if (EditorState.recoveryAvailable)
+        if (EditorState.recoveryAvailable) {
             recoveryOpenTimer.start()
-        else
-            layoutChooserOpenTimer.start()
+            return
+        }
+        // Reopen is off (or the last project could not be restored): rather than land in a
+        // fresh empty project, ask which project to work on.
+        if (!EditorState.reopenLastProject) {
+            window.showStartScreen = true
+            return
+        }
+        layoutChooserOpenTimer.start()
     }
 
     onVisibilityChanged: {
@@ -619,6 +711,8 @@ ApplicationWindow {
     Connections {
         target: EditorState
         function onExternalProjectOpenRequested(url) {
+            if (window.rejectIfProjectOpenPending())
+                return
             editorHeader.confirmIfDirty(function () {
                 EditorState.loadProject(url)
             })
@@ -650,6 +744,17 @@ ApplicationWindow {
 
         function onOpenMulticamWindowRequested() {
             multicamWindow.openSession()
+        }
+
+        // Terminal result of a loadProject()/loadProjectJson() call, from any source —
+        // unlike lastMessageChanged, this does not also fire for the "Unpacking project
+        // media…" progress message a bundle with embedded media raises first, so it's
+        // safe to treat as "the open is done" rather than mistaking progress for success.
+        // rejectIfProjectOpenPending() keeps at most one load in flight at a time, so
+        // whichever request this is, it's the one the start screen (if up) is waiting on.
+        function onProjectLoadFinished(ok) {
+            if (ok)
+                window.showStartScreen = false
         }
 
         function onProjectLayoutChosenChanged() {
@@ -781,6 +886,19 @@ ApplicationWindow {
             Shortcut {
                 sequence: Theme.nativeShortcutSequence(modelData.shortcut)
                 context: Qt.ApplicationShortcut
+                // ApplicationShortcut fires regardless of what is on screen, so without
+                // this a key like M (toggleBookmark) still edited the document hidden
+                // behind the start screen. The editor Column being disabled blocks mouse
+                // input the same way, but Shortcut is not an Item and does not inherit
+                // that — it needs its own guard.
+                //
+                // New Project and Open stay live even here: both end up in
+                // window.requestNewProject()/requestOpenProjectDialog() (via EditorHeader's
+                // triggerAction Connections below), which already gate on a pending load
+                // and unsaved changes — the same functions the start screen's own tiles
+                // call — so there is nothing editing-shaped about letting them through.
+                enabled: modelData.id === "newProject" || modelData.id === "open"
+                         || !window.showStartScreen
                 onActivated: {
                     if (modelData.id === "clearSelection"
                             && timelinePanel.visible
@@ -824,6 +942,7 @@ ApplicationWindow {
     Shortcut {
         sequence: "F1"
         context: Qt.ApplicationShortcut
+        enabled: !window.showStartScreen
         onActivated: {
             if (window.previewFullscreen)
                 window.togglePreviewFullscreen()
@@ -834,6 +953,12 @@ ApplicationWindow {
     Column {
         anchors.fill: parent
         spacing: 0
+        // The start screen sits on top of this document rather than replacing it (see
+        // the StartScreen instance below), so without this the editor underneath was
+        // still fully live — clickable through any gap and, worse, still reachable by
+        // keyboard even though nothing of it is visible. Disabling blocks mouse input
+        // and keyboard focus for the whole subtree, not just the pointer.
+        enabled: !window.showStartScreen
 
         EditorHeader {
             id: editorHeader
@@ -1019,6 +1144,23 @@ ApplicationWindow {
                 // portrait workspace is active.
             }
         }
+    }
+
+    // Startup only: replaces a fresh empty project when "Reopen last project on
+    // startup" is off, so the choice of what to work on is the user's rather than
+    // defaulting to blank. Declared last (after the editor Column) so it draws over
+    // the already-empty document sitting underneath it.
+    StartScreen {
+        id: startScreen
+        anchors.fill: parent
+        visible: window.showStartScreen
+
+        // Delegate to the same functions Ctrl+N / Ctrl+O / the header's Projects menu
+        // use, so there is exactly one place that gates on unsaved changes and decides
+        // when the screen is allowed to disappear.
+        onNewProjectRequested: window.requestNewProject()
+        onOpenProjectRequested: window.requestOpenProjectDialog()
+        onOpenRecentRequested: (path) => window.requestOpenRecentProject(path)
     }
 
     // Notification host — above all panels, so any message lands in one place.
