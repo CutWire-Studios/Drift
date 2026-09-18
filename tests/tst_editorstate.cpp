@@ -4561,11 +4561,24 @@ void EditorStateTest::chromaKeyHueIsFlaggedForTheColourSwatch()
         QCOMPARE(param.value(QStringLiteral("hue")).toBool(), isKeyHue);
     }
 
-    // Picking blue in the swatch lands as 240 degrees on the effect.
-    state.setClipKeyframe(0, 0, QStringLiteral("fx.0.u_keyHue"), 0.0, 240.0);
-    const QList<drift::Effect> stack =
-        videoEffectsOf(*state.project(), mediaClip(*state.project(), 0, 0));
+    // Picking blue in the swatch lands as 240 degrees on the effect — as a plain value, not a key.
+    // The swatch writes like the slider's drag; setClipKeyframe would force a key at the playhead
+    // and a second pick elsewhere would animate the key colour.
+    const auto pick = [&state](double atSeconds, double hue) {
+        state.beginPreviewDrag(QStringLiteral("Edit Key Colour"));
+        state.previewSetClipKeyframe(0, 0, QStringLiteral("fx.0.u_keyHue"), atSeconds, hue);
+        state.commitPreviewDrag();
+    };
+    pick(1.0, 240.0);
+    pick(3.0, 200.0);
+    QList<drift::Effect> stack = videoEffectsOf(*state.project(), mediaClip(*state.project(), 0, 0));
     QCOMPARE(stack.size(), 1);
+    QCOMPARE(stack.first().parameters.value(QStringLiteral("u_keyHue")).toDouble(), 200.0);
+    QVERIFY(stack.first().paramKeyframes.value(QStringLiteral("u_keyHue")).isEmpty());
+
+    // Each pick is one undo step.
+    state.undo();
+    stack = videoEffectsOf(*state.project(), mediaClip(*state.project(), 0, 0));
     QCOMPARE(stack.first().parameters.value(QStringLiteral("u_keyHue")).toDouble(), 240.0);
 
     // Ordinary float params stay unflagged.

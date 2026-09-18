@@ -5272,6 +5272,10 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Edit %1</source>
+        <translation type="unfinished">%1 සංස්කරණය කරන්න</translation>
+    </message>
+    <message>
         <source>Paste effects</source>
         <translation>ප්‍රයෝග අලවන්න</translation>
     </message>

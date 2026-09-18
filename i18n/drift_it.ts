@@ -5272,6 +5272,10 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Edit %1</source>
+        <translation type="unfinished">Modifica %1</translation>
+    </message>
+    <message>
         <source>Paste effects</source>
         <translation>Incolla effetti</translation>
     </message>

@@ -5251,6 +5251,10 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Edit %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Paste effects</source>
         <translation type="unfinished"></translation>
     </message>

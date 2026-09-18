@@ -5251,6 +5251,10 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Edit %1</source>
+        <translation type="unfinished">%1 を編集</translation>
+    </message>
+    <message>
         <source>Paste effects</source>
         <translation>エフェクトを貼り付け</translation>
     </message>
