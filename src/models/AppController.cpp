@@ -744,6 +744,15 @@ AppController::AppController(AssetLibrary *assetLibrary, QObject *parent)
     connect(m_mcp.get(), &drift::mcp::McpServer::tokenChanged, this,
             &AppController::mcpRunningChanged);
     connect(m_mcp.get(), &drift::mcp::McpServer::errorChanged, this, &AppController::mcpErrorChanged);
+    // Loaded here so the property already reads correctly for anything constructed on
+    // this object, but NOT acted on here — headless mode constructs the same
+    // AppController/EditorState and configures the MCP server itself from CLI args
+    // (port, token, transport); starting it early with the defaults would make that
+    // later start() a no-op against the wrong port/token, and would start HTTP even
+    // for a stdio-only headless run. applyMcpStartOnLaunch() is the GUI-only opt-in,
+    // called once from Main.qml's own startup sequence.
+    m_mcpStartOnLaunch =
+        QSettings().value(QStringLiteral("mcp/startOnLaunch"), false).toBool();
     connect(&m_undoStack, &QUndoStack::indexChanged, this, &AppController::undoStackChanged);
     connect(&m_undoStack, &QUndoStack::indexChanged, this, [this] {
         m_timelineModel.refresh();
@@ -19261,19 +19270,51 @@ bool fileStartsWithJsonObject(const QString &path)
 
 } // namespace
 
+bool AppController::beginProjectLoad()
+{
+    if (m_projectLoadPending)
+        return false;
+    m_projectLoadPending = true;
+    emit projectLoadPendingChanged();
+    return true;
+}
+
+void AppController::finishProjectLoad(bool ok, const QString &message)
+{
+    // Only the call that actually acquired the flag (beginProjectLoad() returned true)
+    // reaches here — a rejected request returns before ever calling this — so it is
+    // always safe to release: nothing else can be mid-load while we are.
+    m_projectLoadPending = false;
+    emit projectLoadPendingChanged();
+    emit projectLoadFinished(ok, message);
+}
+
 void AppController::loadProjectJson(const QUrl &url)
+{
+    if (!beginProjectLoad()) {
+        setLastMessage(tr("Still opening a project — try again in a moment."),
+                       QStringLiteral("warning"));
+        return;
+    }
+    loadProjectJsonInternal(url);
+}
+
+void AppController::loadProjectJsonInternal(const QUrl &url)
 {
     const QString path = AndroidUri::filePath(url);
     if (path.isEmpty()) {
-        setLastMessage(tr("That project location isn’t valid"), QStringLiteral("error"));
+        const QString message = tr("That project location isn’t valid");
+        setLastMessage(message, QStringLiteral("error"));
+        finishProjectLoad(false, message);
         return;
     }
 
     QFile file(path);
     if (!file.open(QIODevice::ReadOnly)) {
-        setLastMessage(tr("Couldn’t read %1: %2").arg(QFileInfo(path).fileName(),
-                                                      file.errorString()),
-                       QStringLiteral("error"));
+        const QString message = tr("Couldn’t read %1: %2").arg(QFileInfo(path).fileName(),
+                                                               file.errorString());
+        setLastMessage(message, QStringLiteral("error"));
+        finishProjectLoad(false, message);
         return;
     }
 
@@ -19286,6 +19327,7 @@ void AppController::loadProjectJson(const QUrl &url)
     QString error;
     if (!applyProjectJson(data, &error)) {
         setLastMessage(error, QStringLiteral("error"));
+        finishProjectLoad(false, error);
         return;
     }
 
@@ -19297,7 +19339,9 @@ void AppController::loadProjectJson(const QUrl &url)
     setDirty(true);
     deleteRecoveryFile();
     setProjectLayoutChosen(true);
-    setLastMessage(tr("Project JSON loaded"), QStringLiteral("success"));
+    const QString message = tr("Project JSON loaded");
+    setLastMessage(message, QStringLiteral("success"));
+    finishProjectLoad(true, message);
 }
 
 void AppController::loadPremiereProject(const QUrl &url)
@@ -19619,11 +19663,19 @@ void AppController::cancelPackage()
 
 void AppController::loadProject(const QUrl &url)
 {
+    if (!beginProjectLoad()) {
+        setLastMessage(tr("Still opening a project — try again in a moment."),
+                       QStringLiteral("warning"));
+        return;
+    }
+
     // The bundle reader seeks through its input and hands media paths to FFmpeg, so a SAF document
     // is staged to a real file first. The JSON branch below needs no such thing and takes the URL.
     const QString path = readTargetPath(url);
     if (path.isEmpty()) {
-        setLastMessage(tr("That project location isn’t valid"), QStringLiteral("error"));
+        const QString message = tr("That project location isn’t valid");
+        setLastMessage(message, QStringLiteral("error"));
+        finishProjectLoad(false, message);
         return;
     }
 
@@ -19670,7 +19722,10 @@ void AppController::loadProject(const QUrl &url)
     // }
 
     if (fileStartsWithJsonObject(path)) {
-        loadProjectJson(url);
+        // Not loadProjectJson(): this call already owns the pending flag via the
+        // beginProjectLoad() above, and loadProjectJson()'s own gate would see it
+        // already held and reject its own request.
+        loadProjectJsonInternal(url);
         return;
     }
 
@@ -19679,6 +19734,7 @@ void AppController::loadProject(const QUrl &url)
         drift::bundle::readManifest(path, &error);
     if (!info) {
         setLastMessage(error, QStringLiteral("error"));
+        finishProjectLoad(false, error);
         return;
     }
 
@@ -19697,6 +19753,7 @@ void AppController::loadProject(const QUrl &url)
             return;
         if (!extractOk) {
             setLastMessage(extractError, QStringLiteral("error"));
+            finishProjectLoad(false, extractError);
             return;
         }
 
@@ -19706,6 +19763,7 @@ void AppController::loadProject(const QUrl &url)
                               &applyError)) {
             m_pendingPathRemap.clear();
             setLastMessage(applyError, QStringLiteral("error"));
+            finishProjectLoad(false, applyError);
             return;
         }
 
@@ -19723,8 +19781,10 @@ void AppController::loadProject(const QUrl &url)
         addRecentProject(location);
         deleteRecoveryFile();
         setProjectLayoutChosen(true);
-        setLastMessage(tr("Project loaded"), QStringLiteral("success"));
+        const QString message = tr("Project loaded");
+        setLastMessage(message, QStringLiteral("success"));
         reportMissingAddons(bundle.addons);
+        finishProjectLoad(true, message);
     };
 
     if (bundle.embeddedBytes <= 0) {
@@ -19882,7 +19942,7 @@ void AppController::rehydrateMissingSources()
 #endif
 }
 
-void AppController::newProject()
+void AppController::newProject(bool silent)
 {
     setPlaying(false);
     resetSessionState();
@@ -19923,7 +19983,8 @@ void AppController::newProject()
     emit projectNameChanged();
     emit projectMetadataChanged();
     emit backgroundChanged();
-    setLastMessage(tr("New project"));
+    if (!silent)
+        setLastMessage(tr("New project"));
 }
 
 void AppController::openRecentProject(const QString &path)
@@ -20663,16 +20724,40 @@ void AppController::setMcpEnabled(bool enabled)
 {
     if (!m_mcp)
         return;
-    if (enabled)
+    if (enabled) {
         m_mcp->start();
-    else
+    } else {
         m_mcp->stop();
+        // Turning access off is the security-relevant choice; carrying "start on
+        // launch" past it would silently reopen access next launch that nobody
+        // asked for at the time. Only a manual disable resets it — an error-driven
+        // stop from inside McpServer never reaches this branch.
+        setMcpStartOnLaunch(false);
+    }
 }
 
 void AppController::rotateMcpToken()
 {
     if (m_mcp)
         m_mcp->rotateToken();
+}
+
+void AppController::setMcpStartOnLaunch(bool enabled)
+{
+    if (m_mcpStartOnLaunch == enabled)
+        return;
+    m_mcpStartOnLaunch = enabled;
+    QSettings().setValue(QStringLiteral("mcp/startOnLaunch"), enabled);
+    emit mcpStartOnLaunchChanged();
+}
+
+// GUI-only: called once from Main.qml's own startup sequence, never from headless
+// (which configures and starts the server itself from CLI args). Keeping this out of
+// the constructor is what stops the two from racing over the same server instance.
+void AppController::applyMcpStartOnLaunch()
+{
+    if (m_mcpStartOnLaunch && m_mcp)
+        m_mcp->start();
 }
 
 namespace {

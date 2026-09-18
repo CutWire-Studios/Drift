@@ -46,25 +46,24 @@ Rectangle {
         unsavedDialog.openDialog()
     }
 
+    // New / Open / Recent / Close all delegate to the window: it's the one place
+    // that owns the confirm-if-dirty gate for these together with the start
+    // screen's show/hide bookkeeping, so Ctrl+N/Ctrl+O, this header's Projects
+    // menu, and the start screen's own tiles can't drift out of sync.
     function openProject() {
-        root.confirmIfDirty(function () {
-            var url = FileDialogs.openFile(qsTr("Open Project"), root.projectFilter,
-                                           root.projectMimeTypes)
-            if (url != "")
-                EditorState.loadProject(url)
-        })
+        root.Window.window.requestOpenProjectDialog()
     }
 
     function requestNewProject() {
-        root.confirmIfDirty(function () {
-            EditorState.newProject()
-        })
+        root.Window.window.requestNewProject()
     }
 
     function openRecent(path) {
-        root.confirmIfDirty(function () {
-            EditorState.openRecentProject(path)
-        })
+        root.Window.window.requestOpenRecentProject(path)
+    }
+
+    function closeProject() {
+        root.Window.window.requestCloseProject()
     }
 
     // Returns true when the project is clean after the attempt. False if the
@@ -109,7 +108,13 @@ Rectangle {
 
     // Inverse of saveProjectJson. Confirms unsaved work like Open, because it replaces the
     // timeline. The JSON does not become the current project path.
+    //
+    // loadProjectJson() itself rejects a second call while another load is still in
+    // flight (see AppController::beginProjectLoad), so this check only saves the user a
+    // trip through the file dialog for a request the backend would refuse anyway.
     function openProjectJson() {
+        if (root.Window.window.rejectIfProjectOpenPending())
+            return
         root.confirmIfDirty(function () {
             var url = FileDialogs.openFile(qsTr("Open Project JSON"),
                                            [qsTr("JSON document (*.json)")],
@@ -379,6 +384,7 @@ Rectangle {
                     onOpenFileRequested: root.openProject()
                     onNewProjectRequested: root.requestNewProject()
                     onOpenRecentRequested: (path) => root.openRecent(path)
+                    onCloseProjectRequested: root.closeProject()
                     onSaveAsRequested: root.saveProjectAs()
                     onPackageRequested: root.packageProject()
                     onSaveJsonRequested: root.saveProjectJson()

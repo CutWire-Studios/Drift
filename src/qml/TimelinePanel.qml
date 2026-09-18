@@ -62,6 +62,9 @@ PanelFrame {
     // Exposed for clip filmstrip viewport culling (Flickable ids are local).
     readonly property real timelineViewX: flick.contentX
     readonly property real timelineViewW: flick.width
+    // Exposed so the overview strip can clamp its scroll target without
+    // duplicating the Flickable's contentWidth formula.
+    readonly property real timelineContentWidth: flick.contentWidth
 
     // Fit the whole project (plus end pad) into the timeline viewport.
     function fitZoom() {
@@ -823,10 +826,17 @@ PanelFrame {
             panel: root
         }
 
+        // === full-project overview strip ==============================================
+        TimelineOverview {
+            id: overviewStrip
+            width: parent.width
+            panel: root
+        }
+
         // === ruler + track labels + tracks ================================================
         Column {
             width: parent.width
-            height: parent.height - toolbar.height
+            height: parent.height - toolbar.height - overviewStrip.height
 
             KeyframeGraph {
                 id: keyframesBar

@@ -70,6 +70,8 @@ private slots:
     void serverRequiresBearerToken();
     void serverInitializeWithToken();
     void serverNotificationReturns202();
+    void mcpStartOnLaunchAppliesOnlyWhenInvoked();
+    void mcpDisablingResetsStartOnLaunch();
     void applyUnknownOp();
     void catalogDispatcherParity();
     void textResultRoundsNumbers();
@@ -542,6 +544,53 @@ void McpTest::serverNotificationReturns202()
              &status);
     QCOMPARE(status, 202);
     state.setMcpEnabled(false);
+    qunsetenv("DRIFT_MCP_SESSION_PATH");
+}
+
+// Regression for the constructor starting the server itself: that raced headless mode's
+// own --mcp-port/--mcp-token setup (the later start() was a same-instance no-op against
+// the wrong port/token) and started HTTP even for a stdio-only headless run. Construction
+// must only load the preference; only applyMcpStartOnLaunch() (the GUI's own call) may
+// act on it.
+void McpTest::mcpStartOnLaunchAppliesOnlyWhenInvoked()
+{
+    QTemporaryDir dir;
+    qputenv("DRIFT_MCP_SESSION_PATH", dir.filePath(QStringLiteral("s.json")).toUtf8());
+    QSettings().setValue(QStringLiteral("mcp/startOnLaunch"), true);
+
+    AssetLibrary library;
+    AppController state(&library);
+    QVERIFY(state.mcpStartOnLaunch());
+    QVERIFY(!state.mcpRunning());
+
+    state.applyMcpStartOnLaunch();
+    QVERIFY2(state.mcpRunning(), qPrintable(state.mcpError()));
+
+    state.setMcpEnabled(false);
+    QSettings().remove(QStringLiteral("mcp/startOnLaunch"));
+    qunsetenv("DRIFT_MCP_SESSION_PATH");
+}
+
+// The preference is a standing intent to reopen access unattended, so an explicit
+// "turn access off" has to clear it — otherwise the very next launch would reopen access
+// nobody currently wants, silently.
+void McpTest::mcpDisablingResetsStartOnLaunch()
+{
+    QTemporaryDir dir;
+    qputenv("DRIFT_MCP_SESSION_PATH", dir.filePath(QStringLiteral("s.json")).toUtf8());
+    QSettings().remove(QStringLiteral("mcp/startOnLaunch"));
+
+    AssetLibrary library;
+    AppController state(&library);
+    state.setMcpEnabled(true);
+    state.setMcpStartOnLaunch(true);
+    QVERIFY(state.mcpStartOnLaunch());
+    QVERIFY(QSettings().value(QStringLiteral("mcp/startOnLaunch")).toBool());
+
+    state.setMcpEnabled(false);
+    QVERIFY(!state.mcpStartOnLaunch());
+    QVERIFY(!QSettings().value(QStringLiteral("mcp/startOnLaunch")).toBool());
+
     qunsetenv("DRIFT_MCP_SESSION_PATH");
 }
 

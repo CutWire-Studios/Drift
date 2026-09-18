@@ -1,6 +1,6 @@
 # Agent access (Drift MCP)
 
-Drift can expose a localhost MCP server so Cursor, Claude Code, or other agents can edit the open project. Enable it in **Settings → Agent access** (off at every launch).
+Drift can expose a localhost MCP server so Cursor, Claude Code, or other agents can edit the open project. Enable it in **Settings → Agent access** (off at every launch by default; a "Start agent on startup" switch there opts into starting it automatically instead, and resets itself the next time access is turned off).
 
 ## Connect
 

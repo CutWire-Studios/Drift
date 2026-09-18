@@ -263,7 +263,7 @@ The HMAC key is also not a user secret. It signs requests and derives a stable c
 
 ## Agent access (MCP)
 
-Optional, **off at every launch**. Settings → Agent access starts a localhost MCP server so Cursor or Claude Code can edit the open project (import media, place/trim clips, capture a still of the composition).
+Optional, **off at every launch by default**. Settings → Agent access starts a localhost MCP server so Cursor or Claude Code can edit the open project (import media, place/trim clips, capture a still of the composition). A "Start agent on startup" switch, shown once access is on, opts into starting it automatically instead — turning access off elsewhere resets that switch, so it never survives past an explicit disable.
 
 This is local process control of the editor, not a sandbox. Any process on the machine with the session token can use it. Bind is `127.0.0.1` only; the token rotates each time you enable it.
 

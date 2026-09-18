@@ -452,6 +452,9 @@ QtObject {
 
     // --- Layout: timeline ------------------------------------------------------
     readonly property real timelineToolbarHeight: 40
+    // Resolve-style full-project overview strip above the ruler; short enough
+    // to stay out of the way but tall enough to be an easy click target.
+    readonly property real timelineOverviewHeight: 28
     // Tall enough to be an easy seek/scrub hit target (CapCut/Premiere-style).
     readonly property real timelineRulerHeight: 28
     readonly property real timelineBookmarkRowHeight: 18
