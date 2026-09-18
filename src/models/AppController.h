@@ -134,7 +134,8 @@ class AppController : public QObject
     Q_PROPERTY(bool gpuPreferenceSupported READ gpuPreferenceSupported CONSTANT)
     Q_PROPERTY(bool invertTimelineScroll READ invertTimelineScroll WRITE setInvertTimelineScroll
                    NOTIFY invertTimelineScrollChanged)
-    // Session-only localhost MCP for agents. Never persisted. Off at every launch.
+    // Session-only localhost MCP for agents. Off at every launch, unless mcpStartOnLaunch
+    // opts back in.
     Q_PROPERTY(bool mcpEnabled READ mcpEnabled WRITE setMcpEnabled NOTIFY mcpRunningChanged)
     Q_PROPERTY(bool mcpRunning READ mcpRunning NOTIFY mcpRunningChanged)
     Q_PROPERTY(QString mcpUrl READ mcpUrl NOTIFY mcpRunningChanged)
@@ -144,6 +145,12 @@ class AppController : public QObject
     Q_PROPERTY(QString mcpCursorSnippet READ mcpCursorSnippet NOTIFY mcpRunningChanged)
     Q_PROPERTY(QString mcpClaudeCommand READ mcpClaudeCommand NOTIFY mcpRunningChanged)
     Q_PROPERTY(QString mcpStdioSnippet READ mcpStdioSnippet NOTIFY mcpRunningChanged)
+    // Persisted opt-in: start the MCP server at launch instead of leaving it off.
+    // setMcpEnabled(false) — a manual "turn access off" — clears this, so re-enabling
+    // access always starts from an explicit, un-opted-in state rather than quietly
+    // carrying an old intent to auto-start past the point the user turned access off.
+    Q_PROPERTY(bool mcpStartOnLaunch READ mcpStartOnLaunch WRITE setMcpStartOnLaunch
+                   NOTIFY mcpStartOnLaunchChanged)
     // App-wide interface language, QSettings("ui/language"). Empty means follow the OS locale.
     // "en" is the source catalog (no .qm). Other codes match i18n/drift_<code>.qm.
     // needsUiLanguagePrompt is true only on a brand-new install, before the first-launch chooser
@@ -503,6 +510,12 @@ public:
     Q_INVOKABLE void copyMcpStdioSnippet();
     Q_INVOKABLE void copyMcpAgentGuide();
     Q_INVOKABLE void rotateMcpToken();
+    bool mcpStartOnLaunch() const { return m_mcpStartOnLaunch; }
+    Q_INVOKABLE void setMcpStartOnLaunch(bool enabled);
+    // Starts the server if mcpStartOnLaunch is set. GUI-only — called once from
+    // Main.qml's startup sequence; headless mode never calls this, since it configures
+    // and starts the server itself from --mcp-port/--mcp-token/--mcp-stdio.
+    Q_INVOKABLE void applyMcpStartOnLaunch();
     QString mcpAgentGuide() const;
     Q_INVOKABLE QVariantMap debugInfo() const;
     Q_INVOKABLE QString debugInfoText() const;
@@ -1573,6 +1586,7 @@ signals:
     void invertTimelineScrollChanged();
     void mcpRunningChanged();
     void mcpErrorChanged();
+    void mcpStartOnLaunchChanged();
     void uiLanguageChanged();
     void uiScaleChanged();
     void keyframeGraphVisibilityChanged();
@@ -2235,6 +2249,7 @@ protected:
     bool m_projectLayoutChosen = false;
 
     std::unique_ptr<drift::mcp::McpServer> m_mcp;
+    bool m_mcpStartOnLaunch = false;
     bool m_mcpUndoSuspended = false;
     int m_mcpBatchDepth = 0;
     drift::Project m_mcpBatchBefore;
