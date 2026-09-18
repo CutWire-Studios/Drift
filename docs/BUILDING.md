@@ -37,6 +37,13 @@ aqt install-qt all_os android 6.11.1 android_arm64_v8a \
 
 On Debian/Ubuntu install `libzstd-dev`, `libssl-dev`, `libsoundtouch-dev` and `zlib1g-dev`; on Arch, `zstd`, `openssl`, `soundtouch` and `zlib`; on macOS, `brew install qt ffmpeg zstd openssl@3 sound-touch` — zlib comes with the SDK there (see [macOS](#macos)). None of them has a download fallback — configure fails with a pkg-config error if the development headers are missing.
 
+Two more Linux gotchas that don't fail with a clear error at configure time:
+
+- **FFmpeg 8.x vs. the distro's**: Debian/Ubuntu's packaged FFmpeg usually lags behind 8.x. pkg-config still reports success against the older one — the mismatch only surfaces deep into the build, as `error: 'avcodec_get_supported_config' was not declared in this scope` in `src/engine/Exporter.cpp`. Fix by pointing `PKG_CONFIG_PATH` at a newer FFmpeg's `lib/pkgconfig` (built from source, or from [CutWire-Studios/FFmpeg-Builds](https://github.com/CutWire-Studios/FFmpeg-Builds)) before configuring.
+- **Qt6QuickEffects**: some Qt 6 kits — the online installer's default Desktop kit among them — ship `Qt6QuickEffectsPrivate` but no public `Qt6QuickEffects` config, so `find_package(Qt6 ... COMPONENTS QuickEffects)` fails outright even though the module it wraps is right there. Point `-DQt6QuickEffects_DIR=cmake/qt-shims/Qt6QuickEffects` at the shim in this repo, which aliases the private target, instead of installing a different kit.
+
+`scripts/configure-linux.sh` (below) checks for both up front instead of letting either fail mid-build.
+
 Optional: OpenCV for experimental background-removal builds (`-DWITH_BGREMOVAL=ON`). Only `core`, `imgproc`, and `imgcodecs` are linked.
 
 Skia draws text, shapes and Lottie/SVG clips on the GPU and is on by default (`-DDRIFT_WITH_SKIA=OFF` builds a video/image/audio-only editor: text, shape and Lottie/SVG clips draw nothing). Skia has no distro package Drift can rely on, so `third_party/build-skia.sh <target>` compiles a pinned milestone into `third_party/prebuilt/skia/<target>/` (linux-x64 by default; also `linux-arm64`, `mac-arm64`, `mac-x64` and `android-<abi>`). It needs `clang`, `ninja`, `python3` and `git`, plus on Linux the development packages for HarfBuzz, ICU, FreeType, fontconfig, expat, libpng and zlib (`gn` is downloaded by the script unless one is on `PATH`). The first build takes 20–40 minutes; the result is picked up by `cmake/FindSkia.cmake` automatically, or point `DRIFT_SKIA_DIR` at any directory holding a generated `SkiaConfig.cmake`. Windows CI uses vcpkg's `skia[gl,harfbuzz,icu,freetype,png]:x64-windows-static-md` instead, which pins the same commit. Every packaging lane builds with the option on.
@@ -44,6 +51,18 @@ Skia draws text, shapes and Lottie/SVG clips on the GPU and is on by default (`-
 **Nothing has to be placed by hand.** Fonts, emoji stickers, and speech models are addons (see below), so a clone builds and runs with no bundled assets.
 
 ## Build
+
+On Linux, `scripts/configure-linux.sh` wraps the configure step with the checks described above
+(FFmpeg version, Qt6QuickEffects, and building Skia from source if `third_party/prebuilt/skia/`
+is missing — note that this lives next to the source tree rather than inside `build/`, so
+reconfiguring after `rm -rf build` restores everything else but not that):
+
+```bash
+scripts/configure-linux.sh            # writes to build/, Debug by default
+cmake --build build -j$(nproc)
+```
+
+Everywhere else, or to configure by hand:
 
 ```bash
 cmake -B build -DCMAKE_BUILD_TYPE=Debug
