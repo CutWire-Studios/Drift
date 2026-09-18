@@ -110,7 +110,6 @@ PanelFrame {
         "masks": qsTr("Masks"),
         "effects": qsTr("Effects"),
         "audioEffects": qsTr("Audio FX"),
-        "chroma": qsTr("Chroma"),
         "transition": qsTr("Transition")
     })
 
@@ -136,7 +135,6 @@ PanelFrame {
         ListElement { tabId: "effects"; icon: 11; group: 2 }
         ListElement { tabId: "audioEffects"; icon: 12; group: 2 }
         ListElement { tabId: "transition"; icon: 13; group: 2 }
-        ListElement { tabId: "chroma"; icon: 14; group: 2 }
     }
     property var tabIcons: [
         Theme.icons.info,
@@ -153,7 +151,6 @@ PanelFrame {
         Theme.icons.wand,
         Theme.icons.audioLines,
         Theme.icons.chevronsRight,
-        Theme.icons.pipette
         Theme.icons.layers,
         Theme.icons.box
     ]
@@ -190,8 +187,6 @@ PanelFrame {
                    || root.clipKind === "vector" || root.clipKind === "audio"
         if (tabId === "stabilize")
             return root.clipKind === "video"
-        if (tabId === "chroma")
-            return root.clipKind === "video" || root.clipKind === "image"
         // Masks and effect stacks live on the adjustments pinned to a clip, and those adjustments
         // are what you select to edit them. The clip is where you *aim* one from — the assets
         // panel does that — but not where it is configured: a clip can carry several mask
@@ -755,11 +750,6 @@ PanelFrame {
                     width: tabColumn.width
                     visible: root.currentTabId === "audioEffects"
                     onBrowseAudioEffectsRequested: root.browseAudioEffectsRequested()
-                }
-
-                ChromaKeyInspector {
-                    width: tabColumn.width
-                    visible: root.currentTabId === "chroma"
                 }
             }
         }

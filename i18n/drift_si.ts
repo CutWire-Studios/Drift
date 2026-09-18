@@ -3345,6 +3345,10 @@
         <translation>ව්‍යාපෘති JSON සුරකින ලදී</translation>
     </message>
     <message>
+        <source>Still opening a project — try again in a moment.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Couldn’t read %1: %2</source>
         <translation>%1 කියවීමට නොහැකි විය: %2</translation>
     </message>
@@ -4330,29 +4334,6 @@
     </message>
 </context>
 <context>
-    <name>ChromaKeyInspector</name>
-    <message>
-        <source>Pick the background colour to remove, then click Chroma to apply the key.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Background colour</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Pick the background colour</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Chroma</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Select a clip to use the chroma key.</source>
-        <translation type="unfinished"></translation>
-    </message>
-</context>
-<context>
     <name>ColorSwatchField</name>
     <message>
         <source>Choose colour</source>
@@ -4732,10 +4713,6 @@
     <message>
         <source>Drift project (*.drift)</source>
         <translation>Drift ව්‍යාපෘතිය (*.drift)</translation>
-    </message>
-    <message>
-        <source>Open Project</source>
-        <translation>ව්‍යාපෘතිය විවෘත කරන්න</translation>
     </message>
     <message>
         <source>Save Project</source>
@@ -5289,6 +5266,10 @@
     <message>
         <source>Clear</source>
         <translation>හිස් කරන්න</translation>
+    </message>
+    <message>
+        <source>Pick %1</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Paste effects</source>
@@ -6147,6 +6128,18 @@
 </context>
 <context>
     <name>Main</name>
+    <message>
+        <source>Still opening a project — try again in a moment.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open Project</source>
+        <translation type="unfinished">ව්‍යාපෘතිය විවෘත කරන්න</translation>
+    </message>
+    <message>
+        <source>Project closed</source>
+        <translation type="unfinished"></translation>
+    </message>
     <message>
         <source>Export finished.</source>
         <translation>නිර්යාත කිරීම අවසන් විය.</translation>
@@ -8024,10 +8017,6 @@ If playback stutters, try another.</source>
         <translation>ශ්‍රව්‍ය ප්‍රයෝග</translation>
     </message>
     <message>
-        <source>Chroma</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Transition</source>
         <translation>සංක්‍රාන්තිය</translation>
     </message>
@@ -8293,6 +8282,10 @@ If playback stutters, try another.</source>
     <message>
         <source>Project properties…</source>
         <translation>ව්‍යාපෘති ගුණාංග…</translation>
+    </message>
+    <message>
+        <source>Close project</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -9668,6 +9661,43 @@ If playback stutters, try another.</source>
     <message>
         <source>Cancel</source>
         <translation>අවලංගු කරන්න</translation>
+    </message>
+</context>
+<context>
+    <name>StartScreen</name>
+    <message>
+        <source> (missing)</source>
+        <translation type="unfinished"> (නොමැත)</translation>
+    </message>
+    <message>
+        <source>This file has been moved or deleted:
+%1</source>
+        <translation type="unfinished">මෙම ගොනුව ගෙනයාම හෝ මකාදැමීම සිදු කර ඇත:
+%1</translation>
+    </message>
+    <message>
+        <source>Remove from recents</source>
+        <translation type="unfinished">මෑතකදී භාවිත කළ ඒවායින් ඉවත් කරන්න</translation>
+    </message>
+    <message>
+        <source>Create polished videos fast</source>
+        <translation type="unfinished">උසස් නිමාවකින් යුත් වීඩියෝ ඉක්මනින් සාදන්න</translation>
+    </message>
+    <message>
+        <source>New Project</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open Project…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Recent Projects</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Nothing here yet — projects you save will show up in this list.</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>

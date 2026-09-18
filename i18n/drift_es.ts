@@ -3345,6 +3345,10 @@
         <translation>JSON del proyecto guardado</translation>
     </message>
     <message>
+        <source>Still opening a project — try again in a moment.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Couldn’t read %1: %2</source>
         <translation>No se pudo leer %1: %2</translation>
     </message>
@@ -4330,29 +4334,6 @@
     </message>
 </context>
 <context>
-    <name>ChromaKeyInspector</name>
-    <message>
-        <source>Pick the background colour to remove, then click Chroma to apply the key.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Background colour</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Pick the background colour</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Chroma</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Select a clip to use the chroma key.</source>
-        <translation type="unfinished"></translation>
-    </message>
-</context>
-<context>
     <name>ColorSwatchField</name>
     <message>
         <source>Choose colour</source>
@@ -4732,10 +4713,6 @@
     <message>
         <source>Drift project (*.drift)</source>
         <translation>Proyecto Drift (*.drift)</translation>
-    </message>
-    <message>
-        <source>Open Project</source>
-        <translation>Abrir proyecto</translation>
     </message>
     <message>
         <source>Save Project</source>
@@ -5289,6 +5266,10 @@
     <message>
         <source>Clear</source>
         <translation>Borrar</translation>
+    </message>
+    <message>
+        <source>Pick %1</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Paste effects</source>
@@ -6147,6 +6128,18 @@
 </context>
 <context>
     <name>Main</name>
+    <message>
+        <source>Still opening a project — try again in a moment.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open Project</source>
+        <translation type="unfinished">Abrir proyecto</translation>
+    </message>
+    <message>
+        <source>Project closed</source>
+        <translation type="unfinished"></translation>
+    </message>
     <message>
         <source>Export finished.</source>
         <translation>Exportación finalizada.</translation>
@@ -8024,10 +8017,6 @@ Si la reproducción se corta, prueba con otra opción.</translation>
         <translation>Efectos de audio</translation>
     </message>
     <message>
-        <source>Chroma</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Transition</source>
         <translation>Transición</translation>
     </message>
@@ -8293,6 +8282,10 @@ Si la reproducción se corta, prueba con otra opción.</translation>
     <message>
         <source>Project properties…</source>
         <translation>Propiedades del proyecto…</translation>
+    </message>
+    <message>
+        <source>Close project</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -9668,6 +9661,43 @@ Si la reproducción se corta, prueba con otra opción.</translation>
     <message>
         <source>Cancel</source>
         <translation>Cancelar</translation>
+    </message>
+</context>
+<context>
+    <name>StartScreen</name>
+    <message>
+        <source> (missing)</source>
+        <translation type="unfinished"> (no encontrado)</translation>
+    </message>
+    <message>
+        <source>This file has been moved or deleted:
+%1</source>
+        <translation type="unfinished">Este archivo se ha movido o eliminado:
+%1</translation>
+    </message>
+    <message>
+        <source>Remove from recents</source>
+        <translation type="unfinished">Eliminar de recientes</translation>
+    </message>
+    <message>
+        <source>Create polished videos fast</source>
+        <translation type="unfinished">Crea vídeos profesionales rápidamente</translation>
+    </message>
+    <message>
+        <source>New Project</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open Project…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Recent Projects</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Nothing here yet — projects you save will show up in this list.</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>

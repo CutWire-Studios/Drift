@@ -2990,6 +2990,15 @@ QVariantMap effectToMap(const drift::Effect &effect, int effectIndex, drift::Tim
                 if (!warn.isEmpty())
                     param.insert(QStringLiteral("warning"), warn);
             }
+            // A hue in degrees (chroma key's u_keyHue) is still a float on the keyframe stack, but
+            // nobody thinks of a backdrop as "121°" — the inspector adds a swatch that maps a
+            // picked colour onto it. Detected from the manifest's shape rather than a new param
+            // type, so the shader contract and the addon manifests stay as they are.
+            if (paramDef.type == drift::EffectParamType::Float && paramDef.min == 0.0
+                && paramDef.max == 360.0
+                && paramDef.key.endsWith(QLatin1String("hue"), Qt::CaseInsensitive)) {
+                param.insert(QStringLiteral("hue"), true);
+            }
             // Colours and file paths carry no `prop`: the keyframe stack is typed double.
             if (!paramDef.isColor() && !paramDef.isFilePath()) {
                 param.insert(QStringLiteral("prop"),

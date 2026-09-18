@@ -647,7 +647,6 @@ QtObject {
         trimStart: "align-start-vertical",
         trimEnd: "align-end-vertical",
         blend: "blend",
-        pipette: "pipette",
         option: "option",
         keyboard: "keyboard",
         crop: "crop",

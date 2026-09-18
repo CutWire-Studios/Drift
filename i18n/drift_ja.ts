@@ -3337,6 +3337,10 @@
         <translation>プロジェクト JSON を保存しました</translation>
     </message>
     <message>
+        <source>Still opening a project — try again in a moment.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Couldn’t read %1: %2</source>
         <translation>%1 を読み取れませんでした : %2</translation>
     </message>
@@ -4313,29 +4317,6 @@
     </message>
 </context>
 <context>
-    <name>ChromaKeyInspector</name>
-    <message>
-        <source>Pick the background colour to remove, then click Chroma to apply the key.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Background colour</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Pick the background colour</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Chroma</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Select a clip to use the chroma key.</source>
-        <translation type="unfinished"></translation>
-    </message>
-</context>
-<context>
     <name>ColorSwatchField</name>
     <message>
         <source>Choose colour</source>
@@ -4712,10 +4693,6 @@
     <message>
         <source>Drift project (*.drift)</source>
         <translation>Drift プロジェクト (*.drift)</translation>
-    </message>
-    <message>
-        <source>Open Project</source>
-        <translation>プロジェクトを開く</translation>
     </message>
     <message>
         <source>Save Project</source>
@@ -5268,6 +5245,10 @@
     <message>
         <source>Clear</source>
         <translation>クリア</translation>
+    </message>
+    <message>
+        <source>Pick %1</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Paste effects</source>
@@ -6125,6 +6106,18 @@
 </context>
 <context>
     <name>Main</name>
+    <message>
+        <source>Still opening a project — try again in a moment.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open Project</source>
+        <translation type="unfinished">プロジェクトを開く</translation>
+    </message>
+    <message>
+        <source>Project closed</source>
+        <translation type="unfinished"></translation>
+    </message>
     <message>
         <source>Export finished.</source>
         <translation>エクスポートが完了しました。</translation>
@@ -7989,10 +7982,6 @@ If playback stutters, try another.</source>
         <translation>オーディオ FX</translation>
     </message>
     <message>
-        <source>Chroma</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Transition</source>
         <translation>トランジション</translation>
     </message>
@@ -8258,6 +8247,10 @@ If playback stutters, try another.</source>
     <message>
         <source>Project properties…</source>
         <translation>プロジェクトプロパティ…</translation>
+    </message>
+    <message>
+        <source>Close project</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -9633,6 +9626,43 @@ If playback stutters, try another.</source>
     <message>
         <source>Cancel</source>
         <translation>キャンセル</translation>
+    </message>
+</context>
+<context>
+    <name>StartScreen</name>
+    <message>
+        <source> (missing)</source>
+        <translation type="unfinished"> (見つかりません)</translation>
+    </message>
+    <message>
+        <source>This file has been moved or deleted:
+%1</source>
+        <translation type="unfinished">このファイルは移動または削除されました :
+%1</translation>
+    </message>
+    <message>
+        <source>Remove from recents</source>
+        <translation type="unfinished">最近使用した項目から削除</translation>
+    </message>
+    <message>
+        <source>Create polished videos fast</source>
+        <translation type="unfinished">洗練されたビデオを素早く作成</translation>
+    </message>
+    <message>
+        <source>New Project</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open Project…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Recent Projects</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Nothing here yet — projects you save will show up in this list.</source>
+        <translation type="unfinished">ここにはまだ何もありません — 保存したプロジェクトはこのリストに表示されます。</translation>
     </message>
 </context>
 <context>

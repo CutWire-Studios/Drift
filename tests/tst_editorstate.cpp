@@ -55,6 +55,7 @@ private slots:
     void snapTimeEnabled();
     void retimeKeepsDisabledKeyframeTrackDisabled();
     void effectStackCopyPasteAppendsAndRescales();
+    void chromaKeyHueIsFlaggedForTheColourSwatch();
     void pastedEffectsKeepTheKeyframeGraphSelection();
     void copiedSingleEffectRoutesToTheRightList();
     void pastedAudioEffectsAreDroppedOnClipsWithNoAudio();
@@ -4537,6 +4538,41 @@ void EditorStateTest::effectStackCopyPasteAppendsAndRescales()
     QVERIFY(state.undoAvailable());
     state.undo();
     QCOMPARE(videoEffectsOf(*state.project(), mediaClip(*state.project(), 0, 1)).size(), 1);
+}
+
+// Chroma key's backdrop is picked with a swatch in the Effects card. The swatch shows only for
+// params effectToMap flags as a hue, and it writes degrees through the same fx.<n>.<key> path as
+// the slider — so the flag has to land on u_keyHue and nowhere else.
+void EditorStateTest::chromaKeyHueIsFlaggedForTheColourSwatch()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    appendTwoVideoClips(*state.project());
+
+    state.selectClip(0, 0);
+    state.addEffect(0, 0, QStringLiteral("key.chroma"));
+    const QVariantList effects = state.selectedClipEffects();
+    QCOMPARE(effects.size(), 1);
+    const QVariantList params = effects.first().toMap().value(QStringLiteral("params")).toList();
+    QVERIFY(!params.isEmpty());
+    for (const QVariant &value : params) {
+        const QVariantMap param = value.toMap();
+        const bool isKeyHue = param.value(QStringLiteral("key")).toString() == QStringLiteral("u_keyHue");
+        QCOMPARE(param.value(QStringLiteral("hue")).toBool(), isKeyHue);
+    }
+
+    // Picking blue in the swatch lands as 240 degrees on the effect.
+    state.setClipKeyframe(0, 0, QStringLiteral("fx.0.u_keyHue"), 0.0, 240.0);
+    const QList<drift::Effect> stack =
+        videoEffectsOf(*state.project(), mediaClip(*state.project(), 0, 0));
+    QCOMPARE(stack.size(), 1);
+    QCOMPARE(stack.first().parameters.value(QStringLiteral("u_keyHue")).toDouble(), 240.0);
+
+    // Ordinary float params stay unflagged.
+    state.addEffect(0, 0, QStringLiteral("adjust.contrast"));
+    const QVariantMap contrast = state.selectedClipEffects().last().toMap();
+    for (const QVariant &value : contrast.value(QStringLiteral("params")).toList())
+        QVERIFY(!value.toMap().value(QStringLiteral("hue")).toBool());
 }
 
 // The executable form of "appending never shifts an existing effect index": keyframe-graph

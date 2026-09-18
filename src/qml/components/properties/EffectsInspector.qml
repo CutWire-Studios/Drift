@@ -34,6 +34,23 @@ Item {
 
     function refreshFields() {}
 
+    // Hue params (effectToMap's `hue` flag) are degrees on the keyframe stack but are picked as a
+    // colour. Only the hue survives the round trip: saturation and brightness are the shader's
+    // business (chroma key's Tolerance), so the swatch always shows the pure, fully saturated hue.
+    function hueToHex(hue) {
+        return Qt.hsva((((hue % 360) + 360) % 360) / 360, 1, 1, 1).toString()
+    }
+
+    // Returns NaN for a grey, which has no hue to key on — the caller keeps the current value
+    // rather than snapping the key to red.
+    function hexToHue(hex) {
+        // Qt.lighter(…, 1) is just string -> color; Qt.color() needs a newer Qt than we require.
+        const c = Qt.lighter(hex, 1)
+        if (c.hsvHue < 0)
+            return NaN
+        return c.hsvHue * 360
+    }
+
     Connections {
         target: EditorState
         function onSelectionChanged() { root.clipDataRevision++ }
@@ -529,6 +546,49 @@ Item {
                                     onClicked: EditorState.setEffectStringParam(
                                                    EditorState.selectedTrack, EditorState.selectedClip,
                                                    effectCard.index, paramRow.paramData.key, "")
+                                }
+                            }
+
+                            // Hue params get a swatch as well as the slider: picking the backdrop
+                            // colour is how a chroma key is actually set up, and the slider stays
+                            // for nudging and keyframing. The swatch writes through the same
+                            // setClipKeyframe the slider commits with, so auto-key and existing
+                            // keys behave identically whichever one the user touches.
+                            Row {
+                                visible: paramRow.paramData.type === "float"
+                                         && paramRow.paramData.hue === true
+                                width: parent.width
+                                spacing: 8
+                                Text {
+                                    width: parent.width - 148
+                                    elide: Text.ElideRight
+                                    text: qsTr("Pick %1").arg(paramRow.paramData.label)
+                                    color: Theme.mutedForeground
+                                    font.family: Theme.fontFamily
+                                    font.pixelSize: Theme.fontSizeXs
+                                    anchors.verticalCenter: parent.verticalCenter
+                                }
+                                ColorSwatchField {
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    hex: {
+                                        const data = paramRow.paramData
+                                        const keys = (data.keyframes && data.keyframes.points) || []
+                                        const deg = keys.length === 0
+                                            ? Number(data.value)
+                                            : EditorState.propertyValueAt(
+                                                  EditorState.selectedTrack, EditorState.selectedClip,
+                                                  data.prop, EditorState.playheadSeconds, data.value)
+                                        return root.hueToHex(isNaN(deg) ? 0 : deg)
+                                    }
+                                    tooltip: qsTr("Choose %1").arg(paramRow.paramData.label)
+                                    onEdited: value => {
+                                        const deg = root.hexToHue(value)
+                                        if (isNaN(deg))
+                                            return
+                                        EditorState.setClipKeyframe(
+                                            EditorState.selectedTrack, EditorState.selectedClip,
+                                            paramRow.paramData.prop, EditorState.playheadSeconds, deg)
+                                    }
                                 }
                             }
 
