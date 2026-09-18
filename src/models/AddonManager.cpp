@@ -346,7 +346,23 @@ void AddonManager::refresh(bool force)
 
         if (reply->error() != QNetworkReply::NoError) {
             // Non-fatal: whatever is installed keeps working, and the cached index still lists it.
-            setStatus(QStringLiteral("Couldn’t reach the download store: %1").arg(reply->errorString()));
+            const QString error =
+                QStringLiteral("Couldn’t reach the download store: %1").arg(reply->errorString());
+            qWarning() << "AddonManager: index refresh failed —" << reply->errorString()
+                       << "HTTP status" << reply->attribute(QNetworkRequest::HttpStatusCodeAttribute);
+            setStatus(error);
+
+            // Anything queued here was waiting specifically on this refresh to resolve a
+            // missing or stale download URL (install()/startDownload() only ever add to this
+            // list right before calling refresh(true)) — nothing else was going to retry it,
+            // so a failed refresh left it sitting at 0% forever with no error shown.
+            const QStringList waiting = std::exchange(m_awaitingFreshIndex, {});
+            for (const QString &id : waiting) {
+                m_failures.insert(id, error);
+                emit transferFailed(id, error);
+            }
+            if (!waiting.isEmpty())
+                emit catalogChanged();
             return;
         }
 
@@ -396,6 +412,22 @@ void AddonManager::install(const QString &id)
         return;
 
     m_failures.remove(id);
+    // A prior attempt's single 403-then-refresh retry is used up whether that refresh
+    // succeeded or failed — if it failed, finishDownload() never even ran again to see a
+    // fresh 403 and consume this itself. Without clearing it, one bad refresh permanently
+    // disables the retry for this id: every later 403 skips straight to failing, no matter
+    // how many times the user clicks Retry. A fresh install() is a fresh attempt.
+    m_retried.remove(id);
+    // A refresh already in flight (e.g. the one this manager kicks off at construction)
+    // may be about to replace a stale on-disk index — including this addon's download
+    // URL, which carries its own short server-side expiry independent of how long the
+    // index itself is cached for. Ride that refresh instead of racing it with a URL that
+    // may already be past its expiry; the completion handler drains this list.
+    if (m_refreshing) {
+        if (!m_awaitingFreshIndex.contains(id))
+            m_awaitingFreshIndex.append(id);
+        return;
+    }
     startDownload(id);
 }
 
@@ -447,8 +479,20 @@ void AddonManager::startDownload(const QString &id)
     const double total = addon.value(QStringLiteral("downloadSize")).toDouble();
 
     connect(reply, &QNetworkReply::readyRead, this, [this, transfer] {
-        if (transfer->reply)
-            transfer->file.write(transfer->reply->readAll());
+        if (!transfer->reply)
+            return;
+        // A non-2xx response's body is an error payload — an expired signed URL replies
+        // 403 with a few dozen bytes of JSON, not package bytes — and finishDownload()
+        // already retries that case against a freshly refreshed index. Writing this body
+        // into the .part file first would corrupt it before that retry ever runs: the
+        // next attempt resumes from this file's new (wrong) size, so the real package
+        // ends up spliced onto a garbage prefix instead of replacing it. Drain unwritten.
+        const int status =
+            transfer->reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
+        const QByteArray chunk = transfer->reply->readAll();
+        if (status != 0 && (status < 200 || status >= 300))
+            return;
+        transfer->file.write(chunk);
     });
     connect(reply, &QNetworkReply::downloadProgress, this,
             [this, id, have, total](qint64 received, qint64) {
@@ -470,7 +514,14 @@ void AddonManager::finishDownload(const QString &id)
         return;
     reply->deleteLater();
 
-    transfer->file.write(reply->readAll());
+    const int status = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
+    const QByteArray tail = reply->readAll();
+    // Same reasoning as the readyRead handler above: a small error response (an expired
+    // link's JSON body, say) can arrive as a single chunk that only ever surfaces here,
+    // never through readyRead. Skip writing it — the 403 branch below retries against a
+    // fresh URL, and a resume built on top of that body would be corrupt from byte one.
+    if (status == 0 || (status >= 200 && status < 300))
+        transfer->file.write(tail);
     transfer->file.close();
 
     if (transfer->cancelled) {
@@ -480,7 +531,6 @@ void AddonManager::finishDownload(const QString &id)
     }
 
     if (reply->error() != QNetworkReply::NoError) {
-        const int status = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
         m_transfers.remove(id);
 
         // A rejected ticket means the index we started from has gone stale, not that anything is
