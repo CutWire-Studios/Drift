@@ -3231,6 +3231,18 @@ void CoreTest::backgroundSerialization()
         QCOMPARE(loaded.background().blurStrength, 42.0);
     }
 
+    {
+        drift::Project project;
+        drift::Background bg;
+        bg.kind = drift::BackgroundKind::Transparent;
+        project.setBackground(bg);
+
+        QString error;
+        const drift::Project loaded = drift::Project::fromJson(project.toJson(), &error);
+        QVERIFY2(error.isEmpty(), qPrintable(error));
+        QCOMPARE(loaded.background().kind, drift::BackgroundKind::Transparent);
+    }
+
     // Projects saved before this field default to solid black.
     {
         const QJsonObject root{

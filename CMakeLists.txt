@@ -933,6 +933,7 @@ qt_add_qml_module(drift
         src/qml/components/preview/CropOverlay.qml
         src/qml/components/preview/MaskOverlay.qml
         src/qml/components/preview/PreviewToolbar.qml
+        src/qml/components/preview/Checkerboard.qml
         src/qml/components/preview/AndroidTransformOverlay.qml
         src/qml/components/preview/AndroidCropOverlay.qml
         src/qml/SegmentationWindow.qml

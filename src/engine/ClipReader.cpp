@@ -291,6 +291,44 @@ AVFrame *softwareFrameToNv12(const AVFrame *frame, SwsContext *&sws, int targetW
     return nv12;
 }
 
+// Software preview frames with an alpha plane: RGBA at the decode size, still an AVFrame.
+// The GL importer honours linesize and applies rotation, same as the NV12 path.
+AVFrame *softwareFrameToRgba(const AVFrame *frame, SwsContext *&sws, int targetWidth, int targetHeight)
+{
+    if (!frame || targetWidth <= 0 || targetHeight <= 0)
+        return nullptr;
+    if (isHardwarePixelFormat(static_cast<AVPixelFormat>(frame->format)))
+        return nullptr;
+
+    if (frame->format == AV_PIX_FMT_RGBA && frame->width == targetWidth
+        && frame->height == targetHeight)
+        return av_frame_clone(frame);
+
+    const int flags = swsFlagsForResize(frame->width, frame->height, targetWidth, targetHeight);
+    sws = sws_getCachedContext(sws, frame->width, frame->height,
+                               static_cast<AVPixelFormat>(frame->format), targetWidth, targetHeight,
+                               AV_PIX_FMT_RGBA, flags, nullptr, nullptr, nullptr);
+    if (!sws)
+        return nullptr;
+    configureDecodeSws(sws, frame, 1 /* full-range RGB */);
+
+    AVFrame *rgba = av_frame_alloc();
+    if (!rgba)
+        return nullptr;
+    rgba->format = AV_PIX_FMT_RGBA;
+    rgba->width = targetWidth;
+    rgba->height = targetHeight;
+    rgba->colorspace = frame->colorspace;
+    rgba->color_range = AVCOL_RANGE_JPEG;
+    rgba->pts = frame->pts;
+    if (av_frame_get_buffer(rgba, 0) < 0) {
+        av_frame_free(&rgba);
+        return nullptr;
+    }
+    sws_scale(sws, frame->data, frame->linesize, 0, frame->height, rgba->data, rgba->linesize);
+    return rgba;
+}
+
 drift::TimeUs ptsToUs(const AVFrame *frame, const AVRational &timeBase)
 {
     if (!frame)
@@ -326,6 +364,10 @@ void ClipReader::teardownVideoDecoder()
     if (m_swsNv12) {
         sws_freeContext(m_swsNv12);
         m_swsNv12 = nullptr;
+    }
+    if (m_swsRgba) {
+        sws_freeContext(m_swsRgba);
+        m_swsRgba = nullptr;
     }
     if (m_videoCtx)
         avcodec_free_context(&m_videoCtx);
@@ -844,8 +886,18 @@ bool ClipReader::openSoftwareVideoDecoder()
     if (!m_fmt || m_videoStream < 0)
         return false;
 
-    const AVCodecParameters *par = m_fmt->streams[m_videoStream]->codecpar;
-    const AVCodec *codec = avcodec_find_decoder(par->codec_id);
+    const AVStream *stream = m_fmt->streams[m_videoStream];
+    const AVCodecParameters *par = stream->codecpar;
+    // Native vp9/vp8 decoders ignore WebM's alpha plane. libvpx merges it into yuva420p.
+    const AVCodec *codec = nullptr;
+    if (videoStreamHasAlpha(stream)) {
+        if (par->codec_id == AV_CODEC_ID_VP9)
+            codec = avcodec_find_decoder_by_name("libvpx-vp9");
+        else if (par->codec_id == AV_CODEC_ID_VP8)
+            codec = avcodec_find_decoder_by_name("libvpx");
+    }
+    if (!codec)
+        codec = avcodec_find_decoder(par->codec_id);
     if (!codec)
         return false;
 
@@ -1022,6 +1074,11 @@ bool ClipReader::tryOpenHardwareDecoder()
     // Software and Hardware force that path. DRIFT_NO_HWACCEL still forces
     // software on a broken driver regardless of the toggle.
     if (drift::hwaccel::disabledByEnv())
+        return false;
+
+    // Hardware surfaces are NV12 (or equivalent) and drop the alpha plane. Alpha sources
+    // stay on software so convertFramePreview can keep RGBA.
+    if (videoStreamHasAlpha(m_fmt->streams[m_videoStream]))
         return false;
 
     const HardwareDecodeMode mode = hardwareDecodeMode();
@@ -1634,8 +1691,10 @@ bool ClipReader::convertFramePreview(const AVFrame *frame, PreviewVideoFrame &ou
         return out.isValid();
     }
 
-    AVFrame *nv12 = softwareFrameToNv12(frame, m_swsNv12, targetWidth, targetHeight);
-    out = takePreviewFrame(nv12, effectiveRotation());
+    AVFrame *converted = pixelFormatHasAlpha(static_cast<AVPixelFormat>(frame->format))
+        ? softwareFrameToRgba(frame, m_swsRgba, targetWidth, targetHeight)
+        : softwareFrameToNv12(frame, m_swsNv12, targetWidth, targetHeight);
+    out = takePreviewFrame(converted, effectiveRotation());
     return out.isValid();
 }
 

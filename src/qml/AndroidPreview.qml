@@ -204,10 +204,15 @@ Item {
                     height: viewport.fitHeight
                     x: (viewport.width - width) / 2 + viewport.panX
                     y: (viewport.height - height) / 2 + viewport.panY
-                    color: Theme.overlayColor
+                    color: (EditorState.background && EditorState.background.kind === "transparent")
+                           ? "transparent" : Theme.overlayColor
                     border.width: Theme.borderWidth
                     border.color: Theme.border
                     clip: true
+
+                    Checkerboard {
+                        anchors.fill: parent
+                    }
 
                     PreviewItem {
                         id: preview

@@ -5397,6 +5397,10 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Keeps a transparent canvas. Set the project background to Transparent so holes stay empty.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Constant Quality</source>
         <translation type="unfinished"></translation>
     </message>
@@ -8676,6 +8680,10 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Blur</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Transparent</source>
         <translation type="unfinished"></translation>
     </message>
     <message>

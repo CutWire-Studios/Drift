@@ -994,6 +994,8 @@ GpuScene buildGpuScene(const drift::Project &project, drift::TimeUs timelineUs, 
         // The bottommost visual frame, decoded once — the CPU path decoded it a
         // second time here, effects and all.
         scene.blurSource = bottommostVisualFrame(project, timelineUs, width, height);
+    } else if (bg.kind == drift::BackgroundKind::Transparent) {
+        scene.backgroundColor = QColor(0, 0, 0, 0);
     } else {
         scene.backgroundColor = bg.color.isValid() ? bg.color : QColor(Qt::black);
     }

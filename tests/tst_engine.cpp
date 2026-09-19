@@ -125,6 +125,9 @@ private slots:
     void stillImageDecodesHeicAndAvifViaFfmpeg();
     void stillImageFallsBackWhenQtCannotRead();
     void stillImagePreservesAlpha();
+    void clipReaderPreservesVideoAlpha();
+    void compositorBlendsAlphaVideoOverStill();
+    void exporterPreservesVp9Alpha();
     void stillImageRejectsGarbage();
     void modelAssetRejectsCorrupt();
     void faceModelMvpIsResolutionIndependent();
@@ -331,6 +334,7 @@ private slots:
 
 private:
     static QString makeColorSegmentsVideo(QTemporaryDir &dir);
+    static QString makeAlphaVideo(QTemporaryDir &dir);
     static QString makeRotatedHalvesVideo(QTemporaryDir &dir, int displayDegrees);
     static QString makeHdHalvesVideo(QTemporaryDir &dir);
     static QString makeAv1ColorVideo(QTemporaryDir &dir);
@@ -2788,6 +2792,44 @@ QString EngineTest::makeColorSegmentsVideo(QTemporaryDir &dir)
     if (!proc.waitForFinished(30000) || proc.exitCode() != 0)
         return {};
     return QFileInfo::exists(out) ? out : QString{};
+}
+
+// Left half opaque red, right half fully transparent. Tries VP9+alpha then qtrle.
+QString EngineTest::makeAlphaVideo(QTemporaryDir &dir)
+{
+    const QString ffmpeg = QStandardPaths::findExecutable(QStringLiteral("ffmpeg"));
+    if (ffmpeg.isEmpty())
+        return {};
+
+    const QString source = QStringLiteral("color=c=red:s=64x64:r=25:d=0.4,format=rgba");
+    const QString alphaSplit = QStringLiteral(
+        "geq=r='r(X,Y)':g='g(X,Y)':b='b(X,Y)':a='if(lt(X,32),255,0)'");
+
+    auto run = [&](const QStringList &args, const QString &out) -> bool {
+        QProcess proc;
+        proc.start(ffmpeg, args);
+        if (!proc.waitForFinished(30000) || proc.exitCode() != 0)
+            return false;
+        return QFileInfo::exists(out);
+    };
+
+    const QString webm = dir.filePath(QStringLiteral("alpha.webm"));
+    if (run({QStringLiteral("-y"), QStringLiteral("-f"), QStringLiteral("lavfi"),
+             QStringLiteral("-i"), source, QStringLiteral("-vf"), alphaSplit, QStringLiteral("-an"),
+             QStringLiteral("-c:v"), QStringLiteral("libvpx-vp9"), QStringLiteral("-pix_fmt"),
+             QStringLiteral("yuva420p"), QStringLiteral("-auto-alt-ref"), QStringLiteral("0"),
+             QStringLiteral("-deadline"), QStringLiteral("realtime"), QStringLiteral("-cpu-used"),
+             QStringLiteral("8"), webm},
+            webm))
+        return webm;
+
+    const QString mov = dir.filePath(QStringLiteral("alpha.mov"));
+    if (run({QStringLiteral("-y"), QStringLiteral("-f"), QStringLiteral("lavfi"),
+             QStringLiteral("-i"), source, QStringLiteral("-vf"), alphaSplit, QStringLiteral("-an"),
+             QStringLiteral("-c:v"), QStringLiteral("qtrle"), mov},
+            mov))
+        return mov;
+    return {};
 }
 
 void EngineTest::clipReaderSequentialAndSeek()
@@ -10050,6 +10092,154 @@ void EngineTest::stillImagePreservesAlpha()
     QVERIFY(viaFfmpeg.hasAlphaChannel());
     QCOMPARE(qAlpha(viaFfmpeg.pixel(8, 8)), 255);
     QCOMPARE(qAlpha(viaFfmpeg.pixel(56, 56)), 0);
+}
+
+void EngineTest::clipReaderPreservesVideoAlpha()
+{
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    const QString path = makeAlphaVideo(dir);
+    if (path.isEmpty())
+        QSKIP("ffmpeg could not encode an alpha test clip");
+
+    const MediaInfo info = MediaProbe::probe(path);
+    QVERIFY(info.ok);
+    bool sawAlpha = false;
+    for (const StreamInfo &stream : info.streams) {
+        if (stream.type == StreamInfo::Type::Video)
+            sawAlpha = sawAlpha || stream.hasAlpha;
+    }
+    QVERIFY2(sawAlpha, "probe did not report an alpha video stream");
+
+    ClipReader reader;
+    QVERIFY(reader.open(path));
+    QImage frame;
+    QVERIFY(reader.readVideoFrameAt(0, frame, 64, 64));
+    QVERIFY(!frame.isNull());
+    QVERIFY(frame.hasAlphaChannel());
+    QCOMPARE(qAlpha(frame.pixel(8, 32)), 255);
+    QCOMPARE(qAlpha(frame.pixel(56, 32)), 0);
+
+    PreviewVideoFrame preview;
+    QVERIFY(reader.readPreviewVideoFrame(0, preview, 64, 64));
+    QVERIFY(preview.isValid());
+    QVERIFY(!preview.isHardware());
+    QCOMPARE(preview.frame->format, int(AV_PIX_FMT_RGBA));
+}
+
+void EngineTest::compositorBlendsAlphaVideoOverStill()
+{
+    if (!GpuCompositor::isAvailable())
+        QSKIP("No GPU compositor available");
+
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    const QString videoPath = makeAlphaVideo(dir);
+    if (videoPath.isEmpty())
+        QSKIP("ffmpeg could not encode an alpha test clip");
+
+    QImage still(64, 64, QImage::Format_RGBA8888);
+    still.fill(Qt::blue);
+    const QString stillPath = dir.filePath(QStringLiteral("blue.png"));
+    QVERIFY(still.save(stillPath, "PNG"));
+
+    drift::Project project;
+    project.setResolution(64, 64);
+    project.setFps(25);
+    project.tracks().clear();
+    project.tracks().append(drift::Track{.type = drift::TrackType::Video});
+    project.tracks().append(drift::Track{.type = drift::TrackType::Video});
+
+    drift::Clip overlay;
+    overlay.id = QStringLiteral("alpha");
+    overlay.type = drift::ClipType::Video;
+    overlay.path = videoPath;
+    overlay.timelineStart = 0;
+    overlay.timelineDuration = drift::secondsToUs(0.4);
+    overlay.srcIn = 0;
+    overlay.srcOut = overlay.timelineDuration;
+    project.tracks()[0].clips.append(overlay);
+
+    drift::Clip base;
+    base.id = QStringLiteral("blue");
+    base.type = drift::ClipType::Image;
+    base.path = stillPath;
+    base.timelineStart = 0;
+    base.timelineDuration = overlay.timelineDuration;
+    project.tracks()[1].clips.append(base);
+
+    FrameCompositor compositor;
+    compositor.setProject(&project);
+    const QImage out = compositor.compositeAt(0).convertToFormat(QImage::Format_RGBA8888);
+    QVERIFY(!out.isNull());
+    const QColor left = out.pixelColor(8, 32);
+    const QColor right = out.pixelColor(56, 32);
+    QVERIFY2(left.red() > 150 && left.blue() < 80,
+             qPrintable(QStringLiteral("left %1,%2,%3").arg(left.red()).arg(left.green()).arg(left.blue())));
+    QVERIFY2(right.blue() > 150 && right.red() < 80,
+             qPrintable(QStringLiteral("right %1,%2,%3").arg(right.red()).arg(right.green()).arg(right.blue())));
+}
+
+void EngineTest::exporterPreservesVp9Alpha()
+{
+    if (!GpuCompositor::isAvailable())
+        QSKIP("No GPU compositor available");
+    if (!Exporter::videoCodecById(QStringLiteral("vp9_alpha")).value(QStringLiteral("available")).toBool())
+        QSKIP("libvpx-vp9 is not available");
+
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    const QString videoPath = makeAlphaVideo(dir);
+    if (videoPath.isEmpty())
+        QSKIP("ffmpeg could not encode an alpha test clip");
+
+    drift::Project project;
+    project.setResolution(64, 64);
+    project.setFps(25);
+    drift::Background bg;
+    bg.kind = drift::BackgroundKind::Transparent;
+    project.setBackground(bg);
+    project.tracks().clear();
+    project.tracks().append(drift::Track{.type = drift::TrackType::Video});
+
+    drift::Clip clip;
+    clip.id = QStringLiteral("alpha");
+    clip.type = drift::ClipType::Video;
+    clip.path = videoPath;
+    clip.timelineStart = 0;
+    clip.timelineDuration = drift::secondsToUs(0.4);
+    clip.srcIn = 0;
+    clip.srcOut = clip.timelineDuration;
+    project.tracks()[0].clips.append(clip);
+
+    ExportSettings settings = Exporter::defaultSettings();
+    settings.targetHeight = 0;
+    settings.videoCodecId = QStringLiteral("vp9_alpha");
+    settings.audioCodecId = QStringLiteral("opus");
+    if (!Exporter::audioCodecById(settings.audioCodecId).value(QStringLiteral("available")).toBool()) {
+        settings.audioCodecId = QStringLiteral("aac");
+        if (!Exporter::audioCodecById(settings.audioCodecId).value(QStringLiteral("available")).toBool())
+            QSKIP("No audio encoder available");
+    }
+    settings.rateControl = QStringLiteral("crf");
+    settings.crf = 32;
+    settings.videoPreset = QStringLiteral("8");
+
+    const QString out = dir.filePath(
+        QStringLiteral("out.")
+        + Exporter::defaultSuffix(Exporter::preferredContainer(settings.videoCodecId,
+                                                               settings.audioCodecId)));
+    QString error;
+    const bool ok = Exporter::run(project, settings, out, &error);
+    QVERIFY2(ok, qPrintable(error));
+
+    ClipReader reader;
+    QVERIFY(reader.open(out));
+    QImage frame;
+    QVERIFY(reader.readVideoFrameAt(0, frame, 64, 64));
+    QVERIFY(frame.hasAlphaChannel());
+    QVERIFY2(qAlpha(frame.pixel(8, 32)) > 200, "opaque half lost alpha");
+    QVERIFY2(qAlpha(frame.pixel(56, 32)) < 40, "transparent half was flattened");
 }
 
 void EngineTest::stillImageRejectsGarbage()

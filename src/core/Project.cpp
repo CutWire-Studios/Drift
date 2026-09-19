@@ -183,8 +183,7 @@ Transition transitionFromJson(const QJsonObject &o)
 QJsonObject backgroundToJson(const Background &bg)
 {
     return QJsonObject{
-        {QStringLiteral("kind"),
-         bg.kind == BackgroundKind::Blur ? QStringLiteral("blur") : QStringLiteral("color")},
+        {QStringLiteral("kind"), backgroundKindToString(bg.kind)},
         {QStringLiteral("color"), bg.color.name(QColor::HexArgb)},
         {QStringLiteral("blurStrength"), bg.blurStrength},
     };
@@ -195,9 +194,7 @@ Background backgroundFromJson(const QJsonObject &o)
     Background bg;
     if (o.isEmpty())
         return bg; // old projects: default solid black
-    bg.kind = o.value(QStringLiteral("kind")).toString() == QStringLiteral("blur")
-                  ? BackgroundKind::Blur
-                  : BackgroundKind::Color;
+    bg.kind = backgroundKindFromString(o.value(QStringLiteral("kind")).toString());
     bg.color = QColor(o.value(QStringLiteral("color")).toString(QStringLiteral("#ff000000")));
     bg.blurStrength = o.value(QStringLiteral("blurStrength")).toDouble(bg.blurStrength);
     return bg;

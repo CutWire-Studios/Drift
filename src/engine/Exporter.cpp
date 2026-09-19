@@ -36,6 +36,7 @@
 
 extern "C" {
 #include <libavcodec/avcodec.h>
+#include <libavcodec/defs.h>
 #include <libavformat/avformat.h>
 #include <libavutil/channel_layout.h>
 #include <libavutil/dict.h>
@@ -198,6 +199,7 @@ struct VideoCodecDef {
     // "mp4" | "webm" | "mkv" preferred when paired with a friendly audio codec.
     const char *preferredContainer;
     HwBackend hw = HwBackend::None;
+    bool hasAlpha = false;
 };
 
 struct AudioCodecDef {
@@ -298,11 +300,15 @@ const VideoCodecDef kVideoCodecs[] = {
     {"mpeg2", "MPEG-2", kMpeg2, AV_PIX_FMT_YUV420P, RateMode::Bitrate, false, nullptr, nullptr, 0, "mkv"},
     {"vp8", "VP8", kLibvpx, AV_PIX_FMT_YUV420P, RateMode::Crf, true, kVp9CpuUsed, "4", 10, "webm"},
     {"vp9", "VP9", kLibvpxVp9, AV_PIX_FMT_YUV420P, RateMode::Crf, true, kVp9CpuUsed, "4", 32, "webm"},
+    {"vp9_alpha", "VP9 (alpha)", kLibvpxVp9, AV_PIX_FMT_YUVA420P, RateMode::Crf, true, kVp9CpuUsed, "4", 32,
+     "webm", HwBackend::None, true},
     {"vp9_10", "VP9 10-bit", kLibvpxVp9, AV_PIX_FMT_YUV420P10LE, RateMode::Crf, true, kVp9CpuUsed, "4", 32, "webm"},
     {"dnxhr", "DNxHR", kDnxhd, AV_PIX_FMT_YUV422P, RateMode::Bitrate, false, nullptr, nullptr, 0, "mkv"},
     {"dnxhr_10", "DNxHR 10-bit", kDnxhd, AV_PIX_FMT_YUV422P10LE, RateMode::Bitrate, false, nullptr, nullptr, 0,
      "mkv"},
     {"prores", "ProRes", kProres, AV_PIX_FMT_YUV422P10LE, RateMode::Lossless, false, nullptr, nullptr, 0, "mkv"},
+    {"prores_4444", "ProRes 4444", kProres, AV_PIX_FMT_YUVA444P10LE, RateMode::Lossless, false, nullptr, nullptr,
+     0, "mov", HwBackend::None, true},
     {"theora", "Theora", kLibtheora, AV_PIX_FMT_YUV420P, RateMode::Bitrate, false, nullptr, nullptr, 0, "mkv"},
 };
 
@@ -516,6 +522,7 @@ QVariantMap videoDefToMap(const VideoCodecDef &def)
              def.defaultPreset ? QString::fromUtf8(def.defaultPreset) : QString());
     m.insert(QStringLiteral("defaultCrf"), def.defaultCrf);
     m.insert(QStringLiteral("container"), QString::fromUtf8(def.preferredContainer));
+    m.insert(QStringLiteral("hasAlpha"), def.hasAlpha);
     return m;
 }
 
@@ -570,6 +577,27 @@ void fillLimitedBlackFrame(AVFrame *frame)
             memset(frame->data[1] + row * frame->linesize[1], 128, size_t(frame->width / 2));
             memset(frame->data[2] + row * frame->linesize[2], 128, size_t(frame->width / 2));
         }
+    }
+}
+
+// Clear every plane, including alpha, so a missing composite does not become opaque black
+// in a yuva export.
+void fillTransparentFrame(AVFrame *frame)
+{
+    if (!frame || !frame->data[0])
+        return;
+    const AVPixFmtDescriptor *desc = av_pix_fmt_desc_get(static_cast<AVPixelFormat>(frame->format));
+    if (!desc)
+        return;
+    const int planes = av_pix_fmt_count_planes(static_cast<AVPixelFormat>(frame->format));
+    for (int p = 0; p < planes; ++p) {
+        if (!frame->data[p] || frame->linesize[p] <= 0)
+            continue;
+        const int shift = (p == 1 || p == 2) ? desc->log2_chroma_h : 0;
+        const int rows = (frame->height + ((1 << shift) - 1)) >> shift;
+        const int bytes = qAbs(frame->linesize[p]);
+        for (int row = 0; row < rows; ++row)
+            memset(frame->data[p] + row * frame->linesize[p], 0, size_t(bytes));
     }
 }
 
@@ -795,6 +823,12 @@ void applyVideoPreset(AVCodecContext *vctx, const VideoCodecDef &def, const Expo
     if (def.hw == HwBackend::VideoToolbox && vctx->priv_data)
         av_opt_set_int(vctx->priv_data, "allow_sw", 0, 0);
 
+    const QString id = QString::fromUtf8(def.id);
+    if (id == QLatin1String("prores_4444") && vctx->priv_data) {
+        av_opt_set(vctx->priv_data, "profile", "4444", 0);
+        vctx->profile = AV_PROFILE_PRORES_4444;
+    }
+
     if (!def.supportsPreset || !vctx->priv_data)
         return;
     QByteArray preset = settings.videoPreset.toUtf8();
@@ -812,10 +846,16 @@ void applyVideoPreset(AVCodecContext *vctx, const VideoCodecDef &def, const Expo
     if (def.hw != HwBackend::None)
         return;
 
-    const QString id = QString::fromUtf8(def.id);
     if (id.startsWith(QLatin1String("vp8")) || id.startsWith(QLatin1String("vp9"))) {
+        bool numeric = false;
+        preset.toInt(&numeric);
+        if (!numeric)
+            preset = def.defaultPreset ? QByteArray(def.defaultPreset) : QByteArrayLiteral("4");
         av_opt_set(vctx->priv_data, "cpu-used", preset.constData(), 0);
         av_opt_set(vctx->priv_data, "deadline", "good", 0);
+        // VP9 with an alpha plane cannot use automatic alternate-reference frames.
+        if (def.hasAlpha)
+            av_opt_set_int(vctx->priv_data, "auto-alt-ref", 0, 0);
         return;
     }
     if (id.startsWith(QLatin1String("av1"))) {
@@ -1589,6 +1629,9 @@ QString Exporter::preferredContainer(const QString &videoCodecId, const QString 
     const QString vCont = vdef ? QString::fromUtf8(vdef->preferredContainer) : QStringLiteral("mkv");
     const QString aFam = adef ? QString::fromUtf8(adef->containerFamily) : QStringLiteral("mkv");
 
+    if (vCont == QLatin1String("mov"))
+        return QStringLiteral("mov");
+
     // Lossless / awkward video always prefers mkv.
     if (vCont == QLatin1String("mkv"))
         return QStringLiteral("mkv");
@@ -1645,6 +1688,8 @@ QStringList Exporter::saveFilters(const QString &container, bool audioOnly)
     }
     if (container == QLatin1String("webm"))
         return {QStringLiteral("WebM video (*.webm)")};
+    if (container == QLatin1String("mov"))
+        return {QStringLiteral("QuickTime video (*.mov)")};
     if (container == QLatin1String("gif"))
         return {QStringLiteral("GIF image (*.gif)")};
     if (container == QLatin1String("mkv"))
@@ -1669,6 +1714,8 @@ QString Exporter::defaultSuffix(const QString &container, bool audioOnly)
     }
     if (container == QLatin1String("webm"))
         return QStringLiteral("webm");
+    if (container == QLatin1String("mov"))
+        return QStringLiteral("mov");
     if (container == QLatin1String("gif"))
         return QStringLiteral("gif");
     if (container == QLatin1String("mkv"))
@@ -1992,7 +2039,10 @@ bool Exporter::run(const drift::Project &project, const ExportSettings &settings
         // reads a zero here as licence to treat pts as dts — which is the only way the muxer gets a
         // usable timestamp, since MediaCodec reports none of its own.
         vctx->max_b_frames =
-            (vdef->hw == HwBackend::Vaapi || vdef->hw == HwBackend::MediaCodec || vtH264) ? 0 : 2;
+            (vdef->hw == HwBackend::Vaapi || vdef->hw == HwBackend::MediaCodec || vtH264
+             || vdef->hasAlpha)
+                ? 0
+                : 2;
         if (vdef->hw != HwBackend::None) {
             if (std::strncmp(vdef->id, "h264", 4) == 0)
                 vctx->profile = AV_PROFILE_H264_HIGH;
@@ -2259,8 +2309,12 @@ bool Exporter::run(const drift::Project &project, const ExportSettings &settings
                         nv12ToYuv420p(nv12Y.data(), outW, nv12Uv.data(), outW, vframe);
                 }
             }
-            if (!mapped)
-                fillLimitedBlackFrame(vframe);
+            if (!mapped) {
+                if (vdef->hasAlpha)
+                    fillTransparentFrame(vframe);
+                else
+                    fillLimitedBlackFrame(vframe);
+            }
 
             return sendVideoAndAudio(job.pts);
         };
@@ -2296,7 +2350,7 @@ bool Exporter::run(const drift::Project &project, const ExportSettings &settings
             QImage img = compositor.compositeAt(t);
             if (img.isNull()) {
                 img = QImage(projW, projH, QImage::Format_RGBA8888);
-                img.fill(Qt::black);
+                img.fill(vdef->hasAlpha ? Qt::transparent : Qt::black);
             } else if (img.format() != QImage::Format_RGBA8888) {
                 img = img.convertToFormat(QImage::Format_RGBA8888);
             }

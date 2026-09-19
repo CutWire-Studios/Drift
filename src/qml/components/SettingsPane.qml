@@ -120,7 +120,8 @@ Item {
                     valueRole: "id"
                     model: [
                         { id: "color", label: qsTr("Solid color") },
-                        { id: "blur", label: qsTr("Blur") }
+                        { id: "blur", label: qsTr("Blur") },
+                        { id: "transparent", label: qsTr("Transparent") }
                     ]
                     tooltip: qsTr("Fill behind clips that don’t cover the whole screen")
                     currentIndex: {

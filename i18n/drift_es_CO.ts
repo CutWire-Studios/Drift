@@ -5418,6 +5418,10 @@
         <translation>Codificador de vídeo</translation>
     </message>
     <message>
+        <source>Keeps a transparent canvas. Set the project background to Transparent so holes stay empty.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Constant Quality</source>
         <translation>Calidad constante</translation>
     </message>
@@ -8719,6 +8723,10 @@ Si la reproducción se corta, prueba con otra opción.</translation>
     <message>
         <source>Blur</source>
         <translation type="unfinished">Desenfoque</translation>
+    </message>
+    <message>
+        <source>Transparent</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Fill behind clips that don’t cover the whole screen</source>

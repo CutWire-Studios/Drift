@@ -23,6 +23,9 @@ struct StreamInfo {
     // treated as real video.
     bool attachedPicture = false;
 
+    // Video has an alpha plane (yuva*, packed RGBA/ARGB, VP8/VP9+Alpha, ProRes 4444).
+    bool hasAlpha = false;
+
     // Stream index in AVFormatContext
     int streamIndex = 0;
     int audioStreamOrdinal = 0; // 0-based index among audio streams
@@ -58,3 +61,7 @@ struct AVStream;
 // The stream's display-matrix rotation, normalized to 0/90/180/270 the way players
 // interpret it. Anything that decodes pixels has to apply this itself.
 int displayRotationOf(const AVStream *stream);
+
+// True when the stream's codecpar / metadata say the pictures carry alpha. Used
+// to keep hardware decode off — NV12 surfaces drop the alpha plane.
+bool videoStreamHasAlpha(const AVStream *stream);

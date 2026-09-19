@@ -23,7 +23,7 @@ struct Bookmark
 };
 
 // How the canvas area behind/around clips is filled.
-enum class BackgroundKind { Color, Blur };
+enum class BackgroundKind { Color, Blur, Transparent };
 
 struct Background
 {
@@ -31,6 +31,28 @@ struct Background
     QColor color = Qt::black;    // used when kind == Color
     double blurStrength = 20.0;  // px blur radius; used when kind == Blur
 };
+
+inline QString backgroundKindToString(BackgroundKind kind)
+{
+    switch (kind) {
+    case BackgroundKind::Blur:
+        return QStringLiteral("blur");
+    case BackgroundKind::Transparent:
+        return QStringLiteral("transparent");
+    case BackgroundKind::Color:
+    default:
+        return QStringLiteral("color");
+    }
+}
+
+inline BackgroundKind backgroundKindFromString(const QString &kind)
+{
+    if (kind == QLatin1String("blur"))
+        return BackgroundKind::Blur;
+    if (kind == QLatin1String("transparent"))
+        return BackgroundKind::Transparent;
+    return BackgroundKind::Color;
+}
 
 // A track list that never shares its buffer with the list it was copied from.
 //

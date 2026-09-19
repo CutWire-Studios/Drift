@@ -831,7 +831,7 @@ void fillBackground(GlRuntime &rt, QOpenGLExtraFunctions *gl, GlTarget &canvas, 
     gl->glViewport(0, 0, canvas.width, canvas.height);
     gl->glDisable(GL_BLEND);
     const QColor &c = scene.backgroundColor.isValid() ? scene.backgroundColor : QColor(Qt::black);
-    gl->glClearColor(float(c.redF()), float(c.greenF()), float(c.blueF()), 1.f);
+    gl->glClearColor(float(c.redF()), float(c.greenF()), float(c.blueF()), float(c.alphaF()));
     gl->glClear(GL_COLOR_BUFFER_BIT);
     canvas.fbo->release();
 

@@ -278,6 +278,19 @@ void main() {
 }
 )";
 
+// Packed RGBA (straight alpha) with the same UV affine the NV12 convert shader uses for
+// display-matrix rotation. Alpha sources skip NV12 so this is how they reach the canvas.
+constexpr const char *kRgbaRotateFragShader = R"(#version 330 core
+in vec2 v_texCoord;
+out vec4 fragColor;
+uniform sampler2D u_image;
+uniform mat3 u_texMap;
+void main() {
+    vec2 src = (u_texMap * vec3(v_texCoord, 1.0)).xy;
+    fragColor = texture(u_image, src);
+}
+)";
+
 // Premultiplied canvas RGBA → BT.709 limited luma. Matches libswscale
 // SWS_CS_ITU709 with full-range RGB source and limited-range YUV dest.
 // samplerExternalOES returns RGB — the driver performs the YUV conversion from the buffer's own
@@ -1640,6 +1653,10 @@ void GlRuntime::destroyVideoUploadState()
             gl->glDeleteTextures(1, &m_videoUV);
             m_videoUV = 0;
         }
+        if (m_videoRgba) {
+            gl->glDeleteTextures(1, &m_videoRgba);
+            m_videoRgba = 0;
+        }
         if (m_importY) {
             gl->glDeleteTextures(1, &m_importY);
             m_importY = 0;
@@ -1674,6 +1691,8 @@ void GlRuntime::destroyVideoUploadState()
     }
     m_videoTexW = 0;
     m_videoTexH = 0;
+    m_videoRgbaW = 0;
+    m_videoRgbaH = 0;
     m_videoPboIndex = 0;
     av_frame_free(&m_hwImportStaging);
     av_frame_free(&m_importNv12);
@@ -1715,6 +1734,31 @@ bool GlRuntime::ensureVideoUploadTextures(QOpenGLExtraFunctions *gl, int width, 
     m_videoTexW = width;
     m_videoTexH = height;
     return m_videoY != 0 && m_videoUV != 0;
+}
+
+bool GlRuntime::ensureVideoRgbaTexture(QOpenGLExtraFunctions *gl, int width, int height)
+{
+    if (!gl || width < 1 || height < 1)
+        return false;
+    if (m_videoRgba && m_videoRgbaW == width && m_videoRgbaH == height)
+        return true;
+
+    if (m_videoRgba)
+        gl->glDeleteTextures(1, &m_videoRgba);
+    m_videoRgba = 0;
+
+    gl->glGenTextures(1, &m_videoRgba);
+    gl->glBindTexture(GL_TEXTURE_2D, m_videoRgba);
+    gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    gl->glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE,
+                     nullptr);
+
+    m_videoRgbaW = width;
+    m_videoRgbaH = height;
+    return m_videoRgba != 0;
 }
 
 bool GlRuntime::uploadPlanePbo(QOpenGLExtraFunctions *gl, GLuint texture, int texW, int texH,
@@ -2708,6 +2752,50 @@ GlTarget promoteVideoFrameToTarget(GlRuntime &rt, QOpenGLExtraFunctions *gl,
         return {};
 
     const AVFrame *av = frame.frame.get();
+
+    // Alpha preview frames stay packed RGBA (ClipReader::softwareFrameToRgba). Uploading as
+    // NV12 would drop the plane, and the YUV convert shader hard-codes a = 1.
+    if (av->format == AV_PIX_FMT_RGBA) {
+        const int srcW = av->width;
+        const int srcH = av->height;
+        if (srcW < 1 || srcH < 1 || !av->data[0] || av->linesize[0] <= 0)
+            return {};
+        if (!rt.ensureVideoRgbaTexture(gl, srcW, srcH))
+            return {};
+        if (!rt.uploadPlanePbo(gl, rt.m_videoRgba, srcW, srcH, GL_RGBA8, GL_RGBA, av->data[0],
+                               av->linesize[0], srcW * 4))
+            return {};
+        recordPreviewUploadPath(GlRuntime::PreviewUploadPath::CpuRoundTrip);
+
+        const int destW = qMax(1, frame.displayWidth());
+        const int destH = qMax(1, frame.displayHeight());
+        GlTarget target = rt.acquireTarget(destW, destH);
+        if (!target.isValid())
+            return {};
+        QOpenGLShaderProgram *program = rt.builtinProgram(QStringLiteral("__rgba_rotate__"),
+                                                          kQuadVertexShader, kRgbaRotateFragShader);
+        if (!program) {
+            rt.releaseTarget(std::move(target));
+            return {};
+        }
+        target.fbo->bind();
+        gl->glViewport(0, 0, destW, destH);
+        gl->glDisable(GL_BLEND);
+        gl->glClearColor(0.f, 0.f, 0.f, 0.f);
+        gl->glClear(GL_COLOR_BUFFER_BIT);
+        program->bind();
+        program->setUniformValue("u_image", 0);
+        program->setUniformValue("u_texMap", texMapForRotation(frame.rotation));
+        gl->glActiveTexture(GL_TEXTURE0);
+        gl->glBindTexture(GL_TEXTURE_2D, rt.m_videoRgba);
+        gl->glBindVertexArray(rt.vao);
+        gl->glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+        gl->glBindVertexArray(0);
+        program->release();
+        target.fbo->release();
+        return target;
+    }
+
     const int codedW = av->width & ~1;
     const int codedH = av->height & ~1;
     if (codedW < 2 || codedH < 2)

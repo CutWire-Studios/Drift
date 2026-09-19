@@ -219,6 +219,7 @@ private:
     struct AVBufferRef *m_hwDeviceCtx = nullptr;
     struct SwsContext *m_sws = nullptr;
     struct SwsContext *m_swsNv12 = nullptr;
+    struct SwsContext *m_swsRgba = nullptr;
     struct SwrContext *m_swr = nullptr;
     int m_videoStream = -1;
     int m_audioStream = -1;

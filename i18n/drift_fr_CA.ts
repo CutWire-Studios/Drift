@@ -5420,6 +5420,10 @@
         <translation>Encodeur vidéo</translation>
     </message>
     <message>
+        <source>Keeps a transparent canvas. Set the project background to Transparent so holes stay empty.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Constant Quality</source>
         <translation>Qualité constante</translation>
     </message>
@@ -8722,6 +8726,10 @@ En cas de saccades à la lecture, essayez un autre mode.</translation>
     <message>
         <source>Blur</source>
         <translation type="unfinished">Flou</translation>
+    </message>
+    <message>
+        <source>Transparent</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Fill behind clips that don’t cover the whole screen</source>

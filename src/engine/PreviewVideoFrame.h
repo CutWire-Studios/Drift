@@ -60,6 +60,12 @@ struct PreviewVideoFrame
     }
 };
 
+inline bool pixelFormatHasAlpha(AVPixelFormat fmt)
+{
+    const AVPixFmtDescriptor *desc = av_pix_fmt_desc_get(fmt);
+    return desc && (desc->flags & AV_PIX_FMT_FLAG_ALPHA);
+}
+
 inline void avFrameDeleter(AVFrame *f)
 {
     av_frame_free(&f);

@@ -51,6 +51,7 @@ ThemedDialog {
     property var currentAudioCodec: ({})
 
     readonly property bool videoLossless: !!(currentVideoCodec && currentVideoCodec.lossless)
+    readonly property bool videoHasAlpha: !!(currentVideoCodec && currentVideoCodec.hasAlpha)
     readonly property bool videoSupportsCrf: !!(currentVideoCodec && currentVideoCodec.supportsCrf)
     readonly property bool videoSupportsBitrate: !!(currentVideoCodec && currentVideoCodec.supportsBitrate)
     readonly property bool videoSupportsPreset: !!(currentVideoCodec && currentVideoCodec.supportsPreset)
@@ -581,6 +582,13 @@ ThemedDialog {
                                 root.refreshCodecMeta()
                                 root.syncComboIndices()
                             }
+                        }
+
+                        ThemedLabel {
+                            width: parent.width
+                            visible: root.videoHasAlpha
+                            wrapMode: Text.WordWrap
+                            text: qsTr("Keeps a transparent canvas. Set the project background to Transparent so holes stay empty.")
                         }
                     }
 

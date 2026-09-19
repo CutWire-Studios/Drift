@@ -5397,6 +5397,10 @@
         <translation>ビデオエンコーダ</translation>
     </message>
     <message>
+        <source>Keeps a transparent canvas. Set the project background to Transparent so holes stay empty.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Constant Quality</source>
         <translation>固定品質</translation>
     </message>
@@ -8684,6 +8688,10 @@ If playback stutters, try another.</source>
     <message>
         <source>Blur</source>
         <translation>ブラー</translation>
+    </message>
+    <message>
+        <source>Transparent</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Fill behind clips that don’t cover the whole screen</source>

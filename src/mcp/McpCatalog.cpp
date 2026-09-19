@@ -769,9 +769,11 @@ const QList<Op> &ops()
                        {QStringLiteral("width"), QStringLiteral("height"), QStringLiteral("fps")}) },
         { "set_background", "project", "Change canvas background",
           "Set background kind, color, and/or blur strength. At least one field is required. "
-          "blurStrength only has a visible effect when kind is blur.",
-          objectSchema({{QStringLiteral("kind"), enumProp(QStringLiteral("Background kind"),
-                                                          {QStringLiteral("color"), QStringLiteral("blur")})},
+          "blurStrength only has a visible effect when kind is blur. kind=transparent clears "
+          "the canvas so alpha video and export with VP9 (alpha) / ProRes 4444 keep holes.",
+          objectSchema({                        {QStringLiteral("kind"), enumProp(QStringLiteral("Background kind"),
+                                                          {QStringLiteral("color"), QStringLiteral("blur"),
+                                                           QStringLiteral("transparent")})},
                         {QStringLiteral("color"), stringProp(QStringLiteral("Background color #AARRGGBB"))},
                         {QStringLiteral("blurStrength"), numberProp(QStringLiteral("Blur amount"), 0, 200)}}) },
         { "set_metadata", "project", "Set project title and author",

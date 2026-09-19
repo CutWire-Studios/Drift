@@ -290,6 +290,7 @@ private:
     void destroyExportNv12Slot(int slot);
     bool ensureExportNv12Slot(QOpenGLExtraFunctions *gl, int slot, int width, int height);
     bool ensureVideoUploadTextures(QOpenGLExtraFunctions *gl, int width, int height);
+    bool ensureVideoRgbaTexture(QOpenGLExtraFunctions *gl, int width, int height);
     bool uploadPlanePbo(QOpenGLExtraFunctions *gl, GLuint texture, int texW, int texH, GLenum internalFormat,
                         GLenum format, const uint8_t *src, int srcPitch, int packedWidth);
     void unregisterCudaResources();
@@ -346,6 +347,9 @@ private:
     GLuint m_videoUV = 0;
     int m_videoTexW = 0;
     int m_videoTexH = 0;
+    GLuint m_videoRgba = 0;
+    int m_videoRgbaW = 0;
+    int m_videoRgbaH = 0;
     GLuint m_videoPbo[2] = {0, 0};
     int m_videoPboIndex = 0;
     AVFrame *m_hwImportStaging = nullptr;

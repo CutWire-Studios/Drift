@@ -11667,8 +11667,7 @@ QVariantMap AppController::background() const
 {
     const drift::Background &bg = m_project.background();
     QVariantMap map;
-    map.insert(QStringLiteral("kind"),
-               bg.kind == drift::BackgroundKind::Blur ? QStringLiteral("blur") : QStringLiteral("color"));
+    map.insert(QStringLiteral("kind"), drift::backgroundKindToString(bg.kind));
     map.insert(QStringLiteral("color"), bg.color.name(QColor::HexArgb));
     map.insert(QStringLiteral("blurStrength"), bg.blurStrength);
     return map;
@@ -11678,9 +11677,7 @@ void AppController::setBackground(const QVariantMap &background)
 {
     drift::Background bg = m_project.background();
     if (background.contains(QStringLiteral("kind"))) {
-        bg.kind = background.value(QStringLiteral("kind")).toString() == QStringLiteral("blur")
-                      ? drift::BackgroundKind::Blur
-                      : drift::BackgroundKind::Color;
+        bg.kind = drift::backgroundKindFromString(background.value(QStringLiteral("kind")).toString());
     }
     if (background.contains(QStringLiteral("color"))) {
         const QColor color(background.value(QStringLiteral("color")).toString());

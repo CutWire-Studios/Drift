@@ -4,9 +4,12 @@
 
 extern "C" {
 #include <libavcodec/codec_desc.h>
+#include <libavcodec/codec_id.h>
+#include <libavcodec/defs.h>
 #include <libavformat/avformat.h>
 #include <libavutil/display.h>
 #include <libavutil/dict.h>
+#include <libavutil/pixdesc.h>
 }
 
 int displayRotationOf(const AVStream *stream)
@@ -27,6 +30,29 @@ int displayRotationOf(const AVStream *stream)
     if (rounded < 0)
         rounded += 360;
     return rounded;
+}
+
+bool videoStreamHasAlpha(const AVStream *stream)
+{
+    if (!stream || !stream->codecpar)
+        return false;
+    const AVCodecParameters *par = stream->codecpar;
+
+    const AVPixFmtDescriptor *desc = av_pix_fmt_desc_get(static_cast<AVPixelFormat>(par->format));
+    if (desc && (desc->flags & AV_PIX_FMT_FLAG_ALPHA))
+        return true;
+
+    if (const AVDictionaryEntry *alpha = av_dict_get(stream->metadata, "alpha_mode", nullptr, 0)) {
+        if (alpha->value && alpha->value[0] && alpha->value[0] != '0')
+            return true;
+    }
+
+    // ProRes 4444 / 4444 XQ carry an alpha plane even when pix_fmt is still unset at probe.
+    if (par->codec_id == AV_CODEC_ID_PRORES
+        && (par->profile == AV_PROFILE_PRORES_4444 || par->profile == AV_PROFILE_PRORES_XQ))
+        return true;
+
+    return false;
 }
 
 namespace {
@@ -64,6 +90,7 @@ StreamInfo describeStream(const AVFormatContext *fmt, const AVStream *stream)
             info.fps = av_q2d(stream->avg_frame_rate);
         info.rotationDegrees = displayRotationOf(stream);
         info.attachedPicture = (stream->disposition & AV_DISPOSITION_ATTACHED_PIC) != 0;
+        info.hasAlpha = videoStreamHasAlpha(stream);
         break;
     case AVMEDIA_TYPE_AUDIO:
         info.type = StreamInfo::Type::Audio;
