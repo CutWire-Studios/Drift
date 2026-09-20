@@ -246,15 +246,15 @@
     </message>
     <message>
         <source>New key</source>
-        <translation type="unfinished"></translation>
+        <translation>新しいキー</translation>
     </message>
     <message>
         <source>Replace the key. Every assistant set up with the old one stops working until you copy the setup again.</source>
-        <translation type="unfinished"></translation>
+        <translation>キーを交換してください。古いキーで設定されたすべてのアシスタントは、設定を再度コピーし直すまで動作しなくなります。</translation>
     </message>
     <message>
         <source>New key made — copy the setup again</source>
-        <translation type="unfinished"></translation>
+        <translation>新しいキーを作成 — 設定を再度コピー</translation>
     </message>
     <message>
         <source>Copy the setup for the assistant you use. You only need one.</source>
@@ -322,15 +322,15 @@
     </message>
     <message>
         <source>Start agent on startup</source>
-        <translation type="unfinished"></translation>
+        <translation>起動時にエージェントを開始する</translation>
     </message>
     <message>
         <source>Skip the manual toggle next time you open Drift. Turning access off resets this.</source>
-        <translation type="unfinished"></translation>
+        <translation>次回 Drift を開くときは、手動切り替えをスキップします。アクセスをオフにすると、これがリセットされます。</translation>
     </message>
     <message>
         <source>Let Cursor or Claude edit this project for you — add clips, change the timeline, and check how it looks. Only programs on this device. Off by default each time you open Drift, unless you turn on “Start agent on startup” below; turn it off here when you finish. The key stays the same between sessions, so a setup you pasted once keeps working.</source>
-        <translation type="unfinished"></translation>
+        <translation>CursorやClaudeにこのプロジェクトの編集 (クリップの追加、タイムラインの変更、プレビュー確認など) を任せることができます。対象となるのは、このデバイス上のプログラムのみです。Drift を起動するたびにデフォルトでオフになりますが、以下の「起動時にエージェントを開始」を有効にしている場合は例外です。作業終了時には、ここでオフにしてください。キーはセッション間でも保持されるため、一度貼り付けた設定は引き続き機能します。</translation>
     </message>
 </context>
 <context>
@@ -2798,19 +2798,19 @@
     </message>
     <message>
         <source>3D model added</source>
-        <translation type="unfinished"></translation>
+        <translation>3D モデルが追加されました</translation>
     </message>
     <message>
         <source>3D model replaced</source>
-        <translation type="unfinished"></translation>
+        <translation>3D モデルを置き換えました</translation>
     </message>
     <message>
         <source>3D model options</source>
-        <translation type="unfinished"></translation>
+        <translation>3D モデルのオプション</translation>
     </message>
     <message>
         <source>3D model options updated</source>
-        <translation type="unfinished"></translation>
+        <translation>3D モデルのオプションが更新されました</translation>
     </message>
     <message>
         <source>Animation</source>
@@ -3338,7 +3338,7 @@
     </message>
     <message>
         <source>Still opening a project — try again in a moment.</source>
-        <translation type="unfinished"></translation>
+        <translation>プロジェクトの読み込み中です — しばらくしてからもう一度試してください。</translation>
     </message>
     <message>
         <source>Couldn’t read %1: %2</source>
@@ -5248,11 +5248,11 @@
     </message>
     <message>
         <source>Pick %1</source>
-        <translation type="unfinished"></translation>
+        <translation>選択 %1</translation>
     </message>
     <message>
         <source>Edit %1</source>
-        <translation type="unfinished">%1 を編集</translation>
+        <translation>%1 を編集</translation>
     </message>
     <message>
         <source>Paste effects</source>
@@ -5398,7 +5398,7 @@
     </message>
     <message>
         <source>Keeps a transparent canvas. Set the project background to Transparent so holes stay empty.</source>
-        <translation type="unfinished"></translation>
+        <translation>透明なキャンバスを維持します。穴が空いたままになるよう、プロジェクトの背景を透明に設定してください。</translation>
     </message>
     <message>
         <source>Constant Quality</source>
@@ -6116,15 +6116,15 @@
     <name>Main</name>
     <message>
         <source>Still opening a project — try again in a moment.</source>
-        <translation type="unfinished"></translation>
+        <translation>プロジェクトの読み込み中です — しばらくしてからもう一度試してください。</translation>
     </message>
     <message>
         <source>Open Project</source>
-        <translation type="unfinished">プロジェクトを開く</translation>
+        <translation>プロジェクトを開く</translation>
     </message>
     <message>
         <source>Project closed</source>
-        <translation type="unfinished"></translation>
+        <translation>プロジェクトを閉じました</translation>
     </message>
     <message>
         <source>Export finished.</source>
@@ -6663,7 +6663,7 @@
     </message>
     <message>
         <source>3D</source>
-        <translation type="unfinished"></translation>
+        <translation>3D</translation>
     </message>
     <message>
         <source>Search media</source>
@@ -6949,184 +6949,184 @@
     <name>Model3DInspector</name>
     <message>
         <source>Replace 3D Model</source>
-        <translation type="unfinished"></translation>
+        <translation>3D モデルを置き換え</translation>
     </message>
     <message>
         <source>glTF binary (*.glb)</source>
-        <translation type="unfinished"></translation>
+        <translation>glTF binary (*.glb)</translation>
     </message>
     <message>
         <source>Could not load the model</source>
-        <translation type="unfinished"></translation>
+        <translation>モデルを読み込めませんでした</translation>
     </message>
     <message>
         <source>3D model</source>
-        <translation type="unfinished"></translation>
+        <translation>3D モデル</translation>
     </message>
     <message numerus="yes">
         <source>%n animation(s)</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>%n アニメーション</numerusform>
         </translation>
     </message>
     <message>
         <source>static</source>
-        <translation type="unfinished"></translation>
+        <translation>static</translation>
     </message>
     <message>
         <source>Replace model…</source>
-        <translation type="unfinished"></translation>
+        <translation>モデルを置き換え…</translation>
     </message>
     <message>
         <source>Load another .glb; position, length, pose and lighting stay</source>
-        <translation type="unfinished"></translation>
+        <translation>別の.glbファイルを読み込む。位置、長さ、ポーズ、照明はそのまま維持される</translation>
     </message>
     <message>
         <source>Playback</source>
-        <translation type="unfinished">再生</translation>
+        <translation>再生</translation>
     </message>
     <message>
         <source>Animation</source>
-        <translation type="unfinished">アニメーション</translation>
+        <translation>アニメーション</translation>
     </message>
     <message>
         <source>Animation %1</source>
-        <translation type="unfinished"></translation>
+        <translation>アニメーション %1</translation>
     </message>
     <message>
         <source>Which of the file&apos;s animations plays</source>
-        <translation type="unfinished"></translation>
+        <translation>再生するファイルのアニメーション</translation>
     </message>
     <message>
         <source>After the end</source>
-        <translation type="unfinished">終了後</translation>
+        <translation>終了後</translation>
     </message>
     <message>
         <source>Hold last frame</source>
-        <translation type="unfinished">最後のフレームを保持</translation>
+        <translation>最後のフレームを保持</translation>
     </message>
     <message>
         <source>Loop</source>
-        <translation type="unfinished">ループ</translation>
+        <translation>ループ</translation>
     </message>
     <message>
         <source>Ping-pong</source>
-        <translation type="unfinished">ピンポン</translation>
+        <translation>ピンポン</translation>
     </message>
     <message>
         <source>Hide</source>
-        <translation type="unfinished">非表示</translation>
+        <translation>非表示</translation>
     </message>
     <message>
         <source>What plays once the animation has run its length</source>
-        <translation type="unfinished">アニメーションが再生し終わった後に何を再生するか</translation>
+        <translation>アニメーションが再生し終わった後に何を再生するか</translation>
     </message>
     <message>
         <source>Start offset</source>
-        <translation type="unfinished">開始オフセット</translation>
+        <translation>開始オフセット</translation>
     </message>
     <message>
         <source>Pose</source>
-        <translation type="unfinished"></translation>
+        <translation>ポーズ</translation>
     </message>
     <message>
         <source>Rotations follow the model&apos;s own axes: X tilts, Y then spins about the tilted up axis, Z rolls after both.</source>
-        <translation type="unfinished"></translation>
+        <translation>回転はモデル自身の軸に沿って行われます。まず X軸でチルトし、次に Y軸でチルトした軸を中心にスピンし、最後に Z軸でロールします。</translation>
     </message>
     <message>
         <source>Size</source>
-        <translation type="unfinished">サイズ</translation>
+        <translation>サイズ</translation>
     </message>
     <message>
         <source>Depth</source>
-        <translation type="unfinished">深さ</translation>
+        <translation>深さ</translation>
     </message>
     <message>
         <source>Rotation X</source>
-        <translation type="unfinished"></translation>
+        <translation>回転 X</translation>
     </message>
     <message>
         <source>Rotation Y</source>
-        <translation type="unfinished"></translation>
+        <translation>回転 Y</translation>
     </message>
     <message>
         <source>Rotation Z</source>
-        <translation type="unfinished"></translation>
+        <translation>回転 Z</translation>
     </message>
     <message>
         <source>Lighting</source>
-        <translation type="unfinished"></translation>
+        <translation>ライティング</translation>
     </message>
     <message>
         <source>Move light</source>
-        <translation type="unfinished"></translation>
+        <translation>ライトを移動</translation>
     </message>
     <message>
         <source>Drag the light around the sphere. The light stays fixed to the camera, not the model.</source>
-        <translation type="unfinished"></translation>
+        <translation>球体の周りでライトをドラッグしてください。ライトはモデルではなく、カメラに固定されたままになります。</translation>
     </message>
     <message>
         <source>Behind</source>
-        <translation type="unfinished"></translation>
+        <translation>背面</translation>
     </message>
     <message>
         <source>Put the light on the far side of the model for a rim light</source>
-        <translation type="unfinished"></translation>
+        <translation>リムライトを作るには、モデルの奥側にライトを配置してください</translation>
     </message>
     <message>
         <source>Direction</source>
-        <translation type="unfinished"></translation>
+        <translation>方向</translation>
     </message>
     <message>
         <source>Elevation</source>
-        <translation type="unfinished"></translation>
+        <translation>仰角</translation>
     </message>
     <message>
         <source>Intensity</source>
-        <translation type="unfinished"></translation>
+        <translation>強度</translation>
     </message>
     <message>
         <source>Ambient</source>
-        <translation type="unfinished"></translation>
+        <translation>環境光</translation>
     </message>
 </context>
 <context>
     <name>Model3dSource</name>
     <message>
         <source>Size</source>
-        <translation type="unfinished">サイズ</translation>
+        <translation>サイズ</translation>
     </message>
     <message>
         <source>Depth</source>
-        <translation type="unfinished">深さ</translation>
+        <translation>深さ</translation>
     </message>
     <message>
         <source>Rotation X</source>
-        <translation type="unfinished"></translation>
+        <translation>回転 X</translation>
     </message>
     <message>
         <source>Rotation Y</source>
-        <translation type="unfinished"></translation>
+        <translation>回転 Y</translation>
     </message>
     <message>
         <source>Rotation Z</source>
-        <translation type="unfinished"></translation>
+        <translation>回転 Z</translation>
     </message>
     <message>
         <source>Light direction</source>
-        <translation type="unfinished"></translation>
+        <translation>ライトの方向</translation>
     </message>
     <message>
         <source>Light elevation</source>
-        <translation type="unfinished"></translation>
+        <translation>ライトの仰角</translation>
     </message>
     <message>
         <source>Light intensity</source>
-        <translation type="unfinished"></translation>
+        <translation>ライトの強度</translation>
     </message>
     <message>
         <source>Ambient light</source>
-        <translation type="unfinished"></translation>
+        <translation>環境光</translation>
     </message>
 </context>
 <context>
@@ -7947,7 +7947,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>3D Model</source>
-        <translation type="unfinished"></translation>
+        <translation>3D モデル</translation>
     </message>
     <message>
         <source>Subtitles</source>
@@ -8258,7 +8258,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Close project</source>
-        <translation type="unfinished"></translation>
+        <translation>プロジェクトを閉じる</translation>
     </message>
 </context>
 <context>
@@ -8691,7 +8691,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Transparent</source>
-        <translation type="unfinished"></translation>
+        <translation>透明</translation>
     </message>
     <message>
         <source>Fill behind clips that don’t cover the whole screen</source>
@@ -9644,37 +9644,37 @@ If playback stutters, try another.</source>
     <name>StartScreen</name>
     <message>
         <source> (missing)</source>
-        <translation type="unfinished"> (見つかりません)</translation>
+        <translation> (見つかりません)</translation>
     </message>
     <message>
         <source>This file has been moved or deleted:
 %1</source>
-        <translation type="unfinished">このファイルは移動または削除されました :
+        <translation>このファイルは移動または削除されました :
 %1</translation>
     </message>
     <message>
         <source>Remove from recents</source>
-        <translation type="unfinished">最近使用した項目から削除</translation>
+        <translation>最近使用した項目から削除</translation>
     </message>
     <message>
         <source>Create polished videos fast</source>
-        <translation type="unfinished">洗練されたビデオを素早く作成</translation>
+        <translation>洗練されたビデオを素早く作成</translation>
     </message>
     <message>
         <source>New Project</source>
-        <translation type="unfinished"></translation>
+        <translation>新しいプロジェクト</translation>
     </message>
     <message>
         <source>Open Project…</source>
-        <translation type="unfinished"></translation>
+        <translation>プロジェクトを開く...</translation>
     </message>
     <message>
         <source>Recent Projects</source>
-        <translation type="unfinished"></translation>
+        <translation>最近使ったプロジェクト</translation>
     </message>
     <message>
         <source>Nothing here yet — projects you save will show up in this list.</source>
-        <translation type="unfinished">ここにはまだ何もありません — 保存したプロジェクトはこのリストに表示されます。</translation>
+        <translation>ここにはまだ何もありません — 保存したプロジェクトはこのリストに表示されます。</translation>
     </message>
 </context>
 <context>
@@ -11323,7 +11323,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Offset (px)</source>
-        <translation type="unfinished"></translation>
+        <translation>オフセット (px)</translation>
     </message>
     <message>
         <source>Size (px)</source>
@@ -11355,7 +11355,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Reset position</source>
-        <translation type="unfinished"></translation>
+        <translation>位置をリセット</translation>
     </message>
     <message>
         <source>Fix orientation</source>
