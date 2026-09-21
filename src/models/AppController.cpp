@@ -4003,6 +4003,9 @@ QVariantMap AppController::clipToMap(const drift::Clip &clip, const drift::Clip 
         {QStringLiteral("assetId"), clip.assetId},
         {QStringLiteral("assetIndex"), assetIndexForClip(clip)},
         {QStringLiteral("linked"), !clip.linkId.isEmpty()},
+        // The pairing key itself, so a trim drag can carry its A/V companion on screen without
+        // waiting for the commit to sync it.
+        {QStringLiteral("linkId"), clip.linkId},
         {QStringLiteral("audioStreamIndex"), clip.audioStreamIndex},
         {QStringLiteral("pan"), clip.pan},
         {QStringLiteral("volume"), clip.volume.isEmpty() ? 1.0 : clip.volume.evaluateAt(0)},
@@ -6500,27 +6503,26 @@ void AppController::endTrimGesture()
     m_trimGestureLastOutcome = TrimNone;
 }
 
-int AppController::trimClipLeft(int trackIndex, int clipIndex, double newStart)
+AppController::TrimComputation AppController::computeTrimLeft(int trackIndex, int clipIndex,
+                                                              double newStart) const
 {
+    TrimComputation out;
     if (trackIndex < 0 || trackIndex >= m_project.tracks().size())
-        return TrimNone;
-
-    drift::Track &track = m_project.tracks()[trackIndex];
+        return out;
+    const drift::Track &track = m_project.tracks().at(trackIndex);
     if (clipIndex < 0 || clipIndex >= track.clips.size())
-        return TrimNone;
+        return out;
 
-    drift::Clip &clip = track.clips[clipIndex];
+    out.ok = true;
+    out.outcome = TrimNone;
+    // Worked on a copy: the caller decides whether this ever reaches the project.
+    drift::Clip clip = track.clips.at(clipIndex);
+    out.clip = clip;
+
     const drift::TimeUs rawUs = drift::secondsToUs(newStart);
-    // Same pointer position, same project state, same answer. Rejected here rather than after
-    // the fact, because everything below — the snap scan, the neighbour clamp, three whole-project
-    // sync passes — costs the same whether or not the edge ends up moving.
-    if (m_trimGestureActive && rawUs == m_trimGestureLastInputUs)
-        return m_trimGestureLastOutcome;
-    m_trimGestureLastInputUs = rawUs;
-
     drift::TimeUs snappedStart = snapTimeForGesture(rawUs);
-    // Reported once the edge has actually moved: whether it landed where the pointer asked or
-    // was pulled onto a snap target is the difference between the two feelings Haptics offers.
+    // Whether the edge landed where the pointer asked or was pulled onto a snap target is the
+    // difference between the two feelings Haptics offers.
     const int movedOutcome = (snappedStart != rawUs) ? TrimSnapped : TrimMoved;
     // Extending left can create a new overlap; clamp against neighbors when overlap is off.
     if (!m_allowClipOverlap && snappedStart < clip.timelineStart) {
@@ -6530,18 +6532,22 @@ int AppController::trimClipLeft(int trackIndex, int clipIndex, double newStart)
     }
     const drift::TimeUs delta = snappedStart - clip.timelineStart;
     if (delta == 0)
-        return m_trimGestureLastOutcome = TrimNone;
+        return out;
 
     if (isSyntheticTimelineClip(clip.type)) {
         if (delta > 0) {
-            if (clip.timelineDuration - delta < drift::kMinClipDurationUs)
-                return m_trimGestureLastOutcome = TrimBlocked;
+            if (clip.timelineDuration - delta < drift::kMinClipDurationUs) {
+                out.outcome = TrimBlocked;
+                return out;
+            }
             clip.timelineStart += delta;
             clip.timelineDuration -= delta;
         } else {
             const drift::TimeUs extendBy = -delta;
-            if (clip.timelineDuration + extendBy > syntheticClipMaxDurationUs())
-                return m_trimGestureLastOutcome = TrimBlocked;
+            if (clip.timelineDuration + extendBy > syntheticClipMaxDurationUs()) {
+                out.outcome = TrimBlocked;
+                return out;
+            }
             clip.timelineStart = snappedStart;
             clip.timelineDuration += extendBy;
         }
@@ -6553,27 +6559,30 @@ int AppController::trimClipLeft(int trackIndex, int clipIndex, double newStart)
             cue.endUs -= delta;
         }
         syncSyntheticSourceRange(clip);
-        if (!clip.linkedClipId.isEmpty())
-            syncLinkedPartnersFrom(m_project, clip);
-        syncOverlapTransitionsOnTrack(track);
-        // Live drag: see the note in trimClipRight.
-        syncLinkedAdjustments(m_project);
-        m_trimGestureChanged = true;
-        notifyTracksChanged();
-        return m_trimGestureLastOutcome = movedOutcome;
+        out.clip = clip;
+        out.changed = true;
+        out.outcome = movedOutcome;
+        return out;
     }
 
     if (delta > 0) {
-        if (clip.timelineDuration - delta < drift::kMinClipDurationUs)
-            return m_trimGestureLastOutcome = TrimBlocked;
+        if (clip.timelineDuration - delta < drift::kMinClipDurationUs) {
+            out.outcome = TrimBlocked;
+            return out;
+        }
         const drift::TimeUs sourceDelta = trimSourceDelta(clip, delta, false, false);
-        if (sourceDelta <= 0)
-            return m_trimGestureLastOutcome = TrimBlocked;
+        if (sourceDelta <= 0) {
+            out.outcome = TrimBlocked;
+            return out;
+        }
         if (clip.reverse) {
-            if (clip.srcOut <= clip.srcIn + sourceDelta + drift::kMinClipDurationUs)
-                return m_trimGestureLastOutcome = TrimBlocked;
+            if (clip.srcOut <= clip.srcIn + sourceDelta + drift::kMinClipDurationUs) {
+                out.outcome = TrimBlocked;
+                return out;
+            }
         } else if (clip.srcIn + sourceDelta > clip.srcOut - drift::kMinClipDurationUs) {
-            return m_trimGestureLastOutcome = TrimBlocked;
+            out.outcome = TrimBlocked;
+            return out;
         }
 
         clip.timelineStart += delta;
@@ -6587,15 +6596,18 @@ int AppController::trimClipLeft(int trackIndex, int clipIndex, double newStart)
         const drift::TimeUs sourceExtend = trimSourceDelta(clip, extendBy, true, clip.reverse);
         if (clip.reverse) {
             const drift::TimeUs maxSource = sourceDurationForClip(clip);
-            if (clip.srcOut + sourceExtend > maxSource)
-                return m_trimGestureLastOutcome = TrimBlocked;
+            if (clip.srcOut + sourceExtend > maxSource) {
+                out.outcome = TrimBlocked;
+                return out;
+            }
             clip.timelineStart = snappedStart;
             clip.srcOut += sourceExtend;
             clip.timelineDuration += extendBy;
         } else {
-            if (sourceExtend > clip.srcIn)
-                return m_trimGestureLastOutcome = TrimBlocked;
-
+            if (sourceExtend > clip.srcIn) {
+                out.outcome = TrimBlocked;
+                return out;
+            }
             clip.timelineStart = snappedStart;
             clip.srcIn -= sourceExtend;
             clip.timelineDuration += extendBy;
@@ -6603,33 +6615,28 @@ int AppController::trimClipLeft(int trackIndex, int clipIndex, double newStart)
     }
 
     clip.syncDurationFromSpeedCurve();
-    if (!clip.linkedClipId.isEmpty())
-        syncLinkedPartnersFrom(m_project, clip);
-    syncOverlapTransitionsOnTrack(track);
-    // Live drag: this path never reaches finishEdit, so a pinned adjustment would visibly lag
-    // its clip until the drag was released.
-    syncLinkedAdjustments(m_project);
-    m_trimGestureChanged = true;
-    notifyTracksChanged();
-    return m_trimGestureLastOutcome = movedOutcome;
+    out.clip = clip;
+    out.changed = true;
+    out.outcome = movedOutcome;
+    return out;
 }
 
-int AppController::trimClipRight(int trackIndex, int clipIndex, double newEnd)
+AppController::TrimComputation AppController::computeTrimRight(int trackIndex, int clipIndex,
+                                                               double newEnd) const
 {
+    TrimComputation out;
     if (trackIndex < 0 || trackIndex >= m_project.tracks().size())
-        return TrimNone;
-
-    drift::Track &track = m_project.tracks()[trackIndex];
+        return out;
+    const drift::Track &track = m_project.tracks().at(trackIndex);
     if (clipIndex < 0 || clipIndex >= track.clips.size())
-        return TrimNone;
+        return out;
 
-    drift::Clip &clip = track.clips[clipIndex];
+    out.ok = true;
+    out.outcome = TrimNone;
+    drift::Clip clip = track.clips.at(clipIndex);
+    out.clip = clip;
+
     const drift::TimeUs rawUs = drift::secondsToUs(newEnd);
-    // See the note in trimClipLeft.
-    if (m_trimGestureActive && rawUs == m_trimGestureLastInputUs)
-        return m_trimGestureLastOutcome;
-    m_trimGestureLastInputUs = rawUs;
-
     drift::TimeUs snappedEnd = snapTimeForGesture(rawUs);
     if (!m_allowClipOverlap && snappedEnd > clip.timelineEnd()) {
         const QSet<QString> exclude{clip.id};
@@ -6649,16 +6656,14 @@ int AppController::trimClipRight(int trackIndex, int clipIndex, double newEnd)
         syntheticVisual ? syntheticClipMaxDurationUs() : mediaMaxDuration;
     newDuration = qBound(drift::kMinClipDurationUs, newDuration, maxDuration);
 
-    // The guard trimClipLeft has always had, and this one never did: an edge parked against a
-    // snap target or against maxDuration re-ran every sync pass and re-emitted tracksChanged on
-    // each mouse move, for a clip whose bounds had not changed.
+    // An edge parked against a snap target or against maxDuration has nowhere to go.
     if (newDuration == clip.timelineDuration)
-        return m_trimGestureLastOutcome = TrimNone;
+        return out;
     // Distinguishes "the edge is where you asked" from "the edge was pulled onto a target", and
     // the clamp above from a free move.
     const int movedOutcome = (newDuration != snappedEnd - clip.timelineStart) ? TrimBlocked
                              : (snappedEnd != rawUs)                          ? TrimSnapped
-                                                                             : TrimMoved;
+                                                                              : TrimMoved;
 
     clip.timelineDuration = newDuration;
     const drift::TimeUs span =
@@ -6670,15 +6675,82 @@ int AppController::trimClipRight(int trackIndex, int clipIndex, double newEnd)
         clip.srcOut = qMin(clip.srcIn + span, maxSrcOut);
     }
     clip.syncDurationFromSpeedCurve();
-    if (!clip.linkedClipId.isEmpty())
+    out.clip = clip;
+    out.changed = true;
+    out.outcome = movedOutcome;
+    return out;
+}
+
+QVariantMap AppController::trimPreviewToMap(const TrimComputation &c)
+{
+    if (!c.ok)
+        return QVariantMap{{QStringLiteral("ok"), false}};
+    return QVariantMap{
+        {QStringLiteral("ok"), true},
+        {QStringLiteral("changed"), c.changed},
+        {QStringLiteral("outcome"), c.outcome},
+        {QStringLiteral("start"), drift::usToSeconds(c.clip.timelineStart)},
+        {QStringLiteral("duration"), drift::usToSeconds(c.clip.timelineDuration)},
+        {QStringLiteral("inPoint"), drift::usToSeconds(c.clip.srcIn)},
+        {QStringLiteral("outPoint"), drift::usToSeconds(c.clip.srcOut)},
+    };
+}
+
+QVariantMap AppController::previewTrimLeft(int trackIndex, int clipIndex, double newStart) const
+{
+    return trimPreviewToMap(computeTrimLeft(trackIndex, clipIndex, newStart));
+}
+
+QVariantMap AppController::previewTrimRight(int trackIndex, int clipIndex, double newEnd) const
+{
+    return trimPreviewToMap(computeTrimRight(trackIndex, clipIndex, newEnd));
+}
+
+// Writes a computed trim back to the project and brings everything that hangs off the clip with
+// it. Shared by both edges.
+int AppController::applyTrim(int trackIndex, int clipIndex, const TrimComputation &computed)
+{
+    if (!computed.ok)
+        return TrimNone;
+    if (!computed.changed)
+        return m_trimGestureLastOutcome = computed.outcome;
+
+    drift::Track &track = m_project.tracks()[trackIndex];
+    drift::Clip &clip = track.clips[clipIndex];
+    clip = computed.clip;
+
+    // linkId, not linkedClipId: linkId is what symmetrically pairs A/V companions, which is what
+    // syncLinkedPartnersFrom walks. linkedClipId is the directional pin used by adjustments, and
+    // guarding on it here skipped the partner sync for every linked audio clip.
+    if (!clip.linkId.isEmpty())
         syncLinkedPartnersFrom(m_project, clip);
     syncOverlapTransitionsOnTrack(track);
-    // Live drag: this path never reaches finishEdit, so a pinned adjustment would visibly lag
-    // its clip until the drag was released.
+    // A pinned adjustment takes its extent from its clip, so it has to be brought along here --
+    // this path does not always reach finishEdit.
     syncLinkedAdjustments(m_project);
     m_trimGestureChanged = true;
     notifyTracksChanged();
-    return m_trimGestureLastOutcome = movedOutcome;
+    return m_trimGestureLastOutcome = computed.outcome;
+}
+
+int AppController::trimClipLeft(int trackIndex, int clipIndex, double newStart)
+{
+    const drift::TimeUs rawUs = drift::secondsToUs(newStart);
+    // Same pointer position, same project state, same answer.
+    if (m_trimGestureActive && rawUs == m_trimGestureLastInputUs)
+        return m_trimGestureLastOutcome;
+    m_trimGestureLastInputUs = rawUs;
+    return applyTrim(trackIndex, clipIndex, computeTrimLeft(trackIndex, clipIndex, newStart));
+}
+
+int AppController::trimClipRight(int trackIndex, int clipIndex, double newEnd)
+{
+    const drift::TimeUs rawUs = drift::secondsToUs(newEnd);
+    // See the note in trimClipLeft.
+    if (m_trimGestureActive && rawUs == m_trimGestureLastInputUs)
+        return m_trimGestureLastOutcome;
+    m_trimGestureLastInputUs = rawUs;
+    return applyTrim(trackIndex, clipIndex, computeTrimRight(trackIndex, clipIndex, newEnd));
 }
 
 void AppController::setClipTrim(int trackIndex, int clipIndex, double inPoint, double outPoint)

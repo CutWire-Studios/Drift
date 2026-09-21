@@ -1069,6 +1069,16 @@ public:
     Q_INVOKABLE void splitClipAt(int trackIndex, int clipIndex, double seconds);
     Q_INVOKABLE void splitClipLeftAt(int trackIndex, int clipIndex, double seconds);
     Q_INVOKABLE void splitClipRightAt(int trackIndex, int clipIndex, double seconds);
+    // What a trim would do, without doing it. The drag previews through these: applying the
+    // edit on every pointer sample meant rebuilding the whole timeline model each time, which on
+    // a heavy project cost far more than the edit itself. The commit on release runs the very
+    // same computation, so the clip lands exactly where the preview showed it.
+    //
+    // Returns { ok, changed, outcome, start, duration, inPoint, outPoint } in seconds, or
+    // { ok: false } for an out-of-range clip.
+    Q_INVOKABLE QVariantMap previewTrimLeft(int trackIndex, int clipIndex, double newStart) const;
+    Q_INVOKABLE QVariantMap previewTrimRight(int trackIndex, int clipIndex, double newEnd) const;
+
     // Opens and closes a trim drag. Scoping the gesture lets a repeated pointer position be
     // rejected before any work is done, and lets the caller find out whether the edge ever
     // actually moved — a press and release with no movement must not leave an undo step behind.
@@ -1806,6 +1816,20 @@ protected:
     // a slot connected in the constructor runs ahead of QML's binding re-evaluation is not a
     // guarantee worth depending on, and getting it wrong would serve QML one stale rebuild per
     // emission — intermittent, and indistinguishable from a model bug.
+    // The trim math, factored out so the live preview and the commit cannot drift apart: both
+    // call this, one discards the result and one writes it back. `clip` is the clip as it would
+    // be after the trim; `changed` is false when the edge had nowhere to go.
+    struct TrimComputation {
+        bool ok = false;
+        bool changed = false;
+        int outcome = 0;
+        drift::Clip clip;
+    };
+    TrimComputation computeTrimLeft(int trackIndex, int clipIndex, double newStart) const;
+    TrimComputation computeTrimRight(int trackIndex, int clipIndex, double newEnd) const;
+    int applyTrim(int trackIndex, int clipIndex, const TrimComputation &computed);
+    static QVariantMap trimPreviewToMap(const TrimComputation &computed);
+
     void notifyTracksChanged();
     // Same rule as notifyTracksChanged(): bump the revision before the signal goes out, so no
     // reader can observe the old value on the new selection.

@@ -230,6 +230,34 @@ PanelFrame {
 
     // While dragging a clip, other selected clips (linked A/V partners included)
     // ride along on the X and Y axes so they don't sit still until drop. CapCut-style.
+
+    // A trim in progress, broadcast so the dragged clip's linked A/V companion can follow it on
+    // screen. The commit gives the partner identical timing (syncLinkedTiming), so the preview
+    // is simply the same geometry applied to both.
+    property bool trimFollowActive: false
+    property string trimFollowLinkId: ""
+    property string trimFollowClipId: ""
+    property real trimFollowStart: 0
+    property real trimFollowDuration: 0
+    property real trimFollowIn: 0
+    property real trimFollowOut: 0
+
+    function setTrimFollow(linkId, clipId, start, duration, inPoint, outPoint) {
+        trimFollowLinkId = linkId || ""
+        trimFollowClipId = clipId || ""
+        trimFollowStart = start
+        trimFollowDuration = duration
+        trimFollowIn = inPoint
+        trimFollowOut = outPoint
+        trimFollowActive = trimFollowLinkId !== ""
+    }
+
+    function clearTrimFollow() {
+        trimFollowActive = false
+        trimFollowLinkId = ""
+        trimFollowClipId = ""
+    }
+
     property bool moveFollowActive: false
     property int moveLeaderTrack: -1
     property int moveLeaderClip: -1

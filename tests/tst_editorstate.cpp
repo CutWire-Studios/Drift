@@ -136,6 +136,8 @@ private slots:
     void overlapDoesNotAutoApplyCrossfade();
     void trimmingOverlapClampsStaleTransitionDuration();
     void trimPushesOneUndoStepAndMarksDirty();
+    void trimmingCarriesTheLinkedAudioPartner();
+    void previewTrimMatchesTheCommittedTrim();
     void movedClipDoesNotSnapToItsOwnEdges();
     void snapTargetsStillIncludeOtherClips();
     void trimClickWithoutMovementLeavesNoUndoStep();
@@ -3417,6 +3419,97 @@ void EditorStateTest::snapTargetsStillIncludeOtherClips()
     QCOMPARE(state.playheadSeconds(), 22.0);
     QCOMPARE(state.snapTime(21.96, dragged), 22.0);
 }
+
+
+void EditorStateTest::trimmingCarriesTheLinkedAudioPartner()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    state.setSnapEnabled(false);
+
+    // An A/V pair as separateAudio leaves it: same linkId, no linkedClipId (that field is the
+    // directional pin adjustments use, and confusing the two silently unlinks the audio).
+    state.project()->tracks().clear();
+    state.project()->tracks().append(drift::Track{.type = drift::TrackType::Video});
+    state.project()->tracks().append(drift::Track{.type = drift::TrackType::Audio});
+
+    drift::Clip video;
+    video.id = QStringLiteral("v");
+    video.type = drift::ClipType::Shape;
+    video.linkId = QStringLiteral("pair-1");
+    video.timelineStart = 0;
+    video.timelineDuration = drift::secondsToUs(10.0);
+    state.project()->tracks()[0].clips.append(video);
+
+    drift::Clip audio = video;
+    audio.id = QStringLiteral("a");
+    audio.type = drift::ClipType::Audio;
+    state.project()->tracks()[1].clips.append(audio);
+
+    state.beginTrimGesture(0, 0, 1);
+    state.trimClipRight(0, 0, 6.0);
+    state.endTrimGesture();
+
+    const drift::Clip &trimmedVideo = state.project()->tracks().at(0).clips.at(0);
+    const drift::Clip &trimmedAudio = state.project()->tracks().at(1).clips.at(0);
+    QCOMPARE(drift::usToSeconds(trimmedVideo.timelineDuration), 6.0);
+    QCOMPARE(trimmedAudio.timelineDuration, trimmedVideo.timelineDuration);
+    QCOMPARE(trimmedAudio.timelineStart, trimmedVideo.timelineStart);
+}
+
+void EditorStateTest::previewTrimMatchesTheCommittedTrim()
+{
+    // The whole point of the preview/commit split: the drag shows previewTrim's answer and the
+    // release applies trimClip's, so if they ever disagreed the clip would jump on release.
+    // They run the same computation, and this pins that down over the awkward inputs too --
+    // past the source end, below the minimum duration, and onto snap targets.
+    const QList<double> probes = {
+        -5.0, 0.0, 0.001, 0.4, 1.0, 1.9, 2.0, 2.05, 3.0, 5.0, 9.99, 10.0, 25.0, 1000.0,
+    };
+
+    for (bool snap : {false, true}) {
+        for (double probe : probes) {
+            for (int side : {0, 1}) {
+                AssetLibrary library;
+                AppController state(&library);
+                state.setSnapEnabled(snap);
+                state.project()->tracks().clear();
+                state.project()->tracks().append(drift::Track{.type = drift::TrackType::Video});
+                for (int c = 0; c < 3; ++c) {
+                    drift::Clip clip;
+                    clip.id = QStringLiteral("clip-%1").arg(c);
+                    clip.type = drift::ClipType::Shape;
+                    clip.timelineStart = drift::secondsToUs(c * 4.0);
+                    clip.timelineDuration = drift::secondsToUs(2.0);
+                    state.project()->tracks()[0].clips.append(clip);
+                }
+
+                const QVariantMap preview = side == 0 ? state.previewTrimLeft(0, 1, probe)
+                                                      : state.previewTrimRight(0, 1, probe);
+                QVERIFY(preview.value(QStringLiteral("ok")).toBool());
+
+                const int outcome = side == 0 ? state.trimClipLeft(0, 1, probe)
+                                              : state.trimClipRight(0, 1, probe);
+                const drift::Clip &after = state.project()->tracks().at(0).clips.at(1);
+
+                const QString label = QStringLiteral("side=%1 snap=%2 probe=%3")
+                                          .arg(side).arg(snap).arg(probe);
+                QVERIFY2(preview.value(QStringLiteral("outcome")).toInt() == outcome,
+                         qPrintable(label));
+                QVERIFY2(qFuzzyCompare(preview.value(QStringLiteral("start")).toDouble() + 1.0,
+                                       drift::usToSeconds(after.timelineStart) + 1.0),
+                         qPrintable(label));
+                QVERIFY2(qFuzzyCompare(preview.value(QStringLiteral("duration")).toDouble() + 1.0,
+                                       drift::usToSeconds(after.timelineDuration) + 1.0),
+                         qPrintable(label));
+                QVERIFY2(qFuzzyCompare(preview.value(QStringLiteral("outPoint")).toDouble() + 1.0,
+                                       drift::usToSeconds(after.srcOut) + 1.0),
+                         qPrintable(label));
+            }
+        }
+    }
+}
+
 
 void EditorStateTest::trimPushesOneUndoStepAndMarksDirty()
 {

@@ -57,13 +57,42 @@ Item {
     // maps for the whole selection, and this binding exists once per clip in the project.
     property bool selected: (EditorState.selectionRevision,
                              EditorState.selectionContains(trackIndex, clipIndex))
+    // Live trim geometry, held here instead of being written to the project on every pointer
+    // sample. Applying the edit per sample meant rebuilding the whole timeline model each time —
+    // ~33 ms on a heavy project, several frames — for a change to one clip. The drag now previews
+    // against these and commits once on release; EditorState.previewTrim* runs the same
+    // computation the commit will, so the clip does not move when it lands.
+    property bool trimPreviewActive: false
+    property real trimPreviewStart: 0
+    property real trimPreviewDuration: 0
+    property real trimPreviewIn: 0
+    property real trimPreviewOut: 0
+
+    // The A/V companion of the clip being trimmed. The commit hands it identical timing, so it
+    // follows the same preview rather than sitting still until release.
+    readonly property bool trimFollowFollower: panel.trimFollowActive
+                                               && !!clipData.linkId
+                                               && clipData.linkId === panel.trimFollowLinkId
+                                               && clipData.id !== panel.trimFollowClipId
+
+    readonly property real effectiveStart: trimPreviewActive ? trimPreviewStart
+                                           : trimFollowFollower ? panel.trimFollowStart
+                                           : (clipData.start || 0)
+    readonly property real effectiveDuration: trimPreviewActive ? trimPreviewDuration
+                                              : trimFollowFollower ? panel.trimFollowDuration
+                                              : (clipData.duration || 0)
+
     // The four clipData fields the waveform reads, hoisted to typed scalars. clipData is a
     // fresh JS object on every model change, so anything bound through it re-evaluated on every
     // edit anywhere in the project — re-querying up to 4096 peak buckets per audio clip and
     // repainting its Canvas. These compare by value, so they only propagate on a real change.
     readonly property string wfPath: clipData.path || ""
-    readonly property real wfIn: clipData.inPoint || 0
-    readonly property real wfOut: clipData.outPoint || 0
+    readonly property real wfIn: trimPreviewActive ? trimPreviewIn
+                                 : trimFollowFollower ? panel.trimFollowIn
+                                 : (clipData.inPoint || 0)
+    readonly property real wfOut: trimPreviewActive ? trimPreviewOut
+                                  : trimFollowFollower ? panel.trimFollowOut
+                                  : (clipData.outPoint || 0)
     readonly property int wfStream: clipData.audioStreamIndex || 0
 
     property string trackType: panel.tracks[trackIndex].type
@@ -331,7 +360,7 @@ Item {
     // Floored so short clips stay visible and
     // trimmable even at low zoom.
     width: Math.max(Theme.clipMinWidth,
-                    clipData.duration * panel.pxPerSecond
+                    effectiveDuration * panel.pxPerSecond
                     - 2 * Theme.clipSelectionRingWidth)
     height: Math.max(0, trackRow.height - 2 * Theme.clipSelectionRingWidth)
 
@@ -394,7 +423,7 @@ Item {
         property: "x"
         when: !clipMouse.drag.active
         value: Math.max(Theme.clipSelectionRingWidth,
-                        clipItem.clipData.start * panel.pxPerSecond
+                        clipItem.effectiveStart * panel.pxPerSecond
                         + Theme.clipSelectionRingWidth
                         + clipItem.followOffsetX)
     }
@@ -583,8 +612,8 @@ Item {
             // have a single poster frame that the strip already covers exactly.
             sourcePath: clipItem.clipData.kind === "video" ? (clipItem.clipData.path || "") : ""
             rotationCorrection: clipItem.clipData.rotationCorrection || 0
-            inPoint: clipItem.clipData.inPoint
-            outPoint: clipItem.clipData.outPoint
+            inPoint: clipItem.wfIn
+            outPoint: clipItem.wfOut
             sourceDuration: clipItem.clipData.sourceDuration
             // Image, vector and model "strips" are a single poster frame.
             frameCount: (clipItem.clipData.kind === "image" || clipItem.clipData.kind === "vector"
@@ -1566,6 +1595,9 @@ Item {
             // mouse delivers several positionChanged per frame, and each one used to mutate the
             // project and rebuild the whole timeline model. Same idiom the move drag uses above.
             property int lastTrimPx: -2147483647
+            // Where the edge was last asked to go. Negative means the gesture never moved it,
+            // so there is nothing to commit.
+            property real lastTrimSeconds: -1
             // Set while this handle owns an open preview drag, so the drag is closed exactly
             // once however the gesture ends.
             property bool trimming: false
@@ -1586,6 +1618,7 @@ Item {
                 EditorState.beginPreviewDrag(qsTr("Trim clip"))
                 EditorState.beginTrimGesture(clipItem.trackIndex, clipItem.clipIndex, -1)
                 lastTrimPx = -2147483647
+                lastTrimSeconds = -1
                 trimming = true
             }
             onPositionChanged: (mouse) => {
@@ -1605,16 +1638,33 @@ Item {
                 if (px === lastTrimPx)
                     return
                 lastTrimPx = px
-                // The trim reports what it did rather than the caller guessing from the geometry:
-                // snapping and every limit that can stop this edge live inside it, and the one the
-                // user needs told — the source running out — has no cue on screen at all.
-                Haptics.trimStep(
-                    EditorState.trimClipLeft(clipItem.trackIndex, clipItem.clipIndex, newStart))
+                lastTrimSeconds = newStart
+                // Previewed, not applied. The reply reports what the trim would do -- snapping
+                // and every limit that can stop this edge live inside it, and the one the user
+                // needs told, the source running out, has no cue on screen at all.
+                const p = EditorState.previewTrimLeft(clipItem.trackIndex, clipItem.clipIndex,
+                                                      newStart)
+                if (p.ok && p.changed) {
+                    clipItem.trimPreviewStart = p.start
+                    clipItem.trimPreviewDuration = p.duration
+                    clipItem.trimPreviewIn = p.inPoint
+                    clipItem.trimPreviewOut = p.outPoint
+                    clipItem.trimPreviewActive = true
+                    panel.setTrimFollow(clipItem.clipData.linkId, clipItem.clipData.id,
+                                        p.start, p.duration, p.inPoint, p.outPoint)
+                }
+                Haptics.trimStep(p.ok ? p.outcome : 0)
             }
             onReleased: {
                 Haptics.reset()
                 if (trimming) {
                     trimming = false
+                    // The one and only edit of the gesture. Dropping the preview first so the
+                    // geometry bindings are reading the project again by the time it lands.
+                    clipItem.trimPreviewActive = false
+                    panel.clearTrimFollow()
+                    if (lastTrimSeconds >= 0)
+                        EditorState.trimClipLeft(clipItem.trackIndex, clipItem.clipIndex, lastTrimSeconds)
                     // A press and release that never moved the edge is a click, not an edit.
                     // Committing it anyway would push an undo step that restores nothing and
                     // would mark the project dirty for having done nothing.
@@ -1630,6 +1680,8 @@ Item {
                 Haptics.reset()
                 if (trimming) {
                     trimming = false
+                    clipItem.trimPreviewActive = false
+                    panel.clearTrimFollow()
                     EditorState.endTrimGesture()
                     EditorState.cancelPreviewDrag()
                 }
@@ -1698,6 +1750,9 @@ Item {
 
             // See the matching properties on the left handle.
             property int lastTrimPx: -2147483647
+            // Where the edge was last asked to go. Negative means the gesture never moved it,
+            // so there is nothing to commit.
+            property real lastTrimSeconds: -1
             property bool trimming: false
 
             onPressed: (mouse) => {
@@ -1712,6 +1767,7 @@ Item {
                 EditorState.beginPreviewDrag(qsTr("Trim clip"))
                 EditorState.beginTrimGesture(clipItem.trackIndex, clipItem.clipIndex, 1)
                 lastTrimPx = -2147483647
+                lastTrimSeconds = -1
                 trimming = true
             }
             onPositionChanged: (mouse) => {
@@ -1726,13 +1782,31 @@ Item {
                 if (px === lastTrimPx)
                     return
                 lastTrimPx = px
-                Haptics.trimStep(
-                    EditorState.trimClipRight(clipItem.trackIndex, clipItem.clipIndex, newEnd))
+                lastTrimSeconds = newEnd
+                // See the left handle: previewed here, committed once on release.
+                const p = EditorState.previewTrimRight(clipItem.trackIndex, clipItem.clipIndex,
+                                                       newEnd)
+                if (p.ok && p.changed) {
+                    clipItem.trimPreviewStart = p.start
+                    clipItem.trimPreviewDuration = p.duration
+                    clipItem.trimPreviewIn = p.inPoint
+                    clipItem.trimPreviewOut = p.outPoint
+                    clipItem.trimPreviewActive = true
+                    panel.setTrimFollow(clipItem.clipData.linkId, clipItem.clipData.id,
+                                        p.start, p.duration, p.inPoint, p.outPoint)
+                }
+                Haptics.trimStep(p.ok ? p.outcome : 0)
             }
             onReleased: {
                 Haptics.reset()
                 if (trimming) {
                     trimming = false
+                    // The one and only edit of the gesture. Dropping the preview first so the
+                    // geometry bindings are reading the project again by the time it lands.
+                    clipItem.trimPreviewActive = false
+                    panel.clearTrimFollow()
+                    if (lastTrimSeconds >= 0)
+                        EditorState.trimClipRight(clipItem.trackIndex, clipItem.clipIndex, lastTrimSeconds)
                     // A press and release that never moved the edge is a click, not an edit.
                     // Committing it anyway would push an undo step that restores nothing and
                     // would mark the project dirty for having done nothing.
@@ -1748,6 +1822,8 @@ Item {
                 Haptics.reset()
                 if (trimming) {
                     trimming = false
+                    clipItem.trimPreviewActive = false
+                    panel.clearTrimFollow()
                     EditorState.endTrimGesture()
                     EditorState.cancelPreviewDrag()
                 }
