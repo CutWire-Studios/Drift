@@ -777,7 +777,7 @@ AppController::AppController(AssetLibrary *assetLibrary, QObject *parent)
         emit bookmarksChanged();
         emit workAreaChanged();
         emit projectNameChanged();
-        emit selectionChanged();
+        notifySelectionChanged();
         emit backgroundChanged();
     });
 
@@ -1304,6 +1304,12 @@ int AppController::clipCount() const
     for (const drift::Track &track : m_project.tracks())
         total += track.clips.size();
     return total;
+}
+
+void AppController::notifySelectionChanged()
+{
+    ++m_selectionRevision;
+    emit selectionChanged();
 }
 
 void AppController::notifyTracksChanged()
@@ -5788,7 +5794,7 @@ void AppController::finishEdit(const QString &message)
     if (!m_beatAnalysis.isEmpty() && audioLayoutFingerprint() != m_beatAudioFingerprint)
         clearBeatAnalysis();
     notifyTracksChanged();
-    emit selectionChanged();
+    notifySelectionChanged();
     emit selectedClipDataChanged();
     // Routine edits used to announce themselves here ("Clip moved", "Split
     // clip", ...), which surfaced as a toast for every drag and cut. The
@@ -6079,7 +6085,7 @@ void AppController::selectClip(int trackIndex, int clipIndex)
     m_selection = selectionWithLinkedPartners(m_project, trackIndex, clipIndex);
     m_selectedTransitionTrack = -1;
     m_selectedTransitionLeftClip = -1;
-    emit selectionChanged();
+    notifySelectionChanged();
     emit selectedTransitionDataChanged();
     syncTextOverlaySkip();
 }
@@ -6095,7 +6101,7 @@ void AppController::addToSelection(int trackIndex, int clipIndex)
     }
     m_selectedTrack = trackIndex;
     m_selectedClip = clipIndex;
-    emit selectionChanged();
+    notifySelectionChanged();
 }
 
 void AppController::setSelection(const QVariantList &pairs)
@@ -6121,7 +6127,7 @@ void AppController::setSelection(const QVariantList &pairs)
         m_selectedTrack = m_selection.constLast().first;
         m_selectedClip = m_selection.constLast().second;
     }
-    emit selectionChanged();
+    notifySelectionChanged();
     emit selectedTransitionDataChanged();
     syncTextOverlaySkip();
 }
@@ -6151,7 +6157,7 @@ void AppController::clearSelection()
     m_selection.clear();
     m_selectedTransitionTrack = -1;
     m_selectedTransitionLeftClip = -1;
-    emit selectionChanged();
+    notifySelectionChanged();
     emit selectedTransitionDataChanged();
     syncTextOverlaySkip();
 }
@@ -14963,7 +14969,7 @@ void AppController::selectTransition(int trackIndex, int leftClipIndex)
     m_selectedTrack = trackIndex;
     m_selectedClip = leftClipIndex;
     m_selection = {qMakePair(trackIndex, leftClipIndex)};
-    emit selectionChanged();
+    notifySelectionChanged();
     emit selectedTransitionDataChanged();
 }
 

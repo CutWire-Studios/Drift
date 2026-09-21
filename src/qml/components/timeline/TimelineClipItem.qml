@@ -53,8 +53,19 @@ Item {
     }
 
     property var clipData: panel.tracks[trackIndex].clips[clipIndex]
-    property bool selected: (EditorState.selection,
+    // The revision, not the selection itself: reading EditorState.selection rebuilt a list of
+    // maps for the whole selection, and this binding exists once per clip in the project.
+    property bool selected: (EditorState.selectionRevision,
                              EditorState.selectionContains(trackIndex, clipIndex))
+    // The four clipData fields the waveform reads, hoisted to typed scalars. clipData is a
+    // fresh JS object on every model change, so anything bound through it re-evaluated on every
+    // edit anywhere in the project — re-querying up to 4096 peak buckets per audio clip and
+    // repainting its Canvas. These compare by value, so they only propagate on a real change.
+    readonly property string wfPath: clipData.path || ""
+    readonly property real wfIn: clipData.inPoint || 0
+    readonly property real wfOut: clipData.outPoint || 0
+    readonly property int wfStream: clipData.audioStreamIndex || 0
+
     property string trackType: panel.tracks[trackIndex].type
     property bool showWaveform: panel.tracks[trackIndex].showWaveform === true
     property bool showChannelWaveforms: panel.tracks[trackIndex].showChannelWaveforms === true
@@ -704,7 +715,7 @@ Item {
             Connections {
                 target: EditorState
                 function onWaveformRangeReady(path) {
-                    if (path === clipItem.clipData.path)
+                    if (path === clipItem.wfPath)
                         waveformHost.decodeRevision++
                 }
             }
@@ -729,7 +740,7 @@ Item {
                 // Source seconds per px of clip body, so the strip maps to the trimmed
                 // window rather than the whole file.
                 readonly property real srcPerPx: {
-                    const span = (clipItem.clipData.outPoint || 0) - (clipItem.clipData.inPoint || 0)
+                    const span = clipItem.wfOut - clipItem.wfIn
                     return waveformHost.width > 0 && span > 0 ? span / waveformHost.width : 0
                 }
 
@@ -739,32 +750,32 @@ Item {
 
                 property var peaks: {
                     void waveformHost.decodeRevision
-                    if (!clipItem.clipData.path || srcPerPx <= 0)
+                    if (!clipItem.wfPath || srcPerPx <= 0)
                         return []
                     // The per-channel query covers this window already; asking for the merged
                     // envelope as well would double the work for something nothing draws.
                     if (waveformHost.laneCount > 1)
                         return []
                     return EditorState.waveformPeaksRange(
-                        clipItem.clipData.path,
-                        (clipItem.clipData.inPoint || 0) + x * srcPerPx,
+                        clipItem.wfPath,
+                        clipItem.wfIn + x * srcPerPx,
                         width * srcPerPx,
                         Math.ceil(width),
-                        clipItem.clipData.audioStreamIndex || 0)
+                        clipItem.wfStream)
                 }
 
                 // { channels, buckets, names, peaks } with peaks channel-major and flat.
                 property var channelData: {
                     void waveformHost.decodeRevision
-                    if (!clipItem.clipData.path || srcPerPx <= 0
+                    if (!clipItem.wfPath || srcPerPx <= 0
                             || waveformHost.laneCount <= 1)
                         return null
                     return EditorState.waveformChannelPeaksRange(
-                        clipItem.clipData.path,
-                        (clipItem.clipData.inPoint || 0) + x * srcPerPx,
+                        clipItem.wfPath,
+                        clipItem.wfIn + x * srcPerPx,
                         width * srcPerPx,
                         Math.ceil(width),
-                        clipItem.clipData.audioStreamIndex || 0)
+                        clipItem.wfStream)
                 }
 
                 onPeaksChanged: requestPaint()
@@ -930,7 +941,7 @@ Item {
         // On desktop, 2px threshold eliminates the deadzone while preventing accidental micro-drags.
         drag.threshold: clipItem.touchMode ? 0 : 2
         drag.minimumX: {
-            if (clipItem.selected && EditorState.selection.length > 1) {
+            if (clipItem.selected && EditorState.selectionCount > 1) {
                 const earliest = EditorState.selectionEarliestStartSeconds()
                 const minStart = Math.max(0, (clipItem.clipData.start || 0) - earliest)
                 return minStart * panel.pxPerSecond + Theme.clipSelectionRingWidth
@@ -938,8 +949,8 @@ Item {
             return Theme.clipSelectionRingWidth
         }
         // Allow dropping onto any track, not just the immediate neighbours.
-        drag.minimumY: -Math.max(clipItem.trackRow.height, panel.totalTracksHeight())
-        drag.maximumY: Math.max(clipItem.trackRow.height * 2, panel.totalTracksHeight())
+        drag.minimumY: -Math.max(clipItem.trackRow.height, panel.totalTracksHeightCached)
+        drag.maximumY: Math.max(clipItem.trackRow.height * 2, panel.totalTracksHeightCached)
         preventStealing: !clipItem.touchMode
         pressAndHoldInterval: clipItem.touchMode ? 450 : 800
         property int originTrack: clipItem.trackIndex

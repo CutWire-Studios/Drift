@@ -429,6 +429,10 @@ PanelFrame {
         return Theme.clipVideoPlaceholder; // video: no flat fill, thumbnails would go here
     }
 
+    // Computed once per model change instead of at each of the ten call sites below — one of
+    // which is the drag bounds of every clip delegate, making it O(clips x tracks) on any edit.
+    readonly property real totalTracksHeightCached: (root.tracks, root.totalTracksHeight())
+
     function totalTracksHeight() {
         var h = 0;
         var rows = 0;
@@ -932,7 +936,7 @@ PanelFrame {
                 // lower ones were silently truncated and could not be reached at
                 // all. totalTracksHeight() was already computed but never used.
                 contentHeight: Math.max(height,
-                                        headerHeight + root.totalTracksHeight()
+                                        headerHeight + root.totalTracksHeightCached
                                         + Theme.trackGap)
                 clip: true
                 boundsBehavior: Flickable.StopAtBounds
@@ -969,7 +973,7 @@ PanelFrame {
                         x: 0
                         y: Theme.timelineRulerHeight + Theme.timelineBookmarkRowHeight
                         width: parent.width
-                        height: Math.max(root.totalTracksHeight(), Theme.trackHeightVideo)
+                        height: Math.max(root.totalTracksHeightCached, Theme.trackHeightVideo)
                         z: 150
                         acceptedButtons: Qt.MiddleButton
                         preventStealing: true
@@ -1252,7 +1256,7 @@ PanelFrame {
                         z: 1
                         y: Theme.timelineRulerHeight + Theme.timelineBookmarkRowHeight
                         width: parent.width
-                        height: Math.max(root.totalTracksHeight() + Theme.trackGap,
+                        height: Math.max(root.totalTracksHeightCached + Theme.trackGap,
                                          flick.height - flick.headerHeight)
 
                         readonly property real inX: EditorState.workAreaInSeconds >= 0
@@ -1324,7 +1328,7 @@ PanelFrame {
                         x: 0
                         y: Theme.timelineRulerHeight + Theme.timelineBookmarkRowHeight
                         width: parent.width
-                        height: Math.max(root.totalTracksHeight() + Theme.trackGap,
+                        height: Math.max(root.totalTracksHeightCached + Theme.trackGap,
                                          flick.height - flick.headerHeight)
                         z: 0
                         enabled: root.timelineTool === ""
@@ -1888,7 +1892,7 @@ PanelFrame {
                         // Extends past the last track to the bottom of the
                         // content area: dropping in that empty space is how a
                         // track gets appended below the existing ones.
-                        height: Math.max(root.totalTracksHeight(),
+                        height: Math.max(root.totalTracksHeightCached,
                                          flick.contentHeight - flick.headerHeight)
                         z: 250
                         keys: ["text/plain"]
@@ -2002,7 +2006,7 @@ PanelFrame {
                         x: root.snapGuideSeconds * root.pxPerSecond
                         y: Theme.timelineRulerHeight + Theme.timelineBookmarkRowHeight
                         width: Theme.borderWidth
-                        height: root.totalTracksHeight()
+                        height: root.totalTracksHeightCached
                         color: Theme.snapGuide
                         z: 6
 
@@ -2041,7 +2045,7 @@ PanelFrame {
                         z: 3
                         width: Theme.playheadLineWidth
                         height: Theme.timelineRulerHeight + Theme.timelineBookmarkRowHeight
-                                + root.totalTracksHeight()
+                                + root.totalTracksHeightCached
 
                         Binding {
                             target: playhead
@@ -2174,7 +2178,7 @@ PanelFrame {
                         x: 0
                         y: Theme.timelineRulerHeight + Theme.timelineBookmarkRowHeight
                         width: parent.width
-                        height: root.totalTracksHeight()
+                        height: root.totalTracksHeightCached
                         z: 20
 
                         readonly property bool trimMode: root.timelineTool === "trimStart"

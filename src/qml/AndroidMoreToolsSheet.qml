@@ -18,7 +18,7 @@ AndroidBottomSheet {
     title: qsTr("More tools")
 
     readonly property bool hasSelection: {
-        void EditorState.selection
+        void EditorState.selectionRevision
         return EditorState.selectedTrack >= 0 && EditorState.selectedClip >= 0
     }
 

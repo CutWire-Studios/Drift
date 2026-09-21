@@ -305,6 +305,11 @@ class AppController : public QObject
     Q_PROPERTY(int selectedTrack READ selectedTrack NOTIFY selectionChanged)
     Q_PROPERTY(int selectedClip READ selectedClip NOTIFY selectionChanged)
     Q_PROPERTY(QVariantList selection READ selection NOTIFY selectionChanged)
+    // Change token and size for the selection, so a clip delegate can ask "am I selected?" and
+    // "is this a multi-selection?" without the whole selection being rebuilt into QVariantMaps
+    // once per delegate — which made a marquee over N clips cost O(N^2) per mouse move.
+    Q_PROPERTY(int selectionRevision READ selectionRevision NOTIFY selectionChanged)
+    Q_PROPERTY(int selectionCount READ selectionCount NOTIFY selectionChanged)
     Q_PROPERTY(QVariantMap selectedClipData READ selectedClipData NOTIFY selectedClipDataChanged)
     Q_PROPERTY(QVariantList selectedClipEffects READ selectedClipEffects NOTIFY selectedClipDataChanged)
     Q_PROPERTY(QVariantList selectedClipAudioEffects READ selectedClipAudioEffects NOTIFY selectedClipDataChanged)
@@ -467,6 +472,8 @@ public:
     int selectedTrack() const { return m_selectedTrack; }
     int selectedClip() const { return m_selectedClip; }
     QVariantList selection() const;
+    int selectionRevision() const { return m_selectionRevision; }
+    int selectionCount() const { return m_selection.size(); }
     QVariantMap selectedClipData() const;
     QVariantList selectedClipEffects() const;
     QVariantList selectedClipAudioEffects() const;
@@ -1787,6 +1794,9 @@ protected:
     // guarantee worth depending on, and getting it wrong would serve QML one stale rebuild per
     // emission — intermittent, and indistinguishable from a model bug.
     void notifyTracksChanged();
+    // Same rule as notifyTracksChanged(): bump the revision before the signal goes out, so no
+    // reader can observe the old value on the new selection.
+    void notifySelectionChanged();
 
     void pushProjectEdit(const drift::Project &before, const QString &text);
 
@@ -2278,6 +2288,7 @@ protected:
     int m_selectedTransitionTrack = -1;
     int m_selectedTransitionLeftClip = -1;
     QList<QPair<int, int>> m_selection;
+    int m_selectionRevision = 0;
     int m_timelineTrimCursorSide = 0;
     int m_timelineTrimCursorHeight = 0;
     int m_timelineTrimCursorOwner = 0;

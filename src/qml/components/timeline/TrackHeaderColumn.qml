@@ -260,9 +260,13 @@ Item {
             visible: root.trackOccupiesARow(index)
             height: root.trackHeight(index)
                     + (index < root.tracks.length - 1 ? Theme.trackGap : 0)
+            // Split deliberately: trackRowTop() walks every track ahead of this one, so binding
+            // it straight into `y` re-ran that walk for every header on every scroll frame. The
+            // walk now depends only on the track model; the per-frame part is one subtraction.
+            readonly property real rowTop: root.trackRowTop(index)
             // Follows the timeline's vertical scroll so labels stay
             // aligned with their rows.
-            y: root.trackRowTop(index) - root.contentY
+            y: rowTop - root.contentY
             opacity: root.draggingTrackFrom === index ? 0.45 : 1.0
 
             // Reorder drag. Covers the whole header rather than just the grip:

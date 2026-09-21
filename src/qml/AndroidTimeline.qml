@@ -988,7 +988,7 @@ Item {
 
                 Text {
                     anchors.verticalCenter: parent.verticalCenter
-                    text: qsTr("%n clip(s)", "", EditorState.selection.length)
+                    text: qsTr("%n clip(s)", "", EditorState.selectionCount)
                     color: Theme.panelForeground
                     font.family: Theme.fontFamily
                     font.pixelSize: Theme.fontSizeXs
