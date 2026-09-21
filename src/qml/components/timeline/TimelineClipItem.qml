@@ -155,6 +155,28 @@ Item {
         return t * t * (3.0 - 2.0 * t)
     }
 
+    // Four ToolTips — each a Popup — existed on every clip in the project for the sake of the
+    // one clip the pointer is actually over. Gated on the clip being touched at all; each
+    // tooltip keeps its own visible binding inside, so the reveal delay and the conditions are
+    // exactly what they were.
+    readonly property bool tooltipsActive:
+        clipMouse.containsMouse || clipMouse.pressed
+        || leftTrimMouse.containsMouse || leftTrimMouse.pressed || leftTrimHover.hovered
+        || rightTrimMouse.containsMouse || rightTrimMouse.pressed || rightTrimHover.hovered
+        || fadeInMouse.containsMouse || fadeInMouse.pressed
+        || fadeOutMouse.containsMouse || fadeOutMouse.pressed
+
+    // Arms the Loader holding the context menu and pops it. Re-pops an already-loaded menu
+    // rather than reloading it, for the second right-click that lands while the first is still
+    // closing.
+    function openContextMenu() {
+        if (clipContextMenuLoader.active && clipContextMenuLoader.item) {
+            clipContextMenuLoader.item.popup()
+            return
+        }
+        clipContextMenuLoader.active = true
+    }
+
     // Premiere-style trim pointer (vertical bar + arrow), sized to this clip.
     readonly property int trimCursorSide: leftTrimMouse.containsMouse ? -1
                                           : rightTrimMouse.containsMouse ? 1 : 0
@@ -930,7 +952,7 @@ Item {
                 // Right-click selects, then opens the menu.
                 if (!clipItem.selected)
                     EditorState.selectClip(clipItem.trackIndex, clipItem.clipIndex)
-                clipContextMenu.popup()
+                clipItem.openContextMenu()
                 return
             }
             // Touch multi-select mode (see the panel's multiSelectActive): the press
@@ -982,141 +1004,163 @@ Item {
         // Surfaces actions that were previously
         // reachable only by unlabelled shortcut,
         // plus cutSelection which had no UI at all.
-        ThemedContextMenu {
-            id: clipContextMenu
+        // Every clip in the project used to build this menu at load: eighteen entries, each an
+        // icon, a label and a background, for a menu that only ever opens on a right-click.
+        // Loaded on demand instead. Synchronous, and popped from onLoaded, so the very first
+        // right-click still opens it rather than being spent on the load.
+        Loader {
+            id: clipContextMenuLoader
+            // Stands in for the rect the Menu used to be parented to, so it resolves the same
+            // parent item and clamps against the same bounds.
+            anchors.fill: parent
+            active: false
+            asynchronous: false
+            sourceComponent: clipContextMenuComponent
+            onLoaded: item.popup()
+        }
 
-            property bool canPasteEffects: false
-            property bool canPasteAttributes: false
-            onAboutToShow: {
-                canPasteEffects = EditorState.clipboardHasEffects()
-                canPasteAttributes = EditorState.canPasteAttributes()
-            }
+        Component {
+            id: clipContextMenuComponent
 
-            ThemedMenuItem {
-                text: qsTr("Properties")
-                icon.name: Theme.icons.sliders
-                onTriggered: {
-                    if (!clipItem.selected)
-                        EditorState.selectClip(clipItem.trackIndex, clipItem.clipIndex)
-                    if (typeof panel.openClipProperties === "function")
-                        panel.openClipProperties()
+            ThemedContextMenu {
+                id: clipContextMenu
+
+                property bool canPasteEffects: false
+                property bool canPasteAttributes: false
+                onAboutToShow: {
+                    canPasteEffects = EditorState.clipboardHasEffects()
+                    canPasteAttributes = EditorState.canPasteAttributes()
                 }
-            }
-            ThemedMenuItem {
-                // Touch route into multi-clip selection; the panel owns the mode and
-                // the desktop panel does not declare the property at all.
-                text: qsTr("Select multiple")
-                icon.name: Theme.icons.check
-                visible: panel.multiSelectActive === false
-                onTriggered: panel.multiSelectActive = true
-            }
-            ThemedMenuSeparator { }
-            ThemedMenuItem {
-                text: qsTr("Split at current time")
-                icon.name: Theme.icons.scissors
-                onTriggered: EditorState.splitAtPlayhead()
-            }
-            ThemedMenuItem {
-                text: qsTr("Split item at current time")
-                icon.name: Theme.icons.scissors
-                // Scoped to just this clip (and its linked partner, e.g. companion
-                // audio) — splitAtPlayhead() above cuts every clip under the playhead
-                // across every track, which is surprising when picked from one clip's menu.
-                visible: EditorState.playheadSeconds > clipItem.clipData.start
-                        && EditorState.playheadSeconds < clipItem.clipData.start + clipItem.clipData.duration
-                onTriggered: EditorState.splitClipAt(clipItem.trackIndex, clipItem.clipIndex,
-                                                     EditorState.playheadSeconds)
-            }
-            ThemedMenuItem {
-                text: qsTr("Separate audio")
-                icon.name: Theme.icons.audioLines
-                // CapCut: only offer extract when the clip still has embedded audio.
-                visible: clipItem.trackType === "video" && EditorState.separateAudioAvailable
-                onTriggered: EditorState.separateAudioFromSelection()
-            }
-            ThemedMenuItem {
-                text: qsTr("Separate all audio tracks")
-                icon.name: Theme.icons.audioLines
-                visible: clipItem.trackType === "video" && EditorState.separateAudioAvailable
-                         && EditorState.clipAudioStreamCount(clipItem.trackIndex, clipItem.clipIndex) > 1
-                onTriggered: EditorState.separateAllAudioTracks(clipItem.trackIndex, clipItem.clipIndex)
-            }
-            ThemedMenuItem {
-                text: qsTr("Unlink")
-                icon.name: Theme.icons.unlink
-                visible: !!clipItem.clipData.linked && EditorState.unlinkAvailable
-                onTriggered: EditorState.unlinkSelectedClips()
-            }
-            ThemedMenuSeparator { }
-            ThemedMenuItem {
-                text: qsTr("Cut")
-                icon.name: Theme.icons.scissors
-                onTriggered: EditorState.cutSelection()
-            }
-            ThemedMenuItem {
-                text: qsTr("Copy")
-                icon.name: Theme.icons.copy
-                onTriggered: EditorState.copySelection()
-            }
-            ThemedMenuItem {
-                text: qsTr("Paste attributes…")
-                icon.name: Theme.icons.clipboardPaste
-                enabled: clipContextMenu.canPasteAttributes
-                onTriggered: EditorState.requestPasteAttributes()
-            }
-            ThemedMenuItem {
-                text: qsTr("Duplicate")
-                icon.name: Theme.icons.copyPlus
-                onTriggered: EditorState.duplicateSelectedClip()
-            }
-            ThemedMenuItem {
-                text: qsTr("Rename…")
-                icon.name: Theme.icons.pencil
-                onTriggered: clipItem.panel.requestRenameClip(clipItem.trackIndex, clipItem.clipIndex)
-            }
-            ThemedMenuSeparator { }
-            ThemedMenuItem {
-                text: qsTr("Copy effects")
-                icon.name: Theme.icons.wand
-                visible: clipItem.hasAnyEffects
-                onTriggered: EditorState.copyClipEffectsToClipboard(clipItem.trackIndex,
-                                                                    clipItem.clipIndex)
-            }
-            ThemedMenuItem {
-                text: qsTr("Paste effects")
-                icon.name: Theme.icons.clipboardPaste
-                enabled: clipContextMenu.canPasteEffects
-                onTriggered: EditorState.pasteEffectsFromClipboard(clipItem.trackIndex,
-                                                                   clipItem.clipIndex)
-            }
-            ThemedMenuItem {
-                text: qsTr("Save effects as preset…")
-                icon.name: Theme.icons.save
-                visible: clipItem.hasAnyEffects
-                onTriggered: clipItem.panel.requestSaveEffectPreset(clipItem.trackIndex,
-                                                                     clipItem.clipIndex)
-            }
-            ThemedMenuSeparator { visible: clipItem.clipData.kind === "adjustment" }
-            ThemedMenuItem {
-                text: qsTr("Unlink from clip")
-                icon.name: Theme.icons.unlink
-                visible: clipItem.pinnedToClip
-                onTriggered: EditorState.unlinkAdjustment(clipItem.trackIndex, clipItem.clipIndex)
-            }
-            ThemedMenuItem {
-                text: qsTr("Move to its own track")
-                icon.name: Theme.icons.layers
-                // Only meaningful for a nested one: a standalone adjustment already has one.
-                visible: clipItem.clipData.kind === "adjustment"
-                         && clipItem.panel.tracks[clipItem.trackIndex].isAdjustmentLane === true
-                onTriggered: EditorState.moveAdjustmentToOwnTrack(clipItem.trackIndex,
-                                                                  clipItem.clipIndex)
-            }
-            ThemedMenuSeparator { }
-            ThemedMenuItem {
-                text: qsTr("Delete")
-                icon.name: Theme.icons.trash
-                onTriggered: EditorState.deleteSelectedClip()
+                // Deferred: onClosed runs inside the Popup's own close path, and dropping the
+                // Loader's item there would destroy an object still unwinding.
+                onClosed: Qt.callLater(function() { clipContextMenuLoader.active = false })
+
+                ThemedMenuItem {
+                    text: qsTr("Properties")
+                    icon.name: Theme.icons.sliders
+                    onTriggered: {
+                        if (!clipItem.selected)
+                            EditorState.selectClip(clipItem.trackIndex, clipItem.clipIndex)
+                        if (typeof panel.openClipProperties === "function")
+                            panel.openClipProperties()
+                    }
+                }
+                ThemedMenuItem {
+                    // Touch route into multi-clip selection; the panel owns the mode and
+                    // the desktop panel does not declare the property at all.
+                    text: qsTr("Select multiple")
+                    icon.name: Theme.icons.check
+                    visible: panel.multiSelectActive === false
+                    onTriggered: panel.multiSelectActive = true
+                }
+                ThemedMenuSeparator { }
+                ThemedMenuItem {
+                    text: qsTr("Split at current time")
+                    icon.name: Theme.icons.scissors
+                    onTriggered: EditorState.splitAtPlayhead()
+                }
+                ThemedMenuItem {
+                    text: qsTr("Split item at current time")
+                    icon.name: Theme.icons.scissors
+                    // Scoped to just this clip (and its linked partner, e.g. companion
+                    // audio) — splitAtPlayhead() above cuts every clip under the playhead
+                    // across every track, which is surprising when picked from one clip's menu.
+                    visible: EditorState.playheadSeconds > clipItem.clipData.start
+                            && EditorState.playheadSeconds < clipItem.clipData.start + clipItem.clipData.duration
+                    onTriggered: EditorState.splitClipAt(clipItem.trackIndex, clipItem.clipIndex,
+                                                         EditorState.playheadSeconds)
+                }
+                ThemedMenuItem {
+                    text: qsTr("Separate audio")
+                    icon.name: Theme.icons.audioLines
+                    // CapCut: only offer extract when the clip still has embedded audio.
+                    visible: clipItem.trackType === "video" && EditorState.separateAudioAvailable
+                    onTriggered: EditorState.separateAudioFromSelection()
+                }
+                ThemedMenuItem {
+                    text: qsTr("Separate all audio tracks")
+                    icon.name: Theme.icons.audioLines
+                    visible: clipItem.trackType === "video" && EditorState.separateAudioAvailable
+                             && EditorState.clipAudioStreamCount(clipItem.trackIndex, clipItem.clipIndex) > 1
+                    onTriggered: EditorState.separateAllAudioTracks(clipItem.trackIndex, clipItem.clipIndex)
+                }
+                ThemedMenuItem {
+                    text: qsTr("Unlink")
+                    icon.name: Theme.icons.unlink
+                    visible: !!clipItem.clipData.linked && EditorState.unlinkAvailable
+                    onTriggered: EditorState.unlinkSelectedClips()
+                }
+                ThemedMenuSeparator { }
+                ThemedMenuItem {
+                    text: qsTr("Cut")
+                    icon.name: Theme.icons.scissors
+                    onTriggered: EditorState.cutSelection()
+                }
+                ThemedMenuItem {
+                    text: qsTr("Copy")
+                    icon.name: Theme.icons.copy
+                    onTriggered: EditorState.copySelection()
+                }
+                ThemedMenuItem {
+                    text: qsTr("Paste attributes…")
+                    icon.name: Theme.icons.clipboardPaste
+                    enabled: clipContextMenu.canPasteAttributes
+                    onTriggered: EditorState.requestPasteAttributes()
+                }
+                ThemedMenuItem {
+                    text: qsTr("Duplicate")
+                    icon.name: Theme.icons.copyPlus
+                    onTriggered: EditorState.duplicateSelectedClip()
+                }
+                ThemedMenuItem {
+                    text: qsTr("Rename…")
+                    icon.name: Theme.icons.pencil
+                    onTriggered: clipItem.panel.requestRenameClip(clipItem.trackIndex, clipItem.clipIndex)
+                }
+                ThemedMenuSeparator { }
+                ThemedMenuItem {
+                    text: qsTr("Copy effects")
+                    icon.name: Theme.icons.wand
+                    visible: clipItem.hasAnyEffects
+                    onTriggered: EditorState.copyClipEffectsToClipboard(clipItem.trackIndex,
+                                                                        clipItem.clipIndex)
+                }
+                ThemedMenuItem {
+                    text: qsTr("Paste effects")
+                    icon.name: Theme.icons.clipboardPaste
+                    enabled: clipContextMenu.canPasteEffects
+                    onTriggered: EditorState.pasteEffectsFromClipboard(clipItem.trackIndex,
+                                                                       clipItem.clipIndex)
+                }
+                ThemedMenuItem {
+                    text: qsTr("Save effects as preset…")
+                    icon.name: Theme.icons.save
+                    visible: clipItem.hasAnyEffects
+                    onTriggered: clipItem.panel.requestSaveEffectPreset(clipItem.trackIndex,
+                                                                         clipItem.clipIndex)
+                }
+                ThemedMenuSeparator { visible: clipItem.clipData.kind === "adjustment" }
+                ThemedMenuItem {
+                    text: qsTr("Unlink from clip")
+                    icon.name: Theme.icons.unlink
+                    visible: clipItem.pinnedToClip
+                    onTriggered: EditorState.unlinkAdjustment(clipItem.trackIndex, clipItem.clipIndex)
+                }
+                ThemedMenuItem {
+                    text: qsTr("Move to its own track")
+                    icon.name: Theme.icons.layers
+                    // Only meaningful for a nested one: a standalone adjustment already has one.
+                    visible: clipItem.clipData.kind === "adjustment"
+                             && clipItem.panel.tracks[clipItem.trackIndex].isAdjustmentLane === true
+                    onTriggered: EditorState.moveAdjustmentToOwnTrack(clipItem.trackIndex,
+                                                                      clipItem.clipIndex)
+                }
+                ThemedMenuSeparator { }
+                ThemedMenuItem {
+                    text: qsTr("Delete")
+                    icon.name: Theme.icons.trash
+                    onTriggered: EditorState.deleteSelectedClip()
+                }
             }
         }
         onReleased: {
@@ -1139,7 +1183,7 @@ Item {
             if (!moved) {
                 if (wantsMenu) {
                     clipItem.y = Theme.clipSelectionRingWidth
-                    clipContextMenu.popup()
+                    clipItem.openContextMenu()
                 }
                 return
             }
@@ -1323,9 +1367,15 @@ Item {
 
             HoverHandler { cursorShape: Qt.SizeHorCursor }
 
-            ThemedToolTip {
-                visible: fadeInMouse.pressed || fadeInMouse.containsMouse
-                text: qsTr("Fade in %1s").arg((clipItem.clipData.fadeIn || 0).toFixed(2))
+            Loader {
+                anchors.fill: parent
+                active: clipItem.tooltipsActive
+                sourceComponent: Component {
+                    ThemedToolTip {
+                        visible: fadeInMouse.pressed || fadeInMouse.containsMouse
+                        text: qsTr("Fade in %1s").arg((clipItem.clipData.fadeIn || 0).toFixed(2))
+                    }
+                }
             }
         }
     }
@@ -1388,9 +1438,15 @@ Item {
 
             HoverHandler { cursorShape: Qt.SizeHorCursor }
 
-            ThemedToolTip {
-                visible: fadeOutMouse.pressed || fadeOutMouse.containsMouse
-                text: qsTr("Fade out %1s").arg((clipItem.clipData.fadeOut || 0).toFixed(2))
+            Loader {
+                anchors.fill: parent
+                active: clipItem.tooltipsActive
+                sourceComponent: Component {
+                    ThemedToolTip {
+                        visible: fadeOutMouse.pressed || fadeOutMouse.containsMouse
+                        text: qsTr("Fade out %1s").arg((clipItem.clipData.fadeOut || 0).toFixed(2))
+                    }
+                }
             }
         }
     }
@@ -1418,11 +1474,17 @@ Item {
             NumberAnimation { duration: Theme.durationFast; easing.type: Theme.easing }
         }
 
-        ThemedToolTip {
-            text: qsTr("Drag to trim the start")
-            visible: clipItem.showTrimHandles
-                     && (leftTrimMouse.containsMouse || leftTrimHover.hovered)
-                     && !leftTrimMouse.pressed
+        Loader {
+            anchors.fill: parent
+            active: clipItem.tooltipsActive
+            sourceComponent: Component {
+                ThemedToolTip {
+                    text: qsTr("Drag to trim the start")
+                    visible: clipItem.showTrimHandles
+                             && (leftTrimMouse.containsMouse || leftTrimHover.hovered)
+                             && !leftTrimMouse.pressed
+                }
+            }
         }
         z: 30
 
@@ -1546,11 +1608,17 @@ Item {
             NumberAnimation { duration: Theme.durationFast; easing.type: Theme.easing }
         }
 
-        ThemedToolTip {
-            text: qsTr("Drag to trim the end")
-            visible: clipItem.showTrimHandles
-                     && (rightTrimMouse.containsMouse || rightTrimHover.hovered)
-                     && !rightTrimMouse.pressed
+        Loader {
+            anchors.fill: parent
+            active: clipItem.tooltipsActive
+            sourceComponent: Component {
+                ThemedToolTip {
+                    text: qsTr("Drag to trim the end")
+                    visible: clipItem.showTrimHandles
+                             && (rightTrimMouse.containsMouse || rightTrimHover.hovered)
+                             && !rightTrimMouse.pressed
+                }
+            }
         }
         z: 30
 
