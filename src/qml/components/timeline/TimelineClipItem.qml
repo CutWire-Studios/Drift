@@ -310,6 +310,23 @@ Item {
                     - 2 * Theme.clipSelectionRingWidth)
     height: Math.max(0, trackRow.height - 2 * Theme.clipSelectionRingWidth)
 
+    // A clip scrolled off the side of the timeline still cost a full set of scene-graph nodes,
+    // a hit-test entry and (for audio) a Canvas framebuffer. ClipFilmstrip already culls its own
+    // tiles from exactly these inputs; this extends the rule to the clip body.
+    readonly property real viewportPad: 256
+    readonly property bool inViewport: panel.timelineViewW <= 0
+        || ((x + width) >= panel.timelineViewX - viewportPad
+            && x <= panel.timelineViewX + panel.timelineViewW + viewportPad)
+
+    // The exceptions are not cosmetic. A drag that autoscrolls past the edge must not cull its
+    // own subject; a partner following a multi-clip move is moved from outside itself; and a
+    // selected clip scrolled out of view still owns the keyboard focus that Delete arrives on.
+    visible: inViewport
+             || clipMouse.drag.active || clipMouse.pressed
+             || leftTrimMouse.pressed || rightTrimMouse.pressed
+             || moveFollowFollower
+             || activeFocus
+
     property real lastPreviewDesired: -1
     property int lastPreviewTrack: -1
 

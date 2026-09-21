@@ -45,25 +45,43 @@ Item {
         color: Theme.panelBorder
     }
 
-    // Flattened content map: every clip on every track, drawn as a thin
-    // translucent block at its project-time position.
-    Repeater {
-        model: panel ? panel.tracks.length : 0
-        delegate: Repeater {
-            required property int index
-            readonly property var trackClips: panel.tracks[index].clips
-            model: trackClips.length
+    // Flattened content map: every clip on every track, drawn as a thin translucent block at
+    // its project-time position.
+    //
+    // Painted rather than instantiated. This was a Rectangle per clip in the whole project, none
+    // of them cullable, each re-running its x and width bindings on every edit — for a strip
+    // forty pixels tall where most blocks are a pixel wide. One item now, repainted on the
+    // revision counter.
+    Canvas {
+        id: contentMap
+        anchors.fill: parent
 
-            delegate: Rectangle {
-                required property int index
-                readonly property var clipData: trackClips[index]
-                x: clipData.start * overview.overviewPxPerSecond
-                width: Math.max(1, clipData.duration * overview.overviewPxPerSecond)
-                y: 4
-                height: overview.height - 8
-                radius: 1
-                color: Theme.primary
-                opacity: 0.28
+        // The clip set, and the scale it is drawn at (which folds in both the project duration
+        // and this strip's width). Between them, everything the paint below reads.
+        readonly property int revision: EditorState.tracksRevision
+        readonly property real pps: overview.overviewPxPerSecond
+        onRevisionChanged: requestPaint()
+        onPpsChanged: requestPaint()
+        onHeightChanged: requestPaint()
+
+        onPaint: {
+            const ctx = getContext("2d")
+            ctx.reset()
+            if (!panel || overview.width <= 0)
+                return
+            ctx.globalAlpha = 0.28
+            ctx.fillStyle = Theme.primary
+            const top = 4
+            const blockHeight = Math.max(1, overview.height - 8)
+            const tracks = panel.tracks
+            for (let t = 0; t < tracks.length; ++t) {
+                const clips = tracks[t].clips
+                if (!clips)
+                    continue
+                for (let c = 0; c < clips.length; ++c) {
+                    ctx.fillRect(clips[c].start * contentMap.pps, top,
+                                 Math.max(1, clips[c].duration * contentMap.pps), blockHeight)
+                }
             }
         }
     }
