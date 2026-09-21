@@ -580,6 +580,21 @@ quint64 ClipReader::hardwareFallbackCount()
     return g_hwFallbackCount.load(std::memory_order_relaxed);
 }
 
+int ClipReader::activeDecodeBackendRaw()
+{
+    return g_activeDecodeBackend.load(std::memory_order_relaxed);
+}
+
+void ClipReader::setActiveDecodeBackendRaw(int backend)
+{
+    g_activeDecodeBackend.store(backend, std::memory_order_relaxed);
+}
+
+void ClipReader::setHardwareFallbackCount(quint64 count)
+{
+    g_hwFallbackCount.store(count, std::memory_order_relaxed);
+}
+
 QString ClipReader::lastHardwareFailure()
 {
     QMutexLocker lock(&g_hwFailureMutex);

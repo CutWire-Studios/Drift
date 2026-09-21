@@ -220,12 +220,21 @@ public:
     // Export NV12 ring. Convert the composited (premultiplied) canvas to BT.709
     // limited NV12 and pack into a PIXEL_PACK_BUFFER without waiting. `slot` is
     // 0 .. kExportNv12Slots-1. The GL context must be current (call from exec()).
-    static constexpr int kExportNv12Slots = 2;
-    bool packCanvasToNv12Slot(const GlTarget &canvas, int outW, int outH, int slot);
+    static constexpr int kExportNv12Slots = 3;
+    // `readback` false skips the PIXEL_PACK_BUFFER half: the planes are left in their GL
+    // textures for copyNv12SlotToCuda to take device-side, which is the whole point of that
+    // path. mapNv12Slot then has nothing to map, so the two are not interchangeable per frame.
+    bool packCanvasToNv12Slot(const GlTarget &canvas, int outW, int outH, int slot,
+                              bool readback = true);
     // Wait for packCanvasToNv12Slot(slot), then copy Y and interleaved UV. Strides
     // are bytes per row. The GL context must be current.
     bool mapNv12Slot(int slot, uint8_t *y, int yStride, uint8_t *uv, int uvStride, int width,
                      int height);
+    // The same planes straight into an AV_PIX_FMT_CUDA frame's device memory, never touching
+    // system memory. `dst` must be an NV12-backed CUDA frame of exactly this slot's size,
+    // allocated from the encoder's own frames context. False means the caller should fall back
+    // to packCanvasToNv12Slot + mapNv12Slot.
+    bool copyNv12SlotToCuda(int slot, AVFrame *dst);
 
     // Presentation ring. The preview's composited frame is handed to the Qt Quick
     // scene graph as a live GL texture rather than read back, so the target it
@@ -274,6 +283,9 @@ public:
     };
     static PreviewUploadPath lastPreviewUploadPath();
     static QString lastZeroCopyDeclineReason();
+    // For drift::diag::ProbeScope alone: put both back after a diagnostics sweep has imported
+    // its own frames through the same globals. Importers record; nobody else should.
+    static void restorePreviewUploadPath(PreviewUploadPath path, const QString &declineReason);
 
     // Outcome of the last bring-up attempt. Safe from any thread, and never starts
     // one itself — call available() first if you want an attempt made rather than a
@@ -288,6 +300,7 @@ private:
     void destroyVideoUploadState();
     void destroyExportNv12State();
     void destroyExportNv12Slot(int slot);
+    void unregisterExportCudaResources(int slot);
     bool ensureExportNv12Slot(QOpenGLExtraFunctions *gl, int slot, int width, int height);
     bool ensureVideoUploadTextures(QOpenGLExtraFunctions *gl, int width, int height);
     bool ensureVideoRgbaTexture(QOpenGLExtraFunctions *gl, int width, int height);
@@ -329,6 +342,14 @@ private:
     GlTarget m_presentRing[kPresentRingSize];
     GLsync m_presentFence[kPresentRingSize] = {};
     int m_presentNext = 0;
+    // Publishes so far, and the FBOs a resize evicted from the ring paired with the count at
+    // which each left. PreviewItem hands the scene graph the raw texture name out of a slot,
+    // so destroying that slot's FBO the moment the canvas size changes pulls the texture out
+    // from under a node that is still drawing it — which is a black frame. Retired FBOs are
+    // freed kPresentRingSize publishes later instead, the same bound GpuCompositor already
+    // static_asserts the in-flight composite cap against.
+    quint64 m_presentPublished = 0;
+    std::vector<std::pair<quint64, std::unique_ptr<QOpenGLFramebufferObject>>> m_retiredPresent;
 
     // QImage::cacheKey() → uploaded texture. Stills/text/shapes and decoder cache
     // hits skip CPU→GPU upload; callers blit into a pooled FBO for exclusive use.
@@ -364,6 +385,10 @@ private:
     int m_cudaTexW = 0;
     int m_cudaTexH = 0;
     bool m_cudaImportFailed = false;
+    // Consecutive map/copy refusals. Cleared by any frame that lands; interop only latches off
+    // once this many in a row say the driver is not going to cooperate.
+    int m_cudaCopyFailures = 0;
+    static constexpr int kCudaCopyFailureLimit = 3;
     // Whether this context's GL_VENDOR is NVIDIA: -1 not yet asked. CUDA interop is never
     // attempted against any other GPU's context.
     int m_cudaGlVendorOk = -1;
@@ -395,6 +420,12 @@ private:
         GLsync fence = 0;
         int width = 0;
         int height = 0;
+        // CUgraphicsResource for the two textures when the NVENC path is in use, and the CUDA
+        // device they were registered under — same rule as the import side: a registration
+        // cannot be mapped from another device's context.
+        void *cudaY = nullptr;
+        void *cudaUv = nullptr;
+        AVBufferRef *cudaDevice = nullptr;
     };
     ExportNv12Slot m_exportNv12[kExportNv12Slots];
 

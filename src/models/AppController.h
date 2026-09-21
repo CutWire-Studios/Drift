@@ -537,7 +537,13 @@ public:
     // One paste for a bug report: host facts and codec support followed by what playback is
     // actually doing. Split across two clipboard copies, reporters send whichever tab they
     // happened to have open, which is rarely the one that explains the problem.
-    Q_INVOKABLE void copyDiagnosticsReport(const QVariantMap &playbackInfo);
+    //
+    // `benchmarkInfo` carries only the sweep's own sections — the live rows are collected here,
+    // beside the host facts. Taking them from the dialog instead meant the two halves of a
+    // pasted report described different moments: the rows were captured when the dialog opened
+    // and never refreshed, so a report could say NVDEC in one section and Direct3D 11 in the
+    // other, for the same machine, in the same paste.
+    Q_INVOKABLE void copyDiagnosticsReport(const QVariantMap &benchmarkInfo);
 
     // MCP helpers (GUI thread). Used by src/mcp, not QML.
     QPair<int, int> mcpLocateClip(const QString &id) const;

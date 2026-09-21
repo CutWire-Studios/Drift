@@ -133,6 +133,13 @@ public:
     // last error FFmpeg logged. Empty while nothing has fallen back.
     static QString lastHardwareFailure();
 
+    // For drift::diag::ProbeScope alone: the raw stored backend (-1 for "nothing yet") and the
+    // means to put both counters back after a diagnostics sweep has written its own answers
+    // over them. Nothing else should be setting what the last decoder landed on.
+    static int activeDecodeBackendRaw();
+    static void setActiveDecodeBackendRaw(int backend);
+    static void setHardwareFallbackCount(quint64 count);
+
 #ifdef Q_OS_ANDROID
     // Called by the GL importer when a latched gralloc buffer cannot be bound. Process-wide and
     // sticky: there is no CPU copy to fall back on for the frame in flight, so the only recovery

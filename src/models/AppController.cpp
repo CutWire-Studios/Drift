@@ -20829,6 +20829,11 @@ void AppController::startPlaybackBenchmark()
         return;
     emit playbackBenchmarkRunningChanged();
 
+    // The sweep opens its own readers against the same decoders and GL runtime the preview is
+    // using. Leaving playback running has the two fight over hardware decoder sessions, which
+    // measures neither of them, and the counters the report prints would describe the fight.
+    m_playback.pause();
+
     // The reference clip is what makes two bug reports comparable; the timeline's own first
     // video clip is what reproduces the reporter's actual codec and frame rate. Measure both,
     // because either one alone leaves a question the other answers.
@@ -20866,13 +20871,19 @@ void AppController::startPlaybackBenchmark()
     });
 }
 
-void AppController::copyDiagnosticsReport(const QVariantMap &playbackInfo)
+void AppController::copyDiagnosticsReport(const QVariantMap &benchmarkInfo)
 {
-    QString report = DebugReport::formatPlainText(DebugReport::collect());
-    if (!playbackInfo.isEmpty()) {
-        report += QLatin1Char('\n');
-        report += PlaybackDiagnostics::formatPlainText(playbackInfo);
+    QVariantMap playbackInfo = playbackDiagnostics();
+    // The benchmark's sections ride along; its "rows" key, if it ever grows one, must not
+    // displace the ones just collected.
+    for (auto it = benchmarkInfo.cbegin(); it != benchmarkInfo.cend(); ++it) {
+        if (it.key() != QStringLiteral("rows"))
+            playbackInfo.insert(it.key(), it.value());
     }
+
+    QString report = DebugReport::formatPlainText(DebugReport::collect());
+    report += QLatin1Char('\n');
+    report += PlaybackDiagnostics::formatPlainText(playbackInfo);
     copyToClipboard(report);
 }
 

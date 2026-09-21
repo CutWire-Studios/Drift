@@ -2,6 +2,7 @@
 
 #include "PlaybackStats.h"
 #include "engine/ClipReader.h"
+#include "engine/DiagnosticsProbe.h"
 #include "engine/FrameCompositor.h"
 #include "engine/GpuCompositor.h"
 #include "engine/GpuStatus.h"
@@ -115,6 +116,11 @@ QVariantMap PlaybackDiagnostics::benchmarkClip(const QString &path, const QSize 
     const auto stepUs = static_cast<drift::TimeUs>(drift::kUsPerSecond / fps);
     const drift::TimeUs duration = video->durationUs > 0 ? video->durationUs : info.durationUs;
 
+    // Everything below opens its own decoder and imports its own frames through the same
+    // process-wide records the report's live rows read. Hold them, so the sweep's answers stay
+    // in the sweep's own section instead of rewriting what playback was doing.
+    const drift::diag::ProbeScope probe;
+
     ClipReader reader;
     if (!reader.open(file) || !reader.hasVideo()) {
         out.insert(QStringLiteral("error"), trDiag("Could not open that file for decoding."));
@@ -213,9 +219,8 @@ QVariantMap PlaybackDiagnostics::collect(const PlaybackStats &stats, const drift
 
     if (projectFps > 0)
         rows.append(row(trDiag("Project frame rate"), QStringLiteral("%1 fps").arg(projectFps)));
-    rows.append(row(trDiag("Display refresh"),
-                    refreshRate > 0.0 ? QStringLiteral("%1 Hz").arg(refreshRate, 0, 'f', 2)
-                                      : trDiag("unknown")));
+    // No "Display refresh" row here: PlaybackStats::reportRows() below emits one from the
+    // same number, next to the delivered and displayed rates it has to be read against.
     rows.append(row(trDiag("Renderer"), drift::gl::describeGl(gl)));
 
     const std::optional<drift::hwaccel::Backend> active = ClipReader::activeDecodeBackend();

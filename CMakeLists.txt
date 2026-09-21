@@ -550,6 +550,8 @@ add_library(driftengine STATIC
     src/engine/ClipReader.cpp
     src/engine/DebugReport.h
     src/engine/DebugReport.cpp
+    src/engine/DiagnosticsProbe.h
+    src/engine/DiagnosticsProbe.cpp
     src/engine/ClipReaderWorker.h
     src/engine/ClipReaderWorker.cpp
     src/engine/ClipReaderPool.h

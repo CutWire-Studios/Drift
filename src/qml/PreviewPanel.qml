@@ -170,6 +170,10 @@ PanelFrame {
                     PreviewItem {
                         id: preview
                         anchors.fill: parent
+                        // Not decoration: the engine only binds the window's frame cadence —
+                        // afterAnimating, frameSwapped and the screen's refresh rate — once a
+                        // preview names it, and it is what pulls each composited frame across.
+                        playback: EditorState.playback
 
                         // Canvas size is derived from this, so it has to be real
                         // screen pixels: item geometry is in logical units, and
@@ -255,14 +259,6 @@ PanelFrame {
                             color: "transparent"
                             border.width: 1
                             border.color: Theme.guideWeak
-                        }
-                    }
-
-                    Connections {
-                        target: EditorState.playback
-                        function onCurrentFrameChanged() {
-                            preview.textureSize = EditorState.playback.previewTextureSize
-                            preview.textureId = EditorState.playback.previewTextureId
                         }
                     }
 

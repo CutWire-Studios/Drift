@@ -912,7 +912,13 @@ void fillBackground(GlRuntime &rt, QOpenGLExtraFunctions *gl, GlTarget &canvas, 
 // Draws the whole scene into `canvas`. The caller owns the canvas, which is what
 // lets the preview compose straight into a presentation target it then hands to
 // the scene graph, while export composes into a pooled target it reads back.
-void composeOnGlThread(GlRuntime &rt, const GpuScene &scene, GlTarget &canvas)
+// `lostVideo`, when given, is set if a video layer that had a decoded frame produced no
+// target — an importer and the CPU fallback both refusing the same frame. The caller uses it
+// to publish nothing rather than a canvas with that layer missing from it, which is a black
+// flash on screen. Only video reports: a still or a vector that cannot be built fails the
+// same way on every frame, and holding the preview for that would freeze it for good.
+void composeOnGlThread(GlRuntime &rt, const GpuScene &scene, GlTarget &canvas,
+                       bool *lostVideo = nullptr)
 {
     auto *gl = rt.functions();
     if (!gl)
@@ -979,8 +985,11 @@ void composeOnGlThread(GlRuntime &rt, const GpuScene &scene, GlTarget &canvas)
 
         if (!item.isTransition) {
             GlTarget layerTarget = buildLayerTarget(rt, gl, item.layer, canvasSize);
-            if (!layerTarget.isValid())
+            if (!layerTarget.isValid()) {
+                if (lostVideo && item.layer.valid && item.layer.video.isValid())
+                    *lostVideo = true;
                 continue;
+            }
             drawLayerOnCanvas(rt, gl, canvas, layerTarget, item.layer, item.blend, canvasSize);
             rt.releaseTarget(std::move(layerTarget));
             continue;
@@ -1129,7 +1138,13 @@ GpuFrameTexture renderToTexture(const GpuScene &scene)
         if (!canvas.isValid())
             return;
 
-        composeOnGlThread(rt, scene, canvas);
+        bool lostVideo = false;
+        composeOnGlThread(rt, scene, canvas, &lostVideo);
+        // Publishing a canvas a video layer dropped out of shows the viewer a black frame for
+        // one tick. Publishing nothing leaves the last good frame up instead, and the next
+        // composite is already on its way — a repeat reads as a dropped frame, not a flash.
+        if (lostVideo)
+            return;
 
         // Insert a present fence without waiting: Qt Quick samples on the next
         // vsync. acquirePresentTarget waits this fence before reusing the slot.
@@ -1143,7 +1158,7 @@ GpuFrameTexture renderToTexture(const GpuScene &scene)
 
 static_assert(kExportNv12Slots == GlRuntime::kExportNv12Slots);
 
-bool beginExportNv12(const GpuScene &scene, int outW, int outH, int slot)
+bool beginExportNv12(const GpuScene &scene, int outW, int outH, int slot, bool forCuda)
 {
     if (scene.canvasSize.isEmpty() || outW < 2 || outH < 2 || (outW % 2) || (outH % 2)
         || slot < 0 || slot >= kExportNv12Slots)
@@ -1157,7 +1172,7 @@ bool beginExportNv12(const GpuScene &scene, int outW, int outH, int slot)
             return;
 
         composeOnGlThread(rt, scene, canvas);
-        ok = rt.packCanvasToNv12Slot(canvas, outW, outH, slot);
+        ok = rt.packCanvasToNv12Slot(canvas, outW, outH, slot, !forCuda);
         rt.releaseTarget(std::move(canvas));
     });
     return ok;
@@ -1172,6 +1187,17 @@ bool finishExportNv12(int slot, uint8_t *y, int yStride, uint8_t *uv, int uvStri
     GlRuntime &rt = runtime();
     bool ok = false;
     rt.exec([&] { ok = rt.mapNv12Slot(slot, y, yStride, uv, uvStride, width, height); });
+    return ok;
+}
+
+bool finishExportNv12ToCuda(int slot, AVFrame *dst)
+{
+    if (!dst || slot < 0 || slot >= kExportNv12Slots)
+        return false;
+
+    GlRuntime &rt = runtime();
+    bool ok = false;
+    rt.exec([&] { ok = rt.copyNv12SlotToCuda(slot, dst); });
     return ok;
 }
 

@@ -130,10 +130,15 @@ GpuFrameTexture renderToTexture(const GpuScene &scene);
 
 // Export path: compose, convert to BT.709 limited NV12, pack into an async
 // PBO. `slot` is 0 .. kExportNv12Slots-1. finishExportNv12 waits and copies.
-inline constexpr int kExportNv12Slots = 2;
-bool beginExportNv12(const GpuScene &scene, int outW, int outH, int slot);
+inline constexpr int kExportNv12Slots = 3;
+// `forCuda` leaves the planes in GL textures for finishExportNv12ToCuda instead of packing
+// them for readback; the two finishers are not interchangeable for a given slot.
+bool beginExportNv12(const GpuScene &scene, int outW, int outH, int slot, bool forCuda = false);
 bool finishExportNv12(int slot, uint8_t *y, int yStride, uint8_t *uv, int uvStride, int width,
                       int height);
+// NVENC's frame filled device-side from the slot's planes: no readback, no re-upload. `dst`
+// is an AV_PIX_FMT_CUDA/NV12 frame from the encoder's frames context.
+bool finishExportNv12ToCuda(int slot, AVFrame *dst);
 
 bool isAvailable();
 

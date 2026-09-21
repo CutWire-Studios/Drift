@@ -16,6 +16,10 @@ namespace drift::gpu {
 // set of GPUs does not change under a running app in any way the decoders could follow anyway.
 QList<Adapter> hardwareAdapters();
 
+// DXGI index of the first hardware adapter with this PCI vendor id, or -1 when none is present.
+// AMD is matched on 0x1022 as well: some APUs report the CPU vendor id on the graphics adapter.
+int adapterIndexForVendorId(quint16 vendorId);
+
 // DXGI index of the first hardware adapter from the vendor a GL_VENDOR string names, or -1 when
 // the string is empty, names no vendor this recognises, or matches no adapter here.
 int adapterIndexForGlVendor(const QString &glVendor);

@@ -177,6 +177,8 @@ private slots:
     void debugReportListsCommonCodecs();
     void decodeBackendOrderFollowsTheRenderGpu();
     void playbackDiagnosticsReportsStagesAndFindings();
+    void presentRingKeepsResizedTexturesAliveForTheSceneGraph();
+    void debugReportListsEveryAvailableHardwareEncoder();
     void cudaInteropUploadsAFrameWithoutBlanking();
     void d3d11InteropUploadsAFrameWithoutBlanking();
     void decodeAttemptOrderKeepsPinsOnTheRenderGpu();
@@ -3484,6 +3486,80 @@ void EngineTest::clipReaderAutoKeepsCheapClipsOnSoftware()
 // blank. Only runs where GL and NVDEC are on the same NVIDIA GPU — on a hybrid laptop that
 // means launching under PRIME render offload, since an Intel GL context cannot register its
 // textures with a CUDA context at all.
+// The preview hands the scene graph a raw GL texture name out of the presentation ring, and
+// adaptive quality changes the canvas size under it whenever composites run late. Rebuilding a
+// ring slot's FBO for the new size used to delete the texture the scene graph was still drawing
+// — a black frame, every time the quality ratchet moved, which on a slow machine is constantly.
+void EngineTest::presentRingKeepsResizedTexturesAliveForTheSceneGraph()
+{
+    if (!GpuCompositor::isAvailable())
+        QSKIP("OpenGL offscreen context unavailable");
+
+    auto sceneOfSize = [](int size) {
+        GpuScene scene;
+        scene.canvasSize = QSize(size, size);
+        scene.backgroundColor = Qt::blue;
+        return scene;
+    };
+
+    const GpuFrameTexture first = GpuCompositor::renderToTexture(sceneOfSize(64));
+    QVERIFY(first.isValid());
+    const GLuint held = first.textureId;
+    QVERIFY(held != 0);
+
+    auto textureIsLive = [](GLuint name) {
+        bool live = false;
+        drift::gl::runtime().exec([&] {
+            if (auto *gl = drift::gl::runtime().functions())
+                live = gl->glIsTexture(name) == GL_TRUE;
+        });
+        return live;
+    };
+
+    // A different size forces the slot this name came from to be rebuilt. The scene graph is
+    // still holding it, so it has to stay a texture.
+    for (int i = 0; i < drift::gl::GlRuntime::kPresentRingSize; ++i)
+        QVERIFY(GpuCompositor::renderToTexture(sceneOfSize(96)).isValid());
+    QVERIFY2(textureIsLive(held), "the resize freed a texture the scene graph could still be drawing");
+
+    // Once every slot has been published past it, nothing can name it any more and it is freed
+    // rather than leaked for the session.
+    for (int i = 0; i < drift::gl::GlRuntime::kPresentRingSize + 1; ++i)
+        QVERIFY(GpuCompositor::renderToTexture(sceneOfSize(96)).isValid());
+    QVERIFY2(!textureIsLive(held), "retired present targets are never collected");
+}
+
+// The Hardware column used to name whichever vendor came first in Exporter's static order, so a
+// machine with both NVENC and AMF reported only NVENC — which reads as "AMD H.264 is missing".
+void EngineTest::debugReportListsEveryAvailableHardwareEncoder()
+{
+    const QVariantMap info = DebugReport::collect();
+    const QVariantList encoders = info.value(QStringLiteral("encoders")).toList();
+    QVERIFY(!encoders.isEmpty());
+
+    for (const QVariant &row : encoders) {
+        const QVariantMap m = row.toMap();
+        const QString listed = m.value(QStringLiteral("hardwareEncoder")).toString();
+        QCOMPARE(m.value(QStringLiteral("hardware")).toBool(), !listed.isEmpty());
+
+        // Every available hardware encoder whose id matches this codec family has to appear.
+        const QString family = m.value(QStringLiteral("name")).toString().toLower();
+        const QString prefix = family == QStringLiteral("hevc") ? QStringLiteral("h265") : family;
+        QStringList expected;
+        for (const QVariant &v : Exporter::videoCodecs()) {
+            const QVariantMap codec = v.toMap();
+            if (!codec.value(QStringLiteral("hardware")).toBool()
+                || !codec.value(QStringLiteral("available")).toBool()
+                || !codec.value(QStringLiteral("id")).toString().startsWith(prefix))
+                continue;
+            const QString name = codec.value(QStringLiteral("encoderName")).toString();
+            if (!name.isEmpty() && !expected.contains(name))
+                expected.append(name);
+        }
+        QCOMPARE(listed, expected.join(QStringLiteral(", ")));
+    }
+}
+
 void EngineTest::cudaInteropUploadsAFrameWithoutBlanking()
 {
     if (!GpuCompositor::isAvailable())
@@ -3578,7 +3654,10 @@ void EngineTest::playbackDiagnosticsReportsStagesAndFindings()
     for (const QVariant &v : rows)
         labels << v.toMap().value(QStringLiteral("label")).toString();
     QVERIFY(labels.contains(QStringLiteral("Project frame rate")));
+    // Exactly one. Both the collector and PlaybackStats used to emit a row under this label,
+    // so every pasted report answered the question twice, with different words for "unknown".
     QVERIFY(labels.contains(QStringLiteral("Display refresh")));
+    QCOMPARE(labels.count(QStringLiteral("Display refresh")), 1);
     QVERIFY(labels.contains(QStringLiteral("Delivered frames")));
     QVERIFY(labels.contains(QStringLiteral("Displayed frames")));
 

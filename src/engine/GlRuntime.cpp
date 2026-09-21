@@ -422,7 +422,13 @@ using CUcontext = void *;
 using CUstream = void *;
 using CUgraphicsResource = void *;
 
-enum { kCuSuccess = 0, kCuMemoryDevice = 2, kCuMemoryArray = 3, kCuRegisterWriteDiscard = 0x02 };
+enum {
+    kCuSuccess = 0,
+    kCuMemoryDevice = 2,
+    kCuMemoryArray = 3,
+    kCuRegisterReadOnly = 0x01,
+    kCuRegisterWriteDiscard = 0x02,
+};
 
 // CUDA_MEMCPY2D as the *_v2 entry points expect it. The unversioned cuMemcpy2D symbol that
 // libcuda still exports is the v1 ABI, whose equivalent fields are unsigned int rather than
@@ -549,6 +555,21 @@ CUresult queueCudaPlaneCopy(CudaGlApi &api, CUstream stream, CUarray dst, CUdevi
     // CU_STREAM_NON_BLOCKING, which by definition does not synchronise against the legacy
     // null stream — so a copy issued there was unordered with respect to the map and unmap
     // around it, and GL could sample the WRITE_DISCARD textures before the pixels arrived.
+    return api.cuMemcpy2DAsync(&op, stream);
+}
+
+// The export direction: a mapped GL texture out to the encoder's device memory.
+CUresult queueCudaPlaneReadback(CudaGlApi &api, CUstream stream, CUdeviceptr dst, size_t dstPitch,
+                                CUarray src, size_t widthBytes, size_t height)
+{
+    CudaMemcpy2D op{};
+    op.srcMemoryType = kCuMemoryArray;
+    op.srcArray = src;
+    op.dstMemoryType = kCuMemoryDevice;
+    op.dstDevice = dst;
+    op.dstPitch = dstPitch;
+    op.WidthInBytes = widthBytes;
+    op.Height = height;
     return api.cuMemcpy2DAsync(&op, stream);
 }
 
@@ -1240,6 +1261,7 @@ void GlRuntime::shutdown()
             }
             for (GlTarget &target : m_presentRing)
                 target.fbo.reset();
+            m_retiredPresent.clear();
             m_targetPool.clear();
             m_pooledTargets = 0;
             programs.clear();
@@ -1337,10 +1359,45 @@ void GlRuntime::destroyExportNv12State()
         destroyExportNv12Slot(i);
 }
 
+void GlRuntime::unregisterExportCudaResources(int slot)
+{
+#if !defined(Q_OS_MACOS)
+    if (slot < 0 || slot >= kExportNv12Slots)
+        return;
+    ExportNv12Slot &s = m_exportNv12[slot];
+    CudaGlApi &api = cudaGlApi();
+    if (api.ok && (s.cudaY || s.cudaUv)) {
+        // From the context they were registered in, for the same reason the import side does:
+        // CUDA refuses an unregister from anywhere else and the registration would leak.
+        CUcontext owner = nullptr;
+        if (s.cudaDevice) {
+            const auto *device = reinterpret_cast<const AVHWDeviceContext *>(s.cudaDevice->data);
+            if (device && device->hwctx)
+                owner = *reinterpret_cast<CUcontext const *>(device->hwctx);
+        }
+        const bool pushed = owner && api.cuCtxPushCurrent(owner) == kCuSuccess;
+        if (s.cudaY)
+            api.cuGraphicsUnregisterResource(static_cast<CUgraphicsResource>(s.cudaY));
+        if (s.cudaUv)
+            api.cuGraphicsUnregisterResource(static_cast<CUgraphicsResource>(s.cudaUv));
+        if (pushed) {
+            CUcontext popped = nullptr;
+            api.cuCtxPopCurrent(&popped);
+        }
+    }
+    s.cudaY = nullptr;
+    s.cudaUv = nullptr;
+    av_buffer_unref(&s.cudaDevice);
+#else
+    Q_UNUSED(slot);
+#endif
+}
+
 void GlRuntime::destroyExportNv12Slot(int slot)
 {
     if (slot < 0 || slot >= kExportNv12Slots)
         return;
+    unregisterExportCudaResources(slot);
     auto *gl = functions();
     ExportNv12Slot &s = m_exportNv12[slot];
     if (gl) {
@@ -1385,6 +1442,9 @@ bool GlRuntime::ensureExportNv12Slot(QOpenGLExtraFunctions *gl, int slot, int wi
             f = 0;
         }
     };
+    // The textures below are about to be deleted and remade, so any CUDA registration naming
+    // them has to go first.
+    unregisterExportCudaResources(slot);
     if (s.fence) {
         gl->glDeleteSync(s.fence);
         s.fence = nullptr;
@@ -1436,7 +1496,8 @@ bool GlRuntime::ensureExportNv12Slot(QOpenGLExtraFunctions *gl, int slot, int wi
     return true;
 }
 
-bool GlRuntime::packCanvasToNv12Slot(const GlTarget &canvas, int outW, int outH, int slot)
+bool GlRuntime::packCanvasToNv12Slot(const GlTarget &canvas, int outW, int outH, int slot,
+                                     bool readback)
 {
     auto *gl = functions();
     if (!gl || !canvas.isValid() || !ensureExportNv12Slot(gl, slot, outW, outH))
@@ -1476,6 +1537,15 @@ bool GlRuntime::packCanvasToNv12Slot(const GlTarget &canvas, int outW, int outH,
     if (!drawPlane(yProg, s.yFbo, outW, outH) || !drawPlane(uvProg, s.uvFbo, outW / 2, outH / 2))
         return false;
 
+    if (!readback) {
+        // cuGraphicsMapResources orders itself after the GL work already issued on this
+        // context, so the flush is all the synchronisation copyNv12SlotToCuda needs. No fence:
+        // nothing on the GL side waits for these planes again until the next pack, and that
+        // pack is ordered behind the unmap by the same rule.
+        gl->glFlush();
+        return true;
+    }
+
     gl->glBindBuffer(GL_PIXEL_PACK_BUFFER, s.pbo);
     gl->glPixelStorei(GL_PACK_ALIGNMENT, 1);
     gl->glPixelStorei(GL_PACK_ROW_LENGTH, 0);
@@ -1494,6 +1564,95 @@ bool GlRuntime::packCanvasToNv12Slot(const GlTarget &canvas, int outW, int outH,
     gl->glFlush();
     s.fence = gl->glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
     return s.fence != nullptr;
+}
+
+bool GlRuntime::copyNv12SlotToCuda(int slot, AVFrame *dst)
+{
+#if defined(Q_OS_MACOS)
+    Q_UNUSED(slot);
+    Q_UNUSED(dst);
+    return false;
+#else
+    if (slot < 0 || slot >= kExportNv12Slots || !dst || dst->format != AV_PIX_FMT_CUDA
+        || !cudaSwFormatIsNv12(dst))
+        return false;
+
+    ExportNv12Slot &s = m_exportNv12[slot];
+    if (!s.yTex || !s.uvTex || s.width < 2 || s.height < 2 || dst->width != s.width
+        || dst->height != s.height)
+        return false;
+
+    CudaGlApi &api = cudaGlApi();
+    if (!api.ok)
+        return false;
+
+    CUcontext ctx = nullptr;
+    CUstream stream = nullptr;
+    if (!cudaContextOf(dst, &ctx, &stream))
+        return false;
+    if (api.cuCtxPushCurrent(ctx) != kCuSuccess)
+        return false;
+
+    const AVBufferRef *frameDevice =
+        reinterpret_cast<const AVHWFramesContext *>(dst->hw_frames_ctx->data)->device_ref;
+    if (s.cudaDevice && frameDevice && s.cudaDevice->data != frameDevice->data)
+        unregisterExportCudaResources(slot);
+
+    bool ok = false;
+    if (!s.cudaY || !s.cudaUv) {
+        CUgraphicsResource yRes = nullptr;
+        CUgraphicsResource uvRes = nullptr;
+        // Read-only: CUDA never writes these, and telling it so lets the driver skip the
+        // write-back it would otherwise have to assume on unmap.
+        CUresult rc =
+            api.cuGraphicsGLRegisterImage(&yRes, s.yTex, GL_TEXTURE_2D, kCuRegisterReadOnly);
+        if (rc == kCuSuccess)
+            rc = api.cuGraphicsGLRegisterImage(&uvRes, s.uvTex, GL_TEXTURE_2D, kCuRegisterReadOnly);
+        if (rc == kCuSuccess) {
+            s.cudaY = yRes;
+            s.cudaUv = uvRes;
+            s.cudaDevice = frameDevice ? av_buffer_ref(frameDevice) : nullptr;
+        } else {
+            if (yRes)
+                api.cuGraphicsUnregisterResource(yRes);
+            if (uvRes)
+                api.cuGraphicsUnregisterResource(uvRes);
+        }
+    }
+
+    if (s.cudaY && s.cudaUv) {
+        CUgraphicsResource resources[2] = {static_cast<CUgraphicsResource>(s.cudaY),
+                                           static_cast<CUgraphicsResource>(s.cudaUv)};
+        if (api.cuGraphicsMapResources(2, resources, stream) == kCuSuccess) {
+            CUarray yArray = nullptr;
+            CUarray uvArray = nullptr;
+            CUresult rc = api.cuGraphicsSubResourceGetMappedArray(&yArray, resources[0], 0, 0);
+            if (rc == kCuSuccess)
+                rc = api.cuGraphicsSubResourceGetMappedArray(&uvArray, resources[1], 0, 0);
+            bool copied = false;
+            if (rc == kCuSuccess && yArray && uvArray) {
+                // The UV texture is RG8 at half size: width/2 texels of two bytes is width
+                // bytes a row, over half the rows.
+                rc = queueCudaPlaneReadback(api, stream, dst->data[0],
+                                            size_t(qMax(0, dst->linesize[0])), yArray,
+                                            size_t(s.width), size_t(s.height));
+                if (rc == kCuSuccess)
+                    rc = queueCudaPlaneReadback(api, stream, dst->data[1],
+                                                size_t(qMax(0, dst->linesize[1])), uvArray,
+                                                size_t(s.width), size_t(s.height / 2));
+                copied = rc == kCuSuccess;
+            }
+            api.cuGraphicsUnmapResources(2, resources, stream);
+            // Both copies are queued on the frame's stream; the encoder reads the surface from
+            // elsewhere, so wait for them here rather than hand it over mid-flight.
+            ok = copied && api.cuStreamSynchronize(stream) == kCuSuccess;
+        }
+    }
+
+    CUcontext popped = nullptr;
+    api.cuCtxPopCurrent(&popped);
+    return ok;
+#endif
 }
 
 bool GlRuntime::mapNv12Slot(int slot, uint8_t *y, int yStride, uint8_t *uv, int uvStride, int width,
@@ -1928,11 +2087,21 @@ bool GlRuntime::importCudaNv12(QOpenGLExtraFunctions *gl, const AVFrame *frame)
         ok = copyCudaNv12ToTextures(api, stream, static_cast<CUgraphicsResource>(m_cudaYResource),
                                     static_cast<CUgraphicsResource>(m_cudaUvResource), frame, w, h,
                                     &why);
-        if (!ok) {
+        if (ok) {
+            m_cudaCopyFailures = 0;
+        } else {
+            // A copy failure is not the same answer as "this driver cannot do interop": a
+            // registration made against another reader's context, or a map that lost a race
+            // with the decoder, refuses one frame and succeeds on the next once the resources
+            // are registered again. Latching the session off after the first of those is what
+            // pushed every later frame onto the CPU path — and, when that failed too, dropped
+            // the layer out of the composite, which is the black frame. Retry a few times.
             noteZeroCopyDecline(
                 QStringLiteral("copying the NVDEC surface into GL textures failed: %1").arg(why));
             qWarning("GlRuntime: CUDA interop copy failed: %s", qUtf8Printable(why));
-            m_cudaImportFailed = true;
+            unregisterCudaResources();
+            if (++m_cudaCopyFailures >= kCudaCopyFailureLimit)
+                m_cudaImportFailed = true;
         }
     }
 
@@ -2445,6 +2614,11 @@ GlTarget &GlRuntime::acquirePresentTarget(int width, int height)
     if (!slot.isValid() || slot.width != w || slot.height != h) {
         QOpenGLFramebufferObjectFormat fmt;
         fmt.setAttachment(QOpenGLFramebufferObject::NoAttachment);
+        // Retire rather than destroy: the scene graph may still be drawing the texture that
+        // belongs to this FBO, and freeing the name here is what turns an adaptive-quality
+        // rescale into a black frame. markPresentReady collects it once no node can hold it.
+        if (slot.fbo)
+            m_retiredPresent.emplace_back(m_presentPublished, std::move(slot.fbo));
         slot.fbo = std::make_unique<QOpenGLFramebufferObject>(w, h, fmt);
         slot.width = w;
         slot.height = h;
@@ -2476,6 +2650,13 @@ void GlRuntime::markPresentReady(GlTarget &presentTarget)
     }
     gl->glFlush();
     m_presentFence[slotIndex] = gl->glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
+
+    ++m_presentPublished;
+    // Every slot has been published at least once since these left the ring, so no scene-graph
+    // node can still name their textures.
+    std::erase_if(m_retiredPresent, [this](const auto &entry) {
+        return m_presentPublished - entry.first >= quint64(kPresentRingSize);
+    });
 }
 
 QOpenGLShaderProgram *GlRuntime::builtinProgram(const QString &id, const char *vertexSource,
@@ -2911,6 +3092,13 @@ QString GlRuntime::lastZeroCopyDeclineReason()
 {
     QMutexLocker lock(&g_previewImportMutex);
     return g_zeroCopyDeclineReason;
+}
+
+void GlRuntime::restorePreviewUploadPath(PreviewUploadPath path, const QString &declineReason)
+{
+    QMutexLocker lock(&g_previewImportMutex);
+    g_previewUploadPath = path;
+    g_zeroCopyDeclineReason = declineReason;
 }
 
 void setPackageUniforms(QOpenGLShaderProgram *program, const QMap<QString, QVariant> &parameters,

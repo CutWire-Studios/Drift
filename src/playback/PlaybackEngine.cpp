@@ -70,6 +70,10 @@ inline void abandonAudioFocus() {}
 
 constexpr int kPlayheadUpdateMs = 16; // ~60 Hz UI updates, independent of video decode
 
+// Below this a reported refresh rate is a driver placeholder, not a panel. No display
+// Drift can run on refreshes this slowly, and every real one clears it by a wide margin.
+constexpr double kMinPlausibleRefreshHz = 20.0;
+
 // GPU compositor readiness polling. The first ask is deferred past the window's
 // own bring-up so it neither delays launch nor reports a failure that has not
 // happened yet; the cap keeps a machine that will never have a share context
@@ -618,7 +622,11 @@ qint64 PlaybackEngine::refreshIntervalNs() const
 
 void PlaybackEngine::setDisplayRefreshRate(double hz)
 {
-    const double rate = hz > 0.0 ? hz : 0.0;
+    // Not just "> 0": Windows fills QScreen::refreshRate() from GetDeviceCaps(VREFRESH),
+    // which answers 0 or 1 for "the adapter's default mode". Taking 1 Hz literally would
+    // give requestFrameForPresentation a one-second lead and drive the backstop timer at
+    // two seconds — worse than admitting the rate is unknown and running on the timer.
+    const double rate = hz >= kMinPlausibleRefreshHz ? hz : 0.0;
     if (qFuzzyCompare(m_refreshRate, rate))
         return;
     m_refreshRate = rate;

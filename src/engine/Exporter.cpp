@@ -4,6 +4,7 @@
 #include "ClipReaderPool.h"
 #include "FrameCompositor.h"
 #include "GpuCompositor.h"
+#include "GpuPreference.h"
 #include "HwAccel.h"
 #include "core/Project.h"
 #include "core/Time.h"
@@ -357,6 +358,33 @@ AVHWDeviceType hwDeviceType(HwBackend hw)
     return AV_HWDEVICE_TYPE_NONE;
 }
 
+// Which device to hand av_hwdevice_ctx_create for an *encoder*. Empty means FFmpeg's default.
+//
+// AMF is the case that needs this. It maps to a D3D11VA device, and D3D11VA opens on any
+// vendor's adapter quite happily — but the AMF runtime inspects the adapter behind the device
+// and refuses to initialise on anyone else's, so avcodec_open2 fails with nothing more useful
+// than "cannot open". On a hybrid laptop the default is DXGI adapter 0, which with the discrete
+// GPU preferred is the NVIDIA card, and "H.264 (AMD)" then fails on a machine that has a
+// perfectly good AMD encoder. Name the AMD adapter instead.
+//
+// NVENC needs nothing: CUDA enumerates NVIDIA GPUs through the NVIDIA driver rather than DXGI,
+// so adapter order does not reach it. QSV's device string is a child-device spec, not a DXGI
+// index, so it is left alone too.
+QByteArray encoderDeviceString(HwBackend hw)
+{
+#if defined(Q_OS_WIN)
+    if (hw == HwBackend::Amf) {
+        constexpr quint16 kPciVendorAmd = 0x1002;
+        const int index = drift::gpu::adapterIndexForVendorId(kPciVendorAmd);
+        if (index >= 0)
+            return QByteArray::number(index);
+    }
+#else
+    Q_UNUSED(hw);
+#endif
+    return {};
+}
+
 bool hwBackendOnThisOs(HwBackend hw)
 {
     if (hw == HwBackend::None)
@@ -503,8 +531,19 @@ QVariantMap videoDefToMap(const VideoCodecDef &def)
         // MediaCodec has no AVHWDevice to probe — the encoder existing in the build is the whole
         // answer, and deviceAvailable(NONE) is false, which would hide the row outright.
         const AVHWDeviceType type = hwDeviceType(def.hw);
-        if (type != AV_HWDEVICE_TYPE_NONE)
-            available = available && drift::hwaccel::deviceAvailable(type);
+        if (type != AV_HWDEVICE_TYPE_NONE) {
+            // Probe the same device the export will open, not the decode default. An AMD row on
+            // a machine with no AMD adapter now says so here instead of at avcodec_open2, an
+            // hour into someone's render.
+            const QByteArray device = encoderDeviceString(def.hw);
+#if defined(Q_OS_WIN)
+            // An empty string here means no adapter of that vendor is installed at all, and
+            // D3D11VA would happily open on someone else's and let AMF fail later.
+            if (def.hw == HwBackend::Amf && device.isEmpty())
+                available = false;
+#endif
+            available = available && drift::hwaccel::deviceAvailable(type, device);
+        }
     }
 
     QVariantMap m;
@@ -2061,8 +2100,12 @@ bool Exporter::run(const drift::Project &project, const ExportSettings &settings
             // deviceAvailable() first, not just for the answer: it is the only VAAPI probe
             // that survives a host with no libva, where FFmpeg's stub asserts instead.
             // A codec id restored from settings can name an encoder this machine cannot run.
-            if (!drift::hwaccel::deviceAvailable(type)
-                || av_hwdevice_ctx_create(&hwDeviceCtx, type, nullptr, nullptr, 0) < 0) {
+            const QByteArray hwDevice = encoderDeviceString(vdef->hw);
+            if (!drift::hwaccel::deviceAvailable(type, hwDevice)
+                || av_hwdevice_ctx_create(&hwDeviceCtx, type,
+                                          hwDevice.isEmpty() ? nullptr : hwDevice.constData(),
+                                          nullptr, 0)
+                    < 0) {
                 error = QStringLiteral("Could not create the %1 encoder device.")
                             .arg(QLatin1String(hwVendorName(vdef->hw)));
                 goto cleanup;
@@ -2225,23 +2268,29 @@ bool Exporter::run(const drift::Project &project, const ExportSettings &settings
             return true;
         };
 
-        auto sendVideoAndAudio = [&](int64_t pts) -> bool {
-            applySdrBt709Tags(vframe);
-            vframe->pts = pts;
-            AVFrame *encodeFrame = vframe;
-            if (hwUpload) {
-                av_frame_unref(hwframe);
-                if (av_hwframe_get_buffer(vctx->hw_frames_ctx, hwframe, 0) < 0) {
-                    error = QStringLiteral("Could not allocate a hardware frame");
-                    return false;
+        // `ready` is a hardware frame the caller already filled — the CUDA export path, which
+        // writes the encoder's surface straight from the compositor's GL textures. Everyone
+        // else hands over nothing and pays for the system-memory round trip below.
+        auto sendVideoAndAudio = [&](int64_t pts, AVFrame *ready = nullptr) -> bool {
+            AVFrame *encodeFrame = ready;
+            if (!encodeFrame) {
+                applySdrBt709Tags(vframe);
+                vframe->pts = pts;
+                encodeFrame = vframe;
+                if (hwUpload) {
+                    av_frame_unref(hwframe);
+                    if (av_hwframe_get_buffer(vctx->hw_frames_ctx, hwframe, 0) < 0) {
+                        error = QStringLiteral("Could not allocate a hardware frame");
+                        return false;
+                    }
+                    if (av_hwframe_transfer_data(hwframe, vframe, 0) < 0) {
+                        error = QStringLiteral("Could not upload a frame to the encoder");
+                        return false;
+                    }
+                    applySdrBt709Tags(hwframe);
+                    hwframe->pts = pts;
+                    encodeFrame = hwframe;
                 }
-                if (av_hwframe_transfer_data(hwframe, vframe, 0) < 0) {
-                    error = QStringLiteral("Could not upload a frame to the encoder");
-                    return false;
-                }
-                applySdrBt709Tags(hwframe);
-                hwframe->pts = pts;
-                encodeFrame = hwframe;
             }
             if (!encodeWriteFrame(fmt, vctx, vstream, encodeFrame, pkt, &error))
                 return false;
@@ -2280,10 +2329,23 @@ bool Exporter::run(const drift::Project &project, const ExportSettings &settings
         {
             int slot = 0;
             int64_t pts = 0;
+            drift::TimeUs timeUs = 0;
             bool packed = false;
         };
         InflightNv12 inflight[GpuCompositor::kExportNv12Slots];
         int inflightCount = 0;
+
+        // NVENC's frame can be filled from the compositor's own GL textures, which skips a
+        // full-frame readback into system memory and the matching upload back to the card —
+        // two copies of every frame, on a path where nothing ever looks at the CPU pixels.
+        // Only NVENC: it is the one encoder whose surfaces are CUDA memory the GL interop can
+        // reach. Latches off on the first refusal and the export finishes the ordinary way.
+        // The GL vendor matters as much as the encoder: CUDA can only register textures that
+        // live on its own GPU, so on a hybrid machine compositing on the integrated one the
+        // registration cannot succeed and every frame would pay for a composite it throws away.
+        bool cudaExport = useGpuNv12 && hwUpload && vdef->hw == HwBackend::Nvenc
+            && swPixFmt == AV_PIX_FMT_NV12 && outPixFmt == AV_PIX_FMT_CUDA
+            && GpuCompositor::status().vendor.contains(QStringLiteral("NVIDIA"), Qt::CaseInsensitive);
 
         auto consumeNv12Head = [&]() -> bool {
             const InflightNv12 job = inflight[0];
@@ -2291,13 +2353,39 @@ bool Exporter::run(const drift::Project &project, const ExportSettings &settings
                 inflight[i] = inflight[i + 1];
             --inflightCount;
 
+            bool packed = job.packed;
+            if (cudaExport && packed) {
+                av_frame_unref(hwframe);
+                if (av_hwframe_get_buffer(vctx->hw_frames_ctx, hwframe, 0) < 0) {
+                    error = QStringLiteral("Could not allocate a hardware frame");
+                    return false;
+                }
+                if (GpuCompositor::finishExportNv12ToCuda(job.slot, hwframe)) {
+                    applySdrBt709Tags(hwframe);
+                    hwframe->pts = job.pts;
+                    return sendVideoAndAudio(job.pts, hwframe);
+                }
+                // The planes were never packed for readback, so this frame has to be composed
+                // again the ordinary way rather than salvaged out of the PBO. Every frame after
+                // it is packed for readback from the start.
+                av_frame_unref(hwframe);
+                cudaExport = false;
+                GpuScene retry;
+                if (!compositor.buildSceneAt(job.timeUs, composeOptions, &retry)) {
+                    retry = GpuScene{};
+                    retry.canvasSize = QSize(outW, outH);
+                    retry.backgroundColor = Qt::black;
+                }
+                packed = GpuCompositor::beginExportNv12(retry, outW, outH, job.slot);
+            }
+
             if (av_frame_make_writable(vframe) < 0) {
                 error = QStringLiteral("Video frame not writable");
                 return false;
             }
 
             bool mapped = false;
-            if (job.packed) {
+            if (packed) {
                 if (swPixFmt == AV_PIX_FMT_NV12) {
                     mapped = GpuCompositor::finishExportNv12(job.slot, vframe->data[0],
                                                              vframe->linesize[0], vframe->data[1],
@@ -2342,8 +2430,9 @@ bool Exporter::run(const drift::Project &project, const ExportSettings &settings
                 }
 
                 const int slot = int(i % GpuCompositor::kExportNv12Slots);
-                const bool packed = GpuCompositor::beginExportNv12(scene, outW, outH, slot);
-                inflight[inflightCount++] = InflightNv12{slot, i, packed};
+                const bool packed =
+                    GpuCompositor::beginExportNv12(scene, outW, outH, slot, cudaExport);
+                inflight[inflightCount++] = InflightNv12{slot, i, t, packed};
                 continue;
             }
 

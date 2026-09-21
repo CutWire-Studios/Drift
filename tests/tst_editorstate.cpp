@@ -82,6 +82,7 @@ private slots:
     void splitLeftRightUndoRestoresTheDiscardedHalf();
     void deleteLeftRightActionsCutAtThePlayhead();
     void playbackRateStepsThroughTheOfferedRates();
+    void displayRefreshRateIgnoresDriverPlaceholders();
     void workAreaMarkClearAndUndo();
     void bookmarkSnapTarget();
     void renameClipAndAsset();
@@ -483,6 +484,34 @@ void EditorStateTest::deleteLeftRightActionsCutAtThePlayhead()
     QCOMPARE(state.project()->tracks().at(0).clips.at(0).timelineStart, drift::secondsToUs(0.0));
     QCOMPARE(state.project()->tracks().at(0).clips.at(0).timelineDuration, drift::secondsToUs(4.0));
     QCOMPARE(state.project()->tracks().at(0).clips.at(1).timelineStart, drift::secondsToUs(4.0));
+}
+
+// Windows fills QScreen::refreshRate() from GetDeviceCaps(VREFRESH), which answers 0 or 1 for
+// "the adapter's default mode". Taking 1 Hz at face value gives the preview a one-second
+// presentation lead and a two-second backstop timer, which is worse than no rate at all: with
+// none, requestFrameForPresentation aims at now and the timer runs at the frame interval.
+void EditorStateTest::displayRefreshRateIgnoresDriverPlaceholders()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    PlaybackEngine *playback = state.playback();
+
+    QCOMPARE(playback->displayRefreshRate(), 0.0);
+
+    playback->setDisplayRefreshRate(60.0);
+    QCOMPARE(playback->displayRefreshRate(), 60.0);
+
+    for (double placeholder : {0.0, 1.0, -1.0}) {
+        playback->setDisplayRefreshRate(placeholder);
+        QCOMPARE(playback->displayRefreshRate(), 0.0);
+        playback->setDisplayRefreshRate(60.0);
+    }
+
+    // A real panel that is not 60: 48 Hz on battery, 240 on a gaming display.
+    playback->setDisplayRefreshRate(47.95);
+    QCOMPARE(playback->displayRefreshRate(), 47.95);
+    playback->setDisplayRefreshRate(240.0);
+    QCOMPARE(playback->displayRefreshRate(), 240.0);
 }
 
 void EditorStateTest::playbackRateStepsThroughTheOfferedRates()

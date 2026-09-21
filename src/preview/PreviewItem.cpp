@@ -16,6 +16,17 @@ PreviewItem::PreviewItem(QQuickItem *parent)
     connect(this, &QQuickItem::windowChanged, this, &PreviewItem::bindDisplayCadence);
 }
 
+PreviewItem::~PreviewItem()
+{
+    // The cadence connections are made from the window to the *engine*, not to this item, so
+    // they outlive it: a panel rebuilt by a layout change would leave the old item's pair
+    // running beside the new one's, double-counting every buffer swap.
+    disconnect(m_afterAnimatingConn);
+    disconnect(m_frameSwappedConn);
+    disconnect(m_screenChangedConn);
+    disconnect(m_refreshRateConn);
+}
+
 void PreviewItem::setPlayback(PlaybackEngine *engine)
 {
     if (m_playback == engine)
@@ -43,6 +54,7 @@ void PreviewItem::bindDisplayCadence()
     disconnect(m_afterAnimatingConn);
     disconnect(m_frameSwappedConn);
     disconnect(m_screenChangedConn);
+    disconnect(m_refreshRateConn);
     m_cadenceWindow = win;
 
     if (!win || !m_playback) {
@@ -73,7 +85,14 @@ void PreviewItem::reportRefreshRate()
     if (!m_playback)
         return;
     const QQuickWindow *win = window();
-    const QScreen *screen = win ? win->screen() : nullptr;
+    QScreen *screen = win ? win->screen() : nullptr;
+    // A panel can change mode under us — a laptop dropping to 48 Hz on battery, a
+    // variable-refresh monitor renegotiating — and screenChanged does not fire for that.
+    disconnect(m_refreshRateConn);
+    if (screen) {
+        m_refreshRateConn =
+            connect(screen, &QScreen::refreshRateChanged, this, [this](qreal) { reportRefreshRate(); });
+    }
     m_playback->setDisplayRefreshRate(screen ? screen->refreshRate() : 0.0);
 }
 

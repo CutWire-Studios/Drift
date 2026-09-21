@@ -27,6 +27,18 @@
 #include <QVariantList>
 #include <utility>
 
+#if defined(Q_OS_WIN)
+#ifndef WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN
+#endif
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
+#include <windows.h>
+#elif defined(Q_OS_MACOS)
+#include <sys/sysctl.h>
+#endif
+
 #ifndef DRIFT_VERSION
 #define DRIFT_VERSION "0.0.0"
 #endif
@@ -101,6 +113,42 @@ QString cpuModel()
         }
         if (!hardware.isEmpty())
             return hardware;
+    }
+#elif defined(Q_OS_WIN)
+    // Where the kernel publishes what CPUID reported. Reports pasted from Windows used to say
+    // nothing but "x86_64", which cannot distinguish the machines these bugs turn up on.
+    {
+        HKEY key = nullptr;
+        if (RegOpenKeyExW(HKEY_LOCAL_MACHINE,
+                          L"HARDWARE\\DESCRIPTION\\System\\CentralProcessor\\0", 0,
+                          KEY_QUERY_VALUE, &key)
+            == ERROR_SUCCESS) {
+            wchar_t name[256] = {};
+            DWORD bytes = sizeof(name);
+            DWORD type = 0;
+            const LSTATUS rc =
+                RegQueryValueExW(key, L"ProcessorNameString", nullptr, &type,
+                                 reinterpret_cast<LPBYTE>(name), &bytes);
+            RegCloseKey(key);
+            if (rc == ERROR_SUCCESS && type == REG_SZ) {
+                const QString value = QString::fromWCharArray(name).trimmed();
+                if (!value.isEmpty())
+                    return value;
+            }
+        }
+    }
+#elif defined(Q_OS_MACOS)
+    {
+        size_t size = 0;
+        if (sysctlbyname("machdep.cpu.brand_string", nullptr, &size, nullptr, 0) == 0 && size > 0) {
+            QByteArray brand(int(size), '\0');
+            if (sysctlbyname("machdep.cpu.brand_string", brand.data(), &size, nullptr, 0) == 0) {
+                // sysctl counts the terminator in `size`; constData() stops at it.
+                const QString value = QString::fromUtf8(brand.constData()).trimmed();
+                if (!value.isEmpty())
+                    return value;
+            }
+        }
     }
 #endif
     return QSysInfo::currentCpuArchitecture();
@@ -526,32 +574,38 @@ QVariantMap DebugReport::collect()
     };
 
     const QVariantList exportCodecs = Exporter::videoCodecs();
-    auto firstHwEncoder = [&exportCodecs](const char *prefix) -> QVariantMap {
+    // Every usable one, not the first. The table used to print whichever vendor came first in
+    // Exporter's static order — always NVENC where it exists — which reads as "AMD H.264 is
+    // missing" on a machine that has it, and sent this exact bug down the wrong path.
+    auto hwEncoders = [&exportCodecs](const char *prefix) -> QStringList {
         const QString pre = QString::fromLatin1(prefix);
+        QStringList names;
         for (const QVariant &v : exportCodecs) {
             const QVariantMap m = v.toMap();
             if (!m.value(QStringLiteral("hardware")).toBool())
                 continue;
             if (!m.value(QStringLiteral("id")).toString().startsWith(pre))
                 continue;
-            if (m.value(QStringLiteral("available")).toBool())
-                return m;
+            if (!m.value(QStringLiteral("available")).toBool())
+                continue;
+            const QString name = m.value(QStringLiteral("encoderName")).toString();
+            if (!name.isEmpty() && !names.contains(name))
+                names.append(name);
         }
-        return {};
+        return names;
     };
 
     QVariantList encoders;
     for (const EncoderSpec &spec : kEncoders) {
         const AVCodec *software = findNamedEncoder(spec.softwareNames);
-        const QVariantMap hw = firstHwEncoder(spec.hwIdPrefix);
+        const QStringList hw = hwEncoders(spec.hwIdPrefix);
         QVariantMap row;
         row.insert(QStringLiteral("name"), QString::fromLatin1(spec.name));
         row.insert(QStringLiteral("software"), software != nullptr);
         row.insert(QStringLiteral("hardware"), !hw.isEmpty());
         row.insert(QStringLiteral("softwareEncoder"),
                    software ? QString::fromUtf8(software->name) : QString());
-        row.insert(QStringLiteral("hardwareEncoder"),
-                   hw.value(QStringLiteral("encoderName")).toString());
+        row.insert(QStringLiteral("hardwareEncoder"), hw.join(QStringLiteral(", ")));
         encoders.append(row);
     }
 
