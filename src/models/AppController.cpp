@@ -1320,6 +1320,23 @@ void AppController::notifyTracksChanged()
     m_tracksCache.clear();
     m_durationCacheValid = false;
     ++m_tracksRevision;
+    // Inside a batch the invalidation above has already happened, so a reader still gets the
+    // truth; only the announcement is held back, and the batch sends exactly one.
+    if (m_tracksBatchDepth > 0) {
+        m_tracksBatchPending = true;
+        return;
+    }
+    emit tracksChanged();
+}
+
+void AppController::endTracksBatch()
+{
+    if (--m_tracksBatchDepth > 0)
+        return;
+    m_tracksBatchDepth = 0;
+    if (!m_tracksBatchPending)
+        return;
+    m_tracksBatchPending = false;
     emit tracksChanged();
 }
 
@@ -6731,6 +6748,26 @@ int AppController::applyTrim(int trackIndex, int clipIndex, const TrimComputatio
     m_trimGestureChanged = true;
     notifyTracksChanged();
     return m_trimGestureLastOutcome = computed.outcome;
+}
+
+void AppController::commitTrim(int trackIndex, int clipIndex, int side, double seconds)
+{
+    beginTracksBatch();
+    if (seconds >= 0) {
+        if (side < 0)
+            trimClipLeft(trackIndex, clipIndex, seconds);
+        else
+            trimClipRight(trackIndex, clipIndex, seconds);
+    }
+    // A press and release that never moved the edge is a click, not an edit: committing it would
+    // push an undo step that restores nothing and mark the project dirty for having done nothing.
+    const bool moved = m_trimGestureChanged;
+    endTrimGesture();
+    if (moved)
+        commitPreviewDrag();
+    else
+        cancelPreviewDrag();
+    endTracksBatch();
 }
 
 int AppController::trimClipLeft(int trackIndex, int clipIndex, double newStart)

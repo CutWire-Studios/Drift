@@ -15,8 +15,12 @@ public:
     void undo() override;
     void redo() override;
 
-    QString beforeHash() const { return m_beforeHash; }
-    QString afterHash() const { return m_afterHash; }
+    // Computed on first ask, not in the constructor. Hashing a snapshot means serialising the
+    // whole project to JSON and running SHA-256 over it -- twice per edit, once for each side --
+    // and the only thing that ever reads the result is history introspection over MCP. Every
+    // edit in the app was paying for an answer almost nothing asks for.
+    QString beforeHash() const;
+    QString afterHash() const;
     const Project &before() const { return m_before; }
     const Project &after() const { return m_after; }
 
@@ -24,8 +28,8 @@ private:
     Project *m_project = nullptr;
     Project m_before;
     Project m_after;
-    QString m_beforeHash;
-    QString m_afterHash;
+    mutable QString m_beforeHash;
+    mutable QString m_afterHash;
 };
 
 } // namespace drift

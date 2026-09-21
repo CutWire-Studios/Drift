@@ -136,6 +136,8 @@ private slots:
     void overlapDoesNotAutoApplyCrossfade();
     void trimmingOverlapClampsStaleTransitionDuration();
     void trimPushesOneUndoStepAndMarksDirty();
+    void commitTrimSendsOneTimelineNotification();
+    void commitTrimWithoutMovementLeavesNoUndoStep();
     void trimmingCarriesTheLinkedAudioPartner();
     void previewTrimMatchesTheCommittedTrim();
     void movedClipDoesNotSnapToItsOwnEdges();
@@ -3510,6 +3512,54 @@ void EditorStateTest::previewTrimMatchesTheCommittedTrim()
     }
 }
 
+
+
+
+void EditorStateTest::commitTrimSendsOneTimelineNotification()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    state.setSnapEnabled(false);
+    buildOneClipProject(state, 0.0, 10.0);
+
+    // Releasing a trim used to announce the timeline three times -- once for the edit, once for
+    // the undo push, once from finishEdit -- and each one rebuilt every clip in the project into
+    // QVariantMaps. commitTrim batches the lot behind a single notification.
+    QSignalSpy spy(&state, &AppController::tracksChanged);
+    state.beginPreviewDrag(QStringLiteral("Trim clip"));
+    state.beginTrimGesture(0, 0, 1);
+    state.commitTrim(0, 0, 1, 6.0);
+
+    QCOMPARE(spy.count(), 1);
+    QCOMPARE(state.m_undoStack.count(), 1);
+    QVERIFY(state.hasUnsavedChanges());
+    QCOMPARE(drift::usToSeconds(state.project()->tracks()[0].clips[0].timelineDuration), 6.0);
+
+    // The cache must still be correct after a batched notification, not just eventually.
+    const QVariantList tracks = state.tracks();
+    QCOMPARE(tracks.at(0).toMap().value(QStringLiteral("clips")).toList()
+                 .at(0).toMap().value(QStringLiteral("duration")).toDouble(), 6.0);
+
+    state.undo();
+    QCOMPARE(drift::usToSeconds(state.project()->tracks()[0].clips[0].timelineDuration), 10.0);
+}
+
+void EditorStateTest::commitTrimWithoutMovementLeavesNoUndoStep()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    state.setSnapEnabled(false);
+    buildOneClipProject(state, 0.0, 10.0);
+
+    // seconds < 0 is the handler saying the gesture never moved the edge.
+    state.beginPreviewDrag(QStringLiteral("Trim clip"));
+    state.beginTrimGesture(0, 0, 1);
+    state.commitTrim(0, 0, 1, -1.0);
+
+    QCOMPARE(state.m_undoStack.count(), 0);
+    QVERIFY(!state.hasUnsavedChanges());
+    QCOMPARE(drift::usToSeconds(state.project()->tracks()[0].clips[0].timelineDuration), 10.0);
+}
 
 void EditorStateTest::trimPushesOneUndoStepAndMarksDirty()
 {

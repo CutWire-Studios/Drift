@@ -1663,17 +1663,10 @@ Item {
                     // geometry bindings are reading the project again by the time it lands.
                     clipItem.trimPreviewActive = false
                     panel.clearTrimFollow()
-                    if (lastTrimSeconds >= 0)
-                        EditorState.trimClipLeft(clipItem.trackIndex, clipItem.clipIndex, lastTrimSeconds)
-                    // A press and release that never moved the edge is a click, not an edit.
-                    // Committing it anyway would push an undo step that restores nothing and
-                    // would mark the project dirty for having done nothing.
-                    const moved = EditorState.trimGestureChangedProject()
-                    EditorState.endTrimGesture()
-                    if (moved)
-                        EditorState.commitPreviewDrag()
-                    else
-                        EditorState.cancelPreviewDrag()
+                    // One call, so the edit, the undo push and finishEdit announce the timeline
+                    // once between them rather than three times.
+                    EditorState.commitTrim(clipItem.trackIndex, clipItem.clipIndex,
+                                           -1, lastTrimSeconds)
                 }
             }
             onCanceled: {
@@ -1805,17 +1798,10 @@ Item {
                     // geometry bindings are reading the project again by the time it lands.
                     clipItem.trimPreviewActive = false
                     panel.clearTrimFollow()
-                    if (lastTrimSeconds >= 0)
-                        EditorState.trimClipRight(clipItem.trackIndex, clipItem.clipIndex, lastTrimSeconds)
-                    // A press and release that never moved the edge is a click, not an edit.
-                    // Committing it anyway would push an undo step that restores nothing and
-                    // would mark the project dirty for having done nothing.
-                    const moved = EditorState.trimGestureChangedProject()
-                    EditorState.endTrimGesture()
-                    if (moved)
-                        EditorState.commitPreviewDrag()
-                    else
-                        EditorState.cancelPreviewDrag()
+                    // One call, so the edit, the undo push and finishEdit announce the timeline
+                    // once between them rather than three times.
+                    EditorState.commitTrim(clipItem.trackIndex, clipItem.clipIndex,
+                                           1, lastTrimSeconds)
                 }
             }
             onCanceled: {

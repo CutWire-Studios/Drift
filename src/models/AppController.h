@@ -1084,6 +1084,12 @@ public:
     // actually moved — a press and release with no movement must not leave an undo step behind.
     Q_INVOKABLE void beginTrimGesture(int trackIndex, int clipIndex, int side);
     Q_INVOKABLE void endTrimGesture();
+    // The whole release in one call: the edit, closing the gesture, and the undo commit. Done
+    // separately from QML they sent three "the timeline changed" notifications -- one for the
+    // edit, one for the undo push, one from finishEdit -- and each rebuilt the entire timeline
+    // model. `side` < 0 is the left edge. `seconds` < 0 means the gesture never moved the edge,
+    // so there is nothing to commit.
+    Q_INVOKABLE void commitTrim(int trackIndex, int clipIndex, int side, double seconds);
     Q_INVOKABLE bool trimGestureChangedProject() const { return m_trimGestureChanged; }
 
     // One step of a live trim drag, in timeline seconds. Returns a TrimOutcome rather than void:
@@ -1831,6 +1837,13 @@ protected:
     static QVariantMap trimPreviewToMap(const TrimComputation &computed);
 
     void notifyTracksChanged();
+    // Holds tracksChanged for the length of an operation that touches the project several times.
+    // The caches are still dropped immediately, so anything reading tracks() inside the batch
+    // sees fresh data -- only the notification waits, and only one goes out.
+    void beginTracksBatch() { ++m_tracksBatchDepth; }
+    void endTracksBatch();
+    int m_tracksBatchDepth = 0;
+    bool m_tracksBatchPending = false;
     // Same rule as notifyTracksChanged(): bump the revision before the signal goes out, so no
     // reader can observe the old value on the new selection.
     void notifySelectionChanged();

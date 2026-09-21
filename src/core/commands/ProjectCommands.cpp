@@ -8,9 +8,21 @@ ProjectSnapshotCommand::ProjectSnapshotCommand(Project *project, Project before,
     , m_project(project)
     , m_before(std::move(before))
     , m_after(std::move(after))
-    , m_beforeHash(m_before.contentHash())
-    , m_afterHash(m_after.contentHash())
 {
+}
+
+QString ProjectSnapshotCommand::beforeHash() const
+{
+    if (m_beforeHash.isEmpty())
+        m_beforeHash = m_before.contentHash();
+    return m_beforeHash;
+}
+
+QString ProjectSnapshotCommand::afterHash() const
+{
+    if (m_afterHash.isEmpty())
+        m_afterHash = m_after.contentHash();
+    return m_afterHash;
 }
 
 void ProjectSnapshotCommand::undo()
