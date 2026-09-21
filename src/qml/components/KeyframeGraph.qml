@@ -169,7 +169,7 @@ Item {
     // [{ prop, label, color, points, enabled, shown, valueMin, valueMax }, ...]
     readonly property var allSeries: {
         void EditorState.selectedClipData
-        void EditorState.tracks
+        void EditorState.tracksRevision
         void EditorState.keyframeGraphHiddenProperties
         if (!hasClip)
             return []

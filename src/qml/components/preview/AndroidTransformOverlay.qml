@@ -139,12 +139,12 @@ Item {
             // Live clip style — tracks EditorState so property-sheet edits apply
             // to the inline editor in real time.
             readonly property var liveStyle: {
-                void EditorState.tracks
+                void EditorState.tracksRevision
                 const info = EditorState.clipAt(modelData.track, modelData.clip)
                 return info && info.textStyle ? info.textStyle : null
             }
             readonly property var liveClip: {
-                void EditorState.tracks
+                void EditorState.tracksRevision
                 return EditorState.clipAt(modelData.track, modelData.clip)
             }
 

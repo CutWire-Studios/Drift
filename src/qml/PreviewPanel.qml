@@ -24,7 +24,7 @@ PanelFrame {
     // Frame rate of the project, not a fixed 30 — the timecode readout showed
     // wrong frame numbers for every project that was not 30fps.
     readonly property int projectFps: {
-        void EditorState.tracks
+        void EditorState.tracksRevision
         const fps = EditorState.projectFps()
         return fps > 0 ? fps : 30
     }
@@ -62,7 +62,7 @@ PanelFrame {
                 anchors.margins: Theme.spacingLg
 
                 property real aspect: {
-                    void EditorState.tracks
+                    void EditorState.tracksRevision
                     const w = EditorState.projectWidth()
                     const h = EditorState.projectHeight()
                     return (w > 0 && h > 0) ? (w / h) : (16 / 9)
@@ -270,7 +270,7 @@ PanelFrame {
                     EmptyState {
                         anchors.centerIn: parent
                         width: Math.min(parent.width - Theme.spacing3xl, 280)
-                        visible: EditorState.tracks.length === 0
+                        visible: EditorState.trackCount === 0
                         glyph: Theme.icons.film
                         title: qsTr("Nothing to preview yet")
                         // No CTA: importing and adding tracks both live in the panels
@@ -286,7 +286,7 @@ PanelFrame {
                     EmptyState {
                         anchors.centerIn: parent
                         width: Math.min(parent.width - Theme.spacing3xl, 280)
-                        visible: EditorState.tracks.length > 0
+                        visible: EditorState.trackCount > 0
                                  && EditorState.playback.gpuCompositorStatus !== "unknown"
                                  && !EditorState.playback.gpuCompositorReady
                         glyph: Theme.icons.warning
@@ -308,7 +308,7 @@ PanelFrame {
                         // Only ever a gap message now: when the compositor is down the
                         // state above explains that instead.
                         opacity: EditorState.playback.hasFrame
-                                 || EditorState.tracks.length === 0
+                                 || EditorState.trackCount === 0
                                  || !EditorState.playback.gpuCompositorReady ? 0 : 1
                         text: EditorState.activeAudioClipAtPlayhead().path
                               ? qsTr("Audio only") : qsTr("No clip at the current time")

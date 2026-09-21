@@ -19,8 +19,8 @@ Item {
     property var previewViewport
     property var previewCanvas
 
-    readonly property int projW: { void EditorState.tracks; return Math.max(1, EditorState.projectWidth()) }
-    readonly property int projH: { void EditorState.tracks; return Math.max(1, EditorState.projectHeight()) }
+    readonly property int projW: { void EditorState.tracksRevision; return Math.max(1, EditorState.projectWidth()) }
+    readonly property int projH: { void EditorState.tracksRevision; return Math.max(1, EditorState.projectHeight()) }
     // Project px → viewport px.
     readonly property real pxScale: root.previewCanvas.width / projW
 

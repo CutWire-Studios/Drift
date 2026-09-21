@@ -388,15 +388,7 @@ Item {
                             // the drop target invisible for the whole gesture.
                             if (TouchDrag.active)
                                 return false
-                            void EditorState.tracks
-                            const tracks = EditorState.tracks
-                            if (!tracks || tracks.length === 0)
-                                return true
-                            for (var i = 0; i < tracks.length; ++i) {
-                                if (tracks[i].clips && tracks[i].clips.length > 0)
-                                    return false
-                            }
-                            return true
+                            return EditorState.clipCount === 0
                         }
                         color: Qt.rgba(Theme.appBackground.r, Theme.appBackground.g,
                                        Theme.appBackground.b, 0.82)

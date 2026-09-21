@@ -23,7 +23,7 @@ Window {
     readonly property real durationSeconds: EditorState.durationSeconds
 
     readonly property int projectFps: {
-        void EditorState.tracks
+        void EditorState.tracksRevision
         const fps = EditorState.projectFps()
         return fps > 0 ? fps : 30
     }

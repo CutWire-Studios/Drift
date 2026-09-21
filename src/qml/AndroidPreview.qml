@@ -35,7 +35,7 @@ Item {
     readonly property bool playing: EditorState.playing
 
     readonly property int projectFps: {
-        void EditorState.tracks
+        void EditorState.tracksRevision
         const fps = EditorState.projectFps()
         return fps > 0 ? fps : 30
     }
@@ -106,7 +106,7 @@ Item {
                 anchors.margins: Theme.spacing2xl
 
                 property real aspect: {
-                    void EditorState.tracks
+                    void EditorState.tracksRevision
                     const w = EditorState.projectWidth()
                     const h = EditorState.projectHeight()
                     return (w > 0 && h > 0) ? (w / h) : (16 / 9)

@@ -770,7 +770,7 @@ AppController::AppController(AssetLibrary *assetLibrary, QObject *parent)
             setCurrentBinFolderId(QString());
         normalizeSelection();
         setDirty(true);
-        emit tracksChanged();
+        notifyTracksChanged();
         emit bookmarksChanged();
         emit workAreaChanged();
         emit projectNameChanged();
@@ -894,8 +894,10 @@ AppController::AppController(AssetLibrary *assetLibrary, QObject *parent)
         }
     });
     connect(this, &AppController::tracksChanged, this, [this] {
-        m_timelineModel.refresh();
-        m_clipListModel.refresh();
+        // Deliberately no m_timelineModel/m_clipListModel refresh here. Both are
+        // beginResetModel()/endResetModel() and no QML view binds either of them, so on every
+        // edit they were tearing down and rebuilding views nobody was watching. The refresh in
+        // the QUndoStack::indexChanged handler stays, so they remain correct if ever wired up.
         if (m_multicamActive && !m_multicamSnaps.isEmpty()) {
             bool intact = true;
             for (const MulticamAngleSnap &snap : m_multicamSnaps) {
@@ -1274,8 +1276,31 @@ void syncOverlapTransitions(drift::Project &project)
 
 } // namespace
 
+int AppController::clipCount() const
+{
+    int total = 0;
+    for (const drift::Track &track : m_project.tracks())
+        total += track.clips.size();
+    return total;
+}
+
+void AppController::notifyTracksChanged()
+{
+    m_tracksCacheValid = false;
+    // Dropped now rather than left to the next rebuild: this is a QVariant graph over every clip
+    // in the project, and holding a stale one until the next read doubles the peak.
+    m_tracksCache.clear();
+    m_durationCacheValid = false;
+    ++m_tracksRevision;
+    emit tracksChanged();
+}
+
 QVariantList AppController::tracks() const
 {
+    // QList is implicitly shared, so handing back the cache is a refcount bump.
+    if (m_tracksCacheValid)
+        return m_tracksCache;
+
     QVariantList result;
     result.reserve(m_project.tracks().size());
 
@@ -1336,7 +1361,9 @@ QVariantList AppController::tracks() const
         });
     }
 
-    return result;
+    m_tracksCache = result;
+    m_tracksCacheValid = true;
+    return m_tracksCache;
 }
 
 namespace {
@@ -4832,7 +4859,11 @@ double AppController::playheadSeconds() const
 
 double AppController::durationSeconds() const
 {
-    return drift::usToSeconds(m_project.durationUs());
+    if (!m_durationCacheValid) {
+        m_durationSecondsCache = drift::usToSeconds(m_project.durationUs());
+        m_durationCacheValid = true;
+    }
+    return m_durationSecondsCache;
 }
 
 QString AppController::projectName() const
@@ -5694,6 +5725,11 @@ void AppController::pushProjectEdit(const drift::Project &before, const QString 
     // This is also where a track created by this edit gets its id — nested lanes address their
     // parent by it, and the dozen places that append a track all leave it empty.
     normalizeProjectStructure();
+    // Belt and braces for the tracks cache: normalizeProjectStructure() rewrites the project, and
+    // every edit in the app reaches this function or finishEdit(). One bool write buys immunity
+    // from a future mutation path that forgets to call notifyTracksChanged().
+    m_tracksCacheValid = false;
+    m_durationCacheValid = false;
     if (m_mcpUndoSuspended)
         return;
     m_undoStack.push(new drift::ProjectSnapshotCommand(&m_project, before, m_project, text));
@@ -5729,7 +5765,7 @@ void AppController::finishEdit(const QString &message)
     // up, and it runs through here too.
     if (!m_beatAnalysis.isEmpty() && audioLayoutFingerprint() != m_beatAudioFingerprint)
         clearBeatAnalysis();
-    emit tracksChanged();
+    notifyTracksChanged();
     emit selectionChanged();
     emit selectedClipDataChanged();
     // Routine edits used to announce themselves here ("Clip moved", "Split
@@ -6445,7 +6481,7 @@ void AppController::trimClipLeft(int trackIndex, int clipIndex, double newStart)
         syncOverlapTransitions(m_project);
         // Live drag: see the note in trimClipRight.
         syncLinkedAdjustments(m_project);
-        emit tracksChanged();
+        notifyTracksChanged();
         return;
     }
 
@@ -6494,7 +6530,7 @@ void AppController::trimClipLeft(int trackIndex, int clipIndex, double newStart)
     // Live drag: this path never reaches finishEdit, so a pinned adjustment would visibly lag
     // its clip until the drag was released.
     syncLinkedAdjustments(m_project);
-    emit tracksChanged();
+    notifyTracksChanged();
 }
 
 void AppController::trimClipRight(int trackIndex, int clipIndex, double newEnd)
@@ -6542,7 +6578,7 @@ void AppController::trimClipRight(int trackIndex, int clipIndex, double newEnd)
     // Live drag: this path never reaches finishEdit, so a pinned adjustment would visibly lag
     // its clip until the drag was released.
     syncLinkedAdjustments(m_project);
-    emit tracksChanged();
+    notifyTracksChanged();
 }
 
 void AppController::setClipTrim(int trackIndex, int clipIndex, double inPoint, double outPoint)
@@ -11805,7 +11841,7 @@ void AppController::emitPreviewFrame()
     // Same rule as finishEdit: never seek the live clock for a preview refresh.
     if (!m_playback.isPlaying())
         m_playback.setPlayheadUs(m_playheadUs);
-    emit tracksChanged(); // also notifies selectedClipDataChanged via connection
+    notifyTracksChanged(); // also notifies selectedClipDataChanged via connection
     m_playback.refreshFrame();
 }
 
@@ -15285,7 +15321,7 @@ void AppController::previewSetKeyframeTangents(int trackIndex, int clipIndex, co
         return;
 
     applyTangents(*key, inDx, inDy, outDx, outDy, corner);
-    emit tracksChanged();
+    notifyTracksChanged();
     emit selectedClipDataChanged();
     emit projectMutated();
 }
@@ -17290,7 +17326,7 @@ void AppController::setTrackShowWaveform(int trackIndex, bool show)
 
     // View-only preference: mutate and refresh without an undo entry.
     m_project.tracks()[trackIndex].showWaveform = show;
-    emit tracksChanged();
+    notifyTracksChanged();
 }
 
 bool AppController::trackShowWaveform(int trackIndex) const
@@ -17309,7 +17345,7 @@ void AppController::setTrackShowChannelWaveforms(int trackIndex, bool show)
 
     // View-only preference: mutate and refresh without an undo entry.
     m_project.tracks()[trackIndex].showChannelWaveforms = show;
-    emit tracksChanged();
+    notifyTracksChanged();
 }
 
 bool AppController::trackShowChannelWaveforms(int trackIndex) const
@@ -17330,7 +17366,7 @@ void AppController::setTrackHeightScale(int trackIndex, double scale)
 
     // View-only preference, like showWaveform: no undo entry.
     m_project.tracks()[trackIndex].heightScale = clamped;
-    emit tracksChanged();
+    notifyTracksChanged();
 }
 
 int AppController::trackRowHeight(int trackIndex, const QVariantMap &metrics) const
@@ -17430,7 +17466,7 @@ void AppController::nudgeAllTrackHeightScales(int steps)
 
     // View-only preference, like setTrackHeightScale: no undo entry.
     if (changed)
-        emit tracksChanged();
+        notifyTracksChanged();
 }
 
 bool AppController::canGrowTrackHeights() const
@@ -18999,7 +19035,7 @@ bool AppController::applyProjectJson(const QByteArray &data, QString *error)
     emit snapEnabledChanged();
     emit rippleEnabledChanged();
     emit allowClipOverlapChanged();
-    emit tracksChanged();
+    notifyTracksChanged();
     emit bookmarksChanged();
     emit workAreaChanged();
     emit projectNameChanged();
@@ -19931,7 +19967,7 @@ void AppController::rehydrateMissingSources()
                     m_assetLibrary->setProject(&m_project);
                 m_binFolderModel.setProject(&m_project);
                 restoreFilmstripsAfterLoad();
-                emit tracksChanged();
+                notifyTracksChanged();
             });
 
     watcher->setFuture(QtConcurrent::run([pending, missingPaths]() {
@@ -19983,7 +20019,7 @@ void AppController::newProject(bool silent)
     emit snapEnabledChanged();
     emit rippleEnabledChanged();
     emit allowClipOverlapChanged();
-    emit tracksChanged();
+    notifyTracksChanged();
     emit bookmarksChanged();
     emit workAreaChanged();
     emit projectNameChanged();

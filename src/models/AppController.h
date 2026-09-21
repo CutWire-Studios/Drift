@@ -79,6 +79,15 @@ class AppController : public QObject
     Q_PROPERTY(QString audioOutputDeviceId READ audioOutputDeviceId WRITE setAudioOutputDeviceId
                    NOTIFY audioOutputDeviceIdChanged)
     Q_PROPERTY(QVariantList tracks READ tracks NOTIFY tracksChanged)
+    // A change token for the bindings that read `tracks` only to re-evaluate on an edit. Reading
+    // the list for that rebuilt every clip in the project into QVariantMaps, once per binding,
+    // per emission — with two dozen such bindings across the desktop and touch shells.
+    Q_PROPERTY(quint32 tracksRevision READ tracksRevision NOTIFY tracksChanged)
+    // For the bindings that only ask how many tracks there are, or whether there are any.
+    Q_PROPERTY(int trackCount READ trackCount NOTIFY tracksChanged)
+    // "Is the timeline empty?" — asked by the empty-state copy in both shells, which used to
+    // answer it by serialising the project and looping over every track.
+    Q_PROPERTY(int clipCount READ clipCount NOTIFY tracksChanged)
     // Whether the touch shell's grow/shrink-all-lanes buttons have anywhere left to go, for their
     // enabled state. Properties rather than invokables so QML gets real bindings: an invokable
     // would have to be given a dependency to re-evaluate on, and the only one available is
@@ -368,6 +377,9 @@ public:
     const drift::Project *project() const { return &m_project; }
 
     QVariantList tracks() const;
+    quint32 tracksRevision() const { return m_tracksRevision; }
+    int trackCount() const { return m_project.tracks().size(); }
+    int clipCount() const;
     double playheadSeconds() const;
     double durationSeconds() const;
     bool playing() const { return m_playing; }
@@ -1742,6 +1754,13 @@ signals:
     void openPasteAttributesRequested();
 
 protected:
+    // Every path that changes the timeline model goes through this instead of a bare
+    // `emit tracksChanged()`. The cache has to be dropped *before* the signal goes out: whether
+    // a slot connected in the constructor runs ahead of QML's binding re-evaluation is not a
+    // guarantee worth depending on, and getting it wrong would serve QML one stale rebuild per
+    // emission — intermittent, and indistinguishable from a model bug.
+    void notifyTracksChanged();
+
     void pushProjectEdit(const drift::Project &before, const QString &text);
 
     // Lifts one effect, one audio effect, or the whole stack off a clip. Every copy and
@@ -2021,6 +2040,15 @@ protected:
     // The audio error already on screen, so a device that fails repeatedly toasts once.
     QString m_lastAudioError;
     QUndoStack m_undoStack;
+    // tracks() serialises every clip in the project into nested QVariantMaps, and used to do it
+    // once per binding that read it. Cached between edits; notifyTracksChanged() drops it.
+    mutable QVariantList m_tracksCache;
+    mutable bool m_tracksCacheValid = false;
+    // durationUs() is an uncached full scan behind the durationSeconds property, which notifies
+    // on the same signal and is read just as widely (the overview strip sizes itself from it).
+    mutable double m_durationSecondsCache = 0.0;
+    mutable bool m_durationCacheValid = false;
+    quint32 m_tracksRevision = 0;
     drift::TimeUs m_playheadUs = 0;
     bool m_playing = false;
     bool m_snapEnabled = true;

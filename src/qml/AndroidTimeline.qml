@@ -1633,7 +1633,7 @@ Item {
                                         // untouched, so this has to depend on tracks
                                         // explicitly or the region never repaints.
                                         readonly property var transitionData: {
-                                            void EditorState.tracks
+                                            void EditorState.tracksRevision
                                             return EditorState.transitionBetweenClips(
                                                        trackRow.trackIndex, leftClipIndex)
                                         }

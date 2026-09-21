@@ -21,7 +21,7 @@ Item {
     }
     readonly property bool isSubtitle: !!clip && clip.kind === "subtitle"
     readonly property var cues: {
-        void EditorState.tracks
+        void EditorState.tracksRevision
         return (clip && clip.subtitleCues) ? clip.subtitleCues : []
     }
     readonly property real clipStart: clip ? (clip.start || 0) : 0
@@ -30,7 +30,7 @@ Item {
     // Voice waveform is locked to video/audio clips on the timeline — never to the
     // selected subtitle clip's start/duration (resizing subtitles must not stretch it).
     readonly property var mediaWaveformRange: {
-        void EditorState.tracks
+        void EditorState.tracksRevision
         var start = Number.POSITIVE_INFINITY
         var end = 0
         var tracks = EditorState.tracks
@@ -237,7 +237,7 @@ Item {
                     // lane is hidden too, which meant dropping a long clip paid for the whole
                     // mix with nothing on screen to show for it.
                     property var peaks: {
-                        void EditorState.tracks
+                        void EditorState.tracksRevision
                         void root.waveformRevision
                         return (root.visible && waveDuration > 0)
                             ? EditorState.subtitleWaveformPeaks(waveStart, waveDuration, peakCount)

@@ -17,11 +17,11 @@ Item {
     // size and spin mean nothing (its own size and rotation live on the 3D Model tab).
     readonly property bool isModel3d: clipKind === "model3d"
     readonly property int canvasW: {
-        void EditorState.tracks
+        void EditorState.tracksRevision
         return Math.max(1, EditorState.projectWidth())
     }
     readonly property int canvasH: {
-        void EditorState.tracks
+        void EditorState.tracksRevision
         return Math.max(1, EditorState.projectHeight())
     }
 
