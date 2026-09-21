@@ -10913,6 +10913,10 @@ If playback stutters, try another.</source>
         <translation>ドラッグして開始をトリム</translation>
     </message>
     <message>
+        <source>Trim clip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Drag to trim the end</source>
         <translation>ドラッグして終了をトリム</translation>
     </message>

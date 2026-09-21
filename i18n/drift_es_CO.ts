@@ -10949,6 +10949,10 @@ Si la reproducción se corta, prueba con otra opción.</translation>
         <translation>Arrastra para recortar el inicio</translation>
     </message>
     <message>
+        <source>Trim clip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Drag to trim the end</source>
         <translation>Arrastra para recortar el final</translation>
     </message>

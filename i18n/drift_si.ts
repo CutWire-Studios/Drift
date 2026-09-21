@@ -10949,6 +10949,10 @@ If playback stutters, try another.</source>
         <translation>ආරම්භය කප්පාදු කිරීමට අදින්න</translation>
     </message>
     <message>
+        <source>Trim clip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Drag to trim the end</source>
         <translation>අවසානය කප්පාදු කිරීමට අදින්න</translation>
     </message>

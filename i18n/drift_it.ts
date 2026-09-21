@@ -10949,6 +10949,10 @@ Se la riproduzione va a scatti, prova un&apos;altra opzione.</translation>
         <translation>Trascina per ritagliare l&apos;inizio</translation>
     </message>
     <message>
+        <source>Trim clip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Drag to trim the end</source>
         <translation>Trascina per ritagliare la fine</translation>
     </message>

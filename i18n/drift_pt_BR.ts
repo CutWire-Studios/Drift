@@ -10949,6 +10949,10 @@ Se a reprodução travar, experimente outro.</translation>
         <translation>Arraste para aparar o início</translation>
     </message>
     <message>
+        <source>Trim clip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Drag to trim the end</source>
         <translation>Arraste para aparar o fim</translation>
     </message>

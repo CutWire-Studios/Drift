@@ -10958,6 +10958,10 @@ En cas de saccades à la lecture, essayez un autre mode.</translation>
         <translation>Glisser pour raccourcir le début</translation>
     </message>
     <message>
+        <source>Trim clip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Drag to trim the end</source>
         <translation>Glisser pour raccourcir la fin</translation>
     </message>
