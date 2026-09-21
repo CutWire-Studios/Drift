@@ -178,17 +178,31 @@ Item {
     }
 
     // Premiere-style trim pointer (vertical bar + arrow), sized to this clip.
-    readonly property int trimCursorSide: leftTrimMouse.containsMouse ? -1
+    //
+    // A press owns the cursor for the whole gesture. containsMouse goes false the moment the
+    // pointer leaves the strip, and during a trim the handle geometry trails the pointer by a
+    // frame — so it flapped, and every flap was a restoreOverrideCursor()/setOverrideCursor()
+    // pair with a freshly rasterised pixmap behind it.
+    readonly property int trimCursorSide: leftTrimMouse.pressed ? -1
+                                          : rightTrimMouse.pressed ? 1
+                                          : leftTrimMouse.containsMouse ? -1
                                           : rightTrimMouse.containsMouse ? 1 : 0
     readonly property int trimCursorHeight: Math.round(height)
+    // Identifies this clip to the shared override cursor. Not derived from trackIndex/clipIndex:
+    // those shift when a clip is inserted or removed, which would orphan a held cursor.
+    property int trimCursorToken: 0
     function applyTrimCursor() {
-        EditorState.setTimelineTrimCursor(trimCursorSide, trimCursorHeight)
+        if (trimCursorSide !== 0 && trimCursorToken === 0)
+            trimCursorToken = EditorState.acquireTrimCursorToken()
+        EditorState.setTimelineTrimCursor(trimCursorSide, trimCursorHeight, trimCursorToken)
+        if (trimCursorSide === 0)
+            trimCursorToken = 0
     }
     onTrimCursorSideChanged: applyTrimCursor()
     onTrimCursorHeightChanged: if (trimCursorSide !== 0) applyTrimCursor()
     Component.onDestruction: {
         if (trimCursorSide !== 0)
-            EditorState.setTimelineTrimCursor(0, 0)
+            EditorState.setTimelineTrimCursor(0, 0, trimCursorToken)
         if (lifted && typeof panel.setScrollLocked === "function")
             panel.setScrollLocked(false)
     }

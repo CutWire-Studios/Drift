@@ -19,6 +19,7 @@
 #include "models/BinFolderListModel.h"
 
 #include <QAtomicInt>
+#include <QCursor>
 #include <QFuture>
 #include <QHash>
 #include <QJsonObject>
@@ -1420,7 +1421,12 @@ public:
     Q_INVOKABLE double selectionEarliestStartSeconds() const;
     // Premiere-style trim pointer. side: -1=start, 0=off, 1=end.
     // heightPx scales the cursor to the hovered clip/track height.
-    Q_INVOKABLE void setTimelineTrimCursor(int side, int heightPx = 0);
+    // The trim pointer is an application-wide override cursor, but every clip delegate has an
+    // opinion about it. `owner` says who is asking: a clear from anyone but the current owner is
+    // ignored, so a neighbouring clip's hover ending cannot drop the cursor of the clip actually
+    // being trimmed.
+    Q_INVOKABLE void setTimelineTrimCursor(int side, int heightPx = 0, int owner = 0);
+    Q_INVOKABLE int acquireTrimCursorToken() { return ++m_trimCursorTokenSeq; }
     Q_INVOKABLE QString shortcutFor(const QString &actionId) const;
     // Returns an empty string on success, or the label of the action already bound to
     // `keys` when the binding is refused. Qt resolves an ambiguous application
@@ -2274,6 +2280,13 @@ protected:
     QList<QPair<int, int>> m_selection;
     int m_timelineTrimCursorSide = 0;
     int m_timelineTrimCursorHeight = 0;
+    int m_timelineTrimCursorOwner = 0;
+    int m_trimCursorTokenSeq = 0;
+    // The pointer is drawn with QPainter at the track's height. Heights come from a handful of
+    // row sizes, so this stays tiny — and a member rather than a function-local static because a
+    // QCursor holds a platform cursor that must not outlive QGuiApplication.
+    mutable QHash<int, QCursor> m_trimCursorCache;
+    QCursor trimCursorFor(int side, int heightPx) const;
     bool m_guidesEnabled = false;
     bool m_canvasCropMode = false;
     bool m_maskEditMode = false;

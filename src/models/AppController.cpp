@@ -689,7 +689,10 @@ AppController::~AppController()
         QGuiApplication::restoreOverrideCursor();
         m_timelineTrimCursorSide = 0;
         m_timelineTrimCursorHeight = 0;
+        m_timelineTrimCursorOwner = 0;
     }
+    // Each entry holds a platform cursor; drop them while QGuiApplication is still alive.
+    m_trimCursorCache.clear();
 }
 
 AppController::AppController(AssetLibrary *assetLibrary, QObject *parent)
@@ -18196,20 +18199,48 @@ double AppController::selectionEarliestStartSeconds() const
     return minStart >= 0 ? drift::usToSeconds(minStart) : 0.0;
 }
 
-void AppController::setTimelineTrimCursor(int side, int heightPx)
+QCursor AppController::trimCursorFor(int side, int heightPx) const
+{
+    const int h = qBound(18, heightPx, 160);
+    const int key = side * 1000 + h;
+    const auto it = m_trimCursorCache.constFind(key);
+    if (it != m_trimCursorCache.constEnd())
+        return *it;
+    return *m_trimCursorCache.insert(key, timelineTrimCursor(side, h));
+}
+
+void AppController::setTimelineTrimCursor(int side, int heightPx, int owner)
 {
     side = qBound(-1, side, 1);
     heightPx = qMax(0, heightPx);
-    if (side == m_timelineTrimCursorSide && (side == 0 || heightPx == m_timelineTrimCursorHeight))
-        return;
 
+    if (side == 0) {
+        // Only whoever put the cursor up may take it down. Clip delegates sit edge to edge, so
+        // crossing from one handle to its neighbour raises the new one before the old one clears
+        // — and without this that stale clear would strip the cursor that had just been set.
+        if (owner != 0 && m_timelineTrimCursorOwner != 0 && owner != m_timelineTrimCursorOwner)
+            return;
+        if (m_timelineTrimCursorSide != 0)
+            QGuiApplication::restoreOverrideCursor();
+        m_timelineTrimCursorSide = 0;
+        m_timelineTrimCursorHeight = 0;
+        m_timelineTrimCursorOwner = 0;
+        return;
+    }
+
+    if (side == m_timelineTrimCursorSide && heightPx == m_timelineTrimCursorHeight
+        && owner == m_timelineTrimCursorOwner) {
+        return;
+    }
+
+    // The override stack stays exactly one deep: pop whatever is up before pushing.
     if (m_timelineTrimCursorSide != 0)
         QGuiApplication::restoreOverrideCursor();
 
     m_timelineTrimCursorSide = side;
     m_timelineTrimCursorHeight = heightPx;
-    if (side != 0)
-        QGuiApplication::setOverrideCursor(timelineTrimCursor(side, heightPx > 0 ? heightPx : 28));
+    m_timelineTrimCursorOwner = owner;
+    QGuiApplication::setOverrideCursor(trimCursorFor(side, heightPx > 0 ? heightPx : 28));
 }
 
 QString AppController::shortcutFor(const QString &actionId) const
