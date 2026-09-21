@@ -209,6 +209,15 @@ PlaybackEngine::PlaybackEngine(QObject *parent)
 
     m_playheadTimer.setTimerType(Qt::PreciseTimer);
     m_compositeTimer.setTimerType(Qt::PreciseTimer);
+    // Zero interval, single shot: fires at the end of the current event-loop turn, so a drag
+    // that lands a dozen edits before the loop spins again costs one composite, not a dozen.
+    // Goes straight to requestComposite — refreshFrame() would invalidate the snapshot a second
+    // time, and notifyProjectEdited() has already done that.
+    m_editRefreshTimer.setSingleShot(true);
+    m_editRefreshTimer.setInterval(0);
+    connect(&m_editRefreshTimer, &QTimer::timeout, this, [this] {
+        m_compositor.requestComposite(m_playheadUs, playbackRenderOptions());
+    });
     connect(&m_playheadTimer, &QTimer::timeout, this, &PlaybackEngine::onPlayheadTick);
     connect(&m_compositeTimer, &QTimer::timeout, this, &PlaybackEngine::onCompositeTick);
     connect(&m_compositor, &CompositorService::frameReady, this, &PlaybackEngine::onFrameReady);
@@ -278,6 +287,13 @@ void PlaybackEngine::setProject(drift::Project *project)
     m_mixer.setProject(project);
     m_compositor.setProject(project);
     refreshFrame();
+}
+
+void PlaybackEngine::notifyProjectEdited()
+{
+    m_compositor.invalidateSnapshot();
+    if (!m_editRefreshTimer.isActive())
+        m_editRefreshTimer.start();
 }
 
 void PlaybackEngine::setPlayheadUs(drift::TimeUs us)

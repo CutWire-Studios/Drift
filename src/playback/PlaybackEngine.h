@@ -49,6 +49,11 @@ public:
     ~PlaybackEngine() override;
 
     void setProject(drift::Project *project);
+    // The project the engine already points at was edited in place. setProject(sameProject) was
+    // the only way to say so, and it round-tripped through AudioMixer::setProject (a no-op for an
+    // unchanged pointer) and invalidated the compositor snapshot twice. Coalesces every edit
+    // delivered in one event-loop turn into a single composite request.
+    void notifyProjectEdited();
     void setPlayheadUs(drift::TimeUs us);
     drift::TimeUs playheadUs() const { return m_playheadUs; }
 
@@ -171,6 +176,7 @@ private:
     AudioOutputChannel m_audio;
     QTimer m_playheadTimer;
     QTimer m_compositeTimer;
+    QTimer m_editRefreshTimer;
     QTimer m_gpuProbeTimer;
     int m_gpuProbeAttempts = 0;
     bool m_gpuUnavailableNotified = false;

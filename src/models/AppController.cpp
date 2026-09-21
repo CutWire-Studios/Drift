@@ -923,7 +923,10 @@ AppController::AppController(AssetLibrary *assetLibrary, QObject *parent)
             if (!intact)
                 endMulticamSession();
         } else if (!m_multicamActive || m_multicamSnaps.isEmpty()) {
-            m_playback.setProject(&m_project);
+            // The pointer has not changed — the project behind it was edited in place. Saying so
+            // directly skips a pointless trip through the mixer and, more to the point, coalesces
+            // the composite instead of forcing one per edit.
+            m_playback.notifyProjectEdited();
         }
         emit selectedTransitionDataChanged();
     });
@@ -11929,8 +11932,10 @@ void AppController::emitPreviewFrame()
     // Same rule as finishEdit: never seek the live clock for a preview refresh.
     if (!m_playback.isPlaying())
         m_playback.setPlayheadUs(m_playheadUs);
-    notifyTracksChanged(); // also notifies selectedClipDataChanged via connection
-    m_playback.refreshFrame();
+    // notifyTracksChanged() also notifies selectedClipDataChanged via connection, and the
+    // tracksChanged handler already schedules the composite — calling refreshFrame() here as
+    // well meant every fade and canvas-transform drag invalidated the snapshot twice per move.
+    notifyTracksChanged();
 }
 
 void AppController::previewSetClipPosition(int trackIndex, int clipIndex, double xPixels, double yPixels)
