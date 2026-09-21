@@ -22,6 +22,7 @@ qt_add_executable(tst_editorstate
     ../src/models/AssetLibrary.cpp
     ../src/models/BinFolderListModel.cpp
     ../src/models/TimelineModel.cpp
+    ../src/models/TimelineClipsModel.cpp
     ../src/models/ClipListModel.cpp
     ../src/playback/PlaybackEngine.cpp
     ../src/playback/PlaybackClock.cpp
@@ -169,6 +170,7 @@ qt_add_executable(tst_mcp
     ../src/models/AssetLibrary.cpp
     ../src/models/BinFolderListModel.cpp
     ../src/models/TimelineModel.cpp
+    ../src/models/TimelineClipsModel.cpp
     ../src/models/ClipListModel.cpp
     ../src/playback/PlaybackEngine.cpp
     ../src/playback/PlaybackClock.cpp

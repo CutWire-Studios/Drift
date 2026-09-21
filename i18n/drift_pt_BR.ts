@@ -8809,6 +8809,14 @@ Se a reprodução travar, experimente outro.</translation>
         <translation type="unfinished">A rolagem move para os lados na linha do tempo. Shift+rolagem alterna entre as faixas. Arrastar com o botão do meio também move.</translation>
     </message>
     <message>
+        <source>Timeline overview strip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>A minimap of the whole project above the ruler — click or drag it to jump the zoomed view.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Haptic feedback</source>
         <translation type="unfinished"></translation>
     </message>

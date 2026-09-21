@@ -8809,6 +8809,14 @@ If playback stutters, try another.</source>
         <translation type="unfinished">Scroll කිරීමෙන් කාලරේඛාව ඔස්සේ වමට සහ දකුණට පෑන් වේ. Shift+scroll මඟින් ට්‍රැක් අතර මාරු වේ. මැද බොත්තම ක්ලික් කර ඇදීමෙන්ද පෑන් කළ හැක.</translation>
     </message>
     <message>
+        <source>Timeline overview strip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>A minimap of the whole project above the ruler — click or drag it to jump the zoomed view.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Haptic feedback</source>
         <translation type="unfinished"></translation>
     </message>

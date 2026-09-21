@@ -8809,6 +8809,14 @@ Se la riproduzione va a scatti, prova un&apos;altra opzione.</translation>
         <translation type="unfinished">Lo scorrimento esegue una panoramica a sinistra e a destra lungo la timeline. Maiusc+scorrimento sposta tra le tracce. Anche il trascinamento con il tasto centrale esegue una panoramica.</translation>
     </message>
     <message>
+        <source>Timeline overview strip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>A minimap of the whole project above the ruler — click or drag it to jump the zoomed view.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Haptic feedback</source>
         <translation type="unfinished"></translation>
     </message>

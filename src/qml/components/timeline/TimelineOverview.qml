@@ -6,6 +6,9 @@ import ".."
 // strip's width, with a rectangle marking what the zoomed track view below
 // currently shows. Click or drag anywhere to recenter that view on the
 // clicked point — the equivalent of dragging the minimap in Resolve/Premiere.
+//
+// Can be switched off (EditorState.timelineOverviewVisible) on a timeline long
+// enough that repainting every clip on every edit is felt.
 Item {
     id: overview
 
@@ -17,6 +20,21 @@ Item {
 
     readonly property real duration: Math.max(EditorState.durationSeconds, 1)
     readonly property real overviewPxPerSecond: width / duration
+
+    // Matches drift::ClipType's order, which is what timelineOverviewBlocks() emits.
+    function blockColor(typeCode) {
+        switch (typeCode) {
+        case 1: return Theme.clipAudio       // audio
+        case 3: return Theme.clipText        // text
+        case 4: return Theme.clipSubtitle    // subtitle
+        case 6: return Theme.clipEffect      // adjustment
+        case 2:                              // image
+        case 5:                              // shape
+        case 7:                              // vector
+        case 8: return Theme.clipGraphic     // 3D model
+        default: return Theme.clipVideoOverview
+        }
+    }
 
     function xToSeconds(x) {
         return Math.max(0, Math.min(duration, x / overviewPxPerSecond))
@@ -45,51 +63,66 @@ Item {
         color: Theme.panelBorder
     }
 
-    // Flattened content map: every clip on every track, drawn as a thin translucent block at
-    // its project-time position.
+    // Flattened content map: one thin band per track, each clip drawn in its type's colour.
     //
     // Painted rather than instantiated. This was a Rectangle per clip in the whole project, none
     // of them cullable, each re-running its x and width bindings on every edit — for a strip
-    // forty pixels tall where most blocks are a pixel wide. One item now, repainted on the
-    // revision counter.
+    // where most blocks are a pixel wide. One item now, repainted on the revision counter, and
+    // fed a flat array of numbers from C++ rather than walking the clip graph in JS.
     Canvas {
         id: contentMap
         anchors.fill: parent
 
-        // The clip set, and the scale it is drawn at (which folds in both the project duration
-        // and this strip's width). Between them, everything the paint below reads.
-        readonly property int revision: EditorState.tracksRevision
+        // [lane, typeCode, startSeconds, durationSeconds] per clip.
+        property var blocks: []
+        property int laneCount: 1
+        // The scale the blocks are drawn at, folding in both the project duration and this
+        // strip's width.
         readonly property real pps: overview.overviewPxPerSecond
-        onRevisionChanged: requestPaint()
+        readonly property int revision: EditorState.tracksRevision
+
+        function refresh() {
+            if (!overview.visible)
+                return
+            blocks = EditorState.timelineOverviewBlocks()
+            laneCount = Math.max(1, EditorState.timelineOverviewLaneCount())
+            requestPaint()
+        }
+
+        onRevisionChanged: refresh()
         onPpsChanged: requestPaint()
         onHeightChanged: requestPaint()
+        Component.onCompleted: refresh()
+
+        Connections {
+            target: overview
+            function onVisibleChanged() { contentMap.refresh() }
+        }
 
         onPaint: {
             const ctx = getContext("2d")
             ctx.reset()
             if (!panel || overview.width <= 0)
                 return
-            ctx.globalAlpha = 0.28
-            ctx.fillStyle = Theme.primary
-            const top = 4
-            const blockHeight = Math.max(1, overview.height - 8)
-            const tracks = panel.tracks
-            for (let t = 0; t < tracks.length; ++t) {
-                const clips = tracks[t].clips
-                if (!clips)
-                    continue
-                for (let c = 0; c < clips.length; ++c) {
-                    ctx.fillRect(clips[c].start * contentMap.pps, top,
-                                 Math.max(1, clips[c].duration * contentMap.pps), blockHeight)
-                }
+            const top = 3
+            const available = Math.max(1, overview.height - 7)
+            // One pixel of gap between bands, so adjacent tracks stay countable.
+            const laneHeight = Math.max(2, available / contentMap.laneCount - 1)
+            const laneStride = available / contentMap.laneCount
+            const blocks = contentMap.blocks
+            for (let i = 0; i + 3 < blocks.length; i += 4) {
+                ctx.fillStyle = overview.blockColor(blocks[i + 1])
+                ctx.fillRect(blocks[i + 2] * contentMap.pps, top + blocks[i] * laneStride,
+                             Math.max(1, blocks[i + 3] * contentMap.pps), laneHeight)
             }
         }
     }
 
-    // Viewport indicator: the slice of the project the zoomed track view
-    // below is currently showing.
-    Rectangle {
-        id: viewportRect
+    // Viewport indicator: the slice of the project the zoomed track view below is currently
+    // showing. Drawn as a window rather than a tint — the strip is full of colour now, and a
+    // translucent fill over it read as nothing at all.
+    QtObject {
+        id: viewport
         readonly property real viewStartSeconds: panel ? panel.timelineViewX / panel.pxPerSecond : 0
         readonly property real viewEndSeconds: panel ? (panel.timelineViewX + panel.timelineViewW) / panel.pxPerSecond : 0
         // Clamp both edges independently: the visible range can run past
@@ -97,15 +130,35 @@ Item {
         // and often the whole pad at Fit zoom), which this strip's scale
         // does not otherwise account for — unclamped, the indicator would
         // draw wider than the strip itself.
-        readonly property real clampedStartX: Math.max(0, Math.min(overview.width, viewStartSeconds * overview.overviewPxPerSecond))
-        readonly property real clampedEndX: Math.max(0, Math.min(overview.width, viewEndSeconds * overview.overviewPxPerSecond))
-        x: clampedStartX
-        width: Math.max(3, clampedEndX - clampedStartX)
+        readonly property real startX: Math.max(0, Math.min(overview.width, viewStartSeconds * overview.overviewPxPerSecond))
+        readonly property real endX: Math.max(0, Math.min(overview.width, viewEndSeconds * overview.overviewPxPerSecond))
+    }
+
+    Rectangle {
+        x: 0
+        width: viewport.startX
+        y: 0
+        height: parent.height - 1
+        color: Theme.panelBackground
+        opacity: 0.6
+    }
+
+    Rectangle {
+        x: viewport.endX
+        width: Math.max(0, overview.width - viewport.endX)
+        y: 0
+        height: parent.height - 1
+        color: Theme.panelBackground
+        opacity: 0.6
+    }
+
+    Rectangle {
+        x: viewport.startX
+        width: Math.max(3, viewport.endX - viewport.startX)
         y: 1
-        height: parent.height - 2
+        height: parent.height - 3
         radius: 2
-        color: Theme.primary
-        opacity: 0.16
+        color: "transparent"
         border.width: 1
         border.color: Theme.primary
     }

@@ -992,6 +992,8 @@ AppController::AppController(AssetLibrary *assetLibrary, QObject *parent)
     // keyframe, and an animation appears where the user only meant to reposition something.
     m_autoKeyEnabled = settings.value(QStringLiteral("editor/autoKeyEnabled"), false).toBool();
     m_reopenLastProject = settings.value(QStringLiteral("editor/reopenLastProject"), false).toBool();
+    m_timelineOverviewVisible =
+        settings.value(QStringLiteral("ui/timelineOverviewVisible"), true).toBool();
     // Checked means "allowed", not "forced": with the key unset the engine is in Auto and
     // will use zero-copy on drivers it has been verified against, so showing the box
     // unchecked would contradict what the preview is actually doing. Unchecking writes an
@@ -1320,6 +1322,10 @@ void AppController::notifyTracksChanged()
     m_tracksCache.clear();
     m_durationCacheValid = false;
     ++m_tracksRevision;
+    // After the cache drop, before the signal. A row insert or removal rebuilds the Repeater's
+    // delegates synchronously from inside this call, and those delegates read track-level fields
+    // back through tracks() — which must already be answering from the new project.
+    syncClipModels();
     // Inside a batch the invalidation above has already happened, so a reader still gets the
     // truth; only the announcement is held back, and the batch sends exactly one.
     if (m_tracksBatchDepth > 0) {
@@ -1340,6 +1346,10 @@ void AppController::endTracksBatch()
     emit tracksChanged();
 }
 
+// Layout only: the track flags a row is drawn from, and the four clip fields the timeline
+// panel's JS helpers need to answer "which clip is under this x", "where are the gaps", "how
+// tall is the stack". Everything the clip delegate itself renders comes from clipsModel(), so
+// this list stays small enough that QML deep-converting it to JS on every edit does not matter.
 QVariantList AppController::tracks() const
 {
     // QList is implicitly shared, so handing back the cache is a refcount bump.
@@ -1352,34 +1362,16 @@ QVariantList AppController::tracks() const
     for (int ti = 0; ti < m_project.tracks().size(); ++ti) {
         const drift::Track &track = m_project.tracks().at(ti);
 
-        // Each clip's effect stack lives on the adjustment linked to it in one of this track's
-        // lanes. Gathered once per track rather than resolved per clip: tracks() is rebuilt on
-        // every read and every binding re-reads it, so a per-clip lookup would be quadratic.
-        QHash<QString, const drift::Clip *> videoHosts;
-        QHash<QString, const drift::Clip *> audioHosts;
-        QHash<QString, const drift::Clip *> maskHosts;
-        if (!track.isAdjustment()) {
-            for (const int laneIndex : drift::adjustmentLaneIndexes(m_project, ti)) {
-                for (const drift::Clip &adjustment : m_project.tracks().at(laneIndex).clips) {
-                    if (adjustment.linkedClipId.isEmpty())
-                        continue;
-                    if (adjustment.adjustmentKind == drift::AdjustmentKind::VideoEffects)
-                        videoHosts.insert(adjustment.linkedClipId, &adjustment);
-                    else if (adjustment.adjustmentKind == drift::AdjustmentKind::AudioEffects)
-                        audioHosts.insert(adjustment.linkedClipId, &adjustment);
-                    else if (adjustment.adjustmentKind == drift::AdjustmentKind::Mask)
-                        maskHosts.insert(adjustment.linkedClipId, &adjustment);
-                }
-            }
-        }
-
         QVariantList clips;
         clips.reserve(track.clips.size());
 
         for (const drift::Clip &clip : track.clips) {
-            clips.append(clipToMap(clip, videoHosts.value(clip.id, nullptr),
-                                   audioHosts.value(clip.id, nullptr),
-                                   maskHosts.value(clip.id, nullptr)));
+            clips.append(QVariantMap{
+                {QStringLiteral("id"), clip.id},
+                {QStringLiteral("name"), clip.name},
+                {QStringLiteral("start"), drift::usToSeconds(clip.timelineStart)},
+                {QStringLiteral("duration"), drift::usToSeconds(clip.timelineDuration)},
+            });
         }
 
         QVariantList transitions;
@@ -3095,6 +3087,29 @@ QVariantMap effectToMap(const drift::Effect &effect, int effectIndex, drift::Tim
     };
 }
 
+// What the timeline strip shows of an effect stack: a badge, and a tooltip listing the names.
+// It reads `label` and `enabled` and nothing else, so it has no use for the full map above —
+// which walks the catalog's parameter spec, stats every file-path value and builds a keyframe
+// track per parameter, once per effect, once per clip, on every edit.
+QVariantMap effectBadgeToMap(const drift::Effect &effect)
+{
+    const EffectPresetEntry *def = effectDefForId(effect.catalogId);
+    return {
+        {QStringLiteral("label"),
+         def ? def->meta.displayName : (effect.name.isEmpty() ? effect.catalogId : effect.name)},
+        {QStringLiteral("enabled"), effect.enabled},
+    };
+}
+
+QVariantMap audioEffectBadgeToMap(const drift::Effect &effect)
+{
+    const AudioEffectEntry *def = audioEffectDefForId(effect.catalogId);
+    return {
+        {QStringLiteral("label"), def ? def->displayName : effect.name},
+        {QStringLiteral("enabled"), effect.enabled},
+    };
+}
+
 // Audio effects use the same per-instance shape as video effects, but read from the audio catalog.
 QVariantMap audioEffectToMap(const drift::Effect &effect)
 {
@@ -3936,11 +3951,11 @@ QVariantMap AppController::clipToMap(const drift::Clip &clip, const drift::Clip 
 {
     // Face landmarks live on the media clip, so a linked adjustment reports its host's.
     const drift::Clip &face = faceSource ? *faceSource : clip;
-    // A media clip's stack physically lives on the adjustment linked to it, but the inspector,
-    // the timeline badge and the MCP tools all still ask the clip for "its" effects — so report
-    // the host's list here. Indices line up 1:1 with what the effect invokables take, because a
-    // clip has at most one linked adjustment per kind. The two kinds are separate adjustments,
-    // hence two hosts. An adjustment clip passes neither and reports its own lists.
+    // A media clip's stack physically lives on the adjustment linked to it, but the inspector
+    // and the MCP tools still ask the clip for "its" effects — so report the host's list here.
+    // Indices line up 1:1 with what the effect invokables take, because a clip has at most one
+    // linked adjustment per kind. The two kinds are separate adjustments, hence two hosts. An
+    // adjustment clip passes neither and reports its own lists.
     const drift::Clip &videoHost = videoEffectHost ? *videoEffectHost : clip;
     const drift::Clip &audioHost = audioEffectHost ? *audioEffectHost : clip;
 
@@ -4054,6 +4069,143 @@ QVariantMap AppController::clipToMap(const drift::Clip &clip, const drift::Clip 
     if (clip.type == drift::ClipType::Model3d)
         map.insert(QStringLiteral("model3d"), model3dSourceToMap(clip.model3d, clip.timelineStart));
     return map;
+}
+
+// The timeline strip's view of a clip. Same source fields as the inspector map above, minus
+// everything only an inspector opens — textStyle alone is 45 keys and ten colour-to-string
+// conversions. Built as a value rather than a QVariantMap because this one runs for every clip
+// in the project on every edit, and the model it feeds compares rows to find what changed.
+TimelineClipsModel::Row AppController::clipRow(const drift::Clip &clip,
+                                               const drift::Clip *videoEffectHost,
+                                               const drift::Clip *audioEffectHost) const
+{
+    const drift::Clip &videoHost = videoEffectHost ? *videoEffectHost : clip;
+    const drift::Clip &audioHost = audioEffectHost ? *audioEffectHost : clip;
+    const drift::MediaAsset *sourceAsset = m_project.asset(clip.assetId);
+
+    TimelineClipsModel::Row row;
+    row.id = clip.id;
+    row.name = clip.name;
+    row.path = clip.path;
+    row.kind = drift::clipTypeToString(clip.type);
+    row.adjustmentKind = drift::adjustmentKindToString(clip.adjustmentKind);
+    row.linkedClipId = clip.linkedClipId;
+    row.linkId = clip.linkId;
+    row.linked = !clip.linkId.isEmpty();
+    row.filmstripPath = clip.filmstripPath;
+    row.textContent = clip.textContent;
+    row.rotationCorrection = clip.rotationCorrection;
+    row.start = drift::usToSeconds(clip.timelineStart);
+    row.duration = drift::usToSeconds(clip.timelineDuration);
+    row.inPoint = drift::usToSeconds(clip.srcIn);
+    row.outPoint = drift::usToSeconds(clip.srcOut);
+    row.sourceDuration = sourceAsset ? drift::usToSeconds(sourceAsset->durationUs) : 0.0;
+    row.audioStreamIndex = clip.audioStreamIndex;
+    row.fadeIn = drift::usToSeconds(clip.fadeInUs);
+    row.fadeOut = drift::usToSeconds(clip.fadeOutUs);
+    row.fadeCurve = drift::fadeCurveToString(clip.fadeCurve);
+    // Only a Custom curve is drawn from these points, and the strip keys its fade canvases on
+    // the list — so it has to be present, not populated.
+    if (clip.fadeCurve == drift::FadeCurve::Custom) {
+        for (const QPointF &pt : clip.fadeShape.points()) {
+            row.fadeShape.append(QVariantMap{
+                {QStringLiteral("t"), pt.x()},
+                {QStringLiteral("g"), pt.y()},
+            });
+        }
+    }
+    row.fadeHandles = QVariantList{clip.fadeShape.handle1().x(), clip.fadeShape.handle1().y(),
+                                   clip.fadeShape.handle2().x(), clip.fadeShape.handle2().y()};
+    for (const drift::Effect &effect : videoHost.effects)
+        row.effects.append(effectBadgeToMap(effect));
+    for (const drift::Effect &effect : audioHost.audioEffects)
+        row.audioEffects.append(audioEffectBadgeToMap(effect));
+    return row;
+}
+
+void AppController::syncClipModels()
+{
+    const QList<drift::Track> &tracks = m_project.tracks();
+    while (m_clipModels.size() < tracks.size())
+        m_clipModels.append(new TimelineClipsModel(this));
+
+    for (int ti = 0; ti < tracks.size(); ++ti) {
+        const drift::Track &track = tracks.at(ti);
+
+        // Each clip's effect stack lives on the adjustment linked to it in one of this track's
+        // lanes. Gathered once per track rather than resolved per clip, which would be quadratic.
+        QHash<QString, const drift::Clip *> videoHosts;
+        QHash<QString, const drift::Clip *> audioHosts;
+        if (!track.isAdjustment()) {
+            for (const int laneIndex : drift::adjustmentLaneIndexes(m_project, ti)) {
+                for (const drift::Clip &adjustment : tracks.at(laneIndex).clips) {
+                    if (adjustment.linkedClipId.isEmpty())
+                        continue;
+                    if (adjustment.adjustmentKind == drift::AdjustmentKind::VideoEffects)
+                        videoHosts.insert(adjustment.linkedClipId, &adjustment);
+                    else if (adjustment.adjustmentKind == drift::AdjustmentKind::AudioEffects)
+                        audioHosts.insert(adjustment.linkedClipId, &adjustment);
+                }
+            }
+        }
+
+        QList<TimelineClipsModel::Row> rows;
+        rows.reserve(track.clips.size());
+        for (const drift::Clip &clip : track.clips) {
+            rows.append(clipRow(clip, videoHosts.value(clip.id, nullptr),
+                                audioHosts.value(clip.id, nullptr)));
+        }
+        m_clipModels[ti]->setRows(std::move(rows));
+    }
+
+    // Slots past the end belong to tracks that are gone. Emptied rather than deleted — see the
+    // note on m_clipModels.
+    for (int ti = tracks.size(); ti < m_clipModels.size(); ++ti)
+        m_clipModels[ti]->setRows({});
+}
+
+QVariantList AppController::timelineOverviewBlocks() const
+{
+    QVariantList out;
+    int lane = 0;
+    for (const drift::Track &track : m_project.tracks()) {
+        // An adjustment lane sits inside its parent's row, so at minimap scale a band of its own
+        // would only repeat the clip it is pinned to, one row down.
+        if (track.isAdjustmentLane())
+            continue;
+        for (const drift::Clip &clip : track.clips) {
+            if (clip.timelineDuration <= 0)
+                continue;
+            out.append(lane);
+            out.append(static_cast<int>(clip.type));
+            out.append(drift::usToSeconds(clip.timelineStart));
+            out.append(drift::usToSeconds(clip.timelineDuration));
+        }
+        ++lane;
+    }
+    return out;
+}
+
+int AppController::timelineOverviewLaneCount() const
+{
+    int lanes = 0;
+    for (const drift::Track &track : m_project.tracks()) {
+        if (!track.isAdjustmentLane())
+            ++lanes;
+    }
+    return lanes;
+}
+
+QObject *AppController::clipsModel(int trackIndex) const
+{
+    if (trackIndex < 0)
+        return nullptr;
+    // A Repeater asks for its model as the delegate is built, which can be a turn ahead of the
+    // sync that fills it; minting the slot here keeps the pointer stable either way.
+    auto *self = const_cast<AppController *>(this);
+    while (self->m_clipModels.size() <= trackIndex)
+        self->m_clipModels.append(new TimelineClipsModel(self));
+    return m_clipModels.at(trackIndex);
 }
 
 int AppController::clipCountForAsset(int assetIndex) const
@@ -4914,6 +5066,29 @@ double AppController::durationSeconds() const
     return m_durationSecondsCache;
 }
 
+QVariantMap AppController::mediaExtentSeconds() const
+{
+    drift::TimeUs start = std::numeric_limits<drift::TimeUs>::max();
+    drift::TimeUs end = 0;
+    for (const drift::Track &track : m_project.tracks()) {
+        if (track.type != drift::TrackType::Video && track.type != drift::TrackType::Audio)
+            continue;
+        for (const drift::Clip &clip : track.clips) {
+            if (clip.timelineDuration <= 0)
+                continue;
+            start = qMin(start, clip.timelineStart);
+            end = qMax(end, clip.timelineStart + clip.timelineDuration);
+        }
+    }
+    if (end <= start) {
+        return {{QStringLiteral("start"), 0.0}, {QStringLiteral("duration"), 0.0}};
+    }
+    return {
+        {QStringLiteral("start"), drift::usToSeconds(start)},
+        {QStringLiteral("duration"), drift::usToSeconds(end - start)},
+    };
+}
+
 QString AppController::projectName() const
 {
     return m_project.name();
@@ -5201,6 +5376,16 @@ void AppController::setAutoKeyEnabled(bool enabled)
     QSettings settings;
     settings.setValue(QStringLiteral("editor/autoKeyEnabled"), m_autoKeyEnabled);
     emit autoKeyEnabledChanged();
+}
+
+void AppController::setTimelineOverviewVisible(bool visible)
+{
+    if (m_timelineOverviewVisible == visible)
+        return;
+    m_timelineOverviewVisible = visible;
+    QSettings settings;
+    settings.setValue(QStringLiteral("ui/timelineOverviewVisible"), m_timelineOverviewVisible);
+    emit timelineOverviewVisibleChanged();
 }
 
 void AppController::setReopenLastProject(bool enabled)
@@ -21420,14 +21605,17 @@ QJsonObject AppController::mcpInspect(const McpInspectOptions &options) const
             for (int c = 0; c < track.clips.size(); ++c) {
                 if (only.second >= 0 && c != only.second)
                     continue;
-                if (detail && t < trackModels.size()) {
-                    const QVariantList clipList = trackModels.at(t).toMap().value(QStringLiteral("clips")).toList();
-                    if (c < clipList.size()) {
+                if (detail) {
+                    // clipAt(), not the tracks() list: that one carries only what the timeline
+                    // strip draws, and an inspect row is the whole clip — textStyle, mask,
+                    // keyframes and all.
+                    const QVariantMap fullClip = clipAt(t, c);
+                    if (!fullClip.isEmpty()) {
                         const QVariantMap canvas = mcpCompactClip(t, c, true);
                         QVariantMap transform;
                         for (const char *key : {"x", "y", "w", "h", "rotation", "opacity"})
                             transform.insert(QLatin1String(key), canvas.value(QLatin1String(key)));
-                        clips.append(mcpDetailRow(clipList.at(c).toMap(), transform, options.verbose));
+                        clips.append(mcpDetailRow(fullClip, transform, options.verbose));
                     }
                 } else {
                     const QVariantMap compact = mcpCompactClip(t, c, false);

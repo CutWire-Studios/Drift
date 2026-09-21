@@ -8809,6 +8809,14 @@ Si la reproducción se corta, prueba con otra opción.</translation>
         <translation type="unfinished">El desplazamiento mueve a izquierda y derecha por la línea de tiempo. Mayús+desplazamiento mueve entre pistas. Arrastrar con el botón central también desplaza la vista.</translation>
     </message>
     <message>
+        <source>Timeline overview strip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>A minimap of the whole project above the ruler — click or drag it to jump the zoomed view.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Haptic feedback</source>
         <translation type="unfinished"></translation>
     </message>

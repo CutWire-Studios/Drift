@@ -862,10 +862,14 @@ PanelFrame {
         }
 
         // === full-project overview strip ==============================================
+        // Switchable off in Settings -> Interface; collapses to nothing rather than merely
+        // hiding, so the tracks get the height back.
         TimelineOverview {
             id: overviewStrip
             width: parent.width
             panel: root
+            visible: EditorState.timelineOverviewVisible
+            height: visible ? Theme.timelineOverviewHeight : 0
         }
 
         // === ruler + track labels + tracks ================================================
@@ -1650,7 +1654,11 @@ PanelFrame {
                                             }
 
                                             Repeater {
-                                                model: root.tracks[laneStrip.trackIndex].clips.length
+                                                // The lane's role model, not a count over
+                                                // root.tracks: it notifies per clip and per
+                                                // field, so an edit to one clip no longer re-runs
+                                                // every other delegate's bindings.
+                                                model: EditorState.clipsModel(laneStrip.trackIndex)
                                                 delegate: TimelineClipItem {
                                                     panel: root
                                                     timelineColumn: trackColumn
@@ -1679,7 +1687,7 @@ PanelFrame {
                                     height: Math.max(0, trackRow.height - adjustmentLaneStrips.height)
 
                                     Repeater {
-                                        model: root.tracks[trackClipArea.trackIndex].clips.length
+                                        model: EditorState.clipsModel(trackClipArea.trackIndex)
                                         delegate: TimelineClipItem {
                                             // panel: root is safe — TimelineClipItem's id is clipItem,
                                             // so it does not shadow TimelinePanel's root.

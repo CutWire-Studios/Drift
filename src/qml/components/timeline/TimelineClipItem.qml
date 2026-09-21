@@ -52,7 +52,14 @@ Item {
         }
     }
 
-    property var clipData: panel.tracks[trackIndex].clips[clipIndex]
+    // The row object from EditorState.clipsModel(trackIndex), whose properties are that model's
+    // roles. Required rather than passed in, so this can only ever be a delegate of that model.
+    //
+    // Roles, not a QVariantMap out of panel.tracks: that rebuilt and re-converted every clip in
+    // the project on every edit, and handed each delegate a brand-new JS object, so every
+    // binding through it re-ran even for a clip nothing had touched.
+    required property var model
+    readonly property var clipData: model
     // The revision, not the selection itself: reading EditorState.selection rebuilt a list of
     // maps for the whole selection, and this binding exists once per clip in the project.
     property bool selected: (EditorState.selectionRevision,

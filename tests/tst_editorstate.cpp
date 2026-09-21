@@ -19,11 +19,16 @@
 #include <QClipboard>
 #include <QGuiApplication>
 #include <QJsonDocument>
+#include <QQmlComponent>
+#include <QQmlContext>
+#include <QQmlEngine>
+#include <QAbstractItemModel>
 #include <zlib.h>
 
 #include "engine/HwAccel.h"
 #include "engine/FrameCompositor.h"
 #include "models/AppController.h"
+#include "models/TimelineClipsModel.h"
 #include "models/AssetLibrary.h"
 #include "MulticamImageProvider.h"
 #include "MulticamImageStore.h"
@@ -40,6 +45,16 @@
 #include "core/Track.h"
 
 namespace {
+
+// notifyTracksChanged() is protected — every public edit path calls it, but a test that seeds a
+// project by mutating drift::Project directly has to announce the result itself.
+class TestController : public AppController
+{
+public:
+    using AppController::AppController;
+    using AppController::notifyTracksChanged;
+};
+
 QByteArray readFile(const QString &path)
 {
     QFile file(path);
@@ -202,6 +217,9 @@ private slots:
     void multiClipMoveCrossTracks();
     void multiClipMoveCrossTracksWithLinkedPartners();
     void pasteAttributesToMultipleClips();
+    void clipsModelFeedsDelegateRequiredProperties();
+    void clipsModelNotifiesOnlyTheClipThatChanged();
+    void tracksCarriesLayoutOnlyWhileClipAtStaysFull();
 };
 
 void EditorStateTest::snapTimeEnabled()
@@ -6860,6 +6878,101 @@ void EditorStateTest::pasteAttributesToMultipleClips()
     const drift::Clip &t2Redone = state.project()->tracks().at(track).clips.at(2);
     QCOMPARE(t1Redone.flipH, true);
     QCOMPARE(t2Redone.flipH, true);
+}
+
+// TimelineClipItem is a Repeater delegate over clipsModel() that declares `required property var
+// model` and reads its clip through it. Required properties turn off the delegate's context
+// object, so whether the roles still arrive is a property of QQmlDelegateModel rather than of
+// anything in this repo — and getting it wrong renders every clip blank. Pinned here.
+void EditorStateTest::clipsModelFeedsDelegateRequiredProperties()
+{
+    AssetLibrary library;
+    TestController state(&library);
+    appendTwoVideoClips(*state.project());
+    state.notifyTracksChanged();
+
+    auto *model = qobject_cast<QAbstractItemModel *>(state.clipsModel(0));
+    QVERIFY(model);
+    QCOMPARE(model->rowCount(), 2);
+
+    QQmlEngine engine;
+    engine.rootContext()->setContextProperty(QStringLiteral("clipsModel"), model);
+    QQmlComponent component(&engine);
+    component.setData(R"QML(
+import QtQuick
+Item {
+    id: probeRoot
+    property var names: []
+    property var starts: []
+    Repeater {
+        model: clipsModel
+        delegate: Item {
+            required property int index
+            required property var model
+            Component.onCompleted: {
+                probeRoot.names[index] = model.name
+                probeRoot.starts[index] = model.start
+            }
+        }
+    }
+}
+)QML", QUrl());
+    QVERIFY2(component.isReady(), qPrintable(component.errorString()));
+    std::unique_ptr<QObject> root(component.create());
+    QVERIFY2(root, qPrintable(component.errorString()));
+
+    const QVariantList names = root->property("names").toList();
+    const QVariantList starts = root->property("starts").toList();
+    QCOMPARE(names.size(), 2);
+    QCOMPARE(names.at(0).toString(), QStringLiteral("Shot 0"));
+    QCOMPARE(names.at(1).toString(), QStringLiteral("Shot 1"));
+    QCOMPARE(starts.at(1).toDouble(), 2.0);
+}
+
+// The whole point of the model: moving one clip must not tell the others they changed, and must
+// not name roles that did not move. A reset or a blanket dataChanged would re-run every
+// delegate's filmstrip, waveform and fade-canvas bindings across the project.
+void EditorStateTest::clipsModelNotifiesOnlyTheClipThatChanged()
+{
+    AssetLibrary library;
+    TestController state(&library);
+    appendTwoVideoClips(*state.project());
+    state.notifyTracksChanged();
+
+    auto *model = qobject_cast<QAbstractItemModel *>(state.clipsModel(0));
+    QVERIFY(model);
+    QSignalSpy dataSpy(model, &QAbstractItemModel::dataChanged);
+    QSignalSpy resetSpy(model, &QAbstractItemModel::modelReset);
+
+    state.project()->tracks()[0].clips[1].timelineStart = drift::secondsToUs(3.0);
+    state.notifyTracksChanged();
+
+    QCOMPARE(resetSpy.count(), 0);
+    QCOMPARE(dataSpy.count(), 1);
+    const QList<QVariant> args = dataSpy.takeFirst();
+    QCOMPARE(args.at(0).toModelIndex().row(), 1);
+    QCOMPARE(args.at(1).toModelIndex().row(), 1);
+    const QList<int> roles = args.at(2).value<QList<int>>();
+    QCOMPARE(roles, QList<int>{TimelineClipsModel::StartRole});
+}
+
+// tracks() is the panel's layout data and nothing more. Everything an inspector opens has to
+// keep coming through clipAt(), which is the map the MCP tools and every inspector read.
+void EditorStateTest::tracksCarriesLayoutOnlyWhileClipAtStaysFull()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    appendTwoVideoClips(*state.project());
+
+    const QVariantMap layoutClip = state.tracks().at(0).toMap()
+                                       .value(QStringLiteral("clips")).toList().at(0).toMap();
+    QCOMPARE(layoutClip.keys(), (QStringList{QStringLiteral("duration"), QStringLiteral("id"),
+                                             QStringLiteral("name"), QStringLiteral("start")}));
+
+    const QVariantMap fullClip = state.clipAt(0, 0);
+    for (const char *key : {"textStyle", "shapeStyle", "mask", "keyframes", "assetIndex",
+                            "orientation", "stabilizeMode", "animIn", "volume"})
+        QVERIFY2(fullClip.contains(QLatin1String(key)), key);
 }
 
 QTEST_MAIN(EditorStateTest)

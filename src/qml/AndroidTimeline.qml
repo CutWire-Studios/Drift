@@ -1570,7 +1570,7 @@ Item {
                                             }
 
                                             Repeater {
-                                                model: root.tracks[laneStrip.trackIndex].clips.length
+                                                model: EditorState.clipsModel(laneStrip.trackIndex)
                                                 delegate: TimelineClipItem {
                                                     panel: root
                                                     timelineColumn: trackColumn
@@ -1596,7 +1596,7 @@ Item {
                                     height: Math.max(0, trackRow.height - adjustmentLaneStrips.height)
 
                                     Repeater {
-                                        model: root.tracks[trackClipArea.trackIndex].clips.length
+                                        model: EditorState.clipsModel(trackClipArea.trackIndex)
                                         delegate: TimelineClipItem {
                                             panel: root
                                             timelineColumn: trackColumn

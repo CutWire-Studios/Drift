@@ -29,28 +29,11 @@ Item {
 
     // Voice waveform is locked to video/audio clips on the timeline — never to the
     // selected subtitle clip's start/duration (resizing subtitles must not stretch it).
+    // Computed in C++: reading EditorState.tracks here made Qt deep-convert every clip map in
+    // the project into JS on every edit, to arrive at two numbers.
     readonly property var mediaWaveformRange: {
         void EditorState.tracksRevision
-        var start = Number.POSITIVE_INFINITY
-        var end = 0
-        var tracks = EditorState.tracks
-        for (var t = 0; t < tracks.length; t++) {
-            var type = tracks[t].type
-            if (type !== "video" && type !== "audio")
-                continue
-            var clips = tracks[t].clips || []
-            for (var c = 0; c < clips.length; c++) {
-                var s = clips[c].start || 0
-                var d = clips[c].duration || 0
-                if (d <= 0)
-                    continue
-                start = Math.min(start, s)
-                end = Math.max(end, s + d)
-            }
-        }
-        if (!isFinite(start) || end <= start)
-            return { start: 0, duration: 0 }
-        return { start: start, duration: end - start }
+        return EditorState.mediaExtentSeconds()
     }
 
     // The Repeater always renders `displayCues` (a stable snapshot). We refresh it from the

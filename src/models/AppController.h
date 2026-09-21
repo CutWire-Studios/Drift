@@ -14,6 +14,7 @@
 #include "engine/RvmMatter.h"
 #include "engine/Sam2Segmenter.h"
 #include "ClipListModel.h"
+#include "TimelineClipsModel.h"
 #include "TimelineModel.h"
 #include "models/AssetLibrary.h"
 #include "models/BinFolderListModel.h"
@@ -124,6 +125,10 @@ class AppController : public QObject
     Q_PROPERTY(QString workspaceLayoutPreferred READ workspaceLayoutPreferred
                    NOTIFY workspaceLayoutPreferenceChanged)
     Q_PROPERTY(bool autoKeyEnabled READ autoKeyEnabled WRITE setAutoKeyEnabled NOTIFY autoKeyEnabledChanged)
+    // On by default. Worth turning off on a very long timeline: the strip repaints every clip
+    // in the project on every edit.
+    Q_PROPERTY(bool timelineOverviewVisible READ timelineOverviewVisible
+                   WRITE setTimelineOverviewVisible NOTIFY timelineOverviewVisibleChanged)
     // Opt-in: on launch, restore the last open project (saved .drift or unsaved recovery snapshot).
     Q_PROPERTY(bool reopenLastProject READ reopenLastProject WRITE setReopenLastProject NOTIFY reopenLastProjectChanged)
     // Preview zero-copy import: VAAPI dma-buf on Linux, D3D11 interop on Windows. Takes effect
@@ -393,11 +398,18 @@ public:
     const drift::Project *project() const { return &m_project; }
 
     QVariantList tracks() const;
+    // The clips of one track, as a role model. This is where the timeline delegate's data lives;
+    // `tracks` above carries only what the panel's JS helpers need to lay a row out. Index slots
+    // are never reused or freed, so a model handed to a Repeater stays valid for the session.
+    Q_INVOKABLE QObject *clipsModel(int trackIndex) const;
     quint32 tracksRevision() const { return m_tracksRevision; }
     int trackCount() const { return m_project.tracks().size(); }
     int clipCount() const;
     double playheadSeconds() const;
     double durationSeconds() const;
+    // {start, duration} covering every clip on a video or audio track, for the subtitle lane's
+    // voice waveform. In C++ because the QML that needed it was reading the whole `tracks` graph.
+    Q_INVOKABLE QVariantMap mediaExtentSeconds() const;
     bool playing() const { return m_playing; }
     bool snapEnabled() const { return m_snapEnabled; }
     bool rippleEnabled() const { return m_rippleEnabled; }
@@ -414,6 +426,15 @@ public:
     bool mediaGridMode() const { return m_mediaViewMode == QLatin1String("grid"); }
     QString mediaViewMode() const { return m_mediaViewMode; }
     bool autoKeyEnabled() const { return m_autoKeyEnabled; }
+    bool timelineOverviewVisible() const { return m_timelineOverviewVisible; }
+    void setTimelineOverviewVisible(bool visible);
+    // Every clip in the project as a flat run of numbers — lane, clip-type code, start seconds,
+    // duration seconds — for the overview strip's canvas. Flat because the strip repaints off
+    // it: a list of numbers costs a fraction of what converting the clip graph to JS does.
+    Q_INVOKABLE QVariantList timelineOverviewBlocks() const;
+    // How many bands the strip splits its height into. Adjustment lanes are drawn inside their
+    // parent's row on the timeline and get no band of their own here.
+    Q_INVOKABLE int timelineOverviewLaneCount() const;
     bool reopenLastProject() const { return m_reopenLastProject; }
     bool vaapiZeroCopy() const { return m_vaapiZeroCopy; }
     bool vaapiZeroCopySupported() const;
@@ -1667,6 +1688,7 @@ signals:
     void mediaGridModeChanged();
     void mediaViewModeChanged();
     void autoKeyEnabledChanged();
+    void timelineOverviewVisibleChanged();
     void reopenLastProjectChanged();
     void vaapiZeroCopyChanged();
     void mediaCodecZeroCopyChanged();
@@ -1837,6 +1859,12 @@ protected:
     static QVariantMap trimPreviewToMap(const TrimComputation &computed);
 
     void notifyTracksChanged();
+
+    // Refills the per-track clip models from the project. Called by notifyTracksChanged() before
+    // the signal goes out, so a binding that wakes on tracksChanged already sees the new rows.
+    void syncClipModels();
+    TimelineClipsModel::Row clipRow(const drift::Clip &clip, const drift::Clip *videoEffectHost,
+                                    const drift::Clip *audioEffectHost) const;
     // Holds tracksChanged for the length of an operation that touches the project several times.
     // The caches are still dropped immediately, so anything reading tracks() inside the batch
     // sees fresh data -- only the notification waits, and only one goes out.
@@ -1959,9 +1987,14 @@ protected:
     void addImageOverlayClip(const QString &path, const QString &name, const QString &emoji,
                              double atSeconds, const QString &undoText);
 
+    // The inspector's and the MCP tools' view of a clip: every field, including the sub-maps
+    // only an open inspector reads. The timeline strip does NOT come through here — it reads
+    // clipRow() through TimelineClipsModel, which is what keeps an edit from rebuilding a
+    // textStyle map for every clip in the project.
+    //
     // `effectHost` supplies the stack to report for a media clip, whose effects now live on the
-    // adjustment linked to it. Passing it in rather than looking it up keeps a tracks() rebuild
-    // linear — resolving per clip would make it quadratic.
+    // adjustment linked to it. Passing it in rather than looking it up keeps a whole-project
+    // rebuild linear — resolving per clip would make it quadratic.
     // `faceSource` runs the other way: face landmarks are baked onto the media clip, but the
     // effects inspector now only ever sees the adjustment, so a linked adjustment reports the
     // clip it is pinned to. Null means "this clip's own", which is right for a media clip and for
@@ -2143,6 +2176,10 @@ protected:
     mutable double m_durationSecondsCache = 0.0;
     mutable bool m_durationCacheValid = false;
     quint32 m_tracksRevision = 0;
+    // One model per track index, parented to this. Grown on demand and never shrunk: a Repeater
+    // holds the pointer it was handed, and deleting the model out from under it on a track
+    // removal would leave it dangling. An unused slot just holds no rows.
+    QList<TimelineClipsModel *> m_clipModels;
     // Live trim drag scope. The memo rejects a repeated pointer position before snapTime() and
     // the sync passes run; m_trimGestureChanged is what tells the caller whether the gesture
     // earned an undo step.
@@ -2167,6 +2204,7 @@ protected:
     QString m_workspaceLayoutPreferred = QStringLiteral("landscape");
     QString m_mediaViewMode = QStringLiteral("grid");
     bool m_autoKeyEnabled = false;
+    bool m_timelineOverviewVisible = true;
     bool m_reopenLastProject = false;
     bool m_vaapiZeroCopy = false;
     bool m_mediaCodecZeroCopy = false;

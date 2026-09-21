@@ -259,6 +259,10 @@ QtObject {
     readonly property color clipAdjustmentVideo: clipEffect
     readonly property color clipAdjustmentAudio: "#9B6BC9"
     readonly property color clipAdjustmentMask: "#BA9B5D"
+    // Video in the overview strip only. On the timeline a video clip shows its thumbnails over
+    // clipVideoPlaceholder, which at three pixels tall reads as a hole in the strip — so the
+    // minimap gives footage a neutral slate that stays distinct from the coloured clip types.
+    readonly property color clipVideoOverview: "#6E7A85"
     readonly property color transitionOverlap: "#9B5DE5"
     readonly property color waveformColor: "#ffffffb3" // rgba(255,255,255,0.7) — on dark clip chrome
     // Waveform drawn on panel surfaces (subtitle cue lane, etc.): follows light/dark FG.
@@ -454,7 +458,7 @@ QtObject {
     readonly property real timelineToolbarHeight: 40
     // Resolve-style full-project overview strip above the ruler; short enough
     // to stay out of the way but tall enough to be an easy click target.
-    readonly property real timelineOverviewHeight: 28
+    readonly property real timelineOverviewHeight: 34
     // Tall enough to be an easy seek/scrub hit target (CapCut/Premiere-style).
     readonly property real timelineRulerHeight: 28
     readonly property real timelineBookmarkRowHeight: 18

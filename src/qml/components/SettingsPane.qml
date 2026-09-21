@@ -280,6 +280,14 @@ Item {
                 }
 
                 ThemedSwitch {
+                    visible: !Theme.touchUi
+                    checked: EditorState.timelineOverviewVisible
+                    text: qsTr("Timeline overview strip")
+                    tooltip: qsTr("A minimap of the whole project above the ruler — click or drag it to jump the zoomed view.")
+                    onToggled: EditorState.timelineOverviewVisible = checked
+                }
+
+                ThemedSwitch {
                     visible: Haptics.supported
                     checked: Haptics.enabled
                     text: qsTr("Haptic feedback")

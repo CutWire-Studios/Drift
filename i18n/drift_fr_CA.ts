@@ -8812,6 +8812,14 @@ En cas de saccades à la lecture, essayez un autre mode.</translation>
         <translation type="unfinished">Le défilement déplace la vue vers la gauche et la droite sur la timeline. Maj+défilement navigue entre les pistes. Glisser avec le clic du milieu déplace également la vue.</translation>
     </message>
     <message>
+        <source>Timeline overview strip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>A minimap of the whole project above the ruler — click or drag it to jump the zoomed view.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Haptic feedback</source>
         <translation type="unfinished"></translation>
     </message>
