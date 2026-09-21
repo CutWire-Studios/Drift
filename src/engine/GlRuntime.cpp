@@ -1753,7 +1753,7 @@ bool GlRuntime::ensureVideoRgbaTexture(QOpenGLExtraFunctions *gl, int width, int
     gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    gl->glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE,
+    gl->glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE,
                      nullptr);
 
     m_videoRgbaW = width;
@@ -2762,7 +2762,7 @@ GlTarget promoteVideoFrameToTarget(GlRuntime &rt, QOpenGLExtraFunctions *gl,
             return {};
         if (!rt.ensureVideoRgbaTexture(gl, srcW, srcH))
             return {};
-        if (!rt.uploadPlanePbo(gl, rt.m_videoRgba, srcW, srcH, GL_RGBA8, GL_RGBA, av->data[0],
+        if (!rt.uploadPlanePbo(gl, rt.m_videoRgba, srcW, srcH, GL_RGBA, GL_RGBA, av->data[0],
                                av->linesize[0], srcW * 4))
             return {};
         recordPreviewUploadPath(GlRuntime::PreviewUploadPath::CpuRoundTrip);
