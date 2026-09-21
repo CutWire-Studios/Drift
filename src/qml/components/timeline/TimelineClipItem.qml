@@ -288,6 +288,9 @@ Item {
                     - 2 * Theme.clipSelectionRingWidth)
     height: Math.max(0, trackRow.height - 2 * Theme.clipSelectionRingWidth)
 
+    property real lastPreviewDesired: -1
+    property int lastPreviewTrack: -1
+
     // While dragging, show the same snapped landing outline the
     // library drop uses, on whichever track the clip is over.
     //
@@ -303,8 +306,12 @@ Item {
         const desired = Math.max(0, (x - Theme.clipSelectionRingWidth) / panel.pxPerSecond)
         const pos = mapToItem(timelineColumn, width / 2, height / 2)
         const targetTrack = panel.trackIndexAtY(pos.y)
-        panel.showLandingPreview(targetTrack >= 0 ? targetTrack : trackIndex,
-                                 desired, clipData.duration)
+        const effTrack = targetTrack >= 0 ? targetTrack : trackIndex
+        if (Math.abs(desired - lastPreviewDesired) * panel.pxPerSecond >= 1 || effTrack !== lastPreviewTrack) {
+            lastPreviewDesired = desired
+            lastPreviewTrack = effTrack
+            panel.showLandingPreview(effTrack, desired, clipData.duration)
+        }
     }
     onXChanged: updateMovePreview()
     onYChanged: updateMovePreview()
@@ -867,7 +874,8 @@ Item {
         drag.target: clipItem.touchMode ? (moveArmed ? clipItem : null) : clipItem
         drag.axis: Drag.XAndYAxis
         // Once armed the finger is already down and still, so any motion is the move.
-        drag.threshold: clipItem.touchMode ? 0 : 8
+        // On desktop, 2px threshold eliminates the deadzone while preventing accidental micro-drags.
+        drag.threshold: clipItem.touchMode ? 0 : 2
         drag.minimumX: {
             if (clipItem.selected && EditorState.selection.length > 1) {
                 const earliest = EditorState.selectionEarliestStartSeconds()
@@ -1126,6 +1134,8 @@ Item {
             // offset on top of the new model start for a frame.
             panel.clearMoveFollow()
             panel.clearLandingPreview()
+            lastPreviewDesired = -1
+            lastPreviewTrack = -1
             if (!moved) {
                 if (wantsMenu) {
                     clipItem.y = Theme.clipSelectionRingWidth
@@ -1186,6 +1196,8 @@ Item {
             moveArmed = false
             panel.clearMoveFollow()
             panel.clearLandingPreview()
+            lastPreviewDesired = -1
+            lastPreviewTrack = -1
             // No drop tick: the clip went back where it came from. The latches still have to go.
             Haptics.reset()
         }
