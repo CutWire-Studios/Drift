@@ -6,32 +6,66 @@
 
 namespace drift {
 
+void SnapTargets::build(const Project &project, TimeUs playheadUs,
+                        const QList<TimeUs> &extraTargets)
+{
+    sorted.clear();
+    sorted.reserve(2 + extraTargets.size() + 2 * project.tracks().size());
+    sorted.push_back(0);
+    sorted.push_back(playheadUs);
+    for (const Track &track : project.tracks()) {
+        for (const Clip &clip : track.clips) {
+            sorted.push_back(clip.timelineStart);
+            sorted.push_back(clip.timelineEnd());
+        }
+    }
+    for (TimeUs extra : extraTargets)
+        sorted.push_back(extra);
+
+    std::sort(sorted.begin(), sorted.end());
+    sorted.erase(std::unique(sorted.begin(), sorted.end()), sorted.end());
+}
+
+TimeUs snapTimeTo(const SnapTargets &targets, TimeUs time, bool snapEnabled)
+{
+    if (!snapEnabled || targets.sorted.empty())
+        return qMax<TimeUs>(0, time);
+
+    // Only the two targets bracketing `time` can be the nearest one. Ties go to the lower
+    // target; the old linear scan gave them to whichever clip came first in track order, which
+    // was no more meaningful and only reachable at exact microsecond equidistance.
+    const auto it = std::lower_bound(targets.sorted.begin(), targets.sorted.end(), time);
+    TimeUs best = time;
+    TimeUs bestDistance = kSnapThresholdUs;
+    if (it != targets.sorted.begin()) {
+        const TimeUs candidate = *(it - 1);
+        const TimeUs distance = qAbs(candidate - time);
+        if (distance < bestDistance) {
+            bestDistance = distance;
+            best = candidate;
+        }
+    }
+    if (it != targets.sorted.end()) {
+        const TimeUs candidate = *it;
+        const TimeUs distance = qAbs(candidate - time);
+        if (distance < bestDistance) {
+            bestDistance = distance;
+            best = candidate;
+        }
+    }
+
+    return qMax<TimeUs>(0, best);
+}
+
 TimeUs snapTime(const Project &project, TimeUs time, bool snapEnabled, TimeUs playheadUs,
                 const QList<TimeUs> &extraTargets)
 {
     if (!snapEnabled)
         return qMax<TimeUs>(0, time);
 
-    QList<TimeUs> targets = {0, playheadUs};
-    for (const Track &track : project.tracks()) {
-        for (const Clip &clip : track.clips) {
-            targets.append(clip.timelineStart);
-            targets.append(clip.timelineEnd());
-        }
-    }
-    targets.append(extraTargets);
-
-    TimeUs best = time;
-    TimeUs bestDistance = kSnapThresholdUs;
-    for (TimeUs target : targets) {
-        const TimeUs distance = qAbs(target - time);
-        if (distance < bestDistance) {
-            bestDistance = distance;
-            best = target;
-        }
-    }
-
-    return qMax<TimeUs>(0, best);
+    SnapTargets targets;
+    targets.build(project, playheadUs, extraTargets);
+    return snapTimeTo(targets, time, snapEnabled);
 }
 
 TimeUs resolveClipStart(const Project &project, const Track &track, int excludeClipIndex,

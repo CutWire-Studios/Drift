@@ -1825,6 +1825,13 @@ protected:
     void rebuildBeatSnapTargets();
     // Beat onsets plus project bookmarks — anything clips should magnet to when snap is on.
     QList<drift::TimeUs> extraSnapTargets() const;
+    // Same list, rebuilt only when the beat grid, bookmarks or the work area move. It has no
+    // clip dependency, so an edit to the timeline does not invalidate it.
+    const QList<drift::TimeUs> &extraSnapTargetsCached() const;
+    void invalidateExtraSnapTargets() { m_extraSnapTargetsValid = false; }
+    // Snaps against the vector pinned for the current trim gesture, falling back to a one-shot
+    // build when called outside one.
+    drift::TimeUs snapTimeForGesture(drift::TimeUs rawUs) const;
     // Decodes one frame per angle at the playhead and publishes them to MulticamImageStore.
     // Coalesces: a refresh requested while one is in flight is dropped, not queued.
     void refreshMulticamTiles();
@@ -2073,6 +2080,11 @@ protected:
     // Live trim drag scope. The memo rejects a repeated pointer position before snapTime() and
     // the sync passes run; m_trimGestureChanged is what tells the caller whether the gesture
     // earned an undo step.
+    mutable QList<drift::TimeUs> m_extraSnapTargetsCache;
+    mutable bool m_extraSnapTargetsValid = false;
+    // Pinned for the duration of a trim drag. Nothing can add or remove a clip mid-gesture, and
+    // the only targets that do move are the dragged clip's own edges.
+    drift::SnapTargets m_gestureSnapTargets;
     bool m_trimGestureActive = false;
     bool m_trimGestureChanged = false;
     drift::TimeUs m_trimGestureLastInputUs = -1;

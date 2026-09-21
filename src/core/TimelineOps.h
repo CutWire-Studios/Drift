@@ -5,6 +5,8 @@
 
 #include <QSet>
 
+#include <vector>
+
 namespace drift {
 
 constexpr TimeUs kImageClipDurationUs = 5 * kUsPerSecond;
@@ -13,9 +15,25 @@ constexpr TimeUs kSubtitleClipDurationUs = 30 * kUsPerSecond;
 constexpr TimeUs kMinClipDurationUs = kUsPerSecond / 10;
 constexpr TimeUs kSnapThresholdUs = 150'000;
 
+// Every time an edge can snap to, sorted and deduplicated. Built once and reused: snapTime()
+// below collects the same set from scratch on every call, which is two entries per clip in the
+// project, allocated and linearly scanned for each step of a drag.
+struct SnapTargets {
+    std::vector<TimeUs> sorted;
+
+    void build(const Project &project, TimeUs playheadUs, const QList<TimeUs> &extraTargets);
+    bool isEmpty() const { return sorted.empty(); }
+};
+
+// Nearest target within kSnapThresholdUs, else `time` unchanged. O(log n).
+TimeUs snapTimeTo(const SnapTargets &targets, TimeUs time, bool snapEnabled);
+
 // `extraTargets` are additional snap positions supplied by the caller — currently the
 // detected beat grid, which is analysis state rather than something the project stores.
 // Core never learns what a beat is; it just snaps to whatever times it is handed.
+//
+// Convenience form for the callers that snap exactly once; a drag should build a SnapTargets
+// up front and call snapTimeTo() instead.
 TimeUs snapTime(const Project &project, TimeUs time, bool snapEnabled, TimeUs playheadUs,
                 const QList<TimeUs> &extraTargets = {});
 
