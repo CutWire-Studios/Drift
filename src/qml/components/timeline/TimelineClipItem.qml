@@ -374,7 +374,7 @@ Item {
         if (Math.abs(desired - lastPreviewDesired) * panel.pxPerSecond >= 1 || effTrack !== lastPreviewTrack) {
             lastPreviewDesired = desired
             lastPreviewTrack = effTrack
-            panel.showLandingPreview(effTrack, desired, clipData.duration)
+            panel.showLandingPreview(effTrack, desired, clipData.duration, clipData.id)
         }
     }
     onXChanged: updateMovePreview()
@@ -1229,7 +1229,16 @@ Item {
                 }
                 return
             }
-            const newStart = (clipItem.x - Theme.clipSelectionRingWidth) / panel.pxPerSecond
+            // Snapped here, not only in the preview. The landing outline has always been drawn
+            // at the snapped position while the commit below took the raw pointer position, so a
+            // clip visibly locked onto an edge and then settled a few pixels off it. Mirrors
+            // updateMovePreview() exactly — same clamp, same call — so the clip lands on the
+            // outline it was showing. Recomputed rather than read back from panel.dropStartSeconds
+            // because that is throttled to whole pixels and can be a pixel stale at release.
+            const rawStart = Math.max(0, (clipItem.x - Theme.clipSelectionRingWidth)
+                                          / panel.pxPerSecond)
+            const newStart = panel.snapClipStart(rawStart, clipItem.clipData.duration,
+                                                 clipItem.clipData.id).start
             const pos = clipItem.mapToItem(timelineColumn, clipItem.width / 2, clipItem.height / 2)
             const target = typeof panel.dropTargetAtY === "function"
                          ? panel.dropTargetAtY(pos.y)

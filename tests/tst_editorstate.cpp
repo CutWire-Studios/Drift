@@ -136,6 +136,8 @@ private slots:
     void overlapDoesNotAutoApplyCrossfade();
     void trimmingOverlapClampsStaleTransitionDuration();
     void trimPushesOneUndoStepAndMarksDirty();
+    void movedClipDoesNotSnapToItsOwnEdges();
+    void snapTargetsStillIncludeOtherClips();
     void trimClickWithoutMovementLeavesNoUndoStep();
     void trimClipRightRejectsANoOpMove();
     void tracksCacheIsInvalidatedByEveryMutation();
@@ -3368,6 +3370,53 @@ void buildOneClipProject(AppController &state, double startSeconds, double durat
 }
 
 } // namespace
+
+
+void EditorStateTest::movedClipDoesNotSnapToItsOwnEdges()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    state.setSnapEnabled(true);
+    buildOneClipProject(state, 10.0, 4.0);
+    const QString id = state.project()->tracks()[0].clips[0].id;
+
+    // Nudged well inside the 0.15s snap threshold of its own start.
+    const double nudged = 10.05;
+    // Without the exclusion the clip's own start is the nearest target, so it snaps home.
+    QCOMPARE(state.snapTime(nudged), 10.0);
+    // With it, the drag is free to land where it was put.
+    QCOMPARE(state.snapTime(nudged, id), nudged);
+
+    // Same at the far edge: 14.0 is this clip's own end.
+    QCOMPARE(state.snapTime(13.97), 14.0);
+    QCOMPARE(state.snapTime(13.97, id), 13.97);
+}
+
+void EditorStateTest::snapTargetsStillIncludeOtherClips()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    state.setSnapEnabled(true);
+    buildOneClipProject(state, 10.0, 4.0);
+
+    drift::Clip neighbour;
+    neighbour.id = QStringLiteral("clip-b");
+    neighbour.type = drift::ClipType::Shape;
+    neighbour.timelineStart = drift::secondsToUs(20.0);
+    neighbour.timelineDuration = drift::secondsToUs(4.0);
+    state.project()->tracks()[0].clips.append(neighbour);
+
+    const QString dragged = state.project()->tracks()[0].clips[0].id;
+    // Excluding the dragged clip must not disarm snapping generally: the neighbour's start is
+    // still a target, which is the whole point of dragging up against it.
+    QCOMPARE(state.snapTime(19.95, dragged), 20.0);
+    QCOMPARE(state.snapTime(23.96, dragged), 24.0);
+    // And the playhead stays a target too. Kept inside the project duration, which is what
+    // setPlayheadUs clamps to.
+    state.setPlayheadSeconds(22.0);
+    QCOMPARE(state.playheadSeconds(), 22.0);
+    QCOMPARE(state.snapTime(21.96, dragged), 22.0);
+}
 
 void EditorStateTest::trimPushesOneUndoStepAndMarksDirty()
 {

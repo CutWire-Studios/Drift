@@ -425,8 +425,8 @@ Item {
         return applied
     }
 
-    function showLandingPreview(trackIndex, desiredStart, duration) {
-        const snapped = snapClipStart(desiredStart, duration)
+    function showLandingPreview(trackIndex, desiredStart, duration, excludeClipId) {
+        const snapped = snapClipStart(desiredStart, duration, excludeClipId)
         dropTrackIndex = trackIndex
         dropStartSeconds = snapped.start
         dropDurationSeconds = duration
@@ -453,9 +453,12 @@ Item {
         return snapped
     }
 
-    function snapClipStart(desiredStart, duration) {
-        const l = EditorState.snapTime(desiredStart)
-        const rEdge = EditorState.snapTime(desiredStart + duration)
+    // `excludeClipId` is the clip being dragged, if any: it is still parked at its old start in
+    // the model, so leaving its edges in the target set pins every short drag back to the origin.
+    function snapClipStart(desiredStart, duration, excludeClipId) {
+        const ex = excludeClipId || ""
+        const l = EditorState.snapTime(desiredStart, ex)
+        const rEdge = EditorState.snapTime(desiredStart + duration, ex)
         const lSnapped = Math.abs(l - desiredStart) > 0.0005
         const rSnapped = Math.abs(rEdge - (desiredStart + duration)) > 0.0005
         if (lSnapped && (!rSnapped || Math.abs(l - desiredStart) <= Math.abs(rEdge - duration - desiredStart)))

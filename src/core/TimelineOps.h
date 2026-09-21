@@ -21,7 +21,11 @@ constexpr TimeUs kSnapThresholdUs = 150'000;
 struct SnapTargets {
     std::vector<TimeUs> sorted;
 
-    void build(const Project &project, TimeUs playheadUs, const QList<TimeUs> &extraTargets);
+    // `excludeClipId`, when set, leaves that clip's own two edges out. A clip being dragged is
+    // still sitting at its old position in the model, so without this a short drag snaps
+    // straight back to where it started.
+    void build(const Project &project, TimeUs playheadUs, const QList<TimeUs> &extraTargets,
+               const QString &excludeClipId = {});
     bool isEmpty() const { return sorted.empty(); }
 };
 
@@ -35,7 +39,7 @@ TimeUs snapTimeTo(const SnapTargets &targets, TimeUs time, bool snapEnabled);
 // Convenience form for the callers that snap exactly once; a drag should build a SnapTargets
 // up front and call snapTimeTo() instead.
 TimeUs snapTime(const Project &project, TimeUs time, bool snapEnabled, TimeUs playheadUs,
-                const QList<TimeUs> &extraTargets = {});
+                const QList<TimeUs> &extraTargets = {}, const QString &excludeClipId = {});
 
 TimeUs resolveClipStart(const Project &project, const Track &track, int excludeClipIndex,
                         TimeUs desiredStart, TimeUs duration, bool snapEnabled, TimeUs playheadUs,

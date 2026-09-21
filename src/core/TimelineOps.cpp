@@ -7,7 +7,7 @@
 namespace drift {
 
 void SnapTargets::build(const Project &project, TimeUs playheadUs,
-                        const QList<TimeUs> &extraTargets)
+                        const QList<TimeUs> &extraTargets, const QString &excludeClipId)
 {
     sorted.clear();
     sorted.reserve(2 + extraTargets.size() + 2 * project.tracks().size());
@@ -15,6 +15,8 @@ void SnapTargets::build(const Project &project, TimeUs playheadUs,
     sorted.push_back(playheadUs);
     for (const Track &track : project.tracks()) {
         for (const Clip &clip : track.clips) {
+            if (!excludeClipId.isEmpty() && clip.id == excludeClipId)
+                continue;
             sorted.push_back(clip.timelineStart);
             sorted.push_back(clip.timelineEnd());
         }
@@ -58,13 +60,13 @@ TimeUs snapTimeTo(const SnapTargets &targets, TimeUs time, bool snapEnabled)
 }
 
 TimeUs snapTime(const Project &project, TimeUs time, bool snapEnabled, TimeUs playheadUs,
-                const QList<TimeUs> &extraTargets)
+                const QList<TimeUs> &extraTargets, const QString &excludeClipId)
 {
     if (!snapEnabled)
         return qMax<TimeUs>(0, time);
 
     SnapTargets targets;
-    targets.build(project, playheadUs, extraTargets);
+    targets.build(project, playheadUs, extraTargets, excludeClipId);
     return snapTimeTo(targets, time, snapEnabled);
 }
 

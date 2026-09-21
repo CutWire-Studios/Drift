@@ -379,7 +379,17 @@ public:
     QVariantList audioOutputDevices() const;
     QString audioOutputDeviceId() const { return m_audioOutputDeviceId; }
     void setAudioOutputDeviceId(const QString &id);
-    drift::Project *project() { return &m_project; }
+    // Handing out a mutable pointer is the point past which this object can no longer know what
+    // happened to the project, so the derived caches are dropped here rather than trusted. Two
+    // bool writes, and nothing in src/ takes this overload — it exists for tests and for code
+    // that edits the project behind the controller's back, which is exactly the case that would
+    // otherwise read a stale tracks() list.
+    drift::Project *project()
+    {
+        m_tracksCacheValid = false;
+        m_durationCacheValid = false;
+        return &m_project;
+    }
     const drift::Project *project() const { return &m_project; }
 
     QVariantList tracks() const;
@@ -1458,7 +1468,10 @@ public:
     Q_INVOKABLE int keyboardModifiers() const;
     Q_INVOKABLE void undo();
     Q_INVOKABLE void redo();
-    Q_INVOKABLE double snapTime(double seconds) const;
+    // `excludeClipId` keeps a clip from snapping to its own edges while it is being dragged —
+    // the model still has it at its old position, so those two targets sit right under the
+    // pointer at the start of every move.
+    Q_INVOKABLE double snapTime(double seconds, const QString &excludeClipId = {}) const;
     Q_INVOKABLE QVariantList waveformPeaks(const QString &path) const;
     // Whole-file peaks sliced to a source window, for a dialog whose x axis is a clip's trimmed
     // range rather than the whole file. Shares the dense cache and the waveformReady signal with

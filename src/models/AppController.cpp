@@ -5653,10 +5653,10 @@ QString AppController::filmstripTileUrl(const QString &path, int level, double i
     return tile.isEmpty() ? QString() : imageUrl(tile);
 }
 
-double AppController::snapTime(double seconds) const
+double AppController::snapTime(double seconds, const QString &excludeClipId) const
 {
     return drift::usToSeconds(drift::snapTime(m_project, drift::secondsToUs(seconds), m_snapEnabled,
-                                              m_playheadUs, extraSnapTargets()));
+                                              m_playheadUs, extraSnapTargetsCached(), excludeClipId));
 }
 
 drift::TimeUs AppController::clipDurationForAssetIndex(int assetIndex) const
