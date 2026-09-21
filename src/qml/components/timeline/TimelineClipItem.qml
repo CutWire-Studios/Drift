@@ -1449,6 +1449,14 @@ Item {
                 cursorShape: Qt.BlankCursor
             }
 
+            // Last position this edge was actually committed at, in whole pixels. A high-polling
+            // mouse delivers several positionChanged per frame, and each one used to mutate the
+            // project and rebuild the whole timeline model. Same idiom the move drag uses above.
+            property int lastTrimPx: -2147483647
+            // Set while this handle owns an open preview drag, so the drag is closed exactly
+            // once however the gesture ends.
+            property bool trimming: false
+
             onPressed: (mouse) => {
                 Qt.callLater(function() { clipItem.forceActiveFocus() })
                 const wasSelected = clipItem.selected
@@ -1458,6 +1466,14 @@ Item {
                     EditorState.selectClip(clipItem.trackIndex, clipItem.clipIndex)
                 if (!wasSelected)
                     Haptics.select()
+                // One undo entry and one dirty mark for the whole drag. Without this a trim was
+                // invisible to both: it never moved the undo stack index, and the dirty flag is
+                // only ever set from that index changing — so trimming, closing, and being asked
+                // nothing about saving lost the work outright.
+                EditorState.beginPreviewDrag(qsTr("Trim clip"))
+                EditorState.beginTrimGesture(clipItem.trackIndex, clipItem.clipIndex, -1)
+                lastTrimPx = -2147483647
+                trimming = true
             }
             onPositionChanged: (mouse) => {
                 if (!pressed)
@@ -1471,16 +1487,40 @@ Item {
                 const raw = mapToItem(trackRow, mouse.x, mouse.y).x / panel.pxPerSecond
                 // Floor duration so the clip stays at least
                 // clipMinWidth; handles remain draggable to extend.
-                const newStart = Math.min(raw, end - clipItem.minDurationSeconds)
+                const newStart = Math.max(0, Math.min(raw, end - clipItem.minDurationSeconds))
+                const px = Math.round(newStart * panel.pxPerSecond)
+                if (px === lastTrimPx)
+                    return
+                lastTrimPx = px
                 // The trim reports what it did rather than the caller guessing from the geometry:
                 // snapping and every limit that can stop this edge live inside it, and the one the
                 // user needs told — the source running out — has no cue on screen at all.
                 Haptics.trimStep(
-                    EditorState.trimClipLeft(clipItem.trackIndex, clipItem.clipIndex,
-                                             Math.max(0, newStart)))
+                    EditorState.trimClipLeft(clipItem.trackIndex, clipItem.clipIndex, newStart))
             }
-            onReleased: Haptics.reset()
-            onCanceled: Haptics.reset()
+            onReleased: {
+                Haptics.reset()
+                if (trimming) {
+                    trimming = false
+                    // A press and release that never moved the edge is a click, not an edit.
+                    // Committing it anyway would push an undo step that restores nothing and
+                    // would mark the project dirty for having done nothing.
+                    const moved = EditorState.trimGestureChangedProject()
+                    EditorState.endTrimGesture()
+                    if (moved)
+                        EditorState.commitPreviewDrag()
+                    else
+                        EditorState.cancelPreviewDrag()
+                }
+            }
+            onCanceled: {
+                Haptics.reset()
+                if (trimming) {
+                    trimming = false
+                    EditorState.endTrimGesture()
+                    EditorState.cancelPreviewDrag()
+                }
+            }
         }
     }
 
@@ -1537,6 +1577,10 @@ Item {
                 cursorShape: Qt.BlankCursor
             }
 
+            // See the matching properties on the left handle.
+            property int lastTrimPx: -2147483647
+            property bool trimming: false
+
             onPressed: (mouse) => {
                 Qt.callLater(function() { clipItem.forceActiveFocus() })
                 const wasSelected = clipItem.selected
@@ -1546,6 +1590,10 @@ Item {
                     EditorState.selectClip(clipItem.trackIndex, clipItem.clipIndex)
                 if (!wasSelected)
                     Haptics.select()
+                EditorState.beginPreviewDrag(qsTr("Trim clip"))
+                EditorState.beginTrimGesture(clipItem.trackIndex, clipItem.clipIndex, 1)
+                lastTrimPx = -2147483647
+                trimming = true
             }
             onPositionChanged: (mouse) => {
                 if (!pressed)
@@ -1555,11 +1603,36 @@ Item {
                 const start = clipItem.clipData.start || 0
                 const raw = mapToItem(trackRow, mouse.x, mouse.y).x / panel.pxPerSecond
                 const newEnd = Math.max(raw, start + clipItem.minDurationSeconds)
+                const px = Math.round(newEnd * panel.pxPerSecond)
+                if (px === lastTrimPx)
+                    return
+                lastTrimPx = px
                 Haptics.trimStep(
                     EditorState.trimClipRight(clipItem.trackIndex, clipItem.clipIndex, newEnd))
             }
-            onReleased: Haptics.reset()
-            onCanceled: Haptics.reset()
+            onReleased: {
+                Haptics.reset()
+                if (trimming) {
+                    trimming = false
+                    // A press and release that never moved the edge is a click, not an edit.
+                    // Committing it anyway would push an undo step that restores nothing and
+                    // would mark the project dirty for having done nothing.
+                    const moved = EditorState.trimGestureChangedProject()
+                    EditorState.endTrimGesture()
+                    if (moved)
+                        EditorState.commitPreviewDrag()
+                    else
+                        EditorState.cancelPreviewDrag()
+                }
+            }
+            onCanceled: {
+                Haptics.reset()
+                if (trimming) {
+                    trimming = false
+                    EditorState.endTrimGesture()
+                    EditorState.cancelPreviewDrag()
+                }
+            }
         }
     }
 }

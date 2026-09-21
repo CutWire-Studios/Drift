@@ -1035,14 +1035,35 @@ public:
     Q_INVOKABLE void closeGap(int trackIndex, double gapStartSeconds);
     Q_INVOKABLE void alignSelectedClipLeft();
     Q_INVOKABLE void alignSelectedClipRight();
+    // Mirrors drift::Haptics::TrimState (Haptics.h), which has documented since it was written
+    // that it mirrors this enum. It does now — before, it mirrored nothing.
+    enum TrimOutcome {
+        TrimNone = 0,
+        TrimMoved = 1,
+        TrimSnapped = 2,
+        TrimBlocked = 3,
+    };
+    Q_ENUM(TrimOutcome)
+
     Q_INVOKABLE void splitSelectedClipLeft();
     Q_INVOKABLE void splitSelectedClipRight();
     Q_INVOKABLE void splitAtPlayhead();
     Q_INVOKABLE void splitClipAt(int trackIndex, int clipIndex, double seconds);
     Q_INVOKABLE void splitClipLeftAt(int trackIndex, int clipIndex, double seconds);
     Q_INVOKABLE void splitClipRightAt(int trackIndex, int clipIndex, double seconds);
-    Q_INVOKABLE void trimClipLeft(int trackIndex, int clipIndex, double newStart);
-    Q_INVOKABLE void trimClipRight(int trackIndex, int clipIndex, double newEnd);
+    // Opens and closes a trim drag. Scoping the gesture lets a repeated pointer position be
+    // rejected before any work is done, and lets the caller find out whether the edge ever
+    // actually moved — a press and release with no movement must not leave an undo step behind.
+    Q_INVOKABLE void beginTrimGesture(int trackIndex, int clipIndex, int side);
+    Q_INVOKABLE void endTrimGesture();
+    Q_INVOKABLE bool trimGestureChangedProject() const { return m_trimGestureChanged; }
+
+    // One step of a live trim drag, in timeline seconds. Returns a TrimOutcome rather than void:
+    // snapping and every limit that can stop this edge live inside these, and the one the user
+    // most needs told — the source running out — has no cue on screen at all. Haptics::trimStep
+    // has always been handed this return value; until the enum existed it was reading undefined.
+    Q_INVOKABLE int trimClipLeft(int trackIndex, int clipIndex, double newStart);
+    Q_INVOKABLE int trimClipRight(int trackIndex, int clipIndex, double newEnd);
     Q_INVOKABLE void setClipTrim(int trackIndex, int clipIndex, double inPoint, double outPoint);
     Q_INVOKABLE void setClipStart(int trackIndex, int clipIndex, double start);
     Q_INVOKABLE void setClipDuration(int trackIndex, int clipIndex, double duration);
@@ -2049,6 +2070,13 @@ protected:
     mutable double m_durationSecondsCache = 0.0;
     mutable bool m_durationCacheValid = false;
     quint32 m_tracksRevision = 0;
+    // Live trim drag scope. The memo rejects a repeated pointer position before snapTime() and
+    // the sync passes run; m_trimGestureChanged is what tells the caller whether the gesture
+    // earned an undo step.
+    bool m_trimGestureActive = false;
+    bool m_trimGestureChanged = false;
+    drift::TimeUs m_trimGestureLastInputUs = -1;
+    int m_trimGestureLastOutcome = 0;
     drift::TimeUs m_playheadUs = 0;
     bool m_playing = false;
     bool m_snapEnabled = true;

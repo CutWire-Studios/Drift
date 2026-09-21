@@ -135,6 +135,10 @@ private slots:
     void replaceTransitionOnDrop();
     void overlapDoesNotAutoApplyCrossfade();
     void trimmingOverlapClampsStaleTransitionDuration();
+    void trimPushesOneUndoStepAndMarksDirty();
+    void trimClickWithoutMovementLeavesNoUndoStep();
+    void trimClipRightRejectsANoOpMove();
+    void tracksCacheIsInvalidatedByEveryMutation();
     void removeTransitionDoesNotMoveOverlappingClips();
     void separateAudioFromCombinedClip();
     void separatedAudioTracksMirrorVideoHierarchy();
@@ -3344,6 +3348,126 @@ void EditorStateTest::overlapDoesNotAutoApplyCrossfade()
     state.addTransition(0, 0, QStringLiteral("dip"), 0.5);
     QCOMPARE(state.transitionBetweenClips(0, 0).value(QStringLiteral("kind")).toString(),
              QStringLiteral("dip"));
+}
+
+namespace {
+
+// A bare one-track project with a single synthetic clip, for the trim tests below. Shape clips
+// take the synthetic path through the trims, which needs no media on disk.
+void buildOneClipProject(AppController &state, double startSeconds, double durationSeconds)
+{
+    state.project()->tracks().clear();
+    state.project()->tracks().append(drift::Track{.type = drift::TrackType::Video});
+
+    drift::Clip clip;
+    clip.id = QStringLiteral("clip-a");
+    clip.type = drift::ClipType::Shape;
+    clip.timelineStart = drift::secondsToUs(startSeconds);
+    clip.timelineDuration = drift::secondsToUs(durationSeconds);
+    state.project()->tracks()[0].clips.append(clip);
+}
+
+} // namespace
+
+void EditorStateTest::trimPushesOneUndoStepAndMarksDirty()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    state.setSnapEnabled(false);
+    buildOneClipProject(state, 0.0, 10.0);
+
+    QVERIFY(!state.hasUnsavedChanges());
+    QVERIFY(!state.undoAvailable());
+
+    // What a drag actually looks like: one begin, a stream of steps, one commit.
+    state.beginPreviewDrag(QStringLiteral("Trim clip"));
+    state.beginTrimGesture(0, 0, 1);
+    for (int i = 0; i < 40; ++i)
+        state.trimClipRight(0, 0, 10.0 - i * 0.1);
+    QVERIFY(state.trimGestureChangedProject());
+    state.endTrimGesture();
+    state.commitPreviewDrag();
+
+    const double trimmed = drift::usToSeconds(state.project()->tracks()[0].clips[0].timelineDuration);
+    QVERIFY(trimmed < 10.0);
+
+    // The whole point: forty mutations, one undo step, and the project knows it is dirty.
+    QCOMPARE(state.m_undoStack.count(), 1);
+    QVERIFY(state.hasUnsavedChanges());
+
+    state.undo();
+    QCOMPARE(drift::usToSeconds(state.project()->tracks()[0].clips[0].timelineDuration), 10.0);
+}
+
+void EditorStateTest::trimClickWithoutMovementLeavesNoUndoStep()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    state.setSnapEnabled(false);
+    buildOneClipProject(state, 0.0, 10.0);
+
+    // Press and release on the handle without moving it.
+    state.beginPreviewDrag(QStringLiteral("Trim clip"));
+    state.beginTrimGesture(0, 0, 1);
+    state.trimClipRight(0, 0, 10.0);
+    QVERIFY(!state.trimGestureChangedProject());
+    state.endTrimGesture();
+    state.cancelPreviewDrag();
+
+    QCOMPARE(state.m_undoStack.count(), 0);
+    QVERIFY(!state.hasUnsavedChanges());
+}
+
+void EditorStateTest::trimClipRightRejectsANoOpMove()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    state.setSnapEnabled(false);
+    buildOneClipProject(state, 0.0, 10.0);
+
+    QSignalSpy spy(&state, &AppController::tracksChanged);
+
+    // The edge is already here, so none of these should touch the project or notify.
+    state.beginTrimGesture(0, 0, 1);
+    for (int i = 0; i < 10; ++i)
+        state.trimClipRight(0, 0, 10.0);
+    state.endTrimGesture();
+
+    QCOMPARE(spy.count(), 0);
+    QCOMPARE(drift::usToSeconds(state.project()->tracks()[0].clips[0].timelineDuration), 10.0);
+}
+
+void EditorStateTest::tracksCacheIsInvalidatedByEveryMutation()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    state.setSnapEnabled(false);
+    buildOneClipProject(state, 0.0, 10.0);
+
+    // The guard rail for the tracks() cache: a mutation that forgets to invalidate would serve
+    // QML a stale model, which looks like a rendering bug rather than a caching one.
+    auto durationInTracks = [&state] {
+        const QVariantList tracks = state.tracks();
+        const QVariantList clips = tracks.at(0).toMap().value(QStringLiteral("clips")).toList();
+        return clips.at(0).toMap().value(QStringLiteral("duration")).toDouble();
+    };
+
+    QCOMPARE(durationInTracks(), 10.0);
+
+    state.beginTrimGesture(0, 0, 1);
+    state.trimClipRight(0, 0, 6.0);
+    state.endTrimGesture();
+    QCOMPARE(durationInTracks(), 6.0);
+
+    state.setClipStart(0, 0, 3.0);
+    QCOMPARE(state.tracks().at(0).toMap().value(QStringLiteral("clips")).toList()
+                 .at(0).toMap().value(QStringLiteral("start")).toDouble(), 3.0);
+
+    state.splitClipAt(0, 0, 5.0);
+    QCOMPARE(state.tracks().at(0).toMap().value(QStringLiteral("clips")).toList().size(), 2);
+
+    state.undo();
+    QCOMPARE(state.tracks().at(0).toMap().value(QStringLiteral("clips")).toList().size(), 1);
 }
 
 void EditorStateTest::trimmingOverlapClampsStaleTransitionDuration()
