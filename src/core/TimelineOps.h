@@ -244,6 +244,10 @@ QList<MulticamInterval> multicamIntervals(const QList<MulticamCut> &cuts, TimeUs
 // with it. Keys pushed before the start are dropped.
 void shiftClipKeyframes(Clip &clip, TimeUs delta);
 
+// Carry a split tail's curves back onto its own start, keeping the value they held at the cut so
+// the animation continues rather than restarting.
+void rebaseKeyframesForSplitTail(Clip &tail, TimeUs offset);
+
 bool sliceClipToTimelineRange(const Clip &src, TimeUs start, TimeUs end, Clip &out);
 
 } // namespace drift

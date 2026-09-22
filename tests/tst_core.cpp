@@ -118,6 +118,7 @@ private slots:
     void speedCurveSerialization();
     void clipReverseAndFlipSerialization();
     void clipSplitMergeRoundTrip();
+    void splitCarriesTheAnimationOntoBothHalves();
     void clipLinkFieldsSerialization();
     void maskAndTransitionSerialization();
     void matteMaskSerialization();
@@ -2546,6 +2547,57 @@ void CoreTest::clipReverseAndFlipSerialization()
     QCOMPARE(out.flipH, true);
     QCOMPARE(out.flipV, true);
     QCOMPARE(out.speed, 1.5);
+}
+
+// A cut should be invisible: play the two halves and you should see exactly what the whole clip
+// showed. Key times are clip-relative, so the tail has to carry its curve back onto its own start
+// and keep the value the animation held at the cut. Before this, the tail replayed the whole
+// animation `offset` later.
+void CoreTest::splitCarriesTheAnimationOntoBothHalves()
+{
+    drift::Clip head;
+    head.id = QStringLiteral("head");
+    head.type = drift::ClipType::Video;
+    head.timelineStart = 0;
+    head.timelineDuration = drift::secondsToUs(8.0);
+    head.srcIn = 0;
+    head.srcOut = drift::secondsToUs(8.0);
+    head.transformX.setKeyframe(0, 0.0);
+    head.transformX.setKeyframe(drift::secondsToUs(8.0), 800.0);
+
+    drift::Clip tail;
+    QVERIFY(drift::splitClipAtOffset(head, tail, drift::secondsToUs(4.0)));
+
+    // The head keeps its keys, including the one past the cut: it still shapes the curve inside
+    // the range the head now covers.
+    QCOMPARE(head.transformX.keyframes().size(), 2);
+    QCOMPARE(head.transformX.evaluateAt(drift::secondsToUs(4.0)), 400.0);
+
+    // The tail starts where the head left off and ends where the original did.
+    QCOMPARE(tail.transformX.evaluateAt(0), 400.0);
+    QCOMPARE(tail.transformX.evaluateAt(drift::secondsToUs(4.0)), 800.0);
+
+    // Same value either side of the cut, which is what makes the split invisible.
+    QCOMPARE(head.transformX.evaluateAt(head.timelineDuration), tail.transformX.evaluateAt(0));
+
+    // Effect parameter curves ride along the same way.
+    drift::Clip graded;
+    graded.id = QStringLiteral("graded");
+    graded.type = drift::ClipType::Video;
+    graded.timelineDuration = drift::secondsToUs(4.0);
+    graded.srcIn = 0;
+    graded.srcOut = drift::secondsToUs(4.0);
+    drift::Effect effect;
+    effect.catalogId = QStringLiteral("adjust.contrast");
+    effect.paramKeyframes[QStringLiteral("contrast")].setKeyframe(0, 0.0);
+    effect.paramKeyframes[QStringLiteral("contrast")].setKeyframe(drift::secondsToUs(4.0), 1.0);
+    graded.effects.append(effect);
+
+    drift::Clip gradedTail;
+    QVERIFY(drift::splitClipAtOffset(graded, gradedTail, drift::secondsToUs(2.0)));
+    QCOMPARE(gradedTail.effects.size(), 1);
+    QCOMPARE(gradedTail.effects.at(0).paramKeyframes.value(QStringLiteral("contrast")).evaluateAt(0),
+             0.5);
 }
 
 void CoreTest::clipSplitMergeRoundTrip()

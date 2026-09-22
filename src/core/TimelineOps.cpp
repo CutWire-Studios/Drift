@@ -800,6 +800,11 @@ bool splitClipAtOffset(Clip &head, Clip &tail, TimeUs offset)
     }
 
     head.timelineDuration = offset;
+    // Key times are relative to the clip's own start, so the tail — which now starts `offset`
+    // later — has to carry its curves back by the same amount. Without this a cut, which should be
+    // invisible, replays the whole animation `offset` later on the second half. The head keeps its
+    // keys as they are, including any past the cut: they still shape the curve inside its range.
+    rebaseKeyframesForSplitTail(tail, offset);
     return true;
 }
 
@@ -1065,34 +1070,56 @@ QList<MulticamInterval> multicamIntervals(const QList<MulticamCut> &cuts, TimeUs
     return out;
 }
 
+namespace {
+
+// Every clip-relative curve a clip can carry, in one place so the operations below cannot forget
+// one. TextAnimator curves are deliberately absent: their key "times" are animation progress, not
+// clip time, so moving them would distort the animation rather than move it.
+template<typename Fn>
+void forEachKeyframeTrack(Clip &clip, Fn &&fn)
+{
+    fn(clip.opacity);
+    fn(clip.transformX);
+    fn(clip.transformY);
+    fn(clip.transformW);
+    fn(clip.transformH);
+    fn(clip.rotation);
+    fn(clip.volume);
+    const auto visitMap = [&fn](QMap<QString, KeyframeTrack<double>> &tracks) {
+        for (auto it = tracks.begin(); it != tracks.end(); ++it)
+            fn(it.value());
+    };
+    for (Effect &effect : clip.effects)
+        visitMap(effect.paramKeyframes);
+    for (Effect &effect : clip.audioEffects)
+        visitMap(effect.paramKeyframes);
+    visitMap(clip.mask.keyframes);
+    visitMap(clip.shapeStyle.keyframes);
+    visitMap(clip.textStyle.keyframes);
+    visitMap(clip.vector.keyframes);
+    visitMap(clip.model3d.keyframes);
+}
+
+} // namespace
+
 void shiftClipKeyframes(Clip &clip, TimeUs delta)
 {
     if (delta == 0)
         return;
+    forEachKeyframeTrack(clip, [delta](KeyframeTrack<double> &track) { track.shiftBy(delta); });
+}
 
-    const auto shiftMap = [delta](QMap<QString, KeyframeTrack<double>> &tracks) {
-        for (auto it = tracks.begin(); it != tracks.end(); ++it)
-            it.value().shiftBy(delta);
-    };
-
-    clip.opacity.shiftBy(delta);
-    clip.transformX.shiftBy(delta);
-    clip.transformY.shiftBy(delta);
-    clip.transformW.shiftBy(delta);
-    clip.transformH.shiftBy(delta);
-    clip.rotation.shiftBy(delta);
-    clip.volume.shiftBy(delta);
-    for (Effect &effect : clip.effects)
-        shiftMap(effect.paramKeyframes);
-    for (Effect &effect : clip.audioEffects)
-        shiftMap(effect.paramKeyframes);
-    shiftMap(clip.mask.keyframes);
-    shiftMap(clip.shapeStyle.keyframes);
-    shiftMap(clip.textStyle.keyframes);
-    shiftMap(clip.vector.keyframes);
-    shiftMap(clip.model3d.keyframes);
-    // TextAnimator curves are deliberately left alone: their key "times" are animation progress,
-    // not clip time, so shifting them would distort the animation rather than move it.
+void rebaseKeyframesForSplitTail(Clip &tail, TimeUs offset)
+{
+    if (offset <= 0)
+        return;
+    // Pin the value the curve holds at the cut before moving it, or the tail would start from
+    // whichever key survived the shift and hold it flat — the animation would visibly change shape
+    // at a cut that is supposed to be invisible.
+    forEachKeyframeTrack(tail, [offset](KeyframeTrack<double> &track) {
+        track.pinValueAt(offset);
+        track.shiftBy(-offset);
+    });
 }
 
 bool sliceClipToTimelineRange(const Clip &src, TimeUs start, TimeUs end, Clip &out)
