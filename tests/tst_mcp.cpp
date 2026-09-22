@@ -112,6 +112,7 @@ private slots:
     void marketSearchAndDownloadImportsAsset();
     void sceneOpsAcceptClipRef();
     void addEffectReportsHost();
+    void graphicsAtTheSameTimeStackOnTheirOwnLanes();
     void splitClipKeepsEffectsOnBothHalves();
     void framesFlagsBeyondEnd();
     void inspectRevisionUnchanged();
@@ -4174,6 +4175,47 @@ void McpTest::sceneOpsAcceptClipRef()
              qPrintable(QJsonDocument(first).toJson(QJsonDocument::Compact)));
     QCOMPARE(first.value(QStringLiteral("clip")).toString(), scanned);
     QVERIFY(first.value(QStringLiteral("total")).toInt() >= 3);
+}
+
+// Emoji, stickers, shapes, Lottie and 3D models all map onto one track type. Adding two at the
+// same moment used to push the second down the timeline to the next free gap, so a graphic quietly
+// appeared somewhere other than where it was asked for. They should stack instead.
+void McpTest::graphicsAtTheSameTimeStackOnTheirOwnLanes()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    drift::mcp::McpDispatcher dispatcher(&state);
+
+    const QJsonObject shape = dispatcher.applyOne(
+        QStringLiteral("add_shape"),
+        {{QStringLiteral("shape"), QStringLiteral("circle")}, {QStringLiteral("at"), 2.0}});
+    QVERIFY2(shape.value(QStringLiteral("ok")).toBool(),
+             qPrintable(QJsonDocument(shape).toJson(QJsonDocument::Compact)));
+    const QJsonObject second = dispatcher.applyOne(
+        QStringLiteral("add_shape"),
+        {{QStringLiteral("shape"), QStringLiteral("star")}, {QStringLiteral("at"), 2.0}});
+    QVERIFY2(second.value(QStringLiteral("ok")).toBool(),
+             qPrintable(QJsonDocument(second).toJson(QJsonDocument::Compact)));
+
+    const QJsonObject rows = state.mcpInspect(true, -1, true, false);
+    QList<double> starts;
+    QSet<int> lanes;
+    for (const QJsonValue &track : rows.value(QStringLiteral("tracks")).toArray()) {
+        const QJsonObject t = track.toObject();
+        for (const QJsonValue &item : t.value(QStringLiteral("items")).toArray()) {
+            if (item.toObject().value(QStringLiteral("kind")).toString() != QLatin1String("shape"))
+                continue;
+            starts.append(item.toObject().value(QStringLiteral("start")).toDouble());
+            lanes.insert(t.value(QStringLiteral("i")).toInt());
+        }
+    }
+    QCOMPARE(starts.size(), 2);
+    for (const double start : starts) {
+        QVERIFY2(qAbs(start - 2.0) < 1e-6,
+                 qPrintable(QStringLiteral("a shape landed at %1 instead of 2.0").arg(start)));
+    }
+    QVERIFY2(lanes.size() == 2,
+             qPrintable(QStringLiteral("expected two lanes, got %1").arg(lanes.size())));
 }
 
 void McpTest::addEffectReportsHost()

@@ -309,10 +309,12 @@
                         {QStringLiteral("at"), numberProp(QStringLiteral("Start seconds (default: playhead)"))}},
                        {QStringLiteral("sticker")}) },
         { "add_emoji", "shapes", "Put an emoji character on the timeline",
-          "Add an emoji clip, creating a track when needed. Takes the emoji CHARACTER (e.g. \"🎬\"), not "
-          "a catalog id. Returns {id, track, index}.",
+          "Add an emoji clip. Takes the emoji CHARACTER (e.g. \"🎬\"), not a catalog id. Graphics share "
+          "one track type, so with the target span already occupied this stacks onto its own lane "
+          "rather than sliding down the timeline; pass track to choose one. Returns {id, track, index}.",
           objectSchema({{QStringLiteral("emoji"), stringProp(QStringLiteral("The emoji character itself, e.g. 🎬"))},
                         {QStringLiteral("name"), stringProp(QStringLiteral("Optional display name for the clip"))},
+                        {QStringLiteral("track"), integerProp(QStringLiteral("Graphic track to place on (default: the first free one)"))},
                         {QStringLiteral("at"), numberProp(QStringLiteral("Start seconds (default: playhead)"))}},
                        {QStringLiteral("emoji")}) },
 

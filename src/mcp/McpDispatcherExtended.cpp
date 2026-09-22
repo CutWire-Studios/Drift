@@ -1538,7 +1538,7 @@ QJsonObject McpDispatcher::applyOneExtended(const QString &tool, const QJsonObje
                               ? jsonNumber(args.value(QStringLiteral("at")), m_controller->playheadSeconds())
                               : m_controller->playheadSeconds();
         const QSet<QString> before = clipIdSet(m_controller);
-        m_controller->addStickerClip(stickerId, at);
+        m_controller->addStickerClip(stickerId, at, jsonInt(args.value(QStringLiteral("track")), -1));
         return replyMintedClips(m_controller, before);
     }
 
@@ -1551,7 +1551,7 @@ QJsonObject McpDispatcher::applyOneExtended(const QString &tool, const QJsonObje
                               ? jsonNumber(args.value(QStringLiteral("at")), m_controller->playheadSeconds())
                               : m_controller->playheadSeconds();
         const QSet<QString> before = clipIdSet(m_controller);
-        m_controller->addEmojiClip(emoji, name, at);
+        m_controller->addEmojiClip(emoji, name, at, jsonInt(args.value(QStringLiteral("track")), -1));
         return replyMintedClips(m_controller, before);
     }
 

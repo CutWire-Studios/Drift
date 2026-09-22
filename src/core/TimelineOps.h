@@ -157,6 +157,13 @@ void liftAdjustmentClipsToOwnTracks(Project &project);
 
 int ensureTrackForClipType(Project &project, ClipType type, bool insertAtTop = false);
 
+// Picks a track of the right type whose span at [startUs, startUs+durationUs) is free, creating one
+// when every candidate is busy. Use this for clips that share a track type with other kinds —
+// graphics all land on the shape lane — so a second one at the same time stacks instead of being
+// pushed down the timeline.
+int ensureFreeTrackForClipType(Project &project, ClipType type, TimeUs startUs, TimeUs durationUs,
+                               bool insertAtTop = false);
+
 // Always prepends a fresh track (multiple tracks of the same type are allowed).
 int insertTrackAtTopForClipType(Project &project, ClipType type);
 

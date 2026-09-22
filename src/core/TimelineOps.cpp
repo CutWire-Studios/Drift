@@ -691,6 +691,43 @@ int ensureTrackForClipType(Project &project, ClipType type, bool insertAtTop)
     return insertAtTop ? 0 : project.tracks().size() - 1;
 }
 
+// Like ensureTrackForClipType, but it will not hand back a lane whose span is already taken.
+//
+// Image, Shape, Vector and Model3d all map onto one track type, so emoji, stickers, shapes, Lottie
+// and 3D models share a single lane by default. Adding a second one at the same time then pushed it
+// down the timeline to the next free gap, which silently moved a graphic away from the moment it
+// was meant to appear. Stacking them on their own lanes is what the caller meant.
+int ensureFreeTrackForClipType(Project &project, ClipType type, TimeUs startUs, TimeUs durationUs,
+                               bool insertAtTop)
+{
+    const TrackType trackType = trackTypeForClipType(type);
+    int firstMatch = -1;
+    const QList<Track> &tracks = project.tracks();
+    for (int i = 0; i < tracks.size(); ++i) {
+        if (tracks[i].isAdjustmentLane())
+            continue;
+        if (tracks[i].type != trackType || !tracks[i].allowsClipType(type))
+            continue;
+        if (firstMatch < 0)
+            firstMatch = i;
+        bool collides = false;
+        for (const Clip &existing : tracks[i].clips) {
+            if (startUs < existing.timelineEnd() && existing.timelineStart < startUs + durationUs) {
+                collides = true;
+                break;
+            }
+        }
+        if (!collides)
+            return i;
+    }
+
+    if (firstMatch < 0)
+        return ensureTrackForClipType(project, type, insertAtTop);
+    // Every existing lane is busy at this moment, so give the clip one of its own directly above
+    // the first, which keeps later graphics drawing over earlier ones.
+    return insertTrackAboveForClipType(project, firstMatch, type);
+}
+
 int insertTrackAtTopForClipType(Project &project, ClipType type)
 {
     project.tracks().prepend(Track{.type = trackTypeForClipType(type)});

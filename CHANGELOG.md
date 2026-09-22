@@ -8,6 +8,7 @@ Tracks work done on `main` **since the last public release**. Use this to see wh
 
 ## ✅ Fixed
 
+- Adding two graphics at the same moment — an emoji and a Lottie, say — pushed the second one down the timeline instead of stacking it on its own lane, so it appeared at the wrong time.
 - Keyframes written while the playhead sat outside a clip landed outside it too, where they could never play but still bent the animation.
 - Setting an effect, audio-effect or transition parameter that does not exist now fails instead of quietly storing a value nothing reads. The colour-parameter schema no longer advertises alpha it cannot carry.
 - Beat detection reported half the tempo on music with a strong downbeat — 60 BPM on a 120 BPM track — and said it was certain. It now checks whether the faster tempo explains the music just as well, and reports lower confidence when the two are genuinely close.

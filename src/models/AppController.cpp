@@ -11356,16 +11356,18 @@ void AppController::addShapeClipAt(const QString &shapeId, int trackIndex, doubl
     const drift::ShapeStyle style = entry ? entry->style : shapeStyleForKind(shapeId);
     const drift::Project before = m_project;
 
+    const drift::TimeUs wantStart = atSeconds < 0.0 ? m_playheadUs : drift::secondsToUs(atSeconds);
     int target = trackIndex;
     if (target < 0 || target >= m_project.tracks().size()
         || !m_project.tracks().at(target).allowsClipType(drift::ClipType::Shape)) {
-        target = drift::ensureTrackForClipType(m_project, drift::ClipType::Shape, true);
+        target = drift::ensureFreeTrackForClipType(m_project, drift::ClipType::Shape, wantStart,
+                                                   drift::kImageClipDurationUs, true);
     }
     if (target < 0)
         return;
 
     drift::Track &track = m_project.tracks()[target];
-    const drift::TimeUs startSeconds = atSeconds < 0.0 ? m_playheadUs : drift::secondsToUs(atSeconds);
+    const drift::TimeUs startSeconds = wantStart;
     const drift::TimeUs start = drift::resolveClipStart(m_project, track, -1, startSeconds,
                                                         drift::kImageClipDurationUs, m_snapEnabled, m_playheadUs);
 
@@ -11956,7 +11958,7 @@ void AppController::relinkAdjustment(int trackIndex, int clipIndex, int mediaTra
     finishEdit(tr("Adjustment linked"));
 }
 
-void AppController::addStickerClip(const QString &stickerId, double atSeconds)
+void AppController::addStickerClip(const QString &stickerId, double atSeconds, int trackIndex)
 {
     QString path;
     QString label;
@@ -11999,7 +12001,8 @@ QString AppController::emojiFontFamily() const
     return ::emojiFontFamily();
 }
 
-void AppController::addEmojiClip(const QString &emoji, const QString &name, double atSeconds)
+void AppController::addEmojiClip(const QString &emoji, const QString &name, double atSeconds,
+                                 int trackIndex)
 {
     const QString path = emojiImagePath(emoji);
     if (path.isEmpty()) {
@@ -12007,20 +12010,26 @@ void AppController::addEmojiClip(const QString &emoji, const QString &name, doub
         return;
     }
     addImageOverlayClip(path, name.isEmpty() ? emoji : name, emoji, atSeconds,
-                        QStringLiteral("Emoji added"));
+                        QStringLiteral("Emoji added"), trackIndex);
 }
 
 void AppController::addImageOverlayClip(const QString &path, const QString &name,
                                         const QString &emoji, double atSeconds,
-                                        const QString &undoText)
+                                        const QString &undoText, int requestedTrack)
 {
     const drift::Project before = m_project;
-    const int trackIndex = drift::ensureTrackForClipType(m_project, drift::ClipType::Image, true);
+    const drift::TimeUs wantStart = atSeconds < 0.0 ? m_playheadUs : drift::secondsToUs(atSeconds);
+    int trackIndex = requestedTrack;
+    if (trackIndex < 0 || trackIndex >= m_project.tracks().size()
+        || !m_project.tracks().at(trackIndex).allowsClipType(drift::ClipType::Image)) {
+        trackIndex = drift::ensureFreeTrackForClipType(
+            m_project, drift::ClipType::Image, wantStart, drift::kImageClipDurationUs, true);
+    }
     if (trackIndex < 0)
         return;
 
     drift::Track &track = m_project.tracks()[trackIndex];
-    const drift::TimeUs startSeconds = atSeconds < 0.0 ? m_playheadUs : drift::secondsToUs(atSeconds);
+    const drift::TimeUs startSeconds = wantStart;
     const drift::TimeUs start = drift::resolveClipStart(m_project, track, -1, startSeconds,
                                                         drift::kImageClipDurationUs, m_snapEnabled, m_playheadUs);
 
@@ -14496,13 +14505,6 @@ QVariantMap AppController::addModel3dClip(const QString &path, int trackIndex, d
     }
 
     const drift::Project before = m_project;
-    int target = trackIndex;
-    if (target < 0 || target >= m_project.tracks().size()
-        || !m_project.tracks().at(target).allowsClipType(drift::ClipType::Model3d)) {
-        target = drift::ensureTrackForClipType(m_project, drift::ClipType::Model3d, true);
-    }
-    if (target < 0)
-        return {{QStringLiteral("ok"), false}, {QStringLiteral("error"), QStringLiteral("no graphic track")}};
 
     drift::TimeUs duration =
         model.animationDurationUs() > 0 ? model.animationDurationUs() : drift::kImageClipDurationUs;
@@ -14510,8 +14512,17 @@ QVariantMap AppController::addModel3dClip(const QString &path, int trackIndex, d
         duration = drift::secondsToUs(opts.value(QStringLiteral("duration")).toDouble());
     duration = qMax(duration, drift::kMinClipDurationUs);
 
-    drift::Track &track = m_project.tracks()[target];
     const drift::TimeUs startUs = atSeconds < 0.0 ? m_playheadUs : drift::secondsToUs(atSeconds);
+    int target = trackIndex;
+    if (target < 0 || target >= m_project.tracks().size()
+        || !m_project.tracks().at(target).allowsClipType(drift::ClipType::Model3d)) {
+        target = drift::ensureFreeTrackForClipType(m_project, drift::ClipType::Model3d, startUs,
+                                                   duration, true);
+    }
+    if (target < 0)
+        return {{QStringLiteral("ok"), false}, {QStringLiteral("error"), QStringLiteral("no graphic track")}};
+
+    drift::Track &track = m_project.tracks()[target];
     const drift::TimeUs start = drift::resolveClipStart(m_project, track, -1, startUs, duration,
                                                         m_snapEnabled, m_playheadUs);
 
@@ -14617,19 +14628,22 @@ QVariantMap AppController::addVectorClip(const QString &source, int trackIndex, 
         drift::vec::inspectVector(drift::vec::vectorSourceBytes(vector), vector.kind);
 
     const drift::Project before = m_project;
-    int target = trackIndex;
-    if (target < 0 || target >= m_project.tracks().size()
-        || !m_project.tracks().at(target).allowsClipType(drift::ClipType::Vector)) {
-        target = drift::ensureTrackForClipType(m_project, drift::ClipType::Vector, true);
-    }
-    if (target < 0)
-        return {{QStringLiteral("ok"), false}, {QStringLiteral("error"), QStringLiteral("no graphic track")}};
 
     // Plays once by default; a still gets the image default.
     drift::TimeUs duration = vector.durationUs > 0 ? vector.durationUs : drift::kImageClipDurationUs;
     if (opts.value(QStringLiteral("duration")).toDouble() > 0.0)
         duration = drift::secondsToUs(opts.value(QStringLiteral("duration")).toDouble());
     duration = qMax(duration, drift::kMinClipDurationUs);
+
+    const drift::TimeUs wantStart = atSeconds < 0.0 ? m_playheadUs : drift::secondsToUs(atSeconds);
+    int target = trackIndex;
+    if (target < 0 || target >= m_project.tracks().size()
+        || !m_project.tracks().at(target).allowsClipType(drift::ClipType::Vector)) {
+        target = drift::ensureFreeTrackForClipType(m_project, drift::ClipType::Vector, wantStart,
+                                                   duration, true);
+    }
+    if (target < 0)
+        return {{QStringLiteral("ok"), false}, {QStringLiteral("error"), QStringLiteral("no graphic track")}};
 
     drift::Track &track = m_project.tracks()[target];
     const drift::TimeUs startUs = atSeconds < 0.0 ? m_playheadUs : drift::secondsToUs(atSeconds);
