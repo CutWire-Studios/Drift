@@ -316,6 +316,30 @@ QList<QPair<QString, PciId>> drmRenderNodes()
     return nodes;
 }
 
+bool isLimitedPreviewGpu(PciId id)
+{
+    if (id.vendor != 0x8086)
+        return false;
+    switch (id.device) {
+    case 0x0102:
+    case 0x0106:
+    case 0x010A:
+    case 0x0112:
+    case 0x0116:
+    case 0x0122:
+    case 0x0126:
+    case 0x0152:
+    case 0x0156:
+    case 0x015A:
+    case 0x0162:
+    case 0x0166:
+    case 0x016A:
+        return true;
+    default:
+        return false;
+    }
+}
+
 PciId renderPciId(const QString &glVendor)
 {
     const QString vendor = glVendor.isEmpty() ? drift::hwaccel::renderVendor() : glVendor;

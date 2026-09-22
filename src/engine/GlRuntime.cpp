@@ -92,6 +92,18 @@ extern "C" {
 #ifndef GL_SYNC_FLUSH_COMMANDS_BIT
 #define GL_SYNC_FLUSH_COMMANDS_BIT 0x00000001
 #endif
+#ifndef GL_ALREADY_SIGNALED
+#define GL_ALREADY_SIGNALED 0x911A
+#endif
+#ifndef GL_TIMEOUT_EXPIRED
+#define GL_TIMEOUT_EXPIRED 0x911B
+#endif
+#ifndef GL_CONDITION_SATISFIED
+#define GL_CONDITION_SATISFIED 0x911C
+#endif
+#ifndef GL_WAIT_FAILED
+#define GL_WAIT_FAILED 0x911D
+#endif
 #ifndef GL_UNPACK_ROW_LENGTH
 #define GL_UNPACK_ROW_LENGTH 0x0CF2
 #endif
@@ -1261,6 +1273,7 @@ void GlRuntime::shutdown()
             }
             for (GlTarget &target : m_presentRing)
                 target.fbo.reset();
+            m_presentDisplayed = -1;
             m_retiredPresent.clear();
             m_targetPool.clear();
             m_pooledTargets = 0;
@@ -1698,22 +1711,44 @@ bool GlRuntime::mapNv12Slot(int slot, uint8_t *y, int yStride, uint8_t *uv, int 
     return true;
 }
 
-void GlRuntime::waitPresentFence(int slotIndex)
+bool GlRuntime::waitPresentFence(int slotIndex, GLuint64 timeoutNs)
 {
     if (slotIndex < 0 || slotIndex >= kPresentRingSize)
-        return;
+        return false;
     GLsync &fence = m_presentFence[slotIndex];
     if (!fence)
-        return;
+        return true;
     auto *gl = functions();
     if (!gl) {
         fence = nullptr;
-        return;
+        return true;
     }
     // Only wait for this slot's prior publish — not the whole GPU pipeline.
-    gl->glClientWaitSync(fence, GL_SYNC_FLUSH_COMMANDS_BIT, GLuint64(100'000'000)); // 100 ms
+    const GLenum result = gl->glClientWaitSync(fence, GL_SYNC_FLUSH_COMMANDS_BIT, timeoutNs);
+    if (result == GL_TIMEOUT_EXPIRED)
+        return false;
     gl->glDeleteSync(fence);
     fence = nullptr;
+    return result != GL_WAIT_FAILED;
+}
+
+GlTarget &GlRuntime::preparePresentSlot(int slotIndex, int width, int height)
+{
+    GlTarget &slot = m_presentRing[slotIndex];
+    m_presentNext = (slotIndex + 1) % kPresentRingSize;
+    if (!slot.isValid() || slot.width != width || slot.height != height) {
+        QOpenGLFramebufferObjectFormat fmt;
+        fmt.setAttachment(QOpenGLFramebufferObject::NoAttachment);
+        // Retire rather than destroy: the scene graph may still be drawing the texture that
+        // belongs to this FBO, and freeing the name here is what turns an adaptive-quality
+        // rescale into a black frame. markPresentReady collects it once no node can hold it.
+        if (slot.fbo)
+            m_retiredPresent.emplace_back(m_presentPublished, std::move(slot.fbo));
+        slot.fbo = std::make_unique<QOpenGLFramebufferObject>(width, height, fmt);
+        slot.width = width;
+        slot.height = height;
+    }
+    return slot;
 }
 
 void GlRuntime::destroyImageUploadCache()
@@ -1843,9 +1878,16 @@ void GlRuntime::destroyVideoUploadState()
             m_mcImageCache.clear();
         }
 #endif
-        if (m_videoPbo[0] || m_videoPbo[1]) {
-            gl->glDeleteBuffers(2, m_videoPbo);
-            m_videoPbo[0] = m_videoPbo[1] = 0;
+        for (int i = 0; i < kVideoPboCount; ++i) {
+            if (m_videoPboFence[i]) {
+                gl->glDeleteSync(m_videoPboFence[i]);
+                m_videoPboFence[i] = nullptr;
+            }
+        }
+        if (m_videoPbo[0]) {
+            gl->glDeleteBuffers(kVideoPboCount, m_videoPbo);
+            for (int i = 0; i < kVideoPboCount; ++i)
+                m_videoPbo[i] = 0;
         }
     }
     m_videoTexW = 0;
@@ -1929,9 +1971,12 @@ bool GlRuntime::uploadPlanePbo(QOpenGLExtraFunctions *gl, GLuint texture, int te
         return false;
     const qsizetype packed = qsizetype(packedWidth) * texH;
     if (!m_videoPbo[0])
-        gl->glGenBuffers(2, m_videoPbo);
-    const GLuint pbo = m_videoPbo[m_videoPboIndex];
-    m_videoPboIndex ^= 1;
+        gl->glGenBuffers(kVideoPboCount, m_videoPbo);
+    const int index = m_videoPboIndex;
+    m_videoPboIndex = (m_videoPboIndex + 1) % kVideoPboCount;
+    if (!waitVideoPboFence(gl, index))
+        return false;
+    const GLuint pbo = m_videoPbo[index];
     gl->glBindBuffer(GL_PIXEL_UNPACK_BUFFER, pbo);
     gl->glBufferData(GL_PIXEL_UNPACK_BUFFER, packed, nullptr, GL_STREAM_DRAW);
     void *dst = gl->glMapBufferRange(GL_PIXEL_UNPACK_BUFFER, 0, packed,
@@ -1954,6 +1999,33 @@ bool GlRuntime::uploadPlanePbo(QOpenGLExtraFunctions *gl, GLuint texture, int te
     gl->glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
     gl->glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, texW, texH, format, GL_UNSIGNED_BYTE, nullptr);
     gl->glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
+    m_videoPboFence[index] = gl->glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
+    return true;
+}
+
+bool GlRuntime::waitVideoPboFence(QOpenGLExtraFunctions *gl, int index)
+{
+    if (!gl || index < 0 || index >= kVideoPboCount)
+        return false;
+    GLsync &fence = m_videoPboFence[index];
+    if (!fence)
+        return true;
+    const GLenum result =
+        gl->glClientWaitSync(fence, GL_SYNC_FLUSH_COMMANDS_BIT, GLuint64(1'000'000'000));
+    gl->glDeleteSync(fence);
+    fence = nullptr;
+    return result != GL_TIMEOUT_EXPIRED && result != GL_WAIT_FAILED;
+}
+
+bool GlRuntime::waitLatestVideoUploads(QOpenGLExtraFunctions *gl, int count)
+{
+    if (!gl || count <= 0)
+        return count <= 0;
+    for (int n = 1; n <= count; ++n) {
+        const int index = (m_videoPboIndex - n + kVideoPboCount) % kVideoPboCount;
+        if (!waitVideoPboFence(gl, index))
+            return false;
+    }
     return true;
 }
 
@@ -2603,27 +2675,25 @@ GlTarget &GlRuntime::acquirePresentTarget(int width, int height)
     const int w = qMax(1, width);
     const int h = qMax(1, height);
 
-    const int slotIndex = m_presentNext;
-    GlTarget &slot = m_presentRing[slotIndex];
-    m_presentNext = (m_presentNext + 1) % kPresentRingSize;
-
-    // The scene graph may still be sampling this ring slot from a previous publish.
-    // Wait for that fence before redrawing into the same FBO.
-    waitPresentFence(slotIndex);
-
-    if (!slot.isValid() || slot.width != w || slot.height != h) {
-        QOpenGLFramebufferObjectFormat fmt;
-        fmt.setAttachment(QOpenGLFramebufferObject::NoAttachment);
-        // Retire rather than destroy: the scene graph may still be drawing the texture that
-        // belongs to this FBO, and freeing the name here is what turns an adaptive-quality
-        // rescale into a black frame. markPresentReady collects it once no node can hold it.
-        if (slot.fbo)
-            m_retiredPresent.emplace_back(m_presentPublished, std::move(slot.fbo));
-        slot.fbo = std::make_unique<QOpenGLFramebufferObject>(w, h, fmt);
-        slot.width = w;
-        slot.height = h;
+    // Never redraw the slot the scene graph is still sampling. Poll first so a
+    // ready slot is not blocked behind a slow one; if every candidate is busy,
+    // wait a full second (the export path's budget) rather than the old 100 ms
+    // that HD 2500-class GPUs miss. A timeout leaves the last good frame up.
+    for (int i = 0; i < kPresentRingSize; ++i) {
+        const int slotIndex = (m_presentNext + i) % kPresentRingSize;
+        if (slotIndex == m_presentDisplayed)
+            continue;
+        if (waitPresentFence(slotIndex, 0))
+            return preparePresentSlot(slotIndex, w, h);
     }
-    return slot;
+    for (int i = 0; i < kPresentRingSize; ++i) {
+        const int slotIndex = (m_presentNext + i) % kPresentRingSize;
+        if (slotIndex == m_presentDisplayed)
+            continue;
+        if (waitPresentFence(slotIndex, GLuint64(1'000'000'000)))
+            return preparePresentSlot(slotIndex, w, h);
+    }
+    return m_invalidPresent;
 }
 
 void GlRuntime::markPresentReady(GlTarget &presentTarget)
@@ -2650,6 +2720,7 @@ void GlRuntime::markPresentReady(GlTarget &presentTarget)
     }
     gl->glFlush();
     m_presentFence[slotIndex] = gl->glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
+    m_presentDisplayed = slotIndex;
 
     ++m_presentPublished;
     // Every slot has been published at least once since these left the ring, so no scene-graph
@@ -3034,7 +3105,8 @@ GlTarget promoteVideoFrameToTarget(GlRuntime &rt, QOpenGLExtraFunctions *gl,
             return {};
         if (!rt.uploadPlanePbo(gl, rt.m_videoY, w, h, GL_R8, GL_RED, nv12->data[0], nv12->linesize[0], w)
             || !rt.uploadPlanePbo(gl, rt.m_videoUV, w / 2, h / 2, GL_RG8, GL_RG, nv12->data[1],
-                                  nv12->linesize[1], w))
+                                  nv12->linesize[1], w)
+            || !rt.waitLatestVideoUploads(gl, 2))
             return {};
         texY = rt.m_videoY;
         texUV = rt.m_videoUV;

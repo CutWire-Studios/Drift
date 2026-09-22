@@ -178,6 +178,7 @@ private slots:
     void decodeBackendOrderFollowsTheRenderGpu();
     void playbackDiagnosticsReportsStagesAndFindings();
     void presentRingKeepsResizedTexturesAliveForTheSceneGraph();
+    void presentRingDoesNotRedrawTheTextureOnScreen();
     void debugReportListsEveryAvailableHardwareEncoder();
     void cudaInteropUploadsAFrameWithoutBlanking();
     void d3d11InteropUploadsAFrameWithoutBlanking();
@@ -333,6 +334,7 @@ private slots:
     void audioFileWriterRoundTripsThroughClipReader();
     void glStatusIdsAreStableAndOnlyShareContextRetries();
     void softwareRenderersAreRecognisedByName();
+    void limitedPreviewGpusAreRecognised();
 
 private:
     static QString makeColorSegmentsVideo(QTemporaryDir &dir);
@@ -3527,6 +3529,33 @@ void EngineTest::presentRingKeepsResizedTexturesAliveForTheSceneGraph()
     for (int i = 0; i < drift::gl::GlRuntime::kPresentRingSize + 1; ++i)
         QVERIFY(GpuCompositor::renderToTexture(sceneOfSize(96)).isValid());
     QVERIFY2(!textureIsLive(held), "retired present targets are never collected");
+}
+
+// acquirePresentTarget used to reuse the last published slot after a 100 ms fence
+// timeout, then fillBackground cleared the texture the scene graph was still
+// sampling — a black flash on any GPU whose composite took longer than that.
+void EngineTest::presentRingDoesNotRedrawTheTextureOnScreen()
+{
+    if (!GpuCompositor::isAvailable())
+        QSKIP("OpenGL offscreen context unavailable");
+
+    GpuScene scene;
+    scene.canvasSize = QSize(64, 64);
+    scene.backgroundColor = Qt::blue;
+
+    const GpuFrameTexture first = GpuCompositor::renderToTexture(scene);
+    QVERIFY(first.isValid());
+    QVERIFY(first.textureId != 0);
+
+    const GpuFrameTexture second = GpuCompositor::renderToTexture(scene);
+    QVERIFY(second.isValid());
+    QVERIFY2(first.textureId != second.textureId,
+             "the compositor redrew the texture still on screen");
+
+    const GpuFrameTexture third = GpuCompositor::renderToTexture(scene);
+    QVERIFY(third.isValid());
+    QVERIFY2(second.textureId != third.textureId,
+             "the compositor redrew the texture still on screen");
 }
 
 // The Hardware column used to name whichever vendor came first in Exporter's static order, so a
@@ -10063,6 +10092,28 @@ void EngineTest::softwareRenderersAreRecognisedByName()
     info.minor = 0;
     info.renderer = QStringLiteral("llvmpipe");
     QCOMPARE(drift::gl::describeGl(info), QStringLiteral("OpenGL 3.0 — llvmpipe"));
+}
+
+void EngineTest::limitedPreviewGpusAreRecognised()
+{
+    QVERIFY(drift::gl::isLimitedPreviewRenderer(QStringLiteral("Intel(R) HD Graphics 2500")));
+    QVERIFY(drift::gl::isLimitedPreviewRenderer(
+        QStringLiteral("Mesa Intel(R) HD Graphics 4000 (IVB GT2)")));
+    QVERIFY(drift::gl::isLimitedPreviewRenderer(QStringLiteral("Intel(R) HD Graphics 2000")));
+    QVERIFY(drift::gl::isLimitedPreviewRenderer(QStringLiteral("Sandy Bridge")));
+
+    QVERIFY(!drift::gl::isLimitedPreviewRenderer(QStringLiteral("Mesa Intel(R) UHD Graphics (CML GT2)")));
+    QVERIFY(!drift::gl::isLimitedPreviewRenderer(QStringLiteral("Intel(R) HD Graphics 520")));
+    QVERIFY(!drift::gl::isLimitedPreviewRenderer(QStringLiteral("Intel(R) HD Graphics 4600")));
+    QVERIFY(!drift::gl::isLimitedPreviewRenderer(QStringLiteral("NVIDIA GeForce RTX 3060/PCIe/SSE2")));
+    QVERIFY(!drift::gl::isLimitedPreviewRenderer(QString()));
+
+    QVERIFY(drift::gpu::isLimitedPreviewGpu({0x8086, 0x0152}));
+    QVERIFY(drift::gpu::isLimitedPreviewGpu({0x8086, 0x0162}));
+    QVERIFY(drift::gpu::isLimitedPreviewGpu({0x8086, 0x0102}));
+    QVERIFY(!drift::gpu::isLimitedPreviewGpu({0x8086, 0x9a49}));
+    QVERIFY(!drift::gpu::isLimitedPreviewGpu({0x10de, 0x2484}));
+    QVERIFY(!drift::gpu::isLimitedPreviewGpu({}));
 }
 
 

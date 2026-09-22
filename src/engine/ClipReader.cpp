@@ -1,5 +1,6 @@
 #include "ClipReader.h"
 
+#include "GpuCompositor.h"
 #include "HwAccel.h"
 #include "MediaProbe.h"
 
@@ -1100,6 +1101,10 @@ bool ClipReader::tryOpenHardwareDecoder()
     if (mode == HardwareDecodeMode::Software)
         return false;
     if (mode == HardwareDecodeMode::Auto && !hardwareDecodeIsWorthIt())
+        return false;
+    // Sandy/Ivy Intel: D3D11VA decode plus a CPU preview upload is slower than
+    // software and is the path that published empty NV12 (solid green) on HD 2500.
+    if (mode == HardwareDecodeMode::Auto && GpuCompositor::previewGpuIsLimited())
         return false;
 
 #ifdef Q_OS_ANDROID

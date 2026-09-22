@@ -295,7 +295,12 @@ public:
 private:
     bool ensureReady();
     bool initGlObjects();
-    void waitPresentFence(int slotIndex);
+    // True when the slot is safe to redraw. A timed-out fence is left in place
+    // so the next acquire can wait again instead of clearing a live texture.
+    bool waitPresentFence(int slotIndex, GLuint64 timeoutNs);
+    GlTarget &preparePresentSlot(int slotIndex, int width, int height);
+    bool waitVideoPboFence(QOpenGLExtraFunctions *gl, int index);
+    bool waitLatestVideoUploads(QOpenGLExtraFunctions *gl, int count);
     void destroyImageUploadCache();
     void destroyVideoUploadState();
     void destroyExportNv12State();
@@ -342,6 +347,10 @@ private:
     GlTarget m_presentRing[kPresentRingSize];
     GLsync m_presentFence[kPresentRingSize] = {};
     int m_presentNext = 0;
+    // Slot last handed to the scene graph. acquirePresentTarget never returns it,
+    // so fillBackground cannot clear the texture still on screen.
+    int m_presentDisplayed = -1;
+    GlTarget m_invalidPresent;
     // Publishes so far, and the FBOs a resize evicted from the ring paired with the count at
     // which each left. PreviewItem hands the scene graph the raw texture name out of a slot,
     // so destroying that slot's FBO the moment the canvas size changes pulls the texture out
@@ -371,7 +380,12 @@ private:
     GLuint m_videoRgba = 0;
     int m_videoRgbaW = 0;
     int m_videoRgbaH = 0;
-    GLuint m_videoPbo[2] = {0, 0};
+    // Two planes per frame × two in-flight composites. A two-PBO ring reused
+    // both buffers inside one frame, so the next upload remapped a PBO the GPU
+    // was still reading and the convert shader sampled empty chroma (green).
+    static constexpr int kVideoPboCount = 4;
+    GLuint m_videoPbo[kVideoPboCount] = {};
+    GLsync m_videoPboFence[kVideoPboCount] = {};
     int m_videoPboIndex = 0;
     AVFrame *m_hwImportStaging = nullptr;
     AVFrame *m_importNv12 = nullptr;

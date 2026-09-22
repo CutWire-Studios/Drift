@@ -67,6 +67,26 @@ bool isSoftwareRenderer(const QString &renderer)
     return false;
 }
 
+bool isLimitedPreviewRenderer(const QString &renderer)
+{
+    if (renderer.isEmpty())
+        return false;
+    // Exact product names. "HD Graphics 520" and "UHD Graphics" must not match.
+    static const char *const markers[] = {
+        "HD Graphics 2000",
+        "HD Graphics 2500",
+        "HD Graphics 3000",
+        "HD Graphics 4000",
+        "Sandy Bridge",
+        "Ivy Bridge",
+    };
+    for (const char *marker : markers) {
+        if (renderer.contains(QLatin1StringView(marker), Qt::CaseInsensitive))
+            return true;
+    }
+    return false;
+}
+
 QString describeGl(const GlStatusInfo &info)
 {
     QString version;

@@ -187,7 +187,10 @@ int CompositorService::maxInFlight() const
     // Pipelining exists to keep realtime playback fed. Scrubbing and seeking issue one
     // request at a time by nature, and running two decoders against a moving playhead would
     // only make them fight over the same cursor, so outside playback the depth stays at one.
-    return m_playbackActive ? GpuCompositor::kMaxPreviewComposites : 1;
+    // Old Intel iGPUs cannot keep two composites off the texture on screen either.
+    if (!m_playbackActive || GpuCompositor::previewGpuIsLimited())
+        return 1;
+    return GpuCompositor::kMaxPreviewComposites;
 }
 
 void CompositorService::dispatch(drift::TimeUs timeUs, const FrameCompositor::RenderOptions &options)

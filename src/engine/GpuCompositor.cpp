@@ -9,6 +9,7 @@
 #include "GlFaceSwapRenderer.h"
 #include "GlModelRenderer.h"
 #include "GlRuntime.h"
+#include "GpuDevice.h"
 #include "GpuEffectDefinition.h"
 #include "MaskApplier.h"
 
@@ -1076,6 +1077,17 @@ QString previewUploadPathId()
 QString zeroCopyDeclineReason()
 {
     return GlRuntime::lastZeroCopyDeclineReason();
+}
+
+bool previewGpuIsLimited()
+{
+    const drift::gl::GlStatusInfo info = status();
+    if (drift::gl::isLimitedPreviewRenderer(info.renderer))
+        return true;
+    if (drift::gpu::isLimitedPreviewGpu(drift::gpu::renderPciId(info.vendor)))
+        return true;
+    const QList<drift::gpu::Adapter> gpus = drift::gpu::enumerateAdapters();
+    return gpus.size() == 1 && drift::gpu::isLimitedPreviewGpu(gpus.first().pci());
 }
 
 QImage render(const GpuScene &scene)

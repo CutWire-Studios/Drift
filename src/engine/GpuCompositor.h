@@ -165,4 +165,9 @@ QString zeroCopyDeclineReason();
 // GpuCompositor.cpp static_asserts the ring against this so the two cannot drift apart.
 inline constexpr int kMaxPreviewComposites = 2;
 
+// True when the render GPU is a Sandy/Ivy Intel iGPU: Auto decode stays on
+// software and the compositor runs one frame at a time. PCI of the sole adapter
+// answers before GL is up; the renderer string answers after.
+bool previewGpuIsLimited();
+
 } // namespace GpuCompositor

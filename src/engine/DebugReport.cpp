@@ -746,6 +746,16 @@ QVariantMap DebugReport::collect()
                      "each frame through system memory. Vega, Navi and newer can enable "
                      "Settings → Preview → Faster preview.")));
     }
+    if (GpuCompositor::previewGpuIsLimited()) {
+        hints.append(hintRow(
+            QStringLiteral("limited-preview-gpu"),
+            trReport("This graphics chip keeps preview on software decode"),
+            trReport("Sandy Bridge and Ivy Bridge Intel GPUs (HD 2000–4000) cannot keep "
+                     "hardware-decoded frames on the GPU for preview without flashing. "
+                     "Auto decode stays on the CPU and playback composites one frame at a "
+                     "time. Pick Hardware in the preview toolbar only if you want to try "
+                     "it anyway.")));
+    }
     // The whole of issue #139: Qt's GPU blacklist matches a card it failed to
     // identify, loads its bundled llvmpipe, and the preview goes black on hardware
     // that would have run it fine.
