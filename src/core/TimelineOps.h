@@ -239,6 +239,11 @@ QList<MulticamInterval> multicamIntervals(const QList<MulticamCut> &cuts, TimeUs
 
 // Intersection of `src` with `[start, end)`. False when that span is empty or shorter than
 // kMinClipDurationUs. `out` keeps `src`'s id; the caller mints a new one if it needs one.
+// Move every clip-relative keyframe on a clip by `delta`. Key times are relative to the clip's
+// own start, so a clip that keeps its material but starts somewhere else has to carry its curves
+// with it. Keys pushed before the start are dropped.
+void shiftClipKeyframes(Clip &clip, TimeUs delta);
+
 bool sliceClipToTimelineRange(const Clip &src, TimeUs start, TimeUs end, Clip &out);
 
 } // namespace drift

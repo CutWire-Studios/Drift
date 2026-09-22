@@ -1065,6 +1065,36 @@ QList<MulticamInterval> multicamIntervals(const QList<MulticamCut> &cuts, TimeUs
     return out;
 }
 
+void shiftClipKeyframes(Clip &clip, TimeUs delta)
+{
+    if (delta == 0)
+        return;
+
+    const auto shiftMap = [delta](QMap<QString, KeyframeTrack<double>> &tracks) {
+        for (auto it = tracks.begin(); it != tracks.end(); ++it)
+            it.value().shiftBy(delta);
+    };
+
+    clip.opacity.shiftBy(delta);
+    clip.transformX.shiftBy(delta);
+    clip.transformY.shiftBy(delta);
+    clip.transformW.shiftBy(delta);
+    clip.transformH.shiftBy(delta);
+    clip.rotation.shiftBy(delta);
+    clip.volume.shiftBy(delta);
+    for (Effect &effect : clip.effects)
+        shiftMap(effect.paramKeyframes);
+    for (Effect &effect : clip.audioEffects)
+        shiftMap(effect.paramKeyframes);
+    shiftMap(clip.mask.keyframes);
+    shiftMap(clip.shapeStyle.keyframes);
+    shiftMap(clip.textStyle.keyframes);
+    shiftMap(clip.vector.keyframes);
+    shiftMap(clip.model3d.keyframes);
+    // TextAnimator curves are deliberately left alone: their key "times" are animation progress,
+    // not clip time, so shifting them would distort the animation rather than move it.
+}
+
 bool sliceClipToTimelineRange(const Clip &src, TimeUs start, TimeUs end, Clip &out)
 {
     const TimeUs from = qMax(start, src.timelineStart);

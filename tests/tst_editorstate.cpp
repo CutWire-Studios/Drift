@@ -196,6 +196,7 @@ private slots:
     void multicamSetUpBuildsAWorkingRigFromTheBin();
     void adjustmentLayerCreationAndCompositing();
     void clipEffectsLiveOnALinkedAdjustmentLane();
+    void splittingAGradedClipKeepsEffectsOnBothHalves();
     void linkedAdjustmentFollowsItsClip();
     void deletingAClipUnlinksRatherThanStrandsItsAdjustment();
     void cutoutLandsAsAMaskLayerOnTheClipsOwnLane();
@@ -5864,6 +5865,63 @@ void EditorStateTest::adjustmentLayerCreationAndCompositing()
 // Adding an effect to a media clip no longer writes it onto the clip: it creates a nested lane on
 // that clip's track holding an adjustment pinned to it. The clip still reports the stack as its
 // own, so the inspector and the MCP tools see no difference.
+// The stack lives on an adjustment pinned by linkedClipId, and split only ever handled the linkId
+// that pairs audio with video — so the tail of a split came back ungraded and the grade had to be
+// rebuilt by hand. The existing split test above covers a *standalone* adjustment clip, which was
+// never broken; this is the linked case.
+void EditorStateTest::splittingAGradedClipKeepsEffectsOnBothHalves()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    appendTwoVideoClips(*state.project());
+    state.project()->ensureTrackIds();
+
+    // Grade the 4-second clip and animate a parameter across it.
+    state.selectClip(0, 1);
+    state.addEffect(0, 1, QStringLiteral("adjust.contrast"));
+    const QString headId = state.project()->tracks().at(0).clips.at(1).id;
+    QCOMPARE(state.project()->tracks().size(), 2);
+    QCOMPARE(state.project()->tracks().at(1).clips.size(), 1);
+    state.setClipKeyframe(0, 1, QStringLiteral("fx.0.contrast"), 3.0, 0.5);
+
+    // Cut it in half: clip runs 2.0-6.0, so 4.0 is the midpoint.
+    state.splitClipAt(0, 1, 4.0);
+
+    const drift::Track &media = state.project()->tracks().at(0);
+    QCOMPARE(media.clips.size(), 3);
+    const drift::Clip &head = media.clips.at(1);
+    const drift::Clip &tail = media.clips.at(2);
+    QCOMPARE(head.id, headId);
+    QVERIFY(tail.id != headId);
+
+    // One adjustment per half, each pinned to its own clip and spanning it.
+    const drift::Track &lane = state.project()->tracks().at(1);
+    QCOMPARE(lane.clips.size(), 2);
+    QHash<QString, drift::Clip> byLink;
+    for (const drift::Clip &adjustment : lane.clips)
+        byLink.insert(adjustment.linkedClipId, adjustment);
+    QVERIFY2(byLink.contains(head.id), "head lost its adjustment");
+    QVERIFY2(byLink.contains(tail.id), "tail came back with no adjustment");
+    QCOMPARE(byLink.value(head.id).effects.size(), 1);
+    QCOMPARE(byLink.value(tail.id).effects.size(), 1);
+    QCOMPARE(byLink.value(tail.id).timelineStart, tail.timelineStart);
+    QCOMPARE(byLink.value(tail.id).timelineDuration, tail.timelineDuration);
+
+    // The keyframe sat 1s into the original clip, which is 1s into the head and therefore before
+    // the tail starts: the head keeps it, and the tail's copy is rebased off its front rather than
+    // replaying the animation a second time.
+    const drift::Effect &headEffect = byLink.value(head.id).effects.at(0);
+    const drift::Effect &tailEffect = byLink.value(tail.id).effects.at(0);
+    QVERIFY(headEffect.paramKeyframes.contains(QStringLiteral("contrast")));
+    QCOMPARE(headEffect.paramKeyframes.value(QStringLiteral("contrast")).keyframes().firstKey(),
+             drift::secondsToUs(1.0));
+    QVERIFY(tailEffect.paramKeyframes.value(QStringLiteral("contrast")).keyframes().isEmpty());
+
+    // And the clips themselves still report the stack, which is what the inspector and MCP read.
+    QCOMPARE(state.clipAt(0, 1).value(QStringLiteral("effects")).toList().size(), 1);
+    QCOMPARE(state.clipAt(0, 2).value(QStringLiteral("effects")).toList().size(), 1);
+}
+
 void EditorStateTest::clipEffectsLiveOnALinkedAdjustmentLane()
 {
     AssetLibrary library;

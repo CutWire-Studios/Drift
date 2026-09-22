@@ -91,6 +91,23 @@ public:
 
     void removeKeyframe(TimeUs time) { m_values.remove(time); }
 
+    // Move every key along the clip's own timeline. Key times are clip-relative, so a clip that
+    // keeps its material but changes where it starts — the tail of a split, for one — has to carry
+    // its curve with it or the animation replays at the wrong moment. Keys that land before the
+    // clip's start are dropped; the curve still evaluates from whatever key survives.
+    void shiftBy(TimeUs delta)
+    {
+        if (delta == 0 || m_values.isEmpty())
+            return;
+        QMap<TimeUs, Keyframe<T>> moved;
+        for (auto it = m_values.constBegin(); it != m_values.constEnd(); ++it) {
+            const TimeUs at = it.key() + delta;
+            if (at >= 0)
+                moved.insert(at, it.value());
+        }
+        m_values = moved;
+    }
+
     const QMap<TimeUs, Keyframe<T>> &keyframes() const { return m_values; }
 
     // Mutable access for the curve editor. Null when there is no key exactly at `time`.

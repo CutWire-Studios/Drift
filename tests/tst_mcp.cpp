@@ -111,6 +111,7 @@ private slots:
     void marketSearchAndDownloadImportsAsset();
     void sceneOpsAcceptClipRef();
     void addEffectReportsHost();
+    void splitClipKeepsEffectsOnBothHalves();
     void framesFlagsBeyondEnd();
     void inspectRevisionUnchanged();
     void listEffectsIncludesParams();
@@ -3911,6 +3912,44 @@ void McpTest::addEffectReportsHost()
         const QJsonObject row = state.mcpInspect({true, true, false, false, -1, -1,
                                                   host.value(QStringLiteral("clip")).toString()});
         QVERIFY(row.value(QStringLiteral("ok")).toBool());
+    }
+}
+
+// The agent-facing half of the same defect: through MCP a split clip used to come back with the
+// grade on the head only, and the caller had no way to see it except by rendering a still.
+void McpTest::splitClipKeepsEffectsOnBothHalves()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    state.addTextClip(QStringLiteral("Hello"), 0.0);
+    drift::mcp::McpDispatcher dispatcher(&state);
+
+    const QJsonObject added = dispatcher.applyOne(
+        QStringLiteral("add_effect"),
+        {{QStringLiteral("track"), 0}, {QStringLiteral("index"), 0},
+         {QStringLiteral("effect"), QStringLiteral("stylize_vignette")}});
+    QVERIFY2(added.value(QStringLiteral("ok")).toBool(),
+             qPrintable(QJsonDocument(added).toJson(QJsonDocument::Compact)));
+
+    const double splitAt = drift::usToSeconds(state.project()->tracks().at(0).clips.at(0).timelineEnd()) / 2.0;
+    const QJsonObject split = dispatcher.applyOne(
+        QStringLiteral("split_clip"),
+        {{QStringLiteral("track"), 0}, {QStringLiteral("index"), 0}, {QStringLiteral("at"), splitAt}});
+    QVERIFY2(split.value(QStringLiteral("ok")).toBool(),
+             qPrintable(QJsonDocument(split).toJson(QJsonDocument::Compact)));
+
+    for (const QJsonValue &id : split.value(QStringLiteral("clips")).toArray()) {
+        const QJsonObject row = state.mcpInspect({true, true, false, false, -1, -1, id.toString()});
+        QVERIFY2(row.value(QStringLiteral("ok")).toBool(), qPrintable(id.toString()));
+        int effects = 0;
+        for (const QJsonValue &track : row.value(QStringLiteral("tracks")).toArray()) {
+            for (const QJsonValue &item : track.toObject().value(QStringLiteral("items")).toArray()) {
+                if (item.toObject().value(QStringLiteral("id")).toString() == id.toString())
+                    effects = item.toObject().value(QStringLiteral("effects")).toArray().size();
+            }
+        }
+        QVERIFY2(effects == 1,
+                 qPrintable(QStringLiteral("half %1 reports %2 effects").arg(id.toString()).arg(effects)));
     }
 }
 

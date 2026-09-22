@@ -3846,6 +3846,49 @@ void splitLinkedPartnerAt(drift::Project &project, const drift::Clip &sourceHead
     }
 }
 
+// A clip's effect stack does not live on the clip: it lives on an adjustment clip pinned to it by
+// linkedClipId, which is a different mechanism from the linkId that pairs audio with video. Split
+// handles linkId (splitLinkedPartnerAt above) and used to ignore this one, so the tail of a split
+// came back with no grade at all. Clone each pinned adjustment onto the tail and carry its
+// parameter curves across; syncLinkedAdjustments re-spans both halves afterwards.
+void splitLinkedAdjustmentsAt(drift::Project &project, int parentTrackIndex, const QString &headClipId,
+                              const QString &tailClipId, drift::TimeUs offset)
+{
+    if (headClipId.isEmpty() || tailClipId.isEmpty())
+        return;
+
+    for (const int laneIndex : drift::adjustmentLaneIndexes(project, parentTrackIndex)) {
+        drift::Track &lane = project.tracks()[laneIndex];
+        for (int c = lane.clips.size() - 1; c >= 0; --c) {
+            if (lane.clips.at(c).linkedClipId != headClipId)
+                continue;
+            drift::Clip tailAdjustment = lane.clips.at(c);
+            tailAdjustment.id = QUuid::createUuid().toString(QUuid::WithoutBraces);
+            tailAdjustment.linkedClipId = tailClipId;
+            drift::shiftClipKeyframes(tailAdjustment, -offset);
+            lane.clips.insert(c + 1, tailAdjustment);
+        }
+    }
+}
+
+// Both halves of a split keep the same effects, but only one keeps the original clip id. Where the
+// surviving half is given a fresh id, the adjustment would be left pinned to an id nothing answers
+// to and syncLinkedAdjustments would quietly unlink it.
+void repointLinkedAdjustments(drift::Project &project, int parentTrackIndex, const QString &fromClipId,
+                              const QString &toClipId)
+{
+    if (fromClipId.isEmpty() || toClipId.isEmpty() || fromClipId == toClipId)
+        return;
+
+    for (const int laneIndex : drift::adjustmentLaneIndexes(project, parentTrackIndex)) {
+        drift::Track &lane = project.tracks()[laneIndex];
+        for (drift::Clip &adjustment : lane.clips) {
+            if (adjustment.linkedClipId == fromClipId)
+                adjustment.linkedClipId = toClipId;
+        }
+    }
+}
+
 void expandSelectionWithLinkedPartners(const drift::Project &project, QList<QPair<int, int>> &pairs)
 {
     QList<QPair<int, int>> expanded = pairs;
@@ -6567,8 +6610,18 @@ void AppController::splitAtPlayhead()
     const drift::Project before = m_project;
     bool splitAny = false;
     QSet<QString> handledLinkIds;
+    struct PendingAdjustmentSplit
+    {
+        int trackIndex;
+        QString headId;
+        QString tailId;
+        drift::TimeUs offset;
+    };
+    QList<PendingAdjustmentSplit> pendingAdjustmentSplits;
 
-    for (drift::Track &track : m_project.tracks()) {
+    const QList<drift::Track> &tracksView = m_project.tracks();
+    for (int trackIndex = 0; trackIndex < tracksView.size(); ++trackIndex) {
+        drift::Track &track = m_project.tracks()[trackIndex];
         for (int clipIndex = 0; clipIndex < track.clips.size(); ++clipIndex) {
             drift::Clip &clip = track.clips[clipIndex];
             if (!clip.containsTime(m_playheadUs))
@@ -6576,6 +6629,11 @@ void AppController::splitAtPlayhead()
             if (m_playheadUs == clip.timelineStart)
                 continue;
             if (!clip.linkId.isEmpty() && handledLinkIds.contains(clip.linkId))
+                continue;
+            // An adjustment pinned to a host is split by the host below, which is the only place
+            // that knows the tail's id. Splitting it here as well would leave two adjustments
+            // claiming the same clip.
+            if (!clip.linkedClipId.isEmpty())
                 continue;
 
             const drift::TimeUs offset = m_playheadUs - clip.timelineStart;
@@ -6587,11 +6645,18 @@ void AppController::splitAtPlayhead()
             const QString tailLinkId = drift::assignSplitLinkIds(clip, tail);
             if (!clip.linkId.isEmpty())
                 handledLinkIds.insert(clip.linkId);
+            const QString headId = clip.id;
             splitLinkedPartnerAt(m_project, clip, m_playheadUs, tailLinkId);
             track.clips.insert(clipIndex + 1, tail);
+            pendingAdjustmentSplits.append({trackIndex, headId, tail.id, offset});
             splitAny = true;
             ++clipIndex;
         }
+    }
+
+    for (const PendingAdjustmentSplit &pending : pendingAdjustmentSplits) {
+        splitLinkedAdjustmentsAt(m_project, pending.trackIndex, pending.headId, pending.tailId,
+                                 pending.offset);
     }
 
     if (splitAny) {
@@ -6624,8 +6689,10 @@ void AppController::splitClipAt(int trackIndex, int clipIndex, double seconds)
 
     tail.id = QUuid::createUuid().toString(QUuid::WithoutBraces);
     const QString tailLinkId = drift::assignSplitLinkIds(clip, tail);
+    const QString headId = clip.id;
     splitLinkedPartnerAt(m_project, clip, atUs, tailLinkId);
     track.clips.insert(clipIndex + 1, tail);
+    splitLinkedAdjustmentsAt(m_project, trackIndex, headId, tail.id, offset);
 
     pushProjectEdit(before, tr("Split clip"));
     finishEdit(tr("Split clip"));
@@ -6658,9 +6725,11 @@ void AppController::splitClipLeftAt(int trackIndex, int clipIndex, double second
     if (!drift::splitClipAtOffset(clip, right, offset))
         return;
 
+    const QString droppedId = clip.id;
     right.id = QUuid::createUuid().toString(QUuid::WithoutBraces);
     // Keep only the right half — everything left of the cut is dropped.
     track.clips[clipIndex] = right;
+    repointLinkedAdjustments(m_project, trackIndex, droppedId, right.id);
     // Close the leading gap: keep the left edge put and pull followers.
     if (m_rippleEnabled) {
         track.clips[clipIndex].timelineStart -= offset;
