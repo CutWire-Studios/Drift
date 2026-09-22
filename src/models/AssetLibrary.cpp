@@ -46,13 +46,17 @@ QString importsDir()
            + QStringLiteral("/imports");
 }
 
-QString sanitizedImportFileName(QString name)
+// `name` with ` (n)` before its extension, for the rare case where two documents want the same
+// copy. Matches how the platform's own file managers number a duplicate, so the bin row reads
+// the way the user would expect rather than carrying a hash.
+QString numberedImportFileName(const QString &name, int n)
 {
-    name.replace(QLatin1Char('/'), QLatin1Char('_'));
-    name.replace(QLatin1Char('\\'), QLatin1Char('_'));
-    if (name.isEmpty() || name == QLatin1String(".") || name == QLatin1String(".."))
-        name = QStringLiteral("import.bin");
-    return name;
+    const QString suffix = QFileInfo(name).suffix();
+    const QString stem = suffix.isEmpty() ? name : name.chopped(suffix.size() + 1);
+    return QStringLiteral("%1 (%2)%3")
+        .arg(stem)
+        .arg(n)
+        .arg(suffix.isEmpty() ? QString() : QLatin1Char('.') + suffix);
 }
 
 // FFmpeg and the rest of the media pipeline need real filesystem paths. On Android the SAF
@@ -82,17 +86,24 @@ QString materializeImportUrl(const QUrl &url)
         qWarning("import: read failed for %s (%s)", qPrintable(uri), qPrintable(src->errorString()));
         return {};
     }
+    const qint64 sourceSize = src->size();
     QCryptographicHash key(QCryptographicHash::Sha1);
     key.addData(head);
-    key.addData(QByteArray::number(src->size()));
+    key.addData(QByteArray::number(sourceSize));
 
     // One directory per file so the copy can keep the document's real name — the bin, the clip
     // labels and the export default all show it, and provisionalKind reads the kind off its suffix.
     const QString destDir = importsDir() + QLatin1Char('/')
                             + QString::fromLatin1(key.result().left(8).toHex());
-    const QString destPath =
-        destDir + QLatin1Char('/') + sanitizedImportFileName(AndroidUri::displayName(url));
-    if (QFileInfo::exists(destPath))
+    const QString fileName =
+        AssetLibrary::sanitizedImportFileName(AndroidUri::displayName(url));
+    const QString destPath = destDir + QLatin1Char('/') + fileName;
+    // A copy already under this name in a directory keyed on the document's own bytes is that
+    // same document, picked again — which is exactly what the content key is for. That only
+    // holds while the provider reported a length: plenty report none, and then the key is the
+    // first megabyte alone, which two different documents can share. Those fall through to the
+    // copy and are told apart by their finished size below.
+    if (sourceSize > 0 && QFileInfo::exists(destPath))
         return destPath;
 
     if (!QDir().mkpath(destDir)) {
@@ -127,12 +138,25 @@ QString materializeImportUrl(const QUrl &url)
     }
 
     dst.close();
-    if (!dst.rename(destPath)) {
-        qWarning("import: cannot finish %s (%s)", qPrintable(destPath), qPrintable(dst.errorString()));
+
+    // Nothing was reused above unless the length said so, so anything sitting on the name now is
+    // either the same document (same size, same first megabyte — reuse it and drop the copy) or a
+    // different one the weak key collided with, which gets a number rather than being overwritten.
+    QString finalPath = destPath;
+    for (int attempt = 2; QFileInfo::exists(finalPath); ++attempt) {
+        if (QFileInfo(finalPath).size() == QFileInfo(partPath).size()) {
+            dst.remove();
+            return finalPath;
+        }
+        finalPath = destDir + QLatin1Char('/') + numberedImportFileName(fileName, attempt);
+    }
+
+    if (!dst.rename(finalPath)) {
+        qWarning("import: cannot finish %s (%s)", qPrintable(finalPath), qPrintable(dst.errorString()));
         dst.remove();
         return {};
     }
-    return destPath;
+    return finalPath;
 }
 
 #endif // Q_OS_ANDROID
@@ -443,6 +467,60 @@ bool AssetLibrary::isMediaPath(const QString &path)
 {
     return isVideoPath(path) || isAudioPath(path) || isImagePath(path) || isVectorPath(path)
         || isModelPath(path);
+}
+
+// A picked document's DISPLAY_NAME is whatever its provider chose to report, and the import copy
+// has to carry it as a real file name: the bin, the clip labels and the export default all show
+// it, and the kind guess reads the extension off it. Four things in it are not storable:
+//
+//   - Path separators, which would write the copy outside its import directory entirely.
+//   - Control characters and the reserved set `: * ? " < > |`. App data is not always a plain
+//     ext4 directory — on the emulated and removable volumes it can land on, those are rejected
+//     outright, and the copy fails with nothing to explain it.
+//   - Trailing dots and spaces, which the same volumes silently drop rather than store, so the
+//     name that comes back is not the name that was asked for.
+//   - Length. A file-based-encryption volume — which is what a Samsung Secure Folder container
+//     is — stores names encrypted, and it is the *encrypted* form that has to fit the 255-byte
+//     limit, so the plaintext budget is far smaller than it looks.
+//
+// Truncation keeps the extension: everything downstream that decides what a file is reads it.
+QString AssetLibrary::sanitizedImportFileName(const QString &displayName)
+{
+    // Room for the ".part" the copy is staged under, and for the " (2)" a collision adds, well
+    // inside what an encrypted name expands to.
+    constexpr int kMaxNameBytes = 120;
+    static const QString reserved = QStringLiteral("/\\:*?\"<>|");
+
+    QString name;
+    name.reserve(displayName.size());
+    for (const QChar ch : displayName)
+        name.append(ch.unicode() < 0x20 || ch == QChar(0x7F) || reserved.contains(ch)
+                        ? QLatin1Char('_')
+                        : ch);
+
+    name = name.trimmed();
+    if (name.toUtf8().size() > kMaxNameBytes) {
+        const QString suffix = QFileInfo(name).suffix();
+        // A "suffix" that long is not one — it is a dot somewhere in a very long name, and
+        // keeping it would leave no room for the name itself.
+        QString tail = suffix.isEmpty() || suffix.toUtf8().size() > kMaxNameBytes / 2
+                           ? QString()
+                           : QLatin1Char('.') + suffix;
+        QString stem = name.chopped(tail.size());
+        const qsizetype budget = kMaxNameBytes - tail.toUtf8().size();
+        while (!stem.isEmpty() && stem.toUtf8().size() > budget)
+            stem.chop(1);
+        // Chopping by code unit can strand the leading half of a surrogate pair.
+        if (!stem.isEmpty() && stem.back().isHighSurrogate())
+            stem.chop(1);
+        name = stem + tail;
+    }
+
+    while (name.endsWith(QLatin1Char('.')) || name.endsWith(QLatin1Char(' ')))
+        name.chop(1);
+    if (name.isEmpty())
+        name = QStringLiteral("import.bin");
+    return name;
 }
 
 QString AssetLibrary::mediaNameFilter() const

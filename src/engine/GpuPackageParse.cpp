@@ -137,10 +137,25 @@ bool parseParameters(const QJsonArray &params, QList<drift::EffectParamSpec> *ou
         else if (type == QLatin1String("float") || type == QLatin1String("number"))
             spec.type = drift::EffectParamType::Float;
         else {
-            // Refusing an unknown type is the point: silently treating one as a float is how a
-            // colour param ends up binding 0.0 to a vec3 uniform and rendering the frame black.
-            fail(errorOut, QStringLiteral("parameter '%1' has unknown type '%2'").arg(spec.key, type));
-            return false;
+            // An unknown type must not quietly become a float: that is how a colour param ends up
+            // binding 0.0 to a vec3 uniform and rendering the frame black. But refusing the package
+            // outright would take an already-installed effect away from someone who has it working
+            // — effects.trending shipped duotone with type "string" and hex defaults. So infer the
+            // colour when the default says plainly that it is one, and only refuse what cannot be
+            // read at all.
+            const QString declared = p.value(QStringLiteral("defaultValue")).toString().isEmpty()
+                ? p.value(QStringLiteral("default")).toString()
+                : p.value(QStringLiteral("defaultValue")).toString();
+            if (declared.startsWith(QLatin1Char('#')) && QColor(declared).isValid()) {
+                qWarning("GpuPackageParse: parameter '%s' has unknown type '%s'; reading it as a "
+                         "colour from its default. Declare it as \"color\".",
+                         qUtf8Printable(spec.key), qUtf8Printable(type));
+                spec.type = drift::EffectParamType::Color;
+            } else {
+                fail(errorOut,
+                     QStringLiteral("parameter '%1' has unknown type '%2'").arg(spec.key, type));
+                return false;
+            }
         }
         spec.min = p.value(QStringLiteral("minValue")).toDouble(p.value(QStringLiteral("min")).toDouble(0.0));
         spec.max = p.value(QStringLiteral("maxValue")).toDouble(p.value(QStringLiteral("max")).toDouble(1.0));

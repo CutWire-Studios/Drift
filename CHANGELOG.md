@@ -8,6 +8,7 @@ Tracks work done on `main` **since the last public release**. Use this to see wh
 
 ## ✅ Fixed
 
+- Importing on Android wrote the copy under whatever name the document provider reported, so a name carrying a character the storage volume will not accept — or one longer than an encrypted volume such as a Samsung Secure Folder container can hold — failed with nothing but "could not open that file". Names are now made storable first: separators, control characters and the reserved set are replaced, trailing dots and spaces dropped, and an over-long name is cut with its extension kept. Two documents that want the same copy are numbered apart rather than one silently standing in for the other.
 - An export started by an agent overwrote the settings the export dialog remembers, and an omitted audio-only or GIF switch carried over from the previous render — which could turn a video export into an audio file with nothing to say so.
 - Adding a transition could bind it to a clip that overlapped almost all of the outgoing one instead of the clip at the cut, and a transition loaded from an older project could claim a span far longer than the clips it joins.
 - Auto-reframe stretched the picture and zoomed far past what was asked for — a 9:16 crop of a 4K clip came out around 3x magnified and distorted. It now keeps the source's shape, fits the requested aspect inside the canvas, and reports how much it magnified the source so an upscale is visible before it reaches a render.

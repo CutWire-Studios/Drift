@@ -226,6 +226,7 @@ private slots:
     void tracksCarriesLayoutOnlyWhileClipAtStaysFull();
     void trackFitAnswersForAKindMatchTheAssetForms();
     void provisionalKindReadsTheExtensionAlone();
+    void importFileNameStaysStorable();
 };
 
 // A file dragged in from the file manager has no bin row yet, so the timeline's drop preview
@@ -278,6 +279,55 @@ void EditorStateTest::provisionalKindReadsTheExtensionAlone()
     QVERIFY(library.provisionalKindForUrl(QUrl::fromLocalFile(QStringLiteral("/nowhere/n.txt")))
                 .isEmpty());
     QVERIFY(library.provisionalKindForUrl(QUrl()).isEmpty());
+}
+
+// The name an Android import copy is written under comes from the document provider, not from a
+// filesystem, so it has to be made storable before anything opens a file with it. What survives
+// matters as much as what does not: the extension is what every kind guess downstream reads.
+void EditorStateTest::importFileNameStaysStorable()
+{
+    // Ordinary names, punctuation included, are left exactly as they are.
+    QCOMPARE(AssetLibrary::sanitizedImportFileName(QStringLiteral("test(1).mp3")),
+             QStringLiteral("test(1).mp3"));
+    QCOMPARE(AssetLibrary::sanitizedImportFileName(QStringLiteral("a b & c [take 2]#1.mp4")),
+             QStringLiteral("a b & c [take 2]#1.mp4"));
+
+    // Separators would write the copy outside its own import directory.
+    QCOMPARE(AssetLibrary::sanitizedImportFileName(QStringLiteral("../../etc/passwd.mp4")),
+             QStringLiteral(".._.._etc_passwd.mp4"));
+
+    // Reserved on the volumes app data can land on, and rejected there rather than stored.
+    QCOMPARE(AssetLibrary::sanitizedImportFileName(QStringLiteral("12:30 <clip>?*|\"x\".mov")),
+             QStringLiteral("12_30 _clip_____x_.mov"));
+    QCOMPARE(AssetLibrary::sanitizedImportFileName(QStringLiteral("bell\a\ttab.wav")),
+             QStringLiteral("bell__tab.wav"));
+
+    // Trailing dots and spaces are dropped by those volumes rather than stored, so the name that
+    // comes back would not be the name the copy was written under.
+    QCOMPARE(AssetLibrary::sanitizedImportFileName(QStringLiteral("clip.mp4.  ")),
+             QStringLiteral("clip.mp4"));
+
+    // Nothing usable left at all still has to name a file.
+    QCOMPARE(AssetLibrary::sanitizedImportFileName(QStringLiteral("   ")),
+             QStringLiteral("import.bin"));
+    QCOMPARE(AssetLibrary::sanitizedImportFileName(QStringLiteral("..")),
+             QStringLiteral("import.bin"));
+    QCOMPARE(AssetLibrary::sanitizedImportFileName(QString()), QStringLiteral("import.bin"));
+
+    // Long names are cut to fit an encrypted volume's real budget, and the extension survives —
+    // with room to spare for the ".part" the copy is staged under.
+    const QString longName = QString(400, QLatin1Char('x')) + QStringLiteral(".mp4");
+    const QString cut = AssetLibrary::sanitizedImportFileName(longName);
+    QVERIFY(cut.toUtf8().size() <= 120);
+    QVERIFY(cut.endsWith(QStringLiteral(".mp4")));
+    QVERIFY(cut.size() > 4);
+
+    // Multi-byte characters are counted as bytes, and a cut never strands half a surrogate pair.
+    const QString emoji = QStringLiteral("🎬").repeated(200) + QStringLiteral(".mov");
+    const QString cutEmoji = AssetLibrary::sanitizedImportFileName(emoji);
+    QVERIFY(cutEmoji.toUtf8().size() <= 120);
+    QVERIFY(cutEmoji.endsWith(QStringLiteral(".mov")));
+    QCOMPARE(cutEmoji, QString::fromUtf8(cutEmoji.toUtf8()));
 }
 
 void EditorStateTest::snapTimeEnabled()

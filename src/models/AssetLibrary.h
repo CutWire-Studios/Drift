@@ -73,6 +73,10 @@ public:
     static bool isVectorPath(const QString &path);
     static bool isModelPath(const QString &path);
     static bool isMediaPath(const QString &path);
+    // The file name a picked document's copy in app storage should carry. Only used on Android,
+    // where that name is the provider's DISPLAY_NAME — an arbitrary string, not a name any
+    // filesystem has agreed to store. See the definition for what it takes out and why.
+    static QString sanitizedImportFileName(const QString &displayName);
     // The kind a file looks like from its extension alone, spelled the way a bin row spells it
     // ("video", "audio", "image", "vector", "model3d"), and empty for anything that is not media
     // at all. Q_INVOKABLE because the timeline's file drop has to promise a landing spot while
