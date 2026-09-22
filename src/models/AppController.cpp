@@ -1430,6 +1430,16 @@ void AppController::notifySelectionChanged()
     emit selectionChanged();
 }
 
+void AppController::notifyStabilizeStateChanged(const QString &clipId)
+{
+    if (m_selectedTrack < 0 || m_selectedClip < 0 || m_selectedTrack >= m_project.tracks().size())
+        return;
+    const drift::Track &track = m_project.tracks().at(m_selectedTrack);
+    if (m_selectedClip >= track.clips.size() || track.clips.at(m_selectedClip).id != clipId)
+        return;
+    emit selectedClipDataChanged();
+}
+
 void AppController::notifyTracksChanged()
 {
     // Trims and the other full-path preview edits land here rather than in emitPreviewEdit.
@@ -11441,18 +11451,7 @@ void AppController::setStabilizeProgress(const QString &clipId, double progress,
     if (!force && !statusChanged && now - m_stabilizeLastProgressEmit.value(clipId, 0) < 100)
         return;
     m_stabilizeLastProgressEmit.insert(clipId, now);
-
-    int selectedTrack = -1;
-    int selectedClip = -1;
-    if (m_selectedTrack >= 0 && m_selectedTrack < m_project.tracks().size()) {
-        selectedTrack = m_selectedTrack;
-        selectedClip = m_selectedClip;
-    }
-    if (selectedTrack >= 0 && selectedClip >= 0
-        && selectedClip < m_project.tracks().at(selectedTrack).clips.size()
-        && m_project.tracks().at(selectedTrack).clips.at(selectedClip).id == clipId) {
-        emit selectedClipDataChanged();
-    }
+    notifyStabilizeStateChanged(clipId);
 }
 
 void AppController::clearStabilizeProgress(const QString &clipId)
@@ -11546,8 +11545,9 @@ void AppController::stabilizeClip(int trackIndex, int clipIndex)
                                     ? (keyframeMode ? tr("Building keyframes…")
                                                     : tr("Rendering stabilized video…"))
                                     : tr("Analyzing camera motion…");
+    // setStabilizeProgress(force=true) below already notifies for this clip if it is the one
+    // currently selected.
     setStabilizeProgress(clipId, 0.0, startStatus, true);
-    emit selectedClipDataChanged();
 
     auto finishStabilizeFailure = [this, clipId](const QString &message, const QString &severity) {
         int foundTrack = -1;
@@ -11556,7 +11556,7 @@ void AppController::stabilizeClip(int trackIndex, int clipIndex)
             m_project.tracks()[foundTrack].clips[foundClip].stabilizing = false;
         }
         clearStabilizeProgress(clipId);
-        emit selectedClipDataChanged();
+        notifyStabilizeStateChanged(clipId);
         setLastMessage(message, severity);
     };
 

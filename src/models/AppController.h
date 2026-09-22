@@ -2166,6 +2166,13 @@ protected:
     // Same rule as notifyTracksChanged(): bump the revision before the signal goes out, so no
     // reader can observe the old value on the new selection.
     void notifySelectionChanged();
+    // Stabilization progress/state (stabilizing, stabilizeProgress, stabilizeStatus) changes
+    // outside the undo-tracked edit path — see its call sites — so it never reaches
+    // notifyTracksChanged(). Use this instead of a bare emit selectedClipDataChanged() wherever
+    // that state changes. No-ops unless clipId is the clip currently selected: the signal only
+    // describes that one clip, so a background stabilization on some other clip must not
+    // re-notify a selection it has nothing to do with.
+    void notifyStabilizeStateChanged(const QString &clipId);
 
     void pushProjectEdit(const drift::Project &before, const QString &text);
 
