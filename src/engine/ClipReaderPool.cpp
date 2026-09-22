@@ -19,8 +19,21 @@ ClipReaderPool &ClipReaderPool::instance()
     return pool;
 }
 
+ClipReaderPool::ClipReaderPool()
+{
+    m_idleSweepThread = std::thread([this] { idleSweepLoop(); });
+}
+
 ClipReaderPool::~ClipReaderPool()
 {
+    {
+        std::lock_guard<std::mutex> sweepLock(m_sweepMutex);
+        m_sweepStop = true;
+    }
+    m_sweepCv.notify_all();
+    if (m_idleSweepThread.joinable())
+        m_idleSweepThread.join();
+
     QMutexLocker lock(&m_mutex);
     for (auto &entry : m_videoWorkers)
         stopWorkerEntry(*entry.second);
@@ -28,6 +41,44 @@ ClipReaderPool::~ClipReaderPool()
         stopWorkerEntry(*entry.second);
     m_videoWorkers.clear();
     m_audioWorkers.clear();
+}
+
+// Wakes on its own cadence rather than piggybacking on any caller, which is the whole point:
+// FrameCompositor::prepare (retainActivePaths' only caller) simply stops running while the
+// project is paused, and a one-shot reader opened just before that would otherwise never be
+// swept. The interval only needs to be fine-grained relative to the idle budget it is checking.
+void ClipReaderPool::idleSweepLoop()
+{
+#ifdef Q_OS_ANDROID
+    constexpr auto kInterval = std::chrono::seconds(5);
+#else
+    constexpr auto kInterval = std::chrono::seconds(30);
+#endif
+    std::unique_lock<std::mutex> lock(m_sweepMutex);
+    while (!m_sweepCv.wait_for(lock, kInterval, [this] { return m_sweepStop; })) {
+        lock.unlock();
+        sweepIdleWorkersOnce();
+        lock.lock();
+    }
+}
+
+void ClipReaderPool::sweepIdleWorkersOnce()
+{
+#ifdef Q_OS_ANDROID
+    const qint64 idleMs = kIdleReleaseMs;
+#else
+    const qint64 idleMs = kDesktopIdleReleaseMs;
+#endif
+    std::vector<std::unique_ptr<WorkerEntry>> evicted;
+    {
+        QMutexLocker lock(&m_mutex);
+        evicted = detachIdleLocked(m_videoWorkers, {}, idleMs);
+        std::vector<std::unique_ptr<WorkerEntry>> audio = detachIdleLocked(m_audioWorkers, {}, idleMs);
+        evicted.insert(evicted.end(), std::make_move_iterator(audio.begin()),
+                       std::make_move_iterator(audio.end()));
+    }
+    for (const std::unique_ptr<WorkerEntry> &entry : evicted)
+        stopWorkerEntry(*entry);
 }
 
 void ClipReaderPool::stopWorkerEntry(WorkerEntry &entry)
@@ -279,27 +330,12 @@ void ClipReaderPool::resetAudioStreams()
 
 void ClipReaderPool::retainActivePaths(const QSet<QString> &videoPaths, const QSet<QString> &audioPaths)
 {
-    std::vector<std::unique_ptr<WorkerEntry>> evicted;
-    {
-        QMutexLocker lock(&m_mutex);
-        for (const QString &path : videoPaths)
-            ensureWorker(m_videoWorkers, path);
-        for (const QString &path : audioPaths)
-            ensureWorker(m_audioWorkers, path);
-#ifdef Q_OS_ANDROID
-        // Android only. This runs from FrameCompositor::prepare, i.e. once per composited frame,
-        // and on desktop a decoder that has been off the playhead for ten seconds is one the user
-        // is about to scrub back onto — keeping it open there is the whole point of the pool.
-        // A phone cannot afford the thread and the open AVCodecContext per path that costs.
-        evicted = detachIdleLocked(m_videoWorkers, videoPaths, kIdleReleaseMs);
-        std::vector<std::unique_ptr<WorkerEntry>> audio =
-            detachIdleLocked(m_audioWorkers, audioPaths, kIdleReleaseMs);
-        evicted.insert(evicted.end(), std::make_move_iterator(audio.begin()),
-                       std::make_move_iterator(audio.end()));
-#endif
-    }
-    for (const std::unique_ptr<WorkerEntry> &entry : evicted)
-        stopWorkerEntry(*entry);
+    // Idle eviction lives in idleSweepLoop() now, not here — see its declaration for why.
+    QMutexLocker lock(&m_mutex);
+    for (const QString &path : videoPaths)
+        ensureWorker(m_videoWorkers, path);
+    for (const QString &path : audioPaths)
+        ensureWorker(m_audioWorkers, path);
 }
 
 namespace drift {
