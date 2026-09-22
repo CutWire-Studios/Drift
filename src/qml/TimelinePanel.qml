@@ -373,6 +373,14 @@ PanelFrame {
         EditorState.addTransition(trackIndex, leftClip, kind, 0.5)
     }
 
+    // The bin row's media kind ("video", "audio", "image", ...), which is what the track-fit
+    // questions below are really asking about. A file still in flight from the file manager has
+    // no row, so it answers them with AssetLibrary.provisionalKindForUrl() instead.
+    function assetKind(assetIndex) {
+        const asset = AssetLibrary.assetAt(assetIndex)
+        return asset ? (asset.kind || "video") : "video"
+    }
+
     function assetDurationSeconds(assetIndex) {
         const asset = AssetLibrary.assetAt(assetIndex)
         if (!asset)
@@ -518,12 +526,16 @@ PanelFrame {
         return false
     }
 
-    function firstCompatibleTrackIndex(assetIndex) {
+    function firstCompatibleTrackIndexForKind(mediaKind) {
         for (var i = 0; i < tracks.length; i++) {
-            if (EditorState.trackAcceptsAsset(i, assetIndex))
+            if (EditorState.trackAcceptsKind(i, mediaKind))
                 return i
         }
         return -1
+    }
+
+    function firstCompatibleTrackIndex(assetIndex) {
+        return firstCompatibleTrackIndexForKind(assetKind(assetIndex))
     }
 
     function trackIndexAtY(y) {
@@ -575,6 +587,10 @@ PanelFrame {
     // which is what makes a lane reachable underneath the last track — dropping
     // in the empty space below the tracks appends one.
     function assetDropTargetAtY(assetIndex, y) {
+        return dropTargetAtYForKind(assetKind(assetIndex), y)
+    }
+
+    function dropTargetAtYForKind(mediaKind, y) {
         const count = tracks.length
         if (count === 0)
             return { "newTrack": true, "insertIndex": 0 }
@@ -588,7 +604,7 @@ PanelFrame {
             // Claim the trailing gap too, so the 6px between rows resolves to a
             // boundary rather than to nothing.
             if (y < rowEnd + Theme.trackGap / 2) {
-                if (!EditorState.trackAcceptsAsset(i, assetIndex))
+                if (!EditorState.trackAcceptsKind(i, mediaKind))
                     return { "newTrack": true,
                              "insertIndex": y < cursor + h / 2 ? i : i + 1 }
                 const edge = newTrackEdge(i)
@@ -618,22 +634,22 @@ PanelFrame {
         return Math.max(0, cursor - Theme.trackGap / 2)
     }
 
-    function updateAssetDropPreview(assetIndex, dropX, dropY) {
-        const duration = assetDurationSeconds(assetIndex)
-        const desired = Math.max(0, dropX / pxPerSecond)
-
-        // Mirrors performAssetDrop: an empty project fills its existing track
-        // wherever you aim, rather than stacking a second one on top.
+    // The one place that decides where a dropped clip lands, so the preview during the drag and
+    // the placement on release can never disagree — they used to hold two copies of this rule.
+    // An empty project fills its existing track wherever you aim, rather than stacking a second
+    // one on top of it.
+    function resolveDropTarget(mediaKind, dropY) {
         if (!timelineHasClips()) {
-            const firstIdx = firstCompatibleTrackIndex(assetIndex)
-            if (firstIdx >= 0) {
-                dropCreatesNewTrack = false
-                showLandingPreview(firstIdx, desired, duration)
-                return
-            }
+            const firstIdx = firstCompatibleTrackIndexForKind(mediaKind)
+            if (firstIdx >= 0)
+                return { "newTrack": false, "track": firstIdx }
         }
+        return dropTargetAtYForKind(mediaKind, dropY)
+    }
 
-        const target = assetDropTargetAtY(assetIndex, dropY)
+    function updateDropPreviewForKind(mediaKind, duration, dropX, dropY) {
+        const desired = Math.max(0, dropX / pxPerSecond)
+        const target = resolveDropTarget(mediaKind, dropY)
 
         if (!target.newTrack) {
             dropCreatesNewTrack = false
@@ -650,33 +666,184 @@ PanelFrame {
         snapGuideSeconds = snapped.guide
     }
 
-    function performAssetDrop(assetIndex, dropX, dropY) {
-        const atSeconds = Math.max(0, dropX / pxPerSecond)
-        if (assetIndex < 0)
+    function updateAssetDropPreview(assetIndex, dropX, dropY) {
+        updateDropPreviewForKind(assetKind(assetIndex), assetDurationSeconds(assetIndex),
+                                 dropX, dropY)
+    }
+
+    // Placement against an already-resolved target. Split out because the file-manager drop has
+    // to resolve its target at drop time and place minutes later, once the import has probed:
+    // dropY would be meaningless by then if the user scrolled the tracks in the meantime.
+    // `onPlaced` runs once the clip is actually in the project, which is not necessarily before
+    // this returns: the first clip of a pristine project opens the canvas setup dialog first, and
+    // a multi-file drop cannot place its second clip until that has been answered. It never runs
+    // if the dialog is dismissed, which is the existing meaning of dismissing it — nothing added.
+    function placeAssetAtTarget(assetIndex, atSeconds, target, onPlaced) {
+        if (assetIndex < 0 || !target)
             return
 
         function runAdd() {
-            // An empty project should fill its existing track rather than stack
-            // a second one on top of it.
-            if (!timelineHasClips()) {
-                const firstIdx = firstCompatibleTrackIndex(assetIndex)
-                if (firstIdx >= 0) {
-                    EditorState.addClipFromAssetAt(assetIndex, firstIdx, atSeconds)
-                    return
-                }
-            }
-
-            const target = assetDropTargetAtY(assetIndex, dropY)
             if (target.newTrack)
                 EditorState.addClipFromAssetOnNewTrackAt(assetIndex, target.insertIndex, atSeconds)
             else
                 EditorState.addClipFromAssetAt(assetIndex, target.track, atSeconds)
+            if (onPlaced)
+                onPlaced()
         }
 
         if (typeof Window !== "undefined" && Window.window && Window.window.configureAndAddAsset)
             Window.window.configureAndAddAsset(assetIndex, runAdd)
         else
             runAdd()
+    }
+
+    function performAssetDrop(assetIndex, dropX, dropY) {
+        if (assetIndex < 0)
+            return
+        placeAssetAtTarget(assetIndex, Math.max(0, dropX / pxPerSecond),
+                           resolveDropTarget(assetKind(assetIndex), dropY))
+    }
+
+    // File-manager drops ---------------------------------------------------------------------
+    //
+    // A file dragged straight from the file manager onto a track is imported and placed in one
+    // gesture. It still lands in the bin: a clip is addressed by asset index, so there is no such
+    // thing as a clip whose media is outside the library — this is "import, then place", and the
+    // assets panel shows the row either way. Dragging to the panel first is untouched.
+
+    // Media kind of the file drag currently over the timeline, "" when there is none. The
+    // new-track ghost sizes its lane from this, having no asset index to ask about yet.
+    property string pendingDropKind: ""
+
+    // Set from the drop until the import it started settles. The landing outline stays painted at
+    // the frozen spot for that whole window — probing a large file takes seconds, and clearing
+    // the outline on release made the drop look like it had been ignored.
+    property bool importDropPending: false
+
+    // Nothing has been opened at drag time, let alone probed, so the outline cannot promise a
+    // real length. Same fallback assetDurationSeconds() uses for a row whose duration is unknown.
+    readonly property real urlDropPreviewDuration: 5.0
+
+    // What the drag lands as. A mixed selection is placed file by file, each on a track that
+    // fits it, but the outline can only promise one spot — so it promises the first file's.
+    function urlDropKind(urls) {
+        if (!urls)
+            return ""
+        for (var i = 0; i < urls.length; ++i) {
+            const kind = AssetLibrary.provisionalKindForUrl(urls[i])
+            if (kind.length > 0)
+                return kind
+        }
+        return ""
+    }
+
+    function updateUrlDropPreview(drop) {
+        // A drag that cannot say what it carries yet — some platforms only hand the payload over
+        // on release — is previewed as video rather than not previewed at all. The drop itself
+        // re-reads the urls and places by what they really are.
+        const kind = drop.hasUrls ? urlDropKind(drop.urls) : "video"
+        pendingDropKind = kind
+        if (kind.length === 0) {
+            // Nothing in the drag is media. Promise nothing rather than a spot it cannot land on.
+            clearLandingPreview()
+            return
+        }
+        updateDropPreviewForKind(kind, urlDropPreviewDuration, drop.x, drop.y)
+    }
+
+    function clearUrlDropState() {
+        pendingDropKind = ""
+        importDropPending = false
+    }
+
+    function performUrlDrop(urls, dropX, dropY) {
+        if (!urls || urls.length === 0) {
+            clearUrlDropState()
+            clearLandingPreview()
+            return
+        }
+
+        const kind = urlDropKind(urls)
+        if (kind.length === 0) {
+            clearUrlDropState()
+            clearLandingPreview()
+            // Still handed to the import, so it reports why in the usual words instead of the
+            // drop appearing to do nothing at all.
+            MediaImport.importUrls(urls, true)
+            return
+        }
+
+        // Frozen here rather than read back in the callback: the import is asynchronous, and the
+        // user is free to scroll and zoom while it runs — by then dropY would name a different
+        // track and dropX a different second.
+        const atSeconds = Math.max(0, dropX / pxPerSecond)
+        const target = resolveDropTarget(kind, dropY)
+
+        root.importDropPending = true
+        const started = MediaImport.importUrls(urls, true, function (added) {
+            root.clearUrlDropState()
+            root.clearLandingPreview()
+            if (added <= 0)
+                return
+            // The idiom every caller of this callback uses: the rows it reports are the last
+            // `added` in the library. MediaImport waits for their probes first, so their
+            // durations and resolutions are real by now — which is what the clip lengths and the
+            // canvas setup both need.
+            root.placeImportedAssets(AssetLibrary.count - added, added, atSeconds, target)
+        })
+
+        if (!started) {
+            root.clearUrlDropState()
+            root.clearLandingPreview()
+        }
+    }
+
+    // Where a file after the first one goes when the track the previous one landed on will not
+    // take it — an audio file among videos, typically. The first track that fits, else a new one
+    // at the bottom, which is where adding it from the bin would have put it.
+    function targetForFollowOnKind(mediaKind) {
+        const idx = firstCompatibleTrackIndexForKind(mediaKind)
+        if (idx >= 0)
+            return { "newTrack": false, "track": idx }
+        return { "newTrack": true, "insertIndex": tracks.length }
+    }
+
+    // Places the rows a drop just imported: the first at the spot the drag promised, the rest
+    // back to back after it. One at a time rather than a loop, because placing the first can
+    // block on the canvas setup dialog and the rest have to queue behind that answer.
+    function placeImportedAssets(firstIndex, count, atSeconds, target) {
+        function placeAt(n, cursor, landing) {
+            if (n >= count)
+                return
+
+            const assetIndex = firstIndex + n
+            const kind = assetKind(assetIndex)
+            // The promised spot belongs to the first file. Each one after it follows on the track
+            // the previous one actually landed on, whenever that track will have it, so a batch
+            // reads as one sequence instead of fanning out across new tracks.
+            const fits = landing && !landing.newTrack
+                         && EditorState.trackAcceptsKind(landing.track, kind)
+            const here = fits ? landing : root.targetForFollowOnKind(kind)
+
+            root.placeAssetAtTarget(assetIndex, cursor, here, function () {
+                // Read back rather than advanced by the asset's duration: snapping and a
+                // bin-preview trim both change where the clip really ends, and the next one has
+                // to start there or it lands after a gap.
+                const t = EditorState.selectedTrack
+                const c = EditorState.selectedClip
+                var next = cursor
+                var landed = here
+                if (t >= 0 && t < root.tracks.length) {
+                    const clips = root.tracks[t].clips || []
+                    if (c >= 0 && c < clips.length)
+                        next = clips[c].start + clips[c].duration
+                    landed = { "newTrack": false, "track": t }
+                }
+                placeAt(n + 1, next, landed)
+            })
+        }
+
+        placeAt(0, atSeconds, target)
     }
 
     function handleTimelineWheel(wheel) {
@@ -1616,6 +1783,26 @@ PanelFrame {
                                     border.width: 2
                                     border.color: Theme.primary
                                     z: 5
+
+                                    // The outline is held on screen after a file drop for as
+                                    // long as the import it started is still probing, so it has
+                                    // to say why it is sitting there empty.
+                                    Text {
+                                        anchors.centerIn: parent
+                                        visible: root.importDropPending
+                                        text: qsTr("Importing…")
+                                        color: Theme.primary
+                                        font.family: Theme.fontFamily
+                                        font.pixelSize: Theme.fontSizeTiny
+                                        font.weight: Font.Medium
+
+                                        SequentialAnimation on opacity {
+                                            running: root.importDropPending
+                                            loops: Animation.Infinite
+                                            NumberAnimation { to: 0.45; duration: Theme.durationSlow; easing.type: Theme.easing }
+                                            NumberAnimation { to: 1.0; duration: Theme.durationSlow; easing.type: Theme.easing }
+                                        }
+                                    }
                                 }
 
                                 // Nested adjustment lanes, drawn as strips across the top of
@@ -1934,7 +2121,14 @@ PanelFrame {
                         height: Math.max(root.totalTracksHeightCached,
                                          flick.contentHeight - flick.headerHeight)
                         z: 250
-                        keys: ["text/plain"]
+                        // "text/uri-list" is a drag from outside the app — the file manager,
+                        // usually. It carries files that have not been imported yet, where
+                        // "text/plain" carries the index of a row already in the bin.
+                        keys: ["text/plain", "text/uri-list"]
+
+                        function isFileDrag(drop) {
+                            return drop.keys.indexOf("text/uri-list") !== -1
+                        }
 
                         function assetIndexFromDrop(drop) {
                             if (EditorState.draggingAssetIndex >= 0)
@@ -1945,6 +2139,10 @@ PanelFrame {
                         }
 
                         function updateAssetDrag(drop) {
+                            if (isFileDrag(drop)) {
+                                root.updateUrlDropPreview(drop)
+                                return
+                            }
                             const assetIndex = assetIndexFromDrop(drop)
                             if (assetIndex < 0) {
                                 root.clearLandingPreview()
@@ -1955,9 +2153,19 @@ PanelFrame {
 
                         onEntered: (drop) => updateAssetDrag(drop)
                         onPositionChanged: (drop) => updateAssetDrag(drop)
-                        onExited: root.clearLandingPreview()
+                        onExited: {
+                            root.clearUrlDropState()
+                            root.clearLandingPreview()
+                        }
                         onDropped: (drop) => {
                             drop.accept(Qt.CopyAction)
+                            if (isFileDrag(drop)) {
+                                // Not cleared first, unlike the branch below: performUrlDrop
+                                // keeps the outline on screen at the frozen spot for as long as
+                                // the import it starts is still running.
+                                root.performUrlDrop(drop.hasUrls ? drop.urls : [], drop.x, drop.y)
+                                return
+                            }
                             const assetIndex = assetIndexFromDrop(drop)
                             root.clearLandingPreview()
                             root.performAssetDrop(assetIndex, drop.x, drop.y)
@@ -1977,7 +2185,11 @@ PanelFrame {
                         // the ghost to silently not appear.
                         visible: root.dropCreatesNewTrack
                         readonly property real laneHeight: {
-                            const t = EditorState.trackTypeForAsset(EditorState.draggingAssetIndex)
+                            // A file-manager drag has no bin row to ask about, so its lane is
+                            // sized from the kind guessed off the extension instead.
+                            const t = root.pendingDropKind.length > 0
+                                    ? EditorState.trackTypeForKind(root.pendingDropKind)
+                                    : EditorState.trackTypeForAsset(EditorState.draggingAssetIndex)
                             if (t === "video") return Theme.trackHeightVideo
                             if (t === "audio") return Theme.trackHeightAudio
                             if (t === "shape") return Theme.trackHeightShape
@@ -2020,6 +2232,26 @@ PanelFrame {
                             color: Qt.rgba(Theme.primary.r, Theme.primary.g, Theme.primary.b, 0.3)
                             border.width: 2
                             border.color: Theme.primary
+
+                            // The outline is held on screen after a file drop for as
+                            // long as the import it started is still probing, so it has
+                            // to say why it is sitting there empty.
+                            Text {
+                                anchors.centerIn: parent
+                                visible: root.importDropPending
+                                text: qsTr("Importing…")
+                                color: Theme.primary
+                                font.family: Theme.fontFamily
+                                font.pixelSize: Theme.fontSizeTiny
+                                font.weight: Font.Medium
+
+                                SequentialAnimation on opacity {
+                                    running: root.importDropPending
+                                    loops: Animation.Infinite
+                                    NumberAnimation { to: 0.45; duration: Theme.durationSlow; easing.type: Theme.easing }
+                                    NumberAnimation { to: 1.0; duration: Theme.durationSlow; easing.type: Theme.easing }
+                                }
+                            }
                         }
                     }
 

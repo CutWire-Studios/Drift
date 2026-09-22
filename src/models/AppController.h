@@ -806,6 +806,12 @@ public:
     Q_INVOKABLE void cancelAssetEdit();
     Q_INVOKABLE bool trackAcceptsAsset(int trackIndex, int assetIndex) const;
     Q_INVOKABLE QString trackTypeForAsset(int assetIndex) const;
+    // The same two questions asked of a bare media kind ("video", "audio", "image", ...) rather
+    // than of a bin row. A file dragged in from the file manager has no row yet — it is not
+    // imported until it is dropped — but its extension already says which track it belongs on,
+    // which is all the drag preview needs to promise a landing spot.
+    Q_INVOKABLE bool trackAcceptsKind(int trackIndex, const QString &mediaKind) const;
+    Q_INVOKABLE QString trackTypeForKind(const QString &mediaKind) const;
     // presetId applies a built-in style pack on create; empty keeps the default text style.
     Q_INVOKABLE void addTextClip(const QString &text, double atSeconds,
                                  const QString &presetId = QString());

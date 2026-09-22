@@ -2309,6 +2309,22 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Jump back 1 second</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Jump forward 1 second</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Jump back 10 seconds</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Jump forward 10 seconds</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Go to start of timeline</source>
         <translation type="unfinished"></translation>
     </message>
@@ -11011,6 +11027,10 @@ En cas de saccades à la lecture, essayez un autre mode.</translation>
     <message>
         <source>New track</source>
         <translation>Nouvelle piste</translation>
+    </message>
+    <message>
+        <source>Importing…</source>
+        <translation type="unfinished">Importation…</translation>
     </message>
     <message>
         <source>Close Gap</source>

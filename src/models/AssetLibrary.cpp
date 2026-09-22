@@ -1439,6 +1439,17 @@ QString importLabel(const QUrl &url)
 
 } // namespace
 
+QString AssetLibrary::provisionalKindForUrl(const QUrl &url) const
+{
+    // The name, not the path: materializing a content:// URI means copying it, and this runs on
+    // every drag move. Both isMediaPath() and provisionalKind() look at the suffix alone, so the
+    // display name answers them exactly as the eventual local path would.
+    const QString name = importLabel(url);
+    if (!isMediaPath(name))
+        return {};
+    return drift::mediaKindToString(provisionalKind(name));
+}
+
 void AssetLibrary::importUrls(const QList<QUrl> &urls)
 {
     QStringList paths;

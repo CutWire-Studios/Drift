@@ -2297,6 +2297,22 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Jump back 1 second</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Jump forward 1 second</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Jump back 10 seconds</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Jump forward 10 seconds</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Go to start of timeline</source>
         <translation>Đi đến đầu dòng thời gian</translation>
     </message>
@@ -10962,6 +10978,10 @@ If playback stutters, try another.</source>
     <message>
         <source>New track</source>
         <translation type="unfinished">Bài hát mới</translation>
+    </message>
+    <message>
+        <source>Importing…</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Rename bookmark</source>

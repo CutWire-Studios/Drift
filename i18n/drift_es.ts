@@ -2303,6 +2303,22 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Jump back 1 second</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Jump forward 1 second</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Jump back 10 seconds</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Jump forward 10 seconds</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Go to start of timeline</source>
         <translation type="unfinished"></translation>
     </message>
@@ -11006,6 +11022,10 @@ Si la reproducción se corta, prueba con otra opción.</translation>
     <message>
         <source>New track</source>
         <translation>Nueva pista</translation>
+    </message>
+    <message>
+        <source>Importing…</source>
+        <translation type="unfinished">Importando…</translation>
     </message>
     <message>
         <source>Rename bookmark</source>

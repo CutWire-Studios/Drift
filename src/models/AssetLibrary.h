@@ -73,6 +73,13 @@ public:
     static bool isVectorPath(const QString &path);
     static bool isModelPath(const QString &path);
     static bool isMediaPath(const QString &path);
+    // The kind a file looks like from its extension alone, spelled the way a bin row spells it
+    // ("video", "audio", "image", "vector", "model3d"), and empty for anything that is not media
+    // at all. Q_INVOKABLE because the timeline's file drop has to promise a landing spot while
+    // the drag is still in flight, when nothing has been opened, let alone probed. Provisional in
+    // the same sense as everywhere else here: a .mkv holding only an audio stream reads as video
+    // until the probe says otherwise, which costs the drag preview a track type, never the clip.
+    Q_INVOKABLE QString provisionalKindForUrl(const QUrl &url) const;
     // The same set spelled as a QFileDialog name filter, e.g. "Media files (*.mp4 *.mov ...)".
     Q_INVOKABLE QString mediaNameFilter() const;
     // Import local paths and return the asset ids involved (new or already-present).

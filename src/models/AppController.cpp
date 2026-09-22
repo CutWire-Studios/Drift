@@ -6181,15 +6181,14 @@ void AppController::addClipsFromAssets(const QStringList &assetIds)
 
 bool AppController::trackAcceptsAsset(int trackIndex, int assetIndex) const
 {
-    if (!m_assetLibrary || trackIndex < 0 || trackIndex >= m_project.tracks().size())
+    if (!m_assetLibrary)
         return false;
 
     const QVariantMap asset = m_assetLibrary->assetAt(assetIndex);
     if (asset.isEmpty())
         return false;
 
-    const drift::ClipType clipType = drift::clipTypeFromString(asset.value(QStringLiteral("kind")).toString());
-    return m_project.tracks().at(trackIndex).allowsClipType(clipType);
+    return trackAcceptsKind(trackIndex, asset.value(QStringLiteral("kind")).toString());
 }
 
 QString AppController::trackTypeForAsset(int assetIndex) const
@@ -6201,7 +6200,21 @@ QString AppController::trackTypeForAsset(int assetIndex) const
     if (asset.isEmpty())
         return QStringLiteral("video");
 
-    const drift::ClipType clipType = drift::clipTypeFromString(asset.value(QStringLiteral("kind")).toString());
+    return trackTypeForKind(asset.value(QStringLiteral("kind")).toString());
+}
+
+bool AppController::trackAcceptsKind(int trackIndex, const QString &mediaKind) const
+{
+    if (trackIndex < 0 || trackIndex >= m_project.tracks().size())
+        return false;
+
+    const drift::ClipType clipType = drift::clipTypeFromString(mediaKind);
+    return m_project.tracks().at(trackIndex).allowsClipType(clipType);
+}
+
+QString AppController::trackTypeForKind(const QString &mediaKind) const
+{
+    const drift::ClipType clipType = drift::clipTypeFromString(mediaKind);
     return drift::trackTypeToString(drift::trackTypeForClipType(clipType));
 }
 

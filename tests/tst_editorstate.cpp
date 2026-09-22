@@ -222,7 +222,61 @@ private slots:
     void clipsModelFeedsDelegateRequiredProperties();
     void clipsModelNotifiesOnlyTheClipThatChanged();
     void tracksCarriesLayoutOnlyWhileClipAtStaysFull();
+    void trackFitAnswersForAKindMatchTheAssetForms();
+    void provisionalKindReadsTheExtensionAlone();
 };
+
+// A file dragged in from the file manager has no bin row yet, so the timeline's drop preview
+// has to ask about a bare media kind. Those answers must agree with the asset-index forms,
+// because one drop uses the kind form to promise a landing spot and the asset form to place
+// the clip once the import has actually produced a row.
+void EditorStateTest::trackFitAnswersForAKindMatchTheAssetForms()
+{
+    AssetLibrary library;
+    AppController state(&library);
+
+    QCOMPARE(state.trackTypeForKind(QStringLiteral("video")), QStringLiteral("video"));
+    QCOMPARE(state.trackTypeForKind(QStringLiteral("audio")), QStringLiteral("audio"));
+    // Stills are not video: they live on a shape track, same as vectors and models.
+    QCOMPARE(state.trackTypeForKind(QStringLiteral("image")), QStringLiteral("shape"));
+    QCOMPARE(state.trackTypeForKind(QStringLiteral("vector")), QStringLiteral("shape"));
+    // An unknown spelling falls back to video rather than to nothing, so a drag of something
+    // the probe has not classified yet still gets offered a track.
+    QCOMPARE(state.trackTypeForKind(QStringLiteral("mystery")), QStringLiteral("video"));
+
+    // Out of range answers false rather than reaching into the track list.
+    QVERIFY(!state.trackAcceptsKind(-1, QStringLiteral("video")));
+    QVERIFY(!state.trackAcceptsKind(9999, QStringLiteral("video")));
+
+    const QVariantList tracks = state.tracks();
+    QVERIFY(!tracks.isEmpty());
+    for (int i = 0; i < tracks.size(); ++i) {
+        const QString type = tracks.at(i).toMap().value(QStringLiteral("type")).toString();
+        QCOMPARE(state.trackAcceptsKind(i, QStringLiteral("video")),
+                 type == QStringLiteral("video"));
+        QCOMPARE(state.trackAcceptsKind(i, QStringLiteral("audio")),
+                 type == QStringLiteral("audio"));
+        QCOMPARE(state.trackAcceptsKind(i, QStringLiteral("image")),
+                 type == QStringLiteral("shape"));
+    }
+}
+
+// The guess the drag preview runs on: extension only, on files that need not exist and are
+// certainly not open yet. Anything that is not media at all answers empty, so a dragged
+// document promises no landing spot rather than a wrong one.
+void EditorStateTest::provisionalKindReadsTheExtensionAlone()
+{
+    AssetLibrary library;
+    QCOMPARE(library.provisionalKindForUrl(QUrl::fromLocalFile(QStringLiteral("/nowhere/a.mp4"))),
+             QStringLiteral("video"));
+    QCOMPARE(library.provisionalKindForUrl(QUrl::fromLocalFile(QStringLiteral("/nowhere/a.WAV"))),
+             QStringLiteral("audio"));
+    QCOMPARE(library.provisionalKindForUrl(QUrl::fromLocalFile(QStringLiteral("/nowhere/a.png"))),
+             QStringLiteral("image"));
+    QVERIFY(library.provisionalKindForUrl(QUrl::fromLocalFile(QStringLiteral("/nowhere/n.txt")))
+                .isEmpty());
+    QVERIFY(library.provisionalKindForUrl(QUrl()).isEmpty());
+}
 
 void EditorStateTest::snapTimeEnabled()
 {

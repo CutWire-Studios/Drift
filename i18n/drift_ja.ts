@@ -2297,6 +2297,22 @@
         <translation>1フレーム進む</translation>
     </message>
     <message>
+        <source>Jump back 1 second</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Jump forward 1 second</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Jump back 10 seconds</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Jump forward 10 seconds</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Go to start of timeline</source>
         <translation>タイムラインの先頭へ移動</translation>
     </message>
@@ -10970,6 +10986,10 @@ If playback stutters, try another.</source>
     <message>
         <source>New track</source>
         <translation>新しいトラック</translation>
+    </message>
+    <message>
+        <source>Importing…</source>
+        <translation type="unfinished">インポート中…</translation>
     </message>
     <message>
         <source>Rename bookmark</source>
