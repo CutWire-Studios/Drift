@@ -125,6 +125,7 @@ private slots:
     void setVolumeRoundTrips();
     void writingAtAKeyframeReadbackTimeReusesTheKey();
     void normalizeVolumeIsRelativeAndIdempotent();
+    void duckUnderIsIdempotentAndKeepsTheEnvelope();
     void audioReadOpsAreNotUndoable();
     void armedBeatGridMakesMoveClipSnap();
     void undoExemptOpsMatchCatalogLimitations();
@@ -1391,6 +1392,97 @@ void McpTest::snapClipsToBeatsRespectsMaxDistance()
 // normalize_volume measures the clip *through* its current volume, so the correction has to be
 // relative to it. Writing the gain absolutely threw the existing level away and made a second call
 // with the same target land somewhere else.
+// duck_under used to sample one rest level at the playhead and write it flat at every span, and
+// to append keys on every run rather than replacing the ones it wrote. Run twice with the same
+// arguments it therefore pumped, because each pass read its rest level off the curve the previous
+// pass had already pulled down.
+void McpTest::duckUnderIsIdempotentAndKeepsTheEnvelope()
+{
+    if (ffmpegPath().isEmpty())
+        QSKIP("ffmpeg not available to generate a test clip");
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    const QString voice = dir.filePath(QStringLiteral("voice.wav"));
+    QVERIFY(writeHalfSilentTone(voice)); // 2 s of tone then 2 s of silence
+    const QString bed = dir.filePath(QStringLiteral("bed.wav"));
+    QVERIFY(runFfmpeg({QStringLiteral("-f"), QStringLiteral("lavfi"), QStringLiteral("-i"),
+                       QStringLiteral("sine=frequency=220:sample_rate=48000:duration=12"),
+                       QStringLiteral("-c:a"), QStringLiteral("pcm_s16le"), bed}));
+
+    AssetLibrary library;
+    AppController state(&library);
+    drift::mcp::McpDispatcher dispatcher(&state);
+
+    const QString music = importAndPlace(dispatcher, bed, 0.0);
+    QVERIFY(!music.isEmpty());
+
+    // The voice needs its own lane, and it must not start at zero: with `start - attack` clamped to
+    // the head of the clip, the key times would stop depending on the attack at all.
+    const QJsonObject importedVoice = dispatcher.applyOne(
+        QStringLiteral("import_media"), {{QStringLiteral("paths"), QJsonArray{voice}}});
+    QVERIFY2(importedVoice.value(QStringLiteral("ok")).toBool(),
+             qPrintable(QJsonDocument(importedVoice).toJson(QJsonDocument::Compact)));
+    const QJsonObject placedVoice = dispatcher.applyOne(
+        QStringLiteral("place_clip"),
+        {{QStringLiteral("asset"), QStringLiteral("voice.wav")}, {QStringLiteral("at"), 2.0},
+         {QStringLiteral("new_track"), true}});
+    QVERIFY2(placedVoice.value(QStringLiteral("ok")).toBool(),
+             qPrintable(QJsonDocument(placedVoice).toJson(QJsonDocument::Compact)));
+    const QString speech = placedVoice.value(QStringLiteral("id")).toString();
+    QCOMPARE(placedVoice.value(QStringLiteral("start")).toDouble(), 2.0);
+
+    const auto duck = [&](double attack) {
+        return dispatcher.applyOne(
+            QStringLiteral("duck_under"),
+            {{QStringLiteral("clip"), music}, {QStringLiteral("over_clips"), QJsonArray{speech}},
+             {QStringLiteral("amount"), 0.3}, {QStringLiteral("attack"), attack}});
+    };
+    const auto volumeKeys = [&] {
+        const QJsonObject keys = dispatcher.applyOne(
+            QStringLiteral("list_keyframes"),
+            {{QStringLiteral("clip"), music}, {QStringLiteral("prop"), QStringLiteral("volume")}});
+        return keys.value(QStringLiteral("keys")).toArray();
+    };
+
+    const QJsonObject first = duck(0.12);
+    QVERIFY2(first.value(QStringLiteral("ok")).toBool(),
+             qPrintable(QJsonDocument(first).toJson(QJsonDocument::Compact)));
+    const QJsonArray afterFirst = volumeKeys();
+    QVERIFY2(afterFirst.size() >= 4,
+             qPrintable(QStringLiteral("expected a dip, got %1 keys").arg(afterFirst.size())));
+
+    // Re-running with a different attack moves the key times. The op owns those windows, so the
+    // second pass must replace its own work rather than interleaving a second set of keys.
+    const QJsonObject moved = duck(0.4);
+    QVERIFY2(moved.value(QStringLiteral("ok")).toBool(),
+             qPrintable(QJsonDocument(moved).toJson(QJsonDocument::Compact)));
+    const QJsonArray afterMoved = volumeKeys();
+    QVERIFY2(afterMoved.size() == afterFirst.size(),
+             qPrintable(QStringLiteral("keys grew from %1 to %2 when the attack changed")
+                            .arg(afterFirst.size()).arg(afterMoved.size())));
+
+    // And the rest level must not have crept toward the ducked level on the way.
+    QCOMPARE(moved.value(QStringLiteral("rest")).toDouble(),
+             first.value(QStringLiteral("rest")).toDouble());
+
+    // Running it again unchanged must leave the curve exactly as it was.
+    const QJsonObject second = duck(0.4);
+    QVERIFY2(second.value(QStringLiteral("ok")).toBool(),
+             qPrintable(QJsonDocument(second).toJson(QJsonDocument::Compact)));
+    const QJsonArray afterSecond = volumeKeys();
+    QCOMPARE(afterSecond.size(), afterMoved.size());
+    for (int i = 0; i < afterMoved.size(); ++i) {
+        const QJsonObject a = afterMoved.at(i).toObject();
+        const QJsonObject b = afterSecond.at(i).toObject();
+        QVERIFY2(qAbs(a.value(QStringLiteral("value")).toDouble()
+                      - b.value(QStringLiteral("value")).toDouble()) < 1e-6,
+                 qPrintable(QStringLiteral("key %1 moved from %2 to %3 on a repeat run")
+                                .arg(i)
+                                .arg(a.value(QStringLiteral("value")).toDouble())
+                                .arg(b.value(QStringLiteral("value")).toDouble())));
+    }
+}
+
 void McpTest::normalizeVolumeIsRelativeAndIdempotent()
 {
     if (ffmpegPath().isEmpty())

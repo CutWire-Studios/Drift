@@ -8,6 +8,7 @@ Tracks work done on `main` **since the last public release**. Use this to see wh
 
 ## ✅ Fixed
 
+- Ducking music under speech flattened any volume envelope the music already had, and running it again stacked new keyframes on top of the old ones so the music pumped between words. Each dip now returns to the level the music was actually at, and re-running replaces the previous pass.
 - Setting a value at a keyframe's own time could add a second keyframe a fraction of a millisecond away instead of updating the one already there.
 - The Limiter made audio louder instead of limiting it, and lowering its ceiling added more gain rather than less. It is now a real ceiling limiter: the output never exceeds the ceiling, and a signal already below it is left alone.
 - The true-peak reading was always 0.0 dBFS: it was taken after the master soft clipper and used an interpolation that could not see between samples. It is now a real 4x oversampled measurement of the unclipped mix.

@@ -24342,9 +24342,6 @@ QJsonObject AppController::mcpDuckUnder(int musicTrack, int musicClip, int overT
     if (!isValidClipIndex(musicTrack, musicClip))
         return err("not_found", QStringLiteral("Unknown music clip"));
     const double amt = qBound(0.0, amount, 1.0);
-    const double rest = propertyValueAt(musicTrack, musicClip, QStringLiteral("volume"),
-                                        playheadSeconds(), 1.0);
-    const double ducked = rest * amt;
 
     QList<SilenceRange> speech;
     auto addSpeech = [&](int tr, int cl) {
@@ -24383,11 +24380,48 @@ QJsonObject AppController::mcpDuckUnder(int musicTrack, int musicClip, int overT
         return err("bad_args", QStringLiteral("over_track or over_clips required"));
     }
 
-    mcpBeginBatch();
-    int keys = 0;
+    // Read the level the music sits at going into each dip *before* touching anything. Sampling
+    // one value at the playhead flattened whatever envelope the music already had, and sampling it
+    // after a previous pass had written its own keys made each re-run collapse the rest level
+    // toward the ducked one — the pumping between words.
+    QList<SilenceRange> dips;
+    QList<double> restLevels;
     for (const SilenceRange &span : speech) {
         if (span.end - span.start < 0.05)
             continue;
+        dips.append(span);
+        restLevels.append(propertyValueAt(musicTrack, musicClip, QStringLiteral("volume"),
+                                          span.start - attack, 1.0));
+    }
+
+    mcpBeginBatch();
+
+    // Writing is otherwise purely additive: keys are addressed by exact microsecond, so a re-run
+    // with any changed argument interleaves a fresh set beside the old one. Clear the windows this
+    // pass owns first, so running it twice leaves the same curve as running it once.
+    if (isValidClipIndex(musicTrack, musicClip)) {
+        const drift::Clip &music = m_project.tracks().at(musicTrack).clips.at(musicClip);
+        const double clipStart = drift::usToSeconds(music.timelineStart);
+        QList<double> doomed;
+        const auto &existing = music.volume.keyframes();
+        for (auto it = existing.constBegin(); it != existing.constEnd(); ++it) {
+            const double at = clipStart + drift::usToSeconds(it.key());
+            for (const SilenceRange &span : dips) {
+                if (at >= span.start - attack - 1e-6 && at <= span.end + release + 1e-6) {
+                    doomed.append(at);
+                    break;
+                }
+            }
+        }
+        for (const double at : doomed)
+            removeClipKeyframe(musicTrack, musicClip, QStringLiteral("volume"), at);
+    }
+
+    int keys = 0;
+    for (int i = 0; i < dips.size(); ++i) {
+        const SilenceRange &span = dips.at(i);
+        const double rest = restLevels.at(i);
+        const double ducked = rest * amt;
         setClipKeyframe(musicTrack, musicClip, QStringLiteral("volume"),
                         span.start - attack, rest);
         setClipKeyframe(musicTrack, musicClip, QStringLiteral("volume"), span.start, ducked);
@@ -24397,10 +24431,20 @@ QJsonObject AppController::mcpDuckUnder(int musicTrack, int musicClip, int overT
         keys += 4;
     }
     mcpEndBatch(QStringLiteral("Duck under speech"), keys > 0);
-    return ok({{QStringLiteral("keys"), keys},
-               {QStringLiteral("speech"), speech.size()},
-               {QStringLiteral("rest"), rest},
-               {QStringLiteral("ducked"), ducked}});
+
+    // The rest level is per dip now, so report the first one and say when they differ rather than
+    // implying the whole clip was held at one level.
+    const double firstRest = restLevels.isEmpty() ? 1.0 : restLevels.first();
+    bool restVaries = false;
+    for (const double level : restLevels)
+        restVaries = restVaries || !qFuzzyCompare(level + 1.0, firstRest + 1.0);
+    QJsonObject reply{{QStringLiteral("keys"), keys},
+                      {QStringLiteral("speech"), speech.size()},
+                      {QStringLiteral("rest"), round3(firstRest)},
+                      {QStringLiteral("ducked"), round3(firstRest * amt)}};
+    if (restVaries)
+        reply.insert(QStringLiteral("rest_varies"), true);
+    return ok(reply);
 }
 
 QJsonObject AppController::mcpListFaceTrack(int trackIndex, int clipIndex) const
