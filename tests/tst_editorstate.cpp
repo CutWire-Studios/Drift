@@ -197,6 +197,7 @@ private slots:
     void adjustmentLayerCreationAndCompositing();
     void clipEffectsLiveOnALinkedAdjustmentLane();
     void splittingAGradedClipKeepsEffectsOnBothHalves();
+    void transitionPartnerIsTheNearestClipNotTheEarliest();
     void linkedAdjustmentFollowsItsClip();
     void deletingAClipUnlinksRatherThanStrandsItsAdjustment();
     void cutoutLandsAsAMaskLayerOnTheClipsOwnLane();
@@ -5869,6 +5870,40 @@ void EditorStateTest::adjustmentLayerCreationAndCompositing()
 // that pairs audio with video — so the tail of a split came back ungraded and the grade had to be
 // rebuilt by hand. The existing split test above covers a *standalone* adjustment clip, which was
 // never broken; this is the linked case.
+// "The next clip" means the one starting nearest the cut. Eligibility accepts anything starting
+// between this clip's own start and just past its end, so with overlap on a clip that covers almost
+// all of it also qualifies — and picking the earliest of them bound the transition to that one.
+void EditorStateTest::transitionPartnerIsTheNearestClipNotTheEarliest()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    state.project()->tracks().clear();
+    state.project()->tracks().append(drift::Track{.type = drift::TrackType::Video});
+
+    const auto addClip = [&](const QString &id, double start, double duration) {
+        drift::Clip clip;
+        clip.id = id;
+        clip.type = drift::ClipType::Video;
+        clip.timelineStart = drift::secondsToUs(start);
+        clip.timelineDuration = drift::secondsToUs(duration);
+        clip.srcIn = 0;
+        clip.srcOut = clip.timelineDuration;
+        state.project()->tracks()[0].clips.append(clip);
+    };
+    // A runs 0-10. B sits almost entirely on top of it, C abuts its end — C is the neighbour.
+    addClip(QStringLiteral("a"), 0.0, 10.0);
+    addClip(QStringLiteral("b"), 1.0, 10.0);
+    addClip(QStringLiteral("c"), 9.5, 5.0);
+    state.project()->ensureTrackIds();
+
+    state.addTransition(0, 0, QStringLiteral("crossfade"), 1.0);
+
+    QCOMPARE(state.project()->tracks().at(0).transitions.size(), 1);
+    const drift::Transition &transition = state.project()->tracks().at(0).transitions.first();
+    QCOMPARE(transition.fromClipId, QStringLiteral("a"));
+    QCOMPARE(transition.toClipId, QStringLiteral("c"));
+}
+
 void EditorStateTest::splittingAGradedClipKeepsEffectsOnBothHalves()
 {
     AssetLibrary library;

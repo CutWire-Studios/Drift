@@ -2082,6 +2082,7 @@ protected:
     // Keeps each lane adjacent to and directly above its parent, and demotes lanes whose parent
     // is no longer able to hold them.
     void normalizeAdjustmentLanes(drift::Project &project) const;
+    void clampStoredTransitionDurations(drift::Project &project) const;
 
     // Selection survives a track-list reshuffle by id rather than index arithmetic: a move now
     // drags a track's lanes with it, so the destination index no longer says where things landed.

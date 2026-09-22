@@ -1228,14 +1228,17 @@ int findTransitionPartnerIndex(const drift::Track &track, int fromIndex)
 
     const drift::Clip &fromClip = track.clips.at(fromIndex);
     int best = -1;
-    drift::TimeUs bestStart = std::numeric_limits<drift::TimeUs>::max();
+    drift::TimeUs bestStart = std::numeric_limits<drift::TimeUs>::min();
     for (int i = 0; i < track.clips.size(); ++i) {
         if (i == fromIndex)
             continue;
         const drift::Clip &candidate = track.clips.at(i);
         if (!drift::clipsEligibleForTransition(fromClip, candidate))
             continue;
-        if (candidate.timelineStart < bestStart) {
+        // Eligible clips are everything starting between this clip's own start and just past its
+        // end, so with overlap on that can include one that covers it almost entirely. The partner
+        // meant by "the next clip" is the one starting nearest the cut, not the earliest of them.
+        if (candidate.timelineStart > bestStart) {
             bestStart = candidate.timelineStart;
             best = i;
         }
@@ -11567,7 +11570,30 @@ void AppController::normalizeProjectStructure()
     drift::liftAdjustmentClipsToOwnTracks(m_project);
     drift::hoistClipEffectsToAdjustmentLanes(m_project);
     normalizeAdjustmentLanes(m_project);
+    clampStoredTransitionDurations(m_project);
     restoreSelectionByTrackId(selection);
+}
+
+// Projects saved before overlap stopped minting crossfades can carry a transition whose stored
+// duration is far longer than the clips it joins — one in the wild spanned 23 seconds across a cut.
+// The window is clamped at render time now, but the stored number is what inspect reports and what
+// the transition bar draws, so bring it back inside the clips on the way in.
+void AppController::clampStoredTransitionDurations(drift::Project &project) const
+{
+    for (drift::Track &track : project.tracks()) {
+        for (drift::Transition &transition : track.transitions) {
+            if (transition.durationUs <= 0)
+                continue;
+            const drift::Clip *fromClip = drift::clipById(track, transition.fromClipId);
+            const drift::Clip *toClip = drift::clipById(track, transition.toClipId);
+            if (!fromClip || !toClip)
+                continue;
+            const drift::TimeUs longest =
+                qMin(fromClip->timelineDuration, toClip->timelineDuration);
+            if (longest > 0 && transition.durationUs > longest)
+                transition.durationUs = longest;
+        }
+    }
 }
 
 void AppController::normalizeAdjustmentLanes(drift::Project &project) const
