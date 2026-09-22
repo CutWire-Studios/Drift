@@ -123,6 +123,7 @@ private slots:
     void splitOnBeatsCutsAndUndoesAsOneStep();
     void snapClipsToBeatsRespectsMaxDistance();
     void setVolumeRoundTrips();
+    void writingAtAKeyframeReadbackTimeReusesTheKey();
     void normalizeVolumeIsRelativeAndIdempotent();
     void audioReadOpsAreNotUndoable();
     void armedBeatGridMakesMoveClipSnap();
@@ -1425,6 +1426,72 @@ void McpTest::normalizeVolumeIsRelativeAndIdempotent()
     QVERIFY2(qAbs(second.value(QStringLiteral("measured_lufs")).toDouble() + 20.0) < 1.0,
              qPrintable(QStringLiteral("measured %1 after normalising to -20")
                             .arg(second.value(QStringLiteral("measured_lufs")).toDouble())));
+}
+
+// Times come back over MCP rounded to 3 decimals, so a caller that reads a keyframe's time and
+// writes a new value at it is up to 500 us away from the key it means. The write used to mint a
+// second key beside the first, which then fought with it on playback.
+void McpTest::writingAtAKeyframeReadbackTimeReusesTheKey()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    drift::mcp::McpDispatcher dispatcher(&state);
+
+    const QJsonObject text = dispatcher.applyOne(
+        QStringLiteral("add_text"),
+        {{QStringLiteral("text"), QStringLiteral("A")}, {QStringLiteral("at"), 0.0}});
+    QVERIFY(text.value(QStringLiteral("ok")).toBool());
+    const QString clip = text.value(QStringLiteral("id")).toString();
+
+    // A time that does not survive 3-decimal rounding intact.
+    const double awkward = 1.23456;
+    QVERIFY(dispatcher
+                .applyOne(QStringLiteral("set_keyframe"),
+                          {{QStringLiteral("clip"), clip}, {QStringLiteral("prop"), QStringLiteral("opacity")},
+                           {QStringLiteral("at"), awkward}, {QStringLiteral("value"), 0.4}})
+                .value(QStringLiteral("ok"))
+                .toBool());
+
+    const QJsonObject read = dispatcher.applyOne(
+        QStringLiteral("list_keyframes"),
+        {{QStringLiteral("clip"), clip}, {QStringLiteral("prop"), QStringLiteral("opacity")}});
+    QVERIFY(read.value(QStringLiteral("ok")).toBool());
+    QCOMPARE(read.value(QStringLiteral("keys")).toArray().size(), 1);
+    const double exact = read.value(QStringLiteral("keys")).toArray().at(0).toObject()
+                             .value(QStringLiteral("seconds")).toDouble();
+    // What a client actually receives: replies are rounded to 3 decimals on the way out, so this
+    // is the number the caller has to write back with. In-process the dispatcher hands back full
+    // precision, so round it here the way the wire would.
+    const double reported = std::round(exact * 1000.0) / 1000.0;
+    QVERIFY2(!qFuzzyCompare(reported, exact), "the rounded time was expected to differ");
+
+    // Writing at the time the reply gave must land on the key that is already there.
+    QVERIFY(dispatcher
+                .applyOne(QStringLiteral("set_keyframe"),
+                          {{QStringLiteral("clip"), clip}, {QStringLiteral("prop"), QStringLiteral("opacity")},
+                           {QStringLiteral("at"), reported}, {QStringLiteral("value"), 0.9}})
+                .value(QStringLiteral("ok"))
+                .toBool());
+
+    const QJsonObject after = dispatcher.applyOne(
+        QStringLiteral("list_keyframes"),
+        {{QStringLiteral("clip"), clip}, {QStringLiteral("prop"), QStringLiteral("opacity")}});
+    const QJsonArray keys = after.value(QStringLiteral("keys")).toArray();
+    QVERIFY2(keys.size() == 1,
+             qPrintable(QStringLiteral("expected one key, got %1").arg(keys.size())));
+    QCOMPARE(keys.at(0).toObject().value(QStringLiteral("value")).toDouble(), 0.9);
+
+    // A key the author really did put close by is still its own key.
+    QVERIFY(dispatcher
+                .applyOne(QStringLiteral("set_keyframe"),
+                          {{QStringLiteral("clip"), clip}, {QStringLiteral("prop"), QStringLiteral("opacity")},
+                           {QStringLiteral("at"), awkward + 0.02}, {QStringLiteral("value"), 0.1}})
+                .value(QStringLiteral("ok"))
+                .toBool());
+    const QJsonObject distinct = dispatcher.applyOne(
+        QStringLiteral("list_keyframes"),
+        {{QStringLiteral("clip"), clip}, {QStringLiteral("prop"), QStringLiteral("opacity")}});
+    QCOMPARE(distinct.value(QStringLiteral("keys")).toArray().size(), 2);
 }
 
 void McpTest::setVolumeRoundTrips()

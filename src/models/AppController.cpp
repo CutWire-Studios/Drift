@@ -2826,6 +2826,10 @@ QString normalizeKeyframeProp(const QString &prop)
 }
 
 constexpr drift::TimeUs kKeyframeToleranceUs = drift::kUsPerSecond / 30;
+// Deliberate writes snap far more tightly than that: just enough to absorb the rounding a time
+// takes on its way out and back (replies carry 3 decimals, so up to 500 us), and not enough to
+// swallow two keys an author actually meant to put close together.
+constexpr drift::TimeUs kKeyframeWriteSnapUs = drift::kUsPerSecond / 1000;
 
 // force=true (diamond click) always writes. Otherwise auto-key or an existing
 // key at/near the playhead is required. Empty tracks get a constant key at 0
@@ -2841,7 +2845,11 @@ bool writeKeyframeValue(drift::KeyframeTrack<double> &track, drift::TimeUs relat
         return true;
     }
     if (force || autoKey) {
-        track.setKeyframe(relative, value);
+        // Snap onto a key that is already within tolerance rather than minting a second one beside
+        // it. MCP replies round times to 3 decimals, so a caller that reads a key's time back and
+        // writes to it is up to 500 us off — enough to leave two keys where the caller meant one.
+        const drift::TimeUs existing = track.nearestKeyframe(relative, kKeyframeWriteSnapUs);
+        track.setKeyframe(existing >= 0 ? existing : relative, value);
         return true;
     }
     if (track.isEmpty()) {
