@@ -8,6 +8,7 @@ Tracks work done on `main` **since the last public release**. Use this to see wh
 
 ## ✅ Fixed
 
+- An export started by an agent overwrote the settings the export dialog remembers, and an omitted audio-only or GIF switch carried over from the previous render — which could turn a video export into an audio file with nothing to say so.
 - Adding a transition could bind it to a clip that overlapped almost all of the outgoing one instead of the clip at the cut, and a transition loaded from an older project could claim a span far longer than the clips it joins.
 - Auto-reframe stretched the picture and zoomed far past what was asked for — a 9:16 crop of a 4K clip came out around 3x magnified and distorted. It now keeps the source's shape, fits the requested aspect inside the canvas, and reports how much it magnified the source so an upscale is visible before it reaches a render.
 - Adding two graphics at the same moment — an emoji and a Lottie, say — pushed the second one down the timeline instead of stacking it on its own lane, so it appeared at the wrong time.

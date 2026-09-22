@@ -94,6 +94,7 @@ private slots:
     void placeHonorsOverlapToggle();
     void workAreaRoundTrip();
     void exportOptionsAndSettings();
+    void exportDoesNotInheritAudioOnlyFromAnEarlierRender();
     void exportVideoRequiresPath();
     void projectSetupRoundTrip();
     void captureDoesNotInsertClip();
@@ -916,6 +917,77 @@ void McpTest::workAreaRoundTrip()
     const QJsonObject cleared = dispatcher.applyOne(QStringLiteral("clear_work_area"), {});
     QVERIFY(cleared.value(QStringLiteral("ok")).toBool());
     QVERIFY(!dispatcher.inspect({}).contains(QStringLiteral("work_in")));
+}
+
+// Omitted export settings carry over from the last render, which is handy for a bitrate and a trap
+// for a mode: a build did an audio-only mix check, then asked for the video export without
+// restating audio_only, and got an audio file back with nothing to say so.
+void McpTest::exportDoesNotInheritAudioOnlyFromAnEarlierRender()
+{
+    QStandardPaths::setTestModeEnabled(true);
+    const QString org = QCoreApplication::organizationName();
+    const QString app = QCoreApplication::applicationName();
+    QCoreApplication::setOrganizationName(QStringLiteral("DriftMcpTest"));
+    QCoreApplication::setApplicationName(QStringLiteral("DriftMcpTest"));
+    const auto restore = qScopeGuard([&] {
+        QSettings().remove(QStringLiteral("export"));
+        QSettings().remove(QStringLiteral("export-agent"));
+        QCoreApplication::setOrganizationName(org);
+        QCoreApplication::setApplicationName(app);
+        QStandardPaths::setTestModeEnabled(false);
+    });
+    QSettings().remove(QStringLiteral("export"));
+    QSettings().remove(QStringLiteral("export-agent"));
+
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+
+    AssetLibrary library;
+    AppController state(&library);
+    state.addTextClip(QStringLiteral("Hi"), 0.0);
+    drift::mcp::McpDispatcher dispatcher(&state);
+
+    // Stand in for an earlier audio-only mix check.
+    state.mcpRememberExportSettings({{QStringLiteral("audioOnly"), true},
+                                     {QStringLiteral("audioBitrateKbps"), 256}});
+    QCOMPARE(state.mcpLastExportSettings().value(QStringLiteral("audioBitrateKbps")).toInt(), 256);
+
+    // A later export that says nothing about audio_only must still be a video.
+    const QString out = dir.filePath(QStringLiteral("out.mp4"));
+    const QJsonObject exported = dispatcher.applyOne(
+        QStringLiteral("export_video"),
+        {{QStringLiteral("path"), out},
+         {QStringLiteral("video"), QStringLiteral("h264")}, {QStringLiteral("crf"), 30},
+         {QStringLiteral("scale"), QStringLiteral("480p")}});
+    QVERIFY2(exported.value(QStringLiteral("ok")).toBool(),
+             qPrintable(QJsonDocument(exported).toJson(QJsonDocument::Compact)));
+
+    // export_video is async; spin until the encoder is done with it.
+    const QString written = exported.value(QStringLiteral("path")).toString();
+    QTRY_VERIFY_WITH_TIMEOUT(!state.exportInProgress(), 180000);
+    QVERIFY2(QFileInfo::exists(written), qPrintable(state.lastMessage()));
+    const QString ffprobe = QStandardPaths::findExecutable(QStringLiteral("ffprobe"));
+    if (ffprobe.isEmpty())
+        QSKIP("ffprobe not available to inspect the export");
+    QProcess probe;
+    probe.start(ffprobe,
+                {QStringLiteral("-v"), QStringLiteral("error"), QStringLiteral("-select_streams"),
+                 QStringLiteral("v:0"), QStringLiteral("-show_entries"),
+                 QStringLiteral("stream=codec_type"), QStringLiteral("-of"),
+                 QStringLiteral("csv=p=0"), written});
+    QVERIFY(probe.waitForFinished(60000));
+    const QString streams = QString::fromUtf8(probe.readAllStandardOutput());
+    QVERIFY2(streams.contains(QStringLiteral("video")),
+             "the export came back with no video stream — audio_only was inherited");
+
+    // The useful half of the inheritance is untouched.
+    QCOMPARE(state.mcpLastExportSettings().value(QStringLiteral("audioBitrateKbps")).toInt(), 256);
+    // And the export dialog's own memory was not written by an agent export.
+    QSettings gui;
+    gui.beginGroup(QStringLiteral("export"));
+    QVERIFY2(gui.childKeys().isEmpty(),
+             qPrintable(QStringLiteral("an agent export wrote the GUI store: %1")
+                            .arg(gui.childKeys().join(QStringLiteral(", ")))));
 }
 
 void McpTest::exportOptionsAndSettings()

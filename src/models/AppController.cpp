@@ -21250,7 +21250,8 @@ void AppController::exportWithPreset(const QUrl &outputUrl, const QString &prese
     exportWithSettings(outputUrl, map);
 }
 
-void AppController::exportWithSettings(const QUrl &outputUrl, const QVariantMap &settings)
+void AppController::exportWithSettings(const QUrl &outputUrl, const QVariantMap &settings,
+                                       bool rememberChoice)
 {
     const ExportSettings exportSettings = Exporter::settingsFromMap(settings);
 
@@ -21277,11 +21278,13 @@ void AppController::exportWithSettings(const QUrl &outputUrl, const QVariantMap 
 
     // The chosen location, not the staging file: remembering the latter would point the next
     // export dialog at this app's cache.
+    if (rememberChoice) {
 #ifdef Q_OS_ANDROID
-    rememberExportChoice(AndroidUri::filePath(outputUrl), settings);
+        rememberExportChoice(AndroidUri::filePath(outputUrl), settings);
 #else
-    rememberExportChoice(outputPath, settings);
+        rememberExportChoice(outputPath, settings);
 #endif
+    }
 
     // Stop playback so the decode pool isn't driven from two threads at once.
     setPlaying(false);
@@ -22125,9 +22128,27 @@ bool AppController::mcpSetWorkArea(double inSeconds, double outSeconds)
     return true;
 }
 
+// The agent's own corner of the settings store. An MCP export used to write straight into the
+// export dialog's memory, so a scripted audio-only render silently changed what the user was
+// offered the next time they opened the dialog.
 void AppController::mcpRememberExportSettings(const QVariantMap &settings)
 {
-    rememberExportChoice({}, settings);
+    QSettings store;
+    store.beginGroup(QStringLiteral("export-agent"));
+    for (auto it = settings.begin(); it != settings.end(); ++it)
+        store.setValue(it.key(), it.value());
+    store.endGroup();
+}
+
+QVariantMap AppController::mcpLastExportSettings() const
+{
+    QSettings store;
+    store.beginGroup(QStringLiteral("export-agent"));
+    QVariantMap out;
+    for (const QString &key : store.childKeys())
+        out.insert(key, store.value(key));
+    store.endGroup();
+    return out;
 }
 
 bool AppController::mcpSetClipCanvas(int trackIndex, int clipIndex, const QVariantMap &patch)

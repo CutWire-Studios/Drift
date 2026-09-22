@@ -410,10 +410,14 @@ local fake) without rebuilding.
 ## Traps
 
 - **`set_transform` writes at the playhead.** If the property is keyframed, or `autoKey` is on, it creates a keyframe there instead of a constant value. Seek first, or mute the animation with `set_property_keyframes_enabled(false)`.
+- **`export_video` inherits the settings you leave out** from the last export made through MCP (agent exports keep their own memory, separate from the export dialog's). Mode switches are the exception — `audio_only` and `gif` never carry over — but a codec, a bitrate or a scale does. Pass every setting you care about.
+- **Every visual clip is born with a keyframe at its start** on x/y/width/height: the compositor needs an explicit size. So those properties are already animated, and the first `set_transform` adds a *second* key rather than setting a constant — which is why a transform write behaves like an animation. Writes are clamped into the clip's own span.
+- **`auto_reframe` cannot make a crop sharper than the canvas.** The decode is bounded by the canvas, not by the layout rect, so a crop achieved with an oversized transform resolves at canvas resolution at best. The reply's `scale` says how far the source is being pushed; `upscaled:true` means it is past its own resolution.
 - **`set_mask` replaces the whole mask.** Omitted keys revert to defaults and omitting `shape` turns the mask off. Read the current mask from `inspect({clips:true, detail:true}).tracks[].items[].mask` and send it back merged (its `points` come as `[{x,y}]`, which the schema accepts alongside `[[x,y]]`; drop the read-only `animated`/`keyframes`).
 - **`set_subtitle_cues` replaces every cue.** Read `inspect({clips:true, cues:true})` (or a detail row's `subtitleCues`), merge, send.
-- **`set_effect_param`, `set_audio_effect_param`, `set_transition_param` do not validate.** A wrong key or index still returns `ok`. Verify with `inspect({clips:true, detail:true})`.
+- **`set_effect_param`, `set_audio_effect_param` and `set_transition_param` fail `not_found`** on a key the effect does not declare or a stack index that is not there. They used to accept anything and store it silently; a batch that relied on that now stops at the bad op.
 - **`set_speed_curve` returns a new clip id.** The old UUID stops resolving. End the apply batch after it — an ops array cannot reference an id produced earlier in the same batch.
+- **Keyframe property names are not the transform names**: `width`/`height`, not `w`/`h` (`set_transform` uses w/h, `set_keyframe` uses width/height).
 - **`remove_keyframe` deletes the *nearest* key** with no distance limit. Confirm the exact time with `list_keyframes`.
 - **`set_keyframe_interpolation` moves the playhead** to `at`, changing the default time of later ops in the same batch.
 - **`add_track` shifts every track index** — index 0 is the new track.

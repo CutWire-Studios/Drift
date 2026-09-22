@@ -276,9 +276,15 @@ QJsonArray compactAvailableCodecs(const QVariantList &list)
 QVariantMap mergedExportSettings(AppController *c)
 {
     QVariantMap merged = c->exportDefaultSettings();
-    const QVariantMap last = c->lastExportSettings();
-    for (auto it = last.begin(); it != last.end(); ++it)
+    const QVariantMap last = c->mcpLastExportSettings();
+    for (auto it = last.begin(); it != last.end(); ++it) {
+        // Carrying a codec or a bitrate over is a convenience. Carrying a *mode* over is a trap:
+        // one build asked for a video export, left audio_only out of the args, inherited the true
+        // from an earlier audio-only mix check, and got an audio file back with no warning.
+        if (it.key() == QLatin1String("audioOnly") || it.key() == QLatin1String("gifExport"))
+            continue;
         merged.insert(it.key(), it.value());
+    }
     return merged;
 }
 
@@ -1685,7 +1691,11 @@ QJsonObject McpDispatcher::opExport(const QJsonObject &args)
             loop.quit();
         });
 
-    m_controller->exportWithSettings(QUrl::fromLocalFile(info.absoluteFilePath()), map);
+    // Remember what the agent chose in the agent's own store, so the export dialog still
+    // offers the user what they last picked themselves.
+    m_controller->mcpRememberExportSettings(map);
+    m_controller->exportWithSettings(QUrl::fromLocalFile(info.absoluteFilePath()), map,
+                                     /*rememberChoice=*/false);
 
     if (!wait) {
         QObject::disconnect(conn);

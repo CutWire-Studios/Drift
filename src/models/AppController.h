@@ -693,6 +693,7 @@ public:
     QJsonObject mcpSetClipVolume(int trackIndex, int clipIndex, double value, bool atGiven,
                                  double atSeconds);
     void mcpRememberExportSettings(const QVariantMap &settings);
+    QVariantMap mcpLastExportSettings() const;
     void mcpBeginBatch();
     void mcpEndBatch(const QString &text, bool pushUndo);
     QJsonObject mcpListHistory(int limit = 20) const;
@@ -1660,7 +1661,11 @@ public:
     Q_INVOKABLE QString exportDefaultSuffix(const QString &container, bool audioOnly = false) const;
     Q_INVOKABLE void exportProject(const QUrl &outputUrl);
     Q_INVOKABLE void exportWithPreset(const QUrl &outputUrl, const QString &presetId);
-    Q_INVOKABLE void exportWithSettings(const QUrl &outputUrl, const QVariantMap &settings);
+    // `rememberChoice` is what keeps an agent export out of the export dialog's memory: the GUI
+    // stores what the user picked, an MCP export keeps its own (see mcpRememberExportSettings), and
+    // neither reaches into the other's.
+    Q_INVOKABLE void exportWithSettings(const QUrl &outputUrl, const QVariantMap &settings,
+                                        bool rememberChoice = true);
     Q_INVOKABLE void cancelExport();
     // Copies the finished export into the shared media collection and hands it to the system share
     // sheet. Deferred to this point rather than done as part of the export because it is a second
