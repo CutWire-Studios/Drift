@@ -1165,4 +1165,5 @@ ApplicationWindow {
 
     // Notification host — above all panels, so any message lands in one place.
     ToastHost { }
+    TransitionSelectionBanner { }
 }
