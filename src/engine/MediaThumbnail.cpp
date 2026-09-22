@@ -6,6 +6,7 @@
 #include "StillImage.h"
 
 #include "MediaProbe.h"
+#include "SwsColorRange.h"
 
 #include <QDir>
 #include <QFile>
@@ -122,11 +123,12 @@ QImage frameToImage(const AVFrame *frame, int width, int height, SwsContext **sw
         std::swap(scaledW, scaledH);
 
     *swsCache = sws_getCachedContext(*swsCache, frame->width, frame->height,
-                                     static_cast<AVPixelFormat>(frame->format),
+                                     drift::swsSourceFormat(static_cast<AVPixelFormat>(frame->format)),
                                      scaledW, scaledH, AV_PIX_FMT_RGB24, SWS_BILINEAR,
                                      nullptr, nullptr, nullptr);
     if (!*swsCache)
         return {};
+    drift::configureSwsRange(*swsCache, frame, 1 /* full-range RGB */);
 
     AVFrame *rgb = av_frame_alloc();
     if (!rgb)

@@ -4,6 +4,7 @@
 #include "GpuCompositor.h"
 #include "HwAccel.h"
 #include "MediaProbe.h"
+#include "SwsColorRange.h"
 
 #include <QTransform>
 #include <QtMath>
@@ -122,40 +123,6 @@ bool isHardwarePixelFormat(AVPixelFormat fmt)
     return desc && (desc->flags & AV_PIX_FMT_FLAG_HWACCEL);
 }
 
-int swsColorspaceFromFrame(const AVFrame *frame)
-{
-    if (!frame)
-        return SWS_CS_ITU709;
-    switch (frame->colorspace) {
-    case AVCOL_SPC_BT470BG:
-    case AVCOL_SPC_SMPTE170M:
-        return SWS_CS_ITU601;
-    case AVCOL_SPC_SMPTE240M:
-        return SWS_CS_SMPTE240M;
-    case AVCOL_SPC_FCC:
-        return SWS_CS_FCC;
-    case AVCOL_SPC_BT709:
-    case AVCOL_SPC_BT2020_NCL:
-    case AVCOL_SPC_BT2020_CL:
-        return SWS_CS_ITU709;
-    case AVCOL_SPC_UNSPECIFIED:
-    default:
-        // Drift's SDR pipeline defaults to BT.709 when the bitstream is untagged.
-        return SWS_CS_ITU709;
-    }
-}
-
-// YUV (typically limited) → RGB/NV12 with source colourspace when tagged.
-void configureDecodeSws(SwsContext *sws, const AVFrame *src, int dstRange)
-{
-    if (!sws || !src)
-        return;
-    const int *coeff = sws_getCoefficients(swsColorspaceFromFrame(src));
-    // Unspecified range is treated as limited (MPEG/TV) — the common case for camera footage.
-    const int srcRange = src->color_range == AVCOL_RANGE_JPEG ? 1 : 0;
-    sws_setColorspaceDetails(sws, coeff, srcRange, coeff, dstRange, 0, 1 << 16, 1 << 16);
-}
-
 int swsFlagsForResize(int srcW, int srcH, int dstW, int dstH)
 {
     return (srcW != dstW || srcH != dstH) ? SWS_LANCZOS : SWS_BICUBIC;
@@ -236,11 +203,11 @@ QImage frameToRgba(const AVFrame *frame, SwsContext *&sws, int targetWidth, int 
 
     const int flags = swsFlagsForResize(frame->width, frame->height, targetWidth, targetHeight);
     sws = sws_getCachedContext(sws, frame->width, frame->height,
-                               static_cast<AVPixelFormat>(frame->format), targetWidth, targetHeight,
-                               AV_PIX_FMT_RGBA, flags, nullptr, nullptr, nullptr);
+                               drift::swsSourceFormat(static_cast<AVPixelFormat>(frame->format)), targetWidth,
+                               targetHeight, AV_PIX_FMT_RGBA, flags, nullptr, nullptr, nullptr);
     if (!sws)
         return {};
-    configureDecodeSws(sws, frame, 1 /* full-range RGB */);
+    drift::configureSwsRange(sws, frame, 1 /* full-range RGB */);
 
     AVFrame *rgba = av_frame_alloc();
     if (!rgba)
@@ -286,11 +253,11 @@ AVFrame *softwareFrameToNv12(const AVFrame *frame, SwsContext *&sws, int targetW
 
     const int flags = swsFlagsForResize(frame->width, frame->height, targetWidth, targetHeight);
     sws = sws_getCachedContext(sws, frame->width, frame->height,
-                               static_cast<AVPixelFormat>(frame->format), targetWidth, targetHeight,
-                               AV_PIX_FMT_NV12, flags, nullptr, nullptr, nullptr);
+                               drift::swsSourceFormat(static_cast<AVPixelFormat>(frame->format)), targetWidth,
+                               targetHeight, AV_PIX_FMT_NV12, flags, nullptr, nullptr, nullptr);
     if (!sws)
         return nullptr;
-    configureDecodeSws(sws, frame, frame->color_range == AVCOL_RANGE_JPEG ? 1 : 0);
+    drift::configureSwsRange(sws, frame, frame->color_range == AVCOL_RANGE_JPEG ? 1 : 0);
 
     AVFrame *nv12 = av_frame_alloc();
     if (!nv12)
@@ -324,11 +291,11 @@ AVFrame *softwareFrameToRgba(const AVFrame *frame, SwsContext *&sws, int targetW
 
     const int flags = swsFlagsForResize(frame->width, frame->height, targetWidth, targetHeight);
     sws = sws_getCachedContext(sws, frame->width, frame->height,
-                               static_cast<AVPixelFormat>(frame->format), targetWidth, targetHeight,
-                               AV_PIX_FMT_RGBA, flags, nullptr, nullptr, nullptr);
+                               drift::swsSourceFormat(static_cast<AVPixelFormat>(frame->format)), targetWidth,
+                               targetHeight, AV_PIX_FMT_RGBA, flags, nullptr, nullptr, nullptr);
     if (!sws)
         return nullptr;
-    configureDecodeSws(sws, frame, 1 /* full-range RGB */);
+    drift::configureSwsRange(sws, frame, 1 /* full-range RGB */);
 
     AVFrame *rgba = av_frame_alloc();
     if (!rgba)
