@@ -8,6 +8,8 @@ Tracks work done on `main` **since the last public release**. Use this to see wh
 
 ## ✅ Fixed
 
+- The Duotone effect rendered a black frame instead of tinting the picture, and its shadow and highlight colours could not be changed.
+
 ## ✨ Added
 
 ## 🎨 Improved

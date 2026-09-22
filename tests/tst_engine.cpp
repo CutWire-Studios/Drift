@@ -1,12 +1,15 @@
 #include <QtTest>
 
+#include <QColor>
 #include <QDir>
 #include <QFile>
 #include <QFileInfo>
+#include <QHash>
 #include <QJsonDocument>
 #include <QMatrix4x4>
 #include <QPainter>
 #include <QProcess>
+#include <QRegularExpression>
 #include <QScopeGuard>
 #include <QSet>
 #include <QStandardPaths>
@@ -204,6 +207,7 @@ private slots:
     void compositorSkipsClipBeingEdited();
     void adjustmentEffectContrastCatalogEntry();
     void effectPresetStableIds();
+    void effectParamTypesMatchShaderUniforms();
     void effectPresetCatalogIncludesStylizePresets();
     void effectBrowserCategories();
     void effectGraphTemplateSubstitution();
@@ -5145,6 +5149,63 @@ void EngineTest::effectPresetStableIds()
                      || id.startsWith(QStringLiteral("face_")),
                  qPrintable(QStringLiteral("stable id: %1").arg(id)));
     }
+}
+
+void EngineTest::effectParamTypesMatchShaderUniforms()
+{
+    // A parameter whose declared type disagrees with its shader uniform binds the wrong thing and
+    // the effect renders garbage — duotone declared its colours as "string", which the parser used
+    // to degrade to float, so 0.0 went to a vec3 and every frame came out black. The mismatch is
+    // invisible until someone looks at a rendered frame, so assert it across the whole catalog
+    // rather than waiting for the next package to make the same mistake.
+    static const QRegularExpression uniformRe(
+        QStringLiteral("\\buniform\\s+(float|int|bool|vec2|vec3|vec4|mat[234])\\s+([A-Za-z_]\\w*)"));
+
+    int checked = 0;
+    for (const QString &id : effectPresetIds()) {
+        const EffectPresetEntry *def = effectDefForId(id);
+        QVERIFY(def);
+        if (!def->isGpu || def->gpu.packageDir.isEmpty())
+            continue;
+
+        QHash<QString, const drift::EffectParamSpec *> byKey;
+        for (const drift::EffectParamSpec &spec : def->meta.parameters) {
+            byKey.insert(spec.key, &spec);
+            if (spec.isColor()) {
+                QVERIFY2(QColor(spec.defaultColorHex).isValid(),
+                         qPrintable(QStringLiteral("%1.%2 has an unusable colour default '%3'")
+                                        .arg(id, spec.key, spec.defaultColorHex)));
+            }
+        }
+
+        const QFileInfoList shaders =
+            QDir(def->gpu.packageDir).entryInfoList({QStringLiteral("*.frag")}, QDir::Files);
+        for (const QFileInfo &shaderInfo : shaders) {
+            QFile shader(shaderInfo.absoluteFilePath());
+            if (!shader.open(QIODevice::ReadOnly))
+                continue;
+            const QString source = QString::fromUtf8(shader.readAll());
+            auto it = uniformRe.globalMatch(source);
+            while (it.hasNext()) {
+                const QRegularExpressionMatch m = it.next();
+                const QString glslType = m.captured(1);
+                const QString name = m.captured(2);
+                const drift::EffectParamSpec *spec = byKey.value(name, nullptr);
+                if (!spec) // sampler inputs and engine-injected uniforms are not parameters
+                    continue;
+                ++checked;
+                const bool vectorUniform =
+                    glslType == QLatin1String("vec3") || glslType == QLatin1String("vec4");
+                QVERIFY2(vectorUniform == spec->isColor(),
+                         qPrintable(QStringLiteral("%1.%2 is '%3' in the shader but %4 in the "
+                                                   "catalog")
+                                        .arg(id, name, glslType,
+                                             spec->isColor() ? QStringLiteral("a colour")
+                                                             : QStringLiteral("a scalar"))));
+            }
+        }
+    }
+    QVERIFY2(checked > 0, "no shader uniforms were matched to parameters - the scan is broken");
 }
 
 void EngineTest::effectPresetCatalogIncludesStylizePresets()
