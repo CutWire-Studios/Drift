@@ -48,6 +48,12 @@ packaging/arch/pkg/
 packaging/arch/*.pkg.tar.zst
 installer/windows/output/
 
+# Nightly channel packaging, derived from the stable definitions by
+# scripts/make-nightly-pkgbuild.sh and scripts/make-nightly-flatpak-manifest.py so a change to
+# the real PKGBUILD or manifest can never be forgotten in a committed copy.
+packaging/arch/nightly/
+flatpak/org.cutwire.Drift.Nightly.yml
+
 # Android native dependencies: third_party/build-android.sh clones FFmpeg, x264, zstd, OpenSSL and
 # SoundTouch into src/ and cross-builds them into prebuilt/android/<abi>/. Both are generated and
 # large (~450 MB of sources, ~270 MB of archives); CI restores prebuilt/ from a cache keyed on the

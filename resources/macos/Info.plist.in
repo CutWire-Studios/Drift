@@ -13,11 +13,13 @@
     <key>CFBundleInfoDictionaryVersion</key>
     <string>6.0</string>
     <key>CFBundleName</key>
-    <string>Drift</string>
+    <string>@DRIFT_APP_NAME@</string>
     <key>CFBundleDisplayName</key>
-    <string>Drift</string>
+    <string>@DRIFT_APP_NAME@</string>
     <key>CFBundlePackageType</key>
     <string>APPL</string>
+    <!-- Deliberately @PROJECT_VERSION@ and not the nightly version string: Apple's tooling wants a
+         plain dotted release version here. A nightly is told apart by its bundle id and name. -->
     <key>CFBundleShortVersionString</key>
     <string>@PROJECT_VERSION@</string>
     <key>CFBundleVersion</key>

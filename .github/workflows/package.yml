@@ -16,15 +16,37 @@ on:
         default: all
         type: string
       android_identity:
-        description: "release (org.cutwire.drift) or ci (org.cutwire.drift.ci) package id"
+        description: "release (org.cutwire.drift), ci (….ci) or nightly (….nightly) package id"
         required: false
         default: ci
+        type: string
+      channel:
+        description: "stable or nightly"
+        required: false
+        default: stable
+        type: string
+      build_id:
+        description: "Nightly build stamp, YYYYMMDD.<short sha>; ignored on the stable channel"
+        required: false
+        default: ""
         type: string
 
 permissions:
   contents: read
 
 env:
+  # Nightly artifacts are named for the channel rather than the version, so that
+  # …/releases/download/nightly/Drift-nightly-x86_64.AppImage is a permanent link and the single
+  # rewritten pre-release has exactly one file per platform to clobber each night. The exact
+  # version is in the release body and in the app's Settings pane.
+  ASSET_LABEL: ${{ inputs.channel == 'nightly' && 'nightly' || inputs.version }}
+  # Passed to every desktop Configure step. A nightly gets its own app id, bundle id and version
+  # suffix out of these, and no update check: the badge can only point at stable releases, which
+  # is not what someone running a nightly wants to be nagged towards.
+  DRIFT_CHANNEL_ARGS: >-
+    -DDRIFT_CHANNEL=${{ inputs.channel }}
+    -DDRIFT_BUILD_ID=${{ inputs.build_id }}
+    ${{ inputs.channel == 'nightly' && '-DDRIFT_UPDATE_FEED_URL=' || '' }}
   QT_VERSION: "6.10.3"
   # Drift needs Quick, QuickControls2, QuickEffects, Widgets, OpenGL, Network, Concurrent and Test
   # (qtbase + qtdeclarative, both in the base install); qtmultimedia is the only extra it links.
@@ -100,21 +122,35 @@ jobs:
           path: ~/.local/share/flatpak
           key: flatpak-runtimes-${{ hashFiles('flatpak/org.cutwire.Drift.yml') }}
 
+      # A nightly bundle installed under org.cutwire.Drift would replace the user's Flathub
+      # install, so it gets its own app id — and with it its own .desktop, icon and AppStream id,
+      # which CMake renames on the nightly channel (flatpak build-export drops anything in
+      # /app/share not named after the app id).
+      - name: Generate the nightly manifest
+        if: inputs.channel == 'nightly'
+        run: |
+          python3 scripts/make-nightly-flatpak-manifest.py "${{ inputs.build_id }}"
+          flatpak-builder --show-manifest flatpak/org.cutwire.Drift.Nightly.yml > /dev/null
+
       # The local manifest (not the Flathub one) — it builds the working tree, so it validates the
       # commit under test rather than whatever tag the Flathub manifest is pinned to.
       - name: Build flatpak
+        env:
+          MANIFEST: ${{ inputs.channel == 'nightly' && 'flatpak/org.cutwire.Drift.Nightly.yml' || 'flatpak/org.cutwire.Drift.yml' }}
         run: |
           flatpak-builder --user --force-clean --install-deps-from=flathub \
             --repo="${{ runner.temp }}/flatpak-repo" \
             "${{ runner.temp }}/flatpak-build" \
-            flatpak/org.cutwire.Drift.yml
+            "${MANIFEST}"
 
       - name: Export bundle
+        env:
+          APP_ID: ${{ inputs.channel == 'nightly' && 'org.cutwire.Drift.Nightly' || 'org.cutwire.Drift' }}
         run: |
           mkdir -p dist
           flatpak build-bundle "${{ runner.temp }}/flatpak-repo" \
-            "dist/Drift-${{ inputs.version }}.flatpak" \
-            org.cutwire.Drift
+            "dist/Drift-${{ env.ASSET_LABEL }}.flatpak" \
+            "${APP_ID}"
 
       - name: Upload flatpak bundle
         uses: actions/upload-artifact@v4
@@ -226,7 +262,8 @@ jobs:
             -DCMAKE_PREFIX_PATH="${QT_ROOT_DIR};${GITHUB_WORKSPACE}/.deps/ffmpeg" \
             -DFETCHCONTENT_BASE_DIR="${FETCHCONTENT_BASE_DIR}" \
             -DDRIFT_BUNDLE_ONNXRUNTIME=OFF \
-            -DDRIFT_WITH_SKIA=ON
+            -DDRIFT_WITH_SKIA=ON \
+            ${DRIFT_CHANNEL_ARGS}
 
       - name: Build
         run: cmake --build build --parallel
@@ -254,6 +291,24 @@ jobs:
         run: |
           cmake --install build --prefix "${GITHUB_WORKSPACE}/AppDir/usr" --component drift
           mkdir -p "${GITHUB_WORKSPACE}/dist"
+
+      # linuxdeploy names the AppImage's launcher entry and icon after these, so on the nightly
+      # channel they have to be the org.cutwire.Drift.Nightly pair — the desktop file CMake
+      # generated at configure time, and a copy of the icon under the matching name (the desktop
+      # file's Icon= key and the icon's filename must agree or linuxdeploy rejects it).
+      - name: Resolve the desktop entry for the AppImage
+        id: appimage_meta
+        shell: bash
+        run: |
+          if [ "${{ inputs.channel }}" = "nightly" ]; then
+            icon="${RUNNER_TEMP}/org.cutwire.Drift.Nightly.png"
+            cp flatpak/share/icons/hicolor/256x256/apps/org.cutwire.Drift.png "${icon}"
+            echo "desktop=build/metadata/org.cutwire.Drift.Nightly.desktop" >> "$GITHUB_OUTPUT"
+            echo "icon=${icon}" >> "$GITHUB_OUTPUT"
+          else
+            echo "desktop=flatpak/org.cutwire.Drift.desktop" >> "$GITHUB_OUTPUT"
+            echo "icon=flatpak/share/icons/hicolor/256x256/apps/org.cutwire.Drift.png" >> "$GITHUB_OUTPUT"
+          fi
 
       - name: Build AppImage
         shell: bash
@@ -298,13 +353,13 @@ jobs:
           # hwaccel::deviceAvailable() dlopens libva.so.2 and libva-drm.so.2 itself before
           # letting FFmpeg near VAAPI. See vaapiLoadable() in src/engine/HwAccel.cpp.
           ./linuxdeploy.AppImage --appdir AppDir --plugin qt --output appimage \
-            -d flatpak/org.cutwire.Drift.desktop \
-            -i flatpak/share/icons/hicolor/256x256/apps/org.cutwire.Drift.png \
+            -d "${{ steps.appimage_meta.outputs.desktop }}" \
+            -i "${{ steps.appimage_meta.outputs.icon }}" \
             -e AppDir/usr/bin/drift \
             -l /usr/lib/x86_64-linux-gnu/libssl.so.3 \
             -l /usr/lib/x86_64-linux-gnu/libcrypto.so.3
           appimage="$(ls ./*.AppImage | grep -iv linuxdeploy | head -n 1)"
-          mv "${appimage}" "dist/Drift-${{ inputs.version }}-x86_64.AppImage"
+          mv "${appimage}" "dist/Drift-${{ env.ASSET_LABEL }}-x86_64.AppImage"
 
       - name: Upload AppImage artifact
         uses: actions/upload-artifact@v4
@@ -411,7 +466,8 @@ jobs:
             -DZLIB_INCLUDE_DIR=${{ github.workspace }}\vcpkg\installed\x64-windows-static-md\include `
             -DZLIB_LIBRARY=${{ github.workspace }}\vcpkg\installed\x64-windows-static-md\lib\zs.lib `
             -DDRIFT_BUNDLE_ONNXRUNTIME=OFF `
-            -DDRIFT_WITH_SKIA=ON
+            -DDRIFT_WITH_SKIA=ON `
+            ${{ env.DRIFT_CHANNEL_ARGS }}
 
       # No --target list any more: the tests have to be built here, and building everything is
       # what also gets tools/ compiled by MSVC. Until this job ran ctest, Windows was the one
@@ -516,16 +572,21 @@ jobs:
         uses: Minionguyjpro/Inno-Setup-Action@v1.2.6
         with:
           path: installer/windows/Drift.iss
+          # /DNightly gives the installer its own AppId, name and install directory, so it lands
+          # beside a stable install rather than upgrading it.
           options: |
             /DMyAppVersion=${{ inputs.version }}
             /DMyAppSource=${{ github.workspace }}\dist\bin
+            ${{ inputs.channel == 'nightly' && '/DNightly' || '' }}
 
+      # Wildcard rather than a fixed name: the nightly channel's OutputBaseFilename differs, and
+      # the script only ever emits one installer.
       - name: Collect installer
         shell: pwsh
         run: |
           New-Item -ItemType Directory -Force -Path dist | Out-Null
-          Copy-Item installer\windows\output\Drift-Setup-x64.exe `
-            "dist\Drift-Setup-${{ inputs.version }}-x64.exe" -Force
+          $built = Get-ChildItem installer\windows\output\*.exe
+          Copy-Item $built.FullName "dist\Drift-Setup-${{ env.ASSET_LABEL }}-x64.exe" -Force
 
       - name: Upload installer artifact
         uses: actions/upload-artifact@v4
@@ -540,13 +601,17 @@ jobs:
       #
       # 7z rather than Compress-Archive: the staged tree is several hundred MB of Qt and FFmpeg
       # DLLs, which is where Compress-Archive's in-memory approach gets slow.
+      # The inner folder is channel-named too, so unpacking both channels side by side does not
+      # merge two builds into one directory.
       - name: Build portable zip
         shell: pwsh
+        env:
+          FOLDER: ${{ inputs.channel == 'nightly' && 'Drift Nightly' || 'Drift' }}
         run: |
-          New-Item -ItemType Directory -Force -Path portable\Drift, dist\portable | Out-Null
-          Copy-Item dist\bin\* portable\Drift -Recurse -Force
+          New-Item -ItemType Directory -Force -Path "portable\$env:FOLDER", dist\portable | Out-Null
+          Copy-Item dist\bin\* "portable\$env:FOLDER" -Recurse -Force
           & "$env:ProgramFiles\7-Zip\7z.exe" a -tzip -mx=9 `
-            "dist\portable\Drift-Portable-${{ inputs.version }}-x64.zip" .\portable\Drift
+            "dist\portable\Drift-Portable-${{ env.ASSET_LABEL }}-x64.zip" ".\portable\$env:FOLDER"
 
       - name: Upload portable artifact
         uses: actions/upload-artifact@v4
@@ -593,7 +658,8 @@ jobs:
             -DCMAKE_PREFIX_PATH="$(brew --prefix qt);$(brew --prefix openssl@3);$(brew --prefix)" \
             -DFETCHCONTENT_BASE_DIR="${FETCHCONTENT_BASE_DIR}" \
             -DDRIFT_BUNDLE_ONNXRUNTIME=OFF \
-            -DDRIFT_WITH_SKIA=ON
+            -DDRIFT_WITH_SKIA=ON \
+            ${DRIFT_CHANNEL_ARGS}
 
       - name: Build
         run: cmake --build build-macos --parallel
@@ -617,8 +683,12 @@ jobs:
           NOTARY_PASSWORD: ${{ secrets.MACOS_NOTARY_PASSWORD }}
           NOTARY_TEAM_ID: ${{ secrets.MACOS_NOTARY_TEAM_ID }}
         run: |
+          # --channel has to match the Configure step: it is how the script knows the bundle is
+          # "Drift Nightly.app" rather than "Drift.app".
+          CHANNEL_ARGS=(--channel "${{ inputs.channel }}" --build-id "${{ inputs.build_id }}")
+
           package_adhoc() {
-            scripts/package-macos.sh --build-dir build-macos --skip-build
+            scripts/package-macos.sh --build-dir build-macos --skip-build "${CHANNEL_ARGS[@]}"
           }
 
           if [ -z "$MACOS_CERTIFICATE" ]; then
@@ -631,7 +701,7 @@ jobs:
           set +e
           (
             set -euo pipefail
-            ARGS=(--build-dir build-macos --skip-build)
+            ARGS=(--build-dir build-macos --skip-build "${CHANNEL_ARGS[@]}")
             KEYCHAIN="$RUNNER_TEMP/signing.keychain-db"
             KEYCHAIN_PWD="$(uuidgen)"
             echo "$MACOS_CERTIFICATE" | base64 --decode > "$RUNNER_TEMP/cert.p12"
@@ -672,10 +742,11 @@ jobs:
           rm -f "$RUNNER_TEMP/notary.p8" "$RUNNER_TEMP/cert.p12"
           security delete-keychain "$RUNNER_TEMP/signing.keychain-db" 2>/dev/null || true
 
-      # The script already names it from the project version, which is what a release tag carries.
+      # The script names it from the project version, which is what a release tag carries; a
+      # nightly is renamed to the channel-constant asset name here.
       - name: Name the artifact for this release
         run: |
-          want="dist/Drift-${{ inputs.version }}-arm64.dmg"
+          want="dist/Drift-${{ env.ASSET_LABEL }}-arm64.dmg"
           for f in dist/Drift-*.dmg; do
             [ "$f" = "$want" ] || mv "$f" "$want"
           done
@@ -699,12 +770,25 @@ jobs:
       # makepkg refuses to run as root, and archlinux:base-devel's default
       # user is root — create an unprivileged builder with passwordless sudo
       # (needed for makepkg -s to pacman-install PKGBUILD's own depends).
+      # python is not in base-devel and the nightly PKGBUILD generator needs it before makepkg
+      # installs the PKGBUILD's own makedepends.
       - name: Set up builder user
         run: |
           pacman -Syu --noconfirm
+          pacman -S --needed --noconfirm python
           useradd -m builder
           echo "builder ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
           chown -R builder:builder "${GITHUB_WORKSPACE}"
+
+      # Arch is the one platform where the two channels are not co-installable — both packages
+      # own /usr/bin/drift — so the nightly takes a distinct package name and declares the
+      # conflict, the way an AUR -git package does. The PKGBUILD is derived from the stable one
+      # at build time rather than committed, so a new dependency there cannot be missed here.
+      - name: Generate the nightly PKGBUILD
+        if: inputs.channel == 'nightly'
+        run: |
+          scripts/make-nightly-pkgbuild.sh "${{ inputs.build_id }}" "${{ github.sha }}"
+          chown -R builder:builder packaging/arch/nightly
 
       # The PKGBUILD's source is git+https with a #commit= pin that defaults
       # to the latest tagged release (so a plain `makepkg` — e.g. a real AUR
@@ -712,12 +796,23 @@ jobs:
       # environment first, so pin it to the exact commit that triggered this
       # workflow instead of the tag.
       - name: Build package
-        run: su builder -c "cd '${GITHUB_WORKSPACE}/packaging/arch' && _commit='${{ github.sha }}' makepkg -s --noconfirm"
+        env:
+          PKGDIR: ${{ inputs.channel == 'nightly' && 'packaging/arch/nightly' || 'packaging/arch' }}
+        run: su builder -c "cd '${GITHUB_WORKSPACE}/${PKGDIR}' && _commit='${{ github.sha }}' makepkg -s --noconfirm"
 
+      # makepkg's own filename carries the version, which for a nightly changes every night and
+      # would leave the previous night's asset behind on the one rewritten pre-release. Stable
+      # keeps the name pacman users expect.
       - name: Collect package
+        env:
+          PKGDIR: ${{ inputs.channel == 'nightly' && 'packaging/arch/nightly' || 'packaging/arch' }}
         run: |
           mkdir -p dist
-          cp packaging/arch/*.pkg.tar.zst dist/
+          if [ "${{ inputs.channel }}" = "nightly" ]; then
+            cp "${PKGDIR}"/*.pkg.tar.zst dist/drift-nightly-x86_64.pkg.tar.zst
+          else
+            cp "${PKGDIR}"/*.pkg.tar.zst dist/
+          fi
 
       - name: Upload Arch package artifact
         uses: actions/upload-artifact@v4
@@ -841,27 +936,38 @@ jobs:
           restore-keys: ccache-android-${{ matrix.abi }}-
 
       # versionName comes from CMake PROJECT_VERSION (same as desktop). versionCode: release
-      # builds leave it unset so CMake derives major*10000+minor*100+patch; CI side-loads use
-      # run_number so each dry-run can replace the previous install under the .ci package id.
+      # builds leave it unset so CMake derives major*10000+minor*100+patch; CI side-loads and
+      # nightlies use run_number, which is monotonic, so each new build replaces the previous
+      # install under its own package id rather than the release one.
       - name: Resolve Android package identity
         id: identity
         shell: bash
         run: |
-          if [ "${{ inputs.android_identity }}" = "release" ]; then
-            echo "package=org.cutwire.drift" >> "$GITHUB_OUTPUT"
-            echo "app_name=Drift" >> "$GITHUB_OUTPUT"
-            echo "version_code=" >> "$GITHUB_OUTPUT"
-          else
-            echo "package=org.cutwire.drift.ci" >> "$GITHUB_OUTPUT"
-            echo "app_name=Drift CI" >> "$GITHUB_OUTPUT"
-            echo "version_code=${{ github.run_number }}" >> "$GITHUB_OUTPUT"
-          fi
+          case "${{ inputs.android_identity }}" in
+            release)
+              echo "package=org.cutwire.drift" >> "$GITHUB_OUTPUT"
+              echo "app_name=Drift" >> "$GITHUB_OUTPUT"
+              echo "version_code=" >> "$GITHUB_OUTPUT"
+              ;;
+            nightly)
+              echo "package=org.cutwire.drift.nightly" >> "$GITHUB_OUTPUT"
+              echo "app_name=Drift Nightly" >> "$GITHUB_OUTPUT"
+              echo "version_code=${{ github.run_number }}" >> "$GITHUB_OUTPUT"
+              ;;
+            *)
+              echo "package=org.cutwire.drift.ci" >> "$GITHUB_OUTPUT"
+              echo "app_name=Drift CI" >> "$GITHUB_OUTPUT"
+              echo "version_code=${{ github.run_number }}" >> "$GITHUB_OUTPUT"
+              ;;
+          esac
 
       - name: Build release APK
         env:
           DRIFT_ANDROID_PACKAGE_NAME: ${{ steps.identity.outputs.package }}
           DRIFT_ANDROID_APP_NAME: ${{ steps.identity.outputs.app_name }}
           DRIFT_ANDROID_VERSION_CODE: ${{ steps.identity.outputs.version_code }}
+          DRIFT_CHANNEL: ${{ inputs.channel }}
+          DRIFT_BUILD_ID: ${{ inputs.build_id }}
           CMAKE_C_COMPILER_LAUNCHER: ccache
           CMAKE_CXX_COMPILER_LAUNCHER: ccache
           CCACHE_MAXSIZE: 2G
@@ -889,7 +995,7 @@ jobs:
           KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
           KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
           ABI: ${{ matrix.abi }}
-          VERSION: ${{ inputs.version }}
+          VERSION: ${{ env.ASSET_LABEL }}
         run: |
           set -euo pipefail
           BUILD="build/android-$ABI"
@@ -920,5 +1026,5 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: android-apk-${{ matrix.abi }}
-          path: dist/Drift-${{ inputs.version }}-${{ matrix.abi }}.apk
+          path: dist/Drift-${{ env.ASSET_LABEL }}-${{ matrix.abi }}.apk
           if-no-files-found: error

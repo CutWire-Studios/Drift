@@ -6,7 +6,7 @@ set(CMAKE_OSX_DEPLOYMENT_TARGET "12.0" CACHE STRING "Oldest macOS release Drift 
 
 # C is enabled for JUCE only: its modules compile a handful of C sources (zlib, flac, oggvorbis)
 # and its CMake refuses to configure without it.
-project(Drift VERSION 0.6.0 LANGUAGES CXX C)
+project(Drift VERSION 0.7.0 LANGUAGES CXX C)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -91,6 +91,36 @@ set(DRIFT_MARKET_CLIENT_KEY "5409a0bebab4446f88e51d06024a5cf9a694ee141a6a1c6be7a
 # nag is noise the user cannot act on (Flathub's quality guidelines say as much).
 set(DRIFT_UPDATE_FEED_URL "https://api.github.com/repos/CutWire-Studios/Drift/releases/latest"
     CACHE STRING "Release feed polled for updates; empty disables the update check")
+
+# --- Release channel --------------------------------------------------------
+# Nightly builds are the same source with a different identity: their own app id, their own
+# launcher name, and a version string carrying the build stamp. That is what lets one install
+# beside a stable one (a separate bundle id, Windows AppId and Android package) while still
+# reading the same settings and the same downloaded addons, which is the whole point of testing
+# one. The nightly workflow passes both of these; nothing else sets them.
+#
+# project(Drift VERSION ...) above stays strictly X.Y.Z — CMake rejects a pre-release suffix
+# there — so the string the app displays is built here instead.
+set(DRIFT_CHANNEL "stable" CACHE STRING "Release channel: stable or nightly")
+set(DRIFT_BUILD_ID "" CACHE STRING "Nightly build stamp, YYYYMMDD.<short sha>")
+
+if(NOT DRIFT_CHANNEL STREQUAL "stable" AND NOT DRIFT_CHANNEL STREQUAL "nightly")
+    message(FATAL_ERROR "DRIFT_CHANNEL must be 'stable' or 'nightly', not '${DRIFT_CHANNEL}'")
+endif()
+
+set(DRIFT_APP_ID "org.cutwire.Drift")
+set(DRIFT_APP_NAME "Drift")
+set(DRIFT_VERSION_STRING "${PROJECT_VERSION}")
+if(DRIFT_CHANNEL STREQUAL "nightly")
+    set(DRIFT_APP_ID "org.cutwire.Drift.Nightly")
+    set(DRIFT_APP_NAME "Drift Nightly")
+    # A local nightly configure with no stamp is still legible rather than "0.7.0-nightly.".
+    if(DRIFT_BUILD_ID STREQUAL "")
+        set(DRIFT_BUILD_ID "dev")
+    endif()
+    set(DRIFT_VERSION_STRING "${PROJECT_VERSION}-nightly.${DRIFT_BUILD_ID}")
+endif()
+message(STATUS "Drift channel: ${DRIFT_CHANNEL} (${DRIFT_VERSION_STRING}, ${DRIFT_APP_ID})")
 
 find_package(Qt6 6.5 REQUIRED COMPONENTS Quick QuickControls2 Multimedia Test Concurrent Widgets OpenGL Network QuickEffects Svg Xml)
 find_package(Qt6 COMPONENTS LinguistTools QUIET)
@@ -675,7 +705,7 @@ if(WIN32)
     )
     target_link_libraries(driftengine PRIVATE d3d11 dxgi d3dcompiler opengl32)
 endif()
-target_compile_definitions(driftengine PRIVATE DRIFT_VERSION="${PROJECT_VERSION}")
+target_compile_definitions(driftengine PRIVATE DRIFT_VERSION="${DRIFT_VERSION_STRING}")
 
 if(WITH_BGREMOVAL)
     target_include_directories(driftengine PRIVATE ${OpenCV_INCLUDE_DIRS})
@@ -839,8 +869,11 @@ endif()
 # It also collides with the <build>/Drift/ directory qt_add_qml_module(URI Drift) writes, which
 # on case-insensitive APFS fails the link with EISDIR.
 if(APPLE)
-    set(DRIFT_MACOS_EXECUTABLE "Drift")
-    set(DRIFT_MACOS_BUNDLE_ID "org.cutwire.Drift")
+    # Channel-dependent: a nightly is Drift Nightly.app with its own bundle id, so it installs
+    # beside a stable copy instead of replacing it. "Drift Nightly" does not collide with the
+    # Drift/ QML module directory either (see the note above).
+    set(DRIFT_MACOS_EXECUTABLE "${DRIFT_APP_NAME}")
+    set(DRIFT_MACOS_BUNDLE_ID "${DRIFT_APP_ID}")
     set(DRIFT_MACOS_ICON_FILE "Drift.icns")
 
     # Not CMake's MACOSX_BUNDLE_* properties: the NS* and LSMinimumSystemVersion keys have none.
@@ -1284,7 +1317,7 @@ target_compile_definitions(drift PRIVATE
     DRIFT_MARKET_API_URL="${DRIFT_MARKET_API_URL}"
     DRIFT_MARKET_CLIENT_KEY="${DRIFT_MARKET_CLIENT_KEY}"
     DRIFT_UPDATE_FEED_URL="${DRIFT_UPDATE_FEED_URL}"
-    DRIFT_VERSION="${PROJECT_VERSION}"
+    DRIFT_VERSION="${DRIFT_VERSION_STRING}"
 )
 
 # Ship a file-based package directory next to the binaries that load the catalog.
@@ -1384,6 +1417,25 @@ if(NOT ANDROID)
 # --- install (used by packaging, e.g. Flatpak; the dev workflow runs in-place) ---
 include(GNUInstallDirs)
 
+# Install one freedesktop metadata file under the channel's app id. On stable that is the source
+# file byte for byte. A nightly gets a generated copy with every org.cutwire.Drift occurrence
+# rewritten — the AppStream <id>, its <launchable>, the mime type's <icon> and the desktop file's
+# Icon= all carry that string — and the human-facing name suffixed, so the launcher shows
+# "Drift Nightly" next to a stable entry rather than two identical ones.
+function(drift_install_metadata source destination name)
+    if(DRIFT_CHANNEL STREQUAL "stable")
+        install(FILES "${source}" DESTINATION "${destination}" RENAME "${name}" COMPONENT drift)
+        return()
+    endif()
+    file(READ "${CMAKE_SOURCE_DIR}/${source}" _content)
+    string(REPLACE "org.cutwire.Drift" "${DRIFT_APP_ID}" _content "${_content}")
+    string(REPLACE "Name=Drift\n" "Name=${DRIFT_APP_NAME}\n" _content "${_content}")
+    string(REPLACE "<name>Drift</name>" "<name>${DRIFT_APP_NAME}</name>" _content "${_content}")
+    set(_generated "${CMAKE_CURRENT_BINARY_DIR}/metadata/${name}")
+    file(WRITE "${_generated}" "${_content}")
+    install(FILES "${_generated}" DESTINATION "${destination}" COMPONENT drift)
+endfunction()
+
 # Everything Drift installs is tagged with the "drift" component, so packaging can ask for the app
 # and nothing else: `cmake --install build --component drift`. JUCE's modules install ~50 MB of
 # their own sources into include/JUCE-<version>, and a plain `cmake --install` has no way to say no
@@ -1403,19 +1455,23 @@ else()
                 DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT drift)
     endforeach()
 
-    # Desktop integration for Flatpak / freedesktop.
-    install(FILES flatpak/org.cutwire.Drift.desktop
-            DESTINATION ${CMAKE_INSTALL_DATADIR}/applications COMPONENT drift)
-    install(FILES flatpak/org.cutwire.Drift.metainfo.xml
-            DESTINATION ${CMAKE_INSTALL_DATADIR}/metainfo COMPONENT drift)
-    install(FILES flatpak/org.cutwire.Drift.xml
-            DESTINATION ${CMAKE_INSTALL_DATADIR}/mime/packages COMPONENT drift)
+    # Desktop integration for Flatpak / freedesktop. Every one of these is installed under the
+    # channel's app id: flatpak build-export silently drops anything in /app/share whose name does
+    # not start with the app id, so a nightly named after the stable id would export no launcher
+    # entry and no icon at all.
+    drift_install_metadata(flatpak/org.cutwire.Drift.desktop
+        "${CMAKE_INSTALL_DATADIR}/applications" "${DRIFT_APP_ID}.desktop")
+    drift_install_metadata(flatpak/org.cutwire.Drift.metainfo.xml
+        "${CMAKE_INSTALL_DATADIR}/metainfo" "${DRIFT_APP_ID}.metainfo.xml")
+    drift_install_metadata(flatpak/org.cutwire.Drift.xml
+        "${CMAKE_INSTALL_DATADIR}/mime/packages" "${DRIFT_APP_ID}.xml")
     # 1024px source is intentionally skipped: flatpak build-export rejects icons
     # larger than 512x512.
     foreach(_size 64 128 256 512)
         install(FILES
             flatpak/share/icons/hicolor/${_size}x${_size}/apps/org.cutwire.Drift.png
-            DESTINATION ${CMAKE_INSTALL_DATADIR}/icons/hicolor/${_size}x${_size}/apps COMPONENT drift)
+            DESTINATION ${CMAKE_INSTALL_DATADIR}/icons/hicolor/${_size}x${_size}/apps
+            RENAME ${DRIFT_APP_ID}.png COMPONENT drift)
     endforeach()
 endif()
 
