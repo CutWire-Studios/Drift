@@ -8,6 +8,7 @@ Tracks work done on `main` **since the last public release**. Use this to see wh
 
 ## ✅ Fixed
 
+- Auto-reframe stretched the picture and zoomed far past what was asked for — a 9:16 crop of a 4K clip came out around 3x magnified and distorted. It now keeps the source's shape, fits the requested aspect inside the canvas, and reports how much it magnified the source so an upscale is visible before it reaches a render.
 - Adding two graphics at the same moment — an emoji and a Lottie, say — pushed the second one down the timeline instead of stacking it on its own lane, so it appeared at the wrong time.
 - Keyframes written while the playhead sat outside a clip landed outside it too, where they could never play but still bent the animation.
 - Setting an effect, audio-effect or transition parameter that does not exist now fails instead of quietly storing a value nothing reads. The colour-parameter schema no longer advertises alpha it cannot carry.

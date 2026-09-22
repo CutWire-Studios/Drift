@@ -1266,11 +1266,13 @@
           "Write x/y/w/h transform keyframes so the subject stays in frame at the requested aspect. "
           "Does not crop the project canvas, so a 16:9 timeline can still export a 9:16 deliverable. "
           "mode face follows list_face_track (run detect_faces first); center is a static centre crop; "
-          "motion is face with heavier smoothing.",
+          "motion is face with heavier smoothing. Returns scale — how much of the source ends up "
+          "across the canvas at the tightest point — plus upscaled:true when that is above 1, which "
+          "means the crop is being blown up past the source's own resolution and will look soft.",
           objectSchema(mergeProps(
               {{QStringLiteral("aspect"), numberProp(QStringLiteral("Target width/height, e.g. 0.5625 for 9:16"))},
-               {QStringLiteral("width"), integerProp(QStringLiteral("Target width pixels"))},
-               {QStringLiteral("height"), integerProp(QStringLiteral("Target height pixels"))},
+               {QStringLiteral("width"), integerProp(QStringLiteral("Target width pixels — only used to derive aspect when aspect is omitted"))},
+               {QStringLiteral("height"), integerProp(QStringLiteral("Target height pixels — only used to derive aspect when aspect is omitted"))},
                {QStringLiteral("mode"),
                 propWithDefault(enumProp(QStringLiteral("How to pick the crop"),
                                          {QStringLiteral("face"), QStringLiteral("center"),

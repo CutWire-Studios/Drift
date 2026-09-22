@@ -24606,22 +24606,53 @@ QJsonObject AppController::mcpAutoReframe(int trackIndex, int clipIndex, double 
         smoothed[i].cy = cy / n;
     }
 
+    // The crop window is in normalised source coordinates, where the two axes have different
+    // lengths in pixels. Relating them by the target aspect alone — as this did — treats them as
+    // square, which both distorts the picture and zooms far past what was asked for: on a 4K 16:9
+    // source a 9:16 request came out as a square box and about a 3x upscale. Dividing the source's
+    // own display aspect out is what makes the window the shape the caller asked for.
+    double sourceAspect = canvasW / canvasH;
+    if (const drift::MediaAsset *asset = m_project.asset(clip.assetId)) {
+        if (asset->width > 0 && asset->height > 0)
+            sourceAspect = double(asset->width) / double(asset->height);
+    }
+
+    // How much of the source ends up across the canvas, at the tightest point. Above 1.0 the crop
+    // is being blown up past its own resolution, which no amount of framing can make sharp.
+    double tightestScale = 0.0;
+
+    // Where the target-aspect window lands on the canvas. When the canvas already is that aspect
+    // this is the whole canvas and the crop fills it. When it is not — a 9:16 crop asked for on a
+    // 16:9 timeline, which is the documented use — the window is fitted inside instead. Filling the
+    // canvas in that case would mean stretching the picture, and a reframe that distorts the
+    // subject has not reframed anything.
+    const double frameH = qMin(canvasH, canvasW / targetAspect);
+    const double frameW = frameH * targetAspect;
+    const double frameX = (canvasW - frameW) * 0.5;
+    const double frameY = (canvasH - frameH) * 0.5;
+
     mcpBeginBatch();
     int keys = 0;
     for (const Sample &s : smoothed) {
         // Crop window of targetAspect centred on the face, in normalised source coords.
         double cropH = qMin(1.0, qMax(s.ry * 2.4, 0.35));
-        double cropW = cropH * targetAspect;
+        double cropW = cropH * targetAspect / sourceAspect;
         if (cropW > 1.0) {
             cropW = 1.0;
-            cropH = cropW / targetAspect;
+            cropH = qMin(1.0, cropW * sourceAspect / targetAspect);
         }
         double cropX = qBound(0.0, s.cx - cropW * 0.5, 1.0 - cropW);
         double cropY = qBound(0.0, s.cy - cropH * 0.5, 1.0 - cropH);
-        const double w = canvasW / cropW;
-        const double h = canvasH / cropH;
-        const double x = -cropX * w;
-        const double y = -cropY * h;
+        // The whole source, scaled so that its crop window covers exactly the framed area. w/h
+        // comes out at the source's own aspect, so nothing is stretched.
+        const double w = frameW / cropW;
+        const double h = frameH / cropH;
+        const double x = frameX - cropX * w;
+        const double y = frameY - cropY * h;
+        if (const drift::MediaAsset *asset = m_project.asset(clip.assetId)) {
+            if (asset->width > 0)
+                tightestScale = qMax(tightestScale, frameW / (cropW * asset->width));
+        }
         const double at = drift::usToSeconds(clip.timelineStart) + s.t;
         setClipKeyframe(trackIndex, clipIndex, QStringLiteral("x"), at, x);
         setClipKeyframe(trackIndex, clipIndex, QStringLiteral("y"), at, y);
@@ -24630,9 +24661,17 @@ QJsonObject AppController::mcpAutoReframe(int trackIndex, int clipIndex, double 
         keys += 4;
     }
     mcpEndBatch(QStringLiteral("Auto-reframe"), keys > 0);
-    return ok({{QStringLiteral("keys"), keys},
-               {QStringLiteral("aspect"), targetAspect},
-               {QStringLiteral("mode"), m.isEmpty() ? QStringLiteral("face") : m}});
+    QJsonObject reply{{QStringLiteral("keys"), keys},
+                      {QStringLiteral("aspect"), round3(targetAspect)},
+                      {QStringLiteral("mode"), m.isEmpty() ? QStringLiteral("face") : m}};
+    if (tightestScale > 0.0) {
+        // Say how hard the crop is pushing the source, so a caller can see an upscale here rather
+        // than discover it as a soft picture in a render.
+        reply.insert(QStringLiteral("scale"), round3(tightestScale));
+        if (tightestScale > 1.02)
+            reply.insert(QStringLiteral("upscaled"), true);
+    }
+    return ok(reply);
 }
 
 QJsonObject AppController::mcpListAddons() const

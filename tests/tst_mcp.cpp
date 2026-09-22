@@ -113,6 +113,7 @@ private slots:
     void sceneOpsAcceptClipRef();
     void addEffectReportsHost();
     void graphicsAtTheSameTimeStackOnTheirOwnLanes();
+    void autoReframeKeepsTheSourceAspectAndReportsItsScale();
     void splitClipKeepsEffectsOnBothHalves();
     void framesFlagsBeyondEnd();
     void inspectRevisionUnchanged();
@@ -4180,6 +4181,66 @@ void McpTest::sceneOpsAcceptClipRef()
 // Emoji, stickers, shapes, Lottie and 3D models all map onto one track type. Adding two at the
 // same moment used to push the second down the timeline to the next free gap, so a graphic quietly
 // appeared somewhere other than where it was asked for. They should stack instead.
+// The crop window lives in normalised source coordinates, where the two axes are different lengths
+// in pixels. Relating them by the target aspect alone treated them as square: the written box came
+// out square by arithmetic, the picture was stretched, and a 4K source was blown up about 3x for a
+// 9:16 request. The box has to keep the source's own aspect, and the caller has to be told how hard
+// the crop is pushing the source.
+void McpTest::autoReframeKeepsTheSourceAspectAndReportsItsScale()
+{
+    if (ffmpegPath().isEmpty())
+        QSKIP("ffmpeg not available to generate a test clip");
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    const QString source = dir.filePath(QStringLiteral("wide.mp4"));
+    QVERIFY(runFfmpeg({QStringLiteral("-f"), QStringLiteral("lavfi"), QStringLiteral("-i"),
+                       QStringLiteral("testsrc2=size=3840x2160:rate=30:duration=1"),
+                       QStringLiteral("-c:v"), QStringLiteral("libx264"),
+                       QStringLiteral("-preset"), QStringLiteral("ultrafast"),
+                       QStringLiteral("-pix_fmt"), QStringLiteral("yuv420p"), source}));
+
+    AssetLibrary library;
+    AppController state(&library);
+    drift::mcp::McpDispatcher dispatcher(&state);
+    const QString clip = importAndPlace(dispatcher, source, 0.0);
+    QVERIFY(!clip.isEmpty());
+
+    const QJsonObject reframed = dispatcher.applyOne(
+        QStringLiteral("auto_reframe"),
+        {{QStringLiteral("clip"), clip}, {QStringLiteral("aspect"), 0.5625},
+         {QStringLiteral("mode"), QStringLiteral("center")}});
+    QVERIFY2(reframed.value(QStringLiteral("ok")).toBool(),
+             qPrintable(QJsonDocument(reframed).toJson(QJsonDocument::Compact)));
+
+    // A 9:16 slice of a 4K frame is still about 730 px wide, which is more than the 608 px the
+    // fitted window needs — so this crop is a downscale and the picture stays sharp. (The same
+    // crop of a 1080p source genuinely is an upscale, and the reply says so.)
+    QVERIFY2(reframed.contains(QStringLiteral("scale")), "the reply should say how far the crop pushes the source");
+    QVERIFY2(!reframed.value(QStringLiteral("upscaled")).toBool(),
+             qPrintable(QStringLiteral("scale %1").arg(reframed.value(QStringLiteral("scale")).toDouble())));
+
+    const QJsonObject keys = dispatcher.applyOne(
+        QStringLiteral("list_keyframes"),
+        {{QStringLiteral("clip"), clip}, {QStringLiteral("prop"), QStringLiteral("width")}});
+    const QJsonObject heights = dispatcher.applyOne(
+        QStringLiteral("list_keyframes"),
+        {{QStringLiteral("clip"), clip}, {QStringLiteral("prop"), QStringLiteral("height")}});
+    QVERIFY(keys.value(QStringLiteral("ok")).toBool() && heights.value(QStringLiteral("ok")).toBool());
+    const QJsonArray ws = keys.value(QStringLiteral("keys")).toArray();
+    const QJsonArray hs = heights.value(QStringLiteral("keys")).toArray();
+    QVERIFY(!ws.isEmpty() && ws.size() == hs.size());
+
+    for (int i = 0; i < ws.size(); ++i) {
+        const double w = ws.at(i).toObject().value(QStringLiteral("value")).toDouble();
+        const double h = hs.at(i).toObject().value(QStringLiteral("value")).toDouble();
+        QVERIFY(w > 0.0 && h > 0.0);
+        // The source is 16:9; anything else means the picture is being stretched.
+        QVERIFY2(qAbs(w / h - 16.0 / 9.0) < 0.02,
+                 qPrintable(QStringLiteral("box %1x%2 has aspect %3, not the source's 1.778")
+                                .arg(w).arg(h).arg(w / h)));
+    }
+}
+
 void McpTest::graphicsAtTheSameTimeStackOnTheirOwnLanes()
 {
     AssetLibrary library;
