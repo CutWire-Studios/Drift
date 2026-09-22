@@ -1301,7 +1301,7 @@ public:
     Q_INVOKABLE void removeTransition(int trackIndex, const QString &transitionId);
     Q_INVOKABLE void setTransitionDuration(int trackIndex, const QString &transitionId, double durationSeconds);
     Q_INVOKABLE void setTransitionKind(int trackIndex, const QString &transitionId, const QString &kind);
-    Q_INVOKABLE void setTransitionParam(int trackIndex, const QString &transitionId, const QString &key,
+    Q_INVOKABLE bool setTransitionParam(int trackIndex, const QString &transitionId, const QString &key,
                                         double value);
     Q_INVOKABLE void previewSetTransitionParam(int trackIndex, const QString &transitionId,
                                                const QString &key, double value);
@@ -1358,14 +1358,14 @@ public:
     Q_INVOKABLE void removeEffect(int trackIndex, int clipIndex, int effectIndex);
     Q_INVOKABLE void setEffectEnabled(int trackIndex, int clipIndex, int effectIndex, bool enabled);
     Q_INVOKABLE void moveEffect(int trackIndex, int clipIndex, int fromIndex, int toIndex);
-    Q_INVOKABLE void setEffectParam(int trackIndex, int clipIndex, int effectIndex, const QString &key,
+    Q_INVOKABLE bool setEffectParam(int trackIndex, int clipIndex, int effectIndex, const QString &key,
                                     double value);
-    Q_INVOKABLE void setEffectColorParam(int trackIndex, int clipIndex, int effectIndex,
+    Q_INVOKABLE bool setEffectColorParam(int trackIndex, int clipIndex, int effectIndex,
                                          const QString &key, const QString &value);
     // File-path params (model3d .glb). Same commit-once path as colour — no preview stream.
     // Takes a QUrl like replaceAssetSource / importSubtitleFile so the portal and native
     // dialogs hand us a real local path without QML having to call toLocalFile().
-    Q_INVOKABLE void setEffectStringParam(int trackIndex, int clipIndex, int effectIndex,
+    Q_INVOKABLE bool setEffectStringParam(int trackIndex, int clipIndex, int effectIndex,
                                           const QString &key, const QUrl &url);
     Q_INVOKABLE QVariantList audioEffectCatalog() const;
     Q_INVOKABLE QVariantList audioEffectCategories() const;
@@ -1373,7 +1373,7 @@ public:
     Q_INVOKABLE void removeAudioEffect(int trackIndex, int clipIndex, int effectIndex);
     Q_INVOKABLE void setAudioEffectEnabled(int trackIndex, int clipIndex, int effectIndex, bool enabled);
     Q_INVOKABLE void moveAudioEffect(int trackIndex, int clipIndex, int fromIndex, int toIndex);
-    Q_INVOKABLE void setAudioEffectParam(int trackIndex, int clipIndex, int effectIndex,
+    Q_INVOKABLE bool setAudioEffectParam(int trackIndex, int clipIndex, int effectIndex,
                                          const QString &key, double value);
     Q_INVOKABLE void previewSetAudioEffectParam(int trackIndex, int clipIndex, int effectIndex,
                                                 const QString &key, double value);

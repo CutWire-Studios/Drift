@@ -707,9 +707,9 @@ const QList<Op> &ops()
                        {QStringLiteral("index")}),
           false, true },
         { "set_effect_param", "effects", "Tweak a video effect",
-          "Set one numeric/boolean video effect parameter. WARNING: the write is not validated — an "
-          "unknown key or out-of-range index still returns ok. Take keys from list_effects and confirm "
-          "the result with inspect({clips:true,detail:true}). Use set_effect_color_param for colors.",
+          "Set one numeric/boolean video effect parameter. Fails not_found on a key the effect does "
+          "not declare or a stack index that is not there. Take keys from list_effects({id}). Use "
+          "set_effect_color_param for colors.",
           objectSchema(mergeProps({{QStringLiteral("index"), effectIndexProp()},
                                    {QStringLiteral("key"), stringProp(QStringLiteral("Parameter key from the effect's params in list_effects"))},
                                    {QStringLiteral("value"), numberProp(QStringLiteral("Value (booleans as 0/1); range from list_effects({id})"))}},
@@ -730,9 +730,8 @@ const QList<Op> &ops()
                        {QStringLiteral("index")}),
           false, true },
         { "set_audio_effect_param", "effects", "Tweak an audio effect",
-          "Set one audio effect parameter (booleans as 0/1). WARNING: not validated — an unknown key "
-          "or bad index still returns ok. Take keys from list_audio_effects and confirm with "
-          "inspect({clips:true,detail:true}).",
+          "Set one audio effect parameter (booleans as 0/1). Fails not_found on a key the effect does "
+          "not declare or a stack index that is not there. Take keys from list_audio_effects({id}).",
           objectSchema(mergeProps({{QStringLiteral("index"), effectIndexProp()},
                                    {QStringLiteral("key"), stringProp(QStringLiteral("Parameter key from list_audio_effects"))},
                                    {QStringLiteral("value"), numberProp(QStringLiteral("Value (booleans as 0/1); range from list_audio_effects({id})"))}},
@@ -1219,7 +1218,7 @@ QJsonObject catalogPayload(const QJsonObject &args)
              QStringLiteral("apply is not atomic: on failure the ops before it stay applied; done lists only those, failed carries the error."),
              QStringLiteral("apply cannot run catalog, toolbox, search, inspect, capture, frames, activity, or apply; call those directly."),
              QStringLiteral("Clip-ref ops need clip (uuid) or track+index; they never fall back to the selection (read it from inspect.selection)."),
-             QStringLiteral("set_effect_param, set_audio_effect_param and set_transition_param do not validate key or index; verify with inspect."),
+             QStringLiteral("Effect and transition parameter writes fail not_found on an unknown key or a stack index that is not there."),
              QStringLiteral("set_transform writes at the playhead and becomes a keyframe when the property is animated or autoKey is on."),
              QStringLiteral("set_mask and set_subtitle_cues replace the whole mask / cue list; read the current one from inspect first."),
              QStringLiteral("Segmentation, denoise and face detection expose no progress field; diff inspect to detect completion."),

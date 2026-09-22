@@ -3859,6 +3859,23 @@ void splitLinkedPartnerAt(drift::Project &project, const drift::Clip &sourceHead
 // handles linkId (splitLinkedPartnerAt above) and used to ignore this one, so the tail of a split
 // came back with no grade at all. Clone each pinned adjustment onto the tail and carry its
 // parameter curves across; syncLinkedAdjustments re-spans both halves afterwards.
+// True when a catalog entry actually declares `key`. Writing a parameter an effect does not have
+// used to succeed silently: the value went into the project file, the renderer ignored it, and the
+// caller had no way to tell a typo from a working edit.
+bool declaresParam(const QList<drift::EffectParamSpec> &parameters, const QString &key)
+{
+    for (const drift::EffectParamSpec &param : parameters) {
+        if (param.key == key)
+            return true;
+    }
+    return false;
+}
+
+bool declaresParam(const drift::EffectPresetMeta &meta, const QString &key)
+{
+    return declaresParam(meta.parameters, key);
+}
+
 void splitLinkedAdjustmentsAt(drift::Project &project, int parentTrackIndex, const QString &headClipId,
                               const QString &tailClipId, drift::TimeUs offset)
 {
@@ -15283,16 +15300,20 @@ void AppController::previewSetTransitionParam(int trackIndex, const QString &tra
     emitPreviewFrame();
 }
 
-void AppController::setTransitionParam(int trackIndex, const QString &transitionId, const QString &key,
+bool AppController::setTransitionParam(int trackIndex, const QString &transitionId, const QString &key,
                                        double value)
 {
     if (trackIndex < 0 || trackIndex >= m_project.tracks().size() || key.isEmpty())
-        return;
+        return false;
 
     drift::Track &track = m_project.tracks()[trackIndex];
     drift::Transition *transition = findTransition(track, transitionId);
     if (!transition)
-        return;
+        return false;
+
+    const TransitionPresetEntry *def = transitionDefForId(transition->kindId);
+    if (!def || !declaresParam(def->meta, key))
+        return false;
 
     const drift::Project before = m_project;
     transition->parameters.insert(
@@ -15300,6 +15321,7 @@ void AppController::setTransitionParam(int trackIndex, const QString &transition
     pushProjectEdit(before, tr("Edit transition"));
     finishEdit(tr("Transition updated"));
     emit selectedTransitionDataChanged();
+    return true;
 }
 
 QVariantMap AppController::transitionBetweenClips(int trackIndex, int clipIndex) const
@@ -16683,34 +16705,35 @@ void AppController::moveEffect(int trackIndex, int clipIndex, int fromIndex, int
     finishEdit(tr("Effect reordered"));
 }
 
-void AppController::setEffectParam(int trackIndex, int clipIndex, int effectIndex, const QString &key,
+bool AppController::setEffectParam(int trackIndex, int clipIndex, int effectIndex, const QString &key,
                                    double value)
 {
     if (trackIndex < 0 || trackIndex >= m_project.tracks().size())
-        return;
+        return false;
     // The stack lives on the adjustment linked to this clip, not on the clip.
     if (!redirectToEffectHost(&trackIndex, &clipIndex, drift::AdjustmentKind::VideoEffects,
                               /*create=*/false)) {
-        return;
+        return false;
     }
 
     drift::Track &track = m_project.tracks()[trackIndex];
     if (clipIndex < 0 || clipIndex >= track.clips.size())
-        return;
+        return false;
 
     drift::Clip &clip = track.clips[clipIndex];
     if (effectIndex < 0 || effectIndex >= clip.effects.size())
-        return;
+        return false;
+
+    const EffectPresetEntry *def = effectDefForId(clip.effects[effectIndex].catalogId);
+    if (!def || !declaresParam(def->meta, key))
+        return false;
 
     const drift::Project before = m_project;
-    const EffectPresetEntry *def = effectDefForId(clip.effects[effectIndex].catalogId);
     bool asBoolean = false;
-    if (def) {
-        for (const drift::EffectParamSpec &param : def->meta.parameters) {
-            if (param.key == key) {
-                asBoolean = param.isBoolean();
-                break;
-            }
+    for (const drift::EffectParamSpec &param : def->meta.parameters) {
+        if (param.key == key) {
+            asBoolean = param.isBoolean();
+            break;
         }
     }
     if (asBoolean)
@@ -16719,76 +16742,78 @@ void AppController::setEffectParam(int trackIndex, int clipIndex, int effectInde
         clip.effects[effectIndex].parameters.insert(key, value);
     pushProjectEdit(before, tr("Edit effect"));
     finishEdit(tr("Effect updated"));
+    return true;
 }
 
 // Colour params take this path rather than widening setEffectParam, which every existing QML call
 // site passes a double to. There is no preview variant on purpose: a swatch commits once, so there
 // is no drag stream to coalesce the way a slider needs.
-void AppController::setEffectColorParam(int trackIndex, int clipIndex, int effectIndex,
+bool AppController::setEffectColorParam(int trackIndex, int clipIndex, int effectIndex,
                                         const QString &key, const QString &value)
 {
     if (trackIndex < 0 || trackIndex >= m_project.tracks().size())
-        return;
+        return false;
     // The stack lives on the adjustment linked to this clip, not on the clip.
     if (!redirectToEffectHost(&trackIndex, &clipIndex, drift::AdjustmentKind::VideoEffects,
                               /*create=*/false)) {
-        return;
+        return false;
     }
 
     drift::Track &track = m_project.tracks()[trackIndex];
     if (clipIndex < 0 || clipIndex >= track.clips.size())
-        return;
+        return false;
 
     drift::Clip &clip = track.clips[clipIndex];
     if (effectIndex < 0 || effectIndex >= clip.effects.size())
-        return;
+        return false;
 
     const EffectPresetEntry *def = effectDefForId(clip.effects[effectIndex].catalogId);
     if (!def)
-        return;
+        return false;
     const auto specIt = std::find_if(def->meta.parameters.cbegin(), def->meta.parameters.cend(),
                                      [&](const drift::EffectParamSpec &p) { return p.key == key; });
     if (specIt == def->meta.parameters.cend() || !specIt->isColor())
-        return;
+        return false;
 
     // Normalized to the same six-digit form the catalog default carries, so what lands in the
     // project matches what the parser would have produced.
     const QColor color(value);
     if (!color.isValid())
-        return;
+        return false;
 
     const drift::Project before = m_project;
     clip.effects[effectIndex].parameters.insert(key, color.name(QColor::HexRgb));
     pushProjectEdit(before, tr("Edit effect"));
     finishEdit(tr("Effect updated"));
+    return true;
 }
 
-void AppController::setEffectStringParam(int trackIndex, int clipIndex, int effectIndex,
+bool AppController::setEffectStringParam(int trackIndex, int clipIndex, int effectIndex,
                                          const QString &key, const QUrl &url)
 {
     if (trackIndex < 0 || trackIndex >= m_project.tracks().size())
-        return;
+        return false;
     // The stack lives on the adjustment linked to this clip, not on the clip.
     if (!redirectToEffectHost(&trackIndex, &clipIndex, drift::AdjustmentKind::VideoEffects,
                               /*create=*/false)) {
-        return;
+        return false;
     }
 
     drift::Track &track = m_project.tracks()[trackIndex];
     if (clipIndex < 0 || clipIndex >= track.clips.size())
-        return;
+        return false;
 
     drift::Clip &clip = track.clips[clipIndex];
     if (effectIndex < 0 || effectIndex >= clip.effects.size())
-        return;
+        return false;
 
     const EffectPresetEntry *def = effectDefForId(clip.effects[effectIndex].catalogId);
     if (!def)
-        return;
+        return false;
     const auto specIt = std::find_if(def->meta.parameters.cbegin(), def->meta.parameters.cend(),
                                      [&](const drift::EffectParamSpec &p) { return p.key == key; });
     if (specIt == def->meta.parameters.cend() || !specIt->isFilePath())
-        return;
+        return false;
 
     // Empty URL clears the path (the inspector's clear button). Anything else must resolve to a
     // local file — portal picks, SAF content:// URIs, and plain file:// all come through as QUrl.
@@ -16808,7 +16833,7 @@ void AppController::setEffectStringParam(int trackIndex, int clipIndex, int effe
             path = url.toString(QUrl::PreferLocalFile);
         }
         if (path.isEmpty())
-            return;
+            return false;
     }
 
     const drift::Project before = m_project;
@@ -16818,6 +16843,7 @@ void AppController::setEffectStringParam(int trackIndex, int clipIndex, int effe
 
     if (def->isFaceSwap && key == QLatin1String("sourceImage"))
         ingestFaceSwapSource(path);
+    return true;
 }
 
 QVariantList AppController::audioEffectCatalog() const
@@ -17012,29 +17038,34 @@ void AppController::previewSetAudioEffectParam(int trackIndex, int clipIndex, in
     emitPreviewFrame();
 }
 
-void AppController::setAudioEffectParam(int trackIndex, int clipIndex, int effectIndex,
+bool AppController::setAudioEffectParam(int trackIndex, int clipIndex, int effectIndex,
                                         const QString &key, double value)
 {
     if (trackIndex < 0 || trackIndex >= m_project.tracks().size())
-        return;
+        return false;
     // The stack lives on the adjustment linked to this clip, not on the clip.
     if (!redirectToEffectHost(&trackIndex, &clipIndex, drift::AdjustmentKind::AudioEffects,
                               /*create=*/false)) {
-        return;
+        return false;
     }
 
     drift::Track &track = m_project.tracks()[trackIndex];
     if (clipIndex < 0 || clipIndex >= track.clips.size())
-        return;
+        return false;
 
     drift::Clip &clip = track.clips[clipIndex];
     if (effectIndex < 0 || effectIndex >= clip.audioEffects.size())
-        return;
+        return false;
+
+    const AudioEffectEntry *def = audioEffectDefForId(clip.audioEffects[effectIndex].catalogId);
+    if (!def || !declaresParam(def->parameters, key))
+        return false;
 
     const drift::Project before = m_project;
     clip.audioEffects[effectIndex].parameters.insert(key, value);
     pushProjectEdit(before, tr("Edit audio effect"));
     finishEdit(tr("Audio effect updated"));
+    return true;
 }
 
 // --- effect stacks: copy/paste and user presets ------------------------------

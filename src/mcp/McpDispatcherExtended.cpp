@@ -1,6 +1,8 @@
 #include "mcp/McpCatalog.h"
 #include "mcp/McpDispatcher.h"
 
+#include <QColor>
+
 #include "core/ShapeStyle.h"
 #include "core/TextAnimationPreset.h"
 #include "core/TextPresetStore.h"
@@ -1675,8 +1677,18 @@ QJsonObject McpDispatcher::applyOneExtended(const QString &tool, const QJsonObje
         const QString value = args.value(QStringLiteral("value")).toString().trimmed();
         if (index < 0 || key.isEmpty() || value.isEmpty())
             return err("bad_args", QStringLiteral("index, key, and value required"));
-        m_controller->setEffectColorParam(ref.track, ref.clip, index, key, value);
-        return ok(clipFeedback(ref, {{QStringLiteral("index"), index}, {QStringLiteral("key"), key}}));
+        if (!m_controller->setEffectColorParam(ref.track, ref.clip, index, key, value)) {
+            return err("not_found",
+                       QStringLiteral("effect %1 has no colour parameter '%2' — list_effects({id}) "
+                                      "names its parameters and their types")
+                           .arg(index)
+                           .arg(key));
+        }
+        // Alpha is dropped on purpose: effect colours bind as vec3. Echo what was stored so a
+        // caller can see it rather than assuming the value it sent survived intact.
+        return ok(clipFeedback(ref, {{QStringLiteral("index"), index},
+                                     {QStringLiteral("key"), key},
+                                     {QStringLiteral("value"), QColor(value).name(QColor::HexRgb)}}));
     }
 
     if (tool == QLatin1String("set_audio_effect_enabled")) {
@@ -1758,7 +1770,14 @@ QJsonObject McpDispatcher::applyOneExtended(const QString &tool, const QJsonObje
         if (track < 0 || id.isEmpty() || key.isEmpty() || !args.contains(QStringLiteral("value")))
             return err("bad_args", QStringLiteral("track, id, key, and value required"));
         const double value = jsonNumber(args.value(QStringLiteral("value")), 0);
-        m_controller->setTransitionParam(track, id, key, value);
+        if (!m_controller->setTransitionParam(track, id, key, value)) {
+            return err("not_found",
+                       QStringLiteral("no transition '%1' on track %2 with a parameter '%3' — "
+                                      "list_transitions({id}) names the parameters")
+                           .arg(id)
+                           .arg(track)
+                           .arg(key));
+        }
         return ok({{QStringLiteral("track"), track}, {QStringLiteral("id"), id}, {QStringLiteral("key"), key}});
     }
 
@@ -2222,8 +2241,14 @@ QJsonObject McpDispatcher::applyOneExtended(const QString &tool, const QJsonObje
             return err("bad_args", QStringLiteral("index and key required"));
         const QString value = argString(args, QStringLiteral("value"));
         const QUrl url = value.isEmpty() ? QUrl() : QUrl::fromLocalFile(localPath(value));
-        m_controller->setEffectStringParam(ref.track, ref.clip,
-                                           jsonInt(args.value(QStringLiteral("index"))), key, url);
+        const int index = jsonInt(args.value(QStringLiteral("index")));
+        if (!m_controller->setEffectStringParam(ref.track, ref.clip, index, key, url)) {
+            return err("not_found",
+                       QStringLiteral("effect %1 has no file parameter '%2' — list_effects({id}) "
+                                      "names its parameters and their types")
+                           .arg(index)
+                           .arg(key));
+        }
         return ok(clipFeedback(ref));
     }
 

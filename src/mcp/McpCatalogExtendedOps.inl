@@ -692,7 +692,7 @@
           "type is color in list_effects. Not validated — an unknown key or bad index still returns ok.",
           objectSchema(mergeProps({{QStringLiteral("index"), effectIndexProp()},
                                    {QStringLiteral("key"), stringProp(QStringLiteral("Parameter key from list_effects"))},
-                                   {QStringLiteral("value"), stringProp(QStringLiteral("Color #RRGGBB or #AARRGGBB"))}},
+                                   {QStringLiteral("value"), stringProp(QStringLiteral("Color #RRGGBB; alpha is not carried, effect colours bind as vec3"))}},
                                   clipRefProps()),
                        {QStringLiteral("index"), QStringLiteral("key"), QStringLiteral("value")}) },
         { "set_audio_effect_enabled", "effects", "Toggle audio effect",

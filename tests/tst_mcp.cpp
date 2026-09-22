@@ -77,6 +77,7 @@ private slots:
     void textResultRoundsNumbers();
     void validateRejectsWrongType();
     void validateEnumAndRange();
+    void effectParamWritesRejectUnknownKeys();
     void unknownOpSuggests();
     void listEffectsCompactAndById();
     void listEmojiHasIds();
@@ -3430,6 +3431,53 @@ void McpTest::validateEnumAndRange()
     QCOMPARE(outside.value(QStringLiteral("error")).toString(), QStringLiteral("bad_args"));
     QVERIFY2(outside.value(QStringLiteral("detail")).toString().startsWith(QStringLiteral("at=500 is outside clip [0, ")),
              qPrintable(outside.value(QStringLiteral("detail")).toString()));
+}
+
+// These writes used to return ok whatever you sent them: a misspelt key was stored in the project
+// as a stray parameter the renderer ignored, so a build could drift for an hour before anyone
+// noticed a setting had never taken.
+void McpTest::effectParamWritesRejectUnknownKeys()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    state.addTextClip(QStringLiteral("Hello"), 0.0);
+    drift::mcp::McpDispatcher dispatcher(&state);
+
+    const QJsonObject added = dispatcher.applyOne(
+        QStringLiteral("add_effect"),
+        {{QStringLiteral("track"), 0}, {QStringLiteral("index"), 0},
+         {QStringLiteral("effect"), QStringLiteral("adjust.contrast")}});
+    QVERIFY2(added.value(QStringLiteral("ok")).toBool(),
+             qPrintable(QJsonDocument(added).toJson(QJsonDocument::Compact)));
+
+    // A real parameter still works.
+    const QJsonObject good = dispatcher.applyOne(
+        QStringLiteral("set_effect_param"),
+        {{QStringLiteral("track"), 0}, {QStringLiteral("index"), 0},
+         {QStringLiteral("key"), QStringLiteral("contrast")}, {QStringLiteral("value"), 1.4}});
+    QVERIFY2(good.value(QStringLiteral("ok")).toBool(),
+             qPrintable(QJsonDocument(good).toJson(QJsonDocument::Compact)));
+
+    // A misspelt one does not.
+    const QJsonObject typo = dispatcher.applyOne(
+        QStringLiteral("set_effect_param"),
+        {{QStringLiteral("track"), 0}, {QStringLiteral("index"), 0},
+         {QStringLiteral("key"), QStringLiteral("contrastt")}, {QStringLiteral("value"), 1.4}});
+    QCOMPARE(typo.value(QStringLiteral("error")).toString(), QStringLiteral("not_found"));
+    QVERIFY2(typo.value(QStringLiteral("detail")).toString().contains(QStringLiteral("contrastt")),
+             qPrintable(typo.value(QStringLiteral("detail")).toString()));
+
+    // Neither does a stack index that is not there.
+    const QJsonObject badIndex = dispatcher.applyOne(
+        QStringLiteral("set_effect_param"),
+        {{QStringLiteral("track"), 0}, {QStringLiteral("index"), 7},
+         {QStringLiteral("key"), QStringLiteral("contrast")}, {QStringLiteral("value"), 1.4}});
+    QCOMPARE(badIndex.value(QStringLiteral("error")).toString(), QStringLiteral("not_found"));
+
+    // And the typo was not left behind in the project.
+    const QJsonObject row = state.mcpInspect({true, true, false, false, 0, 0, QString()});
+    QVERIFY2(!QJsonDocument(row).toJson(QJsonDocument::Compact).contains("contrastt"),
+             "the rejected key was stored anyway");
 }
 
 void McpTest::unknownOpSuggests()

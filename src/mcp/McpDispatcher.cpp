@@ -1413,9 +1413,17 @@ QJsonObject McpDispatcher::opSetEffectParam(const QJsonObject &args)
     const ClipRef ref = resolveClip(args);
     if (!ref.valid())
         return clipRefError(args);
-    m_controller->setEffectParam(ref.track, ref.clip, jsonInt(args.value(QStringLiteral("index"))),
-                                 args.value(QStringLiteral("key")).toString(),
-                                 jsonNumber(args.value(QStringLiteral("value")), 0));
+    const int index = jsonInt(args.value(QStringLiteral("index")));
+    const QString key = args.value(QStringLiteral("key")).toString();
+    if (!m_controller->setEffectParam(ref.track, ref.clip, index, key,
+                                      jsonNumber(args.value(QStringLiteral("value")), 0))) {
+        return err("not_found",
+                   QStringLiteral("no parameter '%1' on effect %2 — check the stack index in "
+                                  "inspect({clips:true, detail:true}) and the parameter names in "
+                                  "list_effects({id})")
+                       .arg(key)
+                       .arg(index));
+    }
     return ok(clipFeedback(ref));
 }
 
@@ -1478,9 +1486,17 @@ QJsonObject McpDispatcher::opSetAudioEffectParam(const QJsonObject &args)
     const ClipRef ref = resolveClip(args);
     if (!ref.valid())
         return clipRefError(args);
-    m_controller->setAudioEffectParam(ref.track, ref.clip, jsonInt(args.value(QStringLiteral("index"))),
-                                      args.value(QStringLiteral("key")).toString(),
-                                      jsonNumber(args.value(QStringLiteral("value")), 0));
+    const int index = jsonInt(args.value(QStringLiteral("index")));
+    const QString key = args.value(QStringLiteral("key")).toString();
+    if (!m_controller->setAudioEffectParam(ref.track, ref.clip, index, key,
+                                           jsonNumber(args.value(QStringLiteral("value")), 0))) {
+        return err("not_found",
+                   QStringLiteral("no parameter '%1' on audio effect %2 — check the stack index in "
+                                  "inspect({clips:true, detail:true}) and the parameter names in "
+                                  "list_audio_effects({id})")
+                       .arg(key)
+                       .arg(index));
+    }
     return ok(clipFeedback(ref));
 }
 
