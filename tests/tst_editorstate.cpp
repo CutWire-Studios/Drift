@@ -94,6 +94,7 @@ private slots:
     void undoBookmarkAdd();
     void bookmarkNavigationAndToggle();
     void editPointNavigationWalksEveryClipEdge();
+    void arrowKeysJogAndJumpThePlayhead();
     void splitLeftRightUndoRestoresTheDiscardedHalf();
     void deleteLeftRightActionsCutAtThePlayhead();
     void playbackRateStepsThroughTheOfferedRates();
@@ -437,6 +438,59 @@ void EditorStateTest::editPointNavigationWalksEveryClipEdge()
     state.setPlayheadSeconds(5.0);
     state.triggerAction(QStringLiteral("goToStart"));
     QCOMPARE(state.playheadSeconds(), 0.0);
+}
+
+void EditorStateTest::arrowKeysJogAndJumpThePlayhead()
+{
+    // Isolated from whatever the host has stored under shortcuts/.
+    const QString org = QCoreApplication::organizationName();
+    const QString app = QCoreApplication::applicationName();
+    QCoreApplication::setOrganizationName(QStringLiteral("DriftTest"));
+    QCoreApplication::setApplicationName(QStringLiteral("DriftTestArrowKeys"));
+    const auto restore = qScopeGuard([&] {
+        QSettings().remove(QStringLiteral("shortcuts"));
+        QCoreApplication::setOrganizationName(org);
+        QCoreApplication::setApplicationName(app);
+    });
+    QSettings().remove(QStringLiteral("shortcuts"));
+
+    AssetLibrary library;
+    AppController state(&library);
+    state.addTextClip(QStringLiteral("Pad"), 0.0);
+    state.setClipDuration(0, 0, 30.0);
+
+    QCOMPARE(state.shortcutFor(QStringLiteral("stepBack")), QStringLiteral("Left"));
+    QCOMPARE(state.shortcutFor(QStringLiteral("stepForward")), QStringLiteral("Right"));
+    QCOMPARE(state.shortcutFor(QStringLiteral("jumpBack")), QStringLiteral("Shift+Left"));
+    QCOMPARE(state.shortcutFor(QStringLiteral("jumpForward")), QStringLiteral("Shift+Right"));
+    QCOMPARE(state.shortcutFor(QStringLiteral("jumpBackFar")), QStringLiteral("Ctrl+Left"));
+    QCOMPARE(state.shortcutFor(QStringLiteral("jumpForwardFar")), QStringLiteral("Ctrl+Right"));
+
+    state.setPlayheadSeconds(15.0);
+    QVERIFY(state.handleArrowShortcut(Qt::Key_Left, Qt::NoModifier));
+    QVERIFY(state.playheadSeconds() < 15.0);
+    state.setPlayheadSeconds(15.0);
+    QVERIFY(state.handleArrowShortcut(Qt::Key_Right, Qt::NoModifier));
+    QVERIFY(state.playheadSeconds() > 15.0);
+
+    state.setPlayheadSeconds(15.0);
+    QVERIFY(state.handleArrowShortcut(Qt::Key_Left, Qt::ShiftModifier));
+    QCOMPARE(state.playheadSeconds(), 14.0);
+    QVERIFY(state.handleArrowShortcut(Qt::Key_Right, Qt::ShiftModifier));
+    QCOMPARE(state.playheadSeconds(), 15.0);
+
+    QVERIFY(state.handleArrowShortcut(Qt::Key_Left, Qt::ControlModifier));
+    QCOMPARE(state.playheadSeconds(), 5.0);
+    QVERIFY(state.handleArrowShortcut(Qt::Key_Right, Qt::ControlModifier));
+    QCOMPARE(state.playheadSeconds(), 15.0);
+
+    QVERIFY(!state.handleArrowShortcut(Qt::Key_A, Qt::NoModifier));
+    QCOMPARE(state.playheadSeconds(), 15.0);
+
+    state.triggerAction(QStringLiteral("jumpBack"));
+    QCOMPARE(state.playheadSeconds(), 14.0);
+    state.triggerAction(QStringLiteral("jumpForwardFar"));
+    QCOMPARE(state.playheadSeconds(), 24.0);
 }
 
 void EditorStateTest::splitLeftRightUndoRestoresTheDiscardedHalf()

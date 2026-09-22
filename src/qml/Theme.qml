@@ -36,6 +36,17 @@ QtObject {
         return sequence
     }
 
+    // Arrow chords are dispatched from the editor FocusScope after the focused
+    // item, not as ApplicationShortcut — that matcher misses Left/Right on some
+    // Wayland compositors, and would steal the keys from text fields if it did fire.
+    function shortcutSequenceUsesArrowKey(sequence) {
+        if (!sequence || sequence.length === 0)
+            return false
+        const parts = sequence.split("+")
+        const key = parts[parts.length - 1]
+        return key === "Left" || key === "Right" || key === "Up" || key === "Down"
+    }
+
     function shortcutDisplay(sequence) {
         if (!sequence || sequence.length === 0)
             return ""

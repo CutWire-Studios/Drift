@@ -1490,6 +1490,15 @@ public:
     // Restores every default binding. Backspace clears a binding and persists the
     // empty string, so without this there was no route back from having cleared one.
     Q_INVOKABLE void resetShortcuts();
+    // Canonical chord string for a key event (Ctrl+Shift+Left, …). Same names the
+    // Shortcut items and the shortcut-capture field use, so a rebound chord still
+    // matches when it is dispatched from Keys.onPressed rather than Shortcut {}.
+    Q_INVOKABLE QString shortcutChord(int key, int modifiers) const;
+    // Dispatches the action bound to this arrow-key chord. ApplicationShortcut
+    // matching for Left/Right is unreliable on some Wayland compositors (Hyprland /
+    // Omarchy), and would also steal the keys from text fields; the editor handles
+    // those chords after the focused item instead. Returns true when an action ran.
+    Q_INVOKABLE bool handleArrowShortcut(int key, int modifiers);
     Q_INVOKABLE void triggerAction(const QString &actionId);
     // Per-tab favorites in the assets panel (effects, sounds, shapes, stickers, transitions, templates).
     Q_INVOKABLE bool isAssetFavorite(const QString &tabId, const QString &itemId) const;

@@ -897,8 +897,9 @@ ApplicationWindow {
                 // triggerAction Connections below), which already gate on a pending load
                 // and unsaved changes — the same functions the start screen's own tiles
                 // call — so there is nothing editing-shaped about letting them through.
-                enabled: modelData.id === "newProject" || modelData.id === "open"
-                         || !window.showStartScreen
+                enabled: (modelData.id === "newProject" || modelData.id === "open"
+                         || !window.showStartScreen)
+                         && !Theme.shortcutSequenceUsesArrowKey(modelData.shortcut)
                 onActivated: {
                     if (modelData.id === "clearSelection"
                             && timelinePanel.visible
@@ -949,6 +950,22 @@ ApplicationWindow {
             assetsPanel.showTab("shortcuts")
         }
     }
+
+    // Arrow-key actions (frame step, 1s/10s jump, Alt-nudge, Alt cut-point)
+    // are handled here rather than as ApplicationShortcut. The focused item
+    // sees the key first — text fields keep their cursor, overlay handles keep
+    // their nudge — and only an unaccepted arrow bubbles up. ApplicationShortcut
+    // matching for Left/Right is also a no-op on several Wayland compositors
+    // (Hyprland / Omarchy), which is what made the keys look completely dead.
+    FocusScope {
+        id: editorScope
+        anchors.fill: parent
+        enabled: !window.showStartScreen
+        focus: true
+        Keys.onPressed: function(event) {
+            if (EditorState.handleArrowShortcut(event.key, event.modifiers))
+                event.accepted = true
+        }
 
     Column {
         anchors.fill: parent
@@ -1144,6 +1161,7 @@ ApplicationWindow {
                 // portrait workspace is active.
             }
         }
+    }
     }
 
     // Startup only: replaces a fresh empty project when "Reopen last project on

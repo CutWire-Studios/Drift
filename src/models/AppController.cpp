@@ -3902,13 +3902,20 @@ QHash<QString, QString> defaultShortcuts()
         {QStringLiteral("nudgeLeft"), QStringLiteral("Alt+Left")},
         {QStringLiteral("nudgeRight"), QStringLiteral("Alt+Right")},
         // Cut-point navigation joins the nudge pair on Alt+arrow rather than taking the bare
-        // Up/Down that Premiere uses: an application-context Shortcut is resolved before the
-        // key reaches the focused item, so bare arrows would swallow the number-field spinners
-        // and the list navigation in the font, track and asset pickers.
+        // Up/Down that Premiere uses. Arrow chords are dispatched from the editor FocusScope
+        // after the focused item, so number-field spinners and list navigation still see
+        // unmodified arrows; ApplicationShortcut would fire first and swallow them.
         {QStringLiteral("previousEdit"), QStringLiteral("Alt+Up")},
         {QStringLiteral("nextEdit"), QStringLiteral("Alt+Down")},
-        {QStringLiteral("stepBack"), QStringLiteral("Shift+Left")},
-        {QStringLiteral("stepForward"), QStringLiteral("Shift+Right")},
+        // Timeline jog: one frame, one second, ten seconds. These used to live on
+        // Shift+Left/Right as ApplicationShortcut, which never fired on several
+        // Wayland compositors (notably Hyprland / Omarchy) and left the keys inert.
+        {QStringLiteral("stepBack"), QStringLiteral("Left")},
+        {QStringLiteral("stepForward"), QStringLiteral("Right")},
+        {QStringLiteral("jumpBack"), QStringLiteral("Shift+Left")},
+        {QStringLiteral("jumpForward"), QStringLiteral("Shift+Right")},
+        {QStringLiteral("jumpBackFar"), QStringLiteral("Ctrl+Left")},
+        {QStringLiteral("jumpForwardFar"), QStringLiteral("Ctrl+Right")},
         {QStringLiteral("goToStart"), QStringLiteral("Home")},
         // Premiere's ripple-trim-to-playhead keys, which is exactly what these do.
         {QStringLiteral("deleteLeft"), QStringLiteral("Q")},
@@ -5184,6 +5191,10 @@ QVariantList AppController::actions() const
         action(QStringLiteral("nextEdit"), tr("Go to next cut point")),
         action(QStringLiteral("stepBack"), tr("Step back one frame")),
         action(QStringLiteral("stepForward"), tr("Step forward one frame")),
+        action(QStringLiteral("jumpBack"), tr("Jump back 1 second")),
+        action(QStringLiteral("jumpForward"), tr("Jump forward 1 second")),
+        action(QStringLiteral("jumpBackFar"), tr("Jump back 10 seconds")),
+        action(QStringLiteral("jumpForwardFar"), tr("Jump forward 10 seconds")),
         action(QStringLiteral("goToStart"), tr("Go to start of timeline")),
         action(QStringLiteral("deleteLeft"), tr("Delete left of the playhead")),
         action(QStringLiteral("deleteRight"), tr("Delete right of the playhead")),
@@ -18590,6 +18601,75 @@ void AppController::resetShortcuts()
     emit shortcutsChanged();
 }
 
+QString AppController::shortcutChord(int key, int modifiers) const
+{
+    QString name;
+    switch (key) {
+    case Qt::Key_Escape:    name = QStringLiteral("Escape"); break;
+    case Qt::Key_Backspace: name = QStringLiteral("Backspace"); break;
+    case Qt::Key_Return:    name = QStringLiteral("Return"); break;
+    case Qt::Key_Enter:     name = QStringLiteral("Enter"); break;
+    case Qt::Key_Insert:    name = QStringLiteral("Insert"); break;
+    case Qt::Key_Delete:    name = QStringLiteral("Delete"); break;
+    case Qt::Key_Home:      name = QStringLiteral("Home"); break;
+    case Qt::Key_End:       name = QStringLiteral("End"); break;
+    case Qt::Key_Left:      name = QStringLiteral("Left"); break;
+    case Qt::Key_Up:        name = QStringLiteral("Up"); break;
+    case Qt::Key_Right:     name = QStringLiteral("Right"); break;
+    case Qt::Key_Down:      name = QStringLiteral("Down"); break;
+    case Qt::Key_PageUp:    name = QStringLiteral("PageUp"); break;
+    case Qt::Key_PageDown:  name = QStringLiteral("PageDown"); break;
+    case Qt::Key_Space:     name = QStringLiteral("Space"); break;
+    case Qt::Key_Tab:       name = QStringLiteral("Tab"); break;
+    case Qt::Key_Shift:
+    case Qt::Key_Control:
+    case Qt::Key_Alt:
+    case Qt::Key_Meta:
+        return {};
+    default:
+        if (key >= Qt::Key_F1 && key <= Qt::Key_F12)
+            name = QStringLiteral("F%1").arg(key - Qt::Key_F1 + 1);
+        else if (key >= Qt::Key_0 && key <= Qt::Key_9)
+            name = QChar(QLatin1Char(char(key)));
+        else if (key >= Qt::Key_A && key <= Qt::Key_Z)
+            name = QChar(QLatin1Char(char(key)));
+        break;
+    }
+    if (name.isEmpty())
+        return {};
+
+    QStringList parts;
+    const auto mods = Qt::KeyboardModifiers(modifiers);
+    if (mods & Qt::ControlModifier)
+        parts << QStringLiteral("Ctrl");
+    if (mods & Qt::AltModifier)
+        parts << QStringLiteral("Alt");
+    if (mods & Qt::ShiftModifier)
+        parts << QStringLiteral("Shift");
+    if (mods & Qt::MetaModifier)
+        parts << QStringLiteral("Meta");
+    parts << name;
+    return parts.join(QLatin1Char('+'));
+}
+
+bool AppController::handleArrowShortcut(int key, int modifiers)
+{
+    if (key != Qt::Key_Left && key != Qt::Key_Right && key != Qt::Key_Up && key != Qt::Key_Down)
+        return false;
+
+    const QString chord = shortcutChord(key, modifiers);
+    if (chord.isEmpty())
+        return false;
+
+    for (auto it = m_shortcuts.cbegin(); it != m_shortcuts.cend(); ++it) {
+        if (it.value() != chord)
+            continue;
+        triggerAction(it.key());
+        return true;
+    }
+    return false;
+}
+
 void AppController::loadAssetFavorites()
 {
     m_assetFavorites.clear();
@@ -18716,6 +18796,14 @@ void AppController::triggerAction(const QString &actionId)
         stepFrames(-1);
     else if (actionId == QStringLiteral("stepForward"))
         stepFrames(1);
+    else if (actionId == QStringLiteral("jumpBack"))
+        jumpSeconds(-1.0);
+    else if (actionId == QStringLiteral("jumpForward"))
+        jumpSeconds(1.0);
+    else if (actionId == QStringLiteral("jumpBackFar"))
+        jumpSeconds(-10.0);
+    else if (actionId == QStringLiteral("jumpForwardFar"))
+        jumpSeconds(10.0);
     else if (actionId == QStringLiteral("goToStart"))
         setPlayheadUs(0);
     else if (actionId == QStringLiteral("deleteLeft"))
