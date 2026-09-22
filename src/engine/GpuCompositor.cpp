@@ -14,6 +14,7 @@
 #include "MaskApplier.h"
 
 #include <QMatrix4x4>
+#include <QMutex>
 #include <QMutexLocker>
 #include <QOpenGLShaderProgram>
 #include <QVector2D>
@@ -1079,15 +1080,44 @@ QString zeroCopyDeclineReason()
     return GlRuntime::lastZeroCopyDeclineReason();
 }
 
-bool previewGpuIsLimited()
+namespace {
+
+bool computePreviewGpuIsLimited(const drift::gl::GlStatusInfo &info)
 {
-    const drift::gl::GlStatusInfo info = status();
     if (drift::gl::isLimitedPreviewRenderer(info.renderer))
         return true;
     if (drift::gpu::isLimitedPreviewGpu(drift::gpu::renderPciId(info.vendor)))
         return true;
     const QList<drift::gpu::Adapter> gpus = drift::gpu::enumerateAdapters();
     return gpus.size() == 1 && drift::gpu::isLimitedPreviewGpu(gpus.first().pci());
+}
+
+} // namespace
+
+bool previewGpuIsLimited()
+{
+    // CompositorService::maxInFlight() asks on every dispatch, and the uncached
+    // answer takes two mutexes and copies the adapter list. Latch it as soon as GL
+    // has a renderer string — that answer cannot change under a live context. Until
+    // then the PCI fallback answers and stays uncached, so the renderer string can
+    // still correct a guess made before the context came up.
+    static QMutex mutex;
+    static bool latched = false;
+    static bool latchedValue = false;
+    {
+        QMutexLocker lock(&mutex);
+        if (latched)
+            return latchedValue;
+    }
+
+    const drift::gl::GlStatusInfo info = status();
+    const bool limited = computePreviewGpuIsLimited(info);
+    if (!info.renderer.isEmpty()) {
+        QMutexLocker lock(&mutex);
+        latched = true;
+        latchedValue = limited;
+    }
+    return limited;
 }
 
 QImage render(const GpuScene &scene)

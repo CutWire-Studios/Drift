@@ -1106,7 +1106,11 @@ bool GlRuntime::initGlObjects()
         return false;
     }
 
-    setGlStatus(describeContext(context.get(), gl, drift::gl::GlStatus::Ready));
+    const drift::gl::GlStatusInfo ready = describeContext(context.get(), gl, drift::gl::GlStatus::Ready);
+    setGlStatus(ready);
+    // Decided once, here, rather than per frame: the renderer string cannot change
+    // under a live context, and the upload path that reads it runs on this thread.
+    m_limitedPreviewGpu = drift::gl::isLimitedPreviewRenderer(ready.renderer);
     // Only EGL can say which DRM device a context draws through, and only while it is current.
     // Record it here so the decode side can ask from any thread later.
     drift::gpu::probeRenderDrmNode();
@@ -1727,9 +1731,12 @@ bool GlRuntime::waitPresentFence(int slotIndex, GLuint64 timeoutNs)
     const GLenum result = gl->glClientWaitSync(fence, GL_SYNC_FLUSH_COMMANDS_BIT, timeoutNs);
     if (result == GL_TIMEOUT_EXPIRED)
         return false;
+    // Anything else consumed the fence, including GL_WAIT_FAILED. Report the slot as
+    // reusable: the sync object is gone either way, so refusing it would take the slot
+    // out of the ring for good and a broken driver would stall the preview permanently.
     gl->glDeleteSync(fence);
     fence = nullptr;
-    return result != GL_WAIT_FAILED;
+    return true;
 }
 
 GlTarget &GlRuntime::preparePresentSlot(int slotIndex, int width, int height)
@@ -3105,8 +3112,12 @@ GlTarget promoteVideoFrameToTarget(GlRuntime &rt, QOpenGLExtraFunctions *gl,
             return {};
         if (!rt.uploadPlanePbo(gl, rt.m_videoY, w, h, GL_R8, GL_RED, nv12->data[0], nv12->linesize[0], w)
             || !rt.uploadPlanePbo(gl, rt.m_videoUV, w / 2, h / 2, GL_RG8, GL_RG, nv12->data[1],
-                                  nv12->linesize[1], w)
-            || !rt.waitLatestVideoUploads(gl, 2))
+                                  nv12->linesize[1], w))
+            return {};
+        // Only the chips that sample a still-pending PBO pay for this. Draining both
+        // plane uploads costs a frame of pipelining, so every other GPU relies on the
+        // per-buffer fences in uploadPlanePbo instead.
+        if (rt.m_limitedPreviewGpu && !rt.waitLatestVideoUploads(gl, 2))
             return {};
         texY = rt.m_videoY;
         texUV = rt.m_videoUV;

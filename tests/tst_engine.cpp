@@ -10101,10 +10101,15 @@ void EngineTest::limitedPreviewGpusAreRecognised()
         QStringLiteral("Mesa Intel(R) HD Graphics 4000 (IVB GT2)")));
     QVERIFY(drift::gl::isLimitedPreviewRenderer(QStringLiteral("Intel(R) HD Graphics 2000")));
     QVERIFY(drift::gl::isLimitedPreviewRenderer(QStringLiteral("Sandy Bridge")));
+    // Xeon parts of the same two generations: same silicon, same flashing, and their
+    // renderer string never contains the consumer name.
+    QVERIFY(drift::gl::isLimitedPreviewRenderer(QStringLiteral("Intel(R) HD Graphics P4000")));
+    QVERIFY(drift::gl::isLimitedPreviewRenderer(QStringLiteral("Intel(R) HD Graphics P3000")));
 
     QVERIFY(!drift::gl::isLimitedPreviewRenderer(QStringLiteral("Mesa Intel(R) UHD Graphics (CML GT2)")));
     QVERIFY(!drift::gl::isLimitedPreviewRenderer(QStringLiteral("Intel(R) HD Graphics 520")));
     QVERIFY(!drift::gl::isLimitedPreviewRenderer(QStringLiteral("Intel(R) HD Graphics 4600")));
+    QVERIFY(!drift::gl::isLimitedPreviewRenderer(QStringLiteral("Intel(R) HD Graphics P530")));
     QVERIFY(!drift::gl::isLimitedPreviewRenderer(QStringLiteral("NVIDIA GeForce RTX 3060/PCIe/SSE2")));
     QVERIFY(!drift::gl::isLimitedPreviewRenderer(QString()));
 

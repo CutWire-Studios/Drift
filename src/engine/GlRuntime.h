@@ -300,6 +300,8 @@ private:
     bool waitPresentFence(int slotIndex, GLuint64 timeoutNs);
     GlTarget &preparePresentSlot(int slotIndex, int width, int height);
     bool waitVideoPboFence(QOpenGLExtraFunctions *gl, int index);
+    // Blocks until the GPU has consumed the `count` most recent plane uploads.
+    // Only the limited-preview Intel parts need it — see m_limitedPreviewGpu.
     bool waitLatestVideoUploads(QOpenGLExtraFunctions *gl, int count);
     void destroyImageUploadCache();
     void destroyVideoUploadState();
@@ -383,10 +385,18 @@ private:
     // Two planes per frame × two in-flight composites. A two-PBO ring reused
     // both buffers inside one frame, so the next upload remapped a PBO the GPU
     // was still reading and the convert shader sampled empty chroma (green).
+    // The per-buffer fences below keep the uploads pipelined: a buffer is only
+    // remapped once its own upload has landed, without stalling on the others.
     static constexpr int kVideoPboCount = 4;
     GLuint m_videoPbo[kVideoPboCount] = {};
     GLsync m_videoPboFence[kVideoPboCount] = {};
     int m_videoPboIndex = 0;
+    // Sandy/Ivy Intel: the driver lets the convert shader sample a PBO it has not
+    // finished reading, so this path waits out both plane uploads before drawing.
+    // Every other GPU keeps them in flight — the wait costs a full frame of
+    // pipelining and only these chips need it. Written once on the GL thread when
+    // the context comes up, read on the GL thread while compositing.
+    bool m_limitedPreviewGpu = false;
     AVFrame *m_hwImportStaging = nullptr;
     AVFrame *m_importNv12 = nullptr;
     ::SwsContext *m_importSws = nullptr;
