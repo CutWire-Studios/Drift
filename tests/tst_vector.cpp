@@ -88,6 +88,7 @@ private slots:
     void slotOverrideRecolours();
     void fitModes();
     void loopModes();
+    void foldStopsOnTheLastDrawnFrame();
     void svgStillRenders();
     void svgScanListsElementsAndMintsIds();
     void svgOverridesRecolour();
@@ -277,6 +278,44 @@ void VectorTest::fitModes()
     QVERIFY(stretch.isValid());
     QVERIFY2(qAbs(stretch.width() - 40) <= 2 && qAbs(stretch.height() - 80) <= 2 && qAbs(stretch.center().x() - 30) <= 2,
              qPrintable(QStringLiteral("%1,%2 %3x%4").arg(stretch.x()).arg(stretch.y()).arg(stretch.width()).arg(stretch.height())));
+}
+
+// A Lottie layer is live over [ip, op): the out point is one past the last frame that draws. So a
+// fold that lands exactly on the duration asks Skottie for a frame outside every layer's range.
+// With the document's frame length supplied, no loop mode may return that time.
+void VectorTest::foldStopsOnTheLastDrawnFrame()
+{
+    using namespace drift;
+    const TimeUs duration = secondsToUs(2.0); // 60 frames at 30fps
+    const TimeUs frame = secondsToUs(1.0 / 30.0);
+    const TimeUs lastDrawn = duration - frame;
+    TimeUs out = -1;
+
+    // Hold parks on the last drawn frame, not one past the end.
+    QVERIFY(foldVectorTime(secondsToUs(5.0), duration, VectorLoop::Hold, &out, frame));
+    QCOMPARE(out, lastDrawn);
+
+    // Without a frame length the old behaviour stands, for continuously sampled sources such as a
+    // 3D rig's pose, where there is no "last frame" to stop on.
+    QVERIFY(foldVectorTime(secondsToUs(5.0), duration, VectorLoop::Hold, &out));
+    QCOMPARE(out, duration);
+
+    // The loop still cycles on the full duration; only the final sliver is pulled back.
+    QVERIFY(foldVectorTime(secondsToUs(2.5), duration, VectorLoop::Loop, &out, frame));
+    QCOMPARE(out, secondsToUs(0.5));
+    QVERIFY(foldVectorTime(duration - 1, duration, VectorLoop::Loop, &out, frame));
+    QCOMPARE(out, lastDrawn);
+
+    // Ping-pong keeps its turn on the duration, so the bounce timing is unchanged.
+    QVERIFY(foldVectorTime(secondsToUs(3.0), duration, VectorLoop::PingPong, &out, frame));
+    QCOMPARE(out, secondsToUs(1.0));
+    QVERIFY(foldVectorTime(duration, duration, VectorLoop::PingPong, &out, frame));
+    QCOMPARE(out, lastDrawn);
+
+    // Hide still refuses anything past the end, and clamps what it accepts.
+    QVERIFY(!foldVectorTime(duration + 1, duration, VectorLoop::Hide, &out, frame));
+    QVERIFY(foldVectorTime(duration, duration, VectorLoop::Hide, &out, frame));
+    QCOMPARE(out, lastDrawn);
 }
 
 void VectorTest::loopModes()
