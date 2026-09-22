@@ -306,6 +306,7 @@ private slots:
     void audioEffectCatalogLoadsPackages();
     void audioEffectFactoryBuildsEveryCatalogEntry();
     void audioEffectChainAltersSignal();
+    void limiterHoldsTheCeilingInsteadOfAddingGain();
     void audioEffectChainBypassesUnknownEffect();
     void audioEffectStreamIsContinuousAcrossBlocks();
     void audioEffectFlangerProcessesSignal();
@@ -9305,6 +9306,48 @@ void EngineTest::audioEffectChainAltersSignal()
     QVERIFY2(outRms < inRms * 0.6,
              qPrintable(QStringLiteral("in=%1 out=%2").arg(inRms).arg(outRms)));
     QVERIFY2(outRms > 1e-4, "output is silent — the rack likely failed to build");
+}
+
+// The limiter was built on juce::dsp::Limiter, which is a loudness maximiser: it applies a fixed
+// +3.75 dB plus -threshold dB of automatic makeup. Mapping avfilter's linear `limit` (a ceiling)
+// onto its threshold therefore made the stage *add* about 4 dB at the default ceiling of 0.95, and
+// lowering the ceiling to limit harder added more still.
+void EngineTest::limiterHoldsTheCeilingInsteadOfAddingGain()
+{
+    constexpr int kRate = 48000;
+    constexpr int kFrames = 8192;
+
+    const auto limited = [&](float amplitude, double ceiling) {
+        drift::Effect limiter;
+        limiter.catalogId = QStringLiteral("utility.limiter");
+        limiter.parameters.insert(QStringLiteral("ceiling"), ceiling);
+        const QVector<float> tone = stereoTone(kFrames, 440.0, kRate, amplitude);
+        return runRack({limiter}, tone.constData(), kFrames, kRate);
+    };
+
+    // Well under the ceiling: the stage must be transparent, not a 4 dB boost.
+    const QVector<float> quiet = limited(0.2f, 0.95);
+    QCOMPARE(quiet.size(), kFrames * 2);
+    float quietPeak = 0.0f;
+    for (float s : quiet) {
+        QVERIFY(std::isfinite(s));
+        quietPeak = qMax(quietPeak, std::abs(s));
+    }
+    QVERIFY2(quietPeak < 0.22f,
+             qPrintable(QStringLiteral("a 0.2 signal came out at %1").arg(quietPeak)));
+
+    // Over the ceiling: nothing may exceed it, at either setting. Skip the first samples, where
+    // the drive ramp is still settling.
+    for (const double ceiling : {0.95, 0.5}) {
+        const QVector<float> loud = limited(1.0f, ceiling);
+        float peak = 0.0f;
+        for (int i = kRate / 10 * 2; i < loud.size(); ++i)
+            peak = qMax(peak, std::abs(loud.at(i)));
+        QVERIFY2(peak <= float(ceiling) + 1e-3f,
+                 qPrintable(QStringLiteral("ceiling %1 let %2 through").arg(ceiling).arg(peak)));
+        QVERIFY2(peak > float(ceiling) * 0.7f,
+                 qPrintable(QStringLiteral("ceiling %1 crushed the signal to %2").arg(ceiling).arg(peak)));
+    }
 }
 
 void EngineTest::audioEffectChainBypassesUnknownEffect()
