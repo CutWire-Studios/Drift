@@ -316,6 +316,7 @@ private slots:
     void audioAdjustmentLanesAndMasterBus();
     void audioEffectRackReportsChainRebuilds();
     void onsetsDetectClickTrackTempo();
+    void onsetsResistHalfTimeOnAlternatingBeats();
     void onsetsIgnoreSilence();
 
     void sceneCutsFindIsolatedSpikes();
@@ -9799,6 +9800,52 @@ void EngineTest::audioFileWriterRoundTripsThroughClipReader()
     // 0.5 amplitude sine -> 0.3536 RMS. FLAC is lossless, so this is tight.
     QVERIFY2(std::abs(outRms - 0.3536) < 0.02,
              qPrintable(QStringLiteral("round-tripped RMS %1").arg(outRms)));
+}
+
+// Real music alternates strong and weak beats, and that is exactly where an autocorrelation
+// tempo detector goes wrong: the lag between two *strong* beats correlates better than the lag
+// between adjacent beats, so the detector locks to half the tempo and reports it with full
+// confidence. The identical-click fixture above cannot catch this, because every click is the
+// same and the 2x lag carries no extra energy.
+void EngineTest::onsetsResistHalfTimeOnAlternatingBeats()
+{
+    constexpr int kRate = 22050;
+    constexpr double kPeriod = 0.5; // 120 BPM
+    constexpr int kClicks = 40;
+    constexpr int kFrames = int(kRate * kPeriod * kClicks);
+
+    std::vector<float> pcm(kFrames, 0.0f);
+    std::mt19937 rng(4321);
+    std::uniform_real_distribution<float> noise(-1.0f, 1.0f);
+    for (int c = 0; c < kClicks; ++c) {
+        const int at = int(c * kPeriod * kRate);
+        // Off-beats at a fifth of the downbeat: enough contrast that the lag between two
+        // downbeats out-correlates the lag between adjacent beats, which is what used to make
+        // the detector report 60.09 BPM here with full confidence.
+        const float accent = (c % 2 == 0) ? 1.0f : 0.2f;
+        for (int i = 0; i < kRate / 20 && at + i < kFrames; ++i)
+            pcm[size_t(at + i)] = accent * noise(rng) * std::exp(-i / (kRate * 0.01f));
+    }
+
+    const AudioBeatAnalysis a = AudioOnsets::analyze(pcm.data(), kFrames, kRate, 0.0);
+
+    QVERIFY2(std::abs(a.bpm - 120.0) < 3.0,
+             qPrintable(QStringLiteral("bpm %1 — half time would report about 60").arg(a.bpm)));
+
+    // The beats have to land on every click, not every other one.
+    QVERIFY(!a.beats.isEmpty());
+    int matched = 0;
+    for (int c = 0; c < kClicks; ++c) {
+        const double expected = c * kPeriod;
+        for (const double beat : a.beats) {
+            if (std::abs(beat - expected) < 0.06) {
+                ++matched;
+                break;
+            }
+        }
+    }
+    QVERIFY2(matched > kClicks * 3 / 4,
+             qPrintable(QStringLiteral("only %1 of %2 clicks got a beat").arg(matched).arg(kClicks)));
 }
 
 void EngineTest::onsetsDetectClickTrackTempo()
