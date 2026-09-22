@@ -210,6 +210,7 @@ private slots:
     void effectPresetStableIds();
     void effectParamTypesMatchShaderUniforms();
     void loudnessMatchesTheStandard();
+    void truePeakSeesBetweenSamples();
     void effectPresetCatalogIncludesStylizePresets();
     void effectBrowserCategories();
     void effectGraphTemplateSubstitution();
@@ -5161,6 +5162,43 @@ void EngineTest::effectPresetStableIds()
 // 1 kHz (+0.69 dB) cancels the -0.691 offset in the formula, so the integrated loudness in LUFS
 // comes out equal to the peak level in dBFS. Cross-checked against ffmpeg's ebur128, which reads
 // -27.1 LUFS / -27.1 dBFS peak for such a tone.
+// True peak is not sample peak. A sine at a quarter of the sample rate, offset an eighth of a
+// cycle, puts every sample at 0.707 of the waveform's real crest — so the peak that matters lives
+// between the samples. The old "4x linear interpolant" could never see it: a straight line between
+// two points stays inside the range they already span, so it reported the sample peak and called
+// it true peak.
+void EngineTest::truePeakSeesBetweenSamples()
+{
+    const int sampleRate = 48000;
+    const qint64 frames = sampleRate;
+
+    const auto measure = [&](double frequency, double amplitude, double phase) {
+        const auto fill = [&](float *out, qint64 frameOffset, int maxFrames) {
+            for (int i = 0; i < maxFrames; ++i) {
+                const double t = double(frameOffset + i) / double(sampleRate);
+                const double v = amplitude * std::sin(2.0 * M_PI * frequency * t + phase);
+                out[i * 2] = float(v);
+                out[i * 2 + 1] = float(v);
+            }
+            return maxFrames;
+        };
+        return drift::measureLoudness(frames, sampleRate, fill);
+    };
+
+    // Every sample sits at -3.01 dBFS; the waveform between them reaches full scale.
+    const drift::LoudnessResult inter = measure(sampleRate / 4.0, 1.0, M_PI / 4.0);
+    QVERIFY(inter.ok);
+    QVERIFY2(inter.truePeakDb > -1.0,
+             qPrintable(QStringLiteral("inter-sample peak read %1 dBFS, expected near 0")
+                            .arg(inter.truePeakDb)));
+
+    // A tone well below Nyquist is sampled densely enough that true peak and sample peak agree.
+    const drift::LoudnessResult plain = measure(1000.0, 0.5, 0.0);
+    QVERIFY(plain.ok);
+    QVERIFY2(qAbs(plain.truePeakDb + 6.02) < 0.5,
+             qPrintable(QStringLiteral("1 kHz -6 dBFS tone read %1 dBFS").arg(plain.truePeakDb)));
+}
+
 void EngineTest::loudnessMatchesTheStandard()
 {
     const int sampleRate = 48000;

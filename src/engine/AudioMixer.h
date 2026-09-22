@@ -26,6 +26,12 @@ public:
     void setProject(const drift::Project *project);
     void resetClipAudioState();
 
+    // The master soft clipper is what playback hears, but a meter has to see the mix before it:
+    // softClip saturates to exactly 1.0f, so anything measured after it reports 0.0 dBFS no matter
+    // how far over the top the mix really is.
+    void setMasterClipEnabled(bool enabled) { m_masterClipEnabled = enabled; }
+    bool masterClipEnabled() const { return m_masterClipEnabled; }
+
     void mix(drift::TimeUs timelineStartUs, int sampleCount, int sampleRate, float *interleavedStereoOut) const;
 
     // One clip's audio in timeline space, with its source read, reverse and speed (constant or
@@ -52,4 +58,5 @@ private:
     // and work on the state with the lock released.
     mutable QMutex m_clipAudioMutex;
     mutable QHash<QString, std::shared_ptr<ClipAudioState>> m_clipAudio;
+    bool m_masterClipEnabled = true;
 };

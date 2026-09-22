@@ -23170,6 +23170,9 @@ drift::LoudnessResult blockingLoudness(const drift::Project &snap, double startS
     (void)QtConcurrent::run([snap, startUs, frames, rate, result, &loop]() {
         AudioMixer mixer;
         mixer.setProject(&snap);
+        // Measure the mix as it is, not as the master clipper leaves it: softClip saturates to
+        // exactly 1.0f, so a peak read after it is 0.0 dBFS however hot the mix really is.
+        mixer.setMasterClipEnabled(false);
         *result = drift::measureLoudness(
             frames, rate, [&mixer, startUs, rate](float *out, qint64 frameOffset, int maxFrames) {
                 const drift::TimeUs at = startUs + frameOffset * drift::kUsPerSecond / rate;

@@ -439,6 +439,8 @@ void AudioMixer::mix(drift::TimeUs timelineStartUs, int sampleCount, int sampleR
             rack.process(interleavedStereoOut, sampleCount);
     }
 
-    for (int i = 0; i < sampleCount * 2; ++i)
-        interleavedStereoOut[i] = softClip(interleavedStereoOut[i]);
+    if (m_masterClipEnabled) {
+        for (int i = 0; i < sampleCount * 2; ++i)
+            interleavedStereoOut[i] = softClip(interleavedStereoOut[i]);
+    }
 }
