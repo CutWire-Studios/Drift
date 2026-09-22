@@ -125,6 +125,7 @@ private slots:
     void snapClipsToBeatsRespectsMaxDistance();
     void setVolumeRoundTrips();
     void writingAtAKeyframeReadbackTimeReusesTheKey();
+    void keyframeWritesStayInsideTheClip();
     void normalizeVolumeIsRelativeAndIdempotent();
     void duckUnderIsIdempotentAndKeepsTheEnvelope();
     void audioReadOpsAreNotUndoable();
@@ -1524,6 +1525,48 @@ void McpTest::normalizeVolumeIsRelativeAndIdempotent()
 // Times come back over MCP rounded to 3 decimals, so a caller that reads a keyframe's time and
 // writes a new value at it is up to 500 us away from the key it means. The write used to mint a
 // second key beside the first, which then fought with it on playback.
+// Keyframe times are relative to the clip, and the write was clamped only at the low end. A write
+// made with the playhead past the clip stored a key beyond its end — one that can never render but
+// still bends the curve up to it — and the whole class of stray keys was invisible until something
+// drifted on screen.
+void McpTest::keyframeWritesStayInsideTheClip()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    drift::mcp::McpDispatcher dispatcher(&state);
+
+    const QJsonObject text = dispatcher.applyOne(
+        QStringLiteral("add_text"),
+        {{QStringLiteral("text"), QStringLiteral("A")}, {QStringLiteral("at"), 2.0}});
+    QVERIFY(text.value(QStringLiteral("ok")).toBool());
+    const QString clip = text.value(QStringLiteral("id")).toString();
+    const double start = text.value(QStringLiteral("start")).toDouble();
+    const double end = start + text.value(QStringLiteral("dur")).toDouble();
+    QVERIFY(end > start);
+
+    // Well past the end, and well before the start.
+    for (const double at : {end + 5.0, start - 5.0}) {
+        QVERIFY(dispatcher
+                    .applyOne(QStringLiteral("set_keyframe"),
+                              {{QStringLiteral("clip"), clip},
+                               {QStringLiteral("prop"), QStringLiteral("opacity")},
+                               {QStringLiteral("at"), at}, {QStringLiteral("value"), 0.5}})
+                    .value(QStringLiteral("ok"))
+                    .toBool());
+    }
+
+    const QJsonObject keys = dispatcher.applyOne(
+        QStringLiteral("list_keyframes"),
+        {{QStringLiteral("clip"), clip}, {QStringLiteral("prop"), QStringLiteral("opacity")}});
+    QVERIFY(keys.value(QStringLiteral("ok")).toBool());
+    for (const QJsonValue &v : keys.value(QStringLiteral("keys")).toArray()) {
+        const double at = v.toObject().value(QStringLiteral("seconds")).toDouble();
+        QVERIFY2(at >= start - 1e-6 && at <= end + 1e-6,
+                 qPrintable(QStringLiteral("key at %1 is outside the clip [%2, %3]")
+                                .arg(at).arg(start).arg(end)));
+    }
+}
+
 void McpTest::writingAtAKeyframeReadbackTimeReusesTheKey()
 {
     AssetLibrary library;

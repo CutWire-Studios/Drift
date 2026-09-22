@@ -15432,7 +15432,11 @@ void AppController::setClipKeyframe(int trackIndex, int clipIndex, const QString
 
     drift::Clip &clip = track.clips[clipIndex];
     const drift::Project before = m_project;
-    const drift::TimeUs rel = qMax<drift::TimeUs>(0, drift::secondsToUs(atSeconds) - clip.timelineStart);
+    // Clamp at both ends. Past the clip's end a key can never render, but it still shapes the
+    // curve up to it; before the start, the write lands on relative 0 and silently overwrites the
+    // clip's base layout key. Neither is ever what the caller meant.
+    const drift::TimeUs rel = qBound<drift::TimeUs>(
+        0, drift::secondsToUs(atSeconds) - clip.timelineStart, clip.timelineDuration);
     if (!writeClipPropValue(clip, prop, rel, value, m_autoKeyEnabled, /*force=*/true))
         return;
     pushProjectEdit(before, tr("Add keyframe"));
@@ -22097,7 +22101,10 @@ bool AppController::mcpSetClipCanvas(int trackIndex, int clipIndex, const QVaria
         return false;
 
     const drift::Project before = m_project;
-    const drift::TimeUs relative = qMax<drift::TimeUs>(0, m_playheadUs - clip.timelineStart);
+    // See setClipKeyframe: a transform written with the playhead outside the clip has to land
+    // inside it, or it scatters keys at times the clip never plays.
+    const drift::TimeUs relative =
+        qBound<drift::TimeUs>(0, m_playheadUs - clip.timelineStart, clip.timelineDuration);
     bool any = false;
     auto write = [&](const QString &patchKey, const QString &prop) {
         if (!patch.contains(patchKey))
