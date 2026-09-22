@@ -1494,11 +1494,14 @@ public:
     // Shortcut items and the shortcut-capture field use, so a rebound chord still
     // matches when it is dispatched from Keys.onPressed rather than Shortcut {}.
     Q_INVOKABLE QString shortcutChord(int key, int modifiers) const;
-    // Dispatches the action bound to this arrow-key chord. ApplicationShortcut
-    // matching for Left/Right is unreliable on some Wayland compositors (Hyprland /
-    // Omarchy), and would also steal the keys from text fields; the editor handles
-    // those chords after the focused item instead. Returns true when an action ran.
-    Q_INVOKABLE bool handleArrowShortcut(int key, int modifiers);
+    // The action bound to this arrow-key chord, or an empty string when the key is
+    // not an arrow or nothing claims it. ApplicationShortcut matching for Left/Right
+    // is unreliable on some Wayland compositors (Hyprland / Omarchy), and would also
+    // steal the keys from text fields, so the editor resolves those chords itself
+    // after the focused item. Main.qml dispatches the result through the same
+    // function the Shortcut items use — a few ids are QML state with no
+    // triggerAction branch, and calling triggerAction directly would do nothing.
+    Q_INVOKABLE QString actionForArrowChord(int key, int modifiers) const;
     Q_INVOKABLE void triggerAction(const QString &actionId);
     // Per-tab favorites in the assets panel (effects, sounds, shapes, stickers, transitions, templates).
     Q_INVOKABLE bool isAssetFavorite(const QString &tabId, const QString &itemId) const;
@@ -1910,6 +1913,10 @@ protected:
     // Publishes a finished beat analysis into m_beatAnalysis / m_beatSnapTargets.
     void applyBeatAnalysis(const AudioBeatAnalysis &analysis, double startSeconds, double durSeconds,
                            const QByteArray &fingerprint);
+    // Builds m_shortcuts from the defaults plus whatever QSettings holds, migrating
+    // stored values that a new release has superseded and dropping any default that
+    // would end up sharing a chord with a stored one.
+    void loadShortcuts();
     void loadAssetFavorites();
     void saveAssetFavorites(const QString &tabId);
     void applyEffectTemplateInternal(int trackIndex, int clipIndex, const EffectTemplateEntry &entry,

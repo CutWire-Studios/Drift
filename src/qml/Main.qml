@@ -874,9 +874,48 @@ ApplicationWindow {
         }
     }
 
-    // Shortcut is not an Item, so wrap each binding in a zero-size host.
+    // The one place a bound action is dispatched, shared by the ApplicationShortcut
+    // Repeater below and the editor FocusScope's arrow handling. A handful of ids are
+    // QML state and have no triggerAction branch at all, so a second dispatch site
+    // that called EditorState.triggerAction directly would turn them into dead keys
+    // the moment someone rebound one onto an arrow chord.
+    //
     // Escape (clearSelection): CapCut-style — if a timeline cut tool is active,
     // first press returns to Select; only then does Escape clear the selection.
+    function dispatchAction(id) {
+        if (id === "clearSelection"
+                && timelinePanel.visible
+                && timelinePanel.timelineTool !== "") {
+            timelinePanel.timelineTool = ""
+            return
+        }
+        // Tool modes are QML state, so they are dispatched here rather
+        // than by triggerAction.
+        if (id === "selectTool") {
+            timelinePanel.timelineTool = ""
+            return
+        }
+        if (id === "bladeTool") {
+            timelinePanel.timelineTool = "split"
+            return
+        }
+        // Timeline zoom is QML state as well, and the 1.5 step matches the
+        // toolbar buttons. setZoom clamps to minZoom/maxZoom and re-anchors on
+        // the playhead, so holding the key walks to the end of the range and stops.
+        if (id === "zoomIn") {
+            if (timelinePanel.visible)
+                timelinePanel.setZoom(timelinePanel.zoom * 1.5)
+            return
+        }
+        if (id === "zoomOut") {
+            if (timelinePanel.visible)
+                timelinePanel.setZoom(timelinePanel.zoom / 1.5)
+            return
+        }
+        EditorState.triggerAction(id)
+    }
+
+    // Shortcut is not an Item, so wrap each binding in a zero-size host.
     Repeater {
         model: EditorState.actions
         Item {
@@ -900,38 +939,7 @@ ApplicationWindow {
                 enabled: (modelData.id === "newProject" || modelData.id === "open"
                          || !window.showStartScreen)
                          && !Theme.shortcutSequenceUsesArrowKey(modelData.shortcut)
-                onActivated: {
-                    if (modelData.id === "clearSelection"
-                            && timelinePanel.visible
-                            && timelinePanel.timelineTool !== "") {
-                        timelinePanel.timelineTool = ""
-                        return
-                    }
-                    // Tool modes are QML state, so they are dispatched here rather
-                    // than by triggerAction.
-                    if (modelData.id === "selectTool") {
-                        timelinePanel.timelineTool = ""
-                        return
-                    }
-                    if (modelData.id === "bladeTool") {
-                        timelinePanel.timelineTool = "split"
-                        return
-                    }
-                    // Timeline zoom is QML state as well, and the 1.5 step matches the
-                    // toolbar buttons. setZoom clamps to minZoom/maxZoom and re-anchors on
-                    // the playhead, so holding the key walks to the end of the range and stops.
-                    if (modelData.id === "zoomIn") {
-                        if (timelinePanel.visible)
-                            timelinePanel.setZoom(timelinePanel.zoom * 1.5)
-                        return
-                    }
-                    if (modelData.id === "zoomOut") {
-                        if (timelinePanel.visible)
-                            timelinePanel.setZoom(timelinePanel.zoom / 1.5)
-                        return
-                    }
-                    EditorState.triggerAction(modelData.id)
-                }
+                onActivated: window.dispatchAction(modelData.id)
             }
         }
     }
@@ -963,8 +971,11 @@ ApplicationWindow {
         enabled: !window.showStartScreen
         focus: true
         Keys.onPressed: function(event) {
-            if (EditorState.handleArrowShortcut(event.key, event.modifiers))
-                event.accepted = true
+            const id = EditorState.actionForArrowChord(event.key, event.modifiers)
+            if (id === "")
+                return
+            window.dispatchAction(id)
+            event.accepted = true
         }
 
     Column {

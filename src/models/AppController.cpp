@@ -975,15 +975,8 @@ AppController::AppController(AssetLibrary *assetLibrary, QObject *parent)
         }
     });
 
-    m_shortcuts = defaultShortcuts();
+    loadShortcuts();
     QSettings settings;
-    settings.beginGroup(QStringLiteral("shortcuts"));
-    for (auto it = m_shortcuts.begin(); it != m_shortcuts.end(); ++it) {
-        const QString stored = settings.value(it.key(), it.value()).toString();
-        if (!stored.isEmpty())
-            it.value() = stored;
-    }
-    settings.endGroup();
     m_guidesEnabled = settings.value(QStringLiteral("preview/guidesEnabled"), false).toBool();
     m_guideType = settings.value(QStringLiteral("preview/guideType"), QStringLiteral("thirds")).toString();
     m_loopWorkAreaEnabled = settings.value(QStringLiteral("playback/loopWorkArea"), false).toBool();
@@ -3870,6 +3863,30 @@ void expandSelectionWithLinkedPartners(const drift::Project &project, QList<QPai
         }
     }
     pairs = expanded;
+}
+
+// Lives in the "shortcuts" group alongside the bindings themselves. Absent means 0.
+const char *const kShortcutsVersionKey = "schemaVersion";
+
+// Bump whenever a release moves a default onto a chord an older release used for
+// something else. A stored binding is the user's and always wins — but one that is
+// only in QSettings because it mirrored the default it replaced is not a choice, and
+// leaving it there means the new layout never arrives. See loadShortcuts().
+constexpr int kShortcutsSchemaVersion = 1;
+
+// v0 → v1 (arrow-key jog, #203): stepBack/stepForward moved off Shift+Left/Right onto
+// the bare arrows, and jumpBack/jumpForward took the chords they vacated. Everyone who
+// had ever used "Reset shortcuts" — which writes every binding, not just changed ones —
+// carried the old pair in QSettings, which left two actions claiming Shift+Left and
+// nothing at all on Left/Right: exactly the dead arrow keys #203 was about.
+const QHash<QString, QString> &supersededShortcutDefaults(int fromVersion)
+{
+    static const QHash<QString, QString> upToV0 = {
+        {QStringLiteral("stepBack"), QStringLiteral("Shift+Left")},
+        {QStringLiteral("stepForward"), QStringLiteral("Shift+Right")},
+    };
+    static const QHash<QString, QString> empty;
+    return fromVersion < 1 ? upToV0 : empty;
 }
 
 QHash<QString, QString> defaultShortcuts()
@@ -18590,6 +18607,68 @@ QString AppController::setShortcut(const QString &actionId, const QString &keys)
     return {};
 }
 
+void AppController::loadShortcuts()
+{
+    m_shortcuts = defaultShortcuts();
+
+    QSettings settings;
+    settings.beginGroup(QStringLiteral("shortcuts"));
+    const int version = settings.value(QLatin1String(kShortcutsVersionKey), 0).toInt();
+    const QHash<QString, QString> &superseded = supersededShortcutDefaults(version);
+
+    QHash<QString, QString> stored;
+    for (auto it = m_shortcuts.cbegin(); it != m_shortcuts.cend(); ++it) {
+        // An empty stored value falls through to the default rather than clearing the
+        // binding — setShortcut persists "" for a cleared chord, but a cleared chord has
+        // never survived a restart and making it do so is a separate change.
+        const QString value = settings.value(it.key()).toString();
+        if (value.isEmpty())
+            continue;
+        if (superseded.value(it.key()) == value) {
+            settings.remove(it.key());
+            continue;
+        }
+        stored.insert(it.key(), value);
+    }
+    if (version != kShortcutsSchemaVersion)
+        settings.setValue(QLatin1String(kShortcutsVersionKey), kShortcutsSchemaVersion);
+    settings.endGroup();
+
+    QStringList storedIds = stored.keys();
+    storedIds.sort();
+    for (const QString &actionId : std::as_const(storedIds))
+        m_shortcuts[actionId] = stored.value(actionId);
+
+    QStringList defaultedIds;
+    for (auto it = m_shortcuts.cbegin(); it != m_shortcuts.cend(); ++it) {
+        if (!stored.contains(it.key()))
+            defaultedIds.append(it.key());
+    }
+    defaultedIds.sort();
+
+    // No chord may end up on two actions: actionForArrowChord and the Shortcut items in
+    // Main.qml both resolve a chord to a single action, so with two claimants which one
+    // answers comes down to QHash order. setShortcut refuses a duplicate, but nothing
+    // re-checked the map after a release moved a default onto a chord an older one used
+    // elsewhere. Stored ids go first so a binding the user chose always keeps its chord;
+    // the loser is cleared in memory only, so nothing of theirs is overwritten, and the
+    // sorted walk makes the same settings produce the same map on every launch.
+    QSet<QString> taken;
+    const auto claimChords = [&](const QStringList &actionIds) {
+        for (const QString &actionId : actionIds) {
+            const QString chord = m_shortcuts.value(actionId);
+            if (chord.isEmpty())
+                continue;
+            if (taken.contains(chord))
+                m_shortcuts[actionId].clear();
+            else
+                taken.insert(chord);
+        }
+    };
+    claimChords(storedIds);
+    claimChords(defaultedIds);
+}
+
 void AppController::resetShortcuts()
 {
     m_shortcuts = defaultShortcuts();
@@ -18597,6 +18676,7 @@ void AppController::resetShortcuts()
     settings.beginGroup(QStringLiteral("shortcuts"));
     for (auto it = m_shortcuts.cbegin(); it != m_shortcuts.cend(); ++it)
         settings.setValue(it.key(), it.value());
+    settings.setValue(QLatin1String(kShortcutsVersionKey), kShortcutsSchemaVersion);
     settings.endGroup();
     emit shortcutsChanged();
 }
@@ -18652,22 +18732,22 @@ QString AppController::shortcutChord(int key, int modifiers) const
     return parts.join(QLatin1Char('+'));
 }
 
-bool AppController::handleArrowShortcut(int key, int modifiers)
+QString AppController::actionForArrowChord(int key, int modifiers) const
 {
     if (key != Qt::Key_Left && key != Qt::Key_Right && key != Qt::Key_Up && key != Qt::Key_Down)
-        return false;
+        return {};
 
     const QString chord = shortcutChord(key, modifiers);
     if (chord.isEmpty())
-        return false;
+        return {};
 
+    // loadShortcuts() and setShortcut() both keep the map free of duplicate chords,
+    // so the first match is the only match and QHash order cannot decide the outcome.
     for (auto it = m_shortcuts.cbegin(); it != m_shortcuts.cend(); ++it) {
-        if (it.value() != chord)
-            continue;
-        triggerAction(it.key());
-        return true;
+        if (it.value() == chord)
+            return it.key();
     }
-    return false;
+    return {};
 }
 
 void AppController::loadAssetFavorites()

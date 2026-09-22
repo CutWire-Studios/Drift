@@ -95,6 +95,7 @@ private slots:
     void bookmarkNavigationAndToggle();
     void editPointNavigationWalksEveryClipEdge();
     void arrowKeysJogAndJumpThePlayhead();
+    void storedArrowShortcutsMigrateOntoTheNewJogLayout();
     void splitLeftRightUndoRestoresTheDiscardedHalf();
     void deleteLeftRightActionsCutAtThePlayhead();
     void playbackRateStepsThroughTheOfferedRates();
@@ -466,31 +467,125 @@ void EditorStateTest::arrowKeysJogAndJumpThePlayhead()
     QCOMPARE(state.shortcutFor(QStringLiteral("jumpBackFar")), QStringLiteral("Ctrl+Left"));
     QCOMPARE(state.shortcutFor(QStringLiteral("jumpForwardFar")), QStringLiteral("Ctrl+Right"));
 
+    // What Main.qml's editor FocusScope does with an unaccepted arrow.
+    const auto jog = [&state](int key, Qt::KeyboardModifiers mods) {
+        const QString actionId = state.actionForArrowChord(key, mods);
+        if (actionId.isEmpty())
+            return false;
+        state.triggerAction(actionId);
+        return true;
+    };
+
     state.setPlayheadSeconds(15.0);
-    QVERIFY(state.handleArrowShortcut(Qt::Key_Left, Qt::NoModifier));
+    QVERIFY(jog(Qt::Key_Left, Qt::NoModifier));
     QVERIFY(state.playheadSeconds() < 15.0);
     state.setPlayheadSeconds(15.0);
-    QVERIFY(state.handleArrowShortcut(Qt::Key_Right, Qt::NoModifier));
+    QVERIFY(jog(Qt::Key_Right, Qt::NoModifier));
     QVERIFY(state.playheadSeconds() > 15.0);
 
     state.setPlayheadSeconds(15.0);
-    QVERIFY(state.handleArrowShortcut(Qt::Key_Left, Qt::ShiftModifier));
+    QVERIFY(jog(Qt::Key_Left, Qt::ShiftModifier));
     QCOMPARE(state.playheadSeconds(), 14.0);
-    QVERIFY(state.handleArrowShortcut(Qt::Key_Right, Qt::ShiftModifier));
+    QVERIFY(jog(Qt::Key_Right, Qt::ShiftModifier));
     QCOMPARE(state.playheadSeconds(), 15.0);
 
-    QVERIFY(state.handleArrowShortcut(Qt::Key_Left, Qt::ControlModifier));
+    QVERIFY(jog(Qt::Key_Left, Qt::ControlModifier));
     QCOMPARE(state.playheadSeconds(), 5.0);
-    QVERIFY(state.handleArrowShortcut(Qt::Key_Right, Qt::ControlModifier));
+    QVERIFY(jog(Qt::Key_Right, Qt::ControlModifier));
     QCOMPARE(state.playheadSeconds(), 15.0);
 
-    QVERIFY(!state.handleArrowShortcut(Qt::Key_A, Qt::NoModifier));
+    QVERIFY(!jog(Qt::Key_A, Qt::NoModifier));
     QCOMPARE(state.playheadSeconds(), 15.0);
+
+    // Only the arrow chords are claimed here — everything else still belongs to the
+    // ApplicationShortcut items, and answering for them would double-fire.
+    QVERIFY(state.actionForArrowChord(Qt::Key_Home, Qt::NoModifier).isEmpty());
+    QVERIFY(state.actionForArrowChord(Qt::Key_Up, Qt::AltModifier)
+            == QStringLiteral("previousEdit"));
+    QVERIFY(state.actionForArrowChord(Qt::Key_Left, Qt::AltModifier)
+            == QStringLiteral("nudgeLeft"));
+    // Nothing is bound to Meta+Left.
+    QVERIFY(state.actionForArrowChord(Qt::Key_Left, Qt::MetaModifier).isEmpty());
 
     state.triggerAction(QStringLiteral("jumpBack"));
     QCOMPARE(state.playheadSeconds(), 14.0);
     state.triggerAction(QStringLiteral("jumpForwardFar"));
     QCOMPARE(state.playheadSeconds(), 24.0);
+}
+
+// The arrow-jog release moved stepBack/stepForward off Shift+Left/Right and handed
+// those chords to the new jumpBack/jumpForward. "Reset shortcuts" writes every binding,
+// so a great many installs carried the old pair in QSettings — which left two actions
+// claiming Shift+Left, nothing on the bare arrows, and QHash order deciding which of the
+// two answered.
+void EditorStateTest::storedArrowShortcutsMigrateOntoTheNewJogLayout()
+{
+    const QString org = QCoreApplication::organizationName();
+    const QString app = QCoreApplication::applicationName();
+    QCoreApplication::setOrganizationName(QStringLiteral("DriftTest"));
+    QCoreApplication::setApplicationName(QStringLiteral("DriftTestShortcutMigration"));
+    const auto restore = qScopeGuard([&] {
+        QSettings().remove(QStringLiteral("shortcuts"));
+        QCoreApplication::setOrganizationName(org);
+        QCoreApplication::setApplicationName(app);
+    });
+
+    const auto seed = [](const QHash<QString, QString> &values) {
+        QSettings settings;
+        settings.remove(QStringLiteral("shortcuts"));
+        settings.beginGroup(QStringLiteral("shortcuts"));
+        for (auto it = values.cbegin(); it != values.cend(); ++it)
+            settings.setValue(it.key(), it.value());
+        settings.endGroup();
+        settings.sync();
+    };
+
+    AssetLibrary library;
+
+    // What an install that had ever used "Reset shortcuts" looked like before the move.
+    seed({{QStringLiteral("stepBack"), QStringLiteral("Shift+Left")},
+          {QStringLiteral("stepForward"), QStringLiteral("Shift+Right")},
+          {QStringLiteral("playPause"), QStringLiteral("Space")}});
+    {
+        AppController state(&library);
+        QCOMPARE(state.shortcutFor(QStringLiteral("stepBack")), QStringLiteral("Left"));
+        QCOMPARE(state.shortcutFor(QStringLiteral("stepForward")), QStringLiteral("Right"));
+        QCOMPARE(state.shortcutFor(QStringLiteral("jumpBack")), QStringLiteral("Shift+Left"));
+        QCOMPARE(state.shortcutFor(QStringLiteral("jumpForward")), QStringLiteral("Shift+Right"));
+        QCOMPARE(state.actionForArrowChord(Qt::Key_Left, Qt::NoModifier),
+                 QStringLiteral("stepBack"));
+        QCOMPARE(state.actionForArrowChord(Qt::Key_Left, Qt::ShiftModifier),
+                 QStringLiteral("jumpBack"));
+        // Stamped, so the next launch leaves the (now deliberate) bindings alone.
+        QSettings settings;
+        settings.beginGroup(QStringLiteral("shortcuts"));
+        QCOMPARE(settings.value(QStringLiteral("schemaVersion")).toInt(), 1);
+        settings.endGroup();
+    }
+
+    // A deliberate rebinding of the same action is not the superseded default, so it
+    // survives untouched.
+    seed({{QStringLiteral("stepBack"), QStringLiteral("Ctrl+Shift+Left")}});
+    {
+        AppController state(&library);
+        QCOMPARE(state.shortcutFor(QStringLiteral("stepBack")),
+                 QStringLiteral("Ctrl+Shift+Left"));
+        QCOMPARE(state.actionForArrowChord(Qt::Key_Left, Qt::ControlModifier | Qt::ShiftModifier),
+                 QStringLiteral("stepBack"));
+    }
+
+    // A stored binding that now clashes with someone else's default keeps the chord;
+    // the default that would have duplicated it is dropped rather than left to race it.
+    seed({{QStringLiteral("nudgeLeft"), QStringLiteral("Left")}});
+    {
+        AppController state(&library);
+        QCOMPARE(state.shortcutFor(QStringLiteral("nudgeLeft")), QStringLiteral("Left"));
+        QCOMPARE(state.actionForArrowChord(Qt::Key_Left, Qt::NoModifier),
+                 QStringLiteral("nudgeLeft"));
+        QVERIFY(state.shortcutFor(QStringLiteral("stepBack")).isEmpty());
+        // Nothing else was disturbed.
+        QCOMPARE(state.shortcutFor(QStringLiteral("stepForward")), QStringLiteral("Right"));
+    }
 }
 
 void EditorStateTest::splitLeftRightUndoRestoresTheDiscardedHalf()
