@@ -1,6 +1,7 @@
 #include "FileDialogs.h"
 
 #include <QDir>
+#include <QFile>
 #include <QFileDialog>
 #include <QMimeDatabase>
 #include <QMimeType>
@@ -237,6 +238,35 @@ FileDialogs::~FileDialogs()
 
 namespace {
 
+// A sandboxed Linux build has no broad filesystem permission (see the Flatpak manifest's
+// finish-args) and depends on the native dialog to hand it access to whatever the user picks
+// through xdg-desktop-portal.
+bool sandboxed()
+{
+    return qEnvironmentVariableIsSet("FLATPAK_ID") || QFile::exists(QStringLiteral("/.flatpak-info"))
+        || qEnvironmentVariableIsSet("SNAP");
+}
+
+// Whether Qt's own in-app dialog should replace the platform's native one. Only unsandboxed
+// desktop Linux gets this: Android has no filesystem access outside its sandbox except through
+// the SAF picker the native dialog wraps — Qt's own dialog cannot reach a user's content:// URIs
+// at all, so it must stay native there regardless of `sandboxed()`. A sandboxed Linux build
+// (Flatpak/Snap) needs the native dialog for the same reason — see `sandboxed()` above. Only an
+// unsandboxed Linux build has no such dependency, and forcing Qt's own dialog there avoids a real
+// failure mode: the native GTK dialog can open without ever mapping a visible, focused window
+// under some Wayland/GNOME setups, leaving the app blocked inside gtk_dialog_run() with nothing
+// on screen for the user to interact with.
+bool shouldForceNonNativeDialog()
+{
+#if defined(Q_OS_ANDROID)
+    return false;
+#elif defined(Q_OS_LINUX)
+    return !sandboxed();
+#else
+    return false;
+#endif
+}
+
 void applyFilters(QFileDialog &dialog, const QStringList &nameFilters,
                   const QStringList &mimeTypeFilters)
 {
@@ -289,6 +319,7 @@ QUrl FileDialogs::openFile(const QString &title, const QStringList &nameFilters,
                            const QStringList &mimeTypeFilters) const
 {
     QFileDialog dialog;
+    dialog.setOption(QFileDialog::DontUseNativeDialog, shouldForceNonNativeDialog());
     dialog.setWindowTitle(title);
     dialog.setAcceptMode(QFileDialog::AcceptOpen);
     dialog.setFileMode(QFileDialog::ExistingFile);
@@ -302,6 +333,7 @@ QUrl FileDialogs::openFile(const QString &title, const QStringList &nameFilters,
 QList<QUrl> FileDialogs::openFiles(const QString &title, const QStringList &nameFilters) const
 {
     QFileDialog dialog;
+    dialog.setOption(QFileDialog::DontUseNativeDialog, shouldForceNonNativeDialog());
     dialog.setWindowTitle(title);
     dialog.setAcceptMode(QFileDialog::AcceptOpen);
     dialog.setFileMode(QFileDialog::ExistingFiles);
@@ -328,6 +360,7 @@ QUrl FileDialogs::openDirectory(const QString &title, const QUrl &startDir) cons
     return {};
 #else
     QFileDialog dialog;
+    dialog.setOption(QFileDialog::DontUseNativeDialog, shouldForceNonNativeDialog());
     dialog.setWindowTitle(title);
     if (startDir.isValid() && !startDir.isEmpty())
         dialog.setDirectoryUrl(startDir);
@@ -346,6 +379,7 @@ QUrl FileDialogs::saveFile(const QString &title, const QStringList &nameFilters,
                            const QString &initialDirectory, const QStringList &mimeTypeFilters) const
 {
     QFileDialog dialog;
+    dialog.setOption(QFileDialog::DontUseNativeDialog, shouldForceNonNativeDialog());
     dialog.setWindowTitle(title);
     dialog.setAcceptMode(QFileDialog::AcceptSave);
     dialog.setFileMode(QFileDialog::AnyFile);
