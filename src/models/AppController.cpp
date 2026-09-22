@@ -24299,12 +24299,27 @@ QJsonObject AppController::mcpNormalizeVolume(int trackIndex, int clipIndex, dou
     if (!measured.value(QStringLiteral("ok")).toBool())
         return measured;
     const double lufs = measured.value(QStringLiteral("lufs")).toDouble();
+    const double peakDb = measured.value(QStringLiteral("true_peak_db")).toDouble();
     const double deltaDb = targetLufs - lufs;
-    const double gain = qPow(10.0, deltaDb / 20.0);
+    // The measurement was taken through the clip's current volume, so the correction is relative
+    // to it. Writing the gain as an absolute value discards whatever level the clip was already
+    // set to, which also made calling the op twice give two different answers.
+    const drift::Clip &target = m_project.tracks().at(trackIndex).clips.at(clipIndex);
+    const double currentVolume =
+        propertyValueAt(trackIndex, clipIndex, QStringLiteral("volume"),
+                        drift::usToSeconds(target.timelineStart), 1.0);
+    const double gain = currentVolume * qPow(10.0, deltaDb / 20.0);
     const QJsonObject set = mcpSetClipVolume(trackIndex, clipIndex, gain, false, 0);
     QJsonObject out = set;
     out.insert(QStringLiteral("measured_lufs"), lufs);
     out.insert(QStringLiteral("target_lufs"), targetLufs);
+    // Hitting a loudness target can still put the peaks over the top; say so rather than leaving
+    // the caller to discover it in the render.
+    const double projectedPeakDb = peakDb + deltaDb;
+    if (projectedPeakDb > -1.0) {
+        out.insert(QStringLiteral("clipping"), true);
+        out.insert(QStringLiteral("projected_true_peak_db"), projectedPeakDb);
+    }
     return out;
 }
 

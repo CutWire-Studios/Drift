@@ -79,6 +79,8 @@ LoudnessResult measureLoudness(qint64 totalFrames, int sampleRate,
     Biquad shL = makeHighShelf(1682.0, 4.0, sampleRate);
     Biquad shR = makeHighShelf(1682.0, 4.0, sampleRate);
 
+    // BS.1770 sums the per-channel mean squares with weight 1.0 for L and R; averaging them
+    // instead is a flat -3.01 dB error on every reading, so the blocks below add, not mean.
     const int hop = qMax(1, sampleRate / 10);          // 100 ms
     const int block = qMax(hop, sampleRate * 4 / 10);  // 400 ms
     QVector<double> blockEnergy;
@@ -117,7 +119,7 @@ LoudnessResult measureLoudness(qint64 totalFrames, int sampleRate,
             ++blockCount;
             ++sinceHop;
             if (sinceHop >= hop && blockCount >= block) {
-                const double mean = 0.5 * (blockAcc[0] + blockAcc[1]) / double(blockCount);
+                const double mean = (blockAcc[0] + blockAcc[1]) / double(blockCount);
                 blockEnergy.append(mean);
                 // Overlap 75%: drop the oldest 100 ms of energy.
                 const double dropFrac = double(hop) / double(blockCount);
@@ -130,7 +132,7 @@ LoudnessResult measureLoudness(qint64 totalFrames, int sampleRate,
         done += got;
     }
     if (blockCount > 0) {
-        const double mean = 0.5 * (blockAcc[0] + blockAcc[1]) / double(blockCount);
+        const double mean = (blockAcc[0] + blockAcc[1]) / double(blockCount);
         blockEnergy.append(mean);
     }
 

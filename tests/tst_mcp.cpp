@@ -123,6 +123,7 @@ private slots:
     void splitOnBeatsCutsAndUndoesAsOneStep();
     void snapClipsToBeatsRespectsMaxDistance();
     void setVolumeRoundTrips();
+    void normalizeVolumeIsRelativeAndIdempotent();
     void audioReadOpsAreNotUndoable();
     void armedBeatGridMakesMoveClipSnap();
     void undoExemptOpsMatchCatalogLimitations();
@@ -1384,6 +1385,46 @@ void McpTest::snapClipsToBeatsRespectsMaxDistance()
     const QJsonArray moved = wide.value(QStringLiteral("moved")).toArray();
     QCOMPARE(moved.size(), 1);
     QVERIFY(moved.at(0).toObject().contains(QStringLiteral("to")));
+}
+
+// normalize_volume measures the clip *through* its current volume, so the correction has to be
+// relative to it. Writing the gain absolutely threw the existing level away and made a second call
+// with the same target land somewhere else.
+void McpTest::normalizeVolumeIsRelativeAndIdempotent()
+{
+    if (ffmpegPath().isEmpty())
+        QSKIP("ffmpeg not available to generate a test clip");
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    const QString source = dir.filePath(QStringLiteral("tone.wav"));
+    QVERIFY(writeHalfSilentTone(source));
+
+    AssetLibrary library;
+    AppController state(&library);
+    drift::mcp::McpDispatcher dispatcher(&state);
+    const QString clip = importAndPlace(dispatcher, source, 0.0);
+    QVERIFY(!clip.isEmpty());
+
+    const QJsonObject first = dispatcher.applyOne(
+        QStringLiteral("normalize_volume"),
+        {{QStringLiteral("clip"), clip}, {QStringLiteral("target_lufs"), -20.0}});
+    QVERIFY2(first.value(QStringLiteral("ok")).toBool(),
+             qPrintable(QJsonDocument(first).toJson(QJsonDocument::Compact)));
+    const double firstVolume = first.value(QStringLiteral("value")).toDouble();
+    QVERIFY(firstVolume > 0.0);
+
+    // Already at the target: the second pass must barely move it.
+    const QJsonObject second = dispatcher.applyOne(
+        QStringLiteral("normalize_volume"),
+        {{QStringLiteral("clip"), clip}, {QStringLiteral("target_lufs"), -20.0}});
+    QVERIFY2(second.value(QStringLiteral("ok")).toBool(),
+             qPrintable(QJsonDocument(second).toJson(QJsonDocument::Compact)));
+    const double secondVolume = second.value(QStringLiteral("value")).toDouble();
+    QVERIFY2(qAbs(secondVolume - firstVolume) < 0.05 * firstVolume,
+             qPrintable(QStringLiteral("first %1 then %2").arg(firstVolume).arg(secondVolume)));
+    QVERIFY2(qAbs(second.value(QStringLiteral("measured_lufs")).toDouble() + 20.0) < 1.0,
+             qPrintable(QStringLiteral("measured %1 after normalising to -20")
+                            .arg(second.value(QStringLiteral("measured_lufs")).toDouble())));
 }
 
 void McpTest::setVolumeRoundTrips()

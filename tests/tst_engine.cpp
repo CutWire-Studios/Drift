@@ -31,6 +31,7 @@
 #include "core/TimelineOps.h"
 #include "engine/AudioMixer.h"
 #include "engine/ClipReader.h"
+#include "engine/LoudnessMeter.h"
 #include "engine/StillImage.h"
 #include "engine/DebugReport.h"
 #include "engine/Exporter.h"
@@ -208,6 +209,7 @@ private slots:
     void adjustmentEffectContrastCatalogEntry();
     void effectPresetStableIds();
     void effectParamTypesMatchShaderUniforms();
+    void loudnessMatchesTheStandard();
     void effectPresetCatalogIncludesStylizePresets();
     void effectBrowserCategories();
     void effectGraphTemplateSubstitution();
@@ -5149,6 +5151,50 @@ void EngineTest::effectPresetStableIds()
                      || id.startsWith(QStringLiteral("face_")),
                  qPrintable(QStringLiteral("stable id: %1").arg(id)));
     }
+}
+
+// BS.1770 defines block loudness as the SUM of the per-channel mean squares, not their average.
+// Averaging is a flat 3.01 dB error on every reading, which is what made normalize_volume apply
+// 3 dB too much gain and push audio into clipping.
+//
+// Reference point: for a 1 kHz sine at the same level in both channels, the K-weighting gain at
+// 1 kHz (+0.69 dB) cancels the -0.691 offset in the formula, so the integrated loudness in LUFS
+// comes out equal to the peak level in dBFS. Cross-checked against ffmpeg's ebur128, which reads
+// -27.1 LUFS / -27.1 dBFS peak for such a tone.
+void EngineTest::loudnessMatchesTheStandard()
+{
+    const int sampleRate = 48000;
+    const qint64 frames = sampleRate * 5;
+
+    const auto measureTone = [&](double amplitude, bool rightChannelSilent) {
+        const auto fill = [&](float *out, qint64 frameOffset, int maxFrames) {
+            for (int i = 0; i < maxFrames; ++i) {
+                const double t = double(frameOffset + i) / double(sampleRate);
+                const double v = amplitude * std::sin(2.0 * M_PI * 1000.0 * t);
+                out[i * 2] = float(v);
+                out[i * 2 + 1] = rightChannelSilent ? 0.0f : float(v);
+            }
+            return maxFrames;
+        };
+        return drift::measureLoudness(frames, sampleRate, fill);
+    };
+
+    for (const double dbfs : {-20.0, -12.0, -6.0}) {
+        const double amplitude = std::pow(10.0, dbfs / 20.0);
+        const drift::LoudnessResult r = measureTone(amplitude, false);
+        QVERIFY(r.ok);
+        QVERIFY2(qAbs(r.integratedLufs - dbfs) < 0.5,
+                 qPrintable(QStringLiteral("dual-mono %1 dBFS tone read %2 LUFS")
+                                .arg(dbfs).arg(r.integratedLufs)));
+    }
+
+    // Dropping one channel takes 3 dB off the sum, which is the property the averaging bug hid.
+    const double amplitude = std::pow(10.0, -20.0 / 20.0);
+    const drift::LoudnessResult both = measureTone(amplitude, false);
+    const drift::LoudnessResult one = measureTone(amplitude, true);
+    QVERIFY2(qAbs((both.integratedLufs - one.integratedLufs) - 3.01) < 0.2,
+             qPrintable(QStringLiteral("stereo %1 vs single channel %2")
+                            .arg(both.integratedLufs).arg(one.integratedLufs)));
 }
 
 void EngineTest::effectParamTypesMatchShaderUniforms()
