@@ -328,13 +328,12 @@ Item {
                   ? qsTr("Creating captions… %1%").arg(Math.round(EditorState.subtitleGenProgress * 100))
                   : qsTr("Create captions from speech")
             enabled: !EditorState.subtitleGenerating
+            tooltip: qsTr("Several selected clips become one caption clip")
             onClicked: {
                 const lang = subtitleLanguageBox.currentValue !== undefined
                              ? subtitleLanguageBox.currentValue
                              : ""
-                EditorState.generateSubtitlesForClip(
-                    EditorState.selectedTrack, EditorState.selectedClip, lang,
-                    subtitleWordsBox.currentValue)
+                EditorState.generateSubtitlesForSelection(lang, subtitleWordsBox.currentValue)
             }
         }
 

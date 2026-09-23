@@ -821,12 +821,24 @@ public:
     Q_INVOKABLE bool importSubtitleFile(const QUrl &url, double atSeconds = -1.0);
     // Replace cues on an existing subtitle clip from a .srt file.
     Q_INVOKABLE bool importSubtitleFileIntoClip(int trackIndex, int clipIndex, const QUrl &url);
-    // Export a subtitle clip's cues to a .srt file (clip-local timestamps).
-    Q_INVOKABLE bool exportSubtitleFile(int trackIndex, int clipIndex, const QUrl &url);
+    // Export a subtitle clip's cues to a .srt file. Timestamps are clip-local unless timelineTimes,
+    // which offsets them by the clip's start so they line up with the exported video.
+    Q_INVOKABLE bool exportSubtitleFile(int trackIndex, int clipIndex, const QUrl &url,
+                                        bool timelineTimes = false);
     // maxWordsPerCue caps words per caption; 0 keeps the recommended (character-width) packing.
     Q_INVOKABLE void generateSubtitlesForClip(int trackIndex, int clipIndex,
                                               const QString &language = QString(),
                                               int maxWordsPerCue = 0);
+    // Captions every selected video/audio clip into one subtitle clip (falls back to the focused
+    // clip). Returns false when the selection cannot be transcribed, e.g. clips overlap in time.
+    Q_INVOKABLE bool generateSubtitlesForSelection(const QString &language = QString(),
+                                                   int maxWordsPerCue = 0);
+    // Same, for the given (track, clip) pairs instead of the selection.
+    bool generateSubtitlesForClips(const QList<QPair<int, int>> &pairs, const QString &language = QString(),
+                                   int maxWordsPerCue = 0);
+    // Captions every video/audio clip on the track within [startSec, endSec) into one subtitle clip.
+    bool generateSubtitlesForRange(int trackIndex, double startSec, double endSec,
+                                   const QString &language = QString(), int maxWordsPerCue = 0);
     Q_INVOKABLE void cancelSubtitleGeneration();
     Q_INVOKABLE QVariantList whisperLanguages();
     // points: [{x, y, include}] with x/y normalized to the source frame.
@@ -1227,6 +1239,10 @@ public:
     Q_INVOKABLE void setClipOrientation(int trackIndex, int clipIndex, int degrees);
     Q_INVOKABLE bool canMergeSelection() const;
     Q_INVOKABLE void mergeSelectedClips();
+    // True when the track holds two or more subtitle clips.
+    Q_INVOKABLE bool canMergeAllSubtitlesOnTrack(int trackIndex) const;
+    // Merge every subtitle clip on the track into one, regardless of the selection.
+    Q_INVOKABLE void mergeAllSubtitlesOnTrack(int trackIndex);
     Q_INVOKABLE bool canSeparateAudioSelection() const;
     Q_INVOKABLE void separateAudioFromSelection();
     Q_INVOKABLE void separateAllAudioTracks(int trackIndex, int clipIndex);
@@ -1991,6 +2007,19 @@ protected:
     void finalizeSegmentation(const QString &clipId, const QString &mattePath,
                               const QString &matteFgrPath,
                               drift::TimeUs matteSrcOffsetUs, const QString &outputMode);
+    struct SubtitleSource
+    {
+        QString path;
+        drift::TimeUs srcIn = 0;
+        drift::TimeUs srcOut = 0;
+        drift::TimeUs timelineStart = 0;
+        drift::TimeUs timelineDuration = 0;
+        double speed = 1.0;
+        bool reverse = false;
+    };
+    static SubtitleSource subtitleSourceFromClip(const drift::Clip &clip);
+    bool generateSubtitlesForSources(QList<SubtitleSource> sources, const QString &language,
+                                     int maxWordsPerCue);
     void finalizeGeneratedSubtitles(drift::TimeUs timelineStart, drift::TimeUs timelineDuration,
                                     const QList<drift::SubtitleCue> &cues);
     void finalizeDenoise(const QString &clipId, const QString &audioPath);
@@ -2111,6 +2140,8 @@ protected:
     void restoreFilmstripsAfterLoad();
     void normalizeSelection();
     bool isValidClipIndex(int trackIndex, int clipIndex) const;
+    QList<int> subtitleMergeIndices(const QList<QPair<int, int>> &pairs) const;
+    void mergeSubtitleClipsAt(int trackIndex, QList<int> clipIndices);
 
     // Drops everything scoped to the outgoing project — clipboard, timeline-keyed caches, the
     // auxiliary-window sessions. Called by both newProject and applyProjectJson, before the

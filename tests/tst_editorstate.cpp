@@ -164,6 +164,11 @@ private slots:
     void tracksCacheIsInvalidatedByEveryMutation();
     void removeTransitionDoesNotMoveOverlappingClips();
     void separateAudioFromCombinedClip();
+    void mergeSelectedSubtitleClips();
+    void mergeAllSubtitlesOnTrackIgnoresSelection();
+    void mergeTwoMediaClipsUnchanged();
+    void exportSubtitleFileTimelineTimes();
+    void generateSubtitlesRefusesOverlappingSources();
     void separatedAudioTracksMirrorVideoHierarchy();
     void linkedAudioUnlinkAndMove();
     void deleteLinkedPairTogetherAndUnlinkedClipAlone();
@@ -3010,6 +3015,135 @@ static void appendLinkedVideoAudioPair(drift::Project &project)
 // Separating audio and unlinking are two different operations: a combined clip carries its audio
 // inside the video clip and has nothing to unlink, and separating it produces a linked pair that
 // still moves together until the link itself is broken.
+static void appendSubtitleLane(drift::Project &project)
+{
+    project.tracks().clear();
+    project.tracks().append(drift::Track{.type = drift::TrackType::Subtitle});
+    const double starts[] = {0.0, 5.0, 12.0};
+    for (int i = 0; i < 3; ++i) {
+        drift::Clip clip;
+        clip.id = QStringLiteral("sub-%1").arg(i);
+        clip.type = drift::ClipType::Subtitle;
+        clip.timelineStart = drift::secondsToUs(starts[i]);
+        clip.timelineDuration = drift::secondsToUs(2.0);
+        clip.srcOut = clip.timelineDuration;
+        clip.textStyle.pixelSize = 40 + i;
+        clip.subtitleCues = {drift::SubtitleCue{0, drift::secondsToUs(1.0), QStringLiteral("cue %1").arg(i)}};
+        project.tracks()[0].clips.append(clip);
+    }
+}
+
+static QVariantMap clipPair(int track, int clip)
+{
+    return {{QStringLiteral("track"), track}, {QStringLiteral("clip"), clip}};
+}
+
+void EditorStateTest::mergeSelectedSubtitleClips()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    appendSubtitleLane(*state.project());
+
+    state.setSelection({clipPair(0, 2), clipPair(0, 0), clipPair(0, 1)});
+    QVERIFY(state.canMergeSelection());
+    state.mergeSelectedClips();
+
+    const QList<drift::Clip> &clips = state.project()->tracks().at(0).clips;
+    QCOMPARE(clips.size(), 1);
+    const drift::Clip &merged = clips.at(0);
+    QCOMPARE(merged.id, QStringLiteral("sub-0"));
+    QCOMPARE(merged.textStyle.pixelSize, 40);
+    QCOMPARE(merged.timelineStart, drift::TimeUs{0});
+    QCOMPARE(merged.timelineDuration, drift::secondsToUs(14.0));
+    QCOMPARE(merged.subtitleCues.size(), 3);
+    QCOMPARE(merged.subtitleCues.at(1).startUs, drift::secondsToUs(5.0));
+    QCOMPARE(merged.subtitleCues.at(2).startUs, drift::secondsToUs(12.0));
+    QCOMPARE(merged.subtitleCues.at(2).text, QStringLiteral("cue 2"));
+
+    state.undo();
+    QCOMPARE(state.project()->tracks().at(0).clips.size(), 3);
+}
+
+void EditorStateTest::mergeAllSubtitlesOnTrackIgnoresSelection()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    appendSubtitleLane(*state.project());
+
+    state.selectClip(0, 1);
+    QVERIFY(!state.canMergeSelection());
+    QVERIFY(state.canMergeAllSubtitlesOnTrack(0));
+    QVERIFY(!state.canMergeAllSubtitlesOnTrack(3));
+    state.mergeAllSubtitlesOnTrack(0);
+
+    QCOMPARE(state.project()->tracks().at(0).clips.size(), 1);
+    QCOMPARE(state.project()->tracks().at(0).clips.at(0).subtitleCues.size(), 3);
+    QVERIFY(!state.canMergeAllSubtitlesOnTrack(0));
+}
+
+void EditorStateTest::mergeTwoMediaClipsUnchanged()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    appendCombinedVideoClip(*state.project());
+    drift::Track &track = state.project()->tracks()[0];
+    drift::Clip tail;
+    QVERIFY(drift::splitClipAtOffset(track.clips[0], tail, drift::secondsToUs(2.0)));
+    tail.id = QStringLiteral("clip-video-tail");
+    track.clips.append(tail);
+    drift::Clip third = tail;
+    third.id = QStringLiteral("clip-video-third");
+    third.timelineStart = drift::secondsToUs(10.0);
+    track.clips.append(third);
+
+    state.setSelection({clipPair(0, 0), clipPair(0, 1), clipPair(0, 2)});
+    QVERIFY(!state.canMergeSelection());
+
+    state.setSelection({clipPair(0, 0), clipPair(0, 1)});
+    QVERIFY(state.canMergeSelection());
+    state.mergeSelectedClips();
+    QCOMPARE(state.project()->tracks().at(0).clips.size(), 2);
+    QCOMPARE(state.project()->tracks().at(0).clips.at(0).timelineDuration, drift::secondsToUs(4.0));
+}
+
+void EditorStateTest::exportSubtitleFileTimelineTimes()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    appendSubtitleLane(*state.project());
+    state.project()->tracks()[0].clips[2].timelineStart = drift::secondsToUs(90.0);
+
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    const QString local = dir.filePath(QStringLiteral("local.srt"));
+    const QString absolute = dir.filePath(QStringLiteral("absolute.srt"));
+    QVERIFY(state.exportSubtitleFile(0, 2, QUrl::fromLocalFile(local)));
+    QVERIFY(state.exportSubtitleFile(0, 2, QUrl::fromLocalFile(absolute), true));
+
+    auto read = [](const QString &path) {
+        QFile file(path);
+        return file.open(QIODevice::ReadOnly) ? QString::fromUtf8(file.readAll()) : QString();
+    };
+    QVERIFY(read(local).contains(QStringLiteral("00:00:00,000 --> 00:00:01,000")));
+    QVERIFY(read(absolute).contains(QStringLiteral("00:01:30,000 --> 00:01:31,000")));
+}
+
+void EditorStateTest::generateSubtitlesRefusesOverlappingSources()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    appendCombinedVideoClip(*state.project());
+    drift::Clip other = state.project()->tracks().at(0).clips.at(0);
+    other.id = QStringLiteral("clip-video-2");
+    other.timelineStart = drift::secondsToUs(2.0);
+    state.project()->tracks().append(drift::Track{.type = drift::TrackType::Video});
+    state.project()->tracks()[1].clips.append(other);
+
+    state.setSelection({clipPair(0, 0), clipPair(1, 0)});
+    QVERIFY(!state.generateSubtitlesForSelection());
+    QVERIFY(!state.subtitleGenerating());
+}
+
 void EditorStateTest::separateAudioFromCombinedClip()
 {
     AssetLibrary library;

@@ -1105,9 +1105,12 @@ Item {
 
                 property bool canPasteEffects: false
                 property bool canPasteAttributes: false
+                property bool canMergeTrackSubtitles: false
                 onAboutToShow: {
                     canPasteEffects = EditorState.clipboardHasEffects()
                     canPasteAttributes = EditorState.canPasteAttributes()
+                    canMergeTrackSubtitles = clipItem.trackType === "subtitle"
+                            && EditorState.canMergeAllSubtitlesOnTrack(clipItem.trackIndex)
                 }
                 // Deferred: onClosed runs inside the Popup's own close path, and dropping the
                 // Loader's item there would destroy an object still unwinding.
@@ -1167,6 +1170,20 @@ Item {
                     icon.name: Theme.icons.unlink
                     visible: !!clipItem.clipData.linked && EditorState.unlinkAvailable
                     onTriggered: EditorState.unlinkSelectedClips()
+                }
+                ThemedMenuItem {
+                    text: qsTr("Merge subtitle clips")
+                    icon.name: Theme.icons.linkTwo
+                    visible: clipItem.trackType === "subtitle"
+                    enabled: EditorState.mergeAvailable
+                    onTriggered: EditorState.mergeSelectedClips()
+                }
+                ThemedMenuItem {
+                    text: qsTr("Merge all subtitles on this track")
+                    icon.name: Theme.icons.linkTwo
+                    visible: clipItem.trackType === "subtitle"
+                    enabled: clipContextMenu.canMergeTrackSubtitles
+                    onTriggered: EditorState.mergeAllSubtitlesOnTrack(clipItem.trackIndex)
                 }
                 ThemedMenuSeparator { }
                 ThemedMenuItem {

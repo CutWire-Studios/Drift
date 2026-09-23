@@ -2355,6 +2355,26 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Select video or audio clips to create captions</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The caption range is empty</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No video or audio clips in that range</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>One of these clips has no sound</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>These clips overlap in time — caption them separately</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Transition curve</source>
         <translation type="unfinished"></translation>
     </message>
@@ -2769,6 +2789,10 @@
     <message>
         <source>Clips merged</source>
         <translation>Clipes mesclados</translation>
+    </message>
+    <message>
+        <source>Subtitles merged</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Audio separated</source>
@@ -4258,6 +4282,10 @@
     <message>
         <source>Create captions from speech</source>
         <translation>Criar legendas a partir da fala</translation>
+    </message>
+    <message>
+        <source>Several selected clips become one caption clip</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Download speech recognition (about 670 MB)</source>
@@ -9855,6 +9883,14 @@ Se a reprodução travar, experimente outro.</translation>
         <translation>Exportar legendas</translation>
     </message>
     <message>
+        <source>Timestamps from the start of the video</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Offset the exported captions by this clip&apos;s start so they match the exported video</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>(empty)</source>
         <translation>(vazio)</translation>
     </message>
@@ -9977,8 +10013,8 @@ Se a reprodução travar, experimente outro.</translation>
         <translation>Legendas mais curtas têm o tempo definido dividindo cada frase em partes iguais, então podem ficar levemente fora de sincronia com a fala.</translation>
     </message>
     <message>
-        <source>Create captions from the selected clip&apos;s speech</source>
-        <translation>Criar legendas a partir da fala do clipe selecionado</translation>
+        <source>Create captions from the selected clips&apos; speech — several clips become one caption clip</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Select a video or audio clip first</source>
@@ -10911,6 +10947,14 @@ Se a reprodução travar, experimente outro.</translation>
     <message>
         <source>Unlink</source>
         <translation>Desvincular</translation>
+    </message>
+    <message>
+        <source>Merge subtitle clips</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Merge all subtitles on this track</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Cut</source>

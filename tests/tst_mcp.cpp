@@ -89,6 +89,8 @@ private slots:
     void inspectIsCompact();
     void inspectDetailRowIsCompact();
     void inspectClipAndTrackFilters();
+    void mergeClipsMergesSubtitleTrack();
+    void generateSubtitlesRejectsOverlappingSources();
     void inspectJobsCollapsed();
     void inspectIncludesProjectFields();
     void placeHonorsOverlapToggle();
@@ -828,6 +830,76 @@ void McpTest::inspectClipAndTrackFilters()
     const QJsonObject badTrack = dispatcher.inspect({{QStringLiteral("track"), 99}});
     QCOMPARE(badTrack.value(QStringLiteral("ok")).toBool(), false);
     QCOMPARE(badTrack.value(QStringLiteral("error")).toString(), QStringLiteral("bad_args"));
+}
+
+void McpTest::mergeClipsMergesSubtitleTrack()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    drift::mcp::McpDispatcher dispatcher(&state);
+
+    drift::Project &project = *state.project();
+    project.tracks().clear();
+    project.tracks().append(drift::Track{.type = drift::TrackType::Subtitle});
+    for (int i = 0; i < 3; ++i) {
+        drift::Clip clip;
+        clip.id = QStringLiteral("sub-%1").arg(i);
+        clip.type = drift::ClipType::Subtitle;
+        clip.timelineStart = drift::secondsToUs(4.0 * i);
+        clip.timelineDuration = drift::secondsToUs(2.0);
+        clip.srcOut = clip.timelineDuration;
+        clip.subtitleCues = {drift::SubtitleCue{0, drift::secondsToUs(1.0), QStringLiteral("c%1").arg(i)}};
+        project.tracks()[0].clips.append(clip);
+    }
+
+    const QJsonObject badTrack =
+        dispatcher.applyOne(QStringLiteral("merge_clips"), {{QStringLiteral("track"), 5}});
+    QCOMPARE(badTrack.value(QStringLiteral("error")).toString(), QStringLiteral("bad_args"));
+
+    const QJsonObject merged =
+        dispatcher.applyOne(QStringLiteral("merge_clips"), {{QStringLiteral("track"), 0}});
+    QVERIFY2(merged.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(merged).toJson()));
+    QCOMPARE(state.project()->tracks().at(0).clips.size(), 1);
+    QCOMPARE(state.project()->tracks().at(0).clips.at(0).subtitleCues.size(), 3);
+    QCOMPARE(state.project()->tracks().at(0).clips.at(0).subtitleCues.at(2).startUs, drift::secondsToUs(8.0));
+}
+
+void McpTest::generateSubtitlesRejectsOverlappingSources()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    drift::mcp::McpDispatcher dispatcher(&state);
+
+    drift::Project &project = *state.project();
+    project.tracks().clear();
+    project.tracks().append(drift::Track{.type = drift::TrackType::Audio});
+    project.tracks().append(drift::Track{.type = drift::TrackType::Audio});
+    for (int i = 0; i < 2; ++i) {
+        drift::Clip clip;
+        clip.id = QStringLiteral("audio-%1").arg(i);
+        clip.type = drift::ClipType::Audio;
+        clip.path = QStringLiteral("/tmp/does-not-matter.wav");
+        clip.timelineStart = drift::secondsToUs(1.0 * i);
+        clip.timelineDuration = drift::secondsToUs(3.0);
+        clip.srcOut = clip.timelineDuration;
+        project.tracks()[i].clips.append(clip);
+    }
+
+    const QJsonObject overlap = dispatcher.applyOne(
+        QStringLiteral("generate_subtitles"),
+        {{QStringLiteral("clips"), QJsonArray{QStringLiteral("audio-0"), QStringLiteral("audio-1")}}});
+    QCOMPARE(overlap.value(QStringLiteral("ok")).toBool(), false);
+    QCOMPARE(overlap.value(QStringLiteral("error")).toString(), QStringLiteral("bad_args"));
+    QVERIFY(!state.subtitleGenerating());
+
+    const QJsonObject missingEnd = dispatcher.applyOne(
+        QStringLiteral("generate_subtitles"), {{QStringLiteral("track"), 0}, {QStringLiteral("start"), 0.0}});
+    QCOMPARE(missingEnd.value(QStringLiteral("error")).toString(), QStringLiteral("bad_args"));
+
+    const QJsonObject emptyRange = dispatcher.applyOne(
+        QStringLiteral("generate_subtitles"),
+        {{QStringLiteral("track"), 0}, {QStringLiteral("start"), 10.0}, {QStringLiteral("end"), 20.0}});
+    QCOMPARE(emptyRange.value(QStringLiteral("error")).toString(), QStringLiteral("bad_args"));
 }
 
 void McpTest::inspectJobsCollapsed()

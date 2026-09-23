@@ -2355,6 +2355,26 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Select video or audio clips to create captions</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The caption range is empty</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No video or audio clips in that range</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>One of these clips has no sound</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>These clips overlap in time — caption them separately</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Transition curve</source>
         <translation type="unfinished"></translation>
     </message>
@@ -2769,6 +2789,10 @@
     <message>
         <source>Clips merged</source>
         <translation>ක්ලිප් ඒකාබද්ධ කරන ලදී</translation>
+    </message>
+    <message>
+        <source>Subtitles merged</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Audio separated</source>
@@ -4258,6 +4282,10 @@
     <message>
         <source>Create captions from speech</source>
         <translation>කථනයෙන් උපසිරැසි සාදන්න</translation>
+    </message>
+    <message>
+        <source>Several selected clips become one caption clip</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Download speech recognition (about 670 MB)</source>
@@ -9855,6 +9883,14 @@ If playback stutters, try another.</source>
         <translation>උපසිරැසි නිර්යාත කරන්න</translation>
     </message>
     <message>
+        <source>Timestamps from the start of the video</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Offset the exported captions by this clip&apos;s start so they match the exported video</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>(empty)</source>
         <translation>(හිස්)</translation>
     </message>
@@ -9977,8 +10013,8 @@ If playback stutters, try another.</source>
         <translation>කෙටි උපසිරැසි කාලගත කරනුයේ එක් එක් වාක්‍ය ඛණ්ඩය සමානව බෙදීමෙනි, එබැවින් ඒවා කථනය සමඟ තරමක් නොගැලපී පැවතිය හැක.</translation>
     </message>
     <message>
-        <source>Create captions from the selected clip&apos;s speech</source>
-        <translation>තෝරාගත් ක්ලිපයේ කථනයෙන් උපසිරැසි සාදන්න</translation>
+        <source>Create captions from the selected clips&apos; speech — several clips become one caption clip</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Select a video or audio clip first</source>
@@ -10911,6 +10947,14 @@ If playback stutters, try another.</source>
     <message>
         <source>Unlink</source>
         <translation>විසන්ධි කරන්න</translation>
+    </message>
+    <message>
+        <source>Merge subtitle clips</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Merge all subtitles on this track</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Cut</source>

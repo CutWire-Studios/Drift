@@ -342,9 +342,16 @@ Item {
                         "srt")
                     if (url != "")
                         EditorState.exportSubtitleFile(
-                            root.trackIndex, root.clipIndex, url)
+                            root.trackIndex, root.clipIndex, url, timelineTimesBox.checked)
                 }
             }
+        }
+
+        ThemedCheckBox {
+            id: timelineTimesBox
+            width: parent.width
+            text: qsTr("Timestamps from the start of the video")
+            tooltip: qsTr("Offset the exported captions by this clip's start so they match the exported video")
         }
     }
 

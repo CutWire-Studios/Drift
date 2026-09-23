@@ -1092,6 +1092,8 @@ QString agentGuideText()
         "Selection-based ops take no clip argument and act on the current selection — call\n"
         "select_clip or select_clips first: separate_audio, unlink_audio, merge_clips,\n"
         "align_clip_left, align_clip_right, copy_selection, cut_selection.\n"
+        "merge_clips joins two abutting cuts of the same media, or any 2+ subtitle clips on one\n"
+        "track (gaps allowed); merge_clips({track}) merges every subtitle clip on that track.\n"
         "freeze_frame and paste_at_playhead are playhead-based, not selection-based — seek first.\n"
         "\n"
         "History is linear, like git without branches. list_history returns every version (index 0 =\n"

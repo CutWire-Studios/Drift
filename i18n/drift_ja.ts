@@ -2349,6 +2349,26 @@
         <translation>クリップを移動しました</translation>
     </message>
     <message>
+        <source>Select video or audio clips to create captions</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The caption range is empty</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No video or audio clips in that range</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>One of these clips has no sound</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>These clips overlap in time — caption them separately</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Transition curve</source>
         <translation>トランジションカーブ</translation>
     </message>
@@ -2763,6 +2783,10 @@
     <message>
         <source>Clips merged</source>
         <translation>クリップを結合しました</translation>
+    </message>
+    <message>
+        <source>Subtitles merged</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Audio separated</source>
@@ -4241,6 +4265,10 @@
     <message>
         <source>Create captions from speech</source>
         <translation>音声からキャプションを作成</translation>
+    </message>
+    <message>
+        <source>Several selected clips become one caption clip</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Download speech recognition (about 670 MB)</source>
@@ -9819,6 +9847,14 @@ If playback stutters, try another.</source>
         <translation>字幕をエクスポート</translation>
     </message>
     <message>
+        <source>Timestamps from the start of the video</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Offset the exported captions by this clip&apos;s start so they match the exported video</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>(empty)</source>
         <translation>(空)</translation>
     </message>
@@ -9941,8 +9977,8 @@ If playback stutters, try another.</source>
         <translation>短いキャプションは各フレーズを均等に分割してタイミングを取るため、音声とわずかにずれることがあります。</translation>
     </message>
     <message>
-        <source>Create captions from the selected clip&apos;s speech</source>
-        <translation>選択したクリップの音声からキャプションを作成</translation>
+        <source>Create captions from the selected clips&apos; speech — several clips become one caption clip</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Select a video or audio clip first</source>
@@ -10875,6 +10911,14 @@ If playback stutters, try another.</source>
     <message>
         <source>Unlink</source>
         <translation>リンク解除</translation>
+    </message>
+    <message>
+        <source>Merge subtitle clips</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Merge all subtitles on this track</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Cut</source>

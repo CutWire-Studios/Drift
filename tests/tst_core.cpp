@@ -118,6 +118,7 @@ private slots:
     void speedCurveSerialization();
     void clipReverseAndFlipSerialization();
     void clipSplitMergeRoundTrip();
+    void subtitleClipsMergeWithGaps();
     void splitCarriesTheAnimationOntoBothHalves();
     void clipLinkFieldsSerialization();
     void maskAndTransitionSerialization();
@@ -2646,6 +2647,73 @@ void CoreTest::clipSplitMergeRoundTrip()
     QCOMPARE(revTail.srcIn, drift::secondsToUs(1.0));
     QCOMPARE(revTail.srcOut, drift::secondsToUs(3.0));
     QVERIFY(drift::clipsCanMerge(rev, revTail));
+}
+
+void CoreTest::subtitleClipsMergeWithGaps()
+{
+    auto subtitleClip = [](const QString &id, double startSec, double durSec,
+                           const QList<drift::SubtitleCue> &cues) {
+        drift::Clip clip;
+        clip.id = id;
+        clip.type = drift::ClipType::Subtitle;
+        clip.timelineStart = drift::secondsToUs(startSec);
+        clip.timelineDuration = drift::secondsToUs(durSec);
+        clip.srcIn = 0;
+        clip.srcOut = clip.timelineDuration;
+        clip.subtitleCues = cues;
+        return clip;
+    };
+    auto cue = [](double s, double e, const QString &text) {
+        return drift::SubtitleCue{drift::secondsToUs(s), drift::secondsToUs(e), text};
+    };
+
+    drift::Clip a = subtitleClip(QStringLiteral("a"), 10.0, 2.0, {cue(0.0, 1.0, QStringLiteral("one"))});
+    a.textStyle.pixelSize = 80;
+    a.transformX.setKeyframe(0, 123.0);
+    drift::Clip b = subtitleClip(QStringLiteral("b"), 15.0, 3.0, {cue(0.5, 2.0, QStringLiteral("three"))});
+    b.textStyle.pixelSize = 30;
+    b.fadeOutUs = drift::secondsToUs(0.25);
+    const drift::Clip c = subtitleClip(QStringLiteral("c"), 12.0, 1.0, {cue(0.0, 1.0, QStringLiteral("two"))});
+
+    QVERIFY(!drift::subtitleClipsCanMerge({a}));
+    drift::Clip video = a;
+    video.type = drift::ClipType::Video;
+    QVERIFY(!drift::subtitleClipsCanMerge({a, video}));
+    QVERIFY(drift::subtitleClipsCanMerge({b, a, c}));
+
+    const drift::Clip merged = drift::mergeSubtitleClips({b, a, c});
+    QCOMPARE(merged.id, QStringLiteral("a"));
+    QCOMPARE(merged.timelineStart, drift::secondsToUs(10.0));
+    QCOMPARE(merged.timelineDuration, drift::secondsToUs(8.0));
+    QCOMPARE(merged.srcIn, drift::TimeUs{0});
+    QCOMPARE(merged.srcOut, drift::secondsToUs(8.0));
+    QCOMPARE(merged.textStyle.pixelSize, 80);
+    QCOMPARE(merged.transformX.keyframes().size(), 1);
+    QCOMPARE(merged.fadeOutUs, drift::secondsToUs(0.25));
+    QCOMPARE(merged.subtitleCues.size(), 3);
+    QCOMPARE(merged.subtitleCues.at(0).text, QStringLiteral("one"));
+    QCOMPARE(merged.subtitleCues.at(0).startUs, drift::TimeUs{0});
+    QCOMPARE(merged.subtitleCues.at(1).text, QStringLiteral("two"));
+    QCOMPARE(merged.subtitleCues.at(1).startUs, drift::secondsToUs(2.0));
+    QCOMPARE(merged.subtitleCues.at(1).endUs, drift::secondsToUs(3.0));
+    QCOMPARE(merged.subtitleCues.at(2).text, QStringLiteral("three"));
+    QCOMPARE(merged.subtitleCues.at(2).startUs, drift::secondsToUs(5.5));
+    QCOMPARE(merged.subtitleCues.at(2).endUs, drift::secondsToUs(7.0));
+    QCOMPARE(merged.name, drift::subtitleClipName(merged.subtitleCues));
+
+    drift::Clip head = merged;
+    drift::Clip tail;
+    QVERIFY(drift::splitClipAtOffset(head, tail, drift::secondsToUs(4.0)));
+    tail.id = QStringLiteral("tail");
+    const drift::Clip rejoined = drift::mergeSubtitleClips({tail, head});
+    QCOMPARE(rejoined.timelineStart, merged.timelineStart);
+    QCOMPARE(rejoined.timelineDuration, merged.timelineDuration);
+    QCOMPARE(rejoined.subtitleCues.size(), merged.subtitleCues.size());
+    for (int i = 0; i < merged.subtitleCues.size(); ++i) {
+        QCOMPARE(rejoined.subtitleCues.at(i).startUs, merged.subtitleCues.at(i).startUs);
+        QCOMPARE(rejoined.subtitleCues.at(i).endUs, merged.subtitleCues.at(i).endUs);
+        QCOMPARE(rejoined.subtitleCues.at(i).text, merged.subtitleCues.at(i).text);
+    }
 }
 
 void CoreTest::clipLinkFieldsSerialization()

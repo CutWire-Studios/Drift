@@ -2349,6 +2349,26 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Select video or audio clips to create captions</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The caption range is empty</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No video or audio clips in that range</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>One of these clips has no sound</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>These clips overlap in time — caption them separately</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Transition curve</source>
         <translation type="unfinished"></translation>
     </message>
@@ -2762,6 +2782,10 @@
     </message>
     <message>
         <source>Clips merged</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Subtitles merged</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -4240,6 +4264,10 @@
     </message>
     <message>
         <source>Create captions from speech</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Several selected clips become one caption clip</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -9811,6 +9839,14 @@ If playback stutters, try another.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Timestamps from the start of the video</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Offset the exported captions by this clip&apos;s start so they match the exported video</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>(empty)</source>
         <translation type="unfinished"></translation>
     </message>
@@ -9933,7 +9969,7 @@ If playback stutters, try another.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Create captions from the selected clip&apos;s speech</source>
+        <source>Create captions from the selected clips&apos; speech — several clips become one caption clip</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -10866,6 +10902,14 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Unlink</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Merge subtitle clips</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Merge all subtitles on this track</source>
         <translation type="unfinished"></translation>
     </message>
     <message>

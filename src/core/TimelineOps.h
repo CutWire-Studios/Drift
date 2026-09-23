@@ -195,6 +195,13 @@ bool clipsCanMerge(const Clip &left, const Clip &right);
 // Merge abutting clips. Keeps left transforms/effects; takes right's fade-out.
 Clip mergeClips(const Clip &left, const Clip &right);
 
+// True for two or more clips that are all Subtitle clips. Gaps and overlaps are allowed.
+bool subtitleClipsCanMerge(const QList<Clip> &clips);
+
+// Merge subtitle clips into one spanning the earliest start to the latest end. Keeps the earliest
+// clip's id, style, transform and effects; every cue is rebased onto the merged clip's start.
+Clip mergeSubtitleClips(QList<Clip> clips);
+
 // All clips sharing `clip.linkId` (excluding `clip` itself).
 QList<ClipRef> linkedPartners(const Project &project, const Clip &clip);
 

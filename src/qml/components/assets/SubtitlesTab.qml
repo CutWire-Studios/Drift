@@ -134,16 +134,14 @@ Item {
                 variant: "secondary"
                 glyph: Theme.icons.captions
                 tooltip: root.captionTargetReady
-                         ? qsTr("Create captions from the selected clip's speech")
+                         ? qsTr("Create captions from the selected clips' speech — several clips become one caption clip")
                          : qsTr("Select a video or audio clip first")
                 enabled: root.captionTargetReady
                 onClicked: {
                     const lang = captionLanguageBox.currentValue !== undefined
                                  ? captionLanguageBox.currentValue
                                  : ""
-                    EditorState.generateSubtitlesForClip(
-                        EditorState.selectedTrack, EditorState.selectedClip, lang,
-                        captionWordsBox.currentValue)
+                    EditorState.generateSubtitlesForSelection(lang, captionWordsBox.currentValue)
                 }
             }
 

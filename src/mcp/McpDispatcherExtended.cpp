@@ -770,6 +770,13 @@ QJsonObject McpDispatcher::applyOneExtended(const QString &tool, const QJsonObje
     }
 
     if (tool == QLatin1String("merge_clips")) {
+        if (args.contains(QStringLiteral("track"))) {
+            const int track = jsonInt(args.value(QStringLiteral("track")));
+            if (!m_controller->canMergeAllSubtitlesOnTrack(track))
+                return err("bad_args", QStringLiteral("Track has fewer than two subtitle clips"));
+            m_controller->mergeAllSubtitlesOnTrack(track);
+            return ok({});
+        }
         if (!m_controller->canMergeSelection())
             return err("bad_args", QStringLiteral("Cannot merge selection"));
         m_controller->mergeSelectedClips();
@@ -1597,7 +1604,8 @@ QJsonObject McpDispatcher::applyOneExtended(const QString &tool, const QJsonObje
         const QString path = localPath(argString(args, QStringLiteral("path")));
         if (path.isEmpty())
             return err("bad_args", QStringLiteral("path required"));
-        if (!m_controller->exportSubtitleFile(ref.track, ref.clip, QUrl::fromLocalFile(path)))
+        const bool timelineTimes = jsonBool(args.value(QStringLiteral("timeline_times")));
+        if (!m_controller->exportSubtitleFile(ref.track, ref.clip, QUrl::fromLocalFile(path), timelineTimes))
             return err("bad_args", QStringLiteral("Export refused"));
         return ok(clipFeedback(ref, {{QStringLiteral("path"), path}}));
     }
@@ -1628,12 +1636,39 @@ QJsonObject McpDispatcher::applyOneExtended(const QString &tool, const QJsonObje
         return ok({{QStringLiteral("languages"), compactCatalogList(m_controller->whisperLanguages())}});
 
     if (tool == QLatin1String("generate_subtitles")) {
-        const ClipRef ref = resolveClip(args);
-        if (!ref.valid())
-            return clipRefError(args);
         const QString language = args.value(QStringLiteral("language")).toString();
         const int maxWords =
             static_cast<int>(jsonNumber(args.value(QStringLiteral("max_words_per_cue")), 0.0));
+        const QJsonArray ids = args.value(QStringLiteral("clips")).toArray();
+        if (!ids.isEmpty()) {
+            QList<QPair<int, int>> pairs;
+            for (const QJsonValue &v : ids) {
+                const QString id = v.toString().trimmed();
+                const QPair<int, int> loc = m_controller->mcpLocateClip(id);
+                if (loc.first < 0)
+                    return clipRefError(QJsonObject{{QStringLiteral("clip"), id}});
+                pairs.append(loc);
+            }
+            if (!m_controller->generateSubtitlesForClips(pairs, language, maxWords))
+                return err("bad_args", m_controller->lastMessage());
+            return ok({{QStringLiteral("started"), true}});
+        }
+        if (args.contains(QStringLiteral("start")) || args.contains(QStringLiteral("end"))) {
+            if (!args.contains(QStringLiteral("track")) || !args.contains(QStringLiteral("start"))
+                || !args.contains(QStringLiteral("end")))
+                return err("bad_args", QStringLiteral("track, start and end are required together"));
+            const int track = jsonInt(args.value(QStringLiteral("track")));
+            if (track < 0 || track >= m_controller->tracks().size())
+                return err("bad_args", QStringLiteral("track out of range"));
+            if (!m_controller->generateSubtitlesForRange(track, jsonNumber(args.value(QStringLiteral("start")), 0.0),
+                                                         jsonNumber(args.value(QStringLiteral("end")), 0.0),
+                                                         language, maxWords))
+                return err("bad_args", m_controller->lastMessage());
+            return ok({{QStringLiteral("started"), true}});
+        }
+        const ClipRef ref = resolveClip(args);
+        if (!ref.valid())
+            return clipRefError(args);
         m_controller->generateSubtitlesForClip(ref.track, ref.clip, language, maxWords);
         return ok(clipFeedback(ref, {{QStringLiteral("started"), true}}));
     }

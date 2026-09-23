@@ -7545,7 +7545,7 @@ bool AppController::importSubtitleFileIntoClip(int trackIndex, int clipIndex, co
     return true;
 }
 
-bool AppController::exportSubtitleFile(int trackIndex, int clipIndex, const QUrl &url)
+bool AppController::exportSubtitleFile(int trackIndex, int clipIndex, const QUrl &url, bool timelineTimes)
 {
     if (trackIndex < 0 || trackIndex >= m_project.tracks().size())
         return false;
@@ -7570,8 +7570,16 @@ bool AppController::exportSubtitleFile(int trackIndex, int clipIndex, const QUrl
         return false;
     }
 
+    QList<drift::SubtitleCue> cues = clip.subtitleCues;
+    if (timelineTimes) {
+        for (drift::SubtitleCue &cue : cues) {
+            cue.startUs += clip.timelineStart;
+            cue.endUs += clip.timelineStart;
+        }
+    }
+
     QString error;
-    if (!drift::writeSrtFile(path, clip.subtitleCues, &error)) {
+    if (!drift::writeSrtFile(path, cues, &error)) {
         setLastMessage(error.isEmpty() ? tr("Could not write subtitle file") : error, QStringLiteral("error"));
         return false;
     }
@@ -7603,24 +7611,128 @@ QVariantList AppController::whisperLanguages()
 void AppController::generateSubtitlesForClip(int trackIndex, int clipIndex, const QString &language,
                                              int maxWordsPerCue)
 {
-    if (m_subtitleGenerating) {
-        setLastMessage(tr("Subtitle generation already in progress"), QStringLiteral("warning"));
+    if (!isValidClipIndex(trackIndex, clipIndex))
         return;
-    }
-    if (trackIndex < 0 || trackIndex >= m_project.tracks().size())
-        return;
-    const drift::Track &track = m_project.tracks().at(trackIndex);
-    if (clipIndex < 0 || clipIndex >= track.clips.size())
-        return;
-
-    const drift::Clip clip = track.clips.at(clipIndex);
+    const drift::Clip &clip = m_project.tracks().at(trackIndex).clips.at(clipIndex);
     if (clip.type != drift::ClipType::Video && clip.type != drift::ClipType::Audio) {
         setLastMessage(tr("Select a video or audio clip to create captions"), QStringLiteral("warning"));
         return;
     }
-    if (clip.path.isEmpty() || clip.srcOut <= clip.srcIn) {
-        setLastMessage(tr("This clip has no sound"), QStringLiteral("warning"));
-        return;
+    generateSubtitlesForSources({subtitleSourceFromClip(clip)}, language, maxWordsPerCue);
+}
+
+bool AppController::generateSubtitlesForSelection(const QString &language, int maxWordsPerCue)
+{
+    QList<QPair<int, int>> pairs = m_selection;
+    if (pairs.isEmpty() && m_selectedTrack >= 0 && m_selectedClip >= 0)
+        pairs.append(qMakePair(m_selectedTrack, m_selectedClip));
+    return generateSubtitlesForClips(pairs, language, maxWordsPerCue);
+}
+
+bool AppController::generateSubtitlesForClips(const QList<QPair<int, int>> &pairs, const QString &language,
+                                              int maxWordsPerCue)
+{
+    // Selecting a clip pulls in its linked A/V partner, which carries the same speech over the
+    // same span. Keep one per link, the audio side when there is one, since that is what plays.
+    QList<drift::Clip> clips;
+    for (const QPair<int, int> &pair : pairs) {
+        if (!isValidClipIndex(pair.first, pair.second))
+            continue;
+        const drift::Clip &clip = m_project.tracks().at(pair.first).clips.at(pair.second);
+        if (clip.type != drift::ClipType::Video && clip.type != drift::ClipType::Audio) {
+            setLastMessage(tr("Select video or audio clips to create captions"), QStringLiteral("warning"));
+            return false;
+        }
+        auto partner = std::find_if(clips.begin(), clips.end(), [&clip](const drift::Clip &taken) {
+            return !clip.linkId.isEmpty() && taken.linkId == clip.linkId;
+        });
+        if (partner == clips.end())
+            clips.append(clip);
+        else if (clip.type == drift::ClipType::Audio)
+            *partner = clip;
+    }
+    if (clips.isEmpty()) {
+        setLastMessage(tr("Select a video or audio clip to create captions"), QStringLiteral("warning"));
+        return false;
+    }
+
+    QList<SubtitleSource> sources;
+    for (const drift::Clip &clip : clips)
+        sources.append(subtitleSourceFromClip(clip));
+    return generateSubtitlesForSources(sources, language, maxWordsPerCue);
+}
+
+bool AppController::generateSubtitlesForRange(int trackIndex, double startSec, double endSec,
+                                              const QString &language, int maxWordsPerCue)
+{
+    if (trackIndex < 0 || trackIndex >= m_project.tracks().size())
+        return false;
+    const drift::TimeUs rangeStart = drift::secondsToUs(startSec);
+    const drift::TimeUs rangeEnd = drift::secondsToUs(endSec);
+    if (rangeEnd <= rangeStart) {
+        setLastMessage(tr("The caption range is empty"), QStringLiteral("warning"));
+        return false;
+    }
+
+    QList<SubtitleSource> sources;
+    for (const drift::Clip &clip : m_project.tracks().at(trackIndex).clips) {
+        if (clip.type != drift::ClipType::Video && clip.type != drift::ClipType::Audio)
+            continue;
+        const drift::TimeUs from = qMax(rangeStart, clip.timelineStart);
+        const drift::TimeUs to = qMin(rangeEnd, clip.timelineEnd());
+        if (to <= from)
+            continue;
+        SubtitleSource source = subtitleSourceFromClip(clip);
+        const drift::TimeUs a = clip.timelineToSourceUs(from);
+        const drift::TimeUs b = clip.timelineToSourceUs(to);
+        source.srcIn = qMin(a, b);
+        source.srcOut = qMax(a, b);
+        source.timelineStart = from;
+        source.timelineDuration = to - from;
+        sources.append(source);
+    }
+    if (sources.isEmpty()) {
+        setLastMessage(tr("No video or audio clips in that range"), QStringLiteral("warning"));
+        return false;
+    }
+    return generateSubtitlesForSources(sources, language, maxWordsPerCue);
+}
+
+AppController::SubtitleSource AppController::subtitleSourceFromClip(const drift::Clip &clip)
+{
+    return {clip.path,           clip.srcIn,           clip.srcOut, clip.timelineStart,
+            clip.timelineDuration, clip.effectiveSpeed(), clip.reverse};
+}
+
+bool AppController::generateSubtitlesForSources(QList<SubtitleSource> sources, const QString &language,
+                                                int maxWordsPerCue)
+{
+    if (m_subtitleGenerating) {
+        setLastMessage(tr("Subtitle generation already in progress"), QStringLiteral("warning"));
+        return false;
+    }
+    if (sources.isEmpty())
+        return false;
+    for (const SubtitleSource &source : sources) {
+        if (source.path.isEmpty() || source.srcOut <= source.srcIn) {
+            setLastMessage(sources.size() == 1 ? tr("This clip has no sound")
+                                               : tr("One of these clips has no sound"),
+                           QStringLiteral("warning"));
+            return false;
+        }
+    }
+    std::sort(sources.begin(), sources.end(), [](const SubtitleSource &a, const SubtitleSource &b) {
+        return a.timelineStart < b.timelineStart;
+    });
+    // Overlapping sources would be two voices over the same instant; transcribed back to back they
+    // come out as captions that belong to neither.
+    for (int i = 1; i < sources.size(); ++i) {
+        const SubtitleSource &prev = sources.at(i - 1);
+        if (sources.at(i).timelineStart < prev.timelineStart + prev.timelineDuration) {
+            setLastMessage(tr("These clips overlap in time — caption them separately"),
+                           QStringLiteral("warning"));
+            return false;
+        }
     }
 
     setPlaying(false);
@@ -7634,18 +7746,15 @@ void AppController::generateSubtitlesForClip(int trackIndex, int clipIndex, cons
     emit subtitleGeneratingChanged();
     setLastMessage(tr("Creating captions…"));
 
-    const QString path = clip.path;
-    const drift::TimeUs srcIn = clip.srcIn;
-    const drift::TimeUs srcOut = clip.srcOut;
-    const drift::TimeUs timelineStart = clip.timelineStart;
-    const drift::TimeUs timelineDuration = clip.timelineDuration;
-    const double speed = clip.effectiveSpeed();
-    const bool reverse = clip.reverse;
+    const drift::TimeUs rangeStart = sources.first().timelineStart;
+    drift::TimeUs rangeEnd = rangeStart;
+    for (const SubtitleSource &source : sources)
+        rangeEnd = qMax(rangeEnd, source.timelineStart + source.timelineDuration);
+    const drift::TimeUs rangeDuration = rangeEnd - rangeStart;
     const QString languageCode = language.trimmed().toLower();
     const int wordsPerCue = std::max(0, maxWordsPerCue);
 
-    (void)QtConcurrent::run([this, path, srcIn, srcOut, timelineStart, timelineDuration, speed,
-                             reverse, languageCode, wordsPerCue]() {
+    (void)QtConcurrent::run([this, sources, rangeStart, rangeDuration, languageCode, wordsPerCue]() {
         auto setProgress = [this](double fraction, const QString &status) {
             QMetaObject::invokeMethod(
                 this,
@@ -7660,11 +7769,11 @@ void AppController::generateSubtitlesForClip(int trackIndex, int clipIndex, cons
                 Qt::QueuedConnection);
         };
 
-        auto finish = [this, timelineStart, timelineDuration](bool ok, const QString &message,
-                                                              const QList<drift::SubtitleCue> &cues) {
+        auto finish = [this, rangeStart, rangeDuration](bool ok, const QString &message,
+                                                        const QList<drift::SubtitleCue> &cues) {
             QMetaObject::invokeMethod(
                 this,
-                [this, ok, message, cues, timelineStart, timelineDuration]() {
+                [this, ok, message, cues, rangeStart, rangeDuration]() {
                     m_subtitleGenerating = false;
                     emit subtitleGeneratingChanged();
                     m_subtitleGenProgress = ok ? 1.0 : 0.0;
@@ -7676,7 +7785,7 @@ void AppController::generateSubtitlesForClip(int trackIndex, int clipIndex, cons
                         emit subtitleGenerationFinished(false, message);
                         return;
                     }
-                    finalizeGeneratedSubtitles(timelineStart, timelineDuration, cues);
+                    finalizeGeneratedSubtitles(rangeStart, rangeDuration, cues);
                 },
                 Qt::QueuedConnection);
         };
@@ -7689,45 +7798,63 @@ void AppController::generateSubtitlesForClip(int trackIndex, int clipIndex, cons
             return;
         }
 
-        // Decode the clip's raw source audio over [srcIn, srcOut] at 16 kHz mono.
+        // Decode every source's raw audio over [srcIn, srcOut] at 16 kHz mono, back to back into
+        // one buffer so Whisper runs once; spans remember where each source landed in it.
         setProgress(0.05, tr("Reading audio…"));
         const int rate = 16000;
         const int chunkFrames = 30 * rate;
+        drift::TimeUs totalSpanUs = 0;
+        for (const SubtitleSource &source : sources)
+            totalSpanUs += source.srcOut - source.srcIn;
+        totalSpanUs = std::max<drift::TimeUs>(1, totalSpanUs);
+
+        struct Span
+        {
+            size_t sampleStart;
+            size_t sampleEnd;
+        };
         std::vector<float> mono;
-        drift::TimeUs pos = srcIn;
-        const drift::TimeUs spanUs = std::max<drift::TimeUs>(1, srcOut - srcIn);
-        while (pos < srcOut) {
-            if (m_subtitleGenCancel.loadRelaxed()) {
-                finish(false, tr("Subtitle generation cancelled"), {});
-                return;
+        std::vector<Span> spans;
+        drift::TimeUs decodedUs = 0;
+        for (const SubtitleSource &source : sources) {
+            const size_t spanStart = mono.size();
+            drift::TimeUs pos = source.srcIn;
+            while (pos < source.srcOut) {
+                if (m_subtitleGenCancel.loadRelaxed()) {
+                    finish(false, tr("Subtitle generation cancelled"), {});
+                    return;
+                }
+                const drift::TimeUs remainUs = source.srcOut - pos;
+                const int frames =
+                    qMin<int64_t>(chunkFrames, (remainUs * rate) / drift::kUsPerSecond + 1);
+                if (frames <= 0)
+                    break;
+                QVector<float> stereo(static_cast<qsizetype>(frames) * 2);
+                // Its own decode cursor: this scan walks the file at its own pace while playback
+                // may be reading the same file, and a shared cursor would corrupt both.
+                const int got = ClipReaderPool::instance().readAudioInterleaved(
+                    source.path, kSubtitleScanStreamId, pos, frames, rate, stereo.data());
+                if (got <= 0)
+                    break;
+                const size_t base = mono.size();
+                mono.resize(base + got);
+                for (int i = 0; i < got; ++i)
+                    mono[base + i] = 0.5f * (stereo[i * 2] + stereo[i * 2 + 1]);
+                const drift::TimeUs step =
+                    static_cast<drift::TimeUs>((static_cast<int64_t>(got) * drift::kUsPerSecond) / rate);
+                pos += step;
+                decodedUs += step;
+                const double decodeFrac =
+                    std::min(1.0, static_cast<double>(decodedUs) / static_cast<double>(totalSpanUs));
+                setProgress(0.05 + 0.10 * decodeFrac,
+                            tr("Reading audio… %1%").arg(qRound(100.0 * decodeFrac)));
             }
-            const drift::TimeUs remainUs = srcOut - pos;
-            const int frames =
-                qMin<int64_t>(chunkFrames, (remainUs * rate) / drift::kUsPerSecond + 1);
-            if (frames <= 0)
-                break;
-            QVector<float> stereo(static_cast<qsizetype>(frames) * 2);
-            // Its own decode cursor: this scan walks the file at its own pace while playback may
-            // be reading the same file, and a shared cursor would corrupt both.
-            const int got =
-                ClipReaderPool::instance().readAudioInterleaved(path, kSubtitleScanStreamId, pos,
-                                                                frames, rate, stereo.data());
-            if (got <= 0)
-                break;
-            const size_t base = mono.size();
-            mono.resize(base + got);
-            for (int i = 0; i < got; ++i)
-                mono[base + i] = 0.5f * (stereo[i * 2] + stereo[i * 2 + 1]);
-            pos += static_cast<drift::TimeUs>((static_cast<int64_t>(got) * drift::kUsPerSecond) / rate);
-            const double decodeFrac = static_cast<double>(pos - srcIn) / static_cast<double>(spanUs);
-            setProgress(0.05 + 0.10 * std::min(1.0, decodeFrac),
-                        tr("Reading audio… %1%")
-                            .arg(qRound(100.0 * std::min(1.0, decodeFrac))));
+            spans.push_back({spanStart, mono.size()});
         }
 
         qWarning() << "[subtitles] decoded mono samples:" << mono.size()
-                   << "seconds:" << (mono.size() / 16000.0) << "language:"
-                   << (languageCode.isEmpty() ? QStringLiteral("auto") : languageCode);
+                   << "seconds:" << (mono.size() / 16000.0) << "sources:" << sources.size()
+                   << "language:" << (languageCode.isEmpty() ? QStringLiteral("auto") : languageCode);
         if (mono.empty()) {
             finish(false, tr("No audio decoded"), {});
             return;
@@ -7760,17 +7887,36 @@ void AppController::generateSubtitlesForClip(int trackIndex, int clipIndex, cons
 
         setProgress(0.96, tr("Building caption track…"));
 
-        // Map source-relative cue times onto clip-relative timeline time (accounts for
-        // speed and reverse), clamped to the clip's duration.
-        const double spanSec = drift::usToSeconds(srcOut - srcIn);
+        auto sampleToUs = [rate](size_t sample) {
+            return static_cast<drift::TimeUs>((static_cast<int64_t>(sample) * drift::kUsPerSecond) / rate);
+        };
+
+        // Each cue belongs to the source its start falls in. Its times are made relative to that
+        // source, then mapped onto timeline time (accounting for speed and reverse) and clamped to
+        // that source's slot, so a cue running across a join ends where its source does.
         QList<drift::SubtitleCue> mapped;
         for (const drift::SubtitleCue &cue : res.cues) {
-            const double srcStart = drift::usToSeconds(cue.startUs);
-            const double srcEnd = drift::usToSeconds(cue.endUs);
-            double tlStart = reverse ? (spanSec - srcEnd) / speed : srcStart / speed;
-            double tlEnd = reverse ? (spanSec - srcStart) / speed : srcEnd / speed;
-            drift::TimeUs s = qBound<drift::TimeUs>(0, drift::secondsToUs(tlStart), timelineDuration);
-            drift::TimeUs e = qBound<drift::TimeUs>(0, drift::secondsToUs(tlEnd), timelineDuration);
+            size_t spanIndex = spans.size() - 1;
+            for (size_t i = 0; i < spans.size(); ++i) {
+                if (cue.startUs < sampleToUs(spans[i].sampleEnd)) {
+                    spanIndex = i;
+                    break;
+                }
+            }
+            const Span &span = spans[spanIndex];
+            const SubtitleSource &source = sources.at(static_cast<qsizetype>(spanIndex));
+            const drift::TimeUs spanStartUs = sampleToUs(span.sampleStart);
+            const drift::TimeUs spanLengthUs = sampleToUs(span.sampleEnd) - spanStartUs;
+            const double spanSec = drift::usToSeconds(source.srcOut - source.srcIn);
+            const double srcStart = drift::usToSeconds(qBound<drift::TimeUs>(0, cue.startUs - spanStartUs, spanLengthUs));
+            const double srcEnd = drift::usToSeconds(qBound<drift::TimeUs>(0, cue.endUs - spanStartUs, spanLengthUs));
+            const double tlStart = source.reverse ? (spanSec - srcEnd) / source.speed : srcStart / source.speed;
+            const double tlEnd = source.reverse ? (spanSec - srcStart) / source.speed : srcEnd / source.speed;
+            const drift::TimeUs offset = source.timelineStart - rangeStart;
+            const drift::TimeUs s =
+                offset + qBound<drift::TimeUs>(0, drift::secondsToUs(tlStart), source.timelineDuration);
+            const drift::TimeUs e =
+                offset + qBound<drift::TimeUs>(0, drift::secondsToUs(tlEnd), source.timelineDuration);
             if (e > s) {
                 drift::SubtitleCue m;
                 m.startUs = s;
@@ -7781,8 +7927,8 @@ void AppController::generateSubtitlesForClip(int trackIndex, int clipIndex, cons
         }
         drift::sortSubtitleCues(mapped);
 
-        qWarning() << "[subtitles] mapped cues:" << mapped.size() << "spanSec:" << spanSec
-                   << "timelineDuration us:" << timelineDuration << "speed:" << speed;
+        qWarning() << "[subtitles] mapped cues:" << mapped.size()
+                   << "range duration us:" << rangeDuration;
 
         if (mapped.isEmpty()) {
             finish(false, tr("No speech detected"), {});
@@ -7790,6 +7936,7 @@ void AppController::generateSubtitlesForClip(int trackIndex, int clipIndex, cons
         }
         finish(true, tr("Subtitles generated"), mapped);
     });
+    return true;
 }
 
 bool AppController::segmentationAvailable()
@@ -13831,6 +13978,9 @@ bool AppController::canMergeSelection() const
     if (pairs.isEmpty() && m_selectedTrack >= 0 && m_selectedClip >= 0)
         pairs.append(qMakePair(m_selectedTrack, m_selectedClip));
 
+    if (!subtitleMergeIndices(pairs).isEmpty())
+        return true;
+
     if (pairs.size() == 2) {
         leftTrack = pairs[0].first;
         leftClip = pairs[0].second;
@@ -13875,6 +14025,12 @@ void AppController::mergeSelectedClips()
     QList<QPair<int, int>> pairs = m_selection;
     if (pairs.isEmpty() && m_selectedTrack >= 0 && m_selectedClip >= 0)
         pairs.append(qMakePair(m_selectedTrack, m_selectedClip));
+
+    const QList<int> subtitleIndices = subtitleMergeIndices(pairs);
+    if (!subtitleIndices.isEmpty()) {
+        mergeSubtitleClipsAt(pairs.first().first, subtitleIndices);
+        return;
+    }
 
     if (pairs.size() == 2) {
         if (pairs[0].first != pairs[1].first)
@@ -13933,6 +14089,72 @@ void AppController::mergeSelectedClips()
     pushProjectEdit(before, tr("Clips merged"));
     finishEdit(tr("Clips merged"));
     selectClip(trackIndex, leftIndex);
+}
+
+// Clip indices of a selection that is two or more subtitle clips on one track; empty otherwise.
+QList<int> AppController::subtitleMergeIndices(const QList<QPair<int, int>> &pairs) const
+{
+    if (pairs.size() < 2)
+        return {};
+    const int trackIndex = pairs.first().first;
+    QList<int> indices;
+    QList<drift::Clip> clips;
+    for (const QPair<int, int> &pair : pairs) {
+        if (pair.first != trackIndex || !isValidClipIndex(pair.first, pair.second))
+            return {};
+        if (indices.contains(pair.second))
+            continue;
+        indices.append(pair.second);
+        clips.append(m_project.tracks().at(trackIndex).clips.at(pair.second));
+    }
+    if (!drift::subtitleClipsCanMerge(clips))
+        return {};
+    return indices;
+}
+
+bool AppController::canMergeAllSubtitlesOnTrack(int trackIndex) const
+{
+    if (trackIndex < 0 || trackIndex >= m_project.tracks().size())
+        return false;
+    int count = 0;
+    for (const drift::Clip &clip : m_project.tracks().at(trackIndex).clips) {
+        if (clip.type == drift::ClipType::Subtitle)
+            ++count;
+    }
+    return count >= 2;
+}
+
+void AppController::mergeAllSubtitlesOnTrack(int trackIndex)
+{
+    if (!canMergeAllSubtitlesOnTrack(trackIndex))
+        return;
+    QList<int> indices;
+    const QList<drift::Clip> &clips = m_project.tracks().at(trackIndex).clips;
+    for (int i = 0; i < clips.size(); ++i) {
+        if (clips.at(i).type == drift::ClipType::Subtitle)
+            indices.append(i);
+    }
+    mergeSubtitleClipsAt(trackIndex, indices);
+}
+
+void AppController::mergeSubtitleClipsAt(int trackIndex, QList<int> clipIndices)
+{
+    std::sort(clipIndices.begin(), clipIndices.end());
+    drift::Track &track = m_project.tracks()[trackIndex];
+    QList<drift::Clip> clips;
+    for (int index : clipIndices)
+        clips.append(track.clips.at(index));
+
+    const drift::Project before = m_project;
+    const drift::Clip merged = drift::mergeSubtitleClips(clips);
+    for (int i = clipIndices.size() - 1; i >= 0; --i)
+        track.clips.removeAt(clipIndices.at(i));
+    const int insertAt = clipIndices.first();
+    track.clips.insert(insertAt, merged);
+
+    pushProjectEdit(before, tr("Subtitles merged"));
+    finishEdit(tr("Subtitles merged"));
+    selectClip(trackIndex, insertAt);
 }
 
 bool AppController::canSeparateAudioSelection() const

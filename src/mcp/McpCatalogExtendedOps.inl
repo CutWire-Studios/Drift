@@ -115,10 +115,15 @@
           "trimmed independently. Acts on the current selection — call select_clip first; fails "
           "bad_args when no linked clips are selected.",
           objectSchema({}) },
-        { "merge_clips", "timeline", "Join adjacent clips",
+        { "merge_clips", "timeline", "Join adjacent clips, or several subtitle clips into one",
           "Merge the selected adjacent clips on one track back into a single clip. Acts on the current "
-          "selection — select the clips first; fails bad_args when the selection cannot be merged.",
-          objectSchema({}) },
+          "selection — select the clips first; fails bad_args when the selection cannot be merged. "
+          "Two or more subtitle clips on one track (select_clips) always merge, gaps allowed: the "
+          "result spans first start to last end, holds every cue, and keeps the earliest clip's "
+          "style and transform. Pass track instead to merge every subtitle clip on that track, "
+          "ignoring the selection.",
+          objectSchema({{QStringLiteral("track"),
+                         integerProp(QStringLiteral("Merge every subtitle clip on this track"))}}) },
         { "align_clip_left", "timeline", "Snap start to zero",
           "Move the selected clip so it starts at 0. Acts on the current selection — call select_clip "
           "first.",
@@ -634,8 +639,10 @@
                                   clipRefProps()),
                        {QStringLiteral("path")}) },
         { "export_subtitle_file", "subtitles", "Save a subtitle clip's cues as .srt/.vtt",
-          "Write a subtitle clip's cues to a file. The format follows the path's extension (.srt/.vtt).",
-          objectSchema(mergeProps({{QStringLiteral("path"), stringProp(QStringLiteral("Absolute output path; extension picks the format"))}},
+          "Write a subtitle clip's cues to a file. The format follows the path's extension (.srt/.vtt). "
+          "Cue times are clip-local unless timeline_times is true.",
+          objectSchema(mergeProps({{QStringLiteral("path"), stringProp(QStringLiteral("Absolute output path; extension picks the format"))},
+                                   {QStringLiteral("timeline_times"), boolProp(QStringLiteral("Offset cues by the clip's start so they match the exported video"))}},
                                   clipRefProps()),
                        {QStringLiteral("path")}) },
         { "set_subtitle_cues", "subtitles", "Replace all cues",
@@ -661,14 +668,20 @@
           "Returns {languages:[{id, label}]}. Pass an id as generate_subtitles.language.",
           objectSchema({}), true, false, true },
         { "generate_subtitles", "subtitles", "Auto transcribe, including word-by-word captions",
-          "Transcribe a clip's audio with Whisper into a new subtitle clip. Async: returns "
-          "{started:true} immediately — poll "
+          "Transcribe audio with Whisper into a new subtitle clip. Sources: clips (several UUIDs), "
+          "else track+start+end (every video/audio clip on that track in the range), else one clip "
+          "ref. Several sources produce ONE subtitle clip spanning them; they must not overlap in "
+          "time (bad_args). Async: returns {started:true} immediately — poll "
           "inspect({detail:true}).jobs.subtitleGen.{active,progress,status} until active is false. Cancel "
           "with cancel_subtitle_generation. For word-by-word captions pass max_words_per_cue:1. Run "
           "this AFTER remove_silence — silence removal shifts the timeline and would invalidate cue "
           "times.",
           objectSchema(mergeProps({{QStringLiteral("language"), stringProp(QStringLiteral("Language id from list_whisper_languages; omitted auto-detects"))},
-                                   {QStringLiteral("max_words_per_cue"), numberProp(QStringLiteral("Cap words per caption; omit or 0 for the recommended length. Short caps drift slightly out of sync."))}},
+                                   {QStringLiteral("max_words_per_cue"), numberProp(QStringLiteral("Cap words per caption; omit or 0 for the recommended length. Short caps drift slightly out of sync."))},
+                                   {QStringLiteral("clips"), arrayProp(stringProp(QStringLiteral("Clip UUID")),
+                                                                        QStringLiteral("Video/audio clips to caption together"))},
+                                   {QStringLiteral("start"), numberProp(QStringLiteral("Range start seconds (with track and end)"))},
+                                   {QStringLiteral("end"), numberProp(QStringLiteral("Range end seconds (with track and start)"))}},
                                   clipRefProps())) },
         { "cancel_subtitle_generation", "subtitles", "Abort a running generate_subtitles",
           "Cancel in-flight subtitle generation. Returns ok even when nothing was running; confirm "

@@ -937,6 +937,46 @@ Clip mergeClips(const Clip &left, const Clip &right)
     return out;
 }
 
+bool subtitleClipsCanMerge(const QList<Clip> &clips)
+{
+    if (clips.size() < 2)
+        return false;
+    for (const Clip &clip : clips) {
+        if (clip.type != ClipType::Subtitle)
+            return false;
+    }
+    return true;
+}
+
+Clip mergeSubtitleClips(QList<Clip> clips)
+{
+    std::stable_sort(clips.begin(), clips.end(),
+                     [](const Clip &a, const Clip &b) { return a.timelineStart < b.timelineStart; });
+
+    Clip out = clips.first();
+    TimeUs end = out.timelineEnd();
+    for (const Clip &clip : clips)
+        end = qMax(end, clip.timelineEnd());
+    out.timelineDuration = end - out.timelineStart;
+    out.srcIn = 0;
+    out.srcOut = out.timelineDuration;
+    out.fadeOutUs = clips.last().fadeOutUs;
+
+    QList<SubtitleCue> cues;
+    for (const Clip &clip : clips) {
+        const TimeUs offset = clip.timelineStart - out.timelineStart;
+        for (SubtitleCue cue : clip.subtitleCues) {
+            cue.startUs = qBound(TimeUs{0}, cue.startUs + offset, out.timelineDuration);
+            cue.endUs = qBound(TimeUs{0}, cue.endUs + offset, out.timelineDuration);
+            cues.append(cue);
+        }
+    }
+    sortSubtitleCues(cues);
+    out.subtitleCues = cues;
+    out.name = subtitleClipName(out.subtitleCues);
+    return out;
+}
+
 QList<ClipRef> linkedPartners(const Project &project, const Clip &clip)
 {
     QList<ClipRef> out;
