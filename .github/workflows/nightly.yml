@@ -190,6 +190,7 @@ jobs:
           shopt -s nullglob
           assets=(
             dist/linux-appimage/*.AppImage
+            dist/linux-appimage/*.AppImage.zsync
             dist/windows-installer/*.exe
             dist/windows-portable/*.zip
             dist/macos-dmg/*.dmg

@@ -102,6 +102,7 @@ jobs:
             --title "Drift ${GITHUB_REF_NAME}" \
             --notes-file notes.md \
             dist/linux-appimage/*.AppImage \
+            dist/linux-appimage/*.AppImage.zsync \
             dist/windows-installer/*.exe \
             dist/windows-portable/*.zip \
             dist/macos-dmg/*.dmg \
@@ -159,7 +160,7 @@ jobs:
 
           def asset_label(name: str) -> str | None:
               n = name.lower()
-              if "debug" in n:
+              if "debug" in n or n.endswith(".zsync"):
                   return None
               if n.endswith(".appimage"):
                   return "Linux AppImage"

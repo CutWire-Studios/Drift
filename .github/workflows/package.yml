@@ -195,7 +195,7 @@ jobs:
             | sudo tee /etc/apt/apt-mirrors.txt
           sudo apt-get update -o Acquire::Retries=3
           sudo apt-get install -y -o Acquire::Retries=3 \
-            build-essential ninja-build pkg-config git xvfb \
+            build-essential ninja-build pkg-config git xvfb zsync \
             libgl1-mesa-dev libegl1-mesa-dev libglib2.0-dev libdbus-1-dev \
             libzstd-dev libssl-dev libsoundtouch-dev zlib1g-dev \
             libpulse-dev libasound2-dev \
@@ -318,6 +318,16 @@ jobs:
           chmod +x linuxdeploy.AppImage linuxdeploy-plugin-qt.AppImage
           export QMAKE="${QT_ROOT_DIR}/bin/qmake"
           export VERSION="${{ inputs.version }}"
+          # Update information for AppImageUpdate and friends: appimagetool embeds it and writes
+          # a .zsync next to the AppImage (zsyncmake from apt), which is published alongside it.
+          # The .zsync points at the AppImage by basename, so LDAI_OUTPUT has to be the final
+          # asset name rather than renaming afterwards.
+          if [ "${{ inputs.channel }}" = "nightly" ]; then
+            export LDAI_UPDATE_INFORMATION="gh-releases-zsync|${GITHUB_REPOSITORY/\//|}|nightly|Drift-nightly-x86_64.AppImage.zsync"
+          else
+            export LDAI_UPDATE_INFORMATION="gh-releases-zsync|${GITHUB_REPOSITORY/\//|}|latest|Drift-*-x86_64.AppImage.zsync"
+          fi
+          export LDAI_OUTPUT="Drift-${{ env.ASSET_LABEL }}-x86_64.AppImage"
           # Drift's own QML is compiled into the binary, but the Qt Quick modules it imports are
           # not: without QML_SOURCES_PATHS the qt plugin has nothing to scan and ships an AppImage
           # whose every import fails at startup.
@@ -358,14 +368,16 @@ jobs:
             -e AppDir/usr/bin/drift \
             -l /usr/lib/x86_64-linux-gnu/libssl.so.3 \
             -l /usr/lib/x86_64-linux-gnu/libcrypto.so.3
-          appimage="$(ls ./*.AppImage | grep -iv linuxdeploy | head -n 1)"
-          mv "${appimage}" "dist/Drift-${{ env.ASSET_LABEL }}-x86_64.AppImage"
+          test -f "${LDAI_OUTPUT}.zsync"
+          mv "${LDAI_OUTPUT}" "${LDAI_OUTPUT}.zsync" dist/
 
       - name: Upload AppImage artifact
         uses: actions/upload-artifact@v4
         with:
           name: linux-appimage
-          path: dist/*.AppImage
+          path: |
+            dist/*.AppImage
+            dist/*.AppImage.zsync
 
   windows:
     name: Windows installer
