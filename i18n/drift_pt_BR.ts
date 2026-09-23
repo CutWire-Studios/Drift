@@ -11677,6 +11677,22 @@ Se a reprodução travar, experimente outro.</translation>
         <translation>Tamanho (px)</translation>
     </message>
     <message>
+        <source>Scale</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Edit width and height separately</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Scale width and height together</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Scale clip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Opacity &amp; rotation</source>
         <translation>Opacidade &amp; rotação</translation>
     </message>

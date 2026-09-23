@@ -32,6 +32,59 @@ Item {
     readonly property var propHeight: { "key": "height", "label": qsTr("Height"), "def": root.canvasH, "decimals": 0 }
     readonly property var propRotation: { "key": "rotation", "label": qsTr("Angle"), "def": 0.0, "decimals": 1 }
 
+    // One slider that scales width and height together about the box centre; the link button
+    // swaps it for the separate Width/Height rows.
+    property bool sizeLinked: true
+    readonly property bool isText: clipKind === "text" || clipKind === "subtitle"
+
+    // 100% is the box that fills the canvas on its tighter axis — what Reset and a fitted
+    // import both produce — whatever the clip's own aspect ratio.
+    readonly property real scaleAtPlayhead: {
+        void clipDataRevision
+        void EditorState.playheadSeconds
+        if (!hasSelection)
+            return 1
+        const w = transformAt("width", canvasW)
+        const h = transformAt("height", canvasH)
+        return Math.max(w / canvasW, h / canvasH)
+    }
+
+    property var scaleDragStart: null
+
+    function transformAt(key, def) {
+        return EditorState.propertyValueAt(EditorState.selectedTrack, EditorState.selectedClip,
+                                           key, EditorState.playheadSeconds, def)
+    }
+
+    function beginScaleDrag() {
+        scaleDragStart = {
+            "x": transformAt("x", 0),
+            "y": transformAt("y", 0),
+            "w": transformAt("width", canvasW),
+            "h": transformAt("height", canvasH),
+            "scale": scaleAtPlayhead,
+            "pixelSize": (clipData.textStyle && clipData.textStyle.pixelSize) || 64
+        }
+    }
+
+    function applyScale(scale) {
+        const s = scaleDragStart
+        if (!s || s.scale <= 0)
+            return
+        const k = scale / s.scale
+        const w = Math.max(1, s.w * k)
+        const h = Math.max(1, s.h * k)
+        const x = s.x + (s.w - w) / 2
+        const y = s.y + (s.h - h) / 2
+        if (isText) {
+            EditorState.previewSetTextRect(EditorState.selectedTrack, EditorState.selectedClip,
+                                           x, y, w, h, Math.round(s.pixelSize * k))
+        } else {
+            EditorState.previewSetClipRect(EditorState.selectedTrack, EditorState.selectedClip,
+                                           x, y, w, h)
+        }
+    }
+
     height: contentCol.height
     implicitHeight: contentCol.height
 
@@ -105,17 +158,77 @@ Item {
                 unit: "px"
             }
 
-            Text {
+            Item {
                 visible: !root.isModel3d
-                text: qsTr("Size (px)")
-                color: Theme.mutedForeground
-                font.family: Theme.fontFamily
-                font.pixelSize: Theme.fontSizeXs
-                font.weight: Font.Medium
+                width: parent.width
+                height: sizeLinkButton.height
+
+                Text {
+                    anchors.left: parent.left
+                    anchors.verticalCenter: parent.verticalCenter
+                    text: root.sizeLinked ? qsTr("Scale") : qsTr("Size (px)")
+                    color: Theme.mutedForeground
+                    font.family: Theme.fontFamily
+                    font.pixelSize: Theme.fontSizeXs
+                    font.weight: Font.Medium
+                }
+
+                IconButton {
+                    id: sizeLinkButton
+                    anchors.right: parent.right
+                    anchors.verticalCenter: parent.verticalCenter
+                    buttonSize: 24
+                    iconSize: 14
+                    glyph: root.sizeLinked ? Theme.icons.linkTwo : Theme.icons.unlink
+                    active: root.sizeLinked
+                    tooltip: root.sizeLinked ? qsTr("Edit width and height separately")
+                                             : qsTr("Scale width and height together")
+                    onClicked: root.sizeLinked = !root.sizeLinked
+                }
+            }
+
+            Row {
+                visible: !root.isModel3d && root.sizeLinked
+                width: parent.width
+                spacing: 8
+
+                ThemedSlider {
+                    id: scaleSlider
+                    label: qsTr("Scale")
+                    width: parent.width - scaleReadout.width - parent.spacing
+                    anchors.verticalCenter: parent.verticalCenter
+                    from: 0.05
+                    to: 4
+                    valueFormatter: function (v) { return Math.round(v * 100) + "%" }
+                    Binding on value {
+                        when: !scaleSlider.pressed
+                        value: root.scaleAtPlayhead
+                    }
+                    onPressedChanged: {
+                        if (pressed) {
+                            root.beginScaleDrag()
+                            EditorState.beginPreviewDrag(qsTr("Scale clip"))
+                        } else {
+                            EditorState.commitPreviewDrag()
+                        }
+                    }
+                    onMoved: root.applyScale(value)
+                }
+
+                Text {
+                    id: scaleReadout
+                    width: 48
+                    anchors.verticalCenter: parent.verticalCenter
+                    horizontalAlignment: Text.AlignRight
+                    text: Math.round((scaleSlider.pressed ? scaleSlider.value : root.scaleAtPlayhead) * 100) + "%"
+                    color: Theme.panelForeground
+                    font.family: Theme.monoFontFamily
+                    font.pixelSize: Theme.fontSizeSm
+                }
             }
 
             PropertyKeyframeRow {
-                visible: !root.isModel3d
+                visible: !root.isModel3d && !root.sizeLinked
                 width: parent.width
                 propDef: root.propWidth
                 keyframeList: (root.clipData.keyframes && root.clipData.keyframes.width && root.clipData.keyframes.width.points) || []
@@ -125,7 +238,7 @@ Item {
                 unit: "px"
             }
             PropertyKeyframeRow {
-                visible: !root.isModel3d
+                visible: !root.isModel3d && !root.sizeLinked
                 width: parent.width
                 propDef: root.propHeight
                 keyframeList: (root.clipData.keyframes && root.clipData.keyframes.height && root.clipData.keyframes.height.points) || []

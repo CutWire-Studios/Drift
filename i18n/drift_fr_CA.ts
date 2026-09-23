@@ -11682,6 +11682,22 @@ En cas de saccades à la lecture, essayez un autre mode.</translation>
         <translation>Taille (px)</translation>
     </message>
     <message>
+        <source>Scale</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Edit width and height separately</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Scale width and height together</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Scale clip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Opacity &amp; rotation</source>
         <translation>Opacité &amp; rotation</translation>
     </message>

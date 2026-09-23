@@ -11677,6 +11677,22 @@ Se la riproduzione va a scatti, prova un&apos;altra opzione.</translation>
         <translation>Dimensioni (px)</translation>
     </message>
     <message>
+        <source>Scale</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Edit width and height separately</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Scale width and height together</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Scale clip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Opacity &amp; rotation</source>
         <translation>Opacità e rotazione</translation>
     </message>
