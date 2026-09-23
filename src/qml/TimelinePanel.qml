@@ -1030,20 +1030,7 @@ PanelFrame {
         panLastSceneY = p.y
     }
 
-    // === Voiceover control bar (top-right of timeline toolbar) ===
-    VoiceoverControlBar {
-        id: voiceoverBar
-        anchors.top: parent.top
-        anchors.topMargin: Math.max(2, (toolbar.height - height) / 2)
-        anchors.right: parent.right
-        anchors.rightMargin: 10
-        z: 200
-        visible: EditorState.isRecordingAudio
-        opacity: visible ? 1 : 0
-        Behavior on opacity {
-            NumberAnimation { duration: 180 }
-        }
-    }
+
 
     Column {
         anchors.fill: parent

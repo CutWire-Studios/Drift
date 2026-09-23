@@ -12,15 +12,19 @@ Rectangle {
     id: root
 
     // Docked at the end of the timeline
-    width: mixerVisible ? Math.max(130, stripsRow.implicitWidth + 2) : 0
+    readonly property bool isRecording: EditorState.isRecordingAudio
+    readonly property bool mixerVisible: EditorState.audioMixerVisible || isRecording
+    readonly property real minMixerWidth: isRecording ? 250 : 130
+    width: mixerVisible ? Math.max(minMixerWidth, stripsRow.implicitWidth + 2) : 0
     visible: width > 0
     clip: true
 
-    readonly property bool mixerVisible: EditorState.audioMixerVisible
     readonly property color hoverBg: Theme.popoverHover
-    readonly property color headerBg: Qt.rgba(Theme.panelForeground.r, Theme.panelForeground.g, Theme.panelForeground.b, 0.06)
+    readonly property color headerBg: Theme.darkMode
+        ? Qt.rgba(Theme.panelForeground.r, Theme.panelForeground.g, Theme.panelForeground.b, 0.06)
+        : Qt.rgba(0, 0, 0, 0.04)
 
-    color: Qt.rgba(Theme.panelBackground.r * 0.9, Theme.panelBackground.g * 0.9, Theme.panelBackground.b * 0.9, 0.98)
+    color: Theme.panelBackground
     border.color: Theme.panelBorder
     border.width: 1
 
@@ -269,81 +273,275 @@ Rectangle {
                 }
             }
 
-            IconButton {
+            Row {
                 anchors.right: parent.right
                 anchors.rightMargin: 4
                 anchors.verticalCenter: parent.verticalCenter
-                glyph: Theme.icons.x
-                variant: "text"
-                tooltip: qsTr("Close audio mixer")
-                onClicked: EditorState.audioMixerVisible = false
+                spacing: 2
+
+                // Mic settings button
+                IconButton {
+                    glyph: Theme.icons.mic
+                    variant: "text"
+                    tooltip: qsTr("Microphone: %1 (click to switch)").arg(EditorState.currentMicrophoneName)
+                    onClicked: headerMicMenu.popup()
+
+                    ThemedContextMenu {
+                        id: headerMicMenu
+                        implicitWidth: 220
+
+                        Instantiator {
+                            model: EditorState.availableMicrophones
+                            delegate: ThemedMenuItem {
+                                required property var modelData
+                                text: modelData.name
+                                icon.name: modelData.name === EditorState.currentMicrophoneName ? Theme.icons.check : ""
+                                onTriggered: EditorState.selectMicrophone(modelData.id)
+                            }
+                            onObjectAdded: (index, object) => headerMicMenu.insertItem(index, object)
+                            onObjectRemoved: (index, object) => headerMicMenu.removeItem(object)
+                        }
+                    }
+                }
+
+                IconButton {
+                    glyph: Theme.icons.x
+                    variant: "text"
+                    tooltip: qsTr("Close audio mixer")
+                    onClicked: EditorState.audioMixerVisible = false
+                }
             }
         }
 
-        // === Live Voiceover Status Banner (when recording) ===================
+        // === Dedicated Voiceover Recording Section (active during voiceover recording) ===
         Rectangle {
-            id: voBanner
+            id: voPanel
             visible: EditorState.isRecordingAudio
             width: parent.width
-            height: visible ? 28 : 0
-            color: EditorState.isAudioRecordingPaused ? "#422006" : "#450a0a"
+            height: visible ? 58 : 0
+            clip: true
+            color: EditorState.isAudioRecordingPaused
+                   ? (Theme.darkMode ? "#2b1e06" : "#fef9c3")
+                   : (Theme.darkMode ? "#2b0d0d" : "#fee2e2")
             border.color: EditorState.isAudioRecordingPaused ? "#eab308" : Theme.destructive
             border.width: 1
 
-            Row {
-                anchors.centerIn: parent
-                spacing: 8
+            Behavior on height {
+                NumberAnimation { duration: Theme.durationFast; easing.type: Theme.easing }
+            }
 
-                Rectangle {
-                    width: 8
-                    height: 8
-                    radius: 4
-                    color: EditorState.isAudioRecordingPaused ? "#eab308" : Theme.destructive
-                    anchors.verticalCenter: parent.verticalCenter
-                    SequentialAnimation on opacity {
-                        running: voBanner.visible && !EditorState.isAudioRecordingPaused
-                        loops: Animation.Infinite
-                        NumberAnimation { to: 0.2; duration: 400 }
-                        NumberAnimation { to: 1.0; duration: 400 }
+            Column {
+                anchors.fill: parent
+                anchors.margins: 4
+                spacing: 3
+
+                // --- Row 1: Recording Status, Timer & Transport Action Buttons ---
+                Item {
+                    width: parent.width
+                    height: 22
+
+                    // Status pill & timer
+                    Row {
+                        anchors.left: parent.left
+                        anchors.verticalCenter: parent.verticalCenter
+                        spacing: 5
+
+                        Rectangle {
+                            width: 8
+                            height: 8
+                            radius: 4
+                            color: EditorState.isAudioRecordingPaused ? "#eab308" : Theme.destructive
+                            anchors.verticalCenter: parent.verticalCenter
+                            SequentialAnimation on opacity {
+                                running: voPanel.visible && !EditorState.isAudioRecordingPaused
+                                loops: Animation.Infinite
+                                NumberAnimation { to: 0.2; duration: 400 }
+                                NumberAnimation { to: 1.0; duration: 400 }
+                            }
+                        }
+
+                        Text {
+                            text: EditorState.isAudioRecordingPaused ? qsTr("PAUSED") : qsTr("REC")
+                            font.bold: true
+                            font.pixelSize: 10
+                            color: EditorState.isAudioRecordingPaused ? "#d97706" : Theme.destructive
+                            anchors.verticalCenter: parent.verticalCenter
+                        }
+
+                        Text {
+                            text: {
+                                const secs = EditorState.audioRecordSeconds
+                                const m = Math.floor(secs / 60)
+                                const s = Math.floor(secs % 60)
+                                const ms = Math.floor((secs % 1) * 10)
+                                return (m < 10 ? "0" + m : m) + ":" + (s < 10 ? "0" + s : s) + "." + ms
+                            }
+                            font.family: Theme.monoFontFamily
+                            font.bold: true
+                            font.pixelSize: 11
+                            color: Theme.panelForeground
+                            anchors.verticalCenter: parent.verticalCenter
+                        }
+                    }
+
+                    // Transport Actions (Pause, Done, Discard)
+                    Row {
+                        anchors.right: parent.right
+                        anchors.verticalCenter: parent.verticalCenter
+                        spacing: 2
+
+                        IconButton {
+                            glyph: EditorState.isAudioRecordingPaused ? Theme.icons.play : Theme.icons.pause
+                            variant: "text"
+                            anchors.verticalCenter: parent.verticalCenter
+                            tooltip: EditorState.isAudioRecordingPaused ? qsTr("Resume recording") : qsTr("Pause recording")
+                            onClicked: EditorState.toggleAudioRecordingPause()
+                        }
+
+                        IconButton {
+                            glyph: Theme.icons.check
+                            variant: "text"
+                            anchors.verticalCenter: parent.verticalCenter
+                            tooltip: qsTr("Done — save recording to track")
+                            onClicked: EditorState.stopAudioRecording()
+                        }
+
+                        IconButton {
+                            glyph: Theme.icons.trash
+                            variant: "text"
+                            anchors.verticalCenter: parent.verticalCenter
+                            tooltip: qsTr("Discard — cancel recording")
+                            onClicked: EditorState.cancelAudioRecording()
+                        }
                     }
                 }
 
-                Text {
-                    text: EditorState.isAudioRecordingPaused ? qsTr("PAUSED") : qsTr("REC")
-                    font.bold: true
-                    font.pixelSize: 10
-                    color: EditorState.isAudioRecordingPaused ? "#eab308" : Theme.destructive
-                    anchors.verticalCenter: parent.verticalCenter
-                }
+                // --- Row 2: Microphone Switcher & Mic Gain Slider ---
+                Row {
+                    width: parent.width
+                    height: 22
+                    spacing: 6
 
-                Text {
-                    text: {
-                        const s = EditorState.audioRecordSeconds
-                        const m = Math.floor(s / 60)
-                        const sec = Math.floor(s % 60)
-                        return (m < 10 ? "0" + m : m) + ":" + (sec < 10 ? "0" + sec : sec)
+                    // Microphone Picker Button
+                    Item {
+                        id: voMicPickerBtn
+                        width: Math.min(130, Math.max(70, voMicPickerRow.implicitWidth + 10))
+                        height: 20
+                        anchors.verticalCenter: parent.verticalCenter
+
+                        Rectangle {
+                            anchors.fill: parent
+                            radius: Theme.radiusSm
+                            color: voMicMouse.containsMouse || voMicMenu.opened
+                                   ? Theme.popoverHover
+                                   : (Theme.darkMode ? Qt.rgba(1, 1, 1, 0.08) : Qt.rgba(0, 0, 0, 0.06))
+                            border.color: Theme.panelBorder
+                            border.width: 1
+                        }
+
+                        Row {
+                            id: voMicPickerRow
+                            anchors.centerIn: parent
+                            spacing: 3
+
+                            IconGlyph {
+                                glyph: Theme.icons.mic
+                                iconSize: 11
+                                iconColor: Theme.panelForeground
+                                anchors.verticalCenter: parent.verticalCenter
+                            }
+
+                            Text {
+                                text: EditorState.currentMicrophoneName || qsTr("Default Mic")
+                                font.pixelSize: 10
+                                color: Theme.panelForeground
+                                elide: Text.ElideRight
+                                width: Math.min(85, implicitWidth)
+                                anchors.verticalCenter: parent.verticalCenter
+                            }
+
+                            IconGlyph {
+                                glyph: Theme.icons.chevronDown
+                                iconSize: 9
+                                iconColor: Theme.mutedForeground
+                                anchors.verticalCenter: parent.verticalCenter
+                            }
+                        }
+
+                        MouseArea {
+                            id: voMicMouse
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: voMicMenu.popup(0, voMicPickerBtn.height + 2)
+                        }
+
+                        ThemedContextMenu {
+                            id: voMicMenu
+                            implicitWidth: 220
+
+                            Instantiator {
+                                model: EditorState.availableMicrophones
+                                delegate: ThemedMenuItem {
+                                    required property var modelData
+                                    text: modelData.name
+                                    icon.name: modelData.name === EditorState.currentMicrophoneName ? Theme.icons.check : ""
+                                    onTriggered: EditorState.selectMicrophone(modelData.id)
+                                }
+                                onObjectAdded: (index, object) => voMicMenu.insertItem(index, object)
+                                onObjectRemoved: (index, object) => voMicMenu.removeItem(object)
+                            }
+                        }
+
+                        ThemedToolTip {
+                            visible: voMicMouse.containsMouse && !voMicMenu.opened
+                            text: qsTr("Microphone: %1 (click to switch)").arg(EditorState.currentMicrophoneName)
+                        }
                     }
-                    font.family: Theme.monoFontFamily
-                    font.bold: true
-                    font.pixelSize: 11
-                    color: Theme.panelForeground
-                    anchors.verticalCenter: parent.verticalCenter
-                }
 
-                IconButton {
-                    glyph: EditorState.isAudioRecordingPaused ? Theme.icons.play : Theme.icons.pause
-                    variant: "text"
-                    anchors.verticalCenter: parent.verticalCenter
-                    tooltip: EditorState.isAudioRecordingPaused ? qsTr("Resume") : qsTr("Pause")
-                    onClicked: EditorState.toggleAudioRecordingPause()
-                }
+                    // Divider
+                    Rectangle {
+                        width: 1
+                        height: 14
+                        color: Theme.panelBorder
+                        anchors.verticalCenter: parent.verticalCenter
+                    }
 
-                IconButton {
-                    glyph: Theme.icons.check
-                    variant: "text"
-                    anchors.verticalCenter: parent.verticalCenter
-                    tooltip: qsTr("Done")
-                    onClicked: EditorState.stopAudioRecording()
+                    // Voice Input Gain Slider
+                    Row {
+                        anchors.verticalCenter: parent.verticalCenter
+                        spacing: 3
+
+                        IconGlyph {
+                            glyph: Theme.icons.volumeHigh
+                            iconSize: 11
+                            iconColor: Theme.mutedForeground
+                            anchors.verticalCenter: parent.verticalCenter
+                        }
+
+                        ThemedSlider {
+                            id: voGainSlider
+                            label: qsTr("Mic gain")
+                            width: 60
+                            anchors.verticalCenter: parent.verticalCenter
+                            from: 0.0
+                            to: 2.0
+                            value: EditorState.audioRecordGain
+                            onMoved: EditorState.setAudioRecordGain(value)
+                            valueFormatter: function (v) {
+                                return Math.round(v * 100) + "%"
+                            }
+                        }
+
+                        Text {
+                            text: Math.round(EditorState.audioRecordGain * 100) + "%"
+                            font.family: Theme.monoFontFamily
+                            font.pixelSize: 9
+                            color: Theme.mutedForeground
+                            width: 28
+                            anchors.verticalCenter: parent.verticalCenter
+                        }
+                    }
                 }
             }
         }
@@ -352,7 +550,7 @@ Rectangle {
         Flickable {
             id: stripsFlick
             width: parent.width
-            height: parent.height - topHeader.height - (voBanner.visible ? voBanner.height : 0)
+            height: parent.height - topHeader.height - (voPanel.visible ? voPanel.height : 0)
             contentWidth: stripsRow.implicitWidth
             contentHeight: height
             boundsBehavior: Flickable.StopAtBounds
@@ -393,7 +591,7 @@ Rectangle {
                         Rectangle {
                             anchors.fill: parent
                             color: trackStrip.isRecordingHere
-                                   ? Qt.rgba(0.9, 0.1, 0.1, 0.06)
+                                   ? (Theme.darkMode ? Qt.rgba(0.9, 0.1, 0.1, 0.08) : Qt.rgba(0.9, 0.1, 0.1, 0.04))
                                    : "transparent"
                         }
 
@@ -415,7 +613,9 @@ Rectangle {
                                 width: parent.width
                                 height: 22
                                 radius: 2
-                                color: trackStrip.isRecordingHere ? Qt.rgba(0.9, 0.1, 0.1, 0.25) : root.headerBg
+                                color: trackStrip.isRecordingHere
+                                       ? (Theme.darkMode ? Qt.rgba(0.9, 0.1, 0.1, 0.25) : Qt.rgba(0.9, 0.1, 0.1, 0.12))
+                                       : root.headerBg
                                 border.color: trackStrip.isRecordingHere ? Theme.destructive : Theme.panelBorder
                                 border.width: 1
 
@@ -592,7 +792,7 @@ Rectangle {
                                         ctx.beginPath()
                                         ctx.arc(cx, cy, r, startAngle, endAngle, false)
                                         ctx.lineWidth = 3
-                                        ctx.strokeStyle = "#475569"
+                                        ctx.strokeStyle = Theme.darkMode ? "#475569" : "#cbd5e1"
                                         ctx.lineCap = "round"
                                         ctx.stroke()
 
@@ -605,7 +805,7 @@ Rectangle {
                                                 ctx.arc(cx, cy, r, centerAngle, targetAngle, false)
                                             }
                                             ctx.lineWidth = 3
-                                            ctx.strokeStyle = "#38bdf8"
+                                            ctx.strokeStyle = Theme.darkMode ? "#38bdf8" : "#0284c7"
                                             ctx.lineCap = "round"
                                             ctx.stroke()
                                         }
@@ -615,10 +815,10 @@ Rectangle {
                                         const hy = cy + r * Math.sin(targetAngle)
                                         ctx.beginPath()
                                         ctx.arc(hx, hy, 4, 0, 2 * Math.PI, false)
-                                        ctx.fillStyle = "#0f172a"
+                                        ctx.fillStyle = Theme.darkMode ? "#0f172a" : "#ffffff"
                                         ctx.fill()
                                         ctx.lineWidth = 1.5
-                                        ctx.strokeStyle = "#94a3b8"
+                                        ctx.strokeStyle = Theme.darkMode ? "#94a3b8" : "#64748b"
                                         ctx.stroke()
                                     }
                                 }
@@ -675,7 +875,9 @@ Rectangle {
                                 Rectangle {
                                     anchors.fill: parent
                                     radius: 2
-                                    color: panReadoutMouse.containsMouse ? root.hoverBg : Qt.rgba(0, 0, 0, 0.3)
+                                    color: panReadoutMouse.containsMouse
+                                           ? root.hoverBg
+                                           : (Theme.darkMode ? Qt.rgba(0, 0, 0, 0.35) : Qt.rgba(0, 0, 0, 0.05))
                                     border.color: Theme.panelBorder
                                     border.width: 1
                                 }
@@ -687,7 +889,9 @@ Rectangle {
                                     text: root.formatPan(trackStrip.trackPan)
                                     font.family: Theme.monoFontFamily
                                     font.pixelSize: 9
-                                    color: Math.abs(trackStrip.trackPan) > 0.01 ? "#38bdf8" : Theme.mutedForeground
+                                    color: Math.abs(trackStrip.trackPan) > 0.01
+                                           ? (Theme.darkMode ? "#38bdf8" : "#0284c7")
+                                           : Theme.mutedForeground
                                 }
 
                                 // Up/down tiny arrows
@@ -745,8 +949,8 @@ Rectangle {
                                         Rectangle {
                                             anchors.fill: parent
                                             radius: 2
-                                            color: "#0f1115"
-                                            border.color: "#1e222a"
+                                            color: Theme.darkMode ? "#0f1115" : "#1a1d24"
+                                            border.color: Theme.panelBorder
                                             border.width: 1
                                         }
 
@@ -867,7 +1071,7 @@ Rectangle {
                                             anchors.bottom: parent.bottom
                                             anchors.bottomMargin: 6
                                             width: 2
-                                            color: "#334155"
+                                            color: Theme.sliderTrack
 
                                             // Blue fill below thumb
                                             Rectangle {
@@ -876,7 +1080,7 @@ Rectangle {
                                                 anchors.bottom: parent.bottom
                                                 anchors.top: parent.top
                                                 anchors.topMargin: faderItem.thumbY
-                                                color: "#1e88e5"
+                                                color: Theme.primary
                                             }
                                         }
 
@@ -888,8 +1092,14 @@ Rectangle {
                                             radius: 3
                                             anchors.horizontalCenter: parent.horizontalCenter
                                             y: Math.max(0, Math.min(faderItem.height - height, faderItem.thumbY))
-                                            color: faderMouse.pressed ? "#3b82f6" : (faderMouse.containsMouse ? "#1e293b" : "#0f172a")
-                                            border.color: faderMouse.pressed ? "#93c5fd" : (faderMouse.containsMouse ? "#e2e8f0" : "#64748b")
+                                            color: faderMouse.pressed
+                                                   ? Theme.primary
+                                                   : (faderMouse.containsMouse
+                                                      ? (Theme.darkMode ? "#1e293b" : "#f1f5f9")
+                                                      : (Theme.darkMode ? "#0f172a" : "#ffffff"))
+                                            border.color: faderMouse.pressed
+                                                          ? Theme.primaryForeground
+                                                          : (Theme.darkMode ? "#64748b" : "#94a3b8")
                                             border.width: 1.5
 
                                             // Grip groove inside thumb
@@ -897,7 +1107,9 @@ Rectangle {
                                                 anchors.centerIn: parent
                                                 width: 6
                                                 height: 1
-                                                color: "#94a3b8"
+                                                color: faderMouse.pressed
+                                                       ? Theme.primaryForeground
+                                                       : (Theme.darkMode ? "#94a3b8" : "#64748b")
                                             }
                                         }
 
@@ -958,7 +1170,9 @@ Rectangle {
                                 Rectangle {
                                     anchors.fill: parent
                                     radius: 2
-                                    color: dbReadoutMouse.containsMouse ? root.hoverBg : Qt.rgba(0, 0, 0, 0.4)
+                                    color: dbReadoutMouse.containsMouse
+                                           ? root.hoverBg
+                                           : (Theme.darkMode ? Qt.rgba(0, 0, 0, 0.4) : Qt.rgba(0, 0, 0, 0.05))
                                     border.color: Theme.panelBorder
                                     border.width: 1
                                 }
@@ -1138,8 +1352,8 @@ Rectangle {
                                     Rectangle {
                                         anchors.fill: parent
                                         radius: 2
-                                        color: "#0f1115"
-                                        border.color: "#1e222a"
+                                        color: Theme.darkMode ? "#0f1115" : "#1a1d24"
+                                        border.color: Theme.panelBorder
                                         border.width: 1
                                     }
 
@@ -1254,7 +1468,7 @@ Rectangle {
                                         anchors.bottom: parent.bottom
                                         anchors.bottomMargin: 6
                                         width: 2
-                                        color: "#334155"
+                                        color: Theme.sliderTrack
 
                                         Rectangle {
                                             anchors.left: parent.left
@@ -1262,7 +1476,7 @@ Rectangle {
                                             anchors.bottom: parent.bottom
                                             anchors.top: parent.top
                                             anchors.topMargin: masterFaderItem.thumbY
-                                            color: "#1e88e5"
+                                            color: Theme.primary
                                         }
                                     }
 
@@ -1273,15 +1487,23 @@ Rectangle {
                                         radius: 3
                                         anchors.horizontalCenter: parent.horizontalCenter
                                         y: Math.max(0, Math.min(masterFaderItem.height - height, masterFaderItem.thumbY))
-                                        color: masterFaderMouse.pressed ? "#3b82f6" : (masterFaderMouse.containsMouse ? "#1e293b" : "#0f172a")
-                                        border.color: masterFaderMouse.pressed ? "#93c5fd" : (masterFaderMouse.containsMouse ? "#e2e8f0" : "#64748b")
+                                        color: masterFaderMouse.pressed
+                                               ? Theme.primary
+                                               : (masterFaderMouse.containsMouse
+                                                  ? (Theme.darkMode ? "#1e293b" : "#f1f5f9")
+                                                  : (Theme.darkMode ? "#0f172a" : "#ffffff"))
+                                        border.color: masterFaderMouse.pressed
+                                                      ? Theme.primaryForeground
+                                                      : (Theme.darkMode ? "#64748b" : "#94a3b8")
                                         border.width: 1.5
 
                                         Rectangle {
                                             anchors.centerIn: parent
                                             width: 6
                                             height: 1
-                                            color: "#94a3b8"
+                                            color: masterFaderMouse.pressed
+                                                   ? Theme.primaryForeground
+                                                   : (Theme.darkMode ? "#94a3b8" : "#64748b")
                                         }
                                     }
 
@@ -1330,7 +1552,9 @@ Rectangle {
                             Rectangle {
                                 anchors.fill: parent
                                 radius: 2
-                                color: masterDbReadoutMouse.containsMouse ? root.hoverBg : Qt.rgba(0, 0, 0, 0.4)
+                                color: masterDbReadoutMouse.containsMouse
+                                       ? root.hoverBg
+                                       : (Theme.darkMode ? Qt.rgba(0, 0, 0, 0.4) : Qt.rgba(0, 0, 0, 0.05))
                                 border.color: Theme.panelBorder
                                 border.width: 1
                             }
