@@ -4570,9 +4570,17 @@ void EditorStateTest::audioRecordingVoiceoverWorkflow()
 
     // Initial state
     QCOMPARE(state.isRecordingAudio(), false);
+    QCOMPARE(state.isAudioRecordingPaused(), false);
     QCOMPARE(state.recordingTrackIndex(), -1);
     QCOMPARE(state.audioRecordLevel(), 0.0f);
     QCOMPARE(state.audioRecordSeconds(), 0.0);
+    QCOMPARE(state.audioRecordGain(), 1.0f);
+    QVERIFY(state.audioRecordLivePeaks().isEmpty());
+
+    // Gain adjustment
+    state.setAudioRecordGain(1.25f);
+    QCOMPARE(state.audioRecordGain(), 1.25f);
+    state.setAudioRecordGain(1.0f);
 
     // Set up project with a 10s audio track
     drift::Project &project = *state.project();
@@ -4593,14 +4601,33 @@ void EditorStateTest::audioRecordingVoiceoverWorkflow()
     if (state.isRecordingAudio()) {
         QCOMPARE(state.recordingTrackIndex(), 0);
         QVERIFY(state.playing());
+        QCOMPARE(state.isAudioRecordingPaused(), false);
+
+        // Pause recording test
+        state.pauseAudioRecording();
+        QVERIFY(state.isAudioRecordingPaused());
+        QVERIFY(!state.playing());
+
+        // Resume recording test
+        state.resumeAudioRecording();
+        QVERIFY(!state.isAudioRecordingPaused());
+        QVERIFY(state.playing());
+
+        // Toggle pause test
+        state.toggleAudioRecordingPause();
+        QVERIFY(state.isAudioRecordingPaused());
+        state.toggleAudioRecordingPause();
+        QVERIFY(!state.isAudioRecordingPaused());
 
         // Cancel recording test
         state.cancelAudioRecording();
         QCOMPARE(state.isRecordingAudio(), false);
+        QCOMPARE(state.isAudioRecordingPaused(), false);
         QCOMPARE(state.recordingTrackIndex(), -1);
         QCOMPARE(state.playing(), false);
         QCOMPARE(state.playheadSeconds(), 2.5);
         QCOMPARE(project.tracks().at(0).clips.size(), 1);
+        QVERIFY(state.audioRecordLivePeaks().isEmpty());
 
         // Start recording again to test commit and undo/redo
         state.setPlayheadSeconds(3.0);
@@ -4609,8 +4636,10 @@ void EditorStateTest::audioRecordingVoiceoverWorkflow()
         QTest::qWait(350);
         state.stopAudioRecording();
         QCOMPARE(state.isRecordingAudio(), false);
+        QCOMPARE(state.isAudioRecordingPaused(), false);
         QCOMPARE(state.playing(), false);
         QCOMPARE(project.tracks().at(0).clips.size(), 2);
+        QVERIFY(state.audioRecordLivePeaks().isEmpty());
 
         const drift::Clip &newClip = project.tracks().at(0).clips.at(1);
         QCOMPARE(newClip.type, drift::ClipType::Audio);

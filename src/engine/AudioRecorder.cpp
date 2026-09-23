@@ -110,13 +110,52 @@ QString AudioRecorder::currentDeviceName() const
     return def.isNull() ? QString() : def.description();
 }
 
+void AudioRecorder::setGain(float gain)
+{
+    const float clamped = std::clamp(gain, 0.0f, 3.0f);
+    if (qFuzzyCompare(m_gain, clamped))
+        return;
+    m_gain = clamped;
+    emit gainChanged(m_gain);
+}
+
+QVariantList AudioRecorder::livePeaks() const
+{
+    QVariantList list;
+    list.reserve(static_cast<qsizetype>(m_livePeaks.size()));
+    for (float p : m_livePeaks) {
+        list.append(p);
+    }
+    return list;
+}
+
 void AudioRecorder::selectDevice(const QString &id)
 {
     const QList<QAudioDevice> inputs = QMediaDevices::audioInputs();
     for (const QAudioDevice &device : inputs) {
-        if (QString::fromUtf8(device.id()) == id) {
+        if (QString::fromUtf8(device.id()) == id || device.description() == id) {
+            if (m_selectedDevice == device)
+                return;
             m_selectedDevice = device;
             emit currentDeviceChanged();
+
+            if (m_recording) {
+                if (m_audioSource) {
+                    m_audioSource->stop();
+                    m_audioSource.reset();
+                }
+                m_inputIo = nullptr;
+                m_captureFormat = negotiateFormat(m_selectedDevice);
+                if (m_captureFormat.isValid()) {
+                    m_audioSource = std::make_unique<QAudioSource>(m_selectedDevice, m_captureFormat, this);
+                    m_inputIo = m_audioSource->start();
+                    if (m_inputIo) {
+                        connect(m_inputIo, &QIODevice::readyRead, this, &AudioRecorder::onReadyRead);
+                        if (m_paused)
+                            m_audioSource->suspend();
+                    }
+                }
+            }
             return;
         }
     }
@@ -210,20 +249,52 @@ bool AudioRecorder::startRecording(int trackIndex, const QString &outputPath, QS
     connect(m_inputIo, &QIODevice::readyRead, this, &AudioRecorder::onReadyRead);
 
     m_recording = true;
+    m_paused = false;
     m_recordingTrackIndex = trackIndex;
     m_totalFramesWritten = 0;
     m_recordedSeconds = 0.0;
     m_audioLevel = 0.0f;
+    m_livePeaks.clear();
+    m_peakSampleCounter = 0;
+    m_currentBucketPeak = 0.0f;
 
     emit recordingStateChanged();
+    emit pausedChanged(false);
     emit recordedSecondsChanged(0.0);
     emit audioLevelChanged(0.0f);
+    emit livePeaksChanged();
     return true;
+}
+
+void AudioRecorder::pause()
+{
+    if (!m_recording || m_paused)
+        return;
+
+    m_paused = true;
+    if (m_audioSource)
+        m_audioSource->suspend();
+
+    m_audioLevel = 0.0f;
+    emit audioLevelChanged(0.0f);
+    emit pausedChanged(true);
+}
+
+void AudioRecorder::resume()
+{
+    if (!m_recording || !m_paused)
+        return;
+
+    m_paused = false;
+    if (m_audioSource)
+        m_audioSource->resume();
+
+    emit pausedChanged(false);
 }
 
 void AudioRecorder::onReadyRead()
 {
-    if (!m_recording || !m_inputIo)
+    if (!m_recording || !m_inputIo || m_paused)
         return;
 
     const QByteArray bytes = m_inputIo->readAll();
@@ -235,12 +306,30 @@ void AudioRecorder::onReadyRead()
     if (stereoPcm.empty())
         return;
 
+    // Apply software input gain
+    if (m_gain != 1.0f) {
+        for (float &s : stereoPcm) {
+            s = std::clamp(s * m_gain, -1.0f, 1.0f);
+        }
+    }
+
     const int frames = static_cast<int>(stereoPcm.size() / 2);
+    const int samplesPerPeak = std::max(1, m_sampleRate / 50);
 
     float peak = 0.0f;
     for (int i = 0; i < frames; ++i) {
-        peak = std::max(peak, std::abs(stereoPcm[i * 2]));
-        peak = std::max(peak, std::abs(stereoPcm[i * 2 + 1]));
+        const float sampleL = std::abs(stereoPcm[i * 2]);
+        const float sampleR = std::abs(stereoPcm[i * 2 + 1]);
+        const float framePeak = std::max(sampleL, sampleR);
+        peak = std::max(peak, framePeak);
+
+        m_currentBucketPeak = std::max(m_currentBucketPeak, framePeak);
+        m_peakSampleCounter++;
+        if (m_peakSampleCounter >= samplesPerPeak) {
+            m_livePeaks.push_back(m_currentBucketPeak);
+            m_currentBucketPeak = 0.0f;
+            m_peakSampleCounter = 0;
+        }
     }
     // Exponential smoothing for a responsive, readable meter
     m_audioLevel = std::max(peak, m_audioLevel * 0.75f);
@@ -257,6 +346,7 @@ void AudioRecorder::onReadyRead()
     m_totalFramesWritten += frames;
     m_recordedSeconds = double(m_totalFramesWritten) / double(m_sampleRate);
     emit recordedSecondsChanged(m_recordedSeconds);
+    emit livePeaksChanged();
 }
 
 QString AudioRecorder::stopRecording(drift::TimeUs *recordedDurationUsOut)
@@ -265,6 +355,7 @@ QString AudioRecorder::stopRecording(drift::TimeUs *recordedDurationUsOut)
         return {};
 
     m_recording = false;
+    m_paused = false;
     if (m_audioSource) {
         m_audioSource->stop();
         m_audioSource.reset();
@@ -277,6 +368,7 @@ QString AudioRecorder::stopRecording(drift::TimeUs *recordedDurationUsOut)
         m_writer.abort();
         emit recordingError(error);
         emit recordingStateChanged();
+        emit pausedChanged(false);
         return {};
     }
 
@@ -287,7 +379,12 @@ QString AudioRecorder::stopRecording(drift::TimeUs *recordedDurationUsOut)
     const QString finalPath = m_outputPath;
     m_recordingTrackIndex = -1;
     m_audioLevel = 0.0f;
+    m_livePeaks.clear();
+    m_peakSampleCounter = 0;
+    m_currentBucketPeak = 0.0f;
     emit audioLevelChanged(0.0f);
+    emit pausedChanged(false);
+    emit livePeaksChanged();
     emit recordingStateChanged();
 
     return finalPath;
@@ -299,6 +396,7 @@ void AudioRecorder::cancelRecording()
         return;
 
     m_recording = false;
+    m_paused = false;
     if (m_audioSource) {
         m_audioSource->stop();
         m_audioSource.reset();
@@ -309,7 +407,12 @@ void AudioRecorder::cancelRecording()
     m_recordingTrackIndex = -1;
     m_audioLevel = 0.0f;
     m_recordedSeconds = 0.0;
+    m_livePeaks.clear();
+    m_peakSampleCounter = 0;
+    m_currentBucketPeak = 0.0f;
     emit audioLevelChanged(0.0f);
+    emit pausedChanged(false);
+    emit livePeaksChanged();
     emit recordingStateChanged();
 }
 

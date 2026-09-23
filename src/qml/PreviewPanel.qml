@@ -212,7 +212,7 @@ PanelFrame {
                         height: 28
                         radius: Theme.radiusSm
                         color: Qt.rgba(0, 0, 0, 0.75)
-                        border.color: Theme.destructive
+                        border.color: EditorState.isAudioRecordingPaused ? "#eab308" : Theme.destructive
                         border.width: 1
                         z: 11
                         width: recordRow.implicitWidth + 16
@@ -226,10 +226,10 @@ PanelFrame {
                                 width: 8
                                 height: 8
                                 radius: 4
-                                color: Theme.destructive
+                                color: EditorState.isAudioRecordingPaused ? "#eab308" : Theme.destructive
                                 anchors.verticalCenter: parent.verticalCenter
                                 SequentialAnimation on opacity {
-                                    running: voiceoverRecordBadge.visible
+                                    running: voiceoverRecordBadge.visible && !EditorState.isAudioRecordingPaused
                                     loops: Animation.Infinite
                                     NumberAnimation { to: 0.2; duration: 400 }
                                     NumberAnimation { to: 1.0; duration: 400 }
@@ -237,7 +237,7 @@ PanelFrame {
                             }
 
                             Text {
-                                text: qsTr("REC %1s").arg(EditorState.audioRecordSeconds.toFixed(1))
+                                text: (EditorState.isAudioRecordingPaused ? qsTr("PAUSED %1s") : qsTr("REC %1s")).arg(EditorState.audioRecordSeconds.toFixed(1))
                                 font.pixelSize: 11
                                 font.bold: true
                                 color: Theme.panelForeground

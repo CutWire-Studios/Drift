@@ -90,9 +90,12 @@ class AppController : public QObject
                    NOTIFY audioOutputDeviceIdChanged)
     // Audio recording (voiceover via microphone)
     Q_PROPERTY(bool isRecordingAudio READ isRecordingAudio NOTIFY audioRecordingStateChanged)
+    Q_PROPERTY(bool isAudioRecordingPaused READ isAudioRecordingPaused NOTIFY audioRecordingPausedChanged)
     Q_PROPERTY(int recordingTrackIndex READ recordingTrackIndex NOTIFY audioRecordingStateChanged)
     Q_PROPERTY(float audioRecordLevel READ audioRecordLevel NOTIFY audioRecordLevelChanged)
+    Q_PROPERTY(float audioRecordGain READ audioRecordGain WRITE setAudioRecordGain NOTIFY audioRecordGainChanged)
     Q_PROPERTY(double audioRecordSeconds READ audioRecordSeconds NOTIFY audioRecordSecondsChanged)
+    Q_PROPERTY(QVariantList audioRecordLivePeaks READ audioRecordLivePeaks NOTIFY audioRecordLivePeaksChanged)
     Q_PROPERTY(QVariantList availableMicrophones READ availableMicrophones NOTIFY availableMicrophonesChanged)
     Q_PROPERTY(QString currentMicrophoneName READ currentMicrophoneName NOTIFY currentMicrophoneChanged)
     Q_PROPERTY(QVariantList tracks READ tracks NOTIFY tracksChanged)
@@ -419,13 +422,20 @@ public:
     void setAudioOutputDeviceId(const QString &id);
 
     bool isRecordingAudio() const;
+    bool isAudioRecordingPaused() const;
     int recordingTrackIndex() const;
     float audioRecordLevel() const;
+    float audioRecordGain() const;
+    Q_INVOKABLE void setAudioRecordGain(float gain);
     double audioRecordSeconds() const;
+    QVariantList audioRecordLivePeaks() const;
     QVariantList availableMicrophones() const;
     QString currentMicrophoneName() const;
 
     Q_INVOKABLE void startAudioRecording(int trackIndex = -1);
+    Q_INVOKABLE void pauseAudioRecording();
+    Q_INVOKABLE void resumeAudioRecording();
+    Q_INVOKABLE void toggleAudioRecordingPause();
     Q_INVOKABLE void stopAudioRecording();
     Q_INVOKABLE void cancelAudioRecording();
     Q_INVOKABLE void selectMicrophone(const QString &id);
@@ -1851,8 +1861,11 @@ signals:
     void audioOutputDevicesChanged();
     void audioOutputDeviceIdChanged();
     void audioRecordingStateChanged();
+    void audioRecordingPausedChanged();
+    void audioRecordGainChanged();
     void audioRecordLevelChanged();
     void audioRecordSecondsChanged();
+    void audioRecordLivePeaksChanged();
     void availableMicrophonesChanged();
     void currentMicrophoneChanged();
     void snapEnabledChanged();

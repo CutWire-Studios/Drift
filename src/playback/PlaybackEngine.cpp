@@ -781,6 +781,9 @@ void PlaybackEngine::checkEndOfTimeline(drift::TimeUs timeUs)
         return;
     }
 
+    if (m_voiceoverRecording)
+        return;
+
     const drift::TimeUs durationUs = m_project->durationUs();
     if (durationUs > 0 && timeUs >= durationUs) {
         m_playheadUs = durationUs;

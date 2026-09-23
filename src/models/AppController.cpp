@@ -859,10 +859,16 @@ AppController::AppController(AssetLibrary *assetLibrary, QObject *parent)
 
     connect(&m_audioRecorder, &drift::AudioRecorder::recordingStateChanged, this,
             &AppController::audioRecordingStateChanged);
+    connect(&m_audioRecorder, &drift::AudioRecorder::pausedChanged, this,
+            &AppController::audioRecordingPausedChanged);
+    connect(&m_audioRecorder, &drift::AudioRecorder::gainChanged, this,
+            &AppController::audioRecordGainChanged);
     connect(&m_audioRecorder, &drift::AudioRecorder::audioLevelChanged, this,
             &AppController::audioRecordLevelChanged);
     connect(&m_audioRecorder, &drift::AudioRecorder::recordedSecondsChanged, this,
             &AppController::audioRecordSecondsChanged);
+    connect(&m_audioRecorder, &drift::AudioRecorder::livePeaksChanged, this,
+            &AppController::audioRecordLivePeaksChanged);
     connect(&m_audioRecorder, &drift::AudioRecorder::availableDevicesChanged, this,
             &AppController::availableMicrophonesChanged);
     connect(&m_audioRecorder, &drift::AudioRecorder::currentDeviceChanged, this,
@@ -6215,6 +6221,59 @@ void AppController::selectMicrophone(const QString &id)
     m_audioRecorder.selectDevice(id);
 }
 
+bool AppController::isAudioRecordingPaused() const
+{
+    return m_audioRecorder.isPaused();
+}
+
+float AppController::audioRecordGain() const
+{
+    return m_audioRecorder.gain();
+}
+
+void AppController::setAudioRecordGain(float gain)
+{
+    m_audioRecorder.setGain(gain);
+}
+
+QVariantList AppController::audioRecordLivePeaks() const
+{
+    return m_audioRecorder.livePeaks();
+}
+
+void AppController::pauseAudioRecording()
+{
+    if (!m_audioRecorder.isRecording() || m_audioRecorder.isPaused())
+        return;
+
+    m_audioRecorder.pause();
+    if (m_playing) {
+        m_playing = false;
+        m_playback.pause();
+        emit playingChanged();
+        syncTextOverlaySkip();
+    }
+}
+
+void AppController::resumeAudioRecording()
+{
+    if (!m_audioRecorder.isRecording() || !m_audioRecorder.isPaused())
+        return;
+
+    m_audioRecorder.resume();
+    if (!m_playing) {
+        setPlaying(true);
+    }
+}
+
+void AppController::toggleAudioRecordingPause()
+{
+    if (m_audioRecorder.isPaused())
+        resumeAudioRecording();
+    else
+        pauseAudioRecording();
+}
+
 void AppController::startAudioRecording(int trackIndex)
 {
     if (m_audioRecorder.isRecording()) {
@@ -6253,6 +6312,7 @@ void AppController::startAudioRecording(int trackIndex)
         return;
     }
 
+    m_playback.setVoiceoverRecording(true);
     if (!m_playing) {
         setPlaying(true);
     }
@@ -6268,6 +6328,7 @@ void AppController::stopAudioRecording()
     drift::TimeUs recordedDurationUs = 0;
     const QString recordedPath = m_audioRecorder.stopRecording(&recordedDurationUs);
 
+    m_playback.setVoiceoverRecording(false);
     if (m_playing) {
         m_playing = false;
         m_playback.pause();
@@ -6312,6 +6373,7 @@ void AppController::cancelAudioRecording()
         return;
 
     m_audioRecorder.cancelRecording();
+    m_playback.setVoiceoverRecording(false);
 
     if (m_playing) {
         m_playing = false;
