@@ -516,6 +516,8 @@ PanelFrame {
             if (!ok) {
                 if (message && message.length > 0)
                     Toasts.warning(message)
+            } else if (EditorState.assetEditIsConversion) {
+                Toasts.success(qsTr("“%1” is now in an edit-friendly format.").arg(message))
             } else {
                 Toasts.success(qsTr("Saved “%1”. Drag it onto the timeline.").arg(message))
             }

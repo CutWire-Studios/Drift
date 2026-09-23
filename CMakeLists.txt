@@ -677,6 +677,10 @@ add_library(driftengine STATIC
     src/engine/ReverseProxyCache.cpp
     src/engine/ReverseRenderer.h
     src/engine/ReverseRenderer.cpp
+    src/engine/ProxyEncoder.h
+    src/engine/ProxyEncoder.cpp
+    src/engine/PreviewProxyRenderer.h
+    src/engine/PreviewProxyRenderer.cpp
     src/engine/MediaEditor.h
     src/engine/MediaEditor.cpp
     src/engine/AudioFileWriter.h
@@ -1052,6 +1056,8 @@ qt_add_qml_module(drift
         src/qml/components/ThemedButton.qml
         src/qml/components/ThemedChip.qml
         src/qml/components/ThemedProgressBar.qml
+        src/qml/components/MediaPill.qml
+        src/qml/components/VfrWarning.qml
         src/qml/components/ThemedLabel.qml
         src/qml/components/ThemedDialog.qml
         src/qml/components/AddonManagerDialog.qml
@@ -1234,6 +1240,8 @@ if(Qt6LinguistTools_FOUND)
             src/engine/TransitionCatalog.cpp
             src/engine/FontCatalog.cpp
             src/engine/ReverseRenderer.cpp
+            src/engine/ProxyEncoder.cpp
+            src/engine/PreviewProxyRenderer.cpp
             src/engine/MediaEditor.cpp
             src/engine/ProjectBundle.cpp
             src/core/Project.cpp

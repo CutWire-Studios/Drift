@@ -162,6 +162,38 @@ Item {
                 }
 
                 ThemedSwitch {
+                    checked: EditorState.playback.useProxies
+                    text: qsTr("Use proxies for preview")
+                    tooltip: qsTr("Play clips from their low-resolution proxies where one exists. Export always uses the original media.")
+                    onToggled: EditorState.playback.useProxies = checked
+                }
+
+                ThemedLabel {
+                    text: qsTr("Proxy resolution")
+                }
+
+                ThemedComboBox {
+                    width: parent.width
+                    textRole: "label"
+                    valueRole: "id"
+                    model: [
+                        { id: 360, label: qsTr("360p") },
+                        { id: 540, label: qsTr("540p") },
+                        { id: 720, label: qsTr("720p") },
+                        { id: 1080, label: qsTr("1080p") }
+                    ]
+                    tooltip: qsTr("Size of new proxies. Proxies made at another size are not used until you create them again.")
+                    currentIndex: {
+                        for (var i = 0; i < model.length; ++i) {
+                            if (model[i].id === EditorState.playback.proxySize)
+                                return i
+                        }
+                        return 2
+                    }
+                    onActivated: EditorState.playback.proxySize = model[currentIndex].id
+                }
+
+                ThemedSwitch {
                     visible: EditorState.vaapiZeroCopySupported
                     checked: EditorState.vaapiZeroCopy
                     text: qsTr("Faster preview (experimental)")

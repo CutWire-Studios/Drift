@@ -1565,6 +1565,10 @@
         <translation>そのファイルはこのプロジェクトに既に存在します。</translation>
     </message>
     <message>
+        <source>Converting %1 to an edit-friendly format…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>That media is no longer in this project.</source>
         <translation>そのメディアはこのプロジェクトに存在しません。</translation>
     </message>
@@ -2203,6 +2207,10 @@
         <translation>出力ファイルを作成できませんでした</translation>
     </message>
     <message>
+        <source>Could not create a proxy for %1: %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Your graphics driver is too old for the preview, which needs OpenGL 3.3. See Help → Debug info.</source>
         <translation>グラフィックスドライバーのバージョンが古いため、プレビューを表示できません (OpenGL 3.3が必要です)。「ヘルプ」→「デバッグ情報」を参照してください。</translation>
     </message>
@@ -2251,6 +2259,10 @@
     <message>
         <source>Saving…</source>
         <translation>保存中…</translation>
+    </message>
+    <message>
+        <source>Converting…</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Saving media…</source>
@@ -3803,6 +3815,10 @@
     <message>
         <source>Replaced with “%1”.</source>
         <translation>「%1」に置き換えました。</translation>
+    </message>
+    <message>
+        <source>“%1” is now in an edit-friendly format.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Saved “%1”. Drag it onto the timeline.</source>
@@ -6750,6 +6766,26 @@
         <translation>別の名前を試してください。</translation>
     </message>
     <message>
+        <source>Creating proxy for %1 (%2 more)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Creating proxy for %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Stop creating proxies</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Converting %1 to an edit-friendly format</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Stop converting</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Rename…</source>
         <translation>名前の変更…</translation>
     </message>
@@ -6765,6 +6801,26 @@
         <source>Replace media…</source>
         <translation>メディアを置き換え…</translation>
     </message>
+    <message numerus="yes">
+        <source>Create %n proxies</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Create proxy</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>Remove %n proxies</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Remove proxy</source>
+        <translation type="unfinished"></translation>
+    </message>
     <message>
         <source>Export image…</source>
         <translation>画像をエクスポート…</translation>
@@ -6772,6 +6828,18 @@
     <message>
         <source>Remove from project</source>
         <translation>プロジェクトから削除</translation>
+    </message>
+    <message>
+        <source>Proxy</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Edit-friendly</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Converted to a constant frame rate for smooth editing</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Collapse folder</source>
@@ -6817,6 +6885,10 @@
             <numerusform>%n 個の項目をフォルダーに移動…</numerusform>
         </translation>
     </message>
+    <message>
+        <source>Convert to edit-friendly format</source>
+        <translation type="unfinished"></translation>
+    </message>
     <message numerus="yes">
         <source>Remove %n items from project</source>
         <translation>
@@ -6857,6 +6929,26 @@
     <message>
         <source>Could not read that file — the format is not supported by this build.</source>
         <translation>そのファイルを読み込めませんでした — このビルドではサポートされていない形式です。</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n clip(s) may play back slowly. A proxy makes previewing smoother; export still uses the original.</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Create proxies</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%n clip(s) have a variable frame rate, which can drift out of sync with audio. Convert them to an edit-friendly format to fix it.</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Convert</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Imported %1 of %2 files. The rest could not be opened — this package cannot read files dropped from other apps. Use Import instead.</source>
@@ -8126,6 +8218,129 @@ If playback stutters, try another.</source>
     </message>
 </context>
 <context>
+    <name>ProxyEncoder</name>
+    <message>
+        <source>Could not create the proxy container</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>H.264 encoder not available</source>
+        <translation type="unfinished">H.264 エンコーダが利用できません</translation>
+    </message>
+    <message>
+        <source>Could not create the proxy stream</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Could not allocate the proxy encoder</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Could not open the proxy encoder</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Could not open the proxy file for writing</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Could not write the proxy header</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Could not allocate proxy frame buffers</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Could not allocate the proxy frame</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Proxy writer is not open</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Could not convert a frame for the proxy encoder</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Could not make the proxy frame writable</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Proxy encoder rejected a frame</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Failed to read an encoded proxy packet</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Failed to write a proxy packet</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Could not flush the proxy encoder</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Could not write the proxy trailer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Could not move the proxy into place</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Could not open the clip</source>
+        <translation type="unfinished">クリップを開けませんでした</translation>
+    </message>
+    <message>
+        <source>Could not read the clip&apos;s streams</source>
+        <translation type="unfinished">クリップのストリームを読み取れませんでした</translation>
+    </message>
+    <message>
+        <source>The clip has no video</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No decoder for this clip</source>
+        <translation type="unfinished">このクリップのデコーダがありません</translation>
+    </message>
+    <message>
+        <source>Could not allocate the decoder</source>
+        <translation type="unfinished">デコーダを割り当てられませんでした</translation>
+    </message>
+    <message>
+        <source>Could not configure the decoder</source>
+        <translation type="unfinished">デコーダを設定できませんでした</translation>
+    </message>
+    <message>
+        <source>Could not open the decoder</source>
+        <translation type="unfinished">デコーダを開けませんでした</translation>
+    </message>
+    <message>
+        <source>The clip has no usable video size</source>
+        <translation type="unfinished">クリップに使用可能なビデオサイズがありません</translation>
+    </message>
+    <message>
+        <source>Clips with transparency can&apos;t use a proxy</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Could not allocate decode buffers</source>
+        <translation type="unfinished">デコードバッファを割り当てられませんでした</translation>
+    </message>
+    <message>
+        <source>Proxy cancelled</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No frames could be decoded from this clip</source>
+        <translation type="unfinished">このクリップからフレームをデコードできませんでした</translation>
+    </message>
+</context>
+<context>
     <name>QObject</name>
     <message>
         <source>Measuring loudness…</source>
@@ -8378,112 +8593,8 @@ If playback stutters, try another.</source>
 <context>
     <name>ReverseRenderer</name>
     <message>
-        <source>Could not create the reversed container</source>
-        <translation>リバースコンテナを作成できませんでした</translation>
-    </message>
-    <message>
-        <source>H.264 encoder not available</source>
-        <translation>H.264 エンコーダが利用できません</translation>
-    </message>
-    <message>
-        <source>Could not create the reversed stream</source>
-        <translation>リバースストリームを作成できませんでした</translation>
-    </message>
-    <message>
-        <source>Could not allocate the reversed encoder</source>
-        <translation>リバースエンコーダを割り当てられませんでした</translation>
-    </message>
-    <message>
-        <source>Could not open the reversed encoder</source>
-        <translation>リバースエンコーダを開けませんでした</translation>
-    </message>
-    <message>
-        <source>Could not open the reversed file for writing</source>
-        <translation>リバースファイルを書き込み用に開けませんでした</translation>
-    </message>
-    <message>
-        <source>Could not write the reversed header</source>
-        <translation>リバースヘッダを書き込めませんでした</translation>
-    </message>
-    <message>
-        <source>Could not allocate reversed frame buffers</source>
-        <translation>リバースフレームバッファを割り当てられませんでした</translation>
-    </message>
-    <message>
-        <source>Could not allocate the reversed frame</source>
-        <translation>リバースフレームを割り当てられませんでした</translation>
-    </message>
-    <message>
-        <source>Reversed writer is not open</source>
-        <translation>リバースライターが開かれていません</translation>
-    </message>
-    <message>
-        <source>Could not convert a frame for the reversed encoder</source>
-        <translation>リバースエンコーダ用にフレームを変換できませんでした</translation>
-    </message>
-    <message>
-        <source>Could not make the reversed frame writable</source>
-        <translation>リバースフレームを書き込み可能にできませんでした</translation>
-    </message>
-    <message>
-        <source>Reversed encoder rejected a frame</source>
-        <translation>リバースエンコーダがフレームを拒否しました</translation>
-    </message>
-    <message>
-        <source>Failed to read an encoded reversed packet</source>
-        <translation>エンコードされたリバースパケットの読み取りに失敗しました</translation>
-    </message>
-    <message>
-        <source>Failed to write a reversed packet</source>
-        <translation>リバースパケットの書き込みに失敗しました</translation>
-    </message>
-    <message>
-        <source>Could not flush the reversed encoder</source>
-        <translation>リバースエンコーダをフラッシュできませんでした</translation>
-    </message>
-    <message>
-        <source>Could not write the reversed trailer</source>
-        <translation>リバーストレーラを書き込めませんでした</translation>
-    </message>
-    <message>
-        <source>Could not move the reversed clip into place</source>
-        <translation>リバースクリップを適切な場所に移動できませんでした</translation>
-    </message>
-    <message>
         <source>Nothing to reverse</source>
         <translation>リバースするものはありません</translation>
-    </message>
-    <message>
-        <source>Could not open the clip</source>
-        <translation>クリップを開けませんでした</translation>
-    </message>
-    <message>
-        <source>Could not read the clip&apos;s streams</source>
-        <translation>クリップのストリームを読み取れませんでした</translation>
-    </message>
-    <message>
-        <source>The clip has no video to reverse</source>
-        <translation>クリップにはリバースするビデオがありません</translation>
-    </message>
-    <message>
-        <source>No decoder for this clip</source>
-        <translation>このクリップのデコーダがありません</translation>
-    </message>
-    <message>
-        <source>Could not allocate the decoder</source>
-        <translation>デコーダを割り当てられませんでした</translation>
-    </message>
-    <message>
-        <source>Could not configure the decoder</source>
-        <translation>デコーダを設定できませんでした</translation>
-    </message>
-    <message>
-        <source>Could not open the decoder</source>
-        <translation>デコーダを開けませんでした</translation>
-    </message>
-    <message>
-        <source>The clip has no usable video size</source>
-        <translation>クリップに使用可能なビデオサイズがありません</translation>
     </message>
     <message>
         <source>Could not allocate decode buffers</source>
@@ -8748,6 +8859,38 @@ If playback stutters, try another.</source>
     <message>
         <source>Blur strength</source>
         <translation>ブラーの強さ</translation>
+    </message>
+    <message>
+        <source>Use proxies for preview</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Play clips from their low-resolution proxies where one exists. Export always uses the original media.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Proxy resolution</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>360p</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>540p</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>720p</source>
+        <translation type="unfinished">720p</translation>
+    </message>
+    <message>
+        <source>1080p</source>
+        <translation type="unfinished">1080p</translation>
+    </message>
+    <message>
+        <source>Size of new proxies. Proxies made at another size are not used until you create them again.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Faster preview (experimental)</source>
@@ -10885,6 +11028,22 @@ If playback stutters, try another.</source>
         <translation>%1, トラック %2</translation>
     </message>
     <message>
+        <source>Proxy</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Previewing from a low-resolution proxy. Export uses the original.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Edit-friendly</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Converted to a constant frame rate for smooth editing</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Subtitles</source>
         <translation>字幕</translation>
     </message>
@@ -10907,6 +11066,10 @@ If playback stutters, try another.</source>
     <message>
         <source>Separate all audio tracks</source>
         <translation>すべてのオーディオトラックを分離</translation>
+    </message>
+    <message>
+        <source>Convert to edit-friendly format</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Unlink</source>
@@ -11837,6 +12000,13 @@ If playback stutters, try another.</source>
     <message>
         <source>Visible</source>
         <translation>表示</translation>
+    </message>
+</context>
+<context>
+    <name>VfrWarning</name>
+    <message>
+        <source>Variable frame rate. This clip can drift out of sync with its audio. Right-click it and choose Convert to edit-friendly format.</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>

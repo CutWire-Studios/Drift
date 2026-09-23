@@ -74,7 +74,7 @@ Item {
                                       && (Math.abs(inSeconds - persistedInSeconds) > 0.02
                                           || Math.abs(outSeconds - persistedOutSeconds) > 0.02)
     readonly property bool dirty: cropDirty || trimDirty
-    readonly property bool saving: EditorState.editingAsset
+    readonly property bool saving: EditorState.editingAsset && !EditorState.assetEditIsConversion
     readonly property real position: EditorState.assetPreviewPosition
 
     function openFor(index) {
@@ -198,7 +198,8 @@ Item {
     Connections {
         target: EditorState
         function onAssetEditFinished(ok, message) {
-            if (ok)
+            // A background frame-rate conversion is not this sheet's save.
+            if (ok && !EditorState.assetEditIsConversion)
                 root.close()
         }
         function onProjectReset() {

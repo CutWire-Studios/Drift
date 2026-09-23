@@ -50,6 +50,7 @@ private slots:
     void projectSerializationRoundTrip();
     void binFolderSerializationRoundTrip();
     void binFolderDeletionMovesChildrenToParent();
+    void assetFrameRateMarksRoundTrip();
     void projectMetadataRoundTrip();
     void effectColorParamSurvivesRoundTrip();
     void clipTransformSerialization();
@@ -479,6 +480,44 @@ void CoreTest::binFolderSerializationRoundTrip()
     QCOMPARE(loaded.binFolder(nestedFolderId)->parentId, rootFolderId);
     QVERIFY(loaded.asset(assetId));
     QCOMPARE(loaded.asset(assetId)->folderId, nestedFolderId);
+}
+
+// The VFR check result and the edit-friendly mark save with the project; an asset never checked
+// stays unknown, so a loaded project knows to check it rather than reading it as constant-rate.
+void CoreTest::assetFrameRateMarksRoundTrip()
+{
+    drift::Project project;
+
+    drift::MediaAsset converted;
+    converted.kind = drift::MediaKind::Video;
+    converted.path = QStringLiteral("/tmp/converted.mp4");
+    converted.frameRateKnown = true;
+    converted.editFriendly = true;
+    const QString convertedId = project.addAsset(converted);
+
+    drift::MediaAsset phone;
+    phone.kind = drift::MediaKind::Video;
+    phone.path = QStringLiteral("/tmp/phone.mp4");
+    phone.frameRateKnown = true;
+    phone.variableFrameRate = true;
+    const QString phoneId = project.addAsset(phone);
+
+    drift::MediaAsset unchecked;
+    unchecked.kind = drift::MediaKind::Video;
+    unchecked.path = QStringLiteral("/tmp/unchecked.mp4");
+    const QString uncheckedId = project.addAsset(unchecked);
+
+    QString error;
+    const drift::Project loaded = drift::Project::fromJson(project.toJson(), &error);
+    QVERIFY(error.isEmpty());
+
+    QVERIFY(loaded.asset(convertedId)->editFriendly);
+    QVERIFY(loaded.asset(convertedId)->frameRateKnown);
+    QVERIFY(!loaded.asset(convertedId)->variableFrameRate);
+    QVERIFY(loaded.asset(phoneId)->frameRateKnown);
+    QVERIFY(loaded.asset(phoneId)->variableFrameRate);
+    QVERIFY(!loaded.asset(phoneId)->editFriendly);
+    QVERIFY(!loaded.asset(uncheckedId)->frameRateKnown);
 }
 
 void CoreTest::binFolderDeletionMovesChildrenToParent()

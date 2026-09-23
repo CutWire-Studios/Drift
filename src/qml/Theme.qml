@@ -265,6 +265,14 @@ QtObject {
     readonly property color clipAudio: "#8F5DBA"
     readonly property color clipGraphic: "#BA5D7A"
     readonly property color clipEffect: "#5d93ba"
+    // Clips previewing from a low-res proxy: the name band and the "Proxy" pill. Green, so it
+    // stays apart from the yellow selection ring and every clip-type colour above.
+    readonly property color clipProxy: "#3DBE8B"
+    readonly property color clipProxyForeground: "#06261A"
+    readonly property color clipProxyBand: "#D9174A36"
+    // Media converted to an edit-friendly format ("Convert to edit-friendly format").
+    readonly property color clipEditFriendly: "#5AA9E6"
+    readonly property color clipEditFriendlyForeground: "#06203A"
     // Adjustment layers, tinted by what they act on so a glance at the lane says which it is.
     // The video one is clipEffect itself, which is the colour adjustments have always had.
     readonly property color clipAdjustmentVideo: clipEffect
@@ -607,6 +615,8 @@ QtObject {
         zoomIn: "zoom-in",
         zoomFit: "chevrons-left-right-ellipsis",
         gauge: "gauge",
+        filePlay: "file-play",
+        rabbit: "rabbit",
         play: "play",
         pause: "pause",
         stepBack: "step-back",
