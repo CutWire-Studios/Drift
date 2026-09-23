@@ -287,6 +287,16 @@ QString denoiseCacheDir()
     return dir;
 }
 
+QString generatedAudioDir()
+{
+    const QString base = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
+    if (base.isEmpty())
+        return {};
+    const QString dir = QDir(base).filePath(QStringLiteral("generated-audio"));
+    QDir().mkpath(dir);
+    return dir;
+}
+
 QString newDenoisePath(const QString &suffix)
 {
     const QString dir = denoiseCacheDir();

@@ -2,6 +2,7 @@
 
 #include "BinFolder.h"
 #include "MediaAsset.h"
+#include "Transcript.h"
 #include "Track.h"
 #include "Time.h"
 
@@ -258,6 +259,14 @@ public:
     int assetIndex(const QString &id) const;
     QString assetIdAt(int index) const;
 
+    // Word-level transcripts keyed by asset id. Not undoable: a transcript can cost money to make,
+    // so ProjectSnapshotCommand carries the live set across undo/redo, and entries outlive their
+    // asset so undoing a removal brings the transcript back with it.
+    TranscriptPtr transcript(const QString &assetId) const { return m_transcripts.value(assetId); }
+    void setTranscript(const QString &assetId, TranscriptPtr transcript);
+    const QHash<QString, TranscriptPtr> &transcripts() const { return m_transcripts; }
+    void setTranscripts(const QHash<QString, TranscriptPtr> &transcripts) { m_transcripts = transcripts; }
+
     QString addBinFolder(BinFolder folder);
     BinFolder *binFolder(const QString &id);
     const BinFolder *binFolder(const QString &id) const;
@@ -265,9 +274,11 @@ public:
     QString binFolderIdAt(int index) const;
 
     static Project fromJson(const QJsonObject &object, QString *errorOut = nullptr);
-    QJsonObject toJson() const;
-    // Compact JSON of toJson(); SHA-256 hex of those bytes. Undo history and on-disk
+    QJsonObject toJson(bool includeTranscripts = true) const;
+    // Compact JSON of toJson(false); SHA-256 hex of those bytes. Undo history and on-disk
     // history snapshots share this so a file named <hash>.json hashes back to <hash>.
+    // Transcripts are left out: they are not undoable state, and hashing hundreds of KB of
+    // words on every edit would be wasted work.
     QByteArray toCompactJson() const;
     QString contentHash() const;
 
@@ -297,6 +308,7 @@ private:
     QHash<QString, MediaAsset> m_assetsById;
     QList<QString> m_binFolderOrder;
     QHash<QString, BinFolder> m_binFoldersById;
+    QHash<QString, TranscriptPtr> m_transcripts;
 };
 
 } // namespace drift

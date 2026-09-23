@@ -61,11 +61,15 @@ public:
     // through a single cursor is what desynced overlapping clips.
     //
     // `source`, when set, replaces the file read: (sourceStartUs, frames, dst) -> frames written.
+    //
+    // `audibleStartUs` / `audibleEndUs` widen the clip past its edges into the media beyond its
+    // trim (a transition handle); -1 keeps the clip's own bounds.
     using SourceReader = std::function<int(drift::TimeUs, int, float *)>;
     static QVector<float> readClipAudio(const drift::Clip &clip, quint64 streamId,
                                         drift::TimeUs winStartUs, int outFrames, int sampleRate,
                                         drift::ClipAudioRetimer *retimer,
-                                        const SourceReader &source = {});
+                                        const SourceReader &source = {},
+                                        drift::TimeUs audibleStartUs = -1, drift::TimeUs audibleEndUs = -1);
 
 
 private:

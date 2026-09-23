@@ -100,6 +100,11 @@ private slots:
     void arrowKeysJogAndJumpThePlayhead();
     void storedArrowShortcutsMigrateOntoTheNewJogLayout();
     void splitLeftRightUndoRestoresTheDiscardedHalf();
+    void splitLeftKeepsLinkedAudioInSync();
+    void splitRightKeepsLinkedAudioInSync();
+    void splitLeftRightKeepOuterFades();
+    void audioTrackTakesTransitions();
+    void videoTransitionMirrorsToLinkedAudio();
     void deleteLeftRightActionsCutAtThePlayhead();
     void playbackRateStepsThroughTheOfferedRates();
     void displayRefreshRateIgnoresDriverPlaceholders();
@@ -7583,6 +7588,167 @@ void EditorStateTest::tracksCarriesLayoutOnlyWhileClipAtStaysFull()
     for (const char *key : {"textStyle", "shapeStyle", "mask", "keyframes", "assetIndex",
                             "orientation", "stabilizeMode", "animIn", "volume"})
         QVERIFY2(fullClip.contains(QLatin1String(key)), key);
+}
+
+
+// A follower pair behind the fixture's linked clip, so ripple has something to move on both tracks.
+static void appendFollowerPair(drift::Project &project)
+{
+    for (int t = 0; t < 2; ++t) {
+        drift::Clip follower = project.tracks().at(t).clips.at(0);
+        follower.id = t == 0 ? QStringLiteral("follow-video") : QStringLiteral("follow-audio");
+        follower.linkId = QStringLiteral("link-2");
+        follower.timelineStart = drift::secondsToUs(4.0);
+        follower.timelineDuration = drift::secondsToUs(2.0);
+        follower.srcIn = 0;
+        follower.srcOut = drift::secondsToUs(2.0);
+        project.tracks()[t].clips.append(follower);
+    }
+}
+
+void EditorStateTest::splitLeftKeepsLinkedAudioInSync()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    appendLinkedVideoAudioPair(*state.project());
+    appendFollowerPair(*state.project());
+    state.setRippleEnabled(true);
+
+    state.splitClipLeftAt(0, 0, 1.0);
+    const drift::Project &p = *state.project();
+    for (int t = 0; t < 2; ++t) {
+        const drift::Clip &kept = p.tracks().at(t).clips.at(0);
+        QCOMPARE(kept.id, t == 0 ? QStringLiteral("clip-video") : QStringLiteral("clip-audio"));
+        QCOMPARE(kept.timelineStart, 0);
+        QCOMPARE(kept.timelineDuration, drift::secondsToUs(3.0));
+        QCOMPARE(kept.srcIn, drift::secondsToUs(1.0));
+        QCOMPARE(kept.linkId, QStringLiteral("link-1"));
+        QCOMPARE(p.tracks().at(t).clips.at(1).timelineStart, drift::secondsToUs(3.0));
+    }
+
+    state.undo();
+    for (int t = 0; t < 2; ++t) {
+        QCOMPARE(state.project()->tracks().at(t).clips.at(0).timelineDuration, drift::secondsToUs(4.0));
+        QCOMPARE(state.project()->tracks().at(t).clips.at(1).timelineStart, drift::secondsToUs(4.0));
+    }
+}
+
+void EditorStateTest::splitRightKeepsLinkedAudioInSync()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    appendLinkedVideoAudioPair(*state.project());
+    appendFollowerPair(*state.project());
+    state.setRippleEnabled(true);
+
+    state.splitClipRightAt(1, 0, 3.0);
+    const drift::Project &p = *state.project();
+    for (int t = 0; t < 2; ++t) {
+        const drift::Clip &kept = p.tracks().at(t).clips.at(0);
+        QCOMPARE(kept.timelineDuration, drift::secondsToUs(3.0));
+        QCOMPARE(kept.srcOut, drift::secondsToUs(3.0));
+        QCOMPARE(p.tracks().at(t).clips.at(1).timelineStart, drift::secondsToUs(3.0));
+    }
+
+    // Without ripple nothing behind the cut moves.
+    state.undo();
+    state.setRippleEnabled(false);
+    state.splitClipRightAt(0, 0, 3.0);
+    for (int t = 0; t < 2; ++t) {
+        QCOMPARE(state.project()->tracks().at(t).clips.at(0).timelineDuration, drift::secondsToUs(3.0));
+        QCOMPARE(state.project()->tracks().at(t).clips.at(1).timelineStart, drift::secondsToUs(4.0));
+    }
+}
+
+void EditorStateTest::splitLeftRightKeepOuterFades()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    state.addAdjustmentClip(0.0, 10.0);
+    state.project()->tracks()[0].clips[0].fadeInUs = drift::secondsToUs(1.0);
+    state.project()->tracks()[0].clips[0].fadeOutUs = drift::secondsToUs(2.0);
+
+    // A trim keeps the fade on the edge that moved, like dragging that edge would.
+    state.splitClipLeftAt(0, 0, 4.0);
+    QCOMPARE(state.project()->tracks().at(0).clips.at(0).fadeInUs, drift::secondsToUs(1.0));
+    QCOMPARE(state.project()->tracks().at(0).clips.at(0).fadeOutUs, drift::secondsToUs(2.0));
+    state.undo();
+    state.splitClipRightAt(0, 0, 4.0);
+    QCOMPARE(state.project()->tracks().at(0).clips.at(0).fadeInUs, drift::secondsToUs(1.0));
+    QCOMPARE(state.project()->tracks().at(0).clips.at(0).fadeOutUs, drift::secondsToUs(2.0));
+}
+
+void EditorStateTest::audioTrackTakesTransitions()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    state.addTrack(QStringLiteral("audio"));
+    int audio = -1;
+    for (int t = 0; t < state.project()->tracks().size(); ++t)
+        if (state.project()->tracks().at(t).type == drift::TrackType::Audio)
+            audio = t;
+    QVERIFY(audio >= 0);
+    for (int i = 0; i < 2; ++i) {
+        drift::Clip c;
+        c.id = QStringLiteral("a%1").arg(i);
+        c.type = drift::ClipType::Audio;
+        c.timelineStart = drift::secondsToUs(2.0 * i);
+        c.timelineDuration = drift::secondsToUs(2.0);
+        c.srcOut = c.timelineDuration;
+        state.project()->tracks()[audio].clips.append(c);
+    }
+    state.addTransition(audio, 0, QStringLiteral("crossfade"), 0.4);
+    QCOMPARE(state.project()->tracks().at(audio).transitions.size(), 1);
+    // Clips pulled apart lose it, as on any other track.
+    state.project()->tracks()[audio].clips[1].timelineStart = drift::secondsToUs(3.0);
+    state.addTextClip(QStringLiteral("x"), 0.0); // any edit runs finishEdit
+    QCOMPARE(state.project()->tracks().at(audio).transitions.size(), 0);
+}
+
+void EditorStateTest::videoTransitionMirrorsToLinkedAudio()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    state.addTrack(QStringLiteral("audio"));
+    drift::Project &p = *state.project();
+    int vt = -1, at = -1;
+    for (int t = 0; t < p.tracks().size(); ++t)
+        (p.tracks().at(t).type == drift::TrackType::Audio ? at : vt) = t;
+    QVERIFY(vt >= 0 && at >= 0);
+    for (int i = 0; i < 2; ++i) {
+        drift::Clip v;
+        v.id = QStringLiteral("v%1").arg(i);
+        v.linkId = QStringLiteral("link-%1").arg(i);
+        v.type = drift::ClipType::Video;
+        v.suppressEmbeddedAudio = true;
+        v.timelineStart = drift::secondsToUs(2.0 * i);
+        v.timelineDuration = drift::secondsToUs(2.0);
+        v.srcOut = v.timelineDuration;
+        drift::Clip a = v;
+        a.id = QStringLiteral("a%1").arg(i);
+        a.type = drift::ClipType::Audio;
+        a.suppressEmbeddedAudio = false;
+        p.tracks()[vt].clips.append(v);
+        p.tracks()[at].clips.append(a);
+    }
+    state.addTransition(vt, 0, QStringLiteral("crossfade"), 0.6);
+    QCOMPARE(state.project()->tracks().at(at).transitions.size(), 1);
+    QCOMPARE(state.project()->tracks().at(at).transitions.at(0).fromClipId, QStringLiteral("a0"));
+    QCOMPARE(state.project()->tracks().at(at).transitions.at(0).durationUs, drift::secondsToUs(0.6));
+
+    const QString id = state.project()->tracks().at(vt).transitions.at(0).id;
+    state.setTransitionDuration(vt, id, 0.3);
+    QCOMPARE(state.project()->tracks().at(at).transitions.at(0).durationUs, drift::secondsToUs(0.3));
+    state.removeTransition(vt, id);
+    QCOMPARE(state.project()->tracks().at(at).transitions.size(), 0);
+    state.undo();
+    QCOMPARE(state.project()->tracks().at(at).transitions.size(), 1);
+
+    // Opting out leaves the audio alone.
+    state.removeTransition(vt, id);
+    state.addTransition(vt, 0, QStringLiteral("crossfade"), 0.5, false);
+    QCOMPARE(state.project()->tracks().at(vt).transitions.size(), 1);
+    QCOMPARE(state.project()->tracks().at(at).transitions.size(), 0);
 }
 
 QTEST_MAIN(EditorStateTest)

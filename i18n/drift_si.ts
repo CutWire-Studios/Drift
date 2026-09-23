@@ -2991,12 +2991,28 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>That transition has no sound; audio tracks take crossfade or dip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Replace transition</source>
         <translation>සංක්‍රාන්තිය ප්‍රතිස්ථාපනය කරන්න</translation>
     </message>
     <message>
         <source>Transition updated</source>
         <translation>සංක්‍රාන්තිය යාවත්කාලීන විය</translation>
+    </message>
+    <message>
+        <source>Keep ranges</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Assemble</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cut words</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Add transition</source>
@@ -3527,6 +3543,10 @@
     <message>
         <source>Nothing on this device can share that file</source>
         <translation>මෙම උපාංගයේ එම ගොනුව බෙදාගත හැකි කිසිවක් නොමැත</translation>
+    </message>
+    <message>
+        <source>Remove silence</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Add layer</source>
@@ -4431,6 +4451,17 @@
     <message>
         <source>Reset to Normal</source>
         <translation>Normal වෙත යළි සකසන්න</translation>
+    </message>
+</context>
+<context>
+    <name>CloudProviders</name>
+    <message>
+        <source>No key set</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Key works</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -5932,6 +5963,13 @@
     </message>
     <message>
         <source>Stop colour</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>JobRegistry</name>
+    <message>
+        <source>Queued</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -9120,6 +9158,70 @@ If playback stutters, try another.</source>
         <translation type="unfinished">නියෝජිත (Agent) ප්‍රවේශය</translation>
     </message>
     <message>
+        <source>Cloud providers</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Keys are stored unencrypted in Drift&apos;s settings. ELEVENLABS_API_KEY and FISH_API_KEY in the environment take precedence. Use is billed to your own account.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Transcription (Scribe), voiceover, sound effects</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Voiceover</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No key</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Key from the environment</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Key %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Paste API key</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Save</source>
+        <translation type="unfinished">සුරකින්න</translation>
+    </message>
+    <message>
+        <source>Test</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Clear</source>
+        <translation type="unfinished">හිස් කරන්න</translation>
+    </message>
+    <message>
+        <source>Allow sending audio and text to %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Needed before Drift or a connected agent can transcribe or generate audio with this service</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Default voice id</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Voice model</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Transcription model</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Marketplace</source>
         <translation type="unfinished"></translation>
     </message>
@@ -11861,6 +11963,10 @@ If playback stutters, try another.</source>
     <message>
         <source>Transition to the next clip. Move across the cut to preview it.</source>
         <translation>ඊළඟ ක්ලිපයට සංක්‍රාන්තිය. එය පෙරදසුන් කිරීමට කැපුම හරහා ගමන් කරන්න.</translation>
+    </message>
+    <message>
+        <source>One side has no media past the cut, so its sound fades through silence instead of crossfading.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Type</source>

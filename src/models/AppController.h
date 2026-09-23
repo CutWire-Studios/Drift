@@ -18,6 +18,7 @@
 #include "TimelineModel.h"
 #include "models/AssetLibrary.h"
 #include "models/BinFolderListModel.h"
+#include "models/CloudProviders.h"
 
 #include <QAtomicInt>
 #include <QCursor>
@@ -35,6 +36,7 @@
 #include <QVariantMap>
 
 #include <atomic>
+#include <functional>
 #include <QProcess>
 #include <QMap>
 
@@ -46,6 +48,7 @@ struct EffectTemplateEntry;
 class QTimer;
 class AddonManager;
 class MarketClient;
+class JobRegistry;
 
 namespace drift::mcp {
 class McpServer;
@@ -67,6 +70,7 @@ class AppController : public QObject
     Q_OBJECT
 
     Q_PROPERTY(AssetLibrary *assetLibrary READ assetLibrary CONSTANT)
+    Q_PROPERTY(CloudProviders *cloudProviders READ cloudProviders CONSTANT)
     Q_PROPERTY(BinFolderListModel *binFolderModel READ binFolderModel CONSTANT)
     // Which bin folder is currently being viewed; empty = bin root. Transient navigation state —
     // not persisted, not undoable, same treatment as mediaGridMode's touch-only sibling.
@@ -395,6 +399,7 @@ public:
     ~AppController() override;
 
     AssetLibrary *assetLibrary() const { return m_assetLibrary; }
+    CloudProviders *cloudProviders() const { return m_cloud; }
     BinFolderListModel *binFolderModel() { return &m_binFolderModel; }
     QString currentBinFolderId() const { return m_currentBinFolderId; }
     void setCurrentBinFolderId(const QString &folderId);
@@ -679,7 +684,7 @@ public:
     QJsonObject mcpWaveformImage(const QString &mode, int trackIndex, int clipIndex,
                                  const QString &assetId, double startSeconds, double durSeconds,
                                  int width, int height, bool spectrogram,
-                                 int summaryBuckets) const;
+                                 int summaryBuckets, bool words = true) const;
     bool mcpSetWorkArea(double inSeconds, double outSeconds);
 
     // Audio for agents. All of these block: the QML-facing waveform getters return empty on the
@@ -714,6 +719,23 @@ public:
     // Which model addons are installed, so an agent can say what to install rather than
     // retrying blindly.
     QJsonObject mcpAiCapabilities() const;
+    // Transcript-first editing. Transcripts live on the asset (Project::transcript) in source time.
+    QJsonObject mcpTranscribe(const QStringList &assetIds, const QJsonObject &options);
+    QJsonObject mcpGetTranscript(const QString &assetId, int trackIndex, int clipIndex,
+                                 double startSeconds, double endSeconds, const QJsonObject &options) const;
+    QJsonObject mcpDiarize(const QString &assetId, const QJsonObject &options);
+    QJsonObject mcpKeepRanges(int trackIndex, int clipIndex, const QJsonArray &ranges, double padding,
+                              double declick, bool ripple);
+    QJsonObject mcpAssemble(const QJsonArray &edl, int trackIndex, bool atGiven, double atSeconds,
+                            double padding, double declick);
+    QJsonObject mcpCutWords(int trackIndex, int clipIndex, const QJsonObject &args);
+    QJsonObject mcpTtsGenerate(const QJsonObject &args);
+    QJsonObject mcpSfxGenerate(const QJsonObject &args);
+    QJsonObject mcpListVoices(const QJsonObject &args) const;
+    QJsonObject mcpCloudProviderStatus() const;
+    QJsonObject mcpGetJob(const QString &id) const;
+    QJsonObject mcpCancelJob(const QString &id);
+    JobRegistry *jobRegistry() const { return m_jobs; }
 
     int mcpBookmarkBeats(double startSeconds, double durSeconds, const QString &unit,
                          double minStrength, const QString &labelPrefix);
@@ -731,9 +753,10 @@ public:
     QJsonObject mcpRestoreSnapshot(const QString &hash);
     QJsonObject mcpDetectSilence(int trackIndex, int clipIndex, double startSeconds,
                                  double durSeconds, double threshold, double minDuration,
-                                 double padding) const;
+                                 double padding, const QString &method = QStringLiteral("energy")) const;
     QJsonObject mcpRemoveSilence(int trackIndex, int clipIndex, double threshold,
-                                 double minDuration, double padding);
+                                 double minDuration, double padding, double declick = 0.03,
+                                 const QString &method = QStringLiteral("energy"));
     QJsonObject mcpAnalyzeLoudness(int trackIndex, int clipIndex, double startSeconds,
                                    double durSeconds) const;
     QJsonObject mcpNormalizeVolume(int trackIndex, int clipIndex, double targetLufs);
@@ -1365,7 +1388,10 @@ public:
     // which: "animIn" | "animOut". Partial patch: kind / duration / curve (or legacy ease).
     Q_INVOKABLE void setClipAnimation(int trackIndex, int clipIndex, const QString &which,
                                       const QVariantMap &patch);
-    Q_INVOKABLE void addTransition(int trackIndex, int clipIndex, const QString &kind, double durationSeconds);
+    // linkedAudio: also add the same transition between the two clips' linked audio, when they sit
+    // next to each other on one audio track.
+    Q_INVOKABLE void addTransition(int trackIndex, int clipIndex, const QString &kind, double durationSeconds,
+                                   bool linkedAudio = true);
     Q_INVOKABLE void removeTransition(int trackIndex, const QString &transitionId);
     Q_INVOKABLE void setTransitionDuration(int trackIndex, const QString &transitionId, double durationSeconds);
     Q_INVOKABLE void setTransitionKind(int trackIndex, const QString &transitionId, const QString &kind);
@@ -1375,6 +1401,9 @@ public:
                                                const QString &key, double value);
     Q_INVOKABLE QVariantMap transitionBetweenClips(int trackIndex, int clipIndex) const;
     Q_INVOKABLE QVariantList transitionKinds() const;
+    // The kinds that make sense on this track: on an audio track only those with an audible
+    // curve (crossfade, dip); everything elsewhere.
+    Q_INVOKABLE QVariantList transitionKindsForTrack(int trackIndex) const;
     Q_INVOKABLE QVariantList transitionCategories() const;
     Q_INVOKABLE void selectTransition(int trackIndex, int leftClipIndex);
     Q_INVOKABLE void clearTransitionSelection();
@@ -2069,8 +2098,14 @@ protected:
         drift::TimeUs timelineDuration = 0;
         double speed = 1.0;
         bool reverse = false;
+        QString assetId;
     };
     static SubtitleSource subtitleSourceFromClip(const drift::Clip &clip);
+    // Captions straight from stored transcripts, when every source has a current one. Empty
+    // when any source would need transcribing.
+    std::optional<QList<drift::SubtitleCue>> cuesFromStoredTranscripts(const QList<SubtitleSource> &sources,
+                                                                       drift::TimeUs rangeStart,
+                                                                       int maxWordsPerCue) const;
     bool generateSubtitlesForSources(QList<SubtitleSource> sources, const QString &language,
                                      int maxWordsPerCue);
     void finalizeGeneratedSubtitles(drift::TimeUs timelineStart, drift::TimeUs timelineDuration,
@@ -2198,6 +2233,18 @@ protected:
     // Cached dense peaks for `path`, or nullptr while the off-thread decode is still running
     // (waveformReady is emitted when it lands).
     const MediaWaveform::Dense *densePeaksFor(const QString &path) const;
+    struct SegmentReplaceResult
+    {
+        QStringList ids;
+        drift::TimeUs deltaUs = 0;
+    };
+    // Replaces the clip at (trackIndex, clipIndex) and each linked partner with the segments
+    // `build` makes from it, keeping ids, links, transitions and pinned effects attached, then
+    // ripples every track in the group. No undo step: the caller snapshots and pushes one.
+    bool replaceClipGroupWithSegments(int trackIndex, int clipIndex,
+                                      const std::function<QList<drift::Clip>(const drift::Clip &)> &build,
+                                      bool ripple, SegmentReplaceResult *out, QString *error);
+    void trimClipGroupAt(int trackIndex, int clipIndex, drift::TimeUs atUs, bool dropLeft);
     void applyRippleShift(drift::Track &track, int fromClipIndex, drift::TimeUs delta);
     void restoreFilmstripsAfterLoad();
     void normalizeSelection();
@@ -2272,6 +2319,14 @@ protected:
     AssetLibrary *m_assetLibrary = nullptr;
     AddonManager *m_addonManager = nullptr;
     MarketClient *m_marketClient = nullptr;
+    JobRegistry *m_jobs = nullptr;
+    CloudProviders *m_cloud = nullptr;
+    // An error object when `provider` can't be used yet (no key, no consent); empty when it can.
+    QJsonObject cloudUnavailable(const QString &provider) const;
+    // Imports a generated file into the bin, records what made it, optionally places it.
+    QJsonObject importGeneratedAudio(const QString &path, const QJsonObject &generator, const QJsonValue &place);
+    // Lands a finished transcript on its asset, unless the asset is gone or its file changed.
+    void storeTranscript(const QString &assetId, std::shared_ptr<drift::Transcript> transcript);
     BinFolderListModel m_binFolderModel;
     QString m_currentBinFolderId;
     bool m_importingFolder = false;

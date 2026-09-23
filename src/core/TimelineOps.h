@@ -176,8 +176,12 @@ TimeUs clipDurationForAsset(const MediaAsset *asset);
 TimeUs sourceDurationForClip(const Project &project, const Clip &clip);
 
 // Split `head` at `offset` from its timeline start into head + tail (same reverse/speed).
-// Caller assigns `tail.id`. Returns false if the offset is too close to either end.
+// Caller assigns `tail.id`. Returns false if the offset is too close to either end. The cut
+// edges get no fade or animation; the outer ones are kept, clamped to each half.
 bool splitClipAtOffset(Clip &head, Clip &tail, TimeUs offset);
+// Same, with the minimum half length the caller chooses (splitClipAtOffset uses
+// kMinClipDurationUs). Word-level cutting needs pieces shorter than an interactive split allows.
+bool splitClipAtOffsetMin(Clip &head, Clip &tail, TimeUs offset, TimeUs minEdgeUs);
 
 // Repoint `dst` at the media `src` carries while keeping dst's timeline placement. The source
 // time is read from `src` at dst's timeline start, so the two stay in timeline sync — which is

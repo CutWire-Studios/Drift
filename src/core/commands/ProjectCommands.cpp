@@ -27,14 +27,22 @@ QString ProjectSnapshotCommand::afterHash() const
 
 void ProjectSnapshotCommand::undo()
 {
-    if (m_project)
-        *m_project = m_before;
+    restore(m_before);
 }
 
 void ProjectSnapshotCommand::redo()
 {
-    if (m_project)
-        *m_project = m_after;
+    restore(m_after);
+}
+
+void ProjectSnapshotCommand::restore(const Project &snapshot)
+{
+    if (!m_project)
+        return;
+    // Transcripts are not part of the undoable state (see Project::transcript).
+    const QHash<QString, TranscriptPtr> transcripts = m_project->transcripts();
+    *m_project = snapshot;
+    m_project->setTranscripts(transcripts);
 }
 
 } // namespace drift

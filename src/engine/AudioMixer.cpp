@@ -54,7 +54,8 @@ void panGainsForClip(const drift::Clip &clip, float *leftOut, float *rightOut)
     *rightOut = static_cast<float>(qMin(1.0, 1.0 + pan));
 }
 
-double transitionGainForClip(const drift::Track &track, const drift::Clip &clip, drift::TimeUs timelineUs)
+double transitionGainForClip(const drift::Track &track, const drift::Clip &clip, drift::TimeUs timelineUs,
+                             const drift::AudioTransitionEdge &edge)
 {
     drift::TimeUs windowStart = 0;
     drift::TimeUs windowEnd = 0;
@@ -65,11 +66,16 @@ double transitionGainForClip(const drift::Track &track, const drift::Clip &clip,
     const double p = drift::transitionProgress(*transition, timelineUs, windowStart, windowEnd);
     const TransitionPresetEntry *def = transitionDefForId(transition->kindId);
     const QString curve = def ? def->audioCurve : QStringLiteral("crossfade");
-    const drift::TransitionAudioGains gains = drift::transitionAudioGains(curve, p);
-    if (clip.id == transition->fromClipId)
-        return gains.outgoing;
-    if (clip.id == transition->toClipId)
-        return gains.incoming;
+    // Clips that only touch: each side crossfades when it has media past the cut, and dips when
+    // it doesn't. Overlapping clips have real audio across the window already.
+    if (clip.id == transition->fromClipId) {
+        const QString side = edge.ownsOut ? drift::effectiveAudioCurve(curve, edge.outHasHandle) : curve;
+        return drift::transitionAudioGains(side, p).outgoing;
+    }
+    if (clip.id == transition->toClipId) {
+        const QString side = edge.ownsIn ? drift::effectiveAudioCurve(curve, edge.inHasHandle) : curve;
+        return drift::transitionAudioGains(side, p).incoming;
+    }
     return 1.0;
 }
 
@@ -97,21 +103,47 @@ quint64 clipAudioIdentity(const drift::Clip &clip)
 
 // Silence outside the clip means this is safe to call for a preroll window that runs off the
 // clip's front edge.
+namespace {
+
+// A block that runs past the clip's end still reads a full block of source (the decoder and the
+// retimer both need the continuity), so whatever lies beyond srcOut would otherwise be heard: up
+// to a block of the audio a cut was meant to remove, and a click where it stops.
+void silencePastEnd(QVector<float> &out, drift::TimeUs winStartUs, drift::TimeUs audibleEndUs, int sampleRate)
+{
+    const int frames = out.size() / 2;
+    const int64_t tail = ((audibleEndUs - winStartUs) * sampleRate + drift::kUsPerSecond - 1) / drift::kUsPerSecond;
+    for (int i = static_cast<int>(std::clamp<int64_t>(tail, 0, frames)); i < frames; ++i) {
+        out[i * 2] = 0.0f;
+        out[i * 2 + 1] = 0.0f;
+    }
+}
+
+} // namespace
+
 QVector<float> AudioMixer::readClipAudio(const drift::Clip &clip, quint64 streamId,
                                          drift::TimeUs winStartUs, int outFrames, int sampleRate,
-                                         drift::ClipAudioRetimer *retimer, const SourceReader &source)
+                                         drift::ClipAudioRetimer *retimer, const SourceReader &source,
+                                         drift::TimeUs audibleStartUs, drift::TimeUs audibleEndUs)
 {
     QVector<float> out(outFrames * 2, 0.0f);
     if (outFrames <= 0)
         return out;
 
+    const drift::TimeUs startUs = audibleStartUs >= 0 ? qMin(audibleStartUs, clip.timelineStart) : clip.timelineStart;
+    const drift::TimeUs endUs = audibleEndUs >= 0 ? qMax(audibleEndUs, clip.timelineEnd()) : clip.timelineEnd();
+    // Inside the clip this is exactly timelineToSourceUs; only a handle needs the unclamped form.
+    const bool extended = startUs < clip.timelineStart || endUs > clip.timelineEnd();
+    const auto toSource = [&clip, extended](drift::TimeUs t) {
+        return extended ? clip.timelineToSourceUsUnclamped(t) : clip.timelineToSourceUs(t);
+    };
+
     const drift::TimeUs winDurUs = framesToUs(outFrames, sampleRate);
     const drift::TimeUs winEndUs = winStartUs + winDurUs;
-    if (winEndUs <= clip.timelineStart || winStartUs >= clip.timelineEnd())
+    if (winEndUs <= startUs || winStartUs >= endUs)
         return out; // window is entirely outside the clip — pure silence
 
     // Clamp the window to the clip; frames before the clip's start stay as the leading zeros above.
-    const drift::TimeUs playStartUs = qMax(winStartUs, clip.timelineStart);
+    const drift::TimeUs playStartUs = qMax(winStartUs, startUs);
     const int leadFrames = static_cast<int>(((playStartUs - winStartUs) * sampleRate) / drift::kUsPerSecond);
     const int wantFrames = outFrames - leadFrames;
     if (wantFrames <= 0)
@@ -131,8 +163,8 @@ QVector<float> AudioMixer::readClipAudio(const drift::Clip &clip, quint64 stream
         const drift::TimeUs sourceSpanUs = qMax<drift::TimeUs>(1, framesToUs(wantFrames, sampleRate));
         // Reverse reads the block ahead of the mapped position and flips it below.
         const drift::TimeUs sourceStartUs =
-            clip.reverse ? qMax<drift::TimeUs>(0, clip.timelineToSourceUs(playStartUs) - sourceSpanUs)
-                         : clip.timelineToSourceUs(playStartUs);
+            clip.reverse ? qMax<drift::TimeUs>(0, toSource(playStartUs) - sourceSpanUs)
+                         : toSource(playStartUs);
 
         const int got =
             source ? source(sourceStartUs, wantFrames, out.data() + leadFrames * 2)
@@ -145,6 +177,7 @@ QVector<float> AudioMixer::readClipAudio(const drift::Clip &clip, quint64 stream
                 std::swap(out[i * 2 + 1], out[j * 2 + 1]);
             }
         }
+        silencePastEnd(out, winStartUs, endUs, sampleRate);
         return out;
     }
 
@@ -172,7 +205,7 @@ QVector<float> AudioMixer::readClipAudio(const drift::Clip &clip, quint64 stream
     block.timelineStartUs = playStartUs;
     // For a reversed clip this is already the source position of the first sample in playback
     // order, which is exactly what the retimer's cursor means; it walks backwards from there.
-    block.sourceStartUs = clip.timelineToSourceUs(playStartUs);
+    block.sourceStartUs = toSource(playStartUs);
     block.tempo = tempo;
     block.reverse = clip.reverse;
 
@@ -188,6 +221,7 @@ QVector<float> AudioMixer::readClipAudio(const drift::Clip &clip, quint64 stream
                                                                    sampleRate, dst, audioStreamIndex);
         },
         wantFrames, out.data() + leadFrames * 2);
+    silencePastEnd(out, winStartUs, endUs, sampleRate);
     return out;
 }
 
@@ -212,9 +246,14 @@ void accumulateClipAudio(const drift::Project &project, const drift::Clip &clip,
                                                             (static_cast<int64_t>(sampleCount) * drift::kUsPerSecond)
                                                             / sampleRate);
 
-    const bool overlaps = clip.containsTime(timelineStartUs) || clip.containsTime(bufferEndUs - 1)
-                          || (timelineStartUs < clip.timelineStart && bufferEndUs > clip.timelineEnd());
-    if (!overlaps)
+    // A transition across a butt cut can play this clip into the media past its edges.
+    drift::AudioTransitionEdge edge;
+    if (!track.transitions.isEmpty())
+        edge = drift::audioTransitionEdgeFor(track, clip, drift::sourceDurationForClip(project, clip));
+    const drift::TimeUs audibleStartUs = clip.timelineStart - edge.extendBeforeUs;
+    const drift::TimeUs audibleEndUs = clip.timelineEnd() + edge.extendAfterUs;
+
+    if (bufferEndUs <= audibleStartUs || timelineStartUs >= audibleEndUs)
         return;
 
     const drift::TimeUs blockDurUs = static_cast<drift::TimeUs>(
@@ -296,19 +335,20 @@ void accumulateClipAudio(const drift::Project &project, const drift::Clip &clip,
                 // The preroll window ends exactly where this block starts, so the retimer sees one
                 // continuous stream across the two reads and does not restart between them.
                 const QVector<float> preroll = AudioMixer::readClipAudio(
-                    clip, streamId, primeStartUs, primeFrames, sampleRate, &state.retimer, source);
+                    clip, streamId, primeStartUs, primeFrames, sampleRate, &state.retimer, source,
+                    audibleStartUs, audibleEndUs);
                 rack.warmUp(preroll.constData(), primeFrames);
             }
         }
 
         chunk = AudioMixer::readClipAudio(clip, streamId, timelineStartUs, sampleCount, sampleRate,
-                                          &state.retimer, source);
+                                          &state.retimer, source, audibleStartUs, audibleEndUs);
         if (active)
             rack.process(chunk.data(), sampleCount);
         rack.setLastTimelineEndUs(timelineStartUs + blockDurUs);
     } else {
         chunk = AudioMixer::readClipAudio(clip, streamId, timelineStartUs, sampleCount, sampleRate,
-                                          &state.retimer, source);
+                                          &state.retimer, source, audibleStartUs, audibleEndUs);
     }
 
     const int frames = qMin(sampleCount, chunk.size() / 2);
@@ -319,9 +359,11 @@ void accumulateClipAudio(const drift::Project &project, const drift::Clip &clip,
     for (int i = 0; i < frames; ++i) {
         const drift::TimeUs sampleTimeUs =
             timelineStartUs + static_cast<drift::TimeUs>((static_cast<int64_t>(i) * drift::kUsPerSecond) / sampleRate);
+        // An edge a butt-cut transition covers is shaped by the transition alone.
         const float gain = static_cast<float>(volumeForClip(clip, sampleTimeUs)
-                                              * transitionGainForClip(track, clip, sampleTimeUs)
-                                              * clip.fadeMultiplier(sampleTimeUs));
+                                              * transitionGainForClip(track, clip, sampleTimeUs, edge)
+                                              * clip.fadeMultiplier(sampleTimeUs, edge.ownsIn, edge.ownsOut)
+                                              * clip.audioEdgeMultiplier(sampleTimeUs, edge.ownsIn, edge.ownsOut));
         mixBuffer[i * 2] += chunk[i * 2] * gain * panL;
         mixBuffer[i * 2 + 1] += chunk[i * 2 + 1] * gain * panR;
     }

@@ -3,11 +3,20 @@
 #include <QImage>
 #include <QList>
 #include <QPair>
+#include <QString>
 #include <QVector>
 
 // Audio-as-image for agents: peak lanes, silence shading, onset/beat marks, an optional
 // spectrogram and a time axis in one picture. Pure — the caller mixes the audio.
 namespace drift::waveformsheet {
+
+struct WordLabel
+{
+    double start = 0.0; // absolute seconds
+    double end = 0.0;
+    QString text;
+    int index = -1; // transcript word index, drawn when the text doesn't fit
+};
 
 struct Input
 {
@@ -19,6 +28,7 @@ struct Input
     QList<double> onsets;                   // absolute seconds
     QList<double> beats;                    // absolute seconds
     QVector<QVector<float>> spectrogram;    // [column][bin] 0..1, bin 0 lowest; empty hides it
+    QList<WordLabel> words;                 // transcript words; empty hides the lane
 };
 
 struct Options
@@ -27,12 +37,13 @@ struct Options
     int height = 300;
     int spectrogramHeight = 120;
     int axisHeight = 24;
+    int wordLaneHeight = 22;
 };
 
 inline constexpr QRgb kSilenceShade = 0xFF283040;
 
-// Lanes top to bottom: mixed (55%), speech (45%), spectrogram, axis. The mixed lane takes
-// the whole peak area when there is no speech lane.
+// Lanes top to bottom: mixed (55%), speech (45%), words, spectrogram, axis. The mixed lane
+// takes the whole peak area when there is no speech lane.
 QImage render(const Input &in, const Options &opt);
 
 // The smallest of 0.5, 1, 2, 5, 10, 15, 30, 60, 120, 300, 600 s that is at least

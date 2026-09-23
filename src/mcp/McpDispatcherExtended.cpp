@@ -1745,6 +1745,97 @@ QJsonObject McpDispatcher::applyOneExtended(const QString &tool, const QJsonObje
         return ok(clipFeedback(ref, {{QStringLiteral("started"), true}}));
     }
 
+    // --- transcript ---
+    if (tool == QLatin1String("transcribe")) {
+        QStringList assets;
+        const QString asset = argString(args, QStringLiteral("asset"));
+        if (!asset.isEmpty())
+            assets.append(asset);
+        for (const QJsonValue &v : args.value(QStringLiteral("clips")).toArray()) {
+            const QPair<int, int> loc = m_controller->mcpLocateClip(v.toString().trimmed());
+            if (loc.first < 0)
+                return clipRefError(QJsonObject{{QStringLiteral("clip"), v.toString()}});
+            const QString id = m_controller->project()->tracks().at(loc.first).clips.at(loc.second).assetId;
+            if (!id.isEmpty() && !assets.contains(id))
+                assets.append(id);
+        }
+        if (assets.isEmpty()) {
+            const ClipRef ref = resolveClip(args);
+            if (!ref.valid())
+                return err("bad_args", QStringLiteral("asset, clip or clips required"));
+            const QString id = m_controller->project()->tracks().at(ref.track).clips.at(ref.clip).assetId;
+            if (id.isEmpty())
+                return err("type_mismatch", QStringLiteral("That clip has no media to transcribe"));
+            assets.append(id);
+        }
+        return m_controller->mcpTranscribe(assets, args);
+    }
+
+    if (tool == QLatin1String("get_transcript")) {
+        const QString asset = argString(args, QStringLiteral("asset"));
+        if (!asset.isEmpty())
+            return m_controller->mcpGetTranscript(asset, -1, -1, 0, 0, args);
+        if (args.contains(QStringLiteral("start")) && args.contains(QStringLiteral("end"))
+            && !args.contains(QStringLiteral("clip")))
+            return m_controller->mcpGetTranscript({}, -1, -1, jsonNumber(args.value(QStringLiteral("start")), 0.0),
+                                                  jsonNumber(args.value(QStringLiteral("end")), 0.0), args);
+        const ClipRef ref = resolveClip(args);
+        if (!ref.valid())
+            return err("bad_args", QStringLiteral("asset, clip, or start+end required"));
+        return m_controller->mcpGetTranscript({}, ref.track, ref.clip, 0, 0, args);
+    }
+
+    if (tool == QLatin1String("keep_ranges")) {
+        const ClipRef ref = resolveClip(args);
+        if (!ref.valid())
+            return clipRefError(args);
+        return m_controller->mcpKeepRanges(ref.track, ref.clip, args.value(QStringLiteral("ranges")).toArray(),
+                                           jsonNumber(args.value(QStringLiteral("padding")), 0.0),
+                                           jsonNumber(args.value(QStringLiteral("declick")), 0.03),
+                                           !args.contains(QStringLiteral("ripple")) || jsonBool(args.value(QStringLiteral("ripple"))));
+    }
+
+    if (tool == QLatin1String("assemble")) {
+        return m_controller->mcpAssemble(args.value(QStringLiteral("edl")).toArray(),
+                                         args.contains(QStringLiteral("track")) ? jsonInt(args.value(QStringLiteral("track"))) : -1,
+                                         args.contains(QStringLiteral("at")), jsonNumber(args.value(QStringLiteral("at")), 0.0),
+                                         jsonNumber(args.value(QStringLiteral("padding")), 0.0),
+                                         jsonNumber(args.value(QStringLiteral("declick")), 0.03));
+    }
+
+    if (tool == QLatin1String("cut_words")) {
+        const ClipRef ref = resolveClip(args);
+        if (!ref.valid())
+            return clipRefError(args);
+        return m_controller->mcpCutWords(ref.track, ref.clip, args);
+    }
+
+    if (tool == QLatin1String("diarize")) {
+        QString asset = argString(args, QStringLiteral("asset"));
+        if (asset.isEmpty()) {
+            const ClipRef ref = resolveClip(args);
+            if (!ref.valid())
+                return err("bad_args", QStringLiteral("asset or clip required"));
+            asset = m_controller->project()->tracks().at(ref.track).clips.at(ref.clip).assetId;
+        }
+        return m_controller->mcpDiarize(asset, args);
+    }
+
+    // --- voice ---
+    if (tool == QLatin1String("tts_generate"))
+        return m_controller->mcpTtsGenerate(args);
+    if (tool == QLatin1String("sfx_generate"))
+        return m_controller->mcpSfxGenerate(args);
+    if (tool == QLatin1String("list_voices"))
+        return m_controller->mcpListVoices(args);
+    if (tool == QLatin1String("cloud_provider_status"))
+        return m_controller->mcpCloudProviderStatus();
+
+    if (tool == QLatin1String("get_job"))
+        return m_controller->mcpGetJob(argString(args, QStringLiteral("id"), QStringLiteral("job_id")));
+    if (tool == QLatin1String("cancel_job"))
+        return m_controller->mcpCancelJob(argString(args, QStringLiteral("id"), QStringLiteral("job_id")));
+
     if (tool == QLatin1String("cancel_subtitle_generation")) {
         m_controller->cancelSubtitleGeneration();
         return ok({{QStringLiteral("cancelled"), true}});
@@ -2064,7 +2155,8 @@ QJsonObject McpDispatcher::applyOneExtended(const QString &tool, const QJsonObje
                 jsonInt(args.value(QStringLiteral("width")), 1400),
                 jsonInt(args.value(QStringLiteral("height")), 300),
                 jsonBool(args.value(QStringLiteral("spectrogram"))),
-                jsonInt(args.value(QStringLiteral("summary_buckets")), 50));
+                jsonInt(args.value(QStringLiteral("summary_buckets")), 50),
+                !args.contains(QStringLiteral("words")) || jsonBool(args.value(QStringLiteral("words"))));
         };
 
         // Mode is chosen by what was passed, most specific first: a clip reference names one
@@ -2538,32 +2630,42 @@ QJsonObject McpDispatcher::applyOneExtended(const QString &tool, const QJsonObje
 
     if (tool == QLatin1String("detect_silence")) {
         const ClipRef ref = resolveClip(args);
-        const double threshold = jsonNumber(args.value(QStringLiteral("threshold")), 0.02);
+        const QString method = argString(args, QStringLiteral("method")).isEmpty()
+                                   ? QStringLiteral("energy")
+                                   : argString(args, QStringLiteral("method"));
+        const double threshold =
+            jsonNumber(args.value(QStringLiteral("threshold")), method == QLatin1String("vad") ? 0.5 : 0.02);
         const double minDuration = jsonNumber(args.value(QStringLiteral("min_duration")), 0.35);
         const double padding = jsonNumber(args.value(QStringLiteral("padding")), 0.08);
         if (ref.valid()) {
             return m_controller->mcpDetectSilence(ref.track, ref.clip, 0, 0, threshold, minDuration,
-                                                  padding);
+                                                  padding, method);
         }
         if (!args.contains(QStringLiteral("start")) || !args.contains(QStringLiteral("duration")))
             return err("bad_args", QStringLiteral("clip, or start+duration, required"));
         return m_controller->mcpDetectSilence(-1, -1,
                                               jsonNumber(args.value(QStringLiteral("start")), 0.0),
                                               jsonNumber(args.value(QStringLiteral("duration")), 0.0),
-                                              threshold, minDuration, padding);
+                                              threshold, minDuration, padding, method);
     }
 
     if (tool == QLatin1String("remove_silence")) {
         const ClipRef ref = resolveClip(args);
-        const double threshold = jsonNumber(args.value(QStringLiteral("threshold")), 0.02);
+        const QString method = argString(args, QStringLiteral("method")).isEmpty()
+                                   ? QStringLiteral("energy")
+                                   : argString(args, QStringLiteral("method"));
+        const double threshold =
+            jsonNumber(args.value(QStringLiteral("threshold")), method == QLatin1String("vad") ? 0.5 : 0.02);
         const double minDuration = jsonNumber(args.value(QStringLiteral("min_duration")), 0.35);
         const double padding = jsonNumber(args.value(QStringLiteral("padding")), 0.08);
+        const double declick = jsonNumber(args.value(QStringLiteral("declick")), 0.03);
         if (ref.valid())
-            return m_controller->mcpRemoveSilence(ref.track, ref.clip, threshold, minDuration, padding);
+            return m_controller->mcpRemoveSilence(ref.track, ref.clip, threshold, minDuration, padding,
+                                                  declick, method);
         if (!args.contains(QStringLiteral("track")))
             return err("bad_args", QStringLiteral("clip or track required"));
         return m_controller->mcpRemoveSilence(jsonInt(args.value(QStringLiteral("track"))), -1,
-                                              threshold, minDuration, padding);
+                                              threshold, minDuration, padding, declick, method);
     }
 
     if (tool == QLatin1String("analyze_loudness")) {

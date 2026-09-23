@@ -794,6 +794,34 @@ WhisperResult WhisperTranscriber::transcribe(
     const std::vector<float> &pcm, const std::function<bool(double, const QString &)> &progress,
     const QString &languageCode, int maxWordsPerCue)
 {
+    WhisperResult result = transcribeSegments(pcm, progress, languageCode);
+    if (result.ok) {
+        // Pack into short display lines like openai-whisper's VTT writer
+        // (word_timestamps + max_line_width=42, max_line_count=1), optionally capped shorter still.
+        result.cues = packSubtitleCues(result.cues, 42, 1, maxWordsPerCue);
+    }
+    return result;
+}
+
+void WhisperTranscriber::unload()
+{
+    d->encoder.reset();
+    d->decoder.reset();
+    d->decoderPast.reset();
+    // ensureLoaded() rebuilds these; leave nothing for it to leak or append to twice.
+    if (d->tx)
+        av_tx_uninit(&d->tx);
+    av_freep(&d->fftIn);
+    av_freep(&d->fftOut);
+    d->beginSuppress.clear();
+    d->loaded = false;
+    d->loadAttempted = false;
+}
+
+WhisperResult WhisperTranscriber::transcribeSegments(
+    const std::vector<float> &pcm, const std::function<bool(double, const QString &)> &progress,
+    const QString &languageCode)
+{
     WhisperResult result;
     if (!d->ensureLoaded()) {
         result.error = d->error;
@@ -940,9 +968,7 @@ WhisperResult WhisperTranscriber::transcribe(
     if (progress)
         progress(1.0, QStringLiteral("Finishing up…"));
     sortSubtitleCues(result.cues);
-    // Pack into short display lines like openai-whisper's VTT writer
-    // (word_timestamps + max_line_width=42, max_line_count=1), optionally capped shorter still.
-    result.cues = packSubtitleCues(result.cues, 42, 1, maxWordsPerCue);
+    result.language = d->languageByCode.key(languageToken);
     result.ok = true;
     return result;
 }

@@ -739,16 +739,22 @@ const QList<Op> &ops()
                        {QStringLiteral("index"), QStringLiteral("key"), QStringLiteral("value")}) },
         { "add_transition", "effects", "Bridge two adjacent clips",
           "Add or replace a transition between this clip and the next eligible clip on the same track "
-          "(the neighbour with the earliest start after it); fails bad_args when there is none. Only "
-          "video, shape, and text tracks take transitions. Duration is forced to the physical overlap "
-          "when the clips already overlap, and is floored at 0.1s otherwise. Replacing an existing "
-          "transition clears its parameter overrides. Returns {id, kind, dur, track} — keep id for "
-          "remove_transition and set_transition_*.",
+          "(the neighbour with the earliest start after it); fails bad_args when there is none. Video, "
+          "shape, text and audio tracks take transitions; on an audio track only the sound matters, so "
+          "only crossfade and dip kinds are accepted. Where clips only touch (a butt cut), the audio "
+          "plays on into the media past the cut for a true crossfade, and dips through silence on a "
+          "side with no media to spare. With linked_audio (default), a transition between two video "
+          "clips whose separated audio sits back to back on one audio track gets the same crossfade "
+          "there too, and later duration/kind/curve changes and removal carry across. Duration is "
+          "forced to the physical overlap when the clips already overlap, and is floored at 0.1s "
+          "otherwise. Replacing an existing transition clears its parameter overrides. Returns {id, "
+          "kind, dur, track} — keep id for remove_transition and set_transition_*.",
           objectSchema(mergeProps(
               {{QStringLiteral("kind"),
                 propWithDefault(stringProp(QStringLiteral("Transition id from list_transitions; an unknown id fails not_found with the nearest ids")),
                                 QStringLiteral("crossfade"))},
-               {QStringLiteral("duration"), numberProp(QStringLiteral("Seconds (ignored when clips already overlap)"))}},
+               {QStringLiteral("duration"), numberProp(QStringLiteral("Seconds (ignored when clips already overlap)"))},
+               {QStringLiteral("linked_audio"), propWithDefault(boolProp(QStringLiteral("Mirror onto the clips' linked audio")), true)}},
               clipRefProps())) },
         { "remove_transition", "effects", "Remove a transition",
           "Remove a transition by id from a track. Transition ids are unique within a track only, so "
@@ -1008,7 +1014,7 @@ QStringList toolboxNames()
             QStringLiteral("ui"),        QStringLiteral("shapes"),   QStringLiteral("motion"),
             QStringLiteral("model3d"),   QStringLiteral("subtitles"), QStringLiteral("segmentation"), QStringLiteral("ai"),
             QStringLiteral("audio"),     QStringLiteral("scene"),    QStringLiteral("multicam"),
-            QStringLiteral("market")};
+            QStringLiteral("market"),    QStringLiteral("transcript"), QStringLiteral("voice")};
 }
 
 QStringList undoExemptOps()
@@ -1031,6 +1037,10 @@ QStringList undoExemptOps()
         QStringLiteral("install_addon"),       QStringLiteral("cancel_addon_install"),
         QStringLiteral("set_acceleration"),    QStringLiteral("switch_angle"),
         QStringLiteral("end_multicam"),
+        // Background work and stored analysis: nothing on the timeline changes.
+        QStringLiteral("transcribe"),          QStringLiteral("diarize"),
+        QStringLiteral("cancel_job"),          QStringLiteral("tts_generate"),
+        QStringLiteral("sfx_generate"),
         // Preset stores live on disk, outside the project and its history.
         QStringLiteral("rename_user_text_preset"),      QStringLiteral("delete_user_text_preset"),
         QStringLiteral("export_user_text_preset"),      QStringLiteral("import_user_text_preset"),
@@ -1111,8 +1121,18 @@ QString agentGuideText()
         "- detect_scenes     -> jobs.sceneDetect.{active,progress,status}\n"
         "- set_clip_reverse  -> jobs.reverseRender.{active,progress,status}\n"
         "- market_download   -> jobs.market.active (count), or market_downloads for per-job status\n"
+        "- transcribe, diarize, tts_generate, sfx_generate return {job_id}: poll get_job({id});\n"
+        "  inspect({detail:true}).jobs.list shows recent ones, finished included.\n"
         "jobs.* keys exist only while a job runs. Segmentation, denoise, and face detection report\n"
         "through the app's status only; re-read inspect({clips:true,detail:true}) and compare.\n"
+        "\n"
+        "Editing speech (transcript toolbox):\n"
+        "1. transcribe({clip}) once per source; it survives every edit and undo.\n"
+        "2. get_transcript({asset}) for a whole take in source seconds (compact lines), or\n"
+        "   ({clip}) for what that clip plays on the timeline; view:\"words\" gives word indices.\n"
+        "3. Cut with cut_words (fillers, retakes, slips), keep_ranges (one clip's EDL) or\n"
+        "   assemble (best takes across sources). Cuts land between words with a de-click.\n"
+        "4. Check each cut with get_waveform({image:true}) — it draws the words — and frames.\n"
         "\n"
         "Working to the music (audio toolbox):\n"
         "1. detect_beats({start, duration}) blocks and returns bpm plus exact beat and onset times.\n"
@@ -1193,6 +1213,8 @@ QJsonObject catalogPayload(const QJsonObject &args)
         {"scene", "Detect shots, read what is in them, and cut or assemble against them."},
         {"multicam", "Multi-camera session: set up angles, switch at the playhead, save separate or combined."},
         {"market", "Stock media from the Cutwire marketplace: search or resolve a link, download into the bin. Needs the user's one-time consent in the app; downloads spend a per-machine quota."},
+        {"transcript", "Transcript-first editing: transcribe once, read phrases/words with times, cut by words or by source ranges, assemble takes, label speakers."},
+        {"voice", "Cloud voices: ElevenLabs / Fish Audio text-to-speech, ElevenLabs sound effects, voice lists, provider status. Billable; needs the user's API key."},
     };
 
     const bool brief = args.value(QStringLiteral("brief")).toBool();
@@ -1228,7 +1250,7 @@ QJsonObject catalogPayload(const QJsonObject &args)
              QStringLiteral("Outside the undo stack (as are all read-only ops): %1. set_beat_layers changes the user's own snapping and cannot be undone.")
                  .arg(undoExemptOps().join(QStringLiteral(", "))),
              QStringLiteral("set_speed_curve returns a new clip id and the old UUID stops resolving; end the apply batch after it."),
-             QStringLiteral("generate_subtitles must run AFTER remove_silence, which shifts cue times."),
+             QStringLiteral("generate_subtitles makes a caption clip with fixed times: run it after cutting. From a transcribed asset it is instant and word-exact."),
              QStringLiteral("import_media takes absolute paths only; there is no directory listing, so find files with your own filesystem tools and check missing:[]."),
          }},
     });
@@ -1308,7 +1330,7 @@ QJsonArray homepageTools()
                        "animated lists the keyframed properties. verbose=true returns every field. "
                        "clip=<uuid> returns just that clip (detail on); track=<n> just that track. "
                        "Async jobs appear under jobs {package|subtitleGen|reverseRender|sceneDetect|market} only while "
-                       "active; beats only once analysed. since=<revision> returns {unchanged:true, revision}."),
+                       "active, and jobs.list holds get_job's records; beats only once analysed. since=<revision> returns {unchanged:true, revision}."),
         objectSchema({{QStringLiteral("clips"), boolProp(QStringLiteral("Include per-clip rows under tracks[].items"))},
                       {QStringLiteral("detail"),
                        boolProp(QStringLiteral("Expand rows to the full clip map with kind-irrelevant and default-valued "

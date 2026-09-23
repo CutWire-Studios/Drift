@@ -129,6 +129,7 @@ All return `{started:true}` immediately. Every field below except `export` lives
 | `detect_scenes` | `jobs.sceneDetect.{active, progress, status, clip, scenes}` (also present, inactive, while a scan result is loaded) |
 | `run_segmentation`, `segment_clip`, `apply_denoise`, `detect_faces` | No progress field — re-read `inspect({clips:true, detail:true})` and compare |
 | `stabilize_clip` | Per-clip `stabilizing` / `stabilizeProgress` / `stabilizeStatus` on the detail clip row |
+| `transcribe`, `diarize`, `tts_generate`, `sfx_generate` | Return `{job_id}` instead: poll `get_job({id})` until `active` is false, then read `ok` plus `result` or `error`. `cancel_job({id})` stops one. `inspect({detail:true}).jobs.list` keeps recent jobs, finished ones included |
 
 ## Toolbox reference
 
@@ -154,6 +155,8 @@ All return `{started:true}` immediately. Every field below except `export` lives
 | `ui` | Theme, shortcuts, editor preferences, guides |
 | `multicam` | Multi-camera session: set up, switch at the playhead, save |
 | `market` | Stock media from the Cutwire marketplace: status/consent, search, resolve a link, download into the bin |
+| `transcript` | Word-level transcripts stored on each asset, reading them (`get_transcript`), cutting by words (`cut_words`) or source ranges (`keep_ranges`), building a sequence from an edit list (`assemble`), speaker labels (`diarize`) — see [Editing speech](#editing-speech) |
+| `voice` | ElevenLabs / Fish Audio voiceover (`tts_generate`), ElevenLabs sound effects (`sfx_generate`), `list_voices`, `cloud_provider_status` — see [Cloud voices](#cloud-voices) |
 
 ### Working to the music
 
@@ -216,12 +219,82 @@ something happen” to “what is it”:
    timeline end.
 
 For audio, **`get_waveform({image:true, …})`** returns a PNG with a mixed-peaks lane, a
-speech-band lane, silent stretches shaded, onset ticks when `detect_beats` is current, an
+speech-band lane, silent stretches shaded, onset ticks when `detect_beats` is current, a lane
+of the transcript's words when the media is transcribed (indices in the reply's `words`), an
 optional `spectrogram:true` lane, and a time axis — together with a `summary_buckets` (50)
 numeric summary and the `silence` ranges it found. In `clip` mode the image form is
 timeline-space (through the clip's volume and fades), unlike the numeric clip form.
 
 Typical recipe: `activity()` → `frames({at: peaks})` or `frames()` → edit → `capture({at})`.
+
+### Editing speech
+
+The cheapest way for an agent to understand talking footage is to read it, not watch it. Transcribe
+each source once, read the words with their times, cut between words, and look at pictures only
+at the cuts.
+
+1. **`transcribe({clip})`** (or `{asset}`, or `{clips:[…]}`) transcribes the **whole source file**
+   behind the clip and stores the result on the asset, in source time. It survives every later
+   trim, split, reorder and undo, and is saved with the project; calling it again returns
+   `cached` unless `force:true`. Async — poll `get_job`.
+
+   | `engine` | What you get | Needs |
+   |---|---|---|
+   | `local` (default) | Whisper words, each placed by a CTC forced aligner (real word start/end), Silero VAD keeping Whisper off silence, speaker labels with `diarize:true` | `whisper-model`; `align-model` for the language (word timings, else interpolated and `aligned:false`); `vad-model` and `diarize-model` optional |
+   | `elevenlabs` | Scribe: verbatim (fillers like "um" kept and tagged), audio events like `(laughter)`, speakers with `diarize:true`, `keyterms` to bias names | The user's key and consent (Settings → Cloud providers). **Billable** |
+
+   Whisper tends to drop fillers, so a local transcript tags only the ones it kept.
+2. **`get_transcript`** reads it three ways:
+   - `{asset}`: the whole take in **source seconds**, which is what `keep_ranges` and `assemble` take.
+   - `{clip}`: only what that clip plays, in **timeline seconds**.
+   - `{start, end}`: everything audible on the timeline in that range.
+
+   The default `view:"phrases"` breaks lines on a pause of at least `break_on_silence` (0.7 s) or
+   a speaker change, and adds a `compact` string, `[12.40-15.10] S1 text` per line, which is the
+   cheapest read of a long take. `view:"words"` lists every word with a stable index `i` into the
+   asset's transcript, plus `type` (filler/event), `speaker`, `conf` and `estimated` (the aligner
+   could not place it). Page through with `offset`/`limit`/`next_offset`.
+3. Cut:
+   - **`cut_words`** removes word runs (`words:[[i,j]]`) or text (`text:"um"`, or `match:"phrase"`
+     for a phrase). `snap:"boundary"` also takes the pause around the removed words, keeping
+     `padding` (0.05 s) of air beside the words that stay. `snap:"silence"` cuts at the quietest
+     point of each gap instead. `dry_run` reports the plan without editing.
+   - **`keep_ranges`** rebuilds one clip from source ranges, in any order: its edit decision list.
+   - **`assemble`** places `[{asset, start, end}]` from several sources back to back (the best take
+     of each beat), appended to a track.
+   - **`remove_silence`** with `method:"vad"` cuts only where nobody speaks; energy thresholds
+     mistake music and room noise for speech.
+
+   All of these:
+   - cut linked video and audio together;
+   - ripple what follows;
+   - give every cut edge a short audio-only de-click ramp (`declick`, 0.03 s; it never fades the
+     picture);
+   - leave one undo step.
+4. Check each cut. `get_waveform({image:true})` draws a lane of the transcript's words under the
+   waveform (the reply's `words` carry their indices), and `frames({at:[…]})` shows the picture on
+   both sides.
+5. **`generate_subtitles`** on transcribed media builds captions straight from the stored words,
+   instantly and on the exact word times, however the clips were cut. On media without a
+   transcript it runs Whisper as before.
+
+`diarize({clip})` labels speakers on its own (and relabels an existing transcript's words). A
+butt cut between two clips' audio can take a real crossfade: `add_transition` works on audio
+tracks. With media past the cut on both sides it is a true crossfade; a side with no media dips
+through silence instead.
+
+### Cloud voices
+
+The `voice` toolbox needs the user's own ElevenLabs or Fish Audio account. Keys live in Settings →
+Cloud providers, or in `ELEVENLABS_API_KEY` / `FISH_API_KEY` for headless runs. Nothing is sent
+until the user also turns on that provider's consent switch.
+
+- **`cloud_provider_status`** says what is ready. Keys are never returned.
+- **`list_voices({provider})`** lists voice ids.
+- **`tts_generate({provider, text, voice})`** and **`sfx_generate({prompt, duration})`** write an
+  MP3 under the app data folder, import it into the bin (the asset records what made it), and
+  with `place` put it on a free audio lane.
+- Every call is billable. `not_configured` and `consent_required` errors say what to ask the user.
 
 ### Understanding the footage
 
@@ -429,7 +502,10 @@ local fake) without rebuilding.
 - **`snap_clips_to_beats` may not land on the beat.** With overlap off, a clip is pushed to the next free gap. Read the `to` values back rather than assuming they equal the beat time.
 - **`split_on_beats` keeps your clip id for the *first* piece.** The other pieces are new UUIDs, returned in `clips` in timeline order.
 - **There is no track volume.** `set_volume` is per clip; mute a whole lane with `set_track({muted:true})`.
-- **`generate_subtitles` after `remove_silence`.** Silence removal shifts the timeline; captions generated before it will be wrong.
+- **`generate_subtitles` makes a caption clip with fixed times.** Cut first, caption last. From a transcribed asset it is instant and word-exact.
+- **Word indices belong to the asset, not the clip.** `cut_words({words})` takes indices from `get_transcript` (any view) and they stay valid across cuts; a word the clip no longer plays is skipped.
+- **`transcribe` always covers the whole source file**, however short the clip: an hour-long recording is an hour of transcription (and of Scribe billing).
+- **`keep_ranges` refuses speed-ramped clips** — a ramp is shaped over the clip's own range. Flatten it (`clear_speed_curve`) first.
 - **One caption clip for a cut-up track.** `generate_subtitles({clips:[…]})` or `generate_subtitles({track, start, end})` transcribes several video/audio clips into a single subtitle clip; the sources must not overlap in time. `export_subtitle_file({clip, path, timeline_times:true})` offsets cues by the clip's start so the file matches the exported video.
 - **`apply_denoise` is noise, not reverb.** "Sounds like a bathroom" will not be fixed by denoise.
 - **`activity.content` at coarse steps reads pans as cuts.** Confirm a peak with `frames({at:[…]})` before cutting on it.

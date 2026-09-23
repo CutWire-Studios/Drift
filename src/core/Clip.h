@@ -138,6 +138,11 @@ struct Clip
     FadeCurve fadeCurve = FadeCurve::Smooth;
     // Used when fadeCurve == Custom; shared by fade-in and fade-out.
     FadeShape fadeShape;
+    // Audio-only edge ramps: the de-click at cut points made by remove_silence, cut_words and
+    // keep_ranges. Unlike fadeInUs/fadeOutUs they never touch opacity, so a cut in a talking-head
+    // clip doesn't flash the picture.
+    TimeUs audioFadeInUs = 0;
+    TimeUs audioFadeOutUs = 0;
 
     // CapCut-style body intro/outro (whole-clip opacity/transform motion).
     ClipAnimation animIn;
@@ -193,6 +198,16 @@ struct Clip
         return srcOut - qMin(offset, range);
     }
 
+    // Constant-speed mapping that keeps going past either end of the clip, into the media on
+    // either side of its trim: where a transition handle reads from. Ramped clips have no handles,
+    // so this ignores the curve.
+    TimeUs timelineToSourceUsUnclamped(TimeUs timelineUs) const
+    {
+        const TimeUs rel = timelineUs - timelineStart;
+        const TimeUs offset = static_cast<TimeUs>(llround(static_cast<double>(rel) * effectiveSpeed()));
+        return reverse ? srcOut - offset : srcIn + offset;
+    }
+
     // Inverse of timelineToSourceUs relative to timelineStart: source time → clip-local time.
     TimeUs sourceUsToClipLocalUs(TimeUs sourceUs) const
     {
@@ -234,10 +249,11 @@ struct Clip
     // Fade gain in [0,1] at a timeline time. CapCut Fade In/Out animations own
     // the ramp when set; otherwise edge fadeInUs/Out + clip fadeCurve apply
     // (audio, timeline handles, legacy projects).
-    double fadeMultiplier(TimeUs timelineUs) const
+    // skipIn/skipOut drop that edge's ramp, for an edge an audio transition already shapes.
+    double fadeMultiplier(TimeUs timelineUs, bool skipIn = false, bool skipOut = false) const
     {
-        const bool animFadeIn = animIn.kind == ClipAnimKind::Fade && animIn.durationUs > 0;
-        const bool animFadeOut = animOut.kind == ClipAnimKind::Fade && animOut.durationUs > 0;
+        const bool animFadeIn = !skipIn && animIn.kind == ClipAnimKind::Fade && animIn.durationUs > 0;
+        const bool animFadeOut = !skipOut && animOut.kind == ClipAnimKind::Fade && animOut.durationUs > 0;
         if (!animFadeIn && !animFadeOut && fadeInUs <= 0 && fadeOutUs <= 0)
             return 1.0;
 
@@ -248,7 +264,7 @@ struct Clip
         if (animFadeIn && rel < animIn.durationUs) {
             const double t = static_cast<double>(rel) / static_cast<double>(animIn.durationUs);
             in = shapedProgress(t, animIn.curve, animIn.shape);
-        } else if (fadeInUs > 0 && rel < fadeInUs) {
+        } else if (!skipIn && fadeInUs > 0 && rel < fadeInUs) {
             in = shapedProgress(static_cast<double>(rel) / static_cast<double>(fadeInUs),
                                 fadeCurve, fadeShape);
         }
@@ -257,12 +273,31 @@ struct Clip
         if (animFadeOut && fromEnd < animOut.durationUs) {
             const double t = static_cast<double>(fromEnd) / static_cast<double>(animOut.durationUs);
             out = shapedProgress(t, animOut.curve, animOut.shape);
-        } else if (fadeOutUs > 0 && fromEnd < fadeOutUs) {
+        } else if (!skipOut && fadeOutUs > 0 && fromEnd < fadeOutUs) {
             out = shapedProgress(static_cast<double>(fromEnd) / static_cast<double>(fadeOutUs),
                                  fadeCurve, fadeShape);
         }
 
         return in * out;
+    }
+
+    // Gain from audioFadeInUs/audioFadeOutUs. Clamped at the edges like fadeMultiplier: the mixer
+    // times samples by truncated µs, so the first sample of a clip can read as a hair before it.
+    double audioEdgeMultiplier(TimeUs timelineUs, bool skipIn = false, bool skipOut = false) const
+    {
+        if ((audioFadeInUs <= 0 || skipIn) && (audioFadeOutUs <= 0 || skipOut))
+            return 1.0;
+        const TimeUs rel = qBound(TimeUs{0}, timelineUs - timelineStart, timelineDuration);
+        const TimeUs half = qMax<TimeUs>(1, timelineDuration / 2);
+        const TimeUs inLen = qMin(audioFadeInUs, half);
+        const TimeUs outLen = qMin(audioFadeOutUs, half);
+        const TimeUs fromEnd = timelineDuration - rel;
+        double gain = 1.0;
+        if (!skipIn && inLen > 0 && rel < inLen)
+            gain *= shapedProgress(static_cast<double>(rel) / static_cast<double>(inLen), FadeCurve::Smooth, {});
+        if (!skipOut && outLen > 0 && fromEnd < outLen)
+            gain *= shapedProgress(static_cast<double>(fromEnd) / static_cast<double>(outLen), FadeCurve::Smooth, {});
+        return gain;
     }
 };
 

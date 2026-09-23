@@ -94,10 +94,11 @@ ThemedDialog {
             root.kindFilterKinds = ["onnxruntime", "onnxruntime-ep"]
         } else if (kind === "whisper-model" || kind === "denoise-model"
                    || kind === "sam2-model" || kind === "face-model"
-                   || kind === "object-model") {
+                   || kind === "object-model" || kind === "vad-model"
+                   || kind === "align-model" || kind === "diarize-model") {
             root.kindFilter = "whisper-model"
             root.kindFilterKinds = ["whisper-model", "denoise-model", "sam2-model", "face-model",
-                                    "object-model"]
+                                    "object-model", "vad-model", "align-model", "diarize-model"]
         } else if (kind === "effects" || kind === "effect-templates") {
             root.kindFilter = "effects"
             root.kindFilterKinds = ["effects"]
@@ -157,7 +158,7 @@ ThemedDialog {
                     { id: "stickers", label: qsTr("Stickers"), kinds: ["stickers"] },
                     { id: "whisper-model", label: qsTr("AI tools"),
                       kinds: ["whisper-model", "denoise-model", "sam2-model", "face-model",
-                              "object-model"] },
+                              "object-model", "vad-model", "align-model", "diarize-model"] },
                     { id: "onnxruntime", label: qsTr("AI engine"),
                       kinds: ["onnxruntime", "onnxruntime-ep"] }
                 ]

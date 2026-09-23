@@ -23,6 +23,7 @@
 #include "core/TextLook.h"
 #include "core/TextPresetStore.h"
 #include "core/TimelineOps.h"
+#include "core/CutOps.h"
 #include "core/Transition.h"
 #include "core/commands/ProjectCommands.h"
 #include "engine/AddonRegistry.h"
@@ -78,6 +79,13 @@
 #endif
 #include "engine/TransitionCatalog.h"
 #include "engine/WaveformSheet.h"
+#include "engine/CtcAligner.h"
+#include "engine/LocalTranscription.h"
+#include "models/JobRegistry.h"
+#include "models/CloudProviders.h"
+#include "engine/SpeakerDiarizer.h"
+#include "engine/SileroVad.h"
+#include "engine/SpeechAudio.h"
 #include "engine/WhisperTranscriber.h"
 #include "mcp/McpCatalog.h"
 #include "mcp/McpJson.h"
@@ -120,6 +128,7 @@
 #include <QUuid>
 #include <QVector>
 #include <QFutureWatcher>
+#include <numeric>
 #include <QtConcurrent>
 #include <QtMath>
 #include <algorithm>
@@ -699,6 +708,8 @@ AppController::AppController(AssetLibrary *assetLibrary, QObject *parent)
     : QObject(parent)
     , m_assetLibrary(assetLibrary)
 {
+    m_jobs = new JobRegistry(this);
+    m_cloud = new CloudProviders(this);
     m_project.resetToDefaultTimeline();
     m_project.setAuthor(QSettings().value(QStringLiteral("authorName")).toString());
     if (m_assetLibrary)
@@ -1226,7 +1237,7 @@ bool faceTrackHasMesh(const QString &path)
     return false;
 }
 
-QVariantMap transitionToMap(const drift::Track &track, const drift::Transition &t);
+QVariantMap transitionToMap(const drift::Project &project, const drift::Track &track, const drift::Transition &t);
 QVariantMap maskToMap(const drift::Mask &m);
 drift::Mask maskFromMap(const QVariantMap &m);
 
@@ -1267,7 +1278,68 @@ int findTransitionPartnerIndex(const drift::Track &track, int fromIndex)
 bool trackAllowsTransitions(drift::TrackType type)
 {
     return type == drift::TrackType::Video || type == drift::TrackType::Shape
-           || type == drift::TrackType::Text;
+           || type == drift::TrackType::Text || type == drift::TrackType::Audio;
+}
+
+// On an audio track only the sound of a transition exists, and "hold" has none.
+bool transitionKindFitsTrack(drift::TrackType type, const QString &kindId)
+{
+    if (type != drift::TrackType::Audio)
+        return true;
+    const TransitionPresetEntry *def = transitionDefForId(kindId);
+    return !def || def->audioCurve != QLatin1String("hold");
+}
+
+// The clips a video transition's two clips are linked to, when those sit back to back on one audio
+// track: where the same transition's sound belongs once the audio has been separated out. Found by
+// linkId each time rather than stored, so it survives any edit that keeps the pair adjacent.
+struct LinkedAudioPair
+{
+    int track = -1;
+    QString fromId;
+    QString toId;
+    bool valid() const { return track >= 0; }
+};
+
+LinkedAudioPair linkedAudioPairFor(const drift::Project &project, const drift::Track &track,
+                                   const QString &fromClipId, const QString &toClipId)
+{
+    if (track.type == drift::TrackType::Audio)
+        return {};
+    const drift::Clip *from = drift::clipById(track, fromClipId);
+    const drift::Clip *to = drift::clipById(track, toClipId);
+    if (!from || !to || from->linkId.isEmpty() || to->linkId.isEmpty())
+        return {};
+    for (const drift::ClipRef &pf : drift::linkedPartners(project, *from)) {
+        if (project.tracks().at(pf.trackIndex).type != drift::TrackType::Audio)
+            continue;
+        const drift::Track &audio = project.tracks().at(pf.trackIndex);
+        for (const drift::ClipRef &pt : drift::linkedPartners(project, *to)) {
+            if (pt.trackIndex != pf.trackIndex)
+                continue;
+            const drift::Clip &a = audio.clips.at(pf.clipIndex);
+            const drift::Clip &b = audio.clips.at(pt.clipIndex);
+            if (drift::clipsEligibleForTransition(a, b))
+                return {pf.trackIndex, a.id, b.id};
+        }
+    }
+    return {};
+}
+
+drift::Transition *findTransitionBetween(drift::Track &track, const QString &fromId, const QString &toId)
+{
+    for (drift::Transition &t : track.transitions) {
+        if (t.fromClipId == fromId && t.toClipId == toId)
+            return &t;
+    }
+    return nullptr;
+}
+
+// The audio-track twin of a video transition, or null.
+drift::Transition *mirroredAudioTransition(drift::Project &project, int trackIndex, const drift::Transition &t)
+{
+    const LinkedAudioPair pair = linkedAudioPairFor(project, project.tracks().at(trackIndex), t.fromClipId, t.toClipId);
+    return pair.valid() ? findTransitionBetween(project.tracks()[pair.track], pair.fromId, pair.toId) : nullptr;
 }
 
 void syncOverlapTransitionsOnTrack(drift::Track &track)
@@ -1391,7 +1463,7 @@ QVariantList AppController::tracks() const
         QVariantList transitions;
         transitions.reserve(track.transitions.size());
         for (const drift::Transition &transition : track.transitions)
-            transitions.append(transitionToMap(track, transition));
+            transitions.append(transitionToMap(m_project, track, transition));
 
         result.append(QVariantMap{
             {QStringLiteral("id"), track.id},
@@ -2502,7 +2574,7 @@ drift::Mask maskFromMap(const QVariantMap &m)
     return mask;
 }
 
-QVariantMap transitionToMap(const drift::Track &track, const drift::Transition &t)
+QVariantMap transitionToMap(const drift::Project &project, const drift::Track &track, const drift::Transition &t)
 {
     drift::TimeUs startUs = 0;
     drift::TimeUs endUs = 0;
@@ -2513,6 +2585,17 @@ QVariantMap transitionToMap(const drift::Track &track, const drift::Transition &
     const drift::TimeUs durationUs = hasWindow ? (endUs - startUs) : t.durationUs;
 
     const TransitionPresetEntry *def = transitionDefForId(t.kindId);
+
+    // Whether each side has media past the cut: without it, that side dips instead of crossfading.
+    QVariantMap handles;
+    if (fromClip && toClip && !overlapping && hasWindow) {
+        handles.insert(QStringLiteral("out"),
+                       drift::clipHandleAfterUs(*fromClip, drift::sourceDurationForClip(project, *fromClip))
+                           >= endUs - fromClip->timelineEnd());
+        handles.insert(QStringLiteral("in"),
+                       drift::clipHandleBeforeUs(*toClip, drift::sourceDurationForClip(project, *toClip))
+                           >= toClip->timelineStart - startUs);
+    }
 
     // Current value per parameter, so the properties panel can build its sliders.
     QVariantList params;
@@ -2544,6 +2627,9 @@ QVariantMap transitionToMap(const drift::Track &track, const drift::Transition &
         {QStringLiteral("label"), def ? def->meta.displayName : t.kindId},
         {QStringLiteral("params"), params},
         {QStringLiteral("easingCurve"), drift::fadeCurveToString(t.easingCurve)},
+        {QStringLiteral("audioOnly"), track.type == drift::TrackType::Audio},
+        {QStringLiteral("audioCurve"), def && !def->audioCurve.isEmpty() ? def->audioCurve : QStringLiteral("crossfade")},
+        {QStringLiteral("handles"), handles},
     };
 }
 
@@ -3848,6 +3934,32 @@ void syncLinkedPartnersFrom(drift::Project &project, const drift::Clip &source,
             continue;
         drift::syncLinkedTiming(project.tracks()[ref.trackIndex].clips[ref.clipIndex], source);
     }
+}
+
+// Ripple by time rather than by index, over several tracks at once: every clip on those tracks
+// starting at or after fromUs moves by delta, and linked partners on other tracks follow. Index
+// ripple (applyRippleShift) only ever reached one track, which is how a trim of a linked clip used
+// to leave its partner's followers behind.
+void rippleTracksFrom(drift::Project &project, const QSet<int> &trackIndexes, drift::TimeUs fromUs,
+                      drift::TimeUs delta, const QSet<QString> &excludeIds)
+{
+    if (delta == 0)
+        return;
+    QList<drift::Clip> moved;
+    QSet<QString> movedIds;
+    for (const int t : trackIndexes) {
+        if (t < 0 || t >= project.tracks().size())
+            continue;
+        for (drift::Clip &clip : project.tracks()[t].clips) {
+            if (excludeIds.contains(clip.id) || clip.timelineStart < fromUs)
+                continue;
+            clip.timelineStart = qMax<drift::TimeUs>(0, clip.timelineStart + delta);
+            moved.append(clip);
+            movedIds.insert(clip.id);
+        }
+    }
+    for (const drift::Clip &clip : std::as_const(moved))
+        syncLinkedPartnersFrom(project, clip, movedIds + excludeIds);
 }
 
 void splitLinkedPartnerAt(drift::Project &project, const drift::Clip &sourceHead, drift::TimeUs playheadUs,
@@ -6873,11 +6985,27 @@ void AppController::splitClipAt(int trackIndex, int clipIndex, double seconds)
 
 void AppController::splitClipLeftAt(int trackIndex, int clipIndex, double seconds)
 {
+    trimClipGroupAt(trackIndex, clipIndex, drift::secondsToUs(seconds), true);
+}
+
+void AppController::splitClipRightAt(int trackIndex, int clipIndex, double seconds)
+{
+    trimClipGroupAt(trackIndex, clipIndex, drift::secondsToUs(seconds), false);
+}
+
+// Split-left / split-right are trims: they drop everything on one side of `atUs` from the clip
+// and every linked partner that spans it, keep the clip's id (so transitions, selection and pinned
+// effects stay attached), and ripple all the group's tracks together.
+void AppController::trimClipGroupAt(int trackIndex, int clipIndex, drift::TimeUs atUs, bool dropLeft)
+{
     if (!isValidClipIndex(trackIndex, clipIndex))
         return;
 
-    const drift::TimeUs atUs = drift::secondsToUs(seconds);
+    QList<QPair<int, int>> group;
+    QList<drift::Clip> kept;
     drift::TimeUs offset = 0;
+    drift::TimeUs oldEnd = 0;
+    drift::TimeUs oldDuration = 0;
     {
         // Read through a const view so nothing detaches before the snapshot below.
         const drift::Project &project = m_project;
@@ -6885,69 +7013,219 @@ void AppController::splitClipLeftAt(int trackIndex, int clipIndex, double second
         if (!probe.containsTime(atUs) || atUs == probe.timelineStart)
             return;
         offset = atUs - probe.timelineStart;
+        oldEnd = probe.timelineEnd();
+        oldDuration = probe.timelineDuration;
+        for (const QPair<int, int> &ref : selectionWithLinkedPartners(project, trackIndex, clipIndex)) {
+            const drift::Clip &member = project.tracks().at(ref.first).clips.at(ref.second);
+            const bool isMain = ref.first == trackIndex && ref.second == clipIndex;
+            if (!member.containsTime(atUs) || atUs == member.timelineStart) {
+                if (isMain)
+                    return;
+                continue;
+            }
+            drift::Clip left = member;
+            drift::Clip right;
+            if (!drift::splitClipAtOffset(left, right, atUs - member.timelineStart)) {
+                if (isMain)
+                    return;
+                continue;
+            }
+            drift::Clip keep = dropLeft ? right : left;
+            keep.id = member.id;
+            keep.linkId = member.linkId;
+            if (dropLeft) {
+                keep.fadeInUs = qMin(member.fadeInUs, keep.timelineDuration);
+                keep.animIn = member.animIn;
+                keep.audioFadeInUs = member.audioFadeInUs;
+            } else {
+                keep.fadeOutUs = qMin(member.fadeOutUs, keep.timelineDuration);
+                keep.animOut = member.animOut;
+                keep.audioFadeOutUs = member.audioFadeOutUs;
+            }
+            group.append(ref);
+            kept.append(keep);
+        }
     }
 
     // Snapshot before taking any non-const reference into m_project: QList is
     // copy-on-write, and a reference grabbed first mutates the buffer the copy
     // still shares, leaving `before` already split and undo a no-op.
     const drift::Project before = m_project;
-    drift::Track &track = m_project.tracks()[trackIndex];
-    drift::Clip &clip = track.clips[clipIndex];
-
-    drift::Clip right;
-    if (!drift::splitClipAtOffset(clip, right, offset))
-        return;
-
-    const QString droppedId = clip.id;
-    right.id = QUuid::createUuid().toString(QUuid::WithoutBraces);
-    // Keep only the right half — everything left of the cut is dropped.
-    track.clips[clipIndex] = right;
-    repointLinkedAdjustments(m_project, trackIndex, droppedId, right.id);
-    // Close the leading gap: keep the left edge put and pull followers.
+    QSet<int> tracks;
+    QSet<QString> ids;
+    for (int i = 0; i < group.size(); ++i) {
+        drift::Clip &slot = m_project.tracks()[group.at(i).first].clips[group.at(i).second];
+        slot = kept.at(i);
+        // Close the leading gap: keep the left edge put.
+        if (dropLeft && m_rippleEnabled)
+            slot.timelineStart -= offset;
+        tracks.insert(group.at(i).first);
+        ids.insert(slot.id);
+    }
     if (m_rippleEnabled) {
-        track.clips[clipIndex].timelineStart -= offset;
-        applyRippleShift(track, clipIndex, -offset);
+        if (dropLeft)
+            rippleTracksFrom(m_project, tracks, atUs, -offset, ids);
+        else
+            rippleTracksFrom(m_project, tracks, oldEnd, offset - oldDuration, ids);
     }
 
-    pushProjectEdit(before, tr("Split left"));
-    finishEdit(tr("Split left"));
+    pushProjectEdit(before, dropLeft ? tr("Split left") : tr("Split right"));
+    finishEdit(dropLeft ? tr("Split left") : tr("Split right"));
     selectClip(trackIndex, clipIndex);
 }
 
-void AppController::splitClipRightAt(int trackIndex, int clipIndex, double seconds)
+bool AppController::replaceClipGroupWithSegments(
+    int trackIndex, int clipIndex, const std::function<QList<drift::Clip>(const drift::Clip &)> &build,
+    bool ripple, SegmentReplaceResult *out, QString *error)
 {
-    if (!isValidClipIndex(trackIndex, clipIndex))
-        return;
-
-    const drift::TimeUs atUs = drift::secondsToUs(seconds);
-    drift::TimeUs offset = 0;
-    drift::TimeUs oldDuration = 0;
-    {
-        // Read through a const view so nothing detaches before the snapshot below.
-        const drift::Project &project = m_project;
-        const drift::Clip &probe = project.tracks().at(trackIndex).clips.at(clipIndex);
-        if (!probe.containsTime(atUs))
-            return;
-        offset = atUs - probe.timelineStart;
-        oldDuration = probe.timelineDuration;
+    if (!isValidClipIndex(trackIndex, clipIndex)) {
+        if (error)
+            *error = QStringLiteral("Unknown clip");
+        return false;
     }
 
-    // Snapshot before taking any non-const reference into m_project: QList is
-    // copy-on-write, and a reference grabbed first mutates the buffer the copy
-    // still shares, leaving `before` already split and undo a no-op.
-    const drift::Project before = m_project;
-    drift::Track &track = m_project.tracks()[trackIndex];
-    drift::Clip &clip = track.clips[clipIndex];
+    struct Member
+    {
+        int track = -1;
+        drift::Clip original;
+        QList<drift::Clip> segments;
+    };
+    QList<Member> members;
+    {
+        const drift::Project &project = m_project;
+        const drift::Clip &main = project.tracks().at(trackIndex).clips.at(clipIndex);
+        const QList<drift::Clip> mainSegments = build(main);
+        for (const QPair<int, int> &ref : selectionWithLinkedPartners(project, trackIndex, clipIndex)) {
+            const drift::Clip &clip = project.tracks().at(ref.first).clips.at(ref.second);
+            Member m{ref.first, clip, {}};
+            if (ref.first == trackIndex && ref.second == clipIndex) {
+                m.segments = mainSegments;
+            } else {
+                m.segments = build(clip);
+                // A partner that doesn't cut the same way (its own trim drifted) follows the
+                // main clip's timing, which is what a linked pair means.
+                bool same = m.segments.size() == mainSegments.size();
+                for (int i = 0; same && i < mainSegments.size(); ++i) {
+                    same = m.segments.at(i).timelineStart == mainSegments.at(i).timelineStart
+                           && m.segments.at(i).timelineDuration == mainSegments.at(i).timelineDuration;
+                }
+                if (!same) {
+                    m.segments.clear();
+                    for (const drift::Clip &seg : mainSegments) {
+                        drift::Clip p = clip;
+                        drift::syncLinkedTiming(p, seg);
+                        m.segments.append(p);
+                    }
+                }
+            }
+            members.append(m);
+        }
+    }
 
-    drift::Clip discardedTail;
-    if (!drift::splitClipAtOffset(clip, discardedTail, offset))
-        return;
+    const drift::Clip &main = members.first().original;
+    drift::TimeUs newEnd = main.timelineStart;
+    for (const drift::Clip &seg : members.first().segments)
+        newEnd = qMax(newEnd, seg.timelineEnd());
+    const drift::TimeUs oldEnd = main.timelineEnd();
+    const drift::TimeUs delta = newEnd - oldEnd;
 
-    // Keep only the left half — everything right of the cut is dropped.
-    applyRippleShift(track, clipIndex, clip.timelineDuration - oldDuration);
-    pushProjectEdit(before, tr("Split right"));
-    finishEdit(tr("Split right"));
-    selectClip(trackIndex, clipIndex);
+    QSet<int> groupTracks;
+    QSet<QString> groupIds;
+    for (const Member &m : std::as_const(members)) {
+        groupTracks.insert(m.track);
+        groupIds.insert(m.original.id);
+    }
+    if (!ripple && delta > 0) {
+        for (const int t : std::as_const(groupTracks)) {
+            for (const drift::Clip &clip : m_project.tracks().at(t).clips) {
+                if (!groupIds.contains(clip.id) && clip.timelineStart >= oldEnd
+                    && clip.timelineStart < newEnd) {
+                    if (error)
+                        *error = QStringLiteral("would_overlap");
+                    return false;
+                }
+            }
+        }
+    }
+
+    // Ids and links: segment 0 inherits the original's, so everything addressing the clip keeps
+    // working; each later segment index shares one fresh linkId across the group.
+    const int count = members.first().segments.size();
+    QStringList segmentLinks;
+    for (int k = 0; k < count; ++k)
+        segmentLinks.append(k == 0 || main.linkId.isEmpty()
+                                ? main.linkId
+                                : QUuid::createUuid().toString(QUuid::WithoutBraces));
+    QSet<QString> newIds;
+    for (Member &m : members) {
+        for (int k = 0; k < m.segments.size(); ++k) {
+            drift::Clip &seg = m.segments[k];
+            seg.id = k == 0 ? m.original.id : QUuid::createUuid().toString(QUuid::WithoutBraces);
+            if (!m.original.linkId.isEmpty())
+                seg.linkId = k < segmentLinks.size() ? segmentLinks.at(k) : m.original.linkId;
+            newIds.insert(seg.id);
+        }
+    }
+
+    for (const Member &m : std::as_const(members)) {
+        drift::Track &track = m_project.tracks()[m.track];
+        int index = -1;
+        for (int c = 0; c < track.clips.size(); ++c) {
+            if (track.clips.at(c).id == m.original.id) {
+                index = c;
+                break;
+            }
+        }
+        if (index < 0)
+            continue;
+        track.clips.removeAt(index);
+        for (int k = 0; k < m.segments.size(); ++k)
+            track.clips.insert(index + k, m.segments.at(k));
+
+        if (m.segments.isEmpty()) {
+            for (int i = track.transitions.size() - 1; i >= 0; --i) {
+                if (track.transitions.at(i).fromClipId == m.original.id
+                    || track.transitions.at(i).toClipId == m.original.id)
+                    track.transitions.removeAt(i);
+            }
+        } else {
+            const QString lastId = m.segments.last().id;
+            for (drift::Transition &transition : track.transitions) {
+                if (transition.fromClipId == m.original.id)
+                    transition.fromClipId = lastId;
+            }
+        }
+
+        // Pinned effect stacks: one per segment, or gone with the clip.
+        for (const int laneIndex : drift::adjustmentLaneIndexes(m_project, m.track)) {
+            drift::Track &lane = m_project.tracks()[laneIndex];
+            for (int c = lane.clips.size() - 1; c >= 0; --c) {
+                if (lane.clips.at(c).linkedClipId != m.original.id)
+                    continue;
+                if (m.segments.isEmpty()) {
+                    lane.clips.removeAt(c);
+                    continue;
+                }
+                for (int k = m.segments.size() - 1; k >= 1; --k) {
+                    drift::Clip copy = lane.clips.at(c);
+                    copy.id = QUuid::createUuid().toString(QUuid::WithoutBraces);
+                    copy.linkedClipId = m.segments.at(k).id;
+                    lane.clips.insert(c + 1, copy);
+                }
+            }
+        }
+    }
+
+    if (ripple)
+        rippleTracksFrom(m_project, groupTracks, oldEnd, delta, newIds);
+
+    if (out) {
+        out->ids.clear();
+        for (const drift::Clip &seg : members.first().segments)
+            out->ids.append(seg.id);
+        out->deltaUs = delta;
+    }
+    return true;
 }
 
 const QList<drift::TimeUs> &AppController::extraSnapTargetsCached() const
@@ -7846,7 +8124,36 @@ bool AppController::generateSubtitlesForRange(int trackIndex, double startSec, d
 AppController::SubtitleSource AppController::subtitleSourceFromClip(const drift::Clip &clip)
 {
     return {clip.path,           clip.srcIn,           clip.srcOut, clip.timelineStart,
-            clip.timelineDuration, clip.effectiveSpeed(), clip.reverse};
+            clip.timelineDuration, clip.effectiveSpeed(), clip.reverse, clip.assetId};
+}
+
+std::optional<QList<drift::SubtitleCue>> AppController::cuesFromStoredTranscripts(
+    const QList<SubtitleSource> &sources, drift::TimeUs rangeStart, int maxWordsPerCue) const
+{
+    QList<drift::SubtitleCue> mapped;
+    for (const SubtitleSource &source : sources) {
+        const drift::TranscriptPtr t = m_project.transcript(source.assetId);
+        if (!t || !t->source.matches(source.path))
+            return std::nullopt;
+        const drift::TimeUs offset = source.timelineStart - rangeStart;
+        const double speed = source.speed > 0 ? source.speed : 1.0;
+        for (const drift::SubtitleCue &cue :
+             drift::cuesFromTranscript(*t, source.srcIn, source.srcOut, 42, 1, qMax(0, maxWordsPerCue))) {
+            const double a = drift::usToSeconds(cue.startUs - source.srcIn);
+            const double b = drift::usToSeconds(cue.endUs - source.srcIn);
+            const double span = drift::usToSeconds(source.srcOut - source.srcIn);
+            const double tlStart = source.reverse ? (span - b) / speed : a / speed;
+            const double tlEnd = source.reverse ? (span - a) / speed : b / speed;
+            drift::SubtitleCue m;
+            m.startUs = offset + qBound<drift::TimeUs>(0, drift::secondsToUs(tlStart), source.timelineDuration);
+            m.endUs = offset + qBound<drift::TimeUs>(0, drift::secondsToUs(tlEnd), source.timelineDuration);
+            m.text = cue.text;
+            if (m.endUs > m.startUs)
+                mapped.append(m);
+        }
+    }
+    drift::sortSubtitleCues(mapped);
+    return mapped;
 }
 
 bool AppController::generateSubtitlesForSources(QList<SubtitleSource> sources, const QString &language,
@@ -7881,6 +8188,23 @@ bool AppController::generateSubtitlesForSources(QList<SubtitleSource> sources, c
     }
 
     setPlaying(false);
+
+    // Media already transcribed with word timings: caption from that, no Whisper pass, and the
+    // cues land exactly on the words however the clips were cut since.
+    {
+        const drift::TimeUs rangeStart = sources.first().timelineStart;
+        drift::TimeUs rangeEnd = rangeStart;
+        for (const SubtitleSource &source : sources)
+            rangeEnd = qMax(rangeEnd, source.timelineStart + source.timelineDuration);
+        if (const auto stored = cuesFromStoredTranscripts(sources, rangeStart, maxWordsPerCue)) {
+            if (stored->isEmpty()) {
+                setLastMessage(tr("No speech detected"), QStringLiteral("warning"));
+                return false;
+            }
+            finalizeGeneratedSubtitles(rangeStart, rangeEnd - rangeStart, *stored);
+            return true;
+        }
+    }
 
     m_subtitleGenCancel.storeRelaxed(0);
     m_subtitleGenProgress = 0.0;
@@ -9245,6 +9569,10 @@ void AppController::setTransitionEasing(int trackIndex, const QString &transitio
     transition->easingCurve = next;
     if (next != drift::FadeCurve::Custom)
         transition->easingShape.clear();
+    if (drift::Transition *mirror = mirroredAudioTransition(m_project, trackIndex, *transition)) {
+        mirror->easingCurve = transition->easingCurve;
+        mirror->easingShape = transition->easingShape;
+    }
     pushProjectEdit(before, tr("Transition curve"));
     finishEdit(tr("Transition curve updated"));
     emit selectedTransitionDataChanged();
@@ -12977,7 +13305,9 @@ void AppController::cancelPreviewDrag()
     if (!m_previewDragActive)
         return;
 
+    const auto transcripts = m_project.transcripts();
     m_project = m_previewDragBefore;
+    m_project.setTranscripts(transcripts);
     m_previewDragActive = false;
     emitPreviewFrame();
 }
@@ -15994,7 +16324,8 @@ QVariantMap AppController::maskEditorState() const
     return out;
 }
 
-void AppController::addTransition(int trackIndex, int clipIndex, const QString &kind, double durationSeconds)
+void AppController::addTransition(int trackIndex, int clipIndex, const QString &kind, double durationSeconds,
+                                  bool linkedAudio)
 {
     if (trackIndex < 0 || trackIndex >= m_project.tracks().size())
         return;
@@ -16002,6 +16333,11 @@ void AppController::addTransition(int trackIndex, int clipIndex, const QString &
     drift::Track &track = m_project.tracks()[trackIndex];
     if (!trackAllowsTransitions(track.type))
         return;
+    if (!transitionKindFitsTrack(track.type, kind)) {
+        setLastMessage(tr("That transition has no sound; audio tracks take crossfade or dip"),
+                       QStringLiteral("warning"));
+        return;
+    }
 
     const int partnerIndex = findTransitionPartnerIndex(track, clipIndex);
     if (partnerIndex < 0)
@@ -16014,30 +16350,36 @@ void AppController::addTransition(int trackIndex, int clipIndex, const QString &
     const drift::TimeUs durationUs = overlapUs > 0 ? overlapUs : requestedUs;
     const QString kindId = transitionDefForId(kind) ? kind : QStringLiteral("crossfade");
 
-    for (drift::Transition &existing : track.transitions) {
-        if (existing.fromClipId == fromClip.id && existing.toClipId == toClip.id) {
-            const drift::Project before = m_project;
-            existing.kindId = kindId;
-            existing.parameters.clear(); // overrides belong to the old package
-            existing.durationUs = durationUs;
-            pushProjectEdit(before, tr("Replace transition"));
-            finishEdit(tr("Transition updated"));
-            selectTransition(trackIndex, clipIndex);
-            return;
-        }
-    }
-
-    drift::Transition transition;
-    transition.id = QUuid::createUuid().toString(QUuid::WithoutBraces);
-    transition.fromClipId = fromClip.id;
-    transition.toClipId = toClip.id;
-    transition.kindId = kindId;
-    transition.durationUs = durationUs;
-
     const drift::Project before = m_project;
-    track.transitions.append(transition);
-    pushProjectEdit(before, tr("Add transition"));
-    finishEdit(tr("Transition added"));
+    const QString fromId = fromClip.id;
+    const QString toId = toClip.id;
+    // Adds or replaces the transition between two clips on a track; returns whether it replaced.
+    const auto upsert = [&](int t, const QString &a, const QString &b, const QString &kindForTrack) {
+        drift::Track &target = m_project.tracks()[t];
+        if (drift::Transition *existing = findTransitionBetween(target, a, b)) {
+            existing->kindId = kindForTrack;
+            existing->parameters.clear(); // overrides belong to the old package
+            existing->durationUs = durationUs;
+            return true;
+        }
+        drift::Transition transition;
+        transition.id = QUuid::createUuid().toString(QUuid::WithoutBraces);
+        transition.fromClipId = a;
+        transition.toClipId = b;
+        transition.kindId = kindForTrack;
+        transition.durationUs = durationUs;
+        target.transitions.append(transition);
+        return false;
+    };
+    const bool replaced = upsert(trackIndex, fromId, toId, kindId);
+    if (linkedAudio) {
+        const LinkedAudioPair pair = linkedAudioPairFor(m_project, m_project.tracks().at(trackIndex), fromId, toId);
+        if (pair.valid())
+            upsert(pair.track, pair.fromId, pair.toId,
+                   transitionKindFitsTrack(drift::TrackType::Audio, kindId) ? kindId : QStringLiteral("crossfade"));
+    }
+    pushProjectEdit(before, replaced ? tr("Replace transition") : tr("Add transition"));
+    finishEdit(replaced ? tr("Transition updated") : tr("Transition added"));
     selectTransition(trackIndex, clipIndex);
 }
 
@@ -16060,6 +16402,14 @@ void AppController::removeTransition(int trackIndex, const QString &transitionId
         }
 
         track.transitions.removeAt(i);
+        const LinkedAudioPair pair =
+            linkedAudioPairFor(m_project, m_project.tracks().at(trackIndex), transition.fromClipId, transition.toClipId);
+        if (pair.valid()) {
+            drift::Track &audio = m_project.tracks()[pair.track];
+            for (int k = audio.transitions.size() - 1; k >= 0; --k)
+                if (audio.transitions.at(k).fromClipId == pair.fromId && audio.transitions.at(k).toClipId == pair.toId)
+                    audio.transitions.removeAt(k);
+        }
         pushProjectEdit(before, tr("Remove transition"));
         finishEdit(tr("Transition removed"));
         return;
@@ -16097,6 +16447,8 @@ void AppController::setTransitionDuration(int trackIndex, const QString &transit
         } else {
             transition.durationUs = durationUs;
         }
+        if (drift::Transition *mirror = mirroredAudioTransition(m_project, trackIndex, transition))
+            mirror->durationUs = transition.durationUs;
 
         pushProjectEdit(before, tr("Transition duration"));
         finishEdit(tr("Transition duration updated"));
@@ -16113,6 +16465,8 @@ void AppController::setTransitionKind(int trackIndex, const QString &transitionI
         return;
 
     drift::Track &track = m_project.tracks()[trackIndex];
+    if (!transitionKindFitsTrack(track.type, kind))
+        return;
     const drift::Project before = m_project;
     for (drift::Transition &transition : track.transitions) {
         if (transition.id == transitionId) {
@@ -16120,6 +16474,10 @@ void AppController::setTransitionKind(int trackIndex, const QString &transitionI
                 return;
             transition.kindId = kind;
             transition.parameters.clear(); // overrides belong to the old package
+            if (drift::Transition *mirror = mirroredAudioTransition(m_project, trackIndex, transition)) {
+                mirror->kindId = transitionKindFitsTrack(drift::TrackType::Audio, kind) ? kind : QStringLiteral("crossfade");
+                mirror->parameters.clear();
+            }
             pushProjectEdit(before, tr("Transition kind"));
             finishEdit(tr("Transition kind updated"));
             emit selectedTransitionDataChanged();
@@ -16200,9 +16558,23 @@ QVariantMap AppController::transitionBetweenClips(int trackIndex, int clipIndex)
     const QString toId = track.clips.at(partnerIndex).id;
     for (const drift::Transition &transition : track.transitions) {
         if (transition.fromClipId == fromId && transition.toClipId == toId)
-            return transitionToMap(track, transition);
+            return transitionToMap(m_project, track, transition);
     }
     return {};
+}
+
+QVariantList AppController::transitionKindsForTrack(int trackIndex) const
+{
+    const QVariantList all = transitionKinds();
+    if (trackIndex < 0 || trackIndex >= m_project.tracks().size()
+        || m_project.tracks().at(trackIndex).type != drift::TrackType::Audio)
+        return all;
+    QVariantList audible;
+    for (const QVariant &kind : all) {
+        if (transitionKindFitsTrack(drift::TrackType::Audio, kind.toMap().value(QStringLiteral("kind")).toString()))
+            audible.append(kind);
+    }
+    return audible;
 }
 
 QVariantList AppController::transitionKinds() const
@@ -16227,6 +16599,7 @@ QVariantList AppController::transitionKinds() const
         result.append(QVariantMap{
             {QStringLiteral("kind"), def.meta.id},
             {QStringLiteral("label"), def.meta.displayName},
+            {QStringLiteral("audioCurve"), def.audioCurve.isEmpty() ? QStringLiteral("crossfade") : def.audioCurve},
             {QStringLiteral("category"), def.meta.category},
             {QStringLiteral("previewStripPath"), def.previewStripPath},
             {QStringLiteral("previewFrames"), def.previewFrames},
@@ -22890,6 +23263,9 @@ QJsonObject AppController::mcpInspect(const McpInspectOptions &options) const
             jobs.insert(QStringLiteral("market"),
                         QJsonObject{{QStringLiteral("active"), m_marketClient->activeDownloadCount()}});
         }
+        const QJsonArray jobList = m_jobs->jobs();
+        if (!jobList.isEmpty())
+            jobs.insert(QStringLiteral("list"), jobList);
         if (!jobs.isEmpty())
             extra.insert(QStringLiteral("jobs"), jobs);
         // Beat state without the arrays — detect_beats returns those. `stale` matters because
@@ -23904,19 +24280,29 @@ QJsonObject AppController::mcpAiCapabilities() const
          "background noise removal from audio"},
         {"object-model", objectDetectionAvailable(),
          "detect_scenes({with_objects:true}) — labels each shot with what is in it"},
+        {"vad-model", drift::SileroVad::modelPresent(),
+         "detect_silence / remove_silence method:\"vad\" — speech detection that ignores music and noise"},
+        {"align-model", !drift::CtcAligner::installedLanguages().isEmpty(),
+         "transcribe — measured word timings (per language) for cut_words and word-exact captions"},
+        {"diarize-model", drift::SpeakerDiarizer::modelPresent(),
+         "diarize / transcribe({diarize:true}) — who is speaking when"},
     };
 
     QJsonArray models;
     for (const Capability &capability : capabilities) {
-        models.append(QJsonObject{{QStringLiteral("kind"), QString::fromUtf8(capability.kind)},
-                                  {QStringLiteral("installed"), capability.installed},
-                                  {QStringLiteral("unlocks"), QString::fromUtf8(capability.unlocks)}});
+        QJsonObject row{{QStringLiteral("kind"), QString::fromUtf8(capability.kind)},
+                        {QStringLiteral("installed"), capability.installed},
+                        {QStringLiteral("unlocks"), QString::fromUtf8(capability.unlocks)}};
+        if (qstrcmp(capability.kind, "align-model") == 0)
+            row.insert(QStringLiteral("languages"), QJsonArray::fromStringList(drift::CtcAligner::installedLanguages()));
+        models.append(row);
     }
 
     // A model is useless without a runtime to execute it, so report that too rather than
     // letting an agent conclude a feature is available when nothing can run it.
     const QString variant = drift::ort::activeVariant();
     return ok({{QStringLiteral("models"), models},
+               {QStringLiteral("cloud"), m_cloud->statusJson()},
                {QStringLiteral("runtime"), variant.isEmpty() ? QStringLiteral("none") : variant},
                {QStringLiteral("hint"),
                 QStringLiteral("Missing pieces install with list_addons / install_addon, or from "
@@ -24102,6 +24488,35 @@ QVector<float> blockingSpeechPeaks(const drift::Project &snap, double startSecon
     return *raw;
 }
 
+// The mix of `snap` over the range as 16 kHz mono, for the speech models.
+std::vector<float> blockingMixMono16k(const drift::Project &snap, double startSeconds, double durSeconds)
+{
+    const int rate = drift::kSpeechSampleRate;
+    const qint64 frames = static_cast<qint64>(durSeconds * rate);
+    if (frames <= 0)
+        return {};
+    const drift::TimeUs startUs = drift::secondsToUs(startSeconds);
+    auto mono = std::make_shared<std::vector<float>>();
+    QEventLoop loop;
+    (void)QtConcurrent::run([snap, startUs, frames, rate, mono, &loop]() {
+        AudioMixer mixer;
+        mixer.setProject(&snap);
+        mono->resize(static_cast<size_t>(frames));
+        constexpr int kBlock = 4096;
+        std::vector<float> stereo(kBlock * 2);
+        for (qint64 off = 0; off < frames; off += kBlock) {
+            const int n = static_cast<int>(std::min<qint64>(kBlock, frames - off));
+            std::fill(stereo.begin(), stereo.begin() + n * 2, 0.0f);
+            mixer.mix(startUs + off * drift::kUsPerSecond / rate, n, rate, stereo.data());
+            for (int i = 0; i < n; ++i)
+                (*mono)[static_cast<size_t>(off + i)] = 0.5f * (stereo[i * 2] + stereo[i * 2 + 1]);
+        }
+        QMetaObject::invokeMethod(&loop, &QEventLoop::quit, Qt::QueuedConnection);
+    });
+    loop.exec();
+    return *mono;
+}
+
 drift::LoudnessResult blockingLoudness(const drift::Project &snap, double startSeconds,
                                        double durSeconds)
 {
@@ -24145,6 +24560,21 @@ void muteAllButClip(drift::Project &snap, const QString &clipId)
         if (!has)
             track.muted = true;
     }
+}
+
+// The clip whose sound a clip-scoped analysis should hear. A video whose audio was separated
+// plays nothing itself (its embedded audio is suppressed), so muting everything else left a clip
+// that read as wall-to-wall silence — and remove_silence then deleted it outright.
+QString audibleClipIdFor(const drift::Project &project, const drift::Clip &clip)
+{
+    if (!clip.suppressEmbeddedAudio)
+        return clip.id;
+    for (const drift::ClipRef &ref : drift::linkedPartners(project, clip)) {
+        const drift::Clip &partner = project.tracks().at(ref.trackIndex).clips.at(ref.clipIndex);
+        if (project.tracks().at(ref.trackIndex).type == drift::TrackType::Audio)
+            return partner.id;
+    }
+    return clip.id;
 }
 
 QList<SilenceRange> rangesFromPeaks(const QVector<float> &peaks, double startSeconds,
@@ -24711,7 +25141,7 @@ QJsonObject AppController::mcpActivity(const McpActivityRequest &request)
 QJsonObject AppController::mcpWaveformImage(const QString &mode, int trackIndex, int clipIndex,
                                             const QString &assetId, double startSeconds,
                                             double durSeconds, int width, int height,
-                                            bool spectrogram, int summaryBuckets) const
+                                            bool spectrogram, int summaryBuckets, bool words) const
 {
     using namespace drift::mcp;
     using namespace drift::waveformsheet;
@@ -24826,6 +25256,32 @@ QJsonObject AppController::mcpWaveformImage(const QString &mode, int trackIndex,
 
     in.startSeconds = start;
     in.durationSeconds = dur;
+    // The transcript's words under the waveform: asset mode reads them in source time, clip and
+    // timeline modes as the timeline plays them.
+    if (words) {
+        const drift::TimeUs a = drift::secondsToUs(start);
+        const drift::TimeUs b = drift::secondsToUs(start + dur);
+        if (mode == QLatin1String("asset")) {
+            if (const drift::TranscriptPtr t = m_project.transcript(assetId)) {
+                for (const int i : t->wordsInRange(a, b)) {
+                    const drift::TranscriptWord &w = t->words.at(i);
+                    if (drift::isSpeechToken(w))
+                        in.words.append({drift::usToSeconds(w.startUs), drift::usToSeconds(w.endUs), w.text, i});
+                }
+            }
+        } else {
+            const QString only = mode == QLatin1String("clip")
+                                     ? m_project.tracks().at(trackIndex).clips.at(clipIndex).id
+                                     : QString();
+            for (const drift::TimelineWord &tw : drift::transcriptWordsOnTimeline(m_project, a, b, only)) {
+                if (drift::isSpeechToken(tw.word))
+                    in.words.append({drift::usToSeconds(tw.word.startUs), drift::usToSeconds(tw.word.endUs),
+                                     tw.word.text, tw.index});
+            }
+        }
+        if (!in.words.isEmpty())
+            lanes.append(QStringLiteral("words"));
+    }
     const QImage image = render(in, opt);
     if (image.isNull())
         return err("capture_failed", QStringLiteral("Could not render waveform"));
@@ -24846,6 +25302,21 @@ QJsonObject AppController::mcpWaveformImage(const QString &mode, int trackIndex,
         silence.append(QJsonObject{{QStringLiteral("start"), round3(r.first)},
                                    {QStringLiteral("end"), round3(r.second)}});
     meta.insert(QStringLiteral("silence"), silence);
+    if (!in.words.isEmpty()) {
+        constexpr int kMaxWords = 400;
+        QJsonArray wordArr;
+        for (const WordLabel &w : std::as_const(in.words)) {
+            if (wordArr.size() >= kMaxWords)
+                break;
+            wordArr.append(QJsonObject{{QStringLiteral("i"), w.index},
+                                       {QStringLiteral("text"), w.text},
+                                       {QStringLiteral("start"), round3(w.start)},
+                                       {QStringLiteral("end"), round3(w.end)}});
+        }
+        meta.insert(QStringLiteral("words"), wordArr);
+        if (in.words.size() > kMaxWords)
+            meta.insert(QStringLiteral("words_truncated"), true);
+    }
     meta.insert(QStringLiteral("onsets"), in.onsets.size());
     meta.insert(QStringLiteral("beats"), in.beats.size());
     if (spectrogram && !in.spectrogram.isEmpty()) {
@@ -25079,9 +25550,15 @@ QJsonObject AppController::mcpRestoreSnapshot(const QString &hash)
     const QByteArray json = file.readAll();
     const QString fileHash = QString::fromLatin1(
         QCryptographicHash::hash(json, QCryptographicHash::Sha256).toHex());
+    // Snapshots are hashed without transcripts; keep the session's so restoring one never loses them.
+    const auto transcripts = m_project.transcripts();
     QString error;
     if (!applyProjectJson(json, &error))
         return err("bad_args", error.isEmpty() ? QStringLiteral("Snapshot refused") : error);
+    for (auto it = transcripts.cbegin(); it != transcripts.cend(); ++it) {
+        if (!m_project.transcript(it.key()))
+            m_project.setTranscript(it.key(), it.value());
+    }
     ++m_mcpEditRevision;
     return ok({{QStringLiteral("index"), 0},
                {QStringLiteral("hash"), fileHash},
@@ -25091,7 +25568,7 @@ QJsonObject AppController::mcpRestoreSnapshot(const QString &hash)
 
 QJsonObject AppController::mcpDetectSilence(int trackIndex, int clipIndex, double startSeconds,
                                             double durSeconds, double threshold, double minDuration,
-                                            double padding) const
+                                            double padding, const QString &method) const
 {
     using namespace drift::mcp;
     drift::Project snap = m_project.detachedCopy();
@@ -25103,7 +25580,7 @@ QJsonObject AppController::mcpDetectSilence(int trackIndex, int clipIndex, doubl
         if (!isValidClipIndex(trackIndex, clipIndex))
             return err("not_found", QStringLiteral("Unknown clip"));
         const drift::Clip &clip = m_project.tracks().at(trackIndex).clips.at(clipIndex);
-        muteAllButClip(snap, clip.id);
+        muteAllButClip(snap, audibleClipIdFor(m_project, clip));
         start = drift::usToSeconds(clip.timelineStart);
         dur = drift::usToSeconds(clip.timelineDuration);
         source = QStringLiteral("clip");
@@ -25115,10 +25592,48 @@ QJsonObject AppController::mcpDetectSilence(int trackIndex, int clipIndex, doubl
     if (dur <= 0.0)
         return err("bad_args", QStringLiteral("Nothing to analyse"));
 
-    const int buckets = qBound(8, int(qCeil(dur * 50.0)), 4096);
-    const QVector<float> peaks = blockingSpeechPeaks(snap, start, dur, buckets);
-    const QList<SilenceRange> ranges =
-        rangesFromPeaks(peaks, start, dur, threshold, minDuration, padding);
+    QList<SilenceRange> ranges;
+    if (method == QLatin1String("vad")) {
+        if (!drift::SileroVad::modelPresent())
+            return err("addon_missing", QStringLiteral("method vad needs the voice activity model: "
+                                                       "install_addon({id:\"silero.vad\"})"));
+        drift::SileroVad &vad = drift::SileroVad::instance();
+        if (!vad.available())
+            return err("addon_missing", vad.lastError());
+        const std::vector<float> mono = blockingMixMono16k(snap, start, dur);
+        // Off the GUI thread like the mix: an hour of audio is ~100k model runs.
+        std::vector<float> probs;
+        {
+            QEventLoop loop;
+            (void)QtConcurrent::run([&vad, &mono, &probs, &loop]() {
+                probs = vad.probabilities(mono);
+                QMetaObject::invokeMethod(&loop, &QEventLoop::quit, Qt::QueuedConnection);
+            });
+            loop.exec();
+        }
+        if (probs.empty() && !mono.empty())
+            return err("internal", vad.lastError());
+        drift::VadParams params;
+        params.threshold = static_cast<float>(qBound(0.05, threshold, 0.95));
+        params.speechPadMs = qRound(qMax(0.0, padding) * 1000.0);
+        const QList<drift::VadRange> speech = drift::vadSpeechRanges(probs, mono.size(), params);
+        double cursor = start;
+        auto addGap = [&](double a, double b) {
+            if (b - a >= minDuration)
+                ranges.append({a, b});
+        };
+        for (const drift::VadRange &r : speech) {
+            addGap(cursor, start + drift::usToSeconds(r.startUs));
+            cursor = start + drift::usToSeconds(r.endUs);
+        }
+        addGap(cursor, start + dur);
+    } else if (method == QLatin1String("energy")) {
+        const int buckets = qBound(8, int(qCeil(dur * 50.0)), 4096);
+        const QVector<float> peaks = blockingSpeechPeaks(snap, start, dur, buckets);
+        ranges = rangesFromPeaks(peaks, start, dur, threshold, minDuration, padding);
+    } else {
+        return err("bad_args", QStringLiteral("method must be energy or vad"));
+    }
     QJsonArray out;
     for (const SilenceRange &r : ranges) {
         out.append(QJsonObject{{QStringLiteral("start"), r.start}, {QStringLiteral("end"), r.end}});
@@ -25126,85 +25641,97 @@ QJsonObject AppController::mcpDetectSilence(int trackIndex, int clipIndex, doubl
     return ok({{QStringLiteral("ranges"), out},
                {QStringLiteral("threshold"), threshold},
                {QStringLiteral("source"), source},
+               {QStringLiteral("method"), method},
                {QStringLiteral("n"), out.size()}});
 }
 
 QJsonObject AppController::mcpRemoveSilence(int trackIndex, int clipIndex, double threshold,
-                                            double minDuration, double padding)
+                                            double minDuration, double padding, double declick,
+                                            const QString &method)
 {
     using namespace drift::mcp;
-    QList<QPair<int, int>> targets;
+    QStringList targets;
     if (clipIndex >= 0 && trackIndex >= 0) {
         if (!isValidClipIndex(trackIndex, clipIndex))
             return err("not_found", QStringLiteral("Unknown clip"));
-        targets.append({trackIndex, clipIndex});
+        targets.append(m_project.tracks().at(trackIndex).clips.at(clipIndex).id);
     } else if (trackIndex >= 0 && trackIndex < m_project.tracks().size()) {
-        const drift::Track &track = m_project.tracks().at(trackIndex);
-        for (int c = 0; c < track.clips.size(); ++c)
-            targets.append({trackIndex, c});
+        for (const drift::Clip &clip : m_project.tracks().at(trackIndex).clips)
+            targets.append(clip.id);
     } else {
         return err("bad_args", QStringLiteral("clip or track required"));
     }
 
+    const drift::TimeUs declickUs = drift::secondsToUs(qBound(0.0, declick, 0.5));
+    const drift::TimeUs minKeepUs = qMax<drift::TimeUs>(drift::kCutMinEdgeUs, 2 * declickUs);
+    const drift::Project before = m_project;
     QJsonArray removed;
-    mcpBeginBatch();
-    const bool wasRipple = m_rippleEnabled;
-    m_rippleEnabled = true;
+    QSet<QString> handledLinks;
+    bool changed = false;
 
-    // Back to front so splits don't invalidate later ranges.
-    for (int t = targets.size() - 1; t >= 0; --t) {
-        const QPair<int, int> pair = targets.at(t);
-        if (!isValidClipIndex(pair.first, pair.second))
+    // Back to front: ripple only moves what lies after an edit, so earlier targets keep their place.
+    for (int i = targets.size() - 1; i >= 0; --i) {
+        int tr = -1, cl = -1;
+        if (!findClipById(m_project, targets.at(i), &tr, &cl))
             continue;
-        const QString clipId = m_project.tracks().at(pair.first).clips.at(pair.second).id;
-        const QJsonObject detected =
-            mcpDetectSilence(pair.first, pair.second, 0, 0, threshold, minDuration, padding);
-        const QJsonArray ranges = detected.value(QStringLiteral("ranges")).toArray();
-        for (int r = ranges.size() - 1; r >= 0; --r) {
-            const QJsonObject range = ranges.at(r).toObject();
-            const double s = range.value(QStringLiteral("start")).toDouble();
-            const double e = range.value(QStringLiteral("end")).toDouble();
-            int tr = -1, cl = -1;
-            if (!findClipById(m_project, clipId, &tr, &cl))
-                break;
-            const drift::Clip &clip = m_project.tracks().at(tr).clips.at(cl);
-            const double cs = drift::usToSeconds(clip.timelineStart);
-            const double ce = drift::usToSeconds(clip.timelineStart + clip.timelineDuration);
-            const double cutS = qMax(s, cs);
-            const double cutE = qMin(e, ce);
-            if (cutE - cutS < minDuration)
+        const drift::Clip clip = m_project.tracks().at(tr).clips.at(cl);
+        if (clip.path.isEmpty() && clip.sequenceId.isEmpty())
+            continue;
+        if (!clip.linkId.isEmpty()) {
+            if (handledLinks.contains(clip.linkId))
                 continue;
-            removed.append(QJsonObject{{QStringLiteral("start"), cutS}, {QStringLiteral("end"), cutE}});
-            const bool fromStart = cutS <= cs + 0.001;
-            const bool toEnd = cutE >= ce - 0.001;
-            if (fromStart && toEnd) {
-                selectClip(tr, cl);
-                deleteSelectedClip();
-                closeGap(tr, cutS);
-                break;
-            }
-            if (fromStart) {
-                splitClipLeftAt(tr, cl, cutE);
-            } else if (toEnd) {
-                splitClipRightAt(tr, cl, cutS);
-            } else {
-                splitClipAt(tr, cl, cutS);
-                int tr2 = -1, cl2 = -1;
-                if (findClipById(m_project, clipId, &tr2, &cl2))
-                    splitClipLeftAt(tr2, cl2 + 1, cutE);
-            }
+            handledLinks.insert(clip.linkId);
         }
+        const QJsonObject detected =
+            mcpDetectSilence(tr, cl, 0, 0, threshold, minDuration, padding, method);
+        if (!detected.value(QStringLiteral("ok")).toBool())
+            return detected;
+        QList<drift::TimeRangeUs> silences;
+        for (const QJsonValue &v : detected.value(QStringLiteral("ranges")).toArray()) {
+            const QJsonObject r = v.toObject();
+            silences.append({drift::secondsToUs(r.value(QStringLiteral("start")).toDouble()),
+                             drift::secondsToUs(r.value(QStringLiteral("end")).toDouble())});
+        }
+        const QList<drift::TimeRangeUs> kept = drift::keptTimelineIntervals(clip, silences, minKeepUs);
+        if (kept.size() == 1 && kept.first().startUs == clip.timelineStart
+            && kept.first().endUs == clip.timelineEnd())
+            continue;
+
+        // Report what actually goes, measured against the clip before this edit.
+        drift::TimeUs cursor = clip.timelineStart;
+        QJsonArray clipRemoved;
+        for (const drift::TimeRangeUs &k : kept) {
+            if (k.startUs > cursor)
+                clipRemoved.append(QJsonObject{{QStringLiteral("start"), drift::usToSeconds(cursor)},
+                                               {QStringLiteral("end"), drift::usToSeconds(k.startUs)}});
+            cursor = k.endUs;
+        }
+        if (cursor < clip.timelineEnd())
+            clipRemoved.append(QJsonObject{{QStringLiteral("start"), drift::usToSeconds(cursor)},
+                                           {QStringLiteral("end"), drift::usToSeconds(clip.timelineEnd())}});
+
+        QString error;
+        if (!replaceClipGroupWithSegments(
+                tr, cl,
+                [&kept, declickUs](const drift::Clip &member) {
+                    return drift::packedSegments(member, kept, declickUs);
+                },
+                true, nullptr, &error))
+            continue;
+        changed = true;
+        for (int r = clipRemoved.size() - 1; r >= 0; --r)
+            removed.prepend(clipRemoved.at(r));
     }
 
-    m_rippleEnabled = wasRipple;
-    mcpEndBatch(QStringLiteral("Remove silence"), true);
+    if (changed) {
+        pushProjectEdit(before, tr("Remove silence"));
+        finishEdit(tr("Remove silence"));
+    }
 
     QJsonArray surviving;
-    const auto tracks = this->tracks();
-    for (int t = 0; t < tracks.size(); ++t) {
-        const auto clips = tracks.at(t).toMap().value(QStringLiteral("clips")).toList();
-        for (const QVariant &c : clips)
-            surviving.append(c.toMap().value(QStringLiteral("id")).toString());
+    for (const drift::Track &track : m_project.tracks()) {
+        for (const drift::Clip &clip : track.clips)
+            surviving.append(clip.id);
     }
     return ok({{QStringLiteral("removed"), removed},
                {QStringLiteral("clips"), surviving},
@@ -26203,4 +26730,1018 @@ bool AppController::exportUserTextAnimationPreset(const QString &presetId, const
     json.insert(QStringLiteral("id"), drift::isUserTextAnimationPresetId(preset->id) ? preset->id.mid(5) : preset->id);
     file.write(QJsonDocument(json).toJson(QJsonDocument::Indented));
     return true;
+}
+
+// ---------------------------------------------------------------------------------------------
+// Transcripts
+
+namespace {
+
+QString speakerLabel(const drift::Transcript &t, int speaker)
+{
+    if (speaker < 0)
+        return {};
+    if (speaker < t.speakers.size() && !t.speakers.at(speaker).id.isEmpty())
+        return t.speakers.at(speaker).id;
+    return QStringLiteral("S%1").arg(speaker + 1);
+}
+
+QString clockLabel(double seconds)
+{
+    return QString::number(seconds, 'f', 2);
+}
+
+} // namespace
+
+void AppController::storeTranscript(const QString &assetId, std::shared_ptr<drift::Transcript> transcript)
+{
+    const drift::MediaAsset *asset = m_project.asset(assetId);
+    if (!asset || !transcript)
+        return;
+    if (!transcript->source.isEmpty() && !transcript->source.matches(asset->path))
+        return;
+    m_project.setTranscript(assetId, std::move(transcript));
+    ++m_mcpEditRevision;
+    setDirty(true);
+}
+
+QJsonObject AppController::mcpTranscribe(const QStringList &assetIds, const QJsonObject &options)
+{
+    using namespace drift::mcp;
+    if (assetIds.isEmpty())
+        return err("bad_args", QStringLiteral("asset, clip or clips required"));
+    const QString engine = options.value(QStringLiteral("engine")).toString(QStringLiteral("local"));
+    if (engine != QLatin1String("local") && engine != QLatin1String("elevenlabs"))
+        return err("bad_args", QStringLiteral("engine must be local or elevenlabs"));
+    const bool force = options.value(QStringLiteral("force")).toBool();
+
+    drift::LocalTranscribeOptions local;
+    local.language = options.value(QStringLiteral("language")).toString().trimmed().toLower();
+    local.align = options.value(QStringLiteral("align")).toBool(true);
+    local.diarize = options.value(QStringLiteral("diarize")).toBool(false);
+    local.numSpeakers = options.value(QStringLiteral("num_speakers")).toInt(-1);
+
+    QJsonArray started;
+    QJsonArray cached;
+    for (const QString &assetId : assetIds) {
+        const drift::MediaAsset *asset = m_project.asset(assetId);
+        if (!asset)
+            return err("not_found", QStringLiteral("Unknown asset %1").arg(assetId));
+        if (asset->path.isEmpty() || !asset->sequenceId.isEmpty()
+            || (asset->kind != drift::MediaKind::Audio && asset->kind != drift::MediaKind::Video)
+            || (asset->hasAudioKnown && !asset->hasAudio))
+            return err("type_mismatch", QStringLiteral("%1 has no audio to transcribe").arg(asset->name));
+        const drift::TranscriptPtr existing = m_project.transcript(assetId);
+        if (!force && existing && existing->source.matches(asset->path)) {
+            cached.append(assetId);
+            continue;
+        }
+        if (m_jobs->hasActive(QStringLiteral("transcribe"), assetId))
+            return err("busy", QStringLiteral("%1 is already being transcribed").arg(asset->name));
+        if (engine == QLatin1String("local") && !drift::WhisperTranscriber::modelPresent())
+            return err("addon_missing", QStringLiteral("Local transcription needs the whisper-model addon: "
+                                                       "list_addons, then install_addon."));
+
+        const QString path = asset->path;
+        const drift::SourceFingerprint fingerprint = drift::SourceFingerprint::of(path);
+        auto holder = std::make_shared<std::shared_ptr<drift::Transcript>>();
+        if (engine == QLatin1String("elevenlabs")) {
+            const QJsonObject unavailable = cloudUnavailable(QString::fromLatin1(CloudProviders::kElevenLabs));
+            if (!unavailable.isEmpty())
+                return unavailable;
+            const QString key = m_cloud->apiKey(QString::fromLatin1(CloudProviders::kElevenLabs));
+            const QString model = m_cloud->setting(QString::fromLatin1(CloudProviders::kElevenLabs), QStringLiteral("stt_model"));
+            QStringList keyterms;
+            for (const QJsonValue &v : options.value(QStringLiteral("keyterms")).toArray())
+                keyterms.append(v.toString());
+            const QString id = m_jobs->start(
+                QStringLiteral("transcribe"), assetId, JobRegistry::Lane::Network,
+                [path, key, model, local, keyterms, fingerprint, holder](JobContext &ctx) {
+                    bool cancelled = false;
+                    const std::vector<float> pcm = drift::readMono16k(
+                        path, 0, -1,
+                        [&ctx](double f) {
+                            ctx.progress(0.1 * f, QStringLiteral("Reading audio…"));
+                            return !ctx.cancelled();
+                        },
+                        &cancelled);
+                    if (cancelled)
+                        return;
+                    if (pcm.empty())
+                        return ctx.fail(QStringLiteral("no_audio"), QStringLiteral("No audio decoded"));
+                    QString error;
+                    const QString flac = drift::writeTempFlac16k(pcm, &error);
+                    if (flac.isEmpty())
+                        return ctx.fail(QStringLiteral("internal"), error);
+                    ctx.progress(0.15, QStringLiteral("Uploading to ElevenLabs…"));
+                    drift::cloud::CloudError cloudError;
+                    auto transcript = drift::cloud::elevenlabs::speechToText(
+                        key, model, flac, local.language, local.diarize, local.numSpeakers, keyterms,
+                        [&ctx] { return ctx.cancelled(); },
+                        [&ctx](double f) {
+                            ctx.progress(0.15 + 0.5 * f, f < 1.0 ? QStringLiteral("Uploading to ElevenLabs…")
+                                                                 : QStringLiteral("ElevenLabs is transcribing…"));
+                        },
+                        &cloudError);
+                    QFile::remove(flac);
+                    if (cloudError.isError())
+                        return ctx.fail(cloudError.code, cloudError.message);
+                    transcript->source = fingerprint;
+                    *holder = transcript;
+                    ctx.succeed({{QStringLiteral("words"), transcript->speechTokenCount()},
+                                 {QStringLiteral("engine"), transcript->engine},
+                                 {QStringLiteral("language"), transcript->language},
+                                 {QStringLiteral("aligned"), true},
+                                 {QStringLiteral("diarized"), transcript->diarized}});
+                },
+                [this, assetId, holder](const QJsonObject &job) {
+                    if (job.value(QStringLiteral("ok")).toBool())
+                        storeTranscript(assetId, *holder);
+                    return QJsonObject{};
+                });
+            started.append(QJsonObject{{QStringLiteral("asset"), assetId}, {QStringLiteral("job_id"), id}});
+            continue;
+        }
+        const QString id = m_jobs->start(
+            QStringLiteral("transcribe"), assetId, JobRegistry::Lane::Model,
+            [path, local, fingerprint, holder](JobContext &ctx) {
+                bool cancelled = false;
+                const std::vector<float> pcm = drift::readMono16k(
+                    path, 0, -1,
+                    [&ctx](double f) {
+                        ctx.progress(0.05 * f, QStringLiteral("Reading audio…"));
+                        return !ctx.cancelled();
+                    },
+                    &cancelled);
+                if (cancelled)
+                    return;
+                if (pcm.empty())
+                    return ctx.fail(QStringLiteral("no_audio"), QStringLiteral("No audio decoded"));
+                const drift::LocalTranscribeResult r = drift::transcribeLocal(
+                    pcm, 0, local, [&ctx](double f, const QString &status) {
+                        ctx.progress(0.05 + 0.95 * f, status);
+                        return !ctx.cancelled();
+                    });
+                if (r.cancelled)
+                    return;
+                if (!r.transcript)
+                    return ctx.fail(QStringLiteral("model_error"), r.error);
+                r.transcript->source = fingerprint;
+                *holder = r.transcript;
+                ctx.succeed({{QStringLiteral("words"), r.transcript->speechTokenCount()},
+                             {QStringLiteral("engine"), r.transcript->engine},
+                             {QStringLiteral("language"), r.transcript->language},
+                             {QStringLiteral("aligned"), r.transcript->wordTimingsAligned}});
+            },
+            [this, assetId, holder](const QJsonObject &job) {
+                if (job.value(QStringLiteral("ok")).toBool())
+                    storeTranscript(assetId, *holder);
+                return QJsonObject{};
+            });
+        started.append(QJsonObject{{QStringLiteral("asset"), assetId}, {QStringLiteral("job_id"), id}});
+    }
+    return ok({{QStringLiteral("jobs"), started},
+               {QStringLiteral("cached"), cached},
+               {QStringLiteral("hint"), started.isEmpty()
+                                            ? QStringLiteral("All cached; read with get_transcript.")
+                                            : QStringLiteral("Poll get_job({id}) until active is false, "
+                                                             "then get_transcript.")}});
+}
+
+QJsonObject AppController::mcpGetTranscript(const QString &assetId, int trackIndex, int clipIndex,
+                                            double startSeconds, double endSeconds,
+                                            const QJsonObject &options) const
+{
+    using namespace drift::mcp;
+    const QString view = options.value(QStringLiteral("view")).toString(QStringLiteral("phrases"));
+    const double breakOnSilence = options.value(QStringLiteral("break_on_silence")).toDouble(0.7);
+    const int maxWords = options.value(QStringLiteral("max_words")).toInt(0);
+    const int offset = qMax(0, options.value(QStringLiteral("offset")).toInt(0));
+    const int limit = qBound(1, options.value(QStringLiteral("limit")).toInt(view == QLatin1String("words") ? 400 : 200), 2000);
+    QStringList include;
+    for (const QJsonValue &v : options.value(QStringLiteral("include")).toArray())
+        include.append(v.toString());
+    const bool withFillers = include.contains(QStringLiteral("fillers"));
+    const bool withEvents = include.contains(QStringLiteral("events"));
+
+    // A transcript to read, and the word index each of its entries came from. Asset mode reads
+    // the asset's own transcript in source time; clip and range modes rebuild it on the timeline.
+    drift::Transcript viewT;
+    QList<int> sourceIndex;
+    QList<QString> sourceAsset;
+    QString mode;
+    drift::TranscriptPtr primary;
+
+    auto collect = [&](drift::TimeUs viewStart, drift::TimeUs viewEnd, const QString &onlyClipId) {
+        for (const drift::TimelineWord &tw : drift::transcriptWordsOnTimeline(m_project, viewStart, viewEnd, onlyClipId)) {
+            if (!primary)
+                primary = m_project.transcript(tw.assetId);
+            viewT.words.append(tw.word);
+            sourceIndex.append(tw.index);
+            sourceAsset.append(tw.assetId);
+        }
+    };
+
+    if (!assetId.isEmpty()) {
+        primary = m_project.transcript(assetId);
+        if (!primary)
+            return err("not_found", QStringLiteral("No transcript for this asset; run transcribe first"));
+        mode = QStringLiteral("source");
+        viewT = *primary;
+        for (int i = 0; i < primary->words.size(); ++i) {
+            sourceIndex.append(i);
+            sourceAsset.append(assetId);
+        }
+    } else if (trackIndex >= 0 && clipIndex >= 0) {
+        if (!isValidClipIndex(trackIndex, clipIndex))
+            return err("not_found", QStringLiteral("Unknown clip"));
+        const drift::Clip &clip = m_project.tracks().at(trackIndex).clips.at(clipIndex);
+        primary = m_project.transcript(clip.assetId);
+        if (!primary)
+            return err("not_found", QStringLiteral("No transcript for this clip's media; run transcribe first"));
+        mode = QStringLiteral("timeline");
+        collect(clip.timelineStart, clip.timelineEnd(), clip.id);
+    } else {
+        if (endSeconds <= startSeconds)
+            return err("bad_args", QStringLiteral("asset, clip, or start+end required"));
+        mode = QStringLiteral("timeline");
+        collect(drift::secondsToUs(startSeconds), drift::secondsToUs(endSeconds), {});
+        if (!primary)
+            return err("not_found", QStringLiteral("No transcribed media in that range"));
+    }
+    if (mode == QLatin1String("timeline"))
+        viewT.speakers = primary->speakers;
+
+    const drift::MediaAsset *primaryAsset = nullptr;
+    for (auto it = m_project.assets().cbegin(); it != m_project.assets().cend(); ++it) {
+        if (m_project.transcript(it.key()) == primary)
+            primaryAsset = &it.value();
+    }
+    QJsonArray speakers;
+    for (int sp = 0; sp < primary->speakers.size(); ++sp)
+        speakers.append(QJsonObject{{QStringLiteral("id"), speakerLabel(*primary, sp)},
+                                    {QStringLiteral("label"), primary->speakers.at(sp).label}});
+    QJsonObject meta{
+        {QStringLiteral("time"), mode},
+        {QStringLiteral("engine"), primary->engine},
+        {QStringLiteral("language"), primary->language},
+        {QStringLiteral("aligned"), primary->wordTimingsAligned},
+        {QStringLiteral("diarized"), primary->diarized},
+        {QStringLiteral("stale"), primaryAsset ? !primary->source.matches(primaryAsset->path) : false},
+        {QStringLiteral("speakers"), speakers},
+    };
+
+    const bool multiAsset = QSet<QString>(sourceAsset.cbegin(), sourceAsset.cend()).size() > 1;
+    if (view == QLatin1String("words")) {
+        QJsonArray words;
+        int total = 0;
+        for (int i = 0; i < viewT.words.size(); ++i) {
+            const drift::TranscriptWord &w = viewT.words.at(i);
+            if (w.type == drift::TranscriptTokenType::Spacing)
+                continue;
+            if ((w.type == drift::TranscriptTokenType::Filler && !withFillers && !include.isEmpty())
+                || (w.type == drift::TranscriptTokenType::AudioEvent && !withEvents && !include.isEmpty()))
+                continue;
+            if (total++ < offset || words.size() >= limit)
+                continue;
+            QJsonObject o{{QStringLiteral("i"), sourceIndex.at(i)},
+                          {QStringLiteral("start"), drift::usToSeconds(w.startUs)},
+                          {QStringLiteral("end"), drift::usToSeconds(w.endUs)},
+                          {QStringLiteral("text"), w.text}};
+            if (w.type != drift::TranscriptTokenType::Word)
+                o.insert(QStringLiteral("type"), drift::transcriptTokenTypeToString(w.type));
+            if (w.speaker >= 0)
+                o.insert(QStringLiteral("speaker"), speakerLabel(*primary, w.speaker));
+            if (!std::isnan(w.confidence))
+                o.insert(QStringLiteral("conf"), std::round(w.confidence * 100.0) / 100.0);
+            if (w.interpolated)
+                o.insert(QStringLiteral("estimated"), true);
+            if (multiAsset)
+                o.insert(QStringLiteral("asset"), sourceAsset.at(i));
+            words.append(o);
+        }
+        meta.insert(QStringLiteral("words"), words);
+        meta.insert(QStringLiteral("total"), total);
+        if (offset + words.size() < total)
+            meta.insert(QStringLiteral("next_offset"), offset + words.size());
+        return ok(meta);
+    }
+
+    // Phrases break on silence or speaker change; fillers are shown (as they are editorial signal)
+    // unless the caller narrowed `include`.
+    const bool phraseFillers = include.isEmpty() || withFillers;
+    const bool phraseEvents = include.isEmpty() || withEvents;
+    const QList<drift::TranscriptPhrase> phrases = drift::packTranscriptPhrases(
+        viewT, std::numeric_limits<drift::TimeUs>::min() / 2, std::numeric_limits<drift::TimeUs>::max() / 2,
+        drift::secondsToUs(qMax(0.05, breakOnSilence)), maxWords, phraseFillers, phraseEvents);
+
+    if (view == QLatin1String("text")) {
+        QStringList parts;
+        for (const drift::TranscriptPhrase &p : phrases)
+            parts.append(p.text);
+        meta.insert(QStringLiteral("text"), parts.join(QLatin1Char(' ')));
+        return ok(meta);
+    }
+
+    QJsonArray out;
+    QStringList compact;
+    const int end = qMin(phrases.size(), offset + limit);
+    for (int i = offset; i < end; ++i) {
+        const drift::TranscriptPhrase &p = phrases.at(i);
+        const QString who = speakerLabel(*primary, p.speaker);
+        QJsonObject o{{QStringLiteral("start"), drift::usToSeconds(p.startUs)},
+                      {QStringLiteral("end"), drift::usToSeconds(p.endUs)},
+                      {QStringLiteral("text"), p.text},
+                      {QStringLiteral("words"), QJsonArray{sourceIndex.at(p.firstWord), sourceIndex.at(p.lastWord)}}};
+        if (!who.isEmpty())
+            o.insert(QStringLiteral("speaker"), who);
+        if (multiAsset)
+            o.insert(QStringLiteral("asset"), sourceAsset.at(p.firstWord));
+        out.append(o);
+        compact.append(QStringLiteral("[%1-%2]%3 %4")
+                           .arg(clockLabel(drift::usToSeconds(p.startUs)), clockLabel(drift::usToSeconds(p.endUs)),
+                                who.isEmpty() ? QString() : QLatin1Char(' ') + who, p.text));
+    }
+    meta.insert(QStringLiteral("phrases"), out);
+    meta.insert(QStringLiteral("compact"), compact.join(QLatin1Char('\n')));
+    meta.insert(QStringLiteral("total"), phrases.size());
+    if (end < phrases.size())
+        meta.insert(QStringLiteral("next_offset"), end);
+    return ok(meta);
+}
+
+QJsonObject AppController::mcpDiarize(const QString &assetId, const QJsonObject &options)
+{
+    using namespace drift::mcp;
+    const drift::MediaAsset *asset = m_project.asset(assetId);
+    if (!asset)
+        return err("not_found", QStringLiteral("Unknown asset"));
+    if (asset->path.isEmpty() || (asset->hasAudioKnown && !asset->hasAudio))
+        return err("type_mismatch", QStringLiteral("%1 has no audio").arg(asset->name));
+    if (!drift::SpeakerDiarizer::modelPresent())
+        return err("addon_missing", QStringLiteral("Speaker labels need the diarize-model addon: "
+                                                   "list_addons, then install_addon."));
+    drift::DiarizeParams params;
+    params.numSpeakers = options.value(QStringLiteral("num_speakers")).toInt(-1);
+    params.threshold = static_cast<float>(options.value(QStringLiteral("threshold")).toDouble(0.5));
+    params.minDurationOn = static_cast<float>(options.value(QStringLiteral("min_on")).toDouble(0.3));
+    params.minDurationOff = static_cast<float>(options.value(QStringLiteral("min_off")).toDouble(0.5));
+
+    const QString path = asset->path;
+    auto turns = std::make_shared<QList<drift::DiarizeSegment>>();
+    const QString id = m_jobs->start(
+        QStringLiteral("diarize"), assetId, JobRegistry::Lane::Model,
+        [path, params, turns](JobContext &ctx) {
+            bool cancelled = false;
+            const std::vector<float> pcm = drift::readMono16k(
+                path, 0, -1,
+                [&ctx](double f) {
+                    ctx.progress(0.1 * f, QStringLiteral("Reading audio…"));
+                    return !ctx.cancelled();
+                },
+                &cancelled);
+            if (cancelled)
+                return;
+            if (pcm.empty())
+                return ctx.fail(QStringLiteral("no_audio"), QStringLiteral("No audio decoded"));
+            drift::SpeakerDiarizer &diarizer = drift::SpeakerDiarizer::instance();
+            if (!diarizer.available())
+                return ctx.fail(QStringLiteral("model_error"), diarizer.lastError());
+            *turns = diarizer.diarize(
+                pcm, params,
+                [&ctx](double f) {
+                    ctx.progress(0.1 + 0.9 * f, QStringLiteral("Telling speakers apart…"));
+                    return !ctx.cancelled();
+                },
+                &cancelled);
+            if (cancelled)
+                return;
+            QJsonArray segments;
+            int speakers = 0;
+            for (const drift::DiarizeSegment &t : std::as_const(*turns)) {
+                segments.append(QJsonObject{{QStringLiteral("start"), drift::usToSeconds(t.startUs)},
+                                            {QStringLiteral("end"), drift::usToSeconds(t.endUs)},
+                                            {QStringLiteral("speaker"), QStringLiteral("S%1").arg(t.speaker + 1)}});
+                speakers = qMax(speakers, t.speaker + 1);
+            }
+            ctx.succeed({{QStringLiteral("speakers"), speakers}, {QStringLiteral("segments"), segments}});
+        },
+        [this, assetId, turns](const QJsonObject &job) {
+            if (!job.value(QStringLiteral("ok")).toBool())
+                return QJsonObject{};
+            // Label an existing transcript's words; the turns themselves are in the job result.
+            if (const drift::TranscriptPtr t = m_project.transcript(assetId)) {
+                auto labelled = std::make_shared<drift::Transcript>(*t);
+                drift::assignSpeakers(*labelled, *turns);
+                storeTranscript(assetId, labelled);
+                return QJsonObject{{QStringLiteral("transcript_labelled"), true}};
+            }
+            return QJsonObject{};
+        });
+    return ok({{QStringLiteral("job_id"), id}});
+}
+
+QJsonObject AppController::cloudUnavailable(const QString &provider) const
+{
+    using namespace drift::mcp;
+    const QString name = provider == QLatin1String(CloudProviders::kElevenLabs) ? QStringLiteral("ElevenLabs")
+                                                                                : QStringLiteral("Fish Audio");
+    if (!m_cloud->configured(provider))
+        return err("not_configured", QStringLiteral("%1 has no API key. Ask the user to add one in Settings → "
+                                                    "Cloud providers (or set %2).")
+                                         .arg(name, provider == QLatin1String(CloudProviders::kElevenLabs)
+                                                        ? QStringLiteral("ELEVENLABS_API_KEY")
+                                                        : QStringLiteral("FISH_API_KEY")));
+    if (!m_cloud->consent(provider))
+        return err("consent_required", QStringLiteral("The user hasn't allowed Drift to send audio or text to %1 "
+                                                      "yet. Ask them to allow it in Settings → Cloud providers.")
+                                           .arg(name));
+    return {};
+}
+
+QJsonObject AppController::importGeneratedAudio(const QString &path, const QJsonObject &generator,
+                                                const QJsonValue &place)
+{
+    using namespace drift::mcp;
+    if (!m_assetLibrary)
+        return err("not_found", QStringLiteral("No media bin"));
+    const QStringList ids = m_assetLibrary->importLocalPaths({path});
+    if (ids.isEmpty())
+        return err("import_failed", QStringLiteral("Could not import %1").arg(path));
+    const QString assetId = ids.first();
+    {
+        // Placing needs the probed duration.
+        QEventLoop loop;
+        QTimer timeout;
+        timeout.setSingleShot(true);
+        timeout.start(15000);
+        connect(&timeout, &QTimer::timeout, &loop, &QEventLoop::quit);
+        connect(m_assetLibrary, &AssetLibrary::assetMetadataChanged, &loop, &QEventLoop::quit);
+        while (timeout.isActive() && m_assetLibrary->isImportPending(assetId))
+            loop.exec();
+    }
+    if (drift::MediaAsset *asset = m_project.asset(assetId)) {
+        asset->generator = generator;
+        setDirty(true);
+    }
+    QJsonObject result{{QStringLiteral("asset"), assetId}, {QStringLiteral("path"), path}};
+    if (const drift::MediaAsset *asset = m_project.asset(assetId))
+        result.insert(QStringLiteral("duration"), drift::usToSeconds(asset->durationUs));
+
+    if (place.isUndefined() || place.isNull() || (place.isBool() && !place.toBool()))
+        return ok(result);
+    const QJsonObject where = place.toObject();
+    const int assetIndex = m_assetLibrary->indexOfPath(path);
+    if (assetIndex < 0)
+        return ok(result);
+    const double at = where.contains(QStringLiteral("at")) ? where.value(QStringLiteral("at")).toDouble() : playheadSeconds();
+    QSet<QString> before;
+    for (const drift::Track &t : m_project.tracks())
+        for (const drift::Clip &c : t.clips)
+            before.insert(c.id);
+    int track = where.contains(QStringLiteral("track")) ? where.value(QStringLiteral("track")).toInt() : -1;
+    if (track < 0) {
+        // The first audio lane with room for the whole clip at `at`; otherwise a new one.
+        const drift::TimeUs atUs = drift::secondsToUs(at);
+        const drift::MediaAsset *asset = m_project.asset(assetId);
+        const drift::TimeUs endUs = atUs + qMax<drift::TimeUs>(1, asset ? asset->durationUs : 1);
+        for (int t = 0; t < m_project.tracks().size() && track < 0; ++t) {
+            if (m_project.tracks().at(t).type != drift::TrackType::Audio || !trackAcceptsAsset(t, assetIndex))
+                continue;
+            bool free = true;
+            for (const drift::Clip &c : m_project.tracks().at(t).clips)
+                free = free && (c.timelineEnd() <= atUs || c.timelineStart >= endUs);
+            if (free)
+                track = t;
+        }
+    }
+    if (track >= 0)
+        addClipFromAssetAt(assetIndex, track, at);
+    else
+        addClipFromAssetOnNewTrackAt(assetIndex, m_project.tracks().size(), at);
+    for (const drift::Track &t : m_project.tracks())
+        for (const drift::Clip &c : t.clips)
+            if (!before.contains(c.id))
+                result.insert(QStringLiteral("clip"), c.id);
+    return ok(result);
+}
+
+namespace {
+
+QString slugFor(const QString &text)
+{
+    QString slug;
+    for (const QChar c : text.toLower()) {
+        if (c.isLetterOrNumber())
+            slug.append(c);
+        else if (!slug.isEmpty() && !slug.endsWith(QLatin1Char('-')))
+            slug.append(QLatin1Char('-'));
+        if (slug.size() >= 24)
+            break;
+    }
+    while (slug.endsWith(QLatin1Char('-')))
+        slug.chop(1);
+    return slug.isEmpty() ? QStringLiteral("audio") : slug;
+}
+
+QString generatedPath(const QString &kind, const QString &provider, const QString &text)
+{
+    return QDir(drift::generatedAudioDir())
+        .filePath(QStringLiteral("%1-%2-%3-%4.mp3")
+                      .arg(kind, provider, slugFor(text), QUuid::createUuid().toString(QUuid::Id128).left(8)));
+}
+
+} // namespace
+
+QJsonObject AppController::mcpTtsGenerate(const QJsonObject &args)
+{
+    using namespace drift::mcp;
+    const QString provider = args.value(QStringLiteral("provider")).toString(QString::fromLatin1(CloudProviders::kElevenLabs));
+    if (provider != QLatin1String(CloudProviders::kElevenLabs) && provider != QLatin1String(CloudProviders::kFish))
+        return err("bad_args", QStringLiteral("provider must be elevenlabs or fish"));
+    const QString text = args.value(QStringLiteral("text")).toString().trimmed();
+    if (text.isEmpty())
+        return err("bad_args", QStringLiteral("text required"));
+    if (text.size() > 5000)
+        return err("bad_args", QStringLiteral("text is over 5000 characters; split it into several calls"));
+    const QJsonObject unavailable = cloudUnavailable(provider);
+    if (!unavailable.isEmpty())
+        return unavailable;
+    QString voice = args.value(QStringLiteral("voice")).toString().trimmed();
+    if (voice.isEmpty())
+        voice = m_cloud->setting(provider, QStringLiteral("voice"));
+    if (voice.isEmpty() && provider == QLatin1String(CloudProviders::kElevenLabs))
+        return err("bad_args", QStringLiteral("voice required (list_voices), or set a default voice in Settings"));
+    QString model = args.value(QStringLiteral("model")).toString().trimmed();
+    if (model.isEmpty())
+        model = m_cloud->setting(provider, QStringLiteral("tts_model"));
+    const QString key = m_cloud->apiKey(provider);
+    const double speed = args.value(QStringLiteral("speed")).toDouble(1.0);
+    const QString language = args.value(QStringLiteral("language")).toString();
+    QJsonObject voiceSettings;
+    for (const char *k : {"stability", "similarity_boost", "style"}) {
+        if (args.contains(QLatin1String(k)))
+            voiceSettings.insert(QLatin1String(k), args.value(QLatin1String(k)).toDouble());
+    }
+    if (provider == QLatin1String(CloudProviders::kElevenLabs) && !qFuzzyCompare(speed, 1.0))
+        voiceSettings.insert(QStringLiteral("speed"), qBound(0.7, speed, 1.2));
+    const QString path = generatedPath(QStringLiteral("tts"), provider, text);
+    const QJsonObject generator{{QStringLiteral("provider"), provider}, {QStringLiteral("kind"), QStringLiteral("tts")},
+                                {QStringLiteral("voice"), voice},     {QStringLiteral("model"), model},
+                                {QStringLiteral("text"), text}};
+    const QJsonValue place = args.value(QStringLiteral("place"));
+
+    const QString id = m_jobs->start(
+        QStringLiteral("tts"), provider, JobRegistry::Lane::Network,
+        [provider, key, voice, model, text, voiceSettings, language, speed, path](JobContext &ctx) {
+            ctx.progress(0.1, QStringLiteral("Generating voice…"));
+            drift::cloud::CloudError error;
+            const auto cancel = [&ctx] { return ctx.cancelled(); };
+            const QByteArray audio = provider == QLatin1String(CloudProviders::kElevenLabs)
+                                         ? drift::cloud::elevenlabs::textToSpeech(key, voice, model, text, voiceSettings,
+                                                                                  language, cancel, &error)
+                                         : drift::cloud::fish::textToSpeech(key, model, voice, text, speed, cancel, &error);
+            if (error.isError())
+                return ctx.fail(error.code, error.message);
+            QFile file(path);
+            if (audio.isEmpty() || !file.open(QIODevice::WriteOnly) || file.write(audio) != audio.size())
+                return ctx.fail(QStringLiteral("internal"), QStringLiteral("Could not write %1").arg(path));
+            ctx.succeed({{QStringLiteral("chars"), text.size()}});
+        },
+        [this, path, generator, place](const QJsonObject &job) {
+            if (!job.value(QStringLiteral("ok")).toBool())
+                return QJsonObject{};
+            QJsonObject imported = importGeneratedAudio(path, generator, place);
+            imported.remove(QStringLiteral("ok"));
+            return imported;
+        });
+    return ok({{QStringLiteral("job_id"), id}});
+}
+
+QJsonObject AppController::mcpSfxGenerate(const QJsonObject &args)
+{
+    using namespace drift::mcp;
+    const QString provider = QString::fromLatin1(CloudProviders::kElevenLabs);
+    const QString prompt = args.value(QStringLiteral("prompt")).toString().trimmed();
+    if (prompt.isEmpty())
+        return err("bad_args", QStringLiteral("prompt required"));
+    const QJsonObject unavailable = cloudUnavailable(provider);
+    if (!unavailable.isEmpty())
+        return unavailable;
+    const QString key = m_cloud->apiKey(provider);
+    const double duration = args.value(QStringLiteral("duration")).toDouble(0.0);
+    const double influence = args.value(QStringLiteral("prompt_influence")).toDouble(0.3);
+    const bool loop = args.value(QStringLiteral("loop")).toBool(false);
+    const QString path = generatedPath(QStringLiteral("sfx"), provider, prompt);
+    const QJsonObject generator{{QStringLiteral("provider"), provider}, {QStringLiteral("kind"), QStringLiteral("sfx")},
+                                {QStringLiteral("prompt"), prompt}, {QStringLiteral("duration"), duration}};
+    const QJsonValue place = args.value(QStringLiteral("place"));
+    const QString id = m_jobs->start(
+        QStringLiteral("sfx"), provider, JobRegistry::Lane::Network,
+        [key, prompt, duration, influence, loop, path](JobContext &ctx) {
+            ctx.progress(0.1, QStringLiteral("Generating sound…"));
+            drift::cloud::CloudError error;
+            const QByteArray audio = drift::cloud::elevenlabs::soundEffect(
+                key, prompt, duration, influence, loop, [&ctx] { return ctx.cancelled(); }, &error);
+            if (error.isError())
+                return ctx.fail(error.code, error.message);
+            QFile file(path);
+            if (audio.isEmpty() || !file.open(QIODevice::WriteOnly) || file.write(audio) != audio.size())
+                return ctx.fail(QStringLiteral("internal"), QStringLiteral("Could not write %1").arg(path));
+            ctx.succeed({});
+        },
+        [this, path, generator, place](const QJsonObject &job) {
+            if (!job.value(QStringLiteral("ok")).toBool())
+                return QJsonObject{};
+            QJsonObject imported = importGeneratedAudio(path, generator, place);
+            imported.remove(QStringLiteral("ok"));
+            return imported;
+        });
+    return ok({{QStringLiteral("job_id"), id}});
+}
+
+QJsonObject AppController::mcpListVoices(const QJsonObject &args) const
+{
+    using namespace drift::mcp;
+    const QString provider = args.value(QStringLiteral("provider")).toString(QString::fromLatin1(CloudProviders::kElevenLabs));
+    if (provider != QLatin1String(CloudProviders::kElevenLabs) && provider != QLatin1String(CloudProviders::kFish))
+        return err("bad_args", QStringLiteral("provider must be elevenlabs or fish"));
+    if (!m_cloud->configured(provider))
+        return cloudUnavailable(provider);
+    const QString key = m_cloud->apiKey(provider);
+    const QString search = args.value(QStringLiteral("search")).toString();
+    const int limit = qBound(1, args.value(QStringLiteral("limit")).toInt(30), 100);
+    const QJsonValue page = args.value(QStringLiteral("page"));
+    const bool mine = args.value(QStringLiteral("mine")).toBool(false);
+    QJsonObject result;
+    drift::cloud::CloudError error;
+    QEventLoop loop;
+    (void)QtConcurrent::run([&]() {
+        result = provider == QLatin1String(CloudProviders::kElevenLabs)
+                     ? drift::cloud::elevenlabs::voices(key, search, page.toString(), limit, &error)
+                     : drift::cloud::fish::voices(key, search, mine, qMax(1, page.toInt(1)), limit, &error);
+        QMetaObject::invokeMethod(&loop, &QEventLoop::quit, Qt::QueuedConnection);
+    });
+    loop.exec();
+    if (error.isError())
+        return err(error.code.toUtf8().constData(), error.message);
+    result.insert(QStringLiteral("default_voice"), m_cloud->setting(provider, QStringLiteral("voice")));
+    return ok(result);
+}
+
+QJsonObject AppController::mcpCloudProviderStatus() const
+{
+    return drift::mcp::ok(m_cloud->statusJson());
+}
+
+QJsonObject AppController::mcpKeepRanges(int trackIndex, int clipIndex, const QJsonArray &ranges,
+                                         double padding, double declick, bool ripple)
+{
+    using namespace drift::mcp;
+    if (!isValidClipIndex(trackIndex, clipIndex))
+        return err("not_found", QStringLiteral("Unknown clip"));
+    const drift::Clip clip = m_project.tracks().at(trackIndex).clips.at(clipIndex);
+    if (clip.path.isEmpty() && clip.sequenceId.isEmpty())
+        return err("type_mismatch", QStringLiteral("keep_ranges works on media clips"));
+    if (clip.hasSpeedCurve())
+        return err("type_mismatch", QStringLiteral("This clip has a speed ramp; flatten it first"));
+    QList<drift::TimeRangeUs> source;
+    for (const QJsonValue &v : ranges) {
+        const QJsonObject r = v.toObject();
+        const double a = r.value(QStringLiteral("start")).toDouble(-1);
+        const double b = r.value(QStringLiteral("end")).toDouble(-1);
+        if (a < 0 || b <= a)
+            return err("bad_args", QStringLiteral("each range needs start < end (source seconds)"));
+        source.append({drift::secondsToUs(a), drift::secondsToUs(b)});
+    }
+    if (source.isEmpty())
+        return err("bad_args", QStringLiteral("ranges required"));
+
+    const drift::TimeUs mediaDur = sourceDurationForClip(clip);
+    const drift::TimeUs padUs = drift::secondsToUs(qBound(0.0, padding, 1.0));
+    const drift::TimeUs declickUs = drift::secondsToUs(qBound(0.0, declick, 0.5));
+    QString buildError;
+    const drift::Project before = m_project;
+    SegmentReplaceResult replaced;
+    QString error;
+    if (!replaceClipGroupWithSegments(
+            trackIndex, clipIndex,
+            [&](const drift::Clip &member) {
+                return drift::segmentsFromSourceRanges(member, source, mediaDur, padUs, declickUs, &buildError);
+            },
+            ripple, &replaced, &error))
+        return err(error == QLatin1String("would_overlap") ? "would_overlap" : "bad_args",
+                   error == QLatin1String("would_overlap")
+                       ? QStringLiteral("The result is longer and would run into the next clip; pass ripple:true")
+                       : error);
+    if (replaced.ids.isEmpty())
+        return err("bad_args", buildError.isEmpty() ? QStringLiteral("Nothing left to keep") : buildError);
+    pushProjectEdit(before, tr("Keep ranges"));
+    finishEdit(tr("Keep ranges"));
+
+    QJsonArray applied;
+    drift::TimeUs end = clip.timelineStart;
+    for (const QString &id : std::as_const(replaced.ids)) {
+        int t = -1, c = -1;
+        if (!findClipById(m_project, id, &t, &c))
+            continue;
+        const drift::Clip &seg = m_project.tracks().at(t).clips.at(c);
+        applied.append(QJsonObject{{QStringLiteral("id"), id},
+                                   {QStringLiteral("src_start"), drift::usToSeconds(seg.srcIn)},
+                                   {QStringLiteral("src_end"), drift::usToSeconds(seg.srcOut)},
+                                   {QStringLiteral("start"), drift::usToSeconds(seg.timelineStart)},
+                                   {QStringLiteral("end"), drift::usToSeconds(seg.timelineEnd())}});
+        end = qMax(end, seg.timelineEnd());
+    }
+    return ok({{QStringLiteral("clips"), applied},
+               {QStringLiteral("duration"), drift::usToSeconds(end - clip.timelineStart)},
+               {QStringLiteral("delta"), drift::usToSeconds(replaced.deltaUs)}});
+}
+
+QJsonObject AppController::mcpAssemble(const QJsonArray &edl, int trackIndex, bool atGiven, double atSeconds,
+                                       double padding, double declick)
+{
+    using namespace drift::mcp;
+    struct Run
+    {
+        QString asset;
+        QJsonArray ranges;
+    };
+    QList<Run> runs;
+    for (const QJsonValue &v : edl) {
+        const QJsonObject e = v.toObject();
+        const QString asset = e.value(QStringLiteral("asset")).toString();
+        if (!m_project.asset(asset))
+            return err("not_found", QStringLiteral("Unknown asset %1").arg(asset));
+        const QJsonObject range{{QStringLiteral("start"), e.value(QStringLiteral("start"))},
+                                {QStringLiteral("end"), e.value(QStringLiteral("end"))}};
+        if (runs.isEmpty() || runs.last().asset != asset)
+            runs.append({asset, {}});
+        runs.last().ranges.append(range);
+    }
+    if (runs.isEmpty())
+        return err("bad_args", QStringLiteral("edl required: [{asset, start, end}]"));
+    if (trackIndex >= m_project.tracks().size())
+        return err("bad_args", QStringLiteral("track out of range"));
+
+    mcpBeginBatch();
+    const auto abort = [this](const QJsonObject &error) {
+        // Nothing half-built stays behind: roll back to the start of the batch.
+        const auto transcripts = m_project.transcripts();
+        m_project = m_mcpBatchBefore;
+        m_project.setTranscripts(transcripts);
+        mcpEndBatch(QString(), false);
+        return error;
+    };
+
+    int track = trackIndex;
+    double cursor = atSeconds;
+    QJsonArray placed;
+    for (const Run &run : std::as_const(runs)) {
+        const int assetIndex = m_project.assetIndex(run.asset);
+        if (track < 0) {
+            track = drift::defaultTrackForClipType(
+                m_project, drift::clipTypeFromString(drift::mediaKindToString(m_project.asset(run.asset)->kind)));
+        }
+        if (!atGiven && placed.isEmpty()) {
+            // Append after whatever the target track already holds.
+            cursor = 0.0;
+            if (track >= 0)
+                for (const drift::Clip &c : m_project.tracks().at(track).clips)
+                    cursor = qMax(cursor, drift::usToSeconds(c.timelineEnd()));
+        }
+        QSet<QString> before;
+        for (const drift::Track &t : m_project.tracks())
+            for (const drift::Clip &c : t.clips)
+                before.insert(c.id);
+        if (track >= 0 && trackAcceptsAsset(track, assetIndex))
+            addClipFromAssetAt(assetIndex, track, cursor);
+        else
+            addClipFromAssetOnNewTrackAt(assetIndex, qMax(0, track), cursor);
+        // The clip carrying the asset's picture (or sound, for audio); a linked audio companion
+        // follows it through keep_ranges.
+        QString mainId;
+        for (int t = 0; t < m_project.tracks().size() && mainId.isEmpty(); ++t) {
+            for (const drift::Clip &c : m_project.tracks().at(t).clips) {
+                if (!before.contains(c.id) && c.assetId == run.asset
+                    && (m_project.tracks().at(t).type != drift::TrackType::Audio
+                        || m_project.asset(run.asset)->kind == drift::MediaKind::Audio)) {
+                    mainId = c.id;
+                    track = t;
+                    break;
+                }
+            }
+        }
+        if (mainId.isEmpty())
+            return abort(err("bad_args", QStringLiteral("Could not place asset %1 at %2 s").arg(run.asset).arg(cursor)));
+        int t = -1, c = -1;
+        findClipById(m_project, mainId, &t, &c);
+        const QJsonObject kept = mcpKeepRanges(t, c, run.ranges, padding, declick, true);
+        if (!kept.value(QStringLiteral("ok")).toBool())
+            return abort(kept);
+        for (const QJsonValue &seg : kept.value(QStringLiteral("clips")).toArray()) {
+            placed.append(seg);
+            cursor = qMax(cursor, seg.toObject().value(QStringLiteral("end")).toDouble());
+        }
+    }
+    mcpEndBatch(tr("Assemble"), true);
+    return ok({{QStringLiteral("clips"), placed},
+               {QStringLiteral("track"), track},
+               {QStringLiteral("end"), cursor}});
+}
+
+namespace {
+
+QString matchKey(const QString &text)
+{
+    QString out;
+    for (const QChar c : text.toLower()) {
+        if (c.isLetterOrNumber() || c == QLatin1Char('\''))
+            out.append(c);
+    }
+    return out;
+}
+
+// Timeline-free: the quietest 10 ms of the source between a and b, for a cut that lands in silence.
+drift::TimeUs quietestPoint(const QString &path, drift::TimeUs a, drift::TimeUs b)
+{
+    if (b - a < 20'000)
+        return (a + b) / 2;
+    const std::vector<float> pcm = drift::readMono16k(path, a, b);
+    constexpr int kBucket = drift::kSpeechSampleRate / 100;
+    size_t best = 0;
+    double bestEnergy = std::numeric_limits<double>::max();
+    for (size_t off = 0; off + kBucket <= pcm.size(); off += kBucket / 2) {
+        double e = 0.0;
+        for (int i = 0; i < kBucket; ++i)
+            e += double(pcm[off + i]) * pcm[off + i];
+        if (e < bestEnergy) {
+            bestEnergy = e;
+            best = off + kBucket / 2;
+        }
+    }
+    return qBound(a, a + drift::speechSamplesToUs(best), b);
+}
+
+} // namespace
+
+QJsonObject AppController::mcpCutWords(int trackIndex, int clipIndex, const QJsonObject &args)
+{
+    using namespace drift::mcp;
+    if (!isValidClipIndex(trackIndex, clipIndex))
+        return err("not_found", QStringLiteral("Unknown clip"));
+    const drift::Clip clip = m_project.tracks().at(trackIndex).clips.at(clipIndex);
+    const drift::TranscriptPtr t = m_project.transcript(clip.assetId);
+    if (!t)
+        return err("not_found", QStringLiteral("No transcript for this clip's media; run transcribe first"));
+    const QString snap = args.value(QStringLiteral("snap")).toString(QStringLiteral("boundary"));
+    const drift::TimeUs pad = drift::secondsToUs(qBound(0.03, args.value(QStringLiteral("padding")).toDouble(0.05), 0.2));
+    const drift::TimeUs declickUs = drift::secondsToUs(qBound(0.0, args.value(QStringLiteral("declick")).toDouble(0.03), 0.5));
+    const bool dryRun = args.value(QStringLiteral("dry_run")).toBool(false);
+
+    // Speech tokens in order; runs are expressed as positions in this list.
+    QList<int> speech;
+    for (int i = 0; i < t->words.size(); ++i)
+        if (drift::isSpeechToken(t->words.at(i)))
+            speech.append(i);
+    QHash<int, int> position;
+    for (int p = 0; p < speech.size(); ++p)
+        position.insert(speech.at(p), p);
+
+    QSet<int> remove; // positions in `speech`
+    for (const QJsonValue &v : args.value(QStringLiteral("words")).toArray()) {
+        const QJsonArray pair = v.toArray();
+        const int a = pair.size() > 0 ? pair.at(0).toInt(-1) : v.toInt(-1);
+        const int b = pair.size() > 1 ? pair.at(1).toInt(a) : a;
+        if (a < 0 || b < a || b >= t->words.size())
+            return err("bad_args", QStringLiteral("words entries are word indices [i, j] from get_transcript"));
+        for (int i = a; i <= b; ++i)
+            if (position.contains(i))
+                remove.insert(position.value(i));
+    }
+    QStringList texts;
+    const QJsonValue textArg = args.value(QStringLiteral("text"));
+    if (textArg.isString())
+        texts.append(textArg.toString());
+    for (const QJsonValue &v : textArg.toArray())
+        texts.append(v.toString());
+    const bool phrase = args.value(QStringLiteral("match")).toString(QStringLiteral("word")) == QLatin1String("phrase");
+    for (const QString &text : std::as_const(texts)) {
+        const QStringList needle = [&] {
+            QStringList out;
+            for (const QString &w : text.split(QRegularExpression(QStringLiteral("\\s+")), Qt::SkipEmptyParts))
+                if (!matchKey(w).isEmpty())
+                    out.append(matchKey(w));
+            return out;
+        }();
+        if (needle.isEmpty())
+            continue;
+        if (!phrase) {
+            for (int p = 0; p < speech.size(); ++p)
+                if (needle.contains(matchKey(t->words.at(speech.at(p)).text)))
+                    remove.insert(p);
+            continue;
+        }
+        for (int p = 0; p + needle.size() <= speech.size(); ++p) {
+            bool hit = true;
+            for (int k = 0; k < needle.size() && hit; ++k)
+                hit = matchKey(t->words.at(speech.at(p + k)).text) == needle.at(k);
+            if (hit)
+                for (int k = 0; k < needle.size(); ++k)
+                    remove.insert(p + k);
+        }
+    }
+    if (remove.isEmpty())
+        return err("not_found", QStringLiteral("No matching words"));
+
+    // Only words this clip plays, grouped into runs of neighbouring speech.
+    QList<int> positions(remove.cbegin(), remove.cend());
+    std::sort(positions.begin(), positions.end());
+    QList<QPair<int, int>> runs;
+    for (const int p : std::as_const(positions)) {
+        const drift::TranscriptWord &w = t->words.at(speech.at(p));
+        if (w.endUs <= clip.srcIn || w.startUs >= clip.srcOut)
+            continue;
+        if (!runs.isEmpty() && runs.last().second + 1 == p)
+            runs.last().second = p;
+        else
+            runs.append({p, p});
+    }
+    if (runs.isEmpty())
+        return err("not_found", QStringLiteral("Those words aren't in the part of the media this clip plays"));
+
+    QList<drift::TimeRangeUs> removedTimeline;
+    QJsonArray plan;
+    QJsonArray removedWords;
+    for (const auto &[a, b] : std::as_const(runs)) {
+        const drift::TranscriptWord &first = t->words.at(speech.at(a));
+        const drift::TranscriptWord &last = t->words.at(speech.at(b));
+        const drift::TimeUs L0 = a > 0 ? qMax(clip.srcIn, t->words.at(speech.at(a - 1)).endUs) : clip.srcIn;
+        const drift::TimeUs L1 = qMax(L0, first.startUs);
+        const drift::TimeUs R0 = qMin(clip.srcOut, last.endUs);
+        const drift::TimeUs R1 = b + 1 < speech.size() ? qMax(R0, qMin(clip.srcOut, t->words.at(speech.at(b + 1)).startUs))
+                                                       : clip.srcOut;
+        drift::TimeUs cutS;
+        drift::TimeUs cutE;
+        if (snap == QLatin1String("silence")) {
+            cutS = quietestPoint(clip.path, L0, L1);
+            cutE = quietestPoint(clip.path, R0, R1);
+        } else {
+            // Take the pauses around the removed words too, leaving `pad` of air beside the
+            // words that stay (less when the gap is shorter than that).
+            cutS = L0 == clip.srcIn ? clip.srcIn : qMin(L0 + qMin(pad, (L1 - L0) / 2), L1);
+            cutE = R1 == clip.srcOut ? clip.srcOut : qMax(R1 - qMin(pad, (R1 - R0) / 2), R0);
+        }
+        drift::TimeRangeUs tl;
+        if (!drift::sourceRangeToTimeline(clip, {cutS, cutE}, tl))
+            continue;
+        removedTimeline.append(tl);
+        QStringList said;
+        for (int p = a; p <= b; ++p) {
+            said.append(t->words.at(speech.at(p)).text);
+            removedWords.append(QJsonObject{{QStringLiteral("i"), speech.at(p)},
+                                            {QStringLiteral("text"), t->words.at(speech.at(p)).text}});
+        }
+        plan.append(QJsonObject{{QStringLiteral("start"), drift::usToSeconds(tl.startUs)},
+                                {QStringLiteral("end"), drift::usToSeconds(tl.endUs)},
+                                {QStringLiteral("text"), said.join(QLatin1Char(' '))}});
+    }
+    QJsonObject result{{QStringLiteral("removed"), plan}, {QStringLiteral("removed_words"), removedWords}};
+    if (dryRun) {
+        result.insert(QStringLiteral("dry_run"), true);
+        return ok(result);
+    }
+
+    const QList<drift::TimeRangeUs> kept =
+        drift::keptTimelineIntervals(clip, removedTimeline, qMax<drift::TimeUs>(drift::kCutMinEdgeUs, 2 * declickUs));
+    const drift::Project before = m_project;
+    SegmentReplaceResult replaced;
+    QString error;
+    if (!replaceClipGroupWithSegments(
+            trackIndex, clipIndex,
+            [&kept, declickUs](const drift::Clip &member) { return drift::packedSegments(member, kept, declickUs); },
+            true, &replaced, &error))
+        return err("bad_args", error);
+    pushProjectEdit(before, tr("Cut words"));
+    finishEdit(tr("Cut words"));
+    result.insert(QStringLiteral("clips"), QJsonArray::fromStringList(replaced.ids));
+    result.insert(QStringLiteral("delta"), drift::usToSeconds(replaced.deltaUs));
+    return ok(result);
+}
+
+QJsonObject AppController::mcpGetJob(const QString &id) const
+{
+    using namespace drift::mcp;
+    const QJsonObject job = m_jobs->job(id);
+    if (job.isEmpty())
+        return err("not_found", QStringLiteral("Unknown job"));
+    return ok(job);
+}
+
+QJsonObject AppController::mcpCancelJob(const QString &id)
+{
+    using namespace drift::mcp;
+    if (m_jobs->job(id).isEmpty())
+        return err("not_found", QStringLiteral("Unknown job"));
+    return ok({{QStringLiteral("cancelled"), m_jobs->cancel(id)}});
 }

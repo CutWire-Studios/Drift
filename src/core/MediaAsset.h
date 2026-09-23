@@ -2,6 +2,7 @@
 
 #include "Time.h"
 
+#include <QJsonObject>
 #include <QString>
 #include <QStringList>
 
@@ -77,6 +78,10 @@ struct MediaAsset
 
     // Composite only: the Project::sequenceTracks id this bin item stands for.
     QString sequenceId;
+
+    // Audio Drift generated rather than imported (voiceover, sound effect): what made it —
+    // {provider, kind, voice, model, text/prompt} — so it can be regenerated. Empty otherwise.
+    QJsonObject generator;
 };
 
 // The rotation to actually use for this asset: the user's bin-preview correction when set,

@@ -292,6 +292,10 @@ QJsonObject clipToJson(const Clip &clip)
         {QStringLiteral("effects"), effectsToJson(clip.effects)},
         {QStringLiteral("audioEffects"), effectsToJson(clip.audioEffects)},
     };
+    if (clip.audioFadeInUs > 0)
+        json.insert(QStringLiteral("audioFadeInUs"), static_cast<double>(clip.audioFadeInUs));
+    if (clip.audioFadeOutUs > 0)
+        json.insert(QStringLiteral("audioFadeOutUs"), static_cast<double>(clip.audioFadeOutUs));
     // Only vector clips carry a document, and an inline one can run to megabytes.
     if (clip.type == ClipType::Vector)
         json.insert(QStringLiteral("vector"), clip.vector.toJson());
@@ -394,6 +398,8 @@ Clip clipFromJsonV2(const QJsonObject &object, int canvasW = 1920, int canvasH =
     }
     clip.fadeInUs = static_cast<TimeUs>(object.value(QStringLiteral("fadeInUs")).toDouble());
     clip.fadeOutUs = static_cast<TimeUs>(object.value(QStringLiteral("fadeOutUs")).toDouble());
+    clip.audioFadeInUs = static_cast<TimeUs>(object.value(QStringLiteral("audioFadeInUs")).toDouble());
+    clip.audioFadeOutUs = static_cast<TimeUs>(object.value(QStringLiteral("audioFadeOutUs")).toDouble());
     clip.fadeCurve = fadeCurveFromString(object.value(QStringLiteral("fadeCurve")).toString());
     clip.fadeShape = FadeShape::fromJson(object.value(QStringLiteral("fadeShape")));
     clip.animIn = clipAnimationFromJson(object.value(QStringLiteral("animIn")).toObject());
@@ -489,6 +495,8 @@ QJsonObject assetToJson(const MediaAsset &asset)
         object.insert(QStringLiteral("folderId"), asset.folderId);
     if (!asset.sequenceId.isEmpty())
         object.insert(QStringLiteral("sequenceId"), asset.sequenceId);
+    if (!asset.generator.isEmpty())
+        object.insert(QStringLiteral("generator"), asset.generator);
     return object;
 }
 
@@ -516,6 +524,7 @@ MediaAsset assetFromJsonV2(const QJsonObject &object)
     asset.filmstripPath = object.value(QStringLiteral("filmstripPath")).toString();
     asset.folderId = object.value(QStringLiteral("folderId")).toString();
     asset.sequenceId = object.value(QStringLiteral("sequenceId")).toString();
+    asset.generator = object.value(QStringLiteral("generator")).toObject();
     if (object.contains(QStringLiteral("variableFrameRate"))) {
         asset.frameRateKnown = true;
         asset.variableFrameRate = object.value(QStringLiteral("variableFrameRate")).toBool();
@@ -752,7 +761,16 @@ Project Project::detachedCopy() const
     out.m_assetsById.detach();
     out.m_binFolderOrder.detach();
     out.m_binFoldersById.detach();
+    out.m_transcripts.detach();
     return out;
+}
+
+void Project::setTranscript(const QString &assetId, TranscriptPtr transcript)
+{
+    if (transcript)
+        m_transcripts.insert(assetId, std::move(transcript));
+    else
+        m_transcripts.remove(assetId);
 }
 
 QString Project::addAsset(MediaAsset asset)
@@ -870,10 +888,14 @@ Project Project::fromJson(const QJsonObject &object, QString *errorOut)
     const QJsonArray assetsArray = object.value(QStringLiteral("assets")).toArray();
     for (const QJsonValue &value : assetsArray) {
         const QJsonObject assetObject = value.toObject();
-        if (version >= 2)
-            project.addAsset(assetFromJsonV2(assetObject));
-        else
+        if (version >= 2) {
+            const QString id = project.addAsset(assetFromJsonV2(assetObject));
+            const QJsonObject transcript = assetObject.value(QStringLiteral("transcript")).toObject();
+            if (!transcript.isEmpty())
+                project.setTranscript(id, Transcript::fromJson(transcript));
+        } else {
             project.addAsset(assetFromJsonV1(assetObject));
+        }
     }
 
     const QJsonArray binFoldersArray = object.value(QStringLiteral("binFolders")).toArray();
@@ -1023,13 +1045,19 @@ Project Project::fromJson(const QJsonObject &object, QString *errorOut)
     return project;
 }
 
-QJsonObject Project::toJson() const
+QJsonObject Project::toJson(bool includeTranscripts) const
 {
     QJsonArray assetsArray;
     for (const QString &id : m_assetOrder) {
         const MediaAsset *assetPtr = asset(id);
-        if (assetPtr)
-            assetsArray.append(assetToJson(*assetPtr));
+        if (!assetPtr)
+            continue;
+        QJsonObject assetObject = assetToJson(*assetPtr);
+        if (includeTranscripts) {
+            if (const TranscriptPtr transcript = m_transcripts.value(id))
+                assetObject.insert(QStringLiteral("transcript"), transcript->toJson());
+        }
+        assetsArray.append(assetObject);
     }
 
     QJsonArray binFoldersArray;
@@ -1125,7 +1153,7 @@ QJsonObject Project::toJson() const
 
 QByteArray Project::toCompactJson() const
 {
-    return QJsonDocument(toJson()).toJson(QJsonDocument::Compact);
+    return QJsonDocument(toJson(false)).toJson(QJsonDocument::Compact);
 }
 
 QString Project::contentHash() const

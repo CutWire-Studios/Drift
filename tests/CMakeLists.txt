@@ -19,6 +19,8 @@ qt_add_executable(tst_editorstate
     ../src/MulticamImageProvider.cpp
     ../src/models/AppController.cpp
     ../src/models/AddonManager.cpp
+    ../src/models/JobRegistry.cpp
+    ../src/models/CloudProviders.cpp
     ../src/models/AssetLibrary.cpp
     ../src/models/BinFolderListModel.cpp
     ../src/models/TimelineModel.cpp
@@ -131,6 +133,8 @@ target_compile_definitions(tst_engine PRIVATE
     # Not committed (models/ is gitignored). The denoise tests skip when it is absent so a
     # checkout without the model still passes.
     DRIFT_TEST_DENOISE_MODEL_DIR="${CMAKE_SOURCE_DIR}/models/deepfilternet3"
+    # Staged by drift-addons/recipes/fetch-*.py; the model tests skip when absent.
+    DRIFT_TEST_VAD_MODEL_DIR="${CMAKE_SOURCE_DIR}/../drift-addons/staging/silero-vad/models/silero-vad"
 )
 if(DRIFT_WITH_SKIA)
     target_compile_definitions(tst_engine PRIVATE DRIFT_WITH_SKIA)
@@ -167,6 +171,8 @@ qt_add_executable(tst_mcp
     ../src/MulticamImageStore.cpp
     ../src/models/AppController.cpp
     ../src/models/AddonManager.cpp
+    ../src/models/JobRegistry.cpp
+    ../src/models/CloudProviders.cpp
     ../src/models/AssetLibrary.cpp
     ../src/models/BinFolderListModel.cpp
     ../src/models/TimelineModel.cpp

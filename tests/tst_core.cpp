@@ -16,6 +16,8 @@
 #include "core/ShapePath.h"
 #include "core/SrtIO.h"
 #include "core/SubtitleCue.h"
+#include "core/Transcript.h"
+#include "core/commands/ProjectCommands.h"
 #include "core/LottieTextImport.h"
 #include "core/TextAnimationPreset.h"
 #include "core/TextAnimator.h"
@@ -30,6 +32,7 @@
 
 #include <QTemporaryDir>
 #include "core/TimelineOps.h"
+#include "core/CutOps.h"
 #include "core/Transition.h"
 
 #include <cmath>
@@ -40,6 +43,25 @@ class CoreTest : public QObject
 
 private slots:
     void timeConversion();
+    void transcriptJsonRoundTrip();
+    void transcriptWordsInRange();
+    void transcriptPhrasePacking();
+    void transcriptCuesUseMeasuredTimings();
+    void transcriptSavedWithAssetNotHashed();
+    void transcriptSurvivesUndoRedo();
+    void splitClipClearsInnerFades();
+    void splitThenMergeRestoresFades();
+    void audioEdgeMultiplierRamps();
+    void audioFadesRoundTripAndLeaveOpacity();
+    void keptIntervalsMergeAndDropSlivers();
+    void packedSegmentsPackAndDeclick();
+    void segmentsFromSourceRangesReorder();
+    void segmentsFromSourceRangesReverseAndSpeed();
+    void segmentsFromSourceRangesRejectsSpeedCurve();
+    void sourceRangeToTimelineMapsSpeedAndReverse();
+    void audioHandlesForwardReverseSpeed();
+    void audioTransitionEdgeOwnsButtCutOnly();
+    void transcriptWordsFollowClipsOnTimeline();
     void keyframeHoldInterpolation();
     void keyframeLinearInterpolation();
     void keyframeEaseInterpolation();
@@ -5193,6 +5215,475 @@ void CoreTest::lottieTextImport()
     // Not a text document at all.
     QVERIFY(!lottie::importLottieTextPreset("{\"layers\":[]}", {}, &warnings, &error));
     QVERIFY(!error.isEmpty());
+}
+
+
+namespace {
+
+drift::TranscriptWord tw(double s, double e, const QString &text, int speaker = -1,
+                         drift::TranscriptTokenType type = drift::TranscriptTokenType::Word)
+{
+    drift::TranscriptWord w;
+    w.startUs = drift::secondsToUs(s);
+    w.endUs = drift::secondsToUs(e);
+    w.text = text;
+    w.speaker = static_cast<qint16>(speaker);
+    w.type = type;
+    return w;
+}
+
+std::shared_ptr<drift::Transcript> sampleTranscript()
+{
+    auto t = std::make_shared<drift::Transcript>();
+    t->engine = QStringLiteral("test");
+    t->language = QStringLiteral("en");
+    t->wordTimingsAligned = true;
+    t->diarized = true;
+    t->speakers = {{QStringLiteral("S1"), QStringLiteral("Speaker 1")},
+                   {QStringLiteral("S2"), QStringLiteral("Speaker 2")}};
+    t->words = {
+        tw(0.50, 0.80, QStringLiteral("Hello"), 0),
+        tw(0.80, 0.85, QStringLiteral(" "), 0, drift::TranscriptTokenType::Spacing),
+        tw(0.85, 1.20, QStringLiteral("world."), 0),
+        tw(1.30, 1.50, QStringLiteral("um"), 0, drift::TranscriptTokenType::Filler),
+        tw(2.50, 2.90, QStringLiteral("(laughter)"), -1, drift::TranscriptTokenType::AudioEvent),
+        tw(3.00, 3.30, QStringLiteral("Next"), 1),
+        tw(3.30, 3.60, QStringLiteral("speaker,"), 1),
+        tw(3.60, 3.90, QStringLiteral("here"), 1),
+    };
+    t->words[2].confidence = 0.75f;
+    t->words[5].interpolated = true;
+    return t;
+}
+
+} // namespace
+
+void CoreTest::transcriptJsonRoundTrip()
+{
+    const auto t = sampleTranscript();
+    const auto back = drift::Transcript::fromJson(t->toJson());
+    QVERIFY(back);
+    QCOMPARE(back->words.size(), t->words.size());
+    QCOMPARE(back->engine, t->engine);
+    QCOMPARE(back->speakers.size(), 2);
+    QVERIFY(back->diarized);
+    QVERIFY(back->wordTimingsAligned);
+    for (int i = 0; i < t->words.size(); ++i) {
+        QCOMPARE(back->words[i].startUs, t->words[i].startUs);
+        QCOMPARE(back->words[i].endUs, t->words[i].endUs);
+        QCOMPARE(back->words[i].text, t->words[i].text);
+        QCOMPARE(back->words[i].speaker, t->words[i].speaker);
+        QCOMPARE(back->words[i].type, t->words[i].type);
+        QCOMPARE(back->words[i].interpolated, t->words[i].interpolated);
+    }
+    QVERIFY(std::abs(back->words[2].confidence - 0.75f) < 1e-3f);
+    QVERIFY(std::isnan(back->words[0].confidence));
+}
+
+void CoreTest::transcriptWordsInRange()
+{
+    const auto t = sampleTranscript();
+    QCOMPARE(t->wordsInRange(0, drift::secondsToUs(10)).size(), t->words.size());
+    const QList<int> mid = t->wordsInRange(drift::secondsToUs(1.0), drift::secondsToUs(3.1));
+    QCOMPARE(mid, (QList<int>{2, 3, 4, 5}));
+    QVERIFY(t->wordsInRange(drift::secondsToUs(1.6), drift::secondsToUs(2.4)).isEmpty());
+    QCOMPARE(t->speechTokenCount(), 6);
+    QVERIFY(drift::isFillerWord(QStringLiteral("Umm,")));
+    QVERIFY(!drift::isFillerWord(QStringLiteral("umbrella")));
+}
+
+void CoreTest::transcriptPhrasePacking()
+{
+    const auto t = sampleTranscript();
+    const auto phrases = drift::packTranscriptPhrases(*t, 0, drift::secondsToUs(10),
+                                                      drift::secondsToUs(0.7), 0, false, true);
+    QCOMPARE(phrases.size(), 3);
+    QCOMPARE(phrases[0].text, QStringLiteral("Hello world."));
+    QCOMPARE(phrases[0].speaker, 0);
+    QCOMPARE(phrases[1].text, QStringLiteral("(laughter)"));
+    QCOMPARE(phrases[2].text, QStringLiteral("Next speaker, here"));
+    QCOMPARE(phrases[2].firstWord, 5);
+    QCOMPARE(phrases[2].lastWord, 7);
+
+    const auto withFillers = drift::packTranscriptPhrases(*t, 0, drift::secondsToUs(10),
+                                                          drift::secondsToUs(0.7), 0, true, false);
+    QCOMPARE(withFillers.size(), 2);
+    QCOMPARE(withFillers[0].text, QStringLiteral("Hello world. um"));
+
+    const auto capped = drift::packTranscriptPhrases(*t, 0, drift::secondsToUs(10),
+                                                     drift::secondsToUs(5), 1, false, false);
+    QCOMPARE(capped.size(), 5);
+}
+
+void CoreTest::transcriptCuesUseMeasuredTimings()
+{
+    const auto t = sampleTranscript();
+    const auto cues = drift::cuesFromTranscript(*t, 0, drift::secondsToUs(10), 42, 1, 1);
+    QCOMPARE(cues.size(), 6);
+    QCOMPARE(cues[0].startUs, drift::secondsToUs(0.5));
+    QCOMPARE(cues[0].endUs, drift::secondsToUs(0.8));
+    QCOMPARE(cues[4].text, QStringLiteral("speaker,"));
+    QCOMPARE(cues[4].startUs, drift::secondsToUs(3.3));
+}
+
+void CoreTest::transcriptSavedWithAssetNotHashed()
+{
+    drift::Project project;
+    drift::MediaAsset asset;
+    asset.id = QStringLiteral("a1");
+    asset.path = QStringLiteral("/tmp/x.mp4");
+    asset.kind = drift::MediaKind::Video;
+    project.addAsset(asset);
+    const QString hashBefore = project.contentHash();
+    project.setTranscript(QStringLiteral("a1"), sampleTranscript());
+    QCOMPARE(project.contentHash(), hashBefore);
+
+    const drift::Project back = drift::Project::fromJson(project.toJson());
+    QVERIFY(back.transcript(QStringLiteral("a1")));
+    QCOMPARE(back.transcript(QStringLiteral("a1"))->words.size(), 8);
+
+    // A transcript for an asset that no longer exists is not written.
+    drift::Project orphan;
+    orphan.setTranscript(QStringLiteral("gone"), sampleTranscript());
+    QVERIFY(!drift::Project::fromJson(orphan.toJson()).transcript(QStringLiteral("gone")));
+}
+
+void CoreTest::transcriptSurvivesUndoRedo()
+{
+    drift::Project project;
+    drift::Project before = project;
+    project.setName(QStringLiteral("Edited"));
+    drift::ProjectSnapshotCommand cmd(&project, before, project, QStringLiteral("rename"));
+    project.setTranscript(QStringLiteral("a1"), sampleTranscript());
+    cmd.undo();
+    QCOMPARE(project.name(), before.name());
+    QVERIFY(project.transcript(QStringLiteral("a1")));
+    cmd.redo();
+    QCOMPARE(project.name(), QStringLiteral("Edited"));
+    QVERIFY(project.transcript(QStringLiteral("a1")));
+}
+
+void CoreTest::splitClipClearsInnerFades()
+{
+    drift::Clip clip;
+    clip.type = drift::ClipType::Video;
+    clip.timelineDuration = drift::secondsToUs(10);
+    clip.srcOut = drift::secondsToUs(10);
+    clip.fadeInUs = drift::secondsToUs(1);
+    clip.fadeOutUs = drift::secondsToUs(2);
+    clip.audioFadeInUs = drift::secondsToUs(0.03);
+    clip.audioFadeOutUs = drift::secondsToUs(0.03);
+    clip.animIn.kind = drift::ClipAnimKind::Fade;
+    clip.animIn.durationUs = drift::secondsToUs(1);
+    clip.animOut.kind = drift::ClipAnimKind::Fade;
+    clip.animOut.durationUs = drift::secondsToUs(1);
+
+    drift::Clip head = clip;
+    drift::Clip tail;
+    QVERIFY(drift::splitClipAtOffset(head, tail, drift::secondsToUs(4)));
+    QCOMPARE(head.fadeInUs, drift::secondsToUs(1));
+    QCOMPARE(head.fadeOutUs, 0);
+    QCOMPARE(head.audioFadeOutUs, 0);
+    QCOMPARE(head.animOut.kind, drift::ClipAnimation{}.kind);
+    QCOMPARE(tail.fadeInUs, 0);
+    QCOMPARE(tail.audioFadeInUs, 0);
+    QCOMPARE(tail.animIn.kind, drift::ClipAnimation{}.kind);
+    QCOMPARE(tail.fadeOutUs, drift::secondsToUs(2));
+    QCOMPARE(head.fadeMultiplier(drift::secondsToUs(3.99)), 1.0);
+
+    // Too close to an edge for an interactive split, fine for the cut engine's floor.
+    drift::Clip h2 = clip;
+    QVERIFY(!drift::splitClipAtOffset(h2, tail, drift::secondsToUs(0.05)));
+    QVERIFY(drift::splitClipAtOffsetMin(h2, tail, drift::secondsToUs(0.05), drift::secondsToUs(0.01)));
+}
+
+void CoreTest::splitThenMergeRestoresFades()
+{
+    drift::Clip clip;
+    clip.type = drift::ClipType::Video;
+    clip.assetId = QStringLiteral("a1");
+    clip.timelineDuration = drift::secondsToUs(10);
+    clip.srcOut = drift::secondsToUs(10);
+    clip.fadeInUs = drift::secondsToUs(1);
+    clip.fadeOutUs = drift::secondsToUs(2);
+    drift::Clip head = clip;
+    drift::Clip tail;
+    QVERIFY(drift::splitClipAtOffset(head, tail, drift::secondsToUs(4)));
+    QVERIFY(drift::clipsCanMerge(head, tail));
+    const drift::Clip merged = drift::mergeClips(head, tail);
+    QCOMPARE(merged.fadeInUs, clip.fadeInUs);
+    QCOMPARE(merged.fadeOutUs, clip.fadeOutUs);
+    QCOMPARE(merged.timelineDuration, clip.timelineDuration);
+}
+
+void CoreTest::audioEdgeMultiplierRamps()
+{
+    drift::Clip clip;
+    clip.timelineStart = drift::secondsToUs(1);
+    clip.timelineDuration = drift::secondsToUs(1);
+    QCOMPARE(clip.audioEdgeMultiplier(drift::secondsToUs(1.5)), 1.0);
+    clip.audioFadeInUs = drift::secondsToUs(0.1);
+    clip.audioFadeOutUs = drift::secondsToUs(0.1);
+    QVERIFY(clip.audioEdgeMultiplier(drift::secondsToUs(1.0)) < 0.01);
+    QVERIFY(clip.audioEdgeMultiplier(drift::secondsToUs(1.05)) > 0.3);
+    QVERIFY(clip.audioEdgeMultiplier(drift::secondsToUs(1.05)) < 0.7);
+    QCOMPARE(clip.audioEdgeMultiplier(drift::secondsToUs(1.5)), 1.0);
+    QVERIFY(clip.audioEdgeMultiplier(drift::secondsToUs(2.0)) < 0.01);
+    QCOMPARE(clip.audioEdgeMultiplier(drift::secondsToUs(1.0), true, false), 1.0);
+    QVERIFY(clip.audioEdgeMultiplier(drift::secondsToUs(0.99)) < 0.01);
+}
+
+void CoreTest::audioFadesRoundTripAndLeaveOpacity()
+{
+    drift::Project project;
+    drift::Clip clip;
+    clip.id = QStringLiteral("c1");
+    clip.type = drift::ClipType::Audio;
+    clip.timelineDuration = drift::secondsToUs(2);
+    clip.srcOut = drift::secondsToUs(2);
+    clip.audioFadeInUs = drift::secondsToUs(0.03);
+    clip.audioFadeOutUs = drift::secondsToUs(0.05);
+    project.tracks() = {drift::Track{.type = drift::TrackType::Audio}};
+    project.tracks()[0].clips.append(clip);
+    const drift::Project back = drift::Project::fromJson(project.toJson());
+    QCOMPARE(back.tracks().at(0).clips.at(0).audioFadeInUs, drift::secondsToUs(0.03));
+    QCOMPARE(back.tracks().at(0).clips.at(0).audioFadeOutUs, drift::secondsToUs(0.05));
+    QCOMPARE(clip.fadeMultiplier(0), 1.0);
+
+    drift::Clip partner;
+    drift::syncLinkedTiming(partner, clip);
+    QCOMPARE(partner.audioFadeOutUs, drift::secondsToUs(0.05));
+}
+
+namespace {
+drift::Clip cutFixture()
+{
+    drift::Clip clip;
+    clip.id = QStringLiteral("c");
+    clip.assetId = QStringLiteral("a");
+    clip.type = drift::ClipType::Video;
+    clip.timelineStart = drift::secondsToUs(10);
+    clip.timelineDuration = drift::secondsToUs(10);
+    clip.srcIn = drift::secondsToUs(5);
+    clip.srcOut = drift::secondsToUs(15);
+    clip.fadeInUs = drift::secondsToUs(0.5);
+    clip.fadeOutUs = drift::secondsToUs(1);
+    return clip;
+}
+drift::TimeRangeUs sec(double a, double b)
+{
+    return {drift::secondsToUs(a), drift::secondsToUs(b)};
+}
+} // namespace
+
+void CoreTest::keptIntervalsMergeAndDropSlivers()
+{
+    const drift::Clip clip = cutFixture();
+    const auto kept = drift::keptTimelineIntervals(
+        clip, {sec(12, 13), sec(12.5, 14), sec(14.02, 16), sec(0, 10.03), sec(19.5, 30)},
+        drift::secondsToUs(0.05));
+    // 14–14.02 is a sliver and goes; 10–10.03 is inside the removal.
+    QCOMPARE(kept.size(), 2);
+    QCOMPARE(kept[0].startUs, drift::secondsToUs(10.03));
+    QCOMPARE(kept[0].endUs, drift::secondsToUs(12));
+    QCOMPARE(kept[1].startUs, drift::secondsToUs(16));
+    QCOMPARE(kept[1].endUs, drift::secondsToUs(19.5));
+}
+
+void CoreTest::packedSegmentsPackAndDeclick()
+{
+    const drift::Clip clip = cutFixture();
+    const auto segs = drift::packedSegments(clip, {sec(10, 12), sec(16, 20)}, drift::secondsToUs(0.03));
+    QCOMPARE(segs.size(), 2);
+    QCOMPARE(segs[0].timelineStart, drift::secondsToUs(10));
+    QCOMPARE(segs[0].srcIn, drift::secondsToUs(5));
+    QCOMPARE(segs[0].srcOut, drift::secondsToUs(7));
+    QCOMPARE(segs[1].timelineStart, drift::secondsToUs(12));
+    QCOMPARE(segs[1].srcIn, drift::secondsToUs(11));
+    QCOMPARE(segs[1].timelineDuration, drift::secondsToUs(4));
+    // Outer edges keep the clip's fades; the cut between them gets only the audio de-click.
+    QCOMPARE(segs[0].fadeInUs, drift::secondsToUs(0.5));
+    QCOMPARE(segs[0].fadeOutUs, 0);
+    QCOMPARE(segs[0].audioFadeInUs, 0);
+    QCOMPARE(segs[0].audioFadeOutUs, drift::secondsToUs(0.03));
+    QCOMPARE(segs[1].fadeInUs, 0);
+    QCOMPARE(segs[1].audioFadeInUs, drift::secondsToUs(0.03));
+    QCOMPARE(segs[1].fadeOutUs, drift::secondsToUs(1));
+    QCOMPARE(segs[1].audioFadeOutUs, 0);
+    QVERIFY(drift::packedSegments(clip, {}, 0).isEmpty());
+}
+
+void CoreTest::segmentsFromSourceRangesReorder()
+{
+    const drift::Clip clip = cutFixture();
+    QString error;
+    const auto segs = drift::segmentsFromSourceRanges(clip, {sec(20, 22), sec(1, 2), sec(2, 3)},
+                                                      drift::secondsToUs(30), 0, drift::secondsToUs(0.03), &error);
+    QVERIFY2(error.isEmpty(), qPrintable(error));
+    // The last two touch and play as one.
+    QCOMPARE(segs.size(), 2);
+    QCOMPARE(segs[0].srcIn, drift::secondsToUs(20));
+    QCOMPARE(segs[0].timelineStart, drift::secondsToUs(10));
+    QCOMPARE(segs[1].srcIn, drift::secondsToUs(1));
+    QCOMPARE(segs[1].srcOut, drift::secondsToUs(3));
+    QCOMPARE(segs[1].timelineStart, drift::secondsToUs(12));
+    QCOMPARE(segs[0].audioFadeInUs, drift::secondsToUs(0.03));
+
+    const auto padded = drift::segmentsFromSourceRanges(clip, {sec(0.02, 1), sec(29.5, 29.99)},
+                                                        drift::secondsToUs(30), drift::secondsToUs(0.05), 0, &error);
+    QCOMPARE(padded[0].srcIn, 0);
+    QCOMPARE(padded[1].srcOut, drift::secondsToUs(30));
+}
+
+void CoreTest::segmentsFromSourceRangesReverseAndSpeed()
+{
+    drift::Clip clip = cutFixture();
+    clip.speed = 2.0;
+    clip.timelineDuration = drift::secondsToUs(5);
+    QString error;
+    auto segs = drift::segmentsFromSourceRanges(clip, {sec(6, 8)}, drift::secondsToUs(30), 0, 0, &error);
+    QCOMPARE(segs.size(), 1);
+    QCOMPARE(segs[0].timelineDuration, drift::secondsToUs(1));
+    clip.reverse = true;
+    segs = drift::segmentsFromSourceRanges(clip, {sec(6, 8), sec(10, 12)}, drift::secondsToUs(30), 0, 0, &error);
+    QCOMPARE(segs.size(), 2);
+    QVERIFY(segs[0].reverse);
+    QCOMPARE(segs[0].timelineToSourceUs(segs[0].timelineStart), drift::secondsToUs(8));
+}
+
+void CoreTest::segmentsFromSourceRangesRejectsSpeedCurve()
+{
+    drift::Clip clip = cutFixture();
+    clip.speedCurve = drift::SpeedCurve::flat(1.5);
+    QVERIFY(clip.hasSpeedCurve());
+    QString error;
+    QVERIFY(drift::segmentsFromSourceRanges(clip, {sec(6, 8)}, drift::secondsToUs(30), 0, 0, &error).isEmpty());
+    QVERIFY(!error.isEmpty());
+}
+
+void CoreTest::sourceRangeToTimelineMapsSpeedAndReverse()
+{
+    drift::Clip clip = cutFixture();
+    drift::TimeRangeUs out;
+    QVERIFY(drift::sourceRangeToTimeline(clip, sec(6, 7), out));
+    QCOMPARE(out.startUs, drift::secondsToUs(11));
+    QCOMPARE(out.endUs, drift::secondsToUs(12));
+    QVERIFY(!drift::sourceRangeToTimeline(clip, sec(0, 4), out));
+    clip.speed = 2.0;
+    clip.timelineDuration = drift::secondsToUs(5);
+    QVERIFY(drift::sourceRangeToTimeline(clip, sec(7, 9), out));
+    QCOMPARE(out.startUs, drift::secondsToUs(11));
+    QCOMPARE(out.endUs, drift::secondsToUs(12));
+    clip.reverse = true;
+    QVERIFY(drift::sourceRangeToTimeline(clip, sec(13, 15), out));
+    QCOMPARE(out.startUs, drift::secondsToUs(10));
+    QCOMPARE(out.endUs, drift::secondsToUs(11));
+}
+
+void CoreTest::audioHandlesForwardReverseSpeed()
+{
+    drift::Clip clip;
+    clip.srcIn = drift::secondsToUs(2);
+    clip.srcOut = drift::secondsToUs(5);
+    clip.timelineDuration = drift::secondsToUs(3);
+    const drift::TimeUs media = drift::secondsToUs(10);
+    QCOMPARE(drift::clipHandleBeforeUs(clip, media), drift::secondsToUs(2));
+    QCOMPARE(drift::clipHandleAfterUs(clip, media), drift::secondsToUs(5));
+    clip.speed = 2.0;
+    QCOMPARE(drift::clipHandleBeforeUs(clip, media), drift::secondsToUs(1));
+    clip.reverse = true;
+    // Reversed, the timeline's "before" is the media after srcOut.
+    QCOMPARE(drift::clipHandleBeforeUs(clip, media), drift::secondsToUs(2.5));
+    QCOMPARE(drift::clipHandleAfterUs(clip, media), drift::secondsToUs(1));
+    clip.speedCurve = drift::SpeedCurve::flat(1.5);
+    QCOMPARE(drift::clipHandleAfterUs(clip, media), 0);
+    // The unclamped mapping walks on past the edges.
+    drift::Clip fwd;
+    fwd.srcIn = drift::secondsToUs(2);
+    fwd.srcOut = drift::secondsToUs(5);
+    fwd.timelineStart = drift::secondsToUs(10);
+    fwd.timelineDuration = drift::secondsToUs(3);
+    QCOMPARE(fwd.timelineToSourceUsUnclamped(drift::secondsToUs(13.5)), drift::secondsToUs(5.5));
+    QCOMPARE(fwd.timelineToSourceUsUnclamped(drift::secondsToUs(9.5)), drift::secondsToUs(1.5));
+}
+
+void CoreTest::audioTransitionEdgeOwnsButtCutOnly()
+{
+    drift::Track track{.type = drift::TrackType::Audio};
+    drift::Clip a;
+    a.id = QStringLiteral("a");
+    a.srcIn = 0;
+    a.srcOut = drift::secondsToUs(1);
+    a.timelineDuration = drift::secondsToUs(1);
+    drift::Clip b = a;
+    b.id = QStringLiteral("b");
+    b.timelineStart = drift::secondsToUs(1);
+    b.srcIn = drift::secondsToUs(1);
+    b.srcOut = drift::secondsToUs(2);
+    track.clips = {a, b};
+    drift::Transition t;
+    t.fromClipId = a.id;
+    t.toClipId = b.id;
+    t.durationUs = drift::secondsToUs(0.4);
+    track.transitions = {t};
+    const drift::TimeUs media = drift::secondsToUs(2);
+    const drift::AudioTransitionEdge ea = drift::audioTransitionEdgeFor(track, a, media);
+    QVERIFY(ea.ownsOut && !ea.ownsIn);
+    QVERIFY(ea.outHasHandle);
+    QCOMPARE(ea.extendAfterUs, drift::secondsToUs(0.2));
+    const drift::AudioTransitionEdge eb = drift::audioTransitionEdgeFor(track, b, media);
+    QVERIFY(eb.ownsIn && eb.inHasHandle);
+    QCOMPARE(eb.extendBeforeUs, drift::secondsToUs(0.2));
+    // B's media ends where it does: nothing past it, and a dip for that side.
+    track.clips[1].srcIn = 0;
+    track.clips[1].srcOut = drift::secondsToUs(1);
+    QVERIFY(!drift::audioTransitionEdgeFor(track, track.clips[1], media).inHasHandle);
+    QCOMPARE(drift::effectiveAudioCurve(QStringLiteral("crossfade"), false), QStringLiteral("dip"));
+    QCOMPARE(drift::effectiveAudioCurve(QStringLiteral("crossfade"), true), QStringLiteral("crossfade"));
+    // Overlapping clips have real audio across the window: no ownership.
+    track.clips[1].timelineStart = drift::secondsToUs(0.8);
+    QVERIFY(!drift::audioTransitionEdgeFor(track, track.clips[0], media).ownsOut);
+}
+
+void CoreTest::transcriptWordsFollowClipsOnTimeline()
+{
+    drift::Project project;
+    drift::MediaAsset asset;
+    asset.id = QStringLiteral("a1");
+    asset.kind = drift::MediaKind::Audio;
+    project.addAsset(asset);
+    project.setTranscript(QStringLiteral("a1"), sampleTranscript());
+    project.tracks() = {drift::Track{.type = drift::TrackType::Audio}};
+    // Plays source 2.5–4 s at 2x from timeline 10 s, then source 0–1 s reversed at 20 s.
+    drift::Clip fast;
+    fast.id = QStringLiteral("fast");
+    fast.assetId = QStringLiteral("a1");
+    fast.srcIn = drift::secondsToUs(2.5);
+    fast.srcOut = drift::secondsToUs(4.0);
+    fast.speed = 2.0;
+    fast.timelineStart = drift::secondsToUs(10);
+    fast.timelineDuration = drift::secondsToUs(0.75);
+    drift::Clip rev = fast;
+    rev.id = QStringLiteral("rev");
+    rev.srcIn = 0;
+    rev.srcOut = drift::secondsToUs(1.0);
+    rev.speed = 1.0;
+    rev.reverse = true;
+    rev.timelineStart = drift::secondsToUs(20);
+    rev.timelineDuration = drift::secondsToUs(1.0);
+    project.tracks()[0].clips = {fast, rev};
+
+    const auto all = drift::transcriptWordsOnTimeline(project, 0, drift::secondsToUs(100));
+    // fast: (laughter) 2.5–2.9, Next 3.0–3.3, speaker, 3.3–3.6, here 3.6–3.9; rev: Hello, space, world.
+    QCOMPARE(all.size(), 7);
+    QCOMPARE(all[1].word.text, QStringLiteral("Next"));
+    QCOMPARE(all[1].word.startUs, drift::secondsToUs(10.25));
+    QCOMPARE(all[1].word.endUs, drift::secondsToUs(10.4));
+    QCOMPARE(all[1].index, 5);
+    // Reversed: "world." (source 0.85–1.2 → clipped to 1.0) plays first, at 20.0–20.15.
+    QCOMPARE(all[4].word.text, QStringLiteral("world."));
+    QCOMPARE(all[4].word.startUs, drift::secondsToUs(20.0));
+    QCOMPARE(drift::transcriptWordsOnTimeline(project, 0, drift::secondsToUs(100), QStringLiteral("rev")).size(), 3);
 }
 
 QTEST_MAIN(CoreTest)

@@ -18,6 +18,8 @@ struct WhisperResult
     bool cancelled = false;
     bool ok = false;
     QString error;
+    // The language decoded with: the forced one, or what auto-detect picked.
+    QString language;
 };
 
 // Whisper (openai/whisper-small) speech-to-text on ONNX Runtime. Lazily loads the ~750 MB
@@ -50,6 +52,14 @@ public:
     WhisperResult transcribe(const std::vector<float> &pcm,
                              const std::function<bool(double, const QString &)> &progress,
                              const QString &languageCode = QString(), int maxWordsPerCue = 0);
+
+    // Whisper's own timestamped segments, unpacked: what word alignment starts from.
+    WhisperResult transcribeSegments(const std::vector<float> &pcm,
+                                     const std::function<bool(double, const QString &)> &progress,
+                                     const QString &languageCode = QString());
+
+    // Frees the sessions (~750 MB) so another model can load; the next call reloads them.
+    void unload();
 
     WhisperTranscriber(const WhisperTranscriber &) = delete;
     WhisperTranscriber &operator=(const WhisperTranscriber &) = delete;

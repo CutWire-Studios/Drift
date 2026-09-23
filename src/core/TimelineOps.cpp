@@ -778,7 +778,13 @@ TimeUs sourceDurationForClip(const Project &project, const Clip &clip)
 
 bool splitClipAtOffset(Clip &head, Clip &tail, TimeUs offset)
 {
-    if (offset < kMinClipDurationUs || head.timelineDuration - offset < kMinClipDurationUs)
+    return splitClipAtOffsetMin(head, tail, offset, kMinClipDurationUs);
+}
+
+bool splitClipAtOffsetMin(Clip &head, Clip &tail, TimeUs offset, TimeUs minEdgeUs)
+{
+    minEdgeUs = qMax<TimeUs>(1, minEdgeUs);
+    if (offset < minEdgeUs || head.timelineDuration - offset < minEdgeUs)
         return false;
 
     const TimeUs sourceSpan = head.srcOut - head.srcIn;
@@ -842,6 +848,16 @@ bool splitClipAtOffset(Clip &head, Clip &tail, TimeUs offset)
     }
 
     head.timelineDuration = offset;
+    // A cut is invisible: neither half fades or animates at it. The outer fades stay where they
+    // were (clamped to the shorter halves), and mergeClips puts the tail's fade-out back.
+    head.fadeOutUs = 0;
+    head.animOut = ClipAnimation{};
+    head.audioFadeOutUs = 0;
+    tail.fadeInUs = 0;
+    tail.animIn = ClipAnimation{};
+    tail.audioFadeInUs = 0;
+    head.fadeInUs = qMin(head.fadeInUs, head.timelineDuration);
+    tail.fadeOutUs = qMin(tail.fadeOutUs, tail.timelineDuration);
     // Key times are relative to the clip's own start, so the tail — which now starts `offset`
     // later — has to carry its curves back by the same amount. Without this a cut, which should be
     // invisible, replays the whole animation `offset` later on the second half. The head keeps its
@@ -939,6 +955,8 @@ Clip mergeClips(const Clip &left, const Clip &right)
         out.srcOut = right.srcOut;
     }
     out.fadeOutUs = right.fadeOutUs;
+    out.animOut = right.animOut;
+    out.audioFadeOutUs = right.audioFadeOutUs;
     return out;
 }
 
@@ -1014,6 +1032,8 @@ void syncLinkedTiming(Clip &dst, const Clip &src)
     dst.fadeOutUs = src.fadeOutUs;
     dst.fadeCurve = src.fadeCurve;
     dst.fadeShape = src.fadeShape;
+    dst.audioFadeInUs = src.audioFadeInUs;
+    dst.audioFadeOutUs = src.audioFadeOutUs;
 }
 
 QString assignSplitLinkIds(Clip &head, Clip &tail)

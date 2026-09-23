@@ -1,9 +1,12 @@
 // Headless smoke test for the Whisper auto-subtitle transcriber: decode a media file to
 // 16 kHz mono and print the timed cues.
-// Usage: transcribe [--lang CODE] <media-file>
+// Usage: transcribe [--lang CODE] [--words] <media-file>
 //        CODE is a Whisper language code (en, si, …). Omit for auto-detect.
+//        --words runs the full local pipeline (VAD, Whisper, CTC alignment) and prints each word.
+//        --diarize also labels speakers.
 
 #include "engine/ClipReaderPool.h"
+#include "engine/LocalTranscription.h"
 #include "engine/MediaProbe.h"
 #include "engine/WhisperTranscriber.h"
 #include "core/Time.h"
@@ -23,9 +26,20 @@ int main(int argc, char *argv[])
     const QStringList args = app.arguments();
     QString language;
     QString path;
+    bool words = false;
+    bool diarize = false;
     for (int i = 1; i < args.size(); ++i) {
         if (args.at(i) == QLatin1String("--lang") && i + 1 < args.size()) {
             language = args.at(++i);
+            continue;
+        }
+        if (args.at(i) == QLatin1String("--words")) {
+            words = true;
+            continue;
+        }
+        if (args.at(i) == QLatin1String("--diarize")) {
+            words = true;
+            diarize = true;
             continue;
         }
         if (path.isEmpty() && !args.at(i).startsWith(QLatin1Char('-')))
@@ -59,6 +73,32 @@ int main(int argc, char *argv[])
     std::vector<float> mono(got);
     for (int i = 0; i < got; ++i)
         mono[i] = 0.5f * (stereo[i * 2] + stereo[i * 2 + 1]);
+
+    if (words) {
+        drift::LocalTranscribeOptions options;
+        options.language = language;
+        options.diarize = diarize;
+        const drift::LocalTranscribeResult r = drift::transcribeLocal(
+            mono, 0, options, [&](double p, const QString &status) {
+                err << "\r" << static_cast<int>(p * 100) << "%  " << status << "   ";
+                err.flush();
+                return true;
+            });
+        err << "\n";
+        if (!r.transcript) {
+            err << "transcription failed: " << r.error << "\n";
+            return 1;
+        }
+        out << "engine " << r.transcript->engine << " language " << r.transcript->language << "\n";
+        for (const drift::TranscriptWord &word : r.transcript->words) {
+            out << QString::number(drift::usToSeconds(word.startUs), 'f', 3) << " "
+                << QString::number(drift::usToSeconds(word.endUs), 'f', 3) << " "
+                << (word.interpolated ? "~ " : "  ")
+                << (word.speaker >= 0 ? QStringLiteral("S%1 ").arg(word.speaker + 1) : QString())
+                << word.text << "\n";
+        }
+        return 0;
+    }
 
     drift::WhisperTranscriber &w = drift::WhisperTranscriber::instance();
     if (!w.available()) {

@@ -644,13 +644,24 @@ Item {
             runAdd()
     }
 
+    // A visual-only transition dropped on an audio track becomes the crossfade it can actually be.
+    function transitionKindForTrack(trackIndex, kind) {
+        const kinds = EditorState.transitionKindsForTrack(trackIndex)
+        for (let i = 0; i < kinds.length; ++i) {
+            if (kinds[i].kind === kind)
+                return kind
+        }
+        return "crossfade"
+    }
+
     // Outgoing (earlier) clip of the boundary a transition dropped at this x
     // would bridge.
     function transitionLeftClipAtPosition(trackIndex, xPixels) {
         if (trackIndex < 0 || trackIndex >= tracks.length)
             return -1
         const track = tracks[trackIndex]
-        if (track.type !== "video" && track.type !== "shape" && track.type !== "text")
+        if (track.type !== "video" && track.type !== "shape" && track.type !== "text"
+                && track.type !== "audio")
             return -1
         const seconds = xPixels / pxPerSecond
         const clips = track.clips
@@ -771,7 +782,7 @@ Item {
                 Toasts.info(qsTr("Drop a transition where two clips meet."))
                 return
             }
-            EditorState.addTransition(trackIdx, leftClip, payload, 0.5)
+            EditorState.addTransition(trackIdx, leftClip, transitionKindForTrack(trackIdx, payload), 0.5)
             return
         }
 
@@ -1721,7 +1732,7 @@ Item {
                                         }
                                         readonly property bool showRegion:
                                             (trackType === "video" || trackType === "shape"
-                                             || trackType === "text")
+                                             || trackType === "text" || trackType === "audio")
                                             && leftClip && rightClip
                                             && (physicallyOverlapping || hasTransition)
                                             && regionEnd > regionStart

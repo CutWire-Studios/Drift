@@ -1,4 +1,9 @@
 #include <QtTest>
+#include "engine/SileroVad.h"
+#include "engine/CtcAligner.h"
+#include "engine/KaldiFbank.h"
+#include "engine/SpeakerDiarizer.h"
+#include <set>
 
 #include <QColor>
 #include <QDir>
@@ -300,6 +305,18 @@ private slots:
     void exporterSupportsNtscFrameRates();
     void exporterFrameRateAddsRealDetailToSlowedClips();
     void mixerHasNoBlockBoundaryDropout();
+    void mixerDoesNotLeakPastClipEnd();
+    void declickRemovesStepAtCut();
+    void audioCrossfadeUsesHandles();
+    void audioCrossfadeFallsBackToDip();
+    void waveformSheetDrawsWordLane();
+    void vadRangesFollowSileroRules();
+    void vadModelScoresSilenceLow();
+    void ctcForcedAlignFindsPlantedPath();
+    void alignerNormalizesEnglish();
+    void clusterEmbeddingsCompleteLinkage();
+    void assignSpeakersByOverlap();
+    void kaldiFbankShapeAndTone();
     void mixerSurvivesConcurrentClipAudioReset();
     void retimedClipAudioIsNotSilent();
     void retimedAudioPreservesPitch();
@@ -11148,6 +11165,338 @@ void EngineTest::waveformSheetSpectrogramSeparatesTones()
     }
     QCOMPARE(peak, 1.0f);
     QVERIFY(spectrogram(mono.constData(), 100, rate, bins, columns).isEmpty());
+}
+
+namespace {
+
+QVector<float> mixProject(const drift::Project &project, drift::TimeUs durationUs, int rate, int block)
+{
+    AudioMixer mixer;
+    mixer.setProject(&project);
+    const int total = static_cast<int>((durationUs * rate) / drift::kUsPerSecond);
+    QVector<float> out(total * 2, 0.0f);
+    for (int offset = 0; offset < total; offset += block) {
+        const int count = std::min(block, total - offset);
+        const auto startUs = static_cast<drift::TimeUs>((static_cast<int64_t>(offset) * drift::kUsPerSecond) / rate);
+        mixer.mix(startUs, count, rate, out.data() + static_cast<size_t>(offset) * 2);
+    }
+    return out;
+}
+
+drift::Clip toneSlice(const QString &path, const QString &id, drift::TimeUs at, drift::TimeUs srcIn,
+                      drift::TimeUs dur)
+{
+    drift::Clip clip;
+    clip.id = id;
+    clip.type = drift::ClipType::Audio;
+    clip.path = path;
+    clip.timelineStart = at;
+    clip.timelineDuration = dur;
+    clip.srcIn = srcIn;
+    clip.srcOut = srcIn + dur;
+    return clip;
+}
+
+} // namespace
+
+void EngineTest::mixerDoesNotLeakPastClipEnd()
+{
+    QTemporaryDir dir;
+    const QString path = makeToneAudio(dir);
+    if (path.isEmpty())
+        QSKIP("ffmpeg not available to generate a test clip");
+    constexpr int kRate = 48000;
+    drift::Project project;
+    project.setSampleRate(kRate);
+    drift::Track track{.type = drift::TrackType::Audio};
+    // 0.5 s does not fall on a 1024-frame boundary, so the last block overhangs the clip's end.
+    track.clips.append(toneSlice(path, QStringLiteral("a"), 0, 0, 500'000));
+    project.tracks().append(track);
+
+    const QVector<float> out = mixProject(project, 1'000'000, kRate, 1024);
+    float before = 0.0f;
+    for (int i = kRate / 10; i < kRate / 2 - 10; ++i)
+        before = std::max(before, std::abs(out[i * 2]));
+    QVERIFY2(before > 0.01f, "tone is silent inside the clip");
+    for (int i = kRate / 2 + 1; i < out.size() / 2; ++i)
+        QVERIFY2(out[i * 2] == 0.0f && out[i * 2 + 1] == 0.0f,
+                 qPrintable(QStringLiteral("audio past srcOut at frame %1").arg(i)));
+}
+
+void EngineTest::declickRemovesStepAtCut()
+{
+    QTemporaryDir dir;
+    const QString path = makeToneAudio(dir);
+    if (path.isEmpty())
+        QSKIP("ffmpeg not available to generate a test clip");
+    constexpr int kRate = 48000;
+    constexpr double kToneHz = 440.0;
+
+    auto worstStep = [&](drift::TimeUs declickUs, float *amplitudeOut) {
+        drift::Project project;
+        project.setSampleRate(kRate);
+        drift::Track track{.type = drift::TrackType::Audio};
+        drift::Clip a = toneSlice(path, QStringLiteral("a"), 0, 0, 500'000);
+        // A ends at a zero crossing; B resumes the tone at its peak, so a hard cut is a full-scale step.
+        drift::Clip b = toneSlice(path, QStringLiteral("b"), 500'000, 1'000'568, 500'000);
+        a.audioFadeOutUs = declickUs;
+        b.audioFadeInUs = declickUs;
+        track.clips = {a, b};
+        project.tracks().append(track);
+        const QVector<float> out = mixProject(project, 1'000'000, kRate, 1024);
+        float amplitude = 0.0f;
+        for (int i = kRate / 10; i < kRate / 2 - kRate / 20; ++i)
+            amplitude = std::max(amplitude, std::abs(out[i * 2]));
+        float worst = 0.0f;
+        for (int i = kRate / 2 - kRate / 20; i < kRate / 2 + kRate / 20; ++i)
+            worst = std::max(worst, std::abs(out[i * 2] - out[(i - 1) * 2]));
+        *amplitudeOut = amplitude;
+        return worst;
+    };
+
+    float amplitude = 0.0f;
+    const float hard = worstStep(0, &amplitude);
+    const auto bound = static_cast<float>(amplitude * 2.0 * std::sin(M_PI * kToneHz / kRate));
+    QVERIFY2(hard > bound * 1.5f, "the test cut should click without a de-click fade");
+    const float soft = worstStep(30'000, &amplitude);
+    QVERIFY2(soft < bound * 1.5f,
+             qPrintable(QStringLiteral("step %1 at the cut exceeds %2").arg(soft).arg(bound)));
+}
+
+void EngineTest::vadRangesFollowSileroRules()
+{
+    // 32 ms windows: 1 s silence, 1 s speech, 60 ms dip, 1 s speech, 1 s silence.
+    std::vector<float> probs;
+    auto push = [&](float p, double seconds) {
+        for (int i = 0; i < qRound(seconds * 16000 / 512); ++i)
+            probs.push_back(p);
+    };
+    push(0.02f, 1.0);
+    push(0.9f, 1.0);
+    push(0.1f, 0.064);
+    push(0.9f, 1.0);
+    push(0.02f, 1.0);
+    // A lone blip shorter than min speech is dropped.
+    push(0.9f, 0.096);
+    push(0.02f, 1.0);
+    const size_t total = probs.size() * 512;
+
+    drift::VadParams params;
+    const QList<drift::VadRange> ranges = drift::vadSpeechRanges(probs, total, params);
+    QCOMPARE(ranges.size(), 1); // the 64 ms dip is under min_silence (100 ms)
+    QVERIFY(qAbs(drift::usToSeconds(ranges[0].startUs) - 0.97) < 0.05);
+    QVERIFY(qAbs(drift::usToSeconds(ranges[0].endUs) - 3.09) < 0.05);
+
+    params.minSilenceMs = 30;
+    QCOMPARE(drift::vadSpeechRanges(probs, total, params).size(), 2);
+}
+
+void EngineTest::vadModelScoresSilenceLow()
+{
+    const QString dir = QString::fromUtf8(DRIFT_TEST_VAD_MODEL_DIR);
+    if (!QFile::exists(dir + QStringLiteral("/silero_vad.onnx")))
+        QSKIP("Silero VAD model not staged");
+    qputenv("DRIFT_VAD_MODEL_DIR", dir.toUtf8());
+    drift::SileroVad &vad = drift::SileroVad::instance();
+    if (!vad.available())
+        QSKIP(qPrintable(QStringLiteral("VAD unavailable: %1").arg(vad.lastError())));
+    std::vector<float> pcm(16000 * 2, 0.0f);
+    for (size_t i = 16000; i < pcm.size(); ++i)
+        pcm[i] = 0.3f * std::sin(2.0 * M_PI * 440.0 * i / 16000.0);
+    const std::vector<float> probs = vad.probabilities(pcm);
+    QCOMPARE(probs.size(), (pcm.size() + 511) / 512);
+    for (float p : probs)
+        QVERIFY2(p >= 0.0f && p <= 1.0f, qPrintable(QString::number(p)));
+    float silenceMax = 0.0f;
+    for (size_t i = 0; i < 16000 / 512; ++i)
+        silenceMax = std::max(silenceMax, probs[i]);
+    QVERIFY2(silenceMax < 0.2f, qPrintable(QString::number(silenceMax)));
+}
+
+void EngineTest::ctcForcedAlignFindsPlantedPath()
+{
+    // Vocab: 0 blank, 1 A, 2 B, 3 |. Plant "A A | B" (a repeat needs a blank between).
+    const int vocab = 4;
+    const std::vector<int> planted{0, 1, 1, 0, 1, 0, 3, 0, 0, 2, 2, 2, 0};
+    std::vector<float> lp(planted.size() * vocab, std::log(0.02f));
+    for (size_t t = 0; t < planted.size(); ++t)
+        lp[t * vocab + planted[t]] = std::log(0.94f);
+    const auto spans = drift::ctcForcedAlign(lp.data(), static_cast<int>(planted.size()), vocab, {1, 1, 3, 2}, 0);
+    QCOMPARE(spans.size(), 4);
+    QCOMPARE(spans[0], qMakePair(1, 2));
+    QCOMPARE(spans[1], qMakePair(4, 4));
+    QCOMPARE(spans[2], qMakePair(6, 6));
+    QCOMPARE(spans[3], qMakePair(9, 11));
+    // Too short to hold A,blank,A.
+    QVERIFY(drift::ctcForcedAlign(lp.data(), 2, vocab, {1, 1}, 0).isEmpty());
+}
+
+void EngineTest::alignerNormalizesEnglish()
+{
+    QHash<QChar, int> vocab;
+    for (const QChar c : QStringLiteral("ABCDEFGHIJKLMNOPQRSTUVWXYZ'"))
+        vocab.insert(c, 1);
+    const QString en = QStringLiteral("en");
+    QCOMPARE(drift::normalizeForAligner(QStringLiteral("Café,"), vocab, true, en), QStringLiteral("CAFE"));
+    QCOMPARE(drift::normalizeForAligner(QStringLiteral("don’t"), vocab, true, en), QStringLiteral("DON'T"));
+    QCOMPARE(drift::normalizeForAligner(QStringLiteral("42%"), vocab, true, en), QStringLiteral("FORTY TWO PERCENT"));
+    QCOMPARE(drift::normalizeForAligner(QStringLiteral("1999"), vocab, true, en), QStringLiteral("NINETEEN NINETY NINE"));
+    QCOMPARE(drift::normalizeForAligner(QStringLiteral("2005"), vocab, true, en), QStringLiteral("TWO THOUSAND FIVE"));
+    QVERIFY(drift::normalizeForAligner(QStringLiteral("日本"), vocab, true, en).isEmpty());
+}
+
+void EngineTest::clusterEmbeddingsCompleteLinkage()
+{
+    // Two tight groups of directions plus noise: complete linkage at 0.5 finds two clusters.
+    const int dim = 4;
+    std::vector<float> e{
+        1.0f, 0.05f, 0, 0,   0.98f, 0.1f, 0, 0,   1.0f, -0.05f, 0.02f, 0,
+        0, 0, 1.0f, 0.05f,   0, 0.02f, 0.97f, 0.1f,
+    };
+    const std::vector<int> labels = drift::clusterEmbeddings(e, 5, dim, -1, 0.5f);
+    QCOMPARE(labels.size(), size_t(5));
+    QCOMPARE(labels[0], labels[1]);
+    QCOMPARE(labels[1], labels[2]);
+    QCOMPARE(labels[3], labels[4]);
+    QVERIFY(labels[0] != labels[3]);
+    // Asked for one cluster, everything merges.
+    const std::vector<int> one = drift::clusterEmbeddings(e, 5, dim, 1, 0.5f);
+    QCOMPARE(std::set<int>(one.begin(), one.end()).size(), size_t(1));
+    // A strict threshold keeps every point apart.
+    const std::vector<int> apart = drift::clusterEmbeddings(e, 5, dim, -1, 0.001f);
+    QCOMPARE(std::set<int>(apart.begin(), apart.end()).size(), size_t(5));
+}
+
+void EngineTest::assignSpeakersByOverlap()
+{
+    drift::Transcript t;
+    auto word = [](double a, double b) {
+        drift::TranscriptWord w;
+        w.startUs = drift::secondsToUs(a);
+        w.endUs = drift::secondsToUs(b);
+        w.text = QStringLiteral("w");
+        return w;
+    };
+    t.words = {word(0.1, 0.4), word(0.5, 0.9), word(2.1, 2.5), word(1.55, 1.6)};
+    // Speaker ids are the diarizer's; 3 has no words and must not leave a gap.
+    const QList<drift::DiarizeSegment> turns{{drift::secondsToUs(0), drift::secondsToUs(1.0), 3},
+                                             {drift::secondsToUs(1.0), drift::secondsToUs(1.2), 5},
+                                             {drift::secondsToUs(2.0), drift::secondsToUs(3.0), 7}};
+    drift::assignSpeakers(t, turns);
+    QVERIFY(t.diarized);
+    QCOMPARE(t.words[0].speaker, qint16(0));
+    QCOMPARE(t.words[1].speaker, qint16(0));
+    QCOMPARE(t.words[2].speaker, qint16(1));
+    // In a gap: nearest turn (5 ends at 1.2, 7 starts at 2.0) — the 1.2 turn is closer.
+    QCOMPARE(t.words[3].speaker, qint16(2));
+    QCOMPARE(t.speakers.size(), 3);
+}
+
+void EngineTest::kaldiFbankShapeAndTone()
+{
+    drift::KaldiFbank fbank;
+    std::vector<float> pcm(16000, 0.0f);
+    for (size_t i = 0; i < pcm.size(); ++i)
+        pcm[i] = 0.5f * std::sin(2.0 * M_PI * 1000.0 * i / 16000.0);
+    const std::vector<float> feats = fbank.compute(pcm.data(), pcm.size(), false);
+    QCOMPARE(drift::KaldiFbank::frameCount(pcm.size()), size_t(100));
+    QCOMPARE(feats.size(), size_t(100 * drift::KaldiFbank::kBins));
+    // A 1 kHz tone lights the mel bin around 1 kHz far above the bins at either end.
+    const float *row = feats.data() + 50 * drift::KaldiFbank::kBins;
+    const int peak = static_cast<int>(std::max_element(row, row + drift::KaldiFbank::kBins) - row);
+    QVERIFY2(peak > 15 && peak < 30, qPrintable(QString::number(peak)));
+    QVERIFY(row[peak] - row[drift::KaldiFbank::kBins - 1] > 10.0f);
+}
+
+namespace {
+// Two tone slices butted at 1 s on an audio track with a 0.4 s crossfade between them.
+QVector<float> mixButtCrossfade(const QString &path, drift::Clip a, drift::Clip b)
+{
+    drift::Project project;
+    project.setSampleRate(48000);
+    drift::Track track{.type = drift::TrackType::Audio};
+    track.clips = {a, b};
+    drift::Transition t;
+    t.id = QStringLiteral("t");
+    t.fromClipId = a.id;
+    t.toClipId = b.id;
+    t.kindId = QStringLiteral("crossfade");
+    t.durationUs = 400'000;
+    track.transitions = {t};
+    project.tracks().append(track);
+    drift::MediaAsset asset;
+    asset.id = QStringLiteral("tone");
+    asset.path = path;
+    asset.kind = drift::MediaKind::Audio;
+    asset.durationUs = 2'000'000;
+    project.assets().insert(asset.id, asset);
+    project.assetOrder().append(asset.id);
+    return mixProject(project, 2'000'000, 48000, 1024);
+}
+} // namespace
+
+void EngineTest::audioCrossfadeUsesHandles()
+{
+    QTemporaryDir dir;
+    const QString path = makeToneAudio(dir);
+    if (path.isEmpty())
+        QSKIP("ffmpeg not available to generate a test clip");
+    drift::Clip a = toneSlice(path, QStringLiteral("a"), 0, 0, 1'000'000);
+    drift::Clip b = toneSlice(path, QStringLiteral("b"), 1'000'000, 1'000'000, 1'000'000);
+    a.assetId = b.assetId = QStringLiteral("tone");
+    const QVector<float> out = mixButtCrossfade(path, a, b);
+    // The same continuous tone crossfaded with itself stays at full level through the cut.
+    float before = 0.0f, during = 0.0f, worst = 0.0f;
+    for (int i = 24000; i < 36000; ++i)
+        before = std::max(before, std::abs(out[i * 2]));
+    for (int i = 43200; i < 52800; ++i)
+        during = std::max(during, std::abs(out[i * 2]));
+    for (int i = 40000; i < 56000; ++i)
+        worst = std::max(worst, std::abs(out[i * 2] - out[(i - 1) * 2]));
+    const auto bound = static_cast<float>(before * 2.0 * std::sin(M_PI * 440.0 / 48000));
+    QVERIFY2(during > before * 0.9f, qPrintable(QStringLiteral("level %1 vs %2").arg(during).arg(before)));
+    QVERIFY2(worst < bound * 1.5f, qPrintable(QStringLiteral("step %1 vs %2").arg(worst).arg(bound)));
+}
+
+void EngineTest::audioCrossfadeFallsBackToDip()
+{
+    QTemporaryDir dir;
+    const QString path = makeToneAudio(dir);
+    if (path.isEmpty())
+        QSKIP("ffmpeg not available to generate a test clip");
+    // A plays the file's last second and B its first: neither has media past the cut.
+    drift::Clip a = toneSlice(path, QStringLiteral("a"), 0, 1'000'000, 1'000'000);
+    drift::Clip b = toneSlice(path, QStringLiteral("b"), 1'000'000, 0, 1'000'000);
+    a.assetId = b.assetId = QStringLiteral("tone");
+    const QVector<float> out = mixButtCrossfade(path, a, b);
+    float atCut = 0.0f, before = 0.0f, worst = 0.0f;
+    for (int i = 47900; i < 48100; ++i)
+        atCut = std::max(atCut, std::abs(out[i * 2]));
+    for (int i = 24000; i < 36000; ++i)
+        before = std::max(before, std::abs(out[i * 2]));
+    for (int i = 40000; i < 56000; ++i)
+        worst = std::max(worst, std::abs(out[i * 2] - out[(i - 1) * 2]));
+    const auto bound = static_cast<float>(before * 2.0 * std::sin(M_PI * 440.0 / 48000));
+    QVERIFY2(atCut < before * 0.05f, qPrintable(QStringLiteral("%1 at the cut").arg(atCut)));
+    QVERIFY2(worst < bound * 1.5f, qPrintable(QStringLiteral("step %1 vs %2").arg(worst).arg(bound)));
+}
+
+void EngineTest::waveformSheetDrawsWordLane()
+{
+    drift::waveformsheet::Input in;
+    in.startSeconds = 0.0;
+    in.durationSeconds = 2.0;
+    in.mixed = QVector<float>(100, 0.5f);
+    drift::waveformsheet::Options opt;
+    opt.width = 400;
+    opt.height = 200;
+    const QImage bare = drift::waveformsheet::render(in, opt);
+    in.words = {{0.2, 0.8, QStringLiteral("hello"), 0}, {0.9, 0.905, QStringLiteral("x"), 1}};
+    const QImage withWords = drift::waveformsheet::render(in, opt);
+    // The lane sits between the peaks and the axis and is filled inside the word's box.
+    const int laneY = opt.height - opt.axisHeight - opt.wordLaneHeight / 2;
+    QVERIFY(withWords.pixel(100, laneY) != bare.pixel(100, laneY));
+    QVERIFY(withWords.pixel(100, laneY) != withWords.pixel(390, laneY));
 }
 
 QTEST_MAIN(EngineTest)

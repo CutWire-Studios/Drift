@@ -429,6 +429,8 @@ add_library(driftcore STATIC
     src/core/ClipAnimation.cpp
     src/core/SubtitleCue.h
     src/core/SubtitleCue.cpp
+    src/core/Transcript.h
+    src/core/Transcript.cpp
     src/core/SrtIO.h
     src/core/SrtIO.cpp
     src/core/Mask.h
@@ -483,6 +485,8 @@ add_library(driftcore STATIC
     src/core/OtioReader.cpp
     src/core/TimelineOps.h
     src/core/TimelineOps.cpp
+    src/core/CutOps.h
+    src/core/CutOps.cpp
     src/core/commands/ProjectCommands.h
     src/core/commands/ProjectCommands.cpp
 )
@@ -685,6 +689,18 @@ add_library(driftengine STATIC
     src/engine/MediaEditor.cpp
     src/engine/AudioFileWriter.h
     src/engine/AudioFileWriter.cpp
+    src/engine/SpeechAudio.h
+    src/engine/SpeechAudio.cpp
+    src/engine/SileroVad.h
+    src/engine/SileroVad.cpp
+    src/engine/CtcAligner.h
+    src/engine/CtcAligner.cpp
+    src/engine/LocalTranscription.h
+    src/engine/LocalTranscription.cpp
+    src/engine/KaldiFbank.h
+    src/engine/KaldiFbank.cpp
+    src/engine/SpeakerDiarizer.h
+    src/engine/SpeakerDiarizer.cpp
     src/engine/ProjectBundle.h
     src/engine/ProjectBundle.cpp
     src/engine/ProjectDependencies.h
@@ -776,6 +792,10 @@ qt_add_executable(drift
     src/models/AddonEndpoint.h
     src/models/AddonManager.h
     src/models/AddonManager.cpp
+    src/models/JobRegistry.h
+    src/models/JobRegistry.cpp
+    src/models/CloudProviders.h
+    src/models/CloudProviders.cpp
     src/models/MarketEndpoint.h
     src/models/MarketIdentity.h
     src/models/MarketIdentity.cpp
@@ -1246,6 +1266,7 @@ if(Qt6LinguistTools_FOUND)
             src/engine/MediaEditor.cpp
             src/engine/ProjectBundle.cpp
             src/core/Project.cpp
+            src/core/Transcript.cpp
             src/core/SrtIO.cpp
             src/core/ShapeStyle.cpp
             src/core/TextStyle.cpp

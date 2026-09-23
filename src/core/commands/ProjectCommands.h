@@ -25,6 +25,8 @@ public:
     const Project &after() const { return m_after; }
 
 private:
+    void restore(const Project &snapshot);
+
     Project *m_project = nullptr;
     Project m_before;
     Project m_after;

@@ -1522,7 +1522,15 @@ QJsonObject McpDispatcher::opAddTransition(const QJsonObject &args)
     const double duration = args.contains(QStringLiteral("duration"))
                                 ? jsonNumber(args.value(QStringLiteral("duration")), 0.5)
                                 : 0.5;
-    m_controller->addTransition(ref.track, ref.clip, kind, duration);
+    if (m_controller->project()->tracks().at(ref.track).type == drift::TrackType::Audio) {
+        bool audible = false;
+        for (const QVariant &k : m_controller->transitionKindsForTrack(ref.track))
+            audible = audible || k.toMap().value(QStringLiteral("kind")).toString() == kind;
+        if (!audible)
+            return err("bad_args", QStringLiteral("%1 has no sound; audio tracks take crossfade or dip").arg(kind));
+    }
+    const bool linkedAudio = !args.contains(QStringLiteral("linked_audio")) || jsonBool(args.value(QStringLiteral("linked_audio")));
+    m_controller->addTransition(ref.track, ref.clip, kind, duration, linkedAudio);
     const QVariantMap tr = m_controller->transitionBetweenClips(ref.track, ref.clip);
     if (tr.isEmpty())
         return err("bad_args", QStringLiteral("No neighbour clip for a transition"));
