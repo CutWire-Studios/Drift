@@ -1616,6 +1616,49 @@ Item {
                                             touchMode: true
                                         }
                                     }
+
+                                    // Live voiceover recording indicator on this track
+                                    Rectangle {
+                                        id: liveRecordingBlock
+                                        visible: EditorState.isRecordingAudio && EditorState.recordingTrackIndex === trackClipArea.trackIndex
+                                        x: (EditorState.playheadSeconds - EditorState.audioRecordSeconds) * root.pxPerSecond
+                                        width: Math.max(2, EditorState.audioRecordSeconds * root.pxPerSecond)
+                                        height: parent.height
+                                        color: Qt.rgba(Theme.destructive.r, Theme.destructive.g, Theme.destructive.b, 0.35)
+                                        border.color: Theme.destructive
+                                        border.width: 1
+                                        radius: Theme.radiusSm
+                                        z: 2
+
+                                        Row {
+                                            anchors.left: parent.left
+                                            anchors.leftMargin: 6
+                                            anchors.verticalCenter: parent.verticalCenter
+                                            spacing: 4
+                                            visible: parent.width > 60
+
+                                            Rectangle {
+                                                width: 6
+                                                height: 6
+                                                radius: 3
+                                                color: Theme.destructive
+                                                anchors.verticalCenter: parent.verticalCenter
+                                                SequentialAnimation on opacity {
+                                                    running: liveRecordingBlock.visible
+                                                    loops: Animation.Infinite
+                                                    NumberAnimation { to: 0.2; duration: 400 }
+                                                    NumberAnimation { to: 1.0; duration: 400 }
+                                                }
+                                            }
+
+                                            Text {
+                                                text: qsTr("Recording %1s").arg(EditorState.audioRecordSeconds.toFixed(1))
+                                                font.pixelSize: 10
+                                                color: Theme.panelForeground
+                                                anchors.verticalCenter: parent.verticalCenter
+                                            }
+                                        }
+                                    }
                                 }
 
                                 // Long-press a gap to ripple everything after it left.

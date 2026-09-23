@@ -297,6 +297,15 @@ QString generatedAudioDir()
     return dir;
 }
 
+QString newVoiceoverPath()
+{
+    const QString dir = generatedAudioDir();
+    if (dir.isEmpty())
+        return {};
+    const QString id = QUuid::createUuid().toString(QUuid::WithoutBraces);
+    return QDir(dir).filePath(QStringLiteral("voiceover-") + id + QStringLiteral(".flac"));
+}
+
 QString newDenoisePath(const QString &suffix)
 {
     const QString dir = denoiseCacheDir();

@@ -649,6 +649,8 @@ QtObject {
         video: "video",
         music: "music",
         audioLines: "audio-lines",
+        mic: "mic",
+        micOff: "mic-off",
         image: "image",
         shapes: "shapes",
         chevronDown: "chevron-down",

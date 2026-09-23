@@ -1394,6 +1394,10 @@
         <translation>මකන්න</translation>
     </message>
     <message>
+        <source>Recording %1s</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Close gap</source>
         <translation>හිඩැස වසන්න</translation>
     </message>
@@ -2360,6 +2364,46 @@
     </message>
     <message>
         <source>The graphics card choice takes effect after you restart Drift.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No audio track available for recording</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Failed to create audio recording file</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Failed to start audio recording</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Recording audio…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Audio recording cancelled (too short)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Voiceover %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Record audio</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Recorded voiceover</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Voiceover recorded</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Recording cancelled</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -7912,6 +7956,10 @@
 <context>
     <name>PreviewPanel</name>
     <message>
+        <source>REC %1s</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Nothing to preview yet</source>
         <translation>පෙරදසුන් කිරීමට කිසිවක් නැත</translation>
     </message>
@@ -9179,6 +9227,14 @@ If playback stutters, try another.</source>
     <message>
         <source>Where playback is heard. “System default” follows whatever your computer is set to, including when that changes.</source>
         <translation type="unfinished">ධාවනය ඇසෙන ස්ථානය. “පද්ධති පෙරනිමිය” ඔබේ පරිගණකය සකසා ඇති ඕනෑම දෙයක් අනුගමනය කරයි (එය වෙනස් වන විටද ඇතුළුව).</translation>
+    </message>
+    <message>
+        <source>Microphone input</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Audio device used for recording voiceovers onto audio tracks.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Interface</source>
@@ -11516,6 +11572,10 @@ If playback stutters, try another.</source>
         <translation type="unfinished">ආයාත කරමින්…</translation>
     </message>
     <message>
+        <source>Recording %1s</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Rename bookmark</source>
         <translation>පොත් සලකුණේ නම වෙනස් කරන්න</translation>
     </message>
@@ -11857,6 +11917,22 @@ If playback stutters, try another.</source>
     <message>
         <source>Graphic</source>
         <translation>ග්‍රැෆික්</translation>
+    </message>
+    <message>
+        <source>Stop recording</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Record voiceover</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Stop recording voiceover</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Record voiceover (mic)</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Track height</source>

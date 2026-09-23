@@ -857,6 +857,21 @@ AppController::AppController(AssetLibrary *assetLibrary, QObject *parent)
         setLastMessage(message, QStringLiteral("error"));
     });
 
+    connect(&m_audioRecorder, &drift::AudioRecorder::recordingStateChanged, this,
+            &AppController::audioRecordingStateChanged);
+    connect(&m_audioRecorder, &drift::AudioRecorder::audioLevelChanged, this,
+            &AppController::audioRecordLevelChanged);
+    connect(&m_audioRecorder, &drift::AudioRecorder::recordedSecondsChanged, this,
+            &AppController::audioRecordSecondsChanged);
+    connect(&m_audioRecorder, &drift::AudioRecorder::availableDevicesChanged, this,
+            &AppController::availableMicrophonesChanged);
+    connect(&m_audioRecorder, &drift::AudioRecorder::currentDeviceChanged, this,
+            &AppController::currentMicrophoneChanged);
+    connect(&m_audioRecorder, &drift::AudioRecorder::recordingError, this,
+            [this](const QString &err) {
+                setLastMessage(err, QStringLiteral("error"));
+            });
+
     // Hardware decode that dies mid-playback is otherwise silent — the reader drops to
     // software on its own and the preview just gets slower, which reads as a Drift bug.
     connect(&m_playback, &PlaybackEngine::hardwareDecodeFellBack, this,
@@ -5563,6 +5578,10 @@ void AppController::setPlaying(bool playing)
         m_playback.setPlayheadUs(m_playheadUs);
         m_playback.play();
     } else {
+        if (m_audioRecorder.isRecording()) {
+            stopAudioRecording();
+            return;
+        }
         m_playback.pause();
     }
     emit playingChanged();
@@ -6159,6 +6178,150 @@ void AppController::setAudioOutputDeviceId(const QString &id)
     m_speedCurvePlayer.setAudioDeviceId(bytes);
     m_assetPreviewPlayer.setAudioDeviceId(bytes);
     emit audioOutputDeviceIdChanged();
+}
+
+bool AppController::isRecordingAudio() const
+{
+    return m_audioRecorder.isRecording();
+}
+
+int AppController::recordingTrackIndex() const
+{
+    return m_audioRecorder.recordingTrackIndex();
+}
+
+float AppController::audioRecordLevel() const
+{
+    return m_audioRecorder.audioLevel();
+}
+
+double AppController::audioRecordSeconds() const
+{
+    return m_audioRecorder.recordedSeconds();
+}
+
+QVariantList AppController::availableMicrophones() const
+{
+    return m_audioRecorder.availableDevices();
+}
+
+QString AppController::currentMicrophoneName() const
+{
+    return m_audioRecorder.currentDeviceName();
+}
+
+void AppController::selectMicrophone(const QString &id)
+{
+    m_audioRecorder.selectDevice(id);
+}
+
+void AppController::startAudioRecording(int trackIndex)
+{
+    if (m_audioRecorder.isRecording()) {
+        stopAudioRecording();
+        return;
+    }
+
+    int targetTrack = trackIndex;
+    if (targetTrack < 0 || targetTrack >= m_project.tracks().size()
+        || m_project.tracks().at(targetTrack).type != drift::TrackType::Audio) {
+        if (m_selectedTrack >= 0 && m_selectedTrack < m_project.tracks().size()
+            && m_project.tracks().at(m_selectedTrack).type == drift::TrackType::Audio) {
+            targetTrack = m_selectedTrack;
+        } else {
+            targetTrack = drift::ensureTrackForClipType(m_project, drift::ClipType::Audio, true);
+        }
+    }
+
+    if (targetTrack < 0 || targetTrack >= m_project.tracks().size()) {
+        setLastMessage(tr("No audio track available for recording"), QStringLiteral("error"));
+        return;
+    }
+
+    const QString outputPath = drift::newVoiceoverPath();
+    if (outputPath.isEmpty()) {
+        setLastMessage(tr("Failed to create audio recording file"), QStringLiteral("error"));
+        return;
+    }
+
+    m_recordingStartPlayheadUs = m_playheadUs;
+
+    QString error;
+    if (!m_audioRecorder.startRecording(targetTrack, outputPath, &error)) {
+        setLastMessage(error.isEmpty() ? tr("Failed to start audio recording") : error,
+                       QStringLiteral("error"));
+        return;
+    }
+
+    if (!m_playing) {
+        setPlaying(true);
+    }
+    setLastMessage(tr("Recording audio…"), QStringLiteral("info"));
+}
+
+void AppController::stopAudioRecording()
+{
+    if (!m_audioRecorder.isRecording())
+        return;
+
+    const int trackIndex = m_audioRecorder.recordingTrackIndex();
+    drift::TimeUs recordedDurationUs = 0;
+    const QString recordedPath = m_audioRecorder.stopRecording(&recordedDurationUs);
+
+    if (m_playing) {
+        m_playing = false;
+        m_playback.pause();
+        emit playingChanged();
+        syncTextOverlaySkip();
+    }
+
+    if (recordedPath.isEmpty() || recordedDurationUs < drift::secondsToUs(0.2)) {
+        if (!recordedPath.isEmpty()) {
+            QFile::remove(recordedPath);
+        }
+        setLastMessage(tr("Audio recording cancelled (too short)"), QStringLiteral("info"));
+        return;
+    }
+
+    if (trackIndex < 0 || trackIndex >= m_project.tracks().size())
+        return;
+
+    const drift::Project before = m_project;
+
+    drift::Clip clip;
+    clip.id = QUuid::createUuid().toString(QUuid::WithoutBraces);
+    clip.type = drift::ClipType::Audio;
+    clip.name = tr("Voiceover %1").arg(++m_voiceoverCounter);
+    clip.path = recordedPath;
+    clip.timelineStart = m_recordingStartPlayheadUs;
+    clip.timelineDuration = recordedDurationUs;
+    clip.srcIn = 0;
+    clip.srcOut = recordedDurationUs;
+
+    m_project.tracks()[trackIndex].clips.append(clip);
+
+    pushProjectEdit(before, tr("Record audio"));
+    finishEdit(tr("Recorded voiceover"));
+    selectClip(trackIndex, m_project.tracks().at(trackIndex).clips.size() - 1);
+    setLastMessage(tr("Voiceover recorded"), QStringLiteral("success"));
+}
+
+void AppController::cancelAudioRecording()
+{
+    if (!m_audioRecorder.isRecording())
+        return;
+
+    m_audioRecorder.cancelRecording();
+
+    if (m_playing) {
+        m_playing = false;
+        m_playback.pause();
+        emit playingChanged();
+        syncTextOverlaySkip();
+    }
+
+    setPlayheadUs(m_recordingStartPlayheadUs);
+    setLastMessage(tr("Recording cancelled"), QStringLiteral("info"));
 }
 
 void AppController::setLastMessage(const QString &message, const QString &severity)

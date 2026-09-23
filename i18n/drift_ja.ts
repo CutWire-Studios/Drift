@@ -1392,6 +1392,10 @@
         <translation>削除</translation>
     </message>
     <message>
+        <source>Recording %1s</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Close gap</source>
         <translation>ギャップを埋める</translation>
     </message>
@@ -2355,6 +2359,46 @@
     <message>
         <source>The graphics card choice takes effect after you restart Drift.</source>
         <translation>グラフィックカードの選択は、Driftを再起動した後に反映されます。</translation>
+    </message>
+    <message>
+        <source>No audio track available for recording</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Failed to create audio recording file</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Failed to start audio recording</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Recording audio…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Audio recording cancelled (too short)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Voiceover %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Record audio</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Recorded voiceover</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Voiceover recorded</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Recording cancelled</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Clips moved</source>
@@ -7873,6 +7917,10 @@
 <context>
     <name>PreviewPanel</name>
     <message>
+        <source>REC %1s</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Nothing to preview yet</source>
         <translation>プレビューするものはまだありません</translation>
     </message>
@@ -9140,6 +9188,14 @@ If playback stutters, try another.</source>
     <message>
         <source>Where playback is heard. “System default” follows whatever your computer is set to, including when that changes.</source>
         <translation>再生が聞こえる場所。「システムデフォルト」はコンピューターの設定に追従し、変更時も反映されます。</translation>
+    </message>
+    <message>
+        <source>Microphone input</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Audio device used for recording voiceovers onto audio tracks.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Interface</source>
@@ -11476,6 +11532,10 @@ If playback stutters, try another.</source>
         <translation type="unfinished">インポート中…</translation>
     </message>
     <message>
+        <source>Recording %1s</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Rename bookmark</source>
         <translation>ブックマーク名を変更</translation>
     </message>
@@ -11816,6 +11876,22 @@ If playback stutters, try another.</source>
     <message>
         <source>Graphic</source>
         <translation>グラフィック</translation>
+    </message>
+    <message>
+        <source>Stop recording</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Record voiceover</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Stop recording voiceover</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Record voiceover (mic)</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Track height</source>

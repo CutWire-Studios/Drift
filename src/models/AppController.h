@@ -57,6 +57,7 @@ namespace drift {
 struct MediaEditSpec;
 }
 
+#include "engine/AudioRecorder.h"
 #include "playback/ClipPreviewPlayer.h"
 #include "playback/PlaybackEngine.h"
 
@@ -87,6 +88,13 @@ class AppController : public QObject
     Q_PROPERTY(QVariantList audioOutputDevices READ audioOutputDevices NOTIFY audioOutputDevicesChanged)
     Q_PROPERTY(QString audioOutputDeviceId READ audioOutputDeviceId WRITE setAudioOutputDeviceId
                    NOTIFY audioOutputDeviceIdChanged)
+    // Audio recording (voiceover via microphone)
+    Q_PROPERTY(bool isRecordingAudio READ isRecordingAudio NOTIFY audioRecordingStateChanged)
+    Q_PROPERTY(int recordingTrackIndex READ recordingTrackIndex NOTIFY audioRecordingStateChanged)
+    Q_PROPERTY(float audioRecordLevel READ audioRecordLevel NOTIFY audioRecordLevelChanged)
+    Q_PROPERTY(double audioRecordSeconds READ audioRecordSeconds NOTIFY audioRecordSecondsChanged)
+    Q_PROPERTY(QVariantList availableMicrophones READ availableMicrophones NOTIFY availableMicrophonesChanged)
+    Q_PROPERTY(QString currentMicrophoneName READ currentMicrophoneName NOTIFY currentMicrophoneChanged)
     Q_PROPERTY(QVariantList tracks READ tracks NOTIFY tracksChanged)
     // A change token for the bindings that read `tracks` only to re-evaluate on an edit. Reading
     // the list for that rebuilt every clip in the project into QVariantMaps, once per binding,
@@ -409,6 +417,18 @@ public:
     QVariantList audioOutputDevices() const;
     QString audioOutputDeviceId() const { return m_audioOutputDeviceId; }
     void setAudioOutputDeviceId(const QString &id);
+
+    bool isRecordingAudio() const;
+    int recordingTrackIndex() const;
+    float audioRecordLevel() const;
+    double audioRecordSeconds() const;
+    QVariantList availableMicrophones() const;
+    QString currentMicrophoneName() const;
+
+    Q_INVOKABLE void startAudioRecording(int trackIndex = -1);
+    Q_INVOKABLE void stopAudioRecording();
+    Q_INVOKABLE void cancelAudioRecording();
+    Q_INVOKABLE void selectMicrophone(const QString &id);
     // Handing out a mutable pointer is the point past which this object can no longer know what
     // happened to the project, so the derived caches are dropped here rather than trusted. Two
     // bool writes, and nothing in src/ takes this overload — it exists for tests and for code
@@ -1830,6 +1850,11 @@ signals:
     void playingChanged();
     void audioOutputDevicesChanged();
     void audioOutputDeviceIdChanged();
+    void audioRecordingStateChanged();
+    void audioRecordLevelChanged();
+    void audioRecordSecondsChanged();
+    void availableMicrophonesChanged();
+    void currentMicrophoneChanged();
     void snapEnabledChanged();
     void rippleEnabledChanged();
     void allowClipOverlapChanged();
@@ -2375,6 +2400,9 @@ protected:
     // Only for its audioOutputsChanged signal — the sinks resolve devices themselves.
     QMediaDevices m_mediaDevices;
     QString m_audioOutputDeviceId;
+    drift::AudioRecorder m_audioRecorder;
+    drift::TimeUs m_recordingStartPlayheadUs = 0;
+    int m_voiceoverCounter = 0;
     // The audio error already on screen, so a device that fails repeatedly toasts once.
     QString m_lastAudioError;
     QUndoStack m_undoStack;

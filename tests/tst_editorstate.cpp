@@ -191,6 +191,7 @@ private slots:
     void behindSubjectTargetsAChosenClip();
     void effectRemovalRemapsGraphSelection();
     void denoiseAddsCleanedClipOnTrackAbove();
+    void audioRecordingVoiceoverWorkflow();
     void speedCurveOnAudioClipRetimesAndReplaces();
     void waveformPeaksForSourceRangeSlicesToTheTrimmedWindow();
     void speedCurveSessionExposesTrimmedSourceWindow();
@@ -4560,6 +4561,75 @@ void EditorStateTest::denoiseAddsCleanedClipOnTrackAbove()
     QCOMPARE(project.tracks().at(sourceTrack).clips.at(0).id, QStringLiteral("src-clip"));
 
     QFile::remove(out.path);
+}
+
+void EditorStateTest::audioRecordingVoiceoverWorkflow()
+{
+    AssetLibrary library;
+    AppController state(&library);
+
+    // Initial state
+    QCOMPARE(state.isRecordingAudio(), false);
+    QCOMPARE(state.recordingTrackIndex(), -1);
+    QCOMPARE(state.audioRecordLevel(), 0.0f);
+    QCOMPARE(state.audioRecordSeconds(), 0.0);
+
+    // Set up project with a 10s audio track
+    drift::Project &project = *state.project();
+    project.tracks().clear();
+    project.tracks().append(drift::Track{.type = drift::TrackType::Audio});
+    drift::Clip existingClip;
+    existingClip.id = QStringLiteral("existing-audio");
+    existingClip.type = drift::ClipType::Audio;
+    existingClip.timelineStart = 0;
+    existingClip.timelineDuration = drift::secondsToUs(10.0);
+    project.tracks()[0].clips.append(existingClip);
+
+    // Start recording at 2.5s
+    state.setPlayheadSeconds(2.5);
+    QCOMPARE(state.playheadSeconds(), 2.5);
+    state.startAudioRecording(0);
+
+    if (state.isRecordingAudio()) {
+        QCOMPARE(state.recordingTrackIndex(), 0);
+        QVERIFY(state.playing());
+
+        // Cancel recording test
+        state.cancelAudioRecording();
+        QCOMPARE(state.isRecordingAudio(), false);
+        QCOMPARE(state.recordingTrackIndex(), -1);
+        QCOMPARE(state.playing(), false);
+        QCOMPARE(state.playheadSeconds(), 2.5);
+        QCOMPARE(project.tracks().at(0).clips.size(), 1);
+
+        // Start recording again to test commit and undo/redo
+        state.setPlayheadSeconds(3.0);
+        state.startAudioRecording(0);
+        QVERIFY(state.isRecordingAudio());
+        QTest::qWait(350);
+        state.stopAudioRecording();
+        QCOMPARE(state.isRecordingAudio(), false);
+        QCOMPARE(state.playing(), false);
+        QCOMPARE(project.tracks().at(0).clips.size(), 2);
+
+        const drift::Clip &newClip = project.tracks().at(0).clips.at(1);
+        QCOMPARE(newClip.type, drift::ClipType::Audio);
+        QCOMPARE(newClip.timelineStart, drift::secondsToUs(3.0));
+        QVERIFY(newClip.timelineDuration > 0);
+        QVERIFY(QFile::exists(newClip.path));
+
+        // Test undo
+        QVERIFY(state.undoAvailable());
+        state.undo();
+        QCOMPARE(project.tracks().at(0).clips.size(), 1);
+
+        // Test redo
+        QVERIFY(state.redoAvailable());
+        state.redo();
+        QCOMPARE(project.tracks().at(0).clips.size(), 2);
+
+        QFile::remove(newClip.path);
+    }
 }
 
 void EditorStateTest::shapeStylePartialUpdateAndUndo()

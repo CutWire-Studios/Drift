@@ -782,7 +782,7 @@ void PlaybackEngine::checkEndOfTimeline(drift::TimeUs timeUs)
     }
 
     const drift::TimeUs durationUs = m_project->durationUs();
-    if (timeUs >= durationUs) {
+    if (durationUs > 0 && timeUs >= durationUs) {
         m_playheadUs = durationUs;
         emit playheadUsChanged(static_cast<quint64>(m_playheadUs));
         QMetaObject::invokeMethod(this, &PlaybackEngine::pause, Qt::QueuedConnection);

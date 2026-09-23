@@ -1395,6 +1395,10 @@
         <translation>Supprimer</translation>
     </message>
     <message>
+        <source>Recording %1s</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Close gap</source>
         <translation>Fermer l’écart</translation>
     </message>
@@ -2366,6 +2370,46 @@
     </message>
     <message>
         <source>The graphics card choice takes effect after you restart Drift.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No audio track available for recording</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Failed to create audio recording file</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Failed to start audio recording</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Recording audio…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Audio recording cancelled (too short)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Voiceover %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Record audio</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Recorded voiceover</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Voiceover recorded</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Recording cancelled</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -7915,6 +7959,10 @@
 <context>
     <name>PreviewPanel</name>
     <message>
+        <source>REC %1s</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Nothing to preview yet</source>
         <translation>Pas encore de prévisualisation</translation>
     </message>
@@ -9182,6 +9230,14 @@ En cas de saccades à la lecture, essayez un autre mode.</translation>
     <message>
         <source>Where playback is heard. “System default” follows whatever your computer is set to, including when that changes.</source>
         <translation type="unfinished">Où le son est entendu. « Par défaut du système » suit ce que votre ordinateur a configuré, y compris lorsqu’il change.</translation>
+    </message>
+    <message>
+        <source>Microphone input</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Audio device used for recording voiceovers onto audio tracks.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Interface</source>
@@ -11521,6 +11577,10 @@ En cas de saccades à la lecture, essayez un autre mode.</translation>
         <translation type="unfinished">Importation…</translation>
     </message>
     <message>
+        <source>Recording %1s</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Close Gap</source>
         <translation>Fermer l&apos;écart</translation>
     </message>
@@ -11862,6 +11922,22 @@ En cas de saccades à la lecture, essayez un autre mode.</translation>
     <message>
         <source>Graphic</source>
         <translation>Graphique</translation>
+    </message>
+    <message>
+        <source>Stop recording</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Record voiceover</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Stop recording voiceover</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Record voiceover (mic)</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Track height</source>
