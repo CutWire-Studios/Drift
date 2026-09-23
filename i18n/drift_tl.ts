@@ -9037,14 +9037,6 @@ If playback stutters, try another.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Timeline overview strip</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>A minimap of the whole project above the ruler — click or drag it to jump the zoomed view.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Haptic feedback</source>
         <translation type="unfinished"></translation>
     </message>
@@ -11328,17 +11320,6 @@ If playback stutters, try another.</source>
     </message>
 </context>
 <context>
-    <name>TimelineTabBar</name>
-    <message>
-        <source>Main</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Close tab</source>
-        <translation type="unfinished"></translation>
-    </message>
-</context>
-<context>
     <name>TimelineToolbar</name>
     <message>
         <source>%1 (%2)</source>
@@ -11357,6 +11338,14 @@ If playback stutters, try another.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Select</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cut mode</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Cut mode — click a clip to split it</source>
         <translation type="unfinished"></translation>
     </message>
@@ -11365,7 +11354,15 @@ If playback stutters, try another.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Trim start</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Trim start — click a clip to drop everything left of the cut</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Trim end</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -11417,6 +11414,26 @@ If playback stutters, try another.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Main</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Composite</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Switch between the main timeline and composite clips</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No composite clips yet</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Timeline overview — a minimap of the whole project; click or drag it to jump the view</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Unlink video and audio</source>
         <translation type="unfinished"></translation>
     </message>
@@ -11437,7 +11454,7 @@ If playback stutters, try another.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Scene 1</source>
+        <source>Customize toolbar…</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -11474,6 +11491,49 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Fit timeline in view</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>TimelineToolbarCustomizeDialog</name>
+    <message>
+        <source>Customize timeline toolbar</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Save</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Drag items to reorder them. Items above the divider are toolbar buttons; the rest are in the More menu.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add separator</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Reset to defaults</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>More menu</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>— Separator —</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move up</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move down</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Remove separator</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -11522,6 +11582,14 @@ If playback stutters, try another.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Waveform</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Video + waveform</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>FX</source>
         <translation type="unfinished"></translation>
     </message>
@@ -11566,6 +11634,10 @@ If playback stutters, try another.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Clips show: %1 (click to change)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Video</source>
         <translation type="unfinished"></translation>
     </message>
@@ -11598,15 +11670,27 @@ If playback stutters, try another.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Show thumbnails</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Show waveform</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Rename…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Track height</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Short</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Tall</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Taller</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Scroll over the header to fine-tune</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -11615,10 +11699,6 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Shorter row</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Reset row height</source>
         <translation type="unfinished"></translation>
     </message>
 </context>

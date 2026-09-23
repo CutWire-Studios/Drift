@@ -1000,7 +1000,11 @@ AppController::AppController(AssetLibrary *assetLibrary, QObject *parent)
     m_autoKeyEnabled = settings.value(QStringLiteral("editor/autoKeyEnabled"), false).toBool();
     m_reopenLastProject = settings.value(QStringLiteral("editor/reopenLastProject"), false).toBool();
     m_timelineOverviewVisible =
-        settings.value(QStringLiteral("ui/timelineOverviewVisible"), true).toBool();
+        settings.value(QStringLiteral("ui/timelineOverviewVisible"), false).toBool();
+    m_trackLabelsWidth = qBound(110.0,
+        settings.value(QStringLiteral("ui/trackLabelsWidth"), 130.0).toDouble(), 320.0);
+    m_timelineToolbarItems = settings.value(QStringLiteral("ui/timelineToolbarItems")).toStringList();
+    m_timelineMenuItems = settings.value(QStringLiteral("ui/timelineMenuItems")).toStringList();
     // Checked means "allowed", not "forced": with the key unset the engine is in Auto and
     // will use zero-copy on drivers it has been verified against, so showing the box
     // unchecked would contradict what the preview is actually doing. Unchecking writes an
@@ -1402,7 +1406,7 @@ QVariantList AppController::tracks() const
             {QStringLiteral("transitions"), transitions},
             {QStringLiteral("muted"), track.muted},
             {QStringLiteral("hidden"), track.hidden},
-            {QStringLiteral("showWaveform"), track.showWaveform},
+            {QStringLiteral("clipDisplay"), static_cast<int>(track.clipDisplay)},
             {QStringLiteral("showChannelWaveforms"), track.showChannelWaveforms},
             {QStringLiteral("heightScale"), track.heightScale},
         });
@@ -4216,6 +4220,10 @@ TimelineClipsModel::Row AppController::clipRow(const drift::Clip &clip,
     row.outPoint = drift::usToSeconds(clip.srcOut);
     row.sourceDuration = sourceAsset ? drift::usToSeconds(sourceAsset->durationUs) : 0.0;
     row.audioStreamIndex = clip.audioStreamIndex;
+    // For the waveform bar: not once the audio has been separated, nor when the source has no
+    // audio stream. An unprobed source gets the benefit of the doubt; its waveform stays empty.
+    row.hasEmbeddedAudio = clip.type == drift::ClipType::Video && !clip.suppressEmbeddedAudio
+        && (!sourceAsset || !sourceAsset->hasAudioKnown || sourceAsset->hasAudio);
     row.fadeIn = drift::usToSeconds(clip.fadeInUs);
     row.fadeOut = drift::usToSeconds(clip.fadeOutUs);
     row.fadeCurve = drift::fadeCurveToString(clip.fadeCurve);
@@ -4513,6 +4521,8 @@ bool AppController::renameAsset(int assetIndex, const QString &name)
 
     pushProjectEdit(before, tr("Rename media"));
     finishEdit(tr("Media renamed"));
+    // Composite names also label the timeline switcher.
+    emit sequenceTabsChanged();
     return true;
 }
 
@@ -5571,6 +5581,35 @@ void AppController::setTimelineOverviewVisible(bool visible)
     QSettings settings;
     settings.setValue(QStringLiteral("ui/timelineOverviewVisible"), m_timelineOverviewVisible);
     emit timelineOverviewVisibleChanged();
+}
+
+void AppController::setTrackLabelsWidth(qreal width)
+{
+    width = qBound(110.0, qreal(qRound(width)), 320.0);
+    if (qFuzzyCompare(m_trackLabelsWidth, width))
+        return;
+    m_trackLabelsWidth = width;
+    QSettings settings;
+    settings.setValue(QStringLiteral("ui/trackLabelsWidth"), m_trackLabelsWidth);
+    emit trackLabelsWidthChanged();
+}
+
+void AppController::setTimelineToolbarLayout(const QStringList &toolbarItems,
+                                             const QStringList &menuItems)
+{
+    if (m_timelineToolbarItems == toolbarItems && m_timelineMenuItems == menuItems)
+        return;
+    m_timelineToolbarItems = toolbarItems;
+    m_timelineMenuItems = menuItems;
+    QSettings settings;
+    if (toolbarItems.isEmpty() && menuItems.isEmpty()) {
+        settings.remove(QStringLiteral("ui/timelineToolbarItems"));
+        settings.remove(QStringLiteral("ui/timelineMenuItems"));
+    } else {
+        settings.setValue(QStringLiteral("ui/timelineToolbarItems"), toolbarItems);
+        settings.setValue(QStringLiteral("ui/timelineMenuItems"), menuItems);
+    }
+    emit timelineToolbarLayoutChanged();
 }
 
 void AppController::setReopenLastProject(bool enabled)
@@ -13041,8 +13080,17 @@ void AppController::setClipName(int trackIndex, int clipIndex, const QString &na
     // copy can still alias those payloads across undo snapshots; detach first.
     const drift::Project before = m_project.detachedCopy();
     clip.name = trimmed;
+    // A composite is named after its sequence everywhere else (the bin, the timeline switcher),
+    // so renaming its clip renames the composite itself.
+    bool renamedComposite = false;
+    if (clip.type == drift::ClipType::Composite && m_assetLibrary) {
+        const int assetIndex = m_assetLibrary->indexOfId(clip.assetId);
+        renamedComposite = assetIndex >= 0 && m_assetLibrary->setAssetName(assetIndex, trimmed);
+    }
     pushProjectEdit(before, tr("Rename clip"));
     finishEdit(tr("Clip renamed"));
+    if (renamedComposite)
+        emit sequenceTabsChanged();
 }
 
 void AppController::previewSetClipTextContent(int trackIndex, int clipIndex, const QString &text)
@@ -14516,6 +14564,20 @@ QVariantList AppController::sequenceTabs() const
         });
     }
     return tabs;
+}
+
+QVariantList AppController::compositeSequences() const
+{
+    QVariantList sequences;
+    for (const drift::MediaAsset &asset : m_project.assets()) {
+        if (asset.kind != drift::MediaKind::Composite || !m_project.hasSequence(asset.sequenceId))
+            continue;
+        sequences.append(QVariantMap{
+            {QStringLiteral("id"), asset.sequenceId},
+            {QStringLiteral("name"), asset.name},
+        });
+    }
+    return sequences;
 }
 
 void AppController::openSequence(const QString &sequenceId)
@@ -18666,23 +18728,24 @@ bool AppController::trackHidden(int trackIndex) const
     return m_project.tracks().at(trackIndex).hidden;
 }
 
-void AppController::setTrackShowWaveform(int trackIndex, bool show)
+void AppController::setTrackClipDisplay(int trackIndex, int mode)
 {
     if (trackIndex < 0 || trackIndex >= m_project.tracks().size())
         return;
-    if (m_project.tracks()[trackIndex].showWaveform == show)
+    const auto display = static_cast<drift::Track::ClipDisplay>(qBound(0, mode, 2));
+    if (m_project.tracks()[trackIndex].clipDisplay == display)
         return;
 
     // View-only preference: mutate and refresh without an undo entry.
-    m_project.tracks()[trackIndex].showWaveform = show;
+    m_project.tracks()[trackIndex].clipDisplay = display;
     notifyTracksChanged();
 }
 
-bool AppController::trackShowWaveform(int trackIndex) const
+int AppController::trackClipDisplay(int trackIndex) const
 {
     if (trackIndex < 0 || trackIndex >= m_project.tracks().size())
-        return false;
-    return m_project.tracks().at(trackIndex).showWaveform;
+        return static_cast<int>(drift::Track::ClipDisplay::Both);
+    return static_cast<int>(m_project.tracks().at(trackIndex).clipDisplay);
 }
 
 void AppController::setTrackShowChannelWaveforms(int trackIndex, bool show)
@@ -18713,7 +18776,7 @@ void AppController::setTrackHeightScale(int trackIndex, double scale)
     if (qFuzzyCompare(m_project.tracks()[trackIndex].heightScale, clamped))
         return;
 
-    // View-only preference, like showWaveform: no undo entry.
+    // View-only preference, like clipDisplay: no undo entry.
     m_project.tracks()[trackIndex].heightScale = clamped;
     notifyTracksChanged();
 }
@@ -22699,7 +22762,8 @@ QJsonObject AppController::mcpInspect(const McpInspectOptions &options) const
         };
         if (detail && t < trackModels.size()) {
             const QVariantMap tm = trackModels.at(t).toMap();
-            if (tm.value(QStringLiteral("showWaveform")).toBool())
+            if (tm.value(QStringLiteral("clipDisplay")).toInt()
+                == static_cast<int>(drift::Track::ClipDisplay::Waveform))
                 row.insert(QStringLiteral("showWaveform"), true);
             if (tm.value(QStringLiteral("heightScale")).toDouble() != 1.0)
                 row.insert(QStringLiteral("heightScale"), tm.value(QStringLiteral("heightScale")).toDouble());

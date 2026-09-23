@@ -132,6 +132,14 @@ class AppController : public QObject
     // in the project on every edit.
     Q_PROPERTY(bool timelineOverviewVisible READ timelineOverviewVisible
                    WRITE setTimelineOverviewVisible NOTIFY timelineOverviewVisibleChanged)
+    Q_PROPERTY(qreal trackLabelsWidth READ trackLabelsWidth
+                   WRITE setTrackLabelsWidth NOTIFY trackLabelsWidthChanged)
+    // Timeline toolbar layout: action ids shown as buttons, then the ones in its More menu.
+    // Empty means the QML defaults; ids are validated on the QML side, which owns the registry.
+    Q_PROPERTY(QStringList timelineToolbarItems READ timelineToolbarItems
+                   NOTIFY timelineToolbarLayoutChanged)
+    Q_PROPERTY(QStringList timelineMenuItems READ timelineMenuItems
+                   NOTIFY timelineToolbarLayoutChanged)
     // Opt-in: on launch, restore the last open project (saved .drift or unsaved recovery snapshot).
     Q_PROPERTY(bool reopenLastProject READ reopenLastProject WRITE setReopenLastProject NOTIFY reopenLastProjectChanged)
     // Preview zero-copy import: VAAPI dma-buf on Linux, D3D11 interop on Windows. Takes effect
@@ -440,6 +448,12 @@ public:
     bool autoKeyEnabled() const { return m_autoKeyEnabled; }
     bool timelineOverviewVisible() const { return m_timelineOverviewVisible; }
     void setTimelineOverviewVisible(bool visible);
+    qreal trackLabelsWidth() const { return m_trackLabelsWidth; }
+    void setTrackLabelsWidth(qreal width);
+    QStringList timelineToolbarItems() const { return m_timelineToolbarItems; }
+    QStringList timelineMenuItems() const { return m_timelineMenuItems; }
+    Q_INVOKABLE void setTimelineToolbarLayout(const QStringList &toolbarItems,
+                                              const QStringList &menuItems);
     // Every clip in the project as a flat run of numbers — lane, clip-type code, start seconds,
     // duration seconds — for the overview strip's canvas. Flat because the strip repaints off
     // it: a list of numbers costs a fraction of what converting the clip graph to JS does.
@@ -1269,6 +1283,8 @@ public:
     Q_INVOKABLE bool canMakeCompositeFromSelection() const;
     Q_INVOKABLE void makeCompositeFromSelection();
     QVariantList sequenceTabs() const;
+    // Every composite in the project as [{id, name}], open or not, for the timeline's switcher.
+    Q_INVOKABLE QVariantList compositeSequences() const;
     QString activeSequenceId() const { return m_project.activeSequenceId(); }
     // Opens (or switches to) a composite's tab. "" switches to the main timeline.
     Q_INVOKABLE void openSequence(const QString &sequenceId);
@@ -1464,8 +1480,9 @@ public:
     Q_INVOKABLE bool renameTrack(int trackIndex, const QString &name);
     Q_INVOKABLE bool trackMuted(int trackIndex) const;
     Q_INVOKABLE bool trackHidden(int trackIndex) const;
-    Q_INVOKABLE void setTrackShowWaveform(int trackIndex, bool show);
-    Q_INVOKABLE bool trackShowWaveform(int trackIndex) const;
+    // 0 = filmstrip only, 1 = filmstrip + waveform bar, 2 = waveform only (Track::ClipDisplay).
+    Q_INVOKABLE void setTrackClipDisplay(int trackIndex, int mode);
+    Q_INVOKABLE int trackClipDisplay(int trackIndex) const;
     Q_INVOKABLE void setTrackShowChannelWaveforms(int trackIndex, bool show);
     Q_INVOKABLE bool trackShowChannelWaveforms(int trackIndex) const;
     // Per-track row height multiplier (DAW-style lane resize). Clamped to
@@ -1763,6 +1780,8 @@ signals:
     void mediaViewModeChanged();
     void autoKeyEnabledChanged();
     void timelineOverviewVisibleChanged();
+    void trackLabelsWidthChanged();
+    void timelineToolbarLayoutChanged();
     void reopenLastProjectChanged();
     void vaapiZeroCopyChanged();
     void mediaCodecZeroCopyChanged();
@@ -2309,7 +2328,10 @@ protected:
     QString m_workspaceLayoutPreferred = QStringLiteral("landscape");
     QString m_mediaViewMode = QStringLiteral("grid");
     bool m_autoKeyEnabled = false;
-    bool m_timelineOverviewVisible = true;
+    bool m_timelineOverviewVisible = false;
+    qreal m_trackLabelsWidth = 130;
+    QStringList m_timelineToolbarItems;
+    QStringList m_timelineMenuItems;
     bool m_reopenLastProject = false;
     bool m_vaapiZeroCopy = false;
     bool m_mediaCodecZeroCopy = false;

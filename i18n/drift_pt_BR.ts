@@ -9044,14 +9044,6 @@ Se a reprodução travar, experimente outro.</translation>
         <translation type="unfinished">A rolagem move para os lados na linha do tempo. Shift+rolagem alterna entre as faixas. Arrastar com o botão do meio também move.</translation>
     </message>
     <message>
-        <source>Timeline overview strip</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>A minimap of the whole project above the ruler — click or drag it to jump the zoomed view.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Haptic feedback</source>
         <translation type="unfinished"></translation>
     </message>
@@ -11336,17 +11328,6 @@ Se a reprodução travar, experimente outro.</translation>
     </message>
 </context>
 <context>
-    <name>TimelineTabBar</name>
-    <message>
-        <source>Main</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Close tab</source>
-        <translation type="unfinished"></translation>
-    </message>
-</context>
-<context>
     <name>TimelineToolbar</name>
     <message>
         <source>%1 (%2)</source>
@@ -11365,6 +11346,14 @@ Se a reprodução travar, experimente outro.</translation>
         <translation>Selecionar — edição normal</translation>
     </message>
     <message>
+        <source>Select</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cut mode</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Cut mode — click a clip to split it</source>
         <translation>Modo de corte — clique em um clipe para dividi-lo</translation>
     </message>
@@ -11373,8 +11362,16 @@ Se a reprodução travar, experimente outro.</translation>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Trim start</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Trim start — click a clip to drop everything left of the cut</source>
         <translation>Aparar início — clique em um clipe para descartar tudo à esquerda do corte</translation>
+    </message>
+    <message>
+        <source>Trim end</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Trim end — click a clip to drop everything right of the cut</source>
@@ -11425,6 +11422,26 @@ Se a reprodução travar, experimente outro.</translation>
         <translation>Limpar área de trabalho</translation>
     </message>
     <message>
+        <source>Main</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Composite</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Switch between the main timeline and composite clips</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No composite clips yet</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Timeline overview — a minimap of the whole project; click or drag it to jump the view</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Unlink video and audio</source>
         <translation>Desvincular vídeo e áudio</translation>
     </message>
@@ -11445,8 +11462,8 @@ Se a reprodução travar, experimente outro.</translation>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Scene 1</source>
-        <translation>Cena 1</translation>
+        <source>Customize toolbar…</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Toggle snapping</source>
@@ -11486,6 +11503,49 @@ Se a reprodução travar, experimente outro.</translation>
     </message>
 </context>
 <context>
+    <name>TimelineToolbarCustomizeDialog</name>
+    <message>
+        <source>Customize timeline toolbar</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Save</source>
+        <translation type="unfinished">Salvar</translation>
+    </message>
+    <message>
+        <source>Drag items to reorder them. Items above the divider are toolbar buttons; the rest are in the More menu.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add separator</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Reset to defaults</source>
+        <translation type="unfinished">Restaurar padrões</translation>
+    </message>
+    <message>
+        <source>More menu</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>— Separator —</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move up</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move down</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Remove separator</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>ToastHost</name>
     <message>
         <source>%1  (×%2)</source>
@@ -11516,6 +11576,14 @@ Se a reprodução travar, experimente outro.</translation>
     <message>
         <source>This removes the empty track. You can undo afterwards.</source>
         <translation>Isso remove a faixa vazia. Você pode desfazer depois.</translation>
+    </message>
+    <message>
+        <source>Waveform</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Video + waveform</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>FX</source>
@@ -11562,6 +11630,26 @@ Se a reprodução travar, experimente outro.</translation>
         <translation>Gráfico</translation>
     </message>
     <message>
+        <source>Track height</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Short</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Tall</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Taller</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Scroll over the header to fine-tune</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Video</source>
         <translation>Vídeo</translation>
     </message>
@@ -11594,24 +11682,12 @@ Se a reprodução travar, experimente outro.</translation>
         <translation>Ocultar faixa</translation>
     </message>
     <message>
-        <source>Show thumbnails</source>
-        <translation>Mostrar miniaturas</translation>
-    </message>
-    <message>
-        <source>Show waveform</source>
-        <translation>Mostrar forma de onda</translation>
-    </message>
-    <message>
         <source>Taller row</source>
         <translation>Faixa mais alta</translation>
     </message>
     <message>
         <source>Shorter row</source>
         <translation>Faixa mais baixa</translation>
-    </message>
-    <message>
-        <source>Reset row height</source>
-        <translation>Redefinir altura da linha</translation>
     </message>
     <message>
         <source>Rename track</source>
@@ -11624,6 +11700,10 @@ Se a reprodução travar, experimente outro.</translation>
     <message>
         <source>Track name</source>
         <translation>Nome da faixa</translation>
+    </message>
+    <message>
+        <source>Clips show: %1 (click to change)</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Rename…</source>

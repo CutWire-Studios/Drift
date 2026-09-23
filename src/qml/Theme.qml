@@ -644,6 +644,8 @@ QtObject {
         eye: "eye",
         eyeOff: "eye-off",
         film: "film",
+        panelBottomDashed: "panel-bottom-dashed",
+        panelTop: "panel-top",
         video: "video",
         music: "music",
         audioLines: "audio-lines",

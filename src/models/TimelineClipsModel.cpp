@@ -34,6 +34,7 @@ QList<int> changedRoles(const TimelineClipsModel::Row &a, const TimelineClipsMod
     diff(a.outPoint != b.outPoint, TimelineClipsModel::OutPointRole);
     diff(a.sourceDuration != b.sourceDuration, TimelineClipsModel::SourceDurationRole);
     diff(a.audioStreamIndex != b.audioStreamIndex, TimelineClipsModel::AudioStreamIndexRole);
+    diff(a.hasEmbeddedAudio != b.hasEmbeddedAudio, TimelineClipsModel::HasEmbeddedAudioRole);
     diff(a.fadeIn != b.fadeIn, TimelineClipsModel::FadeInRole);
     diff(a.fadeOut != b.fadeOut, TimelineClipsModel::FadeOutRole);
     diff(a.fadeCurve != b.fadeCurve, TimelineClipsModel::FadeCurveRole);
@@ -99,6 +100,7 @@ QVariant TimelineClipsModel::data(const QModelIndex &index, int role) const
     case OutPointRole: return row.outPoint;
     case SourceDurationRole: return row.sourceDuration;
     case AudioStreamIndexRole: return row.audioStreamIndex;
+    case HasEmbeddedAudioRole: return row.hasEmbeddedAudio;
     case FadeInRole: return row.fadeIn;
     case FadeOutRole: return row.fadeOut;
     case FadeCurveRole: return row.fadeCurve;
@@ -130,6 +132,7 @@ QHash<int, QByteArray> TimelineClipsModel::roleNames() const
         {OutPointRole, "outPoint"},
         {SourceDurationRole, "sourceDuration"},
         {AudioStreamIndexRole, "audioStreamIndex"},
+        {HasEmbeddedAudioRole, "hasEmbeddedAudio"},
         {FadeInRole, "fadeIn"},
         {FadeOutRole, "fadeOut"},
         {FadeCurveRole, "fadeCurve"},

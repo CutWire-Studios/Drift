@@ -36,7 +36,10 @@ struct Track
     bool muted = false;
     bool hidden = false;
     bool locked = false;
-    bool showWaveform = false; // view-only: show audio waveform instead of filmstrip for this track's clips
+    // view-only, video tracks: how clips draw. Video = filmstrip only, Both = filmstrip with a
+    // waveform bar along the bottom, Waveform = waveform instead of the filmstrip.
+    enum class ClipDisplay { Video = 0, Both = 1, Waveform = 2 };
+    ClipDisplay clipDisplay = ClipDisplay::Both;
     // view-only: draw a multi-channel clip's waveform as one lane per source channel instead
     // of the single max-across-channels envelope. Opt-in because a 5.1 clip in a standard row
     // gives each lane a few pixels — pair it with heightScale.

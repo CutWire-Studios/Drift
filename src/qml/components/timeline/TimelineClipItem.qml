@@ -121,7 +121,17 @@ Item {
                                                     && AssetLibrary.isVariableFrameRate(mediaAssetId))
 
     property string trackType: panel.tracks[trackIndex].type
-    property bool showWaveform: panel.tracks[trackIndex].showWaveform === true
+    // Track::ClipDisplay: 0 filmstrip, 1 filmstrip + waveform bar, 2 waveform only.
+    readonly property int clipDisplay: panel.tracks[trackIndex].clipDisplay !== undefined
+                                       ? panel.tracks[trackIndex].clipDisplay : 1
+    readonly property bool showWaveform: clipDisplay === 2
+    // CapCut-style strip under the filmstrip. Dropped once the audio has been separated
+    // (its waveform is on the audio track then) and when the body is too short to split.
+    readonly property bool showWaveformBar: trackType === "video" && clipDisplay === 1
+                                            && clipData.hasEmbeddedAudio === true
+                                            && height - headerBandHeight >= 30
+    readonly property real waveformBarHeight:
+        Math.max(12, Math.round((height - headerBandHeight) * 0.3))
     property bool showChannelWaveforms: panel.tracks[trackIndex].showChannelWaveforms === true
     property var clipEffects: clipData.effects || []
     property var clipAudioEffects: clipData.audioEffects || []
@@ -627,6 +637,7 @@ Item {
                                 || clipItem.trackType === "shape")
                                ? clipItem.headerBandHeight
                                : 0
+            anchors.bottomMargin: clipItem.showWaveformBar ? clipItem.waveformBarHeight : 0
             visible: clipItem.clipData.filmstripPath
                      && clipItem.clipData.filmstripPath.length > 0
                      && !clipItem.showWaveform
@@ -784,12 +795,20 @@ Item {
             visible: clipItem.trackType === "audio"
                      || (clipItem.trackType === "video"
                          && clipItem.showWaveform)
+                     || clipItem.showWaveformBar
             anchors.left: parent.left
             anchors.right: parent.right
             anchors.top: parent.top
-            anchors.topMargin: clipItem.headerBandHeight
+            anchors.topMargin: clipItem.showWaveformBar ? parent.height - clipItem.waveformBarHeight
+                                                        : clipItem.headerBandHeight
             anchors.bottom: parent.bottom
             clip: true
+
+            Rectangle {
+                visible: clipItem.showWaveformBar
+                anchors.fill: parent
+                color: Qt.rgba(0, 0, 0, 0.35)
+            }
 
             // Bumped when an off-thread decode lands, to re-run the peaks and lane-count
             // bindings. Lives on the host because the labels below need it too.
@@ -799,7 +818,8 @@ Item {
             // clip draws the merged lane for one frame and then splits.
             readonly property int sourceChannels: {
                 void decodeRevision
-                if (!clipItem.showChannelWaveforms || !clipItem.clipData.path)
+                if (!clipItem.showChannelWaveforms || clipItem.showWaveformBar
+                        || !clipItem.clipData.path)
                     return 0
                 return EditorState.waveformChannelCount(
                     clipItem.clipData.path, clipItem.clipData.audioStreamIndex || 0)

@@ -1029,13 +1029,8 @@ PanelFrame {
             panel: root
         }
 
-        TimelineTabBar {
-            id: sequenceTabBar
-            width: parent.width
-        }
-
         // === full-project overview strip ==============================================
-        // Switchable off in Settings -> Interface; collapses to nothing rather than merely
+        // Toggled from the toolbar's right end; collapses to nothing rather than merely
         // hiding, so the tracks get the height back.
         TimelineOverview {
             id: overviewStrip
@@ -1048,13 +1043,13 @@ PanelFrame {
         // === ruler + track labels + tracks ================================================
         Column {
             width: parent.width
-            height: parent.height - toolbar.height - sequenceTabBar.height - overviewStrip.height
+            height: parent.height - toolbar.height - overviewStrip.height
 
             KeyframeGraph {
                 id: keyframesBar
                 width: parent.width
                 pxPerSecond: root.pxPerSecond
-                labelsWidth: Theme.trackLabelsWidth
+                labelsWidth: EditorState.trackLabelsWidth
                 propertiesTab: root.propertiesTab
                 // Keep keys/playhead lined up with the track scroll view below.
                 contentX: flick.contentX
@@ -1065,7 +1060,7 @@ PanelFrame {
                 id: subtitleLane
                 width: parent.width
                 pxPerSecond: root.pxPerSecond
-                labelsWidth: Theme.trackLabelsWidth
+                labelsWidth: EditorState.trackLabelsWidth
                 contentX: flick.contentX
                 contentWidth: flick.contentWidth
             }
@@ -1076,7 +1071,8 @@ PanelFrame {
 
             // --- fixed left label column --------------------------------------------
             Column {
-                width: Theme.trackLabelsWidth
+                id: labelsColumn
+                width: EditorState.trackLabelsWidth
                 height: parent.height
 
                 // CapCut-style: add-track sits at the timeline origin, above the
@@ -1123,6 +1119,8 @@ PanelFrame {
                     // the absolutely-positioned label rows out of the column.
                     height: Math.max(0, parent.height - Theme.timelineRulerHeight
                                         - Theme.timelineBookmarkRowHeight)
+                    labelsWidth: EditorState.trackLabelsWidth
+                    resizable: true
                     tracks: root.tracks
                     contentY: flick.contentY
                 }
@@ -1131,7 +1129,7 @@ PanelFrame {
             // --- scrollable ruler + tracks --------------------------------------------
             Flickable {
                 id: flick
-                width: parent.width - Theme.trackLabelsWidth
+                width: parent.width - EditorState.trackLabelsWidth
                 height: parent.height
 
                 // Height of the pinned ruler + bookmark strip at the top.

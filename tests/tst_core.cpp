@@ -1044,7 +1044,7 @@ void CoreTest::multiTrackSerializationRoundTrip()
     drift::Project project;
     project.tracks().clear();
     project.tracks().append(drift::Track{.type = drift::TrackType::Video, .muted = true});
-    project.tracks().append(drift::Track{.type = drift::TrackType::Audio, .showWaveform = true});
+    project.tracks().append(drift::Track{.type = drift::TrackType::Audio, .clipDisplay = drift::Track::ClipDisplay::Waveform});
     project.tracks().append(drift::Track{.type = drift::TrackType::Video, .hidden = true});
     project.tracks().append(drift::Track{.type = drift::TrackType::Text});
 
@@ -1064,7 +1064,7 @@ void CoreTest::multiTrackSerializationRoundTrip()
     QCOMPARE(loaded.tracks()[0].type, drift::TrackType::Video);
     QVERIFY(loaded.tracks()[0].muted);
     QCOMPARE(loaded.tracks()[1].type, drift::TrackType::Audio);
-    QVERIFY(loaded.tracks()[1].showWaveform);
+    QCOMPARE(loaded.tracks()[1].clipDisplay, drift::Track::ClipDisplay::Waveform);
     QCOMPARE(loaded.tracks()[2].type, drift::TrackType::Video);
     QVERIFY(loaded.tracks()[2].hidden);
     QCOMPARE(loaded.tracks()[2].clips.size(), 1);

@@ -9044,14 +9044,6 @@ Se la riproduzione va a scatti, prova un&apos;altra opzione.</translation>
         <translation type="unfinished">Lo scorrimento esegue una panoramica a sinistra e a destra lungo la timeline. Maiusc+scorrimento sposta tra le tracce. Anche il trascinamento con il tasto centrale esegue una panoramica.</translation>
     </message>
     <message>
-        <source>Timeline overview strip</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>A minimap of the whole project above the ruler — click or drag it to jump the zoomed view.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Haptic feedback</source>
         <translation type="unfinished"></translation>
     </message>
@@ -11336,17 +11328,6 @@ Se la riproduzione va a scatti, prova un&apos;altra opzione.</translation>
     </message>
 </context>
 <context>
-    <name>TimelineTabBar</name>
-    <message>
-        <source>Main</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Close tab</source>
-        <translation type="unfinished"></translation>
-    </message>
-</context>
-<context>
     <name>TimelineToolbar</name>
     <message>
         <source>%1 (%2)</source>
@@ -11365,6 +11346,14 @@ Se la riproduzione va a scatti, prova un&apos;altra opzione.</translation>
         <translation>Selezione — modifica normale</translation>
     </message>
     <message>
+        <source>Select</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cut mode</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Cut mode — click a clip to split it</source>
         <translation>Modalità taglio — fai clic su una clip per dividerla</translation>
     </message>
@@ -11373,8 +11362,16 @@ Se la riproduzione va a scatti, prova un&apos;altra opzione.</translation>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Trim start</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Trim start — click a clip to drop everything left of the cut</source>
         <translation>Ritaglio iniziale — fai clic su una clip per eliminare tutto a sinistra del taglio</translation>
+    </message>
+    <message>
+        <source>Trim end</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Trim end — click a clip to drop everything right of the cut</source>
@@ -11425,6 +11422,26 @@ Se la riproduzione va a scatti, prova un&apos;altra opzione.</translation>
         <translation>Cancella area di lavoro</translation>
     </message>
     <message>
+        <source>Main</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Composite</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Switch between the main timeline and composite clips</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No composite clips yet</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Timeline overview — a minimap of the whole project; click or drag it to jump the view</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Unlink video and audio</source>
         <translation>Scollega video e audio</translation>
     </message>
@@ -11445,8 +11462,8 @@ Se la riproduzione va a scatti, prova un&apos;altra opzione.</translation>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Scene 1</source>
-        <translation>Scena 1</translation>
+        <source>Customize toolbar…</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Toggle snapping</source>
@@ -11486,6 +11503,49 @@ Se la riproduzione va a scatti, prova un&apos;altra opzione.</translation>
     </message>
 </context>
 <context>
+    <name>TimelineToolbarCustomizeDialog</name>
+    <message>
+        <source>Customize timeline toolbar</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Save</source>
+        <translation type="unfinished">Salva</translation>
+    </message>
+    <message>
+        <source>Drag items to reorder them. Items above the divider are toolbar buttons; the rest are in the More menu.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add separator</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Reset to defaults</source>
+        <translation type="unfinished">Reimposta ai valori predefiniti</translation>
+    </message>
+    <message>
+        <source>More menu</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>— Separator —</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move up</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move down</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Remove separator</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>ToastHost</name>
     <message>
         <source>%1  (×%2)</source>
@@ -11516,6 +11576,14 @@ Se la riproduzione va a scatti, prova un&apos;altra opzione.</translation>
     <message>
         <source>This removes the empty track. You can undo afterwards.</source>
         <translation>Questo rimuove la traccia vuota. Puoi annullare l&apos;operazione in seguito.</translation>
+    </message>
+    <message>
+        <source>Waveform</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Video + waveform</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>FX</source>
@@ -11562,6 +11630,26 @@ Se la riproduzione va a scatti, prova un&apos;altra opzione.</translation>
         <translation>Grafica</translation>
     </message>
     <message>
+        <source>Track height</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Short</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Tall</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Taller</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Scroll over the header to fine-tune</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Video</source>
         <translation>Video</translation>
     </message>
@@ -11594,24 +11682,12 @@ Se la riproduzione va a scatti, prova un&apos;altra opzione.</translation>
         <translation>Nascondi traccia</translation>
     </message>
     <message>
-        <source>Show thumbnails</source>
-        <translation>Mostra miniature</translation>
-    </message>
-    <message>
-        <source>Show waveform</source>
-        <translation>Mostra forma d&apos;onda</translation>
-    </message>
-    <message>
         <source>Taller row</source>
         <translation>Riga più alta</translation>
     </message>
     <message>
         <source>Shorter row</source>
         <translation>Riga più bassa</translation>
-    </message>
-    <message>
-        <source>Reset row height</source>
-        <translation>Reimposta altezza riga</translation>
     </message>
     <message>
         <source>Rename track</source>
@@ -11624,6 +11700,10 @@ Se la riproduzione va a scatti, prova un&apos;altra opzione.</translation>
     <message>
         <source>Track name</source>
         <translation>Nome traccia</translation>
+    </message>
+    <message>
+        <source>Clips show: %1 (click to change)</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Rename…</source>

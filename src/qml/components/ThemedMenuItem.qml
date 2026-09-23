@@ -57,6 +57,16 @@ MenuItem {
         }
     }
 
+    // The Basic style's submenu arrow is drawn in its own dark-on-dark colour.
+    arrow: IconGlyph {
+        x: root.width - width - Theme.spacingLg
+        anchors.verticalCenter: parent.verticalCenter
+        visible: root.subMenu !== null
+        glyph: Theme.icons.chevronRight
+        iconSize: Theme.iconSizeMd
+        iconColor: Theme.mutedForeground
+    }
+
     background: Rectangle {
         radius: Theme.radiusXs
         color: root.highlighted && root.enabled ? Theme.panelAccent : "transparent"

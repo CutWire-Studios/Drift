@@ -903,7 +903,12 @@ Project Project::fromJson(const QJsonObject &object, QString *errorOut)
             track.muted = trackObject.value(QStringLiteral("muted")).toBool(false);
             track.hidden = trackObject.value(QStringLiteral("hidden")).toBool(false);
             track.locked = trackObject.value(QStringLiteral("locked")).toBool(false);
-            track.showWaveform = trackObject.value(QStringLiteral("showWaveform")).toBool(false);
+            // Projects before clipDisplay only had a waveform-instead-of-filmstrip flag.
+            if (trackObject.contains(QStringLiteral("clipDisplay")))
+                track.clipDisplay = static_cast<Track::ClipDisplay>(
+                    qBound(0, trackObject.value(QStringLiteral("clipDisplay")).toInt(1), 2));
+            else if (trackObject.value(QStringLiteral("showWaveform")).toBool(false))
+                track.clipDisplay = Track::ClipDisplay::Waveform;
             track.showChannelWaveforms =
                 trackObject.value(QStringLiteral("showChannelWaveforms")).toBool(false);
             track.heightScale = qBound(
@@ -1059,7 +1064,7 @@ QJsonObject Project::toJson() const
                 {QStringLiteral("muted"), track.muted},
                 {QStringLiteral("hidden"), track.hidden},
                 {QStringLiteral("locked"), track.locked},
-                {QStringLiteral("showWaveform"), track.showWaveform},
+                {QStringLiteral("clipDisplay"), static_cast<int>(track.clipDisplay)},
                 {QStringLiteral("showChannelWaveforms"), track.showChannelWaveforms},
                 {QStringLiteral("heightScale"), track.heightScale},
                 {QStringLiteral("clips"), clipsArray},

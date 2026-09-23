@@ -39,6 +39,7 @@ public:
         OutPointRole,
         SourceDurationRole,
         AudioStreamIndexRole,
+        HasEmbeddedAudioRole,
         FadeInRole,
         FadeOutRole,
         FadeCurveRole,
@@ -68,6 +69,7 @@ public:
         double outPoint = 0.0;
         double sourceDuration = 0.0;
         int audioStreamIndex = 0;
+        bool hasEmbeddedAudio = false;
         double fadeIn = 0.0;
         double fadeOut = 0.0;
         QString fadeCurve;

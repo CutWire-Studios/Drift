@@ -706,7 +706,8 @@ QJsonObject McpDispatcher::applyOneExtended(const QString &tool, const QJsonObje
         if (!args.contains(QStringLiteral("show")))
             return err("bad_args", QStringLiteral("show required"));
         const bool show = jsonBool(args.value(QStringLiteral("show")));
-        m_controller->setTrackShowWaveform(track, show);
+        m_controller->setTrackClipDisplay(track, static_cast<int>(show ? Track::ClipDisplay::Waveform
+                                                                       : Track::ClipDisplay::Both));
         return ok({{QStringLiteral("track"), track}, {QStringLiteral("show"), show}});
     }
 

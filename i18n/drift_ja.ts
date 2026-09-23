@@ -9005,14 +9005,6 @@ If playback stutters, try another.</source>
         <translation>スクロールでタイムラインに沿って左右にパンします。Shift+スクロールでトラック間を移動します。中クリックドラッグでもパンします。</translation>
     </message>
     <message>
-        <source>Timeline overview strip</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>A minimap of the whole project above the ruler — click or drag it to jump the zoomed view.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Haptic feedback</source>
         <translation>触覚フィードバック</translation>
     </message>
@@ -11296,17 +11288,6 @@ If playback stutters, try another.</source>
     </message>
 </context>
 <context>
-    <name>TimelineTabBar</name>
-    <message>
-        <source>Main</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Close tab</source>
-        <translation type="unfinished"></translation>
-    </message>
-</context>
-<context>
     <name>TimelineToolbar</name>
     <message>
         <source>%1 (%2)</source>
@@ -11325,6 +11306,14 @@ If playback stutters, try another.</source>
         <translation>選択 — 通常編集</translation>
     </message>
     <message>
+        <source>Select</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cut mode</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Cut mode — click a clip to split it</source>
         <translation>切り取りモード — クリップをクリックして分割</translation>
     </message>
@@ -11333,8 +11322,16 @@ If playback stutters, try another.</source>
         <translation>音声を別のトラックに表示する</translation>
     </message>
     <message>
+        <source>Trim start</source>
+        <translation type="unfinished">トリム開始</translation>
+    </message>
+    <message>
         <source>Trim start — click a clip to drop everything left of the cut</source>
         <translation>開始トリム — クリップをクリックして切り取り位置より左を削除</translation>
+    </message>
+    <message>
+        <source>Trim end</source>
+        <translation type="unfinished">トリム終了</translation>
     </message>
     <message>
         <source>Trim end — click a clip to drop everything right of the cut</source>
@@ -11385,6 +11382,26 @@ If playback stutters, try another.</source>
         <translation>ワークエリアをクリア</translation>
     </message>
     <message>
+        <source>Main</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Composite</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Switch between the main timeline and composite clips</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No composite clips yet</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Timeline overview — a minimap of the whole project; click or drag it to jump the view</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Unlink video and audio</source>
         <translation>ビデオとオーディオのリンクを解除</translation>
     </message>
@@ -11405,8 +11422,8 @@ If playback stutters, try another.</source>
         <translation>調整レイヤーを追加</translation>
     </message>
     <message>
-        <source>Scene 1</source>
-        <translation>シーン 1</translation>
+        <source>Customize toolbar…</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Toggle snapping</source>
@@ -11446,6 +11463,49 @@ If playback stutters, try another.</source>
     </message>
 </context>
 <context>
+    <name>TimelineToolbarCustomizeDialog</name>
+    <message>
+        <source>Customize timeline toolbar</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Save</source>
+        <translation type="unfinished">保存</translation>
+    </message>
+    <message>
+        <source>Drag items to reorder them. Items above the divider are toolbar buttons; the rest are in the More menu.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add separator</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Reset to defaults</source>
+        <translation type="unfinished">デフォルトにリセット</translation>
+    </message>
+    <message>
+        <source>More menu</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>— Separator —</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move up</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move down</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Remove separator</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>ToastHost</name>
     <message>
         <source>%1  (×%2)</source>
@@ -11475,6 +11535,14 @@ If playback stutters, try another.</source>
     <message>
         <source>This removes the empty track. You can undo afterwards.</source>
         <translation>これにより空のトラックが削除されます。後で元に戻せます。</translation>
+    </message>
+    <message>
+        <source>Waveform</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Video + waveform</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>FX</source>
@@ -11521,6 +11589,26 @@ If playback stutters, try another.</source>
         <translation>グラフィック</translation>
     </message>
     <message>
+        <source>Track height</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Short</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Tall</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Taller</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Scroll over the header to fine-tune</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Video</source>
         <translation>ビデオ</translation>
     </message>
@@ -11553,24 +11641,12 @@ If playback stutters, try another.</source>
         <translation>トラックを非表示</translation>
     </message>
     <message>
-        <source>Show thumbnails</source>
-        <translation>サムネイルを表示</translation>
-    </message>
-    <message>
-        <source>Show waveform</source>
-        <translation>波形を表示</translation>
-    </message>
-    <message>
         <source>Taller row</source>
         <translation>行を高く</translation>
     </message>
     <message>
         <source>Shorter row</source>
         <translation>行を低く</translation>
-    </message>
-    <message>
-        <source>Reset row height</source>
-        <translation>行の高さをリセット</translation>
     </message>
     <message>
         <source>Rename track</source>
@@ -11583,6 +11659,10 @@ If playback stutters, try another.</source>
     <message>
         <source>Track name</source>
         <translation>トラック名</translation>
+    </message>
+    <message>
+        <source>Clips show: %1 (click to change)</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Rename…</source>

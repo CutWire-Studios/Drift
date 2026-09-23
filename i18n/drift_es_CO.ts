@@ -9044,14 +9044,6 @@ Si la reproducción se corta, prueba con otra opción.</translation>
         <translation type="unfinished">El desplazamiento mueve a izquierda y derecha por la línea de tiempo. Mayús+desplazamiento mueve entre pistas. Arrastrar con el botón central también desplaza la vista.</translation>
     </message>
     <message>
-        <source>Timeline overview strip</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>A minimap of the whole project above the ruler — click or drag it to jump the zoomed view.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Haptic feedback</source>
         <translation type="unfinished"></translation>
     </message>
@@ -11336,17 +11328,6 @@ Si la reproducción se corta, prueba con otra opción.</translation>
     </message>
 </context>
 <context>
-    <name>TimelineTabBar</name>
-    <message>
-        <source>Main</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Close tab</source>
-        <translation type="unfinished"></translation>
-    </message>
-</context>
-<context>
     <name>TimelineToolbar</name>
     <message>
         <source>%1 (%2)</source>
@@ -11365,6 +11346,14 @@ Si la reproducción se corta, prueba con otra opción.</translation>
         <translation>Selección — edición normal</translation>
     </message>
     <message>
+        <source>Select</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cut mode</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Cut mode — click a clip to split it</source>
         <translation>Modo de corte — haz clic en un clip para dividirlo</translation>
     </message>
@@ -11373,8 +11362,16 @@ Si la reproducción se corta, prueba con otra opción.</translation>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Trim start</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Trim start — click a clip to drop everything left of the cut</source>
         <translation>Recortar inicio — haz clic en un clip para descartar todo a la izquierda del corte</translation>
+    </message>
+    <message>
+        <source>Trim end</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Trim end — click a clip to drop everything right of the cut</source>
@@ -11425,6 +11422,26 @@ Si la reproducción se corta, prueba con otra opción.</translation>
         <translation>Borrar área de trabajo</translation>
     </message>
     <message>
+        <source>Main</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Composite</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Switch between the main timeline and composite clips</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No composite clips yet</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Timeline overview — a minimap of the whole project; click or drag it to jump the view</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Unlink video and audio</source>
         <translation>Desvincular vídeo y audio</translation>
     </message>
@@ -11445,8 +11462,8 @@ Si la reproducción se corta, prueba con otra opción.</translation>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Scene 1</source>
-        <translation>Escena 1</translation>
+        <source>Customize toolbar…</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Toggle snapping</source>
@@ -11486,6 +11503,49 @@ Si la reproducción se corta, prueba con otra opción.</translation>
     </message>
 </context>
 <context>
+    <name>TimelineToolbarCustomizeDialog</name>
+    <message>
+        <source>Customize timeline toolbar</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Save</source>
+        <translation type="unfinished">Guardar</translation>
+    </message>
+    <message>
+        <source>Drag items to reorder them. Items above the divider are toolbar buttons; the rest are in the More menu.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add separator</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Reset to defaults</source>
+        <translation type="unfinished">Restablecer valores predeterminados</translation>
+    </message>
+    <message>
+        <source>More menu</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>— Separator —</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move up</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move down</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Remove separator</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>ToastHost</name>
     <message>
         <source>%1  (×%2)</source>
@@ -11516,6 +11576,14 @@ Si la reproducción se corta, prueba con otra opción.</translation>
     <message>
         <source>This removes the empty track. You can undo afterwards.</source>
         <translation>Esto eliminará la pista vacía. Puedes deshacerlo después.</translation>
+    </message>
+    <message>
+        <source>Waveform</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Video + waveform</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>FX</source>
@@ -11562,6 +11630,26 @@ Si la reproducción se corta, prueba con otra opción.</translation>
         <translation>Gráfico</translation>
     </message>
     <message>
+        <source>Track height</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Short</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Tall</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Taller</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Scroll over the header to fine-tune</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Video</source>
         <translation>Vídeo</translation>
     </message>
@@ -11594,24 +11682,12 @@ Si la reproducción se corta, prueba con otra opción.</translation>
         <translation>Ocultar pista</translation>
     </message>
     <message>
-        <source>Show thumbnails</source>
-        <translation>Mostrar miniaturas</translation>
-    </message>
-    <message>
-        <source>Show waveform</source>
-        <translation>Mostrar forma de onda</translation>
-    </message>
-    <message>
         <source>Taller row</source>
         <translation>Fila más alta</translation>
     </message>
     <message>
         <source>Shorter row</source>
         <translation>Fila más baja</translation>
-    </message>
-    <message>
-        <source>Reset row height</source>
-        <translation>Restablecer altura de fila</translation>
     </message>
     <message>
         <source>Rename track</source>
@@ -11624,6 +11700,10 @@ Si la reproducción se corta, prueba con otra opción.</translation>
     <message>
         <source>Track name</source>
         <translation>Nombre de la pista</translation>
+    </message>
+    <message>
+        <source>Clips show: %1 (click to change)</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Rename…</source>

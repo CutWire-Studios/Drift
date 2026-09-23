@@ -12,6 +12,8 @@ MenuSeparator {
     padding: Theme.spacingXs
     topPadding: Theme.spacingXs
     bottomPadding: Theme.spacingXs
+    // A hidden entry still gets a row in the Menu's ListView; collapse it.
+    height: visible ? implicitHeight : 0
 
     contentItem: Rectangle {
         implicitHeight: Theme.borderWidth
