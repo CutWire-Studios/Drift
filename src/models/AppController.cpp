@@ -1055,6 +1055,11 @@ AppController::AppController(AssetLibrary *assetLibrary, QObject *parent)
     // so aboutToQuit only writes this when quit was interrupted (SIGTERM, kill).
     // The file is also removed when the user saves, loads another project,
     // starts fresh, or discards recovery.
+    m_previewAutoCommit = new QTimer(this);
+    m_previewAutoCommit->setSingleShot(true);
+    m_previewAutoCommit->setInterval(400);
+    connect(m_previewAutoCommit, &QTimer::timeout, this, &AppController::commitPreviewDrag);
+
     m_autosaveTimer = new QTimer(this);
     m_autosaveTimer->setInterval(kAutosaveIntervalMs);
     connect(m_autosaveTimer, &QTimer::timeout, this, [this] {
@@ -1405,6 +1410,9 @@ void AppController::notifySelectionChanged()
 
 void AppController::notifyTracksChanged()
 {
+    // Trims and the other full-path preview edits land here rather than in emitPreviewEdit.
+    if (m_previewDragActive)
+        m_previewDragDirty = true;
     m_tracksCacheValid = false;
     // Dropped now rather than left to the next rebuild: this is a QVariant graph over every clip
     // in the project, and holding a stale one until the next read doubles the peak.
@@ -5549,6 +5557,11 @@ void AppController::setPlaying(bool playing)
     if (m_playing == playing)
         return;
 
+    // Sliders and preview handles lock while playing; land the drag in progress while the
+    // commit's seek is still legal.
+    if (playing && m_previewDragActive)
+        commitPreviewDrag();
+
     m_playing = playing;
     if (m_playing) {
         const drift::TimeUs durationUs = m_project.durationUs();
@@ -6338,8 +6351,10 @@ void AppController::finishEdit(const QString &message)
     // During playback the engine clock owns the playhead. Seeking here would
     // PlaybackClock::reset() and (historically) stop the clock while audio kept
     // pulling — freezing A/V at one spot after drops like adding an effect.
+    // Audio only: the tracksChanged below schedules the one composite. A full setPlayheadUs here
+    // dispatched its own, then the edit's invalidation made the scheduled one a second render.
     if (!m_playback.isPlaying())
-        m_playback.setPlayheadUs(m_playheadUs);
+        m_playback.resyncAudioAt(m_playheadUs);
     // Underlying audio may have moved; force the subtitle-lane waveform to recompute.
     m_subtitleWaveformCache.clear();
     // Beats are expensive and explicitly requested, so they are dropped only when the mix
@@ -13300,20 +13315,51 @@ QVariantMap AppController::suggestedProjectSetupForAsset(int assetIndex) const
 
 void AppController::beginPreviewDrag(const QString &undoText)
 {
+    // A press straight after keyboard nudges would otherwise take their result as its "before"
+    // and the nudges would lose their undo step.
+    if (m_previewDragAuto)
+        commitPreviewDrag();
     m_previewDragBefore = m_project;
     m_previewDragActive = true;
+    m_previewDragDirty = false;
     m_previewDragText = undoText.isEmpty() ? tr("Edit clip") : undoText;
+    emit previewDragActiveChanged();
+}
+
+void AppController::beginImplicitPreviewDrag(const QString &undoText)
+{
+    if (!m_previewDragActive) {
+        beginPreviewDrag(undoText);
+        m_previewDragAuto = true;
+    }
+    if (m_previewDragAuto)
+        m_previewAutoCommit->start();
 }
 
 void AppController::emitPreviewFrame()
 {
-    // Same rule as finishEdit: never seek the live clock for a preview refresh.
-    if (!m_playback.isPlaying())
-        m_playback.setPlayheadUs(m_playheadUs);
     // notifyTracksChanged() also notifies selectedClipDataChanged via connection, and the
-    // tracksChanged handler already schedules the composite — calling refreshFrame() here as
-    // well meant every fade and canvas-transform drag invalidated the snapshot twice per move.
+    // tracksChanged handler already schedules the composite. No setPlayheadUs here: its
+    // refreshFrame() raced the handler's and rendered every edit twice.
     notifyTracksChanged();
+}
+
+void AppController::emitPreviewEdit(int trackIndex, int clipIndex, const QStringList &keys)
+{
+    m_previewDragDirty = true;
+    // Multicam refreshes its tiles off tracksChanged, and a batch owes one at its end anyway.
+    if (m_multicamActive || m_tracksBatchDepth > 0) {
+        emitPreviewFrame();
+        return;
+    }
+    // Only the lazily rebuilt caches are dropped; the timeline models, selectedClipData and
+    // every inspector catch up once in commitPreviewDrag. Per-move fan-out of tracksChanged was
+    // what made these drags lag.
+    m_tracksCacheValid = false;
+    m_tracksCache.clear();
+    m_durationCacheValid = false;
+    m_playback.notifyProjectEdited();
+    emit clipPropertiesPreviewed(trackIndex, clipIndex, keys);
 }
 
 void AppController::previewSetClipPosition(int trackIndex, int clipIndex, double xPixels, double yPixels)
@@ -13326,6 +13372,7 @@ void AppController::previewSetClipPosition(int trackIndex, int clipIndex, double
         return;
 
     drift::Clip &clip = track.clips[clipIndex];
+    beginImplicitPreviewDrag(tr("Move clip"));
     const drift::TimeUs relative = qMax<drift::TimeUs>(0, m_playheadUs - clip.timelineStart);
     const bool wroteX = writeKeyframeValue(clip.transformX, relative, xPixels, m_autoKeyEnabled, false);
     const bool wroteY = writeKeyframeValue(clip.transformY, relative, yPixels, m_autoKeyEnabled, false);
@@ -13334,10 +13381,7 @@ void AppController::previewSetClipPosition(int trackIndex, int clipIndex, double
         return;
     }
 
-    if (!m_previewDragActive)
-        beginPreviewDrag(tr("Move clip"));
-
-    emitPreviewFrame();
+    emitPreviewEdit(trackIndex, clipIndex, {QStringLiteral("x"), QStringLiteral("y")});
 }
 
 void AppController::previewSetClipSize(int trackIndex, int clipIndex, double widthPixels, double heightPixels)
@@ -13353,6 +13397,7 @@ void AppController::previewSetClipSize(int trackIndex, int clipIndex, double wid
     // A model clip is placed by its camera; its box has no size or spin of its own.
     if (clip.type == drift::ClipType::Model3d)
         return;
+    beginImplicitPreviewDrag(tr("Resize clip"));
     const drift::TimeUs relative = qMax<drift::TimeUs>(0, m_playheadUs - clip.timelineStart);
     const bool wroteW =
         writeKeyframeValue(clip.transformW, relative, qMax(1.0, widthPixels), m_autoKeyEnabled, false);
@@ -13363,10 +13408,7 @@ void AppController::previewSetClipSize(int trackIndex, int clipIndex, double wid
         return;
     }
 
-    if (!m_previewDragActive)
-        beginPreviewDrag(tr("Resize clip"));
-
-    emitPreviewFrame();
+    emitPreviewEdit(trackIndex, clipIndex, {QStringLiteral("width"), QStringLiteral("height")});
 }
 
 void AppController::previewSetClipRect(int trackIndex, int clipIndex, double xPixels, double yPixels,
@@ -13383,6 +13425,7 @@ void AppController::previewSetClipRect(int trackIndex, int clipIndex, double xPi
     // A model clip is placed by its camera; its box has no size or spin of its own.
     if (clip.type == drift::ClipType::Model3d)
         return;
+    beginImplicitPreviewDrag(tr("Transform clip"));
     const drift::TimeUs relative = qMax<drift::TimeUs>(0, m_playheadUs - clip.timelineStart);
     bool wrote = false;
     wrote = writeKeyframeValue(clip.transformX, relative, xPixels, m_autoKeyEnabled, false) || wrote;
@@ -13396,10 +13439,9 @@ void AppController::previewSetClipRect(int trackIndex, int clipIndex, double xPi
         return;
     }
 
-    if (!m_previewDragActive)
-        beginPreviewDrag(tr("Transform clip"));
-
-    emitPreviewFrame();
+    emitPreviewEdit(trackIndex, clipIndex,
+                    {QStringLiteral("x"), QStringLiteral("y"), QStringLiteral("width"),
+                     QStringLiteral("height")});
 }
 
 void AppController::previewSetClipRotation(int trackIndex, int clipIndex, double degrees)
@@ -13415,16 +13457,14 @@ void AppController::previewSetClipRotation(int trackIndex, int clipIndex, double
     // A model clip is placed by its camera; its box has no size or spin of its own.
     if (clip.type == drift::ClipType::Model3d)
         return;
+    beginImplicitPreviewDrag(tr("Rotate clip"));
     const drift::TimeUs relative = qMax<drift::TimeUs>(0, m_playheadUs - clip.timelineStart);
     if (!writeKeyframeValue(clip.rotation, relative, degrees, m_autoKeyEnabled, false)) {
         emit transformBlocked(tr("Turn on Auto keyframes to rotate this"));
         return;
     }
 
-    if (!m_previewDragActive)
-        beginPreviewDrag(tr("Rotate clip"));
-
-    emitPreviewFrame();
+    emitPreviewEdit(trackIndex, clipIndex, {QStringLiteral("rotation")});
 }
 
 void AppController::previewSetClipKeyframe(int trackIndex, int clipIndex, const QString &prop,
@@ -13432,6 +13472,10 @@ void AppController::previewSetClipKeyframe(int trackIndex, int clipIndex, const 
 {
     if (trackIndex < 0 || trackIndex >= m_project.tracks().size())
         return;
+    // Announced under the caller's indices: listeners address the clip they are showing, not
+    // the adjustment the write lands on.
+    const int announceTrack = trackIndex;
+    const int announceClip = clipIndex;
     // "fx.<i>.<param>" addresses the effect stack, which now lives on the adjustment
     // linked to this clip. Transform props are untouched by this.
     redirectToKeyframeHost(&trackIndex, &clipIndex, prop);
@@ -13441,16 +13485,14 @@ void AppController::previewSetClipKeyframe(int trackIndex, int clipIndex, const 
         return;
 
     drift::Clip &clip = track.clips[clipIndex];
+    beginImplicitPreviewDrag(tr("Edit keyframe"));
     const drift::TimeUs rel = qMax<drift::TimeUs>(0, drift::secondsToUs(atSeconds) - clip.timelineStart);
     if (!writeClipPropValue(clip, prop, rel, value, m_autoKeyEnabled, /*force=*/false)) {
         emit transformBlocked(tr("Turn on Auto keyframes to edit this"));
         return;
     }
 
-    if (!m_previewDragActive)
-        beginPreviewDrag(tr("Edit keyframe"));
-
-    emitPreviewFrame();
+    emitPreviewEdit(announceTrack, announceClip, {prop});
 }
 
 void AppController::previewSetEffectParam(int trackIndex, int clipIndex, int effectIndex,
@@ -13458,6 +13500,8 @@ void AppController::previewSetEffectParam(int trackIndex, int clipIndex, int eff
 {
     if (trackIndex < 0 || trackIndex >= m_project.tracks().size())
         return;
+    const int announceTrack = trackIndex;
+    const int announceClip = clipIndex;
     // The stack lives on the adjustment linked to this clip, not on the clip.
     if (!redirectToEffectHost(&trackIndex, &clipIndex, drift::AdjustmentKind::VideoEffects,
                               /*create=*/false)) {
@@ -13474,8 +13518,7 @@ void AppController::previewSetEffectParam(int trackIndex, int clipIndex, int eff
     if (key.isEmpty())
         return;
 
-    if (!m_previewDragActive)
-        beginPreviewDrag(tr("Edit effect"));
+    beginImplicitPreviewDrag(tr("Edit effect"));
 
     const EffectPresetEntry *def = effectDefForId(clip.effects[effectIndex].catalogId);
     bool asBoolean = false;
@@ -13491,7 +13534,8 @@ void AppController::previewSetEffectParam(int trackIndex, int clipIndex, int eff
         clip.effects[effectIndex].parameters.insert(key, value > 0.5);
     else
         clip.effects[effectIndex].parameters.insert(key, value);
-    emitPreviewFrame();
+    emitPreviewEdit(announceTrack, announceClip,
+                    {QStringLiteral("fx.%1.%2").arg(effectIndex).arg(key)});
 }
 
 void AppController::previewSetClipSpeed(int trackIndex, int clipIndex, double speed)
@@ -13566,11 +13610,10 @@ void AppController::previewSetClipMask(int trackIndex, int clipIndex, const QVar
     if (clipIndex < 0 || clipIndex >= track.clips.size())
         return;
 
-    if (!m_previewDragActive)
-        beginPreviewDrag(tr("Mask changed"));
+    beginImplicitPreviewDrag(tr("Mask changed"));
 
     writeClipMask(trackIndex, clipIndex, maskFromMap(maskMap));
-    emitPreviewFrame();
+    emitPreviewEdit(trackIndex, clipIndex, {QStringLiteral("mask.*")});
 }
 
 void AppController::commitPreviewDrag()
@@ -13578,10 +13621,18 @@ void AppController::commitPreviewDrag()
     if (!m_previewDragActive)
         return;
 
+    m_previewAutoCommit->stop();
+    m_previewDragAuto = false;
+    m_previewDragActive = false;
+    emit previewDragActiveChanged();
+    // A press that never moved, or a drag whose every write was refused.
+    if (!m_previewDragDirty)
+        return;
+    m_previewDragDirty = false;
+
     const QString text = m_previewDragText.isEmpty() ? tr("Edit clip") : m_previewDragText;
     if (!m_mcpUndoSuspended)
         m_undoStack.push(new drift::ProjectSnapshotCommand(&m_project, m_previewDragBefore, m_project, text));
-    m_previewDragActive = false;
     finishEdit(text);
 }
 
@@ -13590,10 +13641,14 @@ void AppController::cancelPreviewDrag()
     if (!m_previewDragActive)
         return;
 
+    m_previewAutoCommit->stop();
+    m_previewDragAuto = false;
+    m_previewDragDirty = false;
     const auto transcripts = m_project.transcripts();
     m_project = m_previewDragBefore;
     m_project.setTranscripts(transcripts);
     m_previewDragActive = false;
+    emit previewDragActiveChanged();
     emitPreviewFrame();
 }
 
@@ -13750,6 +13805,7 @@ void AppController::commitTextEdit(int trackIndex, int clipIndex, const QString 
     if (m_previewDragActive) {
         clip.textContent = trimmed;
         clip.name = trimmed.left(32);
+        m_previewDragDirty = true;
         commitPreviewDrag();
         return;
     }
@@ -14323,6 +14379,7 @@ void AppController::previewSetTextRect(int trackIndex, int clipIndex, double xPi
     // style field rather than a keyframed track, so it is always applied — the two move together
     // under one undo entry, because resizing a text clip should scale what you see, not just the
     // invisible wrap container.
+    beginImplicitPreviewDrag(tr("Resize text"));
     const drift::TimeUs relative = qMax<drift::TimeUs>(0, m_playheadUs - clip.timelineStart);
     bool wrote = false;
     wrote = writeKeyframeValue(clip.transformX, relative, xPixels, m_autoKeyEnabled, false) || wrote;
@@ -14340,10 +14397,9 @@ void AppController::previewSetTextRect(int trackIndex, int clipIndex, double xPi
     if (!wrote)
         return;
 
-    if (!m_previewDragActive)
-        beginPreviewDrag(tr("Resize text"));
-
-    emitPreviewFrame();
+    emitPreviewEdit(trackIndex, clipIndex,
+                    {QStringLiteral("x"), QStringLiteral("y"), QStringLiteral("width"),
+                     QStringLiteral("height"), QStringLiteral("text.pixelSize")});
 }
 
 void AppController::setClipBlendMode(int trackIndex, int clipIndex, const QString &mode)
@@ -14592,11 +14648,10 @@ void AppController::previewSetClipPan(int trackIndex, int clipIndex, double pan)
     if (type != drift::ClipType::Video && type != drift::ClipType::Audio)
         return;
 
-    if (!m_previewDragActive)
-        beginPreviewDrag(tr("Pan changed"));
+    beginImplicitPreviewDrag(tr("Pan changed"));
 
     m_project.tracks()[trackIndex].clips[clipIndex].pan = qBound(-1.0, pan, 1.0);
-    emitPreviewFrame();
+    emitPreviewEdit(trackIndex, clipIndex, {QStringLiteral("pan")});
 }
 
 void AppController::setClipPan(int trackIndex, int clipIndex, double pan)
@@ -16864,12 +16919,11 @@ void AppController::previewSetTransitionParam(int trackIndex, const QString &tra
     if (!transition)
         return;
 
-    if (!m_previewDragActive)
-        beginPreviewDrag(tr("Edit transition"));
+    beginImplicitPreviewDrag(tr("Edit transition"));
 
     transition->parameters.insert(
         key, coerceTransitionParam(transitionDefForId(transition->kindId), key, value));
-    emitPreviewFrame();
+    emitPreviewEdit(trackIndex, -1, {QStringLiteral("transition.%1.%2").arg(transitionId, key)});
 }
 
 bool AppController::setTransitionParam(int trackIndex, const QString &transitionId, const QString &key,
@@ -18727,6 +18781,8 @@ void AppController::previewSetAudioEffectParam(int trackIndex, int clipIndex, in
 {
     if (trackIndex < 0 || trackIndex >= m_project.tracks().size())
         return;
+    const int announceTrack = trackIndex;
+    const int announceClip = clipIndex;
     // The stack lives on the adjustment linked to this clip, not on the clip.
     if (!redirectToEffectHost(&trackIndex, &clipIndex, drift::AdjustmentKind::AudioEffects,
                               /*create=*/false)) {
@@ -18743,13 +18799,13 @@ void AppController::previewSetAudioEffectParam(int trackIndex, int clipIndex, in
     if (key.isEmpty())
         return;
 
-    if (!m_previewDragActive)
-        beginPreviewDrag(tr("Edit audio effect"));
+    beginImplicitPreviewDrag(tr("Edit audio effect"));
 
     clip.audioEffects[effectIndex].parameters.insert(key, value);
     // Audio effects are heard, not seen: a preview frame won't reflect the change, but keeping the
     // project mutated live means the next playback buffer picks it up without a commit.
-    emitPreviewFrame();
+    emitPreviewEdit(announceTrack, announceClip,
+                    {QStringLiteral("afx.%1.%2").arg(effectIndex).arg(key)});
 }
 
 bool AppController::setAudioEffectParam(int trackIndex, int clipIndex, int effectIndex,
@@ -21359,6 +21415,9 @@ void AppController::resetSessionState()
     m_sequencePlayheads.clear();
     m_pendingEffectTemplate.reset();
     m_previewDragActive = false;
+    m_previewDragAuto = false;
+    m_previewDragDirty = false;
+    m_previewAutoCommit->stop();
     m_keyframeGraphHiddenProperties.clear();
     setCanvasCropMode(false);
     setSubtitleEditing(false);
@@ -24924,8 +24983,13 @@ void AppController::mcpEndBatch(const QString &text, bool pushUndo)
     if (--m_mcpBatchDepth > 0)
         return;
     m_mcpUndoSuspended = false;
-    if (m_previewDragActive)
+    if (m_previewDragActive) {
         m_previewDragActive = false;
+        m_previewDragAuto = false;
+        m_previewDragDirty = false;
+        m_previewAutoCommit->stop();
+        emit previewDragActiveChanged();
+    }
     if (pushUndo)
         pushProjectEdit(m_mcpBatchBefore, text);
     finishEdit(text);
@@ -26823,15 +26887,14 @@ void AppController::previewSetStyleLayer(int trackIndex, int clipIndex, const QS
     drift::Clip *clip = styledClipAt(trackIndex, clipIndex);
     if (!clip)
         return;
-    if (!m_previewDragActive)
-        beginPreviewDrag(tr("Edit layer"));
+    beginImplicitPreviewDrag(tr("Edit layer"));
     QVariantMap layer = patch;
     layer.insert(QStringLiteral("id"), layerId);
     if (clip->type == drift::ClipType::Shape)
         applyShapeStylePatch(clip->shapeStyle, QVariantMap{{QStringLiteral("layer"), layer}});
     else
         applyTextStylePatch(clip->textStyle, QVariantMap{{QStringLiteral("layer"), layer}});
-    emitPreviewFrame();
+    emitPreviewEdit(trackIndex, clipIndex, {QStringLiteral("style.%1.*").arg(layerId)});
 }
 
 QString AppController::addTextLayer(int trackIndex, int clipIndex, const QString &kind, int atIndex)
@@ -26888,10 +26951,9 @@ void AppController::previewSetTextAnimationSlot(int trackIndex, int clipIndex, c
         return;
     if (slot != QLatin1String("in") && slot != QLatin1String("out") && slot != QLatin1String("loop"))
         return;
-    if (!m_previewDragActive)
-        beginPreviewDrag(tr("Edit text animation"));
+    beginImplicitPreviewDrag(tr("Edit text animation"));
     applyTextAnimationSetPatch(&clip->textStyle.animation, QVariantMap{{slot, patch}});
-    emitPreviewFrame();
+    emitPreviewEdit(trackIndex, clipIndex, {QStringLiteral("textAnim.%1").arg(slot)});
 }
 
 void AppController::clearTextAnimationSlot(int trackIndex, int clipIndex, const QString &slot)
@@ -27028,12 +27090,11 @@ void AppController::previewSetTextLookParam(int trackIndex, int clipIndex, const
     const drift::TextLook *look = drift::textLookForId(clip->textStyle.lookId);
     if (!look)
         return;
-    if (!m_previewDragActive)
-        beginPreviewDrag(tr("Adjust text look"));
+    beginImplicitPreviewDrag(tr("Adjust text look"));
     QMap<QString, drift::VectorSlotValue> params = clip->textStyle.lookParams;
     mergeParamsFromMap(&params, QVariantMap{{key, value}}, look->params);
     drift::applyTextLook(clip->textStyle, look->id, params);
-    emitPreviewFrame();
+    emitPreviewEdit(trackIndex, clipIndex, {QStringLiteral("textLook.%1").arg(key)});
 }
 
 QVariantList AppController::textPaintEffects() const

@@ -116,6 +116,8 @@ struct GpuScene
     double blurStrengthPx = 20.0;
     QImage blurSource; // bottommost visual frame, already decoded
     QList<GpuItem> items; // back-to-front
+    // Paused preview: keep converted video sources on the GPU between composites.
+    bool cacheVideoSources = false;
 };
 
 // A composited frame still living in GPU memory. The texture belongs to the GL

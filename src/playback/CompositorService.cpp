@@ -246,7 +246,9 @@ bool CompositorService::dispatchPending()
 
     m_lastDispatchedTimeUs = latest;
     m_lastDispatchedOptions = latestOptions;
-    dispatch(latest, effectiveOptions(latestOptions));
+    FrameCompositor::RenderOptions options = effectiveOptions(latestOptions);
+    options.cacheVideoSources = !m_playbackActive;
+    dispatch(latest, options);
     return true;
 }
 

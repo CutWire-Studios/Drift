@@ -325,6 +325,11 @@ Item {
     }
 
     Component.onCompleted: refreshFields()
+    // The Properties panel unloads this tab when another is picked; land typed text first.
+    Component.onDestruction: {
+        if (contentDirty)
+            applyText()
+    }
 
     Timer {
         id: previewStopTimer
@@ -1360,6 +1365,7 @@ Item {
                     }
                     ThemedSlider {
                         id: durationSlider
+                        lockWhilePlaying: true
                         width: parent.width
                         label: root.animSlot === "loop" ? qsTr("Period") : qsTr("Duration")
                         from: root.animSlot === "loop" ? 0.1 : 0

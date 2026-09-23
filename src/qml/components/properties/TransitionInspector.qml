@@ -330,6 +330,7 @@ Item {
 
                     ThemedSlider {
                         id: trParamSlider
+                        lockWhilePlaying: true
                         label: trParamRow.paramData.label
                         visible: !trParamRow.paramData.isBoolean
                         width: parent.width

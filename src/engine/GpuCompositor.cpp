@@ -398,7 +398,7 @@ GlTarget buildLayerTarget(GlRuntime &rt, QOpenGLExtraFunctions *gl, const GpuLay
     } else if (layer.nested) {
         target = nestedLayerTarget(rt, gl, *layer.nested);
     } else if (layer.video.isValid()) {
-        target = promoteVideoFrameToTarget(rt, gl, layer.video);
+        target = promoteVideoFrameToTargetCached(rt, gl, layer.video);
     } else {
 #ifdef DRIFT_WITH_SKIA
         if (layer.vector) {
@@ -1390,7 +1390,9 @@ GpuFrameTexture renderToTexture(const GpuScene &scene)
             return;
 
         bool lostVideo = false;
+        rt.cacheVideoSources = scene.cacheVideoSources;
         composeOnGlThread(rt, scene, canvas, &lostVideo);
+        rt.cacheVideoSources = false;
         // Publishing a canvas a video layer dropped out of shows the viewer a black frame for
         // one tick. Publishing nothing leaves the last good frame up instead, and the next
         // composite is already on its way — a repeat reads as a dropped frame, not a flash.

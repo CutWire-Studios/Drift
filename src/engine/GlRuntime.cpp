@@ -1925,6 +1925,7 @@ void logMediaCodecImportOnce(const char *reason)
 
 void GlRuntime::destroyVideoUploadState()
 {
+    m_videoSourceLru.clear();
     unregisterCudaResources();
     auto *gl = functions();
     if (gl) {
@@ -3145,6 +3146,66 @@ GlTarget drawMediaCodecImage(GlRuntime &rt, QOpenGLExtraFunctions *gl,
     program->release();
     target.fbo->release();
     return target;
+}
+
+GlTarget promoteVideoFrameToTargetCached(GlRuntime &rt, QOpenGLExtraFunctions *gl,
+                                         const PreviewVideoFrame &frame)
+{
+    auto &lru = rt.m_videoSourceLru;
+    if (!rt.cacheVideoSources) {
+        // Playing: every frame is new, so the entries would only hold VRAM.
+        for (GlRuntime::CachedVideoSource &entry : lru)
+            rt.releaseTarget(std::move(entry.target));
+        lru.clear();
+        return promoteVideoFrameToTarget(rt, gl, frame);
+    }
+    if (!gl || !frame.isValid())
+        return {};
+
+    const AVFrame *av = frame.frame.get();
+    for (auto it = lru.begin(); it != lru.end();) {
+        if (it->frame.expired()) {
+            rt.releaseTarget(std::move(it->target));
+            it = lru.erase(it);
+            continue;
+        }
+        if (it->raw == av && it->rotation == frame.rotation && it->colorspace == frame.colorspace
+            && it->colorRange == frame.colorRange) {
+            lru.splice(lru.begin(), lru, it);
+            GlTarget out = rt.acquireTarget(it->target.width, it->target.height);
+            if (!out.isValid())
+                return {};
+            if (!blitTextureToTarget(rt, gl, it->target.texture(), out)) {
+                rt.releaseTarget(std::move(out));
+                return {};
+            }
+            return out;
+        }
+        ++it;
+    }
+
+    GlTarget promoted = promoteVideoFrameToTarget(rt, gl, frame);
+    if (!promoted.isValid())
+        return promoted;
+    // The caller owns and mutates what it is handed, so the cache keeps a copy.
+    GlTarget copy = rt.acquireTarget(promoted.width, promoted.height);
+    if (!copy.isValid() || !blitTextureToTarget(rt, gl, promoted.texture(), copy)) {
+        rt.releaseTarget(std::move(copy));
+        return promoted;
+    }
+    while (lru.size() >= GlRuntime::kMaxCachedVideoSources) {
+        rt.releaseTarget(std::move(lru.back().target));
+        lru.pop_back();
+    }
+    GlRuntime::CachedVideoSource entry;
+    entry.frame = frame.frame;
+    entry.raw = av;
+    entry.rotation = frame.rotation;
+    entry.colorspace = frame.colorspace;
+    entry.colorRange = frame.colorRange;
+    entry.target = std::move(copy);
+    lru.push_front(std::move(entry));
+    return promoted;
 }
 
 GlTarget promoteVideoFrameToTarget(GlRuntime &rt, QOpenGLExtraFunctions *gl,

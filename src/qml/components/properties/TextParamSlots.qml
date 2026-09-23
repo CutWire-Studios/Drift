@@ -88,6 +88,7 @@ Column {
 
             ThemedSlider {
                 id: scalarSlider
+                lockWhilePlaying: true
                 visible: slotRow.ranged
                 width: parent.width
                 label: root.labelOf(slotRow.spec)

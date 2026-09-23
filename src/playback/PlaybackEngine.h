@@ -57,6 +57,8 @@ public:
     // delivered in one event-loop turn into a single composite request.
     void notifyProjectEdited();
     void setPlayheadUs(drift::TimeUs us);
+    // setPlayheadUs without the composite, for a caller whose edit already schedules one.
+    void resyncAudioAt(drift::TimeUs us);
     drift::TimeUs playheadUs() const { return m_playheadUs; }
 
     void setLoopWorkArea(bool enabled) { m_loopWorkArea = enabled; }

@@ -237,6 +237,7 @@ Item {
 
                             ThemedSlider {
                                 id: audioParamSlider
+                                lockWhilePlaying: true
                                 label: audioParamRow.paramData.label
                                 visible: !audioParamRow.paramData.isBoolean
                                 width: parent.width

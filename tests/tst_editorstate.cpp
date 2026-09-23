@@ -150,6 +150,7 @@ private slots:
     void lastExportSettingsNormalisesStringTypedValues();
     void textStyleBlendModeKeyframesAndEffects();
     void previewSetTextRectScalesPixelSize();
+    void previewDragUndoEdges();
     void fontCatalogIsExposedToQml();
     void effectBrowserCategoriesAndApply();
     void multiSelectClipboardGuidesAndShortcuts();
@@ -2719,16 +2720,21 @@ void EditorStateTest::textStyleBlendModeKeyframesAndEffects()
     QCOMPARE(keyframes.size(), 1);
     QCOMPARE(keyframes.first().toMap().value(QStringLiteral("value")).toDouble(), 0.5);
 
-    // WYSIWYG-style preview updates must refresh selectedClipData for the inspector.
+    // A preview drag announces only the properties it wrote; the full selectedClipData refresh
+    // waits for the commit, though a read in between already sees the new value.
     QSignalSpy clipDataSpy(&state, &AppController::selectedClipDataChanged);
+    QSignalSpy previewedSpy(&state, &AppController::clipPropertiesPreviewed);
     state.beginPreviewDrag(QStringLiteral("Move clip"));
     state.previewSetClipPosition(track, clip, 100.0, 200.0);
-    QVERIFY(clipDataSpy.count() >= 1);
+    QCOMPARE(clipDataSpy.count(), 0);
+    QCOMPARE(previewedSpy.count(), 1);
+    QCOMPARE(previewedSpy.first().at(2).toStringList(), QStringList({QStringLiteral("x"), QStringLiteral("y")}));
     const QVariantMap keys = state.selectedClipData().value(QStringLiteral("keyframes")).toMap();
     const QVariantList xKeys = keys.value(QStringLiteral("x")).toMap().value(QStringLiteral("points")).toList();
     QVERIFY(!xKeys.isEmpty());
     QCOMPARE(xKeys.first().toMap().value(QStringLiteral("value")).toDouble(), 100.0);
     state.commitPreviewDrag();
+    QVERIFY(clipDataSpy.count() >= 1);
 
     state.beginPreviewDrag(QStringLiteral("Resize clip"));
     state.previewSetClipSize(track, clip, 640.0, 360.0);
@@ -2994,6 +3000,34 @@ void EditorStateTest::effectRemovalRemapsGraphSelection()
     state.removeEffect(track, clip, 0);
     QCOMPARE(state.keyframeGraphHiddenProperties(),
              (QStringList { QStringLiteral("x"), QStringLiteral("fx.0.brightness") }));
+}
+
+void EditorStateTest::previewDragUndoEdges()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    state.addTextClip(QStringLiteral("Nudge me"), 0.0);
+    const int track = state.selectedTrack();
+    const int clip = state.selectedClip();
+    const double x0 = state.propertyValueAt(track, clip, QStringLiteral("x"), 0.0, 0.0);
+
+    // A press and release with no movement leaves no undo step: the next undo is the add.
+    state.beginPreviewDrag(QStringLiteral("Move clip"));
+    state.commitPreviewDrag();
+    QVERIFY(!state.previewDragActive());
+
+    // A keyboard nudge begins its own drag, whose "before" must predate the write, and lands as
+    // one undo step once the nudges stop.
+    state.previewSetClipPosition(track, clip, x0 + 10.0, 0.0);
+    state.previewSetClipPosition(track, clip, x0 + 20.0, 0.0);
+    QVERIFY(state.previewDragActive());
+    QTRY_VERIFY_WITH_TIMEOUT(!state.previewDragActive(), 2000);
+    QCOMPARE(state.propertyValueAt(track, clip, QStringLiteral("x"), 0.0, 0.0), x0 + 20.0);
+    state.undo();
+    QCOMPARE(state.propertyValueAt(track, clip, QStringLiteral("x"), 0.0, 0.0), x0);
+
+    state.undo();
+    QVERIFY(state.clipAt(track, clip).isEmpty());
 }
 
 void EditorStateTest::previewSetTextRectScalesPixelSize()

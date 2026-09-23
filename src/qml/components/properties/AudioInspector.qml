@@ -111,6 +111,7 @@ Item {
 
             ThemedSlider {
                 id: panSlider
+                lockWhilePlaying: true
                 label: qsTr("Pan")
                 width: parent.width
                 from: -1

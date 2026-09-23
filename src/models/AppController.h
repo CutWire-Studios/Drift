@@ -106,6 +106,7 @@ class AppController : public QObject
     Q_PROPERTY(double playheadSeconds READ playheadSeconds WRITE setPlayheadSeconds NOTIFY playheadSecondsChanged)
     Q_PROPERTY(double durationSeconds READ durationSeconds NOTIFY tracksChanged)
     Q_PROPERTY(bool playing READ playing WRITE setPlaying NOTIFY playingChanged)
+    Q_PROPERTY(bool previewDragActive READ previewDragActive NOTIFY previewDragActiveChanged)
     Q_PROPERTY(bool snapEnabled READ snapEnabled WRITE setSnapEnabled NOTIFY snapEnabledChanged)
     Q_PROPERTY(bool rippleEnabled READ rippleEnabled WRITE setRippleEnabled NOTIFY rippleEnabledChanged)
     Q_PROPERTY(bool allowClipOverlap READ allowClipOverlap WRITE setAllowClipOverlap NOTIFY allowClipOverlapChanged)
@@ -436,6 +437,7 @@ public:
     // voice waveform. In C++ because the QML that needed it was reading the whole `tracks` graph.
     Q_INVOKABLE QVariantMap mediaExtentSeconds() const;
     bool playing() const { return m_playing; }
+    bool previewDragActive() const { return m_previewDragActive; }
     bool snapEnabled() const { return m_snapEnabled; }
     bool rippleEnabled() const { return m_rippleEnabled; }
     bool allowClipOverlap() const { return m_allowClipOverlap; }
@@ -1826,6 +1828,11 @@ signals:
     void inlineTextEditingChanged();
     void externalProjectOpenRequested(const QUrl &url);
     void tracksChanged();
+    // A drag wrote these properties in place without announcing tracksChanged; the full refresh
+    // follows on commit. Keys are the propertyValueAt names ("x", "fx.2.light1_x"); one ending
+    // in ".*" covers every key under that prefix.
+    void clipPropertiesPreviewed(int trackIndex, int clipIndex, const QStringList &keys);
+    void previewDragActiveChanged();
     void playheadSecondsChanged();
     void playingChanged();
     void audioOutputDevicesChanged();
@@ -2624,7 +2631,14 @@ protected:
     static QVariantMap textAnimationPresetToMap(const drift::TextAnimationPreset &preset);
     drift::Project m_previewDragBefore;
     QString m_previewDragText;
+    // Something was written since beginPreviewDrag; a press with no movement commits nothing.
+    bool m_previewDragDirty = false;
+    // Begun by a setter rather than a press (keyboard nudges); commits once the nudges stop.
+    bool m_previewDragAuto = false;
+    QTimer *m_previewAutoCommit = nullptr;
     void emitPreviewFrame();
+    void emitPreviewEdit(int trackIndex, int clipIndex, const QStringList &keys);
+    void beginImplicitPreviewDrag(const QString &undoText);
     // Runs spec off-thread and swaps its output in for the asset at assetIndex, reporting through
     // assetEditChanged/assetEditFinished. The caller has checked no edit is running.
     void startAssetEditJob(const QString &assetId, const QString &name,

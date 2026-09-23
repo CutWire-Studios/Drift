@@ -39,6 +39,18 @@ PanelFrame {
                                          && (clipKind === "text" || clipKind === "subtitle")
                                          && !!root.clipData.textStyle
 
+    // Inspector view state that outlives the tab being unloaded.
+    QtObject {
+        id: inspectorUi
+        property bool sizeLinked: true
+        property string textTab: "text"
+        property string animSlot: "in"
+        property string animCategory: ""
+        property var textExpandedLayerIds: ({})
+        property real contentFieldHeight: 96
+        property var shapeExpandedLayerIds: ({})
+    }
+
     property int activeTab: 0
     readonly property string currentTabId: tabsModel.get(activeTab).tabId
 
@@ -84,7 +96,10 @@ PanelFrame {
             if (root.textTabIndex < 0 || !root.tabVisible("text"))
                 return
             root.activeTab = root.textTabIndex
-            Qt.callLater(textInspector.focusContent)
+            Qt.callLater(() => {
+                if (textLoader.item)
+                    textLoader.item.focusContent()
+            })
         }
     }
 
@@ -667,90 +682,143 @@ PanelFrame {
                     font.weight: Font.Medium
                 }
 
-                GeneralInspector {
-                    width: tabColumn.width
-                    visible: root.currentTabId === "general"
+                // Only the open tab is instantiated. Hidden inspectors used to stay alive and
+                // re-read the whole selected clip on every edit; the view state that has to
+                // outlive a tab switch is kept in inspectorUi instead.
+                Loader {
+                    active: root.currentTabId === "general"
+                    visible: active
+                    sourceComponent: Component { GeneralInspector { width: tabColumn.width } }
                 }
 
-                TextInspector {
-                    id: textInspector
-                    width: tabColumn.width
-                    visible: root.currentTabId === "text"
+                Loader {
+                    id: textLoader
+                    active: root.currentTabId === "text"
+                    visible: active
+                    sourceComponent: Component {
+                        TextInspector {
+                            width: tabColumn.width
+                            textTab: inspectorUi.textTab
+                            animSlot: inspectorUi.animSlot
+                            animCategory: inspectorUi.animCategory
+                            expandedLayerIds: inspectorUi.textExpandedLayerIds
+                            contentFieldHeight: inspectorUi.contentFieldHeight
+                            onTextTabChanged: inspectorUi.textTab = textTab
+                            onAnimSlotChanged: inspectorUi.animSlot = animSlot
+                            onAnimCategoryChanged: inspectorUi.animCategory = animCategory
+                            onExpandedLayerIdsChanged: inspectorUi.textExpandedLayerIds = expandedLayerIds
+                            onContentFieldHeightChanged: inspectorUi.contentFieldHeight = contentFieldHeight
+                        }
+                    }
                 }
 
-                TransformInspector {
-                    width: tabColumn.width
-                    visible: root.currentTabId === "transform"
+                Loader {
+                    active: root.currentTabId === "transform"
+                    visible: active
+                    sourceComponent: Component {
+                        TransformInspector {
+                            width: tabColumn.width
+                            sizeLinked: inspectorUi.sizeLinked
+                            onSizeLinkedChanged: inspectorUi.sizeLinked = sizeLinked
+                        }
+                    }
                 }
 
-                StabilizeInspector {
-                    width: tabColumn.width
-                    visible: root.currentTabId === "stabilize"
+                Loader {
+                    active: root.currentTabId === "stabilize"
+                    visible: active
+                    sourceComponent: Component { StabilizeInspector { width: tabColumn.width } }
                 }
 
-                AnimationInspector {
-                    width: tabColumn.width
-                    visible: root.currentTabId === "animation"
+                Loader {
+                    active: root.currentTabId === "animation"
+                    visible: active
+                    sourceComponent: Component { AnimationInspector { width: tabColumn.width } }
                 }
 
-                AudioInspector {
-                    width: tabColumn.width
-                    visible: root.currentTabId === "audio"
+                Loader {
+                    active: root.currentTabId === "audio"
+                    visible: active
+                    sourceComponent: Component { AudioInspector { width: tabColumn.width } }
                 }
 
-                SpeedFadeInspector {
-                    width: tabColumn.width
-                    visible: root.currentTabId === "speed"
+                Loader {
+                    active: root.currentTabId === "speed"
+                    visible: active
+                    sourceComponent: Component { SpeedFadeInspector { width: tabColumn.width } }
                 }
 
+                // Eager: onActiveTabChanged commits its fields on the way out, which a Loader
+                // could already have destroyed.
                 TransitionInspector {
                     id: transitionInspector
                     width: tabColumn.width
                     visible: root.currentTabId === "transition"
                 }
 
-                BlendingInspector {
-                    width: tabColumn.width
-                    visible: root.currentTabId === "blending"
+                Loader {
+                    active: root.currentTabId === "blending"
+                    visible: active
+                    sourceComponent: Component { BlendingInspector { width: tabColumn.width } }
                 }
 
-                ShapeInspector {
-                    width: tabColumn.width
-                    visible: root.currentTabId === "shape"
-                }
-
-                VectorInspector {
-                    width: tabColumn.width
-                    visible: root.currentTabId === "vector"
-                }
-
-                Model3DInspector {
-                    width: tabColumn.width
-                    visible: root.currentTabId === "model3d"
-                }
-
-                MasksInspector {
-                    width: tabColumn.width
-                    visible: root.currentTabId === "masks"
-                }
-
-                EffectsInspector {
-                    width: tabColumn.width
-                    visible: root.currentTabId === "effects"
-                    onBrowseEffectsRequested: root.browseEffectsRequested()
-                    onSaveEffectPresetRequested: function(effectIndex) {
-                        root.savePresetEffectIndex = effectIndex
-                        effectPresetNameDialog.openWith(
-                            effectIndex < 0 ? qsTr("Save effect preset")
-                                            : qsTr("Save effect as preset"),
-                            root.hasSelection ? (root.clipData.name || "") : "")
+                Loader {
+                    active: root.currentTabId === "shape"
+                    visible: active
+                    sourceComponent: Component {
+                        ShapeInspector {
+                            width: tabColumn.width
+                            expandedLayerIds: inspectorUi.shapeExpandedLayerIds
+                            onExpandedLayerIdsChanged: inspectorUi.shapeExpandedLayerIds = expandedLayerIds
+                        }
                     }
                 }
 
-                AudioEffectsInspector {
-                    width: tabColumn.width
-                    visible: root.currentTabId === "audioEffects"
-                    onBrowseAudioEffectsRequested: root.browseAudioEffectsRequested()
+                Loader {
+                    active: root.currentTabId === "vector"
+                    visible: active
+                    sourceComponent: Component { VectorInspector { width: tabColumn.width } }
+                }
+
+                Loader {
+                    active: root.currentTabId === "model3d"
+                    visible: active
+                    sourceComponent: Component { Model3DInspector { width: tabColumn.width } }
+                }
+
+                Loader {
+                    active: root.currentTabId === "masks"
+                    visible: active
+                    sourceComponent: Component { MasksInspector { width: tabColumn.width } }
+                }
+
+                Loader {
+                    active: root.currentTabId === "effects"
+                    visible: active
+                    sourceComponent: Component {
+                        EffectsInspector {
+                            width: tabColumn.width
+                            onBrowseEffectsRequested: root.browseEffectsRequested()
+                            onSaveEffectPresetRequested: function(effectIndex) {
+                                root.savePresetEffectIndex = effectIndex
+                                effectPresetNameDialog.openWith(
+                                    effectIndex < 0 ? qsTr("Save effect preset")
+                                                    : qsTr("Save effect as preset"),
+                                    root.hasSelection ? (root.clipData.name || "") : "")
+                            }
+                        }
+                    }
+                }
+
+                Loader {
+                    active: root.currentTabId === "audioEffects"
+                    visible: active
+                    sourceComponent: Component {
+                        AudioEffectsInspector {
+                            width: tabColumn.width
+                            onBrowseAudioEffectsRequested: root.browseAudioEffectsRequested()
+                        }
+                    }
                 }
             }
         }

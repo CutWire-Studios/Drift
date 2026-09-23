@@ -283,6 +283,10 @@ public:
     // (or any non-GL thread) — exec() blocks on the GL thread.
     void releaseCaches();
 
+    // Set by the paused-preview render for the duration of one composite; everything else
+    // (playback, export, thumbnails) leaves it clear. GL thread only.
+    bool cacheVideoSources = false;
+
     // Tear down GL objects and stop the GL thread. Called at app exit.
     void shutdown();
 
@@ -390,6 +394,26 @@ private:
     std::list<CachedUpload> m_imageUploadLru;
     static constexpr size_t kMaxCachedUploads = 48;
 
+    // Converted RGBA of recent preview video frames, keyed by the decoded frame object itself:
+    // a paused playhead gets the same AVFrame back from the reader's cache on every composite,
+    // so an effect tweak skips the upload and the YUV convert. The weak_ptr is what makes the
+    // pointer a safe key — while it is live, no other frame can occupy that address.
+    struct CachedVideoSource
+    {
+        std::weak_ptr<AVFrame> frame;
+        const AVFrame *raw = nullptr;
+        int rotation = 0;
+        int colorspace = 0;
+        int colorRange = 0;
+        GlTarget target;
+    };
+    std::list<CachedVideoSource> m_videoSourceLru;
+#ifdef Q_OS_ANDROID
+    static constexpr size_t kMaxCachedVideoSources = 2;
+#else
+    static constexpr size_t kMaxCachedVideoSources = 4;
+#endif
+
     GLuint m_videoY = 0;
     GLuint m_videoUV = 0;
     int m_videoTexW = 0;
@@ -469,6 +493,8 @@ private:
     ExportNv12Slot m_exportNv12[kExportNv12Slots];
 
     friend GLuint cachedUploadTexture(GlRuntime &rt, QOpenGLExtraFunctions *gl, const QImage &image);
+    friend GlTarget promoteVideoFrameToTargetCached(GlRuntime &rt, QOpenGLExtraFunctions *gl,
+                                                    const PreviewVideoFrame &frame);
     friend GlTarget promoteVideoFrameToTarget(GlRuntime &rt, QOpenGLExtraFunctions *gl,
                                               const PreviewVideoFrame &frame);
 };
@@ -515,6 +541,11 @@ GlTarget promoteImageToTargetCached(GlRuntime &rt, QOpenGLExtraFunctions *gl, co
 // in the convert shader.
 GlTarget promoteVideoFrameToTarget(GlRuntime &rt, QOpenGLExtraFunctions *gl,
                                    const PreviewVideoFrame &frame);
+
+// promoteVideoFrameToTarget through the video source cache while GlRuntime::cacheVideoSources
+// is set; with it clear, the cache is emptied and this is the plain promote.
+GlTarget promoteVideoFrameToTargetCached(GlRuntime &rt, QOpenGLExtraFunctions *gl,
+                                         const PreviewVideoFrame &frame);
 
 void setPackageUniforms(QOpenGLShaderProgram *program, const QMap<QString, QVariant> &parameters,
                         const QSize &resolution, drift::TimeUs timeUs, double progress);

@@ -23,6 +23,11 @@ Slider {
     // Callers should set it; the formatter is a fallback, not a substitute.
     property string label: ""
 
+    // For sliders that edit the clip: greyed out while playing. Disabling a pressed slider
+    // releases it, which commits the drag the caller began on press.
+    property bool lockWhilePlaying: false
+    enabled: !(root.lockWhilePlaying && EditorState.playing)
+
     from: 0
     to: 1
     live: true
@@ -104,8 +109,10 @@ Slider {
             // Eases programmatic value changes (a preset chip, a reset button)
             // without fighting the drag, which sets position continuously.
             // Must share the handle's curve below, or fill and handle desync.
+            // Off during any preview drag too: a slider slaved to a preview handle would
+            // otherwise trail it by the animation.
             Behavior on width {
-                enabled: !root.pressed
+                enabled: !root.pressed && !EditorState.previewDragActive
                 NumberAnimation { duration: Theme.durationFast; easing.type: Theme.easingInOut }
             }
         }
@@ -126,7 +133,7 @@ Slider {
         scale: root.pressed ? 1.1 : (root.hovered || root.visualFocus ? 1.05 : 1.0)
 
         Behavior on x {
-            enabled: !root.pressed
+            enabled: !root.pressed && !EditorState.previewDragActive
             NumberAnimation { duration: Theme.durationFast; easing.type: Theme.easingInOut }
         }
         Behavior on color {

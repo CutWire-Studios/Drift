@@ -503,6 +503,7 @@ Column {
             }
             ThemedSlider {
                 id: darkenSlider
+                lockWhilePlaying: true
                 width: parent.width
                 label: qsTr("Darken")
                 from: 0

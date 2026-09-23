@@ -30,6 +30,9 @@ public:
         // Read low-res preview proxies where they exist. Only live playback sets it; export and
         // every other caller must see the original pixels.
         bool allowProxies = false;
+        // Reuse converted video frames across composites. Only the paused preview sets it: an
+        // edit there re-renders the same source frames, where playback never repeats one.
+        bool cacheVideoSources = false;
     };
 
     void setProject(const drift::Project *project) { m_project = project; }

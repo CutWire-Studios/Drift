@@ -26,14 +26,27 @@ Item {
     readonly property real sx: root.width / canvasW
     readonly property real sy: root.height / canvasH
 
+    // Current values per handle, read by the delegates by index. The Repeater's model only
+    // changes when the set of handles does, so a value edit moves the knobs without recreating
+    // them.
+    property var handleValues: []
+    property string handleSignature: ""
+
     function refreshOverlay() {
-        if (interacting || EditorState.playing)
+        // Hidden: onVisibleChanged catches up when shown.
+        if (!visible || interacting || EditorState.playing)
             return
         const next = EditorState.depthEffectEditorState()
         editorState = next
+        const handles = handlesFor(next)
+        const signature = handles.map(h => h.kind + ":" + h.effect + ":" + (h.light || 0)).join("|")
+        handleValues = handles
+        if (signature === handleSignature)
+            return
+        handleSignature = signature
         // Set imperatively, as MaskOverlay does: binding the model re-enters when tracksChanged
         // fires during delegate setup.
-        handleRepeater.model = handlesFor(next)
+        handleRepeater.model = handles
     }
 
     function endInteraction() {
@@ -90,6 +103,16 @@ Item {
     Connections {
         target: EditorState
         function onTracksChanged() { root.refreshOverlay() }
+        // A slider in the inspector dragging a light, or the clip being moved under them.
+        function onClipPropertiesPreviewed(trackIndex, clipIndex, keys) {
+            for (const k of keys) {
+                if (k.startsWith("fx.") || k === "x" || k === "y" || k === "width"
+                        || k === "height" || k === "rotation") {
+                    root.refreshOverlay()
+                    return
+                }
+            }
+        }
         function onSelectionChanged() { root.refreshOverlay() }
         function onSelectedClipDataChanged() { root.refreshOverlay() }
         function onPlayheadSecondsChanged() { root.refreshOverlay() }
@@ -114,7 +137,10 @@ Item {
 
             delegate: Item {
                 id: handle
+                required property int index
                 required property var modelData
+                // Values from the latest refresh; modelData only fixes which handle this is.
+                readonly property var values: root.handleValues[index] || modelData
 
                 readonly property bool isLight: modelData.kind === "light"
                 readonly property string prefix: "light" + modelData.light + "_"
@@ -126,11 +152,11 @@ Item {
                 property real liveZ: NaN
                 property real liveAimX: NaN
                 property real liveAimY: NaN
-                readonly property real hx: isNaN(liveX) ? modelData.x : liveX
-                readonly property real hy: isNaN(liveY) ? modelData.y : liveY
-                readonly property real hz: isNaN(liveZ) ? (modelData.z || 0) : liveZ
-                readonly property real ax: isNaN(liveAimX) ? (modelData.aimX || 0.5) : liveAimX
-                readonly property real ay: isNaN(liveAimY) ? (modelData.aimY || 0.5) : liveAimY
+                readonly property real hx: isNaN(liveX) ? values.x : liveX
+                readonly property real hy: isNaN(liveY) ? values.y : liveY
+                readonly property real hz: isNaN(liveZ) ? (values.z || 0) : liveZ
+                readonly property real ax: isNaN(liveAimX) ? (values.aimX || 0.5) : liveAimX
+                readonly property real ay: isNaN(liveAimY) ? (values.aimY || 0.5) : liveAimY
 
                 // Nearer lights draw larger, so depth reads at a glance.
                 readonly property real knobSize: 26 - hz * 8
@@ -148,14 +174,14 @@ Item {
 
                 // Spot direction: a line from the light to where it is aimed.
                 Rectangle {
-                    visible: handle.isLight && handle.modelData.spot
+                    visible: handle.isLight && handle.values.spot
                     readonly property real dx: (handle.ax - handle.hx) * clipFrame.width
                     readonly property real dy: (handle.ay - handle.hy) * clipFrame.height
                     x: handle.hx * clipFrame.width
                     y: handle.hy * clipFrame.height - height / 2
                     width: Math.sqrt(dx * dx + dy * dy)
                     height: 1.5
-                    color: handle.modelData.color || "#ffffff"
+                    color: handle.values.color || "#ffffff"
                     opacity: 0.7
                     transformOrigin: Item.Left
                     rotation: Math.atan2(dy, dx) * 180 / Math.PI
@@ -163,7 +189,7 @@ Item {
 
                 // Spot aim ring.
                 Rectangle {
-                    visible: handle.isLight && handle.modelData.spot
+                    visible: handle.isLight && handle.values.spot
                     width: 16
                     height: 16
                     radius: 8
@@ -172,7 +198,7 @@ Item {
                     color: "transparent"
                     border.width: 2
                     border.color: aimArea.containsMouse || aimArea.pressed
-                                  ? Theme.primary : (handle.modelData.color || "#ffffff")
+                                  ? Theme.primary : (handle.values.color || "#ffffff")
 
                     MouseArea {
                         id: aimArea
@@ -208,7 +234,7 @@ Item {
                     radius: width / 2
                     x: handle.hx * clipFrame.width - width / 2
                     y: handle.hy * clipFrame.height - height / 2
-                    color: handle.modelData.color || "#ffffff"
+                    color: handle.values.color || "#ffffff"
                     border.width: 2
                     border.color: lightArea.containsMouse || lightArea.pressed
                                   ? Theme.primary : Theme.primaryForeground
@@ -294,7 +320,7 @@ Item {
                         anchors.top: parent.bottom
                         anchors.topMargin: 2
                         anchors.horizontalCenter: parent.horizontalCenter
-                        text: handle.modelData.follow ? qsTr("Focus") : qsTr("Pick focus")
+                        text: handle.values.follow ? qsTr("Focus") : qsTr("Pick focus")
                         color: Theme.primaryForeground
                         style: Text.Outline
                         styleColor: "#80000000"
@@ -321,7 +347,7 @@ Item {
                             handle.liveY = Math.max(0, Math.min(1, p.y))
                             root.writeParam(handle.modelData.effect, "focusX", handle.liveX)
                             root.writeParam(handle.modelData.effect, "focusY", handle.liveY)
-                            if (!handle.modelData.follow) {
+                            if (!handle.values.follow) {
                                 const d = EditorState.sampleDepthAt(EditorState.selectedTrack,
                                                                     EditorState.selectedClip,
                                                                     handle.liveX, handle.liveY)

@@ -39,8 +39,10 @@ Item {
 
     // 100% is the box that fills the canvas on its tighter axis — what Reset and a fitted
     // import both produce — whatever the clip's own aspect ratio.
+    property int liveRevision: 0
     readonly property real scaleAtPlayhead: {
         void clipDataRevision
+        void liveRevision
         void EditorState.playheadSeconds
         if (!hasSelection)
             return 1
@@ -95,6 +97,10 @@ Item {
         function onSelectionChanged() { root.clipDataRevision++ }
         function onSelectedClipDataChanged() { root.clipDataRevision++ }
         function onTracksChanged() { root.clipDataRevision++ }
+        function onClipPropertiesPreviewed(trackIndex, clipIndex, keys) {
+            if (!scaleSlider.pressed && (keys.indexOf("width") >= 0 || keys.indexOf("height") >= 0))
+                root.liveRevision++
+        }
     }
 
     Column {
@@ -194,6 +200,7 @@ Item {
 
                 ThemedSlider {
                     id: scaleSlider
+                    lockWhilePlaying: true
                     label: qsTr("Scale")
                     width: parent.width - scaleReadout.width - parent.spacing
                     anchors.verticalCenter: parent.verticalCenter

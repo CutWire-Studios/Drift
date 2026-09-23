@@ -108,7 +108,7 @@ Item {
             id: speedSlider
             label: qsTr("Speed")
             visible: root.speedKind
-            enabled: !speedColumn.hasSpeedCurve
+            enabled: !speedColumn.hasSpeedCurve && !EditorState.playing
             width: parent.width
             from: 0.25
             to: 4.0

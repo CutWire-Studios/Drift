@@ -311,6 +311,13 @@ void PlaybackEngine::notifyProjectEdited()
 
 void PlaybackEngine::setPlayheadUs(drift::TimeUs us)
 {
+    resyncAudioAt(us);
+    if (!m_playing)
+        refreshFrame();
+}
+
+void PlaybackEngine::resyncAudioAt(drift::TimeUs us)
+{
     m_playheadUs = qMax<drift::TimeUs>(0, us);
     // Only real seeks reach here — the playhead tick emits its position directly rather than
     // routing back through this setter. That matters: the mixer's per-clip DSP is streaming, and a
@@ -323,9 +330,7 @@ void PlaybackEngine::setPlayheadUs(drift::TimeUs us)
     m_lastRequestedFrameUs = -1;
     // reset() clears the running flag; resume the clock if we are still in play
     // so edits/seeks during playback don't freeze audio at one timeline spot.
-    if (!m_playing) {
-        refreshFrame();
-    } else {
+    if (m_playing) {
         m_sinkPlayedUsOffset = m_audio.processedUSecs();
         m_clock.start();
     }
