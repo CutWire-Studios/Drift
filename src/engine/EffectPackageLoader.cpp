@@ -142,6 +142,8 @@ EffectPresetEntry EffectPackageLoader::loadPackage(const QString &packageDir, QS
     if (backend == QLatin1String("compositor")) {
         entry.meta.compositorOnly = true;
         entry.filterName.clear();
+        // No pipeline, but tools that write into the package (thumbnails) still need to find it.
+        entry.gpu.packageDir = packageDir;
         return entry;
     }
 

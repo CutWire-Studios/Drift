@@ -5337,6 +5337,10 @@
         <translation>これらのエフェクトは顔に追従するため、実際に機能させるには、あらかじめクリップをスキャンしておく必要があります。</translation>
     </message>
     <message>
+        <source>Download depth estimation (about 160 MB)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Face effects follow one clip&apos;s faces. Add this to a clip rather than to an adjustment layer.</source>
         <translation>「顔エフェクト」は、特定のクリップ内の顔を追跡します。このエフェクトは、調整レイヤーではなくクリップに適用してください。</translation>
     </message>
@@ -5390,10 +5394,6 @@
     </message>
     <message>
         <source>Clear depth</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Download depth estimation (about 180 MB)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -5461,6 +5461,10 @@
         <translation>%1 を選択</translation>
     </message>
     <message>
+        <source>Automatic (clip beneath)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>: (none)</source>
         <translation>: (なし)</translation>
     </message>
@@ -5479,6 +5483,22 @@
     <message>
         <source>Edit %1</source>
         <translation>%1 を編集</translation>
+    </message>
+    <message>
+        <source>Anything in “%1” nearer than Distance passes in front of this layer.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Anything in “%1” (the clip beneath at the playhead) nearer than Distance passes in front of this layer.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Place this layer above a video or image clip. It goes behind whatever in that clip is nearer than Distance.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>“%1” needs its depth estimated before anything in it can pass in front. It runs in the background and takes roughly half a second per frame.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Paste effects</source>
