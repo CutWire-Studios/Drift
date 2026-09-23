@@ -608,7 +608,9 @@ Item {
                                 // `def` is the param's static value, which the row falls
                                 // back to whenever the track holds no keys.
                                 propDef: ({
-                                    key: paramRow.paramData.prop,
+                                    // Colours and files carry no prop; the row is hidden for them
+                                    // but still built, and its graph colour hashes the key.
+                                    key: paramRow.paramData.prop || "",
                                     label: paramRow.paramData.label,
                                     def: paramRow.paramData.value,
                                     decimals: Math.abs(paramRow.paramData.max
