@@ -265,6 +265,7 @@ QtObject {
     readonly property color clipAudio: "#8F5DBA"
     readonly property color clipGraphic: "#BA5D7A"
     readonly property color clipEffect: "#5d93ba"
+    readonly property color clipComposite: "#BA8F5D"
     // Clips previewing from a low-res proxy: the name band and the "Proxy" pill. Green, so it
     // stays apart from the yellow selection ring and every clip-type colour above.
     readonly property color clipProxy: "#3DBE8B"

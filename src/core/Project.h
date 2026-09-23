@@ -11,6 +11,7 @@
 #include <QJsonObject>
 #include <QList>
 #include <QString>
+#include <QStringList>
 
 #include <initializer_list>
 
@@ -108,11 +109,21 @@ struct TrackList : QList<Track>
     }
 };
 
+// Mints missing/duplicate track ids and repairs orphaned lanes; see Project::ensureTrackIds.
+void ensureTrackIds(QList<Track> &tracks);
+
+// A nested timeline played by Composite clips. Canvas size, fps and sample rate are the project's.
+struct Sequence
+{
+    QString id;
+    TrackList tracks;
+};
+
 // Root project document: tracks, assets, output settings.
 class Project
 {
 public:
-    static constexpr int kCurrentVersion = 9;
+    static constexpr int kCurrentVersion = 10;
 
     Project() { resetToDefaultTimeline(); }
 
@@ -145,8 +156,56 @@ public:
     void setResolution(int width, int height) { m_width = width; m_height = height; }
     void setSampleRate(int rate) { m_sampleRate = rate; }
 
+    // The tracks of the timeline open for editing: the main timeline, or the composite sequence
+    // named by activeSequenceId(). Every edit path works on these, so opening a composite swaps
+    // its tracks in here rather than teaching each of them about nesting.
     const QList<Track> &tracks() const { return m_tracks; }
     QList<Track> &tracks() { return m_tracks; }
+
+    // Empty = the main timeline.
+    QString activeSequenceId() const { return m_activeSequenceId; }
+    // Stores the open tracks back into their slot and loads `id`'s. False for an unknown id.
+    bool activateSequence(const QString &id);
+    bool hasSequence(const QString &id) const { return id.isEmpty() || m_sequences.contains(id); }
+    // Tracks of any timeline, wherever they currently live. Empty id = the main timeline.
+    const QList<Track> &sequenceTracks(const QString &id) const;
+    const QList<Track> &rootTracks() const { return sequenceTracks({}); }
+    TimeUs sequenceDurationUs(const QString &id) const;
+    QStringList sequenceIds() const { return m_sequences.keys(); }
+    // A copy with `id` active, for rendering that timeline through code that reads tracks().
+    Project sequenceView(const QString &id) const;
+    QString addSequence(TrackList tracks);
+    // Must not be the active sequence.
+    void removeSequence(const QString &id);
+
+    // Every timeline's tracks — the open one, the main one and each composite's — for passes that
+    // must reach clips wherever they live (path remaps, packaging).
+    template <typename Fn>
+    void forEachTrackList(Fn &&fn)
+    {
+        fn(static_cast<QList<Track> &>(m_tracks));
+        if (!m_activeSequenceId.isEmpty())
+            fn(static_cast<QList<Track> &>(m_rootTracks));
+        for (auto it = m_sequences.begin(); it != m_sequences.end(); ++it) {
+            if (it.key() != m_activeSequenceId)
+                fn(static_cast<QList<Track> &>(it->tracks));
+        }
+    }
+    template <typename Fn>
+    void forEachTrackList(Fn &&fn) const
+    {
+        fn(tracks());
+        if (!m_activeSequenceId.isEmpty())
+            fn(rootTracks());
+        for (const QString &id : m_sequences.keys()) {
+            if (id != m_activeSequenceId)
+                fn(sequenceTracks(id));
+        }
+    }
+
+    // Composite tabs the user has open, in tab order. Saved with the project.
+    const QStringList &openSequenceTabs() const { return m_openSequenceTabs; }
+    QStringList &openSequenceTabs() { return m_openSequenceTabs; }
 
     const QList<QString> &assetOrder() const { return m_assetOrder; }
     QList<QString> &assetOrder() { return m_assetOrder; }
@@ -224,6 +283,12 @@ private:
     int m_height = 1080;
     int m_sampleRate = 48000;
     TrackList m_tracks;
+    // Main timeline's tracks while a composite is active; stale otherwise (m_tracks holds them).
+    TrackList m_rootTracks;
+    // A sequence's entry is stale while it is the active one.
+    QHash<QString, Sequence> m_sequences;
+    QString m_activeSequenceId;
+    QStringList m_openSequenceTabs;
     QList<Bookmark> m_bookmarks;
     TimeUs m_workAreaInUs = -1;
     TimeUs m_workAreaOutUs = -1;

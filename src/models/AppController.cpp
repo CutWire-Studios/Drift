@@ -785,6 +785,7 @@ AppController::AppController(AssetLibrary *assetLibrary, QObject *parent)
         if (!m_currentBinFolderId.isEmpty() && !m_project.binFolder(m_currentBinFolderId))
             setCurrentBinFolderId(QString());
         normalizeSelection();
+        reconcileSequenceTabs();
         setDirty(true);
         notifyTracksChanged();
         emit bookmarksChanged();
@@ -3455,6 +3456,9 @@ QList<StreamInfo> cachedAudioStreams(const QString &path)
 
 bool clipHasEmbeddedAudio(const drift::Project &project, AssetLibrary *library, const drift::Clip &clip)
 {
+    // A composite plays its nested mix, which is there to separate even while it is silent.
+    if (clip.type == drift::ClipType::Composite)
+        return !clip.suppressEmbeddedAudio;
     if (clip.type != drift::ClipType::Video || clip.suppressEmbeddedAudio || clip.path.isEmpty())
         return false;
     if (!clip.assetId.isEmpty())
@@ -3473,6 +3477,7 @@ drift::Clip makeAudioCompanionFromVideo(const drift::Clip &videoClip, const QStr
     audio.audioStreamIndex = audioStreamIndex;
     audio.name = customName.isEmpty() ? videoClip.name : customName;
     audio.path = videoClip.path;
+    audio.sequenceId = videoClip.sequenceId;
     audio.timelineStart = videoClip.timelineStart;
     audio.timelineDuration = videoClip.timelineDuration;
     audio.srcIn = videoClip.srcIn;
@@ -4092,6 +4097,8 @@ QVariantMap AppController::clipToMap(const drift::Clip &clip, const drift::Clip 
         {QStringLiteral("name"), clip.name},
         {QStringLiteral("path"), clip.path},
         {QStringLiteral("kind"), drift::clipTypeToString(clip.type)},
+        // The nested timeline a composite (or the audio separated from one) plays.
+        {QStringLiteral("sequenceId"), clip.sequenceId},
         // Adjustment clips only: which inspector they get, and whether the timeline should
         // treat their edges as pinned.
         {QStringLiteral("adjustmentKind"), drift::adjustmentKindToString(clip.adjustmentKind)},
@@ -4324,13 +4331,16 @@ int AppController::clipCountForAsset(int assetIndex) const
     if (assetId.isEmpty())
         return 0;
 
+    // Inside composites too: removing media a composite still plays would orphan its clips.
     int count = 0;
-    for (const drift::Track &track : m_project.tracks()) {
-        for (const drift::Clip &clip : track.clips) {
-            if (clip.assetId == assetId)
-                ++count;
+    m_project.forEachTrackList([&](const QList<drift::Track> &tracks) {
+        for (const drift::Track &track : tracks) {
+            for (const drift::Clip &clip : track.clips) {
+                if (clip.assetId == assetId)
+                    ++count;
+            }
         }
-    }
+    });
     return count;
 }
 
@@ -4351,6 +4361,7 @@ bool AppController::removeAsset(int assetIndex)
 
     if (!removedPath.isEmpty())
         m_waveformBlocks.forgetSource(removedPath);
+    pruneOrphanSequences();
 
     // Rows after the removed one shift down, so any index captured at drag
     // start now points at the wrong asset.
@@ -4392,6 +4403,7 @@ int AppController::removeAssets(const QStringList &assetIds)
     }
     if (removed == 0)
         return 0;
+    pruneOrphanSequences();
 
     setDraggingAssetIndex(-1);
     pushProjectEdit(before, removed == 1 ? tr("Media removed") : tr("%n items removed", "", removed));
@@ -4420,23 +4432,25 @@ int AppController::removeAssetsAndClips(const QStringList &assetIds)
     QSet<QString> removedClipIds;
     int removedClips = 0;
 
-    // Remove backwards so QList indices remain valid.
-    for (drift::Track &track : m_project.tracks()) {
-        for (int i = track.clips.size() - 1; i >= 0; --i) {
-            const drift::Clip &clip = track.clips.at(i);
-            if (!targetAssetIds.contains(clip.assetId))
-                continue;
+    // Remove backwards so QList indices remain valid. Every timeline, composites included.
+    m_project.forEachTrackList([&](QList<drift::Track> &tracks) {
+        for (drift::Track &track : tracks) {
+            for (int i = track.clips.size() - 1; i >= 0; --i) {
+                const drift::Clip &clip = track.clips.at(i);
+                if (!targetAssetIds.contains(clip.assetId))
+                    continue;
 
-            removedClipIds.insert(clip.id);
-            track.clips.removeAt(i);
-            ++removedClips;
+                removedClipIds.insert(clip.id);
+                track.clips.removeAt(i);
+                ++removedClips;
+            }
         }
-    }
 
-    // A transition may reference a clip that has just disappeared. Keep the same
-    // invariant enforced by deleteSelectedClip().
-    if (!removedClipIds.isEmpty()) {
-        for (drift::Track &track : m_project.tracks()) {
+        // A transition may reference a clip that has just disappeared. Keep the same
+        // invariant enforced by deleteSelectedClip().
+        if (removedClipIds.isEmpty())
+            return;
+        for (drift::Track &track : tracks) {
             for (int i = track.transitions.size() - 1; i >= 0; --i) {
                 const drift::Transition &transition = track.transitions.at(i);
                 if (removedClipIds.contains(transition.fromClipId)
@@ -4445,7 +4459,7 @@ int AppController::removeAssetsAndClips(const QStringList &assetIds)
                 }
             }
         }
-    }
+    });
 
     int removedAssets = 0;
     for (const QString &id : targetAssetIds) {
@@ -4462,6 +4476,7 @@ int AppController::removeAssetsAndClips(const QStringList &assetIds)
         return 0;
     }
 
+    pruneOrphanSequences();
     setDraggingAssetIndex(-1);
     clearSelection();
 
@@ -6128,6 +6143,7 @@ void AppController::pushProjectEdit(const drift::Project &before, const QString 
     // This is also where a track created by this edit gets its id — nested lanes address their
     // parent by it, and the dozen places that append a track all leave it empty.
     normalizeProjectStructure();
+    syncCompositeAssetDurations();
     // Belt and braces for the tracks cache: normalizeProjectStructure() rewrites the project, and
     // every edit in the app reaches this function or finishEdit(). One bool write buys immunity
     // from a future mutation path that forgets to call notifyTracksChanged().
@@ -6189,10 +6205,19 @@ void AppController::applyRippleShift(drift::Track &track, int fromClipIndex, dri
         track.clips[i].timelineStart = qMax<drift::TimeUs>(0, track.clips[i].timelineStart + delta);
 }
 
+bool AppController::compositeAssetPlaceable(const QVariantMap &asset) const
+{
+    // One level of nesting: a composite goes on the main timeline only.
+    return asset.value(QStringLiteral("kind")).toString() != QLatin1String("composite")
+           || m_project.activeSequenceId().isEmpty();
+}
+
 void AppController::addClipFromAsset(int assetIndex)
 {
     const QVariantMap asset = m_assetLibrary ? m_assetLibrary->assetAt(assetIndex) : QVariantMap{};
     if (asset.isEmpty())
+        return;
+    if (!compositeAssetPlaceable(asset))
         return;
 
     const QString kind = asset.value(QStringLiteral("kind")).toString();
@@ -6226,6 +6251,7 @@ void AppController::addClipFromAsset(int assetIndex)
     clip.name = asset.value(QStringLiteral("name")).toString();
     clip.path = asset.value(QStringLiteral("path")).toString();
     attachAssetSource(clip);
+    clip.sequenceId = asset.value(QStringLiteral("sequenceId")).toString();
     clip.thumbnailPath = thumbnailPath;
     clip.filmstripPath = filmstripPath;
     clip.timelineStart = start;
@@ -6265,7 +6291,7 @@ void AppController::addClipsFromAssets(const QStringList &assetIds)
             continue;
 
         const QVariantMap asset = m_assetLibrary->assetAt(assetIndex);
-        if (asset.isEmpty())
+        if (asset.isEmpty() || !compositeAssetPlaceable(asset))
             continue;
 
         const drift::ClipType clipType = drift::clipTypeFromString(asset.value(QStringLiteral("kind")).toString());
@@ -6296,6 +6322,7 @@ void AppController::addClipsFromAssets(const QStringList &assetIds)
         clip.name = asset.value(QStringLiteral("name")).toString();
         clip.path = asset.value(QStringLiteral("path")).toString();
         attachAssetSource(clip);
+        clip.sequenceId = asset.value(QStringLiteral("sequenceId")).toString();
         clip.thumbnailPath = thumbnailPath;
         clip.filmstripPath = filmstripPath;
         clip.timelineStart = start;
@@ -6351,6 +6378,8 @@ bool AppController::trackAcceptsKind(int trackIndex, const QString &mediaKind) c
         return false;
 
     const drift::ClipType clipType = drift::clipTypeFromString(mediaKind);
+    if (clipType == drift::ClipType::Composite && !m_project.activeSequenceId().isEmpty())
+        return false;
     return m_project.tracks().at(trackIndex).allowsClipType(clipType);
 }
 
@@ -6372,6 +6401,8 @@ void AppController::addClipFromAssetOnNewTrackAt(int assetIndex, int insertIndex
 
     const QVariantMap asset = m_assetLibrary->assetAt(assetIndex);
     if (asset.isEmpty())
+        return;
+    if (!compositeAssetPlaceable(asset))
         return;
 
     const drift::ClipType clipType = drift::clipTypeFromString(asset.value(QStringLiteral("kind")).toString());
@@ -6397,6 +6428,7 @@ void AppController::addClipFromAssetOnNewTrackAt(int assetIndex, int insertIndex
     clip.name = asset.value(QStringLiteral("name")).toString();
     clip.path = asset.value(QStringLiteral("path")).toString();
     attachAssetSource(clip);
+    clip.sequenceId = asset.value(QStringLiteral("sequenceId")).toString();
     clip.thumbnailPath = thumbnailPath;
     clip.filmstripPath = filmstripPath;
     clip.timelineStart = start;
@@ -6419,6 +6451,8 @@ void AppController::addClipFromAssetAt(int assetIndex, int trackIndex, double at
 
     const QVariantMap asset = m_assetLibrary->assetAt(assetIndex);
     if (asset.isEmpty())
+        return;
+    if (!compositeAssetPlaceable(asset))
         return;
 
     m_assetLibrary->ensureMedia(assetIndex);
@@ -6448,6 +6482,7 @@ void AppController::addClipFromAssetAt(int assetIndex, int trackIndex, double at
     clip.name = asset.value(QStringLiteral("name")).toString();
     clip.path = asset.value(QStringLiteral("path")).toString();
     attachAssetSource(clip);
+    clip.sequenceId = asset.value(QStringLiteral("sequenceId")).toString();
     clip.thumbnailPath = thumbnailPath;
     clip.filmstripPath = filmstripPath;
     clip.timelineStart = start;
@@ -14275,7 +14310,8 @@ void AppController::separateAudioFromSelection()
             continue;
 
         drift::Clip &clip = m_project.tracks()[pair.first].clips[pair.second];
-        if (clip.type != drift::ClipType::Video || detachedVideoIds.contains(clip.id))
+        if ((clip.type != drift::ClipType::Video && clip.type != drift::ClipType::Composite)
+            || detachedVideoIds.contains(clip.id))
             continue;
 
         const QString videoId = clip.id;
@@ -14298,6 +14334,437 @@ void AppController::separateAudioFromSelection()
 
     pushProjectEdit(before, tr("Audio separated"));
     finishEdit(tr("Audio separated"));
+}
+
+bool AppController::canMakeCompositeFromSelection() const
+{
+    // One level of nesting only: a composite cannot be made inside a composite, nor contain one.
+    if (!m_project.activeSequenceId().isEmpty())
+        return false;
+
+    QList<QPair<int, int>> pairs = m_selection;
+    if (pairs.isEmpty() && m_selectedTrack >= 0 && m_selectedClip >= 0)
+        pairs.append(qMakePair(m_selectedTrack, m_selectedClip));
+
+    bool any = false;
+    for (const QPair<int, int> &pair : pairs) {
+        if (!isValidClipIndex(pair.first, pair.second))
+            continue;
+        if (!m_project.tracks().at(pair.first).clips.at(pair.second).sequenceId.isEmpty())
+            return false;
+        any = true;
+    }
+    return any;
+}
+
+void AppController::makeCompositeFromSelection()
+{
+    if (!canMakeCompositeFromSelection())
+        return;
+
+    QList<QPair<int, int>> pairs = m_selection;
+    if (pairs.isEmpty())
+        pairs.append(qMakePair(m_selectedTrack, m_selectedClip));
+
+    // Linked A/V partners and the adjustments pinned to a clip travel with it.
+    QSet<QString> ids;
+    for (const QPair<int, int> &pair : pairs) {
+        if (!isValidClipIndex(pair.first, pair.second))
+            continue;
+        for (const QPair<int, int> &linked : selectionWithLinkedPartners(m_project, pair.first, pair.second))
+            ids.insert(m_project.tracks().at(linked.first).clips.at(linked.second).id);
+    }
+    for (const drift::Track &track : m_project.tracks()) {
+        for (const drift::Clip &clip : track.clips) {
+            if (!clip.linkedClipId.isEmpty() && ids.contains(clip.linkedClipId))
+                ids.insert(clip.id);
+        }
+    }
+
+    drift::TimeUs startUs = std::numeric_limits<drift::TimeUs>::max();
+    drift::TimeUs endUs = 0;
+    int bottomVideoTrack = -1;
+    for (int t = 0; t < m_project.tracks().size(); ++t) {
+        const drift::Track &track = m_project.tracks().at(t);
+        for (const drift::Clip &clip : track.clips) {
+            if (!ids.contains(clip.id))
+                continue;
+            if (!clip.sequenceId.isEmpty())
+                return;
+            startUs = qMin(startUs, clip.timelineStart);
+            endUs = qMax(endUs, clip.timelineEnd());
+            if (track.type == drift::TrackType::Video)
+                bottomVideoTrack = t;
+        }
+    }
+    if (endUs <= startUs)
+        return;
+
+    setPlaying(false);
+    const drift::Project before = m_project.detachedCopy();
+
+    // The composite keeps the selection's track layout, shifted to start at zero. Only tracks that
+    // contribute a clip come along; a lane whose parent stays behind becomes a standalone
+    // adjustment track (ensureTrackIds unparents it).
+    drift::TrackList inner;
+    QHash<QString, QString> innerTrackIds;
+    for (const drift::Track &source : m_project.tracks()) {
+        drift::Track copy = source;
+        copy.id = QUuid::createUuid().toString(QUuid::WithoutBraces);
+        copy.locked = false;
+        copy.clips.clear();
+        copy.transitions.clear();
+        for (drift::Clip clip : source.clips) {
+            if (!ids.contains(clip.id))
+                continue;
+            clip.timelineStart -= startUs;
+            copy.clips.append(clip);
+        }
+        if (copy.clips.isEmpty())
+            continue;
+        for (const drift::Transition &transition : source.transitions) {
+            if (ids.contains(transition.fromClipId) && ids.contains(transition.toClipId))
+                copy.transitions.append(transition);
+        }
+        innerTrackIds.insert(source.id, copy.id);
+        inner.append(copy);
+    }
+    for (drift::Track &track : inner)
+        track.parentTrackId = innerTrackIds.value(track.parentTrackId);
+    const QString sequenceId = m_project.addSequence(inner);
+
+    for (drift::Track &track : m_project.tracks()) {
+        for (int i = track.clips.size() - 1; i >= 0; --i) {
+            if (ids.contains(track.clips.at(i).id))
+                track.clips.removeAt(i);
+        }
+        for (int i = track.transitions.size() - 1; i >= 0; --i) {
+            const drift::Transition &transition = track.transitions.at(i);
+            if (ids.contains(transition.fromClipId) || ids.contains(transition.toClipId))
+                track.transitions.removeAt(i);
+        }
+    }
+
+    int compositeCount = 0;
+    for (const drift::MediaAsset &existing : m_project.assets()) {
+        if (existing.kind == drift::MediaKind::Composite)
+            ++compositeCount;
+    }
+    drift::MediaAsset asset;
+    asset.kind = drift::MediaKind::Composite;
+    asset.name = tr("Composite %1").arg(compositeCount + 1);
+    asset.sequenceId = sequenceId;
+    asset.durationUs = endUs - startUs;
+    asset.width = m_project.width();
+    asset.height = m_project.height();
+    asset.fps = m_project.fps();
+    asset.folderId = m_currentBinFolderId;
+    const QString assetId = m_project.addAsset(asset);
+
+    drift::Clip composite;
+    composite.id = QUuid::createUuid().toString(QUuid::WithoutBraces);
+    composite.type = drift::ClipType::Composite;
+    composite.assetId = assetId;
+    composite.sequenceId = sequenceId;
+    composite.name = asset.name;
+    composite.timelineStart = startUs;
+    composite.timelineDuration = endUs - startUs;
+    composite.srcIn = 0;
+    composite.srcOut = composite.timelineDuration;
+
+    // The lowest video track the selection came from, now that it is cleared — unless something
+    // left behind still occupies that span.
+    int trackIndex = bottomVideoTrack;
+    if (trackIndex >= 0) {
+        for (const drift::Clip &clip : m_project.tracks().at(trackIndex).clips) {
+            if (clip.timelineStart < endUs && startUs < clip.timelineEnd()) {
+                trackIndex = -1;
+                break;
+            }
+        }
+    }
+    if (trackIndex < 0) {
+        trackIndex = drift::ensureFreeTrackForClipType(m_project, drift::ClipType::Composite, startUs,
+                                                       composite.timelineDuration, true);
+    }
+    QList<drift::Clip> &clips = m_project.tracks()[trackIndex].clips;
+    int insertAt = 0;
+    while (insertAt < clips.size() && clips.at(insertAt).timelineStart < startUs)
+        ++insertAt;
+    clips.insert(insertAt, composite);
+
+    if (m_assetLibrary)
+        m_assetLibrary->syncToProject();
+    pushProjectEdit(before, tr("Composite created"));
+    finishEdit(tr("Composite created"));
+    selectClip(trackIndex, insertAt);
+    emit sequenceTabsChanged();
+}
+
+QVariantList AppController::sequenceTabs() const
+{
+    QHash<QString, QString> names;
+    for (const drift::MediaAsset &asset : m_project.assets()) {
+        if (asset.kind == drift::MediaKind::Composite)
+            names.insert(asset.sequenceId, asset.name);
+    }
+    QVariantList tabs;
+    for (const QString &id : m_project.openSequenceTabs()) {
+        tabs.append(QVariantMap{
+            {QStringLiteral("id"), id},
+            {QStringLiteral("name"), names.value(id, tr("Composite"))},
+        });
+    }
+    return tabs;
+}
+
+void AppController::openSequence(const QString &sequenceId)
+{
+    if (!m_project.hasSequence(sequenceId))
+        return;
+    if (!sequenceId.isEmpty() && !m_project.openSequenceTabs().contains(sequenceId)) {
+        m_project.openSequenceTabs().append(sequenceId);
+        emit sequenceTabsChanged();
+    }
+    if (sequenceId == m_project.activeSequenceId())
+        return;
+
+    setPlaying(false);
+    if (m_multicamActive)
+        endMulticamSession();
+    clearTransitionSelection();
+    clearSelection();
+    m_sequencePlayheads.insert(m_project.activeSequenceId(), m_playheadUs);
+    m_project.activateSequence(sequenceId);
+    // Every index-keyed cache (the MCP clip index among them) describes the timeline just left.
+    ++m_mcpEditRevision;
+    m_timelineModel.refresh();
+    m_clipListModel.refresh();
+    notifyTracksChanged();
+    setPlayheadUs(m_sequencePlayheads.value(sequenceId, 0));
+    emit sequenceTabsChanged();
+    emit workAreaChanged();
+}
+
+void AppController::openCompositeClip(int trackIndex, int clipIndex)
+{
+    if (!isValidClipIndex(trackIndex, clipIndex))
+        return;
+    openSequence(m_project.tracks().at(trackIndex).clips.at(clipIndex).sequenceId);
+}
+
+void AppController::openCompositeAsset(const QString &assetId)
+{
+    const drift::MediaAsset *asset = m_project.asset(assetId);
+    if (asset && asset->kind == drift::MediaKind::Composite)
+        openSequence(asset->sequenceId);
+}
+
+void AppController::closeSequenceTab(const QString &sequenceId)
+{
+    if (sequenceId.isEmpty())
+        return;
+    if (sequenceId == m_project.activeSequenceId())
+        openSequence(QString());
+    m_project.openSequenceTabs().removeAll(sequenceId);
+    m_sequencePlayheads.remove(sequenceId);
+    emit sequenceTabsChanged();
+}
+
+bool AppController::flattenComposite(int trackIndex, int clipIndex)
+{
+    if (!isValidClipIndex(trackIndex, clipIndex))
+        return false;
+    const drift::Clip clip = m_project.tracks().at(trackIndex).clips.at(clipIndex);
+    if (clip.type != drift::ClipType::Composite || !m_project.hasSequence(clip.sequenceId))
+        return false;
+    if (m_exportInProgress) {
+        setLastMessage(tr("Export already in progress"), QStringLiteral("warning"));
+        return false;
+    }
+    const QString outputPath = drift::newEditedMediaPath(m_project.id(), QStringLiteral("video"));
+    if (outputPath.isEmpty()) {
+        setLastMessage(tr("Could not create an output file"), QStringLiteral("error"));
+        return false;
+    }
+
+    setPlaying(false);
+    m_exportCancel.storeRelaxed(0);
+    m_exportProgress = 0.0;
+    emit exportProgressChanged();
+    m_exportInProgress = true;
+    emit exportInProgressChanged();
+    setLastMessage(tr("Flattening composite…"));
+
+    // Exactly the part of the composite this clip plays. A file cannot carry the transparency
+    // around the composite's content, so the project background fills it.
+    const drift::Project source = m_project.sequenceView(clip.sequenceId);
+    ExportSettings settings = Exporter::defaultSettings();
+    settings.startUs = clip.srcIn;
+    settings.endUs = clip.srcOut;
+    const QString clipId = clip.id;
+    const QString sequenceId = clip.sequenceId;
+    const QString name = clip.name;
+    const drift::TimeUs srcInUs = clip.srcIn;
+    const drift::TimeUs durationUs = clip.srcOut - clip.srcIn;
+
+    (void)QtConcurrent::run([this, source, settings, outputPath, clipId, sequenceId, name, srcInUs,
+                             durationUs]() {
+        Exporter::BackgroundHold hold(QStringLiteral("Flattening composite"), /*cancellable=*/true);
+        QString error;
+        const auto report = [this](double fraction) {
+            QMetaObject::invokeMethod(
+                this,
+                [this, fraction]() {
+                    m_exportProgress = fraction;
+                    emit exportProgressChanged();
+                },
+                Qt::QueuedConnection);
+            return m_exportCancel.loadRelaxed() == 0 && !Exporter::BackgroundHold::cancelRequested();
+        };
+        const bool ok = Exporter::run(source, settings, outputPath, &error, report);
+        QMetaObject::invokeMethod(
+            this,
+            [this, ok, error, outputPath, clipId, sequenceId, name, srcInUs, durationUs]() {
+                m_exportInProgress = false;
+                m_exportProgress = ok ? 1.0 : 0.0;
+                emit exportInProgressChanged();
+                emit exportProgressChanged();
+                if (!ok) {
+                    QFile::remove(outputPath);
+                    setLastMessage(error.isEmpty() ? tr("Flattening was cancelled")
+                                                   : tr("Could not flatten the composite: %1").arg(error),
+                                   QStringLiteral("error"));
+                    return;
+                }
+                finishFlatten(clipId, sequenceId, outputPath, name, srcInUs, durationUs);
+            },
+            Qt::QueuedConnection);
+    });
+    return true;
+}
+
+void AppController::finishFlatten(const QString &clipId, const QString &sequenceId,
+                                  const QString &path, const QString &name, drift::TimeUs srcInUs,
+                                  drift::TimeUs durationUs)
+{
+    // The instance lives on the main timeline; the user may have opened a tab meanwhile.
+    openSequence(QString());
+    int trackIndex = -1;
+    int clipIndex = -1;
+    if (!findClipById(m_project, clipId, &trackIndex, &clipIndex)) {
+        QFile::remove(path);
+        setLastMessage(tr("The composite clip was removed before flattening finished"),
+                       QStringLiteral("warning"));
+        return;
+    }
+
+    const drift::Clip &composite = m_project.tracks().at(trackIndex).clips.at(clipIndex);
+    // The file holds the range the clip played when the render started.
+    if (composite.srcIn != srcInUs || composite.srcOut - composite.srcIn != durationUs) {
+        QFile::remove(path);
+        setLastMessage(tr("The composite clip was trimmed while flattening; try again"),
+                       QStringLiteral("warning"));
+        return;
+    }
+    const drift::Project before = m_project.detachedCopy();
+    const drift::MediaAsset *compositeAsset = m_project.asset(composite.assetId);
+
+    drift::MediaAsset asset;
+    asset.kind = drift::MediaKind::Video;
+    asset.path = path;
+    asset.name = tr("%1 (flattened)").arg(name);
+    asset.durationUs = durationUs;
+    asset.width = m_project.width();
+    asset.height = m_project.height();
+    asset.fps = m_project.fps();
+    asset.hasAudio = true;
+    asset.hasAudioKnown = true;
+    asset.frameRateKnown = true;
+    asset.folderId = compositeAsset ? compositeAsset->folderId : m_currentBinFolderId;
+    const QString assetId = m_project.addAsset(asset);
+
+    // The file starts where the clip's source range did, so every other property of the clip —
+    // effects, transform, fades, the A/V link — carries over unchanged.
+    const auto rebase = [&](drift::Clip &clip) {
+        clip.assetId = assetId;
+        clip.path = path;
+        clip.sequenceId.clear();
+        clip.srcOut -= clip.srcIn;
+        clip.srcIn = 0;
+    };
+    const QString linkId = composite.linkId;
+    for (drift::Track &track : m_project.tracks()) {
+        for (drift::Clip &clip : track.clips) {
+            if (clip.id == clipId) {
+                clip.type = drift::ClipType::Video;
+                rebase(clip);
+            } else if (!linkId.isEmpty() && clip.linkId == linkId && clip.sequenceId == sequenceId) {
+                rebase(clip);
+            }
+        }
+    }
+
+    if (m_assetLibrary) {
+        m_assetLibrary->syncToProject();
+        m_assetLibrary->ensureMedia(m_assetLibrary->indexOfId(assetId));
+    }
+    pushProjectEdit(before, tr("Composite flattened"));
+    finishEdit(tr("Composite flattened"));
+    setLastMessage(tr("Composite flattened"));
+}
+
+void AppController::reconcileSequenceTabs()
+{
+    QStringList &tabs = m_project.openSequenceTabs();
+    tabs.erase(std::remove_if(tabs.begin(), tabs.end(),
+                              [this](const QString &id) { return !m_project.hasSequence(id); }),
+               tabs.end());
+    const QString active = m_project.activeSequenceId();
+    if (!active.isEmpty() && !tabs.contains(active))
+        tabs.append(active);
+    emit sequenceTabsChanged();
+}
+
+void AppController::pruneOrphanSequences()
+{
+    QSet<QString> referenced;
+    for (const drift::MediaAsset &asset : m_project.assets()) {
+        if (asset.kind == drift::MediaKind::Composite)
+            referenced.insert(asset.sequenceId);
+    }
+    const QString active = m_project.activeSequenceId();
+    bool changed = false;
+    for (const QString &id : m_project.sequenceIds()) {
+        if (referenced.contains(id))
+            continue;
+        if (id == active) {
+            clearSelection();
+            m_project.activateSequence(QString());
+            ++m_mcpEditRevision;
+            notifyTracksChanged();
+        }
+        m_project.removeSequence(id);
+        changed = true;
+    }
+    if (changed)
+        emit sequenceTabsChanged();
+}
+
+void AppController::syncCompositeAssetDurations()
+{
+    bool changed = false;
+    for (drift::MediaAsset &asset : m_project.assets()) {
+        if (asset.kind != drift::MediaKind::Composite)
+            continue;
+        const drift::TimeUs durationUs = m_project.sequenceDurationUs(asset.sequenceId);
+        if (asset.durationUs != durationUs) {
+            asset.durationUs = durationUs;
+            changed = true;
+        }
+    }
+    if (changed && m_assetLibrary)
+        m_assetLibrary->syncToProject();
 }
 
 void AppController::separateAllAudioTracks(int trackIndex, int clipIndex)
@@ -18877,6 +19344,10 @@ void AppController::pasteAtPlayhead()
     QList<QPair<int, int>> inserted;
 
     for (const ClipboardItem &item : m_clipboard) {
+        // Composites live on the main timeline only, and never outlive their sequence.
+        if (!item.clip.sequenceId.isEmpty()
+            && (!m_project.activeSequenceId().isEmpty() || !m_project.hasSequence(item.clip.sequenceId)))
+            continue;
         drift::Clip clip = item.clip;
         clip.id = QUuid::createUuid().toString(QUuid::WithoutBraces);
         clip.timelineStart = qMax<drift::TimeUs>(0, clip.timelineStart + shift);
@@ -19974,6 +20445,7 @@ void AppController::resetSessionState()
     m_waveformBlocks.clear();
 
     m_replacingAssetId.clear();
+    m_sequencePlayheads.clear();
     m_pendingEffectTemplate.reset();
     m_previewDragActive = false;
     m_keyframeGraphHiddenProperties.clear();
@@ -20028,18 +20500,20 @@ bool AppController::applyProjectJson(const QByteArray &data, QString *error)
     // elsewhere will not have. The glyph sequence is what was saved, so re-derive the path — the
     // render is cached, and without the font addon it comes back empty and the clip fails to load
     // like any other missing file.
-    for (drift::Track &track : m_project.tracks()) {
-        for (drift::Clip &clip : track.clips) {
-            if (clip.emoji.isEmpty())
-                continue;
-            const QString path = emojiImagePath(clip.emoji);
-            if (path.isEmpty())
-                continue;
-            clip.path = path;
-            clip.thumbnailPath = path;
-            clip.filmstripPath = path;
+    m_project.forEachTrackList([&](QList<drift::Track> &tracks) {
+        for (drift::Track &track : tracks) {
+            for (drift::Clip &clip : track.clips) {
+                if (clip.emoji.isEmpty())
+                    continue;
+                const QString path = emojiImagePath(clip.emoji);
+                if (path.isEmpty())
+                    continue;
+                clip.path = path;
+                clip.thumbnailPath = path;
+                clip.filmstripPath = path;
+            }
         }
-    }
+    });
 
     if (m_assetLibrary)
         m_assetLibrary->setProject(&m_project);
@@ -20086,6 +20560,7 @@ bool AppController::applyProjectJson(const QByteArray &data, QString *error)
     emit rippleEnabledChanged();
     emit allowClipOverlapChanged();
     notifyTracksChanged();
+    emit sequenceTabsChanged();
     emit bookmarksChanged();
     emit workAreaChanged();
     emit projectNameChanged();
@@ -20941,40 +21416,42 @@ void AppController::remapProjectPaths(const QHash<QString, QString> &remap)
         }
     }
 
-    for (drift::Track &track : m_project.tracks()) {
-        for (drift::Clip &clip : track.clips) {
-            // Masks live on adjustment clips, which this flat walk already covers.
-            repoint(clip.mask.mediaPath);
-            repoint(clip.mask.mediaFgrPath);
-            repoint(clip.faceTrackPath);
-            for (drift::Effect &effect : clip.effects) {
-                const EffectPresetEntry *def = effectDefForId(effect.catalogId);
-                if (!def)
-                    continue;
-                for (const drift::EffectParamSpec &spec : def->meta.parameters) {
-                    if (!spec.isFilePath())
+    m_project.forEachTrackList([&](QList<drift::Track> &tracks) {
+        for (drift::Track &track : tracks) {
+            for (drift::Clip &clip : track.clips) {
+                // Masks live on adjustment clips, which this flat walk already covers.
+                repoint(clip.mask.mediaPath);
+                repoint(clip.mask.mediaFgrPath);
+                repoint(clip.faceTrackPath);
+                for (drift::Effect &effect : clip.effects) {
+                    const EffectPresetEntry *def = effectDefForId(effect.catalogId);
+                    if (!def)
                         continue;
-                    auto it = effect.parameters.find(spec.key);
-                    if (it == effect.parameters.end())
-                        continue;
-                    QString path = it.value().toString();
-                    if (repoint(path))
-                        it.value() = path;
+                    for (const drift::EffectParamSpec &spec : def->meta.parameters) {
+                        if (!spec.isFilePath())
+                            continue;
+                        auto it = effect.parameters.find(spec.key);
+                        if (it == effect.parameters.end())
+                            continue;
+                        QString path = it.value().toString();
+                        if (repoint(path))
+                            it.value() = path;
+                    }
+                }
+                if (repoint(clip.path)) {
+                    // Cache renders keyed on the old path; AssetLibrary and
+                    // restoreFilmstripsAfterLoad regenerate them for the new one.
+                    clip.thumbnailPath.clear();
+                    clip.filmstripPath.clear();
+                    // The renderer reads the vector document via clip.vector, not clip.path.
+                    if (clip.type == drift::ClipType::Vector && !clip.vector.isInline())
+                        clip.vector.path = clip.path;
+                    if (clip.type == drift::ClipType::Model3d)
+                        clip.model3d.path = clip.path;
                 }
             }
-            if (repoint(clip.path)) {
-                // Cache renders keyed on the old path; AssetLibrary and
-                // restoreFilmstripsAfterLoad regenerate them for the new one.
-                clip.thumbnailPath.clear();
-                clip.filmstripPath.clear();
-                // The renderer reads the vector document via clip.vector, not clip.path.
-                if (clip.type == drift::ClipType::Vector && !clip.vector.isInline())
-                    clip.vector.path = clip.path;
-                if (clip.type == drift::ClipType::Model3d)
-                    clip.model3d.path = clip.path;
-            }
         }
-    }
+    });
 }
 
 void AppController::rehydrateMissingSources()
@@ -21070,6 +21547,7 @@ void AppController::newProject(bool silent)
     emit rippleEnabledChanged();
     emit allowClipOverlapChanged();
     notifyTracksChanged();
+    emit sequenceTabsChanged();
     emit bookmarksChanged();
     emit workAreaChanged();
     emit projectNameChanged();
@@ -21589,8 +22067,9 @@ void AppController::exportWithSettings(const QUrl &outputUrl, const QVariantMap 
     emit exportInProgressChanged();
     setLastMessage(tr("Exporting…"));
 
-    // Snapshot the project so edits during export can't race the encoder.
-    const drift::Project snapshot = m_project;
+    // Snapshot the project so edits during export can't race the encoder. Always the main
+    // timeline, even while a composite's tab is open.
+    const drift::Project snapshot = m_project.sequenceView({});
 
     const bool disposable = writeTargetIsDisposable(outputUrl);
 
@@ -22162,6 +22641,8 @@ QVariantMap AppController::mcpCompactClip(int trackIndex, int clipIndex, bool in
         {QStringLiteral("outPoint"), drift::usToSeconds(clip.srcOut)},
         {QStringLiteral("assetId"), clip.assetId},
     };
+    if (!clip.sequenceId.isEmpty())
+        out.insert(QStringLiteral("sequenceId"), clip.sequenceId);
     if (!includeCanvas)
         return out;
 

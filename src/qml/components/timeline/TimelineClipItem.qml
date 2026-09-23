@@ -491,7 +491,8 @@ Item {
                 return lit ? Qt.lighter(base, 1.15) : base
             }
             const base = panel.clipColor(
-                clipItem.trackType === "shape" ? "graphic" : clipItem.trackType)
+                clipItem.clipData.kind === "composite" ? "composite"
+                : clipItem.trackType === "shape" ? "graphic" : clipItem.trackType)
             const lit = clipMouse.containsMouse || clipItem.lifted
             return lit ? Qt.lighter(base, 1.15) : base
         }
@@ -1130,6 +1131,10 @@ Item {
             if (!clipItem.selected)
                 EditorState.selectClip(clipItem.trackIndex, clipItem.clipIndex)
         }
+        onDoubleClicked: (mouse) => {
+            if (mouse.button === Qt.LeftButton && clipItem.clipData.kind === "composite")
+                EditorState.openCompositeClip(clipItem.trackIndex, clipItem.clipIndex)
+        }
         onClicked: (mouse) => {
             if (mouse.button === Qt.RightButton || didDrag)
                 return
@@ -1200,6 +1205,25 @@ Item {
                     icon.name: Theme.icons.check
                     visible: panel.multiSelectActive === false
                     onTriggered: panel.multiSelectActive = true
+                }
+                ThemedMenuItem {
+                    text: qsTr("Open composite")
+                    icon.name: Theme.icons.layers
+                    visible: clipItem.clipData.kind === "composite"
+                    onTriggered: EditorState.openCompositeClip(clipItem.trackIndex, clipItem.clipIndex)
+                }
+                ThemedMenuItem {
+                    text: qsTr("Flatten composite")
+                    icon.name: Theme.icons.film
+                    visible: clipItem.clipData.kind === "composite"
+                    enabled: !EditorState.exportInProgress
+                    onTriggered: EditorState.flattenComposite(clipItem.trackIndex, clipItem.clipIndex)
+                }
+                ThemedMenuItem {
+                    text: qsTr("Make composite")
+                    icon.name: Theme.icons.layers
+                    visible: EditorState.makeCompositeAvailable
+                    onTriggered: EditorState.makeCompositeFromSelection()
                 }
                 ThemedMenuSeparator { }
                 ThemedMenuItem {

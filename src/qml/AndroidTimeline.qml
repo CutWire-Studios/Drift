@@ -889,6 +889,7 @@ Item {
         if (type === "audio") return Theme.clipAudio
         if (type === "graphic") return Theme.clipGraphic
         if (type === "effect" || type === "adjustment") return Theme.clipEffect
+        if (type === "composite") return Theme.clipComposite
         return Theme.clipVideoPlaceholder
     }
 

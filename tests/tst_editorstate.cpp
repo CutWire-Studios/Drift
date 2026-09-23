@@ -68,6 +68,9 @@ class EditorStateTest : public QObject
 
 private slots:
     void snapTimeEnabled();
+    void compositeFromSelectionUndoRedo();
+    void compositeTabEditUndoesFromMain();
+    void compositeSeparateAudioAndRemoval();
     void retimeKeepsDisabledKeyframeTrackDisabled();
     void effectStackCopyPasteAppendsAndRescales();
     void chromaKeyHueIsFlaggedForTheColourSwatch();
@@ -426,6 +429,133 @@ void EditorStateTest::undoRedoClipAdd()
 // Library drop onto an existing track uses addClipFromAssetAt. Taking a Track&
 // before the undo snapshot used to share the track list with `before`, so the
 // append mutated both sides and Ctrl+Z left the clip in place.
+namespace {
+
+// Two 5 s clips of one video asset on the first track, at 1 s and 10 s, both selected.
+void setUpTwoClipSelection(AssetLibrary &library, AppController &state)
+{
+    drift::MediaAsset asset;
+    asset.name = QStringLiteral("clip.mp4");
+    asset.kind = drift::MediaKind::Video;
+    asset.path = QStringLiteral("/nonexistent/clip.mp4");
+    asset.durationUs = drift::secondsToUs(5.0);
+    state.project()->addAsset(asset);
+    library.syncToProject();
+    state.setSnapEnabled(false);
+    state.addClipFromAssetAt(0, 0, 1.0);
+    state.addClipFromAssetAt(0, 0, 10.0);
+    QCOMPARE(state.project()->tracks().at(0).clips.size(), 2);
+    state.setSelection({QVariantMap{{QStringLiteral("track"), 0}, {QStringLiteral("clip"), 0}},
+                        QVariantMap{{QStringLiteral("track"), 0}, {QStringLiteral("clip"), 1}}});
+}
+
+} // namespace
+
+void EditorStateTest::compositeFromSelectionUndoRedo()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    setUpTwoClipSelection(library, state);
+
+    QVERIFY(state.canMakeCompositeFromSelection());
+    state.makeCompositeFromSelection();
+
+    const drift::Project &project = *state.project();
+    QCOMPARE(project.tracks().at(0).clips.size(), 1);
+    const drift::Clip composite = project.tracks().at(0).clips.at(0);
+    QCOMPARE(composite.type, drift::ClipType::Composite);
+    QCOMPARE(composite.timelineStart, drift::secondsToUs(1.0));
+    QCOMPARE(composite.timelineDuration, drift::secondsToUs(14.0));
+    QCOMPARE(library.count(), 2);
+    const QList<drift::Track> &inner = project.sequenceTracks(composite.sequenceId);
+    QCOMPARE(inner.size(), 1);
+    QCOMPARE(inner.at(0).clips.size(), 2);
+    QCOMPARE(inner.at(0).clips.at(0).timelineStart, 0);
+    QCOMPARE(inner.at(0).clips.at(1).timelineStart, drift::secondsToUs(9.0));
+    // No nesting: a composite cannot go into another one.
+    state.selectClip(0, 0);
+    QVERIFY(!state.canMakeCompositeFromSelection());
+
+    state.undo();
+    QCOMPARE(state.project()->tracks().at(0).clips.size(), 2);
+    QCOMPARE(library.count(), 1);
+    QVERIFY(state.project()->sequenceIds().isEmpty());
+
+    state.redo();
+    QCOMPARE(state.project()->tracks().at(0).clips.at(0).type, drift::ClipType::Composite);
+    QCOMPARE(library.count(), 2);
+}
+
+void EditorStateTest::compositeTabEditUndoesFromMain()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    setUpTwoClipSelection(library, state);
+    state.makeCompositeFromSelection();
+    const QString sequenceId = state.project()->tracks().at(0).clips.at(0).sequenceId;
+
+    state.openCompositeClip(0, 0);
+    QCOMPARE(state.activeSequenceId(), sequenceId);
+    QCOMPARE(state.sequenceTabs().size(), 1);
+    QCOMPARE(state.project()->tracks().at(0).clips.size(), 2);
+
+    // Content added past the composite's original end does not stretch the placed instance, but
+    // it does raise how far that instance can be trimmed out.
+    state.moveClip(0, 1, 20.0);
+    const drift::Project &project = *state.project();
+    QCOMPARE(project.sequenceDurationUs(sequenceId), drift::secondsToUs(25.0));
+    const drift::Clip &instance = project.rootTracks().at(0).clips.at(0);
+    QCOMPARE(instance.timelineDuration, drift::secondsToUs(14.0));
+    QCOMPARE(drift::sourceDurationForClip(project, instance), drift::secondsToUs(25.0));
+    QCOMPARE(project.asset(instance.assetId)->durationUs, drift::secondsToUs(25.0));
+
+    // Undoing that edit from the main timeline takes you back into the tab it was made in.
+    state.openSequence(QString());
+    QVERIFY(state.activeSequenceId().isEmpty());
+    state.undo();
+    QCOMPARE(state.activeSequenceId(), sequenceId);
+    QCOMPARE(state.project()->sequenceDurationUs(sequenceId), drift::secondsToUs(14.0));
+    QCOMPARE(state.sequenceTabs().size(), 1);
+
+    // Composites cannot be placed inside a composite.
+    QVERIFY(!state.trackAcceptsKind(0, QStringLiteral("composite")));
+
+    state.closeSequenceTab(sequenceId);
+    QVERIFY(state.activeSequenceId().isEmpty());
+    QVERIFY(state.sequenceTabs().isEmpty());
+}
+
+void EditorStateTest::compositeSeparateAudioAndRemoval()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    setUpTwoClipSelection(library, state);
+    state.makeCompositeFromSelection();
+    const drift::Clip composite = state.project()->tracks().at(0).clips.at(0);
+
+    state.selectClip(0, 0);
+    QVERIFY(state.canSeparateAudioSelection());
+    state.separateAudioFromSelection();
+    const drift::Project &project = *state.project();
+    const drift::Clip *audio = nullptr;
+    for (const drift::Track &track : project.tracks()) {
+        for (const drift::Clip &clip : track.clips) {
+            if (clip.type == drift::ClipType::Audio)
+                audio = &clip;
+        }
+    }
+    QVERIFY(audio);
+    QCOMPARE(audio->sequenceId, composite.sequenceId);
+    QVERIFY(!audio->linkId.isEmpty());
+
+    // Removing the composite from the bin takes its instances, its sequence and its tab with it.
+    state.openCompositeClip(0, 0);
+    QCOMPARE(state.removeAssetsAndClips({composite.assetId}), 1);
+    QVERIFY(state.activeSequenceId().isEmpty());
+    QVERIFY(!state.project()->hasSequence(composite.sequenceId));
+    QVERIFY(state.sequenceTabs().isEmpty());
+}
+
 void EditorStateTest::undoLibraryClipDropOntoExistingTrack()
 {
     AssetLibrary library;

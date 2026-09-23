@@ -762,6 +762,77 @@ QJsonObject McpDispatcher::applyOneExtended(const QString &tool, const QJsonObje
         return ok({});
     }
 
+    if (tool == QLatin1String("make_composite")) {
+        if (!m_controller->canMakeCompositeFromSelection())
+            return err("bad_args", QStringLiteral(
+                "Select clips on the main timeline first; composites cannot contain composites"));
+        m_controller->makeCompositeFromSelection();
+        const drift::Project *project = m_controller->project();
+        const int track = m_controller->selectedTrack();
+        const int index = m_controller->selectedClip();
+        if (track < 0 || index < 0)
+            return err("apply_failed", QStringLiteral("No composite was made"));
+        const drift::Clip &clip = project->tracks().at(track).clips.at(index);
+        return ok({{QStringLiteral("clip"), clip.id},
+                   {QStringLiteral("sequence"), clip.sequenceId},
+                   {QStringLiteral("asset"), clip.assetId}});
+    }
+
+    if (tool == QLatin1String("open_composite")) {
+        QString sequenceId;
+        if (args.value(QStringLiteral("main")).toBool()) {
+            sequenceId.clear();
+        } else if (args.contains(QStringLiteral("sequence"))) {
+            sequenceId = argString(args, QStringLiteral("sequence"));
+            if (sequenceId.isEmpty() || !m_controller->project()->hasSequence(sequenceId))
+                return err("not_found", QStringLiteral("Unknown sequence"));
+        } else {
+            const ClipRef ref = resolveClip(args);
+            if (!ref.valid())
+                return clipRefError(args);
+            const drift::Clip &clip = m_controller->project()->tracks().at(ref.track).clips.at(ref.clip);
+            if (clip.type != drift::ClipType::Composite)
+                return err("type_mismatch", QStringLiteral("Not a composite clip"));
+            sequenceId = clip.sequenceId;
+        }
+        m_controller->openSequence(sequenceId);
+        return ok({{QStringLiteral("activeSequence"), m_controller->activeSequenceId()}});
+    }
+
+    if (tool == QLatin1String("list_composites")) {
+        const drift::Project *project = m_controller->project();
+        QJsonArray rows;
+        for (const QString &id : project->assetOrder()) {
+            const drift::MediaAsset *asset = project->asset(id);
+            if (!asset || asset->kind != drift::MediaKind::Composite)
+                continue;
+            rows.append(QJsonObject{
+                {QStringLiteral("sequence"), asset->sequenceId},
+                {QStringLiteral("asset"), asset->id},
+                {QStringLiteral("name"), asset->name},
+                {QStringLiteral("duration"), drift::usToSeconds(project->sequenceDurationUs(asset->sequenceId))},
+                {QStringLiteral("open"), project->openSequenceTabs().contains(asset->sequenceId)},
+                {QStringLiteral("active"), project->activeSequenceId() == asset->sequenceId},
+            });
+        }
+        return ok({{QStringLiteral("composites"), rows},
+                   {QStringLiteral("activeSequence"), project->activeSequenceId()}});
+    }
+
+    if (tool == QLatin1String("flatten_composite")) {
+        const ClipRef ref = resolveClip(args);
+        if (!ref.valid())
+            return clipRefError(args);
+        if (m_controller->project()->tracks().at(ref.track).clips.at(ref.clip).type
+            != drift::ClipType::Composite)
+            return err("type_mismatch", QStringLiteral("Not a composite clip"));
+        if (m_controller->exportInProgress())
+            return err("export_busy", QStringLiteral("An export is already running"));
+        if (!m_controller->flattenComposite(ref.track, ref.clip))
+            return err("export_failed", QStringLiteral("Could not start flattening"));
+        return ok({{QStringLiteral("started"), true}});
+    }
+
     if (tool == QLatin1String("unlink_audio")) {
         if (!m_controller->canUnlinkSelection())
             return err("bad_args", QStringLiteral("No linked clips selected"));

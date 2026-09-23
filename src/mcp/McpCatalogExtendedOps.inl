@@ -115,6 +115,30 @@
           "trimmed independently. Acts on the current selection — call select_clip first; fails "
           "bad_args when no linked clips are selected.",
           objectSchema({}) },
+        { "make_composite", "timeline", "Collapse clips into one composite clip",
+          "Move the selected clips (with their linked audio and pinned adjustments) into a new nested "
+          "timeline and put one composite clip in their place, plus a composite item in the bin. "
+          "Acts on the current selection — call select_clips first. Only on the main timeline, and "
+          "the selection must not already contain a composite. Returns {clip, sequence, asset}.",
+          objectSchema({}) },
+        { "open_composite", "timeline", "Edit inside a composite",
+          "Open a composite's timeline in its own tab and make it the timeline every other op edits "
+          "(tracks, clips, inspect). Name it by a composite clip (clip or track+index), by sequence "
+          "id, or pass main:true to return to the main timeline. Export always renders the main "
+          "timeline. Not an undo step.",
+          objectSchema(mergeProps({{QStringLiteral("sequence"), stringProp(QStringLiteral("Sequence id from list_composites"))},
+                                   {QStringLiteral("main"), boolProp(QStringLiteral("Switch back to the main timeline"))}},
+                                  clipRefProps())) },
+        { "list_composites", "timeline", "Composites, their tabs and which is open",
+          "List every composite: {sequence, asset, name, duration, open, active}. active marks the "
+          "timeline being edited; activeSequence is empty on the main timeline.",
+          objectSchema({}), true },
+        { "flatten_composite", "timeline", "Render a composite clip to a video file",
+          "Render the composite clip's range to a new video file, add it to the bin and swap the "
+          "clip (and audio separated from it) over to it. Async: returns {started:true}; poll "
+          "export_status. Transparency around the composite's content becomes the project "
+          "background.",
+          objectSchema(clipRefProps()) },
         { "merge_clips", "timeline", "Join adjacent clips, or several subtitle clips into one",
           "Merge the selected adjacent clips on one track back into a single clip. Acts on the current "
           "selection — select the clips first; fails bad_args when the selection cannot be merged. "

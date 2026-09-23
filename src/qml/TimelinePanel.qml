@@ -465,6 +465,7 @@ PanelFrame {
         if (type === "audio") return Theme.clipAudio;
         if (type === "graphic") return Theme.clipGraphic;
         if (type === "effect" || type === "adjustment") return Theme.clipEffect;
+        if (type === "composite") return Theme.clipComposite;
         return Theme.clipVideoPlaceholder; // video: no flat fill, thumbnails would go here
     }
 
@@ -1028,6 +1029,11 @@ PanelFrame {
             panel: root
         }
 
+        TimelineTabBar {
+            id: sequenceTabBar
+            width: parent.width
+        }
+
         // === full-project overview strip ==============================================
         // Switchable off in Settings -> Interface; collapses to nothing rather than merely
         // hiding, so the tracks get the height back.
@@ -1042,7 +1048,7 @@ PanelFrame {
         // === ruler + track labels + tracks ================================================
         Column {
             width: parent.width
-            height: parent.height - toolbar.height - overviewStrip.height
+            height: parent.height - toolbar.height - sequenceTabBar.height - overviewStrip.height
 
             KeyframeGraph {
                 id: keyframesBar

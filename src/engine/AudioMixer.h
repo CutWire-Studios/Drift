@@ -8,7 +8,10 @@
 #include <QHash>
 #include <QMutex>
 #include <QVector>
+#include <functional>
 #include <memory>
+
+class AudioMixer;
 
 // Everything the mixer carries between blocks for one clip. Both halves are streaming DSP whose
 // state only means anything while playback runs forward, and both are invalidated at the same
@@ -17,6 +20,9 @@ struct ClipAudioState
 {
     drift::AudioEffectRack rack;
     drift::ClipAudioRetimer retimer;
+    // Composite clips only: the nested timeline, refreshed every block, and the mixer playing it.
+    std::shared_ptr<drift::Project> nestedView;
+    std::shared_ptr<AudioMixer> nestedMixer;
 };
 
 // Mixes active audio clips into interleaved stereo float PCM.
@@ -30,6 +36,13 @@ public:
     // softClip saturates to exactly 1.0f, so anything measured after it reports 0.0 dBFS no matter
     // how far over the top the mix really is.
     void setMasterClipEnabled(bool enabled) { m_masterClipEnabled = enabled; }
+    // For the mixer playing a composite's timeline: `streamSalt` keeps its decode cursors apart
+    // from every other instance of the same composite, `depth` bounds nesting.
+    void setNesting(quint64 streamSalt, int depth)
+    {
+        m_streamSalt = streamSalt;
+        m_depth = depth;
+    }
     bool masterClipEnabled() const { return m_masterClipEnabled; }
 
     void mix(drift::TimeUs timelineStartUs, int sampleCount, int sampleRate, float *interleavedStereoOut) const;
@@ -46,9 +59,13 @@ public:
     // `streamId` is the same thing one level down: the clip's own decode cursor in ClipReaderPool.
     // It must be stable across blocks and unique per caller — two consumers reading one file
     // through a single cursor is what desynced overlapping clips.
+    //
+    // `source`, when set, replaces the file read: (sourceStartUs, frames, dst) -> frames written.
+    using SourceReader = std::function<int(drift::TimeUs, int, float *)>;
     static QVector<float> readClipAudio(const drift::Clip &clip, quint64 streamId,
                                         drift::TimeUs winStartUs, int outFrames, int sampleRate,
-                                        drift::ClipAudioRetimer *retimer);
+                                        drift::ClipAudioRetimer *retimer,
+                                        const SourceReader &source = {});
 
 
 private:
@@ -59,4 +76,6 @@ private:
     mutable QMutex m_clipAudioMutex;
     mutable QHash<QString, std::shared_ptr<ClipAudioState>> m_clipAudio;
     bool m_masterClipEnabled = true;
+    quint64 m_streamSalt = 0;
+    int m_depth = 0;
 };

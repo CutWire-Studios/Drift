@@ -2815,6 +2815,46 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Composite %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Composite created</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Composite</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Flattening composite…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Flattening was cancelled</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Could not flatten the composite: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The composite clip was removed before flattening finished</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The composite clip was trimmed while flattening; try again</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 (flattened)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Composite flattened</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>All audio tracks separated</source>
         <translation type="unfinished"></translation>
     </message>
@@ -6816,6 +6856,10 @@
     </message>
     <message>
         <source>%1 — drag to the timeline, right-click to preview</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open composite</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -11088,6 +11132,18 @@ If playback stutters, try another.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Open composite</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Flatten composite</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Make composite</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Split at current time</source>
         <translation type="unfinished"></translation>
     </message>
@@ -11268,6 +11324,17 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Close Gap</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>TimelineTabBar</name>
+    <message>
+        <source>Main</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Close tab</source>
         <translation type="unfinished"></translation>
     </message>
 </context>

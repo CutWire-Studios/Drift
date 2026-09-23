@@ -185,6 +185,7 @@ PanelFrame {
             return root.clipKind === "video" || root.clipKind === "image"
                    || root.clipKind === "shape" || root.clipKind === "text"
                    || root.clipKind === "vector" || root.clipKind === "audio"
+                   || root.clipKind === "composite"
         if (tabId === "stabilize")
             return root.clipKind === "video"
         // Masks and effect stacks live on the adjustments pinned to a clip, and those adjustments

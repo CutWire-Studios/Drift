@@ -99,7 +99,7 @@ quint64 clipAudioIdentity(const drift::Clip &clip)
 // clip's front edge.
 QVector<float> AudioMixer::readClipAudio(const drift::Clip &clip, quint64 streamId,
                                          drift::TimeUs winStartUs, int outFrames, int sampleRate,
-                                         drift::ClipAudioRetimer *retimer)
+                                         drift::ClipAudioRetimer *retimer, const SourceReader &source)
 {
     QVector<float> out(outFrames * 2, 0.0f);
     if (outFrames <= 0)
@@ -134,9 +134,11 @@ QVector<float> AudioMixer::readClipAudio(const drift::Clip &clip, quint64 stream
             clip.reverse ? qMax<drift::TimeUs>(0, clip.timelineToSourceUs(playStartUs) - sourceSpanUs)
                          : clip.timelineToSourceUs(playStartUs);
 
-        const int got = ClipReaderPool::instance().readAudioInterleaved(
-            clip.path, streamId, sourceStartUs, wantFrames, sampleRate, out.data() + leadFrames * 2,
-            clip.audioStreamIndex);
+        const int got =
+            source ? source(sourceStartUs, wantFrames, out.data() + leadFrames * 2)
+                   : ClipReaderPool::instance().readAudioInterleaved(
+                         clip.path, streamId, sourceStartUs, wantFrames, sampleRate,
+                         out.data() + leadFrames * 2, clip.audioStreamIndex);
         if (got > 1 && clip.reverse) {
             for (int i = leadFrames, j = leadFrames + got - 1; i < j; ++i, --j) {
                 std::swap(out[i * 2], out[j * 2]);
@@ -178,7 +180,10 @@ QVector<float> AudioMixer::readClipAudio(const drift::Clip &clip, quint64 stream
     const int audioStreamIndex = clip.audioStreamIndex;
     retimer->process(
         block,
-        [&path, streamId, sampleRate, audioStreamIndex](drift::TimeUs sourceStartUs, int frames, float *dst) {
+        [&path, &source, streamId, sampleRate, audioStreamIndex](drift::TimeUs sourceStartUs, int frames,
+                                                                 float *dst) {
+            if (source)
+                return source(sourceStartUs, frames, dst);
             return ClipReaderPool::instance().readAudioInterleaved(path, streamId, sourceStartUs, frames,
                                                                    sampleRate, dst, audioStreamIndex);
         },
@@ -188,13 +193,19 @@ QVector<float> AudioMixer::readClipAudio(const drift::Clip &clip, quint64 stream
 
 namespace {
 
-void accumulateClipAudio(const drift::Clip &clip, const drift::Track &track, drift::TimeUs timelineStartUs,
+constexpr int kMaxCompositeDepth = 4;
+
+void accumulateClipAudio(const drift::Project &project, const drift::Clip &clip,
+                         const drift::Track &track, drift::TimeUs timelineStartUs,
                          int sampleCount, int sampleRate, float *mixBuffer,
                          QMutex &stateMutex,
                          QHash<QString, std::shared_ptr<ClipAudioState>> &clipAudio,
-                         const QList<drift::Effect> &laneEffects = {})
+                         const QList<drift::Effect> &laneEffects, quint64 streamSalt, int depth)
 {
-    if (clip.path.isEmpty())
+    if (clip.path.isEmpty() && clip.sequenceId.isEmpty())
+        return;
+    if (!clip.sequenceId.isEmpty()
+        && (depth >= kMaxCompositeDepth || !project.hasSequence(clip.sequenceId)))
         return;
 
     const drift::TimeUs bufferEndUs = timelineStartUs + static_cast<drift::TimeUs>(
@@ -230,7 +241,27 @@ void accumulateClipAudio(const drift::Clip &clip, const drift::Track &track, dri
     // finishes, and the next block simply builds a fresh one.
     ClipAudioState &state = *statePtr;
 
-    const quint64 streamId = ClipReaderPool::streamIdForClip(clip.id);
+    const quint64 streamId = ClipReaderPool::streamIdForClip(clip.id) ^ streamSalt;
+
+    // A composite's source is its nested timeline's mix, read at the clip's source time.
+    AudioMixer::SourceReader source;
+    if (!clip.sequenceId.isEmpty()) {
+        if (!state.nestedMixer) {
+            state.nestedView = std::make_shared<drift::Project>();
+            state.nestedMixer = std::make_shared<AudioMixer>();
+            state.nestedMixer->setMasterClipEnabled(false);
+            state.nestedMixer->setNesting(qHashMulti(streamSalt, clip.id), depth + 1);
+            state.nestedMixer->setProject(state.nestedView.get());
+        }
+        // Refreshed every block so edits inside the composite are heard; the address stays put, so
+        // the nested mixer keeps its per-clip state.
+        *state.nestedView = project.sequenceView(clip.sequenceId);
+        AudioMixer *nested = state.nestedMixer.get();
+        source = [nested, sampleRate](drift::TimeUs sourceStartUs, int frames, float *dst) {
+            nested->mix(sourceStartUs, frames, sampleRate, dst);
+            return frames;
+        };
+    }
 
     QVector<float> chunk;
     // The clip's own stack plus whatever the nested audio lanes on its track contribute right
@@ -265,19 +296,19 @@ void accumulateClipAudio(const drift::Clip &clip, const drift::Track &track, dri
                 // The preroll window ends exactly where this block starts, so the retimer sees one
                 // continuous stream across the two reads and does not restart between them.
                 const QVector<float> preroll = AudioMixer::readClipAudio(
-                    clip, streamId, primeStartUs, primeFrames, sampleRate, &state.retimer);
+                    clip, streamId, primeStartUs, primeFrames, sampleRate, &state.retimer, source);
                 rack.warmUp(preroll.constData(), primeFrames);
             }
         }
 
         chunk = AudioMixer::readClipAudio(clip, streamId, timelineStartUs, sampleCount, sampleRate,
-                                          &state.retimer);
+                                          &state.retimer, source);
         if (active)
             rack.process(chunk.data(), sampleCount);
         rack.setLastTimelineEndUs(timelineStartUs + blockDurUs);
     } else {
         chunk = AudioMixer::readClipAudio(clip, streamId, timelineStartUs, sampleCount, sampleRate,
-                                          &state.retimer);
+                                          &state.retimer, source);
     }
 
     const int frames = qMin(sampleCount, chunk.size() / 2);
@@ -394,15 +425,16 @@ void AudioMixer::mix(drift::TimeUs timelineStartUs, int sampleCount, int sampleR
 
         if (track.type == drift::TrackType::Audio) {
             for (const drift::Clip &clip : track.clips)
-                accumulateClipAudio(clip, track, timelineStartUs, sampleCount, sampleRate,
-                                      interleavedStereoOut, m_clipAudioMutex, m_clipAudio,
-                                      laneEffects);
+                accumulateClipAudio(*m_project, clip, track, timelineStartUs, sampleCount, sampleRate,
+                                    interleavedStereoOut, m_clipAudioMutex, m_clipAudio,
+                                    laneEffects, m_streamSalt, m_depth);
         } else if (track.type == drift::TrackType::Video) {
             for (const drift::Clip &clip : track.clips) {
-                if (clip.type == drift::ClipType::Video && !clip.suppressEmbeddedAudio)
-                    accumulateClipAudio(clip, track, timelineStartUs, sampleCount, sampleRate,
-                                          interleavedStereoOut, m_clipAudioMutex, m_clipAudio,
-                                          laneEffects);
+                if ((clip.type == drift::ClipType::Video || clip.type == drift::ClipType::Composite)
+                    && !clip.suppressEmbeddedAudio)
+                    accumulateClipAudio(*m_project, clip, track, timelineStartUs, sampleCount,
+                                        sampleRate, interleavedStereoOut, m_clipAudioMutex,
+                                        m_clipAudio, laneEffects, m_streamSalt, m_depth);
             }
         }
     }

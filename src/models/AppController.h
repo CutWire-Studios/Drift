@@ -373,6 +373,10 @@ class AppController : public QObject
     Q_PROPERTY(QVariantMap recoveryInfo READ recoveryInfo NOTIFY recoveryChanged)
     Q_PROPERTY(QVariantList recentProjects READ recentProjects NOTIFY recentProjectsChanged)
     Q_PROPERTY(bool separateAudioAvailable READ canSeparateAudioSelection NOTIFY editCapabilitiesChanged)
+    Q_PROPERTY(bool makeCompositeAvailable READ canMakeCompositeFromSelection NOTIFY editCapabilitiesChanged)
+    // Open composite tabs as [{id, name}], main timeline excluded; "" is the main timeline's id.
+    Q_PROPERTY(QVariantList sequenceTabs READ sequenceTabs NOTIFY sequenceTabsChanged)
+    Q_PROPERTY(QString activeSequenceId READ activeSequenceId NOTIFY sequenceTabsChanged)
     Q_PROPERTY(bool unlinkAvailable READ canUnlinkSelection NOTIFY editCapabilitiesChanged)
     Q_PROPERTY(bool mergeAvailable READ canMergeSelection NOTIFY editCapabilitiesChanged)
     // False until the user picks a launch layout (or decides later via first-clip setup / load).
@@ -1259,6 +1263,21 @@ public:
     Q_INVOKABLE void mergeAllSubtitlesOnTrack(int trackIndex);
     Q_INVOKABLE bool canSeparateAudioSelection() const;
     Q_INVOKABLE void separateAudioFromSelection();
+
+    // Composite clips: a nested timeline played as one clip. Making one moves the selection (and
+    // its linked partners) into a new sequence and leaves a composite clip in its place.
+    Q_INVOKABLE bool canMakeCompositeFromSelection() const;
+    Q_INVOKABLE void makeCompositeFromSelection();
+    QVariantList sequenceTabs() const;
+    QString activeSequenceId() const { return m_project.activeSequenceId(); }
+    // Opens (or switches to) a composite's tab. "" switches to the main timeline.
+    Q_INVOKABLE void openSequence(const QString &sequenceId);
+    Q_INVOKABLE void openCompositeClip(int trackIndex, int clipIndex);
+    Q_INVOKABLE void openCompositeAsset(const QString &assetId);
+    Q_INVOKABLE void closeSequenceTab(const QString &sequenceId);
+    // Renders the composite clip's range to a new video file and swaps the clip (and any audio
+    // separated from it) over to that file. Runs in the background on the export slot.
+    Q_INVOKABLE bool flattenComposite(int trackIndex, int clipIndex);
     Q_INVOKABLE void separateAllAudioTracks(int trackIndex, int clipIndex);
     Q_INVOKABLE void separateAllAudioTracksFromSelection();
     Q_INVOKABLE QVariantList clipAudioStreams(int trackIndex, int clipIndex) const;
@@ -1820,6 +1839,7 @@ signals:
     void currentBinFolderIdChanged();
     void selectionChanged();
     void editCapabilitiesChanged();
+    void sequenceTabsChanged();
     void selectedClipDataChanged();
     void selectedTransitionDataChanged();
     void bookmarksChanged();
@@ -2126,6 +2146,15 @@ protected:
     // can insert or reorder tracks, so the selection is carried across by id. Idempotent and
     // cheap when nothing is out of place, which is why it can run on every edit.
     void normalizeProjectStructure();
+    // Keeps open tabs pointing at sequences that exist, and the active one among them.
+    void reconcileSequenceTabs();
+    // A composite asset's duration follows its sequence's content.
+    void syncCompositeAssetDurations();
+    // Drops sequences no composite bin item refers to any more, leaving their tab if open.
+    void pruneOrphanSequences();
+    bool compositeAssetPlaceable(const QVariantMap &asset) const;
+    void finishFlatten(const QString &clipId, const QString &sequenceId, const QString &path,
+                       const QString &name, drift::TimeUs srcInUs, drift::TimeUs durationUs);
 
     // Keeps each lane adjacent to and directly above its parent, and demotes lanes whose parent
     // is no longer able to hold them.
@@ -2406,6 +2435,8 @@ protected:
     // Handed to applyProjectJson by loadProject, applied alongside the other load-time path
     // migrations and cleared there.
     QHash<QString, QString> m_pendingPathRemap;
+    // Playhead per timeline, so switching tabs returns to where each was left. "" = main.
+    QHash<QString, drift::TimeUs> m_sequencePlayheads;
     bool m_packaging = false;
     double m_packageProgress = 0.0;
     QAtomicInt m_packageCancel = 0;

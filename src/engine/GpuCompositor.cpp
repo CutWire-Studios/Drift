@@ -278,6 +278,50 @@ GLuint maskTexture(GlRuntime &rt, QOpenGLExtraFunctions *gl, const QList<drift::
 }
 
 // Source pixels → effects → a canvas-space layer target, still on the GPU.
+void composeOnGlThread(GlRuntime &rt, const GpuScene &scene, GlTarget &canvas,
+                       bool *lostVideo = nullptr);
+void bindQuad(GlRuntime &rt, QOpenGLExtraFunctions *gl);
+
+constexpr const char *kUnpremultiplyFragShader = R"(#version 330 core
+in vec2 v_texCoord;
+out vec4 fragColor;
+uniform sampler2D u_currentTexture;
+void main() {
+    vec4 c = texture(u_currentTexture, v_texCoord);
+    fragColor = c.a > 0.0001 ? vec4(c.rgb / c.a, c.a) : vec4(0.0);
+}
+)";
+
+// A composed canvas is premultiplied, while every layer target is straight alpha.
+GlTarget nestedLayerTarget(GlRuntime &rt, QOpenGLExtraFunctions *gl, const GpuScene &nested)
+{
+    QOpenGLShaderProgram *program = rt.builtinProgram(
+        QStringLiteral("__unpremul__"), kQuadVertexShader, kUnpremultiplyFragShader);
+    if (!program)
+        return {};
+
+    GlTarget canvas = rt.acquireTarget(nested.canvasSize.width(), nested.canvasSize.height());
+    if (!canvas.isValid())
+        return {};
+    composeOnGlThread(rt, nested, canvas);
+
+    GlTarget out = rt.acquireTarget(canvas.width, canvas.height);
+    if (out.isValid()) {
+        out.fbo->bind();
+        gl->glViewport(0, 0, out.width, out.height);
+        gl->glDisable(GL_BLEND);
+        program->bind();
+        program->setUniformValue("u_currentTexture", 0);
+        gl->glActiveTexture(GL_TEXTURE0);
+        gl->glBindTexture(GL_TEXTURE_2D, canvas.texture());
+        bindQuad(rt, gl);
+        program->release();
+        out.fbo->release();
+    }
+    rt.releaseTarget(std::move(canvas));
+    return out;
+}
+
 GlTarget buildLayerTarget(GlRuntime &rt, QOpenGLExtraFunctions *gl, const GpuLayer &layer,
                           const QSize &canvasSize)
 {
@@ -287,6 +331,8 @@ GlTarget buildLayerTarget(GlRuntime &rt, QOpenGLExtraFunctions *gl, const GpuLay
     GlTarget target;
     if (layer.model3d) {
         target = drift::gl::drawModelClip(rt, gl, *layer.model3d, canvasSize);
+    } else if (layer.nested) {
+        target = nestedLayerTarget(rt, gl, *layer.nested);
     } else if (layer.video.isValid()) {
         target = promoteVideoFrameToTarget(rt, gl, layer.video);
     } else {
@@ -919,8 +965,7 @@ void fillBackground(GlRuntime &rt, QOpenGLExtraFunctions *gl, GlTarget &canvas, 
 // to publish nothing rather than a canvas with that layer missing from it, which is a black
 // flash on screen. Only video reports: a still or a vector that cannot be built fails the
 // same way on every frame, and holding the preview for that would freeze it for good.
-void composeOnGlThread(GlRuntime &rt, const GpuScene &scene, GlTarget &canvas,
-                       bool *lostVideo = nullptr)
+void composeOnGlThread(GlRuntime &rt, const GpuScene &scene, GlTarget &canvas, bool *lostVideo)
 {
     auto *gl = rt.functions();
     if (!gl)

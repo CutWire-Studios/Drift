@@ -92,7 +92,10 @@ QList<MediaEntry> collectMedia(const Project &project, bool embedSource)
         append(asset->path, MediaRole::Source, embedSource || isUnder(asset->path, denoiseDir));
     }
 
-    for (const Track &track : project.tracks()) {
+    QList<Track> allTracks;
+    project.forEachTrackList([&](const QList<Track> &tracks) { allTracks.append(tracks); });
+
+    for (const Track &track : allTracks) {
         for (const Clip &clip : track.clips) {
             if (!clip.emoji.isEmpty() || isUnder(clip.path, emojiDir))
                 continue;
@@ -102,7 +105,7 @@ QList<MediaEntry> collectMedia(const Project &project, bool embedSource)
         }
     }
 
-    for (const Track &track : project.tracks()) {
+    for (const Track &track : allTracks) {
         for (const Clip &clip : track.clips) {
             // Masks live on adjustment clips, which this flat walk already covers.
             append(clip.mask.mediaPath, MediaRole::Matte, true);
@@ -141,7 +144,9 @@ QList<AddonRef> collectAddons(const Project &project)
 
     bool usesEmoji = false;
 
-    for (const Track &track : project.tracks()) {
+    QList<Track> allTracks;
+    project.forEachTrackList([&](const QList<Track> &tracks) { allTracks.append(tracks); });
+    for (const Track &track : allTracks) {
         for (const Clip &clip : track.clips) {
             for (const Effect &effect : clip.effects) {
                 if (const EffectPresetEntry *def = effectDefForId(effect.catalogId)) {

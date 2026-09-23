@@ -14,6 +14,9 @@ Item {
     }
     readonly property bool hasSelection: !!clipData && Object.keys(clipData).length > 0
     readonly property string clipKind: hasSelection ? (clipData.kind || "") : ""
+    readonly property bool audible: clipKind === "audio" || clipKind === "video" || clipKind === "composite"
+    // Read straight from a media file: stream choice, denoise and transcription need one.
+    readonly property bool fileAudio: (clipKind === "audio" || clipKind === "video") && !clipData.sequenceId
     readonly property var propVolume: { "key": "volume", "label": qsTr("Volume"), "def": 1.0, "decimals": 2 }
 
     // "Recommended" packs by display width like openai-whisper does; the numbered entries cap
@@ -54,7 +57,7 @@ Item {
 
         PropertyKeyframeRow {
             width: root.width
-            visible: root.clipKind === "audio" || root.clipKind === "video"
+            visible: root.audible
             propDef: root.propVolume
             keyframeList: (root.clipData.keyframes && root.clipData.keyframes.volume && root.clipData.keyframes.volume.points) || []
             useSlider: true
@@ -69,7 +72,7 @@ Item {
             id: panSection
             width: parent.width
             spacing: Theme.spacingSm
-            visible: root.clipKind === "audio" || root.clipKind === "video"
+            visible: root.audible
 
             readonly property real panValue: {
                 void root.clipDataRevision
@@ -139,7 +142,7 @@ Item {
             id: audioTrackSection
             width: parent.width
             spacing: Theme.spacingSm
-            visible: (root.clipKind === "audio" || root.clipKind === "video") && audioTrackModel.length > 1
+            visible: root.fileAudio && audioTrackModel.length > 1
 
             property var audioTrackModel: {
                 void root.clipDataRevision
@@ -178,7 +181,8 @@ Item {
             }
 
             ThemedButton {
-                visible: root.clipKind === "video" && EditorState.separateAudioAvailable
+                visible: (root.clipKind === "video" || root.clipKind === "composite")
+                         && EditorState.separateAudioAvailable
                 width: parent.width
                 text: qsTr("Extract all audio tracks")
                 onClicked: {
@@ -188,7 +192,7 @@ Item {
         }
 
         Rectangle {
-            visible: root.clipKind === "audio" || root.clipKind === "video"
+            visible: root.fileAudio
             width: parent.width
             height: 1
             color: Theme.panelBorder
@@ -200,7 +204,7 @@ Item {
             id: denoiseSection
             width: parent.width
             spacing: Theme.spacingSm
-            visible: root.clipKind === "audio" || root.clipKind === "video"
+            visible: root.fileAudio
 
             // Whether the model is on disk is a one-shot filesystem answer, not a
             // binding, hence the reset below when an addon of this kind appears.
@@ -252,7 +256,7 @@ Item {
         }
 
         Rectangle {
-            visible: root.clipKind === "audio" || root.clipKind === "video"
+            visible: root.fileAudio
             width: parent.width
             height: 1
             color: Theme.panelBorder
@@ -260,7 +264,7 @@ Item {
         }
 
         Text {
-            visible: root.clipKind === "audio" || root.clipKind === "video"
+            visible: root.fileAudio
             text: qsTr("Auto subtitles")
             color: Theme.mutedForeground
             font.family: Theme.fontFamily
@@ -289,7 +293,7 @@ Item {
         ThemedComboBox {
             id: subtitleLanguageBox
             visible: parent.whisperReady
-                     && (root.clipKind === "audio" || root.clipKind === "video")
+                     && root.fileAudio
             width: parent.width
             enabled: !EditorState.subtitleGenerating
             textRole: "label"
@@ -301,7 +305,7 @@ Item {
         ThemedComboBox {
             id: subtitleWordsBox
             visible: parent.whisperReady
-                     && (root.clipKind === "audio" || root.clipKind === "video")
+                     && root.fileAudio
             width: parent.width
             enabled: !EditorState.subtitleGenerating
             textRole: "label"
@@ -322,7 +326,7 @@ Item {
 
         ThemedButton {
             visible: parent.whisperReady
-                     && (root.clipKind === "audio" || root.clipKind === "video")
+                     && root.fileAudio
             width: parent.width
             text: EditorState.subtitleGenerating
                   ? qsTr("Creating captions… %1%").arg(Math.round(EditorState.subtitleGenProgress * 100))
@@ -339,7 +343,7 @@ Item {
 
         ThemedButton {
             visible: !parent.whisperReady
-                     && (root.clipKind === "audio" || root.clipKind === "video")
+                     && root.fileAudio
             width: parent.width
             text: parent.runtimeReady
                   ? qsTr("Download speech recognition (about 670 MB)")

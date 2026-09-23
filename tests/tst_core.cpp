@@ -49,6 +49,8 @@ private slots:
     void keyframeNearestQuery();
     void projectSerializationRoundTrip();
     void binFolderSerializationRoundTrip();
+    void compositeSequenceRoundTrip();
+    void activateSequenceSwapsTracks();
     void binFolderDeletionMovesChildrenToParent();
     void assetFrameRateMarksRoundTrip();
     void projectMetadataRoundTrip();
@@ -446,6 +448,79 @@ void CoreTest::projectSerializationRoundTrip()
     QVERIFY(loaded.hasWorkArea());
     QCOMPARE(loaded.workAreaInUs(), drift::secondsToUs(1.0));
     QCOMPARE(loaded.workAreaOutUs(), drift::secondsToUs(4.0));
+}
+
+void CoreTest::compositeSequenceRoundTrip()
+{
+    drift::Project project;
+    drift::Clip inner;
+    inner.id = QStringLiteral("inner");
+    inner.type = drift::ClipType::Shape;
+    inner.timelineStart = 0;
+    inner.timelineDuration = drift::secondsToUs(4.0);
+    inner.srcOut = inner.timelineDuration;
+    drift::TrackList innerTracks = {drift::Track{.type = drift::TrackType::Shape, .clips = {inner}}};
+    const QString sequenceId = project.addSequence(innerTracks);
+
+    drift::MediaAsset asset;
+    asset.kind = drift::MediaKind::Composite;
+    asset.name = QStringLiteral("Composite 1");
+    asset.sequenceId = sequenceId;
+    const QString assetId = project.addAsset(asset);
+
+    drift::Clip outer;
+    outer.id = QStringLiteral("outer");
+    outer.type = drift::ClipType::Composite;
+    outer.assetId = assetId;
+    outer.sequenceId = sequenceId;
+    outer.timelineDuration = drift::secondsToUs(2.0);
+    outer.srcOut = outer.timelineDuration;
+    project.tracks()[0].clips.append(outer);
+    project.openSequenceTabs().append(sequenceId);
+
+    // Saving while the composite is open must write the same document as from the main timeline.
+    const QByteArray fromMain = project.toCompactJson();
+    QVERIFY(project.activateSequence(sequenceId));
+    QCOMPARE(project.toCompactJson(), fromMain);
+
+    QString error;
+    const drift::Project loaded = drift::Project::fromJson(project.toJson(), &error);
+    QVERIFY2(error.isEmpty(), qPrintable(error));
+    QVERIFY(loaded.activeSequenceId().isEmpty());
+    QCOMPARE(loaded.openSequenceTabs(), QStringList{sequenceId});
+    QCOMPARE(loaded.tracks().at(0).clips.at(0).type, drift::ClipType::Composite);
+    QCOMPARE(loaded.tracks().at(0).clips.at(0).sequenceId, sequenceId);
+    QCOMPARE(loaded.asset(assetId)->kind, drift::MediaKind::Composite);
+    QCOMPARE(loaded.asset(assetId)->sequenceId, sequenceId);
+    QCOMPARE(loaded.sequenceTracks(sequenceId).at(0).clips.at(0).id, QStringLiteral("inner"));
+    QCOMPARE(drift::sourceDurationForClip(loaded, loaded.tracks().at(0).clips.at(0)),
+             drift::secondsToUs(4.0));
+}
+
+void CoreTest::activateSequenceSwapsTracks()
+{
+    drift::Project project;
+    const QString mainTrackId = project.tracks().at(0).id;
+    const QString sequenceId =
+        project.addSequence({drift::Track{.type = drift::TrackType::Audio}});
+
+    QVERIFY(!project.activateSequence(QStringLiteral("missing")));
+    QVERIFY(project.activateSequence(sequenceId));
+    QCOMPARE(project.activeSequenceId(), sequenceId);
+    QCOMPARE(project.tracks().at(0).type, drift::TrackType::Audio);
+    QCOMPARE(project.rootTracks().at(0).id, mainTrackId);
+
+    // Edits made while open land in the sequence, and a snapshot carries them independently.
+    project.tracks().append(drift::Track{.type = drift::TrackType::Text});
+    const drift::Project snapshot = project.detachedCopy();
+    QVERIFY(project.activateSequence({}));
+    QCOMPARE(project.tracks().at(0).id, mainTrackId);
+    QCOMPARE(project.sequenceTracks(sequenceId).size(), 2);
+    QCOMPARE(snapshot.activeSequenceId(), sequenceId);
+    QCOMPARE(snapshot.tracks().size(), 2);
+
+    project.removeSequence(sequenceId);
+    QVERIFY(!project.hasSequence(sequenceId));
 }
 
 void CoreTest::binFolderSerializationRoundTrip()
@@ -1363,7 +1438,7 @@ void CoreTest::shapeStyleSerialization()
     QVERIFY(mid.layers[1].width > 4.0 && mid.layers[1].width < 10.0);
     QCOMPARE(loadedClip.transformX.evaluateAt(0), 100.0);
     QCOMPARE(loadedClip.transformY.evaluateAt(0), 200.0);
-    QCOMPARE(json.value(QStringLiteral("version")).toInt(), 9);
+    QCOMPARE(json.value(QStringLiteral("version")).toInt(), 10);
 }
 
 // A project saved before format 8 carries the flat fill/stroke keys — possibly only the original

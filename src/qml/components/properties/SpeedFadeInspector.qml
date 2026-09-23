@@ -13,6 +13,8 @@ Item {
     }
     readonly property bool hasSelection: !!clipData && Object.keys(clipData).length > 0
     readonly property string clipKind: hasSelection ? (clipData.kind || "") : ""
+    // Composites (and audio separated from one) do not retime in this version.
+    readonly property bool speedKind: (clipKind === "video" || clipKind === "audio") && !clipData.sequenceId
 
     height: speedColumn.height
     implicitHeight: speedColumn.height
@@ -32,7 +34,7 @@ Item {
         spacing: Theme.spacingXl
 
         EmptyState {
-            visible: root.clipKind !== "video" && root.clipKind !== "audio"
+            visible: !root.speedKind
             width: parent.width
             compact: true
             glyph: Theme.icons.gauge
@@ -41,7 +43,7 @@ Item {
         }
 
         Text {
-            visible: root.clipKind === "video" || root.clipKind === "audio"
+            visible: root.speedKind
             text: qsTr("Playback speed")
             color: Theme.mutedForeground
             font.family: Theme.fontFamily
@@ -58,7 +60,7 @@ Item {
         Row {
             width: parent.width
             spacing: 6
-            visible: root.clipKind === "video" || root.clipKind === "audio"
+            visible: root.speedKind
 
             ThemedButton {
                 text: qsTr("Custom speed…")
@@ -80,7 +82,7 @@ Item {
             Row {
                 width: parent.width
                 spacing: 6
-                visible: root.clipKind === "video" || root.clipKind === "audio"
+                visible: root.speedKind
                 Repeater {
                     model: [
                         { label: "0.25×", value: 0.25 },
@@ -105,7 +107,7 @@ Item {
         ThemedSlider {
             id: speedSlider
             label: qsTr("Speed")
-            visible: root.clipKind === "video" || root.clipKind === "audio"
+            visible: root.speedKind
             enabled: !speedColumn.hasSpeedCurve
             width: parent.width
             from: 0.25
@@ -126,7 +128,7 @@ Item {
         }
 
         Text {
-            visible: root.clipKind === "video" || root.clipKind === "audio"
+            visible: root.speedKind
             text: (speedColumn.hasSpeedCurve
                    ? qsTr("Custom speed")
                    : (root.clipData.speed || 1).toFixed(2) + "×")
@@ -137,7 +139,7 @@ Item {
         }
 
         ThemedChip {
-            visible: root.clipKind === "video" || root.clipKind === "audio"
+            visible: root.speedKind
             text: qsTr("Reverse")
             selected: {
                 void root.clipDataRevision

@@ -278,6 +278,9 @@ drift::TimeUs placedDurationUs(const drift::MediaAsset &asset)
 // a trim is set.
 QString durationLabelFor(const drift::MediaAsset &asset)
 {
+    // A composite's length follows its sequence, so the label is derived rather than stored.
+    if (asset.kind == drift::MediaKind::Composite)
+        return formatDuration(asset.durationUs);
     const bool trimmed = asset.trimInUs > 0 || asset.trimOutUs >= 0;
     if (asset.durationLabel.isEmpty() || !trimmed)
         return asset.durationLabel;
@@ -859,7 +862,8 @@ void AssetLibrary::startThumbJob(const QString &assetId)
     }
 
     drift::MediaAsset *asset = m_project->asset(assetId);
-    if (!asset)
+    // A composite has no file to probe or thumbnail.
+    if (!asset || asset->kind == drift::MediaKind::Composite)
         return;
 
     const bool needThumb = asset->thumbnailPath.isEmpty() || !QFileInfo::exists(asset->thumbnailPath);
@@ -1327,6 +1331,7 @@ QVariantMap AssetLibrary::assetAt(int index) const
         {QStringLiteral("filmstripPath"), asset->filmstripPath},
         {QStringLiteral("assetIndex"), index},
         {QStringLiteral("folderId"), asset->folderId},
+        {QStringLiteral("sequenceId"), asset->sequenceId},
     };
 }
 
@@ -1361,7 +1366,7 @@ void AssetLibrary::ensureAudioPresence(const QString &assetId)
         return;
 
     drift::MediaAsset *asset = m_project->asset(assetId);
-    if (!asset || asset->hasAudioKnown)
+    if (!asset || asset->hasAudioKnown || asset->kind == drift::MediaKind::Composite)
         return;
 
     if (asset->channels > 0 || asset->sampleRate > 0) {

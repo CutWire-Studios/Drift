@@ -620,6 +620,7 @@ Item {
                             : kind === "image" ? Theme.icons.image
                             : kind === "vector" ? Theme.icons.layers
                             : kind === "model3d" ? Theme.icons.box
+                            : kind === "composite" ? Theme.icons.layers
                             : Theme.icons.film
                     iconSize: Theme.spacing3xl
                     iconColor: Theme.mutedForeground
@@ -754,7 +755,12 @@ Item {
                             root.selectionAnchorId = cardRoot.assetId
                         }
                     }
-                    onDoubleTapped: if (cardRoot.isFolder) EditorState.currentBinFolderId = cardRoot.folderId
+                    onDoubleTapped: {
+                        if (cardRoot.isFolder)
+                            EditorState.currentBinFolderId = cardRoot.folderId
+                        else if (kind === "composite")
+                            EditorState.openCompositeAsset(cardRoot.assetId)
+                    }
                     onLongPressed: cardRoot.isFolder ? folderMenu.popup() : cardMenu.popup()
                 }
                 DragHandler {
@@ -813,6 +819,7 @@ Item {
                             : kind === "image" ? Theme.icons.image
                             : kind === "vector" ? Theme.icons.layers
                             : kind === "model3d" ? Theme.icons.box
+                            : kind === "composite" ? Theme.icons.layers
                             : Theme.icons.film
                     onLiftTapped: {
                         if (cardRoot.isFolder) {
@@ -832,6 +839,12 @@ Item {
                     id: cardMenu
 
                     ThemedMenuItem {
+                        text: qsTr("Open composite")
+                        icon.name: Theme.icons.layers
+                        visible: kind === "composite" && root.selectedAssetIds.length <= 1
+                        onTriggered: EditorState.openCompositeAsset(assetId)
+                    }
+                    ThemedMenuItem {
                         text: root.selectedAssetIds.length > 1
                               ? qsTr("Add %n items to timeline", "", root.selectedAssetIds.length)
                               : qsTr("Add to timeline")
@@ -841,6 +854,7 @@ Item {
                     ThemedMenuItem {
                         text: qsTr("Preview and edit…")
                         icon.name: Theme.icons.eye
+                        visible: kind !== "composite"
                         onTriggered: root.previewRequested(assetIndex)
                     }
                     ThemedMenuItem {
@@ -852,7 +866,7 @@ Item {
                     ThemedMenuItem {
                         text: qsTr("Replace media…")
                         icon.name: Theme.icons.refresh
-                        visible: root.selectedAssetIds.length <= 1
+                        visible: kind !== "composite" && root.selectedAssetIds.length <= 1
                         onTriggered: root.replaceRequested(assetIndex)
                     }
                     ThemedMenuItem {
@@ -1084,7 +1098,8 @@ Item {
                         glyph: listRow.isFolder ? Theme.icons.folder
                                : (kind === "audio" ? Theme.icons.music
                                   : kind === "vector" ? Theme.icons.layers
-                                  : kind === "model3d" ? Theme.icons.box : Theme.icons.film)
+                                  : kind === "model3d" ? Theme.icons.box
+                                  : kind === "composite" ? Theme.icons.layers : Theme.icons.film)
                         iconSize: Theme.iconSizeBase
                         iconColor: Theme.mutedForeground
                     }
@@ -1208,7 +1223,12 @@ Item {
                             root.selectionAnchorId = listRow.assetId
                         }
                     }
-                    onDoubleTapped: if (listRow.isFolder) EditorState.currentBinFolderId = listRow.folderId
+                    onDoubleTapped: {
+                    if (listRow.isFolder)
+                        EditorState.currentBinFolderId = listRow.folderId
+                    else if (kind === "composite")
+                        EditorState.openCompositeAsset(listRow.assetId)
+                }
                     onLongPressed: listRow.isFolder ? folderRowMenu.popup() : rowMenu.popup()
                 }
                 DragHandler {
@@ -1252,6 +1272,7 @@ Item {
                             : kind === "image" ? Theme.icons.image
                             : kind === "vector" ? Theme.icons.layers
                             : kind === "model3d" ? Theme.icons.box
+                            : kind === "composite" ? Theme.icons.layers
                             : Theme.icons.film
                     onLiftTapped: {
                         if (listRow.isFolder) {
@@ -1283,6 +1304,12 @@ Item {
                 id: rowMenu
 
                 ThemedMenuItem {
+                    text: qsTr("Open composite")
+                    icon.name: Theme.icons.layers
+                    visible: kind === "composite" && root.selectedAssetIds.length <= 1
+                    onTriggered: EditorState.openCompositeAsset(assetId)
+                }
+                ThemedMenuItem {
                     text: root.selectedAssetIds.length > 1
                           ? qsTr("Add %n items to timeline", "", root.selectedAssetIds.length)
                           : qsTr("Add to timeline")
@@ -1292,6 +1319,7 @@ Item {
                 ThemedMenuItem {
                     text: qsTr("Preview and edit…")
                     icon.name: Theme.icons.eye
+                    visible: kind !== "composite"
                     onTriggered: root.previewRequested(assetIndex)
                 }
                 ThemedMenuItem {
@@ -1303,7 +1331,7 @@ Item {
                 ThemedMenuItem {
                     text: qsTr("Replace media…")
                     icon.name: Theme.icons.refresh
-                    visible: root.selectedAssetIds.length <= 1
+                    visible: kind !== "composite" && root.selectedAssetIds.length <= 1
                     onTriggered: root.replaceRequested(assetIndex)
                 }
                 ThemedMenuItem {

@@ -210,6 +210,8 @@ private slots:
     void compositorAppliesMultiplyBlendMode();
     void compositorAnimatesKeyedEffectParam();
     void compositorRendersShapeClip();
+    void compositorRendersCompositeClip();
+    void audioMixerPlaysCompositeClip();
     void compositorSkipsClipBeingEdited();
     void adjustmentEffectContrastCatalogEntry();
     void effectPresetStableIds();
@@ -5199,6 +5201,104 @@ void EngineTest::compositorAnimatesKeyedEffectParam()
     QVERIFY(atMid < atEnd);
     // brightness 0 at t=0 leaves the source untouched.
     QVERIFY(qAbs(atStart - 100) <= 2);
+}
+
+void EngineTest::compositorRendersCompositeClip()
+{
+    if (!GpuCompositor::isAvailable())
+        QSKIP("No GPU compositor available");
+
+    drift::Project project;
+    project.setResolution(128, 128);
+
+    // Inside the composite: nothing for the first second, then a full-canvas red shape.
+    drift::Clip inner;
+    inner.id = QStringLiteral("inner-shape");
+    inner.type = drift::ClipType::Shape;
+    inner.timelineStart = drift::secondsToUs(1.0);
+    inner.timelineDuration = drift::secondsToUs(2.0);
+    inner.shapeStyle.kind = drift::ShapeKind::Rectangle;
+    inner.shapeStyle.setSolidFill(QColor(255, 0, 0));
+    const QString sequenceId =
+        project.addSequence({drift::Track{.type = drift::TrackType::Shape, .clips = {inner}}});
+
+    // The instance starts 1 s into the composite and draws it into the top-left quarter.
+    drift::Clip outer;
+    outer.id = QStringLiteral("outer");
+    outer.type = drift::ClipType::Composite;
+    outer.sequenceId = sequenceId;
+    outer.timelineStart = 0;
+    outer.timelineDuration = drift::secondsToUs(1.0);
+    outer.srcIn = drift::secondsToUs(1.0);
+    outer.srcOut = drift::secondsToUs(2.0);
+    outer.transformX.setKeyframe(0, 0.0);
+    outer.transformY.setKeyframe(0, 0.0);
+    outer.transformW.setKeyframe(0, 64.0);
+    outer.transformH.setKeyframe(0, 64.0);
+    project.tracks()[0].clips.append(outer);
+
+    FrameCompositor compositor;
+    compositor.setProject(&project);
+    const QImage frame = compositor.compositeAt(drift::secondsToUs(0.5));
+    QVERIFY(!frame.isNull());
+    QVERIFY(frame.pixelColor(32, 32).red() > 200);
+    // The composite's own canvas is transparent, so the project background shows around it.
+    QCOMPARE(frame.pixelColor(96, 96), QColor(0, 0, 0));
+
+    // Rendered from inside the composite's tab, the same content sits at its own time.
+    project.activateSequence(sequenceId);
+    const QImage open = compositor.compositeAt(drift::secondsToUs(1.5));
+    QVERIFY(open.pixelColor(96, 96).red() > 200);
+}
+
+void EngineTest::audioMixerPlaysCompositeClip()
+{
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    const QString path = makeSweepAudio(dir);
+    if (path.isEmpty())
+        QSKIP("ffmpeg not available to generate a test clip");
+
+    constexpr int kRate = 48000;
+    constexpr int kFrames = 4096;
+    constexpr drift::TimeUs kInnerSrcInUs = 500'000;
+    constexpr drift::TimeUs kInstanceSrcInUs = 250'000;
+
+    drift::Project project;
+    drift::Clip inner;
+    inner.id = QStringLiteral("inner-audio");
+    inner.type = drift::ClipType::Audio;
+    inner.path = path;
+    inner.timelineStart = 0;
+    inner.timelineDuration = 2'000'000;
+    inner.srcIn = kInnerSrcInUs;
+    inner.srcOut = kInnerSrcInUs + inner.timelineDuration;
+    const QString sequenceId =
+        project.addSequence({drift::Track{.type = drift::TrackType::Audio, .clips = {inner}}});
+
+    drift::Clip outer;
+    outer.id = QStringLiteral("outer");
+    outer.type = drift::ClipType::Composite;
+    outer.sequenceId = sequenceId;
+    outer.timelineStart = 0;
+    outer.timelineDuration = 1'000'000;
+    outer.srcIn = kInstanceSrcInUs;
+    outer.srcOut = kInstanceSrcInUs + outer.timelineDuration;
+    project.tracks()[0].clips.append(outer);
+
+    AudioMixer mixer;
+    mixer.setProject(&project);
+    mixer.setMasterClipEnabled(false);
+    QVector<float> got(kFrames * 2, 0.0f);
+    mixer.mix(0, kFrames, kRate, got.data());
+
+    QVector<float> expected(kFrames * 2, 0.0f);
+    ClipReader ref;
+    QVERIFY(ref.open(path));
+    QCOMPARE(ref.readAudioInterleaved(kInnerSrcInUs + kInstanceSrcInUs, kFrames, kRate, expected.data()),
+             kFrames);
+    QVERIFY2(interleavedRmsError(expected, got, 0, kFrames) < 0.02,
+             "composite did not play its inner clip at the instance's source time");
 }
 
 void EngineTest::compositorRendersShapeClip()

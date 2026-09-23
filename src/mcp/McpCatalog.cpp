@@ -1017,6 +1017,7 @@ QStringList undoExemptOps()
         QStringLiteral("import_media"),        QStringLiteral("import_media_bytes"),
         QStringLiteral("market_download"),     QStringLiteral("market_cancel_download"),
         QStringLiteral("seek"),                QStringLiteral("play"),
+        QStringLiteral("open_composite"),      QStringLiteral("flatten_composite"),
         QStringLiteral("pause"),               QStringLiteral("undo"),
         QStringLiteral("redo"),                QStringLiteral("undo_to"),
         QStringLiteral("take_snapshot"),       QStringLiteral("restore_snapshot"),
@@ -1045,7 +1046,7 @@ QStringList selectionBasedOps()
         QStringLiteral("separate_audio"), QStringLiteral("unlink_audio"),
         QStringLiteral("merge_clips"),    QStringLiteral("align_clip_left"),
         QStringLiteral("align_clip_right"), QStringLiteral("copy_selection"),
-        QStringLiteral("cut_selection"),
+        QStringLiteral("cut_selection"),  QStringLiteral("make_composite"),
     };
     return k;
 }

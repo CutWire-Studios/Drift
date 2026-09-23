@@ -297,6 +297,8 @@ QJsonObject clipToJson(const Clip &clip)
         json.insert(QStringLiteral("vector"), clip.vector.toJson());
     if (clip.type == ClipType::Model3d)
         json.insert(QStringLiteral("model3d"), clip.model3d.toJson());
+    if (!clip.sequenceId.isEmpty())
+        json.insert(QStringLiteral("sequenceId"), clip.sequenceId);
     return json;
 }
 
@@ -353,6 +355,7 @@ Clip clipFromJsonV2(const QJsonObject &object, int canvasW = 1920, int canvasH =
     clip.shapeStyle = shapeStyleFromJson(object.value(QStringLiteral("shapeStyle")).toObject());
     clip.vector = VectorSource::fromJson(object.value(QStringLiteral("vector")).toObject());
     clip.model3d = Model3dSource::fromJson(object.value(QStringLiteral("model3d")).toObject());
+    clip.sequenceId = object.value(QStringLiteral("sequenceId")).toString();
     clip.path = object.value(QStringLiteral("path")).toString();
     clip.thumbnailPath = object.value(QStringLiteral("thumbnailPath")).toString();
     clip.filmstripPath = object.value(QStringLiteral("filmstripPath")).toString();
@@ -484,6 +487,8 @@ QJsonObject assetToJson(const MediaAsset &asset)
         object.insert(QStringLiteral("sourceUri"), asset.sourceUri);
     if (!asset.folderId.isEmpty())
         object.insert(QStringLiteral("folderId"), asset.folderId);
+    if (!asset.sequenceId.isEmpty())
+        object.insert(QStringLiteral("sequenceId"), asset.sequenceId);
     return object;
 }
 
@@ -510,6 +515,7 @@ MediaAsset assetFromJsonV2(const QJsonObject &object)
     asset.thumbnailPath = object.value(QStringLiteral("thumbnailPath")).toString();
     asset.filmstripPath = object.value(QStringLiteral("filmstripPath")).toString();
     asset.folderId = object.value(QStringLiteral("folderId")).toString();
+    asset.sequenceId = object.value(QStringLiteral("sequenceId")).toString();
     if (object.contains(QStringLiteral("variableFrameRate"))) {
         asset.frameRateKnown = true;
         asset.variableFrameRate = object.value(QStringLiteral("variableFrameRate")).toBool();
@@ -554,8 +560,13 @@ void Project::resetToDefaultTimeline()
 
 void Project::ensureTrackIds()
 {
+    drift::ensureTrackIds(m_tracks);
+}
+
+void ensureTrackIds(QList<Track> &tracks)
+{
     QSet<QString> seen;
-    for (Track &track : m_tracks) {
+    for (Track &track : tracks) {
         // A duplicated id is as bad as a missing one — a copy/paste of a whole track would
         // otherwise give two tracks the same parent handle.
         if (track.id.isEmpty() || seen.contains(track.id))
@@ -563,7 +574,7 @@ void Project::ensureTrackIds()
         seen.insert(track.id);
     }
 
-    for (Track &track : m_tracks) {
+    for (Track &track : tracks) {
         if (track.parentTrackId.isEmpty())
             continue;
         // An orphaned lane becomes a standalone adjustment track rather than vanishing: losing
@@ -588,12 +599,68 @@ int Project::trackIndexById(const QString &id) const
 
 TimeUs Project::durationUs() const
 {
+    return sequenceDurationUs(m_activeSequenceId);
+}
+
+const QList<Track> &Project::sequenceTracks(const QString &id) const
+{
+    if (id == m_activeSequenceId)
+        return m_tracks;
+    if (id.isEmpty())
+        return m_rootTracks;
+    static const TrackList kNone;
+    const auto it = m_sequences.constFind(id);
+    return it == m_sequences.constEnd() ? kNone : it->tracks;
+}
+
+TimeUs Project::sequenceDurationUs(const QString &id) const
+{
     TimeUs maxEnd = 0;
-    for (const Track &track : m_tracks) {
+    for (const Track &track : sequenceTracks(id)) {
         for (const Clip &clip : track.clips)
             maxEnd = qMax(maxEnd, clip.timelineEnd());
     }
     return maxEnd;
+}
+
+bool Project::activateSequence(const QString &id)
+{
+    if (id == m_activeSequenceId)
+        return true;
+    if (!id.isEmpty() && !m_sequences.contains(id))
+        return false;
+    TrackList &from = m_activeSequenceId.isEmpty() ? m_rootTracks : m_sequences[m_activeSequenceId].tracks;
+    from.swap(m_tracks);
+    TrackList &to = id.isEmpty() ? m_rootTracks : m_sequences[id].tracks;
+    m_tracks.swap(to);
+    to.clear();
+    m_activeSequenceId = id;
+    return true;
+}
+
+Project Project::sequenceView(const QString &id) const
+{
+    Project view = *this;
+    view.activateSequence(id);
+    return view;
+}
+
+QString Project::addSequence(TrackList tracks)
+{
+    Sequence sequence;
+    sequence.id = QUuid::createUuid().toString(QUuid::WithoutBraces);
+    sequence.tracks = std::move(tracks);
+    drift::ensureTrackIds(sequence.tracks);
+    m_sequences.insert(sequence.id, sequence);
+    return sequence.id;
+}
+
+void Project::removeSequence(const QString &id)
+{
+    if (id.isEmpty() || id == m_activeSequenceId)
+        return;
+    m_sequences.remove(id);
+    m_openSequenceTabs.removeAll(id);
 }
 
 namespace {
@@ -670,6 +737,16 @@ Project Project::detachedCopy() const
     out.m_tracks.detach();
     for (Track &track : out.m_tracks)
         detachTrack(track);
+    out.m_rootTracks.detach();
+    for (Track &track : out.m_rootTracks)
+        detachTrack(track);
+    out.m_sequences.detach();
+    for (Sequence &sequence : out.m_sequences) {
+        sequence.tracks.detach();
+        for (Track &track : sequence.tracks)
+            detachTrack(track);
+    }
+    out.m_openSequenceTabs.detach();
     out.m_bookmarks.detach();
     out.m_assetOrder.detach();
     out.m_assetsById.detach();
@@ -810,14 +887,9 @@ Project Project::fromJson(const QJsonObject &object, QString *errorOut)
             project.addBinFolder(folder);
     }
 
-    // Rebuild tracks from JSON. The Project ctor seeds a 1-track default, so
-    // clearing first is required — otherwise only the first saved track loads.
-    project.m_tracks.clear();
-    const QJsonArray tracksArray = object.value(QStringLiteral("tracks")).toArray();
-    if (tracksArray.isEmpty()) {
-        project.resetToDefaultTimeline();
-    } else {
-        project.m_tracks.reserve(tracksArray.size());
+    const auto tracksFromJson = [&](const QJsonArray &tracksArray) {
+        TrackList tracks;
+        tracks.reserve(tracksArray.size());
         for (const QJsonValue &value : tracksArray) {
             const QJsonObject trackObject = value.toObject();
             Track track;
@@ -850,8 +922,34 @@ Project Project::fromJson(const QJsonObject &object, QString *errorOut)
             for (const QJsonValue &transitionValue : transitionsArray)
                 track.transitions.append(transitionFromJson(transitionValue.toObject()));
 
-            project.m_tracks.append(track);
+            tracks.append(track);
         }
+        return tracks;
+    };
+
+    // Rebuild tracks from JSON. The Project ctor seeds a 1-track default, so
+    // clearing first is required — otherwise only the first saved track loads.
+    project.m_tracks.clear();
+    const QJsonArray tracksArray = object.value(QStringLiteral("tracks")).toArray();
+    if (tracksArray.isEmpty())
+        project.resetToDefaultTimeline();
+    else
+        project.m_tracks = tracksFromJson(tracksArray);
+
+    for (const QJsonValue &value : object.value(QStringLiteral("sequences")).toArray()) {
+        const QJsonObject sequenceObject = value.toObject();
+        Sequence sequence;
+        sequence.id = sequenceObject.value(QStringLiteral("id")).toString();
+        if (sequence.id.isEmpty())
+            continue;
+        sequence.tracks = tracksFromJson(sequenceObject.value(QStringLiteral("tracks")).toArray());
+        drift::ensureTrackIds(sequence.tracks);
+        project.m_sequences.insert(sequence.id, sequence);
+    }
+    for (const QJsonValue &value : object.value(QStringLiteral("openSequenceTabs")).toArray()) {
+        const QString id = value.toString();
+        if (project.m_sequences.contains(id) && !project.m_openSequenceTabs.contains(id))
+            project.m_openSequenceTabs.append(id);
     }
 
     // Lanes address their parent by id, so ids must exist before the migration runs; the second
@@ -876,6 +974,7 @@ Project Project::fromJson(const QJsonObject &object, QString *errorOut)
     // stroke moved from a half-width inset to an Inside layer, so a translucent stroke now sits
     // over the fill instead of beside it. shapeStyleFromJson migrates in place.
     // Version 9 added ClipType::Model3d. Nothing to migrate; same reasoning as version 6.
+    // Version 10 added composite clips and the nested sequences they play. Nothing to migrate.
 
     project.m_bookmarks.clear();
     const QJsonArray bookmarksArray = object.value(QStringLiteral("bookmarks")).toArray();
@@ -940,30 +1039,45 @@ QJsonObject Project::toJson() const
         }
     }
 
-    QJsonArray tracksArray;
-    for (const Track &track : m_tracks) {
-        QJsonArray clipsArray;
-        for (const Clip &clip : track.clips)
-            clipsArray.append(clipToJson(clip));
+    const auto tracksToJson = [](const QList<Track> &tracks) {
+        QJsonArray tracksArray;
+        for (const Track &track : tracks) {
+            QJsonArray clipsArray;
+            for (const Clip &clip : track.clips)
+                clipsArray.append(clipToJson(clip));
 
-        QJsonArray transitionsArray;
-        for (const Transition &transition : track.transitions)
-            transitionsArray.append(transitionToJson(transition));
+            QJsonArray transitionsArray;
+            for (const Transition &transition : track.transitions)
+                transitionsArray.append(transitionToJson(transition));
 
-        tracksArray.append(QJsonObject{
-            {QStringLiteral("id"), track.id},
-            {QStringLiteral("type"), trackTypeToString(track.type)},
-            {QStringLiteral("adjustmentScope"), adjustmentScopeToString(track.adjustmentScope)},
-            {QStringLiteral("parentTrackId"), track.parentTrackId},
-            {QStringLiteral("name"), track.name},
-            {QStringLiteral("muted"), track.muted},
-            {QStringLiteral("hidden"), track.hidden},
-            {QStringLiteral("locked"), track.locked},
-            {QStringLiteral("showWaveform"), track.showWaveform},
-            {QStringLiteral("showChannelWaveforms"), track.showChannelWaveforms},
-            {QStringLiteral("heightScale"), track.heightScale},
-            {QStringLiteral("clips"), clipsArray},
-            {QStringLiteral("transitions"), transitionsArray},
+            tracksArray.append(QJsonObject{
+                {QStringLiteral("id"), track.id},
+                {QStringLiteral("type"), trackTypeToString(track.type)},
+                {QStringLiteral("adjustmentScope"), adjustmentScopeToString(track.adjustmentScope)},
+                {QStringLiteral("parentTrackId"), track.parentTrackId},
+                {QStringLiteral("name"), track.name},
+                {QStringLiteral("muted"), track.muted},
+                {QStringLiteral("hidden"), track.hidden},
+                {QStringLiteral("locked"), track.locked},
+                {QStringLiteral("showWaveform"), track.showWaveform},
+                {QStringLiteral("showChannelWaveforms"), track.showChannelWaveforms},
+                {QStringLiteral("heightScale"), track.heightScale},
+                {QStringLiteral("clips"), clipsArray},
+                {QStringLiteral("transitions"), transitionsArray},
+            });
+        }
+        return tracksArray;
+    };
+
+    // Written as if the main timeline were open, so which tab is active never changes the file.
+    const QJsonArray tracksArray = tracksToJson(rootTracks());
+    QJsonArray sequencesArray;
+    QStringList sequenceIds = m_sequences.keys();
+    sequenceIds.sort();
+    for (const QString &id : sequenceIds) {
+        sequencesArray.append(QJsonObject{
+            {QStringLiteral("id"), id},
+            {QStringLiteral("tracks"), tracksToJson(sequenceTracks(id))},
         });
     }
 
@@ -993,6 +1107,10 @@ QJsonObject Project::toJson() const
         {QStringLiteral("bookmarks"), bookmarksArray},
         {QStringLiteral("background"), backgroundToJson(m_background)},
     };
+    if (!sequencesArray.isEmpty())
+        root.insert(QStringLiteral("sequences"), sequencesArray);
+    if (!m_openSequenceTabs.isEmpty())
+        root.insert(QStringLiteral("openSequenceTabs"), QJsonArray::fromStringList(m_openSequenceTabs));
     if (hasWorkArea()) {
         root.insert(QStringLiteral("workAreaInUs"), static_cast<double>(m_workAreaInUs));
         root.insert(QStringLiteral("workAreaOutUs"), static_cast<double>(m_workAreaOutUs));

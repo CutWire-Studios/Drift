@@ -44,6 +44,8 @@ struct GpuLayer
     std::shared_ptr<const drift::skia::VectorPainter> vector;
     // A glTF model drawn by GlModelRenderer straight into a full-canvas layer target.
     std::shared_ptr<const drift::model3d::ModelDrawRequest> model3d;
+    // A composite clip's nested timeline, composed into a canvas-sized layer target.
+    std::shared_ptr<const struct GpuScene> nested;
     QList<drift::Effect> effects;
     QList<drift::Mask> masks;
     // Index-parallel with `masks`: this frame's decoded coverage map for each Media entry, null
@@ -66,7 +68,8 @@ struct GpuLayer
 
     bool hasPixels() const
     {
-        return video.isValid() || vector != nullptr || model3d != nullptr || !source.isNull();
+        return video.isValid() || vector != nullptr || model3d != nullptr || nested != nullptr
+               || !source.isNull();
     }
 };
 

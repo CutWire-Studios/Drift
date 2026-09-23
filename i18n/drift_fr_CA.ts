@@ -2817,6 +2817,46 @@
         <translation>Audio séparé</translation>
     </message>
     <message>
+        <source>Composite %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Composite created</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Composite</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Flattening composite…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Flattening was cancelled</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Could not flatten the composite: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The composite clip was removed before flattening finished</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The composite clip was trimmed while flattening; try again</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 (flattened)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Composite flattened</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>All audio tracks separated</source>
         <translation type="unfinished"></translation>
     </message>
@@ -6820,6 +6860,10 @@
     <message>
         <source>%1 — drag to the timeline, right-click to preview</source>
         <translation>%1 — faites glisser vers la timeline, clic droit pour prévisualiser</translation>
+    </message>
+    <message>
+        <source>Open composite</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Preview and edit…</source>
@@ -11101,6 +11145,18 @@ En cas de saccades à la lecture, essayez un autre mode.</translation>
         <translation>Sélection multiple</translation>
     </message>
     <message>
+        <source>Open composite</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Flatten composite</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Make composite</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Split at current time</source>
         <translation>Diviser à l&apos;heure actuelle</translation>
     </message>
@@ -11282,6 +11338,17 @@ En cas de saccades à la lecture, essayez un autre mode.</translation>
     <message>
         <source>My look</source>
         <translation>Mon style</translation>
+    </message>
+</context>
+<context>
+    <name>TimelineTabBar</name>
+    <message>
+        <source>Main</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Close tab</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>

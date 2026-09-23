@@ -22,7 +22,8 @@ namespace drift {
 
 // Vector is a Lottie animation or SVG document and Model3d a glTF binary; like Image and Shape
 // they have no media file behind their source range, so they are synthetic and unbounded.
-enum class ClipType { Video, Audio, Image, Text, Subtitle, Shape, Adjustment, Vector, Model3d };
+// Composite plays a nested timeline (Project::sequenceTracks(sequenceId)) as its source.
+enum class ClipType { Video, Audio, Image, Text, Subtitle, Shape, Adjustment, Vector, Model3d, Composite };
 
 QString clipTypeToString(ClipType type);
 ClipType clipTypeFromString(const QString &type);
@@ -77,6 +78,9 @@ struct Clip
     ShapeStyle shapeStyle; // only meaningful when type == Shape
     VectorSource vector;   // only meaningful when type == Vector
     Model3dSource model3d; // only meaningful when type == Model3d
+    // Nested timeline this clip plays: set on a Composite clip and on the Audio companion that
+    // "Separate audio" splits off it.
+    QString sequenceId;
 
     QString path;
     QString thumbnailPath;

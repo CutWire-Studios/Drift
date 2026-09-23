@@ -188,6 +188,7 @@ TrackType trackTypeForClipType(ClipType type)
     case ClipType::Adjustment:
         return TrackType::Adjustment;
     case ClipType::Video:
+    case ClipType::Composite:
         break;
     }
     return TrackType::Video;
@@ -757,6 +758,10 @@ TimeUs clipDurationForAsset(const MediaAsset *asset)
 
 TimeUs sourceDurationForClip(const Project &project, const Clip &clip)
 {
+    // A composite's source is its nested timeline, which grows as content is added inside it.
+    if (!clip.sequenceId.isEmpty())
+        return project.sequenceDurationUs(clip.sequenceId);
+
     if (!clip.assetId.isEmpty()) {
         if (const MediaAsset *asset = project.asset(clip.assetId)) {
             if (asset->durationUs > 0)

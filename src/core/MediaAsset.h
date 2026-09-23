@@ -7,7 +7,8 @@
 
 namespace drift {
 
-enum class MediaKind { Video, Audio, Image, Vector, Model3d, Other };
+// Composite has no file: it is the bin entry for a nested timeline (sequenceId).
+enum class MediaKind { Video, Audio, Image, Vector, Model3d, Composite, Other };
 
 // Suffixes Drift treats as still images. Lives in core rather than next to the other media lists
 // in AssetLibrary because the engine needs it too — FrameCompositor classifies mask media by it,
@@ -73,6 +74,9 @@ struct MediaAsset
     // organizational attribute — clips address media through MediaAsset::id, so moving
     // an asset between folders never touches anything on the timeline.
     QString folderId;
+
+    // Composite only: the Project::sequenceTracks id this bin item stands for.
+    QString sequenceId;
 };
 
 // The rotation to actually use for this asset: the user's bin-preview correction when set,

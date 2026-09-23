@@ -59,6 +59,62 @@ struct AllowProxiesScope
     bool previous;
 };
 
+// Mixed into every decode stream id while a composite's timeline is being read. The pool keeps
+// one cursor per stream id, so without it two instances of one composite (or one instance and
+// the composite's own tab) would share a cursor for each inner clip and seek it back and forth.
+thread_local quint64 t_streamSalt = 0;
+// Sequences being rendered on this thread, outermost first.
+thread_local QStringList t_sequenceChain;
+// Nested timelines already resolved for the frame prepare() is building.
+thread_local QHash<QString, std::shared_ptr<const drift::Project>> *t_nestedViews = nullptr;
+
+constexpr int kMaxCompositeDepth = 4;
+
+quint64 streamIdFor(const QString &clipId)
+{
+    return ClipReaderPool::streamIdForClip(clipId) ^ t_streamSalt;
+}
+
+struct NestedScope
+{
+    explicit NestedScope(const drift::Clip &instance) : previousSalt(t_streamSalt)
+    {
+        t_streamSalt = qHashMulti(t_streamSalt, instance.id);
+        t_sequenceChain.append(instance.sequenceId);
+    }
+    ~NestedScope()
+    {
+        t_streamSalt = previousSalt;
+        t_sequenceChain.removeLast();
+    }
+    quint64 previousSalt;
+};
+
+// The timeline a composite clip plays, or null when there is none or reading it would recurse.
+const drift::Project *nestedProject(const drift::Project &parent, const drift::Clip &clip)
+{
+    if (clip.sequenceId.isEmpty() || !parent.hasSequence(clip.sequenceId)
+        || t_sequenceChain.contains(clip.sequenceId) || t_sequenceChain.size() >= kMaxCompositeDepth)
+        return nullptr;
+    if (!t_nestedViews)
+        return nullptr;
+    auto it = t_nestedViews->constFind(clip.sequenceId);
+    if (it == t_nestedViews->constEnd()) {
+        it = t_nestedViews->insert(
+            clip.sequenceId,
+            std::make_shared<const drift::Project>(parent.sequenceView(clip.sequenceId)));
+    }
+    return it->get();
+}
+
+struct NestedViewsScope
+{
+    NestedViewsScope() : previous(t_nestedViews) { t_nestedViews = &views; }
+    ~NestedViewsScope() { t_nestedViews = previous; }
+    QHash<QString, std::shared_ptr<const drift::Project>> views;
+    QHash<QString, std::shared_ptr<const drift::Project>> *previous;
+};
+
 // The source time a mask's media is read at. Deliberately the *host clip's* source time, not the
 // mask adjustment's own span: a segmentation matte is traced from one clip's source range, so a
 // later head-trim (which moves srcIn but not mediaSrcOffsetUs) or a speed change would otherwise
@@ -97,7 +153,7 @@ void forEachMediaMask(const drift::Project &project, drift::TimeUs timelineUs, V
                     continue;
                 if (!clip.containsTime(timelineUs) || !clip.mask.isMedia())
                     continue;
-                visit(clip, clip.mask, ClipReaderPool::streamIdForClip(clip.id));
+                visit(clip, clip.mask, streamIdFor(clip.id));
             }
             continue;
         }
@@ -112,7 +168,7 @@ void forEachMediaMask(const drift::Project &project, drift::TimeUs timelineUs, V
                 if (!laneMask.mask.isMedia())
                     continue;
                 visit(clip, laneMask.mask,
-                      ClipReaderPool::streamIdForClip(laneMask.adjustmentId));
+                      streamIdFor(laneMask.adjustmentId));
             }
         }
     }
@@ -140,6 +196,16 @@ void collectActivePaths(const drift::Project *project, drift::TimeUs timelineUs,
         for (const drift::Clip &clip : track.clips) {
             if (!clip.containsTime(timelineUs))
                 continue;
+
+            // A composite and its separated audio both read the nested timeline.
+            if (!clip.sequenceId.isEmpty()) {
+                if (const drift::Project *nested = nestedProject(*project, clip)) {
+                    const NestedScope scope(clip);
+                    collectActivePaths(nested, clip.timelineToSourceUs(timelineUs), videoPaths,
+                                       audioPaths);
+                }
+                continue;
+            }
 
             if (clip.path.isEmpty())
                 continue;
@@ -196,12 +262,21 @@ QList<ClipReaderPool::VideoRequest> collectVideoRequests(const drift::Project *p
             if (!clip.containsTime(timelineUs))
                 continue;
 
+            if (clip.type == drift::ClipType::Composite) {
+                if (const drift::Project *nested = nestedProject(*project, clip)) {
+                    const NestedScope scope(clip);
+                    requests.append(collectVideoRequests(nested, clip.timelineToSourceUs(timelineUs),
+                                                         maxWidth, maxHeight));
+                }
+                continue;
+            }
+
             if (clip.type != drift::ClipType::Video || clip.path.isEmpty())
                 continue;
 
             const drift::VideoRead read = drift::resolveVideoRead(clip, timelineUs, t_allowProxies);
             requests.append(ClipReaderPool::VideoRequest{read.path,
-                                                        ClipReaderPool::streamIdForClip(clip.id),
+                                                        streamIdFor(clip.id),
                                                         read.sourceUs, maxWidth, maxHeight,
                                                         clip.rotationCorrection});
         }
@@ -414,7 +489,7 @@ QImage decodeClipMediaFrame(const drift::Clip &clip, drift::TimeUs timelineUs, i
     if (clip.type == drift::ClipType::Video) {
         const drift::VideoRead read = drift::resolveVideoRead(clip, timelineUs, t_allowProxies);
         return ClipReaderPool::instance().readVideoFrame(
-            read.path, ClipReaderPool::streamIdForClip(clip.id), read.sourceUs, maxWidth, maxHeight,
+            read.path, streamIdFor(clip.id), read.sourceUs, maxWidth, maxHeight,
             QString(), 15, false, clip.rotationCorrection);
     }
 
@@ -613,7 +688,7 @@ void fillGpuLayerPixels(GpuLayer &layer, const drift::Clip &clip, drift::TimeUs 
     if (!timeEcho && clip.type == drift::ClipType::Video) {
         const drift::VideoRead read = drift::resolveVideoRead(clip, timelineUs, t_allowProxies);
         const PreviewVideoFrame video = ClipReaderPool::instance().readPreviewVideoFrame(
-            read.path, ClipReaderPool::streamIdForClip(clip.id), read.sourceUs, maxWidth, maxHeight,
+            read.path, streamIdFor(clip.id), read.sourceUs, maxWidth, maxHeight,
             QString(), 15, false, clip.rotationCorrection);
         if (video.isValid()) {
             layer.video = video;
@@ -755,7 +830,7 @@ void fillGpuLayerMasks(GpuLayer &layer, const drift::Clip &host,
                     mediaUs = ((mediaUs % span) + span) % span;
             }
             coverage = ClipReaderPool::instance().readVideoFrame(
-                mask.mediaPath, ClipReaderPool::streamIdForClip(laneMasks.at(i).adjustmentId),
+                mask.mediaPath, streamIdFor(laneMasks.at(i).adjustmentId),
                 mediaUs, canvasWidth, canvasHeight);
         }
         // Media that failed to decode must not silently blank the clip — leave that entry
@@ -775,7 +850,7 @@ void fillGpuLayerMasks(GpuLayer &layer, const drift::Clip &host,
                     ? decodedStillImage(mask.mediaFgrPath, canvasWidth, canvasHeight)
                     : ClipReaderPool::instance().readVideoFrame(
                           mask.mediaFgrPath,
-                          ClipReaderPool::streamIdForClip(laneMasks.at(i).adjustmentId),
+                          streamIdFor(laneMasks.at(i).adjustmentId),
                           maskMediaSourceUs(host, mask, timelineUs), canvasWidth, canvasHeight);
             if (!fgr.isNull())
                 layer.fgr = fgr;
@@ -851,7 +926,12 @@ void applyTextBlockMotion(GpuLayer &layer, const drift::textanim::BlockProps &bl
     }
 }
 
-GpuLayer buildGpuLayer(const drift::Clip &clip, drift::TimeUs timelineUs, int projectWidth,
+GpuScene buildGpuScene(const drift::Project &project, drift::TimeUs timelineUs, int width, int height,
+                       double renderScale, const FrameCompositor::RenderOptions &options,
+                       bool nested = false);
+
+GpuLayer buildGpuLayer(const drift::Project &project, const drift::Clip &clip,
+                       drift::TimeUs timelineUs, int projectWidth,
                        int projectHeight, double renderScale, int canvasWidth, int canvasHeight,
                        int projectFps, int maxTimeEchoHistoryFrames,
                        const QList<drift::Effect> &laneEffects = {},
@@ -961,6 +1041,18 @@ GpuLayer buildGpuLayer(const drift::Clip &clip, drift::TimeUs timelineUs, int pr
         // clipped at a rect edge, and the layer rotation stays off (rotZ is the model's own spin).
         destRect = QRectF(0, 0, canvasWidth, canvasHeight);
         rotation = 0.0;
+    } else if (clip.type == drift::ClipType::Composite) {
+        if (const drift::Project *nested = nestedProject(project, clip)) {
+            const NestedScope scope(clip);
+            FrameCompositor::RenderOptions nestedOptions;
+            nestedOptions.maxTimeEchoHistoryFrames = maxTimeEchoHistoryFrames;
+            auto scene = std::make_shared<GpuScene>(
+                buildGpuScene(*nested, clip.timelineToSourceUs(timelineUs), canvasWidth,
+                              canvasHeight, renderScale, nestedOptions, true));
+            if (!scene->items.isEmpty())
+                layer.nested = std::move(scene);
+        }
+        layer.effects = resolvedClipEffects(clip, clipTimeUs);
     } else {
         // Bounded by the canvas, not the layout rect — see decodeClipMediaFrame.
         fillGpuLayerPixels(layer, clip, timelineUs, canvasWidth, canvasHeight, projectFps,
@@ -988,8 +1080,10 @@ GpuLayer buildGpuLayer(const drift::Clip &clip, drift::TimeUs timelineUs, int pr
     return layer;
 }
 
+// `nested` builds a composite's timeline: its layer sits on the parent's canvas, so the project
+// background belongs to the outermost scene alone.
 GpuScene buildGpuScene(const drift::Project &project, drift::TimeUs timelineUs, int width, int height,
-                       double renderScale, const FrameCompositor::RenderOptions &options)
+                       double renderScale, const FrameCompositor::RenderOptions &options, bool nested)
 {
     GpuScene scene;
     scene.canvasSize = QSize(width, height);
@@ -999,7 +1093,9 @@ GpuScene buildGpuScene(const drift::Project &project, drift::TimeUs timelineUs, 
     const int fps = project.fps();
 
     const drift::Background &bg = project.background();
-    if (bg.kind == drift::BackgroundKind::Blur) {
+    if (nested) {
+        scene.backgroundColor = QColor(0, 0, 0, 0);
+    } else if (bg.kind == drift::BackgroundKind::Blur) {
         scene.backgroundColor = Qt::black;
         scene.backgroundBlur = true;
         scene.blurStrengthPx = bg.blurStrength;
@@ -1037,10 +1133,10 @@ GpuScene buildGpuScene(const drift::Project &project, drift::TimeUs timelineUs, 
             if (fromClip && toClip) {
                 GpuItem item;
                 item.isTransition = true;
-                item.from = buildGpuLayer(*fromClip, timelineUs, projectWidth, projectHeight, renderScale,
+                item.from = buildGpuLayer(project, *fromClip, timelineUs, projectWidth, projectHeight, renderScale,
                                           width, height, fps, options.maxTimeEchoHistoryFrames,
                                           laneEffects, laneMasks);
-                item.to = buildGpuLayer(*toClip, timelineUs, projectWidth, projectHeight, renderScale,
+                item.to = buildGpuLayer(project, *toClip, timelineUs, projectWidth, projectHeight, renderScale,
                                         width, height, fps, options.maxTimeEchoHistoryFrames,
                                         laneEffects, laneMasks);
                 item.progress =
@@ -1107,7 +1203,7 @@ GpuScene buildGpuScene(const drift::Project &project, drift::TimeUs timelineUs, 
 
             GpuItem item;
             item.blend = clip.blendMode;
-            item.layer = buildGpuLayer(clip, timelineUs, projectWidth, projectHeight, renderScale, width,
+            item.layer = buildGpuLayer(project, clip, timelineUs, projectWidth, projectHeight, renderScale, width,
                                        height, fps, options.maxTimeEchoHistoryFrames, laneEffects,
                                        laneMasks);
             if (item.layer.valid)
@@ -1148,6 +1244,7 @@ bool FrameCompositor::prepare(drift::TimeUs timelineUs, const RenderOptions &opt
         return false;
 
     const AllowProxiesScope proxies(options.allowProxies);
+    const NestedViewsScope nestedViews;
     QSet<QString> videoPaths;
     QSet<QString> audioPaths;
     collectActivePaths(m_project, timelineUs, videoPaths, audioPaths);
