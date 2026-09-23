@@ -4658,7 +4658,24 @@ void EditorStateTest::audioRecordingVoiceoverWorkflow()
         state.redo();
         QCOMPARE(project.tracks().at(0).clips.size(), 2);
 
+        // Record a second clip on the same track to verify multiple consecutive recordings work
+        state.setPlayheadSeconds(5.0);
+        state.startAudioRecording(0);
+        QVERIFY(state.isRecordingAudio());
+        QTest::qWait(350);
+        state.stopAudioRecording();
+        QCOMPARE(state.isRecordingAudio(), false);
+        QCOMPARE(project.tracks().at(0).clips.size(), 3);
+
+        const drift::Clip &secondClip = project.tracks().at(0).clips.at(2);
+        QCOMPARE(secondClip.type, drift::ClipType::Audio);
+        QCOMPARE(secondClip.timelineStart, drift::secondsToUs(5.0));
+        QVERIFY(secondClip.timelineDuration > 0);
+        QVERIFY(QFile::exists(secondClip.path));
+        QVERIFY(QFileInfo(secondClip.path).size() > 0);
+
         QFile::remove(newClip.path);
+        QFile::remove(secondClip.path);
     }
 }
 

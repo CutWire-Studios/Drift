@@ -51,6 +51,7 @@ QString generatedAudioDir();
 
 // A fresh, unused absolute path inside generatedAudioDir() for voiceover recordings.
 QString newVoiceoverPath();
+void sweepStaleVoiceovers();
 
 // Deletes leftover A/B preview snippets. Committed renders are referenced by clips in saved
 // projects and are never touched — only the "-preview"/"-original" pairs, which are scratch and

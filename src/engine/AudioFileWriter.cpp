@@ -135,11 +135,15 @@ bool AudioFileWriter::open(const QString &path, int sampleRate, int channels, QS
     if (sampleRate <= 0 || channels <= 0)
         return fail(QStringLiteral("Invalid audio format"));
 
+    d->teardown();
     d->path = path;
     // Same temp-then-rename discipline as MatteWriter and Exporter: a cancelled run must not leave
     // a file that looks like a finished render.
     d->tmpPath = path + QStringLiteral(".part");
     d->channels = channels;
+    d->nextPts = 0;
+    d->finished = false;
+    d->pending.clear();
     if (QFile::exists(d->tmpPath))
         QFile::remove(d->tmpPath);
 
@@ -264,17 +268,20 @@ bool AudioFileWriter::finish(QString *errorOut)
     }
 
     d->finished = true;
+    d->pending.clear();
+    d->nextPts = 0;
     return true;
 }
 
 void AudioFileWriter::abort()
 {
-    if (d->finished)
-        return;
     d->teardown();
     if (!d->tmpPath.isEmpty() && QFile::exists(d->tmpPath))
         QFile::remove(d->tmpPath);
     d->tmpPath.clear();
+    d->pending.clear();
+    d->nextPts = 0;
+    d->finished = false;
 }
 
 QString denoiseCacheDir()
@@ -297,8 +304,20 @@ QString generatedAudioDir()
     return dir;
 }
 
+void sweepStaleVoiceovers()
+{
+    const QString path = generatedAudioDir();
+    if (path.isEmpty())
+        return;
+    QDir dir(path);
+    const QStringList stale = dir.entryList({QStringLiteral("*.flac.part")}, QDir::Files);
+    for (const QString &name : stale)
+        QFile::remove(dir.filePath(name));
+}
+
 QString newVoiceoverPath()
 {
+    sweepStaleVoiceovers();
     const QString dir = generatedAudioDir();
     if (dir.isEmpty())
         return {};

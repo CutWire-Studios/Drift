@@ -6367,10 +6367,7 @@ void AppController::stopAudioRecording()
 
     m_playback.setVoiceoverRecording(false);
     if (m_playing) {
-        m_playing = false;
-        m_playback.pause();
-        emit playingChanged();
-        syncTextOverlaySkip();
+        setPlaying(false);
     }
 
     if (recordedPath.isEmpty() || recordedDurationUs < drift::secondsToUs(0.2)) {
@@ -6397,10 +6394,11 @@ void AppController::stopAudioRecording()
     clip.srcOut = recordedDurationUs;
 
     m_project.tracks()[trackIndex].clips.append(clip);
+    const int newClipIndex = m_project.tracks().at(trackIndex).clips.size() - 1;
 
     pushProjectEdit(before, tr("Record audio"));
     finishEdit(tr("Recorded voiceover"));
-    selectClip(trackIndex, m_project.tracks().at(trackIndex).clips.size() - 1);
+    selectClip(trackIndex, newClipIndex);
     setLastMessage(tr("Voiceover recorded"), QStringLiteral("success"));
 }
 
