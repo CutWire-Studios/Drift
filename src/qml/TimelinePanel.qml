@@ -1073,7 +1073,7 @@ PanelFrame {
 
             KeyframeGraph {
                 id: keyframesBar
-                width: parent.width
+                width: parent.width - (audioMixer.visible ? audioMixer.width : 0)
                 pxPerSecond: root.pxPerSecond
                 labelsWidth: EditorState.trackLabelsWidth
                 propertiesTab: root.propertiesTab
@@ -1084,7 +1084,7 @@ PanelFrame {
 
             SubtitleCueLane {
                 id: subtitleLane
-                width: parent.width
+                width: parent.width - (audioMixer.visible ? audioMixer.width : 0)
                 pxPerSecond: root.pxPerSecond
                 labelsWidth: EditorState.trackLabelsWidth
                 contentX: flick.contentX
@@ -1155,7 +1155,7 @@ PanelFrame {
             // --- scrollable ruler + tracks --------------------------------------------
             Flickable {
                 id: flick
-                width: parent.width - EditorState.trackLabelsWidth
+                width: parent.width - EditorState.trackLabelsWidth - (audioMixer.visible ? audioMixer.width : 0)
                 height: parent.height
 
                 // Height of the pinned ruler + bookmark strip at the top.
@@ -2726,6 +2726,12 @@ PanelFrame {
                         }
                     }
                 }
+            }
+
+            // --- right-docked audio mixer strip --------------------------------------
+            AudioMixerStrip {
+                id: audioMixer
+                height: parent.height
             }
         }
         } // Column (keyframes + tracks)

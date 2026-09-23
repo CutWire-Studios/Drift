@@ -52,6 +52,9 @@ target_link_libraries(tst_editorstate PRIVATE Qt6::Test Qt6::Gui Qt6::Quick Qt6:
 target_compile_definitions(tst_editorstate PRIVATE
     DRIFT_TEST_DENOISE_MODEL_DIR="${CMAKE_SOURCE_DIR}/models/deepfilternet3"
     DRIFT_VERSION="${PROJECT_VERSION}")
+if(DRIFT_WITH_SKIA)
+    target_compile_definitions(tst_editorstate PRIVATE DRIFT_WITH_SKIA)
+endif()
 add_test(NAME EditorState COMMAND tst_editorstate)
 drift_copy_effects(tst_editorstate)
 drift_copy_audio_effects(tst_editorstate)

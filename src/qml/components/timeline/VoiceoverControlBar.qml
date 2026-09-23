@@ -95,7 +95,7 @@ Rectangle {
                 anchors.fill: parent
                 radius: Theme.radiusSm
                 color: micPickerMouse.containsMouse || micMenu.opened
-                       ? Theme.toolbarHover
+                       ? Theme.popoverHover
                        : Qt.rgba(Theme.panelForeground.r, Theme.panelForeground.g, Theme.panelForeground.b, 0.05)
                 border.color: Theme.panelBorder
                 border.width: 1

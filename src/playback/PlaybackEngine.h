@@ -135,6 +135,13 @@ public:
     // Empty id follows the system default. Applied to the sink immediately.
     void setAudioDeviceId(const QByteArray &id) { m_audio.setDeviceId(id); }
 
+    QPair<float, float> trackAudioLevels(int trackIndex) const;
+    QPair<float, float> masterAudioLevels() const;
+    void setMasterVolume(double vol);
+    double masterVolume() const;
+    void setMasterMuted(bool muted);
+    bool masterMuted() const;
+
 signals:
     // Playback cannot produce sound; carries a message meant for the user.
     void audioError(const QString &message);

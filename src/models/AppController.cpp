@@ -1036,6 +1036,8 @@ AppController::AppController(AssetLibrary *assetLibrary, QObject *parent)
     m_reopenLastProject = settings.value(QStringLiteral("editor/reopenLastProject"), false).toBool();
     m_timelineOverviewVisible =
         settings.value(QStringLiteral("ui/timelineOverviewVisible"), false).toBool();
+    m_audioMixerVisible =
+        settings.value(QStringLiteral("ui/audioMixerVisible"), true).toBool();
     m_trackLabelsWidth = qBound(110.0,
         settings.value(QStringLiteral("ui/trackLabelsWidth"), 130.0).toDouble(), 320.0);
     m_timelineToolbarItems = settings.value(QStringLiteral("ui/timelineToolbarItems")).toStringList();
@@ -1502,6 +1504,9 @@ QVariantList AppController::tracks() const
             {QStringLiteral("transitions"), transitions},
             {QStringLiteral("muted"), track.muted},
             {QStringLiteral("hidden"), track.hidden},
+            {QStringLiteral("solo"), track.solo},
+            {QStringLiteral("volume"), track.volume},
+            {QStringLiteral("pan"), track.pan},
             {QStringLiteral("clipDisplay"), static_cast<int>(track.clipDisplay)},
             {QStringLiteral("showChannelWaveforms"), track.showChannelWaveforms},
             {QStringLiteral("heightScale"), track.heightScale},
@@ -5730,6 +5735,38 @@ void AppController::setTimelineOverviewVisible(bool visible)
     QSettings settings;
     settings.setValue(QStringLiteral("ui/timelineOverviewVisible"), m_timelineOverviewVisible);
     emit timelineOverviewVisibleChanged();
+}
+
+void AppController::setAudioMixerVisible(bool visible)
+{
+    if (m_audioMixerVisible == visible)
+        return;
+    m_audioMixerVisible = visible;
+    QSettings settings;
+    settings.setValue(QStringLiteral("ui/audioMixerVisible"), m_audioMixerVisible);
+    emit audioMixerVisibleChanged();
+}
+
+double AppController::masterVolume() const
+{
+    return m_playback.masterVolume();
+}
+
+void AppController::setMasterVolume(double volume)
+{
+    m_playback.setMasterVolume(qMax(0.0, volume));
+    emit masterVolumeChanged();
+}
+
+bool AppController::masterMuted() const
+{
+    return m_playback.masterMuted();
+}
+
+void AppController::setMasterMuted(bool muted)
+{
+    m_playback.setMasterMuted(muted);
+    emit masterMutedChanged();
 }
 
 void AppController::setTrackLabelsWidth(qreal width)
@@ -19799,6 +19836,138 @@ bool AppController::trackHidden(int trackIndex) const
     if (trackIndex < 0 || trackIndex >= m_project.tracks().size())
         return false;
     return m_project.tracks().at(trackIndex).hidden;
+}
+
+void AppController::setTrackSolo(int trackIndex, bool solo)
+{
+    if (trackIndex < 0 || trackIndex >= m_project.tracks().size())
+        return;
+    if (m_project.tracks()[trackIndex].solo == solo)
+        return;
+
+    const drift::Project before = m_project;
+    m_project.tracks()[trackIndex].solo = solo;
+    pushProjectEdit(before, tr("Track solo"));
+    finishEdit(solo ? tr("Track soloed") : tr("Track unsoloed"));
+}
+
+bool AppController::trackSolo(int trackIndex) const
+{
+    if (trackIndex < 0 || trackIndex >= m_project.tracks().size())
+        return false;
+    return m_project.tracks().at(trackIndex).solo;
+}
+
+void AppController::previewTrackVolume(int trackIndex, double volume)
+{
+    if (trackIndex < 0 || trackIndex >= m_project.tracks().size())
+        return;
+    volume = qMax(0.0, volume);
+    if (!m_previewDragActive)
+        beginPreviewDrag(tr("Track volume"));
+
+    m_project.tracks()[trackIndex].volume = volume;
+    emitPreviewFrame();
+}
+
+void AppController::setTrackVolume(int trackIndex, double volume)
+{
+    if (trackIndex < 0 || trackIndex >= m_project.tracks().size())
+        return;
+    volume = qMax(0.0, volume);
+    if (m_previewDragActive) {
+        m_project.tracks()[trackIndex].volume = volume;
+        commitPreviewDrag();
+        return;
+    }
+    if (qFuzzyCompare(m_project.tracks()[trackIndex].volume, volume))
+        return;
+
+    const drift::Project before = m_project;
+    m_project.tracks()[trackIndex].volume = volume;
+    pushProjectEdit(before, tr("Track volume"));
+    finishEdit(tr("Track volume changed"));
+}
+
+double AppController::trackVolume(int trackIndex) const
+{
+    if (trackIndex < 0 || trackIndex >= m_project.tracks().size())
+        return 1.0;
+    return m_project.tracks().at(trackIndex).volume;
+}
+
+void AppController::previewTrackPan(int trackIndex, double pan)
+{
+    if (trackIndex < 0 || trackIndex >= m_project.tracks().size())
+        return;
+    pan = std::clamp(pan, -1.0, 1.0);
+    if (!m_previewDragActive)
+        beginPreviewDrag(tr("Track pan"));
+
+    m_project.tracks()[trackIndex].pan = pan;
+    emitPreviewFrame();
+}
+
+void AppController::setTrackPan(int trackIndex, double pan)
+{
+    if (trackIndex < 0 || trackIndex >= m_project.tracks().size())
+        return;
+    pan = std::clamp(pan, -1.0, 1.0);
+    if (m_previewDragActive) {
+        m_project.tracks()[trackIndex].pan = pan;
+        commitPreviewDrag();
+        return;
+    }
+    if (qFuzzyCompare(m_project.tracks()[trackIndex].pan, pan))
+        return;
+
+    const drift::Project before = m_project;
+    m_project.tracks()[trackIndex].pan = pan;
+    pushProjectEdit(before, tr("Track pan"));
+    finishEdit(tr("Track pan changed"));
+}
+
+double AppController::trackPan(int trackIndex) const
+{
+    if (trackIndex < 0 || trackIndex >= m_project.tracks().size())
+        return 0.0;
+    return m_project.tracks().at(trackIndex).pan;
+}
+
+QVariantMap AppController::trackAudioLevels(int trackIndex) const
+{
+    float left = 0.0f;
+    float right = 0.0f;
+    if (m_audioRecorder.isRecording() && m_audioRecorder.recordingTrackIndex() == trackIndex) {
+        left = m_audioRecorder.audioLevel();
+        right = left;
+    } else if (m_playback.isPlaying()) {
+        const auto levels = m_playback.trackAudioLevels(trackIndex);
+        left = levels.first;
+        right = levels.second;
+    }
+    return {
+        {QStringLiteral("left"), left},
+        {QStringLiteral("right"), right}
+    };
+}
+
+QVariantMap AppController::masterAudioLevels() const
+{
+    float left = 0.0f;
+    float right = 0.0f;
+    if (m_playback.isPlaying()) {
+        const auto levels = m_playback.masterAudioLevels();
+        left = levels.first;
+        right = levels.second;
+    } else if (m_audioRecorder.isRecording()) {
+        left = m_audioRecorder.audioLevel();
+        right = left;
+    }
+    return {
+        {QStringLiteral("left"), left},
+        {QStringLiteral("right"), right}
+    };
 }
 
 void AppController::setTrackClipDisplay(int trackIndex, int mode)

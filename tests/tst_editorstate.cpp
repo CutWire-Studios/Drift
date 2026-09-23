@@ -192,6 +192,7 @@ private slots:
     void effectRemovalRemapsGraphSelection();
     void denoiseAddsCleanedClipOnTrackAbove();
     void audioRecordingVoiceoverWorkflow();
+    void audioMixerTrackControlsAndMetering();
     void speedCurveOnAudioClipRetimesAndReplaces();
     void waveformPeaksForSourceRangeSlicesToTheTrimmedWindow();
     void speedCurveSessionExposesTrimmedSourceWindow();
@@ -4661,6 +4662,89 @@ void EditorStateTest::audioRecordingVoiceoverWorkflow()
     }
 }
 
+void EditorStateTest::audioMixerTrackControlsAndMetering()
+{
+    AssetLibrary library;
+    AppController state(&library);
+
+    // Initial state
+    QCOMPARE(state.audioMixerVisible(), true);
+    state.setAudioMixerVisible(false);
+    QCOMPARE(state.audioMixerVisible(), false);
+    state.setAudioMixerVisible(true);
+    QCOMPARE(state.audioMixerVisible(), true);
+
+    // Master volume & mute
+    QCOMPARE(state.masterVolume(), 1.0);
+    QCOMPARE(state.masterMuted(), false);
+    state.setMasterVolume(1.5);
+    QCOMPARE(state.masterVolume(), 1.5);
+    state.setMasterMuted(true);
+    QCOMPARE(state.masterMuted(), true);
+    state.setMasterMuted(false);
+    state.setMasterVolume(1.0);
+
+    // Set up project with 2 audio tracks
+    drift::Project &project = *state.project();
+    project.tracks().clear();
+    project.tracks().append(drift::Track{.type = drift::TrackType::Audio});
+    project.tracks().append(drift::Track{.type = drift::TrackType::Audio});
+
+    // Initial track values
+    QCOMPARE(state.trackSolo(0), false);
+    QCOMPARE(state.trackSolo(1), false);
+    QCOMPARE(state.trackVolume(0), 1.0);
+    QCOMPARE(state.trackVolume(1), 1.0);
+    QCOMPARE(state.trackPan(0), 0.0);
+    QCOMPARE(state.trackPan(1), 0.0);
+
+    // Track solo and undo
+    state.setTrackSolo(0, true);
+    QCOMPARE(state.trackSolo(0), true);
+    QCOMPARE(state.trackSolo(1), false);
+    QVERIFY(state.undoAvailable());
+    state.undo();
+    QCOMPARE(state.trackSolo(0), false);
+    state.redo();
+    QCOMPARE(state.trackSolo(0), true);
+
+    // Track volume preview and commit
+    state.previewTrackVolume(0, 0.75);
+    QCOMPARE(state.trackVolume(0), 0.75);
+    state.setTrackVolume(0, 0.5);
+    QCOMPARE(state.trackVolume(0), 0.5);
+    state.undo();
+    QCOMPARE(state.trackVolume(0), 1.0);
+    state.redo();
+    QCOMPARE(state.trackVolume(0), 0.5);
+
+    // Track pan preview and commit
+    state.previewTrackPan(0, -0.4);
+    QCOMPARE(state.trackPan(0), -0.4);
+    state.setTrackPan(0, -0.5);
+    QCOMPARE(state.trackPan(0), -0.5);
+    state.undo();
+    QCOMPARE(state.trackPan(0), 0.0);
+    state.redo();
+    QCOMPARE(state.trackPan(0), -0.5);
+
+    // Verify tracks() dictionary exposure
+    QVariantList tracks = state.tracks();
+    QCOMPARE(tracks.size(), 2);
+    QVariantMap t0 = tracks.at(0).toMap();
+    QCOMPARE(t0.value(QStringLiteral("solo")).toBool(), true);
+    QCOMPARE(t0.value(QStringLiteral("volume")).toDouble(), 0.5);
+    QCOMPARE(t0.value(QStringLiteral("pan")).toDouble(), -0.5);
+
+    // Audio levels query
+    QVariantMap levels = state.trackAudioLevels(0);
+    QVERIFY(levels.contains(QStringLiteral("left")));
+    QVERIFY(levels.contains(QStringLiteral("right")));
+    QVariantMap masterLevels = state.masterAudioLevels();
+    QVERIFY(masterLevels.contains(QStringLiteral("left")));
+    QVERIFY(masterLevels.contains(QStringLiteral("right")));
+}
+
 void EditorStateTest::shapeStylePartialUpdateAndUndo()
 {
     AssetLibrary library;
@@ -6551,6 +6635,9 @@ void EditorStateTest::clipEffectsLiveOnALinkedAdjustmentLane()
     scened.addEffect(textTrack, textClip, QStringLiteral("adjust.contrast"));
     scened.addEffect(textTrack, textClip, QStringLiteral("adjust.brightness"));
 
+#ifndef DRIFT_WITH_SKIA
+    QSKIP("text clips in compositor need DRIFT_WITH_SKIA");
+#else
     FrameCompositor compositor;
     compositor.setProject(scened.project());
     GpuScene scene;
@@ -6565,6 +6652,7 @@ void EditorStateTest::clipEffectsLiveOnALinkedAdjustmentLane()
     }
     QCOMPARE(adjustmentItems, 0);
     QCOMPARE(layersCarryingTheStack, 1);
+#endif
 }
 
 // The pin is enforced centrally, so every path that moves or trims a clip keeps it true without

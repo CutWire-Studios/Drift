@@ -949,3 +949,37 @@ int PlaybackEngine::fillAudio(float *buffer, int sampleCount)
     m_clock.syncPlaybackUs(static_cast<drift::TimeUs>(playedUs));
     return sampleCount;
 }
+
+QPair<float, float> PlaybackEngine::trackAudioLevels(int trackIndex) const
+{
+    if (!m_playing)
+        return {0.0f, 0.0f};
+    return m_mixer.trackLevels(trackIndex);
+}
+
+QPair<float, float> PlaybackEngine::masterAudioLevels() const
+{
+    if (!m_playing)
+        return {0.0f, 0.0f};
+    return m_mixer.masterLevels();
+}
+
+void PlaybackEngine::setMasterVolume(double vol)
+{
+    m_mixer.setMasterVolume(vol);
+}
+
+double PlaybackEngine::masterVolume() const
+{
+    return m_mixer.masterVolume();
+}
+
+void PlaybackEngine::setMasterMuted(bool muted)
+{
+    m_mixer.setMasterMuted(muted);
+}
+
+bool PlaybackEngine::masterMuted() const
+{
+    return m_mixer.masterMuted();
+}

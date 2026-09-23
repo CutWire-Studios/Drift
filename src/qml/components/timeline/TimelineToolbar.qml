@@ -560,6 +560,14 @@ Item {
         }
 
         IconButton {
+            glyph: Theme.icons.audioLines
+            variant: "text"
+            tooltip: qsTr("Toggle audio mixer strip")
+            active: EditorState.audioMixerVisible
+            onClicked: EditorState.audioMixerVisible = !EditorState.audioMixerVisible
+        }
+
+        IconButton {
             glyph: Theme.icons.panelTop
             variant: "text"
             tooltip: qsTr("Timeline overview — a minimap of the whole project; click or drag it to jump the view")

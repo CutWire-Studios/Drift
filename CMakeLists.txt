@@ -1054,6 +1054,7 @@ qt_add_qml_module(drift
         src/qml/components/timeline/TimelineOverview.qml
         src/qml/components/timeline/TrackHeaderColumn.qml
         src/qml/components/timeline/VoiceoverControlBar.qml
+        src/qml/components/timeline/AudioMixerStrip.qml
         src/qml/components/timeline/TimelineClipItem.qml
         src/qml/components/IconGlyph.qml
         src/qml/components/IconButton.qml

@@ -36,6 +36,9 @@ struct Track
     bool muted = false;
     bool hidden = false;
     bool locked = false;
+    bool solo = false;
+    double volume = 1.0;
+    double pan = 0.0;
     // view-only, video tracks: how clips draw. Video = filmstrip only, Both = filmstrip with a
     // waveform bar along the bottom, Waveform = waveform instead of the filmstrip.
     enum class ClipDisplay { Video = 0, Both = 1, Waveform = 2 };
