@@ -1026,6 +1026,20 @@ public:
     Q_INVOKABLE void clearFaceTrack(int trackIndex, int clipIndex);
     Q_INVOKABLE bool faceDetectionAvailable();
 
+    // Estimates the clip's depth for the depth effects as a JobRegistry "depth" job targeting the
+    // clip id. Returns the job id, or empty when it could not start (the reason goes to
+    // lastMessage). The sidecar lands on the clip through the undo stack.
+    Q_INVOKABLE QString estimateDepthForClip(int trackIndex, int clipIndex, bool highQuality = false);
+    Q_INVOKABLE void cancelDepthEstimation(const QString &clipId);
+    Q_INVOKABLE void clearDepth(int trackIndex, int clipIndex);
+    Q_INVOKABLE bool depthAvailable();
+    // {active, progress, status, error} of the newest depth job for a clip; empty if there is none.
+    Q_INVOKABLE QVariantMap depthJob(const QString &clipId) const;
+    // Normalised depth (0 far, 1 near) under a point of the clip's frame, given in 0..1 frame
+    // coordinates, at a timeline time (negative: the playhead). -1 when the clip has no depth.
+    Q_INVOKABLE double sampleDepthAt(int trackIndex, int clipIndex, double nx, double ny,
+                                     double atSeconds = -1.0);
+
     // Finds the shot boundaries in a clip's source range. Runs off the GUI thread; the
     // result lands in `scenes` and in the on-disk cache, never in the project. A cached
     // analysis for the same clip and settings is published immediately without rescanning.
@@ -1350,6 +1364,10 @@ public:
     // three lookups out of step: the host clip's rect at the playhead, and the mask layers on
     // that track covering it. Empty when the selection names no maskable track.
     Q_INVOKABLE QVariantMap maskEditorState() const;
+    // What the preview's depth handles need, as one snapshot: the selected media clip's frame on
+    // the canvas and every enabled depth effect with a handle (relight, depth of field) on its
+    // stack, with parameters resolved at the playhead. Empty when there is nothing to show.
+    Q_INVOKABLE QVariantMap depthEffectEditorState() const;
     // Partial patch: only the keys present are applied, like setTextStyle.
     Q_INVOKABLE void setShapeStyle(int trackIndex, int clipIndex, const QVariantMap &style);
 
@@ -1876,6 +1894,7 @@ signals:
     void transitionCurveChanged();
     void transitionCurveApplied();
     void faceDetectingChanged();
+    void depthJobChanged(const QString &clipId);
     void faceDetectProgressChanged();
     void faceDetectStatusChanged();
     void faceDetectionFinished(bool ok, const QString &message);
@@ -2067,6 +2086,7 @@ protected:
     void applyMulticamSlicesToProject(drift::Project &project, bool combined);
     void refreshSegmentationPreview();
     void runSegmentationSeed(int generation);
+    void finalizeDepth(const QString &clipId, const QString &path);
     void finalizeFaceDetection(const QString &clipId, const QString &trackPath,
                                drift::TimeUs srcOffsetUs);
     // Landmark a Face Swap source photo in the background and cache the result. Cheap enough

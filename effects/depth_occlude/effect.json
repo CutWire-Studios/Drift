@@ -1,0 +1,16 @@
+{
+  "id": "depth.occlude",
+  "displayName": "Behind Subject",
+  "category": "depth",
+  "order": 940,
+  "description": "Places this layer at a distance inside the clip below it, so anything nearer — a person walking in front — passes in front of it. The clip below needs its depth estimated.",
+  "backend": "compositor",
+  "parameters": [
+    {"identifier": "depth", "displayName": "Distance", "type": "float",
+     "minValue": 0, "maxValue": 1, "defaultValue": 0.6},
+    {"identifier": "softness", "displayName": "Edge softness", "type": "float",
+     "minValue": 0, "maxValue": 0.2, "defaultValue": 0.03},
+    {"identifier": "cutoutEdges", "displayName": "Use cutout edges", "type": "bool",
+     "defaultValue": 1}
+  ]
+}

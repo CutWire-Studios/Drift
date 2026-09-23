@@ -1,0 +1,420 @@
+{
+  "id": "depth.relight",
+  "displayName": "3D Relight",
+  "category": "depth",
+  "order": 900,
+  "description": "Adds lights that fall on the scene in 3D, using the clip's estimated depth.",
+  "backend": "gpu",
+  "requires": "depth",
+  "parameters": [
+    {
+      "identifier": "ambient",
+      "displayName": "Existing light",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1.5,
+      "defaultValue": 0.75
+    },
+    {
+      "identifier": "relief",
+      "displayName": "Relief",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 3,
+      "defaultValue": 0.6
+    },
+    {
+      "identifier": "depthRange",
+      "displayName": "Scene depth",
+      "type": "float",
+      "minValue": 0.1,
+      "maxValue": 4,
+      "defaultValue": 1
+    },
+    {
+      "identifier": "specular",
+      "displayName": "Shine",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.15
+    },
+    {
+      "identifier": "shininess",
+      "displayName": "Shine tightness",
+      "type": "float",
+      "minValue": 2,
+      "maxValue": 128,
+      "defaultValue": 24
+    },
+    {
+      "identifier": "shadows",
+      "displayName": "Shadows",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.6
+    },
+    {
+      "identifier": "light1_enabled",
+      "displayName": "On",
+      "type": "bool",
+      "defaultValue": 1,
+      "group": "Light 1"
+    },
+    {
+      "identifier": "light1_x",
+      "displayName": "Left / right",
+      "type": "float",
+      "minValue": -0.5,
+      "maxValue": 1.5,
+      "defaultValue": 0.2,
+      "group": "Light 1"
+    },
+    {
+      "identifier": "light1_y",
+      "displayName": "Up / down",
+      "type": "float",
+      "minValue": -0.5,
+      "maxValue": 1.5,
+      "defaultValue": 0.25,
+      "group": "Light 1"
+    },
+    {
+      "identifier": "light1_z",
+      "displayName": "Near / far",
+      "type": "float",
+      "minValue": -1,
+      "maxValue": 1,
+      "defaultValue": -0.3,
+      "group": "Light 1"
+    },
+    {
+      "identifier": "light1_color",
+      "displayName": "Colour",
+      "type": "color",
+      "defaultValue": "#ffd9a8",
+      "group": "Light 1"
+    },
+    {
+      "identifier": "light1_intensity",
+      "displayName": "Brightness",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 4,
+      "defaultValue": 1.2,
+      "group": "Light 1"
+    },
+    {
+      "identifier": "light1_radius",
+      "displayName": "Reach",
+      "type": "float",
+      "minValue": 0.05,
+      "maxValue": 3,
+      "defaultValue": 0.8,
+      "group": "Light 1"
+    },
+    {
+      "identifier": "light1_cone",
+      "displayName": "Spot angle",
+      "type": "float",
+      "minValue": 10,
+      "maxValue": 180,
+      "defaultValue": 180,
+      "group": "Light 1"
+    },
+    {
+      "identifier": "light1_aimX",
+      "displayName": "Aim left / right",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.5,
+      "group": "Light 1"
+    },
+    {
+      "identifier": "light1_aimY",
+      "displayName": "Aim up / down",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.5,
+      "group": "Light 1"
+    },
+    {
+      "identifier": "light2_enabled",
+      "displayName": "On",
+      "type": "bool",
+      "defaultValue": 0,
+      "group": "Light 2"
+    },
+    {
+      "identifier": "light2_x",
+      "displayName": "Left / right",
+      "type": "float",
+      "minValue": -0.5,
+      "maxValue": 1.5,
+      "defaultValue": 0.85,
+      "group": "Light 2"
+    },
+    {
+      "identifier": "light2_y",
+      "displayName": "Up / down",
+      "type": "float",
+      "minValue": -0.5,
+      "maxValue": 1.5,
+      "defaultValue": 0.2,
+      "group": "Light 2"
+    },
+    {
+      "identifier": "light2_z",
+      "displayName": "Near / far",
+      "type": "float",
+      "minValue": -1,
+      "maxValue": 1,
+      "defaultValue": 0.6,
+      "group": "Light 2"
+    },
+    {
+      "identifier": "light2_color",
+      "displayName": "Colour",
+      "type": "color",
+      "defaultValue": "#9fc4ff",
+      "group": "Light 2"
+    },
+    {
+      "identifier": "light2_intensity",
+      "displayName": "Brightness",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 4,
+      "defaultValue": 1.5,
+      "group": "Light 2"
+    },
+    {
+      "identifier": "light2_radius",
+      "displayName": "Reach",
+      "type": "float",
+      "minValue": 0.05,
+      "maxValue": 3,
+      "defaultValue": 0.8,
+      "group": "Light 2"
+    },
+    {
+      "identifier": "light2_cone",
+      "displayName": "Spot angle",
+      "type": "float",
+      "minValue": 10,
+      "maxValue": 180,
+      "defaultValue": 180,
+      "group": "Light 2"
+    },
+    {
+      "identifier": "light2_aimX",
+      "displayName": "Aim left / right",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.5,
+      "group": "Light 2"
+    },
+    {
+      "identifier": "light2_aimY",
+      "displayName": "Aim up / down",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.5,
+      "group": "Light 2"
+    },
+    {
+      "identifier": "light3_enabled",
+      "displayName": "On",
+      "type": "bool",
+      "defaultValue": 0,
+      "group": "Light 3"
+    },
+    {
+      "identifier": "light3_x",
+      "displayName": "Left / right",
+      "type": "float",
+      "minValue": -0.5,
+      "maxValue": 1.5,
+      "defaultValue": 0.5,
+      "group": "Light 3"
+    },
+    {
+      "identifier": "light3_y",
+      "displayName": "Up / down",
+      "type": "float",
+      "minValue": -0.5,
+      "maxValue": 1.5,
+      "defaultValue": 0.95,
+      "group": "Light 3"
+    },
+    {
+      "identifier": "light3_z",
+      "displayName": "Near / far",
+      "type": "float",
+      "minValue": -1,
+      "maxValue": 1,
+      "defaultValue": -0.2,
+      "group": "Light 3"
+    },
+    {
+      "identifier": "light3_color",
+      "displayName": "Colour",
+      "type": "color",
+      "defaultValue": "#ffffff",
+      "group": "Light 3"
+    },
+    {
+      "identifier": "light3_intensity",
+      "displayName": "Brightness",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 4,
+      "defaultValue": 0.8,
+      "group": "Light 3"
+    },
+    {
+      "identifier": "light3_radius",
+      "displayName": "Reach",
+      "type": "float",
+      "minValue": 0.05,
+      "maxValue": 3,
+      "defaultValue": 0.8,
+      "group": "Light 3"
+    },
+    {
+      "identifier": "light3_cone",
+      "displayName": "Spot angle",
+      "type": "float",
+      "minValue": 10,
+      "maxValue": 180,
+      "defaultValue": 180,
+      "group": "Light 3"
+    },
+    {
+      "identifier": "light3_aimX",
+      "displayName": "Aim left / right",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.5,
+      "group": "Light 3"
+    },
+    {
+      "identifier": "light3_aimY",
+      "displayName": "Aim up / down",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.5,
+      "group": "Light 3"
+    },
+    {
+      "identifier": "light4_enabled",
+      "displayName": "On",
+      "type": "bool",
+      "defaultValue": 0,
+      "group": "Light 4"
+    },
+    {
+      "identifier": "light4_x",
+      "displayName": "Left / right",
+      "type": "float",
+      "minValue": -0.5,
+      "maxValue": 1.5,
+      "defaultValue": 0.5,
+      "group": "Light 4"
+    },
+    {
+      "identifier": "light4_y",
+      "displayName": "Up / down",
+      "type": "float",
+      "minValue": -0.5,
+      "maxValue": 1.5,
+      "defaultValue": 0.05,
+      "group": "Light 4"
+    },
+    {
+      "identifier": "light4_z",
+      "displayName": "Near / far",
+      "type": "float",
+      "minValue": -1,
+      "maxValue": 1,
+      "defaultValue": 0.2,
+      "group": "Light 4"
+    },
+    {
+      "identifier": "light4_color",
+      "displayName": "Colour",
+      "type": "color",
+      "defaultValue": "#ff6fb0",
+      "group": "Light 4"
+    },
+    {
+      "identifier": "light4_intensity",
+      "displayName": "Brightness",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 4,
+      "defaultValue": 1.0,
+      "group": "Light 4"
+    },
+    {
+      "identifier": "light4_radius",
+      "displayName": "Reach",
+      "type": "float",
+      "minValue": 0.05,
+      "maxValue": 3,
+      "defaultValue": 0.8,
+      "group": "Light 4"
+    },
+    {
+      "identifier": "light4_cone",
+      "displayName": "Spot angle",
+      "type": "float",
+      "minValue": 10,
+      "maxValue": 180,
+      "defaultValue": 180,
+      "group": "Light 4"
+    },
+    {
+      "identifier": "light4_aimX",
+      "displayName": "Aim left / right",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.5,
+      "group": "Light 4"
+    },
+    {
+      "identifier": "light4_aimY",
+      "displayName": "Aim up / down",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.5,
+      "group": "Light 4"
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture"
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  }
+}

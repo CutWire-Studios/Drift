@@ -33,6 +33,9 @@ struct EffectParamSpec
     // Controls a shader stage GLES cannot compile. The inspector drops these on an ES context,
     // where the renderer ignores them anyway.
     bool desktopGlOnly = false;
+    // Inspector section this parameter folds into ("Light 2"); empty for the effect's own
+    // controls. Presentation only: it never reaches the shader.
+    QString group;
 
     bool isBoolean() const { return type == EffectParamType::Bool; }
     bool isColor() const { return type == EffectParamType::Color; }

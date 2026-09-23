@@ -1,0 +1,22 @@
+{
+  "id": "depth.view",
+  "displayName": "Depth View",
+  "category": "depth",
+  "order": 930,
+  "description": "Shows the clip's estimated depth, near bright and far dark, to check it or export it as a depth pass.",
+  "backend": "gpu",
+  "requires": "depth",
+  "parameters": [
+    {"identifier": "colorize", "displayName": "Colour map", "type": "bool", "defaultValue": 0},
+    {"identifier": "edges", "displayName": "Snap to edges", "type": "bool", "defaultValue": 1},
+    {"identifier": "amount", "displayName": "Amount", "type": "float",
+     "minValue": 0, "maxValue": 1, "defaultValue": 1}
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {"passIndex": 0, "fragmentShader": "main.frag",
+       "inputs": [{"type": "source_texture"}], "output": {"type": "canvas"}}
+    ]
+  }
+}

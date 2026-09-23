@@ -896,6 +896,7 @@ void retargetClipToSource(Clip &dst, const Clip &src, TimeUs srcMediaDurationUs)
     // Landmarks are baked against the outgoing media, indexed by its source time.
     dst.faceTrackPath.clear();
     dst.faceTrackSrcOffsetUs = 0;
+    dst.depthPath.clear();
     // Masks are not reachable from here: they live on the adjustments pinned to the clip, not on
     // the clip. The caller must follow this with clearLinkedMasks(..., mediaOnly = true) — media
     // coverage is rendered pixels describing only the camera it was traced from, and kept it

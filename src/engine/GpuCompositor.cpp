@@ -17,6 +17,7 @@
 #include <QMutex>
 #include <QMutexLocker>
 #include <QOpenGLShaderProgram>
+#include <QScopeGuard>
 #include <QVector2D>
 
 #include <cmath>
@@ -53,6 +54,25 @@ uniform float u_hasMask;
 uniform float u_maskInvert;
 uniform float u_hasFgr;
 uniform float u_layerPremul;
+// Depth occlusion: 1 where this layer shows, falling to 0 where the occluder's depth, laid out on
+// the canvas by kDepthPlaceFragShader, is nearer than the distance the layer was placed at.
+uniform sampler2D u_occ;
+uniform float u_hasOcc;
+uniform float u_occDepth;
+uniform float u_occSoft;
+uniform float u_occCutout;
+uniform vec2 u_occCanvas;
+float occlusion() {
+    if (u_hasOcc < 0.5) return 1.0;
+    vec4 o = texture(u_occ, gl_FragCoord.xy / u_occCanvas);
+    vec2 bytes = floor(o.rg * 255.0 + 0.5);
+    float d = (bytes.x * 256.0 + bytes.y) / 65535.0;
+    float nearer = smoothstep(u_occDepth - u_occSoft, u_occDepth + u_occSoft, d);
+    // With cutout edges the occluder's matte draws the silhouette and depth only decides in front
+    // or behind, so hair keeps the matte's edge instead of the depth map's soft one.
+    float cover = o.a * mix(1.0, o.b, u_occCutout);
+    return 1.0 - cover * nearer;
+}
 void main() {
     vec4 c = texture(u_layer, v_texCoord);
     // A matte can carry a decontaminated foreground alongside its coverage map. It replaces the
@@ -67,6 +87,7 @@ void main() {
         float m = texture(u_mask, v_texCoord).r;
         s *= mix(m, 1.0 - m, u_maskInvert);
     }
+    s *= occlusion();
     float a = c.a * s;
     fragColor = vec4(u_layerPremul > 0.5 ? c.rgb * s : c.rgb * a, a);
 }
@@ -89,6 +110,25 @@ uniform float u_maskInvert;
 uniform float u_hasFgr;
 uniform float u_layerPremul;
 uniform int u_blendMode;      // 1 multiply, 2 screen, 3 overlay, 5 darken, 6 lighten
+// Depth occlusion: 1 where this layer shows, falling to 0 where the occluder's depth, laid out on
+// the canvas by kDepthPlaceFragShader, is nearer than the distance the layer was placed at.
+uniform sampler2D u_occ;
+uniform float u_hasOcc;
+uniform float u_occDepth;
+uniform float u_occSoft;
+uniform float u_occCutout;
+uniform vec2 u_occCanvas;
+float occlusion() {
+    if (u_hasOcc < 0.5) return 1.0;
+    vec4 o = texture(u_occ, gl_FragCoord.xy / u_occCanvas);
+    vec2 bytes = floor(o.rg * 255.0 + 0.5);
+    float d = (bytes.x * 256.0 + bytes.y) / 65535.0;
+    float nearer = smoothstep(u_occDepth - u_occSoft, u_occDepth + u_occSoft, d);
+    // With cutout edges the occluder's matte draws the silhouette and depth only decides in front
+    // or behind, so hair keeps the matte's edge instead of the depth map's soft one.
+    float cover = o.a * mix(1.0, o.b, u_occCutout);
+    return 1.0 - cover * nearer;
+}
 
 vec3 blendRgb(vec3 base, vec3 src) {
     if (u_blendMode == 1) return base * src;
@@ -114,6 +154,7 @@ void main() {
         float m = texture(u_mask, v_texCoord).r;
         sa *= mix(m, 1.0 - m, u_maskInvert);
     }
+    sa *= occlusion();
 
     vec4 dst = texture(u_dst, gl_FragCoord.xy / u_canvasSize); // premultiplied
     vec3 dstRgb = dst.a > 0.0001 ? dst.rgb / dst.a : vec3(0.0);
@@ -155,6 +196,29 @@ void main() {
         else o = max(a, c);
     }
     fragColor = vec4(o, o, o, 1.0);
+}
+)";
+
+// An occluder's depth, drawn with the occluder's own transform so it lands on exactly the pixels the
+// layer covered: 16-bit depth packed into r and g, the cutout matte (1 without one) in b, and the
+// layer's coverage in a.
+constexpr const char *kDepthPlaceFragShader = R"(#version 330 core
+in vec2 v_texCoord;
+out vec4 fragColor;
+uniform sampler2D u_depth;
+uniform sampler2D u_mask;
+uniform float u_hasMask;
+uniform float u_maskInvert;
+uniform float u_opacity;
+void main() {
+    float v = floor(clamp(texture(u_depth, v_texCoord).r, 0.0, 1.0) * 65535.0 + 0.5);
+    float high = floor(v / 256.0);
+    float matte = 1.0;
+    if (u_hasMask > 0.5) {
+        float m = texture(u_mask, v_texCoord).r;
+        matte = mix(m, 1.0 - m, u_maskInvert);
+    }
+    fragColor = vec4(high / 255.0, (v - high * 256.0) / 255.0, matte, u_opacity);
 }
 )";
 
@@ -394,8 +458,9 @@ GlTarget buildLayerTarget(GlRuntime &rt, QOpenGLExtraFunctions *gl, const GpuLay
             drift::applyFaceUniforms(&params, layer.faceSlots);
 
         const std::vector<const GlTarget *> sources{&target};
+        const PipelineAux aux{layer.depth};
         GlTarget next = runPipeline(rt, gl, def->meta.id, def->gpu, sources, params,
-                                    layer.clipTimeUs, 0.0, target.size());
+                                    layer.clipTimeUs, 0.0, target.size(), &aux);
         if (!next.isValid())
             continue; // grace mode
 
@@ -491,9 +556,17 @@ int soleMediaIndex(const GpuLayer &layer)
 
 // Defined below; the mask compose pass reuses it to place media, and it in turn calls the compose
 // pass for the layer's own mask, so one of the two has to be declared ahead.
+struct OcclusionDraw
+{
+    GLuint texture = 0; // the occluder's depth canvas, from depthCanvasTarget()
+    float depth = 0.f;
+    float softness = 0.f;
+    bool cutout = false;
+};
+
 void drawLayerOnCanvas(GlRuntime &rt, QOpenGLExtraFunctions *gl, GlTarget &canvas,
                        const GlTarget &layerTarget, const GpuLayer &layer, drift::BlendMode blend,
-                       const QSize &canvasSize);
+                       const QSize &canvasSize, const OcclusionDraw *occlusion = nullptr);
 
 // Where a media mask's pixels land inside the coverage target. The mask's rect is normalized to
 // the clip frame; the fit mode then decides what happens when the media's aspect differs from it.
@@ -679,11 +752,80 @@ GlTarget composeMaskTarget(GlRuntime &rt, QOpenGLExtraFunctions *gl, const GpuLa
     return accum;
 }
 
+// Both layer shaders read the occluder on unit 4, clear of the layer, mask, canvas-copy and
+// foreground units. Leaves unit 0 active.
+void setOcclusionUniforms(QOpenGLShaderProgram *program, QOpenGLExtraFunctions *gl,
+                          const OcclusionDraw *occlusion, const GlTarget &canvas)
+{
+    const bool on = occlusion && occlusion->texture;
+    program->setUniformValue("u_hasOcc", on ? 1.f : 0.f);
+    program->setUniformValue("u_occ", 4);
+    program->setUniformValue("u_occDepth", on ? occlusion->depth : 0.f);
+    program->setUniformValue("u_occSoft", on ? occlusion->softness : 0.f);
+    program->setUniformValue("u_occCutout", on && occlusion->cutout ? 1.f : 0.f);
+    program->setUniformValue("u_occCanvas", QVector2D(float(canvas.width), float(canvas.height)));
+    gl->glActiveTexture(GL_TEXTURE4);
+    gl->glBindTexture(GL_TEXTURE_2D, on ? occlusion->texture : 0);
+    gl->glActiveTexture(GL_TEXTURE0);
+}
+
+// An occluder's depth laid out on a canvas-sized target, placed as the layer itself was drawn.
+// Null when the layer has no depth frame or the texture cannot be made.
+GlTarget depthCanvasTarget(GlRuntime &rt, QOpenGLExtraFunctions *gl, const GpuLayer &layer,
+                           const QSize &canvasSize)
+{
+    if (!layer.depth)
+        return {};
+    const GLuint depthTex = depthTexture(rt, gl, *layer.depth);
+    QOpenGLShaderProgram *program = rt.builtinProgram(QStringLiteral("__depth_place__"),
+                                                      kLayerVertexShader, kDepthPlaceFragShader);
+    if (!depthTex || !program)
+        return {};
+    GlTarget out = rt.acquireTarget(canvasSize.width(), canvasSize.height());
+    if (!out.isValid())
+        return {};
+
+    // The cutout, when one media mask owns the layer's coverage: the matte from Subject or People
+    // Cutout, whose edge is much finer than the depth map's.
+    GlTarget maskTarget;
+    float maskInvert = 0.f;
+    if (const int sole = soleMediaIndex(layer); sole >= 0) {
+        const QImage &media = layer.maskMedia.at(sole);
+        maskTarget = promoteImageToTargetCached(rt, gl, media, media.size());
+        maskInvert = layer.masks.at(sole).invert ? 1.f : 0.f;
+    }
+
+    out.fbo->bind();
+    gl->glViewport(0, 0, out.width, out.height);
+    gl->glDisable(GL_BLEND);
+    gl->glClearColor(0.f, 0.f, 0.f, 0.f);
+    gl->glClear(GL_COLOR_BUFFER_BIT);
+    program->bind();
+    program->setUniformValue("u_model", modelMatrixFor(layer, canvasSize));
+    program->setUniformValue("u_opacity", float(qBound(0.0, layer.opacity, 1.0)));
+    program->setUniformValue("u_hasMask", maskTarget.isValid() ? 1.f : 0.f);
+    program->setUniformValue("u_maskInvert", maskInvert);
+    program->setUniformValue("u_depth", 0);
+    program->setUniformValue("u_mask", 1);
+    gl->glActiveTexture(GL_TEXTURE0);
+    gl->glBindTexture(GL_TEXTURE_2D, depthTex);
+    gl->glActiveTexture(GL_TEXTURE1);
+    gl->glBindTexture(GL_TEXTURE_2D, maskTarget.isValid() ? maskTarget.texture() : 0);
+    gl->glActiveTexture(GL_TEXTURE0);
+    bindQuad(rt, gl);
+    program->release();
+    out.fbo->release();
+
+    if (maskTarget.isValid())
+        rt.releaseTarget(std::move(maskTarget));
+    return out;
+}
+
 // Draw a prepared layer target onto the canvas with transform, opacity, mask and
 // blend mode. For non-fixed-function modes the canvas is ping-ponged.
 void drawLayerOnCanvas(GlRuntime &rt, QOpenGLExtraFunctions *gl, GlTarget &canvas,
                        const GlTarget &layerTarget, const GpuLayer &layer, drift::BlendMode blend,
-                       const QSize &canvasSize)
+                       const QSize &canvasSize, const OcclusionDraw *occlusion)
 {
     if (!layerTarget.isValid() || layer.rect.width() < 0.5 || layer.rect.height() < 0.5)
         return;
@@ -782,6 +924,7 @@ void drawLayerOnCanvas(GlRuntime &rt, QOpenGLExtraFunctions *gl, GlTarget &canva
         program->setUniformValue("u_mask", 1);
         program->setUniformValue("u_fgr", 2);
         program->setUniformValue("u_layerPremul", layerPremul);
+        setOcclusionUniforms(program, gl, occlusion, canvas);
         gl->glActiveTexture(GL_TEXTURE0);
         gl->glBindTexture(GL_TEXTURE_2D, layerTex);
         gl->glActiveTexture(GL_TEXTURE1);
@@ -830,6 +973,7 @@ void drawLayerOnCanvas(GlRuntime &rt, QOpenGLExtraFunctions *gl, GlTarget &canva
     program->setUniformValue("u_dst", 2);
     program->setUniformValue("u_fgr", 3);
     program->setUniformValue("u_layerPremul", layerPremul);
+    setOcclusionUniforms(program, gl, occlusion, canvas);
     gl->glActiveTexture(GL_TEXTURE0);
     gl->glBindTexture(GL_TEXTURE_2D, layerTex);
     gl->glActiveTexture(GL_TEXTURE1);
@@ -975,7 +1119,16 @@ void composeOnGlThread(GlRuntime &rt, const GpuScene &scene, GlTarget &canvas, b
 
     fillBackground(rt, gl, canvas, scene);
 
-    for (const GpuItem &item : scene.items) {
+    // Depth canvases of the occluders in this scene, by item index, for the layers above them
+    // that sit inside their depth. Released once the scene is composed.
+    std::map<int, GlTarget> depthCanvases;
+    const auto releaseDepthCanvases = qScopeGuard([&] {
+        for (auto &entry : depthCanvases)
+            rt.releaseTarget(std::move(entry.second));
+    });
+
+    for (int itemIndex = 0; itemIndex < scene.items.size(); ++itemIndex) {
+        const GpuItem &item = scene.items.at(itemIndex);
         if (item.isAdjustment) {
             if (item.layer.effects.isEmpty() || item.layer.opacity <= 0.001)
                 continue;
@@ -1015,6 +1168,8 @@ void composeOnGlThread(GlRuntime &rt, const GpuScene &scene, GlTarget &canvas, b
                 if (def->needsFace)
                     drift::applyFaceUniforms(&params, item.layer.faceSlots);
 
+                // A standalone adjustment works on the whole canvas, which no single clip's depth
+                // describes, so depth packages pass through here.
                 const std::vector<const GlTarget *> sources{&target};
                 GlTarget next = runPipeline(rt, gl, def->meta.id, def->gpu, sources, params,
                                             item.layer.clipTimeUs, 0.0, target.size());
@@ -1037,8 +1192,17 @@ void composeOnGlThread(GlRuntime &rt, const GpuScene &scene, GlTarget &canvas, b
                     *lostVideo = true;
                 continue;
             }
-            drawLayerOnCanvas(rt, gl, canvas, layerTarget, item.layer, item.blend, canvasSize);
+            OcclusionDraw occlusion;
+            if (const auto it = depthCanvases.find(item.layer.occluderItem);
+                it != depthCanvases.end() && it->second.isValid()) {
+                occlusion = {it->second.texture(), item.layer.occludeDepth,
+                             item.layer.occludeSoftness, item.layer.occludeCutout};
+            }
+            drawLayerOnCanvas(rt, gl, canvas, layerTarget, item.layer, item.blend, canvasSize,
+                              occlusion.texture ? &occlusion : nullptr);
             rt.releaseTarget(std::move(layerTarget));
+            if (item.layer.emitDepthCanvas)
+                depthCanvases[itemIndex] = depthCanvasTarget(rt, gl, item.layer, canvasSize);
             continue;
         }
 

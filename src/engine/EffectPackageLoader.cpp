@@ -65,12 +65,24 @@ EffectPresetEntry EffectPackageLoader::loadPackage(const QString &packageDir, QS
         GpuPackageParse::slugifyCategory(categoryRaw.isEmpty() ? QStringLiteral("dreamy") : categoryRaw);
     entry.catalogOrder = root.value(QStringLiteral("order")).toInt(0);
 
-    const QString requirement = root.value(QStringLiteral("requires")).toString();
-    if (requirement == QLatin1String("face")) {
-        entry.needsFace = true;
-    } else if (!requirement.isEmpty()) {
-        setError(errorOut, &entry, QStringLiteral("unsupported requires '%1'").arg(requirement));
-        return entry;
+    // A single name, or a list when a package needs more than one kind of per-frame data.
+    const QJsonValue requiresValue = root.value(QStringLiteral("requires"));
+    QStringList requirements;
+    if (requiresValue.isArray()) {
+        for (const QJsonValue &v : requiresValue.toArray())
+            requirements.append(v.toString());
+    } else if (!requiresValue.toString().isEmpty()) {
+        requirements.append(requiresValue.toString());
+    }
+    for (const QString &requirement : std::as_const(requirements)) {
+        if (requirement == QLatin1String("face")) {
+            entry.needsFace = true;
+        } else if (requirement == QLatin1String("depth") && backend == QLatin1String("gpu")) {
+            entry.needsDepth = true;
+        } else {
+            setError(errorOut, &entry, QStringLiteral("unsupported requires '%1'").arg(requirement));
+            return entry;
+        }
     }
 
     if (entry.meta.id.isEmpty()) {
@@ -123,6 +135,7 @@ EffectPresetEntry EffectPackageLoader::loadPackage(const QString &packageDir, QS
                                               &error)) {
             setError(errorOut, &entry, error);
         }
+        entry.gpu.needsDepth = entry.needsDepth;
         return entry;
     }
 

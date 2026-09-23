@@ -1,5 +1,6 @@
 #include "GlRuntime.h"
 
+#include "DepthSidecar.h"
 #include "GlModelRenderer.h"
 #include "GpuDevice.h"
 #include "VaapiZeroCopy.h"
@@ -12,6 +13,7 @@
 
 #include <QColor>
 #include <QCoreApplication>
+#include <QFloat16>
 #include <QMatrix3x3>
 #include <QMutex>
 #include <QMutexLocker>
@@ -223,12 +225,18 @@ namespace {
 // written at the top of the shader body, which is where they would naturally go. They have to be
 // injected between the version line and the precision block, which is why this is a parameter
 // rather than something the caller can do for itself.
-QByteArray translateShaderSource(QByteArray body, bool fragment, const char *extensions = nullptr)
+//
+// `prelude` is GLSL spliced in after the precision block and before the body: declarations the
+// engine provides to a package, such as the depth helpers.
+QByteArray translateShaderSource(QByteArray body, bool fragment, const char *extensions = nullptr,
+                                 const char *prelude = nullptr)
 {
     if (body.startsWith("#version")) {
         const int newline = body.indexOf('\n');
         body = (newline < 0) ? QByteArray() : body.mid(newline + 1);
     }
+    if (prelude)
+        body.prepend(prelude);
 
     const QOpenGLContext *current = QOpenGLContext::currentContext();
     if (!current || !current->isOpenGLES()) {
@@ -256,10 +264,85 @@ QByteArray translateShader(const char *source, bool fragment, const char *extens
     return translateShaderSource(QByteArray(source), fragment, extensions);
 }
 
-QByteArray translateShader(const QString &source, bool fragment)
+QByteArray translateShader(const QString &source, bool fragment, const char *prelude = nullptr)
 {
-    return translateShaderSource(source.toUtf8(), fragment);
+    return translateShaderSource(source.toUtf8(), fragment, nullptr, prelude);
 }
+
+// Compiled into every pass of a "requires": "depth" package. Texture coordinates follow the
+// effect chain's own convention: (0, 0) is the top-left of the frame.
+constexpr const char *kDepthPrelude = R"(
+uniform sampler2D u_depthTexture;
+uniform vec2 u_depthResolution;
+uniform float u_hasDepth;
+
+// Normalised depth at uv: 0 is the farthest thing in the clip, 1 the nearest. 0 everywhere when
+// the clip has no depth map, so effects should test u_hasDepth before trusting it.
+float driftDepth(vec2 uv)
+{
+    return u_hasDepth > 0.5 ? texture(u_depthTexture, uv).r : 0.0;
+}
+
+// driftDepth snapped to the edges of `guide` (normally u_currentTexture). The map is estimated at
+// a fraction of the frame's resolution and its edges are soft; a 3x3 joint-bilateral filter in
+// depth texels weights each tap by how alike its colour is to this pixel's, so depth steps land
+// on colour edges instead of haloing past them.
+float driftDepthGuided(vec2 uv, sampler2D guide)
+{
+    if (u_hasDepth < 0.5)
+        return 0.0;
+    vec2 texel = 1.0 / u_depthResolution;
+    vec3 centre = texture(guide, uv).rgb;
+    float sum = 0.0;
+    float weights = 0.0;
+    for (int y = -1; y <= 1; ++y) {
+        for (int x = -1; x <= 1; ++x) {
+            vec2 at = uv + vec2(float(x), float(y)) * texel;
+            vec3 d = texture(guide, at).rgb - centre;
+            float w = exp(-dot(d, d) * 40.0);
+            sum += texture(u_depthTexture, at).r * w;
+            weights += w;
+        }
+    }
+    return sum / max(weights, 1e-4);
+}
+
+// Surface normal from the depth map, in the frame's uv space (x right, y down) with z towards
+// the viewer. `strength` is how far depth runs per frame width: larger reads as deeper relief.
+vec3 driftNormal(vec2 uv, float strength)
+{
+    if (u_hasDepth < 0.5)
+        return vec3(0.0, 0.0, 1.0);
+    vec2 t = 1.0 / u_depthResolution;
+    float tl = texture(u_depthTexture, uv + vec2(-t.x, -t.y)).r;
+    float tc = texture(u_depthTexture, uv + vec2(0.0, -t.y)).r;
+    float tr = texture(u_depthTexture, uv + vec2(t.x, -t.y)).r;
+    float ml = texture(u_depthTexture, uv + vec2(-t.x, 0.0)).r;
+    float mr = texture(u_depthTexture, uv + vec2(t.x, 0.0)).r;
+    float bl = texture(u_depthTexture, uv + vec2(-t.x, t.y)).r;
+    float bc = texture(u_depthTexture, uv + vec2(0.0, t.y)).r;
+    float br = texture(u_depthTexture, uv + vec2(t.x, t.y)).r;
+    // Sobel, per texel, then per frame width so the result does not depend on map resolution.
+    float gx = ((tr + 2.0 * mr + br) - (tl + 2.0 * ml + bl)) / 8.0 * u_depthResolution.x;
+    float gy = ((bl + 2.0 * bc + br) - (tl + 2.0 * tc + tr)) / 8.0 * u_depthResolution.x;
+    // Nearer is larger, so a surface rising towards the viewer to the right faces left.
+    return normalize(vec3(-gx * strength, -gy * strength, 1.0));
+}
+
+// 16-bit depth through the 8-bit channels of an intermediate buffer, for multi-pass packages.
+vec2 packDepth(float d)
+{
+    float v = floor(clamp(d, 0.0, 1.0) * 65535.0 + 0.5);
+    float high = floor(v / 256.0);
+    return vec2(high, v - high * 256.0) / 255.0;
+}
+
+float unpackDepth(vec2 rg)
+{
+    vec2 bytes = floor(rg * 255.0 + 0.5);
+    return (bytes.x * 256.0 + bytes.y) / 65535.0;
+}
+)";
 
 constexpr const char *kCopyFragShader = R"(#version 330 core
 in vec2 v_texCoord;
@@ -1290,6 +1373,9 @@ void GlRuntime::shutdown()
                     gl->glDeleteTextures(1, &tex);
                 }
                 staticTextures.clear();
+                for (const DepthTexture &entry : depthTextures)
+                    gl->glDeleteTextures(1, &entry.texture);
+                depthTextures.clear();
                 for (const auto &entry : faceSwapPhotos) {
                     if (entry.second.texture)
                         gl->glDeleteTextures(1, &entry.second.texture);
@@ -2786,6 +2872,8 @@ CompiledEffect *GlRuntime::compile(const QString &cacheKey, const drift::GpuEffe
         sourceSig += pass.fragmentShaderSource;
     sourceSig += QLatin1Char('#');
     sourceSig += QString::number(gpu.passes.size());
+    if (gpu.needsDepth)
+        sourceSig += QLatin1String("#depth");
 
     CompiledEffect &cached = programs[cacheKey];
     if (cached.ok && cached.id == cacheKey && cached.sourceSig == sourceSig)
@@ -2807,7 +2895,9 @@ CompiledEffect *GlRuntime::compile(const QString &cacheKey, const drift::GpuEffe
             return nullptr;
         }
         if (!cp.program->addShaderFromSourceCode(QOpenGLShader::Fragment,
-                                                translateShader(pass.fragmentShaderSource, true))) {
+                                                translateShader(pass.fragmentShaderSource, true,
+                                                                gpu.needsDepth ? kDepthPrelude
+                                                                               : nullptr))) {
             qWarning("GlRuntime: fragment compile failed for %s pass %d (%s): %s", qPrintable(cacheKey),
                      pass.passIndex, qPrintable(pass.fragmentShaderFile), qPrintable(cp.program->log()));
             programs.erase(cacheKey);
@@ -2883,6 +2973,59 @@ GLuint staticTexture(GlRuntime &rt, QOpenGLExtraFunctions *gl, const QString &pa
     gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
     gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
     rt.staticTextures[path] = tex;
+    return tex;
+}
+
+GLuint depthTexture(GlRuntime &rt, QOpenGLExtraFunctions *gl, const drift::DepthFrame &frame)
+{
+    for (auto it = rt.depthTextures.begin(); it != rt.depthTextures.end(); ++it) {
+        if (it->key == frame.key) {
+            rt.depthTextures.splice(rt.depthTextures.begin(), rt.depthTextures, it);
+            return it->texture;
+        }
+    }
+    if (frame.size.isEmpty()
+        || frame.values.size() != size_t(frame.size.width()) * size_t(frame.size.height())) {
+        return 0;
+    }
+
+    // Not in every GLES header.
+    constexpr GLenum kR16 = 0x822A;
+    constexpr GLenum kR16F = 0x822D;
+    constexpr GLenum kHalfFloat = 0x140B;
+
+    const QOpenGLContext *context = QOpenGLContext::currentContext();
+    const bool norm16 = context
+                        && (!context->isOpenGLES()
+                            || context->hasExtension(QByteArrayLiteral("GL_EXT_texture_norm16")));
+
+    GLuint tex = 0;
+    gl->glGenTextures(1, &tex);
+    gl->glBindTexture(GL_TEXTURE_2D, tex);
+    gl->glPixelStorei(GL_UNPACK_ALIGNMENT, 2);
+    if (norm16) {
+        gl->glTexImage2D(GL_TEXTURE_2D, 0, kR16, frame.size.width(), frame.size.height(), 0,
+                         GL_RED, GL_UNSIGNED_SHORT, frame.values.data());
+    } else {
+        std::vector<qfloat16> half(frame.values.size());
+        for (size_t i = 0; i < half.size(); ++i)
+            half[i] = qfloat16(float(frame.values[i]) / 65535.0f);
+        gl->glTexImage2D(GL_TEXTURE_2D, 0, kR16F, frame.size.width(), frame.size.height(), 0,
+                         GL_RED, kHalfFloat, half.data());
+    }
+    gl->glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
+    gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    gl->glBindTexture(GL_TEXTURE_2D, 0);
+
+    rt.depthTextures.push_front({frame.key, tex});
+    while (rt.depthTextures.size() > GlRuntime::kMaxDepthTextures) {
+        GLuint old = rt.depthTextures.back().texture;
+        gl->glDeleteTextures(1, &old);
+        rt.depthTextures.pop_back();
+    }
     return tex;
 }
 
@@ -3248,7 +3391,7 @@ void setPackageUniforms(QOpenGLShaderProgram *program, const QMap<QString, QVari
 GlTarget runPipeline(GlRuntime &rt, QOpenGLExtraFunctions *gl, const QString &cacheKey,
                      const drift::GpuEffectDefinition &gpu, const std::vector<const GlTarget *> &sources,
                      const QMap<QString, QVariant> &parameters, drift::TimeUs timeUs, double progress,
-                     const QSize &canvasSize)
+                     const QSize &canvasSize, const PipelineAux *aux)
 {
     CompiledEffect *compiled = rt.compile(cacheKey, gpu);
     if (!compiled || !compiled->ok || compiled->passes.size() != size_t(gpu.passes.size()))
@@ -3277,6 +3420,14 @@ GlTarget runPipeline(GlRuntime &rt, QOpenGLExtraFunctions *gl, const QString &ca
     std::map<QString, GLuint> textures;
     for (const drift::GpuEffectTextureSpec &spec : gpu.textures)
         textures[spec.id] = staticTexture(rt, gl, spec.path);
+
+    GLuint depthTex = 0;
+    QSize depthSize;
+    if (gpu.needsDepth && aux && aux->depth) {
+        depthTex = depthTexture(rt, gl, *aux->depth);
+        if (depthTex)
+            depthSize = aux->depth->size;
+    }
 
     GlTarget canvas = rt.acquireTarget(canvasSize.width(), canvasSize.height());
     if (!canvas.isValid()) {
@@ -3367,6 +3518,17 @@ GlTarget runPipeline(GlRuntime &rt, QOpenGLExtraFunctions *gl, const QString &ca
             // Re-apply resolution after possible buffer-sized primary input.
             program->setUniformValue("u_resolution",
                                      QVector2D(float(inputSize.width()), float(inputSize.height())));
+
+            if (gpu.needsDepth) {
+                gl->glActiveTexture(GL_TEXTURE0 + kDepthTextureUnit);
+                gl->glBindTexture(GL_TEXTURE_2D, depthTex);
+                gl->glActiveTexture(GL_TEXTURE0);
+                program->setUniformValue("u_depthTexture", kDepthTextureUnit);
+                program->setUniformValue("u_depthResolution",
+                                         QVector2D(float(qMax(1, depthSize.width())),
+                                                   float(qMax(1, depthSize.height()))));
+                program->setUniformValue("u_hasDepth", depthTex ? 1.f : 0.f);
+            }
 
             gl->glBindVertexArray(rt.vao);
             gl->glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);

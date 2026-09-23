@@ -26,9 +26,13 @@ inline bool isEngineBoundGpuUniform(const QString &name)
     if (name == QLatin1String("u_resolution") || name == QLatin1String("u_time")
         || name == QLatin1String("u_timeUs") || name == QLatin1String("u_frameIndex")
         || name == QLatin1String("u_currentTexture") || name == QLatin1String("u_progress")
-        || name == QLatin1String("u_fromTexture") || name == QLatin1String("u_toTexture")) {
+        || name == QLatin1String("u_fromTexture") || name == QLatin1String("u_toTexture")
+        || name == QLatin1String("u_hasDepth")) {
         return true;
     }
+    // The depth map and its size, bound for "requires": "depth" packages.
+    if (name.startsWith(QLatin1String("u_depth")))
+        return true;
     // Extra samplers bound for multi-input passes: u_texture1, u_texture2, ...
     return name.startsWith(QLatin1String("u_texture"));
 }
@@ -87,6 +91,9 @@ struct GpuEffectDefinition
     QList<GpuEffectBufferSpec> intermediateBuffers;
     QList<GpuEffectTextureSpec> textures;
     QList<GpuEffectPass> passes;
+    // "requires": "depth": the depth prelude is compiled into every pass and the clip's depth map
+    // is bound beside the declared inputs. See docs/gpu-effects.md.
+    bool needsDepth = false;
     bool valid = false;
     QString errorMessage;
 };

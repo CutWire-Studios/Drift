@@ -129,7 +129,7 @@ All return `{started:true}` immediately. Every field below except `export` lives
 | `detect_scenes` | `jobs.sceneDetect.{active, progress, status, clip, scenes}` (also present, inactive, while a scan result is loaded) |
 | `run_segmentation`, `segment_clip`, `apply_denoise`, `detect_faces` | No progress field — re-read `inspect({clips:true, detail:true})` and compare |
 | `stabilize_clip` | Per-clip `stabilizing` / `stabilizeProgress` / `stabilizeStatus` on the detail clip row |
-| `transcribe`, `diarize`, `tts_generate`, `sfx_generate` | Return `{job_id}` instead: poll `get_job({id})` until `active` is false, then read `ok` plus `result` or `error`. `cancel_job({id})` stops one. `inspect({detail:true}).jobs.list` keeps recent jobs, finished ones included |
+| `transcribe`, `diarize`, `tts_generate`, `sfx_generate`, `estimate_depth` | Return `{job_id}` instead: poll `get_job({id})` until `active` is false, then read `ok` plus `result` or `error`. `cancel_job({id})` stops one. `inspect({detail:true}).jobs.list` keeps recent jobs, finished ones included |
 
 ## Toolbox reference
 
@@ -149,7 +149,7 @@ All return `{started:true}` immediately. Every field below except `export` lives
 | `keyframes` | Property animation keys and tangents — clip transform, `fx.<i>.<param>`, `mask.<key>`, on text/subtitle clips `text.<key>` (pixelSize, letterSpacing, lineHeight, boxPadding, pathBend) or `text.layer.<id>.<field>` (opacity, offsetX, offsetY, blur, width, spread, trimStart, trimEnd, dashOffset, sketchLength, sketchDeviation, color.r/g/b/a, gradient.angle/offset/scale/center.x/y, gradient.stop.n.pos, effect.<param> for an effect paint's scalar params); the old names outlineWidth, shadowBlur, glowRadius, gradientAngle, color.r… still resolve onto the stroke/shadow/glow/fill layers. On shape clips the same layer fields as `shape.layer.<id>.<field>` (a fresh shape's layers are `fill` and `stroke`) plus `shape.<cornerRadius|points|innerRatio|headSize|thickness|tailX|tailSize>`; on SVG clips `vector.svg.…` (see Motion); on 3D model clips `model3d.<scale\|depth\|rotX\|rotY\|rotZ\|lightYaw\|lightPitch\|lightIntensity\|ambient>` (see 3D models). `set_keyframe` on a property the clip does not have fails `bad_args` |
 | `speed` | Speed ramps; reading custom fade curves (write them with `set_fade_curve` in `canvas`) |
 | `segmentation` | SAM-style cutout (session or one-shot) |
-| `ai` | Denoise, face detection, auto-reframe, add-on install |
+| `ai` | Denoise, face detection, auto-reframe, depth estimation for the depth effects (`estimate_depth`, `sample_depth`, `clear_depth`) — see [Depth effects](#depth-effects), add-on install |
 | `audio` | Waveforms, silence, loudness, ducking, beat detection, beat-synced cuts, clip volume |
 | `scene` | Shot detection, what is in each shot, scene-synced cuts |
 | `ui` | Theme, shortcuts, editor preferences, guides |
@@ -402,6 +402,31 @@ speed/reverse and `offset` remap into it, and `loop` (`loop` default, `hold`, `p
 decides what happens past its end. Node (rigid) animation and skeletal skinning play; morph
 targets do not (reported in `warning`). `capture` / `frames` render model clips like everything
 else.
+
+### Depth effects
+
+Five effects in the `depth` category read a clip's estimated depth (relative, 0 = farthest thing in
+the clip, 1 = nearest, consistent across the clip) and pass the frame through until it exists:
+
+| Effect | What it does | Handy parameters |
+|---|---|---|
+| `depth.relight` | Up to four 3D point/spot lights that fall on the scene, with shadows | `ambient` (how much of the original light remains), `light<N>_enabled/x/y/z/color/intensity/radius/cone/aimX/aimY` — x/y in 0..1 frame units (may sit off-frame), z −1 (towards camera) … 1 (at the back) |
+| `depth.focus` | Depth of field | `focusDepth`, `focusRange`, `blur` (px at 1080p), `autoFocus` + `focusX/focusY` to track whatever is at a point |
+| `depth.fog` | Haze thickening with distance | `fogColor`, `density`, `start`, `ground` |
+| `depth.view` | Shows the depth itself (greyscale or colour map) | `colorize` |
+| `depth.occlude` | Goes on a layer *above* the clip (text, sticker, 3D model): places it at `depth` inside that clip, so nearer things pass in front | `depth`, `softness`, `cutoutEdges` |
+
+1. `ai_capabilities` — `depth-model` must be installed (`install_addon` otherwise).
+2. `estimate_depth({clip, quality})` → `{job_id}`; poll `get_job` (it is slow: about 0.5 s per
+   frame on CPU at `draft`). Re-estimating unchanged pixels returns the cached map at once.
+3. `add_effect` with one of the ids above on the clip (or, for `depth.occlude`, on the layer above
+   it) and tune with `set_effect_param` (`set_effect_color_param` for light colours) or `fx.<i>.<param>` keyframes.
+4. `sample_depth({clip, x, y, time?})` → `{depth}` reads what is at a spot — use it to set
+   `focusDepth` on the subject, or `depth` on `depth.occlude` just behind them.
+
+`inspect({clips:true,detail:true})` reports `hasDepth`. The map is cleared when the clip's pixels
+change (replace source, switch angle, orientation); `clear_depth` removes it by hand. Standalone
+adjustment tracks have no depth of their own, so depth effects there pass through.
 
 ### Text looks and animation
 

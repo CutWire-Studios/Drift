@@ -111,6 +111,11 @@ struct Clip
     QString faceTrackPath;
     TimeUs faceTrackSrcOffsetUs = 0;
 
+    // Estimated depth (DepthSidecar) driving the depth effects. Timestamped in source time, so
+    // unlike a matte it needs no offset to be looked up; it only has to be dropped whenever the
+    // pixels it was estimated from change.
+    QString depthPath;
+
     // Baked stabilized video written by the two-pass ffmpeg job, plus the settings
     // last used to produce it. `stabilizing` is transient UI state and is not saved.
     // Keyframe mode writes sparse transformX/Y keys instead of a new video.

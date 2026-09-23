@@ -2141,6 +2141,43 @@ QJsonObject McpDispatcher::applyOneExtended(const QString &tool, const QJsonObje
         return ok(clipFeedback(ref));
     }
 
+    if (tool == QLatin1String("estimate_depth")) {
+        const ClipRef ref = resolveClip(args);
+        if (!ref.valid())
+            return clipRefError(args);
+        if (!m_controller->depthAvailable())
+            return err("addon_missing", QStringLiteral("Depth estimation needs the depth-model addon: "
+                                                       "list_addons, then install_addon."));
+        const bool high = argString(args, QStringLiteral("quality")) == QLatin1String("high");
+        const QString id = m_controller->estimateDepthForClip(ref.track, ref.clip, high);
+        if (id.isEmpty())
+            return err("failed", m_controller->lastMessage());
+        return ok(clipFeedback(ref, {{QStringLiteral("job_id"), id}}));
+    }
+
+    if (tool == QLatin1String("clear_depth")) {
+        const ClipRef ref = resolveClip(args);
+        if (!ref.valid())
+            return clipRefError(args);
+        m_controller->clearDepth(ref.track, ref.clip);
+        return ok(clipFeedback(ref));
+    }
+
+    if (tool == QLatin1String("sample_depth")) {
+        const ClipRef ref = resolveClip(args);
+        if (!ref.valid())
+            return clipRefError(args);
+        const double time = args.contains(QStringLiteral("time"))
+                                ? args.value(QStringLiteral("time")).toDouble()
+                                : -1.0;
+        const double depth = m_controller->sampleDepthAt(
+            ref.track, ref.clip, args.value(QStringLiteral("x")).toDouble(),
+            args.value(QStringLiteral("y")).toDouble(), time);
+        if (depth < 0.0)
+            return err("no_depth", QStringLiteral("This clip has no estimated depth; run estimate_depth."));
+        return ok({{QStringLiteral("depth"), depth}});
+    }
+
     // --- audio ---
     if (tool == QLatin1String("audio_summary"))
         return m_controller->mcpAudioSummary();

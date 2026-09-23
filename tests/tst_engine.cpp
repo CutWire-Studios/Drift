@@ -39,6 +39,8 @@
 #include "engine/LoudnessMeter.h"
 #include "engine/StillImage.h"
 #include "engine/DebugReport.h"
+#include "engine/DepthSidecar.h"
+#include "engine/VdaDepth.h"
 #include "engine/Exporter.h"
 #include "engine/PreviewProxyRenderer.h"
 #include "engine/GpuCompositor.h"
@@ -125,6 +127,15 @@ private slots:
     void reverseProxyLookupIsByContainmentAndSourceIdentity();
     void resolveVideoReadMirrorsTheClipOntoTheProxy();
     void faceTrackRoundTripsAndInterpolates();
+    void depthSidecarRoundTripsAndNormalises();
+    void depthSidecarRejectsUnfinishedFile();
+    void vdaStitcherAlignsAndBlendsWindows();
+    void vdaInferenceSizeKeepsAspectOnPatchGrid();
+    void effectPackageLoaderParsesDepthRequirement();
+    void depthPipelineBindsMapInFrameOrientation();
+    void depthEffectsRenderWithDepthAndPassThroughWithout();
+    void depthOfFieldKeepsFocusSharpAndBlursTheRest();
+    void depthOcclusionHidesLayerBehindNearerPixels();
     void faceTrackV2CarriesContoursAndPose();
     void faceTrackV1FileStillLoads();
     void smoothFaceTrackHandlesMissingBlocks();
@@ -459,6 +470,461 @@ void EngineTest::emojiRasterisesGlyph()
 // agree on codec, pixel format and time base. A mismatch shows up as a mask that decodes black
 // The sidecar is what preview and export both read, so a rounding or indexing slip here shows up
 // as a warp that lags the face rather than as an error.
+void EngineTest::depthSidecarRoundTripsAndNormalises()
+{
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    const QString path = dir.filePath(QStringLiteral("clip.driftdepth"));
+    const QSize size(24, 16);
+    const int pixels = size.width() * size.height();
+
+    // A left-to-right ramp whose overall level rises frame by frame, as a subject walking closer
+    // would. Frame f spans [f, f + 10].
+    constexpr int kFrames = 5;
+    drift::DepthSidecarWriter writer;
+    QString error;
+    QVERIFY2(writer.open(path, size, QStringLiteral("test"), &error), qPrintable(error));
+    std::vector<float> frame(static_cast<size_t>(pixels));
+    for (int f = 0; f < kFrames; ++f) {
+        for (int y = 0; y < size.height(); ++y)
+            for (int x = 0; x < size.width(); ++x)
+                frame[size_t(y * size.width() + x)] = float(f) + 10.0f * x / (size.width() - 1);
+        QVERIFY2(writer.writeFrame(drift::TimeUs(f) * 40000, frame.data(), &error),
+                 qPrintable(error));
+    }
+    QVERIFY2(writer.finish(&error), qPrintable(error));
+    QVERIFY(!QFile::exists(path + QStringLiteral(".part")));
+
+    const std::shared_ptr<const drift::DepthSidecar> sidecar = drift::DepthSidecar::open(path, &error);
+    QVERIFY2(sidecar, qPrintable(error));
+    QCOMPARE(sidecar->size(), size);
+    QCOMPARE(sidecar->frameCount(), kFrames);
+    QCOMPARE(sidecar->ptsAt(3), drift::TimeUs(120000));
+
+    // Nearest frame by timestamp, clamped at both ends.
+    const auto first = sidecar->frameAt(-5);
+    const auto third = sidecar->frameAt(81000);
+    const auto last = sidecar->frameAt(10'000'000);
+    QVERIFY(first && third && last);
+    QCOMPARE(first->key, sidecar->frameAt(0)->key);
+    QCOMPARE(third->key, sidecar->frameAt(80000)->key);
+    QVERIFY(first->key != third->key);
+
+    // Normalised over the whole clip, not per frame: the same pixel is nearer in a later frame,
+    // and the ramp still runs far to near within every frame.
+    const quint16 firstLeft = first->values[0];
+    const quint16 lastLeft = last->values[0];
+    QVERIFY(lastLeft > firstLeft);
+    for (const auto &f : {first, third, last}) {
+        for (int x = 1; x < size.width(); ++x)
+            QVERIFY(f->values[size_t(x)] >= f->values[size_t(x - 1)]);
+    }
+    // Clip range [0.1, 13.9] from the percentiles: value 14 at the far right of the last frame
+    // clamps to fully near, and value 0 at the far left of the first to fully far.
+    QCOMPARE(last->values[size_t(size.width() - 1)], quint16(65535));
+    QCOMPARE(firstLeft, quint16(0));
+
+    // Sampling agrees with the decoded frame at a pixel centre.
+    const double centre = sidecar->sample(0, (5 + 0.5) / size.width(), 0.5);
+    QVERIFY(std::abs(centre - first->values[5] / 65535.0) < 1e-3);
+}
+
+void EngineTest::depthSidecarRejectsUnfinishedFile()
+{
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    const QString path = dir.filePath(QStringLiteral("partial.driftdepth"));
+    const std::vector<float> frame(64, 1.0f);
+    QString error;
+    {
+        drift::DepthSidecarWriter writer;
+        QVERIFY(writer.open(path, QSize(8, 8), QStringLiteral("test"), &error));
+        QVERIFY(writer.writeFrame(0, frame.data(), &error));
+        // Destroyed without finish(): the temp file is removed and nothing takes the real name.
+    }
+    QVERIFY(!QFile::exists(path));
+    QVERIFY(!QFile::exists(path + QStringLiteral(".part")));
+
+    // A file cut off mid-write still carries the placeholder header, which must not open.
+    {
+        drift::DepthSidecarWriter writer;
+        QVERIFY(writer.open(path, QSize(8, 8), QStringLiteral("test"), &error));
+        QVERIFY(writer.writeFrame(0, frame.data(), &error));
+        QVERIFY(QFile::copy(path + QStringLiteral(".part"), path));
+    }
+    QVERIFY(!drift::DepthSidecar::open(path, &error));
+    QVERIFY(!error.isEmpty());
+}
+
+void EngineTest::vdaStitcherAlignsAndBlendsWindows()
+{
+    // Two pixels per frame, so the scale/shift fit is well-posed. The "true" depth of frame f is
+    // (f, 2f); the second window reports it through a = 2, b = 3, which the stitcher must undo.
+    constexpr size_t kPixels = 2;
+    const auto truth = [](int frame, int pixel) { return float(frame * (pixel + 1)); };
+
+    std::vector<float> first(size_t(drift::kVdaWindow) * kPixels);
+    for (int t = 0; t < drift::kVdaWindow; ++t)
+        for (int p = 0; p < int(kPixels); ++p)
+            first[size_t(t) * kPixels + p] = truth(t, p);
+
+    // Window two opens with the carried keyframes, then new frames 32..53.
+    std::vector<int> frames;
+    for (const int k : drift::kVdaKeyframes)
+        frames.push_back(k);
+    for (int f = drift::kVdaWindow; f < drift::kVdaWindow + drift::kVdaStride; ++f)
+        frames.push_back(f);
+    QCOMPARE(int(frames.size()), drift::kVdaWindow);
+    std::vector<float> second(size_t(drift::kVdaWindow) * kPixels);
+    for (int t = 0; t < drift::kVdaWindow; ++t)
+        for (int p = 0; p < int(kPixels); ++p)
+            second[size_t(t) * kPixels + p] = (truth(frames[size_t(t)], p) - 3.0f) / 2.0f;
+
+    drift::VdaStitcher stitcher(kPixels);
+    std::vector<std::pair<int, std::vector<float>>> out;
+    const auto collect = [&](int index, const float *d) {
+        out.emplace_back(index, std::vector<float>(d, d + kPixels));
+    };
+
+    stitcher.addWindow(first.data(), collect);
+    // The last eight frames stay pending: the next window may still blend them.
+    QCOMPARE(int(out.size()), drift::kVdaWindow - drift::kVdaInterp);
+
+    stitcher.addWindow(second.data(), collect);
+    QVERIFY(std::abs(stitcher.lastScale() - 2.0) < 1e-6);
+    QVERIFY(std::abs(stitcher.lastShift() - 3.0) < 1e-6);
+    stitcher.finish(collect);
+
+    QCOMPARE(int(out.size()), drift::kVdaWindow + drift::kVdaStride);
+    for (int i = 0; i < int(out.size()); ++i) {
+        QCOMPARE(out[size_t(i)].first, i);
+        for (int p = 0; p < int(kPixels); ++p) {
+            // Both windows agree once aligned, so the cross-fade is invisible and every frame,
+            // blended or not, comes out at its true depth.
+            QVERIFY2(std::abs(out[size_t(i)].second[size_t(p)] - truth(i, p)) < 1e-4,
+                     qPrintable(QStringLiteral("frame %1 pixel %2").arg(i).arg(p)));
+        }
+    }
+}
+
+void EngineTest::vdaInferenceSizeKeepsAspectOnPatchGrid()
+{
+    QCOMPARE(drift::VdaDepth::inferenceSize(QSize(1920, 1080), 392), QSize(700, 392));
+    QCOMPARE(drift::VdaDepth::inferenceSize(QSize(2160, 3840), 392), QSize(392, 700));
+    QCOMPARE(drift::VdaDepth::inferenceSize(QSize(1920, 1080), 518), QSize(924, 518));
+    // Held to the export's range of 8..160 patches a side.
+    QCOMPARE(drift::VdaDepth::inferenceSize(QSize(1920, 1080), 100), QSize(182, 112));
+    QCOMPARE(drift::VdaDepth::inferenceSize(QSize(4000, 100), 392), QSize(2240, 392));
+}
+
+void EngineTest::effectPackageLoaderParsesDepthRequirement()
+{
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    const auto writePackage = [&](const QString &name, const QByteArray &requirement,
+                                  const QByteArray &parameters) {
+        const QString pkg = dir.filePath(name);
+        QDir().mkpath(pkg);
+        QFile json(QDir(pkg).filePath(QStringLiteral("effect.json")));
+        json.open(QIODevice::WriteOnly | QIODevice::Text);
+        json.write(R"({"id": "test.)" + name.toUtf8() + R"(", "backend": "gpu", "requires": )"
+                   + requirement + R"(, "parameters": )" + parameters + R"(,
+          "pipeline": {"intermediateBuffers": [], "passes": [
+            {"passIndex": 0, "fragmentShader": "x.frag",
+             "inputs": [{"type": "source_texture"}], "output": {"type": "canvas"}}]}})");
+        json.close();
+        QFile frag(QDir(pkg).filePath(QStringLiteral("x.frag")));
+        frag.open(QIODevice::WriteOnly | QIODevice::Text);
+        frag.write("#version 330 core\nin vec2 v_texCoord; out vec4 fragColor;\n"
+                   "uniform sampler2D u_currentTexture;\n"
+                   "void main(){ fragColor = texture(u_currentTexture, v_texCoord); }\n");
+        frag.close();
+        return pkg;
+    };
+
+    QString error;
+    const EffectPresetEntry single =
+        EffectPackageLoader::loadPackage(writePackage(QStringLiteral("depth"), "\"depth\"", "[]"), &error);
+    QVERIFY2(single.gpu.valid, qPrintable(error));
+    QVERIFY(single.needsDepth);
+    QVERIFY(single.gpu.needsDepth);
+    QVERIFY(!single.needsFace);
+
+    const EffectPresetEntry both = EffectPackageLoader::loadPackage(
+        writePackage(QStringLiteral("both"), R"(["face", "depth"])", "[]"), &error);
+    QVERIFY2(both.gpu.valid, qPrintable(error));
+    QVERIFY(both.needsDepth);
+    QVERIFY(both.needsFace);
+
+    // The engine binds u_depth* itself, so a package may not declare a parameter by that name.
+    const EffectPresetEntry reserved = EffectPackageLoader::loadPackage(
+        writePackage(QStringLiteral("reserved"), "\"depth\"",
+                     R"([{"identifier": "u_depthScale", "displayName": "S", "type": "float",
+                         "defaultValue": 1, "minValue": 0, "maxValue": 2}])"),
+        &error);
+    QVERIFY(!reserved.gpu.valid);
+
+    const EffectPresetEntry unknown = EffectPackageLoader::loadPackage(
+        writePackage(QStringLiteral("unknown"), "\"normals\"", "[]"), &error);
+    QVERIFY(error.contains(QStringLiteral("unsupported requires")));
+    Q_UNUSED(unknown);
+}
+
+void EngineTest::depthPipelineBindsMapInFrameOrientation()
+{
+    if (!GpuEffectExecutor::instance().isAvailable())
+        QSKIP("OpenGL offscreen context unavailable");
+
+    // Writes depth to red, the frame to green and whether depth was bound to blue, so one
+    // readback shows whether the map and the frame agree about which way is up.
+    drift::GpuEffectDefinition gpu;
+    gpu.needsDepth = true;
+    drift::GpuEffectPass pass;
+    pass.fragmentShaderSource = QStringLiteral(
+        "#version 330 core\nin vec2 v_texCoord; out vec4 fragColor;\n"
+        "uniform sampler2D u_currentTexture;\n"
+        "void main() {\n"
+        "    float d = driftDepth(v_texCoord);\n"
+        "    float round = unpackDepth(packDepth(d));\n"
+        "    vec3 n = driftNormal(v_texCoord, 1.0);\n"
+        "    float g = driftDepthGuided(v_texCoord, u_currentTexture);\n"
+        "    fragColor = vec4(round, texture(u_currentTexture, v_texCoord).g, u_hasDepth,"
+        "                     n.z > 0.0 && g >= 0.0 ? 1.0 : 0.0);\n"
+        "}\n");
+    gpu.passes = {pass};
+    gpu.valid = true;
+
+    // Top half of the frame bright, bottom dark; the depth map says the same, near over far.
+    QImage frame(32, 32, QImage::Format_RGBA8888);
+    frame.fill(Qt::black);
+    for (int y = 0; y < 16; ++y)
+        for (int x = 0; x < 32; ++x)
+            frame.setPixelColor(x, y, Qt::white);
+    auto depth = std::make_shared<drift::DepthFrame>();
+    depth->size = QSize(8, 8);
+    depth->key = 0xD3F7'0000'0001ull;
+    depth->values.assign(64, 0);
+    for (int i = 0; i < 32; ++i)
+        depth->values[size_t(i)] = 65535;
+
+    GpuEffectExecutor::ChainStep step;
+    step.cacheKey = QStringLiteral("test.depth_orientation");
+    step.gpu = &gpu;
+    step.depth = depth;
+    const QImage out = GpuEffectExecutor::instance().applyChain({step}, frame, 0);
+    QVERIFY(!out.isNull());
+
+    const QColor top = out.pixelColor(16, 3);
+    const QColor bottom = out.pixelColor(16, 28);
+    QCOMPARE(top.blue(), 255);
+    QCOMPARE(top.alpha(), 255);
+    QVERIFY2(top.green() > 200 && top.red() > 200,
+             qPrintable(QStringLiteral("top r=%1 g=%2").arg(top.red()).arg(top.green())));
+    QVERIFY2(bottom.green() < 50 && bottom.red() < 50,
+             qPrintable(QStringLiteral("bottom r=%1 g=%2").arg(bottom.red()).arg(bottom.green())));
+
+    // No map: the same package runs, told there is no depth.
+    step.depth = nullptr;
+    const QImage bare = GpuEffectExecutor::instance().applyChain({step}, frame, 0);
+    QCOMPARE(bare.pixelColor(16, 3).blue(), 0);
+    QCOMPARE(bare.pixelColor(16, 3).red(), 0);
+}
+
+namespace {
+
+// Left half near, right half far, as a clip-normalised depth map.
+std::shared_ptr<drift::DepthFrame> splitDepth(quint64 key)
+{
+    auto depth = std::make_shared<drift::DepthFrame>();
+    depth->size = QSize(32, 18);
+    depth->key = key;
+    depth->values.resize(size_t(32 * 18));
+    for (int y = 0; y < 18; ++y)
+        for (int x = 0; x < 32; ++x)
+            depth->values[size_t(y * 32 + x)] = x < 16 ? 65535 : 0;
+    return depth;
+}
+
+double meanAbsDiff(const QImage &a, const QImage &b, const QRect &area)
+{
+    double sum = 0.0;
+    for (int y = area.top(); y <= area.bottom(); ++y) {
+        for (int x = area.left(); x <= area.right(); ++x) {
+            const QColor p = a.pixelColor(x, y);
+            const QColor q = b.pixelColor(x, y);
+            sum += std::abs(p.red() - q.red()) + std::abs(p.green() - q.green())
+                   + std::abs(p.blue() - q.blue());
+        }
+    }
+    return sum / (3.0 * area.width() * area.height());
+}
+
+} // namespace
+
+void EngineTest::depthEffectsRenderWithDepthAndPassThroughWithout()
+{
+    if (!GpuEffectExecutor::instance().isAvailable())
+        QSKIP("OpenGL offscreen context unavailable");
+
+    QImage frame(160, 90, QImage::Format_RGBA8888);
+    frame.fill(QColor(110, 110, 110));
+    const auto depth = splitDepth(0xD3F7'0000'0101ull);
+
+    for (const char *id : {"depth.relight", "depth.focus", "depth.fog", "depth.view"}) {
+        const EffectPresetEntry *def = effectDefForId(QString::fromLatin1(id));
+        QVERIFY2(def, id);
+        QVERIFY2(def->isGpu && def->gpu.valid && def->needsDepth, id);
+
+        drift::Effect effect;
+        effect.catalogId = def->meta.id;
+        // A flat grey frame gives the lens blur nothing to smear, so depth of field is judged by
+        // its own test below; here it only has to compile and run.
+        const QImage lit = EffectProcessor::applyEffects(frame, {effect}, 0, {}, depth);
+        QVERIFY2(!lit.isNull(), id);
+        if (qstrcmp(id, "depth.focus") != 0) {
+            QVERIFY2(meanAbsDiff(lit, frame, frame.rect()) > 2.0,
+                     qPrintable(QStringLiteral("%1 left the frame unchanged — did it compile?")
+                                    .arg(QLatin1String(id))));
+        }
+
+        const QImage bare = EffectProcessor::applyEffects(frame, {effect}, 0, {}, nullptr);
+        QVERIFY2(meanAbsDiff(bare, frame, frame.rect()) < 1.0,
+                 qPrintable(QStringLiteral("%1 changed a clip with no depth").arg(QLatin1String(id))));
+    }
+
+    // The default key light sits up and to the left, in front of the near half: that half must
+    // come out brighter than the far half behind it.
+    drift::Effect relight;
+    relight.catalogId = QStringLiteral("depth.relight");
+    const QImage lit = EffectProcessor::applyEffects(frame, {relight}, 0, {}, depth);
+    QVERIFY(lit.pixelColor(40, 30).red() > lit.pixelColor(130, 30).red());
+
+    // Fog thickens with distance: the far half is pulled further towards the fog colour.
+    drift::Effect fog;
+    fog.catalogId = QStringLiteral("depth.fog");
+    const QImage foggy = EffectProcessor::applyEffects(frame, {fog}, 0, {}, depth);
+    QVERIFY(meanAbsDiff(foggy, frame, QRect(100, 10, 50, 70))
+            > meanAbsDiff(foggy, frame, QRect(10, 10, 50, 70)) + 10.0);
+}
+
+void EngineTest::depthOfFieldKeepsFocusSharpAndBlursTheRest()
+{
+    if (!GpuEffectExecutor::instance().isAvailable())
+        QSKIP("OpenGL offscreen context unavailable");
+
+    // A fine checkerboard: blur shows up as the squares greying out.
+    QImage frame(320, 180, QImage::Format_RGBA8888);
+    for (int y = 0; y < frame.height(); ++y)
+        for (int x = 0; x < frame.width(); ++x)
+            frame.setPixelColor(x, y, ((x / 4 + y / 4) % 2) ? Qt::white : Qt::black);
+    const auto depth = splitDepth(0xD3F7'0000'0201ull);
+
+    drift::Effect dof;
+    dof.catalogId = QStringLiteral("depth.focus");
+    dof.parameters.insert(QStringLiteral("focusDepth"), 1.0); // the near half
+    dof.parameters.insert(QStringLiteral("blur"), 20.0);
+    const QImage out = EffectProcessor::applyEffects(frame, {dof}, 0, {}, depth);
+
+    // Well inside each half, away from the seam the guided filter softens.
+    const QRect sharp(20, 40, 100, 100);
+    const QRect soft(200, 40, 100, 100);
+    QVERIFY2(meanAbsDiff(out, frame, sharp) < 8.0,
+             qPrintable(QStringLiteral("in-focus half changed by %1").arg(meanAbsDiff(out, frame, sharp))));
+    QVERIFY2(meanAbsDiff(out, frame, soft) > 60.0,
+             qPrintable(QStringLiteral("out-of-focus half changed by only %1").arg(meanAbsDiff(out, frame, soft))));
+
+    // Following a focus point on the far half flips which side is sharp.
+    dof.parameters.insert(QStringLiteral("autoFocus"), 1.0);
+    dof.parameters.insert(QStringLiteral("focusX"), 0.8);
+    const QImage flipped = EffectProcessor::applyEffects(frame, {dof}, 0, {}, depth);
+    QVERIFY(meanAbsDiff(flipped, frame, soft) < 8.0);
+    QVERIFY(meanAbsDiff(flipped, frame, sharp) > 60.0);
+}
+
+void EngineTest::depthOcclusionHidesLayerBehindNearerPixels()
+{
+    if (!GpuCompositor::isAvailable())
+        QSKIP("OpenGL offscreen context unavailable");
+
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    const QSize canvas(64, 36);
+
+    QImage grey(canvas, QImage::Format_RGBA8888);
+    grey.fill(QColor(128, 128, 128));
+    const QString greyPath = dir.filePath(QStringLiteral("grey.png"));
+    QVERIFY(grey.save(greyPath));
+    QImage red(canvas, QImage::Format_RGBA8888);
+    red.fill(QColor(230, 20, 20));
+    const QString redPath = dir.filePath(QStringLiteral("red.png"));
+    QVERIFY(red.save(redPath));
+
+    // The grey clip's left half is near, its right half far.
+    const QString depthPath = dir.filePath(QStringLiteral("grey.driftdepth"));
+    {
+        drift::DepthSidecarWriter writer;
+        QString error;
+        QVERIFY2(writer.open(depthPath, QSize(32, 18), QStringLiteral("test"), &error),
+                 qPrintable(error));
+        std::vector<float> disparity(32 * 18);
+        for (int y = 0; y < 18; ++y)
+            for (int x = 0; x < 32; ++x)
+                disparity[size_t(y * 32 + x)] = x < 16 ? 1.0f : 0.0f;
+        QVERIFY(writer.writeFrame(0, disparity.data(), &error));
+        QVERIFY2(writer.finish(&error), qPrintable(error));
+    }
+
+    drift::Project project;
+    project.setResolution(canvas.width(), canvas.height());
+    project.tracks().append(drift::Track{.type = drift::TrackType::Video}); // top
+    project.tracks().append(drift::Track{.type = drift::TrackType::Video}); // bottom
+
+    drift::Clip below;
+    below.id = QStringLiteral("below");
+    below.type = drift::ClipType::Image;
+    below.path = greyPath;
+    below.timelineDuration = drift::secondsToUs(1.0);
+    below.srcOut = below.timelineDuration;
+    below.depthPath = depthPath;
+    project.tracks()[1].clips.append(below);
+
+    drift::Clip above;
+    above.id = QStringLiteral("above");
+    above.type = drift::ClipType::Image;
+    above.path = redPath;
+    above.timelineDuration = drift::secondsToUs(1.0);
+    above.srcOut = above.timelineDuration;
+    drift::Effect occlude;
+    occlude.catalogId = QStringLiteral("depth.occlude");
+    occlude.parameters.insert(QStringLiteral("depth"), 0.5);
+    above.effects.append(occlude);
+    project.tracks()[0].clips.append(above);
+
+    FrameCompositor compositor;
+    compositor.setProject(&project);
+
+    GpuScene scene;
+    QVERIFY(compositor.buildSceneAt(500'000, {}, &scene));
+    QCOMPARE(scene.items.size(), 2);
+    QVERIFY(scene.items.at(0).layer.emitDepthCanvas);
+    QCOMPARE(scene.items.at(1).layer.occluderItem, 0);
+
+    const QImage out = compositor.compositeAt(500'000);
+    QVERIFY(!out.isNull());
+    // Nearer than the layer on the left, so the grey clip shows through; farther on the right.
+    const QColor left = out.pixelColor(8, 18);
+    const QColor right = out.pixelColor(56, 18);
+    QVERIFY2(std::abs(left.red() - 128) < 12 && std::abs(left.green() - 128) < 12,
+             qPrintable(QStringLiteral("left %1,%2,%3").arg(left.red()).arg(left.green()).arg(left.blue())));
+    QVERIFY2(right.red() > 200 && right.green() < 60,
+             qPrintable(QStringLiteral("right %1,%2,%3").arg(right.red()).arg(right.green()).arg(right.blue())));
+
+    // Without depth below, there is nothing to sit inside and the layer draws whole.
+    project.tracks()[1].clips[0].depthPath.clear();
+    const QImage plain = compositor.compositeAt(500'000);
+    QVERIFY(plain.pixelColor(8, 18).red() > 200);
+}
+
 void EngineTest::faceTrackRoundTripsAndInterpolates()
 {
     QTemporaryDir dir;

@@ -31,6 +31,7 @@
 #include "mcp/McpProtocol.h"
 #include "mcp/McpSession.h"
 #include "mcp/McpStdio.h"
+#include "engine/DepthSidecar.h"
 #include "engine/GpuCompositor.h"
 #include "engine/ObjectDetector.h"
 #include "models/AppController.h"
@@ -75,6 +76,7 @@ private slots:
     void mcpStartOnLaunchAppliesOnlyWhenInvoked();
     void mcpDisablingResetsStartOnLaunch();
     void applyUnknownOp();
+    void depthToolsSampleAndClear();
     void catalogDispatcherParity();
     void textResultRoundsNumbers();
     void validateRejectsWrongType();
@@ -627,6 +629,57 @@ void McpTest::applyUnknownOp()
         dispatcher.applyOne(QStringLiteral("not_real"), {});
     QCOMPARE(result.value(QStringLiteral("ok")).toBool(), false);
     QCOMPARE(result.value(QStringLiteral("error")).toString(), QStringLiteral("unknown_op"));
+}
+
+void McpTest::depthToolsSampleAndClear()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    drift::mcp::McpDispatcher dispatcher(&state);
+    state.addTextClip(QStringLiteral("Deep"), 0.0);
+    const int track = state.selectedTrack();
+    const int clip = state.selectedClip();
+    const QString id = state.mcpCompactClip(track, clip).value(QStringLiteral("id")).toString();
+    const QJsonObject at{{QStringLiteral("clip"), id}, {QStringLiteral("x"), 0.25},
+                         {QStringLiteral("y"), 0.5}};
+
+    QJsonObject result = dispatcher.applyOne(QStringLiteral("sample_depth"), at);
+    QVERIFY(!result.value(QStringLiteral("ok")).toBool());
+    QCOMPARE(result.value(QStringLiteral("error")).toString(), QStringLiteral("no_depth"));
+
+    // Left half near, right half far.
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    const QString depthPath = dir.filePath(QStringLiteral("text.driftdepth"));
+    {
+        drift::DepthSidecarWriter writer;
+        QString error;
+        QVERIFY(writer.open(depthPath, QSize(16, 8), QStringLiteral("test"), &error));
+        std::vector<float> disparity(16 * 8);
+        for (int y = 0; y < 8; ++y)
+            for (int x = 0; x < 16; ++x)
+                disparity[size_t(y * 16 + x)] = x < 8 ? 1.0f : 0.0f;
+        QVERIFY(writer.writeFrame(0, disparity.data(), &error));
+        QVERIFY2(writer.finish(&error), qPrintable(error));
+    }
+    state.project()->tracks()[track].clips[clip].depthPath = depthPath;
+
+    result = dispatcher.applyOne(QStringLiteral("sample_depth"), at);
+    QVERIFY2(result.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(result).toJson()));
+    QVERIFY(result.value(QStringLiteral("depth")).toDouble() > 0.99);
+    QJsonObject far = at;
+    far.insert(QStringLiteral("x"), 0.9);
+    far.insert(QStringLiteral("time"), 0.5);
+    QVERIFY(dispatcher.applyOne(QStringLiteral("sample_depth"), far)
+                .value(QStringLiteral("depth")).toDouble() < 0.01);
+
+    QVERIFY(dispatcher.applyOne(QStringLiteral("clear_depth"), {{QStringLiteral("clip"), id}})
+                .value(QStringLiteral("ok")).toBool());
+    QVERIFY(state.project()->tracks().at(track).clips.at(clip).depthPath.isEmpty());
+
+    // A text clip has no pixels to estimate, and the test environment has no model either way.
+    QVERIFY(!dispatcher.applyOne(QStringLiteral("estimate_depth"), {{QStringLiteral("clip"), id}})
+                 .value(QStringLiteral("ok")).toBool());
 }
 
 void McpTest::applyBatchStopsAndUndoRevertsPrefix()

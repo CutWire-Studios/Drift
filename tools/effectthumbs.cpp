@@ -1,8 +1,10 @@
+#include "engine/DepthSidecar.h"
 #include "engine/EffectCatalog.h"
 #include "engine/EffectPackageLoader.h"
 #include "engine/EffectProcessor.h"
 #include "engine/FaceLandmarker.h"
 #include "engine/GpuEffectExecutor.h"
+#include "engine/VdaDepth.h"
 
 #include <QGuiApplication>
 #include <QDir>
@@ -10,6 +12,9 @@
 #include <QImage>
 #include <QPainter>
 #include <QTextStream>
+
+#include <algorithm>
+#include <cmath>
 
 namespace {
 
@@ -245,6 +250,78 @@ QMap<QString, QVariant> dramaticDefaults(const EffectPresetEntry &def)
     return params;
 }
 
+// Depth for the depth effects' thumbnails: the model's estimate of the base when the addon is
+// installed, otherwise a stand-in that puts the centre-bottom of the frame nearest, which is
+// roughly where the subject of a portrait sits.
+std::shared_ptr<drift::DepthFrame> baseDepth(const QImage &base, QTextStream &err)
+{
+    auto frame = std::make_shared<drift::DepthFrame>();
+    frame->key = 0xE44E'C7'0000'0001ull;
+
+    drift::VdaDepth &vda = drift::VdaDepth::instance();
+    std::vector<float> disparity;
+    QSize size;
+    if (vda.available()) {
+        std::unique_ptr<drift::VdaDepth::Pass> pass =
+            vda.newPass(392, [&](drift::TimeUs, const float *d) {
+                disparity.assign(d, d + size_t(size.width()) * size.height());
+                return true;
+            });
+        size = drift::VdaDepth::inferenceSize(base.size(), 392);
+        if (!pass || !pass->push(base, 0) || !pass->flush())
+            disparity.clear();
+    }
+    if (!disparity.empty()) {
+        std::vector<float> sorted = disparity;
+        std::sort(sorted.begin(), sorted.end());
+        const float lo = sorted[sorted.size() / 100];
+        const float hi = sorted[sorted.size() * 99 / 100];
+        frame->size = size;
+        frame->values.resize(disparity.size());
+        for (size_t i = 0; i < disparity.size(); ++i) {
+            const float n = (disparity[i] - lo) / std::max(hi - lo, 1e-6f);
+            frame->values[i] = quint16(std::lround(std::clamp(n, 0.0f, 1.0f) * 65535.0f));
+        }
+        return frame;
+    }
+
+    err << "depth: model unavailable (" << vda.lastError() << "); using a stand-in depth map\n";
+    frame->size = QSize(64, 64);
+    frame->values.resize(64 * 64);
+    for (int y = 0; y < 64; ++y) {
+        for (int x = 0; x < 64; ++x) {
+            const double dx = (x - 31.5) / 32.0;
+            const double dy = (y - 40.0) / 40.0;
+            const double subject = std::exp(-(dx * dx * 6.0 + dy * dy * 2.5));
+            const double ground = y / 63.0 * 0.5;
+            frame->values[size_t(y * 64 + x)] =
+                quint16(std::lround(std::clamp(std::max(subject, ground), 0.0, 1.0) * 65535.0));
+        }
+    }
+    return frame;
+}
+
+// The depth effects' own defaults are the look they are designed around, and pushing every
+// slider to 70% would scatter the lights and throw the focus. A couple of choices read better
+// small.
+QMap<QString, QVariant> depthDefaults(const EffectPresetEntry &def)
+{
+    QMap<QString, QVariant> params;
+    for (const drift::EffectParamSpec &spec : def.meta.parameters)
+        params.insert(spec.key, spec.defaultVariant());
+    if (def.meta.id == QLatin1String("depth.relight")) {
+        params.insert(QStringLiteral("ambient"), 0.45);
+        params.insert(QStringLiteral("light2_enabled"), true);
+    } else if (def.meta.id == QLatin1String("depth.focus")) {
+        params.insert(QStringLiteral("autoFocus"), true);
+        params.insert(QStringLiteral("focusY"), 0.4);
+        params.insert(QStringLiteral("blur"), 24.0);
+    } else if (def.meta.id == QLatin1String("depth.view")) {
+        params.insert(QStringLiteral("colorize"), true);
+    }
+    return params;
+}
+
 QImage applyTimeEchoPreview(const QImage &base, const QMap<QString, QVariant> &params)
 {
     QList<QImage> frames;
@@ -364,6 +441,7 @@ int main(int argc, char *argv[])
     }
 
     const QImage chromaBase = withGreenScreenBackdrop(base);
+    std::shared_ptr<drift::DepthFrame> depth;
 
     int ok = 0;
     int failed = 0;
@@ -395,6 +473,13 @@ int main(int argc, char *argv[])
             effect.catalogId = def.meta.id;
             effect.parameters = params;
             result = EffectProcessor::applyEffects(chromaBase, {effect}, 500000);
+        } else if (def.needsDepth) {
+            if (!depth)
+                depth = baseDepth(base, err);
+            drift::Effect effect;
+            effect.catalogId = def.meta.id;
+            effect.parameters = depthDefaults(def);
+            result = EffectProcessor::applyEffects(base, {effect}, 500000, {}, depth);
         } else if (def.needsFace) {
             drift::Effect effect;
             effect.catalogId = def.meta.id;

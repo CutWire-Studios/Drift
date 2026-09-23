@@ -42,6 +42,10 @@ class QOffscreenSurface;
 class QOpenGLContext;
 struct SwsContext;
 
+namespace drift {
+struct DepthFrame;
+}
+
 namespace drift::skia {
 class SkiaRuntime;
 }
@@ -184,6 +188,17 @@ public:
     // topologies and different vertex layouts, so one clip using both effects would rebuild the
     // buffers twice per frame.
     FaceMeshGpu faceSwapMesh;
+
+    // Depth maps uploaded for "requires": "depth" packages, most recent first. A frame is used by
+    // every depth effect on its clip and by the preview and export of the same timestamp, so a
+    // handful covers it. Destroyed in shutdown() alongside staticTextures.
+    struct DepthTexture
+    {
+        quint64 key = 0;
+        GLuint texture = 0;
+    };
+    std::list<DepthTexture> depthTextures;
+    static constexpr size_t kMaxDepthTextures = 4;
 
     // A QOpenGLContext has thread affinity and can only be made current on the
     // thread it lives on, but GL work arrives from several threads (the
@@ -467,6 +482,21 @@ GLuint uploadTexture(QOpenGLExtraFunctions *gl, const QImage &image, bool flipVe
 bool blitTextureToTarget(GlRuntime &rt, QOpenGLExtraFunctions *gl, GLuint srcTex, GlTarget &dest);
 GLuint staticTexture(GlRuntime &rt, QOpenGLExtraFunctions *gl, const QString &path);
 
+// The texture unit the depth map is bound to, clear of the units package inputs count up from.
+// GL 3.3 and GLES 3.0 both guarantee 16 fragment units.
+constexpr int kDepthTextureUnit = 8;
+
+// A single-channel 16-bit texture of a depth frame, uploaded once and cached by DepthFrame::key.
+// R16 where the context has it; GLES without EXT_texture_norm16 gets R16F, which is filterable in
+// core ES 3.0 and keeps about 11 bits — plenty for normalised depth.
+GLuint depthTexture(GlRuntime &rt, QOpenGLExtraFunctions *gl, const drift::DepthFrame &frame);
+
+// Per-layer data a pipeline may bind besides its source textures.
+struct PipelineAux
+{
+    std::shared_ptr<const drift::DepthFrame> depth;
+};
+
 // Upload a QImage into a pooled FBO, so sources, intermediate buffers and the
 // canvas all share one texture orientation. A null image becomes transparent
 // black at fallbackSize.
@@ -492,9 +522,12 @@ void setPackageUniforms(QOpenGLShaderProgram *program, const QMap<QString, QVari
 // Run every pass of one GPU package, reading from `sources` and returning a new
 // pooled target with the result. Nothing is read back to the CPU. Returns an
 // invalid target on failure (grace mode).
+//
+// `aux` carries the layer's depth for packages that need it. Without one a depth package still
+// runs, with u_hasDepth = 0, which the prelude helpers turn into a pass-through.
 GlTarget runPipeline(GlRuntime &rt, QOpenGLExtraFunctions *gl, const QString &cacheKey,
                      const drift::GpuEffectDefinition &gpu, const std::vector<const GlTarget *> &sources,
                      const QMap<QString, QVariant> &parameters, drift::TimeUs timeUs, double progress,
-                     const QSize &canvasSize);
+                     const QSize &canvasSize, const PipelineAux *aux = nullptr);
 
 } // namespace drift::gl

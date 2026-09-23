@@ -187,6 +187,7 @@ private slots:
     void keyframeGraphPropertySelection();
     void keyframesCanBeDisabledPerProperty();
     void effectParamKeyframes();
+    void depthEffectEditorStateResolvesHandles();
     void effectRemovalRemapsGraphSelection();
     void denoiseAddsCleanedClipOnTrackAbove();
     void speedCurveOnAudioClipRetimesAndReplaces();
@@ -2852,6 +2853,57 @@ void EditorStateTest::effectParamKeyframes()
     QCOMPARE(state.clipKeyframes(track, clip, QStringLiteral("fx.9.contrast")).size(), 0);
 }
 
+void EditorStateTest::depthEffectEditorStateResolvesHandles()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    // Without an effect with handles there is nothing to draw.
+    state.addTextClip(QStringLiteral("Lit"), 0.0);
+    const int track = state.selectedTrack();
+    const int clip = state.selectedClip();
+    QVERIFY(state.depthEffectEditorState().isEmpty());
+
+    state.addEffect(track, clip, QStringLiteral("adjust.contrast"));
+    state.addEffect(track, clip, QStringLiteral("depth.relight"));
+    state.addEffect(track, clip, QStringLiteral("depth.focus"));
+    state.setPlayheadSeconds(1.0);
+
+    QVariantMap editor = state.depthEffectEditorState();
+    QVERIFY(editor.value(QStringLiteral("hasFrame")).toBool());
+    QVariantList effects = editor.value(QStringLiteral("effects")).toList();
+    QCOMPARE(effects.size(), 2);
+    // Indices are the stack's, so the overlay's "fx.<i>.<key>" writes land on the right effect.
+    QCOMPARE(effects.at(0).toMap().value(QStringLiteral("index")).toInt(), 1);
+    QCOMPARE(effects.at(1).toMap().value(QStringLiteral("index")).toInt(), 2);
+    QVariantMap relight = effects.at(0).toMap().value(QStringLiteral("params")).toMap();
+    // Defaults are filled in for parameters the clip never set.
+    QVERIFY(relight.value(QStringLiteral("light1_enabled")).toBool());
+    QCOMPARE(relight.value(QStringLiteral("light1_x")).toDouble(), 0.2);
+
+    // A handle drag writes the static value while the parameter is not animated...
+    state.setAutoKeyEnabled(false);
+    state.beginPreviewDrag(QStringLiteral("Move light"));
+    state.previewSetClipKeyframe(track, clip, QStringLiteral("fx.1.light1_x"), 1.0, 0.6);
+    state.commitPreviewDrag();
+    relight = state.depthEffectEditorState().value(QStringLiteral("effects")).toList()
+                  .at(0).toMap().value(QStringLiteral("params")).toMap();
+    QCOMPARE(relight.value(QStringLiteral("light1_x")).toDouble(), 0.6);
+
+    // ...and once it is, the handle sits where the animation puts it at the playhead.
+    state.setClipKeyframe(track, clip, QStringLiteral("fx.1.light1_x"), 0.0, 0.0);
+    state.setClipKeyframe(track, clip, QStringLiteral("fx.1.light1_x"), 2.0, 1.0);
+    relight = state.depthEffectEditorState().value(QStringLiteral("effects")).toList()
+                  .at(0).toMap().value(QStringLiteral("params")).toMap();
+    QVERIFY(std::abs(relight.value(QStringLiteral("light1_x")).toDouble() - 0.5) < 1e-6);
+
+    // A disabled effect draws no handles.
+    state.setEffectEnabled(track, clip, 1, false);
+    effects = state.depthEffectEditorState().value(QStringLiteral("effects")).toList();
+    QCOMPARE(effects.size(), 1);
+    QCOMPARE(effects.at(0).toMap().value(QStringLiteral("catalogId")).toString(),
+             QStringLiteral("depth.focus"));
+}
+
 void EditorStateTest::effectRemovalRemapsGraphSelection()
 {
     AssetLibrary library;
@@ -4851,6 +4903,7 @@ void EditorStateTest::replaceAssetSourceRebindsClipsAndClampsTrim()
         clip.timelineDuration = drift::secondsToUs(8.0);
         clip.effects.append(drift::Effect{.name = QStringLiteral("gblur")});
         clip.faceTrackPath = QStringLiteral("/tmp/stale.landmarks");
+        clip.depthPath = QStringLiteral("/tmp/stale.driftdepth");
         clip.faceTrackSrcOffsetUs = drift::secondsToUs(1.0);
     }
     const QString assetId = library.assetIdAt(0);
@@ -4880,6 +4933,7 @@ void EditorStateTest::replaceAssetSourceRebindsClipsAndClampsTrim()
     // footage never had.
     QVERIFY(after.faceTrackPath.isEmpty());
     QCOMPARE(after.faceTrackSrcOffsetUs, drift::TimeUs(0));
+    QVERIFY(after.depthPath.isEmpty());
     // The source window is pulled inside the shorter file, and the timeline duration follows so
     // the clip never addresses frames past the end of its media.
     const drift::TimeUs mediaDuration = project.asset(assetId)->durationUs;
@@ -4896,6 +4950,7 @@ void EditorStateTest::replaceAssetSourceRebindsClipsAndClampsTrim()
     QCOMPARE(undone.srcOut, beforeSwap.srcOut);
     QCOMPARE(undone.timelineDuration, beforeSwap.timelineDuration);
     QCOMPARE(undone.faceTrackPath, beforeSwap.faceTrackPath);
+    QCOMPARE(undone.depthPath, beforeSwap.depthPath);
 }
 
 // A clip's type is fixed at creation and decides which track it may sit on, so audio cannot slot

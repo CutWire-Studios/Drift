@@ -649,6 +649,10 @@ add_library(driftengine STATIC
     src/engine/Sam2Segmenter.cpp
     src/engine/RvmMatter.h
     src/engine/RvmMatter.cpp
+    src/engine/VdaDepth.h
+    src/engine/VdaDepth.cpp
+    src/engine/DepthSidecar.h
+    src/engine/DepthSidecar.cpp
     src/engine/FaceLandmarker.h
     src/engine/FaceLandmarker.cpp
     src/engine/FaceTrack.h
@@ -993,6 +997,7 @@ qt_add_qml_module(drift
         src/qml/components/preview/TransformOverlay.qml
         src/qml/components/preview/CropOverlay.qml
         src/qml/components/preview/MaskOverlay.qml
+        src/qml/components/preview/DepthEffectOverlay.qml
         src/qml/components/preview/PreviewToolbar.qml
         src/qml/components/preview/Checkerboard.qml
         src/qml/components/preview/AndroidTransformOverlay.qml

@@ -23,7 +23,7 @@ Search order: `DRIFT_EFFECTS_DIR`, `<applicationDir>/effects`, `<AppDataLocation
 | `backend` | `"gpu"` or `"model3d"` |
 | `parameters[]` | User-facing uniforms — see the parameter types below |
 | `fixedParams` | Hidden uniforms (colors as `#rrggbb`, enums as strings) |
-| `requires` | `"face"` to receive the baked face anchors (see below). Any other value is a parse error |
+| `requires` | `"face"` to receive the baked face anchors, `"depth"` to receive the clip's depth map (see below), or an array of both. Any other value is a parse error. `"depth"` is `gpu` backend only |
 | `pipeline` | `intermediateBuffers` + `passes` |
 
 ### Parameter types
@@ -51,7 +51,7 @@ Pass outputs: `buffer` or `canvas`.
 ## GLSL
 
 - `#version 330 core`
-- Reserved: `u_currentTexture`, `u_textureN`, `u_resolution`, `u_time`, `u_timeUs`, `u_frameIndex`, `u_progress`, `u_fromTexture`, `u_toTexture`
+- Reserved: `u_currentTexture`, `u_textureN`, `u_resolution`, `u_time`, `u_timeUs`, `u_frameIndex`, `u_progress`, `u_fromTexture`, `u_toTexture`, `u_depth*`, `u_hasDepth`, `u_face*`
 
 **Grace mode:** compile/GL failure → passthrough.
 
@@ -103,6 +103,38 @@ source, so `GlRuntime` would need no change.
 `hasPose`, and `hasMesh` false. Optional v2 blobs: `"c"` (contours), `"p"` (pose), `"m"` (468×3
 mesh, uint16 packed like contours). Missing `"m"` is not an error — the 3D Face Mesh effect
 pass-throughs until the clip is re-detected. Format version stays 2; do not bump for the mesh blob.
+
+## Depth effects
+
+A package with `"requires": "depth"` receives the depth estimated for its clip (the Depth addon,
+Video Depth Anything; see `VdaDepth` and `DepthSidecar`). The engine compiles a prelude into every
+pass — **do not declare these yourself**:
+
+| Name | Kind | Notes |
+|---|---|---|
+| `u_depthTexture` | `sampler2D` | Single channel, bound on unit 8. Lower resolution than the frame (short side 392 or 518) |
+| `u_depthResolution` | `vec2` | Its size in texels |
+| `u_hasDepth` | `float` | **`< 0.5` means there is no depth: pass the frame through.** A clip that has not been estimated, and standalone adjustment tracks, render this way |
+| `float driftDepth(vec2 uv)` | helper | 0 is the farthest thing in the clip, 1 the nearest. Normalised over the **whole clip**, so a value means the same place from frame to frame |
+| `float driftDepthGuided(vec2 uv, sampler2D guide)` | helper | `driftDepth` snapped to the colour edges of `guide` (normally `u_currentTexture`) by a 3×3 joint-bilateral filter. Use it wherever a depth edge meets a visible edge |
+| `vec3 driftNormal(vec2 uv, float strength)` | helper | Surface normal from depth gradients, in uv space (x right, **y down**) with z toward the viewer |
+| `vec2 packDepth(float)` / `float unpackDepth(vec2)` | helpers | 16-bit depth through two 8-bit channels of an intermediate buffer |
+
+Depth uv matches the frame's: `(0, 0)` is the top-left. The map is relative, not metres — distances
+in a shader are perceptual, so expose a scale parameter rather than assuming units.
+
+### Behind Subject (`depth.occlude`)
+
+A compositor-backend package, not a shader: it places the layer carrying it (text, a sticker, a 3D
+model) at `depth` inside the **nearest clip below it that has depth**, and wherever that clip is
+nearer the layer gives way. `FrameCompositor::buildGpuScene` marks the occluder
+(`GpuLayer::emitDepthCanvas`) and the occluded layer (`occluderItem`); `composeOnGlThread` lays the
+occluder's depth out on a canvas-sized target once it is drawn (`kDepthPlaceFragShader`: depth in
+r/g, cutout matte in b, coverage in a), and both layer shaders test against it. With
+`cutoutEdges`, an occluder with a single media mask (a Subject/People Cutout matte) supplies the
+silhouette and depth only decides in front or behind. The occluder is looked for within the same
+scene, so inside a composite clip it stays inside it. Not applied in transitions or the CPU
+compositor, and a 3D model counts as one flat plane at `depth`.
 
 ## Special case: time_echo
 

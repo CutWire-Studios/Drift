@@ -1008,6 +1008,37 @@
         { "clear_face_track", "ai", "Remove face track",
           "Delete the stored face track from a clip, undoing detect_faces.",
           objectSchema(clipRefProps()), false, true },
+        { "estimate_depth", "ai", "Estimate depth for the depth effects",
+          "Estimate a video or image clip's depth with the depth-model addon (Video Depth Anything), "
+          "which the depth effects read: depth.relight (3D lights), depth.focus (depth of field), "
+          "depth.fog, depth.view, and depth.occlude (put a layer above it behind whatever is nearer). "
+          "Without it those effects pass the frame through. Pass the media clip or the effects "
+          "adjustment pinned to it. Slow: roughly 0.5 s per frame on CPU at quality \"draft\", about "
+          "twice that at \"high\"; re-estimating the same pixels returns the cached result at once. "
+          "Async: returns {job_id}; poll get_job, whose result is {path, frames, cached}, then "
+          "inspect({clips:true,detail:true}) reports hasDepth. Cancel with cancel_job.",
+          objectSchema(mergeProps(
+              clipRefProps(),
+              {{QStringLiteral("quality"),
+                propWithDefault(enumProp(QStringLiteral("draft (short side 392) or high (518)"),
+                                         {QStringLiteral("draft"), QStringLiteral("high")}),
+                                QStringLiteral("draft"))}})) },
+        { "clear_depth", "ai", "Remove estimated depth",
+          "Detach the estimated depth from a clip, undoing estimate_depth. Its depth effects then pass "
+          "the frame through.",
+          objectSchema(clipRefProps()), false, true },
+        { "sample_depth", "ai", "Read depth at a point",
+          "Normalised depth (0 = farthest thing in the clip, 1 = nearest) at a point of the clip's "
+          "frame, x/y in 0..1 from the top-left, at a timeline time (default: the playhead). Use it "
+          "to set depth.focus focusDepth or depth.occlude depth from what is at a spot. Returns "
+          "{depth}; errors when the clip has no depth (run estimate_depth).",
+          objectSchema(mergeProps(
+                           clipRefProps(),
+                           {{QStringLiteral("x"), numberProp(QStringLiteral("0..1 across the clip's frame"), 0, 1)},
+                            {QStringLiteral("y"), numberProp(QStringLiteral("0..1 down the clip's frame"), 0, 1)},
+                            {QStringLiteral("time"), numberProp(QStringLiteral("Timeline seconds (default: playhead)"))}}),
+                       {QStringLiteral("x"), QStringLiteral("y")}),
+          true, false, true },
 
         { "audio_summary", "audio", "What carries sound",
           "List every clip that actually reaches the mix — audio clips, plus video clips whose "

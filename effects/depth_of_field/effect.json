@@ -1,0 +1,36 @@
+{
+  "id": "depth.focus",
+  "displayName": "Depth of Field",
+  "category": "depth",
+  "order": 910,
+  "description": "Lens blur that follows the clip's estimated depth: keep one distance sharp and let the rest fall out of focus.",
+  "backend": "gpu",
+  "requires": "depth",
+  "parameters": [
+    {"identifier": "focusDepth", "displayName": "Focus distance", "type": "float",
+     "minValue": 0, "maxValue": 1, "defaultValue": 0.7},
+    {"identifier": "focusRange", "displayName": "Sharp range", "type": "float",
+     "minValue": 0, "maxValue": 0.5, "defaultValue": 0.06},
+    {"identifier": "blur", "displayName": "Blur", "type": "float",
+     "minValue": 0, "maxValue": 40, "defaultValue": 14},
+    {"identifier": "nearBlur", "displayName": "Foreground blur", "type": "float",
+     "minValue": 0, "maxValue": 1, "defaultValue": 1},
+    {"identifier": "highlights", "displayName": "Bokeh highlights", "type": "float",
+     "minValue": 0, "maxValue": 1, "defaultValue": 0.3},
+    {"identifier": "autoFocus", "displayName": "Follow focus point", "type": "bool",
+     "defaultValue": 0},
+    {"identifier": "focusX", "displayName": "Focus point left / right", "type": "float",
+     "minValue": 0, "maxValue": 1, "defaultValue": 0.5},
+    {"identifier": "focusY", "displayName": "Focus point up / down", "type": "float",
+     "minValue": 0, "maxValue": 1, "defaultValue": 0.5}
+  ],
+  "pipeline": {
+    "intermediateBuffers": [{"id": "coc", "scale": 1.0}],
+    "passes": [
+      {"passIndex": 0, "fragmentShader": "coc.frag",
+       "inputs": [{"type": "source_texture"}], "output": {"type": "buffer", "id": "coc"}},
+      {"passIndex": 1, "fragmentShader": "gather.frag",
+       "inputs": [{"type": "buffer", "id": "coc"}], "output": {"type": "canvas"}}
+    ]
+  }
+}

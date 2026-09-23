@@ -2411,6 +2411,38 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Select a video or image clip to estimate depth for</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Clip has no video to estimate depth for</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Depth estimation needs the Depth addon</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Depth is already being estimated for this clip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Estimating depth…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Clip no longer exists</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Estimate Depth</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Clear Depth</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Building keyframes…</source>
         <translation type="unfinished"></translation>
     </message>
@@ -4741,6 +4773,29 @@
     </message>
 </context>
 <context>
+    <name>DepthEffectOverlay</name>
+    <message>
+        <source>Aim light</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move light</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Focus</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Pick focus</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move focus</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>DownloadFormat</name>
     <message>
         <source>%1 B</source>
@@ -5123,6 +5178,10 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Depth &amp; Lighting</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Other</source>
         <translation type="unfinished"></translation>
     </message>
@@ -5320,6 +5379,42 @@
     </message>
     <message>
         <source>Install AI engine first</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Depth</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Depth effects follow one clip&apos;s depth. Add this to a clip rather than to an adjustment layer.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>These effects need the clip&apos;s depth, so it has to be estimated first. It runs in the background and takes roughly half a second per frame.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>High quality</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Sharper depth edges, about twice as slow</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Re-estimate depth</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Estimate depth</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Clear depth</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Download depth estimation (about 180 MB)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -8478,7 +8573,19 @@ If playback stutters, try another.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Loading the depth model…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No cache directory</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Could not decode frame %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Estimating depth, frame %1 of %2…</source>
         <translation type="unfinished"></translation>
     </message>
     <message>

@@ -147,7 +147,8 @@ QImage applyLibavFilterGraph(const QImage &input, const QString &filters)
 } // namespace
 
 QImage EffectProcessor::applyEffects(const QImage &input, const QList<drift::Effect> &effects,
-                                     drift::TimeUs timeUs, const QList<drift::FaceAnchors> &faceSlots)
+                                     drift::TimeUs timeUs, const QList<drift::FaceAnchors> &faceSlots,
+                                     const std::shared_ptr<const drift::DepthFrame> &depth)
 {
     if (input.isNull() || effects.isEmpty())
         return input;
@@ -201,7 +202,8 @@ QImage EffectProcessor::applyEffects(const QImage &input, const QList<drift::Eff
             QMap<QString, QVariant> params = resolvedEffectParameters(effect, *def);
             if (def->needsFace)
                 drift::applyFaceUniforms(&params, faceSlots);
-            gpuChain.append(GpuEffectExecutor::ChainStep{def->meta.id, &def->gpu, nullptr, params, {}});
+            gpuChain.append(GpuEffectExecutor::ChainStep{def->meta.id, &def->gpu, nullptr, params, {},
+                                                         def->needsDepth ? depth : nullptr});
             continue;
         }
 

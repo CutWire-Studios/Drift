@@ -3026,6 +3026,7 @@ void CoreTest::faceTrackSerialization()
     clip.timelineDuration = drift::secondsToUs(3.0);
     clip.faceTrackPath = QStringLiteral("/tmp/facetracks/abc.json");
     clip.faceTrackSrcOffsetUs = drift::secondsToUs(2.25);
+    clip.depthPath = QStringLiteral("/tmp/depth/abc.driftdepth");
     project.tracks()[0].clips.append(clip);
 
     const QJsonObject json = project.toJson();
@@ -3036,6 +3037,7 @@ void CoreTest::faceTrackSerialization()
     const drift::Clip &out = loaded.tracks()[0].clips[0];
     QCOMPARE(out.faceTrackPath, QStringLiteral("/tmp/facetracks/abc.json"));
     QCOMPARE(out.faceTrackSrcOffsetUs, drift::secondsToUs(2.25));
+    QCOMPARE(out.depthPath, QStringLiteral("/tmp/depth/abc.driftdepth"));
 
     // A project written before face tracking existed carries neither key, and must still load with
     // the clip simply having no track rather than failing.
@@ -3046,6 +3048,7 @@ void CoreTest::faceTrackSerialization()
     QJsonObject legacyClip = legacyClips.at(0).toObject();
     legacyClip.remove(QStringLiteral("faceTrackPath"));
     legacyClip.remove(QStringLiteral("faceTrackSrcOffsetUs"));
+    legacyClip.remove(QStringLiteral("depthPath"));
     legacyClips.replace(0, legacyClip);
     legacyTrack.insert(QStringLiteral("clips"), legacyClips);
     legacyTracks.replace(0, legacyTrack);
@@ -3055,6 +3058,7 @@ void CoreTest::faceTrackSerialization()
     QVERIFY(error.isEmpty());
     QVERIFY(old.tracks()[0].clips[0].faceTrackPath.isEmpty());
     QCOMPARE(old.tracks()[0].clips[0].faceTrackSrcOffsetUs, drift::TimeUs(0));
+    QVERIFY(old.tracks()[0].clips[0].depthPath.isEmpty());
 }
 
 void CoreTest::emojiClipSerialization()

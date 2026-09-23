@@ -121,8 +121,9 @@ QImage GpuEffectExecutor::applyChain(const QList<ChainStep> &steps, const QImage
                 continue;
 
             const std::vector<const GlTarget *> sources{&current};
+            const PipelineAux aux{step.depth};
             GlTarget next = runPipeline(rt, gl, step.cacheKey, *step.gpu, sources, step.parameters,
-                                        timeUs, 0.0, canvasSize);
+                                        timeUs, 0.0, canvasSize, &aux);
             if (!next.isValid())
                 continue; // grace mode: skip this effect, keep the chain going
 

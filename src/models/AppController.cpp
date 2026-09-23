@@ -60,6 +60,8 @@
 #include "engine/FaceLandmarker.h"
 #include "engine/FaceSwapSource.h"
 #include "engine/FaceTrack.h"
+#include "engine/DepthSidecar.h"
+#include "engine/VdaDepth.h"
 #include "engine/ModelAsset.h"
 #include "engine/ModelClipTransform.h"
 #include "engine/ReverseProxyCache.h"
@@ -151,6 +153,7 @@ constexpr quint64 kDenoiseScanStreamId = 0xA5'11'5C'A4'00'00'00'02ull;
 constexpr quint64 kSegmentEncodeStreamId = 0xA5'11'5C'A4'00'00'00'03ull;
 constexpr quint64 kCutoutRenderStreamId = 0xA5'11'5C'A4'00'00'00'04ull;
 constexpr quint64 kFaceDetectStreamId = 0xA5'11'5C'A4'00'00'00'05ull;
+constexpr quint64 kDepthScanStreamId = 0xA5'11'5C'A4'00'00'00'09ull;
 
 QString stabilizationCacheDir()
 {
@@ -3152,6 +3155,7 @@ QVariantMap effectToMap(const drift::Effect &effect, int effectIndex, drift::Tim
                 {QStringLiteral("isBoolean"), paramDef.isBoolean()},
                 {QStringLiteral("type"), paramDef.typeName()},
                 {QStringLiteral("value"), value},
+                {QStringLiteral("group"), paramDef.group},
             };
             if (paramDef.isFilePath()) {
                 param.insert(QStringLiteral("fileFilters"), paramDef.fileFilters);
@@ -3190,6 +3194,7 @@ QVariantMap effectToMap(const drift::Effect &effect, int effectIndex, drift::Tim
          def ? def->meta.displayName : (effect.name.isEmpty() ? effect.catalogId : effect.name)},
         {QStringLiteral("params"), params},
         {QStringLiteral("compositorOnly"), def ? def->meta.compositorOnly : false},
+        {QStringLiteral("needsDepth"), def ? def->needsDepth : false},
         {QStringLiteral("missing"), def == nullptr},
         {QStringLiteral("enabled"), effect.enabled},
     };
@@ -4246,6 +4251,12 @@ QVariantMap AppController::clipToMap(const drift::Clip &clip, const drift::Clip 
         // Whether there is anything a face scan could run on at all: an unlinked adjustment or an
         // audio clip has no source, and the inspector must not offer to scan one.
         {QStringLiteral("canFaceTrack"), face.type == drift::ClipType::Video
+             || face.type == drift::ClipType::Image},
+        {QStringLiteral("hasDepth"), !face.depthPath.isEmpty()},
+        // Depth lives on the media clip an effect adjustment is pinned to, and so does its job;
+        // the inspector needs that clip's id to follow the job's progress.
+        {QStringLiteral("depthClipId"), face.id},
+        {QStringLiteral("canDepth"), face.type == drift::ClipType::Video
              || face.type == drift::ClipType::Image},
         {QStringLiteral("stabilized"), clip.stabilizeAppliedSmoothing >= 0},
         {QStringLiteral("stabilizing"), clip.stabilizing},
@@ -5322,6 +5333,7 @@ int AppController::rebindClipsToAsset(const QString &assetId, const drift::Media
             // warps tracking a face the new footage never had, and render without erroring.
             clip.faceTrackPath.clear();
             clip.faceTrackSrcOffsetUs = 0;
+            clip.depthPath.clear();
 
             // Stills have no source range to fit.
             if (asset.durationUs <= 0 || clip.srcOut <= asset.durationUs)
@@ -10431,6 +10443,279 @@ void AppController::cancelFaceDetection()
         m_faceDetectCancel.storeRelaxed(1);
 }
 
+// --- depth estimation -------------------------------------------------------
+
+namespace {
+
+// Short side of the depth map. 392 measured about 0.55 s a frame on CPU against 1.2 s at the
+// model's native 518, for depth that differs mostly in fine edges.
+constexpr int kDepthShortSide = 392;
+constexpr int kDepthShortSideHigh = 518;
+// Frames are decoded no larger than this; the model never sees more than 518 on the short side.
+constexpr int kDepthDecodeBound = 1280;
+// Bump when the sidecar written for the same inputs would change, so stale ones stop matching.
+constexpr int kDepthSchema = 1;
+
+} // namespace
+
+bool AppController::depthAvailable()
+{
+    return drift::VdaDepth::modelPresent();
+}
+
+QString AppController::estimateDepthForClip(int trackIndex, int clipIndex, bool highQuality)
+{
+    // Same redirect as detectFacesForClip: the prompt lives in the effect adjustment's inspector,
+    // and the depth belongs on the clip it is pinned to.
+    const drift::ClipRef source = sourceClipRef(trackIndex, clipIndex);
+    trackIndex = source.trackIndex;
+    clipIndex = source.clipIndex;
+    if (trackIndex < 0 || trackIndex >= m_project.tracks().size())
+        return {};
+    const drift::Track &track = m_project.tracks().at(trackIndex);
+    if (clipIndex < 0 || clipIndex >= track.clips.size())
+        return {};
+
+    const drift::Clip clip = track.clips.at(clipIndex);
+    if (clip.type != drift::ClipType::Video && clip.type != drift::ClipType::Image) {
+        setLastMessage(tr("Select a video or image clip to estimate depth for"),
+                       QStringLiteral("warning"));
+        return {};
+    }
+    if (clip.path.isEmpty() || (clip.type == drift::ClipType::Video && clip.srcOut <= clip.srcIn)) {
+        setLastMessage(tr("Clip has no video to estimate depth for"), QStringLiteral("warning"));
+        return {};
+    }
+    if (!drift::VdaDepth::modelPresent()) {
+        setLastMessage(tr("Depth estimation needs the Depth addon"), QStringLiteral("warning"));
+        return {};
+    }
+    if (m_jobs->hasActive(QStringLiteral("depth"), clip.id)) {
+        setLastMessage(tr("Depth is already being estimated for this clip"),
+                       QStringLiteral("warning"));
+        return {};
+    }
+
+    // Same reason as the face and segmentation jobs: playback would drive the decode pool from a
+    // second thread while this walks it frame by frame.
+    setPlaying(false);
+
+    const QString path = clip.path;
+    const bool still = clip.type == drift::ClipType::Image;
+    const drift::TimeUs srcIn = still ? 0 : clip.srcIn;
+    const drift::TimeUs srcOut = still ? 1 : clip.srcOut;
+    const int fps = qMax(1, m_project.fps());
+    const int rotationCorrection = clip.rotationCorrection;
+    const int shortSide = highQuality ? kDepthShortSideHigh : kDepthShortSide;
+    // Resolved by id at the end rather than by index: the timeline can be edited while this runs.
+    const QString clipId = clip.id;
+    auto result = std::make_shared<QString>();
+    QPointer<AppController> self(this);
+
+    const QString id = m_jobs->start(
+        QStringLiteral("depth"), clipId, JobRegistry::Lane::Model,
+        [self, path, still, srcIn, srcOut, fps, rotationCorrection, shortSide, clipId,
+         result](JobContext &ctx) {
+            const auto notify = [self, clipId]() {
+                QMetaObject::invokeMethod(
+                    self.data(),
+                    [self, clipId]() {
+                        if (self)
+                            emit self->depthJobChanged(clipId);
+                    },
+                    Qt::QueuedConnection);
+            };
+            ctx.progress(0.0, QObject::tr("Loading the depth model…"));
+            notify();
+
+            drift::VdaDepth &vda = drift::VdaDepth::instance();
+            if (!vda.available())
+                return ctx.fail(QStringLiteral("model_error"), vda.lastError());
+
+            // Named by what produced it, so estimating the same pixels again — this clip after an
+            // undo, or another clip cut from the same range — finds the first result.
+            const QFileInfo info(path);
+            QCryptographicHash hash(QCryptographicHash::Sha256);
+            hash.addData(QStringLiteral("%1|%2|%3|%4|%5|%6|%7|%8|%9")
+                             .arg(info.absoluteFilePath())
+                             .arg(info.size())
+                             .arg(info.lastModified().toMSecsSinceEpoch())
+                             .arg(rotationCorrection)
+                             .arg(srcIn)
+                             .arg(srcOut)
+                             .arg(fps)
+                             .arg(shortSide)
+                             .arg(vda.variant() + QLatin1Char('/') + QString::number(kDepthSchema))
+                             .toUtf8());
+            const QString dir = drift::depthCacheDir();
+            if (dir.isEmpty())
+                return ctx.fail(QStringLiteral("io_error"), QObject::tr("No cache directory"));
+            const QString sidecarPath = QDir(dir).filePath(
+                QString::fromLatin1(hash.result().toHex().left(32)) + QStringLiteral(".driftdepth"));
+            if (drift::DepthSidecar::open(sidecarPath)) {
+                *result = sidecarPath;
+                return ctx.succeed({{QStringLiteral("path"), sidecarPath},
+                                    {QStringLiteral("cached"), true}});
+            }
+
+            const drift::TimeUs step = drift::kUsPerSecond / fps;
+            const int total = still ? 1 : int((srcOut - srcIn + step - 1) / step);
+
+            drift::DepthSidecarWriter writer;
+            bool writerOpen = false;
+            QString error;
+            int written = 0;
+            std::unique_ptr<drift::VdaDepth::Pass> pass;
+            pass = vda.newPass(shortSide, [&](drift::TimeUs ptsUs, const float *disparity) {
+                if (!writerOpen) {
+                    writerOpen = writer.open(sidecarPath, pass->size(), vda.variant(), &error);
+                    if (!writerOpen)
+                        return false;
+                }
+                ++written;
+                return writer.writeFrame(ptsUs, disparity, &error) && !ctx.cancelled();
+            });
+            if (!pass)
+                return ctx.fail(QStringLiteral("model_error"), vda.lastError());
+
+            int lastPercent = -1;
+            for (int i = 0; i < total; ++i) {
+                if (ctx.cancelled())
+                    return;
+                const drift::TimeUs sourceUs = srcIn + drift::TimeUs(i) * step;
+                const QImage frame = ClipReaderPool::instance().readVideoFrame(
+                    path, kDepthScanStreamId, sourceUs, kDepthDecodeBound, kDepthDecodeBound,
+                    QString(), 15, false, rotationCorrection);
+                if (frame.isNull())
+                    return ctx.fail(QStringLiteral("decode_error"),
+                                    QObject::tr("Could not decode frame %1").arg(i));
+                if (!pass->push(frame, sourceUs)) {
+                    if (ctx.cancelled())
+                        return;
+                    return ctx.fail(QStringLiteral("model_error"),
+                                    error.isEmpty() ? pass->error() : error);
+                }
+                const int percent = (i + 1) * 100 / total;
+                if (percent != lastPercent) {
+                    lastPercent = percent;
+                    ctx.progress(double(i + 1) / total,
+                                 QObject::tr("Estimating depth, frame %1 of %2…").arg(i + 1).arg(total));
+                    notify();
+                }
+            }
+            if (!pass->flush() || !writerOpen || !writer.finish(&error)) {
+                if (ctx.cancelled())
+                    return;
+                return ctx.fail(QStringLiteral("model_error"),
+                                error.isEmpty() ? pass->error() : error);
+            }
+            *result = sidecarPath;
+            ctx.succeed({{QStringLiteral("path"), sidecarPath},
+                         {QStringLiteral("frames"), written},
+                         {QStringLiteral("cached"), false}});
+        },
+        [this, clipId, result](const QJsonObject &job) {
+            if (job.value(QStringLiteral("ok")).toBool()) {
+                finalizeDepth(clipId, *result);
+            } else {
+                const QJsonObject error = job.value(QStringLiteral("error")).toObject();
+                if (error.value(QStringLiteral("code")).toString() != QLatin1String("cancelled"))
+                    setLastMessage(error.value(QStringLiteral("message")).toString(),
+                                   QStringLiteral("error"));
+            }
+            emit depthJobChanged(clipId);
+            return QJsonObject{};
+        });
+    emit depthJobChanged(clipId);
+    setLastMessage(tr("Estimating depth…"));
+    return id;
+}
+
+void AppController::finalizeDepth(const QString &clipId, const QString &path)
+{
+    int trackIndex = -1;
+    int clipIndex = -1;
+    if (!findClipById(m_project, clipId, &trackIndex, &clipIndex)) {
+        // The clip was deleted while the job ran. The sidecar stays: it is keyed by content and a
+        // redo or another clip of the same range will find it.
+        setLastMessage(tr("Clip no longer exists"), QStringLiteral("warning"));
+        return;
+    }
+    const drift::Project before = m_project;
+    m_project.tracks()[trackIndex].clips[clipIndex].depthPath = path;
+    pushProjectEdit(before, tr("Estimate Depth"));
+    finishEdit(tr("Estimate Depth"));
+}
+
+void AppController::cancelDepthEstimation(const QString &clipId)
+{
+    for (const QJsonValue &v : m_jobs->jobs()) {
+        const QJsonObject job = v.toObject();
+        if (job.value(QStringLiteral("kind")).toString() == QLatin1String("depth")
+            && job.value(QStringLiteral("target")).toString() == clipId
+            && job.value(QStringLiteral("active")).toBool()) {
+            m_jobs->cancel(job.value(QStringLiteral("id")).toString());
+        }
+    }
+}
+
+QVariantMap AppController::depthJob(const QString &clipId) const
+{
+    const QJsonArray jobs = m_jobs->jobs();
+    for (qsizetype i = jobs.size() - 1; i >= 0; --i) {
+        const QJsonObject job = jobs.at(i).toObject();
+        if (job.value(QStringLiteral("kind")).toString() != QLatin1String("depth")
+            || job.value(QStringLiteral("target")).toString() != clipId) {
+            continue;
+        }
+        return {{QStringLiteral("active"), job.value(QStringLiteral("active")).toBool()},
+                {QStringLiteral("progress"), job.value(QStringLiteral("progress")).toDouble()},
+                {QStringLiteral("status"), job.value(QStringLiteral("status")).toString()},
+                {QStringLiteral("error"), job.value(QStringLiteral("error"))
+                                              .toObject()
+                                              .value(QStringLiteral("message"))
+                                              .toString()}};
+    }
+    return {};
+}
+
+void AppController::clearDepth(int trackIndex, int clipIndex)
+{
+    const drift::ClipRef source = sourceClipRef(trackIndex, clipIndex);
+    trackIndex = source.trackIndex;
+    clipIndex = source.clipIndex;
+    if (trackIndex < 0 || trackIndex >= m_project.tracks().size())
+        return;
+    if (clipIndex < 0 || clipIndex >= m_project.tracks().at(trackIndex).clips.size())
+        return;
+    if (m_project.tracks().at(trackIndex).clips.at(clipIndex).depthPath.isEmpty())
+        return;
+
+    // The sidecar stays on disk so undo can bring it back.
+    const drift::Project before = m_project;
+    m_project.tracks()[trackIndex].clips[clipIndex].depthPath.clear();
+    pushProjectEdit(before, tr("Clear Depth"));
+    finishEdit(tr("Clear Depth"));
+}
+
+double AppController::sampleDepthAt(int trackIndex, int clipIndex, double nx, double ny,
+                                    double atSeconds)
+{
+    const drift::ClipRef source = sourceClipRef(trackIndex, clipIndex);
+    if (source.trackIndex < 0 || source.trackIndex >= m_project.tracks().size())
+        return -1.0;
+    const drift::Track &track = m_project.tracks().at(source.trackIndex);
+    if (source.clipIndex < 0 || source.clipIndex >= track.clips.size())
+        return -1.0;
+    const drift::Clip &clip = track.clips.at(source.clipIndex);
+    const std::shared_ptr<const drift::DepthSidecar> sidecar =
+        drift::loadDepthSidecarCached(clip.depthPath);
+    if (!sidecar)
+        return -1.0;
+    const drift::TimeUs at = atSeconds < 0.0 ? m_playheadUs : drift::secondsToUs(atSeconds);
+    return sidecar->sample(clip.timelineToSourceUs(at), qBound(0.0, nx, 1.0), qBound(0.0, ny, 1.0));
+}
+
 void AppController::clearFaceTrack(int trackIndex, int clipIndex)
 {
     // Same redirect as detectFacesForClip: the caller is the effect adjustment's inspector.
@@ -14373,7 +14658,11 @@ void AppController::setClipOrientationTo(drift::Clip &clip, int degrees)
 {
     const drift::MediaAsset *asset = m_project.asset(clip.assetId);
     const int probed = asset ? asset->rotationDegrees : 0;
-    clip.rotationCorrection = ((degrees - probed) % 360 + 360) % 360;
+    const int correction = ((degrees - probed) % 360 + 360) % 360;
+    // Depth is estimated on upright frames; turned, it would no longer line up with them.
+    if (correction != clip.rotationCorrection)
+        clip.depthPath.clear();
+    clip.rotationCorrection = correction;
 }
 
 void AppController::setClipOrientation(int trackIndex, int clipIndex, int degrees)
@@ -16210,6 +16499,69 @@ void AppController::removeMaskPoint(int trackIndex, int clipIndex, int pointInde
     writeClipMask(trackIndex, clipIndex, mask);
     pushProjectEdit(before, tr("Remove mask point"));
     finishEdit(tr("Mask point removed"));
+}
+
+QVariantMap AppController::depthEffectEditorState() const
+{
+    QVariantMap out;
+    // The effect stack of a media clip lives on the adjustment pinned to it, and the depth on the
+    // media clip itself: resolve both from whichever of the two is selected.
+    const drift::ClipRef source = sourceClipRef(m_selectedTrack, m_selectedClip);
+    if (source.trackIndex < 0 || source.trackIndex >= m_project.tracks().size())
+        return out;
+    const drift::Track &track = m_project.tracks().at(source.trackIndex);
+    if (source.clipIndex < 0 || source.clipIndex >= track.clips.size())
+        return out;
+    const drift::Clip &media = track.clips.at(source.clipIndex);
+    // A standalone adjustment has no depth of its own, and a clip off the playhead has no pixels
+    // on screen to put handles against.
+    if (media.type == drift::ClipType::Adjustment || !media.containsTime(m_playheadUs))
+        return out;
+    const drift::Clip *host =
+        effectHostClip(source.trackIndex, source.clipIndex, drift::AdjustmentKind::VideoEffects);
+    const drift::Clip &stack = host ? *host : media;
+
+    QVariantList effects;
+    const drift::TimeUs relative = m_playheadUs - stack.timelineStart;
+    for (int i = 0; i < stack.effects.size(); ++i) {
+        const drift::Effect &effect = stack.effects.at(i);
+        if (!effect.enabled)
+            continue;
+        if (effect.catalogId != QLatin1String("depth.relight")
+            && effect.catalogId != QLatin1String("depth.focus")) {
+            continue;
+        }
+        const EffectPresetEntry *def = effectDefForId(effect.catalogId);
+        if (!def)
+            continue;
+        const QMap<QString, QVariant> params =
+            resolvedEffectParameters(effect.resolvedAt(relative), *def);
+        QVariantMap map;
+        for (auto it = params.constBegin(); it != params.constEnd(); ++it)
+            map.insert(it.key(), it.value());
+        effects.append(QVariantMap{{QStringLiteral("index"), i},
+                                   {QStringLiteral("catalogId"), effect.catalogId},
+                                   {QStringLiteral("params"), map}});
+    }
+    if (effects.isEmpty())
+        return out;
+
+    // Effect coordinates are normalized to the clip's own frame, the same frame masks use.
+    const drift::TimeUs clipRelative = m_playheadUs - media.timelineStart;
+    const auto value = [&](const drift::KeyframeTrack<double> &kt, double fallback) {
+        return kt.isEmpty() ? fallback : kt.evaluateAt(clipRelative);
+    };
+    out.insert(QStringLiteral("hasFrame"), true);
+    out.insert(QStringLiteral("canvasWidth"), m_project.width());
+    out.insert(QStringLiteral("canvasHeight"), m_project.height());
+    out.insert(QStringLiteral("x"), value(media.transformX, 0.0));
+    out.insert(QStringLiteral("y"), value(media.transformY, 0.0));
+    out.insert(QStringLiteral("width"), value(media.transformW, m_project.width()));
+    out.insert(QStringLiteral("height"), value(media.transformH, m_project.height()));
+    out.insert(QStringLiteral("rotation"), value(media.rotation, 0.0));
+    out.insert(QStringLiteral("hasDepth"), !media.depthPath.isEmpty());
+    out.insert(QStringLiteral("effects"), effects);
+    return out;
 }
 
 QVariantMap AppController::maskEditorState() const
@@ -21859,6 +22211,7 @@ void AppController::remapProjectPaths(const QHash<QString, QString> &remap)
                 repoint(clip.mask.mediaPath);
                 repoint(clip.mask.mediaFgrPath);
                 repoint(clip.faceTrackPath);
+                repoint(clip.depthPath);
                 for (drift::Effect &effect : clip.effects) {
                     const EffectPresetEntry *def = effectDefForId(effect.catalogId);
                     if (!def)
@@ -23013,7 +23366,7 @@ QJsonObject mcpDetailRow(const QVariantMap &clipMap, const QVariantMap &transfor
         if (m.value(QLatin1String(which)).toMap().value(QStringLiteral("kind")).toString() == QLatin1String("none"))
             m.remove(QLatin1String(which));
     }
-    for (const char *key : {"filmstripPath", "thumbnailPath", "canFaceTrack"})
+    for (const char *key : {"filmstripPath", "thumbnailPath", "canFaceTrack", "canDepth", "depthClipId"})
         m.remove(QLatin1String(key));
     if (!m.value(QStringLiteral("hasFaceTrack")).toBool()) {
         m.remove(QStringLiteral("faceTrackHasContours"));
@@ -24286,6 +24639,8 @@ QJsonObject AppController::mcpAiCapabilities() const
          "transcribe — measured word timings (per language) for cut_words and word-exact captions"},
         {"diarize-model", drift::SpeakerDiarizer::modelPresent(),
          "diarize / transcribe({diarize:true}) — who is speaking when"},
+        {"depth-model", drift::VdaDepth::modelPresent(),
+         "depth estimation for the depth effects — 3D relighting, depth of field, fog, occlusion"},
     };
 
     QJsonArray models;
