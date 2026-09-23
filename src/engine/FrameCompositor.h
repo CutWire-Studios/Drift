@@ -27,6 +27,9 @@ public:
         // Clip id to omit from the frame (the text clip being edited in place on
         // the preview). Empty renders everything.
         QString skipClipId;
+        // Read low-res preview proxies where they exist. Only live playback sets it; export and
+        // every other caller must see the original pixels.
+        bool allowProxies = false;
     };
 
     void setProject(const drift::Project *project) { m_project = project; }

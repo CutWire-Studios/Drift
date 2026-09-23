@@ -4,6 +4,7 @@
 #include "engine/ClipReaderPool.h"
 #include "engine/GpuCompositor.h"
 #include "engine/HwAccel.h"
+#include "engine/ReverseProxyCache.h"
 
 #include <QSettings>
 #include <QVariantMap>
@@ -167,6 +168,11 @@ ClipReader::HardwareDecodeMode decodeModeFromString(const QString &mode)
     return ClipReader::HardwareDecodeMode::Auto;
 }
 
+bool isKnownProxySize(int shortSide)
+{
+    return shortSide == 360 || shortSide == 540 || shortSide == 720 || shortSide == 1080;
+}
+
 QString loadSavedDecodeMode()
 {
     const QString saved = QSettings().value(QStringLiteral("preview/decodeMode")).toString();
@@ -196,6 +202,13 @@ PlaybackEngine::PlaybackEngine(QObject *parent)
     ClipReaderPool::instance().setHardwareDecodeMode(decodeModeFromString(m_decodeMode),
                                                      decodeBackendFromString(m_decodeMode));
     m_hwFallbackCount = ClipReader::hardwareFallbackCount();
+
+    QSettings settings;
+    drift::ReverseProxyCache::previewProxiesEnabled =
+        settings.value(QStringLiteral("preview/useProxies"), true).toBool();
+    if (const int size = settings.value(QStringLiteral("preview/proxySize")).toInt();
+        isKnownProxySize(size))
+        drift::ReverseProxyCache::previewProxyShortSide = size;
 
     m_compositor.setDropLateFrames(true);
     m_compositor.setAdaptiveQuality(isAutoQuality());
@@ -426,6 +439,36 @@ QVariantList PlaybackEngine::decodeModes() const
                warn ? offGpuDecodeNote(backend, match) : QString());
     }
     return modes;
+}
+
+bool PlaybackEngine::useProxies() const
+{
+    return drift::ReverseProxyCache::previewProxiesEnabled;
+}
+
+void PlaybackEngine::setUseProxies(bool use)
+{
+    if (drift::ReverseProxyCache::previewProxiesEnabled == use)
+        return;
+    drift::ReverseProxyCache::previewProxiesEnabled = use;
+    QSettings().setValue(QStringLiteral("preview/useProxies"), use);
+    emit useProxiesChanged();
+    refreshFrame();
+}
+
+int PlaybackEngine::proxySize() const
+{
+    return drift::ReverseProxyCache::previewProxyShortSide;
+}
+
+void PlaybackEngine::setProxySize(int shortSide)
+{
+    if (!isKnownProxySize(shortSide) || drift::ReverseProxyCache::previewProxyShortSide == shortSide)
+        return;
+    drift::ReverseProxyCache::previewProxyShortSide = shortSide;
+    QSettings().setValue(QStringLiteral("preview/proxySize"), shortSide);
+    emit proxySizeChanged();
+    refreshFrame();
 }
 
 void PlaybackEngine::setDecodeMode(const QString &mode)
@@ -847,6 +890,7 @@ FrameCompositor::RenderOptions PlaybackEngine::playbackRenderOptions() const
     if (!m_playing)
         options.skipClipId = m_editingClipId;
 
+    options.allowProxies = true;
     return options;
 }
 

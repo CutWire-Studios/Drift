@@ -1567,6 +1567,10 @@
         <translation>Ese archivo ya está en este proyecto.</translation>
     </message>
     <message>
+        <source>Converting %1 to an edit-friendly format…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>That media is no longer in this project.</source>
         <translation>Ese medio ya no está en este proyecto.</translation>
     </message>
@@ -2227,6 +2231,10 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Could not create a proxy for %1: %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Your graphics driver only provides %1; the preview needs OpenGL 3.3. See Help → Debug info.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -2257,6 +2265,10 @@
     <message>
         <source>Saving…</source>
         <translation>Guardando…</translation>
+    </message>
+    <message>
+        <source>Converting…</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Saving media…</source>
@@ -3815,6 +3827,10 @@
     <message>
         <source>Replaced with “%1”.</source>
         <translation>Reemplazado por “%1”.</translation>
+    </message>
+    <message>
+        <source>“%1” is now in an edit-friendly format.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Saved “%1”. Drag it onto the timeline.</source>
@@ -6775,6 +6791,26 @@
         <translation>Prueba con un nombre diferente.</translation>
     </message>
     <message>
+        <source>Creating proxy for %1 (%2 more)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Creating proxy for %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Stop creating proxies</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Converting %1 to an edit-friendly format</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Stop converting</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Rename…</source>
         <translation>Cambiar nombre…</translation>
     </message>
@@ -6790,6 +6826,28 @@
         <source>Replace media…</source>
         <translation>Reemplazar medio…</translation>
     </message>
+    <message numerus="yes">
+        <source>Create %n proxies</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Create proxy</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>Remove %n proxies</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Remove proxy</source>
+        <translation type="unfinished"></translation>
+    </message>
     <message>
         <source>Export image…</source>
         <translation>Exportar imagen…</translation>
@@ -6797,6 +6855,18 @@
     <message>
         <source>Remove from project</source>
         <translation>Eliminar del proyecto</translation>
+    </message>
+    <message>
+        <source>Proxy</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Edit-friendly</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Converted to a constant frame rate for smooth editing</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Collapse folder</source>
@@ -6844,6 +6914,10 @@
             <numerusform>Mover %n elementos a la carpeta…</numerusform>
         </translation>
     </message>
+    <message>
+        <source>Convert to edit-friendly format</source>
+        <translation type="unfinished"></translation>
+    </message>
     <message numerus="yes">
         <source>Remove %n items from project</source>
         <translation>
@@ -6884,6 +6958,28 @@
     </message>
     <message>
         <source>Could not read that file — the format is not supported by this build.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%n clip(s) may play back slowly. A proxy makes previewing smoother; export still uses the original.</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Create proxies</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%n clip(s) have a variable frame rate, which can drift out of sync with audio. Convert them to an edit-friendly format to fix it.</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Convert</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -8161,6 +8257,129 @@ Si la reproducción se corta, prueba con otra opción.</translation>
     </message>
 </context>
 <context>
+    <name>ProxyEncoder</name>
+    <message>
+        <source>Could not create the proxy container</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>H.264 encoder not available</source>
+        <translation type="unfinished">Codificador H.264 no disponible</translation>
+    </message>
+    <message>
+        <source>Could not create the proxy stream</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Could not allocate the proxy encoder</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Could not open the proxy encoder</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Could not open the proxy file for writing</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Could not write the proxy header</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Could not allocate proxy frame buffers</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Could not allocate the proxy frame</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Proxy writer is not open</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Could not convert a frame for the proxy encoder</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Could not make the proxy frame writable</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Proxy encoder rejected a frame</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Failed to read an encoded proxy packet</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Failed to write a proxy packet</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Could not flush the proxy encoder</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Could not write the proxy trailer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Could not move the proxy into place</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Could not open the clip</source>
+        <translation type="unfinished">No se pudo abrir el clip</translation>
+    </message>
+    <message>
+        <source>Could not read the clip&apos;s streams</source>
+        <translation type="unfinished">No se pudieron leer los flujos del clip</translation>
+    </message>
+    <message>
+        <source>The clip has no video</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No decoder for this clip</source>
+        <translation type="unfinished">No hay descodificador para este clip</translation>
+    </message>
+    <message>
+        <source>Could not allocate the decoder</source>
+        <translation type="unfinished">No se pudo asignar el descodificador</translation>
+    </message>
+    <message>
+        <source>Could not configure the decoder</source>
+        <translation type="unfinished">No se pudo configurar el descodificador</translation>
+    </message>
+    <message>
+        <source>Could not open the decoder</source>
+        <translation type="unfinished">No se pudo abrir el descodificador</translation>
+    </message>
+    <message>
+        <source>The clip has no usable video size</source>
+        <translation type="unfinished">El clip no tiene un tamaño de vídeo utilizable</translation>
+    </message>
+    <message>
+        <source>Clips with transparency can&apos;t use a proxy</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Could not allocate decode buffers</source>
+        <translation type="unfinished">No se pudieron asignar los búferes de descodificación</translation>
+    </message>
+    <message>
+        <source>Proxy cancelled</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No frames could be decoded from this clip</source>
+        <translation type="unfinished">No se pudieron descodificar fotogramas de este clip</translation>
+    </message>
+</context>
+<context>
     <name>QObject</name>
     <message>
         <source>Measuring loudness…</source>
@@ -8413,112 +8632,8 @@ Si la reproducción se corta, prueba con otra opción.</translation>
 <context>
     <name>ReverseRenderer</name>
     <message>
-        <source>Could not create the reversed container</source>
-        <translation>No se pudo crear el contenedor invertido</translation>
-    </message>
-    <message>
-        <source>H.264 encoder not available</source>
-        <translation>Codificador H.264 no disponible</translation>
-    </message>
-    <message>
-        <source>Could not create the reversed stream</source>
-        <translation>No se pudo crear el flujo invertido</translation>
-    </message>
-    <message>
-        <source>Could not allocate the reversed encoder</source>
-        <translation>No se pudo asignar el codificador invertido</translation>
-    </message>
-    <message>
-        <source>Could not open the reversed encoder</source>
-        <translation>No se pudo abrir el codificador invertido</translation>
-    </message>
-    <message>
-        <source>Could not open the reversed file for writing</source>
-        <translation>No se pudo abrir el archivo invertido para escritura</translation>
-    </message>
-    <message>
-        <source>Could not write the reversed header</source>
-        <translation>No se pudo escribir la cabecera invertida</translation>
-    </message>
-    <message>
-        <source>Could not allocate reversed frame buffers</source>
-        <translation>No se pudieron asignar los búferes de fotogramas invertidos</translation>
-    </message>
-    <message>
-        <source>Could not allocate the reversed frame</source>
-        <translation>No se pudo asignar el fotograma invertido</translation>
-    </message>
-    <message>
-        <source>Reversed writer is not open</source>
-        <translation>El escritor invertido no está abierto</translation>
-    </message>
-    <message>
-        <source>Could not convert a frame for the reversed encoder</source>
-        <translation>No se pudo convertir un fotograma para el codificador invertido</translation>
-    </message>
-    <message>
-        <source>Could not make the reversed frame writable</source>
-        <translation>No se pudo hacer escribible el fotograma invertido</translation>
-    </message>
-    <message>
-        <source>Reversed encoder rejected a frame</source>
-        <translation>El codificador invertido rechazó un fotograma</translation>
-    </message>
-    <message>
-        <source>Failed to read an encoded reversed packet</source>
-        <translation>Error al leer un paquete invertido codificado</translation>
-    </message>
-    <message>
-        <source>Failed to write a reversed packet</source>
-        <translation>Error al escribir un paquete invertido</translation>
-    </message>
-    <message>
-        <source>Could not flush the reversed encoder</source>
-        <translation>No se pudo vaciar el búfer del codificador invertido</translation>
-    </message>
-    <message>
-        <source>Could not write the reversed trailer</source>
-        <translation>No se pudo escribir la cola invertida</translation>
-    </message>
-    <message>
-        <source>Could not move the reversed clip into place</source>
-        <translation>No se pudo colocar el clip invertido en su destino</translation>
-    </message>
-    <message>
         <source>Nothing to reverse</source>
         <translation>Nada que invertir</translation>
-    </message>
-    <message>
-        <source>Could not open the clip</source>
-        <translation>No se pudo abrir el clip</translation>
-    </message>
-    <message>
-        <source>Could not read the clip&apos;s streams</source>
-        <translation>No se pudieron leer los flujos del clip</translation>
-    </message>
-    <message>
-        <source>The clip has no video to reverse</source>
-        <translation>El clip no tiene vídeo para invertir</translation>
-    </message>
-    <message>
-        <source>No decoder for this clip</source>
-        <translation>No hay descodificador para este clip</translation>
-    </message>
-    <message>
-        <source>Could not allocate the decoder</source>
-        <translation>No se pudo asignar el descodificador</translation>
-    </message>
-    <message>
-        <source>Could not configure the decoder</source>
-        <translation>No se pudo configurar el descodificador</translation>
-    </message>
-    <message>
-        <source>Could not open the decoder</source>
-        <translation>No se pudo abrir el descodificador</translation>
-    </message>
-    <message>
-        <source>The clip has no usable video size</source>
-        <translation>El clip no tiene un tamaño de vídeo utilizable</translation>
     </message>
     <message>
         <source>Could not allocate decode buffers</source>
@@ -8783,6 +8898,38 @@ Si la reproducción se corta, prueba con otra opción.</translation>
     <message>
         <source>Blur strength</source>
         <translation type="unfinished">Intensidad del desenfoque</translation>
+    </message>
+    <message>
+        <source>Use proxies for preview</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Play clips from their low-resolution proxies where one exists. Export always uses the original media.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Proxy resolution</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>360p</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>540p</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>720p</source>
+        <translation type="unfinished">720p</translation>
+    </message>
+    <message>
+        <source>1080p</source>
+        <translation type="unfinished">1080p</translation>
+    </message>
+    <message>
+        <source>Size of new proxies. Proxies made at another size are not used until you create them again.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Faster preview (experimental)</source>
@@ -10921,6 +11068,22 @@ Si la reproducción se corta, prueba con otra opción.</translation>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Proxy</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Previewing from a low-resolution proxy. Export uses the original.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Edit-friendly</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Converted to a constant frame rate for smooth editing</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Subtitles</source>
         <translation>Subtítulos</translation>
     </message>
@@ -10942,6 +11105,10 @@ Si la reproducción se corta, prueba con otra opción.</translation>
     </message>
     <message>
         <source>Separate all audio tracks</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Convert to edit-friendly format</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -11873,6 +12040,13 @@ Si la reproducción se corta, prueba con otra opción.</translation>
     </message>
     <message>
         <source>Visible</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>VfrWarning</name>
+    <message>
+        <source>Variable frame rate. This clip can drift out of sync with its audio. Right-click it and choose Convert to edit-friendly format.</source>
         <translation type="unfinished"></translation>
     </message>
 </context>

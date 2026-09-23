@@ -23,10 +23,16 @@ struct MediaEditSpec
     // a bin-preview rotation override (0/90/180/270) so the crop rectangle — drawn in the QML
     // preview against that corrected orientation — lands on the same pixels here.
     int rotationOverride = -1;
+    // Video: land frames on the nearest standard rate (23.976 ... 60) to the source's average
+    // instead of the average itself. Either way every output frame sits on a constant-rate grid,
+    // duplicating or dropping source frames as their timestamps call for, so a variable-rate
+    // source keeps its sync with the audio.
+    bool conformFrameRate = false;
 };
 
 // Rewrites `inputPath` into `outputPath` with the requested trim and crop. Images become PNG,
-// audio becomes FLAC, video becomes H.264 MP4 (AAC audio kept when the source has it).
+// audio becomes FLAC, video becomes constant-frame-rate H.264 MP4 (AAC audio kept when the source
+// has it), 10-bit when the source is, with the source's colour tags.
 //
 // onProgress is called with 0..1 and returns false to cancel. Cancel and failure leave no
 // finished file behind — a `.part` is removed.

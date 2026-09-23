@@ -47,6 +47,18 @@
 
 namespace {
 
+// RenderOptions::allowProxies for the prepare() running on this thread. Preview and export can
+// composite concurrently on different threads, and the flag is needed several helpers deep, so
+// it rides a thread_local rather than every helper's signature.
+thread_local bool t_allowProxies = false;
+
+struct AllowProxiesScope
+{
+    explicit AllowProxiesScope(bool allow) : previous(t_allowProxies) { t_allowProxies = allow; }
+    ~AllowProxiesScope() { t_allowProxies = previous; }
+    bool previous;
+};
+
 // The source time a mask's media is read at. Deliberately the *host clip's* source time, not the
 // mask adjustment's own span: a segmentation matte is traced from one clip's source range, so a
 // later head-trim (which moves srcIn but not mediaSrcOffsetUs) or a speed change would otherwise
@@ -141,7 +153,7 @@ void collectActivePaths(const drift::Project *project, drift::TimeUs timelineUs,
                 && clip.type != drift::ClipType::Text) {
                 // The reversed proxy, when there is one, is what the composite actually reads —
                 // retaining clip.path instead would tear down the proxy's worker every frame.
-                videoPaths.insert(drift::videoReadPath(clip));
+                videoPaths.insert(drift::videoReadPath(clip, t_allowProxies));
             }
             if (track.type == drift::TrackType::Audio
                 || (track.type == drift::TrackType::Video && clip.type == drift::ClipType::Video)) {
@@ -187,7 +199,7 @@ QList<ClipReaderPool::VideoRequest> collectVideoRequests(const drift::Project *p
             if (clip.type != drift::ClipType::Video || clip.path.isEmpty())
                 continue;
 
-            const drift::VideoRead read = drift::resolveVideoRead(clip, timelineUs);
+            const drift::VideoRead read = drift::resolveVideoRead(clip, timelineUs, t_allowProxies);
             requests.append(ClipReaderPool::VideoRequest{read.path,
                                                         ClipReaderPool::streamIdForClip(clip.id),
                                                         read.sourceUs, maxWidth, maxHeight,
@@ -400,7 +412,7 @@ QImage decodeClipMediaFrame(const drift::Clip &clip, drift::TimeUs timelineUs, i
         return decodedStillImage(clip.path, maxWidth, maxHeight);
 
     if (clip.type == drift::ClipType::Video) {
-        const drift::VideoRead read = drift::resolveVideoRead(clip, timelineUs);
+        const drift::VideoRead read = drift::resolveVideoRead(clip, timelineUs, t_allowProxies);
         return ClipReaderPool::instance().readVideoFrame(
             read.path, ClipReaderPool::streamIdForClip(clip.id), read.sourceUs, maxWidth, maxHeight,
             QString(), 15, false, clip.rotationCorrection);
@@ -599,7 +611,7 @@ void fillGpuLayerPixels(GpuLayer &layer, const drift::Clip &clip, drift::TimeUs 
 
     const drift::Effect *timeEcho = findTimeEchoEffect(clip.effects);
     if (!timeEcho && clip.type == drift::ClipType::Video) {
-        const drift::VideoRead read = drift::resolveVideoRead(clip, timelineUs);
+        const drift::VideoRead read = drift::resolveVideoRead(clip, timelineUs, t_allowProxies);
         const PreviewVideoFrame video = ClipReaderPool::instance().readPreviewVideoFrame(
             read.path, ClipReaderPool::streamIdForClip(clip.id), read.sourceUs, maxWidth, maxHeight,
             QString(), 15, false, clip.rotationCorrection);
@@ -1135,6 +1147,7 @@ bool FrameCompositor::prepare(drift::TimeUs timelineUs, const RenderOptions &opt
     if (width <= 0 || height <= 0)
         return false;
 
+    const AllowProxiesScope proxies(options.allowProxies);
     QSet<QString> videoPaths;
     QSet<QString> audioPaths;
     collectActivePaths(m_project, timelineUs, videoPaths, audioPaths);

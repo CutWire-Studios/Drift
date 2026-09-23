@@ -49,6 +49,7 @@ Item {
                 required property int repeats
                 required property int timeout
                 required property bool exiting
+                required property string actionText
 
                 width: parent.width
                 height: toastRow.implicitHeight + Theme.spacingXl * 2
@@ -101,8 +102,9 @@ Item {
 
                     Text {
                         anchors.verticalCenter: parent.verticalCenter
-                        width: parent.width - parent.spacing * 2
+                        width: parent.width - parent.spacing * (actionButton.visible ? 3 : 2)
                                - Theme.iconSizeBase - dismissButton.width
+                               - (actionButton.visible ? actionButton.width : 0)
                         text: toast.repeats > 1
                               ? qsTr("%1  (×%2)").arg(toast.message).arg(toast.repeats)
                               : toast.message
@@ -112,6 +114,15 @@ Item {
                         wrapMode: Text.WordWrap
                         maximumLineCount: 3
                         elide: Text.ElideRight
+                    }
+
+                    ThemedButton {
+                        id: actionButton
+                        anchors.verticalCenter: parent.verticalCenter
+                        visible: toast.actionText.length > 0
+                        text: toast.actionText
+                        variant: "primary"
+                        onClicked: Toasts.trigger(toast.toastId)
                     }
 
                     IconButton {

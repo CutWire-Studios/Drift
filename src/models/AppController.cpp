@@ -732,9 +732,22 @@ AppController::AppController(AssetLibrary *assetLibrary, QObject *parent)
     connect(&m_waveformBlocks, &WaveformBlockCache::rangeReady, this,
             &AppController::waveformRangeReady);
 
+    // Queued: the finished job's own bookkeeping is still unwinding when this is emitted.
+    connect(this, &AppController::assetEditFinished, this, &AppController::startNextConversion,
+            Qt::QueuedConnection);
+
     if (m_assetLibrary) {
         connect(m_assetLibrary, &AssetLibrary::assetSourceProbed, this,
                 &AppController::finalizeAssetReplace);
+        // No pushProjectEdit: a proxy is a cache, not project content. This only asks the
+        // compositor to re-read, which now resolves to (or away from) the proxy.
+        connect(m_assetLibrary, &AssetLibrary::proxiesChanged, this,
+                &AppController::emitPreviewFrame);
+        connect(m_assetLibrary, &AssetLibrary::proxyFailed, this,
+                [this](const QString &name, const QString &error) {
+                    setLastMessage(tr("Could not create a proxy for %1: %2").arg(name, error),
+                                   QStringLiteral("error"));
+                });
     }
 
     m_undoStack.setUndoLimit(kMaxUndoSteps);
@@ -4875,6 +4888,7 @@ bool AppController::exportAssetImage(int assetIndex, const QUrl &url)
 
 void AppController::cancelAssetEdit()
 {
+    m_conversionQueue.clear();
     if (m_editingAsset)
         m_assetEditCancel.storeRelaxed(1);
 }
@@ -4930,17 +4944,6 @@ bool AppController::saveAssetEdit(int assetIndex, double inSeconds, double outSe
         return false;
     }
 
-    setPlaying(false);
-
-    m_assetEditCancel.storeRelaxed(0);
-    m_assetEditProgress = 0.0;
-    m_assetEditStatus = tr("Saving…");
-    m_editingAsset = true;
-    m_editingAssetId = assetId;
-    m_assetEditKeepName = name;
-    emit assetEditChanged();
-    setLastMessage(tr("Saving media…"));
-
     drift::MediaEditSpec spec;
     spec.inputPath = path;
     spec.outputPath = outPath;
@@ -4956,7 +4959,27 @@ bool AppController::saveAssetEdit(int assetIndex, double inSeconds, double outSe
     // crops will not be the one the user saw and dragged a box around.
     spec.rotationOverride = asset.value(QStringLiteral("effectiveRotation"), -1).toInt();
 
-    (void)QtConcurrent::run([this, spec, assetIndex]() {
+    startAssetEditJob(assetId, name, spec, false);
+    return true;
+}
+
+void AppController::startAssetEditJob(const QString &assetId, const QString &name,
+                                      const drift::MediaEditSpec &spec, bool conversion)
+{
+    setPlaying(false);
+
+    m_assetEditCancel.storeRelaxed(0);
+    m_assetEditProgress = 0.0;
+    m_assetEditStatus = conversion ? tr("Converting…") : tr("Saving…");
+    m_editingAsset = true;
+    m_editingAssetId = assetId;
+    m_assetEditKeepName = name;
+    m_assetEditIsConversion = conversion;
+    emit assetEditChanged();
+    setLastMessage(conversion ? tr("Converting %1 to an edit-friendly format…").arg(name)
+                              : tr("Saving media…"));
+
+    (void)QtConcurrent::run([this, spec, assetId]() {
         QString error;
         const bool ok = drift::editMedia(spec, &error, [this](double fraction) {
             if (m_assetEditCancel.loadRelaxed() != 0)
@@ -4973,7 +4996,7 @@ bool AppController::saveAssetEdit(int assetIndex, double inSeconds, double outSe
 
         QMetaObject::invokeMethod(
             this,
-            [this, ok, error, spec, assetIndex]() {
+            [this, ok, error, spec, assetId]() {
                 if (!ok) {
                     QFile::remove(spec.outputPath);
                     m_editingAsset = false;
@@ -4990,7 +5013,11 @@ bool AppController::saveAssetEdit(int assetIndex, double inSeconds, double outSe
 
                 m_assetEditStatus = tr("Updating the library…");
                 emit assetEditChanged();
-                if (!replaceAssetSource(assetIndex, QUrl::fromLocalFile(spec.outputPath))) {
+                // By id: a conversion runs in the background, and the bin may have been sorted
+                // or had rows removed since it started.
+                const int assetIndex = m_assetLibrary ? m_assetLibrary->indexOfId(assetId) : -1;
+                if (assetIndex < 0
+                    || !replaceAssetSource(assetIndex, QUrl::fromLocalFile(spec.outputPath))) {
                     QFile::remove(spec.outputPath);
                     m_editingAsset = false;
                     m_editingAssetId.clear();
@@ -5003,7 +5030,44 @@ bool AppController::saveAssetEdit(int assetIndex, double inSeconds, double outSe
             },
             Qt::QueuedConnection);
     });
-    return true;
+}
+
+void AppController::convertAssetsToConstantFrameRate(const QStringList &assetIds)
+{
+    for (const QString &id : assetIds) {
+        if (!m_conversionQueue.contains(id) && id != m_editingAssetId)
+            m_conversionQueue.append(id);
+    }
+    if (!m_editingAsset)
+        startNextConversion();
+}
+
+void AppController::startNextConversion()
+{
+    while (!m_conversionQueue.isEmpty() && !m_editingAsset && m_assetLibrary) {
+        const QString assetId = m_conversionQueue.takeFirst();
+        const int assetIndex = m_assetLibrary->indexOfId(assetId);
+        const QVariantMap asset = m_assetLibrary->assetAt(assetIndex);
+        const QString path = asset.value(QStringLiteral("path")).toString();
+        if (asset.value(QStringLiteral("kind")).toString() != QLatin1String("video")
+            || !QFileInfo(path).isFile())
+            continue;
+        const QString outPath = drift::newEditedMediaPath(m_project.id(), QStringLiteral("video"));
+        if (outPath.isEmpty()) {
+            setLastMessage(tr("Could not create an output file"), QStringLiteral("error"));
+            m_conversionQueue.clear();
+            return;
+        }
+
+        drift::MediaEditSpec spec;
+        spec.inputPath = path;
+        spec.outputPath = outPath;
+        spec.kind = QStringLiteral("video");
+        spec.conformFrameRate = true;
+        // Baked upright the way a crop is, so the bin's rotation correction carries over.
+        spec.rotationOverride = asset.value(QStringLiteral("effectiveRotation"), -1).toInt();
+        startAssetEditJob(assetId, asset.value(QStringLiteral("name")).toString(), spec, true);
+    }
 }
 
 void AppController::finalizeAssetReplace(const QString &assetId, const drift::MediaAsset &filled,
@@ -5068,6 +5132,13 @@ void AppController::finalizeAssetReplace(const QString &assetId, const drift::Me
     drift::MediaAsset replacement = filled;
     replacement.name = newName;
     replacement.sourceUri = replacementSourceUri;
+    // Every edit job writes onto a constant-rate grid, so its output needs no check. The
+    // edit-friendly mark comes from the conversion, and a later crop of converted media keeps it.
+    if (fromEdit) {
+        replacement.frameRateKnown = true;
+        replacement.variableFrameRate = false;
+        replacement.editFriendly = m_assetEditIsConversion || current->editFriendly;
+    }
     // Captured before applyProbedSource overwrites `current` in place — rebindClipsToAsset needs
     // to know what the bin's correction *was* to rebase each clip's own by how much it changed.
     const int oldBinCorrection = drift::rotationCorrectionOf(*current);

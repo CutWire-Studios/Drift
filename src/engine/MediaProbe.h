@@ -25,6 +25,8 @@ struct StreamInfo {
 
     // Video has an alpha plane (yuva*, packed RGBA/ARGB, VP8/VP9+Alpha, ProRes 4444).
     bool hasAlpha = false;
+    // Bits per luma sample (8, 10, 12...), 0 when the pixel format is not known at probe time.
+    int bitDepth = 0;
 
     // Stream index in AVFormatContext
     int streamIndex = 0;
@@ -54,6 +56,10 @@ class MediaProbe
 public:
     static MediaInfo probe(const QString &path);
     static QList<StreamInfo> audioStreams(const QString &path);
+    // Reads the first few seconds of video packets (no decode) and reports whether their
+    // spacing is irregular — phone and screen recordings, mostly. Header frame rates alone can't
+    // tell: an interlaced CFR file also has r_frame_rate != avg_frame_rate. Blocking.
+    static bool isVariableFrameRate(const QString &path);
 };
 
 struct AVStream;

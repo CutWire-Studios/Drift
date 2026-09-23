@@ -1,6 +1,8 @@
 #include "MediaProbe.h"
 
+#include <algorithm>
 #include <cmath>
+#include <vector>
 
 extern "C" {
 #include <libavcodec/codec_desc.h>
@@ -91,6 +93,9 @@ StreamInfo describeStream(const AVFormatContext *fmt, const AVStream *stream)
         info.rotationDegrees = displayRotationOf(stream);
         info.attachedPicture = (stream->disposition & AV_DISPOSITION_ATTACHED_PIC) != 0;
         info.hasAlpha = videoStreamHasAlpha(stream);
+        if (const AVPixFmtDescriptor *pixDesc =
+                av_pix_fmt_desc_get(static_cast<AVPixelFormat>(par->format)))
+            info.bitDepth = pixDesc->comp[0].depth;
         break;
     case AVMEDIA_TYPE_AUDIO:
         info.type = StreamInfo::Type::Audio;
@@ -162,4 +167,64 @@ QList<StreamInfo> MediaProbe::audioStreams(const QString &path)
             out.append(s);
     }
     return out;
+}
+
+bool MediaProbe::isVariableFrameRate(const QString &path)
+{
+    // Enough packets to see a phone's rate wander, few enough that import stays quick on 4K.
+    constexpr int kMaxPackets = 300;
+    constexpr int64_t kMaxScanUs = 10 * int64_t(AV_TIME_BASE);
+
+    AVFormatContext *fmt = nullptr;
+    const QByteArray pathUtf8 = path.toUtf8();
+    if (avformat_open_input(&fmt, pathUtf8.constData(), nullptr, nullptr) < 0)
+        return false;
+    if (avformat_find_stream_info(fmt, nullptr) < 0) {
+        avformat_close_input(&fmt);
+        return false;
+    }
+    const int index = av_find_best_stream(fmt, AVMEDIA_TYPE_VIDEO, -1, -1, nullptr, 0);
+    if (index < 0 || (fmt->streams[index]->disposition & AV_DISPOSITION_ATTACHED_PIC)) {
+        avformat_close_input(&fmt);
+        return false;
+    }
+    const AVStream *stream = fmt->streams[index];
+    const int64_t maxScanTs = av_rescale_q(kMaxScanUs, {1, AV_TIME_BASE}, stream->time_base);
+
+    std::vector<int64_t> pts;
+    AVPacket *packet = av_packet_alloc();
+    while (packet && int(pts.size()) < kMaxPackets && av_read_frame(fmt, packet) >= 0) {
+        if (packet->stream_index == index && packet->pts != AV_NOPTS_VALUE) {
+            pts.push_back(packet->pts);
+            if (packet->pts - pts.front() > maxScanTs) {
+                av_packet_unref(packet);
+                break;
+            }
+        }
+        av_packet_unref(packet);
+    }
+    av_packet_free(&packet);
+    avformat_close_input(&fmt);
+
+    if (pts.size() < 10)
+        return false;
+    // Sorted to undo B-frame reordering, which scrambles packet order but not frame spacing.
+    std::sort(pts.begin(), pts.end());
+    std::vector<int64_t> deltas;
+    deltas.reserve(pts.size() - 1);
+    for (size_t i = 1; i < pts.size(); ++i) {
+        if (pts[i] > pts[i - 1])
+            deltas.push_back(pts[i] - pts[i - 1]);
+    }
+    if (deltas.size() < 9)
+        return false;
+    std::vector<int64_t> sorted = deltas;
+    std::nth_element(sorted.begin(), sorted.begin() + sorted.size() / 2, sorted.end());
+    const double median = double(sorted[sorted.size() / 2]);
+    // A mux rounding to the time base's grid jitters every delta by a tick or two; only a real
+    // gap or burst moves one by a quarter of a frame.
+    const auto irregular = std::count_if(deltas.begin(), deltas.end(), [median](int64_t delta) {
+        return std::abs(double(delta) - median) > median * 0.25;
+    });
+    return irregular * 20 > int64_t(deltas.size());
 }

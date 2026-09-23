@@ -40,6 +40,8 @@ class PlaybackEngine : public QObject
     Q_PROPERTY(double playbackRate READ playbackRate WRITE setPlaybackRate NOTIFY playbackRateChanged)
     Q_PROPERTY(QString decodeMode READ decodeMode WRITE setDecodeMode NOTIFY decodeModeChanged)
     Q_PROPERTY(QVariantList decodeModes READ decodeModes NOTIFY decodeModesChanged)
+    Q_PROPERTY(bool useProxies READ useProxies WRITE setUseProxies NOTIFY useProxiesChanged)
+    Q_PROPERTY(int proxySize READ proxySize WRITE setProxySize NOTIFY proxySizeChanged)
     // Live playback counters for the diagnostics report and the preview overlay. Constant
     // because the block itself is owned here for the engine's lifetime; its contents change.
     Q_PROPERTY(PlaybackStats *stats READ stats CONSTANT)
@@ -94,6 +96,12 @@ public:
     // is the sentence explaining it. A property rather than a plain call because the verdict
     // needs the GL context, which may come up after the picker is built.
     QVariantList decodeModes() const;
+    // Preview proxies (ReverseProxyCache preview entries). proxySize is the proxy's short side:
+    // 360, 540, 720 or 1080. Proxies built at another size stop matching until rebuilt.
+    bool useProxies() const;
+    void setUseProxies(bool use);
+    int proxySize() const;
+    void setProxySize(int shortSide);
 
     PlaybackStats *stats() { return &m_stats; }
     const PlaybackStats *stats() const { return &m_stats; }
@@ -145,6 +153,8 @@ signals:
     void playbackRateChanged();
     void decodeModeChanged();
     void decodeModesChanged();
+    void useProxiesChanged();
+    void proxySizeChanged();
     void playheadUsChanged(quint64 us);
 
 private:

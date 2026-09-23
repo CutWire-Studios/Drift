@@ -57,6 +57,14 @@ struct MediaAsset
     bool hasAudio = false;
     bool hasAudioKnown = false;
 
+    // Video frame spacing is irregular (phone and screen recordings), which can drift against
+    // the audio. Unknown until checked: import checks, and an older project's assets are
+    // checked in the background the first time the bin or timeline asks.
+    bool variableFrameRate = false;
+    bool frameRateKnown = false;
+    // This file is Drift's "edit-friendly" constant-rate re-encode of what was imported.
+    bool editFriendly = false;
+
     QString durationLabel;
     QString thumbnailPath;
     QString filmstripPath;

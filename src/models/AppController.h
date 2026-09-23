@@ -50,6 +50,9 @@ class MarketClient;
 namespace drift::mcp {
 class McpServer;
 }
+namespace drift {
+struct MediaEditSpec;
+}
 
 #include "playback/ClipPreviewPlayer.h"
 #include "playback/PlaybackEngine.h"
@@ -210,6 +213,11 @@ class AppController : public QObject
     Q_PROPERTY(bool editingAsset READ editingAsset NOTIFY assetEditChanged)
     Q_PROPERTY(double assetEditProgress READ assetEditProgress NOTIFY assetEditChanged)
     Q_PROPERTY(QString assetEditStatus READ assetEditStatus NOTIFY assetEditChanged)
+    // The running (or, once it finishes, the last) asset edit job is a frame-rate conversion
+    // rather than a crop, so the finish can be worded for it. Also carries its name while it runs,
+    // since a conversion has no preview window to show progress in.
+    Q_PROPERTY(bool assetEditIsConversion READ assetEditIsConversion NOTIFY assetEditChanged)
+    Q_PROPERTY(QString assetEditName READ assetEditName NOTIFY assetEditChanged)
     Q_PROPERTY(double subtitleGenProgress READ subtitleGenProgress NOTIFY subtitleGenProgressChanged)
     Q_PROPERTY(QString subtitleGenStatus READ subtitleGenStatus NOTIFY subtitleGenStatusChanged)
     Q_PROPERTY(bool segmenting READ segmenting NOTIFY segmentingChanged)
@@ -470,6 +478,8 @@ public:
     bool editingAsset() const { return m_editingAsset; }
     double assetEditProgress() const { return m_assetEditProgress; }
     QString assetEditStatus() const { return m_assetEditStatus; }
+    bool assetEditIsConversion() const { return m_assetEditIsConversion; }
+    QString assetEditName() const { return m_assetEditKeepName; }
     double subtitleGenProgress() const { return m_subtitleGenProgress; }
     QString subtitleGenStatus() const { return m_subtitleGenStatus; }
     bool segmenting() const { return m_segmenting; }
@@ -805,6 +815,10 @@ public:
     Q_INVOKABLE bool saveAssetEdit(int assetIndex, double inSeconds, double outSeconds,
                                    double cropX, double cropY, double cropW, double cropH);
     Q_INVOKABLE void cancelAssetEdit();
+    // "Convert to edit-friendly format": re-encodes each video asset onto a constant, standard
+    // frame rate and swaps it in, one at a time, the same undoable way a crop does, marking the
+    // asset edit-friendly. The original file is left where it was.
+    Q_INVOKABLE void convertAssetsToConstantFrameRate(const QStringList &assetIds);
     Q_INVOKABLE bool trackAcceptsAsset(int trackIndex, int assetIndex) const;
     Q_INVOKABLE QString trackTypeForAsset(int assetIndex) const;
     // The same two questions asked of a bare media kind ("video", "audio", "image", ...) rather
@@ -2301,6 +2315,9 @@ protected:
     QString m_assetEditKeepName;
     QString m_editingAssetId;
     QAtomicInt m_assetEditCancel = 0;
+    bool m_assetEditIsConversion = false;
+    // Asset ids waiting for convertAssetsToConstantFrameRate; the edit job runs one at a time.
+    QStringList m_conversionQueue;
     double m_subtitleGenProgress = 0.0;
     QString m_subtitleGenStatus;
     QAtomicInt m_subtitleGenCancel = 0;
@@ -2468,6 +2485,11 @@ protected:
     drift::Project m_previewDragBefore;
     QString m_previewDragText;
     void emitPreviewFrame();
+    // Runs spec off-thread and swaps its output in for the asset at assetIndex, reporting through
+    // assetEditChanged/assetEditFinished. The caller has checked no edit is running.
+    void startAssetEditJob(const QString &assetId, const QString &name,
+                           const drift::MediaEditSpec &spec, bool conversion);
+    void startNextConversion();
     void syncTextOverlaySkip();
     struct ClipboardItem
     {

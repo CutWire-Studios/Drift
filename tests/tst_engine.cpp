@@ -35,6 +35,7 @@
 #include "engine/StillImage.h"
 #include "engine/DebugReport.h"
 #include "engine/Exporter.h"
+#include "engine/PreviewProxyRenderer.h"
 #include "engine/GpuCompositor.h"
 #include "engine/MediaWaveform.h"
 #include "playback/PlaybackDiagnostics.h"
@@ -111,7 +112,11 @@ private slots:
     void matteWriterPreservesSoftAlpha();
     void matteWriterRoundTripsColourForeground();
     void reverseRendererPlaysSourceBackwards();
+    void previewProxyKeepsSourceTiming();
+    void variableFrameRateIsDetected();
     void mediaEditorCropsAnImage();
+    void mediaEditorConformsVariableFrameRate();
+    void mediaEditorKeepsTenBitAndColourTags();
     void reverseProxyLookupIsByContainmentAndSourceIdentity();
     void resolveVideoReadMirrorsTheClipOntoTheProxy();
     void faceTrackRoundTripsAndInterpolates();
@@ -2612,6 +2617,119 @@ void EngineTest::reverseRendererPlaysSourceBackwards()
     }
 }
 
+// A preview proxy is swapped in by path alone, so every frame has to sit at the same source time
+// as in the original — and only the preview may see it.
+void EngineTest::previewProxyKeepsSourceTiming()
+{
+    if (!Exporter::videoCodecById(QStringLiteral("h264")).value(QStringLiteral("available")).toBool())
+        QSKIP("No H.264 encoder available in this FFmpeg build");
+
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    const QString sourcePath = dir.filePath(QStringLiteral("source.mp4"));
+    const QString proxyPath = dir.filePath(QStringLiteral("proxy.mp4"));
+    const QSize size(320, 240);
+    const int frames = 10;
+    const int fps = 30;
+
+    drift::MatteWriter writer;
+    QString error;
+    QVERIFY2(writer.open(sourcePath, size, fps, 1, &error), qPrintable(error));
+    for (int i = 0; i < frames; ++i) {
+        QImage mask(size, QImage::Format_Grayscale8);
+        mask.fill(0);
+        QPainter p(&mask);
+        p.fillRect(QRect(0, i * 20, size.width(), 20), Qt::white);
+        p.end();
+        QVERIFY2(writer.writeFrame(mask, &error), qPrintable(error));
+    }
+    QVERIFY2(writer.finish(&error), qPrintable(error));
+
+    QVERIFY2(drift::renderPreviewProxy(sourcePath, 120, proxyPath, &error, {}), qPrintable(error));
+    QVERIFY(!QFileInfo::exists(proxyPath + QStringLiteral(".part")));
+
+    const MediaInfo info = MediaProbe::probe(proxyPath);
+    QVERIFY(info.ok);
+    QCOMPARE(info.streams.first().width, 160);
+    QCOMPARE(info.streams.first().height, 120);
+
+    for (int j = 0; j < frames; ++j) {
+        const drift::TimeUs us = (2 * drift::TimeUs(j) + 1) * drift::kUsPerSecond / (2 * fps);
+        const QImage frame = ClipReaderPool::instance().readVideoFrame(proxyPath, 1, us, 0, 0);
+        QVERIFY2(!frame.isNull(), qPrintable(QStringLiteral("proxy frame %1 did not decode").arg(j)));
+        int band = -1;
+        for (int b = 0; b < frames + 2; ++b) {
+            if (qRed(frame.pixel(frame.width() / 2, b * 10 + 5)) > 128) {
+                band = b;
+                break;
+            }
+        }
+        QCOMPARE(band, j);
+    }
+
+    drift::ReverseProxyCache::instance().insertPreview(sourcePath, 120, proxyPath);
+    const auto restore = qScopeGuard([&] {
+        drift::ReverseProxyCache::previewProxyShortSide = 720;
+        drift::ReverseProxyCache::previewProxiesEnabled = true;
+    });
+    drift::ReverseProxyCache::previewProxyShortSide = 120;
+
+    drift::Clip clip;
+    clip.id = QStringLiteral("proxy-clip");
+    clip.type = drift::ClipType::Video;
+    clip.path = sourcePath;
+    clip.srcOut = drift::kUsPerSecond / 3;
+    clip.timelineStart = 0;
+    QCOMPARE(drift::resolveVideoRead(clip, 0, true).path, proxyPath);
+    QCOMPARE(drift::resolveVideoRead(clip, 0, false).path, sourcePath);
+    QCOMPARE(drift::videoReadPath(clip, true), proxyPath);
+    QCOMPARE(drift::videoReadPath(clip), sourcePath);
+
+    drift::ReverseProxyCache::previewProxiesEnabled = false;
+    QCOMPARE(drift::resolveVideoRead(clip, 0, true).path, sourcePath);
+    drift::ReverseProxyCache::previewProxiesEnabled = true;
+
+    // Built at another size: stops matching once the setting moves.
+    drift::ReverseProxyCache::previewProxyShortSide = 540;
+    QCOMPARE(drift::resolveVideoRead(clip, 0, true).path, sourcePath);
+    drift::ReverseProxyCache::previewProxyShortSide = 120;
+
+    drift::ReverseProxyCache::instance().removePreview(sourcePath);
+    QCOMPARE(drift::resolveVideoRead(clip, 0, true).path, sourcePath);
+    QVERIFY(!QFileInfo::exists(proxyPath));
+}
+
+void EngineTest::variableFrameRateIsDetected()
+{
+    const QString ffmpeg = QStandardPaths::findExecutable(QStringLiteral("ffmpeg"));
+    if (ffmpeg.isEmpty())
+        QSKIP("ffmpeg not on PATH");
+
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    const QString cfrPath = dir.filePath(QStringLiteral("cfr.mp4"));
+    const QString vfrPath = dir.filePath(QStringLiteral("vfr.mp4"));
+
+    auto run = [&](const QStringList &args) {
+        QProcess process;
+        process.start(ffmpeg, args);
+        return process.waitForFinished(60'000) && process.exitCode() == 0;
+    };
+    const QStringList common{QStringLiteral("-y"), QStringLiteral("-loglevel"), QStringLiteral("error"),
+                             QStringLiteral("-f"), QStringLiteral("lavfi"), QStringLiteral("-i"),
+                             QStringLiteral("testsrc=d=3:r=30:s=160x120")};
+    QVERIFY(run(common + QStringList{cfrPath}));
+    // Full rate for the first second and a half, then every third frame, the way a phone drops
+    // its rate in low light.
+    QVERIFY(run(common + QStringList{QStringLiteral("-vf"),
+                                     QStringLiteral("select='lt(n\\,45)+not(mod(n\\,3))'"),
+                                     QStringLiteral("-fps_mode"), QStringLiteral("passthrough"),
+                                     vfrPath}));
+
+    QVERIFY(!MediaProbe::isVariableFrameRate(cfrPath));
+    QVERIFY(MediaProbe::isVariableFrameRate(vfrPath));
+}
+
 void EngineTest::mediaEditorCropsAnImage()
 {
     QTemporaryDir dir;
@@ -2651,6 +2769,94 @@ void EngineTest::mediaEditorCropsAnImage()
 // stops being usable the moment the source underneath it changes. Both halves matter: the first is
 // what keeps ordinary editing smooth, the second is what stops a stale render being served as if
 // it were the current source.
+// A variable-rate source has to come out on a constant grid with its frames where their
+// timestamps put them — not counted off one after another, which is what drifted crops out of sync.
+void EngineTest::mediaEditorConformsVariableFrameRate()
+{
+    const QString ffmpeg = QStandardPaths::findExecutable(QStringLiteral("ffmpeg"));
+    if (ffmpeg.isEmpty())
+        QSKIP("ffmpeg not on PATH");
+
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    const QString vfrPath = dir.filePath(QStringLiteral("vfr.mp4"));
+    const QString outPath = dir.filePath(QStringLiteral("cfr.mp4"));
+    QProcess process;
+    // 30 fps for 1.5 s, then every third frame: 45 + 15 = 60 frames over 3 s.
+    process.start(ffmpeg, {QStringLiteral("-y"), QStringLiteral("-loglevel"), QStringLiteral("error"),
+                           QStringLiteral("-f"), QStringLiteral("lavfi"), QStringLiteral("-i"),
+                           QStringLiteral("testsrc=d=3:r=30:s=160x120"), QStringLiteral("-vf"),
+                           QStringLiteral("select='lt(n\\,45)+not(mod(n\\,3))'"),
+                           QStringLiteral("-fps_mode"), QStringLiteral("passthrough"), vfrPath});
+    QVERIFY(process.waitForFinished(60'000) && process.exitCode() == 0);
+    QVERIFY(MediaProbe::isVariableFrameRate(vfrPath));
+
+    drift::MediaEditSpec spec;
+    spec.inputPath = vfrPath;
+    spec.outputPath = outPath;
+    spec.kind = QStringLiteral("video");
+    spec.conformFrameRate = true;
+    QString error;
+    QVERIFY2(drift::editMedia(spec, &error, {}), qPrintable(error));
+
+    QVERIFY(!MediaProbe::isVariableFrameRate(outPath));
+    const MediaInfo info = MediaProbe::probe(outPath);
+    QVERIFY(info.ok);
+    QCOMPARE(info.streams.first().fps, 30.0);
+    // The dropped stretch is filled by holding frames, so the duration survives.
+    QVERIFY2(qAbs(info.durationUs - 3 * drift::kUsPerSecond) < drift::kUsPerSecond / 10,
+             qPrintable(QString::number(info.durationUs)));
+}
+
+void EngineTest::mediaEditorKeepsTenBitAndColourTags()
+{
+    const QString ffmpeg = QStandardPaths::findExecutable(QStringLiteral("ffmpeg"));
+    if (ffmpeg.isEmpty())
+        QSKIP("ffmpeg not on PATH");
+
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    const QString sourcePath = dir.filePath(QStringLiteral("hdr.mp4"));
+    const QString outPath = dir.filePath(QStringLiteral("cropped.mp4"));
+    QProcess process;
+    process.start(ffmpeg, {QStringLiteral("-y"), QStringLiteral("-loglevel"), QStringLiteral("error"),
+                           QStringLiteral("-f"), QStringLiteral("lavfi"), QStringLiteral("-i"),
+                           QStringLiteral("testsrc=d=1:r=30:s=320x240"),
+                           QStringLiteral("-vf"),
+                           QStringLiteral("setparams=color_primaries=bt2020:color_trc=smpte2084"
+                                          ":colorspace=bt2020nc"),
+                           QStringLiteral("-pix_fmt"), QStringLiteral("yuv420p10le"),
+                           QStringLiteral("-c:v"), QStringLiteral("libx264"), sourcePath});
+    QVERIFY(process.waitForFinished(60'000));
+    if (process.exitCode() != 0)
+        QSKIP("ffmpeg here cannot write 10-bit H.264");
+
+    drift::MediaEditSpec spec;
+    spec.inputPath = sourcePath;
+    spec.outputPath = outPath;
+    spec.kind = QStringLiteral("video");
+    spec.cropX = 0.25;
+    spec.cropW = 0.5;
+    QString error;
+    QVERIFY2(drift::editMedia(spec, &error, {}), qPrintable(error));
+
+    const MediaInfo info = MediaProbe::probe(outPath);
+    QVERIFY(info.ok);
+    QCOMPARE(info.streams.first().width, 160);
+    QCOMPARE(info.streams.first().height, 240);
+    QCOMPARE(info.streams.first().bitDepth, 10);
+
+    process.start(QStandardPaths::findExecutable(QStringLiteral("ffprobe")),
+                  {QStringLiteral("-v"), QStringLiteral("error"), QStringLiteral("-select_streams"),
+                   QStringLiteral("v"), QStringLiteral("-show_entries"),
+                   QStringLiteral("stream=color_transfer,color_primaries"), QStringLiteral("-of"),
+                   QStringLiteral("csv=p=0"), outPath});
+    QVERIFY(process.waitForFinished(30'000));
+    const QString tags = QString::fromUtf8(process.readAllStandardOutput()).trimmed();
+    QVERIFY2(tags.contains(QStringLiteral("smpte2084")) && tags.contains(QStringLiteral("bt2020")),
+             qPrintable(tags));
+}
+
 void EngineTest::reverseProxyLookupIsByContainmentAndSourceIdentity()
 {
     QTemporaryDir dir;

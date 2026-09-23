@@ -102,6 +102,24 @@ Item {
                                   : (clipData.outPoint || 0)
     readonly property int wfStream: clipData.audioStreamIndex || 0
 
+    // Preview is playing this clip from a proxy (export still reads wfPath). The revision and the
+    // two settings are named so the binding re-reads when any of them moves.
+    readonly property bool previewUsesProxy: (AssetLibrary.badgeRevision,
+                                              EditorState.playback.proxySize,
+                                              EditorState.playback.useProxies
+                                              && clipData.kind === "video"
+                                              && AssetLibrary.hasProxyForPath(wfPath))
+    // The bin asset behind this clip, by path: the clip model carries no asset id.
+    readonly property string mediaAssetId: (AssetLibrary.badgeRevision,
+                                            clipData.kind === "video"
+                                            ? AssetLibrary.assetIdForPath(wfPath) : "")
+    readonly property bool mediaEditFriendly: (AssetLibrary.badgeRevision,
+                                               mediaAssetId.length > 0
+                                               && AssetLibrary.isEditFriendly(mediaAssetId))
+    readonly property bool mediaVariableFrameRate: (AssetLibrary.badgeRevision,
+                                                    mediaAssetId.length > 0 && !mediaEditFriendly
+                                                    && AssetLibrary.isVariableFrameRate(mediaAssetId))
+
     property string trackType: panel.tracks[trackIndex].type
     property bool showWaveform: panel.tracks[trackIndex].showWaveform === true
     property bool showChannelWaveforms: panel.tracks[trackIndex].showChannelWaveforms === true
@@ -640,23 +658,72 @@ Item {
                      || clipItem.trackType === "shape"
             width: parent.width
             height: clipItem.headerBandHeight
-            color: Theme.scrimColor
+            // Green band marks a clip the preview plays from its proxy, readable at any zoom
+            // even once the pill no longer fits.
+            color: clipItem.previewUsesProxy ? Theme.clipProxyBand : Theme.scrimColor
             z: 1
 
             // Just the name. The effect stack used to be listed on a second line here, but it
             // now lives on the clip's adjustment lane, which shows it in the row above — two
             // copies of the same list, one of them detached from the thing you edit.
-            Text {
+            //
+            // A VFR "!" leads the name so it survives any zoom; the pills follow it. The name only
+            // gives up width when everything doesn't fit, so a long name elides and pills stay whole.
+            Row {
+                id: clipNameRow
                 anchors.left: parent.left
                 anchors.right: parent.right
                 anchors.verticalCenter: parent.verticalCenter
                 anchors.leftMargin: 6
                 anchors.rightMargin: 6
-                text: clipItem.clipData.name
-                color: Theme.onMedia
-                font.pixelSize: Theme.fontSizeTiny
-                font.family: Theme.fontFamily
-                elide: Text.ElideRight
+                spacing: 4
+
+                readonly property real pillsWidth:
+                    (proxyBadge.visible ? proxyBadge.width + spacing : 0)
+                    + (editFriendlyBadge.visible ? editFriendlyBadge.width + spacing : 0)
+
+                VfrWarning {
+                    id: vfrBadge
+                    anchors.verticalCenter: parent.verticalCenter
+                    visible: clipItem.mediaVariableFrameRate
+                    size: Math.min(Theme.iconSizeSm, clipItem.headerBandHeight - 2)
+                }
+
+                Text {
+                    width: Math.max(0, Math.min(implicitWidth,
+                                                parent.width - clipNameRow.pillsWidth
+                                                - (vfrBadge.visible ? vfrBadge.width + parent.spacing : 0)))
+                    anchors.verticalCenter: parent.verticalCenter
+                    text: clipItem.clipData.name
+                    color: Theme.onMedia
+                    font.pixelSize: Theme.fontSizeTiny
+                    font.family: Theme.fontFamily
+                    elide: Text.ElideRight
+                }
+
+                MediaPill {
+                    id: proxyBadge
+                    anchors.verticalCenter: parent.verticalCenter
+                    text: qsTr("Proxy")
+                    tooltip: qsTr("Previewing from a low-resolution proxy. Export uses the original.")
+                    // Dropped on clips too narrow to still show some of their name beside it.
+                    visible: clipItem.previewUsesProxy && parent.width > width * 2.5
+                    height: Math.min(implicitHeight, clipItem.headerBandHeight - 2)
+                    fontSize: Theme.fontSizeTiny
+                }
+
+                MediaPill {
+                    id: editFriendlyBadge
+                    anchors.verticalCenter: parent.verticalCenter
+                    text: qsTr("Edit-friendly")
+                    tooltip: qsTr("Converted to a constant frame rate for smooth editing")
+                    accent: Theme.clipEditFriendly
+                    foreground: Theme.clipEditFriendlyForeground
+                    visible: clipItem.mediaEditFriendly
+                             && parent.width > width * 2.5 + (proxyBadge.visible ? proxyBadge.width : 0)
+                    height: Math.min(implicitHeight, clipItem.headerBandHeight - 2)
+                    fontSize: Theme.fontSizeTiny
+                }
             }
         }
 
@@ -1164,6 +1231,13 @@ Item {
                     visible: clipItem.trackType === "video" && EditorState.separateAudioAvailable
                              && EditorState.clipAudioStreamCount(clipItem.trackIndex, clipItem.clipIndex) > 1
                     onTriggered: EditorState.separateAllAudioTracks(clipItem.trackIndex, clipItem.clipIndex)
+                }
+                ThemedMenuItem {
+                    text: qsTr("Convert to edit-friendly format")
+                    icon.name: Theme.icons.rabbit
+                    // Converts the bin media, so every clip using it follows along.
+                    visible: clipItem.mediaAssetId.length > 0 && !clipItem.mediaEditFriendly
+                    onTriggered: EditorState.convertAssetsToConstantFrameRate([clipItem.mediaAssetId])
                 }
                 ThemedMenuItem {
                     text: qsTr("Unlink")

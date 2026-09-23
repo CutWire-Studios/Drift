@@ -7,6 +7,8 @@
 #include <QMutex>
 #include <QString>
 
+#include <atomic>
+
 namespace drift {
 
 // Registry of pre-rendered reversed copies of source ranges, so a reversed clip can be read
@@ -29,6 +31,20 @@ public:
     void insert(const QString &sourcePath, TimeUs coverInUs, TimeUs coverOutUs,
                 const QString &proxyPath);
 
+    // Preview proxies: whole-file, low-res copies that keep the source's own timestamps. Only
+    // live preview reads them; export always decodes the original. Keyed on the proxy's short
+    // side too, so changing the proxy-size setting makes old proxies stop matching.
+    //
+    // lookupPreview runs for every video clip on every composited frame, so unlike lookup() it
+    // does not stat the source — staleness is settled by load() and insertPreview().
+    QString lookupPreview(const QString &sourcePath, int shortSide) const;
+    void insertPreview(const QString &sourcePath, int shortSide, const QString &proxyPath);
+    void removePreview(const QString &sourcePath);
+
+    // Set from QSettings by PlaybackEngine; read on the compositor threads.
+    static std::atomic<bool> previewProxiesEnabled;
+    static std::atomic<int> previewProxyShortSide;
+
     // Reads the on-disk index, dropping entries whose proxy or source is gone or whose source has
     // changed since the render.
     void load();
@@ -50,6 +66,8 @@ private:
     struct Entry
     {
         QString proxyPath;
+        bool preview = false;
+        int shortSide = 0;
         TimeUs coverInUs = 0;
         TimeUs coverOutUs = 0;
         // The source as it was when the render ran. There is no file watching anywhere in the app
@@ -73,11 +91,14 @@ struct VideoRead
     QString path;
     TimeUs sourceUs = 0;
 };
-VideoRead resolveVideoRead(const Clip &clip, TimeUs timelineUs);
+//
+// allowPreviewProxy is set only by live preview; export must leave it off so it always reads
+// full-quality pixels.
+VideoRead resolveVideoRead(const Clip &clip, TimeUs timelineUs, bool allowPreviewProxy = false);
 
 // The path a reversed clip reads its video from, without resolving a time. For retaining decoder
 // workers, where tearing down the proxy's worker would reopen the file every frame.
-QString videoReadPath(const Clip &clip);
+QString videoReadPath(const Clip &clip, bool allowPreviewProxy = false);
 
 // <AppDataLocation>/reversed, created on demand. Mirrors matteCacheDir(). On Android it is
 // <CacheLocation>/reversed instead — see the definition.

@@ -21,16 +21,23 @@ QtObject {
     readonly property int defaultTimeout: 5000
     readonly property int maxVisible: 4
 
-    function post(severity, message, timeout) {
+    // Callbacks for toasts with an action button, by toastId. A ListModel row can't hold a
+    // function, so the row carries only the label.
+    property var _actions: ({})
+
+    // actionText/action are optional: a button on the toast that runs action() and dismisses.
+    function post(severity, message, timeout, actionText, action) {
         if (!message || message.length === 0)
             return -1
+        const hasAction = !!actionText && typeof action === "function"
 
         // Collapse an identical consecutive message into a repeat count instead
         // of stacking duplicates (transform-blocked fires repeatedly on drag).
         if (model.count > 0) {
             const last = model.get(model.count - 1)
             // Never fold a repeat into a toast that is already animating out.
-            if (last.message === message && last.severity === severity && !last.exiting) {
+            if (!hasAction && last.message === message && last.severity === severity
+                    && !last.exiting && last.actionText.length === 0) {
                 model.setProperty(model.count - 1, "repeats", last.repeats + 1)
                 return last.toastId
             }
@@ -43,14 +50,24 @@ QtObject {
             message: message,
             repeats: 1,
             exiting: false,
+            actionText: hasAction ? actionText : "",
             timeout: timeout !== undefined ? timeout
                                            : (severity === "error" ? 0 : defaultTimeout)
         })
+        if (hasAction)
+            _actions[id] = action
 
         while (model.count > maxVisible)
-            model.remove(0)
+            remove(model.get(0).toastId)
 
         return id
+    }
+
+    function trigger(toastId) {
+        const action = _actions[toastId]
+        dismiss(toastId)
+        if (action)
+            action()
     }
 
     function info(message, timeout) { return post("info", message, timeout) }
@@ -74,6 +91,7 @@ QtObject {
     }
 
     function remove(toastId) {
+        delete _actions[toastId]
         for (var i = 0; i < model.count; ++i) {
             if (model.get(i).toastId === toastId) {
                 model.remove(i)
@@ -84,5 +102,6 @@ QtObject {
 
     function clear() {
         model.clear()
+        _actions = ({})
     }
 }

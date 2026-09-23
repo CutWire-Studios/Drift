@@ -104,6 +104,37 @@ Item {
     // clip selection already treats a right-click (TimelineClipItem.qml).
     property var selectedAssetIds: []
 
+    // What a badge binding names so it re-reads: the AssetLibrary badge queries are function calls
+    // QML can't track, and proxy "ready" also depends on the proxy size setting.
+    readonly property int _badgeRevision: AssetLibrary.badgeRevision + EditorState.playback.proxySize
+
+    // "none", "queued", "building", "ready", or "" for rows a proxy can't apply to.
+    function proxyStateOf(assetId) {
+        void root._badgeRevision
+        return AssetLibrary.proxyState(assetId)
+    }
+    function editFriendlyOf(assetId) {
+        void root._badgeRevision
+        return AssetLibrary.isEditFriendly(assetId)
+    }
+    // Converted media is constant-rate by construction, so the warning never sits beside the pill.
+    function vfrWarningOf(assetId) {
+        void root._badgeRevision
+        return !AssetLibrary.isEditFriendly(assetId) && AssetLibrary.isVariableFrameRate(assetId)
+    }
+
+    // The selected assets whose proxy state is one of `states`.
+    function selectedWithProxyState(states) {
+        void root._badgeRevision
+        const ids = []
+        for (let i = 0; i < root.selectedAssetIds.length; ++i) {
+            const id = root.selectedAssetIds[i]
+            if (states.indexOf(AssetLibrary.proxyState(id)) >= 0)
+                ids.push(id)
+        }
+        return ids
+    }
+
     function isAssetSelected(assetId) {
         return assetId.length > 0 && root.selectedAssetIds.indexOf(assetId) >= 0
     }
@@ -630,6 +661,28 @@ Item {
                     }
                 }
 
+                VfrWarning {
+                    z: 3
+                    anchors.right: parent.right
+                    anchors.top: parent.top
+                    anchors.margins: Theme.spacingSm
+                    visible: !cardRoot.isFolder && kind === "video" && root.vfrWarningOf(cardRoot.assetId)
+                }
+
+                // Proxy build progress along the thumbnail's bottom edge; the pill beside the
+                // name below says which state it is in.
+                ThemedProgressBar {
+                    z: 1
+                    visible: !cardRoot.isFolder && AssetLibrary.proxyBusy
+                             && root._badgeRevision >= 0
+                             && AssetLibrary.proxyState(cardRoot.assetId) === "building"
+                    anchors.left: parent.left
+                    anchors.right: parent.right
+                    anchors.bottom: parent.bottom
+                    barHeight: Theme.spacingXs
+                    value: AssetLibrary.proxyProgress
+                }
+
                 Rectangle {
                     visible: !cardRoot.isFolder && duration.length > 0
                     anchors.right: parent.right
@@ -813,6 +866,27 @@ Item {
                         onTriggered: root.moveToFolderRequested(root.selectedAssetIds)
                     }
                     ThemedMenuItem {
+                        readonly property var ids: root.selectedWithProxyState(["none"])
+                        text: ids.length > 1 ? qsTr("Create %n proxies", "", ids.length) : qsTr("Create proxy")
+                        icon.name: Theme.icons.filePlay
+                        visible: ids.length > 0
+                        onTriggered: AssetLibrary.createProxies(ids)
+                    }
+                    ThemedMenuItem {
+                        readonly property var ids: root.selectedWithProxyState(["ready", "queued", "building"])
+                        text: ids.length > 1 ? qsTr("Remove %n proxies", "", ids.length) : qsTr("Remove proxy")
+                        icon.name: Theme.icons.x
+                        visible: ids.length > 0
+                        onTriggered: AssetLibrary.removeProxies(ids)
+                    }
+                    ThemedMenuItem {
+                        text: qsTr("Convert to edit-friendly format")
+                        icon.name: Theme.icons.rabbit
+                        visible: kind === "video" && root.selectedAssetIds.length <= 1
+                                 && !root.editFriendlyOf(assetId)
+                        onTriggered: EditorState.convertAssetsToConstantFrameRate([assetId])
+                    }
+                    ThemedMenuItem {
                         text: qsTr("Export image…")
                         icon.name: Theme.icons.save
                         visible: kind === "image"
@@ -854,13 +928,43 @@ Item {
                 }
             }
 
-            Text {
+            Row {
+                id: cardNameRow
                 width: parent.width
-                text: name
-                color: Theme.mutedForeground
-                font.family: Theme.fontFamily
-                font.pixelSize: Theme.fontSizeCard
-                elide: Text.ElideRight
+                spacing: Theme.spacingSm
+                readonly property string proxyState: cardRoot.isFolder ? ""
+                                                                       : root.proxyStateOf(cardRoot.assetId)
+
+                MediaPill {
+                    id: cardProxyPill
+                    anchors.verticalCenter: parent.verticalCenter
+                    text: qsTr("Proxy")
+                    visible: cardNameRow.proxyState === "ready" || cardNameRow.proxyState === "queued"
+                             || cardNameRow.proxyState === "building"
+                    waiting: cardNameRow.proxyState !== "ready"
+                    fontSize: Theme.fontSizeTiny
+                }
+                MediaPill {
+                    id: cardEditFriendlyPill
+                    anchors.verticalCenter: parent.verticalCenter
+                    text: qsTr("Edit-friendly")
+                    tooltip: qsTr("Converted to a constant frame rate for smooth editing")
+                    accent: Theme.clipEditFriendly
+                    foreground: Theme.clipEditFriendlyForeground
+                    visible: !cardRoot.isFolder && root.editFriendlyOf(cardRoot.assetId)
+                    fontSize: Theme.fontSizeTiny
+                }
+                Text {
+                    width: Math.max(0, parent.width
+                                       - (cardProxyPill.visible ? cardProxyPill.width + parent.spacing : 0)
+                                       - (cardEditFriendlyPill.visible
+                                          ? cardEditFriendlyPill.width + parent.spacing : 0))
+                    text: name
+                    color: Theme.mutedForeground
+                    font.family: Theme.fontFamily
+                    font.pixelSize: Theme.fontSizeCard
+                    elide: Text.ElideRight
+                }
             }
         }
     }
@@ -1005,6 +1109,14 @@ Item {
                             progressColor: Theme.onMedia
                         }
                     }
+
+                    VfrWarning {
+                        anchors.right: parent.right
+                        anchors.top: parent.top
+                        anchors.margins: 1
+                        size: Theme.iconSizeSm
+                        visible: !listRow.isFolder && kind === "video" && root.vfrWarningOf(assetId)
+                    }
                 }
 
                 Column {
@@ -1012,13 +1124,42 @@ Item {
                     // Derived from the actual thumbnail width
                     // rather than a magic constant.
                     width: parent.width - listThumbFrame.width - listRowContent.spacing
-                    Text {
-                        text: name
-                        color: Theme.panelForeground
-                        font.family: Theme.fontFamily
-                        font.pixelSize: Theme.fontSizeSm
-                        elide: Text.ElideRight
+                    Row {
+                        id: rowNameRow
                         width: parent.width
+                        spacing: Theme.spacingSm
+                        readonly property string proxyState: listRow.isFolder ? ""
+                                                                              : root.proxyStateOf(assetId)
+
+                        MediaPill {
+                            id: rowProxyPill
+                            anchors.verticalCenter: parent.verticalCenter
+                            text: qsTr("Proxy")
+                            visible: rowNameRow.proxyState === "ready"
+                                     || rowNameRow.proxyState === "queued"
+                                     || rowNameRow.proxyState === "building"
+                            waiting: rowNameRow.proxyState !== "ready"
+                        }
+                        MediaPill {
+                            id: rowEditFriendlyPill
+                            anchors.verticalCenter: parent.verticalCenter
+                            text: qsTr("Edit-friendly")
+                            tooltip: qsTr("Converted to a constant frame rate for smooth editing")
+                            accent: Theme.clipEditFriendly
+                            foreground: Theme.clipEditFriendlyForeground
+                            visible: !listRow.isFolder && root.editFriendlyOf(assetId)
+                        }
+                        Text {
+                            text: name
+                            color: Theme.panelForeground
+                            font.family: Theme.fontFamily
+                            font.pixelSize: Theme.fontSizeSm
+                            elide: Text.ElideRight
+                            width: Math.max(0, parent.width
+                                               - (rowProxyPill.visible ? rowProxyPill.width + parent.spacing : 0)
+                                               - (rowEditFriendlyPill.visible
+                                                  ? rowEditFriendlyPill.width + parent.spacing : 0))
+                        }
                     }
                     Text {
                         visible: !listRow.isFolder
@@ -1172,6 +1313,27 @@ Item {
                     icon.name: Theme.icons.folder
                     visible: BinFolderModel.count > 0
                     onTriggered: root.moveToFolderRequested(root.selectedAssetIds)
+                }
+                ThemedMenuItem {
+                    readonly property var ids: root.selectedWithProxyState(["none"])
+                    text: ids.length > 1 ? qsTr("Create %n proxies", "", ids.length) : qsTr("Create proxy")
+                    icon.name: Theme.icons.filePlay
+                    visible: ids.length > 0
+                    onTriggered: AssetLibrary.createProxies(ids)
+                }
+                ThemedMenuItem {
+                    readonly property var ids: root.selectedWithProxyState(["ready", "queued", "building"])
+                    text: ids.length > 1 ? qsTr("Remove %n proxies", "", ids.length) : qsTr("Remove proxy")
+                    icon.name: Theme.icons.x
+                    visible: ids.length > 0
+                    onTriggered: AssetLibrary.removeProxies(ids)
+                }
+                ThemedMenuItem {
+                    text: qsTr("Convert to edit-friendly format")
+                    icon.name: Theme.icons.rabbit
+                    visible: kind === "video" && root.selectedAssetIds.length <= 1
+                             && !root.editFriendlyOf(assetId)
+                    onTriggered: EditorState.convertAssetsToConstantFrameRate([assetId])
                 }
                 ThemedMenuItem {
                     text: qsTr("Export image…")
@@ -1505,11 +1667,110 @@ Item {
         hint: qsTr("Drag media here, or import more.")
     }
 
+    // Proxy jobs run in the background; this is their one progress surface and the way to stop
+    // them.
+    Item {
+        id: proxyStatusRow
+        anchors.top: binNavRow.bottom
+        anchors.topMargin: visible ? Theme.spacingSm : 0
+        anchors.left: parent.left
+        anchors.right: parent.right
+        anchors.leftMargin: Theme.pagePadding
+        anchors.rightMargin: Theme.pagePadding
+        visible: AssetLibrary.proxyBusy
+        height: visible ? Math.max(proxyStatusText.implicitHeight + Theme.spacingSm
+                                   + proxyStatusBar.height, proxyCancel.height)
+                        : 0
+
+        Text {
+            id: proxyStatusText
+            anchors.left: parent.left
+            anchors.right: proxyCancel.left
+            anchors.rightMargin: Theme.spacingMd
+            anchors.top: parent.top
+            text: AssetLibrary.proxyQueuedCount > 0
+                  ? qsTr("Creating proxy for %1 (%2 more)").arg(AssetLibrary.proxyCurrentName)
+                                                            .arg(AssetLibrary.proxyQueuedCount)
+                  : qsTr("Creating proxy for %1").arg(AssetLibrary.proxyCurrentName)
+            color: Theme.mutedForeground
+            font.family: Theme.fontFamily
+            font.pixelSize: Theme.fontSizeXs
+            elide: Text.ElideMiddle
+        }
+        ThemedProgressBar {
+            id: proxyStatusBar
+            anchors.left: parent.left
+            anchors.right: proxyCancel.left
+            anchors.rightMargin: Theme.spacingMd
+            anchors.top: proxyStatusText.bottom
+            anchors.topMargin: Theme.spacingSm
+            barHeight: Theme.spacingXs
+            value: AssetLibrary.proxyProgress
+        }
+        IconButton {
+            id: proxyCancel
+            anchors.right: parent.right
+            anchors.verticalCenter: parent.verticalCenter
+            glyph: Theme.icons.x
+            variant: "ghost"
+            tooltip: qsTr("Stop creating proxies")
+            onClicked: AssetLibrary.cancelProxies()
+        }
+    }
+
+    // A frame-rate conversion has no preview window to report in, so it reports here. Crops
+    // keep theirs in the preview window.
+    Item {
+        id: conversionStatusRow
+        anchors.top: proxyStatusRow.bottom
+        anchors.topMargin: visible ? Theme.spacingSm : 0
+        anchors.left: parent.left
+        anchors.right: parent.right
+        anchors.leftMargin: Theme.pagePadding
+        anchors.rightMargin: Theme.pagePadding
+        visible: EditorState.editingAsset && EditorState.assetEditIsConversion
+        height: visible ? Math.max(conversionStatusText.implicitHeight + Theme.spacingSm
+                                   + conversionStatusBar.height, conversionCancel.height)
+                        : 0
+
+        Text {
+            id: conversionStatusText
+            anchors.left: parent.left
+            anchors.right: conversionCancel.left
+            anchors.rightMargin: Theme.spacingMd
+            anchors.top: parent.top
+            text: qsTr("Converting %1 to an edit-friendly format").arg(EditorState.assetEditName)
+            color: Theme.mutedForeground
+            font.family: Theme.fontFamily
+            font.pixelSize: Theme.fontSizeXs
+            elide: Text.ElideMiddle
+        }
+        ThemedProgressBar {
+            id: conversionStatusBar
+            anchors.left: parent.left
+            anchors.right: conversionCancel.left
+            anchors.rightMargin: Theme.spacingMd
+            anchors.top: conversionStatusText.bottom
+            anchors.topMargin: Theme.spacingSm
+            barHeight: Theme.spacingXs
+            value: EditorState.assetEditProgress
+        }
+        IconButton {
+            id: conversionCancel
+            anchors.right: parent.right
+            anchors.verticalCenter: parent.verticalCenter
+            glyph: Theme.icons.x
+            variant: "ghost"
+            tooltip: qsTr("Stop converting")
+            onClicked: EditorState.cancelAssetEdit()
+        }
+    }
+
     GridView {
         id: grid
         visible: root.gridMode && root.combinedItems.length > 0
 
-        anchors.top: binNavRow.bottom
+        anchors.top: conversionStatusRow.bottom
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.bottom: parent.bottom
@@ -1532,7 +1793,7 @@ Item {
         id: listColumn
         visible: !root.gridMode && root.combinedItems.length > 0
 
-        anchors.top: binNavRow.bottom
+        anchors.top: conversionStatusRow.bottom
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.bottom: parent.bottom

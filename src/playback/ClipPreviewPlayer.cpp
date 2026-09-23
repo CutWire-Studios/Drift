@@ -240,7 +240,7 @@ void ClipPreviewPlayer::requestFrame(drift::TimeUs position)
         QMutexLocker lock(&m_clipMutex);
         if (m_clip.type == drift::ClipType::Audio || m_clip.path.isEmpty())
             return;
-        const drift::VideoRead read = drift::resolveVideoRead(m_clip, position);
+        const drift::VideoRead read = drift::resolveVideoRead(m_clip, position, true);
         path = read.path;
         sourceUs = read.sourceUs;
         streamId = kPreviewStreamSalt ^ ClipReaderPool::streamIdForClip(m_clip.id);
