@@ -707,12 +707,15 @@ const QList<Op> &ops()
                        {QStringLiteral("index")}),
           false, true },
         { "set_effect_param", "effects", "Tweak a video effect",
-          "Set one numeric/boolean video effect parameter. Fails not_found on a key the effect does "
-          "not declare or a stack index that is not there. Take keys from list_effects({id}). Use "
-          "set_effect_color_param for colors.",
+          "Set one numeric/boolean video effect parameter, or a clip param (type \"clip\", e.g. "
+          "depth.occlude's target) to a clip id string — \"\" leaves the choice to the effect. Fails "
+          "not_found on a key the effect does not declare or a stack index that is not there. Take "
+          "keys from list_effects({id}). Use set_effect_color_param for colors.",
           objectSchema(mergeProps({{QStringLiteral("index"), effectIndexProp()},
                                    {QStringLiteral("key"), stringProp(QStringLiteral("Parameter key from the effect's params in list_effects"))},
-                                   {QStringLiteral("value"), numberProp(QStringLiteral("Value (booleans as 0/1); range from list_effects({id})"))}},
+                                   {QStringLiteral("value"),
+                                    QJsonObject{{QStringLiteral("type"), QJsonArray{QStringLiteral("number"), QStringLiteral("string")}},
+                                                {QStringLiteral("description"), QStringLiteral("Value (booleans as 0/1; a clip id for clip params); range from list_effects({id})")}}}},
                                   clipRefProps()),
                        {QStringLiteral("index"), QStringLiteral("key"), QStringLiteral("value")}) },
         { "add_audio_effect", "effects", "Put an audio effect on a clip",

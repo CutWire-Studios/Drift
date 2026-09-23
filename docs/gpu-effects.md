@@ -126,8 +126,11 @@ in a shader are perceptual, so expose a scale parameter rather than assuming uni
 ### Behind Subject (`depth.occlude`)
 
 A compositor-backend package, not a shader: it places the layer carrying it (text, a sticker, a 3D
-model) at `depth` inside the **nearest clip below it that has depth**, and wherever that clip is
-nearer the layer gives way. `FrameCompositor::buildGpuScene` marks the occluder
+model) at `depth` inside a video or image clip beneath it, and wherever that clip is nearer the
+layer gives way. Its `target` parameter is of type `clip` (a clip id, picked in the inspector from
+`AppController::effectClipCandidates`); empty, or naming a clip that no longer exists, means the
+nearest video or image clip beneath — whether or not it has depth yet, so the inspector can name it
+and offer to estimate it. A chosen clip that is not on screen at that instant occludes nothing. `FrameCompositor::buildGpuScene` marks the occluder
 (`GpuLayer::emitDepthCanvas`) and the occluded layer (`occluderItem`); `composeOnGlThread` lays the
 occluder's depth out on a canvas-sized target once it is drawn (`kDepthPlaceFragShader`: depth in
 r/g, cutout matte in b, coverage in a), and both layer shaders test against it. With

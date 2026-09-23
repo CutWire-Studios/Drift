@@ -1482,6 +1482,18 @@ public:
     // dialogs hand us a real local path without QML having to call toLocalFile().
     Q_INVOKABLE bool setEffectStringParam(int trackIndex, int clipIndex, int effectIndex,
                                           const QString &key, const QUrl &url);
+    // Clip params ("clip" type, e.g. the clip Behind Subject sits in). Empty clears the choice
+    // back to automatic.
+    Q_INVOKABLE bool setEffectClipParam(int trackIndex, int clipIndex, int effectIndex,
+                                        const QString &key, const QString &clipId);
+    // What a clip param can point at: every video or image clip on a visible track beneath the
+    // clip that overlaps it in time, nearest track first. [{id, name, track, clip, hasDepth}]
+    Q_INVOKABLE QVariantList effectClipCandidates(int trackIndex, int clipIndex) const;
+    // The clip a clip param resolves to right now — the chosen one, or with none chosen the
+    // nearest video or image clip beneath at the playhead, which is what the renderer uses.
+    // {explicit, id, name, track, clip, hasDepth}; empty when there is none.
+    Q_INVOKABLE QVariantMap effectClipTarget(int trackIndex, int clipIndex, int effectIndex,
+                                             const QString &key) const;
     Q_INVOKABLE QVariantList audioEffectCatalog() const;
     Q_INVOKABLE QVariantList audioEffectCategories() const;
     Q_INVOKABLE void addAudioEffect(int trackIndex, int clipIndex, const QString &effectId);

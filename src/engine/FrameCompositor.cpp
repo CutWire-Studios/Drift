@@ -352,8 +352,9 @@ std::shared_ptr<const drift::DepthFrame> depthFrameForClip(const drift::Clip &cl
     return sidecar->frameAt(clip.timelineToSourceUs(timelineUs));
 }
 
-// The nearest clip drawn so far that has depth, as a candidate for layers above it to sit inside.
-// The frame is only decoded once a layer actually asks for it.
+// A video or image clip drawn so far, as a candidate for layers above it to sit inside. The frame
+// is only decoded once a layer actually asks for it; sidecar is null until the clip's depth has
+// been estimated.
 struct DepthOccluder
 {
     int item = -1;
@@ -361,14 +362,30 @@ struct DepthOccluder
     drift::TimeUs sourceUs = 0;
 };
 
-// "depth.occlude" places a layer at a distance inside the nearest clip below it that has depth,
-// so whatever in that clip is nearer passes in front. The effect has no pixels of its own: it only
-// tells the compositor to lay the occluder's depth out on the canvas and test this layer against
-// it. Occluders are looked for in the same scene, so inside a composite clip they stay inside it.
-void applyDepthOcclusion(GpuScene &scene, GpuLayer &layer, const DepthOccluder &occluder)
+bool projectHasClip(const drift::Project &project, const QString &id)
 {
-    if (occluder.item < 0)
-        return;
+    bool found = false;
+    project.forEachTrackList([&](const QList<drift::Track> &tracks) {
+        for (const drift::Track &track : tracks) {
+            for (const drift::Clip &clip : track.clips) {
+                if (clip.id == id)
+                    found = true;
+            }
+        }
+    });
+    return found;
+}
+
+// "depth.occlude" places a layer at a distance inside a clip below it, so whatever in that clip is
+// nearer passes in front. Its "target" param names the clip; empty — or naming a clip that no
+// longer exists — means the nearest video or image clip beneath. A chosen clip that is not on
+// screen at this instant occludes nothing. The effect has no pixels of its own: it only tells the
+// compositor to lay the clip's depth out on the canvas and test this layer against it. Clips are
+// looked for in the same scene, so inside a composite clip they stay inside it.
+void applyDepthOcclusion(const drift::Project &project, GpuScene &scene, GpuLayer &layer,
+                         const DepthOccluder &nearest,
+                         const QHash<QString, DepthOccluder> &occluders)
+{
     const drift::Effect *occlude = nullptr;
     for (const drift::Effect &effect : std::as_const(layer.effects)) {
         if (effect.enabled && effect.catalogId == QLatin1String("depth.occlude"))
@@ -379,6 +396,14 @@ void applyDepthOcclusion(GpuScene &scene, GpuLayer &layer, const DepthOccluder &
     const EffectPresetEntry *def = effectDefForId(occlude->catalogId);
     if (!def)
         return;
+    const QMap<QString, QVariant> params = resolvedEffectParameters(*occlude, *def);
+
+    const QString target = params.value(QStringLiteral("target")).toString();
+    DepthOccluder occluder = nearest;
+    if (!target.isEmpty() && projectHasClip(project, target))
+        occluder = occluders.value(target);
+    if (occluder.item < 0 || !occluder.sidecar)
+        return;
 
     GpuLayer &host = scene.items[occluder.item].layer;
     if (!host.emitDepthCanvas) {
@@ -388,7 +413,6 @@ void applyDepthOcclusion(GpuScene &scene, GpuLayer &layer, const DepthOccluder &
             return;
         host.emitDepthCanvas = true;
     }
-    const QMap<QString, QVariant> params = resolvedEffectParameters(*occlude, *def);
     layer.occluderItem = occluder.item;
     layer.occludeDepth = float(params.value(QStringLiteral("depth")).toDouble());
     layer.occludeSoftness = float(params.value(QStringLiteral("softness")).toDouble());
@@ -1180,7 +1204,8 @@ GpuScene buildGpuScene(const drift::Project &project, drift::TimeUs timelineUs, 
         scene.backgroundColor = bg.color.isValid() ? bg.color : QColor(Qt::black);
     }
 
-    DepthOccluder occluder;
+    DepthOccluder nearestOccluder;
+    QHash<QString, DepthOccluder> occluders;
 
     // Track 0 is topmost and composites in front, so emit back-to-front.
     const QList<drift::Track> &tracks = project.tracks();
@@ -1282,13 +1307,13 @@ GpuScene buildGpuScene(const drift::Project &project, drift::TimeUs timelineUs, 
                                        laneMasks);
             if (!item.layer.valid)
                 continue;
-            applyDepthOcclusion(scene, item.layer, occluder);
+            applyDepthOcclusion(project, scene, item.layer, nearestOccluder, occluders);
             scene.items.append(item);
-            if (!clip.depthPath.isEmpty()) {
-                if (auto sidecar = drift::loadDepthSidecarCached(clip.depthPath)) {
-                    occluder = {int(scene.items.size()) - 1, std::move(sidecar),
-                                clip.timelineToSourceUs(timelineUs)};
-                }
+            if (clip.type == drift::ClipType::Video || clip.type == drift::ClipType::Image) {
+                nearestOccluder = {int(scene.items.size()) - 1,
+                                   drift::loadDepthSidecarCached(clip.depthPath),
+                                   clip.timelineToSourceUs(timelineUs)};
+                occluders.insert(clip.id, nearestOccluder);
             }
         }
     }

@@ -919,7 +919,37 @@ void EngineTest::depthOcclusionHidesLayerBehindNearerPixels()
     QVERIFY2(right.red() > 200 && right.green() < 60,
              qPrintable(QStringLiteral("right %1,%2,%3").arg(right.red()).arg(right.green()).arg(right.blue())));
 
+    // A chosen clip wins over the nearest one. Put a blue still with no depth between the two:
+    // automatic now means the blue clip, which has no depth, so the red layer draws whole...
+    QImage blue(canvas, QImage::Format_RGBA8888);
+    blue.fill(QColor(20, 20, 230));
+    const QString bluePath = dir.filePath(QStringLiteral("blue.png"));
+    QVERIFY(blue.save(bluePath));
+    drift::Clip middle = below;
+    middle.id = QStringLiteral("middle");
+    middle.path = bluePath;
+    middle.depthPath.clear();
+    project.tracks().insert(1, drift::Track{.type = drift::TrackType::Video});
+    project.tracks()[1].clips.append(middle);
+    QVERIFY(compositor.compositeAt(500'000).pixelColor(8, 18).red() > 200);
+
+    // ...and naming the grey clip puts the layer back inside it, with the blue clip showing
+    // through where the grey clip is nearer.
+    project.tracks()[0].clips[0].effects[0].parameters.insert(QStringLiteral("target"),
+                                                              QStringLiteral("below"));
+    const QImage chosen = compositor.compositeAt(500'000);
+    QVERIFY2(chosen.pixelColor(8, 18).blue() > 200 && chosen.pixelColor(8, 18).red() < 60,
+             "the chosen clip's near half should hide the layer");
+    QVERIFY(chosen.pixelColor(56, 18).red() > 200);
+
+    // A choice naming a clip that is gone falls back to automatic.
+    project.tracks()[0].clips[0].effects[0].parameters.insert(QStringLiteral("target"),
+                                                              QStringLiteral("deleted"));
+    QVERIFY(compositor.compositeAt(500'000).pixelColor(8, 18).red() > 200);
+
     // Without depth below, there is nothing to sit inside and the layer draws whole.
+    project.tracks().removeAt(1);
+    project.tracks()[0].clips[0].effects[0].parameters.remove(QStringLiteral("target"));
     project.tracks()[1].clips[0].depthPath.clear();
     const QImage plain = compositor.compositeAt(500'000);
     QVERIFY(plain.pixelColor(8, 18).red() > 200);

@@ -34,6 +34,144 @@ Item {
 
     function refreshFields() {}
 
+    // Depth status and controls for one clip: estimate (draft or high quality), progress, cancel,
+    // clear, and the download when the model is missing. Used for the selected clip's own depth
+    // effects and, on the Behind Subject card, for the clip that layer sits inside.
+    component DepthPanel: Column {
+        id: panel
+        property int targetTrack: -1
+        property int targetClip: -1
+        // Where the depth job is keyed, so progress can be followed.
+        property string targetId: ""
+        property bool hasDepth: false
+        property bool canDepth: true
+        property string cannotText: ""
+        property string missingText: ""
+
+        // Asked of the engine rather than the addon registry, and reset when an addon lands:
+        // the model can equally come from DRIFT_DEPTH_MODEL_DIR.
+        property bool runtimeReady: Addons.runtimeAvailable()
+        property bool depthReady: EditorState.depthAvailable() && Addons.runtimeAvailable()
+        property bool highQuality: false
+        property int jobRevision: 0
+        readonly property var job: {
+            void panel.jobRevision
+            return panel.targetId ? EditorState.depthJob(panel.targetId) : ({})
+        }
+        readonly property bool running: job.active === true
+
+        spacing: Theme.spacingSm
+
+        Connections {
+            target: EditorState
+            function onDepthJobChanged(clipId) {
+                if (clipId === panel.targetId)
+                    panel.jobRevision++
+            }
+        }
+        Connections {
+            target: Addons
+            function onKindChanged(kind) {
+                if (kind !== "depth-model" && kind !== "onnxruntime")
+                    return
+                panel.runtimeReady = Addons.runtimeAvailable()
+                panel.depthReady = EditorState.depthAvailable() && panel.runtimeReady
+            }
+        }
+
+        Text {
+            width: parent.width
+            wrapMode: Text.WordWrap
+            visible: !panel.canDepth && panel.cannotText !== ""
+            text: panel.cannotText
+            color: Theme.warning
+            font.family: Theme.fontFamily
+            font.pixelSize: Theme.fontSizeXs
+        }
+
+        // The effect is in the stack and doing nothing; without this the preview gives no clue why.
+        Text {
+            width: parent.width
+            wrapMode: Text.WordWrap
+            visible: panel.canDepth && panel.depthReady && !panel.hasDepth && !panel.running
+            text: panel.missingText
+            color: Theme.warning
+            font.family: Theme.fontFamily
+            font.pixelSize: Theme.fontSizeXs
+        }
+
+        Text {
+            width: parent.width
+            wrapMode: Text.WordWrap
+            visible: !panel.running && !!panel.job.error
+            text: panel.job.error || ""
+            color: Theme.destructive
+            font.family: Theme.fontFamily
+            font.pixelSize: Theme.fontSizeXs
+        }
+
+        ThemedChip {
+            visible: panel.canDepth && panel.depthReady && !panel.running
+            text: qsTr("High quality")
+            tooltip: qsTr("Sharper depth edges, about twice as slow")
+            selected: panel.highQuality
+            onClicked: panel.highQuality = !panel.highQuality
+        }
+
+        ThemedButton {
+            visible: panel.canDepth && panel.depthReady && !panel.running
+            width: parent.width
+            text: panel.hasDepth ? qsTr("Re-estimate depth") : qsTr("Estimate depth")
+            variant: panel.hasDepth ? "ghost" : "secondary"
+            onClicked: EditorState.estimateDepthForClip(panel.targetTrack, panel.targetClip,
+                                                        panel.highQuality)
+        }
+
+        ThemedButton {
+            visible: panel.canDepth && panel.hasDepth && !panel.running
+            width: parent.width
+            text: qsTr("Clear depth")
+            variant: "ghost"
+            onClicked: EditorState.clearDepth(panel.targetTrack, panel.targetClip)
+        }
+
+        Text {
+            width: parent.width
+            wrapMode: Text.WordWrap
+            visible: panel.running
+            text: panel.job.status || ""
+            color: Theme.mutedForeground
+            font.family: Theme.fontFamily
+            font.pixelSize: Theme.fontSizeXs
+        }
+
+        ThemedProgressBar {
+            visible: panel.running
+            width: parent.width
+            value: panel.job.progress || 0
+        }
+
+        ThemedButton {
+            visible: panel.running
+            width: parent.width
+            text: qsTr("Cancel")
+            variant: "ghost"
+            onClicked: EditorState.cancelDepthEstimation(panel.targetId)
+        }
+
+        ThemedButton {
+            visible: panel.canDepth && !panel.depthReady
+            width: parent.width
+            text: panel.runtimeReady
+                  ? qsTr("Download depth estimation (about 160 MB)")
+                  : qsTr("Install AI engine first")
+            variant: "primary"
+            // Inline components cannot see the file's ids, so not root.Window.
+            onClicked: panel.Window.window.openAddonManager(
+                panel.runtimeReady ? "depth-model" : "onnxruntime")
+        }
+    }
+
     // Hue params (effectToMap's `hue` flag) are degrees on the keyframe stack but are picked as a
     // colour. Only the hue survives the round trip: saturation and brightness are the shader's
     // business (chroma key's Tolerance), so the swatch always shows the pure, fully saturated hue.
@@ -271,32 +409,17 @@ Item {
         // The depth effects read the clip's estimated depth and pass the frame through without it.
         // Estimating takes minutes on a CPU, so unlike the face scan it never starts by itself:
         // it is offered here, beside the effects that need it. Hidden when none are in the stack.
+        // Behind Subject reads another clip's depth, so it carries its own panel on its card.
         Column {
             id: depthSection
             visible: depthSection.usesDepthEffect
             width: parent.width
             spacing: Theme.spacingSm
 
-            // Same reasoning as faceSection: ask the engine, and reset when an addon lands.
-            property bool runtimeReady: Addons.runtimeAvailable()
-            property bool depthReady: EditorState.depthAvailable() && Addons.runtimeAvailable()
-            property bool highQuality: false
-            property int jobRevision: 0
-
             readonly property var hostData: {
                 void root.clipDataRevision
                 return EditorState.selectedClipData || ({})
             }
-            readonly property bool canDepth: hostData.canDepth === true
-            readonly property bool hasDepth: hostData.hasDepth === true
-            // The media clip the depth belongs to, which is where the job is keyed — the
-            // selection may be the adjustment pinned to it.
-            readonly property string hostId: hostData.depthClipId || ""
-            readonly property var job: {
-                void depthSection.jobRevision
-                return depthSection.hostId ? EditorState.depthJob(depthSection.hostId) : ({})
-            }
-            readonly property bool running: job.active === true
             readonly property bool usesDepthEffect: {
                 void root.clipDataRevision
                 const effects = EditorState.selectedClipEffects || []
@@ -307,24 +430,6 @@ Item {
                 return false
             }
 
-            Connections {
-                target: EditorState
-                function onDepthJobChanged(clipId) {
-                    if (clipId === depthSection.hostId)
-                        depthSection.jobRevision++
-                }
-            }
-            Connections {
-                target: Addons
-                function onKindChanged(kind) {
-                    if (kind !== "depth-model" && kind !== "onnxruntime")
-                        return
-                    depthSection.runtimeReady = Addons.runtimeAvailable()
-                    depthSection.depthReady = EditorState.depthAvailable()
-                                              && depthSection.runtimeReady
-                }
-            }
-
             Text {
                 width: parent.width
                 text: qsTr("Depth")
@@ -333,98 +438,17 @@ Item {
                 font.pixelSize: Theme.fontSizeXs
             }
 
-            Text {
+            DepthPanel {
                 width: parent.width
-                wrapMode: Text.WordWrap
-                visible: !depthSection.canDepth
-                text: qsTr("Depth effects follow one clip's depth. Add this to a clip rather than to an adjustment layer.")
-                color: Theme.warning
-                font.family: Theme.fontFamily
-                font.pixelSize: Theme.fontSizeXs
-            }
-
-            // The effect is in the stack and doing nothing; without this the preview gives no
-            // clue why.
-            Text {
-                width: parent.width
-                wrapMode: Text.WordWrap
-                visible: depthSection.canDepth && depthSection.depthReady && !depthSection.hasDepth
-                         && !depthSection.running
-                text: qsTr("These effects need the clip's depth, so it has to be estimated first. It runs in the background and takes roughly half a second per frame.")
-                color: Theme.warning
-                font.family: Theme.fontFamily
-                font.pixelSize: Theme.fontSizeXs
-            }
-
-            Text {
-                width: parent.width
-                wrapMode: Text.WordWrap
-                visible: !depthSection.running && !!depthSection.job.error
-                text: depthSection.job.error || ""
-                color: Theme.destructive
-                font.family: Theme.fontFamily
-                font.pixelSize: Theme.fontSizeXs
-            }
-
-            ThemedChip {
-                visible: depthSection.canDepth && depthSection.depthReady && !depthSection.running
-                text: qsTr("High quality")
-                tooltip: qsTr("Sharper depth edges, about twice as slow")
-                selected: depthSection.highQuality
-                onClicked: depthSection.highQuality = !depthSection.highQuality
-            }
-
-            ThemedButton {
-                visible: depthSection.canDepth && depthSection.depthReady && !depthSection.running
-                width: parent.width
-                text: depthSection.hasDepth ? qsTr("Re-estimate depth") : qsTr("Estimate depth")
-                variant: depthSection.hasDepth ? "ghost" : "secondary"
-                onClicked: EditorState.estimateDepthForClip(
-                               EditorState.selectedTrack, EditorState.selectedClip,
-                               depthSection.highQuality)
-            }
-
-            ThemedButton {
-                visible: depthSection.canDepth && depthSection.hasDepth && !depthSection.running
-                width: parent.width
-                text: qsTr("Clear depth")
-                variant: "ghost"
-                onClicked: EditorState.clearDepth(EditorState.selectedTrack, EditorState.selectedClip)
-            }
-
-            Text {
-                width: parent.width
-                wrapMode: Text.WordWrap
-                visible: depthSection.running
-                text: depthSection.job.status || ""
-                color: Theme.mutedForeground
-                font.family: Theme.fontFamily
-                font.pixelSize: Theme.fontSizeXs
-            }
-
-            ThemedProgressBar {
-                visible: depthSection.running
-                width: parent.width
-                value: depthSection.job.progress || 0
-            }
-
-            ThemedButton {
-                visible: depthSection.running
-                width: parent.width
-                text: qsTr("Cancel")
-                variant: "ghost"
-                onClicked: EditorState.cancelDepthEstimation(depthSection.hostId)
-            }
-
-            ThemedButton {
-                visible: depthSection.canDepth && !depthSection.depthReady
-                width: parent.width
-                text: depthSection.runtimeReady
-                      ? qsTr("Download depth estimation (about 180 MB)")
-                      : qsTr("Install AI engine first")
-                variant: "primary"
-                onClicked: root.Window.window.openAddonManager(
-                    depthSection.runtimeReady ? "depth-model" : "onnxruntime")
+                // The media clip the depth belongs to; the selection may be the adjustment pinned
+                // to it, which estimateDepthForClip redirects through.
+                targetTrack: EditorState.selectedTrack
+                targetClip: EditorState.selectedClip
+                targetId: depthSection.hostData.depthClipId || ""
+                hasDepth: depthSection.hostData.hasDepth === true
+                canDepth: depthSection.hostData.canDepth === true
+                cannotText: qsTr("Depth effects follow one clip's depth. Add this to a clip rather than to an adjustment layer.")
+                missingText: qsTr("These effects need the clip's depth, so it has to be estimated first. It runs in the background and takes roughly half a second per frame.")
             }
         }
 
@@ -721,6 +745,49 @@ Item {
                                     }
                                 }
 
+                                // Clip params: which clip on the timeline the effect works with — Behind
+                                // Subject's clip to sit inside. Picked from the clips beneath this
+                                // one; the first entry leaves the choice to the effect.
+                                Column {
+                                    id: clipParam
+                                    visible: paramRow.paramData.type === "clip"
+                                    width: parent.width
+                                    spacing: 4
+                                    readonly property var candidates: {
+                                        void root.clipDataRevision
+                                        return paramRow.paramData.type === "clip"
+                                            ? EditorState.effectClipCandidates(EditorState.selectedTrack,
+                                                                               EditorState.selectedClip)
+                                            : []
+                                    }
+
+                                    Text {
+                                        width: parent.width
+                                        elide: Text.ElideRight
+                                        text: paramRow.paramData.label
+                                        color: Theme.mutedForeground
+                                        font.family: Theme.fontFamily
+                                        font.pixelSize: Theme.fontSizeXs
+                                    }
+                                    ThemedComboBox {
+                                        width: parent.width
+                                        model: [qsTr("Automatic (clip beneath)")].concat(
+                                                   clipParam.candidates.map(c => c.name))
+                                        currentIndex: {
+                                            const id = paramRow.paramData.value || ""
+                                            for (let i = 0; i < clipParam.candidates.length; i++) {
+                                                if (clipParam.candidates[i].id === id)
+                                                    return i + 1
+                                            }
+                                            return 0
+                                        }
+                                        onActivated: (index) => EditorState.setEffectClipParam(
+                                            EditorState.selectedTrack, EditorState.selectedClip,
+                                            effectCard.index, paramRow.paramData.key,
+                                            index === 0 ? "" : clipParam.candidates[index - 1].id)
+                                    }
+                                }
+
                                 // File paths (face-prop .glb): basename + Choose / Clear. Not keyframed.
                                 Row {
                                     visible: paramRow.paramData.type === "file"
@@ -849,6 +916,53 @@ Item {
                                 }
                             }
                         }
+                    }
+                }
+
+                // Behind Subject reads the depth of the clip it sits inside, not of this layer, so
+                // that clip's depth is estimated from here.
+                Column {
+                    id: occludeSection
+                    readonly property bool isOcclude: effectCard.effectData.catalogId === "depth.occlude"
+                    visible: isOcclude
+                    width: parent.width
+                    spacing: Theme.spacingSm
+                    opacity: effectCard.effectEnabled ? 1 : 0.45
+                    readonly property var target: {
+                        void root.clipDataRevision
+                        void EditorState.playheadSeconds
+                        return occludeSection.isOcclude
+                            ? EditorState.effectClipTarget(EditorState.selectedTrack,
+                                                           EditorState.selectedClip,
+                                                           effectCard.index, "target")
+                            : ({})
+                    }
+                    readonly property string targetName: target.name || ""
+
+                    Text {
+                        width: parent.width
+                        wrapMode: Text.WordWrap
+                        visible: !!occludeSection.target.id
+                        text: occludeSection.target.explicit
+                              ? qsTr("Anything in “%1” nearer than Distance passes in front of this layer.")
+                                    .arg(occludeSection.targetName)
+                              : qsTr("Anything in “%1” (the clip beneath at the playhead) nearer than Distance passes in front of this layer.")
+                                    .arg(occludeSection.targetName)
+                        color: Theme.mutedForeground
+                        font.family: Theme.fontFamily
+                        font.pixelSize: Theme.fontSizeXs
+                    }
+
+                    DepthPanel {
+                        width: parent.width
+                        targetTrack: occludeSection.target.track !== undefined ? occludeSection.target.track : -1
+                        targetClip: occludeSection.target.clip !== undefined ? occludeSection.target.clip : -1
+                        targetId: occludeSection.target.id || ""
+                        hasDepth: occludeSection.target.hasDepth === true
+                        canDepth: !!occludeSection.target.id
+                        cannotText: qsTr("Place this layer above a video or image clip. It goes behind whatever in that clip is nearer than Distance.")
+                        missingText: qsTr("“%1” needs its depth estimated before anything in it can pass in front. It runs in the background and takes roughly half a second per frame.")
+                                         .arg(occludeSection.targetName)
                     }
                 }
             }

@@ -677,6 +677,18 @@ void McpTest::depthToolsSampleAndClear()
                 .value(QStringLiteral("ok")).toBool());
     QVERIFY(state.project()->tracks().at(track).clips.at(clip).depthPath.isEmpty());
 
+    // Behind Subject's clip is chosen by id through set_effect_param.
+    QVERIFY(dispatcher.applyOne(QStringLiteral("add_effect"),
+                                {{QStringLiteral("clip"), id}, {QStringLiteral("effect"), QStringLiteral("depth.occlude")}})
+                .value(QStringLiteral("ok")).toBool());
+    const QJsonObject pick = dispatcher.applyOne(
+        QStringLiteral("set_effect_param"),
+        {{QStringLiteral("clip"), id}, {QStringLiteral("index"), 0},
+         {QStringLiteral("key"), QStringLiteral("target")}, {QStringLiteral("value"), id}});
+    QVERIFY2(pick.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(pick).toJson()));
+    QCOMPARE(state.effectClipTarget(track, clip, 0, QStringLiteral("target"))
+                 .value(QStringLiteral("id")).toString(), id);
+
     // A text clip has no pixels to estimate, and the test environment has no model either way.
     QVERIFY(!dispatcher.applyOne(QStringLiteral("estimate_depth"), {{QStringLiteral("clip"), id}})
                  .value(QStringLiteral("ok")).toBool());

@@ -2882,10 +2882,10 @@ drift::KeyframeTrack<double> *keyframeTrackForProp(drift::Clip &clip, const QStr
 
     drift::Effect &effect = clip.effects[effectIndex];
 
-    // Colour and file params are not animatable: the track type is double all the way down.
+    // Colour, file and clip params are not animatable: the track type is double all the way down.
     if (const EffectPresetEntry *def = effectDefForId(effect.catalogId)) {
         for (const drift::EffectParamSpec &spec : def->meta.parameters) {
-            if (spec.key == paramKey && (spec.isColor() || spec.isFilePath()))
+            if (spec.key == paramKey && spec.isText())
                 return nullptr;
         }
     }
@@ -3175,8 +3175,8 @@ QVariantMap effectToMap(const drift::Effect &effect, int effectIndex, drift::Tim
                 && paramDef.key.endsWith(QLatin1String("hue"), Qt::CaseInsensitive)) {
                 param.insert(QStringLiteral("hue"), true);
             }
-            // Colours and file paths carry no `prop`: the keyframe stack is typed double.
-            if (!paramDef.isColor() && !paramDef.isFilePath()) {
+            // Colours, file paths and clips carry no `prop`: the keyframe stack is typed double.
+            if (!paramDef.isText()) {
                 param.insert(QStringLiteral("prop"),
                              QStringLiteral("fx.%1.%2").arg(effectIndex).arg(paramDef.key));
                 param.insert(QStringLiteral("keyframes"),
@@ -18377,6 +18377,129 @@ bool AppController::setEffectColorParam(int trackIndex, int clipIndex, int effec
     pushProjectEdit(before, tr("Edit effect"));
     finishEdit(tr("Effect updated"));
     return true;
+}
+
+bool AppController::setEffectClipParam(int trackIndex, int clipIndex, int effectIndex,
+                                       const QString &key, const QString &clipId)
+{
+    if (!redirectToEffectHost(&trackIndex, &clipIndex, drift::AdjustmentKind::VideoEffects,
+                              /*create=*/false)) {
+        return false;
+    }
+    if (trackIndex < 0 || trackIndex >= m_project.tracks().size())
+        return false;
+    drift::Track &track = m_project.tracks()[trackIndex];
+    if (clipIndex < 0 || clipIndex >= track.clips.size())
+        return false;
+    drift::Clip &clip = track.clips[clipIndex];
+    if (effectIndex < 0 || effectIndex >= clip.effects.size())
+        return false;
+    const EffectPresetEntry *def = effectDefForId(clip.effects[effectIndex].catalogId);
+    if (!def)
+        return false;
+    const auto spec = std::find_if(def->meta.parameters.cbegin(), def->meta.parameters.cend(),
+                                   [&](const drift::EffectParamSpec &p) { return p.key == key; });
+    if (spec == def->meta.parameters.cend() || !spec->isClip())
+        return false;
+    if (clip.effects[effectIndex].parameters.value(key).toString() == clipId)
+        return true;
+
+    const drift::Project before = m_project;
+    clip.effects[effectIndex].parameters.insert(key, clipId);
+    pushProjectEdit(before, tr("Edit effect"));
+    finishEdit(tr("Effect updated"));
+    return true;
+}
+
+namespace {
+
+QString clipDisplayName(const drift::Clip &clip)
+{
+    if (!clip.name.isEmpty())
+        return clip.name;
+    return QFileInfo(clip.path).completeBaseName();
+}
+
+} // namespace
+
+QVariantList AppController::effectClipCandidates(int trackIndex, int clipIndex) const
+{
+    QVariantList out;
+    const drift::ClipRef host = sourceClipRef(trackIndex, clipIndex);
+    if (host.trackIndex < 0 || host.trackIndex >= m_project.tracks().size())
+        return out;
+    const drift::Clip &self = m_project.tracks().at(host.trackIndex).clips.at(host.clipIndex);
+    const drift::TimeUs start = self.timelineStart;
+    const drift::TimeUs end = self.timelineEnd();
+
+    // Track 0 is topmost, so "beneath" is every higher index, nearest first.
+    const QList<drift::Track> &tracks = m_project.tracks();
+    for (int t = host.trackIndex + 1; t < tracks.size(); ++t) {
+        const drift::Track &track = tracks.at(t);
+        if (track.hidden || track.type == drift::TrackType::Audio || track.isAdjustmentLane())
+            continue;
+        for (int c = 0; c < track.clips.size(); ++c) {
+            const drift::Clip &clip = track.clips.at(c);
+            if (clip.type != drift::ClipType::Video && clip.type != drift::ClipType::Image)
+                continue;
+            if (clip.timelineEnd() <= start || clip.timelineStart >= end)
+                continue;
+            out.append(QVariantMap{{QStringLiteral("id"), clip.id},
+                                   {QStringLiteral("name"), clipDisplayName(clip)},
+                                   {QStringLiteral("track"), t},
+                                   {QStringLiteral("clip"), c},
+                                   {QStringLiteral("hasDepth"), !clip.depthPath.isEmpty()}});
+        }
+    }
+    return out;
+}
+
+QVariantMap AppController::effectClipTarget(int trackIndex, int clipIndex, int effectIndex,
+                                            const QString &key) const
+{
+    const drift::ClipRef host = sourceClipRef(trackIndex, clipIndex);
+    if (host.trackIndex < 0 || host.trackIndex >= m_project.tracks().size())
+        return {};
+    const drift::Clip *stack =
+        effectHostClip(host.trackIndex, host.clipIndex, drift::AdjustmentKind::VideoEffects);
+    if (!stack)
+        stack = &m_project.tracks().at(host.trackIndex).clips.at(host.clipIndex);
+    if (effectIndex < 0 || effectIndex >= stack->effects.size())
+        return {};
+    const QString chosen = stack->effects.at(effectIndex).parameters.value(key).toString();
+
+    const auto describe = [&](int t, int c, bool isExplicit) {
+        const drift::Clip &clip = m_project.tracks().at(t).clips.at(c);
+        return QVariantMap{{QStringLiteral("explicit"), isExplicit},
+                           {QStringLiteral("id"), clip.id},
+                           {QStringLiteral("name"), clipDisplayName(clip)},
+                           {QStringLiteral("track"), t},
+                           {QStringLiteral("clip"), c},
+                           {QStringLiteral("hasDepth"), !clip.depthPath.isEmpty()}};
+    };
+
+    // A chosen clip that no longer exists (deleted, or split into new ids) falls back to
+    // automatic, exactly as the renderer does.
+    int t = -1;
+    int c = -1;
+    if (!chosen.isEmpty() && findClipById(m_project, chosen, &t, &c))
+        return describe(t, c, true);
+
+    // Automatic: the nearest clip beneath at the playhead, or at the start when the playhead is
+    // outside this clip.
+    const drift::Clip &self = m_project.tracks().at(host.trackIndex).clips.at(host.clipIndex);
+    const drift::TimeUs at = self.containsTime(m_playheadUs) ? m_playheadUs : self.timelineStart;
+    const QVariantList candidates = effectClipCandidates(host.trackIndex, host.clipIndex);
+    for (const QVariant &v : candidates) {
+        const QVariantMap m = v.toMap();
+        const drift::Clip &clip =
+            m_project.tracks().at(m.value(QStringLiteral("track")).toInt())
+                .clips.at(m.value(QStringLiteral("clip")).toInt());
+        if (clip.containsTime(at))
+            return describe(m.value(QStringLiteral("track")).toInt(),
+                            m.value(QStringLiteral("clip")).toInt(), false);
+    }
+    return {};
 }
 
 bool AppController::setEffectStringParam(int trackIndex, int clipIndex, int effectIndex,

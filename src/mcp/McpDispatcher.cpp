@@ -1421,8 +1421,14 @@ QJsonObject McpDispatcher::opSetEffectParam(const QJsonObject &args)
         return clipRefError(args);
     const int index = jsonInt(args.value(QStringLiteral("index")));
     const QString key = args.value(QStringLiteral("key")).toString();
-    if (!m_controller->setEffectParam(ref.track, ref.clip, index, key,
-                                      jsonNumber(args.value(QStringLiteral("value")), 0))) {
+    // A string value is a clip id for a "clip" param (depth.occlude's target); "" is automatic.
+    const QJsonValue value = args.value(QStringLiteral("value"));
+    const bool set = value.isString()
+                         ? m_controller->setEffectClipParam(ref.track, ref.clip, index, key,
+                                                            value.toString())
+                         : m_controller->setEffectParam(ref.track, ref.clip, index, key,
+                                                        jsonNumber(value, 0));
+    if (!set) {
         return err("not_found",
                    QStringLiteral("no parameter '%1' on effect %2 — check the stack index in "
                                   "inspect({clips:true, detail:true}) and the parameter names in "

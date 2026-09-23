@@ -188,6 +188,7 @@ private slots:
     void keyframesCanBeDisabledPerProperty();
     void effectParamKeyframes();
     void depthEffectEditorStateResolvesHandles();
+    void behindSubjectTargetsAChosenClip();
     void effectRemovalRemapsGraphSelection();
     void denoiseAddsCleanedClipOnTrackAbove();
     void speedCurveOnAudioClipRetimesAndReplaces();
@@ -2902,6 +2903,72 @@ void EditorStateTest::depthEffectEditorStateResolvesHandles()
     QCOMPARE(effects.size(), 1);
     QCOMPARE(effects.at(0).toMap().value(QStringLiteral("catalogId")).toString(),
              QStringLiteral("depth.focus"));
+}
+
+void EditorStateTest::behindSubjectTargetsAChosenClip()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    drift::Project &project = *state.project();
+    project.tracks().clear();
+    for (int i = 0; i < 3; ++i)
+        project.tracks().append(drift::Track{.type = drift::TrackType::Video});
+
+    // A title on top, two stills beneath it, the lower one estimated.
+    const auto still = [&](const QString &id, const QString &name, int track) {
+        drift::Clip clip;
+        clip.id = id;
+        clip.name = name;
+        clip.type = drift::ClipType::Image;
+        clip.path = QStringLiteral("/tmp/%1.png").arg(id);
+        clip.timelineDuration = drift::secondsToUs(4.0);
+        clip.srcOut = clip.timelineDuration;
+        project.tracks()[track].clips.append(clip);
+    };
+    drift::Clip title;
+    title.id = QStringLiteral("title");
+    title.type = drift::ClipType::Text;
+    title.textContent = QStringLiteral("Behind");
+    title.timelineDuration = drift::secondsToUs(4.0);
+    project.tracks()[0].clips.append(title);
+    still(QStringLiteral("near"), QStringLiteral("Overlay"), 1);
+    still(QStringLiteral("far"), QStringLiteral("Interview"), 2);
+    project.tracks()[2].clips[0].depthPath = QStringLiteral("/tmp/far.driftdepth");
+
+    state.addEffect(0, 0, QStringLiteral("depth.occlude"));
+    state.selectClip(0, 0);
+    state.setPlayheadSeconds(1.0);
+
+    const QVariantList candidates = state.effectClipCandidates(0, 0);
+    QCOMPARE(candidates.size(), 2);
+    QCOMPARE(candidates.at(0).toMap().value(QStringLiteral("id")).toString(), QStringLiteral("near"));
+    QCOMPARE(candidates.at(1).toMap().value(QStringLiteral("name")).toString(), QStringLiteral("Interview"));
+    QVERIFY(candidates.at(1).toMap().value(QStringLiteral("hasDepth")).toBool());
+
+    // Automatic is the nearest clip beneath, depth or not — the same one the renderer uses.
+    QVariantMap target = state.effectClipTarget(0, 0, 0, QStringLiteral("target"));
+    QCOMPARE(target.value(QStringLiteral("id")).toString(), QStringLiteral("near"));
+    QVERIFY(!target.value(QStringLiteral("explicit")).toBool());
+    QVERIFY(!target.value(QStringLiteral("hasDepth")).toBool());
+
+    QVERIFY(state.setEffectClipParam(0, 0, 0, QStringLiteral("target"), QStringLiteral("far")));
+    target = state.effectClipTarget(0, 0, 0, QStringLiteral("target"));
+    QCOMPARE(target.value(QStringLiteral("id")).toString(), QStringLiteral("far"));
+    QVERIFY(target.value(QStringLiteral("explicit")).toBool());
+    QVERIFY(target.value(QStringLiteral("hasDepth")).toBool());
+    // Adding the effect gave the title an adjustment lane, so indices are checked by what they
+    // point at: they are what the inspector hands to estimateDepthForClip.
+    QCOMPARE(project.tracks().at(target.value(QStringLiteral("track")).toInt())
+                 .clips.at(target.value(QStringLiteral("clip")).toInt()).id,
+             QStringLiteral("far"));
+
+    // Only clip params take a clip id.
+    QVERIFY(!state.setEffectClipParam(0, 0, 0, QStringLiteral("depth"), QStringLiteral("far")));
+
+    // One undo step back to automatic.
+    state.undo();
+    target = state.effectClipTarget(0, 0, 0, QStringLiteral("target"));
+    QCOMPARE(target.value(QStringLiteral("id")).toString(), QStringLiteral("near"));
 }
 
 void EditorStateTest::effectRemovalRemapsGraphSelection()

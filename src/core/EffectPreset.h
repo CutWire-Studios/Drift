@@ -16,6 +16,8 @@ enum class EffectParamType {
     Bool,
     Color,
     FilePath,
+    // Another clip on the timeline, by id. Empty means the effect picks one itself.
+    Clip,
 };
 
 // User-adjustable parameter metadata for an effect preset (GUI-free).
@@ -40,6 +42,9 @@ struct EffectParamSpec
     bool isBoolean() const { return type == EffectParamType::Bool; }
     bool isColor() const { return type == EffectParamType::Color; }
     bool isFilePath() const { return type == EffectParamType::FilePath; }
+    bool isClip() const { return type == EffectParamType::Clip; }
+    // Strings on the parameter map rather than numbers: never keyframed, never bound as uniforms.
+    bool isText() const { return isColor() || isFilePath() || isClip(); }
 
     // The catalog default as the QVariant a parameter map wants. Every caller used to spell this
     // out as a ternary, and each one was a place to forget a new type.
@@ -52,6 +57,8 @@ struct EffectParamSpec
             return QVariant(defaultColorHex);
         case EffectParamType::FilePath:
             return QVariant(defaultString);
+        case EffectParamType::Clip:
+            return QVariant(QString());
         case EffectParamType::Float:
             break;
         }
@@ -68,6 +75,8 @@ struct EffectParamSpec
             return QStringLiteral("color");
         case EffectParamType::FilePath:
             return QStringLiteral("file");
+        case EffectParamType::Clip:
+            return QStringLiteral("clip");
         case EffectParamType::Float:
             break;
         }

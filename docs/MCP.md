@@ -414,13 +414,13 @@ the clip, 1 = nearest, consistent across the clip) and pass the frame through un
 | `depth.focus` | Depth of field | `focusDepth`, `focusRange`, `blur` (px at 1080p), `autoFocus` + `focusX/focusY` to track whatever is at a point |
 | `depth.fog` | Haze thickening with distance | `fogColor`, `density`, `start`, `ground` |
 | `depth.view` | Shows the depth itself (greyscale or colour map) | `colorize` |
-| `depth.occlude` | Goes on a layer *above* the clip (text, sticker, 3D model): places it at `depth` inside that clip, so nearer things pass in front | `depth`, `softness`, `cutoutEdges` |
+| `depth.occlude` | Goes on a layer *above* the clip (text, sticker, 3D model): places it at `depth` inside that clip, so nearer things pass in front | `target` (the clip to sit inside, by id — a string for `set_effect_param`; `""` = the nearest video/image clip beneath), `depth`, `softness`, `cutoutEdges` |
 
 1. `ai_capabilities` — `depth-model` must be installed (`install_addon` otherwise).
 2. `estimate_depth({clip, quality})` → `{job_id}`; poll `get_job` (it is slow: about 0.5 s per
    frame on CPU at `draft`). Re-estimating unchanged pixels returns the cached map at once.
 3. `add_effect` with one of the ids above on the clip (or, for `depth.occlude`, on the layer above
-   it) and tune with `set_effect_param` (`set_effect_color_param` for light colours) or `fx.<i>.<param>` keyframes.
+   it — and `estimate_depth` the clip it sits inside, not that layer) and tune with `set_effect_param` (`set_effect_color_param` for light colours) or `fx.<i>.<param>` keyframes.
 4. `sample_depth({clip, x, y, time?})` → `{depth}` reads what is at a spot — use it to set
    `focusDepth` on the subject, or `depth` on `depth.occlude` just behind them.
 

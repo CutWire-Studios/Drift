@@ -134,6 +134,8 @@ bool parseParameters(const QJsonArray &params, QList<drift::EffectParamSpec> *ou
             spec.type = drift::EffectParamType::Color;
         else if (type == QLatin1String("file"))
             spec.type = drift::EffectParamType::FilePath;
+        else if (type == QLatin1String("clip"))
+            spec.type = drift::EffectParamType::Clip;
         else if (type == QLatin1String("float") || type == QLatin1String("number"))
             spec.type = drift::EffectParamType::Float;
         else {
@@ -200,7 +202,8 @@ bool parseParameters(const QJsonArray &params, QList<drift::EffectParamSpec> *ou
         }
         // File params are never GPU uniforms — skip the reserved-name check for them so a
         // package can still call a file param something that would collide as a uniform.
-        if (gpuBackend && !spec.isFilePath() && drift::isReservedGpuUniform(spec.key)) {
+        if (gpuBackend && !spec.isFilePath() && !spec.isClip()
+            && drift::isReservedGpuUniform(spec.key)) {
             fail(errorOut,
                  QStringLiteral("parameter '%1' collides with reserved uniform").arg(spec.key));
             return false;
