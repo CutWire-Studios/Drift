@@ -122,7 +122,7 @@ if(DRIFT_CHANNEL STREQUAL "nightly")
 endif()
 message(STATUS "Drift channel: ${DRIFT_CHANNEL} (${DRIFT_VERSION_STRING}, ${DRIFT_APP_ID})")
 
-find_package(Qt6 6.5 REQUIRED COMPONENTS Quick QuickControls2 Multimedia Test Concurrent Widgets OpenGL Network QuickEffects Svg Xml)
+find_package(Qt6 6.10 REQUIRED COMPONENTS Quick QuickControls2 Multimedia Test Concurrent Widgets OpenGL Network QuickEffects Svg Xml)
 find_package(Qt6 COMPONENTS LinguistTools QUIET)
 
 # IconImage loads Lucide SVGs from qrc. The SVG imageformat plugin is refused when it was
@@ -851,6 +851,14 @@ qt_add_executable(drift
     src/playback/PlaybackDiagnostics.cpp
     src/preview/PreviewItem.h
     src/preview/PreviewItem.cpp
+    src/timeline/ClipThumbnailStore.h
+    src/timeline/ClipThumbnailStore.cpp
+    src/timeline/TimelineLayout.h
+    src/timeline/TimelineLayout.cpp
+    src/timeline/TimelineTrackItem.h
+    src/timeline/TimelineTrackItem.cpp
+    src/timeline/TimelineViewState.h
+    src/timeline/TimelineViewState.cpp
 )
 
 # The MCP server itself ships everywhere. On Android it listens on loopback like it does on
@@ -1067,6 +1075,8 @@ qt_add_qml_module(drift
         src/qml/components/timeline/VoiceoverControlBar.qml
         src/qml/components/timeline/AudioMixerStrip.qml
         src/qml/components/timeline/TimelineClipItem.qml
+        src/qml/components/timeline/PlayheadInterpolator.qml
+        src/qml/components/timeline/TimelineTrackArea.qml
         src/qml/components/IconGlyph.qml
         src/qml/components/IconButton.qml
         src/qml/components/PanelFrame.qml

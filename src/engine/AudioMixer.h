@@ -20,9 +20,11 @@ struct ClipAudioState
 {
     drift::AudioEffectRack rack;
     drift::ClipAudioRetimer retimer;
-    // Composite clips only: the nested timeline, refreshed every block, and the mixer playing it.
+    // Composite clips only: the nested timeline and the mixer playing it. Rebuilt when the
+    // project snapshot changes; without a snapshot (the offline mixers) on every block.
     std::shared_ptr<drift::Project> nestedView;
     std::shared_ptr<AudioMixer> nestedMixer;
+    quint64 nestedSerial = 0;
 };
 
 // Mixes active audio clips into interleaved stereo float PCM.
@@ -30,6 +32,10 @@ class AudioMixer
 {
 public:
     void setProject(const drift::Project *project);
+    // Playback's immutable copy of the project, swapped from the GUI thread on each edit. While
+    // one is set, mix() reads it instead of the project passed to setProject(), which the GUI
+    // thread keeps editing underneath the audio thread. `serial` changes with every new copy.
+    void setSnapshot(std::shared_ptr<const drift::Project> snapshot, quint64 serial);
     void resetClipAudioState();
 
     // The master soft clipper is what playback hears, but a meter has to see the mix before it:
@@ -79,9 +85,16 @@ public:
 
     QPair<float, float> trackLevels(int trackIndex) const;
     QPair<float, float> masterLevels() const;
+    // Loudest block per channel since the previous call, master first then one pair per
+    // requested track. A meter polling slower than the mixer's block rate would otherwise
+    // see whichever block happened to be last and miss the transients between polls.
+    QList<float> takeMeterPeaks(const QList<int> &trackIndexes) const;
 
 private:
     const drift::Project *m_project = nullptr;
+    mutable QMutex m_snapshotMutex;
+    std::shared_ptr<const drift::Project> m_snapshot;
+    quint64 m_snapshotSerial = 0;
     // mix() runs on the audio thread; resetClipAudioState() is called from the GUI thread on seek,
     // play and pause. The mutex covers the hash itself — callers take a shared_ptr copy out of it
     // and work on the state with the lock released.
@@ -93,6 +106,8 @@ private:
     mutable QMutex m_levelsMutex;
     mutable QHash<int, QPair<float, float>> m_trackLevels;
     mutable QPair<float, float> m_masterLevels{0.0f, 0.0f};
+    mutable QHash<int, QPair<float, float>> m_trackMeterPeaks;
+    mutable QPair<float, float> m_masterMeterPeak{0.0f, 0.0f};
     quint64 m_streamSalt = 0;
     int m_depth = 0;
 };

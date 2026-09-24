@@ -1355,6 +1355,26 @@
         <translation>Mi aspecto</translation>
     </message>
     <message>
+        <source>Proxy</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Previewing from a low-resolution proxy. Export uses the original.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Edit-friendly</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Converted to a constant frame rate for smooth editing</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Variable frame rate. This clip can drift out of sync with its audio. Right-click it and choose Convert to edit-friendly format.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Drop a transition where two clips meet.</source>
         <translation>Suelta una transición donde se unan dos clips.</translation>
     </message>
@@ -3129,6 +3149,14 @@
     <message>
         <source>Add transition</source>
         <translation>Añadir transición</translation>
+    </message>
+    <message>
+        <source>Effect</source>
+        <translation type="unfinished">Efecto</translation>
+    </message>
+    <message>
+        <source>%1 (off)</source>
+        <translation type="unfinished">%1 (desactivado)</translation>
     </message>
     <message>
         <source>Custom guides</source>
@@ -8468,6 +8496,18 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Playhead update (median)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Playhead update (p95)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Audio mix load (p95)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Samples</source>
         <translation type="unfinished"></translation>
     </message>
@@ -12051,6 +12091,26 @@ Si la reproducción se corta, prueba con otra opción.</translation>
 <context>
     <name>TimelinePanel</name>
     <message>
+        <source>Proxy</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Previewing from a low-resolution proxy. Export uses the original.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Edit-friendly</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Converted to a constant frame rate for smooth editing</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Variable frame rate. This clip can drift out of sync with its audio. Right-click it and choose Convert to edit-friendly format.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Save effect preset</source>
         <translation>Guardar ajuste predeterminado de efecto</translation>
     </message>
@@ -12371,6 +12431,25 @@ Si la reproducción se corta, prueba con otra opción.</translation>
     <message>
         <source>Remove separator</source>
         <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>TimelineTrackItem</name>
+    <message>
+        <source>Audio adjustment</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Mask</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Adjustment</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Subtitles</source>
+        <translation type="unfinished">Subtítulos</translation>
     </message>
 </context>
 <context>

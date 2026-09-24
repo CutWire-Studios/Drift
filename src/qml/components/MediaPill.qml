@@ -32,8 +32,12 @@ Rectangle {
     }
 
     HoverHandler { id: hover }
-    ThemedToolTip {
-        visible: hover.hovered && root.tooltip.length > 0
-        text: root.tooltip
+    // A tooltip is a Popup; built only while hovered, not once per pill on every clip and card.
+    Loader {
+        active: hover.hovered && root.tooltip.length > 0
+        sourceComponent: ThemedToolTip {
+            visible: true
+            text: root.tooltip
+        }
     }
 }

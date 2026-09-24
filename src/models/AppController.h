@@ -27,6 +27,7 @@
 #include <QHash>
 #include <QJsonObject>
 #include <QMediaDevices>
+#include <QElapsedTimer>
 #include <QObject>
 #include <QPair>
 #include <QSet>
@@ -116,6 +117,14 @@ class AppController : public QObject
     Q_PROPERTY(bool canGrowTrackHeights READ canGrowTrackHeights NOTIFY tracksChanged)
     Q_PROPERTY(bool canShrinkTrackHeights READ canShrinkTrackHeights NOTIFY tracksChanged)
     Q_PROPERTY(double playheadSeconds READ playheadSeconds WRITE setPlayheadSeconds NOTIFY playheadSecondsChanged)
+    // The same playhead, announced at most ~10 times a second while playing and on every change
+    // otherwise. Inspectors bind this: a value readout does not need frame rate, and ~45 rows
+    // re-evaluating per frame is a large share of the GUI thread during playback.
+    Q_PROPERTY(double inspectorPlayheadSeconds READ playheadSeconds NOTIFY inspectorPlayheadChanged)
+    // Which timeline clip renderer the panels build: the scene-graph one (TimelineTrackClips) or
+    // the per-clip QML delegates. Read once at startup, from DRIFT_TIMELINE_RENDERER or the
+    // timeline/renderer setting ("scenegraph" / "legacy").
+    Q_PROPERTY(bool sceneGraphTimeline READ sceneGraphTimeline CONSTANT)
     Q_PROPERTY(double durationSeconds READ durationSeconds NOTIFY tracksChanged)
     Q_PROPERTY(bool playing READ playing WRITE setPlaying NOTIFY playingChanged)
     Q_PROPERTY(bool previewDragActive READ previewDragActive NOTIFY previewDragActiveChanged)
@@ -596,6 +605,14 @@ public:
     QVariantList selection() const;
     int selectionRevision() const { return m_selectionRevision; }
     int selectionCount() const { return m_selection.size(); }
+
+    // For the scene-graph timeline, which draws in C++ and should not go through QVariant.
+    // Same values the QML waveform and filmstrip queries return; empty means still decoding.
+    QVector<float> waveformDisplayPeaks(const QString &path, double startSeconds, double durSeconds,
+                                        int buckets, int audioStreamIndex, int channel = -1) const;
+    QStringList waveformChannelNames(const QString &path, int audioStreamIndex) const;
+    QString filmstripTilePath(const QString &path, int level, qint64 index,
+                              int rotationCorrection) const;
     QVariantMap selectedClipData() const;
     QVariantList selectedClipEffects() const;
     QVariantList selectedClipAudioEffects() const;
@@ -1001,6 +1018,8 @@ public:
     bool multicamActive() const { return m_multicamActive; }
     QVariantList multicamAngles() const;
     int multicamActiveAngle() const;
+    quint64 multicamPlayheadSignature() const;
+    bool sceneGraphTimeline() const;
     int multicamRevision() const { return m_multicamRevision; }
     QVariantList multicamProgramClips() const;
     bool multicamCanSetUp() const;
@@ -1638,6 +1657,9 @@ public:
     Q_INVOKABLE double trackPan(int trackIndex) const;
     Q_INVOKABLE QVariantMap trackAudioLevels(int trackIndex) const;
     Q_INVOKABLE QVariantMap masterAudioLevels() const;
+    // [masterL, masterR, track0L, track0R, ...] in one call, peaks since the previous call.
+    // The mixer meters poll this rather than one QVariantMap per strip per tick.
+    Q_INVOKABLE QList<float> meterLevels(const QList<int> &trackIndexes) const;
     // Empty name clears the custom label, falling back to the type+position display
     // ("Video 1") again.
     Q_INVOKABLE bool renameTrack(int trackIndex, const QString &name);
@@ -1936,6 +1958,7 @@ signals:
     void clipPropertiesPreviewed(int trackIndex, int clipIndex, const QStringList &keys);
     void previewDragActiveChanged();
     void playheadSecondsChanged();
+    void inspectorPlayheadChanged();
     void playingChanged();
     void audioOutputDevicesChanged();
     void audioOutputDeviceIdChanged();
@@ -2140,6 +2163,8 @@ protected:
     // Refills the per-track clip models from the project. Called by notifyTracksChanged() before
     // the signal goes out, so a binding that wakes on tracksChanged already sees the new rows.
     void syncClipModels();
+    TimelineClipsModel::Decorations trackDecorations(const drift::Track &track,
+                                                     const QList<int> &laneIndexes) const;
     TimelineClipsModel::Row clipRow(const drift::Clip &clip, const drift::Clip *videoEffectHost,
                                     const drift::Clip *audioEffectHost) const;
     // Holds tracksChanged for the length of an operation that touches the project several times.
@@ -2464,7 +2489,9 @@ protected:
     void setDirty(bool dirty);
     void setCurrentProjectPath(const QString &path);
     void addRecentProject(const QString &path);
-    void writeRecoveryFile();
+    // Off the GUI thread unless `synchronous` (quitting), which waits out any write in flight.
+    void writeRecoveryFile(bool synchronous = false);
+    QJsonObject sessionJson() const;
     void deleteRecoveryFile();
     void detectRecoveryFile();
     static QString recoveryFilePath();
@@ -2626,6 +2653,8 @@ protected:
     drift::TimeUs m_multicamRangeEnd = 0;
     QList<drift::MulticamCut> m_multicamCuts;
     int m_multicamRevision = 0;
+    quint64 m_multicamPlayheadSignature = 0;
+    QElapsedTimer m_inspectorPlayheadClock;
     // A refresh already running. Tiles are dropped rather than queued while it is set, so a
     // machine that cannot keep up falls behind in frame rate instead of in wall-clock time.
     bool m_multicamRefreshing = false;
@@ -2828,6 +2857,10 @@ protected:
     QString m_currentProjectPath;
     bool m_dirty = false;
     QTimer *m_autosaveTimer = nullptr;
+    // The recovery write running on a worker, and a counter that deleteRecoveryFile() bumps so a
+    // write that finishes after the file was meant to be gone does not bring it back.
+    QFuture<QString> m_recoveryWrite;
+    quint64 m_recoveryGeneration = 0;
     bool m_recoveryAvailable = false;
     QVariantMap m_recoveryInfo;
     QUrl m_pendingStartupProject;

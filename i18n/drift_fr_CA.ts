@@ -1356,6 +1356,26 @@
         <translation>Mon style</translation>
     </message>
     <message>
+        <source>Proxy</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Previewing from a low-resolution proxy. Export uses the original.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Edit-friendly</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Converted to a constant frame rate for smooth editing</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Variable frame rate. This clip can drift out of sync with its audio. Right-click it and choose Convert to edit-friendly format.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Drop a transition where two clips meet.</source>
         <translation>Déposez une transition à la jonction de deux clips.</translation>
     </message>
@@ -3127,6 +3147,14 @@
     <message>
         <source>Add transition</source>
         <translation>Ajouter une transition</translation>
+    </message>
+    <message>
+        <source>Effect</source>
+        <translation type="unfinished">Effet</translation>
+    </message>
+    <message>
+        <source>%1 (off)</source>
+        <translation type="unfinished">%1 (désactivé)</translation>
     </message>
     <message>
         <source>Custom guides</source>
@@ -8471,6 +8499,18 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Playhead update (median)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Playhead update (p95)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Audio mix load (p95)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Samples</source>
         <translation type="unfinished"></translation>
     </message>
@@ -12056,6 +12096,26 @@ En cas de saccades à la lecture, essayez un autre mode.</translation>
 <context>
     <name>TimelinePanel</name>
     <message>
+        <source>Proxy</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Previewing from a low-resolution proxy. Export uses the original.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Edit-friendly</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Converted to a constant frame rate for smooth editing</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Variable frame rate. This clip can drift out of sync with its audio. Right-click it and choose Convert to edit-friendly format.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Save effect preset</source>
         <translation>Enregistrer le préréglage d&apos;effet</translation>
     </message>
@@ -12376,6 +12436,25 @@ En cas de saccades à la lecture, essayez un autre mode.</translation>
     <message>
         <source>Remove separator</source>
         <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>TimelineTrackItem</name>
+    <message>
+        <source>Audio adjustment</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Mask</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Adjustment</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Subtitles</source>
+        <translation type="unfinished">Sous-titres</translation>
     </message>
 </context>
 <context>

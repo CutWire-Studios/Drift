@@ -714,7 +714,6 @@ AppController::AppController(AssetLibrary *assetLibrary, QObject *parent)
     connect(this, &AppController::selectionChanged, this, &AppController::maskEditActiveChanged);
     connect(this, &AppController::tracksChanged, this, &AppController::maskEditActiveChanged);
     connect(this, &AppController::maskEditModeChanged, this, &AppController::maskEditActiveChanged);
-    connect(this, &AppController::playheadSecondsChanged, this, &AppController::maskEditActiveChanged);
     if (m_assetLibrary) {
         connect(m_assetLibrary, &AssetLibrary::assetMetadataChanged, this,
                 &AppController::editCapabilitiesChanged);
@@ -918,6 +917,19 @@ AppController::AppController(AssetLibrary *assetLibrary, QObject *parent)
         m_playheadUs = newUs;
         emit playheadSecondsChanged();
     });
+    connect(this, &AppController::playheadSecondsChanged, this, [this] {
+        constexpr qint64 kInspectorPlayheadIntervalMs = 100;
+        if (m_playing && m_inspectorPlayheadClock.isValid()
+            && m_inspectorPlayheadClock.elapsed() < kInspectorPlayheadIntervalMs)
+            return;
+        m_inspectorPlayheadClock.start();
+        emit inspectorPlayheadChanged();
+    });
+    // The throttle may have swallowed the last position before a stop.
+    connect(this, &AppController::playingChanged, this, [this] {
+        if (!m_playing)
+            emit inspectorPlayheadChanged();
+    });
     connect(&m_playback, &PlaybackEngine::playingChanged, this, [this] {
         if (!m_playback.isPlaying() && m_playing) {
             m_playing = false;
@@ -955,12 +967,12 @@ AppController::AppController(AssetLibrary *assetLibrary, QObject *parent)
             }
             if (!intact)
                 endMulticamSession();
-        } else if (!m_multicamActive || m_multicamSnaps.isEmpty()) {
-            // The pointer has not changed — the project behind it was edited in place. Saying so
-            // directly skips a pointless trip through the mixer and, more to the point, coalesces
-            // the composite instead of forcing one per edit.
-            m_playback.notifyProjectEdited();
         }
+        // The pointer has not changed — the project behind it was edited in place. Saying so
+        // directly skips a pointless trip through the mixer and, more to the point, coalesces
+        // the composite instead of forcing one per edit. This is the only preview refresh an
+        // edit gets; the preview panel no longer asks for a second, uncoalesced one.
+        m_playback.notifyProjectEdited();
         emit selectedTransitionDataChanged();
     });
     connect(this, &AppController::selectionChanged, this, [this] {
@@ -973,7 +985,14 @@ AppController::AppController(AssetLibrary *assetLibrary, QObject *parent)
     connect(this, &AppController::playheadSecondsChanged, this, [this] {
         if (!m_multicamActive)
             return;
-        emit multicamChanged();
+        // Only the active angle and which angles cover the playhead depend on it. Emitting
+        // multicamChanged hands the window a fresh angle list and rebuilds every tile, so do
+        // that when one of those actually moves rather than on every frame.
+        const quint64 signature = multicamPlayheadSignature();
+        if (signature != m_multicamPlayheadSignature) {
+            m_multicamPlayheadSignature = signature;
+            emit multicamChanged();
+        }
         // While playing, the ~12 Hz timer owns tile refreshes: the playhead ticks at the
         // display cadence, and decoding every angle that often would starve the compositor.
         if (!m_playing)
@@ -1084,7 +1103,9 @@ AppController::AppController(AssetLibrary *assetLibrary, QObject *parent)
         // Remember the open project so opt-in reopen can load a clean .drift next launch.
         QSettings().setValue(QStringLiteral("lastSessionPath"), m_currentProjectPath);
         if (m_dirty)
-            writeRecoveryFile();
+            writeRecoveryFile(true);
+        else
+            m_recoveryWrite.waitForFinished();
     });
 
     detectRecoveryFile();
@@ -4400,6 +4421,21 @@ TimelineClipsModel::Row AppController::clipRow(const drift::Clip &clip,
         row.effects.append(effectBadgeToMap(effect));
     for (const drift::Effect &effect : audioHost.audioEffects)
         row.audioEffects.append(audioEffectBadgeToMap(effect));
+    row.fadeCurveTyped = clip.fadeCurve;
+    row.fadeShapeTyped = clip.fadeShape;
+    QStringList effectNames;
+    for (const QVariantList *list : {&row.effects, &row.audioEffects}) {
+        for (const QVariant &value : *list) {
+            const QVariantMap fx = value.toMap();
+            QString label = fx.value(QStringLiteral("label")).toString();
+            if (label.isEmpty())
+                label = tr("Effect");
+            effectNames.append(fx.value(QStringLiteral("enabled"), true).toBool()
+                                   ? label
+                                   : tr("%1 (off)").arg(label));
+        }
+    }
+    row.effectsLabel = effectNames.join(QStringLiteral(" · "));
     return row;
 }
 
@@ -4416,8 +4452,9 @@ void AppController::syncClipModels()
         // lanes. Gathered once per track rather than resolved per clip, which would be quadratic.
         QHash<QString, const drift::Clip *> videoHosts;
         QHash<QString, const drift::Clip *> audioHosts;
+        const QList<int> laneIndexes = drift::adjustmentLaneIndexes(m_project, ti);
         if (!track.isAdjustment()) {
-            for (const int laneIndex : drift::adjustmentLaneIndexes(m_project, ti)) {
+            for (const int laneIndex : laneIndexes) {
                 for (const drift::Clip &adjustment : tracks.at(laneIndex).clips) {
                     if (adjustment.linkedClipId.isEmpty())
                         continue;
@@ -4436,12 +4473,82 @@ void AppController::syncClipModels()
                                 audioHosts.value(clip.id, nullptr)));
         }
         m_clipModels[ti]->setRows(std::move(rows));
+        m_clipModels[ti]->setDecorations(trackDecorations(track, laneIndexes));
     }
 
     // Slots past the end belong to tracks that are gone. Emptied rather than deleted — see the
     // note on m_clipModels.
-    for (int ti = tracks.size(); ti < m_clipModels.size(); ++ti)
+    for (int ti = tracks.size(); ti < m_clipModels.size(); ++ti) {
         m_clipModels[ti]->setRows({});
+        m_clipModels[ti]->setDecorations({});
+    }
+}
+
+TimelineClipsModel::Decorations AppController::trackDecorations(const drift::Track &track,
+                                                                const QList<int> &laneIndexes) const
+{
+    TimelineClipsModel::Decorations out;
+    out.adjustmentLanes = laneIndexes;
+
+    // Gaps are whatever time no clip covers between two neighbours in start order. They are
+    // never stored, only derived.
+    QList<const drift::Clip *> sorted;
+    sorted.reserve(track.clips.size());
+    for (const drift::Clip &clip : track.clips)
+        sorted.append(&clip);
+    std::stable_sort(sorted.begin(), sorted.end(), [](const drift::Clip *a, const drift::Clip *b) {
+        return a->timelineStart < b->timelineStart;
+    });
+    for (int i = 0; i + 1 < sorted.size(); ++i) {
+        const drift::TimeUs gapStart = sorted.at(i)->timelineEnd();
+        const drift::TimeUs gapEnd = sorted.at(i + 1)->timelineStart;
+        if (gapEnd > gapStart)
+            out.gaps.append({drift::usToSeconds(gapStart), drift::usToSeconds(gapEnd)});
+    }
+
+    if (!trackAllowsTransitions(track.type))
+        return out;
+
+    // One region per clip that overlaps its transition partner or carries a transition to it —
+    // the same partner the transition commands resolve, so a click lands on what is drawn.
+    for (int left = 0; left < track.clips.size(); ++left) {
+        const int right = findTransitionPartnerIndex(track, left);
+        if (right < 0)
+            continue;
+        const drift::Clip &fromClip = track.clips.at(left);
+        const drift::Clip &toClip = track.clips.at(right);
+        const drift::Transition *transition = nullptr;
+        for (const drift::Transition &candidate : track.transitions) {
+            if (candidate.fromClipId == fromClip.id && candidate.toClipId == toClip.id) {
+                transition = &candidate;
+                break;
+            }
+        }
+
+        TimelineClipsModel::TransitionRegion region;
+        region.leftClip = left;
+        drift::TimeUs startUs = 0;
+        drift::TimeUs endUs = 0;
+        if (transition) {
+            if (!drift::transitionWindow(track, *transition, startUs, endUs))
+                continue;
+            region.hasTransition = true;
+            const TransitionPresetEntry *def = transitionDefForId(transition->kindId);
+            region.label = def ? def->meta.displayName : transition->kindId;
+            region.kind = transition->kindId;
+        } else if (drift::clipsPhysicallyOverlap(fromClip, toClip)) {
+            startUs = toClip.timelineStart;
+            endUs = fromClip.timelineEnd();
+        } else {
+            continue;
+        }
+        if (endUs <= startUs)
+            continue;
+        region.start = drift::usToSeconds(startUs);
+        region.end = drift::usToSeconds(endUs);
+        out.transitions.append(region);
+    }
+    return out;
 }
 
 QVariantList AppController::timelineOverviewBlocks() const
@@ -9301,6 +9408,28 @@ QVariantList AppController::multicamAngles() const
         });
     }
     return out;
+}
+
+bool AppController::sceneGraphTimeline() const
+{
+    static const bool enabled = [] {
+        QString choice = qEnvironmentVariable("DRIFT_TIMELINE_RENDERER");
+        if (choice.isEmpty())
+            choice = QSettings().value(QStringLiteral("timeline/renderer")).toString();
+        return choice.compare(QStringLiteral("scenegraph"), Qt::CaseInsensitive) == 0;
+    }();
+    return enabled;
+}
+
+quint64 AppController::multicamPlayheadSignature() const
+{
+    quint64 signature = static_cast<quint32>(multicamActiveAngle() + 1);
+    const int count = qMin<int>(int(m_multicamSnaps.size()), 32);
+    for (int i = 0; i < count; ++i) {
+        if (m_multicamSnaps.at(i).original.containsTime(m_playheadUs))
+            signature |= quint64(1) << (32 + i);
+    }
+    return signature;
 }
 
 int AppController::multicamActiveAngle() const
@@ -20612,6 +20741,26 @@ QVariantMap AppController::trackAudioLevels(int trackIndex) const
     };
 }
 
+QList<float> AppController::meterLevels(const QList<int> &trackIndexes) const
+{
+    QList<float> out = m_playback.takeMeterPeaks(trackIndexes);
+    if (!m_audioRecorder.isRecording())
+        return out;
+    const float level = m_audioRecorder.audioLevel();
+    if (!m_playback.isPlaying()) {
+        out[0] = level;
+        out[1] = level;
+    }
+    const int recordingTrack = m_audioRecorder.recordingTrackIndex();
+    for (int i = 0; i < trackIndexes.size(); ++i) {
+        if (trackIndexes.at(i) == recordingTrack) {
+            out[2 + i * 2] = level;
+            out[3 + i * 2] = level;
+        }
+    }
+    return out;
+}
+
 QVariantMap AppController::masterAudioLevels() const
 {
     float left = 0.0f;
@@ -22016,6 +22165,35 @@ QVariantMap AppController::waveformChannelPeaksRange(const QString &path, double
     return result;
 }
 
+QVector<float> AppController::waveformDisplayPeaks(const QString &path, double startSeconds,
+                                                   double durSeconds, int buckets,
+                                                   int audioStreamIndex, int channel) const
+{
+    QVector<float> out;
+    if (path.isEmpty() || durSeconds <= 0.0 || buckets <= 0)
+        return out;
+    const QVector<float> span = m_waveformBlocks.range(path, startSeconds, durSeconds,
+                                                       qBound(1, buckets, 4096), audioStreamIndex,
+                                                       channel);
+    out.reserve(span.size());
+    for (float peak : span)
+        out.append(peak < 0.0f ? 0.0f : float(qMax(0.05, waveformDisplayLevel(peak))));
+    return out;
+}
+
+QStringList AppController::waveformChannelNames(const QString &path, int audioStreamIndex) const
+{
+    return m_waveformBlocks.channelNames(path, audioStreamIndex);
+}
+
+QString AppController::filmstripTilePath(const QString &path, int level, qint64 index,
+                                         int rotationCorrection) const
+{
+    if (path.isEmpty())
+        return {};
+    return m_filmstripTiles.tile(path, level, index, rotationCorrection);
+}
+
 int AppController::waveformChannelCount(const QString &path, int audioStreamIndex) const
 {
     if (path.isEmpty())
@@ -22374,6 +22552,17 @@ void AppController::normalizeSelection()
 QByteArray AppController::serializeProjectJson() const
 {
     QJsonObject root = m_project.toJson();
+    const QJsonObject session = sessionJson();
+    for (auto it = session.constBegin(); it != session.constEnd(); ++it)
+        root.insert(it.key(), it.value());
+    return QJsonDocument(root).toJson(QJsonDocument::Indented);
+}
+
+// What a saved project records beside the project itself: view and editing state, read on the GUI
+// thread so the project half can be serialized anywhere.
+QJsonObject AppController::sessionJson() const
+{
+    QJsonObject root;
     root.insert(QStringLiteral("playheadUs"), static_cast<double>(m_playheadUs));
     root.insert(QStringLiteral("snapEnabled"), m_snapEnabled);
     root.insert(QStringLiteral("rippleEnabled"), m_rippleEnabled);
@@ -22394,7 +22583,7 @@ QByteArray AppController::serializeProjectJson() const
         {QStringLiteral("active"), QJsonArray::fromStringList(m_activeGuideSets)},
         {QStringLiteral("sets"), guideSets},
     });
-    return QJsonDocument(root).toJson(QJsonDocument::Indented);
+    return root;
 }
 
 void AppController::resetSessionState()
@@ -23674,33 +23863,86 @@ void AppController::releaseTransientCaches()
     drift::gl::runtime().releaseCaches();
 }
 
-void AppController::writeRecoveryFile()
-{
-    const QString path = recoveryFilePath();
-    QDir().mkpath(QFileInfo(path).absolutePath());
+namespace {
 
-    QJsonObject root = QJsonDocument::fromJson(serializeProjectJson()).object();
-    QJsonObject meta;
-    meta.insert(QStringLiteral("originalPath"), m_currentProjectPath);
-    meta.insert(QStringLiteral("projectName"), m_project.name());
-    meta.insert(QStringLiteral("savedAt"), QDateTime::currentDateTime().toString(Qt::ISODate));
+// Serializes and writes a recovery file to a temp sibling of `path`. Returns the temp path, or an
+// empty string on failure. Runs on any thread: everything it reads is its own copy.
+QString writeRecoveryTemp(const drift::Project &project, QJsonObject session, const QJsonObject &meta,
+                          const QString &path)
+{
+    QJsonObject root = project.toJson();
+    for (auto it = session.constBegin(); it != session.constEnd(); ++it)
+        root.insert(it.key(), it.value());
     root.insert(QStringLiteral("__recovery"), meta);
 
-    // Write to a temp sibling and rename so a crash mid-write can't corrupt the
-    // recovery file itself.
+    // Write to a temp sibling and rename so a crash mid-write can't corrupt the recovery file
+    // itself. Compact: nothing reads this but restoreAutosave, and it takes either form.
     const QString tmpPath = path + QStringLiteral(".tmp");
     QFile file(tmpPath);
     if (!file.open(QIODevice::WriteOnly))
-        return;
-    file.write(QJsonDocument(root).toJson(QJsonDocument::Indented));
+        return {};
+    file.write(QJsonDocument(root).toJson(QJsonDocument::Compact));
     file.close();
+    return tmpPath;
+}
+
+void promoteRecoveryTemp(const QString &tmpPath, const QString &path)
+{
+    // Never remove the current file for a temp that is not there to replace it.
+    if (tmpPath.isEmpty() || !QFile::exists(tmpPath))
+        return;
     if (QFile::exists(path))
         QFile::remove(path);
     QFile::rename(tmpPath, path);
 }
 
+} // namespace
+
+void AppController::writeRecoveryFile(bool synchronous)
+{
+    const QString path = recoveryFilePath();
+    QDir().mkpath(QFileInfo(path).absolutePath());
+
+    QJsonObject meta;
+    meta.insert(QStringLiteral("originalPath"), m_currentProjectPath);
+    meta.insert(QStringLiteral("projectName"), m_project.name());
+    meta.insert(QStringLiteral("savedAt"), QDateTime::currentDateTime().toString(Qt::ISODate));
+    const QJsonObject session = sessionJson();
+
+    if (synchronous) {
+        // Waits on the worker only: its continuation needs this thread's event loop.
+        m_recoveryWrite.waitForFinished();
+        ++m_recoveryGeneration;
+        promoteRecoveryTemp(writeRecoveryTemp(m_project, session, meta, path), path);
+        return;
+    }
+
+    // Serializing a large project took tens of milliseconds on the GUI thread every 15 seconds,
+    // playing or not. The snapshot playback already keeps is reused when it is current, so the
+    // only GUI-thread cost left is the session fields above.
+    if (m_recoveryWrite.isRunning())
+        return;
+    std::shared_ptr<const drift::Project> snapshot = m_playback.projectSnapshot(&m_project);
+    if (!snapshot)
+        snapshot = std::make_shared<const drift::Project>(m_project.detachedCopy());
+    const quint64 generation = m_recoveryGeneration;
+    m_recoveryWrite = QtConcurrent::run([snapshot, session, meta, path] {
+        return writeRecoveryTemp(*snapshot, session, meta, path);
+    });
+    m_recoveryWrite.then(this, [this, generation, path](const QString &tmpPath) {
+        // The file was deleted (a save, a new project) while this was being written.
+        if (generation != m_recoveryGeneration) {
+            if (!tmpPath.isEmpty())
+                QFile::remove(tmpPath);
+            return;
+        }
+        promoteRecoveryTemp(tmpPath, path);
+    });
+}
+
 void AppController::deleteRecoveryFile()
 {
+    ++m_recoveryGeneration;
     const QString path = recoveryFilePath();
     if (QFile::exists(path))
         QFile::remove(path);

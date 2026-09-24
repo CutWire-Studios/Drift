@@ -1355,6 +1355,26 @@
         <translation>මගේ විලාසය</translation>
     </message>
     <message>
+        <source>Proxy</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Previewing from a low-resolution proxy. Export uses the original.</source>
+        <translation type="unfinished">අඩු විභේදනයක් සහිත ප්‍රොක්සියක් මඟින් පෙරදසුන් කෙරේ. නිර්යාතයේදී මුල් පිටපත භාවිත කරයි.</translation>
+    </message>
+    <message>
+        <source>Edit-friendly</source>
+        <translation type="unfinished">සංස්කරණයට පහසු</translation>
+    </message>
+    <message>
+        <source>Converted to a constant frame rate for smooth editing</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Variable frame rate. This clip can drift out of sync with its audio. Right-click it and choose Convert to edit-friendly format.</source>
+        <translation type="unfinished">විචල්‍ය රාමු අනුපාතය. මෙම ක්ලිපය එහි ශ්‍රව්‍ය සමඟ අසමමුහුර්ත විය හැක. එය මත දකුණු ක්ලික් කර &apos;සංස්කරණයට පහසු ආකෘතියකට පරිවර්තනය කරන්න&apos; තෝරන්න.</translation>
+    </message>
+    <message>
         <source>Drop a transition where two clips meet.</source>
         <translation>ක්ලිප් දෙකක් හමුවන තැනට සංක්‍රාන්තියක් දමන්න.</translation>
     </message>
@@ -3121,6 +3141,14 @@
     <message>
         <source>Add transition</source>
         <translation>සංක්‍රාන්තියක් එක් කරන්න</translation>
+    </message>
+    <message>
+        <source>Effect</source>
+        <translation type="unfinished">ප්‍රයෝගය</translation>
+    </message>
+    <message>
+        <source>%1 (off)</source>
+        <translation type="unfinished">%1 (අක්‍රියයි)</translation>
     </message>
     <message>
         <source>Custom guides</source>
@@ -8468,6 +8496,18 @@
         <translation>පෙරදසුන් උඩුගත කිරීම</translation>
     </message>
     <message>
+        <source>Playhead update (median)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Playhead update (p95)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Audio mix load (p95)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Samples</source>
         <translation>සාම්පල</translation>
     </message>
@@ -12051,6 +12091,26 @@ If playback stutters, try another.</source>
 <context>
     <name>TimelinePanel</name>
     <message>
+        <source>Proxy</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Previewing from a low-resolution proxy. Export uses the original.</source>
+        <translation type="unfinished">අඩු විභේදනයක් සහිත ප්‍රොක්සියක් මඟින් පෙරදසුන් කෙරේ. නිර්යාතයේදී මුල් පිටපත භාවිත කරයි.</translation>
+    </message>
+    <message>
+        <source>Edit-friendly</source>
+        <translation type="unfinished">සංස්කරණයට පහසු</translation>
+    </message>
+    <message>
+        <source>Converted to a constant frame rate for smooth editing</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Variable frame rate. This clip can drift out of sync with its audio. Right-click it and choose Convert to edit-friendly format.</source>
+        <translation type="unfinished">විචල්‍ය රාමු අනුපාතය. මෙම ක්ලිපය එහි ශ්‍රව්‍ය සමඟ අසමමුහුර්ත විය හැක. එය මත දකුණු ක්ලික් කර &apos;සංස්කරණයට පහසු ආකෘතියකට පරිවර්තනය කරන්න&apos; තෝරන්න.</translation>
+    </message>
+    <message>
         <source>Save effect preset</source>
         <translation>ප්‍රයෝග පෙරසැකසුම සුරකින්න</translation>
     </message>
@@ -12371,6 +12431,25 @@ If playback stutters, try another.</source>
     <message>
         <source>Remove separator</source>
         <translation>බෙදුම්කාරකය ඉවත් කරන්න</translation>
+    </message>
+</context>
+<context>
+    <name>TimelineTrackItem</name>
+    <message>
+        <source>Audio adjustment</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Mask</source>
+        <translation type="unfinished">ආවරණය (Mask)</translation>
+    </message>
+    <message>
+        <source>Adjustment</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Subtitles</source>
+        <translation type="unfinished">උපසිරැසි</translation>
     </message>
 </context>
 <context>

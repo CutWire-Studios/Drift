@@ -1,5 +1,7 @@
 #include "PlaybackEngine.h"
 
+#include <cstdio>
+
 #include "engine/AndroidUri.h"
 #include "engine/ClipReaderPool.h"
 #include "engine/GpuCompositor.h"
@@ -68,8 +70,6 @@ void abandonAudioFocus()
 inline void requestAudioFocus() {}
 inline void abandonAudioFocus() {}
 #endif
-
-constexpr int kPlayheadUpdateMs = 16; // ~60 Hz UI updates, independent of video decode
 
 // Below this a reported refresh rate is a driver placeholder, not a panel. No display
 // Drift can run on refreshes this slowly, and every real one clears it by a wide margin.
@@ -220,7 +220,6 @@ PlaybackEngine::PlaybackEngine(QObject *parent)
     connect(&m_audio, &AudioOutputChannel::errorOccurred, this, &PlaybackEngine::audioError);
     m_sampleRate = m_audio.sampleRate();
 
-    m_playheadTimer.setTimerType(Qt::PreciseTimer);
     m_compositeTimer.setTimerType(Qt::PreciseTimer);
     // Zero interval, single shot: fires at the end of the current event-loop turn, so a drag
     // that lands a dozen edits before the loop spins again costs one composite, not a dozen.
@@ -229,9 +228,11 @@ PlaybackEngine::PlaybackEngine(QObject *parent)
     m_editRefreshTimer.setSingleShot(true);
     m_editRefreshTimer.setInterval(0);
     connect(&m_editRefreshTimer, &QTimer::timeout, this, [this] {
+        // Before the composite, which then reuses this same snapshot: one copy per edit batch.
+        if (m_playing)
+            pushAudioSnapshot();
         m_compositor.requestComposite(m_playheadUs, playbackRenderOptions());
     });
-    connect(&m_playheadTimer, &QTimer::timeout, this, &PlaybackEngine::onPlayheadTick);
     connect(&m_compositeTimer, &QTimer::timeout, this, &PlaybackEngine::onCompositeTick);
     connect(&m_compositor, &CompositorService::frameReady, this, &PlaybackEngine::onFrameReady);
 
@@ -264,7 +265,6 @@ PlaybackEngine::~PlaybackEngine()
     abandonAudioFocus();
 #endif
     m_playing = false;
-    m_playheadTimer.stop();
     m_compositeTimer.stop();
     m_clock.stop();
 
@@ -299,7 +299,28 @@ void PlaybackEngine::setProject(drift::Project *project)
     m_project = project;
     m_mixer.setProject(project);
     m_compositor.setProject(project);
+    m_audioSnapshot.reset();
+    m_retiredAudioSnapshot.reset();
+    if (m_playing)
+        pushAudioSnapshot();
     refreshFrame();
+}
+
+std::shared_ptr<const drift::Project> PlaybackEngine::projectSnapshot(const drift::Project *project)
+{
+    if (!project || project != m_project)
+        return {};
+    return m_compositor.snapshot();
+}
+
+void PlaybackEngine::pushAudioSnapshot()
+{
+    std::shared_ptr<const drift::Project> snapshot = m_compositor.snapshot();
+    if (snapshot == m_audioSnapshot)
+        return;
+    m_retiredAudioSnapshot = std::move(m_audioSnapshot);
+    m_audioSnapshot = std::move(snapshot);
+    m_mixer.setSnapshot(m_audioSnapshot, m_compositor.snapshotSerial());
 }
 
 void PlaybackEngine::notifyProjectEdited()
@@ -328,6 +349,7 @@ void PlaybackEngine::resyncAudioAt(drift::TimeUs us)
     // The grid position is stale after a jump: without this the next display tick can
     // quantise to the frame that is already on screen and decline to redraw it.
     m_lastRequestedFrameUs = -1;
+    m_lastEmittedFrameUs = -1;
     // reset() clears the running flag; resume the clock if we are still in play
     // so edits/seeks during playback don't freeze audio at one timeline spot.
     if (m_playing) {
@@ -635,6 +657,8 @@ void PlaybackEngine::play()
     m_sinkPlayedUsOffset = m_audio.processedUSecs();
     m_clock.start();
 
+    pushAudioSnapshot();
+
     // Opening the device may settle on a rate the project did not ask for, which comes back as
     // sampleRateChanged and re-anchors the clock — so this has to follow m_playing being set.
     m_audio.start();
@@ -643,11 +667,11 @@ void PlaybackEngine::play()
 
     m_stats.reset();
     m_lastRequestedFrameUs = -1;
-    m_playheadTimer.start(kPlayheadUpdateMs);
+    m_lastEmittedFrameUs = -1;
     syncDisplayCadence();
 
-    onPlayheadTick();
-    onCompositeTick();
+    advancePlayhead();
+    requestFrameForPresentation();
 }
 
 void PlaybackEngine::syncDisplayCadence()
@@ -713,6 +737,7 @@ void PlaybackEngine::onDisplayTick()
     m_lastDisplayTickNs = PlaybackClock::nowNs();
     if (!m_playing || !m_project)
         return;
+    advancePlayhead();
     requestFrameForPresentation();
 }
 
@@ -750,15 +775,16 @@ void PlaybackEngine::pause()
     m_compositor.setPlaybackActive(false);
     drift::android::releaseKeepScreenOn();
     abandonAudioFocus();
-    m_playheadTimer.stop();
     m_compositeTimer.stop();
     m_clock.pause();
     m_playheadUs = m_clock.pausedAt();
     m_mixer.resetClipAudioState();
     m_audioStreamGeneration.fetch_add(1, std::memory_order_release);
-    emit playheadUsChanged(static_cast<quint64>(m_playheadUs));
+    emitPlayhead();
     emit playingChanged();
     refreshFrame();
+    if (qEnvironmentVariableIsSet("DRIFT_PLAYBACK_STATS"))
+        std::fprintf(stderr, "%s\n", qPrintable(m_stats.summaryLine()));
 }
 
 void PlaybackEngine::refreshFrame()
@@ -813,18 +839,32 @@ bool PlaybackEngine::shouldLoopWorkArea(drift::TimeUs *loopInOut, drift::TimeUs 
     return true;
 }
 
-void PlaybackEngine::onPlayheadTick()
+void PlaybackEngine::advancePlayhead()
 {
     if (!m_playing || !m_project)
         return;
 
     const drift::TimeUs timeUs = m_clock.currentTimeUs();
-    if (timeUs == m_playheadUs)
-        return;
-
-    m_playheadUs = timeUs;
-    emit playheadUsChanged(static_cast<quint64>(timeUs));
+    // Listeners hear about the playhead once per project frame, not once per refresh: nothing
+    // they show can change between two frames, and on a 144 Hz panel the difference is most of
+    // the GUI thread. The timeline needle interpolates between these on its own.
+    const drift::TimeUs step = frameStepUs();
+    const drift::TimeUs frameUs = step > 0 ? (timeUs / step) * step : timeUs;
+    if (frameUs != m_lastEmittedFrameUs) {
+        m_lastEmittedFrameUs = frameUs;
+        m_playheadUs = timeUs;
+        emitPlayhead();
+    }
+    // Every tick, not only on emits, so a loop boundary is honoured at display precision.
     checkEndOfTimeline(timeUs);
+}
+
+void PlaybackEngine::emitPlayhead()
+{
+    const qint64 startNs = PlaybackClock::nowNs();
+    emit playheadUsChanged(static_cast<quint64>(m_playheadUs));
+    if (m_playing)
+        m_stats.noteGuiTick(double(PlaybackClock::nowNs() - startNs) / 1'000'000.0);
 }
 
 void PlaybackEngine::onCompositeTick()
@@ -841,6 +881,7 @@ void PlaybackEngine::onCompositeTick()
         return;
     }
 
+    advancePlayhead();
     requestFrameForPresentation();
 }
 
@@ -923,6 +964,7 @@ int PlaybackEngine::fillAudio(float *buffer, int sampleCount)
     // Mix at the produce position (audio we are generating into the buffer),
     // then anchor the visible playhead to what the sink has actually played so
     // video follows audio rather than leading it by the buffer depth.
+    const qint64 mixStartNs = PlaybackClock::nowNs();
     if (qFuzzyCompare(m_playbackRate, 1.0)) {
         m_mixer.mix(m_clock.produceTimeUs(), sampleCount, m_sampleRate, buffer);
     } else {
@@ -948,6 +990,10 @@ int PlaybackEngine::fillAudio(float *buffer, int sampleCount)
             },
             sampleCount, buffer);
     }
+    if (m_sampleRate > 0) {
+        const double blockNs = 1e9 * sampleCount / m_sampleRate;
+        m_stats.noteAudioMixLoad(double(PlaybackClock::nowNs() - mixStartNs) / blockNs);
+    }
     m_clock.onAudioSamplesRendered(sampleCount);
     const qint64 playedUs = qMax(qint64(0), m_audio.processedUSecs() - m_sinkPlayedUsOffset);
     m_clock.syncPlaybackUs(static_cast<drift::TimeUs>(playedUs));
@@ -966,6 +1012,13 @@ QPair<float, float> PlaybackEngine::masterAudioLevels() const
     if (!m_playing)
         return {0.0f, 0.0f};
     return m_mixer.masterLevels();
+}
+
+QList<float> PlaybackEngine::takeMeterPeaks(const QList<int> &trackIndexes) const
+{
+    if (!m_playing)
+        return QList<float>(2 + trackIndexes.size() * 2, 0.0f);
+    return m_mixer.takeMeterPeaks(trackIndexes);
 }
 
 void PlaybackEngine::setMasterVolume(double vol)

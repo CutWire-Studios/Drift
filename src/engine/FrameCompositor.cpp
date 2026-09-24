@@ -109,9 +109,12 @@ const drift::Project *nestedProject(const drift::Project &parent, const drift::C
 
 struct NestedViewsScope
 {
-    NestedViewsScope() : previous(t_nestedViews) { t_nestedViews = &views; }
+    explicit NestedViewsScope(QHash<QString, std::shared_ptr<const drift::Project>> &views)
+        : previous(t_nestedViews)
+    {
+        t_nestedViews = &views;
+    }
     ~NestedViewsScope() { t_nestedViews = previous; }
-    QHash<QString, std::shared_ptr<const drift::Project>> views;
     QHash<QString, std::shared_ptr<const drift::Project>> *previous;
 };
 
@@ -1352,7 +1355,7 @@ bool FrameCompositor::prepare(drift::TimeUs timelineUs, const RenderOptions &opt
         return false;
 
     const AllowProxiesScope proxies(options.allowProxies);
-    const NestedViewsScope nestedViews;
+    const NestedViewsScope nestedViews(m_nestedViews);
     QSet<QString> videoPaths;
     QSet<QString> audioPaths;
     collectActivePaths(m_project, timelineUs, videoPaths, audioPaths);

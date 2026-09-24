@@ -43,7 +43,6 @@ Item {
     readonly property real scaleAtPlayhead: {
         void clipDataRevision
         void liveRevision
-        void EditorState.playheadSeconds
         if (!hasSelection)
             return 1
         const w = transformAt("width", canvasW)
@@ -55,7 +54,7 @@ Item {
 
     function transformAt(key, def) {
         return EditorState.propertyValueAt(EditorState.selectedTrack, EditorState.selectedClip,
-                                           key, EditorState.playheadSeconds, def)
+                                           key, EditorState.inspectorPlayheadSeconds, def)
     }
 
     function beginScaleDrag() {
@@ -305,7 +304,7 @@ Item {
                         text: modelData + "°"
                         selected: {
                             void root.clipDataRevision
-                            void EditorState.playheadSeconds
+                            void EditorState.inspectorPlayheadSeconds
                             const cur = Number(root.clipData.rotationAtPlayhead || 0)
                             return Math.abs(cur - modelData) < 0.5
                         }

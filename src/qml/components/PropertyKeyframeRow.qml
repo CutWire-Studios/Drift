@@ -61,7 +61,6 @@ Column {
         void valueRevision
         void liveSynced
         void keyframeList
-        void EditorState.playheadSeconds
         return valueAtPlayhead()
     }
     readonly property real displayedValue: editing ? liveValue : currentValue
@@ -129,18 +128,23 @@ Column {
     // Asks the engine rather than reimplementing evaluateAt here. This used to be a JS mirror
     // of the interpolation math that had to be kept in sync with Keyframe.h by hand — which
     // stopped being tractable once keys grew individual bezier tangents.
+    //
+    // The playhead is read only past the early returns, and as the inspector's throttled copy:
+    // a binding depends on what it actually read, so a row with no keys never re-evaluates for
+    // playback at all.
     function valueAtPlayhead() {
         if (!liveSynced && (!keyframeList || keyframeList.length === 0))
             return propDef.def
         return EditorState.propertyValueAt(EditorState.selectedTrack, EditorState.selectedClip,
-                                           propDef.key, EditorState.playheadSeconds, propDef.def)
+                                           propDef.key, EditorState.inspectorPlayheadSeconds,
+                                           propDef.def)
     }
 
     function keyframeAtPlayhead() {
-        if (!keyframeList)
+        if (!keyframeList || keyframeList.length === 0)
             return null
 
-        const t = EditorState.playheadSeconds
+        const t = EditorState.inspectorPlayheadSeconds
         const tolerance = 1 / 30
         let best = null
         for (let i = 0; i < keyframeList.length; ++i) {
@@ -170,7 +174,7 @@ Column {
     readonly property bool hasPrevKeyframe: {
         if (!keyframeList || keyframeList.length === 0)
             return false
-        const t = EditorState.playheadSeconds
+        const t = EditorState.inspectorPlayheadSeconds
         const tolerance = 1 / 30
         for (let i = 0; i < keyframeList.length; ++i) {
             if (keyframeList[i].seconds < t - tolerance)
@@ -182,7 +186,7 @@ Column {
     readonly property bool hasNextKeyframe: {
         if (!keyframeList || keyframeList.length === 0)
             return false
-        const t = EditorState.playheadSeconds
+        const t = EditorState.inspectorPlayheadSeconds
         const tolerance = 1 / 30
         for (let i = 0; i < keyframeList.length; ++i) {
             if (keyframeList[i].seconds > t + tolerance)
@@ -230,7 +234,6 @@ Column {
     Connections {
         target: EditorState
         function onSelectedClipDataChanged() { root.bumpValue() }
-        function onPlayheadSecondsChanged() { root.bumpValue() }
         function onTracksChanged() { root.bumpValue() }
         function onClipPropertiesPreviewed(trackIndex, clipIndex, keys) {
             if (root.editing || !root.matchesKey(keys))
@@ -248,6 +251,7 @@ Column {
 
     Component.onCompleted: syncEditors()
     onKeyframeListChanged: bumpValue()
+    onCurrentValueChanged: syncEditors()
 
     Item {
         width: root.width

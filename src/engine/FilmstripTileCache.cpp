@@ -40,7 +40,9 @@ FilmstripTileCache::FilmstripTileCache(QObject *parent)
     connect(&m_decodeThread, &QThread::finished, m_decodeContext, &QObject::deleteLater);
 
     m_decodeThread.setObjectName(QStringLiteral("drift-filmstrip"));
-    m_decodeThread.start();
+    // Thumbnails are the least urgent decode in the process; they should never take a core from
+    // playback. Low rather than Idle, so a paused timeline still fills in promptly.
+    m_decodeThread.start(QThread::LowPriority);
 }
 
 FilmstripTileCache::~FilmstripTileCache()

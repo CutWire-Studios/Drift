@@ -23,8 +23,12 @@ Rectangle {
     }
 
     HoverHandler { id: hover }
-    ThemedToolTip {
-        visible: hover.hovered
-        text: qsTr("Variable frame rate. This clip can drift out of sync with its audio. Right-click it and choose Convert to edit-friendly format.")
+    // Built only while hovered: this badge sits on every VFR clip and bin card.
+    Loader {
+        active: hover.hovered
+        sourceComponent: ThemedToolTip {
+            visible: true
+            text: qsTr("Variable frame rate. This clip can drift out of sync with its audio. Right-click it and choose Convert to edit-friendly format.")
+        }
     }
 }

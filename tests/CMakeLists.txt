@@ -25,6 +25,10 @@ qt_add_executable(tst_editorstate
     ../src/models/BinFolderListModel.cpp
     ../src/models/TimelineModel.cpp
     ../src/models/TimelineClipsModel.cpp
+    ../src/timeline/TimelineLayout.cpp
+    ../src/timeline/TimelineTrackItem.cpp
+    ../src/timeline/TimelineViewState.cpp
+    ../src/timeline/ClipThumbnailStore.cpp
     ../src/models/ClipListModel.cpp
     ../src/playback/PlaybackEngine.cpp
     ../src/playback/PlaybackClock.cpp

@@ -9,6 +9,7 @@
 #include "engine/AudioMixer.h"
 #include "engine/audio/ClipAudioRetimer.h"
 
+#include <memory>
 #include <QImage>
 #include <QMutex>
 #include <QObject>
@@ -139,6 +140,7 @@ public:
 
     QPair<float, float> trackAudioLevels(int trackIndex) const;
     QPair<float, float> masterAudioLevels() const;
+    QList<float> takeMeterPeaks(const QList<int> &trackIndexes) const;
     void setMasterVolume(double vol);
     double masterVolume() const;
     void setMasterMuted(bool muted);
@@ -173,7 +175,19 @@ private:
     int fillAudio(float *buffer, int sampleCount);
     void ensureAudioSink();
     void onAudioSampleRateChanged();
-    void onPlayheadTick();
+    // Reads the clock and publishes the playhead when it has crossed into a new project frame.
+    void advancePlayhead();
+    void emitPlayhead();
+    // Hands the mixer the compositor's current project snapshot, so the audio thread never reads
+    // the live project the GUI thread is editing.
+    void pushAudioSnapshot();
+
+public:
+    // The immutable copy the compositor is reading (made now if an edit invalidated it), for other
+    // readers off the GUI thread. Null when `project` is not the one being played.
+    std::shared_ptr<const drift::Project> projectSnapshot(const drift::Project *project);
+
+private:
     void onCompositeTick();
     // Pick the frame that should be on screen at the next swap and ask for it, unless it is
     // the one already requested.
@@ -196,7 +210,6 @@ private:
     PlaybackStats m_stats;
     AudioMixer m_mixer;
     AudioOutputChannel m_audio;
-    QTimer m_playheadTimer;
     QTimer m_compositeTimer;
     QTimer m_editRefreshTimer;
     QTimer m_gpuProbeTimer;
@@ -238,6 +251,12 @@ private:
     double m_refreshRate = 0.0;
     qint64 m_lastDisplayTickNs = 0;
     drift::TimeUs m_lastRequestedFrameUs = -1;
+    drift::TimeUs m_lastEmittedFrameUs = -1;
+    // The snapshot the mixer is reading, and the one before it. Holding the previous one until the
+    // next swap means the audio thread's own reference is never the last, so a whole project is
+    // never freed inside an audio callback.
+    std::shared_ptr<const drift::Project> m_audioSnapshot;
+    std::shared_ptr<const drift::Project> m_retiredAudioSnapshot;
     // The rate the sink negotiated, which is what the mixer renders at and what the clock counts
     // samples in — not necessarily the project's rate, since the device has the final say.
     int m_sampleRate = 48000;

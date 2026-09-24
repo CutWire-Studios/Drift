@@ -68,8 +68,17 @@ void PreviewItem::bindDisplayCadence()
     // afterAnimating is the one per-frame window signal Qt emits on the GUI thread, and it
     // lands at the right moment: animations have advanced, the scene has not yet been
     // synced, so a frame requested now is the one that should appear at the coming swap.
-    m_afterAnimatingConn = connect(win, &QQuickWindow::afterAnimating, m_playback,
-                                   &PlaybackEngine::onDisplayTick);
+    //
+    // While playing, each tick also schedules the next frame. The playhead is published once per
+    // project frame, so on a fast panel nothing else in the scene necessarily changes between
+    // refreshes, and without a pending update the window would stop producing ticks at all.
+    m_afterAnimatingConn = connect(win, &QQuickWindow::afterAnimating, this, [win, this] {
+        if (!m_playback)
+            return;
+        m_playback->onDisplayTick();
+        if (m_playback->isPlaying())
+            win->update();
+    });
     // frameSwapped comes from the render thread, so it must be queued. It is only used to
     // count real presents — a rate the delivered-frame rate is compared against — which
     // survives the event-loop hop that scheduling would not.

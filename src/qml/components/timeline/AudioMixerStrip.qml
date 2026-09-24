@@ -768,9 +768,11 @@ Rectangle {
             }
 
             // --- Metering Animation Engine -------------------------------------------
-            property var liveTrackLevels: ({})
-            property var liveTrackPeaks: ({})
-            property var livePeakHoldTimes: ({})
+            // One C++ call per tick for every meter, written into each strip's own scalar
+            // properties, so a tick only re-evaluates the meters that actually moved.
+            readonly property real meterDecay: 0.04
+            readonly property real meterPeakDecay: 0.02
+            readonly property int meterPeakHoldMs: 1200
 
             property real masterLevelL: 0.0
             property real masterLevelR: 0.0
@@ -786,68 +788,36 @@ Rectangle {
                 running: root.visible && (EditorState.playing || EditorState.isRecordingAudio)
                 onTriggered: {
                     const now = Date.now()
-                    const decay = 0.04
-                    const peakDecay = 0.02
-                    const newLevels = {}
-                    const newPeaks = {}
-                    const newTimes = Object.assign({}, content.livePeakHoldTimes)
+                    const tracks = content.audioTracksList
+                    const indexes = []
+                    for (let i = 0; i < tracks.length; i++)
+                        indexes.push(tracks[i].trackIndex)
+                    const levels = EditorState.meterLevels(indexes)
 
-                    for (var i = 0; i < content.audioTracksList.length; i++) {
-                        const ti = content.audioTracksList[i].trackIndex
-                        const raw = EditorState.trackAudioLevels(ti)
-                        const targetL = raw ? (raw.left || 0.0) : 0.0
-                        const targetR = raw ? (raw.right || 0.0) : 0.0
-
-                        const cur = content.liveTrackLevels[ti] || { l: 0.0, r: 0.0 }
-                        const curPeaks = content.liveTrackPeaks[ti] || { l: 0.0, r: 0.0 }
-                        var holdTimes = newTimes[ti] || { l: 0, r: 0 }
-
-                        // Instant attack, linear release
-                        const l = targetL >= cur.l ? targetL : Math.max(0.0, cur.l - decay)
-                        const r = targetR >= cur.r ? targetR : Math.max(0.0, cur.r - decay)
-
-                        var pkL = curPeaks.l
-                        if (targetL >= pkL) {
-                            pkL = targetL
-                            holdTimes.l = now
-                        } else if (now - holdTimes.l > 1200) {
-                            pkL = Math.max(0.0, pkL - peakDecay)
-                        }
-
-                        var pkR = curPeaks.r
-                        if (targetR >= pkR) {
-                            pkR = targetR
-                            holdTimes.r = now
-                        } else if (now - holdTimes.r > 1200) {
-                            pkR = Math.max(0.0, pkR - peakDecay)
-                        }
-
-                        newLevels[ti] = { l: l, r: r }
-                        newPeaks[ti] = { l: pkL, r: pkR }
-                        newTimes[ti] = holdTimes
+                    for (let i = 0; i < tracks.length; i++) {
+                        const strip = stripRepeater.itemAt(i)
+                        if (strip)
+                            strip.applyMeter(levels[2 + i * 2], levels[3 + i * 2], now)
                     }
-                    content.liveTrackLevels = newLevels
-                    content.liveTrackPeaks = newPeaks
-                    content.livePeakHoldTimes = newTimes
 
-                    const mRaw = EditorState.masterAudioLevels()
-                    const mTargetL = mRaw ? (mRaw.left || 0.0) : 0.0
-                    const mTargetR = mRaw ? (mRaw.right || 0.0) : 0.0
-
+                    const mTargetL = levels[0]
+                    const mTargetR = levels[1]
+                    const decay = content.meterDecay
+                    const peakDecay = content.meterPeakDecay
                     content.masterLevelL = mTargetL >= content.masterLevelL ? mTargetL : Math.max(0.0, content.masterLevelL - decay)
                     content.masterLevelR = mTargetR >= content.masterLevelR ? mTargetR : Math.max(0.0, content.masterLevelR - decay)
 
                     if (mTargetL >= content.masterPeakL) {
                         content.masterPeakL = mTargetL
                         content.masterPeakHoldTimeL = now
-                    } else if (now - content.masterPeakHoldTimeL > 1200) {
+                    } else if (now - content.masterPeakHoldTimeL > content.meterPeakHoldMs) {
                         content.masterPeakL = Math.max(0.0, content.masterPeakL - peakDecay)
                     }
 
                     if (mTargetR >= content.masterPeakR) {
                         content.masterPeakR = mTargetR
                         content.masterPeakHoldTimeR = now
-                    } else if (now - content.masterPeakHoldTimeR > 1200) {
+                    } else if (now - content.masterPeakHoldTimeR > content.meterPeakHoldMs) {
                         content.masterPeakR = Math.max(0.0, content.masterPeakR - peakDecay)
                     }
                 }
@@ -856,8 +826,11 @@ Rectangle {
             function resetMeters() {
                 if (EditorState.playing || EditorState.isRecordingAudio)
                     return
-                liveTrackLevels = ({})
-                liveTrackPeaks = ({})
+                for (let i = 0; i < stripRepeater.count; i++) {
+                    const strip = stripRepeater.itemAt(i)
+                    if (strip)
+                        strip.clearMeter()
+                }
                 masterLevelL = 0.0
                 masterLevelR = 0.0
                 masterPeakL = 0.0
@@ -1194,6 +1167,7 @@ Rectangle {
                             // Count model: previewTrackVolume/Pan rebuild audioTracksList on every drag
                             // tick, and a list model would recreate the strip under the pressed fader.
                             Repeater {
+                                id: stripRepeater
                                 model: content.audioTracksList.length
 
                                 delegate: ChannelStrip {
@@ -1202,8 +1176,35 @@ Rectangle {
                                     readonly property var modelData: content.audioTracksList[index] || ({})
 
                                     readonly property int trackIndex: modelData.trackIndex
-                                    readonly property var curLevels: content.liveTrackLevels[trackIndex] || { l: 0.0, r: 0.0 }
-                                    readonly property var curPeaks: content.liveTrackPeaks[trackIndex] || { l: 0.0, r: 0.0 }
+                                    property real peakHoldTimeL: 0
+                                    property real peakHoldTimeR: 0
+
+                                    // Instant attack, linear release; peaks hold, then fall.
+                                    function applyMeter(targetL, targetR, now) {
+                                        const decay = content.meterDecay
+                                        const peakDecay = content.meterPeakDecay
+                                        levelL = targetL >= levelL ? targetL : Math.max(0.0, levelL - decay)
+                                        levelR = targetR >= levelR ? targetR : Math.max(0.0, levelR - decay)
+                                        if (targetL >= peakL) {
+                                            peakL = targetL
+                                            peakHoldTimeL = now
+                                        } else if (now - peakHoldTimeL > content.meterPeakHoldMs) {
+                                            peakL = Math.max(0.0, peakL - peakDecay)
+                                        }
+                                        if (targetR >= peakR) {
+                                            peakR = targetR
+                                            peakHoldTimeR = now
+                                        } else if (now - peakHoldTimeR > content.meterPeakHoldMs) {
+                                            peakR = Math.max(0.0, peakR - peakDecay)
+                                        }
+                                    }
+
+                                    function clearMeter() {
+                                        levelL = 0
+                                        levelR = 0
+                                        peakL = 0
+                                        peakR = 0
+                                    }
 
                                     width: root.stripWidth
                                     height: stripsRow.height
@@ -1217,10 +1218,6 @@ Rectangle {
                                     armPaused: EditorState.isAudioRecordingPaused
                                     volume: armed ? EditorState.audioRecordGain : modelData.volume
                                     pan: modelData.pan
-                                    levelL: curLevels.l
-                                    levelR: curLevels.r
-                                    peakL: curPeaks.l
-                                    peakR: curPeaks.r
 
                                     onMuteToggled: EditorState.setTrackMuted(trackIndex, !muted)
                                     onSoloToggled: EditorState.setTrackSolo(trackIndex, !solo)

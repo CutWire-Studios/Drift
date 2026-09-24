@@ -55,7 +55,10 @@ ClipReaderPool::WorkerEntry &ClipReaderPool::ensureWorker(
         entry->thread = std::make_unique<QThread>();
         entry->worker = new ClipReaderWorker;
         entry->worker->moveToThread(entry->thread.get());
-        entry->thread->start();
+        // The audio thread blocks on its decode workers every buffer, so those run above the
+        // video ones, which are paced by read-ahead and have slack to spare.
+        entry->thread->start(&workers == &m_audioWorkers ? QThread::HighPriority
+                                                         : QThread::InheritPriority);
 
         // Open asynchronously. Callers that need frames/audio use BlockingQueued
         // decode methods, which run after this open on the worker's event queue —

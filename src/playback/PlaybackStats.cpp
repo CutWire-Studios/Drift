@@ -151,6 +151,64 @@ void PlaybackStats::noteInFlight(int count)
     m_inFlightPeak = qMax(m_inFlightPeak, count);
 }
 
+void PlaybackStats::noteGuiTick(double ms)
+{
+    m_guiTick.add(ms);
+}
+
+void PlaybackStats::noteAudioMixLoad(double load)
+{
+    float current = m_pendingMixLoadMax.load(std::memory_order_relaxed);
+    const float value = static_cast<float>(load);
+    while (value > current
+           && !m_pendingMixLoadMax.compare_exchange_weak(current, value, std::memory_order_relaxed)) {
+    }
+}
+
+void PlaybackStats::drainAudioMixLoad() const
+{
+    const float pending = m_pendingMixLoadMax.exchange(0.0f, std::memory_order_relaxed);
+    if (pending <= 0.0f)
+        return;
+    m_audioMixLoad.add(pending);
+    m_audioMixLoadPeak = qMax(m_audioMixLoadPeak, pending);
+}
+
+double PlaybackStats::audioMixLoadP95() const
+{
+    drainAudioMixLoad();
+    return m_audioMixLoad.percentile(0.95);
+}
+
+double PlaybackStats::audioMixLoadMax() const
+{
+    drainAudioMixLoad();
+    return m_audioMixLoadPeak;
+}
+
+QString PlaybackStats::summaryLine() const
+{
+    return QStringLiteral("drift-stats delivered=%1 displayed=%2 refresh=%3 jitter=%4 "
+                          "composite=%5/%6 decodeWait=%7 dropped=%8 coalesced=%9 inFlight=%10 "
+                          "upload=%11 guiTick=%12/%13 mixLoad=%14/%15 samples=%16")
+        .arg(deliveredFps(), 0, 'f', 1)
+        .arg(displayedFps(), 0, 'f', 1)
+        .arg(m_refreshRate, 0, 'f', 1)
+        .arg(jitterMs(), 0, 'f', 2)
+        .arg(compositeMedianMs(), 0, 'f', 2)
+        .arg(compositeP95Ms(), 0, 'f', 2)
+        .arg(decodeWaitMedianMs(), 0, 'f', 2)
+        .arg(m_dropped)
+        .arg(m_coalesced)
+        .arg(m_inFlightPeak)
+        .arg(m_uploadPath.isEmpty() ? QStringLiteral("-") : m_uploadPath)
+        .arg(guiTickMedianMs(), 0, 'f', 3)
+        .arg(guiTickP95Ms(), 0, 'f', 3)
+        .arg(audioMixLoadP95(), 0, 'f', 3)
+        .arg(audioMixLoadMax(), 0, 'f', 3)
+        .arg(m_composite.count());
+}
+
 void PlaybackStats::setRefreshRate(double hz)
 {
     m_refreshRate = hz > 0.0 ? hz : 0.0;
@@ -172,6 +230,10 @@ void PlaybackStats::reset()
     m_decodeWait.clear();
     m_deliveredIntervals.clear();
     m_displayedIntervals.clear();
+    m_guiTick.clear();
+    m_pendingMixLoadMax.store(0.0f, std::memory_order_relaxed);
+    m_audioMixLoad.clear();
+    m_audioMixLoadPeak = 0.0f;
     m_lastDeliveredNs = 0;
     m_lastDisplayedNs = 0;
     m_dropped = 0;
@@ -239,6 +301,10 @@ QVariantList PlaybackStats::reportRows() const
     rows.append(statRow(tr("Composites in flight (peak)"), QString::number(m_inFlightPeak)));
     rows.append(statRow(tr("Preview upload"),
                         m_uploadPath.isEmpty() ? QStringLiteral("—") : m_uploadPath));
+    rows.append(statRow(tr("Playhead update (median)"), msText(guiTickMedianMs())));
+    rows.append(statRow(tr("Playhead update (p95)"), msText(guiTickP95Ms())));
+    rows.append(statRow(tr("Audio mix load (p95)"),
+                        QStringLiteral("%1%").arg(audioMixLoadP95() * 100.0, 0, 'f', 0)));
     rows.append(statRow(tr("Samples"), QString::number(m_composite.count())));
     return rows;
 }

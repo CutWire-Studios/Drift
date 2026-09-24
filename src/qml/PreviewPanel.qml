@@ -445,9 +445,6 @@ PanelFrame {
             if (!EditorState.playing)
                 EditorState.playback.refreshFrame()
         }
-        function onTracksChanged() {
-            EditorState.playback.refreshFrame()
-        }
         function onPlayingChanged() {
             if (!EditorState.playing)
                 EditorState.playback.refreshFrame()

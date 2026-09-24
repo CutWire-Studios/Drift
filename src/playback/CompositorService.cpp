@@ -30,7 +30,10 @@ CompositorWorker::CompositorWorker(QObject *parent)
 void CompositorWorker::composite(drift::TimeUs timeUs, FrameCompositor::RenderOptions options,
                                  std::shared_ptr<const drift::Project> snapshot, quint64 sequence)
 {
-    // Keep the shared tree alive for the whole frame; setProject only borrows.
+    // Keep the shared tree alive for the whole frame; setProject only borrows. Compared while the
+    // old one is still held, so the two cannot share an address.
+    if (snapshot != m_snapshot)
+        m_compositor.clearNestedViewCache();
     m_snapshot = std::move(snapshot);
     if (!m_snapshot) {
         // Still report completion: the service treats a request as in flight
@@ -193,18 +196,27 @@ int CompositorService::maxInFlight() const
     return GpuCompositor::kMaxPreviewComposites;
 }
 
-void CompositorService::dispatch(drift::TimeUs timeUs, const FrameCompositor::RenderOptions &options)
+std::shared_ptr<const drift::Project> CompositorService::snapshot()
 {
     if (!m_project)
-        return;
-
+        return {};
     if (!m_sharedSnapshot || m_snapshotGeneration != m_liveGeneration) {
         // One uniquely-owned snapshot per generation; subsequent ticks only bump
         // the shared_ptr. Plain Project copy would keep sharing QMap/QList with
         // the live tree — unsafe once the GUI mutates while the worker reads.
         m_sharedSnapshot = std::make_shared<drift::Project>(m_project->detachedCopy());
         m_snapshotGeneration = m_liveGeneration;
+        ++m_snapshotSerial;
     }
+    return m_sharedSnapshot;
+}
+
+void CompositorService::dispatch(drift::TimeUs timeUs, const FrameCompositor::RenderOptions &options)
+{
+    if (!m_project)
+        return;
+
+    snapshot();
 
     ++m_inFlight;
     if (m_stats)

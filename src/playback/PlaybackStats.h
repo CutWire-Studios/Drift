@@ -6,6 +6,7 @@
 #include <QVariantMap>
 
 #include <array>
+#include <atomic>
 
 // Rolling playback counters, sampled as frames are composited and presented.
 //
@@ -35,6 +36,9 @@ class PlaybackStats : public QObject
     Q_PROPERTY(int coalescedRequests READ coalescedRequests NOTIFY updated)
     Q_PROPERTY(int inFlightPeak READ inFlightPeak NOTIFY updated)
     Q_PROPERTY(QString uploadPath READ uploadPath NOTIFY updated)
+    Q_PROPERTY(double guiTickMedianMs READ guiTickMedianMs NOTIFY updated)
+    Q_PROPERTY(double guiTickP95Ms READ guiTickP95Ms NOTIFY updated)
+    Q_PROPERTY(double audioMixLoadP95 READ audioMixLoadP95 NOTIFY updated)
     Q_PROPERTY(bool active READ isActive WRITE setActive NOTIFY activeChanged)
 
 public:
@@ -58,6 +62,12 @@ public:
     // One display buffer swap.
     void noteDisplayed();
     void noteInFlight(int count);
+    // GUI-thread time spent delivering one playhead change to its listeners (every binding and
+    // Connections handler that depends on the playhead runs inside that emit).
+    void noteGuiTick(double ms);
+    // Audio thread. Mix time over the block's own duration: 1.0 means the mixer took as long as
+    // the audio it produced. Lock-free; folded into a window on the GUI thread.
+    void noteAudioMixLoad(double load);
 
     void setRefreshRate(double hz);
     void setAdaptiveScale(double scale);
@@ -81,6 +91,13 @@ public:
     int coalescedRequests() const { return m_coalesced; }
     int inFlightPeak() const { return m_inFlightPeak; }
     QString uploadPath() const { return m_uploadPath; }
+    double guiTickMedianMs() const { return m_guiTick.median(); }
+    double guiTickP95Ms() const { return m_guiTick.percentile(0.95); }
+    double audioMixLoadP95() const;
+    double audioMixLoadMax() const;
+
+    // One line with every figure, for DRIFT_PLAYBACK_STATS runs.
+    QString summaryLine() const;
 
     // Flat {label, value} rows for the diagnostics report, matching DebugReport's shape.
     QVariantList reportRows() const;
@@ -122,6 +139,13 @@ private:
     Window m_decodeWait;
     Window m_deliveredIntervals;
     Window m_displayedIntervals;
+    Window m_guiTick;
+    // Audio-thread samples land here and are drained into m_audioMixLoad by readers. A single
+    // slot is enough: the reader only needs the worst block since it last looked.
+    mutable std::atomic<float> m_pendingMixLoadMax{0.0f};
+    mutable Window m_audioMixLoad;
+    mutable float m_audioMixLoadPeak = 0.0f;
+    void drainAudioMixLoad() const;
 
     qint64 m_lastDeliveredNs = 0;
     qint64 m_lastDisplayedNs = 0;

@@ -1,5 +1,8 @@
 #include "TimelineClipsModel.h"
 
+#include <QSet>
+#include <QStringList>
+
 TimelineClipsModel::TimelineClipsModel(QObject *parent)
     : QAbstractListModel(parent)
 {
@@ -50,16 +53,69 @@ QList<int> changedRoles(const TimelineClipsModel::Row &a, const TimelineClipsMod
 void TimelineClipsModel::setRows(QList<Row> rows)
 {
     // Same clips in the same order is the common case — every trim, move, fade and effect edit.
-    // Anything that adds, removes or reorders resets: the delegates have to be rebuilt anyway.
     bool sameShape = rows.size() == m_rows.size();
     for (int i = 0; sameShape && i < rows.size(); ++i)
         sameShape = rows.at(i).id == m_rows.at(i).id;
 
     if (!sameShape) {
-        beginResetModel();
-        m_rows = std::move(rows);
-        endResetModel();
-        return;
+        // A split, delete, paste or add changes the set but keeps everything else in order.
+        // Removing and inserting just those rows leaves every other delegate standing; a reset
+        // would rebuild the whole track, filmstrips and waveforms included.
+        QSet<QString> newIds;
+        newIds.reserve(rows.size());
+        for (const Row &row : rows)
+            newIds.insert(row.id);
+        QSet<QString> oldIds;
+        oldIds.reserve(m_rows.size());
+        for (const Row &row : m_rows)
+            oldIds.insert(row.id);
+
+        QStringList keptOld;
+        for (const Row &row : m_rows) {
+            if (newIds.contains(row.id))
+                keptOld.append(row.id);
+        }
+        QStringList keptNew;
+        for (const Row &row : rows) {
+            if (oldIds.contains(row.id))
+                keptNew.append(row.id);
+        }
+        const bool unique = newIds.size() == rows.size() && oldIds.size() == m_rows.size();
+        if (!unique || keptOld != keptNew) {
+            beginResetModel();
+            m_rows = std::move(rows);
+            endResetModel();
+            return;
+        }
+
+        for (int i = m_rows.size() - 1; i >= 0;) {
+            if (newIds.contains(m_rows.at(i).id)) {
+                --i;
+                continue;
+            }
+            int first = i;
+            while (first > 0 && !newIds.contains(m_rows.at(first - 1).id))
+                --first;
+            beginRemoveRows({}, first, i);
+            m_rows.remove(first, i - first + 1);
+            endRemoveRows();
+            i = first - 1;
+        }
+        for (int i = 0; i < rows.size();) {
+            if (oldIds.contains(rows.at(i).id)) {
+                ++i;
+                continue;
+            }
+            int last = i;
+            while (last + 1 < rows.size() && !oldIds.contains(rows.at(last + 1).id))
+                ++last;
+            beginInsertRows({}, i, last);
+            for (int j = i; j <= last; ++j)
+                m_rows.insert(j, rows.at(j));
+            endInsertRows();
+            i = last + 1;
+        }
+        // Same ids in the same order now; fall through to the per-role update.
     }
 
     for (int i = 0; i < rows.size(); ++i) {
@@ -69,6 +125,49 @@ void TimelineClipsModel::setRows(QList<Row> rows)
         m_rows[i] = rows.at(i);
         emit dataChanged(index(i), index(i), roles);
     }
+}
+
+void TimelineClipsModel::setDecorations(Decorations decorations)
+{
+    if (decorations == m_decorations)
+        return;
+    m_decorations = std::move(decorations);
+    emit decorationsChanged();
+}
+
+QVariantList TimelineClipsModel::gaps() const
+{
+    QVariantList out;
+    out.reserve(m_decorations.gaps.size());
+    for (const Gap &gap : m_decorations.gaps)
+        out.append(QVariantMap{{QStringLiteral("start"), gap.start}, {QStringLiteral("end"), gap.end}});
+    return out;
+}
+
+QVariantList TimelineClipsModel::transitionRegions() const
+{
+    QVariantList out;
+    out.reserve(m_decorations.transitions.size());
+    for (const TransitionRegion &region : m_decorations.transitions) {
+        out.append(QVariantMap{
+            {QStringLiteral("leftClip"), region.leftClip},
+            {QStringLiteral("start"), region.start},
+            {QStringLiteral("end"), region.end},
+            {QStringLiteral("hasTransition"), region.hasTransition},
+            {QStringLiteral("label"), region.label},
+            {QStringLiteral("kind"), region.kind},
+        });
+    }
+    return out;
+}
+
+QVariantList TimelineClipsModel::adjustmentLanes() const
+{
+    QVariantList out;
+    out.reserve(m_decorations.adjustmentLanes.size());
+    for (int lane : m_decorations.adjustmentLanes)
+        out.append(lane);
+    return out;
 }
 
 int TimelineClipsModel::rowCount(const QModelIndex &parent) const

@@ -276,18 +276,16 @@ Item {
                     readonly property real radius: width / 2 - 4
                     readonly property real yaw: {
                         void root.clipDataRevision
-                        void EditorState.playheadSeconds
                         return orbDrag.dragging ? orbDrag.liveYaw
                                                 : EditorState.propertyValueAt(EditorState.selectedTrack, EditorState.selectedClip,
-                                                                              "model3d.lightYaw", EditorState.playheadSeconds,
+                                                                              "model3d.lightYaw", EditorState.inspectorPlayheadSeconds,
                                                                               Number(root.model3d.lightYaw) || 0)
                     }
                     readonly property real pitch: {
                         void root.clipDataRevision
-                        void EditorState.playheadSeconds
                         return orbDrag.dragging ? orbDrag.livePitch
                                                 : EditorState.propertyValueAt(EditorState.selectedTrack, EditorState.selectedClip,
-                                                                              "model3d.lightPitch", EditorState.playheadSeconds,
+                                                                              "model3d.lightPitch", EditorState.inspectorPlayheadSeconds,
                                                                               Number(root.model3d.lightPitch) || 0)
                     }
                     // Same mapping as the renderer's screenLightDir: +x right, +y up, +z toward

@@ -154,7 +154,9 @@ AudioOutputChannel::AudioOutputChannel(const QString &threadName, QObject *paren
     // decode and mix audio — never block the GUI thread.
     m_pull->moveToThread(&m_thread);
     m_thread.setObjectName(threadName);
-    m_thread.start();
+    // The one thread whose lateness is audible. Honoured on Windows and macOS; a normal Linux
+    // thread cannot raise itself, which is why background work there is lowered instead.
+    m_thread.start(QThread::TimeCriticalPriority);
 
     // Fires for a new or removed device *and* for the default one changing, which on Windows is
     // every headphone jack, HDMI monitor and Bluetooth headset.

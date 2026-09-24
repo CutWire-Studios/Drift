@@ -132,6 +132,85 @@ PanelFrame {
     }
     readonly property var tracks: EditorState.tracks
     readonly property real playheadSeconds: EditorState.playheadSeconds
+    // What the scene-graph clip renderer reads from this panel, bound once here instead of once
+    // per clip.
+    TimelineViewState {
+        id: timelineViewState
+        viewX: root.timelineViewX
+        viewW: root.timelineViewW
+        pxPerSecond: root.pxPerSecond
+        touchMode: false
+        multiSelectActive: root.multiSelectActive === true
+        totalTracksHeight: root.totalTracksHeightCached
+        moveFollowActive: root.moveFollowActive
+        moveLeaderTrack: root.moveLeaderTrack
+        moveLeaderClip: root.moveLeaderClip
+        moveFollowDeltaX: root.moveFollowDeltaX
+        moveFollowDeltaY: root.moveFollowDeltaY
+        trimFollowActive: root.trimFollowActive
+        trimFollowLinkId: root.trimFollowLinkId
+        trimFollowClipId: root.trimFollowClipId
+        trimFollowStart: root.trimFollowStart
+        trimFollowDuration: root.trimFollowDuration
+        trimFollowIn: root.trimFollowIn
+        trimFollowOut: root.trimFollowOut
+        effectDropTrack: root.effectDropTrackIndex
+        effectDropClip: root.effectDropClipIndex
+        style: ({
+            "clipVideo": Theme.clipVideoPlaceholder,
+            "clipAudio": Theme.clipAudio,
+            "clipText": Theme.clipText,
+            "clipSubtitle": Theme.clipSubtitle,
+            "clipGraphic": Theme.clipGraphic,
+            "clipEffect": Theme.clipEffect,
+            "clipComposite": Theme.clipComposite,
+            "adjustmentVideo": Theme.clipAdjustmentVideo,
+            "adjustmentAudio": Theme.clipAdjustmentAudio,
+            "adjustmentMask": Theme.clipAdjustmentMask,
+            "primary": Theme.primary,
+            "scrim": Theme.scrimColor,
+            "proxyBand": Theme.clipProxyBand,
+            "onMedia": Theme.onMedia,
+            "waveform": Theme.waveformColor,
+            "mutedForeground": Theme.mutedForeground,
+            "panelBorder": Theme.panelBorder,
+            "proxyPill": Theme.clipProxy,
+            "proxyPillForeground": Theme.clipProxyForeground,
+            "editFriendlyPill": Theme.clipEditFriendly,
+            "editFriendlyPillForeground": Theme.clipEditFriendlyForeground,
+            "warning": Theme.warning,
+            "fontFamily": Theme.fontFamily,
+            "fontSizeTiny": Theme.fontSizeTiny,
+            "fontSizeXs": Theme.fontSizeXs,
+            "radiusSm": Theme.radiusSm,
+            "radiusXs": Theme.radiusXs,
+            "ringWidth": Theme.clipSelectionRingWidth,
+            "borderWidthFocus": Theme.borderWidthFocus,
+            "headerBandHeight": Theme.clipHeaderBandHeight,
+            "clipMinWidth": Theme.clipMinWidth,
+            "iconSizeSm": Theme.iconSizeSm,
+            "spacingLg": Theme.spacingLg,
+            "spacingMd": Theme.spacingMd,
+            "edgeMarginDesktop": 14,
+            "edgeMarginTouch": Theme.androidClipEdgeMargin,
+            "trimHotspotExtraDesktop": 10,
+            "trimHotspotExtraTouch": Theme.androidTrimHotspotExtra,
+            "proxyLabel": qsTr("Proxy"),
+            "proxyTooltip": qsTr("Previewing from a low-resolution proxy. Export uses the original."),
+            "editFriendlyLabel": qsTr("Edit-friendly"),
+            "editFriendlyTooltip": qsTr("Converted to a constant frame rate for smooth editing"),
+            "vfrTooltip": qsTr("Variable frame rate. This clip can drift out of sync with its audio. Right-click it and choose Convert to edit-friendly format.")
+        })
+    }
+
+    PlayheadInterpolator {
+        id: needle
+        active: root.visible
+        onSecondsChanged: {
+            if (EditorState.playing)
+                root.ensurePlayheadVisible()
+        }
+    }
     // True between beginPlayheadSeek and endPlayheadSeek when playback was
     // interrupted so a click or drag could land, and should resume on release.
     property bool resumePlaybackAfterSeek: false
@@ -446,21 +525,6 @@ PanelFrame {
         })
     }
 
-    // Track indices of the nested lanes belonging to `trackIndex`, topmost first. Derived from
-    // `tracks` rather than asked of EditorState so it re-evaluates on its own.
-    function adjustmentLanesFor(trackIndex) {
-        var out = []
-        if (trackIndex < 0 || trackIndex >= tracks.length)
-            return out
-        const parentId = tracks[trackIndex].id
-        if (!parentId)
-            return out
-        for (var i = 0; i < tracks.length; i++) {
-            if (tracks[i].isAdjustmentLane && tracks[i].parentTrackId === parentId)
-                out.push(i)
-        }
-        return out
-    }
 
     // Nested lanes take no row of their own, so they must not contribute a gap either.
     function trackOccupiesARow(index) {
@@ -515,24 +579,6 @@ PanelFrame {
         return -1
     }
 
-    // Empty stretches on a track, sorted left-to-right. Gaps are never stored — they're
-    // just whatever time isn't covered by a clip — so this recomputes them from the
-    // current clip list on every call rather than caching anything.
-    function gapsForTrack(trackIndex) {
-        if (trackIndex < 0 || trackIndex >= tracks.length)
-            return []
-        const sorted = tracks[trackIndex].clips.slice().sort(function (a, b) {
-            return a.start - b.start
-        })
-        const gaps = []
-        for (var i = 0; i < sorted.length - 1; i++) {
-            const gapStart = sorted[i].start + sorted[i].duration
-            const gapEnd = sorted[i + 1].start
-            if (gapEnd > gapStart)
-                gaps.push({ start: gapStart, end: gapEnd })
-        }
-        return gaps
-    }
 
     function timelineHasClips() {
         for (var i = 0; i < tracks.length; i++) {
@@ -974,7 +1020,7 @@ PanelFrame {
     }
 
     function ensurePlayheadVisible() {
-        const playheadX = EditorState.playheadSeconds * pxPerSecond;
+        const playheadX = needle.seconds * pxPerSecond;
         const margin = 64;
         var target = -1
         if (playheadX < flick.contentX + margin)
@@ -1863,7 +1909,10 @@ PanelFrame {
                                     z: 4
 
                                     Repeater {
-                                        model: root.adjustmentLanesFor(trackRow.trackIndex)
+                                        // From the track's clip model, which only re-announces
+                                        // the list when a lane actually comes or goes. A JS
+                                        // array here rebuilt every lane and its clips per edit.
+                                        model: EditorState.clipsModel(trackRow.trackIndex).adjustmentLanes
                                         delegate: Item {
                                             id: laneStrip
                                             required property var modelData
@@ -1887,12 +1936,26 @@ PanelFrame {
                                                 }
                                             }
 
+                                            Loader {
+                                                anchors.fill: parent
+                                                active: EditorState.sceneGraphTimeline
+                                                sourceComponent: Component {
+                                                    TimelineTrackArea {
+                                                        panel: root
+                                                        timelineColumn: trackColumn
+                                                        trackIndex: laneStrip.trackIndex
+                                                        viewState: timelineViewState
+                                                    }
+                                                }
+                                            }
+
                                             Repeater {
                                                 // The lane's role model, not a count over
                                                 // root.tracks: it notifies per clip and per
                                                 // field, so an edit to one clip no longer re-runs
                                                 // every other delegate's bindings.
-                                                model: EditorState.clipsModel(laneStrip.trackIndex)
+                                                model: EditorState.sceneGraphTimeline
+                                                       ? null : EditorState.clipsModel(laneStrip.trackIndex)
                                                 delegate: TimelineClipItem {
                                                     panel: root
                                                     timelineColumn: trackColumn
@@ -1920,8 +1983,23 @@ PanelFrame {
                                     width: trackRow.width
                                     height: Math.max(0, trackRow.height - adjustmentLaneStrips.height)
 
+                                    Loader {
+                                        id: sceneGraphClips
+                                        anchors.fill: parent
+                                        active: EditorState.sceneGraphTimeline
+                                        sourceComponent: Component {
+                                            TimelineTrackArea {
+                                                panel: root
+                                                timelineColumn: trackColumn
+                                                trackIndex: trackClipArea.trackIndex
+                                                viewState: timelineViewState
+                                            }
+                                        }
+                                    }
+
                                     Repeater {
-                                        model: EditorState.clipsModel(trackClipArea.trackIndex)
+                                        model: EditorState.sceneGraphTimeline
+                                               ? null : EditorState.clipsModel(trackClipArea.trackIndex)
                                         delegate: TimelineClipItem {
                                             // panel: root is safe — TimelineClipItem's id is clipItem,
                                             // so it does not shadow TimelinePanel's root.
@@ -2069,9 +2147,10 @@ PanelFrame {
                                 }
 
                                 // Right-click a gap to ripple everything after it (and any
-                                // linked partner clips on other tracks) left to close it.
+                                // linked partner clips on other tracks) left to close it. The
+                                // menu is one per panel; gaps only carry a hover tint.
                                 Repeater {
-                                    model: root.gapsForTrack(trackRow.trackIndex)
+                                    model: EditorState.clipsModel(trackRow.trackIndex).gaps
                                     delegate: Item {
                                         id: gapItem
                                         required property var modelData
@@ -2092,113 +2171,39 @@ PanelFrame {
                                             anchors.fill: parent
                                             hoverEnabled: true
                                             acceptedButtons: Qt.RightButton
-                                            onPressed: gapContextMenu.popup()
-
-                                            ThemedContextMenu {
-                                                id: gapContextMenu
-                                                ThemedMenuItem {
-                                                    text: qsTr("Close Gap")
-                                                    icon.name: Theme.icons.chevronsRightLeft
-                                                    onTriggered: EditorState.closeGap(trackRow.trackIndex,
-                                                                                      gapItem.modelData.start)
-                                                }
-                                            }
+                                            onPressed: root.openGapMenu(trackRow.trackIndex,
+                                                                        gapItem.modelData.start)
                                         }
                                     }
                                 }
 
                                 // Transition overlap regions (purple) — above clips for hit-testing.
+                                // One delegate per region that exists, computed in C++, instead of
+                                // one per clip each scanning the whole track for its partner.
                                 Repeater {
-                                    model: Math.max(0, root.tracks[trackRow.trackIndex].clips.length)
+                                    model: EditorState.clipsModel(trackRow.trackIndex).transitionRegions
                                     delegate: Item {
                                         id: transitionRegion
-                                        property int leftClipIndex: modelData
-                                        property var leftClip: root.tracks[trackRow.trackIndex].clips[leftClipIndex]
-                                        property string trackType: root.tracks[trackRow.trackIndex].type
-                                        // Reading root.tracks keeps this bound to tracksChanged; without
-                                        // that dependency the invokable is evaluated once and a transition
-                                        // added later never registers (clicking would re-add a crossfade).
-                                        property var transitionData: root.tracks[trackRow.trackIndex]
-                                            ? EditorState.transitionBetweenClips(trackRow.trackIndex, leftClipIndex)
-                                            : ({})
-                                        property bool hasTransition: transitionData
-                                                                       && Object.keys(transitionData).length > 0
-                                        property bool transitionSelected: EditorState.selectedTransitionTrack === trackRow.trackIndex
-                                                                          && EditorState.selectedTransitionLeftClip === leftClipIndex
-
-                                        // Find partner clip that abuts/overlaps this one.
-                                        property int partnerIndex: {
-                                            const clips = root.tracks[trackRow.trackIndex].clips
-                                            const left = leftClip
-                                            if (!left)
-                                                return -1
-                                            let best = -1
-                                            let bestStart = 1e12
-                                            for (let i = 0; i < clips.length; i++) {
-                                                if (i === leftClipIndex)
-                                                    continue
-                                                const right = clips[i]
-                                                if (right.start < left.start)
-                                                    continue
-                                                const gap = right.start - (left.start + left.duration)
-                                                if (gap > 0.001)
-                                                    continue
-                                                if (right.start < bestStart) {
-                                                    bestStart = right.start
-                                                    best = i
-                                                }
-                                            }
-                                            return best
-                                        }
-                                        property var rightClip: partnerIndex >= 0
-                                            ? root.tracks[trackRow.trackIndex].clips[partnerIndex]
-                                            : null
-                                        property bool physicallyOverlapping: leftClip && rightClip
-                                            && rightClip.start < (leftClip.start + leftClip.duration)
-                                        property real regionStart: {
-                                            if (!leftClip || !rightClip)
-                                                return 0
-                                            if (hasTransition && transitionData.start !== undefined)
-                                                return transitionData.start
-                                            if (physicallyOverlapping)
-                                                return rightClip.start
-                                            return 0
-                                        }
-                                        property real regionEnd: {
-                                            if (!leftClip || !rightClip)
-                                                return 0
-                                            if (hasTransition && transitionData.end !== undefined)
-                                                return transitionData.end
-                                            if (physicallyOverlapping)
-                                                return leftClip.start + leftClip.duration
-                                            return 0
-                                        }
-                                        property bool showRegion: (trackType === "video"
-                                                                   || trackType === "shape"
-                                                                   || trackType === "text"
-                                                                   || trackType === "audio")
-                                                                  && leftClip && rightClip
-                                                                  && (physicallyOverlapping || hasTransition)
-                                                                  && regionEnd > regionStart
+                                        required property var modelData
+                                        readonly property int leftClipIndex: modelData.leftClip
+                                        readonly property bool hasTransition: modelData.hasTransition
+                                        readonly property bool transitionSelected:
+                                            EditorState.selectedTransitionTrack === trackRow.trackIndex
+                                            && EditorState.selectedTransitionLeftClip === leftClipIndex
 
                                         z: 10
-                                        visible: showRegion
-                                        x: regionStart * root.pxPerSecond
-                                        width: Math.max(8, (regionEnd - regionStart) * root.pxPerSecond)
+                                        x: modelData.start * root.pxPerSecond
+                                        width: Math.max(8, (modelData.end - modelData.start) * root.pxPerSecond)
                                         height: parent.height - Theme.clipSelectionRingWidth * 2
                                         y: Theme.clipSelectionRingWidth
 
                                         Rectangle {
                                             anchors.fill: parent
                                             radius: Theme.radiusSm
-                                            color: transitionRegion.transitionSelected
-                                                   ? Qt.rgba(Theme.transitionOverlap.r, Theme.transitionOverlap.g,
-                                                             Theme.transitionOverlap.b, 0.85)
-                                                   : (transitionRegion.hasTransition
-                                                      ? Qt.rgba(Theme.transitionOverlap.r, Theme.transitionOverlap.g,
-                                                                Theme.transitionOverlap.b, 0.65)
-                                                      : Qt.rgba(Theme.transitionOverlap.r, Theme.transitionOverlap.g,
-                                                                Theme.transitionOverlap.b, 0.35))
+                                            color: Qt.rgba(Theme.transitionOverlap.r, Theme.transitionOverlap.g,
+                                                           Theme.transitionOverlap.b,
+                                                           transitionRegion.transitionSelected ? 0.85
+                                                           : (transitionRegion.hasTransition ? 0.65 : 0.35))
                                             border.width: transitionRegion.transitionSelected ? 2 : 1
                                             border.color: Theme.transitionOverlap
 
@@ -2227,10 +2232,8 @@ PanelFrame {
                                             Text {
                                                 anchors.centerIn: parent
                                                 visible: parent.width >= 28
-                                                text: transitionRegion.hasTransition
-                                                      ? (transitionRegion.transitionData.label
-                                                         ? transitionRegion.transitionData.label.charAt(0)
-                                                         : "≫")
+                                                text: transitionRegion.hasTransition && transitionRegion.modelData.label
+                                                      ? transitionRegion.modelData.label.charAt(0)
                                                       : "≫"
                                                 color: Theme.onMedia
                                                 font.family: Theme.fontFamily
@@ -2238,13 +2241,16 @@ PanelFrame {
                                                 font.weight: Font.Bold
                                             }
 
-                                            ThemedToolTip {
-                                                visible: transitionMouse.containsMouse
-                                                         && transitionRegion.hasTransition
-                                                delay: 400
-                                                text: transitionRegion.transitionData.label
-                                                      || transitionRegion.transitionData.kind
-                                                      || ""
+                                            Loader {
+                                                active: transitionMouse.containsMouse
+                                                        && transitionRegion.hasTransition
+                                                sourceComponent: ThemedToolTip {
+                                                    visible: true
+                                                    delay: 400
+                                                    text: transitionRegion.modelData.label
+                                                          || transitionRegion.modelData.kind
+                                                          || ""
+                                                }
                                             }
                                         }
 
@@ -2506,7 +2512,7 @@ PanelFrame {
                         Binding {
                             target: playhead
                             property: "x"
-                            value: EditorState.playheadSeconds * root.pxPerSecond
+                            value: needle.seconds * root.pxPerSecond
                             when: !playheadDragArea.drag.active && !playheadLineDrag.drag.active
                         }
 
@@ -2764,15 +2770,29 @@ PanelFrame {
 
     Connections {
         target: EditorState
-        function onPlayheadSecondsChanged() {
-            if (EditorState.playing)
-                root.ensurePlayheadVisible()
-        }
         // A drag abandoned outside the timeline never fires onExited/onDropped
         // on any DropArea here, so the landing outline used to stay painted.
         function onDraggingAssetIndexChanged() {
             if (EditorState.draggingAssetIndex < 0)
                 root.clearLandingPreview()
+        }
+    }
+
+    // One gap menu for the whole timeline, rather than one built up front inside every gap.
+    property int gapMenuTrack: -1
+    property real gapMenuStart: 0
+    function openGapMenu(trackIndex, start) {
+        gapMenuTrack = trackIndex
+        gapMenuStart = start
+        gapContextMenu.popup()
+    }
+
+    ThemedContextMenu {
+        id: gapContextMenu
+        ThemedMenuItem {
+            text: qsTr("Close Gap")
+            icon.name: Theme.icons.chevronsRightLeft
+            onTriggered: EditorState.closeGap(root.gapMenuTrack, root.gapMenuStart)
         }
     }
 

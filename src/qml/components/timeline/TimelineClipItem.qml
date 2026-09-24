@@ -31,6 +31,12 @@ Item {
     property int clipIndex: index
     // Wider trim/move hit areas for phones; desktop leaves this false.
     property bool touchMode: false
+    // Set when the scene-graph renderer (TimelineTrackClips) draws this clip and owns its body
+    // gestures. The delegate is then only the trim handles, fade dots and context menu, and exists
+    // only for the clips that need those right now.
+    property bool overlayOnly: false
+    // The renderer, told about the live trim so it draws the body where the edge currently is.
+    property var trackClips: null
 
     // Desktop timeline deletion is intentionally scoped to the clip that owns
     // keyboard focus. Clicking a clip already calls forceActiveFocus(), so this
@@ -81,6 +87,17 @@ Item {
                                                && !!clipData.linkId
                                                && clipData.linkId === panel.trimFollowLinkId
                                                && clipData.id !== panel.trimFollowClipId
+
+    function syncLivePreview() {
+        if (overlayOnly && trackClips)
+            trackClips.setLivePreview(clipData.id, trimPreviewActive, trimPreviewStart,
+                                      trimPreviewDuration, trimPreviewIn, trimPreviewOut)
+    }
+    onTrimPreviewActiveChanged: syncLivePreview()
+    onTrimPreviewStartChanged: syncLivePreview()
+    onTrimPreviewDurationChanged: syncLivePreview()
+    onTrimPreviewInChanged: syncLivePreview()
+    onTrimPreviewOutChanged: syncLivePreview()
 
     readonly property real effectiveStart: trimPreviewActive ? trimPreviewStart
                                            : trimFollowFollower ? panel.trimFollowStart
@@ -276,6 +293,8 @@ Item {
     onTrimCursorSideChanged: applyTrimCursor()
     onTrimCursorHeightChanged: if (trimCursorSide !== 0) applyTrimCursor()
     Component.onDestruction: {
+        if (overlayOnly && trimPreviewActive && trackClips)
+            trackClips.setLivePreview(clipData.id, false, 0, 0, 0, 0)
         if (trimCursorSide !== 0)
             EditorState.setTimelineTrimCursor(0, 0, trimCursorToken)
         if (lifted && typeof panel.setScrollLocked === "function")
@@ -444,11 +463,13 @@ Item {
     onXChanged: updateMovePreview()
     onYChanged: updateMovePreview()
 
-    // CapCut-style: selected/linked partners slide with the dragged clip.
+    // CapCut-style: selected/linked partners slide with the dragged clip. As an overlay the
+    // leader follows too: the renderer is the one dragging, and the handles ride along with it.
     readonly property bool moveFollowFollower: panel.moveFollowActive
                                               && selected
-                                              && !(panel.moveLeaderTrack === trackIndex
-                                                   && panel.moveLeaderClip === clipIndex)
+                                              && (overlayOnly
+                                                  || !(panel.moveLeaderTrack === trackIndex
+                                                       && panel.moveLeaderClip === clipIndex))
     readonly property real followOffsetX: moveFollowFollower ? panel.moveFollowDeltaX : 0
     readonly property real followOffsetY: (moveFollowFollower && trackIndex === panel.moveLeaderTrack)
                                           ? panel.moveFollowDeltaY : 0
@@ -491,6 +512,7 @@ Item {
     Rectangle {
         id: clipBackground
         anchors.fill: parent
+        visible: !clipItem.overlayOnly
         radius: Theme.radiusSm
         // Lightens on hover — previously nothing
         // in the clip reacted to the pointer.
@@ -1023,9 +1045,22 @@ Item {
         }
     }
 
+    // Parented to the clip rather than to clipMouse, which is hidden when this is an overlay.
+    // Stands in for the rect the Menu used to be parented to, so it resolves the same parent item
+    // and clamps against the same bounds.
+    Loader {
+        id: clipContextMenuLoader
+        anchors.fill: parent
+        active: false
+        asynchronous: false
+        sourceComponent: clipContextMenuComponent
+        onLoaded: item.popup()
+    }
+
     MouseArea {
         id: clipMouse
         z: 2
+        visible: !clipItem.overlayOnly
         anchors.fill: parent
         hoverEnabled: true
         // Always leave edge strips for CapCut-style trim cursor on approach.
@@ -1178,17 +1213,6 @@ Item {
         // icon, a label and a background, for a menu that only ever opens on a right-click.
         // Loaded on demand instead. Synchronous, and popped from onLoaded, so the very first
         // right-click still opens it rather than being spent on the load.
-        Loader {
-            id: clipContextMenuLoader
-            // Stands in for the rect the Menu used to be parented to, so it resolves the same
-            // parent item and clamps against the same bounds.
-            anchors.fill: parent
-            active: false
-            asynchronous: false
-            sourceComponent: clipContextMenuComponent
-            onLoaded: item.popup()
-        }
-
         Component {
             id: clipContextMenuComponent
 

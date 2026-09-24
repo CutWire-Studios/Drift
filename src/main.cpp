@@ -26,6 +26,8 @@
 #include "ShapePreviewImageProvider.h"
 #include "TextStylePreviewImageProvider.h"
 #include "preview/PreviewItem.h"
+#include "timeline/TimelineTrackItem.h"
+#include "timeline/TimelineViewState.h"
 
 // QApplication (not QGuiApplication) is required so QFileDialog can use the
 // native platform file picker, which routes through xdg-desktop-portal.
@@ -536,6 +538,8 @@ int main(int argc, char *argv[])
     drift::ReverseProxyCache::instance().sweep(drift::ReverseProxyCache::kDefaultMaxBytes);
 
     qmlRegisterType<PreviewItem>("Drift", 1, 0, "PreviewItem");
+    qmlRegisterType<TimelineViewState>("Drift", 1, 0, "TimelineViewState");
+    qmlRegisterType<TimelineTrackItem>("Drift", 1, 0, "TimelineTrackClips");
 
     static AssetLibrary assetLibrary;
     static EditorState editorState(&assetLibrary);

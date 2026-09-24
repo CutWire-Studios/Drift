@@ -107,6 +107,24 @@ Item {
         }
     }
 
+    // One gap menu for the whole timeline, rather than one built up front inside every gap.
+    property int gapMenuTrack: -1
+    property real gapMenuStart: 0
+    function openGapMenu(trackIndex, start) {
+        gapMenuTrack = trackIndex
+        gapMenuStart = start
+        gapContextMenu.popup()
+    }
+
+    ThemedContextMenu {
+        id: gapContextMenu
+        ThemedMenuItem {
+            text: qsTr("Close gap")
+            icon.name: Theme.icons.chevronsRightLeft
+            onTriggered: EditorState.closeGap(root.gapMenuTrack, root.gapMenuStart)
+        }
+    }
+
     ThemedDialog {
         id: convertToSubtitleDialog
         title: qsTr("Convert to subtitle?")
@@ -389,6 +407,81 @@ Item {
     }
 
     readonly property var tracks: EditorState.tracks
+    // What the scene-graph clip renderer reads from this panel, bound once here instead of once
+    // per clip.
+    TimelineViewState {
+        id: timelineViewState
+        viewX: root.timelineViewX
+        viewW: root.timelineViewW
+        pxPerSecond: root.pxPerSecond
+        touchMode: true
+        multiSelectActive: root.multiSelectActive === true
+        totalTracksHeight: root.totalTracksHeight()
+        moveFollowActive: root.moveFollowActive
+        moveLeaderTrack: root.moveLeaderTrack
+        moveLeaderClip: root.moveLeaderClip
+        moveFollowDeltaX: root.moveFollowDeltaX
+        moveFollowDeltaY: root.moveFollowDeltaY
+        trimFollowActive: root.trimFollowActive
+        trimFollowLinkId: root.trimFollowLinkId
+        trimFollowClipId: root.trimFollowClipId
+        trimFollowStart: root.trimFollowStart
+        trimFollowDuration: root.trimFollowDuration
+        trimFollowIn: root.trimFollowIn
+        trimFollowOut: root.trimFollowOut
+        effectDropTrack: root.effectDropTrackIndex
+        effectDropClip: root.effectDropClipIndex
+        style: ({
+            "clipVideo": Theme.clipVideoPlaceholder,
+            "clipAudio": Theme.clipAudio,
+            "clipText": Theme.clipText,
+            "clipSubtitle": Theme.clipSubtitle,
+            "clipGraphic": Theme.clipGraphic,
+            "clipEffect": Theme.clipEffect,
+            "clipComposite": Theme.clipComposite,
+            "adjustmentVideo": Theme.clipAdjustmentVideo,
+            "adjustmentAudio": Theme.clipAdjustmentAudio,
+            "adjustmentMask": Theme.clipAdjustmentMask,
+            "primary": Theme.primary,
+            "scrim": Theme.scrimColor,
+            "proxyBand": Theme.clipProxyBand,
+            "onMedia": Theme.onMedia,
+            "waveform": Theme.waveformColor,
+            "mutedForeground": Theme.mutedForeground,
+            "panelBorder": Theme.panelBorder,
+            "proxyPill": Theme.clipProxy,
+            "proxyPillForeground": Theme.clipProxyForeground,
+            "editFriendlyPill": Theme.clipEditFriendly,
+            "editFriendlyPillForeground": Theme.clipEditFriendlyForeground,
+            "warning": Theme.warning,
+            "fontFamily": Theme.fontFamily,
+            "fontSizeTiny": Theme.fontSizeTiny,
+            "fontSizeXs": Theme.fontSizeXs,
+            "radiusSm": Theme.radiusSm,
+            "radiusXs": Theme.radiusXs,
+            "ringWidth": Theme.clipSelectionRingWidth,
+            "borderWidthFocus": Theme.borderWidthFocus,
+            "headerBandHeight": Theme.clipHeaderBandHeight,
+            "clipMinWidth": Theme.clipMinWidth,
+            "iconSizeSm": Theme.iconSizeSm,
+            "spacingLg": Theme.spacingLg,
+            "spacingMd": Theme.spacingMd,
+            "edgeMarginDesktop": 14,
+            "edgeMarginTouch": Theme.androidClipEdgeMargin,
+            "trimHotspotExtraDesktop": 10,
+            "trimHotspotExtraTouch": Theme.androidTrimHotspotExtra,
+            "proxyLabel": qsTr("Proxy"),
+            "proxyTooltip": qsTr("Previewing from a low-resolution proxy. Export uses the original."),
+            "editFriendlyLabel": qsTr("Edit-friendly"),
+            "editFriendlyTooltip": qsTr("Converted to a constant frame rate for smooth editing"),
+            "vfrTooltip": qsTr("Variable frame rate. This clip can drift out of sync with its audio. Right-click it and choose Convert to edit-friendly format.")
+        })
+    }
+
+    PlayheadInterpolator {
+        id: needle
+        active: root.visible
+    }
 
     property real snapGuideSeconds: -1
     // The guide is where the panel already records that a drag is held by a snap target, and it
@@ -906,21 +999,6 @@ Item {
         return index >= 0 && index < tracks.length && !tracks[index].isAdjustmentLane
     }
 
-    // Track indices of the nested lanes belonging to `trackIndex`, topmost first. Derived from
-    // `tracks` rather than asked of EditorState so it re-evaluates on its own.
-    function adjustmentLanesFor(trackIndex) {
-        var out = []
-        if (trackIndex < 0 || trackIndex >= tracks.length)
-            return out
-        const parentId = tracks[trackIndex].id
-        if (!parentId)
-            return out
-        for (var i = 0; i < tracks.length; i++) {
-            if (tracks[i].isAdjustmentLane && tracks[i].parentTrackId === parentId)
-                out.push(i)
-        }
-        return out
-    }
 
     // Adjustment layers are tinted by what they act on, so a glance at a lane says whether it is
     // grading the picture, treating the audio, or cutting a mask.
@@ -964,23 +1042,6 @@ Item {
         return -1
     }
 
-    // Empty stretches on a track, sorted left-to-right. Gaps are never stored —
-    // they are whatever time is not covered by a clip.
-    function gapsForTrack(trackIndex) {
-        if (trackIndex < 0 || trackIndex >= tracks.length)
-            return []
-        const sorted = tracks[trackIndex].clips.slice().sort(function (a, b) {
-            return a.start - b.start
-        })
-        const gaps = []
-        for (var i = 0; i < sorted.length - 1; i++) {
-            const gapStart = sorted[i].start + sorted[i].duration
-            const gapEnd = sorted[i + 1].start
-            if (gapEnd > gapStart)
-                gaps.push({ start: gapStart, end: gapEnd })
-        }
-        return gaps
-    }
 
     function trackIndexAtY(y) {
         var cursor = 0
@@ -1277,7 +1338,7 @@ Item {
                 Binding {
                     target: flick
                     property: "contentX"
-                    value: root.clampContentX(EditorState.playheadSeconds * root.pxPerSecond
+                    value: root.clampContentX(needle.seconds * root.pxPerSecond
                                               - flick.width / 2)
                     when: !root.userDrivingView
                     restoreMode: Binding.RestoreNone
@@ -1600,7 +1661,7 @@ Item {
                                     z: 4
 
                                     Repeater {
-                                        model: root.adjustmentLanesFor(trackRow.trackIndex)
+                                        model: EditorState.clipsModel(trackRow.trackIndex).adjustmentLanes
                                         delegate: Item {
                                             id: laneStrip
                                             required property var modelData
@@ -1616,8 +1677,23 @@ Item {
                                                                Theme.clipEffect.b, 0.12)
                                             }
 
+                                            Loader {
+                                                anchors.fill: parent
+                                                active: EditorState.sceneGraphTimeline
+                                                sourceComponent: Component {
+                                                    TimelineTrackArea {
+                                                        panel: root
+                                                        timelineColumn: trackColumn
+                                                        trackIndex: laneStrip.trackIndex
+                                                        viewState: timelineViewState
+                                                        touchMode: true
+                                                    }
+                                                }
+                                            }
+
                                             Repeater {
-                                                model: EditorState.clipsModel(laneStrip.trackIndex)
+                                                model: EditorState.sceneGraphTimeline
+                                                       ? null : EditorState.clipsModel(laneStrip.trackIndex)
                                                 delegate: TimelineClipItem {
                                                     panel: root
                                                     timelineColumn: trackColumn
@@ -1642,8 +1718,23 @@ Item {
                                     width: trackRow.width
                                     height: Math.max(0, trackRow.height - adjustmentLaneStrips.height)
 
+                                    Loader {
+                                        anchors.fill: parent
+                                        active: EditorState.sceneGraphTimeline
+                                        sourceComponent: Component {
+                                            TimelineTrackArea {
+                                                panel: root
+                                                timelineColumn: trackColumn
+                                                trackIndex: trackClipArea.trackIndex
+                                                viewState: timelineViewState
+                                                touchMode: true
+                                            }
+                                        }
+                                    }
+
                                     Repeater {
-                                        model: EditorState.clipsModel(trackClipArea.trackIndex)
+                                        model: EditorState.sceneGraphTimeline
+                                               ? null : EditorState.clipsModel(trackClipArea.trackIndex)
                                         delegate: TimelineClipItem {
                                             panel: root
                                             timelineColumn: trackColumn
@@ -1783,7 +1874,7 @@ Item {
 
                                 // Long-press a gap to ripple everything after it left.
                                 Repeater {
-                                    model: root.gapsForTrack(trackRow.trackIndex)
+                                    model: EditorState.clipsModel(trackRow.trackIndex).gaps
                                     delegate: Item {
                                         id: gapItem
                                         required property var modelData
@@ -1804,17 +1895,8 @@ Item {
                                             id: gapPress
                                             anchors.fill: parent
                                             pressAndHoldInterval: 400
-                                            onPressAndHold: gapContextMenu.popup()
-
-                                            ThemedContextMenu {
-                                                id: gapContextMenu
-                                                ThemedMenuItem {
-                                                    text: qsTr("Close gap")
-                                                    icon.name: Theme.icons.chevronsRightLeft
-                                                    onTriggered: EditorState.closeGap(trackRow.trackIndex,
-                                                                                      gapItem.modelData.start)
-                                                }
-                                            }
+                                            onPressAndHold: root.openGapMenu(trackRow.trackIndex,
+                                                                             gapItem.modelData.start)
                                         }
                                     }
                                 }
@@ -1825,88 +1907,22 @@ Item {
                                 // No preventStealing: a pan across an overlap must still
                                 // reach the Flickable.
                                 Repeater {
-                                    model: root.tracks[trackRow.trackIndex].clips.length
+                                    model: EditorState.clipsModel(trackRow.trackIndex).transitionRegions
                                     delegate: Item {
                                         id: transitionRegion
-                                        required property int index
-                                        readonly property int leftClipIndex: index
-                                        readonly property var leftClip:
-                                            root.tracks[trackRow.trackIndex].clips[leftClipIndex]
-                                        readonly property string trackType: root.tracks[trackRow.trackIndex].type
-                                        // transitionBetweenClips is a plain call with no
-                                        // notifier of its own, and adding a transition
-                                        // leaves the clip count — the Repeater's model —
-                                        // untouched, so this has to depend on tracks
-                                        // explicitly or the region never repaints.
-                                        readonly property var transitionData: {
-                                            void EditorState.tracksRevision
-                                            return EditorState.transitionBetweenClips(
-                                                       trackRow.trackIndex, leftClipIndex)
-                                        }
-                                        readonly property bool hasTransition:
-                                            transitionData && Object.keys(transitionData).length > 0
+                                        required property var modelData
+                                        readonly property int leftClipIndex: modelData.leftClip
+                                        readonly property bool hasTransition: modelData.hasTransition
                                         readonly property bool transitionSelected:
                                             EditorState.selectedTransitionTrack === trackRow.trackIndex
                                             && EditorState.selectedTransitionLeftClip === leftClipIndex
 
-                                        // Nearest later clip that abuts or overlaps this one.
-                                        readonly property int partnerIndex: {
-                                            const clips = root.tracks[trackRow.trackIndex].clips
-                                            const left = leftClip
-                                            if (!left)
-                                                return -1
-                                            var best = -1
-                                            var bestStart = 1e12
-                                            for (var i = 0; i < clips.length; i++) {
-                                                if (i === leftClipIndex)
-                                                    continue
-                                                const right = clips[i]
-                                                if (right.start < left.start)
-                                                    continue
-                                                if (right.start - (left.start + left.duration) > 0.001)
-                                                    continue
-                                                if (right.start < bestStart) {
-                                                    bestStart = right.start
-                                                    best = i
-                                                }
-                                            }
-                                            return best
-                                        }
-                                        readonly property var rightClip: partnerIndex >= 0
-                                            ? root.tracks[trackRow.trackIndex].clips[partnerIndex]
-                                            : null
-                                        readonly property bool physicallyOverlapping:
-                                            leftClip && rightClip
-                                            && rightClip.start < (leftClip.start + leftClip.duration)
-                                        readonly property real regionStart: {
-                                            if (!leftClip || !rightClip)
-                                                return 0
-                                            if (hasTransition && transitionData.start !== undefined)
-                                                return transitionData.start
-                                            return physicallyOverlapping ? rightClip.start : 0
-                                        }
-                                        readonly property real regionEnd: {
-                                            if (!leftClip || !rightClip)
-                                                return 0
-                                            if (hasTransition && transitionData.end !== undefined)
-                                                return transitionData.end
-                                            return physicallyOverlapping
-                                                   ? leftClip.start + leftClip.duration : 0
-                                        }
-                                        readonly property bool showRegion:
-                                            (trackType === "video" || trackType === "shape"
-                                             || trackType === "text" || trackType === "audio")
-                                            && leftClip && rightClip
-                                            && (physicallyOverlapping || hasTransition)
-                                            && regionEnd > regionStart
-
                                         z: 10
-                                        visible: showRegion
-                                        x: regionStart * root.pxPerSecond
+                                        x: modelData.start * root.pxPerSecond
                                         // Floored to a fingertip rather than the desktop's
                                         // 8px, so a half-second crossfade is still tappable.
                                         width: Math.max(Theme.androidIconButtonSize,
-                                                        (regionEnd - regionStart) * root.pxPerSecond)
+                                                        (modelData.end - modelData.start) * root.pxPerSecond)
                                         y: Theme.clipSelectionRingWidth
                                         height: parent.height - Theme.clipSelectionRingWidth * 2
 
@@ -1943,10 +1959,8 @@ Item {
 
                                             Text {
                                                 anchors.centerIn: parent
-                                                text: transitionRegion.hasTransition
-                                                      ? (transitionRegion.transitionData.label
-                                                         ? transitionRegion.transitionData.label.charAt(0)
-                                                         : "≫")
+                                                text: transitionRegion.hasTransition && transitionRegion.modelData.label
+                                                      ? transitionRegion.modelData.label.charAt(0)
                                                       : "≫"
                                                 color: Theme.onMedia
                                                 font.family: Theme.fontFamily

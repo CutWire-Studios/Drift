@@ -13,7 +13,7 @@ see is what you get.
 |---|---|
 | CMake | ≥ 3.21 |
 | C++ compiler | C++20 |
-| Qt | 6.5+ (Quick, QuickControls2, Multimedia, Test, Concurrent, Widgets, OpenGL, Network, Svg, LinguistTools) |
+| Qt | 6.10+ (Quick, QuickControls2, Multimedia, Test, Concurrent, Widgets, OpenGL, Network, Svg, LinguistTools) |
 | Qt ImageFormats | runtime only — supplies the `qwebp` / `qtiff` plugins |
 | FFmpeg | 8.x (libavformat, libavcodec, libavutil, libswscale, libswresample, libavfilter) |
 | libzstd | any (addon package decompression) |

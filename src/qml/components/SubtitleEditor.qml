@@ -22,7 +22,7 @@ Item {
     readonly property int selectedCueIndex: EditorState.selectedSubtitleCue
 
     readonly property double localPlayhead: {
-        void EditorState.playheadSeconds
+        void EditorState.inspectorPlayheadSeconds
         void root.clip
         return clip ? EditorState.subtitleLocalPlayheadSeconds(trackIndex, clipIndex) : -1
     }

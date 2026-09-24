@@ -32,6 +32,9 @@
 #include "engine/ClipReaderPool.h"
 #include "models/AppController.h"
 #include "models/TimelineClipsModel.h"
+#include "timeline/TimelineLayout.h"
+#include "timeline/TimelineTrackItem.h"
+#include "timeline/TimelineViewState.h"
 #include "models/AssetLibrary.h"
 #include "MulticamImageProvider.h"
 #include "MulticamImageStore.h"
@@ -246,6 +249,10 @@ private slots:
     void pasteAttributesToMultipleClips();
     void clipsModelFeedsDelegateRequiredProperties();
     void clipsModelNotifiesOnlyTheClipThatChanged();
+    void clipsModelInsertsAndRemovesWithoutReset();
+    void clipsModelDerivesGapsAndOverlaps();
+    void timelineLayoutCullsTilesAndHits();
+    void trackItemOverlaysFollowSelection();
     void tracksCarriesLayoutOnlyWhileClipAtStaysFull();
     void trackFitAnswersForAKindMatchTheAssetForms();
     void provisionalKindReadsTheExtensionAlone();
@@ -8179,6 +8186,149 @@ void EditorStateTest::clipsModelNotifiesOnlyTheClipThatChanged()
     QCOMPARE(args.at(1).toModelIndex().row(), 1);
     const QList<int> roles = args.at(2).value<QList<int>>();
     QCOMPARE(roles, QList<int>{TimelineClipsModel::StartRole});
+}
+
+// Adding or removing a clip must leave every other delegate on the track standing.
+void EditorStateTest::clipsModelInsertsAndRemovesWithoutReset()
+{
+    AssetLibrary library;
+    TestController state(&library);
+    appendTwoVideoClips(*state.project());
+    state.notifyTracksChanged();
+
+    auto *model = qobject_cast<QAbstractItemModel *>(state.clipsModel(0));
+    QVERIFY(model);
+    QSignalSpy resetSpy(model, &QAbstractItemModel::modelReset);
+    QSignalSpy insertSpy(model, &QAbstractItemModel::rowsInserted);
+    QSignalSpy removeSpy(model, &QAbstractItemModel::rowsRemoved);
+
+    drift::Clip extra = state.project()->tracks().at(0).clips.at(0);
+    extra.id = QStringLiteral("clip-mid");
+    state.project()->tracks()[0].clips.insert(1, extra);
+    state.notifyTracksChanged();
+    QCOMPARE(resetSpy.count(), 0);
+    QCOMPARE(insertSpy.count(), 1);
+    QCOMPARE(insertSpy.at(0).at(1).toInt(), 1);
+    QCOMPARE(model->rowCount(), 3);
+    QCOMPARE(model->index(1, 0).data(TimelineClipsModel::IdRole).toString(), QStringLiteral("clip-mid"));
+
+    state.project()->tracks()[0].clips.removeAt(0);
+    state.notifyTracksChanged();
+    QCOMPARE(resetSpy.count(), 0);
+    QCOMPARE(removeSpy.count(), 1);
+    QCOMPARE(removeSpy.at(0).at(1).toInt(), 0);
+    QCOMPARE(model->rowCount(), 2);
+    QCOMPARE(model->index(0, 0).data(TimelineClipsModel::IdRole).toString(), QStringLiteral("clip-mid"));
+
+    // A reorder cannot be expressed as inserts and removes around fixed rows.
+    auto &clips = state.project()->tracks()[0].clips;
+    clips.swapItemsAt(0, 1);
+    state.notifyTracksChanged();
+    QCOMPARE(resetSpy.count(), 1);
+}
+
+void EditorStateTest::clipsModelDerivesGapsAndOverlaps()
+{
+    AssetLibrary library;
+    TestController state(&library);
+    appendTwoVideoClips(*state.project());
+    state.project()->tracks()[0].clips[1].timelineStart = drift::secondsToUs(3.0);
+    state.notifyTracksChanged();
+
+    auto *model = qobject_cast<TimelineClipsModel *>(state.clipsModel(0));
+    QVERIFY(model);
+    QCOMPARE(model->decorations().gaps.size(), 1);
+    QCOMPARE(model->decorations().gaps.at(0).start, 2.0);
+    QCOMPARE(model->decorations().gaps.at(0).end, 3.0);
+    QVERIFY(model->decorations().transitions.isEmpty());
+
+    QSignalSpy decorationsSpy(model, &TimelineClipsModel::decorationsChanged);
+    state.project()->tracks()[0].clips[1].timelineStart = drift::secondsToUs(1.5);
+    state.notifyTracksChanged();
+    QCOMPARE(decorationsSpy.count(), 1);
+    QVERIFY(model->decorations().gaps.isEmpty());
+    QCOMPARE(model->decorations().transitions.size(), 1);
+    const TimelineClipsModel::TransitionRegion region = model->decorations().transitions.at(0);
+    QCOMPARE(region.leftClip, 0);
+    QCOMPARE(region.start, 1.5);
+    QCOMPARE(region.end, 2.0);
+    QVERIFY(!region.hasTransition);
+
+    // An edit that leaves the decorations as they were must not re-announce them.
+    state.project()->tracks()[0].clips[1].name = QStringLiteral("Renamed");
+    state.notifyTracksChanged();
+    QCOMPARE(decorationsSpy.count(), 1);
+}
+
+void EditorStateTest::timelineLayoutCullsTilesAndHits()
+{
+    using namespace timelinelayout;
+    const QRectF rect = clipRect(2.0, 3.0, 100.0, 60.0, 1.5, 24.0);
+    QCOMPARE(rect, QRectF(201.5, 1.5, 297.0, 57.0));
+    // Floored to the minimum width at a low zoom.
+    QCOMPARE(clipRect(0.0, 0.01, 10.0, 60.0, 1.5, 24.0).width(), 24.0);
+
+    const Window window = contentWindow(1000.0, 800.0);
+    QCOMPARE(window.left, 512.0);
+    QCOMPARE(window.right, 2560.0);
+    // Scrolling inside a chunk leaves the window alone.
+    QCOMPARE(contentWindow(1100.0, 800.0), window);
+
+    // A body 10 000 px wide showing source 10..20 s of a 100 s file: only tiles near the window.
+    const TileGrid grid = tileGrid(0.0, 10000.0, 10.0, 20.0, 100.0, window);
+    QVERIFY(grid.sourceMapped);
+    QCOMPARE(grid.pxPerSourceSec, 1000.0);
+    QCOMPARE(grid.stripOriginX, -10000.0);
+    QCOMPARE(grid.firstTile, int(std::floor((512.0 + 10000.0) / 120.0)));
+    QCOMPARE(grid.lastTile, int(std::floor((2560.0 + 10000.0) / 120.0)));
+    QCOMPARE(frameForTile(grid, grid.firstTile, 100.0, 8), 0);
+    // 0.12 s per tile rounds down past the finest level, which clamps.
+    QCOMPARE(tileLevel(grid), -3);
+
+    const Span span = waveformSpan(400.0, 5000.0, window);
+    QCOMPARE(span.left, 112.0);
+    QCOMPARE(span.width, 2048.0);
+
+    const QRectF clip(100.0, 0.0, 200.0, 40.0);
+    QCOMPARE(hitZone(clip, {200.0, 20.0}, 14.0, 10.0), Zone::Body);
+    QCOMPARE(hitZone(clip, {105.0, 20.0}, 14.0, 10.0), Zone::Hover);
+    QCOMPARE(hitZone(clip, {95.0, 20.0}, 14.0, 10.0), Zone::Hover);
+    QCOMPARE(hitZone(clip, {80.0, 20.0}, 14.0, 10.0), Zone::None);
+}
+
+// The QML overlay exists only for the clips that need trim handles: the selected ones.
+void EditorStateTest::trackItemOverlaysFollowSelection()
+{
+    AssetLibrary library;
+    TestController state(&library);
+    appendTwoVideoClips(*state.project());
+    state.notifyTracksChanged();
+
+    TimelineViewState view;
+    TimelineTrackItem item;
+    item.setViewState(&view);
+    item.setEditor(&state);
+    item.setClipsModel(state.clipsModel(0));
+    item.setTrackIndex(0);
+
+    QAbstractItemModel *active = item.activeClips();
+    QCOMPARE(active->rowCount(), 0);
+
+    state.selectClip(0, 1);
+    QCOMPARE(active->rowCount(), 1);
+    QCOMPARE(active->index(0, 0).data(ActiveClipsModel::SourceIndexRole).toInt(), 1);
+
+    // A clip inserted ahead of it shifts the index the overlay addresses it by.
+    QSignalSpy changed(active, &QAbstractItemModel::dataChanged);
+    drift::Clip extra = state.project()->tracks().at(0).clips.at(0);
+    extra.id = QStringLiteral("clip-head");
+    state.project()->tracks()[0].clips.prepend(extra);
+    state.notifyTracksChanged();
+    QVERIFY(changed.count() > 0);
+    QCOMPARE(active->rowCount(), 1);
+    const QString activeId = active->index(0, 0).data(TimelineClipsModel::IdRole).toString();
+    const int sourceIndex = active->index(0, 0).data(ActiveClipsModel::SourceIndexRole).toInt();
+    QCOMPARE(state.project()->tracks().at(0).clips.at(sourceIndex).id, activeId);
 }
 
 // tracks() is the panel's layout data and nothing more. Everything an inspector opens has to
