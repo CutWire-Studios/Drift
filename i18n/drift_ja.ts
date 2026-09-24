@@ -2141,24 +2141,12 @@
         <translation>手ぶれ補正キャッシュディレクトリを作成できませんでした</translation>
     </message>
     <message>
-        <source>ffmpeg executable not found in PATH</source>
-        <translation>PATH に ffmpeg 実行ファイルが見つかりません</translation>
-    </message>
-    <message>
         <source>Stabilize Video</source>
         <translation>ビデオ手ぶれ補正</translation>
     </message>
     <message>
-        <source>Stabilization analysis failed or cancelled.</source>
-        <translation>手ぶれ補正分析が失敗またはキャンセルされました。</translation>
-    </message>
-    <message>
         <source>Video stabilized successfully!</source>
         <translation>ビデオの手ぶれ補正に成功しました！</translation>
-    </message>
-    <message>
-        <source>Stabilization rendering failed or cancelled.</source>
-        <translation>手ぶれ補正レンダリングが失敗またはキャンセルされました。</translation>
     </message>
     <message>
         <source>Remove Stabilization</source>
@@ -2463,10 +2451,6 @@
     <message>
         <source>Stabilization keyframes applied.</source>
         <translation>手ぶれ補正キーフレームを適用しました。</translation>
-    </message>
-    <message>
-        <source>Could not store the stabilized video.</source>
-        <translation>手ぶれ補正済みビデオを保存できませんでした。</translation>
     </message>
     <message>
         <source>Change Stabilization Mode</source>
@@ -3043,6 +3027,26 @@
     <message>
         <source>Add transition</source>
         <translation>トランジションを追加</translation>
+    </message>
+    <message>
+        <source>This build of Drift has no video stabilization support</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Stabilization rendering failed.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Stabilization rendering failed: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Stabilization analysis failed.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Stabilization analysis failed: %1</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Transition added</source>

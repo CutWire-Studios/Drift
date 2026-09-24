@@ -2145,24 +2145,12 @@
         <translation>ස්ථාවර කිරීමේ හැඹිලි බහලුම සෑදීමට නොහැකි විය</translation>
     </message>
     <message>
-        <source>ffmpeg executable not found in PATH</source>
-        <translation>PATH තුළ ffmpeg විධානය හමු නොවීය</translation>
-    </message>
-    <message>
         <source>Stabilize Video</source>
         <translation>වීඩියෝව ස්ථාවර කරන්න</translation>
     </message>
     <message>
-        <source>Stabilization analysis failed or cancelled.</source>
-        <translation>ස්ථාවර කිරීමේ විශ්ලේෂණය අසාර්ථක විය හෝ අවලංගු කෙරිණි.</translation>
-    </message>
-    <message>
         <source>Video stabilized successfully!</source>
         <translation>වීඩියෝව සාර්ථකව ස්ථාවර කරන ලදී!</translation>
-    </message>
-    <message>
-        <source>Stabilization rendering failed or cancelled.</source>
-        <translation>ස්ථාවර කිරීමේ රෙන්ඩර් කිරීම අසාර්ථක විය හෝ අවලංගු කෙරිණි.</translation>
     </message>
     <message>
         <source>Remove Stabilization</source>
@@ -2469,10 +2457,6 @@
     <message>
         <source>Stabilization keyframes applied.</source>
         <translation>ස්ථාවර කිරීමේ කීෆ්‍රේම යොදන ලදී.</translation>
-    </message>
-    <message>
-        <source>Could not store the stabilized video.</source>
-        <translation>ස්ථාවර කළ වීඩියෝව ගබඩා කිරීමට නොහැකි විය.</translation>
     </message>
     <message>
         <source>Change Stabilization Mode</source>
@@ -3049,6 +3033,26 @@
     <message>
         <source>Add transition</source>
         <translation>සංක්‍රාන්තියක් එක් කරන්න</translation>
+    </message>
+    <message>
+        <source>This build of Drift has no video stabilization support</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Stabilization rendering failed.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Stabilization rendering failed: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Stabilization analysis failed.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Stabilization analysis failed: %1</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Transition added</source>

@@ -2141,24 +2141,12 @@
         <translation>Không thể tạo thư mục bộ đệm ổn định</translation>
     </message>
     <message>
-        <source>ffmpeg executable not found in PATH</source>
-        <translation>Không tìm thấy tệp thực thi ffmpeg trong ĐƯỜNG DẪN</translation>
-    </message>
-    <message>
         <source>Stabilize Video</source>
         <translation>Ổn định Video</translation>
     </message>
     <message>
-        <source>Stabilization analysis failed or cancelled.</source>
-        <translation>Phân tích độ ổn định không thành công hoặc bị hủy.</translation>
-    </message>
-    <message>
         <source>Video stabilized successfully!</source>
         <translation>Ổn định video thành công!</translation>
-    </message>
-    <message>
-        <source>Stabilization rendering failed or cancelled.</source>
-        <translation>Kết xuất ổn định không thành công hoặc bị hủy.</translation>
     </message>
     <message>
         <source>Remove Stabilization</source>
@@ -2462,10 +2450,6 @@
     </message>
     <message>
         <source>Stabilization keyframes applied.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Could not store the stabilized video.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -3050,6 +3034,26 @@
     </message>
     <message>
         <source>Add transition</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This build of Drift has no video stabilization support</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Stabilization rendering failed.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Stabilization rendering failed: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Stabilization analysis failed.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Stabilization analysis failed: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>

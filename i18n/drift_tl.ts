@@ -2145,23 +2145,11 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>ffmpeg executable not found in PATH</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Stabilize Video</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Stabilization analysis failed or cancelled.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Video stabilized successfully!</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Stabilization rendering failed or cancelled.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -2472,10 +2460,6 @@
     </message>
     <message>
         <source>Stabilization keyframes applied.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Could not store the stabilized video.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -3052,6 +3036,26 @@
     </message>
     <message>
         <source>Add transition</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This build of Drift has no video stabilization support</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Stabilization rendering failed.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Stabilization rendering failed: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Stabilization analysis failed.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Stabilization analysis failed: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
