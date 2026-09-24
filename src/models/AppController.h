@@ -367,6 +367,8 @@ class AppController : public QObject
     Q_PROPERTY(QVariantList guideSets READ guideSets NOTIFY guidesChanged)
     // The items of every active set, flattened for drawing.
     Q_PROPERTY(QVariantList guideItems READ guideItems NOTIFY guidesChanged)
+    // Library set whose guides are being dragged on the preview; empty when not editing.
+    Q_PROPERTY(QString guideEditSetId READ guideEditSetId WRITE setGuideEditSetId NOTIFY guideEditSetIdChanged)
     Q_PROPERTY(QVariantMap background READ background NOTIFY backgroundChanged)
     Q_PROPERTY(bool canvasCropMode READ canvasCropMode WRITE setCanvasCropMode NOTIFY canvasCropModeChanged)
     Q_PROPERTY(bool maskEditMode READ maskEditMode WRITE setMaskEditMode NOTIFY maskEditModeChanged)
@@ -613,6 +615,8 @@ public:
     Q_INVOKABLE void setGuideItemProperty(const QString &setId, const QString &itemId,
                                           const QString &key, const QVariant &value);
     Q_INVOKABLE void removeGuideItem(const QString &setId, const QString &itemId);
+    QString guideEditSetId() const { return m_guideEditSetId; }
+    void setGuideEditSetId(const QString &id);
     QVariantMap background() const;
     QVariantList actions() const;
     QVariantList bookmarks() const;
@@ -2056,6 +2060,7 @@ signals:
     void subtitleWaveformReady(double startSeconds, double durSeconds, int sampleCount);
     void beatAnalysisChanged();
     void guidesChanged();
+    void guideEditSetIdChanged();
     void shortcutsChanged();
     void assetFavoritesChanged();
     void userTextPresetsChanged();
@@ -2720,6 +2725,7 @@ protected:
     QList<drift::GuideSet> m_guideLibrary;
     // Copies of custom sets the open project uses, so its guides draw on a machine without them.
     QList<drift::GuideSet> m_projectGuideSets;
+    QString m_guideEditSetId;
     const drift::GuideSet *findGuideSet(const QString &id) const;
     drift::GuideSet *libraryGuideSet(const QString &id);
     // Persists the library; an edit to an active set also changes what the project saves.

@@ -883,6 +883,10 @@ ApplicationWindow {
     // Escape (clearSelection): CapCut-style — if a timeline cut tool is active,
     // first press returns to Select; only then does Escape clear the selection.
     function dispatchAction(id) {
+        if (id === "clearSelection" && EditorState.guideEditSetId !== "") {
+            EditorState.guideEditSetId = ""
+            return
+        }
         if (id === "clearSelection"
                 && timelinePanel.visible
                 && timelinePanel.timelineTool !== "") {

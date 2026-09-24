@@ -6175,6 +6175,8 @@ void AppController::setGuidesEnabled(bool enabled)
     if (m_guidesEnabled == enabled)
         return;
     m_guidesEnabled = enabled;
+    if (!enabled)
+        setGuideEditSetId(QString());
     QSettings settings;
     settings.setValue(QStringLiteral("preview/guidesEnabled"), m_guidesEnabled);
     setDirty(true);
@@ -6258,6 +6260,8 @@ void AppController::setGuideSetActive(const QString &id, bool active)
         m_activeGuideSets.append(id);
     else
         m_activeGuideSets.removeAll(id);
+    if (!active && m_guideEditSetId == id)
+        setGuideEditSetId(QString());
     QSettings().setValue(QStringLiteral("preview/activeGuideSets"), m_activeGuideSets);
     setDirty(true);
     emit guidesChanged();
@@ -6338,6 +6342,8 @@ void AppController::deleteGuideSet(const QString &id)
     if (removed == m_guideLibrary.end())
         return;
     m_guideLibrary.erase(removed, m_guideLibrary.end());
+    if (m_guideEditSetId == id)
+        setGuideEditSetId(QString());
     // Otherwise the project's copy would bring it straight back.
     m_projectGuideSets.removeIf([&](const drift::GuideSet &set) { return set.id == id; });
     if (m_activeGuideSets.removeAll(id) > 0) {
@@ -6415,6 +6421,22 @@ void AppController::setGuideItemProperty(const QString &setId, const QString &it
     // The picker hands back #AARRGGBB; opacity has its own control.
     it->color.setAlpha(255);
     guideLibraryEdited(setId);
+}
+
+void AppController::setGuideEditSetId(const QString &id)
+{
+    if (m_guideEditSetId == id || (!id.isEmpty() && !libraryGuideSet(id)))
+        return;
+    m_guideEditSetId = id;
+    // Guide editing claims the preview's pointer like crop and mask editing, and the set
+    // being edited has to be on screen.
+    if (!id.isEmpty()) {
+        setCanvasCropMode(false);
+        setMaskEditMode(false);
+        setGuidesEnabled(true);
+        setGuideSetActive(id, true);
+    }
+    emit guideEditSetIdChanged();
 }
 
 void AppController::removeGuideItem(const QString &setId, const QString &itemId)
@@ -13650,6 +13672,8 @@ void AppController::setCanvasCropMode(bool active)
         m_maskEditMode = false;
         emit maskEditModeChanged();
     }
+    if (active)
+        setGuideEditSetId(QString());
     emit canvasCropModeChanged();
 }
 
@@ -13678,6 +13702,8 @@ void AppController::setMaskEditMode(bool active)
         m_canvasCropMode = false;
         emit canvasCropModeChanged();
     }
+    if (active)
+        setGuideEditSetId(QString());
     emit maskEditModeChanged();
 }
 
@@ -22227,6 +22253,7 @@ void AppController::resetSessionState()
     m_previewAutoCommit->stop();
     m_keyframeGraphHiddenProperties.clear();
     setCanvasCropMode(false);
+    setGuideEditSetId(QString());
     setSubtitleEditing(false);
     setSelectedSubtitleCue(-1);
 

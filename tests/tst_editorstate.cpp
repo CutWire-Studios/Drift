@@ -2102,8 +2102,26 @@ void EditorStateTest::guideLibraryEditing()
     state.removeGuideItem(copy, item);
     QCOMPARE(findSet(state, copy).value(QStringLiteral("items")).toList().size(), 4);
 
+    // Edit mode: library sets only, shows the set, and shares the preview with crop and mask modes.
+    state.setGuideEditSetId(QStringLiteral("thirds"));
+    QVERIFY(state.guideEditSetId().isEmpty());
+    state.setGuidesEnabled(false);
+    state.setGuideSetActive(copy, false);
+    state.setGuideEditSetId(copy);
+    QCOMPARE(state.guideEditSetId(), copy);
+    QVERIFY(state.guidesEnabled());
+    QVERIFY(findSet(state, copy).value(QStringLiteral("active")).toBool());
+    state.setCanvasCropMode(true);
+    QVERIFY(state.guideEditSetId().isEmpty());
+    state.setGuideEditSetId(copy);
+    QVERIFY(!state.canvasCropMode());
+    state.setGuidesEnabled(false);
+    QVERIFY(state.guideEditSetId().isEmpty());
+    state.setGuideEditSetId(copy);
+
     state.deleteGuideSet(copy);
     QVERIFY(findSet(state, copy).isEmpty());
+    QVERIFY(state.guideEditSetId().isEmpty());
     QVERIFY(state.guideItems().isEmpty());
 
     const QString fresh = state.createGuideSet(QString());

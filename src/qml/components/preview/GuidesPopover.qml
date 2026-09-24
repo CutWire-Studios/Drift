@@ -352,6 +352,16 @@ Popup {
             onEditingFinished: EditorState.renameGuideSet(root.selectedId, text)
         }
 
+        ThemedButton {
+            visible: root.editable
+            glyph: Theme.icons.pencil
+            text: qsTr("Edit on preview")
+            onClicked: {
+                EditorState.guideEditSetId = root.selectedId
+                root.close()
+            }
+        }
+
         Text {
             width: parent.width
             visible: root.selected !== null && !root.editable

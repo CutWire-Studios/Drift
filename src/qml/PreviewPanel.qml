@@ -323,6 +323,7 @@ PanelFrame {
                     z: 150
                     visible: !root.playing && EditorState.projectWidth() > 0
                              && EditorState.maskEditActive && !EditorState.canvasCropMode
+                             && EditorState.guideEditSetId === ""
                 }
 
                 // Light and focus handles for the depth effects. Above the transform gizmo, but
@@ -336,6 +337,7 @@ PanelFrame {
                     z: 120
                     visible: !root.playing && EditorState.projectWidth() > 0
                              && !EditorState.canvasCropMode && !EditorState.maskEditActive
+                             && EditorState.guideEditSetId === ""
                 }
 
                 TransformOverlay {
@@ -351,6 +353,7 @@ PanelFrame {
                     z: 100
                     visible: !root.playing && EditorState.projectWidth() > 0
                              && !EditorState.canvasCropMode && !EditorState.maskEditActive
+                             && EditorState.guideEditSetId === ""
                 }
 
                 // Canvas crop tool. Lives outside the (clipped) canvas rect so the
@@ -365,6 +368,14 @@ PanelFrame {
                     enabled: visible
                     z: 200
                     previewViewport: viewport
+                    previewCanvas: canvasRect
+                }
+
+                GuideEditOverlay {
+                    anchors.fill: parent
+                    visible: EditorState.guideEditSetId !== ""
+                    enabled: visible
+                    z: 200
                     previewCanvas: canvasRect
                 }
             }
