@@ -88,25 +88,16 @@ Item {
                     onToggled: EditorState.guidesEnabled = checked
                 }
 
-                ThemedComboBox {
-                    width: parent.width
-                    visible: EditorState.guidesEnabled
-                    textRole: "label"
-                    valueRole: "id"
-                    model: [
-                        { id: "thirds", label: qsTr("Rule of thirds") },
-                        { id: "crosshair", label: qsTr("Center cross") },
-                        { id: "safe", label: qsTr("Safe margins") }
-                    ]
-                    tooltip: qsTr("Which guide to show")
-                    currentIndex: {
-                        for (var i = 0; i < model.length; ++i) {
-                            if (model[i].id === EditorState.guideType)
-                                return i
-                        }
-                        return 0
+                Repeater {
+                    model: EditorState.guidesEnabled ? EditorState.guideSets : []
+
+                    ThemedCheckBox {
+                        required property var modelData
+                        width: parent.width
+                        text: modelData.name
+                        checked: modelData.active
+                        onToggled: EditorState.setGuideSetActive(modelData.id, checked)
                     }
-                    onActivated: EditorState.guideType = model[currentIndex].id
                 }
 
                 ThemedLabel {

@@ -1005,7 +1005,13 @@ AppController::AppController(AssetLibrary *assetLibrary, QObject *parent)
     loadShortcuts();
     QSettings settings;
     m_guidesEnabled = settings.value(QStringLiteral("preview/guidesEnabled"), false).toBool();
-    m_guideType = settings.value(QStringLiteral("preview/guideType"), QStringLiteral("thirds")).toString();
+    for (const QJsonValue &value :
+         QJsonDocument::fromJson(settings.value(QStringLiteral("preview/guideSets")).toByteArray()).array())
+        m_guideLibrary.append(drift::guideSetFromJson(value.toObject()));
+    // Settings from before guide sets held a single guide type.
+    m_activeGuideSets = settings.contains(QStringLiteral("preview/activeGuideSets"))
+        ? settings.value(QStringLiteral("preview/activeGuideSets")).toStringList()
+        : QStringList{settings.value(QStringLiteral("preview/guideType"), QStringLiteral("thirds")).toString()};
     m_loopWorkAreaEnabled = settings.value(QStringLiteral("playback/loopWorkArea"), false).toBool();
     m_playback.setLoopWorkArea(m_loopWorkAreaEnabled);
     // Off by default: with it on, nudging a clip while the playhead sits anywhere writes a
@@ -6171,18 +6177,286 @@ void AppController::setGuidesEnabled(bool enabled)
     m_guidesEnabled = enabled;
     QSettings settings;
     settings.setValue(QStringLiteral("preview/guidesEnabled"), m_guidesEnabled);
+    setDirty(true);
     emit guidesChanged();
 }
 
-void AppController::setGuideType(const QString &type)
+const drift::GuideSet *AppController::findGuideSet(const QString &id) const
 {
-    const QString normalized = type.trimmed().isEmpty() ? QStringLiteral("thirds") : type.trimmed();
-    if (m_guideType == normalized)
+    for (const QList<drift::GuideSet> *list : {&drift::builtInGuideSets(), &m_guideLibrary, &m_projectGuideSets}) {
+        for (const drift::GuideSet &set : *list) {
+            if (set.id == id)
+                return &set;
+        }
+    }
+    return nullptr;
+}
+
+static QVariantMap guideItemToVariant(const drift::GuideItem &item)
+{
+    return {
+        {QStringLiteral("id"), item.id},
+        {QStringLiteral("kind"), drift::guideKindToString(item.kind)},
+        {QStringLiteral("pos"), item.pos},
+        {QStringLiteral("left"), item.left},
+        {QStringLiteral("top"), item.top},
+        {QStringLiteral("right"), item.right},
+        {QStringLiteral("bottom"), item.bottom},
+        {QStringLiteral("aspectW"), item.aspectW},
+        {QStringLiteral("aspectH"), item.aspectH},
+        {QStringLiteral("aspect"), item.aspectW / item.aspectH},
+        {QStringLiteral("color"), item.color.name(QColor::HexRgb)},
+        {QStringLiteral("opacity"), item.opacity},
+        {QStringLiteral("locked"), item.locked},
+    };
+}
+
+QVariantList AppController::guideSets() const
+{
+    QVariantList out;
+    QSet<QString> seen;
+    for (const QList<drift::GuideSet> *list : {&drift::builtInGuideSets(), &m_guideLibrary, &m_projectGuideSets}) {
+        for (const drift::GuideSet &set : *list) {
+            if (seen.contains(set.id))
+                continue;
+            seen.insert(set.id);
+            QVariantList items;
+            for (const drift::GuideItem &item : set.items)
+                items.append(guideItemToVariant(item));
+            out.append(QVariantMap{
+                {QStringLiteral("id"), set.id},
+                {QStringLiteral("name"), set.builtIn ? QCoreApplication::translate("GuideSet", set.name.toUtf8().constData())
+                                                     : set.name},
+                {QStringLiteral("builtIn"), set.builtIn},
+                {QStringLiteral("active"), m_activeGuideSets.contains(set.id)},
+                {QStringLiteral("inLibrary"), list == &m_guideLibrary},
+                {QStringLiteral("items"), items},
+            });
+        }
+    }
+    return out;
+}
+
+QVariantList AppController::guideItems() const
+{
+    QVariantList out;
+    for (const QString &id : m_activeGuideSets) {
+        const drift::GuideSet *set = findGuideSet(id);
+        if (!set)
+            continue;
+        for (const drift::GuideItem &item : set->items)
+            out.append(guideItemToVariant(item));
+    }
+    return out;
+}
+
+void AppController::setGuideSetActive(const QString &id, bool active)
+{
+    if (!findGuideSet(id) || m_activeGuideSets.contains(id) == active)
         return;
-    m_guideType = normalized;
-    QSettings settings;
-    settings.setValue(QStringLiteral("preview/guideType"), m_guideType);
+    if (active)
+        m_activeGuideSets.append(id);
+    else
+        m_activeGuideSets.removeAll(id);
+    QSettings().setValue(QStringLiteral("preview/activeGuideSets"), m_activeGuideSets);
+    setDirty(true);
     emit guidesChanged();
+}
+
+drift::GuideSet *AppController::libraryGuideSet(const QString &id)
+{
+    for (drift::GuideSet &set : m_guideLibrary) {
+        if (set.id == id)
+            return &set;
+    }
+    return nullptr;
+}
+
+void AppController::guideLibraryEdited(const QString &id)
+{
+    QJsonArray sets;
+    for (const drift::GuideSet &set : m_guideLibrary)
+        sets.append(drift::guideSetToJson(set));
+    QSettings().setValue(QStringLiteral("preview/guideSets"), QJsonDocument(sets).toJson(QJsonDocument::Compact));
+    if (m_activeGuideSets.contains(id))
+        setDirty(true);
+    emit guidesChanged();
+}
+
+static QString newGuideId()
+{
+    return QUuid::createUuid().toString(QUuid::WithoutBraces);
+}
+
+QString AppController::createGuideSet(const QString &name)
+{
+    drift::GuideSet set;
+    set.id = newGuideId();
+    set.name = name.trimmed().isEmpty() ? tr("Custom guides") : name.trimmed();
+    m_guideLibrary.append(set);
+    m_activeGuideSets.append(set.id);
+    QSettings().setValue(QStringLiteral("preview/activeGuideSets"), m_activeGuideSets);
+    guideLibraryEdited(set.id);
+    return set.id;
+}
+
+QString AppController::duplicateGuideSet(const QString &id)
+{
+    const drift::GuideSet *source = findGuideSet(id);
+    if (!source)
+        return {};
+    drift::GuideSet copy = *source;
+    copy.id = newGuideId();
+    copy.name = tr("%1 copy").arg(source->builtIn ? QCoreApplication::translate("GuideSet", source->name.toUtf8().constData())
+                                                  : source->name);
+    copy.builtIn = false;
+    m_guideLibrary.append(copy);
+    // The copy takes the original's place, so duplicating to edit leaves the preview unchanged.
+    const int at = m_activeGuideSets.indexOf(id);
+    if (at >= 0)
+        m_activeGuideSets[at] = copy.id;
+    else
+        m_activeGuideSets.append(copy.id);
+    QSettings().setValue(QStringLiteral("preview/activeGuideSets"), m_activeGuideSets);
+    guideLibraryEdited(copy.id);
+    return copy.id;
+}
+
+void AppController::renameGuideSet(const QString &id, const QString &name)
+{
+    drift::GuideSet *set = libraryGuideSet(id);
+    if (!set || name.trimmed().isEmpty() || set->name == name.trimmed())
+        return;
+    set->name = name.trimmed();
+    guideLibraryEdited(id);
+}
+
+void AppController::deleteGuideSet(const QString &id)
+{
+    const auto removed = std::remove_if(m_guideLibrary.begin(), m_guideLibrary.end(),
+                                        [&](const drift::GuideSet &set) { return set.id == id; });
+    if (removed == m_guideLibrary.end())
+        return;
+    m_guideLibrary.erase(removed, m_guideLibrary.end());
+    // Otherwise the project's copy would bring it straight back.
+    m_projectGuideSets.removeIf([&](const drift::GuideSet &set) { return set.id == id; });
+    if (m_activeGuideSets.removeAll(id) > 0) {
+        QSettings().setValue(QStringLiteral("preview/activeGuideSets"), m_activeGuideSets);
+        setDirty(true);
+    }
+    guideLibraryEdited(id);
+}
+
+void AppController::saveGuideSetToLibrary(const QString &id)
+{
+    if (libraryGuideSet(id))
+        return;
+    for (int i = 0; i < m_projectGuideSets.size(); ++i) {
+        if (m_projectGuideSets.at(i).id == id) {
+            m_guideLibrary.append(m_projectGuideSets.takeAt(i));
+            guideLibraryEdited(id);
+            return;
+        }
+    }
+}
+
+QString AppController::addGuideItem(const QString &setId, const QString &kind)
+{
+    drift::GuideSet *set = libraryGuideSet(setId);
+    if (!set)
+        return {};
+    drift::GuideItem item;
+    item.id = newGuideId();
+    item.kind = drift::guideKindFromString(kind);
+    if (item.kind == drift::GuideKind::Rect)
+        item.left = item.top = item.right = item.bottom = 0.05;
+    if (item.kind == drift::GuideKind::Aspect) {
+        item.aspectW = 9;
+        item.aspectH = 16;
+    }
+    set->items.append(item);
+    guideLibraryEdited(setId);
+    return item.id;
+}
+
+void AppController::setGuideItemProperty(const QString &setId, const QString &itemId,
+                                         const QString &key, const QVariant &value)
+{
+    drift::GuideSet *set = libraryGuideSet(setId);
+    if (!set)
+        return;
+    const auto it = std::find_if(set->items.begin(), set->items.end(),
+                                 [&](const drift::GuideItem &item) { return item.id == itemId; });
+    if (it == set->items.end())
+        return;
+    const double number = value.toDouble();
+    if (key == QLatin1String("pos"))
+        it->pos = qBound(0.0, number, 1.0);
+    else if (key == QLatin1String("left"))
+        it->left = qBound(0.0, number, 0.5);
+    else if (key == QLatin1String("top"))
+        it->top = qBound(0.0, number, 0.5);
+    else if (key == QLatin1String("right"))
+        it->right = qBound(0.0, number, 0.5);
+    else if (key == QLatin1String("bottom"))
+        it->bottom = qBound(0.0, number, 0.5);
+    else if (key == QLatin1String("aspectW") && number > 0)
+        it->aspectW = number;
+    else if (key == QLatin1String("aspectH") && number > 0)
+        it->aspectH = number;
+    else if (key == QLatin1String("opacity"))
+        it->opacity = qBound(0.0, number, 1.0);
+    else if (key == QLatin1String("locked"))
+        it->locked = value.toBool();
+    else if (key == QLatin1String("color") && QColor(value.toString()).isValid())
+        it->color = QColor(value.toString()).toRgb();
+    else
+        return;
+    // The picker hands back #AARRGGBB; opacity has its own control.
+    it->color.setAlpha(255);
+    guideLibraryEdited(setId);
+}
+
+void AppController::removeGuideItem(const QString &setId, const QString &itemId)
+{
+    drift::GuideSet *set = libraryGuideSet(setId);
+    if (!set || set->items.removeIf([&](const drift::GuideItem &item) { return item.id == itemId; }) == 0)
+        return;
+    guideLibraryEdited(setId);
+}
+
+QVariantMap AppController::guideSnapTargets(double width, double height) const
+{
+    QVariantList xs;
+    QVariantList ys;
+    for (const QString &id : m_activeGuideSets) {
+        const drift::GuideSet *set = findGuideSet(id);
+        if (!set)
+            continue;
+        for (const drift::GuideItem &item : set->items) {
+            switch (item.kind) {
+            case drift::GuideKind::Vertical:
+                xs << item.pos * width;
+                break;
+            case drift::GuideKind::Horizontal:
+                ys << item.pos * height;
+                break;
+            case drift::GuideKind::Rect:
+                xs << item.left * width << (1 - item.right) * width;
+                ys << item.top * height << (1 - item.bottom) * height;
+                break;
+            case drift::GuideKind::Aspect: {
+                const double ratio = item.aspectW / item.aspectH;
+                const double frameW = qMin(width, height * ratio);
+                const double frameH = qMin(height, width / ratio);
+                xs << (width - frameW) / 2 << (width + frameW) / 2;
+                ys << (height - frameH) / 2 << (height + frameH) / 2;
+                break;
+            }
+            }
+        }
+    }
+    return {{QStringLiteral("x"), xs}, {QStringLiteral("y"), ys}};
 }
 
 QVariantList AppController::audioOutputDevices() const
@@ -21907,6 +22181,17 @@ QByteArray AppController::serializeProjectJson() const
     // predate the tree mode.
     root.insert(QStringLiteral("mediaGridMode"), mediaGridMode());
     root.insert(QStringLiteral("loopWorkArea"), m_loopWorkAreaEnabled);
+    QJsonArray guideSets;
+    for (const QString &id : m_activeGuideSets) {
+        const drift::GuideSet *set = findGuideSet(id);
+        if (set && !set->builtIn)
+            guideSets.append(drift::guideSetToJson(*set));
+    }
+    root.insert(QStringLiteral("guides"), QJsonObject{
+        {QStringLiteral("enabled"), m_guidesEnabled},
+        {QStringLiteral("active"), QJsonArray::fromStringList(m_activeGuideSets)},
+        {QStringLiteral("sets"), guideSets},
+    });
     return QJsonDocument(root).toJson(QJsonDocument::Indented);
 }
 
@@ -22033,6 +22318,24 @@ bool AppController::applyProjectJson(const QByteArray &data, QString *error)
         m_playback.setLoopWorkArea(m_loopWorkAreaEnabled);
     }
 
+    // Projects from before guides were saved keep whatever the session had.
+    if (root.contains(QStringLiteral("guides"))) {
+        const QJsonObject guides = root.value(QStringLiteral("guides")).toObject();
+        m_guidesEnabled = guides.value(QStringLiteral("enabled")).toBool(false);
+        m_projectGuideSets.clear();
+        for (const QJsonValue &value : guides.value(QStringLiteral("sets")).toArray()) {
+            drift::GuideSet set = drift::guideSetFromJson(value.toObject());
+            if (!set.id.isEmpty())
+                m_projectGuideSets.append(set);
+        }
+        m_activeGuideSets.clear();
+        for (const QJsonValue &value : guides.value(QStringLiteral("active")).toArray()) {
+            const QString id = value.toString();
+            if (findGuideSet(id) && !m_activeGuideSets.contains(id))
+                m_activeGuideSets.append(id);
+        }
+    }
+
     if (root.contains(QStringLiteral("playheadUs"))) {
         setPlayheadUs(static_cast<drift::TimeUs>(root.value(QStringLiteral("playheadUs")).toDouble()));
     } else {
@@ -22058,6 +22361,7 @@ bool AppController::applyProjectJson(const QByteArray &data, QString *error)
     emit projectNameChanged();
     emit projectMetadataChanged();
     emit backgroundChanged();
+    emit guidesChanged();
     return true;
 }
 

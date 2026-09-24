@@ -2415,17 +2415,6 @@ QJsonObject McpDispatcher::applyOneExtended(const QString &tool, const QJsonObje
         return ok({{QStringLiteral("snap"), m_controller->snapEnabled()}});
     }
 
-    if (tool == QLatin1String("set_guides")) {
-        if (!args.contains(QStringLiteral("enabled")) && !args.contains(QStringLiteral("type")))
-            return err("bad_args", QStringLiteral("enabled or type required"));
-        if (args.contains(QStringLiteral("enabled")))
-            m_controller->setGuidesEnabled(jsonBool(args.value(QStringLiteral("enabled"))));
-        if (args.contains(QStringLiteral("type")))
-            m_controller->setGuideType(argString(args, QStringLiteral("type")));
-        return ok({{QStringLiteral("enabled"), m_controller->guidesEnabled()},
-                   {QStringLiteral("type"), m_controller->guideType()}});
-    }
-
     if (tool == QLatin1String("set_loop_work_area")) {
         if (!args.contains(QStringLiteral("enabled")))
             return err("bad_args", QStringLiteral("enabled required"));

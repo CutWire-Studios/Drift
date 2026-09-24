@@ -19,6 +19,7 @@
 #include "models/AssetLibrary.h"
 #include "models/BinFolderListModel.h"
 #include "models/CloudProviders.h"
+#include "core/GuideSet.h"
 
 #include <QAtomicInt>
 #include <QCursor>
@@ -360,7 +361,12 @@ class AppController : public QObject
     Q_PROPERTY(int selectedTransitionTrack READ selectedTransitionTrack NOTIFY selectedTransitionDataChanged)
     Q_PROPERTY(int selectedTransitionLeftClip READ selectedTransitionLeftClip NOTIFY selectedTransitionDataChanged)
     Q_PROPERTY(bool guidesEnabled READ guidesEnabled WRITE setGuidesEnabled NOTIFY guidesChanged)
-    Q_PROPERTY(QString guideType READ guideType WRITE setGuideType NOTIFY guidesChanged)
+    // Every set the picker offers: built-ins, the app-wide library, then copies carried by the
+    // project for sets this machine's library does not have. Each {id, name, builtIn, active,
+    // inLibrary, items}.
+    Q_PROPERTY(QVariantList guideSets READ guideSets NOTIFY guidesChanged)
+    // The items of every active set, flattened for drawing.
+    Q_PROPERTY(QVariantList guideItems READ guideItems NOTIFY guidesChanged)
     Q_PROPERTY(QVariantMap background READ background NOTIFY backgroundChanged)
     Q_PROPERTY(bool canvasCropMode READ canvasCropMode WRITE setCanvasCropMode NOTIFY canvasCropModeChanged)
     Q_PROPERTY(bool maskEditMode READ maskEditMode WRITE setMaskEditMode NOTIFY maskEditModeChanged)
@@ -590,7 +596,23 @@ public:
     int selectedTransitionTrack() const { return m_selectedTransitionTrack; }
     int selectedTransitionLeftClip() const { return m_selectedTransitionLeftClip; }
     bool guidesEnabled() const { return m_guidesEnabled; }
-    QString guideType() const { return m_guideType; }
+    QVariantList guideSets() const;
+    QVariantList guideItems() const;
+    Q_INVOKABLE void setGuideSetActive(const QString &id, bool active);
+    // Edges of the active guides for a canvas of this size, as {x: [px], y: [px]}.
+    Q_INVOKABLE QVariantMap guideSnapTargets(double width, double height) const;
+    // Library editing. Built-in sets and project-only copies are read-only; each returns the new id.
+    Q_INVOKABLE QString createGuideSet(const QString &name);
+    Q_INVOKABLE QString duplicateGuideSet(const QString &id);
+    Q_INVOKABLE void renameGuideSet(const QString &id, const QString &name);
+    Q_INVOKABLE void deleteGuideSet(const QString &id);
+    // Copies a set the project carries into this machine's library.
+    Q_INVOKABLE void saveGuideSetToLibrary(const QString &id);
+    Q_INVOKABLE QString addGuideItem(const QString &setId, const QString &kind);
+    // key: pos, left, top, right, bottom, aspectW, aspectH, color, opacity or locked.
+    Q_INVOKABLE void setGuideItemProperty(const QString &setId, const QString &itemId,
+                                          const QString &key, const QVariant &value);
+    Q_INVOKABLE void removeGuideItem(const QString &setId, const QString &itemId);
     QVariantMap background() const;
     QVariantList actions() const;
     QVariantList bookmarks() const;
@@ -832,7 +854,6 @@ public:
     void setSelectedSubtitleCue(int index);
     void setProjectName(const QString &name);
     void setGuidesEnabled(bool enabled);
-    void setGuideType(const QString &type);
 
     Q_INVOKABLE void addClipFromAsset(int assetIndex);
     // Multi-select "Add to timeline": each asset lands on its own kind-appropriate default
@@ -2694,7 +2715,15 @@ protected:
     bool m_guidesEnabled = false;
     bool m_canvasCropMode = false;
     bool m_maskEditMode = false;
-    QString m_guideType = QStringLiteral("thirds");
+    QStringList m_activeGuideSets{QStringLiteral("thirds")};
+    // App-wide custom sets.
+    QList<drift::GuideSet> m_guideLibrary;
+    // Copies of custom sets the open project uses, so its guides draw on a machine without them.
+    QList<drift::GuideSet> m_projectGuideSets;
+    const drift::GuideSet *findGuideSet(const QString &id) const;
+    drift::GuideSet *libraryGuideSet(const QString &id);
+    // Persists the library; an edit to an active set also changes what the project saves.
+    void guideLibraryEdited(const QString &id);
     QHash<QString, QString> m_shortcuts;
     QHash<QString, QSet<QString>> m_assetFavorites;
     int m_draggingAssetIndex = -1;

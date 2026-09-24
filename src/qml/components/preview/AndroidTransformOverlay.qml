@@ -90,7 +90,7 @@ Item {
     }
 
     // Stickiness: while a clip is moved or resized its edges and centre pull to
-    // the canvas edges and centre lines. The tolerance is a screen distance, so
+    // the canvas edges, centre lines and visible guides. The tolerance is a screen distance, so
     // the pull feels the same whatever the project resolution or preview zoom.
     readonly property real snapTolPx: 10
 
@@ -273,9 +273,13 @@ Item {
             // True while a resize grip is held, for the size readout.
             property bool resizing: false
 
-            // Canvas edges and centre lines, in layout px.
-            readonly property var snapTargetsX: [0, handle.canvasW / 2, handle.canvasW]
-            readonly property var snapTargetsY: [0, handle.canvasH / 2, handle.canvasH]
+            // Visible guides, in layout px. Reading guideItems re-runs this when the
+            // active sets change.
+            readonly property var guideSnap: EditorState.guidesEnabled && EditorState.guideItems.length > 0
+                ? EditorState.guideSnapTargets(handle.canvasW, handle.canvasH) : ({ x: [], y: [] })
+            // Canvas edges and centre lines, plus the guides.
+            readonly property var snapTargetsX: [0, handle.canvasW / 2, handle.canvasW].concat(guideSnap.x)
+            readonly property var snapTargetsY: [0, handle.canvasH / 2, handle.canvasH].concat(guideSnap.y)
             readonly property real snapTolX: root.snapTolPx / handle.sx
             readonly property real snapTolY: root.snapTolPx / handle.sy
             // A rotated box has no axis-aligned edges to stick with, so it does

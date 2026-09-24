@@ -18,7 +18,9 @@
 #include <QScopeGuard>
 #include <QClipboard>
 #include <QGuiApplication>
+#include <QJsonArray>
 #include <QJsonDocument>
+#include <QJsonObject>
 #include <QQmlComponent>
 #include <QQmlContext>
 #include <QQmlEngine>
@@ -136,6 +138,8 @@ private slots:
     void projectPersistenceRoundTrip();
     void saveProjectAsDuplicatesProject();
     void projectJsonExportImportRoundTrip();
+    void guidesTravelWithProject();
+    void guideLibraryEditing();
     void projectJsonImportRejectsGarbageAndLeavesTimeline();
     void mogrtImportIntoExistingProject();
     void newProjectClearsEverything();
@@ -1955,6 +1959,157 @@ void EditorStateTest::projectJsonExportImportRoundTrip()
     QVERIFY(state.hasUnsavedChanges());
 }
 
+void EditorStateTest::guidesTravelWithProject()
+{
+    const QString org = QCoreApplication::organizationName();
+    const QString app = QCoreApplication::applicationName();
+    QCoreApplication::setOrganizationName(QStringLiteral("DriftTest"));
+    QCoreApplication::setApplicationName(QStringLiteral("DriftTestGuides"));
+    const auto restore = qScopeGuard([&] {
+        QSettings().remove(QStringLiteral("preview"));
+        QCoreApplication::setOrganizationName(org);
+        QCoreApplication::setApplicationName(app);
+    });
+    QSettings().remove(QStringLiteral("preview"));
+
+    AssetLibrary library;
+    AppController state(&library);
+    state.setGuideSetActive(QStringLiteral("thirds"), true);
+    state.setGuideSetActive(QStringLiteral("safe"), true);
+    state.setGuideSetActive(QStringLiteral("no-such-set"), true);
+    state.setGuidesEnabled(true);
+    QVERIFY(state.hasUnsavedChanges());
+    QCOMPARE(state.guideItems().size(), 6);
+
+    state.setGuideSetActive(QStringLiteral("aspect-9x16"), true);
+    const QVariantMap snap = state.guideSnapTargets(1920, 1080);
+    const QVariantList xs = snap.value(QStringLiteral("x")).toList();
+    const QVariantList ys = snap.value(QStringLiteral("y")).toList();
+    for (double x : {640.0, 1280.0, 96.0, 1824.0, 48.0, 1872.0, 656.25, 1263.75})
+        QVERIFY2(xs.contains(x), qPrintable(QString::number(x)));
+    for (double y : {360.0, 720.0, 54.0, 1026.0, 0.0, 1080.0})
+        QVERIFY2(ys.contains(y), qPrintable(QString::number(y)));
+    state.setGuideSetActive(QStringLiteral("aspect-9x16"), false);
+
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    const QString jsonPath = dir.filePath(QStringLiteral("project.json"));
+    state.saveProjectJson(QUrl::fromLocalFile(jsonPath));
+
+    // A custom set from another machine's library rides along in the file.
+    QJsonObject root = QJsonDocument::fromJson(readFile(jsonPath)).object();
+    QJsonObject guides = root.value(QStringLiteral("guides")).toObject();
+    QCOMPARE(guides.value(QStringLiteral("active")).toArray().size(), 2);
+    QVERIFY(guides.value(QStringLiteral("sets")).toArray().isEmpty());
+    drift::GuideSet custom{QStringLiteral("custom-1"), QStringLiteral("Mine"), false, {}};
+    drift::GuideItem line;
+    line.kind = drift::GuideKind::Horizontal;
+    line.pos = 0.2;
+    custom.items.append(line);
+    guides.insert(QStringLiteral("active"), QJsonArray{QStringLiteral("custom-1")});
+    guides.insert(QStringLiteral("sets"), QJsonArray{drift::guideSetToJson(custom)});
+    root.insert(QStringLiteral("guides"), guides);
+    {
+        QFile file(jsonPath);
+        QVERIFY(file.open(QIODevice::WriteOnly | QIODevice::Truncate));
+        file.write(QJsonDocument(root).toJson());
+    }
+
+    state.setGuidesEnabled(false);
+    state.loadProjectJson(QUrl::fromLocalFile(jsonPath));
+    QVERIFY(state.guidesEnabled());
+    const QVariantList items = state.guideItems();
+    QCOMPARE(items.size(), 1);
+    QCOMPARE(items.first().toMap().value(QStringLiteral("kind")).toString(), QStringLiteral("h"));
+    QCOMPARE(items.first().toMap().value(QStringLiteral("pos")).toDouble(), 0.2);
+    QStringList active;
+    for (const QVariant &entry : state.guideSets()) {
+        if (entry.toMap().value(QStringLiteral("active")).toBool())
+            active.append(entry.toMap().value(QStringLiteral("id")).toString());
+    }
+    QCOMPARE(active, QStringList{QStringLiteral("custom-1")});
+
+    // Saving again keeps the copy, since this library still does not have it.
+    state.saveProjectJson(QUrl::fromLocalFile(jsonPath));
+    guides = QJsonDocument::fromJson(readFile(jsonPath)).object().value(QStringLiteral("guides")).toObject();
+    QCOMPARE(guides.value(QStringLiteral("sets")).toArray().size(), 1);
+
+    // Undo leaves guide state alone.
+    state.addTextClip(QStringLiteral("Undo me"), 0.0);
+    state.setGuideSetActive(QStringLiteral("thirds"), true);
+    state.undo();
+    QCOMPARE(state.guideItems().size(), 5);
+}
+
+void EditorStateTest::guideLibraryEditing()
+{
+    const QString org = QCoreApplication::organizationName();
+    const QString app = QCoreApplication::applicationName();
+    QCoreApplication::setOrganizationName(QStringLiteral("DriftTest"));
+    QCoreApplication::setApplicationName(QStringLiteral("DriftTestGuideLibrary"));
+    const auto restore = qScopeGuard([&] {
+        QSettings().remove(QStringLiteral("preview"));
+        QCoreApplication::setOrganizationName(org);
+        QCoreApplication::setApplicationName(app);
+    });
+    QSettings().remove(QStringLiteral("preview"));
+
+    const auto findSet = [](AppController &state, const QString &id) {
+        for (const QVariant &entry : state.guideSets()) {
+            if (entry.toMap().value(QStringLiteral("id")).toString() == id)
+                return entry.toMap();
+        }
+        return QVariantMap();
+    };
+
+    AssetLibrary library;
+    AppController state(&library);
+    state.setGuideSetActive(QStringLiteral("thirds"), true);
+
+    // Duplicating a built-in swaps the copy in, so the preview does not change.
+    const QString copy = state.duplicateGuideSet(QStringLiteral("thirds"));
+    QVERIFY(!copy.isEmpty());
+    QVERIFY(!findSet(state, QStringLiteral("thirds")).value(QStringLiteral("active")).toBool());
+    QVariantMap copied = findSet(state, copy);
+    QVERIFY(copied.value(QStringLiteral("active")).toBool());
+    QVERIFY(copied.value(QStringLiteral("inLibrary")).toBool());
+    QCOMPARE(copied.value(QStringLiteral("items")).toList().size(), 4);
+
+    // Built-ins stay read-only.
+    QVERIFY(state.addGuideItem(QStringLiteral("thirds"), QStringLiteral("v")).isEmpty());
+
+    const QString item = state.addGuideItem(copy, QStringLiteral("aspect"));
+    state.setGuideItemProperty(copy, item, QStringLiteral("aspectW"), 4);
+    state.setGuideItemProperty(copy, item, QStringLiteral("aspectH"), 5);
+    state.setGuideItemProperty(copy, item, QStringLiteral("opacity"), 2.0);
+    state.setGuideItemProperty(copy, item, QStringLiteral("color"), QStringLiteral("#80ff0000"));
+    state.setGuideItemProperty(copy, item, QStringLiteral("locked"), true);
+    state.renameGuideSet(copy, QStringLiteral("  Mine  "));
+    copied = findSet(state, copy);
+    QCOMPARE(copied.value(QStringLiteral("name")).toString(), QStringLiteral("Mine"));
+    const QVariantMap added = copied.value(QStringLiteral("items")).toList().last().toMap();
+    QCOMPARE(added.value(QStringLiteral("aspect")).toDouble(), 0.8);
+    QCOMPARE(added.value(QStringLiteral("opacity")).toDouble(), 1.0);
+    QCOMPARE(added.value(QStringLiteral("color")).toString(), QStringLiteral("#ff0000"));
+    QVERIFY(added.value(QStringLiteral("locked")).toBool());
+
+    // The library outlives the controller.
+    {
+        AppController reopened(&library);
+        QCOMPARE(findSet(reopened, copy).value(QStringLiteral("items")).toList().size(), 5);
+    }
+
+    state.removeGuideItem(copy, item);
+    QCOMPARE(findSet(state, copy).value(QStringLiteral("items")).toList().size(), 4);
+
+    state.deleteGuideSet(copy);
+    QVERIFY(findSet(state, copy).isEmpty());
+    QVERIFY(state.guideItems().isEmpty());
+
+    const QString fresh = state.createGuideSet(QString());
+    QVERIFY(findSet(state, fresh).value(QStringLiteral("active")).toBool());
+}
+
 void EditorStateTest::projectJsonImportRejectsGarbageAndLeavesTimeline()
 {
     AssetLibrary library;
@@ -3183,8 +3338,8 @@ void EditorStateTest::multiSelectClipboardGuidesAndShortcuts()
     // Guides state is writable.
     state.setGuidesEnabled(true);
     QCOMPARE(state.guidesEnabled(), true);
-    state.setGuideType(QStringLiteral("safe"));
-    QCOMPARE(state.guideType(), QStringLiteral("safe"));
+    state.setGuideSetActive(QStringLiteral("safe"), true);
+    QVERIFY(!state.guideItems().isEmpty());
 
     // Shortcut/action layer wiring.
     state.setShortcut(QStringLiteral("nudgeRight"), QStringLiteral("Ctrl+Alt+Right"));

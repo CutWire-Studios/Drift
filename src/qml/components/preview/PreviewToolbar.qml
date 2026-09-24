@@ -280,6 +280,23 @@ Item {
         }
 
         IconButton {
+            glyph: Theme.icons.chevronDown
+            variant: "text"
+            tooltip: qsTr("Guide sets")
+            anchors.verticalCenter: parent.verticalCenter
+            buttonSize: Theme.iconButtonSize * 0.6
+            iconSize: Theme.iconSizeBase * 0.75
+            active: guidesPopover.visible
+            onClicked: guidesPopover.opened ? guidesPopover.close() : guidesPopover.open()
+
+            GuidesPopover {
+                id: guidesPopover
+                x: parent.width - width
+                y: -height - Theme.spacingMd
+            }
+        }
+
+        IconButton {
             glyph: Theme.icons.mask
             variant: "text"
             tooltip: qsTr("Keep mask handles on the preview while another clip is selected")

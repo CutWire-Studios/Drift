@@ -433,6 +433,8 @@ add_library(driftcore STATIC
     src/core/SubtitleCue.cpp
     src/core/Transcript.h
     src/core/Transcript.cpp
+    src/core/GuideSet.h
+    src/core/GuideSet.cpp
     src/core/SrtIO.h
     src/core/SrtIO.cpp
     src/core/Mask.h
@@ -1000,6 +1002,8 @@ qt_add_qml_module(drift
         src/qml/PreviewPanel.qml
         src/qml/components/preview/TransformOverlay.qml
         src/qml/components/preview/CropOverlay.qml
+        src/qml/components/preview/GuideLayer.qml
+        src/qml/components/preview/GuidesPopover.qml
         src/qml/components/preview/MaskOverlay.qml
         src/qml/components/preview/DepthEffectOverlay.qml
         src/qml/components/preview/PreviewToolbar.qml
@@ -1278,6 +1282,7 @@ if(Qt6LinguistTools_FOUND)
             src/engine/ProjectBundle.cpp
             src/core/Project.cpp
             src/core/Transcript.cpp
+            src/core/GuideSet.cpp
             src/core/SrtIO.cpp
             src/core/ShapeStyle.cpp
             src/core/TextStyle.cpp

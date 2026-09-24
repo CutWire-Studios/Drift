@@ -246,64 +246,8 @@ PanelFrame {
                         }
                     }
 
-                    Item {
+                    GuideLayer {
                         anchors.fill: parent
-                        visible: EditorState.guidesEnabled
-
-                        Repeater {
-                            model: EditorState.guideType === "thirds" ? 2 : 0
-                            Rectangle {
-                                width: 1
-                                height: parent.height
-                                x: parent.width * (index + 1) / 3
-                                color: Theme.guideMedium
-                            }
-                        }
-                        Repeater {
-                            model: EditorState.guideType === "thirds" ? 2 : 0
-                            Rectangle {
-                                height: 1
-                                width: parent.width
-                                y: parent.height * (index + 1) / 3
-                                color: Theme.guideMedium
-                            }
-                        }
-
-                        Rectangle {
-                            visible: EditorState.guideType === "crosshair"
-                            width: 1
-                            height: parent.height
-                            x: parent.width / 2
-                            color: Theme.guideMedium
-                        }
-                        Rectangle {
-                            visible: EditorState.guideType === "crosshair"
-                            height: 1
-                            width: parent.width
-                            y: parent.height / 2
-                            color: Theme.guideMedium
-                        }
-
-                        Rectangle {
-                            visible: EditorState.guideType === "safe"
-                            x: parent.width * 0.05
-                            y: parent.height * 0.05
-                            width: parent.width * 0.90
-                            height: parent.height * 0.90
-                            color: "transparent"
-                            border.width: 1
-                            border.color: Theme.guideMedium
-                        }
-                        Rectangle {
-                            visible: EditorState.guideType === "safe"
-                            x: parent.width * 0.025
-                            y: parent.height * 0.025
-                            width: parent.width * 0.95
-                            height: parent.height * 0.95
-                            color: "transparent"
-                            border.width: 1
-                            border.color: Theme.guideWeak
-                        }
                     }
 
                     // On a brand-new project this — the largest, most central panel —
