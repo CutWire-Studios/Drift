@@ -4552,6 +4552,16 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Add
+Audio
+Track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Click to add an audio track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source> (Recording)</source>
         <translation type="unfinished"></translation>
     </message>
