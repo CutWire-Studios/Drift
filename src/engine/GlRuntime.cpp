@@ -1288,12 +1288,18 @@ bool GlRuntime::exec(const std::function<void()> &fn)
     QMetaObject::invokeMethod(
         m_glOwner,
         [this, &fn]() -> bool {
-            if (!context->makeCurrent(surface.get())) {
+            // The GL thread has one context and nothing else to switch to, so it stays current
+            // between calls: a make/done pair per exec() is a driver round trip every composite,
+            // and on some drivers an implicit flush as well.
+            if (QOpenGLContext::currentContext() != context.get()
+                && !context->makeCurrent(surface.get())) {
                 qWarning("GlRuntime: makeCurrent failed");
                 return false;
             }
             fn();
-            context->doneCurrent();
+            // What doneCurrent used to flush implicitly: fences created inside fn() must reach
+            // the GPU before another context (Qt Quick's render thread) waits on them.
+            context->functions()->glFlush();
             return true;
         },
         Qt::BlockingQueuedConnection, &ran);

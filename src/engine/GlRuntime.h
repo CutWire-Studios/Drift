@@ -421,12 +421,13 @@ private:
     GLuint m_videoRgba = 0;
     int m_videoRgbaW = 0;
     int m_videoRgbaH = 0;
-    // Two planes per frame × two in-flight composites. A two-PBO ring reused
-    // both buffers inside one frame, so the next upload remapped a PBO the GPU
-    // was still reading and the convert shader sampled empty chroma (green).
-    // The per-buffer fences below keep the uploads pipelined: a buffer is only
-    // remapped once its own upload has landed, without stalling on the others.
-    static constexpr int kVideoPboCount = 4;
+    // Two planes per software layer × up to four layers × two in-flight composites. A two-PBO
+    // ring reused both buffers inside one frame, so the next upload remapped a PBO the GPU was
+    // still reading and the convert shader sampled empty chroma (green). Four was one layer's
+    // worth: a third software layer wrapped the ring inside a single frame and blocked the GL
+    // thread on its own previous upload. The per-buffer fences below keep the uploads
+    // pipelined: a buffer is only remapped once its own upload has landed.
+    static constexpr int kVideoPboCount = 16;
     GLuint m_videoPbo[kVideoPboCount] = {};
     GLsync m_videoPboFence[kVideoPboCount] = {};
     int m_videoPboIndex = 0;
