@@ -934,6 +934,10 @@ PanelFrame {
         effectPresetNameDialog.openWith(qsTr("Save effect preset"), name)
     }
 
+    function requestConvertTextToSubtitle() {
+        convertToSubtitleDialog.open()
+    }
+
     function requestRenameClip(trackIndex, clipIndex) {
         if (trackIndex < 0 || clipIndex < 0)
             return
@@ -2782,6 +2786,22 @@ PanelFrame {
             bookmarkRow.renameIndex = -1
         }
         onRejected: bookmarkRow.renameIndex = -1
+    }
+
+    ThemedDialog {
+        id: convertToSubtitleDialog
+        title: qsTr("Convert to subtitle?")
+        acceptText: qsTr("Convert")
+        preferredWidth: Theme.dialogWidthSm
+
+        contentItem: ThemedLabel {
+            width: parent ? parent.width : Theme.dialogWidthSm
+            wrapMode: Text.WordWrap
+            size: "sm"
+            text: qsTr("The selected text clips will be replaced by one subtitle clip. Every caption will use the position and style of the first text clip.")
+        }
+
+        onAccepted: EditorState.convertSelectionToSubtitle()
     }
 
     ThemedDialog {

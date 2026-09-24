@@ -1306,6 +1306,18 @@
         <translation>Lưu cài đặt trước hiệu ứng</translation>
     </message>
     <message>
+        <source>Convert to subtitle?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Convert</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The selected text clips will be replaced by one subtitle clip. Every caption will use the position and style of the first text clip.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Rename clip</source>
         <translation>Đổi tên clip</translation>
     </message>
@@ -3130,6 +3142,20 @@
     </message>
     <message>
         <source>Stabilization analysis failed: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Subtitles converted to text</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>Created %n text clips</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Text converted to subtitles</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -11564,6 +11590,14 @@ If playback stutters, try another.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Convert to text clips</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Convert to subtitle</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Cut</source>
         <translation type="unfinished"></translation>
     </message>
@@ -11704,6 +11738,18 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Bookmark</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Convert to subtitle?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Convert</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The selected text clips will be replaced by one subtitle clip. Every caption will use the position and style of the first text clip.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>

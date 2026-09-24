@@ -64,6 +64,10 @@ Item {
     property int savePresetTrack: -1
     property int savePresetClip: -1
 
+    function requestConvertTextToSubtitle() {
+        convertToSubtitleDialog.open()
+    }
+
     // TimelineClipItem's context menu calls this on its `panel`, so the touch timeline
     // has to answer it exactly as TimelinePanel does or "Rename…" is a TypeError.
     function requestRenameClip(trackIndex, clipIndex) {
@@ -101,6 +105,22 @@ Item {
         Behavior on opacity {
             NumberAnimation { duration: 180 }
         }
+    }
+
+    ThemedDialog {
+        id: convertToSubtitleDialog
+        title: qsTr("Convert to subtitle?")
+        acceptText: qsTr("Convert")
+        preferredWidth: Theme.dialogWidthSm
+
+        contentItem: ThemedLabel {
+            width: parent ? parent.width : Theme.dialogWidthSm
+            wrapMode: Text.WordWrap
+            size: "sm"
+            text: qsTr("The selected text clips will be replaced by one subtitle clip. Every caption will use the position and style of the first text clip.")
+        }
+
+        onAccepted: EditorState.convertSelectionToSubtitle()
     }
 
     ThemedDialog {

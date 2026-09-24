@@ -409,6 +409,7 @@ class AppController : public QObject
     Q_PROPERTY(QString activeSequenceId READ activeSequenceId NOTIFY sequenceTabsChanged)
     Q_PROPERTY(bool unlinkAvailable READ canUnlinkSelection NOTIFY editCapabilitiesChanged)
     Q_PROPERTY(bool mergeAvailable READ canMergeSelection NOTIFY editCapabilitiesChanged)
+    Q_PROPERTY(bool textToSubtitleAvailable READ canConvertSelectionToSubtitle NOTIFY editCapabilitiesChanged)
     // False until the user picks a launch layout (or decides later via first-clip setup / load).
     Q_PROPERTY(bool projectLayoutChosen READ projectLayoutChosen NOTIFY projectLayoutChosenChanged)
 
@@ -1356,6 +1357,14 @@ public:
     Q_INVOKABLE bool canMergeAllSubtitlesOnTrack(int trackIndex) const;
     // Merge every subtitle clip on the track into one, regardless of the selection.
     Q_INVOKABLE void mergeAllSubtitlesOnTrack(int trackIndex);
+    // One text clip per non-empty cue, placed at the cue's time on a text track; the subtitle
+    // clip is removed. Each keeps the subtitle's style and layout.
+    Q_INVOKABLE void convertSubtitleToTextClips(int trackIndex, int clipIndex);
+    // True when the selection is made up only of text clips.
+    Q_INVOKABLE bool canConvertSelectionToSubtitle() const;
+    // Replaces the selected text clips with one subtitle clip, one cue per text clip. Style,
+    // layout and keyframes come from the earliest clip; the rest contribute only text and timing.
+    Q_INVOKABLE void convertSelectionToSubtitle();
     Q_INVOKABLE bool canSeparateAudioSelection() const;
     Q_INVOKABLE void separateAudioFromSelection();
 

@@ -1303,6 +1303,18 @@ Item {
                     enabled: clipContextMenu.canMergeTrackSubtitles
                     onTriggered: EditorState.mergeAllSubtitlesOnTrack(clipItem.trackIndex)
                 }
+                ThemedMenuItem {
+                    text: qsTr("Convert to text clips")
+                    icon.name: Theme.icons.type
+                    visible: clipItem.trackType === "subtitle"
+                    onTriggered: EditorState.convertSubtitleToTextClips(clipItem.trackIndex, clipItem.clipIndex)
+                }
+                ThemedMenuItem {
+                    text: qsTr("Convert to subtitle")
+                    icon.name: Theme.icons.captions
+                    visible: clipItem.trackType === "text" && EditorState.textToSubtitleAvailable
+                    onTriggered: clipItem.panel.requestConvertTextToSubtitle()
+                }
                 ThemedMenuSeparator { }
                 ThemedMenuItem {
                     text: qsTr("Cut")

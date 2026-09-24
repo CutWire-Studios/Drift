@@ -15209,6 +15209,172 @@ void AppController::mergeSubtitleClipsAt(int trackIndex, QList<int> clipIndices)
     selectClip(trackIndex, insertAt);
 }
 
+void AppController::convertSubtitleToTextClips(int trackIndex, int clipIndex)
+{
+    if (!isValidClipIndex(trackIndex, clipIndex))
+        return;
+    const drift::Clip subtitle = m_project.tracks().at(trackIndex).clips.at(clipIndex);
+    if (subtitle.type != drift::ClipType::Subtitle)
+        return;
+
+    QList<drift::SubtitleCue> cues = subtitle.subtitleCues;
+    drift::sortSubtitleCues(cues);
+    QList<drift::Clip> texts;
+    for (const drift::SubtitleCue &cue : cues) {
+        if (cue.text.trimmed().isEmpty())
+            continue;
+        const drift::TimeUs startUs = qMax<drift::TimeUs>(cue.startUs, 0);
+        const drift::TimeUs endUs = qMin(cue.endUs, subtitle.timelineDuration);
+        if (endUs <= startUs)
+            continue;
+
+        // Built by hand rather than with sliceClipToTimelineRange: its split refuses cuts closer
+        // than kMinClipDurationUs to an edge, which would drop cues that start right at the clip's
+        // head or are very short.
+        drift::Clip text = subtitle;
+        text.id = QUuid::createUuid().toString(QUuid::WithoutBraces);
+        text.type = drift::ClipType::Text;
+        text.subtitleCues.clear();
+        text.textContent = cue.text;
+        text.name = cue.text.left(32);
+        text.timelineStart = subtitle.timelineStart + startUs;
+        text.timelineDuration = endUs - startUs;
+        text.srcIn = 0;
+        text.srcOut = text.timelineDuration;
+        drift::rebaseKeyframesForSplitTail(text, startUs);
+        // The subtitle's own fades and intro/outro belong to its outer edges only.
+        if (startUs > 0) {
+            text.fadeInUs = 0;
+            text.animIn = drift::ClipAnimation{};
+        }
+        if (endUs < subtitle.timelineDuration) {
+            text.fadeOutUs = 0;
+            text.animOut = drift::ClipAnimation{};
+        }
+        text.fadeInUs = qMin(text.fadeInUs, text.timelineDuration);
+        text.fadeOutUs = qMin(text.fadeOutUs, text.timelineDuration);
+        texts.append(text);
+    }
+    if (texts.isEmpty()) {
+        setLastMessage(tr("This subtitle clip has no captions"), QStringLiteral("warning"));
+        return;
+    }
+
+    setPlaying(false);
+    const drift::Project before = m_project;
+    m_project.tracks()[trackIndex].clips.removeAt(clipIndex);
+    for (drift::Track &track : m_project.tracks()) {
+        for (int i = track.transitions.size() - 1; i >= 0; --i) {
+            const drift::Transition &transition = track.transitions.at(i);
+            if (transition.fromClipId == subtitle.id || transition.toClipId == subtitle.id)
+                track.transitions.removeAt(i);
+        }
+    }
+
+    const int textTrack = drift::ensureFreeTrackForClipType(
+        m_project, drift::ClipType::Text, subtitle.timelineStart, subtitle.timelineDuration, true);
+    if (textTrack < 0)
+        return;
+    drift::Track &track = m_project.tracks()[textTrack];
+    const int firstIndex = track.clips.size();
+    track.clips.append(texts);
+
+    pushProjectEdit(before, tr("Subtitles converted to text"));
+    clearSelection();
+    finishEdit(tr("Subtitles converted to text"));
+    selectClip(textTrack, firstIndex);
+    setLastMessage(tr("Created %n text clips", "", int(texts.size())), QStringLiteral("success"));
+}
+
+bool AppController::canConvertSelectionToSubtitle() const
+{
+    QList<QPair<int, int>> pairs = m_selection;
+    if (pairs.isEmpty() && m_selectedTrack >= 0 && m_selectedClip >= 0)
+        pairs.append(qMakePair(m_selectedTrack, m_selectedClip));
+    if (pairs.isEmpty())
+        return false;
+    for (const QPair<int, int> &pair : pairs) {
+        if (!isValidClipIndex(pair.first, pair.second)
+            || m_project.tracks().at(pair.first).clips.at(pair.second).type != drift::ClipType::Text)
+            return false;
+    }
+    return true;
+}
+
+void AppController::convertSelectionToSubtitle()
+{
+    if (!canConvertSelectionToSubtitle())
+        return;
+
+    QList<QPair<int, int>> pairs = m_selection;
+    if (pairs.isEmpty())
+        pairs.append(qMakePair(m_selectedTrack, m_selectedClip));
+
+    QList<drift::Clip> texts;
+    QSet<QString> ids;
+    for (const QPair<int, int> &pair : pairs) {
+        const drift::Clip &clip = m_project.tracks().at(pair.first).clips.at(pair.second);
+        if (ids.contains(clip.id))
+            continue;
+        ids.insert(clip.id);
+        texts.append(clip);
+    }
+    std::stable_sort(texts.begin(), texts.end(), [](const drift::Clip &a, const drift::Clip &b) {
+        return a.timelineStart < b.timelineStart;
+    });
+
+    const drift::Clip &first = texts.first();
+    drift::TimeUs endUs = first.timelineEnd();
+    for (const drift::Clip &text : texts)
+        endUs = qMax(endUs, text.timelineEnd());
+
+    QList<drift::SubtitleCue> cues;
+    for (const drift::Clip &text : texts) {
+        drift::SubtitleCue cue;
+        cue.startUs = text.timelineStart - first.timelineStart;
+        cue.endUs = text.timelineEnd() - first.timelineStart;
+        cue.text = text.textContent.isEmpty() ? text.name : text.textContent;
+        cues.append(cue);
+    }
+
+    drift::Clip subtitle = first;
+    subtitle.id = QUuid::createUuid().toString(QUuid::WithoutBraces);
+    subtitle.type = drift::ClipType::Subtitle;
+    subtitle.textContent.clear();
+    subtitle.subtitleCues = cues;
+    subtitle.name = drift::subtitleClipName(cues);
+    subtitle.timelineDuration = endUs - first.timelineStart;
+    subtitle.srcIn = 0;
+    subtitle.srcOut = subtitle.timelineDuration;
+
+    setPlaying(false);
+    const drift::Project before = m_project;
+    for (drift::Track &track : m_project.tracks()) {
+        for (int i = track.clips.size() - 1; i >= 0; --i) {
+            if (ids.contains(track.clips.at(i).id))
+                track.clips.removeAt(i);
+        }
+        for (int i = track.transitions.size() - 1; i >= 0; --i) {
+            const drift::Transition &transition = track.transitions.at(i);
+            if (ids.contains(transition.fromClipId) || ids.contains(transition.toClipId))
+                track.transitions.removeAt(i);
+        }
+    }
+
+    const int subtitleTrack = drift::ensureFreeTrackForClipType(
+        m_project, drift::ClipType::Subtitle, subtitle.timelineStart, subtitle.timelineDuration, true);
+    if (subtitleTrack < 0)
+        return;
+    drift::Track &track = m_project.tracks()[subtitleTrack];
+    track.clips.append(subtitle);
+    const int subtitleIndex = track.clips.size() - 1;
+
+    pushProjectEdit(before, tr("Text converted to subtitles"));
+    clearSelection();
+    finishEdit(tr("Text converted to subtitles"));
+    selectClip(subtitleTrack, subtitleIndex);
+}
+
 bool AppController::canSeparateAudioSelection() const
 {
     QList<QPair<int, int>> pairs = m_selection;
