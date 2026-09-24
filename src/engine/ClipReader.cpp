@@ -1,5 +1,6 @@
 #include "ClipReader.h"
 
+#include "GlRuntime.h"
 #include "GpuCompositor.h"
 #include "HwAccel.h"
 #include "MediaProbe.h"
@@ -1033,6 +1034,21 @@ constexpr double kHwAccelMinKbitPerFrame = 250.0;
 // 1080p60 sits just over this; 1080p30 and 720p60 sit under it.
 constexpr double kHwAccelMinPixelsPerSecond = 1920.0 * 1080.0 * 50.0;
 
+// The heuristic in hardwareDecodeIsWorthIt() weighs decode cost against reading a GPU frame
+// back to the CPU. Once a frame on this machine has gone straight from the decoder into the
+// compositor with no importer declining, that readback is gone, and hardware decode is the
+// cheaper path for light clips too — it takes the work off the CPU entirely. Evidence rather
+// than prediction: until a heavy clip has proved the path, the heuristic stands, and the first
+// decline withdraws it again.
+bool ClipReader::zeroCopyProven()
+{
+    using Path = drift::gl::GlRuntime::PreviewUploadPath;
+    const Path path = drift::gl::GlRuntime::lastPreviewUploadPath();
+    const bool zeroCopy =
+        path == Path::CudaInterop || path == Path::VaapiDmaBuf || path == Path::D3d11Interop;
+    return zeroCopy && drift::gl::GlRuntime::lastZeroCopyDeclineReason().isEmpty();
+}
+
 bool ClipReader::hardwareDecodeIsWorthIt() const
 {
     const AVStream *stream = m_fmt->streams[m_videoStream];
@@ -1179,7 +1195,7 @@ bool ClipReader::tryOpenHardwareDecoder()
     const HardwareDecodeMode mode = hardwareDecodeMode();
     if (mode == HardwareDecodeMode::Software)
         return false;
-    if (mode == HardwareDecodeMode::Auto && !hardwareDecodeIsWorthIt())
+    if (mode == HardwareDecodeMode::Auto && !hardwareDecodeIsWorthIt() && !zeroCopyProven())
         return false;
     // Sandy/Ivy Intel: D3D11VA decode plus a CPU preview upload is slower than
     // software and is the path that published empty NV12 (solid green) on HD 2500.

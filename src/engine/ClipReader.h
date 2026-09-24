@@ -132,6 +132,7 @@ public:
     // How many video streams the current composite reads at once. Software decoders opened
     // after this split the machine's cores between them instead of each taking all of them.
     static void setActiveVideoStreams(int count);
+    static bool zeroCopyProven();
     // Why the most recent of those happened: backend, codec, the failing call's error and the
     // last error FFmpeg logged. Empty while nothing has fallen back.
     static QString lastHardwareFailure();
