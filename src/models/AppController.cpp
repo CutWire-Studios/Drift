@@ -942,7 +942,9 @@ AppController::AppController(AssetLibrary *assetLibrary, QObject *parent)
     connect(&m_playback, &PlaybackEngine::playingChanged, this, [this] {
         if (!m_playback.isPlaying() && m_playing) {
             m_playing = false;
+            m_playheadUs = m_playback.playheadUs();
             emit playingChanged();
+            emit playheadSecondsChanged();
         }
     });
     // The extra snap targets are the beat grid, the bookmarks and the work area — none of which
@@ -1037,7 +1039,7 @@ AppController::AppController(AssetLibrary *assetLibrary, QObject *parent)
     m_timelineOverviewVisible =
         settings.value(QStringLiteral("ui/timelineOverviewVisible"), false).toBool();
     m_audioMixerVisible =
-        settings.value(QStringLiteral("ui/audioMixerVisible"), true).toBool();
+        settings.value(QStringLiteral("ui/audioMixerVisible"), false).toBool();
     m_trackLabelsWidth = qBound(110.0,
         settings.value(QStringLiteral("ui/trackLabelsWidth"), 130.0).toDouble(), 320.0);
     m_timelineToolbarItems = settings.value(QStringLiteral("ui/timelineToolbarItems")).toStringList();
@@ -5583,7 +5585,7 @@ void AppController::setPlaying(bool playing)
             const drift::TimeUs loopOut = m_project.workAreaOutUs();
             if (m_playheadUs >= loopOut || m_playheadUs < loopIn)
                 setPlayheadUs(loopIn);
-        } else if (m_playheadUs >= durationUs && durationUs > 0) {
+        } else if (!m_playback.isVoiceoverRecording() && m_playheadUs >= durationUs && durationUs > 0) {
             setPlayheadUs(0);
         }
         m_playback.setPlayheadUs(m_playheadUs);
@@ -6284,7 +6286,7 @@ void AppController::pauseAudioRecording()
         return;
 
     m_audioRecorder.pause();
-    if (m_playing) {
+    if (m_playback.isPlaying() || m_playing) {
         m_playing = false;
         m_playback.pause();
         emit playingChanged();
@@ -6366,14 +6368,18 @@ void AppController::stopAudioRecording()
     const QString recordedPath = m_audioRecorder.stopRecording(&recordedDurationUs);
 
     m_playback.setVoiceoverRecording(false);
-    if (m_playing) {
-        setPlaying(false);
+    if (m_playback.isPlaying() || m_playing) {
+        m_playing = false;
+        m_playback.pause();
+        emit playingChanged();
+        syncTextOverlaySkip();
     }
 
     if (recordedPath.isEmpty() || recordedDurationUs < drift::secondsToUs(0.2)) {
         if (!recordedPath.isEmpty()) {
             QFile::remove(recordedPath);
         }
+        setPlayheadUs(m_recordingStartPlayheadUs);
         setLastMessage(tr("Audio recording cancelled (too short)"), QStringLiteral("info"));
         return;
     }
@@ -6396,6 +6402,10 @@ void AppController::stopAudioRecording()
     m_project.tracks()[trackIndex].clips.append(clip);
     const int newClipIndex = m_project.tracks().at(trackIndex).clips.size() - 1;
 
+    // Park playhead cleanly right at the end of the recorded clip
+    const drift::TimeUs endPlayheadUs = m_recordingStartPlayheadUs + recordedDurationUs;
+    setPlayheadUs(endPlayheadUs);
+
     pushProjectEdit(before, tr("Record audio"));
     finishEdit(tr("Recorded voiceover"));
     selectClip(trackIndex, newClipIndex);
@@ -6410,7 +6420,7 @@ void AppController::cancelAudioRecording()
     m_audioRecorder.cancelRecording();
     m_playback.setVoiceoverRecording(false);
 
-    if (m_playing) {
+    if (m_playback.isPlaying() || m_playing) {
         m_playing = false;
         m_playback.pause();
         emit playingChanged();
@@ -22841,6 +22851,7 @@ void AppController::newProject(bool silent)
     m_allowClipOverlap = false;
     setLoopWorkAreaEnabled(false);
     setMediaGridMode(true);
+    setAudioMixerVisible(false);
     setDirty(false);
     deleteRecoveryFile();
     // Always notify — even when already false — so the layout chooser reopens

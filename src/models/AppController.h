@@ -2482,7 +2482,7 @@ protected:
     QString m_mediaViewMode = QStringLiteral("grid");
     bool m_autoKeyEnabled = false;
     bool m_timelineOverviewVisible = false;
-    bool m_audioMixerVisible = true;
+    bool m_audioMixerVisible = false;
     qreal m_trackLabelsWidth = 130;
     QStringList m_timelineToolbarItems;
     QStringList m_timelineMenuItems;

@@ -253,8 +253,11 @@ Rectangle {
             Row {
                 anchors.left: parent.left
                 anchors.leftMargin: 8
+                anchors.right: headerCloseBtn.left
+                anchors.rightMargin: 4
                 anchors.verticalCenter: parent.verticalCenter
                 spacing: 6
+                clip: true
 
                 IconGlyph {
                     glyph: Theme.icons.audioLines
@@ -269,47 +272,21 @@ Rectangle {
                     font.family: Theme.fontFamily
                     font.pixelSize: Theme.fontSizeSm
                     font.bold: true
+                    elide: Text.ElideRight
+                    width: Math.max(0, parent.width - 20)
                     anchors.verticalCenter: parent.verticalCenter
                 }
             }
 
-            Row {
+            IconButton {
+                id: headerCloseBtn
                 anchors.right: parent.right
                 anchors.rightMargin: 4
                 anchors.verticalCenter: parent.verticalCenter
-                spacing: 2
-
-                // Mic settings button
-                IconButton {
-                    glyph: Theme.icons.mic
-                    variant: "text"
-                    tooltip: qsTr("Microphone: %1 (click to switch)").arg(EditorState.currentMicrophoneName)
-                    onClicked: headerMicMenu.popup()
-
-                    ThemedContextMenu {
-                        id: headerMicMenu
-                        implicitWidth: 220
-
-                        Instantiator {
-                            model: EditorState.availableMicrophones
-                            delegate: ThemedMenuItem {
-                                required property var modelData
-                                text: modelData.name
-                                icon.name: modelData.name === EditorState.currentMicrophoneName ? Theme.icons.check : ""
-                                onTriggered: EditorState.selectMicrophone(modelData.id)
-                            }
-                            onObjectAdded: (index, object) => headerMicMenu.insertItem(index, object)
-                            onObjectRemoved: (index, object) => headerMicMenu.removeItem(object)
-                        }
-                    }
-                }
-
-                IconButton {
-                    glyph: Theme.icons.x
-                    variant: "text"
-                    tooltip: qsTr("Close audio mixer")
-                    onClicked: EditorState.audioMixerVisible = false
-                }
+                glyph: Theme.icons.x
+                variant: "text"
+                tooltip: qsTr("Close audio mixer")
+                onClicked: EditorState.audioMixerVisible = false
             }
         }
 
@@ -318,12 +295,12 @@ Rectangle {
             id: voPanel
             visible: EditorState.isRecordingAudio
             width: parent.width
-            height: visible ? 58 : 0
+            height: visible ? 52 : 0
             clip: true
             color: EditorState.isAudioRecordingPaused
-                   ? (Theme.darkMode ? "#2b1e06" : "#fef9c3")
-                   : (Theme.darkMode ? "#2b0d0d" : "#fee2e2")
-            border.color: EditorState.isAudioRecordingPaused ? "#eab308" : Theme.destructive
+                   ? (Theme.darkMode ? Qt.rgba(0.9, 0.7, 0.1, 0.1) : Qt.rgba(0.9, 0.7, 0.1, 0.06))
+                   : (Theme.darkMode ? Qt.rgba(0.9, 0.1, 0.1, 0.08) : Qt.rgba(0.9, 0.1, 0.1, 0.04))
+            border.color: EditorState.isAudioRecordingPaused ? "#eab308" : (Theme.darkMode ? Qt.rgba(0.9, 0.1, 0.1, 0.3) : Qt.rgba(0.9, 0.1, 0.1, 0.2))
             border.width: 1
 
             Behavior on height {
@@ -416,7 +393,7 @@ Rectangle {
                     }
                 }
 
-                // --- Row 2: Microphone Switcher & Mic Gain Slider ---
+                // --- Row 2: Microphone Switcher ---
                 Row {
                     width: parent.width
                     height: 22
@@ -425,7 +402,7 @@ Rectangle {
                     // Microphone Picker Button
                     Item {
                         id: voMicPickerBtn
-                        width: Math.min(130, Math.max(70, voMicPickerRow.implicitWidth + 10))
+                        width: Math.min(parent.width, 180)
                         height: 20
                         anchors.verticalCenter: parent.verticalCenter
 
@@ -440,9 +417,12 @@ Rectangle {
                         }
 
                         Row {
-                            id: voMicPickerRow
-                            anchors.centerIn: parent
-                            spacing: 3
+                            anchors.left: parent.left
+                            anchors.leftMargin: 6
+                            anchors.right: parent.right
+                            anchors.rightMargin: 6
+                            anchors.verticalCenter: parent.verticalCenter
+                            spacing: 4
 
                             IconGlyph {
                                 glyph: Theme.icons.mic
@@ -456,7 +436,7 @@ Rectangle {
                                 font.pixelSize: 10
                                 color: Theme.panelForeground
                                 elide: Text.ElideRight
-                                width: Math.min(85, implicitWidth)
+                                width: Math.max(10, voMicPickerBtn.width - 40)
                                 anchors.verticalCenter: parent.verticalCenter
                             }
 
@@ -498,50 +478,6 @@ Rectangle {
                             text: qsTr("Microphone: %1 (click to switch)").arg(EditorState.currentMicrophoneName)
                         }
                     }
-
-                    // Divider
-                    Rectangle {
-                        width: 1
-                        height: 14
-                        color: Theme.panelBorder
-                        anchors.verticalCenter: parent.verticalCenter
-                    }
-
-                    // Voice Input Gain Slider
-                    Row {
-                        anchors.verticalCenter: parent.verticalCenter
-                        spacing: 3
-
-                        IconGlyph {
-                            glyph: Theme.icons.volumeHigh
-                            iconSize: 11
-                            iconColor: Theme.mutedForeground
-                            anchors.verticalCenter: parent.verticalCenter
-                        }
-
-                        ThemedSlider {
-                            id: voGainSlider
-                            label: qsTr("Mic gain")
-                            width: 60
-                            anchors.verticalCenter: parent.verticalCenter
-                            from: 0.0
-                            to: 2.0
-                            value: EditorState.audioRecordGain
-                            onMoved: EditorState.setAudioRecordGain(value)
-                            valueFormatter: function (v) {
-                                return Math.round(v * 100) + "%"
-                            }
-                        }
-
-                        Text {
-                            text: Math.round(EditorState.audioRecordGain * 100) + "%"
-                            font.family: Theme.monoFontFamily
-                            font.pixelSize: 9
-                            color: Theme.mutedForeground
-                            width: 28
-                            anchors.verticalCenter: parent.verticalCenter
-                        }
-                    }
                 }
             }
         }
@@ -561,6 +497,78 @@ Rectangle {
             Row {
                 id: stripsRow
                 height: parent.height
+
+                // Empty state when no audio tracks exist
+                Item {
+                    id: addTrackEmptyState
+                    visible: root.audioTracksList.length === 0
+                    width: visible ? 62 : 0
+                    height: parent.height
+
+                    Rectangle {
+                        anchors.fill: parent
+                        anchors.margins: 4
+                        radius: 4
+                        color: addTrackMouse.containsMouse ? root.hoverBg : "transparent"
+                        border.color: addTrackMouse.containsMouse ? Theme.primary : Theme.panelBorder
+                        border.width: 1
+
+                        Column {
+                            anchors.centerIn: parent
+                            spacing: 8
+                            width: parent.width - 8
+
+                            Rectangle {
+                                width: 28
+                                height: 28
+                                radius: 14
+                                anchors.horizontalCenter: parent.horizontalCenter
+                                color: addTrackMouse.containsMouse
+                                    ? Qt.rgba(Theme.primary.r, Theme.primary.g, Theme.primary.b, 0.15)
+                                    : Qt.rgba(Theme.panelForeground.r, Theme.panelForeground.g, Theme.panelForeground.b, 0.06)
+
+                                IconGlyph {
+                                    anchors.centerIn: parent
+                                    glyph: Theme.icons.plus
+                                    iconSize: 14
+                                    iconColor: addTrackMouse.containsMouse ? Theme.primary : Theme.mutedForeground
+                                }
+                            }
+
+                            Text {
+                                anchors.horizontalCenter: parent.horizontalCenter
+                                text: qsTr("Add\nAudio\nTrack")
+                                horizontalAlignment: Text.AlignHCenter
+                                font.family: Theme.fontFamily
+                                font.pixelSize: 10
+                                font.bold: true
+                                color: addTrackMouse.containsMouse ? Theme.primary : Theme.mutedForeground
+                                lineHeight: 1.1
+                            }
+                        }
+
+                        ThemedToolTip {
+                            visible: addTrackMouse.containsMouse
+                            text: qsTr("Click to add an audio track")
+                        }
+
+                        MouseArea {
+                            id: addTrackMouse
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: EditorState.addTrack("audio")
+                        }
+                    }
+
+                    // Right border divider
+                    Rectangle {
+                        anchors.right: parent.right
+                        width: 1
+                        height: parent.height
+                        color: Theme.panelBorder
+                    }
+                }
 
                 // Channel strip per audio track
                 Repeater {
@@ -1060,7 +1068,9 @@ Rectangle {
                                         width: 18
                                         height: parent.height
 
-                                        readonly property real curDb: root.linearToDb(trackStrip.trackVol)
+                                        readonly property real curDb: trackStrip.isRecordingHere
+                                            ? root.linearToDb(EditorState.audioRecordGain)
+                                            : root.linearToDb(trackStrip.trackVol)
                                         readonly property real thumbY: (parent.height - 12) * (1.0 - root.dbToRatio(curDb))
 
                                         // Vertical track line
@@ -1073,14 +1083,14 @@ Rectangle {
                                             width: 2
                                             color: Theme.sliderTrack
 
-                                            // Blue fill below thumb
+                                            // Fill below thumb (Red when recording, Blue when normal)
                                             Rectangle {
                                                 anchors.left: parent.left
                                                 anchors.right: parent.right
                                                 anchors.bottom: parent.bottom
                                                 anchors.top: parent.top
                                                 anchors.topMargin: faderItem.thumbY
-                                                color: Theme.primary
+                                                color: trackStrip.isRecordingHere ? Theme.destructive : Theme.primary
                                             }
                                         }
 
@@ -1093,13 +1103,15 @@ Rectangle {
                                             anchors.horizontalCenter: parent.horizontalCenter
                                             y: Math.max(0, Math.min(faderItem.height - height, faderItem.thumbY))
                                             color: faderMouse.pressed
-                                                   ? Theme.primary
+                                                   ? (trackStrip.isRecordingHere ? Theme.destructive : Theme.primary)
                                                    : (faderMouse.containsMouse
                                                       ? (Theme.darkMode ? "#1e293b" : "#f1f5f9")
                                                       : (Theme.darkMode ? "#0f172a" : "#ffffff"))
-                                            border.color: faderMouse.pressed
-                                                          ? Theme.primaryForeground
-                                                          : (Theme.darkMode ? "#64748b" : "#94a3b8")
+                                            border.color: trackStrip.isRecordingHere
+                                                          ? Theme.destructive
+                                                          : (faderMouse.pressed
+                                                             ? Theme.primaryForeground
+                                                             : (Theme.darkMode ? "#64748b" : "#94a3b8"))
                                             border.width: 1.5
 
                                             // Grip groove inside thumb
@@ -1109,7 +1121,7 @@ Rectangle {
                                                 height: 1
                                                 color: faderMouse.pressed
                                                        ? Theme.primaryForeground
-                                                       : (Theme.darkMode ? "#94a3b8" : "#64748b")
+                                                       : (trackStrip.isRecordingHere ? Theme.destructive : (Theme.darkMode ? "#94a3b8" : "#64748b"))
                                             }
                                         }
 
@@ -1126,7 +1138,7 @@ Rectangle {
 
                                             onPressed: (mouse) => {
                                                 startY = mouse.y
-                                                startDb = root.linearToDb(trackStrip.trackVol)
+                                                startDb = faderItem.curDb
                                             }
                                             onPositionChanged: (mouse) => {
                                                 if (pressed) {
@@ -1135,27 +1147,47 @@ Rectangle {
                                                         const yRatio = Math.max(0.0, Math.min(1.0, 1.0 - (mouse.y - 6) / availableH))
                                                         var newDb = root.ratioToDb(yRatio)
                                                         if (Math.abs(newDb) < 0.25) newDb = 0.0
-                                                        EditorState.previewTrackVolume(trackStrip.trackIndex, root.dbToLinear(newDb))
+                                                        if (trackStrip.isRecordingHere) {
+                                                            EditorState.setAudioRecordGain(root.dbToLinear(newDb))
+                                                        } else {
+                                                            EditorState.previewTrackVolume(trackStrip.trackIndex, root.dbToLinear(newDb))
+                                                        }
                                                     }
                                                 }
                                             }
                                             onReleased: {
-                                                EditorState.setTrackVolume(trackStrip.trackIndex, trackStrip.trackVol)
+                                                if (!trackStrip.isRecordingHere) {
+                                                    EditorState.setTrackVolume(trackStrip.trackIndex, trackStrip.trackVol)
+                                                }
                                             }
                                             onDoubleClicked: {
-                                                EditorState.setTrackVolume(trackStrip.trackIndex, 1.0)
+                                                if (trackStrip.isRecordingHere) {
+                                                    EditorState.setAudioRecordGain(1.0)
+                                                } else {
+                                                    EditorState.setTrackVolume(trackStrip.trackIndex, 1.0)
+                                                }
                                             }
                                             onWheel: (wheel) => {
                                                 const step = wheel.angleDelta.y > 0 ? 0.5 : -0.5
-                                                var d = root.linearToDb(trackStrip.trackVol) + step
-                                                if (Math.abs(d) < 0.25) d = 0.0
-                                                EditorState.setTrackVolume(trackStrip.trackIndex, root.dbToLinear(d))
+                                                if (trackStrip.isRecordingHere) {
+                                                    var d = root.linearToDb(EditorState.audioRecordGain) + step
+                                                    if (Math.abs(d) < 0.25) d = 0.0
+                                                    EditorState.setAudioRecordGain(root.dbToLinear(d))
+                                                } else {
+                                                    var d = root.linearToDb(trackStrip.trackVol) + step
+                                                    if (Math.abs(d) < 0.25) d = 0.0
+                                                    EditorState.setTrackVolume(trackStrip.trackIndex, root.dbToLinear(d))
+                                                }
                                             }
                                         }
 
                                         ThemedToolTip {
                                             visible: faderMouse.containsMouse
-                                            text: qsTr("Volume: %1 (double-click to reset 0dB)").arg(root.formatDb(root.linearToDb(trackStrip.trackVol)))
+                                            text: trackStrip.isRecordingHere
+                                                ? qsTr("Mic Recording Gain: %1 (%2%) — scroll to adjust, double-click to reset 0dB")
+                                                    .arg(root.formatDb(faderItem.curDb))
+                                                    .arg(Math.round(EditorState.audioRecordGain * 100))
+                                                : qsTr("Volume: %1 (double-click to reset 0dB)").arg(root.formatDb(faderItem.curDb))
                                         }
                                     }
                                 }
@@ -1178,7 +1210,9 @@ Rectangle {
                                 }
 
                                 Text {
-                                    readonly property real db: root.linearToDb(trackStrip.trackVol)
+                                    readonly property real db: trackStrip.isRecordingHere
+                                        ? root.linearToDb(EditorState.audioRecordGain)
+                                        : root.linearToDb(trackStrip.trackVol)
                                     anchors.left: parent.left
                                     anchors.leftMargin: 3
                                     anchors.verticalCenter: parent.verticalCenter
@@ -1186,7 +1220,9 @@ Rectangle {
                                     font.family: Theme.monoFontFamily
                                     font.pixelSize: 9
                                     font.bold: true
-                                    color: db > 0.05 ? Theme.destructive : Theme.panelForeground
+                                    color: trackStrip.isRecordingHere
+                                           ? Theme.destructive
+                                           : (db > 0.05 ? Theme.destructive : Theme.panelForeground)
                                 }
 
                                 Column {
@@ -1212,18 +1248,32 @@ Rectangle {
                                     anchors.fill: parent
                                     hoverEnabled: true
                                     cursorShape: Qt.PointingHandCursor
-                                    onDoubleClicked: EditorState.setTrackVolume(trackStrip.trackIndex, 1.0)
+                                    onDoubleClicked: {
+                                        if (trackStrip.isRecordingHere) {
+                                            EditorState.setAudioRecordGain(1.0)
+                                        } else {
+                                            EditorState.setTrackVolume(trackStrip.trackIndex, 1.0)
+                                        }
+                                    }
                                     onWheel: (wheel) => {
                                         const step = wheel.angleDelta.y > 0 ? 0.5 : -0.5
-                                        var d = root.linearToDb(trackStrip.trackVol) + step
-                                        if (Math.abs(d) < 0.25) d = 0.0
-                                        EditorState.setTrackVolume(trackStrip.trackIndex, root.dbToLinear(d))
+                                        if (trackStrip.isRecordingHere) {
+                                            var d = root.linearToDb(EditorState.audioRecordGain) + step
+                                            if (Math.abs(d) < 0.25) d = 0.0
+                                            EditorState.setAudioRecordGain(root.dbToLinear(d))
+                                        } else {
+                                            var d = root.linearToDb(trackStrip.trackVol) + step
+                                            if (Math.abs(d) < 0.25) d = 0.0
+                                            EditorState.setTrackVolume(trackStrip.trackIndex, root.dbToLinear(d))
+                                        }
                                     }
                                 }
 
                                 ThemedToolTip {
                                     visible: dbReadoutMouse.containsMouse
-                                    text: qsTr("Track level in dB — scroll to adjust, double-click to reset to 0dB")
+                                    text: trackStrip.isRecordingHere
+                                        ? qsTr("Mic recording level in dB — scroll to adjust, double-click to reset to 0dB (100%)")
+                                        : qsTr("Track level in dB — scroll to adjust, double-click to reset to 0dB")
                                 }
                             }
                         }

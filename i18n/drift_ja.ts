@@ -1392,7 +1392,11 @@
         <translation>削除</translation>
     </message>
     <message>
-        <source>Recording %1s</source>
+        <source>PAUSED </source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>REC </source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -3073,6 +3077,34 @@
         <translation>トランジションを更新しました</translation>
     </message>
     <message>
+        <source>Track solo</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Track soloed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Track unsoloed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Track volume</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Track volume changed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Track pan</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Track pan changed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Keep ranges</source>
         <translation type="unfinished"></translation>
     </message>
@@ -4425,6 +4457,121 @@
     <message>
         <source>Download speech recognition (about 670 MB)</source>
         <translation>音声認識をダウンロード (約 670 MB)</translation>
+    </message>
+</context>
+<context>
+    <name>AudioMixerStrip</name>
+    <message>
+        <source>Audio Mixer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Microphone: %1 (click to switch)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Close audio mixer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>PAUSED</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>REC</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Resume recording</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Pause recording</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Done — save recording to track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Discard — cancel recording</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Default Mic</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source> (Recording)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Unmute</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Mute</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Unsolo</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Solo</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Recording paused — click to finish</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Recording — click to finish</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Record voiceover on %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Pan: %1 (double-click to center)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Mic Recording Gain: %1 (%2%) — scroll to adjust, double-click to reset 0dB</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Volume: %1 (double-click to reset 0dB)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Mic recording level in dB — scroll to adjust, double-click to reset to 0dB (100%)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Track level in dB — scroll to adjust, double-click to reset to 0dB</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Master</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Unmute master</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Mute master</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Main</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Master Volume: %1 (double-click to reset 0dB)</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -7918,6 +8065,10 @@
     <name>PreviewPanel</name>
     <message>
         <source>REC %1s</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>PAUSED %1s</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -11532,7 +11683,11 @@ If playback stutters, try another.</source>
         <translation type="unfinished">インポート中…</translation>
     </message>
     <message>
-        <source>Recording %1s</source>
+        <source>PAUSED </source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>REC </source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -11684,6 +11839,10 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>No composite clips yet</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Toggle audio mixer strip</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -11886,10 +12045,6 @@ If playback stutters, try another.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Stop recording voiceover</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Record voiceover (mic)</source>
         <translation type="unfinished"></translation>
     </message>
@@ -11920,6 +12075,14 @@ If playback stutters, try another.</source>
     <message>
         <source>Drag the header to reorder this track</source>
         <translation>ヘッダーをドラッグしてこのトラックの順序を変更</translation>
+    </message>
+    <message>
+        <source>Paused — click to finish recording</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Recording — click to finish recording</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Unmute track</source>
@@ -12541,6 +12704,53 @@ If playback stutters, try another.</source>
     <message>
         <source>Close</source>
         <translation>閉じる</translation>
+    </message>
+</context>
+<context>
+    <name>VoiceoverControlBar</name>
+    <message>
+        <source>PAUSED</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>REC</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Default Mic</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Input microphone: %1 (click to switch)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Mic gain</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Voice input gain: %1% (adjust voice level)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Live voice level: %1%</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Resume recording</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Pause recording</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Done — finish recording and save to track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cancel — discard recording</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>

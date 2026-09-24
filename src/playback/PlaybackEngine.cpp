@@ -751,9 +751,8 @@ void PlaybackEngine::pause()
     m_playheadUs = m_clock.pausedAt();
     m_mixer.resetClipAudioState();
     m_audioStreamGeneration.fetch_add(1, std::memory_order_release);
-    m_audio.stop();
-    emit playingChanged();
     emit playheadUsChanged(static_cast<quint64>(m_playheadUs));
+    emit playingChanged();
     refreshFrame();
 }
 
