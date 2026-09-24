@@ -9416,7 +9416,7 @@ bool AppController::sceneGraphTimeline() const
         QString choice = qEnvironmentVariable("DRIFT_TIMELINE_RENDERER");
         if (choice.isEmpty())
             choice = QSettings().value(QStringLiteral("timeline/renderer")).toString();
-        return choice.compare(QStringLiteral("scenegraph"), Qt::CaseInsensitive) == 0;
+        return choice.compare(QStringLiteral("legacy"), Qt::CaseInsensitive) != 0;
     }();
     return enabled;
 }

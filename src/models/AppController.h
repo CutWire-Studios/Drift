@@ -123,7 +123,7 @@ class AppController : public QObject
     Q_PROPERTY(double inspectorPlayheadSeconds READ playheadSeconds NOTIFY inspectorPlayheadChanged)
     // Which timeline clip renderer the panels build: the scene-graph one (TimelineTrackClips) or
     // the per-clip QML delegates. Read once at startup, from DRIFT_TIMELINE_RENDERER or the
-    // timeline/renderer setting ("scenegraph" / "legacy").
+    // timeline/renderer setting. Scene graph unless either says "legacy".
     Q_PROPERTY(bool sceneGraphTimeline READ sceneGraphTimeline CONSTANT)
     Q_PROPERTY(double durationSeconds READ durationSeconds NOTIFY tracksChanged)
     Q_PROPERTY(bool playing READ playing WRITE setPlaying NOTIFY playingChanged)
