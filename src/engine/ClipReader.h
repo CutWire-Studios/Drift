@@ -129,6 +129,9 @@ public:
     // Times a reader gave up on hardware mid-decode and went sticky-software. Silent
     // otherwise: the preview just gets slower and nothing says why.
     static quint64 hardwareFallbackCount();
+    // How many video streams the current composite reads at once. Software decoders opened
+    // after this split the machine's cores between them instead of each taking all of them.
+    static void setActiveVideoStreams(int count);
     // Why the most recent of those happened: backend, codec, the failing call's error and the
     // last error FFmpeg logged. Empty while nothing has fallen back.
     static QString lastHardwareFailure();
@@ -369,8 +372,10 @@ private:
     // Software read-ahead is held in RAM on top of the history above, so the depth
     // is capped by bytes as well as by time: the same 2 s is 60 frames of a 25 fps
     // 720p clip (~83 MB) but only a handful of 4K ones.
-    static constexpr qsizetype kPreviewCacheByteBudget = 128 * 1024 * 1024;
-    static constexpr int kMaxReadAheadFrames = 300;
+    // The byte budget is process-wide and sized from physical memory (see
+    // previewCacheBudgetBytes()), divided between the readers that currently read ahead.
+    bool m_countsForReadAhead = false;
+    void updateReadAheadCount();
     // Floor on the history slots even when the byte budget is tighter than they are. It shrinks
     // with the share so several readers on one path cannot each hold a full history.
     static constexpr int kMinCachedFrames = 4;

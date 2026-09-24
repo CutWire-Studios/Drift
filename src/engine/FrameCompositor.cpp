@@ -1364,8 +1364,9 @@ bool FrameCompositor::prepare(drift::TimeUs timelineUs, const RenderOptions &opt
 
     // Start every clip's decode before compositing anything, so they run in
     // parallel across the per-path worker threads rather than serially below.
-    ClipReaderPool::instance().warmVideoFrames(
-        collectVideoRequests(m_project, timelineUs, width, height));
+    const auto videoRequests = collectVideoRequests(m_project, timelineUs, width, height);
+    ClipReader::setActiveVideoStreams(int(videoRequests.size()));
+    ClipReaderPool::instance().warmVideoFrames(videoRequests);
 
     *widthOut = width;
     *heightOut = height;

@@ -15,6 +15,16 @@
 #include <QStandardPaths>
 #include <QMutex>
 #include <QMutexLocker>
+#include <QThread>
+
+#if defined(Q_OS_WIN)
+#include <windows.h>
+#elif defined(Q_OS_MACOS)
+#include <sys/sysctl.h>
+#include <sys/types.h>
+#elif defined(Q_OS_UNIX)
+#include <unistd.h>
+#endif
 
 #include <atomic>
 #include <cstdarg>
@@ -393,6 +403,7 @@ void ClipReader::teardownVideoDecoder()
     m_decodeH = 0;
     m_videoCache.clear();
     m_previewCache.clear();
+    updateReadAheadCount();
 }
 
 QSize ClipReader::decodeSizeFor(int maxWidth, int maxHeight) const
@@ -688,6 +699,66 @@ bool ClipReader::lookupCachedPreview(drift::TimeUs sourceUs, PreviewVideoFrame &
     return out.isValid();
 }
 
+namespace {
+
+// Readers currently holding read-ahead. The preview cache budget is split between them.
+std::atomic<int> g_readAheadReaders{0};
+std::atomic<int> g_activeVideoStreams{1};
+
+qint64 physicalMemoryBytes()
+{
+#if defined(Q_OS_WIN)
+    MEMORYSTATUSEX status;
+    status.dwLength = sizeof(status);
+    if (GlobalMemoryStatusEx(&status))
+        return qint64(status.ullTotalPhys);
+#elif defined(Q_OS_MACOS)
+    int64_t bytes = 0;
+    size_t size = sizeof(bytes);
+    if (sysctlbyname("hw.memsize", &bytes, &size, nullptr, 0) == 0)
+        return bytes;
+#elif defined(Q_OS_UNIX)
+    const long pages = sysconf(_SC_PHYS_PAGES);
+    const long pageSize = sysconf(_SC_PAGE_SIZE);
+    if (pages > 0 && pageSize > 0)
+        return qint64(pages) * pageSize;
+#endif
+    return 0;
+}
+
+// Decoded frames held for preview, across every reader. An eighth of physical memory (a
+// sixteenth on Android, which shares it with the GPU and everything else on the phone), never
+// less than the old fixed 128 MB: that figure was ~10 frames of 4K and left no read-ahead at all.
+qsizetype previewCacheBudgetBytes()
+{
+    static const qsizetype budget = [] {
+        constexpr qsizetype floor = 128ll * 1024 * 1024;
+#ifdef Q_OS_ANDROID
+        constexpr int divisor = 16;
+#else
+        constexpr int divisor = 8;
+#endif
+        return qMax<qsizetype>(floor, physicalMemoryBytes() / divisor);
+    }();
+    return budget;
+}
+
+} // namespace
+
+void ClipReader::setActiveVideoStreams(int count)
+{
+    g_activeVideoStreams.store(qMax(1, count), std::memory_order_relaxed);
+}
+
+void ClipReader::updateReadAheadCount()
+{
+    const bool counts = m_readAheadUs > 0 && m_videoCtx;
+    if (counts == m_countsForReadAhead)
+        return;
+    m_countsForReadAhead = counts;
+    g_readAheadReaders.fetch_add(counts ? 1 : -1, std::memory_order_relaxed);
+}
+
 void ClipReader::storeCachedPreview(drift::TimeUs ptsUs, const PreviewVideoFrame &frame)
 {
     if (!frame.isValid())
@@ -741,9 +812,9 @@ int ClipReader::previewCacheCapacity() const
     if (m_readAheadUs <= 0 || m_sourceFrameDurationUs <= 0)
         return kMaxCachedFrames;
 
-    const int aheadFrames =
-        qBound(0, static_cast<int>(m_readAheadUs / m_sourceFrameDurationUs), kMaxReadAheadFrames);
-    int capacity = historyFrames + aheadFrames;
+    // Bounded by bytes below, not by a frame count.
+    const qsizetype aheadFrames = qMax<qsizetype>(0, m_readAheadUs / m_sourceFrameDurationUs);
+    qsizetype capacity = historyFrames + aheadFrames;
 
     qsizetype frameBytes = 0;
     if (!m_previewCache.isEmpty() && m_previewCache.constFirst().frame.frame) {
@@ -751,10 +822,11 @@ int ClipReader::previewCacheCapacity() const
         frameBytes = av_image_get_buffer_size(static_cast<AVPixelFormat>(f->format), f->width, f->height, 1);
     }
     if (frameBytes > 0) {
-        const qsizetype budget = kPreviewCacheByteBudget / m_previewCacheShares;
+        const int readers = qMax(1, g_readAheadReaders.load(std::memory_order_relaxed));
+        const qsizetype budget = previewCacheBudgetBytes() / readers;
         capacity = qMin<qsizetype>(capacity, qMax<qsizetype>(historyFrames, budget / frameBytes));
     }
-    return capacity;
+    return int(qMin<qsizetype>(capacity, std::numeric_limits<int>::max()));
 }
 
 void ClipReader::trimPreviewCache()
@@ -786,6 +858,10 @@ bool ClipReader::wantsMorePreviewReadAhead() const
 
 void ClipReader::close()
 {
+    if (m_countsForReadAhead) {
+        m_countsForReadAhead = false;
+        g_readAheadReaders.fetch_sub(1, std::memory_order_relaxed);
+    }
     if (m_swr)
         swr_free(&m_swr);
 
@@ -926,10 +1002,13 @@ bool ClipReader::openSoftwareVideoDecoder()
         return false;
     }
 
-    // 0 lets libavcodec size the pool (typically one worker per core). Caps used
-    // to leave 4K software decode short of realtime; overlapping readers can
-    // still oversubscribe, which is preferable to stuttering a single clip.
-    m_videoCtx->thread_count = 0;
+    // The cores split between the streams the timeline is reading at once, never under two
+    // each. One stream still gets every core — caps used to leave 4K software decode short of
+    // realtime — but five overlapping clips each spawning a thread per core oversubscribed the
+    // machine several times over, and every extra frame thread is another frame of latency.
+    const int cores = qMax(1, QThread::idealThreadCount());
+    const int streams = g_activeVideoStreams.load(std::memory_order_relaxed);
+    m_videoCtx->thread_count = qBound(qMin(2, cores), cores / streams, cores);
     m_videoCtx->thread_type = FF_THREAD_FRAME | FF_THREAD_SLICE;
 
     if (avcodec_open2(m_videoCtx, codec, nullptr) < 0) {
@@ -2165,6 +2244,7 @@ void ClipReader::prefetchNextVideoFrame(int maxWidth, int maxHeight)
 bool ClipReader::prefetchNextPreviewVideoFrame(int maxWidth, int maxHeight, drift::TimeUs readAheadUs)
 {
     m_readAheadUs = qMax<drift::TimeUs>(0, readAheadUs);
+    updateReadAheadCount();
     trimPreviewCache();
 
     if (!m_videoPositioned || m_sourceFrameDurationUs <= 0)
