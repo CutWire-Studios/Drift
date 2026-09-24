@@ -1932,21 +1932,13 @@ void logMediaCodecImportOnce(const char *reason)
 void GlRuntime::destroyVideoUploadState()
 {
     m_videoSourceLru.clear();
-    unregisterCudaResources();
     auto *gl = functions();
+    releaseUploadSlots(gl);
     if (gl) {
 #if defined(Q_OS_WIN)
         if (m_d3d11)
             m_d3d11->release(gl);
 #endif
-        if (m_videoY) {
-            gl->glDeleteTextures(1, &m_videoY);
-            m_videoY = 0;
-        }
-        if (m_videoUV) {
-            gl->glDeleteTextures(1, &m_videoUV);
-            m_videoUV = 0;
-        }
         if (m_videoRgba) {
             gl->glDeleteTextures(1, &m_videoRgba);
             m_videoRgba = 0;
@@ -2001,19 +1993,100 @@ void GlRuntime::destroyVideoUploadState()
     m_importSws = nullptr;
 }
 
+void GlRuntime::stashCurrentUploadSlot()
+{
+    if (m_currentUploadSlot < 0 || m_currentUploadSlot >= int(m_uploadSlots.size()))
+        return;
+    VideoUploadSlot &slot = m_uploadSlots[m_currentUploadSlot];
+    slot.cudaY = m_cudaYResource;
+    slot.cudaUv = m_cudaUvResource;
+    slot.cudaDevice = m_cudaResourceDevice;
+    slot.cudaW = m_cudaTexW;
+    slot.cudaH = m_cudaTexH;
+}
+
+void GlRuntime::selectUploadSlot(int index)
+{
+    stashCurrentUploadSlot();
+    m_currentUploadSlot = index;
+    if (index < 0) {
+        m_videoY = m_videoUV = 0;
+        m_videoTexW = m_videoTexH = 0;
+        m_cudaYResource = m_cudaUvResource = nullptr;
+        m_cudaResourceDevice = nullptr;
+        m_cudaTexW = m_cudaTexH = 0;
+        return;
+    }
+    VideoUploadSlot &slot = m_uploadSlots[index];
+    slot.lastUse = ++m_uploadUseCounter;
+    m_videoY = slot.y;
+    m_videoUV = slot.uv;
+    m_videoTexW = slot.w;
+    m_videoTexH = slot.h;
+    m_cudaYResource = slot.cudaY;
+    m_cudaUvResource = slot.cudaUv;
+    m_cudaResourceDevice = slot.cudaDevice;
+    m_cudaTexW = slot.cudaW;
+    m_cudaTexH = slot.cudaH;
+}
+
+void GlRuntime::releaseUploadSlot(QOpenGLExtraFunctions *gl, int index)
+{
+    // Unregistering works on the current view, so make this slot current for it.
+    selectUploadSlot(index);
+    unregisterCudaResources();
+    VideoUploadSlot &slot = m_uploadSlots[index];
+    if (gl) {
+        if (slot.y)
+            gl->glDeleteTextures(1, &slot.y);
+        if (slot.uv)
+            gl->glDeleteTextures(1, &slot.uv);
+    }
+    m_currentUploadSlot = -1;
+    m_uploadSlots.erase(m_uploadSlots.begin() + index);
+    selectUploadSlot(-1);
+}
+
+void GlRuntime::releaseUploadSlots(QOpenGLExtraFunctions *gl)
+{
+    while (!m_uploadSlots.empty())
+        releaseUploadSlot(gl, int(m_uploadSlots.size()) - 1);
+}
+
 bool GlRuntime::ensureVideoUploadTextures(QOpenGLExtraFunctions *gl, int width, int height)
 {
     if (!gl || width < 2 || height < 2 || (width % 2) || (height % 2))
         return false;
-    if (m_videoY && m_videoUV && m_videoTexW == width && m_videoTexH == height)
-        return true;
 
-    unregisterCudaResources();
-    if (m_videoY)
-        gl->glDeleteTextures(1, &m_videoY);
-    if (m_videoUV)
-        gl->glDeleteTextures(1, &m_videoUV);
-    m_videoY = m_videoUV = 0;
+    // The least recently used slot of this size, or a new one while there are fewer than
+    // kUploadSlotsPerSize of them.
+    int sameSize = 0;
+    int oldest = -1;
+    for (int i = 0; i < int(m_uploadSlots.size()); ++i) {
+        const VideoUploadSlot &slot = m_uploadSlots[i];
+        if (slot.w != width || slot.h != height)
+            continue;
+        ++sameSize;
+        if (oldest < 0 || slot.lastUse < m_uploadSlots[oldest].lastUse)
+            oldest = i;
+    }
+    if (sameSize >= kUploadSlotsPerSize) {
+        selectUploadSlot(oldest);
+        return true;
+    }
+
+    if (int(m_uploadSlots.size()) >= kMaxUploadSlots) {
+        int evict = 0;
+        for (int i = 1; i < int(m_uploadSlots.size()); ++i) {
+            if (m_uploadSlots[i].lastUse < m_uploadSlots[evict].lastUse)
+                evict = i;
+        }
+        releaseUploadSlot(gl, evict);
+    }
+
+    selectUploadSlot(-1);
+    m_uploadSlots.push_back(VideoUploadSlot{});
+    m_currentUploadSlot = int(m_uploadSlots.size()) - 1;
 
     gl->glGenTextures(1, &m_videoY);
     gl->glBindTexture(GL_TEXTURE_2D, m_videoY);
@@ -2034,6 +2107,12 @@ bool GlRuntime::ensureVideoUploadTextures(QOpenGLExtraFunctions *gl, int width, 
 
     m_videoTexW = width;
     m_videoTexH = height;
+    VideoUploadSlot &slot = m_uploadSlots[m_currentUploadSlot];
+    slot.y = m_videoY;
+    slot.uv = m_videoUV;
+    slot.w = width;
+    slot.h = height;
+    slot.lastUse = ++m_uploadUseCounter;
     return m_videoY != 0 && m_videoUV != 0;
 }
 

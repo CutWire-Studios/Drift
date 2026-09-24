@@ -414,10 +414,41 @@ private:
     static constexpr size_t kMaxCachedVideoSources = 4;
 #endif
 
+    // The Y/UV pair the current layer uploads into, and its CUDA registration: a view of one
+    // entry in m_uploadSlots, chosen by ensureVideoUploadTextures().
     GLuint m_videoY = 0;
     GLuint m_videoUV = 0;
     int m_videoTexW = 0;
     int m_videoTexH = 0;
+
+    // Upload textures per layer instead of one shared pair. With one pair, every layer of a
+    // frame wrote into the texture the previous layer's convert draw was still reading, so the
+    // driver serialised them, and two layers of different sizes deleted and recreated the pair
+    // (and re-registered it with CUDA) on every layer of every frame. Slots are kept per size and
+    // handed out least recently used first, so consecutive layers never share one.
+    struct VideoUploadSlot
+    {
+        GLuint y = 0;
+        GLuint uv = 0;
+        int w = 0;
+        int h = 0;
+        void *cudaY = nullptr;
+        void *cudaUv = nullptr;
+        AVBufferRef *cudaDevice = nullptr;
+        int cudaW = 0;
+        int cudaH = 0;
+        quint64 lastUse = 0;
+    };
+    std::vector<VideoUploadSlot> m_uploadSlots;
+    int m_currentUploadSlot = -1;
+    quint64 m_uploadUseCounter = 0;
+    static constexpr int kUploadSlotsPerSize = 3;
+    static constexpr int kMaxUploadSlots = 8;
+    void stashCurrentUploadSlot();
+    void selectUploadSlot(int index);
+    void releaseUploadSlot(QOpenGLExtraFunctions *gl, int index);
+    void releaseUploadSlots(QOpenGLExtraFunctions *gl);
+
     GLuint m_videoRgba = 0;
     int m_videoRgbaW = 0;
     int m_videoRgbaH = 0;
