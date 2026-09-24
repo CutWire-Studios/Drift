@@ -8,6 +8,7 @@
 #include <QTransform>
 #include <QtMath>
 #include <QByteArray>
+#include <QHash>
 #include <QFile>
 #include <QSettings>
 #include <QDir>
@@ -522,21 +523,34 @@ void installRecordingLogCallback()
     std::call_once(once, [] { av_log_set_callback(recordingLogCallback); });
 }
 
-// One CUDA device for every reader. Each av_hwdevice_ctx_create makes a CUDA context of its own,
-// and a preview frame's surface belongs to the context of the reader that decoded it — while
+// One device per backend (and device node) for every reader, created on first use.
+//
+// CUDA is where this started. Each av_hwdevice_ctx_create makes a CUDA context of its own, and a
+// preview frame's surface belongs to the context of the reader that decoded it — while
 // GlRuntime's interop textures are registered with exactly one. Two hardware clips on a timeline,
-// or the diagnostics benchmark running beside one, made every switch between them fail to map with
-// CUDA_ERROR_INVALID_HANDLE. A context per reader also cost VRAM for nothing: NVDEC decoders share
-// a context without trouble.
+// or the diagnostics benchmark running beside one, made every switch between them fail to map
+// with CUDA_ERROR_INVALID_HANDLE. A context per reader also cost VRAM for nothing: NVDEC decoders
+// share a context without trouble.
+//
+// VAAPI and D3D11VA share for the cost alone: a device per clip meant a DRM fd and a vaInitialize,
+// or a D3D11 device, for every clip opened. Both are built for sharing — FFmpeg guards D3D11VA's
+// immediate context with the device lock, and libva's display is used from any thread. Keyed by
+// the device string too, since that follows the render GPU and may not be known yet the first time.
 //
 // Never released. Tearing a CUDA context down once the driver has begun its own exit teardown
-// aborts the process (see FaceLandmarker), and the OS reclaims it anyway.
-AVBufferRef *sharedCudaDevice()
+// aborts the process (see FaceLandmarker), and the OS reclaims all of them anyway. A failed
+// creation is not remembered, so the next reader tries again exactly as it did unshared.
+AVBufferRef *sharedHwDevice(AVHWDeviceType type, const QByteArray &deviceString)
 {
     static QMutex mutex;
-    static AVBufferRef *device = nullptr;
+    static QHash<QPair<int, QByteArray>, AVBufferRef *> devices;
     QMutexLocker lock(&mutex);
-    if (!device && av_hwdevice_ctx_create(&device, AV_HWDEVICE_TYPE_CUDA, nullptr, nullptr, 0) < 0) {
+    AVBufferRef *&device = devices[{int(type), deviceString}];
+    if (!device
+        && av_hwdevice_ctx_create(&device, type,
+                                  deviceString.isEmpty() ? nullptr : deviceString.constData(),
+                                  nullptr, 0)
+               < 0) {
         av_buffer_unref(&device);
         return nullptr;
     }
@@ -1112,8 +1126,9 @@ bool ClipReader::openHardwareDecoderWith(drift::hwaccel::Backend backend)
         return false;
 
     installRecordingLogCallback();
-    if (type == AV_HWDEVICE_TYPE_CUDA) {
-        m_hwDeviceCtx = sharedCudaDevice();
+    if (type == AV_HWDEVICE_TYPE_CUDA || type == AV_HWDEVICE_TYPE_VAAPI
+        || type == AV_HWDEVICE_TYPE_D3D11VA) {
+        m_hwDeviceCtx = sharedHwDevice(type, drift::hwaccel::deviceString(type));
         if (!m_hwDeviceCtx)
             return false;
     } else {
