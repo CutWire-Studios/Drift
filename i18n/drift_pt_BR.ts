@@ -4219,58 +4219,6 @@
         <translation>Importar arquivos de vídeo, áudio ou imagem</translation>
     </message>
     <message>
-        <source>Touch and hold a transition, then drag it onto where two clips meet.</source>
-        <translation>Toque e segure uma transição, depois arraste-a para onde dois clipes se encontram.</translation>
-    </message>
-    <message>
-        <source>Drag onto where two clips overlap. They fade into each other by default.</source>
-        <translation>Arraste para onde dois clipes se sobrepõem. Por padrão, eles fazem fade entre si.</translation>
-    </message>
-    <message>
-        <source>Search transitions</source>
-        <translation>Pesquisar transições</translation>
-    </message>
-    <message>
-        <source>No transitions available</source>
-        <translation>Nenhuma transição disponível</translation>
-    </message>
-    <message>
-        <source>Install a transitions pack to add more.</source>
-        <translation>Instale um pacote de transições para adicionar mais.</translation>
-    </message>
-    <message>
-        <source>Get extras</source>
-        <translation>Obter extras</translation>
-    </message>
-    <message>
-        <source>No transitions match “%1”</source>
-        <translation>Nenhuma transição corresponde a “%1”</translation>
-    </message>
-    <message>
-        <source>No favorites yet</source>
-        <translation>Nenhum favorito ainda</translation>
-    </message>
-    <message>
-        <source>Nothing in this category</source>
-        <translation>Nada nesta categoria</translation>
-    </message>
-    <message>
-        <source>Try a different name.</source>
-        <translation>Tente outro nome.</translation>
-    </message>
-    <message>
-        <source>Star transitions to save them here.</source>
-        <translation>Marque transições com estrela para salvá-las aqui.</translation>
-    </message>
-    <message>
-        <source>Pick another category.</source>
-        <translation>Escolha outra categoria.</translation>
-    </message>
-    <message>
-        <source>%1 — drag onto an overlap between two clips</source>
-        <translation>%1 — arraste para uma sobreposição entre dois clipes</translation>
-    </message>
-    <message>
         <source>New folder</source>
         <translation>Nova pasta</translation>
     </message>
@@ -12813,6 +12761,61 @@ Se a reprodução travar, experimente outro.</translation>
     <message>
         <source>Remove transition</source>
         <translation>Remover transição</translation>
+    </message>
+</context>
+<context>
+    <name>TransitionsTab</name>
+    <message>
+        <source>Touch and hold a transition, then drag it onto where two clips meet.</source>
+        <translation type="unfinished">Toque e segure uma transição, depois arraste-a para onde dois clipes se encontram.</translation>
+    </message>
+    <message>
+        <source>Drag onto where two clips overlap. They fade into each other by default.</source>
+        <translation type="unfinished">Arraste para onde dois clipes se sobrepõem. Por padrão, eles fazem fade entre si.</translation>
+    </message>
+    <message>
+        <source>Search transitions</source>
+        <translation type="unfinished">Pesquisar transições</translation>
+    </message>
+    <message>
+        <source>No transitions available</source>
+        <translation type="unfinished">Nenhuma transição disponível</translation>
+    </message>
+    <message>
+        <source>Install a transitions pack to add more.</source>
+        <translation type="unfinished">Instale um pacote de transições para adicionar mais.</translation>
+    </message>
+    <message>
+        <source>Get extras</source>
+        <translation type="unfinished">Obter extras</translation>
+    </message>
+    <message>
+        <source>No transitions match “%1”</source>
+        <translation type="unfinished">Nenhuma transição corresponde a “%1”</translation>
+    </message>
+    <message>
+        <source>No favorites yet</source>
+        <translation type="unfinished">Nenhum favorito ainda</translation>
+    </message>
+    <message>
+        <source>Nothing in this category</source>
+        <translation type="unfinished">Nada nesta categoria</translation>
+    </message>
+    <message>
+        <source>Try a different name.</source>
+        <translation type="unfinished">Tente outro nome.</translation>
+    </message>
+    <message>
+        <source>Star transitions to save them here.</source>
+        <translation type="unfinished">Marque transições com estrela para salvá-las aqui.</translation>
+    </message>
+    <message>
+        <source>Pick another category.</source>
+        <translation type="unfinished">Escolha outra categoria.</translation>
+    </message>
+    <message>
+        <source>%1 — drag onto an overlap between two clips</source>
+        <translation type="unfinished">%1 — arraste para uma sobreposição entre dois clipes</translation>
     </message>
 </context>
 <context>

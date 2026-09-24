@@ -181,6 +181,7 @@ Item {
         contentItem: ListView {
             id: list
             clip: true
+            reuseItems: true
             model: familyModel
 
             header: Rectangle {

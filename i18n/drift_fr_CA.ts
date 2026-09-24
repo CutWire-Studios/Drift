@@ -4221,58 +4221,6 @@
         <translation>Importer des fichiers vidéo, audio ou image</translation>
     </message>
     <message>
-        <source>Touch and hold a transition, then drag it onto where two clips meet.</source>
-        <translation>Touchez et maintenez une transition, puis faites-la glisser à la jonction de deux clips.</translation>
-    </message>
-    <message>
-        <source>Drag onto where two clips overlap. They fade into each other by default.</source>
-        <translation>Glissez sur l&apos;endroit où deux clips se chevauchent. Ils fondent les uns dans les autres par défaut.</translation>
-    </message>
-    <message>
-        <source>Search transitions</source>
-        <translation>Rechercher des transitions</translation>
-    </message>
-    <message>
-        <source>No transitions available</source>
-        <translation>Aucune transition disponible</translation>
-    </message>
-    <message>
-        <source>Install a transitions pack to add more.</source>
-        <translation>Installez une extension de transitions pour en ajouter davantage.</translation>
-    </message>
-    <message>
-        <source>Get extras</source>
-        <translation>Obtenir des extras</translation>
-    </message>
-    <message>
-        <source>No transitions match “%1”</source>
-        <translation>Aucune transition ne correspond à “%1”</translation>
-    </message>
-    <message>
-        <source>No favorites yet</source>
-        <translation>Pas encore de favoris</translation>
-    </message>
-    <message>
-        <source>Nothing in this category</source>
-        <translation>Rien dans cette catégorie</translation>
-    </message>
-    <message>
-        <source>Try a different name.</source>
-        <translation>Essayez un nom différent.</translation>
-    </message>
-    <message>
-        <source>Star transitions to save them here.</source>
-        <translation>Étoilez les transitions pour les enregistrer ici.</translation>
-    </message>
-    <message>
-        <source>Pick another category.</source>
-        <translation>Choisissez une autre catégorie.</translation>
-    </message>
-    <message>
-        <source>%1 — drag onto an overlap between two clips</source>
-        <translation>%1 — faites glisser sur un chevauchement entre deux clips</translation>
-    </message>
-    <message>
         <source>New folder</source>
         <translation>Nouveau dossier</translation>
     </message>
@@ -12818,6 +12766,61 @@ En cas de saccades à la lecture, essayez un autre mode.</translation>
     <message>
         <source>Remove transition</source>
         <translation>Supprimer la transition</translation>
+    </message>
+</context>
+<context>
+    <name>TransitionsTab</name>
+    <message>
+        <source>Touch and hold a transition, then drag it onto where two clips meet.</source>
+        <translation type="unfinished">Touchez et maintenez une transition, puis faites-la glisser à la jonction de deux clips.</translation>
+    </message>
+    <message>
+        <source>Drag onto where two clips overlap. They fade into each other by default.</source>
+        <translation type="unfinished">Glissez sur l&apos;endroit où deux clips se chevauchent. Ils fondent les uns dans les autres par défaut.</translation>
+    </message>
+    <message>
+        <source>Search transitions</source>
+        <translation type="unfinished">Rechercher des transitions</translation>
+    </message>
+    <message>
+        <source>No transitions available</source>
+        <translation type="unfinished">Aucune transition disponible</translation>
+    </message>
+    <message>
+        <source>Install a transitions pack to add more.</source>
+        <translation type="unfinished">Installez une extension de transitions pour en ajouter davantage.</translation>
+    </message>
+    <message>
+        <source>Get extras</source>
+        <translation type="unfinished">Obtenir des extras</translation>
+    </message>
+    <message>
+        <source>No transitions match “%1”</source>
+        <translation type="unfinished">Aucune transition ne correspond à “%1”</translation>
+    </message>
+    <message>
+        <source>No favorites yet</source>
+        <translation type="unfinished">Pas encore de favoris</translation>
+    </message>
+    <message>
+        <source>Nothing in this category</source>
+        <translation type="unfinished">Rien dans cette catégorie</translation>
+    </message>
+    <message>
+        <source>Try a different name.</source>
+        <translation type="unfinished">Essayez un nom différent.</translation>
+    </message>
+    <message>
+        <source>Star transitions to save them here.</source>
+        <translation type="unfinished">Étoilez les transitions pour les enregistrer ici.</translation>
+    </message>
+    <message>
+        <source>Pick another category.</source>
+        <translation type="unfinished">Choisissez une autre catégorie.</translation>
+    </message>
+    <message>
+        <source>%1 — drag onto an overlap between two clips</source>
+        <translation type="unfinished">%1 — faites glisser sur un chevauchement entre deux clips</translation>
     </message>
 </context>
 <context>

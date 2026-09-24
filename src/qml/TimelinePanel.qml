@@ -8,6 +8,10 @@ import "components/timeline"
 PanelFrame {
     id: root
 
+    // Keyframe lane height the user dragged to; session-only, kept here because the graph
+    // itself is unloaded whenever no clip or no keyframe tab is selected.
+    property real keyframeLaneHeight: 88
+
     property real zoom: 1.0
     property string propertiesTab: ""
 
@@ -1048,13 +1052,16 @@ PanelFrame {
 
         // === full-project overview strip ==============================================
         // Toggled from the toolbar's right end; collapses to nothing rather than merely
-        // hiding, so the tracks get the height back.
-        TimelineOverview {
+        // hiding, so the tracks get the height back. Unloaded while off.
+        Loader {
             id: overviewStrip
             width: parent.width
-            panel: root
-            visible: EditorState.timelineOverviewVisible
-            height: visible ? Theme.timelineOverviewHeight : 0
+            active: EditorState.timelineOverviewVisible
+            visible: active
+            height: active ? Theme.timelineOverviewHeight : 0
+            sourceComponent: Component {
+                TimelineOverview { panel: root }
+            }
         }
 
         // === ruler + track labels + tracks ================================================
@@ -1062,29 +1069,48 @@ PanelFrame {
             width: parent.width
             height: parent.height - toolbar.height - overviewStrip.height
 
-            KeyframeGraph {
+            // Loaded only on the tabs it can show on; the graph still hides itself when the
+            // clip has no curves. Its height is left to the item, so the lane can resize.
+            Loader {
                 id: keyframesBar
                 width: parent.width - (audioMixer.visible ? audioMixer.width : 0)
-                pxPerSecond: root.pxPerSecond
-                labelsWidth: EditorState.trackLabelsWidth
-                propertiesTab: root.propertiesTab
-                // Keep keys/playhead lined up with the track scroll view below.
-                contentX: flick.contentX
-                contentWidth: flick.contentWidth
+                active: (root.propertiesTab === "transform" || root.propertiesTab === "effects"
+                         || root.propertiesTab === "stabilize" || root.propertiesTab === "masks"
+                         || root.propertiesTab === "audio")
+                        && EditorState.selectedTrack >= 0 && EditorState.selectedClip >= 0
+                sourceComponent: Component {
+                    KeyframeGraph {
+                        pxPerSecond: root.pxPerSecond
+                        labelsWidth: EditorState.trackLabelsWidth
+                        propertiesTab: root.propertiesTab
+                        // Keep keys/playhead lined up with the track scroll view below.
+                        contentX: flick.contentX
+                        contentWidth: flick.contentWidth
+                        // Outlives the graph being unloaded between selections.
+                        laneHeight: root.keyframeLaneHeight
+                        onLaneHeightChanged: root.keyframeLaneHeight = laneHeight
+                    }
+                }
             }
 
-            SubtitleCueLane {
+            Loader {
                 id: subtitleLane
                 width: parent.width - (audioMixer.visible ? audioMixer.width : 0)
-                pxPerSecond: root.pxPerSecond
-                labelsWidth: EditorState.trackLabelsWidth
-                contentX: flick.contentX
-                contentWidth: flick.contentWidth
+                active: EditorState.subtitleEditing
+                sourceComponent: Component {
+                    SubtitleCueLane {
+                        pxPerSecond: root.pxPerSecond
+                        labelsWidth: EditorState.trackLabelsWidth
+                        contentX: flick.contentX
+                        contentWidth: flick.contentWidth
+                    }
+                }
             }
 
             Row {
                 width: parent.width
-                height: parent.height - keyframesBar.height - subtitleLane.height
+                height: parent.height - (keyframesBar.item ? keyframesBar.item.height : 0)
+                        - (subtitleLane.item ? subtitleLane.item.height : 0)
 
             // --- fixed left label column --------------------------------------------
             Column {
@@ -1920,10 +1946,16 @@ PanelFrame {
                                         z: 2
 
                                         // Real-time live audio waveform canvas
+                                        // Capped and pinned to the newest end: the block grows with the
+                                        // take, and a canvas as wide as a long recording at high zoom
+                                        // would be a huge framebuffer. Draws only the peaks it covers.
                                         Canvas {
                                             id: liveWaveCanvas
-                                            anchors.fill: parent
+                                            anchors.right: parent.right
+                                            anchors.top: parent.top
+                                            anchors.bottom: parent.bottom
                                             anchors.margins: 1
+                                            width: Math.min(Math.max(0, parent.width - 2), 4096)
                                             visible: parent.width > 4
 
                                             Connections {
@@ -1945,7 +1977,9 @@ PanelFrame {
                                                 var mid = height / 2;
                                                 var half = mid * 0.85;
                                                 var w = Math.max(1, Math.floor(width));
-                                                var n = peaks.length;
+                                                var full = Math.max(w, liveRecordingBlock.width - 2);
+                                                var first = peaks.length * (full - w) / full;
+                                                var n = peaks.length - first;
 
                                                 // Centerline guideline
                                                 ctx.strokeStyle = Qt.rgba(1.0, 1.0, 1.0, 0.15);
@@ -1959,9 +1993,9 @@ PanelFrame {
                                                 ctx.fillStyle = Qt.rgba(1.0, 1.0, 1.0, 0.85);
                                                 ctx.beginPath();
                                                 for (var x = 0; x < w; x++) {
-                                                    var i0 = Math.floor(x * n / w);
-                                                    var i1 = Math.floor((x + 1) * n / w);
-                                                    if (i1 <= i0) i1 = Math.min(n, i0 + 1);
+                                                    var i0 = Math.floor(first + x * n / w);
+                                                    var i1 = Math.floor(first + (x + 1) * n / w);
+                                                    if (i1 <= i0) i1 = Math.min(peaks.length, i0 + 1);
                                                     var peak = 0;
                                                     for (var i = i0; i < i1; i++) {
                                                         if (peaks[i] > peak) peak = peaks[i];
@@ -1972,9 +2006,9 @@ PanelFrame {
                                                     ctx.lineTo(x + 1, mid - amp);
                                                 }
                                                 for (var xb = w - 1; xb >= 0; xb--) {
-                                                    var j0 = Math.floor(xb * n / w);
-                                                    var j1 = Math.floor((xb + 1) * n / w);
-                                                    if (j1 <= j0) j1 = Math.min(n, j0 + 1);
+                                                    var j0 = Math.floor(first + xb * n / w);
+                                                    var j1 = Math.floor(first + (xb + 1) * n / w);
+                                                    if (j1 <= j0) j1 = Math.min(peaks.length, j0 + 1);
                                                     var peakB = 0;
                                                     for (var j = j0; j < j1; j++) {
                                                         if (peaks[j] > peakB) peakB = peaks[j];

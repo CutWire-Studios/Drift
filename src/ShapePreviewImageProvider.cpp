@@ -79,7 +79,8 @@ QImage ShapePreviewImageProvider::requestImage(const QString &id, QSize *size, c
 #endif
     {
         QMutexLocker lock(&g_cardMutex);
-        g_cardCache.insert(key, new QImage(card), qMax(1, int(card.sizeInBytes() / 1024)));
+        // Counted per card: a byte cost against a max of 64 held at most one card.
+        g_cardCache.insert(key, new QImage(card));
     }
     if (size)
         *size = card.size();

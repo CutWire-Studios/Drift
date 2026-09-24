@@ -25,7 +25,6 @@ PanelFrame {
     // selectedClipData is a QVariantMap; key the binding on an explicit revision
     // so nested fields such as effects refresh after project edits.
     property int clipDataRevision: 0
-    property int previousTab: 0
     readonly property var clipData: {
         void clipDataRevision
         return EditorState.selectedClipData
@@ -53,13 +52,6 @@ PanelFrame {
 
     property int activeTab: 0
     readonly property string currentTabId: tabsModel.get(activeTab).tabId
-
-    onActiveTabChanged: {
-        if (tabsModel.get(root.previousTab).tabId === "transition")
-            transitionInspector.commitEdits()
-        root.previousTab = activeTab
-        transitionInspector.refreshFields()
-    }
 
     // Kept for SubtitleEditor, which formats cue times through it.
     function formatSeconds(value) {
@@ -748,12 +740,12 @@ PanelFrame {
                     sourceComponent: Component { SpeedFadeInspector { width: tabColumn.width } }
                 }
 
-                // Eager: onActiveTabChanged commits its fields on the way out, which a Loader
-                // could already have destroyed.
-                TransitionInspector {
-                    id: transitionInspector
-                    width: tabColumn.width
-                    visible: root.currentTabId === "transition"
+                // Its kind box and duration field commit on their own (activate / editing
+                // finished), so nothing is lost when the tab switch destroys it.
+                Loader {
+                    active: root.currentTabId === "transition"
+                    visible: active
+                    sourceComponent: Component { TransitionInspector { width: tabColumn.width } }
                 }
 
                 Loader {
@@ -825,14 +817,19 @@ PanelFrame {
 
         // Full-height editor with its own internal cue list scrolling, so it
         // sits beside the tab Flickable rather than inside it.
-        SubtitleEditor {
+        Loader {
             anchors.top: tabStripHost.bottom
             anchors.left: railDivider.right
             anchors.right: parent.right
             anchors.bottom: parent.bottom
-            visible: root.currentTabId === "subtitles"
-            clip: root.hasSelection ? root.clipData : null
-            formatSeconds: root.formatSeconds
+            active: root.currentTabId === "subtitles"
+            visible: active
+            sourceComponent: Component {
+                SubtitleEditor {
+                    clip: root.hasSelection ? root.clipData : null
+                    formatSeconds: root.formatSeconds
+                }
+            }
         }
     }
 

@@ -358,6 +358,7 @@ Item {
     // ---- Lyrics list (compact, keeps neighbours in view) -----------------------
     ListView {
         id: listView
+        reuseItems: true
         anchors.top: header.bottom
         anchors.topMargin: 8
         anchors.bottom: editorPanel.top

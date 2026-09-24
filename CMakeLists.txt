@@ -1050,6 +1050,7 @@ qt_add_qml_module(drift
         src/qml/components/assets/ShapesTab.qml
         src/qml/components/assets/MasksTab.qml
         src/qml/components/assets/SoundsTab.qml
+        src/qml/components/assets/TransitionsTab.qml
         src/qml/components/assets/ShortcutsTab.qml
         src/qml/components/assets/MediaAssetsTab.qml
         src/qml/components/assets/MarketConsentPanel.qml
@@ -1100,6 +1101,7 @@ qt_add_qml_module(drift
         src/qml/components/VfrWarning.qml
         src/qml/components/ThemedLabel.qml
         src/qml/components/ThemedDialog.qml
+        src/qml/components/LazyLoader.qml
         src/qml/components/AddonManagerDialog.qml
         src/qml/components/AddonStartupDialog.qml
         src/qml/components/MissingAddonsDialog.qml

@@ -150,6 +150,7 @@ Popup {
 
         GridView {
             id: grid
+            reuseItems: true
             anchors.top: groupBar.bottom
             anchors.topMargin: Theme.spacingMd
             anchors.left: parent.left

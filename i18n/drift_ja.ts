@@ -4201,58 +4201,6 @@
         <translation>ビデオ、オーディオ、画像ファイルをインポート</translation>
     </message>
     <message>
-        <source>Touch and hold a transition, then drag it onto where two clips meet.</source>
-        <translation>トランジションを長押しして、2つのクリップが接する部分にドラッグします。</translation>
-    </message>
-    <message>
-        <source>Drag onto where two clips overlap. They fade into each other by default.</source>
-        <translation>2つのクリップが重なる部分にドラッグしてください。デフォルトでは互いにフェードインします。</translation>
-    </message>
-    <message>
-        <source>Search transitions</source>
-        <translation>トランジションを検索</translation>
-    </message>
-    <message>
-        <source>No transitions available</source>
-        <translation>利用可能なトランジションがありません</translation>
-    </message>
-    <message>
-        <source>Install a transitions pack to add more.</source>
-        <translation>トランジションパックをインストールして追加してください。</translation>
-    </message>
-    <message>
-        <source>Get extras</source>
-        <translation>拡張機能を入手</translation>
-    </message>
-    <message>
-        <source>No transitions match “%1”</source>
-        <translation>「%1」に一致するトランジションはありません</translation>
-    </message>
-    <message>
-        <source>No favorites yet</source>
-        <translation>お気に入りはまだありません</translation>
-    </message>
-    <message>
-        <source>Nothing in this category</source>
-        <translation>このカテゴリには何もありません</translation>
-    </message>
-    <message>
-        <source>Try a different name.</source>
-        <translation>別の名前を試してください。</translation>
-    </message>
-    <message>
-        <source>Star transitions to save them here.</source>
-        <translation>トランジションにスターを付けてここに保存します。</translation>
-    </message>
-    <message>
-        <source>Pick another category.</source>
-        <translation>別のカテゴリを選択してください。</translation>
-    </message>
-    <message>
-        <source>%1 — drag onto an overlap between two clips</source>
-        <translation>%1 — 2つのクリップの重なりにドラッグ</translation>
-    </message>
-    <message>
         <source>New folder</source>
         <translation>新しいフォルダー</translation>
     </message>
@@ -12769,6 +12717,61 @@ If playback stutters, try another.</source>
     <message>
         <source>Remove transition</source>
         <translation>トランジションを削除</translation>
+    </message>
+</context>
+<context>
+    <name>TransitionsTab</name>
+    <message>
+        <source>Touch and hold a transition, then drag it onto where two clips meet.</source>
+        <translation type="unfinished">トランジションを長押しして、2つのクリップが接する部分にドラッグします。</translation>
+    </message>
+    <message>
+        <source>Drag onto where two clips overlap. They fade into each other by default.</source>
+        <translation type="unfinished">2つのクリップが重なる部分にドラッグしてください。デフォルトでは互いにフェードインします。</translation>
+    </message>
+    <message>
+        <source>Search transitions</source>
+        <translation type="unfinished">トランジションを検索</translation>
+    </message>
+    <message>
+        <source>No transitions available</source>
+        <translation type="unfinished">利用可能なトランジションがありません</translation>
+    </message>
+    <message>
+        <source>Install a transitions pack to add more.</source>
+        <translation type="unfinished">トランジションパックをインストールして追加してください。</translation>
+    </message>
+    <message>
+        <source>Get extras</source>
+        <translation type="unfinished">拡張機能を入手</translation>
+    </message>
+    <message>
+        <source>No transitions match “%1”</source>
+        <translation type="unfinished">「%1」に一致するトランジションはありません</translation>
+    </message>
+    <message>
+        <source>No favorites yet</source>
+        <translation type="unfinished">お気に入りはまだありません</translation>
+    </message>
+    <message>
+        <source>Nothing in this category</source>
+        <translation type="unfinished">このカテゴリには何もありません</translation>
+    </message>
+    <message>
+        <source>Try a different name.</source>
+        <translation type="unfinished">別の名前を試してください。</translation>
+    </message>
+    <message>
+        <source>Star transitions to save them here.</source>
+        <translation type="unfinished">トランジションにスターを付けてここに保存します。</translation>
+    </message>
+    <message>
+        <source>Pick another category.</source>
+        <translation type="unfinished">別のカテゴリを選択してください。</translation>
+    </message>
+    <message>
+        <source>%1 — drag onto an overlap between two clips</source>
+        <translation type="unfinished">%1 — 2つのクリップの重なりにドラッグ</translation>
     </message>
 </context>
 <context>

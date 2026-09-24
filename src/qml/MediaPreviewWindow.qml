@@ -342,6 +342,9 @@ Window {
                 anchors.fill: parent
                 fillMode: Image.PreserveAspectFit
                 asynchronous: true
+                // Capped at the screen: a 48 MP photo decoded whole is ~190 MB.
+                sourceSize: Qt.size(Math.ceil(Screen.width * Screen.devicePixelRatio),
+                                    Math.ceil(Screen.height * Screen.devicePixelRatio))
                 source: root.isImage && root.sourcePath.length > 0
                         ? EditorState.imageUrl(root.sourcePath) : ""
             }

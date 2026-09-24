@@ -13,6 +13,9 @@ import "components/preview"
 PanelFrame {
     id: root
 
+    // The crop overlay's gesture hint, dismissed once per session rather than per crop.
+    property bool cropHintDismissed: false
+
     readonly property real currentSeconds: EditorState.playheadSeconds
     readonly property real durationSeconds: EditorState.durationSeconds
     readonly property bool playing: EditorState.playing
@@ -195,11 +198,13 @@ PanelFrame {
                     // Top-left so it never covers the transport controls or the bottom-right
                     // resolution readout. Only visible while the diagnostics dialog has the
                     // counters armed.
-                    PlaybackStatsOverlay {
+                    Loader {
                         anchors.left: parent.left
                         anchors.top: parent.top
                         anchors.margins: Theme.spacingLg
                         z: 10
+                        active: !!EditorState.playback.stats && EditorState.playback.stats.active
+                        sourceComponent: Component { PlaybackStatsOverlay { } }
                     }
 
                     // Voiceover recording indicator overlay
@@ -314,16 +319,16 @@ PanelFrame {
 
                 // Mask editing claims the same grips and pointer as the transform gizmo, so the
                 // two are mutually exclusive rather than stacked.
-                MaskOverlay {
-                    id: maskOverlay
+                Loader {
                     x: canvasRect.x
                     y: canvasRect.y
                     width: canvasRect.width
                     height: canvasRect.height
                     z: 150
-                    visible: !root.playing && EditorState.projectWidth() > 0
-                             && EditorState.maskEditActive && !EditorState.canvasCropMode
-                             && EditorState.guideEditSetId === ""
+                    active: !root.playing && EditorState.projectWidth() > 0
+                            && EditorState.maskEditActive && !EditorState.canvasCropMode
+                            && EditorState.guideEditSetId === ""
+                    sourceComponent: Component { MaskOverlay { } }
                 }
 
                 // Light and focus handles for the depth effects. Above the transform gizmo, but
@@ -361,22 +366,33 @@ PanelFrame {
                 // output. Values are kept in project pixels; committing hands the
                 // rect to AppController, which rebases clip layout so nothing
                 // moves or rescales — content outside the new frame is simply lost.
-                CropOverlay {
-                    id: cropOverlay
+                // Built fresh each crop session, so what its show/hide used to do (reset the
+                // frame, reset the view) happens on load and unload instead.
+                Loader {
                     anchors.fill: parent
-                    visible: EditorState.canvasCropMode
-                    enabled: visible
                     z: 200
-                    previewViewport: viewport
-                    previewCanvas: canvasRect
+                    active: EditorState.canvasCropMode
+                    sourceComponent: Component {
+                        CropOverlay {
+                            previewViewport: viewport
+                            previewCanvas: canvasRect
+                            hintDismissed: root.cropHintDismissed
+                            onHintDismissedChanged: root.cropHintDismissed = hintDismissed
+                        }
+                    }
+                    onLoaded: viewport.resetView()
+                    onActiveChanged: if (!active) viewport.resetView()
                 }
 
-                GuideEditOverlay {
+                Loader {
                     anchors.fill: parent
-                    visible: EditorState.guideEditSetId !== ""
-                    enabled: visible
                     z: 200
-                    previewCanvas: canvasRect
+                    active: EditorState.guideEditSetId !== ""
+                    sourceComponent: Component {
+                        GuideEditOverlay {
+                            previewCanvas: canvasRect
+                        }
+                    }
                 }
             }
         }

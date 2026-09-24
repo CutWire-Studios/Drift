@@ -314,7 +314,7 @@ ApplicationWindow {
             runner()
             return
         }
-        projectSetupDialog.openForAsset(assetIndex, runner)
+        projectSetupDialogLoader.ensure().openForAsset(assetIndex, runner)
     }
 
     // "Decide later" closes the first-run chooser without settling on a canvas size.
@@ -335,14 +335,14 @@ ApplicationWindow {
     function promptLanguageChooserIfNeeded() {
         if (!EditorState.needsUiLanguagePrompt)
             return false
-        if (languageChooserDialog.visible)
+        if (languageChooserDialogLoader.shown)
             return true
-        languageChooserDialog.openChooser()
+        languageChooserDialogLoader.ensure().openChooser()
         return true
     }
 
     function promptLayoutChooserIfNeeded() {
-        if (EditorState.needsUiLanguagePrompt || languageChooserDialog.visible)
+        if (EditorState.needsUiLanguagePrompt || languageChooserDialogLoader.shown)
             return
         if (EditorState.recoveryAvailable || EditorState.projectLayoutChosen)
             return
@@ -352,9 +352,9 @@ ApplicationWindow {
         // New / Open / a recent project rather than racing them with this dialog too.
         if (window.showStartScreen)
             return
-        if (layoutChooserDialog.visible || recoveryDialog.visible)
+        if (layoutChooserDialogLoader.shown || recoveryDialogLoader.shown)
             return
-        layoutChooserDialog.openChooser()
+        layoutChooserDialogLoader.ensure().openChooser()
     }
 
     // Quiet catalog refresh for the header attention indicator.
@@ -364,157 +364,231 @@ ApplicationWindow {
 
     // Settings / header: reopen platform layout picker anytime.
     function openLayoutChooser() {
-        layoutChooserDialog.openFromSettings()
+        layoutChooserDialogLoader.ensure().openFromSettings()
     }
 
-    ProjectSetupDialog {
-        id: projectSetupDialog
+    LazyLoader {
+        id: projectSetupDialogLoader
+        sourceComponent: Component {
+            ProjectSetupDialog { }
+        }
     }
 
-    LanguageChooserDialog {
-        id: languageChooserDialog
-        // First-launch only. After Continue the language is stored, then the usual
-        // recovery / layout prompts can run.
-        onClosed: window.continueStartupAfterLanguage()
+    LazyLoader {
+        id: languageChooserDialogLoader
+        sourceComponent: Component {
+            LanguageChooserDialog {
+                // First-launch only. After Continue the language is stored, then the usual
+                // recovery / layout prompts can run.
+                onClosed: window.continueStartupAfterLanguage()
+            }
+        }
     }
 
-    LayoutChooserDialog {
-        id: layoutChooserDialog
-        // rejected() fires before closed(), so the flag is already set by the time
-        // callers check it.
-        onFirstRunDismissed: window.layoutPromptDismissed = true
+    LazyLoader {
+        id: layoutChooserDialogLoader
+        sourceComponent: Component {
+            LayoutChooserDialog {
+                // rejected() fires before closed(), so the flag is already set by the time
+                // callers check it.
+                onFirstRunDismissed: window.layoutPromptDismissed = true
+            }
+        }
     }
 
-    RecoveryDialog {
-        id: recoveryDialog
-        onClosed: Qt.callLater(window.promptLayoutChooserIfNeeded)
+    LazyLoader {
+        id: recoveryDialogLoader
+        sourceComponent: Component {
+            RecoveryDialog {
+                onClosed: Qt.callLater(window.promptLayoutChooserIfNeeded)
+            }
+        }
     }
 
-    SubtitleProgressDialog {
-        id: subtitleProgressDialog
+    LazyLoader {
+        id: subtitleProgressDialogLoader
+        sourceComponent: Component {
+            SubtitleProgressDialog { }
+        }
     }
 
-    ReverseProgressDialog {
-        id: reverseProgressDialog
+    LazyLoader {
+        id: reverseProgressDialogLoader
+        sourceComponent: Component {
+            ReverseProgressDialog { }
+        }
     }
 
-    AddonManagerDialog {
-        id: addonManagerDialog
+    LazyLoader {
+        id: addonManagerDialogLoader
+        sourceComponent: Component {
+            AddonManagerDialog { }
+        }
     }
 
     AddonStartupDialog {
         id: addonStartupDialog
     }
 
-    MissingAddonsDialog {
-        id: missingAddonsDialog
+    LazyLoader {
+        id: missingAddonsDialogLoader
+        sourceComponent: Component {
+            MissingAddonsDialog { }
+        }
     }
 
-    UpdateDialog {
-        id: updateDialog
+    LazyLoader {
+        id: updateDialogLoader
+        sourceComponent: Component {
+            UpdateDialog { }
+        }
     }
 
-    DebugInfoDialog {
-        id: debugInfoDialog
+    // Kept after its first close: it holds the last benchmark result.
+    LazyLoader {
+        id: debugInfoDialogLoader
+        keepLoaded: true
+        sourceComponent: Component {
+            DebugInfoDialog { }
+        }
     }
 
-    SettingsDialog {
-        id: settingsDialog
+    LazyLoader {
+        id: settingsDialogLoader
+        sourceComponent: Component {
+            SettingsDialog { }
+        }
     }
 
-    PasteAttributesDialog {
-        id: pasteAttributesDialog
+    LazyLoader {
+        id: pasteAttributesDialogLoader
+        sourceComponent: Component {
+            PasteAttributesDialog { }
+        }
     }
 
-    SegmentationWindow {
-        id: segmentationWindow
+    LazyLoader {
+        id: segmentationWindowLoader
+        sourceComponent: Component {
+            SegmentationWindow { }
+        }
     }
 
     Connections {
         target: EditorState
         function onOpenSegmentationWindowRequested(track, clip, startSeconds, durationSeconds) {
-            segmentationWindow.openFor(track, clip, startSeconds, durationSeconds, true)
+            segmentationWindowLoader.ensure().openFor(track, clip, startSeconds, durationSeconds, true)
         }
         function onOpenPasteAttributesRequested() {
             window.openPasteAttributes()
         }
-    }
-
-    // Another view of the same timeline rather than an editor of its own — see MulticamWindow.
-    MulticamWindow {
-        id: multicamWindow
-    }
-
-    DownloadsWindow {
-        id: downloadsWindow
-
-        // Shows itself the first time a download starts, then stays out of the way:
-        // reopening on every later job would yank focus mid-edit for something the header
-        // badge already reports.
-        property bool shownOnce: false
-
-        Connections {
-            target: Market
-            function onDownloadStarted(itemId) {
-                if (downloadsWindow.shownOnce)
-                    return
-                downloadsWindow.shownOnce = true
-                downloadsWindow.show()
-            }
+        // These two dialogs open themselves from the same signals, but only once they exist.
+        function onSubtitleGeneratingChanged() {
+            if (EditorState.subtitleGenerating)
+                subtitleProgressDialogLoader.ensure().open()
+        }
+        function onReverseConfirmRequested(trackIndex, clipIndex, seconds) {
+            const dialog = reverseProgressDialogLoader.ensure()
+            dialog.pendingTrack = trackIndex
+            dialog.pendingClip = clipIndex
+            dialog.pendingSeconds = seconds
+            dialog.open()
         }
     }
 
-    DenoiseWindow {
-        id: denoiseWindow
+    // Another view of the same timeline rather than an editor of its own — see MulticamWindow.
+    LazyLoader {
+        id: multicamWindowLoader
+        sourceComponent: Component {
+            MulticamWindow { }
+        }
     }
 
-    SpeedCurveWindow {
-        id: speedCurveWindow
+    LazyLoader {
+        id: downloadsWindowLoader
+        sourceComponent: Component {
+            DownloadsWindow { }
+        }
     }
 
-    FadeCurveWindow {
-        id: fadeCurveWindow
+    // Shows the downloads window the first time a download starts, then stays out of the way:
+    // reopening on every later job would yank focus mid-edit for something the header
+    // badge already reports.
+    property bool downloadsWindowShownOnce: false
+
+    Connections {
+        target: Market
+        function onDownloadStarted(itemId) {
+            if (window.downloadsWindowShownOnce)
+                return
+            window.downloadsWindowShownOnce = true
+            downloadsWindowLoader.ensure().show()
+        }
     }
 
-    MediaPreviewWindow {
-        id: mediaPreviewWindow
+    LazyLoader {
+        id: denoiseWindowLoader
+        sourceComponent: Component {
+            DenoiseWindow { }
+        }
+    }
+
+    LazyLoader {
+        id: speedCurveWindowLoader
+        sourceComponent: Component {
+            SpeedCurveWindow { }
+        }
+    }
+
+    LazyLoader {
+        id: fadeCurveWindowLoader
+        sourceComponent: Component {
+            FadeCurveWindow { }
+        }
+    }
+
+    LazyLoader {
+        id: mediaPreviewWindowLoader
+        sourceComponent: Component {
+            MediaPreviewWindow { }
+        }
     }
 
     // Opened from the clip inspector; a window rather than a dialog so the timeline stays visible.
     function openSegmentation(track, clip, startSeconds, durationSeconds) {
-        segmentationWindow.openFor(track, clip, startSeconds, durationSeconds)
+        segmentationWindowLoader.ensure().openFor(track, clip, startSeconds, durationSeconds)
     }
 
     function openDenoise(track, clip, durationSeconds) {
-        denoiseWindow.openFor(track, clip, durationSeconds)
+        denoiseWindowLoader.ensure().openFor(track, clip, durationSeconds)
     }
 
     function openSpeedCurve(track, clip) {
-        speedCurveWindow.openFor(track, clip)
+        speedCurveWindowLoader.ensure().openFor(track, clip)
     }
 
     function openFadeCurve(track, clip) {
-        fadeCurveWindow.openFor(track, clip)
+        fadeCurveWindowLoader.ensure().openFor(track, clip)
     }
 
     function openTransitionCurve(track, transitionId) {
-        fadeCurveWindow.openForTransition(track, transitionId)
+        fadeCurveWindowLoader.ensure().openForTransition(track, transitionId)
     }
 
     function openMediaPreview(assetIndex) {
-        mediaPreviewWindow.openFor(assetIndex)
+        mediaPreviewWindowLoader.ensure().openFor(assetIndex)
     }
 
     // Opened from the header and from the "multicam" shortcut. Unlike the windows above it is
     // not bound to one clip, so it survives any edit and only closes when the document does.
     function openMulticam() {
-        multicamWindow.openSession()
+        multicamWindowLoader.ensure().openSession()
     }
 
     // Opened from the header's Settings menu. Every preference lives here now; the
     // assets rail no longer carries a settings tab.
     function openSettings() {
-        settingsDialog.open()
+        settingsDialogLoader.ensure().open()
     }
 
     // ── Project lifecycle: New / Open / Open recent / Close ─────────────────────
@@ -596,9 +670,9 @@ ApplicationWindow {
     // Opened from the header, and from every empty state that a missing addon causes.
     function openAddonManager(kind) {
         if (kind === undefined)
-            addonManagerDialog.open()
+            addonManagerDialogLoader.ensure().open()
         else
-            addonManagerDialog.openForKind(kind)
+            addonManagerDialogLoader.ensure().openForKind(kind)
     }
 
     // Header Extras button: open the essential/update nudge when the icon is pulsing,
@@ -611,26 +685,26 @@ ApplicationWindow {
 
     // Opened from the header badge, which only exists while there is something to show.
     function openUpdateDialog() {
-        updateDialog.open()
+        updateDialogLoader.ensure().open()
     }
 
     function openDebugInfo() {
-        debugInfoDialog.open()
+        debugInfoDialogLoader.ensure().open()
     }
 
     function openPasteAttributes() {
-        pasteAttributesDialog.openDialog()
+        pasteAttributesDialogLoader.ensure().openDialog()
     }
 
     function promptRecoveryIfNeeded() {
-        if (EditorState.needsUiLanguagePrompt || languageChooserDialog.visible)
+        if (EditorState.needsUiLanguagePrompt || languageChooserDialogLoader.shown)
             return
-        if (!EditorState.recoveryAvailable || recoveryDialog.visible)
+        if (!EditorState.recoveryAvailable || recoveryDialogLoader.shown)
             return
         // Opt-in reopen handles recovery (and last .drift) without asking.
         if (EditorState.reopenLastProject)
             return
-        recoveryDialog.open()
+        recoveryDialogLoader.ensure().open()
     }
 
     // Ask every launch while the previous session left an autosave snapshot
@@ -649,7 +723,7 @@ ApplicationWindow {
                 return
             }
             promptRecoveryIfNeeded()
-            if (recoveryDialog.visible || ++attempts >= 20)
+            if (recoveryDialogLoader.shown || ++attempts >= 20)
                 stop()
         }
     }
@@ -718,7 +792,7 @@ ApplicationWindow {
             })
         }
         function onRecoveryChanged() {
-            if (EditorState.needsUiLanguagePrompt || languageChooserDialog.visible)
+            if (EditorState.needsUiLanguagePrompt || languageChooserDialogLoader.shown)
                 return
             if (EditorState.reopenLastProject)
                 return
@@ -735,15 +809,20 @@ ApplicationWindow {
         // Multicam addresses tracks by index, so it has nothing to act on either once the
         // document behind those indices is gone.
         function onProjectReset() {
-            segmentationWindow.close()
-            denoiseWindow.close()
-            speedCurveWindow.close()
-            fadeCurveWindow.close()
-            multicamWindow.close()
+            if (segmentationWindowLoader.item)
+                segmentationWindowLoader.item.close()
+            if (denoiseWindowLoader.item)
+                denoiseWindowLoader.item.close()
+            if (speedCurveWindowLoader.item)
+                speedCurveWindowLoader.item.close()
+            if (fadeCurveWindowLoader.item)
+                fadeCurveWindowLoader.item.close()
+            if (multicamWindowLoader.item)
+                multicamWindowLoader.item.close()
         }
 
         function onOpenMulticamWindowRequested() {
-            multicamWindow.openSession()
+            multicamWindowLoader.ensure().openSession()
         }
 
         // Terminal result of a loadProject()/loadProjectJson() call, from any source —
@@ -784,7 +863,7 @@ ApplicationWindow {
         }
 
         function onMissingAddons(addons) {
-            missingAddonsDialog.openFor(addons)
+            missingAddonsDialogLoader.ensure().openFor(addons)
         }
 
         function onPackageFinished(ok, message) {
@@ -996,7 +1075,7 @@ ApplicationWindow {
             id: editorHeader
             width: parent.width
             visible: !window.previewFullscreen
-            onDownloadsRequested: downloadsWindow.show()
+            onDownloadsRequested: downloadsWindowLoader.ensure().show()
         }
 
         Item {
@@ -1183,17 +1262,19 @@ ApplicationWindow {
     // startup" is off, so the choice of what to work on is the user's rather than
     // defaulting to blank. Declared last (after the editor Column) so it draws over
     // the already-empty document sitting underneath it.
-    StartScreen {
-        id: startScreen
+    Loader {
         anchors.fill: parent
-        visible: window.showStartScreen
-
-        // Delegate to the same functions Ctrl+N / Ctrl+O / the header's Projects menu
-        // use, so there is exactly one place that gates on unsaved changes and decides
-        // when the screen is allowed to disappear.
-        onNewProjectRequested: window.requestNewProject()
-        onOpenProjectRequested: window.requestOpenProjectDialog()
-        onOpenRecentRequested: (path) => window.requestOpenRecentProject(path)
+        active: window.showStartScreen
+        sourceComponent: Component {
+            StartScreen {
+                // Delegate to the same functions Ctrl+N / Ctrl+O / the header's Projects menu
+                // use, so there is exactly one place that gates on unsaved changes and decides
+                // when the screen is allowed to disappear.
+                onNewProjectRequested: window.requestNewProject()
+                onOpenProjectRequested: window.requestOpenProjectDialog()
+                onOpenRecentRequested: (path) => window.requestOpenRecentProject(path)
+            }
+        }
     }
 
     // Notification host — above all panels, so any message lands in one place.

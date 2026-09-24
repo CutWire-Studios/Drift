@@ -1,4 +1,5 @@
 import QtQuick
+import QtQuick.Window
 import QtQuick.Controls.Basic
 import Drift
 import ".."
@@ -59,6 +60,7 @@ Item {
     property bool importing: false
     // Kind visibility filter supplied by the parent (depends on the active tab).
     property var assetVisibleFn: function(kind) { return true }
+    property alias searchText: search.text
     readonly property string query: search.text.trim().toLowerCase()
 
     // Emitted from the card/row context menu — adds the selected asset(s) to the timeline in
@@ -212,7 +214,8 @@ Item {
     // Shift-click silently fall back to a single-item selection instead of a range. Reassigning
     // only when something actually changed avoids spamming dependents on every unrelated
     // combinedItems recompute.
-    onCombinedItemsChanged: {
+    onCombinedItemsChanged: root.pruneSelection()
+    function pruneSelection() {
         if (root.selectedAssetIds.length === 0 && root.selectionAnchorId.length === 0)
             return
         const present = {}
@@ -504,6 +507,12 @@ Item {
             // flicker that comes with reassigning a GridView's whole model) for what is really a
             // single-image update.
             property string _liveThumbnailPath: thumbnailPath
+            // The Connections below replaces the binding, so a recycled card has to get it back.
+            GridView.onReused: cardRoot._liveThumbnailPath = Qt.binding(() => cardRoot.thumbnailPath)
+            GridView.onPooled: {
+                cardMenu.close()
+                folderMenu.close()
+            }
             Connections {
                 target: AssetLibrary
                 function onAssetMetadataChanged(assetId) {
@@ -601,6 +610,8 @@ Item {
                             ? EditorState.imageUrl(cardRoot._liveThumbnailPath) : ""
                     fillMode: Image.PreserveAspectFit
                     asynchronous: true
+                    sourceSize: Qt.size(Math.ceil(Theme.assetCardWidth * Screen.devicePixelRatio),
+                                         Math.ceil(Theme.assetCardWidth * 9 / 16 * Screen.devicePixelRatio))
                     // Fades in rather than popping at full opacity.
                     opacity: status === Image.Ready ? 1 : 0
 
@@ -1035,6 +1046,11 @@ Item {
             // See the matching property on gridDelegate's cardRoot: lets a rotate/trim edit
             // refresh just this row's thumbnail without MediaAssetsTab rebuilding the whole list.
             property string _liveThumbnailPath: thumbnailPath
+            ListView.onReused: listRow._liveThumbnailPath = Qt.binding(() => listRow.thumbnailPath)
+            ListView.onPooled: {
+                rowMenu.close()
+                folderRowMenu.close()
+            }
             Connections {
                 target: AssetLibrary
                 function onAssetMetadataChanged(assetId) {
@@ -1089,6 +1105,8 @@ Item {
                         // Was missing, so list thumbnails decoded
                         // on the UI thread and stalled scrolling.
                         asynchronous: true
+                        sourceSize: Qt.size(Math.ceil(listThumbFrame.width * Screen.devicePixelRatio),
+                                             Math.ceil(listThumbFrame.height * Screen.devicePixelRatio))
                     }
 
                     IconGlyph {
@@ -1811,9 +1829,11 @@ Item {
         cellHeight: (Theme.assetCardWidth * 9 / 16) + Theme.spacing3xl + Theme.assetCardGap
 
         clip: true
+        reuseItems: true
         ScrollBar.vertical: AppScrollBar { }
 
-        model: root.combinedItems
+        // Only the view on screen gets the items; a hidden view would still build delegates.
+        model: root.gridMode ? root.combinedItems : []
         delegate: gridDelegate
     }
 
@@ -1832,9 +1852,10 @@ Item {
         spacing: Theme.spacingMd
 
         clip: true
+        reuseItems: true
         ScrollBar.vertical: AppScrollBar { }
 
-        model: root.combinedItems
+        model: root.gridMode ? [] : root.combinedItems
         delegate: listDelegate
     }
 }

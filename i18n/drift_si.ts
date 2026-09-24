@@ -4219,58 +4219,6 @@
         <translation>වීඩියෝ, ශ්‍රව්‍ය හෝ පින්තූර ගොනු ආයාත කරන්න</translation>
     </message>
     <message>
-        <source>Touch and hold a transition, then drag it onto where two clips meet.</source>
-        <translation>සංක්‍රාන්තියක් ස්පර්ශ කරගෙන සිටින්න, ඉන්පසු එය ක්ලිප් දෙකක් හමුවන තැනට අදින්න.</translation>
-    </message>
-    <message>
-        <source>Drag onto where two clips overlap. They fade into each other by default.</source>
-        <translation>ක්ලිප් දෙකක් එකිනෙක මත පිහිටන තැනට අදින්න. ඒවා පෙරනිමියෙන් එකිනෙකට Fade වේ.</translation>
-    </message>
-    <message>
-        <source>Search transitions</source>
-        <translation>සංක්‍රාන්ති සොයන්න</translation>
-    </message>
-    <message>
-        <source>No transitions available</source>
-        <translation>සංක්‍රාන්ති කිසිවක් නොමැත</translation>
-    </message>
-    <message>
-        <source>Install a transitions pack to add more.</source>
-        <translation>තවත් එක් කිරීමට සංක්‍රාන්ති පැකේජයක් ස්ථාපනය කරන්න.</translation>
-    </message>
-    <message>
-        <source>Get extras</source>
-        <translation>අමතර අංග ලබාගන්න</translation>
-    </message>
-    <message>
-        <source>No transitions match “%1”</source>
-        <translation>“%1” ට ගැලපෙන සංක්‍රාන්ති නැත</translation>
-    </message>
-    <message>
-        <source>No favorites yet</source>
-        <translation>තවමත් ප්‍රියතමයන් නැත</translation>
-    </message>
-    <message>
-        <source>Nothing in this category</source>
-        <translation>මෙම ප්‍රවර්ගයේ කිසිවක් නැත</translation>
-    </message>
-    <message>
-        <source>Try a different name.</source>
-        <translation>වෙනත් නමක් උත්සාහ කරන්න.</translation>
-    </message>
-    <message>
-        <source>Star transitions to save them here.</source>
-        <translation>මෙහි සුරැකීමට සංක්‍රාන්ති තරු ලකුණු කරන්න.</translation>
-    </message>
-    <message>
-        <source>Pick another category.</source>
-        <translation>වෙනත් ප්‍රවර්ගයක් තෝරන්න.</translation>
-    </message>
-    <message>
-        <source>%1 — drag onto an overlap between two clips</source>
-        <translation>%1 — ක්ලිප් දෙකක් අතර අතිච්ඡාදනය වන තැනට අදින්න</translation>
-    </message>
-    <message>
         <source>New folder</source>
         <translation>නව ෆෝල්ඩරය</translation>
     </message>
@@ -12813,6 +12761,61 @@ If playback stutters, try another.</source>
     <message>
         <source>Remove transition</source>
         <translation>සංක්‍රාන්තිය ඉවත් කරන්න</translation>
+    </message>
+</context>
+<context>
+    <name>TransitionsTab</name>
+    <message>
+        <source>Touch and hold a transition, then drag it onto where two clips meet.</source>
+        <translation type="unfinished">සංක්‍රාන්තියක් ස්පර්ශ කරගෙන සිටින්න, ඉන්පසු එය ක්ලිප් දෙකක් හමුවන තැනට අදින්න.</translation>
+    </message>
+    <message>
+        <source>Drag onto where two clips overlap. They fade into each other by default.</source>
+        <translation type="unfinished">ක්ලිප් දෙකක් එකිනෙක මත පිහිටන තැනට අදින්න. ඒවා පෙරනිමියෙන් එකිනෙකට Fade වේ.</translation>
+    </message>
+    <message>
+        <source>Search transitions</source>
+        <translation type="unfinished">සංක්‍රාන්ති සොයන්න</translation>
+    </message>
+    <message>
+        <source>No transitions available</source>
+        <translation type="unfinished">සංක්‍රාන්ති කිසිවක් නොමැත</translation>
+    </message>
+    <message>
+        <source>Install a transitions pack to add more.</source>
+        <translation type="unfinished">තවත් එක් කිරීමට සංක්‍රාන්ති පැකේජයක් ස්ථාපනය කරන්න.</translation>
+    </message>
+    <message>
+        <source>Get extras</source>
+        <translation type="unfinished">අමතර අංග ලබාගන්න</translation>
+    </message>
+    <message>
+        <source>No transitions match “%1”</source>
+        <translation type="unfinished">“%1” ට ගැලපෙන සංක්‍රාන්ති නැත</translation>
+    </message>
+    <message>
+        <source>No favorites yet</source>
+        <translation type="unfinished">තවමත් ප්‍රියතමයන් නැත</translation>
+    </message>
+    <message>
+        <source>Nothing in this category</source>
+        <translation type="unfinished">මෙම ප්‍රවර්ගයේ කිසිවක් නැත</translation>
+    </message>
+    <message>
+        <source>Try a different name.</source>
+        <translation type="unfinished">වෙනත් නමක් උත්සාහ කරන්න.</translation>
+    </message>
+    <message>
+        <source>Star transitions to save them here.</source>
+        <translation type="unfinished">මෙහි සුරැකීමට සංක්‍රාන්ති තරු ලකුණු කරන්න.</translation>
+    </message>
+    <message>
+        <source>Pick another category.</source>
+        <translation type="unfinished">වෙනත් ප්‍රවර්ගයක් තෝරන්න.</translation>
+    </message>
+    <message>
+        <source>%1 — drag onto an overlap between two clips</source>
+        <translation type="unfinished">%1 — ක්ලිප් දෙකක් අතර අතිච්ඡාදනය වන තැනට අදින්න</translation>
     </message>
 </context>
 <context>

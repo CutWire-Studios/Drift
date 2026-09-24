@@ -8,6 +8,7 @@ import ".."
 Item {
     id: root
 
+    property alias searchText: search.text
     readonly property string query: search.text.trim().toLowerCase()
     readonly property var visibleActions: {
         const actions = EditorState.actions || []
@@ -32,22 +33,27 @@ Item {
         font.family: Theme.fontFamily
     }
 
-    Flickable {
+    ListView {
+        id: shortcutList
         anchors.top: search.bottom
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.bottom: parent.bottom
         anchors.topMargin: Theme.spacingMd
-        contentHeight: shortcutColumn.height + Theme.spacing3xl
+        bottomMargin: Theme.spacing3xl
+        spacing: Theme.spacingMd
         clip: true
+        reuseItems: true
+        boundsBehavior: Flickable.StopAtBounds
         ScrollBar.vertical: AppScrollBar { }
+        model: root.visibleActions
 
-        Column {
-            id: shortcutColumn
+        header: Column {
             x: Theme.pagePadding
-            width: parent.width - Theme.pagePadding * 2
+            width: shortcutList.width - Theme.pagePadding * 2
             spacing: Theme.spacingMd
             topPadding: Theme.pagePadding
+            bottomPadding: Theme.spacingMd
 
             Text {
                 width: parent.width
@@ -76,34 +82,43 @@ Item {
                 title: qsTr("No shortcuts match “%1”").arg(search.text.trim())
                 hint: qsTr("Try a different name or key.")
             }
+        }
 
-            Repeater {
-                model: root.visibleActions
-                delegate: Row {
-                    required property var modelData
-                    width: shortcutColumn.width
-                    spacing: Theme.spacingLg
+        delegate: Row {
+            required property var modelData
+            x: Theme.pagePadding
+            width: shortcutList.width - Theme.pagePadding * 2
+            spacing: Theme.spacingLg
 
-                    Text {
-                        width: Math.max(90, shortcutColumn.width - 128)
-                        text: modelData.label
-                        color: Theme.panelForeground
-                        font.family: Theme.fontFamily
-                        font.pixelSize: Theme.fontSizeXs
-                        wrapMode: Text.WordWrap
-                        anchors.verticalCenter: parent.verticalCenter
-                    }
-                    ShortcutCaptureField {
-                        width: 120
-                        actionId: modelData.id
-                        shortcut: modelData.shortcut
-                    }
-                }
+            ListView.onPooled: captureField.capturing = false
+
+            Text {
+                width: Math.max(90, parent.width - 128)
+                text: modelData.label
+                color: Theme.panelForeground
+                font.family: Theme.fontFamily
+                font.pixelSize: Theme.fontSizeXs
+                wrapMode: Text.WordWrap
+                anchors.verticalCenter: parent.verticalCenter
             }
+            ShortcutCaptureField {
+                id: captureField
+                width: 120
+                actionId: modelData.id
+                shortcut: modelData.shortcut
+            }
+        }
 
-            // Clearing a binding persists the empty string, so without this there was
-            // no way back from having cleared one.
+        // Clearing a binding persists the empty string, so without this there was
+        // no way back from having cleared one.
+        footer: Item {
+            width: shortcutList.width
+            height: resetButton.height + Theme.spacingMd
+
             ThemedButton {
+                id: resetButton
+                x: Theme.pagePadding
+                y: Theme.spacingMd
                 text: qsTr("Reset to defaults")
                 variant: "secondary"
                 glyph: Theme.icons.undo

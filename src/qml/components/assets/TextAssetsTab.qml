@@ -43,19 +43,36 @@ Item {
             EditorState.exportUserTextPreset(preset.id, url)
     }
 
-    Flickable {
-        anchors.fill: parent
-        contentWidth: width
-        contentHeight: textColumn.height + Theme.spacing3xl
-        clip: true
-        ScrollBar.vertical: AppScrollBar { }
+    FontMetrics {
+        id: labelMetrics
+        font.family: Theme.fontFamily
+        font.pixelSize: Theme.fontSizeXs
+    }
 
-        Column {
+    // The built-in packs recycle; everything above them (intro, the user's own styles)
+    // rides along as the header. One trailing gap wider than the padded area, so the
+    // cards pack from the left exactly as the old Grid did.
+    GridView {
+        id: packGrid
+        x: Theme.pagePadding
+        width: parent.width - Theme.pagePadding * 2 + Theme.assetCardGap
+        height: parent.height
+        bottomMargin: Theme.spacing3xl
+        clip: true
+        reuseItems: true
+        boundsBehavior: Flickable.StopAtBounds
+        ScrollBar.vertical: AppScrollBar { }
+        cellWidth: Theme.assetCardWidth + Theme.assetCardGap
+        cellHeight: Math.round(Theme.assetCardWidth * 0.55) + Theme.spacingSm
+                    + Math.ceil(labelMetrics.height) + Theme.assetCardGap
+        model: root.presets
+
+        header: Column {
             id: textColumn
-            x: Theme.pagePadding
-            width: parent.width - Theme.pagePadding * 2
+            width: packGrid.width - Theme.assetCardGap
             spacing: Theme.spacingMd
             topPadding: Theme.pagePadding
+            bottomPadding: Theme.spacingMd
 
             Text {
                 width: parent.width
@@ -214,62 +231,50 @@ Item {
                 font.pixelSize: Theme.fontSizeXs
                 font.weight: Font.Medium
             }
+        }
 
-            Grid {
-                id: packGrid
+        delegate: Column {
+            id: packCard
+            required property var modelData
+            width: Theme.assetCardWidth
+            spacing: Theme.spacingSm
+
+            scale: packPress.pressed ? 0.97 : (packHover.hovered ? 1.02 : 1.0)
+            Behavior on scale {
+                NumberAnimation { duration: Theme.durationFast; easing.type: Theme.easing }
+            }
+
+            TextStylePackThumb {
                 width: parent.width
-                columns: Math.max(1, Math.floor((width + Theme.assetCardGap)
-                                                / (Theme.assetCardWidth + Theme.assetCardGap)))
-                columnSpacing: Theme.assetCardGap
-                rowSpacing: Theme.assetCardGap
+                height: Math.round(width * 0.55)
+                presetId: packCard.modelData.id
+                hovered: packHover.hovered
 
-                Repeater {
-                    model: root.presets
-                    delegate: Column {
-                        id: packCard
-                        required property var modelData
-                        width: Theme.assetCardWidth
-                        spacing: Theme.spacingSm
+                HoverHandler {
+                    id: packHover
+                }
 
-                        scale: packPress.pressed ? 0.97 : (packHover.hovered ? 1.02 : 1.0)
-                        Behavior on scale {
-                            NumberAnimation { duration: Theme.durationFast; easing.type: Theme.easing }
-                        }
-
-                        TextStylePackThumb {
-                            width: parent.width
-                            height: Math.round(width * 0.55)
-                            presetId: packCard.modelData.id
-                            hovered: packHover.hovered
-
-                            HoverHandler {
-                                id: packHover
-                            }
-
-                            TapHandler {
-                                id: packPress
-                                gesturePolicy: TapHandler.ReleaseWithinBounds
-                                onTapped: {
-                                    EditorState.addTextClip("", -1, packCard.modelData.id)
-                                    root.added()
-                                }
-                            }
-                        }
-
-                        Text {
-                            width: parent.width
-                            text: packCard.modelData.label
-                            elide: Text.ElideRight
-                            horizontalAlignment: Text.AlignHCenter
-                            color: packHover.hovered ? Theme.panelForeground : Theme.mutedForeground
-                            font.family: Theme.fontFamily
-                            font.pixelSize: Theme.fontSizeXs
-
-                            Behavior on color {
-                                ColorAnimation { duration: Theme.durationFast; easing.type: Theme.easing }
-                            }
-                        }
+                TapHandler {
+                    id: packPress
+                    gesturePolicy: TapHandler.ReleaseWithinBounds
+                    onTapped: {
+                        EditorState.addTextClip("", -1, packCard.modelData.id)
+                        root.added()
                     }
+                }
+            }
+
+            Text {
+                width: parent.width
+                text: packCard.modelData.label
+                elide: Text.ElideRight
+                horizontalAlignment: Text.AlignHCenter
+                color: packHover.hovered ? Theme.panelForeground : Theme.mutedForeground
+                font.family: Theme.fontFamily
+                font.pixelSize: Theme.fontSizeXs
+
+                Behavior on color {
+                    ColorAnimation { duration: Theme.durationFast; easing.type: Theme.easing }
                 }
             }
         }

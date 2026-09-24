@@ -56,7 +56,8 @@ Column {
             anchors.fill: parent
             anchors.margins: 1
             visible: tile.playing
-            source: frame.spriteBase.length > 0 ? frame.spriteBase + "&frames=24" : ""
+            // Only the playing tile renders its 24-frame sheet; the image cache keeps it for a replay.
+            source: tile.playing && frame.spriteBase.length > 0 ? frame.spriteBase + "&frames=24" : ""
             frameCount: 24
             frameWidth: 104
             frameHeight: 58
