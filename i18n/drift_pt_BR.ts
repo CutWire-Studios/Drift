@@ -3123,6 +3123,14 @@
         <translation>Adicionar transição</translation>
     </message>
     <message>
+        <source>Custom guides</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 copy</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>This build of Drift has no video stabilization support</source>
         <translation type="unfinished"></translation>
     </message>
@@ -6314,6 +6322,183 @@ Track</source>
     </message>
 </context>
 <context>
+    <name>GuideEditOverlay</name>
+    <message>
+        <source>Release to remove</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Editing %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Drag from the top or left edge to add a guide, off the canvas to remove one. Shift steps by 1%.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Done</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>GuideSet</name>
+    <message>
+        <source>Rule of thirds</source>
+        <translation type="unfinished">Regra dos terços</translation>
+    </message>
+    <message>
+        <source>Center cross</source>
+        <translation type="unfinished">Cruz central</translation>
+    </message>
+    <message>
+        <source>Safe margins</source>
+        <translation type="unfinished">Margens seguras</translation>
+    </message>
+    <message>
+        <source>9:16 frame</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>4:5 frame</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>1:1 frame</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>GuidesPopover</name>
+    <message>
+        <source>Vertical line</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Horizontal line</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Margins</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Aspect frame</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Unlock so it can be dragged on the preview</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Lock so it cannot be dragged on the preview</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Remove guide</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>From left</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>From top</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Left</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Right</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Top</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Bottom</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Guide colour</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Opacity</source>
+        <translation type="unfinished">Opacidade</translation>
+    </message>
+    <message>
+        <source>Show guides</source>
+        <translation type="unfinished">Mostrar guias</translation>
+    </message>
+    <message>
+        <source>Guide sets</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show this set</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Built-in</source>
+        <translation type="unfinished">Integrados</translation>
+    </message>
+    <message>
+        <source>From project</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>New guide set</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Duplicate set</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Save to my guide sets</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Delete set</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Set name</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Edit on preview</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Built-in sets can&apos;t be changed. Duplicate one to make an editable copy.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This set came with the project. Save it to your guide sets to edit it.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Vertical</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Horizontal</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Frame</source>
+        <translation type="unfinished">Quadro</translation>
+    </message>
+    <message>
+        <source>Add a guide</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>JobRegistry</name>
     <message>
         <source>Queued</source>
@@ -8279,6 +8464,10 @@ Se a reprodução travar, experimente outro.</translation>
         <translation>Alternar guias</translation>
     </message>
     <message>
+        <source>Guide sets</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Keep mask handles on the preview while another clip is selected</source>
         <translation type="unfinished"></translation>
     </message>
@@ -9303,22 +9492,6 @@ Se a reprodução travar, experimente outro.</translation>
     <message>
         <source>Show alignment guides over the preview</source>
         <translation type="unfinished">Mostrar guias de alinhamento sobre a pré-visualização</translation>
-    </message>
-    <message>
-        <source>Rule of thirds</source>
-        <translation type="unfinished">Regra dos terços</translation>
-    </message>
-    <message>
-        <source>Center cross</source>
-        <translation type="unfinished">Cruz central</translation>
-    </message>
-    <message>
-        <source>Safe margins</source>
-        <translation type="unfinished">Margens seguras</translation>
-    </message>
-    <message>
-        <source>Which guide to show</source>
-        <translation type="unfinished">Qual guia mostrar</translation>
     </message>
     <message>
         <source>Background</source>
