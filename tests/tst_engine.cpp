@@ -69,6 +69,8 @@
 #include "engine/EffectProcessor.h"
 #include "engine/FaceTrack.h"
 #include "engine/FaceMesh.h"
+#include "engine/FacePropCatalog.h"
+#include "engine/FacePropImport.h"
 #include "engine/FaceModelTransform.h"
 #include "engine/ModelAsset.h"
 #include "engine/ModelAnimation.h"
@@ -100,6 +102,7 @@
 #include "engine/MediaProbe.h"
 #include "engine/TransitionCatalog.h"
 #include "core/Transition.h"
+#include "TestZip.h"
 
 extern "C" {
 #include <libavcodec/avcodec.h>
@@ -174,6 +177,14 @@ private slots:
     void modelClipDoesNotLeakGlState();
     void faceModelFillWireDoesNotLeakGlState();
     void faceMesh3dEffectPackageLoads();
+    void facePropsEffectPackageLoads();
+    void facePropImportFromMultiPropZip();
+    void facePropImportFromFolder();
+    void facePropImportRejectsUnsafeManifests();
+    void facePropImportRejectsBadModels();
+    void facePropImportReplacesSameId();
+    void facePropRemoveStaysInsideRoot();
+    void facePropCatalogReadsManifestsAndBareGlb();
     void faceMeshRestLoadsAndWarps();
     void faceMesh3dPassThroughWithoutMesh();
     void faceMesh3dDrawsWarpedOverlay();
@@ -2279,6 +2290,288 @@ void EngineTest::faceMesh3dEffectPackageLoads()
     QVERIFY(hasModel);
     QVERIFY(hasFill);
     QVERIFY(hasWire);
+}
+
+namespace {
+
+QByteArray facePropManifestJson(const QString &id, const QString &model,
+                                const QJsonObject &params = {})
+{
+    QJsonObject root{
+        {QStringLiteral("schema"), 1},
+        {QStringLiteral("type"), QStringLiteral("face-prop")},
+        {QStringLiteral("name"), id.toUpper()},
+        {QStringLiteral("model"), model},
+        {QStringLiteral("thumbnail"), QStringLiteral("thumbnail.png")},
+        {QStringLiteral("params"), params},
+    };
+    if (!id.isEmpty())
+        root.insert(QStringLiteral("id"), id);
+    return QJsonDocument(root).toJson();
+}
+
+QByteArray fakeGlb(const QByteArray &tag = "v1")
+{
+    return QByteArray("glTF\x02\x00\x00\x00", 8) + tag;
+}
+
+bool writeTestFile(const QString &path, const QByteArray &data)
+{
+    QDir().mkpath(QFileInfo(path).absolutePath());
+    QFile file(path);
+    return file.open(QIODevice::WriteOnly) && file.write(data) == data.size();
+}
+
+} // namespace
+
+void EngineTest::facePropsEffectPackageLoads()
+{
+    const EffectPresetEntry *def = effectDefForId(QStringLiteral("face_props"));
+    QVERIFY2(def, "face_props package missing from catalog");
+    QVERIFY(def->isModel3d);
+    QVERIFY(def->needsFace);
+    // No warpMesh: the glb path, not the fitted face mesh.
+    QVERIFY(!def->fixedParams.contains(QStringLiteral("warpMesh")));
+    bool hasModel = false;
+    bool hasScale = false;
+    for (const drift::EffectParamSpec &spec : def->meta.parameters) {
+        if (spec.key == QLatin1String("model")) {
+            QVERIFY(spec.isFilePath());
+            QVERIFY(spec.defaultString.isEmpty());
+            hasModel = true;
+        }
+        if (spec.key == QLatin1String("scale")) {
+            // Drift-Assets hats are fitted at up to ~1.5.
+            QVERIFY(spec.max >= 1.5);
+            hasScale = true;
+        }
+    }
+    QVERIFY(hasModel);
+    QVERIFY(hasScale);
+}
+
+void EngineTest::facePropImportFromMultiPropZip()
+{
+    QTemporaryDir tmp;
+    QVERIFY(tmp.isValid());
+    const QString zip = tmp.filePath(QStringLiteral("props.zip"));
+    QVERIFY(writeStoredZip(zip, {
+        {QStringLiteral("face-props/halo/prop.json"),
+         facePropManifestJson(QStringLiteral("halo"), QStringLiteral("halo.glb"),
+                              {{QStringLiteral("scale"), 0.65},
+                               {QStringLiteral("offsetY"), 1.05},
+                               {QStringLiteral("occlusion"), true}})},
+        {QStringLiteral("face-props/halo/halo.glb"), fakeGlb()},
+        {QStringLiteral("face-props/halo/thumbnail.png"), QByteArray("png")},
+        {QStringLiteral("face-props/cat-ears/prop.json"),
+         facePropManifestJson(QStringLiteral("cat-ears"), QStringLiteral("cat-ears.glb"))},
+        {QStringLiteral("face-props/cat-ears/cat-ears.glb"), fakeGlb()},
+        {QStringLiteral("README.md"), QByteArray("readme")},
+    }));
+
+    const QString dest = tmp.filePath(QStringLiteral("installed"));
+    const FacePropImportResult result = importFacePropsFromZip(zip, dest);
+    QVERIFY2(result.errors.isEmpty(), qPrintable(result.errors.join(QLatin1Char('\n'))));
+    QCOMPARE(QSet<QString>(result.installedIds.cbegin(), result.installedIds.cend()),
+             (QSet<QString>{QStringLiteral("halo"), QStringLiteral("cat-ears")}));
+    QVERIFY(QFileInfo::exists(dest + QStringLiteral("/halo/halo.glb")));
+    QVERIFY(QFileInfo::exists(dest + QStringLiteral("/halo/thumbnail.png")));
+    QVERIFY(QFileInfo::exists(dest + QStringLiteral("/halo/prop.json")));
+    // The prop's thumbnail is optional; the second one ships without it.
+    QVERIFY(QFileInfo::exists(dest + QStringLiteral("/cat-ears/cat-ears.glb")));
+
+    // Not a zip at all.
+    const QString notZip = tmp.filePath(QStringLiteral("props.7z"));
+    QVERIFY(writeTestFile(notZip, QByteArray("7z\xbc\xaf\x27\x1c")));
+    const FacePropImportResult bad = importFacePropsFromZip(notZip, dest);
+    QVERIFY(bad.installedIds.isEmpty());
+    QCOMPARE(bad.errors.size(), 1);
+}
+
+void EngineTest::facePropImportFromFolder()
+{
+    QTemporaryDir tmp;
+    QVERIFY(tmp.isValid());
+    // No id in the manifest: the folder name stands in, sanitised.
+    const QString src = tmp.filePath(QStringLiteral("assets/face-props/Party Hat"));
+    QVERIFY(writeTestFile(src + QStringLiteral("/prop.json"),
+                          facePropManifestJson(QString(), QStringLiteral("hat.glb"))));
+    QVERIFY(writeTestFile(src + QStringLiteral("/hat.glb"), fakeGlb()));
+    QVERIFY(writeTestFile(src + QStringLiteral("/thumbnail.png"), QByteArray("png")));
+
+    const QString dest = tmp.filePath(QStringLiteral("installed"));
+    const FacePropImportResult result =
+        importFacePropsFromDirectory(tmp.filePath(QStringLiteral("assets")), dest);
+    QVERIFY2(result.errors.isEmpty(), qPrintable(result.errors.join(QLatin1Char('\n'))));
+    QCOMPARE(result.installedIds, QStringList{QStringLiteral("party-hat")});
+    QVERIFY(QFileInfo::exists(dest + QStringLiteral("/party-hat/hat.glb")));
+
+    // A single prop folder picked directly works the same.
+    const FacePropImportResult direct = importFacePropsFromDirectory(src, dest);
+    QCOMPARE(direct.installedIds, QStringList{QStringLiteral("party-hat")});
+}
+
+void EngineTest::facePropImportRejectsUnsafeManifests()
+{
+    QTemporaryDir tmp;
+    QVERIFY(tmp.isValid());
+    const QString zip = tmp.filePath(QStringLiteral("evil.zip"));
+    QVERIFY(writeStoredZip(zip, {
+        {QStringLiteral("traversal/prop.json"),
+         facePropManifestJson(QStringLiteral("traversal"), QStringLiteral("../escape.glb"))},
+        {QStringLiteral("escape.glb"), fakeGlb()},
+        {QStringLiteral("absolute/prop.json"),
+         facePropManifestJson(QStringLiteral("absolute"), QStringLiteral("/tmp/abs.glb"))},
+        {QStringLiteral("badid/prop.json"),
+         facePropManifestJson(QStringLiteral("../Bad ID"), QStringLiteral("m.glb"))},
+        {QStringLiteral("badid/m.glb"), fakeGlb()},
+        {QStringLiteral("badparam/prop.json"),
+         facePropManifestJson(QStringLiteral("badparam"), QStringLiteral("m.glb"),
+                              {{QStringLiteral("scale"), QStringLiteral("big")}})},
+        {QStringLiteral("badparam/m.glb"), fakeGlb()},
+        // readEntries drops entries that escape the archive, so this prop is never seen.
+        {QStringLiteral("../outside/prop.json"),
+         facePropManifestJson(QStringLiteral("outside"), QStringLiteral("m.glb"))},
+        {QStringLiteral("good/prop.json"),
+         facePropManifestJson(QStringLiteral("good"), QStringLiteral("m.glb"))},
+        {QStringLiteral("good/m.glb"), fakeGlb()},
+    }));
+
+    const QString dest = tmp.filePath(QStringLiteral("installed"));
+    const FacePropImportResult result = importFacePropsFromZip(zip, dest);
+    QCOMPARE(result.installedIds, QStringList{QStringLiteral("good")});
+    QCOMPARE(result.errors.size(), 4);
+    QCOMPARE(QDir(dest).entryList(QDir::AllEntries | QDir::Hidden | QDir::NoDotAndDotDot),
+             QStringList{QStringLiteral("good")});
+    QCOMPARE(QDir(tmp.path()).entryList(QDir::AllEntries | QDir::Hidden | QDir::NoDotAndDotDot),
+             (QStringList{QStringLiteral("evil.zip"), QStringLiteral("installed")}));
+
+    FacePropManifest manifest;
+    QString error;
+    QVERIFY(!parseFacePropManifest(QByteArray("{\"type\":\"sticker\",\"model\":\"a.glb\"}"),
+                                   QStringLiteral("a"), &manifest, &error));
+    QVERIFY(!error.isEmpty());
+    QVERIFY(!parseFacePropManifest(QByteArray("{\"type\":\"face-prop\",\"schema\":2,\"model\":\"a.glb\"}"),
+                                   QStringLiteral("a"), &manifest, &error));
+    QVERIFY(!parseFacePropManifest(facePropManifestJson(QStringLiteral("a"), QStringLiteral("a.obj")),
+                                   QStringLiteral("a"), &manifest, &error));
+    // Unknown params are dropped, not refused.
+    QVERIFY(parseFacePropManifest(
+        facePropManifestJson(QStringLiteral("a"), QStringLiteral("a.glb"),
+                             {{QStringLiteral("scale"), 2.0}, {QStringLiteral("warpMesh"), 1}}),
+        QStringLiteral("a"), &manifest, &error));
+    QCOMPARE(manifest.params.value(QStringLiteral("scale")).toDouble(), 2.0);
+    QVERIFY(!manifest.params.contains(QStringLiteral("warpMesh")));
+}
+
+void EngineTest::facePropImportRejectsBadModels()
+{
+    QTemporaryDir tmp;
+    QVERIFY(tmp.isValid());
+    const QString src = tmp.filePath(QStringLiteral("src"));
+    QVERIFY(writeTestFile(src + QStringLiteral("/missing/prop.json"),
+                          facePropManifestJson(QStringLiteral("missing"), QStringLiteral("gone.glb"))));
+    QVERIFY(writeTestFile(src + QStringLiteral("/notgltf/prop.json"),
+                          facePropManifestJson(QStringLiteral("notgltf"), QStringLiteral("m.glb"))));
+    QVERIFY(writeTestFile(src + QStringLiteral("/notgltf/m.glb"), QByteArray("not a model")));
+
+    const QString dest = tmp.filePath(QStringLiteral("installed"));
+    const FacePropImportResult result = importFacePropsFromDirectory(src, dest);
+    QVERIFY(result.installedIds.isEmpty());
+    QCOMPARE(result.errors.size(), 2);
+    QVERIFY(QDir(dest).entryList(QDir::AllEntries | QDir::Hidden | QDir::NoDotAndDotDot).isEmpty());
+}
+
+void EngineTest::facePropImportReplacesSameId()
+{
+    QTemporaryDir tmp;
+    QVERIFY(tmp.isValid());
+    const QString dest = tmp.filePath(QStringLiteral("installed"));
+    const QString zip = tmp.filePath(QStringLiteral("v1.zip"));
+    QVERIFY(writeStoredZip(zip, {
+        {QStringLiteral("halo/prop.json"),
+         facePropManifestJson(QStringLiteral("halo"), QStringLiteral("old.glb"))},
+        {QStringLiteral("halo/old.glb"), fakeGlb("v1")},
+    }));
+    QCOMPARE(importFacePropsFromZip(zip, dest).installedIds, QStringList{QStringLiteral("halo")});
+
+    const QString src = tmp.filePath(QStringLiteral("v2/halo"));
+    QVERIFY(writeTestFile(src + QStringLiteral("/prop.json"),
+                          facePropManifestJson(QStringLiteral("halo"), QStringLiteral("new.glb"))));
+    QVERIFY(writeTestFile(src + QStringLiteral("/new.glb"), fakeGlb("v2")));
+    QCOMPARE(importFacePropsFromDirectory(src, dest).installedIds, QStringList{QStringLiteral("halo")});
+
+    QCOMPARE(QDir(dest).entryList(QDir::AllEntries | QDir::Hidden | QDir::NoDotAndDotDot),
+             QStringList{QStringLiteral("halo")});
+    QCOMPARE(QDir(dest + QStringLiteral("/halo")).entryList(QDir::Files, QDir::Name),
+             (QStringList{QStringLiteral("new.glb"), QStringLiteral("prop.json")}));
+    QFile glb(dest + QStringLiteral("/halo/new.glb"));
+    QVERIFY(glb.open(QIODevice::ReadOnly));
+    QVERIFY(glb.readAll().endsWith("v2"));
+}
+
+void EngineTest::facePropRemoveStaysInsideRoot()
+{
+    QTemporaryDir tmp;
+    QVERIFY(tmp.isValid());
+    const QString dest = tmp.filePath(QStringLiteral("installed"));
+    QVERIFY(writeTestFile(dest + QStringLiteral("/halo/prop.json"), QByteArray("{}")));
+    QVERIFY(writeTestFile(tmp.filePath(QStringLiteral("outside/keep.txt")), QByteArray("keep")));
+
+    QString error;
+    QVERIFY(!removeUserFaceProp(QStringLiteral("../outside"), &error, dest));
+    QVERIFY(!error.isEmpty());
+    QVERIFY(!removeUserFaceProp(QString(), &error, dest));
+    QVERIFY(!removeUserFaceProp(QStringLiteral("nope"), &error, dest));
+    QVERIFY(QFileInfo::exists(tmp.filePath(QStringLiteral("outside/keep.txt"))));
+    QVERIFY(QDir(dest).exists());
+
+    QVERIFY(removeUserFaceProp(QStringLiteral("halo"), &error, dest));
+    QVERIFY(!QFileInfo::exists(dest + QStringLiteral("/halo")));
+}
+
+void EngineTest::facePropCatalogReadsManifestsAndBareGlb()
+{
+    QTemporaryDir tmp;
+    QVERIFY(tmp.isValid());
+    const QString root = tmp.path();
+    QVERIFY(writeTestFile(root + QStringLiteral("/aviator/prop.json"),
+                          facePropManifestJson(QStringLiteral("aviator"), QStringLiteral("aviator.glb"),
+                                               {{QStringLiteral("scale"), 1.07},
+                                                {QStringLiteral("occlusion"), false}})));
+    QVERIFY(writeTestFile(root + QStringLiteral("/aviator/aviator.glb"), fakeGlb()));
+    QVERIFY(writeTestFile(root + QStringLiteral("/aviator/thumbnail.png"), QByteArray("png")));
+    QVERIFY(writeTestFile(root + QStringLiteral("/plain.glb"), fakeGlb()));
+    QVERIFY(writeTestFile(root + QStringLiteral("/pack/nested.glb"), fakeGlb()));
+    // A manifest whose model is absent lists nothing rather than a prop that cannot draw.
+    QVERIFY(writeTestFile(root + QStringLiteral("/broken/prop.json"),
+                          facePropManifestJson(QStringLiteral("broken"), QStringLiteral("gone.glb"))));
+
+    reloadFacePropCatalog({root});
+    const auto restore = qScopeGuard([] { reloadFacePropCatalog(); });
+    const QList<FacePropEntry> props = facePropsSnapshot();
+    QCOMPARE(props.size(), 3);
+
+    const auto find = [&](const QString &id) {
+        for (const FacePropEntry &e : props) {
+            if (e.id == id)
+                return e;
+        }
+        return FacePropEntry{};
+    };
+    const FacePropEntry aviator = find(QStringLiteral("aviator"));
+    QCOMPARE(aviator.label, QStringLiteral("AVIATOR"));
+    QCOMPARE(QFileInfo(aviator.path).fileName(), QStringLiteral("aviator.glb"));
+    QCOMPARE(QFileInfo(aviator.thumbnailPath).fileName(), QStringLiteral("thumbnail.png"));
+    QVERIFY(!aviator.dir.isEmpty());
+    QCOMPARE(aviator.params.value(QStringLiteral("scale")).toDouble(), 1.07);
+    QCOMPARE(aviator.params.value(QStringLiteral("occlusion")).toBool(), false);
+
+    const FacePropEntry plain = find(QStringLiteral("plain"));
+    QCOMPARE(plain.label, QStringLiteral("plain"));
+    QVERIFY(plain.dir.isEmpty());
+    QVERIFY(plain.params.isEmpty());
+    QVERIFY(QFileInfo::exists(find(QStringLiteral("nested")).path));
 }
 
 void EngineTest::faceMeshRestLoadsAndWarps()

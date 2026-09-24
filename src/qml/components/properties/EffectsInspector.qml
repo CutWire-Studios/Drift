@@ -629,6 +629,17 @@ Item {
                     }
                 }
 
+                Loader {
+                    active: effectCard.effectData.catalogId === "face_props"
+                    visible: active
+                    width: parent.width
+                    opacity: effectCard.effectEnabled ? 1 : 0.45
+                    sourceComponent: FacePropPicker {
+                        effectIndex: effectCard.index
+                        effectParams: effectCard.effectParams
+                    }
+                }
+
                 Column {
                     width: parent.width
                     spacing: 6
@@ -644,7 +655,9 @@ Item {
                             spacing: 4
                             // Out of the layout entirely when folded away, or the outer column
                             // would still space out every hidden row.
-                            visible: group === "" || groupStart || groupOpen
+                            visible: (group === "" || groupStart || groupOpen)
+                                     && !(paramData.key === "model"
+                                          && effectCard.effectData.catalogId === "face_props")
                             // Folding for packages that declare "group" on their parameters (the
                             // relight effect's four lights): the group's first row carries the
                             // header, and every row of a closed group collapses to nothing.

@@ -37,9 +37,8 @@ layout(location = 2) in vec2 a_uv;
 uniform mat4 u_mvp;
 uniform mat3 u_normalMatrix;
 // +1 keep clip z; -1 negate. MediaPipe z is smaller when nearer, but wnToNdc uses
-// z_ndc = −z_wn/4 for glTF props whose +Z is toward the viewer. A warped mesh
-// round-trips MediaPipe points, so without the flip the far side of the nose
-// wins GL_LESS and shows through the near side. XY is unchanged.
+// z_ndc = −z_wn/4, so on a real (forward.z < 0) pose the near side would lose GL_LESS.
+// Face props and the warped mesh both draw with −1. XY is unchanged.
 uniform float u_flipDepth;
 out vec3 v_nrm;
 out vec2 v_uv;
@@ -750,15 +749,15 @@ GlTarget drawFaceModelEffect(GlRuntime &rt, QOpenGLExtraFunctions *gl, const Fac
 
     gl->glEnable(GL_DEPTH_TEST);
     gl->glDepthFunc(GL_LESS);
-    // Warped overlay: real MediaPipe frontal is a half-turn about X (forward.z < 0), which
-    // reverses screen winding versus the identity-quat tests. GL_BACK would cull the whole
-    // face. Props keep CCW cull; the warp path disables it just before draw.
+    // Real MediaPipe frontal is a half-turn about X (forward.z < 0), which reverses screen
+    // winding versus the identity-quat tests: a glTF prop's CCW front faces land CW, so props
+    // cull with CW as front. The warp path disables culling just before draw.
     if (params.warpMesh) {
         gl->glDisable(GL_CULL_FACE);
     } else {
         gl->glEnable(GL_CULL_FACE);
         gl->glCullFace(GL_BACK);
-        gl->glFrontFace(GL_CCW);
+        gl->glFrontFace(GL_CW);
     }
 
     const QMatrix4x4 modelMvp = faceModelMvp(face, params, aspect);
@@ -771,10 +770,16 @@ GlTarget drawFaceModelEffect(GlRuntime &rt, QOpenGLExtraFunctions *gl, const Fac
         for (int r = 0; r < 3; ++r)
             for (int c = 0; c < 3; ++c)
                 normalMatrix(r, c) = nm(r, c);
+        // NDC y follows image y (down), but the light is specified with +y up.
+        if (!params.warpMesh) {
+            for (int c = 0; c < 3; ++c)
+                normalMatrix(1, c) = -normalMatrix(1, c);
+        }
     }
 
     // Head proxy occlusion: depth-only. Cull is off — the Z-negation that makes glTF winding
-    // face the camera also flips the sphere, and a culled proxy writes no depth at all.
+    // face the camera also flips the sphere, and a culled proxy writes no depth at all. Its depth
+    // is flipped like the prop's (u_flipDepth) so the two compare in the same space.
     //
     // Skip it for the warped face mesh: that mesh *is* the face surface, so the ellipsoid
     // clips cheeks and the nose instead of hiding a prop behind the head.
@@ -784,7 +789,9 @@ GlTarget drawFaceModelEffect(GlRuntime &rt, QOpenGLExtraFunctions *gl, const Fac
             rt.builtinProgram(QStringLiteral("face_head_proxy"), kProxyVert, kProxyFrag);
         if (proxyProg) {
             proxyProg->bind();
-            proxyProg->setUniformValue("u_mvp", faceHeadProxyMvp(face, params, aspect));
+            QMatrix4x4 proxyMvp = faceHeadProxyMvp(face, params, aspect);
+            proxyMvp.setRow(2, -proxyMvp.row(2));
+            proxyProg->setUniformValue("u_mvp", proxyMvp);
             gl->glDisable(GL_CULL_FACE);
             gl->glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
             gl->glDepthMask(GL_TRUE);
@@ -824,7 +831,7 @@ GlTarget drawFaceModelEffect(GlRuntime &rt, QOpenGLExtraFunctions *gl, const Fac
     prog->bind();
     prog->setUniformValue("u_mvp", modelMvp);
     prog->setUniformValue("u_normalMatrix", normalMatrix);
-    prog->setUniformValue("u_flipDepth", params.warpMesh ? -1.f : 1.f);
+    prog->setUniformValue("u_flipDepth", -1.f);
     prog->setUniformValue("u_lightDir", screenLightDir(params.lightYaw, params.lightPitch));
     prog->setUniformValue("u_lightIntensity", float(params.lightIntensity));
     prog->setUniformValue("u_ambient", float(params.ambient));

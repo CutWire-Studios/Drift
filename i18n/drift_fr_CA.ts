@@ -3332,6 +3332,44 @@
         <translation>Effet mis à jour</translation>
     </message>
     <message>
+        <source>Could not read the selected file</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>Imported %n face prop(s)</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Imported %n face prop(s); %1 skipped: %2</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>No face props were imported</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Could not delete the face prop</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Face prop deleted</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Apply face prop</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Face prop applied</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Add audio effect</source>
         <translation>Ajouter un effet audio</translation>
     </message>
@@ -6029,6 +6067,152 @@
     <message>
         <source>Share</source>
         <translation type="unfinished">Partager</translation>
+    </message>
+</context>
+<context>
+    <name>FacePropImport</name>
+    <message>
+        <source>%1 is not a binary glTF model</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Could not write to %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>prop.json is not valid JSON</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>prop.json is not a face prop</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>prop.json needs a newer version of Drift</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>invalid prop id “%1”</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>prop.json must name a .glb model in the prop folder</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>prop.json thumbnail must be a file in the prop folder</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>prop.json names the same file twice</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>param “%1” must be a number</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>param “occlusion” must be true or false</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Could not open %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 is not a .zip archive. Other archive formats are not supported.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 has too many files</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No face props (prop.json) found in %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 has too many props</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 is missing</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 is too large or damaged</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 is too large or unreadable</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>“%1” is not an imported face prop</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Could not delete “%1”</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>FacePropPicker</name>
+    <message>
+        <source>Prop</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Import</source>
+        <translation type="unfinished">Importer</translation>
+    </message>
+    <message>
+        <source>Import face props from a .zip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Import Face Props</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Zip archives (*.zip)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Import zip…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Import folder…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No face props installed. Import a .zip from Drift-Assets, or any folder of props that carry a prop.json.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Custom model: %1 (missing)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Custom model: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Delete prop…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Delete this prop?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Delete</source>
+        <translation type="unfinished">Supprimer</translation>
+    </message>
+    <message>
+        <source>“%1” will be removed from your face props. Effects using it will show it as missing until it is imported again.</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>

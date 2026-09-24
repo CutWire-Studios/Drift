@@ -1577,6 +1577,17 @@ public:
     // {explicit, id, name, track, clip, hasDepth}; empty when there is none.
     Q_INVOKABLE QVariantMap effectClipTarget(int trackIndex, int clipIndex, int effectIndex,
                                              const QString &key) const;
+    // The Face Props effect's picker. [{id, name, thumbnailPath, description, license, modelPath,
+    // removable}]; removable is true for props the user imported.
+    Q_INVOKABLE QVariantList facePropLibrary() const;
+    // A .zip or a folder holding one or many props (each a folder with a prop.json). Reports in the
+    // toast; returns {installed: [ids], errors: [messages]}.
+    Q_INVOKABLE QVariantMap importFaceProps(const QUrl &url);
+    Q_INVOKABLE bool removeFaceProp(const QString &propId);
+    // Points a face_props effect at the prop and resets its placement to the prop's fitted values,
+    // as one undo step. Lighting and the face index are the user's and stay as they are.
+    Q_INVOKABLE bool applyFaceProp(int trackIndex, int clipIndex, int effectIndex,
+                                   const QString &propId);
     Q_INVOKABLE QVariantList audioEffectCatalog() const;
     Q_INVOKABLE QVariantList audioEffectCategories() const;
     Q_INVOKABLE void addAudioEffect(int trackIndex, int clipIndex, const QString &effectId);
@@ -2071,6 +2082,7 @@ signals:
     void assetFavoritesChanged();
     void userTextPresetsChanged();
     void userEffectPresetsChanged();
+    void facePropsChanged();
     void canvasCropModeChanged();
     void maskEditModeChanged();
     void maskEditActiveChanged();

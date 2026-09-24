@@ -681,6 +681,8 @@ add_library(driftengine STATIC
     src/engine/FaceSwapSource.cpp
     src/engine/FacePropCatalog.h
     src/engine/FacePropCatalog.cpp
+    src/engine/FacePropImport.h
+    src/engine/FacePropImport.cpp
     src/engine/DeepFilterDenoiser.h
     src/engine/DeepFilterDenoiser.cpp
     src/engine/MatteWriter.h
@@ -1040,6 +1042,7 @@ qt_add_qml_module(drift
         src/qml/components/properties/Model3DInspector.qml
         src/qml/components/properties/MasksInspector.qml
         src/qml/components/properties/EffectsInspector.qml
+        src/qml/components/properties/FacePropPicker.qml
         src/qml/components/assets/TextAssetsTab.qml
         src/qml/components/assets/ScenesTab.qml
         src/qml/components/assets/SubtitlesTab.qml
@@ -1281,6 +1284,7 @@ if(Qt6LinguistTools_FOUND)
             src/engine/PreviewProxyRenderer.cpp
             src/engine/MediaEditor.cpp
             src/engine/ProjectBundle.cpp
+            src/engine/FacePropImport.cpp
             src/core/Project.cpp
             src/core/Transcript.cpp
             src/core/GuideSet.cpp

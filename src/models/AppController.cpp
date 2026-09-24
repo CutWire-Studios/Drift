@@ -58,6 +58,8 @@
 #include "engine/MediaProbe.h"
 #include "engine/MediaWaveform.h"
 #include "engine/FaceLandmarker.h"
+#include "engine/FacePropCatalog.h"
+#include "engine/FacePropImport.h"
 #include "engine/FaceSwapSource.h"
 #include "engine/FaceTrack.h"
 #include "engine/DepthSidecar.h"
@@ -119,6 +121,7 @@
 #include <QAudioDevice>
 #include <QThreadPool>
 #include <QSaveFile>
+#include <QTemporaryFile>
 #include <QSettings>
 #include <QByteArray>
 #include <QTranslator>
@@ -19325,6 +19328,155 @@ bool AppController::setEffectStringParam(int trackIndex, int clipIndex, int effe
 
     if (def->isFaceSwap && key == QLatin1String("sourceImage"))
         ingestFaceSwapSource(path);
+    return true;
+}
+
+QVariantList AppController::facePropLibrary() const
+{
+    QVariantList out;
+    for (const FacePropEntry &entry : facePropsSnapshot()) {
+        out.append(QVariantMap{
+            {QStringLiteral("id"), entry.id},
+            {QStringLiteral("name"), entry.label},
+            {QStringLiteral("thumbnailPath"), entry.thumbnailPath},
+            {QStringLiteral("description"), entry.description},
+            {QStringLiteral("license"), entry.license},
+            {QStringLiteral("modelPath"), entry.path},
+            {QStringLiteral("removable"), entry.userInstalled},
+        });
+    }
+    return out;
+}
+
+QVariantMap AppController::importFaceProps(const QUrl &url)
+{
+    QString path = url.isLocalFile() ? url.toLocalFile() : url.toString();
+#ifdef Q_OS_ANDROID
+    // The zip reader seeks around the archive, so a SAF document is copied to a real file first.
+    QTemporaryFile copy(QDir::temp().filePath(QStringLiteral("drift-face-props-XXXXXX.zip")));
+    if (AndroidUri::isContentUri(url)) {
+        std::unique_ptr<QFile> src = AndroidUri::openForRead(url);
+        if (!src || !copy.open()) {
+            setLastMessage(tr("Could not read the selected file"), QStringLiteral("error"));
+            return {};
+        }
+        while (!src->atEnd()) {
+            if (copy.write(src->read(1 << 20)) < 0) {
+                setLastMessage(tr("Could not read the selected file"), QStringLiteral("error"));
+                return {};
+            }
+        }
+        copy.close();
+        path = copy.fileName();
+    }
+#endif
+    if (path.isEmpty())
+        return {};
+
+    const FacePropImportResult result = QFileInfo(path).isDir()
+        ? importFacePropsFromDirectory(path, userFacePropsDir())
+        : importFacePropsFromZip(path, userFacePropsDir());
+
+    const int installed = int(result.installedIds.size());
+    if (installed > 0 && result.errors.isEmpty())
+        setLastMessage(tr("Imported %n face prop(s)", "", installed), QStringLiteral("success"));
+    else if (installed > 0)
+        setLastMessage(tr("Imported %n face prop(s); %1 skipped: %2", "", installed)
+                           .arg(result.errors.size())
+                           .arg(result.errors.first()),
+                       QStringLiteral("warning"));
+    else
+        setLastMessage(result.errors.isEmpty() ? tr("No face props were imported") : result.errors.first(),
+                       QStringLiteral("error"));
+
+    if (installed > 0) {
+        reloadFacePropCatalog();
+        emit facePropsChanged();
+        // A re-import replaces files an effect may already be drawing.
+        emitPreviewFrame();
+    }
+    return {
+        {QStringLiteral("installed"), result.installedIds},
+        {QStringLiteral("errors"), result.errors},
+    };
+}
+
+bool AppController::removeFaceProp(const QString &propId)
+{
+    const QList<FacePropEntry> props = facePropsSnapshot();
+    const auto prop = std::find_if(props.cbegin(), props.cend(),
+                                   [&](const FacePropEntry &e) { return e.id == propId; });
+    QString error;
+    if (prop == props.cend() || !prop->userInstalled
+        || !removeUserFaceProp(QFileInfo(prop->dir).fileName(), &error, userFacePropsDir())) {
+        setLastMessage(error.isEmpty() ? tr("Could not delete the face prop") : error,
+                       QStringLiteral("error"));
+        return false;
+    }
+    reloadFacePropCatalog();
+    emit facePropsChanged();
+    setLastMessage(tr("Face prop deleted"), QStringLiteral("success"));
+    emitPreviewFrame();
+    return true;
+}
+
+bool AppController::applyFaceProp(int trackIndex, int clipIndex, int effectIndex,
+                                  const QString &propId)
+{
+    if (trackIndex < 0 || trackIndex >= m_project.tracks().size())
+        return false;
+    // The stack lives on the adjustment linked to this clip, not on the clip.
+    if (!redirectToEffectHost(&trackIndex, &clipIndex, drift::AdjustmentKind::VideoEffects,
+                              /*create=*/false)) {
+        return false;
+    }
+
+    drift::Track &track = m_project.tracks()[trackIndex];
+    if (clipIndex < 0 || clipIndex >= track.clips.size())
+        return false;
+
+    drift::Clip &clip = track.clips[clipIndex];
+    if (effectIndex < 0 || effectIndex >= clip.effects.size())
+        return false;
+    if (clip.effects[effectIndex].catalogId != QLatin1String("face_props"))
+        return false;
+    const EffectPresetEntry *def = effectDefForId(clip.effects[effectIndex].catalogId);
+    if (!def)
+        return false;
+
+    const QList<FacePropEntry> props = facePropsSnapshot();
+    const auto prop = std::find_if(props.cbegin(), props.cend(),
+                                   [&](const FacePropEntry &e) { return e.id == propId; });
+    if (prop == props.cend())
+        return false;
+
+    // What a prop is fitted with. A key the prop leaves out goes back to the package default
+    // rather than keeping the previous prop's placement.
+    static const QStringList placementKeys{
+        QStringLiteral("scale"),         QStringLiteral("offsetX"),
+        QStringLiteral("offsetY"),       QStringLiteral("offsetZ"),
+        QStringLiteral("rotX"),          QStringLiteral("rotY"),
+        QStringLiteral("rotZ"),          QStringLiteral("occlusion"),
+        QStringLiteral("occlusionSize"), QStringLiteral("occlusionOffset"),
+        QStringLiteral("occlusionDepth"),
+    };
+
+    const drift::Project before = m_project;
+    drift::Effect &effect = clip.effects[effectIndex];
+    effect.parameters.insert(QStringLiteral("model"), prop->path);
+    for (const drift::EffectParamSpec &spec : def->meta.parameters) {
+        if (!placementKeys.contains(spec.key))
+            continue;
+        const QVariant value = prop->params.value(spec.key, spec.defaultVariant());
+        if (spec.isBoolean())
+            effect.parameters.insert(spec.key, value.toBool());
+        else
+            effect.parameters.insert(spec.key, std::clamp(value.toDouble(), spec.min, spec.max));
+        // Keys would override the placement just set, so the prop would not appear to apply.
+        effect.paramKeyframes.remove(spec.key);
+    }
+    pushProjectEdit(before, tr("Apply face prop"));
+    finishEdit(tr("Face prop applied"));
     return true;
 }
 
