@@ -132,9 +132,21 @@ QVector<float> AudioMixer::readClipAudio(const drift::Clip &clip, quint64 stream
                                          drift::ClipAudioRetimer *retimer, const SourceReader &source,
                                          drift::TimeUs audibleStartUs, drift::TimeUs audibleEndUs)
 {
-    QVector<float> out(outFrames * 2, 0.0f);
+    QVector<float> out;
+    readClipAudio(out, clip, streamId, winStartUs, outFrames, sampleRate, retimer, source,
+                  audibleStartUs, audibleEndUs);
+    return out;
+}
+
+void AudioMixer::readClipAudio(QVector<float> &out, const drift::Clip &clip, quint64 streamId,
+                               drift::TimeUs winStartUs, int outFrames, int sampleRate,
+                               drift::ClipAudioRetimer *retimer, const SourceReader &source,
+                               drift::TimeUs audibleStartUs, drift::TimeUs audibleEndUs)
+{
+    out.resize(qMax(0, outFrames) * 2);
+    std::fill(out.begin(), out.end(), 0.0f);
     if (outFrames <= 0)
-        return out;
+        return;
 
     const drift::TimeUs startUs = audibleStartUs >= 0 ? qMin(audibleStartUs, clip.timelineStart) : clip.timelineStart;
     const drift::TimeUs endUs = audibleEndUs >= 0 ? qMax(audibleEndUs, clip.timelineEnd()) : clip.timelineEnd();
@@ -147,14 +159,14 @@ QVector<float> AudioMixer::readClipAudio(const drift::Clip &clip, quint64 stream
     const drift::TimeUs winDurUs = framesToUs(outFrames, sampleRate);
     const drift::TimeUs winEndUs = winStartUs + winDurUs;
     if (winEndUs <= startUs || winStartUs >= endUs)
-        return out; // window is entirely outside the clip — pure silence
+        return; // window is entirely outside the clip — pure silence
 
     // Clamp the window to the clip; frames before the clip's start stay as the leading zeros above.
     const drift::TimeUs playStartUs = qMax(winStartUs, startUs);
     const int leadFrames = static_cast<int>(((playStartUs - winStartUs) * sampleRate) / drift::kUsPerSecond);
     const int wantFrames = outFrames - leadFrames;
     if (wantFrames <= 0)
-        return out;
+        return;
 
     // Whether a clip is retimed is a property of the clip, not of the moment. A ramp that happens
     // to pass through 1.0 in this block still goes through the stretcher: bypassing it for one
@@ -185,11 +197,11 @@ QVector<float> AudioMixer::readClipAudio(const drift::Clip &clip, quint64 stream
             }
         }
         silencePastEnd(out, winStartUs, endUs, sampleRate);
-        return out;
+        return;
     }
 
     if (!retimer)
-        return out;
+        return;
 
     // Take the ramp's average over the block rather than its value at the left edge: differencing
     // the mapping is the curve's integral, so the audio cannot slowly slide against the picture
@@ -229,7 +241,6 @@ QVector<float> AudioMixer::readClipAudio(const drift::Clip &clip, quint64 stream
         },
         wantFrames, out.data() + leadFrames * 2);
     silencePastEnd(out, winStartUs, endUs, sampleRate);
-    return out;
 }
 
 namespace {
@@ -241,7 +252,8 @@ void accumulateClipAudio(const drift::Project &project, const drift::Clip &clip,
                          int sampleCount, int sampleRate, float *mixBuffer,
                          QMutex &stateMutex,
                          QHash<QString, std::shared_ptr<ClipAudioState>> &clipAudio,
-                         const QList<drift::Effect> &laneEffects, quint64 streamSalt, int depth,
+                         const QList<const drift::Clip *> &laneClips, size_t laneKey,
+                         quint64 streamSalt, int depth,
                          quint64 snapshotSerial, float *outPeakL = nullptr,
                          float *outPeakR = nullptr)
 {
@@ -315,15 +327,21 @@ void accumulateClipAudio(const drift::Project &project, const drift::Clip &clip,
         };
     }
 
-    QVector<float> chunk;
+    QVector<float> &chunk = state.chunk;
     // The clip's own stack plus whatever the nested audio lanes on its track contribute right
     // now. A lane can begin and end part-way through a clip, so this list changes shape mid-clip
     // — which is exactly the case the rebuild check below exists to cover.
-    QList<drift::Effect> effectChain = clip.audioEffects;
-    effectChain.append(laneEffects);
-
-    if (!effectChain.isEmpty()) {
+    if (!clip.audioEffects.isEmpty() || !laneClips.isEmpty()) {
         drift::AudioEffectRack &rack = state.rack;
+        if (snapshotSerial == 0 || state.effectSpecsSerial != snapshotSerial
+            || state.effectSpecsKey != laneKey) {
+            QList<drift::Effect> effectChain = clip.audioEffects;
+            for (const drift::Clip *adjustment : laneClips)
+                effectChain.append(adjustment->audioEffects);
+            state.effectSpecs = audioEffectSpecsFor(effectChain);
+            state.effectSpecsSerial = snapshotSerial;
+            state.effectSpecsKey = laneKey;
+        }
 
         const drift::TimeUs lastEndUs = rack.lastTimelineEndUs();
         const bool continuous = lastEndUs >= 0
@@ -333,7 +351,7 @@ void accumulateClipAudio(const drift::Project &project, const drift::Clip &clip,
         // discontinuity as a seek. Without this, a lane starting mid-clip opens its tail cold.
         bool rebuilt = false;
         const bool active =
-            rack.configure(audioEffectSpecsFor(effectChain), sampleRate, &rebuilt);
+            rack.configure(state.effectSpecs, sampleRate, &rebuilt);
         if (active && (!continuous || rebuilt)) {
             rack.reset();
             // Warm the stages on the audio immediately before this block. That is what makes an
@@ -347,21 +365,21 @@ void accumulateClipAudio(const drift::Project &project, const drift::Clip &clip,
                                                  / sampleRate);
                 // The preroll window ends exactly where this block starts, so the retimer sees one
                 // continuous stream across the two reads and does not restart between them.
-                const QVector<float> preroll = AudioMixer::readClipAudio(
-                    clip, streamId, primeStartUs, primeFrames, sampleRate, &state.retimer, source,
-                    audibleStartUs, audibleEndUs);
-                rack.warmUp(preroll.constData(), primeFrames);
+                AudioMixer::readClipAudio(state.preroll, clip, streamId, primeStartUs, primeFrames,
+                                          sampleRate, &state.retimer, source, audibleStartUs,
+                                          audibleEndUs);
+                rack.warmUp(state.preroll.constData(), primeFrames);
             }
         }
 
-        chunk = AudioMixer::readClipAudio(clip, streamId, timelineStartUs, sampleCount, sampleRate,
-                                          &state.retimer, source, audibleStartUs, audibleEndUs);
+        AudioMixer::readClipAudio(chunk, clip, streamId, timelineStartUs, sampleCount, sampleRate,
+                                  &state.retimer, source, audibleStartUs, audibleEndUs);
         if (active)
             rack.process(chunk.data(), sampleCount);
         rack.setLastTimelineEndUs(timelineStartUs + blockDurUs);
     } else {
-        chunk = AudioMixer::readClipAudio(clip, streamId, timelineStartUs, sampleCount, sampleRate,
-                                          &state.retimer, source, audibleStartUs, audibleEndUs);
+        AudioMixer::readClipAudio(chunk, clip, streamId, timelineStartUs, sampleCount, sampleRate,
+                                  &state.retimer, source, audibleStartUs, audibleEndUs);
     }
 
     const int frames = qMin(sampleCount, chunk.size() / 2);
@@ -463,47 +481,48 @@ namespace {
 // and be torn down by resetClipAudioState() on seek along with everything else.
 const QString kMasterBusStateKey = QStringLiteral("__master_bus__");
 
-// The audio-kind adjustments on the nested lanes of `trackIndex` that are live at this instant.
-// Their effects append to each of that track's clips, which is the audio mirror of how a video
-// lane folds into the clip's own layer pass.
-QList<drift::Effect> laneAudioEffects(const drift::Project &project, int trackIndex,
-                                      drift::TimeUs timelineUs)
+// The audio-kind adjustments on each track's nested lanes append their effects to each of that
+// track's clips, which is the audio mirror of how a video lane folds into the clip's own layer
+// pass. Standalone ones are the master bus: an audio track has no z-order, so "everything below"
+// simply means the whole mix, and every live one contributes to a single chain.
+AudioMixer::AudioAdjustments collectAudioAdjustments(const drift::Project &project)
 {
-    QList<drift::Effect> result;
-    for (const int laneIndex : drift::adjustmentLaneIndexes(project, trackIndex)) {
-        const drift::Track &lane = project.tracks().at(laneIndex);
-        if (lane.muted || lane.hidden)
+    AudioMixer::AudioAdjustments result;
+    const QList<drift::Track> &tracks = project.tracks();
+    for (int i = 0; i < tracks.size(); ++i) {
+        const drift::Track &track = tracks.at(i);
+        if (!track.isAdjustment() || track.muted || track.hidden)
             continue;
-        for (const drift::Clip &adjustment : lane.clips) {
-            if (adjustment.adjustmentKind != drift::AdjustmentKind::AudioEffects)
+        QList<const drift::Clip *> *target = &result.masterBus;
+        if (track.isAdjustmentLane()) {
+            const int parent = drift::adjustmentLaneParentIndex(project, i);
+            if (parent < 0)
                 continue;
-            if (!adjustment.containsTime(timelineUs))
-                continue;
-            result.append(adjustment.audioEffects);
+            target = &result.lanes[parent];
+        }
+        for (const drift::Clip &adjustment : track.clips) {
+            if (adjustment.adjustmentKind == drift::AdjustmentKind::AudioEffects
+                && !adjustment.audioEffects.isEmpty())
+                target->append(&adjustment);
         }
     }
     return result;
 }
 
-// Standalone audio adjustments — the master bus. An audio track has no z-order, so "everything
-// below" simply means the whole mix, and every live one contributes to a single chain.
-QList<drift::Effect> masterBusEffects(const drift::Project &project, drift::TimeUs timelineUs)
+// The adjustments among `candidates` live at `timelineUs`, into `live`. Returns a key for that
+// set, which is all that can change an effect chain within one snapshot.
+size_t liveAdjustments(const QList<const drift::Clip *> &candidates, drift::TimeUs timelineUs,
+                       QList<const drift::Clip *> &live)
 {
-    QList<drift::Effect> result;
-    for (const drift::Track &track : project.tracks()) {
-        if (!track.isAdjustment() || track.isAdjustmentLane())
+    live.clear();
+    size_t key = 0;
+    for (const drift::Clip *adjustment : candidates) {
+        if (!adjustment->containsTime(timelineUs))
             continue;
-        if (track.muted || track.hidden)
-            continue;
-        for (const drift::Clip &adjustment : track.clips) {
-            if (adjustment.adjustmentKind != drift::AdjustmentKind::AudioEffects)
-                continue;
-            if (!adjustment.containsTime(timelineUs))
-                continue;
-            result.append(adjustment.audioEffects);
-        }
+        live.append(adjustment);
+        key = qHashMulti(key, adjustment->id);
     }
-    return result;
+    return key;
 }
 
 } // namespace
@@ -535,6 +554,18 @@ void AudioMixer::mix(drift::TimeUs timelineStartUs, int sampleCount, int sampleR
         }
     }
 
+    // A snapshot's adjustments are fixed, so they are gathered once per serial; without one the
+    // project can change between blocks and they are gathered every time.
+    AudioAdjustments unsnapshotted;
+    if (serial != 0 && m_adjustments.serial != serial) {
+        m_adjustments = collectAudioAdjustments(*project);
+        m_adjustments.serial = serial;
+    } else if (serial == 0) {
+        unsnapshotted = collectAudioAdjustments(*project);
+    }
+    const AudioAdjustments &adjustments = serial != 0 ? m_adjustments : unsnapshotted;
+    QList<const drift::Clip *> live;
+
     QHash<int, QPair<float, float>> newTrackLevels;
     for (int ti = 0; ti < tracks.size(); ++ti) {
         const drift::Track &track = tracks.at(ti);
@@ -546,8 +577,8 @@ void AudioMixer::mix(drift::TimeUs timelineStartUs, int sampleCount, int sampleR
         if (track.isAdjustment())
             continue;
 
-        const QList<drift::Effect> laneEffects =
-            laneAudioEffects(*project, ti, timelineStartUs);
+        const size_t laneKey =
+            liveAdjustments(adjustments.lanes.value(ti), timelineStartUs, live);
 
         float peakL = 0.0f;
         float peakR = 0.0f;
@@ -555,14 +586,14 @@ void AudioMixer::mix(drift::TimeUs timelineStartUs, int sampleCount, int sampleR
             for (const drift::Clip &clip : track.clips)
                 accumulateClipAudio(*project, clip, track, timelineStartUs, sampleCount, sampleRate,
                                     interleavedStereoOut, m_clipAudioMutex, m_clipAudio,
-                                    laneEffects, m_streamSalt, m_depth, serial, &peakL, &peakR);
+                                    live, laneKey, m_streamSalt, m_depth, serial, &peakL, &peakR);
         } else if (track.type == drift::TrackType::Video) {
             for (const drift::Clip &clip : track.clips) {
                 if ((clip.type == drift::ClipType::Video || clip.type == drift::ClipType::Composite)
                     && !clip.suppressEmbeddedAudio)
                     accumulateClipAudio(*project, clip, track, timelineStartUs, sampleCount,
                                         sampleRate, interleavedStereoOut, m_clipAudioMutex,
-                                        m_clipAudio, laneEffects, m_streamSalt, m_depth, serial,
+                                        m_clipAudio, live, laneKey, m_streamSalt, m_depth, serial,
                                         &peakL, &peakR);
             }
         }
@@ -571,8 +602,8 @@ void AudioMixer::mix(drift::TimeUs timelineStartUs, int sampleCount, int sampleR
 
     // The master bus runs on the summed mix, before the limiter — an adjustment that raises level
     // must still be caught by the soft clip rather than sitting outside it.
-    const QList<drift::Effect> busEffects = masterBusEffects(*project, timelineStartUs);
-    if (!busEffects.isEmpty()) {
+    const size_t busKey = liveAdjustments(adjustments.masterBus, timelineStartUs, live);
+    if (!live.isEmpty()) {
         std::shared_ptr<ClipAudioState> statePtr;
         {
             // Keyed like a clip so resetClipAudioState() tears the bus down on seek along with
@@ -590,8 +621,17 @@ void AudioMixer::mix(drift::TimeUs timelineStartUs, int sampleCount, int sampleR
         const bool continuous = lastEndUs >= 0
                                 && qAbs(timelineStartUs - lastEndUs) <= kTimelineGapToleranceUs;
 
+        ClipAudioState &state = *statePtr;
+        if (serial == 0 || state.effectSpecsSerial != serial || state.effectSpecsKey != busKey) {
+            QList<drift::Effect> busEffects;
+            for (const drift::Clip *adjustment : std::as_const(live))
+                busEffects.append(adjustment->audioEffects);
+            state.effectSpecs = audioEffectSpecsFor(busEffects);
+            state.effectSpecsSerial = serial;
+            state.effectSpecsKey = busKey;
+        }
         bool rebuilt = false;
-        const bool active = rack.configure(audioEffectSpecsFor(busEffects), sampleRate, &rebuilt);
+        const bool active = rack.configure(state.effectSpecs, sampleRate, &rebuilt);
         // No preroll here, unlike a clip: the bus's input is the mix itself, which cannot be
         // re-read for the window before this block without re-running every clip. A tail on the
         // master therefore opens cold after a seek.

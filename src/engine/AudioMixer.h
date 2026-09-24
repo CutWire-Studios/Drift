@@ -25,6 +25,14 @@ struct ClipAudioState
     std::shared_ptr<drift::Project> nestedView;
     std::shared_ptr<AudioMixer> nestedMixer;
     quint64 nestedSerial = 0;
+    // The rack's specs, reused while the snapshot and the live lane adjustments stay the same.
+    // Effect parameters are not keyframed, so within one snapshot the chain decides them alone.
+    QVector<drift::AudioEffectSpec> effectSpecs;
+    quint64 effectSpecsSerial = 0;
+    size_t effectSpecsKey = 0;
+    // Scratch for the block and its preroll, so a playing clip does not allocate per block.
+    QVector<float> chunk;
+    QVector<float> preroll;
 };
 
 // Mixes active audio clips into interleaved stereo float PCM.
@@ -76,6 +84,11 @@ public:
                                         drift::ClipAudioRetimer *retimer,
                                         const SourceReader &source = {},
                                         drift::TimeUs audibleStartUs = -1, drift::TimeUs audibleEndUs = -1);
+    // The same, into `out`, which is resized to `outFrames` and keeps its capacity across calls.
+    static void readClipAudio(QVector<float> &out, const drift::Clip &clip, quint64 streamId,
+                              drift::TimeUs winStartUs, int outFrames, int sampleRate,
+                              drift::ClipAudioRetimer *retimer, const SourceReader &source = {},
+                              drift::TimeUs audibleStartUs = -1, drift::TimeUs audibleEndUs = -1);
 
 
     void setMasterVolume(double volume) { m_masterVolume = volume; }
@@ -90,8 +103,21 @@ public:
     // see whichever block happened to be last and miss the transients between polls.
     QList<float> takeMeterPeaks(const QList<int> &trackIndexes) const;
 
+    // The audio-effect adjustments a snapshot holds, with only the time test left to do per
+    // block: per parent track its lanes' clips, and the standalone ones that form the master bus.
+    // Only adjustments that carry effects are listed.
+    struct AudioAdjustments
+    {
+        quint64 serial = 0;
+        QHash<int, QList<const drift::Clip *>> lanes;
+        QList<const drift::Clip *> masterBus;
+    };
+
 private:
     const drift::Project *m_project = nullptr;
+    // Built once per snapshot serial and read only by mix(), which for a snapshot-driven mixer
+    // runs on the audio thread alone. The pointers are into the snapshot with that serial.
+    mutable AudioAdjustments m_adjustments;
     mutable QMutex m_snapshotMutex;
     std::shared_ptr<const drift::Project> m_snapshot;
     quint64 m_snapshotSerial = 0;
