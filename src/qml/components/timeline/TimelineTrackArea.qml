@@ -126,7 +126,6 @@ Item {
         id: overlays
         model: renderer.activeClips
         delegate: TimelineClipItem {
-            overlayOnly: true
             trackClips: renderer
             panel: area.panel
             timelineColumn: area.timelineColumn
