@@ -1394,6 +1394,14 @@
         <translation>මකන්න</translation>
     </message>
     <message>
+        <source>PAUSED </source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>REC </source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Close gap</source>
         <translation>හිඩැස වසන්න</translation>
     </message>
@@ -2351,6 +2359,46 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>No audio track available for recording</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Failed to create audio recording file</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Failed to start audio recording</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Recording audio…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Audio recording cancelled (too short)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Voiceover %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Record audio</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Recorded voiceover</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Voiceover recorded</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Recording cancelled</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Clips moved</source>
         <translation type="unfinished"></translation>
     </message>
@@ -3017,6 +3065,34 @@
     <message>
         <source>Transition updated</source>
         <translation>සංක්‍රාන්තිය යාවත්කාලීන විය</translation>
+    </message>
+    <message>
+        <source>Track solo</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Track soloed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Track unsoloed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Track volume</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Track volume changed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Track pan</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Track pan changed</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Keep ranges</source>
@@ -4402,6 +4478,121 @@
     <message>
         <source>Download speech recognition (about 670 MB)</source>
         <translation>කථන හඳුනාගැනීම බාගන්න (මෙගාබයිට් 670ක් පමණ)</translation>
+    </message>
+</context>
+<context>
+    <name>AudioMixerStrip</name>
+    <message>
+        <source>Audio Mixer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Microphone: %1 (click to switch)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Close audio mixer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>PAUSED</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>REC</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Resume recording</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Pause recording</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Done — save recording to track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Discard — cancel recording</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Default Mic</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source> (Recording)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Unmute</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Mute</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Unsolo</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Solo</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Recording paused — click to finish</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Recording — click to finish</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Record voiceover on %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Pan: %1 (double-click to center)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Mic Recording Gain: %1 (%2%) — scroll to adjust, double-click to reset 0dB</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Volume: %1 (double-click to reset 0dB)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Mic recording level in dB — scroll to adjust, double-click to reset to 0dB (100%)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Track level in dB — scroll to adjust, double-click to reset to 0dB</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Master</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Unmute master</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Mute master</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Main</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Master Volume: %1 (double-click to reset 0dB)</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -7916,6 +8107,14 @@
 <context>
     <name>PreviewPanel</name>
     <message>
+        <source>REC %1s</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>PAUSED %1s</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Nothing to preview yet</source>
         <translation>පෙරදසුන් කිරීමට කිසිවක් නැත</translation>
     </message>
@@ -9183,6 +9382,14 @@ If playback stutters, try another.</source>
     <message>
         <source>Where playback is heard. “System default” follows whatever your computer is set to, including when that changes.</source>
         <translation type="unfinished">ධාවනය ඇසෙන ස්ථානය. “පද්ධති පෙරනිමිය” ඔබේ පරිගණකය සකසා ඇති ඕනෑම දෙයක් අනුගමනය කරයි (එය වෙනස් වන විටද ඇතුළුව).</translation>
+    </message>
+    <message>
+        <source>Microphone input</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Audio device used for recording voiceovers onto audio tracks.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Interface</source>
@@ -11520,6 +11727,14 @@ If playback stutters, try another.</source>
         <translation type="unfinished">ආයාත කරමින්…</translation>
     </message>
     <message>
+        <source>PAUSED </source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>REC </source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Rename bookmark</source>
         <translation>පොත් සලකුණේ නම වෙනස් කරන්න</translation>
     </message>
@@ -11668,6 +11883,10 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>No composite clips yet</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Toggle audio mixer strip</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -11863,6 +12082,18 @@ If playback stutters, try another.</source>
         <translation>ග්‍රැෆික්</translation>
     </message>
     <message>
+        <source>Stop recording</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Record voiceover</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Record voiceover (mic)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Track height</source>
         <translation type="unfinished"></translation>
     </message>
@@ -11889,6 +12120,14 @@ If playback stutters, try another.</source>
     <message>
         <source>Drag the header to reorder this track</source>
         <translation>මෙම ට්‍රැකයේ පිළිවෙළ වෙනස් කිරීමට ශීර්ෂය අදින්න</translation>
+    </message>
+    <message>
+        <source>Paused — click to finish recording</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Recording — click to finish recording</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Unmute track</source>
@@ -12510,6 +12749,53 @@ If playback stutters, try another.</source>
     <message>
         <source>Close</source>
         <translation>වසන්න</translation>
+    </message>
+</context>
+<context>
+    <name>VoiceoverControlBar</name>
+    <message>
+        <source>PAUSED</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>REC</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Default Mic</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Input microphone: %1 (click to switch)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Mic gain</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Voice input gain: %1% (adjust voice level)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Live voice level: %1%</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Resume recording</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Pause recording</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Done — finish recording and save to track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cancel — discard recording</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>

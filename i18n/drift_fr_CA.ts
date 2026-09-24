@@ -1395,6 +1395,14 @@
         <translation>Supprimer</translation>
     </message>
     <message>
+        <source>PAUSED </source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>REC </source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Close gap</source>
         <translation>Fermer l’écart</translation>
     </message>
@@ -2357,6 +2365,46 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>No audio track available for recording</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Failed to create audio recording file</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Failed to start audio recording</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Recording audio…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Audio recording cancelled (too short)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Voiceover %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Record audio</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Recorded voiceover</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Voiceover recorded</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Recording cancelled</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Clips moved</source>
         <translation type="unfinished"></translation>
     </message>
@@ -3023,6 +3071,34 @@
     <message>
         <source>Transition updated</source>
         <translation>Transition mise à jour</translation>
+    </message>
+    <message>
+        <source>Track solo</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Track soloed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Track unsoloed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Track volume</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Track volume changed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Track pan</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Track pan changed</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Keep ranges</source>
@@ -4404,6 +4480,121 @@
     <message>
         <source>Download speech recognition (about 670 MB)</source>
         <translation>Télécharger la reconnaissance vocale (environ 670 Mo)</translation>
+    </message>
+</context>
+<context>
+    <name>AudioMixerStrip</name>
+    <message>
+        <source>Audio Mixer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Microphone: %1 (click to switch)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Close audio mixer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>PAUSED</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>REC</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Resume recording</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Pause recording</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Done — save recording to track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Discard — cancel recording</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Default Mic</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source> (Recording)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Unmute</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Mute</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Unsolo</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Solo</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Recording paused — click to finish</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Recording — click to finish</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Record voiceover on %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Pan: %1 (double-click to center)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Mic Recording Gain: %1 (%2%) — scroll to adjust, double-click to reset 0dB</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Volume: %1 (double-click to reset 0dB)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Mic recording level in dB — scroll to adjust, double-click to reset to 0dB (100%)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Track level in dB — scroll to adjust, double-click to reset to 0dB</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Master</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Unmute master</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Mute master</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Main</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Master Volume: %1 (double-click to reset 0dB)</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -7919,6 +8110,14 @@
 <context>
     <name>PreviewPanel</name>
     <message>
+        <source>REC %1s</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>PAUSED %1s</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Nothing to preview yet</source>
         <translation>Pas encore de prévisualisation</translation>
     </message>
@@ -9186,6 +9385,14 @@ En cas de saccades à la lecture, essayez un autre mode.</translation>
     <message>
         <source>Where playback is heard. “System default” follows whatever your computer is set to, including when that changes.</source>
         <translation type="unfinished">Où le son est entendu. « Par défaut du système » suit ce que votre ordinateur a configuré, y compris lorsqu’il change.</translation>
+    </message>
+    <message>
+        <source>Microphone input</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Audio device used for recording voiceovers onto audio tracks.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Interface</source>
@@ -11525,6 +11732,14 @@ En cas de saccades à la lecture, essayez un autre mode.</translation>
         <translation type="unfinished">Importation…</translation>
     </message>
     <message>
+        <source>PAUSED </source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>REC </source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Close Gap</source>
         <translation>Fermer l&apos;écart</translation>
     </message>
@@ -11673,6 +11888,10 @@ En cas de saccades à la lecture, essayez un autre mode.</translation>
     </message>
     <message>
         <source>No composite clips yet</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Toggle audio mixer strip</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -11868,6 +12087,18 @@ En cas de saccades à la lecture, essayez un autre mode.</translation>
         <translation>Graphique</translation>
     </message>
     <message>
+        <source>Stop recording</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Record voiceover</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Record voiceover (mic)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Track height</source>
         <translation type="unfinished"></translation>
     </message>
@@ -11894,6 +12125,14 @@ En cas de saccades à la lecture, essayez un autre mode.</translation>
     <message>
         <source>Drag the header to reorder this track</source>
         <translation>Glissez l&apos;en-tête pour réorganiser cette piste</translation>
+    </message>
+    <message>
+        <source>Paused — click to finish recording</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Recording — click to finish recording</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Unmute track</source>
@@ -12515,6 +12754,53 @@ En cas de saccades à la lecture, essayez un autre mode.</translation>
     <message>
         <source>Close</source>
         <translation>Fermer</translation>
+    </message>
+</context>
+<context>
+    <name>VoiceoverControlBar</name>
+    <message>
+        <source>PAUSED</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>REC</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Default Mic</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Input microphone: %1 (click to switch)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Mic gain</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Voice input gain: %1% (adjust voice level)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Live voice level: %1%</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Resume recording</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Pause recording</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Done — finish recording and save to track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cancel — discard recording</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>

@@ -72,6 +72,14 @@ public:
                                         drift::TimeUs audibleStartUs = -1, drift::TimeUs audibleEndUs = -1);
 
 
+    void setMasterVolume(double volume) { m_masterVolume = volume; }
+    double masterVolume() const { return m_masterVolume; }
+    void setMasterMuted(bool muted) { m_masterMuted = muted; }
+    bool masterMuted() const { return m_masterMuted; }
+
+    QPair<float, float> trackLevels(int trackIndex) const;
+    QPair<float, float> masterLevels() const;
+
 private:
     const drift::Project *m_project = nullptr;
     // mix() runs on the audio thread; resetClipAudioState() is called from the GUI thread on seek,
@@ -80,6 +88,11 @@ private:
     mutable QMutex m_clipAudioMutex;
     mutable QHash<QString, std::shared_ptr<ClipAudioState>> m_clipAudio;
     bool m_masterClipEnabled = true;
+    double m_masterVolume = 1.0;
+    bool m_masterMuted = false;
+    mutable QMutex m_levelsMutex;
+    mutable QHash<int, QPair<float, float>> m_trackLevels;
+    mutable QPair<float, float> m_masterLevels{0.0f, 0.0f};
     quint64 m_streamSalt = 0;
     int m_depth = 0;
 };

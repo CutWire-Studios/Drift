@@ -833,6 +833,27 @@ AppController::AppController(AssetLibrary *assetLibrary, QObject *parent)
         setLastMessage(message, QStringLiteral("error"));
     });
 
+    connect(&m_audioRecorder, &drift::AudioRecorder::recordingStateChanged, this,
+            &AppController::audioRecordingStateChanged);
+    connect(&m_audioRecorder, &drift::AudioRecorder::pausedChanged, this,
+            &AppController::audioRecordingPausedChanged);
+    connect(&m_audioRecorder, &drift::AudioRecorder::gainChanged, this,
+            &AppController::audioRecordGainChanged);
+    connect(&m_audioRecorder, &drift::AudioRecorder::audioLevelChanged, this,
+            &AppController::audioRecordLevelChanged);
+    connect(&m_audioRecorder, &drift::AudioRecorder::recordedSecondsChanged, this,
+            &AppController::audioRecordSecondsChanged);
+    connect(&m_audioRecorder, &drift::AudioRecorder::livePeaksChanged, this,
+            &AppController::audioRecordLivePeaksChanged);
+    connect(&m_audioRecorder, &drift::AudioRecorder::availableDevicesChanged, this,
+            &AppController::availableMicrophonesChanged);
+    connect(&m_audioRecorder, &drift::AudioRecorder::currentDeviceChanged, this,
+            &AppController::currentMicrophoneChanged);
+    connect(&m_audioRecorder, &drift::AudioRecorder::recordingError, this,
+            [this](const QString &err) {
+                setLastMessage(err, QStringLiteral("error"));
+            });
+
     // Hardware decode that dies mid-playback is otherwise silent — the reader drops to
     // software on its own and the preview just gets slower, which reads as a Drift bug.
     connect(&m_playback, &PlaybackEngine::hardwareDecodeFellBack, this,
@@ -897,7 +918,9 @@ AppController::AppController(AssetLibrary *assetLibrary, QObject *parent)
     connect(&m_playback, &PlaybackEngine::playingChanged, this, [this] {
         if (!m_playback.isPlaying() && m_playing) {
             m_playing = false;
+            m_playheadUs = m_playback.playheadUs();
             emit playingChanged();
+            emit playheadSecondsChanged();
         }
     });
     // The extra snap targets are the beat grid, the bookmarks and the work area — none of which
@@ -991,6 +1014,8 @@ AppController::AppController(AssetLibrary *assetLibrary, QObject *parent)
     m_reopenLastProject = settings.value(QStringLiteral("editor/reopenLastProject"), false).toBool();
     m_timelineOverviewVisible =
         settings.value(QStringLiteral("ui/timelineOverviewVisible"), false).toBool();
+    m_audioMixerVisible =
+        settings.value(QStringLiteral("ui/audioMixerVisible"), false).toBool();
     m_trackLabelsWidth = qBound(110.0,
         settings.value(QStringLiteral("ui/trackLabelsWidth"), 130.0).toDouble(), 320.0);
     m_timelineToolbarItems = settings.value(QStringLiteral("ui/timelineToolbarItems")).toStringList();
@@ -1465,6 +1490,9 @@ QVariantList AppController::tracks() const
             {QStringLiteral("transitions"), transitions},
             {QStringLiteral("muted"), track.muted},
             {QStringLiteral("hidden"), track.hidden},
+            {QStringLiteral("solo"), track.solo},
+            {QStringLiteral("volume"), track.volume},
+            {QStringLiteral("pan"), track.pan},
             {QStringLiteral("clipDisplay"), static_cast<int>(track.clipDisplay)},
             {QStringLiteral("showChannelWaveforms"), track.showChannelWaveforms},
             {QStringLiteral("heightScale"), track.heightScale},
@@ -5546,12 +5574,16 @@ void AppController::setPlaying(bool playing)
             const drift::TimeUs loopOut = m_project.workAreaOutUs();
             if (m_playheadUs >= loopOut || m_playheadUs < loopIn)
                 setPlayheadUs(loopIn);
-        } else if (m_playheadUs >= durationUs && durationUs > 0) {
+        } else if (!m_playback.isVoiceoverRecording() && m_playheadUs >= durationUs && durationUs > 0) {
             setPlayheadUs(0);
         }
         m_playback.setPlayheadUs(m_playheadUs);
         m_playback.play();
     } else {
+        if (m_audioRecorder.isRecording()) {
+            stopAudioRecording();
+            return;
+        }
         m_playback.pause();
     }
     emit playingChanged();
@@ -5694,6 +5726,38 @@ void AppController::setTimelineOverviewVisible(bool visible)
     QSettings settings;
     settings.setValue(QStringLiteral("ui/timelineOverviewVisible"), m_timelineOverviewVisible);
     emit timelineOverviewVisibleChanged();
+}
+
+void AppController::setAudioMixerVisible(bool visible)
+{
+    if (m_audioMixerVisible == visible)
+        return;
+    m_audioMixerVisible = visible;
+    QSettings settings;
+    settings.setValue(QStringLiteral("ui/audioMixerVisible"), m_audioMixerVisible);
+    emit audioMixerVisibleChanged();
+}
+
+double AppController::masterVolume() const
+{
+    return m_playback.masterVolume();
+}
+
+void AppController::setMasterVolume(double volume)
+{
+    m_playback.setMasterVolume(qMax(0.0, volume));
+    emit masterVolumeChanged();
+}
+
+bool AppController::masterMuted() const
+{
+    return m_playback.masterMuted();
+}
+
+void AppController::setMasterMuted(bool muted)
+{
+    m_playback.setMasterMuted(muted);
+    emit masterMutedChanged();
 }
 
 void AppController::setTrackLabelsWidth(qreal width)
@@ -6148,6 +6212,212 @@ void AppController::setAudioOutputDeviceId(const QString &id)
     m_speedCurvePlayer.setAudioDeviceId(bytes);
     m_assetPreviewPlayer.setAudioDeviceId(bytes);
     emit audioOutputDeviceIdChanged();
+}
+
+bool AppController::isRecordingAudio() const
+{
+    return m_audioRecorder.isRecording();
+}
+
+int AppController::recordingTrackIndex() const
+{
+    return m_audioRecorder.recordingTrackIndex();
+}
+
+float AppController::audioRecordLevel() const
+{
+    return m_audioRecorder.audioLevel();
+}
+
+double AppController::audioRecordSeconds() const
+{
+    return m_audioRecorder.recordedSeconds();
+}
+
+QVariantList AppController::availableMicrophones() const
+{
+    return m_audioRecorder.availableDevices();
+}
+
+QString AppController::currentMicrophoneName() const
+{
+    return m_audioRecorder.currentDeviceName();
+}
+
+void AppController::selectMicrophone(const QString &id)
+{
+    m_audioRecorder.selectDevice(id);
+}
+
+bool AppController::isAudioRecordingPaused() const
+{
+    return m_audioRecorder.isPaused();
+}
+
+float AppController::audioRecordGain() const
+{
+    return m_audioRecorder.gain();
+}
+
+void AppController::setAudioRecordGain(float gain)
+{
+    m_audioRecorder.setGain(gain);
+}
+
+QVariantList AppController::audioRecordLivePeaks() const
+{
+    return m_audioRecorder.livePeaks();
+}
+
+void AppController::pauseAudioRecording()
+{
+    if (!m_audioRecorder.isRecording() || m_audioRecorder.isPaused())
+        return;
+
+    m_audioRecorder.pause();
+    if (m_playback.isPlaying() || m_playing) {
+        m_playing = false;
+        m_playback.pause();
+        emit playingChanged();
+        syncTextOverlaySkip();
+    }
+}
+
+void AppController::resumeAudioRecording()
+{
+    if (!m_audioRecorder.isRecording() || !m_audioRecorder.isPaused())
+        return;
+
+    m_audioRecorder.resume();
+    if (!m_playing) {
+        setPlaying(true);
+    }
+}
+
+void AppController::toggleAudioRecordingPause()
+{
+    if (m_audioRecorder.isPaused())
+        resumeAudioRecording();
+    else
+        pauseAudioRecording();
+}
+
+void AppController::startAudioRecording(int trackIndex)
+{
+    if (m_audioRecorder.isRecording()) {
+        stopAudioRecording();
+        return;
+    }
+
+    int targetTrack = trackIndex;
+    if (targetTrack < 0 || targetTrack >= m_project.tracks().size()
+        || m_project.tracks().at(targetTrack).type != drift::TrackType::Audio) {
+        if (m_selectedTrack >= 0 && m_selectedTrack < m_project.tracks().size()
+            && m_project.tracks().at(m_selectedTrack).type == drift::TrackType::Audio) {
+            targetTrack = m_selectedTrack;
+        } else {
+            targetTrack = drift::ensureTrackForClipType(m_project, drift::ClipType::Audio, true);
+        }
+    }
+
+    if (targetTrack < 0 || targetTrack >= m_project.tracks().size()) {
+        setLastMessage(tr("No audio track available for recording"), QStringLiteral("error"));
+        return;
+    }
+
+    const QString outputPath = drift::newVoiceoverPath();
+    if (outputPath.isEmpty()) {
+        setLastMessage(tr("Failed to create audio recording file"), QStringLiteral("error"));
+        return;
+    }
+
+    m_recordingStartPlayheadUs = m_playheadUs;
+
+    QString error;
+    if (!m_audioRecorder.startRecording(targetTrack, outputPath, &error)) {
+        setLastMessage(error.isEmpty() ? tr("Failed to start audio recording") : error,
+                       QStringLiteral("error"));
+        return;
+    }
+
+    m_playback.setVoiceoverRecording(true);
+    if (!m_playing) {
+        setPlaying(true);
+    }
+    setLastMessage(tr("Recording audio…"), QStringLiteral("info"));
+}
+
+void AppController::stopAudioRecording()
+{
+    if (!m_audioRecorder.isRecording())
+        return;
+
+    const int trackIndex = m_audioRecorder.recordingTrackIndex();
+    drift::TimeUs recordedDurationUs = 0;
+    const QString recordedPath = m_audioRecorder.stopRecording(&recordedDurationUs);
+
+    m_playback.setVoiceoverRecording(false);
+    if (m_playback.isPlaying() || m_playing) {
+        m_playing = false;
+        m_playback.pause();
+        emit playingChanged();
+        syncTextOverlaySkip();
+    }
+
+    if (recordedPath.isEmpty() || recordedDurationUs < drift::secondsToUs(0.2)) {
+        if (!recordedPath.isEmpty()) {
+            QFile::remove(recordedPath);
+        }
+        setPlayheadUs(m_recordingStartPlayheadUs);
+        setLastMessage(tr("Audio recording cancelled (too short)"), QStringLiteral("info"));
+        return;
+    }
+
+    if (trackIndex < 0 || trackIndex >= m_project.tracks().size())
+        return;
+
+    const drift::Project before = m_project;
+
+    drift::Clip clip;
+    clip.id = QUuid::createUuid().toString(QUuid::WithoutBraces);
+    clip.type = drift::ClipType::Audio;
+    clip.name = tr("Voiceover %1").arg(++m_voiceoverCounter);
+    clip.path = recordedPath;
+    clip.timelineStart = m_recordingStartPlayheadUs;
+    clip.timelineDuration = recordedDurationUs;
+    clip.srcIn = 0;
+    clip.srcOut = recordedDurationUs;
+
+    m_project.tracks()[trackIndex].clips.append(clip);
+    const int newClipIndex = m_project.tracks().at(trackIndex).clips.size() - 1;
+
+    // Park playhead cleanly right at the end of the recorded clip
+    const drift::TimeUs endPlayheadUs = m_recordingStartPlayheadUs + recordedDurationUs;
+    setPlayheadUs(endPlayheadUs);
+
+    pushProjectEdit(before, tr("Record audio"));
+    finishEdit(tr("Recorded voiceover"));
+    selectClip(trackIndex, newClipIndex);
+    setLastMessage(tr("Voiceover recorded"), QStringLiteral("success"));
+}
+
+void AppController::cancelAudioRecording()
+{
+    if (!m_audioRecorder.isRecording())
+        return;
+
+    m_audioRecorder.cancelRecording();
+    m_playback.setVoiceoverRecording(false);
+
+    if (m_playback.isPlaying() || m_playing) {
+        m_playing = false;
+        m_playback.pause();
+        emit playingChanged();
+        syncTextOverlaySkip();
+    }
+
+    setPlayheadUs(m_recordingStartPlayheadUs);
+    setLastMessage(tr("Recording cancelled"), QStringLiteral("info"));
 }
 
 void AppController::setLastMessage(const QString &message, const QString &severity)
@@ -19586,6 +19856,138 @@ bool AppController::trackHidden(int trackIndex) const
     return m_project.tracks().at(trackIndex).hidden;
 }
 
+void AppController::setTrackSolo(int trackIndex, bool solo)
+{
+    if (trackIndex < 0 || trackIndex >= m_project.tracks().size())
+        return;
+    if (m_project.tracks()[trackIndex].solo == solo)
+        return;
+
+    const drift::Project before = m_project;
+    m_project.tracks()[trackIndex].solo = solo;
+    pushProjectEdit(before, tr("Track solo"));
+    finishEdit(solo ? tr("Track soloed") : tr("Track unsoloed"));
+}
+
+bool AppController::trackSolo(int trackIndex) const
+{
+    if (trackIndex < 0 || trackIndex >= m_project.tracks().size())
+        return false;
+    return m_project.tracks().at(trackIndex).solo;
+}
+
+void AppController::previewTrackVolume(int trackIndex, double volume)
+{
+    if (trackIndex < 0 || trackIndex >= m_project.tracks().size())
+        return;
+    volume = qMax(0.0, volume);
+    if (!m_previewDragActive)
+        beginPreviewDrag(tr("Track volume"));
+
+    m_project.tracks()[trackIndex].volume = volume;
+    emitPreviewFrame();
+}
+
+void AppController::setTrackVolume(int trackIndex, double volume)
+{
+    if (trackIndex < 0 || trackIndex >= m_project.tracks().size())
+        return;
+    volume = qMax(0.0, volume);
+    if (m_previewDragActive) {
+        m_project.tracks()[trackIndex].volume = volume;
+        commitPreviewDrag();
+        return;
+    }
+    if (qFuzzyCompare(m_project.tracks()[trackIndex].volume, volume))
+        return;
+
+    const drift::Project before = m_project;
+    m_project.tracks()[trackIndex].volume = volume;
+    pushProjectEdit(before, tr("Track volume"));
+    finishEdit(tr("Track volume changed"));
+}
+
+double AppController::trackVolume(int trackIndex) const
+{
+    if (trackIndex < 0 || trackIndex >= m_project.tracks().size())
+        return 1.0;
+    return m_project.tracks().at(trackIndex).volume;
+}
+
+void AppController::previewTrackPan(int trackIndex, double pan)
+{
+    if (trackIndex < 0 || trackIndex >= m_project.tracks().size())
+        return;
+    pan = std::clamp(pan, -1.0, 1.0);
+    if (!m_previewDragActive)
+        beginPreviewDrag(tr("Track pan"));
+
+    m_project.tracks()[trackIndex].pan = pan;
+    emitPreviewFrame();
+}
+
+void AppController::setTrackPan(int trackIndex, double pan)
+{
+    if (trackIndex < 0 || trackIndex >= m_project.tracks().size())
+        return;
+    pan = std::clamp(pan, -1.0, 1.0);
+    if (m_previewDragActive) {
+        m_project.tracks()[trackIndex].pan = pan;
+        commitPreviewDrag();
+        return;
+    }
+    if (qFuzzyCompare(m_project.tracks()[trackIndex].pan, pan))
+        return;
+
+    const drift::Project before = m_project;
+    m_project.tracks()[trackIndex].pan = pan;
+    pushProjectEdit(before, tr("Track pan"));
+    finishEdit(tr("Track pan changed"));
+}
+
+double AppController::trackPan(int trackIndex) const
+{
+    if (trackIndex < 0 || trackIndex >= m_project.tracks().size())
+        return 0.0;
+    return m_project.tracks().at(trackIndex).pan;
+}
+
+QVariantMap AppController::trackAudioLevels(int trackIndex) const
+{
+    float left = 0.0f;
+    float right = 0.0f;
+    if (m_audioRecorder.isRecording() && m_audioRecorder.recordingTrackIndex() == trackIndex) {
+        left = m_audioRecorder.audioLevel();
+        right = left;
+    } else if (m_playback.isPlaying()) {
+        const auto levels = m_playback.trackAudioLevels(trackIndex);
+        left = levels.first;
+        right = levels.second;
+    }
+    return {
+        {QStringLiteral("left"), left},
+        {QStringLiteral("right"), right}
+    };
+}
+
+QVariantMap AppController::masterAudioLevels() const
+{
+    float left = 0.0f;
+    float right = 0.0f;
+    if (m_playback.isPlaying()) {
+        const auto levels = m_playback.masterAudioLevels();
+        left = levels.first;
+        right = levels.second;
+    } else if (m_audioRecorder.isRecording()) {
+        left = m_audioRecorder.audioLevel();
+        right = left;
+    }
+    return {
+        {QStringLiteral("left"), left},
+        {QStringLiteral("right"), right}
+    };
+}
+
 void AppController::setTrackClipDisplay(int trackIndex, int mode)
 {
     if (trackIndex < 0 || trackIndex >= m_project.tracks().size())
@@ -22462,6 +22864,7 @@ void AppController::newProject(bool silent)
     m_allowClipOverlap = false;
     setLoopWorkAreaEnabled(false);
     setMediaGridMode(true);
+    setAudioMixerVisible(false);
     setDirty(false);
     deleteRecoveryFile();
     // Always notify — even when already false — so the layout chooser reopens

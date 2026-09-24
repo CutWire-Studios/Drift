@@ -57,6 +57,7 @@ namespace drift {
 struct MediaEditSpec;
 }
 
+#include "engine/AudioRecorder.h"
 #include "playback/ClipPreviewPlayer.h"
 #include "playback/PlaybackEngine.h"
 
@@ -87,6 +88,16 @@ class AppController : public QObject
     Q_PROPERTY(QVariantList audioOutputDevices READ audioOutputDevices NOTIFY audioOutputDevicesChanged)
     Q_PROPERTY(QString audioOutputDeviceId READ audioOutputDeviceId WRITE setAudioOutputDeviceId
                    NOTIFY audioOutputDeviceIdChanged)
+    // Audio recording (voiceover via microphone)
+    Q_PROPERTY(bool isRecordingAudio READ isRecordingAudio NOTIFY audioRecordingStateChanged)
+    Q_PROPERTY(bool isAudioRecordingPaused READ isAudioRecordingPaused NOTIFY audioRecordingPausedChanged)
+    Q_PROPERTY(int recordingTrackIndex READ recordingTrackIndex NOTIFY audioRecordingStateChanged)
+    Q_PROPERTY(float audioRecordLevel READ audioRecordLevel NOTIFY audioRecordLevelChanged)
+    Q_PROPERTY(float audioRecordGain READ audioRecordGain WRITE setAudioRecordGain NOTIFY audioRecordGainChanged)
+    Q_PROPERTY(double audioRecordSeconds READ audioRecordSeconds NOTIFY audioRecordSecondsChanged)
+    Q_PROPERTY(QVariantList audioRecordLivePeaks READ audioRecordLivePeaks NOTIFY audioRecordLivePeaksChanged)
+    Q_PROPERTY(QVariantList availableMicrophones READ availableMicrophones NOTIFY availableMicrophonesChanged)
+    Q_PROPERTY(QString currentMicrophoneName READ currentMicrophoneName NOTIFY currentMicrophoneChanged)
     Q_PROPERTY(QVariantList tracks READ tracks NOTIFY tracksChanged)
     // A change token for the bindings that read `tracks` only to re-evaluate on an edit. Reading
     // the list for that rebuilt every clip in the project into QVariantMaps, once per binding,
@@ -137,6 +148,12 @@ class AppController : public QObject
     // in the project on every edit.
     Q_PROPERTY(bool timelineOverviewVisible READ timelineOverviewVisible
                    WRITE setTimelineOverviewVisible NOTIFY timelineOverviewVisibleChanged)
+    Q_PROPERTY(bool audioMixerVisible READ audioMixerVisible
+                   WRITE setAudioMixerVisible NOTIFY audioMixerVisibleChanged)
+    Q_PROPERTY(double masterVolume READ masterVolume
+                   WRITE setMasterVolume NOTIFY masterVolumeChanged)
+    Q_PROPERTY(bool masterMuted READ masterMuted
+                   WRITE setMasterMuted NOTIFY masterMutedChanged)
     Q_PROPERTY(qreal trackLabelsWidth READ trackLabelsWidth
                    WRITE setTrackLabelsWidth NOTIFY trackLabelsWidthChanged)
     // Timeline toolbar layout: action ids shown as buttons, then the ones in its More menu.
@@ -410,6 +427,25 @@ public:
     QVariantList audioOutputDevices() const;
     QString audioOutputDeviceId() const { return m_audioOutputDeviceId; }
     void setAudioOutputDeviceId(const QString &id);
+
+    bool isRecordingAudio() const;
+    bool isAudioRecordingPaused() const;
+    int recordingTrackIndex() const;
+    float audioRecordLevel() const;
+    float audioRecordGain() const;
+    Q_INVOKABLE void setAudioRecordGain(float gain);
+    double audioRecordSeconds() const;
+    QVariantList audioRecordLivePeaks() const;
+    QVariantList availableMicrophones() const;
+    QString currentMicrophoneName() const;
+
+    Q_INVOKABLE void startAudioRecording(int trackIndex = -1);
+    Q_INVOKABLE void pauseAudioRecording();
+    Q_INVOKABLE void resumeAudioRecording();
+    Q_INVOKABLE void toggleAudioRecordingPause();
+    Q_INVOKABLE void stopAudioRecording();
+    Q_INVOKABLE void cancelAudioRecording();
+    Q_INVOKABLE void selectMicrophone(const QString &id);
     // Handing out a mutable pointer is the point past which this object can no longer know what
     // happened to the project, so the derived caches are dropped here rather than trusted. Two
     // bool writes, and nothing in src/ takes this overload — it exists for tests and for code
@@ -455,6 +491,12 @@ public:
     bool autoKeyEnabled() const { return m_autoKeyEnabled; }
     bool timelineOverviewVisible() const { return m_timelineOverviewVisible; }
     void setTimelineOverviewVisible(bool visible);
+    bool audioMixerVisible() const { return m_audioMixerVisible; }
+    void setAudioMixerVisible(bool visible);
+    double masterVolume() const;
+    void setMasterVolume(double volume);
+    bool masterMuted() const;
+    void setMasterMuted(bool muted);
     qreal trackLabelsWidth() const { return m_trackLabelsWidth; }
     void setTrackLabelsWidth(qreal width);
     QStringList timelineToolbarItems() const { return m_timelineToolbarItems; }
@@ -1536,6 +1578,16 @@ public:
     Q_INVOKABLE bool importUserEffectPreset(const QUrl &fileUrl);
     Q_INVOKABLE void setTrackMuted(int trackIndex, bool muted);
     Q_INVOKABLE void setTrackHidden(int trackIndex, bool hidden);
+    Q_INVOKABLE void setTrackSolo(int trackIndex, bool solo);
+    Q_INVOKABLE bool trackSolo(int trackIndex) const;
+    Q_INVOKABLE void setTrackVolume(int trackIndex, double volume);
+    Q_INVOKABLE void previewTrackVolume(int trackIndex, double volume);
+    Q_INVOKABLE double trackVolume(int trackIndex) const;
+    Q_INVOKABLE void setTrackPan(int trackIndex, double pan);
+    Q_INVOKABLE void previewTrackPan(int trackIndex, double pan);
+    Q_INVOKABLE double trackPan(int trackIndex) const;
+    Q_INVOKABLE QVariantMap trackAudioLevels(int trackIndex) const;
+    Q_INVOKABLE QVariantMap masterAudioLevels() const;
     // Empty name clears the custom label, falling back to the type+position display
     // ("Video 1") again.
     Q_INVOKABLE bool renameTrack(int trackIndex, const QString &name);
@@ -1837,6 +1889,14 @@ signals:
     void playingChanged();
     void audioOutputDevicesChanged();
     void audioOutputDeviceIdChanged();
+    void audioRecordingStateChanged();
+    void audioRecordingPausedChanged();
+    void audioRecordGainChanged();
+    void audioRecordLevelChanged();
+    void audioRecordSecondsChanged();
+    void audioRecordLivePeaksChanged();
+    void availableMicrophonesChanged();
+    void currentMicrophoneChanged();
     void snapEnabledChanged();
     void rippleEnabledChanged();
     void allowClipOverlapChanged();
@@ -1846,6 +1906,9 @@ signals:
     void mediaViewModeChanged();
     void autoKeyEnabledChanged();
     void timelineOverviewVisibleChanged();
+    void audioMixerVisibleChanged();
+    void masterVolumeChanged();
+    void masterMutedChanged();
     void trackLabelsWidthChanged();
     void timelineToolbarLayoutChanged();
     void reopenLastProjectChanged();
@@ -2385,6 +2448,9 @@ protected:
     // Only for its audioOutputsChanged signal — the sinks resolve devices themselves.
     QMediaDevices m_mediaDevices;
     QString m_audioOutputDeviceId;
+    drift::AudioRecorder m_audioRecorder;
+    drift::TimeUs m_recordingStartPlayheadUs = 0;
+    int m_voiceoverCounter = 0;
     // The audio error already on screen, so a device that fails repeatedly toasts once.
     QString m_lastAudioError;
     QUndoStack m_undoStack;
@@ -2426,6 +2492,7 @@ protected:
     QString m_mediaViewMode = QStringLiteral("grid");
     bool m_autoKeyEnabled = false;
     bool m_timelineOverviewVisible = false;
+    bool m_audioMixerVisible = false;
     qreal m_trackLabelsWidth = 130;
     QStringList m_timelineToolbarItems;
     QStringList m_timelineMenuItems;

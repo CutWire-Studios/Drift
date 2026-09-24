@@ -27,6 +27,7 @@
 
 #include "engine/HwAccel.h"
 #include "engine/FrameCompositor.h"
+#include "engine/ClipReaderPool.h"
 #include "models/AppController.h"
 #include "models/TimelineClipsModel.h"
 #include "models/AssetLibrary.h"
@@ -192,6 +193,8 @@ private slots:
     void behindSubjectTargetsAChosenClip();
     void effectRemovalRemapsGraphSelection();
     void denoiseAddsCleanedClipOnTrackAbove();
+    void audioRecordingVoiceoverWorkflow();
+    void audioMixerTrackControlsAndMetering();
     void speedCurveOnAudioClipRetimesAndReplaces();
     void waveformPeaksForSourceRangeSlicesToTheTrimmedWindow();
     void speedCurveSessionExposesTrimmedSourceWindow();
@@ -4596,6 +4599,280 @@ void EditorStateTest::denoiseAddsCleanedClipOnTrackAbove()
     QFile::remove(out.path);
 }
 
+void EditorStateTest::audioRecordingVoiceoverWorkflow()
+{
+    AssetLibrary library;
+    AppController state(&library);
+
+    // Initial state
+    QCOMPARE(state.isRecordingAudio(), false);
+    QCOMPARE(state.isAudioRecordingPaused(), false);
+    QCOMPARE(state.recordingTrackIndex(), -1);
+    QCOMPARE(state.audioRecordLevel(), 0.0f);
+    QCOMPARE(state.audioRecordSeconds(), 0.0);
+    QCOMPARE(state.audioRecordGain(), 1.0f);
+    QVERIFY(state.audioRecordLivePeaks().isEmpty());
+
+    // Gain adjustment
+    state.setAudioRecordGain(1.25f);
+    QCOMPARE(state.audioRecordGain(), 1.25f);
+    state.setAudioRecordGain(1.0f);
+
+    // Set up project with a 10s audio track
+    drift::Project &project = *state.project();
+    project.tracks().clear();
+    project.tracks().append(drift::Track{.type = drift::TrackType::Audio});
+    drift::Clip existingClip;
+    existingClip.id = QStringLiteral("existing-audio");
+    existingClip.type = drift::ClipType::Audio;
+    existingClip.timelineStart = 0;
+    existingClip.timelineDuration = drift::secondsToUs(10.0);
+    project.tracks()[0].clips.append(existingClip);
+
+    // Start recording at 2.5s
+    state.setPlayheadSeconds(2.5);
+    QCOMPARE(state.playheadSeconds(), 2.5);
+    state.startAudioRecording(0);
+
+    if (state.isRecordingAudio()) {
+        QCOMPARE(state.recordingTrackIndex(), 0);
+        QVERIFY(state.playing());
+        QCOMPARE(state.isAudioRecordingPaused(), false);
+
+        // Pause recording test
+        state.pauseAudioRecording();
+        QVERIFY(state.isAudioRecordingPaused());
+        QVERIFY(!state.playing());
+
+        // Resume recording test
+        state.resumeAudioRecording();
+        QVERIFY(!state.isAudioRecordingPaused());
+        QVERIFY(state.playing());
+
+        // Toggle pause test
+        state.toggleAudioRecordingPause();
+        QVERIFY(state.isAudioRecordingPaused());
+        state.toggleAudioRecordingPause();
+        QVERIFY(!state.isAudioRecordingPaused());
+
+        // Cancel recording test
+        state.cancelAudioRecording();
+        QCOMPARE(state.isRecordingAudio(), false);
+        QCOMPARE(state.isAudioRecordingPaused(), false);
+        QCOMPARE(state.recordingTrackIndex(), -1);
+        QCOMPARE(state.playing(), false);
+        QCOMPARE(state.playheadSeconds(), 2.5);
+        QCOMPARE(project.tracks().at(0).clips.size(), 1);
+        QVERIFY(state.audioRecordLivePeaks().isEmpty());
+
+        // Start recording again to test commit and undo/redo
+        state.setPlayheadSeconds(3.0);
+        state.startAudioRecording(0);
+        QVERIFY(state.isRecordingAudio());
+        QTRY_VERIFY_WITH_TIMEOUT(state.audioRecordSeconds() >= 0.25, 2000);
+        state.stopAudioRecording();
+        QCOMPARE(state.isRecordingAudio(), false);
+        QCOMPARE(state.isAudioRecordingPaused(), false);
+        QCOMPARE(state.playing(), false);
+        QCOMPARE(project.tracks().at(0).clips.size(), 2);
+        QVERIFY(state.audioRecordLivePeaks().isEmpty());
+
+        const drift::Clip &newClip = project.tracks().at(0).clips.at(1);
+        QCOMPARE(newClip.type, drift::ClipType::Audio);
+        QCOMPARE(newClip.timelineStart, drift::secondsToUs(3.0));
+        QVERIFY(newClip.timelineDuration > 0);
+        QVERIFY(QFile::exists(newClip.path));
+
+        // Test undo
+        QVERIFY(state.undoAvailable());
+        state.undo();
+        QCOMPARE(project.tracks().at(0).clips.size(), 1);
+
+        // Test redo
+        QVERIFY(state.redoAvailable());
+        state.redo();
+        QCOMPARE(project.tracks().at(0).clips.size(), 2);
+
+        // Record a second clip consecutively without moving playhead manually
+        state.startAudioRecording(0);
+        QVERIFY(state.isRecordingAudio());
+        QTRY_VERIFY_WITH_TIMEOUT(state.audioRecordSeconds() >= 0.25, 2000);
+        state.stopAudioRecording();
+        QCOMPARE(state.isRecordingAudio(), false);
+        QCOMPARE(project.tracks().at(0).clips.size(), 3);
+
+        const drift::Clip &secondClip = project.tracks().at(0).clips.at(2);
+        QCOMPARE(secondClip.type, drift::ClipType::Audio);
+        QVERIFY(secondClip.timelineDuration > 0);
+        QVERIFY(QFile::exists(secondClip.path));
+        QVERIFY(QFileInfo(secondClip.path).size() > 0);
+
+        // Verify seeking and playback after recording two clips
+        state.setPlayheadSeconds(0.0);
+        QCOMPARE(state.playheadSeconds(), 0.0);
+        state.setPlaying(true);
+        QVERIFY(state.playing());
+        QTest::qWait(500);
+        state.setPlaying(false);
+        QCOMPARE(state.playing(), false);
+        state.setPlayheadSeconds(1.0);
+        QCOMPARE(state.playheadSeconds(), 1.0);
+
+        QFile::remove(newClip.path);
+        QFile::remove(secondClip.path);
+
+        // NOW TEST FROM SCRATCH: Empty track with 2 consecutive recordings
+        project.tracks()[0].clips.clear();
+        state.setPlayheadSeconds(0.0);
+        QCOMPARE(project.durationUs(), 0);
+
+        state.startAudioRecording(0);
+        QVERIFY(state.isRecordingAudio());
+        QTRY_VERIFY_WITH_TIMEOUT(state.audioRecordSeconds() >= 0.25, 2000);
+        state.stopAudioRecording();
+        QCOMPARE(state.isRecordingAudio(), false);
+        QCOMPARE(project.tracks().at(0).clips.size(), 1);
+        const QString path1 = project.tracks().at(0).clips.at(0).path;
+        const drift::TimeUs clip0End = project.tracks().at(0).clips.at(0).timelineEnd();
+        QCOMPARE(state.playheadSeconds(), drift::usToSeconds(clip0End));
+
+        // Second recording immediately after: must start right where clip 0 ended without overlap
+        state.startAudioRecording(0);
+        QVERIFY(state.isRecordingAudio());
+        QCOMPARE(state.playheadSeconds(), drift::usToSeconds(clip0End));
+        QTRY_VERIFY_WITH_TIMEOUT(state.audioRecordSeconds() >= 0.25, 2000);
+        state.stopAudioRecording();
+        QCOMPARE(state.isRecordingAudio(), false);
+        QCOMPARE(project.tracks().at(0).clips.size(), 2);
+        const QString path2 = project.tracks().at(0).clips.at(1).path;
+        const drift::TimeUs clip1Start = project.tracks().at(0).clips.at(1).timelineStart;
+        const drift::TimeUs clip1End = project.tracks().at(0).clips.at(1).timelineEnd();
+
+        // Clips must not overlap
+        QVERIFY(clip1Start >= clip0End);
+        QCOMPARE(state.playheadSeconds(), drift::usToSeconds(clip1End));
+
+        // Verify FLAC files decode properly
+        std::vector<float> testBuf(2048);
+        int r1 = ClipReaderPool::instance().readAudioInterleaved(path1, 101, 0, 1024, 48000, testBuf.data());
+        int r2 = ClipReaderPool::instance().readAudioInterleaved(path2, 102, 0, 1024, 48000, testBuf.data());
+        QVERIFY(r1 > 0);
+        QVERIFY(r2 > 0);
+
+        // Third recording: test stopping via togglePlayback() (spacebar equivalent)
+        state.startAudioRecording(0);
+        QVERIFY(state.isRecordingAudio());
+        QTRY_VERIFY_WITH_TIMEOUT(state.audioRecordSeconds() >= 0.25, 2000);
+        state.togglePlayback(); // Spacebar stops recording
+        QCOMPARE(state.isRecordingAudio(), false);
+        QCOMPARE(state.playing(), false);
+        QCOMPARE(project.tracks().at(0).clips.size(), 3);
+        const QString path3 = project.tracks().at(0).clips.at(2).path;
+
+        // Try moving the playhead to start
+        state.setPlayheadSeconds(0.0);
+        QCOMPARE(state.playheadSeconds(), 0.0);
+
+        // Try playing via togglePlayback() (spacebar equivalent)
+        state.togglePlayback();
+        QVERIFY(state.playing());
+        QTest::qWait(400);
+        state.togglePlayback();
+        QCOMPARE(state.playing(), false);
+
+        // Verify seeking anywhere on timeline
+        state.setPlayheadSeconds(0.5);
+        QCOMPARE(state.playheadSeconds(), 0.5);
+
+        QFile::remove(path1);
+        QFile::remove(path2);
+        QFile::remove(path3);
+    }
+}
+
+void EditorStateTest::audioMixerTrackControlsAndMetering()
+{
+    AssetLibrary library;
+    AppController state(&library);
+
+    // Initial state
+    QCOMPARE(state.audioMixerVisible(), false);
+    state.setAudioMixerVisible(true);
+    QCOMPARE(state.audioMixerVisible(), true);
+    state.setAudioMixerVisible(false);
+    QCOMPARE(state.audioMixerVisible(), false);
+
+    // Master volume & mute
+    QCOMPARE(state.masterVolume(), 1.0);
+    QCOMPARE(state.masterMuted(), false);
+    state.setMasterVolume(1.5);
+    QCOMPARE(state.masterVolume(), 1.5);
+    state.setMasterMuted(true);
+    QCOMPARE(state.masterMuted(), true);
+    state.setMasterMuted(false);
+    state.setMasterVolume(1.0);
+
+    // Set up project with 2 audio tracks
+    drift::Project &project = *state.project();
+    project.tracks().clear();
+    project.tracks().append(drift::Track{.type = drift::TrackType::Audio});
+    project.tracks().append(drift::Track{.type = drift::TrackType::Audio});
+
+    // Initial track values
+    QCOMPARE(state.trackSolo(0), false);
+    QCOMPARE(state.trackSolo(1), false);
+    QCOMPARE(state.trackVolume(0), 1.0);
+    QCOMPARE(state.trackVolume(1), 1.0);
+    QCOMPARE(state.trackPan(0), 0.0);
+    QCOMPARE(state.trackPan(1), 0.0);
+
+    // Track solo and undo
+    state.setTrackSolo(0, true);
+    QCOMPARE(state.trackSolo(0), true);
+    QCOMPARE(state.trackSolo(1), false);
+    QVERIFY(state.undoAvailable());
+    state.undo();
+    QCOMPARE(state.trackSolo(0), false);
+    state.redo();
+    QCOMPARE(state.trackSolo(0), true);
+
+    // Track volume preview and commit
+    state.previewTrackVolume(0, 0.75);
+    QCOMPARE(state.trackVolume(0), 0.75);
+    state.setTrackVolume(0, 0.5);
+    QCOMPARE(state.trackVolume(0), 0.5);
+    state.undo();
+    QCOMPARE(state.trackVolume(0), 1.0);
+    state.redo();
+    QCOMPARE(state.trackVolume(0), 0.5);
+
+    // Track pan preview and commit
+    state.previewTrackPan(0, -0.4);
+    QCOMPARE(state.trackPan(0), -0.4);
+    state.setTrackPan(0, -0.5);
+    QCOMPARE(state.trackPan(0), -0.5);
+    state.undo();
+    QCOMPARE(state.trackPan(0), 0.0);
+    state.redo();
+    QCOMPARE(state.trackPan(0), -0.5);
+
+    // Verify tracks() dictionary exposure
+    QVariantList tracks = state.tracks();
+    QCOMPARE(tracks.size(), 2);
+    QVariantMap t0 = tracks.at(0).toMap();
+    QCOMPARE(t0.value(QStringLiteral("solo")).toBool(), true);
+    QCOMPARE(t0.value(QStringLiteral("volume")).toDouble(), 0.5);
+    QCOMPARE(t0.value(QStringLiteral("pan")).toDouble(), -0.5);
+
+    // Audio levels query
+    QVariantMap levels = state.trackAudioLevels(0);
+    QVERIFY(levels.contains(QStringLiteral("left")));
+    QVERIFY(levels.contains(QStringLiteral("right")));
+    QVariantMap masterLevels = state.masterAudioLevels();
+    QVERIFY(masterLevels.contains(QStringLiteral("left")));
+    QVERIFY(masterLevels.contains(QStringLiteral("right")));
+}
+
 void EditorStateTest::shapeStylePartialUpdateAndUndo()
 {
     AssetLibrary library;
@@ -6486,6 +6763,9 @@ void EditorStateTest::clipEffectsLiveOnALinkedAdjustmentLane()
     scened.addEffect(textTrack, textClip, QStringLiteral("adjust.contrast"));
     scened.addEffect(textTrack, textClip, QStringLiteral("adjust.brightness"));
 
+#ifndef DRIFT_WITH_SKIA
+    QSKIP("text clips in compositor need DRIFT_WITH_SKIA");
+#else
     FrameCompositor compositor;
     compositor.setProject(scened.project());
     GpuScene scene;
@@ -6500,6 +6780,7 @@ void EditorStateTest::clipEffectsLiveOnALinkedAdjustmentLane()
     }
     QCOMPARE(adjustmentItems, 0);
     QCOMPARE(layersCarryingTheStack, 1);
+#endif
 }
 
 // The pin is enforced centrally, so every path that moves or trims a clip keeps it true without

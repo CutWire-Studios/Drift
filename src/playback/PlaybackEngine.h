@@ -64,6 +64,9 @@ public:
     void setLoopWorkArea(bool enabled) { m_loopWorkArea = enabled; }
     bool loopWorkArea() const { return m_loopWorkArea; }
 
+    void setVoiceoverRecording(bool rec) { m_voiceoverRecording = rec; }
+    bool isVoiceoverRecording() const { return m_voiceoverRecording; }
+
     int previewTextureId() const;
     QSize previewTextureSize() const;
     // Readback fallback for Android drivers that refuse to share the GL context with the scene
@@ -133,6 +136,13 @@ public:
 
     // Empty id follows the system default. Applied to the sink immediately.
     void setAudioDeviceId(const QByteArray &id) { m_audio.setDeviceId(id); }
+
+    QPair<float, float> trackAudioLevels(int trackIndex) const;
+    QPair<float, float> masterAudioLevels() const;
+    void setMasterVolume(double vol);
+    double masterVolume() const;
+    void setMasterMuted(bool muted);
+    bool masterMuted() const;
 
 signals:
     // Playback cannot produce sound; carries a message meant for the user.
@@ -232,6 +242,7 @@ private:
     // samples in — not necessarily the project's rate, since the device has the final say.
     int m_sampleRate = 48000;
     bool m_loopWorkArea = false;
+    bool m_voiceoverRecording = false;
     // processedUSecs() is cumulative from QAudioSink::start(), not from the last clock reset.
     // Subtracting this (captured whenever the clock is re-anchored) keeps a seek from landing
     // at seekTarget + time-since-play instead of seekTarget.

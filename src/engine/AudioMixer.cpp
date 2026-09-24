@@ -54,6 +54,13 @@ void panGainsForClip(const drift::Clip &clip, float *leftOut, float *rightOut)
     *rightOut = static_cast<float>(qMin(1.0, 1.0 + pan));
 }
 
+void panGainsForTrack(const drift::Track &track, float *leftOut, float *rightOut)
+{
+    const double pan = qBound(-1.0, track.pan, 1.0);
+    *leftOut = static_cast<float>(qMin(1.0, 1.0 - pan));
+    *rightOut = static_cast<float>(qMin(1.0, 1.0 + pan));
+}
+
 double transitionGainForClip(const drift::Track &track, const drift::Clip &clip, drift::TimeUs timelineUs,
                              const drift::AudioTransitionEdge &edge)
 {
@@ -234,7 +241,8 @@ void accumulateClipAudio(const drift::Project &project, const drift::Clip &clip,
                          int sampleCount, int sampleRate, float *mixBuffer,
                          QMutex &stateMutex,
                          QHash<QString, std::shared_ptr<ClipAudioState>> &clipAudio,
-                         const QList<drift::Effect> &laneEffects, quint64 streamSalt, int depth)
+                         const QList<drift::Effect> &laneEffects, quint64 streamSalt, int depth,
+                         float *outPeakL = nullptr, float *outPeakR = nullptr)
 {
     if (clip.path.isEmpty() && clip.sequenceId.isEmpty())
         return;
@@ -356,6 +364,13 @@ void accumulateClipAudio(const drift::Project &project, const drift::Clip &clip,
     float panL = 1.0f;
     float panR = 1.0f;
     panGainsForClip(clip, &panL, &panR);
+    float trackPanL = 1.0f;
+    float trackPanR = 1.0f;
+    panGainsForTrack(track, &trackPanL, &trackPanR);
+    const float trackVol = static_cast<float>(qMax(0.0, track.volume));
+
+    float peakL = 0.0f;
+    float peakR = 0.0f;
     for (int i = 0; i < frames; ++i) {
         const drift::TimeUs sampleTimeUs =
             timelineStartUs + static_cast<drift::TimeUs>((static_cast<int64_t>(i) * drift::kUsPerSecond) / sampleRate);
@@ -364,9 +379,17 @@ void accumulateClipAudio(const drift::Project &project, const drift::Clip &clip,
                                               * transitionGainForClip(track, clip, sampleTimeUs, edge)
                                               * clip.fadeMultiplier(sampleTimeUs, edge.ownsIn, edge.ownsOut)
                                               * clip.audioEdgeMultiplier(sampleTimeUs, edge.ownsIn, edge.ownsOut));
-        mixBuffer[i * 2] += chunk[i * 2] * gain * panL;
-        mixBuffer[i * 2 + 1] += chunk[i * 2 + 1] * gain * panR;
+        const float sampleL = chunk[i * 2] * gain * panL * trackVol * trackPanL;
+        const float sampleR = chunk[i * 2 + 1] * gain * panR * trackVol * trackPanR;
+        mixBuffer[i * 2] += sampleL;
+        mixBuffer[i * 2 + 1] += sampleR;
+        peakL = qMax(peakL, qAbs(sampleL));
+        peakR = qMax(peakR, qAbs(sampleR));
     }
+    if (outPeakL)
+        *outPeakL = qMax(*outPeakL, peakL);
+    if (outPeakR)
+        *outPeakR = qMax(*outPeakR, peakR);
 }
 
 } // namespace
@@ -385,6 +408,11 @@ void AudioMixer::resetClipAudioState()
     {
         QMutexLocker locker(&m_clipAudioMutex);
         m_clipAudio.clear();
+    }
+    {
+        QMutexLocker lock(&m_levelsMutex);
+        m_trackLevels.clear();
+        m_masterLevels = {0.0f, 0.0f};
     }
     // The decoders behind those clips are just as discontinuous. Their sequential fast path cannot
     // see a playhead move on its own — a forward seek shorter than its threshold reads as ordinary
@@ -452,9 +480,18 @@ void AudioMixer::mix(drift::TimeUs timelineStartUs, int sampleCount, int sampleR
     std::memset(interleavedStereoOut, 0, static_cast<size_t>(sampleCount) * 2 * sizeof(float));
 
     const QList<drift::Track> &tracks = m_project->tracks();
+    bool anySolo = false;
+    for (const drift::Track &t : tracks) {
+        if (t.solo) {
+            anySolo = true;
+            break;
+        }
+    }
+
+    QHash<int, QPair<float, float>> newTrackLevels;
     for (int ti = 0; ti < tracks.size(); ++ti) {
         const drift::Track &track = tracks.at(ti);
-        if (track.muted || track.hidden)
+        if (track.muted || track.hidden || (anySolo && !track.solo))
             continue;
 
         // Adjustment tracks carry no audio of their own: a lane's effects reach the mix through
@@ -465,20 +502,24 @@ void AudioMixer::mix(drift::TimeUs timelineStartUs, int sampleCount, int sampleR
         const QList<drift::Effect> laneEffects =
             laneAudioEffects(*m_project, ti, timelineStartUs);
 
+        float peakL = 0.0f;
+        float peakR = 0.0f;
         if (track.type == drift::TrackType::Audio) {
             for (const drift::Clip &clip : track.clips)
                 accumulateClipAudio(*m_project, clip, track, timelineStartUs, sampleCount, sampleRate,
                                     interleavedStereoOut, m_clipAudioMutex, m_clipAudio,
-                                    laneEffects, m_streamSalt, m_depth);
+                                    laneEffects, m_streamSalt, m_depth, &peakL, &peakR);
         } else if (track.type == drift::TrackType::Video) {
             for (const drift::Clip &clip : track.clips) {
                 if ((clip.type == drift::ClipType::Video || clip.type == drift::ClipType::Composite)
                     && !clip.suppressEmbeddedAudio)
                     accumulateClipAudio(*m_project, clip, track, timelineStartUs, sampleCount,
                                         sampleRate, interleavedStereoOut, m_clipAudioMutex,
-                                        m_clipAudio, laneEffects, m_streamSalt, m_depth);
+                                        m_clipAudio, laneEffects, m_streamSalt, m_depth,
+                                        &peakL, &peakR);
             }
         }
+        newTrackLevels.insert(ti, {peakL, peakR});
     }
 
     // The master bus runs on the summed mix, before the limiter — an adjustment that raises level
@@ -513,8 +554,42 @@ void AudioMixer::mix(drift::TimeUs timelineStartUs, int sampleCount, int sampleR
             rack.process(interleavedStereoOut, sampleCount);
     }
 
-    if (m_masterClipEnabled) {
-        for (int i = 0; i < sampleCount * 2; ++i)
-            interleavedStereoOut[i] = softClip(interleavedStereoOut[i]);
+    if (m_masterMuted) {
+        std::memset(interleavedStereoOut, 0, static_cast<size_t>(sampleCount) * 2 * sizeof(float));
+    } else {
+        const float mGain = static_cast<float>(qMax(0.0, m_masterVolume));
+        if (!qFuzzyCompare(mGain, 1.0f)) {
+            for (int i = 0; i < sampleCount * 2; ++i)
+                interleavedStereoOut[i] *= mGain;
+        }
+        if (m_masterClipEnabled) {
+            for (int i = 0; i < sampleCount * 2; ++i)
+                interleavedStereoOut[i] = softClip(interleavedStereoOut[i]);
+        }
     }
+
+    float mPeakL = 0.0f;
+    float mPeakR = 0.0f;
+    for (int i = 0; i < sampleCount; ++i) {
+        mPeakL = qMax(mPeakL, qAbs(interleavedStereoOut[i * 2]));
+        mPeakR = qMax(mPeakR, qAbs(interleavedStereoOut[i * 2 + 1]));
+    }
+
+    {
+        QMutexLocker lock(&m_levelsMutex);
+        m_trackLevels = newTrackLevels;
+        m_masterLevels = {mPeakL, mPeakR};
+    }
+}
+
+QPair<float, float> AudioMixer::trackLevels(int trackIndex) const
+{
+    QMutexLocker lock(&m_levelsMutex);
+    return m_trackLevels.value(trackIndex, {0.0f, 0.0f});
+}
+
+QPair<float, float> AudioMixer::masterLevels() const
+{
+    QMutexLocker lock(&m_levelsMutex);
+    return m_masterLevels;
 }

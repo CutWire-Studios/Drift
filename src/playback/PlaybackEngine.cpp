@@ -756,9 +756,8 @@ void PlaybackEngine::pause()
     m_playheadUs = m_clock.pausedAt();
     m_mixer.resetClipAudioState();
     m_audioStreamGeneration.fetch_add(1, std::memory_order_release);
-    m_audio.stop();
-    emit playingChanged();
     emit playheadUsChanged(static_cast<quint64>(m_playheadUs));
+    emit playingChanged();
     refreshFrame();
 }
 
@@ -786,8 +785,11 @@ void PlaybackEngine::checkEndOfTimeline(drift::TimeUs timeUs)
         return;
     }
 
+    if (m_voiceoverRecording)
+        return;
+
     const drift::TimeUs durationUs = m_project->durationUs();
-    if (timeUs >= durationUs) {
+    if (durationUs > 0 && timeUs >= durationUs) {
         m_playheadUs = durationUs;
         emit playheadUsChanged(static_cast<quint64>(m_playheadUs));
         QMetaObject::invokeMethod(this, &PlaybackEngine::pause, Qt::QueuedConnection);
@@ -950,4 +952,38 @@ int PlaybackEngine::fillAudio(float *buffer, int sampleCount)
     const qint64 playedUs = qMax(qint64(0), m_audio.processedUSecs() - m_sinkPlayedUsOffset);
     m_clock.syncPlaybackUs(static_cast<drift::TimeUs>(playedUs));
     return sampleCount;
+}
+
+QPair<float, float> PlaybackEngine::trackAudioLevels(int trackIndex) const
+{
+    if (!m_playing)
+        return {0.0f, 0.0f};
+    return m_mixer.trackLevels(trackIndex);
+}
+
+QPair<float, float> PlaybackEngine::masterAudioLevels() const
+{
+    if (!m_playing)
+        return {0.0f, 0.0f};
+    return m_mixer.masterLevels();
+}
+
+void PlaybackEngine::setMasterVolume(double vol)
+{
+    m_mixer.setMasterVolume(vol);
+}
+
+double PlaybackEngine::masterVolume() const
+{
+    return m_mixer.masterVolume();
+}
+
+void PlaybackEngine::setMasterMuted(bool muted)
+{
+    m_mixer.setMasterMuted(muted);
+}
+
+bool PlaybackEngine::masterMuted() const
+{
+    return m_mixer.masterMuted();
 }
