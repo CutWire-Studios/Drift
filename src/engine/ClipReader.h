@@ -217,6 +217,7 @@ private:
     bool lookupCachedPreview(drift::TimeUs sourceUs, PreviewVideoFrame &out) const;
     void storeCachedPreview(drift::TimeUs ptsUs, const PreviewVideoFrame &frame);
     int previewCacheCapacity() const;
+    drift::TimeUs nextPrefetchTargetUs() const;
     void trimPreviewCache();
     bool wantsMorePreviewReadAhead() const;
 

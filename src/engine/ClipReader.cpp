@@ -19,6 +19,8 @@
 #include <QMutexLocker>
 #include <QThread>
 
+#include <algorithm>
+
 #if defined(Q_OS_WIN)
 #include <windows.h>
 #elif defined(Q_OS_MACOS)
@@ -2263,13 +2265,22 @@ bool ClipReader::readPreviewVideoFrame(drift::TimeUs sourceUs, PreviewVideoFrame
     return decodePreviewVideoFrameAtOnce(sourceUs, out, maxWidth, maxHeight, nullptr);
 }
 
+// The peek frame is already decoded but not yet stored, so it is the next one to hand out. Aiming a
+// frame past it (m_lastVideoPtsUs is the peek's pts) promoted it straight to cover and past, which
+// cached every other frame; the first request for a skipped one then sat behind the cursor and
+// re-decoded the whole GOP from its keyframe.
+drift::TimeUs ClipReader::nextPrefetchTargetUs() const
+{
+    return m_hasPeek ? m_peekPtsUs : m_lastVideoPtsUs + m_sourceFrameDurationUs;
+}
+
 void ClipReader::prefetchNextVideoFrame(int maxWidth, int maxHeight)
 {
     if (!m_videoPositioned || m_sourceFrameDurationUs <= 0)
         return;
 
     QImage ignored;
-    readVideoFrameAt(m_lastVideoPtsUs + m_sourceFrameDurationUs, ignored, maxWidth, maxHeight);
+    readVideoFrameAt(nextPrefetchTargetUs(), ignored, maxWidth, maxHeight);
 }
 
 bool ClipReader::prefetchNextPreviewVideoFrame(int maxWidth, int maxHeight, drift::TimeUs readAheadUs)
@@ -2281,7 +2292,17 @@ bool ClipReader::prefetchNextPreviewVideoFrame(int maxWidth, int maxHeight, drif
     if (!m_videoPositioned || m_sourceFrameDurationUs <= 0)
         return false;
 
-    drift::TimeUs target = m_lastVideoPtsUs + m_sourceFrameDurationUs;
+    // A full cache holding nothing behind the playhead would evict the very frame decoded next
+    // (it is the farthest ahead) while the cursor moves past it, so the request that reaches it
+    // later has to seek back and re-decode the GOP. Wait for playback to consume one instead.
+    if (m_previewCache.size() >= previewCacheCapacity()
+        && std::none_of(m_previewCache.cbegin(), m_previewCache.cend(), [this](const CachedPreview &c) {
+               return c.ptsUs < m_lastRequestedPreviewUs;
+           })) {
+        return false;
+    }
+
+    drift::TimeUs target = nextPrefetchTargetUs();
     PreviewVideoFrame cached;
     while (target - m_lastRequestedPreviewUs < m_readAheadUs && lookupCachedPreview(target, cached))
         target += m_sourceFrameDurationUs;

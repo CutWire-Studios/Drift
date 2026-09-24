@@ -129,6 +129,77 @@ drift::TimeUs maskMediaSourceUs(const drift::Clip &host, const drift::Mask &mask
     return qMax<drift::TimeUs>(0, host.timelineToSourceUs(timelineUs) - mask.mediaSrcOffsetUs);
 }
 
+// A mask's media can be a still as easily as a video, and the two decode through different paths.
+// Suffix rather than header sniffing: this is consulted per clip per frame, and a stat plus a
+// header read on every one of them would cost more than the answer is worth.
+bool maskMediaIsStillImage(const QString &path)
+{
+    // Off the shared suffix list, not QImageReader::supportedImageFormats(). Deriving it from the
+    // deployed plugins meant a build without qtimageformats classified a .webp mask as *video* and
+    // handed it to FFmpeg — which decoded it, so masks quietly worked on exactly the builds where
+    // image clips rendered as nothing. Same answer everywhere now; decodedStillImage has its own
+    // FFmpeg fallback for the formats Qt cannot take.
+    static const QSet<QString> suffixes = [] {
+        QSet<QString> out;
+        for (const QString &suffix : drift::imageExtensions())
+            out.insert(suffix.toLower());
+        return out;
+    }();
+    const int dot = path.lastIndexOf(QLatin1Char('.'));
+    if (dot < 0)
+        return false;
+    return suffixes.contains(path.mid(dot + 1).toLower());
+}
+
+// Length of a looping mask video. Probing opens the file, which is far too expensive to repeat per
+// frame, so the answer is cached per path — keyed on mtime and size like decodedStillImage, since
+// the same path can hold different media over time.
+drift::TimeUs maskMediaDurationUs(const QString &path)
+{
+    struct Entry
+    {
+        qint64 mtimeMs = 0;
+        qint64 fileSize = 0;
+        drift::TimeUs durationUs = 0;
+    };
+    static QMutex mutex;
+    static std::unordered_map<QString, Entry> cache;
+
+    const QFileInfo info(path);
+    if (!info.exists())
+        return 0;
+
+    const QMutexLocker lock(&mutex);
+    const auto it = cache.find(path);
+    if (it != cache.end() && it->second.mtimeMs == info.lastModified().toMSecsSinceEpoch()
+        && it->second.fileSize == info.size()) {
+        return it->second.durationUs;
+    }
+
+    const MediaInfo probed = MediaProbe::probe(path);
+    Entry entry;
+    entry.mtimeMs = info.lastModified().toMSecsSinceEpoch();
+    entry.fileSize = info.size();
+    entry.durationUs = drift::TimeUs(probed.durationUs);
+    cache[path] = entry;
+    return entry.durationUs;
+}
+
+// maskMediaSourceUs, folded into the media's length for a looping mask video. The coverage read,
+// its sidecar and the warm-up all use this, so the warm lands on the frame the read asks for.
+drift::TimeUs maskMediaTimeUs(const drift::Clip &host, const drift::Mask &mask, drift::TimeUs timelineUs)
+{
+    drift::TimeUs mediaUs = maskMediaSourceUs(host, mask, timelineUs);
+    if (mask.mediaLoop && !maskMediaIsStillImage(mask.mediaPath)) {
+        // Wrapping needs the media's length, which only a probe knows; asking for it per frame is
+        // a cache hit after the first.
+        const drift::TimeUs span = maskMediaDurationUs(mask.mediaPath);
+        if (span > 0)
+            mediaUs = ((mediaUs % span) + span) % span;
+    }
+    return mediaUs;
+}
+
 // Visit every (host clip, media mask) pair that contributes at `timelineUs`, with the stream id
 // the mask's media decodes under. Shared by the two collectors below and mirrored by
 // buildGpuLayer, so retention, warming and the composite cannot disagree about what is read.
@@ -246,12 +317,15 @@ QList<ClipReaderPool::VideoRequest> collectVideoRequests(const drift::Project *p
     // stalling the composite on a serial read later.
     forEachMediaMask(*project, timelineUs,
                      [&](const drift::Clip &host, const drift::Mask &mask, quint64 streamId) {
-                         const drift::TimeUs mediaUs = maskMediaSourceUs(host, mask, timelineUs);
-                         requests.append(ClipReaderPool::VideoRequest{mask.mediaPath, streamId,
-                                                                      mediaUs, maxWidth, maxHeight});
+                         const drift::TimeUs mediaUs = maskMediaTimeUs(host, mask, timelineUs);
+                         if (!maskMediaIsStillImage(mask.mediaPath)) {
+                             requests.append(ClipReaderPool::VideoRequest{
+                                 mask.mediaPath, streamId, mediaUs, maxWidth, maxHeight});
+                         }
                          // The pool keys workers by path, so the sidecar reusing the mask's stream
                          // id gets its own reader rather than fighting the coverage for one.
-                         if (!mask.mediaFgrPath.isEmpty() && !mask.invert) {
+                         if (!mask.mediaFgrPath.isEmpty() && !mask.invert
+                             && !maskMediaIsStillImage(mask.mediaFgrPath)) {
                              requests.append(ClipReaderPool::VideoRequest{
                                  mask.mediaFgrPath, streamId, mediaUs, maxWidth, maxHeight});
                          }
@@ -840,60 +914,20 @@ void applyClipBodyAnimation(const drift::Clip &clip, drift::TimeUs timelineUs, d
     *rotation += body.rotationDeg;
 }
 
-// A mask's media can be a still as easily as a video, and the two decode through different paths.
-// Suffix rather than header sniffing: this is consulted per clip per frame, and a stat plus a
-// header read on every one of them would cost more than the answer is worth.
-bool maskMediaIsStillImage(const QString &path)
+// One media file's pixels at `mediaUs`. Video goes through the preview read, the same path
+// collectVideoRequests warms: reading it as a QImage instead made the warm-up a second decode that
+// moved the stream's cursor past the frame the image read then asked for, and every mask frame
+// paid a CPU RGBA conversion plus a full RGBA upload.
+MaskMediaFrame decodeMaskMedia(const QString &path, quint64 streamId, drift::TimeUs mediaUs,
+                               int canvasWidth, int canvasHeight)
 {
-    // Off the shared suffix list, not QImageReader::supportedImageFormats(). Deriving it from the
-    // deployed plugins meant a build without qtimageformats classified a .webp mask as *video* and
-    // handed it to FFmpeg — which decoded it, so masks quietly worked on exactly the builds where
-    // image clips rendered as nothing. Same answer everywhere now; decodedStillImage has its own
-    // FFmpeg fallback for the formats Qt cannot take.
-    static const QSet<QString> suffixes = [] {
-        QSet<QString> out;
-        for (const QString &suffix : drift::imageExtensions())
-            out.insert(suffix.toLower());
-        return out;
-    }();
-    const int dot = path.lastIndexOf(QLatin1Char('.'));
-    if (dot < 0)
-        return false;
-    return suffixes.contains(path.mid(dot + 1).toLower());
-}
-
-// Length of a looping mask video. Probing opens the file, which is far too expensive to repeat per
-// frame, so the answer is cached per path — keyed on mtime and size like decodedStillImage, since
-// the same path can hold different media over time.
-drift::TimeUs maskMediaDurationUs(const QString &path)
-{
-    struct Entry
-    {
-        qint64 mtimeMs = 0;
-        qint64 fileSize = 0;
-        drift::TimeUs durationUs = 0;
-    };
-    static QMutex mutex;
-    static std::unordered_map<QString, Entry> cache;
-
-    const QFileInfo info(path);
-    if (!info.exists())
-        return 0;
-
-    const QMutexLocker lock(&mutex);
-    const auto it = cache.find(path);
-    if (it != cache.end() && it->second.mtimeMs == info.lastModified().toMSecsSinceEpoch()
-        && it->second.fileSize == info.size()) {
-        return it->second.durationUs;
-    }
-
-    const MediaInfo probed = MediaProbe::probe(path);
-    Entry entry;
-    entry.mtimeMs = info.lastModified().toMSecsSinceEpoch();
-    entry.fileSize = info.size();
-    entry.durationUs = drift::TimeUs(probed.durationUs);
-    cache[path] = entry;
-    return entry.durationUs;
+    MaskMediaFrame out;
+    if (maskMediaIsStillImage(path))
+        out.image = decodedStillImage(path, canvasWidth, canvasHeight);
+    else
+        out.video = ClipReaderPool::instance().readPreviewVideoFrame(path, streamId, mediaUs,
+                                                                      canvasWidth, canvasHeight);
+    return out;
 }
 
 // The stack, plus this frame's decoded coverage for each media entry. Media is decoded here
@@ -915,43 +949,20 @@ void fillGpuLayerMasks(GpuLayer &layer, const drift::Clip &host,
         if (!mask.isMedia())
             continue;
 
-        QImage coverage;
-        if (maskMediaIsStillImage(mask.mediaPath)) {
-            coverage = decodedStillImage(mask.mediaPath, canvasWidth, canvasHeight);
-        } else {
-            drift::TimeUs mediaUs = maskMediaSourceUs(host, mask, timelineUs);
-            if (mask.mediaLoop) {
-                // Wrapping needs the media's length, which only a probe knows; asking for it per
-                // frame is a cache hit after the first.
-                const drift::TimeUs span = maskMediaDurationUs(mask.mediaPath);
-                if (span > 0)
-                    mediaUs = ((mediaUs % span) + span) % span;
-            }
-            coverage = ClipReaderPool::instance().readVideoFrame(
-                mask.mediaPath, streamIdFor(laneMasks.at(i).adjustmentId),
-                mediaUs, canvasWidth, canvasHeight);
-        }
-        // Media that failed to decode must not silently blank the clip — leave that entry
-        // contributing nothing rather than covering nothing.
-        if (!coverage.isNull())
-            layer.maskMedia[i] = coverage;
+        const quint64 streamId = streamIdFor(laneMasks.at(i).adjustmentId);
+        const drift::TimeUs mediaUs = maskMediaTimeUs(host, mask, timelineUs);
+        // Media that failed to decode must not silently blank the clip — a null entry
+        // contributes nothing rather than covering nothing.
+        layer.maskMedia[i] =
+            decodeMaskMedia(mask.mediaPath, streamId, mediaUs, canvasWidth, canvasHeight);
 
         // The decontaminated foreground, when the cutout produced one. Bound only for a lone
         // media mask, which is what a segmentation makes: with a stack there is no single entry
         // whose colours the layer should take. Skipped when inverted — inverting a cutout keeps
         // the background, and giving that the subject's colours would be plainly wrong.
         if (laneMasks.size() == 1 && !mask.mediaFgrPath.isEmpty() && !mask.invert) {
-            // Decoded the same two ways as the coverage above — a sidecar that only worked for
-            // video would be an arbitrary asymmetry.
-            const QImage fgr =
-                maskMediaIsStillImage(mask.mediaFgrPath)
-                    ? decodedStillImage(mask.mediaFgrPath, canvasWidth, canvasHeight)
-                    : ClipReaderPool::instance().readVideoFrame(
-                          mask.mediaFgrPath,
-                          streamIdFor(laneMasks.at(i).adjustmentId),
-                          maskMediaSourceUs(host, mask, timelineUs), canvasWidth, canvasHeight);
-            if (!fgr.isNull())
-                layer.fgr = fgr;
+            layer.fgr = decodeMaskMedia(mask.mediaFgrPath, streamId, mediaUs, canvasWidth,
+                                        canvasHeight);
         }
     }
 }

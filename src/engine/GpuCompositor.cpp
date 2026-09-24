@@ -524,6 +524,15 @@ GlTarget mipmappedLayerCopy(GlRuntime &rt, QOpenGLExtraFunctions *gl, const GlTa
     return copy;
 }
 
+// A mask entry's pixels in a pooled target the caller releases. Video takes the same upload as a
+// clip's frame (YUV planes, or a GPU import), not an RGBA image.
+GlTarget promoteMaskMedia(GlRuntime &rt, QOpenGLExtraFunctions *gl, const MaskMediaFrame &media)
+{
+    if (media.video.isValid())
+        return promoteVideoFrameToTargetCached(rt, gl, media.video);
+    return promoteImageToTargetCached(rt, gl, media.image, media.image.size());
+}
+
 // Index of the only contributing entry when it is a plain full-frame media mask, else -1. That is
 // exactly what a segmentation produces, and it can go straight to the layer shader with no
 // compose pass at all — worth the special case because every cutout hits it every frame. It is
@@ -661,8 +670,8 @@ GlTarget composeMaskTarget(GlRuntime &rt, QOpenGLExtraFunctions *gl, const GpuLa
             // present would blank the clip.
             if (i >= layer.maskMedia.size() || layer.maskMedia.at(i).isNull())
                 continue;
-            const QImage &media = layer.maskMedia.at(i);
-            GlTarget src = promoteImageToTargetCached(rt, gl, media, media.size());
+            const MaskMediaFrame &media = layer.maskMedia.at(i);
+            GlTarget src = promoteMaskMedia(rt, gl, media);
             if (!src.isValid())
                 continue;
 
@@ -790,8 +799,7 @@ GlTarget depthCanvasTarget(GlRuntime &rt, QOpenGLExtraFunctions *gl, const GpuLa
     GlTarget maskTarget;
     float maskInvert = 0.f;
     if (const int sole = soleMediaIndex(layer); sole >= 0) {
-        const QImage &media = layer.maskMedia.at(sole);
-        maskTarget = promoteImageToTargetCached(rt, gl, media, media.size());
+        maskTarget = promoteMaskMedia(rt, gl, layer.maskMedia.at(sole));
         maskInvert = layer.masks.at(sole).invert ? 1.f : 0.f;
     }
 
@@ -843,14 +851,13 @@ void drawLayerOnCanvas(GlRuntime &rt, QOpenGLExtraFunctions *gl, GlTarget &canva
         // One plain full-frame media mask owns the coverage: bind it straight to the layer shader
         // and skip the compose pass entirely. Invert stays a uniform rather than being baked in,
         // because the same matte file backs both halves of a cutout and differs only by this flag.
-        const QImage &media = layer.maskMedia.at(sole);
-        maskTarget = promoteImageToTargetCached(rt, gl, media, media.size());
+        maskTarget = promoteMaskMedia(rt, gl, layer.maskMedia.at(sole));
         maskTex = maskTarget.isValid() ? maskTarget.texture() : 0;
         maskInvert = layer.masks.at(sole).invert ? 1.f : 0.f;
         // The decontaminated foreground only means anything on this path — with a stack there is
         // no single entry whose colours the layer should take.
         if (!layer.fgr.isNull()) {
-            fgrTarget = promoteImageToTargetCached(rt, gl, layer.fgr, layer.fgr.size());
+            fgrTarget = promoteMaskMedia(rt, gl, layer.fgr);
             fgrTex = fgrTarget.isValid() ? fgrTarget.texture() : 0;
         }
     } else if (!drift::masksAreInert(layer.masks)) {

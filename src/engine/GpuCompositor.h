@@ -30,6 +30,21 @@ namespace drift::model3d {
 struct ModelDrawRequest;
 }
 
+// One frame of a media mask's pixels. A video decodes through the preview path like any clip, so
+// it uploads as YUV (or imports on the GPU) instead of being converted to RGBA on the CPU first,
+// and it shares the reader cache the compositor's warm-up filled. A still stays an image.
+struct MaskMediaFrame
+{
+    PreviewVideoFrame video;
+    QImage image;
+
+    bool isNull() const { return !video.isValid() && image.isNull(); }
+    QSize size() const
+    {
+        return video.isValid() ? QSize(video.displayWidth(), video.displayHeight()) : image.size();
+    }
+};
+
 // A single textured layer: the clip's source pixels plus everything needed to
 // place it on the canvas. Prefer `video` when set (hardware frames stay on the
 // GPU until the importer); then `vector`, drawn by Skia straight into the layer
@@ -51,11 +66,11 @@ struct GpuLayer
     QList<drift::Mask> masks;
     // Index-parallel with `masks`: this frame's decoded coverage map for each Media entry, null
     // for parametric ones. Decoded by FrameCompositor, which is the only place that knows the time.
-    QList<QImage> maskMedia;
+    QList<MaskMediaFrame> maskMedia;
     // The decontaminated foreground, when a lone media mask carries one. Single rather than
     // index-parallel: it replaces the layer's colour outright, which only makes sense when one
     // media mask owns the coverage — see soleMediaIndex.
-    QImage fgr;
+    MaskMediaFrame fgr;
     QRectF rect;             // destination rect on the canvas, in canvas pixels
     double rotation = 0.0;   // degrees, clockwise, about the rect centre
     bool flipH = false;
