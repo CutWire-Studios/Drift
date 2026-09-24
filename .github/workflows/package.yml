@@ -223,7 +223,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: .deps
-          key: deps-linux-${{ hashFiles('CMakeLists.txt') }}
+          key: v2-deps-linux-${{ hashFiles('CMakeLists.txt') }}
 
       # Skia is built once per script revision and cached: 15–20 minutes on a miss, seconds on a
       # hit. clang-15 because Skia's GN toolchain files are written for clang and jammy's default
@@ -235,7 +235,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: third_party/prebuilt/skia/linux-x64
-          key: skia-linux-x64-${{ hashFiles('third_party/build-skia.sh') }}
+          key: v2-skia-linux-x64-${{ hashFiles('third_party/build-skia.sh') }}
 
       - name: Build Skia
         if: steps.skia-cache.outputs.cache-hit != 'true'
@@ -453,7 +453,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: .deps
-          key: deps-win-${{ hashFiles('CMakeLists.txt') }}
+          key: v2-deps-win-${{ hashFiles('CMakeLists.txt') }}
 
       # Same pin as the Linux job, and for the same reason — see FFMPEG_TAG above. These DLLs
       # deliberately land on top of the ones windeployqt copies out of Qt.
@@ -655,7 +655,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: third_party/prebuilt/skia/mac-arm64
-          key: skia-mac-arm64-${{ hashFiles('third_party/build-skia.sh') }}
+          key: v2-skia-mac-arm64-${{ hashFiles('third_party/build-skia.sh') }}
 
       - name: Build Skia
         if: steps.skia-cache.outputs.cache-hit != 'true'
@@ -918,7 +918,7 @@ jobs:
         uses: actions/cache/restore@v4
         with:
           path: third_party/prebuilt
-          key: android-deps-${{ matrix.abi }}-${{ env.NDK_VERSION }}-${{ hashFiles('third_party/build-android.sh', 'third_party/build-skia.sh') }}
+          key: v2-android-deps-${{ matrix.abi }}-${{ env.NDK_VERSION }}-${{ hashFiles('third_party/build-android.sh', 'third_party/build-skia.sh') }}
 
       # Two scripts, one cache: both install under third_party/prebuilt, so a change to either
       # rebuilds both. Skia cross-compiles with the NDK's clang and carries its own HarfBuzz, ICU,
