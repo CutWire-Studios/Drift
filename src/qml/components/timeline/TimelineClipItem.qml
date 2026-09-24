@@ -1,12 +1,12 @@
 import QtQuick
-import QtQuick.Controls.Basic
 import Drift
 import ".."
 
-// A single clip on a timeline track: background/fade canvas, filmstrip or
-// waveform, name/effects band, drag-to-move, trim handles and fade dots, plus
-// the clip context menu. Positioning and edits are delegated back to the panel
-// (pxPerSecond, snap/landing helpers, trackIndexAtY) and to EditorState.
+// The interactive chrome of one timeline clip: trim handles, fade dots and the context menu.
+// The clip itself — body, filmstrip, waveform, labels — is drawn by TimelineTrackClips, which
+// also owns the body gestures (select, move). This overlay only exists for the clips that need
+// it right now (see TimelineTrackClips.activeClips), sits exactly over the drawn clip, and leaves
+// its middle empty so presses there reach the renderer.
 Item {
     id: clipItem
 
@@ -29,12 +29,8 @@ Item {
     required property int index
     property int trackIndex
     property int clipIndex: index
-    // Wider trim/move hit areas for phones; desktop leaves this false.
+    // Wider trim hit areas for phones; desktop leaves this false.
     property bool touchMode: false
-    // Set when the scene-graph renderer (TimelineTrackClips) draws this clip and owns its body
-    // gestures. The delegate is then only the trim handles, fade dots and context menu, and exists
-    // only for the clips that need those right now.
-    property bool overlayOnly: false
     // The renderer, told about the live trim so it draws the body where the edge currently is.
     property var trackClips: null
 
@@ -89,7 +85,7 @@ Item {
                                                && clipData.id !== panel.trimFollowClipId
 
     function syncLivePreview() {
-        if (overlayOnly && trackClips)
+        if (trackClips)
             trackClips.setLivePreview(clipData.id, trimPreviewActive, trimPreviewStart,
                                       trimPreviewDuration, trimPreviewIn, trimPreviewOut)
     }
@@ -106,154 +102,34 @@ Item {
                                               : trimFollowFollower ? panel.trimFollowDuration
                                               : (clipData.duration || 0)
 
-    // The four clipData fields the waveform reads, hoisted to typed scalars. clipData is a
-    // fresh JS object on every model change, so anything bound through it re-evaluated on every
-    // edit anywhere in the project — re-querying up to 4096 peak buckets per audio clip and
-    // repainting its Canvas. These compare by value, so they only propagate on a real change.
-    readonly property string wfPath: clipData.path || ""
-    readonly property real wfIn: trimPreviewActive ? trimPreviewIn
-                                 : trimFollowFollower ? panel.trimFollowIn
-                                 : (clipData.inPoint || 0)
-    readonly property real wfOut: trimPreviewActive ? trimPreviewOut
-                                  : trimFollowFollower ? panel.trimFollowOut
-                                  : (clipData.outPoint || 0)
-    readonly property int wfStream: clipData.audioStreamIndex || 0
-
-    // Preview is playing this clip from a proxy (export still reads wfPath). The revision and the
-    // two settings are named so the binding re-reads when any of them moves.
-    readonly property bool previewUsesProxy: (AssetLibrary.badgeRevision,
-                                              EditorState.playback.proxySize,
-                                              EditorState.playback.useProxies
-                                              && clipData.kind === "video"
-                                              && AssetLibrary.hasProxyForPath(wfPath))
     // The bin asset behind this clip, by path: the clip model carries no asset id.
     readonly property string mediaAssetId: (AssetLibrary.badgeRevision,
                                             clipData.kind === "video"
-                                            ? AssetLibrary.assetIdForPath(wfPath) : "")
+                                            ? AssetLibrary.assetIdForPath(clipData.path || "") : "")
     readonly property bool mediaEditFriendly: (AssetLibrary.badgeRevision,
                                                mediaAssetId.length > 0
                                                && AssetLibrary.isEditFriendly(mediaAssetId))
-    readonly property bool mediaVariableFrameRate: (AssetLibrary.badgeRevision,
-                                                    mediaAssetId.length > 0 && !mediaEditFriendly
-                                                    && AssetLibrary.isVariableFrameRate(mediaAssetId))
-
     property string trackType: panel.tracks[trackIndex].type
-    // Track::ClipDisplay: 0 filmstrip, 1 filmstrip + waveform bar, 2 waveform only.
-    readonly property int clipDisplay: panel.tracks[trackIndex].clipDisplay !== undefined
-                                       ? panel.tracks[trackIndex].clipDisplay : 1
-    readonly property bool showWaveform: clipDisplay === 2
-    // CapCut-style strip under the filmstrip. Dropped once the audio has been separated
-    // (its waveform is on the audio track then) and when the body is too short to split.
-    readonly property bool showWaveformBar: trackType === "video" && clipDisplay === 1
-                                            && clipData.hasEmbeddedAudio === true
-                                            && height - headerBandHeight >= 30
-    readonly property real waveformBarHeight:
-        Math.max(12, Math.round((height - headerBandHeight) * 0.3))
-    property bool showChannelWaveforms: panel.tracks[trackIndex].showChannelWaveforms === true
     property var clipEffects: clipData.effects || []
     property var clipAudioEffects: clipData.audioEffects || []
     readonly property bool hasAnyEffects: clipEffects.length > 0 || clipAudioEffects.length > 0
-    readonly property string effectsLabelText: {
-        const names = []
-        for (var i = 0; i < clipEffects.length; i++) {
-            const fx = clipEffects[i]
-            const label = fx.label || qsTr("Effect")
-            names.push(fx.enabled === false ? qsTr("%1 (off)").arg(label) : label)
-        }
-        for (var j = 0; j < clipAudioEffects.length; j++) {
-            const afx = clipAudioEffects[j]
-            const alabel = afx.label || qsTr("Effect")
-            names.push(afx.enabled === false ? qsTr("%1 (off)").arg(alabel) : alabel)
-        }
-        return names.join(" · ")
-    }
-    // An adjustment is its stack — the name ("Adjustment Layer") says nothing the colour and
-    // lane do not already. So it shows the effects it carries, and falls back to naming its kind
-    // only while it is still empty.
-    readonly property string adjustmentLabelText: {
-        if (clipItem.effectsLabelText.length > 0)
-            return clipItem.effectsLabelText
-        // Nothing in it yet: a name the user gave it, else what kind of layer it is.
-        if (clipItem.clipData.name && clipItem.clipData.name.length > 0)
-            return clipItem.clipData.name
-        const kind = clipItem.clipData.adjustmentKind
-        if (kind === "audioEffects") return qsTr("Audio adjustment")
-        if (kind === "mask") return qsTr("Mask")
-        return qsTr("Adjustment")
-    }
-
     // Named so tooling (and a screen reader) can address a clip by what the user sees on it
     // rather than by pixel position. The timeline is the app's main interaction surface and had
     // no accessible identity at all.
     Accessible.role: Accessible.Button
-    Accessible.name: {
-        const label = clipItem.clipData.name && clipItem.clipData.name.length > 0
-                    ? clipItem.clipData.name
-                    : clipItem.adjustmentLabelText
-        return qsTr("%1, track %2").arg(label).arg(clipItem.trackIndex + 1)
-    }
+    Accessible.name: qsTr("%1, track %2").arg(clipItem.clipData.name || "").arg(clipItem.trackIndex + 1)
     Accessible.selected: clipItem.selected
     Accessible.onPressAction: EditorState.selectClip(clipItem.trackIndex, clipItem.clipIndex)
 
-    property bool effectDropTarget: panel.effectDropTrackIndex === trackIndex
-                                    && panel.effectDropClipIndex === clipIndex
     // Subtitles keep cue-owned timing; text clips use the same edge fades as video.
     readonly property bool timelineFadeHandles: trackType !== "subtitle"
-
-    // Gain along a fade ramp (progress 0..1). Mirrors Clip::shapeFade / FadeShape.
-    function fadeGainAt(progress) {
-        const t = Math.max(0, Math.min(1, progress))
-        const curve = clipItem.clipData.fadeCurve || "smooth"
-        if (curve === "linear")
-            return t
-        if (curve === "equalPower")
-            return Math.sin(t * Math.PI * 0.5)
-        if (curve === "bezier") {
-            // Mirrors FadeShape::bezierAt — anchors pinned at (0,0)/(1,1), solve x for t.
-            const h = clipItem.clipData.fadeHandles || [0.42, 0.0, 0.58, 1.0]
-            let lo = 0, hi = 1
-            for (let i = 0; i < 24; ++i) {
-                const mid = (lo + hi) / 2
-                const mt = 1 - mid
-                const x = 3 * mt * mt * mid * h[0] + 3 * mt * mid * mid * h[2] + mid * mid * mid
-                if (x < t) lo = mid; else hi = mid
-            }
-            const u = (lo + hi) / 2
-            const mu = 1 - u
-            return 3 * mu * mu * u * h[1] + 3 * mu * u * u * h[3] + u * u * u
-        }
-        if (curve === "custom") {
-            const pts = clipItem.clipData.fadeShape || []
-            if (pts.length < 2)
-                return t
-            if (t <= pts[0].t)
-                return pts[0].g
-            if (t >= pts[pts.length - 1].t)
-                return pts[pts.length - 1].g
-            for (let i = 0; i + 1 < pts.length; ++i) {
-                const a = pts[i]
-                const b = pts[i + 1]
-                if (t < a.t || t > b.t)
-                    continue
-                const span = b.t - a.t
-                if (Math.abs(span) < 1e-9)
-                    return b.g
-                const u = (t - a.t) / span
-                return a.g + (b.g - a.g) * u
-            }
-            return pts[pts.length - 1].g
-        }
-        // smooth (smoothstep)
-        return t * t * (3.0 - 2.0 * t)
-    }
 
     // Four ToolTips — each a Popup — existed on every clip in the project for the sake of the
     // one clip the pointer is actually over. Gated on the clip being touched at all; each
     // tooltip keeps its own visible binding inside, so the reveal delay and the conditions are
     // exactly what they were.
     readonly property bool tooltipsActive:
-        clipMouse.containsMouse || clipMouse.pressed
-        || leftTrimMouse.containsMouse || leftTrimMouse.pressed || leftTrimHover.hovered
+        leftTrimMouse.containsMouse || leftTrimMouse.pressed || leftTrimHover.hovered
         || rightTrimMouse.containsMouse || rightTrimMouse.pressed || rightTrimHover.hovered
         || fadeInMouse.containsMouse || fadeInMouse.pressed
         || fadeOutMouse.containsMouse || fadeOutMouse.pressed
@@ -293,12 +169,10 @@ Item {
     onTrimCursorSideChanged: applyTrimCursor()
     onTrimCursorHeightChanged: if (trimCursorSide !== 0) applyTrimCursor()
     Component.onDestruction: {
-        if (overlayOnly && trimPreviewActive && trackClips)
+        if (trimPreviewActive && trackClips)
             trackClips.setLivePreview(clipData.id, false, 0, 0, 0, 0)
         if (trimCursorSide !== 0)
             EditorState.setTimelineTrimCursor(0, 0, trimCursorToken)
-        if (lifted && typeof panel.setScrollLocked === "function")
-            panel.setScrollLocked(false)
     }
 
     // An adjustment pinned to a clip takes its extent from that clip, so its edges are not the
@@ -317,12 +191,6 @@ Item {
     readonly property real trimHandleWidth: touchMode
                                             ? Theme.androidClipTrimHandleWidth
                                             : Theme.clipTrimHandleWidth
-    // Clamped against the clip's own width: a minimum-width (56dp) clip inset by a
-    // fixed 22dp each side left a 12dp movable core, and the edge bands are dead
-    // until the clip is selected — so short clips could not be tapped at all.
-    readonly property real edgeMargin: touchMode
-                                       ? Math.min(Theme.androidClipEdgeMargin, width / 4)
-                                       : 14
     readonly property real trimHotspotExtra: touchMode
                                              ? Theme.androidTrimHotspotExtra
                                              : 10
@@ -402,15 +270,6 @@ Item {
                                                ? 2 * fadeHandleInset + fadeHandleSize + 12
                                                : 26
 
-    // Name band height, derived once instead of
-    // being hardcoded at three separate sites,
-    // and clamped so it can never swallow a
-    // short (25px) text or subtitle row.
-    // One line now: the effect list that used to need a taller band moved to the lane.
-    readonly property real headerBandHeight:
-        Math.min(Theme.clipHeaderBandHeight, Math.max(0, height * 0.5))
-
-    y: Theme.clipSelectionRingWidth
     // Floored so short clips stay visible and
     // trimmable even at low zoom.
     width: Math.max(Theme.clipMinWidth,
@@ -418,634 +277,17 @@ Item {
                     - 2 * Theme.clipSelectionRingWidth)
     height: Math.max(0, trackRow.height - 2 * Theme.clipSelectionRingWidth)
 
-    // A clip scrolled off the side of the timeline still cost a full set of scene-graph nodes,
-    // a hit-test entry and (for audio) a Canvas framebuffer. ClipFilmstrip already culls its own
-    // tiles from exactly these inputs; this extends the rule to the clip body.
-    readonly property real viewportPad: 256
-    readonly property bool inViewport: panel.timelineViewW <= 0
-        || ((x + width) >= panel.timelineViewX - viewportPad
-            && x <= panel.timelineViewX + panel.timelineViewW + viewportPad)
-
-    // The exceptions are not cosmetic. A drag that autoscrolls past the edge must not cull its
-    // own subject; a partner following a multi-clip move is moved from outside itself; and a
-    // selected clip scrolled out of view still owns the keyboard focus that Delete arrives on.
-    visible: inViewport
-             || clipMouse.drag.active || clipMouse.pressed
-             || leftTrimMouse.pressed || rightTrimMouse.pressed
-             || moveFollowFollower
-             || activeFocus
-
-    property real lastPreviewDesired: -1
-    property int lastPreviewTrack: -1
-
-    // While dragging, show the same snapped landing outline the
-    // library drop uses, on whichever track the clip is over.
-    //
-    // Gated on `moving` rather than drag.active: Qt only clears drag.active
-    // after onReleased returns, so resetting y on drop re-armed the preview and
-    // left an orphaned outline on the old track.
-    function updateMovePreview() {
-        if (!clipMouse.moving)
-            return
-        // Keep linked/selected partners locked to this clip's live X and Y.
-        panel.updateMoveFollow(x - clipMouse.moveOriginX,
-                               y - Theme.clipSelectionRingWidth)
-        const desired = Math.max(0, (x - Theme.clipSelectionRingWidth) / panel.pxPerSecond)
-        const pos = mapToItem(timelineColumn, width / 2, height / 2)
-        const targetTrack = panel.trackIndexAtY(pos.y)
-        const effTrack = targetTrack >= 0 ? targetTrack : trackIndex
-        if (Math.abs(desired - lastPreviewDesired) * panel.pxPerSecond >= 1 || effTrack !== lastPreviewTrack) {
-            lastPreviewDesired = desired
-            lastPreviewTrack = effTrack
-            panel.showLandingPreview(effTrack, desired, clipData.duration, clipData.id)
-        }
-    }
-    onXChanged: updateMovePreview()
-    onYChanged: updateMovePreview()
-
-    // CapCut-style: selected/linked partners slide with the dragged clip. As an overlay the
-    // leader follows too: the renderer is the one dragging, and the handles ride along with it.
-    readonly property bool moveFollowFollower: panel.moveFollowActive
-                                              && selected
-                                              && (overlayOnly
-                                                  || !(panel.moveLeaderTrack === trackIndex
-                                                       && panel.moveLeaderClip === clipIndex))
+    // Selected clips slide with a move the renderer is dragging — the dragged one included, since
+    // its handles have to ride along with it.
+    readonly property bool moveFollowFollower: panel.moveFollowActive && selected
     readonly property real followOffsetX: moveFollowFollower ? panel.moveFollowDeltaX : 0
     readonly property real followOffsetY: (moveFollowFollower && trackIndex === panel.moveLeaderTrack)
                                           ? panel.moveFollowDeltaY : 0
 
-    Binding {
-        target: clipItem
-        property: "x"
-        when: !clipMouse.drag.active
-        value: Math.max(Theme.clipSelectionRingWidth,
-                        clipItem.effectiveStart * panel.pxPerSecond
-                        + Theme.clipSelectionRingWidth
-                        + clipItem.followOffsetX)
-    }
+    x: Math.max(Theme.clipSelectionRingWidth,
+                effectiveStart * panel.pxPerSecond + Theme.clipSelectionRingWidth + followOffsetX)
+    y: Theme.clipSelectionRingWidth + followOffsetY
 
-    Binding {
-        target: clipItem
-        property: "y"
-        when: !clipMouse.drag.active
-        value: Theme.clipSelectionRingWidth + followOffsetY
-    }
-
-    // No `Behavior on y` here. A drop settle looks appealing but cannot work at this
-    // seam: onReleased reads clipItem.y through mapToItem to decide the target track,
-    // and MouseArea.drag writes y directly during the drag. Animating y makes that
-    // read lag the pointer, so trackIndexAtY resolves back to the origin track and a
-    // cross-track drag silently becomes a same-track move. Gating the Behavior on
-    // drag.active does not save it — Qt clears drag.active only after onReleased
-    // returns, so y is already reset by then and the settle never plays anyway.
-    // Touch: the hold has to be visible or there is no way to know the clip is now
-    // liftable rather than still waiting. Lifts the clip out of the row and above its
-    // neighbours for as long as the finger owns it.
-    readonly property bool lifted: clipItem.touchMode
-                                  && (clipMouse.moveArmed || clipMouse.drag.active)
-    z: (lifted || clipMouse.drag.active || (moveFollowFollower && Math.abs(followOffsetY) > 1)) ? 10 : 0
-    scale: lifted ? 1.03 : 1.0
-    Behavior on scale {
-        NumberAnimation { duration: Theme.durationPress; easing.type: Theme.easing }
-    }
-
-    Rectangle {
-        id: clipBackground
-        anchors.fill: parent
-        visible: !clipItem.overlayOnly
-        radius: Theme.radiusSm
-        // Lightens on hover — previously nothing
-        // in the clip reacted to the pointer.
-        color: {
-            if (clipItem.clipData.kind === "adjustment") {
-                const base = panel.adjustmentColor(clipItem.clipData.adjustmentKind)
-                const lit = clipMouse.containsMouse || clipItem.lifted
-                return lit ? Qt.lighter(base, 1.15) : base
-            }
-            const base = panel.clipColor(
-                clipItem.clipData.kind === "composite" ? "composite"
-                : clipItem.trackType === "shape" ? "graphic" : clipItem.trackType)
-            const lit = clipMouse.containsMouse || clipItem.lifted
-            return lit ? Qt.lighter(base, 1.15) : base
-        }
-        border.width: clipItem.effectDropTarget
-                      ? Theme.borderWidthFocus
-                      : (clipItem.selected ? Theme.clipSelectionRingWidth : 0)
-        border.color: clipItem.effectDropTarget ? Theme.clipEffect : Theme.primary
-        clip: true
-
-        Behavior on color {
-            ColorAnimation { duration: Theme.durationFast; easing.type: Theme.easing }
-        }
-        Behavior on border.width {
-            NumberAnimation { duration: Theme.durationFast; easing.type: Theme.easing }
-        }
-
-        Rectangle {
-            anchors.fill: parent
-            visible: clipItem.effectDropTarget
-            color: Qt.rgba(Theme.clipEffect.r, Theme.clipEffect.g, Theme.clipEffect.b, 0.28)
-            z: 4
-        }
-
-        // Fade ramp overlays — sized only to the fade spans so a multi-hour clip
-        // does not allocate a hundreds-of-thousands-px Canvas framebuffer.
-        Canvas {
-            id: fadeInCanvas
-            x: 0
-            y: 0
-            z: 2
-            width: Math.max(0, Math.min(parent.width,
-                                        (clipItem.clipData.fadeIn || 0) * panel.pxPerSecond))
-            height: parent.height
-            visible: width > 0.5
-            // Curve / custom shape changes must redraw even when width is unchanged.
-            property string curveKey: (clipItem.clipData.fadeCurve || "smooth")
-                                      + "|" + JSON.stringify(clipItem.clipData.fadeShape || [])
-            onWidthChanged: requestPaint()
-            onHeightChanged: requestPaint()
-            onCurveKeyChanged: requestPaint()
-            onPaint: {
-                var ctx = getContext("2d")
-                ctx.reset()
-                if (width < 0.5 || height < 0.5)
-                    return
-                ctx.fillStyle = "rgba(0,0,0,0.38)"
-                ctx.strokeStyle = "rgba(255,255,255,0.9)"
-                ctx.lineWidth = 1.5
-                const steps = Math.max(8, Math.min(64, Math.ceil(width / 2)))
-                ctx.beginPath()
-                ctx.moveTo(0, 0)
-                ctx.lineTo(width, 0)
-                for (let i = steps; i >= 0; --i) {
-                    const t = i / steps
-                    const g = clipItem.fadeGainAt(t)
-                    ctx.lineTo(t * width, height * (1.0 - g))
-                }
-                ctx.closePath()
-                ctx.fill()
-                ctx.beginPath()
-                for (let i = 0; i <= steps; ++i) {
-                    const t = i / steps
-                    const g = clipItem.fadeGainAt(t)
-                    const x = t * width
-                    const y = height * (1.0 - g)
-                    if (i === 0)
-                        ctx.moveTo(x, y)
-                    else
-                        ctx.lineTo(x, y)
-                }
-                ctx.stroke()
-            }
-        }
-
-        Canvas {
-            id: fadeOutCanvas
-            y: 0
-            z: 2
-            width: Math.max(0, Math.min(parent.width,
-                                        (clipItem.clipData.fadeOut || 0) * panel.pxPerSecond))
-            height: parent.height
-            x: parent.width - width
-            visible: width > 0.5
-            property string curveKey: (clipItem.clipData.fadeCurve || "smooth")
-                                      + "|" + JSON.stringify(clipItem.clipData.fadeShape || [])
-            onWidthChanged: requestPaint()
-            onHeightChanged: requestPaint()
-            onXChanged: requestPaint()
-            onCurveKeyChanged: requestPaint()
-            onPaint: {
-                var ctx = getContext("2d")
-                ctx.reset()
-                if (width < 0.5 || height < 0.5)
-                    return
-                ctx.fillStyle = "rgba(0,0,0,0.38)"
-                ctx.strokeStyle = "rgba(255,255,255,0.9)"
-                ctx.lineWidth = 1.5
-                const steps = Math.max(8, Math.min(64, Math.ceil(width / 2)))
-                // Fade-out: progress from full (left of wedge) to silent (right edge).
-                ctx.beginPath()
-                ctx.moveTo(0, 0)
-                ctx.lineTo(width, 0)
-                for (let i = steps; i >= 0; --i) {
-                    const t = i / steps
-                    const g = clipItem.fadeGainAt(1.0 - t)
-                    ctx.lineTo(t * width, height * (1.0 - g))
-                }
-                ctx.closePath()
-                ctx.fill()
-                ctx.beginPath()
-                for (let i = 0; i <= steps; ++i) {
-                    const t = i / steps
-                    const g = clipItem.fadeGainAt(1.0 - t)
-                    const x = t * width
-                    const y = height * (1.0 - g)
-                    if (i === 0)
-                        ctx.moveTo(x, y)
-                    else
-                        ctx.lineTo(x, y)
-                }
-                ctx.stroke()
-            }
-        }
-
-        ClipFilmstrip {
-            anchors.left: parent.left
-            anchors.right: parent.right
-            anchors.top: parent.top
-            anchors.bottom: parent.bottom
-            anchors.topMargin: (clipItem.trackType === "video"
-                                || clipItem.trackType === "audio"
-                                || clipItem.trackType === "shape")
-                               ? clipItem.headerBandHeight
-                               : 0
-            anchors.bottomMargin: clipItem.showWaveformBar ? clipItem.waveformBarHeight : 0
-            visible: clipItem.clipData.filmstripPath
-                     && clipItem.clipData.filmstripPath.length > 0
-                     && !clipItem.showWaveform
-                     && (clipItem.trackType === "video"
-                         || clipItem.trackType === "shape"
-                         || clipItem.clipData.kind === "image")
-            filmstripPath: clipItem.clipData.filmstripPath
-            // Video only: on-demand tiles need a decodable video stream, and images/shapes
-            // have a single poster frame that the strip already covers exactly.
-            sourcePath: clipItem.clipData.kind === "video" ? (clipItem.clipData.path || "") : ""
-            rotationCorrection: clipItem.clipData.rotationCorrection || 0
-            inPoint: clipItem.wfIn
-            outPoint: clipItem.wfOut
-            sourceDuration: clipItem.clipData.sourceDuration
-            // Image, vector and model "strips" are a single poster frame.
-            frameCount: (clipItem.clipData.kind === "image" || clipItem.clipData.kind === "vector"
-                         || clipItem.clipData.kind === "model3d") ? 1 : 8
-            // Viewport-cull tiles so multi-hour clips don't spawn thousands of Images.
-            worldX: clipItem.x
-            viewX: panel.timelineViewX
-            viewW: panel.timelineViewW
-            refreshEpoch: panel.filmstripRefreshEpoch !== undefined
-                          ? panel.filmstripRefreshEpoch : 0
-            z: 0
-        }
-
-        Rectangle {
-            visible: clipItem.trackType === "video"
-                     || clipItem.trackType === "audio"
-                     || clipItem.trackType === "shape"
-            width: parent.width
-            height: clipItem.headerBandHeight
-            // Green band marks a clip the preview plays from its proxy, readable at any zoom
-            // even once the pill no longer fits.
-            color: clipItem.previewUsesProxy ? Theme.clipProxyBand : Theme.scrimColor
-            z: 1
-
-            // Just the name. The effect stack used to be listed on a second line here, but it
-            // now lives on the clip's adjustment lane, which shows it in the row above — two
-            // copies of the same list, one of them detached from the thing you edit.
-            //
-            // A VFR "!" leads the name so it survives any zoom; the pills follow it. The name only
-            // gives up width when everything doesn't fit, so a long name elides and pills stay whole.
-            Row {
-                id: clipNameRow
-                anchors.left: parent.left
-                anchors.right: parent.right
-                anchors.verticalCenter: parent.verticalCenter
-                anchors.leftMargin: 6
-                anchors.rightMargin: 6
-                spacing: 4
-
-                readonly property real pillsWidth:
-                    (proxyBadge.visible ? proxyBadge.width + spacing : 0)
-                    + (editFriendlyBadge.visible ? editFriendlyBadge.width + spacing : 0)
-
-                VfrWarning {
-                    id: vfrBadge
-                    anchors.verticalCenter: parent.verticalCenter
-                    visible: clipItem.mediaVariableFrameRate
-                    size: Math.min(Theme.iconSizeSm, clipItem.headerBandHeight - 2)
-                }
-
-                Text {
-                    width: Math.max(0, Math.min(implicitWidth,
-                                                parent.width - clipNameRow.pillsWidth
-                                                - (vfrBadge.visible ? vfrBadge.width + parent.spacing : 0)))
-                    anchors.verticalCenter: parent.verticalCenter
-                    text: clipItem.clipData.name
-                    color: Theme.onMedia
-                    font.pixelSize: Theme.fontSizeTiny
-                    font.family: Theme.fontFamily
-                    elide: Text.ElideRight
-                }
-
-                MediaPill {
-                    id: proxyBadge
-                    anchors.verticalCenter: parent.verticalCenter
-                    text: qsTr("Proxy")
-                    tooltip: qsTr("Previewing from a low-resolution proxy. Export uses the original.")
-                    // Dropped on clips too narrow to still show some of their name beside it.
-                    visible: clipItem.previewUsesProxy && parent.width > width * 2.5
-                    height: Math.min(implicitHeight, clipItem.headerBandHeight - 2)
-                    fontSize: Theme.fontSizeTiny
-                }
-
-                MediaPill {
-                    id: editFriendlyBadge
-                    anchors.verticalCenter: parent.verticalCenter
-                    text: qsTr("Edit-friendly")
-                    tooltip: qsTr("Converted to a constant frame rate for smooth editing")
-                    accent: Theme.clipEditFriendly
-                    foreground: Theme.clipEditFriendlyForeground
-                    visible: clipItem.mediaEditFriendly
-                             && parent.width > width * 2.5 + (proxyBadge.visible ? proxyBadge.width : 0)
-                    height: Math.min(implicitHeight, clipItem.headerBandHeight - 2)
-                    fontSize: Theme.fontSizeTiny
-                }
-            }
-        }
-
-        // Adjustments get a single centred line rather than the scrim band above: a nested lane
-        // is a ~20px strip, and a band plus two text rows has nowhere to be legible.
-        Item {
-            visible: clipItem.clipData.kind === "adjustment"
-            anchors.fill: parent
-            z: 1
-
-            Text {
-                anchors.left: parent.left
-                anchors.right: parent.right
-                anchors.verticalCenter: parent.verticalCenter
-                anchors.leftMargin: 6
-                anchors.rightMargin: 6
-                text: clipItem.adjustmentLabelText
-                color: Theme.onMedia
-                font.pixelSize: Theme.fontSizeTiny
-                font.family: Theme.fontFamily
-                elide: Text.ElideRight
-            }
-        }
-
-        Column {
-            visible: clipItem.trackType === "text"
-                     || clipItem.trackType === "subtitle"
-            anchors.left: parent.left
-            anchors.right: parent.right
-            anchors.verticalCenter: parent.verticalCenter
-            // Clamped so the label width cannot
-            // go negative on very narrow clips.
-            anchors.leftMargin: Math.min(Theme.spacingLg, parent.width / 4)
-            anchors.rightMargin: Math.min(Theme.spacingLg, parent.width / 4)
-            spacing: 1
-
-            Text {
-                width: parent.width
-                text: clipItem.trackType === "subtitle"
-                      ? (clipItem.clipData.name
-                         || qsTr("Subtitles"))
-                      : (clipItem.clipData.textContent
-                         || clipItem.clipData.name)
-                color: Theme.onMedia
-                font.pixelSize: Theme.fontSizeXs
-                font.family: Theme.fontFamily
-                elide: Text.ElideRight
-            }
-
-        }
-
-        // Waveform: only the slice of the clip that is on screen gets a Canvas, at 1:1 px,
-        // so a multi-hour clip neither allocates a hundreds-of-thousands-px buffer nor
-        // stretches a fixed peak list across it.
-        Item {
-            id: waveformHost
-            visible: clipItem.trackType === "audio"
-                     || (clipItem.trackType === "video"
-                         && clipItem.showWaveform)
-                     || clipItem.showWaveformBar
-            anchors.left: parent.left
-            anchors.right: parent.right
-            anchors.top: parent.top
-            anchors.topMargin: clipItem.showWaveformBar ? parent.height - clipItem.waveformBarHeight
-                                                        : clipItem.headerBandHeight
-            anchors.bottom: parent.bottom
-            clip: true
-
-            Rectangle {
-                visible: clipItem.showWaveformBar
-                anchors.fill: parent
-                color: Qt.rgba(0, 0, 0, 0.35)
-            }
-
-            // Bumped when an off-thread decode lands, to re-run the peaks and lane-count
-            // bindings. Lives on the host because the labels below need it too.
-            property int decodeRevision: 0
-
-            // Channels the decoder found, 0 until the first block lands — so a multi-channel
-            // clip draws the merged lane for one frame and then splits.
-            readonly property int sourceChannels: {
-                void decodeRevision
-                if (!clipItem.showChannelWaveforms || clipItem.showWaveformBar
-                        || !clipItem.clipData.path)
-                    return 0
-                return EditorState.waveformChannelCount(
-                    clipItem.clipData.path, clipItem.clipData.audioStreamIndex || 0)
-            }
-
-            // Below this a lane is a grey smear rather than a waveform, so fall back to the
-            // single merged envelope instead of drawing something unreadable.
-            readonly property real minLaneHeight: 8
-
-            readonly property int laneCount: {
-                if (sourceChannels < 2)
-                    return 1
-                return (height / sourceChannels) >= minLaneHeight ? sourceChannels : 1
-            }
-            readonly property real laneHeight: height / Math.max(1, laneCount)
-
-            Connections {
-                target: EditorState
-                function onWaveformRangeReady(path) {
-                    if (path === clipItem.wfPath)
-                        waveformHost.decodeRevision++
-                }
-            }
-
-            Canvas {
-                id: waveformCanvas
-
-                // Visible slice of the clip, snapped to a 256px grid so scrolling only
-                // re-queries peaks every step instead of every frame.
-                readonly property real windowStep: 256
-                readonly property real visibleLeft: {
-                    const left = panel.timelineViewX - clipItem.x - windowStep
-                    return Math.max(0, Math.floor(left / windowStep) * windowStep)
-                }
-                readonly property real visibleRight: {
-                    if (panel.timelineViewW <= 0)
-                        return waveformHost.width
-                    const right = panel.timelineViewX - clipItem.x + panel.timelineViewW + windowStep
-                    return Math.min(waveformHost.width,
-                                    Math.ceil(right / windowStep) * windowStep)
-                }
-                // Source seconds per px of clip body, so the strip maps to the trimmed
-                // window rather than the whole file.
-                readonly property real srcPerPx: {
-                    const span = clipItem.wfOut - clipItem.wfIn
-                    return waveformHost.width > 0 && span > 0 ? span / waveformHost.width : 0
-                }
-
-                x: visibleLeft
-                width: Math.max(1, Math.min(4096, Math.floor(visibleRight - visibleLeft)))
-                height: waveformHost.height
-
-                property var peaks: {
-                    void waveformHost.decodeRevision
-                    if (!clipItem.wfPath || srcPerPx <= 0)
-                        return []
-                    // The per-channel query covers this window already; asking for the merged
-                    // envelope as well would double the work for something nothing draws.
-                    if (waveformHost.laneCount > 1)
-                        return []
-                    return EditorState.waveformPeaksRange(
-                        clipItem.wfPath,
-                        clipItem.wfIn + x * srcPerPx,
-                        width * srcPerPx,
-                        Math.ceil(width),
-                        clipItem.wfStream)
-                }
-
-                // { channels, buckets, names, peaks } with peaks channel-major and flat.
-                property var channelData: {
-                    void waveformHost.decodeRevision
-                    if (!clipItem.wfPath || srcPerPx <= 0
-                            || waveformHost.laneCount <= 1)
-                        return null
-                    return EditorState.waveformChannelPeaksRange(
-                        clipItem.wfPath,
-                        clipItem.wfIn + x * srcPerPx,
-                        width * srcPerPx,
-                        Math.ceil(width),
-                        clipItem.wfStream)
-                }
-
-                onPeaksChanged: requestPaint()
-                onChannelDataChanged: requestPaint()
-                onWidthChanged: requestPaint()
-                onHeightChanged: requestPaint()
-
-                // One lane per source channel. Drawn as a single filled path per lane rather
-                // than a rect per column: 8 lanes over a viewport-wide clip is tens of
-                // thousands of fillRect calls, which visibly hitches on repaint.
-                function paintLanes(ctx, data) {
-                    const channels = data.channels
-                    const buckets = data.buckets
-                    const values = data.peaks
-                    const w = Math.max(1, Math.floor(width))
-                    const laneH = height / channels
-
-                    ctx.fillStyle = Theme.waveformColor
-                    for (var c = 0; c < channels; c++) {
-                        const base = c * buckets
-                        const mid = c * laneH + laneH / 2
-                        const half = (laneH / 2) * 0.85
-                        ctx.beginPath()
-                        // Top edge left to right, then the mirrored bottom edge back, so the
-                        // lane closes into one shape.
-                        for (var x = 0; x < w; x++) {
-                            var i0 = base + Math.floor(x * buckets / w)
-                            var i1 = base + Math.floor((x + 1) * buckets / w)
-                            if (i1 <= i0)
-                                i1 = Math.min(base + buckets, i0 + 1)
-                            var peak = 0
-                            for (var i = i0; i < i1; i++) {
-                                if (values[i] > peak)
-                                    peak = values[i]
-                            }
-                            const amp = Math.max(0.5, peak * half)
-                            if (x === 0)
-                                ctx.moveTo(x, mid - amp)
-                            else
-                                ctx.lineTo(x, mid - amp)
-                            ctx.lineTo(x + 1, mid - amp)
-                        }
-                        for (var xb = w - 1; xb >= 0; xb--) {
-                            var j0 = base + Math.floor(xb * buckets / w)
-                            var j1 = base + Math.floor((xb + 1) * buckets / w)
-                            if (j1 <= j0)
-                                j1 = Math.min(base + buckets, j0 + 1)
-                            var peakB = 0
-                            for (var j = j0; j < j1; j++) {
-                                if (values[j] > peakB)
-                                    peakB = values[j]
-                            }
-                            const ampB = Math.max(0.5, peakB * half)
-                            ctx.lineTo(xb + 1, mid + ampB)
-                            ctx.lineTo(xb, mid + ampB)
-                        }
-                        ctx.closePath()
-                        ctx.fill()
-                    }
-
-                    // Without a divider eight lanes read as one grey block. Inner edges only.
-                    ctx.fillStyle = Theme.panelBorder
-                    ctx.globalAlpha = 0.5
-                    for (var d = 1; d < channels; d++)
-                        ctx.fillRect(0, Math.round(d * laneH), w, 1)
-                    ctx.globalAlpha = 1.0
-                }
-
-                onPaint: {
-                    var ctx = getContext("2d");
-                    ctx.clearRect(0, 0, width, height);
-
-                    if (waveformHost.laneCount > 1 && channelData
-                            && channelData.channels > 1 && channelData.buckets > 0) {
-                        paintLanes(ctx, channelData);
-                        return;
-                    }
-
-                    if (!peaks || peaks.length === 0)
-                        return;
-                    ctx.fillStyle = Theme.waveformColor;
-                    var mid = height / 2;
-                    var w = Math.max(1, Math.floor(width));
-                    var n = peaks.length;
-                    for (var x = 0; x < w; x++) {
-                        var i0 = Math.floor(x * n / w);
-                        var i1 = Math.floor((x + 1) * n / w);
-                        if (i1 <= i0)
-                            i1 = Math.min(n, i0 + 1);
-                        var peak = 0;
-                        for (var i = i0; i < i1; i++) {
-                            if (peaks[i] > peak)
-                                peak = peaks[i];
-                        }
-                        var amp = peak * mid * 0.9;
-                        if (amp > 0.5)
-                            ctx.fillRect(x, mid - amp, 1, amp * 2);
-                    }
-                }
-            }
-
-            // Channel labels. Pinned to the host, not drawn into the canvas: the canvas x
-            // tracks the viewport, so anything painted in its coordinates slides while you
-            // scroll. Hidden when a lane is too short for the glyph to fit.
-            Repeater {
-                model: waveformHost.laneCount > 1 ? waveformHost.laneCount : 0
-
-                Text {
-                    readonly property var names: waveformCanvas.channelData
-                                                 ? waveformCanvas.channelData.names : null
-                    x: 3
-                    y: index * waveformHost.laneHeight
-                       + (waveformHost.laneHeight - height) / 2
-                    visible: waveformHost.laneHeight >= 14
-                    text: (names && names[index]) ? names[index] : (index + 1)
-                    color: Theme.mutedForeground
-                    font.family: Theme.fontFamily
-                    font.pixelSize: Theme.fontSizeTiny
-                }
-            }
-        }
-    }
-
-    // Parented to the clip rather than to clipMouse, which is hidden when this is an overlay.
     // Stands in for the rect the Menu used to be parented to, so it resolves the same parent item
     // and clamps against the same bounds.
     Loader {
@@ -1057,512 +299,206 @@ Item {
         onLoaded: item.popup()
     }
 
-    MouseArea {
-        id: clipMouse
-        z: 2
-        visible: !clipItem.overlayOnly
-        anchors.fill: parent
-        hoverEnabled: true
-        // Always leave edge strips for CapCut-style trim cursor on approach.
-        anchors.leftMargin: clipItem.edgeMargin
-        anchors.rightMargin: clipItem.edgeMargin
-        enabled: !leftTrimMouse.pressed && !rightTrimMouse.pressed
-                     && !fadeInMouse.pressed && !fadeOutMouse.pressed
-        // CapCut: open hand to move. Trim edges set SizeHorCursor via their own
-        // HoverHandlers (subtitle-grip pattern); do not claim a cursor here while
-        // those zones are hovered or Qt keeps the open-hand shape.
-        cursorShape: {
-            if (drag.active)
-                return Qt.ClosedHandCursor
-            if (leftTrimMouse.containsMouse || rightTrimMouse.containsMouse
-                    || fadeInMouse.containsMouse || fadeOutMouse.containsMouse)
-                return Qt.BlankCursor
-            return Qt.OpenHandCursor
-        }
-        // Right-click opens the clip menu; the app
-        // previously had no context menus at all.
-        acceptedButtons: Qt.LeftButton | Qt.RightButton
-        // On touch a clip only becomes draggable after a deliberate press-and-hold.
-        // Holding the grab from the first touch (preventStealing over a surface that is
-        // mostly clips) meant the Flickable could never pan, so a timeline with any
-        // content in it could not be scrolled at all.
-        //
-        // Arming goes through drag.target, not preventStealing: MouseArea copies
-        // preventStealing into its private stealMouse flag once, in mousePressEvent, and
-        // drag activation needs keepMouseGrab && stealMouse. Raising preventStealing
-        // after the press sets only keepMouseGrab, which then blocks the branch that
-        // would have set stealMouse — leaving the clip grabbed and permanently
-        // undraggable. A null drag.target skips the drag block entirely instead, so the
-        // Flickable steals at its own threshold and panning works.
-        drag.target: clipItem.touchMode ? (moveArmed ? clipItem : null) : clipItem
-        drag.axis: Drag.XAndYAxis
-        // Once armed the finger is already down and still, so any motion is the move.
-        // On desktop, 2px threshold eliminates the deadzone while preventing accidental micro-drags.
-        drag.threshold: clipItem.touchMode ? 0 : 2
-        drag.minimumX: {
-            if (clipItem.selected && EditorState.selectionCount > 1) {
-                const earliest = EditorState.selectionEarliestStartSeconds()
-                const minStart = Math.max(0, (clipItem.clipData.start || 0) - earliest)
-                return minStart * panel.pxPerSecond + Theme.clipSelectionRingWidth
-            }
-            return Theme.clipSelectionRingWidth
-        }
-        // Allow dropping onto any track, not just the immediate neighbours.
-        drag.minimumY: -Math.max(clipItem.trackRow.height, panel.totalTracksHeightCached)
-        drag.maximumY: Math.max(clipItem.trackRow.height * 2, panel.totalTracksHeightCached)
-        preventStealing: !clipItem.touchMode
-        pressAndHoldInterval: clipItem.touchMode ? 450 : 800
-        property int originTrack: clipItem.trackIndex
-        property int originClip: clipItem.clipIndex
-        // Model-space X at press — follow delta is measured from this so partners
-        // stay locked to the leader even after the drag threshold has been crossed.
-        property real moveOriginX: 0
-        // drag.active is cleared after onReleased in some paths; remember we dragged.
-        property bool didDrag: false
-        // True only for the span we treat as a move, so the landing preview stops
-        // updating the moment the clip is dropped.
-        property bool moving: false
-        // Touch only: the hold has been recognised and the clip is now draggable.
-        // Releasing without moving opens the context menu instead.
-        property bool moveArmed: false
+    Component {
+        id: clipContextMenuComponent
 
-        // Where inside the clip the finger landed, so the autoscroll driver below can
-        // recompute the pointer's viewport position each tick instead of guessing at
-        // the clip's centre (which for a clip wider than the viewport is never in it).
-        property real grabX: 0
-        property real grabY: 0
+        ThemedContextMenu {
+            id: clipContextMenu
 
-        onPressed: (mouse) => {
-            Qt.callLater(function() { clipItem.forceActiveFocus() })
-            // Read before anything selects: `selected` comes back through the model, so testing it
-            // after the call would report the state this press is about to create.
-            const wasSelected = clipItem.selected
-            // A previous gesture that ended while snapped would otherwise leave the latch engaged
-            // and swallow this one's first tick.
-            Haptics.reset()
-            originTrack = clipItem.trackIndex
-            originClip = clipItem.clipIndex
-            moveOriginX = clipItem.clipData.start * panel.pxPerSecond
-                          + Theme.clipSelectionRingWidth
-            grabX = mouse.x + clipItem.edgeMargin
-            grabY = mouse.y
-            didDrag = false
-            moving = false
-            moveArmed = false
-            if (mouse.button === Qt.RightButton) {
-                // Right-click selects, then opens the menu.
-                if (!clipItem.selected)
-                    EditorState.selectClip(clipItem.trackIndex, clipItem.clipIndex)
-                clipItem.openContextMenu()
-                return
+            property bool canPasteEffects: false
+            property bool canPasteAttributes: false
+            property bool canMergeTrackSubtitles: false
+            onAboutToShow: {
+                canPasteEffects = EditorState.clipboardHasEffects()
+                canPasteAttributes = EditorState.canPasteAttributes()
+                canMergeTrackSubtitles = clipItem.trackType === "subtitle"
+                        && EditorState.canMergeAllSubtitlesOnTrack(clipItem.trackIndex)
             }
-            // Touch multi-select mode (see the panel's multiSelectActive): the press
-            // does nothing so a pan still reaches the Flickable, and the tap toggles
-            // on release. Undefined on desktop, which has shift-click and the marquee.
-            if (panel.multiSelectActive === true)
-                return
-            if ((mouse.modifiers & (Qt.ShiftModifier | Qt.ControlModifier)) !== 0)
-                EditorState.addToSelection(clipItem.trackIndex, clipItem.clipIndex)
-            else if (!wasSelected)
-                EditorState.selectClip(clipItem.trackIndex, clipItem.clipIndex)
-            // Only when the press changed the selection. Tapping a clip that is already selected
-            // does nothing, and onClicked is about to run this same branch again — ticking on both
-            // would double up on any tap slow enough to outlast the rate limiter.
-            if (!wasSelected)
-                Haptics.select()
-        }
-        // Hold, then move to drag; hold and let go to get the menu. One gesture serves
-        // both, which is what leaves the plain drag free for the Flickable to pan with.
-        onPressAndHold: (mouse) => {
-            if (!clipItem.touchMode || mouse.button === Qt.RightButton)
-                return
-            if (didDrag || drag.active || panel.multiSelectActive === true)
-                return
-            moveArmed = true
-            // The moment the clip becomes draggable, and the only one in the gesture that nothing
-            // on screen can announce ahead of the user's own movement: the lift animation plays
-            // because of this, not before it.
-            Haptics.pickUp()
-            if (!clipItem.selected)
-                EditorState.selectClip(clipItem.trackIndex, clipItem.clipIndex)
-        }
-        onDoubleClicked: (mouse) => {
-            if (mouse.button === Qt.LeftButton && clipItem.clipData.kind === "composite")
-                EditorState.openCompositeClip(clipItem.trackIndex, clipItem.clipIndex)
-        }
-        onClicked: (mouse) => {
-            if (mouse.button === Qt.RightButton || didDrag)
-                return
-            if (panel.multiSelectActive === true) {
-                // The press deliberately does nothing in this mode so a pan can still reach the
-                // Flickable, which leaves the tick to the tap that lands here.
-                panel.toggleInSelection(clipItem.trackIndex, clipItem.clipIndex)
-                Haptics.select()
-                return
-            }
-            if ((mouse.modifiers & (Qt.ShiftModifier | Qt.ControlModifier)) !== 0)
-                EditorState.addToSelection(clipItem.trackIndex, clipItem.clipIndex)
-            else
-                EditorState.selectClip(clipItem.trackIndex, clipItem.clipIndex)
-        }
+            // Deferred: onClosed runs inside the Popup's own close path, and dropping the
+            // Loader's item there would destroy an object still unwinding.
+            onClosed: Qt.callLater(function() { clipContextMenuLoader.active = false })
 
-        // Surfaces actions that were previously
-        // reachable only by unlabelled shortcut,
-        // plus cutSelection which had no UI at all.
-        // Every clip in the project used to build this menu at load: eighteen entries, each an
-        // icon, a label and a background, for a menu that only ever opens on a right-click.
-        // Loaded on demand instead. Synchronous, and popped from onLoaded, so the very first
-        // right-click still opens it rather than being spent on the load.
-        Component {
-            id: clipContextMenuComponent
-
-            ThemedContextMenu {
-                id: clipContextMenu
-
-                property bool canPasteEffects: false
-                property bool canPasteAttributes: false
-                property bool canMergeTrackSubtitles: false
-                onAboutToShow: {
-                    canPasteEffects = EditorState.clipboardHasEffects()
-                    canPasteAttributes = EditorState.canPasteAttributes()
-                    canMergeTrackSubtitles = clipItem.trackType === "subtitle"
-                            && EditorState.canMergeAllSubtitlesOnTrack(clipItem.trackIndex)
-                }
-                // Deferred: onClosed runs inside the Popup's own close path, and dropping the
-                // Loader's item there would destroy an object still unwinding.
-                onClosed: Qt.callLater(function() { clipContextMenuLoader.active = false })
-
-                ThemedMenuItem {
-                    text: qsTr("Properties")
-                    icon.name: Theme.icons.sliders
-                    onTriggered: {
-                        if (!clipItem.selected)
-                            EditorState.selectClip(clipItem.trackIndex, clipItem.clipIndex)
-                        if (typeof panel.openClipProperties === "function")
-                            panel.openClipProperties()
-                    }
-                }
-                ThemedMenuItem {
-                    // Touch route into multi-clip selection; the panel owns the mode and
-                    // the desktop panel does not declare the property at all.
-                    text: qsTr("Select multiple")
-                    icon.name: Theme.icons.check
-                    visible: panel.multiSelectActive === false
-                    onTriggered: panel.multiSelectActive = true
-                }
-                ThemedMenuItem {
-                    text: qsTr("Open composite")
-                    icon.name: Theme.icons.layers
-                    visible: clipItem.clipData.kind === "composite"
-                    onTriggered: EditorState.openCompositeClip(clipItem.trackIndex, clipItem.clipIndex)
-                }
-                ThemedMenuItem {
-                    text: qsTr("Flatten composite")
-                    icon.name: Theme.icons.film
-                    visible: clipItem.clipData.kind === "composite"
-                    enabled: !EditorState.exportInProgress
-                    onTriggered: EditorState.flattenComposite(clipItem.trackIndex, clipItem.clipIndex)
-                }
-                ThemedMenuItem {
-                    text: qsTr("Make composite")
-                    icon.name: Theme.icons.layers
-                    visible: EditorState.makeCompositeAvailable
-                    onTriggered: EditorState.makeCompositeFromSelection()
-                }
-                ThemedMenuSeparator { }
-                ThemedMenuItem {
-                    text: qsTr("Split at current time")
-                    icon.name: Theme.icons.scissors
-                    onTriggered: EditorState.splitAtPlayhead()
-                }
-                ThemedMenuItem {
-                    text: qsTr("Split item at current time")
-                    icon.name: Theme.icons.scissors
-                    // Scoped to just this clip (and its linked partner, e.g. companion
-                    // audio) — splitAtPlayhead() above cuts every clip under the playhead
-                    // across every track, which is surprising when picked from one clip's menu.
-                    visible: EditorState.playheadSeconds > clipItem.clipData.start
-                            && EditorState.playheadSeconds < clipItem.clipData.start + clipItem.clipData.duration
-                    onTriggered: EditorState.splitClipAt(clipItem.trackIndex, clipItem.clipIndex,
-                                                         EditorState.playheadSeconds)
-                }
-                ThemedMenuItem {
-                    text: qsTr("Separate audio")
-                    icon.name: Theme.icons.audioLines
-                    // CapCut: only offer extract when the clip still has embedded audio.
-                    visible: clipItem.trackType === "video" && EditorState.separateAudioAvailable
-                    onTriggered: EditorState.separateAudioFromSelection()
-                }
-                ThemedMenuItem {
-                    text: qsTr("Separate all audio tracks")
-                    icon.name: Theme.icons.audioLines
-                    visible: clipItem.trackType === "video" && EditorState.separateAudioAvailable
-                             && EditorState.clipAudioStreamCount(clipItem.trackIndex, clipItem.clipIndex) > 1
-                    onTriggered: EditorState.separateAllAudioTracks(clipItem.trackIndex, clipItem.clipIndex)
-                }
-                ThemedMenuItem {
-                    text: qsTr("Convert to edit-friendly format")
-                    icon.name: Theme.icons.rabbit
-                    // Converts the bin media, so every clip using it follows along.
-                    visible: clipItem.mediaAssetId.length > 0 && !clipItem.mediaEditFriendly
-                    onTriggered: EditorState.convertAssetsToConstantFrameRate([clipItem.mediaAssetId])
-                }
-                ThemedMenuItem {
-                    text: qsTr("Unlink")
-                    icon.name: Theme.icons.unlink
-                    visible: !!clipItem.clipData.linked && EditorState.unlinkAvailable
-                    onTriggered: EditorState.unlinkSelectedClips()
-                }
-                ThemedMenuItem {
-                    text: qsTr("Merge subtitle clips")
-                    icon.name: Theme.icons.linkTwo
-                    visible: clipItem.trackType === "subtitle"
-                    enabled: EditorState.mergeAvailable
-                    onTriggered: EditorState.mergeSelectedClips()
-                }
-                ThemedMenuItem {
-                    text: qsTr("Merge all subtitles on this track")
-                    icon.name: Theme.icons.linkTwo
-                    visible: clipItem.trackType === "subtitle"
-                    enabled: clipContextMenu.canMergeTrackSubtitles
-                    onTriggered: EditorState.mergeAllSubtitlesOnTrack(clipItem.trackIndex)
-                }
-                ThemedMenuItem {
-                    text: qsTr("Convert to text clips")
-                    icon.name: Theme.icons.type
-                    visible: clipItem.trackType === "subtitle"
-                    onTriggered: EditorState.convertSubtitleToTextClips(clipItem.trackIndex, clipItem.clipIndex)
-                }
-                ThemedMenuItem {
-                    text: qsTr("Convert to subtitle")
-                    icon.name: Theme.icons.captions
-                    visible: clipItem.trackType === "text" && EditorState.textToSubtitleAvailable
-                    onTriggered: clipItem.panel.requestConvertTextToSubtitle()
-                }
-                ThemedMenuSeparator { }
-                ThemedMenuItem {
-                    text: qsTr("Cut")
-                    icon.name: Theme.icons.scissors
-                    onTriggered: EditorState.cutSelection()
-                }
-                ThemedMenuItem {
-                    text: qsTr("Copy")
-                    icon.name: Theme.icons.copy
-                    onTriggered: EditorState.copySelection()
-                }
-                ThemedMenuItem {
-                    text: qsTr("Paste attributes…")
-                    icon.name: Theme.icons.clipboardPaste
-                    enabled: clipContextMenu.canPasteAttributes
-                    onTriggered: EditorState.requestPasteAttributes()
-                }
-                ThemedMenuItem {
-                    text: qsTr("Duplicate")
-                    icon.name: Theme.icons.copyPlus
-                    onTriggered: EditorState.duplicateSelectedClip()
-                }
-                ThemedMenuItem {
-                    text: qsTr("Rename…")
-                    icon.name: Theme.icons.pencil
-                    onTriggered: clipItem.panel.requestRenameClip(clipItem.trackIndex, clipItem.clipIndex)
-                }
-                ThemedMenuSeparator { }
-                ThemedMenuItem {
-                    text: qsTr("Copy effects")
-                    icon.name: Theme.icons.wand
-                    visible: clipItem.hasAnyEffects
-                    onTriggered: EditorState.copyClipEffectsToClipboard(clipItem.trackIndex,
-                                                                        clipItem.clipIndex)
-                }
-                ThemedMenuItem {
-                    text: qsTr("Paste effects")
-                    icon.name: Theme.icons.clipboardPaste
-                    enabled: clipContextMenu.canPasteEffects
-                    onTriggered: EditorState.pasteEffectsFromClipboard(clipItem.trackIndex,
-                                                                       clipItem.clipIndex)
-                }
-                ThemedMenuItem {
-                    text: qsTr("Save effects as preset…")
-                    icon.name: Theme.icons.save
-                    visible: clipItem.hasAnyEffects
-                    onTriggered: clipItem.panel.requestSaveEffectPreset(clipItem.trackIndex,
-                                                                         clipItem.clipIndex)
-                }
-                ThemedMenuSeparator { visible: clipItem.clipData.kind === "adjustment" }
-                ThemedMenuItem {
-                    text: qsTr("Unlink from clip")
-                    icon.name: Theme.icons.unlink
-                    visible: clipItem.pinnedToClip
-                    onTriggered: EditorState.unlinkAdjustment(clipItem.trackIndex, clipItem.clipIndex)
-                }
-                ThemedMenuItem {
-                    text: qsTr("Move to its own track")
-                    icon.name: Theme.icons.layers
-                    // Only meaningful for a nested one: a standalone adjustment already has one.
-                    visible: clipItem.clipData.kind === "adjustment"
-                             && clipItem.panel.tracks[clipItem.trackIndex].isAdjustmentLane === true
-                    onTriggered: EditorState.moveAdjustmentToOwnTrack(clipItem.trackIndex,
-                                                                      clipItem.clipIndex)
-                }
-                ThemedMenuSeparator { }
-                ThemedMenuItem {
-                    text: qsTr("Delete")
-                    icon.name: Theme.icons.trash
-                    onTriggered: EditorState.deleteSelectedClip()
+            ThemedMenuItem {
+                text: qsTr("Properties")
+                icon.name: Theme.icons.sliders
+                onTriggered: {
+                    if (!clipItem.selected)
+                        EditorState.selectClip(clipItem.trackIndex, clipItem.clipIndex)
+                    if (typeof panel.openClipProperties === "function")
+                        panel.openClipProperties()
                 }
             }
-        }
-        onReleased: {
-            const moved = drag.active || didDrag
-            // Armed but never moved: the hold was a request for the menu.
-            const wantsMenu = clipItem.touchMode && moveArmed && !moved
-            // NOTE: Keep didDrag true if moved so onClicked (which runs immediately after
-            // onReleased in Qt Quick) knows a drag happened and does not collapse the selection.
-            // didDrag is reset on the next onPressed or onCanceled.
-            if (!moved)
-                didDrag = false
-            moving = false
-            moveArmed = false
-            // Clear follow before committing so partners don't keep the drag
-            // offset on top of the new model start for a frame.
-            panel.clearMoveFollow()
-            panel.clearLandingPreview()
-            lastPreviewDesired = -1
-            lastPreviewTrack = -1
-            if (!moved) {
-                if (wantsMenu) {
-                    clipItem.y = Theme.clipSelectionRingWidth
-                    clipItem.openContextMenu()
-                }
-                return
+            ThemedMenuItem {
+                // Touch route into multi-clip selection; the panel owns the mode and
+                // the desktop panel does not declare the property at all.
+                text: qsTr("Select multiple")
+                icon.name: Theme.icons.check
+                visible: panel.multiSelectActive === false
+                onTriggered: panel.multiSelectActive = true
             }
-            // Snapped here, not only in the preview. The landing outline has always been drawn
-            // at the snapped position while the commit below took the raw pointer position, so a
-            // clip visibly locked onto an edge and then settled a few pixels off it. Mirrors
-            // updateMovePreview() exactly — same clamp, same call — so the clip lands on the
-            // outline it was showing. Recomputed rather than read back from panel.dropStartSeconds
-            // because that is throttled to whole pixels and can be a pixel stale at release.
-            const rawStart = Math.max(0, (clipItem.x - Theme.clipSelectionRingWidth)
-                                          / panel.pxPerSecond)
-            const newStart = panel.snapClipStart(rawStart, clipItem.clipData.duration,
-                                                 clipItem.clipData.id).start
-            const pos = clipItem.mapToItem(timelineColumn, clipItem.width / 2, clipItem.height / 2)
-            const target = typeof panel.dropTargetAtY === "function"
-                         ? panel.dropTargetAtY(pos.y)
-                         : { "track": panel.trackIndexAtY(pos.y), "lane": -1 }
-            clipItem.y = Theme.clipSelectionRingWidth
-            const isAdjustment = clipItem.clipData.kind === "adjustment"
-            const wasInLane = panel.tracks[originTrack].isAdjustmentLane === true
-            // Use indices captured on press — after the model updates, clipIndex
-            // on this delegate can already refer to a different clip.
-            if (isAdjustment && target.lane >= 0) {
-                // Released on a lane strip: an ordinary cross-track move onto that lane. Only an
-                // adjustment can land there — a media clip aimed at the strip falls through to
-                // the row's own clip area rather than snapping back from a rejected move.
-                if (target.lane !== originTrack)
-                    EditorState.moveClipToTrack(originTrack, originClip, target.lane, newStart)
-                else
-                    EditorState.moveClip(originTrack, originClip, newStart)
-            } else if (isAdjustment && target.track >= 0
-                       && panel.tracks[target.track].type !== "adjustment") {
-                // An adjustment released on a media track's body nests inside it: it stops
-                // applying to everything composited below and applies only to that track.
-                EditorState.moveAdjustmentToLane(originTrack, originClip, target.track, newStart)
-            } else if (isAdjustment && wasInLane && target.track < 0) {
-                // Dragged clear of every row: the inverse gesture, back to a track of its own
-                // affecting everything below it.
-                EditorState.moveAdjustmentToOwnTrack(originTrack, originClip, newStart)
-            } else if (target.track >= 0 && target.track !== originTrack) {
-                EditorState.moveClipToTrack(originTrack, originClip, target.track, newStart)
-            } else {
-                EditorState.moveClip(originTrack, originClip, newStart)
+            ThemedMenuItem {
+                text: qsTr("Open composite")
+                icon.name: Theme.icons.layers
+                visible: clipItem.clipData.kind === "composite"
+                onTriggered: EditorState.openCompositeClip(clipItem.trackIndex, clipItem.clipIndex)
             }
-            // Closes the gesture pickUp opened, and clears the snap and lane latches the drag left
-            // engaged.
-            Haptics.drop()
-        }
-        onPositionChanged: {
-            if (pressed && drag.active) {
-                didDrag = true
-                if (!moving) {
-                    moving = true
-                    panel.beginMoveFollow(originTrack, originClip)
-                }
-                panel.updateMoveFollow(clipItem.x - moveOriginX,
-                                       clipItem.y - Theme.clipSelectionRingWidth)
+            ThemedMenuItem {
+                text: qsTr("Flatten composite")
+                icon.name: Theme.icons.film
+                visible: clipItem.clipData.kind === "composite"
+                enabled: !EditorState.exportInProgress
+                onTriggered: EditorState.flattenComposite(clipItem.trackIndex, clipItem.clipIndex)
             }
-        }
-        onCanceled: {
-            didDrag = false
-            moving = false
-            moveArmed = false
-            panel.clearMoveFollow()
-            panel.clearLandingPreview()
-            lastPreviewDesired = -1
-            lastPreviewTrack = -1
-            // No drop tick: the clip went back where it came from. The latches still have to go.
-            Haptics.reset()
+            ThemedMenuItem {
+                text: qsTr("Make composite")
+                icon.name: Theme.icons.layers
+                visible: EditorState.makeCompositeAvailable
+                onTriggered: EditorState.makeCompositeFromSelection()
+            }
+            ThemedMenuSeparator { }
+            ThemedMenuItem {
+                text: qsTr("Split at current time")
+                icon.name: Theme.icons.scissors
+                onTriggered: EditorState.splitAtPlayhead()
+            }
+            ThemedMenuItem {
+                text: qsTr("Split item at current time")
+                icon.name: Theme.icons.scissors
+                // Scoped to just this clip (and its linked partner, e.g. companion
+                // audio) — splitAtPlayhead() above cuts every clip under the playhead
+                // across every track, which is surprising when picked from one clip's menu.
+                visible: EditorState.playheadSeconds > clipItem.clipData.start
+                        && EditorState.playheadSeconds < clipItem.clipData.start + clipItem.clipData.duration
+                onTriggered: EditorState.splitClipAt(clipItem.trackIndex, clipItem.clipIndex,
+                                                     EditorState.playheadSeconds)
+            }
+            ThemedMenuItem {
+                text: qsTr("Separate audio")
+                icon.name: Theme.icons.audioLines
+                // CapCut: only offer extract when the clip still has embedded audio.
+                visible: clipItem.trackType === "video" && EditorState.separateAudioAvailable
+                onTriggered: EditorState.separateAudioFromSelection()
+            }
+            ThemedMenuItem {
+                text: qsTr("Separate all audio tracks")
+                icon.name: Theme.icons.audioLines
+                visible: clipItem.trackType === "video" && EditorState.separateAudioAvailable
+                         && EditorState.clipAudioStreamCount(clipItem.trackIndex, clipItem.clipIndex) > 1
+                onTriggered: EditorState.separateAllAudioTracks(clipItem.trackIndex, clipItem.clipIndex)
+            }
+            ThemedMenuItem {
+                text: qsTr("Convert to edit-friendly format")
+                icon.name: Theme.icons.rabbit
+                // Converts the bin media, so every clip using it follows along.
+                visible: clipItem.mediaAssetId.length > 0 && !clipItem.mediaEditFriendly
+                onTriggered: EditorState.convertAssetsToConstantFrameRate([clipItem.mediaAssetId])
+            }
+            ThemedMenuItem {
+                text: qsTr("Unlink")
+                icon.name: Theme.icons.unlink
+                visible: !!clipItem.clipData.linked && EditorState.unlinkAvailable
+                onTriggered: EditorState.unlinkSelectedClips()
+            }
+            ThemedMenuItem {
+                text: qsTr("Merge subtitle clips")
+                icon.name: Theme.icons.linkTwo
+                visible: clipItem.trackType === "subtitle"
+                enabled: EditorState.mergeAvailable
+                onTriggered: EditorState.mergeSelectedClips()
+            }
+            ThemedMenuItem {
+                text: qsTr("Merge all subtitles on this track")
+                icon.name: Theme.icons.linkTwo
+                visible: clipItem.trackType === "subtitle"
+                enabled: clipContextMenu.canMergeTrackSubtitles
+                onTriggered: EditorState.mergeAllSubtitlesOnTrack(clipItem.trackIndex)
+            }
+            ThemedMenuItem {
+                text: qsTr("Convert to text clips")
+                icon.name: Theme.icons.type
+                visible: clipItem.trackType === "subtitle"
+                onTriggered: EditorState.convertSubtitleToTextClips(clipItem.trackIndex, clipItem.clipIndex)
+            }
+            ThemedMenuItem {
+                text: qsTr("Convert to subtitle")
+                icon.name: Theme.icons.captions
+                visible: clipItem.trackType === "text" && EditorState.textToSubtitleAvailable
+                onTriggered: clipItem.panel.requestConvertTextToSubtitle()
+            }
+            ThemedMenuSeparator { }
+            ThemedMenuItem {
+                text: qsTr("Cut")
+                icon.name: Theme.icons.scissors
+                onTriggered: EditorState.cutSelection()
+            }
+            ThemedMenuItem {
+                text: qsTr("Copy")
+                icon.name: Theme.icons.copy
+                onTriggered: EditorState.copySelection()
+            }
+            ThemedMenuItem {
+                text: qsTr("Paste attributes…")
+                icon.name: Theme.icons.clipboardPaste
+                enabled: clipContextMenu.canPasteAttributes
+                onTriggered: EditorState.requestPasteAttributes()
+            }
+            ThemedMenuItem {
+                text: qsTr("Duplicate")
+                icon.name: Theme.icons.copyPlus
+                onTriggered: EditorState.duplicateSelectedClip()
+            }
+            ThemedMenuItem {
+                text: qsTr("Rename…")
+                icon.name: Theme.icons.pencil
+                onTriggered: clipItem.panel.requestRenameClip(clipItem.trackIndex, clipItem.clipIndex)
+            }
+            ThemedMenuSeparator { }
+            ThemedMenuItem {
+                text: qsTr("Copy effects")
+                icon.name: Theme.icons.wand
+                visible: clipItem.hasAnyEffects
+                onTriggered: EditorState.copyClipEffectsToClipboard(clipItem.trackIndex,
+                                                                    clipItem.clipIndex)
+            }
+            ThemedMenuItem {
+                text: qsTr("Paste effects")
+                icon.name: Theme.icons.clipboardPaste
+                enabled: clipContextMenu.canPasteEffects
+                onTriggered: EditorState.pasteEffectsFromClipboard(clipItem.trackIndex,
+                                                                   clipItem.clipIndex)
+            }
+            ThemedMenuItem {
+                text: qsTr("Save effects as preset…")
+                icon.name: Theme.icons.save
+                visible: clipItem.hasAnyEffects
+                onTriggered: clipItem.panel.requestSaveEffectPreset(clipItem.trackIndex,
+                                                                     clipItem.clipIndex)
+            }
+            ThemedMenuSeparator { visible: clipItem.clipData.kind === "adjustment" }
+            ThemedMenuItem {
+                text: qsTr("Unlink from clip")
+                icon.name: Theme.icons.unlink
+                visible: clipItem.pinnedToClip
+                onTriggered: EditorState.unlinkAdjustment(clipItem.trackIndex, clipItem.clipIndex)
+            }
+            ThemedMenuItem {
+                text: qsTr("Move to its own track")
+                icon.name: Theme.icons.layers
+                // Only meaningful for a nested one: a standalone adjustment already has one.
+                visible: clipItem.clipData.kind === "adjustment"
+                         && clipItem.panel.tracks[clipItem.trackIndex].isAdjustmentLane === true
+                onTriggered: EditorState.moveAdjustmentToOwnTrack(clipItem.trackIndex,
+                                                                  clipItem.clipIndex)
+            }
+            ThemedMenuSeparator { }
+            ThemedMenuItem {
+                text: qsTr("Delete")
+                icon.name: Theme.icons.trash
+                onTriggered: EditorState.deleteSelectedClip()
+            }
         }
     }
 
-    // Edge autoscroll while a clip is being dragged on touch. Guarded on the panel
-    // actually offering it, because this file is shared with the desktop TimelinePanel
-    // (same pattern as panel.openClipProperties).
-    // Armed means this clip owns the gesture. The Flickable is told to stop competing for
-    // it rather than the MouseArea trying to hold the grab: raising preventStealing after
-    // the press sets keepMouseGrab without stealMouse, and drag activation needs both.
-    onLiftedChanged: {
-        if (clipItem.touchMode && typeof panel.setScrollLocked === "function")
-            panel.setScrollLocked(clipItem.lifted)
-    }
-    Timer {
-        id: dragAutoScroll
-        interval: 16
-        repeat: true
-        running: clipItem.touchMode && clipMouse.moving && clipMouse.drag.active
-                 && typeof panel.dragEdgeScroll === "function"
-
-        // Ramps with how far past the edge the finger is, so a nudge creeps and a
-        // finger pinned to the edge travels.
-        function step(depth) { return Math.min(24, 6 + depth * 0.4) }
-
-        onTriggered: {
-            const px = clipItem.x + clipMouse.grabX - panel.timelineViewX
-            const py = clipItem.mapToItem(timelineColumn, 0, clipMouse.grabY).y
-                       + panel.seekHeaderHeight - panel.timelineViewY
-            // Bands are a fraction of the axis, capped: the timeline pane is only ~120px
-            // tall at its minimum, and fixed 48px bands there would meet in the middle and
-            // leave every position inside one — scrolling on any drag, in one direction,
-            // forever. The seek strip is pinned to the top of the viewport, so the vertical
-            // band starts below it.
-            const edgeX = Math.min(48, panel.timelineViewW * 0.25)
-            const usableTop = panel.seekHeaderHeight
-            const usableH = Math.max(0, panel.timelineViewH - usableTop)
-            const edgeY = Math.min(48, usableH * 0.25)
-            var dx = 0
-            var dy = 0
-            if (px < edgeX)
-                dx = -step(edgeX - px)
-            else if (px > panel.timelineViewW - edgeX)
-                dx = step(px - (panel.timelineViewW - edgeX))
-            if (edgeY > 0) {
-                if (py < usableTop + edgeY)
-                    dy = -step(usableTop + edgeY - py)
-                else if (py > panel.timelineViewH - edgeY)
-                    dy = step(py - (panel.timelineViewH - edgeY))
-            }
-            if (dx === 0 && dy === 0)
-                return
-
-            const applied = panel.dragEdgeScroll(dx, dy)
-            // Qt recomputes the drag target's position from a *scene* anchor mapped
-            // through the parent's current transform, so the scroll delta is already
-            // folded into the next move event — adding it here does not double-count,
-            // it only keeps the clip under the finger while no move events arrive.
-            clipItem.x += applied.x
-            clipItem.y += applied.y
-        }
-    }
 
     // Fade dots sit above trim handles so they stay
     // grabable at the corners (zero fade). Trim the
@@ -1715,9 +651,9 @@ Item {
         width: (leftTrimMouse.containsMouse || leftTrimHover.hovered || leftTrimMouse.pressed)
                ? Math.max(2, clipItem.trimHandleWidth * 0.35)
                : clipItem.trimHandleWidth
-        anchors.left: clipBackground.left
-        anchors.top: clipBackground.top
-        anchors.bottom: clipBackground.bottom
+        anchors.left: parent.left
+        anchors.top: parent.top
+        anchors.bottom: parent.bottom
         color: clipItem.showTrimHandles ? Theme.primary : "transparent"
         opacity: !clipItem.showTrimHandles ? 0
                  : (leftTrimMouse.containsMouse || leftTrimHover.hovered || leftTrimMouse.pressed)
@@ -1865,9 +801,9 @@ Item {
         width: (rightTrimMouse.containsMouse || rightTrimHover.hovered || rightTrimMouse.pressed)
                ? Math.max(2, clipItem.trimHandleWidth * 0.35)
                : clipItem.trimHandleWidth
-        anchors.right: clipBackground.right
-        anchors.top: clipBackground.top
-        anchors.bottom: clipBackground.bottom
+        anchors.right: parent.right
+        anchors.top: parent.top
+        anchors.bottom: parent.bottom
         color: clipItem.showTrimHandles ? Theme.primary : "transparent"
         opacity: !clipItem.showTrimHandles ? 0
                  : (rightTrimMouse.containsMouse || rightTrimHover.hovered || rightTrimMouse.pressed)

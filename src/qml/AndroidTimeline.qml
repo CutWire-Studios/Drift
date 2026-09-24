@@ -1644,6 +1644,8 @@ Item {
                             model: root.tracks.length
                             delegate: Rectangle {
                                 id: trackRow
+                                // Above the rows below it while one of its clips is dragged, so the clip draws over them.
+                                z: trackClipsRenderer.dragging ? 20 : 0
                                 property int trackIndex: index
                                 // A nested lane is drawn inside its parent's row, not given one
                                 // of its own. Column skips invisible children, so no gap either.
@@ -1677,30 +1679,15 @@ Item {
                                                                Theme.clipEffect.b, 0.12)
                                             }
 
-                                            Loader {
+                                            TimelineTrackArea {
                                                 anchors.fill: parent
-                                                active: EditorState.sceneGraphTimeline
-                                                sourceComponent: Component {
-                                                    TimelineTrackArea {
-                                                        panel: root
-                                                        timelineColumn: trackColumn
-                                                        trackIndex: laneStrip.trackIndex
-                                                        viewState: timelineViewState
-                                                        touchMode: true
-                                                    }
-                                                }
+                                                panel: root
+                                                timelineColumn: trackColumn
+                                                trackIndex: laneStrip.trackIndex
+                                                viewState: timelineViewState
+                                                touchMode: true
                                             }
 
-                                            Repeater {
-                                                model: EditorState.sceneGraphTimeline
-                                                       ? null : EditorState.clipsModel(laneStrip.trackIndex)
-                                                delegate: TimelineClipItem {
-                                                    panel: root
-                                                    timelineColumn: trackColumn
-                                                    trackIndex: laneStrip.trackIndex
-                                                    touchMode: true
-                                                }
-                                            }
                                         }
                                     }
                                 }
@@ -1718,30 +1705,16 @@ Item {
                                     width: trackRow.width
                                     height: Math.max(0, trackRow.height - adjustmentLaneStrips.height)
 
-                                    Loader {
+                                    TimelineTrackArea {
+                                        id: trackClipsRenderer
                                         anchors.fill: parent
-                                        active: EditorState.sceneGraphTimeline
-                                        sourceComponent: Component {
-                                            TimelineTrackArea {
-                                                panel: root
-                                                timelineColumn: trackColumn
-                                                trackIndex: trackClipArea.trackIndex
-                                                viewState: timelineViewState
-                                                touchMode: true
-                                            }
-                                        }
+                                        panel: root
+                                        timelineColumn: trackColumn
+                                        trackIndex: trackClipArea.trackIndex
+                                        viewState: timelineViewState
+                                        touchMode: true
                                     }
 
-                                    Repeater {
-                                        model: EditorState.sceneGraphTimeline
-                                               ? null : EditorState.clipsModel(trackClipArea.trackIndex)
-                                        delegate: TimelineClipItem {
-                                            panel: root
-                                            timelineColumn: trackColumn
-                                            trackIndex: trackClipArea.trackIndex
-                                            touchMode: true
-                                        }
-                                    }
 
                                     // Live voiceover recording indicator and waveform on this track
                                     Rectangle {

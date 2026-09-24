@@ -698,8 +698,6 @@ AppController::AppController(AssetLibrary *assetLibrary, QObject *parent)
         m_assetLibrary->setProject(&m_project);
     m_binFolderModel.setProject(&m_project);
 
-    m_timelineModel.setProject(&m_project);
-    m_clipListModel.setProject(&m_project);
 
     // selectedClipData reflects the current clip's live values, so it must
     // refresh on both selection changes and any edit to the timeline (e.g. a
@@ -763,8 +761,6 @@ AppController::AppController(AssetLibrary *assetLibrary, QObject *parent)
         QSettings().value(QStringLiteral("mcp/startOnLaunch"), false).toBool();
     connect(&m_undoStack, &QUndoStack::indexChanged, this, &AppController::undoStackChanged);
     connect(&m_undoStack, &QUndoStack::indexChanged, this, [this] {
-        m_timelineModel.refresh();
-        m_clipListModel.refresh();
         // Undo/redo swaps the whole project, including the asset table the
         // media bin reads through; without this an undone removal leaves the
         // model with a stale row count.
@@ -949,10 +945,6 @@ AppController::AppController(AssetLibrary *assetLibrary, QObject *parent)
             &AppController::invalidateExtraSnapTargets);
 
     connect(this, &AppController::tracksChanged, this, [this] {
-        // Deliberately no m_timelineModel/m_clipListModel refresh here. Both are
-        // beginResetModel()/endResetModel() and no QML view binds either of them, so on every
-        // edit they were tearing down and rebuilding views nobody was watching. The refresh in
-        // the QUndoStack::indexChanged handler stays, so they remain correct if ever wired up.
         if (m_multicamActive && !m_multicamSnaps.isEmpty()) {
             bool intact = true;
             for (const MulticamAngleSnap &snap : m_multicamSnaps) {
@@ -975,10 +967,6 @@ AppController::AppController(AssetLibrary *assetLibrary, QObject *parent)
         m_playback.notifyProjectEdited();
         emit selectedTransitionDataChanged();
     });
-    connect(this, &AppController::selectionChanged, this, [this] {
-        m_clipListModel.setTrackIndex(m_selectedTrack >= 0 ? m_selectedTrack : 0);
-    });
-
     // Multicam is a view of the timeline, so it follows the same signals the main window does.
     // Which angle is live and what each one is showing both depend on the playhead, so the
     // window's bindings have to be re-evaluated even when no tile has landed yet.
@@ -9410,17 +9398,6 @@ QVariantList AppController::multicamAngles() const
     return out;
 }
 
-bool AppController::sceneGraphTimeline() const
-{
-    static const bool enabled = [] {
-        QString choice = qEnvironmentVariable("DRIFT_TIMELINE_RENDERER");
-        if (choice.isEmpty())
-            choice = QSettings().value(QStringLiteral("timeline/renderer")).toString();
-        return choice.compare(QStringLiteral("legacy"), Qt::CaseInsensitive) != 0;
-    }();
-    return enabled;
-}
-
 quint64 AppController::multicamPlayheadSignature() const
 {
     quint64 signature = static_cast<quint32>(multicamActiveAngle() + 1);
@@ -16120,8 +16097,6 @@ void AppController::openSequence(const QString &sequenceId)
     m_project.activateSequence(sequenceId);
     // Every index-keyed cache (the MCP clip index among them) describes the timeline just left.
     ++m_mcpEditRevision;
-    m_timelineModel.refresh();
-    m_clipListModel.refresh();
     notifyTracksChanged();
     setPlayheadUs(m_sequencePlayheads.value(sequenceId, 0));
     emit sequenceTabsChanged();

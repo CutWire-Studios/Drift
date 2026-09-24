@@ -1666,6 +1666,8 @@ PanelFrame {
                             model: root.tracks.length
                             delegate: Rectangle {
                                 id: trackRow
+                                // Above the rows below it while one of its clips is dragged, so the clip draws over them.
+                                z: trackClipsRenderer.dragging ? 20 : 0
                                 property int trackIndex: index
                                 // Drawn inside its parent's row instead of getting one here.
                                 // Column skips invisible children entirely, so this costs no
@@ -1936,32 +1938,14 @@ PanelFrame {
                                                 }
                                             }
 
-                                            Loader {
+                                            TimelineTrackArea {
                                                 anchors.fill: parent
-                                                active: EditorState.sceneGraphTimeline
-                                                sourceComponent: Component {
-                                                    TimelineTrackArea {
-                                                        panel: root
-                                                        timelineColumn: trackColumn
-                                                        trackIndex: laneStrip.trackIndex
-                                                        viewState: timelineViewState
-                                                    }
-                                                }
+                                                panel: root
+                                                timelineColumn: trackColumn
+                                                trackIndex: laneStrip.trackIndex
+                                                viewState: timelineViewState
                                             }
 
-                                            Repeater {
-                                                // The lane's role model, not a count over
-                                                // root.tracks: it notifies per clip and per
-                                                // field, so an edit to one clip no longer re-runs
-                                                // every other delegate's bindings.
-                                                model: EditorState.sceneGraphTimeline
-                                                       ? null : EditorState.clipsModel(laneStrip.trackIndex)
-                                                delegate: TimelineClipItem {
-                                                    panel: root
-                                                    timelineColumn: trackColumn
-                                                    trackIndex: laneStrip.trackIndex
-                                                }
-                                            }
                                         }
                                     }
                                 }
@@ -1983,31 +1967,15 @@ PanelFrame {
                                     width: trackRow.width
                                     height: Math.max(0, trackRow.height - adjustmentLaneStrips.height)
 
-                                    Loader {
-                                        id: sceneGraphClips
+                                    TimelineTrackArea {
+                                        id: trackClipsRenderer
                                         anchors.fill: parent
-                                        active: EditorState.sceneGraphTimeline
-                                        sourceComponent: Component {
-                                            TimelineTrackArea {
-                                                panel: root
-                                                timelineColumn: trackColumn
-                                                trackIndex: trackClipArea.trackIndex
-                                                viewState: timelineViewState
-                                            }
-                                        }
+                                        panel: root
+                                        timelineColumn: trackColumn
+                                        trackIndex: trackClipArea.trackIndex
+                                        viewState: timelineViewState
                                     }
 
-                                    Repeater {
-                                        model: EditorState.sceneGraphTimeline
-                                               ? null : EditorState.clipsModel(trackClipArea.trackIndex)
-                                        delegate: TimelineClipItem {
-                                            // panel: root is safe — TimelineClipItem's id is clipItem,
-                                            // so it does not shadow TimelinePanel's root.
-                                            panel: root
-                                            timelineColumn: trackColumn
-                                            trackIndex: trackClipArea.trackIndex
-                                        }
-                                    }
 
                                     // Live voiceover recording indicator and waveform on this track
                                     Rectangle {

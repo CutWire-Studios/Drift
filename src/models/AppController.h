@@ -13,9 +13,7 @@
 #include "engine/ProjectBundle.h"
 #include "engine/RvmMatter.h"
 #include "engine/Sam2Segmenter.h"
-#include "ClipListModel.h"
 #include "TimelineClipsModel.h"
-#include "TimelineModel.h"
 #include "models/AssetLibrary.h"
 #include "models/BinFolderListModel.h"
 #include "models/CloudProviders.h"
@@ -82,8 +80,6 @@ class AppController : public QObject
     // True while importFolder's off-thread directory walk is running, so the bin can raise its
     // progress overlay over a slow tree (a big hierarchy, or a Flatpak document-portal mount).
     Q_PROPERTY(bool importingFolder READ importingFolder NOTIFY importingFolderChanged)
-    Q_PROPERTY(TimelineModel *timelineModel READ timelineModel CONSTANT)
-    Q_PROPERTY(ClipListModel *clipListModel READ clipListModel CONSTANT)
     Q_PROPERTY(PlaybackEngine *playback READ playback CONSTANT)
     // Output devices to choose between, each {id, label}; the first entry has an empty id and
     // means "whatever the system default is at the time", which is also the default choice.
@@ -121,10 +117,6 @@ class AppController : public QObject
     // otherwise. Inspectors bind this: a value readout does not need frame rate, and ~45 rows
     // re-evaluating per frame is a large share of the GUI thread during playback.
     Q_PROPERTY(double inspectorPlayheadSeconds READ playheadSeconds NOTIFY inspectorPlayheadChanged)
-    // Which timeline clip renderer the panels build: the scene-graph one (TimelineTrackClips) or
-    // the per-clip QML delegates. Read once at startup, from DRIFT_TIMELINE_RENDERER or the
-    // timeline/renderer setting. Scene graph unless either says "legacy".
-    Q_PROPERTY(bool sceneGraphTimeline READ sceneGraphTimeline CONSTANT)
     Q_PROPERTY(double durationSeconds READ durationSeconds NOTIFY tracksChanged)
     Q_PROPERTY(bool playing READ playing WRITE setPlaying NOTIFY playingChanged)
     Q_PROPERTY(bool previewDragActive READ previewDragActive NOTIFY previewDragActiveChanged)
@@ -442,8 +434,6 @@ public:
     BinFolderListModel *binFolderModel() { return &m_binFolderModel; }
     QString currentBinFolderId() const { return m_currentBinFolderId; }
     void setCurrentBinFolderId(const QString &folderId);
-    TimelineModel *timelineModel() { return &m_timelineModel; }
-    ClipListModel *clipListModel() { return &m_clipListModel; }
     PlaybackEngine *playback() { return &m_playback; }
     QVariantList audioOutputDevices() const;
     QString audioOutputDeviceId() const { return m_audioOutputDeviceId; }
@@ -1019,7 +1009,6 @@ public:
     QVariantList multicamAngles() const;
     int multicamActiveAngle() const;
     quint64 multicamPlayheadSignature() const;
-    bool sceneGraphTimeline() const;
     int multicamRevision() const { return m_multicamRevision; }
     QVariantList multicamProgramClips() const;
     bool multicamCanSetUp() const;
@@ -2515,8 +2504,6 @@ protected:
     BinFolderListModel m_binFolderModel;
     QString m_currentBinFolderId;
     bool m_importingFolder = false;
-    TimelineModel m_timelineModel;
-    ClipListModel m_clipListModel;
     // These trees must outlive m_playback: the compositor thread holds a bare
     // pointer into whichever one is live and may still be mid-composite at
     // teardown. During a multicam session that is m_multicamStaged, otherwise

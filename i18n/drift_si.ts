@@ -1356,7 +1356,7 @@
     </message>
     <message>
         <source>Proxy</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">ප්‍රොක්සි</translation>
     </message>
     <message>
         <source>Previewing from a low-resolution proxy. Export uses the original.</source>
@@ -1368,7 +1368,7 @@
     </message>
     <message>
         <source>Converted to a constant frame rate for smooth editing</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">සුමට සංස්කරණයක් සඳහා නියත රාමු අනුපාතයකට පරිවර්තනය කරන ලදී</translation>
     </message>
     <message>
         <source>Variable frame rate. This clip can drift out of sync with its audio. Right-click it and choose Convert to edit-friendly format.</source>
@@ -11916,48 +11916,8 @@ If playback stutters, try another.</source>
 <context>
     <name>TimelineClipItem</name>
     <message>
-        <source>Effect</source>
-        <translation>ප්‍රයෝගය</translation>
-    </message>
-    <message>
-        <source>%1 (off)</source>
-        <translation>%1 (අක්‍රියයි)</translation>
-    </message>
-    <message>
-        <source>Audio adjustment</source>
-        <translation>ශ්‍රව්‍ය සීරුමාරුව (Audio adjustment)</translation>
-    </message>
-    <message>
-        <source>Mask</source>
-        <translation>ආවරණය (Mask)</translation>
-    </message>
-    <message>
-        <source>Adjustment</source>
-        <translation>ගැලපුම (Adjustment)</translation>
-    </message>
-    <message>
         <source>%1, track %2</source>
         <translation>%1, ට්‍රැකය %2</translation>
-    </message>
-    <message>
-        <source>Proxy</source>
-        <translation>ප්‍රොක්සි (Proxy)</translation>
-    </message>
-    <message>
-        <source>Previewing from a low-resolution proxy. Export uses the original.</source>
-        <translation>අඩු විභේදනයක් සහිත ප්‍රොක්සියක් මඟින් පෙරදසුන් කෙරේ. නිර්යාතයේදී මුල් පිටපත භාවිත කරයි.</translation>
-    </message>
-    <message>
-        <source>Edit-friendly</source>
-        <translation>සංස්කරණයට පහසු</translation>
-    </message>
-    <message>
-        <source>Converted to a constant frame rate for smooth editing</source>
-        <translation>සුමට සංස්කරණය සඳහා නියත රාමු අනුපාතයකට පරිවර්තනය කරන ලදී</translation>
-    </message>
-    <message>
-        <source>Subtitles</source>
-        <translation>උපසිරැසි</translation>
     </message>
     <message>
         <source>Properties</source>
@@ -12092,7 +12052,7 @@ If playback stutters, try another.</source>
     <name>TimelinePanel</name>
     <message>
         <source>Proxy</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">ප්‍රොක්සි</translation>
     </message>
     <message>
         <source>Previewing from a low-resolution proxy. Export uses the original.</source>
@@ -12104,7 +12064,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Converted to a constant frame rate for smooth editing</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">සුමට සංස්කරණයක් සඳහා නියත රාමු අනුපාතයකට පරිවර්තනය කරන ලදී</translation>
     </message>
     <message>
         <source>Variable frame rate. This clip can drift out of sync with its audio. Right-click it and choose Convert to edit-friendly format.</source>
@@ -12437,7 +12397,7 @@ If playback stutters, try another.</source>
     <name>TimelineTrackItem</name>
     <message>
         <source>Audio adjustment</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">ශ්‍රව්‍ය ගැලපුම්</translation>
     </message>
     <message>
         <source>Mask</source>

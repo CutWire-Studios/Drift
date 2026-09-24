@@ -829,12 +829,8 @@ qt_add_executable(drift
     src/models/AssetLibrary.cpp
     src/models/BinFolderListModel.h
     src/models/BinFolderListModel.cpp
-    src/models/TimelineModel.h
-    src/models/TimelineModel.cpp
     src/models/TimelineClipsModel.h
     src/models/TimelineClipsModel.cpp
-    src/models/ClipListModel.h
-    src/models/ClipListModel.cpp
     src/playback/PlaybackEngine.h
     src/playback/PlaybackEngine.cpp
     src/playback/PlaybackClock.h
