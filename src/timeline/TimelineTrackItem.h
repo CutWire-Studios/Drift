@@ -114,6 +114,9 @@ public:
     // What the panel's drop rules need about a clip: id, start, duration, kind.
     Q_INVOKABLE QVariantMap clipInfo(int index) const;
 
+    // Exposes the drawn clips to assistive technology as children of the track item.
+    static void installAccessibility();
+
 signals:
     void viewStateChanged();
     void clipsModelChanged();
@@ -168,6 +171,9 @@ public:
     };
 
 private:
+    friend class TimelineTrackAccessible;
+    friend class TimelineClipAccessible;
+
     struct ClipVisual
     {
         int index = -1;

@@ -12416,6 +12416,10 @@ En cas de saccades à la lecture, essayez un autre mode.</translation>
         <source>Subtitles</source>
         <translation type="unfinished">Sous-titres</translation>
     </message>
+    <message>
+        <source>%1, track %2</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>ToastHost</name>

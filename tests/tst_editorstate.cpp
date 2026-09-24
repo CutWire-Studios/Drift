@@ -1,5 +1,6 @@
 #include <QtTest>
 
+#include <QAccessible>
 #include <QDir>
 #include <QFile>
 #include <QFileInfo>
@@ -253,6 +254,7 @@ private slots:
     void clipsModelDerivesGapsAndOverlaps();
     void timelineLayoutCullsTilesAndHits();
     void trackItemOverlaysFollowSelection();
+    void trackItemExposesDrawnClipsToAccessibility();
     void tracksCarriesLayoutOnlyWhileClipAtStaysFull();
     void trackFitAnswersForAKindMatchTheAssetForms();
     void provisionalKindReadsTheExtensionAlone();
@@ -8329,6 +8331,50 @@ void EditorStateTest::trackItemOverlaysFollowSelection()
     const QString activeId = active->index(0, 0).data(TimelineClipsModel::IdRole).toString();
     const int sourceIndex = active->index(0, 0).data(ActiveClipsModel::SourceIndexRole).toInt();
     QCOMPARE(state.project()->tracks().at(0).clips.at(sourceIndex).id, activeId);
+}
+
+// The clips are drawn, not items, so a screen reader only finds them through the track item's
+// accessible interface: one button per drawn clip, named and selectable like the old delegates.
+void EditorStateTest::trackItemExposesDrawnClipsToAccessibility()
+{
+    struct PolishableTrackItem : TimelineTrackItem
+    {
+        using TimelineTrackItem::updatePolish;
+    };
+
+    TimelineTrackItem::installAccessibility();
+    AssetLibrary library;
+    TestController state(&library);
+    appendTwoVideoClips(*state.project());
+    state.notifyTracksChanged();
+
+    TimelineViewState view;
+    view.setPxPerSecond(100.0);
+    view.setViewX(0.0);
+    view.setViewW(1000.0);
+    PolishableTrackItem item;
+    item.setSize(QSizeF(1000.0, 40.0));
+    item.setViewState(&view);
+    item.setEditor(&state);
+    item.setClipsModel(state.clipsModel(0));
+    item.setTrackIndex(0);
+    item.updatePolish();
+
+    QAccessibleInterface *track = QAccessible::queryAccessibleInterface(&item);
+    QVERIFY(track);
+    QCOMPARE(track->childCount(), 2);
+    QAccessibleInterface *second = track->child(1);
+    QVERIFY(second);
+    QCOMPARE(second->role(), QAccessible::Button);
+    QCOMPARE(second->text(QAccessible::Name), QStringLiteral("Shot 1, track 1"));
+    QCOMPARE(track->indexOfChild(second), 1);
+    QVERIFY(!second->state().selected);
+
+    QAccessibleActionInterface *action = second->actionInterface();
+    QVERIFY(action);
+    action->doAction(QAccessibleActionInterface::pressAction());
+    QVERIFY(state.selectionContains(0, 1));
+    QVERIFY(second->state().selected);
 }
 
 // tracks() is the panel's layout data and nothing more. Everything an inspector opens has to

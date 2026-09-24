@@ -12411,6 +12411,10 @@ Si la reproducción se corta, prueba con otra opción.</translation>
         <source>Subtitles</source>
         <translation type="unfinished">Subtítulos</translation>
     </message>
+    <message>
+        <source>%1, track %2</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>ToastHost</name>

@@ -7,6 +7,8 @@
 #include "models/TimelineClipsModel.h"
 #include "playback/PlaybackEngine.h"
 
+#include <QAccessible>
+#include <QAccessibleObject>
 #include <QFont>
 #include <QFontMetricsF>
 #include <QCursor>
@@ -681,7 +683,22 @@ void TimelineTrackItem::updateActiveSet()
 
 void TimelineTrackItem::updatePolish()
 {
+    const bool accessible = QAccessible::isActive();
+    QStringList shownIds;
+    if (accessible) {
+        for (const ClipVisual &visual : std::as_const(m_visible))
+            shownIds.append(visual.id);
+    }
     build();
+    if (accessible) {
+        QStringList ids;
+        for (const ClipVisual &visual : std::as_const(m_visible))
+            ids.append(visual.id);
+        if (ids != shownIds) {
+            QAccessibleEvent event(this, QAccessible::ObjectReorder);
+            QAccessible::updateAccessibility(&event);
+        }
+    }
     update();
 }
 
@@ -1561,4 +1578,194 @@ void TimelineTrackItem::keyPressEvent(QKeyEvent *event)
         return;
     }
     event->ignore();
+}
+
+// --- accessibility -------------------------------------------------------------------------------
+
+// One drawn clip. It has no QObject of its own, so it is addressed by clip id and reads the index
+// fresh from the model, the same way the gestures do.
+class TimelineClipAccessible : public QAccessibleInterface, public QAccessibleActionInterface
+{
+public:
+    TimelineClipAccessible(TimelineTrackItem *item, const QString &clipId)
+        : m_item(item)
+        , m_clipId(clipId)
+    {
+    }
+
+    const QString &clipId() const { return m_clipId; }
+
+    bool isValid() const override { return rowIndex() >= 0; }
+    QObject *object() const override { return nullptr; }
+    QWindow *window() const override { return m_item ? m_item->window() : nullptr; }
+    QAccessibleInterface *parent() const override
+    {
+        return m_item ? QAccessible::queryAccessibleInterface(m_item.data()) : nullptr;
+    }
+    QAccessibleInterface *child(int) const override { return nullptr; }
+    int childCount() const override { return 0; }
+    int indexOfChild(const QAccessibleInterface *) const override { return -1; }
+    QAccessibleInterface *childAt(int, int) const override { return nullptr; }
+
+    QString text(QAccessible::Text t) const override
+    {
+        const int index = rowIndex();
+        if (t != QAccessible::Name || index < 0)
+            return {};
+        return TimelineTrackItem::tr("%1, track %2")
+            .arg(m_item->m_clips->rows().at(index).name)
+            .arg(m_item->m_trackIndex + 1);
+    }
+    void setText(QAccessible::Text, const QString &) override {}
+
+    QRect rect() const override
+    {
+        if (!m_item)
+            return {};
+        for (const TimelineTrackItem::ClipVisual &visual : std::as_const(m_item->m_visible)) {
+            if (visual.id == m_clipId)
+                return QRectF(m_item->mapToGlobal(visual.rect.topLeft()), visual.rect.size())
+                    .toAlignedRect();
+        }
+        return {};
+    }
+    QAccessible::Role role() const override { return QAccessible::Button; }
+    QAccessible::State state() const override
+    {
+        QAccessible::State s;
+        s.selectable = true;
+        const int index = rowIndex();
+        s.selected = index >= 0 && m_item->isSelected(index);
+        return s;
+    }
+
+    void *interface_cast(QAccessible::InterfaceType type) override
+    {
+        return type == QAccessible::ActionInterface ? static_cast<QAccessibleActionInterface *>(this)
+                                                     : nullptr;
+    }
+
+    QStringList actionNames() const override { return {pressAction()}; }
+    void doAction(const QString &actionName) override
+    {
+        const int index = rowIndex();
+        if (actionName == pressAction() && index >= 0 && m_item->m_editor)
+            m_item->m_editor->selectClip(m_item->m_trackIndex, index);
+    }
+    QStringList keyBindingsForAction(const QString &) const override { return {}; }
+
+private:
+    int rowIndex() const
+    {
+        if (!m_item || !m_item->m_clips)
+            return -1;
+        const QList<TimelineClipsModel::Row> &rows = m_item->m_clips->rows();
+        for (int i = 0; i < rows.size(); ++i) {
+            if (rows.at(i).id == m_clipId)
+                return i;
+        }
+        return -1;
+    }
+
+    QPointer<TimelineTrackItem> m_item;
+    QString m_clipId;
+};
+
+// The track item, with the clips it currently draws as children. The Qt Quick factory would only
+// see an item with no child items.
+class TimelineTrackAccessible : public QAccessibleObject
+{
+public:
+    explicit TimelineTrackAccessible(TimelineTrackItem *item)
+        : QAccessibleObject(item)
+    {
+    }
+
+    ~TimelineTrackAccessible() override
+    {
+        for (QAccessible::Id id : std::as_const(m_children))
+            QAccessible::deleteAccessibleInterface(id);
+    }
+
+    QWindow *window() const override { return item()->window(); }
+
+    QAccessibleInterface *parent() const override
+    {
+        // The nearest ancestor Qt Quick exposes; the factory answers null for the rest.
+        for (QQuickItem *p = item()->parentItem(); p; p = p->parentItem()) {
+            if (QAccessibleInterface *iface = QAccessible::queryAccessibleInterface(p))
+                return iface;
+        }
+        return item()->window() ? QAccessible::queryAccessibleInterface(item()->window()) : nullptr;
+    }
+
+    int childCount() const override { return int(item()->m_visible.size()); }
+
+    QAccessibleInterface *child(int index) const override
+    {
+        if (index < 0 || index >= item()->m_visible.size())
+            return nullptr;
+        const QString &clipId = item()->m_visible.at(index).id;
+        QAccessible::Id id = m_children.value(clipId);
+        if (!id) {
+            id = QAccessible::registerAccessibleInterface(
+                new TimelineClipAccessible(item(), clipId));
+            m_children.insert(clipId, id);
+        }
+        return QAccessible::accessibleInterface(id);
+    }
+
+    int indexOfChild(const QAccessibleInterface *child) const override
+    {
+        const auto *clip = dynamic_cast<const TimelineClipAccessible *>(child);
+        if (!clip)
+            return -1;
+        const QList<TimelineTrackItem::ClipVisual> &visible = item()->m_visible;
+        for (int i = 0; i < visible.size(); ++i) {
+            if (visible.at(i).id == clip->clipId())
+                return i;
+        }
+        return -1;
+    }
+
+    QAccessibleInterface *childAt(int x, int y) const override
+    {
+        for (int i = childCount() - 1; i >= 0; --i) {
+            QAccessibleInterface *iface = child(i);
+            if (iface && iface->rect().contains(x, y))
+                return iface;
+        }
+        return nullptr;
+    }
+
+    QRect rect() const override
+    {
+        const QRectF local = item()->boundingRect();
+        return QRectF(item()->mapToGlobal(local.topLeft()), local.size()).toAlignedRect();
+    }
+
+    QString text(QAccessible::Text) const override { return {}; }
+    QAccessible::Role role() const override { return QAccessible::Grouping; }
+
+    QAccessible::State state() const override
+    {
+        QAccessible::State s;
+        s.invisible = !item()->isVisible();
+        return s;
+    }
+
+private:
+    TimelineTrackItem *item() const { return static_cast<TimelineTrackItem *>(object()); }
+
+    mutable QHash<QString, QAccessible::Id> m_children;
+};
+
+void TimelineTrackItem::installAccessibility()
+{
+    QAccessible::installFactory([](const QString &className, QObject *object)
+                                    -> QAccessibleInterface * {
+        if (className == QLatin1String("TimelineTrackItem"))
+            return new TimelineTrackAccessible(static_cast<TimelineTrackItem *>(object));
+        return nullptr;
+    });
 }

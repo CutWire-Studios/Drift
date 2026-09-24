@@ -36,6 +36,9 @@ Item {
         editor: EditorState
         assets: AssetLibrary
         haptics: Haptics
+        // Only marks the item accessible so Qt Quick lists it; the clips it draws are exposed as
+        // its children from C++ (TimelineTrackItem::installAccessibility).
+        Accessible.role: Accessible.Grouping
 
         onMoveStarted: (clipIndex) => {
             area.lastPreviewDesired = -1

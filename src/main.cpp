@@ -540,6 +540,7 @@ int main(int argc, char *argv[])
     qmlRegisterType<PreviewItem>("Drift", 1, 0, "PreviewItem");
     qmlRegisterType<TimelineViewState>("Drift", 1, 0, "TimelineViewState");
     qmlRegisterType<TimelineTrackItem>("Drift", 1, 0, "TimelineTrackClips");
+    TimelineTrackItem::installAccessibility();
 
     static AssetLibrary assetLibrary;
     static EditorState editorState(&assetLibrary);

@@ -12368,6 +12368,10 @@ If playback stutters, try another.</source>
         <source>Subtitles</source>
         <translation type="unfinished">字幕</translation>
     </message>
+    <message>
+        <source>%1, track %2</source>
+        <translation type="unfinished">%1, トラック %2</translation>
+    </message>
 </context>
 <context>
     <name>ToastHost</name>
