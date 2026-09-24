@@ -86,10 +86,12 @@ constexpr int kGpuProbeMaxAttempts = 20;
 // How much decoded source each clip's reader keeps buffered ahead of the
 // playhead during fast playback. This absorbs frames that decode slower than
 // realtime (long GOPs, a heavy transition) by spending the slack on either side
-// of them. The real bound is the process-wide byte budget in ClipReader, sized from
-// physical memory; this only says how far ahead is worth reaching when memory allows.
-// Every edit or seek discards the part of the buffer past the change.
-constexpr drift::TimeUs kReadAheadUs = 5 * drift::kUsPerSecond;
+// of them. The byte budget in ClipReader, sized from physical memory, bounds it too — that is
+// what gives 4K room to read ahead at all. Not longer than this: 5 s was measured slower after a
+// seek (two 1080p30 software streams dropped from ~15 to ~12 fps), because the prefetch then
+// competes with the frames playback actually needs. Every edit or seek discards the part of the
+// buffer past the change.
+constexpr drift::TimeUs kReadAheadUs = 2 * drift::kUsPerSecond;
 
 // The rates the preview transport offers. All sit inside the stretcher's own clamp
 // (kMinCurveSpeed..kMaxCurveSpeed), and nothing outside this list is accepted.

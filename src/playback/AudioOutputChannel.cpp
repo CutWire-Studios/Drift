@@ -213,10 +213,17 @@ void AudioOutputChannel::start()
 
     // Never block the GUI on sink I/O: start() may pull the first buffer, which opens and seeks
     // media, and that must stay on the audio thread.
+    //
+    // Pausing playback leaves the sink running on silence (stop() is for teardown), so a play
+    // after a pause finds it already started; starting it again only earns a Qt warning.
     QMetaObject::invokeMethod(
         m_pull,
         [this] {
-            if (m_sink)
+            if (!m_sink)
+                return;
+            if (m_sink->state() == QAudio::SuspendedState)
+                m_sink->resume();
+            else if (m_sink->state() == QAudio::StoppedState)
                 m_sink->start(m_pull);
         },
         Qt::QueuedConnection);
