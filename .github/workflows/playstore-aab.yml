@@ -153,7 +153,7 @@ jobs:
           done
           rm -rf "$HOME/.cache/aqt"
 
-      # FFmpeg, x264, zstd, OpenSSL and SoundTouch cross-built for Android: ~45 min per ABI,
+      # FFmpeg, x264, dav1d, vid.stab, zstd, OpenSSL and SoundTouch cross-built for Android: ~45 min per ABI,
       # and they only change when the script that pins their tags does.
       #
       # Prefer a combined cache from a previous AAB run. On a miss, reuse package.yml's

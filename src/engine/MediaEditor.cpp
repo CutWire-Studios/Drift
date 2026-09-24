@@ -197,6 +197,17 @@ bool x264Supports(AVPixelFormat format)
     return false;
 }
 
+QStringList rotationChain(int rotation)
+{
+    if (rotation == 90)
+        return {QStringLiteral("transpose=clock")};
+    if (rotation == 180)
+        return {QStringLiteral("hflip,vflip")};
+    if (rotation == 270)
+        return {QStringLiteral("transpose=cclock")};
+    return {};
+}
+
 // buffer (source frames, microsecond timestamps) -> `chain` -> buffersink.
 bool buildFilterGraph(const AVCodecContext *dec, const AVStream *stream, const QString &chain,
                       AVFilterGraph **graphOut, AVFilterContext **srcOut, AVFilterContext **sinkOut)
@@ -912,13 +923,9 @@ bool editVideo(const MediaEditSpec &spec, QString *errorOut,
     AVFilterContext *filterSrc = nullptr;
     AVFilterContext *filterSink = nullptr;
     {
-        QStringList chain;
-        if (rotation == 90)
-            chain << QStringLiteral("transpose=clock");
-        else if (rotation == 180)
-            chain << QStringLiteral("hflip,vflip");
-        else if (rotation == 270)
-            chain << QStringLiteral("transpose=cclock");
+        QStringList chain = rotationChain(rotation);
+        if (!spec.videoFilter.isEmpty())
+            chain << spec.videoFilter;
         if (crop != QRect(0, 0, displayW, displayH))
             chain << QStringLiteral("crop=%1:%2:%3:%4:exact=1")
                          .arg(crop.width())
@@ -1156,6 +1163,144 @@ bool editVideo(const MediaEditSpec &spec, QString *errorOut,
 }
 
 } // namespace
+
+bool analyzeVideo(const QString &inputPath, const QString &filter, QString *errorOut,
+                  const std::function<bool(double)> &onProgress)
+{
+    auto fail = [&](const QString &message) {
+        if (errorOut)
+            *errorOut = message;
+        return false;
+    };
+
+    AVFormatContext *fmt = nullptr;
+    const QByteArray pathUtf8 = inputPath.toUtf8();
+    if (avformat_open_input(&fmt, pathUtf8.constData(), nullptr, nullptr) < 0)
+        return fail(trEdit("Could not open the video"));
+    if (avformat_find_stream_info(fmt, nullptr) < 0) {
+        avformat_close_input(&fmt);
+        return fail(trEdit("Could not read the video"));
+    }
+
+    const int videoIndex = av_find_best_stream(fmt, AVMEDIA_TYPE_VIDEO, -1, -1, nullptr, 0);
+    if (videoIndex < 0) {
+        avformat_close_input(&fmt);
+        return fail(trEdit("That file has no video"));
+    }
+
+    AVStream *vStream = fmt->streams[videoIndex];
+    const AVCodec *vDecCodec = avcodec_find_decoder(vStream->codecpar->codec_id);
+    AVCodecContext *vDec = vDecCodec ? avcodec_alloc_context3(vDecCodec) : nullptr;
+    if (vDec)
+        vDec->thread_count = 0;
+    if (!vDec || avcodec_parameters_to_context(vDec, vStream->codecpar) < 0
+        || avcodec_open2(vDec, vDecCodec, nullptr) < 0) {
+        if (vDec)
+            avcodec_free_context(&vDec);
+        avformat_close_input(&fmt);
+        return fail(trEdit("Could not decode the video"));
+    }
+
+    QStringList chain = rotationChain(displayRotationOf(vStream));
+    chain << filter;
+    AVFilterGraph *graph = nullptr;
+    AVFilterContext *filterSrc = nullptr;
+    AVFilterContext *filterSink = nullptr;
+    if (!buildFilterGraph(vDec, vStream, chain.join(QLatin1Char(',')), &graph, &filterSrc,
+                          &filterSink)) {
+        avcodec_free_context(&vDec);
+        avformat_close_input(&fmt);
+        return fail(trEdit("Could not set up the video analysis"));
+    }
+
+    const TimeUs durationUs = fmt->duration > 0 ? fmt->duration
+                                                : av_rescale_q(vStream->duration, vStream->time_base,
+                                                               {1, AV_TIME_BASE});
+    AVPacket *packet = av_packet_alloc();
+    AVFrame *frame = av_frame_alloc();
+    AVFrame *filtered = av_frame_alloc();
+    bool ok = packet && frame && filtered;
+    int framesAnalyzed = 0;
+
+    auto drainFilter = [&]() -> bool {
+        for (;;) {
+            const int rc = av_buffersink_get_frame(filterSink, filtered);
+            if (rc == AVERROR(EAGAIN) || rc == AVERROR_EOF)
+                return true;
+            if (rc < 0)
+                return fail(trEdit("Could not analyze a frame"));
+            av_frame_unref(filtered);
+        }
+    };
+
+    // Same timestamp handling and pre-roll skip as editVideo's handleVideo with no trim, so
+    // both passes feed the filter the same frames.
+    auto handleVideo = [&](AVFrame *decoded) -> bool {
+        const TimeUs ptsUs = framePtsUs(decoded, vStream->time_base);
+        if (ptsUs + 1000 < 0)
+            return true;
+        decoded->pts = ptsUs;
+        decoded->duration = av_rescale_q(decoded->duration, vStream->time_base, {1, AV_TIME_BASE});
+        if (av_buffersrc_add_frame_flags(filterSrc, decoded, AV_BUFFERSRC_FLAG_KEEP_REF) < 0)
+            return fail(trEdit("Could not analyze a frame"));
+        ++framesAnalyzed;
+        if (!drainFilter())
+            return false;
+        if (durationUs > 0 && cancelled(onProgress, double(ptsUs) / double(durationUs)))
+            return fail(trEdit("Cancelled"));
+        return true;
+    };
+
+    auto receiveAll = [&]() -> bool {
+        for (;;) {
+            const int rc = avcodec_receive_frame(vDec, frame);
+            if (rc == AVERROR(EAGAIN) || rc == AVERROR_EOF)
+                return true;
+            if (rc < 0)
+                return fail(trEdit("Could not decode the video"));
+            const bool handled = handleVideo(frame);
+            av_frame_unref(frame);
+            if (!handled)
+                return false;
+        }
+    };
+
+    while (ok && av_read_frame(fmt, packet) >= 0) {
+        if (packet->stream_index != videoIndex) {
+            av_packet_unref(packet);
+            continue;
+        }
+        const int send = avcodec_send_packet(vDec, packet);
+        av_packet_unref(packet);
+        if (send < 0 && send != AVERROR(EAGAIN))
+            continue;
+        ok = receiveAll();
+    }
+    if (ok) {
+        avcodec_send_packet(vDec, nullptr);
+        ok = receiveAll();
+    }
+    if (ok)
+        ok = av_buffersrc_add_frame_flags(filterSrc, nullptr, 0) >= 0 && drainFilter();
+    if (ok && framesAnalyzed == 0)
+        ok = fail(trEdit("No frames could be decoded from this clip"));
+
+    av_frame_free(&filtered);
+    av_frame_free(&frame);
+    av_packet_free(&packet);
+    // vidstabdetect writes its result file as the graph is torn down.
+    avfilter_graph_free(&graph);
+    avcodec_free_context(&vDec);
+    avformat_close_input(&fmt);
+    if (ok && onProgress)
+        onProgress(1.0);
+    return ok;
+}
+
+bool hasVideoFilter(const char *name)
+{
+    return avfilter_get_by_name(name) != nullptr;
+}
 
 QString newEditedMediaPath(const QString &projectId, const QString &kind)
 {

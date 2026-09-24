@@ -28,6 +28,8 @@ struct MediaEditSpec
     // duplicating or dropping source frames as their timestamps call for, so a variable-rate
     // source keeps its sync with the audio.
     bool conformFrameRate = false;
+    // Video: an extra libavfilter chain run on the upright frames, before the crop.
+    QString videoFilter;
 };
 
 // Rewrites `inputPath` into `outputPath` with the requested trim and crop. Images become PNG,
@@ -38,6 +40,16 @@ struct MediaEditSpec
 // finished file behind — a `.part` is removed.
 bool editMedia(const MediaEditSpec &spec, QString *errorOut,
                const std::function<bool(double)> &onProgress);
+
+// Decodes every video frame of `inputPath`, upright, through the libavfilter chain `filter` and
+// discards what comes out. Frames reach the filter exactly as editVideo hands them to
+// `videoFilter`, so a two-pass filter (vidstabdetect, then vidstabtransform) sees the same frames
+// in both passes.
+bool analyzeVideo(const QString &inputPath, const QString &filter, QString *errorOut,
+                  const std::function<bool(double)> &onProgress);
+
+// Whether this build's libavfilter has the named filter (vid.stab's are an optional library).
+bool hasVideoFilter(const char *name);
 
 // Project-owned media, same directory freeze frames use, so a save bundles the result
 // and a cache sweep cannot delete it. Extension follows kind (png / flac / mp4).

@@ -33,6 +33,7 @@
 
 #include "core/Clip.h"
 #include "core/Project.h"
+#include "core/Stabilize.h"
 #include "core/TimelineOps.h"
 #include "engine/AudioMixer.h"
 #include "engine/ClipReader.h"
@@ -124,6 +125,7 @@ private slots:
     void mediaEditorCropsAnImage();
     void mediaEditorConformsVariableFrameRate();
     void mediaEditorKeepsTenBitAndColourTags();
+    void mediaEditorStabilizesInProcess();
     void reverseProxyLookupIsByContainmentAndSourceIdentity();
     void resolveVideoReadMirrorsTheClipOntoTheProxy();
     void faceTrackRoundTripsAndInterpolates();
@@ -3370,6 +3372,53 @@ void EngineTest::mediaEditorKeepsTenBitAndColourTags()
     const QString tags = QString::fromUtf8(process.readAllStandardOutput()).trimmed();
     QVERIFY2(tags.contains(QStringLiteral("smpte2084")) && tags.contains(QStringLiteral("bt2020")),
              qPrintable(tags));
+}
+
+void EngineTest::mediaEditorStabilizesInProcess()
+{
+    if (!drift::hasVideoFilter("vidstabdetect") || !drift::hasVideoFilter("vidstabtransform"))
+        QSKIP("libavfilter here was built without vid.stab");
+    const QString ffmpeg = QStandardPaths::findExecutable(QStringLiteral("ffmpeg"));
+    if (ffmpeg.isEmpty())
+        QSKIP("ffmpeg not on PATH");
+
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    const QString sourcePath = dir.filePath(QStringLiteral("shaky.mp4"));
+    const QString trfPath = dir.filePath(QStringLiteral("motion.trf"));
+    const QString outPath = dir.filePath(QStringLiteral("stable.mp4"));
+    QProcess process;
+    process.start(ffmpeg, {QStringLiteral("-y"), QStringLiteral("-loglevel"), QStringLiteral("error"),
+                           QStringLiteral("-f"), QStringLiteral("lavfi"), QStringLiteral("-i"),
+                           QStringLiteral("testsrc=d=1:r=30:s=400x300"),
+                           QStringLiteral("-vf"),
+                           QStringLiteral("crop=320:240:40+30*sin(t*20):30+20*cos(t*17)"),
+                           QStringLiteral("-pix_fmt"), QStringLiteral("yuv420p"),
+                           QStringLiteral("-c:v"), QStringLiteral("libx264"), sourcePath});
+    QVERIFY(process.waitForFinished(60'000));
+    QCOMPARE(process.exitCode(), 0);
+
+    QString error;
+    QVERIFY2(drift::analyzeVideo(sourcePath,
+                                 QStringLiteral("vidstabdetect=shakiness=5:accuracy=15:result='%1'")
+                                     .arg(trfPath),
+                                 &error, {}),
+             qPrintable(error));
+    // vid.stab's binary file carries one record past the last frame; the ffmpeg CLI's does too.
+    QCOMPARE(drift::readTrfFrameTranslations(trfPath).size(), 31);
+
+    drift::MediaEditSpec spec;
+    spec.inputPath = sourcePath;
+    spec.outputPath = outPath;
+    spec.kind = QStringLiteral("video");
+    spec.videoFilter = QStringLiteral("vidstabtransform=input='%1':smoothing=15:tripod=0:optzoom=1")
+                           .arg(trfPath);
+    QVERIFY2(drift::editMedia(spec, &error, {}), qPrintable(error));
+
+    const MediaInfo info = MediaProbe::probe(outPath);
+    QVERIFY(info.ok);
+    QCOMPARE(info.streams.first().width, 320);
+    QCOMPARE(info.streams.first().height, 240);
 }
 
 void EngineTest::reverseProxyLookupIsByContainmentAndSourceIdentity()

@@ -203,6 +203,8 @@ if(ANDROID)
         "${DRIFT_PREBUILT}/lib/libx264.a"
         # libavcodec's only software AV1 decoder — the native "av1" decoder needs a hwaccel.
         "${DRIFT_PREBUILT}/lib/libdav1d.a"
+        # vidstabdetect/vidstabtransform, which clip stabilization runs through libavfilter.
+        "${DRIFT_PREBUILT}/lib/libvidstab.a"
         # mediandk resolves the AMediaCodec_*/AMediaFormat_* the --enable-mediacodec decoders call,
         # plus the AImageReader_*/AImage_* the zero-copy preview surface is built on. android is
         # for AHardwareBuffer_*, which lives in libandroid rather than libmediandk.

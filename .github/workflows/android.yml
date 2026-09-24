@@ -85,7 +85,7 @@ jobs:
           aqt install-qt all_os android "$QT_VERSION" android_arm64_v8a \
             -m $QT_ANDROID_MODULES -O "$HOME/Qt"
 
-      # FFmpeg, x264, zstd, OpenSSL and SoundTouch cross-built for Android: ~45 min,
+      # FFmpeg, x264, dav1d, vid.stab, zstd, OpenSSL and SoundTouch cross-built for Android: ~45 min,
       # and they only change when the script that pins their tags does.
       - name: Restore prebuilt native dependencies
         id: deps-cache

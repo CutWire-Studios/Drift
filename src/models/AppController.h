@@ -37,7 +37,7 @@
 
 #include <atomic>
 #include <functional>
-#include <QProcess>
+#include <QSharedPointer>
 #include <QMap>
 
 #include <memory>
@@ -2150,8 +2150,11 @@ protected:
     void finalizeGeneratedSubtitles(drift::TimeUs timelineStart, drift::TimeUs timelineDuration,
                                     const QList<drift::SubtitleCue> &cues);
     void finalizeDenoise(const QString &clipId, const QString &audioPath);
-    void watchStabilizeProgress(QProcess *process, const QString &clipId, qint64 durationUs,
-                                double rangeFrom, double rangeTo);
+    // Runs on the stabilize worker: maps a job's 0..1 onto [rangeFrom, rangeTo] of the clip's
+    // progress, posts it to the UI thread, and returns false once `cancel` is set.
+    std::function<bool(double)> stabilizeProgressReporter(const QString &clipId,
+                                                          const QSharedPointer<QAtomicInt> &cancel,
+                                                          double rangeFrom, double rangeTo);
     void setStabilizeProgress(const QString &clipId, double progress, const QString &status,
                               bool force);
     void clearStabilizeProgress(const QString &clipId);
@@ -2573,7 +2576,7 @@ protected:
     double m_sceneDetectProgress = 0.0;
     QString m_sceneDetectStatus;
     QAtomicInt m_sceneDetectCancel = 0;
-    QMap<QString, QProcess*> m_stabilizeProcesses;
+    QMap<QString, QSharedPointer<QAtomicInt>> m_stabilizeJobs;
     QMap<QString, double> m_stabilizeProgress;
     QMap<QString, QString> m_stabilizeStatus;
     QMap<QString, qint64> m_stabilizeLastProgressEmit;
