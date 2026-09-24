@@ -1022,6 +1022,9 @@ AppController::AppController(AssetLibrary *assetLibrary, QObject *parent)
         settings.value(QStringLiteral("ui/timelineOverviewVisible"), false).toBool();
     m_audioMixerVisible =
         settings.value(QStringLiteral("ui/audioMixerVisible"), false).toBool();
+    m_audioMixerWidth = settings.value(QStringLiteral("ui/audioMixerWidth"), 0.0).toDouble();
+    if (m_audioMixerWidth > 0)
+        m_audioMixerWidth = qBound(160.0, m_audioMixerWidth, 2000.0);
     m_trackLabelsWidth = qBound(110.0,
         settings.value(QStringLiteral("ui/trackLabelsWidth"), 130.0).toDouble(), 320.0);
     m_timelineToolbarItems = settings.value(QStringLiteral("ui/timelineToolbarItems")).toStringList();
@@ -1468,8 +1471,17 @@ QVariantList AppController::tracks() const
 
         QVariantList clips;
         clips.reserve(track.clips.size());
+        // Whether the track feeds the mix, for the audio mixer's strip list. Same rule as a
+        // clip's waveform bar: an unprobed source gets the benefit of the doubt.
+        bool hasAudio = track.type == drift::TrackType::Audio;
 
         for (const drift::Clip &clip : track.clips) {
+            if (!hasAudio && track.type == drift::TrackType::Video && !clip.suppressEmbeddedAudio) {
+                const drift::MediaAsset *asset = m_project.asset(clip.assetId);
+                hasAudio = clip.type == drift::ClipType::Composite
+                    || (clip.type == drift::ClipType::Video
+                        && (!asset || !asset->hasAudioKnown || asset->hasAudio));
+            }
             clips.append(QVariantMap{
                 {QStringLiteral("id"), clip.id},
                 {QStringLiteral("name"), clip.name},
@@ -1493,6 +1505,7 @@ QVariantList AppController::tracks() const
             {QStringLiteral("isAdjustmentLane"), track.isAdjustmentLane()},
             {QStringLiteral("name"), track.name},
             {QStringLiteral("clips"), clips},
+            {QStringLiteral("hasAudio"), hasAudio},
             {QStringLiteral("transitions"), transitions},
             {QStringLiteral("muted"), track.muted},
             {QStringLiteral("hidden"), track.hidden},
@@ -5742,6 +5755,17 @@ void AppController::setAudioMixerVisible(bool visible)
     QSettings settings;
     settings.setValue(QStringLiteral("ui/audioMixerVisible"), m_audioMixerVisible);
     emit audioMixerVisibleChanged();
+}
+
+void AppController::setAudioMixerWidth(qreal width)
+{
+    width = width > 0 ? qBound(160.0, qreal(qRound(width)), 2000.0) : 0.0;
+    if (qFuzzyCompare(m_audioMixerWidth + 1, width + 1))
+        return;
+    m_audioMixerWidth = width;
+    QSettings settings;
+    settings.setValue(QStringLiteral("ui/audioMixerWidth"), m_audioMixerWidth);
+    emit audioMixerWidthChanged();
 }
 
 double AppController::masterVolume() const

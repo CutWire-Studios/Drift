@@ -4504,19 +4504,19 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Paused</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Recording</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Microphone: %1 (click to switch)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Close audio mixer</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>PAUSED</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>REC</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -4537,20 +4537,6 @@
     </message>
     <message>
         <source>Default Mic</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Add
-Audio
-Track</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Click to add an audio track</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source> (Recording)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -4582,23 +4568,43 @@ Track</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Pan: %1 (double-click to center)</source>
+        <source>Pan %1 — drag to adjust, double-click to center</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Mic Recording Gain: %1 (%2%) — scroll to adjust, double-click to reset 0dB</source>
+        <source>Mic gain %1 dB (%2%) — scroll to adjust, double-click for 0 dB</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Volume: %1 (double-click to reset 0dB)</source>
+        <source>%1 dB — scroll to adjust, double-click for 0 dB</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Mic recording level in dB — scroll to adjust, double-click to reset to 0dB (100%)</source>
+        <source>Master volume</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Track level in dB — scroll to adjust, double-click to reset to 0dB</source>
+        <source>%1 volume</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Mic gain %1 dB</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Volume %1 dB</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source> — Shift-drag for fine, double-click for 0 dB</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add audio track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Drag to resize — double-click to fit</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -4610,15 +4616,23 @@ Track</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>C</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>L%1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>R%1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source> (recording)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Mute master</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Main</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Master Volume: %1 (double-click to reset 0dB)</source>
         <translation type="unfinished"></translation>
     </message>
 </context>

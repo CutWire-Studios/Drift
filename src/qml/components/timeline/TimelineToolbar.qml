@@ -560,7 +560,7 @@ Item {
         }
 
         IconButton {
-            glyph: Theme.icons.audioLines
+            glyph: Theme.icons.slidersVertical
             variant: "text"
             tooltip: qsTr("Toggle audio mixer strip")
             active: EditorState.audioMixerVisible

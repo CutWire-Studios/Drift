@@ -151,6 +151,9 @@ class AppController : public QObject
                    WRITE setTimelineOverviewVisible NOTIFY timelineOverviewVisibleChanged)
     Q_PROPERTY(bool audioMixerVisible READ audioMixerVisible
                    WRITE setAudioMixerVisible NOTIFY audioMixerVisibleChanged)
+    // Width the user dragged the mixer to; 0 means size to fit its channel strips.
+    Q_PROPERTY(qreal audioMixerWidth READ audioMixerWidth
+                   WRITE setAudioMixerWidth NOTIFY audioMixerWidthChanged)
     Q_PROPERTY(double masterVolume READ masterVolume
                    WRITE setMasterVolume NOTIFY masterVolumeChanged)
     Q_PROPERTY(bool masterMuted READ masterMuted
@@ -502,6 +505,8 @@ public:
     void setTimelineOverviewVisible(bool visible);
     bool audioMixerVisible() const { return m_audioMixerVisible; }
     void setAudioMixerVisible(bool visible);
+    qreal audioMixerWidth() const { return m_audioMixerWidth; }
+    void setAudioMixerWidth(qreal width);
     double masterVolume() const;
     void setMasterVolume(double volume);
     bool masterMuted() const;
@@ -1941,6 +1946,7 @@ signals:
     void autoKeyEnabledChanged();
     void timelineOverviewVisibleChanged();
     void audioMixerVisibleChanged();
+    void audioMixerWidthChanged();
     void masterVolumeChanged();
     void masterMutedChanged();
     void trackLabelsWidthChanged();
@@ -2528,6 +2534,7 @@ protected:
     bool m_autoKeyEnabled = false;
     bool m_timelineOverviewVisible = false;
     bool m_audioMixerVisible = false;
+    qreal m_audioMixerWidth = 0;
     qreal m_trackLabelsWidth = 130;
     QStringList m_timelineToolbarItems;
     QStringList m_timelineMenuItems;

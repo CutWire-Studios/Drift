@@ -3,37 +3,40 @@ import QtQuick.Controls.Basic
 import Drift
 import ".."
 
-// Audio mixer strip docked on the right side at the end of the timeline.
-// Displays per-audio-track channel strips (A1, A2, ...) and a Master strip.
-// Includes track label, Mute/Solo/Arm buttons, rotary Pan knob with numeric readout,
-// dual-channel vertical stereo VU peak meters with dB markings & peak hold,
-// vertical volume fader slider, and bottom numeric dB readout.
+// Audio mixer docked on the right side at the end of the timeline: one channel strip per
+// audio track (name, mute/solo/record, pan, stereo meter, fader, level readout) and a
+// Master strip pinned to the left edge; the track strips after it scroll horizontally.
+// The left edge drags to resize; double-clicking it goes back to fitting the strips.
 Rectangle {
     id: root
 
-    // Docked at the end of the timeline
     readonly property bool isRecording: EditorState.isRecordingAudio
     readonly property bool mixerVisible: EditorState.audioMixerVisible || isRecording
-    readonly property real minMixerWidth: isRecording ? 250 : 130
-    width: mixerVisible ? Math.max(minMixerWidth, stripsRow.implicitWidth + 2) : 0
+
+    readonly property real baseStripWidth: 96
+    readonly property real minMixerWidth: isRecording ? 250 : 160
+    // Keep enough of the timeline visible that the mixer can never swallow it.
+    readonly property real maxMixerWidth: parent
+        ? Math.max(minMixerWidth, parent.width - EditorState.trackLabelsWidth - 240)
+        : 2000
+    readonly property int columnCount: Math.max(1, mixerLoader.item ? mixerLoader.item.audioTracksList.length : 0) + 1
+    readonly property real fitWidth: columnCount * baseStripWidth + 1
+    readonly property real preferredWidth: EditorState.audioMixerWidth > 0 ? EditorState.audioMixerWidth : fitWidth
+    readonly property real stripWidth: baseStripWidth
+
+    width: mixerVisible ? Math.max(minMixerWidth, Math.min(maxMixerWidth, preferredWidth)) : 0
     visible: width > 0
     clip: true
-
-    readonly property color hoverBg: Theme.popoverHover
-    readonly property color headerBg: Theme.darkMode
-        ? Qt.rgba(Theme.panelForeground.r, Theme.panelForeground.g, Theme.panelForeground.b, 0.06)
-        : Qt.rgba(0, 0, 0, 0.04)
-
     color: Theme.panelBackground
-    border.color: Theme.panelBorder
-    border.width: 1
+
+    property bool resizing: false
 
     Behavior on width {
-        NumberAnimation { duration: Theme.durationNormal; easing.type: Theme.easing }
+        enabled: !root.resizing
+        NumberAnimation { duration: Theme.durationSlow; easing.type: Theme.easing }
     }
 
     // --- Piecewise dB <-> Y-Ratio Conversions ---------------------------------
-    // Scale markings: 6, 0, -2, -5, -10, -15, -20, -30, -45, -60
     readonly property var dbPoints: [
         { db: 6.0,  r: 1.00 },
         { db: 0.0,  r: 0.85 },
@@ -85,1575 +88,1247 @@ Rectangle {
         return Math.pow(10.0, db / 20.0)
     }
 
+    // Unity is a detent: faders and the wheel settle on exactly 0 dB when they pass near it.
+    function snapDb(db) {
+        return Math.abs(db) < 0.25 ? 0.0 : db
+    }
+
     function formatDb(db) {
-        if (db <= -59.5) return "-∞dB"
-        const sign = db > 0.005 ? "+" : (db < -0.005 ? "-" : "")
-        return sign + Math.abs(db).toFixed(2) + "dB"
+        if (db <= -59.5) return "-∞"
+        if (Math.abs(db) < 0.05) return "0.0"
+        return (db > 0 ? "+" : "") + db.toFixed(1)
     }
 
     function formatPan(pan) {
         const val = Math.round(pan * 100)
-        if (val === 0) return "0"
-        if (val < 0) return "< " + Math.abs(val)
-        return "> " + val
+        if (val === 0) return qsTr("C")
+        return val < 0 ? qsTr("L%1").arg(-val) : qsTr("R%1").arg(val)
     }
 
-    // Audio tracks model: filters project tracks to only non-nested audio tracks
-    readonly property var audioTracksList: {
-        const result = []
-        const allTracks = EditorState.tracks
-        var audioCount = 0
-        for (var i = 0; i < allTracks.length; i++) {
-            const t = allTracks[i]
-            if (t.type === "audio" && !t.isAdjustmentLane) {
-                audioCount++
-                result.push({
-                    trackIndex: i,
-                    ordinal: audioCount,
-                    name: t.name && t.name.length > 0 ? t.name : ("A" + audioCount),
-                    shortName: "A" + audioCount,
-                    muted: t.muted === true,
-                    solo: t.solo === true,
-                    volume: t.volume !== undefined ? t.volume : 1.0,
-                    pan: t.pan !== undefined ? t.pan : 0.0
-                })
+    // === Reusable pieces =====================================================
+
+    // Square toggle used for mute / solo / record. `tone` picks the checked treatment:
+    // "destructive" (mute, record) or "active" (solo, the app's amber active state).
+    component StripToggle: AbstractButton {
+        id: toggle
+
+        property string glyph: ""
+        property string tooltip: ""
+        property string tone: "destructive"
+        property bool blinking: false
+
+        readonly property color _checkedFg: tone === "active" ? Theme.panelSecondaryForeground : Theme.destructive
+
+        implicitWidth: 28
+        implicitHeight: 28
+        hoverEnabled: true
+        focusPolicy: Qt.TabFocus
+        scale: down ? Theme.pressScale : 1.0
+
+        Behavior on scale {
+            NumberAnimation { duration: Theme.durationPress; easing.type: Theme.easing }
+        }
+
+        Accessible.role: Accessible.CheckBox
+        Accessible.name: tooltip
+        Accessible.checked: checked
+
+        background: Rectangle {
+            radius: Theme.radiusXs
+            color: toggle.checked
+                   ? (toggle.tone === "active" ? Theme.panelSecondaryBg
+                                               : Qt.rgba(Theme.destructive.r, Theme.destructive.g, Theme.destructive.b, 0.16))
+                   : (toggle.down ? Theme.panelMuted : (toggle.hovered ? Theme.popoverHover : "transparent"))
+            border.width: toggle.checked || toggle.visualFocus ? Theme.borderWidth : 0
+            border.color: toggle.visualFocus ? Theme.focusRing
+                        : toggle.tone === "active" ? Theme.panelSecondaryBorder
+                        : Qt.rgba(Theme.destructive.r, Theme.destructive.g, Theme.destructive.b, 0.45)
+
+            Behavior on color {
+                ColorAnimation { duration: Theme.durationFast; easing.type: Theme.easing }
             }
         }
-        return result
-    }
 
-    // --- Metering Animation Engine -------------------------------------------
-    property var liveTrackLevels: ({})
-    property var liveTrackPeaks: ({})
-    property var livePeakHoldTimes: ({})
+        contentItem: Item {
+            IconGlyph {
+                id: toggleGlyph
+                anchors.centerIn: parent
+                glyph: toggle.glyph
+                iconSize: Theme.iconSizeBase
+                iconColor: toggle.checked ? toggle._checkedFg
+                         : (toggle.hovered ? Theme.panelForeground : Theme.mutedForeground)
 
-    property real masterLevelL: 0.0
-    property real masterLevelR: 0.0
-    property real masterPeakL: 0.0
-    property real masterPeakR: 0.0
-    property real masterPeakHoldTimeL: 0
-    property real masterPeakHoldTimeR: 0
-
-    Timer {
-        id: meterTimer
-        interval: 30
-        repeat: true
-        running: root.visible && (EditorState.playing || EditorState.isRecordingAudio)
-        onTriggered: {
-            const now = Date.now()
-            const decay = 0.04
-            const peakDecay = 0.02
-            const newLevels = {}
-            const newPeaks = {}
-            const newTimes = Object.assign({}, root.livePeakHoldTimes)
-
-            // Update each audio track
-            for (var i = 0; i < root.audioTracksList.length; i++) {
-                const t = root.audioTracksList[i]
-                const ti = t.trackIndex
-                const raw = EditorState.trackAudioLevels(ti)
-                const targetL = raw ? (raw.left || 0.0) : 0.0
-                const targetR = raw ? (raw.right || 0.0) : 0.0
-
-                const cur = root.liveTrackLevels[ti] || { l: 0.0, r: 0.0 }
-                const curPeaks = root.liveTrackPeaks[ti] || { l: 0.0, r: 0.0 }
-                var holdTimes = newTimes[ti] || { l: 0, r: 0 }
-
-                // Smooth bar levels (instant attack, exponential decay)
-                const l = targetL >= cur.l ? targetL : Math.max(0.0, cur.l - decay)
-                const r = targetR >= cur.r ? targetR : Math.max(0.0, cur.r - decay)
-
-                // Peak hold L
-                var pkL = curPeaks.l
-                if (targetL >= pkL) {
-                    pkL = targetL
-                    holdTimes.l = now
-                } else if (now - holdTimes.l > 1200) {
-                    pkL = Math.max(0.0, pkL - peakDecay)
+                SequentialAnimation on opacity {
+                    running: toggle.blinking
+                    loops: Animation.Infinite
+                    onStopped: toggleGlyph.opacity = 1
+                    NumberAnimation { to: 0.3; duration: 450 }
+                    NumberAnimation { to: 1.0; duration: 450 }
                 }
-
-                // Peak hold R
-                var pkR = curPeaks.r
-                if (targetR >= pkR) {
-                    pkR = targetR
-                    holdTimes.r = now
-                } else if (now - holdTimes.r > 1200) {
-                    pkR = Math.max(0.0, pkR - peakDecay)
-                }
-
-                newLevels[ti] = { l: l, r: r }
-                newPeaks[ti] = { l: pkL, r: pkR }
-                newTimes[ti] = holdTimes
             }
-            root.liveTrackLevels = newLevels
-            root.liveTrackPeaks = newPeaks
-            root.livePeakHoldTimes = newTimes
+        }
 
-            // Update master levels
-            const mRaw = EditorState.masterAudioLevels()
-            const mTargetL = mRaw ? (mRaw.left || 0.0) : 0.0
-            const mTargetR = mRaw ? (mRaw.right || 0.0) : 0.0
+        ThemedToolTip {
+            visible: toggle.tooltip.length > 0 && (toggle.hovered || toggle.visualFocus)
+            text: toggle.tooltip
+        }
 
-            root.masterLevelL = mTargetL >= root.masterLevelL ? mTargetL : Math.max(0.0, root.masterLevelL - decay)
-            root.masterLevelR = mTargetR >= root.masterLevelR ? mTargetR : Math.max(0.0, root.masterLevelR - decay)
-
-            if (mTargetL >= root.masterPeakL) {
-                root.masterPeakL = mTargetL
-                root.masterPeakHoldTimeL = now
-            } else if (now - root.masterPeakHoldTimeL > 1200) {
-                root.masterPeakL = Math.max(0.0, root.masterPeakL - peakDecay)
-            }
-
-            if (mTargetR >= root.masterPeakR) {
-                root.masterPeakR = mTargetR
-                root.masterPeakHoldTimeR = now
-            } else if (now - root.masterPeakHoldTimeR > 1200) {
-                root.masterPeakR = Math.max(0.0, root.masterPeakR - peakDecay)
-            }
+        MouseArea {
+            anchors.fill: parent
+            acceptedButtons: Qt.NoButton
+            cursorShape: Qt.PointingHandCursor
         }
     }
 
-    // Reset levels when playback stops
-    Connections {
-        target: EditorState
-        function onPlayingChanged() {
-            if (!EditorState.playing && !EditorState.isRecordingAudio) {
-                root.liveTrackLevels = ({})
-                root.liveTrackPeaks = ({})
-                root.masterLevelL = 0.0
-                root.masterLevelR = 0.0
-                root.masterPeakL = 0.0
-                root.masterPeakR = 0.0
-            }
-        }
-        function onAudioRecordingStateChanged() {
-            if (!EditorState.playing && !EditorState.isRecordingAudio) {
-                root.liveTrackLevels = ({})
-                root.liveTrackPeaks = ({})
-                root.masterLevelL = 0.0
-                root.masterLevelR = 0.0
-                root.masterPeakL = 0.0
-                root.masterPeakR = 0.0
-            }
-        }
+    // Zone colours: `vivid` draws the live level, the muted tints mark the zones at rest.
+    component ZoneGradient: Gradient {
+        property bool vivid: false
+        readonly property color red: vivid ? Theme.destructive
+                                           : (Theme.darkMode ? "#4a2c2c" : "#f1d4d1")
+        readonly property color yellow: vivid ? Theme.primary
+                                              : (Theme.darkMode ? "#453c22" : "#f2e7c4")
+        readonly property color green: vivid ? Theme.constructive
+                                             : (Theme.darkMode ? "#26392d" : "#d6e8da")
+        GradientStop { position: 0.00; color: red }
+        GradientStop { position: 0.15; color: red }
+        GradientStop { position: 0.15; color: yellow }
+        GradientStop { position: 0.33; color: yellow }
+        GradientStop { position: 0.33; color: green }
+        GradientStop { position: 1.00; color: green }
     }
 
-    Column {
-        anchors.fill: parent
+    component MeterChannel: Item {
+        id: channel
 
-        // === Panel Top Header ================================================
+        property Item mixer
+        property real level: 0
+        property real peak: 0
+
+        readonly property real levelRatio: mixer.dbToRatio(mixer.linearToDb(level))
+        readonly property real peakRatio: mixer.dbToRatio(mixer.linearToDb(peak))
+
         Rectangle {
-            id: topHeader
+            anchors.fill: parent
+            radius: 1
+            gradient: ZoneGradient {}
+        }
+
+        Item {
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.bottom: parent.bottom
+            height: Math.max(0, Math.min(1, channel.levelRatio)) * parent.height
+            clip: true
+
+            Rectangle {
+                anchors.bottom: parent.bottom
+                width: parent.width
+                height: channel.height
+                radius: 1
+                gradient: ZoneGradient { vivid: true }
+            }
+        }
+
+        // Peak hold; red once the held peak has crossed 0 dBFS.
+        Rectangle {
+            visible: channel.peak > 0.001
             width: parent.width
-            height: Theme.timelineRulerHeight + Theme.timelineBookmarkRowHeight
-            color: Theme.panelBackground
-            border.color: Theme.panelBorder
-            border.width: 1
+            height: 2
+            y: Math.max(0, parent.height * (1.0 - channel.peakRatio) - 1)
+            color: channel.peak >= 1.0 ? Theme.destructive : Theme.panelForeground
+        }
+    }
+
+    // Stereo peak meter. The zones are fixed to the scale, not to the bar, so a quiet signal
+    // is green all the way up and only the part above -6 dB turns amber, above 0 red.
+    component LevelMeter: Item {
+        id: meter
+
+        property Item mixer
+        property real levelL: 0
+        property real levelR: 0
+        property real peakL: 0
+        property real peakR: 0
+
+        readonly property real innerH: height - 2
+
+        implicitWidth: 16
+
+        MeterChannel {
+            x: 1
+            y: 1
+            width: meter.width / 2 - 2
+            height: meter.innerH
+            mixer: meter.mixer
+            level: meter.levelL
+            peak: meter.peakL
+        }
+        MeterChannel {
+            x: meter.width / 2 + 1
+            y: 1
+            width: meter.width / 2 - 2
+            height: meter.innerH
+            mixer: meter.mixer
+            level: meter.levelR
+            peak: meter.peakR
+        }
+
+        // Hairline tick marks at the labelled scale points.
+        Repeater {
+            model: [0, -5, -10, -20, -30, -45]
+            delegate: Rectangle {
+                required property var modelData
+                x: 1
+                width: meter.width - 2
+                height: 1
+                y: 1 + meter.innerH * (1.0 - meter.mixer.dbToRatio(modelData))
+                color: Theme.panelBackground
+                opacity: 0.7
+            }
+        }
+    }
+
+    // One channel strip. Tracks and Master share it so their meters and faders line up;
+    // Master simply hides the controls it does not have.
+    component ChannelStrip: Item {
+        id: strip
+
+        property Item mixer
+        property bool master: false
+        property string name: ""
+        property string fullName: name
+        property bool muted: false
+        property bool solo: false
+        property bool armed: false
+        // Voiceover recording targets audio tracks only.
+        property bool canRecord: true
+        property bool isVideo: false
+        property bool armPaused: false
+        property real volume: 1.0
+        property real pan: 0.0
+        property real levelL: 0
+        property real levelR: 0
+        property real peakL: 0
+        property real peakR: 0
+
+        signal muteToggled()
+        signal soloToggled()
+        signal armToggled()
+        signal volumePreviewed(real gain)
+        signal volumeCommitted()
+        signal volumeSet(real gain)
+        signal panPreviewed(real value)
+        signal panCommitted()
+        signal panSet(real value)
+
+        readonly property real curDb: mixer.linearToDb(volume)
+        readonly property color fillColor: armed ? Theme.destructive : Theme.primary
+
+        function nudgeDb(step) {
+            volumeSet(mixer.dbToLinear(mixer.snapDb(mixer.linearToDb(volume) + step)))
+        }
+        function nudgePan(step) {
+            var p = Math.max(-1.0, Math.min(1.0, pan + step))
+            panSet(Math.abs(p) < 0.03 ? 0.0 : p)
+        }
+
+        // Recording tint across the whole strip so the armed track reads from a distance.
+        Rectangle {
+            anchors.fill: parent
+            visible: strip.armed
+            color: Qt.rgba(Theme.destructive.r, Theme.destructive.g, Theme.destructive.b, Theme.darkMode ? 0.08 : 0.05)
+        }
+
+        // --- Name --------------------------------------------------------------
+        Item {
+            id: nameRow
+            anchors.top: parent.top
+            anchors.left: parent.left
+            anchors.right: parent.right
+            height: 32
 
             Row {
-                anchors.left: parent.left
-                anchors.leftMargin: 8
-                anchors.right: headerCloseBtn.left
-                anchors.rightMargin: 4
-                anchors.verticalCenter: parent.verticalCenter
-                spacing: 6
-                clip: true
+                anchors.centerIn: parent
+                width: Math.min(implicitWidth, parent.width - Theme.spacingLg * 2)
+                spacing: Theme.spacingSm
 
-                IconGlyph {
-                    glyph: Theme.icons.audioLines
-                    iconSize: 14
-                    iconColor: Theme.primary
+                Rectangle {
+                    id: nameDot
+                    width: 6
+                    height: 6
+                    radius: 3
                     anchors.verticalCenter: parent.verticalCenter
+                    color: strip.armed ? (strip.armPaused ? "#eab308" : Theme.destructive)
+                         : strip.master ? Theme.primary
+                         : strip.isVideo ? Theme.clipVideoOverview : Theme.clipAudio
                 }
 
                 Text {
-                    text: qsTr("Audio Mixer")
-                    color: Theme.panelForeground
+                    width: Math.min(implicitWidth, nameRow.width - Theme.spacingLg * 2 - nameDot.width - parent.spacing)
+                    anchors.verticalCenter: parent.verticalCenter
+                    text: strip.name
+                    elide: Text.ElideRight
+                    color: strip.master ? Theme.accentOnPanel : Theme.panelForeground
                     font.family: Theme.fontFamily
                     font.pixelSize: Theme.fontSizeSm
-                    font.bold: true
-                    elide: Text.ElideRight
-                    width: Math.max(0, parent.width - 20)
-                    anchors.verticalCenter: parent.verticalCenter
+                    font.weight: Font.DemiBold
                 }
             }
 
-            IconButton {
-                id: headerCloseBtn
-                anchors.right: parent.right
-                anchors.rightMargin: 4
-                anchors.verticalCenter: parent.verticalCenter
-                glyph: Theme.icons.x
-                variant: "text"
-                tooltip: qsTr("Close audio mixer")
-                onClicked: EditorState.audioMixerVisible = false
+            HoverHandler { id: nameHover }
+            ThemedToolTip {
+                visible: nameHover.hovered
+                text: strip.fullName + (strip.armed ? qsTr(" (recording)") : "")
             }
         }
 
-        // === Dedicated Voiceover Recording Section (active during voiceover recording) ===
-        Rectangle {
-            id: voPanel
-            visible: EditorState.isRecordingAudio
-            width: parent.width
-            height: visible ? 52 : 0
-            clip: true
-            color: EditorState.isAudioRecordingPaused
-                   ? (Theme.darkMode ? Qt.rgba(0.9, 0.7, 0.1, 0.1) : Qt.rgba(0.9, 0.7, 0.1, 0.06))
-                   : (Theme.darkMode ? Qt.rgba(0.9, 0.1, 0.1, 0.08) : Qt.rgba(0.9, 0.1, 0.1, 0.04))
-            border.color: EditorState.isAudioRecordingPaused ? "#eab308" : (Theme.darkMode ? Qt.rgba(0.9, 0.1, 0.1, 0.3) : Qt.rgba(0.9, 0.1, 0.1, 0.2))
-            border.width: 1
+        // --- Mute / Solo / Record -------------------------------------------------
+        Row {
+            id: toggleRow
+            anchors.top: nameRow.bottom
+            anchors.horizontalCenter: parent.horizontalCenter
+            height: 32
+            spacing: Theme.spacingXs
 
-            Behavior on height {
-                NumberAnimation { duration: Theme.durationFast; easing.type: Theme.easing }
+            StripToggle {
+                glyph: strip.muted ? Theme.icons.volumeOff : Theme.icons.volumeHigh
+                checked: strip.muted
+                tooltip: strip.master ? (strip.muted ? qsTr("Unmute master") : qsTr("Mute master"))
+                                      : (strip.muted ? qsTr("Unmute") : qsTr("Mute"))
+                onClicked: strip.muteToggled()
             }
+            StripToggle {
+                visible: !strip.master
+                glyph: Theme.icons.headphones
+                tone: "active"
+                checked: strip.solo
+                tooltip: strip.solo ? qsTr("Unsolo") : qsTr("Solo")
+                onClicked: strip.soloToggled()
+            }
+            StripToggle {
+                visible: !strip.master && strip.canRecord
+                glyph: Theme.icons.mic
+                checked: strip.armed
+                blinking: strip.armed && !strip.armPaused
+                tooltip: strip.armed
+                         ? (strip.armPaused ? qsTr("Recording paused — click to finish") : qsTr("Recording — click to finish"))
+                         : qsTr("Record voiceover on %1").arg(strip.name)
+                onClicked: strip.armToggled()
+            }
+        }
+
+        // --- Pan ---------------------------------------------------------------------
+        Item {
+            id: panArea
+            anchors.top: toggleRow.bottom
+            anchors.topMargin: Theme.spacingSm
+            anchors.left: parent.left
+            anchors.right: parent.right
+            height: 62
+
+            Canvas {
+                id: panKnob
+                visible: !strip.master
+                width: 40
+                height: 40
+                anchors.horizontalCenter: parent.horizontalCenter
+                antialiasing: true
+
+                readonly property real value: strip.pan
+                readonly property bool dark: Theme.darkMode
+                readonly property bool hot: panMouse.containsMouse || panMouse.pressed
+                onValueChanged: requestPaint()
+                onDarkChanged: requestPaint()
+                onHotChanged: requestPaint()
+
+                onPaint: {
+                    const ctx = getContext("2d")
+                    ctx.reset()
+                    const cx = width / 2
+                    const cy = height / 2
+                    const r = 17
+                    // 270 degree sweep with centre at 12 o'clock.
+                    const center = 1.5 * Math.PI
+                    const target = center + value * 0.75 * Math.PI
+
+                    ctx.lineCap = "round"
+                    ctx.lineWidth = 2.5
+                    ctx.strokeStyle = "" + Theme.sliderTrack
+                    ctx.beginPath()
+                    ctx.arc(cx, cy, r, 0.75 * Math.PI, 2.25 * Math.PI, false)
+                    ctx.stroke()
+
+                    if (Math.abs(value) > 0.005) {
+                        ctx.strokeStyle = "" + Theme.primary
+                        ctx.beginPath()
+                        ctx.arc(cx, cy, r, Math.min(center, target), Math.max(center, target), false)
+                        ctx.stroke()
+                    }
+
+                    ctx.beginPath()
+                    ctx.arc(cx, cy, 12, 0, 2 * Math.PI, false)
+                    ctx.fillStyle = "" + (hot ? Theme.panelMuted : Theme.panelAccent)
+                    ctx.fill()
+                    ctx.lineWidth = 1
+                    ctx.strokeStyle = "" + Theme.panelBorder
+                    ctx.stroke()
+
+                    ctx.lineWidth = 2
+                    ctx.strokeStyle = "" + Theme.panelForeground
+                    ctx.beginPath()
+                    ctx.moveTo(cx + 4 * Math.cos(target), cy + 4 * Math.sin(target))
+                    ctx.lineTo(cx + 11 * Math.cos(target), cy + 11 * Math.sin(target))
+                    ctx.stroke()
+                }
+
+                MouseArea {
+                    id: panMouse
+                    anchors.fill: parent
+                    anchors.margins: -4
+                    hoverEnabled: true
+                    cursorShape: Qt.SizeVerCursor
+                    preventStealing: true
+
+                    property point last
+                    property real dragPan: 0
+
+                    onPressed: (mouse) => {
+                        last = Qt.point(mouse.x, mouse.y)
+                        dragPan = strip.pan
+                    }
+                    onPositionChanged: (mouse) => {
+                        if (!pressed)
+                            return
+                        // Up or right pans right; Shift for fine control.
+                        const fine = (mouse.modifiers & Qt.ShiftModifier) ? 0.2 : 1.0
+                        const d = ((mouse.x - last.x) - (mouse.y - last.y)) / 100.0 * fine
+                        last = Qt.point(mouse.x, mouse.y)
+                        dragPan = Math.max(-1.0, Math.min(1.0, dragPan + d))
+                        strip.panPreviewed(Math.abs(dragPan) < 0.04 ? 0.0 : dragPan)
+                    }
+                    onReleased: strip.panCommitted()
+                    onDoubleClicked: strip.panSet(0.0)
+                    onWheel: (wheel) => strip.nudgePan(wheel.angleDelta.y > 0 ? 0.05 : -0.05)
+                }
+
+                ThemedToolTip {
+                    visible: panMouse.containsMouse && !panMouse.pressed
+                    text: qsTr("Pan %1 — drag to adjust, double-click to center").arg(strip.mixer.formatPan(strip.pan))
+                }
+            }
+
+            Text {
+                visible: !strip.master
+                anchors.horizontalCenter: parent.horizontalCenter
+                anchors.bottom: parent.bottom
+                text: strip.mixer.formatPan(strip.pan)
+                color: Math.abs(strip.pan) > 0.005 ? Theme.accentOnPanel : Theme.mutedForeground
+                font.family: Theme.monoFontFamily
+                font.pixelSize: Theme.fontSizeXs
+            }
+        }
+
+        // --- Level readout -------------------------------------------------------------
+        Rectangle {
+            id: readout
+            anchors.bottom: parent.bottom
+            anchors.bottomMargin: Theme.spacingMd
+            anchors.horizontalCenter: parent.horizontalCenter
+            width: Math.min(parent.width - Theme.spacingLg, 64)
+            height: 24
+            radius: Theme.radiusXs
+            color: readoutMouse.containsMouse ? Theme.popoverHover : Theme.panelAccent
+            border.width: Theme.borderWidth
+            border.color: Theme.panelBorder
+
+            Text {
+                anchors.centerIn: parent
+                text: strip.mixer.formatDb(strip.curDb)
+                color: strip.armed || strip.curDb > 0.05 ? Theme.destructive : Theme.panelForeground
+                font.family: Theme.monoFontFamily
+                font.pixelSize: Theme.fontSizeXs
+            }
+
+            MouseArea {
+                id: readoutMouse
+                anchors.fill: parent
+                hoverEnabled: true
+                cursorShape: Qt.SizeVerCursor
+                onDoubleClicked: strip.volumeSet(1.0)
+                onWheel: (wheel) => strip.nudgeDb(wheel.angleDelta.y > 0 ? 0.5 : -0.5)
+            }
+
+            ThemedToolTip {
+                visible: readoutMouse.containsMouse
+                text: strip.armed
+                      ? qsTr("Mic gain %1 dB (%2%) — scroll to adjust, double-click for 0 dB")
+                            .arg(strip.mixer.formatDb(strip.curDb)).arg(Math.round(strip.volume * 100))
+                      : qsTr("%1 dB — scroll to adjust, double-click for 0 dB").arg(strip.mixer.formatDb(strip.curDb))
+            }
+        }
+
+        // --- Meter + fader ------------------------------------------------------------
+        Row {
+            id: meterRow
+            anchors.top: panArea.bottom
+            anchors.topMargin: Theme.spacingLg
+            anchors.bottom: readout.top
+            anchors.bottomMargin: Theme.spacingLg
+            anchors.horizontalCenter: parent.horizontalCenter
+            spacing: Theme.spacingSm
+
+            LevelMeter {
+                height: parent.height
+                mixer: strip.mixer
+                levelL: strip.levelL
+                levelR: strip.levelR
+                peakL: strip.peakL
+                peakR: strip.peakR
+            }
+
+            // dB scale
+            Item {
+                width: 20
+                height: parent.height
+
+                Repeater {
+                    model: [0, -5, -10, -20, -30, -45]
+                    delegate: Text {
+                        required property var modelData
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        y: 1 + (parent.height - 2) * (1.0 - strip.mixer.dbToRatio(modelData)) - height / 2
+                        text: modelData === 0 ? "0" : String(-modelData)
+                        color: Theme.mutedForeground
+                        font.family: Theme.monoFontFamily
+                        font.pixelSize: Theme.fontSizeTick
+                    }
+                }
+            }
+
+            Item {
+                id: fader
+                width: 26
+                height: parent.height
+
+                readonly property real capH: 16
+                readonly property real travel: height - capH
+                readonly property real capY: travel * (1.0 - strip.mixer.dbToRatio(strip.curDb))
+
+                Accessible.role: Accessible.Slider
+                Accessible.name: strip.master ? qsTr("Master volume") : qsTr("%1 volume").arg(strip.fullName)
+
+                // Groove
+                Rectangle {
+                    id: groove
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    y: fader.capH / 2
+                    width: 3
+                    height: fader.travel
+                    radius: 1.5
+                    color: Theme.sliderTrack
+
+                    Rectangle {
+                        anchors.left: parent.left
+                        anchors.right: parent.right
+                        anchors.bottom: parent.bottom
+                        height: Math.max(0, parent.height - fader.capY)
+                        radius: parent.radius
+                        color: strip.fillColor
+                    }
+                }
+
+                // Unity (0 dB) notch
+                Rectangle {
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    y: fader.capH / 2 + fader.travel * (1.0 - strip.mixer.dbToRatio(0)) - 0.5
+                    width: 16
+                    height: 1
+                    color: Theme.mutedForeground
+                }
+
+                Rectangle {
+                    id: cap
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    y: fader.capY
+                    width: 24
+                    height: fader.capH
+                    radius: Theme.radiusXs
+                    color: faderMouse.pressed ? strip.fillColor
+                         : faderMouse.containsMouse ? Theme.panelMuted : Theme.panelAccent
+                    border.width: Theme.borderWidth
+                    border.color: faderMouse.pressed ? strip.fillColor : Theme.sliderTrack
+
+                    Behavior on color {
+                        ColorAnimation { duration: Theme.durationFast; easing.type: Theme.easing }
+                    }
+
+                    Rectangle {
+                        anchors.centerIn: parent
+                        width: 12
+                        height: 1
+                        color: faderMouse.pressed ? Theme.primaryForeground : Theme.panelForeground
+                    }
+                }
+
+                MouseArea {
+                    id: faderMouse
+                    anchors.fill: parent
+                    anchors.leftMargin: -4
+                    anchors.rightMargin: -4
+                    hoverEnabled: true
+                    cursorShape: pressed ? Qt.ClosedHandCursor : Qt.SizeVerCursor
+                    preventStealing: true
+
+                    property real lastY: 0
+                    property real dragRatio: 0
+
+                    function emitRatio() {
+                        strip.volumePreviewed(strip.mixer.dbToLinear(strip.mixer.snapDb(strip.mixer.ratioToDb(dragRatio))))
+                    }
+
+                    // Grabbing the cap drags relative to where it was; clicking the groove
+                    // jumps the cap there first. Shift slows the drag for fine trims.
+                    onPressed: (mouse) => {
+                        lastY = mouse.y
+                        if (mouse.y >= fader.capY - 3 && mouse.y <= fader.capY + fader.capH + 3) {
+                            dragRatio = strip.mixer.dbToRatio(strip.curDb)
+                        } else {
+                            dragRatio = Math.max(0, Math.min(1, 1.0 - (mouse.y - fader.capH / 2) / fader.travel))
+                            emitRatio()
+                        }
+                    }
+                    onPositionChanged: (mouse) => {
+                        if (!pressed || fader.travel <= 0)
+                            return
+                        const fine = (mouse.modifiers & Qt.ShiftModifier) ? 0.2 : 1.0
+                        dragRatio = Math.max(0, Math.min(1, dragRatio - (mouse.y - lastY) / fader.travel * fine))
+                        lastY = mouse.y
+                        emitRatio()
+                    }
+                    onReleased: strip.volumeCommitted()
+                    onDoubleClicked: strip.volumeSet(1.0)
+                    onWheel: (wheel) => strip.nudgeDb(wheel.angleDelta.y > 0 ? 0.5 : -0.5)
+                }
+
+                ThemedToolTip {
+                    visible: faderMouse.containsMouse || faderMouse.pressed
+                    text: (strip.armed ? qsTr("Mic gain %1 dB") : qsTr("Volume %1 dB")).arg(strip.mixer.formatDb(strip.curDb))
+                          + (faderMouse.pressed ? "" : qsTr(" — Shift-drag for fine, double-click for 0 dB"))
+                }
+            }
+        }
+
+        // Divider
+        Rectangle {
+            anchors.right: parent.right
+            width: 1
+            height: parent.height
+            color: Theme.panelBorder
+        }
+    }
+
+    // Everything below exists only while the mixer is open (or still animating closed), so a
+    // hidden mixer costs no strips, no meter timer and no track-list rebuilds.
+    Loader {
+        id: mixerLoader
+        anchors.fill: parent
+        active: root.mixerVisible || root.width > 0
+        sourceComponent: Item {
+            id: content
+
+            // One strip per track that feeds the mix: audio tracks, and video tracks whose clips carry
+            // their own sound. Unnamed tracks get the "V1"/"A2" label the compact track header uses.
+            readonly property var audioTracksList: {
+                const result = []
+                const allTracks = EditorState.tracks
+                var videoCount = 0
+                var audioCount = 0
+                for (var i = 0; i < allTracks.length; i++) {
+                    const t = allTracks[i]
+                    if (t.type === "video")
+                        videoCount++
+                    else if (t.type === "audio")
+                        audioCount++
+                    else
+                        continue
+                    if (!t.hasAudio)
+                        continue
+                    const isVideo = t.type === "video"
+                    result.push({
+                        trackIndex: i,
+                        isVideo: isVideo,
+                        name: t.name && t.name.length > 0 ? t.name : (isVideo ? "V" + videoCount : "A" + audioCount),
+                        muted: t.muted === true,
+                        solo: t.solo === true,
+                        volume: t.volume !== undefined ? t.volume : 1.0,
+                        pan: t.pan !== undefined ? t.pan : 0.0
+                    })
+                }
+                return result
+            }
+
+            // --- Metering Animation Engine -------------------------------------------
+            property var liveTrackLevels: ({})
+            property var liveTrackPeaks: ({})
+            property var livePeakHoldTimes: ({})
+
+            property real masterLevelL: 0.0
+            property real masterLevelR: 0.0
+            property real masterPeakL: 0.0
+            property real masterPeakR: 0.0
+            property real masterPeakHoldTimeL: 0
+            property real masterPeakHoldTimeR: 0
+
+            Timer {
+                id: meterTimer
+                interval: 30
+                repeat: true
+                running: root.visible && (EditorState.playing || EditorState.isRecordingAudio)
+                onTriggered: {
+                    const now = Date.now()
+                    const decay = 0.04
+                    const peakDecay = 0.02
+                    const newLevels = {}
+                    const newPeaks = {}
+                    const newTimes = Object.assign({}, content.livePeakHoldTimes)
+
+                    for (var i = 0; i < content.audioTracksList.length; i++) {
+                        const ti = content.audioTracksList[i].trackIndex
+                        const raw = EditorState.trackAudioLevels(ti)
+                        const targetL = raw ? (raw.left || 0.0) : 0.0
+                        const targetR = raw ? (raw.right || 0.0) : 0.0
+
+                        const cur = content.liveTrackLevels[ti] || { l: 0.0, r: 0.0 }
+                        const curPeaks = content.liveTrackPeaks[ti] || { l: 0.0, r: 0.0 }
+                        var holdTimes = newTimes[ti] || { l: 0, r: 0 }
+
+                        // Instant attack, linear release
+                        const l = targetL >= cur.l ? targetL : Math.max(0.0, cur.l - decay)
+                        const r = targetR >= cur.r ? targetR : Math.max(0.0, cur.r - decay)
+
+                        var pkL = curPeaks.l
+                        if (targetL >= pkL) {
+                            pkL = targetL
+                            holdTimes.l = now
+                        } else if (now - holdTimes.l > 1200) {
+                            pkL = Math.max(0.0, pkL - peakDecay)
+                        }
+
+                        var pkR = curPeaks.r
+                        if (targetR >= pkR) {
+                            pkR = targetR
+                            holdTimes.r = now
+                        } else if (now - holdTimes.r > 1200) {
+                            pkR = Math.max(0.0, pkR - peakDecay)
+                        }
+
+                        newLevels[ti] = { l: l, r: r }
+                        newPeaks[ti] = { l: pkL, r: pkR }
+                        newTimes[ti] = holdTimes
+                    }
+                    content.liveTrackLevels = newLevels
+                    content.liveTrackPeaks = newPeaks
+                    content.livePeakHoldTimes = newTimes
+
+                    const mRaw = EditorState.masterAudioLevels()
+                    const mTargetL = mRaw ? (mRaw.left || 0.0) : 0.0
+                    const mTargetR = mRaw ? (mRaw.right || 0.0) : 0.0
+
+                    content.masterLevelL = mTargetL >= content.masterLevelL ? mTargetL : Math.max(0.0, content.masterLevelL - decay)
+                    content.masterLevelR = mTargetR >= content.masterLevelR ? mTargetR : Math.max(0.0, content.masterLevelR - decay)
+
+                    if (mTargetL >= content.masterPeakL) {
+                        content.masterPeakL = mTargetL
+                        content.masterPeakHoldTimeL = now
+                    } else if (now - content.masterPeakHoldTimeL > 1200) {
+                        content.masterPeakL = Math.max(0.0, content.masterPeakL - peakDecay)
+                    }
+
+                    if (mTargetR >= content.masterPeakR) {
+                        content.masterPeakR = mTargetR
+                        content.masterPeakHoldTimeR = now
+                    } else if (now - content.masterPeakHoldTimeR > 1200) {
+                        content.masterPeakR = Math.max(0.0, content.masterPeakR - peakDecay)
+                    }
+                }
+            }
+
+            function resetMeters() {
+                if (EditorState.playing || EditorState.isRecordingAudio)
+                    return
+                liveTrackLevels = ({})
+                liveTrackPeaks = ({})
+                masterLevelL = 0.0
+                masterLevelR = 0.0
+                masterPeakL = 0.0
+                masterPeakR = 0.0
+            }
+
+            Connections {
+                target: EditorState
+                function onPlayingChanged() { content.resetMeters() }
+                function onAudioRecordingStateChanged() { content.resetMeters() }
+            }
+
+
+            // === Layout ==============================================================
 
             Column {
                 anchors.fill: parent
-                anchors.margins: 4
-                spacing: 3
+                anchors.leftMargin: 1
 
-                // --- Row 1: Recording Status, Timer & Transport Action Buttons ---
+                // --- Header ----------------------------------------------------------------
                 Item {
+                    id: topHeader
                     width: parent.width
-                    height: 22
+                    height: Theme.timelineRulerHeight + Theme.timelineBookmarkRowHeight
 
-                    // Status pill & timer
                     Row {
                         anchors.left: parent.left
+                        anchors.leftMargin: Theme.spacingLg + 2
+                        anchors.right: headerCloseBtn.left
+                        anchors.rightMargin: Theme.spacingSm
                         anchors.verticalCenter: parent.verticalCenter
-                        spacing: 5
+                        spacing: Theme.spacingMd
+                        clip: true
 
-                        Rectangle {
-                            width: 8
-                            height: 8
-                            radius: 4
-                            color: EditorState.isAudioRecordingPaused ? "#eab308" : Theme.destructive
-                            anchors.verticalCenter: parent.verticalCenter
-                            SequentialAnimation on opacity {
-                                running: voPanel.visible && !EditorState.isAudioRecordingPaused
-                                loops: Animation.Infinite
-                                NumberAnimation { to: 0.2; duration: 400 }
-                                NumberAnimation { to: 1.0; duration: 400 }
-                            }
-                        }
-
-                        Text {
-                            text: EditorState.isAudioRecordingPaused ? qsTr("PAUSED") : qsTr("REC")
-                            font.bold: true
-                            font.pixelSize: 10
-                            color: EditorState.isAudioRecordingPaused ? "#d97706" : Theme.destructive
+                        IconGlyph {
+                            glyph: Theme.icons.slidersVertical
+                            iconSize: Theme.iconSizeMd
+                            iconColor: Theme.mutedForeground
                             anchors.verticalCenter: parent.verticalCenter
                         }
 
                         Text {
-                            text: {
-                                const secs = EditorState.audioRecordSeconds
-                                const m = Math.floor(secs / 60)
-                                const s = Math.floor(secs % 60)
-                                const ms = Math.floor((secs % 1) * 10)
-                                return (m < 10 ? "0" + m : m) + ":" + (s < 10 ? "0" + s : s) + "." + ms
-                            }
-                            font.family: Theme.monoFontFamily
-                            font.bold: true
-                            font.pixelSize: 11
+                            text: qsTr("Audio Mixer")
                             color: Theme.panelForeground
+                            font.family: Theme.fontFamily
+                            font.pixelSize: Theme.fontSizeSm
+                            font.weight: Font.DemiBold
+                            elide: Text.ElideRight
+                            width: Math.max(0, parent.width - Theme.iconSizeMd - parent.spacing)
                             anchors.verticalCenter: parent.verticalCenter
                         }
                     }
 
-                    // Transport Actions (Pause, Done, Discard)
-                    Row {
+                    IconButton {
+                        id: headerCloseBtn
                         anchors.right: parent.right
+                        anchors.rightMargin: Theme.spacingSm
                         anchors.verticalCenter: parent.verticalCenter
-                        spacing: 2
-
-                        IconButton {
-                            glyph: EditorState.isAudioRecordingPaused ? Theme.icons.play : Theme.icons.pause
-                            variant: "text"
-                            anchors.verticalCenter: parent.verticalCenter
-                            tooltip: EditorState.isAudioRecordingPaused ? qsTr("Resume recording") : qsTr("Pause recording")
-                            onClicked: EditorState.toggleAudioRecordingPause()
-                        }
-
-                        IconButton {
-                            glyph: Theme.icons.check
-                            variant: "text"
-                            anchors.verticalCenter: parent.verticalCenter
-                            tooltip: qsTr("Done — save recording to track")
-                            onClicked: EditorState.stopAudioRecording()
-                        }
-
-                        IconButton {
-                            glyph: Theme.icons.trash
-                            variant: "text"
-                            anchors.verticalCenter: parent.verticalCenter
-                            tooltip: qsTr("Discard — cancel recording")
-                            onClicked: EditorState.cancelAudioRecording()
-                        }
+                        buttonSize: 24
+                        iconSize: Theme.iconSizeMd
+                        glyph: Theme.icons.x
+                        variant: "text"
+                        tooltip: qsTr("Close audio mixer")
+                        onClicked: EditorState.audioMixerVisible = false
                     }
-                }
-
-                // --- Row 2: Microphone Switcher ---
-                Row {
-                    width: parent.width
-                    height: 22
-                    spacing: 6
-
-                    // Microphone Picker Button
-                    Item {
-                        id: voMicPickerBtn
-                        width: Math.min(parent.width, 180)
-                        height: 20
-                        anchors.verticalCenter: parent.verticalCenter
-
-                        Rectangle {
-                            anchors.fill: parent
-                            radius: Theme.radiusSm
-                            color: voMicMouse.containsMouse || voMicMenu.opened
-                                   ? Theme.popoverHover
-                                   : (Theme.darkMode ? Qt.rgba(1, 1, 1, 0.08) : Qt.rgba(0, 0, 0, 0.06))
-                            border.color: Theme.panelBorder
-                            border.width: 1
-                        }
-
-                        Row {
-                            anchors.left: parent.left
-                            anchors.leftMargin: 6
-                            anchors.right: parent.right
-                            anchors.rightMargin: 6
-                            anchors.verticalCenter: parent.verticalCenter
-                            spacing: 4
-
-                            IconGlyph {
-                                glyph: Theme.icons.mic
-                                iconSize: 11
-                                iconColor: Theme.panelForeground
-                                anchors.verticalCenter: parent.verticalCenter
-                            }
-
-                            Text {
-                                text: EditorState.currentMicrophoneName || qsTr("Default Mic")
-                                font.pixelSize: 10
-                                color: Theme.panelForeground
-                                elide: Text.ElideRight
-                                width: Math.max(10, voMicPickerBtn.width - 40)
-                                anchors.verticalCenter: parent.verticalCenter
-                            }
-
-                            IconGlyph {
-                                glyph: Theme.icons.chevronDown
-                                iconSize: 9
-                                iconColor: Theme.mutedForeground
-                                anchors.verticalCenter: parent.verticalCenter
-                            }
-                        }
-
-                        MouseArea {
-                            id: voMicMouse
-                            anchors.fill: parent
-                            hoverEnabled: true
-                            cursorShape: Qt.PointingHandCursor
-                            onClicked: voMicMenu.popup(0, voMicPickerBtn.height + 2)
-                        }
-
-                        ThemedContextMenu {
-                            id: voMicMenu
-                            implicitWidth: 220
-
-                            Instantiator {
-                                model: EditorState.availableMicrophones
-                                delegate: ThemedMenuItem {
-                                    required property var modelData
-                                    text: modelData.name
-                                    icon.name: modelData.name === EditorState.currentMicrophoneName ? Theme.icons.check : ""
-                                    onTriggered: EditorState.selectMicrophone(modelData.id)
-                                }
-                                onObjectAdded: (index, object) => voMicMenu.insertItem(index, object)
-                                onObjectRemoved: (index, object) => voMicMenu.removeItem(object)
-                            }
-                        }
-
-                        ThemedToolTip {
-                            visible: voMicMouse.containsMouse && !voMicMenu.opened
-                            text: qsTr("Microphone: %1 (click to switch)").arg(EditorState.currentMicrophoneName)
-                        }
-                    }
-                }
-            }
-        }
-
-        // === Channel Strips Area =============================================
-        Flickable {
-            id: stripsFlick
-            width: parent.width
-            height: parent.height - topHeader.height - (voPanel.visible ? voPanel.height : 0)
-            contentWidth: stripsRow.implicitWidth
-            contentHeight: height
-            boundsBehavior: Flickable.StopAtBounds
-            clip: true
-
-            ScrollBar.horizontal: AppScrollBar { policy: ScrollBar.AsNeeded }
-
-            Row {
-                id: stripsRow
-                height: parent.height
-
-                // Empty state when no audio tracks exist
-                Item {
-                    id: addTrackEmptyState
-                    visible: root.audioTracksList.length === 0
-                    width: visible ? 62 : 0
-                    height: parent.height
 
                     Rectangle {
-                        anchors.fill: parent
-                        anchors.margins: 4
-                        radius: 4
-                        color: addTrackMouse.containsMouse ? root.hoverBg : "transparent"
-                        border.color: addTrackMouse.containsMouse ? Theme.primary : Theme.panelBorder
-                        border.width: 1
-
-                        Column {
-                            anchors.centerIn: parent
-                            spacing: 8
-                            width: parent.width - 8
-
-                            Rectangle {
-                                width: 28
-                                height: 28
-                                radius: 14
-                                anchors.horizontalCenter: parent.horizontalCenter
-                                color: addTrackMouse.containsMouse
-                                    ? Qt.rgba(Theme.primary.r, Theme.primary.g, Theme.primary.b, 0.15)
-                                    : Qt.rgba(Theme.panelForeground.r, Theme.panelForeground.g, Theme.panelForeground.b, 0.06)
-
-                                IconGlyph {
-                                    anchors.centerIn: parent
-                                    glyph: Theme.icons.plus
-                                    iconSize: 14
-                                    iconColor: addTrackMouse.containsMouse ? Theme.primary : Theme.mutedForeground
-                                }
-                            }
-
-                            Text {
-                                anchors.horizontalCenter: parent.horizontalCenter
-                                text: qsTr("Add\nAudio\nTrack")
-                                horizontalAlignment: Text.AlignHCenter
-                                font.family: Theme.fontFamily
-                                font.pixelSize: 10
-                                font.bold: true
-                                color: addTrackMouse.containsMouse ? Theme.primary : Theme.mutedForeground
-                                lineHeight: 1.1
-                            }
-                        }
-
-                        ThemedToolTip {
-                            visible: addTrackMouse.containsMouse
-                            text: qsTr("Click to add an audio track")
-                        }
-
-                        MouseArea {
-                            id: addTrackMouse
-                            anchors.fill: parent
-                            hoverEnabled: true
-                            cursorShape: Qt.PointingHandCursor
-                            onClicked: EditorState.addTrack("audio")
-                        }
-                    }
-
-                    // Right border divider
-                    Rectangle {
-                        anchors.right: parent.right
-                        width: 1
-                        height: parent.height
+                        anchors.bottom: parent.bottom
+                        width: parent.width
+                        height: 1
                         color: Theme.panelBorder
                     }
                 }
 
-                // Channel strip per audio track
-                Repeater {
-                    model: root.audioTracksList
+                // --- Voiceover recording controls (only while recording) ---------------------
+                Rectangle {
+                    id: voPanel
+                    visible: EditorState.isRecordingAudio
+                    width: parent.width
+                    height: visible ? 60 : 0
+                    clip: true
+                    color: EditorState.isAudioRecordingPaused
+                           ? Qt.rgba(0.92, 0.70, 0.03, Theme.darkMode ? 0.10 : 0.07)
+                           : Qt.rgba(Theme.destructive.r, Theme.destructive.g, Theme.destructive.b, Theme.darkMode ? 0.08 : 0.05)
 
-                    delegate: Item {
-                        id: trackStrip
-                        required property var modelData
-                        required property int index
+                    Behavior on height {
+                        NumberAnimation { duration: Theme.durationBase; easing.type: Theme.easing }
+                    }
 
-                        readonly property int trackIndex: modelData.trackIndex
-                        readonly property string trackName: modelData.name
-                        readonly property string shortName: modelData.shortName
-                        readonly property bool trackMuted: modelData.muted
-                        readonly property bool trackSolo: modelData.solo
-                        readonly property real trackVol: modelData.volume
-                        readonly property real trackPan: modelData.pan
-                        readonly property bool isRecordingHere:
-                            EditorState.isRecordingAudio && EditorState.recordingTrackIndex === trackIndex
+                    Rectangle {
+                        anchors.bottom: parent.bottom
+                        width: parent.width
+                        height: 1
+                        color: Theme.panelBorder
+                    }
 
-                        readonly property var curLevels: root.liveTrackLevels[trackIndex] || { l: 0.0, r: 0.0 }
-                        readonly property var curPeaks: root.liveTrackPeaks[trackIndex] || { l: 0.0, r: 0.0 }
+                    Column {
+                        anchors.fill: parent
+                        anchors.leftMargin: Theme.spacingLg
+                        anchors.rightMargin: Theme.spacingSm
+                        anchors.topMargin: Theme.spacingSm
+                        spacing: Theme.spacingXs
 
-                        width: 62
-                        height: parent.height
+                        Item {
+                            width: parent.width
+                            height: 26
 
-                        // Channel strip background
-                        Rectangle {
-                            anchors.fill: parent
-                            color: trackStrip.isRecordingHere
-                                   ? (Theme.darkMode ? Qt.rgba(0.9, 0.1, 0.1, 0.08) : Qt.rgba(0.9, 0.1, 0.1, 0.04))
-                                   : "transparent"
-                        }
-
-                        // Right border divider
-                        Rectangle {
-                            anchors.right: parent.right
-                            width: 1
-                            height: parent.height
-                            color: Theme.panelBorder
-                        }
-
-                        Column {
-                            anchors.fill: parent
-                            anchors.margins: 2
-                            spacing: 2
-
-                            // --- 1. Track Name Header ------------------------
-                            Rectangle {
-                                width: parent.width
-                                height: 22
-                                radius: 2
-                                color: trackStrip.isRecordingHere
-                                       ? (Theme.darkMode ? Qt.rgba(0.9, 0.1, 0.1, 0.25) : Qt.rgba(0.9, 0.1, 0.1, 0.12))
-                                       : root.headerBg
-                                border.color: trackStrip.isRecordingHere ? Theme.destructive : Theme.panelBorder
-                                border.width: 1
-
-                                Text {
-                                    anchors.centerIn: parent
-                                    text: trackStrip.shortName
-                                    font.bold: true
-                                    font.pixelSize: 11
-                                    color: trackStrip.isRecordingHere ? Theme.destructive : Theme.panelForeground
-                                }
-
-                                ThemedToolTip {
-                                    visible: headerMouse.containsMouse
-                                    text: trackStrip.trackName + (trackStrip.isRecordingHere ? qsTr(" (Recording)") : "")
-                                }
-                                MouseArea {
-                                    id: headerMouse
-                                    anchors.fill: parent
-                                    hoverEnabled: true
-                                }
-                            }
-
-                            // --- 2. 3-Button Row: Mute, Solo, Record ---------
                             Row {
-                                anchors.horizontalCenter: parent.horizontalCenter
-                                spacing: 2
-                                height: 22
+                                anchors.left: parent.left
+                                anchors.verticalCenter: parent.verticalCenter
+                                spacing: Theme.spacingMd
 
-                                // Mute Button
                                 Rectangle {
-                                    width: 18
-                                    height: 18
-                                    radius: 2
+                                    width: 8
+                                    height: 8
+                                    radius: 4
+                                    color: EditorState.isAudioRecordingPaused ? "#eab308" : Theme.destructive
                                     anchors.verticalCenter: parent.verticalCenter
-                                    color: trackStrip.trackMuted
-                                           ? Qt.rgba(Theme.destructive.r, Theme.destructive.g, Theme.destructive.b, 0.25)
-                                           : (muteMouse.containsMouse ? root.hoverBg : "transparent")
-                                    border.color: trackStrip.trackMuted ? Theme.destructive : "transparent"
-                                    border.width: 1
-
-                                    IconGlyph {
-                                        anchors.centerIn: parent
-                                        glyph: trackStrip.trackMuted ? Theme.icons.volumeOff : Theme.icons.volumeHigh
-                                        iconSize: 12
-                                        iconColor: trackStrip.trackMuted ? Theme.destructive : Theme.mutedForeground
+                                    SequentialAnimation on opacity {
+                                        running: voPanel.visible && !EditorState.isAudioRecordingPaused
+                                        loops: Animation.Infinite
+                                        NumberAnimation { to: 0.3; duration: 450 }
+                                        NumberAnimation { to: 1.0; duration: 450 }
                                     }
-
-                                    ThemedToolTip {
-                                        visible: muteMouse.containsMouse
-                                        text: trackStrip.trackMuted ? qsTr("Unmute") : qsTr("Mute")
-                                    }
-                                    MouseArea {
-                                        id: muteMouse
-                                        anchors.fill: parent
-                                        hoverEnabled: true
-                                        cursorShape: Qt.PointingHandCursor
-                                        onClicked: EditorState.setTrackMuted(trackStrip.trackIndex, !trackStrip.trackMuted)
-                                    }
-                                }
-
-                                // Solo Button
-                                Rectangle {
-                                    width: 18
-                                    height: 18
-                                    radius: 2
-                                    anchors.verticalCenter: parent.verticalCenter
-                                    color: trackStrip.trackSolo
-                                           ? Qt.rgba(0.2, 0.5, 0.9, 0.25)
-                                           : (soloMouse.containsMouse ? root.hoverBg : "transparent")
-                                    border.color: trackStrip.trackSolo ? "#38bdf8" : "transparent"
-                                    border.width: 1
-
-                                    IconGlyph {
-                                        anchors.centerIn: parent
-                                        glyph: Theme.icons.headphones
-                                        iconSize: 12
-                                        iconColor: trackStrip.trackSolo ? "#38bdf8" : Theme.mutedForeground
-                                    }
-
-                                    ThemedToolTip {
-                                        visible: soloMouse.containsMouse
-                                        text: trackStrip.trackSolo ? qsTr("Unsolo") : qsTr("Solo")
-                                    }
-                                    MouseArea {
-                                        id: soloMouse
-                                        anchors.fill: parent
-                                        hoverEnabled: true
-                                        cursorShape: Qt.PointingHandCursor
-                                        onClicked: EditorState.setTrackSolo(trackStrip.trackIndex, !trackStrip.trackSolo)
-                                    }
-                                }
-
-                                // Record Arm Button (Red Dot 🔴)
-                                Rectangle {
-                                    width: 18
-                                    height: 18
-                                    radius: 2
-                                    anchors.verticalCenter: parent.verticalCenter
-                                    color: trackStrip.isRecordingHere
-                                           ? Qt.rgba(0.9, 0.1, 0.1, 0.3)
-                                           : (recMouse.containsMouse ? root.hoverBg : "transparent")
-                                    border.color: trackStrip.isRecordingHere ? Theme.destructive : "transparent"
-                                    border.width: 1
-
-                                    Rectangle {
-                                        anchors.centerIn: parent
-                                        width: 8
-                                        height: 8
-                                        radius: 4
-                                        color: trackStrip.isRecordingHere
-                                               ? (EditorState.isAudioRecordingPaused ? "#eab308" : Theme.destructive)
-                                               : (recMouse.containsMouse ? Theme.destructive : "#7f1d1d")
-
-                                        SequentialAnimation on opacity {
-                                            running: trackStrip.isRecordingHere && !EditorState.isAudioRecordingPaused
-                                            loops: Animation.Infinite
-                                            NumberAnimation { to: 0.2; duration: 400 }
-                                            NumberAnimation { to: 1.0; duration: 400 }
-                                        }
-                                    }
-
-                                    ThemedToolTip {
-                                        visible: recMouse.containsMouse
-                                        text: trackStrip.isRecordingHere
-                                              ? (EditorState.isAudioRecordingPaused ? qsTr("Recording paused — click to finish") : qsTr("Recording — click to finish"))
-                                              : qsTr("Record voiceover on %1").arg(trackStrip.shortName)
-                                    }
-                                    MouseArea {
-                                        id: recMouse
-                                        anchors.fill: parent
-                                        hoverEnabled: true
-                                        cursorShape: Qt.PointingHandCursor
-                                        onClicked: {
-                                            if (trackStrip.isRecordingHere) {
-                                                EditorState.stopAudioRecording()
-                                            } else {
-                                                EditorState.startAudioRecording(trackStrip.trackIndex)
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-
-                            // --- 3. Circular Rotary Pan Knob -----------------
-                            Item {
-                                width: 36
-                                height: 36
-                                anchors.horizontalCenter: parent.horizontalCenter
-
-                                Canvas {
-                                    id: panCanvas
-                                    anchors.fill: parent
-                                    antialiasing: true
-
-                                    readonly property real currentPan: trackStrip.trackPan
-
-                                    onCurrentPanChanged: requestPaint()
-
-                                    onPaint: {
-                                        const ctx = getContext("2d")
-                                        ctx.reset()
-                                        const cx = width / 2
-                                        const cy = height / 2
-                                        const r = 12
-
-                                        // Total sweep: 135 deg to 405 deg (270 deg span)
-                                        // 0 pan is at 270 deg (top center / 12 o'clock)
-                                        const startAngle = 135 * Math.PI / 180
-                                        const endAngle = 405 * Math.PI / 180
-                                        const centerAngle = 270 * Math.PI / 180
-                                        const targetAngle = centerAngle + currentPan * (135 * Math.PI / 180)
-
-                                        // Background arc (slate grey)
-                                        ctx.beginPath()
-                                        ctx.arc(cx, cy, r, startAngle, endAngle, false)
-                                        ctx.lineWidth = 3
-                                        ctx.strokeStyle = Theme.darkMode ? "#475569" : "#cbd5e1"
-                                        ctx.lineCap = "round"
-                                        ctx.stroke()
-
-                                        // Active arc (cyan / blue)
-                                        if (Math.abs(currentPan) > 0.005) {
-                                            ctx.beginPath()
-                                            if (currentPan < 0) {
-                                                ctx.arc(cx, cy, r, targetAngle, centerAngle, false)
-                                            } else {
-                                                ctx.arc(cx, cy, r, centerAngle, targetAngle, false)
-                                            }
-                                            ctx.lineWidth = 3
-                                            ctx.strokeStyle = Theme.darkMode ? "#38bdf8" : "#0284c7"
-                                            ctx.lineCap = "round"
-                                            ctx.stroke()
-                                        }
-
-                                        // Handle circle at targetAngle
-                                        const hx = cx + r * Math.cos(targetAngle)
-                                        const hy = cy + r * Math.sin(targetAngle)
-                                        ctx.beginPath()
-                                        ctx.arc(hx, hy, 4, 0, 2 * Math.PI, false)
-                                        ctx.fillStyle = Theme.darkMode ? "#0f172a" : "#ffffff"
-                                        ctx.fill()
-                                        ctx.lineWidth = 1.5
-                                        ctx.strokeStyle = Theme.darkMode ? "#94a3b8" : "#64748b"
-                                        ctx.stroke()
-                                    }
-                                }
-
-                                MouseArea {
-                                    id: panMouse
-                                    anchors.fill: parent
-                                    hoverEnabled: true
-                                    cursorShape: Qt.SizeVerCursor
-                                    preventStealing: true
-
-                                    property real startY: 0
-                                    property real startPan: 0
-
-                                    onPressed: (mouse) => {
-                                        startY = mouse.y
-                                        startPan = trackStrip.trackPan
-                                    }
-                                    onPositionChanged: (mouse) => {
-                                        if (pressed) {
-                                            const dy = startY - mouse.y
-                                            var newPan = startPan + (dy / 50.0)
-                                            if (Math.abs(newPan) < 0.04) newPan = 0.0
-                                            newPan = Math.max(-1.0, Math.min(1.0, newPan))
-                                            EditorState.previewTrackPan(trackStrip.trackIndex, newPan)
-                                        }
-                                    }
-                                    onReleased: {
-                                        EditorState.setTrackPan(trackStrip.trackIndex, trackStrip.trackPan)
-                                    }
-                                    onDoubleClicked: {
-                                        EditorState.setTrackPan(trackStrip.trackIndex, 0.0)
-                                    }
-                                    onWheel: (wheel) => {
-                                        const delta = wheel.angleDelta.y > 0 ? 0.05 : -0.05
-                                        var p = Math.max(-1.0, Math.min(1.0, trackStrip.trackPan + delta))
-                                        if (Math.abs(p) < 0.03) p = 0.0
-                                        EditorState.setTrackPan(trackStrip.trackIndex, p)
-                                    }
-                                }
-
-                                ThemedToolTip {
-                                    visible: panMouse.containsMouse
-                                    text: qsTr("Pan: %1 (double-click to center)").arg(root.formatPan(trackStrip.trackPan))
-                                }
-                            }
-
-                            // --- 4. Pan Numeric Readout (Spinbox styling) ----
-                            Item {
-                                width: 38
-                                height: 16
-                                anchors.horizontalCenter: parent.horizontalCenter
-
-                                Rectangle {
-                                    anchors.fill: parent
-                                    radius: 2
-                                    color: panReadoutMouse.containsMouse
-                                           ? root.hoverBg
-                                           : (Theme.darkMode ? Qt.rgba(0, 0, 0, 0.35) : Qt.rgba(0, 0, 0, 0.05))
-                                    border.color: Theme.panelBorder
-                                    border.width: 1
                                 }
 
                                 Text {
-                                    anchors.left: parent.left
-                                    anchors.leftMargin: 3
+                                    text: EditorState.isAudioRecordingPaused ? qsTr("Paused") : qsTr("Recording")
+                                    font.family: Theme.fontFamily
+                                    font.pixelSize: Theme.fontSizeXs
+                                    font.weight: Font.DemiBold
+                                    color: EditorState.isAudioRecordingPaused ? "#d97706" : Theme.destructive
                                     anchors.verticalCenter: parent.verticalCenter
-                                    text: root.formatPan(trackStrip.trackPan)
-                                    font.family: Theme.monoFontFamily
-                                    font.pixelSize: 9
-                                    color: Math.abs(trackStrip.trackPan) > 0.01
-                                           ? (Theme.darkMode ? "#38bdf8" : "#0284c7")
-                                           : Theme.mutedForeground
-                                }
-
-                                // Up/down tiny arrows
-                                Column {
-                                    anchors.right: parent.right
-                                    anchors.rightMargin: 2
-                                    anchors.verticalCenter: parent.verticalCenter
-                                    spacing: 1
-
-                                    IconGlyph {
-                                        glyph: Theme.icons.chevronUp
-                                        iconSize: 7
-                                        iconColor: Theme.mutedForeground
-                                    }
-                                    IconGlyph {
-                                        glyph: Theme.icons.chevronDown
-                                        iconSize: 7
-                                        iconColor: Theme.mutedForeground
-                                    }
-                                }
-
-                                MouseArea {
-                                    id: panReadoutMouse
-                                    anchors.fill: parent
-                                    hoverEnabled: true
-                                    cursorShape: Qt.PointingHandCursor
-                                    onDoubleClicked: EditorState.setTrackPan(trackStrip.trackIndex, 0.0)
-                                    onWheel: (wheel) => {
-                                        const delta = wheel.angleDelta.y > 0 ? 0.05 : -0.05
-                                        var p = Math.max(-1.0, Math.min(1.0, trackStrip.trackPan + delta))
-                                        if (Math.abs(p) < 0.03) p = 0.0
-                                        EditorState.setTrackPan(trackStrip.trackIndex, p)
-                                    }
-                                }
-                            }
-
-                            // --- 5. Meter & Fader Main Section ----------------
-                            Item {
-                                id: meterFaderArea
-                                width: parent.width
-                                height: Math.max(120, trackStrip.height - 105)
-
-                                Row {
-                                    anchors.centerIn: parent
-                                    spacing: 4
-                                    height: parent.height
-
-                                    // --- Dual Stereo VU Peak Meter ---------------
-                                    Item {
-                                        id: dualMeter
-                                        width: 22
-                                        height: parent.height
-
-                                        // Meter trough background
-                                        Rectangle {
-                                            anchors.fill: parent
-                                            radius: 2
-                                            color: Theme.darkMode ? "#0f1115" : "#1a1d24"
-                                            border.color: Theme.panelBorder
-                                            border.width: 1
-                                        }
-
-                                        // Left channel bar
-                                        Rectangle {
-                                            id: meterBarL
-                                            anchors.left: parent.left
-                                            anchors.leftMargin: 2
-                                            anchors.bottom: parent.bottom
-                                            anchors.bottomMargin: 1
-                                            width: 7
-                                            height: Math.max(0, Math.min(parent.height - 2,
-                                                root.dbToRatio(root.linearToDb(trackStrip.curLevels.l)) * (parent.height - 2)))
-                                            radius: 1
-                                            gradient: Gradient {
-                                                GradientStop { position: 0.0; color: "#ef4444" }
-                                                GradientStop { position: 0.15; color: "#eab308" }
-                                                GradientStop { position: 0.35; color: "#22c55e" }
-                                                GradientStop { position: 1.0; color: "#15803d" }
-                                            }
-                                        }
-
-                                        // Right channel bar
-                                        Rectangle {
-                                            id: meterBarR
-                                            anchors.right: parent.right
-                                            anchors.rightMargin: 2
-                                            anchors.bottom: parent.bottom
-                                            anchors.bottomMargin: 1
-                                            width: 7
-                                            height: Math.max(0, Math.min(parent.height - 2,
-                                                root.dbToRatio(root.linearToDb(trackStrip.curLevels.r)) * (parent.height - 2)))
-                                            radius: 1
-                                            gradient: Gradient {
-                                                GradientStop { position: 0.0; color: "#ef4444" }
-                                                GradientStop { position: 0.15; color: "#eab308" }
-                                                GradientStop { position: 0.35; color: "#22c55e" }
-                                                GradientStop { position: 1.0; color: "#15803d" }
-                                            }
-                                        }
-
-                                        // Peak hold white line L
-                                        Rectangle {
-                                            anchors.left: parent.left
-                                            anchors.leftMargin: 2
-                                            width: 7
-                                            height: 1
-                                            y: Math.max(1, (dualMeter.height - 2) * (1.0 - root.dbToRatio(root.linearToDb(trackStrip.curPeaks.l))))
-                                            color: "#ffffff"
-                                            visible: trackStrip.curPeaks.l > 0.001
-                                        }
-
-                                        // Peak hold white line R
-                                        Rectangle {
-                                            anchors.right: parent.right
-                                            anchors.rightMargin: 2
-                                            width: 7
-                                            height: 1
-                                            y: Math.max(1, (dualMeter.height - 2) * (1.0 - root.dbToRatio(root.linearToDb(trackStrip.curPeaks.r))))
-                                            color: "#ffffff"
-                                            visible: trackStrip.curPeaks.r > 0.001
-                                        }
-
-                                        // dB Scale markings overlay
-                                        Repeater {
-                                            model: [
-                                                { db: 0,   label: "0" },
-                                                { db: -2,  label: "-2" },
-                                                { db: -5,  label: "-5" },
-                                                { db: -10, label: "-10" },
-                                                { db: -15, label: "-15" },
-                                                { db: -20, label: "-20" },
-                                                { db: -30, label: "-30" },
-                                                { db: -45, label: "-45" }
-                                            ]
-
-                                            delegate: Item {
-                                                id: tickItem
-                                                required property var modelData
-                                                width: dualMeter.width
-                                                height: 1
-                                                y: (dualMeter.height - 2) * (1.0 - root.dbToRatio(modelData.db))
-
-                                                // Divider tick line across bars
-                                                Rectangle {
-                                                    anchors.fill: parent
-                                                    color: Qt.rgba(0, 0, 0, 0.4)
-                                                    height: 1
-                                                }
-
-                                                // Label
-                                                Text {
-                                                    visible: dualMeter.height >= 140 || modelData.db === 0 || modelData.db === -10 || modelData.db === -20
-                                                    anchors.centerIn: parent
-                                                    text: modelData.label
-                                                    font.pixelSize: 6
-                                                    font.family: Theme.monoFontFamily
-                                                    color: Qt.rgba(1, 1, 1, 0.45)
-                                                }
-                                            }
-                                        }
-                                    }
-
-                                    // --- Vertical Fader Slider -------------------
-                                    Item {
-                                        id: faderItem
-                                        width: 18
-                                        height: parent.height
-
-                                        readonly property real curDb: trackStrip.isRecordingHere
-                                            ? root.linearToDb(EditorState.audioRecordGain)
-                                            : root.linearToDb(trackStrip.trackVol)
-                                        readonly property real thumbY: (parent.height - 12) * (1.0 - root.dbToRatio(curDb))
-
-                                        // Vertical track line
-                                        Rectangle {
-                                            anchors.horizontalCenter: parent.horizontalCenter
-                                            anchors.top: parent.top
-                                            anchors.topMargin: 6
-                                            anchors.bottom: parent.bottom
-                                            anchors.bottomMargin: 6
-                                            width: 2
-                                            color: Theme.sliderTrack
-
-                                            // Fill below thumb (Red when recording, Blue when normal)
-                                            Rectangle {
-                                                anchors.left: parent.left
-                                                anchors.right: parent.right
-                                                anchors.bottom: parent.bottom
-                                                anchors.top: parent.top
-                                                anchors.topMargin: faderItem.thumbY
-                                                color: trackStrip.isRecordingHere ? Theme.destructive : Theme.primary
-                                            }
-                                        }
-
-                                        // Fader Thumb Handle
-                                        Rectangle {
-                                            id: faderThumb
-                                            width: 14
-                                            height: 10
-                                            radius: 3
-                                            anchors.horizontalCenter: parent.horizontalCenter
-                                            y: Math.max(0, Math.min(faderItem.height - height, faderItem.thumbY))
-                                            color: faderMouse.pressed
-                                                   ? (trackStrip.isRecordingHere ? Theme.destructive : Theme.primary)
-                                                   : (faderMouse.containsMouse
-                                                      ? (Theme.darkMode ? "#1e293b" : "#f1f5f9")
-                                                      : (Theme.darkMode ? "#0f172a" : "#ffffff"))
-                                            border.color: trackStrip.isRecordingHere
-                                                          ? Theme.destructive
-                                                          : (faderMouse.pressed
-                                                             ? Theme.primaryForeground
-                                                             : (Theme.darkMode ? "#64748b" : "#94a3b8"))
-                                            border.width: 1.5
-
-                                            // Grip groove inside thumb
-                                            Rectangle {
-                                                anchors.centerIn: parent
-                                                width: 6
-                                                height: 1
-                                                color: faderMouse.pressed
-                                                       ? Theme.primaryForeground
-                                                       : (trackStrip.isRecordingHere ? Theme.destructive : (Theme.darkMode ? "#94a3b8" : "#64748b"))
-                                            }
-                                        }
-
-                                        MouseArea {
-                                            id: faderMouse
-                                            anchors.fill: parent
-                                            anchors.margins: -4
-                                            hoverEnabled: true
-                                            cursorShape: Qt.SizeVerCursor
-                                            preventStealing: true
-
-                                            property real startY: 0
-                                            property real startDb: 0
-
-                                            onPressed: (mouse) => {
-                                                startY = mouse.y
-                                                startDb = faderItem.curDb
-                                            }
-                                            onPositionChanged: (mouse) => {
-                                                if (pressed) {
-                                                    const availableH = faderItem.height - 12
-                                                    if (availableH > 0) {
-                                                        const yRatio = Math.max(0.0, Math.min(1.0, 1.0 - (mouse.y - 6) / availableH))
-                                                        var newDb = root.ratioToDb(yRatio)
-                                                        if (Math.abs(newDb) < 0.25) newDb = 0.0
-                                                        if (trackStrip.isRecordingHere) {
-                                                            EditorState.setAudioRecordGain(root.dbToLinear(newDb))
-                                                        } else {
-                                                            EditorState.previewTrackVolume(trackStrip.trackIndex, root.dbToLinear(newDb))
-                                                        }
-                                                    }
-                                                }
-                                            }
-                                            onReleased: {
-                                                if (!trackStrip.isRecordingHere) {
-                                                    EditorState.setTrackVolume(trackStrip.trackIndex, trackStrip.trackVol)
-                                                }
-                                            }
-                                            onDoubleClicked: {
-                                                if (trackStrip.isRecordingHere) {
-                                                    EditorState.setAudioRecordGain(1.0)
-                                                } else {
-                                                    EditorState.setTrackVolume(trackStrip.trackIndex, 1.0)
-                                                }
-                                            }
-                                            onWheel: (wheel) => {
-                                                const step = wheel.angleDelta.y > 0 ? 0.5 : -0.5
-                                                if (trackStrip.isRecordingHere) {
-                                                    var d = root.linearToDb(EditorState.audioRecordGain) + step
-                                                    if (Math.abs(d) < 0.25) d = 0.0
-                                                    EditorState.setAudioRecordGain(root.dbToLinear(d))
-                                                } else {
-                                                    var d = root.linearToDb(trackStrip.trackVol) + step
-                                                    if (Math.abs(d) < 0.25) d = 0.0
-                                                    EditorState.setTrackVolume(trackStrip.trackIndex, root.dbToLinear(d))
-                                                }
-                                            }
-                                        }
-
-                                        ThemedToolTip {
-                                            visible: faderMouse.containsMouse
-                                            text: trackStrip.isRecordingHere
-                                                ? qsTr("Mic Recording Gain: %1 (%2%) — scroll to adjust, double-click to reset 0dB")
-                                                    .arg(root.formatDb(faderItem.curDb))
-                                                    .arg(Math.round(EditorState.audioRecordGain * 100))
-                                                : qsTr("Volume: %1 (double-click to reset 0dB)").arg(root.formatDb(faderItem.curDb))
-                                        }
-                                    }
-                                }
-                            }
-
-                            // --- 6. Bottom Numeric dB Readout ----------------
-                            Item {
-                                width: 56
-                                height: 18
-                                anchors.horizontalCenter: parent.horizontalCenter
-
-                                Rectangle {
-                                    anchors.fill: parent
-                                    radius: 2
-                                    color: dbReadoutMouse.containsMouse
-                                           ? root.hoverBg
-                                           : (Theme.darkMode ? Qt.rgba(0, 0, 0, 0.4) : Qt.rgba(0, 0, 0, 0.05))
-                                    border.color: Theme.panelBorder
-                                    border.width: 1
                                 }
 
                                 Text {
-                                    readonly property real db: trackStrip.isRecordingHere
-                                        ? root.linearToDb(EditorState.audioRecordGain)
-                                        : root.linearToDb(trackStrip.trackVol)
-                                    anchors.left: parent.left
-                                    anchors.leftMargin: 3
-                                    anchors.verticalCenter: parent.verticalCenter
-                                    text: root.formatDb(db)
+                                    text: {
+                                        const secs = EditorState.audioRecordSeconds
+                                        const m = Math.floor(secs / 60)
+                                        const s = Math.floor(secs % 60)
+                                        const ds = Math.floor((secs % 1) * 10)
+                                        return (m < 10 ? "0" + m : m) + ":" + (s < 10 ? "0" + s : s) + "." + ds
+                                    }
                                     font.family: Theme.monoFontFamily
-                                    font.pixelSize: 9
-                                    font.bold: true
-                                    color: trackStrip.isRecordingHere
-                                           ? Theme.destructive
-                                           : (db > 0.05 ? Theme.destructive : Theme.panelForeground)
-                                }
-
-                                Column {
-                                    anchors.right: parent.right
-                                    anchors.rightMargin: 2
+                                    font.pixelSize: Theme.fontSizeXs
+                                    color: Theme.panelForeground
                                     anchors.verticalCenter: parent.verticalCenter
-                                    spacing: 1
+                                }
+                            }
 
-                                    IconGlyph {
-                                        glyph: Theme.icons.chevronUp
-                                        iconSize: 7
-                                        iconColor: Theme.mutedForeground
-                                    }
-                                    IconGlyph {
-                                        glyph: Theme.icons.chevronDown
-                                        iconSize: 7
-                                        iconColor: Theme.mutedForeground
-                                    }
+                            Row {
+                                anchors.right: parent.right
+                                anchors.verticalCenter: parent.verticalCenter
+                                spacing: Theme.spacingXs
+
+                                IconButton {
+                                    buttonSize: 24
+                                    iconSize: Theme.iconSizeMd
+                                    glyph: EditorState.isAudioRecordingPaused ? Theme.icons.play : Theme.icons.pause
+                                    tooltip: EditorState.isAudioRecordingPaused ? qsTr("Resume recording") : qsTr("Pause recording")
+                                    onClicked: EditorState.toggleAudioRecordingPause()
+                                }
+                                IconButton {
+                                    buttonSize: 24
+                                    iconSize: Theme.iconSizeMd
+                                    glyph: Theme.icons.check
+                                    tooltip: qsTr("Done — save recording to track")
+                                    onClicked: EditorState.stopAudioRecording()
+                                }
+                                IconButton {
+                                    buttonSize: 24
+                                    iconSize: Theme.iconSizeMd
+                                    glyph: Theme.icons.trash
+                                    tooltip: qsTr("Discard — cancel recording")
+                                    onClicked: EditorState.cancelAudioRecording()
+                                }
+                            }
+                        }
+
+                        // Microphone picker
+                        Item {
+                            id: voMicPickerBtn
+                            width: Math.min(parent.width, 240)
+                            height: 24
+
+                            Rectangle {
+                                anchors.fill: parent
+                                radius: Theme.radiusXs
+                                color: voMicMouse.containsMouse || voMicMenu.opened ? Theme.popoverHover : Theme.panelAccent
+                                border.color: Theme.panelBorder
+                                border.width: Theme.borderWidth
+                            }
+
+                            Row {
+                                anchors.left: parent.left
+                                anchors.leftMargin: Theme.spacingMd
+                                anchors.right: parent.right
+                                anchors.rightMargin: Theme.spacingMd
+                                anchors.verticalCenter: parent.verticalCenter
+                                spacing: Theme.spacingSm
+
+                                IconGlyph {
+                                    glyph: Theme.icons.mic
+                                    iconSize: Theme.iconSizeSm
+                                    iconColor: Theme.mutedForeground
+                                    anchors.verticalCenter: parent.verticalCenter
                                 }
 
-                                MouseArea {
-                                    id: dbReadoutMouse
-                                    anchors.fill: parent
-                                    hoverEnabled: true
-                                    cursorShape: Qt.PointingHandCursor
-                                    onDoubleClicked: {
-                                        if (trackStrip.isRecordingHere) {
-                                            EditorState.setAudioRecordGain(1.0)
-                                        } else {
-                                            EditorState.setTrackVolume(trackStrip.trackIndex, 1.0)
-                                        }
-                                    }
-                                    onWheel: (wheel) => {
-                                        const step = wheel.angleDelta.y > 0 ? 0.5 : -0.5
-                                        if (trackStrip.isRecordingHere) {
-                                            var d = root.linearToDb(EditorState.audioRecordGain) + step
-                                            if (Math.abs(d) < 0.25) d = 0.0
-                                            EditorState.setAudioRecordGain(root.dbToLinear(d))
-                                        } else {
-                                            var d = root.linearToDb(trackStrip.trackVol) + step
-                                            if (Math.abs(d) < 0.25) d = 0.0
-                                            EditorState.setTrackVolume(trackStrip.trackIndex, root.dbToLinear(d))
-                                        }
-                                    }
+                                Text {
+                                    text: EditorState.currentMicrophoneName || qsTr("Default Mic")
+                                    font.family: Theme.fontFamily
+                                    font.pixelSize: Theme.fontSizeXs
+                                    color: Theme.panelForeground
+                                    elide: Text.ElideRight
+                                    width: Math.max(10, voMicPickerBtn.width - Theme.iconSizeSm * 2 - Theme.spacingMd * 2 - Theme.spacingSm * 2)
+                                    anchors.verticalCenter: parent.verticalCenter
                                 }
 
-                                ThemedToolTip {
-                                    visible: dbReadoutMouse.containsMouse
-                                    text: trackStrip.isRecordingHere
-                                        ? qsTr("Mic recording level in dB — scroll to adjust, double-click to reset to 0dB (100%)")
-                                        : qsTr("Track level in dB — scroll to adjust, double-click to reset to 0dB")
+                                IconGlyph {
+                                    glyph: Theme.icons.chevronDown
+                                    iconSize: Theme.iconSizeSm
+                                    iconColor: Theme.mutedForeground
+                                    anchors.verticalCenter: parent.verticalCenter
                                 }
+                            }
+
+                            MouseArea {
+                                id: voMicMouse
+                                anchors.fill: parent
+                                hoverEnabled: true
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: voMicMenu.popup(0, voMicPickerBtn.height + 2)
+                            }
+
+                            ThemedContextMenu {
+                                id: voMicMenu
+                                implicitWidth: 220
+
+                                Instantiator {
+                                    model: EditorState.availableMicrophones
+                                    delegate: ThemedMenuItem {
+                                        required property var modelData
+                                        text: modelData.name
+                                        icon.name: modelData.name === EditorState.currentMicrophoneName ? Theme.icons.check : ""
+                                        onTriggered: EditorState.selectMicrophone(modelData.id)
+                                    }
+                                    onObjectAdded: (index, object) => voMicMenu.insertItem(index, object)
+                                    onObjectRemoved: (index, object) => voMicMenu.removeItem(object)
+                                }
+                            }
+
+                            ThemedToolTip {
+                                visible: voMicMouse.containsMouse && !voMicMenu.opened
+                                text: qsTr("Microphone: %1 (click to switch)").arg(EditorState.currentMicrophoneName)
                             }
                         }
                     }
                 }
 
-                // === Master Channel Strip ====================================
+                // --- Channel strips --------------------------------------------------------------
                 Item {
-                    id: masterStrip
-                    width: 66
-                    height: parent.height
+                    width: parent.width
+                    height: parent.height - topHeader.height - voPanel.height
 
-                    // Background with slight accent tint
-                    Rectangle {
-                        anchors.fill: parent
-                        color: Qt.rgba(Theme.panelForeground.r, Theme.panelForeground.g, Theme.panelForeground.b, 0.03)
-                    }
+                    Flickable {
+                        id: stripsFlick
+                        anchors.left: masterStrip.right
+                        anchors.right: parent.right
+                        anchors.top: parent.top
+                        anchors.bottom: parent.bottom
+                        contentWidth: stripsRow.width
+                        contentHeight: height
+                        boundsBehavior: Flickable.StopAtBounds
+                        flickableDirection: Flickable.HorizontalFlick
+                        clip: true
 
-                    Column {
-                        anchors.fill: parent
-                        anchors.margins: 2
-                        spacing: 2
+                        ScrollBar.horizontal: AppScrollBar { policy: ScrollBar.AsNeeded }
 
-                        // --- 1. Master Header --------------------------------
-                        Rectangle {
-                            width: parent.width
-                            height: 22
-                            radius: 2
-                            color: root.headerBg
-                            border.color: Theme.panelBorder
-                            border.width: 1
-
-                            Text {
-                                anchors.centerIn: parent
-                                text: qsTr("Master")
-                                font.bold: true
-                                font.pixelSize: 11
-                                color: Theme.primary
-                            }
-                        }
-
-                        // --- 2. Master Buttons -------------------------------
                         Row {
-                            anchors.horizontalCenter: parent.horizontalCenter
-                            spacing: 4
-                            height: 22
+                            id: stripsRow
+                            height: stripsFlick.height
 
-                            // Master Mute Button
-                            Rectangle {
-                                width: 22
-                                height: 18
-                                radius: 2
-                                anchors.verticalCenter: parent.verticalCenter
-                                color: EditorState.masterMuted
-                                       ? Qt.rgba(Theme.destructive.r, Theme.destructive.g, Theme.destructive.b, 0.25)
-                                       : (masterMuteMouse.containsMouse ? root.hoverBg : "transparent")
-                                border.color: EditorState.masterMuted ? Theme.destructive : "transparent"
-                                border.width: 1
-
-                                IconGlyph {
-                                    anchors.centerIn: parent
-                                    glyph: EditorState.masterMuted ? Theme.icons.volumeOff : Theme.icons.volumeHigh
-                                    iconSize: 12
-                                    iconColor: EditorState.masterMuted ? Theme.destructive : Theme.mutedForeground
-                                }
-
-                                ThemedToolTip {
-                                    visible: masterMuteMouse.containsMouse
-                                    text: EditorState.masterMuted ? qsTr("Unmute master") : qsTr("Mute master")
-                                }
-                                MouseArea {
-                                    id: masterMuteMouse
-                                    anchors.fill: parent
-                                    hoverEnabled: true
-                                    cursorShape: Qt.PointingHandCursor
-                                    onClicked: EditorState.masterMuted = !EditorState.masterMuted
-                                }
-                            }
-                        }
-
-                        // --- 3. Master Spacer to align meters -----------------
-                        Item {
-                            width: 36
-                            height: 36
-                            anchors.horizontalCenter: parent.horizontalCenter
-
-                            IconGlyph {
-                                anchors.centerIn: parent
-                                glyph: Theme.icons.audioLines
-                                iconSize: 18
-                                iconColor: Theme.mutedForeground
-                            }
-                        }
-
-                        // --- 4. Master Label Space ----------------------------
-                        Item {
-                            width: 38
-                            height: 16
-                            anchors.horizontalCenter: parent.horizontalCenter
-
-                            Text {
-                                anchors.centerIn: parent
-                                text: qsTr("Main")
-                                font.pixelSize: 9
-                                color: Theme.mutedForeground
-                            }
-                        }
-
-                        // --- 5. Master Meter & Fader Section ------------------
-                        Item {
-                            id: masterMeterFaderArea
-                            width: parent.width
-                            height: Math.max(120, masterStrip.height - 105)
-
-                            Row {
-                                anchors.centerIn: parent
-                                spacing: 4
+                            // Empty state when no audio tracks exist
+                            Item {
+                                visible: content.audioTracksList.length === 0
+                                width: visible ? root.stripWidth : 0
                                 height: parent.height
 
-                                // Master Dual Meter
-                                Item {
-                                    id: masterDualMeter
-                                    width: 22
-                                    height: parent.height
+                                Rectangle {
+                                    anchors.fill: parent
+                                    anchors.margins: Theme.spacingSm
+                                    radius: Theme.radiusSm
+                                    color: addTrackMouse.containsMouse ? Theme.popoverHover : "transparent"
+                                    border.width: Theme.borderWidth
+                                    border.color: addTrackMouse.containsMouse ? Theme.panelMuted : Theme.panelBorder
 
-                                    Rectangle {
-                                        anchors.fill: parent
-                                        radius: 2
-                                        color: Theme.darkMode ? "#0f1115" : "#1a1d24"
-                                        border.color: Theme.panelBorder
-                                        border.width: 1
+                                    Behavior on color {
+                                        ColorAnimation { duration: Theme.durationFast; easing.type: Theme.easing }
                                     }
 
-                                    // L
-                                    Rectangle {
-                                        anchors.left: parent.left
-                                        anchors.leftMargin: 2
-                                        anchors.bottom: parent.bottom
-                                        anchors.bottomMargin: 1
-                                        width: 7
-                                        height: Math.max(0, Math.min(parent.height - 2,
-                                            root.dbToRatio(root.linearToDb(root.masterLevelL)) * (parent.height - 2)))
-                                        radius: 1
-                                        gradient: Gradient {
-                                            GradientStop { position: 0.0; color: "#ef4444" }
-                                            GradientStop { position: 0.15; color: "#eab308" }
-                                            GradientStop { position: 0.35; color: "#22c55e" }
-                                            GradientStop { position: 1.0; color: "#15803d" }
+                                    Column {
+                                        anchors.centerIn: parent
+                                        width: parent.width - Theme.spacingLg
+                                        spacing: Theme.spacingMd
+
+                                        IconGlyph {
+                                            anchors.horizontalCenter: parent.horizontalCenter
+                                            glyph: Theme.icons.plus
+                                            iconSize: Theme.iconSizeBase
+                                            iconColor: addTrackMouse.containsMouse ? Theme.panelForeground : Theme.mutedForeground
                                         }
-                                    }
 
-                                    // R
-                                    Rectangle {
-                                        anchors.right: parent.right
-                                        anchors.rightMargin: 2
-                                        anchors.bottom: parent.bottom
-                                        anchors.bottomMargin: 1
-                                        width: 7
-                                        height: Math.max(0, Math.min(parent.height - 2,
-                                            root.dbToRatio(root.linearToDb(root.masterLevelR)) * (parent.height - 2)))
-                                        radius: 1
-                                        gradient: Gradient {
-                                            GradientStop { position: 0.0; color: "#ef4444" }
-                                            GradientStop { position: 0.15; color: "#eab308" }
-                                            GradientStop { position: 0.35; color: "#22c55e" }
-                                            GradientStop { position: 1.0; color: "#15803d" }
-                                        }
-                                    }
-
-                                    // Peak hold L
-                                    Rectangle {
-                                        anchors.left: parent.left
-                                        anchors.leftMargin: 2
-                                        width: 7
-                                        height: 1
-                                        y: Math.max(1, (masterDualMeter.height - 2) * (1.0 - root.dbToRatio(root.linearToDb(root.masterPeakL))))
-                                        color: "#ffffff"
-                                        visible: root.masterPeakL > 0.001
-                                    }
-
-                                    // Peak hold R
-                                    Rectangle {
-                                        anchors.right: parent.right
-                                        anchors.rightMargin: 2
-                                        width: 7
-                                        height: 1
-                                        y: Math.max(1, (masterDualMeter.height - 2) * (1.0 - root.dbToRatio(root.linearToDb(root.masterPeakR))))
-                                        color: "#ffffff"
-                                        visible: root.masterPeakR > 0.001
-                                    }
-
-                                    // dB markings
-                                    Repeater {
-                                        model: [
-                                            { db: 0,   label: "0" },
-                                            { db: -2,  label: "-2" },
-                                            { db: -5,  label: "-5" },
-                                            { db: -10, label: "-10" },
-                                            { db: -15, label: "-15" },
-                                            { db: -20, label: "-20" },
-                                            { db: -30, label: "-30" },
-                                            { db: -45, label: "-45" }
-                                        ]
-
-                                        delegate: Item {
-                                            required property var modelData
-                                            width: masterDualMeter.width
-                                            height: 1
-                                            y: (masterDualMeter.height - 2) * (1.0 - root.dbToRatio(modelData.db))
-
-                                            Rectangle {
-                                                anchors.fill: parent
-                                                color: Qt.rgba(0, 0, 0, 0.4)
-                                                height: 1
-                                            }
-
-                                            Text {
-                                                visible: masterDualMeter.height >= 140 || modelData.db === 0 || modelData.db === -10 || modelData.db === -20
-                                                anchors.centerIn: parent
-                                                text: modelData.label
-                                                font.pixelSize: 6
-                                                font.family: Theme.monoFontFamily
-                                                color: Qt.rgba(1, 1, 1, 0.45)
-                                            }
-                                        }
-                                    }
-                                }
-
-                                // Master Fader Slider
-                                Item {
-                                    id: masterFaderItem
-                                    width: 18
-                                    height: parent.height
-
-                                    readonly property real curDb: root.linearToDb(EditorState.masterVolume)
-                                    readonly property real thumbY: (parent.height - 12) * (1.0 - root.dbToRatio(curDb))
-
-                                    Rectangle {
-                                        anchors.horizontalCenter: parent.horizontalCenter
-                                        anchors.top: parent.top
-                                        anchors.topMargin: 6
-                                        anchors.bottom: parent.bottom
-                                        anchors.bottomMargin: 6
-                                        width: 2
-                                        color: Theme.sliderTrack
-
-                                        Rectangle {
-                                            anchors.left: parent.left
-                                            anchors.right: parent.right
-                                            anchors.bottom: parent.bottom
-                                            anchors.top: parent.top
-                                            anchors.topMargin: masterFaderItem.thumbY
-                                            color: Theme.primary
-                                        }
-                                    }
-
-                                    Rectangle {
-                                        id: masterFaderThumb
-                                        width: 14
-                                        height: 10
-                                        radius: 3
-                                        anchors.horizontalCenter: parent.horizontalCenter
-                                        y: Math.max(0, Math.min(masterFaderItem.height - height, masterFaderItem.thumbY))
-                                        color: masterFaderMouse.pressed
-                                               ? Theme.primary
-                                               : (masterFaderMouse.containsMouse
-                                                  ? (Theme.darkMode ? "#1e293b" : "#f1f5f9")
-                                                  : (Theme.darkMode ? "#0f172a" : "#ffffff"))
-                                        border.color: masterFaderMouse.pressed
-                                                      ? Theme.primaryForeground
-                                                      : (Theme.darkMode ? "#64748b" : "#94a3b8")
-                                        border.width: 1.5
-
-                                        Rectangle {
-                                            anchors.centerIn: parent
-                                            width: 6
-                                            height: 1
-                                            color: masterFaderMouse.pressed
-                                                   ? Theme.primaryForeground
-                                                   : (Theme.darkMode ? "#94a3b8" : "#64748b")
+                                        Text {
+                                            width: parent.width
+                                            text: qsTr("Add audio track")
+                                            horizontalAlignment: Text.AlignHCenter
+                                            wrapMode: Text.WordWrap
+                                            font.family: Theme.fontFamily
+                                            font.pixelSize: Theme.fontSizeXs
+                                            color: addTrackMouse.containsMouse ? Theme.panelForeground : Theme.mutedForeground
                                         }
                                     }
 
                                     MouseArea {
-                                        id: masterFaderMouse
+                                        id: addTrackMouse
                                         anchors.fill: parent
-                                        anchors.margins: -4
                                         hoverEnabled: true
-                                        cursorShape: Qt.SizeVerCursor
-                                        preventStealing: true
-
-                                        onPositionChanged: (mouse) => {
-                                            if (pressed) {
-                                                const availableH = masterFaderItem.height - 12
-                                                if (availableH > 0) {
-                                                    const yRatio = Math.max(0.0, Math.min(1.0, 1.0 - (mouse.y - 6) / availableH))
-                                                    var newDb = root.ratioToDb(yRatio)
-                                                    if (Math.abs(newDb) < 0.25) newDb = 0.0
-                                                    EditorState.masterVolume = root.dbToLinear(newDb)
-                                                }
-                                            }
-                                        }
-                                        onDoubleClicked: EditorState.masterVolume = 1.0
-                                        onWheel: (wheel) => {
-                                            const step = wheel.angleDelta.y > 0 ? 0.5 : -0.5
-                                            var d = root.linearToDb(EditorState.masterVolume) + step
-                                            if (Math.abs(d) < 0.25) d = 0.0
-                                            EditorState.masterVolume = root.dbToLinear(d)
-                                        }
-                                    }
-
-                                    ThemedToolTip {
-                                        visible: masterFaderMouse.containsMouse
-                                        text: qsTr("Master Volume: %1 (double-click to reset 0dB)").arg(root.formatDb(root.linearToDb(EditorState.masterVolume)))
+                                        cursorShape: Qt.PointingHandCursor
+                                        onClicked: EditorState.addTrack("audio")
                                     }
                                 }
                             }
-                        }
 
-                        // --- 6. Master Bottom dB Readout ---------------------
-                        Item {
-                            width: 58
-                            height: 18
-                            anchors.horizontalCenter: parent.horizontalCenter
+                            // Count model: previewTrackVolume/Pan rebuild audioTracksList on every drag
+                            // tick, and a list model would recreate the strip under the pressed fader.
+                            Repeater {
+                                model: content.audioTracksList.length
 
-                            Rectangle {
-                                anchors.fill: parent
-                                radius: 2
-                                color: masterDbReadoutMouse.containsMouse
-                                       ? root.hoverBg
-                                       : (Theme.darkMode ? Qt.rgba(0, 0, 0, 0.4) : Qt.rgba(0, 0, 0, 0.05))
-                                border.color: Theme.panelBorder
-                                border.width: 1
-                            }
+                                delegate: ChannelStrip {
+                                    id: trackStrip
+                                    required property int index
+                                    readonly property var modelData: content.audioTracksList[index] || ({})
 
-                            Text {
-                                readonly property real db: root.linearToDb(EditorState.masterVolume)
-                                anchors.left: parent.left
-                                anchors.leftMargin: 3
-                                anchors.verticalCenter: parent.verticalCenter
-                                text: root.formatDb(db)
-                                font.family: Theme.monoFontFamily
-                                font.pixelSize: 9
-                                font.bold: true
-                                color: db > 0.05 ? Theme.destructive : Theme.panelForeground
-                            }
+                                    readonly property int trackIndex: modelData.trackIndex
+                                    readonly property var curLevels: content.liveTrackLevels[trackIndex] || { l: 0.0, r: 0.0 }
+                                    readonly property var curPeaks: content.liveTrackPeaks[trackIndex] || { l: 0.0, r: 0.0 }
 
-                            Column {
-                                anchors.right: parent.right
-                                anchors.rightMargin: 2
-                                anchors.verticalCenter: parent.verticalCenter
-                                spacing: 1
+                                    width: root.stripWidth
+                                    height: stripsRow.height
+                                    mixer: root
+                                    name: modelData.name
+                                    isVideo: modelData.isVideo === true
+                                    canRecord: !isVideo
+                                    muted: modelData.muted
+                                    solo: modelData.solo
+                                    armed: EditorState.isRecordingAudio && EditorState.recordingTrackIndex === trackIndex
+                                    armPaused: EditorState.isAudioRecordingPaused
+                                    volume: armed ? EditorState.audioRecordGain : modelData.volume
+                                    pan: modelData.pan
+                                    levelL: curLevels.l
+                                    levelR: curLevels.r
+                                    peakL: curPeaks.l
+                                    peakR: curPeaks.r
 
-                                IconGlyph {
-                                    glyph: Theme.icons.chevronUp
-                                    iconSize: 7
-                                    iconColor: Theme.mutedForeground
-                                }
-                                IconGlyph {
-                                    glyph: Theme.icons.chevronDown
-                                    iconSize: 7
-                                    iconColor: Theme.mutedForeground
-                                }
-                            }
-
-                            MouseArea {
-                                id: masterDbReadoutMouse
-                                anchors.fill: parent
-                                hoverEnabled: true
-                                cursorShape: Qt.PointingHandCursor
-                                onDoubleClicked: EditorState.masterVolume = 1.0
-                                onWheel: (wheel) => {
-                                    const step = wheel.angleDelta.y > 0 ? 0.5 : -0.5
-                                    var d = root.linearToDb(EditorState.masterVolume) + step
-                                    if (Math.abs(d) < 0.25) d = 0.0
-                                    EditorState.masterVolume = root.dbToLinear(d)
+                                    onMuteToggled: EditorState.setTrackMuted(trackIndex, !muted)
+                                    onSoloToggled: EditorState.setTrackSolo(trackIndex, !solo)
+                                    onArmToggled: {
+                                        if (armed)
+                                            EditorState.stopAudioRecording()
+                                        else
+                                            EditorState.startAudioRecording(trackIndex)
+                                    }
+                                    onVolumePreviewed: (gain) => {
+                                        if (armed)
+                                            EditorState.setAudioRecordGain(gain)
+                                        else
+                                            EditorState.previewTrackVolume(trackIndex, gain)
+                                    }
+                                    onVolumeCommitted: {
+                                        if (!armed)
+                                            EditorState.setTrackVolume(trackIndex, modelData.volume)
+                                    }
+                                    onVolumeSet: (gain) => {
+                                        if (armed)
+                                            EditorState.setAudioRecordGain(gain)
+                                        else
+                                            EditorState.setTrackVolume(trackIndex, gain)
+                                    }
+                                    onPanPreviewed: (value) => EditorState.previewTrackPan(trackIndex, value)
+                                    onPanCommitted: EditorState.setTrackPan(trackIndex, modelData.pan)
+                                    onPanSet: (value) => EditorState.setTrackPan(trackIndex, value)
                                 }
                             }
                         }
                     }
+
+                    ChannelStrip {
+                        id: masterStrip
+                        anchors.left: parent.left
+                        width: root.stripWidth
+                        height: parent.height
+                        mixer: root
+                        master: true
+                        name: qsTr("Master")
+                        muted: EditorState.masterMuted
+                        volume: EditorState.masterVolume
+                        levelL: content.masterLevelL
+                        levelR: content.masterLevelR
+                        peakL: content.masterPeakL
+                        peakR: content.masterPeakR
+
+                        onMuteToggled: EditorState.masterMuted = !EditorState.masterMuted
+                        onVolumePreviewed: (gain) => EditorState.masterVolume = gain
+                        onVolumeSet: (gain) => EditorState.masterVolume = gain
+
+                        Rectangle {
+                            z: -1
+                            anchors.fill: parent
+                            color: Theme.panelAccent
+                            opacity: 0.5
+                        }
+                    }
+                }
+            }
+
+            // --- Resize handle ---------------------------------------------------------------
+            // Drag the left edge to resize; double-click returns to fitting the strips.
+            MouseArea {
+                id: resizeHandle
+                anchors.left: parent.left
+                anchors.top: parent.top
+                anchors.bottom: parent.bottom
+                width: 6
+                z: 50
+                hoverEnabled: true
+                cursorShape: Qt.SplitHCursor
+                preventStealing: true
+
+                property real pressGlobalX: 0
+                property real pressWidth: 0
+
+                onPressedChanged: root.resizing = pressed
+                onPressed: (mouse) => {
+                    pressGlobalX = mapToItem(null, mouse.x, 0).x
+                    pressWidth = root.width
+                    Haptics.pickUp()
+                }
+                onPositionChanged: (mouse) => {
+                    if (!pressed)
+                        return
+                    const dx = mapToItem(null, mouse.x, 0).x - pressGlobalX
+                    EditorState.audioMixerWidth = Math.max(root.minMixerWidth, Math.min(root.maxMixerWidth, pressWidth - dx))
+                }
+                onReleased: Haptics.drop()
+                onDoubleClicked: EditorState.audioMixerWidth = 0
+
+                // Resting edge line; turns amber while the handle is hovered or dragged.
+                Rectangle {
+                    anchors.left: parent.left
+                    width: resizeHandle.pressed || resizeHandle.containsMouse ? 2 : 1
+                    height: parent.height
+                    color: resizeHandle.pressed || resizeHandle.containsMouse ? Theme.primary : Theme.panelBorder
+
+                    Behavior on color {
+                        ColorAnimation { duration: Theme.durationFast; easing.type: Theme.easing }
+                    }
+                }
+
+                ThemedToolTip {
+                    visible: resizeHandle.containsMouse && !resizeHandle.pressed
+                    text: qsTr("Drag to resize — double-click to fit")
                 }
             }
         }

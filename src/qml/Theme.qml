@@ -636,6 +636,7 @@ QtObject {
         wand: "wand-sparkles",
         sparkles: "sparkles",
         sliders: "sliders-horizontal",
+        slidersVertical: "sliders-vertical",
         settings: "settings",
         upload: "upload",
         plus: "plus",
