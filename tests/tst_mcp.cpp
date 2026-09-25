@@ -580,6 +580,16 @@ void McpTest::serverNotificationReturns202()
 // act on it.
 void McpTest::mcpStartOnLaunchAppliesOnlyWhenInvoked()
 {
+    // Without an organization name QSettings can't write on Windows.
+    const QString org = QCoreApplication::organizationName();
+    const QString app = QCoreApplication::applicationName();
+    QCoreApplication::setOrganizationName(QStringLiteral("DriftMcpTest"));
+    QCoreApplication::setApplicationName(QStringLiteral("DriftMcpTest"));
+    const auto restore = qScopeGuard([&] {
+        QSettings().remove(QStringLiteral("mcp/startOnLaunch"));
+        QCoreApplication::setOrganizationName(org);
+        QCoreApplication::setApplicationName(app);
+    });
     QTemporaryDir dir;
     qputenv("DRIFT_MCP_SESSION_PATH", dir.filePath(QStringLiteral("s.json")).toUtf8());
     QSettings().setValue(QStringLiteral("mcp/startOnLaunch"), true);
@@ -593,7 +603,6 @@ void McpTest::mcpStartOnLaunchAppliesOnlyWhenInvoked()
     QVERIFY2(state.mcpRunning(), qPrintable(state.mcpError()));
 
     state.setMcpEnabled(false);
-    QSettings().remove(QStringLiteral("mcp/startOnLaunch"));
     qunsetenv("DRIFT_MCP_SESSION_PATH");
 }
 
@@ -602,6 +611,16 @@ void McpTest::mcpStartOnLaunchAppliesOnlyWhenInvoked()
 // nobody currently wants, silently.
 void McpTest::mcpDisablingResetsStartOnLaunch()
 {
+    // Without an organization name QSettings can't write on Windows.
+    const QString org = QCoreApplication::organizationName();
+    const QString app = QCoreApplication::applicationName();
+    QCoreApplication::setOrganizationName(QStringLiteral("DriftMcpTest"));
+    QCoreApplication::setApplicationName(QStringLiteral("DriftMcpTest"));
+    const auto restore = qScopeGuard([&] {
+        QSettings().remove(QStringLiteral("mcp/startOnLaunch"));
+        QCoreApplication::setOrganizationName(org);
+        QCoreApplication::setApplicationName(app);
+    });
     QTemporaryDir dir;
     qputenv("DRIFT_MCP_SESSION_PATH", dir.filePath(QStringLiteral("s.json")).toUtf8());
     QSettings().remove(QStringLiteral("mcp/startOnLaunch"));

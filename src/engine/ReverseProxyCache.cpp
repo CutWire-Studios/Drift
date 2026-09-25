@@ -1,4 +1,5 @@
 #include "ReverseProxyCache.h"
+#include "ClipReaderPool.h"
 
 #include <QDateTime>
 #include <QDir>
@@ -180,20 +181,29 @@ void ReverseProxyCache::removePreview(const QString &sourcePath)
     if (sourcePath.isEmpty())
         return;
 
-    QMutexLocker lock(&m_mutex);
-    const auto it = m_entries.find(QFileInfo(sourcePath).absoluteFilePath());
-    if (it == m_entries.end())
-        return;
-    QList<Entry> &list = it.value();
-    for (int i = list.size() - 1; i >= 0; --i) {
-        if (list.at(i).preview) {
-            QFile::remove(list.at(i).proxyPath);
-            list.removeAt(i);
+    QStringList removed;
+    {
+        QMutexLocker lock(&m_mutex);
+        const auto it = m_entries.find(QFileInfo(sourcePath).absoluteFilePath());
+        if (it == m_entries.end())
+            return;
+        QList<Entry> &list = it.value();
+        for (int i = list.size() - 1; i >= 0; --i) {
+            if (list.at(i).preview) {
+                removed.append(list.at(i).proxyPath);
+                list.removeAt(i);
+            }
         }
+        if (list.isEmpty())
+            m_entries.erase(it);
+        saveLocked();
     }
-    if (list.isEmpty())
-        m_entries.erase(it);
-    saveLocked();
+    // Outside m_mutex: releasing joins decoder threads, and one may be resolving a read through
+    // this cache.
+    for (const QString &proxyPath : removed) {
+        ClipReaderPool::instance().releasePath(proxyPath);
+        QFile::remove(proxyPath);
+    }
 }
 
 void ReverseProxyCache::saveLocked() const

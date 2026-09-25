@@ -209,6 +209,22 @@ void ClipReaderPool::releaseAll()
         stopWorkerEntry(*entry);
 }
 
+void ClipReaderPool::releasePath(const QString &path)
+{
+    std::vector<std::unique_ptr<WorkerEntry>> evicted;
+    {
+        QMutexLocker lock(&m_mutex);
+        evicted = detachIdleLocked(
+            m_videoWorkers, [&](const VideoKey &key, const WorkerEntry &) { return key.first != path; }, 0);
+        std::vector<std::unique_ptr<WorkerEntry>> audio = detachIdleLocked(
+            m_audioWorkers, [&](const QString &key, const WorkerEntry &) { return key != path; }, 0);
+        evicted.insert(evicted.end(), std::make_move_iterator(audio.begin()),
+                       std::make_move_iterator(audio.end()));
+    }
+    for (const std::unique_ptr<WorkerEntry> &entry : evicted)
+        stopWorkerEntry(*entry);
+}
+
 void ClipReaderPool::setReadAheadUs(drift::TimeUs readAheadUs)
 {
     m_readAheadUs.store(qMax<drift::TimeUs>(0, readAheadUs), std::memory_order_relaxed);

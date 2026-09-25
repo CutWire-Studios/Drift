@@ -120,6 +120,9 @@ public:
     // application-state handler: backgrounding is the one moment where reopening every file later
     // is cheaper than holding the decoders. Callable from any thread except a worker thread.
     void releaseAll();
+    // Same, for one file only — so it can be deleted, which Windows refuses while a decoder
+    // still holds it open.
+    void releasePath(const QString &path);
 
 private:
     ClipReaderPool();
