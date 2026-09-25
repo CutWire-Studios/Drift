@@ -14,6 +14,8 @@
 #   ANDROID_NDK_ROOT the NDK version the Qt kit was built against, NOT simply the newest installed.
 #                    Mixing NDK majors between Qt, FFmpeg and the app produces libc++ symbol
 #                    errors and dlopen failures that get misattributed to something else.
+#   DRIFT_CHANNEL               stable (default) or nightly; sets the reported version string
+#   DRIFT_BUILD_ID              nightly build stamp, YYYYMMDD.<short sha>
 #   DRIFT_ANDROID_PACKAGE_NAME  application id (default org.cutwire.drift.debug for a local
 #                               non-Release build, org.cutwire.drift for Release; CI uses .ci)
 #   DRIFT_ANDROID_APP_NAME      launcher label (default "Drift Debug" / "Drift", same rule)
@@ -69,6 +71,10 @@ else
     : "${DRIFT_ANDROID_PACKAGE_NAME:=org.cutwire.drift.debug}"
     : "${DRIFT_ANDROID_APP_NAME:=Drift Debug}"
 fi
+# The package id and launcher label are set independently above, so the channel here only
+# decides the version string the app reports (0.7.0-nightly.<stamp>).
+: "${DRIFT_CHANNEL:=stable}"
+: "${DRIFT_BUILD_ID:=}"
 : "${QT_ANDROID_ABIS:=$ABI}"
 : "${BUILD_AAB:=0}"
 : "${SKIP_APK:=0}"
@@ -119,6 +125,8 @@ CMAKE_ARGS=(
     -DDRIFT_WITH_SKIA=ON
     -DDRIFT_ANDROID_PACKAGE_NAME="$DRIFT_ANDROID_PACKAGE_NAME"
     -DDRIFT_ANDROID_APP_NAME="$DRIFT_ANDROID_APP_NAME"
+    -DDRIFT_CHANNEL="$DRIFT_CHANNEL"
+    -DDRIFT_BUILD_ID="$DRIFT_BUILD_ID"
 )
 if [ -n "${DRIFT_ANDROID_VERSION_CODE:-}" ]; then
     CMAKE_ARGS+=(-DDRIFT_ANDROID_VERSION_CODE="$DRIFT_ANDROID_VERSION_CODE")

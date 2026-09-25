@@ -5,7 +5,12 @@ import Drift
 Item {
     id: root
 
+    property alias searchText: browser.searchText
+    property alias activeCategory: browser.activeCategory
+    property alias categories: browser.categories
+
     AudioEffectBrowser {
+        id: browser
         anchors.fill: parent
     }
 }

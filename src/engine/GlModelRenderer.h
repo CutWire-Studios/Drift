@@ -5,7 +5,14 @@
 #include "GlRuntime.h"
 
 #include <QOpenGLExtraFunctions>
+#include <QSize>
 #include <QString>
+
+#include <memory>
+
+namespace drift::model3d {
+struct ModelDrawRequest;
+}
 
 namespace drift::gl {
 
@@ -80,6 +87,14 @@ GlTarget resolveFaceOverlay(GlRuntime &rt, QOpenGLExtraFunctions *gl, GlTarget &
 
 // Look up or upload a model. Null when the CPU load fails. Called only on the GL thread.
 GlModelGpu *acquireGlModel(GlRuntime &rt, QOpenGLExtraFunctions *gl, const QString &path);
+// Same, from an asset the caller already resolved so the upload matches its parse exactly.
+GlModelGpu *acquireGlModel(GlRuntime &rt, QOpenGLExtraFunctions *gl, const QString &path,
+                           std::shared_ptr<const ModelAsset> cpu);
+
+// Draw a Model3d clip into a new pooled, straight-alpha layer target the size of the canvas.
+// Invalid on any failure (the compositor then draws nothing for the clip).
+GlTarget drawModelClip(GlRuntime &rt, QOpenGLExtraFunctions *gl,
+                       const model3d::ModelDrawRequest &request, const QSize &canvasSize);
 
 void destroyGlModels(GlRuntime &rt, QOpenGLExtraFunctions *gl);
 

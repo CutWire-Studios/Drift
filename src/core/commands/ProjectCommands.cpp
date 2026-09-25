@@ -8,21 +8,41 @@ ProjectSnapshotCommand::ProjectSnapshotCommand(Project *project, Project before,
     , m_project(project)
     , m_before(std::move(before))
     , m_after(std::move(after))
-    , m_beforeHash(m_before.contentHash())
-    , m_afterHash(m_after.contentHash())
 {
+}
+
+QString ProjectSnapshotCommand::beforeHash() const
+{
+    if (m_beforeHash.isEmpty())
+        m_beforeHash = m_before.contentHash();
+    return m_beforeHash;
+}
+
+QString ProjectSnapshotCommand::afterHash() const
+{
+    if (m_afterHash.isEmpty())
+        m_afterHash = m_after.contentHash();
+    return m_afterHash;
 }
 
 void ProjectSnapshotCommand::undo()
 {
-    if (m_project)
-        *m_project = m_before;
+    restore(m_before);
 }
 
 void ProjectSnapshotCommand::redo()
 {
-    if (m_project)
-        *m_project = m_after;
+    restore(m_after);
+}
+
+void ProjectSnapshotCommand::restore(const Project &snapshot)
+{
+    if (!m_project)
+        return;
+    // Transcripts are not part of the undoable state (see Project::transcript).
+    const QHash<QString, TranscriptPtr> transcripts = m_project->transcripts();
+    *m_project = snapshot;
+    m_project->setTranscripts(transcripts);
 }
 
 } // namespace drift

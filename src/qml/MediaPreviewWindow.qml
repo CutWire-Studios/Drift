@@ -63,7 +63,7 @@ Window {
                                       && (Math.abs(inSeconds - persistedInSeconds) > 0.02
                                           || Math.abs(outSeconds - persistedOutSeconds) > 0.02)
     readonly property bool dirty: cropDirty || trimDirty
-    readonly property bool saving: EditorState.editingAsset
+    readonly property bool saving: EditorState.editingAsset && !EditorState.assetEditIsConversion
 
     width: 920
     height: 680
@@ -202,7 +202,8 @@ Window {
     Connections {
         target: EditorState
         function onAssetEditFinished(ok, message) {
-            if (!ok)
+            // A background frame-rate conversion is not this window's save.
+            if (!ok || EditorState.assetEditIsConversion)
                 return
             player.stop()
             root.close()
@@ -341,6 +342,9 @@ Window {
                 anchors.fill: parent
                 fillMode: Image.PreserveAspectFit
                 asynchronous: true
+                // Capped at the screen: a 48 MP photo decoded whole is ~190 MB.
+                sourceSize: Qt.size(Math.ceil(Screen.width * Screen.devicePixelRatio),
+                                    Math.ceil(Screen.height * Screen.devicePixelRatio))
                 source: root.isImage && root.sourcePath.length > 0
                         ? EditorState.imageUrl(root.sourcePath) : ""
             }

@@ -9,7 +9,12 @@ IconButton {
     property string tabId: ""
     property string itemId: ""
 
-    property bool favorited: false
+    // A binding rather than a one-shot read so a card recycled onto another item re-reads it.
+    property int _favoritesTick: 0
+    readonly property bool favorited: {
+        void _favoritesTick
+        return EditorState.isAssetFavorite(tabId, itemId)
+    }
 
     glyph: Theme.icons.star
     variant: "ghost"
@@ -18,12 +23,10 @@ IconButton {
     active: favorited
     tooltip: favorited ? qsTr("Remove from favorites") : qsTr("Add to favorites")
 
-    Component.onCompleted: favorited = EditorState.isAssetFavorite(tabId, itemId)
-
     Connections {
         target: EditorState
         function onAssetFavoritesChanged() {
-            root.favorited = EditorState.isAssetFavorite(root.tabId, root.itemId)
+            root._favoritesTick++
         }
     }
 

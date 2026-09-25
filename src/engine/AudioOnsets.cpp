@@ -41,6 +41,12 @@ constexpr double kMinBpm = 60.0;
 constexpr double kMaxBpm = 200.0;
 constexpr double kPreferredBpm = 120.0;
 constexpr double kOctaveSigma = 0.9; // width of the log-normal tempo prior
+// A sub-multiple lag has to keep this much of the winner's raw correlation to be preferred. Set
+// below 1.0 because the faster tempo explains strictly more onsets: it is expected to score a
+// little lower on an accented pattern, not higher.
+constexpr double kOctaveAcceptance = 0.55;
+// Two octaves scoring this close to each other means the answer is not really decided.
+constexpr double kOctaveAmbiguous = 0.9;
 constexpr double kMinTempoConfidence = 0.25;
 constexpr double kMinAnalysisSec = AudioOnsets::kMinAnalysisSec;
 
@@ -187,11 +193,17 @@ int estimatePeriod(const std::vector<float> &odf, double framesPerSec, double &c
     double best = 0.0;
     double sum = 0.0;
     int bestLag = 0;
+    std::vector<double> raw(static_cast<size_t>(maxLag) + 1, 0.0);
     for (int lag = minLag; lag <= maxLag; ++lag) {
         double acc = 0.0;
         for (int i = lag; i < n; ++i)
             acc += centered[i] * centered[i - lag];
-        acc /= (n - lag);
+        // Biased estimator: divide by the whole length, not by the number of overlapping samples.
+        // The unbiased form divides by a shrinking count, which inflates long lags exactly where
+        // the half-time candidate sits — and at the end of the search range there is nothing left
+        // to out-score it.
+        acc /= n;
+        raw[static_cast<size_t>(lag)] = acc;
 
         const double bpm = 60.0 * framesPerSec / lag;
         const double d = std::log(bpm / kPreferredBpm) / kOctaveSigma;
@@ -207,9 +219,37 @@ int estimatePeriod(const std::vector<float> &odf, double framesPerSec, double &c
     const double meanCorrelation = sum / (maxLag - minLag + 1);
     if (bestLag == 0 || meanCorrelation <= 1e-12)
         return 0;
+
+    // Octave correction. Music with alternating strong and weak beats correlates *better* at twice
+    // the beat period than at the beat itself, so raw correlation alone reliably picks half time —
+    // it reported 60 BPM on a 120 BPM track, with full confidence. A sub-multiple that still
+    // carries most of the winner's correlation is the better answer, because it explains the same
+    // peaks and more besides. The prior alone cannot do this: at half time it costs only ~26%.
+    const int firstChoice = bestLag;
+    for (int divisor : {2, 3}) {
+        for (;;) {
+            const int candidate = bestLag / divisor;
+            if (bestLag % divisor != 0 || candidate < minLag)
+                break;
+            if (raw[static_cast<size_t>(candidate)] < kOctaveAcceptance * raw[static_cast<size_t>(bestLag)])
+                break;
+            bestLag = candidate;
+        }
+    }
+
     // How far the winner stands above the average lag — a ratio of 1.0 means "no better
     // than anything else", so shift and squash into 0..1.
     confidence = std::min(1.0, (best / meanCorrelation - 1.0) / 3.0);
+
+    // When the correction had to overrule the raw winner, the two octaves were close enough to
+    // argue about — say so in the confidence instead of reporting certainty about which one the
+    // music is in. Where raw correlation and the prior already agreed, nothing was in doubt.
+    if (bestLag != firstChoice && raw[static_cast<size_t>(bestLag)] > 1e-12) {
+        const double ratio =
+            raw[static_cast<size_t>(firstChoice)] / raw[static_cast<size_t>(bestLag)];
+        if (ratio > kOctaveAmbiguous)
+            confidence *= 0.5;
+    }
     return bestLag;
 }
 

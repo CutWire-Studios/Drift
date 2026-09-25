@@ -50,6 +50,11 @@ bool isTransient(GlStatus status);
 // GL_RENDERER only. GL_VENDOR says "Mesa" for hardware drivers too.
 bool isSoftwareRenderer(const QString &renderer);
 
+// Sandy Bridge / Ivy Bridge Intel iGPUs (HD 2000–4000). Hardware decode plus a
+// CPU preview round-trip on these is slower than software, and the GL driver
+// cannot keep two in-flight composites off the texture on screen.
+bool isLimitedPreviewRenderer(const QString &renderer);
+
 // "OpenGL 3.0 — llvmpipe (LLVM 3.6, 128 bits)". Empty when nothing is known.
 QString describeGl(const GlStatusInfo &info);
 

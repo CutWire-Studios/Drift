@@ -86,15 +86,19 @@ void LimiterProcessor::setDriveLinear(float linear)
 
 void LimiterProcessor::setCeilingLinear(float linear)
 {
-    m_limiter.setThreshold(linearToDecibels(linear));
+    m_ceiling = juce::jlimit(1.0e-4f, 1.0f, linear);
 }
 
 void LimiterProcessor::prepare(const juce::dsp::ProcessSpec &spec)
 {
     m_drive.reset(spec.sampleRate, kParamRampSeconds);
     m_drive.setCurrentAndTargetValue(m_driveTarget);
-    m_limiter.prepare(spec);
-    m_limiter.setRelease(50.0f); // alimiter=release=50 in the manifest chain
+    // alimiter=release=50 in the manifest chain.
+    const double releaseSeconds = 0.05;
+    m_releaseCoeff = spec.sampleRate > 0.0
+        ? float(1.0 - std::exp(-1.0 / (releaseSeconds * spec.sampleRate)))
+        : 1.0f;
+    m_gain = 1.0f;
 }
 
 void LimiterProcessor::process(juce::dsp::AudioBlock<float> &block)
@@ -103,18 +107,32 @@ void LimiterProcessor::process(juce::dsp::AudioBlock<float> &block)
     const int frames = static_cast<int>(block.getNumSamples());
     for (int i = 0; i < frames; ++i) {
         const float drive = m_drive.getNextValue();
-        for (int channel = 0; channel < channels; ++channel)
-            block.setSample(channel, i, block.getSample(channel, i) * drive);
-    }
 
-    juce::dsp::ProcessContextReplacing<float> context(block);
-    m_limiter.process(context);
+        // Gain is linked across channels so the stereo image does not shift when one side peaks.
+        float peak = 0.0f;
+        for (int channel = 0; channel < channels; ++channel) {
+            const float driven = block.getSample(channel, i) * drive;
+            block.setSample(channel, i, driven);
+            peak = juce::jmax(peak, std::abs(driven));
+        }
+
+        // Attack is instantaneous and computed from this sample's own peak, which is what makes
+        // the ceiling a guarantee rather than an average.
+        const float desired = peak > m_ceiling ? m_ceiling / peak : 1.0f;
+        if (desired < m_gain)
+            m_gain = desired;
+        else
+            m_gain += (desired - m_gain) * m_releaseCoeff;
+
+        for (int channel = 0; channel < channels; ++channel)
+            block.setSample(channel, i, block.getSample(channel, i) * m_gain);
+    }
 }
 
 void LimiterProcessor::reset()
 {
     m_drive.setCurrentAndTargetValue(m_driveTarget);
-    m_limiter.reset();
+    m_gain = 1.0f;
 }
 
 // ---- GateProcessor ----------------------------------------------------------------------

@@ -25,7 +25,6 @@ PanelFrame {
     // selectedClipData is a QVariantMap; key the binding on an explicit revision
     // so nested fields such as effects refresh after project edits.
     property int clipDataRevision: 0
-    property int previousTab: 0
     readonly property var clipData: {
         void clipDataRevision
         return EditorState.selectedClipData
@@ -39,15 +38,20 @@ PanelFrame {
                                          && (clipKind === "text" || clipKind === "subtitle")
                                          && !!root.clipData.textStyle
 
+    // Inspector view state that outlives the tab being unloaded.
+    QtObject {
+        id: inspectorUi
+        property bool sizeLinked: true
+        property string textTab: "text"
+        property string animSlot: "in"
+        property string animCategory: ""
+        property var textExpandedLayerIds: ({})
+        property real contentFieldHeight: 96
+        property var shapeExpandedLayerIds: ({})
+    }
+
     property int activeTab: 0
     readonly property string currentTabId: tabsModel.get(activeTab).tabId
-
-    onActiveTabChanged: {
-        if (tabsModel.get(root.previousTab).tabId === "transition")
-            transitionInspector.commitEdits()
-        root.previousTab = activeTab
-        transitionInspector.refreshFields()
-    }
 
     // Kept for SubtitleEditor, which formats cue times through it.
     function formatSeconds(value) {
@@ -84,7 +88,10 @@ PanelFrame {
             if (root.textTabIndex < 0 || !root.tabVisible("text"))
                 return
             root.activeTab = root.textTabIndex
-            Qt.callLater(textInspector.focusContent)
+            Qt.callLater(() => {
+                if (textLoader.item)
+                    textLoader.item.focusContent()
+            })
         }
     }
 
@@ -99,6 +106,7 @@ PanelFrame {
         "text": qsTr("Text"),
         "shape": qsTr("Shape"),
         "vector": qsTr("Motion"),
+        "model3d": qsTr("3D Model"),
         "subtitles": qsTr("Subtitles"),
         "transform": qsTr("Transform"),
         "stabilize": qsTr("Stabilization"),
@@ -122,6 +130,7 @@ PanelFrame {
         ListElement { tabId: "text"; icon: 1; group: 0 }
         ListElement { tabId: "shape"; icon: 2; group: 0 }
         ListElement { tabId: "vector"; icon: 14; group: 0 }
+        ListElement { tabId: "model3d"; icon: 15; group: 0 }
         ListElement { tabId: "subtitles"; icon: 3; group: 0 }
         ListElement { tabId: "transform"; icon: 4; group: 1 }
         ListElement { tabId: "stabilize"; icon: 5; group: 1 }
@@ -149,7 +158,8 @@ PanelFrame {
         Theme.icons.wand,
         Theme.icons.audioLines,
         Theme.icons.chevronsRight,
-        Theme.icons.layers
+        Theme.icons.layers,
+        Theme.icons.box
     ]
 
     function tabVisible(tabId) {
@@ -174,12 +184,15 @@ PanelFrame {
             return root.clipKind === "shape"
         if (tabId === "vector")
             return root.clipKind === "vector"
+        if (tabId === "model3d")
+            return root.clipKind === "model3d"
         if (tabId === "text")
             return root.hasTextStyle
         if (tabId === "animation")
             return root.clipKind === "video" || root.clipKind === "image"
                    || root.clipKind === "shape" || root.clipKind === "text"
                    || root.clipKind === "vector" || root.clipKind === "audio"
+                   || root.clipKind === "composite"
         if (tabId === "stabilize")
             return root.clipKind === "video"
         // Masks and effect stacks live on the adjustments pinned to a clip, and those adjustments
@@ -661,99 +674,162 @@ PanelFrame {
                     font.weight: Font.Medium
                 }
 
-                GeneralInspector {
-                    width: tabColumn.width
-                    visible: root.currentTabId === "general"
+                // Only the open tab is instantiated. Hidden inspectors used to stay alive and
+                // re-read the whole selected clip on every edit; the view state that has to
+                // outlive a tab switch is kept in inspectorUi instead.
+                Loader {
+                    active: root.currentTabId === "general"
+                    visible: active
+                    sourceComponent: Component { GeneralInspector { width: tabColumn.width } }
                 }
 
-                TextInspector {
-                    id: textInspector
-                    width: tabColumn.width
-                    visible: root.currentTabId === "text"
-                }
-
-                TransformInspector {
-                    width: tabColumn.width
-                    visible: root.currentTabId === "transform"
-                }
-
-                StabilizeInspector {
-                    width: tabColumn.width
-                    visible: root.currentTabId === "stabilize"
-                }
-
-                AnimationInspector {
-                    width: tabColumn.width
-                    visible: root.currentTabId === "animation"
-                }
-
-                AudioInspector {
-                    width: tabColumn.width
-                    visible: root.currentTabId === "audio"
-                }
-
-                SpeedFadeInspector {
-                    width: tabColumn.width
-                    visible: root.currentTabId === "speed"
-                }
-
-                TransitionInspector {
-                    id: transitionInspector
-                    width: tabColumn.width
-                    visible: root.currentTabId === "transition"
-                }
-
-                BlendingInspector {
-                    width: tabColumn.width
-                    visible: root.currentTabId === "blending"
-                }
-
-                ShapeInspector {
-                    width: tabColumn.width
-                    visible: root.currentTabId === "shape"
-                }
-
-                VectorInspector {
-                    width: tabColumn.width
-                    visible: root.currentTabId === "vector"
-                }
-
-                MasksInspector {
-                    width: tabColumn.width
-                    visible: root.currentTabId === "masks"
-                }
-
-                EffectsInspector {
-                    width: tabColumn.width
-                    visible: root.currentTabId === "effects"
-                    onBrowseEffectsRequested: root.browseEffectsRequested()
-                    onSaveEffectPresetRequested: function(effectIndex) {
-                        root.savePresetEffectIndex = effectIndex
-                        effectPresetNameDialog.openWith(
-                            effectIndex < 0 ? qsTr("Save effect preset")
-                                            : qsTr("Save effect as preset"),
-                            root.hasSelection ? (root.clipData.name || "") : "")
+                Loader {
+                    id: textLoader
+                    active: root.currentTabId === "text"
+                    visible: active
+                    sourceComponent: Component {
+                        TextInspector {
+                            width: tabColumn.width
+                            textTab: inspectorUi.textTab
+                            animSlot: inspectorUi.animSlot
+                            animCategory: inspectorUi.animCategory
+                            expandedLayerIds: inspectorUi.textExpandedLayerIds
+                            contentFieldHeight: inspectorUi.contentFieldHeight
+                            onTextTabChanged: inspectorUi.textTab = textTab
+                            onAnimSlotChanged: inspectorUi.animSlot = animSlot
+                            onAnimCategoryChanged: inspectorUi.animCategory = animCategory
+                            onExpandedLayerIdsChanged: inspectorUi.textExpandedLayerIds = expandedLayerIds
+                            onContentFieldHeightChanged: inspectorUi.contentFieldHeight = contentFieldHeight
+                        }
                     }
                 }
 
-                AudioEffectsInspector {
-                    width: tabColumn.width
-                    visible: root.currentTabId === "audioEffects"
-                    onBrowseAudioEffectsRequested: root.browseAudioEffectsRequested()
+                Loader {
+                    active: root.currentTabId === "transform"
+                    visible: active
+                    sourceComponent: Component {
+                        TransformInspector {
+                            width: tabColumn.width
+                            sizeLinked: inspectorUi.sizeLinked
+                            onSizeLinkedChanged: inspectorUi.sizeLinked = sizeLinked
+                        }
+                    }
+                }
+
+                Loader {
+                    active: root.currentTabId === "stabilize"
+                    visible: active
+                    sourceComponent: Component { StabilizeInspector { width: tabColumn.width } }
+                }
+
+                Loader {
+                    active: root.currentTabId === "animation"
+                    visible: active
+                    sourceComponent: Component { AnimationInspector { width: tabColumn.width } }
+                }
+
+                Loader {
+                    active: root.currentTabId === "audio"
+                    visible: active
+                    sourceComponent: Component { AudioInspector { width: tabColumn.width } }
+                }
+
+                Loader {
+                    active: root.currentTabId === "speed"
+                    visible: active
+                    sourceComponent: Component { SpeedFadeInspector { width: tabColumn.width } }
+                }
+
+                // Its kind box and duration field commit on their own (activate / editing
+                // finished), so nothing is lost when the tab switch destroys it.
+                Loader {
+                    active: root.currentTabId === "transition"
+                    visible: active
+                    sourceComponent: Component { TransitionInspector { width: tabColumn.width } }
+                }
+
+                Loader {
+                    active: root.currentTabId === "blending"
+                    visible: active
+                    sourceComponent: Component { BlendingInspector { width: tabColumn.width } }
+                }
+
+                Loader {
+                    active: root.currentTabId === "shape"
+                    visible: active
+                    sourceComponent: Component {
+                        ShapeInspector {
+                            width: tabColumn.width
+                            expandedLayerIds: inspectorUi.shapeExpandedLayerIds
+                            onExpandedLayerIdsChanged: inspectorUi.shapeExpandedLayerIds = expandedLayerIds
+                        }
+                    }
+                }
+
+                Loader {
+                    active: root.currentTabId === "vector"
+                    visible: active
+                    sourceComponent: Component { VectorInspector { width: tabColumn.width } }
+                }
+
+                Loader {
+                    active: root.currentTabId === "model3d"
+                    visible: active
+                    sourceComponent: Component { Model3DInspector { width: tabColumn.width } }
+                }
+
+                Loader {
+                    active: root.currentTabId === "masks"
+                    visible: active
+                    sourceComponent: Component { MasksInspector { width: tabColumn.width } }
+                }
+
+                Loader {
+                    active: root.currentTabId === "effects"
+                    visible: active
+                    sourceComponent: Component {
+                        EffectsInspector {
+                            width: tabColumn.width
+                            onBrowseEffectsRequested: root.browseEffectsRequested()
+                            onSaveEffectPresetRequested: function(effectIndex) {
+                                root.savePresetEffectIndex = effectIndex
+                                effectPresetNameDialog.openWith(
+                                    effectIndex < 0 ? qsTr("Save effect preset")
+                                                    : qsTr("Save effect as preset"),
+                                    root.hasSelection ? (root.clipData.name || "") : "")
+                            }
+                        }
+                    }
+                }
+
+                Loader {
+                    active: root.currentTabId === "audioEffects"
+                    visible: active
+                    sourceComponent: Component {
+                        AudioEffectsInspector {
+                            width: tabColumn.width
+                            onBrowseAudioEffectsRequested: root.browseAudioEffectsRequested()
+                        }
+                    }
                 }
             }
         }
 
         // Full-height editor with its own internal cue list scrolling, so it
         // sits beside the tab Flickable rather than inside it.
-        SubtitleEditor {
+        Loader {
             anchors.top: tabStripHost.bottom
             anchors.left: railDivider.right
             anchors.right: parent.right
             anchors.bottom: parent.bottom
-            visible: root.currentTabId === "subtitles"
-            clip: root.hasSelection ? root.clipData : null
-            formatSeconds: root.formatSeconds
+            active: root.currentTabId === "subtitles"
+            visible: active
+            sourceComponent: Component {
+                SubtitleEditor {
+                    clip: root.hasSelection ? root.clipData : null
+                    formatSeconds: root.formatSeconds
+                }
+            }
         }
     }
 

@@ -1,9 +1,12 @@
 #include "PlaybackEngine.h"
 
+#include <cstdio>
+
 #include "engine/AndroidUri.h"
 #include "engine/ClipReaderPool.h"
 #include "engine/GpuCompositor.h"
 #include "engine/HwAccel.h"
+#include "engine/ReverseProxyCache.h"
 
 #include <QSettings>
 #include <QVariantMap>
@@ -68,7 +71,9 @@ inline void requestAudioFocus() {}
 inline void abandonAudioFocus() {}
 #endif
 
-constexpr int kPlayheadUpdateMs = 16; // ~60 Hz UI updates, independent of video decode
+// Below this a reported refresh rate is a driver placeholder, not a panel. No display
+// Drift can run on refreshes this slowly, and every real one clears it by a wide margin.
+constexpr double kMinPlausibleRefreshHz = 20.0;
 
 // GPU compositor readiness polling. The first ask is deferred past the window's
 // own bring-up so it neither delays launch nor reports a failure that has not
@@ -81,9 +86,11 @@ constexpr int kGpuProbeMaxAttempts = 20;
 // How much decoded source each clip's reader keeps buffered ahead of the
 // playhead during fast playback. This absorbs frames that decode slower than
 // realtime (long GOPs, a heavy transition) by spending the slack on either side
-// of them. It is deliberately seconds and not minutes: the frames are held in
-// RAM per clip — 2 s of 720p NV12 is ~83 MB — and every edit or seek discards
-// the part of the buffer past the change.
+// of them. The byte budget in ClipReader, sized from physical memory, bounds it too — that is
+// what gives 4K room to read ahead at all. Not longer than this: 5 s was measured slower after a
+// seek (two 1080p30 software streams dropped from ~15 to ~12 fps), because the prefetch then
+// competes with the frames playback actually needs. Every edit or seek discards the part of the
+// buffer past the change.
 constexpr drift::TimeUs kReadAheadUs = 2 * drift::kUsPerSecond;
 
 // The rates the preview transport offers. All sit inside the stretcher's own clamp
@@ -163,6 +170,11 @@ ClipReader::HardwareDecodeMode decodeModeFromString(const QString &mode)
     return ClipReader::HardwareDecodeMode::Auto;
 }
 
+bool isKnownProxySize(int shortSide)
+{
+    return shortSide == 360 || shortSide == 540 || shortSide == 720 || shortSide == 1080;
+}
+
 QString loadSavedDecodeMode()
 {
     const QString saved = QSettings().value(QStringLiteral("preview/decodeMode")).toString();
@@ -193,6 +205,13 @@ PlaybackEngine::PlaybackEngine(QObject *parent)
                                                      decodeBackendFromString(m_decodeMode));
     m_hwFallbackCount = ClipReader::hardwareFallbackCount();
 
+    QSettings settings;
+    drift::ReverseProxyCache::previewProxiesEnabled =
+        settings.value(QStringLiteral("preview/useProxies"), true).toBool();
+    if (const int size = settings.value(QStringLiteral("preview/proxySize")).toInt();
+        isKnownProxySize(size))
+        drift::ReverseProxyCache::previewProxyShortSide = size;
+
     m_compositor.setDropLateFrames(true);
     m_compositor.setAdaptiveQuality(isAutoQuality());
     m_compositor.setStats(&m_stats);
@@ -203,9 +222,19 @@ PlaybackEngine::PlaybackEngine(QObject *parent)
     connect(&m_audio, &AudioOutputChannel::errorOccurred, this, &PlaybackEngine::audioError);
     m_sampleRate = m_audio.sampleRate();
 
-    m_playheadTimer.setTimerType(Qt::PreciseTimer);
     m_compositeTimer.setTimerType(Qt::PreciseTimer);
-    connect(&m_playheadTimer, &QTimer::timeout, this, &PlaybackEngine::onPlayheadTick);
+    // Zero interval, single shot: fires at the end of the current event-loop turn, so a drag
+    // that lands a dozen edits before the loop spins again costs one composite, not a dozen.
+    // Goes straight to requestComposite — refreshFrame() would invalidate the snapshot a second
+    // time, and notifyProjectEdited() has already done that.
+    m_editRefreshTimer.setSingleShot(true);
+    m_editRefreshTimer.setInterval(0);
+    connect(&m_editRefreshTimer, &QTimer::timeout, this, [this] {
+        // Before the composite, which then reuses this same snapshot: one copy per edit batch.
+        if (m_playing)
+            pushAudioSnapshot();
+        m_compositor.requestComposite(m_playheadUs, playbackRenderOptions());
+    });
     connect(&m_compositeTimer, &QTimer::timeout, this, &PlaybackEngine::onCompositeTick);
     connect(&m_compositor, &CompositorService::frameReady, this, &PlaybackEngine::onFrameReady);
 
@@ -238,7 +267,6 @@ PlaybackEngine::~PlaybackEngine()
     abandonAudioFocus();
 #endif
     m_playing = false;
-    m_playheadTimer.stop();
     m_compositeTimer.stop();
     m_clock.stop();
 
@@ -273,10 +301,45 @@ void PlaybackEngine::setProject(drift::Project *project)
     m_project = project;
     m_mixer.setProject(project);
     m_compositor.setProject(project);
+    m_audioSnapshot.reset();
+    m_retiredAudioSnapshot.reset();
+    if (m_playing)
+        pushAudioSnapshot();
     refreshFrame();
 }
 
+std::shared_ptr<const drift::Project> PlaybackEngine::projectSnapshot(const drift::Project *project)
+{
+    if (!project || project != m_project)
+        return {};
+    return m_compositor.snapshot();
+}
+
+void PlaybackEngine::pushAudioSnapshot()
+{
+    std::shared_ptr<const drift::Project> snapshot = m_compositor.snapshot();
+    if (snapshot == m_audioSnapshot)
+        return;
+    m_retiredAudioSnapshot = std::move(m_audioSnapshot);
+    m_audioSnapshot = std::move(snapshot);
+    m_mixer.setSnapshot(m_audioSnapshot, m_compositor.snapshotSerial());
+}
+
+void PlaybackEngine::notifyProjectEdited()
+{
+    m_compositor.invalidateSnapshot();
+    if (!m_editRefreshTimer.isActive())
+        m_editRefreshTimer.start();
+}
+
 void PlaybackEngine::setPlayheadUs(drift::TimeUs us)
+{
+    resyncAudioAt(us);
+    if (!m_playing)
+        refreshFrame();
+}
+
+void PlaybackEngine::resyncAudioAt(drift::TimeUs us)
 {
     m_playheadUs = qMax<drift::TimeUs>(0, us);
     // Only real seeks reach here — the playhead tick emits its position directly rather than
@@ -288,11 +351,10 @@ void PlaybackEngine::setPlayheadUs(drift::TimeUs us)
     // The grid position is stale after a jump: without this the next display tick can
     // quantise to the frame that is already on screen and decline to redraw it.
     m_lastRequestedFrameUs = -1;
+    m_lastEmittedFrameUs = -1;
     // reset() clears the running flag; resume the clock if we are still in play
     // so edits/seeks during playback don't freeze audio at one timeline spot.
-    if (!m_playing) {
-        refreshFrame();
-    } else {
+    if (m_playing) {
         m_sinkPlayedUsOffset = m_audio.processedUSecs();
         m_clock.start();
     }
@@ -406,6 +468,36 @@ QVariantList PlaybackEngine::decodeModes() const
                warn ? offGpuDecodeNote(backend, match) : QString());
     }
     return modes;
+}
+
+bool PlaybackEngine::useProxies() const
+{
+    return drift::ReverseProxyCache::previewProxiesEnabled;
+}
+
+void PlaybackEngine::setUseProxies(bool use)
+{
+    if (drift::ReverseProxyCache::previewProxiesEnabled == use)
+        return;
+    drift::ReverseProxyCache::previewProxiesEnabled = use;
+    QSettings().setValue(QStringLiteral("preview/useProxies"), use);
+    emit useProxiesChanged();
+    refreshFrame();
+}
+
+int PlaybackEngine::proxySize() const
+{
+    return drift::ReverseProxyCache::previewProxyShortSide;
+}
+
+void PlaybackEngine::setProxySize(int shortSide)
+{
+    if (!isKnownProxySize(shortSide) || drift::ReverseProxyCache::previewProxyShortSide == shortSide)
+        return;
+    drift::ReverseProxyCache::previewProxyShortSide = shortSide;
+    QSettings().setValue(QStringLiteral("preview/proxySize"), shortSide);
+    emit proxySizeChanged();
+    refreshFrame();
 }
 
 void PlaybackEngine::setDecodeMode(const QString &mode)
@@ -567,6 +659,8 @@ void PlaybackEngine::play()
     m_sinkPlayedUsOffset = m_audio.processedUSecs();
     m_clock.start();
 
+    pushAudioSnapshot();
+
     // Opening the device may settle on a rate the project did not ask for, which comes back as
     // sampleRateChanged and re-anchors the clock — so this has to follow m_playing being set.
     m_audio.start();
@@ -575,11 +669,11 @@ void PlaybackEngine::play()
 
     m_stats.reset();
     m_lastRequestedFrameUs = -1;
-    m_playheadTimer.start(kPlayheadUpdateMs);
+    m_lastEmittedFrameUs = -1;
     syncDisplayCadence();
 
-    onPlayheadTick();
-    onCompositeTick();
+    advancePlayhead();
+    requestFrameForPresentation();
 }
 
 void PlaybackEngine::syncDisplayCadence()
@@ -618,7 +712,11 @@ qint64 PlaybackEngine::refreshIntervalNs() const
 
 void PlaybackEngine::setDisplayRefreshRate(double hz)
 {
-    const double rate = hz > 0.0 ? hz : 0.0;
+    // Not just "> 0": Windows fills QScreen::refreshRate() from GetDeviceCaps(VREFRESH),
+    // which answers 0 or 1 for "the adapter's default mode". Taking 1 Hz literally would
+    // give requestFrameForPresentation a one-second lead and drive the backstop timer at
+    // two seconds — worse than admitting the rate is unknown and running on the timer.
+    const double rate = hz >= kMinPlausibleRefreshHz ? hz : 0.0;
     if (qFuzzyCompare(m_refreshRate, rate))
         return;
     m_refreshRate = rate;
@@ -641,6 +739,7 @@ void PlaybackEngine::onDisplayTick()
     m_lastDisplayTickNs = PlaybackClock::nowNs();
     if (!m_playing || !m_project)
         return;
+    advancePlayhead();
     requestFrameForPresentation();
 }
 
@@ -678,16 +777,16 @@ void PlaybackEngine::pause()
     m_compositor.setPlaybackActive(false);
     drift::android::releaseKeepScreenOn();
     abandonAudioFocus();
-    m_playheadTimer.stop();
     m_compositeTimer.stop();
     m_clock.pause();
     m_playheadUs = m_clock.pausedAt();
     m_mixer.resetClipAudioState();
     m_audioStreamGeneration.fetch_add(1, std::memory_order_release);
-    m_audio.stop();
+    emitPlayhead();
     emit playingChanged();
-    emit playheadUsChanged(static_cast<quint64>(m_playheadUs));
     refreshFrame();
+    if (qEnvironmentVariableIsSet("DRIFT_PLAYBACK_STATS"))
+        std::fprintf(stderr, "%s\n", qPrintable(m_stats.summaryLine()));
 }
 
 void PlaybackEngine::refreshFrame()
@@ -714,8 +813,11 @@ void PlaybackEngine::checkEndOfTimeline(drift::TimeUs timeUs)
         return;
     }
 
+    if (m_voiceoverRecording)
+        return;
+
     const drift::TimeUs durationUs = m_project->durationUs();
-    if (timeUs >= durationUs) {
+    if (durationUs > 0 && timeUs >= durationUs) {
         m_playheadUs = durationUs;
         emit playheadUsChanged(static_cast<quint64>(m_playheadUs));
         QMetaObject::invokeMethod(this, &PlaybackEngine::pause, Qt::QueuedConnection);
@@ -739,18 +841,32 @@ bool PlaybackEngine::shouldLoopWorkArea(drift::TimeUs *loopInOut, drift::TimeUs 
     return true;
 }
 
-void PlaybackEngine::onPlayheadTick()
+void PlaybackEngine::advancePlayhead()
 {
     if (!m_playing || !m_project)
         return;
 
     const drift::TimeUs timeUs = m_clock.currentTimeUs();
-    if (timeUs == m_playheadUs)
-        return;
-
-    m_playheadUs = timeUs;
-    emit playheadUsChanged(static_cast<quint64>(timeUs));
+    // Listeners hear about the playhead once per project frame, not once per refresh: nothing
+    // they show can change between two frames, and on a 144 Hz panel the difference is most of
+    // the GUI thread. The timeline needle interpolates between these on its own.
+    const drift::TimeUs step = frameStepUs();
+    const drift::TimeUs frameUs = step > 0 ? (timeUs / step) * step : timeUs;
+    if (frameUs != m_lastEmittedFrameUs) {
+        m_lastEmittedFrameUs = frameUs;
+        m_playheadUs = timeUs;
+        emitPlayhead();
+    }
+    // Every tick, not only on emits, so a loop boundary is honoured at display precision.
     checkEndOfTimeline(timeUs);
+}
+
+void PlaybackEngine::emitPlayhead()
+{
+    const qint64 startNs = PlaybackClock::nowNs();
+    emit playheadUsChanged(static_cast<quint64>(m_playheadUs));
+    if (m_playing)
+        m_stats.noteGuiTick(double(PlaybackClock::nowNs() - startNs) / 1'000'000.0);
 }
 
 void PlaybackEngine::onCompositeTick()
@@ -767,6 +883,7 @@ void PlaybackEngine::onCompositeTick()
         return;
     }
 
+    advancePlayhead();
     requestFrameForPresentation();
 }
 
@@ -823,6 +940,7 @@ FrameCompositor::RenderOptions PlaybackEngine::playbackRenderOptions() const
     if (!m_playing)
         options.skipClipId = m_editingClipId;
 
+    options.allowProxies = true;
     return options;
 }
 
@@ -848,6 +966,7 @@ int PlaybackEngine::fillAudio(float *buffer, int sampleCount)
     // Mix at the produce position (audio we are generating into the buffer),
     // then anchor the visible playhead to what the sink has actually played so
     // video follows audio rather than leading it by the buffer depth.
+    const qint64 mixStartNs = PlaybackClock::nowNs();
     if (qFuzzyCompare(m_playbackRate, 1.0)) {
         m_mixer.mix(m_clock.produceTimeUs(), sampleCount, m_sampleRate, buffer);
     } else {
@@ -873,8 +992,53 @@ int PlaybackEngine::fillAudio(float *buffer, int sampleCount)
             },
             sampleCount, buffer);
     }
+    if (m_sampleRate > 0) {
+        const double blockNs = 1e9 * sampleCount / m_sampleRate;
+        m_stats.noteAudioMixLoad(double(PlaybackClock::nowNs() - mixStartNs) / blockNs);
+    }
     m_clock.onAudioSamplesRendered(sampleCount);
     const qint64 playedUs = qMax(qint64(0), m_audio.processedUSecs() - m_sinkPlayedUsOffset);
     m_clock.syncPlaybackUs(static_cast<drift::TimeUs>(playedUs));
     return sampleCount;
+}
+
+QPair<float, float> PlaybackEngine::trackAudioLevels(int trackIndex) const
+{
+    if (!m_playing)
+        return {0.0f, 0.0f};
+    return m_mixer.trackLevels(trackIndex);
+}
+
+QPair<float, float> PlaybackEngine::masterAudioLevels() const
+{
+    if (!m_playing)
+        return {0.0f, 0.0f};
+    return m_mixer.masterLevels();
+}
+
+QList<float> PlaybackEngine::takeMeterPeaks(const QList<int> &trackIndexes) const
+{
+    if (!m_playing)
+        return QList<float>(2 + trackIndexes.size() * 2, 0.0f);
+    return m_mixer.takeMeterPeaks(trackIndexes);
+}
+
+void PlaybackEngine::setMasterVolume(double vol)
+{
+    m_mixer.setMasterVolume(vol);
+}
+
+double PlaybackEngine::masterVolume() const
+{
+    return m_mixer.masterVolume();
+}
+
+void PlaybackEngine::setMasterMuted(bool muted)
+{
+    m_mixer.setMasterMuted(muted);
+}
+
+bool PlaybackEngine::masterMuted() const
+{
+    return m_mixer.masterMuted();
 }

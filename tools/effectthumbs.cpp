@@ -1,15 +1,27 @@
+#include "engine/DepthSidecar.h"
 #include "engine/EffectCatalog.h"
 #include "engine/EffectPackageLoader.h"
 #include "engine/EffectProcessor.h"
 #include "engine/FaceLandmarker.h"
+#include "engine/FaceSwapSource.h"
 #include "engine/GpuEffectExecutor.h"
+#include "engine/VdaDepth.h"
 
 #include <QGuiApplication>
 #include <QDir>
 #include <QFileInfo>
+#include <QFont>
+#include <QFontMetrics>
+#include <QHash>
 #include <QImage>
+#include <QJsonDocument>
+#include <QJsonObject>
 #include <QPainter>
+#include <QPainterPath>
 #include <QTextStream>
+
+#include <algorithm>
+#include <cmath>
 
 namespace {
 
@@ -245,6 +257,231 @@ QMap<QString, QVariant> dramaticDefaults(const EffectPresetEntry &def)
     return params;
 }
 
+// Depth for the depth effects' thumbnails: the model's estimate of the base when the addon is
+// installed, otherwise a stand-in that puts the centre-bottom of the frame nearest, which is
+// roughly where the subject of a portrait sits.
+std::shared_ptr<drift::DepthFrame> baseDepth(const QImage &base, QTextStream &err)
+{
+    auto frame = std::make_shared<drift::DepthFrame>();
+    frame->key = 0xE44E'C7'0000'0001ull;
+
+    drift::VdaDepth &vda = drift::VdaDepth::instance();
+    std::vector<float> disparity;
+    QSize size;
+    if (vda.available()) {
+        std::unique_ptr<drift::VdaDepth::Pass> pass =
+            vda.newPass(392, [&](drift::TimeUs, const float *d) {
+                disparity.assign(d, d + size_t(size.width()) * size.height());
+                return true;
+            });
+        size = drift::VdaDepth::inferenceSize(base.size(), 392);
+        if (!pass || !pass->push(base, 0) || !pass->flush())
+            disparity.clear();
+    }
+    if (!disparity.empty()) {
+        std::vector<float> sorted = disparity;
+        std::sort(sorted.begin(), sorted.end());
+        const float lo = sorted[sorted.size() / 100];
+        const float hi = sorted[sorted.size() * 99 / 100];
+        frame->size = size;
+        frame->values.resize(disparity.size());
+        for (size_t i = 0; i < disparity.size(); ++i) {
+            const float n = (disparity[i] - lo) / std::max(hi - lo, 1e-6f);
+            frame->values[i] = quint16(std::lround(std::clamp(n, 0.0f, 1.0f) * 65535.0f));
+        }
+        return frame;
+    }
+
+    err << "depth: model unavailable (" << vda.lastError() << "); using a stand-in depth map\n";
+    frame->size = QSize(64, 64);
+    frame->values.resize(64 * 64);
+    for (int y = 0; y < 64; ++y) {
+        for (int x = 0; x < 64; ++x) {
+            const double dx = (x - 31.5) / 32.0;
+            const double dy = (y - 40.0) / 40.0;
+            const double subject = std::exp(-(dx * dx * 6.0 + dy * dy * 2.5));
+            const double ground = y / 63.0 * 0.5;
+            frame->values[size_t(y * 64 + x)] =
+                quint16(std::lround(std::clamp(std::max(subject, ground), 0.0, 1.0) * 65535.0));
+        }
+    }
+    return frame;
+}
+
+// The depth effects' own defaults are the look they are designed around, and pushing every
+// slider to 70% would scatter the lights and throw the focus. A couple of choices read better
+// small.
+QMap<QString, QVariant> depthDefaults(const EffectPresetEntry &def)
+{
+    QMap<QString, QVariant> params;
+    for (const drift::EffectParamSpec &spec : def.meta.parameters)
+        params.insert(spec.key, spec.defaultVariant());
+    if (def.meta.id == QLatin1String("depth.relight")) {
+        params.insert(QStringLiteral("ambient"), 0.4);
+        params.insert(QStringLiteral("light1_intensity"), 2.0);
+        params.insert(QStringLiteral("light2_enabled"), true);
+        params.insert(QStringLiteral("light2_intensity"), 1.0);
+    } else if (def.meta.id == QLatin1String("depth.focus")) {
+        params.insert(QStringLiteral("blur"), 24.0);
+    } else if (def.meta.id == QLatin1String("depth.view")) {
+        params.insert(QStringLiteral("colorize"), true);
+    }
+    return params;
+}
+
+// Which photo each effect's thumbnail is rendered from. A single --base keeps the old behaviour:
+// that one photo for everything.
+struct BaseChooser
+{
+    QString fallback;
+    QString face;
+    QString chroma;
+    QString faceSwapSource;
+    QHash<QString, QString> categories;
+    QHash<QString, QString> effects;
+
+    static BaseChooser load(const QString &basesPath, const QString &basePath, QTextStream &err)
+    {
+        BaseChooser c;
+        c.fallback = c.face = c.chroma = basePath;
+        if (basesPath.isEmpty())
+            return c;
+        QFile file(basesPath);
+        if (!file.open(QIODevice::ReadOnly)) {
+            err << "bases: cannot read " << basesPath << "\n";
+            return c;
+        }
+        const QJsonObject root = QJsonDocument::fromJson(file.readAll()).object();
+        const QDir dir = QFileInfo(basesPath).absoluteDir();
+        const auto path = [&](const QJsonValue &v) {
+            return v.toString().isEmpty() ? QString() : dir.filePath(v.toString());
+        };
+        c.fallback = path(root.value(QStringLiteral("default")));
+        c.face = path(root.value(QStringLiteral("face")));
+        c.chroma = path(root.value(QStringLiteral("chroma")));
+        c.faceSwapSource = path(root.value(QStringLiteral("faceSwapSource")));
+        if (c.face.isEmpty())
+            c.face = c.fallback;
+        if (c.chroma.isEmpty())
+            c.chroma = c.fallback;
+        if (c.faceSwapSource.isEmpty())
+            c.faceSwapSource = c.face;
+        const QJsonObject categories = root.value(QStringLiteral("categories")).toObject();
+        for (auto it = categories.begin(); it != categories.end(); ++it)
+            c.categories.insert(it.key(), path(it.value()));
+        const QJsonObject effects = root.value(QStringLiteral("effects")).toObject();
+        for (auto it = effects.begin(); it != effects.end(); ++it)
+            c.effects.insert(it.key(), path(it.value()));
+        return c;
+    }
+
+    QString forEffect(const EffectPresetEntry &def) const
+    {
+        if (effects.contains(def.meta.id))
+            return effects.value(def.meta.id);
+        // A face category may bring its own face (warps look wrong on the beauty portrait).
+        if (def.needsFace || def.isFaceSwap)
+            return categories.value(def.meta.category, face);
+        if (def.meta.id == QLatin1String("key.chroma"))
+            return chroma;
+        return categories.value(def.meta.category, fallback);
+    }
+};
+
+// Scaled to cover and cropped about the centre. The photos are prepared square with the subject
+// in the middle, so this is usually a plain resize; a wider one keeps its middle, not its left.
+QImage squareCrop(const QImage &image, int size)
+{
+    const QImage scaled =
+        image.scaled(size, size, Qt::KeepAspectRatioByExpanding, Qt::SmoothTransformation);
+    return scaled.copy((scaled.width() - size) / 2, (scaled.height() - size) / 2, size, size);
+}
+
+// Behind Subject has no shader to run: it tells the compositor to hide a layer wherever the clip
+// beneath is nearer. Shown the way it is used — a title set into the scene, the subject in front.
+QImage behindSubjectPreview(const QImage &base, const drift::DepthFrame &depth)
+{
+    QImage title(base.size(), QImage::Format_ARGB32_Premultiplied);
+    title.fill(Qt::transparent);
+    {
+        QPainter p(&title);
+        p.setRenderHint(QPainter::Antialiasing, true);
+        // Sized to span the frame, so it reads on both sides of the subject.
+        const QString text = QStringLiteral("DRIFT");
+        QFont font;
+        font.setBold(true);
+        font.setPixelSize(100);
+        font.setPixelSize(int(100.0 * base.width() * 0.92 / QFontMetrics(font).horizontalAdvance(text)));
+        p.setFont(font);
+        p.setPen(QColor(255, 214, 10));
+        p.drawText(title.rect().adjusted(0, -base.height() / 5, 0, -base.height() / 5),
+                   Qt::AlignCenter, text);
+    }
+
+    // Everything nearer than the middle of the clip's depth passes in front of the title.
+    QImage out = base.convertToFormat(QImage::Format_ARGB32_Premultiplied);
+    QPainter p(&out);
+    for (int y = 0; y < out.height(); ++y) {
+        const int dy = std::min(depth.size.height() - 1, y * depth.size.height() / out.height());
+        auto *line = reinterpret_cast<QRgb *>(title.scanLine(y));
+        for (int x = 0; x < out.width(); ++x) {
+            const int dx = std::min(depth.size.width() - 1, x * depth.size.width() / out.width());
+            const double d = depth.values[size_t(dy) * depth.size.width() + dx] / 65535.0;
+            const double show = 1.0 - std::clamp((d - 0.45) / 0.1, 0.0, 1.0);
+            const QRgb px = line[x];
+            line[x] = qRgba(int(qRed(px) * show), int(qGreen(px) * show), int(qBlue(px) * show),
+                            int(qAlpha(px) * show));
+        }
+    }
+    p.drawImage(0, 0, title);
+    p.end();
+    return out;
+}
+
+// Face Swap, shown as what it does: the result, with the face that was put there inset in the
+// corner. The effect reads the source photo's own landmark sidecar, baked here first as the app
+// does when a photo is picked.
+template <typename Face>
+QImage faceSwapPreview(const EffectPresetEntry &def, const Face &target, const Face &source,
+                       const QString &sourcePath, QTextStream &err)
+{
+    QString error;
+    if (!drift::ingestFaceSwapSource(sourcePath, &error)) {
+        err << "face swap: " << error << "\n";
+        return {};
+    }
+    drift::Effect effect;
+    effect.catalogId = def.meta.id;
+    for (const drift::EffectParamSpec &spec : def.meta.parameters)
+        effect.parameters.insert(spec.key, spec.defaultVariant());
+    effect.parameters.insert(QStringLiteral("sourceImage"), sourcePath);
+    QImage out = EffectProcessor::applyEffects(target.image, {effect}, 500000, {target.anchors})
+                     .convertToFormat(QImage::Format_ARGB32_Premultiplied);
+
+    // The source face, cropped about its oval and drawn as a round badge.
+    const QSize size = source.image.size();
+    const QPointF centre(source.anchors.faceCenter.x() * size.width(),
+                         source.anchors.faceCenter.y() * size.height());
+    const double radius = std::max(source.anchors.faceRx, source.anchors.faceRy) * size.width() * 1.25;
+    const QRectF crop(centre.x() - radius, centre.y() - radius, radius * 2, radius * 2);
+    const int badge = out.width() * 36 / 100;
+    const QRectF where(out.width() - badge - out.width() * 0.04, out.height() - badge - out.height() * 0.04,
+                       badge, badge);
+    QPainter p(&out);
+    p.setRenderHint(QPainter::Antialiasing, true);
+    p.setRenderHint(QPainter::SmoothPixmapTransform, true);
+    QPainterPath circle;
+    circle.addEllipse(where);
+    p.setClipPath(circle);
+    p.drawImage(where, source.image, crop);
+    p.setClipping(false);
+    p.setPen(QPen(Qt::white, std::max(2.0, out.width() / 64.0)));
+    p.setBrush(Qt::NoBrush);
+    p.drawEllipse(where);
+    p.end();
+    return out;
+}
+
 QImage applyTimeEchoPreview(const QImage &base, const QMap<QString, QVariant> &params)
 {
     QList<QImage> frames;
@@ -296,6 +533,7 @@ int main(int argc, char *argv[])
     const QStringList args = app.arguments();
     QString effectsRoot = QDir(QCoreApplication::applicationDirPath()).filePath(QStringLiteral("effects"));
     QString basePath;
+    QString basesPath;
     QString onlyId;
     int size = 256;
     bool force = false;
@@ -306,6 +544,8 @@ int main(int argc, char *argv[])
             effectsRoot = args.at(++i);
         else if (a == QLatin1String("--base") && i + 1 < args.size())
             basePath = args.at(++i);
+        else if (a == QLatin1String("--bases") && i + 1 < args.size())
+            basesPath = args.at(++i);
         else if (a == QLatin1String("--only") && i + 1 < args.size())
             onlyId = args.at(++i);
         else if (a == QLatin1String("--size") && i + 1 < args.size())
@@ -313,8 +553,12 @@ int main(int argc, char *argv[])
         else if (a == QLatin1String("--force"))
             force = true;
         else if (a == QLatin1String("--help") || a == QLatin1String("-h")) {
-            err << "usage: effectthumbs [--effects DIR] [--base image] [--only id] [--size N]\n"
-                   "                    [--force]\n"
+            err << "usage: effectthumbs [--effects DIR] [--base image | --bases FILE.json] [--only id]\n"
+                   "                    [--size N] [--force]\n"
+                   "\n"
+                   "--bases picks a photo per effect: {default, face, chroma, categories:{slug: file},\n"
+                   "effects:{id: file}}, files relative to the JSON. An effect uses its own entry,\n"
+                   "then face (face effects) or chroma (the key), then its category, then default.\n"
                    "\n"
                    "Writes thumbnail.png into each effect package directory. Packages that already\n"
                    "have one are left alone unless --force or --only names them: these files are\n"
@@ -334,36 +578,62 @@ int main(int argc, char *argv[])
         return 1;
     }
 
-    QImage base;
-    if (!basePath.isEmpty())
-        base = QImage(basePath).convertToFormat(QImage::Format_RGBA8888);
-    if (base.isNull())
-        base = makeFallbackBase(size * 2);
-    base = base.scaled(size, size, Qt::KeepAspectRatioByExpanding, Qt::SmoothTransformation)
-               .copy(0, 0, size, size);
+    const BaseChooser chooser = BaseChooser::load(basesPath, basePath, err);
 
-    // Prefer landmarks from the real base photo when the face model is available; fall back to
-    // the drawn stand-in so thumbnails still generate without the addon installed.
-    drift::FaceAnchors faceAnchors;
-    QImage faceBase;
-    bool usedDetectedFace = false;
-    if (drift::FaceLandmarker::instance().available()) {
-        const QList<drift::FaceAnchors> faces = drift::FaceLandmarker::instance().detect(base);
-        if (!faces.isEmpty() && faces.first().valid) {
-            faceAnchors = faces.first();
-            faceBase = base;
-            usedDetectedFace = true;
-            out << "face: detected on base (score=" << faceAnchors.score << ")\n";
+    // Loaded, cropped and analysed once per photo, however many effects share it.
+    QHash<QString, QImage> bases;
+    const auto baseFor = [&](const QString &path) -> QImage {
+        const auto it = bases.constFind(path);
+        if (it != bases.cend())
+            return *it;
+        QImage image;
+        if (!path.isEmpty())
+            image = QImage(path).convertToFormat(QImage::Format_RGBA8888);
+        if (image.isNull())
+            image = makeFallbackBase(size * 2);
+        image = squareCrop(image, size);
+        bases.insert(path, image);
+        return image;
+    };
+    QHash<QString, std::shared_ptr<drift::DepthFrame>> depths;
+    const auto depthFor = [&](const QString &path) {
+        auto &depth = depths[path];
+        if (!depth)
+            depth = baseDepth(baseFor(path), err);
+        return depth;
+    };
+
+    // Landmarks per face photo. Prefer the real photo when the face model is available; fall back
+    // to the drawn stand-in so thumbnails still generate without the addon installed.
+    struct FacePhoto
+    {
+        QImage image;
+        drift::FaceAnchors anchors;
+    };
+    QHash<QString, FacePhoto> faces;
+    const auto faceFor = [&](const QString &path) -> FacePhoto {
+        const auto it = faces.constFind(path);
+        if (it != faces.cend())
+            return *it;
+        FacePhoto face;
+        if (drift::FaceLandmarker::instance().available()) {
+            const QImage candidate = baseFor(path);
+            const QList<drift::FaceAnchors> found = drift::FaceLandmarker::instance().detect(candidate);
+            if (!found.isEmpty() && found.first().valid) {
+                face = {candidate, found.first()};
+                out << "face: detected on " << path << " (score=" << face.anchors.score << ")\n";
+            }
         }
-    }
-    if (!usedDetectedFace) {
-        if (!basePath.isEmpty())
-            err << "face: detection unavailable (" << drift::FaceLandmarker::instance().lastError()
-                << "); using drawn stand-in for face effects\n";
-        faceBase = makeFaceBase(size, &faceAnchors);
-    }
+        if (face.image.isNull()) {
+            err << "face: none found on " << path << " ("
+                << drift::FaceLandmarker::instance().lastError() << "); using drawn stand-in\n";
+            face.image = makeFaceBase(size, &face.anchors);
+        }
+        faces.insert(path, face);
+        return face;
+    };
 
-    const QImage chromaBase = withGreenScreenBackdrop(base);
+    const QImage chromaBase = withGreenScreenBackdrop(baseFor(chooser.chroma));
 
     int ok = 0;
     int failed = 0;
@@ -371,7 +641,8 @@ int main(int argc, char *argv[])
     for (const EffectPresetEntry &def : effectCatalog()) {
         if (!onlyId.isEmpty() && def.meta.id != onlyId)
             continue;
-        if (!def.isGpu || !def.gpu.valid) {
+        const bool occlude = def.meta.id == QLatin1String("depth.occlude");
+        if ((!def.isGpu || !def.gpu.valid) && !occlude && !def.isFaceSwap) {
             err << "skip non-gpu " << def.meta.id << "\n";
             continue;
         }
@@ -386,21 +657,47 @@ int main(int argc, char *argv[])
             continue;
         }
 
+        const QString basePhoto = chooser.forEffect(def);
+        const QImage base = baseFor(basePhoto);
         QImage result;
         const QMap<QString, QVariant> params = dramaticDefaults(def);
-        if (def.meta.id == QLatin1String("time_echo")) {
+        if (occlude) {
+            result = behindSubjectPreview(base, *depthFor(basePhoto));
+        } else if (def.isFaceSwap) {
+            result = faceSwapPreview(def, faceFor(basePhoto), faceFor(chooser.faceSwapSource),
+                                     chooser.faceSwapSource, err);
+        } else if (def.meta.id == QLatin1String("time_echo")) {
             result = applyTimeEchoPreview(base, params);
         } else if (def.meta.id == QLatin1String("key.chroma")) {
             drift::Effect effect;
             effect.catalogId = def.meta.id;
             effect.parameters = params;
             result = EffectProcessor::applyEffects(chromaBase, {effect}, 500000);
+        } else if (def.needsDepth) {
+            drift::Effect effect;
+            effect.catalogId = def.meta.id;
+            effect.parameters = depthDefaults(def);
+            const std::shared_ptr<drift::DepthFrame> depth = depthFor(basePhoto);
+            // Focus on the subject by its depth rather than by where it sits in the frame, so a
+            // different photo cannot silently focus on the sky.
+            if (def.meta.id == QLatin1String("depth.focus")) {
+                std::vector<quint16> sorted = depth->values;
+                std::sort(sorted.begin(), sorted.end());
+                // The near end of the frame, with a sharp range deep enough for a whole
+                // subject rather than just its nearest edge.
+                const double nearest = sorted[sorted.size() * 90 / 100] / 65535.0;
+                effect.parameters.insert(QStringLiteral("autoFocus"), false);
+                effect.parameters.insert(QStringLiteral("focusDepth"), nearest);
+                effect.parameters.insert(QStringLiteral("focusRange"), 0.15);
+                out << "depth.focus: focusing at " << nearest << "\n";
+            }
+            result = EffectProcessor::applyEffects(base, {effect}, 500000, {}, depth);
         } else if (def.needsFace) {
             drift::Effect effect;
             effect.catalogId = def.meta.id;
             effect.parameters = params;
-
-            result = EffectProcessor::applyEffects(faceBase, {effect}, 500000, {faceAnchors});
+            const FacePhoto face = faceFor(basePhoto);
+            result = EffectProcessor::applyEffects(face.image, {effect}, 500000, {face.anchors});
         } else {
             drift::Effect effect;
             effect.catalogId = def.meta.id;

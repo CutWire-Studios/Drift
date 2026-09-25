@@ -94,8 +94,11 @@ Backend backendFromId(const QString &id);
 const char *scaleFilter(Backend backend);
 
 // Cached: creating a device context is expensive, and the answer cannot change while the
-// process runs.
+// process runs. The first form asks deviceString() which device to open — the decode answer,
+// which on Windows means the adapter OpenGL draws on. Encoders want a different adapter, so
+// they pass their own string; the cache is keyed on both, so the two do not collide.
 bool deviceAvailable(AVHWDeviceType type);
+bool deviceAvailable(AVHWDeviceType type, const QByteArray &device);
 
 // DRIFT_NO_HWACCEL is the escape hatch for a driver that decodes garbage or crashes.
 bool disabledByEnv();

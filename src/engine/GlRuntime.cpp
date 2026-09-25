@@ -1,5 +1,6 @@
 #include "GlRuntime.h"
 
+#include "DepthSidecar.h"
 #include "GlModelRenderer.h"
 #include "GpuDevice.h"
 #include "VaapiZeroCopy.h"
@@ -12,6 +13,7 @@
 
 #include <QColor>
 #include <QCoreApplication>
+#include <QFloat16>
 #include <QMatrix3x3>
 #include <QMutex>
 #include <QMutexLocker>
@@ -91,6 +93,18 @@ extern "C" {
 #endif
 #ifndef GL_SYNC_FLUSH_COMMANDS_BIT
 #define GL_SYNC_FLUSH_COMMANDS_BIT 0x00000001
+#endif
+#ifndef GL_ALREADY_SIGNALED
+#define GL_ALREADY_SIGNALED 0x911A
+#endif
+#ifndef GL_TIMEOUT_EXPIRED
+#define GL_TIMEOUT_EXPIRED 0x911B
+#endif
+#ifndef GL_CONDITION_SATISFIED
+#define GL_CONDITION_SATISFIED 0x911C
+#endif
+#ifndef GL_WAIT_FAILED
+#define GL_WAIT_FAILED 0x911D
 #endif
 #ifndef GL_UNPACK_ROW_LENGTH
 #define GL_UNPACK_ROW_LENGTH 0x0CF2
@@ -211,12 +225,18 @@ namespace {
 // written at the top of the shader body, which is where they would naturally go. They have to be
 // injected between the version line and the precision block, which is why this is a parameter
 // rather than something the caller can do for itself.
-QByteArray translateShaderSource(QByteArray body, bool fragment, const char *extensions = nullptr)
+//
+// `prelude` is GLSL spliced in after the precision block and before the body: declarations the
+// engine provides to a package, such as the depth helpers.
+QByteArray translateShaderSource(QByteArray body, bool fragment, const char *extensions = nullptr,
+                                 const char *prelude = nullptr)
 {
     if (body.startsWith("#version")) {
         const int newline = body.indexOf('\n');
         body = (newline < 0) ? QByteArray() : body.mid(newline + 1);
     }
+    if (prelude)
+        body.prepend(prelude);
 
     const QOpenGLContext *current = QOpenGLContext::currentContext();
     if (!current || !current->isOpenGLES()) {
@@ -244,10 +264,85 @@ QByteArray translateShader(const char *source, bool fragment, const char *extens
     return translateShaderSource(QByteArray(source), fragment, extensions);
 }
 
-QByteArray translateShader(const QString &source, bool fragment)
+QByteArray translateShader(const QString &source, bool fragment, const char *prelude = nullptr)
 {
-    return translateShaderSource(source.toUtf8(), fragment);
+    return translateShaderSource(source.toUtf8(), fragment, nullptr, prelude);
 }
+
+// Compiled into every pass of a "requires": "depth" package. Texture coordinates follow the
+// effect chain's own convention: (0, 0) is the top-left of the frame.
+constexpr const char *kDepthPrelude = R"(
+uniform sampler2D u_depthTexture;
+uniform vec2 u_depthResolution;
+uniform float u_hasDepth;
+
+// Normalised depth at uv: 0 is the farthest thing in the clip, 1 the nearest. 0 everywhere when
+// the clip has no depth map, so effects should test u_hasDepth before trusting it.
+float driftDepth(vec2 uv)
+{
+    return u_hasDepth > 0.5 ? texture(u_depthTexture, uv).r : 0.0;
+}
+
+// driftDepth snapped to the edges of `guide` (normally u_currentTexture). The map is estimated at
+// a fraction of the frame's resolution and its edges are soft; a 3x3 joint-bilateral filter in
+// depth texels weights each tap by how alike its colour is to this pixel's, so depth steps land
+// on colour edges instead of haloing past them.
+float driftDepthGuided(vec2 uv, sampler2D guide)
+{
+    if (u_hasDepth < 0.5)
+        return 0.0;
+    vec2 texel = 1.0 / u_depthResolution;
+    vec3 centre = texture(guide, uv).rgb;
+    float sum = 0.0;
+    float weights = 0.0;
+    for (int y = -1; y <= 1; ++y) {
+        for (int x = -1; x <= 1; ++x) {
+            vec2 at = uv + vec2(float(x), float(y)) * texel;
+            vec3 d = texture(guide, at).rgb - centre;
+            float w = exp(-dot(d, d) * 40.0);
+            sum += texture(u_depthTexture, at).r * w;
+            weights += w;
+        }
+    }
+    return sum / max(weights, 1e-4);
+}
+
+// Surface normal from the depth map, in the frame's uv space (x right, y down) with z towards
+// the viewer. `strength` is how far depth runs per frame width: larger reads as deeper relief.
+vec3 driftNormal(vec2 uv, float strength)
+{
+    if (u_hasDepth < 0.5)
+        return vec3(0.0, 0.0, 1.0);
+    vec2 t = 1.0 / u_depthResolution;
+    float tl = texture(u_depthTexture, uv + vec2(-t.x, -t.y)).r;
+    float tc = texture(u_depthTexture, uv + vec2(0.0, -t.y)).r;
+    float tr = texture(u_depthTexture, uv + vec2(t.x, -t.y)).r;
+    float ml = texture(u_depthTexture, uv + vec2(-t.x, 0.0)).r;
+    float mr = texture(u_depthTexture, uv + vec2(t.x, 0.0)).r;
+    float bl = texture(u_depthTexture, uv + vec2(-t.x, t.y)).r;
+    float bc = texture(u_depthTexture, uv + vec2(0.0, t.y)).r;
+    float br = texture(u_depthTexture, uv + vec2(t.x, t.y)).r;
+    // Sobel, per texel, then per frame width so the result does not depend on map resolution.
+    float gx = ((tr + 2.0 * mr + br) - (tl + 2.0 * ml + bl)) / 8.0 * u_depthResolution.x;
+    float gy = ((bl + 2.0 * bc + br) - (tl + 2.0 * tc + tr)) / 8.0 * u_depthResolution.x;
+    // Nearer is larger, so a surface rising towards the viewer to the right faces left.
+    return normalize(vec3(-gx * strength, -gy * strength, 1.0));
+}
+
+// 16-bit depth through the 8-bit channels of an intermediate buffer, for multi-pass packages.
+vec2 packDepth(float d)
+{
+    float v = floor(clamp(d, 0.0, 1.0) * 65535.0 + 0.5);
+    float high = floor(v / 256.0);
+    return vec2(high, v - high * 256.0) / 255.0;
+}
+
+float unpackDepth(vec2 rg)
+{
+    vec2 bytes = floor(rg * 255.0 + 0.5);
+    return (bytes.x * 256.0 + bytes.y) / 65535.0;
+}
+)";
 
 constexpr const char *kCopyFragShader = R"(#version 330 core
 in vec2 v_texCoord;
@@ -275,6 +370,19 @@ void main() {
     vec3 yuv = (vec3(y, chroma) - u_yuvOffset) * u_yuvScale;
     vec3 rgb = u_yuvToRgb * yuv;
     fragColor = vec4(clamp(rgb, 0.0, 1.0), 1.0);
+}
+)";
+
+// Packed RGBA (straight alpha) with the same UV affine the NV12 convert shader uses for
+// display-matrix rotation. Alpha sources skip NV12 so this is how they reach the canvas.
+constexpr const char *kRgbaRotateFragShader = R"(#version 330 core
+in vec2 v_texCoord;
+out vec4 fragColor;
+uniform sampler2D u_image;
+uniform mat3 u_texMap;
+void main() {
+    vec2 src = (u_texMap * vec3(v_texCoord, 1.0)).xy;
+    fragColor = texture(u_image, src);
 }
 )";
 
@@ -409,7 +517,13 @@ using CUcontext = void *;
 using CUstream = void *;
 using CUgraphicsResource = void *;
 
-enum { kCuSuccess = 0, kCuMemoryDevice = 2, kCuMemoryArray = 3, kCuRegisterWriteDiscard = 0x02 };
+enum {
+    kCuSuccess = 0,
+    kCuMemoryDevice = 2,
+    kCuMemoryArray = 3,
+    kCuRegisterReadOnly = 0x01,
+    kCuRegisterWriteDiscard = 0x02,
+};
 
 // CUDA_MEMCPY2D as the *_v2 entry points expect it. The unversioned cuMemcpy2D symbol that
 // libcuda still exports is the v1 ABI, whose equivalent fields are unsigned int rather than
@@ -536,6 +650,21 @@ CUresult queueCudaPlaneCopy(CudaGlApi &api, CUstream stream, CUarray dst, CUdevi
     // CU_STREAM_NON_BLOCKING, which by definition does not synchronise against the legacy
     // null stream — so a copy issued there was unordered with respect to the map and unmap
     // around it, and GL could sample the WRITE_DISCARD textures before the pixels arrived.
+    return api.cuMemcpy2DAsync(&op, stream);
+}
+
+// The export direction: a mapped GL texture out to the encoder's device memory.
+CUresult queueCudaPlaneReadback(CudaGlApi &api, CUstream stream, CUdeviceptr dst, size_t dstPitch,
+                                CUarray src, size_t widthBytes, size_t height)
+{
+    CudaMemcpy2D op{};
+    op.srcMemoryType = kCuMemoryArray;
+    op.srcArray = src;
+    op.dstMemoryType = kCuMemoryDevice;
+    op.dstDevice = dst;
+    op.dstPitch = dstPitch;
+    op.WidthInBytes = widthBytes;
+    op.Height = height;
     return api.cuMemcpy2DAsync(&op, stream);
 }
 
@@ -1060,7 +1189,11 @@ bool GlRuntime::initGlObjects()
         return false;
     }
 
-    setGlStatus(describeContext(context.get(), gl, drift::gl::GlStatus::Ready));
+    const drift::gl::GlStatusInfo ready = describeContext(context.get(), gl, drift::gl::GlStatus::Ready);
+    setGlStatus(ready);
+    // Decided once, here, rather than per frame: the renderer string cannot change
+    // under a live context, and the upload path that reads it runs on this thread.
+    m_limitedPreviewGpu = drift::gl::isLimitedPreviewRenderer(ready.renderer);
     // Only EGL can say which DRM device a context draws through, and only while it is current.
     // Record it here so the decode side can ask from any thread later.
     drift::gpu::probeRenderDrmNode();
@@ -1155,12 +1288,18 @@ bool GlRuntime::exec(const std::function<void()> &fn)
     QMetaObject::invokeMethod(
         m_glOwner,
         [this, &fn]() -> bool {
-            if (!context->makeCurrent(surface.get())) {
+            // The GL thread has one context and nothing else to switch to, so it stays current
+            // between calls: a make/done pair per exec() is a driver round trip every composite,
+            // and on some drivers an implicit flush as well.
+            if (QOpenGLContext::currentContext() != context.get()
+                && !context->makeCurrent(surface.get())) {
                 qWarning("GlRuntime: makeCurrent failed");
                 return false;
             }
             fn();
-            context->doneCurrent();
+            // What doneCurrent used to flush implicitly: fences created inside fn() must reach
+            // the GPU before another context (Qt Quick's render thread) waits on them.
+            context->functions()->glFlush();
             return true;
         },
         Qt::BlockingQueuedConnection, &ran);
@@ -1227,6 +1366,8 @@ void GlRuntime::shutdown()
             }
             for (GlTarget &target : m_presentRing)
                 target.fbo.reset();
+            m_presentDisplayed = -1;
+            m_retiredPresent.clear();
             m_targetPool.clear();
             m_pooledTargets = 0;
             programs.clear();
@@ -1238,6 +1379,9 @@ void GlRuntime::shutdown()
                     gl->glDeleteTextures(1, &tex);
                 }
                 staticTextures.clear();
+                for (const DepthTexture &entry : depthTextures)
+                    gl->glDeleteTextures(1, &entry.texture);
+                depthTextures.clear();
                 for (const auto &entry : faceSwapPhotos) {
                     if (entry.second.texture)
                         gl->glDeleteTextures(1, &entry.second.texture);
@@ -1324,10 +1468,45 @@ void GlRuntime::destroyExportNv12State()
         destroyExportNv12Slot(i);
 }
 
+void GlRuntime::unregisterExportCudaResources(int slot)
+{
+#if !defined(Q_OS_MACOS)
+    if (slot < 0 || slot >= kExportNv12Slots)
+        return;
+    ExportNv12Slot &s = m_exportNv12[slot];
+    CudaGlApi &api = cudaGlApi();
+    if (api.ok && (s.cudaY || s.cudaUv)) {
+        // From the context they were registered in, for the same reason the import side does:
+        // CUDA refuses an unregister from anywhere else and the registration would leak.
+        CUcontext owner = nullptr;
+        if (s.cudaDevice) {
+            const auto *device = reinterpret_cast<const AVHWDeviceContext *>(s.cudaDevice->data);
+            if (device && device->hwctx)
+                owner = *reinterpret_cast<CUcontext const *>(device->hwctx);
+        }
+        const bool pushed = owner && api.cuCtxPushCurrent(owner) == kCuSuccess;
+        if (s.cudaY)
+            api.cuGraphicsUnregisterResource(static_cast<CUgraphicsResource>(s.cudaY));
+        if (s.cudaUv)
+            api.cuGraphicsUnregisterResource(static_cast<CUgraphicsResource>(s.cudaUv));
+        if (pushed) {
+            CUcontext popped = nullptr;
+            api.cuCtxPopCurrent(&popped);
+        }
+    }
+    s.cudaY = nullptr;
+    s.cudaUv = nullptr;
+    av_buffer_unref(&s.cudaDevice);
+#else
+    Q_UNUSED(slot);
+#endif
+}
+
 void GlRuntime::destroyExportNv12Slot(int slot)
 {
     if (slot < 0 || slot >= kExportNv12Slots)
         return;
+    unregisterExportCudaResources(slot);
     auto *gl = functions();
     ExportNv12Slot &s = m_exportNv12[slot];
     if (gl) {
@@ -1372,6 +1551,9 @@ bool GlRuntime::ensureExportNv12Slot(QOpenGLExtraFunctions *gl, int slot, int wi
             f = 0;
         }
     };
+    // The textures below are about to be deleted and remade, so any CUDA registration naming
+    // them has to go first.
+    unregisterExportCudaResources(slot);
     if (s.fence) {
         gl->glDeleteSync(s.fence);
         s.fence = nullptr;
@@ -1423,7 +1605,8 @@ bool GlRuntime::ensureExportNv12Slot(QOpenGLExtraFunctions *gl, int slot, int wi
     return true;
 }
 
-bool GlRuntime::packCanvasToNv12Slot(const GlTarget &canvas, int outW, int outH, int slot)
+bool GlRuntime::packCanvasToNv12Slot(const GlTarget &canvas, int outW, int outH, int slot,
+                                     bool readback)
 {
     auto *gl = functions();
     if (!gl || !canvas.isValid() || !ensureExportNv12Slot(gl, slot, outW, outH))
@@ -1463,6 +1646,15 @@ bool GlRuntime::packCanvasToNv12Slot(const GlTarget &canvas, int outW, int outH,
     if (!drawPlane(yProg, s.yFbo, outW, outH) || !drawPlane(uvProg, s.uvFbo, outW / 2, outH / 2))
         return false;
 
+    if (!readback) {
+        // cuGraphicsMapResources orders itself after the GL work already issued on this
+        // context, so the flush is all the synchronisation copyNv12SlotToCuda needs. No fence:
+        // nothing on the GL side waits for these planes again until the next pack, and that
+        // pack is ordered behind the unmap by the same rule.
+        gl->glFlush();
+        return true;
+    }
+
     gl->glBindBuffer(GL_PIXEL_PACK_BUFFER, s.pbo);
     gl->glPixelStorei(GL_PACK_ALIGNMENT, 1);
     gl->glPixelStorei(GL_PACK_ROW_LENGTH, 0);
@@ -1481,6 +1673,95 @@ bool GlRuntime::packCanvasToNv12Slot(const GlTarget &canvas, int outW, int outH,
     gl->glFlush();
     s.fence = gl->glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
     return s.fence != nullptr;
+}
+
+bool GlRuntime::copyNv12SlotToCuda(int slot, AVFrame *dst)
+{
+#if defined(Q_OS_MACOS)
+    Q_UNUSED(slot);
+    Q_UNUSED(dst);
+    return false;
+#else
+    if (slot < 0 || slot >= kExportNv12Slots || !dst || dst->format != AV_PIX_FMT_CUDA
+        || !cudaSwFormatIsNv12(dst))
+        return false;
+
+    ExportNv12Slot &s = m_exportNv12[slot];
+    if (!s.yTex || !s.uvTex || s.width < 2 || s.height < 2 || dst->width != s.width
+        || dst->height != s.height)
+        return false;
+
+    CudaGlApi &api = cudaGlApi();
+    if (!api.ok)
+        return false;
+
+    CUcontext ctx = nullptr;
+    CUstream stream = nullptr;
+    if (!cudaContextOf(dst, &ctx, &stream))
+        return false;
+    if (api.cuCtxPushCurrent(ctx) != kCuSuccess)
+        return false;
+
+    const AVBufferRef *frameDevice =
+        reinterpret_cast<const AVHWFramesContext *>(dst->hw_frames_ctx->data)->device_ref;
+    if (s.cudaDevice && frameDevice && s.cudaDevice->data != frameDevice->data)
+        unregisterExportCudaResources(slot);
+
+    bool ok = false;
+    if (!s.cudaY || !s.cudaUv) {
+        CUgraphicsResource yRes = nullptr;
+        CUgraphicsResource uvRes = nullptr;
+        // Read-only: CUDA never writes these, and telling it so lets the driver skip the
+        // write-back it would otherwise have to assume on unmap.
+        CUresult rc =
+            api.cuGraphicsGLRegisterImage(&yRes, s.yTex, GL_TEXTURE_2D, kCuRegisterReadOnly);
+        if (rc == kCuSuccess)
+            rc = api.cuGraphicsGLRegisterImage(&uvRes, s.uvTex, GL_TEXTURE_2D, kCuRegisterReadOnly);
+        if (rc == kCuSuccess) {
+            s.cudaY = yRes;
+            s.cudaUv = uvRes;
+            s.cudaDevice = frameDevice ? av_buffer_ref(frameDevice) : nullptr;
+        } else {
+            if (yRes)
+                api.cuGraphicsUnregisterResource(yRes);
+            if (uvRes)
+                api.cuGraphicsUnregisterResource(uvRes);
+        }
+    }
+
+    if (s.cudaY && s.cudaUv) {
+        CUgraphicsResource resources[2] = {static_cast<CUgraphicsResource>(s.cudaY),
+                                           static_cast<CUgraphicsResource>(s.cudaUv)};
+        if (api.cuGraphicsMapResources(2, resources, stream) == kCuSuccess) {
+            CUarray yArray = nullptr;
+            CUarray uvArray = nullptr;
+            CUresult rc = api.cuGraphicsSubResourceGetMappedArray(&yArray, resources[0], 0, 0);
+            if (rc == kCuSuccess)
+                rc = api.cuGraphicsSubResourceGetMappedArray(&uvArray, resources[1], 0, 0);
+            bool copied = false;
+            if (rc == kCuSuccess && yArray && uvArray) {
+                // The UV texture is RG8 at half size: width/2 texels of two bytes is width
+                // bytes a row, over half the rows.
+                rc = queueCudaPlaneReadback(api, stream, dst->data[0],
+                                            size_t(qMax(0, dst->linesize[0])), yArray,
+                                            size_t(s.width), size_t(s.height));
+                if (rc == kCuSuccess)
+                    rc = queueCudaPlaneReadback(api, stream, dst->data[1],
+                                                size_t(qMax(0, dst->linesize[1])), uvArray,
+                                                size_t(s.width), size_t(s.height / 2));
+                copied = rc == kCuSuccess;
+            }
+            api.cuGraphicsUnmapResources(2, resources, stream);
+            // Both copies are queued on the frame's stream; the encoder reads the surface from
+            // elsewhere, so wait for them here rather than hand it over mid-flight.
+            ok = copied && api.cuStreamSynchronize(stream) == kCuSuccess;
+        }
+    }
+
+    CUcontext popped = nullptr;
+    api.cuCtxPopCurrent(&popped);
+    return ok;
+#endif
 }
 
 bool GlRuntime::mapNv12Slot(int slot, uint8_t *y, int yStride, uint8_t *uv, int uvStride, int width,
@@ -1526,22 +1807,47 @@ bool GlRuntime::mapNv12Slot(int slot, uint8_t *y, int yStride, uint8_t *uv, int 
     return true;
 }
 
-void GlRuntime::waitPresentFence(int slotIndex)
+bool GlRuntime::waitPresentFence(int slotIndex, GLuint64 timeoutNs)
 {
     if (slotIndex < 0 || slotIndex >= kPresentRingSize)
-        return;
+        return false;
     GLsync &fence = m_presentFence[slotIndex];
     if (!fence)
-        return;
+        return true;
     auto *gl = functions();
     if (!gl) {
         fence = nullptr;
-        return;
+        return true;
     }
     // Only wait for this slot's prior publish — not the whole GPU pipeline.
-    gl->glClientWaitSync(fence, GL_SYNC_FLUSH_COMMANDS_BIT, GLuint64(100'000'000)); // 100 ms
+    const GLenum result = gl->glClientWaitSync(fence, GL_SYNC_FLUSH_COMMANDS_BIT, timeoutNs);
+    if (result == GL_TIMEOUT_EXPIRED)
+        return false;
+    // Anything else consumed the fence, including GL_WAIT_FAILED. Report the slot as
+    // reusable: the sync object is gone either way, so refusing it would take the slot
+    // out of the ring for good and a broken driver would stall the preview permanently.
     gl->glDeleteSync(fence);
     fence = nullptr;
+    return true;
+}
+
+GlTarget &GlRuntime::preparePresentSlot(int slotIndex, int width, int height)
+{
+    GlTarget &slot = m_presentRing[slotIndex];
+    m_presentNext = (slotIndex + 1) % kPresentRingSize;
+    if (!slot.isValid() || slot.width != width || slot.height != height) {
+        QOpenGLFramebufferObjectFormat fmt;
+        fmt.setAttachment(QOpenGLFramebufferObject::NoAttachment);
+        // Retire rather than destroy: the scene graph may still be drawing the texture that
+        // belongs to this FBO, and freeing the name here is what turns an adaptive-quality
+        // rescale into a black frame. markPresentReady collects it once no node can hold it.
+        if (slot.fbo)
+            m_retiredPresent.emplace_back(m_presentPublished, std::move(slot.fbo));
+        slot.fbo = std::make_unique<QOpenGLFramebufferObject>(width, height, fmt);
+        slot.width = width;
+        slot.height = height;
+    }
+    return slot;
 }
 
 void GlRuntime::destroyImageUploadCache()
@@ -1625,20 +1931,17 @@ void logMediaCodecImportOnce(const char *reason)
 
 void GlRuntime::destroyVideoUploadState()
 {
-    unregisterCudaResources();
+    m_videoSourceLru.clear();
     auto *gl = functions();
+    releaseUploadSlots(gl);
     if (gl) {
 #if defined(Q_OS_WIN)
         if (m_d3d11)
             m_d3d11->release(gl);
 #endif
-        if (m_videoY) {
-            gl->glDeleteTextures(1, &m_videoY);
-            m_videoY = 0;
-        }
-        if (m_videoUV) {
-            gl->glDeleteTextures(1, &m_videoUV);
-            m_videoUV = 0;
+        if (m_videoRgba) {
+            gl->glDeleteTextures(1, &m_videoRgba);
+            m_videoRgba = 0;
         }
         if (m_importY) {
             gl->glDeleteTextures(1, &m_importY);
@@ -1667,13 +1970,22 @@ void GlRuntime::destroyVideoUploadState()
             m_mcImageCache.clear();
         }
 #endif
-        if (m_videoPbo[0] || m_videoPbo[1]) {
-            gl->glDeleteBuffers(2, m_videoPbo);
-            m_videoPbo[0] = m_videoPbo[1] = 0;
+        for (int i = 0; i < kVideoPboCount; ++i) {
+            if (m_videoPboFence[i]) {
+                gl->glDeleteSync(m_videoPboFence[i]);
+                m_videoPboFence[i] = nullptr;
+            }
+        }
+        if (m_videoPbo[0]) {
+            gl->glDeleteBuffers(kVideoPboCount, m_videoPbo);
+            for (int i = 0; i < kVideoPboCount; ++i)
+                m_videoPbo[i] = 0;
         }
     }
     m_videoTexW = 0;
     m_videoTexH = 0;
+    m_videoRgbaW = 0;
+    m_videoRgbaH = 0;
     m_videoPboIndex = 0;
     av_frame_free(&m_hwImportStaging);
     av_frame_free(&m_importNv12);
@@ -1681,19 +1993,100 @@ void GlRuntime::destroyVideoUploadState()
     m_importSws = nullptr;
 }
 
+void GlRuntime::stashCurrentUploadSlot()
+{
+    if (m_currentUploadSlot < 0 || m_currentUploadSlot >= int(m_uploadSlots.size()))
+        return;
+    VideoUploadSlot &slot = m_uploadSlots[m_currentUploadSlot];
+    slot.cudaY = m_cudaYResource;
+    slot.cudaUv = m_cudaUvResource;
+    slot.cudaDevice = m_cudaResourceDevice;
+    slot.cudaW = m_cudaTexW;
+    slot.cudaH = m_cudaTexH;
+}
+
+void GlRuntime::selectUploadSlot(int index)
+{
+    stashCurrentUploadSlot();
+    m_currentUploadSlot = index;
+    if (index < 0) {
+        m_videoY = m_videoUV = 0;
+        m_videoTexW = m_videoTexH = 0;
+        m_cudaYResource = m_cudaUvResource = nullptr;
+        m_cudaResourceDevice = nullptr;
+        m_cudaTexW = m_cudaTexH = 0;
+        return;
+    }
+    VideoUploadSlot &slot = m_uploadSlots[index];
+    slot.lastUse = ++m_uploadUseCounter;
+    m_videoY = slot.y;
+    m_videoUV = slot.uv;
+    m_videoTexW = slot.w;
+    m_videoTexH = slot.h;
+    m_cudaYResource = slot.cudaY;
+    m_cudaUvResource = slot.cudaUv;
+    m_cudaResourceDevice = slot.cudaDevice;
+    m_cudaTexW = slot.cudaW;
+    m_cudaTexH = slot.cudaH;
+}
+
+void GlRuntime::releaseUploadSlot(QOpenGLExtraFunctions *gl, int index)
+{
+    // Unregistering works on the current view, so make this slot current for it.
+    selectUploadSlot(index);
+    unregisterCudaResources();
+    VideoUploadSlot &slot = m_uploadSlots[index];
+    if (gl) {
+        if (slot.y)
+            gl->glDeleteTextures(1, &slot.y);
+        if (slot.uv)
+            gl->glDeleteTextures(1, &slot.uv);
+    }
+    m_currentUploadSlot = -1;
+    m_uploadSlots.erase(m_uploadSlots.begin() + index);
+    selectUploadSlot(-1);
+}
+
+void GlRuntime::releaseUploadSlots(QOpenGLExtraFunctions *gl)
+{
+    while (!m_uploadSlots.empty())
+        releaseUploadSlot(gl, int(m_uploadSlots.size()) - 1);
+}
+
 bool GlRuntime::ensureVideoUploadTextures(QOpenGLExtraFunctions *gl, int width, int height)
 {
     if (!gl || width < 2 || height < 2 || (width % 2) || (height % 2))
         return false;
-    if (m_videoY && m_videoUV && m_videoTexW == width && m_videoTexH == height)
-        return true;
 
-    unregisterCudaResources();
-    if (m_videoY)
-        gl->glDeleteTextures(1, &m_videoY);
-    if (m_videoUV)
-        gl->glDeleteTextures(1, &m_videoUV);
-    m_videoY = m_videoUV = 0;
+    // The least recently used slot of this size, or a new one while there are fewer than
+    // kUploadSlotsPerSize of them.
+    int sameSize = 0;
+    int oldest = -1;
+    for (int i = 0; i < int(m_uploadSlots.size()); ++i) {
+        const VideoUploadSlot &slot = m_uploadSlots[i];
+        if (slot.w != width || slot.h != height)
+            continue;
+        ++sameSize;
+        if (oldest < 0 || slot.lastUse < m_uploadSlots[oldest].lastUse)
+            oldest = i;
+    }
+    if (sameSize >= kUploadSlotsPerSize) {
+        selectUploadSlot(oldest);
+        return true;
+    }
+
+    if (int(m_uploadSlots.size()) >= kMaxUploadSlots) {
+        int evict = 0;
+        for (int i = 1; i < int(m_uploadSlots.size()); ++i) {
+            if (m_uploadSlots[i].lastUse < m_uploadSlots[evict].lastUse)
+                evict = i;
+        }
+        releaseUploadSlot(gl, evict);
+    }
+
+    selectUploadSlot(-1);
+    m_uploadSlots.push_back(VideoUploadSlot{});
+    m_currentUploadSlot = int(m_uploadSlots.size()) - 1;
 
     gl->glGenTextures(1, &m_videoY);
     gl->glBindTexture(GL_TEXTURE_2D, m_videoY);
@@ -1714,7 +2107,38 @@ bool GlRuntime::ensureVideoUploadTextures(QOpenGLExtraFunctions *gl, int width, 
 
     m_videoTexW = width;
     m_videoTexH = height;
+    VideoUploadSlot &slot = m_uploadSlots[m_currentUploadSlot];
+    slot.y = m_videoY;
+    slot.uv = m_videoUV;
+    slot.w = width;
+    slot.h = height;
+    slot.lastUse = ++m_uploadUseCounter;
     return m_videoY != 0 && m_videoUV != 0;
+}
+
+bool GlRuntime::ensureVideoRgbaTexture(QOpenGLExtraFunctions *gl, int width, int height)
+{
+    if (!gl || width < 1 || height < 1)
+        return false;
+    if (m_videoRgba && m_videoRgbaW == width && m_videoRgbaH == height)
+        return true;
+
+    if (m_videoRgba)
+        gl->glDeleteTextures(1, &m_videoRgba);
+    m_videoRgba = 0;
+
+    gl->glGenTextures(1, &m_videoRgba);
+    gl->glBindTexture(GL_TEXTURE_2D, m_videoRgba);
+    gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    gl->glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE,
+                     nullptr);
+
+    m_videoRgbaW = width;
+    m_videoRgbaH = height;
+    return m_videoRgba != 0;
 }
 
 bool GlRuntime::uploadPlanePbo(QOpenGLExtraFunctions *gl, GLuint texture, int texW, int texH,
@@ -1726,9 +2150,12 @@ bool GlRuntime::uploadPlanePbo(QOpenGLExtraFunctions *gl, GLuint texture, int te
         return false;
     const qsizetype packed = qsizetype(packedWidth) * texH;
     if (!m_videoPbo[0])
-        gl->glGenBuffers(2, m_videoPbo);
-    const GLuint pbo = m_videoPbo[m_videoPboIndex];
-    m_videoPboIndex ^= 1;
+        gl->glGenBuffers(kVideoPboCount, m_videoPbo);
+    const int index = m_videoPboIndex;
+    m_videoPboIndex = (m_videoPboIndex + 1) % kVideoPboCount;
+    if (!waitVideoPboFence(gl, index))
+        return false;
+    const GLuint pbo = m_videoPbo[index];
     gl->glBindBuffer(GL_PIXEL_UNPACK_BUFFER, pbo);
     gl->glBufferData(GL_PIXEL_UNPACK_BUFFER, packed, nullptr, GL_STREAM_DRAW);
     void *dst = gl->glMapBufferRange(GL_PIXEL_UNPACK_BUFFER, 0, packed,
@@ -1751,6 +2178,33 @@ bool GlRuntime::uploadPlanePbo(QOpenGLExtraFunctions *gl, GLuint texture, int te
     gl->glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
     gl->glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, texW, texH, format, GL_UNSIGNED_BYTE, nullptr);
     gl->glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
+    m_videoPboFence[index] = gl->glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
+    return true;
+}
+
+bool GlRuntime::waitVideoPboFence(QOpenGLExtraFunctions *gl, int index)
+{
+    if (!gl || index < 0 || index >= kVideoPboCount)
+        return false;
+    GLsync &fence = m_videoPboFence[index];
+    if (!fence)
+        return true;
+    const GLenum result =
+        gl->glClientWaitSync(fence, GL_SYNC_FLUSH_COMMANDS_BIT, GLuint64(1'000'000'000));
+    gl->glDeleteSync(fence);
+    fence = nullptr;
+    return result != GL_TIMEOUT_EXPIRED && result != GL_WAIT_FAILED;
+}
+
+bool GlRuntime::waitLatestVideoUploads(QOpenGLExtraFunctions *gl, int count)
+{
+    if (!gl || count <= 0)
+        return count <= 0;
+    for (int n = 1; n <= count; ++n) {
+        const int index = (m_videoPboIndex - n + kVideoPboCount) % kVideoPboCount;
+        if (!waitVideoPboFence(gl, index))
+            return false;
+    }
     return true;
 }
 
@@ -1884,11 +2338,21 @@ bool GlRuntime::importCudaNv12(QOpenGLExtraFunctions *gl, const AVFrame *frame)
         ok = copyCudaNv12ToTextures(api, stream, static_cast<CUgraphicsResource>(m_cudaYResource),
                                     static_cast<CUgraphicsResource>(m_cudaUvResource), frame, w, h,
                                     &why);
-        if (!ok) {
+        if (ok) {
+            m_cudaCopyFailures = 0;
+        } else {
+            // A copy failure is not the same answer as "this driver cannot do interop": a
+            // registration made against another reader's context, or a map that lost a race
+            // with the decoder, refuses one frame and succeeds on the next once the resources
+            // are registered again. Latching the session off after the first of those is what
+            // pushed every later frame onto the CPU path — and, when that failed too, dropped
+            // the layer out of the composite, which is the black frame. Retry a few times.
             noteZeroCopyDecline(
                 QStringLiteral("copying the NVDEC surface into GL textures failed: %1").arg(why));
             qWarning("GlRuntime: CUDA interop copy failed: %s", qUtf8Printable(why));
-            m_cudaImportFailed = true;
+            unregisterCudaResources();
+            if (++m_cudaCopyFailures >= kCudaCopyFailureLimit)
+                m_cudaImportFailed = true;
         }
     }
 
@@ -2390,22 +2854,25 @@ GlTarget &GlRuntime::acquirePresentTarget(int width, int height)
     const int w = qMax(1, width);
     const int h = qMax(1, height);
 
-    const int slotIndex = m_presentNext;
-    GlTarget &slot = m_presentRing[slotIndex];
-    m_presentNext = (m_presentNext + 1) % kPresentRingSize;
-
-    // The scene graph may still be sampling this ring slot from a previous publish.
-    // Wait for that fence before redrawing into the same FBO.
-    waitPresentFence(slotIndex);
-
-    if (!slot.isValid() || slot.width != w || slot.height != h) {
-        QOpenGLFramebufferObjectFormat fmt;
-        fmt.setAttachment(QOpenGLFramebufferObject::NoAttachment);
-        slot.fbo = std::make_unique<QOpenGLFramebufferObject>(w, h, fmt);
-        slot.width = w;
-        slot.height = h;
+    // Never redraw the slot the scene graph is still sampling. Poll first so a
+    // ready slot is not blocked behind a slow one; if every candidate is busy,
+    // wait a full second (the export path's budget) rather than the old 100 ms
+    // that HD 2500-class GPUs miss. A timeout leaves the last good frame up.
+    for (int i = 0; i < kPresentRingSize; ++i) {
+        const int slotIndex = (m_presentNext + i) % kPresentRingSize;
+        if (slotIndex == m_presentDisplayed)
+            continue;
+        if (waitPresentFence(slotIndex, 0))
+            return preparePresentSlot(slotIndex, w, h);
     }
-    return slot;
+    for (int i = 0; i < kPresentRingSize; ++i) {
+        const int slotIndex = (m_presentNext + i) % kPresentRingSize;
+        if (slotIndex == m_presentDisplayed)
+            continue;
+        if (waitPresentFence(slotIndex, GLuint64(1'000'000'000)))
+            return preparePresentSlot(slotIndex, w, h);
+    }
+    return m_invalidPresent;
 }
 
 void GlRuntime::markPresentReady(GlTarget &presentTarget)
@@ -2432,6 +2899,14 @@ void GlRuntime::markPresentReady(GlTarget &presentTarget)
     }
     gl->glFlush();
     m_presentFence[slotIndex] = gl->glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
+    m_presentDisplayed = slotIndex;
+
+    ++m_presentPublished;
+    // Every slot has been published at least once since these left the ring, so no scene-graph
+    // node can still name their textures.
+    std::erase_if(m_retiredPresent, [this](const auto &entry) {
+        return m_presentPublished - entry.first >= quint64(kPresentRingSize);
+    });
 }
 
 QOpenGLShaderProgram *GlRuntime::builtinProgram(const QString &id, const char *vertexSource,
@@ -2483,6 +2958,8 @@ CompiledEffect *GlRuntime::compile(const QString &cacheKey, const drift::GpuEffe
         sourceSig += pass.fragmentShaderSource;
     sourceSig += QLatin1Char('#');
     sourceSig += QString::number(gpu.passes.size());
+    if (gpu.needsDepth)
+        sourceSig += QLatin1String("#depth");
 
     CompiledEffect &cached = programs[cacheKey];
     if (cached.ok && cached.id == cacheKey && cached.sourceSig == sourceSig)
@@ -2504,7 +2981,9 @@ CompiledEffect *GlRuntime::compile(const QString &cacheKey, const drift::GpuEffe
             return nullptr;
         }
         if (!cp.program->addShaderFromSourceCode(QOpenGLShader::Fragment,
-                                                translateShader(pass.fragmentShaderSource, true))) {
+                                                translateShader(pass.fragmentShaderSource, true,
+                                                                gpu.needsDepth ? kDepthPrelude
+                                                                               : nullptr))) {
             qWarning("GlRuntime: fragment compile failed for %s pass %d (%s): %s", qPrintable(cacheKey),
                      pass.passIndex, qPrintable(pass.fragmentShaderFile), qPrintable(cp.program->log()));
             programs.erase(cacheKey);
@@ -2580,6 +3059,59 @@ GLuint staticTexture(GlRuntime &rt, QOpenGLExtraFunctions *gl, const QString &pa
     gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
     gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
     rt.staticTextures[path] = tex;
+    return tex;
+}
+
+GLuint depthTexture(GlRuntime &rt, QOpenGLExtraFunctions *gl, const drift::DepthFrame &frame)
+{
+    for (auto it = rt.depthTextures.begin(); it != rt.depthTextures.end(); ++it) {
+        if (it->key == frame.key) {
+            rt.depthTextures.splice(rt.depthTextures.begin(), rt.depthTextures, it);
+            return it->texture;
+        }
+    }
+    if (frame.size.isEmpty()
+        || frame.values.size() != size_t(frame.size.width()) * size_t(frame.size.height())) {
+        return 0;
+    }
+
+    // Not in every GLES header.
+    constexpr GLenum kR16 = 0x822A;
+    constexpr GLenum kR16F = 0x822D;
+    constexpr GLenum kHalfFloat = 0x140B;
+
+    const QOpenGLContext *context = QOpenGLContext::currentContext();
+    const bool norm16 = context
+                        && (!context->isOpenGLES()
+                            || context->hasExtension(QByteArrayLiteral("GL_EXT_texture_norm16")));
+
+    GLuint tex = 0;
+    gl->glGenTextures(1, &tex);
+    gl->glBindTexture(GL_TEXTURE_2D, tex);
+    gl->glPixelStorei(GL_UNPACK_ALIGNMENT, 2);
+    if (norm16) {
+        gl->glTexImage2D(GL_TEXTURE_2D, 0, kR16, frame.size.width(), frame.size.height(), 0,
+                         GL_RED, GL_UNSIGNED_SHORT, frame.values.data());
+    } else {
+        std::vector<qfloat16> half(frame.values.size());
+        for (size_t i = 0; i < half.size(); ++i)
+            half[i] = qfloat16(float(frame.values[i]) / 65535.0f);
+        gl->glTexImage2D(GL_TEXTURE_2D, 0, kR16F, frame.size.width(), frame.size.height(), 0,
+                         GL_RED, kHalfFloat, half.data());
+    }
+    gl->glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
+    gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    gl->glBindTexture(GL_TEXTURE_2D, 0);
+
+    rt.depthTextures.push_front({frame.key, tex});
+    while (rt.depthTextures.size() > GlRuntime::kMaxDepthTextures) {
+        GLuint old = rt.depthTextures.back().texture;
+        gl->glDeleteTextures(1, &old);
+        rt.depthTextures.pop_back();
+    }
     return tex;
 }
 
@@ -2701,6 +3233,66 @@ GlTarget drawMediaCodecImage(GlRuntime &rt, QOpenGLExtraFunctions *gl,
     return target;
 }
 
+GlTarget promoteVideoFrameToTargetCached(GlRuntime &rt, QOpenGLExtraFunctions *gl,
+                                         const PreviewVideoFrame &frame)
+{
+    auto &lru = rt.m_videoSourceLru;
+    if (!rt.cacheVideoSources) {
+        // Playing: every frame is new, so the entries would only hold VRAM.
+        for (GlRuntime::CachedVideoSource &entry : lru)
+            rt.releaseTarget(std::move(entry.target));
+        lru.clear();
+        return promoteVideoFrameToTarget(rt, gl, frame);
+    }
+    if (!gl || !frame.isValid())
+        return {};
+
+    const AVFrame *av = frame.frame.get();
+    for (auto it = lru.begin(); it != lru.end();) {
+        if (it->frame.expired()) {
+            rt.releaseTarget(std::move(it->target));
+            it = lru.erase(it);
+            continue;
+        }
+        if (it->raw == av && it->rotation == frame.rotation && it->colorspace == frame.colorspace
+            && it->colorRange == frame.colorRange) {
+            lru.splice(lru.begin(), lru, it);
+            GlTarget out = rt.acquireTarget(it->target.width, it->target.height);
+            if (!out.isValid())
+                return {};
+            if (!blitTextureToTarget(rt, gl, it->target.texture(), out)) {
+                rt.releaseTarget(std::move(out));
+                return {};
+            }
+            return out;
+        }
+        ++it;
+    }
+
+    GlTarget promoted = promoteVideoFrameToTarget(rt, gl, frame);
+    if (!promoted.isValid())
+        return promoted;
+    // The caller owns and mutates what it is handed, so the cache keeps a copy.
+    GlTarget copy = rt.acquireTarget(promoted.width, promoted.height);
+    if (!copy.isValid() || !blitTextureToTarget(rt, gl, promoted.texture(), copy)) {
+        rt.releaseTarget(std::move(copy));
+        return promoted;
+    }
+    while (lru.size() >= GlRuntime::kMaxCachedVideoSources) {
+        rt.releaseTarget(std::move(lru.back().target));
+        lru.pop_back();
+    }
+    GlRuntime::CachedVideoSource entry;
+    entry.frame = frame.frame;
+    entry.raw = av;
+    entry.rotation = frame.rotation;
+    entry.colorspace = frame.colorspace;
+    entry.colorRange = frame.colorRange;
+    entry.target = std::move(copy);
+    lru.push_front(std::move(entry));
+    return promoted;
+}
+
 GlTarget promoteVideoFrameToTarget(GlRuntime &rt, QOpenGLExtraFunctions *gl,
                                    const PreviewVideoFrame &frame)
 {
@@ -2708,6 +3300,50 @@ GlTarget promoteVideoFrameToTarget(GlRuntime &rt, QOpenGLExtraFunctions *gl,
         return {};
 
     const AVFrame *av = frame.frame.get();
+
+    // Alpha preview frames stay packed RGBA (ClipReader::softwareFrameToRgba). Uploading as
+    // NV12 would drop the plane, and the YUV convert shader hard-codes a = 1.
+    if (av->format == AV_PIX_FMT_RGBA) {
+        const int srcW = av->width;
+        const int srcH = av->height;
+        if (srcW < 1 || srcH < 1 || !av->data[0] || av->linesize[0] <= 0)
+            return {};
+        if (!rt.ensureVideoRgbaTexture(gl, srcW, srcH))
+            return {};
+        if (!rt.uploadPlanePbo(gl, rt.m_videoRgba, srcW, srcH, GL_RGBA, GL_RGBA, av->data[0],
+                               av->linesize[0], srcW * 4))
+            return {};
+        recordPreviewUploadPath(GlRuntime::PreviewUploadPath::CpuRoundTrip);
+
+        const int destW = qMax(1, frame.displayWidth());
+        const int destH = qMax(1, frame.displayHeight());
+        GlTarget target = rt.acquireTarget(destW, destH);
+        if (!target.isValid())
+            return {};
+        QOpenGLShaderProgram *program = rt.builtinProgram(QStringLiteral("__rgba_rotate__"),
+                                                          kQuadVertexShader, kRgbaRotateFragShader);
+        if (!program) {
+            rt.releaseTarget(std::move(target));
+            return {};
+        }
+        target.fbo->bind();
+        gl->glViewport(0, 0, destW, destH);
+        gl->glDisable(GL_BLEND);
+        gl->glClearColor(0.f, 0.f, 0.f, 0.f);
+        gl->glClear(GL_COLOR_BUFFER_BIT);
+        program->bind();
+        program->setUniformValue("u_image", 0);
+        program->setUniformValue("u_texMap", texMapForRotation(frame.rotation));
+        gl->glActiveTexture(GL_TEXTURE0);
+        gl->glBindTexture(GL_TEXTURE_2D, rt.m_videoRgba);
+        gl->glBindVertexArray(rt.vao);
+        gl->glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+        gl->glBindVertexArray(0);
+        program->release();
+        target.fbo->release();
+        return target;
+    }
+
     const int codedW = av->width & ~1;
     const int codedH = av->height & ~1;
     if (codedW < 2 || codedH < 2)
@@ -2767,6 +3403,11 @@ GlTarget promoteVideoFrameToTarget(GlRuntime &rt, QOpenGLExtraFunctions *gl,
             || !rt.uploadPlanePbo(gl, rt.m_videoUV, w / 2, h / 2, GL_RG8, GL_RG, nv12->data[1],
                                   nv12->linesize[1], w))
             return {};
+        // Only the chips that sample a still-pending PBO pay for this. Draining both
+        // plane uploads costs a frame of pipelining, so every other GPU relies on the
+        // per-buffer fences in uploadPlanePbo instead.
+        if (rt.m_limitedPreviewGpu && !rt.waitLatestVideoUploads(gl, 2))
+            return {};
         texY = rt.m_videoY;
         texUV = rt.m_videoUV;
         recordPreviewUploadPath(GlRuntime::PreviewUploadPath::CpuRoundTrip);
@@ -2823,6 +3464,13 @@ QString GlRuntime::lastZeroCopyDeclineReason()
 {
     QMutexLocker lock(&g_previewImportMutex);
     return g_zeroCopyDeclineReason;
+}
+
+void GlRuntime::restorePreviewUploadPath(PreviewUploadPath path, const QString &declineReason)
+{
+    QMutexLocker lock(&g_previewImportMutex);
+    g_previewUploadPath = path;
+    g_zeroCopyDeclineReason = declineReason;
 }
 
 void setPackageUniforms(QOpenGLShaderProgram *program, const QMap<QString, QVariant> &parameters,
@@ -2889,7 +3537,7 @@ void setPackageUniforms(QOpenGLShaderProgram *program, const QMap<QString, QVari
 GlTarget runPipeline(GlRuntime &rt, QOpenGLExtraFunctions *gl, const QString &cacheKey,
                      const drift::GpuEffectDefinition &gpu, const std::vector<const GlTarget *> &sources,
                      const QMap<QString, QVariant> &parameters, drift::TimeUs timeUs, double progress,
-                     const QSize &canvasSize)
+                     const QSize &canvasSize, const PipelineAux *aux)
 {
     CompiledEffect *compiled = rt.compile(cacheKey, gpu);
     if (!compiled || !compiled->ok || compiled->passes.size() != size_t(gpu.passes.size()))
@@ -2918,6 +3566,14 @@ GlTarget runPipeline(GlRuntime &rt, QOpenGLExtraFunctions *gl, const QString &ca
     std::map<QString, GLuint> textures;
     for (const drift::GpuEffectTextureSpec &spec : gpu.textures)
         textures[spec.id] = staticTexture(rt, gl, spec.path);
+
+    GLuint depthTex = 0;
+    QSize depthSize;
+    if (gpu.needsDepth && aux && aux->depth) {
+        depthTex = depthTexture(rt, gl, *aux->depth);
+        if (depthTex)
+            depthSize = aux->depth->size;
+    }
 
     GlTarget canvas = rt.acquireTarget(canvasSize.width(), canvasSize.height());
     if (!canvas.isValid()) {
@@ -3008,6 +3664,17 @@ GlTarget runPipeline(GlRuntime &rt, QOpenGLExtraFunctions *gl, const QString &ca
             // Re-apply resolution after possible buffer-sized primary input.
             program->setUniformValue("u_resolution",
                                      QVector2D(float(inputSize.width()), float(inputSize.height())));
+
+            if (gpu.needsDepth) {
+                gl->glActiveTexture(GL_TEXTURE0 + kDepthTextureUnit);
+                gl->glBindTexture(GL_TEXTURE_2D, depthTex);
+                gl->glActiveTexture(GL_TEXTURE0);
+                program->setUniformValue("u_depthTexture", kDepthTextureUnit);
+                program->setUniformValue("u_depthResolution",
+                                         QVector2D(float(qMax(1, depthSize.width())),
+                                                   float(qMax(1, depthSize.height()))));
+                program->setUniformValue("u_hasDepth", depthTex ? 1.f : 0.f);
+            }
 
             gl->glBindVertexArray(rt.vao);
             gl->glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);

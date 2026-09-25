@@ -186,6 +186,26 @@ QtObject {
         }
     }
 
+    // Offers, never acts: a proxy costs disk and minutes of encoding, and a conversion replaces
+    // the clip's media, so both wait for the user to say yes.
+    property Connections _suggestionWatch: Connections {
+        target: AssetLibrary
+        function onImportSuggestions(proxyIds, vfrIds) {
+            if (proxyIds.length > 0) {
+                Toasts.post("info",
+                            qsTr("%n clip(s) may play back slowly. A proxy makes previewing smoother; export still uses the original.", "", proxyIds.length),
+                            12000, qsTr("Create proxies"),
+                            function () { AssetLibrary.createProxies(proxyIds) })
+            }
+            if (vfrIds.length > 0) {
+                Toasts.post("warning",
+                            qsTr("%n clip(s) have a variable frame rate, which can drift out of sync with audio. Convert them to an edit-friendly format to fix it.", "", vfrIds.length),
+                            12000, qsTr("Convert"),
+                            function () { EditorState.convertAssetsToConstantFrameRate(vfrIds) })
+            }
+        }
+    }
+
     property Connections _finishWatch: Connections {
         target: AssetLibrary
         function onImportFinished(materialized, failed) {

@@ -67,6 +67,31 @@ bool isSoftwareRenderer(const QString &renderer)
     return false;
 }
 
+bool isLimitedPreviewRenderer(const QString &renderer)
+{
+    if (renderer.isEmpty())
+        return false;
+    // Exact product names. "HD Graphics 520" and "UHD Graphics" must not match.
+    // The P-prefixed entries are the Xeon workstation parts of the same two
+    // generations — identical silicon, identical flashing, and their renderer
+    // string does not contain the consumer name.
+    static const char *const markers[] = {
+        "HD Graphics 2000",
+        "HD Graphics 2500",
+        "HD Graphics 3000",
+        "HD Graphics 4000",
+        "HD Graphics P3000",
+        "HD Graphics P4000",
+        "Sandy Bridge",
+        "Ivy Bridge",
+    };
+    for (const char *marker : markers) {
+        if (renderer.contains(QLatin1StringView(marker), Qt::CaseInsensitive))
+            return true;
+    }
+    return false;
+}
+
 QString describeGl(const GlStatusInfo &info)
 {
     QString version;

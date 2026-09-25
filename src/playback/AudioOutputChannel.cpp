@@ -154,7 +154,9 @@ AudioOutputChannel::AudioOutputChannel(const QString &threadName, QObject *paren
     // decode and mix audio — never block the GUI thread.
     m_pull->moveToThread(&m_thread);
     m_thread.setObjectName(threadName);
-    m_thread.start();
+    // The one thread whose lateness is audible. Honoured on Windows and macOS; a normal Linux
+    // thread cannot raise itself, which is why background work there is lowered instead.
+    m_thread.start(QThread::TimeCriticalPriority);
 
     // Fires for a new or removed device *and* for the default one changing, which on Windows is
     // every headphone jack, HDMI monitor and Bluetooth headset.
@@ -211,10 +213,17 @@ void AudioOutputChannel::start()
 
     // Never block the GUI on sink I/O: start() may pull the first buffer, which opens and seeks
     // media, and that must stay on the audio thread.
+    //
+    // Pausing playback leaves the sink running on silence (stop() is for teardown), so a play
+    // after a pause finds it already started; starting it again only earns a Qt warning.
     QMetaObject::invokeMethod(
         m_pull,
         [this] {
-            if (m_sink)
+            if (!m_sink)
+                return;
+            if (m_sink->state() == QAudio::SuspendedState)
+                m_sink->resume();
+            else if (m_sink->state() == QAudio::StoppedState)
                 m_sink->start(m_pull);
         },
         Qt::QueuedConnection);

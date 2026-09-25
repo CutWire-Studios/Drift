@@ -8,6 +8,10 @@ import "components/timeline"
 PanelFrame {
     id: root
 
+    // Keyframe lane height the user dragged to; session-only, kept here because the graph
+    // itself is unloaded whenever no clip or no keyframe tab is selected.
+    property real keyframeLaneHeight: 88
+
     property real zoom: 1.0
     property string propertiesTab: ""
 
@@ -62,6 +66,9 @@ PanelFrame {
     // Exposed for clip filmstrip viewport culling (Flickable ids are local).
     readonly property real timelineViewX: flick.contentX
     readonly property real timelineViewW: flick.width
+    // Exposed so the overview strip can clamp its scroll target without
+    // duplicating the Flickable's contentWidth formula.
+    readonly property real timelineContentWidth: flick.contentWidth
 
     // Fit the whole project (plus end pad) into the timeline viewport.
     function fitZoom() {
@@ -125,6 +132,85 @@ PanelFrame {
     }
     readonly property var tracks: EditorState.tracks
     readonly property real playheadSeconds: EditorState.playheadSeconds
+    // What the scene-graph clip renderer reads from this panel, bound once here instead of once
+    // per clip.
+    TimelineViewState {
+        id: timelineViewState
+        viewX: root.timelineViewX
+        viewW: root.timelineViewW
+        pxPerSecond: root.pxPerSecond
+        touchMode: false
+        multiSelectActive: root.multiSelectActive === true
+        totalTracksHeight: root.totalTracksHeightCached
+        moveFollowActive: root.moveFollowActive
+        moveLeaderTrack: root.moveLeaderTrack
+        moveLeaderClip: root.moveLeaderClip
+        moveFollowDeltaX: root.moveFollowDeltaX
+        moveFollowDeltaY: root.moveFollowDeltaY
+        trimFollowActive: root.trimFollowActive
+        trimFollowLinkId: root.trimFollowLinkId
+        trimFollowClipId: root.trimFollowClipId
+        trimFollowStart: root.trimFollowStart
+        trimFollowDuration: root.trimFollowDuration
+        trimFollowIn: root.trimFollowIn
+        trimFollowOut: root.trimFollowOut
+        effectDropTrack: root.effectDropTrackIndex
+        effectDropClip: root.effectDropClipIndex
+        style: ({
+            "clipVideo": Theme.clipVideoPlaceholder,
+            "clipAudio": Theme.clipAudio,
+            "clipText": Theme.clipText,
+            "clipSubtitle": Theme.clipSubtitle,
+            "clipGraphic": Theme.clipGraphic,
+            "clipEffect": Theme.clipEffect,
+            "clipComposite": Theme.clipComposite,
+            "adjustmentVideo": Theme.clipAdjustmentVideo,
+            "adjustmentAudio": Theme.clipAdjustmentAudio,
+            "adjustmentMask": Theme.clipAdjustmentMask,
+            "primary": Theme.primary,
+            "scrim": Theme.scrimColor,
+            "proxyBand": Theme.clipProxyBand,
+            "onMedia": Theme.onMedia,
+            "waveform": Theme.waveformColor,
+            "mutedForeground": Theme.mutedForeground,
+            "panelBorder": Theme.panelBorder,
+            "proxyPill": Theme.clipProxy,
+            "proxyPillForeground": Theme.clipProxyForeground,
+            "editFriendlyPill": Theme.clipEditFriendly,
+            "editFriendlyPillForeground": Theme.clipEditFriendlyForeground,
+            "warning": Theme.warning,
+            "fontFamily": Theme.fontFamily,
+            "fontSizeTiny": Theme.fontSizeTiny,
+            "fontSizeXs": Theme.fontSizeXs,
+            "radiusSm": Theme.radiusSm,
+            "radiusXs": Theme.radiusXs,
+            "ringWidth": Theme.clipSelectionRingWidth,
+            "borderWidthFocus": Theme.borderWidthFocus,
+            "headerBandHeight": Theme.clipHeaderBandHeight,
+            "clipMinWidth": Theme.clipMinWidth,
+            "iconSizeSm": Theme.iconSizeSm,
+            "spacingLg": Theme.spacingLg,
+            "spacingMd": Theme.spacingMd,
+            "edgeMarginDesktop": 14,
+            "edgeMarginTouch": Theme.androidClipEdgeMargin,
+            "trimHotspotExtraDesktop": 10,
+            "trimHotspotExtraTouch": Theme.androidTrimHotspotExtra,
+            "proxyLabel": qsTr("Proxy"),
+            "proxyTooltip": qsTr("Previewing from a low-resolution proxy. Export uses the original."),
+            "editFriendlyLabel": qsTr("Edit-friendly"),
+            "editFriendlyTooltip": qsTr("Converted to a constant frame rate for smooth editing"),
+            "vfrTooltip": qsTr("Variable frame rate. This clip can drift out of sync with its audio. Right-click it and choose Convert to edit-friendly format.")
+        })
+    }
+
+    PlayheadInterpolator {
+        id: needle
+        active: root.visible
+        onSecondsChanged: {
+            if (EditorState.playing)
+                root.ensurePlayheadVisible()
+        }
+    }
     // True between beginPlayheadSeek and endPlayheadSeek when playback was
     // interrupted so a click or drag could land, and should resume on release.
     property bool resumePlaybackAfterSeek: false
@@ -227,6 +313,34 @@ PanelFrame {
 
     // While dragging a clip, other selected clips (linked A/V partners included)
     // ride along on the X and Y axes so they don't sit still until drop. CapCut-style.
+
+    // A trim in progress, broadcast so the dragged clip's linked A/V companion can follow it on
+    // screen. The commit gives the partner identical timing (syncLinkedTiming), so the preview
+    // is simply the same geometry applied to both.
+    property bool trimFollowActive: false
+    property string trimFollowLinkId: ""
+    property string trimFollowClipId: ""
+    property real trimFollowStart: 0
+    property real trimFollowDuration: 0
+    property real trimFollowIn: 0
+    property real trimFollowOut: 0
+
+    function setTrimFollow(linkId, clipId, start, duration, inPoint, outPoint) {
+        trimFollowLinkId = linkId || ""
+        trimFollowClipId = clipId || ""
+        trimFollowStart = start
+        trimFollowDuration = duration
+        trimFollowIn = inPoint
+        trimFollowOut = outPoint
+        trimFollowActive = trimFollowLinkId !== ""
+    }
+
+    function clearTrimFollow() {
+        trimFollowActive = false
+        trimFollowLinkId = ""
+        trimFollowClipId = ""
+    }
+
     property bool moveFollowActive: false
     property int moveLeaderTrack: -1
     property int moveLeaderClip: -1
@@ -258,8 +372,8 @@ PanelFrame {
 
     // Shared by library drops and in-timeline clip moves so both snap and show
     // the same outline the same way.
-    function showLandingPreview(trackIndex, desiredStart, duration) {
-        const snapped = snapClipStart(desiredStart, duration)
+    function showLandingPreview(trackIndex, desiredStart, duration, excludeClipId) {
+        const snapped = snapClipStart(desiredStart, duration, excludeClipId)
         dropTrackIndex = trackIndex
         dropStartSeconds = snapped.start
         dropDurationSeconds = duration
@@ -290,12 +404,23 @@ PanelFrame {
         effectDropClipIndex = clipIndex
     }
 
+    // A visual-only transition dropped on an audio track becomes the crossfade it can actually be.
+    function transitionKindForTrack(trackIndex, kind) {
+        const kinds = EditorState.transitionKindsForTrack(trackIndex)
+        for (let i = 0; i < kinds.length; ++i) {
+            if (kinds[i].kind === kind)
+                return kind
+        }
+        return "crossfade"
+    }
+
     // Find the outgoing (earlier) clip index for a transition drop at timeline x.
     function transitionLeftClipAtPosition(trackIndex, xPixels) {
         if (trackIndex < 0 || trackIndex >= tracks.length)
             return -1
         const track = tracks[trackIndex]
-        if (track.type !== "video" && track.type !== "shape" && track.type !== "text")
+        if (track.type !== "video" && track.type !== "shape" && track.type !== "text"
+                && track.type !== "audio")
             return -1
         const seconds = xPixels / pxPerSecond
         const clips = track.clips
@@ -339,7 +464,15 @@ PanelFrame {
         const leftClip = transitionLeftClipAtPosition(trackIndex, xPixels)
         if (leftClip < 0 || !kind || kind.length === 0)
             return
-        EditorState.addTransition(trackIndex, leftClip, kind, 0.5)
+        EditorState.addTransition(trackIndex, leftClip, transitionKindForTrack(trackIndex, kind), 0.5)
+    }
+
+    // The bin row's media kind ("video", "audio", "image", ...), which is what the track-fit
+    // questions below are really asking about. A file still in flight from the file manager has
+    // no row, so it answers them with AssetLibrary.provisionalKindForUrl() instead.
+    function assetKind(assetIndex) {
+        const asset = AssetLibrary.assetAt(assetIndex)
+        return asset ? (asset.kind || "video") : "video"
     }
 
     function assetDurationSeconds(assetIndex) {
@@ -354,9 +487,12 @@ PanelFrame {
 
     // Snap a clip's desired start against timeline targets, testing both edges.
     // Returns {start, guide}; guide < 0 means no snap occurred.
-    function snapClipStart(desiredStart, duration) {
-        const l = EditorState.snapTime(desiredStart)
-        const rEdge = EditorState.snapTime(desiredStart + duration)
+    // `excludeClipId` is the clip being dragged, if any: it is still parked at its old start in
+    // the model, so leaving its edges in the target set pins every short drag back to the origin.
+    function snapClipStart(desiredStart, duration, excludeClipId) {
+        const ex = excludeClipId || ""
+        const l = EditorState.snapTime(desiredStart, ex)
+        const rEdge = EditorState.snapTime(desiredStart + duration, ex)
         const lSnapped = Math.abs(l - desiredStart) > 0.0005
         const rSnapped = Math.abs(rEdge - (desiredStart + duration)) > 0.0005
         if (lSnapped && (!rSnapped || Math.abs(l - desiredStart) <= Math.abs(rEdge - duration - desiredStart)))
@@ -389,21 +525,6 @@ PanelFrame {
         })
     }
 
-    // Track indices of the nested lanes belonging to `trackIndex`, topmost first. Derived from
-    // `tracks` rather than asked of EditorState so it re-evaluates on its own.
-    function adjustmentLanesFor(trackIndex) {
-        var out = []
-        if (trackIndex < 0 || trackIndex >= tracks.length)
-            return out
-        const parentId = tracks[trackIndex].id
-        if (!parentId)
-            return out
-        for (var i = 0; i < tracks.length; i++) {
-            if (tracks[i].isAdjustmentLane && tracks[i].parentTrackId === parentId)
-                out.push(i)
-        }
-        return out
-    }
 
     // Nested lanes take no row of their own, so they must not contribute a gap either.
     function trackOccupiesARow(index) {
@@ -423,8 +544,13 @@ PanelFrame {
         if (type === "audio") return Theme.clipAudio;
         if (type === "graphic") return Theme.clipGraphic;
         if (type === "effect" || type === "adjustment") return Theme.clipEffect;
+        if (type === "composite") return Theme.clipComposite;
         return Theme.clipVideoPlaceholder; // video: no flat fill, thumbnails would go here
     }
+
+    // Computed once per model change instead of at each of the ten call sites below — one of
+    // which is the drag bounds of every clip delegate, making it O(clips x tracks) on any edit.
+    readonly property real totalTracksHeightCached: (root.tracks, root.totalTracksHeight())
 
     function totalTracksHeight() {
         var h = 0;
@@ -453,24 +579,6 @@ PanelFrame {
         return -1
     }
 
-    // Empty stretches on a track, sorted left-to-right. Gaps are never stored — they're
-    // just whatever time isn't covered by a clip — so this recomputes them from the
-    // current clip list on every call rather than caching anything.
-    function gapsForTrack(trackIndex) {
-        if (trackIndex < 0 || trackIndex >= tracks.length)
-            return []
-        const sorted = tracks[trackIndex].clips.slice().sort(function (a, b) {
-            return a.start - b.start
-        })
-        const gaps = []
-        for (var i = 0; i < sorted.length - 1; i++) {
-            const gapStart = sorted[i].start + sorted[i].duration
-            const gapEnd = sorted[i + 1].start
-            if (gapEnd > gapStart)
-                gaps.push({ start: gapStart, end: gapEnd })
-        }
-        return gaps
-    }
 
     function timelineHasClips() {
         for (var i = 0; i < tracks.length; i++) {
@@ -480,12 +588,16 @@ PanelFrame {
         return false
     }
 
-    function firstCompatibleTrackIndex(assetIndex) {
+    function firstCompatibleTrackIndexForKind(mediaKind) {
         for (var i = 0; i < tracks.length; i++) {
-            if (EditorState.trackAcceptsAsset(i, assetIndex))
+            if (EditorState.trackAcceptsKind(i, mediaKind))
                 return i
         }
         return -1
+    }
+
+    function firstCompatibleTrackIndex(assetIndex) {
+        return firstCompatibleTrackIndexForKind(assetKind(assetIndex))
     }
 
     function trackIndexAtY(y) {
@@ -537,6 +649,10 @@ PanelFrame {
     // which is what makes a lane reachable underneath the last track — dropping
     // in the empty space below the tracks appends one.
     function assetDropTargetAtY(assetIndex, y) {
+        return dropTargetAtYForKind(assetKind(assetIndex), y)
+    }
+
+    function dropTargetAtYForKind(mediaKind, y) {
         const count = tracks.length
         if (count === 0)
             return { "newTrack": true, "insertIndex": 0 }
@@ -550,7 +666,7 @@ PanelFrame {
             // Claim the trailing gap too, so the 6px between rows resolves to a
             // boundary rather than to nothing.
             if (y < rowEnd + Theme.trackGap / 2) {
-                if (!EditorState.trackAcceptsAsset(i, assetIndex))
+                if (!EditorState.trackAcceptsKind(i, mediaKind))
                     return { "newTrack": true,
                              "insertIndex": y < cursor + h / 2 ? i : i + 1 }
                 const edge = newTrackEdge(i)
@@ -580,22 +696,22 @@ PanelFrame {
         return Math.max(0, cursor - Theme.trackGap / 2)
     }
 
-    function updateAssetDropPreview(assetIndex, dropX, dropY) {
-        const duration = assetDurationSeconds(assetIndex)
-        const desired = Math.max(0, dropX / pxPerSecond)
-
-        // Mirrors performAssetDrop: an empty project fills its existing track
-        // wherever you aim, rather than stacking a second one on top.
+    // The one place that decides where a dropped clip lands, so the preview during the drag and
+    // the placement on release can never disagree — they used to hold two copies of this rule.
+    // An empty project fills its existing track wherever you aim, rather than stacking a second
+    // one on top of it.
+    function resolveDropTarget(mediaKind, dropY) {
         if (!timelineHasClips()) {
-            const firstIdx = firstCompatibleTrackIndex(assetIndex)
-            if (firstIdx >= 0) {
-                dropCreatesNewTrack = false
-                showLandingPreview(firstIdx, desired, duration)
-                return
-            }
+            const firstIdx = firstCompatibleTrackIndexForKind(mediaKind)
+            if (firstIdx >= 0)
+                return { "newTrack": false, "track": firstIdx }
         }
+        return dropTargetAtYForKind(mediaKind, dropY)
+    }
 
-        const target = assetDropTargetAtY(assetIndex, dropY)
+    function updateDropPreviewForKind(mediaKind, duration, dropX, dropY) {
+        const desired = Math.max(0, dropX / pxPerSecond)
+        const target = resolveDropTarget(mediaKind, dropY)
 
         if (!target.newTrack) {
             dropCreatesNewTrack = false
@@ -612,33 +728,184 @@ PanelFrame {
         snapGuideSeconds = snapped.guide
     }
 
-    function performAssetDrop(assetIndex, dropX, dropY) {
-        const atSeconds = Math.max(0, dropX / pxPerSecond)
-        if (assetIndex < 0)
+    function updateAssetDropPreview(assetIndex, dropX, dropY) {
+        updateDropPreviewForKind(assetKind(assetIndex), assetDurationSeconds(assetIndex),
+                                 dropX, dropY)
+    }
+
+    // Placement against an already-resolved target. Split out because the file-manager drop has
+    // to resolve its target at drop time and place minutes later, once the import has probed:
+    // dropY would be meaningless by then if the user scrolled the tracks in the meantime.
+    // `onPlaced` runs once the clip is actually in the project, which is not necessarily before
+    // this returns: the first clip of a pristine project opens the canvas setup dialog first, and
+    // a multi-file drop cannot place its second clip until that has been answered. It never runs
+    // if the dialog is dismissed, which is the existing meaning of dismissing it — nothing added.
+    function placeAssetAtTarget(assetIndex, atSeconds, target, onPlaced) {
+        if (assetIndex < 0 || !target)
             return
 
         function runAdd() {
-            // An empty project should fill its existing track rather than stack
-            // a second one on top of it.
-            if (!timelineHasClips()) {
-                const firstIdx = firstCompatibleTrackIndex(assetIndex)
-                if (firstIdx >= 0) {
-                    EditorState.addClipFromAssetAt(assetIndex, firstIdx, atSeconds)
-                    return
-                }
-            }
-
-            const target = assetDropTargetAtY(assetIndex, dropY)
             if (target.newTrack)
                 EditorState.addClipFromAssetOnNewTrackAt(assetIndex, target.insertIndex, atSeconds)
             else
                 EditorState.addClipFromAssetAt(assetIndex, target.track, atSeconds)
+            if (onPlaced)
+                onPlaced()
         }
 
         if (typeof Window !== "undefined" && Window.window && Window.window.configureAndAddAsset)
             Window.window.configureAndAddAsset(assetIndex, runAdd)
         else
             runAdd()
+    }
+
+    function performAssetDrop(assetIndex, dropX, dropY) {
+        if (assetIndex < 0)
+            return
+        placeAssetAtTarget(assetIndex, Math.max(0, dropX / pxPerSecond),
+                           resolveDropTarget(assetKind(assetIndex), dropY))
+    }
+
+    // File-manager drops ---------------------------------------------------------------------
+    //
+    // A file dragged straight from the file manager onto a track is imported and placed in one
+    // gesture. It still lands in the bin: a clip is addressed by asset index, so there is no such
+    // thing as a clip whose media is outside the library — this is "import, then place", and the
+    // assets panel shows the row either way. Dragging to the panel first is untouched.
+
+    // Media kind of the file drag currently over the timeline, "" when there is none. The
+    // new-track ghost sizes its lane from this, having no asset index to ask about yet.
+    property string pendingDropKind: ""
+
+    // Set from the drop until the import it started settles. The landing outline stays painted at
+    // the frozen spot for that whole window — probing a large file takes seconds, and clearing
+    // the outline on release made the drop look like it had been ignored.
+    property bool importDropPending: false
+
+    // Nothing has been opened at drag time, let alone probed, so the outline cannot promise a
+    // real length. Same fallback assetDurationSeconds() uses for a row whose duration is unknown.
+    readonly property real urlDropPreviewDuration: 5.0
+
+    // What the drag lands as. A mixed selection is placed file by file, each on a track that
+    // fits it, but the outline can only promise one spot — so it promises the first file's.
+    function urlDropKind(urls) {
+        if (!urls)
+            return ""
+        for (var i = 0; i < urls.length; ++i) {
+            const kind = AssetLibrary.provisionalKindForUrl(urls[i])
+            if (kind.length > 0)
+                return kind
+        }
+        return ""
+    }
+
+    function updateUrlDropPreview(drop) {
+        // A drag that cannot say what it carries yet — some platforms only hand the payload over
+        // on release — is previewed as video rather than not previewed at all. The drop itself
+        // re-reads the urls and places by what they really are.
+        const kind = drop.hasUrls ? urlDropKind(drop.urls) : "video"
+        pendingDropKind = kind
+        if (kind.length === 0) {
+            // Nothing in the drag is media. Promise nothing rather than a spot it cannot land on.
+            clearLandingPreview()
+            return
+        }
+        updateDropPreviewForKind(kind, urlDropPreviewDuration, drop.x, drop.y)
+    }
+
+    function clearUrlDropState() {
+        pendingDropKind = ""
+        importDropPending = false
+    }
+
+    function performUrlDrop(urls, dropX, dropY) {
+        if (!urls || urls.length === 0) {
+            clearUrlDropState()
+            clearLandingPreview()
+            return
+        }
+
+        const kind = urlDropKind(urls)
+        if (kind.length === 0) {
+            clearUrlDropState()
+            clearLandingPreview()
+            // Still handed to the import, so it reports why in the usual words instead of the
+            // drop appearing to do nothing at all.
+            MediaImport.importUrls(urls, true)
+            return
+        }
+
+        // Frozen here rather than read back in the callback: the import is asynchronous, and the
+        // user is free to scroll and zoom while it runs — by then dropY would name a different
+        // track and dropX a different second.
+        const atSeconds = Math.max(0, dropX / pxPerSecond)
+        const target = resolveDropTarget(kind, dropY)
+
+        root.importDropPending = true
+        const started = MediaImport.importUrls(urls, true, function (added) {
+            root.clearUrlDropState()
+            root.clearLandingPreview()
+            if (added <= 0)
+                return
+            // The idiom every caller of this callback uses: the rows it reports are the last
+            // `added` in the library. MediaImport waits for their probes first, so their
+            // durations and resolutions are real by now — which is what the clip lengths and the
+            // canvas setup both need.
+            root.placeImportedAssets(AssetLibrary.count - added, added, atSeconds, target)
+        })
+
+        if (!started) {
+            root.clearUrlDropState()
+            root.clearLandingPreview()
+        }
+    }
+
+    // Where a file after the first one goes when the track the previous one landed on will not
+    // take it — an audio file among videos, typically. The first track that fits, else a new one
+    // at the bottom, which is where adding it from the bin would have put it.
+    function targetForFollowOnKind(mediaKind) {
+        const idx = firstCompatibleTrackIndexForKind(mediaKind)
+        if (idx >= 0)
+            return { "newTrack": false, "track": idx }
+        return { "newTrack": true, "insertIndex": tracks.length }
+    }
+
+    // Places the rows a drop just imported: the first at the spot the drag promised, the rest
+    // back to back after it. One at a time rather than a loop, because placing the first can
+    // block on the canvas setup dialog and the rest have to queue behind that answer.
+    function placeImportedAssets(firstIndex, count, atSeconds, target) {
+        function placeAt(n, cursor, landing) {
+            if (n >= count)
+                return
+
+            const assetIndex = firstIndex + n
+            const kind = assetKind(assetIndex)
+            // The promised spot belongs to the first file. Each one after it follows on the track
+            // the previous one actually landed on, whenever that track will have it, so a batch
+            // reads as one sequence instead of fanning out across new tracks.
+            const fits = landing && !landing.newTrack
+                         && EditorState.trackAcceptsKind(landing.track, kind)
+            const here = fits ? landing : root.targetForFollowOnKind(kind)
+
+            root.placeAssetAtTarget(assetIndex, cursor, here, function () {
+                // Read back rather than advanced by the asset's duration: snapping and a
+                // bin-preview trim both change where the clip really ends, and the next one has
+                // to start there or it lands after a gap.
+                const t = EditorState.selectedTrack
+                const c = EditorState.selectedClip
+                var next = cursor
+                var landed = here
+                if (t >= 0 && t < root.tracks.length) {
+                    const clips = root.tracks[t].clips || []
+                    if (c >= 0 && c < clips.length)
+                        next = clips[c].start + clips[c].duration
+                    landed = { "newTrack": false, "track": t }
+                }
+                placeAt(n + 1, next, landed)
+            })
+        }
+
+        placeAt(0, atSeconds, target)
     }
 
     function handleTimelineWheel(wheel) {
@@ -717,6 +984,10 @@ PanelFrame {
         effectPresetNameDialog.openWith(qsTr("Save effect preset"), name)
     }
 
+    function requestConvertTextToSubtitle() {
+        convertToSubtitleDialog.open()
+    }
+
     function requestRenameClip(trackIndex, clipIndex) {
         if (trackIndex < 0 || clipIndex < 0)
             return
@@ -749,7 +1020,7 @@ PanelFrame {
     }
 
     function ensurePlayheadVisible() {
-        const playheadX = EditorState.playheadSeconds * pxPerSecond;
+        const playheadX = needle.seconds * pxPerSecond;
         const margin = 64;
         var target = -1
         if (playheadX < flick.contentX + margin)
@@ -813,6 +1084,8 @@ PanelFrame {
         panLastSceneY = p.y
     }
 
+
+
     Column {
         anchors.fill: parent
 
@@ -823,38 +1096,72 @@ PanelFrame {
             panel: root
         }
 
+        // === full-project overview strip ==============================================
+        // Toggled from the toolbar's right end; collapses to nothing rather than merely
+        // hiding, so the tracks get the height back. Unloaded while off.
+        Loader {
+            id: overviewStrip
+            width: parent.width
+            active: EditorState.timelineOverviewVisible
+            visible: active
+            height: active ? Theme.timelineOverviewHeight : 0
+            sourceComponent: Component {
+                TimelineOverview { panel: root }
+            }
+        }
+
         // === ruler + track labels + tracks ================================================
         Column {
             width: parent.width
-            height: parent.height - toolbar.height
+            height: parent.height - toolbar.height - overviewStrip.height
 
-            KeyframeGraph {
+            // Loaded only on the tabs it can show on; the graph still hides itself when the
+            // clip has no curves. Its height is left to the item, so the lane can resize.
+            Loader {
                 id: keyframesBar
-                width: parent.width
-                pxPerSecond: root.pxPerSecond
-                labelsWidth: Theme.trackLabelsWidth
-                propertiesTab: root.propertiesTab
-                // Keep keys/playhead lined up with the track scroll view below.
-                contentX: flick.contentX
-                contentWidth: flick.contentWidth
+                width: parent.width - (audioMixer.visible ? audioMixer.width : 0)
+                active: (root.propertiesTab === "transform" || root.propertiesTab === "effects"
+                         || root.propertiesTab === "stabilize" || root.propertiesTab === "masks"
+                         || root.propertiesTab === "audio")
+                        && EditorState.selectedTrack >= 0 && EditorState.selectedClip >= 0
+                sourceComponent: Component {
+                    KeyframeGraph {
+                        pxPerSecond: root.pxPerSecond
+                        labelsWidth: EditorState.trackLabelsWidth
+                        propertiesTab: root.propertiesTab
+                        // Keep keys/playhead lined up with the track scroll view below.
+                        contentX: flick.contentX
+                        contentWidth: flick.contentWidth
+                        // Outlives the graph being unloaded between selections.
+                        laneHeight: root.keyframeLaneHeight
+                        onLaneHeightChanged: root.keyframeLaneHeight = laneHeight
+                    }
+                }
             }
 
-            SubtitleCueLane {
+            Loader {
                 id: subtitleLane
-                width: parent.width
-                pxPerSecond: root.pxPerSecond
-                labelsWidth: Theme.trackLabelsWidth
-                contentX: flick.contentX
-                contentWidth: flick.contentWidth
+                width: parent.width - (audioMixer.visible ? audioMixer.width : 0)
+                active: EditorState.subtitleEditing
+                sourceComponent: Component {
+                    SubtitleCueLane {
+                        pxPerSecond: root.pxPerSecond
+                        labelsWidth: EditorState.trackLabelsWidth
+                        contentX: flick.contentX
+                        contentWidth: flick.contentWidth
+                    }
+                }
             }
 
             Row {
                 width: parent.width
-                height: parent.height - keyframesBar.height - subtitleLane.height
+                height: parent.height - (keyframesBar.item ? keyframesBar.item.height : 0)
+                        - (subtitleLane.item ? subtitleLane.item.height : 0)
 
             // --- fixed left label column --------------------------------------------
             Column {
-                width: Theme.trackLabelsWidth
+                id: labelsColumn
+                width: EditorState.trackLabelsWidth
                 height: parent.height
 
                 // CapCut-style: add-track sits at the timeline origin, above the
@@ -901,6 +1208,8 @@ PanelFrame {
                     // the absolutely-positioned label rows out of the column.
                     height: Math.max(0, parent.height - Theme.timelineRulerHeight
                                         - Theme.timelineBookmarkRowHeight)
+                    labelsWidth: EditorState.trackLabelsWidth
+                    resizable: true
                     tracks: root.tracks
                     contentY: flick.contentY
                 }
@@ -909,7 +1218,7 @@ PanelFrame {
             // --- scrollable ruler + tracks --------------------------------------------
             Flickable {
                 id: flick
-                width: parent.width - Theme.trackLabelsWidth
+                width: parent.width - EditorState.trackLabelsWidth - (audioMixer.visible ? audioMixer.width : 0)
                 height: parent.height
 
                 // Height of the pinned ruler + bookmark strip at the top.
@@ -922,7 +1231,7 @@ PanelFrame {
                 // lower ones were silently truncated and could not be reached at
                 // all. totalTracksHeight() was already computed but never used.
                 contentHeight: Math.max(height,
-                                        headerHeight + root.totalTracksHeight()
+                                        headerHeight + root.totalTracksHeightCached
                                         + Theme.trackGap)
                 clip: true
                 boundsBehavior: Flickable.StopAtBounds
@@ -959,7 +1268,7 @@ PanelFrame {
                         x: 0
                         y: Theme.timelineRulerHeight + Theme.timelineBookmarkRowHeight
                         width: parent.width
-                        height: Math.max(root.totalTracksHeight(), Theme.trackHeightVideo)
+                        height: Math.max(root.totalTracksHeightCached, Theme.trackHeightVideo)
                         z: 150
                         acceptedButtons: Qt.MiddleButton
                         preventStealing: true
@@ -1242,7 +1551,7 @@ PanelFrame {
                         z: 1
                         y: Theme.timelineRulerHeight + Theme.timelineBookmarkRowHeight
                         width: parent.width
-                        height: Math.max(root.totalTracksHeight() + Theme.trackGap,
+                        height: Math.max(root.totalTracksHeightCached + Theme.trackGap,
                                          flick.height - flick.headerHeight)
 
                         readonly property real inX: EditorState.workAreaInSeconds >= 0
@@ -1314,7 +1623,7 @@ PanelFrame {
                         x: 0
                         y: Theme.timelineRulerHeight + Theme.timelineBookmarkRowHeight
                         width: parent.width
-                        height: Math.max(root.totalTracksHeight() + Theme.trackGap,
+                        height: Math.max(root.totalTracksHeightCached + Theme.trackGap,
                                          flick.height - flick.headerHeight)
                         z: 0
                         enabled: root.timelineTool === ""
@@ -1357,6 +1666,8 @@ PanelFrame {
                             model: root.tracks.length
                             delegate: Rectangle {
                                 id: trackRow
+                                // Above the rows below it while one of its clips is dragged, so the clip draws over them.
+                                z: trackClipsRenderer.dragging ? 20 : 0
                                 property int trackIndex: index
                                 // Drawn inside its parent's row instead of getting one here.
                                 // Column skips invisible children entirely, so this costs no
@@ -1567,6 +1878,26 @@ PanelFrame {
                                     border.width: 2
                                     border.color: Theme.primary
                                     z: 5
+
+                                    // The outline is held on screen after a file drop for as
+                                    // long as the import it started is still probing, so it has
+                                    // to say why it is sitting there empty.
+                                    Text {
+                                        anchors.centerIn: parent
+                                        visible: root.importDropPending
+                                        text: qsTr("Importing…")
+                                        color: Theme.primary
+                                        font.family: Theme.fontFamily
+                                        font.pixelSize: Theme.fontSizeTiny
+                                        font.weight: Font.Medium
+
+                                        SequentialAnimation on opacity {
+                                            running: root.importDropPending
+                                            loops: Animation.Infinite
+                                            NumberAnimation { to: 0.45; duration: Theme.durationSlow; easing.type: Theme.easing }
+                                            NumberAnimation { to: 1.0; duration: Theme.durationSlow; easing.type: Theme.easing }
+                                        }
+                                    }
                                 }
 
                                 // Nested adjustment lanes, drawn as strips across the top of
@@ -1580,7 +1911,10 @@ PanelFrame {
                                     z: 4
 
                                     Repeater {
-                                        model: root.adjustmentLanesFor(trackRow.trackIndex)
+                                        // From the track's clip model, which only re-announces
+                                        // the list when a lane actually comes or goes. A JS
+                                        // array here rebuilt every lane and its clips per edit.
+                                        model: EditorState.clipsModel(trackRow.trackIndex).adjustmentLanes
                                         delegate: Item {
                                             id: laneStrip
                                             required property var modelData
@@ -1604,14 +1938,14 @@ PanelFrame {
                                                 }
                                             }
 
-                                            Repeater {
-                                                model: root.tracks[laneStrip.trackIndex].clips.length
-                                                delegate: TimelineClipItem {
-                                                    panel: root
-                                                    timelineColumn: trackColumn
-                                                    trackIndex: laneStrip.trackIndex
-                                                }
+                                            TimelineTrackArea {
+                                                anchors.fill: parent
+                                                panel: root
+                                                timelineColumn: trackColumn
+                                                trackIndex: laneStrip.trackIndex
+                                                viewState: timelineViewState
                                             }
+
                                         }
                                     }
                                 }
@@ -1633,22 +1967,158 @@ PanelFrame {
                                     width: trackRow.width
                                     height: Math.max(0, trackRow.height - adjustmentLaneStrips.height)
 
-                                    Repeater {
-                                        model: root.tracks[trackClipArea.trackIndex].clips.length
-                                        delegate: TimelineClipItem {
-                                            // panel: root is safe — TimelineClipItem's id is clipItem,
-                                            // so it does not shadow TimelinePanel's root.
-                                            panel: root
-                                            timelineColumn: trackColumn
-                                            trackIndex: trackClipArea.trackIndex
+                                    TimelineTrackArea {
+                                        id: trackClipsRenderer
+                                        anchors.fill: parent
+                                        panel: root
+                                        timelineColumn: trackColumn
+                                        trackIndex: trackClipArea.trackIndex
+                                        viewState: timelineViewState
+                                    }
+
+
+                                    // Live voiceover recording indicator and waveform on this track
+                                    Rectangle {
+                                        id: liveRecordingBlock
+                                        visible: EditorState.isRecordingAudio && EditorState.recordingTrackIndex === trackClipArea.trackIndex
+                                        x: (EditorState.playheadSeconds - EditorState.audioRecordSeconds) * root.pxPerSecond
+                                        width: Math.max(2, EditorState.audioRecordSeconds * root.pxPerSecond)
+                                        height: parent.height
+                                        color: Qt.rgba(Theme.destructive.r, Theme.destructive.g, Theme.destructive.b, 0.25)
+                                        border.color: EditorState.isAudioRecordingPaused ? "#eab308" : Theme.destructive
+                                        border.width: 1
+                                        radius: Theme.radiusSm
+                                        clip: true
+                                        z: 2
+
+                                        // Real-time live audio waveform canvas
+                                        // Capped and pinned to the newest end: the block grows with the
+                                        // take, and a canvas as wide as a long recording at high zoom
+                                        // would be a huge framebuffer. Draws only the peaks it covers.
+                                        Canvas {
+                                            id: liveWaveCanvas
+                                            anchors.right: parent.right
+                                            anchors.top: parent.top
+                                            anchors.bottom: parent.bottom
+                                            anchors.margins: 1
+                                            width: Math.min(Math.max(0, parent.width - 2), 4096)
+                                            visible: parent.width > 4
+
+                                            Connections {
+                                                target: EditorState
+                                                function onAudioRecordLivePeaksChanged() {
+                                                    liveWaveCanvas.requestPaint()
+                                                }
+                                            }
+                                            onWidthChanged: requestPaint()
+                                            onHeightChanged: requestPaint()
+
+                                            onPaint: {
+                                                var ctx = getContext("2d");
+                                                ctx.clearRect(0, 0, width, height);
+                                                var peaks = EditorState.audioRecordLivePeaks;
+                                                if (!peaks || peaks.length === 0)
+                                                    return;
+
+                                                var mid = height / 2;
+                                                var half = mid * 0.85;
+                                                var w = Math.max(1, Math.floor(width));
+                                                var full = Math.max(w, liveRecordingBlock.width - 2);
+                                                var first = peaks.length * (full - w) / full;
+                                                var n = peaks.length - first;
+
+                                                // Centerline guideline
+                                                ctx.strokeStyle = Qt.rgba(1.0, 1.0, 1.0, 0.15);
+                                                ctx.lineWidth = 1;
+                                                ctx.beginPath();
+                                                ctx.moveTo(0, mid);
+                                                ctx.lineTo(w, mid);
+                                                ctx.stroke();
+
+                                                // Mirrored waveform fill
+                                                ctx.fillStyle = Qt.rgba(1.0, 1.0, 1.0, 0.85);
+                                                ctx.beginPath();
+                                                for (var x = 0; x < w; x++) {
+                                                    var i0 = Math.floor(first + x * n / w);
+                                                    var i1 = Math.floor(first + (x + 1) * n / w);
+                                                    if (i1 <= i0) i1 = Math.min(peaks.length, i0 + 1);
+                                                    var peak = 0;
+                                                    for (var i = i0; i < i1; i++) {
+                                                        if (peaks[i] > peak) peak = peaks[i];
+                                                    }
+                                                    var amp = Math.max(1.0, peak * half);
+                                                    if (x === 0) ctx.moveTo(x, mid - amp);
+                                                    else ctx.lineTo(x, mid - amp);
+                                                    ctx.lineTo(x + 1, mid - amp);
+                                                }
+                                                for (var xb = w - 1; xb >= 0; xb--) {
+                                                    var j0 = Math.floor(first + xb * n / w);
+                                                    var j1 = Math.floor(first + (xb + 1) * n / w);
+                                                    if (j1 <= j0) j1 = Math.min(peaks.length, j0 + 1);
+                                                    var peakB = 0;
+                                                    for (var j = j0; j < j1; j++) {
+                                                        if (peaks[j] > peakB) peakB = peaks[j];
+                                                    }
+                                                    var ampB = Math.max(1.0, peakB * half);
+                                                    ctx.lineTo(xb + 1, mid + ampB);
+                                                    ctx.lineTo(xb, mid + ampB);
+                                                }
+                                                ctx.closePath();
+                                                ctx.fill();
+                                            }
+                                        }
+
+                                        // Badge tag in upper-left corner of the recording clip
+                                        Rectangle {
+                                            visible: liveRecordingBlock.width > 55
+                                            anchors.left: parent.left
+                                            anchors.leftMargin: 4
+                                            anchors.top: parent.top
+                                            anchors.topMargin: 3
+                                            height: 18
+                                            radius: 3
+                                            color: Qt.rgba(0, 0, 0, 0.7)
+                                            border.color: EditorState.isAudioRecordingPaused ? "#eab308" : Theme.destructive
+                                            border.width: 1
+                                            width: liveRecRow.implicitWidth + 8
+
+                                            Row {
+                                                id: liveRecRow
+                                                anchors.centerIn: parent
+                                                spacing: 4
+
+                                                Rectangle {
+                                                    width: 6
+                                                    height: 6
+                                                    radius: 3
+                                                    color: EditorState.isAudioRecordingPaused ? "#eab308" : Theme.destructive
+                                                    anchors.verticalCenter: parent.verticalCenter
+                                                    SequentialAnimation on opacity {
+                                                        running: liveRecordingBlock.visible && !EditorState.isAudioRecordingPaused
+                                                        loops: Animation.Infinite
+                                                        NumberAnimation { to: 0.2; duration: 400 }
+                                                        NumberAnimation { to: 1.0; duration: 400 }
+                                                    }
+                                                }
+
+                                                Text {
+                                                    text: (EditorState.isAudioRecordingPaused ? qsTr("PAUSED ") : qsTr("REC "))
+                                                          + EditorState.audioRecordSeconds.toFixed(1) + "s"
+                                                    font.pixelSize: 10
+                                                    font.bold: true
+                                                    color: Theme.panelForeground
+                                                    anchors.verticalCenter: parent.verticalCenter
+                                                }
+                                            }
                                         }
                                     }
                                 }
 
                                 // Right-click a gap to ripple everything after it (and any
-                                // linked partner clips on other tracks) left to close it.
+                                // linked partner clips on other tracks) left to close it. The
+                                // menu is one per panel; gaps only carry a hover tint.
                                 Repeater {
-                                    model: root.gapsForTrack(trackRow.trackIndex)
+                                    model: EditorState.clipsModel(trackRow.trackIndex).gaps
                                     delegate: Item {
                                         id: gapItem
                                         required property var modelData
@@ -1669,112 +2139,39 @@ PanelFrame {
                                             anchors.fill: parent
                                             hoverEnabled: true
                                             acceptedButtons: Qt.RightButton
-                                            onPressed: gapContextMenu.popup()
-
-                                            ThemedContextMenu {
-                                                id: gapContextMenu
-                                                ThemedMenuItem {
-                                                    text: qsTr("Close Gap")
-                                                    icon.name: Theme.icons.chevronsRightLeft
-                                                    onTriggered: EditorState.closeGap(trackRow.trackIndex,
-                                                                                      gapItem.modelData.start)
-                                                }
-                                            }
+                                            onPressed: root.openGapMenu(trackRow.trackIndex,
+                                                                        gapItem.modelData.start)
                                         }
                                     }
                                 }
 
                                 // Transition overlap regions (purple) — above clips for hit-testing.
+                                // One delegate per region that exists, computed in C++, instead of
+                                // one per clip each scanning the whole track for its partner.
                                 Repeater {
-                                    model: Math.max(0, root.tracks[trackRow.trackIndex].clips.length)
+                                    model: EditorState.clipsModel(trackRow.trackIndex).transitionRegions
                                     delegate: Item {
                                         id: transitionRegion
-                                        property int leftClipIndex: modelData
-                                        property var leftClip: root.tracks[trackRow.trackIndex].clips[leftClipIndex]
-                                        property string trackType: root.tracks[trackRow.trackIndex].type
-                                        // Reading root.tracks keeps this bound to tracksChanged; without
-                                        // that dependency the invokable is evaluated once and a transition
-                                        // added later never registers (clicking would re-add a crossfade).
-                                        property var transitionData: root.tracks[trackRow.trackIndex]
-                                            ? EditorState.transitionBetweenClips(trackRow.trackIndex, leftClipIndex)
-                                            : ({})
-                                        property bool hasTransition: transitionData
-                                                                       && Object.keys(transitionData).length > 0
-                                        property bool transitionSelected: EditorState.selectedTransitionTrack === trackRow.trackIndex
-                                                                          && EditorState.selectedTransitionLeftClip === leftClipIndex
-
-                                        // Find partner clip that abuts/overlaps this one.
-                                        property int partnerIndex: {
-                                            const clips = root.tracks[trackRow.trackIndex].clips
-                                            const left = leftClip
-                                            if (!left)
-                                                return -1
-                                            let best = -1
-                                            let bestStart = 1e12
-                                            for (let i = 0; i < clips.length; i++) {
-                                                if (i === leftClipIndex)
-                                                    continue
-                                                const right = clips[i]
-                                                if (right.start < left.start)
-                                                    continue
-                                                const gap = right.start - (left.start + left.duration)
-                                                if (gap > 0.001)
-                                                    continue
-                                                if (right.start < bestStart) {
-                                                    bestStart = right.start
-                                                    best = i
-                                                }
-                                            }
-                                            return best
-                                        }
-                                        property var rightClip: partnerIndex >= 0
-                                            ? root.tracks[trackRow.trackIndex].clips[partnerIndex]
-                                            : null
-                                        property bool physicallyOverlapping: leftClip && rightClip
-                                            && rightClip.start < (leftClip.start + leftClip.duration)
-                                        property real regionStart: {
-                                            if (!leftClip || !rightClip)
-                                                return 0
-                                            if (hasTransition && transitionData.start !== undefined)
-                                                return transitionData.start
-                                            if (physicallyOverlapping)
-                                                return rightClip.start
-                                            return 0
-                                        }
-                                        property real regionEnd: {
-                                            if (!leftClip || !rightClip)
-                                                return 0
-                                            if (hasTransition && transitionData.end !== undefined)
-                                                return transitionData.end
-                                            if (physicallyOverlapping)
-                                                return leftClip.start + leftClip.duration
-                                            return 0
-                                        }
-                                        property bool showRegion: (trackType === "video"
-                                                                   || trackType === "shape"
-                                                                   || trackType === "text")
-                                                                  && leftClip && rightClip
-                                                                  && (physicallyOverlapping || hasTransition)
-                                                                  && regionEnd > regionStart
+                                        required property var modelData
+                                        readonly property int leftClipIndex: modelData.leftClip
+                                        readonly property bool hasTransition: modelData.hasTransition
+                                        readonly property bool transitionSelected:
+                                            EditorState.selectedTransitionTrack === trackRow.trackIndex
+                                            && EditorState.selectedTransitionLeftClip === leftClipIndex
 
                                         z: 10
-                                        visible: showRegion
-                                        x: regionStart * root.pxPerSecond
-                                        width: Math.max(8, (regionEnd - regionStart) * root.pxPerSecond)
+                                        x: modelData.start * root.pxPerSecond
+                                        width: Math.max(8, (modelData.end - modelData.start) * root.pxPerSecond)
                                         height: parent.height - Theme.clipSelectionRingWidth * 2
                                         y: Theme.clipSelectionRingWidth
 
                                         Rectangle {
                                             anchors.fill: parent
                                             radius: Theme.radiusSm
-                                            color: transitionRegion.transitionSelected
-                                                   ? Qt.rgba(Theme.transitionOverlap.r, Theme.transitionOverlap.g,
-                                                             Theme.transitionOverlap.b, 0.85)
-                                                   : (transitionRegion.hasTransition
-                                                      ? Qt.rgba(Theme.transitionOverlap.r, Theme.transitionOverlap.g,
-                                                                Theme.transitionOverlap.b, 0.65)
-                                                      : Qt.rgba(Theme.transitionOverlap.r, Theme.transitionOverlap.g,
-                                                                Theme.transitionOverlap.b, 0.35))
+                                            color: Qt.rgba(Theme.transitionOverlap.r, Theme.transitionOverlap.g,
+                                                           Theme.transitionOverlap.b,
+                                                           transitionRegion.transitionSelected ? 0.85
+                                                           : (transitionRegion.hasTransition ? 0.65 : 0.35))
                                             border.width: transitionRegion.transitionSelected ? 2 : 1
                                             border.color: Theme.transitionOverlap
 
@@ -1803,10 +2200,8 @@ PanelFrame {
                                             Text {
                                                 anchors.centerIn: parent
                                                 visible: parent.width >= 28
-                                                text: transitionRegion.hasTransition
-                                                      ? (transitionRegion.transitionData.label
-                                                         ? transitionRegion.transitionData.label.charAt(0)
-                                                         : "≫")
+                                                text: transitionRegion.hasTransition && transitionRegion.modelData.label
+                                                      ? transitionRegion.modelData.label.charAt(0)
                                                       : "≫"
                                                 color: Theme.onMedia
                                                 font.family: Theme.fontFamily
@@ -1814,13 +2209,16 @@ PanelFrame {
                                                 font.weight: Font.Bold
                                             }
 
-                                            ThemedToolTip {
-                                                visible: transitionMouse.containsMouse
-                                                         && transitionRegion.hasTransition
-                                                delay: 400
-                                                text: transitionRegion.transitionData.label
-                                                      || transitionRegion.transitionData.kind
-                                                      || ""
+                                            Loader {
+                                                active: transitionMouse.containsMouse
+                                                        && transitionRegion.hasTransition
+                                                sourceComponent: ThemedToolTip {
+                                                    visible: true
+                                                    delay: 400
+                                                    text: transitionRegion.modelData.label
+                                                          || transitionRegion.modelData.kind
+                                                          || ""
+                                                }
                                             }
                                         }
 
@@ -1833,7 +2231,8 @@ PanelFrame {
                                                 if (kind.length > 0)
                                                     EditorState.addTransition(trackRow.trackIndex,
                                                                               transitionRegion.leftClipIndex,
-                                                                              kind, 0.5)
+                                                                              root.transitionKindForTrack(trackRow.trackIndex, kind),
+                                                                              0.5)
                                             }
                                         }
 
@@ -1878,10 +2277,17 @@ PanelFrame {
                         // Extends past the last track to the bottom of the
                         // content area: dropping in that empty space is how a
                         // track gets appended below the existing ones.
-                        height: Math.max(root.totalTracksHeight(),
+                        height: Math.max(root.totalTracksHeightCached,
                                          flick.contentHeight - flick.headerHeight)
                         z: 250
-                        keys: ["text/plain"]
+                        // "text/uri-list" is a drag from outside the app — the file manager,
+                        // usually. It carries files that have not been imported yet, where
+                        // "text/plain" carries the index of a row already in the bin.
+                        keys: ["text/plain", "text/uri-list"]
+
+                        function isFileDrag(drop) {
+                            return drop.keys.indexOf("text/uri-list") !== -1
+                        }
 
                         function assetIndexFromDrop(drop) {
                             if (EditorState.draggingAssetIndex >= 0)
@@ -1892,6 +2298,10 @@ PanelFrame {
                         }
 
                         function updateAssetDrag(drop) {
+                            if (isFileDrag(drop)) {
+                                root.updateUrlDropPreview(drop)
+                                return
+                            }
                             const assetIndex = assetIndexFromDrop(drop)
                             if (assetIndex < 0) {
                                 root.clearLandingPreview()
@@ -1902,9 +2312,19 @@ PanelFrame {
 
                         onEntered: (drop) => updateAssetDrag(drop)
                         onPositionChanged: (drop) => updateAssetDrag(drop)
-                        onExited: root.clearLandingPreview()
+                        onExited: {
+                            root.clearUrlDropState()
+                            root.clearLandingPreview()
+                        }
                         onDropped: (drop) => {
                             drop.accept(Qt.CopyAction)
+                            if (isFileDrag(drop)) {
+                                // Not cleared first, unlike the branch below: performUrlDrop
+                                // keeps the outline on screen at the frozen spot for as long as
+                                // the import it starts is still running.
+                                root.performUrlDrop(drop.hasUrls ? drop.urls : [], drop.x, drop.y)
+                                return
+                            }
                             const assetIndex = assetIndexFromDrop(drop)
                             root.clearLandingPreview()
                             root.performAssetDrop(assetIndex, drop.x, drop.y)
@@ -1924,7 +2344,11 @@ PanelFrame {
                         // the ghost to silently not appear.
                         visible: root.dropCreatesNewTrack
                         readonly property real laneHeight: {
-                            const t = EditorState.trackTypeForAsset(EditorState.draggingAssetIndex)
+                            // A file-manager drag has no bin row to ask about, so its lane is
+                            // sized from the kind guessed off the extension instead.
+                            const t = root.pendingDropKind.length > 0
+                                    ? EditorState.trackTypeForKind(root.pendingDropKind)
+                                    : EditorState.trackTypeForAsset(EditorState.draggingAssetIndex)
                             if (t === "video") return Theme.trackHeightVideo
                             if (t === "audio") return Theme.trackHeightAudio
                             if (t === "shape") return Theme.trackHeightShape
@@ -1967,6 +2391,26 @@ PanelFrame {
                             color: Qt.rgba(Theme.primary.r, Theme.primary.g, Theme.primary.b, 0.3)
                             border.width: 2
                             border.color: Theme.primary
+
+                            // The outline is held on screen after a file drop for as
+                            // long as the import it started is still probing, so it has
+                            // to say why it is sitting there empty.
+                            Text {
+                                anchors.centerIn: parent
+                                visible: root.importDropPending
+                                text: qsTr("Importing…")
+                                color: Theme.primary
+                                font.family: Theme.fontFamily
+                                font.pixelSize: Theme.fontSizeTiny
+                                font.weight: Font.Medium
+
+                                SequentialAnimation on opacity {
+                                    running: root.importDropPending
+                                    loops: Animation.Infinite
+                                    NumberAnimation { to: 0.45; duration: Theme.durationSlow; easing.type: Theme.easing }
+                                    NumberAnimation { to: 1.0; duration: Theme.durationSlow; easing.type: Theme.easing }
+                                }
+                            }
                         }
                     }
 
@@ -1992,7 +2436,7 @@ PanelFrame {
                         x: root.snapGuideSeconds * root.pxPerSecond
                         y: Theme.timelineRulerHeight + Theme.timelineBookmarkRowHeight
                         width: Theme.borderWidth
-                        height: root.totalTracksHeight()
+                        height: root.totalTracksHeightCached
                         color: Theme.snapGuide
                         z: 6
 
@@ -2031,12 +2475,12 @@ PanelFrame {
                         z: 3
                         width: Theme.playheadLineWidth
                         height: Theme.timelineRulerHeight + Theme.timelineBookmarkRowHeight
-                                + root.totalTracksHeight()
+                                + root.totalTracksHeightCached
 
                         Binding {
                             target: playhead
                             property: "x"
-                            value: EditorState.playheadSeconds * root.pxPerSecond
+                            value: needle.seconds * root.pxPerSecond
                             when: !playheadDragArea.drag.active && !playheadLineDrag.drag.active
                         }
 
@@ -2164,7 +2608,7 @@ PanelFrame {
                         x: 0
                         y: Theme.timelineRulerHeight + Theme.timelineBookmarkRowHeight
                         width: parent.width
-                        height: root.totalTracksHeight()
+                        height: root.totalTracksHeightCached
                         z: 20
 
                         readonly property bool trimMode: root.timelineTool === "trimStart"
@@ -2282,21 +2726,41 @@ PanelFrame {
                     }
                 }
             }
+
+            // --- right-docked audio mixer strip --------------------------------------
+            AudioMixerStrip {
+                id: audioMixer
+                height: parent.height
+            }
         }
         } // Column (keyframes + tracks)
     }
 
     Connections {
         target: EditorState
-        function onPlayheadSecondsChanged() {
-            if (EditorState.playing)
-                root.ensurePlayheadVisible()
-        }
         // A drag abandoned outside the timeline never fires onExited/onDropped
         // on any DropArea here, so the landing outline used to stay painted.
         function onDraggingAssetIndexChanged() {
             if (EditorState.draggingAssetIndex < 0)
                 root.clearLandingPreview()
+        }
+    }
+
+    // One gap menu for the whole timeline, rather than one built up front inside every gap.
+    property int gapMenuTrack: -1
+    property real gapMenuStart: 0
+    function openGapMenu(trackIndex, start) {
+        gapMenuTrack = trackIndex
+        gapMenuStart = start
+        gapContextMenu.popup()
+    }
+
+    ThemedContextMenu {
+        id: gapContextMenu
+        ThemedMenuItem {
+            text: qsTr("Close Gap")
+            icon.name: Theme.icons.chevronsRightLeft
+            onTriggered: EditorState.closeGap(root.gapMenuTrack, root.gapMenuStart)
         }
     }
 
@@ -2344,6 +2808,22 @@ PanelFrame {
             bookmarkRow.renameIndex = -1
         }
         onRejected: bookmarkRow.renameIndex = -1
+    }
+
+    ThemedDialog {
+        id: convertToSubtitleDialog
+        title: qsTr("Convert to subtitle?")
+        acceptText: qsTr("Convert")
+        preferredWidth: Theme.dialogWidthSm
+
+        contentItem: ThemedLabel {
+            width: parent ? parent.width : Theme.dialogWidthSm
+            wrapMode: Text.WordWrap
+            size: "sm"
+            text: qsTr("The selected text clips will be replaced by one subtitle clip. Every caption will use the position and style of the first text clip.")
+        }
+
+        onAccepted: EditorState.convertSelectionToSubtitle()
     }
 
     ThemedDialog {

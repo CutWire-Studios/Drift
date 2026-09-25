@@ -47,7 +47,8 @@ QImage cachedCard(const QString &key)
 void storeCard(const QString &key, const QImage &image)
 {
     QMutexLocker lock(&g_cardMutex);
-    g_cardCache.insert(key, new QImage(image), qMax(1, int(image.sizeInBytes() / 1024)));
+    // Counted per card: a byte cost against a max of 96 held at most one card.
+    g_cardCache.insert(key, new QImage(image));
 }
 
 drift::Clip tileClip(const QString &fontFamily, int weight, bool italic, drift::TimeUs durationUs)

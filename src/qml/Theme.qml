@@ -36,6 +36,17 @@ QtObject {
         return sequence
     }
 
+    // Arrow chords are dispatched from the editor FocusScope after the focused
+    // item, not as ApplicationShortcut — that matcher misses Left/Right on some
+    // Wayland compositors, and would steal the keys from text fields if it did fire.
+    function shortcutSequenceUsesArrowKey(sequence) {
+        if (!sequence || sequence.length === 0)
+            return false
+        const parts = sequence.split("+")
+        const key = parts[parts.length - 1]
+        return key === "Left" || key === "Right" || key === "Up" || key === "Down"
+    }
+
     function shortcutDisplay(sequence) {
         if (!sequence || sequence.length === 0)
             return ""
@@ -254,11 +265,24 @@ QtObject {
     readonly property color clipAudio: "#8F5DBA"
     readonly property color clipGraphic: "#BA5D7A"
     readonly property color clipEffect: "#5d93ba"
+    readonly property color clipComposite: "#BA8F5D"
+    // Clips previewing from a low-res proxy: the name band and the "Proxy" pill. Green, so it
+    // stays apart from the yellow selection ring and every clip-type colour above.
+    readonly property color clipProxy: "#3DBE8B"
+    readonly property color clipProxyForeground: "#06261A"
+    readonly property color clipProxyBand: "#D9174A36"
+    // Media converted to an edit-friendly format ("Convert to edit-friendly format").
+    readonly property color clipEditFriendly: "#5AA9E6"
+    readonly property color clipEditFriendlyForeground: "#06203A"
     // Adjustment layers, tinted by what they act on so a glance at the lane says which it is.
     // The video one is clipEffect itself, which is the colour adjustments have always had.
     readonly property color clipAdjustmentVideo: clipEffect
     readonly property color clipAdjustmentAudio: "#9B6BC9"
     readonly property color clipAdjustmentMask: "#BA9B5D"
+    // Video in the overview strip only. On the timeline a video clip shows its thumbnails over
+    // clipVideoPlaceholder, which at three pixels tall reads as a hole in the strip — so the
+    // minimap gives footage a neutral slate that stays distinct from the coloured clip types.
+    readonly property color clipVideoOverview: "#6E7A85"
     readonly property color transitionOverlap: "#9B5DE5"
     readonly property color waveformColor: "#ffffffb3" // rgba(255,255,255,0.7) — on dark clip chrome
     // Waveform drawn on panel surfaces (subtitle cue lane, etc.): follows light/dark FG.
@@ -452,6 +476,9 @@ QtObject {
 
     // --- Layout: timeline ------------------------------------------------------
     readonly property real timelineToolbarHeight: 40
+    // Resolve-style full-project overview strip above the ruler; short enough
+    // to stay out of the way but tall enough to be an easy click target.
+    readonly property real timelineOverviewHeight: 34
     // Tall enough to be an easy seek/scrub hit target (CapCut/Premiere-style).
     readonly property real timelineRulerHeight: 28
     readonly property real timelineBookmarkRowHeight: 18
@@ -579,6 +606,7 @@ QtObject {
         repeat: "repeat",
         star: "star",
         layers: "layers",
+        box: "box",
         split: "split",
         magnet: "magnet",
         linkTwo: "link-2",
@@ -588,6 +616,8 @@ QtObject {
         zoomIn: "zoom-in",
         zoomFit: "chevrons-left-right-ellipsis",
         gauge: "gauge",
+        filePlay: "file-play",
+        rabbit: "rabbit",
         play: "play",
         pause: "pause",
         stepBack: "step-back",
@@ -606,6 +636,7 @@ QtObject {
         wand: "wand-sparkles",
         sparkles: "sparkles",
         sliders: "sliders-horizontal",
+        slidersVertical: "sliders-vertical",
         settings: "settings",
         upload: "upload",
         plus: "plus",
@@ -614,9 +645,13 @@ QtObject {
         eye: "eye",
         eyeOff: "eye-off",
         film: "film",
+        panelBottomDashed: "panel-bottom-dashed",
+        panelTop: "panel-top",
         video: "video",
         music: "music",
         audioLines: "audio-lines",
+        mic: "mic",
+        micOff: "mic-off",
         image: "image",
         shapes: "shapes",
         chevronDown: "chevron-down",

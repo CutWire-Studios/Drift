@@ -119,6 +119,10 @@ QString vectorSourceHash(const QByteArray &data);
 // Maps a raw animation time (clip source time plus offset) onto the animation's own timeline
 // according to the loop mode. Returns false when nothing should be drawn (Hide outside
 // 0..duration). A still (duration <= 0) always folds to 0.
-bool foldVectorTime(TimeUs animUs, TimeUs durationUs, VectorLoop loop, TimeUs *out);
+// Map clip-local animation time onto a time inside the document. `frameUs` is the document's frame
+// length; pass it for frame-based documents (Lottie) so the fold stops on the last frame that
+// actually draws, and leave it 0 for continuously sampled ones (a 3D rig's pose).
+bool foldVectorTime(TimeUs animUs, TimeUs durationUs, VectorLoop loop, TimeUs *out,
+                    TimeUs frameUs = 0);
 
 } // namespace drift

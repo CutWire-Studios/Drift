@@ -2,6 +2,7 @@
 
 #include <QtMath>
 
+#include <array>
 #include <cmath>
 
 namespace drift {
@@ -63,6 +64,71 @@ Biquad makeHighShelf(double freqHz, double gainDb, double sampleRate)
 
 constexpr int kChunkFrames = 1 << 16;
 
+// BS.1770 measures true peak on an oversampled signal: two consecutive samples can both sit under
+// full scale while the waveform between them does not. Linear interpolation cannot show that —
+// a straight line between two points never leaves the range they already span — so the peak has to
+// come from a band-limited reconstruction. 4x is the minimum the standard accepts.
+constexpr int kOversample = 4;
+constexpr int kTapsPerPhase = 12;
+constexpr int kKernelLength = kOversample * kTapsPerPhase;
+
+const std::array<double, kKernelLength> &truePeakKernel()
+{
+    static const std::array<double, kKernelLength> kernel = [] {
+        std::array<double, kKernelLength> h{};
+        const double center = (kKernelLength - 1) / 2.0;
+        for (int i = 0; i < kKernelLength; ++i) {
+            const double x = (i - center) / double(kOversample);
+            // Windowed sinc: a lowpass at the original Nyquist, which is what reconstructs the
+            // waveform between samples. The Hann window keeps the ripple down at this length.
+            const double sinc = qFuzzyIsNull(x) ? 1.0 : std::sin(M_PI * x) / (M_PI * x);
+            const double window = 0.5 - 0.5 * std::cos(2.0 * M_PI * i / (kKernelLength - 1));
+            h[i] = sinc * window;
+        }
+        // Normalise each phase to unity gain, so a steady signal reconstructs at its own level and
+        // the estimate can only ever be raised by real inter-sample content.
+        for (int phase = 0; phase < kOversample; ++phase) {
+            double sum = 0.0;
+            for (int tap = 0; tap < kTapsPerPhase; ++tap)
+                sum += h[phase + tap * kOversample];
+            if (!qFuzzyIsNull(sum)) {
+                for (int tap = 0; tap < kTapsPerPhase; ++tap)
+                    h[phase + tap * kOversample] /= sum;
+            }
+        }
+        return h;
+    }();
+    return kernel;
+}
+
+// Tracks one channel's recent samples and reports the largest reconstructed magnitude.
+class TruePeakFollower
+{
+public:
+    double push(double sample)
+    {
+        m_history[m_cursor] = sample;
+        m_cursor = (m_cursor + 1) % kTapsPerPhase;
+
+        const std::array<double, kKernelLength> &h = truePeakKernel();
+        double peak = qAbs(sample);
+        for (int phase = 0; phase < kOversample; ++phase) {
+            double acc = 0.0;
+            for (int tap = 0; tap < kTapsPerPhase; ++tap) {
+                // Newest sample first, walking back through the ring.
+                const int idx = (m_cursor - 1 - tap + kTapsPerPhase * 2) % kTapsPerPhase;
+                acc += m_history[idx] * h[phase + tap * kOversample];
+            }
+            peak = qMax(peak, qAbs(acc));
+        }
+        return peak;
+    }
+
+private:
+    std::array<double, kTapsPerPhase> m_history{};
+    int m_cursor = 0;
+};
+
 } // namespace
 
 LoudnessResult measureLoudness(qint64 totalFrames, int sampleRate,
@@ -79,6 +145,8 @@ LoudnessResult measureLoudness(qint64 totalFrames, int sampleRate,
     Biquad shL = makeHighShelf(1682.0, 4.0, sampleRate);
     Biquad shR = makeHighShelf(1682.0, 4.0, sampleRate);
 
+    // BS.1770 sums the per-channel mean squares with weight 1.0 for L and R; averaging them
+    // instead is a flat -3.01 dB error on every reading, so the blocks below add, not mean.
     const int hop = qMax(1, sampleRate / 10);          // 100 ms
     const int block = qMax(hop, sampleRate * 4 / 10);  // 400 ms
     QVector<double> blockEnergy;
@@ -87,8 +155,8 @@ LoudnessResult measureLoudness(qint64 totalFrames, int sampleRate,
     double blockAcc[2] = {0.0, 0.0};
     int blockCount = 0;
     int sinceHop = 0;
-    double prevL = 0.0;
-    double prevR = 0.0;
+    TruePeakFollower peakL;
+    TruePeakFollower peakR;
 
     QVector<float> chunk(static_cast<qsizetype>(kChunkFrames) * 2);
     for (qint64 done = 0; done < totalFrames;) {
@@ -99,16 +167,8 @@ LoudnessResult measureLoudness(qint64 totalFrames, int sampleRate,
         for (int i = 0; i < got; ++i) {
             const double l = chunk[i * 2];
             const double r = chunk[i * 2 + 1];
-            truePeak = qMax(truePeak, qAbs(l));
-            truePeak = qMax(truePeak, qAbs(r));
-            // 4× linear interpolant as a cheap true-peak stand-in.
-            for (int t = 1; t <= 3; ++t) {
-                const double a = t / 4.0;
-                truePeak = qMax(truePeak, qAbs(prevL + (l - prevL) * a));
-                truePeak = qMax(truePeak, qAbs(prevR + (r - prevR) * a));
-            }
-            prevL = l;
-            prevR = r;
+            truePeak = qMax(truePeak, peakL.push(l));
+            truePeak = qMax(truePeak, peakR.push(r));
 
             const double kl = shL.process(hpL.process(l));
             const double kr = shR.process(hpR.process(r));
@@ -117,7 +177,7 @@ LoudnessResult measureLoudness(qint64 totalFrames, int sampleRate,
             ++blockCount;
             ++sinceHop;
             if (sinceHop >= hop && blockCount >= block) {
-                const double mean = 0.5 * (blockAcc[0] + blockAcc[1]) / double(blockCount);
+                const double mean = (blockAcc[0] + blockAcc[1]) / double(blockCount);
                 blockEnergy.append(mean);
                 // Overlap 75%: drop the oldest 100 ms of energy.
                 const double dropFrac = double(hop) / double(blockCount);
@@ -130,7 +190,7 @@ LoudnessResult measureLoudness(qint64 totalFrames, int sampleRate,
         done += got;
     }
     if (blockCount > 0) {
-        const double mean = 0.5 * (blockAcc[0] + blockAcc[1]) / double(blockCount);
+        const double mean = (blockAcc[0] + blockAcc[1]) / double(blockCount);
         blockEnergy.append(mean);
     }
 

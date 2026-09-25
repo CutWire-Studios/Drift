@@ -44,7 +44,23 @@ QString bakePathForDecode(const Clip &clip)
     return tmp;
 }
 
+QString previewProxyPath(const Clip &clip)
+{
+    if (clip.type != ClipType::Video || clip.path.isEmpty()
+        || !ReverseProxyCache::previewProxiesEnabled.load(std::memory_order_relaxed))
+        return {};
+    return ReverseProxyCache::instance().lookupPreview(
+        clip.path, ReverseProxyCache::previewProxyShortSide.load(std::memory_order_relaxed));
+}
+
 } // namespace
+
+std::atomic<bool> ReverseProxyCache::previewProxiesEnabled{true};
+#ifdef Q_OS_ANDROID
+std::atomic<int> ReverseProxyCache::previewProxyShortSide{540};
+#else
+std::atomic<int> ReverseProxyCache::previewProxyShortSide{720};
+#endif
 
 ReverseProxyCache &ReverseProxyCache::instance()
 {
@@ -69,7 +85,7 @@ QString ReverseProxyCache::lookup(const QString &sourcePath, TimeUs srcIn, TimeU
     const qint64 mtimeMs = info.lastModified().toMSecsSinceEpoch();
     const qint64 size = info.size();
     for (const Entry &entry : *it) {
-        if (entry.sourceMtimeMs != mtimeMs || entry.sourceSize != size)
+        if (entry.preview || entry.sourceMtimeMs != mtimeMs || entry.sourceSize != size)
             continue;
         // Containment, not equality: trimming a reversed clip inward, splitting it, or pasting a
         // copy all stay inside the range that was rendered and keep hitting the proxy for free.
@@ -103,12 +119,80 @@ void ReverseProxyCache::insert(const QString &sourcePath, TimeUs coverInUs, Time
     for (int i = list.size() - 1; i >= 0; --i) {
         const Entry &old = list.at(i);
         if (old.sourceMtimeMs != entry.sourceMtimeMs || old.sourceSize != entry.sourceSize
-            || (entry.coverInUs <= old.coverInUs && entry.coverOutUs >= old.coverOutUs)) {
+            || (!old.preview && entry.coverInUs <= old.coverInUs
+                && entry.coverOutUs >= old.coverOutUs)) {
             QFile::remove(old.proxyPath);
             list.removeAt(i);
         }
     }
     list.prepend(entry);
+    saveLocked();
+}
+
+QString ReverseProxyCache::lookupPreview(const QString &sourcePath, int shortSide) const
+{
+    if (sourcePath.isEmpty())
+        return {};
+
+    QMutexLocker lock(&m_mutex);
+    const auto it = m_entries.constFind(QFileInfo(sourcePath).absoluteFilePath());
+    if (it == m_entries.constEnd())
+        return {};
+    for (const Entry &entry : *it) {
+        if (entry.preview && entry.shortSide == shortSide)
+            return entry.proxyPath;
+    }
+    return {};
+}
+
+void ReverseProxyCache::insertPreview(const QString &sourcePath, int shortSide,
+                                      const QString &proxyPath)
+{
+    if (sourcePath.isEmpty() || proxyPath.isEmpty())
+        return;
+
+    const QFileInfo info(sourcePath);
+    Entry entry;
+    entry.proxyPath = proxyPath;
+    entry.preview = true;
+    entry.shortSide = shortSide;
+    entry.sourceMtimeMs = info.lastModified().toMSecsSinceEpoch();
+    entry.sourceSize = info.size();
+
+    QMutexLocker lock(&m_mutex);
+    QList<Entry> &list = m_entries[info.absoluteFilePath()];
+    // One preview proxy per source: a proxy at another size is dead weight once the setting
+    // moved, and a stale-source entry of either kind can never be read again.
+    for (int i = list.size() - 1; i >= 0; --i) {
+        const Entry &old = list.at(i);
+        if (old.preview || old.sourceMtimeMs != entry.sourceMtimeMs
+            || old.sourceSize != entry.sourceSize) {
+            QFile::remove(old.proxyPath);
+            list.removeAt(i);
+        }
+    }
+    list.prepend(entry);
+    saveLocked();
+}
+
+void ReverseProxyCache::removePreview(const QString &sourcePath)
+{
+    if (sourcePath.isEmpty())
+        return;
+
+    QMutexLocker lock(&m_mutex);
+    const auto it = m_entries.find(QFileInfo(sourcePath).absoluteFilePath());
+    if (it == m_entries.end())
+        return;
+    QList<Entry> &list = it.value();
+    for (int i = list.size() - 1; i >= 0; --i) {
+        if (list.at(i).preview) {
+            QFile::remove(list.at(i).proxyPath);
+            list.removeAt(i);
+        }
+    }
+    if (list.isEmpty())
+        m_entries.erase(it);
     saveLocked();
 }
 
@@ -128,6 +212,10 @@ void ReverseProxyCache::saveLocked() const
             object[QStringLiteral("coverOutUs")] = double(entry.coverOutUs);
             object[QStringLiteral("sourceMtimeMs")] = double(entry.sourceMtimeMs);
             object[QStringLiteral("sourceSize")] = double(entry.sourceSize);
+            if (entry.preview) {
+                object[QStringLiteral("kind")] = QStringLiteral("preview");
+                object[QStringLiteral("shortSide")] = entry.shortSide;
+            }
             array.append(object);
         }
     }
@@ -161,6 +249,8 @@ void ReverseProxyCache::load()
         entry.coverOutUs = TimeUs(object[QStringLiteral("coverOutUs")].toDouble());
         entry.sourceMtimeMs = qint64(object[QStringLiteral("sourceMtimeMs")].toDouble());
         entry.sourceSize = qint64(object[QStringLiteral("sourceSize")].toDouble());
+        entry.preview = object[QStringLiteral("kind")].toString() == QStringLiteral("preview");
+        entry.shortSide = object[QStringLiteral("shortSide")].toInt();
         if (source.isEmpty() || entry.proxyPath.isEmpty())
             continue;
         if (!QFile::exists(entry.proxyPath))
@@ -227,10 +317,11 @@ void ReverseProxyCache::sweep(qint64 maxBytes)
     saveLocked();
 }
 
-VideoRead resolveVideoRead(const Clip &clip, TimeUs timelineUs)
+VideoRead resolveVideoRead(const Clip &clip, TimeUs timelineUs, bool allowPreviewProxy)
 {
     const TimeUs sourceUs = clip.timelineToSourceUs(timelineUs);
     VideoRead read{clip.path, sourceUs};
+    bool reversed = false;
     if (clip.reverse && clip.type == ClipType::Video && !clip.path.isEmpty()) {
         TimeUs coverEndUs = 0;
         const QString proxy =
@@ -238,8 +329,15 @@ VideoRead resolveVideoRead(const Clip &clip, TimeUs timelineUs)
         // The proxy holds [coverIn, coverOut] flipped end-for-end, so a source time maps to its
         // mirror. timelineToSourceUs already walked down from srcOut, and this undoes that walk —
         // the composite reads the proxy strictly forwards.
-        if (!proxy.isEmpty())
+        if (!proxy.isEmpty()) {
             read = {proxy, coverEndUs - sourceUs};
+            reversed = true;
+        }
+    }
+    // A preview proxy shares the source's timestamps, so only the path changes.
+    if (!reversed && allowPreviewProxy) {
+        if (const QString proxy = previewProxyPath(clip); !proxy.isEmpty())
+            read.path = proxy;
     }
 
     // A baked stabilize file is the original source, already transformed. Prefer it over the
@@ -249,17 +347,22 @@ VideoRead resolveVideoRead(const Clip &clip, TimeUs timelineUs)
     return read;
 }
 
-QString videoReadPath(const Clip &clip)
+QString videoReadPath(const Clip &clip, bool allowPreviewProxy)
 {
     if (const QString baked = bakePathForDecode(clip); !baked.isEmpty())
         return baked;
 
-    if (!clip.reverse || clip.type != ClipType::Video || clip.path.isEmpty())
-        return clip.path;
-
-    const QString proxy =
-        ReverseProxyCache::instance().lookup(clip.path, clip.srcIn, clip.srcOut, nullptr);
-    return proxy.isEmpty() ? clip.path : proxy;
+    if (clip.reverse && clip.type == ClipType::Video && !clip.path.isEmpty()) {
+        const QString proxy =
+            ReverseProxyCache::instance().lookup(clip.path, clip.srcIn, clip.srcOut, nullptr);
+        if (!proxy.isEmpty())
+            return proxy;
+    }
+    if (allowPreviewProxy) {
+        if (const QString proxy = previewProxyPath(clip); !proxy.isEmpty())
+            return proxy;
+    }
+    return clip.path;
 }
 
 QString reverseCacheDir()

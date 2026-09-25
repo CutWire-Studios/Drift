@@ -6,7 +6,7 @@ set(CMAKE_OSX_DEPLOYMENT_TARGET "12.0" CACHE STRING "Oldest macOS release Drift 
 
 # C is enabled for JUCE only: its modules compile a handful of C sources (zlib, flac, oggvorbis)
 # and its CMake refuses to configure without it.
-project(Drift VERSION 0.6.0 LANGUAGES CXX C)
+project(Drift VERSION 0.7.0 LANGUAGES CXX C)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -92,7 +92,37 @@ set(DRIFT_MARKET_CLIENT_KEY "5409a0bebab4446f88e51d06024a5cf9a694ee141a6a1c6be7a
 set(DRIFT_UPDATE_FEED_URL "https://api.github.com/repos/CutWire-Studios/Drift/releases/latest"
     CACHE STRING "Release feed polled for updates; empty disables the update check")
 
-find_package(Qt6 6.5 REQUIRED COMPONENTS Quick QuickControls2 Multimedia Test Concurrent Widgets OpenGL Network QuickEffects Svg Xml)
+# --- Release channel --------------------------------------------------------
+# Nightly builds are the same source with a different identity: their own app id, their own
+# launcher name, and a version string carrying the build stamp. That is what lets one install
+# beside a stable one (a separate bundle id, Windows AppId and Android package) while still
+# reading the same settings and the same downloaded addons, which is the whole point of testing
+# one. The nightly workflow passes both of these; nothing else sets them.
+#
+# project(Drift VERSION ...) above stays strictly X.Y.Z — CMake rejects a pre-release suffix
+# there — so the string the app displays is built here instead.
+set(DRIFT_CHANNEL "stable" CACHE STRING "Release channel: stable or nightly")
+set(DRIFT_BUILD_ID "" CACHE STRING "Nightly build stamp, YYYYMMDD.<short sha>")
+
+if(NOT DRIFT_CHANNEL STREQUAL "stable" AND NOT DRIFT_CHANNEL STREQUAL "nightly")
+    message(FATAL_ERROR "DRIFT_CHANNEL must be 'stable' or 'nightly', not '${DRIFT_CHANNEL}'")
+endif()
+
+set(DRIFT_APP_ID "org.cutwire.Drift")
+set(DRIFT_APP_NAME "Drift")
+set(DRIFT_VERSION_STRING "${PROJECT_VERSION}")
+if(DRIFT_CHANNEL STREQUAL "nightly")
+    set(DRIFT_APP_ID "org.cutwire.Drift.Nightly")
+    set(DRIFT_APP_NAME "Drift Nightly")
+    # A local nightly configure with no stamp is still legible rather than "0.7.0-nightly.".
+    if(DRIFT_BUILD_ID STREQUAL "")
+        set(DRIFT_BUILD_ID "dev")
+    endif()
+    set(DRIFT_VERSION_STRING "${PROJECT_VERSION}-nightly.${DRIFT_BUILD_ID}")
+endif()
+message(STATUS "Drift channel: ${DRIFT_CHANNEL} (${DRIFT_VERSION_STRING}, ${DRIFT_APP_ID})")
+
+find_package(Qt6 6.10 REQUIRED COMPONENTS Quick QuickControls2 Multimedia Test Concurrent Widgets OpenGL Network QuickEffects Svg Xml)
 find_package(Qt6 COMPONENTS LinguistTools QUIET)
 
 # IconImage loads Lucide SVGs from qrc. The SVG imageformat plugin is refused when it was
@@ -173,6 +203,8 @@ if(ANDROID)
         "${DRIFT_PREBUILT}/lib/libx264.a"
         # libavcodec's only software AV1 decoder — the native "av1" decoder needs a hwaccel.
         "${DRIFT_PREBUILT}/lib/libdav1d.a"
+        # vidstabdetect/vidstabtransform, which clip stabilization runs through libavfilter.
+        "${DRIFT_PREBUILT}/lib/libvidstab.a"
         # mediandk resolves the AMediaCodec_*/AMediaFormat_* the --enable-mediacodec decoders call,
         # plus the AImageReader_*/AImage_* the zero-copy preview surface is built on. android is
         # for AHardwareBuffer_*, which lives in libandroid rather than libmediandk.
@@ -399,6 +431,10 @@ add_library(driftcore STATIC
     src/core/ClipAnimation.cpp
     src/core/SubtitleCue.h
     src/core/SubtitleCue.cpp
+    src/core/Transcript.h
+    src/core/Transcript.cpp
+    src/core/GuideSet.h
+    src/core/GuideSet.cpp
     src/core/SrtIO.h
     src/core/SrtIO.cpp
     src/core/Mask.h
@@ -429,6 +465,8 @@ add_library(driftcore STATIC
     src/core/ShapePath.cpp
     src/core/VectorSource.h
     src/core/VectorSource.cpp
+    src/core/Model3dSource.h
+    src/core/Model3dSource.cpp
     src/core/ZipArchive.h
     src/core/ZipArchive.cpp
     src/core/DotLottie.h
@@ -451,6 +489,8 @@ add_library(driftcore STATIC
     src/core/OtioReader.cpp
     src/core/TimelineOps.h
     src/core/TimelineOps.cpp
+    src/core/CutOps.h
+    src/core/CutOps.cpp
     src/core/commands/ProjectCommands.h
     src/core/commands/ProjectCommands.cpp
 )
@@ -548,6 +588,8 @@ add_library(driftengine STATIC
     src/engine/ClipReader.cpp
     src/engine/DebugReport.h
     src/engine/DebugReport.cpp
+    src/engine/DiagnosticsProbe.h
+    src/engine/DiagnosticsProbe.cpp
     src/engine/ClipReaderWorker.h
     src/engine/ClipReaderWorker.cpp
     src/engine/ClipReaderPool.h
@@ -611,12 +653,22 @@ add_library(driftengine STATIC
     src/engine/Sam2Segmenter.cpp
     src/engine/RvmMatter.h
     src/engine/RvmMatter.cpp
+    src/engine/VdaDepth.h
+    src/engine/VdaDepth.cpp
+    src/engine/DepthSidecar.h
+    src/engine/DepthSidecar.cpp
     src/engine/FaceLandmarker.h
     src/engine/FaceLandmarker.cpp
     src/engine/FaceTrack.h
     src/engine/FaceTrack.cpp
     src/engine/FaceModelTransform.h
     src/engine/FaceModelTransform.cpp
+    src/engine/ModelAnimation.h
+    src/engine/ModelAnimation.cpp
+    src/engine/ModelClipTransform.h
+    src/engine/ModelClipTransform.cpp
+    src/engine/ModelClipRenderer.h
+    src/engine/ModelClipRenderer.cpp
     src/engine/FaceMesh.h
     src/engine/FaceMesh.cpp
     src/engine/ModelAsset.h
@@ -629,6 +681,8 @@ add_library(driftengine STATIC
     src/engine/FaceSwapSource.cpp
     src/engine/FacePropCatalog.h
     src/engine/FacePropCatalog.cpp
+    src/engine/FacePropImport.h
+    src/engine/FacePropImport.cpp
     src/engine/DeepFilterDenoiser.h
     src/engine/DeepFilterDenoiser.cpp
     src/engine/MatteWriter.h
@@ -637,10 +691,28 @@ add_library(driftengine STATIC
     src/engine/ReverseProxyCache.cpp
     src/engine/ReverseRenderer.h
     src/engine/ReverseRenderer.cpp
+    src/engine/ProxyEncoder.h
+    src/engine/ProxyEncoder.cpp
+    src/engine/PreviewProxyRenderer.h
+    src/engine/PreviewProxyRenderer.cpp
     src/engine/MediaEditor.h
     src/engine/MediaEditor.cpp
     src/engine/AudioFileWriter.h
     src/engine/AudioFileWriter.cpp
+    src/engine/AudioRecorder.h
+    src/engine/AudioRecorder.cpp
+    src/engine/SpeechAudio.h
+    src/engine/SpeechAudio.cpp
+    src/engine/SileroVad.h
+    src/engine/SileroVad.cpp
+    src/engine/CtcAligner.h
+    src/engine/CtcAligner.cpp
+    src/engine/LocalTranscription.h
+    src/engine/LocalTranscription.cpp
+    src/engine/KaldiFbank.h
+    src/engine/KaldiFbank.cpp
+    src/engine/SpeakerDiarizer.h
+    src/engine/SpeakerDiarizer.cpp
     src/engine/ProjectBundle.h
     src/engine/ProjectBundle.cpp
     src/engine/ProjectDependencies.h
@@ -653,7 +725,7 @@ add_library(driftengine STATIC
 target_include_directories(driftengine PUBLIC src)
 # cgltf is PRIVATE: ModelAsset.h exposes no cgltf type, so nothing outside ModelAsset.cpp includes it.
 target_include_directories(driftengine SYSTEM PRIVATE ${CMAKE_SOURCE_DIR}/third_party/cgltf)
-target_link_libraries(driftengine PUBLIC Qt6::Core Qt6::Gui Qt6::OpenGL FFmpeg::FFmpeg driftcore
+target_link_libraries(driftengine PUBLIC Qt6::Core Qt6::Gui Qt6::OpenGL Qt6::Multimedia FFmpeg::FFmpeg driftcore
     driftaudiodsp onnxruntime::headers)
 target_link_libraries(driftengine PRIVATE ${DRIFT_ZSTD_TARGET} OpenSSL::Crypto ${CMAKE_DL_LIBS})
 if(WIN32)
@@ -665,7 +737,7 @@ if(WIN32)
     )
     target_link_libraries(driftengine PRIVATE d3d11 dxgi d3dcompiler opengl32)
 endif()
-target_compile_definitions(driftengine PRIVATE DRIFT_VERSION="${PROJECT_VERSION}")
+target_compile_definitions(driftengine PRIVATE DRIFT_VERSION="${DRIFT_VERSION_STRING}")
 
 if(WITH_BGREMOVAL)
     target_include_directories(driftengine PRIVATE ${OpenCV_INCLUDE_DIRS})
@@ -732,6 +804,10 @@ qt_add_executable(drift
     src/models/AddonEndpoint.h
     src/models/AddonManager.h
     src/models/AddonManager.cpp
+    src/models/JobRegistry.h
+    src/models/JobRegistry.cpp
+    src/models/CloudProviders.h
+    src/models/CloudProviders.cpp
     src/models/MarketEndpoint.h
     src/models/MarketIdentity.h
     src/models/MarketIdentity.cpp
@@ -753,10 +829,8 @@ qt_add_executable(drift
     src/models/AssetLibrary.cpp
     src/models/BinFolderListModel.h
     src/models/BinFolderListModel.cpp
-    src/models/TimelineModel.h
-    src/models/TimelineModel.cpp
-    src/models/ClipListModel.h
-    src/models/ClipListModel.cpp
+    src/models/TimelineClipsModel.h
+    src/models/TimelineClipsModel.cpp
     src/playback/PlaybackEngine.h
     src/playback/PlaybackEngine.cpp
     src/playback/PlaybackClock.h
@@ -773,6 +847,14 @@ qt_add_executable(drift
     src/playback/PlaybackDiagnostics.cpp
     src/preview/PreviewItem.h
     src/preview/PreviewItem.cpp
+    src/timeline/ClipThumbnailStore.h
+    src/timeline/ClipThumbnailStore.cpp
+    src/timeline/TimelineLayout.h
+    src/timeline/TimelineLayout.cpp
+    src/timeline/TimelineTrackItem.h
+    src/timeline/TimelineTrackItem.cpp
+    src/timeline/TimelineViewState.h
+    src/timeline/TimelineViewState.cpp
 )
 
 # The MCP server itself ships everywhere. On Android it listens on loopback like it does on
@@ -827,8 +909,11 @@ endif()
 # It also collides with the <build>/Drift/ directory qt_add_qml_module(URI Drift) writes, which
 # on case-insensitive APFS fails the link with EISDIR.
 if(APPLE)
-    set(DRIFT_MACOS_EXECUTABLE "Drift")
-    set(DRIFT_MACOS_BUNDLE_ID "org.cutwire.Drift")
+    # Channel-dependent: a nightly is Drift Nightly.app with its own bundle id, so it installs
+    # beside a stable copy instead of replacing it. "Drift Nightly" does not collide with the
+    # Drift/ QML module directory either (see the note above).
+    set(DRIFT_MACOS_EXECUTABLE "${DRIFT_APP_NAME}")
+    set(DRIFT_MACOS_BUNDLE_ID "${DRIFT_APP_ID}")
     set(DRIFT_MACOS_ICON_FILE "Drift.icns")
 
     # Not CMake's MACOSX_BUNDLE_* properties: the NS* and LSMinimumSystemVersion keys have none.
@@ -923,8 +1008,13 @@ qt_add_qml_module(drift
         src/qml/PreviewPanel.qml
         src/qml/components/preview/TransformOverlay.qml
         src/qml/components/preview/CropOverlay.qml
+        src/qml/components/preview/GuideLayer.qml
+        src/qml/components/preview/GuidesPopover.qml
+        src/qml/components/preview/GuideEditOverlay.qml
         src/qml/components/preview/MaskOverlay.qml
+        src/qml/components/preview/DepthEffectOverlay.qml
         src/qml/components/preview/PreviewToolbar.qml
+        src/qml/components/preview/Checkerboard.qml
         src/qml/components/preview/AndroidTransformOverlay.qml
         src/qml/components/preview/AndroidCropOverlay.qml
         src/qml/SegmentationWindow.qml
@@ -953,8 +1043,10 @@ qt_add_qml_module(drift
         src/qml/components/properties/BlendingInspector.qml
         src/qml/components/properties/ShapeInspector.qml
         src/qml/components/properties/VectorInspector.qml
+        src/qml/components/properties/Model3DInspector.qml
         src/qml/components/properties/MasksInspector.qml
         src/qml/components/properties/EffectsInspector.qml
+        src/qml/components/properties/FacePropPicker.qml
         src/qml/components/assets/TextAssetsTab.qml
         src/qml/components/assets/ScenesTab.qml
         src/qml/components/assets/SubtitlesTab.qml
@@ -962,6 +1054,7 @@ qt_add_qml_module(drift
         src/qml/components/assets/ShapesTab.qml
         src/qml/components/assets/MasksTab.qml
         src/qml/components/assets/SoundsTab.qml
+        src/qml/components/assets/TransitionsTab.qml
         src/qml/components/assets/ShortcutsTab.qml
         src/qml/components/assets/MediaAssetsTab.qml
         src/qml/components/assets/MarketConsentPanel.qml
@@ -972,8 +1065,14 @@ qt_add_qml_module(drift
         src/qml/components/assets/AssetFavoriteButton.qml
         src/qml/TimelinePanel.qml
         src/qml/components/timeline/TimelineToolbar.qml
+        src/qml/components/timeline/TimelineToolbarCustomizeDialog.qml
+        src/qml/components/timeline/TimelineOverview.qml
         src/qml/components/timeline/TrackHeaderColumn.qml
+        src/qml/components/timeline/VoiceoverControlBar.qml
+        src/qml/components/timeline/AudioMixerStrip.qml
         src/qml/components/timeline/TimelineClipItem.qml
+        src/qml/components/timeline/PlayheadInterpolator.qml
+        src/qml/components/timeline/TimelineTrackArea.qml
         src/qml/components/IconGlyph.qml
         src/qml/components/IconButton.qml
         src/qml/components/PanelFrame.qml
@@ -1004,8 +1103,11 @@ qt_add_qml_module(drift
         src/qml/components/ThemedButton.qml
         src/qml/components/ThemedChip.qml
         src/qml/components/ThemedProgressBar.qml
+        src/qml/components/MediaPill.qml
+        src/qml/components/VfrWarning.qml
         src/qml/components/ThemedLabel.qml
         src/qml/components/ThemedDialog.qml
+        src/qml/components/LazyLoader.qml
         src/qml/components/AddonManagerDialog.qml
         src/qml/components/AddonStartupDialog.qml
         src/qml/components/MissingAddonsDialog.qml
@@ -1033,6 +1135,7 @@ qt_add_qml_module(drift
         src/qml/components/RecoveryDialog.qml
         src/qml/components/UnsavedChangesDialog.qml
         src/qml/components/RecentProjectsPopup.qml
+        src/qml/components/StartScreen.qml
         src/qml/components/NewTrackMenu.qml
         src/qml/components/ToastHost.qml
         src/qml/components/EmptyState.qml
@@ -1185,9 +1288,14 @@ if(Qt6LinguistTools_FOUND)
             src/engine/TransitionCatalog.cpp
             src/engine/FontCatalog.cpp
             src/engine/ReverseRenderer.cpp
+            src/engine/ProxyEncoder.cpp
+            src/engine/PreviewProxyRenderer.cpp
             src/engine/MediaEditor.cpp
             src/engine/ProjectBundle.cpp
+            src/engine/FacePropImport.cpp
             src/core/Project.cpp
+            src/core/Transcript.cpp
+            src/core/GuideSet.cpp
             src/core/SrtIO.cpp
             src/core/ShapeStyle.cpp
             src/core/TextStyle.cpp
@@ -1268,7 +1376,7 @@ target_compile_definitions(drift PRIVATE
     DRIFT_MARKET_API_URL="${DRIFT_MARKET_API_URL}"
     DRIFT_MARKET_CLIENT_KEY="${DRIFT_MARKET_CLIENT_KEY}"
     DRIFT_UPDATE_FEED_URL="${DRIFT_UPDATE_FEED_URL}"
-    DRIFT_VERSION="${PROJECT_VERSION}"
+    DRIFT_VERSION="${DRIFT_VERSION_STRING}"
 )
 
 # Ship a file-based package directory next to the binaries that load the catalog.
@@ -1368,6 +1476,25 @@ if(NOT ANDROID)
 # --- install (used by packaging, e.g. Flatpak; the dev workflow runs in-place) ---
 include(GNUInstallDirs)
 
+# Install one freedesktop metadata file under the channel's app id. On stable that is the source
+# file byte for byte. A nightly gets a generated copy with every org.cutwire.Drift occurrence
+# rewritten — the AppStream <id>, its <launchable>, the mime type's <icon> and the desktop file's
+# Icon= all carry that string — and the human-facing name suffixed, so the launcher shows
+# "Drift Nightly" next to a stable entry rather than two identical ones.
+function(drift_install_metadata source destination name)
+    if(DRIFT_CHANNEL STREQUAL "stable")
+        install(FILES "${source}" DESTINATION "${destination}" RENAME "${name}" COMPONENT drift)
+        return()
+    endif()
+    file(READ "${CMAKE_SOURCE_DIR}/${source}" _content)
+    string(REPLACE "org.cutwire.Drift" "${DRIFT_APP_ID}" _content "${_content}")
+    string(REPLACE "Name=Drift\n" "Name=${DRIFT_APP_NAME}\n" _content "${_content}")
+    string(REPLACE "<name>Drift</name>" "<name>${DRIFT_APP_NAME}</name>" _content "${_content}")
+    set(_generated "${CMAKE_CURRENT_BINARY_DIR}/metadata/${name}")
+    file(WRITE "${_generated}" "${_content}")
+    install(FILES "${_generated}" DESTINATION "${destination}" COMPONENT drift)
+endfunction()
+
 # Everything Drift installs is tagged with the "drift" component, so packaging can ask for the app
 # and nothing else: `cmake --install build --component drift`. JUCE's modules install ~50 MB of
 # their own sources into include/JUCE-<version>, and a plain `cmake --install` has no way to say no
@@ -1387,19 +1514,23 @@ else()
                 DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT drift)
     endforeach()
 
-    # Desktop integration for Flatpak / freedesktop.
-    install(FILES flatpak/org.cutwire.Drift.desktop
-            DESTINATION ${CMAKE_INSTALL_DATADIR}/applications COMPONENT drift)
-    install(FILES flatpak/org.cutwire.Drift.metainfo.xml
-            DESTINATION ${CMAKE_INSTALL_DATADIR}/metainfo COMPONENT drift)
-    install(FILES flatpak/org.cutwire.Drift.xml
-            DESTINATION ${CMAKE_INSTALL_DATADIR}/mime/packages COMPONENT drift)
+    # Desktop integration for Flatpak / freedesktop. Every one of these is installed under the
+    # channel's app id: flatpak build-export silently drops anything in /app/share whose name does
+    # not start with the app id, so a nightly named after the stable id would export no launcher
+    # entry and no icon at all.
+    drift_install_metadata(flatpak/org.cutwire.Drift.desktop
+        "${CMAKE_INSTALL_DATADIR}/applications" "${DRIFT_APP_ID}.desktop")
+    drift_install_metadata(flatpak/org.cutwire.Drift.metainfo.xml
+        "${CMAKE_INSTALL_DATADIR}/metainfo" "${DRIFT_APP_ID}.metainfo.xml")
+    drift_install_metadata(flatpak/org.cutwire.Drift.xml
+        "${CMAKE_INSTALL_DATADIR}/mime/packages" "${DRIFT_APP_ID}.xml")
     # 1024px source is intentionally skipped: flatpak build-export rejects icons
     # larger than 512x512.
     foreach(_size 64 128 256 512)
         install(FILES
             flatpak/share/icons/hicolor/${_size}x${_size}/apps/org.cutwire.Drift.png
-            DESTINATION ${CMAKE_INSTALL_DATADIR}/icons/hicolor/${_size}x${_size}/apps COMPONENT drift)
+            DESTINATION ${CMAKE_INSTALL_DATADIR}/icons/hicolor/${_size}x${_size}/apps
+            RENAME ${DRIFT_APP_ID}.png COMPONENT drift)
     endforeach()
 endif()
 

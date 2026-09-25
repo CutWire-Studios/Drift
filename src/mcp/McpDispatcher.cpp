@@ -276,9 +276,15 @@ QJsonArray compactAvailableCodecs(const QVariantList &list)
 QVariantMap mergedExportSettings(AppController *c)
 {
     QVariantMap merged = c->exportDefaultSettings();
-    const QVariantMap last = c->lastExportSettings();
-    for (auto it = last.begin(); it != last.end(); ++it)
+    const QVariantMap last = c->mcpLastExportSettings();
+    for (auto it = last.begin(); it != last.end(); ++it) {
+        // Carrying a codec or a bitrate over is a convenience. Carrying a *mode* over is a trap:
+        // one build asked for a video export, left audio_only out of the args, inherited the true
+        // from an earlier audio-only mix check, and got an audio file back with no warning.
+        if (it.key() == QLatin1String("audioOnly") || it.key() == QLatin1String("gifExport"))
+            continue;
         merged.insert(it.key(), it.value());
+    }
     return merged;
 }
 
@@ -1413,9 +1419,23 @@ QJsonObject McpDispatcher::opSetEffectParam(const QJsonObject &args)
     const ClipRef ref = resolveClip(args);
     if (!ref.valid())
         return clipRefError(args);
-    m_controller->setEffectParam(ref.track, ref.clip, jsonInt(args.value(QStringLiteral("index"))),
-                                 args.value(QStringLiteral("key")).toString(),
-                                 jsonNumber(args.value(QStringLiteral("value")), 0));
+    const int index = jsonInt(args.value(QStringLiteral("index")));
+    const QString key = args.value(QStringLiteral("key")).toString();
+    // A string value is a clip id for a "clip" param (depth.occlude's target); "" is automatic.
+    const QJsonValue value = args.value(QStringLiteral("value"));
+    const bool set = value.isString()
+                         ? m_controller->setEffectClipParam(ref.track, ref.clip, index, key,
+                                                            value.toString())
+                         : m_controller->setEffectParam(ref.track, ref.clip, index, key,
+                                                        jsonNumber(value, 0));
+    if (!set) {
+        return err("not_found",
+                   QStringLiteral("no parameter '%1' on effect %2 — check the stack index in "
+                                  "inspect({clips:true, detail:true}) and the parameter names in "
+                                  "list_effects({id})")
+                       .arg(key)
+                       .arg(index));
+    }
     return ok(clipFeedback(ref));
 }
 
@@ -1478,9 +1498,17 @@ QJsonObject McpDispatcher::opSetAudioEffectParam(const QJsonObject &args)
     const ClipRef ref = resolveClip(args);
     if (!ref.valid())
         return clipRefError(args);
-    m_controller->setAudioEffectParam(ref.track, ref.clip, jsonInt(args.value(QStringLiteral("index"))),
-                                      args.value(QStringLiteral("key")).toString(),
-                                      jsonNumber(args.value(QStringLiteral("value")), 0));
+    const int index = jsonInt(args.value(QStringLiteral("index")));
+    const QString key = args.value(QStringLiteral("key")).toString();
+    if (!m_controller->setAudioEffectParam(ref.track, ref.clip, index, key,
+                                           jsonNumber(args.value(QStringLiteral("value")), 0))) {
+        return err("not_found",
+                   QStringLiteral("no parameter '%1' on audio effect %2 — check the stack index in "
+                                  "inspect({clips:true, detail:true}) and the parameter names in "
+                                  "list_audio_effects({id})")
+                       .arg(key)
+                       .arg(index));
+    }
     return ok(clipFeedback(ref));
 }
 
@@ -1500,7 +1528,15 @@ QJsonObject McpDispatcher::opAddTransition(const QJsonObject &args)
     const double duration = args.contains(QStringLiteral("duration"))
                                 ? jsonNumber(args.value(QStringLiteral("duration")), 0.5)
                                 : 0.5;
-    m_controller->addTransition(ref.track, ref.clip, kind, duration);
+    if (m_controller->project()->tracks().at(ref.track).type == drift::TrackType::Audio) {
+        bool audible = false;
+        for (const QVariant &k : m_controller->transitionKindsForTrack(ref.track))
+            audible = audible || k.toMap().value(QStringLiteral("kind")).toString() == kind;
+        if (!audible)
+            return err("bad_args", QStringLiteral("%1 has no sound; audio tracks take crossfade or dip").arg(kind));
+    }
+    const bool linkedAudio = !args.contains(QStringLiteral("linked_audio")) || jsonBool(args.value(QStringLiteral("linked_audio")));
+    m_controller->addTransition(ref.track, ref.clip, kind, duration, linkedAudio);
     const QVariantMap tr = m_controller->transitionBetweenClips(ref.track, ref.clip);
     if (tr.isEmpty())
         return err("bad_args", QStringLiteral("No neighbour clip for a transition"));
@@ -1669,7 +1705,11 @@ QJsonObject McpDispatcher::opExport(const QJsonObject &args)
             loop.quit();
         });
 
-    m_controller->exportWithSettings(QUrl::fromLocalFile(info.absoluteFilePath()), map);
+    // Remember what the agent chose in the agent's own store, so the export dialog still
+    // offers the user what they last picked themselves.
+    m_controller->mcpRememberExportSettings(map);
+    m_controller->exportWithSettings(QUrl::fromLocalFile(info.absoluteFilePath()), map,
+                                     /*rememberChoice=*/false);
 
     if (!wait) {
         QObject::disconnect(conn);

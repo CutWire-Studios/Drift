@@ -1,0 +1,37 @@
+{
+  "id": "depth.occlude",
+  "displayName": "Behind Subject",
+  "category": "depth",
+  "order": 940,
+  "description": "Puts this layer inside a video clip beneath it, so anything in that clip nearer than Distance \u2014 a person walking in front \u2014 passes in front of it. Pick the clip under Clip; its depth has to be estimated once.",
+  "backend": "compositor",
+  "parameters": [
+    {
+      "identifier": "target",
+      "displayName": "Clip",
+      "type": "clip"
+    },
+    {
+      "identifier": "depth",
+      "displayName": "Distance",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.6
+    },
+    {
+      "identifier": "softness",
+      "displayName": "Edge softness",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 0.2,
+      "defaultValue": 0.03
+    },
+    {
+      "identifier": "cutoutEdges",
+      "displayName": "Use cutout edges",
+      "type": "bool",
+      "defaultValue": 1
+    }
+  ]
+}

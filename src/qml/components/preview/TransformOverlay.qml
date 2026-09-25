@@ -49,6 +49,16 @@ Item {
         return true
     }
 
+    function sameOverlayClips(a, b) {
+        if (!a || !b || a.length !== b.length)
+            return false
+        for (let i = 0; i < a.length; ++i) {
+            if (a[i].track !== b[i].track || a[i].clip !== b[i].clip || a[i].kind !== b[i].kind)
+                return false
+        }
+        return true
+    }
+
     function refreshOverlay() {
         if (interacting)
             return
@@ -59,7 +69,12 @@ Item {
         const next = EditorState.previewClipsAtPlayhead()
         if (clipsOverlayEqual(overlayClips, next))
             return
+        const sameClips = sameOverlayClips(overlayClips, next)
         overlayClips = next
+        // Only geometry moved (a slider or another handle dragging this clip): the delegates
+        // follow through `box`, and recreating them would drop a selected handle's focus.
+        if (sameClips)
+            return
         // Set model imperatively. Binding `model: overlayClips` re-enters when
         // tracksChanged fires during delegate setup (binding loop on model).
         clipRepeater.model = next
@@ -74,7 +89,7 @@ Item {
     }
 
     // Stickiness: while a clip is moved or resized its edges and centre pull to
-    // the canvas edges and centre lines. The tolerance is a screen distance, so
+    // the canvas edges, centre lines and visible guides. The tolerance is a screen distance, so
     // the pull feels the same whatever the project resolution or preview zoom.
     readonly property real snapTolPx: 8
 
@@ -127,6 +142,14 @@ Item {
     Connections {
         target: EditorState
         function onTracksChanged() { root.refreshOverlay() }
+        function onClipPropertiesPreviewed(trackIndex, clipIndex, keys) {
+            for (const k of keys) {
+                if (k === "x" || k === "y" || k === "width" || k === "height" || k === "rotation") {
+                    root.refreshOverlay()
+                    return
+                }
+            }
+        }
         function onSelectionChanged() { root.refreshOverlay() }
         function onPlayheadSecondsChanged() { root.refreshOverlay() }
         function onPlayingChanged() {
@@ -141,36 +164,44 @@ Item {
         delegate: Item {
             id: handle
             required property var modelData
+            required property int index
+            // Latest geometry; the model itself is only swapped when the set of clips changes.
+            readonly property var box: root.overlayClips[index] || modelData
 
-            readonly property bool selected: EditorState.selectedTrack === modelData.track
-                                                    && EditorState.selectedClip === modelData.clip
-            readonly property bool isText: modelData.kind === "text"
+            readonly property bool selected: EditorState.selectedTrack === box.track
+                                                    && EditorState.selectedClip === box.clip
+            readonly property bool isText: box.kind === "text"
+            // A 3D model: the box is the projected model, not the clip's layout rect, so a drag
+            // moves the clip anchor by the box delta and there is nothing to resize or spin.
+            readonly property bool isModel3d: box.kind === "model3d"
+            readonly property real anchorOffsetX: box.anchorX !== undefined ? box.anchorX - box.x : 0
+            readonly property real anchorOffsetY: box.anchorY !== undefined ? box.anchorY - box.y : 0
             readonly property bool editing: root.editingKey
-                                                    === (modelData.track + ":" + modelData.clip)
+                                                    === (box.track + ":" + box.clip)
             // True when this clip was just added with no text and should
             // open with an empty editor instead of the placeholder string.
             property bool openAsPlaceholder: false
             // Live clip style — tracks EditorState so property-panel edits
             // apply to the inline editor in real time.
             readonly property var liveStyle: {
-                void EditorState.tracks
-                const info = EditorState.clipAt(modelData.track, modelData.clip)
+                void EditorState.tracksRevision
+                const info = EditorState.clipAt(box.track, box.clip)
                 return info && info.textStyle ? info.textStyle : null
             }
             readonly property var liveClip: {
-                void EditorState.tracks
-                return EditorState.clipAt(modelData.track, modelData.clip)
+                void EditorState.tracksRevision
+                return EditorState.clipAt(box.track, box.clip)
             }
 
             function enterEdit() {
-                root.editingKey = modelData.track + ":" + modelData.clip
+                root.editingKey = box.track + ":" + box.clip
                 root.interacting = true
-                EditorState.selectClip(modelData.track, modelData.clip)
-                EditorState.beginTextEdit(modelData.track, modelData.clip)
-                const info = EditorState.clipAt(modelData.track, modelData.clip)
+                EditorState.selectClip(box.track, box.clip)
+                EditorState.beginTextEdit(box.track, box.clip)
+                const info = EditorState.clipAt(box.track, box.clip)
                 if (handle.openAsPlaceholder) {
                     editor.text = ""
-                    EditorState.previewSetClipTextContent(modelData.track, modelData.clip, "")
+                    EditorState.previewSetClipTextContent(box.track, box.clip, "")
                     handle.openAsPlaceholder = false
                 } else {
                     editor.text = info.textContent || ""
@@ -182,7 +213,7 @@ Item {
             function commitEdit() {
                 if (!handle.editing)
                     return
-                EditorState.commitTextEdit(modelData.track, modelData.clip, editor.text)
+                EditorState.commitTextEdit(box.track, box.clip, editor.text)
                 handle.finishEdit()
             }
 
@@ -207,7 +238,7 @@ Item {
                 if (!handle.isText || handle.editing)
                     return
                 if (root.pendingEditKey
-                        !== (modelData.track + ":" + modelData.clip))
+                        !== (box.track + ":" + box.clip))
                     return
                 root.pendingEditKey = ""
                 handle.openAsPlaceholder = true
@@ -221,8 +252,8 @@ Item {
                 function onPendingEditKeyChanged() { handle.claimPendingEdit() }
             }
 
-            readonly property real canvasW: Math.max(1, modelData.canvasWidth)
-            readonly property real canvasH: Math.max(1, modelData.canvasHeight)
+            readonly property real canvasW: Math.max(1, box.canvasWidth)
+            readonly property real canvasH: Math.max(1, box.canvasHeight)
             readonly property real sx: parent.width / canvasW
             readonly property real sy: parent.height / canvasH
 
@@ -234,10 +265,10 @@ Item {
             property real liveH: -1
             property real liveRotation: 1e9
 
-            readonly property real layoutX: liveX > -1e11 ? liveX : modelData.x
-            readonly property real layoutY: liveY > -1e11 ? liveY : modelData.y
-            readonly property real layoutW: liveW >= 0 ? liveW : modelData.width
-            readonly property real layoutH: liveH >= 0 ? liveH : modelData.height
+            readonly property real layoutX: liveX > -1e11 ? liveX : box.x
+            readonly property real layoutY: liveY > -1e11 ? liveY : box.y
+            readonly property real layoutW: liveW >= 0 ? liveW : box.width
+            readonly property real layoutH: liveH >= 0 ? liveH : box.height
             readonly property real centerX: (layoutX + layoutW * 0.5) * sx
             readonly property real centerY: (layoutY + layoutH * 0.5) * sy
 
@@ -252,9 +283,9 @@ Item {
             // still the one the pointer reaches. The clip being edited
             // jumps above everything so its editor and the click-away
             // catcher order correctly.
-            z: handle.editing ? 1000 : handle.selected ? 900 : -modelData.track
+            z: handle.editing ? 1000 : handle.selected ? 900 : -box.track
             transformOrigin: Item.Center
-            rotation: liveRotation < 1e8 ? liveRotation : modelData.rotation
+            rotation: liveRotation < 1e8 ? liveRotation : box.rotation
 
             property real dragStartX: 0
             property real dragStartY: 0
@@ -268,9 +299,13 @@ Item {
             // Clip angle minus pointer angle when the rotate grip was taken.
             property real rotateGrabOffset: 0
 
-            // Canvas edges and centre lines, in layout px.
-            readonly property var snapTargetsX: [0, handle.canvasW / 2, handle.canvasW]
-            readonly property var snapTargetsY: [0, handle.canvasH / 2, handle.canvasH]
+            // Visible guides, in layout px. Reading guideItems re-runs this when the
+            // active sets change.
+            readonly property var guideSnap: EditorState.guidesEnabled && EditorState.guideItems.length > 0
+                ? EditorState.guideSnapTargets(handle.canvasW, handle.canvasH) : ({ x: [], y: [] })
+            // Canvas edges and centre lines, plus the guides.
+            readonly property var snapTargetsX: [0, handle.canvasW / 2, handle.canvasW].concat(guideSnap.x)
+            readonly property var snapTargetsY: [0, handle.canvasH / 2, handle.canvasH].concat(guideSnap.y)
             readonly property real snapTolX: root.snapTolPx / handle.sx
             readonly property real snapTolY: root.snapTolPx / handle.sy
             // A rotated box has no axis-aligned edges to stick with, so it does
@@ -303,10 +338,10 @@ Item {
                 }
                 EditorState.beginPreviewDrag()
                 EditorState.previewSetClipPosition(
-                    handle.modelData.track,
-                    handle.modelData.clip,
-                    handle.modelData.x + dx,
-                    handle.modelData.y + dy)
+                    handle.box.track,
+                    handle.box.clip,
+                    handle.box.x + handle.anchorOffsetX + dx,
+                    handle.box.y + handle.anchorOffsetY + dy)
                 EditorState.commitPreviewDrag()
                 event.accepted = true
             }
@@ -316,7 +351,7 @@ Item {
                 function onSelectedClipDataChanged() {
                     if (!handle.editing || editor.activeFocus)
                         return
-                    const info = EditorState.clipAt(modelData.track, modelData.clip)
+                    const info = EditorState.clipAt(box.track, box.clip)
                     if (!info)
                         return
                     const next = info.textContent || ""
@@ -378,8 +413,8 @@ Item {
                     if (!handle.editing)
                         return
                     EditorState.previewSetClipTextContent(
-                        handle.modelData.track,
-                        handle.modelData.clip,
+                        handle.box.track,
+                        handle.box.clip,
                         text)
                 }
                 Keys.onEscapePressed: handle.cancelEdit()
@@ -389,7 +424,7 @@ Item {
             TapHandler {
                 enabled: !handle.editing
                 onTapped: {
-                    EditorState.selectClip(handle.modelData.track, handle.modelData.clip)
+                    EditorState.selectClip(handle.box.track, handle.box.clip)
                     handle.forceActiveFocus()
                 }
             }
@@ -421,11 +456,11 @@ Item {
                                                          bodyDrag.centroid.scenePosition.y)
                         bodyDrag.pressPx = p.x
                         bodyDrag.pressPy = p.y
-                        handle.dragStartX = handle.modelData.x
-                        handle.dragStartY = handle.modelData.y
+                        handle.dragStartX = handle.box.x
+                        handle.dragStartY = handle.box.y
                         handle.liveX = handle.dragStartX
                         handle.liveY = handle.dragStartY
-                        EditorState.selectClip(handle.modelData.track, handle.modelData.clip)
+                        EditorState.selectClip(handle.box.track, handle.box.clip)
                         handle.forceActiveFocus()
                         EditorState.beginPreviewDrag()
                     } else {
@@ -461,11 +496,24 @@ Item {
                     handle.liveX = xPx
                     handle.liveY = yPx
                     EditorState.previewSetClipPosition(
-                        handle.modelData.track,
-                        handle.modelData.clip,
-                        xPx,
-                        yPx)
+                        handle.box.track,
+                        handle.box.clip,
+                        xPx + handle.anchorOffsetX,
+                        yPx + handle.anchorOffsetY)
                 }
+            }
+
+            // The single move handle of a 3D model: an affordance at the box centre (the whole
+            // box drags), where the corner and rotation grips would otherwise invite resizing.
+            Rectangle {
+                visible: handle.selected && handle.isModel3d && !handle.editing
+                anchors.centerIn: parent
+                width: 14
+                height: 14
+                radius: 7
+                color: Theme.primary
+                border.width: Theme.borderWidth
+                border.color: Theme.onMedia
             }
 
             // Resize grips: 4 edges then 4 corners, the same frame the canvas
@@ -473,7 +521,7 @@ Item {
             // (-1 = left/top, +1 = right/bottom, 0 = stays put). The opposite
             // edge or corner is the anchor and does not move.
             Repeater {
-                model: (handle.selected && !handle.editing)
+                model: (handle.selected && !handle.editing && !handle.isModel3d)
                        ? [
                            { dx: -1, dy:  0, cursor: Qt.SizeHorCursor },
                            { dx:  1, dy:  0, cursor: Qt.SizeHorCursor },
@@ -498,8 +546,8 @@ Item {
                     // Footage has a real aspect to protect, so its corners hold
                     // the ratio unless Shift asks for a stretch. Boxes that exist
                     // to be reshaped (text, subtitles, shapes) work the other way.
-                    readonly property bool lockByDefault: handle.modelData.kind === "video"
-                                                          || handle.modelData.kind === "image"
+                    readonly property bool lockByDefault: handle.box.kind === "video"
+                                                          || handle.box.kind === "image"
 
                     width: hs
                     height: hs
@@ -625,13 +673,13 @@ Item {
                             const size = Math.round(handle.dragStartPixelSize
                                                     * h / Math.max(1, handle.dragStartH))
                             EditorState.previewSetTextRect(
-                                handle.modelData.track,
-                                handle.modelData.clip,
+                                handle.box.track,
+                                handle.box.clip,
                                 x, y, w, h, size)
                         } else {
                             EditorState.previewSetClipRect(
-                                handle.modelData.track,
-                                handle.modelData.clip,
+                                handle.box.track,
+                                handle.box.clip,
                                 x, y, w, h)
                         }
                     }
@@ -660,14 +708,14 @@ Item {
                             handle.dragStartY = handle.layoutY
                             handle.dragStartW = handle.layoutW
                             handle.dragStartH = handle.layoutH
-                            handle.dragStartPixelSize = handle.modelData.pixelSize || 64
+                            handle.dragStartPixelSize = handle.box.pixelSize || 64
                             handle.liveX = handle.dragStartX
                             handle.liveY = handle.dragStartY
                             handle.liveW = handle.dragStartW
                             handle.liveH = handle.dragStartH
                             handle.resizing = true
                             root.interacting = true
-                            EditorState.selectClip(handle.modelData.track, handle.modelData.clip)
+                            EditorState.selectClip(handle.box.track, handle.box.clip)
                             handle.forceActiveFocus()
                             EditorState.beginPreviewDrag()
                         }
@@ -728,7 +776,7 @@ Item {
 
             // Rotation handle above the box
             Item {
-                visible: handle.selected && !handle.editing
+                visible: handle.selected && !handle.editing && !handle.isModel3d
                 width: 14
                 height: 14
                 x: handle.width / 2 - width / 2
@@ -768,12 +816,12 @@ Item {
                         if (active) {
                             root.interacting = true
                             handle.rotating = true
-                            handle.liveRotation = handle.modelData.rotation
+                            handle.liveRotation = handle.box.rotation
                             // Turning starts from where the grip was taken, so
                             // grabbing it does not snap the clip to the pointer.
-                            handle.rotateGrabOffset = handle.modelData.rotation
+                            handle.rotateGrabOffset = handle.box.rotation
                                     - rotateDrag.pointerAngle()
-                            EditorState.selectClip(handle.modelData.track, handle.modelData.clip)
+                            EditorState.selectClip(handle.box.track, handle.box.clip)
                             handle.forceActiveFocus()
                             EditorState.beginPreviewDrag()
                         } else {
@@ -791,8 +839,8 @@ Item {
                             deg = root.snapAngle(deg)
                         handle.liveRotation = deg
                         EditorState.previewSetClipRotation(
-                            handle.modelData.track,
-                            handle.modelData.clip,
+                            handle.box.track,
+                            handle.box.clip,
                             deg)
                     }
                 }

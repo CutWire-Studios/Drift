@@ -14,6 +14,10 @@ ThemedDialog {
 
     property var info: ({ codecs: [], encoders: [], system: [], hints: [] })
     property var playback: ({ rows: [], hints: [] })
+    // The sweep's own sections, kept apart from the live rows above. Copying re-collects the
+    // rows in C++ so both halves of the pasted report describe the same instant, and only this
+    // travels across.
+    property var benchmark: ({})
     property int activeTab: 0
 
     onOpened: {
@@ -23,21 +27,17 @@ ThemedDialog {
     onAccepted: {
         // Both tabs, always. Which one the reporter was looking at says nothing about which
         // one holds the answer.
-        EditorState.copyDiagnosticsReport(playback)
+        EditorState.copyDiagnosticsReport(benchmark)
         Toasts.success(qsTr("Copied to clipboard"))
     }
 
     Connections {
         target: EditorState
         function onPlaybackBenchmarkFinished(result) {
-            // Merge, not replace: the counters and findings collected on open are still the
-            // live ones; the benchmark only adds its own sections.
-            let merged = {}
-            for (const k in root.playback)
-                merged[k] = root.playback[k]
-            for (const k in result)
-                merged[k] = result[k]
-            root.playback = merged
+            root.benchmark = result
+            // The sweep decoded for a couple of seconds against the same counters these rows
+            // come from, so what was collected on open is no longer what the report would say.
+            root.playback = EditorState.playbackDiagnostics()
         }
     }
 
@@ -599,7 +599,7 @@ ThemedDialog {
                         Column {
                             id: benchSection
                             required property var modelData
-                            readonly property var bench: root.playback[modelData.key] || null
+                            readonly property var bench: root.benchmark[modelData.key] || null
                             readonly property var b: bench || ({})
 
                             width: parent.width

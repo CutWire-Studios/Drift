@@ -75,7 +75,10 @@ QJsonObject animPropProp()
         "are shape.layer.<layerId>.<field> (a fresh shape's layers are \"fill\" and \"stroke\") and the "
         "geometry knobs shape.<cornerRadius|points|innerRatio|headSize|thickness|tailX|tailSize>. On "
         "an SVG vector clip the svg.* overrides: vector.svg.<strokeWidth|opacity>, "
-        "vector.svg.<fill|stroke>.<r|g|b|a>, or the same under vector.svg.<elementId>. "
+        "vector.svg.<fill|stroke>.<r|g|b|a>, or the same under vector.svg.<elementId>. On a 3D "
+        "model clip model3d.<scale|depth|rotX|rotY|rotZ|lightYaw|lightPitch|lightIntensity|ambient> "
+        "(rotations are about the model's own axes, X then Y then Z; keyframe model3d.rotY to spin a "
+        "tilted model about its own axis). "
         "Note width/height here vs w/h in set_transform. Spellings live in this "
 "schema — list_animated_properties returns only properties that already have keys (empty on a "
         "fresh clip), so do not use it to learn names."));
@@ -704,12 +707,15 @@ const QList<Op> &ops()
                        {QStringLiteral("index")}),
           false, true },
         { "set_effect_param", "effects", "Tweak a video effect",
-          "Set one numeric/boolean video effect parameter. WARNING: the write is not validated — an "
-          "unknown key or out-of-range index still returns ok. Take keys from list_effects and confirm "
-          "the result with inspect({clips:true,detail:true}). Use set_effect_color_param for colors.",
+          "Set one numeric/boolean video effect parameter, or a clip param (type \"clip\", e.g. "
+          "depth.occlude's target) to a clip id string — \"\" leaves the choice to the effect. Fails "
+          "not_found on a key the effect does not declare or a stack index that is not there. Take "
+          "keys from list_effects({id}). Use set_effect_color_param for colors.",
           objectSchema(mergeProps({{QStringLiteral("index"), effectIndexProp()},
                                    {QStringLiteral("key"), stringProp(QStringLiteral("Parameter key from the effect's params in list_effects"))},
-                                   {QStringLiteral("value"), numberProp(QStringLiteral("Value (booleans as 0/1); range from list_effects({id})"))}},
+                                   {QStringLiteral("value"),
+                                    QJsonObject{{QStringLiteral("type"), QJsonArray{QStringLiteral("number"), QStringLiteral("string")}},
+                                                {QStringLiteral("description"), QStringLiteral("Value (booleans as 0/1; a clip id for clip params); range from list_effects({id})")}}}},
                                   clipRefProps()),
                        {QStringLiteral("index"), QStringLiteral("key"), QStringLiteral("value")}) },
         { "add_audio_effect", "effects", "Put an audio effect on a clip",
@@ -727,9 +733,8 @@ const QList<Op> &ops()
                        {QStringLiteral("index")}),
           false, true },
         { "set_audio_effect_param", "effects", "Tweak an audio effect",
-          "Set one audio effect parameter (booleans as 0/1). WARNING: not validated — an unknown key "
-          "or bad index still returns ok. Take keys from list_audio_effects and confirm with "
-          "inspect({clips:true,detail:true}).",
+          "Set one audio effect parameter (booleans as 0/1). Fails not_found on a key the effect does "
+          "not declare or a stack index that is not there. Take keys from list_audio_effects({id}).",
           objectSchema(mergeProps({{QStringLiteral("index"), effectIndexProp()},
                                    {QStringLiteral("key"), stringProp(QStringLiteral("Parameter key from list_audio_effects"))},
                                    {QStringLiteral("value"), numberProp(QStringLiteral("Value (booleans as 0/1); range from list_audio_effects({id})"))}},
@@ -737,16 +742,22 @@ const QList<Op> &ops()
                        {QStringLiteral("index"), QStringLiteral("key"), QStringLiteral("value")}) },
         { "add_transition", "effects", "Bridge two adjacent clips",
           "Add or replace a transition between this clip and the next eligible clip on the same track "
-          "(the neighbour with the earliest start after it); fails bad_args when there is none. Only "
-          "video, shape, and text tracks take transitions. Duration is forced to the physical overlap "
-          "when the clips already overlap, and is floored at 0.1s otherwise. Replacing an existing "
-          "transition clears its parameter overrides. Returns {id, kind, dur, track} — keep id for "
-          "remove_transition and set_transition_*.",
+          "(the neighbour with the earliest start after it); fails bad_args when there is none. Video, "
+          "shape, text and audio tracks take transitions; on an audio track only the sound matters, so "
+          "only crossfade and dip kinds are accepted. Where clips only touch (a butt cut), the audio "
+          "plays on into the media past the cut for a true crossfade, and dips through silence on a "
+          "side with no media to spare. With linked_audio (default), a transition between two video "
+          "clips whose separated audio sits back to back on one audio track gets the same crossfade "
+          "there too, and later duration/kind/curve changes and removal carry across. Duration is "
+          "forced to the physical overlap when the clips already overlap, and is floored at 0.1s "
+          "otherwise. Replacing an existing transition clears its parameter overrides. Returns {id, "
+          "kind, dur, track} — keep id for remove_transition and set_transition_*.",
           objectSchema(mergeProps(
               {{QStringLiteral("kind"),
                 propWithDefault(stringProp(QStringLiteral("Transition id from list_transitions; an unknown id fails not_found with the nearest ids")),
                                 QStringLiteral("crossfade"))},
-               {QStringLiteral("duration"), numberProp(QStringLiteral("Seconds (ignored when clips already overlap)"))}},
+               {QStringLiteral("duration"), numberProp(QStringLiteral("Seconds (ignored when clips already overlap)"))},
+               {QStringLiteral("linked_audio"), propWithDefault(boolProp(QStringLiteral("Mirror onto the clips' linked audio")), true)}},
               clipRefProps())) },
         { "remove_transition", "effects", "Remove a transition",
           "Remove a transition by id from a track. Transition ids are unique within a track only, so "
@@ -766,9 +777,11 @@ const QList<Op> &ops()
                        {QStringLiteral("width"), QStringLiteral("height"), QStringLiteral("fps")}) },
         { "set_background", "project", "Change canvas background",
           "Set background kind, color, and/or blur strength. At least one field is required. "
-          "blurStrength only has a visible effect when kind is blur.",
-          objectSchema({{QStringLiteral("kind"), enumProp(QStringLiteral("Background kind"),
-                                                          {QStringLiteral("color"), QStringLiteral("blur")})},
+          "blurStrength only has a visible effect when kind is blur. kind=transparent clears "
+          "the canvas so alpha video and export with VP9 (alpha) / ProRes 4444 keep holes.",
+          objectSchema({                        {QStringLiteral("kind"), enumProp(QStringLiteral("Background kind"),
+                                                          {QStringLiteral("color"), QStringLiteral("blur"),
+                                                           QStringLiteral("transparent")})},
                         {QStringLiteral("color"), stringProp(QStringLiteral("Background color #AARRGGBB"))},
                         {QStringLiteral("blurStrength"), numberProp(QStringLiteral("Blur amount"), 0, 200)}}) },
         { "set_metadata", "project", "Set project title and author",
@@ -812,7 +825,7 @@ const QList<Op> &ops()
         { "list_animated_properties", "keyframes", "See what already has keys",
           "Returns {props:[…]} — only the properties that already carry keyframes on this clip. Empty "
           "on a fresh clip. Property spellings live in the `prop` schema of the other keyframes ops "
-          "(x, y, width, height, rotation, opacity, volume, fx.<i>.<key>, mask.<key>, text.<key>, shape.<key>, vector.svg.<key>), not here.",
+          "(x, y, width, height, rotation, opacity, volume, fx.<i>.<key>, mask.<key>, text.<key>, shape.<key>, vector.svg.<key>, model3d.<key>), not here.",
           objectSchema(clipRefProps()), true, false, true },
         { "list_keyframes", "keyframes", "Read keys for one property",
           "Returns {prop, enabled, keys:[{seconds, value, inDx, inDy, outDx, outDy, corner, hold, "
@@ -1002,9 +1015,9 @@ QStringList toolboxNames()
             QStringLiteral("playback"),  QStringLiteral("text"),     QStringLiteral("effects"),
             QStringLiteral("project"),   QStringLiteral("keyframes"), QStringLiteral("speed"),
             QStringLiteral("ui"),        QStringLiteral("shapes"),   QStringLiteral("motion"),
-            QStringLiteral("subtitles"), QStringLiteral("segmentation"), QStringLiteral("ai"),
+            QStringLiteral("model3d"),   QStringLiteral("subtitles"), QStringLiteral("segmentation"), QStringLiteral("ai"),
             QStringLiteral("audio"),     QStringLiteral("scene"),    QStringLiteral("multicam"),
-            QStringLiteral("market")};
+            QStringLiteral("market"),    QStringLiteral("transcript"), QStringLiteral("voice")};
 }
 
 QStringList undoExemptOps()
@@ -1013,12 +1026,13 @@ QStringList undoExemptOps()
         QStringLiteral("import_media"),        QStringLiteral("import_media_bytes"),
         QStringLiteral("market_download"),     QStringLiteral("market_cancel_download"),
         QStringLiteral("seek"),                QStringLiteral("play"),
+        QStringLiteral("open_composite"),      QStringLiteral("flatten_composite"),
         QStringLiteral("pause"),               QStringLiteral("undo"),
         QStringLiteral("redo"),                QStringLiteral("undo_to"),
         QStringLiteral("take_snapshot"),       QStringLiteral("restore_snapshot"),
         QStringLiteral("set_overlap"),         QStringLiteral("set_ripple"),
-        QStringLiteral("set_snap"),            QStringLiteral("set_guides"),
-        QStringLiteral("set_loop_work_area"),  QStringLiteral("export_video"),
+        QStringLiteral("set_snap"),            QStringLiteral("set_loop_work_area"),
+        QStringLiteral("export_video"),
         QStringLiteral("save_project"),        QStringLiteral("set_theme"),
         QStringLiteral("set_shortcut"),        QStringLiteral("reset_shortcuts"),
         QStringLiteral("set_beat_layers"),     QStringLiteral("detect_beats"),
@@ -1026,6 +1040,10 @@ QStringList undoExemptOps()
         QStringLiteral("install_addon"),       QStringLiteral("cancel_addon_install"),
         QStringLiteral("set_acceleration"),    QStringLiteral("switch_angle"),
         QStringLiteral("end_multicam"),
+        // Background work and stored analysis: nothing on the timeline changes.
+        QStringLiteral("transcribe"),          QStringLiteral("diarize"),
+        QStringLiteral("cancel_job"),          QStringLiteral("tts_generate"),
+        QStringLiteral("sfx_generate"),
         // Preset stores live on disk, outside the project and its history.
         QStringLiteral("rename_user_text_preset"),      QStringLiteral("delete_user_text_preset"),
         QStringLiteral("export_user_text_preset"),      QStringLiteral("import_user_text_preset"),
@@ -1041,7 +1059,7 @@ QStringList selectionBasedOps()
         QStringLiteral("separate_audio"), QStringLiteral("unlink_audio"),
         QStringLiteral("merge_clips"),    QStringLiteral("align_clip_left"),
         QStringLiteral("align_clip_right"), QStringLiteral("copy_selection"),
-        QStringLiteral("cut_selection"),
+        QStringLiteral("cut_selection"),  QStringLiteral("make_composite"),
     };
     return k;
 }
@@ -1088,6 +1106,8 @@ QString agentGuideText()
         "Selection-based ops take no clip argument and act on the current selection — call\n"
         "select_clip or select_clips first: separate_audio, unlink_audio, merge_clips,\n"
         "align_clip_left, align_clip_right, copy_selection, cut_selection.\n"
+        "merge_clips joins two abutting cuts of the same media, or any 2+ subtitle clips on one\n"
+        "track (gaps allowed); merge_clips({track}) merges every subtitle clip on that track.\n"
         "freeze_frame and paste_at_playhead are playhead-based, not selection-based — seek first.\n"
         "\n"
         "History is linear, like git without branches. list_history returns every version (index 0 =\n"
@@ -1104,8 +1124,18 @@ QString agentGuideText()
         "- detect_scenes     -> jobs.sceneDetect.{active,progress,status}\n"
         "- set_clip_reverse  -> jobs.reverseRender.{active,progress,status}\n"
         "- market_download   -> jobs.market.active (count), or market_downloads for per-job status\n"
+        "- transcribe, diarize, tts_generate, sfx_generate return {job_id}: poll get_job({id});\n"
+        "  inspect({detail:true}).jobs.list shows recent ones, finished included.\n"
         "jobs.* keys exist only while a job runs. Segmentation, denoise, and face detection report\n"
         "through the app's status only; re-read inspect({clips:true,detail:true}) and compare.\n"
+        "\n"
+        "Editing speech (transcript toolbox):\n"
+        "1. transcribe({clip}) once per source; it survives every edit and undo.\n"
+        "2. get_transcript({asset}) for a whole take in source seconds (compact lines), or\n"
+        "   ({clip}) for what that clip plays on the timeline; view:\"words\" gives word indices.\n"
+        "3. Cut with cut_words (fillers, retakes, slips), keep_ranges (one clip's EDL) or\n"
+        "   assemble (best takes across sources). Cuts land between words with a de-click.\n"
+        "4. Check each cut with get_waveform({image:true}) — it draws the words — and frames.\n"
         "\n"
         "Working to the music (audio toolbox):\n"
         "1. detect_beats({start, duration}) blocks and returns bpm plus exact beat and onset times.\n"
@@ -1155,7 +1185,7 @@ QString agentGuideText()
         "shape.layer.<id>.<field>. A fresh shape has layers \"fill\" and \"stroke\".\n"
         "\n"
         "Toolboxes: media, timeline, canvas, playback, text, effects, project, keyframes, speed, ui, "
-        "shapes, motion, subtitles, segmentation, ai, audio, scene, multicam, market.\n");
+        "shapes, motion, model3d, subtitles, segmentation, ai, audio, scene, multicam, market.\n");
 }
 
 QJsonObject catalogPayload(const QJsonObject &args)
@@ -1178,6 +1208,7 @@ QJsonObject catalogPayload(const QJsonObject &args)
         {"ui", "Editor theme and keyboard shortcuts."},
         {"shapes", "Builtin shapes, stickers, emoji."},
         {"motion", "Lottie animations and SVG drawings as vector clips: add, inspect, re-theme through slots."},
+        {"model3d", "3D models (.glb) as model clips: add, inspect, pick the animation, pose and light them."},
         {"subtitles", "Subtitle clips, import/export, Whisper generation."},
         {"segmentation", "SAM-style cutout and mask output."},
         {"ai", "Denoise, face detection, auto-reframe, model add-ons (list/install), acceleration."},
@@ -1185,6 +1216,8 @@ QJsonObject catalogPayload(const QJsonObject &args)
         {"scene", "Detect shots, read what is in them, and cut or assemble against them."},
         {"multicam", "Multi-camera session: set up angles, switch at the playhead, save separate or combined."},
         {"market", "Stock media from the Cutwire marketplace: search or resolve a link, download into the bin. Needs the user's one-time consent in the app; downloads spend a per-machine quota."},
+        {"transcript", "Transcript-first editing: transcribe once, read phrases/words with times, cut by words or by source ranges, assemble takes, label speakers."},
+        {"voice", "Cloud voices: ElevenLabs / Fish Audio text-to-speech, ElevenLabs sound effects, voice lists, provider status. Billable; needs the user's API key."},
     };
 
     const bool brief = args.value(QStringLiteral("brief")).toBool();
@@ -1213,14 +1246,14 @@ QJsonObject catalogPayload(const QJsonObject &args)
              QStringLiteral("apply is not atomic: on failure the ops before it stay applied; done lists only those, failed carries the error."),
              QStringLiteral("apply cannot run catalog, toolbox, search, inspect, capture, frames, activity, or apply; call those directly."),
              QStringLiteral("Clip-ref ops need clip (uuid) or track+index; they never fall back to the selection (read it from inspect.selection)."),
-             QStringLiteral("set_effect_param, set_audio_effect_param and set_transition_param do not validate key or index; verify with inspect."),
+             QStringLiteral("Effect and transition parameter writes fail not_found on an unknown key or a stack index that is not there."),
              QStringLiteral("set_transform writes at the playhead and becomes a keyframe when the property is animated or autoKey is on."),
              QStringLiteral("set_mask and set_subtitle_cues replace the whole mask / cue list; read the current one from inspect first."),
              QStringLiteral("Segmentation, denoise and face detection expose no progress field; diff inspect to detect completion."),
              QStringLiteral("Outside the undo stack (as are all read-only ops): %1. set_beat_layers changes the user's own snapping and cannot be undone.")
                  .arg(undoExemptOps().join(QStringLiteral(", "))),
              QStringLiteral("set_speed_curve returns a new clip id and the old UUID stops resolving; end the apply batch after it."),
-             QStringLiteral("generate_subtitles must run AFTER remove_silence, which shifts cue times."),
+             QStringLiteral("generate_subtitles makes a caption clip with fixed times: run it after cutting. From a transcribed asset it is instant and word-exact."),
              QStringLiteral("import_media takes absolute paths only; there is no directory listing, so find files with your own filesystem tools and check missing:[]."),
          }},
     });
@@ -1300,7 +1333,7 @@ QJsonArray homepageTools()
                        "animated lists the keyframed properties. verbose=true returns every field. "
                        "clip=<uuid> returns just that clip (detail on); track=<n> just that track. "
                        "Async jobs appear under jobs {package|subtitleGen|reverseRender|sceneDetect|market} only while "
-                       "active; beats only once analysed. since=<revision> returns {unchanged:true, revision}."),
+                       "active, and jobs.list holds get_job's records; beats only once analysed. since=<revision> returns {unchanged:true, revision}."),
         objectSchema({{QStringLiteral("clips"), boolProp(QStringLiteral("Include per-clip rows under tracks[].items"))},
                       {QStringLiteral("detail"),
                        boolProp(QStringLiteral("Expand rows to the full clip map with kind-irrelevant and default-valued "
@@ -1383,7 +1416,7 @@ QJsonArray homepageTools()
         QStringLiteral("When: You know what you want but not the op name. Find an op by keyword: effects, "
                        "transitions, keyframes, animation, subtitles, captions, transcribe, beats, tempo, scenes, "
                        "shots, silence, loudness, mask, fade, speed, reverse, crop, resize, export, render, "
-                       "import, undo, history, bookmark, stabilize, denoise, faces, emoji, fonts, shapes, lottie, "
+                       "import, undo, history, bookmark, stabilize, denoise, faces, emoji, fonts, shapes, lottie, glb, model3d, "
                        "stickers, multicam, gradient, glow, neon, style pack, look, rotation, stock, marketplace. Scores op names, toolbox, when hints, descriptions and argument names; "
                        "returns hits:[{name, toolbox, when, args, required}]. schema:true inlines inputSchema when "
                        "there are ≤3 hits, so you can go straight to apply."),

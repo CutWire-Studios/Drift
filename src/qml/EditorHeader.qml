@@ -46,25 +46,24 @@ Rectangle {
         unsavedDialog.openDialog()
     }
 
+    // New / Open / Recent / Close all delegate to the window: it's the one place
+    // that owns the confirm-if-dirty gate for these together with the start
+    // screen's show/hide bookkeeping, so Ctrl+N/Ctrl+O, this header's Projects
+    // menu, and the start screen's own tiles can't drift out of sync.
     function openProject() {
-        root.confirmIfDirty(function () {
-            var url = FileDialogs.openFile(qsTr("Open Project"), root.projectFilter,
-                                           root.projectMimeTypes)
-            if (url != "")
-                EditorState.loadProject(url)
-        })
+        root.Window.window.requestOpenProjectDialog()
     }
 
     function requestNewProject() {
-        root.confirmIfDirty(function () {
-            EditorState.newProject()
-        })
+        root.Window.window.requestNewProject()
     }
 
     function openRecent(path) {
-        root.confirmIfDirty(function () {
-            EditorState.openRecentProject(path)
-        })
+        root.Window.window.requestOpenRecentProject(path)
+    }
+
+    function closeProject() {
+        root.Window.window.requestCloseProject()
     }
 
     // Returns true when the project is clean after the attempt. False if the
@@ -109,7 +108,13 @@ Rectangle {
 
     // Inverse of saveProjectJson. Confirms unsaved work like Open, because it replaces the
     // timeline. The JSON does not become the current project path.
+    //
+    // loadProjectJson() itself rejects a second call while another load is still in
+    // flight (see AppController::beginProjectLoad), so this check only saves the user a
+    // trip through the file dialog for a request the backend would refuse anyway.
     function openProjectJson() {
+        if (root.Window.window.rejectIfProjectOpenPending())
+            return
         root.confirmIfDirty(function () {
             var url = FileDialogs.openFile(qsTr("Open Project JSON"),
                                            [qsTr("JSON document (*.json)")],
@@ -199,7 +204,7 @@ Rectangle {
     }
 
     function exportVideo() {
-        exportDialog.openDialog()
+        exportDialogLoader.ensure().openDialog()
     }
 
     // True once the user has dismissed the progress dialog while an export is
@@ -212,7 +217,7 @@ Rectangle {
         function onExportInProgressChanged() {
             if (EditorState.exportInProgress) {
                 root.exportProgressDismissed = false
-                exportProgressDialog.openDialog()
+                exportProgressDialogLoader.ensure().openDialog()
             }
         }
         function onSaveRequested() { root.saveProject() }
@@ -221,33 +226,41 @@ Rectangle {
         function onNewProjectRequested() { root.requestNewProject() }
     }
 
-    ExportDialog {
-        id: exportDialog
+    LazyLoader {
+        id: exportDialogLoader
+        sourceComponent: Component { ExportDialog { } }
     }
 
-    ExportProgressDialog {
-        id: exportProgressDialog
-        onClosed: if (EditorState.exportInProgress) root.exportProgressDismissed = true
+    LazyLoader {
+        id: exportProgressDialogLoader
+        sourceComponent: Component {
+            ExportProgressDialog {
+                onClosed: if (EditorState.exportInProgress) root.exportProgressDismissed = true
+            }
+        }
     }
 
-    ProjectPropertiesDialog {
-        id: projectPropertiesDialog
+    LazyLoader {
+        id: projectPropertiesDialogLoader
+        sourceComponent: Component { ProjectPropertiesDialog { } }
     }
 
     PackageProgressDialog {
         id: packageProgressDialog
     }
 
-    LanguageChooserDialog {
-        id: languageChooserDialog
+    LazyLoader {
+        id: languageChooserDialogLoader
+        sourceComponent: Component { LanguageChooserDialog { } }
     }
 
     AgentAccessDialog {
         id: agentAccessDialog
     }
 
-    VideoSizeDialog {
-        id: videoSizeDialog
+    LazyLoader {
+        id: videoSizeDialogLoader
+        sourceComponent: Component { VideoSizeDialog { } }
     }
 
     UnsavedChangesDialog {
@@ -300,7 +313,7 @@ Rectangle {
             Rectangle {
                 id: projectsButton
 
-                readonly property bool open: recentPopup.visible
+                readonly property bool open: recentPopupLoader.shown
                 readonly property bool saved: !EditorState.hasUnsavedChanges
 
                 // Cap width so a long name does not shove the right-side actions.
@@ -370,27 +383,34 @@ Rectangle {
                     anchors.fill: parent
                     hoverEnabled: true
                     cursorShape: Qt.PointingHandCursor
-                    onClicked: recentPopup.open()
+                    onClicked: recentPopupLoader.ensure().open()
                 }
 
-                RecentProjectsPopup {
-                    id: recentPopup
-                    y: parent.height + Theme.spacingMd
-                    onOpenFileRequested: root.openProject()
-                    onNewProjectRequested: root.requestNewProject()
-                    onOpenRecentRequested: (path) => root.openRecent(path)
-                    onSaveAsRequested: root.saveProjectAs()
-                    onPackageRequested: root.packageProject()
-                    onSaveJsonRequested: root.saveProjectJson()
-                    onOpenJsonRequested: root.openProjectJson()
-                    // Disabled: external project imports. Uncomment with the open*() functions above.
-                    // onImportPremiereRequested: root.openPremiereProject()
-                    // onImportMogrtRequested: root.openMogrt()
-                    // onImportKdenliveRequested: root.openKdenliveProject()
-                    // onImportResolveRequested: root.openResolveProject()
-                    // onImportEdlRequested: root.openEdlTimeline()
-                    // onImportOtioRequested: root.openOtioTimeline()
-                    onPropertiesRequested: projectPropertiesDialog.openDialog()
+                // Fills the button so the popup still hangs off its bottom edge.
+                LazyLoader {
+                    id: recentPopupLoader
+                    anchors.fill: parent
+                    sourceComponent: Component {
+                        RecentProjectsPopup {
+                            y: parent.height + Theme.spacingMd
+                            onOpenFileRequested: root.openProject()
+                            onNewProjectRequested: root.requestNewProject()
+                            onOpenRecentRequested: (path) => root.openRecent(path)
+                            onCloseProjectRequested: root.closeProject()
+                            onSaveAsRequested: root.saveProjectAs()
+                            onPackageRequested: root.packageProject()
+                            onSaveJsonRequested: root.saveProjectJson()
+                            onOpenJsonRequested: root.openProjectJson()
+                            // Disabled: external project imports. Uncomment with the open*() functions above.
+                            // onImportPremiereRequested: root.openPremiereProject()
+                            // onImportMogrtRequested: root.openMogrt()
+                            // onImportKdenliveRequested: root.openKdenliveProject()
+                            // onImportResolveRequested: root.openResolveProject()
+                            // onImportEdlRequested: root.openEdlTimeline()
+                            // onImportOtioRequested: root.openOtioTimeline()
+                            onPropertiesRequested: projectPropertiesDialogLoader.ensure().openDialog()
+                        }
+                    }
                 }
             }
 
@@ -411,10 +431,10 @@ Rectangle {
                 glyph: Theme.icons.ratio
                 variant: "ghost"
                 text: qsTr("Video")
-                active: videoSizeDialog.visible || EditorState.canvasCropMode
+                active: videoSizeDialogLoader.shown || EditorState.canvasCropMode
                 tooltip: qsTr("Video size and layout")
                 anchors.verticalCenter: parent.verticalCenter
-                onClicked: videoSizeDialog.openDialog()
+                onClicked: videoSizeDialogLoader.ensure().openDialog()
             }
         }
 
@@ -573,7 +593,7 @@ Rectangle {
                     ThemedMenuItem {
                         text: qsTr("Language…")
                         icon.name: Theme.icons.languages
-                        onTriggered: languageChooserDialog.openFromHeader()
+                        onTriggered: languageChooserDialogLoader.ensure().openFromHeader()
                     }
 
                     ThemedMenuSeparator { }
@@ -766,7 +786,7 @@ Rectangle {
                     cursorShape: Qt.PointingHandCursor
                     onClicked: {
                         root.exportProgressDismissed = false
-                        exportProgressDialog.openDialog()
+                        exportProgressDialogLoader.ensure().openDialog()
                     }
                 }
             }

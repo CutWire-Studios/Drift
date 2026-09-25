@@ -105,16 +105,20 @@ QList<Adapter> hardwareAdapters()
     return adapters;
 }
 
-int adapterIndexForGlVendor(const QString &glVendor)
+int adapterIndexForVendorId(quint16 vendorId)
 {
-    const quint16 wanted = vendorIdForGlVendor(glVendor);
-    if (wanted == 0)
+    if (vendorId == 0)
         return -1;
     for (const Adapter &adapter : hardwareAdapters()) {
-        if (adapter.vendorId == wanted || (wanted == 0x1002 && adapter.vendorId == 0x1022))
+        if (adapter.vendorId == vendorId || (vendorId == 0x1002 && adapter.vendorId == 0x1022))
             return adapter.index;
     }
     return -1;
+}
+
+int adapterIndexForGlVendor(const QString &glVendor)
+{
+    return adapterIndexForVendorId(vendorIdForGlVendor(glVendor));
 }
 
 QString preferenceId(Preference preference)

@@ -19,10 +19,15 @@ qt_add_executable(tst_editorstate
     ../src/MulticamImageProvider.cpp
     ../src/models/AppController.cpp
     ../src/models/AddonManager.cpp
+    ../src/models/JobRegistry.cpp
+    ../src/models/CloudProviders.cpp
     ../src/models/AssetLibrary.cpp
     ../src/models/BinFolderListModel.cpp
-    ../src/models/TimelineModel.cpp
-    ../src/models/ClipListModel.cpp
+    ../src/models/TimelineClipsModel.cpp
+    ../src/timeline/TimelineLayout.cpp
+    ../src/timeline/TimelineTrackItem.cpp
+    ../src/timeline/TimelineViewState.cpp
+    ../src/timeline/ClipThumbnailStore.cpp
     ../src/playback/PlaybackEngine.cpp
     ../src/playback/PlaybackClock.cpp
     ../src/playback/AudioOutputChannel.cpp
@@ -49,6 +54,9 @@ target_link_libraries(tst_editorstate PRIVATE Qt6::Test Qt6::Gui Qt6::Quick Qt6:
 target_compile_definitions(tst_editorstate PRIVATE
     DRIFT_TEST_DENOISE_MODEL_DIR="${CMAKE_SOURCE_DIR}/models/deepfilternet3"
     DRIFT_VERSION="${PROJECT_VERSION}")
+if(DRIFT_WITH_SKIA)
+    target_compile_definitions(tst_editorstate PRIVATE DRIFT_WITH_SKIA)
+endif()
 add_test(NAME EditorState COMMAND tst_editorstate)
 drift_copy_effects(tst_editorstate)
 drift_copy_audio_effects(tst_editorstate)
@@ -130,6 +138,8 @@ target_compile_definitions(tst_engine PRIVATE
     # Not committed (models/ is gitignored). The denoise tests skip when it is absent so a
     # checkout without the model still passes.
     DRIFT_TEST_DENOISE_MODEL_DIR="${CMAKE_SOURCE_DIR}/models/deepfilternet3"
+    # Staged by drift-addons/recipes/fetch-*.py; the model tests skip when absent.
+    DRIFT_TEST_VAD_MODEL_DIR="${CMAKE_SOURCE_DIR}/../drift-addons/staging/silero-vad/models/silero-vad"
 )
 if(DRIFT_WITH_SKIA)
     target_compile_definitions(tst_engine PRIVATE DRIFT_WITH_SKIA)
@@ -166,10 +176,11 @@ qt_add_executable(tst_mcp
     ../src/MulticamImageStore.cpp
     ../src/models/AppController.cpp
     ../src/models/AddonManager.cpp
+    ../src/models/JobRegistry.cpp
+    ../src/models/CloudProviders.cpp
     ../src/models/AssetLibrary.cpp
     ../src/models/BinFolderListModel.cpp
-    ../src/models/TimelineModel.cpp
-    ../src/models/ClipListModel.cpp
+    ../src/models/TimelineClipsModel.cpp
     ../src/playback/PlaybackEngine.cpp
     ../src/playback/PlaybackClock.cpp
     ../src/playback/AudioOutputChannel.cpp

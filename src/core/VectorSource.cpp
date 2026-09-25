@@ -452,34 +452,45 @@ QString vectorSourceHash(const QByteArray &data)
     return QString::fromLatin1(QCryptographicHash::hash(data, QCryptographicHash::Sha256).toHex());
 }
 
-bool foldVectorTime(TimeUs animUs, TimeUs durationUs, VectorLoop loop, TimeUs *out)
+bool foldVectorTime(TimeUs animUs, TimeUs durationUs, VectorLoop loop, TimeUs *out, TimeUs frameUs)
 {
     if (durationUs <= 0) {
         *out = 0;
         return true;
     }
+    // A Lottie layer is live over [ip, op) — the out point is one past the last frame that draws
+    // anything. Seeking exactly to the duration therefore lands on the comp's post-roll, which is
+    // usually blank, so "hold the last frame" held nothing. Stop a frame short of the end instead.
+    const TimeUs lastDrawn =
+        frameUs > 0 ? qMax(TimeUs{0}, durationUs - frameUs) : durationUs;
     switch (loop) {
     case VectorLoop::Hold:
-        *out = qBound(TimeUs{0}, animUs, durationUs);
+        *out = qBound(TimeUs{0}, animUs, lastDrawn);
         return true;
     case VectorLoop::Loop: {
         // C++ % keeps the sign of the dividend; a negative offset must still land inside the cycle.
-        const TimeUs t = animUs % durationUs;
-        *out = t < 0 ? t + durationUs : t;
+        TimeUs t = animUs % durationUs;
+        if (t < 0)
+            t += durationUs;
+        // The cycle is still the full duration; only the seek is pulled back off the out point, so
+        // the last sliver of the loop shows the final frame rather than blanking.
+        *out = qMin(t, lastDrawn);
         return true;
     }
     case VectorLoop::PingPong: {
+        // The turn stays on the document's own duration so the bounce keeps its timing; only the
+        // seek at the apex is pulled back off the out point.
         const TimeUs period = 2 * durationUs;
         TimeUs t = animUs % period;
         if (t < 0)
             t += period;
-        *out = t > durationUs ? period - t : t;
+        *out = qMin(t > durationUs ? period - t : t, lastDrawn);
         return true;
     }
     case VectorLoop::Hide:
         if (animUs < 0 || animUs > durationUs)
             return false;
-        *out = animUs;
+        *out = qMin(animUs, lastDrawn);
         return true;
     }
     *out = 0;

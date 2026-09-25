@@ -1,6 +1,6 @@
 # Agent access (Drift MCP)
 
-Drift can expose a localhost MCP server so Cursor, Claude Code, or other agents can edit the open project. Enable it in **Settings → Agent access** (off at every launch).
+Drift can expose a localhost MCP server so Cursor, Claude Code, or other agents can edit the open project. Enable it in **Settings → Agent access** (off at every launch by default; a "Start agent on startup" switch there opts into starting it automatically instead, and resets itself the next time access is turned off).
 
 ## Connect
 
@@ -100,16 +100,17 @@ Pinned endpoints (`/mcp/timeline`, `/mcp/project`, …) list that toolbox’s op
 |-------|------|
 | Time | Seconds |
 | Clip reference | Prefer `clip` UUID from `inspect`; else `track` (0 = top) + `index`. One or the other is **required** — clip ops never fall back to the selection. Read the current selection from `inspect.selection` |
-| Selection ops | `separate_audio`, `unlink_audio`, `merge_clips`, `align_clip_left/right`, `copy_selection`, `cut_selection` take no clip argument — call `select_clip` first. `freeze_frame` and `paste_at_playhead` are playhead-based (seek first); they do not use the selection |
+| Selection ops | `separate_audio`, `unlink_audio`, `merge_clips`, `align_clip_left/right`, `copy_selection`, `cut_selection` take no clip argument — call `select_clip` first. `merge_clips` joins two abutting cuts of the same media, or two or more subtitle clips on one track (`select_clips`; gaps allowed, the earliest clip's style and transform win); `merge_clips({track})` merges every subtitle clip on that track without a selection. `freeze_frame` and `paste_at_playhead` are playhead-based (seek first); they do not use the selection |
 | Discovery | Effect stack indices, transition ids, and bookmark indices exist **only** in `inspect({clips:true, detail:true})`. Subtitle cues: `inspect({clips:true, cues:true})` or the `subtitleCues` field of a detail row. Mask/fade/speed/volume/keyframes/`hasFaceTrack`/stabilize* are on the same detail rows. **Detail rows omit what does not apply**: caption styling only on text/subtitle clips, shape styling only on shapes, `vector` (document metadata, slot overrides — never the document text) only on Lottie/SVG clips, `mask` only when one is set, `keyframes` only for animated properties (listed in `animated`), stabilize/animation blocks only when in use, fade fields only when a fade is set, empty arrays, false booleans and other defaults dropped (absent = default: no fade, `speed` 1, `volume` 1, unlinked). Every row carries `transform:{x,y,w,h,rotation,opacity}` at the playhead. `verbose:true` returns the raw untrimmed map |
 | Numbers | Every number in a reply is rounded to 3 decimals, except `fps` and speed-curve `pos` which keep 6 |
 | Validation | Toolbox op args are checked against the op's schema before it runs (the homepage tools `inspect`, `capture`, `frames`, `activity` are not): a missing required key → `bad_args` naming it; a wrong JSON type → `type_mismatch` (numeric strings like `"1"` are still accepted); an enum or declared min/max violation → `bad_args` listing the allowed values or range. Unknown keys are not errors; they come back as `ignored:[…]` on success. A clip-ref op with neither `clip` nor `track`+`index` gets `bad_args` saying so; a stale uuid gets `not_found` with a hint to re-read `inspect` |
 | Effects | `list_effects` / `list_audio_effects` / `list_transitions` are compact by default (`cats:{<cat>:[{id,label}]}`); pass `id`, `cat`, or `q` to get parameters. Ids are accepted with `.` or `_` interchangeably; an unknown id returns `not_found` with the closest matches. Effect stacks live on an **adjustment clip linked to the target**, created on its own lane the first time; `add_effect`/`add_audio_effect` report it as `host:{track,index,clip}`. Keep addressing the original clip in every effect op, and expect that extra lane in `inspect` |
 | Images | `capture`, `frames`, and `get_waveform({image:true})` return a text block (JSON meta) followed by an image block. Times are always in the text block; never rely on burned-in labels alone. Sheets fit one vision image (≤1456 px long edge) |
 | Overlap | Off by default — place/move snap to gaps unless `set_overlap` enables overlap; the reply reports `requested` vs `placed`. With overlap off, moving several clips toward zero must be sequenced **back-to-front**. `set_ripple` / `close_gap` close holes after a delete |
+| Composites | `make_composite` (selection-based) moves the selected clips into a nested timeline and leaves one `composite` clip plus a bin item. `open_composite({clip})` / `({sequence})` makes that timeline the one every op edits; `open_composite({main:true})` returns. Adding content past a composite's end never lengthens placed instances; their trim limit follows the content. One level only: no composites inside composites. `flatten_composite` renders the clip to a video file (async, poll `export_status`) and swaps it in. `export_video` always renders the main timeline |
 | Export | `export_video` is async — poll `inspect().export` or `export_status`. The output path is normalised, so use the `path` echoed back. Named sizes: `list_export_presets` + `export_with_preset` |
 | Atomicity | `apply` is **not** atomic: on failure the ops before it stay applied. The failure reply is `{ok:false, error:"apply_failed", stopped:<index>, tool, failed:<that op's error>, done:[results of the ops that ran]}` — `done` never contains the failed op. An ops array cannot reference an id produced earlier in the same batch — end the batch after `set_speed_curve` |
-| Undo | One batch = one undo step. Linear history (no branches): `list_history({limit})` returns the newest `limit` (default 20) versions as `{index, label, short}` plus the HEAD `hash`/`short` and `total` (index 0 = Origin). `undo_to({index})` or `undo_to({hash})` jumps (a ≥8-char prefix such as `short` works); the next edit drops redo. `take_snapshot` writes compact project JSON named `<hash>.json` (file SHA-256 = history hash). Ops outside the stack (and all read-only ops): `import_media`, `import_media_bytes`, `seek`, `play`, `pause`, `undo`, `redo`, `undo_to`, `take_snapshot`, `restore_snapshot`, `set_overlap`, `set_ripple`, `set_snap`, `set_guides`, `set_loop_work_area`, `export_video`, `save_project`, `set_theme`, `set_shortcut`, `reset_shortcuts`, `set_beat_layers`, `detect_beats`, `list_speed_curve`, `list_fade_curve`, `install_addon`, `cancel_addon_install`, `set_acceleration`, `switch_angle`, `end_multicam`, `market_download`, `market_cancel_download`, and the preset-store ops `rename/delete/export/import_user_text_preset`, `rename/delete/export_text_animation_preset`. **`set_beat_layers` changes the user's own snapping and cannot be undone** |
+| Undo | One batch = one undo step. Linear history (no branches): `list_history({limit})` returns the newest `limit` (default 20) versions as `{index, label, short}` plus the HEAD `hash`/`short` and `total` (index 0 = Origin). `undo_to({index})` or `undo_to({hash})` jumps (a ≥8-char prefix such as `short` works); the next edit drops redo. `take_snapshot` writes compact project JSON named `<hash>.json` (file SHA-256 = history hash). Ops outside the stack (and all read-only ops): `import_media`, `import_media_bytes`, `seek`, `play`, `pause`, `undo`, `redo`, `undo_to`, `take_snapshot`, `restore_snapshot`, `set_overlap`, `set_ripple`, `set_snap`, `set_loop_work_area`, `export_video`, `save_project`, `set_theme`, `set_shortcut`, `reset_shortcuts`, `set_beat_layers`, `detect_beats`, `list_speed_curve`, `list_fade_curve`, `install_addon`, `cancel_addon_install`, `set_acceleration`, `switch_angle`, `end_multicam`, `market_download`, `market_cancel_download`, and the preset-store ops `rename/delete/export/import_user_text_preset`, `rename/delete/export_text_animation_preset`. **`set_beat_layers` changes the user's own snapping and cannot be undone** |
 | Errors | `{ok:false, error:<code>, detail:<text>}` — `bad_args`, `not_found`, `type_mismatch`, `unknown_op` (the detail suggests the nearest op names and their toolbox), `unknown_toolbox`, `wrong_endpoint`, `wrong_toolbox`, `apply_failed`, `import_failed`, `import_timeout`, `export_busy`, `export_failed`, `export_timeout`, `capture_failed`, `conflict`, `unsupported` (a build without the vector renderer), and from the market toolbox `market_unavailable`, `consent_required`, `market_error`, `download_failed`. `type_mismatch` is also the answer when an op gets the wrong **kind** of clip (a shape to `apply_text_preset`, a title to `set_shape_style`, an image to `set_clip_orientation`) |
 | Change detection | Every `inspect` includes `revision`; pass `since:<revision>` to get `{unchanged:true}` when state is current |
 | Media import | Absolute paths or `file://`, or `import_media_bytes` (base64 — always pass an explicit `path`). **No directory listing.** If the user gave a fuzzy name (`GX010023.mp4` in Downloads), glob/search with **your own filesystem tools**, then pass the hits to `import_media` and confirm `missing:[]` is empty |
@@ -128,6 +129,7 @@ All return `{started:true}` immediately. Every field below except `export` lives
 | `detect_scenes` | `jobs.sceneDetect.{active, progress, status, clip, scenes}` (also present, inactive, while a scan result is loaded) |
 | `run_segmentation`, `segment_clip`, `apply_denoise`, `detect_faces` | No progress field — re-read `inspect({clips:true, detail:true})` and compare |
 | `stabilize_clip` | Per-clip `stabilizing` / `stabilizeProgress` / `stabilizeStatus` on the detail clip row |
+| `transcribe`, `diarize`, `tts_generate`, `sfx_generate`, `estimate_depth` | Return `{job_id}` instead: poll `get_job({id})` until `active` is false, then read `ok` plus `result` or `error`. `cancel_job({id})` stops one. `inspect({detail:true}).jobs.list` keeps recent jobs, finished ones included |
 
 ## Toolbox reference
 
@@ -140,18 +142,21 @@ All return `{started:true}` immediately. Every field below except `export` lives
 | `text` | Title and caption clips, style packs (`list_text_presets`, user presets), fonts, shading layers (fill/stroke/shadow/glow/extrude), gradient presets and shader effects, looks, In/Out/Loop animation presets, Lottie preset import |
 | `shapes` | Builtin shapes, stickers, emoji |
 | `motion` | Lottie animations and SVG drawings as vector clips: add, inspect, swap the document, re-theme through slots or the `svg.*` element overrides |
+| `model3d` | 3D models (glTF binary `.glb`) as model clips: add, inspect, pick the animation, pose and light them — see [3D models](#3d-models) |
 | `subtitles` | Subtitle clips, cues, import/export, Whisper generation |
 | `effects` | Video/audio effects, transitions, templates, effect clipboard |
 | `project` | Open/new/save/package, canvas, background, metadata, export |
-| `keyframes` | Property animation keys and tangents — clip transform, `fx.<i>.<param>`, `mask.<key>`, on text/subtitle clips `text.<key>` (pixelSize, letterSpacing, lineHeight, boxPadding, pathBend) or `text.layer.<id>.<field>` (opacity, offsetX, offsetY, blur, width, spread, trimStart, trimEnd, dashOffset, sketchLength, sketchDeviation, color.r/g/b/a, gradient.angle/offset/scale/center.x/y, gradient.stop.n.pos, effect.<param> for an effect paint's scalar params); the old names outlineWidth, shadowBlur, glowRadius, gradientAngle, color.r… still resolve onto the stroke/shadow/glow/fill layers. On shape clips the same layer fields as `shape.layer.<id>.<field>` (a fresh shape's layers are `fill` and `stroke`) plus `shape.<cornerRadius|points|innerRatio|headSize|thickness|tailX|tailSize>`; on SVG clips `vector.svg.…` (see Motion). `set_keyframe` on a property the clip does not have fails `bad_args` |
+| `keyframes` | Property animation keys and tangents — clip transform, `fx.<i>.<param>`, `mask.<key>`, on text/subtitle clips `text.<key>` (pixelSize, letterSpacing, lineHeight, boxPadding, pathBend) or `text.layer.<id>.<field>` (opacity, offsetX, offsetY, blur, width, spread, trimStart, trimEnd, dashOffset, sketchLength, sketchDeviation, color.r/g/b/a, gradient.angle/offset/scale/center.x/y, gradient.stop.n.pos, effect.<param> for an effect paint's scalar params); the old names outlineWidth, shadowBlur, glowRadius, gradientAngle, color.r… still resolve onto the stroke/shadow/glow/fill layers. On shape clips the same layer fields as `shape.layer.<id>.<field>` (a fresh shape's layers are `fill` and `stroke`) plus `shape.<cornerRadius|points|innerRatio|headSize|thickness|tailX|tailSize>`; on SVG clips `vector.svg.…` (see Motion); on 3D model clips `model3d.<scale\|depth\|rotX\|rotY\|rotZ\|lightYaw\|lightPitch\|lightIntensity\|ambient>` (see 3D models). `set_keyframe` on a property the clip does not have fails `bad_args` |
 | `speed` | Speed ramps; reading custom fade curves (write them with `set_fade_curve` in `canvas`) |
 | `segmentation` | SAM-style cutout (session or one-shot) |
-| `ai` | Denoise, face detection, auto-reframe, add-on install |
+| `ai` | Denoise, face detection, auto-reframe, depth estimation for the depth effects (`estimate_depth`, `sample_depth`, `clear_depth`) — see [Depth effects](#depth-effects), add-on install |
 | `audio` | Waveforms, silence, loudness, ducking, beat detection, beat-synced cuts, clip volume |
 | `scene` | Shot detection, what is in each shot, scene-synced cuts |
 | `ui` | Theme, shortcuts, editor preferences, guides |
 | `multicam` | Multi-camera session: set up, switch at the playhead, save |
 | `market` | Stock media from the Cutwire marketplace: status/consent, search, resolve a link, download into the bin |
+| `transcript` | Word-level transcripts stored on each asset, reading them (`get_transcript`), cutting by words (`cut_words`) or source ranges (`keep_ranges`), building a sequence from an edit list (`assemble`), speaker labels (`diarize`) — see [Editing speech](#editing-speech) |
+| `voice` | ElevenLabs / Fish Audio voiceover (`tts_generate`), ElevenLabs sound effects (`sfx_generate`), `list_voices`, `cloud_provider_status` — see [Cloud voices](#cloud-voices) |
 
 ### Working to the music
 
@@ -214,12 +219,82 @@ something happen” to “what is it”:
    timeline end.
 
 For audio, **`get_waveform({image:true, …})`** returns a PNG with a mixed-peaks lane, a
-speech-band lane, silent stretches shaded, onset ticks when `detect_beats` is current, an
+speech-band lane, silent stretches shaded, onset ticks when `detect_beats` is current, a lane
+of the transcript's words when the media is transcribed (indices in the reply's `words`), an
 optional `spectrogram:true` lane, and a time axis — together with a `summary_buckets` (50)
 numeric summary and the `silence` ranges it found. In `clip` mode the image form is
 timeline-space (through the clip's volume and fades), unlike the numeric clip form.
 
 Typical recipe: `activity()` → `frames({at: peaks})` or `frames()` → edit → `capture({at})`.
+
+### Editing speech
+
+The cheapest way for an agent to understand talking footage is to read it, not watch it. Transcribe
+each source once, read the words with their times, cut between words, and look at pictures only
+at the cuts.
+
+1. **`transcribe({clip})`** (or `{asset}`, or `{clips:[…]}`) transcribes the **whole source file**
+   behind the clip and stores the result on the asset, in source time. It survives every later
+   trim, split, reorder and undo, and is saved with the project; calling it again returns
+   `cached` unless `force:true`. Async — poll `get_job`.
+
+   | `engine` | What you get | Needs |
+   |---|---|---|
+   | `local` (default) | Whisper words, each placed by a CTC forced aligner (real word start/end), Silero VAD keeping Whisper off silence, speaker labels with `diarize:true` | `whisper-model`; `align-model` for the language (word timings, else interpolated and `aligned:false`); `vad-model` and `diarize-model` optional |
+   | `elevenlabs` | Scribe: verbatim (fillers like "um" kept and tagged), audio events like `(laughter)`, speakers with `diarize:true`, `keyterms` to bias names | The user's key and consent (Settings → Cloud providers). **Billable** |
+
+   Whisper tends to drop fillers, so a local transcript tags only the ones it kept.
+2. **`get_transcript`** reads it three ways:
+   - `{asset}`: the whole take in **source seconds**, which is what `keep_ranges` and `assemble` take.
+   - `{clip}`: only what that clip plays, in **timeline seconds**.
+   - `{start, end}`: everything audible on the timeline in that range.
+
+   The default `view:"phrases"` breaks lines on a pause of at least `break_on_silence` (0.7 s) or
+   a speaker change, and adds a `compact` string, `[12.40-15.10] S1 text` per line, which is the
+   cheapest read of a long take. `view:"words"` lists every word with a stable index `i` into the
+   asset's transcript, plus `type` (filler/event), `speaker`, `conf` and `estimated` (the aligner
+   could not place it). Page through with `offset`/`limit`/`next_offset`.
+3. Cut:
+   - **`cut_words`** removes word runs (`words:[[i,j]]`) or text (`text:"um"`, or `match:"phrase"`
+     for a phrase). `snap:"boundary"` also takes the pause around the removed words, keeping
+     `padding` (0.05 s) of air beside the words that stay. `snap:"silence"` cuts at the quietest
+     point of each gap instead. `dry_run` reports the plan without editing.
+   - **`keep_ranges`** rebuilds one clip from source ranges, in any order: its edit decision list.
+   - **`assemble`** places `[{asset, start, end}]` from several sources back to back (the best take
+     of each beat), appended to a track.
+   - **`remove_silence`** with `method:"vad"` cuts only where nobody speaks; energy thresholds
+     mistake music and room noise for speech.
+
+   All of these:
+   - cut linked video and audio together;
+   - ripple what follows;
+   - give every cut edge a short audio-only de-click ramp (`declick`, 0.03 s; it never fades the
+     picture);
+   - leave one undo step.
+4. Check each cut. `get_waveform({image:true})` draws a lane of the transcript's words under the
+   waveform (the reply's `words` carry their indices), and `frames({at:[…]})` shows the picture on
+   both sides.
+5. **`generate_subtitles`** on transcribed media builds captions straight from the stored words,
+   instantly and on the exact word times, however the clips were cut. On media without a
+   transcript it runs Whisper as before.
+
+`diarize({clip})` labels speakers on its own (and relabels an existing transcript's words). A
+butt cut between two clips' audio can take a real crossfade: `add_transition` works on audio
+tracks. With media past the cut on both sides it is a true crossfade; a side with no media dips
+through silence instead.
+
+### Cloud voices
+
+The `voice` toolbox needs the user's own ElevenLabs or Fish Audio account. Keys live in Settings →
+Cloud providers, or in `ELEVENLABS_API_KEY` / `FISH_API_KEY` for headless runs. Nothing is sent
+until the user also turns on that provider's consent switch.
+
+- **`cloud_provider_status`** says what is ready. Keys are never returned.
+- **`list_voices({provider})`** lists voice ids.
+- **`tts_generate({provider, text, voice})`** and **`sfx_generate({prompt, duration})`** write an
+  MP3 under the app data folder, import it into the bin (the asset records what made it), and
+  with `place` put it on a free audio lane.
+- Every call is billable. `not_configured` and `consent_required` errors say what to ask the user.
 
 ### Understanding the footage
 
@@ -291,6 +366,67 @@ one element from `elements` (ids are case-sensitive; `visible` is 0/1). Everythi
 keyframes as `vector.svg.…` — scalars directly, colours per channel (`vector.svg.logo.fill.r`,
 one `set_keyframe` per channel, 0..1). An `.svg` dropped in the bin (`import_media`) is a vector
 asset and places as a vector clip.
+
+### 3D models
+
+The `model3d` toolbox puts a glTF binary (`.glb` only — a `.gltf` with sidecar files would not
+survive bundling) on a graphic track as a **model clip**. The clip is a full-canvas layer: the
+model is drawn by its own camera into it, so it is never clipped by a box edge, and it takes
+opacity, fades, blend modes, effects, masks and transitions like any other clip. Track order
+alone decides stacking; `depth` is perspective, never z-order.
+
+| Call | Effect |
+|---|---|
+| `import_media({paths})` | Also takes `.glb` files; the asset places with `place_clip` like any other (its duration is the first animation's length, 5 s for a static model) |
+| `add_model3d({path, at, track, duration, animation, loop, offset, scale, depth, rotX, rotY, rotZ, lightYaw, lightPitch, lightIntensity, ambient, name})` | Absolute `.glb` path. Returns `{id, track, index, animations:[{name, durationSec}], vertexCount, warning?, model3d:{…}}` |
+| `inspect_model3d({path \| clip})` | Read-only. `{animations, vertexCount, primitiveCount, materialCount, textureCount, warning}` — `warning` says what the loader skipped (Draco compression, extra material textures, morph targets) |
+| `set_model3d_source({clip, path})` | Swap the file; position, length, pose, lighting and keyframes stay, the animation index clamps to the new file |
+| `set_model3d_options({clip, animation, loop, offset, scale, depth, rotX, rotY, rotZ, lightYaw, lightPitch, lightIntensity, ambient, name})` | Plain (non-keyed) values; only supplied keys change |
+
+Placement and pose: the model sits at the clip's `x`/`y` (top-left of the full-canvas layer, so
+`0,0` is centred; move it with `set_transform x/y` or `x`/`y` keyframes — `w`, `h` and
+`rotation` are ignored for this kind, and `set_transform` still reports the canvas size for
+them). `scale` is the fraction of canvas height the model's largest extent spans; `depth` 0..1
+goes from flat (orthographic) to strong foreshortening without changing the on-screen size.
+`rotX`/`rotY`/`rotZ` are degrees about the **model's own axes** (intrinsic), applied X, then Y,
+then Z, each following the earlier ones: X tilts, Y spins about the model's up axis *as tilted by
+X*, Z rolls about its forward axis after both. So to spin a tilted globe about its own axis, set
+`rotX` for the tilt and keyframe `rotY`; to stand up a model exported on its side, `rotX: -90`
+then turntable it with `rotZ` (its original up). Lighting is one key light
+(`lightYaw`/`lightPitch` degrees, `lightIntensity`) plus `ambient` 0..1. All nine keyframe as
+`model3d.<key>`. Shading is a simple Blinn-Phong on the base colour — normal, roughness and
+occlusion maps are ignored, so a model reads flatter than in a PBR viewer.
+
+An animated file lists its clips in `animations`; `animation` picks one by index, the clip's
+speed/reverse and `offset` remap into it, and `loop` (`loop` default, `hold`, `pingpong`, `hide`)
+decides what happens past its end. Node (rigid) animation and skeletal skinning play; morph
+targets do not (reported in `warning`). `capture` / `frames` render model clips like everything
+else.
+
+### Depth effects
+
+Five effects in the `depth` category read a clip's estimated depth (relative, 0 = farthest thing in
+the clip, 1 = nearest, consistent across the clip) and pass the frame through until it exists:
+
+| Effect | What it does | Handy parameters |
+|---|---|---|
+| `depth.relight` | Up to four 3D point/spot lights that fall on the scene, with shadows | `ambient` (how much of the original light remains), `light<N>_enabled/x/y/z/color/intensity/radius/cone/aimX/aimY` — x/y in 0..1 frame units (may sit off-frame), z −1 (towards camera) … 1 (at the back) |
+| `depth.focus` | Depth of field | `focusDepth`, `focusRange`, `blur` (px at 1080p), `autoFocus` + `focusX/focusY` to track whatever is at a point |
+| `depth.fog` | Haze thickening with distance | `fogColor`, `density`, `start`, `ground` |
+| `depth.view` | Shows the depth itself (greyscale or colour map) | `colorize` |
+| `depth.occlude` | Goes on a layer *above* the clip (text, sticker, 3D model): places it at `depth` inside that clip, so nearer things pass in front | `target` (the clip to sit inside, by id — a string for `set_effect_param`; `""` = the nearest video/image clip beneath), `depth`, `softness`, `cutoutEdges` |
+
+1. `ai_capabilities` — `depth-model` must be installed (`install_addon` otherwise).
+2. `estimate_depth({clip, quality})` → `{job_id}`; poll `get_job` (it is slow: about 0.5 s per
+   frame on CPU at `draft`). Re-estimating unchanged pixels returns the cached map at once.
+3. `add_effect` with one of the ids above on the clip (or, for `depth.occlude`, on the layer above
+   it — and `estimate_depth` the clip it sits inside, not that layer) and tune with `set_effect_param` (`set_effect_color_param` for light colours) or `fx.<i>.<param>` keyframes.
+4. `sample_depth({clip, x, y, time?})` → `{depth}` reads what is at a spot — use it to set
+   `focusDepth` on the subject, or `depth` on `depth.occlude` just behind them.
+
+`inspect({clips:true,detail:true})` reports `hasDepth`. The map is cleared when the clip's pixels
+change (replace source, switch angle, orientation); `clear_depth` removes it by hand. Standalone
+adjustment tracks have no depth of their own, so depth effects there pass through.
 
 ### Text looks and animation
 
@@ -373,10 +509,14 @@ local fake) without rebuilding.
 ## Traps
 
 - **`set_transform` writes at the playhead.** If the property is keyframed, or `autoKey` is on, it creates a keyframe there instead of a constant value. Seek first, or mute the animation with `set_property_keyframes_enabled(false)`.
+- **`export_video` inherits the settings you leave out** from the last export made through MCP (agent exports keep their own memory, separate from the export dialog's). Mode switches are the exception — `audio_only` and `gif` never carry over — but a codec, a bitrate or a scale does. Pass every setting you care about.
+- **Every visual clip is born with a keyframe at its start** on x/y/width/height: the compositor needs an explicit size. So those properties are already animated, and the first `set_transform` adds a *second* key rather than setting a constant — which is why a transform write behaves like an animation. Writes are clamped into the clip's own span.
+- **`auto_reframe` cannot make a crop sharper than the canvas.** The decode is bounded by the canvas, not by the layout rect, so a crop achieved with an oversized transform resolves at canvas resolution at best. The reply's `scale` says how far the source is being pushed; `upscaled:true` means it is past its own resolution.
 - **`set_mask` replaces the whole mask.** Omitted keys revert to defaults and omitting `shape` turns the mask off. Read the current mask from `inspect({clips:true, detail:true}).tracks[].items[].mask` and send it back merged (its `points` come as `[{x,y}]`, which the schema accepts alongside `[[x,y]]`; drop the read-only `animated`/`keyframes`).
 - **`set_subtitle_cues` replaces every cue.** Read `inspect({clips:true, cues:true})` (or a detail row's `subtitleCues`), merge, send.
-- **`set_effect_param`, `set_audio_effect_param`, `set_transition_param` do not validate.** A wrong key or index still returns `ok`. Verify with `inspect({clips:true, detail:true})`.
+- **`set_effect_param`, `set_audio_effect_param` and `set_transition_param` fail `not_found`** on a key the effect does not declare or a stack index that is not there. They used to accept anything and store it silently; a batch that relied on that now stops at the bad op.
 - **`set_speed_curve` returns a new clip id.** The old UUID stops resolving. End the apply batch after it — an ops array cannot reference an id produced earlier in the same batch.
+- **Keyframe property names are not the transform names**: `width`/`height`, not `w`/`h` (`set_transform` uses w/h, `set_keyframe` uses width/height).
 - **`remove_keyframe` deletes the *nearest* key** with no distance limit. Confirm the exact time with `list_keyframes`.
 - **`set_keyframe_interpolation` moves the playhead** to `at`, changing the default time of later ops in the same batch.
 - **`add_track` shifts every track index** — index 0 is the new track.
@@ -387,7 +527,11 @@ local fake) without rebuilding.
 - **`snap_clips_to_beats` may not land on the beat.** With overlap off, a clip is pushed to the next free gap. Read the `to` values back rather than assuming they equal the beat time.
 - **`split_on_beats` keeps your clip id for the *first* piece.** The other pieces are new UUIDs, returned in `clips` in timeline order.
 - **There is no track volume.** `set_volume` is per clip; mute a whole lane with `set_track({muted:true})`.
-- **`generate_subtitles` after `remove_silence`.** Silence removal shifts the timeline; captions generated before it will be wrong.
+- **`generate_subtitles` makes a caption clip with fixed times.** Cut first, caption last. From a transcribed asset it is instant and word-exact.
+- **Word indices belong to the asset, not the clip.** `cut_words({words})` takes indices from `get_transcript` (any view) and they stay valid across cuts; a word the clip no longer plays is skipped.
+- **`transcribe` always covers the whole source file**, however short the clip: an hour-long recording is an hour of transcription (and of Scribe billing).
+- **`keep_ranges` refuses speed-ramped clips** — a ramp is shaped over the clip's own range. Flatten it (`clear_speed_curve`) first.
+- **One caption clip for a cut-up track.** `generate_subtitles({clips:[…]})` or `generate_subtitles({track, start, end})` transcribes several video/audio clips into a single subtitle clip; the sources must not overlap in time. `export_subtitle_file({clip, path, timeline_times:true})` offsets cues by the clip's start so the file matches the exported video.
 - **`apply_denoise` is noise, not reverb.** "Sounds like a bathroom" will not be fixed by denoise.
 - **`activity.content` at coarse steps reads pans as cuts.** Confirm a peak with `frames({at:[…]})` before cutting on it.
 - **`frames({clip})` times are source seconds.** Use `tl` for the timeline position.

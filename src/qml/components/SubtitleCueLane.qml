@@ -10,6 +10,11 @@ Item {
 
     property real pxPerSecond: 50
     property real contentX: 0
+    // The voice waveform covers the viewport plus a chunk either side, parked on a chunk boundary,
+    // rather than the whole media range: at high zoom that range is wider than any texture, and
+    // Canvas silently downscales past GL_MAX_TEXTURE_SIZE. It repaints when a boundary is crossed.
+    readonly property real paintChunk: 256
+    readonly property real paintOriginX: Math.floor(contentX / paintChunk) * paintChunk - paintChunk
     property real contentWidth: 800
     property real labelsWidth: Theme.trackLabelsWidth
 
@@ -21,7 +26,7 @@ Item {
     }
     readonly property bool isSubtitle: !!clip && clip.kind === "subtitle"
     readonly property var cues: {
-        void EditorState.tracks
+        void EditorState.tracksRevision
         return (clip && clip.subtitleCues) ? clip.subtitleCues : []
     }
     readonly property real clipStart: clip ? (clip.start || 0) : 0
@@ -29,28 +34,11 @@ Item {
 
     // Voice waveform is locked to video/audio clips on the timeline — never to the
     // selected subtitle clip's start/duration (resizing subtitles must not stretch it).
+    // Computed in C++: reading EditorState.tracks here made Qt deep-convert every clip map in
+    // the project into JS on every edit, to arrive at two numbers.
     readonly property var mediaWaveformRange: {
-        void EditorState.tracks
-        var start = Number.POSITIVE_INFINITY
-        var end = 0
-        var tracks = EditorState.tracks
-        for (var t = 0; t < tracks.length; t++) {
-            var type = tracks[t].type
-            if (type !== "video" && type !== "audio")
-                continue
-            var clips = tracks[t].clips || []
-            for (var c = 0; c < clips.length; c++) {
-                var s = clips[c].start || 0
-                var d = clips[c].duration || 0
-                if (d <= 0)
-                    continue
-                start = Math.min(start, s)
-                end = Math.max(end, s + d)
-            }
-        }
-        if (!isFinite(start) || end <= start)
-            return { start: 0, duration: 0 }
-        return { start: start, duration: end - start }
+        void EditorState.tracksRevision
+        return EditorState.mediaExtentSeconds()
     }
 
     // The Repeater always renders `displayCues` (a stable snapshot). We refresh it from the
@@ -100,6 +88,17 @@ Item {
         if (index < b.length - 1)
             return b[index + 1].start
         return clipDuration > 0 ? clipDuration : b[index].end + 3600
+    }
+    // One playhead-dependent binding for the whole lane instead of one per cue: during playback
+    // only the lane re-evaluates, and only the two cues whose state flips repaint.
+    readonly property int activeCueIndex: {
+        const cues = displayCues
+        const ph = EditorState.playheadSeconds - clipStart
+        for (let i = 0; i < cues.length; i++) {
+            if (ph >= cues[i].start && ph < cues[i].end)
+                return i
+        }
+        return -1
     }
     function clampVal(v, lo, hi) {
         return Math.max(lo, Math.min(hi, v))
@@ -216,15 +215,21 @@ Item {
                 // scaled from A/V clips only, so subtitle trim/move does not reshape it.
                 Canvas {
                     id: voiceWaveform
-                    x: root.mediaWaveformRange.start * root.pxPerSecond
-                    width: Math.max(2, root.mediaWaveformRange.duration * root.pxPerSecond)
+                    readonly property real rangeX0: root.mediaWaveformRange.start * root.pxPerSecond
+                    readonly property real rangeX1: (root.mediaWaveformRange.start
+                                                     + root.mediaWaveformRange.duration) * root.pxPerSecond
+                    readonly property real windowX0: Math.max(rangeX0, root.paintOriginX)
+                    readonly property real windowX1: Math.min(rangeX1, root.paintOriginX + viewport.width
+                                                                       + 2 * root.paintChunk)
+                    x: windowX0
+                    width: Math.max(2, windowX1 - windowX0)
                     height: parent.height
-                    visible: root.mediaWaveformRange.duration > 0
+                    visible: root.mediaWaveformRange.duration > 0 && windowX1 > windowX0
                     opacity: 0.75
                     z: 1
 
-                    readonly property real waveStart: root.mediaWaveformRange.start
-                    readonly property real waveDuration: root.mediaWaveformRange.duration
+                    readonly property real waveStart: windowX0 / root.pxPerSecond
+                    readonly property real waveDuration: Math.max(0, windowX1 - windowX0) / root.pxPerSecond
                     // One peak bucket per screen pixel (rounded to 64) so zoom keeps
                     // column resolution instead of stretching a fixed 240-peak list.
                     readonly property int peakCount: {
@@ -237,7 +242,7 @@ Item {
                     // lane is hidden too, which meant dropping a long clip paid for the whole
                     // mix with nothing on screen to show for it.
                     property var peaks: {
-                        void EditorState.tracks
+                        void EditorState.tracksRevision
                         void root.waveformRevision
                         return (root.visible && waveDuration > 0)
                             ? EditorState.subtitleWaveformPeaks(waveStart, waveDuration, peakCount)
@@ -305,10 +310,7 @@ Item {
                         required property var modelData
 
                         readonly property bool isSelected: index === EditorState.selectedSubtitleCue
-                        readonly property bool isActive: {
-                            const ph = EditorState.playheadSeconds - root.clipStart
-                            return ph >= modelData.start && ph < modelData.end
-                        }
+                        readonly property bool isActive: index === root.activeCueIndex
                         readonly property real gripW: Math.min(8, Math.max(3, width / 4))
 
                         property bool dragging: false

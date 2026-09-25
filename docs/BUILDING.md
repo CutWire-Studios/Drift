@@ -13,7 +13,7 @@ see is what you get.
 |---|---|
 | CMake | ≥ 3.21 |
 | C++ compiler | C++20 |
-| Qt | 6.5+ (Quick, QuickControls2, Multimedia, Test, Concurrent, Widgets, OpenGL, Network, Svg, LinguistTools) |
+| Qt | 6.10+ (Quick, QuickControls2, Multimedia, Test, Concurrent, Widgets, OpenGL, Network, Svg, LinguistTools) |
 | Qt ImageFormats | runtime only — supplies the `qwebp` / `qtiff` plugins |
 | FFmpeg | 8.x (libavformat, libavcodec, libavutil, libswscale, libswresample, libavfilter) |
 | libzstd | any (addon package decompression) |
@@ -244,7 +244,7 @@ The HMAC key is also not a user secret. It signs requests and derives a stable c
 
 ## Agent access (MCP)
 
-Optional, **off at every launch**. Settings → Agent access starts a localhost MCP server so Cursor or Claude Code can edit the open project (import media, place/trim clips, capture a still of the composition).
+Optional, **off at every launch by default**. Settings → Agent access starts a localhost MCP server so Cursor or Claude Code can edit the open project (import media, place/trim clips, capture a still of the composition). A "Start agent on startup" switch, shown once access is on, opts into starting it automatically instead — turning access off elsewhere resets that switch, so it never survives past an explicit disable.
 
 This is local process control of the editor, not a sandbox. Any process on the machine with the session token can use it. Bind is `127.0.0.1` only; the token rotates each time you enable it.
 
@@ -327,6 +327,51 @@ GitHub release. Before tagging:
 
 Flathub is submitted separately from `flatpak/org.cutwire.Drift.flathub.yml`; pin its `commit:` to
 the tagged commit first.
+
+**After tagging, bump `main` to the next version** (`CMakeLists.txt` and `packaging/arch/PKGBUILD`
+again). Nightly builds label themselves `<project version>-nightly.<stamp>`, so leaving `main` on
+the version that just shipped would name them after a release that is already out.
+
+### Nightly builds
+
+[`.github/workflows/nightly.yml`](../.github/workflows/nightly.yml) runs at 18:30 UTC (midnight in UTC+05:30), skips
+itself when `main` has not moved since the last one, and rewrites a single pre-release tagged
+`nightly` — assets, notes and tag — rather than adding a release per build. Being a pre-release
+keeps it off `releases/latest` and out of the in-app update check. It can also be dispatched
+manually, one platform at a time.
+
+Everything channel-specific comes from two CMake variables, `DRIFT_CHANNEL` (`stable` or
+`nightly`) and `DRIFT_BUILD_ID`:
+
+| | stable | nightly |
+|---|---|---|
+| Version reported by the app | `0.7.0` | `0.7.0-nightly.20260922.ac5601e` |
+| Linux / Flatpak app id | `org.cutwire.Drift` | `org.cutwire.Drift.Nightly` |
+| macOS bundle | `Drift.app`, `org.cutwire.Drift` | `Drift Nightly.app`, `org.cutwire.Drift.Nightly` |
+| Windows | AppId `{1FC80696-…}`, `%ProgramFiles%\Drift` | AppId `{1699D9B5-…}`, `…\Drift Nightly` |
+| Android | `org.cutwire.drift` | `org.cutwire.drift.nightly` |
+| Arch | `drift` | `drift-nightly` (`conflicts=('drift')`) |
+| In-app update check | on | compiled out |
+
+So a nightly installs beside a stable copy everywhere except Arch, where both packages own
+`/usr/bin/drift`. All channels deliberately share `~/.config/CutWire Drift` (and `%APPDATA%\Drift`),
+so a nightly opens your real projects and reuses addons you have already downloaded.
+
+The Arch PKGBUILD and the Flatpak manifest for the nightly channel are *derived* from the stable
+ones at build time by `scripts/make-nightly-pkgbuild.sh` and
+`scripts/make-nightly-flatpak-manifest.py`, so a new dependency or cmake flag only has to be added
+in one place. Both are runnable locally:
+
+```bash
+scripts/make-nightly-pkgbuild.sh 20260922.ac5601e "$(git rev-parse HEAD)"
+scripts/make-nightly-flatpak-manifest.py 20260922.ac5601e
+```
+
+To build the nightly channel by hand, add the two flags to any configure line:
+
+```bash
+cmake -B build -DDRIFT_CHANNEL=nightly -DDRIFT_BUILD_ID=20260922.ac5601e
+```
 
 ### CMake targets
 

@@ -17,9 +17,9 @@
     <!-- Explicit network permissions for HTTPS (update check, addon index). -->
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
-    <!-- The one injected permission worth keeping: QAudioSink (PlaybackEngine, ClipPreviewPlayer)
-         is the app's only QtMultimedia user, and it is the output side of it. -->
+    <!-- QtMultimedia audio output and microphone recording -->
     <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
     <!-- Timeline touch feedback. Haptics.java prefers View.performHapticFeedback, which needs no
          permission at all; this covers the case that route cannot: the one-argument overload does
          nothing and returns false when the system's touch-feedback setting is off, which several

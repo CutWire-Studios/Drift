@@ -111,10 +111,10 @@ Item {
         readonly property bool overridden: root.svgSlots[slotKey] !== undefined
         readonly property string hex: {
             void root.clipDataRevision
-            void EditorState.playheadSeconds
             if (animated) {
+                const t = EditorState.inspectorPlayheadSeconds
                 const ch = c => EditorState.propertyValueAt(EditorState.selectedTrack, EditorState.selectedClip,
-                                                            keyframeKey + "." + c, EditorState.playheadSeconds, 0)
+                                                            keyframeKey + "." + c, t, 0)
                 return Qt.rgba(ch("r"), ch("g"), ch("b"), ch("a")).toString()
             }
             if (overridden)

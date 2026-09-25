@@ -4,9 +4,11 @@
 #   scripts/package-macos.sh
 #   scripts/package-macos.sh --identity "Developer ID Application: ..." --notarize
 #   scripts/package-macos.sh --build-dir build-macos --skip-build
+#   scripts/package-macos.sh --channel nightly --build-id 20260922.ac5601e
 #
-# Signing is ad-hoc unless --identity is given. --notarize submits to Apple and staples the
-# ticket, using either an App Store Connect API key (NOTARY_KEY holding the .p8 path,
+# --channel nightly builds "Drift Nightly.app" with its own bundle id, so it installs beside a
+# stable copy. Signing is ad-hoc unless --identity is given. --notarize submits to Apple and
+# staples the ticket, using either an App Store Connect API key (NOTARY_KEY holding the .p8 path,
 # NOTARY_KEY_ID, NOTARY_ISSUER_ID) or an Apple ID (NOTARY_APPLE_ID, NOTARY_PASSWORD holding an
 # app-specific password, NOTARY_TEAM_ID).
 set -euo pipefail
@@ -18,15 +20,19 @@ IDENTITY=""
 SKIP_BUILD=0
 NOTARIZE=0
 QT_PREFIX=""
+CHANNEL="stable"
+BUILD_ID=""
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --identity)   IDENTITY="$2"; shift 2 ;;
     --build-dir)  BUILD_DIR="$ROOT/$2"; shift 2 ;;
     --qt-prefix)  QT_PREFIX="$2"; shift 2 ;;
+    --channel)    CHANNEL="$2"; shift 2 ;;
+    --build-id)   BUILD_ID="$2"; shift 2 ;;
     --skip-build) SKIP_BUILD=1; shift ;;
     --notarize)   NOTARIZE=1; shift ;;
-    -h|--help)    sed -n '2,10p' "$0"; exit 0 ;;
+    -h|--help)    sed -n '2,13p' "$0"; exit 0 ;;
     *) echo "unknown option: $1" >&2; exit 2 ;;
   esac
 done
@@ -68,7 +74,17 @@ fi
 
 VERSION="$(sed -n 's/^project(Drift VERSION \([0-9.]*\).*/\1/p' "$ROOT/CMakeLists.txt")"
 ARCH="$(uname -m)"
-APP="$BUILD_DIR/Drift.app"
+
+# The bundle name follows the channel because CMake's DRIFT_APP_NAME does: a nightly is
+# "Drift Nightly.app" with bundle id org.cutwire.Drift.Nightly, which is what lets the two sit in
+# /Applications together.
+case "$CHANNEL" in
+  stable)  APP_NAME="Drift" ;;
+  nightly) APP_NAME="Drift Nightly"; VERSION="$VERSION-nightly.${BUILD_ID:-dev}" ;;
+  *) echo "--channel must be stable or nightly, not: $CHANNEL" >&2; exit 2 ;;
+esac
+
+APP="$BUILD_DIR/$APP_NAME.app"
 DMG="$DIST_DIR/Drift-$VERSION-$ARCH.dmg"
 
 if [[ $SKIP_BUILD -eq 0 ]]; then
@@ -76,7 +92,9 @@ if [[ $SKIP_BUILD -eq 0 ]]; then
   cmake -B "$BUILD_DIR" -G Ninja \
     -DCMAKE_BUILD_TYPE=Release \
     -DCMAKE_PREFIX_PATH="$QT_PREFIX;$BREW_PREFIX/opt/openssl@3;$BREW_PREFIX" \
-    -DDRIFT_BUNDLE_ONNXRUNTIME=OFF
+    -DDRIFT_BUNDLE_ONNXRUNTIME=OFF \
+    -DDRIFT_CHANNEL="$CHANNEL" \
+    -DDRIFT_BUILD_ID="$BUILD_ID"
   cmake --build "$BUILD_DIR" --target drift --parallel "$(sysctl -n hw.ncpu)"
 fi
 
@@ -90,7 +108,7 @@ fi
 
 # macdeployqt leaves the build tree's rpaths in place, and dyld searches those before the
 # @loader_path entries in the frameworks, so the host's Qt would win over the bundled one.
-EXE="$APP/Contents/MacOS/Drift"
+EXE="$APP/Contents/MacOS/$APP_NAME"
 rpaths() { otool -l "$EXE" | awk '/LC_RPATH/{f=1} f&&/ path /{print $2; f=0}'; }
 
 while IFS= read -r RPATH; do
@@ -178,11 +196,11 @@ fi
 mkdir -p "$DIST_DIR"
 rm -f "$DMG"
 
-cp -R "$APP" "$STAGING/Drift.app"
+cp -R "$APP" "$STAGING/$APP_NAME.app"
 ln -s /Applications "$STAGING/Applications"
 rm -f "$STAGING/Drift.zip"
 
-hdiutil create -volname "Drift $VERSION" -srcfolder "$STAGING" \
+hdiutil create -volname "$APP_NAME $VERSION" -srcfolder "$STAGING" \
   -ov -format UDZO -quiet "$DMG"
 
 if [[ -n "$IDENTITY" ]]; then

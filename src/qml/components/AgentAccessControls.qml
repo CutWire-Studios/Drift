@@ -2,8 +2,9 @@ import QtQuick
 import QtQuick.Controls.Basic
 import Drift
 
-// Session-only localhost MCP, written for the person connecting an assistant rather than
-// for someone reading a protocol spec.
+// Localhost MCP, written for the person connecting an assistant rather than for someone
+// reading a protocol spec. Access is per session; the key persists so a pasted setup keeps
+// working across launches.
 //
 // One surface, two hosts: AgentAccessDialog (the desktop header button) and the Agent
 // access section of SettingsPane, which is where the phone reaches it. Phase 0 added a
@@ -25,7 +26,7 @@ Column {
         size: "sm"
         wrapMode: Text.WordWrap
         visible: root.showIntro
-        text: qsTr("Let Cursor or Claude edit this project for you — add clips, change the timeline, and check how it looks. Only programs on this device. Starts off each time you open Drift; turn it off when you finish.")
+        text: qsTr("Let Cursor or Claude edit this project for you — add clips, change the timeline, and check how it looks. Only programs on this device. Off by default each time you open Drift, unless you turn on “Start agent on startup” below; turn it off here when you finish. The key stays the same between sessions, so a setup you pasted once keeps working.")
     }
 
     ThemedSwitch {
@@ -33,6 +34,18 @@ Column {
         text: qsTr("Allow for this session")
         tooltip: qsTr("Let an assistant on this device edit this project until you turn it off or quit.")
         onToggled: EditorState.mcpEnabled = checked
+    }
+
+    // Visible whenever there is something to act on: normally that means access is
+    // currently on, but a start-on-launch attempt that failed leaves mcpStartOnLaunch
+    // set and mcpRunning false — the switch has to stay reachable then too, or turning
+    // it back off (to stop the next launch from trying again) has nowhere to happen.
+    ThemedSwitch {
+        visible: EditorState.mcpRunning || EditorState.mcpStartOnLaunch
+        checked: EditorState.mcpStartOnLaunch
+        text: qsTr("Start agent on startup")
+        tooltip: qsTr("Skip the manual toggle next time you open Drift. Turning access off resets this.")
+        onToggled: EditorState.mcpStartOnLaunch = checked
     }
 
     ThemedLabel {
@@ -82,6 +95,17 @@ Column {
             visible: EditorState.mcpUrl.length > 0
             size: "sm"
             text: qsTr("Listening on %1").arg(EditorState.mcpUrl)
+        }
+
+        ThemedButton {
+            variant: "ghost"
+            glyph: Theme.icons.refresh
+            text: qsTr("New key")
+            tooltip: qsTr("Replace the key. Every assistant set up with the old one stops working until you copy the setup again.")
+            onClicked: {
+                EditorState.rotateMcpToken()
+                Toasts.success(qsTr("New key made — copy the setup again"))
+            }
         }
 
         ThemedLabel {

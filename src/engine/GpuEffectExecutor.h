@@ -1,5 +1,6 @@
 #pragma once
 
+#include "DepthSidecar.h"
 #include "EffectCatalog.h"
 #include "FaceLandmarker.h"
 #include "GpuEffectDefinition.h"
@@ -26,6 +27,7 @@ public:
         const EffectPresetEntry *modelDef = nullptr;
         QMap<QString, QVariant> parameters;
         QList<drift::FaceAnchors> faceSlots;
+        std::shared_ptr<const drift::DepthFrame> depth;
     };
 
     // Run a whole effect chain with a single upload and a single readback, keeping

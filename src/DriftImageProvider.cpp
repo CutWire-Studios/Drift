@@ -1,6 +1,7 @@
 #include "DriftImageProvider.h"
 
 #include <QFileInfo>
+#include <QImageReader>
 #include <QUrl>
 #include <QUrlQuery>
 
@@ -39,23 +40,49 @@ QImage DriftImageProvider::requestImage(const QString &id, QSize *size, const QS
         return {};
     }
 
-    QImage image(path);
+    // Decode through QImageReader so a smaller requested size is decoded small (JPEG scales in
+    // the decoder), rather than decoding the full file and scaling the result.
+    QImageReader reader(path);
+    QSize sourceSize = reader.size();
+
+    // Crop out the requested filmstrip frame before any rescale, so the returned image is a
+    // single frame at its native resolution.
+    if (frameCount > 0 && frame >= 0 && sourceSize.width() >= frameCount) {
+        const int frameW = sourceSize.width() / frameCount;
+        const int x = qMin(frame, frameCount - 1) * frameW;
+        reader.setClipRect(QRect(x, 0, frameW, sourceSize.height()));
+        sourceSize = QSize(frameW, sourceSize.height());
+    }
+
+    // Same result as scaling with KeepAspectRatioByExpanding, but only ever downscales. A request
+    // with one side 0 fits the other side and keeps the aspect ratio.
+    if (sourceSize.isValid() && requestedSize.isValid()
+        && (requestedSize.width() > 0 || requestedSize.height() > 0)) {
+        QSize target = requestedSize;
+        if (target.width() <= 0)
+            target.setWidth(qMax(1, qRound(double(sourceSize.width()) * target.height() / sourceSize.height())));
+        else if (target.height() <= 0)
+            target.setHeight(qMax(1, qRound(double(sourceSize.height()) * target.width() / sourceSize.width())));
+        const QSize scaled = sourceSize.scaled(target, Qt::KeepAspectRatioByExpanding);
+        if (scaled.width() < sourceSize.width() && scaled.height() < sourceSize.height())
+            reader.setScaledSize(scaled);
+    }
+
+    QImage image = reader.read();
     if (image.isNull()) {
         if (size)
             *size = QSize();
         return {};
     }
 
-    // Crop out the requested filmstrip frame before any rescale, so the returned image is a
-    // single frame at its native resolution.
-    if (frameCount > 0 && frame >= 0 && image.width() >= frameCount) {
-        const int frameW = image.width() / frameCount;
-        const int x = qMin(frame, frameCount - 1) * frameW;
-        image = image.copy(QRect(x, 0, frameW, image.height()));
-    }
-
-    if (requestedSize.isValid() && requestedSize.width() > 0 && requestedSize.height() > 0) {
-        image = image.scaled(requestedSize, Qt::KeepAspectRatioByExpanding, Qt::SmoothTransformation);
+    // A format that can't report its size up front was read whole; crop and scale it here.
+    if (!sourceSize.isValid()) {
+        if (frameCount > 0 && frame >= 0 && image.width() >= frameCount) {
+            const int frameW = image.width() / frameCount;
+            image = image.copy(QRect(qMin(frame, frameCount - 1) * frameW, 0, frameW, image.height()));
+        }
+        if (requestedSize.width() > 0 && requestedSize.height() > 0)
+            image = image.scaled(requestedSize, Qt::KeepAspectRatioByExpanding, Qt::SmoothTransformation);
     }
 
     // Everything leaves here premultiplied ARGB, whatever it was read as. Two reasons, and the

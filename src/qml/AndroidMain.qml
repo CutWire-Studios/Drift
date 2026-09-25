@@ -384,10 +384,10 @@ ApplicationWindow {
         }
         // debugInfoDialog before settingsDialog: it opens from inside Settings, so it is the
         // one on top whenever both are up.
-        const modals = [debugInfoDialog, settingsDialog, projectPropertiesDialog,
-                        recoveryDialog, unsavedDialog, addonStartupDialog, addonManagerDialog,
-                        missingAddonsDialog, updateDialog, reverseProgressDialog,
-                        subtitleProgressDialog]
+        const modals = [debugInfoDialogLoader.item, settingsDialogLoader.item, projectPropertiesDialog,
+                        recoveryDialog, unsavedDialog, addonStartupDialog, addonManagerDialogLoader.item,
+                        missingAddonsDialogLoader.item, updateDialogLoader.item,
+                        reverseProgressDialogLoader.item, subtitleProgressDialogLoader.item]
         for (var i = 0; i < modals.length; ++i) {
             if (modals[i] && modals[i].visible) {
                 // The recovery prompt is the one modal with no dismissal: close() skips
@@ -399,8 +399,8 @@ ApplicationWindow {
                 // Same reasoning, different cause: these three cancel the job they
                 // are reporting on when they close, and Back is far too easy to
                 // hit for that. The dialog's own Cancel button stays the way out.
-                if (modals[i] === reverseProgressDialog
-                        || modals[i] === subtitleProgressDialog
+                if (modals[i] === reverseProgressDialogLoader.item
+                        || modals[i] === subtitleProgressDialogLoader.item
                         || modals[i] === packageProgressDialog)
                     return true
                 modals[i].close()
@@ -438,9 +438,13 @@ ApplicationWindow {
         return false
     }
 
-    LanguageChooserDialog {
-        id: languageChooserDialog
-        onClosed: window.continueStartupAfterLanguage()
+    LazyLoader {
+        id: languageChooserDialogLoader
+        sourceComponent: Component {
+            LanguageChooserDialog {
+                onClosed: window.continueStartupAfterLanguage()
+            }
+        }
     }
     // The phone view over LayoutPresets. Hosted here rather than in the editor because
     // Settings → Video reaches it through Window.window.openLayoutChooser() too.
@@ -571,45 +575,46 @@ ApplicationWindow {
         onRejected: window._pendingAfterUnsaved = null
     }
 
-    AddonManagerDialog { id: addonManagerDialog }
+    LazyLoader { id: addonManagerDialogLoader; sourceComponent: Component { AddonManagerDialog { } } }
     AddonStartupDialog { id: addonStartupDialog }
-    MissingAddonsDialog { id: missingAddonsDialog }
-    UpdateDialog { id: updateDialog }
-    DebugInfoDialog { id: debugInfoDialog }
+    LazyLoader { id: missingAddonsDialogLoader; sourceComponent: Component { MissingAddonsDialog { } } }
+    LazyLoader { id: updateDialogLoader; sourceComponent: Component { UpdateDialog { } } }
+    // Kept after its first close: it holds the last benchmark result.
+    LazyLoader { id: debugInfoDialogLoader; keepLoaded: true; sourceComponent: Component { DebugInfoDialog { } } }
 
-    SettingsDialog { id: settingsDialog }
-    SubtitleProgressDialog { id: subtitleProgressDialog }
-    ReverseProgressDialog { id: reverseProgressDialog }
+    LazyLoader { id: settingsDialogLoader; sourceComponent: Component { SettingsDialog { } } }
+    LazyLoader { id: subtitleProgressDialogLoader; sourceComponent: Component { SubtitleProgressDialog { } } }
+    LazyLoader { id: reverseProgressDialogLoader; sourceComponent: Component { ReverseProgressDialog { } } }
 
     // Long-running clip tools. These are top-level Windows on desktop; on Android the
     // platform gives each one the whole screen, so they read as full-screen pages that
     // the system Back key dismisses (see the Back shortcut above).
-    SegmentationWindow { id: segmentationWindow }
-    DenoiseWindow { id: denoiseWindow }
-    SpeedCurveWindow { id: speedCurveWindow }
-    FadeCurveWindow { id: fadeCurveWindow }
-    MulticamWindow { id: multicamWindow }
+    LazyLoader { id: segmentationWindowLoader; sourceComponent: Component { SegmentationWindow { } } }
+    LazyLoader { id: denoiseWindowLoader; sourceComponent: Component { DenoiseWindow { } } }
+    LazyLoader { id: speedCurveWindowLoader; sourceComponent: Component { SpeedCurveWindow { } } }
+    LazyLoader { id: fadeCurveWindowLoader; sourceComponent: Component { FadeCurveWindow { } } }
+    LazyLoader { id: multicamWindowLoader; sourceComponent: Component { MulticamWindow { } } }
 
     // Every inspector reaches these through Window.window.<name>() — the same contract
     // Main.qml offers on desktop. A missing one is a runtime TypeError, not a dead button.
     function openSegmentation(track, clip, startSeconds, durationSeconds) {
-        segmentationWindow.openFor(track, clip, startSeconds, durationSeconds)
+        segmentationWindowLoader.ensure().openFor(track, clip, startSeconds, durationSeconds)
     }
 
     function openDenoise(track, clip, durationSeconds) {
-        denoiseWindow.openFor(track, clip, durationSeconds)
+        denoiseWindowLoader.ensure().openFor(track, clip, durationSeconds)
     }
 
     function openSpeedCurve(track, clip) {
-        speedCurveWindow.openFor(track, clip)
+        speedCurveWindowLoader.ensure().openFor(track, clip)
     }
 
     function openFadeCurve(track, clip) {
-        fadeCurveWindow.openFor(track, clip)
+        fadeCurveWindowLoader.ensure().openFor(track, clip)
     }
 
     function openTransitionCurve(track, transitionId) {
-        fadeCurveWindow.openForTransition(track, transitionId)
+        fadeCurveWindowLoader.ensure().openForTransition(track, transitionId)
     }
 
     // Preview-and-edit is its own screen, not one of the Windows above: a secondary Window gets
@@ -633,20 +638,20 @@ ApplicationWindow {
     }
 
     function openMulticam() {
-        multicamWindow.openSession()
+        multicamWindowLoader.ensure().openSession()
     }
 
     // Opened from the overflow menu, which used to switch the asset sheet to a
     // settings tab.
     function openSettings() {
-        settingsDialog.open()
+        settingsDialogLoader.ensure().open()
     }
 
     function openAddonManager(kind) {
         if (kind === undefined)
-            addonManagerDialog.open()
+            addonManagerDialogLoader.ensure().open()
         else
-            addonManagerDialog.openForKind(kind)
+            addonManagerDialogLoader.ensure().openForKind(kind)
     }
 
     function openExtras() {
@@ -656,11 +661,11 @@ ApplicationWindow {
     }
 
     function openUpdateDialog() {
-        updateDialog.open()
+        updateDialogLoader.ensure().open()
     }
 
     function openDebugInfo() {
-        debugInfoDialog.open()
+        debugInfoDialogLoader.ensure().open()
     }
 
     readonly property alias addonAttentionNeeded: addonStartupDialog.needsAttention
@@ -671,22 +676,22 @@ ApplicationWindow {
 
     // True while any of the full-screen clip tools owns the display, so the editor's
     // Back handling defers to them instead of popping the stack behind them.
-    readonly property bool toolWindowOpen: segmentationWindow.visible || denoiseWindow.visible
-                                           || speedCurveWindow.visible || fadeCurveWindow.visible
-                                           || multicamWindow.visible
+    readonly property bool toolWindowOpen: segmentationWindowLoader.shown || denoiseWindowLoader.shown
+                                           || speedCurveWindowLoader.shown || fadeCurveWindowLoader.shown
+                                           || multicamWindowLoader.shown
                                            || window.mediaPreviewPage !== null
 
     function closeTopToolWindow() {
-        if (segmentationWindow.visible)
-            segmentationWindow.close()
-        else if (denoiseWindow.visible)
-            denoiseWindow.close()
-        else if (speedCurveWindow.visible)
-            speedCurveWindow.close()
-        else if (fadeCurveWindow.visible)
-            fadeCurveWindow.close()
-        else if (multicamWindow.visible)
-            multicamWindow.close()
+        if (segmentationWindowLoader.shown)
+            segmentationWindowLoader.item.close()
+        else if (denoiseWindowLoader.shown)
+            denoiseWindowLoader.item.close()
+        else if (speedCurveWindowLoader.shown)
+            speedCurveWindowLoader.item.close()
+        else if (fadeCurveWindowLoader.shown)
+            fadeCurveWindowLoader.item.close()
+        else if (multicamWindowLoader.shown)
+            multicamWindowLoader.item.close()
         else if (window.mediaPreviewPage)
             window.mediaPreviewPage.close()
     }
@@ -699,7 +704,7 @@ ApplicationWindow {
         onTriggered: {
             // Opting in to reopening the last project already restores the autosave, so
             // asking about it as well is a question the user has answered once already.
-            if (EditorState.needsUiLanguagePrompt || languageChooserDialog.visible)
+            if (EditorState.needsUiLanguagePrompt || languageChooserDialogLoader.shown)
                 return
             if (!EditorState.recoveryAvailable || EditorState.reopenLastProject) {
                 stop()
@@ -715,8 +720,11 @@ ApplicationWindow {
 
     Component.onCompleted: {
         Theme.windowWidth = window.width
+        // Independent of the language/recovery/launch-intent branching below — it
+        // neither gates nor is gated by any of it.
+        EditorState.applyMcpStartOnLaunch()
         if (EditorState.needsUiLanguagePrompt) {
-            languageChooserDialog.openChooser()
+            languageChooserDialogLoader.ensure().openChooser()
             return
         }
         window.continueStartupAfterLanguage()
@@ -766,7 +774,7 @@ ApplicationWindow {
     Connections {
         target: EditorState
         function onRecoveryChanged() {
-            if (EditorState.needsUiLanguagePrompt || languageChooserDialog.visible)
+            if (EditorState.needsUiLanguagePrompt || languageChooserDialogLoader.shown)
                 return
             if (EditorState.reopenLastProject)
                 return
@@ -774,13 +782,25 @@ ApplicationWindow {
                 recoveryOpenTimer.start()
         }
         function onOpenSegmentationWindowRequested(track, clip, startSeconds, durationSeconds) {
-            segmentationWindow.openFor(track, clip, startSeconds, durationSeconds, true)
+            segmentationWindowLoader.ensure().openFor(track, clip, startSeconds, durationSeconds, true)
         }
         function onOpenMulticamWindowRequested() {
-            multicamWindow.openSession()
+            multicamWindowLoader.ensure().openSession()
         }
         function onMissingAddons(addons) {
-            missingAddonsDialog.openFor(addons)
+            missingAddonsDialogLoader.ensure().openFor(addons)
+        }
+        // These two dialogs open themselves from the same signals, but only once they exist.
+        function onSubtitleGeneratingChanged() {
+            if (EditorState.subtitleGenerating)
+                subtitleProgressDialogLoader.ensure().open()
+        }
+        function onReverseConfirmRequested(trackIndex, clipIndex, seconds) {
+            const dialog = reverseProgressDialogLoader.ensure()
+            dialog.pendingTrack = trackIndex
+            dialog.pendingClip = clipIndex
+            dialog.pendingSeconds = seconds
+            dialog.open()
         }
         function onExportFinished(success) {
             if (success) {
@@ -872,7 +892,8 @@ ApplicationWindow {
             // The two audition players are separate transports with their own audio sinks and
             // decode timers; pausing only the main one left them playing to nobody.
             EditorState.pauseSpeedCurvePreview()
-            denoiseWindow.stopPlayback()
+            if (denoiseWindowLoader.item)
+                denoiseWindowLoader.item.stopPlayback()
             // Losing the foreground is the last moment guaranteed to run: the OS can reclaim the
             // process from here without another callback, and aboutToQuit does not fire when it does.
             EditorState.flushRecoverySnapshot()

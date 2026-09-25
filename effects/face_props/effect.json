@@ -1,0 +1,149 @@
+{
+  "id": "face_props",
+  "displayName": "Face Props",
+  "category": "props",
+  "order": 800,
+  "backend": "model3d",
+  "requires": "face",
+  "parameters": [
+    {
+      "identifier": "model",
+      "displayName": "Prop",
+      "type": "file",
+      "fileFilters": ["glTF binary (*.glb)", "All files (*)"]
+    },
+    {
+      "identifier": "scale",
+      "displayName": "Scale",
+      "type": "float",
+      "minValue": 0.05,
+      "maxValue": 4.0,
+      "defaultValue": 1.0
+    },
+    {
+      "identifier": "offsetX",
+      "displayName": "Offset X",
+      "type": "float",
+      "minValue": -2.0,
+      "maxValue": 2.0,
+      "defaultValue": 0.0
+    },
+    {
+      "identifier": "offsetY",
+      "displayName": "Offset Y",
+      "type": "float",
+      "minValue": -2.0,
+      "maxValue": 2.0,
+      "defaultValue": 0.0
+    },
+    {
+      "identifier": "offsetZ",
+      "displayName": "Offset Z",
+      "type": "float",
+      "minValue": -2.0,
+      "maxValue": 2.0,
+      "defaultValue": 0.0
+    },
+    {
+      "identifier": "rotX",
+      "displayName": "Rotate X",
+      "type": "float",
+      "minValue": -180.0,
+      "maxValue": 180.0,
+      "defaultValue": 0.0
+    },
+    {
+      "identifier": "rotY",
+      "displayName": "Rotate Y",
+      "type": "float",
+      "minValue": -180.0,
+      "maxValue": 180.0,
+      "defaultValue": 0.0
+    },
+    {
+      "identifier": "rotZ",
+      "displayName": "Rotate Z",
+      "type": "float",
+      "minValue": -180.0,
+      "maxValue": 180.0,
+      "defaultValue": 0.0
+    },
+    {
+      "identifier": "occlusion",
+      "displayName": "Head Occlusion",
+      "type": "bool",
+      "defaultValue": 1
+    },
+    {
+      "identifier": "faceIndex",
+      "displayName": "Face",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 3,
+      "defaultValue": 0
+    },
+    {
+      "identifier": "occlusionSize",
+      "displayName": "Occlusion Size",
+      "type": "float",
+      "minValue": 0.5,
+      "maxValue": 2.0,
+      "defaultValue": 1.0,
+      "group": "Occlusion"
+    },
+    {
+      "identifier": "occlusionOffset",
+      "displayName": "Occlusion Offset",
+      "type": "float",
+      "minValue": -1.0,
+      "maxValue": 1.0,
+      "defaultValue": 0.0,
+      "group": "Occlusion"
+    },
+    {
+      "identifier": "occlusionDepth",
+      "displayName": "Occlusion Depth",
+      "type": "float",
+      "minValue": -1.0,
+      "maxValue": 1.0,
+      "defaultValue": 0.0,
+      "group": "Occlusion"
+    },
+    {
+      "identifier": "lightYaw",
+      "displayName": "Light Yaw",
+      "type": "float",
+      "minValue": -180.0,
+      "maxValue": 180.0,
+      "defaultValue": 30.0,
+      "group": "Lighting"
+    },
+    {
+      "identifier": "lightPitch",
+      "displayName": "Light Pitch",
+      "type": "float",
+      "minValue": -90.0,
+      "maxValue": 90.0,
+      "defaultValue": 20.0,
+      "group": "Lighting"
+    },
+    {
+      "identifier": "lightIntensity",
+      "displayName": "Light Intensity",
+      "type": "float",
+      "minValue": 0.0,
+      "maxValue": 3.0,
+      "defaultValue": 1.0,
+      "group": "Lighting"
+    },
+    {
+      "identifier": "ambient",
+      "displayName": "Ambient",
+      "type": "float",
+      "minValue": 0.0,
+      "maxValue": 1.0,
+      "defaultValue": 0.45,
+      "group": "Lighting"
+    }
+  ]
+}

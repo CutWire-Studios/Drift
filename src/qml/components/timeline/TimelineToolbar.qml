@@ -3,10 +3,10 @@ import QtQuick.Controls.Basic
 import Drift
 import ".."
 
-// Timeline toolbar: transport/edit actions, scene badge, snap/ripple toggles
-// and zoom controls. Zoom and the time readout are read from and written back
-// to the owning TimelinePanel via `panel`. New tracks are added from the
-// plus button above the track headers.
+// Timeline toolbar: transport, user-arranged edit actions with a More menu, timeline
+// switcher (main / composites), snap/ripple toggles, zoom controls and the overview toggle. Zoom and the
+// time readout are read from and written back to the owning TimelinePanel via `panel`.
+// New tracks are added from the plus button above the track headers.
 Item {
     id: toolbar
 
@@ -29,6 +29,165 @@ Item {
         width: parent.width
         height: 1
         color: Theme.panelBorder
+    }
+
+    // Every customisable edit action, keyed by the id stored in the toolbar layout.
+    // `tip` is the longer toolbar tooltip where the menu label alone would be too terse.
+    readonly property var actionMeta: ({
+        "select": { glyph: Theme.icons.mousePointer, label: qsTr("Select"),
+                    tip: qsTr("Select — normal editing"), shortcut: "selectTool" },
+        "cut": { glyph: Theme.icons.scissors, label: qsTr("Cut mode"),
+                 tip: qsTr("Cut mode — click a clip to split it"), shortcut: "bladeTool" },
+        "separateAudio": { glyph: Theme.icons.audioLines, label: qsTr("Show audio on separate track"),
+                           shortcut: "separateAudio" },
+        "unlink": { glyph: Theme.icons.unlink, label: qsTr("Unlink video and audio"),
+                    shortcut: "unlink" },
+        "trimStart": { glyph: Theme.icons.trimStart, label: qsTr("Trim start"),
+                       tip: qsTr("Trim start — click a clip to drop everything left of the cut") },
+        "trimEnd": { glyph: Theme.icons.trimEnd, label: qsTr("Trim end"),
+                     tip: qsTr("Trim end — click a clip to drop everything right of the cut") },
+        "undo": { glyph: Theme.icons.undo, label: qsTr("Undo"), shortcut: "undo" },
+        "redo": { glyph: Theme.icons.redo, label: qsTr("Redo"), shortcut: "redo" },
+        "delete": { glyph: Theme.icons.trash, label: qsTr("Delete clip"), shortcut: "delete" },
+        "copy": { glyph: Theme.icons.copy, label: qsTr("Copy selection"), shortcut: "copy" },
+        "paste": { glyph: Theme.icons.clipboardPaste, label: qsTr("Paste at current time"),
+                   shortcut: "paste" },
+        "duplicate": { glyph: Theme.icons.copyPlus, label: qsTr("Duplicate clip"),
+                       shortcut: "duplicate" },
+        "bookmark": { glyph: Theme.icons.bookmark, label: qsTr("Add/remove bookmark at current time"),
+                      shortcut: "toggleBookmark" },
+        "markIn": { glyph: Theme.icons.setStart, label: qsTr("Mark work area in"), shortcut: "markIn" },
+        "markOut": { glyph: Theme.icons.setEnd, label: qsTr("Mark work area out"), shortcut: "markOut" },
+        "loop": { glyph: Theme.icons.repeat, label: qsTr("Loop work area playback"),
+                  shortcut: "toggleLoop" },
+        "clearWorkArea": { glyph: Theme.icons.x, label: qsTr("Clear work area"),
+                           shortcut: "clearInOut" },
+        "merge": { glyph: Theme.icons.linkTwo, label: qsTr("Merge adjacent clips"), shortcut: "merge" },
+        "freeze": { glyph: Theme.icons.snowflake, label: qsTr("Freeze frame at current time") },
+        "adjustmentLayer": { glyph: Theme.icons.wand, label: qsTr("Add adjustment layer") }
+    })
+
+    readonly property var defaultToolbarItems: [
+        "select", "cut", "separator", "undo", "redo", "delete", "separator",
+        "separateAudio", "unlink"
+    ]
+    readonly property var defaultMenuItems: [
+        "trimStart", "trimEnd", "separator", "copy", "paste", "duplicate", "separator",
+        "bookmark", "markIn", "markOut", "loop", "clearWorkArea", "separator",
+        "merge", "freeze", "adjustmentLayer"
+    ]
+
+    // The stored layout, cleaned: unknown or repeated ids are dropped and any action missing
+    // from both lists (one added in a later version) lands at the end of the menu.
+    readonly property var layout: {
+        const storedToolbar = EditorState.timelineToolbarItems
+        const storedMenu = EditorState.timelineMenuItems
+        if (storedToolbar.length === 0 && storedMenu.length === 0)
+            return { toolbar: defaultToolbarItems, menu: defaultMenuItems }
+        const seen = {}
+        const clean = (list) => list.filter((id) => {
+            if (id === "separator")
+                return true
+            if (!actionMeta[id] || seen[id])
+                return false
+            seen[id] = true
+            return true
+        })
+        const toolbarItems = clean(storedToolbar)
+        const menuItems = clean(storedMenu)
+        for (const id of Object.keys(actionMeta)) {
+            if (!seen[id])
+                menuItems.push(id)
+        }
+        return { toolbar: toolbarItems, menu: menuItems }
+    }
+
+    function actionTooltip(id) {
+        const meta = actionMeta[id]
+        const label = meta.tip || meta.label
+        return meta.shortcut ? withShortcut(label, meta.shortcut) : label
+    }
+
+    function triggerAction(id) {
+        switch (id) {
+        case "select": panel.timelineTool = ""; break
+        case "cut": panel.timelineTool = panel.timelineTool === "split" ? "" : "split"; break
+        case "trimStart": panel.timelineTool = panel.timelineTool === "trimStart" ? "" : "trimStart"; break
+        case "trimEnd": panel.timelineTool = panel.timelineTool === "trimEnd" ? "" : "trimEnd"; break
+        case "separateAudio": EditorState.separateAudioFromSelection(); break
+        case "unlink": EditorState.unlinkSelectedClips(); break
+        case "undo": EditorState.undo(); break
+        case "redo": EditorState.redo(); break
+        case "delete": EditorState.deleteSelectedClip(); break
+        case "copy": EditorState.copySelection(); break
+        case "paste": EditorState.pasteAtPlayhead(); break
+        case "duplicate": EditorState.duplicateSelectedClip(); break
+        case "bookmark": EditorState.toggleBookmarkAtPlayhead(); break
+        case "markIn": EditorState.markWorkAreaIn(); break
+        case "markOut": EditorState.markWorkAreaOut(); break
+        case "loop": EditorState.toggleLoopWorkArea(); break
+        case "clearWorkArea": EditorState.clearWorkArea(); break
+        case "merge": EditorState.mergeSelectedClips(); break
+        case "freeze": EditorState.freezeFrameAtPlayhead(); break
+        case "adjustmentLayer": EditorState.addAdjustmentClip(-1, -1); break
+        }
+    }
+
+    function actionEnabled(id) {
+        switch (id) {
+        case "separateAudio": return EditorState.separateAudioAvailable
+        case "unlink": return EditorState.unlinkAvailable
+        case "undo": return EditorState.undoAvailable
+        case "redo": return EditorState.redoAvailable
+        case "loop": return EditorState.workAreaActive
+        case "clearWorkArea": return EditorState.workAreaInSeconds >= 0
+                                     || EditorState.workAreaOutSeconds >= 0
+        case "merge": return EditorState.mergeAvailable
+        }
+        return true
+    }
+
+    function actionActive(id) {
+        switch (id) {
+        case "select": return panel.timelineTool === ""
+        case "cut": return panel.timelineTool === "split"
+        case "trimStart": return panel.timelineTool === "trimStart"
+        case "trimEnd": return panel.timelineTool === "trimEnd"
+        case "markIn": return EditorState.workAreaInSeconds >= 0
+        case "markOut": return EditorState.workAreaOutSeconds >= 0
+        case "loop": return EditorState.loopWorkAreaEnabled
+        }
+        return false
+    }
+
+    // On the toolbar the A/V pair only appears when it applies to the selection, so a
+    // selection shows one or the other rather than two mostly-disabled buttons.
+    function actionShownOnToolbar(id) {
+        if (id === "separator")
+            return true
+        if (id === "separateAudio")
+            return EditorState.separateAudioAvailable
+        if (id === "unlink")
+            return EditorState.unlinkAvailable
+        return true
+    }
+
+    // A separator only divides something: not at either end, and not next to another one
+    // (which happens when the buttons between them are all contextually hidden).
+    function separatorNeeded(list, i, shown) {
+        var before = false
+        for (var b = i - 1; b >= 0 && list[b] !== "separator"; b--) {
+            if (shown(list[b])) { before = true; break }
+        }
+        if (!before)
+            return false
+        for (var a = i + 1; a < list.length; a++) {
+            if (list[a] === "separator")
+                return false
+            if (shown(list[a]))
+                return true
+        }
+        return false
     }
 
     Row {
@@ -64,238 +223,110 @@ Item {
             anchors.verticalCenter: parent.verticalCenter
         }
 
-        // CapCut-style exclusive tool modes: Select is the default; cut tools
-        // stay sticky until you switch back via Select (or V). Clicking the
-        // active cut tool again also returns to Select.
-        IconButton {
-            glyph: Theme.icons.mousePointer
-            variant: "text"
-            tooltip: toolbar.withShortcut(qsTr("Select — normal editing"), "selectTool")
-            active: toolbar.panel.timelineTool === ""
-            onClicked: toolbar.panel.timelineTool = ""
-        }
-        IconButton {
-            glyph: Theme.icons.scissors
-            variant: "text"
-            tooltip: toolbar.withShortcut(qsTr("Cut mode — click a clip to split it"), "bladeTool")
-            active: toolbar.panel.timelineTool === "split"
-            onClicked: toolbar.panel.timelineTool = toolbar.panel.timelineTool === "split" ? "" : "split"
-        }
+        Repeater {
+            model: toolbar.layout.toolbar
 
-        // A/V actions belong beside the primary clip tools rather than at the end
-        // of the toolbar. On narrower desktop windows the old placement was clipped,
-        // which made an already-implemented feature look as if it did not exist.
-        // Keep only the action that is relevant to the current selection visible:
-        // embedded A/V -> show audio on its own linked lane; linked pair -> Unlink.
-        IconButton {
-            glyph: Theme.icons.audioLines
-            variant: "text"
-            tooltip: toolbar.withShortcut(qsTr("Show audio on separate track"), "separateAudio")
-            visible: EditorState.separateAudioAvailable
-            enabled: EditorState.separateAudioAvailable
-            onClicked: EditorState.separateAudioFromSelection()
-        }
-        IconButton {
-            glyph: Theme.icons.unlink
-            variant: "text"
-            tooltip: toolbar.withShortcut(qsTr("Unlink video and audio"), "unlink")
-            visible: EditorState.unlinkAvailable
-            enabled: EditorState.unlinkAvailable
-            onClicked: EditorState.unlinkSelectedClips()
+            delegate: Item {
+                id: slot
+                required property string modelData
+                required property int index
+                readonly property bool isSeparator: modelData === "separator"
+
+                visible: isSeparator
+                         ? toolbar.separatorNeeded(toolbar.layout.toolbar, index,
+                                                   toolbar.actionShownOnToolbar)
+                         : toolbar.actionShownOnToolbar(modelData)
+                width: isSeparator ? Theme.borderWidth : actionButton.width
+                height: isSeparator ? Theme.spacing3xl : actionButton.height
+                anchors.verticalCenter: parent ? parent.verticalCenter : undefined
+
+                Rectangle {
+                    visible: slot.isSeparator
+                    anchors.fill: parent
+                    color: Theme.panelBorder
+                }
+
+                IconButton {
+                    id: actionButton
+                    visible: !slot.isSeparator
+                    glyph: slot.isSeparator ? "" : toolbar.actionMeta[slot.modelData].glyph
+                    variant: "text"
+                    tooltip: slot.isSeparator ? "" : toolbar.actionTooltip(slot.modelData)
+                    active: toolbar.actionActive(slot.modelData)
+                    enabled: toolbar.actionEnabled(slot.modelData)
+                    onClicked: toolbar.triggerAction(slot.modelData)
+                }
+            }
         }
 
         IconButton {
-            glyph: Theme.icons.trimStart
+            id: overflowButton
+            glyph: Theme.icons.ellipsis
             variant: "text"
-            tooltip: qsTr("Trim start — click a clip to drop everything left of the cut")
-            active: toolbar.panel.timelineTool === "trimStart"
-            onClicked: toolbar.panel.timelineTool = toolbar.panel.timelineTool === "trimStart" ? "" : "trimStart"
-        }
-        IconButton {
-            glyph: Theme.icons.trimEnd
-            variant: "text"
-            tooltip: qsTr("Trim end — click a clip to drop everything right of the cut")
-            active: toolbar.panel.timelineTool === "trimEnd"
-            onClicked: toolbar.panel.timelineTool = toolbar.panel.timelineTool === "trimEnd" ? "" : "trimEnd"
-        }
-        // Undo/redo and the clipboard group come before the situational actions
-        // below. This Row clips, and at the minimum window width there is only room
-        // for roughly the first two thirds of it — so the buttons that must never
-        // vanish have to be the ones nearest the left edge. Everything past the
-        // second separator is also reachable from the overflow menu.
-        IconButton {
-            glyph: Theme.icons.undo
-            variant: "text"
-            tooltip: toolbar.withShortcut(qsTr("Undo"), "undo")
-            onClicked: EditorState.undo()
-            enabled: EditorState.undoAvailable
-        }
-        IconButton {
-            glyph: Theme.icons.redo
-            variant: "text"
-            tooltip: toolbar.withShortcut(qsTr("Redo"), "redo")
-            onClicked: EditorState.redo()
-            enabled: EditorState.redoAvailable
-        }
-        IconButton {
-            glyph: Theme.icons.trash
-            variant: "text"
-            tooltip: toolbar.withShortcut(qsTr("Delete clip"), "delete")
-            onClicked: EditorState.deleteSelectedClip()
-        }
-        IconButton {
-            glyph: Theme.icons.copy
-            variant: "text"
-            tooltip: toolbar.withShortcut(qsTr("Copy selection"), "copy")
-            onClicked: EditorState.copySelection()
-        }
-        IconButton {
-            glyph: Theme.icons.clipboardPaste
-            variant: "text"
-            tooltip: toolbar.withShortcut(qsTr("Paste at current time"), "paste")
-            onClicked: EditorState.pasteAtPlayhead()
-        }
-        IconButton {
-            glyph: Theme.icons.copyPlus
-            variant: "text"
-            tooltip: toolbar.withShortcut(qsTr("Duplicate clip"), "duplicate")
-            onClicked: EditorState.duplicateSelectedClip()
-        }
+            tooltip: qsTr("More edit actions")
+            active: overflowMenu.opened
+            onClicked: overflowMenu.opened ? overflowMenu.close()
+                                           : overflowMenu.popup(0, overflowButton.height)
 
-        Rectangle {
-            width: Theme.borderWidth
-            height: Theme.spacing3xl
-            color: Theme.panelBorder
-            anchors.verticalCenter: parent.verticalCenter
-        }
+            ThemedContextMenu {
+                id: overflowMenu
+                implicitWidth: 260
 
-        IconButton {
-            glyph: Theme.icons.bookmark
-            variant: "text"
-            tooltip: toolbar.withShortcut(qsTr("Add/remove bookmark at current time"),
-                                         "toggleBookmark")
-            onClicked: EditorState.toggleBookmarkAtPlayhead()
-        }
-        IconButton {
-            glyph: Theme.icons.setStart
-            variant: "text"
-            tooltip: toolbar.withShortcut(qsTr("Mark work area in"), "markIn")
-            active: EditorState.workAreaInSeconds >= 0
-            onClicked: EditorState.markWorkAreaIn()
-        }
-        IconButton {
-            glyph: Theme.icons.setEnd
-            variant: "text"
-            tooltip: toolbar.withShortcut(qsTr("Mark work area out"), "markOut")
-            active: EditorState.workAreaOutSeconds >= 0
-            onClicked: EditorState.markWorkAreaOut()
-        }
-        IconButton {
-            glyph: Theme.icons.repeat
-            variant: "text"
-            tooltip: toolbar.withShortcut(qsTr("Loop work area playback"), "toggleLoop")
-            active: EditorState.loopWorkAreaEnabled
-            enabled: EditorState.workAreaActive
-            onClicked: EditorState.toggleLoopWorkArea()
-        }
-        IconButton {
-            glyph: Theme.icons.x
-            variant: "text"
-            tooltip: toolbar.withShortcut(qsTr("Clear work area"), "clearInOut")
-            enabled: EditorState.workAreaInSeconds >= 0 || EditorState.workAreaOutSeconds >= 0
-            onClicked: EditorState.clearWorkArea()
-        }
-        IconButton {
-            glyph: Theme.icons.linkTwo
-            variant: "text"
-            tooltip: toolbar.withShortcut(qsTr("Merge adjacent clips"), "merge")
-            enabled: EditorState.mergeAvailable
-            onClicked: EditorState.mergeSelectedClips()
-        }
-        IconButton {
-            glyph: Theme.icons.snowflake
-            variant: "text"
-            tooltip: qsTr("Freeze frame at current time")
-            onClicked: EditorState.freezeFrameAtPlayhead()
+                // Rebuilt on each open from the current layout. A Menu cannot host a
+                // Repeater, and Instantiator cannot mix items with separators.
+                onAboutToShow: toolbar.rebuildOverflowMenu()
+
+                ThemedMenuSeparator { id: customizeSeparator }
+                ThemedMenuItem {
+                    text: qsTr("Customize toolbar…")
+                    icon.name: Theme.icons.sliders
+                    onTriggered: customizeDialog.open()
+                }
+            }
         }
     }
 
-    // Reachable form of whatever `leftControls` had to clip. Appears only when the
-    // Row actually overflows, so at a normal window width nothing changes.
-    IconButton {
-        id: overflowButton
-        anchors.left: leftControls.left
-        anchors.leftMargin: Math.max(0, leftControls.width - width)
-        anchors.verticalCenter: parent.verticalCenter
-        visible: leftControls.implicitWidth > leftControls.width
-        glyph: Theme.icons.ellipsis
-        variant: "text"
-        tooltip: qsTr("More edit actions")
-        active: overflowMenu.opened
-        onClicked: overflowMenu.opened ? overflowMenu.close()
-                                       : overflowMenu.popup(0, overflowButton.height)
-
-        ThemedContextMenu {
-            id: overflowMenu
-
-            ThemedMenuItem {
-                text: qsTr("Add/remove bookmark at current time")
-                icon.name: Theme.icons.bookmark
-                onTriggered: EditorState.toggleBookmarkAtPlayhead()
-            }
-            ThemedMenuItem {
-                text: toolbar.withShortcut(qsTr("Mark work area in"), "markIn")
-                icon.name: Theme.icons.setStart
-                onTriggered: EditorState.markWorkAreaIn()
-            }
-            ThemedMenuItem {
-                text: toolbar.withShortcut(qsTr("Mark work area out"), "markOut")
-                icon.name: Theme.icons.setEnd
-                onTriggered: EditorState.markWorkAreaOut()
-            }
-            ThemedMenuItem {
-                text: toolbar.withShortcut(qsTr("Loop work area playback"), "toggleLoop")
-                icon.name: Theme.icons.repeat
-                enabled: EditorState.workAreaActive
-                onTriggered: EditorState.toggleLoopWorkArea()
-            }
-            ThemedMenuItem {
-                text: toolbar.withShortcut(qsTr("Clear work area"), "clearInOut")
-                icon.name: Theme.icons.x
-                enabled: EditorState.workAreaInSeconds >= 0 || EditorState.workAreaOutSeconds >= 0
-                onTriggered: EditorState.clearWorkArea()
-            }
-            ThemedMenuSeparator { }
-            ThemedMenuItem {
-                text: qsTr("Show audio on separate track")
-                icon.name: Theme.icons.audioLines
-                enabled: EditorState.separateAudioAvailable
-                onTriggered: EditorState.separateAudioFromSelection()
-            }
-            ThemedMenuItem {
-                text: qsTr("Unlink video and audio")
-                icon.name: Theme.icons.unlink
-                enabled: EditorState.unlinkAvailable
-                onTriggered: EditorState.unlinkSelectedClips()
-            }
-            ThemedMenuItem {
-                text: qsTr("Merge adjacent clips")
-                icon.name: Theme.icons.linkTwo
-                enabled: EditorState.mergeAvailable
-                onTriggered: EditorState.mergeSelectedClips()
-            }
-            ThemedMenuItem {
-                text: qsTr("Freeze frame at current time")
-                icon.name: Theme.icons.snowflake
-                onTriggered: EditorState.freezeFrameAtPlayhead()
-            }
-            ThemedMenuSeparator { }
-            ThemedMenuItem {
-                text: qsTr("Add adjustment layer")
-                icon.name: Theme.icons.wand
-                onTriggered: EditorState.addAdjustmentClip(-1, -1)
-            }
+    Component {
+        id: overflowItemComponent
+        ThemedMenuItem {
+            property string actionId
+            text: toolbar.actionMeta[actionId].shortcut
+                  ? toolbar.withShortcut(toolbar.actionMeta[actionId].label,
+                                         toolbar.actionMeta[actionId].shortcut)
+                  : toolbar.actionMeta[actionId].label
+            icon.name: toolbar.actionMeta[actionId].glyph
+            enabled: toolbar.actionEnabled(actionId)
+            onTriggered: toolbar.triggerAction(actionId)
         }
+    }
+
+    Component {
+        id: overflowSeparatorComponent
+        ThemedMenuSeparator {}
+    }
+
+    function rebuildOverflowMenu() {
+        // Everything before the fixed "Customize" tail is generated.
+        while (overflowMenu.count > 2)
+            overflowMenu.removeItem(overflowMenu.itemAt(0))
+        const list = layout.menu
+        const always = () => true
+        var at = 0
+        for (var i = 0; i < list.length; i++) {
+            if (list[i] === "separator") {
+                if (separatorNeeded(list, i, always))
+                    overflowMenu.insertItem(at++, overflowSeparatorComponent.createObject(null))
+                continue
+            }
+            overflowMenu.insertItem(at++, overflowItemComponent.createObject(null,
+                                                                            { actionId: list[i] }))
+        }
+        customizeSeparator.visible = at > 0
+    }
+
+    TimelineToolbarCustomizeDialog {
+        id: customizeDialog
+        toolbar: toolbar
     }
 
     Rectangle {
@@ -305,7 +336,10 @@ Item {
         // toolbar edges and grow freely. Prefer dead centre, but slide
         // aside to stay clear of them, and drop out entirely once the
         // gap can no longer fit the badge.
-        readonly property real gapStart: leftControls.x + leftControls.width + 12
+        // leftControls is stretched up to rightControls so it can clip, so its buttons
+        // end at implicitWidth, not width.
+        readonly property real gapStart: leftControls.x
+                                         + Math.min(leftControls.implicitWidth, leftControls.width) + 12
         readonly property real gapEnd: rightControls.x - 12
 
         x: Math.max(gapStart, Math.min((toolbar.width - width) / 2, gapEnd - width))
@@ -318,24 +352,104 @@ Item {
         border.width: 1
         border.color: Qt.rgba(Theme.panelForeground.r, Theme.panelForeground.g, Theme.panelForeground.b, 0.1)
 
+        // The active timeline: "Main", or the open composite's name.
+        readonly property string activeName: {
+            const active = EditorState.activeSequenceId
+            if (active === "")
+                return qsTr("Main")
+            const tabs = EditorState.sequenceTabs
+            for (var i = 0; i < tabs.length; i++) {
+                if (tabs[i].id === active)
+                    return tabs[i].name
+            }
+            return qsTr("Composite")
+        }
+
         Row {
             id: sceneRow
             anchors.centerIn: parent
             spacing: 6
 
-            Text {
-                text: qsTr("Scene 1")
-                color: Theme.panelForeground
-                font.family: Theme.fontFamily
-                font.pixelSize: Theme.fontSizeSm
-                anchors.verticalCenter: parent.verticalCenter
-            }
             IconGlyph {
-                glyph: Theme.icons.layers
+                glyph: EditorState.activeSequenceId === "" ? Theme.icons.film : Theme.icons.layers
                 iconSize: 14
                 iconColor: Theme.mutedForeground
                 anchors.verticalCenter: parent.verticalCenter
             }
+            Text {
+                text: sceneBadge.activeName
+                color: Theme.panelForeground
+                font.family: Theme.fontFamily
+                font.pixelSize: Theme.fontSizeSm
+                elide: Text.ElideRight
+                width: Math.min(implicitWidth, 180)
+                anchors.verticalCenter: parent.verticalCenter
+            }
+            IconGlyph {
+                glyph: Theme.icons.chevronDown
+                iconSize: 12
+                iconColor: Theme.mutedForeground
+                anchors.verticalCenter: parent.verticalCenter
+            }
+        }
+
+        MouseArea {
+            id: sceneMouse
+            anchors.fill: parent
+            hoverEnabled: true
+            cursorShape: Qt.PointingHandCursor
+            onClicked: sceneMenu.opened ? sceneMenu.close() : sceneMenu.popup(0, sceneBadge.height + 4)
+        }
+
+        ThemedToolTip {
+            visible: sceneMouse.containsMouse && !sceneMenu.opened
+            text: qsTr("Switch between the main timeline and composite clips")
+        }
+
+        ThemedContextMenu {
+            id: sceneMenu
+            implicitWidth: 240
+
+            // Composites come and go with the project's assets, which have no notify of
+            // their own here, so the list is read fresh on each open.
+            onAboutToShow: toolbar.rebuildSceneMenu()
+        }
+    }
+
+    Component {
+        id: sceneItemComponent
+        ThemedMenuItem {
+            property string sequenceId
+            property string sequenceName
+            text: sequenceName
+            icon.name: EditorState.activeSequenceId === sequenceId
+                       ? Theme.icons.check
+                       : (sequenceId === "" ? Theme.icons.film : Theme.icons.layers)
+            onTriggered: EditorState.openSequence(sequenceId)
+        }
+    }
+
+    Component {
+        id: sceneEmptyComponent
+        ThemedMenuItem {
+            enabled: false
+            text: qsTr("No composite clips yet")
+            icon.name: Theme.icons.info
+        }
+    }
+
+    function rebuildSceneMenu() {
+        while (sceneMenu.count > 0)
+            sceneMenu.removeItem(sceneMenu.itemAt(0))
+        sceneMenu.addItem(sceneItemComponent.createObject(null,
+            { sequenceId: "", sequenceName: qsTr("Main") }))
+        sceneMenu.addItem(overflowSeparatorComponent.createObject(null))
+        const composites = EditorState.compositeSequences()
+        if (composites.length === 0)
+            sceneMenu.addItem(sceneEmptyComponent.createObject(null))
+        for (var i = 0; i < composites.length; i++) {
+            sceneMenu.addItem(sceneItemComponent.createObject(null,
+                { sequenceId: composites[i].id, sequenceName: composites[i].name }))
         }
     }
 
@@ -436,6 +550,29 @@ Item {
             variant: "text"
             tooltip: qsTr("Fit timeline in view")
             onClicked: toolbar.panel.fitZoom()
+        }
+
+        Rectangle {
+            width: Theme.borderWidth
+            height: Theme.spacing3xl
+            color: Theme.panelBorder
+            anchors.verticalCenter: parent.verticalCenter
+        }
+
+        IconButton {
+            glyph: Theme.icons.slidersVertical
+            variant: "text"
+            tooltip: qsTr("Toggle audio mixer strip")
+            active: EditorState.audioMixerVisible
+            onClicked: EditorState.audioMixerVisible = !EditorState.audioMixerVisible
+        }
+
+        IconButton {
+            glyph: Theme.icons.panelTop
+            variant: "text"
+            tooltip: qsTr("Timeline overview — a minimap of the whole project; click or drag it to jump the view")
+            active: EditorState.timelineOverviewVisible
+            onClicked: EditorState.timelineOverviewVisible = !EditorState.timelineOverviewVisible
         }
     }
 }

@@ -14,6 +14,7 @@ Column {
     readonly property var categories: EditorState.audioEffectCategories()
     readonly property var catalog: EditorState.audioEffectCatalog()
     property string activeCategory: categories.length > 0 ? categories[0].id : ""
+    property alias searchText: search.text
     readonly property string query: search.text.trim().toLowerCase()
     property int favoritesTick: 0
 
@@ -107,13 +108,10 @@ Column {
             onCategoryActivated: (categoryId) => root.activeCategory = categoryId
         }
 
-        Flickable {
+        Item {
             width: parent.width
             height: Math.max(0, parent.height - browserTip.height - search.height - Theme.spacingMd
                              - categoryChips.height)
-            contentHeight: Math.max(emptySearchHint.height, presetGrid.height) + 24
-            clip: true
-            ScrollBar.vertical: AppScrollBar { }
 
             Text {
                 id: emptySearchHint
@@ -132,147 +130,160 @@ Column {
                 wrapMode: Text.WordWrap
             }
 
-            Grid {
+            FontMetrics {
+                id: labelMetrics
+                font.family: Theme.fontFamily
+                font.pixelSize: Theme.fontSizeCard
+                font.weight: Font.Medium
+            }
+
+            // One trailing gap wider than the padded area, so the cards pack from the left exactly
+            // as the old Grid did. Rows are a fixed two label lines tall.
+            GridView {
                 id: presetGrid
                 x: 12
-                y: 12
-                width: parent.width - 24
+                width: parent.width - 24 + Theme.assetCardGap
+                height: parent.height
+                topMargin: 12
+                bottomMargin: 12
                 visible: root.visiblePresets.length > 0
-                columns: Math.max(1, Math.floor((width + Theme.assetCardGap) / (Theme.assetCardWidth + Theme.assetCardGap)))
-                columnSpacing: Theme.assetCardGap
-                rowSpacing: Theme.assetCardGap
+                clip: true
+                reuseItems: true
+                boundsBehavior: Flickable.StopAtBounds
+                ScrollBar.vertical: AppScrollBar { }
+                cellWidth: Theme.assetCardWidth + Theme.assetCardGap
+                cellHeight: Theme.assetCardWidth + 4 + Math.ceil(labelMetrics.height) * 2 + Theme.assetCardGap
+                model: root.visiblePresets
 
-                Repeater {
-                    model: root.visiblePresets
-                    delegate: Column {
-                        id: presetCard
-                        required property var modelData
+                delegate: Column {
+                    id: presetCard
+                    required property var modelData
+                    width: Theme.assetCardWidth
+                    spacing: 4
+                    opacity: presetDrag.active ? 0.85 : 1
+                    scale: presetDrag.active ? 1.04 : 1.0
+
+                    Behavior on opacity {
+                        NumberAnimation { duration: Theme.durationFast; easing.type: Theme.easing }
+                    }
+                    Behavior on scale {
+                        NumberAnimation { duration: Theme.durationFast; easing.type: Theme.easing }
+                    }
+
+                    readonly property string thumb: presetCard.modelData.thumbnailPath || ""
+                    readonly property string iconGlyph: presetCard.modelData.icon || "audio-lines"
+
+                    Drag.active: presetDrag.active
+                    Drag.dragType: Drag.Automatic
+                    Drag.supportedActions: Qt.CopyAction
+                    Drag.keys: ["application/x-drift-audio-effect"]
+                    Drag.mimeData: ({ "application/x-drift-audio-effect": presetCard.modelData.id })
+                    Drag.hotSpot.x: width / 2
+                    Drag.hotSpot.y: Theme.assetCardWidth / 2
+
+                    Rectangle {
                         width: Theme.assetCardWidth
-                        spacing: 4
-                        opacity: presetDrag.active ? 0.85 : 1
-                        scale: presetDrag.active ? 1.04 : 1.0
+                        height: Theme.assetCardWidth
+                        radius: Theme.radiusSm
+                        color: cardHover.hovered ? Theme.panelAccent : Theme.panelBackground
+                        border.width: presetDrag.active ? 1 : 0
+                        border.color: Theme.primary
+                        clip: true
+                        scale: cardHover.hovered ? 1.03 : 1.0
 
-                        Behavior on opacity {
-                            NumberAnimation { duration: Theme.durationFast; easing.type: Theme.easing }
+                        Behavior on color {
+                            ColorAnimation { duration: Theme.durationFast; easing.type: Theme.easing }
                         }
                         Behavior on scale {
                             NumberAnimation { duration: Theme.durationFast; easing.type: Theme.easing }
                         }
-
-                        readonly property string thumb: presetCard.modelData.thumbnailPath || ""
-                        readonly property string iconGlyph: presetCard.modelData.icon || "audio-lines"
-
-                        Drag.active: presetDrag.active
-                        Drag.dragType: Drag.Automatic
-                        Drag.supportedActions: Qt.CopyAction
-                        Drag.keys: ["application/x-drift-audio-effect"]
-                        Drag.mimeData: ({ "application/x-drift-audio-effect": presetCard.modelData.id })
-                        Drag.hotSpot.x: width / 2
-                        Drag.hotSpot.y: Theme.assetCardWidth / 2
-
-                        Rectangle {
-                            width: Theme.assetCardWidth
-                            height: Theme.assetCardWidth
-                            radius: Theme.radiusSm
-                            color: cardHover.hovered ? Theme.panelAccent : Theme.panelBackground
-                            border.width: presetDrag.active ? 1 : 0
-                            border.color: Theme.primary
-                            clip: true
-                            scale: cardHover.hovered ? 1.03 : 1.0
-
-                            Behavior on color {
-                                ColorAnimation { duration: Theme.durationFast; easing.type: Theme.easing }
-                            }
-                            Behavior on scale {
-                                NumberAnimation { duration: Theme.durationFast; easing.type: Theme.easing }
-                            }
-                            Behavior on border.width {
-                                NumberAnimation { duration: Theme.durationFast; easing.type: Theme.easing }
-                            }
-
-                            HoverHandler { id: cardHover }
-
-                            Image {
-                                id: presetThumb
-                                anchors.fill: parent
-                                visible: presetCard.thumb.length > 0 && status === Image.Ready
-                                source: presetCard.thumb.length > 0
-                                        ? EditorState.imageUrl(presetCard.thumb) : ""
-                                fillMode: Image.PreserveAspectCrop
-                                asynchronous: true
-                                smooth: true
-                            }
-
-                            IconGlyph {
-                                anchors.centerIn: parent
-                                visible: presetCard.thumb.length === 0
-                                         || presetThumb.status === Image.Error
-                                glyph: presetCard.iconGlyph
-                                iconSize: 28
-                                iconColor: Theme.mutedForeground
-                            }
-
-                            TapHandler {
-                                // Touch taps arrive through TouchLiftArea below, which
-                                // holds the grab this one would need.
-                                enabled: !presetDrag.active && !Theme.touchUi
-                                onTapped: root.applyPreset(presetCard.modelData.id)
-                            }
-
-                            DragHandler {
-                                id: presetDrag
-                                target: null
-                                // Touch lifts through TouchDrag instead: a platform
-                                // drag has no touch gesture and cannot leave the sheet.
-                                enabled: !Theme.touchUi
-                                acceptedButtons: Qt.LeftButton
-                            }
-
-                            // Hold to carry the preset onto a specific clip; tap still
-                            // applies it to the selection.
-                            TouchLiftArea {
-                                dragKind: "audioEffect"
-                                payload: presetCard.modelData.id
-                                label: presetCard.modelData.label
-                                thumbnail: presetCard.thumb
-                                glyph: presetCard.iconGlyph
-                                onLiftTapped: root.applyPreset(presetCard.modelData.id)
-                            }
-
-                            AssetFavoriteButton {
-                                anchors.left: parent.left
-                                anchors.top: parent.top
-                                anchors.margins: 3
-                                tabId: "sounds"
-                                itemId: presetCard.modelData.id
-                            }
-
-                            IconButton {
-                                anchors.right: parent.right
-                                anchors.top: parent.top
-                                anchors.margins: 3
-                                glyph: Theme.icons.plus
-                                variant: "ghost"
-                                buttonSize: 18
-                                iconSize: 12
-                                tooltip: qsTr("Apply to selected clip")
-                                enabled: EditorState.selectedClip >= 0
-                                onClicked: root.applyPreset(presetCard.modelData.id)
-                            }
+                        Behavior on border.width {
+                            NumberAnimation { duration: Theme.durationFast; easing.type: Theme.easing }
                         }
 
-                        Text {
-                            width: parent.width
-                            text: presetCard.modelData.label
-                            color: Theme.panelForeground
-                            font.family: Theme.fontFamily
-                            font.pixelSize: Theme.fontSizeCard
-                            font.weight: Font.Medium
-                            horizontalAlignment: Text.AlignHCenter
-                            elide: Text.ElideRight
-                            maximumLineCount: 2
-                            wrapMode: Text.WordWrap
+                        HoverHandler { id: cardHover }
+
+                        Image {
+                            id: presetThumb
+                            anchors.fill: parent
+                            visible: presetCard.thumb.length > 0 && status === Image.Ready
+                            source: presetCard.thumb.length > 0
+                                    ? EditorState.imageUrl(presetCard.thumb) : ""
+                            fillMode: Image.PreserveAspectCrop
+                            asynchronous: true
+                            sourceSize: Qt.size(Math.ceil(Theme.assetCardWidth * Screen.devicePixelRatio), Math.ceil(Theme.assetCardWidth * Screen.devicePixelRatio))
+                            smooth: true
                         }
+
+                        IconGlyph {
+                            anchors.centerIn: parent
+                            visible: presetCard.thumb.length === 0
+                                     || presetThumb.status === Image.Error
+                            glyph: presetCard.iconGlyph
+                            iconSize: 28
+                            iconColor: Theme.mutedForeground
+                        }
+
+                        TapHandler {
+                            // Touch taps arrive through TouchLiftArea below, which
+                            // holds the grab this one would need.
+                            enabled: !presetDrag.active && !Theme.touchUi
+                            onTapped: root.applyPreset(presetCard.modelData.id)
+                        }
+
+                        DragHandler {
+                            id: presetDrag
+                            target: null
+                            // Touch lifts through TouchDrag instead: a platform
+                            // drag has no touch gesture and cannot leave the sheet.
+                            enabled: !Theme.touchUi
+                            acceptedButtons: Qt.LeftButton
+                        }
+
+                        // Hold to carry the preset onto a specific clip; tap still
+                        // applies it to the selection.
+                        TouchLiftArea {
+                            dragKind: "audioEffect"
+                            payload: presetCard.modelData.id
+                            label: presetCard.modelData.label
+                            thumbnail: presetCard.thumb
+                            glyph: presetCard.iconGlyph
+                            onLiftTapped: root.applyPreset(presetCard.modelData.id)
+                        }
+
+                        AssetFavoriteButton {
+                            anchors.left: parent.left
+                            anchors.top: parent.top
+                            anchors.margins: 3
+                            tabId: "sounds"
+                            itemId: presetCard.modelData.id
+                        }
+
+                        IconButton {
+                            anchors.right: parent.right
+                            anchors.top: parent.top
+                            anchors.margins: 3
+                            glyph: Theme.icons.plus
+                            variant: "ghost"
+                            buttonSize: 18
+                            iconSize: 12
+                            tooltip: qsTr("Apply to selected clip")
+                            enabled: EditorState.selectedClip >= 0
+                            onClicked: root.applyPreset(presetCard.modelData.id)
+                        }
+                    }
+
+                    Text {
+                        width: parent.width
+                        text: presetCard.modelData.label
+                        color: Theme.panelForeground
+                        font.family: Theme.fontFamily
+                        font.pixelSize: Theme.fontSizeCard
+                        font.weight: Font.Medium
+                        horizontalAlignment: Text.AlignHCenter
+                        elide: Text.ElideRight
+                        maximumLineCount: 2
+                        wrapMode: Text.WordWrap
                     }
                 }
             }

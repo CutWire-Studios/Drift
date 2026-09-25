@@ -1,0 +1,27 @@
+{
+  "id": "depth.fog",
+  "displayName": "Depth Fog",
+  "category": "depth",
+  "order": 920,
+  "description": "Haze that thickens with distance, using the clip's estimated depth.",
+  "backend": "gpu",
+  "requires": "depth",
+  "parameters": [
+    {"identifier": "fogColor", "displayName": "Colour", "type": "color", "defaultValue": "#c8d2de"},
+    {"identifier": "density", "displayName": "Density", "type": "float",
+     "minValue": 0, "maxValue": 4, "defaultValue": 1.2},
+    {"identifier": "start", "displayName": "Starts at", "type": "float",
+     "minValue": 0, "maxValue": 1, "defaultValue": 0.25},
+    {"identifier": "ground", "displayName": "Low-lying", "type": "float",
+     "minValue": 0, "maxValue": 1, "defaultValue": 0},
+    {"identifier": "amount", "displayName": "Amount", "type": "float",
+     "minValue": 0, "maxValue": 1, "defaultValue": 0.85}
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {"passIndex": 0, "fragmentShader": "main.frag",
+       "inputs": [{"type": "source_texture"}], "output": {"type": "canvas"}}
+    ]
+  }
+}

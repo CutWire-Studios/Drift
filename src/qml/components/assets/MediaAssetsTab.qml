@@ -1,4 +1,5 @@
 import QtQuick
+import QtQuick.Window
 import QtQuick.Controls.Basic
 import Drift
 import ".."
@@ -59,6 +60,7 @@ Item {
     property bool importing: false
     // Kind visibility filter supplied by the parent (depends on the active tab).
     property var assetVisibleFn: function(kind) { return true }
+    property alias searchText: search.text
     readonly property string query: search.text.trim().toLowerCase()
 
     // Emitted from the card/row context menu — adds the selected asset(s) to the timeline in
@@ -103,6 +105,37 @@ Item {
     // isn't, it replaces the selection with just that card first, matching how the timeline's
     // clip selection already treats a right-click (TimelineClipItem.qml).
     property var selectedAssetIds: []
+
+    // What a badge binding names so it re-reads: the AssetLibrary badge queries are function calls
+    // QML can't track, and proxy "ready" also depends on the proxy size setting.
+    readonly property int _badgeRevision: AssetLibrary.badgeRevision + EditorState.playback.proxySize
+
+    // "none", "queued", "building", "ready", or "" for rows a proxy can't apply to.
+    function proxyStateOf(assetId) {
+        void root._badgeRevision
+        return AssetLibrary.proxyState(assetId)
+    }
+    function editFriendlyOf(assetId) {
+        void root._badgeRevision
+        return AssetLibrary.isEditFriendly(assetId)
+    }
+    // Converted media is constant-rate by construction, so the warning never sits beside the pill.
+    function vfrWarningOf(assetId) {
+        void root._badgeRevision
+        return !AssetLibrary.isEditFriendly(assetId) && AssetLibrary.isVariableFrameRate(assetId)
+    }
+
+    // The selected assets whose proxy state is one of `states`.
+    function selectedWithProxyState(states) {
+        void root._badgeRevision
+        const ids = []
+        for (let i = 0; i < root.selectedAssetIds.length; ++i) {
+            const id = root.selectedAssetIds[i]
+            if (states.indexOf(AssetLibrary.proxyState(id)) >= 0)
+                ids.push(id)
+        }
+        return ids
+    }
 
     function isAssetSelected(assetId) {
         return assetId.length > 0 && root.selectedAssetIds.indexOf(assetId) >= 0
@@ -181,7 +214,8 @@ Item {
     // Shift-click silently fall back to a single-item selection instead of a range. Reassigning
     // only when something actually changed avoids spamming dependents on every unrelated
     // combinedItems recompute.
-    onCombinedItemsChanged: {
+    onCombinedItemsChanged: root.pruneSelection()
+    function pruneSelection() {
         if (root.selectedAssetIds.length === 0 && root.selectionAnchorId.length === 0)
             return
         const present = {}
@@ -473,6 +507,12 @@ Item {
             // flicker that comes with reassigning a GridView's whole model) for what is really a
             // single-image update.
             property string _liveThumbnailPath: thumbnailPath
+            // The Connections below replaces the binding, so a recycled card has to get it back.
+            GridView.onReused: cardRoot._liveThumbnailPath = Qt.binding(() => cardRoot.thumbnailPath)
+            GridView.onPooled: {
+                cardMenu.close()
+                folderMenu.close()
+            }
             Connections {
                 target: AssetLibrary
                 function onAssetMetadataChanged(assetId) {
@@ -570,6 +610,8 @@ Item {
                             ? EditorState.imageUrl(cardRoot._liveThumbnailPath) : ""
                     fillMode: Image.PreserveAspectFit
                     asynchronous: true
+                    sourceSize: Qt.size(Math.ceil(Theme.assetCardWidth * Screen.devicePixelRatio),
+                                         Math.ceil(Theme.assetCardWidth * 9 / 16 * Screen.devicePixelRatio))
                     // Fades in rather than popping at full opacity.
                     opacity: status === Image.Ready ? 1 : 0
 
@@ -588,6 +630,8 @@ Item {
                     glyph: kind === "audio" ? Theme.icons.music
                             : kind === "image" ? Theme.icons.image
                             : kind === "vector" ? Theme.icons.layers
+                            : kind === "model3d" ? Theme.icons.box
+                            : kind === "composite" ? Theme.icons.layers
                             : Theme.icons.film
                     iconSize: Theme.spacing3xl
                     iconColor: Theme.mutedForeground
@@ -627,6 +671,28 @@ Item {
                         size: Theme.spacing3xl
                         progressColor: Theme.onMedia
                     }
+                }
+
+                VfrWarning {
+                    z: 3
+                    anchors.right: parent.right
+                    anchors.top: parent.top
+                    anchors.margins: Theme.spacingSm
+                    visible: !cardRoot.isFolder && kind === "video" && root.vfrWarningOf(cardRoot.assetId)
+                }
+
+                // Proxy build progress along the thumbnail's bottom edge; the pill beside the
+                // name below says which state it is in.
+                ThemedProgressBar {
+                    z: 1
+                    visible: !cardRoot.isFolder && AssetLibrary.proxyBusy
+                             && root._badgeRevision >= 0
+                             && AssetLibrary.proxyState(cardRoot.assetId) === "building"
+                    anchors.left: parent.left
+                    anchors.right: parent.right
+                    anchors.bottom: parent.bottom
+                    barHeight: Theme.spacingXs
+                    value: AssetLibrary.proxyProgress
                 }
 
                 Rectangle {
@@ -700,7 +766,12 @@ Item {
                             root.selectionAnchorId = cardRoot.assetId
                         }
                     }
-                    onDoubleTapped: if (cardRoot.isFolder) EditorState.currentBinFolderId = cardRoot.folderId
+                    onDoubleTapped: {
+                        if (cardRoot.isFolder)
+                            EditorState.currentBinFolderId = cardRoot.folderId
+                        else if (kind === "composite")
+                            EditorState.openCompositeAsset(cardRoot.assetId)
+                    }
                     onLongPressed: cardRoot.isFolder ? folderMenu.popup() : cardMenu.popup()
                 }
                 DragHandler {
@@ -758,6 +829,8 @@ Item {
                     glyph: kind === "audio" ? Theme.icons.music
                             : kind === "image" ? Theme.icons.image
                             : kind === "vector" ? Theme.icons.layers
+                            : kind === "model3d" ? Theme.icons.box
+                            : kind === "composite" ? Theme.icons.layers
                             : Theme.icons.film
                     onLiftTapped: {
                         if (cardRoot.isFolder) {
@@ -777,6 +850,12 @@ Item {
                     id: cardMenu
 
                     ThemedMenuItem {
+                        text: qsTr("Open composite")
+                        icon.name: Theme.icons.layers
+                        visible: kind === "composite" && root.selectedAssetIds.length <= 1
+                        onTriggered: EditorState.openCompositeAsset(assetId)
+                    }
+                    ThemedMenuItem {
                         text: root.selectedAssetIds.length > 1
                               ? qsTr("Add %n items to timeline", "", root.selectedAssetIds.length)
                               : qsTr("Add to timeline")
@@ -786,6 +865,7 @@ Item {
                     ThemedMenuItem {
                         text: qsTr("Preview and edit…")
                         icon.name: Theme.icons.eye
+                        visible: kind !== "composite"
                         onTriggered: root.previewRequested(assetIndex)
                     }
                     ThemedMenuItem {
@@ -797,7 +877,7 @@ Item {
                     ThemedMenuItem {
                         text: qsTr("Replace media…")
                         icon.name: Theme.icons.refresh
-                        visible: root.selectedAssetIds.length <= 1
+                        visible: kind !== "composite" && root.selectedAssetIds.length <= 1
                         onTriggered: root.replaceRequested(assetIndex)
                     }
                     ThemedMenuItem {
@@ -809,6 +889,27 @@ Item {
                         icon.name: Theme.icons.folder
                         visible: BinFolderModel.count > 0
                         onTriggered: root.moveToFolderRequested(root.selectedAssetIds)
+                    }
+                    ThemedMenuItem {
+                        readonly property var ids: root.selectedWithProxyState(["none"])
+                        text: ids.length > 1 ? qsTr("Create %n proxies", "", ids.length) : qsTr("Create proxy")
+                        icon.name: Theme.icons.filePlay
+                        visible: ids.length > 0
+                        onTriggered: AssetLibrary.createProxies(ids)
+                    }
+                    ThemedMenuItem {
+                        readonly property var ids: root.selectedWithProxyState(["ready", "queued", "building"])
+                        text: ids.length > 1 ? qsTr("Remove %n proxies", "", ids.length) : qsTr("Remove proxy")
+                        icon.name: Theme.icons.x
+                        visible: ids.length > 0
+                        onTriggered: AssetLibrary.removeProxies(ids)
+                    }
+                    ThemedMenuItem {
+                        text: qsTr("Convert to edit-friendly format")
+                        icon.name: Theme.icons.rabbit
+                        visible: kind === "video" && root.selectedAssetIds.length <= 1
+                                 && !root.editFriendlyOf(assetId)
+                        onTriggered: EditorState.convertAssetsToConstantFrameRate([assetId])
                     }
                     ThemedMenuItem {
                         text: qsTr("Export image…")
@@ -852,13 +953,43 @@ Item {
                 }
             }
 
-            Text {
+            Row {
+                id: cardNameRow
                 width: parent.width
-                text: name
-                color: Theme.mutedForeground
-                font.family: Theme.fontFamily
-                font.pixelSize: Theme.fontSizeCard
-                elide: Text.ElideRight
+                spacing: Theme.spacingSm
+                readonly property string proxyState: cardRoot.isFolder ? ""
+                                                                       : root.proxyStateOf(cardRoot.assetId)
+
+                MediaPill {
+                    id: cardProxyPill
+                    anchors.verticalCenter: parent.verticalCenter
+                    text: qsTr("Proxy")
+                    visible: cardNameRow.proxyState === "ready" || cardNameRow.proxyState === "queued"
+                             || cardNameRow.proxyState === "building"
+                    waiting: cardNameRow.proxyState !== "ready"
+                    fontSize: Theme.fontSizeTiny
+                }
+                MediaPill {
+                    id: cardEditFriendlyPill
+                    anchors.verticalCenter: parent.verticalCenter
+                    text: qsTr("Edit-friendly")
+                    tooltip: qsTr("Converted to a constant frame rate for smooth editing")
+                    accent: Theme.clipEditFriendly
+                    foreground: Theme.clipEditFriendlyForeground
+                    visible: !cardRoot.isFolder && root.editFriendlyOf(cardRoot.assetId)
+                    fontSize: Theme.fontSizeTiny
+                }
+                Text {
+                    width: Math.max(0, parent.width
+                                       - (cardProxyPill.visible ? cardProxyPill.width + parent.spacing : 0)
+                                       - (cardEditFriendlyPill.visible
+                                          ? cardEditFriendlyPill.width + parent.spacing : 0))
+                    text: name
+                    color: Theme.mutedForeground
+                    font.family: Theme.fontFamily
+                    font.pixelSize: Theme.fontSizeCard
+                    elide: Text.ElideRight
+                }
             }
         }
     }
@@ -915,6 +1046,11 @@ Item {
             // See the matching property on gridDelegate's cardRoot: lets a rotate/trim edit
             // refresh just this row's thumbnail without MediaAssetsTab rebuilding the whole list.
             property string _liveThumbnailPath: thumbnailPath
+            ListView.onReused: listRow._liveThumbnailPath = Qt.binding(() => listRow.thumbnailPath)
+            ListView.onPooled: {
+                rowMenu.close()
+                folderRowMenu.close()
+            }
             Connections {
                 target: AssetLibrary
                 function onAssetMetadataChanged(assetId) {
@@ -969,6 +1105,8 @@ Item {
                         // Was missing, so list thumbnails decoded
                         // on the UI thread and stalled scrolling.
                         asynchronous: true
+                        sourceSize: Qt.size(Math.ceil(listThumbFrame.width * Screen.devicePixelRatio),
+                                             Math.ceil(listThumbFrame.height * Screen.devicePixelRatio))
                     }
 
                     IconGlyph {
@@ -977,7 +1115,9 @@ Item {
                                     || listRow._liveThumbnailPath.length === 0 || listThumb.status === Image.Error
                         glyph: listRow.isFolder ? Theme.icons.folder
                                : (kind === "audio" ? Theme.icons.music
-                                  : kind === "vector" ? Theme.icons.layers : Theme.icons.film)
+                                  : kind === "vector" ? Theme.icons.layers
+                                  : kind === "model3d" ? Theme.icons.box
+                                  : kind === "composite" ? Theme.icons.layers : Theme.icons.film)
                         iconSize: Theme.iconSizeBase
                         iconColor: Theme.mutedForeground
                     }
@@ -1002,6 +1142,14 @@ Item {
                             progressColor: Theme.onMedia
                         }
                     }
+
+                    VfrWarning {
+                        anchors.right: parent.right
+                        anchors.top: parent.top
+                        anchors.margins: 1
+                        size: Theme.iconSizeSm
+                        visible: !listRow.isFolder && kind === "video" && root.vfrWarningOf(assetId)
+                    }
                 }
 
                 Column {
@@ -1009,13 +1157,42 @@ Item {
                     // Derived from the actual thumbnail width
                     // rather than a magic constant.
                     width: parent.width - listThumbFrame.width - listRowContent.spacing
-                    Text {
-                        text: name
-                        color: Theme.panelForeground
-                        font.family: Theme.fontFamily
-                        font.pixelSize: Theme.fontSizeSm
-                        elide: Text.ElideRight
+                    Row {
+                        id: rowNameRow
                         width: parent.width
+                        spacing: Theme.spacingSm
+                        readonly property string proxyState: listRow.isFolder ? ""
+                                                                              : root.proxyStateOf(assetId)
+
+                        MediaPill {
+                            id: rowProxyPill
+                            anchors.verticalCenter: parent.verticalCenter
+                            text: qsTr("Proxy")
+                            visible: rowNameRow.proxyState === "ready"
+                                     || rowNameRow.proxyState === "queued"
+                                     || rowNameRow.proxyState === "building"
+                            waiting: rowNameRow.proxyState !== "ready"
+                        }
+                        MediaPill {
+                            id: rowEditFriendlyPill
+                            anchors.verticalCenter: parent.verticalCenter
+                            text: qsTr("Edit-friendly")
+                            tooltip: qsTr("Converted to a constant frame rate for smooth editing")
+                            accent: Theme.clipEditFriendly
+                            foreground: Theme.clipEditFriendlyForeground
+                            visible: !listRow.isFolder && root.editFriendlyOf(assetId)
+                        }
+                        Text {
+                            text: name
+                            color: Theme.panelForeground
+                            font.family: Theme.fontFamily
+                            font.pixelSize: Theme.fontSizeSm
+                            elide: Text.ElideRight
+                            width: Math.max(0, parent.width
+                                               - (rowProxyPill.visible ? rowProxyPill.width + parent.spacing : 0)
+                                               - (rowEditFriendlyPill.visible
+                                                  ? rowEditFriendlyPill.width + parent.spacing : 0))
+                        }
                     }
                     Text {
                         visible: !listRow.isFolder
@@ -1064,7 +1241,12 @@ Item {
                             root.selectionAnchorId = listRow.assetId
                         }
                     }
-                    onDoubleTapped: if (listRow.isFolder) EditorState.currentBinFolderId = listRow.folderId
+                    onDoubleTapped: {
+                    if (listRow.isFolder)
+                        EditorState.currentBinFolderId = listRow.folderId
+                    else if (kind === "composite")
+                        EditorState.openCompositeAsset(listRow.assetId)
+                }
                     onLongPressed: listRow.isFolder ? folderRowMenu.popup() : rowMenu.popup()
                 }
                 DragHandler {
@@ -1107,6 +1289,8 @@ Item {
                     glyph: kind === "audio" ? Theme.icons.music
                             : kind === "image" ? Theme.icons.image
                             : kind === "vector" ? Theme.icons.layers
+                            : kind === "model3d" ? Theme.icons.box
+                            : kind === "composite" ? Theme.icons.layers
                             : Theme.icons.film
                     onLiftTapped: {
                         if (listRow.isFolder) {
@@ -1138,6 +1322,12 @@ Item {
                 id: rowMenu
 
                 ThemedMenuItem {
+                    text: qsTr("Open composite")
+                    icon.name: Theme.icons.layers
+                    visible: kind === "composite" && root.selectedAssetIds.length <= 1
+                    onTriggered: EditorState.openCompositeAsset(assetId)
+                }
+                ThemedMenuItem {
                     text: root.selectedAssetIds.length > 1
                           ? qsTr("Add %n items to timeline", "", root.selectedAssetIds.length)
                           : qsTr("Add to timeline")
@@ -1147,6 +1337,7 @@ Item {
                 ThemedMenuItem {
                     text: qsTr("Preview and edit…")
                     icon.name: Theme.icons.eye
+                    visible: kind !== "composite"
                     onTriggered: root.previewRequested(assetIndex)
                 }
                 ThemedMenuItem {
@@ -1158,7 +1349,7 @@ Item {
                 ThemedMenuItem {
                     text: qsTr("Replace media…")
                     icon.name: Theme.icons.refresh
-                    visible: root.selectedAssetIds.length <= 1
+                    visible: kind !== "composite" && root.selectedAssetIds.length <= 1
                     onTriggered: root.replaceRequested(assetIndex)
                 }
                 ThemedMenuItem {
@@ -1168,6 +1359,27 @@ Item {
                     icon.name: Theme.icons.folder
                     visible: BinFolderModel.count > 0
                     onTriggered: root.moveToFolderRequested(root.selectedAssetIds)
+                }
+                ThemedMenuItem {
+                    readonly property var ids: root.selectedWithProxyState(["none"])
+                    text: ids.length > 1 ? qsTr("Create %n proxies", "", ids.length) : qsTr("Create proxy")
+                    icon.name: Theme.icons.filePlay
+                    visible: ids.length > 0
+                    onTriggered: AssetLibrary.createProxies(ids)
+                }
+                ThemedMenuItem {
+                    readonly property var ids: root.selectedWithProxyState(["ready", "queued", "building"])
+                    text: ids.length > 1 ? qsTr("Remove %n proxies", "", ids.length) : qsTr("Remove proxy")
+                    icon.name: Theme.icons.x
+                    visible: ids.length > 0
+                    onTriggered: AssetLibrary.removeProxies(ids)
+                }
+                ThemedMenuItem {
+                    text: qsTr("Convert to edit-friendly format")
+                    icon.name: Theme.icons.rabbit
+                    visible: kind === "video" && root.selectedAssetIds.length <= 1
+                             && !root.editFriendlyOf(assetId)
+                    onTriggered: EditorState.convertAssetsToConstantFrameRate([assetId])
                 }
                 ThemedMenuItem {
                     text: qsTr("Export image…")
@@ -1317,7 +1529,9 @@ Item {
                             { glyph: Theme.icons.image, label: qsTr("Images"),
                               formats: "PNG · JPG · WEBP · HEIC · GIF" },
                             { glyph: Theme.icons.shapes, label: qsTr("Vector"),
-                              formats: "SVG · Lottie (.json, .lottie)" }
+                              formats: "SVG · Lottie (.json, .lottie)" },
+                            { glyph: Theme.icons.box, label: qsTr("3D"),
+                              formats: "glTF binary (.glb)" }
                         ]
 
                         delegate: Row {
@@ -1499,11 +1713,110 @@ Item {
         hint: qsTr("Drag media here, or import more.")
     }
 
+    // Proxy jobs run in the background; this is their one progress surface and the way to stop
+    // them.
+    Item {
+        id: proxyStatusRow
+        anchors.top: binNavRow.bottom
+        anchors.topMargin: visible ? Theme.spacingSm : 0
+        anchors.left: parent.left
+        anchors.right: parent.right
+        anchors.leftMargin: Theme.pagePadding
+        anchors.rightMargin: Theme.pagePadding
+        visible: AssetLibrary.proxyBusy
+        height: visible ? Math.max(proxyStatusText.implicitHeight + Theme.spacingSm
+                                   + proxyStatusBar.height, proxyCancel.height)
+                        : 0
+
+        Text {
+            id: proxyStatusText
+            anchors.left: parent.left
+            anchors.right: proxyCancel.left
+            anchors.rightMargin: Theme.spacingMd
+            anchors.top: parent.top
+            text: AssetLibrary.proxyQueuedCount > 0
+                  ? qsTr("Creating proxy for %1 (%2 more)").arg(AssetLibrary.proxyCurrentName)
+                                                            .arg(AssetLibrary.proxyQueuedCount)
+                  : qsTr("Creating proxy for %1").arg(AssetLibrary.proxyCurrentName)
+            color: Theme.mutedForeground
+            font.family: Theme.fontFamily
+            font.pixelSize: Theme.fontSizeXs
+            elide: Text.ElideMiddle
+        }
+        ThemedProgressBar {
+            id: proxyStatusBar
+            anchors.left: parent.left
+            anchors.right: proxyCancel.left
+            anchors.rightMargin: Theme.spacingMd
+            anchors.top: proxyStatusText.bottom
+            anchors.topMargin: Theme.spacingSm
+            barHeight: Theme.spacingXs
+            value: AssetLibrary.proxyProgress
+        }
+        IconButton {
+            id: proxyCancel
+            anchors.right: parent.right
+            anchors.verticalCenter: parent.verticalCenter
+            glyph: Theme.icons.x
+            variant: "ghost"
+            tooltip: qsTr("Stop creating proxies")
+            onClicked: AssetLibrary.cancelProxies()
+        }
+    }
+
+    // A frame-rate conversion has no preview window to report in, so it reports here. Crops
+    // keep theirs in the preview window.
+    Item {
+        id: conversionStatusRow
+        anchors.top: proxyStatusRow.bottom
+        anchors.topMargin: visible ? Theme.spacingSm : 0
+        anchors.left: parent.left
+        anchors.right: parent.right
+        anchors.leftMargin: Theme.pagePadding
+        anchors.rightMargin: Theme.pagePadding
+        visible: EditorState.editingAsset && EditorState.assetEditIsConversion
+        height: visible ? Math.max(conversionStatusText.implicitHeight + Theme.spacingSm
+                                   + conversionStatusBar.height, conversionCancel.height)
+                        : 0
+
+        Text {
+            id: conversionStatusText
+            anchors.left: parent.left
+            anchors.right: conversionCancel.left
+            anchors.rightMargin: Theme.spacingMd
+            anchors.top: parent.top
+            text: qsTr("Converting %1 to an edit-friendly format").arg(EditorState.assetEditName)
+            color: Theme.mutedForeground
+            font.family: Theme.fontFamily
+            font.pixelSize: Theme.fontSizeXs
+            elide: Text.ElideMiddle
+        }
+        ThemedProgressBar {
+            id: conversionStatusBar
+            anchors.left: parent.left
+            anchors.right: conversionCancel.left
+            anchors.rightMargin: Theme.spacingMd
+            anchors.top: conversionStatusText.bottom
+            anchors.topMargin: Theme.spacingSm
+            barHeight: Theme.spacingXs
+            value: EditorState.assetEditProgress
+        }
+        IconButton {
+            id: conversionCancel
+            anchors.right: parent.right
+            anchors.verticalCenter: parent.verticalCenter
+            glyph: Theme.icons.x
+            variant: "ghost"
+            tooltip: qsTr("Stop converting")
+            onClicked: EditorState.cancelAssetEdit()
+        }
+    }
+
     GridView {
         id: grid
         visible: root.gridMode && root.combinedItems.length > 0
 
-        anchors.top: binNavRow.bottom
+        anchors.top: conversionStatusRow.bottom
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.bottom: parent.bottom
@@ -1516,9 +1829,11 @@ Item {
         cellHeight: (Theme.assetCardWidth * 9 / 16) + Theme.spacing3xl + Theme.assetCardGap
 
         clip: true
+        reuseItems: true
         ScrollBar.vertical: AppScrollBar { }
 
-        model: root.combinedItems
+        // Only the view on screen gets the items; a hidden view would still build delegates.
+        model: root.gridMode ? root.combinedItems : []
         delegate: gridDelegate
     }
 
@@ -1526,7 +1841,7 @@ Item {
         id: listColumn
         visible: !root.gridMode && root.combinedItems.length > 0
 
-        anchors.top: binNavRow.bottom
+        anchors.top: conversionStatusRow.bottom
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.bottom: parent.bottom
@@ -1537,9 +1852,10 @@ Item {
         spacing: Theme.spacingMd
 
         clip: true
+        reuseItems: true
         ScrollBar.vertical: AppScrollBar { }
 
-        model: root.combinedItems
+        model: root.gridMode ? [] : root.combinedItems
         delegate: listDelegate
     }
 }

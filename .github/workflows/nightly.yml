@@ -1,0 +1,214 @@
+name: Nightly
+
+# One pre-release, tagged `nightly`, rewritten in place every night — rather than a tag per build,
+# which would bury the stable releases. Because it is a pre-release it can never become "Latest",
+# `releases/latest` keeps returning the newest stable tag, and the in-app update check (which
+# refuses pre-releases outright, see UpdateChecker::applyRelease) never offers it to anyone.
+#
+# Nightly builds carry their own application identity on every platform — bundle id, Windows
+# AppId, Flatpak app id, Android package, Arch package name — so one can be installed and
+# uninstalled without disturbing a stable install. They deliberately share the settings and addon
+# directory with it: a nightly that starts with no fonts, no speech model and none of your
+# projects is not a nightly anyone will test with.
+on:
+  schedule:
+    # Midnight in UTC+05:30, which cron can only express in UTC: 18:30 the previous day.
+    # The guard below skips the run entirely when main has not moved.
+    - cron: "30 18 * * *"
+  workflow_dispatch:
+    inputs:
+      platforms:
+        description: "Which platform(s) to build"
+        required: true
+        default: all
+        type: choice
+        options:
+          - all
+          - flatpak
+          - linux
+          - windows
+          - macos
+          - arch
+          - android
+
+permissions:
+  contents: write
+
+# Never cancel in flight: a half-finished run would leave the pre-release holding a mix of two
+# nights' assets.
+concurrency:
+  group: nightly
+  cancel-in-progress: false
+
+jobs:
+  check:
+    name: Decide whether to build
+    runs-on: ubuntu-latest
+    outputs:
+      should_build: ${{ steps.decide.outputs.should_build }}
+      version: ${{ steps.decide.outputs.version }}
+      build_id: ${{ steps.decide.outputs.build_id }}
+    steps:
+      - uses: actions/checkout@v4
+
+      # Scheduled workflows run on forks too, where this would push a tag and a release nobody
+      # asked for. A manual dispatch on a fork is still allowed — that is someone opting in.
+      - name: Decide
+        id: decide
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+
+          if [ "${{ github.event_name }}" = "schedule" ] \
+             && [ "${GITHUB_REPOSITORY}" != "CutWire-Studios/Drift" ]; then
+            echo "Scheduled nightly is upstream-only; ${GITHUB_REPOSITORY} skipped."
+            echo "should_build=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          # The nightly tag points at the commit the current pre-release was built from, so it is
+          # also the record of "have we already shipped this?". A manual dispatch rebuilds anyway.
+          tagged="$(gh api "repos/${GITHUB_REPOSITORY}/git/ref/tags/nightly" \
+                      --jq '.object.sha' 2>/dev/null || true)"
+          if [ "${{ github.event_name }}" = "schedule" ] && [ "${tagged}" = "${GITHUB_SHA}" ]; then
+            echo "No commits since the last nightly (${tagged}); nothing to build."
+            echo "should_build=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          # Computed once here rather than per job: six jobs each calling date(1) can straddle
+          # midnight and stamp one release with two dates.
+          build_id="$(date -u +%Y%m%d).${GITHUB_SHA::7}"
+          project_version="$(grep -oP '^project\(Drift VERSION \K[0-9]+\.[0-9]+\.[0-9]+' CMakeLists.txt)"
+
+          echo "should_build=true" >> "$GITHUB_OUTPUT"
+          echo "build_id=${build_id}" >> "$GITHUB_OUTPUT"
+          echo "version=${project_version}-nightly.${build_id}" >> "$GITHUB_OUTPUT"
+
+  package:
+    name: Package
+    needs: check
+    if: needs.check.outputs.should_build == 'true'
+    uses: ./.github/workflows/package.yml
+    with:
+      version: ${{ needs.check.outputs.version }}
+      platforms: ${{ inputs.platforms || 'all' }}
+      channel: nightly
+      build_id: ${{ needs.check.outputs.build_id }}
+      android_identity: nightly
+    secrets: inherit
+
+  publish:
+    name: Rewrite the nightly pre-release
+    runs-on: ubuntu-latest
+    needs: [check, package]
+    steps:
+      # Full history: the notes list what landed since the last stable tag.
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+
+      # Move the tag before touching the release, so the release always points at a commit that
+      # actually produced the assets attached to it.
+      - name: Point the nightly tag at this commit
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          if gh api "repos/${GITHUB_REPOSITORY}/git/ref/tags/nightly" >/dev/null 2>&1; then
+            gh api -X PATCH "repos/${GITHUB_REPOSITORY}/git/refs/tags/nightly" \
+              -f sha="${GITHUB_SHA}" -F force=true > /dev/null
+          else
+            gh api -X POST "repos/${GITHUB_REPOSITORY}/git/refs" \
+              -f ref=refs/tags/nightly -f sha="${GITHUB_SHA}" > /dev/null
+          fi
+
+      - name: Write release notes
+        run: |
+          set -euo pipefail
+          last_stable="$(git describe --tags --abbrev=0 --match 'v*.*.*' "${GITHUB_SHA}" 2>/dev/null || true)"
+
+          {
+            echo "**${{ needs.check.outputs.version }}** — built from \`${GITHUB_SHA::7}\` on $(date -u '+%Y-%m-%d %H:%M UTC')."
+            echo
+            echo "> Untested build straight off \`main\`. It can lose work, fail to export, or refuse"
+            echo "> to start. If you need something that works, use the [latest stable release](https://github.com/${GITHUB_REPOSITORY}/releases/latest)."
+            echo
+            echo "This pre-release is replaced in place every night, so the download links above always"
+            echo "point at the newest build. Nightlies install **beside** a stable Drift and share its"
+            echo "settings, projects and installed addons — except on Arch, where \`drift-nightly\`"
+            echo "conflicts with \`drift\` because both own \`/usr/bin/drift\`."
+            echo
+            if [ -n "${last_stable}" ]; then
+              echo "## Changes since ${last_stable}"
+              echo
+              git log --no-merges -n 50 --pretty='- %s (%h)' "${last_stable}..${GITHUB_SHA}"
+              total="$(git log --no-merges --oneline "${last_stable}..${GITHUB_SHA}" | wc -l)"
+              if [ "${total}" -gt 50 ]; then
+                echo "- …and $((total - 50)) more ([full log](https://github.com/${GITHUB_REPOSITORY}/compare/${last_stable}...main))"
+              fi
+              echo
+            fi
+            cat <<'EOF'
+          ## Installing
+
+          - **AppImage** (Linux, any distro): `chmod +x Drift-nightly-x86_64.AppImage && ./Drift-nightly-x86_64.AppImage`
+          - **Windows installer**: run `Drift-Setup-nightly-x64.exe`. Installs as "Drift Nightly" in its
+            own directory; it does not touch an existing Drift install or take over `.drift` files.
+          - **Windows portable**: extract `Drift-Portable-nightly-x64.zip` and run `drift.exe` from the
+            `Drift Nightly` folder inside it.
+          - **macOS** (Apple Silicon): open `Drift-nightly-arm64.dmg` and drag *Drift Nightly* to
+            Applications. Ad-hoc signed, so the first launch needs right-click → Open.
+          - **Arch Linux**: `sudo pacman -U drift-nightly-x86_64.pkg.tar.zst` (replaces `drift`).
+          - **Flatpak**: `flatpak install --user Drift-nightly.flatpak` — app id
+            `org.cutwire.Drift.Nightly`, so it sits beside a Flathub install.
+          - **Android**: `adb install Drift-nightly-arm64-v8a.apk` (`x86_64` for emulators). Package id
+            `org.cutwire.drift.nightly`.
+
+          Fonts, stickers, speech models and GPU/CPU acceleration runtimes are not bundled — install
+          the ones you want from the Addon Manager in the app header.
+          EOF
+          } > notes.md
+
+          cat notes.md
+
+      # Edited, not deleted and recreated: recreating notifies every watcher of the repository
+      # every single night. Asset names are channel-constant (Drift-nightly-…), so --clobber
+      # replaces each one in place. A workflow_dispatch run for a subset of platforms therefore
+      # leaves the other platforms' assets from the previous night in place — stale but
+      # installable, which beats an empty release.
+      - name: Publish
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          assets=(
+            dist/linux-appimage/*.AppImage
+            dist/linux-appimage/*.AppImage.zsync
+            dist/windows-installer/*.exe
+            dist/windows-portable/*.zip
+            dist/macos-dmg/*.dmg
+            dist/arch-package/*.pkg.tar.zst
+            dist/flatpak-bundle/*.flatpak
+            dist/android-apk-*/*.apk
+          )
+          if [ ${#assets[@]} -eq 0 ]; then
+            echo "::error::no artifacts were produced; refusing to rewrite the nightly release"
+            exit 1
+          fi
+
+          title="Drift Nightly — ${{ needs.check.outputs.version }}"
+          if gh release view nightly >/dev/null 2>&1; then
+            gh release edit nightly --prerelease --latest=false \
+              --title "${title}" --notes-file notes.md
+          else
+            gh release create nightly --prerelease --latest=false \
+              --title "${title}" --notes-file notes.md
+          fi
+          gh release upload nightly --clobber "${assets[@]}"

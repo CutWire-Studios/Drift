@@ -45,6 +45,14 @@ QString denoiseCacheDir();
 // snippets from each other; pass an empty string for a committed render.
 QString newDenoisePath(const QString &suffix = QString());
 
+// <AppDataLocation>/generated-audio, created on demand: voiceovers and sound effects made by the
+// cloud providers. Referenced by projects like any imported media, so nothing sweeps it.
+QString generatedAudioDir();
+
+// A fresh, unused absolute path inside generatedAudioDir() for voiceover recordings.
+QString newVoiceoverPath();
+void sweepStaleVoiceovers();
+
 // Deletes leftover A/B preview snippets. Committed renders are referenced by clips in saved
 // projects and are never touched — only the "-preview"/"-original" pairs, which are scratch and
 // are orphaned by a crash or a closed window. Called once at startup.

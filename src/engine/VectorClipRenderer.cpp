@@ -60,6 +60,7 @@ struct Document
     sk_sp<SkSVGDOM> svg;
     QSizeF size;             // the document's own size; empty when an SVG declares none
     double durationSec = 0;  // 0 for a still
+    double fps = 0;          // frames per second the document declares; 0 for a still
     quint64 key = 0;         // cache key, folded into painter keys
     QMutex mutex;            // seek + render are one critical section
     // SVG: the root and every element with an id (the document's own and the ones scanSvg
@@ -191,8 +192,11 @@ public:
         lock.unlock();
 
         std::shared_ptr<Document> doc = build(source);
-        if (doc)
-            doc->key = qHash(key) | 1;
+        // A failed load (file missing or unreadable mid-relink) must not be pinned under the
+        // content hash, or the animation stays blank until the file is next parsed anew.
+        if (!doc)
+            return nullptr;
+        doc->key = qHash(key) | 1;
 
         lock.relock();
         // Another thread may have built the same document meanwhile; theirs wins so both
@@ -326,6 +330,7 @@ private:
             applySlots(*doc->slotManager, source);
         doc->size = QSizeF(doc->animation->size().width(), doc->animation->size().height());
         doc->durationSec = doc->animation->duration();
+        doc->fps = doc->animation->fps();
         return doc;
     }
 
@@ -415,8 +420,9 @@ std::shared_ptr<const skia::VectorPainter> makePainter(const RenderRequest &requ
     if (!doc)
         return nullptr;
     TimeUs folded = 0;
+    const TimeUs frameUs = doc->fps > 0.0 ? secondsToUs(1.0 / doc->fps) : 0;
     if (!foldVectorTime(request.animUs + request.source.startOffsetUs, secondsToUs(doc->durationSec),
-                        request.source.loop, &folded))
+                        request.source.loop, &folded, frameUs))
         return nullptr;
     SvgOverrides overrides;
     if (request.source.kind == VectorKind::Svg)

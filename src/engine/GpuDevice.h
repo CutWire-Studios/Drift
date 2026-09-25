@@ -87,6 +87,11 @@ PciId renderPciId(const QString &glVendor = {});
 // Display name for a PCI id, from enumerateAdapters(). Empty when nothing matches.
 QString adapterName(PciId id);
 
+// Sandy Bridge / Ivy Bridge Intel iGPUs (HD 2000–4000). Same set as
+// drift::gl::isLimitedPreviewRenderer(), identified by PCI id so Auto decode
+// can refuse hardware before the compositor has a GL_RENDERER string.
+bool isLimitedPreviewGpu(PciId id);
+
 // Points the sysfs walk at a fixture tree and drops the adapter cache. Tests only; an empty
 // root restores "/sys".
 void setSysfsRootForTesting(const QString &root);

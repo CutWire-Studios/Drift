@@ -2,12 +2,14 @@
 
 #include "Time.h"
 
+#include <QJsonObject>
 #include <QString>
 #include <QStringList>
 
 namespace drift {
 
-enum class MediaKind { Video, Audio, Image, Vector, Other };
+// Composite has no file: it is the bin entry for a nested timeline (sequenceId).
+enum class MediaKind { Video, Audio, Image, Vector, Model3d, Composite, Other };
 
 // Suffixes Drift treats as still images. Lives in core rather than next to the other media lists
 // in AssetLibrary because the engine needs it too — FrameCompositor classifies mask media by it,
@@ -57,6 +59,14 @@ struct MediaAsset
     bool hasAudio = false;
     bool hasAudioKnown = false;
 
+    // Video frame spacing is irregular (phone and screen recordings), which can drift against
+    // the audio. Unknown until checked: import checks, and an older project's assets are
+    // checked in the background the first time the bin or timeline asks.
+    bool variableFrameRate = false;
+    bool frameRateKnown = false;
+    // This file is Drift's "edit-friendly" constant-rate re-encode of what was imported.
+    bool editFriendly = false;
+
     QString durationLabel;
     QString thumbnailPath;
     QString filmstripPath;
@@ -65,6 +75,13 @@ struct MediaAsset
     // organizational attribute — clips address media through MediaAsset::id, so moving
     // an asset between folders never touches anything on the timeline.
     QString folderId;
+
+    // Composite only: the Project::sequenceTracks id this bin item stands for.
+    QString sequenceId;
+
+    // Audio Drift generated rather than imported (voiceover, sound effect): what made it —
+    // {provider, kind, voice, model, text/prompt} — so it can be regenerated. Empty otherwise.
+    QJsonObject generator;
 };
 
 // The rotation to actually use for this asset: the user's bin-preview correction when set,

@@ -153,7 +153,7 @@ jobs:
           done
           rm -rf "$HOME/.cache/aqt"
 
-      # FFmpeg, x264, zstd, OpenSSL and SoundTouch cross-built for Android: ~45 min per ABI,
+      # FFmpeg, x264, dav1d, vid.stab, zstd, OpenSSL, SoundTouch and Skia cross-built for Android: ~65 min per ABI,
       # and they only change when the script that pins their tags does.
       #
       # Prefer a combined cache from a previous AAB run. On a miss, reuse package.yml's
@@ -165,7 +165,7 @@ jobs:
         uses: actions/cache/restore@v4
         with:
           path: third_party/prebuilt
-          key: android-deps-aab-all-${{ env.NDK_VERSION }}-${{ hashFiles('third_party/build-android.sh') }}
+          key: v2-android-deps-aab-all-${{ env.NDK_VERSION }}-${{ hashFiles('third_party/build-android.sh', 'third_party/build-skia.sh') }}
 
       - name: Restore prebuilt native dependencies (arm64-v8a)
         if: steps.deps-all.outputs.cache-hit != 'true'
@@ -173,13 +173,16 @@ jobs:
         uses: actions/cache/restore@v4
         with:
           path: third_party/prebuilt
-          key: android-deps-arm64-v8a-${{ env.NDK_VERSION }}-${{ hashFiles('third_party/build-android.sh') }}
+          key: v2-android-deps-arm64-v8a-${{ env.NDK_VERSION }}-${{ hashFiles('third_party/build-android.sh', 'third_party/build-skia.sh') }}
 
       - name: Stash arm64-v8a prebuilts
         if: steps.deps-all.outputs.cache-hit != 'true' && steps.deps-arm64.outputs.cache-hit == 'true'
         run: |
-          mkdir -p "$RUNNER_TEMP/deps"
+          mkdir -p "$RUNNER_TEMP/deps/skia"
           mv third_party/prebuilt/android/arm64-v8a "$RUNNER_TEMP/deps/"
+          if [ -d third_party/prebuilt/skia/android-arm64-v8a ]; then
+            mv third_party/prebuilt/skia/android-arm64-v8a "$RUNNER_TEMP/deps/skia/"
+          fi
           rm -rf third_party/prebuilt
 
       - name: Restore prebuilt native dependencies (armeabi-v7a)
@@ -188,13 +191,16 @@ jobs:
         uses: actions/cache/restore@v4
         with:
           path: third_party/prebuilt
-          key: android-deps-armeabi-v7a-${{ env.NDK_VERSION }}-${{ hashFiles('third_party/build-android.sh') }}
+          key: v2-android-deps-armeabi-v7a-${{ env.NDK_VERSION }}-${{ hashFiles('third_party/build-android.sh', 'third_party/build-skia.sh') }}
 
       - name: Stash armeabi-v7a prebuilts
         if: steps.deps-all.outputs.cache-hit != 'true' && steps.deps-armv7.outputs.cache-hit == 'true'
         run: |
-          mkdir -p "$RUNNER_TEMP/deps"
+          mkdir -p "$RUNNER_TEMP/deps/skia"
           mv third_party/prebuilt/android/armeabi-v7a "$RUNNER_TEMP/deps/"
+          if [ -d third_party/prebuilt/skia/android-armeabi-v7a ]; then
+            mv third_party/prebuilt/skia/android-armeabi-v7a "$RUNNER_TEMP/deps/skia/"
+          fi
           rm -rf third_party/prebuilt
 
       - name: Restore prebuilt native dependencies (x86_64)
@@ -203,25 +209,34 @@ jobs:
         uses: actions/cache/restore@v4
         with:
           path: third_party/prebuilt
-          key: android-deps-x86_64-${{ env.NDK_VERSION }}-${{ hashFiles('third_party/build-android.sh') }}
+          key: v2-android-deps-x86_64-${{ env.NDK_VERSION }}-${{ hashFiles('third_party/build-android.sh', 'third_party/build-skia.sh') }}
 
       - name: Stash x86_64 prebuilts
         if: steps.deps-all.outputs.cache-hit != 'true' && steps.deps-x86.outputs.cache-hit == 'true'
         run: |
-          mkdir -p "$RUNNER_TEMP/deps"
+          mkdir -p "$RUNNER_TEMP/deps/skia"
           mv third_party/prebuilt/android/x86_64 "$RUNNER_TEMP/deps/"
+          if [ -d third_party/prebuilt/skia/android-x86_64 ]; then
+            mv third_party/prebuilt/skia/android-x86_64 "$RUNNER_TEMP/deps/skia/"
+          fi
           rm -rf third_party/prebuilt
 
       - name: Assemble and build native dependencies
         if: steps.deps-all.outputs.cache-hit != 'true'
         run: |
           set -euo pipefail
-          mkdir -p third_party/prebuilt/android
+          mkdir -p third_party/prebuilt/android third_party/prebuilt/skia
           for abi in arm64-v8a armeabi-v7a x86_64; do
             if [ -d "$RUNNER_TEMP/deps/$abi" ]; then
               mv "$RUNNER_TEMP/deps/$abi" "third_party/prebuilt/android/$abi"
             else
               ./third_party/build-android.sh "$abi"
+            fi
+            if [ -d "$RUNNER_TEMP/deps/skia/android-$abi" ]; then
+              mv "$RUNNER_TEMP/deps/skia/android-$abi" "third_party/prebuilt/skia/android-$abi"
+            elif [ -f third_party/build-skia.sh ]; then
+              # Absent on tags from before Skia came to Android; those build without it.
+              JOBS="$(nproc)" ./third_party/build-skia.sh "android-$abi"
             fi
           done
 

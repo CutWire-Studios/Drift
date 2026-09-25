@@ -37,9 +37,16 @@ public:
     void reset() override;
 
 private:
+    // juce::dsp::Limiter is a loudness maximiser: it applies a fixed +3.75 dB plus -threshold dB of
+    // automatic makeup, so mapping avfilter's linear `limit` (a ceiling) onto its threshold made
+    // the stage add gain, and made asking it to limit harder add more. This is a plain
+    // feed-forward peak limiter instead: gain never exceeds 1, and the output never exceeds the
+    // ceiling.
     juce::SmoothedValue<float> m_drive;
-    juce::dsp::Limiter<float> m_limiter;
     float m_driveTarget = 1.0f;
+    float m_ceiling = 1.0f;
+    float m_gain = 1.0f;
+    float m_releaseCoeff = 0.0f;
 };
 
 // agate. avfilter's threshold is linear 0..1; juce's NoiseGate takes dB.

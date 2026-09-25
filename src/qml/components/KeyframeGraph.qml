@@ -14,6 +14,11 @@ Item {
 
     property real pxPerSecond: 50
     property real contentX: 0
+    // The canvases below cover the viewport plus a chunk either side, parked on a chunk boundary,
+    // so scrolling (and playback's auto-scroll) only repaints them when a boundary is crossed
+    // rather than on every frame.
+    readonly property real paintChunk: 256
+    readonly property real paintOriginX: Math.floor(contentX / paintChunk) * paintChunk - paintChunk
     property real contentWidth: 800
     property real labelsWidth: Theme.trackLabelsWidth
     property string propertiesTab: ""
@@ -169,7 +174,7 @@ Item {
     // [{ prop, label, color, points, enabled, shown, valueMin, valueMax }, ...]
     readonly property var allSeries: {
         void EditorState.selectedClipData
-        void EditorState.tracks
+        void EditorState.tracksRevision
         void EditorState.keyframeGraphHiddenProperties
         if (!hasClip)
             return []
@@ -568,8 +573,8 @@ Item {
                     Canvas {
                         id: beatCanvas
                         // Viewport-sized, not content-sized — see curveCanvas.
-                        x: root.contentX
-                        width: viewport.width
+                        x: root.paintOriginX
+                        width: viewport.width + 2 * root.paintChunk
                         anchors.top: parent.top
                         anchors.bottom: parent.bottom
                         z: 0
@@ -584,7 +589,7 @@ Item {
                             // Canvas-local x for an absolute timeline position. Rounding happens
                             // after the shift, so a fractional scroll offset cannot push a 1px
                             // tick onto a half-pixel and smear it across two columns.
-                            const localX = t => Math.round(root.xForSeconds(t) - root.contentX)
+                            const localX = t => Math.round(root.xForSeconds(t) - root.paintOriginX)
 
                             if (root.hasGrid) {
                                 const perBar = a.beatsPerBar || 4
@@ -633,7 +638,7 @@ Item {
                             function onHasGridChanged() { beatCanvas.requestPaint() }
                             function onHasOnsetsChanged() { beatCanvas.requestPaint() }
                             function onPxPerSecondChanged() { beatCanvas.requestPaint() }
-                            function onContentXChanged() { beatCanvas.requestPaint() }
+                            function onPaintOriginXChanged() { beatCanvas.requestPaint() }
                         }
                     }
 
@@ -646,8 +651,8 @@ Item {
                         // past GL_MAX_TEXTURE_SIZE to fit — 16384px, which at 40x zoom is barely
                         // 8 seconds of timeline. Past that the curves are drawn correctly and
                         // then downsampled onto the GPU, which is what smeared them.
-                        x: root.contentX
-                        width: viewport.width
+                        x: root.paintOriginX
+                        width: viewport.width + 2 * root.paintChunk
                         anchors.top: parent.top
                         anchors.bottom: parent.bottom
                         onPaint: {
@@ -655,7 +660,7 @@ Item {
                             ctx.clearRect(0, 0, width, height)
                             // Everything below is in absolute timeline coordinates.
                             ctx.save()
-                            ctx.translate(-root.contentX, 0)
+                            ctx.translate(-root.paintOriginX, 0)
                             const spanX0 = root.xForSeconds(root.clipStart)
                             const spanX1 = root.xForSeconds(root.clipStart + root.clipDuration)
 
@@ -748,7 +753,7 @@ Item {
                             target: root
                             function onSeriesChanged() { curveCanvas.requestPaint() }
                             function onPxPerSecondChanged() { curveCanvas.requestPaint() }
-                            function onContentXChanged() { curveCanvas.requestPaint() }
+                            function onPaintOriginXChanged() { curveCanvas.requestPaint() }
                             function onDragSecondsChanged() { curveCanvas.requestPaint() }
                             function onDragValueChanged() { curveCanvas.requestPaint() }
                             function onDragTangentOutDyChanged() { curveCanvas.requestPaint() }

@@ -13,16 +13,19 @@
 #include "engine/ProjectBundle.h"
 #include "engine/RvmMatter.h"
 #include "engine/Sam2Segmenter.h"
-#include "ClipListModel.h"
-#include "TimelineModel.h"
+#include "TimelineClipsModel.h"
 #include "models/AssetLibrary.h"
 #include "models/BinFolderListModel.h"
+#include "models/CloudProviders.h"
+#include "core/GuideSet.h"
 
 #include <QAtomicInt>
+#include <QCursor>
 #include <QFuture>
 #include <QHash>
 #include <QJsonObject>
 #include <QMediaDevices>
+#include <QElapsedTimer>
 #include <QObject>
 #include <QPair>
 #include <QSet>
@@ -33,7 +36,8 @@
 #include <QVariantMap>
 
 #include <atomic>
-#include <QProcess>
+#include <functional>
+#include <QSharedPointer>
 #include <QMap>
 
 #include <memory>
@@ -44,11 +48,16 @@ struct EffectTemplateEntry;
 class QTimer;
 class AddonManager;
 class MarketClient;
+class JobRegistry;
 
 namespace drift::mcp {
 class McpServer;
 }
+namespace drift {
+struct MediaEditSpec;
+}
 
+#include "engine/AudioRecorder.h"
 #include "playback/ClipPreviewPlayer.h"
 #include "playback/PlaybackEngine.h"
 
@@ -62,6 +71,7 @@ class AppController : public QObject
     Q_OBJECT
 
     Q_PROPERTY(AssetLibrary *assetLibrary READ assetLibrary CONSTANT)
+    Q_PROPERTY(CloudProviders *cloudProviders READ cloudProviders CONSTANT)
     Q_PROPERTY(BinFolderListModel *binFolderModel READ binFolderModel CONSTANT)
     // Which bin folder is currently being viewed; empty = bin root. Transient navigation state —
     // not persisted, not undoable, same treatment as mediaGridMode's touch-only sibling.
@@ -70,15 +80,32 @@ class AppController : public QObject
     // True while importFolder's off-thread directory walk is running, so the bin can raise its
     // progress overlay over a slow tree (a big hierarchy, or a Flatpak document-portal mount).
     Q_PROPERTY(bool importingFolder READ importingFolder NOTIFY importingFolderChanged)
-    Q_PROPERTY(TimelineModel *timelineModel READ timelineModel CONSTANT)
-    Q_PROPERTY(ClipListModel *clipListModel READ clipListModel CONSTANT)
     Q_PROPERTY(PlaybackEngine *playback READ playback CONSTANT)
     // Output devices to choose between, each {id, label}; the first entry has an empty id and
     // means "whatever the system default is at the time", which is also the default choice.
     Q_PROPERTY(QVariantList audioOutputDevices READ audioOutputDevices NOTIFY audioOutputDevicesChanged)
     Q_PROPERTY(QString audioOutputDeviceId READ audioOutputDeviceId WRITE setAudioOutputDeviceId
                    NOTIFY audioOutputDeviceIdChanged)
+    // Audio recording (voiceover via microphone)
+    Q_PROPERTY(bool isRecordingAudio READ isRecordingAudio NOTIFY audioRecordingStateChanged)
+    Q_PROPERTY(bool isAudioRecordingPaused READ isAudioRecordingPaused NOTIFY audioRecordingPausedChanged)
+    Q_PROPERTY(int recordingTrackIndex READ recordingTrackIndex NOTIFY audioRecordingStateChanged)
+    Q_PROPERTY(float audioRecordLevel READ audioRecordLevel NOTIFY audioRecordLevelChanged)
+    Q_PROPERTY(float audioRecordGain READ audioRecordGain WRITE setAudioRecordGain NOTIFY audioRecordGainChanged)
+    Q_PROPERTY(double audioRecordSeconds READ audioRecordSeconds NOTIFY audioRecordSecondsChanged)
+    Q_PROPERTY(QVariantList audioRecordLivePeaks READ audioRecordLivePeaks NOTIFY audioRecordLivePeaksChanged)
+    Q_PROPERTY(QVariantList availableMicrophones READ availableMicrophones NOTIFY availableMicrophonesChanged)
+    Q_PROPERTY(QString currentMicrophoneName READ currentMicrophoneName NOTIFY currentMicrophoneChanged)
     Q_PROPERTY(QVariantList tracks READ tracks NOTIFY tracksChanged)
+    // A change token for the bindings that read `tracks` only to re-evaluate on an edit. Reading
+    // the list for that rebuilt every clip in the project into QVariantMaps, once per binding,
+    // per emission — with two dozen such bindings across the desktop and touch shells.
+    Q_PROPERTY(quint32 tracksRevision READ tracksRevision NOTIFY tracksChanged)
+    // For the bindings that only ask how many tracks there are, or whether there are any.
+    Q_PROPERTY(int trackCount READ trackCount NOTIFY tracksChanged)
+    // "Is the timeline empty?" — asked by the empty-state copy in both shells, which used to
+    // answer it by serialising the project and looping over every track.
+    Q_PROPERTY(int clipCount READ clipCount NOTIFY tracksChanged)
     // Whether the touch shell's grow/shrink-all-lanes buttons have anywhere left to go, for their
     // enabled state. Properties rather than invokables so QML gets real bindings: an invokable
     // would have to be given a dependency to re-evaluate on, and the only one available is
@@ -86,8 +113,13 @@ class AppController : public QObject
     Q_PROPERTY(bool canGrowTrackHeights READ canGrowTrackHeights NOTIFY tracksChanged)
     Q_PROPERTY(bool canShrinkTrackHeights READ canShrinkTrackHeights NOTIFY tracksChanged)
     Q_PROPERTY(double playheadSeconds READ playheadSeconds WRITE setPlayheadSeconds NOTIFY playheadSecondsChanged)
+    // The same playhead, announced at most ~10 times a second while playing and on every change
+    // otherwise. Inspectors bind this: a value readout does not need frame rate, and ~45 rows
+    // re-evaluating per frame is a large share of the GUI thread during playback.
+    Q_PROPERTY(double inspectorPlayheadSeconds READ playheadSeconds NOTIFY inspectorPlayheadChanged)
     Q_PROPERTY(double durationSeconds READ durationSeconds NOTIFY tracksChanged)
     Q_PROPERTY(bool playing READ playing WRITE setPlaying NOTIFY playingChanged)
+    Q_PROPERTY(bool previewDragActive READ previewDragActive NOTIFY previewDragActiveChanged)
     Q_PROPERTY(bool snapEnabled READ snapEnabled WRITE setSnapEnabled NOTIFY snapEnabledChanged)
     Q_PROPERTY(bool rippleEnabled READ rippleEnabled WRITE setRippleEnabled NOTIFY rippleEnabledChanged)
     Q_PROPERTY(bool allowClipOverlap READ allowClipOverlap WRITE setAllowClipOverlap NOTIFY allowClipOverlapChanged)
@@ -114,6 +146,27 @@ class AppController : public QObject
     Q_PROPERTY(QString workspaceLayoutPreferred READ workspaceLayoutPreferred
                    NOTIFY workspaceLayoutPreferenceChanged)
     Q_PROPERTY(bool autoKeyEnabled READ autoKeyEnabled WRITE setAutoKeyEnabled NOTIFY autoKeyEnabledChanged)
+    // On by default. Worth turning off on a very long timeline: the strip repaints every clip
+    // in the project on every edit.
+    Q_PROPERTY(bool timelineOverviewVisible READ timelineOverviewVisible
+                   WRITE setTimelineOverviewVisible NOTIFY timelineOverviewVisibleChanged)
+    Q_PROPERTY(bool audioMixerVisible READ audioMixerVisible
+                   WRITE setAudioMixerVisible NOTIFY audioMixerVisibleChanged)
+    // Width the user dragged the mixer to; 0 means size to fit its channel strips.
+    Q_PROPERTY(qreal audioMixerWidth READ audioMixerWidth
+                   WRITE setAudioMixerWidth NOTIFY audioMixerWidthChanged)
+    Q_PROPERTY(double masterVolume READ masterVolume
+                   WRITE setMasterVolume NOTIFY masterVolumeChanged)
+    Q_PROPERTY(bool masterMuted READ masterMuted
+                   WRITE setMasterMuted NOTIFY masterMutedChanged)
+    Q_PROPERTY(qreal trackLabelsWidth READ trackLabelsWidth
+                   WRITE setTrackLabelsWidth NOTIFY trackLabelsWidthChanged)
+    // Timeline toolbar layout: action ids shown as buttons, then the ones in its More menu.
+    // Empty means the QML defaults; ids are validated on the QML side, which owns the registry.
+    Q_PROPERTY(QStringList timelineToolbarItems READ timelineToolbarItems
+                   NOTIFY timelineToolbarLayoutChanged)
+    Q_PROPERTY(QStringList timelineMenuItems READ timelineMenuItems
+                   NOTIFY timelineToolbarLayoutChanged)
     // Opt-in: on launch, restore the last open project (saved .drift or unsaved recovery snapshot).
     Q_PROPERTY(bool reopenLastProject READ reopenLastProject WRITE setReopenLastProject NOTIFY reopenLastProjectChanged)
     // Preview zero-copy import: VAAPI dma-buf on Linux, D3D11 interop on Windows. Takes effect
@@ -134,7 +187,8 @@ class AppController : public QObject
     Q_PROPERTY(bool gpuPreferenceSupported READ gpuPreferenceSupported CONSTANT)
     Q_PROPERTY(bool invertTimelineScroll READ invertTimelineScroll WRITE setInvertTimelineScroll
                    NOTIFY invertTimelineScrollChanged)
-    // Session-only localhost MCP for agents. Never persisted. Off at every launch.
+    // Session-only localhost MCP for agents. Off at every launch, unless mcpStartOnLaunch
+    // opts back in.
     Q_PROPERTY(bool mcpEnabled READ mcpEnabled WRITE setMcpEnabled NOTIFY mcpRunningChanged)
     Q_PROPERTY(bool mcpRunning READ mcpRunning NOTIFY mcpRunningChanged)
     Q_PROPERTY(QString mcpUrl READ mcpUrl NOTIFY mcpRunningChanged)
@@ -144,6 +198,12 @@ class AppController : public QObject
     Q_PROPERTY(QString mcpCursorSnippet READ mcpCursorSnippet NOTIFY mcpRunningChanged)
     Q_PROPERTY(QString mcpClaudeCommand READ mcpClaudeCommand NOTIFY mcpRunningChanged)
     Q_PROPERTY(QString mcpStdioSnippet READ mcpStdioSnippet NOTIFY mcpRunningChanged)
+    // Persisted opt-in: start the MCP server at launch instead of leaving it off.
+    // setMcpEnabled(false) — a manual "turn access off" — clears this, so re-enabling
+    // access always starts from an explicit, un-opted-in state rather than quietly
+    // carrying an old intent to auto-start past the point the user turned access off.
+    Q_PROPERTY(bool mcpStartOnLaunch READ mcpStartOnLaunch WRITE setMcpStartOnLaunch
+                   NOTIFY mcpStartOnLaunchChanged)
     // App-wide interface language, QSettings("ui/language"). Empty means follow the OS locale.
     // "en" is the source catalog (no .qm). Other codes match i18n/drift_<code>.qm.
     // needsUiLanguagePrompt is true only on a brand-new install, before the first-launch chooser
@@ -188,6 +248,11 @@ class AppController : public QObject
     Q_PROPERTY(bool editingAsset READ editingAsset NOTIFY assetEditChanged)
     Q_PROPERTY(double assetEditProgress READ assetEditProgress NOTIFY assetEditChanged)
     Q_PROPERTY(QString assetEditStatus READ assetEditStatus NOTIFY assetEditChanged)
+    // The running (or, once it finishes, the last) asset edit job is a frame-rate conversion
+    // rather than a crop, so the finish can be worded for it. Also carries its name while it runs,
+    // since a conversion has no preview window to show progress in.
+    Q_PROPERTY(bool assetEditIsConversion READ assetEditIsConversion NOTIFY assetEditChanged)
+    Q_PROPERTY(QString assetEditName READ assetEditName NOTIFY assetEditChanged)
     Q_PROPERTY(double subtitleGenProgress READ subtitleGenProgress NOTIFY subtitleGenProgressChanged)
     Q_PROPERTY(QString subtitleGenStatus READ subtitleGenStatus NOTIFY subtitleGenStatusChanged)
     Q_PROPERTY(bool segmenting READ segmenting NOTIFY segmentingChanged)
@@ -288,6 +353,11 @@ class AppController : public QObject
     Q_PROPERTY(int selectedTrack READ selectedTrack NOTIFY selectionChanged)
     Q_PROPERTY(int selectedClip READ selectedClip NOTIFY selectionChanged)
     Q_PROPERTY(QVariantList selection READ selection NOTIFY selectionChanged)
+    // Change token and size for the selection, so a clip delegate can ask "am I selected?" and
+    // "is this a multi-selection?" without the whole selection being rebuilt into QVariantMaps
+    // once per delegate — which made a marquee over N clips cost O(N^2) per mouse move.
+    Q_PROPERTY(int selectionRevision READ selectionRevision NOTIFY selectionChanged)
+    Q_PROPERTY(int selectionCount READ selectionCount NOTIFY selectionChanged)
     Q_PROPERTY(QVariantMap selectedClipData READ selectedClipData NOTIFY selectedClipDataChanged)
     Q_PROPERTY(QVariantList selectedClipEffects READ selectedClipEffects NOTIFY selectedClipDataChanged)
     Q_PROPERTY(QVariantList selectedClipAudioEffects READ selectedClipAudioEffects NOTIFY selectedClipDataChanged)
@@ -295,7 +365,14 @@ class AppController : public QObject
     Q_PROPERTY(int selectedTransitionTrack READ selectedTransitionTrack NOTIFY selectedTransitionDataChanged)
     Q_PROPERTY(int selectedTransitionLeftClip READ selectedTransitionLeftClip NOTIFY selectedTransitionDataChanged)
     Q_PROPERTY(bool guidesEnabled READ guidesEnabled WRITE setGuidesEnabled NOTIFY guidesChanged)
-    Q_PROPERTY(QString guideType READ guideType WRITE setGuideType NOTIFY guidesChanged)
+    // Every set the picker offers: built-ins, the app-wide library, then copies carried by the
+    // project for sets this machine's library does not have. Each {id, name, builtIn, active,
+    // inLibrary, items}.
+    Q_PROPERTY(QVariantList guideSets READ guideSets NOTIFY guidesChanged)
+    // The items of every active set, flattened for drawing.
+    Q_PROPERTY(QVariantList guideItems READ guideItems NOTIFY guidesChanged)
+    // Library set whose guides are being dragged on the preview; empty when not editing.
+    Q_PROPERTY(QString guideEditSetId READ guideEditSetId WRITE setGuideEditSetId NOTIFY guideEditSetIdChanged)
     Q_PROPERTY(QVariantMap background READ background NOTIFY backgroundChanged)
     Q_PROPERTY(bool canvasCropMode READ canvasCropMode WRITE setCanvasCropMode NOTIFY canvasCropModeChanged)
     Q_PROPERTY(bool maskEditMode READ maskEditMode WRITE setMaskEditMode NOTIFY maskEditModeChanged)
@@ -321,6 +398,12 @@ class AppController : public QObject
     // to regex the prose, and none of the real failure strings matched, so a
     // corrupt-project open rendered as a neutral info toast.
     Q_PROPERTY(QString lastMessageSeverity READ lastMessageSeverity NOTIFY lastMessageChanged)
+    // True from the moment loadProject()/loadProjectJson() is called — by the header,
+    // the start screen, an external open, or a startup restore — until projectLoadFinished
+    // fires. Tracked here rather than by each QML call site so a load kicked off from C++
+    // (consumeStartupProject, restoreLastSessionIfEnabled) is just as visible as one QML
+    // started itself; nothing else may replace the document while this is true.
+    Q_PROPERTY(bool projectLoadPending READ projectLoadPending NOTIFY projectLoadPendingChanged)
     Q_PROPERTY(int draggingAssetIndex READ draggingAssetIndex WRITE setDraggingAssetIndex NOTIFY draggingAssetIndexChanged)
     // Set by MediaPreviewWindow.qml/AndroidMediaPreview.qml while open, so the bin grid can defer
     // rebuilding its delegate array (and the scroll-position flicker that causes) until the
@@ -332,8 +415,13 @@ class AppController : public QObject
     Q_PROPERTY(QVariantMap recoveryInfo READ recoveryInfo NOTIFY recoveryChanged)
     Q_PROPERTY(QVariantList recentProjects READ recentProjects NOTIFY recentProjectsChanged)
     Q_PROPERTY(bool separateAudioAvailable READ canSeparateAudioSelection NOTIFY editCapabilitiesChanged)
+    Q_PROPERTY(bool makeCompositeAvailable READ canMakeCompositeFromSelection NOTIFY editCapabilitiesChanged)
+    // Open composite tabs as [{id, name}], main timeline excluded; "" is the main timeline's id.
+    Q_PROPERTY(QVariantList sequenceTabs READ sequenceTabs NOTIFY sequenceTabsChanged)
+    Q_PROPERTY(QString activeSequenceId READ activeSequenceId NOTIFY sequenceTabsChanged)
     Q_PROPERTY(bool unlinkAvailable READ canUnlinkSelection NOTIFY editCapabilitiesChanged)
     Q_PROPERTY(bool mergeAvailable READ canMergeSelection NOTIFY editCapabilitiesChanged)
+    Q_PROPERTY(bool textToSubtitleAvailable READ canConvertSelectionToSubtitle NOTIFY editCapabilitiesChanged)
     // False until the user picks a launch layout (or decides later via first-clip setup / load).
     Q_PROPERTY(bool projectLayoutChosen READ projectLayoutChosen NOTIFY projectLayoutChosenChanged)
 
@@ -342,22 +430,61 @@ public:
     ~AppController() override;
 
     AssetLibrary *assetLibrary() const { return m_assetLibrary; }
+    CloudProviders *cloudProviders() const { return m_cloud; }
     BinFolderListModel *binFolderModel() { return &m_binFolderModel; }
     QString currentBinFolderId() const { return m_currentBinFolderId; }
     void setCurrentBinFolderId(const QString &folderId);
-    TimelineModel *timelineModel() { return &m_timelineModel; }
-    ClipListModel *clipListModel() { return &m_clipListModel; }
     PlaybackEngine *playback() { return &m_playback; }
     QVariantList audioOutputDevices() const;
     QString audioOutputDeviceId() const { return m_audioOutputDeviceId; }
     void setAudioOutputDeviceId(const QString &id);
-    drift::Project *project() { return &m_project; }
+
+    bool isRecordingAudio() const;
+    bool isAudioRecordingPaused() const;
+    int recordingTrackIndex() const;
+    float audioRecordLevel() const;
+    float audioRecordGain() const;
+    Q_INVOKABLE void setAudioRecordGain(float gain);
+    double audioRecordSeconds() const;
+    QVariantList audioRecordLivePeaks() const;
+    QVariantList availableMicrophones() const;
+    QString currentMicrophoneName() const;
+
+    Q_INVOKABLE void startAudioRecording(int trackIndex = -1);
+    Q_INVOKABLE void pauseAudioRecording();
+    Q_INVOKABLE void resumeAudioRecording();
+    Q_INVOKABLE void toggleAudioRecordingPause();
+    Q_INVOKABLE void stopAudioRecording();
+    Q_INVOKABLE void cancelAudioRecording();
+    Q_INVOKABLE void selectMicrophone(const QString &id);
+    // Handing out a mutable pointer is the point past which this object can no longer know what
+    // happened to the project, so the derived caches are dropped here rather than trusted. Two
+    // bool writes, and nothing in src/ takes this overload — it exists for tests and for code
+    // that edits the project behind the controller's back, which is exactly the case that would
+    // otherwise read a stale tracks() list.
+    drift::Project *project()
+    {
+        m_tracksCacheValid = false;
+        m_durationCacheValid = false;
+        return &m_project;
+    }
     const drift::Project *project() const { return &m_project; }
 
     QVariantList tracks() const;
+    // The clips of one track, as a role model. This is where the timeline delegate's data lives;
+    // `tracks` above carries only what the panel's JS helpers need to lay a row out. Index slots
+    // are never reused or freed, so a model handed to a Repeater stays valid for the session.
+    Q_INVOKABLE QObject *clipsModel(int trackIndex) const;
+    quint32 tracksRevision() const { return m_tracksRevision; }
+    int trackCount() const { return m_project.tracks().size(); }
+    int clipCount() const;
     double playheadSeconds() const;
     double durationSeconds() const;
+    // {start, duration} covering every clip on a video or audio track, for the subtitle lane's
+    // voice waveform. In C++ because the QML that needed it was reading the whole `tracks` graph.
+    Q_INVOKABLE QVariantMap mediaExtentSeconds() const;
     bool playing() const { return m_playing; }
+    bool previewDragActive() const { return m_previewDragActive; }
     bool snapEnabled() const { return m_snapEnabled; }
     bool rippleEnabled() const { return m_rippleEnabled; }
     bool allowClipOverlap() const { return m_allowClipOverlap; }
@@ -373,6 +500,29 @@ public:
     bool mediaGridMode() const { return m_mediaViewMode == QLatin1String("grid"); }
     QString mediaViewMode() const { return m_mediaViewMode; }
     bool autoKeyEnabled() const { return m_autoKeyEnabled; }
+    bool timelineOverviewVisible() const { return m_timelineOverviewVisible; }
+    void setTimelineOverviewVisible(bool visible);
+    bool audioMixerVisible() const { return m_audioMixerVisible; }
+    void setAudioMixerVisible(bool visible);
+    qreal audioMixerWidth() const { return m_audioMixerWidth; }
+    void setAudioMixerWidth(qreal width);
+    double masterVolume() const;
+    void setMasterVolume(double volume);
+    bool masterMuted() const;
+    void setMasterMuted(bool muted);
+    qreal trackLabelsWidth() const { return m_trackLabelsWidth; }
+    void setTrackLabelsWidth(qreal width);
+    QStringList timelineToolbarItems() const { return m_timelineToolbarItems; }
+    QStringList timelineMenuItems() const { return m_timelineMenuItems; }
+    Q_INVOKABLE void setTimelineToolbarLayout(const QStringList &toolbarItems,
+                                              const QStringList &menuItems);
+    // Every clip in the project as a flat run of numbers — lane, clip-type code, start seconds,
+    // duration seconds — for the overview strip's canvas. Flat because the strip repaints off
+    // it: a list of numbers costs a fraction of what converting the clip graph to JS does.
+    Q_INVOKABLE QVariantList timelineOverviewBlocks() const;
+    // How many bands the strip splits its height into. Adjustment lanes are drawn inside their
+    // parent's row on the timeline and get no band of their own here.
+    Q_INVOKABLE int timelineOverviewLaneCount() const;
     bool reopenLastProject() const { return m_reopenLastProject; }
     bool vaapiZeroCopy() const { return m_vaapiZeroCopy; }
     bool vaapiZeroCopySupported() const;
@@ -408,6 +558,8 @@ public:
     bool editingAsset() const { return m_editingAsset; }
     double assetEditProgress() const { return m_assetEditProgress; }
     QString assetEditStatus() const { return m_assetEditStatus; }
+    bool assetEditIsConversion() const { return m_assetEditIsConversion; }
+    QString assetEditName() const { return m_assetEditKeepName; }
     double subtitleGenProgress() const { return m_subtitleGenProgress; }
     QString subtitleGenStatus() const { return m_subtitleGenStatus; }
     bool segmenting() const { return m_segmenting; }
@@ -441,6 +593,16 @@ public:
     int selectedTrack() const { return m_selectedTrack; }
     int selectedClip() const { return m_selectedClip; }
     QVariantList selection() const;
+    int selectionRevision() const { return m_selectionRevision; }
+    int selectionCount() const { return m_selection.size(); }
+
+    // For the scene-graph timeline, which draws in C++ and should not go through QVariant.
+    // Same values the QML waveform and filmstrip queries return; empty means still decoding.
+    QVector<float> waveformDisplayPeaks(const QString &path, double startSeconds, double durSeconds,
+                                        int buckets, int audioStreamIndex, int channel = -1) const;
+    QStringList waveformChannelNames(const QString &path, int audioStreamIndex) const;
+    QString filmstripTilePath(const QString &path, int level, qint64 index,
+                              int rotationCorrection) const;
     QVariantMap selectedClipData() const;
     QVariantList selectedClipEffects() const;
     QVariantList selectedClipAudioEffects() const;
@@ -448,7 +610,25 @@ public:
     int selectedTransitionTrack() const { return m_selectedTransitionTrack; }
     int selectedTransitionLeftClip() const { return m_selectedTransitionLeftClip; }
     bool guidesEnabled() const { return m_guidesEnabled; }
-    QString guideType() const { return m_guideType; }
+    QVariantList guideSets() const;
+    QVariantList guideItems() const;
+    Q_INVOKABLE void setGuideSetActive(const QString &id, bool active);
+    // Edges of the active guides for a canvas of this size, as {x: [px], y: [px]}.
+    Q_INVOKABLE QVariantMap guideSnapTargets(double width, double height) const;
+    // Library editing. Built-in sets and project-only copies are read-only; each returns the new id.
+    Q_INVOKABLE QString createGuideSet(const QString &name);
+    Q_INVOKABLE QString duplicateGuideSet(const QString &id);
+    Q_INVOKABLE void renameGuideSet(const QString &id, const QString &name);
+    Q_INVOKABLE void deleteGuideSet(const QString &id);
+    // Copies a set the project carries into this machine's library.
+    Q_INVOKABLE void saveGuideSetToLibrary(const QString &id);
+    Q_INVOKABLE QString addGuideItem(const QString &setId, const QString &kind);
+    // key: pos, left, top, right, bottom, aspectW, aspectH, color, opacity or locked.
+    Q_INVOKABLE void setGuideItemProperty(const QString &setId, const QString &itemId,
+                                          const QString &key, const QVariant &value);
+    Q_INVOKABLE void removeGuideItem(const QString &setId, const QString &itemId);
+    QString guideEditSetId() const { return m_guideEditSetId; }
+    void setGuideEditSetId(const QString &id);
     QVariantMap background() const;
     QVariantList actions() const;
     QVariantList bookmarks() const;
@@ -460,6 +640,7 @@ public:
     QString projectName() const;
     QString lastMessage() const { return m_lastMessage; }
     QString lastMessageSeverity() const { return m_lastMessageSeverity; }
+    bool projectLoadPending() const { return m_projectLoadPending; }
     int draggingAssetIndex() const { return m_draggingAssetIndex; }
     void setDraggingAssetIndex(int index);
     bool assetPreviewWindowOpen() const { return m_assetPreviewWindowOpen; }
@@ -502,6 +683,13 @@ public:
     Q_INVOKABLE void copyMcpClaudeCommand();
     Q_INVOKABLE void copyMcpStdioSnippet();
     Q_INVOKABLE void copyMcpAgentGuide();
+    Q_INVOKABLE void rotateMcpToken();
+    bool mcpStartOnLaunch() const { return m_mcpStartOnLaunch; }
+    Q_INVOKABLE void setMcpStartOnLaunch(bool enabled);
+    // Starts the server if mcpStartOnLaunch is set. GUI-only — called once from
+    // Main.qml's startup sequence; headless mode never calls this, since it configures
+    // and starts the server itself from --mcp-port/--mcp-token/--mcp-stdio.
+    Q_INVOKABLE void applyMcpStartOnLaunch();
     QString mcpAgentGuide() const;
     Q_INVOKABLE QVariantMap debugInfo() const;
     Q_INVOKABLE QString debugInfoText() const;
@@ -516,7 +704,13 @@ public:
     // One paste for a bug report: host facts and codec support followed by what playback is
     // actually doing. Split across two clipboard copies, reporters send whichever tab they
     // happened to have open, which is rarely the one that explains the problem.
-    Q_INVOKABLE void copyDiagnosticsReport(const QVariantMap &playbackInfo);
+    //
+    // `benchmarkInfo` carries only the sweep's own sections — the live rows are collected here,
+    // beside the host facts. Taking them from the dialog instead meant the two halves of a
+    // pasted report described different moments: the rows were captured when the dialog opened
+    // and never refreshed, so a report could say NVDEC in one section and Direct3D 11 in the
+    // other, for the same machine, in the same paste.
+    Q_INVOKABLE void copyDiagnosticsReport(const QVariantMap &benchmarkInfo);
 
     // MCP helpers (GUI thread). Used by src/mcp, not QML.
     QPair<int, int> mcpLocateClip(const QString &id) const;
@@ -573,7 +767,7 @@ public:
     QJsonObject mcpWaveformImage(const QString &mode, int trackIndex, int clipIndex,
                                  const QString &assetId, double startSeconds, double durSeconds,
                                  int width, int height, bool spectrogram,
-                                 int summaryBuckets) const;
+                                 int summaryBuckets, bool words = true) const;
     bool mcpSetWorkArea(double inSeconds, double outSeconds);
 
     // Audio for agents. All of these block: the QML-facing waveform getters return empty on the
@@ -608,6 +802,23 @@ public:
     // Which model addons are installed, so an agent can say what to install rather than
     // retrying blindly.
     QJsonObject mcpAiCapabilities() const;
+    // Transcript-first editing. Transcripts live on the asset (Project::transcript) in source time.
+    QJsonObject mcpTranscribe(const QStringList &assetIds, const QJsonObject &options);
+    QJsonObject mcpGetTranscript(const QString &assetId, int trackIndex, int clipIndex,
+                                 double startSeconds, double endSeconds, const QJsonObject &options) const;
+    QJsonObject mcpDiarize(const QString &assetId, const QJsonObject &options);
+    QJsonObject mcpKeepRanges(int trackIndex, int clipIndex, const QJsonArray &ranges, double padding,
+                              double declick, bool ripple);
+    QJsonObject mcpAssemble(const QJsonArray &edl, int trackIndex, bool atGiven, double atSeconds,
+                            double padding, double declick);
+    QJsonObject mcpCutWords(int trackIndex, int clipIndex, const QJsonObject &args);
+    QJsonObject mcpTtsGenerate(const QJsonObject &args);
+    QJsonObject mcpSfxGenerate(const QJsonObject &args);
+    QJsonObject mcpListVoices(const QJsonObject &args) const;
+    QJsonObject mcpCloudProviderStatus() const;
+    QJsonObject mcpGetJob(const QString &id) const;
+    QJsonObject mcpCancelJob(const QString &id);
+    JobRegistry *jobRegistry() const { return m_jobs; }
 
     int mcpBookmarkBeats(double startSeconds, double durSeconds, const QString &unit,
                          double minStrength, const QString &labelPrefix);
@@ -615,6 +826,7 @@ public:
     QJsonObject mcpSetClipVolume(int trackIndex, int clipIndex, double value, bool atGiven,
                                  double atSeconds);
     void mcpRememberExportSettings(const QVariantMap &settings);
+    QVariantMap mcpLastExportSettings() const;
     void mcpBeginBatch();
     void mcpEndBatch(const QString &text, bool pushUndo);
     QJsonObject mcpListHistory(int limit = 20) const;
@@ -624,9 +836,10 @@ public:
     QJsonObject mcpRestoreSnapshot(const QString &hash);
     QJsonObject mcpDetectSilence(int trackIndex, int clipIndex, double startSeconds,
                                  double durSeconds, double threshold, double minDuration,
-                                 double padding) const;
+                                 double padding, const QString &method = QStringLiteral("energy")) const;
     QJsonObject mcpRemoveSilence(int trackIndex, int clipIndex, double threshold,
-                                 double minDuration, double padding);
+                                 double minDuration, double padding, double declick = 0.03,
+                                 const QString &method = QStringLiteral("energy"));
     QJsonObject mcpAnalyzeLoudness(int trackIndex, int clipIndex, double startSeconds,
                                    double durSeconds) const;
     QJsonObject mcpNormalizeVolume(int trackIndex, int clipIndex, double targetLufs);
@@ -657,7 +870,6 @@ public:
     void setSelectedSubtitleCue(int index);
     void setProjectName(const QString &name);
     void setGuidesEnabled(bool enabled);
-    void setGuideType(const QString &type);
 
     Q_INVOKABLE void addClipFromAsset(int assetIndex);
     // Multi-select "Add to timeline": each asset lands on its own kind-appropriate default
@@ -726,8 +938,18 @@ public:
     Q_INVOKABLE bool saveAssetEdit(int assetIndex, double inSeconds, double outSeconds,
                                    double cropX, double cropY, double cropW, double cropH);
     Q_INVOKABLE void cancelAssetEdit();
+    // "Convert to edit-friendly format": re-encodes each video asset onto a constant, standard
+    // frame rate and swaps it in, one at a time, the same undoable way a crop does, marking the
+    // asset edit-friendly. The original file is left where it was.
+    Q_INVOKABLE void convertAssetsToConstantFrameRate(const QStringList &assetIds);
     Q_INVOKABLE bool trackAcceptsAsset(int trackIndex, int assetIndex) const;
     Q_INVOKABLE QString trackTypeForAsset(int assetIndex) const;
+    // The same two questions asked of a bare media kind ("video", "audio", "image", ...) rather
+    // than of a bin row. A file dragged in from the file manager has no row yet — it is not
+    // imported until it is dropped — but its extension already says which track it belongs on,
+    // which is all the drag preview needs to promise a landing spot.
+    Q_INVOKABLE bool trackAcceptsKind(int trackIndex, const QString &mediaKind) const;
+    Q_INVOKABLE QString trackTypeForKind(const QString &mediaKind) const;
     // presetId applies a built-in style pack on create; empty keeps the default text style.
     Q_INVOKABLE void addTextClip(const QString &text, double atSeconds,
                                  const QString &presetId = QString());
@@ -736,12 +958,24 @@ public:
     Q_INVOKABLE bool importSubtitleFile(const QUrl &url, double atSeconds = -1.0);
     // Replace cues on an existing subtitle clip from a .srt file.
     Q_INVOKABLE bool importSubtitleFileIntoClip(int trackIndex, int clipIndex, const QUrl &url);
-    // Export a subtitle clip's cues to a .srt file (clip-local timestamps).
-    Q_INVOKABLE bool exportSubtitleFile(int trackIndex, int clipIndex, const QUrl &url);
+    // Export a subtitle clip's cues to a .srt file. Timestamps are clip-local unless timelineTimes,
+    // which offsets them by the clip's start so they line up with the exported video.
+    Q_INVOKABLE bool exportSubtitleFile(int trackIndex, int clipIndex, const QUrl &url,
+                                        bool timelineTimes = false);
     // maxWordsPerCue caps words per caption; 0 keeps the recommended (character-width) packing.
     Q_INVOKABLE void generateSubtitlesForClip(int trackIndex, int clipIndex,
                                               const QString &language = QString(),
                                               int maxWordsPerCue = 0);
+    // Captions every selected video/audio clip into one subtitle clip (falls back to the focused
+    // clip). Returns false when the selection cannot be transcribed, e.g. clips overlap in time.
+    Q_INVOKABLE bool generateSubtitlesForSelection(const QString &language = QString(),
+                                                   int maxWordsPerCue = 0);
+    // Same, for the given (track, clip) pairs instead of the selection.
+    bool generateSubtitlesForClips(const QList<QPair<int, int>> &pairs, const QString &language = QString(),
+                                   int maxWordsPerCue = 0);
+    // Captions every video/audio clip on the track within [startSec, endSec) into one subtitle clip.
+    bool generateSubtitlesForRange(int trackIndex, double startSec, double endSec,
+                                   const QString &language = QString(), int maxWordsPerCue = 0);
     Q_INVOKABLE void cancelSubtitleGeneration();
     Q_INVOKABLE QVariantList whisperLanguages();
     // points: [{x, y, include}] with x/y normalized to the source frame.
@@ -774,6 +1008,7 @@ public:
     bool multicamActive() const { return m_multicamActive; }
     QVariantList multicamAngles() const;
     int multicamActiveAngle() const;
+    quint64 multicamPlayheadSignature() const;
     int multicamRevision() const { return m_multicamRevision; }
     QVariantList multicamProgramClips() const;
     bool multicamCanSetUp() const;
@@ -874,6 +1109,20 @@ public:
     Q_INVOKABLE void clearFaceTrack(int trackIndex, int clipIndex);
     Q_INVOKABLE bool faceDetectionAvailable();
 
+    // Estimates the clip's depth for the depth effects as a JobRegistry "depth" job targeting the
+    // clip id. Returns the job id, or empty when it could not start (the reason goes to
+    // lastMessage). The sidecar lands on the clip through the undo stack.
+    Q_INVOKABLE QString estimateDepthForClip(int trackIndex, int clipIndex, bool highQuality = false);
+    Q_INVOKABLE void cancelDepthEstimation(const QString &clipId);
+    Q_INVOKABLE void clearDepth(int trackIndex, int clipIndex);
+    Q_INVOKABLE bool depthAvailable();
+    // {active, progress, status, error} of the newest depth job for a clip; empty if there is none.
+    Q_INVOKABLE QVariantMap depthJob(const QString &clipId) const;
+    // Normalised depth (0 far, 1 near) under a point of the clip's frame, given in 0..1 frame
+    // coordinates, at a timeline time (negative: the playhead). -1 when the clip has no depth.
+    Q_INVOKABLE double sampleDepthAt(int trackIndex, int clipIndex, double nx, double ny,
+                                     double atSeconds = -1.0);
+
     // Finds the shot boundaries in a clip's source range. Runs off the GUI thread; the
     // result lands in `scenes` and in the on-disk cache, never in the project. A cached
     // analysis for the same clip and settings is published immediately without rescanning.
@@ -928,7 +1177,8 @@ public:
     // become draggable and it stops following the clip.
     Q_INVOKABLE void unlinkAdjustment(int trackIndex, int clipIndex);
     Q_INVOKABLE void relinkAdjustment(int trackIndex, int clipIndex, int mediaTrack, int mediaClip);
-    Q_INVOKABLE void addStickerClip(const QString &stickerId, double atSeconds);
+    Q_INVOKABLE void addStickerClip(const QString &stickerId, double atSeconds,
+                                    int trackIndex = -1);
     Q_INVOKABLE QVariantList builtinStickers() const;
     Q_INVOKABLE QVariantList builtinStickerCategories() const;
     // The full emoji set behind the sticker packs; empty until the pack carrying the font is
@@ -936,7 +1186,8 @@ public:
     Q_INVOKABLE QVariantList emojiCatalog() const;
     Q_INVOKABLE QStringList emojiGroups() const;
     Q_INVOKABLE QString emojiFontFamily() const;
-    Q_INVOKABLE void addEmojiClip(const QString &emoji, const QString &name, double atSeconds);
+    Q_INVOKABLE void addEmojiClip(const QString &emoji, const QString &name, double atSeconds,
+                                  int trackIndex = -1);
     Q_INVOKABLE QVariantList builtinShapes() const;
     Q_INVOKABLE QVariantList builtinShapeCategories() const;
     Q_INVOKABLE QVariantList previewClipsAtPlayhead() const;
@@ -996,14 +1247,51 @@ public:
     Q_INVOKABLE void closeGap(int trackIndex, double gapStartSeconds);
     Q_INVOKABLE void alignSelectedClipLeft();
     Q_INVOKABLE void alignSelectedClipRight();
+    // Mirrors drift::Haptics::TrimState (Haptics.h), which has documented since it was written
+    // that it mirrors this enum. It does now — before, it mirrored nothing.
+    enum TrimOutcome {
+        TrimNone = 0,
+        TrimMoved = 1,
+        TrimSnapped = 2,
+        TrimBlocked = 3,
+    };
+    Q_ENUM(TrimOutcome)
+
     Q_INVOKABLE void splitSelectedClipLeft();
     Q_INVOKABLE void splitSelectedClipRight();
     Q_INVOKABLE void splitAtPlayhead();
     Q_INVOKABLE void splitClipAt(int trackIndex, int clipIndex, double seconds);
     Q_INVOKABLE void splitClipLeftAt(int trackIndex, int clipIndex, double seconds);
     Q_INVOKABLE void splitClipRightAt(int trackIndex, int clipIndex, double seconds);
-    Q_INVOKABLE void trimClipLeft(int trackIndex, int clipIndex, double newStart);
-    Q_INVOKABLE void trimClipRight(int trackIndex, int clipIndex, double newEnd);
+    // What a trim would do, without doing it. The drag previews through these: applying the
+    // edit on every pointer sample meant rebuilding the whole timeline model each time, which on
+    // a heavy project cost far more than the edit itself. The commit on release runs the very
+    // same computation, so the clip lands exactly where the preview showed it.
+    //
+    // Returns { ok, changed, outcome, start, duration, inPoint, outPoint } in seconds, or
+    // { ok: false } for an out-of-range clip.
+    Q_INVOKABLE QVariantMap previewTrimLeft(int trackIndex, int clipIndex, double newStart) const;
+    Q_INVOKABLE QVariantMap previewTrimRight(int trackIndex, int clipIndex, double newEnd) const;
+
+    // Opens and closes a trim drag. Scoping the gesture lets a repeated pointer position be
+    // rejected before any work is done, and lets the caller find out whether the edge ever
+    // actually moved — a press and release with no movement must not leave an undo step behind.
+    Q_INVOKABLE void beginTrimGesture(int trackIndex, int clipIndex, int side);
+    Q_INVOKABLE void endTrimGesture();
+    // The whole release in one call: the edit, closing the gesture, and the undo commit. Done
+    // separately from QML they sent three "the timeline changed" notifications -- one for the
+    // edit, one for the undo push, one from finishEdit -- and each rebuilt the entire timeline
+    // model. `side` < 0 is the left edge. `seconds` < 0 means the gesture never moved the edge,
+    // so there is nothing to commit.
+    Q_INVOKABLE void commitTrim(int trackIndex, int clipIndex, int side, double seconds);
+    Q_INVOKABLE bool trimGestureChangedProject() const { return m_trimGestureChanged; }
+
+    // One step of a live trim drag, in timeline seconds. Returns a TrimOutcome rather than void:
+    // snapping and every limit that can stop this edge live inside these, and the one the user
+    // most needs told — the source running out — has no cue on screen at all. Haptics::trimStep
+    // has always been handed this return value; until the enum existed it was reading undefined.
+    Q_INVOKABLE int trimClipLeft(int trackIndex, int clipIndex, double newStart);
+    Q_INVOKABLE int trimClipRight(int trackIndex, int clipIndex, double newEnd);
     Q_INVOKABLE void setClipTrim(int trackIndex, int clipIndex, double inPoint, double outPoint);
     Q_INVOKABLE void setClipStart(int trackIndex, int clipIndex, double start);
     Q_INVOKABLE void setClipDuration(int trackIndex, int clipIndex, double duration);
@@ -1103,8 +1391,37 @@ public:
     Q_INVOKABLE void setClipOrientation(int trackIndex, int clipIndex, int degrees);
     Q_INVOKABLE bool canMergeSelection() const;
     Q_INVOKABLE void mergeSelectedClips();
+    // True when the track holds two or more subtitle clips.
+    Q_INVOKABLE bool canMergeAllSubtitlesOnTrack(int trackIndex) const;
+    // Merge every subtitle clip on the track into one, regardless of the selection.
+    Q_INVOKABLE void mergeAllSubtitlesOnTrack(int trackIndex);
+    // One text clip per non-empty cue, placed at the cue's time on a text track; the subtitle
+    // clip is removed. Each keeps the subtitle's style and layout.
+    Q_INVOKABLE void convertSubtitleToTextClips(int trackIndex, int clipIndex);
+    // True when the selection is made up only of text clips.
+    Q_INVOKABLE bool canConvertSelectionToSubtitle() const;
+    // Replaces the selected text clips with one subtitle clip, one cue per text clip. Style,
+    // layout and keyframes come from the earliest clip; the rest contribute only text and timing.
+    Q_INVOKABLE void convertSelectionToSubtitle();
     Q_INVOKABLE bool canSeparateAudioSelection() const;
     Q_INVOKABLE void separateAudioFromSelection();
+
+    // Composite clips: a nested timeline played as one clip. Making one moves the selection (and
+    // its linked partners) into a new sequence and leaves a composite clip in its place.
+    Q_INVOKABLE bool canMakeCompositeFromSelection() const;
+    Q_INVOKABLE void makeCompositeFromSelection();
+    QVariantList sequenceTabs() const;
+    // Every composite in the project as [{id, name}], open or not, for the timeline's switcher.
+    Q_INVOKABLE QVariantList compositeSequences() const;
+    QString activeSequenceId() const { return m_project.activeSequenceId(); }
+    // Opens (or switches to) a composite's tab. "" switches to the main timeline.
+    Q_INVOKABLE void openSequence(const QString &sequenceId);
+    Q_INVOKABLE void openCompositeClip(int trackIndex, int clipIndex);
+    Q_INVOKABLE void openCompositeAsset(const QString &assetId);
+    Q_INVOKABLE void closeSequenceTab(const QString &sequenceId);
+    // Renders the composite clip's range to a new video file and swaps the clip (and any audio
+    // separated from it) over to that file. Runs in the background on the export slot.
+    Q_INVOKABLE bool flattenComposite(int trackIndex, int clipIndex);
     Q_INVOKABLE void separateAllAudioTracks(int trackIndex, int clipIndex);
     Q_INVOKABLE void separateAllAudioTracksFromSelection();
     Q_INVOKABLE QVariantList clipAudioStreams(int trackIndex, int clipIndex) const;
@@ -1138,6 +1455,10 @@ public:
     // three lookups out of step: the host clip's rect at the playhead, and the mask layers on
     // that track covering it. Empty when the selection names no maskable track.
     Q_INVOKABLE QVariantMap maskEditorState() const;
+    // What the preview's depth handles need, as one snapshot: the selected media clip's frame on
+    // the canvas and every enabled depth effect with a handle (relight, depth of field) on its
+    // stack, with parameters resolved at the playhead. Empty when there is nothing to show.
+    Q_INVOKABLE QVariantMap depthEffectEditorState() const;
     // Partial patch: only the keys present are applied, like setTextStyle.
     Q_INVOKABLE void setShapeStyle(int trackIndex, int clipIndex, const QVariantMap &style);
 
@@ -1159,21 +1480,39 @@ public:
     Q_INVOKABLE QVariantMap inspectVector(const QString &source, const QString &kind = {}) const;
     Q_INVOKABLE QVariantMap inspectVectorClip(int trackIndex, int clipIndex) const;
     Q_INVOKABLE QString vectorSourceText(int trackIndex, int clipIndex) const;
+    // 3D model (.glb) clips. opts keys: animation (index), loop, offset (seconds), name, duration
+    // (seconds; default = the first animation's length, 5 s for a static model), and the pose /
+    // light statics (scale, depth, rotX, rotY, rotZ, lightYaw, lightPitch, lightIntensity,
+    // ambient) as plain values — keyframe them through setClipKeyframe with "model3d.<key>".
+    Q_INVOKABLE QVariantMap addModel3dClip(const QString &path, int trackIndex, double atSeconds,
+                                           const QVariantMap &opts = {});
+    Q_INVOKABLE QVariantMap setModel3dSource(int trackIndex, int clipIndex, const QString &path,
+                                             const QVariantMap &opts = {});
+    // Returns an error string, empty on success.
+    Q_INVOKABLE QString setModel3dOptions(int trackIndex, int clipIndex, const QVariantMap &opts);
+    Q_INVOKABLE QVariantMap inspectModel3d(const QString &path) const;
+    Q_INVOKABLE QVariantMap inspectModel3dClip(int trackIndex, int clipIndex) const;
     Q_INVOKABLE void setClipFade(int trackIndex, int clipIndex, double fadeInSeconds, double fadeOutSeconds);
     Q_INVOKABLE void setClipFadeCurve(int trackIndex, int clipIndex, const QString &curve);
     // which: "animIn" | "animOut". Partial patch: kind / duration / curve (or legacy ease).
     Q_INVOKABLE void setClipAnimation(int trackIndex, int clipIndex, const QString &which,
                                       const QVariantMap &patch);
-    Q_INVOKABLE void addTransition(int trackIndex, int clipIndex, const QString &kind, double durationSeconds);
+    // linkedAudio: also add the same transition between the two clips' linked audio, when they sit
+    // next to each other on one audio track.
+    Q_INVOKABLE void addTransition(int trackIndex, int clipIndex, const QString &kind, double durationSeconds,
+                                   bool linkedAudio = true);
     Q_INVOKABLE void removeTransition(int trackIndex, const QString &transitionId);
     Q_INVOKABLE void setTransitionDuration(int trackIndex, const QString &transitionId, double durationSeconds);
     Q_INVOKABLE void setTransitionKind(int trackIndex, const QString &transitionId, const QString &kind);
-    Q_INVOKABLE void setTransitionParam(int trackIndex, const QString &transitionId, const QString &key,
+    Q_INVOKABLE bool setTransitionParam(int trackIndex, const QString &transitionId, const QString &key,
                                         double value);
     Q_INVOKABLE void previewSetTransitionParam(int trackIndex, const QString &transitionId,
                                                const QString &key, double value);
     Q_INVOKABLE QVariantMap transitionBetweenClips(int trackIndex, int clipIndex) const;
     Q_INVOKABLE QVariantList transitionKinds() const;
+    // The kinds that make sense on this track: on an audio track only those with an audible
+    // curve (crossfade, dip); everything elsewhere.
+    Q_INVOKABLE QVariantList transitionKindsForTrack(int trackIndex) const;
     Q_INVOKABLE QVariantList transitionCategories() const;
     Q_INVOKABLE void selectTransition(int trackIndex, int leftClipIndex);
     Q_INVOKABLE void clearTransitionSelection();
@@ -1225,22 +1564,45 @@ public:
     Q_INVOKABLE void removeEffect(int trackIndex, int clipIndex, int effectIndex);
     Q_INVOKABLE void setEffectEnabled(int trackIndex, int clipIndex, int effectIndex, bool enabled);
     Q_INVOKABLE void moveEffect(int trackIndex, int clipIndex, int fromIndex, int toIndex);
-    Q_INVOKABLE void setEffectParam(int trackIndex, int clipIndex, int effectIndex, const QString &key,
+    Q_INVOKABLE bool setEffectParam(int trackIndex, int clipIndex, int effectIndex, const QString &key,
                                     double value);
-    Q_INVOKABLE void setEffectColorParam(int trackIndex, int clipIndex, int effectIndex,
+    Q_INVOKABLE bool setEffectColorParam(int trackIndex, int clipIndex, int effectIndex,
                                          const QString &key, const QString &value);
     // File-path params (model3d .glb). Same commit-once path as colour — no preview stream.
     // Takes a QUrl like replaceAssetSource / importSubtitleFile so the portal and native
     // dialogs hand us a real local path without QML having to call toLocalFile().
-    Q_INVOKABLE void setEffectStringParam(int trackIndex, int clipIndex, int effectIndex,
+    Q_INVOKABLE bool setEffectStringParam(int trackIndex, int clipIndex, int effectIndex,
                                           const QString &key, const QUrl &url);
+    // Clip params ("clip" type, e.g. the clip Behind Subject sits in). Empty clears the choice
+    // back to automatic.
+    Q_INVOKABLE bool setEffectClipParam(int trackIndex, int clipIndex, int effectIndex,
+                                        const QString &key, const QString &clipId);
+    // What a clip param can point at: every video or image clip on a visible track beneath the
+    // clip that overlaps it in time, nearest track first. [{id, name, track, clip, hasDepth}]
+    Q_INVOKABLE QVariantList effectClipCandidates(int trackIndex, int clipIndex) const;
+    // The clip a clip param resolves to right now — the chosen one, or with none chosen the
+    // nearest video or image clip beneath at the playhead, which is what the renderer uses.
+    // {explicit, id, name, track, clip, hasDepth}; empty when there is none.
+    Q_INVOKABLE QVariantMap effectClipTarget(int trackIndex, int clipIndex, int effectIndex,
+                                             const QString &key) const;
+    // The Face Props effect's picker. [{id, name, thumbnailPath, description, license, modelPath,
+    // removable}]; removable is true for props the user imported.
+    Q_INVOKABLE QVariantList facePropLibrary() const;
+    // A .zip or a folder holding one or many props (each a folder with a prop.json). Reports in the
+    // toast; returns {installed: [ids], errors: [messages]}.
+    Q_INVOKABLE QVariantMap importFaceProps(const QUrl &url);
+    Q_INVOKABLE bool removeFaceProp(const QString &propId);
+    // Points a face_props effect at the prop and resets its placement to the prop's fitted values,
+    // as one undo step. Lighting and the face index are the user's and stay as they are.
+    Q_INVOKABLE bool applyFaceProp(int trackIndex, int clipIndex, int effectIndex,
+                                   const QString &propId);
     Q_INVOKABLE QVariantList audioEffectCatalog() const;
     Q_INVOKABLE QVariantList audioEffectCategories() const;
     Q_INVOKABLE void addAudioEffect(int trackIndex, int clipIndex, const QString &effectId);
     Q_INVOKABLE void removeAudioEffect(int trackIndex, int clipIndex, int effectIndex);
     Q_INVOKABLE void setAudioEffectEnabled(int trackIndex, int clipIndex, int effectIndex, bool enabled);
     Q_INVOKABLE void moveAudioEffect(int trackIndex, int clipIndex, int fromIndex, int toIndex);
-    Q_INVOKABLE void setAudioEffectParam(int trackIndex, int clipIndex, int effectIndex,
+    Q_INVOKABLE bool setAudioEffectParam(int trackIndex, int clipIndex, int effectIndex,
                                          const QString &key, double value);
     Q_INVOKABLE void previewSetAudioEffectParam(int trackIndex, int clipIndex, int effectIndex,
                                                 const QString &key, double value);
@@ -1274,13 +1636,27 @@ public:
     Q_INVOKABLE bool importUserEffectPreset(const QUrl &fileUrl);
     Q_INVOKABLE void setTrackMuted(int trackIndex, bool muted);
     Q_INVOKABLE void setTrackHidden(int trackIndex, bool hidden);
+    Q_INVOKABLE void setTrackSolo(int trackIndex, bool solo);
+    Q_INVOKABLE bool trackSolo(int trackIndex) const;
+    Q_INVOKABLE void setTrackVolume(int trackIndex, double volume);
+    Q_INVOKABLE void previewTrackVolume(int trackIndex, double volume);
+    Q_INVOKABLE double trackVolume(int trackIndex) const;
+    Q_INVOKABLE void setTrackPan(int trackIndex, double pan);
+    Q_INVOKABLE void previewTrackPan(int trackIndex, double pan);
+    Q_INVOKABLE double trackPan(int trackIndex) const;
+    Q_INVOKABLE QVariantMap trackAudioLevels(int trackIndex) const;
+    Q_INVOKABLE QVariantMap masterAudioLevels() const;
+    // [masterL, masterR, track0L, track0R, ...] in one call, peaks since the previous call.
+    // The mixer meters poll this rather than one QVariantMap per strip per tick.
+    Q_INVOKABLE QList<float> meterLevels(const QList<int> &trackIndexes) const;
     // Empty name clears the custom label, falling back to the type+position display
     // ("Video 1") again.
     Q_INVOKABLE bool renameTrack(int trackIndex, const QString &name);
     Q_INVOKABLE bool trackMuted(int trackIndex) const;
     Q_INVOKABLE bool trackHidden(int trackIndex) const;
-    Q_INVOKABLE void setTrackShowWaveform(int trackIndex, bool show);
-    Q_INVOKABLE bool trackShowWaveform(int trackIndex) const;
+    // 0 = filmstrip only, 1 = filmstrip + waveform bar, 2 = waveform only (Track::ClipDisplay).
+    Q_INVOKABLE void setTrackClipDisplay(int trackIndex, int mode);
+    Q_INVOKABLE int trackClipDisplay(int trackIndex) const;
     Q_INVOKABLE void setTrackShowChannelWaveforms(int trackIndex, bool show);
     Q_INVOKABLE bool trackShowChannelWaveforms(int trackIndex) const;
     // Per-track row height multiplier (DAW-style lane resize). Clamped to
@@ -1348,7 +1724,12 @@ public:
     Q_INVOKABLE double selectionEarliestStartSeconds() const;
     // Premiere-style trim pointer. side: -1=start, 0=off, 1=end.
     // heightPx scales the cursor to the hovered clip/track height.
-    Q_INVOKABLE void setTimelineTrimCursor(int side, int heightPx = 0);
+    // The trim pointer is an application-wide override cursor, but every clip delegate has an
+    // opinion about it. `owner` says who is asking: a clear from anyone but the current owner is
+    // ignored, so a neighbouring clip's hover ending cannot drop the cursor of the clip actually
+    // being trimmed.
+    Q_INVOKABLE void setTimelineTrimCursor(int side, int heightPx = 0, int owner = 0);
+    Q_INVOKABLE int acquireTrimCursorToken() { return ++m_trimCursorTokenSeq; }
     Q_INVOKABLE QString shortcutFor(const QString &actionId) const;
     // Returns an empty string on success, or the label of the action already bound to
     // `keys` when the binding is refused. Qt resolves an ambiguous application
@@ -1358,6 +1739,18 @@ public:
     // Restores every default binding. Backspace clears a binding and persists the
     // empty string, so without this there was no route back from having cleared one.
     Q_INVOKABLE void resetShortcuts();
+    // Canonical chord string for a key event (Ctrl+Shift+Left, …). Same names the
+    // Shortcut items and the shortcut-capture field use, so a rebound chord still
+    // matches when it is dispatched from Keys.onPressed rather than Shortcut {}.
+    Q_INVOKABLE QString shortcutChord(int key, int modifiers) const;
+    // The action bound to this arrow-key chord, or an empty string when the key is
+    // not an arrow or nothing claims it. ApplicationShortcut matching for Left/Right
+    // is unreliable on some Wayland compositors (Hyprland / Omarchy), and would also
+    // steal the keys from text fields, so the editor resolves those chords itself
+    // after the focused item. Main.qml dispatches the result through the same
+    // function the Shortcut items use — a few ids are QML state with no
+    // triggerAction branch, and calling triggerAction directly would do nothing.
+    Q_INVOKABLE QString actionForArrowChord(int key, int modifiers) const;
     Q_INVOKABLE void triggerAction(const QString &actionId);
     // Per-tab favorites in the assets panel (effects, sounds, shapes, stickers, transitions, templates).
     Q_INVOKABLE bool isAssetFavorite(const QString &tabId, const QString &itemId) const;
@@ -1373,7 +1766,10 @@ public:
     Q_INVOKABLE int keyboardModifiers() const;
     Q_INVOKABLE void undo();
     Q_INVOKABLE void redo();
-    Q_INVOKABLE double snapTime(double seconds) const;
+    // `excludeClipId` keeps a clip from snapping to its own edges while it is being dragged —
+    // the model still has it at its old position, so those two targets sit right under the
+    // pointer at the start of every move.
+    Q_INVOKABLE double snapTime(double seconds, const QString &excludeClipId = {}) const;
     Q_INVOKABLE QVariantList waveformPeaks(const QString &path) const;
     // Whole-file peaks sliced to a source window, for a dialog whose x axis is a clip's trimmed
     // range rather than the whole file. Shares the dense cache and the waveformReady signal with
@@ -1453,7 +1849,10 @@ public:
     Q_INVOKABLE void loadOtioTimeline(const QUrl &url);
     Q_INVOKABLE void cancelPackage();
     Q_INVOKABLE void loadProject(const QUrl &url);
-    Q_INVOKABLE void newProject();
+    // silent skips the "New project" status message — used by Close Project, which
+    // reuses this reset but reports its own "Project closed" message instead; setting
+    // lastMessage twice would queue two toasts, since each change is its own toast.
+    Q_INVOKABLE void newProject(bool silent = false);
     Q_INVOKABLE void openRecentProject(const QString &path);
     Q_INVOKABLE void clearRecentProjects();
     // Removes one path from the recents list without deleting the file on disk.
@@ -1502,7 +1901,11 @@ public:
     Q_INVOKABLE QString exportDefaultSuffix(const QString &container, bool audioOnly = false) const;
     Q_INVOKABLE void exportProject(const QUrl &outputUrl);
     Q_INVOKABLE void exportWithPreset(const QUrl &outputUrl, const QString &presetId);
-    Q_INVOKABLE void exportWithSettings(const QUrl &outputUrl, const QVariantMap &settings);
+    // `rememberChoice` is what keeps an agent export out of the export dialog's memory: the GUI
+    // stores what the user picked, an MCP export keeps its own (see mcpRememberExportSettings), and
+    // neither reaches into the other's.
+    Q_INVOKABLE void exportWithSettings(const QUrl &outputUrl, const QVariantMap &settings,
+                                        bool rememberChoice = true);
     Q_INVOKABLE void cancelExport();
     // Copies the finished export into the shared media collection and hands it to the system share
     // sheet. Deferred to this point rather than done as part of the export because it is a second
@@ -1538,10 +1941,24 @@ signals:
     void inlineTextEditingChanged();
     void externalProjectOpenRequested(const QUrl &url);
     void tracksChanged();
+    // A drag wrote these properties in place without announcing tracksChanged; the full refresh
+    // follows on commit. Keys are the propertyValueAt names ("x", "fx.2.light1_x"); one ending
+    // in ".*" covers every key under that prefix.
+    void clipPropertiesPreviewed(int trackIndex, int clipIndex, const QStringList &keys);
+    void previewDragActiveChanged();
     void playheadSecondsChanged();
+    void inspectorPlayheadChanged();
     void playingChanged();
     void audioOutputDevicesChanged();
     void audioOutputDeviceIdChanged();
+    void audioRecordingStateChanged();
+    void audioRecordingPausedChanged();
+    void audioRecordGainChanged();
+    void audioRecordLevelChanged();
+    void audioRecordSecondsChanged();
+    void audioRecordLivePeaksChanged();
+    void availableMicrophonesChanged();
+    void currentMicrophoneChanged();
     void snapEnabledChanged();
     void rippleEnabledChanged();
     void allowClipOverlapChanged();
@@ -1550,6 +1967,13 @@ signals:
     void mediaGridModeChanged();
     void mediaViewModeChanged();
     void autoKeyEnabledChanged();
+    void timelineOverviewVisibleChanged();
+    void audioMixerVisibleChanged();
+    void audioMixerWidthChanged();
+    void masterVolumeChanged();
+    void masterMutedChanged();
+    void trackLabelsWidthChanged();
+    void timelineToolbarLayoutChanged();
     void reopenLastProjectChanged();
     void vaapiZeroCopyChanged();
     void mediaCodecZeroCopyChanged();
@@ -1560,6 +1984,7 @@ signals:
     void invertTimelineScrollChanged();
     void mcpRunningChanged();
     void mcpErrorChanged();
+    void mcpStartOnLaunchChanged();
     void uiLanguageChanged();
     void uiScaleChanged();
     void keyframeGraphVisibilityChanged();
@@ -1614,6 +2039,7 @@ signals:
     void transitionCurveChanged();
     void transitionCurveApplied();
     void faceDetectingChanged();
+    void depthJobChanged(const QString &clipId);
     void faceDetectProgressChanged();
     void faceDetectStatusChanged();
     void faceDetectionFinished(bool ok, const QString &message);
@@ -1625,6 +2051,7 @@ signals:
     void currentBinFolderIdChanged();
     void selectionChanged();
     void editCapabilitiesChanged();
+    void sequenceTabsChanged();
     void selectedClipDataChanged();
     void selectedTransitionDataChanged();
     void bookmarksChanged();
@@ -1641,6 +2068,14 @@ signals:
     // Addons the freshly opened project needs but that are not installed. Each entry is
     // id / name / version / kinds, for MissingAddonsDialog.
     void missingAddons(const QVariantList &addons);
+    // Terminal result of loadProject()/loadProjectJson(): exactly one per call that
+    // reaches a load generation still current when it finishes. A bundle with embedded
+    // media raises the "Unpacking project media…" lastMessage first and this only once
+    // extraction and apply are done — QML waiting to know whether an open landed (e.g.
+    // to dismiss a "pick a project" screen) needs this rather than lastMessageChanged,
+    // which fires for that progress message too.
+    void projectLoadFinished(bool ok, const QString &message);
+    void projectLoadPendingChanged();
     void lastMessageChanged();
     void draggingAssetIndexChanged();
     void assetPreviewWindowOpenChanged();
@@ -1654,10 +2089,12 @@ signals:
     void subtitleWaveformReady(double startSeconds, double durSeconds, int sampleCount);
     void beatAnalysisChanged();
     void guidesChanged();
+    void guideEditSetIdChanged();
     void shortcutsChanged();
     void assetFavoritesChanged();
     void userTextPresetsChanged();
     void userEffectPresetsChanged();
+    void facePropsChanged();
     void canvasCropModeChanged();
     void maskEditModeChanged();
     void maskEditActiveChanged();
@@ -1691,6 +2128,45 @@ signals:
     void openPasteAttributesRequested();
 
 protected:
+    // Every path that changes the timeline model goes through this instead of a bare
+    // `emit tracksChanged()`. The cache has to be dropped *before* the signal goes out: whether
+    // a slot connected in the constructor runs ahead of QML's binding re-evaluation is not a
+    // guarantee worth depending on, and getting it wrong would serve QML one stale rebuild per
+    // emission — intermittent, and indistinguishable from a model bug.
+    // The trim math, factored out so the live preview and the commit cannot drift apart: both
+    // call this, one discards the result and one writes it back. `clip` is the clip as it would
+    // be after the trim; `changed` is false when the edge had nowhere to go.
+    struct TrimComputation {
+        bool ok = false;
+        bool changed = false;
+        int outcome = 0;
+        drift::Clip clip;
+    };
+    TrimComputation computeTrimLeft(int trackIndex, int clipIndex, double newStart) const;
+    TrimComputation computeTrimRight(int trackIndex, int clipIndex, double newEnd) const;
+    int applyTrim(int trackIndex, int clipIndex, const TrimComputation &computed);
+    static QVariantMap trimPreviewToMap(const TrimComputation &computed);
+
+    void notifyTracksChanged();
+
+    // Refills the per-track clip models from the project. Called by notifyTracksChanged() before
+    // the signal goes out, so a binding that wakes on tracksChanged already sees the new rows.
+    void syncClipModels();
+    TimelineClipsModel::Decorations trackDecorations(const drift::Track &track,
+                                                     const QList<int> &laneIndexes) const;
+    TimelineClipsModel::Row clipRow(const drift::Clip &clip, const drift::Clip *videoEffectHost,
+                                    const drift::Clip *audioEffectHost) const;
+    // Holds tracksChanged for the length of an operation that touches the project several times.
+    // The caches are still dropped immediately, so anything reading tracks() inside the batch
+    // sees fresh data -- only the notification waits, and only one goes out.
+    void beginTracksBatch() { ++m_tracksBatchDepth; }
+    void endTracksBatch();
+    int m_tracksBatchDepth = 0;
+    bool m_tracksBatchPending = false;
+    // Same rule as notifyTracksChanged(): bump the revision before the signal goes out, so no
+    // reader can observe the old value on the new selection.
+    void notifySelectionChanged();
+
     void pushProjectEdit(const drift::Project &before, const QString &text);
 
     // Lifts one effect, one audio effect, or the whole stack off a clip. Every copy and
@@ -1716,6 +2192,10 @@ protected:
     // Publishes a finished beat analysis into m_beatAnalysis / m_beatSnapTargets.
     void applyBeatAnalysis(const AudioBeatAnalysis &analysis, double startSeconds, double durSeconds,
                            const QByteArray &fingerprint);
+    // Builds m_shortcuts from the defaults plus whatever QSettings holds, migrating
+    // stored values that a new release has superseded and dropping any default that
+    // would end up sharing a chord with a stored one.
+    void loadShortcuts();
     void loadAssetFavorites();
     void saveAssetFavorites(const QString &tabId);
     void applyEffectTemplateInternal(int trackIndex, int clipIndex, const EffectTemplateEntry &entry,
@@ -1734,6 +2214,13 @@ protected:
     void rebuildBeatSnapTargets();
     // Beat onsets plus project bookmarks — anything clips should magnet to when snap is on.
     QList<drift::TimeUs> extraSnapTargets() const;
+    // Same list, rebuilt only when the beat grid, bookmarks or the work area move. It has no
+    // clip dependency, so an edit to the timeline does not invalidate it.
+    const QList<drift::TimeUs> &extraSnapTargetsCached() const;
+    void invalidateExtraSnapTargets() { m_extraSnapTargetsValid = false; }
+    // Snaps against the vector pinned for the current trim gesture, falling back to a one-shot
+    // build when called outside one.
+    drift::TimeUs snapTimeForGesture(drift::TimeUs rawUs) const;
     // Decodes one frame per angle at the playhead and publishes them to MulticamImageStore.
     // Coalesces: a refresh requested while one is in flight is dropped, not queued.
     void refreshMulticamTiles();
@@ -1748,6 +2235,7 @@ protected:
     void applyMulticamSlicesToProject(drift::Project &project, bool combined);
     void refreshSegmentationPreview();
     void runSegmentationSeed(int generation);
+    void finalizeDepth(const QString &clipId, const QString &path);
     void finalizeFaceDetection(const QString &clipId, const QString &trackPath,
                                drift::TimeUs srcOffsetUs);
     // Landmark a Face Swap source photo in the background and cache the result. Cheap enough
@@ -1770,11 +2258,33 @@ protected:
     void finalizeSegmentation(const QString &clipId, const QString &mattePath,
                               const QString &matteFgrPath,
                               drift::TimeUs matteSrcOffsetUs, const QString &outputMode);
+    struct SubtitleSource
+    {
+        QString path;
+        drift::TimeUs srcIn = 0;
+        drift::TimeUs srcOut = 0;
+        drift::TimeUs timelineStart = 0;
+        drift::TimeUs timelineDuration = 0;
+        double speed = 1.0;
+        bool reverse = false;
+        QString assetId;
+    };
+    static SubtitleSource subtitleSourceFromClip(const drift::Clip &clip);
+    // Captions straight from stored transcripts, when every source has a current one. Empty
+    // when any source would need transcribing.
+    std::optional<QList<drift::SubtitleCue>> cuesFromStoredTranscripts(const QList<SubtitleSource> &sources,
+                                                                       drift::TimeUs rangeStart,
+                                                                       int maxWordsPerCue) const;
+    bool generateSubtitlesForSources(QList<SubtitleSource> sources, const QString &language,
+                                     int maxWordsPerCue);
     void finalizeGeneratedSubtitles(drift::TimeUs timelineStart, drift::TimeUs timelineDuration,
                                     const QList<drift::SubtitleCue> &cues);
     void finalizeDenoise(const QString &clipId, const QString &audioPath);
-    void watchStabilizeProgress(QProcess *process, const QString &clipId, qint64 durationUs,
-                                double rangeFrom, double rangeTo);
+    // Runs on the stabilize worker: maps a job's 0..1 onto [rangeFrom, rangeTo] of the clip's
+    // progress, posts it to the UI thread, and returns false once `cancel` is set.
+    std::function<bool(double)> stabilizeProgressReporter(const QString &clipId,
+                                                          const QSharedPointer<QAtomicInt> &cancel,
+                                                          double rangeFrom, double rangeTo);
     void setStabilizeProgress(const QString &clipId, double progress, const QString &status,
                               bool force);
     void clearStabilizeProgress(const QString &clipId);
@@ -1793,11 +2303,17 @@ protected:
 
     // Stickers and emoji are both a PNG dropped on an image track at the playhead.
     void addImageOverlayClip(const QString &path, const QString &name, const QString &emoji,
-                             double atSeconds, const QString &undoText);
+                             double atSeconds, const QString &undoText,
+                             int requestedTrack = -1);
 
+    // The inspector's and the MCP tools' view of a clip: every field, including the sub-maps
+    // only an open inspector reads. The timeline strip does NOT come through here — it reads
+    // clipRow() through TimelineClipsModel, which is what keeps an edit from rebuilding a
+    // textStyle map for every clip in the project.
+    //
     // `effectHost` supplies the stack to report for a media clip, whose effects now live on the
-    // adjustment linked to it. Passing it in rather than looking it up keeps a tracks() rebuild
-    // linear — resolving per clip would make it quadratic.
+    // adjustment linked to it. Passing it in rather than looking it up keeps a whole-project
+    // rebuild linear — resolving per clip would make it quadratic.
     // `faceSource` runs the other way: face landmarks are baked onto the media clip, but the
     // effects inspector now only ever sees the adjustment, so a linked adjustment reports the
     // clip it is pinned to. Null means "this clip's own", which is right for a media clip and for
@@ -1856,10 +2372,20 @@ protected:
     // can insert or reorder tracks, so the selection is carried across by id. Idempotent and
     // cheap when nothing is out of place, which is why it can run on every edit.
     void normalizeProjectStructure();
+    // Keeps open tabs pointing at sequences that exist, and the active one among them.
+    void reconcileSequenceTabs();
+    // A composite asset's duration follows its sequence's content.
+    void syncCompositeAssetDurations();
+    // Drops sequences no composite bin item refers to any more, leaving their tab if open.
+    void pruneOrphanSequences();
+    bool compositeAssetPlaceable(const QVariantMap &asset) const;
+    void finishFlatten(const QString &clipId, const QString &sequenceId, const QString &path,
+                       const QString &name, drift::TimeUs srcInUs, drift::TimeUs durationUs);
 
     // Keeps each lane adjacent to and directly above its parent, and demotes lanes whose parent
     // is no longer able to hold them.
     void normalizeAdjustmentLanes(drift::Project &project) const;
+    void clampStoredTransitionDurations(drift::Project &project) const;
 
     // Selection survives a track-list reshuffle by id rather than index arithmetic: a move now
     // drags a track's lanes with it, so the destination index no longer says where things landed.
@@ -1879,10 +2405,24 @@ protected:
     // Cached dense peaks for `path`, or nullptr while the off-thread decode is still running
     // (waveformReady is emitted when it lands).
     const MediaWaveform::Dense *densePeaksFor(const QString &path) const;
+    struct SegmentReplaceResult
+    {
+        QStringList ids;
+        drift::TimeUs deltaUs = 0;
+    };
+    // Replaces the clip at (trackIndex, clipIndex) and each linked partner with the segments
+    // `build` makes from it, keeping ids, links, transitions and pinned effects attached, then
+    // ripples every track in the group. No undo step: the caller snapshots and pushes one.
+    bool replaceClipGroupWithSegments(int trackIndex, int clipIndex,
+                                      const std::function<QList<drift::Clip>(const drift::Clip &)> &build,
+                                      bool ripple, SegmentReplaceResult *out, QString *error);
+    void trimClipGroupAt(int trackIndex, int clipIndex, drift::TimeUs atUs, bool dropLeft);
     void applyRippleShift(drift::Track &track, int fromClipIndex, drift::TimeUs delta);
     void restoreFilmstripsAfterLoad();
     void normalizeSelection();
     bool isValidClipIndex(int trackIndex, int clipIndex) const;
+    QList<int> subtitleMergeIndices(const QList<QPair<int, int>> &pairs) const;
+    void mergeSubtitleClipsAt(int trackIndex, QList<int> clipIndices);
 
     // Drops everything scoped to the outgoing project — clipboard, timeline-keyed caches, the
     // auxiliary-window sessions. Called by both newProject and applyProjectJson, before the
@@ -1891,6 +2431,18 @@ protected:
 
     QByteArray serializeProjectJson() const;
     bool applyProjectJson(const QByteArray &data, QString *error);
+    // Bracket every loadProject()/loadProjectJson() call, sync or async, success or
+    // failure, so projectLoadPending is accurate regardless of what triggered the load.
+    // beginProjectLoad() returns false (and acquires nothing) when a load already owns
+    // the flag — the caller must bail out without touching m_projectLoadPending itself,
+    // so a second, unrelated request can never clear the first one's pending state.
+    bool beginProjectLoad();
+    void finishProjectLoad(bool ok, const QString &message);
+    // The actual body of loadProjectJson(), run once beginProjectLoad() has succeeded.
+    // loadProject() delegates here directly for a JSON file — it already owns the
+    // pending flag from its own beginProjectLoad(), so the JSON path must not try to
+    // acquire it again (that would just no-op) nor release it early on failure.
+    void loadProjectJsonInternal(const QUrl &url);
     // Shared by saveProject and packageProject. `embedSource` forces every source asset into the
     // bundle; otherwise each keeps whatever mode it had, tracked in m_embeddedSources. GUI thread
     // only — packageProject builds the request here and hands the finished copy to its worker.
@@ -1926,7 +2478,9 @@ protected:
     void setDirty(bool dirty);
     void setCurrentProjectPath(const QString &path);
     void addRecentProject(const QString &path);
-    void writeRecoveryFile();
+    // Off the GUI thread unless `synchronous` (quitting), which waits out any write in flight.
+    void writeRecoveryFile(bool synchronous = false);
+    QJsonObject sessionJson() const;
     void deleteRecoveryFile();
     void detectRecoveryFile();
     static QString recoveryFilePath();
@@ -1939,11 +2493,17 @@ protected:
     AssetLibrary *m_assetLibrary = nullptr;
     AddonManager *m_addonManager = nullptr;
     MarketClient *m_marketClient = nullptr;
+    JobRegistry *m_jobs = nullptr;
+    CloudProviders *m_cloud = nullptr;
+    // An error object when `provider` can't be used yet (no key, no consent); empty when it can.
+    QJsonObject cloudUnavailable(const QString &provider) const;
+    // Imports a generated file into the bin, records what made it, optionally places it.
+    QJsonObject importGeneratedAudio(const QString &path, const QJsonObject &generator, const QJsonValue &place);
+    // Lands a finished transcript on its asset, unless the asset is gone or its file changed.
+    void storeTranscript(const QString &assetId, std::shared_ptr<drift::Transcript> transcript);
     BinFolderListModel m_binFolderModel;
     QString m_currentBinFolderId;
     bool m_importingFolder = false;
-    TimelineModel m_timelineModel;
-    ClipListModel m_clipListModel;
     // These trees must outlive m_playback: the compositor thread holds a bare
     // pointer into whichever one is live and may still be mid-composite at
     // teardown. During a multicam session that is m_multicamStaged, otherwise
@@ -1955,9 +2515,37 @@ protected:
     // Only for its audioOutputsChanged signal — the sinks resolve devices themselves.
     QMediaDevices m_mediaDevices;
     QString m_audioOutputDeviceId;
+    drift::AudioRecorder m_audioRecorder;
+    drift::TimeUs m_recordingStartPlayheadUs = 0;
+    int m_voiceoverCounter = 0;
     // The audio error already on screen, so a device that fails repeatedly toasts once.
     QString m_lastAudioError;
     QUndoStack m_undoStack;
+    // tracks() serialises every clip in the project into nested QVariantMaps, and used to do it
+    // once per binding that read it. Cached between edits; notifyTracksChanged() drops it.
+    mutable QVariantList m_tracksCache;
+    mutable bool m_tracksCacheValid = false;
+    // durationUs() is an uncached full scan behind the durationSeconds property, which notifies
+    // on the same signal and is read just as widely (the overview strip sizes itself from it).
+    mutable double m_durationSecondsCache = 0.0;
+    mutable bool m_durationCacheValid = false;
+    quint32 m_tracksRevision = 0;
+    // One model per track index, parented to this. Grown on demand and never shrunk: a Repeater
+    // holds the pointer it was handed, and deleting the model out from under it on a track
+    // removal would leave it dangling. An unused slot just holds no rows.
+    QList<TimelineClipsModel *> m_clipModels;
+    // Live trim drag scope. The memo rejects a repeated pointer position before snapTime() and
+    // the sync passes run; m_trimGestureChanged is what tells the caller whether the gesture
+    // earned an undo step.
+    mutable QList<drift::TimeUs> m_extraSnapTargetsCache;
+    mutable bool m_extraSnapTargetsValid = false;
+    // Pinned for the duration of a trim drag. Nothing can add or remove a clip mid-gesture, and
+    // the only targets that do move are the dragged clip's own edges.
+    drift::SnapTargets m_gestureSnapTargets;
+    bool m_trimGestureActive = false;
+    bool m_trimGestureChanged = false;
+    drift::TimeUs m_trimGestureLastInputUs = -1;
+    int m_trimGestureLastOutcome = 0;
     drift::TimeUs m_playheadUs = 0;
     bool m_playing = false;
     bool m_snapEnabled = true;
@@ -1970,6 +2558,12 @@ protected:
     QString m_workspaceLayoutPreferred = QStringLiteral("landscape");
     QString m_mediaViewMode = QStringLiteral("grid");
     bool m_autoKeyEnabled = false;
+    bool m_timelineOverviewVisible = false;
+    bool m_audioMixerVisible = false;
+    qreal m_audioMixerWidth = 0;
+    qreal m_trackLabelsWidth = 130;
+    QStringList m_timelineToolbarItems;
+    QStringList m_timelineMenuItems;
     bool m_reopenLastProject = false;
     bool m_vaapiZeroCopy = false;
     bool m_mediaCodecZeroCopy = false;
@@ -2004,6 +2598,9 @@ protected:
     QString m_assetEditKeepName;
     QString m_editingAssetId;
     QAtomicInt m_assetEditCancel = 0;
+    bool m_assetEditIsConversion = false;
+    // Asset ids waiting for convertAssetsToConstantFrameRate; the edit job runs one at a time.
+    QStringList m_conversionQueue;
     double m_subtitleGenProgress = 0.0;
     QString m_subtitleGenStatus;
     QAtomicInt m_subtitleGenCancel = 0;
@@ -2043,6 +2640,8 @@ protected:
     drift::TimeUs m_multicamRangeEnd = 0;
     QList<drift::MulticamCut> m_multicamCuts;
     int m_multicamRevision = 0;
+    quint64 m_multicamPlayheadSignature = 0;
+    QElapsedTimer m_inspectorPlayheadClock;
     // A refresh already running. Tiles are dropped rather than queued while it is set, so a
     // machine that cannot keep up falls behind in frame rate instead of in wall-clock time.
     bool m_multicamRefreshing = false;
@@ -2092,6 +2691,8 @@ protected:
     // Handed to applyProjectJson by loadProject, applied alongside the other load-time path
     // migrations and cleared there.
     QHash<QString, QString> m_pendingPathRemap;
+    // Playhead per timeline, so switching tabs returns to where each was left. "" = main.
+    QHash<QString, drift::TimeUs> m_sequencePlayheads;
     bool m_packaging = false;
     double m_packageProgress = 0.0;
     QAtomicInt m_packageCancel = 0;
@@ -2112,7 +2713,7 @@ protected:
     double m_sceneDetectProgress = 0.0;
     QString m_sceneDetectStatus;
     QAtomicInt m_sceneDetectCancel = 0;
-    QMap<QString, QProcess*> m_stabilizeProcesses;
+    QMap<QString, QSharedPointer<QAtomicInt>> m_stabilizeJobs;
     QMap<QString, double> m_stabilizeProgress;
     QMap<QString, QString> m_stabilizeStatus;
     QMap<QString, qint64> m_stabilizeLastProgressEmit;
@@ -2129,6 +2730,7 @@ protected:
     int m_segSeedGeneration = 0; // bumped per seed preview; stale masks are dropped
     bool m_segSeedRunning = false;
     int m_loadGeneration = 0; // bumped per loadProject; stale extracts are dropped
+    bool m_projectLoadPending = false;
     QImage m_segFrame;
     drift::Sam2Embedding m_segEmbedding;
     // "sam2" or "rvm". Persists across sessions so the window reopens on the last choice.
@@ -2140,12 +2742,29 @@ protected:
     int m_selectedTransitionTrack = -1;
     int m_selectedTransitionLeftClip = -1;
     QList<QPair<int, int>> m_selection;
+    int m_selectionRevision = 0;
     int m_timelineTrimCursorSide = 0;
     int m_timelineTrimCursorHeight = 0;
+    int m_timelineTrimCursorOwner = 0;
+    int m_trimCursorTokenSeq = 0;
+    // The pointer is drawn with QPainter at the track's height. Heights come from a handful of
+    // row sizes, so this stays tiny — and a member rather than a function-local static because a
+    // QCursor holds a platform cursor that must not outlive QGuiApplication.
+    mutable QHash<int, QCursor> m_trimCursorCache;
+    QCursor trimCursorFor(int side, int heightPx) const;
     bool m_guidesEnabled = false;
     bool m_canvasCropMode = false;
     bool m_maskEditMode = false;
-    QString m_guideType = QStringLiteral("thirds");
+    QStringList m_activeGuideSets{QStringLiteral("thirds")};
+    // App-wide custom sets.
+    QList<drift::GuideSet> m_guideLibrary;
+    // Copies of custom sets the open project uses, so its guides draw on a machine without them.
+    QList<drift::GuideSet> m_projectGuideSets;
+    QString m_guideEditSetId;
+    const drift::GuideSet *findGuideSet(const QString &id) const;
+    drift::GuideSet *libraryGuideSet(const QString &id);
+    // Persists the library; an edit to an active set also changes what the project saves.
+    void guideLibraryEdited(const QString &id);
     QHash<QString, QString> m_shortcuts;
     QHash<QString, QSet<QString>> m_assetFavorites;
     int m_draggingAssetIndex = -1;
@@ -2161,7 +2780,19 @@ protected:
     static QVariantMap textAnimationPresetToMap(const drift::TextAnimationPreset &preset);
     drift::Project m_previewDragBefore;
     QString m_previewDragText;
+    // Something was written since beginPreviewDrag; a press with no movement commits nothing.
+    bool m_previewDragDirty = false;
+    // Begun by a setter rather than a press (keyboard nudges); commits once the nudges stop.
+    bool m_previewDragAuto = false;
+    QTimer *m_previewAutoCommit = nullptr;
     void emitPreviewFrame();
+    void emitPreviewEdit(int trackIndex, int clipIndex, const QStringList &keys);
+    void beginImplicitPreviewDrag(const QString &undoText);
+    // Runs spec off-thread and swaps its output in for the asset at assetIndex, reporting through
+    // assetEditChanged/assetEditFinished. The caller has checked no edit is running.
+    void startAssetEditJob(const QString &assetId, const QString &name,
+                           const drift::MediaEditSpec &spec, bool conversion);
+    void startNextConversion();
     void syncTextOverlaySkip();
     struct ClipboardItem
     {
@@ -2213,6 +2844,10 @@ protected:
     QString m_currentProjectPath;
     bool m_dirty = false;
     QTimer *m_autosaveTimer = nullptr;
+    // The recovery write running on a worker, and a counter that deleteRecoveryFile() bumps so a
+    // write that finishes after the file was meant to be gone does not bring it back.
+    QFuture<QString> m_recoveryWrite;
+    quint64 m_recoveryGeneration = 0;
     bool m_recoveryAvailable = false;
     QVariantMap m_recoveryInfo;
     QUrl m_pendingStartupProject;
@@ -2222,6 +2857,7 @@ protected:
     bool m_projectLayoutChosen = false;
 
     std::unique_ptr<drift::mcp::McpServer> m_mcp;
+    bool m_mcpStartOnLaunch = false;
     bool m_mcpUndoSuspended = false;
     int m_mcpBatchDepth = 0;
     drift::Project m_mcpBatchBefore;

@@ -13,6 +13,9 @@ import "components/preview"
 PanelFrame {
     id: root
 
+    // The crop overlay's gesture hint, dismissed once per session rather than per crop.
+    property bool cropHintDismissed: false
+
     readonly property real currentSeconds: EditorState.playheadSeconds
     readonly property real durationSeconds: EditorState.durationSeconds
     readonly property bool playing: EditorState.playing
@@ -24,7 +27,7 @@ PanelFrame {
     // Frame rate of the project, not a fixed 30 — the timecode readout showed
     // wrong frame numbers for every project that was not 30fps.
     readonly property int projectFps: {
-        void EditorState.tracks
+        void EditorState.tracksRevision
         const fps = EditorState.projectFps()
         return fps > 0 ? fps : 30
     }
@@ -62,7 +65,7 @@ PanelFrame {
                 anchors.margins: Theme.spacingLg
 
                 property real aspect: {
-                    void EditorState.tracks
+                    void EditorState.tracksRevision
                     const w = EditorState.projectWidth()
                     const h = EditorState.projectHeight()
                     return (w > 0 && h > 0) ? (w / h) : (16 / 9)
@@ -157,14 +160,23 @@ PanelFrame {
                     height: viewport.fitHeight
                     x: (viewport.width - width) / 2 + viewport.panX
                     y: (viewport.height - height) / 2 + viewport.panY
-                    color: Theme.overlayColor
+                    color: (EditorState.background && EditorState.background.kind === "transparent")
+                           ? "transparent" : Theme.overlayColor
                     border.width: Theme.borderWidth
                     border.color: Theme.border
                     clip: true
 
+                    Checkerboard {
+                        anchors.fill: parent
+                    }
+
                     PreviewItem {
                         id: preview
                         anchors.fill: parent
+                        // Not decoration: the engine only binds the window's frame cadence —
+                        // afterAnimating, frameSwapped and the screen's refresh rate — once a
+                        // preview names it, and it is what pulls each composited frame across.
+                        playback: EditorState.playback
 
                         // Canvas size is derived from this, so it has to be real
                         // screen pixels: item geometry is in logical units, and
@@ -186,79 +198,61 @@ PanelFrame {
                     // Top-left so it never covers the transport controls or the bottom-right
                     // resolution readout. Only visible while the diagnostics dialog has the
                     // counters armed.
-                    PlaybackStatsOverlay {
+                    Loader {
                         anchors.left: parent.left
                         anchors.top: parent.top
                         anchors.margins: Theme.spacingLg
                         z: 10
+                        active: !!EditorState.playback.stats && EditorState.playback.stats.active
+                        sourceComponent: Component { PlaybackStatsOverlay { } }
                     }
 
-                    Item {
+                    // Voiceover recording indicator overlay
+                    Rectangle {
+                        id: voiceoverRecordBadge
+                        visible: EditorState.isRecordingAudio
+                        anchors.right: parent.right
+                        anchors.top: parent.top
+                        anchors.margins: Theme.spacingLg
+                        height: 28
+                        radius: Theme.radiusSm
+                        color: Qt.rgba(0, 0, 0, 0.75)
+                        border.color: EditorState.isAudioRecordingPaused ? "#eab308" : Theme.destructive
+                        border.width: 1
+                        z: 11
+                        width: recordRow.implicitWidth + 16
+
+                        Row {
+                            id: recordRow
+                            anchors.centerIn: parent
+                            spacing: 6
+
+                            Rectangle {
+                                width: 8
+                                height: 8
+                                radius: 4
+                                color: EditorState.isAudioRecordingPaused ? "#eab308" : Theme.destructive
+                                anchors.verticalCenter: parent.verticalCenter
+                                SequentialAnimation on opacity {
+                                    running: voiceoverRecordBadge.visible && !EditorState.isAudioRecordingPaused
+                                    loops: Animation.Infinite
+                                    NumberAnimation { to: 0.2; duration: 400 }
+                                    NumberAnimation { to: 1.0; duration: 400 }
+                                }
+                            }
+
+                            Text {
+                                text: (EditorState.isAudioRecordingPaused ? qsTr("PAUSED %1s") : qsTr("REC %1s")).arg(EditorState.audioRecordSeconds.toFixed(1))
+                                font.pixelSize: 11
+                                font.bold: true
+                                color: Theme.panelForeground
+                                anchors.verticalCenter: parent.verticalCenter
+                            }
+                        }
+                    }
+
+                    GuideLayer {
                         anchors.fill: parent
-                        visible: EditorState.guidesEnabled
-
-                        Repeater {
-                            model: EditorState.guideType === "thirds" ? 2 : 0
-                            Rectangle {
-                                width: 1
-                                height: parent.height
-                                x: parent.width * (index + 1) / 3
-                                color: Theme.guideMedium
-                            }
-                        }
-                        Repeater {
-                            model: EditorState.guideType === "thirds" ? 2 : 0
-                            Rectangle {
-                                height: 1
-                                width: parent.width
-                                y: parent.height * (index + 1) / 3
-                                color: Theme.guideMedium
-                            }
-                        }
-
-                        Rectangle {
-                            visible: EditorState.guideType === "crosshair"
-                            width: 1
-                            height: parent.height
-                            x: parent.width / 2
-                            color: Theme.guideMedium
-                        }
-                        Rectangle {
-                            visible: EditorState.guideType === "crosshair"
-                            height: 1
-                            width: parent.width
-                            y: parent.height / 2
-                            color: Theme.guideMedium
-                        }
-
-                        Rectangle {
-                            visible: EditorState.guideType === "safe"
-                            x: parent.width * 0.05
-                            y: parent.height * 0.05
-                            width: parent.width * 0.90
-                            height: parent.height * 0.90
-                            color: "transparent"
-                            border.width: 1
-                            border.color: Theme.guideMedium
-                        }
-                        Rectangle {
-                            visible: EditorState.guideType === "safe"
-                            x: parent.width * 0.025
-                            y: parent.height * 0.025
-                            width: parent.width * 0.95
-                            height: parent.height * 0.95
-                            color: "transparent"
-                            border.width: 1
-                            border.color: Theme.guideWeak
-                        }
-                    }
-
-                    Connections {
-                        target: EditorState.playback
-                        function onCurrentFrameChanged() {
-                            preview.textureSize = EditorState.playback.previewTextureSize
-                            preview.textureId = EditorState.playback.previewTextureId
-                        }
                     }
 
                     // On a brand-new project this — the largest, most central panel —
@@ -269,7 +263,7 @@ PanelFrame {
                     EmptyState {
                         anchors.centerIn: parent
                         width: Math.min(parent.width - Theme.spacing3xl, 280)
-                        visible: EditorState.tracks.length === 0
+                        visible: EditorState.trackCount === 0
                         glyph: Theme.icons.film
                         title: qsTr("Nothing to preview yet")
                         // No CTA: importing and adding tracks both live in the panels
@@ -285,7 +279,7 @@ PanelFrame {
                     EmptyState {
                         anchors.centerIn: parent
                         width: Math.min(parent.width - Theme.spacing3xl, 280)
-                        visible: EditorState.tracks.length > 0
+                        visible: EditorState.trackCount > 0
                                  && EditorState.playback.gpuCompositorStatus !== "unknown"
                                  && !EditorState.playback.gpuCompositorReady
                         glyph: Theme.icons.warning
@@ -307,7 +301,7 @@ PanelFrame {
                         // Only ever a gap message now: when the compositor is down the
                         // state above explains that instead.
                         opacity: EditorState.playback.hasFrame
-                                 || EditorState.tracks.length === 0
+                                 || EditorState.trackCount === 0
                                  || !EditorState.playback.gpuCompositorReady ? 0 : 1
                         text: EditorState.activeAudioClipAtPlayhead().path
                               ? qsTr("Audio only") : qsTr("No clip at the current time")
@@ -325,15 +319,30 @@ PanelFrame {
 
                 // Mask editing claims the same grips and pointer as the transform gizmo, so the
                 // two are mutually exclusive rather than stacked.
-                MaskOverlay {
-                    id: maskOverlay
+                Loader {
                     x: canvasRect.x
                     y: canvasRect.y
                     width: canvasRect.width
                     height: canvasRect.height
                     z: 150
+                    active: !root.playing && EditorState.projectWidth() > 0
+                            && EditorState.maskEditActive && !EditorState.canvasCropMode
+                            && EditorState.guideEditSetId === ""
+                    sourceComponent: Component { MaskOverlay { } }
+                }
+
+                // Light and focus handles for the depth effects. Above the transform gizmo, but
+                // only the handles take the pointer, so the clip itself can still be dragged.
+                DepthEffectOverlay {
+                    id: depthOverlay
+                    x: canvasRect.x
+                    y: canvasRect.y
+                    width: canvasRect.width
+                    height: canvasRect.height
+                    z: 120
                     visible: !root.playing && EditorState.projectWidth() > 0
-                             && EditorState.maskEditActive && !EditorState.canvasCropMode
+                             && !EditorState.canvasCropMode && !EditorState.maskEditActive
+                             && EditorState.guideEditSetId === ""
                 }
 
                 TransformOverlay {
@@ -349,6 +358,7 @@ PanelFrame {
                     z: 100
                     visible: !root.playing && EditorState.projectWidth() > 0
                              && !EditorState.canvasCropMode && !EditorState.maskEditActive
+                             && EditorState.guideEditSetId === ""
                 }
 
                 // Canvas crop tool. Lives outside the (clipped) canvas rect so the
@@ -356,14 +366,33 @@ PanelFrame {
                 // output. Values are kept in project pixels; committing hands the
                 // rect to AppController, which rebases clip layout so nothing
                 // moves or rescales — content outside the new frame is simply lost.
-                CropOverlay {
-                    id: cropOverlay
+                // Built fresh each crop session, so what its show/hide used to do (reset the
+                // frame, reset the view) happens on load and unload instead.
+                Loader {
                     anchors.fill: parent
-                    visible: EditorState.canvasCropMode
-                    enabled: visible
                     z: 200
-                    previewViewport: viewport
-                    previewCanvas: canvasRect
+                    active: EditorState.canvasCropMode
+                    sourceComponent: Component {
+                        CropOverlay {
+                            previewViewport: viewport
+                            previewCanvas: canvasRect
+                            hintDismissed: root.cropHintDismissed
+                            onHintDismissedChanged: root.cropHintDismissed = hintDismissed
+                        }
+                    }
+                    onLoaded: viewport.resetView()
+                    onActiveChanged: if (!active) viewport.resetView()
+                }
+
+                Loader {
+                    anchors.fill: parent
+                    z: 200
+                    active: EditorState.guideEditSetId !== ""
+                    sourceComponent: Component {
+                        GuideEditOverlay {
+                            previewCanvas: canvasRect
+                        }
+                    }
                 }
             }
         }
@@ -415,9 +444,6 @@ PanelFrame {
         function onPlayheadSecondsChanged() {
             if (!EditorState.playing)
                 EditorState.playback.refreshFrame()
-        }
-        function onTracksChanged() {
-            EditorState.playback.refreshFrame()
         }
         function onPlayingChanged() {
             if (!EditorState.playing)

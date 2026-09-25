@@ -4,6 +4,9 @@
 
 #include "engine/MediaProbe.h"
 #include "engine/MediaThumbnail.h"
+#include "engine/ModelAsset.h"
+#include "engine/PreviewProxyRenderer.h"
+#include "engine/ReverseProxyCache.h"
 #include "engine/VectorInspect.h"
 #include "core/DotLottie.h"
 
@@ -22,6 +25,8 @@
 #include <QImageReader>
 #include <QJsonObject>
 #include <QMetaObject>
+#include <QScopeGuard>
+#include <QSettings>
 #include <QUrl>
 #include <QUuid>
 #include <QFutureWatcher>
@@ -45,13 +50,17 @@ QString importsDir()
            + QStringLiteral("/imports");
 }
 
-QString sanitizedImportFileName(QString name)
+// `name` with ` (n)` before its extension, for the rare case where two documents want the same
+// copy. Matches how the platform's own file managers number a duplicate, so the bin row reads
+// the way the user would expect rather than carrying a hash.
+QString numberedImportFileName(const QString &name, int n)
 {
-    name.replace(QLatin1Char('/'), QLatin1Char('_'));
-    name.replace(QLatin1Char('\\'), QLatin1Char('_'));
-    if (name.isEmpty() || name == QLatin1String(".") || name == QLatin1String(".."))
-        name = QStringLiteral("import.bin");
-    return name;
+    const QString suffix = QFileInfo(name).suffix();
+    const QString stem = suffix.isEmpty() ? name : name.chopped(suffix.size() + 1);
+    return QStringLiteral("%1 (%2)%3")
+        .arg(stem)
+        .arg(n)
+        .arg(suffix.isEmpty() ? QString() : QLatin1Char('.') + suffix);
 }
 
 // FFmpeg and the rest of the media pipeline need real filesystem paths. On Android the SAF
@@ -81,17 +90,24 @@ QString materializeImportUrl(const QUrl &url)
         qWarning("import: read failed for %s (%s)", qPrintable(uri), qPrintable(src->errorString()));
         return {};
     }
+    const qint64 sourceSize = src->size();
     QCryptographicHash key(QCryptographicHash::Sha1);
     key.addData(head);
-    key.addData(QByteArray::number(src->size()));
+    key.addData(QByteArray::number(sourceSize));
 
     // One directory per file so the copy can keep the document's real name — the bin, the clip
     // labels and the export default all show it, and provisionalKind reads the kind off its suffix.
     const QString destDir = importsDir() + QLatin1Char('/')
                             + QString::fromLatin1(key.result().left(8).toHex());
-    const QString destPath =
-        destDir + QLatin1Char('/') + sanitizedImportFileName(AndroidUri::displayName(url));
-    if (QFileInfo::exists(destPath))
+    const QString fileName =
+        AssetLibrary::sanitizedImportFileName(AndroidUri::displayName(url));
+    const QString destPath = destDir + QLatin1Char('/') + fileName;
+    // A copy already under this name in a directory keyed on the document's own bytes is that
+    // same document, picked again — which is exactly what the content key is for. That only
+    // holds while the provider reported a length: plenty report none, and then the key is the
+    // first megabyte alone, which two different documents can share. Those fall through to the
+    // copy and are told apart by their finished size below.
+    if (sourceSize > 0 && QFileInfo::exists(destPath))
         return destPath;
 
     if (!QDir().mkpath(destDir)) {
@@ -126,12 +142,25 @@ QString materializeImportUrl(const QUrl &url)
     }
 
     dst.close();
-    if (!dst.rename(destPath)) {
-        qWarning("import: cannot finish %s (%s)", qPrintable(destPath), qPrintable(dst.errorString()));
+
+    // Nothing was reused above unless the length said so, so anything sitting on the name now is
+    // either the same document (same size, same first megabyte — reuse it and drop the copy) or a
+    // different one the weak key collided with, which gets a number rather than being overwritten.
+    QString finalPath = destPath;
+    for (int attempt = 2; QFileInfo::exists(finalPath); ++attempt) {
+        if (QFileInfo(finalPath).size() == QFileInfo(partPath).size()) {
+            dst.remove();
+            return finalPath;
+        }
+        finalPath = destDir + QLatin1Char('/') + numberedImportFileName(fileName, attempt);
+    }
+
+    if (!dst.rename(finalPath)) {
+        qWarning("import: cannot finish %s (%s)", qPrintable(finalPath), qPrintable(dst.errorString()));
         dst.remove();
         return {};
     }
-    return destPath;
+    return finalPath;
 }
 
 #endif // Q_OS_ANDROID
@@ -202,6 +231,8 @@ drift::MediaKind kindFrom(const MediaInfo &info, const QString &path)
 
 drift::MediaKind provisionalKind(const QString &path)
 {
+    if (AssetLibrary::isModelPath(path))
+        return drift::MediaKind::Model3d;
     if (AssetLibrary::isVectorPath(path))
         return drift::MediaKind::Vector;
     if (AssetLibrary::isImagePath(path))
@@ -247,6 +278,9 @@ drift::TimeUs placedDurationUs(const drift::MediaAsset &asset)
 // a trim is set.
 QString durationLabelFor(const drift::MediaAsset &asset)
 {
+    // A composite's length follows its sequence, so the label is derived rather than stored.
+    if (asset.kind == drift::MediaKind::Composite)
+        return formatDuration(asset.durationUs);
     const bool trimmed = asset.trimInUs > 0 || asset.trimOutUs >= 0;
     if (asset.durationLabel.isEmpty() || !trimmed)
         return asset.durationLabel;
@@ -364,11 +398,34 @@ std::optional<drift::MediaAsset> buildVectorAsset(const QString &absolutePath, c
     return asset;
 }
 
+// A glTF binary: parsed by the model loader. No thumbnail — the bin shows a placeholder icon.
+std::optional<drift::MediaAsset> buildModelAsset(const QString &absolutePath, const QString &name)
+{
+    const auto model = drift::loadModelAssetCached(absolutePath);
+    if (!model) {
+        qWarning("import: %s is not a usable glTF binary: %s", qPrintable(absolutePath),
+                 qPrintable(drift::modelAssetWarning(absolutePath)));
+        return std::nullopt;
+    }
+    drift::MediaAsset asset;
+    asset.name = name;
+    asset.path = absolutePath;
+    asset.kind = drift::MediaKind::Model3d;
+    asset.durationUs = model->animations.isEmpty() ? 0 : model->animations.first().durationUs;
+    asset.durationLabel = formatDuration(asset.durationUs);
+    asset.hasAudio = false;
+    asset.hasAudioKnown = true;
+    return asset;
+}
+
 // Reads everything the bin needs about a file. Blocking, so it only ever runs on a worker
 // thread — shared by the import path and the replace path.
-std::optional<drift::MediaAsset> probeAsset(const QString &absolutePath, bool imageOnly)
+std::optional<drift::MediaAsset> probeAsset(const QString &absolutePath, bool imageOnly,
+                                            MediaInfo *infoOut = nullptr)
 {
     const QString name = QFileInfo(absolutePath).fileName();
+    if (AssetLibrary::isModelPath(absolutePath))
+        return buildModelAsset(absolutePath, name);
     if (AssetLibrary::isVectorPath(absolutePath))
         return buildVectorAsset(absolutePath, name);
     if (imageOnly)
@@ -377,7 +434,38 @@ std::optional<drift::MediaAsset> probeAsset(const QString &absolutePath, bool im
     const MediaInfo info = MediaProbe::probe(absolutePath);
     if (!info.ok)
         return std::nullopt;
+    if (infoOut)
+        *infoOut = info;
     return buildProbedAsset(absolutePath, name, info);
+}
+
+// Footage whose decode, not its composite, is what makes live preview stutter. The preview
+// already decodes at canvas size, so plain resolution only counts well past 1080p.
+bool wantsPreviewProxy(const MediaInfo &info)
+{
+    for (const StreamInfo &stream : info.streams) {
+        if (stream.type != StreamInfo::Type::Video || stream.attachedPicture)
+            continue;
+        // A proxy is plain yuv420p, so it would preview the clip opaque.
+        if (stream.hasAlpha)
+            return false;
+        const int shortSide = std::min(stream.width, stream.height);
+        if (shortSide > 1080)
+            return true;
+#ifdef Q_OS_ANDROID
+        if (shortSide >= 1080 && stream.fps > 60.5)
+            return true;
+#endif
+        const bool heavyCodec = stream.codecName == QLatin1String("hevc")
+            || stream.codecName == QLatin1String("av1") || stream.codecName == QLatin1String("vp9");
+        if (!heavyCodec)
+            return false;
+        // 10-bit is where hardware decoders most often bow out and the CPU takes over.
+        return stream.bitDepth > 8
+            || QSettings().value(QStringLiteral("preview/decodeMode")).toString()
+                   == QLatin1String("software");
+    }
+    return false;
 }
 
 } // namespace
@@ -407,9 +495,71 @@ bool AssetLibrary::isVectorPath(const QString &path)
     return suffix == QLatin1String("json") || suffix == QLatin1String("svg") || drift::isDotLottiePath(path);
 }
 
+// Only the binary container: a .gltf references sidecar .bin/texture files that bundling and
+// relink would not carry along.
+bool AssetLibrary::isModelPath(const QString &path)
+{
+    return QFileInfo(path).suffix().toLower() == QLatin1String("glb");
+}
+
 bool AssetLibrary::isMediaPath(const QString &path)
 {
-    return isVideoPath(path) || isAudioPath(path) || isImagePath(path) || isVectorPath(path);
+    return isVideoPath(path) || isAudioPath(path) || isImagePath(path) || isVectorPath(path)
+        || isModelPath(path);
+}
+
+// A picked document's DISPLAY_NAME is whatever its provider chose to report, and the import copy
+// has to carry it as a real file name: the bin, the clip labels and the export default all show
+// it, and the kind guess reads the extension off it. Four things in it are not storable:
+//
+//   - Path separators, which would write the copy outside its import directory entirely.
+//   - Control characters and the reserved set `: * ? " < > |`. App data is not always a plain
+//     ext4 directory — on the emulated and removable volumes it can land on, those are rejected
+//     outright, and the copy fails with nothing to explain it.
+//   - Trailing dots and spaces, which the same volumes silently drop rather than store, so the
+//     name that comes back is not the name that was asked for.
+//   - Length. A file-based-encryption volume — which is what a Samsung Secure Folder container
+//     is — stores names encrypted, and it is the *encrypted* form that has to fit the 255-byte
+//     limit, so the plaintext budget is far smaller than it looks.
+//
+// Truncation keeps the extension: everything downstream that decides what a file is reads it.
+QString AssetLibrary::sanitizedImportFileName(const QString &displayName)
+{
+    // Room for the ".part" the copy is staged under, and for the " (2)" a collision adds, well
+    // inside what an encrypted name expands to.
+    constexpr int kMaxNameBytes = 120;
+    static const QString reserved = QStringLiteral("/\\:*?\"<>|");
+
+    QString name;
+    name.reserve(displayName.size());
+    for (const QChar ch : displayName)
+        name.append(ch.unicode() < 0x20 || ch == QChar(0x7F) || reserved.contains(ch)
+                        ? QLatin1Char('_')
+                        : ch);
+
+    name = name.trimmed();
+    if (name.toUtf8().size() > kMaxNameBytes) {
+        const QString suffix = QFileInfo(name).suffix();
+        // A "suffix" that long is not one — it is a dot somewhere in a very long name, and
+        // keeping it would leave no room for the name itself.
+        QString tail = suffix.isEmpty() || suffix.toUtf8().size() > kMaxNameBytes / 2
+                           ? QString()
+                           : QLatin1Char('.') + suffix;
+        QString stem = name.chopped(tail.size());
+        const qsizetype budget = kMaxNameBytes - tail.toUtf8().size();
+        while (!stem.isEmpty() && stem.toUtf8().size() > budget)
+            stem.chop(1);
+        // Chopping by code unit can strand the leading half of a surrogate pair.
+        if (!stem.isEmpty() && stem.back().isHighSurrogate())
+            stem.chop(1);
+        name = stem + tail;
+    }
+
+    while (name.endsWith(QLatin1Char('.')) || name.endsWith(QLatin1Char(' ')))
+        name.chop(1);
+    if (name.isEmpty())
+        name = QStringLiteral("import.bin");
+    return name;
 }
 
 QString AssetLibrary::mediaNameFilter() const
@@ -422,6 +572,7 @@ QString AssetLibrary::mediaNameFilter() const
         }
         globs.append(QStringLiteral("*.json"));
         globs.append(QStringLiteral("*.lottie"));
+        globs.append(QStringLiteral("*.glb"));
         return globs.join(QLatin1Char(' '));
     }();
     return tr("Media files (%1)").arg(pattern);
@@ -449,6 +600,12 @@ AssetLibrary::AssetLibrary(QObject *parent)
     connect(this, &QAbstractItemModel::rowsInserted, this, &AssetLibrary::snapshotAssets);
     connect(this, &QAbstractItemModel::rowsRemoved, this, &AssetLibrary::snapshotAssets);
     connect(this, &QAbstractItemModel::modelReset, this, &AssetLibrary::snapshotAssets);
+
+    m_proxyPool.setMaxThreadCount(1);
+    connect(this, &AssetLibrary::proxyStateChanged, this, &AssetLibrary::bumpBadges);
+    // Path changes: a replace, a conversion landing, or an undo of either, each of which can
+    // change whether a proxy, the VFR check or the edit-friendly mark apply.
+    connect(this, &AssetLibrary::assetCardChanged, this, &AssetLibrary::bumpBadges);
 }
 
 // Every probe and thumbnail job captures `this` and posts its result back to this object, so
@@ -460,6 +617,8 @@ AssetLibrary::~AssetLibrary()
 {
     m_jobs.clear();
     m_jobs.waitForDone();
+    m_proxyCancel.storeRelaxed(1);
+    m_proxyPool.waitForDone();
 }
 
 QList<QString> AssetLibrary::currentPaths() const
@@ -577,6 +736,7 @@ void AssetLibrary::setProject(drift::Project *project)
     m_importPending.clear();
     m_thumbPending.clear();
     m_audioProbePending.clear();
+    m_frameRateProbePending.clear();
     endResetModel();
 }
 
@@ -702,7 +862,8 @@ void AssetLibrary::startThumbJob(const QString &assetId)
     }
 
     drift::MediaAsset *asset = m_project->asset(assetId);
-    if (!asset)
+    // A composite has no file to probe or thumbnail.
+    if (!asset || asset->kind == drift::MediaKind::Composite)
         return;
 
     const bool needThumb = asset->thumbnailPath.isEmpty() || !QFileInfo::exists(asset->thumbnailPath);
@@ -807,13 +968,19 @@ void AssetLibrary::startImportJob(const QString &assetId, const QString &absolut
     m_importPending.insert(assetId);
 
     (void)QtConcurrent::run(&m_jobs, [this, assetId, absolutePath, imageOnly]() {
-        const std::optional<drift::MediaAsset> probed = probeAsset(absolutePath, imageOnly);
+        MediaInfo info;
+        const std::optional<drift::MediaAsset> probed = probeAsset(absolutePath, imageOnly, &info);
         const drift::MediaAsset filled = probed.value_or(drift::MediaAsset{});
         const bool ok = probed.has_value();
+        const bool video = ok && filled.kind == drift::MediaKind::Video;
+        const bool suggestProxy = video && wantsPreviewProxy(info);
+        const bool variableFrameRate = video && MediaProbe::isVariableFrameRate(absolutePath);
 
         QMetaObject::invokeMethod(
             this,
-            [this, assetId, filled, ok]() { applyImportResult(assetId, filled, ok); },
+            [this, assetId, filled, ok, suggestProxy, variableFrameRate]() {
+                applyImportResult(assetId, filled, ok, suggestProxy, variableFrameRate);
+            },
             Qt::QueuedConnection);
     });
 }
@@ -878,9 +1045,20 @@ bool AssetLibrary::applyProbedSource(const QString &assetId, const drift::MediaA
     return true;
 }
 
-void AssetLibrary::applyImportResult(const QString &assetId, const drift::MediaAsset &filled, bool ok)
+void AssetLibrary::applyImportResult(const QString &assetId, const drift::MediaAsset &filled, bool ok,
+                                     bool suggestProxy, bool variableFrameRate)
 {
     m_importPending.remove(assetId);
+    // Flushed on every way out below, so a failed or withdrawn last probe still delivers the
+    // suggestions the rest of the batch collected.
+    const auto flushSuggestions = qScopeGuard([this] {
+        if (!m_importPending.isEmpty()
+            || (m_suggestProxyIds.isEmpty() && m_suggestVfrIds.isEmpty()))
+            return;
+        emit importSuggestions(m_suggestProxyIds, m_suggestVfrIds);
+        m_suggestProxyIds.clear();
+        m_suggestVfrIds.clear();
+    });
     if (!m_project)
         return;
 
@@ -920,11 +1098,210 @@ void AssetLibrary::applyImportResult(const QString &assetId, const drift::MediaA
     asset->thumbnailPath = filled.thumbnailPath;
     asset->filmstripPath = filled.filmstripPath;
 
+    // Re-importing a file whose proxy survived in the cache would otherwise suggest another.
+    if (suggestProxy && drift::ReverseProxyCache::previewProxiesEnabled
+        && drift::ReverseProxyCache::instance()
+               .lookupPreview(asset->path, drift::ReverseProxyCache::previewProxyShortSide)
+               .isEmpty())
+        m_suggestProxyIds.append(assetId);
+    if (asset->kind == drift::MediaKind::Video) {
+        asset->frameRateKnown = true;
+        asset->variableFrameRate = variableFrameRate;
+    }
+    if (variableFrameRate)
+        m_suggestVfrIds.append(assetId);
+
     emitAssetRowChanged(index,
                         {NameRole, KindRole, DurationRole, DurationSecondsRole, PathRole,
                          ThumbnailPathRole, FilmstripPathRole});
     emit assetMetadataChanged(assetId);
     emit assetCardChanged(assetId);
+}
+
+QString AssetLibrary::proxyCurrentName() const
+{
+    const drift::MediaAsset *asset = m_project ? m_project->asset(m_proxyBuilding) : nullptr;
+    return asset ? asset->name : QString();
+}
+
+QString AssetLibrary::proxyState(const QString &assetId) const
+{
+    const drift::MediaAsset *asset = m_project ? m_project->asset(assetId) : nullptr;
+    if (!asset || asset->kind != drift::MediaKind::Video)
+        return {};
+    if (assetId == m_proxyBuilding)
+        return QStringLiteral("building");
+    if (m_proxyQueue.contains(assetId))
+        return QStringLiteral("queued");
+    return drift::ReverseProxyCache::instance()
+                   .lookupPreview(asset->path, drift::ReverseProxyCache::previewProxyShortSide)
+                   .isEmpty()
+        ? QStringLiteral("none")
+        : QStringLiteral("ready");
+}
+
+void AssetLibrary::bumpBadges()
+{
+    ++m_badgeRevision;
+    emit badgeRevisionChanged();
+}
+
+QString AssetLibrary::assetIdForPath(const QString &path) const
+{
+    const int index = path.isEmpty() ? -1 : indexOfPath(path);
+    return index < 0 ? QString() : assetIdAt(index);
+}
+
+bool AssetLibrary::isEditFriendly(const QString &assetId) const
+{
+    const drift::MediaAsset *asset = m_project ? m_project->asset(assetId) : nullptr;
+    return asset && asset->editFriendly;
+}
+
+bool AssetLibrary::isVariableFrameRate(const QString &assetId)
+{
+    drift::MediaAsset *asset = m_project ? m_project->asset(assetId) : nullptr;
+    if (!asset || asset->kind != drift::MediaKind::Video)
+        return false;
+    if (asset->frameRateKnown)
+        return asset->variableFrameRate;
+    if (m_frameRateProbePending.contains(assetId) || m_importPending.contains(assetId))
+        return false;
+
+    m_frameRateProbePending.insert(assetId);
+    const QString path = asset->path;
+    (void)QtConcurrent::run(&m_jobs, [this, assetId, path]() {
+        const bool variable = MediaProbe::isVariableFrameRate(path);
+        QMetaObject::invokeMethod(
+            this,
+            [this, assetId, path, variable]() {
+                m_frameRateProbePending.remove(assetId);
+                drift::MediaAsset *asset = m_project ? m_project->asset(assetId) : nullptr;
+                // Answered for a file the row no longer points at.
+                if (!asset || asset->path != path)
+                    return;
+                asset->frameRateKnown = true;
+                asset->variableFrameRate = variable;
+                if (variable)
+                    bumpBadges();
+            },
+            Qt::QueuedConnection);
+    });
+    return false;
+}
+
+bool AssetLibrary::hasProxyForPath(const QString &path) const
+{
+    return !drift::ReverseProxyCache::instance()
+                .lookupPreview(path, drift::ReverseProxyCache::previewProxyShortSide)
+                .isEmpty();
+}
+
+void AssetLibrary::createProxies(const QStringList &assetIds)
+{
+    for (const QString &id : assetIds) {
+        if (proxyState(id) != QLatin1String("none"))
+            continue;
+        m_proxyQueue.append(id);
+        emit proxyStateChanged(id);
+    }
+    emit proxyJobsChanged();
+    startNextProxy();
+}
+
+void AssetLibrary::removeProxies(const QStringList &assetIds)
+{
+    bool removedAny = false;
+    for (const QString &id : assetIds) {
+        if (m_proxyQueue.removeAll(id) > 0)
+            emit proxyStateChanged(id);
+        if (id == m_proxyBuilding)
+            m_proxyCancel.storeRelaxed(1);
+        if (const drift::MediaAsset *asset = m_project ? m_project->asset(id) : nullptr;
+            asset && proxyState(id) == QLatin1String("ready")) {
+            drift::ReverseProxyCache::instance().removePreview(asset->path);
+            removedAny = true;
+            emit proxyStateChanged(id);
+        }
+    }
+    emit proxyJobsChanged();
+    if (removedAny)
+        emit proxiesChanged();
+}
+
+void AssetLibrary::cancelProxies()
+{
+    const QStringList queued = m_proxyQueue;
+    m_proxyQueue.clear();
+    for (const QString &id : queued)
+        emit proxyStateChanged(id);
+    if (!m_proxyBuilding.isEmpty())
+        m_proxyCancel.storeRelaxed(1);
+    emit proxyJobsChanged();
+}
+
+void AssetLibrary::startNextProxy()
+{
+    if (!m_proxyBuilding.isEmpty())
+        return;
+
+    const drift::MediaAsset *asset = nullptr;
+    while (!m_proxyQueue.isEmpty() && !asset) {
+        const QString id = m_proxyQueue.takeFirst();
+        asset = m_project ? m_project->asset(id) : nullptr;
+        if (!asset)
+            continue;
+        m_proxyBuilding = id;
+    }
+    m_proxyProgress = 0.0;
+    emit proxyJobsChanged();
+    if (!asset)
+        return;
+    emit proxyStateChanged(m_proxyBuilding);
+
+    const QString assetId = m_proxyBuilding;
+    const QString sourcePath = asset->path;
+    const QString name = asset->name;
+    const int shortSide = drift::ReverseProxyCache::previewProxyShortSide;
+    m_proxyCancel.storeRelaxed(0);
+
+    (void)QtConcurrent::run(&m_proxyPool, [this, assetId, sourcePath, name, shortSide]() {
+        const QString outPath = drift::newReversePath();
+        QString error;
+        const bool ok = !outPath.isEmpty()
+            && drift::renderPreviewProxy(sourcePath, shortSide, outPath, &error,
+                                         [this, posted = -1.0](double fraction) mutable {
+                                             // Called per frame; the bar only needs percents.
+                                             if (fraction - posted >= 0.01) {
+                                                 posted = fraction;
+                                                 QMetaObject::invokeMethod(
+                                                     this,
+                                                     [this, fraction] {
+                                                         m_proxyProgress = fraction;
+                                                         emit proxyJobsChanged();
+                                                     },
+                                                     Qt::QueuedConnection);
+                                             }
+                                             return m_proxyCancel.loadRelaxed() == 0;
+                                         });
+        const bool cancelled = m_proxyCancel.loadRelaxed() != 0;
+
+        QMetaObject::invokeMethod(
+            this,
+            [this, assetId, sourcePath, name, shortSide, outPath, ok, cancelled, error]() {
+                m_proxyBuilding.clear();
+                if (ok && !cancelled) {
+                    drift::ReverseProxyCache::instance().insertPreview(sourcePath, shortSide,
+                                                                       outPath);
+                    emit proxiesChanged();
+                } else if (!cancelled) {
+                    emit proxyFailed(name, error);
+                }
+                emit proxyStateChanged(assetId);
+                startNextProxy();
+            },
+            Qt::QueuedConnection);
+    });
 }
 
 QVariantMap AssetLibrary::assetAt(int index) const
@@ -954,6 +1331,7 @@ QVariantMap AssetLibrary::assetAt(int index) const
         {QStringLiteral("filmstripPath"), asset->filmstripPath},
         {QStringLiteral("assetIndex"), index},
         {QStringLiteral("folderId"), asset->folderId},
+        {QStringLiteral("sequenceId"), asset->sequenceId},
     };
 }
 
@@ -988,7 +1366,7 @@ void AssetLibrary::ensureAudioPresence(const QString &assetId)
         return;
 
     drift::MediaAsset *asset = m_project->asset(assetId);
-    if (!asset || asset->hasAudioKnown)
+    if (!asset || asset->hasAudioKnown || asset->kind == drift::MediaKind::Composite)
         return;
 
     if (asset->channels > 0 || asset->sampleRate > 0) {
@@ -1404,6 +1782,17 @@ QString importLabel(const QUrl &url)
 }
 
 } // namespace
+
+QString AssetLibrary::provisionalKindForUrl(const QUrl &url) const
+{
+    // The name, not the path: materializing a content:// URI means copying it, and this runs on
+    // every drag move. Both isMediaPath() and provisionalKind() look at the suffix alone, so the
+    // display name answers them exactly as the eventual local path would.
+    const QString name = importLabel(url);
+    if (!isMediaPath(name))
+        return {};
+    return drift::mediaKindToString(provisionalKind(name));
+}
 
 void AssetLibrary::importUrls(const QList<QUrl> &urls)
 {

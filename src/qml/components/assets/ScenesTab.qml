@@ -227,6 +227,7 @@ Item {
 
     ListView {
         id: sceneList
+        reuseItems: true
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.top: header.bottom
@@ -265,6 +266,8 @@ Item {
 
                     Image {
                         anchors.fill: parent
+                        // A recycled row keeps its old frame until the new one decodes.
+                        visible: status === Image.Ready
                         fillMode: Image.PreserveAspectCrop
                         asynchronous: true
                         cache: true

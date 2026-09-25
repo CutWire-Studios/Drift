@@ -4,6 +4,7 @@
 #include "ClipReaderPool.h"
 #include "FrameCompositor.h"
 #include "GpuCompositor.h"
+#include "GpuPreference.h"
 #include "HwAccel.h"
 #include "core/Project.h"
 #include "core/Time.h"
@@ -36,6 +37,7 @@
 
 extern "C" {
 #include <libavcodec/avcodec.h>
+#include <libavcodec/defs.h>
 #include <libavformat/avformat.h>
 #include <libavutil/channel_layout.h>
 #include <libavutil/dict.h>
@@ -198,6 +200,7 @@ struct VideoCodecDef {
     // "mp4" | "webm" | "mkv" preferred when paired with a friendly audio codec.
     const char *preferredContainer;
     HwBackend hw = HwBackend::None;
+    bool hasAlpha = false;
 };
 
 struct AudioCodecDef {
@@ -298,11 +301,15 @@ const VideoCodecDef kVideoCodecs[] = {
     {"mpeg2", "MPEG-2", kMpeg2, AV_PIX_FMT_YUV420P, RateMode::Bitrate, false, nullptr, nullptr, 0, "mkv"},
     {"vp8", "VP8", kLibvpx, AV_PIX_FMT_YUV420P, RateMode::Crf, true, kVp9CpuUsed, "4", 10, "webm"},
     {"vp9", "VP9", kLibvpxVp9, AV_PIX_FMT_YUV420P, RateMode::Crf, true, kVp9CpuUsed, "4", 32, "webm"},
+    {"vp9_alpha", "VP9 (alpha)", kLibvpxVp9, AV_PIX_FMT_YUVA420P, RateMode::Crf, true, kVp9CpuUsed, "4", 32,
+     "webm", HwBackend::None, true},
     {"vp9_10", "VP9 10-bit", kLibvpxVp9, AV_PIX_FMT_YUV420P10LE, RateMode::Crf, true, kVp9CpuUsed, "4", 32, "webm"},
     {"dnxhr", "DNxHR", kDnxhd, AV_PIX_FMT_YUV422P, RateMode::Bitrate, false, nullptr, nullptr, 0, "mkv"},
     {"dnxhr_10", "DNxHR 10-bit", kDnxhd, AV_PIX_FMT_YUV422P10LE, RateMode::Bitrate, false, nullptr, nullptr, 0,
      "mkv"},
     {"prores", "ProRes", kProres, AV_PIX_FMT_YUV422P10LE, RateMode::Lossless, false, nullptr, nullptr, 0, "mkv"},
+    {"prores_4444", "ProRes 4444", kProres, AV_PIX_FMT_YUVA444P10LE, RateMode::Lossless, false, nullptr, nullptr,
+     0, "mov", HwBackend::None, true},
     {"theora", "Theora", kLibtheora, AV_PIX_FMT_YUV420P, RateMode::Bitrate, false, nullptr, nullptr, 0, "mkv"},
 };
 
@@ -349,6 +356,33 @@ AVHWDeviceType hwDeviceType(HwBackend hw)
         break;
     }
     return AV_HWDEVICE_TYPE_NONE;
+}
+
+// Which device to hand av_hwdevice_ctx_create for an *encoder*. Empty means FFmpeg's default.
+//
+// AMF is the case that needs this. It maps to a D3D11VA device, and D3D11VA opens on any
+// vendor's adapter quite happily — but the AMF runtime inspects the adapter behind the device
+// and refuses to initialise on anyone else's, so avcodec_open2 fails with nothing more useful
+// than "cannot open". On a hybrid laptop the default is DXGI adapter 0, which with the discrete
+// GPU preferred is the NVIDIA card, and "H.264 (AMD)" then fails on a machine that has a
+// perfectly good AMD encoder. Name the AMD adapter instead.
+//
+// NVENC needs nothing: CUDA enumerates NVIDIA GPUs through the NVIDIA driver rather than DXGI,
+// so adapter order does not reach it. QSV's device string is a child-device spec, not a DXGI
+// index, so it is left alone too.
+QByteArray encoderDeviceString(HwBackend hw)
+{
+#if defined(Q_OS_WIN)
+    if (hw == HwBackend::Amf) {
+        constexpr quint16 kPciVendorAmd = 0x1002;
+        const int index = drift::gpu::adapterIndexForVendorId(kPciVendorAmd);
+        if (index >= 0)
+            return QByteArray::number(index);
+    }
+#else
+    Q_UNUSED(hw);
+#endif
+    return {};
 }
 
 bool hwBackendOnThisOs(HwBackend hw)
@@ -497,8 +531,19 @@ QVariantMap videoDefToMap(const VideoCodecDef &def)
         // MediaCodec has no AVHWDevice to probe — the encoder existing in the build is the whole
         // answer, and deviceAvailable(NONE) is false, which would hide the row outright.
         const AVHWDeviceType type = hwDeviceType(def.hw);
-        if (type != AV_HWDEVICE_TYPE_NONE)
-            available = available && drift::hwaccel::deviceAvailable(type);
+        if (type != AV_HWDEVICE_TYPE_NONE) {
+            // Probe the same device the export will open, not the decode default. An AMD row on
+            // a machine with no AMD adapter now says so here instead of at avcodec_open2, an
+            // hour into someone's render.
+            const QByteArray device = encoderDeviceString(def.hw);
+#if defined(Q_OS_WIN)
+            // An empty string here means no adapter of that vendor is installed at all, and
+            // D3D11VA would happily open on someone else's and let AMF fail later.
+            if (def.hw == HwBackend::Amf && device.isEmpty())
+                available = false;
+#endif
+            available = available && drift::hwaccel::deviceAvailable(type, device);
+        }
     }
 
     QVariantMap m;
@@ -516,6 +561,7 @@ QVariantMap videoDefToMap(const VideoCodecDef &def)
              def.defaultPreset ? QString::fromUtf8(def.defaultPreset) : QString());
     m.insert(QStringLiteral("defaultCrf"), def.defaultCrf);
     m.insert(QStringLiteral("container"), QString::fromUtf8(def.preferredContainer));
+    m.insert(QStringLiteral("hasAlpha"), def.hasAlpha);
     return m;
 }
 
@@ -570,6 +616,27 @@ void fillLimitedBlackFrame(AVFrame *frame)
             memset(frame->data[1] + row * frame->linesize[1], 128, size_t(frame->width / 2));
             memset(frame->data[2] + row * frame->linesize[2], 128, size_t(frame->width / 2));
         }
+    }
+}
+
+// Clear every plane, including alpha, so a missing composite does not become opaque black
+// in a yuva export.
+void fillTransparentFrame(AVFrame *frame)
+{
+    if (!frame || !frame->data[0])
+        return;
+    const AVPixFmtDescriptor *desc = av_pix_fmt_desc_get(static_cast<AVPixelFormat>(frame->format));
+    if (!desc)
+        return;
+    const int planes = av_pix_fmt_count_planes(static_cast<AVPixelFormat>(frame->format));
+    for (int p = 0; p < planes; ++p) {
+        if (!frame->data[p] || frame->linesize[p] <= 0)
+            continue;
+        const int shift = (p == 1 || p == 2) ? desc->log2_chroma_h : 0;
+        const int rows = (frame->height + ((1 << shift) - 1)) >> shift;
+        const int bytes = qAbs(frame->linesize[p]);
+        for (int row = 0; row < rows; ++row)
+            memset(frame->data[p] + row * frame->linesize[p], 0, size_t(bytes));
     }
 }
 
@@ -795,6 +862,12 @@ void applyVideoPreset(AVCodecContext *vctx, const VideoCodecDef &def, const Expo
     if (def.hw == HwBackend::VideoToolbox && vctx->priv_data)
         av_opt_set_int(vctx->priv_data, "allow_sw", 0, 0);
 
+    const QString id = QString::fromUtf8(def.id);
+    if (id == QLatin1String("prores_4444") && vctx->priv_data) {
+        av_opt_set(vctx->priv_data, "profile", "4444", 0);
+        vctx->profile = AV_PROFILE_PRORES_4444;
+    }
+
     if (!def.supportsPreset || !vctx->priv_data)
         return;
     QByteArray preset = settings.videoPreset.toUtf8();
@@ -812,10 +885,16 @@ void applyVideoPreset(AVCodecContext *vctx, const VideoCodecDef &def, const Expo
     if (def.hw != HwBackend::None)
         return;
 
-    const QString id = QString::fromUtf8(def.id);
     if (id.startsWith(QLatin1String("vp8")) || id.startsWith(QLatin1String("vp9"))) {
+        bool numeric = false;
+        preset.toInt(&numeric);
+        if (!numeric)
+            preset = def.defaultPreset ? QByteArray(def.defaultPreset) : QByteArrayLiteral("4");
         av_opt_set(vctx->priv_data, "cpu-used", preset.constData(), 0);
         av_opt_set(vctx->priv_data, "deadline", "good", 0);
+        // VP9 with an alpha plane cannot use automatic alternate-reference frames.
+        if (def.hasAlpha)
+            av_opt_set_int(vctx->priv_data, "auto-alt-ref", 0, 0);
         return;
     }
     if (id.startsWith(QLatin1String("av1"))) {
@@ -1589,6 +1668,9 @@ QString Exporter::preferredContainer(const QString &videoCodecId, const QString 
     const QString vCont = vdef ? QString::fromUtf8(vdef->preferredContainer) : QStringLiteral("mkv");
     const QString aFam = adef ? QString::fromUtf8(adef->containerFamily) : QStringLiteral("mkv");
 
+    if (vCont == QLatin1String("mov"))
+        return QStringLiteral("mov");
+
     // Lossless / awkward video always prefers mkv.
     if (vCont == QLatin1String("mkv"))
         return QStringLiteral("mkv");
@@ -1645,6 +1727,8 @@ QStringList Exporter::saveFilters(const QString &container, bool audioOnly)
     }
     if (container == QLatin1String("webm"))
         return {QStringLiteral("WebM video (*.webm)")};
+    if (container == QLatin1String("mov"))
+        return {QStringLiteral("QuickTime video (*.mov)")};
     if (container == QLatin1String("gif"))
         return {QStringLiteral("GIF image (*.gif)")};
     if (container == QLatin1String("mkv"))
@@ -1669,6 +1753,8 @@ QString Exporter::defaultSuffix(const QString &container, bool audioOnly)
     }
     if (container == QLatin1String("webm"))
         return QStringLiteral("webm");
+    if (container == QLatin1String("mov"))
+        return QStringLiteral("mov");
     if (container == QLatin1String("gif"))
         return QStringLiteral("gif");
     if (container == QLatin1String("mkv"))
@@ -1992,7 +2078,10 @@ bool Exporter::run(const drift::Project &project, const ExportSettings &settings
         // reads a zero here as licence to treat pts as dts — which is the only way the muxer gets a
         // usable timestamp, since MediaCodec reports none of its own.
         vctx->max_b_frames =
-            (vdef->hw == HwBackend::Vaapi || vdef->hw == HwBackend::MediaCodec || vtH264) ? 0 : 2;
+            (vdef->hw == HwBackend::Vaapi || vdef->hw == HwBackend::MediaCodec || vtH264
+             || vdef->hasAlpha)
+                ? 0
+                : 2;
         if (vdef->hw != HwBackend::None) {
             if (std::strncmp(vdef->id, "h264", 4) == 0)
                 vctx->profile = AV_PROFILE_H264_HIGH;
@@ -2011,8 +2100,12 @@ bool Exporter::run(const drift::Project &project, const ExportSettings &settings
             // deviceAvailable() first, not just for the answer: it is the only VAAPI probe
             // that survives a host with no libva, where FFmpeg's stub asserts instead.
             // A codec id restored from settings can name an encoder this machine cannot run.
-            if (!drift::hwaccel::deviceAvailable(type)
-                || av_hwdevice_ctx_create(&hwDeviceCtx, type, nullptr, nullptr, 0) < 0) {
+            const QByteArray hwDevice = encoderDeviceString(vdef->hw);
+            if (!drift::hwaccel::deviceAvailable(type, hwDevice)
+                || av_hwdevice_ctx_create(&hwDeviceCtx, type,
+                                          hwDevice.isEmpty() ? nullptr : hwDevice.constData(),
+                                          nullptr, 0)
+                    < 0) {
                 error = QStringLiteral("Could not create the %1 encoder device.")
                             .arg(QLatin1String(hwVendorName(vdef->hw)));
                 goto cleanup;
@@ -2175,23 +2268,29 @@ bool Exporter::run(const drift::Project &project, const ExportSettings &settings
             return true;
         };
 
-        auto sendVideoAndAudio = [&](int64_t pts) -> bool {
-            applySdrBt709Tags(vframe);
-            vframe->pts = pts;
-            AVFrame *encodeFrame = vframe;
-            if (hwUpload) {
-                av_frame_unref(hwframe);
-                if (av_hwframe_get_buffer(vctx->hw_frames_ctx, hwframe, 0) < 0) {
-                    error = QStringLiteral("Could not allocate a hardware frame");
-                    return false;
+        // `ready` is a hardware frame the caller already filled — the CUDA export path, which
+        // writes the encoder's surface straight from the compositor's GL textures. Everyone
+        // else hands over nothing and pays for the system-memory round trip below.
+        auto sendVideoAndAudio = [&](int64_t pts, AVFrame *ready = nullptr) -> bool {
+            AVFrame *encodeFrame = ready;
+            if (!encodeFrame) {
+                applySdrBt709Tags(vframe);
+                vframe->pts = pts;
+                encodeFrame = vframe;
+                if (hwUpload) {
+                    av_frame_unref(hwframe);
+                    if (av_hwframe_get_buffer(vctx->hw_frames_ctx, hwframe, 0) < 0) {
+                        error = QStringLiteral("Could not allocate a hardware frame");
+                        return false;
+                    }
+                    if (av_hwframe_transfer_data(hwframe, vframe, 0) < 0) {
+                        error = QStringLiteral("Could not upload a frame to the encoder");
+                        return false;
+                    }
+                    applySdrBt709Tags(hwframe);
+                    hwframe->pts = pts;
+                    encodeFrame = hwframe;
                 }
-                if (av_hwframe_transfer_data(hwframe, vframe, 0) < 0) {
-                    error = QStringLiteral("Could not upload a frame to the encoder");
-                    return false;
-                }
-                applySdrBt709Tags(hwframe);
-                hwframe->pts = pts;
-                encodeFrame = hwframe;
             }
             if (!encodeWriteFrame(fmt, vctx, vstream, encodeFrame, pkt, &error))
                 return false;
@@ -2230,10 +2329,23 @@ bool Exporter::run(const drift::Project &project, const ExportSettings &settings
         {
             int slot = 0;
             int64_t pts = 0;
+            drift::TimeUs timeUs = 0;
             bool packed = false;
         };
         InflightNv12 inflight[GpuCompositor::kExportNv12Slots];
         int inflightCount = 0;
+
+        // NVENC's frame can be filled from the compositor's own GL textures, which skips a
+        // full-frame readback into system memory and the matching upload back to the card —
+        // two copies of every frame, on a path where nothing ever looks at the CPU pixels.
+        // Only NVENC: it is the one encoder whose surfaces are CUDA memory the GL interop can
+        // reach. Latches off on the first refusal and the export finishes the ordinary way.
+        // The GL vendor matters as much as the encoder: CUDA can only register textures that
+        // live on its own GPU, so on a hybrid machine compositing on the integrated one the
+        // registration cannot succeed and every frame would pay for a composite it throws away.
+        bool cudaExport = useGpuNv12 && hwUpload && vdef->hw == HwBackend::Nvenc
+            && swPixFmt == AV_PIX_FMT_NV12 && outPixFmt == AV_PIX_FMT_CUDA
+            && GpuCompositor::status().vendor.contains(QStringLiteral("NVIDIA"), Qt::CaseInsensitive);
 
         auto consumeNv12Head = [&]() -> bool {
             const InflightNv12 job = inflight[0];
@@ -2241,13 +2353,39 @@ bool Exporter::run(const drift::Project &project, const ExportSettings &settings
                 inflight[i] = inflight[i + 1];
             --inflightCount;
 
+            bool packed = job.packed;
+            if (cudaExport && packed) {
+                av_frame_unref(hwframe);
+                if (av_hwframe_get_buffer(vctx->hw_frames_ctx, hwframe, 0) < 0) {
+                    error = QStringLiteral("Could not allocate a hardware frame");
+                    return false;
+                }
+                if (GpuCompositor::finishExportNv12ToCuda(job.slot, hwframe)) {
+                    applySdrBt709Tags(hwframe);
+                    hwframe->pts = job.pts;
+                    return sendVideoAndAudio(job.pts, hwframe);
+                }
+                // The planes were never packed for readback, so this frame has to be composed
+                // again the ordinary way rather than salvaged out of the PBO. Every frame after
+                // it is packed for readback from the start.
+                av_frame_unref(hwframe);
+                cudaExport = false;
+                GpuScene retry;
+                if (!compositor.buildSceneAt(job.timeUs, composeOptions, &retry)) {
+                    retry = GpuScene{};
+                    retry.canvasSize = QSize(outW, outH);
+                    retry.backgroundColor = Qt::black;
+                }
+                packed = GpuCompositor::beginExportNv12(retry, outW, outH, job.slot);
+            }
+
             if (av_frame_make_writable(vframe) < 0) {
                 error = QStringLiteral("Video frame not writable");
                 return false;
             }
 
             bool mapped = false;
-            if (job.packed) {
+            if (packed) {
                 if (swPixFmt == AV_PIX_FMT_NV12) {
                     mapped = GpuCompositor::finishExportNv12(job.slot, vframe->data[0],
                                                              vframe->linesize[0], vframe->data[1],
@@ -2259,8 +2397,12 @@ bool Exporter::run(const drift::Project &project, const ExportSettings &settings
                         nv12ToYuv420p(nv12Y.data(), outW, nv12Uv.data(), outW, vframe);
                 }
             }
-            if (!mapped)
-                fillLimitedBlackFrame(vframe);
+            if (!mapped) {
+                if (vdef->hasAlpha)
+                    fillTransparentFrame(vframe);
+                else
+                    fillLimitedBlackFrame(vframe);
+            }
 
             return sendVideoAndAudio(job.pts);
         };
@@ -2288,15 +2430,16 @@ bool Exporter::run(const drift::Project &project, const ExportSettings &settings
                 }
 
                 const int slot = int(i % GpuCompositor::kExportNv12Slots);
-                const bool packed = GpuCompositor::beginExportNv12(scene, outW, outH, slot);
-                inflight[inflightCount++] = InflightNv12{slot, i, packed};
+                const bool packed =
+                    GpuCompositor::beginExportNv12(scene, outW, outH, slot, cudaExport);
+                inflight[inflightCount++] = InflightNv12{slot, i, t, packed};
                 continue;
             }
 
             QImage img = compositor.compositeAt(t);
             if (img.isNull()) {
                 img = QImage(projW, projH, QImage::Format_RGBA8888);
-                img.fill(Qt::black);
+                img.fill(vdef->hasAlpha ? Qt::transparent : Qt::black);
             } else if (img.format() != QImage::Format_RGBA8888) {
                 img = img.convertToFormat(QImage::Format_RGBA8888);
             }

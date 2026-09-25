@@ -17,6 +17,7 @@ Item {
     readonly property var categories: EditorState.builtinShapeCategories()
     readonly property var allShapes: EditorState.builtinShapes()
     property string activeCategory: categories.length > 0 ? categories[0].id : ""
+    property alias searchText: search.text
     readonly property string query: search.text.trim().toLowerCase()
     property int favoritesTick: 0
 
@@ -76,13 +77,10 @@ Item {
             onCategoryActivated: (categoryId) => root.activeCategory = categoryId
         }
 
-        Flickable {
+        Item {
             width: parent.width
             height: Math.max(0, parent.height - Theme.pagePadding - search.height
                              - Theme.spacingMd - categoryChips.height)
-            contentHeight: Math.max(emptySearchHint.height, shapeGrid.height) + Theme.pagePadding * 2
-            clip: true
-            ScrollBar.vertical: AppScrollBar { }
 
             Text {
                 id: emptySearchHint
@@ -101,116 +99,127 @@ Item {
                 wrapMode: Text.WordWrap
             }
 
-            Grid {
+            FontMetrics {
+                id: labelMetrics
+                font.family: Theme.fontFamily
+                font.pixelSize: Theme.fontSizeCard
+            }
+
+            // One trailing gap wider than the padded area, so the cards pack from the left exactly
+            // as the old Grid did.
+            GridView {
                 id: shapeGrid
                 x: Theme.pagePadding
-                y: Theme.pagePadding
-                width: parent.width - Theme.pagePadding * 2
+                width: parent.width - Theme.pagePadding * 2 + Theme.assetCardGap
+                height: parent.height
+                topMargin: Theme.pagePadding
+                bottomMargin: Theme.pagePadding
                 visible: root.currentShapes.length > 0
-                columns: Math.max(1, Math.floor((width + Theme.assetCardGap) / (Theme.assetCardWidth + Theme.assetCardGap)))
-                columnSpacing: Theme.assetCardGap
-                rowSpacing: Theme.assetCardGap
+                clip: true
+                reuseItems: true
+                boundsBehavior: Flickable.StopAtBounds
+                ScrollBar.vertical: AppScrollBar { }
+                cellWidth: Theme.assetCardWidth + Theme.assetCardGap
+                cellHeight: Theme.assetCardWidth + Theme.spacingSm + Math.ceil(labelMetrics.height) + Theme.assetCardGap
+                model: root.currentShapes
 
-                Repeater {
-                    model: root.currentShapes
-                    delegate: Column {
-                        id: shapeCard
-                        required property var modelData
+                delegate: Column {
+                    id: shapeCard
+                    required property var modelData
+                    width: Theme.assetCardWidth
+                    spacing: Theme.spacingSm
+
+                    opacity: shapeDrag.active ? 0.85 : 1
+                    scale: shapeDrag.active ? 1.04 : 1.0
+
+                    Behavior on opacity {
+                        NumberAnimation { duration: Theme.durationFast; easing.type: Theme.easing }
+                    }
+                    Behavior on scale {
+                        NumberAnimation { duration: Theme.durationFast; easing.type: Theme.easing }
+                    }
+
+                    Drag.active: shapeDrag.active
+                    Drag.dragType: Drag.Automatic
+                    Drag.supportedActions: Qt.CopyAction
+                    Drag.keys: ["application/x-drift-shape"]
+                    Drag.mimeData: { "application/x-drift-shape": shapeCard.modelData.id }
+
+                    Rectangle {
                         width: Theme.assetCardWidth
-                        spacing: Theme.spacingSm
+                        height: Theme.assetCardWidth
+                        radius: Theme.radiusSm
+                        color: shapeHover.hovered ? Theme.popoverHover : Theme.panelAccent
+                        border.width: 1
+                        border.color: shapeHover.hovered ? Theme.accent : "transparent"
 
-                        opacity: shapeDrag.active ? 0.85 : 1
-                        scale: shapeDrag.active ? 1.04 : 1.0
-
-                        Behavior on opacity {
-                            NumberAnimation { duration: Theme.durationFast; easing.type: Theme.easing }
+                        Behavior on color {
+                            ColorAnimation { duration: Theme.durationFast; easing.type: Theme.easing }
                         }
-                        Behavior on scale {
-                            NumberAnimation { duration: Theme.durationFast; easing.type: Theme.easing }
+                        Behavior on border.color {
+                            ColorAnimation { duration: Theme.durationFast; easing.type: Theme.easing }
                         }
 
-                        Drag.active: shapeDrag.active
-                        Drag.dragType: Drag.Automatic
-                        Drag.supportedActions: Qt.CopyAction
-                        Drag.keys: ["application/x-drift-shape"]
-                        Drag.mimeData: { "application/x-drift-shape": shapeCard.modelData.id }
-
-                        Rectangle {
-                            width: Theme.assetCardWidth
-                            height: Theme.assetCardWidth
-                            radius: Theme.radiusSm
-                            color: shapeHover.hovered ? Theme.popoverHover : Theme.panelAccent
-                            border.width: 1
-                            border.color: shapeHover.hovered ? Theme.accent : "transparent"
-
-                            Behavior on color {
-                                ColorAnimation { duration: Theme.durationFast; easing.type: Theme.easing }
-                            }
-                            Behavior on border.color {
-                                ColorAnimation { duration: Theme.durationFast; easing.type: Theme.easing }
-                            }
-
-                            // The catalog entry drawn with its real default style, so the card
-                            // shows what lands on the timeline.
-                            Image {
-                                anchors.fill: parent
-                                anchors.margins: Theme.pagePadding
-                                source: "image://shape/" + shapeCard.modelData.id
-                                sourceSize: Qt.size(Theme.assetCardWidth * 2, Theme.assetCardWidth * 2)
-                                fillMode: Image.PreserveAspectFit
-                                asynchronous: true
-                                cache: true
-                                scale: shapeTap.pressed ? 0.94 : shapeHover.hovered ? 1.06 : 1.0
-                                Behavior on scale {
-                                    NumberAnimation { duration: Theme.durationFast; easing.type: Theme.easing }
-                                }
-                            }
-
-                            HoverHandler {
-                                id: shapeHover
-                                cursorShape: Qt.PointingHandCursor
-                            }
-
-                            ThemedToolTip {
-                                text: qsTr("%1 — click to add, or drag to the timeline").arg(shapeCard.modelData.label)
-                                visible: shapeHover.hovered
-                            }
-
-                            TapHandler {
-                                id: shapeTap
-                                onTapped: {
-                                    EditorState.addShapeClip(shapeCard.modelData.id, -1)
-                                    root.added()
-                                }
-                            }
-                            DragHandler {
-                                id: shapeDrag
-                                target: null
-                                // Touch adds at the playhead and closes the sheet; a
-                                // platform drag has no gesture there and only competes
-                                // with the tap for the grab.
-                                enabled: !Theme.touchUi
-                                acceptedButtons: Qt.LeftButton
-                            }
-
-                            AssetFavoriteButton {
-                                anchors.right: parent.right
-                                anchors.top: parent.top
-                                anchors.margins: 3
-                                tabId: "shapes"
-                                itemId: shapeCard.modelData.id
+                        // The catalog entry drawn with its real default style, so the card
+                        // shows what lands on the timeline.
+                        Image {
+                            anchors.fill: parent
+                            anchors.margins: Theme.pagePadding
+                            source: "image://shape/" + shapeCard.modelData.id
+                            sourceSize: Qt.size(Theme.assetCardWidth * 2, Theme.assetCardWidth * 2)
+                            fillMode: Image.PreserveAspectFit
+                            asynchronous: true
+                            cache: true
+                            scale: shapeTap.pressed ? 0.94 : shapeHover.hovered ? 1.06 : 1.0
+                            Behavior on scale {
+                                NumberAnimation { duration: Theme.durationFast; easing.type: Theme.easing }
                             }
                         }
 
-                        Text {
-                            width: parent.width
-                            text: modelData.label
-                            color: Theme.mutedForeground
-                            font.family: Theme.fontFamily
-                            font.pixelSize: Theme.fontSizeCard
-                            horizontalAlignment: Text.AlignHCenter
-                            elide: Text.ElideRight
+                        HoverHandler {
+                            id: shapeHover
+                            cursorShape: Qt.PointingHandCursor
                         }
+
+                        ThemedToolTip {
+                            text: qsTr("%1 — click to add, or drag to the timeline").arg(shapeCard.modelData.label)
+                            visible: shapeHover.hovered
+                        }
+
+                        TapHandler {
+                            id: shapeTap
+                            onTapped: {
+                                EditorState.addShapeClip(shapeCard.modelData.id, -1)
+                                root.added()
+                            }
+                        }
+                        DragHandler {
+                            id: shapeDrag
+                            target: null
+                            // Touch adds at the playhead and closes the sheet; a
+                            // platform drag has no gesture there and only competes
+                            // with the tap for the grab.
+                            enabled: !Theme.touchUi
+                            acceptedButtons: Qt.LeftButton
+                        }
+
+                        AssetFavoriteButton {
+                            anchors.right: parent.right
+                            anchors.top: parent.top
+                            anchors.margins: 3
+                            tabId: "shapes"
+                            itemId: shapeCard.modelData.id
+                        }
+                    }
+
+                    Text {
+                        width: parent.width
+                        text: modelData.label
+                        color: Theme.mutedForeground
+                        font.family: Theme.fontFamily
+                        font.pixelSize: Theme.fontSizeCard
+                        horizontalAlignment: Text.AlignHCenter
+                        elide: Text.ElideRight
                     }
                 }
             }

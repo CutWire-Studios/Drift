@@ -23,6 +23,67 @@ TransitionAudioGains transitionAudioGains(const QString &curve, double progress)
     return gains;
 }
 
+TimeUs clipHandleBeforeUs(const Clip &clip, TimeUs mediaDurationUs)
+{
+    if (clip.hasSpeedCurve())
+        return 0;
+    const TimeUs source = clip.reverse ? qMax<TimeUs>(0, mediaDurationUs - clip.srcOut) : qMax<TimeUs>(0, clip.srcIn);
+    return static_cast<TimeUs>(static_cast<double>(source) / clip.effectiveSpeed());
+}
+
+TimeUs clipHandleAfterUs(const Clip &clip, TimeUs mediaDurationUs)
+{
+    if (clip.hasSpeedCurve())
+        return 0;
+    const TimeUs source = clip.reverse ? qMax<TimeUs>(0, clip.srcIn) : qMax<TimeUs>(0, mediaDurationUs - clip.srcOut);
+    return static_cast<TimeUs>(static_cast<double>(source) / clip.effectiveSpeed());
+}
+
+AudioTransitionEdge audioTransitionEdgeFor(const Track &track, const Clip &clip, TimeUs mediaDurationUs)
+{
+    AudioTransitionEdge edge;
+    for (const Transition &transition : track.transitions) {
+        const bool isFrom = transition.fromClipId == clip.id;
+        const bool isTo = transition.toClipId == clip.id;
+        if (!isFrom && !isTo)
+            continue;
+        const Clip *from = clipById(track, transition.fromClipId);
+        const Clip *to = clipById(track, transition.toClipId);
+        if (!from || !to || clipsPhysicallyOverlap(*from, *to))
+            continue;
+        TimeUs ws = 0;
+        TimeUs we = 0;
+        if (!transitionWindow(track, transition, ws, we))
+            continue;
+        if (isFrom) {
+            edge.ownsOut = true;
+            const TimeUs need = qMax<TimeUs>(0, we - clip.timelineEnd());
+            if (need > 0 && clipHandleAfterUs(clip, mediaDurationUs) >= need) {
+                edge.extendAfterUs = need;
+                edge.outHasHandle = true;
+            }
+        }
+        if (isTo) {
+            edge.ownsIn = true;
+            const TimeUs need = qMax<TimeUs>(0, clip.timelineStart - ws);
+            if (need > 0 && clipHandleBeforeUs(clip, mediaDurationUs) >= need) {
+                edge.extendBeforeUs = need;
+                edge.inHasHandle = true;
+            }
+        }
+    }
+    return edge;
+}
+
+QString effectiveAudioCurve(const QString &curve, bool hasHandle)
+{
+    // A crossfade needs both sounds across the whole window; without the media for it, fade
+    // through silence rather than cut a half-level sound off at the edit.
+    if (!hasHandle && (curve.isEmpty() || curve == QLatin1String("crossfade")))
+        return QStringLiteral("dip");
+    return curve.isEmpty() ? QStringLiteral("crossfade") : curve;
+}
+
 const Clip *clipById(const Track &track, const QString &clipId)
 {
     for (const Clip &clip : track.clips) {
@@ -81,12 +142,13 @@ bool transitionWindow(const Track &track, const Transition &transition, TimeUs &
     if (transition.durationUs <= 0)
         return false;
 
-    // Adjacent clips: virtual window centered on the cut.
+    // Adjacent clips: virtual window centered on the cut, never outside the two clips
+    // (a stale durationUs from a former overlap must not start before t=0 or outrun them).
     const TimeUs center = fromClip->timelineEnd();
     const TimeUs half = transition.durationUs / 2;
-    startUs = center - half;
-    endUs = center + half;
-    return true;
+    startUs = qMax(fromClip->timelineStart, center - half);
+    endUs = qMin(toClip->timelineEnd(), center + half);
+    return endUs > startUs;
 }
 
 double transitionProgress(const Transition &transition, TimeUs timelineUs, TimeUs windowStartUs,

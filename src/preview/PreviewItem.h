@@ -26,6 +26,7 @@ class PreviewItem : public QQuickItem
 
 public:
     explicit PreviewItem(QQuickItem *parent = nullptr);
+    ~PreviewItem() override;
 
     PlaybackEngine *playback() const { return m_playback; }
     void setPlayback(PlaybackEngine *engine);
@@ -61,6 +62,7 @@ private:
     QMetaObject::Connection m_afterAnimatingConn;
     QMetaObject::Connection m_frameSwappedConn;
     QMetaObject::Connection m_screenChangedConn;
+    QMetaObject::Connection m_refreshRateConn;
     QPointer<QQuickWindow> m_cadenceWindow;
     int m_textureId = 0;
     QSize m_textureSize;

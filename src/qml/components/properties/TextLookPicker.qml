@@ -140,7 +140,9 @@ Item {
                 readonly property real tileWidth: Math.floor((width - gap * (columns - 1)) / columns)
 
                 Repeater {
-                    model: root.looks
+                    // Popup content exists while closed; building the tiles only while open keeps
+                    // their preview renders from running on every edit behind a closed dialog.
+                    model: dialog.visible ? root.looks : []
                     delegate: Column {
                         id: lookTile
                         required property var modelData

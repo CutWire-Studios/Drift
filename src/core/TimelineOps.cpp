@@ -6,32 +6,68 @@
 
 namespace drift {
 
-TimeUs snapTime(const Project &project, TimeUs time, bool snapEnabled, TimeUs playheadUs,
-                const QList<TimeUs> &extraTargets)
+void SnapTargets::build(const Project &project, TimeUs playheadUs,
+                        const QList<TimeUs> &extraTargets, const QString &excludeClipId)
 {
-    if (!snapEnabled)
-        return qMax<TimeUs>(0, time);
-
-    QList<TimeUs> targets = {0, playheadUs};
+    sorted.clear();
+    sorted.reserve(2 + extraTargets.size() + 2 * project.tracks().size());
+    sorted.push_back(0);
+    sorted.push_back(playheadUs);
     for (const Track &track : project.tracks()) {
         for (const Clip &clip : track.clips) {
-            targets.append(clip.timelineStart);
-            targets.append(clip.timelineEnd());
+            if (!excludeClipId.isEmpty() && clip.id == excludeClipId)
+                continue;
+            sorted.push_back(clip.timelineStart);
+            sorted.push_back(clip.timelineEnd());
         }
     }
-    targets.append(extraTargets);
+    for (TimeUs extra : extraTargets)
+        sorted.push_back(extra);
 
+    std::sort(sorted.begin(), sorted.end());
+    sorted.erase(std::unique(sorted.begin(), sorted.end()), sorted.end());
+}
+
+TimeUs snapTimeTo(const SnapTargets &targets, TimeUs time, bool snapEnabled)
+{
+    if (!snapEnabled || targets.sorted.empty())
+        return qMax<TimeUs>(0, time);
+
+    // Only the two targets bracketing `time` can be the nearest one. Ties go to the lower
+    // target; the old linear scan gave them to whichever clip came first in track order, which
+    // was no more meaningful and only reachable at exact microsecond equidistance.
+    const auto it = std::lower_bound(targets.sorted.begin(), targets.sorted.end(), time);
     TimeUs best = time;
     TimeUs bestDistance = kSnapThresholdUs;
-    for (TimeUs target : targets) {
-        const TimeUs distance = qAbs(target - time);
+    if (it != targets.sorted.begin()) {
+        const TimeUs candidate = *(it - 1);
+        const TimeUs distance = qAbs(candidate - time);
         if (distance < bestDistance) {
             bestDistance = distance;
-            best = target;
+            best = candidate;
+        }
+    }
+    if (it != targets.sorted.end()) {
+        const TimeUs candidate = *it;
+        const TimeUs distance = qAbs(candidate - time);
+        if (distance < bestDistance) {
+            bestDistance = distance;
+            best = candidate;
         }
     }
 
     return qMax<TimeUs>(0, best);
+}
+
+TimeUs snapTime(const Project &project, TimeUs time, bool snapEnabled, TimeUs playheadUs,
+                const QList<TimeUs> &extraTargets, const QString &excludeClipId)
+{
+    if (!snapEnabled)
+        return qMax<TimeUs>(0, time);
+
+    SnapTargets targets;
+    targets.build(project, playheadUs, extraTargets, excludeClipId);
+    return snapTimeTo(targets, time, snapEnabled);
 }
 
 TimeUs resolveClipStart(const Project &project, const Track &track, int excludeClipIndex,
@@ -147,10 +183,12 @@ TrackType trackTypeForClipType(ClipType type)
     case ClipType::Image:
     case ClipType::Shape:
     case ClipType::Vector:
+    case ClipType::Model3d:
         return TrackType::Shape;
     case ClipType::Adjustment:
         return TrackType::Adjustment;
     case ClipType::Video:
+    case ClipType::Composite:
         break;
     }
     return TrackType::Video;
@@ -654,6 +692,43 @@ int ensureTrackForClipType(Project &project, ClipType type, bool insertAtTop)
     return insertAtTop ? 0 : project.tracks().size() - 1;
 }
 
+// Like ensureTrackForClipType, but it will not hand back a lane whose span is already taken.
+//
+// Image, Shape, Vector and Model3d all map onto one track type, so emoji, stickers, shapes, Lottie
+// and 3D models share a single lane by default. Adding a second one at the same time then pushed it
+// down the timeline to the next free gap, which silently moved a graphic away from the moment it
+// was meant to appear. Stacking them on their own lanes is what the caller meant.
+int ensureFreeTrackForClipType(Project &project, ClipType type, TimeUs startUs, TimeUs durationUs,
+                               bool insertAtTop)
+{
+    const TrackType trackType = trackTypeForClipType(type);
+    int firstMatch = -1;
+    const QList<Track> &tracks = project.tracks();
+    for (int i = 0; i < tracks.size(); ++i) {
+        if (tracks[i].isAdjustmentLane())
+            continue;
+        if (tracks[i].type != trackType || !tracks[i].allowsClipType(type))
+            continue;
+        if (firstMatch < 0)
+            firstMatch = i;
+        bool collides = false;
+        for (const Clip &existing : tracks[i].clips) {
+            if (startUs < existing.timelineEnd() && existing.timelineStart < startUs + durationUs) {
+                collides = true;
+                break;
+            }
+        }
+        if (!collides)
+            return i;
+    }
+
+    if (firstMatch < 0)
+        return ensureTrackForClipType(project, type, insertAtTop);
+    // Every existing lane is busy at this moment, so give the clip one of its own directly above
+    // the first, which keeps later graphics drawing over earlier ones.
+    return insertTrackAboveForClipType(project, firstMatch, type);
+}
+
 int insertTrackAtTopForClipType(Project &project, ClipType type)
 {
     project.tracks().prepend(Track{.type = trackTypeForClipType(type)});
@@ -683,6 +758,10 @@ TimeUs clipDurationForAsset(const MediaAsset *asset)
 
 TimeUs sourceDurationForClip(const Project &project, const Clip &clip)
 {
+    // A composite's source is its nested timeline, which grows as content is added inside it.
+    if (!clip.sequenceId.isEmpty())
+        return project.sequenceDurationUs(clip.sequenceId);
+
     if (!clip.assetId.isEmpty()) {
         if (const MediaAsset *asset = project.asset(clip.assetId)) {
             if (asset->durationUs > 0)
@@ -691,7 +770,7 @@ TimeUs sourceDurationForClip(const Project &project, const Clip &clip)
     }
 
     if (clip.type == ClipType::Image || clip.type == ClipType::Shape || clip.type == ClipType::Vector
-        || clip.type == ClipType::Adjustment)
+        || clip.type == ClipType::Model3d || clip.type == ClipType::Adjustment)
         return kImageClipDurationUs;
 
     return qMax(clip.srcOut, clip.timelineDuration);
@@ -699,7 +778,13 @@ TimeUs sourceDurationForClip(const Project &project, const Clip &clip)
 
 bool splitClipAtOffset(Clip &head, Clip &tail, TimeUs offset)
 {
-    if (offset < kMinClipDurationUs || head.timelineDuration - offset < kMinClipDurationUs)
+    return splitClipAtOffsetMin(head, tail, offset, kMinClipDurationUs);
+}
+
+bool splitClipAtOffsetMin(Clip &head, Clip &tail, TimeUs offset, TimeUs minEdgeUs)
+{
+    minEdgeUs = qMax<TimeUs>(1, minEdgeUs);
+    if (offset < minEdgeUs || head.timelineDuration - offset < minEdgeUs)
         return false;
 
     const TimeUs sourceSpan = head.srcOut - head.srcIn;
@@ -763,6 +848,21 @@ bool splitClipAtOffset(Clip &head, Clip &tail, TimeUs offset)
     }
 
     head.timelineDuration = offset;
+    // A cut is invisible: neither half fades or animates at it. The outer fades stay where they
+    // were (clamped to the shorter halves), and mergeClips puts the tail's fade-out back.
+    head.fadeOutUs = 0;
+    head.animOut = ClipAnimation{};
+    head.audioFadeOutUs = 0;
+    tail.fadeInUs = 0;
+    tail.animIn = ClipAnimation{};
+    tail.audioFadeInUs = 0;
+    head.fadeInUs = qMin(head.fadeInUs, head.timelineDuration);
+    tail.fadeOutUs = qMin(tail.fadeOutUs, tail.timelineDuration);
+    // Key times are relative to the clip's own start, so the tail — which now starts `offset`
+    // later — has to carry its curves back by the same amount. Without this a cut, which should be
+    // invisible, replays the whole animation `offset` later on the second half. The head keeps its
+    // keys as they are, including any past the cut: they still shape the curve inside its range.
+    rebaseKeyframesForSplitTail(tail, offset);
     return true;
 }
 
@@ -796,6 +896,7 @@ void retargetClipToSource(Clip &dst, const Clip &src, TimeUs srcMediaDurationUs)
     // Landmarks are baked against the outgoing media, indexed by its source time.
     dst.faceTrackPath.clear();
     dst.faceTrackSrcOffsetUs = 0;
+    dst.depthPath.clear();
     // Masks are not reachable from here: they live on the adjustments pinned to the clip, not on
     // the clip. The caller must follow this with clearLinkedMasks(..., mediaOnly = true) — media
     // coverage is rendered pixels describing only the camera it was traced from, and kept it
@@ -855,6 +956,48 @@ Clip mergeClips(const Clip &left, const Clip &right)
         out.srcOut = right.srcOut;
     }
     out.fadeOutUs = right.fadeOutUs;
+    out.animOut = right.animOut;
+    out.audioFadeOutUs = right.audioFadeOutUs;
+    return out;
+}
+
+bool subtitleClipsCanMerge(const QList<Clip> &clips)
+{
+    if (clips.size() < 2)
+        return false;
+    for (const Clip &clip : clips) {
+        if (clip.type != ClipType::Subtitle)
+            return false;
+    }
+    return true;
+}
+
+Clip mergeSubtitleClips(QList<Clip> clips)
+{
+    std::stable_sort(clips.begin(), clips.end(),
+                     [](const Clip &a, const Clip &b) { return a.timelineStart < b.timelineStart; });
+
+    Clip out = clips.first();
+    TimeUs end = out.timelineEnd();
+    for (const Clip &clip : clips)
+        end = qMax(end, clip.timelineEnd());
+    out.timelineDuration = end - out.timelineStart;
+    out.srcIn = 0;
+    out.srcOut = out.timelineDuration;
+    out.fadeOutUs = clips.last().fadeOutUs;
+
+    QList<SubtitleCue> cues;
+    for (const Clip &clip : clips) {
+        const TimeUs offset = clip.timelineStart - out.timelineStart;
+        for (SubtitleCue cue : clip.subtitleCues) {
+            cue.startUs = qBound(TimeUs{0}, cue.startUs + offset, out.timelineDuration);
+            cue.endUs = qBound(TimeUs{0}, cue.endUs + offset, out.timelineDuration);
+            cues.append(cue);
+        }
+    }
+    sortSubtitleCues(cues);
+    out.subtitleCues = cues;
+    out.name = subtitleClipName(out.subtitleCues);
     return out;
 }
 
@@ -890,6 +1033,8 @@ void syncLinkedTiming(Clip &dst, const Clip &src)
     dst.fadeOutUs = src.fadeOutUs;
     dst.fadeCurve = src.fadeCurve;
     dst.fadeShape = src.fadeShape;
+    dst.audioFadeInUs = src.audioFadeInUs;
+    dst.audioFadeOutUs = src.audioFadeOutUs;
 }
 
 QString assignSplitLinkIds(Clip &head, Clip &tail)
@@ -1026,6 +1171,58 @@ QList<MulticamInterval> multicamIntervals(const QList<MulticamCut> &cuts, TimeUs
         out.append(MulticamInterval{cuts.at(i).timeUs, end, cuts.at(i).angle});
     }
     return out;
+}
+
+namespace {
+
+// Every clip-relative curve a clip can carry, in one place so the operations below cannot forget
+// one. TextAnimator curves are deliberately absent: their key "times" are animation progress, not
+// clip time, so moving them would distort the animation rather than move it.
+template<typename Fn>
+void forEachKeyframeTrack(Clip &clip, Fn &&fn)
+{
+    fn(clip.opacity);
+    fn(clip.transformX);
+    fn(clip.transformY);
+    fn(clip.transformW);
+    fn(clip.transformH);
+    fn(clip.rotation);
+    fn(clip.volume);
+    const auto visitMap = [&fn](QMap<QString, KeyframeTrack<double>> &tracks) {
+        for (auto it = tracks.begin(); it != tracks.end(); ++it)
+            fn(it.value());
+    };
+    for (Effect &effect : clip.effects)
+        visitMap(effect.paramKeyframes);
+    for (Effect &effect : clip.audioEffects)
+        visitMap(effect.paramKeyframes);
+    visitMap(clip.mask.keyframes);
+    visitMap(clip.shapeStyle.keyframes);
+    visitMap(clip.textStyle.keyframes);
+    visitMap(clip.vector.keyframes);
+    visitMap(clip.model3d.keyframes);
+}
+
+} // namespace
+
+void shiftClipKeyframes(Clip &clip, TimeUs delta)
+{
+    if (delta == 0)
+        return;
+    forEachKeyframeTrack(clip, [delta](KeyframeTrack<double> &track) { track.shiftBy(delta); });
+}
+
+void rebaseKeyframesForSplitTail(Clip &tail, TimeUs offset)
+{
+    if (offset <= 0)
+        return;
+    // Pin the value the curve holds at the cut before moving it, or the tail would start from
+    // whichever key survived the shift and hold it flat — the animation would visibly change shape
+    // at a cut that is supposed to be invisible.
+    forEachKeyframeTrack(tail, [offset](KeyframeTrack<double> &track) {
+        track.pinValueAt(offset);
+        track.shiftBy(-offset);
+    });
 }
 
 bool sliceClipToTimelineRange(const Clip &src, TimeUs start, TimeUs end, Clip &out)

@@ -11,9 +11,9 @@ Column {
     signal cropStarted()
     signal layoutChooserOpened()
 
-    property int canvasW: { void EditorState.tracks; return EditorState.projectWidth() }
-    property int canvasH: { void EditorState.tracks; return EditorState.projectHeight() }
-    property int canvasFps: { void EditorState.tracks; return EditorState.projectFps() }
+    property int canvasW: { void EditorState.tracksRevision; return EditorState.projectWidth() }
+    property int canvasH: { void EditorState.tracksRevision; return EditorState.projectHeight() }
+    property int canvasFps: { void EditorState.tracksRevision; return EditorState.projectFps() }
 
     readonly property var canvasPresets: [
         { label: qsTr("Custom"), w: 0, h: 0 },

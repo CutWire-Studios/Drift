@@ -1,4 +1,5 @@
 import QtQuick
+import QtQuick.Window
 import QtQuick.Controls.Basic
 import QtQuick.Layouts
 import QtMultimedia
@@ -30,6 +31,7 @@ Item {
         void Market.items
         return previewId.length > 0 ? Market.itemById(previewId) : ({})
     }
+    property alias searchText: search.text
     readonly property string query: search.text.trim()
     readonly property int activeFilterCount: Object.keys(root.filterValues).length
 
@@ -115,7 +117,11 @@ Item {
         return false
     }
 
-    onVisibleChanged: {
+    // Also run on creation: the assets panel loads this tab already visible, so no
+    // visibleChanged arrives for the first showing.
+    onVisibleChanged: root.ensureCatalog()
+    Component.onCompleted: root.ensureCatalog()
+    function ensureCatalog() {
         if (!visible || !Market.configured || !Market.consented)
             return
         if (Market.types.length === 0 && !Market.catalogLoading)
@@ -876,6 +882,7 @@ Item {
                     source: root.previewItem.preview_url || root.previewItem.thumb_url || ""
                     fillMode: Image.PreserveAspectFit
                     asynchronous: true
+                    sourceSize.height: Math.ceil(220 * Screen.devicePixelRatio)
                 }
 
                 VideoOutput {

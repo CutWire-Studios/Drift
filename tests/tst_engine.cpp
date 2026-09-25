@@ -1,12 +1,20 @@
 #include <QtTest>
+#include "engine/SileroVad.h"
+#include "engine/CtcAligner.h"
+#include "engine/KaldiFbank.h"
+#include "engine/SpeakerDiarizer.h"
+#include <set>
 
+#include <QColor>
 #include <QDir>
 #include <QFile>
 #include <QFileInfo>
+#include <QHash>
 #include <QJsonDocument>
 #include <QMatrix4x4>
 #include <QPainter>
 #include <QProcess>
+#include <QRegularExpression>
 #include <QScopeGuard>
 #include <QSet>
 #include <QStandardPaths>
@@ -25,12 +33,17 @@
 
 #include "core/Clip.h"
 #include "core/Project.h"
+#include "core/Stabilize.h"
 #include "core/TimelineOps.h"
 #include "engine/AudioMixer.h"
 #include "engine/ClipReader.h"
+#include "engine/LoudnessMeter.h"
 #include "engine/StillImage.h"
 #include "engine/DebugReport.h"
+#include "engine/DepthSidecar.h"
+#include "engine/VdaDepth.h"
 #include "engine/Exporter.h"
+#include "engine/PreviewProxyRenderer.h"
 #include "engine/GpuCompositor.h"
 #include "engine/MediaWaveform.h"
 #include "playback/PlaybackDiagnostics.h"
@@ -56,8 +69,13 @@
 #include "engine/EffectProcessor.h"
 #include "engine/FaceTrack.h"
 #include "engine/FaceMesh.h"
+#include "engine/FacePropCatalog.h"
+#include "engine/FacePropImport.h"
 #include "engine/FaceModelTransform.h"
 #include "engine/ModelAsset.h"
+#include "engine/ModelAnimation.h"
+#include "engine/ModelClipRenderer.h"
+#include "engine/ModelClipTransform.h"
 #include "engine/GlFaceSwapRenderer.h"
 #include "engine/FaceSwapSource.h"
 #include "engine/GlModelRenderer.h"
@@ -84,6 +102,7 @@
 #include "engine/MediaProbe.h"
 #include "engine/TransitionCatalog.h"
 #include "core/Transition.h"
+#include "TestZip.h"
 
 extern "C" {
 #include <libavcodec/avcodec.h>
@@ -104,10 +123,24 @@ private slots:
     void matteWriterPreservesSoftAlpha();
     void matteWriterRoundTripsColourForeground();
     void reverseRendererPlaysSourceBackwards();
+    void previewProxyKeepsSourceTiming();
+    void variableFrameRateIsDetected();
     void mediaEditorCropsAnImage();
+    void mediaEditorConformsVariableFrameRate();
+    void mediaEditorKeepsTenBitAndColourTags();
+    void mediaEditorStabilizesInProcess();
     void reverseProxyLookupIsByContainmentAndSourceIdentity();
     void resolveVideoReadMirrorsTheClipOntoTheProxy();
     void faceTrackRoundTripsAndInterpolates();
+    void depthSidecarRoundTripsAndNormalises();
+    void depthSidecarRejectsUnfinishedFile();
+    void vdaStitcherAlignsAndBlendsWindows();
+    void vdaInferenceSizeKeepsAspectOnPatchGrid();
+    void effectPackageLoaderParsesDepthRequirement();
+    void depthPipelineBindsMapInFrameOrientation();
+    void depthEffectsRenderWithDepthAndPassThroughWithout();
+    void depthOfFieldKeepsFocusSharpAndBlursTheRest();
+    void depthOcclusionHidesLayerBehindNearerPixels();
     void faceTrackV2CarriesContoursAndPose();
     void faceTrackV1FileStillLoads();
     void smoothFaceTrackHandlesMissingBlocks();
@@ -122,13 +155,36 @@ private slots:
     void stillImageDecodesHeicAndAvifViaFfmpeg();
     void stillImageFallsBackWhenQtCannotRead();
     void stillImagePreservesAlpha();
+    void clipReaderPreservesVideoAlpha();
+    void compositorBlendsAlphaVideoOverStill();
+    void exporterPreservesVp9Alpha();
     void stillImageRejectsGarbage();
     void modelAssetRejectsCorrupt();
     void faceModelMvpIsResolutionIndependent();
     void faceModelMvpMapsUpToDecreasingNdcY();
     void faceModelDoesNotLeakGlState();
+    void modelAssetCubeHasNoRig();
+    void modelAssetParsesBoxAnimated();
+    void modelAssetParsesRiggedSimple();
+    void modelAnimSamplerInterpolates();
+    void modelPoseHierarchyAndSkinning();
+    void modelClipCameraIsAspectOnly();
+    void modelClipScreenRectMatchesMvp();
+    void modelClipDrawRequestFollowsLoopMode();
+    void modelClipRendersCube();
+    void modelClipRigRenders();
+    void compositorRendersModelClip();
+    void modelClipDoesNotLeakGlState();
     void faceModelFillWireDoesNotLeakGlState();
     void faceMesh3dEffectPackageLoads();
+    void facePropsEffectPackageLoads();
+    void facePropImportFromMultiPropZip();
+    void facePropImportFromFolder();
+    void facePropImportRejectsUnsafeManifests();
+    void facePropImportRejectsBadModels();
+    void facePropImportReplacesSameId();
+    void facePropRemoveStaysInsideRoot();
+    void facePropCatalogReadsManifestsAndBareGlb();
     void faceMeshRestLoadsAndWarps();
     void faceMesh3dPassThroughWithoutMesh();
     void faceMesh3dDrawsWarpedOverlay();
@@ -159,6 +215,9 @@ private slots:
     void debugReportListsCommonCodecs();
     void decodeBackendOrderFollowsTheRenderGpu();
     void playbackDiagnosticsReportsStagesAndFindings();
+    void presentRingKeepsResizedTexturesAliveForTheSceneGraph();
+    void presentRingDoesNotRedrawTheTextureOnScreen();
+    void debugReportListsEveryAvailableHardwareEncoder();
     void cudaInteropUploadsAFrameWithoutBlanking();
     void d3d11InteropUploadsAFrameWithoutBlanking();
     void decodeAttemptOrderKeepsPinsOnTheRenderGpu();
@@ -180,9 +239,14 @@ private slots:
     void compositorAppliesMultiplyBlendMode();
     void compositorAnimatesKeyedEffectParam();
     void compositorRendersShapeClip();
+    void compositorRendersCompositeClip();
+    void audioMixerPlaysCompositeClip();
     void compositorSkipsClipBeingEdited();
     void adjustmentEffectContrastCatalogEntry();
     void effectPresetStableIds();
+    void effectParamTypesMatchShaderUniforms();
+    void loudnessMatchesTheStandard();
+    void truePeakSeesBetweenSamples();
     void effectPresetCatalogIncludesStylizePresets();
     void effectBrowserCategories();
     void effectGraphTemplateSubstitution();
@@ -265,6 +329,18 @@ private slots:
     void exporterSupportsNtscFrameRates();
     void exporterFrameRateAddsRealDetailToSlowedClips();
     void mixerHasNoBlockBoundaryDropout();
+    void mixerDoesNotLeakPastClipEnd();
+    void declickRemovesStepAtCut();
+    void audioCrossfadeUsesHandles();
+    void audioCrossfadeFallsBackToDip();
+    void waveformSheetDrawsWordLane();
+    void vadRangesFollowSileroRules();
+    void vadModelScoresSilenceLow();
+    void ctcForcedAlignFindsPlantedPath();
+    void alignerNormalizesEnglish();
+    void clusterEmbeddingsCompleteLinkage();
+    void assignSpeakersByOverlap();
+    void kaldiFbankShapeAndTone();
     void mixerSurvivesConcurrentClipAudioReset();
     void retimedClipAudioIsNotSilent();
     void retimedAudioPreservesPitch();
@@ -278,6 +354,7 @@ private slots:
     void audioEffectCatalogLoadsPackages();
     void audioEffectFactoryBuildsEveryCatalogEntry();
     void audioEffectChainAltersSignal();
+    void limiterHoldsTheCeilingInsteadOfAddingGain();
     void audioEffectChainBypassesUnknownEffect();
     void audioEffectStreamIsContinuousAcrossBlocks();
     void audioEffectFlangerProcessesSignal();
@@ -287,6 +364,7 @@ private slots:
     void audioAdjustmentLanesAndMasterBus();
     void audioEffectRackReportsChainRebuilds();
     void onsetsDetectClickTrackTempo();
+    void onsetsResistHalfTimeOnAlternatingBeats();
     void onsetsIgnoreSilence();
 
     void sceneCutsFindIsolatedSpikes();
@@ -313,9 +391,11 @@ private slots:
     void audioFileWriterRoundTripsThroughClipReader();
     void glStatusIdsAreStableAndOnlyShareContextRetries();
     void softwareRenderersAreRecognisedByName();
+    void limitedPreviewGpusAreRecognised();
 
 private:
     static QString makeColorSegmentsVideo(QTemporaryDir &dir);
+    static QString makeAlphaVideo(QTemporaryDir &dir);
     static QString makeRotatedHalvesVideo(QTemporaryDir &dir, int displayDegrees);
     static QString makeHdHalvesVideo(QTemporaryDir &dir);
     static QString makeAv1ColorVideo(QTemporaryDir &dir);
@@ -403,6 +483,491 @@ void EngineTest::emojiRasterisesGlyph()
 // agree on codec, pixel format and time base. A mismatch shows up as a mask that decodes black
 // The sidecar is what preview and export both read, so a rounding or indexing slip here shows up
 // as a warp that lags the face rather than as an error.
+void EngineTest::depthSidecarRoundTripsAndNormalises()
+{
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    const QString path = dir.filePath(QStringLiteral("clip.driftdepth"));
+    const QSize size(24, 16);
+    const int pixels = size.width() * size.height();
+
+    // A left-to-right ramp whose overall level rises frame by frame, as a subject walking closer
+    // would. Frame f spans [f, f + 10].
+    constexpr int kFrames = 5;
+    drift::DepthSidecarWriter writer;
+    QString error;
+    QVERIFY2(writer.open(path, size, QStringLiteral("test"), &error), qPrintable(error));
+    std::vector<float> frame(static_cast<size_t>(pixels));
+    for (int f = 0; f < kFrames; ++f) {
+        for (int y = 0; y < size.height(); ++y)
+            for (int x = 0; x < size.width(); ++x)
+                frame[size_t(y * size.width() + x)] = float(f) + 10.0f * x / (size.width() - 1);
+        QVERIFY2(writer.writeFrame(drift::TimeUs(f) * 40000, frame.data(), &error),
+                 qPrintable(error));
+    }
+    QVERIFY2(writer.finish(&error), qPrintable(error));
+    QVERIFY(!QFile::exists(path + QStringLiteral(".part")));
+
+    const std::shared_ptr<const drift::DepthSidecar> sidecar = drift::DepthSidecar::open(path, &error);
+    QVERIFY2(sidecar, qPrintable(error));
+    QCOMPARE(sidecar->size(), size);
+    QCOMPARE(sidecar->frameCount(), kFrames);
+    QCOMPARE(sidecar->ptsAt(3), drift::TimeUs(120000));
+
+    // Nearest frame by timestamp, clamped at both ends.
+    const auto first = sidecar->frameAt(-5);
+    const auto third = sidecar->frameAt(81000);
+    const auto last = sidecar->frameAt(10'000'000);
+    QVERIFY(first && third && last);
+    QCOMPARE(first->key, sidecar->frameAt(0)->key);
+    QCOMPARE(third->key, sidecar->frameAt(80000)->key);
+    QVERIFY(first->key != third->key);
+
+    // Normalised over the whole clip, not per frame: the same pixel is nearer in a later frame,
+    // and the ramp still runs far to near within every frame.
+    const quint16 firstLeft = first->values[0];
+    const quint16 lastLeft = last->values[0];
+    QVERIFY(lastLeft > firstLeft);
+    for (const auto &f : {first, third, last}) {
+        for (int x = 1; x < size.width(); ++x)
+            QVERIFY(f->values[size_t(x)] >= f->values[size_t(x - 1)]);
+    }
+    // Clip range [0.1, 13.9] from the percentiles: value 14 at the far right of the last frame
+    // clamps to fully near, and value 0 at the far left of the first to fully far.
+    QCOMPARE(last->values[size_t(size.width() - 1)], quint16(65535));
+    QCOMPARE(firstLeft, quint16(0));
+
+    // Sampling agrees with the decoded frame at a pixel centre.
+    const double centre = sidecar->sample(0, (5 + 0.5) / size.width(), 0.5);
+    QVERIFY(std::abs(centre - first->values[5] / 65535.0) < 1e-3);
+}
+
+void EngineTest::depthSidecarRejectsUnfinishedFile()
+{
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    const QString path = dir.filePath(QStringLiteral("partial.driftdepth"));
+    const std::vector<float> frame(64, 1.0f);
+    QString error;
+    {
+        drift::DepthSidecarWriter writer;
+        QVERIFY(writer.open(path, QSize(8, 8), QStringLiteral("test"), &error));
+        QVERIFY(writer.writeFrame(0, frame.data(), &error));
+        // Destroyed without finish(): the temp file is removed and nothing takes the real name.
+    }
+    QVERIFY(!QFile::exists(path));
+    QVERIFY(!QFile::exists(path + QStringLiteral(".part")));
+
+    // A file cut off mid-write still carries the placeholder header, which must not open.
+    {
+        drift::DepthSidecarWriter writer;
+        QVERIFY(writer.open(path, QSize(8, 8), QStringLiteral("test"), &error));
+        QVERIFY(writer.writeFrame(0, frame.data(), &error));
+        QVERIFY(QFile::copy(path + QStringLiteral(".part"), path));
+    }
+    QVERIFY(!drift::DepthSidecar::open(path, &error));
+    QVERIFY(!error.isEmpty());
+}
+
+void EngineTest::vdaStitcherAlignsAndBlendsWindows()
+{
+    // Two pixels per frame, so the scale/shift fit is well-posed. The "true" depth of frame f is
+    // (f, 2f); the second window reports it through a = 2, b = 3, which the stitcher must undo.
+    constexpr size_t kPixels = 2;
+    const auto truth = [](int frame, int pixel) { return float(frame * (pixel + 1)); };
+
+    std::vector<float> first(size_t(drift::kVdaWindow) * kPixels);
+    for (int t = 0; t < drift::kVdaWindow; ++t)
+        for (int p = 0; p < int(kPixels); ++p)
+            first[size_t(t) * kPixels + p] = truth(t, p);
+
+    // Window two opens with the carried keyframes, then new frames 32..53.
+    std::vector<int> frames;
+    for (const int k : drift::kVdaKeyframes)
+        frames.push_back(k);
+    for (int f = drift::kVdaWindow; f < drift::kVdaWindow + drift::kVdaStride; ++f)
+        frames.push_back(f);
+    QCOMPARE(int(frames.size()), drift::kVdaWindow);
+    std::vector<float> second(size_t(drift::kVdaWindow) * kPixels);
+    for (int t = 0; t < drift::kVdaWindow; ++t)
+        for (int p = 0; p < int(kPixels); ++p)
+            second[size_t(t) * kPixels + p] = (truth(frames[size_t(t)], p) - 3.0f) / 2.0f;
+
+    drift::VdaStitcher stitcher(kPixels);
+    std::vector<std::pair<int, std::vector<float>>> out;
+    const auto collect = [&](int index, const float *d) {
+        out.emplace_back(index, std::vector<float>(d, d + kPixels));
+    };
+
+    stitcher.addWindow(first.data(), collect);
+    // The last eight frames stay pending: the next window may still blend them.
+    QCOMPARE(int(out.size()), drift::kVdaWindow - drift::kVdaInterp);
+
+    stitcher.addWindow(second.data(), collect);
+    QVERIFY(std::abs(stitcher.lastScale() - 2.0) < 1e-6);
+    QVERIFY(std::abs(stitcher.lastShift() - 3.0) < 1e-6);
+    stitcher.finish(collect);
+
+    QCOMPARE(int(out.size()), drift::kVdaWindow + drift::kVdaStride);
+    for (int i = 0; i < int(out.size()); ++i) {
+        QCOMPARE(out[size_t(i)].first, i);
+        for (int p = 0; p < int(kPixels); ++p) {
+            // Both windows agree once aligned, so the cross-fade is invisible and every frame,
+            // blended or not, comes out at its true depth.
+            QVERIFY2(std::abs(out[size_t(i)].second[size_t(p)] - truth(i, p)) < 1e-4,
+                     qPrintable(QStringLiteral("frame %1 pixel %2").arg(i).arg(p)));
+        }
+    }
+}
+
+void EngineTest::vdaInferenceSizeKeepsAspectOnPatchGrid()
+{
+    QCOMPARE(drift::VdaDepth::inferenceSize(QSize(1920, 1080), 392), QSize(700, 392));
+    QCOMPARE(drift::VdaDepth::inferenceSize(QSize(2160, 3840), 392), QSize(392, 700));
+    QCOMPARE(drift::VdaDepth::inferenceSize(QSize(1920, 1080), 518), QSize(924, 518));
+    // Held to the export's range of 8..160 patches a side.
+    QCOMPARE(drift::VdaDepth::inferenceSize(QSize(1920, 1080), 100), QSize(182, 112));
+    QCOMPARE(drift::VdaDepth::inferenceSize(QSize(4000, 100), 392), QSize(2240, 392));
+}
+
+void EngineTest::effectPackageLoaderParsesDepthRequirement()
+{
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    const auto writePackage = [&](const QString &name, const QByteArray &requirement,
+                                  const QByteArray &parameters) {
+        const QString pkg = dir.filePath(name);
+        QDir().mkpath(pkg);
+        QFile json(QDir(pkg).filePath(QStringLiteral("effect.json")));
+        json.open(QIODevice::WriteOnly | QIODevice::Text);
+        json.write(R"({"id": "test.)" + name.toUtf8() + R"(", "backend": "gpu", "requires": )"
+                   + requirement + R"(, "parameters": )" + parameters + R"(,
+          "pipeline": {"intermediateBuffers": [], "passes": [
+            {"passIndex": 0, "fragmentShader": "x.frag",
+             "inputs": [{"type": "source_texture"}], "output": {"type": "canvas"}}]}})");
+        json.close();
+        QFile frag(QDir(pkg).filePath(QStringLiteral("x.frag")));
+        frag.open(QIODevice::WriteOnly | QIODevice::Text);
+        frag.write("#version 330 core\nin vec2 v_texCoord; out vec4 fragColor;\n"
+                   "uniform sampler2D u_currentTexture;\n"
+                   "void main(){ fragColor = texture(u_currentTexture, v_texCoord); }\n");
+        frag.close();
+        return pkg;
+    };
+
+    QString error;
+    const EffectPresetEntry single =
+        EffectPackageLoader::loadPackage(writePackage(QStringLiteral("depth"), "\"depth\"", "[]"), &error);
+    QVERIFY2(single.gpu.valid, qPrintable(error));
+    QVERIFY(single.needsDepth);
+    QVERIFY(single.gpu.needsDepth);
+    QVERIFY(!single.needsFace);
+
+    const EffectPresetEntry both = EffectPackageLoader::loadPackage(
+        writePackage(QStringLiteral("both"), R"(["face", "depth"])", "[]"), &error);
+    QVERIFY2(both.gpu.valid, qPrintable(error));
+    QVERIFY(both.needsDepth);
+    QVERIFY(both.needsFace);
+
+    // The engine binds u_depth* itself, so a package may not declare a parameter by that name.
+    const EffectPresetEntry reserved = EffectPackageLoader::loadPackage(
+        writePackage(QStringLiteral("reserved"), "\"depth\"",
+                     R"([{"identifier": "u_depthScale", "displayName": "S", "type": "float",
+                         "defaultValue": 1, "minValue": 0, "maxValue": 2}])"),
+        &error);
+    QVERIFY(!reserved.gpu.valid);
+
+    const EffectPresetEntry unknown = EffectPackageLoader::loadPackage(
+        writePackage(QStringLiteral("unknown"), "\"normals\"", "[]"), &error);
+    QVERIFY(error.contains(QStringLiteral("unsupported requires")));
+    Q_UNUSED(unknown);
+}
+
+void EngineTest::depthPipelineBindsMapInFrameOrientation()
+{
+    if (!GpuEffectExecutor::instance().isAvailable())
+        QSKIP("OpenGL offscreen context unavailable");
+
+    // Writes depth to red, the frame to green and whether depth was bound to blue, so one
+    // readback shows whether the map and the frame agree about which way is up.
+    drift::GpuEffectDefinition gpu;
+    gpu.needsDepth = true;
+    drift::GpuEffectPass pass;
+    pass.fragmentShaderSource = QStringLiteral(
+        "#version 330 core\nin vec2 v_texCoord; out vec4 fragColor;\n"
+        "uniform sampler2D u_currentTexture;\n"
+        "void main() {\n"
+        "    float d = driftDepth(v_texCoord);\n"
+        "    float round = unpackDepth(packDepth(d));\n"
+        "    vec3 n = driftNormal(v_texCoord, 1.0);\n"
+        "    float g = driftDepthGuided(v_texCoord, u_currentTexture);\n"
+        "    fragColor = vec4(round, texture(u_currentTexture, v_texCoord).g, u_hasDepth,"
+        "                     n.z > 0.0 && g >= 0.0 ? 1.0 : 0.0);\n"
+        "}\n");
+    gpu.passes = {pass};
+    gpu.valid = true;
+
+    // Top half of the frame bright, bottom dark; the depth map says the same, near over far.
+    QImage frame(32, 32, QImage::Format_RGBA8888);
+    frame.fill(Qt::black);
+    for (int y = 0; y < 16; ++y)
+        for (int x = 0; x < 32; ++x)
+            frame.setPixelColor(x, y, Qt::white);
+    auto depth = std::make_shared<drift::DepthFrame>();
+    depth->size = QSize(8, 8);
+    depth->key = 0xD3F7'0000'0001ull;
+    depth->values.assign(64, 0);
+    for (int i = 0; i < 32; ++i)
+        depth->values[size_t(i)] = 65535;
+
+    GpuEffectExecutor::ChainStep step;
+    step.cacheKey = QStringLiteral("test.depth_orientation");
+    step.gpu = &gpu;
+    step.depth = depth;
+    const QImage out = GpuEffectExecutor::instance().applyChain({step}, frame, 0);
+    QVERIFY(!out.isNull());
+
+    const QColor top = out.pixelColor(16, 3);
+    const QColor bottom = out.pixelColor(16, 28);
+    QCOMPARE(top.blue(), 255);
+    QCOMPARE(top.alpha(), 255);
+    QVERIFY2(top.green() > 200 && top.red() > 200,
+             qPrintable(QStringLiteral("top r=%1 g=%2").arg(top.red()).arg(top.green())));
+    QVERIFY2(bottom.green() < 50 && bottom.red() < 50,
+             qPrintable(QStringLiteral("bottom r=%1 g=%2").arg(bottom.red()).arg(bottom.green())));
+
+    // No map: the same package runs, told there is no depth.
+    step.depth = nullptr;
+    const QImage bare = GpuEffectExecutor::instance().applyChain({step}, frame, 0);
+    QCOMPARE(bare.pixelColor(16, 3).blue(), 0);
+    QCOMPARE(bare.pixelColor(16, 3).red(), 0);
+}
+
+namespace {
+
+// Left half near, right half far, as a clip-normalised depth map.
+std::shared_ptr<drift::DepthFrame> splitDepth(quint64 key)
+{
+    auto depth = std::make_shared<drift::DepthFrame>();
+    depth->size = QSize(32, 18);
+    depth->key = key;
+    depth->values.resize(size_t(32 * 18));
+    for (int y = 0; y < 18; ++y)
+        for (int x = 0; x < 32; ++x)
+            depth->values[size_t(y * 32 + x)] = x < 16 ? 65535 : 0;
+    return depth;
+}
+
+double meanAbsDiff(const QImage &a, const QImage &b, const QRect &area)
+{
+    double sum = 0.0;
+    for (int y = area.top(); y <= area.bottom(); ++y) {
+        for (int x = area.left(); x <= area.right(); ++x) {
+            const QColor p = a.pixelColor(x, y);
+            const QColor q = b.pixelColor(x, y);
+            sum += std::abs(p.red() - q.red()) + std::abs(p.green() - q.green())
+                   + std::abs(p.blue() - q.blue());
+        }
+    }
+    return sum / (3.0 * area.width() * area.height());
+}
+
+} // namespace
+
+void EngineTest::depthEffectsRenderWithDepthAndPassThroughWithout()
+{
+    if (!GpuEffectExecutor::instance().isAvailable())
+        QSKIP("OpenGL offscreen context unavailable");
+
+    QImage frame(160, 90, QImage::Format_RGBA8888);
+    frame.fill(QColor(110, 110, 110));
+    const auto depth = splitDepth(0xD3F7'0000'0101ull);
+
+    for (const char *id : {"depth.relight", "depth.focus", "depth.fog", "depth.view"}) {
+        const EffectPresetEntry *def = effectDefForId(QString::fromLatin1(id));
+        QVERIFY2(def, id);
+        QVERIFY2(def->isGpu && def->gpu.valid && def->needsDepth, id);
+
+        drift::Effect effect;
+        effect.catalogId = def->meta.id;
+        // A flat grey frame gives the lens blur nothing to smear, so depth of field is judged by
+        // its own test below; here it only has to compile and run.
+        const QImage lit = EffectProcessor::applyEffects(frame, {effect}, 0, {}, depth);
+        QVERIFY2(!lit.isNull(), id);
+        if (qstrcmp(id, "depth.focus") != 0) {
+            QVERIFY2(meanAbsDiff(lit, frame, frame.rect()) > 2.0,
+                     qPrintable(QStringLiteral("%1 left the frame unchanged — did it compile?")
+                                    .arg(QLatin1String(id))));
+        }
+
+        const QImage bare = EffectProcessor::applyEffects(frame, {effect}, 0, {}, nullptr);
+        QVERIFY2(meanAbsDiff(bare, frame, frame.rect()) < 1.0,
+                 qPrintable(QStringLiteral("%1 changed a clip with no depth").arg(QLatin1String(id))));
+    }
+
+    // The default key light sits up and to the left, in front of the near half: that half must
+    // come out brighter than the far half behind it.
+    drift::Effect relight;
+    relight.catalogId = QStringLiteral("depth.relight");
+    const QImage lit = EffectProcessor::applyEffects(frame, {relight}, 0, {}, depth);
+    QVERIFY(lit.pixelColor(40, 30).red() > lit.pixelColor(130, 30).red());
+
+    // Fog thickens with distance: the far half is pulled further towards the fog colour.
+    drift::Effect fog;
+    fog.catalogId = QStringLiteral("depth.fog");
+    const QImage foggy = EffectProcessor::applyEffects(frame, {fog}, 0, {}, depth);
+    QVERIFY(meanAbsDiff(foggy, frame, QRect(100, 10, 50, 70))
+            > meanAbsDiff(foggy, frame, QRect(10, 10, 50, 70)) + 10.0);
+}
+
+void EngineTest::depthOfFieldKeepsFocusSharpAndBlursTheRest()
+{
+    if (!GpuEffectExecutor::instance().isAvailable())
+        QSKIP("OpenGL offscreen context unavailable");
+
+    // A fine checkerboard: blur shows up as the squares greying out.
+    QImage frame(320, 180, QImage::Format_RGBA8888);
+    for (int y = 0; y < frame.height(); ++y)
+        for (int x = 0; x < frame.width(); ++x)
+            frame.setPixelColor(x, y, ((x / 4 + y / 4) % 2) ? Qt::white : Qt::black);
+    const auto depth = splitDepth(0xD3F7'0000'0201ull);
+
+    drift::Effect dof;
+    dof.catalogId = QStringLiteral("depth.focus");
+    dof.parameters.insert(QStringLiteral("focusDepth"), 1.0); // the near half
+    dof.parameters.insert(QStringLiteral("blur"), 20.0);
+    const QImage out = EffectProcessor::applyEffects(frame, {dof}, 0, {}, depth);
+
+    // Well inside each half, away from the seam the guided filter softens.
+    const QRect sharp(20, 40, 100, 100);
+    const QRect soft(200, 40, 100, 100);
+    QVERIFY2(meanAbsDiff(out, frame, sharp) < 8.0,
+             qPrintable(QStringLiteral("in-focus half changed by %1").arg(meanAbsDiff(out, frame, sharp))));
+    QVERIFY2(meanAbsDiff(out, frame, soft) > 60.0,
+             qPrintable(QStringLiteral("out-of-focus half changed by only %1").arg(meanAbsDiff(out, frame, soft))));
+
+    // Following a focus point on the far half flips which side is sharp.
+    dof.parameters.insert(QStringLiteral("autoFocus"), 1.0);
+    dof.parameters.insert(QStringLiteral("focusX"), 0.8);
+    const QImage flipped = EffectProcessor::applyEffects(frame, {dof}, 0, {}, depth);
+    QVERIFY(meanAbsDiff(flipped, frame, soft) < 8.0);
+    QVERIFY(meanAbsDiff(flipped, frame, sharp) > 60.0);
+}
+
+void EngineTest::depthOcclusionHidesLayerBehindNearerPixels()
+{
+    if (!GpuCompositor::isAvailable())
+        QSKIP("OpenGL offscreen context unavailable");
+
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    const QSize canvas(64, 36);
+
+    QImage grey(canvas, QImage::Format_RGBA8888);
+    grey.fill(QColor(128, 128, 128));
+    const QString greyPath = dir.filePath(QStringLiteral("grey.png"));
+    QVERIFY(grey.save(greyPath));
+    QImage red(canvas, QImage::Format_RGBA8888);
+    red.fill(QColor(230, 20, 20));
+    const QString redPath = dir.filePath(QStringLiteral("red.png"));
+    QVERIFY(red.save(redPath));
+
+    // The grey clip's left half is near, its right half far.
+    const QString depthPath = dir.filePath(QStringLiteral("grey.driftdepth"));
+    {
+        drift::DepthSidecarWriter writer;
+        QString error;
+        QVERIFY2(writer.open(depthPath, QSize(32, 18), QStringLiteral("test"), &error),
+                 qPrintable(error));
+        std::vector<float> disparity(32 * 18);
+        for (int y = 0; y < 18; ++y)
+            for (int x = 0; x < 32; ++x)
+                disparity[size_t(y * 32 + x)] = x < 16 ? 1.0f : 0.0f;
+        QVERIFY(writer.writeFrame(0, disparity.data(), &error));
+        QVERIFY2(writer.finish(&error), qPrintable(error));
+    }
+
+    drift::Project project;
+    project.setResolution(canvas.width(), canvas.height());
+    project.tracks().append(drift::Track{.type = drift::TrackType::Video}); // top
+    project.tracks().append(drift::Track{.type = drift::TrackType::Video}); // bottom
+
+    drift::Clip below;
+    below.id = QStringLiteral("below");
+    below.type = drift::ClipType::Image;
+    below.path = greyPath;
+    below.timelineDuration = drift::secondsToUs(1.0);
+    below.srcOut = below.timelineDuration;
+    below.depthPath = depthPath;
+    project.tracks()[1].clips.append(below);
+
+    drift::Clip above;
+    above.id = QStringLiteral("above");
+    above.type = drift::ClipType::Image;
+    above.path = redPath;
+    above.timelineDuration = drift::secondsToUs(1.0);
+    above.srcOut = above.timelineDuration;
+    drift::Effect occlude;
+    occlude.catalogId = QStringLiteral("depth.occlude");
+    occlude.parameters.insert(QStringLiteral("depth"), 0.5);
+    above.effects.append(occlude);
+    project.tracks()[0].clips.append(above);
+
+    FrameCompositor compositor;
+    compositor.setProject(&project);
+
+    GpuScene scene;
+    QVERIFY(compositor.buildSceneAt(500'000, {}, &scene));
+    QCOMPARE(scene.items.size(), 2);
+    QVERIFY(scene.items.at(0).layer.emitDepthCanvas);
+    QCOMPARE(scene.items.at(1).layer.occluderItem, 0);
+
+    const QImage out = compositor.compositeAt(500'000);
+    QVERIFY(!out.isNull());
+    // Nearer than the layer on the left, so the grey clip shows through; farther on the right.
+    const QColor left = out.pixelColor(8, 18);
+    const QColor right = out.pixelColor(56, 18);
+    QVERIFY2(std::abs(left.red() - 128) < 12 && std::abs(left.green() - 128) < 12,
+             qPrintable(QStringLiteral("left %1,%2,%3").arg(left.red()).arg(left.green()).arg(left.blue())));
+    QVERIFY2(right.red() > 200 && right.green() < 60,
+             qPrintable(QStringLiteral("right %1,%2,%3").arg(right.red()).arg(right.green()).arg(right.blue())));
+
+    // A chosen clip wins over the nearest one. Put a blue still with no depth between the two:
+    // automatic now means the blue clip, which has no depth, so the red layer draws whole...
+    QImage blue(canvas, QImage::Format_RGBA8888);
+    blue.fill(QColor(20, 20, 230));
+    const QString bluePath = dir.filePath(QStringLiteral("blue.png"));
+    QVERIFY(blue.save(bluePath));
+    drift::Clip middle = below;
+    middle.id = QStringLiteral("middle");
+    middle.path = bluePath;
+    middle.depthPath.clear();
+    project.tracks().insert(1, drift::Track{.type = drift::TrackType::Video});
+    project.tracks()[1].clips.append(middle);
+    QVERIFY(compositor.compositeAt(500'000).pixelColor(8, 18).red() > 200);
+
+    // ...and naming the grey clip puts the layer back inside it, with the blue clip showing
+    // through where the grey clip is nearer.
+    project.tracks()[0].clips[0].effects[0].parameters.insert(QStringLiteral("target"),
+                                                              QStringLiteral("below"));
+    const QImage chosen = compositor.compositeAt(500'000);
+    QVERIFY2(chosen.pixelColor(8, 18).blue() > 200 && chosen.pixelColor(8, 18).red() < 60,
+             "the chosen clip's near half should hide the layer");
+    QVERIFY(chosen.pixelColor(56, 18).red() > 200);
+
+    // A choice naming a clip that is gone falls back to automatic.
+    project.tracks()[0].clips[0].effects[0].parameters.insert(QStringLiteral("target"),
+                                                              QStringLiteral("deleted"));
+    QVERIFY(compositor.compositeAt(500'000).pixelColor(8, 18).red() > 200);
+
+    // Without depth below, there is nothing to sit inside and the layer draws whole.
+    project.tracks().removeAt(1);
+    project.tracks()[0].clips[0].effects[0].parameters.remove(QStringLiteral("target"));
+    project.tracks()[1].clips[0].depthPath.clear();
+    const QImage plain = compositor.compositeAt(500'000);
+    QVERIFY(plain.pixelColor(8, 18).red() > 200);
+}
+
 void EngineTest::faceTrackRoundTripsAndInterpolates()
 {
     QTemporaryDir dir;
@@ -1046,6 +1611,624 @@ void EngineTest::faceModelDoesNotLeakGlState()
     QVERIFY(out.pixelColor(32, 32).red() != 100);
 }
 
+void EngineTest::modelAssetCubeHasNoRig()
+{
+    const auto asset = drift::loadModelAssetCached(QStringLiteral(DRIFT_TEST_DATA_DIR "/cube.glb"));
+    QVERIFY(asset);
+    QVERIFY(!asset->rig);
+    QVERIFY(asset->animations.isEmpty());
+    QVERIFY(asset->warning.isEmpty());
+    QVector3D lo, hi;
+    drift::modelClipBounds(*asset, &lo, &hi);
+    QCOMPARE(lo, asset->aabbMin);
+    QCOMPARE(hi, asset->aabbMax);
+}
+
+void EngineTest::modelAssetParsesBoxAnimated()
+{
+    const QString path = QStringLiteral(DRIFT_TEST_DATA_DIR "/model/BoxAnimated.glb");
+    QVERIFY2(QFileInfo::exists(path), qPrintable(path));
+    QString warning;
+    const auto asset = drift::loadModelAsset(path, &warning);
+    QVERIFY2(asset, qPrintable(warning));
+
+    // The baked buffer is untouched by the rig: same geometry the face effect has always drawn.
+    QVERIFY(asset->vertexCount() > 0);
+    QCOMPARE(asset->aabbMax.x() - asset->aabbMin.x(), 1.0f);
+
+    QCOMPARE(asset->animations.size(), 1);
+    QVERIFY(asset->animations.first().durationUs > drift::secondsToUs(3.7)
+            && asset->animations.first().durationUs < drift::secondsToUs(3.72));
+
+    QVERIFY(asset->rig);
+    const drift::ModelRig &rig = *asset->rig;
+    QCOMPARE(rig.nodes.size(), 4);
+    QVERIFY(rig.skins.isEmpty());
+    QCOMPARE(rig.paletteSize, 4);
+    QCOMPARE(rig.animations.size(), 1);
+    QCOMPARE(rig.animations.first().channels.size(), 2);
+    QCOMPARE(rig.animations.first().samplers.size(), 2);
+    QVERIFY(std::abs(rig.animations.first().durationSec - 3.7083) < 1e-3);
+    // Parents precede children.
+    for (int i = 0; i < rig.nodes.size(); ++i)
+        QVERIFY(rig.nodes[i].parent < i);
+    // Every vertex is rigid here: its own node's row at weight one.
+    QVERIFY(rig.vertexCount() > 0);
+    QCOMPARE(rig.vertices.size(), rig.vertexCount() * drift::kRigVertStride);
+    for (int i = 0; i < rig.vertexCount(); ++i) {
+        const float *v = rig.vertices.constData() + i * drift::kRigVertStride;
+        QCOMPARE(v[12], 1.f);
+        QCOMPARE(v[13], 0.f);
+        QVERIFY(int(v[8]) >= 0 && int(v[8]) < rig.nodes.size());
+    }
+    for (const drift::ModelPrimitive &prim : rig.primitives)
+        QVERIFY(prim.node >= 0 && prim.node < rig.nodes.size());
+    // Rest bounds are normalised: centred, largest axis one unit.
+    const QVector3D extent = rig.restAabbMax - rig.restAabbMin;
+    QVERIFY(std::abs(std::max({extent.x(), extent.y(), extent.z()}) - 1.0f) < 1e-4f);
+    QVERIFY((rig.restAabbMin + rig.restAabbMax).length() < 1e-4f);
+
+    // The lid moves: a posed vertex differs between t=0 and mid-animation.
+    const drift::ModelPose rest = drift::evaluateModelPose(rig, 0, 0.0);
+    const drift::ModelPose mid = drift::evaluateModelPose(rig, 0, 1.8);
+    QCOMPARE(rest.palette.size(), rig.paletteSize);
+    bool moved = false;
+    for (int i = 0; i < rig.paletteSize && !moved; ++i)
+        moved = rest.palette[i] != mid.palette[i];
+    QVERIFY(moved);
+    // But the rest pose at animation index -1 equals the file's own node transforms at t=0
+    // for the untouched nodes.
+    const drift::ModelPose bare = drift::evaluateModelPose(rig, -1, 0.0);
+    QCOMPARE(bare.palette.size(), rig.paletteSize);
+}
+
+void EngineTest::modelAssetParsesRiggedSimple()
+{
+    const QString path = QStringLiteral(DRIFT_TEST_DATA_DIR "/model/RiggedSimple.glb");
+    QVERIFY2(QFileInfo::exists(path), qPrintable(path));
+    QString warning;
+    const auto asset = drift::loadModelAsset(path, &warning);
+    QVERIFY2(asset, qPrintable(warning));
+    // The rig takes over skinning, so the bind-pose note must not be raised.
+    QVERIFY2(!asset->warning.contains(QStringLiteral("bind pose")), qPrintable(asset->warning));
+
+    QVERIFY(asset->rig);
+    const drift::ModelRig &rig = *asset->rig;
+    QCOMPARE(rig.nodes.size(), 5);
+    QCOMPARE(rig.skins.size(), 1);
+    QCOMPARE(rig.skins.first().joints.size(), 2);
+    QCOMPARE(rig.skins.first().inverseBind.size(), 2);
+    QCOMPARE(rig.skins.first().paletteBase, 5);
+    QCOMPARE(rig.paletteSize, 7);
+    QCOMPARE(rig.animations.size(), 1);
+    QCOMPARE(rig.animations.first().channels.size(), 3);
+    // Skinned vertices point at absolute palette rows past the node rows, and blend to one.
+    int skinnedVerts = 0;
+    for (int i = 0; i < rig.vertexCount(); ++i) {
+        const float *v = rig.vertices.constData() + i * drift::kRigVertStride;
+        const float sum = v[12] + v[13] + v[14] + v[15];
+        QVERIFY(std::abs(sum - 1.f) < 1e-3f);
+        for (int k = 0; k < 4; ++k) {
+            if (v[12 + k] > 0.f && int(v[8 + k]) >= 5)
+                ++skinnedVerts;
+        }
+    }
+    QVERIFY(skinnedVerts > 0);
+    // The inverse bind matrices are not identity (the bones sit away from the origin).
+    QVERIFY(rig.skins.first().inverseBind.first() != QMatrix4x4());
+
+    // Skinned rest bounds are normalised too, and the animation bends the cylinder.
+    const QVector3D extent = rig.restAabbMax - rig.restAabbMin;
+    QVERIFY(std::abs(std::max({extent.x(), extent.y(), extent.z()}) - 1.0f) < 1e-4f);
+    const drift::ModelPose a = drift::evaluateModelPose(rig, 0, 0.0);
+    const drift::ModelPose b = drift::evaluateModelPose(rig, 0, 1.0);
+    QVERIFY(a.palette[6] != b.palette[6]);
+}
+
+void EngineTest::modelAnimSamplerInterpolates()
+{
+    drift::ModelAnimSampler s;
+    s.components = 3;
+    s.times = {0.f, 1.f, 3.f};
+    s.values = {0.f, 0.f, 0.f, 2.f, 4.f, 6.f, 4.f, 4.f, 4.f};
+    float v[4];
+
+    s.interp = drift::ModelAnimSampler::Interp::Linear;
+    drift::sampleModelAnimSampler(s, 0.5, v);
+    QCOMPARE(v[0], 1.f);
+    QCOMPARE(v[1], 2.f);
+    QCOMPARE(v[2], 3.f);
+    drift::sampleModelAnimSampler(s, 2.0, v);
+    QCOMPARE(v[0], 3.f);
+    // Clamped outside the range.
+    drift::sampleModelAnimSampler(s, -5.0, v);
+    QCOMPARE(v[1], 0.f);
+    drift::sampleModelAnimSampler(s, 9.0, v);
+    QCOMPARE(v[1], 4.f);
+
+    s.interp = drift::ModelAnimSampler::Interp::Step;
+    drift::sampleModelAnimSampler(s, 0.99, v);
+    QCOMPARE(v[0], 0.f);
+    drift::sampleModelAnimSampler(s, 1.0, v);
+    QCOMPARE(v[0], 2.f);
+
+    // CubicSpline with zero tangents is a smoothstep between the keys.
+    drift::ModelAnimSampler c;
+    c.components = 1;
+    c.interp = drift::ModelAnimSampler::Interp::CubicSpline;
+    c.times = {0.f, 2.f};
+    c.values = {0.f, 0.f, 0.f, 0.f, 10.f, 0.f}; // in, value, out per key
+    drift::sampleModelAnimSampler(c, 1.0, v);
+    QCOMPARE(v[0], 5.f);
+    drift::sampleModelAnimSampler(c, 0.5, v);
+    QVERIFY(v[0] > 0.f && v[0] < 2.5f);
+
+    // Rotations slerp the short way and come out unit length.
+    drift::ModelAnimSampler q;
+    q.components = 4;
+    q.interp = drift::ModelAnimSampler::Interp::Linear;
+    q.times = {0.f, 1.f};
+    const float h = std::sqrt(0.5f);
+    q.values = {0.f, 0.f, 0.f, 1.f, 0.f, 0.f, h, h}; // identity → 90° about z
+    drift::sampleModelAnimSampler(q, 0.5, v);
+    const QQuaternion mid(v[3], v[0], v[1], v[2]);
+    QVERIFY(std::abs(mid.length() - 1.f) < 1e-5f);
+    const QVector3D turned = mid.rotatedVector(QVector3D(1.f, 0.f, 0.f));
+    QVERIFY(std::abs(turned.x() - h) < 1e-4f && std::abs(turned.y() - h) < 1e-4f);
+    // Flipping the sign of the second key must not change the path.
+    q.values = {0.f, 0.f, 0.f, 1.f, 0.f, 0.f, -h, -h};
+    drift::sampleModelAnimSampler(q, 0.5, v);
+    const QVector3D turned2 = QQuaternion(v[3], v[0], v[1], v[2]).rotatedVector(QVector3D(1.f, 0.f, 0.f));
+    QVERIFY(std::abs(turned2.x() - h) < 1e-4f && std::abs(turned2.y() - h) < 1e-4f);
+}
+
+void EngineTest::modelPoseHierarchyAndSkinning()
+{
+    drift::ModelRig rig;
+    drift::ModelNode root;
+    root.translation = QVector3D(1.f, 0.f, 0.f);
+    drift::ModelNode child;
+    child.parent = 0;
+    child.rotation = QQuaternion::fromAxisAndAngle(0.f, 0.f, 1.f, 90.f);
+    rig.nodes = {root, child};
+    drift::ModelSkin skin;
+    skin.joints = {1};
+    QMatrix4x4 ibm;
+    ibm.translate(0.f, -2.f, 0.f);
+    skin.inverseBind = {ibm};
+    skin.paletteBase = 2;
+    rig.skins = {skin};
+    rig.paletteSize = 3;
+    rig.restCentre = QVector3D(0.f, 0.f, 0.f);
+    rig.restInvScale = 1.f;
+
+    const drift::ModelPose pose = drift::evaluateModelPose(rig, -1, 0.0);
+    QCOMPARE(pose.palette.size(), 3);
+    // Child world = T(1,0,0) * Rz(90): the point (1,0,0) lands at (1,1,0).
+    const QVector3D p = pose.palette[1].map(QVector3D(1.f, 0.f, 0.f));
+    QVERIFY((p - QVector3D(1.f, 1.f, 0.f)).length() < 1e-5f);
+    // Joint row = world * IBM: (0,2,0) is first brought to the origin, then posed.
+    const QVector3D j = pose.palette[2].map(QVector3D(0.f, 2.f, 0.f));
+    QVERIFY((j - QVector3D(1.f, 0.f, 0.f)).length() < 1e-5f);
+
+    // Normalisation folds into every row.
+    rig.restCentre = QVector3D(1.f, 0.f, 0.f);
+    rig.restInvScale = 0.5f;
+    const drift::ModelPose normed = drift::evaluateModelPose(rig, -1, 0.0);
+    const QVector3D pn = normed.palette[1].map(QVector3D(1.f, 0.f, 0.f));
+    QVERIFY((pn - QVector3D(0.f, 0.5f, 0.f)).length() < 1e-5f);
+
+    // A channel on the root moves the whole subtree; a matrix node ignores channels.
+    drift::ModelAnimation anim;
+    drift::ModelAnimSampler s;
+    s.components = 3;
+    s.times = {0.f, 1.f};
+    s.values = {1.f, 0.f, 0.f, 1.f, 0.f, 5.f};
+    anim.samplers = {s};
+    drift::ModelAnimChannel ch;
+    ch.node = 0;
+    ch.sampler = 0;
+    ch.path = drift::ModelAnimChannel::Path::Translation;
+    anim.channels = {ch};
+    rig.animations = {anim};
+    rig.restCentre = QVector3D();
+    rig.restInvScale = 1.f;
+    const drift::ModelPose moved = drift::evaluateModelPose(rig, 0, 1.0);
+    QVERIFY((moved.palette[1].map(QVector3D(1.f, 0.f, 0.f)) - QVector3D(1.f, 1.f, 5.f)).length() < 1e-5f);
+    rig.nodes[0].hasMatrix = true;
+    rig.nodes[0].matrix.setToIdentity();
+    const drift::ModelPose fixed = drift::evaluateModelPose(rig, 0, 1.0);
+    QVERIFY((fixed.palette[1].map(QVector3D(1.f, 0.f, 0.f)) - QVector3D(0.f, 1.f, 0.f)).length() < 1e-5f);
+
+    QCOMPARE(drift::modelAnimationDurationUs(drift::ModelAsset(), 0), 0);
+}
+
+void EngineTest::modelClipCameraIsAspectOnly()
+{
+    const QVector3D aabbMin(-0.5f, -0.5f, -0.5f);
+    const QVector3D aabbMax(0.5f, 0.5f, 0.5f);
+    drift::ModelClipParams params;
+    params.scale = 0.5;
+
+    for (const double depth : {0.0, 0.5, 1.0}) {
+        params.depth = depth;
+        const double aspect = 9.0 / 16.0;
+        const QMatrix4x4 a = drift::modelClipCamera(params, aabbMin, aabbMax, aspect).mvp;
+        const QMatrix4x4 b = drift::modelClipCamera(params, aabbMin, aabbMax, aspect).mvp;
+        for (int i = 0; i < 16; ++i)
+            QCOMPARE(a.data()[i], b.data()[i]);
+
+        // Size compensation: the unit extent at the model-centre plane spans 2*scale NDC
+        // vertically whatever the depth, so the depth slider never changes the on-screen size.
+        const QVector4D top = a * QVector4D(0.f, 0.5f, 0.f, 1.f);
+        const QVector4D bottom = a * QVector4D(0.f, -0.5f, 0.f, 1.f);
+        const double span = double(top.y() / top.w()) - double(bottom.y() / bottom.w());
+        QVERIFY2(std::abs(span - 1.0) < 1e-4,
+                 qPrintable(QStringLiteral("depth %1: span %2").arg(depth).arg(span)));
+        // And the horizontal extent honours the aspect: a unit width spans 2*scale*aspect.
+        const QVector4D left = a * QVector4D(-0.5f, 0.f, 0.f, 1.f);
+        const QVector4D right = a * QVector4D(0.5f, 0.f, 0.f, 1.f);
+        const double hspan = double(right.x() / right.w()) - double(left.x() / left.w());
+        QVERIFY2(std::abs(hspan - aspect) < 1e-4,
+                 qPrintable(QStringLiteral("depth %1: hspan %2").arg(depth).arg(hspan)));
+    }
+
+    // Perspective: at depth 1 a point nearer the camera (+z) projects larger than one behind.
+    params.depth = 1.0;
+    const QMatrix4x4 persp = drift::modelClipCamera(params, aabbMin, aabbMax, 1.0).mvp;
+    const QVector4D nearPt = persp * QVector4D(0.5f, 0.f, 0.5f, 1.f);
+    const QVector4D farPt = persp * QVector4D(0.5f, 0.f, -0.5f, 1.f);
+    QVERIFY(nearPt.x() / nearPt.w() > farPt.x() / farPt.w());
+    // Orthographic at depth 0: both project to the same x.
+    params.depth = 0.0;
+    const QMatrix4x4 ortho = drift::modelClipCamera(params, aabbMin, aabbMax, 1.0).mvp;
+    const QVector4D nearO = ortho * QVector4D(0.5f, 0.f, 0.5f, 1.f);
+    const QVector4D farO = ortho * QVector4D(0.5f, 0.f, -0.5f, 1.f);
+    QCOMPARE(nearO.x() / nearO.w(), farO.x() / farO.w());
+    // Nearer surfaces win GL_LESS in both modes.
+    QVERIFY(nearO.z() / nearO.w() < farO.z() / farO.w());
+    QVERIFY(nearPt.z() / nearPt.w() < farPt.z() / farPt.w());
+
+    // Rotations are about the model's own axes: with the model tilted by X, spinning Y keeps
+    // the model's up axis where the tilt put it (the spin is about that axis), where a world-axis
+    // Y spin would swing it around.
+    {
+        drift::ModelClipParams tilted;
+        tilted.scale = 0.5;
+        tilted.depth = 0.0;
+        tilted.rotX = 90.0;
+        QVector3D upAt0;
+        for (const double spin : {0.0, 45.0, 90.0, 180.0}) {
+            tilted.rotY = spin;
+            const drift::ModelClipCamera cam = drift::modelClipCamera(tilted, aabbMin, aabbMax, 1.0);
+            const QVector3D up = cam.modelView.mapVector(QVector3D(0.f, 1.f, 0.f)).normalized();
+            if (spin == 0.0)
+                upAt0 = up;
+            QVERIFY2((up - upAt0).length() < 1e-4f,
+                     qPrintable(QStringLiteral("rotY %1 moved the up axis to %2,%3,%4")
+                                    .arg(spin).arg(up.x()).arg(up.y()).arg(up.z())));
+        }
+        // And Z rolls about the model's forward axis after both: with X = 90, model +Z (its
+        // forward) now points down (−Y in view), and rolling Z leaves it there.
+        tilted.rotY = 0.0;
+        for (const double roll : {0.0, 60.0}) {
+            tilted.rotZ = roll;
+            const drift::ModelClipCamera cam = drift::modelClipCamera(tilted, aabbMin, aabbMax, 1.0);
+            const QVector3D fwd = cam.modelView.mapVector(QVector3D(0.f, 0.f, 1.f)).normalized();
+            QVERIFY((fwd - QVector3D(0.f, -1.f, 0.f)).length() < 1e-4f);
+        }
+    }
+
+    // The centre lands where the clip's x/y put it, as a sticker (independent of depth).
+    params.depth = 0.7;
+    params.centreX = 0.25;
+    params.centreY = 0.75;
+    const QMatrix4x4 moved = drift::modelClipCamera(params, aabbMin, aabbMax, 1.0).mvp;
+    const QVector4D centre = moved * QVector4D(0.f, 0.f, 0.f, 1.f);
+    QVERIFY(std::abs(double(centre.x() / centre.w()) - (2.0 * 0.25 - 1.0)) < 1e-5);
+    QVERIFY(std::abs(double(centre.y() / centre.w()) - (1.0 - 2.0 * 0.75)) < 1e-5);
+}
+
+void EngineTest::modelClipScreenRectMatchesMvp()
+{
+    const QVector3D aabbMin(-0.5f, -0.25f, -0.125f);
+    const QVector3D aabbMax(0.5f, 0.25f, 0.125f);
+    drift::ModelClipParams params;
+    params.scale = 0.4;
+    params.depth = 0.0;
+    params.centreX = 0.5;
+    params.centreY = 0.5;
+    const double aspect = 9.0 / 16.0;
+    // Orthographic and unrotated: the largest axis (x) spans 0.4 of the height, i.e.
+    // 0.4 * aspect of the width, centred.
+    const QRectF rect = drift::modelClipScreenRect(params, aabbMin, aabbMax, aspect);
+    QVERIFY(std::abs(rect.width() - 0.4 * aspect) < 1e-4);
+    QVERIFY(std::abs(rect.height() - 0.2) < 1e-4);
+    QVERIFY(std::abs(rect.center().x() - 0.5) < 1e-4);
+    QVERIFY(std::abs(rect.center().y() - 0.5) < 1e-4);
+
+    // Every projected corner lies inside the rect (top-left origin, y down) under perspective.
+    params.depth = 1.0;
+    params.rotY = 35.0;
+    params.rotX = -20.0;
+    const QRectF r2 = drift::modelClipScreenRect(params, aabbMin, aabbMax, aspect);
+    const QMatrix4x4 mvp = drift::modelClipCamera(params, aabbMin, aabbMax, aspect).mvp;
+    for (int i = 0; i < 8; ++i) {
+        const QVector4D c = mvp * QVector4D((i & 1) ? aabbMax.x() : aabbMin.x(),
+                                            (i & 2) ? aabbMax.y() : aabbMin.y(),
+                                            (i & 4) ? aabbMax.z() : aabbMin.z(), 1.f);
+        const QPointF p((c.x() / c.w() + 1.0) * 0.5, (1.0 - c.y() / c.w()) * 0.5);
+        QVERIFY2(r2.adjusted(-1e-5, -1e-5, 1e-5, 1e-5).contains(p),
+                 qPrintable(QStringLiteral("corner %1 (%2, %3) outside %4,%5 %6x%7")
+                                .arg(i).arg(p.x()).arg(p.y())
+                                .arg(r2.x()).arg(r2.y()).arg(r2.width()).arg(r2.height())));
+    }
+}
+
+void EngineTest::modelClipDrawRequestFollowsLoopMode()
+{
+    const QString path = QStringLiteral(DRIFT_TEST_DATA_DIR "/cube.glb");
+    drift::model3d::RenderRequest request;
+    request.path = path;
+    request.centre = QPointF(0.5, 0.5);
+    request.source.path = path;
+    request.source.scale = 0.3;
+    request.source.rotY = 45.0;
+
+    const auto draw = drift::model3d::makeDrawRequest(request);
+    QVERIFY(draw);
+    QVERIFY(draw->asset);
+    QCOMPARE(draw->params.scale, 0.3);
+    QCOMPARE(draw->params.rotY, 45.0);
+    QCOMPARE(draw->params.centreX, 0.5);
+
+    request.path = QStringLiteral(DRIFT_TEST_DATA_DIR "/does-not-exist.glb");
+    QVERIFY(!drift::model3d::makeDrawRequest(request));
+}
+
+namespace {
+
+GpuScene modelClipScene(const QString &path, int size, double rotY = 0.0, double lightPitch = 20.0,
+                        double depth = 0.5)
+{
+    drift::model3d::RenderRequest request;
+    request.path = path;
+    request.centre = QPointF(0.5, 0.5);
+    request.source.path = path;
+    request.source.scale = 0.5;
+    request.source.depth = depth;
+    request.source.rotY = rotY;
+    request.source.rotX = 20.0;
+    request.source.lightPitch = lightPitch;
+
+    GpuLayer layer;
+    layer.model3d = drift::model3d::makeDrawRequest(request);
+    layer.rect = QRectF(0, 0, size, size);
+    layer.valid = true;
+
+    GpuItem item;
+    item.layer = layer;
+
+    GpuScene scene;
+    scene.canvasSize = QSize(size, size);
+    scene.backgroundColor = Qt::black;
+    scene.items.append(item);
+    return scene;
+}
+
+} // namespace
+
+void EngineTest::modelClipRendersCube()
+{
+    if (!GpuCompositor::isAvailable())
+        QSKIP("OpenGL offscreen context unavailable");
+    const QString path = QStringLiteral(DRIFT_TEST_DATA_DIR "/cube.glb");
+
+    const QImage out = GpuCompositor::render(modelClipScene(path, 64));
+    QVERIFY(!out.isNull());
+    QCOMPARE(out.size(), QSize(64, 64));
+    // The cube covers the middle and leaves the corners to the background.
+    const QRgb centre = out.pixel(32, 32);
+    QVERIFY2(qRed(centre) + qGreen(centre) + qBlue(centre) > 60,
+             qPrintable(QStringLiteral("centre #%1").arg(centre, 8, 16, QLatin1Char('0'))));
+    const QRgb corner = out.pixel(2, 2);
+    QVERIFY2(qRed(corner) + qGreen(corner) + qBlue(corner) < 30,
+             qPrintable(QStringLiteral("corner #%1").arg(corner, 8, 16, QLatin1Char('0'))));
+    // Rows are flipped in the resolve so v=0 is the image top: rotX tips the cube's top toward
+    // the camera, so under perspective the top of the picture is the wider (nearer) end. The
+    // cube's shared vertices have no per-face normals, so lighting cannot tell faces apart.
+    const QImage tipped = GpuCompositor::render(modelClipScene(path, 64, 0.0, 20.0, 1.0));
+    QVERIFY(!tipped.isNull());
+    auto coveredWidth = [&](int y) {
+        int n = 0;
+        for (int x = 0; x < 64; ++x)
+            n += qGray(tipped.pixel(x, y)) > 20 ? 1 : 0;
+        return n;
+    };
+    const int upperWidth = coveredWidth(22);
+    const int lowerWidth = coveredWidth(42);
+    QVERIFY2(upperWidth > lowerWidth + 2,
+             qPrintable(QStringLiteral("upper %1 lower %2").arg(upperWidth).arg(lowerWidth)));
+
+    // A spin changes the picture.
+    const QImage spun = GpuCompositor::render(modelClipScene(path, 64, 60.0));
+    QVERIFY(!spun.isNull());
+    int diff = 0;
+    for (int y = 0; y < 64; ++y)
+        for (int x = 0; x < 64; ++x)
+            diff += std::abs(qGray(out.pixel(x, y)) - qGray(spun.pixel(x, y)));
+    QVERIFY(diff > 0);
+
+    // WYSIWYG: the same scene at twice the size downsamples to roughly the same picture.
+    const QImage big = GpuCompositor::render(modelClipScene(path, 128))
+                           .scaled(64, 64, Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
+    QVERIFY(!big.isNull());
+    long total = 0;
+    for (int y = 0; y < 64; ++y)
+        for (int x = 0; x < 64; ++x)
+            total += std::abs(qGray(out.pixel(x, y)) - qGray(big.pixel(x, y)));
+    QVERIFY2(total / (64 * 64) < 12, qPrintable(QStringLiteral("mean diff %1").arg(total / (64.0 * 64.0))));
+}
+
+namespace {
+
+GpuScene modelClipSceneAt(const QString &path, int size, drift::TimeUs animUs, drift::VectorLoop loop)
+{
+    drift::model3d::RenderRequest request;
+    request.path = path;
+    request.centre = QPointF(0.5, 0.5);
+    request.source.path = path;
+    request.source.scale = 0.6;
+    request.source.depth = 0.3;
+    request.source.rotX = 25.0;
+    request.source.rotY = 30.0;
+    request.source.loop = loop;
+    request.animUs = animUs;
+
+    GpuLayer layer;
+    layer.model3d = drift::model3d::makeDrawRequest(request);
+    layer.rect = QRectF(0, 0, size, size);
+    layer.valid = layer.model3d != nullptr;
+
+    GpuItem item;
+    item.layer = layer;
+
+    GpuScene scene;
+    scene.canvasSize = QSize(size, size);
+    scene.backgroundColor = Qt::black;
+    scene.items.append(item);
+    return scene;
+}
+
+long imageDifference(const QImage &a, const QImage &b)
+{
+    long diff = 0;
+    for (int y = 0; y < a.height(); ++y)
+        for (int x = 0; x < a.width(); ++x)
+            diff += std::abs(qGray(a.pixel(x, y)) - qGray(b.pixel(x, y)));
+    return diff;
+}
+
+} // namespace
+
+void EngineTest::modelClipRigRenders()
+{
+    if (!GpuCompositor::isAvailable())
+        QSKIP("OpenGL offscreen context unavailable");
+
+    for (const char *file : {"BoxAnimated.glb", "RiggedSimple.glb"}) {
+        const QString path = QStringLiteral(DRIFT_TEST_DATA_DIR "/model/") + QLatin1String(file);
+        const QImage t0 = GpuCompositor::render(modelClipSceneAt(path, 96, 0, drift::VectorLoop::Loop));
+        QVERIFY2(!t0.isNull(), file);
+        int lit = 0;
+        for (int y = 0; y < 96; ++y)
+            for (int x = 0; x < 96; ++x)
+                lit += qGray(t0.pixel(x, y)) > 20 ? 1 : 0;
+        // RiggedSimple is a thin cylinder, so only a few percent of the canvas is covered.
+        QVERIFY2(lit > 96 * 96 / 40, qPrintable(QStringLiteral("%1: %2 lit pixels").arg(file).arg(lit)));
+
+        // Mid-animation the picture changes; a Loop past the end wraps back to the start.
+        const drift::TimeUs mid = drift::secondsToUs(1.2);
+        const QImage tMid = GpuCompositor::render(modelClipSceneAt(path, 96, mid, drift::VectorLoop::Loop));
+        QVERIFY2(imageDifference(t0, tMid) > 500, file);
+        const auto asset = drift::loadModelAssetCached(path);
+        QVERIFY(asset && !asset->animations.isEmpty());
+        const drift::TimeUs len = asset->animations.first().durationUs;
+        const QImage wrapped = GpuCompositor::render(modelClipSceneAt(path, 96, len + mid, drift::VectorLoop::Loop));
+        QVERIFY2(imageDifference(tMid, wrapped) < 200, file);
+        // Hide past the end draws nothing at all.
+        const GpuScene hidden = modelClipSceneAt(path, 96, len + mid, drift::VectorLoop::Hide);
+        QVERIFY2(!hidden.items.first().layer.model3d, file);
+    }
+}
+
+void EngineTest::compositorRendersModelClip()
+{
+    if (!GpuCompositor::isAvailable())
+        QSKIP("OpenGL offscreen context unavailable");
+
+    drift::Project project;
+    project.setResolution(200, 100);
+    project.tracks().clear();
+    project.tracks().append(drift::Track{.type = drift::TrackType::Shape});
+    drift::Clip clip;
+    clip.id = QStringLiteral("model");
+    clip.type = drift::ClipType::Model3d;
+    clip.path = QStringLiteral(DRIFT_TEST_DATA_DIR "/model/BoxAnimated.glb");
+    clip.model3d.path = clip.path;
+    clip.model3d.scale = 0.4;
+    clip.model3d.depth = 0.0;
+    clip.model3d.loop = drift::VectorLoop::Hold;
+    clip.timelineStart = 0;
+    clip.timelineDuration = drift::secondsToUs(4.0);
+    clip.srcIn = 0;
+    clip.srcOut = drift::secondsToUs(4.0);
+    // Off-centre: x/y shift the model, and the size keys are ignored.
+    clip.transformX.setKeyframe(0, -50.0);
+    clip.transformY.setKeyframe(0, 0.0);
+    clip.transformW.setKeyframe(0, 200.0);
+    clip.transformH.setKeyframe(0, 100.0);
+    // A rotY key animates the pose from the clip's own keyframes.
+    clip.model3d.keyframes[QStringLiteral("rotY")].setKeyframe(0, 0.0);
+    clip.model3d.keyframes[QStringLiteral("rotY")].setKeyframe(drift::secondsToUs(2.0), 90.0);
+    project.tracks()[0].clips.append(clip);
+
+    FrameCompositor compositor;
+    compositor.setProject(&project);
+    const QImage t0 = compositor.compositeAt(0).convertToFormat(QImage::Format_RGBA8888);
+    QCOMPARE(t0.size(), QSize(200, 100));
+    // Covered pixels sit left of centre (the model centre is at x = 100 − 50 = 50).
+    long sumX = 0;
+    long count = 0;
+    for (int y = 0; y < 100; ++y)
+        for (int x = 0; x < 200; ++x) {
+            if (qGray(t0.pixel(x, y)) > 20) {
+                sumX += x;
+                ++count;
+            }
+        }
+    QVERIFY(count > 200);
+    const double meanX = double(sumX) / double(count);
+    QVERIFY2(std::abs(meanX - 50.0) < 6.0, qPrintable(QString::number(meanX)));
+    // Nothing spills past the canvas midline: scale 0.4 of a 100 px height is a 40 px box.
+    for (int y = 0; y < 100; ++y)
+        QVERIFY(qGray(t0.pixel(150, y)) <= 20);
+
+    // Turned by the keyframe and moved by the file's animation, the frame differs at t=1.
+    const QImage t1 = compositor.compositeAt(drift::secondsToUs(1.0)).convertToFormat(QImage::Format_RGBA8888);
+    long diff = 0;
+    for (int y = 0; y < 100; ++y)
+        for (int x = 0; x < 200; ++x)
+            diff += std::abs(qGray(t0.pixel(x, y)) - qGray(t1.pixel(x, y)));
+    QVERIFY(diff > 1000);
+}
+
+void EngineTest::modelClipDoesNotLeakGlState()
+{
+    if (!GpuCompositor::isAvailable())
+        QSKIP("OpenGL offscreen context unavailable");
+    const QString path = QStringLiteral(DRIFT_TEST_DATA_DIR "/cube.glb");
+    QVERIFY(!GpuCompositor::render(modelClipScene(path, 64)).isNull());
+
+    // A plain image layer after a model draw must still land: a leaked depth test or cull
+    // would drop the fullscreen quad.
+    QImage source(64, 64, QImage::Format_RGBA8888);
+    source.fill(QColor(200, 30, 30));
+    GpuLayer layer;
+    layer.source = source;
+    layer.rect = QRectF(0, 0, 64, 64);
+    layer.valid = true;
+    GpuItem item;
+    item.layer = layer;
+    GpuScene scene;
+    scene.canvasSize = QSize(64, 64);
+    scene.backgroundColor = Qt::black;
+    scene.items.append(item);
+    const QImage out = GpuCompositor::render(scene);
+    QVERIFY(!out.isNull());
+    QVERIFY(qRed(out.pixel(32, 32)) > 150);
+}
+
 void EngineTest::faceModelFillWireDoesNotLeakGlState()
 {
     if (!GpuEffectExecutor::instance().isAvailable())
@@ -1107,6 +2290,288 @@ void EngineTest::faceMesh3dEffectPackageLoads()
     QVERIFY(hasModel);
     QVERIFY(hasFill);
     QVERIFY(hasWire);
+}
+
+namespace {
+
+QByteArray facePropManifestJson(const QString &id, const QString &model,
+                                const QJsonObject &params = {})
+{
+    QJsonObject root{
+        {QStringLiteral("schema"), 1},
+        {QStringLiteral("type"), QStringLiteral("face-prop")},
+        {QStringLiteral("name"), id.toUpper()},
+        {QStringLiteral("model"), model},
+        {QStringLiteral("thumbnail"), QStringLiteral("thumbnail.png")},
+        {QStringLiteral("params"), params},
+    };
+    if (!id.isEmpty())
+        root.insert(QStringLiteral("id"), id);
+    return QJsonDocument(root).toJson();
+}
+
+QByteArray fakeGlb(const QByteArray &tag = "v1")
+{
+    return QByteArray("glTF\x02\x00\x00\x00", 8) + tag;
+}
+
+bool writeTestFile(const QString &path, const QByteArray &data)
+{
+    QDir().mkpath(QFileInfo(path).absolutePath());
+    QFile file(path);
+    return file.open(QIODevice::WriteOnly) && file.write(data) == data.size();
+}
+
+} // namespace
+
+void EngineTest::facePropsEffectPackageLoads()
+{
+    const EffectPresetEntry *def = effectDefForId(QStringLiteral("face_props"));
+    QVERIFY2(def, "face_props package missing from catalog");
+    QVERIFY(def->isModel3d);
+    QVERIFY(def->needsFace);
+    // No warpMesh: the glb path, not the fitted face mesh.
+    QVERIFY(!def->fixedParams.contains(QStringLiteral("warpMesh")));
+    bool hasModel = false;
+    bool hasScale = false;
+    for (const drift::EffectParamSpec &spec : def->meta.parameters) {
+        if (spec.key == QLatin1String("model")) {
+            QVERIFY(spec.isFilePath());
+            QVERIFY(spec.defaultString.isEmpty());
+            hasModel = true;
+        }
+        if (spec.key == QLatin1String("scale")) {
+            // Drift-Assets hats are fitted at up to ~1.5.
+            QVERIFY(spec.max >= 1.5);
+            hasScale = true;
+        }
+    }
+    QVERIFY(hasModel);
+    QVERIFY(hasScale);
+}
+
+void EngineTest::facePropImportFromMultiPropZip()
+{
+    QTemporaryDir tmp;
+    QVERIFY(tmp.isValid());
+    const QString zip = tmp.filePath(QStringLiteral("props.zip"));
+    QVERIFY(writeStoredZip(zip, {
+        {QStringLiteral("face-props/halo/prop.json"),
+         facePropManifestJson(QStringLiteral("halo"), QStringLiteral("halo.glb"),
+                              {{QStringLiteral("scale"), 0.65},
+                               {QStringLiteral("offsetY"), 1.05},
+                               {QStringLiteral("occlusion"), true}})},
+        {QStringLiteral("face-props/halo/halo.glb"), fakeGlb()},
+        {QStringLiteral("face-props/halo/thumbnail.png"), QByteArray("png")},
+        {QStringLiteral("face-props/cat-ears/prop.json"),
+         facePropManifestJson(QStringLiteral("cat-ears"), QStringLiteral("cat-ears.glb"))},
+        {QStringLiteral("face-props/cat-ears/cat-ears.glb"), fakeGlb()},
+        {QStringLiteral("README.md"), QByteArray("readme")},
+    }));
+
+    const QString dest = tmp.filePath(QStringLiteral("installed"));
+    const FacePropImportResult result = importFacePropsFromZip(zip, dest);
+    QVERIFY2(result.errors.isEmpty(), qPrintable(result.errors.join(QLatin1Char('\n'))));
+    QCOMPARE(QSet<QString>(result.installedIds.cbegin(), result.installedIds.cend()),
+             (QSet<QString>{QStringLiteral("halo"), QStringLiteral("cat-ears")}));
+    QVERIFY(QFileInfo::exists(dest + QStringLiteral("/halo/halo.glb")));
+    QVERIFY(QFileInfo::exists(dest + QStringLiteral("/halo/thumbnail.png")));
+    QVERIFY(QFileInfo::exists(dest + QStringLiteral("/halo/prop.json")));
+    // The prop's thumbnail is optional; the second one ships without it.
+    QVERIFY(QFileInfo::exists(dest + QStringLiteral("/cat-ears/cat-ears.glb")));
+
+    // Not a zip at all.
+    const QString notZip = tmp.filePath(QStringLiteral("props.7z"));
+    QVERIFY(writeTestFile(notZip, QByteArray("7z\xbc\xaf\x27\x1c")));
+    const FacePropImportResult bad = importFacePropsFromZip(notZip, dest);
+    QVERIFY(bad.installedIds.isEmpty());
+    QCOMPARE(bad.errors.size(), 1);
+}
+
+void EngineTest::facePropImportFromFolder()
+{
+    QTemporaryDir tmp;
+    QVERIFY(tmp.isValid());
+    // No id in the manifest: the folder name stands in, sanitised.
+    const QString src = tmp.filePath(QStringLiteral("assets/face-props/Party Hat"));
+    QVERIFY(writeTestFile(src + QStringLiteral("/prop.json"),
+                          facePropManifestJson(QString(), QStringLiteral("hat.glb"))));
+    QVERIFY(writeTestFile(src + QStringLiteral("/hat.glb"), fakeGlb()));
+    QVERIFY(writeTestFile(src + QStringLiteral("/thumbnail.png"), QByteArray("png")));
+
+    const QString dest = tmp.filePath(QStringLiteral("installed"));
+    const FacePropImportResult result =
+        importFacePropsFromDirectory(tmp.filePath(QStringLiteral("assets")), dest);
+    QVERIFY2(result.errors.isEmpty(), qPrintable(result.errors.join(QLatin1Char('\n'))));
+    QCOMPARE(result.installedIds, QStringList{QStringLiteral("party-hat")});
+    QVERIFY(QFileInfo::exists(dest + QStringLiteral("/party-hat/hat.glb")));
+
+    // A single prop folder picked directly works the same.
+    const FacePropImportResult direct = importFacePropsFromDirectory(src, dest);
+    QCOMPARE(direct.installedIds, QStringList{QStringLiteral("party-hat")});
+}
+
+void EngineTest::facePropImportRejectsUnsafeManifests()
+{
+    QTemporaryDir tmp;
+    QVERIFY(tmp.isValid());
+    const QString zip = tmp.filePath(QStringLiteral("evil.zip"));
+    QVERIFY(writeStoredZip(zip, {
+        {QStringLiteral("traversal/prop.json"),
+         facePropManifestJson(QStringLiteral("traversal"), QStringLiteral("../escape.glb"))},
+        {QStringLiteral("escape.glb"), fakeGlb()},
+        {QStringLiteral("absolute/prop.json"),
+         facePropManifestJson(QStringLiteral("absolute"), QStringLiteral("/tmp/abs.glb"))},
+        {QStringLiteral("badid/prop.json"),
+         facePropManifestJson(QStringLiteral("../Bad ID"), QStringLiteral("m.glb"))},
+        {QStringLiteral("badid/m.glb"), fakeGlb()},
+        {QStringLiteral("badparam/prop.json"),
+         facePropManifestJson(QStringLiteral("badparam"), QStringLiteral("m.glb"),
+                              {{QStringLiteral("scale"), QStringLiteral("big")}})},
+        {QStringLiteral("badparam/m.glb"), fakeGlb()},
+        // readEntries drops entries that escape the archive, so this prop is never seen.
+        {QStringLiteral("../outside/prop.json"),
+         facePropManifestJson(QStringLiteral("outside"), QStringLiteral("m.glb"))},
+        {QStringLiteral("good/prop.json"),
+         facePropManifestJson(QStringLiteral("good"), QStringLiteral("m.glb"))},
+        {QStringLiteral("good/m.glb"), fakeGlb()},
+    }));
+
+    const QString dest = tmp.filePath(QStringLiteral("installed"));
+    const FacePropImportResult result = importFacePropsFromZip(zip, dest);
+    QCOMPARE(result.installedIds, QStringList{QStringLiteral("good")});
+    QCOMPARE(result.errors.size(), 4);
+    QCOMPARE(QDir(dest).entryList(QDir::AllEntries | QDir::Hidden | QDir::NoDotAndDotDot),
+             QStringList{QStringLiteral("good")});
+    QCOMPARE(QDir(tmp.path()).entryList(QDir::AllEntries | QDir::Hidden | QDir::NoDotAndDotDot),
+             (QStringList{QStringLiteral("evil.zip"), QStringLiteral("installed")}));
+
+    FacePropManifest manifest;
+    QString error;
+    QVERIFY(!parseFacePropManifest(QByteArray("{\"type\":\"sticker\",\"model\":\"a.glb\"}"),
+                                   QStringLiteral("a"), &manifest, &error));
+    QVERIFY(!error.isEmpty());
+    QVERIFY(!parseFacePropManifest(QByteArray("{\"type\":\"face-prop\",\"schema\":2,\"model\":\"a.glb\"}"),
+                                   QStringLiteral("a"), &manifest, &error));
+    QVERIFY(!parseFacePropManifest(facePropManifestJson(QStringLiteral("a"), QStringLiteral("a.obj")),
+                                   QStringLiteral("a"), &manifest, &error));
+    // Unknown params are dropped, not refused.
+    QVERIFY(parseFacePropManifest(
+        facePropManifestJson(QStringLiteral("a"), QStringLiteral("a.glb"),
+                             {{QStringLiteral("scale"), 2.0}, {QStringLiteral("warpMesh"), 1}}),
+        QStringLiteral("a"), &manifest, &error));
+    QCOMPARE(manifest.params.value(QStringLiteral("scale")).toDouble(), 2.0);
+    QVERIFY(!manifest.params.contains(QStringLiteral("warpMesh")));
+}
+
+void EngineTest::facePropImportRejectsBadModels()
+{
+    QTemporaryDir tmp;
+    QVERIFY(tmp.isValid());
+    const QString src = tmp.filePath(QStringLiteral("src"));
+    QVERIFY(writeTestFile(src + QStringLiteral("/missing/prop.json"),
+                          facePropManifestJson(QStringLiteral("missing"), QStringLiteral("gone.glb"))));
+    QVERIFY(writeTestFile(src + QStringLiteral("/notgltf/prop.json"),
+                          facePropManifestJson(QStringLiteral("notgltf"), QStringLiteral("m.glb"))));
+    QVERIFY(writeTestFile(src + QStringLiteral("/notgltf/m.glb"), QByteArray("not a model")));
+
+    const QString dest = tmp.filePath(QStringLiteral("installed"));
+    const FacePropImportResult result = importFacePropsFromDirectory(src, dest);
+    QVERIFY(result.installedIds.isEmpty());
+    QCOMPARE(result.errors.size(), 2);
+    QVERIFY(QDir(dest).entryList(QDir::AllEntries | QDir::Hidden | QDir::NoDotAndDotDot).isEmpty());
+}
+
+void EngineTest::facePropImportReplacesSameId()
+{
+    QTemporaryDir tmp;
+    QVERIFY(tmp.isValid());
+    const QString dest = tmp.filePath(QStringLiteral("installed"));
+    const QString zip = tmp.filePath(QStringLiteral("v1.zip"));
+    QVERIFY(writeStoredZip(zip, {
+        {QStringLiteral("halo/prop.json"),
+         facePropManifestJson(QStringLiteral("halo"), QStringLiteral("old.glb"))},
+        {QStringLiteral("halo/old.glb"), fakeGlb("v1")},
+    }));
+    QCOMPARE(importFacePropsFromZip(zip, dest).installedIds, QStringList{QStringLiteral("halo")});
+
+    const QString src = tmp.filePath(QStringLiteral("v2/halo"));
+    QVERIFY(writeTestFile(src + QStringLiteral("/prop.json"),
+                          facePropManifestJson(QStringLiteral("halo"), QStringLiteral("new.glb"))));
+    QVERIFY(writeTestFile(src + QStringLiteral("/new.glb"), fakeGlb("v2")));
+    QCOMPARE(importFacePropsFromDirectory(src, dest).installedIds, QStringList{QStringLiteral("halo")});
+
+    QCOMPARE(QDir(dest).entryList(QDir::AllEntries | QDir::Hidden | QDir::NoDotAndDotDot),
+             QStringList{QStringLiteral("halo")});
+    QCOMPARE(QDir(dest + QStringLiteral("/halo")).entryList(QDir::Files, QDir::Name),
+             (QStringList{QStringLiteral("new.glb"), QStringLiteral("prop.json")}));
+    QFile glb(dest + QStringLiteral("/halo/new.glb"));
+    QVERIFY(glb.open(QIODevice::ReadOnly));
+    QVERIFY(glb.readAll().endsWith("v2"));
+}
+
+void EngineTest::facePropRemoveStaysInsideRoot()
+{
+    QTemporaryDir tmp;
+    QVERIFY(tmp.isValid());
+    const QString dest = tmp.filePath(QStringLiteral("installed"));
+    QVERIFY(writeTestFile(dest + QStringLiteral("/halo/prop.json"), QByteArray("{}")));
+    QVERIFY(writeTestFile(tmp.filePath(QStringLiteral("outside/keep.txt")), QByteArray("keep")));
+
+    QString error;
+    QVERIFY(!removeUserFaceProp(QStringLiteral("../outside"), &error, dest));
+    QVERIFY(!error.isEmpty());
+    QVERIFY(!removeUserFaceProp(QString(), &error, dest));
+    QVERIFY(!removeUserFaceProp(QStringLiteral("nope"), &error, dest));
+    QVERIFY(QFileInfo::exists(tmp.filePath(QStringLiteral("outside/keep.txt"))));
+    QVERIFY(QDir(dest).exists());
+
+    QVERIFY(removeUserFaceProp(QStringLiteral("halo"), &error, dest));
+    QVERIFY(!QFileInfo::exists(dest + QStringLiteral("/halo")));
+}
+
+void EngineTest::facePropCatalogReadsManifestsAndBareGlb()
+{
+    QTemporaryDir tmp;
+    QVERIFY(tmp.isValid());
+    const QString root = tmp.path();
+    QVERIFY(writeTestFile(root + QStringLiteral("/aviator/prop.json"),
+                          facePropManifestJson(QStringLiteral("aviator"), QStringLiteral("aviator.glb"),
+                                               {{QStringLiteral("scale"), 1.07},
+                                                {QStringLiteral("occlusion"), false}})));
+    QVERIFY(writeTestFile(root + QStringLiteral("/aviator/aviator.glb"), fakeGlb()));
+    QVERIFY(writeTestFile(root + QStringLiteral("/aviator/thumbnail.png"), QByteArray("png")));
+    QVERIFY(writeTestFile(root + QStringLiteral("/plain.glb"), fakeGlb()));
+    QVERIFY(writeTestFile(root + QStringLiteral("/pack/nested.glb"), fakeGlb()));
+    // A manifest whose model is absent lists nothing rather than a prop that cannot draw.
+    QVERIFY(writeTestFile(root + QStringLiteral("/broken/prop.json"),
+                          facePropManifestJson(QStringLiteral("broken"), QStringLiteral("gone.glb"))));
+
+    reloadFacePropCatalog({root});
+    const auto restore = qScopeGuard([] { reloadFacePropCatalog(); });
+    const QList<FacePropEntry> props = facePropsSnapshot();
+    QCOMPARE(props.size(), 3);
+
+    const auto find = [&](const QString &id) {
+        for (const FacePropEntry &e : props) {
+            if (e.id == id)
+                return e;
+        }
+        return FacePropEntry{};
+    };
+    const FacePropEntry aviator = find(QStringLiteral("aviator"));
+    QCOMPARE(aviator.label, QStringLiteral("AVIATOR"));
+    QCOMPARE(QFileInfo(aviator.path).fileName(), QStringLiteral("aviator.glb"));
+    QCOMPARE(QFileInfo(aviator.thumbnailPath).fileName(), QStringLiteral("thumbnail.png"));
+    QVERIFY(!aviator.dir.isEmpty());
+    QCOMPARE(aviator.params.value(QStringLiteral("scale")).toDouble(), 1.07);
+    QCOMPARE(aviator.params.value(QStringLiteral("occlusion")).toBool(), false);
+
+    const FacePropEntry plain = find(QStringLiteral("plain"));
+    QCOMPARE(plain.label, QStringLiteral("plain"));
+    QVERIFY(plain.dir.isEmpty());
+    QVERIFY(plain.params.isEmpty());
+    QVERIFY(QFileInfo::exists(find(QStringLiteral("nested")).path));
 }
 
 void EngineTest::faceMeshRestLoadsAndWarps()
@@ -1962,6 +3427,119 @@ void EngineTest::reverseRendererPlaysSourceBackwards()
     }
 }
 
+// A preview proxy is swapped in by path alone, so every frame has to sit at the same source time
+// as in the original — and only the preview may see it.
+void EngineTest::previewProxyKeepsSourceTiming()
+{
+    if (!Exporter::videoCodecById(QStringLiteral("h264")).value(QStringLiteral("available")).toBool())
+        QSKIP("No H.264 encoder available in this FFmpeg build");
+
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    const QString sourcePath = dir.filePath(QStringLiteral("source.mp4"));
+    const QString proxyPath = dir.filePath(QStringLiteral("proxy.mp4"));
+    const QSize size(320, 240);
+    const int frames = 10;
+    const int fps = 30;
+
+    drift::MatteWriter writer;
+    QString error;
+    QVERIFY2(writer.open(sourcePath, size, fps, 1, &error), qPrintable(error));
+    for (int i = 0; i < frames; ++i) {
+        QImage mask(size, QImage::Format_Grayscale8);
+        mask.fill(0);
+        QPainter p(&mask);
+        p.fillRect(QRect(0, i * 20, size.width(), 20), Qt::white);
+        p.end();
+        QVERIFY2(writer.writeFrame(mask, &error), qPrintable(error));
+    }
+    QVERIFY2(writer.finish(&error), qPrintable(error));
+
+    QVERIFY2(drift::renderPreviewProxy(sourcePath, 120, proxyPath, &error, {}), qPrintable(error));
+    QVERIFY(!QFileInfo::exists(proxyPath + QStringLiteral(".part")));
+
+    const MediaInfo info = MediaProbe::probe(proxyPath);
+    QVERIFY(info.ok);
+    QCOMPARE(info.streams.first().width, 160);
+    QCOMPARE(info.streams.first().height, 120);
+
+    for (int j = 0; j < frames; ++j) {
+        const drift::TimeUs us = (2 * drift::TimeUs(j) + 1) * drift::kUsPerSecond / (2 * fps);
+        const QImage frame = ClipReaderPool::instance().readVideoFrame(proxyPath, 1, us, 0, 0);
+        QVERIFY2(!frame.isNull(), qPrintable(QStringLiteral("proxy frame %1 did not decode").arg(j)));
+        int band = -1;
+        for (int b = 0; b < frames + 2; ++b) {
+            if (qRed(frame.pixel(frame.width() / 2, b * 10 + 5)) > 128) {
+                band = b;
+                break;
+            }
+        }
+        QCOMPARE(band, j);
+    }
+
+    drift::ReverseProxyCache::instance().insertPreview(sourcePath, 120, proxyPath);
+    const auto restore = qScopeGuard([&] {
+        drift::ReverseProxyCache::previewProxyShortSide = 720;
+        drift::ReverseProxyCache::previewProxiesEnabled = true;
+    });
+    drift::ReverseProxyCache::previewProxyShortSide = 120;
+
+    drift::Clip clip;
+    clip.id = QStringLiteral("proxy-clip");
+    clip.type = drift::ClipType::Video;
+    clip.path = sourcePath;
+    clip.srcOut = drift::kUsPerSecond / 3;
+    clip.timelineStart = 0;
+    QCOMPARE(drift::resolveVideoRead(clip, 0, true).path, proxyPath);
+    QCOMPARE(drift::resolveVideoRead(clip, 0, false).path, sourcePath);
+    QCOMPARE(drift::videoReadPath(clip, true), proxyPath);
+    QCOMPARE(drift::videoReadPath(clip), sourcePath);
+
+    drift::ReverseProxyCache::previewProxiesEnabled = false;
+    QCOMPARE(drift::resolveVideoRead(clip, 0, true).path, sourcePath);
+    drift::ReverseProxyCache::previewProxiesEnabled = true;
+
+    // Built at another size: stops matching once the setting moves.
+    drift::ReverseProxyCache::previewProxyShortSide = 540;
+    QCOMPARE(drift::resolveVideoRead(clip, 0, true).path, sourcePath);
+    drift::ReverseProxyCache::previewProxyShortSide = 120;
+
+    drift::ReverseProxyCache::instance().removePreview(sourcePath);
+    QCOMPARE(drift::resolveVideoRead(clip, 0, true).path, sourcePath);
+    QVERIFY(!QFileInfo::exists(proxyPath));
+}
+
+void EngineTest::variableFrameRateIsDetected()
+{
+    const QString ffmpeg = QStandardPaths::findExecutable(QStringLiteral("ffmpeg"));
+    if (ffmpeg.isEmpty())
+        QSKIP("ffmpeg not on PATH");
+
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    const QString cfrPath = dir.filePath(QStringLiteral("cfr.mp4"));
+    const QString vfrPath = dir.filePath(QStringLiteral("vfr.mp4"));
+
+    auto run = [&](const QStringList &args) {
+        QProcess process;
+        process.start(ffmpeg, args);
+        return process.waitForFinished(60'000) && process.exitCode() == 0;
+    };
+    const QStringList common{QStringLiteral("-y"), QStringLiteral("-loglevel"), QStringLiteral("error"),
+                             QStringLiteral("-f"), QStringLiteral("lavfi"), QStringLiteral("-i"),
+                             QStringLiteral("testsrc=d=3:r=30:s=160x120")};
+    QVERIFY(run(common + QStringList{cfrPath}));
+    // Full rate for the first second and a half, then every third frame, the way a phone drops
+    // its rate in low light.
+    QVERIFY(run(common + QStringList{QStringLiteral("-vf"),
+                                     QStringLiteral("select='lt(n\\,45)+not(mod(n\\,3))'"),
+                                     QStringLiteral("-fps_mode"), QStringLiteral("passthrough"),
+                                     vfrPath}));
+
+    QVERIFY(!MediaProbe::isVariableFrameRate(cfrPath));
+    QVERIFY(MediaProbe::isVariableFrameRate(vfrPath));
+}
+
 void EngineTest::mediaEditorCropsAnImage()
 {
     QTemporaryDir dir;
@@ -2001,6 +3579,141 @@ void EngineTest::mediaEditorCropsAnImage()
 // stops being usable the moment the source underneath it changes. Both halves matter: the first is
 // what keeps ordinary editing smooth, the second is what stops a stale render being served as if
 // it were the current source.
+// A variable-rate source has to come out on a constant grid with its frames where their
+// timestamps put them — not counted off one after another, which is what drifted crops out of sync.
+void EngineTest::mediaEditorConformsVariableFrameRate()
+{
+    const QString ffmpeg = QStandardPaths::findExecutable(QStringLiteral("ffmpeg"));
+    if (ffmpeg.isEmpty())
+        QSKIP("ffmpeg not on PATH");
+
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    const QString vfrPath = dir.filePath(QStringLiteral("vfr.mp4"));
+    const QString outPath = dir.filePath(QStringLiteral("cfr.mp4"));
+    QProcess process;
+    // 30 fps for 1.5 s, then every third frame: 45 + 15 = 60 frames over 3 s.
+    process.start(ffmpeg, {QStringLiteral("-y"), QStringLiteral("-loglevel"), QStringLiteral("error"),
+                           QStringLiteral("-f"), QStringLiteral("lavfi"), QStringLiteral("-i"),
+                           QStringLiteral("testsrc=d=3:r=30:s=160x120"), QStringLiteral("-vf"),
+                           QStringLiteral("select='lt(n\\,45)+not(mod(n\\,3))'"),
+                           QStringLiteral("-fps_mode"), QStringLiteral("passthrough"), vfrPath});
+    QVERIFY(process.waitForFinished(60'000) && process.exitCode() == 0);
+    QVERIFY(MediaProbe::isVariableFrameRate(vfrPath));
+
+    drift::MediaEditSpec spec;
+    spec.inputPath = vfrPath;
+    spec.outputPath = outPath;
+    spec.kind = QStringLiteral("video");
+    spec.conformFrameRate = true;
+    QString error;
+    QVERIFY2(drift::editMedia(spec, &error, {}), qPrintable(error));
+
+    QVERIFY(!MediaProbe::isVariableFrameRate(outPath));
+    const MediaInfo info = MediaProbe::probe(outPath);
+    QVERIFY(info.ok);
+    QCOMPARE(info.streams.first().fps, 30.0);
+    // The dropped stretch is filled by holding frames, so the duration survives.
+    QVERIFY2(qAbs(info.durationUs - 3 * drift::kUsPerSecond) < drift::kUsPerSecond / 10,
+             qPrintable(QString::number(info.durationUs)));
+}
+
+void EngineTest::mediaEditorKeepsTenBitAndColourTags()
+{
+    const QString ffmpeg = QStandardPaths::findExecutable(QStringLiteral("ffmpeg"));
+    if (ffmpeg.isEmpty())
+        QSKIP("ffmpeg not on PATH");
+
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    const QString sourcePath = dir.filePath(QStringLiteral("hdr.mp4"));
+    const QString outPath = dir.filePath(QStringLiteral("cropped.mp4"));
+    QProcess process;
+    process.start(ffmpeg, {QStringLiteral("-y"), QStringLiteral("-loglevel"), QStringLiteral("error"),
+                           QStringLiteral("-f"), QStringLiteral("lavfi"), QStringLiteral("-i"),
+                           QStringLiteral("testsrc=d=1:r=30:s=320x240"),
+                           QStringLiteral("-vf"),
+                           QStringLiteral("setparams=color_primaries=bt2020:color_trc=smpte2084"
+                                          ":colorspace=bt2020nc"),
+                           QStringLiteral("-pix_fmt"), QStringLiteral("yuv420p10le"),
+                           QStringLiteral("-c:v"), QStringLiteral("libx264"), sourcePath});
+    QVERIFY(process.waitForFinished(60'000));
+    if (process.exitCode() != 0)
+        QSKIP("ffmpeg here cannot write 10-bit H.264");
+
+    drift::MediaEditSpec spec;
+    spec.inputPath = sourcePath;
+    spec.outputPath = outPath;
+    spec.kind = QStringLiteral("video");
+    spec.cropX = 0.25;
+    spec.cropW = 0.5;
+    QString error;
+    QVERIFY2(drift::editMedia(spec, &error, {}), qPrintable(error));
+
+    const MediaInfo info = MediaProbe::probe(outPath);
+    QVERIFY(info.ok);
+    QCOMPARE(info.streams.first().width, 160);
+    QCOMPARE(info.streams.first().height, 240);
+    QCOMPARE(info.streams.first().bitDepth, 10);
+
+    process.start(QStandardPaths::findExecutable(QStringLiteral("ffprobe")),
+                  {QStringLiteral("-v"), QStringLiteral("error"), QStringLiteral("-select_streams"),
+                   QStringLiteral("v"), QStringLiteral("-show_entries"),
+                   QStringLiteral("stream=color_transfer,color_primaries"), QStringLiteral("-of"),
+                   QStringLiteral("csv=p=0"), outPath});
+    QVERIFY(process.waitForFinished(30'000));
+    const QString tags = QString::fromUtf8(process.readAllStandardOutput()).trimmed();
+    QVERIFY2(tags.contains(QStringLiteral("smpte2084")) && tags.contains(QStringLiteral("bt2020")),
+             qPrintable(tags));
+}
+
+void EngineTest::mediaEditorStabilizesInProcess()
+{
+    if (!drift::hasVideoFilter("vidstabdetect") || !drift::hasVideoFilter("vidstabtransform"))
+        QSKIP("libavfilter here was built without vid.stab");
+    const QString ffmpeg = QStandardPaths::findExecutable(QStringLiteral("ffmpeg"));
+    if (ffmpeg.isEmpty())
+        QSKIP("ffmpeg not on PATH");
+
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    const QString sourcePath = dir.filePath(QStringLiteral("shaky.mp4"));
+    const QString trfPath = dir.filePath(QStringLiteral("motion.trf"));
+    const QString outPath = dir.filePath(QStringLiteral("stable.mp4"));
+    QProcess process;
+    process.start(ffmpeg, {QStringLiteral("-y"), QStringLiteral("-loglevel"), QStringLiteral("error"),
+                           QStringLiteral("-f"), QStringLiteral("lavfi"), QStringLiteral("-i"),
+                           QStringLiteral("testsrc=d=1:r=30:s=400x300"),
+                           QStringLiteral("-vf"),
+                           QStringLiteral("crop=320:240:40+30*sin(t*20):30+20*cos(t*17)"),
+                           QStringLiteral("-pix_fmt"), QStringLiteral("yuv420p"),
+                           QStringLiteral("-c:v"), QStringLiteral("libx264"), sourcePath});
+    QVERIFY(process.waitForFinished(60'000));
+    QCOMPARE(process.exitCode(), 0);
+
+    QString error;
+    QVERIFY2(drift::analyzeVideo(sourcePath,
+                                 QStringLiteral("vidstabdetect=shakiness=5:accuracy=15:result='%1'")
+                                     .arg(trfPath),
+                                 &error, {}),
+             qPrintable(error));
+    // vid.stab's binary file carries one record past the last frame; the ffmpeg CLI's does too.
+    QCOMPARE(drift::readTrfFrameTranslations(trfPath).size(), 31);
+
+    drift::MediaEditSpec spec;
+    spec.inputPath = sourcePath;
+    spec.outputPath = outPath;
+    spec.kind = QStringLiteral("video");
+    spec.videoFilter = QStringLiteral("vidstabtransform=input='%1':smoothing=15:tripod=0:optzoom=1")
+                           .arg(trfPath);
+    QVERIFY2(drift::editMedia(spec, &error, {}), qPrintable(error));
+
+    const MediaInfo info = MediaProbe::probe(outPath);
+    QVERIFY(info.ok);
+    QCOMPARE(info.streams.first().width, 320);
+    QCOMPARE(info.streams.first().height, 240);
+}
+
 void EngineTest::reverseProxyLookupIsByContainmentAndSourceIdentity()
 {
     QTemporaryDir dir;
@@ -2155,6 +3868,44 @@ QString EngineTest::makeColorSegmentsVideo(QTemporaryDir &dir)
     if (!proc.waitForFinished(30000) || proc.exitCode() != 0)
         return {};
     return QFileInfo::exists(out) ? out : QString{};
+}
+
+// Left half opaque red, right half fully transparent. Tries VP9+alpha then qtrle.
+QString EngineTest::makeAlphaVideo(QTemporaryDir &dir)
+{
+    const QString ffmpeg = QStandardPaths::findExecutable(QStringLiteral("ffmpeg"));
+    if (ffmpeg.isEmpty())
+        return {};
+
+    const QString source = QStringLiteral("color=c=red:s=64x64:r=25:d=0.4,format=rgba");
+    const QString alphaSplit = QStringLiteral(
+        "geq=r='r(X,Y)':g='g(X,Y)':b='b(X,Y)':a='if(lt(X,32),255,0)'");
+
+    auto run = [&](const QStringList &args, const QString &out) -> bool {
+        QProcess proc;
+        proc.start(ffmpeg, args);
+        if (!proc.waitForFinished(30000) || proc.exitCode() != 0)
+            return false;
+        return QFileInfo::exists(out);
+    };
+
+    const QString webm = dir.filePath(QStringLiteral("alpha.webm"));
+    if (run({QStringLiteral("-y"), QStringLiteral("-f"), QStringLiteral("lavfi"),
+             QStringLiteral("-i"), source, QStringLiteral("-vf"), alphaSplit, QStringLiteral("-an"),
+             QStringLiteral("-c:v"), QStringLiteral("libvpx-vp9"), QStringLiteral("-pix_fmt"),
+             QStringLiteral("yuva420p"), QStringLiteral("-auto-alt-ref"), QStringLiteral("0"),
+             QStringLiteral("-deadline"), QStringLiteral("realtime"), QStringLiteral("-cpu-used"),
+             QStringLiteral("8"), webm},
+            webm))
+        return webm;
+
+    const QString mov = dir.filePath(QStringLiteral("alpha.mov"));
+    if (run({QStringLiteral("-y"), QStringLiteral("-f"), QStringLiteral("lavfi"),
+             QStringLiteral("-i"), source, QStringLiteral("-vf"), alphaSplit, QStringLiteral("-an"),
+             QStringLiteral("-c:v"), QStringLiteral("qtrle"), mov},
+            mov))
+        return mov;
+    return {};
 }
 
 void EngineTest::clipReaderSequentialAndSeek()
@@ -2809,6 +4560,107 @@ void EngineTest::clipReaderAutoKeepsCheapClipsOnSoftware()
 // blank. Only runs where GL and NVDEC are on the same NVIDIA GPU — on a hybrid laptop that
 // means launching under PRIME render offload, since an Intel GL context cannot register its
 // textures with a CUDA context at all.
+// The preview hands the scene graph a raw GL texture name out of the presentation ring, and
+// adaptive quality changes the canvas size under it whenever composites run late. Rebuilding a
+// ring slot's FBO for the new size used to delete the texture the scene graph was still drawing
+// — a black frame, every time the quality ratchet moved, which on a slow machine is constantly.
+void EngineTest::presentRingKeepsResizedTexturesAliveForTheSceneGraph()
+{
+    if (!GpuCompositor::isAvailable())
+        QSKIP("OpenGL offscreen context unavailable");
+
+    auto sceneOfSize = [](int size) {
+        GpuScene scene;
+        scene.canvasSize = QSize(size, size);
+        scene.backgroundColor = Qt::blue;
+        return scene;
+    };
+
+    const GpuFrameTexture first = GpuCompositor::renderToTexture(sceneOfSize(64));
+    QVERIFY(first.isValid());
+    const GLuint held = first.textureId;
+    QVERIFY(held != 0);
+
+    auto textureIsLive = [](GLuint name) {
+        bool live = false;
+        drift::gl::runtime().exec([&] {
+            if (auto *gl = drift::gl::runtime().functions())
+                live = gl->glIsTexture(name) == GL_TRUE;
+        });
+        return live;
+    };
+
+    // A different size forces the slot this name came from to be rebuilt. The scene graph is
+    // still holding it, so it has to stay a texture.
+    for (int i = 0; i < drift::gl::GlRuntime::kPresentRingSize; ++i)
+        QVERIFY(GpuCompositor::renderToTexture(sceneOfSize(96)).isValid());
+    QVERIFY2(textureIsLive(held), "the resize freed a texture the scene graph could still be drawing");
+
+    // Once every slot has been published past it, nothing can name it any more and it is freed
+    // rather than leaked for the session.
+    for (int i = 0; i < drift::gl::GlRuntime::kPresentRingSize + 1; ++i)
+        QVERIFY(GpuCompositor::renderToTexture(sceneOfSize(96)).isValid());
+    QVERIFY2(!textureIsLive(held), "retired present targets are never collected");
+}
+
+// acquirePresentTarget used to reuse the last published slot after a 100 ms fence
+// timeout, then fillBackground cleared the texture the scene graph was still
+// sampling — a black flash on any GPU whose composite took longer than that.
+void EngineTest::presentRingDoesNotRedrawTheTextureOnScreen()
+{
+    if (!GpuCompositor::isAvailable())
+        QSKIP("OpenGL offscreen context unavailable");
+
+    GpuScene scene;
+    scene.canvasSize = QSize(64, 64);
+    scene.backgroundColor = Qt::blue;
+
+    const GpuFrameTexture first = GpuCompositor::renderToTexture(scene);
+    QVERIFY(first.isValid());
+    QVERIFY(first.textureId != 0);
+
+    const GpuFrameTexture second = GpuCompositor::renderToTexture(scene);
+    QVERIFY(second.isValid());
+    QVERIFY2(first.textureId != second.textureId,
+             "the compositor redrew the texture still on screen");
+
+    const GpuFrameTexture third = GpuCompositor::renderToTexture(scene);
+    QVERIFY(third.isValid());
+    QVERIFY2(second.textureId != third.textureId,
+             "the compositor redrew the texture still on screen");
+}
+
+// The Hardware column used to name whichever vendor came first in Exporter's static order, so a
+// machine with both NVENC and AMF reported only NVENC — which reads as "AMD H.264 is missing".
+void EngineTest::debugReportListsEveryAvailableHardwareEncoder()
+{
+    const QVariantMap info = DebugReport::collect();
+    const QVariantList encoders = info.value(QStringLiteral("encoders")).toList();
+    QVERIFY(!encoders.isEmpty());
+
+    for (const QVariant &row : encoders) {
+        const QVariantMap m = row.toMap();
+        const QString listed = m.value(QStringLiteral("hardwareEncoder")).toString();
+        QCOMPARE(m.value(QStringLiteral("hardware")).toBool(), !listed.isEmpty());
+
+        // Every available hardware encoder whose id matches this codec family has to appear.
+        const QString family = m.value(QStringLiteral("name")).toString().toLower();
+        const QString prefix = family == QStringLiteral("hevc") ? QStringLiteral("h265") : family;
+        QStringList expected;
+        for (const QVariant &v : Exporter::videoCodecs()) {
+            const QVariantMap codec = v.toMap();
+            if (!codec.value(QStringLiteral("hardware")).toBool()
+                || !codec.value(QStringLiteral("available")).toBool()
+                || !codec.value(QStringLiteral("id")).toString().startsWith(prefix))
+                continue;
+            const QString name = codec.value(QStringLiteral("encoderName")).toString();
+            if (!name.isEmpty() && !expected.contains(name))
+                expected.append(name);
+        }
+        QCOMPARE(listed, expected.join(QStringLiteral(", ")));
+    }
+}
+
 void EngineTest::cudaInteropUploadsAFrameWithoutBlanking()
 {
     if (!GpuCompositor::isAvailable())
@@ -2903,7 +4755,10 @@ void EngineTest::playbackDiagnosticsReportsStagesAndFindings()
     for (const QVariant &v : rows)
         labels << v.toMap().value(QStringLiteral("label")).toString();
     QVERIFY(labels.contains(QStringLiteral("Project frame rate")));
+    // Exactly one. Both the collector and PlaybackStats used to emit a row under this label,
+    // so every pasted report answered the question twice, with different words for "unknown".
     QVERIFY(labels.contains(QStringLiteral("Display refresh")));
+    QCOMPARE(labels.count(QStringLiteral("Display refresh")), 1);
     QVERIFY(labels.contains(QStringLiteral("Delivered frames")));
     QVERIFY(labels.contains(QStringLiteral("Displayed frames")));
 
@@ -4203,6 +6058,104 @@ void EngineTest::compositorAnimatesKeyedEffectParam()
     QVERIFY(qAbs(atStart - 100) <= 2);
 }
 
+void EngineTest::compositorRendersCompositeClip()
+{
+    if (!GpuCompositor::isAvailable())
+        QSKIP("No GPU compositor available");
+
+    drift::Project project;
+    project.setResolution(128, 128);
+
+    // Inside the composite: nothing for the first second, then a full-canvas red shape.
+    drift::Clip inner;
+    inner.id = QStringLiteral("inner-shape");
+    inner.type = drift::ClipType::Shape;
+    inner.timelineStart = drift::secondsToUs(1.0);
+    inner.timelineDuration = drift::secondsToUs(2.0);
+    inner.shapeStyle.kind = drift::ShapeKind::Rectangle;
+    inner.shapeStyle.setSolidFill(QColor(255, 0, 0));
+    const QString sequenceId =
+        project.addSequence({drift::Track{.type = drift::TrackType::Shape, .clips = {inner}}});
+
+    // The instance starts 1 s into the composite and draws it into the top-left quarter.
+    drift::Clip outer;
+    outer.id = QStringLiteral("outer");
+    outer.type = drift::ClipType::Composite;
+    outer.sequenceId = sequenceId;
+    outer.timelineStart = 0;
+    outer.timelineDuration = drift::secondsToUs(1.0);
+    outer.srcIn = drift::secondsToUs(1.0);
+    outer.srcOut = drift::secondsToUs(2.0);
+    outer.transformX.setKeyframe(0, 0.0);
+    outer.transformY.setKeyframe(0, 0.0);
+    outer.transformW.setKeyframe(0, 64.0);
+    outer.transformH.setKeyframe(0, 64.0);
+    project.tracks()[0].clips.append(outer);
+
+    FrameCompositor compositor;
+    compositor.setProject(&project);
+    const QImage frame = compositor.compositeAt(drift::secondsToUs(0.5));
+    QVERIFY(!frame.isNull());
+    QVERIFY(frame.pixelColor(32, 32).red() > 200);
+    // The composite's own canvas is transparent, so the project background shows around it.
+    QCOMPARE(frame.pixelColor(96, 96), QColor(0, 0, 0));
+
+    // Rendered from inside the composite's tab, the same content sits at its own time.
+    project.activateSequence(sequenceId);
+    const QImage open = compositor.compositeAt(drift::secondsToUs(1.5));
+    QVERIFY(open.pixelColor(96, 96).red() > 200);
+}
+
+void EngineTest::audioMixerPlaysCompositeClip()
+{
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    const QString path = makeSweepAudio(dir);
+    if (path.isEmpty())
+        QSKIP("ffmpeg not available to generate a test clip");
+
+    constexpr int kRate = 48000;
+    constexpr int kFrames = 4096;
+    constexpr drift::TimeUs kInnerSrcInUs = 500'000;
+    constexpr drift::TimeUs kInstanceSrcInUs = 250'000;
+
+    drift::Project project;
+    drift::Clip inner;
+    inner.id = QStringLiteral("inner-audio");
+    inner.type = drift::ClipType::Audio;
+    inner.path = path;
+    inner.timelineStart = 0;
+    inner.timelineDuration = 2'000'000;
+    inner.srcIn = kInnerSrcInUs;
+    inner.srcOut = kInnerSrcInUs + inner.timelineDuration;
+    const QString sequenceId =
+        project.addSequence({drift::Track{.type = drift::TrackType::Audio, .clips = {inner}}});
+
+    drift::Clip outer;
+    outer.id = QStringLiteral("outer");
+    outer.type = drift::ClipType::Composite;
+    outer.sequenceId = sequenceId;
+    outer.timelineStart = 0;
+    outer.timelineDuration = 1'000'000;
+    outer.srcIn = kInstanceSrcInUs;
+    outer.srcOut = kInstanceSrcInUs + outer.timelineDuration;
+    project.tracks()[0].clips.append(outer);
+
+    AudioMixer mixer;
+    mixer.setProject(&project);
+    mixer.setMasterClipEnabled(false);
+    QVector<float> got(kFrames * 2, 0.0f);
+    mixer.mix(0, kFrames, kRate, got.data());
+
+    QVector<float> expected(kFrames * 2, 0.0f);
+    ClipReader ref;
+    QVERIFY(ref.open(path));
+    QCOMPARE(ref.readAudioInterleaved(kInnerSrcInUs + kInstanceSrcInUs, kFrames, kRate, expected.data()),
+             kFrames);
+    QVERIFY2(interleavedRmsError(expected, got, 0, kFrames) < 0.02,
+             "composite did not play its inner clip at the instance's source time");
+}
+
 void EngineTest::compositorRendersShapeClip()
 {
     if (!GpuCompositor::isAvailable())
@@ -4362,6 +6315,144 @@ void EngineTest::effectPresetStableIds()
                      || id.startsWith(QStringLiteral("face_")),
                  qPrintable(QStringLiteral("stable id: %1").arg(id)));
     }
+}
+
+// BS.1770 defines block loudness as the SUM of the per-channel mean squares, not their average.
+// Averaging is a flat 3.01 dB error on every reading, which is what made normalize_volume apply
+// 3 dB too much gain and push audio into clipping.
+//
+// Reference point: for a 1 kHz sine at the same level in both channels, the K-weighting gain at
+// 1 kHz (+0.69 dB) cancels the -0.691 offset in the formula, so the integrated loudness in LUFS
+// comes out equal to the peak level in dBFS. Cross-checked against ffmpeg's ebur128, which reads
+// -27.1 LUFS / -27.1 dBFS peak for such a tone.
+// True peak is not sample peak. A sine at a quarter of the sample rate, offset an eighth of a
+// cycle, puts every sample at 0.707 of the waveform's real crest — so the peak that matters lives
+// between the samples. The old "4x linear interpolant" could never see it: a straight line between
+// two points stays inside the range they already span, so it reported the sample peak and called
+// it true peak.
+void EngineTest::truePeakSeesBetweenSamples()
+{
+    const int sampleRate = 48000;
+    const qint64 frames = sampleRate;
+
+    const auto measure = [&](double frequency, double amplitude, double phase) {
+        const auto fill = [&](float *out, qint64 frameOffset, int maxFrames) {
+            for (int i = 0; i < maxFrames; ++i) {
+                const double t = double(frameOffset + i) / double(sampleRate);
+                const double v = amplitude * std::sin(2.0 * M_PI * frequency * t + phase);
+                out[i * 2] = float(v);
+                out[i * 2 + 1] = float(v);
+            }
+            return maxFrames;
+        };
+        return drift::measureLoudness(frames, sampleRate, fill);
+    };
+
+    // Every sample sits at -3.01 dBFS; the waveform between them reaches full scale.
+    const drift::LoudnessResult inter = measure(sampleRate / 4.0, 1.0, M_PI / 4.0);
+    QVERIFY(inter.ok);
+    QVERIFY2(inter.truePeakDb > -1.0,
+             qPrintable(QStringLiteral("inter-sample peak read %1 dBFS, expected near 0")
+                            .arg(inter.truePeakDb)));
+
+    // A tone well below Nyquist is sampled densely enough that true peak and sample peak agree.
+    const drift::LoudnessResult plain = measure(1000.0, 0.5, 0.0);
+    QVERIFY(plain.ok);
+    QVERIFY2(qAbs(plain.truePeakDb + 6.02) < 0.5,
+             qPrintable(QStringLiteral("1 kHz -6 dBFS tone read %1 dBFS").arg(plain.truePeakDb)));
+}
+
+void EngineTest::loudnessMatchesTheStandard()
+{
+    const int sampleRate = 48000;
+    const qint64 frames = sampleRate * 5;
+
+    const auto measureTone = [&](double amplitude, bool rightChannelSilent) {
+        const auto fill = [&](float *out, qint64 frameOffset, int maxFrames) {
+            for (int i = 0; i < maxFrames; ++i) {
+                const double t = double(frameOffset + i) / double(sampleRate);
+                const double v = amplitude * std::sin(2.0 * M_PI * 1000.0 * t);
+                out[i * 2] = float(v);
+                out[i * 2 + 1] = rightChannelSilent ? 0.0f : float(v);
+            }
+            return maxFrames;
+        };
+        return drift::measureLoudness(frames, sampleRate, fill);
+    };
+
+    for (const double dbfs : {-20.0, -12.0, -6.0}) {
+        const double amplitude = std::pow(10.0, dbfs / 20.0);
+        const drift::LoudnessResult r = measureTone(amplitude, false);
+        QVERIFY(r.ok);
+        QVERIFY2(qAbs(r.integratedLufs - dbfs) < 0.5,
+                 qPrintable(QStringLiteral("dual-mono %1 dBFS tone read %2 LUFS")
+                                .arg(dbfs).arg(r.integratedLufs)));
+    }
+
+    // Dropping one channel takes 3 dB off the sum, which is the property the averaging bug hid.
+    const double amplitude = std::pow(10.0, -20.0 / 20.0);
+    const drift::LoudnessResult both = measureTone(amplitude, false);
+    const drift::LoudnessResult one = measureTone(amplitude, true);
+    QVERIFY2(qAbs((both.integratedLufs - one.integratedLufs) - 3.01) < 0.2,
+             qPrintable(QStringLiteral("stereo %1 vs single channel %2")
+                            .arg(both.integratedLufs).arg(one.integratedLufs)));
+}
+
+void EngineTest::effectParamTypesMatchShaderUniforms()
+{
+    // A parameter whose declared type disagrees with its shader uniform binds the wrong thing and
+    // the effect renders garbage — duotone declared its colours as "string", which the parser used
+    // to degrade to float, so 0.0 went to a vec3 and every frame came out black. The mismatch is
+    // invisible until someone looks at a rendered frame, so assert it across the whole catalog
+    // rather than waiting for the next package to make the same mistake.
+    static const QRegularExpression uniformRe(
+        QStringLiteral("\\buniform\\s+(float|int|bool|vec2|vec3|vec4|mat[234])\\s+([A-Za-z_]\\w*)"));
+
+    int checked = 0;
+    for (const QString &id : effectPresetIds()) {
+        const EffectPresetEntry *def = effectDefForId(id);
+        QVERIFY(def);
+        if (!def->isGpu || def->gpu.packageDir.isEmpty())
+            continue;
+
+        QHash<QString, const drift::EffectParamSpec *> byKey;
+        for (const drift::EffectParamSpec &spec : def->meta.parameters) {
+            byKey.insert(spec.key, &spec);
+            if (spec.isColor()) {
+                QVERIFY2(QColor(spec.defaultColorHex).isValid(),
+                         qPrintable(QStringLiteral("%1.%2 has an unusable colour default '%3'")
+                                        .arg(id, spec.key, spec.defaultColorHex)));
+            }
+        }
+
+        const QFileInfoList shaders =
+            QDir(def->gpu.packageDir).entryInfoList({QStringLiteral("*.frag")}, QDir::Files);
+        for (const QFileInfo &shaderInfo : shaders) {
+            QFile shader(shaderInfo.absoluteFilePath());
+            if (!shader.open(QIODevice::ReadOnly))
+                continue;
+            const QString source = QString::fromUtf8(shader.readAll());
+            auto it = uniformRe.globalMatch(source);
+            while (it.hasNext()) {
+                const QRegularExpressionMatch m = it.next();
+                const QString glslType = m.captured(1);
+                const QString name = m.captured(2);
+                const drift::EffectParamSpec *spec = byKey.value(name, nullptr);
+                if (!spec) // sampler inputs and engine-injected uniforms are not parameters
+                    continue;
+                ++checked;
+                const bool vectorUniform =
+                    glslType == QLatin1String("vec3") || glslType == QLatin1String("vec4");
+                QVERIFY2(vectorUniform == spec->isColor(),
+                         qPrintable(QStringLiteral("%1.%2 is '%3' in the shader but %4 in the "
+                                                   "catalog")
+                                        .arg(id, name, glslType,
+                                             spec->isColor() ? QStringLiteral("a colour")
+                                                             : QStringLiteral("a scalar"))));
+            }
+        }
+    }
+    QVERIFY2(checked > 0, "no shader uniforms were matched to parameters - the scan is broken");
 }
 
 void EngineTest::effectPresetCatalogIncludesStylizePresets()
@@ -8379,6 +10470,48 @@ void EngineTest::audioEffectChainAltersSignal()
     QVERIFY2(outRms > 1e-4, "output is silent — the rack likely failed to build");
 }
 
+// The limiter was built on juce::dsp::Limiter, which is a loudness maximiser: it applies a fixed
+// +3.75 dB plus -threshold dB of automatic makeup. Mapping avfilter's linear `limit` (a ceiling)
+// onto its threshold therefore made the stage *add* about 4 dB at the default ceiling of 0.95, and
+// lowering the ceiling to limit harder added more still.
+void EngineTest::limiterHoldsTheCeilingInsteadOfAddingGain()
+{
+    constexpr int kRate = 48000;
+    constexpr int kFrames = 8192;
+
+    const auto limited = [&](float amplitude, double ceiling) {
+        drift::Effect limiter;
+        limiter.catalogId = QStringLiteral("utility.limiter");
+        limiter.parameters.insert(QStringLiteral("ceiling"), ceiling);
+        const QVector<float> tone = stereoTone(kFrames, 440.0, kRate, amplitude);
+        return runRack({limiter}, tone.constData(), kFrames, kRate);
+    };
+
+    // Well under the ceiling: the stage must be transparent, not a 4 dB boost.
+    const QVector<float> quiet = limited(0.2f, 0.95);
+    QCOMPARE(quiet.size(), kFrames * 2);
+    float quietPeak = 0.0f;
+    for (float s : quiet) {
+        QVERIFY(std::isfinite(s));
+        quietPeak = qMax(quietPeak, std::abs(s));
+    }
+    QVERIFY2(quietPeak < 0.22f,
+             qPrintable(QStringLiteral("a 0.2 signal came out at %1").arg(quietPeak)));
+
+    // Over the ceiling: nothing may exceed it, at either setting. Skip the first samples, where
+    // the drive ramp is still settling.
+    for (const double ceiling : {0.95, 0.5}) {
+        const QVector<float> loud = limited(1.0f, ceiling);
+        float peak = 0.0f;
+        for (int i = kRate / 10 * 2; i < loud.size(); ++i)
+            peak = qMax(peak, std::abs(loud.at(i)));
+        QVERIFY2(peak <= float(ceiling) + 1e-3f,
+                 qPrintable(QStringLiteral("ceiling %1 let %2 through").arg(ceiling).arg(peak)));
+        QVERIFY2(peak > float(ceiling) * 0.7f,
+                 qPrintable(QStringLiteral("ceiling %1 crushed the signal to %2").arg(ceiling).arg(peak)));
+    }
+}
+
 void EngineTest::audioEffectChainBypassesUnknownEffect()
 {
     // An effect whose id is not in the catalog (e.g. an addon the user hasn't installed) must be a
@@ -8828,6 +10961,52 @@ void EngineTest::audioFileWriterRoundTripsThroughClipReader()
     // 0.5 amplitude sine -> 0.3536 RMS. FLAC is lossless, so this is tight.
     QVERIFY2(std::abs(outRms - 0.3536) < 0.02,
              qPrintable(QStringLiteral("round-tripped RMS %1").arg(outRms)));
+}
+
+// Real music alternates strong and weak beats, and that is exactly where an autocorrelation
+// tempo detector goes wrong: the lag between two *strong* beats correlates better than the lag
+// between adjacent beats, so the detector locks to half the tempo and reports it with full
+// confidence. The identical-click fixture above cannot catch this, because every click is the
+// same and the 2x lag carries no extra energy.
+void EngineTest::onsetsResistHalfTimeOnAlternatingBeats()
+{
+    constexpr int kRate = 22050;
+    constexpr double kPeriod = 0.5; // 120 BPM
+    constexpr int kClicks = 40;
+    constexpr int kFrames = int(kRate * kPeriod * kClicks);
+
+    std::vector<float> pcm(kFrames, 0.0f);
+    std::mt19937 rng(4321);
+    std::uniform_real_distribution<float> noise(-1.0f, 1.0f);
+    for (int c = 0; c < kClicks; ++c) {
+        const int at = int(c * kPeriod * kRate);
+        // Off-beats at a fifth of the downbeat: enough contrast that the lag between two
+        // downbeats out-correlates the lag between adjacent beats, which is what used to make
+        // the detector report 60.09 BPM here with full confidence.
+        const float accent = (c % 2 == 0) ? 1.0f : 0.2f;
+        for (int i = 0; i < kRate / 20 && at + i < kFrames; ++i)
+            pcm[size_t(at + i)] = accent * noise(rng) * std::exp(-i / (kRate * 0.01f));
+    }
+
+    const AudioBeatAnalysis a = AudioOnsets::analyze(pcm.data(), kFrames, kRate, 0.0);
+
+    QVERIFY2(std::abs(a.bpm - 120.0) < 3.0,
+             qPrintable(QStringLiteral("bpm %1 — half time would report about 60").arg(a.bpm)));
+
+    // The beats have to land on every click, not every other one.
+    QVERIFY(!a.beats.isEmpty());
+    int matched = 0;
+    for (int c = 0; c < kClicks; ++c) {
+        const double expected = c * kPeriod;
+        for (const double beat : a.beats) {
+            if (std::abs(beat - expected) < 0.06) {
+                ++matched;
+                break;
+            }
+        }
+    }
+    QVERIFY2(matched > kClicks * 3 / 4,
+             qPrintable(QStringLiteral("only %1 of %2 clicks got a beat").arg(matched).arg(kClicks)));
 }
 
 void EngineTest::onsetsDetectClickTrackTempo()
@@ -9311,6 +11490,33 @@ void EngineTest::softwareRenderersAreRecognisedByName()
     QCOMPARE(drift::gl::describeGl(info), QStringLiteral("OpenGL 3.0 — llvmpipe"));
 }
 
+void EngineTest::limitedPreviewGpusAreRecognised()
+{
+    QVERIFY(drift::gl::isLimitedPreviewRenderer(QStringLiteral("Intel(R) HD Graphics 2500")));
+    QVERIFY(drift::gl::isLimitedPreviewRenderer(
+        QStringLiteral("Mesa Intel(R) HD Graphics 4000 (IVB GT2)")));
+    QVERIFY(drift::gl::isLimitedPreviewRenderer(QStringLiteral("Intel(R) HD Graphics 2000")));
+    QVERIFY(drift::gl::isLimitedPreviewRenderer(QStringLiteral("Sandy Bridge")));
+    // Xeon parts of the same two generations: same silicon, same flashing, and their
+    // renderer string never contains the consumer name.
+    QVERIFY(drift::gl::isLimitedPreviewRenderer(QStringLiteral("Intel(R) HD Graphics P4000")));
+    QVERIFY(drift::gl::isLimitedPreviewRenderer(QStringLiteral("Intel(R) HD Graphics P3000")));
+
+    QVERIFY(!drift::gl::isLimitedPreviewRenderer(QStringLiteral("Mesa Intel(R) UHD Graphics (CML GT2)")));
+    QVERIFY(!drift::gl::isLimitedPreviewRenderer(QStringLiteral("Intel(R) HD Graphics 520")));
+    QVERIFY(!drift::gl::isLimitedPreviewRenderer(QStringLiteral("Intel(R) HD Graphics 4600")));
+    QVERIFY(!drift::gl::isLimitedPreviewRenderer(QStringLiteral("Intel(R) HD Graphics P530")));
+    QVERIFY(!drift::gl::isLimitedPreviewRenderer(QStringLiteral("NVIDIA GeForce RTX 3060/PCIe/SSE2")));
+    QVERIFY(!drift::gl::isLimitedPreviewRenderer(QString()));
+
+    QVERIFY(drift::gpu::isLimitedPreviewGpu({0x8086, 0x0152}));
+    QVERIFY(drift::gpu::isLimitedPreviewGpu({0x8086, 0x0162}));
+    QVERIFY(drift::gpu::isLimitedPreviewGpu({0x8086, 0x0102}));
+    QVERIFY(!drift::gpu::isLimitedPreviewGpu({0x8086, 0x9a49}));
+    QVERIFY(!drift::gpu::isLimitedPreviewGpu({0x10de, 0x2484}));
+    QVERIFY(!drift::gpu::isLimitedPreviewGpu({}));
+}
+
 
 // --- Still images -----------------------------------------------------------------------------
 // decodeStillImage is the single entry point the bin, the thumbnailer and the compositor share.
@@ -9417,6 +11623,154 @@ void EngineTest::stillImagePreservesAlpha()
     QVERIFY(viaFfmpeg.hasAlphaChannel());
     QCOMPARE(qAlpha(viaFfmpeg.pixel(8, 8)), 255);
     QCOMPARE(qAlpha(viaFfmpeg.pixel(56, 56)), 0);
+}
+
+void EngineTest::clipReaderPreservesVideoAlpha()
+{
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    const QString path = makeAlphaVideo(dir);
+    if (path.isEmpty())
+        QSKIP("ffmpeg could not encode an alpha test clip");
+
+    const MediaInfo info = MediaProbe::probe(path);
+    QVERIFY(info.ok);
+    bool sawAlpha = false;
+    for (const StreamInfo &stream : info.streams) {
+        if (stream.type == StreamInfo::Type::Video)
+            sawAlpha = sawAlpha || stream.hasAlpha;
+    }
+    QVERIFY2(sawAlpha, "probe did not report an alpha video stream");
+
+    ClipReader reader;
+    QVERIFY(reader.open(path));
+    QImage frame;
+    QVERIFY(reader.readVideoFrameAt(0, frame, 64, 64));
+    QVERIFY(!frame.isNull());
+    QVERIFY(frame.hasAlphaChannel());
+    QCOMPARE(qAlpha(frame.pixel(8, 32)), 255);
+    QCOMPARE(qAlpha(frame.pixel(56, 32)), 0);
+
+    PreviewVideoFrame preview;
+    QVERIFY(reader.readPreviewVideoFrame(0, preview, 64, 64));
+    QVERIFY(preview.isValid());
+    QVERIFY(!preview.isHardware());
+    QCOMPARE(preview.frame->format, int(AV_PIX_FMT_RGBA));
+}
+
+void EngineTest::compositorBlendsAlphaVideoOverStill()
+{
+    if (!GpuCompositor::isAvailable())
+        QSKIP("No GPU compositor available");
+
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    const QString videoPath = makeAlphaVideo(dir);
+    if (videoPath.isEmpty())
+        QSKIP("ffmpeg could not encode an alpha test clip");
+
+    QImage still(64, 64, QImage::Format_RGBA8888);
+    still.fill(Qt::blue);
+    const QString stillPath = dir.filePath(QStringLiteral("blue.png"));
+    QVERIFY(still.save(stillPath, "PNG"));
+
+    drift::Project project;
+    project.setResolution(64, 64);
+    project.setFps(25);
+    project.tracks().clear();
+    project.tracks().append(drift::Track{.type = drift::TrackType::Video});
+    project.tracks().append(drift::Track{.type = drift::TrackType::Video});
+
+    drift::Clip overlay;
+    overlay.id = QStringLiteral("alpha");
+    overlay.type = drift::ClipType::Video;
+    overlay.path = videoPath;
+    overlay.timelineStart = 0;
+    overlay.timelineDuration = drift::secondsToUs(0.4);
+    overlay.srcIn = 0;
+    overlay.srcOut = overlay.timelineDuration;
+    project.tracks()[0].clips.append(overlay);
+
+    drift::Clip base;
+    base.id = QStringLiteral("blue");
+    base.type = drift::ClipType::Image;
+    base.path = stillPath;
+    base.timelineStart = 0;
+    base.timelineDuration = overlay.timelineDuration;
+    project.tracks()[1].clips.append(base);
+
+    FrameCompositor compositor;
+    compositor.setProject(&project);
+    const QImage out = compositor.compositeAt(0).convertToFormat(QImage::Format_RGBA8888);
+    QVERIFY(!out.isNull());
+    const QColor left = out.pixelColor(8, 32);
+    const QColor right = out.pixelColor(56, 32);
+    QVERIFY2(left.red() > 150 && left.blue() < 80,
+             qPrintable(QStringLiteral("left %1,%2,%3").arg(left.red()).arg(left.green()).arg(left.blue())));
+    QVERIFY2(right.blue() > 150 && right.red() < 80,
+             qPrintable(QStringLiteral("right %1,%2,%3").arg(right.red()).arg(right.green()).arg(right.blue())));
+}
+
+void EngineTest::exporterPreservesVp9Alpha()
+{
+    if (!GpuCompositor::isAvailable())
+        QSKIP("No GPU compositor available");
+    if (!Exporter::videoCodecById(QStringLiteral("vp9_alpha")).value(QStringLiteral("available")).toBool())
+        QSKIP("libvpx-vp9 is not available");
+
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    const QString videoPath = makeAlphaVideo(dir);
+    if (videoPath.isEmpty())
+        QSKIP("ffmpeg could not encode an alpha test clip");
+
+    drift::Project project;
+    project.setResolution(64, 64);
+    project.setFps(25);
+    drift::Background bg;
+    bg.kind = drift::BackgroundKind::Transparent;
+    project.setBackground(bg);
+    project.tracks().clear();
+    project.tracks().append(drift::Track{.type = drift::TrackType::Video});
+
+    drift::Clip clip;
+    clip.id = QStringLiteral("alpha");
+    clip.type = drift::ClipType::Video;
+    clip.path = videoPath;
+    clip.timelineStart = 0;
+    clip.timelineDuration = drift::secondsToUs(0.4);
+    clip.srcIn = 0;
+    clip.srcOut = clip.timelineDuration;
+    project.tracks()[0].clips.append(clip);
+
+    ExportSettings settings = Exporter::defaultSettings();
+    settings.targetHeight = 0;
+    settings.videoCodecId = QStringLiteral("vp9_alpha");
+    settings.audioCodecId = QStringLiteral("opus");
+    if (!Exporter::audioCodecById(settings.audioCodecId).value(QStringLiteral("available")).toBool()) {
+        settings.audioCodecId = QStringLiteral("aac");
+        if (!Exporter::audioCodecById(settings.audioCodecId).value(QStringLiteral("available")).toBool())
+            QSKIP("No audio encoder available");
+    }
+    settings.rateControl = QStringLiteral("crf");
+    settings.crf = 32;
+    settings.videoPreset = QStringLiteral("8");
+
+    const QString out = dir.filePath(
+        QStringLiteral("out.")
+        + Exporter::defaultSuffix(Exporter::preferredContainer(settings.videoCodecId,
+                                                               settings.audioCodecId)));
+    QString error;
+    const bool ok = Exporter::run(project, settings, out, &error);
+    QVERIFY2(ok, qPrintable(error));
+
+    ClipReader reader;
+    QVERIFY(reader.open(out));
+    QImage frame;
+    QVERIFY(reader.readVideoFrameAt(0, frame, 64, 64));
+    QVERIFY(frame.hasAlphaChannel());
+    QVERIFY2(qAlpha(frame.pixel(8, 32)) > 200, "opaque half lost alpha");
+    QVERIFY2(qAlpha(frame.pixel(56, 32)) < 40, "transparent half was flattened");
 }
 
 void EngineTest::stillImageRejectsGarbage()
@@ -9649,6 +12003,338 @@ void EngineTest::waveformSheetSpectrogramSeparatesTones()
     }
     QCOMPARE(peak, 1.0f);
     QVERIFY(spectrogram(mono.constData(), 100, rate, bins, columns).isEmpty());
+}
+
+namespace {
+
+QVector<float> mixProject(const drift::Project &project, drift::TimeUs durationUs, int rate, int block)
+{
+    AudioMixer mixer;
+    mixer.setProject(&project);
+    const int total = static_cast<int>((durationUs * rate) / drift::kUsPerSecond);
+    QVector<float> out(total * 2, 0.0f);
+    for (int offset = 0; offset < total; offset += block) {
+        const int count = std::min(block, total - offset);
+        const auto startUs = static_cast<drift::TimeUs>((static_cast<int64_t>(offset) * drift::kUsPerSecond) / rate);
+        mixer.mix(startUs, count, rate, out.data() + static_cast<size_t>(offset) * 2);
+    }
+    return out;
+}
+
+drift::Clip toneSlice(const QString &path, const QString &id, drift::TimeUs at, drift::TimeUs srcIn,
+                      drift::TimeUs dur)
+{
+    drift::Clip clip;
+    clip.id = id;
+    clip.type = drift::ClipType::Audio;
+    clip.path = path;
+    clip.timelineStart = at;
+    clip.timelineDuration = dur;
+    clip.srcIn = srcIn;
+    clip.srcOut = srcIn + dur;
+    return clip;
+}
+
+} // namespace
+
+void EngineTest::mixerDoesNotLeakPastClipEnd()
+{
+    QTemporaryDir dir;
+    const QString path = makeToneAudio(dir);
+    if (path.isEmpty())
+        QSKIP("ffmpeg not available to generate a test clip");
+    constexpr int kRate = 48000;
+    drift::Project project;
+    project.setSampleRate(kRate);
+    drift::Track track{.type = drift::TrackType::Audio};
+    // 0.5 s does not fall on a 1024-frame boundary, so the last block overhangs the clip's end.
+    track.clips.append(toneSlice(path, QStringLiteral("a"), 0, 0, 500'000));
+    project.tracks().append(track);
+
+    const QVector<float> out = mixProject(project, 1'000'000, kRate, 1024);
+    float before = 0.0f;
+    for (int i = kRate / 10; i < kRate / 2 - 10; ++i)
+        before = std::max(before, std::abs(out[i * 2]));
+    QVERIFY2(before > 0.01f, "tone is silent inside the clip");
+    for (int i = kRate / 2 + 1; i < out.size() / 2; ++i)
+        QVERIFY2(out[i * 2] == 0.0f && out[i * 2 + 1] == 0.0f,
+                 qPrintable(QStringLiteral("audio past srcOut at frame %1").arg(i)));
+}
+
+void EngineTest::declickRemovesStepAtCut()
+{
+    QTemporaryDir dir;
+    const QString path = makeToneAudio(dir);
+    if (path.isEmpty())
+        QSKIP("ffmpeg not available to generate a test clip");
+    constexpr int kRate = 48000;
+    constexpr double kToneHz = 440.0;
+
+    auto worstStep = [&](drift::TimeUs declickUs, float *amplitudeOut) {
+        drift::Project project;
+        project.setSampleRate(kRate);
+        drift::Track track{.type = drift::TrackType::Audio};
+        drift::Clip a = toneSlice(path, QStringLiteral("a"), 0, 0, 500'000);
+        // A ends at a zero crossing; B resumes the tone at its peak, so a hard cut is a full-scale step.
+        drift::Clip b = toneSlice(path, QStringLiteral("b"), 500'000, 1'000'568, 500'000);
+        a.audioFadeOutUs = declickUs;
+        b.audioFadeInUs = declickUs;
+        track.clips = {a, b};
+        project.tracks().append(track);
+        const QVector<float> out = mixProject(project, 1'000'000, kRate, 1024);
+        float amplitude = 0.0f;
+        for (int i = kRate / 10; i < kRate / 2 - kRate / 20; ++i)
+            amplitude = std::max(amplitude, std::abs(out[i * 2]));
+        float worst = 0.0f;
+        for (int i = kRate / 2 - kRate / 20; i < kRate / 2 + kRate / 20; ++i)
+            worst = std::max(worst, std::abs(out[i * 2] - out[(i - 1) * 2]));
+        *amplitudeOut = amplitude;
+        return worst;
+    };
+
+    float amplitude = 0.0f;
+    const float hard = worstStep(0, &amplitude);
+    const auto bound = static_cast<float>(amplitude * 2.0 * std::sin(M_PI * kToneHz / kRate));
+    QVERIFY2(hard > bound * 1.5f, "the test cut should click without a de-click fade");
+    const float soft = worstStep(30'000, &amplitude);
+    QVERIFY2(soft < bound * 1.5f,
+             qPrintable(QStringLiteral("step %1 at the cut exceeds %2").arg(soft).arg(bound)));
+}
+
+void EngineTest::vadRangesFollowSileroRules()
+{
+    // 32 ms windows: 1 s silence, 1 s speech, 60 ms dip, 1 s speech, 1 s silence.
+    std::vector<float> probs;
+    auto push = [&](float p, double seconds) {
+        for (int i = 0; i < qRound(seconds * 16000 / 512); ++i)
+            probs.push_back(p);
+    };
+    push(0.02f, 1.0);
+    push(0.9f, 1.0);
+    push(0.1f, 0.064);
+    push(0.9f, 1.0);
+    push(0.02f, 1.0);
+    // A lone blip shorter than min speech is dropped.
+    push(0.9f, 0.096);
+    push(0.02f, 1.0);
+    const size_t total = probs.size() * 512;
+
+    drift::VadParams params;
+    const QList<drift::VadRange> ranges = drift::vadSpeechRanges(probs, total, params);
+    QCOMPARE(ranges.size(), 1); // the 64 ms dip is under min_silence (100 ms)
+    QVERIFY(qAbs(drift::usToSeconds(ranges[0].startUs) - 0.97) < 0.05);
+    QVERIFY(qAbs(drift::usToSeconds(ranges[0].endUs) - 3.09) < 0.05);
+
+    params.minSilenceMs = 30;
+    QCOMPARE(drift::vadSpeechRanges(probs, total, params).size(), 2);
+}
+
+void EngineTest::vadModelScoresSilenceLow()
+{
+    const QString dir = QString::fromUtf8(DRIFT_TEST_VAD_MODEL_DIR);
+    if (!QFile::exists(dir + QStringLiteral("/silero_vad.onnx")))
+        QSKIP("Silero VAD model not staged");
+    qputenv("DRIFT_VAD_MODEL_DIR", dir.toUtf8());
+    drift::SileroVad &vad = drift::SileroVad::instance();
+    if (!vad.available())
+        QSKIP(qPrintable(QStringLiteral("VAD unavailable: %1").arg(vad.lastError())));
+    std::vector<float> pcm(16000 * 2, 0.0f);
+    for (size_t i = 16000; i < pcm.size(); ++i)
+        pcm[i] = 0.3f * std::sin(2.0 * M_PI * 440.0 * i / 16000.0);
+    const std::vector<float> probs = vad.probabilities(pcm);
+    QCOMPARE(probs.size(), (pcm.size() + 511) / 512);
+    for (float p : probs)
+        QVERIFY2(p >= 0.0f && p <= 1.0f, qPrintable(QString::number(p)));
+    float silenceMax = 0.0f;
+    for (size_t i = 0; i < 16000 / 512; ++i)
+        silenceMax = std::max(silenceMax, probs[i]);
+    QVERIFY2(silenceMax < 0.2f, qPrintable(QString::number(silenceMax)));
+}
+
+void EngineTest::ctcForcedAlignFindsPlantedPath()
+{
+    // Vocab: 0 blank, 1 A, 2 B, 3 |. Plant "A A | B" (a repeat needs a blank between).
+    const int vocab = 4;
+    const std::vector<int> planted{0, 1, 1, 0, 1, 0, 3, 0, 0, 2, 2, 2, 0};
+    std::vector<float> lp(planted.size() * vocab, std::log(0.02f));
+    for (size_t t = 0; t < planted.size(); ++t)
+        lp[t * vocab + planted[t]] = std::log(0.94f);
+    const auto spans = drift::ctcForcedAlign(lp.data(), static_cast<int>(planted.size()), vocab, {1, 1, 3, 2}, 0);
+    QCOMPARE(spans.size(), 4);
+    QCOMPARE(spans[0], qMakePair(1, 2));
+    QCOMPARE(spans[1], qMakePair(4, 4));
+    QCOMPARE(spans[2], qMakePair(6, 6));
+    QCOMPARE(spans[3], qMakePair(9, 11));
+    // Too short to hold A,blank,A.
+    QVERIFY(drift::ctcForcedAlign(lp.data(), 2, vocab, {1, 1}, 0).isEmpty());
+}
+
+void EngineTest::alignerNormalizesEnglish()
+{
+    QHash<QChar, int> vocab;
+    for (const QChar c : QStringLiteral("ABCDEFGHIJKLMNOPQRSTUVWXYZ'"))
+        vocab.insert(c, 1);
+    const QString en = QStringLiteral("en");
+    QCOMPARE(drift::normalizeForAligner(QStringLiteral("Café,"), vocab, true, en), QStringLiteral("CAFE"));
+    QCOMPARE(drift::normalizeForAligner(QStringLiteral("don’t"), vocab, true, en), QStringLiteral("DON'T"));
+    QCOMPARE(drift::normalizeForAligner(QStringLiteral("42%"), vocab, true, en), QStringLiteral("FORTY TWO PERCENT"));
+    QCOMPARE(drift::normalizeForAligner(QStringLiteral("1999"), vocab, true, en), QStringLiteral("NINETEEN NINETY NINE"));
+    QCOMPARE(drift::normalizeForAligner(QStringLiteral("2005"), vocab, true, en), QStringLiteral("TWO THOUSAND FIVE"));
+    QVERIFY(drift::normalizeForAligner(QStringLiteral("日本"), vocab, true, en).isEmpty());
+}
+
+void EngineTest::clusterEmbeddingsCompleteLinkage()
+{
+    // Two tight groups of directions plus noise: complete linkage at 0.5 finds two clusters.
+    const int dim = 4;
+    std::vector<float> e{
+        1.0f, 0.05f, 0, 0,   0.98f, 0.1f, 0, 0,   1.0f, -0.05f, 0.02f, 0,
+        0, 0, 1.0f, 0.05f,   0, 0.02f, 0.97f, 0.1f,
+    };
+    const std::vector<int> labels = drift::clusterEmbeddings(e, 5, dim, -1, 0.5f);
+    QCOMPARE(labels.size(), size_t(5));
+    QCOMPARE(labels[0], labels[1]);
+    QCOMPARE(labels[1], labels[2]);
+    QCOMPARE(labels[3], labels[4]);
+    QVERIFY(labels[0] != labels[3]);
+    // Asked for one cluster, everything merges.
+    const std::vector<int> one = drift::clusterEmbeddings(e, 5, dim, 1, 0.5f);
+    QCOMPARE(std::set<int>(one.begin(), one.end()).size(), size_t(1));
+    // A strict threshold keeps every point apart.
+    const std::vector<int> apart = drift::clusterEmbeddings(e, 5, dim, -1, 0.001f);
+    QCOMPARE(std::set<int>(apart.begin(), apart.end()).size(), size_t(5));
+}
+
+void EngineTest::assignSpeakersByOverlap()
+{
+    drift::Transcript t;
+    auto word = [](double a, double b) {
+        drift::TranscriptWord w;
+        w.startUs = drift::secondsToUs(a);
+        w.endUs = drift::secondsToUs(b);
+        w.text = QStringLiteral("w");
+        return w;
+    };
+    t.words = {word(0.1, 0.4), word(0.5, 0.9), word(2.1, 2.5), word(1.55, 1.6)};
+    // Speaker ids are the diarizer's; 3 has no words and must not leave a gap.
+    const QList<drift::DiarizeSegment> turns{{drift::secondsToUs(0), drift::secondsToUs(1.0), 3},
+                                             {drift::secondsToUs(1.0), drift::secondsToUs(1.2), 5},
+                                             {drift::secondsToUs(2.0), drift::secondsToUs(3.0), 7}};
+    drift::assignSpeakers(t, turns);
+    QVERIFY(t.diarized);
+    QCOMPARE(t.words[0].speaker, qint16(0));
+    QCOMPARE(t.words[1].speaker, qint16(0));
+    QCOMPARE(t.words[2].speaker, qint16(1));
+    // In a gap: nearest turn (5 ends at 1.2, 7 starts at 2.0) — the 1.2 turn is closer.
+    QCOMPARE(t.words[3].speaker, qint16(2));
+    QCOMPARE(t.speakers.size(), 3);
+}
+
+void EngineTest::kaldiFbankShapeAndTone()
+{
+    drift::KaldiFbank fbank;
+    std::vector<float> pcm(16000, 0.0f);
+    for (size_t i = 0; i < pcm.size(); ++i)
+        pcm[i] = 0.5f * std::sin(2.0 * M_PI * 1000.0 * i / 16000.0);
+    const std::vector<float> feats = fbank.compute(pcm.data(), pcm.size(), false);
+    QCOMPARE(drift::KaldiFbank::frameCount(pcm.size()), size_t(100));
+    QCOMPARE(feats.size(), size_t(100 * drift::KaldiFbank::kBins));
+    // A 1 kHz tone lights the mel bin around 1 kHz far above the bins at either end.
+    const float *row = feats.data() + 50 * drift::KaldiFbank::kBins;
+    const int peak = static_cast<int>(std::max_element(row, row + drift::KaldiFbank::kBins) - row);
+    QVERIFY2(peak > 15 && peak < 30, qPrintable(QString::number(peak)));
+    QVERIFY(row[peak] - row[drift::KaldiFbank::kBins - 1] > 10.0f);
+}
+
+namespace {
+// Two tone slices butted at 1 s on an audio track with a 0.4 s crossfade between them.
+QVector<float> mixButtCrossfade(const QString &path, drift::Clip a, drift::Clip b)
+{
+    drift::Project project;
+    project.setSampleRate(48000);
+    drift::Track track{.type = drift::TrackType::Audio};
+    track.clips = {a, b};
+    drift::Transition t;
+    t.id = QStringLiteral("t");
+    t.fromClipId = a.id;
+    t.toClipId = b.id;
+    t.kindId = QStringLiteral("crossfade");
+    t.durationUs = 400'000;
+    track.transitions = {t};
+    project.tracks().append(track);
+    drift::MediaAsset asset;
+    asset.id = QStringLiteral("tone");
+    asset.path = path;
+    asset.kind = drift::MediaKind::Audio;
+    asset.durationUs = 2'000'000;
+    project.assets().insert(asset.id, asset);
+    project.assetOrder().append(asset.id);
+    return mixProject(project, 2'000'000, 48000, 1024);
+}
+} // namespace
+
+void EngineTest::audioCrossfadeUsesHandles()
+{
+    QTemporaryDir dir;
+    const QString path = makeToneAudio(dir);
+    if (path.isEmpty())
+        QSKIP("ffmpeg not available to generate a test clip");
+    drift::Clip a = toneSlice(path, QStringLiteral("a"), 0, 0, 1'000'000);
+    drift::Clip b = toneSlice(path, QStringLiteral("b"), 1'000'000, 1'000'000, 1'000'000);
+    a.assetId = b.assetId = QStringLiteral("tone");
+    const QVector<float> out = mixButtCrossfade(path, a, b);
+    // The same continuous tone crossfaded with itself stays at full level through the cut.
+    float before = 0.0f, during = 0.0f, worst = 0.0f;
+    for (int i = 24000; i < 36000; ++i)
+        before = std::max(before, std::abs(out[i * 2]));
+    for (int i = 43200; i < 52800; ++i)
+        during = std::max(during, std::abs(out[i * 2]));
+    for (int i = 40000; i < 56000; ++i)
+        worst = std::max(worst, std::abs(out[i * 2] - out[(i - 1) * 2]));
+    const auto bound = static_cast<float>(before * 2.0 * std::sin(M_PI * 440.0 / 48000));
+    QVERIFY2(during > before * 0.9f, qPrintable(QStringLiteral("level %1 vs %2").arg(during).arg(before)));
+    QVERIFY2(worst < bound * 1.5f, qPrintable(QStringLiteral("step %1 vs %2").arg(worst).arg(bound)));
+}
+
+void EngineTest::audioCrossfadeFallsBackToDip()
+{
+    QTemporaryDir dir;
+    const QString path = makeToneAudio(dir);
+    if (path.isEmpty())
+        QSKIP("ffmpeg not available to generate a test clip");
+    // A plays the file's last second and B its first: neither has media past the cut.
+    drift::Clip a = toneSlice(path, QStringLiteral("a"), 0, 1'000'000, 1'000'000);
+    drift::Clip b = toneSlice(path, QStringLiteral("b"), 1'000'000, 0, 1'000'000);
+    a.assetId = b.assetId = QStringLiteral("tone");
+    const QVector<float> out = mixButtCrossfade(path, a, b);
+    float atCut = 0.0f, before = 0.0f, worst = 0.0f;
+    for (int i = 47900; i < 48100; ++i)
+        atCut = std::max(atCut, std::abs(out[i * 2]));
+    for (int i = 24000; i < 36000; ++i)
+        before = std::max(before, std::abs(out[i * 2]));
+    for (int i = 40000; i < 56000; ++i)
+        worst = std::max(worst, std::abs(out[i * 2] - out[(i - 1) * 2]));
+    const auto bound = static_cast<float>(before * 2.0 * std::sin(M_PI * 440.0 / 48000));
+    QVERIFY2(atCut < before * 0.05f, qPrintable(QStringLiteral("%1 at the cut").arg(atCut)));
+    QVERIFY2(worst < bound * 1.5f, qPrintable(QStringLiteral("step %1 vs %2").arg(worst).arg(bound)));
+}
+
+void EngineTest::waveformSheetDrawsWordLane()
+{
+    drift::waveformsheet::Input in;
+    in.startSeconds = 0.0;
+    in.durationSeconds = 2.0;
+    in.mixed = QVector<float>(100, 0.5f);
+    drift::waveformsheet::Options opt;
+    opt.width = 400;
+    opt.height = 200;
+    const QImage bare = drift::waveformsheet::render(in, opt);
+    in.words = {{0.2, 0.8, QStringLiteral("hello"), 0}, {0.9, 0.905, QStringLiteral("x"), 1}};
+    const QImage withWords = drift::waveformsheet::render(in, opt);
+    // The lane sits between the peaks and the axis and is filled inside the word's box.
+    const int laneY = opt.height - opt.axisHeight - opt.wordLaneHeight / 2;
+    QVERIFY(withWords.pixel(100, laneY) != bare.pixel(100, laneY));
+    QVERIFY(withWords.pixel(100, laneY) != withWords.pixel(390, laneY));
 }
 
 QTEST_MAIN(EngineTest)

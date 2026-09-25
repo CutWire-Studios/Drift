@@ -55,7 +55,7 @@ struct AddonRef
 
 // Source media is the only thing that can be referenced instead of embedded; derived artifacts are
 // always embedded, because they live in a volatile app-data cache the user never backs up.
-enum class MediaRole { Source, Matte, FaceTrack, Model3d };
+enum class MediaRole { Source, Matte, FaceTrack, Model3d, Depth };
 
 QString mediaRoleToString(MediaRole role);
 MediaRole mediaRoleFromString(const QString &role);

@@ -9,6 +9,7 @@
 #include "engine/AudioMixer.h"
 #include "engine/audio/ClipAudioRetimer.h"
 
+#include <memory>
 #include <QImage>
 #include <QMutex>
 #include <QObject>
@@ -40,6 +41,8 @@ class PlaybackEngine : public QObject
     Q_PROPERTY(double playbackRate READ playbackRate WRITE setPlaybackRate NOTIFY playbackRateChanged)
     Q_PROPERTY(QString decodeMode READ decodeMode WRITE setDecodeMode NOTIFY decodeModeChanged)
     Q_PROPERTY(QVariantList decodeModes READ decodeModes NOTIFY decodeModesChanged)
+    Q_PROPERTY(bool useProxies READ useProxies WRITE setUseProxies NOTIFY useProxiesChanged)
+    Q_PROPERTY(int proxySize READ proxySize WRITE setProxySize NOTIFY proxySizeChanged)
     // Live playback counters for the diagnostics report and the preview overlay. Constant
     // because the block itself is owned here for the engine's lifetime; its contents change.
     Q_PROPERTY(PlaybackStats *stats READ stats CONSTANT)
@@ -49,11 +52,21 @@ public:
     ~PlaybackEngine() override;
 
     void setProject(drift::Project *project);
+    // The project the engine already points at was edited in place. setProject(sameProject) was
+    // the only way to say so, and it round-tripped through AudioMixer::setProject (a no-op for an
+    // unchanged pointer) and invalidated the compositor snapshot twice. Coalesces every edit
+    // delivered in one event-loop turn into a single composite request.
+    void notifyProjectEdited();
     void setPlayheadUs(drift::TimeUs us);
+    // setPlayheadUs without the composite, for a caller whose edit already schedules one.
+    void resyncAudioAt(drift::TimeUs us);
     drift::TimeUs playheadUs() const { return m_playheadUs; }
 
     void setLoopWorkArea(bool enabled) { m_loopWorkArea = enabled; }
     bool loopWorkArea() const { return m_loopWorkArea; }
+
+    void setVoiceoverRecording(bool rec) { m_voiceoverRecording = rec; }
+    bool isVoiceoverRecording() const { return m_voiceoverRecording; }
 
     int previewTextureId() const;
     QSize previewTextureSize() const;
@@ -89,6 +102,12 @@ public:
     // is the sentence explaining it. A property rather than a plain call because the verdict
     // needs the GL context, which may come up after the picker is built.
     QVariantList decodeModes() const;
+    // Preview proxies (ReverseProxyCache preview entries). proxySize is the proxy's short side:
+    // 360, 540, 720 or 1080. Proxies built at another size stop matching until rebuilt.
+    bool useProxies() const;
+    void setUseProxies(bool use);
+    int proxySize() const;
+    void setProxySize(int shortSide);
 
     PlaybackStats *stats() { return &m_stats; }
     const PlaybackStats *stats() const { return &m_stats; }
@@ -119,6 +138,14 @@ public:
     // Empty id follows the system default. Applied to the sink immediately.
     void setAudioDeviceId(const QByteArray &id) { m_audio.setDeviceId(id); }
 
+    QPair<float, float> trackAudioLevels(int trackIndex) const;
+    QPair<float, float> masterAudioLevels() const;
+    QList<float> takeMeterPeaks(const QList<int> &trackIndexes) const;
+    void setMasterVolume(double vol);
+    double masterVolume() const;
+    void setMasterMuted(bool muted);
+    bool masterMuted() const;
+
 signals:
     // Playback cannot produce sound; carries a message meant for the user.
     void audioError(const QString &message);
@@ -140,13 +167,27 @@ signals:
     void playbackRateChanged();
     void decodeModeChanged();
     void decodeModesChanged();
+    void useProxiesChanged();
+    void proxySizeChanged();
     void playheadUsChanged(quint64 us);
 
 private:
     int fillAudio(float *buffer, int sampleCount);
     void ensureAudioSink();
     void onAudioSampleRateChanged();
-    void onPlayheadTick();
+    // Reads the clock and publishes the playhead when it has crossed into a new project frame.
+    void advancePlayhead();
+    void emitPlayhead();
+    // Hands the mixer the compositor's current project snapshot, so the audio thread never reads
+    // the live project the GUI thread is editing.
+    void pushAudioSnapshot();
+
+public:
+    // The immutable copy the compositor is reading (made now if an edit invalidated it), for other
+    // readers off the GUI thread. Null when `project` is not the one being played.
+    std::shared_ptr<const drift::Project> projectSnapshot(const drift::Project *project);
+
+private:
     void onCompositeTick();
     // Pick the frame that should be on screen at the next swap and ask for it, unless it is
     // the one already requested.
@@ -169,8 +210,8 @@ private:
     PlaybackStats m_stats;
     AudioMixer m_mixer;
     AudioOutputChannel m_audio;
-    QTimer m_playheadTimer;
     QTimer m_compositeTimer;
+    QTimer m_editRefreshTimer;
     QTimer m_gpuProbeTimer;
     int m_gpuProbeAttempts = 0;
     bool m_gpuUnavailableNotified = false;
@@ -210,10 +251,17 @@ private:
     double m_refreshRate = 0.0;
     qint64 m_lastDisplayTickNs = 0;
     drift::TimeUs m_lastRequestedFrameUs = -1;
+    drift::TimeUs m_lastEmittedFrameUs = -1;
+    // The snapshot the mixer is reading, and the one before it. Holding the previous one until the
+    // next swap means the audio thread's own reference is never the last, so a whole project is
+    // never freed inside an audio callback.
+    std::shared_ptr<const drift::Project> m_audioSnapshot;
+    std::shared_ptr<const drift::Project> m_retiredAudioSnapshot;
     // The rate the sink negotiated, which is what the mixer renders at and what the clock counts
     // samples in — not necessarily the project's rate, since the device has the final say.
     int m_sampleRate = 48000;
     bool m_loopWorkArea = false;
+    bool m_voiceoverRecording = false;
     // processedUSecs() is cumulative from QAudioSink::start(), not from the last clock reset.
     // Subtracting this (captured whenever the clock is re-anchored) keeps a seek from landing
     // at seekTarget + time-since-play instead of seekTarget.

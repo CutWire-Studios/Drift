@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Cross-builds the native dependencies Drift links that have no Android package: FFmpeg, x264,
-# dav1d, zstd, OpenSSL (libcrypto) and SoundTouch. Output goes to
+# dav1d, vid.stab, zstd, OpenSSL (libcrypto) and SoundTouch. Output goes to
 # third_party/prebuilt/android/<abi>/{include,lib}, which is where the root CMakeLists looks.
 #
 # JUCE and the ONNX Runtime headers are NOT here: JUCE is a FetchContent source tree CMake builds
@@ -30,6 +30,7 @@ X264_TAG="stable"
 ZSTD_TAG="v1.5.7"
 OPENSSL_TAG="openssl-3.6.3"
 DAV1D_TAG="1.5.4"
+VIDSTAB_TAG="v1.1.1"
 # Upstream tags this release "2.4.1"; there is no plain "2.4.0".
 SOUNDTOUCH_TAG="2.4.1"
 
@@ -125,6 +126,20 @@ meson setup "$SRC/dav1d/build-$ABI" "$SRC/dav1d" --cross-file "$SRC/dav1d/cross-
   -Db_staticpic=true -Denable_tools=false -Denable_tests=false
 ninja -C "$SRC/dav1d/build-$ABI" install
 
+# --- vid.stab ----------------------------------------------------------------
+# FFmpeg's vidstabdetect/vidstabtransform filters, which clip stabilization runs in-process.
+# OpenMP off: it would drag libomp into the app for a filter that runs on a worker thread anyway.
+# CMAKE_POLICY_VERSION_MINIMUM because its CMakeLists still asks for 2.8, which CMake 4 rejects.
+# FindSSE try-compiles its SSE checks, so they come out false on ARM rather than adding -msse2.
+clone https://github.com/georgmartius/vid.stab.git "$VIDSTAB_TAG" vid.stab
+cmake -S "$SRC/vid.stab" -B "$SRC/vid.stab/build-$ABI" -G Ninja \
+  -DCMAKE_TOOLCHAIN_FILE="$ANDROID_NDK_ROOT/build/cmake/android.toolchain.cmake" \
+  -DANDROID_ABI="$ABI" -DANDROID_PLATFORM="android-$API" \
+  -DCMAKE_INSTALL_PREFIX="$OUT" -DCMAKE_INSTALL_LIBDIR=lib -DCMAKE_BUILD_TYPE=Release \
+  -DCMAKE_POSITION_INDEPENDENT_CODE=ON -DCMAKE_POLICY_VERSION_MINIMUM=3.5 \
+  -DBUILD_SHARED_LIBS=OFF -DUSE_OMP=OFF
+cmake --build "$SRC/vid.stab/build-$ABI" --target install
+
 # --- FFmpeg ------------------------------------------------------------------
 # No --disable-postproc: libpostproc was removed in FFmpeg 8.0 and configure hard-errors on the
 # option. avformat and avcodec are always built, so they have no --enable- switch either.
@@ -152,7 +167,7 @@ clone https://git.ffmpeg.org/ffmpeg.git "$FFMPEG_TAG" ffmpeg
     --sysroot="$TC/sysroot" \
     --cc="$CC" --cxx="$CXX" --ar="$AR" --nm="$NM" --ranlib="$RANLIB" --strip="$STRIP" \
     --enable-static --disable-shared --enable-pic \
-    --enable-gpl --enable-version3 --enable-libx264 --enable-libdav1d \
+    --enable-gpl --enable-version3 --enable-libx264 --enable-libdav1d --enable-libvidstab \
     --extra-cflags="-I$OUT/include -fvisibility=hidden $ARM_CFLAGS" --extra-ldflags="-L$OUT/lib" \
     --disable-programs --disable-doc --disable-avdevice \
     --disable-vaapi --disable-vdpau --disable-v4l2-m2m --disable-cuda-llvm \

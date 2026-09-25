@@ -115,10 +115,39 @@
           "trimmed independently. Acts on the current selection — call select_clip first; fails "
           "bad_args when no linked clips are selected.",
           objectSchema({}) },
-        { "merge_clips", "timeline", "Join adjacent clips",
-          "Merge the selected adjacent clips on one track back into a single clip. Acts on the current "
-          "selection — select the clips first; fails bad_args when the selection cannot be merged.",
+        { "make_composite", "timeline", "Collapse clips into one composite clip",
+          "Move the selected clips (with their linked audio and pinned adjustments) into a new nested "
+          "timeline and put one composite clip in their place, plus a composite item in the bin. "
+          "Acts on the current selection — call select_clips first. Only on the main timeline, and "
+          "the selection must not already contain a composite. Returns {clip, sequence, asset}.",
           objectSchema({}) },
+        { "open_composite", "timeline", "Edit inside a composite",
+          "Open a composite's timeline in its own tab and make it the timeline every other op edits "
+          "(tracks, clips, inspect). Name it by a composite clip (clip or track+index), by sequence "
+          "id, or pass main:true to return to the main timeline. Export always renders the main "
+          "timeline. Not an undo step.",
+          objectSchema(mergeProps({{QStringLiteral("sequence"), stringProp(QStringLiteral("Sequence id from list_composites"))},
+                                   {QStringLiteral("main"), boolProp(QStringLiteral("Switch back to the main timeline"))}},
+                                  clipRefProps())) },
+        { "list_composites", "timeline", "Composites, their tabs and which is open",
+          "List every composite: {sequence, asset, name, duration, open, active}. active marks the "
+          "timeline being edited; activeSequence is empty on the main timeline.",
+          objectSchema({}), true },
+        { "flatten_composite", "timeline", "Render a composite clip to a video file",
+          "Render the composite clip's range to a new video file, add it to the bin and swap the "
+          "clip (and audio separated from it) over to it. Async: returns {started:true}; poll "
+          "export_status. Transparency around the composite's content becomes the project "
+          "background.",
+          objectSchema(clipRefProps()) },
+        { "merge_clips", "timeline", "Join adjacent clips, or several subtitle clips into one",
+          "Merge the selected adjacent clips on one track back into a single clip. Acts on the current "
+          "selection — select the clips first; fails bad_args when the selection cannot be merged. "
+          "Two or more subtitle clips on one track (select_clips) always merge, gaps allowed: the "
+          "result spans first start to last end, holds every cue, and keeps the earliest clip's "
+          "style and transform. Pass track instead to merge every subtitle clip on that track, "
+          "ignoring the selection.",
+          objectSchema({{QStringLiteral("track"),
+                         integerProp(QStringLiteral("Merge every subtitle clip on this track"))}}) },
         { "align_clip_left", "timeline", "Snap start to zero",
           "Move the selected clip so it starts at 0. Acts on the current selection — call select_clip "
           "first.",
@@ -309,10 +338,12 @@
                         {QStringLiteral("at"), numberProp(QStringLiteral("Start seconds (default: playhead)"))}},
                        {QStringLiteral("sticker")}) },
         { "add_emoji", "shapes", "Put an emoji character on the timeline",
-          "Add an emoji clip, creating a track when needed. Takes the emoji CHARACTER (e.g. \"🎬\"), not "
-          "a catalog id. Returns {id, track, index}.",
+          "Add an emoji clip. Takes the emoji CHARACTER (e.g. \"🎬\"), not a catalog id. Graphics share "
+          "one track type, so with the target span already occupied this stacks onto its own lane "
+          "rather than sliding down the timeline; pass track to choose one. Returns {id, track, index}.",
           objectSchema({{QStringLiteral("emoji"), stringProp(QStringLiteral("The emoji character itself, e.g. 🎬"))},
                         {QStringLiteral("name"), stringProp(QStringLiteral("Optional display name for the clip"))},
+                        {QStringLiteral("track"), integerProp(QStringLiteral("Graphic track to place on (default: the first free one)"))},
                         {QStringLiteral("at"), numberProp(QStringLiteral("Start seconds (default: playhead)"))}},
                        {QStringLiteral("emoji")}) },
 
@@ -550,6 +581,72 @@
           "Read it to edit a document that has no slots, then send it back with set_lottie_source.",
           objectSchema(clipRefProps()), true, false, true },
 
+        { "add_model3d", "model3d", "Place a 3D model (.glb)",
+          "Add a glTF binary as a model clip on a graphic track, creating one when needed. The clip "
+          "is a full-canvas layer; the model sits at the clip's x/y centre (move it with "
+          "set_transform x/y or the keyframes ops — w/h/rotation are ignored for this kind). scale "
+          "is the fraction of canvas height the model spans, depth 0..1 is how much perspective "
+          "foreshortening there is (size never changes with it), rotX/rotY/rotZ are degrees about "
+          "the MODEL'S OWN axes (intrinsic, applied X then Y then Z: Y spins about the model's up "
+          "axis as tilted by X, Z rolls about its forward axis after both — so a keyframed rotY "
+          "spins a tilted model about its own axis rather than wobbling it around the world's), "
+          "and lightYaw/lightPitch/lightIntensity/ambient light it. All nine are keyframable as "
+          "model3d.<key>. An animated file plays its first animation at its own length unless "
+          "duration is given; loop decides what happens past the end. Returns {id, track, index, "
+          "animations:[{name, durationSec}], vertexCount, warning?, model3d:{…}}.",
+          objectSchema({{QStringLiteral("path"), stringProp(QStringLiteral("Absolute path to a .glb file"))},
+                        {QStringLiteral("at"), numberProp(QStringLiteral("Start seconds (default: playhead)"))},
+                        {QStringLiteral("track"), integerProp(QStringLiteral("Optional destination graphic track; omitted picks or creates one"))},
+                        {QStringLiteral("duration"), numberProp(QStringLiteral("Clip length in seconds (default: the first animation's length, 5 s for a static model)"))},
+                        {QStringLiteral("animation"), integerProp(QStringLiteral("Index into the file's animations (default 0)"))},
+                        {QStringLiteral("loop"), enumProp(QStringLiteral("Past the animation's end: hold the last frame, loop, ping-pong, or hide (default loop)"),
+                                                           {QStringLiteral("hold"), QStringLiteral("loop"), QStringLiteral("pingpong"), QStringLiteral("hide")})},
+                        {QStringLiteral("offset"), numberProp(QStringLiteral("Seconds into the animation at the clip's start (default 0)"))},
+                        {QStringLiteral("scale"), numberProp(QStringLiteral("Fraction of canvas height the model spans (default 0.5)"), 0.01, 10.0)},
+                        {QStringLiteral("depth"), numberProp(QStringLiteral("Perspective strength 0 (flat) .. 1 (strong); default 0.5"), 0.0, 1.0)},
+                        {QStringLiteral("rotX"), numberProp(QStringLiteral("Degrees about the model's own X axis (tilt; applied first)"))},
+                        {QStringLiteral("rotY"), numberProp(QStringLiteral("Degrees about the model's own Y axis after the X tilt (turntable / spin)"))},
+                        {QStringLiteral("rotZ"), numberProp(QStringLiteral("Degrees about the model's own Z axis after X and Y (roll)"))},
+                        {QStringLiteral("lightYaw"), numberProp(QStringLiteral("Key light direction, degrees (default 30)"))},
+                        {QStringLiteral("lightPitch"), numberProp(QStringLiteral("Key light elevation, degrees (default 20)"))},
+                        {QStringLiteral("lightIntensity"), numberProp(QStringLiteral("Key light strength (default 1)"), 0.0, 10.0)},
+                        {QStringLiteral("ambient"), numberProp(QStringLiteral("Ambient light 0..1 (default 0.35)"), 0.0, 1.0)},
+                        {QStringLiteral("name"), stringProp(QStringLiteral("Clip name (default: the file name)"))}},
+                       {QStringLiteral("path")}) },
+        { "inspect_model3d", "model3d", "Check a .glb before or after placing it",
+          "Parse a model and report what it carries without touching the timeline: animations:[{name, "
+          "durationSec}], vertexCount, primitiveCount, materialCount, textureCount, warning (what "
+          "the loader had to skip — Draco compression, extra material textures, …). Give path for a "
+          "file, or clip for one already on the timeline (adds its model3d options).",
+          objectSchema(mergeProps({{QStringLiteral("path"), stringProp(QStringLiteral("Absolute .glb path"))}},
+                                  clipRefProps())),
+          true, false, true },
+        { "set_model3d_source", "model3d", "Swap the file under a model clip",
+          "Replace the clip's .glb, keeping its position, length, pose, lighting and keyframes; the "
+          "animation index is clamped to the new file. Returns the inspect summary of the new file.",
+          objectSchema(mergeProps({{QStringLiteral("path"), stringProp(QStringLiteral("Absolute .glb path"))}},
+                                  clipRefProps()),
+                       {QStringLiteral("path")}) },
+        { "set_model3d_options", "model3d", "Animation, loop, pose or lighting of a model clip",
+          "Change how a model clip plays and looks; only supplied keys change. Pose and light values "
+          "set here are plain (non-keyed) values — use set_keyframe with model3d.<key> to animate them. "
+          "Rotations are about the model's own axes, applied X then Y then Z (see add_model3d).",
+          objectSchema(mergeProps({{QStringLiteral("animation"), integerProp(QStringLiteral("Index into the file's animations"))},
+                                   {QStringLiteral("loop"), enumProp(QStringLiteral("hold | loop | pingpong | hide"),
+                                                                      {QStringLiteral("hold"), QStringLiteral("loop"), QStringLiteral("pingpong"), QStringLiteral("hide")})},
+                                   {QStringLiteral("offset"), numberProp(QStringLiteral("Seconds into the animation at the clip's start"))},
+                                   {QStringLiteral("scale"), numberProp(QStringLiteral("Fraction of canvas height the model spans"), 0.01, 10.0)},
+                                   {QStringLiteral("depth"), numberProp(QStringLiteral("Perspective strength 0..1"), 0.0, 1.0)},
+                                   {QStringLiteral("rotX"), numberProp(QStringLiteral("Degrees about the model's own X axis (tilt; applied first)"))},
+                                   {QStringLiteral("rotY"), numberProp(QStringLiteral("Degrees about the model's own Y axis after the X tilt (turntable / spin)"))},
+                                   {QStringLiteral("rotZ"), numberProp(QStringLiteral("Degrees about the model's own Z axis after X and Y (roll)"))},
+                                   {QStringLiteral("lightYaw"), numberProp(QStringLiteral("Key light direction, degrees"))},
+                                   {QStringLiteral("lightPitch"), numberProp(QStringLiteral("Key light elevation, degrees"))},
+                                   {QStringLiteral("lightIntensity"), numberProp(QStringLiteral("Key light strength"), 0.0, 10.0)},
+                                   {QStringLiteral("ambient"), numberProp(QStringLiteral("Ambient light 0..1"), 0.0, 1.0)},
+                                   {QStringLiteral("name"), stringProp(QStringLiteral("Clip name"))}},
+                                  clipRefProps())) },
+
         { "add_subtitle_clip", "subtitles", "Empty subtitle lane",
           "Add an empty subtitle clip, creating a subtitle track when needed. Returns {id, track, index}. "
           "Fill it with set_subtitle_cues or import_subtitle_into_clip.",
@@ -566,8 +663,10 @@
                                   clipRefProps()),
                        {QStringLiteral("path")}) },
         { "export_subtitle_file", "subtitles", "Save a subtitle clip's cues as .srt/.vtt",
-          "Write a subtitle clip's cues to a file. The format follows the path's extension (.srt/.vtt).",
-          objectSchema(mergeProps({{QStringLiteral("path"), stringProp(QStringLiteral("Absolute output path; extension picks the format"))}},
+          "Write a subtitle clip's cues to a file. The format follows the path's extension (.srt/.vtt). "
+          "Cue times are clip-local unless timeline_times is true.",
+          objectSchema(mergeProps({{QStringLiteral("path"), stringProp(QStringLiteral("Absolute output path; extension picks the format"))},
+                                   {QStringLiteral("timeline_times"), boolProp(QStringLiteral("Offset cues by the clip's start so they match the exported video"))}},
                                   clipRefProps()),
                        {QStringLiteral("path")}) },
         { "set_subtitle_cues", "subtitles", "Replace all cues",
@@ -593,15 +692,124 @@
           "Returns {languages:[{id, label}]}. Pass an id as generate_subtitles.language.",
           objectSchema({}), true, false, true },
         { "generate_subtitles", "subtitles", "Auto transcribe, including word-by-word captions",
-          "Transcribe a clip's audio with Whisper into a new subtitle clip. Async: returns "
-          "{started:true} immediately — poll "
+          "Transcribe audio with Whisper into a new subtitle clip. Sources: clips (several UUIDs), "
+          "else track+start+end (every video/audio clip on that track in the range), else one clip "
+          "ref. Several sources produce ONE subtitle clip spanning them; they must not overlap in "
+          "time (bad_args). Async: returns {started:true} immediately — poll "
           "inspect({detail:true}).jobs.subtitleGen.{active,progress,status} until active is false. Cancel "
           "with cancel_subtitle_generation. For word-by-word captions pass max_words_per_cue:1. Run "
           "this AFTER remove_silence — silence removal shifts the timeline and would invalidate cue "
           "times.",
           objectSchema(mergeProps({{QStringLiteral("language"), stringProp(QStringLiteral("Language id from list_whisper_languages; omitted auto-detects"))},
-                                   {QStringLiteral("max_words_per_cue"), numberProp(QStringLiteral("Cap words per caption; omit or 0 for the recommended length. Short caps drift slightly out of sync."))}},
+                                   {QStringLiteral("max_words_per_cue"), numberProp(QStringLiteral("Cap words per caption; omit or 0 for the recommended length. Short caps drift slightly out of sync."))},
+                                   {QStringLiteral("clips"), arrayProp(stringProp(QStringLiteral("Clip UUID")),
+                                                                        QStringLiteral("Video/audio clips to caption together"))},
+                                   {QStringLiteral("start"), numberProp(QStringLiteral("Range start seconds (with track and end)"))},
+                                   {QStringLiteral("end"), numberProp(QStringLiteral("Range end seconds (with track and start)"))}},
                                   clipRefProps())) },
+        { "transcribe", "transcript", "Word-level transcript of a clip's media",
+          "Transcribe the whole source file behind an asset or clip, once: the result is stored on "
+          "the asset (in source time) and survives every later cut, trim, reorder and undo, so "
+          "get_transcript, cut_words and generate_subtitles reuse it. engine \"local\" = Whisper "
+          "+ word-timing aligner (align-model addon for the language) + Silero VAD when "
+          "installed; \"elevenlabs\" = Scribe, which keeps fillers (um, uh), tags audio events "
+          "and can label speakers (BILLABLE, needs the user's key). Async: returns {jobs:[{asset, "
+          "job_id}], cached:[asset]}; poll get_job. Already-transcribed media returns cached unless force.",
+          objectSchema(mergeProps(
+              {{QStringLiteral("asset"), stringProp(QStringLiteral("Asset id (alternative to clip)"))},
+               {QStringLiteral("clips"), arrayProp(stringProp(QStringLiteral("Clip UUID")), QStringLiteral("Transcribe each clip's media"))},
+               {QStringLiteral("engine"), propWithDefault(enumProp(QStringLiteral("Transcriber"), {QStringLiteral("local"), QStringLiteral("elevenlabs")}), QStringLiteral("local"))},
+               {QStringLiteral("language"), stringProp(QStringLiteral("Language code (en, de, …); omit to auto-detect"))},
+               {QStringLiteral("diarize"), propWithDefault(boolProp(QStringLiteral("Label who speaks each word (local needs diarize-model)")), false)},
+               {QStringLiteral("num_speakers"), numberProp(QStringLiteral("Known speaker count; helps diarization"))},
+               {QStringLiteral("align"), propWithDefault(boolProp(QStringLiteral("local: measure word timings with the aligner when one is installed")), true)},
+               {QStringLiteral("keyterms"), arrayProp(stringProp(QStringLiteral("Term")), QStringLiteral("elevenlabs: names and jargon to bias recognition toward"))},
+               {QStringLiteral("force"), propWithDefault(boolProp(QStringLiteral("Re-transcribe even if a transcript exists")), false)}},
+              clipRefProps())) },
+        { "get_transcript", "transcript", "Read what was said, with times",
+          "The primary way to read footage. Pass asset (source seconds), clip (timeline seconds, "
+          "only the part of the media that clip plays) or start+end (timeline, every audible clip). "
+          "view phrases (default): lines broken on silence >= break_on_silence or speaker change, "
+          "plus `compact` text \"[start-end] S1 text\" — the cheapest way to read a whole take. "
+          "view words: every word with a stable index i (into the asset's transcript) for cut_words. "
+          "Paginate with offset/limit; next_offset is set when more remain. Fillers and audio events "
+          "are included unless include narrows it. `stale` = the source file changed since.",
+          objectSchema(mergeProps(
+              {{QStringLiteral("asset"), stringProp(QStringLiteral("Asset id"))},
+               {QStringLiteral("start"), numberProp(QStringLiteral("Timeline start seconds (range mode)"))},
+               {QStringLiteral("end"), numberProp(QStringLiteral("Timeline end seconds (range mode)"))},
+               {QStringLiteral("view"), propWithDefault(enumProp(QStringLiteral("Shape of the answer"), {QStringLiteral("phrases"), QStringLiteral("words"), QStringLiteral("text")}), QStringLiteral("phrases"))},
+               {QStringLiteral("break_on_silence"), propWithDefault(numberProp(QStringLiteral("phrases: start a new line after a gap this long (s)")), 0.7)},
+               {QStringLiteral("max_words"), numberProp(QStringLiteral("phrases: cap words per line"))},
+               {QStringLiteral("include"), arrayProp(enumProp(QStringLiteral("Token kind"), {QStringLiteral("fillers"), QStringLiteral("events")}), QStringLiteral("Only these extra token kinds (default: all)"))},
+               {QStringLiteral("offset"), numberProp(QStringLiteral("First entry to return"))},
+               {QStringLiteral("limit"), numberProp(QStringLiteral("Entries per page (phrases 200, words 400)"))}},
+              clipRefProps())),
+          true, false, true },
+        { "cut_words", "transcript", "Cut words out of a clip",
+          "Remove words from a clip by transcript index ([i, j] runs from get_transcript view "
+          "words, stable across edits) or by text (\"um\", or match phrase for an exact word "
+          "sequence). Cuts land between words: snap boundary (default) also takes the pause "
+          "around the removed words, keeping `padding` of air beside the words that stay; snap "
+          "silence cuts at the quietest point of each gap instead. Linked audio/video are cut "
+          "together, what follows ripples, each cut gets a de-click ramp. One undo step. "
+          "dry_run returns the plan without editing. Returns {removed:[{start,end,text}] "
+          "(timeline, before the edit), removed_words, clips, delta}.",
+          objectSchema(mergeProps(
+              {{QStringLiteral("words"), arrayProp(arrayProp(numberProp(QStringLiteral("Word index")), QStringLiteral("[i, j] inclusive")),
+                                                   QStringLiteral("Runs of word indices to remove"))},
+               {QStringLiteral("text"), QJsonObject{{QStringLiteral("description"), QStringLiteral("A word or phrase (or a list) to remove wherever it is said in this clip")}}},
+               {QStringLiteral("match"), propWithDefault(enumProp(QStringLiteral("text matches single words, or the whole phrase in order"), {QStringLiteral("word"), QStringLiteral("phrase")}), QStringLiteral("word"))},
+               {QStringLiteral("snap"), propWithDefault(enumProp(QStringLiteral("Where in each gap to cut"), {QStringLiteral("boundary"), QStringLiteral("silence")}), QStringLiteral("boundary"))},
+               {QStringLiteral("padding"), propWithDefault(numberProp(QStringLiteral("Air kept beside remaining words, seconds (0.03–0.2)"), 0.03, 0.2), 0.05)},
+               {QStringLiteral("declick"), propWithDefault(numberProp(QStringLiteral("Audio ramp at each cut, seconds; 0 = off"), 0, 0.5), 0.03)},
+               {QStringLiteral("dry_run"), propWithDefault(boolProp(QStringLiteral("Report the cuts without making them")), false)}},
+              clipRefProps())) },
+        { "keep_ranges", "transcript", "Keep only these source ranges of a clip",
+          "Rebuild a clip from source-time ranges, in the order given (reordering is fine): an "
+          "edit decision list for one clip. Ranges are source seconds (get_transcript({asset}) "
+          "times), padded by `padding`, may reach outside the clip's current trim, and touching "
+          "ranges play as one. Linked partners follow; later clips ripple; cut edges get a "
+          "de-click ramp. Refuses speed-ramped clips. One undo step. Returns {clips:[{id, "
+          "src_start, src_end, start, end}], duration, delta}.",
+          objectSchema(mergeProps(
+              {{QStringLiteral("ranges"), arrayProp(objectSchema({{QStringLiteral("start"), numberProp(QStringLiteral("Source seconds"))},
+                                                                  {QStringLiteral("end"), numberProp(QStringLiteral("Source seconds"))}},
+                                                                 {QStringLiteral("start"), QStringLiteral("end")}),
+                                                    QStringLiteral("Source ranges to keep, in play order"))},
+               {QStringLiteral("padding"), propWithDefault(numberProp(QStringLiteral("Seconds added to both ends of each range"), 0, 1), 0.0)},
+               {QStringLiteral("declick"), propWithDefault(numberProp(QStringLiteral("Audio ramp at each cut, seconds; 0 = off"), 0, 0.5), 0.03)},
+               {QStringLiteral("ripple"), propWithDefault(boolProp(QStringLiteral("Move later clips to follow the new length")), true)}},
+              clipRefProps()),
+                       {QStringLiteral("ranges")}) },
+        { "assemble", "transcript", "Build a sequence from an edit decision list",
+          "Place takes from several assets back to back: edl [{asset, start, end}] in source "
+          "seconds, in play order (best take of each beat, any source). Appends to the end of "
+          "`track` (default: the usual track for the first asset) unless `at` is given; video "
+          "brings its linked audio. One undo step; nothing is left behind on failure. Returns "
+          "{clips:[{id, src_start, src_end, start, end}], track, end}.",
+          objectSchema({{QStringLiteral("edl"), arrayProp(objectSchema({{QStringLiteral("asset"), stringProp(QStringLiteral("Asset id"))},
+                                                                        {QStringLiteral("start"), numberProp(QStringLiteral("Source seconds"))},
+                                                                        {QStringLiteral("end"), numberProp(QStringLiteral("Source seconds"))}},
+                                                                       {QStringLiteral("asset"), QStringLiteral("start"), QStringLiteral("end")}),
+                                                          QStringLiteral("Ranges in play order"))},
+                        {QStringLiteral("track"), numberProp(QStringLiteral("Target track index"))},
+                        {QStringLiteral("at"), numberProp(QStringLiteral("Timeline seconds to start at (default: after the track's last clip)"))},
+                        {QStringLiteral("padding"), propWithDefault(numberProp(QStringLiteral("Seconds added to both ends of each range"), 0, 1), 0.0)},
+                        {QStringLiteral("declick"), propWithDefault(numberProp(QStringLiteral("Audio ramp at each cut, seconds"), 0, 0.5), 0.03)}},
+                       {QStringLiteral("edl")}) },
+        { "diarize", "transcript", "Who speaks when",
+          "Label speakers in an asset's (or clip's) whole source file with the local diarize-model "
+          "addon. Async: returns {job_id}; the job result is {speakers, segments:[{start,end,speaker}]} "
+          "in source seconds, and an existing transcript gets its words labelled S1, S2… (read with "
+          "get_transcript). transcribe({diarize:true}) does both in one pass.",
+          objectSchema(mergeProps(
+              {{QStringLiteral("asset"), stringProp(QStringLiteral("Asset id (alternative to clip)"))},
+               {QStringLiteral("num_speakers"), numberProp(QStringLiteral("Known speaker count; otherwise estimated"))},
+               {QStringLiteral("threshold"), propWithDefault(numberProp(QStringLiteral("Cosine distance cut; lower finds more speakers"), 0, 2), 0.5)},
+               {QStringLiteral("min_on"), propWithDefault(numberProp(QStringLiteral("Drop turns shorter than this (s)")), 0.3)},
+               {QStringLiteral("min_off"), propWithDefault(numberProp(QStringLiteral("Bridge same-speaker gaps shorter than this (s)")), 0.5)}},
+              clipRefProps())) },
         { "cancel_subtitle_generation", "subtitles", "Abort a running generate_subtitles",
           "Cancel in-flight subtitle generation. Returns ok even when nothing was running; confirm "
           "with inspect({detail:true}).jobs.subtitleGen.active.",
@@ -626,7 +834,7 @@
           "type is color in list_effects. Not validated — an unknown key or bad index still returns ok.",
           objectSchema(mergeProps({{QStringLiteral("index"), effectIndexProp()},
                                    {QStringLiteral("key"), stringProp(QStringLiteral("Parameter key from list_effects"))},
-                                   {QStringLiteral("value"), stringProp(QStringLiteral("Color #RRGGBB or #AARRGGBB"))}},
+                                   {QStringLiteral("value"), stringProp(QStringLiteral("Color #RRGGBB; alpha is not carried, effect colours bind as vec3"))}},
                                   clipRefProps()),
                        {QStringLiteral("index"), QStringLiteral("key"), QStringLiteral("value")}) },
         { "set_audio_effect_enabled", "effects", "Toggle audio effect",
@@ -800,6 +1008,37 @@
         { "clear_face_track", "ai", "Remove face track",
           "Delete the stored face track from a clip, undoing detect_faces.",
           objectSchema(clipRefProps()), false, true },
+        { "estimate_depth", "ai", "Estimate depth for the depth effects",
+          "Estimate a video or image clip's depth with the depth-model addon (Video Depth Anything), "
+          "which the depth effects read: depth.relight (3D lights), depth.focus (depth of field), "
+          "depth.fog, depth.view, and depth.occlude (put a layer above it behind whatever is nearer). "
+          "Without it those effects pass the frame through. Pass the media clip or the effects "
+          "adjustment pinned to it. Slow: roughly 0.5 s per frame on CPU at quality \"draft\", about "
+          "twice that at \"high\"; re-estimating the same pixels returns the cached result at once. "
+          "Async: returns {job_id}; poll get_job, whose result is {path, frames, cached}, then "
+          "inspect({clips:true,detail:true}) reports hasDepth. Cancel with cancel_job.",
+          objectSchema(mergeProps(
+              clipRefProps(),
+              {{QStringLiteral("quality"),
+                propWithDefault(enumProp(QStringLiteral("draft (short side 392) or high (518)"),
+                                         {QStringLiteral("draft"), QStringLiteral("high")}),
+                                QStringLiteral("draft"))}})) },
+        { "clear_depth", "ai", "Remove estimated depth",
+          "Detach the estimated depth from a clip, undoing estimate_depth. Its depth effects then pass "
+          "the frame through.",
+          objectSchema(clipRefProps()), false, true },
+        { "sample_depth", "ai", "Read depth at a point",
+          "Normalised depth (0 = farthest thing in the clip, 1 = nearest) at a point of the clip's "
+          "frame, x/y in 0..1 from the top-left, at a timeline time (default: the playhead). Use it "
+          "to set depth.focus focusDepth or depth.occlude depth from what is at a spot. Returns "
+          "{depth}; errors when the clip has no depth (run estimate_depth).",
+          objectSchema(mergeProps(
+                           clipRefProps(),
+                           {{QStringLiteral("x"), numberProp(QStringLiteral("0..1 across the clip's frame"), 0, 1)},
+                            {QStringLiteral("y"), numberProp(QStringLiteral("0..1 down the clip's frame"), 0, 1)},
+                            {QStringLiteral("time"), numberProp(QStringLiteral("Timeline seconds (default: playhead)"))}}),
+                       {QStringLiteral("x"), QStringLiteral("y")}),
+          true, false, true },
 
         { "audio_summary", "audio", "What carries sound",
           "List every clip that actually reaches the mix — audio clips, plus video clips whose "
@@ -817,7 +1056,8 @@
           "mode is what you would actually hear. Silence reads as a true 0, so this is usable for "
           "finding dead air. Blocks while decoding, so the data is there on the first call. "
           "image:true returns a PNG instead — mixed lane, speech-band lane, silence shaded, onset "
-          "ticks when detect_beats is current, optional spectrogram — plus a summary_buckets "
+          "ticks when detect_beats is current, the transcript's words (reply `words` carries their "
+          "indices for cut_words) when the media is transcribed, optional spectrogram — plus a summary_buckets "
           "numeric summary; clip mode is then timeline-space (through the clip's volume and fades), "
           "asset mode draws the mixed lane only. image:true cannot be used inside apply.",
           objectSchema(mergeProps(
@@ -825,6 +1065,7 @@
                {QStringLiteral("image"), propWithDefault(boolProp(QStringLiteral("Return a waveform PNG instead of numbers")), false)},
                {QStringLiteral("width"), propWithDefault(integerProp(QStringLiteral("image only: PNG width"), 200, 2000), 1400)},
                {QStringLiteral("height"), propWithDefault(integerProp(QStringLiteral("image only: PNG height (grows by 120 with a spectrogram)"), 120, 800), 300)},
+               {QStringLiteral("words"), propWithDefault(boolProp(QStringLiteral("image: a lane of the transcript's words (with their indices in the reply) when the media is transcribed")), true)},
                {QStringLiteral("spectrogram"), propWithDefault(boolProp(QStringLiteral("image only: add a 64-bin log spectrogram lane")), false)},
                {QStringLiteral("summary_buckets"), propWithDefault(integerProp(QStringLiteral("image only: how many numeric peaks to return beside the image"), 1, 4096), 50)},
                {QStringLiteral("start"), numberProp(QStringLiteral("Range start in seconds. Timeline seconds in timeline mode, source seconds in asset mode. Ignored in clip mode, which always spans the whole trimmed clip."))},
@@ -1010,13 +1251,6 @@
           "Editor snap-to-clips/beats/bookmarks. Not undoable.",
           objectSchema({{QStringLiteral("enabled"), boolProp(QStringLiteral("Snap on"))}},
                        {QStringLiteral("enabled")}) },
-        { "set_guides", "ui", "Show thirds/centre/golden/grid overlays on the preview",
-          "Show composition guides on the preview and/or pick the guide kind. Not undoable.",
-          objectSchema({{QStringLiteral("enabled"), boolProp(QStringLiteral("Show guides"))},
-                        {QStringLiteral("type"),
-                         enumProp(QStringLiteral("Guide kind"),
-                                  {QStringLiteral("thirds"), QStringLiteral("center"),
-                                   QStringLiteral("golden"), QStringLiteral("grid")})}}) },
         { "set_loop_work_area", "playback", "Loop the In/Out range",
           "When on, playback loops over the work area. Not undoable.",
           objectSchema({{QStringLiteral("enabled"), boolProp(QStringLiteral("Loop the work area"))}},
@@ -1198,11 +1432,13 @@
           "Write x/y/w/h transform keyframes so the subject stays in frame at the requested aspect. "
           "Does not crop the project canvas, so a 16:9 timeline can still export a 9:16 deliverable. "
           "mode face follows list_face_track (run detect_faces first); center is a static centre crop; "
-          "motion is face with heavier smoothing.",
+          "motion is face with heavier smoothing. Returns scale — how much of the source ends up "
+          "across the canvas at the tightest point — plus upscaled:true when that is above 1, which "
+          "means the crop is being blown up past the source's own resolution and will look soft.",
           objectSchema(mergeProps(
               {{QStringLiteral("aspect"), numberProp(QStringLiteral("Target width/height, e.g. 0.5625 for 9:16"))},
-               {QStringLiteral("width"), integerProp(QStringLiteral("Target width pixels"))},
-               {QStringLiteral("height"), integerProp(QStringLiteral("Target height pixels"))},
+               {QStringLiteral("width"), integerProp(QStringLiteral("Target width pixels — only used to derive aspect when aspect is omitted"))},
+               {QStringLiteral("height"), integerProp(QStringLiteral("Target height pixels — only used to derive aspect when aspect is omitted"))},
                {QStringLiteral("mode"),
                 propWithDefault(enumProp(QStringLiteral("How to pick the crop"),
                                          {QStringLiteral("face"), QStringLiteral("center"),
@@ -1222,26 +1458,79 @@
         { "clear_beat_analysis", "audio", "Drop the beat grid",
           "Clear the transient beat analysis so the next detect_beats is not cached.",
           objectSchema({}), false, true },
+        { "tts_generate", "voice", "Voiceover from text (billable)",
+          "Speak `text` with an ElevenLabs or Fish Audio voice and import the MP3 into the bin (and "
+          "onto the timeline with place). BILLABLE on the user's account. Needs a key and the user's "
+          "consent (errors not_configured / consent_required tell you what to ask for). Async: "
+          "returns {job_id}; the job result has {asset, clip?, duration, path}. Voice ids come from "
+          "list_voices; omitted = the default set in Settings.",
+          objectSchema({{QStringLiteral("provider"), propWithDefault(enumProp(QStringLiteral("Voice service"), {QStringLiteral("elevenlabs"), QStringLiteral("fish")}), QStringLiteral("elevenlabs"))},
+                        {QStringLiteral("text"), stringProp(QStringLiteral("What to say (≤5000 characters)"))},
+                        {QStringLiteral("voice"), stringProp(QStringLiteral("Voice id (ElevenLabs voice_id / Fish reference_id)"))},
+                        {QStringLiteral("model"), stringProp(QStringLiteral("Model id; omitted = Settings default (eleven_multilingual_v2 / s2.1-pro)"))},
+                        {QStringLiteral("language"), stringProp(QStringLiteral("ElevenLabs: ISO language code to enforce"))},
+                        {QStringLiteral("speed"), numberProp(QStringLiteral("Speaking rate (ElevenLabs 0.7–1.2, Fish 0.5–2)"))},
+                        {QStringLiteral("stability"), numberProp(QStringLiteral("ElevenLabs voice setting"), 0, 1)},
+                        {QStringLiteral("similarity_boost"), numberProp(QStringLiteral("ElevenLabs voice setting"), 0, 1)},
+                        {QStringLiteral("style"), numberProp(QStringLiteral("ElevenLabs voice setting"), 0, 1)},
+                        {QStringLiteral("place"), QJsonObject{{QStringLiteral("description"), QStringLiteral("true = at the playhead on a free audio lane; or {at, track}")}}}},
+                       {QStringLiteral("text")}) },
+        { "sfx_generate", "voice", "Sound effect from a prompt (billable)",
+          "ElevenLabs text-to-sound-effects: import the result into the bin (and onto the timeline "
+          "with place). BILLABLE. Async: returns {job_id}; the job result has {asset, clip?, duration}.",
+          objectSchema({{QStringLiteral("prompt"), stringProp(QStringLiteral("Describe the sound"))},
+                        {QStringLiteral("duration"), numberProp(QStringLiteral("Seconds (0.5–30); omitted = the model picks"))},
+                        {QStringLiteral("prompt_influence"), propWithDefault(numberProp(QStringLiteral("How literally to follow the prompt"), 0, 1), 0.3)},
+                        {QStringLiteral("loop"), propWithDefault(boolProp(QStringLiteral("Make it loop seamlessly")), false)},
+                        {QStringLiteral("place"), QJsonObject{{QStringLiteral("description"), QStringLiteral("true = at the playhead; or {at, track}")}}}},
+                       {QStringLiteral("prompt")}) },
+        { "list_voices", "voice", "Voices you can speak with",
+          "Voices on the user's ElevenLabs or Fish Audio account (and public ones they can use). "
+          "Returns {voices:[{id, name, …}], next?, default_voice}; pass next back as page.",
+          objectSchema({{QStringLiteral("provider"), propWithDefault(enumProp(QStringLiteral("Voice service"), {QStringLiteral("elevenlabs"), QStringLiteral("fish")}), QStringLiteral("elevenlabs"))},
+                        {QStringLiteral("search"), stringProp(QStringLiteral("Filter by name"))},
+                        {QStringLiteral("mine"), propWithDefault(boolProp(QStringLiteral("Fish: only the user's own voices")), false)},
+                        {QStringLiteral("page"), QJsonObject{{QStringLiteral("description"), QStringLiteral("next from the previous page")}}},
+                        {QStringLiteral("limit"), propWithDefault(numberProp(QStringLiteral("Voices per page"), 1, 100), 30)}}),
+          true, false, true },
+        { "cloud_provider_status", "voice", "Which cloud services are ready",
+          "For elevenlabs and fish: {configured, key_source, consent, tts_model, default_voice, "
+          "stt_model}. Keys are never returned.",
+          objectSchema({}), true, false, true },
+        { "get_job", "ai", "Progress of a background job",
+          "State of a job started by transcribe, diarize, tts_generate or sfx_generate: {id, kind, "
+          "target, active, progress, status}; once active is false, ok plus result or error. "
+          "inspect({detail:true}).jobs.list shows every recent job.",
+          objectSchema({{QStringLiteral("id"), stringProp(QStringLiteral("Job id"))}}, {QStringLiteral("id")}),
+          true, false, true },
+        { "cancel_job", "ai", "Stop a background job",
+          "Cancel a running job by id. Returns {cancelled}; false when it had already finished.",
+          objectSchema({{QStringLiteral("id"), stringProp(QStringLiteral("Job id"))}}, {QStringLiteral("id")}) },
         { "detect_silence", "audio", "Find dead air",
-          "Find ranges where speech-band energy stays below threshold. BLOCKS. Pass clip for that "
-          "clip, or start+duration for the mixed timeline. Returns {ranges:[{start,end}], threshold, "
-          "source} in timeline seconds.",
+          "Find ranges with no speech. method \"energy\" (default) thresholds speech-band amplitude; "
+          "\"vad\" uses the Silero voice-activity model (addon vad-model), which ignores music, "
+          "breath and room noise that energy mistakes for speech. BLOCKS. Pass clip for that clip, "
+          "or start+duration for the mixed timeline. Returns {ranges:[{start,end}], threshold, "
+          "source, method} in timeline seconds.",
           objectSchema(mergeProps(
               {{QStringLiteral("start"), numberProp(QStringLiteral("Timeline start seconds (timeline mode)"))},
                {QStringLiteral("duration"), numberProp(QStringLiteral("Range length seconds (timeline mode)"))},
-               {QStringLiteral("threshold"), propWithDefault(numberProp(QStringLiteral("Speech-band amplitude below which a bucket is silence"), 0, 1), 0.02)},
+               {QStringLiteral("method"), propWithDefault(enumProp(QStringLiteral("Detector"), {QStringLiteral("energy"), QStringLiteral("vad")}), QStringLiteral("energy"))},
+               {QStringLiteral("threshold"), numberProp(QStringLiteral("energy: speech-band amplitude below which a bucket is silence (default 0.02). vad: speech probability below which audio is silence (default 0.5)"), 0, 1)},
                {QStringLiteral("min_duration"), propWithDefault(numberProp(QStringLiteral("Ignore silences shorter than this many seconds")), 0.35)},
                {QStringLiteral("padding"), propWithDefault(numberProp(QStringLiteral("Seconds of room tone to keep on each side of speech")), 0.08)}},
               clipRefProps())),
           true, false, true },
         { "remove_silence", "audio", "Cut dead air in one step",
-          "Split, delete, and close-gap internally so silences disappear. One undo step. Pass clip "
-          "or track. Returns {removed:[{start,end}], clips:[surviving ids]}. Run generate_subtitles "
-          "AFTER this.",
+          "Cut the silences out of a clip (or every clip on a track) and ripple what follows. Linked "
+          "audio/video are cut together. Each cut edge gets a short audio-only de-click ramp. One "
+          "undo step. Returns {removed:[{start,end}] (timeline seconds before the edit), clips:[surviving ids]}.",
           objectSchema(mergeProps(
-              {{QStringLiteral("threshold"), propWithDefault(numberProp(QStringLiteral("Same as detect_silence"), 0, 1), 0.02)},
+              {{QStringLiteral("method"), propWithDefault(enumProp(QStringLiteral("Same as detect_silence"), {QStringLiteral("energy"), QStringLiteral("vad")}), QStringLiteral("energy"))},
+               {QStringLiteral("threshold"), numberProp(QStringLiteral("Same as detect_silence"), 0, 1)},
                {QStringLiteral("min_duration"), propWithDefault(numberProp(QStringLiteral("Same as detect_silence")), 0.35)},
-               {QStringLiteral("padding"), propWithDefault(numberProp(QStringLiteral("Same as detect_silence")), 0.08)}},
+               {QStringLiteral("padding"), propWithDefault(numberProp(QStringLiteral("Same as detect_silence")), 0.08)},
+               {QStringLiteral("declick"), propWithDefault(numberProp(QStringLiteral("Audio ramp in seconds at each cut; 0 turns it off"), 0, 0.5), 0.03)}},
               clipRefProps())) },
         { "analyze_loudness", "audio", "Measure LUFS and true peak",
           "Integrated loudness (EBU R128 / BS.1770) plus a 4×-interpolated true-peak estimate. Pass "

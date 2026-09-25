@@ -69,6 +69,11 @@ public:
     ~CompositorService() override;
 
     void setProject(const drift::Project *project);
+    // The immutable copy of the project that composites are reading, made now if an edit
+    // invalidated the last one. Shared with the audio thread so one edit costs one copy.
+    std::shared_ptr<const drift::Project> snapshot();
+    // Bumped each time snapshot() makes a new copy; never 0 for a real snapshot.
+    quint64 snapshotSerial() const { return m_snapshotSerial; }
     void requestComposite(drift::TimeUs timeUs,
                           FrameCompositor::RenderOptions options = FrameCompositor::RenderOptions{});
 
@@ -123,6 +128,7 @@ private:
     std::shared_ptr<const drift::Project> m_sharedSnapshot;
     int m_snapshotGeneration = 0;
     int m_liveGeneration = 0;
+    quint64 m_snapshotSerial = 0;
 
     // Requests and completions are both GUI-thread only (every requestComposite caller is
     // PlaybackEngine, and onWorkerFrameReady is a queued slot), so this needs no atomic.

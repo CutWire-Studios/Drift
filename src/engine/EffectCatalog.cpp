@@ -59,6 +59,8 @@ QString translatedCategoryLabel(const QString &slug)
         return QCoreApplication::translate("EffectCatalog", "Face Props");
     if (slug == QLatin1String("artistic"))
         return QCoreApplication::translate("EffectCatalog", "Artistic");
+    if (slug == QLatin1String("depth"))
+        return QCoreApplication::translate("EffectCatalog", "Depth & Lighting");
     if (slug.isEmpty())
         return QCoreApplication::translate("EffectCatalog", "Other");
     return slug.at(0).toUpper() + slug.mid(1);
@@ -189,6 +191,8 @@ QMap<QString, QVariant> resolvedEffectParameters(const drift::Effect &effect, co
             params.insert(spec.key, spec.defaultColorHex);
         if (spec.isFilePath() && params.value(spec.key).typeId() != QMetaType::QString)
             params.insert(spec.key, spec.defaultString);
+        if (spec.isClip() && params.value(spec.key).typeId() != QMetaType::QString)
+            params.insert(spec.key, QString());
     }
 
     // Derived placeholders used by graph templates.

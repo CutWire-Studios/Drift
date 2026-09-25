@@ -129,7 +129,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: .deps
-          key: deps-linux-${{ hashFiles('CMakeLists.txt') }}
+          key: v2-deps-linux-${{ hashFiles('CMakeLists.txt') }}
 
       # The build tree is not cached, so every run reconfigures and recompiles from scratch —
       # ccache is what makes that cheap. The sha in the key is what makes the cache save at
@@ -149,7 +149,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: third_party/prebuilt/skia/linux-x64
-          key: skia-tests-linux-x64-${{ hashFiles('third_party/build-skia.sh') }}
+          key: v2-skia-tests-linux-x64-${{ hashFiles('third_party/build-skia.sh') }}
 
       - name: Build Skia
         if: steps.skia-cache.outputs.cache-hit != 'true'
@@ -270,7 +270,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: .deps
-          key: deps-macos-${{ hashFiles('CMakeLists.txt') }}
+          key: v2-deps-macos-${{ hashFiles('CMakeLists.txt') }}
 
       # Skia for macOS is compiled here from the pinned commit (Homebrew has no Skia) and cached
       # by script revision. HarfBuzz/ICU/FreeType are compiled in rather than taken from Homebrew,
@@ -280,7 +280,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: third_party/prebuilt/skia/mac-arm64
-          key: skia-mac-arm64-${{ hashFiles('third_party/build-skia.sh') }}
+          key: v2-skia-mac-arm64-${{ hashFiles('third_party/build-skia.sh') }}
 
       - name: Build Skia
         if: steps.skia-cache.outputs.cache-hit != 'true'

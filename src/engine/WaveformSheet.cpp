@@ -84,7 +84,8 @@ QImage render(const Input &in, const Options &opt)
     const bool spec = !in.spectrogram.isEmpty();
     const int specH = spec ? std::max(0, opt.spectrogramHeight) : 0;
     const int axisH = std::max(0, opt.axisHeight);
-    const int laneArea = std::max(0, height - axisH - specH);
+    const int wordsH = in.words.isEmpty() ? 0 : std::max(0, opt.wordLaneHeight);
+    const int laneArea = std::max(0, height - axisH - specH - wordsH);
     const int mixedH = in.speech.isEmpty() ? laneArea : int(std::lround(laneArea * 0.55));
     const int speechH = laneArea - mixedH;
     const double duration = in.durationSeconds > 0.0 ? in.durationSeconds : 1.0;
@@ -120,10 +121,41 @@ QImage render(const Input &in, const Options &opt)
             p.drawLine(x, 0, x, tick);
     }
 
+    if (wordsH > 0) {
+        // One box per word, alternating shades so neighbours read apart; the text is elided to
+        // the box, or replaced by its index when even that won't fit.
+        const int top = laneArea;
+        p.fillRect(0, top, width, wordsH, QColor(18, 18, 22));
+        QFont font;
+        font.setPixelSize(std::clamp(wordsH - 8, 8, 13));
+        p.setFont(font);
+        const QFontMetrics metrics(font);
+        int n = 0;
+        for (const WordLabel &w : in.words) {
+            const int x0 = std::clamp(xAt(w.start), 0, width);
+            const int x1 = std::clamp(xAt(w.end), 0, width);
+            if (x1 <= x0)
+                continue;
+            p.fillRect(x0, top + 1, x1 - x0, wordsH - 2, (n++ % 2) ? QColor(52, 64, 88) : QColor(40, 50, 70));
+            p.setPen(QColor(120, 140, 170));
+            p.drawLine(x0, top, x0, top + wordsH - 1);
+            const int room = x1 - x0 - 4;
+            if (room < 4)
+                continue;
+            QString label = metrics.elidedText(w.text, Qt::ElideRight, room);
+            if ((label.isEmpty() || label == QStringLiteral("…")) && w.index >= 0)
+                label = QStringLiteral("#%1").arg(w.index);
+            if (metrics.horizontalAdvance(label) > room)
+                continue;
+            p.setPen(QColor(230, 235, 245));
+            p.drawText(x0 + 2, top + wordsH - (wordsH - metrics.ascent()) / 2 - 1, label);
+        }
+    }
+
     if (spec && specH > 0) {
         const int columns = in.spectrogram.size();
         const int bins = in.spectrogram.first().size();
-        const int top = laneArea;
+        const int top = laneArea + wordsH;
         for (int x = 0; x < width; ++x) {
             const QVector<float> &column = in.spectrogram.at(int(qint64(x) * columns / width));
             for (int y = 0; y < specH; ++y) {

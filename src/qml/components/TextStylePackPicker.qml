@@ -188,7 +188,9 @@ Item {
                     spacing: packColumn.gridSpacing
 
                     Repeater {
-                        model: root.userPresets
+                        // Popup content exists while closed; building the tiles only while open keeps
+                        // their preview renders from running on every edit behind a closed dialog.
+                        model: dialog.visible ? root.userPresets : []
                         delegate: packDelegate
                     }
                 }
@@ -209,7 +211,7 @@ Item {
                     spacing: packColumn.gridSpacing
 
                     Repeater {
-                        model: root.presets
+                        model: dialog.visible ? root.presets : []
                         delegate: packDelegate
                     }
                 }

@@ -352,15 +352,20 @@ const char *scaleFilter(Backend backend)
 
 bool deviceAvailable(AVHWDeviceType type)
 {
+    return deviceAvailable(type, deviceString(type));
+}
+
+bool deviceAvailable(AVHWDeviceType type, const QByteArray &device)
+{
     if (type == AV_HWDEVICE_TYPE_NONE)
         return false;
 #if !defined(Q_OS_WIN) && !defined(Q_OS_MACOS)
     if (type == AV_HWDEVICE_TYPE_VAAPI && !vaapiLoadable())
         return false;
 #endif
-    // Keyed on the device string too: it follows the render vendor, which is only seeded once a
-    // GL context has been probed.
-    const QByteArray device = deviceString(type);
+    // Keyed on the device string too: for the decode answer it follows the render vendor, which
+    // is only seeded once a GL context has been probed, and an encoder may ask about a different
+    // adapter entirely.
     const QString key = QStringLiteral("%1:%2").arg(static_cast<int>(type)).arg(QString::fromLatin1(device));
 
     static QMutex mutex;

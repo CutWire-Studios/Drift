@@ -35,7 +35,7 @@ Item {
     readonly property bool playing: EditorState.playing
 
     readonly property int projectFps: {
-        void EditorState.tracks
+        void EditorState.tracksRevision
         const fps = EditorState.projectFps()
         return fps > 0 ? fps : 30
     }
@@ -106,7 +106,7 @@ Item {
                 anchors.margins: Theme.spacing2xl
 
                 property real aspect: {
-                    void EditorState.tracks
+                    void EditorState.tracksRevision
                     const w = EditorState.projectWidth()
                     const h = EditorState.projectHeight()
                     return (w > 0 && h > 0) ? (w / h) : (16 / 9)
@@ -204,10 +204,15 @@ Item {
                     height: viewport.fitHeight
                     x: (viewport.width - width) / 2 + viewport.panX
                     y: (viewport.height - height) / 2 + viewport.panY
-                    color: Theme.overlayColor
+                    color: (EditorState.background && EditorState.background.kind === "transparent")
+                           ? "transparent" : Theme.overlayColor
                     border.width: Theme.borderWidth
                     border.color: Theme.border
                     clip: true
+
+                    Checkerboard {
+                        anchors.fill: parent
+                    }
 
                     PreviewItem {
                         id: preview
@@ -224,66 +229,10 @@ Item {
                         onHeightChanged: updateRenderSize()
                     }
 
-                    // Composition guides. The switch and the type live in the
-                    // Settings tab; this is the layer that reads them.
-                    Item {
+                    // Composition guides. Which sets are active lives in the
+                    // Settings tab; this is the layer that draws them.
+                    GuideLayer {
                         anchors.fill: parent
-                        visible: EditorState.guidesEnabled
-
-                        Repeater {
-                            model: EditorState.guideType === "thirds" ? 2 : 0
-                            Rectangle {
-                                width: 1
-                                height: parent.height
-                                x: parent.width * (index + 1) / 3
-                                color: Theme.guideMedium
-                            }
-                        }
-                        Repeater {
-                            model: EditorState.guideType === "thirds" ? 2 : 0
-                            Rectangle {
-                                height: 1
-                                width: parent.width
-                                y: parent.height * (index + 1) / 3
-                                color: Theme.guideMedium
-                            }
-                        }
-
-                        Rectangle {
-                            visible: EditorState.guideType === "crosshair"
-                            width: 1
-                            height: parent.height
-                            x: parent.width / 2
-                            color: Theme.guideMedium
-                        }
-                        Rectangle {
-                            visible: EditorState.guideType === "crosshair"
-                            height: 1
-                            width: parent.width
-                            y: parent.height / 2
-                            color: Theme.guideMedium
-                        }
-
-                        Rectangle {
-                            visible: EditorState.guideType === "safe"
-                            x: parent.width * 0.05
-                            y: parent.height * 0.05
-                            width: parent.width * 0.90
-                            height: parent.height * 0.90
-                            color: "transparent"
-                            border.width: 1
-                            border.color: Theme.guideMedium
-                        }
-                        Rectangle {
-                            visible: EditorState.guideType === "safe"
-                            x: parent.width * 0.025
-                            y: parent.height * 0.025
-                            width: parent.width * 0.95
-                            height: parent.height * 0.95
-                            color: "transparent"
-                            border.width: 1
-                            border.color: Theme.guideWeak
-                        }
                     }
 
                     Text {

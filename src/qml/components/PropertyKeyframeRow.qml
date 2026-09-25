@@ -48,6 +48,10 @@ Column {
     property int valueRevision: 0
     property bool editing: false
     property real liveValue: 0
+    // Set while another control (a preview handle, a twin slider) is dragging this property.
+    // Those drags skip tracksChanged, so propDef.def is stale until they commit and the value
+    // has to come from the engine.
+    property bool liveSynced: false
 
     readonly property var activeKey: {
         void valueRevision
@@ -55,15 +59,26 @@ Column {
     }
     readonly property real currentValue: {
         void valueRevision
+        void liveSynced
         void keyframeList
-        void EditorState.playheadSeconds
         return valueAtPlayhead()
     }
     readonly property real displayedValue: editing ? liveValue : currentValue
 
     function bumpValue() {
+        liveSynced = false
         valueRevision++
         syncEditors()
+    }
+
+    function matchesKey(keys) {
+        const key = propDef.key
+        for (let i = 0; i < keys.length; ++i) {
+            const k = keys[i]
+            if (k === key || (k.endsWith(".*") && key.startsWith(k.slice(0, -1))))
+                return true
+        }
+        return false
     }
 
     function syncEditors() {
@@ -113,18 +128,23 @@ Column {
     // Asks the engine rather than reimplementing evaluateAt here. This used to be a JS mirror
     // of the interpolation math that had to be kept in sync with Keyframe.h by hand — which
     // stopped being tractable once keys grew individual bezier tangents.
+    //
+    // The playhead is read only past the early returns, and as the inspector's throttled copy:
+    // a binding depends on what it actually read, so a row with no keys never re-evaluates for
+    // playback at all.
     function valueAtPlayhead() {
-        if (!keyframeList || keyframeList.length === 0)
+        if (!liveSynced && (!keyframeList || keyframeList.length === 0))
             return propDef.def
         return EditorState.propertyValueAt(EditorState.selectedTrack, EditorState.selectedClip,
-                                           propDef.key, EditorState.playheadSeconds, propDef.def)
+                                           propDef.key, EditorState.inspectorPlayheadSeconds,
+                                           propDef.def)
     }
 
     function keyframeAtPlayhead() {
-        if (!keyframeList)
+        if (!keyframeList || keyframeList.length === 0)
             return null
 
-        const t = EditorState.playheadSeconds
+        const t = EditorState.inspectorPlayheadSeconds
         const tolerance = 1 / 30
         let best = null
         for (let i = 0; i < keyframeList.length; ++i) {
@@ -154,7 +174,7 @@ Column {
     readonly property bool hasPrevKeyframe: {
         if (!keyframeList || keyframeList.length === 0)
             return false
-        const t = EditorState.playheadSeconds
+        const t = EditorState.inspectorPlayheadSeconds
         const tolerance = 1 / 30
         for (let i = 0; i < keyframeList.length; ++i) {
             if (keyframeList[i].seconds < t - tolerance)
@@ -166,7 +186,7 @@ Column {
     readonly property bool hasNextKeyframe: {
         if (!keyframeList || keyframeList.length === 0)
             return false
-        const t = EditorState.playheadSeconds
+        const t = EditorState.inspectorPlayheadSeconds
         const tolerance = 1 / 30
         for (let i = 0; i < keyframeList.length; ++i) {
             if (keyframeList[i].seconds > t + tolerance)
@@ -214,12 +234,24 @@ Column {
     Connections {
         target: EditorState
         function onSelectedClipDataChanged() { root.bumpValue() }
-        function onPlayheadSecondsChanged() { root.bumpValue() }
         function onTracksChanged() { root.bumpValue() }
+        function onClipPropertiesPreviewed(trackIndex, clipIndex, keys) {
+            if (root.editing || !root.matchesKey(keys))
+                return
+            root.liveSynced = true
+            root.valueRevision++
+            root.syncEditors()
+        }
+    }
+
+    Component.onDestruction: {
+        if (valueSlider.pressed)
+            EditorState.commitPreviewDrag()
     }
 
     Component.onCompleted: syncEditors()
     onKeyframeListChanged: bumpValue()
+    onCurrentValueChanged: syncEditors()
 
     Item {
         width: root.width
@@ -439,6 +471,7 @@ Column {
 
             ThemedSlider {
                 id: valueSlider
+                lockWhilePlaying: true
                 label: root.propDef.label
                 width: parent.width - readoutBox.width - parent.spacing
                 anchors.verticalCenter: parent.verticalCenter
@@ -452,7 +485,9 @@ Column {
                 }
                 onMoved: {
                     root.liveValue = value
-                    EditorState.showKeyframeGraphProperty(root.propDef.key)
+                    // Keyboard nudges arrive without a press.
+                    if (!pressed)
+                        EditorState.showKeyframeGraphProperty(root.propDef.key)
                     EditorState.previewSetClipKeyframe(
                         EditorState.selectedTrack, EditorState.selectedClip, root.propDef.key,
                         EditorState.playheadSeconds, value)
@@ -461,6 +496,7 @@ Column {
                     if (pressed) {
                         root.editing = true
                         root.liveValue = value
+                        EditorState.showKeyframeGraphProperty(root.propDef.key)
                         EditorState.beginPreviewDrag(qsTr("Edit %1").arg(root.propDef.label))
                     } else {
                         EditorState.commitPreviewDrag()

@@ -50,65 +50,8 @@ AbstractButton {
         }
     }
 
-    function keyName(key) {
-        const named = ({
-            0x01000000: "Escape",
-            0x01000003: "Backspace",
-            0x01000004: "Return",
-            0x01000005: "Enter",
-            0x01000006: "Insert",
-            0x01000007: "Delete",
-            0x01000010: "Home",
-            0x01000011: "End",
-            0x01000012: "Left",
-            0x01000013: "Up",
-            0x01000014: "Right",
-            0x01000015: "Down",
-            0x01000016: "PageUp",
-            0x01000017: "PageDown",
-            0x01000020: "Shift",
-            0x01000021: "Control",
-            0x01000023: "Alt",
-            0x01000024: "Meta",
-            0x20: "Space",
-            0x09: "Tab"
-        })
-        if (named[key])
-            return named[key]
-        if (key >= Qt.Key_F1 && key <= Qt.Key_F12)
-            return "F" + (key - Qt.Key_F1 + 1)
-        if (key >= Qt.Key_0 && key <= Qt.Key_9)
-            return String.fromCharCode(key)
-        if (key >= Qt.Key_A && key <= Qt.Key_Z)
-            return String.fromCharCode(key)
-        return ""
-    }
-
     function chordFromEvent(event) {
-        const name = keyName(event.key)
-        if (!name || name === "Shift" || name === "Control" || name === "Alt" || name === "Meta")
-            return ""
-
-        let parts = []
-
-        // Qt already normalizes Apple modifiers:
-        //
-        // ControlModifier = Command on macOS
-        // MetaModifier    = physical Control on macOS
-        //
-        // Store exactly Qt's canonical names. This keeps Shortcut {}
-        // execution and the persisted shortcut map consistent.
-        if (event.modifiers & Qt.ControlModifier)
-            parts.push("Ctrl")
-        if (event.modifiers & Qt.AltModifier)
-            parts.push("Alt")
-        if (event.modifiers & Qt.ShiftModifier)
-            parts.push("Shift")
-        if (event.modifiers & Qt.MetaModifier)
-            parts.push("Meta")
-
-        parts.push(name)
-        return parts.join("+")
+        return EditorState.shortcutChord(event.key, event.modifiers)
     }
 
     contentItem: Text {
