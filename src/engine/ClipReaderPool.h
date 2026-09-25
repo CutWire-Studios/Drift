@@ -24,9 +24,10 @@
 
 class ClipReaderWorker;
 
-// Threaded reader pool: one worker thread per media path (video and audio are separate). Each
-// worker holds a decoder per stream id, so callers reading the same file at different positions do
-// not fight over one decode cursor — see ClipReaderWorker.
+// Threaded reader pool. Video gets a worker thread per (path, stream id): two clips cut from one
+// file each decode on their own thread, so a clip opening and seeking its decoder — the incoming
+// side of a transition, say — never stalls the other one's frames behind it. Audio keeps one worker
+// per path, holding a decoder per stream id (see ClipReaderWorker).
 class ClipReaderPool
 {
 public:
@@ -108,8 +109,9 @@ public:
     // for. Called when the timeline playhead moves: a short forward seek looks like ordinary
     // playback to the sequential fast path, which would keep streaming from the old position.
     void resetAudioStreams();
-    // Opens a worker for every path the current frame reads and records them as the active set,
-    // which the background idle sweep (see idleSweepLoop()) never evicts. Everything else —
+    // Records the paths the current frame reads as the active set, which the background idle
+    // sweep (see idleSweepLoop()) never evicts — for video, only the streams on those paths the
+    // last warmVideoFrames read, so pausing keeps exactly the clips on screen. Everything else —
     // including one-shot reads for segmentation or face tracking, which never appear on the
     // timeline — is reclaimed once idle, even while the project is paused.
     void retainActivePaths(const QSet<QString> &videoPaths, const QSet<QString> &audioPaths);
@@ -127,24 +129,34 @@ private:
     {
         std::unique_ptr<QThread> thread;
         ClipReaderWorker *worker = nullptr;
-        // Restarted by every ensureWorker(). The release below is gated on it so scrubbing a clip
+        // Restarted by every ensureVideoWorker()/ensureAudioWorker(). The release below is gated on it so scrubbing a clip
         // in and out of the active set frame by frame does not tear the decoder down and reopen it.
         QElapsedTimer lastUse;
         // Callers currently inside a blocking decode, holding this entry's raw worker pointer with
         // the pool mutex released. Never destroy an entry while this is non-zero.
         int inFlight = 0;
+        // Video only: compositor thread that last read through this worker, 0 for everything else.
+        quintptr session = 0;
     };
+    using VideoKey = std::pair<QString, quint64>;
 
     static void stopWorkerEntry(WorkerEntry &entry);
-    WorkerEntry &ensureWorker(std::map<QString, std::unique_ptr<WorkerEntry>> &workers,
-                              const QString &path);
+    static std::unique_ptr<WorkerEntry> startWorker(const QString &path, QThread::Priority priority);
+    // Caller holds m_mutex. A stream new to a path takes over the least recently used worker that
+    // `session` read on that path but no longer does: a file split into pieces keeps one decoder,
+    // positioned where the last piece stopped, instead of opening one per piece. Only for a
+    // session whose streams on this path warmVideoFrames recorded — without that, two clips it reads
+    // alternately would take the worker from each other on every frame.
+    WorkerEntry &ensureVideoWorker(const QString &path, quint64 streamId, quintptr session);
+    WorkerEntry &ensureAudioWorker(const QString &path);
     // Caller holds m_mutex. Erases every entry outside `keep` that has been untouched for at least
     // minIdleMs and has no decode in flight, and hands the owning pointers back so the caller can
     // stop them once the lock is released — stopWorkerEntry joins a thread and must not run under
     // m_mutex.
-    std::vector<std::unique_ptr<WorkerEntry>> detachIdleLocked(
-        std::map<QString, std::unique_ptr<WorkerEntry>> &workers, const QSet<QString> &keep,
-        qint64 minIdleMs);
+    template<typename Map, typename Keep>
+    static std::vector<std::unique_ptr<WorkerEntry>> detachIdleLocked(Map &workers, Keep keep,
+                                                                      qint64 minIdleMs);
+    bool keepVideoWorkerLocked(const VideoKey &key, const WorkerEntry &entry) const;
 
     // Runs on its own thread for the pool's lifetime so idle workers are reclaimed even when
     // nothing calls retainActivePaths for a while (its only caller is FrameCompositor::prepare,
@@ -159,9 +171,11 @@ private:
 
     QMutex m_mutex;
     std::atomic<drift::TimeUs> m_readAheadUs{0};
-    std::map<QString, std::unique_ptr<WorkerEntry>> m_videoWorkers;
+    std::map<VideoKey, std::unique_ptr<WorkerEntry>> m_videoWorkers;
     std::map<QString, std::unique_ptr<WorkerEntry>> m_audioWorkers;
     QSet<QString> m_activeVideoPaths;
+    // Per session, the streams on each path its last warmVideoFrames read.
+    QHash<quintptr, QHash<QString, QList<quint64>>> m_activeVideoStreams;
     QSet<QString> m_activeAudioPaths;
 
     std::thread m_idleSweepThread;

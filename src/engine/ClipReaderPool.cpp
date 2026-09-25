@@ -66,9 +66,14 @@ void ClipReaderPool::sweepIdleWorkersOnce()
     std::vector<std::unique_ptr<WorkerEntry>> evicted;
     {
         QMutexLocker lock(&m_mutex);
-        evicted = detachIdleLocked(m_videoWorkers, m_activeVideoPaths, idleMs);
-        std::vector<std::unique_ptr<WorkerEntry>> audio =
-            detachIdleLocked(m_audioWorkers, m_activeAudioPaths, idleMs);
+        evicted = detachIdleLocked(
+            m_videoWorkers,
+            [this](const VideoKey &key, const WorkerEntry &entry) { return keepVideoWorkerLocked(key, entry); },
+            idleMs);
+        std::vector<std::unique_ptr<WorkerEntry>> audio = detachIdleLocked(
+            m_audioWorkers,
+            [this](const QString &path, const WorkerEntry &) { return m_activeAudioPaths.contains(path); },
+            idleMs);
         evicted.insert(evicted.end(), std::make_move_iterator(audio.begin()),
                        std::make_move_iterator(audio.end()));
     }
@@ -92,30 +97,78 @@ void ClipReaderPool::stopWorkerEntry(WorkerEntry &entry)
     entry.thread.reset();
 }
 
-ClipReaderPool::WorkerEntry &ClipReaderPool::ensureWorker(
-    std::map<QString, std::unique_ptr<WorkerEntry>> &workers, const QString &path)
+std::unique_ptr<ClipReaderPool::WorkerEntry> ClipReaderPool::startWorker(const QString &path,
+                                                                        QThread::Priority priority)
 {
-    auto it = workers.find(path);
-    if (it == workers.end()) {
-        auto entry = std::make_unique<WorkerEntry>();
-        entry->thread = std::make_unique<QThread>();
-        entry->worker = new ClipReaderWorker;
-        entry->worker->moveToThread(entry->thread.get());
-        // The audio thread blocks on its decode workers every buffer, so those run above the
-        // video ones, which are paced by read-ahead and have slack to spare.
-        entry->thread->start(&workers == &m_audioWorkers ? QThread::HighPriority
-                                                         : QThread::InheritPriority);
+    auto entry = std::make_unique<WorkerEntry>();
+    entry->thread = std::make_unique<QThread>();
+    entry->worker = new ClipReaderWorker;
+    entry->worker->moveToThread(entry->thread.get());
+    entry->thread->start(priority);
 
-        // Open asynchronously. Callers that need frames/audio use BlockingQueued
-        // decode methods, which run after this open on the worker's event queue —
-        // so the GUI/audio threads are never stuck inside avformat_find_stream_info
-        // while holding the pool mutex (multi-hour files make that open very slow).
-        QMetaObject::invokeMethod(entry->worker, "openPath", Qt::QueuedConnection, Q_ARG(QString, path));
-        it = workers.emplace(path, std::move(entry)).first;
+    // Open asynchronously. Callers that need frames/audio use BlockingQueued
+    // decode methods, which run after this open on the worker's event queue —
+    // so the GUI/audio threads are never stuck inside avformat_find_stream_info
+    // while holding the pool mutex (multi-hour files make that open very slow).
+    QMetaObject::invokeMethod(entry->worker, "openPath", Qt::QueuedConnection, Q_ARG(QString, path));
+    return entry;
+}
+
+ClipReaderPool::WorkerEntry &ClipReaderPool::ensureVideoWorker(const QString &path, quint64 streamId,
+                                                               quintptr session)
+{
+    const VideoKey key{path, streamId};
+    auto it = m_videoWorkers.find(key);
+    if (it == m_videoWorkers.end() && session != 0) {
+        const auto sessionIt = m_activeVideoStreams.constFind(session);
+        if (sessionIt != m_activeVideoStreams.cend() && sessionIt->contains(path)) {
+            const QList<quint64> active = sessionIt->value(path);
+            auto spare = m_videoWorkers.end();
+            for (auto entry = m_videoWorkers.lower_bound(VideoKey{path, 0});
+                 entry != m_videoWorkers.end() && entry->first.first == path; ++entry) {
+                if (entry->second->session != session || entry->second->inFlight > 0
+                    || active.contains(entry->first.second))
+                    continue;
+                if (spare == m_videoWorkers.end()
+                    || entry->second->lastUse.elapsed() > spare->second->lastUse.elapsed())
+                    spare = entry;
+            }
+            if (spare != m_videoWorkers.end()) {
+                auto node = m_videoWorkers.extract(spare);
+                node.key() = key;
+                it = m_videoWorkers.insert(std::move(node)).position;
+                // The worker hands its reader to the new stream id only once it knows the old one
+                // left this session's set (see ClipReaderWorker::readerFor).
+                QMetaObject::invokeMethod(it->second->worker, "setActiveStreams", Qt::QueuedConnection,
+                                          Q_ARG(quintptr, session), Q_ARG(QList<quint64>, active));
+            }
+        }
     }
+    if (it == m_videoWorkers.end())
+        it = m_videoWorkers.emplace(key, startWorker(path, QThread::InheritPriority)).first;
+
+    it->second->lastUse.start();
+    if (session != 0)
+        it->second->session = session;
+    return *it->second;
+}
+
+ClipReaderPool::WorkerEntry &ClipReaderPool::ensureAudioWorker(const QString &path)
+{
+    auto it = m_audioWorkers.find(path);
+    // The audio thread blocks on its decode workers every buffer, so those run above the
+    // video ones, which are paced by read-ahead and have slack to spare.
+    if (it == m_audioWorkers.end())
+        it = m_audioWorkers.emplace(path, startWorker(path, QThread::HighPriority)).first;
 
     it->second->lastUse.start();
     return *it->second;
+}
+
+bool ClipReaderPool::keepVideoWorkerLocked(const VideoKey &key, const WorkerEntry &entry) const
+{
+    return m_activeVideoPaths.contains(key.first)
+        && m_activeVideoStreams.value(entry.session).value(key.first).contains(key.second);
 }
 
 // Only unlinks the evictable workers; the caller tears them down after dropping the lock.
@@ -124,14 +177,14 @@ ClipReaderPool::WorkerEntry &ClipReaderPool::ensureWorker(
 // audio thread inside readAudioInterleaved. A worker with inFlight > 0 is being read right now and
 // is never taken: that is what makes the raw WorkerEntry* those readers hold across the unlocked
 // decode safe.
+template<typename Map, typename Keep>
 std::vector<std::unique_ptr<ClipReaderPool::WorkerEntry>> ClipReaderPool::detachIdleLocked(
-    std::map<QString, std::unique_ptr<WorkerEntry>> &workers, const QSet<QString> &keep,
-    qint64 minIdleMs)
+    Map &workers, Keep keep, qint64 minIdleMs)
 {
     std::vector<std::unique_ptr<WorkerEntry>> evicted;
     for (auto it = workers.begin(); it != workers.end();) {
         WorkerEntry &entry = *it->second;
-        if (keep.contains(it->first) || entry.inFlight > 0 || entry.lastUse.elapsed() < minIdleMs) {
+        if (keep(it->first, entry) || entry.inFlight > 0 || entry.lastUse.elapsed() < minIdleMs) {
             ++it;
             continue;
         }
@@ -146,8 +199,9 @@ void ClipReaderPool::releaseAll()
     std::vector<std::unique_ptr<WorkerEntry>> evicted;
     {
         QMutexLocker lock(&m_mutex);
-        evicted = detachIdleLocked(m_videoWorkers, {}, 0);
-        std::vector<std::unique_ptr<WorkerEntry>> audio = detachIdleLocked(m_audioWorkers, {}, 0);
+        const auto keepNone = [](const auto &, const WorkerEntry &) { return false; };
+        evicted = detachIdleLocked(m_videoWorkers, keepNone, 0);
+        std::vector<std::unique_ptr<WorkerEntry>> audio = detachIdleLocked(m_audioWorkers, keepNone, 0);
         evicted.insert(evicted.end(), std::make_move_iterator(audio.begin()),
                        std::make_move_iterator(audio.end()));
     }
@@ -202,23 +256,20 @@ void ClipReaderPool::warmVideoFrames(const QList<VideoRequest> &requests)
         if (!request.path.isEmpty())
             streamsByPath[request.path].append(request.streamId);
     }
-    {
-        QMutexLocker lock(&m_mutex);
-        for (auto it = streamsByPath.cbegin(); it != streamsByPath.cend(); ++it) {
-            QMetaObject::invokeMethod(ensureWorker(m_videoWorkers, it.key()).worker, "setActiveStreams",
-                                      Qt::QueuedConnection, Q_ARG(quintptr, session),
-                                      Q_ARG(QList<quint64>, it.value()));
-        }
-    }
+    // The posts happen under the pool mutex: they do not block, and holding the lock is what stops
+    // the idle release from deleting a worker between resolving it and posting to it.
+    QMutexLocker lock(&m_mutex);
+    m_activeVideoStreams.insert(session, streamsByPath);
     for (const VideoRequest &request : requests) {
         if (request.path.isEmpty())
             continue;
 
-        // The post happens under the pool mutex: it does not block, and holding the lock is what
-        // stops the idle release from deleting the worker between resolving it and posting to it.
-        QMutexLocker lock(&m_mutex);
+        ClipReaderWorker *worker = ensureVideoWorker(request.path, request.streamId, session).worker;
+        QMetaObject::invokeMethod(worker, "setActiveStreams", Qt::QueuedConnection,
+                                  Q_ARG(quintptr, session),
+                                  Q_ARG(QList<quint64>, streamsByPath.value(request.path)));
         // Prefer the preview decode path so warm hits the same cache as composite.
-        QMetaObject::invokeMethod(ensureWorker(m_videoWorkers, request.path).worker, "decodePreviewVideo",
+        QMetaObject::invokeMethod(worker, "decodePreviewVideo",
                                   Qt::QueuedConnection,
                                   Q_ARG(quint64, request.streamId), Q_ARG(drift::TimeUs, request.sourceUs),
                                   Q_ARG(int, request.maxWidth), Q_ARG(int, request.maxHeight),
@@ -259,7 +310,7 @@ QImage ClipReaderPool::readVideoFrame(const QString &path, quint64 streamId, dri
         // parallel instead of serializing on this lock. inFlight keeps the idle
         // release from destroying the entry while we hold its raw worker pointer.
         QMutexLocker lock(&m_mutex);
-        entry = &ensureWorker(m_videoWorkers, path);
+        entry = &ensureVideoWorker(path, streamId, 0);
         ++entry->inFlight;
     }
     ClipReaderWorker *worker = entry->worker;
@@ -297,7 +348,7 @@ PreviewVideoFrame ClipReaderPool::readPreviewVideoFrame(const QString &path, qui
     WorkerEntry *entry = nullptr;
     {
         QMutexLocker lock(&m_mutex);
-        entry = &ensureWorker(m_videoWorkers, path);
+        entry = &ensureVideoWorker(path, streamId, quintptr(QThread::currentThread()));
         ++entry->inFlight;
     }
     ClipReaderWorker *worker = entry->worker;
@@ -337,7 +388,7 @@ int ClipReaderPool::readAudioInterleaved(const QString &path, quint64 streamId,
     WorkerEntry *entry = nullptr;
     {
         QMutexLocker lock(&m_mutex);
-        entry = &ensureWorker(m_audioWorkers, path);
+        entry = &ensureAudioWorker(path);
         ++entry->inFlight;
     }
 
@@ -366,10 +417,8 @@ void ClipReaderPool::retainActivePaths(const QSet<QString> &videoPaths, const QS
     QMutexLocker lock(&m_mutex);
     m_activeVideoPaths = videoPaths;
     m_activeAudioPaths = audioPaths;
-    for (const QString &path : videoPaths)
-        ensureWorker(m_videoWorkers, path);
     for (const QString &path : audioPaths)
-        ensureWorker(m_audioWorkers, path);
+        ensureAudioWorker(path);
 }
 
 namespace drift {

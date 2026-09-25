@@ -69,6 +69,9 @@ thread_local QStringList t_sequenceChain;
 thread_local QHash<QString, std::shared_ptr<const drift::Project>> *t_nestedViews = nullptr;
 
 constexpr int kMaxCompositeDepth = 4;
+// How far ahead of the first frame a clip needs its decoder opens: covers a cold 4K software
+// seek or a MediaCodec open, a few hundred ms each.
+constexpr drift::TimeUs kClipLookaheadUs = 1'000'000;
 
 quint64 streamIdFor(const QString &clipId)
 {
@@ -248,6 +251,31 @@ void forEachMediaMask(const drift::Project &project, drift::TimeUs timelineUs, V
     }
 }
 
+// An adjacent-clip transition draws both clips across a window centred on the cut, so each is on
+// screen for part of it outside its own range, where containsTime says it is not.
+QSet<QString> activeTransitionClipIds(const drift::Track &track, drift::TimeUs timelineUs)
+{
+    drift::TimeUs startUs = 0;
+    drift::TimeUs endUs = 0;
+    const drift::Transition *transition = drift::activeTransitionAt(track, timelineUs, startUs, endUs);
+    if (!transition)
+        return {};
+    return {transition->fromClipId, transition->toClipId};
+}
+
+// Where the timeline first draws `clip`: its start, or earlier when a transition leads into it.
+drift::TimeUs firstDrawnUs(const drift::Track &track, const drift::Clip &clip)
+{
+    drift::TimeUs firstUs = clip.timelineStart;
+    for (const drift::Transition &transition : track.transitions) {
+        drift::TimeUs startUs = 0;
+        drift::TimeUs endUs = 0;
+        if (transition.toClipId == clip.id && drift::transitionWindow(track, transition, startUs, endUs))
+            firstUs = qMin(firstUs, startUs);
+    }
+    return firstUs;
+}
+
 void collectActivePaths(const drift::Project *project, drift::TimeUs timelineUs, QSet<QString> &videoPaths,
                         QSet<QString> &audioPaths)
 {
@@ -267,8 +295,9 @@ void collectActivePaths(const drift::Project *project, drift::TimeUs timelineUs,
         if (track.hidden)
             continue;
 
+        const QSet<QString> transitionClipIds = activeTransitionClipIds(track, timelineUs);
         for (const drift::Clip &clip : track.clips) {
-            if (!clip.containsTime(timelineUs))
+            if (!clip.containsTime(timelineUs) && !transitionClipIds.contains(clip.id))
                 continue;
 
             // A composite and its separated audio both read the nested timeline.
@@ -305,9 +334,13 @@ void collectActivePaths(const drift::Project *project, drift::TimeUs timelineUs,
 
 // Every video frame this composite will need, so the readers can decode them
 // concurrently on their own threads instead of one clip at a time on ours.
+//
+// With `lookaheadUs` set, a video clip first drawn within that much of `timelineUs` is warmed at
+// its first frame too. Otherwise its decoder only opens on the frame that needs it, and a cold open
+// and seek of a 4K file stalls playback for a few hundred ms at every cut and transition.
 QList<ClipReaderPool::VideoRequest> collectVideoRequests(const drift::Project *project,
                                                          drift::TimeUs timelineUs, int maxWidth,
-                                                         int maxHeight)
+                                                         int maxHeight, drift::TimeUs lookaheadUs)
 {
     QList<ClipReaderPool::VideoRequest> requests;
     if (!project)
@@ -335,15 +368,22 @@ QList<ClipReaderPool::VideoRequest> collectVideoRequests(const drift::Project *p
         if (track.hidden || track.type == drift::TrackType::Audio)
             continue;
 
+        const QSet<QString> transitionClipIds = activeTransitionClipIds(track, timelineUs);
         for (const drift::Clip &clip : track.clips) {
-            if (!clip.containsTime(timelineUs))
-                continue;
+            drift::TimeUs readUs = timelineUs;
+            if (!clip.containsTime(timelineUs) && !transitionClipIds.contains(clip.id)) {
+                if (lookaheadUs <= 0 || clip.type != drift::ClipType::Video || clip.path.isEmpty())
+                    continue;
+                readUs = firstDrawnUs(track, clip);
+                if (readUs <= timelineUs || readUs - timelineUs > lookaheadUs)
+                    continue;
+            }
 
             if (clip.type == drift::ClipType::Composite) {
                 if (const drift::Project *nested = nestedProject(*project, clip)) {
                     const NestedScope scope(clip);
                     requests.append(collectVideoRequests(nested, clip.timelineToSourceUs(timelineUs),
-                                                         maxWidth, maxHeight));
+                                                         maxWidth, maxHeight, lookaheadUs));
                 }
                 continue;
             }
@@ -351,7 +391,7 @@ QList<ClipReaderPool::VideoRequest> collectVideoRequests(const drift::Project *p
             if (clip.type != drift::ClipType::Video || clip.path.isEmpty())
                 continue;
 
-            const drift::VideoRead read = drift::resolveVideoRead(clip, timelineUs, t_allowProxies);
+            const drift::VideoRead read = drift::resolveVideoRead(clip, readUs, t_allowProxies);
             requests.append(ClipReaderPool::VideoRequest{read.path,
                                                         streamIdFor(clip.id),
                                                         read.sourceUs,
@@ -1395,7 +1435,9 @@ bool FrameCompositor::prepare(drift::TimeUs timelineUs, const RenderOptions &opt
 
     // Start every clip's decode before compositing anything, so they run in
     // parallel across the per-path worker threads rather than serially below.
-    const auto videoRequests = collectVideoRequests(m_project, timelineUs, width, height);
+    // Only while frames have a deadline: playback and export set read-ahead, a paused seek does not.
+    const drift::TimeUs lookaheadUs = options.readAheadUs > 0 ? kClipLookaheadUs : 0;
+    const auto videoRequests = collectVideoRequests(m_project, timelineUs, width, height, lookaheadUs);
     ClipReader::setActiveVideoStreams(int(videoRequests.size()));
     ClipReaderPool::instance().warmVideoFrames(videoRequests);
 

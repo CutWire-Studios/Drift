@@ -16,8 +16,9 @@
 #include <map>
 #include <memory>
 
-// Owns the ClipReaders for one media path on a dedicated thread; all decode calls are serialized
-// here. Readers keep their own frame caches, so this class holds no cache of its own.
+// Owns ClipReaders for one media path on a dedicated thread; all decode calls are serialized
+// here. Readers keep their own frame caches, so this class holds no cache of its own. The pool
+// gives each video stream a worker of its own (see ClipReaderPool); audio shares one per path.
 //
 // There is one reader per stream id rather than one per path. A ClipReader carries a decode
 // position, and both its audio and video fast paths assume the next request continues where the
