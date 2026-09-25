@@ -61,8 +61,6 @@ struct MediaAsset
     TimeUs durationUs = 0;
 
     QRectF sourceFrame{0, 0, 1, 1};
-    double frameInSeconds = 0;
-    double frameOutSeconds = -1;
 
     int width = 0;
     int height = 0;

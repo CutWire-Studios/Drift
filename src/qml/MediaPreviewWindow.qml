@@ -130,8 +130,6 @@ Window {
                 root.cropX = frame.x; root.cropY = frame.y
                 root.cropW = frame.width; root.cropH = frame.height
             }
-            root.inSeconds = asset.frameInSeconds || 0
-            root.outSeconds = asset.frameOutSeconds >= 0 ? asset.frameOutSeconds : root.durationSeconds
         }
         root.frameResetPending = false
         root.show()
@@ -155,6 +153,10 @@ Window {
     }
 
     function resetEdits() {
+        if (root.clipId.length === 0) {
+            root.inSeconds = root.persistedInSeconds
+            root.outSeconds = root.persistedOutSeconds
+        }
         root.cropX = 0
         root.cropY = 0
         root.cropW = 1

@@ -433,8 +433,6 @@ void CoreTest::sourceFramingRoundTrip()
     asset.height = 2160;
     asset.path = QStringLiteral("original.mp4");
     asset.sourceFrame = QRectF(0.25, 0.25, 0.5, 0.5);
-    asset.frameInSeconds = 2;
-    asset.frameOutSeconds = 8;
     const QString id = project.addAsset(asset);
     drift::Clip clip;
     clip.assetId = id;
@@ -446,8 +444,6 @@ void CoreTest::sourceFramingRoundTrip()
     QCOMPARE(loaded.asset(id)->height, 2160);
     QCOMPARE(loaded.asset(id)->path, asset.path);
     QCOMPARE(loaded.asset(id)->sourceFrame, asset.sourceFrame);
-    QCOMPARE(loaded.asset(id)->frameInSeconds, 2.0);
-    QCOMPARE(loaded.asset(id)->frameOutSeconds, 8.0);
     QCOMPARE(loaded.tracks()[0].clips[0].sourceFrame, clip.sourceFrame);
     QCOMPARE(drift::sourceFrameFromJson({}), QRectF(0, 0, 1, 1));
     QCOMPARE(drift::normalizedSourceFrame(-1, 4, 2, 0.5), QRectF(0, 0.5, 1, 0.5));

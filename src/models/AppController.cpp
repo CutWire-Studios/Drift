@@ -3489,8 +3489,6 @@ void applyAssetLayout(drift::Clip &clip, const QVariantMap &asset, int canvasW, 
         std::swap(mediaW, mediaH);
     if (clip.type == drift::ClipType::Video) {
         clip.sourceFrame = asset.value(QStringLiteral("sourceFrame"), QRectF(0, 0, 1, 1)).toRectF();
-        clip.srcIn = drift::secondsToUs(asset.value(QStringLiteral("frameInSeconds")).toDouble());
-        clip.srcOut = clip.srcIn + clip.timelineDuration;
         if (mediaW > 0 && mediaH > 0) {
             mediaW = qMax(1, qRound(mediaW * clip.sourceFrame.width()));
             mediaH = qMax(1, qRound(mediaH * clip.sourceFrame.height()));
@@ -5258,16 +5256,25 @@ bool AppController::saveAssetEdit(int assetIndex, double inSeconds, double outSe
         return false;
     }
 
+    // Video never re-encodes: the crop is stored as the asset's source frame and the range goes
+    // through the same non-destructive trim as the plain-trim path below.
     if (kind == QStringLiteral("video")) {
-        const double duration = asset.value(QStringLiteral("durationSeconds")).toDouble();
-        if (!std::isfinite(inSeconds) || !std::isfinite(outSeconds) || duration <= 0)
+        if (!std::isfinite(inSeconds) || !std::isfinite(outSeconds))
             return false;
+        const QRectF frame = drift::normalizedSourceFrame(cropX, cropY, cropW, cropH);
+        const drift::TimeUs trimIn = drift::secondsToUs(qMax(0.0, inSeconds));
+        const drift::TimeUs trimOut = outSeconds < 0.0 ? -1 : drift::secondsToUs(outSeconds);
         const drift::Project before = m_project.detachedCopy();
-        auto *media = m_project.asset(assetId);
-        media->sourceFrame = drift::normalizedSourceFrame(cropX, cropY, cropW, cropH);
-        media->frameInSeconds = qBound(0.0, inSeconds, qMax(0.0, duration - 0.05));
-        media->frameOutSeconds = qBound(media->frameInSeconds + 0.001,
-                                        outSeconds < 0 ? duration : outSeconds, duration);
+        bool changed = m_assetLibrary->setAssetTrim(assetIndex, trimIn, trimOut);
+        drift::MediaAsset *media = m_project.asset(assetId);
+        if (media->sourceFrame != frame) {
+            media->sourceFrame = frame;
+            changed = true;
+        }
+        if (!changed) {
+            emit assetEditFinished(true, QString());
+            return true;
+        }
         pushProjectEdit(before, tr("Frame source video"));
         finishEdit(tr("Video framing saved"));
         emit assetEditFinished(true, QString());
@@ -6974,10 +6981,7 @@ drift::TimeUs AppController::clipDurationForAssetIndex(int assetIndex) const
 {
     if (!m_assetLibrary)
         return drift::kImageClipDurationUs;
-    const auto *asset = m_project.asset(m_assetLibrary->assetIdAt(assetIndex));
-    if (asset && asset->kind == drift::MediaKind::Video && asset->frameOutSeconds >= 0)
-        return qMax(drift::TimeUs{1}, drift::secondsToUs(asset->frameOutSeconds - asset->frameInSeconds));
-    return drift::clipDurationForAsset(asset);
+    return drift::clipDurationForAsset(m_project.asset(m_assetLibrary->assetIdAt(assetIndex)));
 }
 
 drift::TimeUs AppController::sourceDurationForClip(const drift::Clip &clip) const

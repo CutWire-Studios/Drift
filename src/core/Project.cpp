@@ -474,8 +474,6 @@ QJsonObject assetToJson(const MediaAsset &asset)
         {QStringLiteral("duration"), asset.durationLabel},
         {QStringLiteral("path"), asset.path},
         {QStringLiteral("sourceFrame"), drift::sourceFrameToJson(asset.sourceFrame)},
-        {QStringLiteral("frameInSeconds"), asset.frameInSeconds},
-        {QStringLiteral("frameOutSeconds"), asset.frameOutSeconds},
         {QStringLiteral("width"), asset.width},
         {QStringLiteral("height"), asset.height},
         {QStringLiteral("fps"), asset.fps},
@@ -518,8 +516,6 @@ MediaAsset assetFromJsonV2(const QJsonObject &object)
     asset.durationLabel = object.value(QStringLiteral("duration")).toString();
     asset.path = object.value(QStringLiteral("path")).toString();
     asset.sourceFrame = drift::sourceFrameFromJson(object.value(QStringLiteral("sourceFrame")).toArray());
-    asset.frameInSeconds = object.value(QStringLiteral("frameInSeconds")).toDouble();
-    asset.frameOutSeconds = object.value(QStringLiteral("frameOutSeconds")).toDouble(-1);
     asset.sourceUri = object.value(QStringLiteral("sourceUri")).toString();
     asset.width = object.value(QStringLiteral("width")).toInt();
     asset.height = object.value(QStringLiteral("height")).toInt();
@@ -561,8 +557,6 @@ MediaAsset assetFromJsonV1(const QJsonObject &object)
     asset.durationUs = secondsToUs(object.value(QStringLiteral("durationSeconds")).toDouble());
     asset.path = object.value(QStringLiteral("path")).toString();
     asset.sourceFrame = drift::sourceFrameFromJson(object.value(QStringLiteral("sourceFrame")).toArray());
-    asset.frameInSeconds = object.value(QStringLiteral("frameInSeconds")).toDouble();
-    asset.frameOutSeconds = object.value(QStringLiteral("frameOutSeconds")).toDouble(-1);
     asset.thumbnailPath = object.value(QStringLiteral("thumbnailPath")).toString();
     asset.filmstripPath = object.value(QStringLiteral("filmstripPath")).toString();
     return asset;
