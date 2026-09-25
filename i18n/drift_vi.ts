@@ -13319,5 +13319,15 @@ The video preview cannot render. Updating your graphics driver may help.</source
 The video preview cannot render, and Drift may not start at all. Update your graphics driver, or run Drift on a machine with a newer GPU.</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>Drift is not drawing its window</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Drift has been running for %1 seconds but its window has not drawn anything yet.
+
+If the window is blank or black, your graphics driver is most likely outdated or faulty. Update it from your GPU vendor&apos;s website (AMD, NVIDIA or Intel) and start Drift again.</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 </TS>

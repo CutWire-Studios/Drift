@@ -13377,5 +13377,15 @@ The video preview cannot render, and Drift may not start at all. Update your gra
 
 වීඩියෝ පෙරදසුන රෙන්ඩර් කළ නොහැකි අතර, Drift කිසිසේත්ම ආරම්භ නොවීමට ඉඩ ඇත. ඔබේ ග්‍රැෆික් ධාවකය යාවත්කාලීන කරන්න, නැතහොත් නව GPU එකක් සහිත පරිගණකයක Drift ධාවනය කරන්න.</translation>
     </message>
+    <message>
+        <source>Drift is not drawing its window</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Drift has been running for %1 seconds but its window has not drawn anything yet.
+
+If the window is blank or black, your graphics driver is most likely outdated or faulty. Update it from your GPU vendor&apos;s website (AMD, NVIDIA or Intel) and start Drift again.</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 </TS>
