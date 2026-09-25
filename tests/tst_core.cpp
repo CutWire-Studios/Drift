@@ -445,6 +445,12 @@ void CoreTest::sourceFramingRoundTrip()
     QCOMPARE(loaded.asset(id)->path, asset.path);
     QCOMPARE(loaded.asset(id)->sourceFrame, asset.sourceFrame);
     QCOMPARE(loaded.tracks()[0].clips[0].sourceFrame, clip.sourceFrame);
+    drift::Project plain;
+    drift::MediaAsset plainAsset;
+    plainAsset.path = asset.path;
+    plain.addAsset(plainAsset);
+    plain.tracks()[0].clips.append(drift::Clip{});
+    QVERIFY(!QJsonDocument(plain.toJson()).toJson().contains("sourceFrame"));
     QCOMPARE(drift::sourceFrameFromJson({}), QRectF(0, 0, 1, 1));
     QCOMPARE(drift::normalizedSourceFrame(-1, 4, 2, 0.5), QRectF(0, 0.5, 1, 0.5));
 }

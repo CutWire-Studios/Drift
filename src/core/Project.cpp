@@ -245,7 +245,6 @@ QJsonObject clipToJson(const Clip &clip)
         {QStringLiteral("subtitleCues"), subtitleCuesToJson(clip.subtitleCues)},
         {QStringLiteral("shapeStyle"), shapeStyleToJson(clip.shapeStyle)},
         {QStringLiteral("path"), clip.path},
-        {QStringLiteral("sourceFrame"), drift::sourceFrameToJson(clip.sourceFrame)},
         {QStringLiteral("thumbnailPath"), clip.thumbnailPath},
         {QStringLiteral("filmstripPath"), clip.filmstripPath},
         {QStringLiteral("emoji"), clip.emoji},
@@ -305,6 +304,8 @@ QJsonObject clipToJson(const Clip &clip)
         json.insert(QStringLiteral("model3d"), clip.model3d.toJson());
     if (!clip.sequenceId.isEmpty())
         json.insert(QStringLiteral("sequenceId"), clip.sequenceId);
+    if (clip.sourceFrame != QRectF(0, 0, 1, 1))
+        json.insert(QStringLiteral("sourceFrame"), drift::sourceFrameToJson(clip.sourceFrame));
     return json;
 }
 
@@ -473,7 +474,6 @@ QJsonObject assetToJson(const MediaAsset &asset)
         {QStringLiteral("durationUs"), static_cast<double>(asset.durationUs)},
         {QStringLiteral("duration"), asset.durationLabel},
         {QStringLiteral("path"), asset.path},
-        {QStringLiteral("sourceFrame"), drift::sourceFrameToJson(asset.sourceFrame)},
         {QStringLiteral("width"), asset.width},
         {QStringLiteral("height"), asset.height},
         {QStringLiteral("fps"), asset.fps},
@@ -503,6 +503,8 @@ QJsonObject assetToJson(const MediaAsset &asset)
         object.insert(QStringLiteral("sequenceId"), asset.sequenceId);
     if (!asset.generator.isEmpty())
         object.insert(QStringLiteral("generator"), asset.generator);
+    if (asset.sourceFrame != QRectF(0, 0, 1, 1))
+        object.insert(QStringLiteral("sourceFrame"), drift::sourceFrameToJson(asset.sourceFrame));
     return object;
 }
 

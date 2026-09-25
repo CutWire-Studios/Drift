@@ -1639,7 +1639,6 @@ QJsonArray AssetLibrary::toJsonArray() const
             {QStringLiteral("durationUs"), static_cast<double>(asset->durationUs)},
             {QStringLiteral("duration"), asset->durationLabel},
             {QStringLiteral("path"), asset->path},
-            {QStringLiteral("sourceFrame"), drift::sourceFrameToJson(asset->sourceFrame)},
             {QStringLiteral("width"), asset->width},
             {QStringLiteral("height"), asset->height},
             {QStringLiteral("fps"), asset->fps},
@@ -1655,6 +1654,8 @@ QJsonArray AssetLibrary::toJsonArray() const
         };
         if (asset->hasAudioKnown)
             object.insert(QStringLiteral("hasAudio"), asset->hasAudio);
+        if (asset->sourceFrame != QRectF(0, 0, 1, 1))
+            object.insert(QStringLiteral("sourceFrame"), drift::sourceFrameToJson(asset->sourceFrame));
         assets.append(object);
     }
     return assets;
