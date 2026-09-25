@@ -386,6 +386,22 @@ GlTarget nestedLayerTarget(GlRuntime &rt, QOpenGLExtraFunctions *gl, const GpuSc
     return out;
 }
 
+// Targets keep the image's top row at y = 0, so the normalized crop maps straight to GL pixels.
+GlTarget cropTarget(GlRuntime &rt, GlTarget source, const QRectF &crop)
+{
+    const QRect pixels = QRectF(crop.x() * source.width, crop.y() * source.height,
+                                crop.width() * source.width, crop.height() * source.height)
+                             .toAlignedRect()
+                         & QRect(0, 0, source.width, source.height);
+    GlTarget out = rt.acquireTarget(qMax(1, pixels.width()), qMax(1, pixels.height()));
+    if (out.isValid())
+        QOpenGLFramebufferObject::blitFramebuffer(out.fbo.get(), QRect(0, 0, out.width, out.height),
+                                                  source.fbo.get(), pixels, GL_COLOR_BUFFER_BIT,
+                                                  GL_LINEAR);
+    rt.releaseTarget(std::move(source));
+    return out;
+}
+
 GlTarget buildLayerTarget(GlRuntime &rt, QOpenGLExtraFunctions *gl, const GpuLayer &layer,
                           const QSize &canvasSize)
 {
@@ -399,6 +415,8 @@ GlTarget buildLayerTarget(GlRuntime &rt, QOpenGLExtraFunctions *gl, const GpuLay
         target = nestedLayerTarget(rt, gl, *layer.nested);
     } else if (layer.video.isValid()) {
         target = promoteVideoFrameToTargetCached(rt, gl, layer.video);
+        if (target.isValid() && layer.videoCrop != QRectF(0, 0, 1, 1))
+            target = cropTarget(rt, std::move(target), layer.videoCrop);
     } else {
 #ifdef DRIFT_WITH_SKIA
         if (layer.vector) {

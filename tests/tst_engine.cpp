@@ -5767,37 +5767,51 @@ void EngineTest::compositorFramesOriginalVideoBeforeScaling()
     QTemporaryDir dir;
     const QString path = dir.filePath(QStringLiteral("framing.mkv"));
     QProcess proc;
+    // Quadrants: red top-left, blue top-right, lime bottom-left, white bottom-right.
     proc.start(ffmpeg, {QStringLiteral("-y"), QStringLiteral("-f"), QStringLiteral("lavfi"),
-        QStringLiteral("-i"), QStringLiteral("color=red:s=384x216:d=1,drawbox=x=192:y=0:w=192:h=216:color=blue:t=fill"),
+        QStringLiteral("-i"), QStringLiteral("color=red:s=384x216:d=1,"
+                                             "drawbox=x=192:y=0:w=192:h=108:color=blue:t=fill,"
+                                             "drawbox=x=0:y=108:w=192:h=108:color=lime:t=fill,"
+                                             "drawbox=x=192:y=108:w=192:h=108:color=white:t=fill"),
         QStringLiteral("-c:v"), QStringLiteral("ffv1"), path});
     QVERIFY(proc.waitForFinished(30000));
     QCOMPARE(proc.exitCode(), 0);
     drift::Project project;
-    project.setResolution(96, 108);
+    project.setResolution(96, 54);
     drift::Clip clip;
     clip.id = QStringLiteral("framed");
     clip.path = path;
     clip.type = drift::ClipType::Video;
     clip.timelineDuration = drift::secondsToUs(1);
     clip.srcOut = clip.timelineDuration;
-    clip.sourceFrame = QRectF(0.5, 0, 0.5, 1);
+    clip.sourceFrame = QRectF(0.5, 0, 0.5, 0.5);
     project.tracks()[0].clips.append(clip);
     FrameCompositor compositor;
     compositor.setProject(&project);
+
     GpuScene scene;
     QVERIFY(compositor.buildSceneAt(0, {}, &scene));
     QCOMPARE(scene.items.size(), 1);
-    const QImage pixels = scene.items.first().layer.source;
-    QVERIFY(!pixels.isNull());
-    QVERIFY(pixels.width() >= 96);
-    QVERIFY(pixels.height() >= 108);
-    const QColor blue = pixels.pixelColor(pixels.width() / 4, pixels.height() / 2);
-    QVERIFY(blue.blue() > 200 && blue.red() < 30);
-    project.tracks()[0].clips[0].sourceFrame = QRectF(0, 0, 0.5, 1);
-    QVERIFY(compositor.buildSceneAt(0, {}, &scene));
-    const QImage left = scene.items.first().layer.source;
-    const QColor red = left.pixelColor(left.width() / 2, left.height() / 2);
-    QVERIFY(red.red() > 200 && red.blue() < 30);
+    const GpuLayer &layer = scene.items.first().layer;
+    if (GpuCompositor::isAvailable()) {
+        QVERIFY(layer.video.isValid());
+        QCOMPARE(layer.videoCrop, clip.sourceFrame);
+        QVERIFY(layer.video.displayWidth() >= 96 * 2);
+    } else {
+        QVERIFY(layer.source.width() >= 96);
+    }
+
+    const auto centre = [&](const QRectF &frame) {
+        project.tracks()[0].clips[0].sourceFrame = frame;
+        const QImage image = compositor.compositeAt(0);
+        return image.pixelColor(image.width() / 2, image.height() / 2);
+    };
+    const QColor blue = centre(QRectF(0.5, 0, 0.5, 0.5));
+    QVERIFY2(blue.blue() > 200 && blue.red() < 60 && blue.green() < 60, qPrintable(blue.name()));
+    const QColor lime = centre(QRectF(0, 0.5, 0.5, 0.5));
+    QVERIFY2(lime.green() > 200 && lime.red() < 60 && lime.blue() < 60, qPrintable(lime.name()));
+    const QColor red = centre(QRectF(0, 0, 0.5, 0.5));
+    QVERIFY2(red.red() > 200 && red.green() < 60 && red.blue() < 60, qPrintable(red.name()));
 }
 
 void EngineTest::compositorDefaultRenderStaysFullResolution()

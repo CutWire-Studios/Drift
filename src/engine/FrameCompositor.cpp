@@ -871,14 +871,17 @@ void fillGpuLayerPixels(GpuLayer &layer, const drift::Clip &clip, drift::TimeUs 
         return;
 
     const drift::Effect *timeEcho = findTimeEchoEffect(clip.effects);
-    if (!timeEcho && clip.type == drift::ClipType::Video
-        && clip.sourceFrame == QRectF(0, 0, 1, 1)) {
+    if (!timeEcho && clip.type == drift::ClipType::Video) {
         const drift::VideoRead read = drift::resolveVideoRead(clip, timelineUs, t_allowProxies);
+        // Same enlarged bound as collectVideoRequests and decodeClipMediaFrame, so a framed clip
+        // hits the frame warmVideoFrames decoded and keeps its resolution once cropped.
         const PreviewVideoFrame video = ClipReaderPool::instance().readPreviewVideoFrame(
-            read.path, streamIdFor(clip.id), read.sourceUs, maxWidth, maxHeight,
+            read.path, streamIdFor(clip.id), read.sourceUs,
+            qCeil(maxWidth / clip.sourceFrame.width()), qCeil(maxHeight / clip.sourceFrame.height()),
             QString(), 15, false, clip.rotationCorrection);
         if (video.isValid()) {
             layer.video = video;
+            layer.videoCrop = clip.sourceFrame;
             return;
         }
     }
