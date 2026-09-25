@@ -555,6 +555,7 @@ add_library(driftengine STATIC
     src/engine/AndroidUri.cpp
     src/engine/HwAccel.h
     src/engine/HwAccel.cpp
+    src/engine/SwsColorRange.h
     src/engine/MediaProbe.h
     src/engine/MediaProbe.cpp
     src/engine/MediaThumbnail.h

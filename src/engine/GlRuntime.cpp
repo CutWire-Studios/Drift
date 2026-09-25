@@ -3,6 +3,7 @@
 #include "DepthSidecar.h"
 #include "GlModelRenderer.h"
 #include "GpuDevice.h"
+#include "SwsColorRange.h"
 #include "VaapiZeroCopy.h"
 #if defined(Q_OS_WIN)
 #include "D3d11GlInterop.h"
@@ -2822,10 +2823,13 @@ AVFrame *GlRuntime::ensureSoftwareNv12(const AVFrame *src)
         return nullptr;
 
     m_importSws = sws_getCachedContext(m_importSws, src->width, src->height,
-                                       static_cast<AVPixelFormat>(src->format), tw, th, AV_PIX_FMT_NV12,
-                                       SWS_BILINEAR, nullptr, nullptr, nullptr);
+                                       swsSourceFormat(static_cast<AVPixelFormat>(src->format)), tw, th,
+                                       AV_PIX_FMT_NV12, SWS_BILINEAR, nullptr, nullptr, nullptr);
     if (!m_importSws)
         return nullptr;
+    // m_importNv12->color_range is set to src->color_range below, so the conversion must keep
+    // the source's range rather than converting it.
+    configureSwsRangePreserving(m_importSws, src);
 
     if (!m_importNv12)
         m_importNv12 = av_frame_alloc();
