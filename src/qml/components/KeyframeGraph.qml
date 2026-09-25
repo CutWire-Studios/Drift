@@ -827,12 +827,14 @@ Item {
                                         root.draggingKey = true
                                         EditorState.beginPreviewDrag(qsTr("Move keyframe"))
                                     } else {
-                                        EditorState.commitPreviewDrag()
-                                        root.draggingKey = false
+                                        // Unfreezing rebuilds the Repeater and destroys this
+                                        // delegate mid-handler, so every reset has to land first.
                                         root.dragProp = ""
                                         root.dragIndex = -1
                                         keyDot.dragDx = 0
                                         keyDot.dragDy = 0
+                                        EditorState.commitPreviewDrag()
+                                        root.draggingKey = false
                                     }
                                 }
                                 onTranslationChanged: {
@@ -938,12 +940,14 @@ Item {
                                             root.draggingKey = true
                                             EditorState.beginPreviewDrag(qsTr("Edit keyframe curve"))
                                         } else {
-                                            EditorState.commitPreviewDrag()
-                                            root.draggingKey = false
+                                            // Same ordering as the key drag: unfreezing destroys
+                                            // this delegate, so reset before it.
                                             root.dragProp = ""
                                             root.dragTangentIndex = -1
                                             tangent.dragDx = 0
                                             tangent.dragDy = 0
+                                            EditorState.commitPreviewDrag()
+                                            root.draggingKey = false
                                         }
                                     }
                                     onTranslationChanged: {
