@@ -5206,12 +5206,7 @@ bool AppController::setClipSourceFrame(const QString &clipId, double x, double y
                         return size;
                     };
                     const QSizeF previous = fittedSize(previousFrame), next = fittedSize(frame);
-                    const auto scaleTrack = [](drift::KeyframeTrack<double> &track, double ratio,
-                                               double fallback) {
-                        if (track.isEmpty()) {
-                            track.setKeyframe(0, fallback);
-                            return;
-                        }
+                    const auto scaleTrack = [](drift::KeyframeTrack<double> &track, double ratio) {
                         const auto keys = track.keyframes();
                         for (auto it = keys.cbegin(); it != keys.cend(); ++it) {
                             auto key = it.value();
@@ -5221,8 +5216,8 @@ bool AppController::setClipSourceFrame(const QString &clipId, double x, double y
                             track.setKeyframe(it.key(), key);
                         }
                     };
-                    scaleTrack(clip.transformW, next.width() / previous.width(), next.width());
-                    scaleTrack(clip.transformH, next.height() / previous.height(), next.height());
+                    scaleTrack(clip.transformW, next.width() / previous.width());
+                    scaleTrack(clip.transformH, next.height() / previous.height());
                 }
             }
             pushProjectEdit(before, tr("Frame video"));

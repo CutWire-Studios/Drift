@@ -615,6 +615,13 @@ void EditorStateTest::sourceFramingPreservesOriginalAndUndoes()
     QCOMPARE(state.project()->tracks().at(0).clips.at(0).sourceFrame, QRectF(0, 0, 1, 1));
     QCOMPARE(state.project()->tracks().at(0).clips.at(0).path, asset.path);
     QVERIFY(!state.setClipSourceFrame(QStringLiteral("deleted"), 0, 0, 1, 1));
+
+    auto &unlaid = state.project()->tracks()[0].clips[0];
+    unlaid.transformW = {};
+    unlaid.transformH = {};
+    QVERIFY(state.setClipSourceFrame(clip.id, 0.25, 0.25, 0.5, 0.5));
+    QVERIFY(state.project()->tracks().at(0).clips.at(0).transformW.isEmpty());
+    QVERIFY(state.project()->tracks().at(0).clips.at(0).transformH.isEmpty());
 }
 
 void EditorStateTest::undoLibraryClipDropOntoExistingTrack()
