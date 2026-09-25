@@ -415,6 +415,7 @@ void AddonManager::install(const QString &id)
     if (m_refreshing) {
         if (!m_awaitingFreshIndex.contains(id))
             m_awaitingFreshIndex.append(id);
+        emit catalogChanged();
         return;
     }
     startDownload(id);
