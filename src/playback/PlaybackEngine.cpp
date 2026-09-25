@@ -1,5 +1,7 @@
 #include "PlaybackEngine.h"
 
+#include "PerfLog.h"
+
 #include <cstdio>
 
 #include "engine/AndroidUri.h"
@@ -235,6 +237,15 @@ PlaybackEngine::PlaybackEngine(QObject *parent)
             pushAudioSnapshot();
         m_compositor.requestComposite(m_playheadUs, playbackRenderOptions());
     });
+    // A finger resting mid-scrub should see the exact frame, not wait for the lift.
+    m_scrubSettleTimer.setSingleShot(true);
+    m_scrubSettleTimer.setInterval(180);
+    connect(&m_scrubSettleTimer, &QTimer::timeout, this, [this] {
+        if (m_playing)
+            return;
+        m_scrubSeeks = 0;
+        m_compositor.requestComposite(m_playheadUs, playbackRenderOptions());
+    });
     connect(&m_compositeTimer, &QTimer::timeout, this, &PlaybackEngine::onCompositeTick);
     connect(&m_compositor, &CompositorService::frameReady, this, &PlaybackEngine::onFrameReady);
 
@@ -334,9 +345,40 @@ void PlaybackEngine::notifyProjectEdited()
 
 void PlaybackEngine::setPlayheadUs(drift::TimeUs us)
 {
-    resyncAudioAt(us);
+    if (m_playing) {
+        resyncAudioAt(us);
+        return;
+    }
+    // Paused: play() re-anchors the mixer and the clock from m_playheadUs anyway, so a seek only
+    // has to move the position and draw it. A scrubbing timeline lands here once per scroll
+    // event, so everything here is paid dozens of times a second.
+    m_playheadUs = qMax<drift::TimeUs>(0, us);
+    m_lastRequestedFrameUs = -1;
+    m_lastEmittedFrameUs = -1;
+    // No invalidateSnapshot: every edit already does that through notifyProjectEdited(), so the
+    // shared snapshot is current and only the time changed.
+    if (m_scrubbing) {
+        ++m_scrubSeeks;
+        m_scrubSettleTimer.start();
+    }
+    m_compositor.requestComposite(m_playheadUs, playbackRenderOptions());
+}
+
+void PlaybackEngine::beginScrub()
+{
+    m_scrubbing = true;
+    m_scrubSeeks = 0;
+}
+
+void PlaybackEngine::endScrub()
+{
+    if (!m_scrubbing)
+        return;
+    m_scrubbing = false;
+    m_scrubSeeks = 0;
+    m_scrubSettleTimer.stop();
     if (!m_playing)
-        refreshFrame();
+        m_compositor.requestComposite(m_playheadUs, playbackRenderOptions());
 }
 
 void PlaybackEngine::resyncAudioAt(drift::TimeUs us)
@@ -643,6 +685,9 @@ void PlaybackEngine::play()
 {
     if (m_playing)
         return;
+    m_scrubbing = false;
+    m_scrubSeeks = 0;
+    m_scrubSettleTimer.stop();
 
     m_mixer.resetClipAudioState();
     m_audioStreamGeneration.fetch_add(1, std::memory_order_release);
@@ -900,6 +945,9 @@ void PlaybackEngine::onFrameReady(const GpuFrameTexture &frame)
         m_currentFrame = frame;
     }
     m_stats.setUploadPath(GpuCompositor::previewUploadPathId());
+    if (drift::perf::enabled() && !frame.image.isNull())
+        drift::perf::record("frame.readback", 0.0);
+    const drift::perf::Scope perfScope("frame.arrive");
     emit currentFrameChanged();
 }
 
@@ -941,6 +989,14 @@ FrameCompositor::RenderOptions PlaybackEngine::playbackRenderOptions() const
         options.skipClipId = m_editingClipId;
 
     options.allowProxies = true;
+
+    // The first seek of a scrub is often all there is (a tap on the ruler), so it stays exact;
+    // the ones after it are passing through.
+    if (m_scrubbing && !m_playing && m_scrubSeeks >= 2) {
+        options.approximateSeek = true;
+        // Same cap as playback: full time_echo history multiplies decode work per frame.
+        options.maxTimeEchoHistoryFrames = 12;
+    }
     return options;
 }
 

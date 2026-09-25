@@ -121,8 +121,10 @@ Item {
     Accessible.selected: clipItem.selected
     Accessible.onPressAction: EditorState.selectClip(clipItem.trackIndex, clipItem.clipIndex)
 
-    // Subtitles keep cue-owned timing; text clips use the same edge fades as video.
-    readonly property bool timelineFadeHandles: trackType !== "subtitle"
+    // Subtitles keep cue-owned timing; text clips use the same edge fades as video. On touch the
+    // fades live in the toolbar's Fade sheet: a dot a finger can hit sits right next to the trim
+    // handle, and one of the two always got grabbed instead of the other.
+    readonly property bool timelineFadeHandles: trackType !== "subtitle" && !touchMode
 
     // Four ToolTips — each a Popup — existed on every clip in the project for the sake of the
     // one clip the pointer is actually over. Gated on the clip being touched at all; each
@@ -188,8 +190,11 @@ Item {
     readonly property real minDurationSeconds: Math.max(
         Theme.clipMinDurationSeconds,
         Theme.clipMinWidth / panel.pxPerSecond)
+    // On touch the bars give way on a narrow clip, so its middle — where a long-press picks it
+    // up — never shrinks to a sliver between two trim handles. The grab outside the clip stays.
     readonly property real trimHandleWidth: touchMode
-                                            ? Theme.androidClipTrimHandleWidth
+                                            ? Math.min(Theme.androidClipTrimHandleWidth,
+                                                       Math.max(6, width * 0.25))
                                             : Theme.clipTrimHandleWidth
     readonly property real trimHotspotExtra: touchMode
                                              ? Theme.androidTrimHotspotExtra
@@ -257,18 +262,11 @@ Item {
         return true
     }
 
-    // Fade dots. On touch they used to be switched off outright: at the clip corners
-    // they landed inside the trim strips, which own the full height of both edges.
-    // Instead they are sized to a fingertip and inset past those strips, and — like the
-    // trim handles — only appear on the selected clip. Desktop keeps the 13px corner
-    // dots and a zero inset, so nothing there moves.
-    readonly property real fadeHandleSize: touchMode ? 22 : 13
-    // Clears the trim strip's own hotspot (trimHandleWidth + 4) plus the dot's -6
-    // hit margin, so the two never contend for the same press.
-    readonly property real fadeHandleInset: touchMode ? trimHandleWidth + 12 : 0
-    readonly property real fadeHandleMinWidth: touchMode
-                                               ? 2 * fadeHandleInset + fadeHandleSize + 12
-                                               : 26
+    // Fade dots, pointer only (see timelineFadeHandles): at the clip's top corners, where the trim
+    // strips leave room for them.
+    readonly property real fadeHandleSize: 13
+    readonly property real fadeHandleInset: 0
+    readonly property real fadeHandleMinWidth: 26
 
     // Floored so short clips stay visible and
     // trimmable even at low zoom.
@@ -508,9 +506,7 @@ Item {
         width: clipItem.fadeHandleSize
         height: clipItem.fadeHandleSize
         radius: clipItem.fadeHandleSize / 2
-        y: clipItem.touchMode
-           ? Math.max(0, (clipItem.height - clipItem.fadeHandleSize) / 2)
-           : 2
+        y: 2
         z: 40
         visible: clipItem.timelineFadeHandles && clipItem.selected
                  && clipItem.width > clipItem.fadeHandleMinWidth
@@ -579,9 +575,7 @@ Item {
         width: clipItem.fadeHandleSize
         height: clipItem.fadeHandleSize
         radius: clipItem.fadeHandleSize / 2
-        y: clipItem.touchMode
-           ? Math.max(0, (clipItem.height - clipItem.fadeHandleSize) / 2)
-           : 2
+        y: 2
         z: 40
         visible: clipItem.timelineFadeHandles && clipItem.selected
                  && clipItem.width > clipItem.fadeHandleMinWidth
@@ -648,9 +642,24 @@ Item {
     Rectangle {
         id: leftTrimHandle
         // Thin edge bar; hotspots still use the wide Theme width when idle.
-        width: (leftTrimMouse.containsMouse || leftTrimHover.hovered || leftTrimMouse.pressed)
+        // The pointer gets a hairline to trim to; a finger covers the bar anyway, so on touch it
+        // stays full width and keeps its grip.
+        width: !clipItem.touchMode
+               && (leftTrimMouse.containsMouse || leftTrimHover.hovered || leftTrimMouse.pressed)
                ? Math.max(2, clipItem.trimHandleWidth * 0.35)
                : clipItem.trimHandleWidth
+        radius: clipItem.touchMode ? Theme.radiusXs : 0
+
+        // Grip notch: says "this edge moves" without a tooltip, which touch cannot show.
+        Rectangle {
+            anchors.centerIn: parent
+            visible: clipItem.touchMode && clipItem.showTrimHandles
+            width: 3
+            height: Math.min(16, parent.height * 0.4)
+            radius: 1.5
+            color: Theme.onMedia
+            opacity: 0.9
+        }
         anchors.left: parent.left
         anchors.top: parent.top
         anchors.bottom: parent.bottom
@@ -798,9 +807,24 @@ Item {
 
     Rectangle {
         id: rightTrimHandle
-        width: (rightTrimMouse.containsMouse || rightTrimHover.hovered || rightTrimMouse.pressed)
+        // The pointer gets a hairline to trim to; a finger covers the bar anyway, so on touch it
+        // stays full width and keeps its grip.
+        width: !clipItem.touchMode
+               && (rightTrimMouse.containsMouse || rightTrimHover.hovered || rightTrimMouse.pressed)
                ? Math.max(2, clipItem.trimHandleWidth * 0.35)
                : clipItem.trimHandleWidth
+        radius: clipItem.touchMode ? Theme.radiusXs : 0
+
+        // Grip notch: says "this edge moves" without a tooltip, which touch cannot show.
+        Rectangle {
+            anchors.centerIn: parent
+            visible: clipItem.touchMode && clipItem.showTrimHandles
+            width: 3
+            height: Math.min(16, parent.height * 0.4)
+            radius: 1.5
+            color: Theme.onMedia
+            opacity: 0.9
+        }
         anchors.right: parent.right
         anchors.top: parent.top
         anchors.bottom: parent.bottom

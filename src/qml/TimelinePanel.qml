@@ -777,6 +777,8 @@ PanelFrame {
     // new-track ghost sizes its lane from this, having no asset index to ask about yet.
     property string pendingDropKind: ""
 
+    readonly property TimelineDropRouter dropRouter: TimelineDropRouter { panel: root }
+
     // Set from the drop until the import it started settles. The landing outline stays painted at
     // the frozen spot for that whole window — probing a large file takes seconds, and clearing
     // the outline on release made the drop look like it had been ignored.
@@ -1006,13 +1008,15 @@ PanelFrame {
     // sink's processedUSecs is cumulative from play(), so the visible playhead
     // becomes clickTime + elapsed. Pause for the gesture and resume on release.
     function beginPlayheadSeek() {
-        if (!EditorState.playing)
-            return
-        resumePlaybackAfterSeek = true
-        EditorState.playing = false
+        if (EditorState.playing) {
+            resumePlaybackAfterSeek = true
+            EditorState.playing = false
+        }
+        EditorState.beginScrub()
     }
 
     function endPlayheadSeek() {
+        EditorState.endScrub()
         if (!resumePlaybackAfterSeek)
             return
         resumePlaybackAfterSeek = false
@@ -1691,10 +1695,15 @@ PanelFrame {
 
                                 DropArea {
                                     anchors.fill: parent
-                                    keys: ["text/plain", "application/x-drift-effect",
-                                           "application/x-drift-audio-effect",
-                                           "application/x-drift-shape", "application/x-drift-transition",
-                                           "application/x-drift-mask"]
+                                    keys: AssetDrag.allKeys()
+
+                                    // Every asset kind but media goes through the shared router.
+                                    // Placeable kinds normally land on the overlay above; here they
+                                    // are the Wayland fallback, like media below.
+                                    function routedKind(drop) {
+                                        const kind = AssetDrag.kindFromKeys(drop.keys)
+                                        return kind === "media" ? "" : kind
+                                    }
 
                                     function isEffectDrag(drop) {
                                         return drop.keys.indexOf("application/x-drift-effect") !== -1
@@ -1734,6 +1743,12 @@ PanelFrame {
                                     }
 
                                     function updateAssetPreview(drop) {
+                                        const kind = routedKind(drop)
+                                        if (kind.length > 0 && !isTransitionDrag(drop)) {
+                                            root.dropRouter.hover(kind, AssetDrag.payloadFromDrop(drop, kind),
+                                                                  drop.x, root.trackOffsetY(trackRow.trackIndex) + drop.y)
+                                            return
+                                        }
                                         if (isTransitionDrag(drop)) {
                                             root.clearLandingPreview()
                                             root.clearEffectDropHighlight()
@@ -1799,6 +1814,13 @@ PanelFrame {
                                     }
                                     onDropped: (drop) => {
                                         drop.accept(Qt.CopyAction)
+                                        const kind = routedKind(drop)
+                                        if (kind.length > 0 && !isTransitionDrag(drop)) {
+                                            root.dropRouter.drop(kind, AssetDrag.payloadFromDrop(drop, kind),
+                                                                 AssetDrag.labelFromDrop(drop, kind), drop.x,
+                                                                 root.trackOffsetY(trackRow.trackIndex) + drop.y)
+                                            return
+                                        }
                                         if (isTransitionDrag(drop)) {
                                             const kind = drop.getDataAsString("application/x-drift-transition")
                                             root.applyTransitionDrop(trackRow.trackIndex, drop.x, kind)
@@ -2283,10 +2305,17 @@ PanelFrame {
                         // "text/uri-list" is a drag from outside the app — the file manager,
                         // usually. It carries files that have not been imported yet, where
                         // "text/plain" carries the index of a row already in the bin.
-                        keys: ["text/plain", "text/uri-list"]
+                        keys: ["text/plain", "text/uri-list"].concat(AssetDrag.placeableKeys())
 
                         function isFileDrag(drop) {
                             return drop.keys.indexOf("text/uri-list") !== -1
+                        }
+
+                        // Shapes, stickers, emoji, text styles and adjustment layers: placed like
+                        // media, new-track bands and the empty space below the tracks included.
+                        function placeableKind(drop) {
+                            const kind = AssetDrag.kindFromKeys(drop.keys)
+                            return kind !== "media" && EditorState.isPlaceableDropKind(kind) ? kind : ""
                         }
 
                         function assetIndexFromDrop(drop) {
@@ -2300,6 +2329,11 @@ PanelFrame {
                         function updateAssetDrag(drop) {
                             if (isFileDrag(drop)) {
                                 root.updateUrlDropPreview(drop)
+                                return
+                            }
+                            const kind = placeableKind(drop)
+                            if (kind.length > 0) {
+                                root.dropRouter.hover(kind, AssetDrag.payloadFromDrop(drop, kind), drop.x, drop.y)
                                 return
                             }
                             const assetIndex = assetIndexFromDrop(drop)
@@ -2323,6 +2357,12 @@ PanelFrame {
                                 // keeps the outline on screen at the frozen spot for as long as
                                 // the import it starts is still running.
                                 root.performUrlDrop(drop.hasUrls ? drop.urls : [], drop.x, drop.y)
+                                return
+                            }
+                            const kind = placeableKind(drop)
+                            if (kind.length > 0) {
+                                root.dropRouter.drop(kind, AssetDrag.payloadFromDrop(drop, kind),
+                                                     AssetDrag.labelFromDrop(drop, kind), drop.x, drop.y)
                                 return
                             }
                             const assetIndex = assetIndexFromDrop(drop)

@@ -24,9 +24,32 @@ void ClipReaderWorker::closePath()
 
 // Runs on the worker thread, so opening and closing readers here never blocks a decode request's
 // caller — the audio callback or the compositor — on an avformat operation.
-ClipReader *ClipReaderWorker::readerFor(quint64 streamId, int audioStreamOrdinal)
+ClipReader *ClipReaderWorker::readerFor(quint64 streamId, int audioStreamOrdinal, quintptr session)
 {
     auto it = m_readers.find(streamId);
+    // Only for a caller that has said which streams it is using (FrameCompositor, through
+    // warmVideoFrames): without that, two clips it reads alternately would take the reader from
+    // each other on every frame.
+    if (it == m_readers.end() && session != 0 && m_activeStreams.contains(session)) {
+        // Every clip reads through its own stream, so a file split into pieces opened a decoder
+        // per piece, and scrubbing across the cuts opened and closed one at every boundary — on a
+        // phone a hardware codec each time, hundreds of milliseconds apiece. The pieces share one
+        // source timeline, so a reader this compositor has stopped using is just as good: take it
+        // over, decoder position, caches and all.
+        const QList<quint64> &active = m_activeStreams[session];
+        auto spare = m_readers.end();
+        for (auto entry = m_readers.begin(); entry != m_readers.end(); ++entry) {
+            if (entry->second.session != session || active.contains(entry->first))
+                continue;
+            if (spare == m_readers.end() || entry->second.lastUseMs < spare->second.lastUseMs)
+                spare = entry;
+        }
+        if (spare != m_readers.end()) {
+            auto node = m_readers.extract(spare);
+            node.key() = streamId;
+            it = m_readers.insert(std::move(node)).position;
+        }
+    }
     if (it == m_readers.end()) {
         if (m_path.isEmpty())
             return nullptr;
@@ -40,6 +63,8 @@ ClipReader *ClipReaderWorker::readerFor(quint64 streamId, int audioStreamOrdinal
 
     const qint64 now = m_clock.elapsed();
     it->second.lastUseMs = now;
+    if (session != 0)
+        it->second.session = session;
 
     size_t active = 0;
     for (auto entry = m_readers.begin(); entry != m_readers.end();) {
@@ -89,16 +114,17 @@ PreviewVideoFrame ClipReaderWorker::decodePreviewVideo(quint64 streamId, drift::
                                                        int maxWidth, int maxHeight,
                                                        const QString &stabilizePath,
                                                        int stabilizeSmoothing, bool stabilizeTripod,
-                                                       int rotationCorrection)
+                                                       int rotationCorrection, bool approximate,
+                                                       quintptr session)
 {
     QMutexLocker lock(&m_mutex);
-    ClipReader *reader = readerFor(streamId);
+    ClipReader *reader = readerFor(streamId, 0, session);
     if (reader) {
         reader->setStabilizeParams(stabilizePath, stabilizeSmoothing, stabilizeTripod);
         reader->setRotationCorrection(rotationCorrection);
     }
     PreviewVideoFrame frame;
-    if (!reader || !reader->readPreviewVideoFrame(sourceUs, frame, maxWidth, maxHeight))
+    if (!reader || !reader->readPreviewVideoFrame(sourceUs, frame, maxWidth, maxHeight, approximate))
         return {};
     return frame;
 }
@@ -118,6 +144,12 @@ int ClipReaderWorker::decodeAudio(quint64 streamId, drift::TimeUs sourceStartUs,
         return 0;
     return reader->readAudioInterleaved(sourceStartUs, sampleCount, outputSampleRate,
                                         interleavedStereoOut);
+}
+
+void ClipReaderWorker::setActiveStreams(quintptr session, const QList<quint64> &streams)
+{
+    QMutexLocker lock(&m_mutex);
+    m_activeStreams.insert(session, streams);
 }
 
 void ClipReaderWorker::prefetchNextVideo(quint64 streamId, int maxWidth, int maxHeight)

@@ -3,6 +3,7 @@
 #include "engine/FrameCompositor.h"
 #include "engine/GpuCompositor.h"
 
+#include <QHash>
 #include <QObject>
 #include <QThread>
 
@@ -90,6 +91,13 @@ public:
     // Realtime playback running. Adaptation measures playback frames only — paused
     // and scrubbed frames have no deadline to miss — and ignores the first few
     // frames of each run, which pay for opening and seeking the decoders.
+    // Whether a request would redraw exactly what `last` already asked for. An approximate
+    // request after an exact one of the same frame is redundant; an exact one after an
+    // approximate one is not — it is the settle.
+    static bool isRedundantRequest(drift::TimeUs time, const FrameCompositor::RenderOptions &options,
+                                   drift::TimeUs lastTime,
+                                   const FrameCompositor::RenderOptions &last);
+
     void setPlaybackActive(bool active);
 
     // Wall-clock budget for one composite before it counts against the adaptive
@@ -139,10 +147,14 @@ private:
     // showing it would step the picture backwards. This replaces the old wall-clock staleness
     // test, which threw away finished frames that had nothing newer to replace them with.
     quint64 m_lastPresentedSequence = 0;
-    std::atomic<drift::TimeUs> m_pendingTimeUs{0};
-    std::atomic<int> m_pendingPreviewScalePercent{100};
-    std::atomic<int> m_pendingMaxTimeEchoHistoryFrames{-1};
-    std::atomic<drift::TimeUs> m_pendingReadAheadUs{0};
+    // Dispatch time per sequence, for request-to-screen latency. Filled only under perf logging.
+    QHash<quint64, qint64> m_perfDispatchNs;
+    // The newest request, whole. Both writers (requestComposite and the catch-up dispatch in
+    // onWorkerFrameReady) run on the GUI thread. It used to be four atomics, which silently
+    // dropped every option they did not name — proxies and the inline-edit skip never reached
+    // the worker.
+    drift::TimeUs m_pendingTimeUs = 0;
+    FrameCompositor::RenderOptions m_pendingOptions;
     drift::TimeUs m_lastDispatchedTimeUs = -1;
     // The scale the caller asked for, before any adaptive multiplier — that is
     // applied at dispatch, so a change takes effect on the very next frame.

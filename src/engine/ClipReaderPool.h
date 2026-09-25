@@ -69,6 +69,17 @@ public:
     static void resetDecodeWaitNs();
     static qint64 decodeWaitNs();
 
+    // Scrub mode for preview reads made on this thread while the scope lives (see
+    // ClipReader::readPreviewVideoFrame's `approximate`). Per-thread for the same reason as the
+    // decode wait: the compositor sets it around one frame, and export may be compositing
+    // exactly at the same time on another thread.
+    struct ApproximateSeekScope
+    {
+        explicit ApproximateSeekScope(bool approximate);
+        ~ApproximateSeekScope();
+        bool previous;
+    };
+
     // Preview toolbar: Auto (per clip), Software, or Hardware on a named backend.
     // Drops every open video decoder so the next read opens on the chosen path.
     // Drop every open video decoder so the next read reopens on whatever the current decode

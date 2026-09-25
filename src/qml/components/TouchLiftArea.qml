@@ -17,6 +17,8 @@ MouseArea {
     property string label: ""
     property string thumbnail: ""
     property string glyph: ""
+    // Off where a lift has nowhere to go (inside a modal popup): the card is then tap-only.
+    property bool liftEnabled: true
 
     // A press that never became a lift. Cards with nothing to offer on tap
     // simply leave this unconnected.
@@ -43,6 +45,8 @@ MouseArea {
     }
 
     onPressAndHold: (mouse) => {
+        if (!liftEnabled)
+            return
         lifted = true
         suppressTap = true
         Haptics.pickUp()

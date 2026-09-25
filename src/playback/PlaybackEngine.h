@@ -58,6 +58,12 @@ public:
     // delivered in one event-loop turn into a single composite request.
     void notifyProjectEdited();
     void setPlayheadUs(drift::TimeUs us);
+    // A scrub gesture is under way: seeks in between show approximate frames (see
+    // RenderOptions::approximateSeek), and the exact one is drawn when the finger rests or the
+    // gesture ends.
+    void beginScrub();
+    void endScrub();
+    bool isScrubbing() const { return m_scrubbing; }
     // setPlayheadUs without the composite, for a caller whose edit already schedules one.
     void resyncAudioAt(drift::TimeUs us);
     drift::TimeUs playheadUs() const { return m_playheadUs; }
@@ -212,6 +218,9 @@ private:
     AudioOutputChannel m_audio;
     QTimer m_compositeTimer;
     QTimer m_editRefreshTimer;
+    QTimer m_scrubSettleTimer;
+    bool m_scrubbing = false;
+    int m_scrubSeeks = 0;
     QTimer m_gpuProbeTimer;
     int m_gpuProbeAttempts = 0;
     bool m_gpuUnavailableNotified = false;

@@ -14,6 +14,8 @@ ClipReaderPool &ClipReaderPool::instance()
     if (!registered) {
         qRegisterMetaType<drift::TimeUs>("drift::TimeUs");
         qRegisterMetaType<PreviewVideoFrame>("PreviewVideoFrame");
+        qRegisterMetaType<quintptr>("quintptr");
+        qRegisterMetaType<QList<quint64>>("QList<quint64>");
         registered = true;
     }
     return pool;
@@ -182,8 +184,40 @@ void ClipReaderPool::setHardwareDecodeMode(ClipReader::HardwareDecodeMode mode,
     resetVideoDecoders();
 }
 
+namespace {
+thread_local bool t_approximateSeek = false;
+} // namespace
+
+ClipReaderPool::ApproximateSeekScope::ApproximateSeekScope(bool approximate)
+    : previous(t_approximateSeek)
+{
+    t_approximateSeek = approximate;
+}
+
+ClipReaderPool::ApproximateSeekScope::~ApproximateSeekScope()
+{
+    t_approximateSeek = previous;
+}
+
 void ClipReaderPool::warmVideoFrames(const QList<VideoRequest> &requests)
 {
+    const bool approximate = t_approximateSeek;
+    const quintptr session = quintptr(QThread::currentThread());
+    // Tell each path's worker which of its streams this frame reads before any read arrives,
+    // so a clip coming on screen can take over a reader the previous one left (see readerFor).
+    QHash<QString, QList<quint64>> streamsByPath;
+    for (const VideoRequest &request : requests) {
+        if (!request.path.isEmpty())
+            streamsByPath[request.path].append(request.streamId);
+    }
+    {
+        QMutexLocker lock(&m_mutex);
+        for (auto it = streamsByPath.cbegin(); it != streamsByPath.cend(); ++it) {
+            QMetaObject::invokeMethod(ensureWorker(m_videoWorkers, it.key()).worker, "setActiveStreams",
+                                      Qt::QueuedConnection, Q_ARG(quintptr, session),
+                                      Q_ARG(QList<quint64>, it.value()));
+        }
+    }
     for (const VideoRequest &request : requests) {
         if (request.path.isEmpty())
             continue;
@@ -197,7 +231,8 @@ void ClipReaderPool::warmVideoFrames(const QList<VideoRequest> &requests)
                                   Q_ARG(quint64, request.streamId), Q_ARG(drift::TimeUs, request.sourceUs),
                                   Q_ARG(int, request.maxWidth), Q_ARG(int, request.maxHeight),
                                   Q_ARG(QString, QString()), Q_ARG(int, 15), Q_ARG(bool, false),
-                                  Q_ARG(int, request.rotationCorrection));
+                                  Q_ARG(int, request.rotationCorrection), Q_ARG(bool, approximate),
+                                  Q_ARG(quintptr, session));
     }
 }
 
@@ -275,6 +310,7 @@ PreviewVideoFrame ClipReaderPool::readPreviewVideoFrame(const QString &path, qui
     }
     ClipReaderWorker *worker = entry->worker;
 
+    const bool approximate = t_approximateSeek;
     PreviewVideoFrame frame;
     QElapsedTimer decodeWait;
     decodeWait.start();
@@ -283,11 +319,15 @@ PreviewVideoFrame ClipReaderPool::readPreviewVideoFrame(const QString &path, qui
                                Q_ARG(drift::TimeUs, sourceUs), Q_ARG(int, maxWidth),
                                Q_ARG(int, maxHeight),
                                Q_ARG(QString, stabilizePath), Q_ARG(int, stabilizeSmoothing),
-                               Q_ARG(bool, stabilizeTripod), Q_ARG(int, rotationCorrection));
+                               Q_ARG(bool, stabilizeTripod), Q_ARG(int, rotationCorrection),
+                               Q_ARG(bool, approximate), Q_ARG(quintptr, quintptr(QThread::currentThread())));
     t_decodeWaitNs += decodeWait.nsecsElapsed();
 
-    worker->requestPrefetchPreview(streamId, maxWidth, maxHeight,
-                                   m_readAheadUs.load(std::memory_order_relaxed));
+    // A scrub's next request is somewhere else entirely; a frame decoded ahead of this one would
+    // only sit in the worker's queue in front of it.
+    if (!approximate)
+        worker->requestPrefetchPreview(streamId, maxWidth, maxHeight,
+                                       m_readAheadUs.load(std::memory_order_relaxed));
 
     QMutexLocker lock(&m_mutex);
     --entry->inFlight;

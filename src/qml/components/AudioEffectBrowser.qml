@@ -141,6 +141,10 @@ Column {
             // as the old Grid did. Rows are a fixed two label lines tall.
             GridView {
                 id: presetGrid
+                // As many columns as fit at the nominal card size, rounded, with the cards stretched or
+                // squeezed a little to fill the row — a fixed card left a column's worth of empty space.
+                readonly property int columnCount: Math.max(1, Math.round(width / (Theme.assetCardWidth + Theme.assetCardGap)))
+                readonly property real cardSize: Math.floor(width / columnCount) - Theme.assetCardGap
                 x: 12
                 width: parent.width - 24 + Theme.assetCardGap
                 height: parent.height
@@ -150,15 +154,16 @@ Column {
                 clip: true
                 reuseItems: true
                 boundsBehavior: Flickable.StopAtBounds
+                acceptedButtons: Theme.touchUi ? Qt.LeftButton : Qt.NoButton
                 ScrollBar.vertical: AppScrollBar { }
-                cellWidth: Theme.assetCardWidth + Theme.assetCardGap
-                cellHeight: Theme.assetCardWidth + 4 + Math.ceil(labelMetrics.height) * 2 + Theme.assetCardGap
+                cellWidth: Math.floor(width / columnCount)
+                cellHeight: presetGrid.cardSize + 4 + Math.ceil(labelMetrics.height) * 2 + Theme.assetCardGap
                 model: root.visiblePresets
 
                 delegate: Column {
                     id: presetCard
                     required property var modelData
-                    width: Theme.assetCardWidth
+                    width: presetGrid.cardSize
                     spacing: 4
                     opacity: presetDrag.active ? 0.85 : 1
                     scale: presetDrag.active ? 1.04 : 1.0
@@ -179,11 +184,11 @@ Column {
                     Drag.keys: ["application/x-drift-audio-effect"]
                     Drag.mimeData: ({ "application/x-drift-audio-effect": presetCard.modelData.id })
                     Drag.hotSpot.x: width / 2
-                    Drag.hotSpot.y: Theme.assetCardWidth / 2
+                    Drag.hotSpot.y: presetGrid.cardSize / 2
 
                     Rectangle {
-                        width: Theme.assetCardWidth
-                        height: Theme.assetCardWidth
+                        width: presetGrid.cardSize
+                        height: presetGrid.cardSize
                         radius: Theme.radiusSm
                         color: cardHover.hovered ? Theme.panelAccent : Theme.panelBackground
                         border.width: presetDrag.active ? 1 : 0
@@ -211,7 +216,7 @@ Column {
                                     ? EditorState.imageUrl(presetCard.thumb) : ""
                             fillMode: Image.PreserveAspectCrop
                             asynchronous: true
-                            sourceSize: Qt.size(Math.ceil(Theme.assetCardWidth * Screen.devicePixelRatio), Math.ceil(Theme.assetCardWidth * Screen.devicePixelRatio))
+                            sourceSize: Qt.size(Math.ceil(presetGrid.cardSize * Screen.devicePixelRatio), Math.ceil(presetGrid.cardSize * Screen.devicePixelRatio))
                             smooth: true
                         }
 
@@ -238,6 +243,7 @@ Column {
                             // drag has no touch gesture and cannot leave the sheet.
                             enabled: !Theme.touchUi
                             acceptedButtons: Qt.LeftButton
+                            acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad | PointerDevice.Stylus
                         }
 
                         // Hold to carry the preset onto a specific clip; tap still

@@ -277,13 +277,48 @@ Item {
                     width: canvasRect.width
                     height: canvasRect.height
                     z: 100
-                    visible: !root.playing && EditorState.projectWidth() > 0
+                    visible: !root.playing && !EditorState.scrubbing && EditorState.projectWidth() > 0
                              && !EditorState.canvasCropMode
                     // Disables every DragHandler / TapHandler / MouseArea in the
                     // overlay: PointerHandler::wantsEvent walks isEnabled() on
                     // ancestors. Hiding would also work, but the boxes should stay
                     // drawn under the scrim so the project does not appear to jump.
                     enabled: !root.overlayBlocksPreview
+                }
+
+                // Lifted asset cards can be dropped on the preview as well as on the timeline:
+                // overlays land at the playhead where the finger lets go, effects and masks on the
+                // clip under it.
+                PreviewDropOverlay {
+                    id: previewDrop
+                    x: canvasRect.x
+                    y: canvasRect.y
+                    width: canvasRect.width
+                    height: canvasRect.height
+                    z: 150
+                    visible: EditorState.projectWidth() > 0 && !EditorState.canvasCropMode
+
+                    function local(sceneX, sceneY) {
+                        return previewDrop.mapFromItem(null, sceneX, sceneY)
+                    }
+                    function touchDropContains(sceneX, sceneY) {
+                        const p = local(sceneX, sceneY)
+                        return previewDrop.containsLocal(p.x, p.y)
+                    }
+                    function updateTouchDrop(kind, payload, sceneX, sceneY) {
+                        const p = local(sceneX, sceneY)
+                        return previewDrop.hover(kind, payload, p.x, p.y)
+                    }
+                    function performTouchDrop(kind, payload, sceneX, sceneY) {
+                        const p = local(sceneX, sceneY)
+                        previewDrop.drop(kind, payload, TouchDrag.label, p.x, p.y)
+                    }
+                    function clearTouchDrop() {
+                        previewDrop.clear()
+                    }
+
+                    Component.onCompleted: TouchDrag.registerTarget(previewDrop)
+                    Component.onDestruction: TouchDrag.unregisterTarget(previewDrop)
                 }
 
                 AndroidCropOverlay {
@@ -583,15 +618,10 @@ Item {
         }
     }
 
+    // Seeks and edits render from the engine itself (setPlayheadUs, notifyProjectEdited); asking
+    // again here doubled every scrub step and copied the whole project each time.
     Connections {
         target: EditorState
-        function onPlayheadSecondsChanged() {
-            if (!EditorState.playing)
-                EditorState.playback.refreshFrame()
-        }
-        function onTracksChanged() {
-            EditorState.playback.refreshFrame()
-        }
         function onPlayingChanged() {
             if (!EditorState.playing)
                 EditorState.playback.refreshFrame()

@@ -6,6 +6,7 @@
 
 #include <QAtomicInt>
 #include <QElapsedTimer>
+#include <QHash>
 #include <QImage>
 #include <QMutex>
 #include <QObject>
@@ -52,7 +53,11 @@ public slots:
     PreviewVideoFrame decodePreviewVideo(quint64 streamId, drift::TimeUs sourceUs, int maxWidth,
                                          int maxHeight, const QString &stabilizePath = QString(),
                                          int stabilizeSmoothing = 15, bool stabilizeTripod = false,
-                                         int rotationCorrection = 0);
+                                         int rotationCorrection = 0, bool approximate = false,
+                                         quintptr session = 0);
+    // The streams on this path that `session` (one compositor thread) reads for the frame it is
+    // building. A reader of that session outside the set is free to be handed to a new stream.
+    void setActiveStreams(quintptr session, const QList<quint64> &streams);
     int decodeAudio(quint64 streamId, drift::TimeUs sourceStartUs, int sampleCount,
                     int outputSampleRate, float *interleavedStereoOut, int audioStreamOrdinal = 0);
     void prefetchNextVideo(quint64 streamId, int maxWidth, int maxHeight);
@@ -75,10 +80,13 @@ private:
     {
         std::unique_ptr<ClipReader> reader;
         qint64 lastUseMs = 0;
+        // Compositor thread that last read through this reader, 0 for everything else.
+        quintptr session = 0;
     };
+    QHash<quintptr, QList<quint64>> m_activeStreams;
 
     // Call with m_mutex held.
-    ClipReader *readerFor(quint64 streamId, int audioStreamOrdinal = 0);
+    ClipReader *readerFor(quint64 streamId, int audioStreamOrdinal = 0, quintptr session = 0);
 
     QString m_path;
     std::map<quint64, ReaderEntry> m_readers;

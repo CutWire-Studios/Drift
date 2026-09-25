@@ -14,8 +14,8 @@ import Drift
 QtObject {
     id: touchDrag
 
-    // "" while idle. Otherwise one of media | effect | audioEffect | template |
-    // transition — the drop target switches on this.
+    // "" while idle. Otherwise one of the kinds listed in AssetDrag.qml — the drop
+    // target switches on this.
     property string kind: ""
     // Asset index for "media", a catalog id for every other kind.
     property var payload: null
@@ -30,8 +30,31 @@ QtObject {
     property real sceneX: 0
     property real sceneY: 0
 
-    // The timeline registers itself here; it owns the landing preview and the drop.
-    property var dropTarget: null
+    // Drop targets register here (the timeline, the preview). Each one says whether a
+    // scene point is its to take (touchDropContains), and owns its own landing preview
+    // and drop; the finger's position picks which one is active.
+    property var dropTargets: []
+    property var activeTarget: null
+
+    function registerTarget(target) {
+        if (dropTargets.indexOf(target) < 0)
+            dropTargets = dropTargets.concat([target])
+    }
+
+    function unregisterTarget(target) {
+        dropTargets = dropTargets.filter(t => t !== target)
+        if (activeTarget === target)
+            activeTarget = null
+    }
+
+    function _targetAt(x, y) {
+        for (let i = 0; i < dropTargets.length; ++i) {
+            const t = dropTargets[i]
+            if (t.visible !== false && t.touchDropContains(x, y))
+                return t
+        }
+        return null
+    }
     // True while the finger is over a spot the drop target would accept, so the
     // ghost can say so.
     property bool overTarget: false
@@ -58,35 +81,33 @@ QtObject {
     function moveTo(x, y) {
         sceneX = x
         sceneY = y
-        if (!active || !dropTarget)
+        if (!active)
             return
         // clearOfSource is latched by the sheet from its own sceneY handler, so it
         // is already up to date for this position.
-        if (!clearOfSource) {
-            overTarget = false
-            dropTarget.clearTouchDrop()
-            return
-        }
-        overTarget = dropTarget.updateTouchDrop(kind, payload, x, y)
+        const target = clearOfSource ? _targetAt(x, y) : null
+        if (activeTarget && activeTarget !== target)
+            activeTarget.clearTouchDrop()
+        activeTarget = target
+        overTarget = target ? target.updateTouchDrop(kind, payload, x, y) : false
     }
 
     function finish() {
         if (!active)
             return
-        if (dropTarget) {
-            if (clearOfSource)
-                dropTarget.performTouchDrop(kind, payload, sceneX, sceneY)
-            else
-                dropTarget.clearTouchDrop()
-        }
+        const target = clearOfSource ? _targetAt(sceneX, sceneY) : null
+        if (activeTarget && activeTarget !== target)
+            activeTarget.clearTouchDrop()
+        if (target)
+            target.performTouchDrop(kind, payload, sceneX, sceneY)
         _reset()
     }
 
     function cancel() {
         if (!active)
             return
-        if (dropTarget)
-            dropTarget.clearTouchDrop()
+        if (activeTarget)
+            activeTarget.clearTouchDrop()
         _reset()
     }
 
@@ -98,6 +119,7 @@ QtObject {
         glyph = ""
         overTarget = false
         clearOfSource = false
+        activeTarget = null
         EditorState.draggingAssetIndex = -1
     }
 }

@@ -1384,6 +1384,8 @@ bool FrameCompositor::prepare(drift::TimeUs timelineUs, const RenderOptions &opt
         return false;
 
     const AllowProxiesScope proxies(options.allowProxies);
+    // Covers the warm below and every read buildGpuScene makes, nested timelines included.
+    const ClipReaderPool::ApproximateSeekScope approximate(options.approximateSeek);
     const NestedViewsScope nestedViews(m_nestedViews);
     QSet<QString> videoPaths;
     QSet<QString> audioPaths;

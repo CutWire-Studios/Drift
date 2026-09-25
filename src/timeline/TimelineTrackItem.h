@@ -194,6 +194,7 @@ private:
         QString clipId;
         QRectF pressRect;
         QPointF pressItemPos;
+        QPointF liftItemPos; // where the finger was when the long-press picked the clip up
         QPointF lastScenePos;
         QPointF pointer;
         QRectF rect;
@@ -221,6 +222,8 @@ private:
 
     void scheduleRebuild();
     void onViewChanged();
+    void onMoveFollowChanged();
+    void onTrimFollowChanged();
     void updateActiveSet();
     void build();
     void appendClip(int index, const QRectF &rect, bool selected, bool lit, bool lifted);

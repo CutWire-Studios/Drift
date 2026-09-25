@@ -132,7 +132,15 @@ Item {
             }
         }
         function onSelectionChanged() { root.refreshOverlay() }
-        function onPlayheadSecondsChanged() { root.refreshOverlay() }
+        // A scrub moves the playhead per scroll event; catch up once when it ends.
+        function onPlayheadSecondsChanged() {
+            if (!EditorState.scrubbing)
+                root.refreshOverlay()
+        }
+        function onScrubbingChanged() {
+            if (!EditorState.scrubbing)
+                root.refreshOverlay()
+        }
         function onPlayingChanged() {
             if (!EditorState.playing)
                 root.refreshOverlay()

@@ -71,8 +71,21 @@ Item {
             assetsSheet.dismiss()
         if (propertiesSheet.opened)
             propertiesSheet.dismiss()
+        if (fadeSheet.opened)
+            fadeSheet.dismiss()
         if (!moreToolsSheet.opened)
             moreToolsSheet.open()
+    }
+
+    function openFadeSheet() {
+        if (assetsSheet.opened)
+            assetsSheet.dismiss()
+        if (propertiesSheet.opened)
+            propertiesSheet.dismiss()
+        if (moreToolsSheet.opened)
+            moreToolsSheet.dismiss()
+        if (!fadeSheet.opened)
+            fadeSheet.open()
     }
 
     function closeSheets() {
@@ -82,6 +95,8 @@ Item {
             addMenu.dismiss()
         if (moreToolsSheet.opened)
             moreToolsSheet.dismiss()
+        if (fadeSheet.opened)
+            fadeSheet.dismiss()
         if (assetsSheet.opened)
             assetsSheet.dismiss()
         if (propertiesSheet.opened)
@@ -107,6 +122,10 @@ Item {
         }
         if (moreToolsSheet.opened) {
             moreToolsSheet.dismiss()
+            return true
+        }
+        if (fadeSheet.opened) {
+            fadeSheet.dismiss()
             return true
         }
         if (addMenu.opened) {
@@ -364,6 +383,7 @@ Item {
                     anchors.right: parent.right
                     panel: timeline
                     onMoreRequested: root.openMoreTools()
+                    onFadeRequested: root.openFadeSheet()
                 }
 
                 Item {
@@ -455,6 +475,10 @@ Item {
     AndroidMoreToolsSheet {
         id: moreToolsSheet
         panel: timeline
+    }
+
+    AndroidFadeSheet {
+        id: fadeSheet
     }
 
     AndroidBottomSheet {

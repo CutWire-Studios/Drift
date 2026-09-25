@@ -109,6 +109,10 @@ Item {
             // as the old Grid did.
             GridView {
                 id: shapeGrid
+                // As many columns as fit at the nominal card size, rounded, with the cards stretched or
+                // squeezed a little to fill the row — a fixed card left a column's worth of empty space.
+                readonly property int columnCount: Math.max(1, Math.round(width / (Theme.assetCardWidth + Theme.assetCardGap)))
+                readonly property real cardSize: Math.floor(width / columnCount) - Theme.assetCardGap
                 x: Theme.pagePadding
                 width: parent.width - Theme.pagePadding * 2 + Theme.assetCardGap
                 height: parent.height
@@ -118,19 +122,20 @@ Item {
                 clip: true
                 reuseItems: true
                 boundsBehavior: Flickable.StopAtBounds
+                acceptedButtons: Theme.touchUi ? Qt.LeftButton : Qt.NoButton
                 ScrollBar.vertical: AppScrollBar { }
-                cellWidth: Theme.assetCardWidth + Theme.assetCardGap
-                cellHeight: Theme.assetCardWidth + Theme.spacingSm + Math.ceil(labelMetrics.height) + Theme.assetCardGap
+                cellWidth: Math.floor(width / columnCount)
+                cellHeight: shapeGrid.cardSize + Theme.spacingSm + Math.ceil(labelMetrics.height) + Theme.assetCardGap
                 model: root.currentShapes
 
                 delegate: Column {
                     id: shapeCard
                     required property var modelData
-                    width: Theme.assetCardWidth
+                    width: shapeGrid.cardSize
                     spacing: Theme.spacingSm
 
                     opacity: shapeDrag.active ? 0.85 : 1
-                    scale: shapeDrag.active ? 1.04 : 1.0
+                    scale: shapeDrag.active ? 1.04 : (shapeDrag.pressed ? 0.97 : 1.0)
 
                     Behavior on opacity {
                         NumberAnimation { duration: Theme.durationFast; easing.type: Theme.easing }
@@ -139,19 +144,13 @@ Item {
                         NumberAnimation { duration: Theme.durationFast; easing.type: Theme.easing }
                     }
 
-                    Drag.active: shapeDrag.active
-                    Drag.dragType: Drag.Automatic
-                    Drag.supportedActions: Qt.CopyAction
-                    Drag.keys: ["application/x-drift-shape"]
-                    Drag.mimeData: { "application/x-drift-shape": shapeCard.modelData.id }
-
                     Rectangle {
-                        width: Theme.assetCardWidth
-                        height: Theme.assetCardWidth
+                        width: shapeGrid.cardSize
+                        height: shapeGrid.cardSize
                         radius: Theme.radiusSm
-                        color: shapeHover.hovered ? Theme.popoverHover : Theme.panelAccent
+                        color: shapeDrag.hovered ? Theme.popoverHover : Theme.panelAccent
                         border.width: 1
-                        border.color: shapeHover.hovered ? Theme.accent : "transparent"
+                        border.color: shapeDrag.hovered ? Theme.accent : "transparent"
 
                         Behavior on color {
                             ColorAnimation { duration: Theme.durationFast; easing.type: Theme.easing }
@@ -166,41 +165,32 @@ Item {
                             anchors.fill: parent
                             anchors.margins: Theme.pagePadding
                             source: "image://shape/" + shapeCard.modelData.id
-                            sourceSize: Qt.size(Theme.assetCardWidth * 2, Theme.assetCardWidth * 2)
+                            sourceSize: Qt.size(shapeGrid.cardSize * 2, shapeGrid.cardSize * 2)
                             fillMode: Image.PreserveAspectFit
                             asynchronous: true
                             cache: true
-                            scale: shapeTap.pressed ? 0.94 : shapeHover.hovered ? 1.06 : 1.0
+                            scale: shapeDrag.pressed ? 0.94 : shapeDrag.hovered ? 1.06 : 1.0
                             Behavior on scale {
                                 NumberAnimation { duration: Theme.durationFast; easing.type: Theme.easing }
                             }
                         }
 
-                        HoverHandler {
-                            id: shapeHover
-                            cursorShape: Qt.PointingHandCursor
-                        }
-
                         ThemedToolTip {
-                            text: qsTr("%1 — click to add, or drag to the timeline").arg(shapeCard.modelData.label)
-                            visible: shapeHover.hovered
+                            text: qsTr("%1 — click to add, or drag to the timeline or preview").arg(shapeCard.modelData.label)
+                            visible: shapeDrag.hovered && !shapeDrag.active
                         }
 
-                        TapHandler {
-                            id: shapeTap
+                        AssetDragSource {
+                            id: shapeDrag
+                            anchors.fill: parent
+                            kind: "shape"
+                            payload: shapeCard.modelData.id
+                            label: shapeCard.modelData.label
+                            glyph: Theme.icons.shapes
                             onTapped: {
                                 EditorState.addShapeClip(shapeCard.modelData.id, -1)
                                 root.added()
                             }
-                        }
-                        DragHandler {
-                            id: shapeDrag
-                            target: null
-                            // Touch adds at the playhead and closes the sheet; a
-                            // platform drag has no gesture there and only competes
-                            // with the tap for the grab.
-                            enabled: !Theme.touchUi
-                            acceptedButtons: Qt.LeftButton
                         }
 
                         AssetFavoriteButton {

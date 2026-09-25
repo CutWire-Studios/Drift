@@ -1,5 +1,7 @@
 #include "CompositorService.h"
 
+#include "PerfLog.h"
+#include "PlaybackClock.h"
 #include "PlaybackStats.h"
 #include "engine/ClipReaderPool.h"
 
@@ -204,6 +206,7 @@ std::shared_ptr<const drift::Project> CompositorService::snapshot()
         // One uniquely-owned snapshot per generation; subsequent ticks only bump
         // the shared_ptr. Plain Project copy would keep sharing QMap/QList with
         // the live tree — unsafe once the GUI mutates while the worker reads.
+        const drift::perf::Scope perfScope("snapshot.copy");
         m_sharedSnapshot = std::make_shared<drift::Project>(m_project->detachedCopy());
         m_snapshotGeneration = m_liveGeneration;
         ++m_snapshotSerial;
@@ -224,6 +227,9 @@ void CompositorService::dispatch(drift::TimeUs timeUs, const FrameCompositor::Re
 
     // Round-robin rather than "first idle": the workers are interchangeable, and alternating
     // keeps a long composite on one of them from starving the other's warm decoder caches.
+    if (drift::perf::enabled())
+        m_perfDispatchNs.insert(m_nextSequence, PlaybackClock::nowNs());
+
     CompositorWorker *worker = m_workers[m_nextWorker];
     m_nextWorker = (m_nextWorker + 1) % GpuCompositor::kMaxPreviewComposites;
 
@@ -234,27 +240,32 @@ void CompositorService::dispatch(drift::TimeUs timeUs, const FrameCompositor::Re
                               Q_ARG(quint64, m_nextSequence++));
 }
 
+bool CompositorService::isRedundantRequest(drift::TimeUs time,
+                                           const FrameCompositor::RenderOptions &options,
+                                           drift::TimeUs lastTime,
+                                           const FrameCompositor::RenderOptions &last)
+{
+    return time == lastTime
+           && options.previewScale == last.previewScale
+           && options.maxTimeEchoHistoryFrames == last.maxTimeEchoHistoryFrames
+           && options.readAheadUs == last.readAheadUs
+           && options.skipClipId == last.skipClipId
+           && options.allowProxies == last.allowProxies
+           && (options.approximateSeek == last.approximateSeek || options.approximateSeek);
+}
+
 bool CompositorService::dispatchPending()
 {
     if (m_inFlight >= maxInFlight())
         return false;
 
-    const drift::TimeUs latest = m_pendingTimeUs.load(std::memory_order_acquire);
-    FrameCompositor::RenderOptions latestOptions;
-    latestOptions.previewScale =
-        static_cast<double>(m_pendingPreviewScalePercent.load(std::memory_order_acquire)) / 100.0;
-    latestOptions.maxTimeEchoHistoryFrames =
-        m_pendingMaxTimeEchoHistoryFrames.load(std::memory_order_acquire);
-    latestOptions.readAheadUs = m_pendingReadAheadUs.load(std::memory_order_acquire);
+    const drift::TimeUs latest = m_pendingTimeUs;
+    const FrameCompositor::RenderOptions latestOptions = m_pendingOptions;
 
     // Nothing new to draw. Re-rendering the frame already requested would burn a worker on a
     // picture identical to the one on screen.
-    if (latest == m_lastDispatchedTimeUs
-        && latestOptions.previewScale == m_lastDispatchedOptions.previewScale
-        && latestOptions.maxTimeEchoHistoryFrames == m_lastDispatchedOptions.maxTimeEchoHistoryFrames
-        && latestOptions.readAheadUs == m_lastDispatchedOptions.readAheadUs) {
+    if (isRedundantRequest(latest, latestOptions, m_lastDispatchedTimeUs, m_lastDispatchedOptions))
         return false;
-    }
 
     m_lastDispatchedTimeUs = latest;
     m_lastDispatchedOptions = latestOptions;
@@ -281,10 +292,8 @@ void CompositorService::requestComposite(drift::TimeUs timeUs, FrameCompositor::
         qBound(kMinPreviewScalePercent, static_cast<int>(std::lround(options.previewScale * 100.0)), 100);
     options.previewScale = previewScalePercent / 100.0;
 
-    m_pendingTimeUs.store(timeUs, std::memory_order_release);
-    m_pendingPreviewScalePercent.store(previewScalePercent, std::memory_order_release);
-    m_pendingMaxTimeEchoHistoryFrames.store(options.maxTimeEchoHistoryFrames, std::memory_order_release);
-    m_pendingReadAheadUs.store(options.readAheadUs, std::memory_order_release);
+    m_pendingTimeUs = timeUs;
+    m_pendingOptions = options;
 
     // Folded into work already running. Counted because a high rate here is the signal that
     // the pipeline cannot keep up with the cadence being asked of it.
@@ -314,6 +323,15 @@ void CompositorService::onWorkerFrameReady(const GpuFrameTexture &frame, drift::
     // discarding a frame purely for being late when nothing existed to replace it. Paying for
     // a composite and then showing nothing is a hitch; showing it slightly late is not.
     const bool overtaken = sequence <= m_lastPresentedSequence;
+    if (drift::perf::enabled()) {
+        const qint64 dispatchedNs = m_perfDispatchNs.take(sequence);
+        drift::perf::record(m_pendingOptions.approximateSeek ? "composite.work.approx" : "composite.work",
+                            timing.compositeMs);
+        drift::perf::record("decode.wait", timing.decodeWaitMs);
+        if (!overtaken && dispatchedNs > 0)
+            drift::perf::record(m_playbackActive ? "frame.latency.play" : "frame.latency.seek",
+                                double(PlaybackClock::nowNs() - dispatchedNs) / 1'000'000.0);
+    }
     if (!overtaken && frame.isValid()) {
         m_lastPresentedSequence = sequence;
         if (m_stats)

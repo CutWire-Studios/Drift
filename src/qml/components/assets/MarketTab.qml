@@ -549,13 +549,17 @@ Item {
 
             GridView {
                 id: grid
+                // As many columns as fit at the nominal card size, rounded, with the cards stretched or
+                // squeezed a little to fill the row — a fixed card left a column's worth of empty space.
+                readonly property int columnCount: Math.max(1, Math.round(width / (grid.cardSize + Theme.assetCardGap)))
+                readonly property real cardSize: Math.floor(width / columnCount) - Theme.assetCardGap
                 anchors.fill: parent
                 anchors.margins: Theme.pagePadding
                 anchors.topMargin: Theme.spacingMd
                 anchors.rightMargin: Theme.pagePadding - Theme.assetCardGap
                 visible: Market.items.length > 0
-                cellWidth: Theme.assetCardWidth + Theme.assetCardGap
-                cellHeight: (Theme.assetCardWidth * 9 / 16) + Theme.spacing3xl + Theme.assetCardGap
+                cellWidth: Math.floor(width / columnCount)
+                cellHeight: (cardSize * 9 / 16) + Theme.spacing3xl + Theme.assetCardGap
                 // Keeps a screen's worth of delegates alive either side of the viewport, so
                 // a short scroll back does not destroy and rebuild the images it just had.
                 cacheBuffer: Math.max(0, Math.round(height))
@@ -603,7 +607,7 @@ Item {
                     id: card
                     required property var modelData
                     required property int index
-                    width: Theme.assetCardWidth
+                    width: grid.cardSize
                     spacing: 4
 
                     readonly property var job: {
@@ -619,8 +623,8 @@ Item {
 
                     Rectangle {
                         id: cardThumb
-                        width: Theme.assetCardWidth
-                        height: Theme.assetCardWidth * 9 / 16
+                        width: grid.cardSize
+                        height: grid.cardSize * 9 / 16
                         radius: Theme.radiusSm
                         color: Theme.panelAccent
                         clip: true

@@ -32,6 +32,7 @@ qt_add_executable(tst_editorstate
     ../src/playback/PlaybackClock.cpp
     ../src/playback/AudioOutputChannel.cpp
     ../src/playback/CompositorService.cpp
+    ../src/playback/PerfLog.cpp
     ../src/playback/PlaybackStats.cpp
     ../src/playback/PlaybackDiagnostics.cpp
     ../src/playback/ClipPreviewPlayer.cpp
@@ -185,6 +186,7 @@ qt_add_executable(tst_mcp
     ../src/playback/PlaybackClock.cpp
     ../src/playback/AudioOutputChannel.cpp
     ../src/playback/CompositorService.cpp
+    ../src/playback/PerfLog.cpp
     ../src/playback/PlaybackStats.cpp
     ../src/playback/PlaybackDiagnostics.cpp
     ../src/playback/ClipPreviewPlayer.cpp

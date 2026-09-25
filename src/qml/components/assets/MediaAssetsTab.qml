@@ -484,7 +484,7 @@ Item {
         id: gridDelegate
         Column {
             id: cardRoot
-            width: Theme.assetCardWidth
+            width: grid.cardSize
             spacing: 4
 
             required property bool isFolder
@@ -542,7 +542,7 @@ Item {
             // compositors (notably Mutter) then deliver drop Y far from
             // the grab point. Center on the thumbnail like effect cards.
             Drag.hotSpot.x: width / 2
-            Drag.hotSpot.y: Theme.assetCardWidth * 9 / 32
+            Drag.hotSpot.y: grid.cardSize * 9 / 32
 
             // Grid cards had neither hover feedback nor a pointing
             // cursor, while the list rows had both.
@@ -563,8 +563,8 @@ Item {
             }
 
             Rectangle {
-                width: Theme.assetCardWidth
-                height: Theme.assetCardWidth * 9 / 16
+                width: grid.cardSize
+                height: grid.cardSize * 9 / 16
                 radius: Theme.radiusSm
                 color: Theme.panelAccent
                 clip: true
@@ -610,8 +610,8 @@ Item {
                             ? EditorState.imageUrl(cardRoot._liveThumbnailPath) : ""
                     fillMode: Image.PreserveAspectFit
                     asynchronous: true
-                    sourceSize: Qt.size(Math.ceil(Theme.assetCardWidth * Screen.devicePixelRatio),
-                                         Math.ceil(Theme.assetCardWidth * 9 / 16 * Screen.devicePixelRatio))
+                    sourceSize: Qt.size(Math.ceil(grid.cardSize * Screen.devicePixelRatio),
+                                         Math.ceil(grid.cardSize * 9 / 16 * Screen.devicePixelRatio))
                     // Fades in rather than popping at full opacity.
                     opacity: status === Image.Ready ? 1 : 0
 
@@ -785,6 +785,7 @@ Item {
                     // action only ("Move to folder…"), not a drag-and-drop target.
                     enabled: !Theme.touchUi && !cardRoot.isFolder
                     acceptedButtons: Qt.LeftButton
+                    acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad | PointerDevice.Stylus
                     onActiveChanged: {
                         if (active) {
                             EditorState.draggingAssetIndex = assetIndex
@@ -1254,6 +1255,7 @@ Item {
                     target: null
                     enabled: !Theme.touchUi && !listRow.isFolder
                     acceptedButtons: Qt.LeftButton
+                    acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad | PointerDevice.Stylus
                     onActiveChanged: {
                         if (active) {
                             EditorState.draggingAssetIndex = assetIndex
@@ -1814,6 +1816,10 @@ Item {
 
     GridView {
         id: grid
+        // As many columns as fit at the nominal card size, rounded, with the cards stretched or
+        // squeezed a little to fill the row — a fixed card left a column's worth of empty space.
+        readonly property int columnCount: Math.max(1, Math.round(width / (Theme.assetCardWidth + Theme.assetCardGap)))
+        readonly property real cardSize: Math.floor(width / columnCount) - Theme.assetCardGap
         visible: root.gridMode && root.combinedItems.length > 0
 
         anchors.top: conversionStatusRow.bottom
@@ -1825,11 +1831,14 @@ Item {
         anchors.topMargin: Theme.spacingMd
         anchors.rightMargin: Theme.pagePadding - Theme.assetCardGap
 
-        cellWidth: Theme.assetCardWidth + Theme.assetCardGap
-        cellHeight: (Theme.assetCardWidth * 9 / 16) + Theme.spacing3xl + Theme.assetCardGap
+        cellWidth: Math.floor(width / columnCount)
+        cellHeight: (cardSize * 9 / 16) + Theme.spacing3xl + Theme.assetCardGap
 
         clip: true
         reuseItems: true
+        // A mouse drag on a card drags the asset to the timeline; the wheel and touchpad
+        // scroll. Letting the grid take mouse drags too made the two fight over every gesture.
+        acceptedButtons: Theme.touchUi ? Qt.LeftButton : Qt.NoButton
         ScrollBar.vertical: AppScrollBar { }
 
         // Only the view on screen gets the items; a hidden view would still build delegates.
@@ -1853,6 +1862,7 @@ Item {
 
         clip: true
         reuseItems: true
+        acceptedButtons: Theme.touchUi ? Qt.LeftButton : Qt.NoButton
         ScrollBar.vertical: AppScrollBar { }
 
         model: root.gridMode ? [] : root.combinedItems

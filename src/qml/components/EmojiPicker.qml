@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Controls.Basic
 import Drift
+import "assets"
 
 // The full Unicode emoji set, offered next to the curated sticker packs — those only cover a
 // couple of hundred glyphs. Picking one rasterises it and drops it on an image track, so from the
@@ -162,6 +163,7 @@ Popup {
             clip: true
             model: root.visibleEmoji
             boundsBehavior: Flickable.StopAtBounds
+            acceptedButtons: Theme.touchUi ? Qt.LeftButton : Qt.NoButton
             ScrollBar.vertical: AppScrollBar { }
 
             delegate: Item {
@@ -174,7 +176,7 @@ Popup {
                     anchors.fill: parent
                     anchors.margins: 2
                     radius: Theme.radiusSm
-                    color: cellHover.hovered ? Theme.popoverHover : "transparent"
+                    color: cellDrag.hovered ? Theme.popoverHover : "transparent"
 
                     Behavior on color {
                         ColorAnimation { duration: Theme.durationFast; easing.type: Theme.easing }
@@ -190,17 +192,20 @@ Popup {
                     }
                 }
 
-                HoverHandler {
-                    id: cellHover
-                    cursorShape: Qt.PointingHandCursor
-                }
-
                 ThemedToolTip {
                     text: cell.modelData.name
-                    visible: cellHover.hovered
+                    visible: cellDrag.hovered && !cellDrag.active
                 }
 
-                TapHandler {
+                // Draggable on the desktop; on the phone this grid is a modal popup, which a
+                // lifted card cannot leave, so there it stays tap-to-add.
+                AssetDragSource {
+                    id: cellDrag
+                    anchors.fill: parent
+                    kind: "emoji"
+                    payload: cell.modelData.emoji
+                    label: cell.modelData.name
+                    liftEnabled: false
                     onTapped: {
                         EditorState.addEmojiClip(cell.modelData.emoji, cell.modelData.name, -1)
                         root.close()

@@ -544,6 +544,9 @@ QtObject {
     // 800ms platform long-press: the tap it competes with only opens a menu, and a
     // gesture that has to be held for most of a second reads as an unresponsive app.
     readonly property int touchLiftInterval: 320
+    // Upward travel after a lift that counts as heading for a drop target: past this the
+    // asset sheet slides aside even while the finger is still over it.
+    readonly property real touchLiftStepAsideDistance: 56
     // The rail's five slots divide its width, so destinations have no fixed width.
     // The Add button is the one that does: a docked-FAB-sized target in the centre.
     readonly property real androidRailFabSize: 48
@@ -559,7 +562,8 @@ QtObject {
     readonly property real androidPlayheadCentreWidth: 2
     readonly property real androidClipTrimHandleWidth: 20
     readonly property real androidClipEdgeMargin: 22
-    readonly property real androidTrimHotspotExtra: 14
+    // Outside the clip, so with the 20px bar a trim edge offers a 40px+ grab — a fingertip.
+    readonly property real androidTrimHotspotExtra: 20
     // Preview region held between a floor and a ceiling. The pane is sized from the project
     // aspect, but only within this band: below the floor the canvas letterboxes inside the
     // pane instead of the pane shrinking, so the transport row's y stays put between the

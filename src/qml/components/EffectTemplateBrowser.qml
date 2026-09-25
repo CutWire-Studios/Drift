@@ -155,6 +155,10 @@ Column {
             // as the old Grid did. Rows are a fixed two label lines tall.
             GridView {
                 id: presetGrid
+                // As many columns as fit at the nominal card size, rounded, with the cards stretched or
+                // squeezed a little to fill the row — a fixed card left a column's worth of empty space.
+                readonly property int columnCount: Math.max(1, Math.round(width / (Theme.assetCardWidth + Theme.assetCardGap)))
+                readonly property real cardSize: Math.floor(width / columnCount) - Theme.assetCardGap
                 x: 12
                 width: parent.width - 24 + Theme.assetCardGap
                 height: parent.height
@@ -164,15 +168,16 @@ Column {
                 clip: true
                 reuseItems: true
                 boundsBehavior: Flickable.StopAtBounds
+                acceptedButtons: Theme.touchUi ? Qt.LeftButton : Qt.NoButton
                 ScrollBar.vertical: AppScrollBar { }
-                cellWidth: Theme.assetCardWidth + Theme.assetCardGap
-                cellHeight: Theme.assetCardWidth + 4 + Math.ceil(labelMetrics.height) * 2 + Theme.assetCardGap
+                cellWidth: Math.floor(width / columnCount)
+                cellHeight: presetGrid.cardSize + 4 + Math.ceil(labelMetrics.height) * 2 + Theme.assetCardGap
                 model: root.visibleTemplates
 
                 delegate: Column {
                     id: templateCard
                     required property var modelData
-                    width: Theme.assetCardWidth
+                    width: presetGrid.cardSize
                     spacing: 4
 
                     readonly property var effectThumbs: templateCard.modelData.effectThumbnails || []
@@ -182,8 +187,8 @@ Column {
                     readonly property int mosaicRows: mosaicCells <= 2 ? 1 : 2
 
                     Rectangle {
-                        width: Theme.assetCardWidth
-                        height: Theme.assetCardWidth
+                        width: presetGrid.cardSize
+                        height: presetGrid.cardSize
                         radius: Theme.radiusSm
                         color: cardHover.hovered ? Theme.panelSecondaryBg : Theme.panelAccent
                         border.width: 1
@@ -222,7 +227,7 @@ Column {
                                                 : ""
                                         fillMode: Image.PreserveAspectCrop
                                         asynchronous: true
-                                        sourceSize: Qt.size(Math.ceil(Theme.assetCardWidth * Screen.devicePixelRatio), Math.ceil(Theme.assetCardWidth * Screen.devicePixelRatio))
+                                        sourceSize: Qt.size(Math.ceil(presetGrid.cardSize * Screen.devicePixelRatio), Math.ceil(presetGrid.cardSize * Screen.devicePixelRatio))
                                         smooth: true
                                     }
 
@@ -307,7 +312,15 @@ Column {
                             }
                         }
 
-                        TapHandler {
+                        // Tap applies to the selected clip; drag to apply it to any clip, on the
+                        // timeline or in the preview.
+                        AssetDragSource {
+                            id: templateDrag
+                            anchors.fill: parent
+                            kind: "template"
+                            payload: templateCard.modelData.id
+                            label: templateCard.modelData.label
+                            glyph: Theme.icons.layers
                             onTapped: root.applyTemplate(templateCard.modelData.id)
                         }
 

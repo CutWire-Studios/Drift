@@ -28,6 +28,7 @@
 #include <QAbstractItemModel>
 #include <zlib.h>
 
+#include "playback/CompositorService.h"
 #include "engine/HwAccel.h"
 #include "engine/FrameCompositor.h"
 #include "engine/ClipReaderPool.h"
@@ -94,6 +95,15 @@ private slots:
     void channelCountIsKnownBeforeAnythingDecodes();
     void separateAudioCarriesAudioEffectsAndSpeedCurve();
     void addTextClip();
+    void dropShapeOnNewTrackIsOneUndo();
+    void dropShapeOnTrackUsesThatTrack();
+    void stickerLandsOnRequestedTrack();
+    void dropEffectOnGapAddsAdjustmentLayer();
+    void dropRejectsClipKindOverEmptyNonVideoTrack();
+    void transitionJunctionFindsTheCut();
+    void previewDropCentresOverlayInOneUndo();
+    void previewClipAtCanvasPointPicksTopmost();
+    void compositorRequestDedupKeepsEveryOption();
     void addTextClipEmptyUsesPlaceholder();
     void addTextClipWithTextDoesNotRequestEdit();
     void addTextClipWithPresetAppliesStyle();
@@ -4299,6 +4309,191 @@ void buildOneClipProject(AppController &state, double startSeconds, double durat
 
 } // namespace
 
+
+namespace {
+
+QString firstShapeId(const AppController &state)
+{
+    const QVariantList shapes = state.builtinShapes();
+    return shapes.isEmpty() ? QString() : shapes.first().toMap().value(QStringLiteral("id")).toString();
+}
+
+} // namespace
+
+// Dragging a shape into the new-track band inserts the track and the clip as one edit.
+void EditorStateTest::dropShapeOnNewTrackIsOneUndo()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    buildOneClipProject(state, 0.0, 4.0);
+    const QString shape = firstShapeId(state);
+    QVERIFY(!shape.isEmpty());
+    const int undoBefore = state.m_undoStack.count();
+
+    const QVariantMap plan = state.dropAsset(QStringLiteral("shape"), shape, QString(), -1, 1.0, 0);
+    QVERIFY(plan.value(QStringLiteral("accepted")).toBool());
+    QCOMPARE(plan.value(QStringLiteral("mode")).toString(), QStringLiteral("newTrack"));
+
+    const QList<drift::Track> &tracks = state.project()->tracks();
+    QCOMPARE(tracks.size(), 2);
+    QCOMPARE(tracks.at(0).type, drift::TrackType::Shape);
+    QCOMPARE(tracks.at(0).clips.size(), 1);
+    QCOMPARE(state.m_undoStack.count(), undoBefore + 1);
+
+    state.undo();
+    QCOMPARE(state.project()->tracks().size(), 1);
+}
+
+void EditorStateTest::dropShapeOnTrackUsesThatTrack()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    state.project()->tracks().clear();
+    state.project()->tracks().append(drift::Track{.type = drift::TrackType::Shape});
+    state.project()->tracks().append(drift::Track{.type = drift::TrackType::Shape});
+    const QString shape = firstShapeId(state);
+
+    const QVariantMap plan = state.planAssetDrop(QStringLiteral("shape"), shape, 1, 2.0, -1);
+    QCOMPARE(plan.value(QStringLiteral("mode")).toString(), QStringLiteral("gap"));
+    state.dropAsset(QStringLiteral("shape"), shape, QString(), 1, 2.0, -1);
+    QCOMPARE(state.project()->tracks().at(0).clips.size(), 0);
+    QCOMPARE(state.project()->tracks().at(1).clips.size(), 1);
+
+    // A track that cannot take the kind is not a landing spot; the drop asks for a new track.
+    state.project()->tracks().append(drift::Track{.type = drift::TrackType::Audio});
+    const QVariantMap onAudio = state.planAssetDrop(QStringLiteral("shape"), shape, 2, 2.0, -1);
+    QCOMPARE(onAudio.value(QStringLiteral("mode")).toString(), QStringLiteral("newTrack"));
+}
+
+// addStickerClip used to drop its track argument on the floor.
+void EditorStateTest::stickerLandsOnRequestedTrack()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    const QVariantList stickers = state.builtinStickers();
+    if (stickers.isEmpty())
+        QSKIP("no built-in stickers in this build");
+    state.project()->tracks().clear();
+    state.project()->tracks().append(drift::Track{.type = drift::TrackType::Shape});
+    state.project()->tracks().append(drift::Track{.type = drift::TrackType::Shape});
+
+    state.addStickerClip(stickers.first().toMap().value(QStringLiteral("id")).toString(), 0.0, 1);
+    QCOMPARE(state.project()->tracks().at(0).clips.size(), 0);
+    QCOMPARE(state.project()->tracks().at(1).clips.size(), 1);
+}
+
+void EditorStateTest::dropEffectOnGapAddsAdjustmentLayer()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    buildOneClipProject(state, 0.0, 4.0);
+
+    const QVariantMap onClip = state.planAssetDrop(QStringLiteral("effect"), QStringLiteral("x"), 0, 1.0, -1);
+    QCOMPARE(onClip.value(QStringLiteral("mode")).toString(), QStringLiteral("clip"));
+    QCOMPARE(onClip.value(QStringLiteral("clip")).toInt(), 0);
+
+    const QVariantMap onGap = state.planAssetDrop(QStringLiteral("effect"), QStringLiteral("x"), 0, 6.0, -1);
+    QCOMPARE(onGap.value(QStringLiteral("mode")).toString(), QStringLiteral("gap"));
+    state.dropAsset(QStringLiteral("effect"), QStringLiteral("x"), QString(), 0, 6.0, -1);
+
+    bool foundAdjustment = false;
+    for (const drift::Track &track : state.project()->tracks()) {
+        if (track.isAdjustment() && !track.clips.isEmpty())
+            foundAdjustment = true;
+    }
+    QVERIFY(foundAdjustment);
+}
+
+void EditorStateTest::dropRejectsClipKindOverEmptyNonVideoTrack()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    state.project()->tracks().clear();
+    state.project()->tracks().append(drift::Track{.type = drift::TrackType::Audio});
+
+    const QVariantMap plan = state.planAssetDrop(QStringLiteral("template"), QStringLiteral("x"), 0, 1.0, -1);
+    QVERIFY(!plan.value(QStringLiteral("accepted")).toBool());
+    QVERIFY(!plan.value(QStringLiteral("message")).toString().isEmpty());
+}
+
+void EditorStateTest::transitionJunctionFindsTheCut()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    buildOneClipProject(state, 0.0, 4.0);
+    drift::Clip second;
+    second.id = QStringLiteral("clip-b");
+    second.type = drift::ClipType::Shape;
+    second.timelineStart = drift::secondsToUs(4.0);
+    second.timelineDuration = drift::secondsToUs(4.0);
+    state.project()->tracks()[0].clips.append(second);
+
+    QCOMPARE(state.transitionJunctionAt(0, 4.1), 0);
+    QCOMPARE(state.transitionJunctionAt(0, 3.9), 0);
+    QCOMPARE(state.transitionJunctionAt(0, 2.0), -1);
+}
+
+// A shape dropped on the preview is centred on the drop point, and undoing once removes it.
+void EditorStateTest::previewDropCentresOverlayInOneUndo()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    buildOneClipProject(state, 0.0, 10.0);
+    const QString shape = firstShapeId(state);
+    const int undoBefore = state.m_undoStack.count();
+    const int tracksBefore = state.project()->tracks().size();
+
+    const QVariantMap plan = state.dropAssetOnPreview(QStringLiteral("shape"), shape, QString(), 500.0, 400.0);
+    QVERIFY(plan.value(QStringLiteral("accepted")).toBool());
+    QCOMPARE(state.m_undoStack.count(), undoBefore + 1);
+
+    const drift::Clip &added = state.project()->tracks().at(state.selectedTrack()).clips.at(state.selectedClip());
+    const double w = added.transformW.evaluateAt(0);
+    const double h = added.transformH.evaluateAt(0);
+    QVERIFY(qAbs(added.transformX.evaluateAt(0) + w / 2.0 - 500.0) < 0.5);
+    QVERIFY(qAbs(added.transformY.evaluateAt(0) + h / 2.0 - 400.0) < 0.5);
+
+    state.undo();
+    QCOMPARE(state.project()->tracks().size(), tracksBefore);
+}
+
+void EditorStateTest::previewClipAtCanvasPointPicksTopmost()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    const QString shape = firstShapeId(state);
+    state.project()->tracks().clear();
+    state.dropAssetOnPreview(QStringLiteral("shape"), shape, QString(), 500.0, 400.0);
+    state.dropAssetOnPreview(QStringLiteral("shape"), shape, QString(), 520.0, 410.0);
+
+    const QVariantMap hit = state.previewClipAtCanvasPoint(510.0, 405.0);
+    QVERIFY(!hit.isEmpty());
+    QCOMPARE(hit.value(QStringLiteral("track")).toInt(), 0);
+    QVERIFY(state.previewClipAtCanvasPoint(-500.0, -500.0).isEmpty());
+}
+
+// The compositor used to rebuild each request from four fields and drop the rest, so proxies and
+// the inline-edit skip never reached a frame. What decides "already drawn" must see every option,
+// and a scrub's exact settle must never be mistaken for the approximate frame before it.
+void EditorStateTest::compositorRequestDedupKeepsEveryOption()
+{
+    FrameCompositor::RenderOptions exact;
+    exact.allowProxies = true;
+    FrameCompositor::RenderOptions approx = exact;
+    approx.approximateSeek = true;
+
+    QVERIFY(CompositorService::isRedundantRequest(1000, exact, 1000, exact));
+    QVERIFY(!CompositorService::isRedundantRequest(1001, exact, 1000, exact));
+    QVERIFY(!CompositorService::isRedundantRequest(1000, exact, 1000, approx));
+    QVERIFY(CompositorService::isRedundantRequest(1000, approx, 1000, exact));
+
+    FrameCompositor::RenderOptions skipping = exact;
+    skipping.skipClipId = QStringLiteral("text-clip");
+    QVERIFY(!CompositorService::isRedundantRequest(1000, skipping, 1000, exact));
+    FrameCompositor::RenderOptions noProxies = exact;
+    noProxies.allowProxies = false;
+    QVERIFY(!CompositorService::isRedundantRequest(1000, noProxies, 1000, exact));
+}
 
 void EditorStateTest::movedClipDoesNotSnapToItsOwnEdges()
 {

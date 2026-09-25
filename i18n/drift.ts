@@ -484,6 +484,14 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Fade</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Speed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Duplicate</source>
         <translation type="unfinished"></translation>
     </message>
@@ -493,6 +501,10 @@
     </message>
     <message>
         <source>Fit</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move the playhead over the clip to split it</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -586,6 +598,49 @@
     </message>
     <message>
         <source>Done</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>AndroidFadeSheet</name>
+    <message>
+        <source>Fade</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Done</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Linear</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Smooth</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Natural</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Custom</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 s</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Fade in</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Fade out</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Curve</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -916,7 +971,183 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Clip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Select multiple</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Tap clips to add them to the selection</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cut</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Remove the clip and keep it to paste</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Copy</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Keep a copy to paste</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Paste attributes…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Apply what you copied from another clip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Rename…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Change the clip&apos;s name</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open composite</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Edit the clips inside</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Flatten composite</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Render it into a single video clip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Make composite</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Group the selected clips into one</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Unlink</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Edit video and its audio separately</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Separate all audio tracks</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>One audio clip per audio track in the file</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Convert to edit-friendly format</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Smoother editing for phone and screen recordings</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Merge subtitle clips</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Join the selected subtitle clips</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Merge all subtitles on this track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Join every subtitle clip on the track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Convert to text clips</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>One text clip per cue</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Convert to subtitle</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Turn text clips into subtitle cues</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Unlink from clip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Stop following the clip it is attached to</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move to its own track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Take the adjustment out of this lane</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Effects</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Copy effects</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Keep this clip&apos;s effects to paste</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Paste effects</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add the copied effects to this clip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Save effects as preset…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Reuse this look on other clips</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Trim &amp; timing</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Split all tracks</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cut every clip under the playhead</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -1384,14 +1615,6 @@
     </message>
     <message>
         <source>Variable frame rate. This clip can drift out of sync with its audio. Right-click it and choose Convert to edit-friendly format.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Drop a transition where two clips meet.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Drop that onto a clip to apply it.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -3200,6 +3423,42 @@
     </message>
     <message>
         <source>Stabilization analysis failed: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Drop a transition where two clips meet.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Audio effects go on clips with sound.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>That goes on a video, image, shape or text clip.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Drop that onto a clip to apply it.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add to new track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Audio effects go on the timeline.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Audio goes on the timeline.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Drop that onto a clip in the preview.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add to preview</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -5403,7 +5662,11 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Add an adjustment layer to apply effects across all clips underneath</source>
+        <source>Add an adjustment layer to apply effects across all clips underneath, or drag it to where it should go</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Adjustment layer</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -7541,6 +7804,10 @@
     </message>
     <message>
         <source>%1 — drag onto a clip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Select a clip first, or drag the mask onto one</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -10525,7 +10792,7 @@ If playback stutters, try another.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>%1 — click to add, or drag to the timeline</source>
+        <source>%1 — click to add, or drag to the timeline or preview</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -10887,6 +11154,10 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Pick another category.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 — click to add, or drag to the timeline or preview</source>
         <translation type="unfinished"></translation>
     </message>
 </context>

@@ -846,6 +846,8 @@ qt_add_executable(drift
     src/playback/PlaybackStats.cpp
     src/playback/PlaybackDiagnostics.h
     src/playback/PlaybackDiagnostics.cpp
+    src/playback/PerfLog.h
+    src/playback/PerfLog.cpp
     src/preview/PreviewItem.h
     src/preview/PreviewItem.cpp
     src/timeline/ClipThumbnailStore.h
@@ -964,6 +966,7 @@ set_source_files_properties(src/qml/Toasts.qml PROPERTIES QT_QML_SINGLETON_TYPE 
 # In-flight lift-and-drop state for the phone asset sheet; the ghost is drawn by
 # AndroidBottomSheet and the drop is performed by AndroidTimeline.
 set_source_files_properties(src/qml/TouchDrag.qml PROPERTIES QT_QML_SINGLETON_TYPE true)
+set_source_files_properties(src/qml/AssetDrag.qml PROPERTIES QT_QML_SINGLETON_TYPE true)
 
 # Lucide icons: use the original scalable SVG sources in QML.
 file(GLOB DRIFT_LUCIDE_ICONS RELATIVE "${CMAKE_SOURCE_DIR}" CONFIGURE_DEPENDS
@@ -990,6 +993,7 @@ qt_add_qml_module(drift
         src/qml/AndroidLayoutSheet.qml
         src/qml/AndroidMain.qml
         src/qml/AndroidMoreToolsSheet.qml
+        src/qml/AndroidFadeSheet.qml
         src/qml/AndroidProjectSheet.qml
         src/qml/AndroidHome.qml
         src/qml/AndroidEditor.qml
@@ -1004,10 +1008,12 @@ qt_add_qml_module(drift
         src/qml/Theme.qml
         src/qml/Toasts.qml
         src/qml/TouchDrag.qml
+        src/qml/AssetDrag.qml
         src/qml/EditorHeader.qml
         src/qml/AssetsPanel.qml
         src/qml/PreviewPanel.qml
         src/qml/components/preview/TransformOverlay.qml
+        src/qml/components/preview/PreviewDropOverlay.qml
         src/qml/components/preview/CropOverlay.qml
         src/qml/components/preview/GuideLayer.qml
         src/qml/components/preview/GuidesPopover.qml
@@ -1053,6 +1059,7 @@ qt_add_qml_module(drift
         src/qml/components/assets/SubtitlesTab.qml
         src/qml/components/assets/StickersTab.qml
         src/qml/components/assets/ShapesTab.qml
+        src/qml/components/assets/AssetDragSource.qml
         src/qml/components/assets/MasksTab.qml
         src/qml/components/assets/SoundsTab.qml
         src/qml/components/assets/TransitionsTab.qml
@@ -1074,6 +1081,7 @@ qt_add_qml_module(drift
         src/qml/components/timeline/TimelineClipItem.qml
         src/qml/components/timeline/PlayheadInterpolator.qml
         src/qml/components/timeline/TimelineTrackArea.qml
+        src/qml/components/timeline/TimelineDropRouter.qml
         src/qml/components/IconGlyph.qml
         src/qml/components/IconButton.qml
         src/qml/components/PanelFrame.qml
@@ -1125,6 +1133,7 @@ qt_add_qml_module(drift
         src/qml/components/ProjectPropertiesDialog.qml
         src/qml/components/SettingsPane.qml
         src/qml/components/SheetActionRow.qml
+        src/qml/components/SheetActionTile.qml
         src/qml/components/SettingsDialog.qml
         src/qml/components/PasteAttributesDialog.qml
         src/qml/components/PackageProgressDialog.qml

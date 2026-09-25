@@ -70,6 +70,7 @@
 #include "engine/VaapiZeroCopy.h"
 #include "engine/VectorClipRenderer.h"
 #include "engine/VectorInspect.h"
+#include "playback/PerfLog.h"
 #include "playback/PlaybackDiagnostics.h"
 #include "engine/ReverseRenderer.h"
 #include "engine/Sam2Segmenter.h"
@@ -915,7 +916,7 @@ AppController::AppController(AssetLibrary *assetLibrary, QObject *parent)
     });
     connect(this, &AppController::playheadSecondsChanged, this, [this] {
         constexpr qint64 kInspectorPlayheadIntervalMs = 100;
-        if (m_playing && m_inspectorPlayheadClock.isValid()
+        if ((m_playing || m_scrubbing) && m_inspectorPlayheadClock.isValid()
             && m_inspectorPlayheadClock.elapsed() < kInspectorPlayheadIntervalMs)
             return;
         m_inspectorPlayheadClock.start();
@@ -5750,13 +5751,20 @@ QVariantList AppController::actions() const
 
 void AppController::setPlayheadUs(drift::TimeUs us)
 {
+    const drift::perf::Scope perfScope("seek.gui");
     const drift::TimeUs clamped = qBound<drift::TimeUs>(0, us, qMax(m_project.durationUs(), drift::TimeUs{0}));
     if (m_playheadUs == clamped)
         return;
 
     m_playheadUs = clamped;
-    m_playback.setPlayheadUs(clamped);
-    emit playheadSecondsChanged();
+    {
+        const drift::perf::Scope engineScope("seek.engine");
+        m_playback.setPlayheadUs(clamped);
+    }
+    {
+        const drift::perf::Scope emitScope("seek.emit");
+        emit playheadSecondsChanged();
+    }
     if (!m_playing)
         syncTextOverlaySkip();
 }
@@ -5776,6 +5784,8 @@ void AppController::setPlaying(bool playing)
     if (playing && m_previewDragActive)
         commitPreviewDrag();
 
+    if (playing)
+        endScrub();
     m_playing = playing;
     if (m_playing) {
         const drift::TimeUs durationUs = m_project.durationUs();
@@ -5798,6 +5808,26 @@ void AppController::setPlaying(bool playing)
     }
     emit playingChanged();
     syncTextOverlaySkip();
+}
+
+void AppController::beginScrub()
+{
+    m_playback.beginScrub();
+    if (m_scrubbing)
+        return;
+    m_scrubbing = true;
+    emit scrubbingChanged();
+}
+
+void AppController::endScrub()
+{
+    m_playback.endScrub();
+    if (!m_scrubbing)
+        return;
+    m_scrubbing = false;
+    emit scrubbingChanged();
+    // The throttle may have swallowed the last position of the gesture.
+    emit inspectorPlayheadChanged();
 }
 
 void AppController::togglePlayback()
@@ -8563,7 +8593,8 @@ void AppController::moveClipToTrack(int trackIndex, int clipIndex, int newTrackI
     finishEdit(tr("Clips moved"));
 }
 
-void AppController::addTextClip(const QString &text, double atSeconds, const QString &presetId)
+void AppController::addTextClip(const QString &text, double atSeconds, const QString &presetId,
+                                int requestedTrack)
 {
     const QString trimmed = text.trimmed();
     // Adding with no text is the "drop it in, then type on the preview" path:
@@ -8573,7 +8604,11 @@ void AppController::addTextClip(const QString &text, double atSeconds, const QSt
     const QString content = placeholder ? tr("Your text here") : trimmed;
 
     const drift::Project before = m_project;
-    const int trackIndex = drift::ensureTrackForClipType(m_project, drift::ClipType::Text, true);
+    const bool requestedFits = requestedTrack >= 0 && requestedTrack < m_project.tracks().size()
+                               && m_project.tracks().at(requestedTrack).allowsClipType(drift::ClipType::Text);
+    const int trackIndex = requestedFits
+        ? requestedTrack
+        : drift::ensureTrackForClipType(m_project, drift::ClipType::Text, true);
     if (trackIndex < 0)
         return;
 
@@ -13656,7 +13691,7 @@ void AppController::addStickerClip(const QString &stickerId, double atSeconds, i
         return;
 
     addImageOverlayClip(path, label.isEmpty() ? stickerId : label, QString(), atSeconds,
-                        QStringLiteral("Sticker added"));
+                        QStringLiteral("Sticker added"), trackIndex);
 }
 
 QVariantList AppController::emojiCatalog() const
@@ -13734,6 +13769,365 @@ void AppController::addImageOverlayClip(const QString &path, const QString &name
     pushProjectEdit(before, undoText);
     finishEdit(undoText);
     selectClip(trackIndex, newClipIndex);
+}
+
+namespace {
+
+std::optional<drift::ClipType> placeableClipType(const QString &kind)
+{
+    if (kind == QLatin1String("shape"))
+        return drift::ClipType::Shape;
+    if (kind == QLatin1String("sticker") || kind == QLatin1String("emoji"))
+        return drift::ClipType::Image;
+    if (kind == QLatin1String("textStyle"))
+        return drift::ClipType::Text;
+    if (kind == QLatin1String("adjustment"))
+        return drift::ClipType::Adjustment;
+    return std::nullopt;
+}
+
+bool isClipTargetedKind(const QString &kind)
+{
+    return kind == QLatin1String("effect") || kind == QLatin1String("audioEffect")
+           || kind == QLatin1String("template") || kind == QLatin1String("effectStack")
+           || kind == QLatin1String("mask");
+}
+
+int clipIndexAtTime(const drift::Track &track, drift::TimeUs t)
+{
+    // Last match wins: with overlap allowed, the later clip is the one drawn on top.
+    int found = -1;
+    for (int i = 0; i < track.clips.size(); ++i) {
+        const drift::Clip &clip = track.clips.at(i);
+        if (t >= clip.timelineStart && t < clip.timelineEnd())
+            found = i;
+    }
+    return found;
+}
+
+QVariantMap rejectDrop(const QString &message = QString())
+{
+    return {{QStringLiteral("accepted"), false}, {QStringLiteral("mode"), QStringLiteral("none")},
+            {QStringLiteral("message"), message}};
+}
+
+} // namespace
+
+bool AppController::isPlaceableDropKind(const QString &kind) const
+{
+    return placeableClipType(kind).has_value();
+}
+
+bool AppController::trackAcceptsDropKind(int trackIndex, const QString &kind) const
+{
+    if (trackIndex < 0 || trackIndex >= m_project.tracks().size())
+        return false;
+    const drift::Track &track = m_project.tracks().at(trackIndex);
+    if (const std::optional<drift::ClipType> type = placeableClipType(kind))
+        return track.allowsClipType(*type) && !track.isAdjustmentLane();
+    return true;
+}
+
+int AppController::transitionJunctionAt(int trackIndex, double seconds) const
+{
+    if (trackIndex < 0 || trackIndex >= m_project.tracks().size())
+        return -1;
+    const drift::Track &track = m_project.tracks().at(trackIndex);
+    if (track.type != drift::TrackType::Video && track.type != drift::TrackType::Shape
+        && track.type != drift::TrackType::Text && track.type != drift::TrackType::Audio)
+        return -1;
+    // A cut is a target for a quarter second either side of it; an overlap for its whole length.
+    constexpr double kCutReach = 0.25;
+    constexpr double kTouching = 0.001;
+    int best = -1;
+    double bestDistance = 1e9;
+    for (int i = 0; i < track.clips.size(); ++i) {
+        const drift::Clip &left = track.clips.at(i);
+        const double leftEnd = drift::usToSeconds(left.timelineEnd());
+        for (int j = 0; j < track.clips.size(); ++j) {
+            const drift::Clip &right = track.clips.at(j);
+            if (i == j || right.timelineStart < left.timelineStart)
+                continue;
+            const double rightStart = drift::usToSeconds(right.timelineStart);
+            if (rightStart - leftEnd > kTouching)
+                continue;
+            const double regionStart = rightStart < leftEnd ? rightStart : leftEnd - kCutReach;
+            const double regionEnd = rightStart < leftEnd ? leftEnd : leftEnd + kCutReach;
+            if (seconds < regionStart || seconds > regionEnd)
+                continue;
+            const double distance = qAbs(seconds - (regionStart + regionEnd) / 2.0);
+            if (distance < bestDistance) {
+                bestDistance = distance;
+                best = i;
+            }
+        }
+    }
+    return best;
+}
+
+QVariantMap AppController::planAssetDrop(const QString &kind, const QString &payload, int trackIndex,
+                                         double seconds, int newTrackIndex) const
+{
+    Q_UNUSED(payload);
+    const double at = qMax(0.0, seconds);
+    const int trackCount = int(m_project.tracks().size());
+    const bool onTrack = trackIndex >= 0 && trackIndex < trackCount;
+
+    if (const std::optional<drift::ClipType> type = placeableClipType(kind)) {
+        const double duration = drift::usToSeconds(*type == drift::ClipType::Text
+                                                       ? drift::kTextClipDurationUs
+                                                       : drift::kImageClipDurationUs);
+        QVariantMap plan{{QStringLiteral("accepted"), true},
+                         {QStringLiteral("landingStart"), at},
+                         {QStringLiteral("landingDuration"), duration},
+                         {QStringLiteral("track"), -1},
+                         {QStringLiteral("newTrackIndex"), -1}};
+        if (newTrackIndex >= 0 || !onTrack || !trackAcceptsDropKind(trackIndex, kind)) {
+            plan.insert(QStringLiteral("mode"), QStringLiteral("newTrack"));
+            plan.insert(QStringLiteral("newTrackIndex"),
+                        newTrackIndex >= 0 ? qMin(newTrackIndex, trackCount) : 0);
+            return plan;
+        }
+        plan.insert(QStringLiteral("mode"), QStringLiteral("gap"));
+        plan.insert(QStringLiteral("track"), trackIndex);
+        return plan;
+    }
+
+    if (!onTrack)
+        return rejectDrop();
+    const drift::Track &track = m_project.tracks().at(trackIndex);
+
+    if (kind == QLatin1String("transition")) {
+        const int left = transitionJunctionAt(trackIndex, at);
+        if (left < 0)
+            return rejectDrop(tr("Drop a transition where two clips meet."));
+        return {{QStringLiteral("accepted"), true}, {QStringLiteral("mode"), QStringLiteral("junction")},
+                {QStringLiteral("track"), trackIndex}, {QStringLiteral("clip"), left}};
+    }
+
+    if (!isClipTargetedKind(kind))
+        return rejectDrop();
+
+    const bool audioTrack = track.type == drift::TrackType::Audio;
+    const int clipIndex = clipIndexAtTime(track, drift::secondsToUs(at));
+    if (clipIndex >= 0) {
+        const bool fits = kind == QLatin1String("audioEffect")
+                              ? (audioTrack || track.type == drift::TrackType::Video)
+                              : !audioTrack && !(kind == QLatin1String("mask") && track.isAdjustmentLane());
+        if (!fits) {
+            return rejectDrop(kind == QLatin1String("audioEffect")
+                                  ? tr("Audio effects go on clips with sound.")
+                                  : tr("That goes on a video, image, shape or text clip."));
+        }
+        return {{QStringLiteral("accepted"), true}, {QStringLiteral("mode"), QStringLiteral("clip")},
+                {QStringLiteral("track"), trackIndex}, {QStringLiteral("clip"), clipIndex}};
+    }
+
+    // Over empty track. An effect there becomes an adjustment layer over whatever is below it,
+    // and a mask a mask lane — both only make sense over pictures.
+    const bool pictureTrack = track.type == drift::TrackType::Video;
+    if (pictureTrack && (kind == QLatin1String("effect") || kind == QLatin1String("effectStack")
+                         || kind == QLatin1String("mask"))) {
+        return {{QStringLiteral("accepted"), true}, {QStringLiteral("mode"), QStringLiteral("gap")},
+                {QStringLiteral("track"), trackIndex},
+                {QStringLiteral("landingStart"), at},
+                {QStringLiteral("landingDuration"), drift::usToSeconds(drift::kImageClipDurationUs)}};
+    }
+    return rejectDrop(tr("Drop that onto a clip to apply it."));
+}
+
+QVariantMap AppController::dropAsset(const QString &kind, const QString &payload, const QString &label,
+                                     int trackIndex, double seconds, int newTrackIndex)
+{
+    const QVariantMap plan = planAssetDrop(kind, payload, trackIndex, seconds, newTrackIndex);
+    // A refusal's message is the caller's to show: it knows whether a toast fits.
+    if (!plan.value(QStringLiteral("accepted")).toBool())
+        return plan;
+    const QString mode = plan.value(QStringLiteral("mode")).toString();
+    const int track = plan.value(QStringLiteral("track")).toInt();
+    const int clip = plan.value(QStringLiteral("clip"), -1).toInt();
+    const double at = plan.value(QStringLiteral("landingStart"), qMax(0.0, seconds)).toDouble();
+
+    if (const std::optional<drift::ClipType> type = placeableClipType(kind)) {
+        // A new track and the clip on it are one edit, so one undo takes both away.
+        const bool newTrack = mode == QLatin1String("newTrack");
+        int target = track;
+        if (newTrack) {
+            mcpBeginBatch();
+            target = drift::insertTrackAboveForClipType(
+                m_project, plan.value(QStringLiteral("newTrackIndex")).toInt(), *type);
+        }
+        if (kind == QLatin1String("shape"))
+            addShapeClipAt(payload, target, at);
+        else if (kind == QLatin1String("sticker"))
+            addStickerClip(payload, at, target);
+        else if (kind == QLatin1String("emoji"))
+            addEmojiClip(payload, label, at, target);
+        else if (kind == QLatin1String("textStyle"))
+            addTextClip(QString(), at, payload, target);
+        else if (kind == QLatin1String("adjustment"))
+            addAdjustmentClipAt(target, at);
+        if (newTrack)
+            mcpEndBatch(tr("Add to new track"), true);
+        return plan;
+    }
+
+    if (mode == QLatin1String("junction")) {
+        QString transition = QStringLiteral("crossfade");
+        for (const QVariant &entry : transitionKindsForTrack(track)) {
+            if (entry.toMap().value(QStringLiteral("kind")).toString() == payload)
+                transition = payload;
+        }
+        addTransition(track, clip, transition, 0.5);
+        return plan;
+    }
+
+    if (mode == QLatin1String("clip")) {
+        if (kind == QLatin1String("effect"))
+            addEffect(track, clip, payload);
+        else if (kind == QLatin1String("audioEffect"))
+            addAudioEffect(track, clip, payload);
+        else if (kind == QLatin1String("template"))
+            applyEffectTemplate(track, clip, payload);
+        else if (kind == QLatin1String("effectStack"))
+            applyEffectPreset(track, clip, payload);
+        else if (kind == QLatin1String("mask"))
+            addMaskToClip(track, clip, payload);
+        // Effects and masks select what they made (the stack's host, the mask clip), which is
+        // where their inspector lives; the rest leave the target selected.
+        if (kind != QLatin1String("effect") && kind != QLatin1String("mask"))
+            selectClip(track, clip);
+        return plan;
+    }
+
+    // mode == "gap"
+    if (kind == QLatin1String("effect")) {
+        addAdjustmentClipWithEffect(payload, -1, at);
+    } else if (kind == QLatin1String("mask")) {
+        addMaskLaneClip(track, payload, at);
+    } else if (kind == QLatin1String("effectStack")) {
+        mcpBeginBatch();
+        addAdjustmentClipWithEffect(QString(), -1, at);
+        if (m_selectedTrack >= 0 && m_selectedClip >= 0)
+            applyEffectPreset(m_selectedTrack, m_selectedClip, payload);
+        mcpEndBatch(tr("Add adjustment layer"), true);
+    }
+    return plan;
+}
+
+QVariantMap AppController::previewClipAtCanvasPoint(double canvasX, double canvasY) const
+{
+    // previewClipsAtPlayhead lists the top track first, so the first hit is the one on top.
+    for (const QVariant &item : previewClipsAtPlayhead()) {
+        const QVariantMap box = item.toMap();
+        const double x = box.value(QStringLiteral("x")).toDouble();
+        const double y = box.value(QStringLiteral("y")).toDouble();
+        const double w = box.value(QStringLiteral("width")).toDouble();
+        const double h = box.value(QStringLiteral("height")).toDouble();
+        const double radians = qDegreesToRadians(box.value(QStringLiteral("rotation")).toDouble());
+        const double cx = x + w / 2.0;
+        const double cy = y + h / 2.0;
+        // Into the box's own frame: undo its rotation about its centre.
+        const double dx = canvasX - cx;
+        const double dy = canvasY - cy;
+        const double lx = dx * std::cos(-radians) - dy * std::sin(-radians);
+        const double ly = dx * std::sin(-radians) + dy * std::cos(-radians);
+        if (qAbs(lx) <= w / 2.0 && qAbs(ly) <= h / 2.0)
+            return box;
+    }
+    return {};
+}
+
+QVariantMap AppController::planPreviewDrop(const QString &kind, const QString &payload,
+                                           double canvasX, double canvasY) const
+{
+    if (kind == QLatin1String("transition"))
+        return rejectDrop();
+    if (kind == QLatin1String("audioEffect"))
+        return rejectDrop(tr("Audio effects go on the timeline."));
+    if (kind == QLatin1String("media")) {
+        const drift::MediaAsset *asset =
+            m_assetLibrary ? m_project.asset(m_assetLibrary->assetIdAt(payload.toInt())) : nullptr;
+        if (!asset)
+            return rejectDrop();
+        if (asset->kind == drift::MediaKind::Audio)
+            return rejectDrop(tr("Audio goes on the timeline."));
+        return {{QStringLiteral("accepted"), true}, {QStringLiteral("mode"), QStringLiteral("canvas")}};
+    }
+    if (placeableClipType(kind))
+        return {{QStringLiteral("accepted"), true}, {QStringLiteral("mode"), QStringLiteral("canvas")}};
+    if (isClipTargetedKind(kind)) {
+        const QVariantMap box = previewClipAtCanvasPoint(canvasX, canvasY);
+        if (box.isEmpty())
+            return rejectDrop(tr("Drop that onto a clip in the preview."));
+        QVariantMap plan = box;
+        plan.insert(QStringLiteral("accepted"), true);
+        plan.insert(QStringLiteral("mode"), QStringLiteral("clip"));
+        plan.insert(QStringLiteral("clip"), box.value(QStringLiteral("clip")));
+        return plan;
+    }
+    return rejectDrop();
+}
+
+QVariantMap AppController::dropAssetOnPreview(const QString &kind, const QString &payload,
+                                              const QString &label, double canvasX, double canvasY)
+{
+    // Lands at the playhead, so the playhead has to hold still for it.
+    if (m_playing)
+        setPlaying(false);
+
+    const QVariantMap plan = planPreviewDrop(kind, payload, canvasX, canvasY);
+    // A refusal's message is the caller's to show: it knows whether a toast fits.
+    if (!plan.value(QStringLiteral("accepted")).toBool())
+        return plan;
+    const double at = drift::usToSeconds(m_playheadUs);
+
+    if (plan.value(QStringLiteral("mode")).toString() == QLatin1String("clip")) {
+        const int track = plan.value(QStringLiteral("track")).toInt();
+        const int clip = plan.value(QStringLiteral("clip")).toInt();
+        if (kind == QLatin1String("effect"))
+            addEffect(track, clip, payload);
+        else if (kind == QLatin1String("template"))
+            applyEffectTemplate(track, clip, payload);
+        else if (kind == QLatin1String("effectStack"))
+            applyEffectPreset(track, clip, payload);
+        else if (kind == QLatin1String("mask"))
+            addMaskToClip(track, clip, payload);
+        if (kind != QLatin1String("effect") && kind != QLatin1String("mask"))
+            selectClip(track, clip);
+        return plan;
+    }
+
+    if (kind == QLatin1String("media")) {
+        addClipFromAssetOnNewTrackAt(payload.toInt(), 0, at);
+        return plan;
+    }
+
+    // Overlays land on top, centred where they were dropped: the add and the placement are one
+    // edit, so a single undo removes the clip rather than first moving it back to the default.
+    mcpBeginBatch();
+    if (kind == QLatin1String("shape"))
+        addShapeClipAt(payload, -1, at);
+    else if (kind == QLatin1String("sticker"))
+        addStickerClip(payload, at, -1);
+    else if (kind == QLatin1String("emoji"))
+        addEmojiClip(payload, label, at, -1);
+    else if (kind == QLatin1String("textStyle"))
+        addTextClip(QString(), at, payload, -1);
+    else if (kind == QLatin1String("adjustment"))
+        addAdjustmentClipAt(-1, at);
+    if (kind != QLatin1String("adjustment") && m_selectedTrack >= 0
+        && m_selectedTrack < m_project.tracks().size()
+        && m_selectedClip >= 0 && m_selectedClip < m_project.tracks().at(m_selectedTrack).clips.size()) {
+        drift::Clip &added = m_project.tracks()[m_selectedTrack].clips[m_selectedClip];
+        const double w = added.transformW.evaluateAt(0);
+        const double h = added.transformH.evaluateAt(0);
+        const double x = qBound(-w / 2.0, canvasX - w / 2.0, m_project.width() - w / 2.0);
+        const double y = qBound(-h / 2.0, canvasY - h / 2.0, m_project.height() - h / 2.0);
+        setClipLayoutPixels(added, x, y, w, h);
+    }
+    mcpEndBatch(tr("Add to preview"), true);
+    return plan;
 }
 
 QVariantList AppController::previewClipsAtPlayhead() const

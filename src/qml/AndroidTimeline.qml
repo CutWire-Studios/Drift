@@ -497,6 +497,10 @@ Item {
     property real dropDurationSeconds: 0
     property bool dropCreatesNewTrack: false
     property int dropNewTrackIndex: 0
+    // Clip type of a non-media drag headed for a new track (see TimelineDropRouter); sizes the
+    // ghost lane when there is no asset index to ask.
+    property string pendingDropKind: ""
+    readonly property TimelineDropRouter dropRouter: TimelineDropRouter { panel: root }
     property int effectDropTrackIndex: -1
     property int effectDropClipIndex: -1
 
@@ -772,67 +776,14 @@ Item {
             runAdd()
     }
 
-    // A visual-only transition dropped on an audio track becomes the crossfade it can actually be.
-    function transitionKindForTrack(trackIndex, kind) {
-        const kinds = EditorState.transitionKindsForTrack(trackIndex)
-        for (let i = 0; i < kinds.length; ++i) {
-            if (kinds[i].kind === kind)
-                return kind
-        }
-        return "crossfade"
-    }
-
-    // Outgoing (earlier) clip of the boundary a transition dropped at this x
-    // would bridge.
-    function transitionLeftClipAtPosition(trackIndex, xPixels) {
-        if (trackIndex < 0 || trackIndex >= tracks.length)
-            return -1
-        const track = tracks[trackIndex]
-        if (track.type !== "video" && track.type !== "shape" && track.type !== "text"
-                && track.type !== "audio")
-            return -1
-        const seconds = xPixels / pxPerSecond
-        const clips = track.clips
-        let best = -1
-        let bestDist = 1e9
-        for (let i = 0; i < clips.length; i++) {
-            const left = clips[i]
-            for (let j = 0; j < clips.length; j++) {
-                if (i === j)
-                    continue
-                const right = clips[j]
-                if (right.start < left.start)
-                    continue
-                const leftEnd = left.start + left.duration
-                const gap = right.start - leftEnd
-                if (gap > 0.001)
-                    continue
-                let regionStart
-                let regionEnd
-                if (right.start < leftEnd) {
-                    regionStart = right.start
-                    regionEnd = leftEnd
-                } else {
-                    regionStart = leftEnd - 0.25
-                    regionEnd = leftEnd + 0.25
-                }
-                if (seconds >= regionStart && seconds <= regionEnd) {
-                    const mid = (regionStart + regionEnd) / 2
-                    const dist = Math.abs(seconds - mid)
-                    if (dist < bestDist) {
-                        bestDist = dist
-                        best = i
-                    }
-                }
-            }
-        }
-        return best
-    }
-
     // --- TouchDrag drop target ------------------------------------------------
 
-    Component.onCompleted: TouchDrag.dropTarget = root
-    Component.onDestruction: if (TouchDrag.dropTarget === root) TouchDrag.dropTarget = null
+    Component.onCompleted: TouchDrag.registerTarget(root)
+    Component.onDestruction: TouchDrag.unregisterTarget(root)
+
+    function touchDropContains(sceneX, sceneY) {
+        return touchDropPoint(sceneX, sceneY).inside
+    }
 
     // Scene point → { inside, x (content px), y (track-column px), viewX, viewY }.
     // The seek strip is pinned to the top of the viewport, so anything under it is
@@ -851,6 +802,7 @@ Item {
     function clearTouchDrop() {
         clearLandingPreview()
         clearEffectDropHighlight()
+        pendingDropKind = ""
         dropEdgeScroll.stop()
     }
 
@@ -872,21 +824,7 @@ Item {
             updateAssetDropPreview(payload, pt.x, pt.y)
             return true
         }
-
-        clearLandingPreview()
-        const trackIdx = trackIndexAtY(pt.y)
-        if (trackIdx < 0) {
-            clearEffectDropHighlight()
-            return false
-        }
-        if (kind === "transition") {
-            const leftClip = transitionLeftClipAtPosition(trackIdx, Math.max(0, pt.x))
-            effectDropTrackIndex = leftClip >= 0 ? trackIdx : -1
-            effectDropClipIndex = leftClip
-            return leftClip >= 0
-        }
-        updateEffectDropHighlight(trackIdx, Math.max(0, pt.x))
-        return effectDropClipIndex >= 0
+        return dropRouter.hover(kind, payload, pt.x, pt.y)
     }
 
     function performTouchDrop(kind, payload, sceneX, sceneY) {
@@ -899,33 +837,7 @@ Item {
             performAssetDrop(payload, pt.x, pt.y)
             return
         }
-
-        const trackIdx = trackIndexAtY(pt.y)
-        const clipX = Math.max(0, pt.x)
-
-        if (kind === "transition") {
-            const leftClip = trackIdx >= 0
-                             ? transitionLeftClipAtPosition(trackIdx, clipX) : -1
-            if (leftClip < 0) {
-                Toasts.info(qsTr("Drop a transition where two clips meet."))
-                return
-            }
-            EditorState.addTransition(trackIdx, leftClip, transitionKindForTrack(trackIdx, payload), 0.5)
-            return
-        }
-
-        const clipIdx = trackIdx >= 0 ? clipIndexAtPosition(trackIdx, clipX) : -1
-        if (clipIdx < 0) {
-            Toasts.info(qsTr("Drop that onto a clip to apply it."))
-            return
-        }
-        if (kind === "effect")
-            EditorState.addEffect(trackIdx, clipIdx, payload)
-        else if (kind === "audioEffect")
-            EditorState.addAudioEffect(trackIdx, clipIdx, payload)
-        else if (kind === "template")
-            EditorState.applyEffectTemplate(trackIdx, clipIdx, payload)
-        EditorState.selectClip(trackIdx, clipIdx)
+        dropRouter.drop(kind, payload, TouchDrag.label, pt.x, pt.y)
     }
 
     // The pane is a couple of track rows tall and a few seconds wide, so without
@@ -1060,13 +972,15 @@ Item {
     // sink's processedUSecs is cumulative from play(), so the visible playhead
     // becomes tapTime + elapsed. Pause for the gesture and resume on release.
     function beginPlayheadSeek() {
-        if (!EditorState.playing)
-            return
-        resumePlaybackAfterSeek = true
-        EditorState.playing = false
+        if (EditorState.playing) {
+            resumePlaybackAfterSeek = true
+            EditorState.playing = false
+        }
+        EditorState.beginScrub()
     }
 
     function endPlayheadSeek() {
+        EditorState.endScrub()
         if (!resumePlaybackAfterSeek)
             return
         resumePlaybackAfterSeek = false
@@ -1581,8 +1495,11 @@ Item {
 
                                     MouseArea {
                                         anchors.fill: parent
-                                        // The flag is 10px; the target is a fingertip.
-                                        anchors.margins: -14
+                                        // The flag is 10px; the target is a fingertip — widened
+                                        // sideways only, so it cannot reach down over the first
+                                        // track and eat the start of a pan there.
+                                        anchors.leftMargin: -14
+                                        anchors.rightMargin: -14
                                         preventStealing: true
                                         pressAndHoldInterval: 400
 
@@ -1654,6 +1571,13 @@ Item {
                                 height: root.trackHeight(trackIndex)
                                 color: Qt.rgba(Theme.panelAccent.r, Theme.panelAccent.g,
                                                Theme.panelAccent.b, 0.22)
+
+                                // A tap on empty track clears the selection. Clips take their
+                                // own presses first, and a drag still belongs to the Flickable.
+                                TapHandler {
+                                    enabled: !root.multiSelectActive
+                                    onTapped: EditorState.clearSelection()
+                                }
 
                                 // Nested adjustment lanes as strips across the top of this row.
                                 Column {
@@ -1845,15 +1769,18 @@ Item {
                                     }
                                 }
 
-                                // Long-press a gap to ripple everything after it left.
+                                // Long-press a gap to ripple everything after it left; a tap
+                                // clears the selection like any other empty stretch of track.
                                 Repeater {
                                     model: EditorState.clipsModel(trackRow.trackIndex).gaps
                                     delegate: Item {
                                         id: gapItem
                                         required property var modelData
                                         x: modelData.start * root.pxPerSecond
-                                        width: Math.max(Theme.androidClipEdgeMargin,
-                                                        (modelData.end - modelData.start) * root.pxPerSecond)
+                                        // The gap's own width, never more: padding it to a minimum
+                                        // spilled it over the next clip's edge, where it swallowed
+                                        // that clip's taps and its trim handle.
+                                        width: Math.max(0, (modelData.end - modelData.start) * root.pxPerSecond)
                                         height: trackRow.height
                                         z: 1
 
@@ -1868,8 +1795,15 @@ Item {
                                             id: gapPress
                                             anchors.fill: parent
                                             pressAndHoldInterval: 400
-                                            onPressAndHold: root.openGapMenu(trackRow.trackIndex,
-                                                                             gapItem.modelData.start)
+                                            property bool held: false
+                                            onPressed: held = false
+                                            onPressAndHold: {
+                                                held = true
+                                                Haptics.pickUp()
+                                                root.openGapMenu(trackRow.trackIndex, gapItem.modelData.start)
+                                            }
+                                            onClicked: if (!held && !root.multiSelectActive)
+                                                           EditorState.clearSelection()
                                         }
                                     }
                                 }
@@ -1942,8 +1876,13 @@ Item {
                                             }
                                         }
 
+                                        // Only the glyph in the middle is a target. Covering the
+                                        // whole overlap took the ends of both clips with it, and
+                                        // those are where their trim handles are.
                                         MouseArea {
-                                            anchors.fill: parent
+                                            anchors.centerIn: parent
+                                            width: Math.min(parent.width, Theme.androidIconButtonSize)
+                                            height: parent.height
                                             onClicked: {
                                                 if (transitionRegion.hasTransition) {
                                                     Haptics.select()
@@ -2060,7 +1999,9 @@ Item {
                         id: newTrackIndicator
                         visible: root.dropCreatesNewTrack
                         readonly property real laneHeight: {
-                            const t = EditorState.trackTypeForAsset(EditorState.draggingAssetIndex)
+                            const t = root.pendingDropKind.length > 0
+                                    ? EditorState.trackTypeForKind(root.pendingDropKind)
+                                    : EditorState.trackTypeForAsset(EditorState.draggingAssetIndex)
                             if (t === "video") return Theme.trackHeightVideo
                             if (t === "audio") return Theme.trackHeightAudio
                             if (t === "shape") return Theme.trackHeightShape

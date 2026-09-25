@@ -132,6 +132,10 @@ Item {
 
             GridView {
                 id: transitionGrid
+                // As many columns as fit at the nominal card size, rounded, with the cards stretched or
+                // squeezed a little to fill the row — a fixed card left a column's worth of empty space.
+                readonly property int columnCount: Math.max(1, Math.round(width / (Theme.assetCardWidth + Theme.assetCardGap)))
+                readonly property real cardSize: Math.floor(width / columnCount) - Theme.assetCardGap
                 // One trailing gap wider than the padded area, so the last column's gap
                 // fits and the cards pack from the left exactly as the old Grid did.
                 x: Theme.pagePadding
@@ -144,15 +148,16 @@ Item {
                 clip: true
                 reuseItems: true
                 boundsBehavior: Flickable.StopAtBounds
+                acceptedButtons: Theme.touchUi ? Qt.LeftButton : Qt.NoButton
                 ScrollBar.vertical: AppScrollBar { }
-                cellWidth: Theme.assetCardWidth + Theme.assetCardGap
-                cellHeight: Theme.assetCardWidth + 4 + Math.ceil(labelMetrics.height) * 2 + Theme.assetCardGap
+                cellWidth: Math.floor(width / columnCount)
+                cellHeight: transitionGrid.cardSize + 4 + Math.ceil(labelMetrics.height) * 2 + Theme.assetCardGap
                 model: root.visibleTransitions
 
                 delegate: Column {
                     id: transitionCard
                     required property var modelData
-                    width: Theme.assetCardWidth
+                    width: transitionGrid.cardSize
                     spacing: 4
                     // Lift on grab — matches the media and effect cards.
                     opacity: transitionDrag.active ? 0.85 : 1
@@ -203,11 +208,11 @@ Item {
                     Drag.keys: ["application/x-drift-transition"]
                     Drag.mimeData: ({ "application/x-drift-transition": transitionCard.modelData.kind })
                     Drag.hotSpot.x: width / 2
-                    Drag.hotSpot.y: Theme.assetCardWidth / 2
+                    Drag.hotSpot.y: transitionGrid.cardSize / 2
 
                     Rectangle {
-                        width: Theme.assetCardWidth
-                        height: Theme.assetCardWidth
+                        width: transitionGrid.cardSize
+                        height: transitionGrid.cardSize
                         radius: Theme.radiusSm
                         color: transitionHover.hovered ? Theme.panelSecondaryBg : Theme.panelAccent
                         border.width: transitionDrag.active ? Theme.borderWidth : 0
@@ -241,6 +246,7 @@ Item {
                             // drag has no touch gesture and cannot leave the sheet.
                             enabled: !Theme.touchUi
                             acceptedButtons: Qt.LeftButton
+                            acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad | PointerDevice.Stylus
                         }
 
                         // Hold to carry the transition onto the join between two

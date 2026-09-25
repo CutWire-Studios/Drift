@@ -340,7 +340,7 @@ PanelFrame {
                     width: canvasRect.width
                     height: canvasRect.height
                     z: 120
-                    visible: !root.playing && EditorState.projectWidth() > 0
+                    visible: !root.playing && !EditorState.scrubbing && EditorState.projectWidth() > 0
                              && !EditorState.canvasCropMode && !EditorState.maskEditActive
                              && EditorState.guideEditSetId === ""
                 }
@@ -356,9 +356,54 @@ PanelFrame {
                     width: canvasRect.width
                     height: canvasRect.height
                     z: 100
-                    visible: !root.playing && EditorState.projectWidth() > 0
+                    visible: !root.playing && !EditorState.scrubbing && EditorState.projectWidth() > 0
                              && !EditorState.canvasCropMode && !EditorState.maskEditActive
                              && EditorState.guideEditSetId === ""
+                }
+
+                // Assets dragged from the browsers land here as overlays at the playhead, or onto
+                // the clip under the pointer. Above the transform handles so a drag passing over a
+                // selected clip still reaches it.
+                PreviewDropOverlay {
+                    id: previewDrop
+                    x: canvasRect.x
+                    y: canvasRect.y
+                    width: canvasRect.width
+                    height: canvasRect.height
+                    z: 150
+                    enabled: EditorState.projectWidth() > 0 && !EditorState.canvasCropMode
+                             && !EditorState.maskEditActive && EditorState.guideEditSetId === ""
+
+                    DropArea {
+                        anchors.fill: parent
+                        enabled: previewDrop.enabled
+                        keys: AssetDrag.allKeys()
+
+                        function kindOf(drop) {
+                            return AssetDrag.kindFromKeys(drop.keys)
+                        }
+                        function payloadOf(drop, kind) {
+                            if (kind === "media" && EditorState.draggingAssetIndex >= 0)
+                                return EditorState.draggingAssetIndex
+                            return AssetDrag.payloadFromDrop(drop, kind)
+                        }
+
+                        onEntered: (drop) => {
+                            const kind = kindOf(drop)
+                            previewDrop.hover(kind, payloadOf(drop, kind), drop.x, drop.y)
+                        }
+                        onPositionChanged: (drop) => {
+                            const kind = kindOf(drop)
+                            previewDrop.hover(kind, payloadOf(drop, kind), drop.x, drop.y)
+                        }
+                        onExited: previewDrop.clear()
+                        onDropped: (drop) => {
+                            drop.accept(Qt.CopyAction)
+                            const kind = kindOf(drop)
+                            previewDrop.drop(kind, payloadOf(drop, kind), AssetDrag.labelFromDrop(drop, kind),
+                                             drop.x, drop.y)
+                        }
+                    }
                 }
 
                 // Canvas crop tool. Lives outside the (clipped) canvas rect so the
@@ -439,12 +484,9 @@ PanelFrame {
         }
     }
 
+    // Seeks render from the engine itself (PlaybackEngine::setPlayheadUs).
     Connections {
         target: EditorState
-        function onPlayheadSecondsChanged() {
-            if (!EditorState.playing)
-                EditorState.playback.refreshFrame()
-        }
         function onPlayingChanged() {
             if (!EditorState.playing)
                 EditorState.playback.refreshFrame()

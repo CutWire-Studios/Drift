@@ -1929,7 +1929,8 @@ bool ClipReader::refVideoFrame(AVFrame *&dst, const AVFrame *src)
     return av_frame_ref(dst, src) >= 0;
 }
 
-bool ClipReader::advanceVideoTo(drift::TimeUs sourceUs, int maxWidth, int maxHeight, bool *hwFailure)
+bool ClipReader::advanceVideoTo(drift::TimeUs sourceUs, int maxWidth, int maxHeight, bool *hwFailure,
+                                const AdvanceLimits &limits)
 {
     if (hwFailure)
         *hwFailure = false;
@@ -1943,7 +1944,7 @@ bool ClipReader::advanceVideoTo(drift::TimeUs sourceUs, int maxWidth, int maxHei
     if (m_hasCover && sourceUs == m_coverPtsUs)
         return true;
 
-    const bool needSeek = !m_videoPositioned
+    const bool needSeek = limits.forceSeek || !m_videoPositioned
                           || (m_hasCover && sourceUs < m_coverPtsUs)
                           || sourceUs - m_lastVideoPtsUs > kForwardSeekThresholdUs;
     if (needSeek && !seekVideoStream(sourceUs))
@@ -1960,6 +1961,7 @@ bool ClipReader::advanceVideoTo(drift::TimeUs sourceUs, int maxWidth, int maxHei
     bool done = false;
     bool sawHwFailure = false;
     bool droppedPacket = false;
+    int received = 0;
 
     auto markHwFailure = [&](const QString &what) {
         if (m_hwAccelActive || m_mediaCodecActive) {
@@ -2032,6 +2034,10 @@ bool ClipReader::advanceVideoTo(drift::TimeUs sourceUs, int maxWidth, int maxHei
             if (stabilized != decoded)
                 av_frame_free(&stabilized);
             av_frame_unref(decoded);
+            // Only frames count, not packets: MediaCodec can need several inputs before its
+            // first output, and those keep going until a frame arrives.
+            if (++received >= limits.maxFrames)
+                done = true;
         }
     };
 
@@ -2217,13 +2223,19 @@ bool ClipReader::decodePreviewVideoFrameAtOnce(drift::TimeUs sourceUs, PreviewVi
 }
 
 bool ClipReader::readPreviewVideoFrame(drift::TimeUs sourceUs, PreviewVideoFrame &out, int maxWidth,
-                                       int maxHeight)
+                                       int maxHeight, bool approximate)
 {
     if (!m_prefetching)
         m_lastRequestedPreviewUs = sourceUs;
 
+    const auto decode = [&](bool *hwFailure) {
+        return approximate
+                   ? decodePreviewVideoFrameApprox(sourceUs, out, maxWidth, maxHeight, hwFailure)
+                   : decodePreviewVideoFrameAtOnce(sourceUs, out, maxWidth, maxHeight, hwFailure);
+    };
+
     bool hwFailure = false;
-    if (decodePreviewVideoFrameAtOnce(sourceUs, out, maxWidth, maxHeight, &hwFailure))
+    if (decode(&hwFailure))
         return true;
 
     if (!hwFailure)
@@ -2232,7 +2244,107 @@ bool ClipReader::readPreviewVideoFrame(drift::TimeUs sourceUs, PreviewVideoFrame
     if (!fallbackFromHardwareDecoder())
         return false;
 
-    return decodePreviewVideoFrameAtOnce(sourceUs, out, maxWidth, maxHeight, nullptr);
+    return decode(nullptr);
+}
+
+drift::TimeUs ClipReader::keyframeAtOrBeforeUs(drift::TimeUs sourceUs) const
+{
+    if (!m_fmt || m_videoStream < 0)
+        return -1;
+    AVStream *stream = m_fmt->streams[m_videoStream];
+    const int64_t startTs = stream->start_time != AV_NOPTS_VALUE ? stream->start_time : 0;
+    const int64_t targetTs = av_rescale_q(sourceUs, {1, AV_TIME_BASE}, stream->time_base) + startTs;
+    const AVIndexEntry *entry =
+        avformat_index_get_entry_from_timestamp(stream, targetTs, AVSEEK_FLAG_BACKWARD);
+    if (!entry)
+        return -1;
+    return av_rescale_q(entry->timestamp - startTs, stream->time_base, {1, AV_TIME_BASE});
+}
+
+bool ClipReader::lookupNearestCachedPreviewInRange(drift::TimeUs loUs, drift::TimeUs hiUs,
+                                                   PreviewVideoFrame &out) const
+{
+    const drift::TimeUs limit = hiUs + frameToleranceUs();
+    int bestIndex = -1;
+    for (int i = 0; i < m_previewCache.size(); ++i) {
+        const drift::TimeUs pts = m_previewCache.at(i).ptsUs;
+        if (pts < loUs || pts > limit)
+            continue;
+        if (bestIndex < 0 || pts > m_previewCache.at(bestIndex).ptsUs)
+            bestIndex = i;
+    }
+    if (bestIndex < 0)
+        return false;
+    out = m_previewCache.at(bestIndex).frame;
+    return out.isValid();
+}
+
+// A scrub asks for a new time on every scroll event and only needs to look roughly right until the
+// gesture settles. Exact frames there meant seeking to the keyframe and decoding the whole GOP up
+// to the target on each step, which on a phone is far slower than the finger. The ladder here, from
+// cheapest: an exact cached frame; a few frames of forward decode when the target is just ahead;
+// a bounded step through the GOP when it is further ahead in the same one; the nearest cached frame
+// between the target's keyframe and the target; the keyframe itself.
+bool ClipReader::decodePreviewVideoFrameApprox(drift::TimeUs sourceUs, PreviewVideoFrame &out, int maxWidth,
+                                               int maxHeight, bool *hwFailure)
+{
+    if (hwFailure)
+        *hwFailure = false;
+    if (!ensureVideoDecoder())
+        return false;
+
+    applyDecodeSize(decodeSizeFor(maxWidth, maxHeight));
+
+    while (m_hasPeek && sourceUs >= m_peekPtsUs)
+        promotePeekToCover();
+    if (coverHolds(sourceUs) && lookupCachedPreview(m_coverPtsUs, out))
+        return true;
+    if (lookupCachedPreview(sourceUs, out))
+        return true;
+
+    const drift::TimeUs frameUs = m_sourceFrameDurationUs > 0 ? m_sourceFrameDurationUs
+                                                                : drift::kUsPerSecond / 30;
+    const bool ahead = m_videoPositioned && m_hasCover && sourceUs >= m_coverPtsUs;
+    AdvanceLimits limits;
+    if (ahead && sourceUs - m_lastVideoPtsUs <= kScrubForwardFrames * frameUs) {
+        limits.maxFrames = kScrubForwardFrames + 2;
+    } else {
+        const drift::TimeUs keyframeUs = keyframeAtOrBeforeUs(sourceUs);
+        // Index timestamps are DTS in MP4, a frame or two ahead of the matching PTS.
+        const drift::TimeUs slackUs = 2 * frameUs;
+        if (ahead && keyframeUs >= 0 && keyframeUs <= m_lastVideoPtsUs + slackUs) {
+            // Already inside the target's GOP: step towards it without seeking.
+            limits.maxFrames = kScrubForwardFrames;
+        } else {
+            const drift::TimeUs loUs = keyframeUs >= 0 ? keyframeUs - slackUs
+                                                       : sourceUs - kForwardSeekThresholdUs;
+            if (lookupNearestCachedPreviewInRange(loUs, sourceUs, out))
+                return true;
+            limits.maxFrames = 1;
+            limits.forceSeek = true;
+        }
+    }
+
+    if (!advanceVideoTo(sourceUs, maxWidth, maxHeight, hwFailure, limits))
+        return false;
+    if (!m_coverFrame)
+        return false;
+
+    PreviewVideoFrame converted;
+    if (!convertFramePreview(m_coverFrame, converted, m_decodeW, m_decodeH)) {
+        if (m_hwAccelActive
+            && (m_coverFrame->format == m_hwPixFmt
+                || isHardwarePixelFormat(static_cast<AVPixelFormat>(m_coverFrame->format)))) {
+            recordHardwareFailure(QStringLiteral("handing the decoded surface to the preview failed"));
+            if (hwFailure)
+                *hwFailure = true;
+            m_videoPositioned = false;
+        }
+        return false;
+    }
+    out = converted;
+    storeCachedPreview(m_coverPtsUs, converted);
+    return true;
 }
 
 // The peek frame is already decoded but not yet stored, so it is the next one to hand out. Aiming a

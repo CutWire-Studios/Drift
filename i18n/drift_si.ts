@@ -484,6 +484,14 @@
         <translation>බෙදන්න</translation>
     </message>
     <message>
+        <source>Fade</source>
+        <translation type="unfinished">Fade (ක්‍රමිකව මැකීම)</translation>
+    </message>
+    <message>
+        <source>Speed</source>
+        <translation type="unfinished">වේගය</translation>
+    </message>
+    <message>
         <source>Duplicate</source>
         <translation>අනුපිටපත් කරන්න</translation>
     </message>
@@ -494,6 +502,10 @@
     <message>
         <source>Fit</source>
         <translation>සරිලන (Fit)</translation>
+    </message>
+    <message>
+        <source>Move the playhead over the clip to split it</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Tap a clip to edit</source>
@@ -587,6 +599,49 @@
     <message>
         <source>Done</source>
         <translation>අවසන්</translation>
+    </message>
+</context>
+<context>
+    <name>AndroidFadeSheet</name>
+    <message>
+        <source>Fade</source>
+        <translation type="unfinished">Fade (ක්‍රමිකව මැකීම)</translation>
+    </message>
+    <message>
+        <source>Done</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Linear</source>
+        <translation type="unfinished">රේඛීය</translation>
+    </message>
+    <message>
+        <source>Smooth</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Natural</source>
+        <translation type="unfinished">ස්වභාවික</translation>
+    </message>
+    <message>
+        <source>Custom</source>
+        <translation type="unfinished">අභිරුචි</translation>
+    </message>
+    <message>
+        <source>%1 s</source>
+        <translation type="unfinished">තත් %1</translation>
+    </message>
+    <message>
+        <source>Fade in</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Fade out</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Curve</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -916,8 +971,184 @@
         <translation>තවත් මෙවලම්</translation>
     </message>
     <message>
+        <source>Clip</source>
+        <translation type="unfinished">ක්ලිප්</translation>
+    </message>
+    <message>
+        <source>Select multiple</source>
+        <translation type="unfinished">බහුවිධ තෝරන්න</translation>
+    </message>
+    <message>
+        <source>Tap clips to add them to the selection</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cut</source>
+        <translation type="unfinished">කපන්න</translation>
+    </message>
+    <message>
+        <source>Remove the clip and keep it to paste</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Copy</source>
+        <translation type="unfinished">පිටපත් කරන්න</translation>
+    </message>
+    <message>
+        <source>Keep a copy to paste</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Paste attributes…</source>
+        <translation type="unfinished">ගුණාංග අලවන්න…</translation>
+    </message>
+    <message>
+        <source>Apply what you copied from another clip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Rename…</source>
+        <translation type="unfinished">නම වෙනස් කරන්න…</translation>
+    </message>
+    <message>
+        <source>Change the clip&apos;s name</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open composite</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Edit the clips inside</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Flatten composite</source>
+        <translation type="unfinished">සංයුක්තය (Composite) සමතලා කරන්න</translation>
+    </message>
+    <message>
+        <source>Render it into a single video clip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Make composite</source>
+        <translation type="unfinished">සංයුක්තයක් (Composite) සාදන්න</translation>
+    </message>
+    <message>
+        <source>Group the selected clips into one</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Unlink</source>
+        <translation type="unfinished">විසන්ධි කරන්න</translation>
+    </message>
+    <message>
+        <source>Edit video and its audio separately</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Separate all audio tracks</source>
+        <translation type="unfinished">සියලු ශ්‍රව්‍ය ට්‍රැක් වෙන් කරන්න</translation>
+    </message>
+    <message>
+        <source>One audio clip per audio track in the file</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Convert to edit-friendly format</source>
+        <translation type="unfinished">සංස්කරණයට පහසු ආකෘතියකට පරිවර්තනය කරන්න</translation>
+    </message>
+    <message>
+        <source>Smoother editing for phone and screen recordings</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Merge subtitle clips</source>
+        <translation type="unfinished">උපසිරැසි ක්ලිප් ඒකාබද්ධ කරන්න</translation>
+    </message>
+    <message>
+        <source>Join the selected subtitle clips</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Merge all subtitles on this track</source>
+        <translation type="unfinished">මෙම ට්‍රැකයේ ඇති සියලුම උපසිරැසි ඒකාබද්ධ කරන්න</translation>
+    </message>
+    <message>
+        <source>Join every subtitle clip on the track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Convert to text clips</source>
+        <translation type="unfinished">පෙළ ක්ලිප් බවට පරිවර්තනය කරන්න</translation>
+    </message>
+    <message>
+        <source>One text clip per cue</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Convert to subtitle</source>
+        <translation type="unfinished">උපසිරැසියක් බවට පරිවර්තනය කරන්න</translation>
+    </message>
+    <message>
+        <source>Turn text clips into subtitle cues</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Unlink from clip</source>
+        <translation type="unfinished">ක්ලිපයෙන් විසන්ධි කරන්න</translation>
+    </message>
+    <message>
+        <source>Stop following the clip it is attached to</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move to its own track</source>
+        <translation type="unfinished">වෙනම ට්‍රැකයක් වෙත ගෙන යන්න</translation>
+    </message>
+    <message>
+        <source>Take the adjustment out of this lane</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Effects</source>
+        <translation type="unfinished">ප්‍රයෝග</translation>
+    </message>
+    <message>
+        <source>Copy effects</source>
+        <translation type="unfinished">ප්‍රයෝග පිටපත් කරන්න</translation>
+    </message>
+    <message>
+        <source>Keep this clip&apos;s effects to paste</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Paste effects</source>
+        <translation type="unfinished">ප්‍රයෝග අලවන්න</translation>
+    </message>
+    <message>
+        <source>Add the copied effects to this clip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Save effects as preset…</source>
+        <translation type="unfinished">ප්‍රයෝග පෙරසැකසුමක් ලෙස සුරකින්න…</translation>
+    </message>
+    <message>
+        <source>Reuse this look on other clips</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Trim &amp; timing</source>
         <translation>කප්පාදු කිරීම සහ කාලය</translation>
+    </message>
+    <message>
+        <source>Split all tracks</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cut every clip under the playhead</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Trim start</source>
@@ -1385,14 +1616,6 @@
     <message>
         <source>Variable frame rate. This clip can drift out of sync with its audio. Right-click it and choose Convert to edit-friendly format.</source>
         <translation type="unfinished">විචල්‍ය රාමු අනුපාතය. මෙම ක්ලිපය එහි ශ්‍රව්‍ය සමඟ අසමමුහුර්ත විය හැක. එය මත දකුණු ක්ලික් කර &apos;සංස්කරණයට පහසු ආකෘතියකට පරිවර්තනය කරන්න&apos; තෝරන්න.</translation>
-    </message>
-    <message>
-        <source>Drop a transition where two clips meet.</source>
-        <translation>ක්ලිප් දෙකක් හමුවන තැනට සංක්‍රාන්තියක් දමන්න.</translation>
-    </message>
-    <message>
-        <source>Drop that onto a clip to apply it.</source>
-        <translation>එය යෙදීමට ක්ලිප් එකක් මතට දමන්න.</translation>
     </message>
     <message>
         <source>Keyframes</source>
@@ -3201,6 +3424,42 @@
     <message>
         <source>Stabilization analysis failed: %1</source>
         <translation>ස්ථාවර කිරීමේ විශ්ලේෂණය අසමත් විය: %1</translation>
+    </message>
+    <message>
+        <source>Drop a transition where two clips meet.</source>
+        <translation type="unfinished">ක්ලිප් දෙකක් හමුවන තැනට සංක්‍රාන්තියක් දමන්න.</translation>
+    </message>
+    <message>
+        <source>Audio effects go on clips with sound.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>That goes on a video, image, shape or text clip.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Drop that onto a clip to apply it.</source>
+        <translation type="unfinished">එය යෙදීමට ක්ලිප් එකක් මතට දමන්න.</translation>
+    </message>
+    <message>
+        <source>Add to new track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Audio effects go on the timeline.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Audio goes on the timeline.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Drop that onto a clip in the preview.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add to preview</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Subtitles converted to text</source>
@@ -5403,8 +5662,12 @@
         <translation>ගැලපුම් ස්තරයක් එක් කරන්න</translation>
     </message>
     <message>
-        <source>Add an adjustment layer to apply effects across all clips underneath</source>
-        <translation>ඊට පහළින් ඇති සියලුම ක්ලිප් සඳහා ප්‍රයෝග යෙදීමට ගැලපුම් ස්තරයක් එක් කරන්න</translation>
+        <source>Add an adjustment layer to apply effects across all clips underneath, or drag it to where it should go</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Adjustment layer</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>No effects match “%1”.</source>
@@ -7542,6 +7805,10 @@
     <message>
         <source>%1 — drag onto a clip</source>
         <translation>%1 — ක්ලිපයක් මතට අදින්න</translation>
+    </message>
+    <message>
+        <source>Select a clip first, or drag the mask onto one</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -10532,8 +10799,8 @@ If playback stutters, try another.</source>
         <translation>මෙම ප්‍රවර්ගයේ කිසිවක් නැත.</translation>
     </message>
     <message>
-        <source>%1 — click to add, or drag to the timeline</source>
-        <translation>%1 — එක් කිරීමට ක්ලික් කරන්න, නැතහොත් කාලරේඛාවට අදින්න</translation>
+        <source>%1 — click to add, or drag to the timeline or preview</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -10896,6 +11163,10 @@ If playback stutters, try another.</source>
     <message>
         <source>Pick another category.</source>
         <translation>වෙනත් ප්‍රවර්ගයක් තෝරන්න.</translation>
+    </message>
+    <message>
+        <source>%1 — click to add, or drag to the timeline or preview</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>

@@ -119,6 +119,10 @@ class AppController : public QObject
     Q_PROPERTY(double inspectorPlayheadSeconds READ playheadSeconds NOTIFY inspectorPlayheadChanged)
     Q_PROPERTY(double durationSeconds READ durationSeconds NOTIFY tracksChanged)
     Q_PROPERTY(bool playing READ playing WRITE setPlaying NOTIFY playingChanged)
+    // Between beginScrub and endScrub. Preview overlays stand aside the way they do for
+    // playback: the playhead moves on every scroll event, and re-resolving their clips each
+    // time was most of what a scrub step cost on the GUI thread.
+    Q_PROPERTY(bool scrubbing READ scrubbing NOTIFY scrubbingChanged)
     Q_PROPERTY(bool previewDragActive READ previewDragActive NOTIFY previewDragActiveChanged)
     Q_PROPERTY(bool snapEnabled READ snapEnabled WRITE setSnapEnabled NOTIFY snapEnabledChanged)
     Q_PROPERTY(bool rippleEnabled READ rippleEnabled WRITE setRippleEnabled NOTIFY rippleEnabledChanged)
@@ -953,7 +957,7 @@ public:
     Q_INVOKABLE QString trackTypeForKind(const QString &mediaKind) const;
     // presetId applies a built-in style pack on create; empty keeps the default text style.
     Q_INVOKABLE void addTextClip(const QString &text, double atSeconds,
-                                 const QString &presetId = QString());
+                                 const QString &presetId = QString(), int trackIndex = -1);
     Q_INVOKABLE void addSubtitleClip(double atSeconds);
     // Import a SubRip (.srt) file as a new subtitle clip at the playhead (or atSeconds).
     Q_INVOKABLE bool importSubtitleFile(const QUrl &url, double atSeconds = -1.0);
@@ -1192,6 +1196,30 @@ public:
     Q_INVOKABLE QVariantList builtinShapes() const;
     Q_INVOKABLE QVariantList builtinShapeCategories() const;
     Q_INVOKABLE QVariantList previewClipsAtPlayhead() const;
+
+    // Asset drag-and-drop. One resolver for every kind a browser can lift (AssetDrag.qml has
+    // the list; media keeps its own asset-index path), shared by the desktop and phone
+    // timelines and both previews. plan* only says what a drop would do — the hover outline
+    // comes from it — and drop* does exactly that, so the two cannot disagree.
+    //
+    // A plan is {accepted, mode, track, clip, landingStart, landingDuration, newTrackIndex,
+    // message}; mode is "clip" (applied to a clip), "gap" (lands on the track), "newTrack",
+    // "junction" (between two clips), or "canvas" (a preview drop). `newTrackIndex` >= 0 asks
+    // for a fresh track inserted at that index.
+    Q_INVOKABLE bool trackAcceptsDropKind(int trackIndex, const QString &kind) const;
+    Q_INVOKABLE bool isPlaceableDropKind(const QString &kind) const;
+    Q_INVOKABLE QVariantMap planAssetDrop(const QString &kind, const QString &payload, int trackIndex,
+                                          double seconds, int newTrackIndex) const;
+    Q_INVOKABLE QVariantMap dropAsset(const QString &kind, const QString &payload, const QString &label,
+                                      int trackIndex, double seconds, int newTrackIndex);
+    // Topmost visible clip under a canvas point at the playhead, rotation-aware; empty if none.
+    Q_INVOKABLE QVariantMap previewClipAtCanvasPoint(double canvasX, double canvasY) const;
+    Q_INVOKABLE QVariantMap planPreviewDrop(const QString &kind, const QString &payload,
+                                            double canvasX, double canvasY) const;
+    Q_INVOKABLE QVariantMap dropAssetOnPreview(const QString &kind, const QString &payload,
+                                               const QString &label, double canvasX, double canvasY);
+    // Left clip of the cut a transition dropped at this time would bridge, or -1.
+    Q_INVOKABLE int transitionJunctionAt(int trackIndex, double seconds) const;
     Q_INVOKABLE void beginPreviewDrag(const QString &undoText = {});
     Q_INVOKABLE void previewSetClipPosition(int trackIndex, int clipIndex, double xPixels, double yPixels);
     Q_INVOKABLE void previewSetClipSize(int trackIndex, int clipIndex, double widthPixels, double heightPixels);
@@ -1757,6 +1785,12 @@ public:
     Q_INVOKABLE bool isAssetFavorite(const QString &tabId, const QString &itemId) const;
     Q_INVOKABLE void toggleAssetFavorite(const QString &tabId, const QString &itemId);
     Q_INVOKABLE void togglePlayback();
+    // Bracket a scrub gesture (a dragged playhead, or the phone timeline being scrolled under
+    // its fixed playhead). In between, the preview shows approximate frames and inspectors
+    // follow the playhead at a reduced rate; the exact frame is drawn at the end.
+    Q_INVOKABLE void beginScrub();
+    Q_INVOKABLE void endScrub();
+    bool scrubbing() const { return m_scrubbing; }
     // Frame-accurate transport. Stepping quantizes to the project's frame grid first: the playhead
     // can sit between frames after a scrub, and adding a frame duration to that would carry the
     // off-grid offset forever.
@@ -1950,6 +1984,7 @@ signals:
     void playheadSecondsChanged();
     void inspectorPlayheadChanged();
     void playingChanged();
+    void scrubbingChanged();
     void audioOutputDevicesChanged();
     void audioOutputDeviceIdChanged();
     void audioRecordingStateChanged();
@@ -2556,6 +2591,7 @@ protected:
     int m_trimGestureLastOutcome = 0;
     drift::TimeUs m_playheadUs = 0;
     bool m_playing = false;
+    bool m_scrubbing = false;
     bool m_snapEnabled = true;
     bool m_rippleEnabled = false;
     bool m_allowClipOverlap = false;

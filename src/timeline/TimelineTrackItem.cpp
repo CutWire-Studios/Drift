@@ -5,6 +5,7 @@
 #include "models/AppController.h"
 #include "models/AssetLibrary.h"
 #include "models/TimelineClipsModel.h"
+#include "playback/PerfLog.h"
 #include "playback/PlaybackEngine.h"
 
 #include <QAccessible>
@@ -189,12 +190,12 @@ QFont labelFont(const QString &family, double pixelSize, bool bold)
     return font;
 }
 
+// What the text looks like, not where it is: position lives on the label's transform, so a label
+// that only moved (a dragged clip, a scroll into the next chunk) keeps its laid-out node.
 QString labelKey(const TimelineTrackItem::Label &l)
 {
-    return QStringLiteral("%1|%2|%3|%4|%5|%6")
+    return QStringLiteral("%1|%2|%3|%4")
         .arg(l.text)
-        .arg(qRound(l.origin.x() * 4))
-        .arg(qRound(l.origin.y() * 4))
         .arg(l.pixelSize)
         .arg(l.color.rgba())
         .arg(l.bold);
@@ -274,7 +275,9 @@ public:
     QHash<QString, QSGTexture *> textures;
     QHash<QString, int> textureStamps;
     QList<QSGImageNode *> images;
-    QHash<QString, QSGTextNode *> labels;
+    // Several clips can carry the same label (a split clip keeps its name), so each look maps to
+    // a list of placed nodes. The transform owns its text node.
+    QHash<QString, QList<QSGTransformNode *>> labels;
 };
 
 } // namespace
@@ -353,6 +356,7 @@ TimelineTrackItem::TimelineTrackItem(QQuickItem *parent)
         if (!m_viewState || !m_viewState->touchMode() || m_viewState->multiSelectActive())
             return;
         m_drag.armed = true;
+        m_drag.liftItemPos = mapFromScene(m_drag.lastScenePos);
         // The Flickable may no longer steal this gesture: the clip is picked up.
         setKeepMouseGrab(true);
         setKeepTouchGrab(true);
@@ -380,6 +384,10 @@ void TimelineTrackItem::setViewState(TimelineViewState *state)
         connect(m_viewState, &TimelineViewState::viewChanged, this, &TimelineTrackItem::onViewChanged);
         connect(m_viewState, &TimelineViewState::gestureChanged, this,
                 &TimelineTrackItem::scheduleRebuild);
+        connect(m_viewState, &TimelineViewState::moveFollowChanged, this,
+                &TimelineTrackItem::onMoveFollowChanged);
+        connect(m_viewState, &TimelineViewState::trimFollowChanged, this,
+                &TimelineTrackItem::onTrimFollowChanged);
         connect(m_viewState, &TimelineViewState::styleChanged, this,
                 &TimelineTrackItem::scheduleRebuild);
         setAcceptHoverEvents(!m_viewState->touchMode());
@@ -564,6 +572,36 @@ void TimelineTrackItem::scheduleRebuild()
     polish();
 }
 
+// A drag writes the follow offset on every move; redrawing every track for it was most of the
+// per-move cost on a phone. Only a track with a selected clip other than the one being dragged has
+// anything that moves.
+void TimelineTrackItem::onMoveFollowChanged()
+{
+    if (!m_viewState || !m_clips || !m_viewState->moveFollowActive())
+        return;
+    const bool leaderTrack = m_viewState->moveLeaderTrack() == m_trackIndex;
+    const int rows = int(m_clips->rows().size());
+    for (int i = 0; i < rows; ++i) {
+        if ((!leaderTrack || i != m_viewState->moveLeaderClip()) && isSelected(i)) {
+            scheduleRebuild();
+            return;
+        }
+    }
+}
+
+void TimelineTrackItem::onTrimFollowChanged()
+{
+    if (!m_viewState || !m_clips || !m_viewState->trimFollowActive())
+        return;
+    const QString &linkId = m_viewState->trimFollowLinkId();
+    for (const TimelineClipsModel::Row &row : m_clips->rows()) {
+        if (!row.linkId.isEmpty() && row.linkId == linkId && row.id != m_viewState->trimFollowClipId()) {
+            scheduleRebuild();
+            return;
+        }
+    }
+}
+
 void TimelineTrackItem::onViewChanged()
 {
     if (!m_viewState)
@@ -683,6 +721,7 @@ void TimelineTrackItem::updateActiveSet()
 
 void TimelineTrackItem::updatePolish()
 {
+    const drift::perf::Scope perfScope("track.polish");
     const bool accessible = QAccessible::isActive();
     QStringList shownIds;
     if (accessible) {
@@ -1167,6 +1206,7 @@ void TimelineTrackItem::buildFilmstrip(int index, const QRectF &body, double inP
 
 QSGNode *TimelineTrackItem::updatePaintNode(QSGNode *oldNode, UpdatePaintNodeData *)
 {
+    const drift::perf::Scope perfScope("track.paint");
     auto *root = static_cast<TrackRootNode *>(oldNode);
     if (!root)
         root = new TrackRootNode;
@@ -1225,15 +1265,17 @@ QSGNode *TimelineTrackItem::updatePaintNode(QSGNode *oldNode, UpdatePaintNodeDat
         }
     }
 
-    // Labels: a node per distinct label, kept while it stays identical.
-    QHash<QString, QSGTextNode *> kept;
+    // Labels: laid out once per look and moved by their transform, so only new text pays for
+    // shaping.
+    QHash<QString, QList<QSGTransformNode *>> pool;
+    pool.swap(root->labels);
     for (const Label &label : std::as_const(m_labels)) {
         const QString key = labelKey(label);
-        if (kept.contains(key))
-            continue;
-        QSGTextNode *node = root->labels.take(key);
-        if (!node && win) {
-            node = win->createTextNode();
+        QSGTransformNode *placed = nullptr;
+        if (auto it = pool.find(key); it != pool.end() && !it->isEmpty())
+            placed = it->takeLast();
+        if (!placed && win) {
+            auto *node = win->createTextNode();
             node->setColor(label.color);
             node->setRenderType(QSGTextNode::QtRendering);
             QTextLayout layout(label.text, labelFont(m_fontFamily, label.pixelSize, label.bold));
@@ -1244,17 +1286,25 @@ QSGNode *TimelineTrackItem::updatePaintNode(QSGNode *oldNode, UpdatePaintNodeDat
                 line.setPosition(QPointF(0, 0));
             }
             layout.endLayout();
-            node->addTextLayout(label.origin, &layout);
-            root->texts->appendChildNode(node);
+            node->addTextLayout(QPointF(0, 0), &layout);
+            placed = new QSGTransformNode;
+            placed->appendChildNode(node);
+            root->texts->appendChildNode(placed);
         }
-        if (node)
-            kept.insert(key, node);
+        if (!placed)
+            continue;
+        QMatrix4x4 at;
+        at.translate(float(label.origin.x()), float(label.origin.y()));
+        if (placed->matrix() != at)
+            placed->setMatrix(at);
+        root->labels[key].append(placed);
     }
-    for (QSGTextNode *stale : std::as_const(root->labels)) {
-        root->texts->removeChildNode(stale);
-        delete stale;
+    for (const QList<QSGTransformNode *> &stale : std::as_const(pool)) {
+        for (QSGTransformNode *node : stale) {
+            root->texts->removeChildNode(node);
+            delete node;
+        }
     }
-    root->labels = kept;
 
     return root;
 }
@@ -1296,7 +1346,11 @@ void TimelineTrackItem::mousePressEvent(QMouseEvent *event)
 {
     Zone zone = Zone::None;
     const int index = clipAt(event->position(), &zone);
-    if (index < 0 || zone != Zone::Body || !m_editor || !m_viewState) {
+    // On touch an unselected clip has no trim handles, so its edge band is just more of the clip:
+    // treating it as dead left a finger-wide strip at each end of every clip that did nothing.
+    const bool touchEdgeOfUnselected = m_viewState && m_viewState->touchMode() && index >= 0
+                                       && zone != Zone::None && !isSelected(index);
+    if (index < 0 || (zone != Zone::Body && !touchEdgeOfUnselected) || !m_editor || !m_viewState) {
         event->ignore();
         return;
     }
@@ -1329,11 +1383,13 @@ void TimelineTrackItem::mousePressEvent(QMouseEvent *event)
     }
 
     // On a pointer the clip owns the press outright; on touch the Flickable may still take it
-    // for a pan until a press-and-hold picks the clip up.
+    // for a pan until a press-and-hold picks the clip up. 400 ms is Android's own long-press.
     setKeepMouseGrab(!touch);
-    m_longPress.start(touch ? 450 : 800);
+    m_longPress.start(touch ? 400 : 800);
 
-    if (!m_viewState->multiSelectActive()) {
+    // Touch selects on release instead: a pan that happens to start on a clip is someone
+    // scrolling, and selecting on touch-down made every such pan select whatever it began on.
+    if (!touch && !m_viewState->multiSelectActive()) {
         if (event->modifiers() & (Qt::ShiftModifier | Qt::ControlModifier))
             m_editor->addToSelection(m_trackIndex, index);
         else if (!wasSelected)
@@ -1395,6 +1451,7 @@ void TimelineTrackItem::refreshDrag()
 
 void TimelineTrackItem::mouseMoveEvent(QMouseEvent *event)
 {
+    const drift::perf::Scope perfScope("drag.move");
     if (!m_drag.pressed || !m_clips || m_drag.clipIndex >= m_clips->rows().size()) {
         event->ignore();
         return;
@@ -1410,6 +1467,14 @@ void TimelineTrackItem::mouseMoveEvent(QMouseEvent *event)
                 if (delta.manhattanLength() > QGuiApplication::styleHints()->startDragDistance())
                     m_longPress.stop();
                 event->ignore();
+                return;
+            }
+            // Picked up. A finger never holds perfectly still, so the clip only starts to move
+            // once it has clearly been dragged; letting go before that puts it back.
+            const QPointF sinceLift = mapFromScene(event->scenePosition()) - m_drag.liftItemPos;
+            if (sinceLift.manhattanLength() < QGuiApplication::styleHints()->startDragDistance()) {
+                m_drag.lastScenePos = event->scenePosition();
+                event->accept();
                 return;
             }
         } else if (!pastThreshold || m_viewState->multiSelectActive()) {
@@ -1448,10 +1513,12 @@ void TimelineTrackItem::finishPress(bool canceled)
     if (canceled || !m_editor)
         return;
 
-    // Held and let go without moving: the hold was a request for the menu.
+    const bool touch = m_viewState && m_viewState->touchMode();
+
+    // Picked up and put down where it was. Long-press only ever lifts; the clip's actions live
+    // in the toolbar, so there is no menu to open here.
     if (drag.armed) {
         updateActiveSet();
-        emit contextMenuRequested(drag.clipIndex);
         return;
     }
 
@@ -1462,6 +1529,13 @@ void TimelineTrackItem::finishPress(bool canceled)
     }
     if (QGuiApplication::keyboardModifiers() & (Qt::ShiftModifier | Qt::ControlModifier))
         return; // the press already added it
+    if (touch) {
+        // Tapping a clip that is already selected keeps the selection as it is, so a
+        // multi-selection is not lost to a stray tap on one of its members.
+        if (drag.wasSelected)
+            return;
+        callHaptic("select");
+    }
     m_editor->selectClip(m_trackIndex, drag.clipIndex);
 }
 

@@ -827,8 +827,15 @@ PanelFrame {
             height: parent.height
 
             Rectangle {
+                id: assetsHeader
+                // In a sheet the title is the sheet's own, so this bar only earns its height when
+                // the tab has actions to put in it (emoji picker, media import); otherwise it was
+                // an empty band between the sheet title and the content.
+                readonly property string tabId: tabsModel.get(root.activeTab).tabId
+                readonly property bool hasActions: tabId === "stickers" || kindsForTab(tabId).length > 0
                 width: parent.width
-                height: Theme.panelHeaderHeight
+                height: root.sheetMode && !hasActions ? 0 : Theme.panelHeaderHeight
+                visible: height > 0
                 // Matches the surrounding PanelFrame; it used to paint the app
                 // background, so the header read as a different surface than the
                 // panel it belongs to.
@@ -980,7 +987,7 @@ PanelFrame {
                 active: root.currentTabId === "text"
                 visible: active
                 width: parent.width
-                height: parent.height - Theme.panelHeaderHeight
+                height: parent.height - assetsHeader.height
                 opacity: root.tabOpacity
                 sourceComponent: Component {
                     TextAssetsTab {
@@ -993,7 +1000,7 @@ PanelFrame {
                 active: root.currentTabId === "subtitles"
                 visible: active
                 width: parent.width
-                height: parent.height - Theme.panelHeaderHeight
+                height: parent.height - assetsHeader.height
                 opacity: root.tabOpacity
                 sourceComponent: Component {
                     SubtitlesTab {
@@ -1006,7 +1013,7 @@ PanelFrame {
                 active: root.currentTabId === "sounds"
                 visible: active
                 width: parent.width
-                height: parent.height - Theme.panelHeaderHeight
+                height: parent.height - assetsHeader.height
                 opacity: root.tabOpacity
                 sourceComponent: Component {
                     SoundsTab {
@@ -1021,7 +1028,7 @@ PanelFrame {
                 active: root.currentTabId === "stickers"
                 visible: active
                 width: parent.width
-                height: parent.height - Theme.panelHeaderHeight
+                height: parent.height - assetsHeader.height
                 opacity: root.tabOpacity
                 sourceComponent: Component {
                     StickersTab {
@@ -1037,7 +1044,7 @@ PanelFrame {
                 active: root.currentTabId === "shapes"
                 visible: active
                 width: parent.width
-                height: parent.height - Theme.panelHeaderHeight
+                height: parent.height - assetsHeader.height
                 opacity: root.tabOpacity
                 sourceComponent: Component {
                     ShapesTab {
@@ -1053,7 +1060,7 @@ PanelFrame {
                 active: root.currentTabId === "scenes"
                 visible: active
                 width: parent.width
-                height: parent.height - Theme.panelHeaderHeight
+                height: parent.height - assetsHeader.height
                 opacity: root.tabOpacity
                 sourceComponent: Component {
                     ScenesTab {
@@ -1074,7 +1081,7 @@ PanelFrame {
                 active: root.currentTabId === "shortcuts"
                 visible: active
                 width: parent.width
-                height: parent.height - Theme.panelHeaderHeight
+                height: parent.height - assetsHeader.height
                 opacity: root.tabOpacity
                 sourceComponent: Component {
                     ShortcutsTab {
@@ -1088,7 +1095,7 @@ PanelFrame {
                 active: root.currentTabId === "masks"
                 visible: active
                 width: parent.width
-                height: parent.height - Theme.panelHeaderHeight
+                height: parent.height - assetsHeader.height
                 opacity: root.tabOpacity
                 sourceComponent: Component {
                     MasksTab {
@@ -1101,7 +1108,7 @@ PanelFrame {
                 active: root.currentTabId === "effects"
                 visible: active
                 width: parent.width
-                height: parent.height - Theme.panelHeaderHeight
+                height: parent.height - assetsHeader.height
                 opacity: root.tabOpacity
                 sourceComponent: Component {
                     EffectBrowser {
@@ -1116,7 +1123,7 @@ PanelFrame {
                 active: root.currentTabId === "templates"
                 visible: active
                 width: parent.width
-                height: parent.height - Theme.panelHeaderHeight
+                height: parent.height - assetsHeader.height
                 opacity: root.tabOpacity
                 sourceComponent: Component {
                     EffectTemplateBrowser {
@@ -1131,7 +1138,7 @@ PanelFrame {
                 active: root.currentTabId === "transitions"
                 visible: active
                 width: parent.width
-                height: parent.height - Theme.panelHeaderHeight
+                height: parent.height - assetsHeader.height
                 opacity: root.tabOpacity
                 sourceComponent: Component {
                     TransitionsTab {
@@ -1147,7 +1154,7 @@ PanelFrame {
                 active: root.kindsForTab(root.currentTabId).length > 0
                 visible: active
                 width: parent.width
-                height: parent.height - Theme.panelHeaderHeight
+                height: parent.height - assetsHeader.height
                 opacity: root.tabOpacity
                 sourceComponent: Component {
                     MediaAssetsTab {
@@ -1196,7 +1203,7 @@ PanelFrame {
                 active: root.currentTabId === "market"
                 visible: active
                 width: parent.width
-                height: parent.height - Theme.panelHeaderHeight
+                height: parent.height - assetsHeader.height
                 opacity: root.tabOpacity
                 sourceComponent: Component {
                     MarketTab {

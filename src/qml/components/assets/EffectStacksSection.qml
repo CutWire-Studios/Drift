@@ -83,11 +83,15 @@ Column {
     }
 
     Grid {
+        id: stackGrid
         width: parent.width - 24
         x: 12
         visible: root.presets.length > 0
-        columns: Math.max(1, Math.floor((width + Theme.assetCardGap)
+        // Columns fill the width: rounded to the nearest count at the nominal card size, the
+        // cards stretched or squeezed to take up the slack.
+        columns: Math.max(1, Math.round((width + Theme.assetCardGap)
                                         / (Theme.assetCardWidth + Theme.assetCardGap)))
+        readonly property real cardSize: Math.floor((width + Theme.assetCardGap) / columns) - Theme.assetCardGap
         columnSpacing: Theme.assetCardGap
         rowSpacing: Theme.assetCardGap
 
@@ -96,10 +100,11 @@ Column {
             delegate: Column {
                 id: stackCard
                 required property var modelData
-                width: Theme.assetCardWidth
+                width: stackGrid.cardSize
                 spacing: Theme.spacingSm
 
-                scale: cardPress.pressed ? 0.97 : (cardHover.hovered ? 1.02 : 1.0)
+                opacity: cardDrag.active ? 0.85 : 1
+                scale: cardDrag.active ? 1.04 : cardDrag.pressed ? 0.97 : (cardDrag.hovered ? 1.02 : 1.0)
                 Behavior on scale {
                     NumberAnimation { duration: Theme.durationFast; easing.type: Theme.easing }
                 }
@@ -108,7 +113,7 @@ Column {
                     width: parent.width
                     height: Math.round(width * 0.55)
                     radius: Theme.radiusSm
-                    color: cardHover.hovered ? Theme.panelAccent : Theme.panelBackground
+                    color: cardDrag.hovered ? Theme.panelAccent : Theme.panelBackground
                     border.width: Theme.borderWidth
                     border.color: Theme.panelBorder
 
@@ -116,13 +121,13 @@ Column {
                         ColorAnimation { duration: Theme.durationFast; easing.type: Theme.easing }
                     }
 
-                    HoverHandler {
-                        id: cardHover
-                    }
-
-                    TapHandler {
-                        id: cardPress
-                        gesturePolicy: TapHandler.ReleaseWithinBounds
+                    AssetDragSource {
+                        id: cardDrag
+                        anchors.fill: parent
+                        kind: "effectStack"
+                        payload: stackCard.modelData.id
+                        label: stackCard.modelData.label || ""
+                        glyph: Theme.icons.layers
                         onTapped: root.applyStack(stackCard.modelData)
                     }
 
@@ -165,7 +170,7 @@ Column {
                         anchors.top: parent.top
                         anchors.right: parent.right
                         anchors.margins: 2
-                        visible: cardHover.hovered || stackMenu.visible
+                        visible: cardDrag.hovered || stackMenu.visible
                         glyph: Theme.icons.ellipsis
                         variant: "ghost"
                         buttonSize: 20
@@ -201,7 +206,7 @@ Column {
                     text: stackCard.modelData.label
                     elide: Text.ElideRight
                     horizontalAlignment: Text.AlignHCenter
-                    color: cardHover.hovered ? Theme.panelForeground : Theme.mutedForeground
+                    color: cardDrag.hovered ? Theme.panelForeground : Theme.mutedForeground
                     font.family: Theme.fontFamily
                     font.pixelSize: Theme.fontSizeXs
 

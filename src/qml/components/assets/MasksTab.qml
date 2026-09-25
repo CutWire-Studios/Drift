@@ -176,6 +176,7 @@ Item {
                              - Theme.spacingLg)
             contentHeight: maskGrid.height + Theme.pagePadding * 2
             clip: true
+            acceptedButtons: Theme.touchUi ? Qt.LeftButton : Qt.NoButton
             ScrollBar.vertical: AppScrollBar { }
 
             Grid {
@@ -183,7 +184,10 @@ Item {
                 x: Theme.pagePadding
                 y: Theme.pagePadding
                 width: parent.width - Theme.pagePadding * 2
-                columns: Math.max(1, Math.floor((width + Theme.assetCardGap) / (Theme.assetCardWidth + Theme.assetCardGap)))
+                // Columns fill the width: rounded to the nearest count at the nominal card size,
+                // the cards stretched or squeezed to take up the slack.
+                columns: Math.max(1, Math.round((width + Theme.assetCardGap) / (Theme.assetCardWidth + Theme.assetCardGap)))
+                readonly property real cardSize: Math.floor((width + Theme.assetCardGap) / columns) - Theme.assetCardGap
                 columnSpacing: Theme.assetCardGap
                 rowSpacing: Theme.assetCardGap
 
@@ -192,13 +196,13 @@ Item {
                     delegate: Column {
                         id: maskCard
                         required property var modelData
-                        width: Theme.assetCardWidth
+                        width: maskGrid.cardSize
                         spacing: Theme.spacingSm
 
                         // Lift on grab: the card dims and grows slightly, so it reads as picked
                         // up rather than merely faded.
                         opacity: maskDrag.active ? 0.85 : 1
-                        scale: maskDrag.active ? 1.04 : 1.0
+                        scale: maskDrag.active ? 1.04 : (maskDrag.pressed ? 0.97 : 1.0)
 
                         Behavior on opacity {
                             NumberAnimation { duration: Theme.durationFast; easing.type: Theme.easing }
@@ -207,19 +211,11 @@ Item {
                             NumberAnimation { duration: Theme.durationFast; easing.type: Theme.easing }
                         }
 
-                        Drag.active: maskDrag.active
-                        Drag.dragType: Drag.Automatic
-                        Drag.supportedActions: Qt.CopyAction
-                        Drag.keys: ["application/x-drift-mask"]
-                        Drag.mimeData: ({ "application/x-drift-mask": maskCard.modelData.id })
-                        Drag.hotSpot.x: width / 2
-                        Drag.hotSpot.y: Theme.assetCardWidth / 2
-
                         Rectangle {
-                            width: Theme.assetCardWidth
-                            height: Theme.assetCardWidth
+                            width: maskGrid.cardSize
+                            height: maskGrid.cardSize
                             radius: Theme.radiusSm
-                            color: maskHover.hovered ? Theme.popoverHover : Theme.panelAccent
+                            color: maskDrag.hovered ? Theme.popoverHover : Theme.panelAccent
                             border.width: maskDrag.active ? 1 : 0
                             border.color: Theme.primary
                             clip: true
@@ -259,29 +255,26 @@ Item {
                                 }
                             }
 
-                            HoverHandler {
-                                id: maskHover
-                                cursorShape: Qt.PointingHandCursor
-                            }
-
                             ThemedToolTip {
                                 text: root.hasVisualSelection
                                       ? qsTr("%1 — click to apply, or drag onto a clip").arg(maskCard.modelData.label)
                                       : qsTr("%1 — drag onto a clip").arg(maskCard.modelData.label)
-                                visible: maskHover.hovered
+                                visible: maskDrag.hovered && !maskDrag.active
                             }
 
-                            TapHandler {
-                                enabled: !maskDrag.active && root.hasVisualSelection
-                                onTapped: root.applyMask(maskCard.modelData.id)
-                            }
-                            DragHandler {
+                            AssetDragSource {
                                 id: maskDrag
-                                target: null
-                                // Touch applies to the selection and closes the sheet; a platform
-                                // drag has no gesture there and only competes for the grab.
-                                enabled: !Theme.touchUi
-                                acceptedButtons: Qt.LeftButton
+                                anchors.fill: parent
+                                kind: "mask"
+                                payload: maskCard.modelData.id
+                                label: maskCard.modelData.label
+                                glyph: Theme.icons.mask
+                                onTapped: {
+                                    if (root.hasVisualSelection)
+                                        root.applyMask(maskCard.modelData.id)
+                                    else
+                                        Toasts.info(qsTr("Select a clip first, or drag the mask onto one"))
+                                }
                             }
                         }
 

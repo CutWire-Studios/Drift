@@ -71,6 +71,8 @@ Popup {
     // panel moves as it goes, so re-testing the pointer against it would flap.
     property bool steppedAside: false
     property real _asideFade: steppedAside ? 0 : 1
+    // Where the finger was when the card was lifted, -1 until the first move reports it.
+    property real _liftStartY: -1
 
     Behavior on _asideFade {
         NumberAnimation { duration: Theme.durationBase; easing.type: Theme.easing }
@@ -82,14 +84,31 @@ Popup {
         function onSceneYChanged() {
             if (!root.opened || root.steppedAside || !TouchDrag.active)
                 return
-            if (TouchDrag.sceneY >= panel.mapToItem(null, 0, 0).y - Theme.spacingLg)
+            if (root._liftStartY < 0)
+                root._liftStartY = TouchDrag.sceneY
+            // Either the finger has left the sheet, or it has clearly set off upwards — towards
+            // the timeline and the preview, the only places a card can go. Waiting for it to
+            // clear the sheet's top edge meant dragging over the very targets the sheet hid.
+            const aboveSheet = TouchDrag.sceneY < panel.mapToItem(null, 0, 0).y - Theme.spacingLg
+            const pulledUp = root._liftStartY - TouchDrag.sceneY > Theme.touchLiftStepAsideDistance
+            if (!aboveSheet && !pulledUp)
                 return
             root.steppedAside = true
             TouchDrag.clearOfSource = true
         }
 
         function onActiveChanged() {
-            if (TouchDrag.active || !root.opened || !root.steppedAside)
+            if (TouchDrag.active) {
+                if (root.opened) {
+                    root._liftStartY = -1
+                    // An expanded sheet covers the preview entirely; back to its resting size
+                    // so there is somewhere to drop.
+                    if (root.expanded)
+                        root.collapse()
+                }
+                return
+            }
+            if (!root.opened || !root.steppedAside)
                 return
             // callLater, not close(): the drag ended inside the released handler of
             // an item this popup owns, and tearing it down under its own event is

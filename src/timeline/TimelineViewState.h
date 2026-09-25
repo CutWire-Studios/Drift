@@ -25,16 +25,19 @@ class TimelineViewState : public QObject
     Q_PROPERTY(bool moveFollowActive MEMBER m_moveFollowActive NOTIFY gestureChanged)
     Q_PROPERTY(int moveLeaderTrack MEMBER m_moveLeaderTrack NOTIFY gestureChanged)
     Q_PROPERTY(int moveLeaderClip MEMBER m_moveLeaderClip NOTIFY gestureChanged)
-    Q_PROPERTY(double moveFollowDeltaX MEMBER m_moveFollowDeltaX NOTIFY gestureChanged)
-    Q_PROPERTY(double moveFollowDeltaY MEMBER m_moveFollowDeltaY NOTIFY gestureChanged)
+    // Written on every move of a drag. Only tracks holding a follower need to redraw for them, so
+    // they notify separately from the rest of the gesture state.
+    Q_PROPERTY(double moveFollowDeltaX MEMBER m_moveFollowDeltaX NOTIFY moveFollowChanged)
+    Q_PROPERTY(double moveFollowDeltaY MEMBER m_moveFollowDeltaY NOTIFY moveFollowChanged)
 
     Q_PROPERTY(bool trimFollowActive MEMBER m_trimFollowActive NOTIFY gestureChanged)
     Q_PROPERTY(QString trimFollowLinkId MEMBER m_trimFollowLinkId NOTIFY gestureChanged)
     Q_PROPERTY(QString trimFollowClipId MEMBER m_trimFollowClipId NOTIFY gestureChanged)
-    Q_PROPERTY(double trimFollowStart MEMBER m_trimFollowStart NOTIFY gestureChanged)
-    Q_PROPERTY(double trimFollowDuration MEMBER m_trimFollowDuration NOTIFY gestureChanged)
-    Q_PROPERTY(double trimFollowIn MEMBER m_trimFollowIn NOTIFY gestureChanged)
-    Q_PROPERTY(double trimFollowOut MEMBER m_trimFollowOut NOTIFY gestureChanged)
+    // Same for the linked trim: per move, and only the partner's track cares.
+    Q_PROPERTY(double trimFollowStart MEMBER m_trimFollowStart NOTIFY trimFollowChanged)
+    Q_PROPERTY(double trimFollowDuration MEMBER m_trimFollowDuration NOTIFY trimFollowChanged)
+    Q_PROPERTY(double trimFollowIn MEMBER m_trimFollowIn NOTIFY trimFollowChanged)
+    Q_PROPERTY(double trimFollowOut MEMBER m_trimFollowOut NOTIFY trimFollowChanged)
 
     Q_PROPERTY(int effectDropTrack MEMBER m_effectDropTrack NOTIFY gestureChanged)
     Q_PROPERTY(int effectDropClip MEMBER m_effectDropClip NOTIFY gestureChanged)
@@ -125,6 +128,8 @@ public:
 signals:
     void viewChanged();
     void gestureChanged();
+    void moveFollowChanged();
+    void trimFollowChanged();
     void styleChanged();
 
 private:

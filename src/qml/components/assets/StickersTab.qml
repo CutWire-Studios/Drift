@@ -138,6 +138,11 @@ Item {
             // One trailing gap wider than the padded area, so the cards pack from the left
             // exactly as the old Grid did.
             GridView {
+                id: stickerGrid
+                // As many columns as fit at the nominal card size, rounded, with the cards stretched or
+                // squeezed a little to fill the row — a fixed card left a column's worth of empty space.
+                readonly property int columnCount: Math.max(1, Math.round(width / (Theme.assetCardWidth + Theme.assetCardGap)))
+                readonly property real cardSize: Math.floor(width / columnCount) - Theme.assetCardGap
                 x: Theme.pagePadding
                 width: parent.width - Theme.pagePadding * 2 + Theme.assetCardGap
                 height: parent.height
@@ -146,22 +151,33 @@ Item {
                 visible: root.currentStickers.length > 0
                 clip: true
                 reuseItems: true
+                // A mouse drag on a card drags the sticker; the wheel and touchpad scroll.
+                acceptedButtons: Theme.touchUi ? Qt.LeftButton : Qt.NoButton
                 boundsBehavior: Flickable.StopAtBounds
                 ScrollBar.vertical: AppScrollBar { }
-                cellWidth: Theme.assetCardWidth + Theme.assetCardGap
-                cellHeight: Theme.assetCardWidth + Theme.spacingSm + Math.ceil(labelMetrics.height) + Theme.assetCardGap
+                cellWidth: Math.floor(width / columnCount)
+                cellHeight: stickerGrid.cardSize + Theme.spacingSm + Math.ceil(labelMetrics.height) + Theme.assetCardGap
                 model: root.currentStickers
 
                 delegate: Column {
                     required property var modelData
-                    width: Theme.assetCardWidth
+                    width: stickerGrid.cardSize
                     spacing: Theme.spacingSm
+                    opacity: stickerDrag.active ? 0.85 : 1
+                    scale: stickerDrag.active ? 1.04 : (stickerDrag.pressed ? 0.97 : 1.0)
+
+                    Behavior on opacity {
+                        NumberAnimation { duration: Theme.durationFast; easing.type: Theme.easing }
+                    }
+                    Behavior on scale {
+                        NumberAnimation { duration: Theme.durationFast; easing.type: Theme.easing }
+                    }
 
                     Rectangle {
-                        width: Theme.assetCardWidth
-                        height: Theme.assetCardWidth
+                        width: stickerGrid.cardSize
+                        height: stickerGrid.cardSize
                         radius: Theme.radiusSm
-                        color: stickerMouse.containsMouse ? Theme.popoverHover : Theme.panelAccent
+                        color: stickerDrag.hovered ? Theme.popoverHover : Theme.panelAccent
                         clip: true
 
                         Behavior on color {
@@ -181,8 +197,8 @@ Item {
                             source: EditorState.imageUrl(modelData.path)
                             fillMode: Image.PreserveAspectFit
                             asynchronous: true
-                            sourceSize: Qt.size(Math.ceil((Theme.assetCardWidth - Theme.pagePadding * 2) * Screen.devicePixelRatio),
-                                                 Math.ceil((Theme.assetCardWidth - Theme.pagePadding * 2) * Screen.devicePixelRatio))
+                            sourceSize: Qt.size(Math.ceil((stickerGrid.cardSize - Theme.pagePadding * 2) * Screen.devicePixelRatio),
+                                                 Math.ceil((stickerGrid.cardSize - Theme.pagePadding * 2) * Screen.devicePixelRatio))
                             opacity: status === Image.Ready ? 1 : 0
 
                             Behavior on opacity {
@@ -199,16 +215,18 @@ Item {
                         }
 
                         ThemedToolTip {
-                            text: modelData.label
-                            visible: stickerMouse.containsMouse
+                            text: qsTr("%1 — click to add, or drag to the timeline or preview").arg(modelData.label)
+                            visible: stickerDrag.hovered && !stickerDrag.active
                         }
 
-                        MouseArea {
-                            id: stickerMouse
+                        AssetDragSource {
+                            id: stickerDrag
                             anchors.fill: parent
-                            hoverEnabled: true
-                            cursorShape: Qt.PointingHandCursor
-                            onClicked: {
+                            kind: "sticker"
+                            payload: modelData.id
+                            label: modelData.label
+                            thumbnail: modelData.path
+                            onTapped: {
                                 EditorState.addStickerClip(modelData.id, -1)
                                 root.added()
                             }

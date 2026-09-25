@@ -11,6 +11,7 @@
 #include <QString>
 #include <QVector>
 
+#include <limits>
 #include <optional>
 
 extern "C" {
@@ -48,7 +49,11 @@ public:
     bool readVideoFrameAt(drift::TimeUs sourceUs, QImage &out, int maxWidth, int maxHeight);
     // Same seek/decode path as readVideoFrameAt, but returns an AVFrame handle for
     // the preview compositor (hardware surfaces stay on the GPU).
-    bool readPreviewVideoFrame(drift::TimeUs sourceUs, PreviewVideoFrame &out, int maxWidth, int maxHeight);
+    // With `approximate` (a scrub in progress) the reader may return the nearest frame that is
+    // cheap to reach — a cached one, a few frames of forward decode, or the keyframe at or before
+    // the time — instead of decoding forward through the GOP to the exact frame.
+    bool readPreviewVideoFrame(drift::TimeUs sourceUs, PreviewVideoFrame &out, int maxWidth, int maxHeight,
+                               bool approximate = false);
     // Decode one frame past the current position into the cache, to overlap
     // decode with the caller's compositing work. Match the format of the last
     // read so prefetch does not consume a frame the other format still needs.
@@ -191,6 +196,10 @@ private:
                                 bool *hwFailure);
     bool decodePreviewVideoFrameAtOnce(drift::TimeUs sourceUs, PreviewVideoFrame &out, int maxWidth,
                                        int maxHeight, bool *hwFailure);
+    bool decodePreviewVideoFrameApprox(drift::TimeUs sourceUs, PreviewVideoFrame &out, int maxWidth,
+                                       int maxHeight, bool *hwFailure);
+    // Keyframe at or before the time, from the demuxer's index; -1 when the container has none.
+    drift::TimeUs keyframeAtOrBeforeUs(drift::TimeUs sourceUs) const;
     bool seekVideoStream(drift::TimeUs sourceUs);
     bool seekAudioStream(drift::TimeUs sourceUs);
 
@@ -205,7 +214,20 @@ private:
     bool coverHolds(drift::TimeUs sourceUs) const;
     void promotePeekToCover();
     bool refVideoFrame(AVFrame *&dst, const AVFrame *src);
-    bool advanceVideoTo(drift::TimeUs sourceUs, int maxWidth, int maxHeight, bool *hwFailure);
+    struct AdvanceLimits
+    {
+        // Stop after this many decoded frames, wherever they land. The last one becomes the
+        // cover, so the caller gets the closest frame it could afford.
+        int maxFrames = std::numeric_limits<int>::max();
+        // Seek even if decoding forward from the current position would get there.
+        bool forceSeek = false;
+    };
+    bool advanceVideoTo(drift::TimeUs sourceUs, int maxWidth, int maxHeight, bool *hwFailure)
+    {
+        return advanceVideoTo(sourceUs, maxWidth, maxHeight, hwFailure, AdvanceLimits());
+    }
+    bool advanceVideoTo(drift::TimeUs sourceUs, int maxWidth, int maxHeight, bool *hwFailure,
+                        const AdvanceLimits &limits);
 
     // Decode size fitted into the caller's box, quantized so small preview
     // resizes don't churn the sws context and the frame cache.
@@ -215,6 +237,9 @@ private:
     bool lookupCachedFrame(drift::TimeUs sourceUs, QImage &out) const;
     void storeCachedFrame(drift::TimeUs ptsUs, const QImage &image);
     bool lookupCachedPreview(drift::TimeUs sourceUs, PreviewVideoFrame &out) const;
+    // The cached frame latest in [loUs, hiUs] (plus the usual tolerance past hiUs).
+    bool lookupNearestCachedPreviewInRange(drift::TimeUs loUs, drift::TimeUs hiUs,
+                                           PreviewVideoFrame &out) const;
     void storeCachedPreview(drift::TimeUs ptsUs, const PreviewVideoFrame &frame);
     int previewCacheCapacity() const;
     drift::TimeUs nextPrefetchTargetUs() const;
@@ -315,6 +340,13 @@ private:
     int m_decodeH = 0;
     drift::TimeUs m_sourceFrameDurationUs = 0; // 0 until the stream is opened
     static constexpr drift::TimeUs kForwardSeekThresholdUs = 2 * drift::kUsPerSecond;
+    // How far a scrub step may decode forward to stay exact, and how far it steps through a GOP
+    // when it cannot. Phones decode a frame in several milliseconds; desktops in one or two.
+#ifdef Q_OS_ANDROID
+    static constexpr int kScrubForwardFrames = 4;
+#else
+    static constexpr int kScrubForwardFrames = 6;
+#endif
 
     // Cover = last source frame at or before the request; peek = the next one.
     // Playback holds cover until peek's PTS, so VFR gaps do not re-seek.

@@ -25,6 +25,7 @@
 #include "SegmentImageProvider.h"
 #include "ShapePreviewImageProvider.h"
 #include "TextStylePreviewImageProvider.h"
+#include "playback/PerfLog.h"
 #include "preview/PreviewItem.h"
 #include "timeline/TimelineTrackItem.h"
 #include "timeline/TimelineViewState.h"
@@ -56,6 +57,8 @@
 #include <QUrl>
 
 #include <condition_variable>
+#include <QElapsedTimer>
+#include <QTimer>
 #include <memory>
 #include <mutex>
 #include <thread>
@@ -480,6 +483,9 @@ int main(int argc, char *argv[])
 {
     forceStderrLogging();
     applyLogLevel(verboseLoggingRequested(argc, argv));
+    // Per-frame polish/sync/render/swap from Qt's own render loop, next to DriftPerf's figures.
+    if (drift::perf::enabled() && qEnvironmentVariableIsEmpty("QT_LOGGING_RULES"))
+        qputenv("QT_LOGGING_RULES", "qt.scenegraph.time.renderloop.debug=true");
 
 #ifndef Q_OS_ANDROID
     // --headless is checked first: it also accepts --mcp-stdio, as the transport to serve
@@ -716,6 +722,45 @@ int main(int argc, char *argv[])
 
     engine.setInitialProperties({{QStringLiteral("shellPreference"), shellPreference}});
     engine.loadFromModule("Drift", "Shell");
+    drift::perf::install();
+    if (drift::perf::enabled()) {
+        // Frame pacing: the interval between swaps is the frame time the user sees. Windows are
+        // created lazily by the shell, so look for new ones periodically. Emitted on the render
+        // thread; gaps past half a second are idle time, not frames.
+        auto *hookTimer = new QTimer(&app);
+        QObject::connect(hookTimer, &QTimer::timeout, &app, [] {
+            for (QWindow *window : QGuiApplication::topLevelWindows()) {
+                auto *quick = qobject_cast<QQuickWindow *>(window);
+                if (!quick || quick->property("_driftPerfHooked").toBool())
+                    continue;
+                quick->setProperty("_driftPerfHooked", true);
+                // Sync blocks the GUI thread; render is the render thread's own work. Together
+                // with the swap interval they say which thread a slow frame belongs to.
+                auto sync = std::make_shared<QElapsedTimer>();
+                auto render = std::make_shared<QElapsedTimer>();
+                QObject::connect(quick, &QQuickWindow::beforeSynchronizing, quick,
+                                 [sync] { sync->start(); }, Qt::DirectConnection);
+                QObject::connect(quick, &QQuickWindow::afterSynchronizing, quick, [sync] {
+                    drift::perf::record("frame.sync", double(sync->nsecsElapsed()) / 1'000'000.0);
+                }, Qt::DirectConnection);
+                QObject::connect(quick, &QQuickWindow::beforeRendering, quick,
+                                 [render] { render->start(); }, Qt::DirectConnection);
+                QObject::connect(quick, &QQuickWindow::afterRendering, quick, [render] {
+                    drift::perf::record("frame.render", double(render->nsecsElapsed()) / 1'000'000.0);
+                }, Qt::DirectConnection);
+                auto last = std::make_shared<QElapsedTimer>();
+                QObject::connect(quick, &QQuickWindow::frameSwapped, quick, [last] {
+                    if (last->isValid()) {
+                        const double ms = double(last->nsecsElapsed()) / 1'000'000.0;
+                        if (ms < 500.0)
+                            drift::perf::record("frame", ms);
+                    }
+                    last->start();
+                }, Qt::DirectConnection);
+            }
+        });
+        hookTimer->start(1000);
+    }
 
 #ifndef Q_OS_ANDROID
     // Shell.qml is not a window itself; the shell window it builds is its host.

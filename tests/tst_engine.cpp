@@ -232,6 +232,10 @@ private slots:
     void audioStreamResetRepositionsShortForwardSeek();
     void audioMixerOverlappingSameFileClips();
     void videoStreamsDoNotReseekPerFrame();
+    void approximatePreviewStopsAtKeyframe();
+    void approximatePreviewBackwardHitsCache();
+    void approximatePreviewForwardStepIsBounded();
+    void readerHandoffKeepsDecoderPosition();
     void compositorFramesOriginalVideoBeforeScaling();
     void compositorDefaultRenderStaysFullResolution();
     void compositorPreviewScaleRendersLowerResolution();
@@ -5426,6 +5430,102 @@ QString EngineTest::makeLongGopVideo(QTemporaryDir &dir)
     if (!proc.waitForFinished(60000) || proc.exitCode() != 0)
         return {};
     return QFileInfo::exists(out) ? out : QString{};
+}
+
+// A scrub step asks for an approximate frame: the reader may show the keyframe at or before the
+// time instead of decoding the GOP forward to it. Keyframes of this source are at 0 s and 2 s.
+void EngineTest::approximatePreviewStopsAtKeyframe()
+{
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    const QString path = makeLongGopVideo(dir);
+    if (path.isEmpty())
+        QSKIP("ffmpeg not available to generate a test clip");
+
+    ClipReader exact;
+    QVERIFY(exact.open(path));
+    PreviewVideoFrame frame;
+    const quint64 exactBefore = ClipReader::videoFramesDecoded();
+    QVERIFY(exact.readPreviewVideoFrame(1'500'000, frame, 640, 360, false));
+    const quint64 exactDecoded = ClipReader::videoFramesDecoded() - exactBefore;
+
+    ClipReader approx;
+    QVERIFY(approx.open(path));
+    const quint64 approxBefore = ClipReader::videoFramesDecoded();
+    QVERIFY(approx.readPreviewVideoFrame(1'500'000, frame, 640, 360, true));
+    QVERIFY(frame.isValid());
+    const quint64 approxDecoded = ClipReader::videoFramesDecoded() - approxBefore;
+
+    QVERIFY2(approxDecoded * 4 < exactDecoded,
+             qPrintable(QStringLiteral("approximate decoded %1 frames, exact %2")
+                            .arg(approxDecoded).arg(exactDecoded)));
+}
+
+// Backwards inside a GOP the keyframe is already cached, so the step costs no decode at all.
+void EngineTest::approximatePreviewBackwardHitsCache()
+{
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    const QString path = makeLongGopVideo(dir);
+    if (path.isEmpty())
+        QSKIP("ffmpeg not available to generate a test clip");
+
+    ClipReader reader;
+    QVERIFY(reader.open(path));
+    PreviewVideoFrame frame;
+    QVERIFY(reader.readPreviewVideoFrame(1'500'000, frame, 640, 360, true));
+    const quint64 before = ClipReader::videoFramesDecoded();
+    QVERIFY(reader.readPreviewVideoFrame(1'200'000, frame, 640, 360, true));
+    QVERIFY(frame.isValid());
+    QCOMPARE(ClipReader::videoFramesDecoded() - before, quint64(0));
+}
+
+// Forward within the GOP it walks a bounded step towards the target instead of all the way.
+void EngineTest::approximatePreviewForwardStepIsBounded()
+{
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    const QString path = makeLongGopVideo(dir);
+    if (path.isEmpty())
+        QSKIP("ffmpeg not available to generate a test clip");
+
+    ClipReader reader;
+    QVERIFY(reader.open(path));
+    PreviewVideoFrame frame;
+    QVERIFY(reader.readPreviewVideoFrame(200'000, frame, 640, 360, true));
+    const quint64 before = ClipReader::videoFramesDecoded();
+    QVERIFY(reader.readPreviewVideoFrame(1'800'000, frame, 640, 360, true));
+    QVERIFY(frame.isValid());
+    const quint64 decoded = ClipReader::videoFramesDecoded() - before;
+    // The exact frame is ~40 frames on; a step is a handful, plus decoder pipeline latency.
+    QVERIFY2(decoded <= 16, qPrintable(QStringLiteral("decoded %1 frames").arg(decoded)));
+}
+
+// A clip cut into pieces reads each piece through its own stream. When the compositor moves from
+// one piece to the next, the next takes over the previous piece's reader rather than opening a
+// decoder of its own — the same source timeline, so it simply decodes on.
+void EngineTest::readerHandoffKeepsDecoderPosition()
+{
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    const QString path = makeLongGopVideo(dir);
+    if (path.isEmpty())
+        QSKIP("ffmpeg not available to generate a test clip");
+
+    ClipReaderPool &pool = ClipReaderPool::instance();
+    pool.setReadAheadUs(0);
+    constexpr quint64 kFirstPiece = 9101;
+    constexpr quint64 kSecondPiece = 9102;
+
+    pool.warmVideoFrames({ClipReaderPool::VideoRequest{path, kFirstPiece, 1'000'000, 640, 360, 0}});
+    QVERIFY(pool.readPreviewVideoFrame(path, kFirstPiece, 1'000'000, 640, 360).isValid());
+
+    const quint64 before = ClipReader::videoFramesDecoded();
+    pool.warmVideoFrames({ClipReaderPool::VideoRequest{path, kSecondPiece, 1'080'000, 640, 360, 0}});
+    QVERIFY(pool.readPreviewVideoFrame(path, kSecondPiece, 1'080'000, 640, 360).isValid());
+    const quint64 decoded = ClipReader::videoFramesDecoded() - before;
+    // A fresh reader would seek to the keyframe at 0 and decode ~27 frames to get here.
+    QVERIFY2(decoded <= 6, qPrintable(QStringLiteral("decoded %1 frames").arg(decoded)));
 }
 
 // Two clips cut from one file and overlapping on the timeline interleave reads at positions

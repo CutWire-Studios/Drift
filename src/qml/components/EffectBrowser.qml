@@ -116,8 +116,19 @@ Column {
                 text: qsTr("Add adjustment layer")
                 glyph: Theme.icons.wand
                 variant: "secondary"
-                tooltip: qsTr("Add an adjustment layer to apply effects across all clips underneath")
-                onClicked: EditorState.addAdjustmentClip(-1, -1)
+                tooltip: qsTr("Add an adjustment layer to apply effects across all clips underneath, or drag it to where it should go")
+                down: adjustmentDrag.pressed
+
+                // Tap adds at the playhead as before; drag places it on a track.
+                AssetDragSource {
+                    id: adjustmentDrag
+                    anchors.fill: parent
+                    kind: "adjustment"
+                    payload: "videoEffects"
+                    label: qsTr("Adjustment layer")
+                    glyph: Theme.icons.wand
+                    onTapped: EditorState.addAdjustmentClip(-1, -1)
+                }
             }
         }
 
@@ -175,6 +186,10 @@ Column {
             // "Built-in" line) since a GridView can't size each row to its tallest card.
             GridView {
                 id: presetGrid
+                // As many columns as fit at the nominal card size, rounded, with the cards stretched or
+                // squeezed a little to fill the row — a fixed card left a column's worth of empty space.
+                readonly property int columnCount: Math.max(1, Math.round(width / (Theme.assetCardWidth + Theme.assetCardGap)))
+                readonly property real cardSize: Math.floor(width / columnCount) - Theme.assetCardGap
                 x: 12
                 width: parent.width - 24 + Theme.assetCardGap
                 height: parent.height
@@ -184,16 +199,17 @@ Column {
                 clip: true
                 reuseItems: true
                 boundsBehavior: Flickable.StopAtBounds
+                acceptedButtons: Theme.touchUi ? Qt.LeftButton : Qt.NoButton
                 ScrollBar.vertical: AppScrollBar { }
-                cellWidth: Theme.assetCardWidth + Theme.assetCardGap
-                cellHeight: Theme.assetCardWidth + 4 + Math.ceil(labelMetrics.height) * 2
+                cellWidth: Math.floor(width / columnCount)
+                cellHeight: presetGrid.cardSize + 4 + Math.ceil(labelMetrics.height) * 2
                             + 4 + Math.ceil(badgeMetrics.height) + Theme.assetCardGap
                 model: root.visiblePresets
 
                 delegate: Column {
                     id: presetCard
                     required property var modelData
-                    width: Theme.assetCardWidth
+                    width: presetGrid.cardSize
                     spacing: 4
                     // Lift on grab: the card dims and grows slightly, so it reads
                     // as picked up rather than merely faded.
@@ -215,11 +231,11 @@ Column {
                     Drag.keys: ["application/x-drift-effect"]
                     Drag.mimeData: ({ "application/x-drift-effect": presetCard.modelData.id })
                     Drag.hotSpot.x: width / 2
-                    Drag.hotSpot.y: Theme.assetCardWidth / 2
+                    Drag.hotSpot.y: presetGrid.cardSize / 2
 
                     Rectangle {
-                        width: Theme.assetCardWidth
-                        height: Theme.assetCardWidth
+                        width: presetGrid.cardSize
+                        height: presetGrid.cardSize
                         radius: Theme.radiusSm
                         color: cardHover.hovered ? Theme.panelSecondaryBg : Theme.panelAccent
                         border.width: presetDrag.active ? 1 : 0
@@ -248,7 +264,7 @@ Column {
                                     ? EditorState.imageUrl(presetCard.thumb) : ""
                             fillMode: Image.PreserveAspectCrop
                             asynchronous: true
-                            sourceSize: Qt.size(Math.ceil(Theme.assetCardWidth * Screen.devicePixelRatio), Math.ceil(Theme.assetCardWidth * Screen.devicePixelRatio))
+                            sourceSize: Qt.size(Math.ceil(presetGrid.cardSize * Screen.devicePixelRatio), Math.ceil(presetGrid.cardSize * Screen.devicePixelRatio))
                             smooth: true
                         }
 
@@ -282,6 +298,7 @@ Column {
                             // drag has no touch gesture and cannot leave the sheet.
                             enabled: !Theme.touchUi
                             acceptedButtons: Qt.LeftButton
+                            acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad | PointerDevice.Stylus
                         }
 
                         // Hold to carry the preset onto a specific clip; tap still
