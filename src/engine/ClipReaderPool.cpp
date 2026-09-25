@@ -51,11 +51,7 @@ ClipReaderPool::~ClipReaderPool()
 // swept. The interval only needs to be fine-grained relative to the idle budget it is checking.
 void ClipReaderPool::idleSweepLoop()
 {
-#ifdef Q_OS_ANDROID
     constexpr auto kInterval = std::chrono::seconds(5);
-#else
-    constexpr auto kInterval = std::chrono::seconds(30);
-#endif
     std::unique_lock<std::mutex> lock(m_sweepMutex);
     while (!m_sweepCv.wait_for(lock, kInterval, [this] { return m_sweepStop; })) {
         lock.unlock();
@@ -66,11 +62,7 @@ void ClipReaderPool::idleSweepLoop()
 
 void ClipReaderPool::sweepIdleWorkersOnce()
 {
-#ifdef Q_OS_ANDROID
     const qint64 idleMs = kIdleReleaseMs;
-#else
-    const qint64 idleMs = kDesktopIdleReleaseMs;
-#endif
     std::vector<std::unique_ptr<WorkerEntry>> evicted;
     {
         QMutexLocker lock(&m_mutex);

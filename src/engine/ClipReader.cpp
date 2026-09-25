@@ -811,7 +811,7 @@ int ClipReader::previewCacheCapacity() const
     if (frameBytes > 0) {
         const int readers = qMax(1, g_readAheadReaders.load(std::memory_order_relaxed));
         const qsizetype budget = previewCacheBudgetBytes() / readers;
-        capacity = qMin<qsizetype>(capacity, qMax<qsizetype>(historyFrames, budget / frameBytes));
+        capacity = qMin<qsizetype>(capacity, qMax<qsizetype>(kMinCachedFrames, budget / frameBytes));
     }
     return int(qMin<qsizetype>(capacity, std::numeric_limits<int>::max()));
 }

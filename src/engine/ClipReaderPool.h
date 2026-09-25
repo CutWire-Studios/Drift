@@ -153,12 +153,9 @@ private:
     void idleSweepLoop();
     void sweepIdleWorkersOnce();
 
+    // Desktop too: a 4K decoder holds a few hundred MB of frames or GPU surfaces, and a timeline
+    // cut from a dozen files kept every one of them open for as long as it looped.
     static constexpr qint64 kIdleReleaseMs = 10'000;
-    // Desktop keeps a decoder open far longer than Android's tight budget allows, so pausing on
-    // a clip and scrubbing back to it minutes later still hits a warm reader. This only bounds
-    // paths that never come back — a one-shot decode for face tracking or segmentation that never
-    // sits on the timeline, and so never gets its idle timer refreshed again.
-    static constexpr qint64 kDesktopIdleReleaseMs = 5 * 60 * 1000;
 
     QMutex m_mutex;
     std::atomic<drift::TimeUs> m_readAheadUs{0};
