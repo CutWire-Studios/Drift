@@ -331,8 +331,12 @@ ThemedDialog {
         var suffix = EditorState.exportDefaultSuffix(container, isAudioOnly)
         var dialogTitle = isGifExport ? qsTr("Export GIF")
                 : isAudioOnly ? qsTr("Export Audio") : qsTr("Export Video")
+        // SAF offers no overwrite, so a repeated default name would only ever pick up " (1)".
+        var suggestedName = Qt.platform.os === "android"
+                ? EditorState.projectName + " " + Qt.formatDateTime(new Date(), "yyyyMMdd_HHmmss")
+                : EditorState.projectName
         var url = FileDialogs.saveFile(dialogTitle, filters,
-                                       EditorState.projectName, suffix,
+                                       suggestedName, suffix,
                                        EditorState.lastExportFolder())
         if (url != "") {
             EditorState.exportWithSettings(url, buildSettings())

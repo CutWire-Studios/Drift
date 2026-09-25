@@ -495,7 +495,27 @@ QUrl FileDialogs::saveFile(const QString &title, const QStringList &nameFilters,
     dialog.setWindowTitle(title);
     dialog.setAcceptMode(QFileDialog::AcceptSave);
     dialog.setFileMode(QFileDialog::AnyFile);
+#ifdef Q_OS_ANDROID
+    // On a name clash the storage provider only keeps the extension ahead of " (1)" when the
+    // requested MIME type matches that extension in Android's own MimeTypeMap. Qt sends "*/*"
+    // whenever more than one filter is set, and its MIME names do not always match Android's,
+    // so ask Android for the one type and clear the name filters Qt would add on top of it.
+    // An unmapped extension gets octet-stream, which the provider treats as matching too.
+    if (!suffix.isEmpty()) {
+        const QJniObject mimeMap = QJniObject::callStaticObjectMethod(
+            "android/webkit/MimeTypeMap", "getSingleton", "()Landroid/webkit/MimeTypeMap;");
+        const QJniObject mime = mimeMap.callObjectMethod(
+            "getMimeTypeFromExtension", "(Ljava/lang/String;)Ljava/lang/String;",
+            QJniObject::fromString(suffix.toLower()).object<jstring>());
+        dialog.setMimeTypeFilters({mime.isValid() ? mime.toString()
+                                                  : QStringLiteral("application/octet-stream")});
+        dialog.setNameFilters({});
+    } else {
+        applyFilters(dialog, nameFilters, mimeTypeFilters);
+    }
+#else
     applyFilters(dialog, nameFilters, mimeTypeFilters);
+#endif
 
     if (!initialDirectory.isEmpty() && QDir(initialDirectory).exists())
         dialog.setDirectory(initialDirectory);
