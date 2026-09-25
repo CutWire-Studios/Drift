@@ -1318,6 +1318,7 @@ QVariantMap AssetLibrary::assetAt(int index) const
         {QStringLiteral("durationSeconds"), drift::usToSeconds(asset->durationUs)},
         {QStringLiteral("placedDurationSeconds"), drift::usToSeconds(placedDurationUs(*asset))},
         {QStringLiteral("path"), asset->path},
+        {QStringLiteral("sourceFrame"), asset->sourceFrame},
         {QStringLiteral("width"), asset->width},
         {QStringLiteral("height"), asset->height},
         {QStringLiteral("fps"), asset->fps},
@@ -1653,6 +1654,8 @@ QJsonArray AssetLibrary::toJsonArray() const
         };
         if (asset->hasAudioKnown)
             object.insert(QStringLiteral("hasAudio"), asset->hasAudio);
+        if (asset->sourceFrame != QRectF(0, 0, 1, 1))
+            object.insert(QStringLiteral("sourceFrame"), drift::sourceFrameToJson(asset->sourceFrame));
         assets.append(object);
     }
     return assets;
@@ -1683,6 +1686,7 @@ void AssetLibrary::loadFromJsonArray(const QJsonArray &assets)
             asset.durationUs = drift::secondsToUs(object.value(QStringLiteral("durationSeconds")).toDouble());
         }
         asset.path = object.value(QStringLiteral("path")).toString();
+        asset.sourceFrame = drift::sourceFrameFromJson(object.value(QStringLiteral("sourceFrame")).toArray());
         asset.width = object.value(QStringLiteral("width")).toInt();
         asset.height = object.value(QStringLiteral("height")).toInt();
         asset.fps = object.value(QStringLiteral("fps")).toDouble();

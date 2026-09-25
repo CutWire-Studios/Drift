@@ -579,6 +579,10 @@ ApplicationWindow {
         mediaPreviewWindowLoader.ensure().openFor(assetIndex)
     }
 
+    function openSourceFrame(track, clip) {
+        mediaPreviewWindowLoader.ensure().openClip(track, clip)
+    }
+
     // Opened from the header and from the "multicam" shortcut. Unlike the windows above it is
     // not bound to one clip, so it survives any edit and only closes when the document does.
     function openMulticam() {

@@ -304,6 +304,8 @@ QJsonObject clipToJson(const Clip &clip)
         json.insert(QStringLiteral("model3d"), clip.model3d.toJson());
     if (!clip.sequenceId.isEmpty())
         json.insert(QStringLiteral("sequenceId"), clip.sequenceId);
+    if (clip.sourceFrame != QRectF(0, 0, 1, 1))
+        json.insert(QStringLiteral("sourceFrame"), drift::sourceFrameToJson(clip.sourceFrame));
     return json;
 }
 
@@ -362,6 +364,7 @@ Clip clipFromJsonV2(const QJsonObject &object, int canvasW = 1920, int canvasH =
     clip.model3d = Model3dSource::fromJson(object.value(QStringLiteral("model3d")).toObject());
     clip.sequenceId = object.value(QStringLiteral("sequenceId")).toString();
     clip.path = object.value(QStringLiteral("path")).toString();
+    clip.sourceFrame = drift::sourceFrameFromJson(object.value(QStringLiteral("sourceFrame")).toArray());
     clip.thumbnailPath = object.value(QStringLiteral("thumbnailPath")).toString();
     clip.filmstripPath = object.value(QStringLiteral("filmstripPath")).toString();
     clip.emoji = object.value(QStringLiteral("emoji")).toString();
@@ -445,6 +448,7 @@ Clip clipFromJsonV1(const QJsonObject &object, const QList<QString> &assetOrder)
     clip.id = QUuid::createUuid().toString(QUuid::WithoutBraces);
     clip.name = object.value(QStringLiteral("name")).toString();
     clip.path = object.value(QStringLiteral("path")).toString();
+    clip.sourceFrame = drift::sourceFrameFromJson(object.value(QStringLiteral("sourceFrame")).toArray());
     clip.type = clipTypeFromString(object.value(QStringLiteral("kind")).toString());
     clip.textContent = object.value(QStringLiteral("textContent")).toString();
     clip.thumbnailPath = object.value(QStringLiteral("thumbnailPath")).toString();
@@ -499,6 +503,8 @@ QJsonObject assetToJson(const MediaAsset &asset)
         object.insert(QStringLiteral("sequenceId"), asset.sequenceId);
     if (!asset.generator.isEmpty())
         object.insert(QStringLiteral("generator"), asset.generator);
+    if (asset.sourceFrame != QRectF(0, 0, 1, 1))
+        object.insert(QStringLiteral("sourceFrame"), drift::sourceFrameToJson(asset.sourceFrame));
     return object;
 }
 
@@ -511,6 +517,7 @@ MediaAsset assetFromJsonV2(const QJsonObject &object)
     asset.durationUs = static_cast<TimeUs>(object.value(QStringLiteral("durationUs")).toDouble());
     asset.durationLabel = object.value(QStringLiteral("duration")).toString();
     asset.path = object.value(QStringLiteral("path")).toString();
+    asset.sourceFrame = drift::sourceFrameFromJson(object.value(QStringLiteral("sourceFrame")).toArray());
     asset.sourceUri = object.value(QStringLiteral("sourceUri")).toString();
     asset.width = object.value(QStringLiteral("width")).toInt();
     asset.height = object.value(QStringLiteral("height")).toInt();
@@ -551,6 +558,7 @@ MediaAsset assetFromJsonV1(const QJsonObject &object)
     asset.durationLabel = object.value(QStringLiteral("duration")).toString();
     asset.durationUs = secondsToUs(object.value(QStringLiteral("durationSeconds")).toDouble());
     asset.path = object.value(QStringLiteral("path")).toString();
+    asset.sourceFrame = drift::sourceFrameFromJson(object.value(QStringLiteral("sourceFrame")).toArray());
     asset.thumbnailPath = object.value(QStringLiteral("thumbnailPath")).toString();
     asset.filmstripPath = object.value(QStringLiteral("filmstripPath")).toString();
     return asset;

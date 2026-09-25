@@ -98,6 +98,7 @@ private slots:
     void addTextClipWithTextDoesNotRequestEdit();
     void addTextClipWithPresetAppliesStyle();
     void undoRedoClipAdd();
+    void sourceFramingPreservesOriginalAndUndoes();
     void undoLibraryClipDropOntoExistingTrack();
     void undoTrackMute();
     void packagedProjectCarriesDerivedArtifacts();
@@ -578,6 +579,49 @@ void EditorStateTest::compositeSeparateAudioAndRemoval()
     QVERIFY(state.activeSequenceId().isEmpty());
     QVERIFY(!state.project()->hasSequence(composite.sequenceId));
     QVERIFY(state.sequenceTabs().isEmpty());
+}
+
+void EditorStateTest::sourceFramingPreservesOriginalAndUndoes()
+{
+    QTemporaryFile file;
+    QVERIFY(file.open());
+    AssetLibrary library;
+    AppController state(&library);
+    state.project()->setResolution(1920, 1080);
+    drift::MediaAsset asset;
+    asset.kind = drift::MediaKind::Video;
+    asset.path = file.fileName();
+    asset.width = 3840;
+    asset.height = 2160;
+    asset.durationUs = drift::secondsToUs(10);
+    const QString id = state.project()->addAsset(asset);
+    library.syncToProject();
+    QVERIFY(state.saveAssetEdit(0, 2, 8, 0.25, 0.25, 0.5, 0.5));
+    QCOMPARE(state.project()->asset(id)->path, asset.path);
+    QCOMPARE(state.project()->asset(id)->width, 3840);
+    state.addClipFromAssetAt(0, 0, 0);
+    const auto clip = state.project()->tracks().at(0).clips.at(0);
+    QCOMPARE(clip.sourceFrame, QRectF(0.25, 0.25, 0.5, 0.5));
+    QCOMPARE(clip.srcIn, drift::secondsToUs(2));
+    QCOMPARE(clip.srcOut, drift::secondsToUs(8));
+    QCOMPARE(clip.timelineDuration, drift::secondsToUs(6));
+    QCOMPARE(state.clipAt(0, 0).value(QStringLiteral("sourceWidth")).toInt(), 3840);
+    QVERIFY(state.setClipSourceFrame(clip.id, 0, 0, 1, 1));
+    QCOMPARE(state.project()->tracks().at(0).clips.at(0).sourceFrame, QRectF(0, 0, 1, 1));
+    QCOMPARE(state.project()->asset(id)->sourceFrame, clip.sourceFrame);
+    state.undo();
+    QCOMPARE(state.project()->tracks().at(0).clips.at(0).sourceFrame, clip.sourceFrame);
+    state.redo();
+    QCOMPARE(state.project()->tracks().at(0).clips.at(0).sourceFrame, QRectF(0, 0, 1, 1));
+    QCOMPARE(state.project()->tracks().at(0).clips.at(0).path, asset.path);
+    QVERIFY(!state.setClipSourceFrame(QStringLiteral("deleted"), 0, 0, 1, 1));
+
+    auto &unlaid = state.project()->tracks()[0].clips[0];
+    unlaid.transformW = {};
+    unlaid.transformH = {};
+    QVERIFY(state.setClipSourceFrame(clip.id, 0.25, 0.25, 0.5, 0.5));
+    QVERIFY(state.project()->tracks().at(0).clips.at(0).transformW.isEmpty());
+    QVERIFY(state.project()->tracks().at(0).clips.at(0).transformH.isEmpty());
 }
 
 void EditorStateTest::undoLibraryClipDropOntoExistingTrack()

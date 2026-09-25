@@ -69,6 +69,7 @@ private slots:
     void disabledKeyframesFreezeAtFirstKey();
     void legacyTrackInterpolationMigratesLosslessly();
     void keyframeNearestQuery();
+    void sourceFramingRoundTrip();
     void projectSerializationRoundTrip();
     void binFolderSerializationRoundTrip();
     void compositeSequenceRoundTrip();
@@ -422,6 +423,36 @@ void CoreTest::projectMetadataRoundTrip()
 
     // Two fresh projects are distinct documents, not the same one.
     QVERIFY(drift::Project().id() != drift::Project().id());
+}
+
+void CoreTest::sourceFramingRoundTrip()
+{
+    drift::Project project;
+    drift::MediaAsset asset;
+    asset.width = 3840;
+    asset.height = 2160;
+    asset.path = QStringLiteral("original.mp4");
+    asset.sourceFrame = QRectF(0.25, 0.25, 0.5, 0.5);
+    const QString id = project.addAsset(asset);
+    drift::Clip clip;
+    clip.assetId = id;
+    clip.path = asset.path;
+    clip.sourceFrame = QRectF(0.1, 0.2, 0.3, 0.4);
+    project.tracks()[0].clips.append(clip);
+    const auto loaded = drift::Project::fromJson(project.toJson());
+    QCOMPARE(loaded.asset(id)->width, 3840);
+    QCOMPARE(loaded.asset(id)->height, 2160);
+    QCOMPARE(loaded.asset(id)->path, asset.path);
+    QCOMPARE(loaded.asset(id)->sourceFrame, asset.sourceFrame);
+    QCOMPARE(loaded.tracks()[0].clips[0].sourceFrame, clip.sourceFrame);
+    drift::Project plain;
+    drift::MediaAsset plainAsset;
+    plainAsset.path = asset.path;
+    plain.addAsset(plainAsset);
+    plain.tracks()[0].clips.append(drift::Clip{});
+    QVERIFY(!QJsonDocument(plain.toJson()).toJson().contains("sourceFrame"));
+    QCOMPARE(drift::sourceFrameFromJson({}), QRectF(0, 0, 1, 1));
+    QCOMPARE(drift::normalizedSourceFrame(-1, 4, 2, 0.5), QRectF(0, 0.5, 1, 0.5));
 }
 
 void CoreTest::projectSerializationRoundTrip()
