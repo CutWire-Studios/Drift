@@ -15,8 +15,11 @@
 #include <QList>
 
 #include <atomic>
+#include <condition_variable>
 #include <map>
 #include <memory>
+#include <mutex>
+#include <thread>
 #include <vector>
 
 class ClipReaderWorker;
@@ -94,10 +97,10 @@ public:
     // for. Called when the timeline playhead moves: a short forward seek looks like ordinary
     // playback to the sequential fast path, which would keep streaming from the old position.
     void resetAudioStreams();
-    // Opens a worker for every path the current frame reads. On Android it also closes the ones
-    // that have gone idle: without that, every path ever decoded — including one-shot reads for
-    // segmentation or face tracking, which never appear on the timeline — keeps a thread, an open
-    // demuxer/decoder and its frame caches alive for the rest of the process.
+    // Opens a worker for every path the current frame reads and records them as the active set,
+    // which the background idle sweep (see idleSweepLoop()) never evicts. Everything else —
+    // including one-shot reads for segmentation or face tracking, which never appear on the
+    // timeline — is reclaimed once idle, even while the project is paused.
     void retainActivePaths(const QSet<QString> &videoPaths, const QSet<QString> &audioPaths);
 
     // Drop every worker that is not mid-decode, ignoring the idle gate. For the Android
@@ -106,7 +109,7 @@ public:
     void releaseAll();
 
 private:
-    ClipReaderPool() = default;
+    ClipReaderPool();
     ~ClipReaderPool();
 
     struct WorkerEntry
@@ -132,12 +135,31 @@ private:
         std::map<QString, std::unique_ptr<WorkerEntry>> &workers, const QSet<QString> &keep,
         qint64 minIdleMs);
 
+    // Runs on its own thread for the pool's lifetime so idle workers are reclaimed even when
+    // nothing calls retainActivePaths for a while (its only caller is FrameCompositor::prepare,
+    // which stops running entirely while the project is paused). The last active set is kept, so
+    // pausing on a clip never closes the readers under the playhead.
+    void idleSweepLoop();
+    void sweepIdleWorkersOnce();
+
     static constexpr qint64 kIdleReleaseMs = 10'000;
+    // Desktop keeps a decoder open far longer than Android's tight budget allows, so pausing on
+    // a clip and scrubbing back to it minutes later still hits a warm reader. This only bounds
+    // paths that never come back — a one-shot decode for face tracking or segmentation that never
+    // sits on the timeline, and so never gets its idle timer refreshed again.
+    static constexpr qint64 kDesktopIdleReleaseMs = 5 * 60 * 1000;
 
     QMutex m_mutex;
     std::atomic<drift::TimeUs> m_readAheadUs{0};
     std::map<QString, std::unique_ptr<WorkerEntry>> m_videoWorkers;
     std::map<QString, std::unique_ptr<WorkerEntry>> m_audioWorkers;
+    QSet<QString> m_activeVideoPaths;
+    QSet<QString> m_activeAudioPaths;
+
+    std::thread m_idleSweepThread;
+    std::mutex m_sweepMutex;
+    std::condition_variable m_sweepCv;
+    bool m_sweepStop = false;
 };
 
 // Blocks MediaCodec surface decoding for its lifetime, and resets every open video decoder on the
