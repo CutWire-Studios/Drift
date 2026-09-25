@@ -66,8 +66,13 @@ inline void configureSwsRange(SwsContext *sws, const AVFrame *src, int dstRange)
     if (!sws || !src)
         return;
     const int *coeff = sws_getCoefficients(swsColorspaceFromFrame(src));
-    // Unspecified range is treated as limited (MPEG/TV) — the common case for camera footage.
-    const int srcRange = src->color_range == AVCOL_RANGE_JPEG ? 1 : 0;
+    // Unspecified range is treated as limited (MPEG/TV) — the common case for camera footage —
+    // unless the format is YUVJ*, which is full range by definition.
+    const bool yuvj = swsSourceFormat(static_cast<AVPixelFormat>(src->format)) != src->format;
+    const int srcRange = src->color_range == AVCOL_RANGE_JPEG
+                                 || (src->color_range == AVCOL_RANGE_UNSPECIFIED && yuvj)
+                             ? 1
+                             : 0;
     sws_setColorspaceDetails(sws, coeff, srcRange, coeff, dstRange, 0, 1 << 16, 1 << 16);
 }
 
