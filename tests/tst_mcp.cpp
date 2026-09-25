@@ -5640,7 +5640,7 @@ void McpTest::cutWordsByTextAndIndex()
 
     // By index on the (now second) piece: word 4 is "phrase".
     r = dispatcher.applyOne(QStringLiteral("cut_words"),
-                            {{QStringLiteral("clip"), pieces[1].id}, {QStringLiteral("words"), QJsonArray{QJsonArray{4, 4}}}});
+                            {{QStringLiteral("clip"), pieces[1].id}, {QStringLiteral("words"), QJsonArray{QJsonValue(QJsonArray{4, 4})}}});
     QVERIFY2(r.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(r).toJson(QJsonDocument::Compact)));
     QCOMPARE(r.value(QStringLiteral("removed_words")).toArray().at(0).toObject().value(QStringLiteral("text")).toString(),
              QStringLiteral("phrase"));

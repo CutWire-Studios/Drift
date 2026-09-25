@@ -5,6 +5,7 @@ extern "C" {
 #include <libavutil/tx.h>
 }
 
+#define _USE_MATH_DEFINES
 #include <cfloat>
 #include <cmath>
 

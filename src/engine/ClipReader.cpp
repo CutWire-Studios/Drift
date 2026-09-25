@@ -22,6 +22,9 @@
 #include <algorithm>
 
 #if defined(Q_OS_WIN)
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
 #include <windows.h>
 #elif defined(Q_OS_MACOS)
 #include <sys/sysctl.h>
