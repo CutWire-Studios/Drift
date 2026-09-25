@@ -72,8 +72,9 @@ void ClipReaderPool::sweepIdleWorkersOnce()
     std::vector<std::unique_ptr<WorkerEntry>> evicted;
     {
         QMutexLocker lock(&m_mutex);
-        evicted = detachIdleLocked(m_videoWorkers, {}, idleMs);
-        std::vector<std::unique_ptr<WorkerEntry>> audio = detachIdleLocked(m_audioWorkers, {}, idleMs);
+        evicted = detachIdleLocked(m_videoWorkers, m_activeVideoPaths, idleMs);
+        std::vector<std::unique_ptr<WorkerEntry>> audio =
+            detachIdleLocked(m_audioWorkers, m_activeAudioPaths, idleMs);
         evicted.insert(evicted.end(), std::make_move_iterator(audio.begin()),
                        std::make_move_iterator(audio.end()));
     }
@@ -330,8 +331,9 @@ void ClipReaderPool::resetAudioStreams()
 
 void ClipReaderPool::retainActivePaths(const QSet<QString> &videoPaths, const QSet<QString> &audioPaths)
 {
-    // Idle eviction lives in idleSweepLoop() now, not here — see its declaration for why.
     QMutexLocker lock(&m_mutex);
+    m_activeVideoPaths = videoPaths;
+    m_activeAudioPaths = audioPaths;
     for (const QString &path : videoPaths)
         ensureWorker(m_videoWorkers, path);
     for (const QString &path : audioPaths)

@@ -97,10 +97,10 @@ public:
     // for. Called when the timeline playhead moves: a short forward seek looks like ordinary
     // playback to the sequential fast path, which would keep streaming from the old position.
     void resetAudioStreams();
-    // Opens a worker for every path the current frame reads. Idle workers — including one-shot
-    // reads for segmentation or face tracking, which never appear on the timeline — are reclaimed
-    // by a background sweep (see idleSweepLoop()) rather than by this call, so cleanup still
-    // happens even when the project is paused and nothing is asking for frames.
+    // Opens a worker for every path the current frame reads and records them as the active set,
+    // which the background idle sweep (see idleSweepLoop()) never evicts. Everything else —
+    // including one-shot reads for segmentation or face tracking, which never appear on the
+    // timeline — is reclaimed once idle, even while the project is paused.
     void retainActivePaths(const QSet<QString> &videoPaths, const QSet<QString> &audioPaths);
 
     // Drop every worker that is not mid-decode, ignoring the idle gate. For the Android
@@ -137,9 +137,8 @@ private:
 
     // Runs on its own thread for the pool's lifetime so idle workers are reclaimed even when
     // nothing calls retainActivePaths for a while (its only caller is FrameCompositor::prepare,
-    // which stops running entirely while the project is paused). Any real activity — a direct
-    // read, or retainActivePaths re-touching a still-active path — refreshes WorkerEntry::lastUse
-    // and keeps that entry out of reach, so no `keep` set is needed here.
+    // which stops running entirely while the project is paused). The last active set is kept, so
+    // pausing on a clip never closes the readers under the playhead.
     void idleSweepLoop();
     void sweepIdleWorkersOnce();
 
@@ -154,6 +153,8 @@ private:
     std::atomic<drift::TimeUs> m_readAheadUs{0};
     std::map<QString, std::unique_ptr<WorkerEntry>> m_videoWorkers;
     std::map<QString, std::unique_ptr<WorkerEntry>> m_audioWorkers;
+    QSet<QString> m_activeVideoPaths;
+    QSet<QString> m_activeAudioPaths;
 
     std::thread m_idleSweepThread;
     std::mutex m_sweepMutex;
