@@ -5,9 +5,9 @@ extern "C" {
 #include <libavutil/tx.h>
 }
 
-#define _USE_MATH_DEFINES
 #include <cfloat>
 #include <cmath>
+#include <numbers>
 
 namespace drift {
 
@@ -43,7 +43,7 @@ KaldiFbank::KaldiFbank() : d(new Impl)
     d->window.resize(kFrameLength);
     for (int i = 0; i < kFrameLength; ++i)
         d->window[i] = static_cast<float>(
-            std::pow(0.5 - 0.5 * std::cos(2.0 * M_PI * i / (kFrameLength - 1)), 0.85));
+            std::pow(0.5 - 0.5 * std::cos(2.0 * std::numbers::pi * i / (kFrameLength - 1)), 0.85));
 
     const int fftBins = kFft / 2;
     const double binWidth = static_cast<double>(kRate) / kFft;
