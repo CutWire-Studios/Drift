@@ -3711,7 +3711,7 @@ void EngineTest::mediaEditorStabilizesInProcess()
     spec.outputPath = outPath;
     spec.kind = QStringLiteral("video");
     spec.videoFilter = QStringLiteral("vidstabtransform=input='%1':smoothing=15:tripod=0:optzoom=1")
-                           .arg(trfPath);
+                           .arg(QString(trfPath).replace(QLatin1Char(':'), QStringLiteral("\\:")));
     QVERIFY2(drift::editMedia(spec, &error, {}), qPrintable(error));
 
     const MediaInfo info = MediaProbe::probe(outPath);
@@ -5901,6 +5901,8 @@ void EngineTest::compositorFramesOriginalVideoBeforeScaling()
     } else {
         QVERIFY(layer.source.width() >= 96);
     }
+    if (!GpuCompositor::isAvailable())
+        QSKIP("GPU compositor unavailable");
 
     const auto centre = [&](const QRectF &frame) {
         project.tracks()[0].clips[0].sourceFrame = frame;

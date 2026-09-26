@@ -1496,6 +1496,9 @@ bool ClipReader::initSwFilterGraph(int width, int height, AVPixelFormat pixFmt)
     m_swFilterSink = sink;
 
     QString targetTrfPath = m_tempTrfPath.isEmpty() ? m_stabilizePath : m_tempTrfPath;
+    targetTrfPath.replace(QLatin1Char('\\'), QStringLiteral("\\\\"));
+    targetTrfPath.replace(QLatin1Char('\''), QStringLiteral("'\\''"));
+    targetTrfPath.replace(QLatin1Char(':'), QStringLiteral("\\:"));
     int smoothing = m_stabilizeSmoothing > 0 ? m_stabilizeSmoothing : 15;
     int tripod = m_stabilizeTripod ? 1 : 0;
     QString filterDesc = QString("vidstabtransform=input='%1':zoom=15:smoothing=%2:tripod=%3")
