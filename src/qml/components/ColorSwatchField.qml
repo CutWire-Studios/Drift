@@ -1,5 +1,4 @@
 import QtQuick
-import QtQuick.Dialogs
 import Drift
 
 // Colour swatch that opens a picker, paired with a hex field for exact values.
@@ -11,6 +10,8 @@ Row {
     property string tooltip: qsTr("Choose colour")
     // Emitted once the user commits, never on every keystroke.
     signal edited(string value)
+    signal eyedropperStarted()
+    signal eyedropperEnded()
 
     spacing: 6
 
@@ -47,8 +48,9 @@ Row {
             cursorShape: Qt.PointingHandCursor
             onClicked: {
                 Haptics.press()
-                colorDialog.selectedColor = root.hex
-                colorDialog.open()
+                const dialog = colorDialogLoader.ensure()
+                dialog.selectedColor = root.hex
+                dialog.open()
             }
             onWheel: (wheel) => { wheel.accepted = false }
         }
@@ -77,9 +79,15 @@ Row {
         }
     }
 
-    ColorDialog {
-        id: colorDialog
-        title: qsTr("Select Color")
-        onAccepted: root.edited(root._toHex(selectedColor))
+    LazyLoader {
+        id: colorDialogLoader
+        sourceComponent: Component {
+            ThemedColorDialog {
+                title: qsTr("Select Color")
+                onAccepted: root.edited(root._toHex(selectedColor))
+                onEyedropperStarted: root.eyedropperStarted()
+                onEyedropperEnded: root.eyedropperEnded()
+            }
+        }
     }
 }

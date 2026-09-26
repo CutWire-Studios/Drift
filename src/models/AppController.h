@@ -20,7 +20,9 @@
 #include "core/GuideSet.h"
 
 #include <QAtomicInt>
+#include <QColor>
 #include <QCursor>
+#include <QImage>
 #include <QFuture>
 #include <QHash>
 #include <QJsonObject>
@@ -1240,6 +1242,8 @@ public:
                                       int trackIndex, double seconds, int newTrackIndex);
     // Topmost visible clip under a canvas point at the playhead, rotation-aware; empty if none.
     Q_INVOKABLE QVariantMap previewClipAtCanvasPoint(double canvasX, double canvasY) const;
+    // Pixel of an Item.grabToImage result, for the colour eyedropper; transparent when outside.
+    Q_INVOKABLE QColor imagePixel(const QImage &image, int x, int y) const;
     Q_INVOKABLE QVariantMap planPreviewDrop(const QString &kind, const QString &payload,
                                             double canvasX, double canvasY) const;
     Q_INVOKABLE QVariantMap dropAssetOnPreview(const QString &kind, const QString &payload,
@@ -1259,6 +1263,10 @@ public:
                                             double atSeconds, double value);
     Q_INVOKABLE void previewSetEffectParam(int trackIndex, int clipIndex, int effectIndex,
                                            const QString &key, double value);
+    // Needs an explicit beginPreviewDrag; the colour eyedropper bypasses the effect it is picking
+    // for (a chroma key would otherwise sample its own keyed-out output) and then cancels.
+    Q_INVOKABLE void previewSetEffectEnabled(int trackIndex, int clipIndex, int effectIndex,
+                                             bool enabled);
     Q_INVOKABLE void previewSetClipSpeed(int trackIndex, int clipIndex, double speed);
     Q_INVOKABLE void previewSetClipMask(int trackIndex, int clipIndex, const QVariantMap &mask);
     Q_INVOKABLE void previewSetClipFade(int trackIndex, int clipIndex, double fadeInSeconds, double fadeOutSeconds);

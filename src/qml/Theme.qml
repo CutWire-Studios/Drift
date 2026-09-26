@@ -617,6 +617,7 @@ QtObject {
         copyPlus: "copy-plus",
         copy: "copy",
         trash: "trash-2",
+        pipette: "pipette",
         snowflake: "snowflake",
         bookmark: "bookmark",
         repeat: "repeat",

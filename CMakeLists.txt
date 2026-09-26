@@ -1099,6 +1099,8 @@ qt_add_qml_module(drift
         src/qml/components/SubtitleCueLane.qml
         src/qml/components/ShortcutCaptureField.qml
         src/qml/components/ColorSwatchField.qml
+        src/qml/components/ThemedColorDialog.qml
+        src/qml/components/ColorEyedropper.qml
         src/qml/components/EffectBrowser.qml
         src/qml/components/AudioEffectBrowser.qml
         src/qml/components/EffectTemplateBrowser.qml

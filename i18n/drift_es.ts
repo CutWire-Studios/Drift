@@ -5092,6 +5092,17 @@
     </message>
 </context>
 <context>
+    <name>ColorEyedropper</name>
+    <message>
+        <source>Drag to a colour and lift to pick it</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Click a colour to pick it. Esc cancels.</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>ColorSwatchField</name>
     <message>
         <source>Choose colour</source>
@@ -12288,6 +12299,25 @@ Si la reproducción se corta, prueba con otra opción.</translation>
     <message>
         <source>Custom</source>
         <translation>Personalizado</translation>
+    </message>
+</context>
+<context>
+    <name>ThemedColorDialog</name>
+    <message>
+        <source>Original colour</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Enter a color like #FF0000</source>
+        <translation type="unfinished">Introduce un color como #FF0000</translation>
+    </message>
+    <message>
+        <source>Hex colour</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Pick a colour from the window</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>

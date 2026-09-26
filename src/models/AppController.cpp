@@ -14930,6 +14930,39 @@ void AppController::previewSetEffectParam(int trackIndex, int clipIndex, int eff
                     {QStringLiteral("fx.%1.%2").arg(effectIndex).arg(key)});
 }
 
+void AppController::previewSetEffectEnabled(int trackIndex, int clipIndex, int effectIndex,
+                                            bool enabled)
+{
+    if (!m_previewDragActive || trackIndex < 0 || trackIndex >= m_project.tracks().size())
+        return;
+    const int announceTrack = trackIndex;
+    const int announceClip = clipIndex;
+    if (!redirectToEffectHost(&trackIndex, &clipIndex, drift::AdjustmentKind::VideoEffects,
+                              /*create=*/false)) {
+        return;
+    }
+
+    drift::Track &track = m_project.tracks()[trackIndex];
+    if (clipIndex < 0 || clipIndex >= track.clips.size())
+        return;
+    drift::Clip &clip = track.clips[clipIndex];
+    if (effectIndex < 0 || effectIndex >= clip.effects.size()
+        || clip.effects[effectIndex].enabled == enabled) {
+        return;
+    }
+
+    clip.effects[effectIndex].enabled = enabled;
+    emitPreviewEdit(announceTrack, announceClip,
+                    {QStringLiteral("fx.%1.enabled").arg(effectIndex)});
+}
+
+QColor AppController::imagePixel(const QImage &image, int x, int y) const
+{
+    if (!image.valid(x, y))
+        return Qt::transparent;
+    return image.pixelColor(x, y);
+}
+
 void AppController::previewSetClipSpeed(int trackIndex, int clipIndex, double speed)
 {
     if (trackIndex < 0 || trackIndex >= m_project.tracks().size())

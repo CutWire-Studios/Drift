@@ -1,5 +1,4 @@
 import QtQuick
-import QtQuick.Dialogs
 import Drift
 import ".."
 
@@ -424,7 +423,7 @@ Column {
         }
     }
 
-    ColorDialog {
+    ThemedColorDialog {
         id: stopColorDialog
         title: qsTr("Stop colour")
         property int targetIndex: -1

@@ -172,6 +172,14 @@ Item {
         }
     }
 
+    // An eyedropper aimed at the preview would otherwise sample this effect's own output, which
+    // for a chroma key is the very colour already keyed out. Undone by cancelPreviewDrag.
+    function bypassForEyedropper(effectIndex) {
+        EditorState.beginPreviewDrag()
+        EditorState.previewSetEffectEnabled(EditorState.selectedTrack, EditorState.selectedClip,
+                                            effectIndex, false)
+    }
+
     // Hue params (effectToMap's `hue` flag) are degrees on the keyframe stack but are picked as a
     // colour. Only the hue survives the round trip: saturation and brightness are the shader's
     // business (chroma key's Tolerance), so the swatch always shows the pure, fully saturated hue.
@@ -752,6 +760,8 @@ Item {
                                         anchors.verticalCenter: parent.verticalCenter
                                         hex: paramRow.paramData.value || "#ffffff"
                                         tooltip: qsTr("Choose %1").arg(paramRow.paramData.label)
+                                        onEyedropperStarted: root.bypassForEyedropper(effectCard.index)
+                                        onEyedropperEnded: EditorState.cancelPreviewDrag()
                                         onEdited: value => EditorState.setEffectColorParam(
                                                       EditorState.selectedTrack, EditorState.selectedClip,
                                                       effectCard.index, paramRow.paramData.key, value)
@@ -891,6 +901,8 @@ Item {
                                         anchors.verticalCenter: parent.verticalCenter
                                         hex: root.hueToHex(hueRow.currentHue())
                                         tooltip: qsTr("Choose %1").arg(paramRow.paramData.label)
+                                        onEyedropperStarted: root.bypassForEyedropper(effectCard.index)
+                                        onEyedropperEnded: EditorState.cancelPreviewDrag()
                                         onEdited: value => {
                                             const deg = root.hexToHue(value)
                                             // Grey has no hue; and the hex field re-emits its own
