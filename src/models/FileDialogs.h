@@ -6,6 +6,8 @@
 #include <QUrl>
 #include <QVariantMap>
 
+class QFileDialog;
+
 // QML-facing wrapper around QFileDialog so file pickers use the native
 // platform dialog (xdg-desktop-portal under Flatpak; Android Storage Access
 // Framework / ACTION_OPEN_DOCUMENT on Android) instead of the QtQuick.Dialogs
@@ -14,6 +16,9 @@
 class FileDialogs : public QObject
 {
     Q_OBJECT
+    // True while a blocking picker is up. Its exec() runs a nested event loop, so LazyLoader must
+    // not destroy a closed popup whose handler is still waiting on the picker.
+    Q_PROPERTY(bool active READ isActive NOTIFY activeChanged)
 
 public:
     explicit FileDialogs(QObject *parent = nullptr);
@@ -81,7 +86,11 @@ public:
     // asset that has to survive a restart still needs a document the app can re-acquire.
     Q_INVOKABLE bool pickVisualMedia(bool allowMultiple = true);
 
+    bool isActive() const { return m_active > 0; }
+
 signals:
+    void activeChanged();
+
     // A .drift tapped in a file manager while this process was already running. Nothing polls
     // for that case — takeLaunchUrl() only runs once, at QML startup — so the warm-start intent
     // is pushed instead. Never emitted on desktop.
@@ -95,6 +104,9 @@ signals:
     void visualMediaPicked(const QList<QUrl> &urls);
 
 private:
+    int exec(QFileDialog &dialog) const;
+
+    mutable int m_active = 0;
 #ifdef Q_OS_ANDROID
     class NewIntentBridge;
     NewIntentBridge *m_newIntentBridge = nullptr;

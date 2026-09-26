@@ -19,8 +19,11 @@ Loader {
         return root.item
     }
 
+    // A file picker runs a nested event loop, and the item's handler that opened it (a menu
+    // action, a dialog's onAccepted) is still on the stack; destroying the item then aborts.
+    // Retried once the picker returns.
     function releaseIfHidden() {
-        if (root.item && !root.item.visible)
+        if (root.item && !root.item.visible && !FileDialogs.active)
             root.active = false
     }
 
@@ -31,6 +34,14 @@ Loader {
         ignoreUnknownSignals: true
         function onVisibleChanged() {
             if (!root.item.visible)
+                Qt.callLater(root.releaseIfHidden)
+        }
+    }
+
+    Connections {
+        target: root.keepLoaded || !root.item ? null : FileDialogs
+        function onActiveChanged() {
+            if (!FileDialogs.active)
                 Qt.callLater(root.releaseIfHidden)
         }
     }

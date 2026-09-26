@@ -1,14 +1,9 @@
 #include "FileDialogs.h"
 
 #include <QDir>
-#include <QFile>
 #include <QFileDialog>
-#include <QFileInfo>
-#include <QGuiApplication>
 #include <QMimeDatabase>
 #include <QMimeType>
-#include <QSettings>
-#include <QWindow>
 
 #ifdef Q_OS_ANDROID
 #include <QJniEnvironment>
@@ -242,135 +237,6 @@ FileDialogs::~FileDialogs()
 
 namespace {
 
-// Defined only where shouldForceNonNativeDialog() below actually calls it — every other platform
-// returns false from a branch that never reaches here, and an unconditional definition is an
-// unused static function (and a -Wunused-function warning) on all of them. Q_OS_ANDROID has to be
-// excluded explicitly: Qt defines Q_OS_LINUX there too.
-#if defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID)
-// A sandboxed Linux build has no broad filesystem permission (see the Flatpak manifest's
-// finish-args) and depends on the native dialog to hand it access to whatever the user picks
-// through xdg-desktop-portal.
-bool sandboxed()
-{
-    return qEnvironmentVariableIsSet("FLATPAK_ID") || QFile::exists(QStringLiteral("/.flatpak-info"))
-        || qEnvironmentVariableIsSet("SNAP");
-}
-#endif
-
-// Whether Qt's own in-app dialog should replace the platform's native one. Only unsandboxed
-// desktop Linux gets this: Android has no filesystem access outside its sandbox except through
-// the SAF picker the native dialog wraps — Qt's own dialog cannot reach a user's content:// URIs
-// at all, so it must stay native there regardless of `sandboxed()`. A sandboxed Linux build
-// (Flatpak/Snap) needs the native dialog for the same reason — see `sandboxed()` above. Only an
-// unsandboxed Linux build has no such dependency, and forcing Qt's own dialog there avoids a real
-// failure mode: the native GTK dialog can open without ever mapping a visible, focused window
-// under some Wayland/GNOME setups, leaving the app blocked inside gtk_dialog_run() with nothing
-// on screen for the user to interact with.
-bool shouldForceNonNativeDialog()
-{
-#if defined(Q_OS_ANDROID)
-    return false;
-#elif defined(Q_OS_LINUX)
-    return !sandboxed();
-#else
-    return false;
-#endif
-}
-
-// The window a dialog should hang off. QFileDialog is a QWidget and this app's window is a
-// QQuickWindow, so QDialog's usual route finds nothing: QApplication::activeWindow() only ever
-// looks at widget windows and is always null here. Qt then centres the dialog on the primary
-// screen with no transient-parent relationship at all, which was invisible while the platform
-// helper was doing the work and is not any more — see parentDialogToApp() below.
-QWindow *appWindow()
-{
-    // The focused window is the one the user just acted in, which is the right parent even when
-    // that is a secondary window (the multicam or curve editor) rather than the main one.
-    if (QWindow *focus = QGuiApplication::focusWindow())
-        return focus;
-    for (QWindow *window : QGuiApplication::topLevelWindows()) {
-        // Qt::Window skips tooltips, menus and other popups, which are top-level windows too and
-        // would make a hopeless parent for something modal.
-        if (window->isVisible() && window->type() == Qt::Window)
-            return window;
-    }
-    return nullptr;
-}
-
-// Ties `dialog` to the app's window before it is shown. Two things go wrong without this, both
-// only on the non-native path this file now takes on desktop Linux:
-//
-//   - With no transient parent, a Wayland compositor has no parent/child relationship to enforce,
-//     so the main window can be raised over a dialog that is blocking inside exec(). The result is
-//     an app that ignores all input with no dialog in sight — the same symptom, and the same
-//     support report, that forcing the non-native dialog was meant to put an end to.
-//   - QDialog::adjustPosition() centres on the primary screen when it cannot find a parent, so on
-//     a two-monitor desk the picker opens on the wrong one.
-//
-// Must run before exec(): winId() realises the handle early so setTransientParent() is in place by
-// the time the window is mapped, which is the only moment the compositor reads it.
-//
-// Deliberately confined to the non-native path. Realising the handle on a dialog that is about to
-// be replaced by a platform helper means creating a native window the helper never shows, and how
-// each platform's helper reacts to a widget that already has one is not something this can be
-// tested against from a Linux desk. The native dialogs are parented by their platform today and
-// nobody has reported otherwise, so there is nothing here to fix on those paths and no reason to
-// take the risk on them.
-void parentDialogToApp(QFileDialog &dialog)
-{
-    if (!shouldForceNonNativeDialog())
-        return;
-    QWindow *parent = appWindow();
-    if (!parent)
-        return;
-    dialog.winId();
-    QWindow *handle = dialog.windowHandle();
-    if (!handle)
-        return;
-    handle->setTransientParent(parent);
-    handle->setScreen(parent->screen());
-}
-
-// Where the last import came from. Qt's own dialog has no memory across launches — it falls back
-// to QFileDialogPrivate::lastVisitedDir(), a process-global static that starts empty and resolves
-// to the working directory, so launching Drift from a terminal used to open the picker on whatever
-// directory that shell happened to be in. The portal used to remember this per app on desktop
-// Linux; now that it is out of the loop on the non-native path, this has to be kept here instead.
-const char *kLastImportFolderKey = "import/lastFolder";
-
-QString lastImportFolder()
-{
-    const QString folder = QSettings().value(QLatin1String(kLastImportFolderKey)).toString();
-    if (folder.isEmpty() || !QDir(folder).exists())
-        return {};
-    return folder;
-}
-
-void rememberImportFolder(const QList<QUrl> &urls)
-{
-    // Only a real path is worth storing: an Android content:// URI has no directory to reopen, and
-    // its grant does not survive the process anyway.
-    if (urls.isEmpty() || !urls.first().isLocalFile())
-        return;
-    const QString folder = QFileInfo(urls.first().toLocalFile()).absolutePath();
-    if (folder.isEmpty() || !QDir(folder).exists())
-        return;
-    QSettings().setValue(QLatin1String(kLastImportFolderKey), folder);
-}
-
-// Seeds an open dialog with that folder. Skipped on Android, where the SAF picker owns its own
-// navigation and a filesystem path means nothing to it.
-void applyLastImportFolder(QFileDialog &dialog)
-{
-#ifndef Q_OS_ANDROID
-    const QString folder = lastImportFolder();
-    if (!folder.isEmpty())
-        dialog.setDirectory(folder);
-#else
-    Q_UNUSED(dialog);
-#endif
-}
-
 void applyFilters(QFileDialog &dialog, const QStringList &nameFilters,
                   const QStringList &mimeTypeFilters)
 {
@@ -419,39 +285,41 @@ void applyOpenFilters(QFileDialog &dialog, const QStringList &nameFilters,
 
 } // namespace
 
+int FileDialogs::exec(QFileDialog &dialog) const
+{
+    auto *self = const_cast<FileDialogs *>(this);
+    if (m_active++ == 0)
+        emit self->activeChanged();
+    const int result = dialog.exec();
+    if (--m_active == 0)
+        emit self->activeChanged();
+    return result;
+}
+
 QUrl FileDialogs::openFile(const QString &title, const QStringList &nameFilters,
                            const QStringList &mimeTypeFilters) const
 {
     QFileDialog dialog;
-    dialog.setOption(QFileDialog::DontUseNativeDialog, shouldForceNonNativeDialog());
     dialog.setWindowTitle(title);
     dialog.setAcceptMode(QFileDialog::AcceptOpen);
     dialog.setFileMode(QFileDialog::ExistingFile);
     applyOpenFilters(dialog, nameFilters, mimeTypeFilters);
-    applyLastImportFolder(dialog);
-    parentDialogToApp(dialog);
-    if (dialog.exec() != QDialog::Accepted)
+    if (exec(dialog) != QDialog::Accepted)
         return {};
     const QList<QUrl> urls = dialog.selectedUrls();
-    rememberImportFolder(urls);
     return urls.isEmpty() ? QUrl() : urls.first();
 }
 
 QList<QUrl> FileDialogs::openFiles(const QString &title, const QStringList &nameFilters) const
 {
     QFileDialog dialog;
-    dialog.setOption(QFileDialog::DontUseNativeDialog, shouldForceNonNativeDialog());
     dialog.setWindowTitle(title);
     dialog.setAcceptMode(QFileDialog::AcceptOpen);
     dialog.setFileMode(QFileDialog::ExistingFiles);
     applyOpenFilters(dialog, nameFilters, {});
-    applyLastImportFolder(dialog);
-    parentDialogToApp(dialog);
-    if (dialog.exec() != QDialog::Accepted)
+    if (exec(dialog) != QDialog::Accepted)
         return {};
-    const QList<QUrl> urls = dialog.selectedUrls();
-    rememberImportFolder(urls);
-    return urls;
+    return dialog.selectedUrls();
 }
 
 bool FileDialogs::supportsDirectoryPicker() const
@@ -471,15 +339,13 @@ QUrl FileDialogs::openDirectory(const QString &title, const QUrl &startDir) cons
     return {};
 #else
     QFileDialog dialog;
-    dialog.setOption(QFileDialog::DontUseNativeDialog, shouldForceNonNativeDialog());
     dialog.setWindowTitle(title);
     if (startDir.isValid() && !startDir.isEmpty())
         dialog.setDirectoryUrl(startDir);
     dialog.setAcceptMode(QFileDialog::AcceptOpen);
     dialog.setFileMode(QFileDialog::Directory);
     dialog.setOption(QFileDialog::ShowDirsOnly, true);
-    parentDialogToApp(dialog);
-    if (dialog.exec() != QDialog::Accepted)
+    if (exec(dialog) != QDialog::Accepted)
         return {};
     const QList<QUrl> urls = dialog.selectedUrls();
     return urls.isEmpty() ? QUrl() : urls.first();
@@ -491,7 +357,6 @@ QUrl FileDialogs::saveFile(const QString &title, const QStringList &nameFilters,
                            const QString &initialDirectory, const QStringList &mimeTypeFilters) const
 {
     QFileDialog dialog;
-    dialog.setOption(QFileDialog::DontUseNativeDialog, shouldForceNonNativeDialog());
     dialog.setWindowTitle(title);
     dialog.setAcceptMode(QFileDialog::AcceptSave);
     dialog.setFileMode(QFileDialog::AnyFile);
@@ -533,8 +398,7 @@ QUrl FileDialogs::saveFile(const QString &title, const QStringList &nameFilters,
         name += QLatin1Char('.') + suffix;
     dialog.selectFile(name);
 
-    parentDialogToApp(dialog);
-    if (dialog.exec() != QDialog::Accepted)
+    if (exec(dialog) != QDialog::Accepted)
         return {};
     const QList<QUrl> urls = dialog.selectedUrls();
     return urls.isEmpty() ? QUrl() : urls.first();

@@ -567,6 +567,17 @@ int main(int argc, char *argv[])
     }
 #endif
 
+#if defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID)
+    // The AppImage bundles no gtk3/kde theme plugin (and cannot load the host's), so file dialogs
+    // fall back to Qt's own. The portal plugin is bundled but Qt only picks it inside Flatpak/Snap.
+    // linuxdeploy's AppRun hook sets "gtk2" on GNOME/XFCE, which is never bundled, so replace that too.
+    if (qEnvironmentVariableIsSet("APPIMAGE")) {
+        const QByteArray theme = qgetenv("QT_QPA_PLATFORMTHEME");
+        if (theme.isEmpty() || theme == "gtk2")
+            qputenv("QT_QPA_PLATFORMTHEME", "xdgdesktopportal");
+    }
+#endif
+
     QApplication app(argc, argv);
     // A missing image plugin is silent everywhere else: the reader just returns a null QImage,
     // so the bin card is blank and the clip renders as nothing with no hint why. On a released
