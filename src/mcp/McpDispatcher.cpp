@@ -606,6 +606,12 @@ QJsonObject McpDispatcher::clipFeedback(const ClipRef &ref, const QJsonObject &e
         out.insert(QStringLiteral("w"), clip.value(QStringLiteral("w")).toDouble());
     if (clip.contains(QStringLiteral("h")))
         out.insert(QStringLiteral("h"), clip.value(QStringLiteral("h")).toDouble());
+    if (clip.value(QStringLiteral("layer3d")).toBool())
+        out.insert(QStringLiteral("layer3d"), true);
+    copyNum("rotationX", "rotationX");
+    copyNum("rotationY", "rotationY");
+    copyNum("z", "z");
+    copyNum("perspective", "perspective");
     return out;
 }
 
@@ -1238,11 +1244,14 @@ QJsonObject McpDispatcher::opSetTransform(const QJsonObject &args)
     if (!ref.valid())
         return clipRefError(args);
     QVariantMap patch;
-    for (const char *key : {"x", "y", "w", "h", "rotation", "opacity"}) {
+    for (const char *key :
+         {"x", "y", "w", "h", "rotation", "rotationX", "rotationY", "z", "perspective", "opacity"}) {
         const QString k = QString::fromUtf8(key);
         if (args.contains(k))
             patch.insert(k, jsonNumber(args.value(k), 0));
     }
+    if (args.contains(QStringLiteral("layer3d")))
+        patch.insert(QStringLiteral("layer3d"), args.value(QStringLiteral("layer3d")).toBool());
     if (patch.isEmpty())
         return err("bad_args", QStringLiteral("No transform fields"));
     if (!m_controller->mcpSetClipCanvas(ref.track, ref.clip, patch))

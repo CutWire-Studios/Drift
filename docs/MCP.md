@@ -101,7 +101,7 @@ Pinned endpoints (`/mcp/timeline`, `/mcp/project`, …) list that toolbox’s op
 | Time | Seconds |
 | Clip reference | Prefer `clip` UUID from `inspect`; else `track` (0 = top) + `index`. One or the other is **required** — clip ops never fall back to the selection. Read the current selection from `inspect.selection` |
 | Selection ops | `separate_audio`, `unlink_audio`, `merge_clips`, `align_clip_left/right`, `copy_selection`, `cut_selection` take no clip argument — call `select_clip` first. `merge_clips` joins two abutting cuts of the same media, or two or more subtitle clips on one track (`select_clips`; gaps allowed, the earliest clip's style and transform win); `merge_clips({track})` merges every subtitle clip on that track without a selection. `freeze_frame` and `paste_at_playhead` are playhead-based (seek first); they do not use the selection |
-| Discovery | Effect stack indices, transition ids, and bookmark indices exist **only** in `inspect({clips:true, detail:true})`. Subtitle cues: `inspect({clips:true, cues:true})` or the `subtitleCues` field of a detail row. Mask/fade/speed/volume/keyframes/`hasFaceTrack`/stabilize* are on the same detail rows. **Detail rows omit what does not apply**: caption styling only on text/subtitle clips, shape styling only on shapes, `vector` (document metadata, slot overrides — never the document text) only on Lottie/SVG clips, `mask` only when one is set, `keyframes` only for animated properties (listed in `animated`), stabilize/animation blocks only when in use, fade fields only when a fade is set, empty arrays, false booleans and other defaults dropped (absent = default: no fade, `speed` 1, `volume` 1, unlinked). Every row carries `transform:{x,y,w,h,rotation,opacity}` at the playhead. `verbose:true` returns the raw untrimmed map |
+| Discovery | Effect stack indices, transition ids, and bookmark indices exist **only** in `inspect({clips:true, detail:true})`. Subtitle cues: `inspect({clips:true, cues:true})` or the `subtitleCues` field of a detail row. Mask/fade/speed/volume/keyframes/`hasFaceTrack`/stabilize* are on the same detail rows. **Detail rows omit what does not apply**: caption styling only on text/subtitle clips, shape styling only on shapes, `vector` (document metadata, slot overrides — never the document text) only on Lottie/SVG clips, `mask` only when one is set, `keyframes` only for animated properties (listed in `animated`), stabilize/animation blocks only when in use, fade fields only when a fade is set, empty arrays, false booleans and other defaults dropped (absent = default: no fade, `speed` 1, `volume` 1, unlinked). Every row carries `transform:{x,y,w,h,rotation,opacity}` at the playhead, plus `layer3d`, `rotationX`, `rotationY`, `z` and `perspective` on a clip switched to a 3D layer (see [3D clip transforms](#3d-clip-transforms)). `verbose:true` returns the raw untrimmed map |
 | Numbers | Every number in a reply is rounded to 3 decimals, except `fps` and speed-curve `pos` which keep 6 |
 | Validation | Toolbox op args are checked against the op's schema before it runs (the homepage tools `inspect`, `capture`, `frames`, `activity` are not): a missing required key → `bad_args` naming it; a wrong JSON type → `type_mismatch` (numeric strings like `"1"` are still accepted); an enum or declared min/max violation → `bad_args` listing the allowed values or range. Unknown keys are not errors; they come back as `ignored:[…]` on success. A clip-ref op with neither `clip` nor `track`+`index` gets `bad_args` saying so; a stale uuid gets `not_found` with a hint to re-read `inspect` |
 | Effects | `list_effects` / `list_audio_effects` / `list_transitions` are compact by default (`cats:{<cat>:[{id,label}]}`); pass `id`, `cat`, or `q` to get parameters. Ids are accepted with `.` or `_` interchangeably; an unknown id returns `not_found` with the closest matches. Effect stacks live on an **adjustment clip linked to the target**, created on its own lane the first time; `add_effect`/`add_audio_effect` report it as `host:{track,index,clip}`. Keep addressing the original clip in every effect op, and expect that extra lane in `inspect` |
@@ -137,7 +137,7 @@ All return `{started:true}` immediately. Every field below except `export` lives
 |---------|-------------|
 | `media` | Import (paths/bytes), list, rename, remove, replace, export still, `set_asset_rotation` (lossless orientation override for a sideways video) |
 | `timeline` | Tracks, clips, selection, ripple/gap, bookmarks, copy/paste, A/V link |
-| `canvas` | Transform, flip, blend, mask, fade, speed, reverse, animation, stabilisation, `set_clip_orientation` (lossless 0/90/180/270 for a video clip), shape styling (`set_shape_style`: the same shading-layer stack captions have — `layers` / `layer` patches, `add_shape_layer` … — plus geometry knobs; the legacy flat `fill`/`stroke` keys still land on the `fill`/`stroke` layers) — see [Shapes](#shapes) |
+| `canvas` | Transform (including 3D tilt, depth and perspective), flip, blend, mask, fade, speed, reverse, animation, stabilisation, `set_clip_orientation` (lossless 0/90/180/270 for a video clip), shape styling (`set_shape_style`: the same shading-layer stack captions have — `layers` / `layer` patches, `add_shape_layer` … — plus geometry knobs; the legacy flat `fill`/`stroke` keys still land on the `fill`/`stroke` layers) — see [Shapes](#shapes) |
 | `playback` | Seek, play, pause, In/Out work area |
 | `text` | Title and caption clips, style packs (`list_text_presets`, user presets), fonts, shading layers (fill/stroke/shadow/glow/extrude), gradient presets and shader effects, looks, In/Out/Loop animation presets, Lottie preset import |
 | `shapes` | Builtin shapes, stickers, emoji |
@@ -367,6 +367,35 @@ keyframes as `vector.svg.…` — scalars directly, colours per channel (`vector
 one `set_keyframe` per channel, 0..1). An `.svg` dropped in the bin (`import_media`) is a vector
 asset and places as a vector clip.
 
+### 3D clip transforms
+
+Every visual clip except a 3D model clip can be made a **3D layer**, then tilted and pushed in
+depth. The switch is per clip (`layer3d`, off by default; the inspector's "3D layer" switch).
+Four more transform properties sit beside `x`/`y`/`w`/`h`/`rotation`. Writing any of them, through
+`set_transform` or `set_keyframe`, turns the switch on, and a clip loaded with any of them set comes
+up switched on. `set_transform({layer3d:false})` flattens the clip: all four go back to their
+defaults (keys included; `undo` brings them back). `set_transform` writes them at the playhead (the same keyframe rules apply),
+`set_keyframe` animates them under the same names, and `reset_transform` clears them and switches
+3D off:
+
+| Property | Default | Meaning |
+|---|---|---|
+| `rotationX` | 0 | Degrees; + tips the top edge away from the viewer |
+| `rotationY` | 0 | Degrees; + swings the right edge away from the viewer |
+| `z` | 0 | Project pixels; − pushes the clip away (smaller), + pulls it toward the viewer |
+| `perspective` | 2000 | Distance of the eye from the canvas, in project pixels; smaller = stronger foreshortening |
+
+The clip turns about its own centre. Rotations are intrinsic: X, then Y, then the existing
+`rotation`, so `rotation` spins the clip within its tilted plane. The eye sits `perspective` px in
+front of the **canvas centre**, so every clip is seen by the same virtual camera. As a result, a clip
+off-centre drifts toward the centre as `z` decreases. At `z = −perspective` it is half size, and at
+`z ≥ perspective` it is behind the eye and draws nothing.
+
+Masks and effects are applied in the clip's own frame before the tilt, so they follow it. Clip
+intro/outro animations and text animations stay flat, on top of the tilt. A clip whose 3D values
+are all zero renders exactly as before. `inspect` and
+`set_transform` readouts include `layer3d` and the four fields only on a 3D layer.
+
 ### 3D models
 
 The `model3d` toolbox puts a glTF binary (`.glb` only — a `.gltf` with sidecar files would not
@@ -384,8 +413,8 @@ alone decides stacking; `depth` is perspective, never z-order.
 | `set_model3d_options({clip, animation, loop, offset, scale, depth, rotX, rotY, rotZ, lightYaw, lightPitch, lightIntensity, ambient, name})` | Plain (non-keyed) values; only supplied keys change |
 
 Placement and pose: the model sits at the clip's `x`/`y` (top-left of the full-canvas layer, so
-`0,0` is centred; move it with `set_transform x/y` or `x`/`y` keyframes — `w`, `h` and
-`rotation` are ignored for this kind, and `set_transform` still reports the canvas size for
+`0,0` is centred; move it with `set_transform x/y` or `x`/`y` keyframes — `w`, `h`,
+`rotation` and the 3D clip transform (`rotationX`, `rotationY`, `z`, `perspective`) are ignored for this kind, and `set_transform` still reports the canvas size for
 them). `scale` is the fraction of canvas height the model's largest extent spans; `depth` 0..1
 goes from flat (orthographic) to strong foreshortening without changing the on-screen size.
 `rotX`/`rotY`/`rotZ` are degrees about the **model's own axes** (intrinsic), applied X, then Y,
@@ -516,7 +545,8 @@ local fake) without rebuilding.
 - **`set_subtitle_cues` replaces every cue.** Read `inspect({clips:true, cues:true})` (or a detail row's `subtitleCues`), merge, send.
 - **`set_effect_param`, `set_audio_effect_param` and `set_transition_param` fail `not_found`** on a key the effect does not declare or a stack index that is not there. They used to accept anything and store it silently; a batch that relied on that now stops at the bad op.
 - **`set_speed_curve` returns a new clip id.** The old UUID stops resolving. End the apply batch after it — an ops array cannot reference an id produced earlier in the same batch.
-- **Keyframe property names are not the transform names**: `width`/`height`, not `w`/`h` (`set_transform` uses w/h, `set_keyframe` uses width/height).
+- **Keyframe property names are not the transform names**: `width`/`height`, not `w`/`h` (`set_transform` uses w/h, `set_keyframe` uses width/height). The 3D names `rotationX`, `rotationY`, `z` and `perspective` are the same in both.
+- **A clip's `z` does not change stacking.** Track order alone decides what draws on top, and tilted clips never intersect. A clip tilted past 90° shows its mirror image; there is no back face.
 - **`remove_keyframe` deletes the *nearest* key** with no distance limit. Confirm the exact time with `list_keyframes`.
 - **`set_keyframe_interpolation` moves the playhead** to `at`, changing the default time of later ops in the same batch.
 - **`add_track` shifts every track index** — index 0 is the new track.

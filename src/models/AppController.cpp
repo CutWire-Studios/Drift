@@ -30,6 +30,8 @@
 #include "engine/AndroidUri.h"
 #include "engine/AudioMixer.h"
 #include "engine/ClipReaderPool.h"
+#include "engine/ClipGizmo.h"
+#include "engine/ClipTransform3d.h"
 #include "engine/DebugReport.h"
 #include "engine/HwAccel.h"
 #include "engine/ProjectDependencies.h"
@@ -1016,6 +1018,9 @@ AppController::AppController(AssetLibrary *assetLibrary, QObject *parent)
     loadShortcuts();
     QSettings settings;
     m_guidesEnabled = settings.value(QStringLiteral("preview/guidesEnabled"), false).toBool();
+    m_gizmoTool = settings.value(QStringLiteral("preview/gizmoTool"), m_gizmoTool).toString();
+    m_gizmoOrientation =
+        settings.value(QStringLiteral("preview/gizmoOrientation"), m_gizmoOrientation).toString();
     for (const QJsonValue &value :
          QJsonDocument::fromJson(settings.value(QStringLiteral("preview/guideSets")).toByteArray()).array())
         m_guideLibrary.append(drift::guideSetFromJson(value.toObject()));
@@ -2866,6 +2871,15 @@ bool looksLikeModel3dProp(const QString &prop)
     return drift::model3dScalar(probe, prop.mid(8), &value);
 }
 
+void clearClipPose3d(drift::Clip &clip)
+{
+    clip.rotationX = {};
+    clip.rotationY = {};
+    clip.positionZ = {};
+    clip.perspective = {};
+    clip.layer3d = false;
+}
+
 drift::KeyframeTrack<double> *transformTrackForProp(drift::Clip &clip, const QString &prop)
 {
     if (prop == QStringLiteral("opacity"))
@@ -2880,6 +2894,14 @@ drift::KeyframeTrack<double> *transformTrackForProp(drift::Clip &clip, const QSt
         return &clip.transformH;
     if (prop == QStringLiteral("rotation"))
         return &clip.rotation;
+    if (prop == QStringLiteral("rotationX"))
+        return &clip.rotationX;
+    if (prop == QStringLiteral("rotationY"))
+        return &clip.rotationY;
+    if (prop == QStringLiteral("z"))
+        return &clip.positionZ;
+    if (prop == QStringLiteral("perspective"))
+        return &clip.perspective;
     if (prop == QStringLiteral("volume"))
         return &clip.volume;
     return nullptr;
@@ -3127,7 +3149,14 @@ bool writeClipPropValue(drift::Clip &clip, const QString &prop, drift::TimeUs re
     QString paramKey;
     if (!parseEffectProp(prop, &effectIndex, &paramKey)) {
         drift::KeyframeTrack<double> *kt = transformTrackForProp(clip, prop);
-        return kt && writeKeyframeValue(*kt, relative, value, autoKey, force);
+        if (!kt || !writeKeyframeValue(*kt, relative, value, autoKey, force))
+            return false;
+        // A 3D value written to a flat clip would do nothing, so writing one makes it a 3D layer.
+        if (kt == &clip.rotationX || kt == &clip.rotationY || kt == &clip.positionZ
+            || kt == &clip.perspective) {
+            clip.layer3d = clip.type != drift::ClipType::Model3d;
+        }
+        return true;
     }
 
     if (effectIndex >= clip.effects.size())
@@ -3319,6 +3348,10 @@ QVariantMap keyframesToMap(const drift::Clip &clip)
         {QStringLiteral("width"), keyframeTrackToMap(clip.transformW, clip.timelineStart)},
         {QStringLiteral("height"), keyframeTrackToMap(clip.transformH, clip.timelineStart)},
         {QStringLiteral("rotation"), keyframeTrackToMap(clip.rotation, clip.timelineStart)},
+        {QStringLiteral("rotationX"), keyframeTrackToMap(clip.rotationX, clip.timelineStart)},
+        {QStringLiteral("rotationY"), keyframeTrackToMap(clip.rotationY, clip.timelineStart)},
+        {QStringLiteral("z"), keyframeTrackToMap(clip.positionZ, clip.timelineStart)},
+        {QStringLiteral("perspective"), keyframeTrackToMap(clip.perspective, clip.timelineStart)},
         {QStringLiteral("volume"), keyframeTrackToMap(clip.volume, clip.timelineStart)},
     };
 }
@@ -3395,6 +3428,10 @@ void remapKeyframesForRetime(drift::Clip &dst, const drift::Clip &src)
     remapKeyframeTrack(dst.transformW, src.transformW, src, dst);
     remapKeyframeTrack(dst.transformH, src.transformH, src, dst);
     remapKeyframeTrack(dst.rotation, src.rotation, src, dst);
+    remapKeyframeTrack(dst.rotationX, src.rotationX, src, dst);
+    remapKeyframeTrack(dst.rotationY, src.rotationY, src, dst);
+    remapKeyframeTrack(dst.positionZ, src.positionZ, src, dst);
+    remapKeyframeTrack(dst.perspective, src.perspective, src, dst);
     remapKeyframeTrack(dst.volume, src.volume, src, dst);
 
     for (int i = 0; i < dst.effects.size() && i < src.effects.size(); ++i) {
@@ -4213,6 +4250,12 @@ QHash<QString, QString> defaultShortcuts()
         {QStringLiteral("speedUp"), QStringLiteral("L")},
         {QStringLiteral("speedDown"), QStringLiteral("J")},
         {QStringLiteral("toggleGuides"), QStringLiteral("G")},
+        // The 3D gizmo's tools. Blender's G/R/S and W/E/R are taken by guides, split and the
+        // ripple deletes, so these sit on T(ranslate), R(otate) and E (next to R).
+        {QStringLiteral("gizmoMove"), QStringLiteral("T")},
+        {QStringLiteral("gizmoRotate"), QStringLiteral("R")},
+        {QStringLiteral("gizmoScale"), QStringLiteral("E")},
+        {QStringLiteral("gizmoOrientation"), QStringLiteral("Shift+T")},
         {QStringLiteral("toggleBookmark"), QStringLiteral("M")},
         {QStringLiteral("nextBookmark"), QStringLiteral("Shift+M")},
         {QStringLiteral("previousBookmark"), QStringLiteral("Ctrl+Shift+M")},
@@ -4300,6 +4343,7 @@ QVariantMap AppController::clipToMap(const drift::Clip &clip, const drift::Clip 
         {QStringLiteral("hasSpeedCurve"), clip.hasSpeedCurve()},
         {QStringLiteral("reverse"), clip.reverse},
         {QStringLiteral("flipH"), clip.flipH},
+        {QStringLiteral("layer3d"), clip.layer3d},
         {QStringLiteral("flipV"), clip.flipV},
         // Discrete lossless orientation fix, distinct from the free "rotation" keyframe track
         // below. "orientation" is the absolute result (what the inspector shows), the correction
@@ -5732,6 +5776,10 @@ QVariantList AppController::actions() const
         action(QStringLiteral("speedUp"), tr("Increase playback speed")),
         action(QStringLiteral("speedDown"), tr("Decrease playback speed")),
         action(QStringLiteral("toggleGuides"), tr("Toggle guides")),
+        action(QStringLiteral("gizmoMove"), tr("3D gizmo: move")),
+        action(QStringLiteral("gizmoRotate"), tr("3D gizmo: rotate")),
+        action(QStringLiteral("gizmoScale"), tr("3D gizmo: scale")),
+        action(QStringLiteral("gizmoOrientation"), tr("3D gizmo: switch global/local axes")),
         action(QStringLiteral("toggleBookmark"), tr("Add/remove bookmark at current time")),
         action(QStringLiteral("nextBookmark"), tr("Go to next bookmark")),
         action(QStringLiteral("previousBookmark"), tr("Go to previous bookmark")),
@@ -6426,6 +6474,27 @@ void AppController::setGuidesEnabled(bool enabled)
     settings.setValue(QStringLiteral("preview/guidesEnabled"), m_guidesEnabled);
     setDirty(true);
     emit guidesChanged();
+}
+
+void AppController::setGizmoTool(const QString &tool)
+{
+    if (m_gizmoTool == tool
+        || (tool != QLatin1String("move") && tool != QLatin1String("rotate")
+            && tool != QLatin1String("scale")))
+        return;
+    m_gizmoTool = tool;
+    QSettings().setValue(QStringLiteral("preview/gizmoTool"), m_gizmoTool);
+    emit gizmoChanged();
+}
+
+void AppController::setGizmoOrientation(const QString &orientation)
+{
+    if (m_gizmoOrientation == orientation
+        || (orientation != QLatin1String("global") && orientation != QLatin1String("local")))
+        return;
+    m_gizmoOrientation = orientation;
+    QSettings().setValue(QStringLiteral("preview/gizmoOrientation"), m_gizmoOrientation);
+    emit gizmoChanged();
 }
 
 const drift::GuideSet *AppController::findGuideSet(const QString &id) const
@@ -14015,6 +14084,175 @@ QVariantMap AppController::dropAsset(const QString &kind, const QString &payload
     return plan;
 }
 
+namespace {
+
+drift::ClipPose3d previewBoxPose(const QVariantMap &box)
+{
+    drift::ClipPose3d pose;
+    pose.rotationX = box.value(QStringLiteral("rotationX")).toDouble();
+    pose.rotationY = box.value(QStringLiteral("rotationY")).toDouble();
+    pose.positionZ = box.value(QStringLiteral("z")).toDouble();
+    pose.perspective =
+        box.value(QStringLiteral("perspective"), drift::kDefaultClipPerspective).toDouble();
+    return pose;
+}
+
+} // namespace
+
+namespace {
+
+drift::gizmo::Pose gizmoPoseFromBox(const QVariantMap &box)
+{
+    drift::gizmo::Pose pose;
+    pose.rect = QRectF(box.value(QStringLiteral("x")).toDouble(), box.value(QStringLiteral("y")).toDouble(),
+                       box.value(QStringLiteral("width")).toDouble(),
+                       box.value(QStringLiteral("height")).toDouble());
+    pose.rotation = box.value(QStringLiteral("rotation")).toDouble();
+    pose.pose3d = previewBoxPose(box);
+    pose.canvas = QSizeF(box.value(QStringLiteral("canvasWidth")).toDouble(),
+                         box.value(QStringLiteral("canvasHeight")).toDouble());
+    return pose;
+}
+
+QVariantList polylineToVariant(const QPolygonF &line)
+{
+    QVariantList out;
+    out.reserve(line.size());
+    for (const QPointF &p : line)
+        out.append(p);
+    return out;
+}
+
+} // namespace
+
+QVariantMap AppController::previewGizmoGeometry(const QVariantMap &box, double scale, double size) const
+{
+    using namespace drift::gizmo;
+    const Geometry g = geometry(gizmoPoseFromBox(box), toolFromString(m_gizmoTool),
+                                orientationFromString(m_gizmoOrientation), scale, size);
+    QVariantList handles;
+    for (const Handle &h : g.handles) {
+        QVariantList front;
+        for (const QPolygonF &line : h.front)
+            front.append(QVariant(polylineToVariant(line)));
+        QVariantList back;
+        for (const QPolygonF &line : h.back)
+            back.append(QVariant(polylineToVariant(line)));
+        static const char *kinds[] = {"arrow", "dolly", "ring", "scale", "uniform"};
+        handles.append(QVariantMap{
+            {QStringLiteral("id"), h.id},
+            {QStringLiteral("kind"), QString::fromLatin1(kinds[int(h.kind)])},
+            {QStringLiteral("front"), front},
+            {QStringLiteral("back"), back},
+            {QStringLiteral("head"), polylineToVariant(h.head)},
+        });
+    }
+    return {
+        {QStringLiteral("valid"), g.valid},
+        {QStringLiteral("origin"), g.origin},
+        {QStringLiteral("handles"), handles},
+    };
+}
+
+QString AppController::previewGizmoPick(const QVariantMap &box, double scale, double size, double x,
+                                        double y, double tolerance) const
+{
+    using namespace drift::gizmo;
+    const Geometry g = geometry(gizmoPoseFromBox(box), toolFromString(m_gizmoTool),
+                                orientationFromString(m_gizmoOrientation), scale, size);
+    return pick(g, QPointF(x, y), tolerance);
+}
+
+QVariantMap AppController::previewApplyGizmoDrag(const QVariantMap &start, const QString &handle,
+                                                 double pressX, double pressY, double nowX,
+                                                 double nowY, bool snap, double scale)
+{
+    using namespace drift::gizmo;
+    const int trackIndex = start.value(QStringLiteral("track")).toInt();
+    const int clipIndex = start.value(QStringLiteral("clip")).toInt();
+    if (!isValidClipIndex(trackIndex, clipIndex))
+        return start;
+    drift::Clip &clip = m_project.tracks()[trackIndex].clips[clipIndex];
+    if (clip.type == drift::ClipType::Model3d)
+        return start;
+
+    const Tool tool = toolFromString(m_gizmoTool);
+    const DragResult result = drag(gizmoPoseFromBox(start), tool, orientationFromString(m_gizmoOrientation),
+                                   handle, QPointF(pressX, pressY), QPointF(nowX, nowY), snap, scale);
+    const Pose &pose = result.pose;
+
+    beginImplicitPreviewDrag(tool == Tool::Move     ? tr("Move clip in 3D")
+                             : tool == Tool::Rotate ? tr("Rotate clip in 3D")
+                                                    : tr("Scale clip"));
+    const drift::TimeUs relative = qMax<drift::TimeUs>(0, m_playheadUs - clip.timelineStart);
+    bool wrote = false;
+    QStringList keys;
+    const auto write = [&](drift::KeyframeTrack<double> &track, double value, const QString &key) {
+        if (writeKeyframeValue(track, relative, value, m_autoKeyEnabled, false)) {
+            wrote = true;
+            keys << key;
+        }
+    };
+    if (tool == Tool::Rotate) {
+        write(clip.rotationX, pose.pose3d.rotationX, QStringLiteral("rotationX"));
+        write(clip.rotationY, pose.pose3d.rotationY, QStringLiteral("rotationY"));
+        write(clip.rotation, pose.rotation, QStringLiteral("rotation"));
+    } else {
+        write(clip.transformX, pose.rect.x(), QStringLiteral("x"));
+        write(clip.transformY, pose.rect.y(), QStringLiteral("y"));
+        if (tool == Tool::Move) {
+            write(clip.positionZ, pose.pose3d.positionZ, QStringLiteral("z"));
+        } else {
+            write(clip.transformW, pose.rect.width(), QStringLiteral("width"));
+            write(clip.transformH, pose.rect.height(), QStringLiteral("height"));
+        }
+    }
+    // Scaling a text box both ways scales what it shows, as the 2D corner grips do.
+    const bool isText = clip.type == drift::ClipType::Text || clip.type == drift::ClipType::Subtitle;
+    if (isText && handle == QLatin1String("xy")) {
+        const int pixelSize = qBound(
+            8, qRound(start.value(QStringLiteral("pixelSize"), 64).toDouble() * result.uniformFactor), 800);
+        if (clip.textStyle.pixelSize != pixelSize) {
+            clip.textStyle.pixelSize = pixelSize;
+            wrote = true;
+            keys << QStringLiteral("text.pixelSize");
+        }
+    }
+    if (!wrote) {
+        emit transformBlocked(tr("Turn on Auto keyframes to change this"));
+        return start;
+    }
+    clip.layer3d = true;
+    emitPreviewEdit(trackIndex, clipIndex, keys);
+
+    QVariantMap out = start;
+    out.insert(QStringLiteral("x"), pose.rect.x());
+    out.insert(QStringLiteral("y"), pose.rect.y());
+    out.insert(QStringLiteral("width"), pose.rect.width());
+    out.insert(QStringLiteral("height"), pose.rect.height());
+    out.insert(QStringLiteral("rotation"), pose.rotation);
+    out.insert(QStringLiteral("rotationX"), pose.pose3d.rotationX);
+    out.insert(QStringLiteral("rotationY"), pose.pose3d.rotationY);
+    out.insert(QStringLiteral("z"), pose.pose3d.positionZ);
+    return out;
+}
+
+QMatrix4x4 AppController::previewClipPoseMatrix(const QVariantMap &box, double x, double y,
+                                                double w, double h, double rotation,
+                                                double scaleX, double scaleY) const
+{
+    const QSizeF canvas(box.value(QStringLiteral("canvasWidth")).toDouble(),
+                        box.value(QStringLiteral("canvasHeight")).toDouble());
+    if (canvas.isEmpty() || scaleX <= 0.0 || scaleY <= 0.0)
+        return {};
+    QMatrix4x4 m;
+    m.scale(float(scaleX), float(scaleY));
+    m.translate(float(-x), float(-y));
+    m *= drift::clipLocalToCanvas(QRectF(x, y, w, h), rotation, previewBoxPose(box), canvas);
+    m.scale(float(1.0 / scaleX), float(1.0 / scaleY));
+    return m;
+}
+
 QVariantMap AppController::previewClipAtCanvasPoint(double canvasX, double canvasY) const
 {
     // previewClipsAtPlayhead lists the top track first, so the first hit is the one on top.
@@ -14024,6 +14262,16 @@ QVariantMap AppController::previewClipAtCanvasPoint(double canvasX, double canva
         const double y = box.value(QStringLiteral("y")).toDouble();
         const double w = box.value(QStringLiteral("width")).toDouble();
         const double h = box.value(QStringLiteral("height")).toDouble();
+        const drift::ClipPose3d pose = previewBoxPose(box);
+        if (pose.isActive()) {
+            const QPolygonF quad = drift::projectedClipQuad(
+                QRectF(x, y, w, h), box.value(QStringLiteral("rotation")).toDouble(), pose,
+                QSizeF(box.value(QStringLiteral("canvasWidth")).toDouble(),
+                       box.value(QStringLiteral("canvasHeight")).toDouble()));
+            if (quad.containsPoint(QPointF(canvasX, canvasY), Qt::OddEvenFill))
+                return box;
+            continue;
+        }
         const double radians = qDegreesToRadians(box.value(QStringLiteral("rotation")).toDouble());
         const double cx = x + w / 2.0;
         const double cy = y + h / 2.0;
@@ -14170,6 +14418,12 @@ QVariantList AppController::previewClipsAtPlayhead() const
                 {QStringLiteral("width"), w},
                 {QStringLiteral("height"), h},
                 {QStringLiteral("rotation"), rotation},
+                {QStringLiteral("layer3d"), clip.layer3d},
+                {QStringLiteral("rotationX"), clipTransformValue(clip.rotationX, relative, 0.0)},
+                {QStringLiteral("rotationY"), clipTransformValue(clip.rotationY, relative, 0.0)},
+                {QStringLiteral("z"), clipTransformValue(clip.positionZ, relative, 0.0)},
+                {QStringLiteral("perspective"),
+                 clipTransformValue(clip.perspective, relative, drift::kDefaultClipPerspective)},
                 {QStringLiteral("canvasWidth"), canvasWidth},
                 {QStringLiteral("canvasHeight"), canvasHeight},
             };
@@ -14193,6 +14447,10 @@ QVariantList AppController::previewClipsAtPlayhead() const
                 entry.insert(QStringLiteral("width"), box.width() * canvasWidth);
                 entry.insert(QStringLiteral("height"), box.height() * canvasHeight);
                 entry.insert(QStringLiteral("rotation"), 0.0);
+                entry.insert(QStringLiteral("layer3d"), false);
+                entry.insert(QStringLiteral("rotationX"), 0.0);
+                entry.insert(QStringLiteral("rotationY"), 0.0);
+                entry.insert(QStringLiteral("z"), 0.0);
             }
             out.append(entry);
         }
@@ -15747,6 +16005,22 @@ bool AppController::clipHasReverseProxy(int trackIndex, int clipIndex) const
     return !drift::ReverseProxyCache::instance()
                 .lookup(clip.path, clip.srcIn, clip.srcOut, nullptr)
                 .isEmpty();
+}
+
+void AppController::setClipLayer3d(int trackIndex, int clipIndex, bool enabled)
+{
+    if (!isValidClipIndex(trackIndex, clipIndex))
+        return;
+    drift::Clip &clip = m_project.tracks()[trackIndex].clips[clipIndex];
+    if (clip.type == drift::ClipType::Audio || clip.type == drift::ClipType::Model3d
+        || clip.layer3d == enabled)
+        return;
+    const drift::Project before = m_project;
+    clip.layer3d = enabled;
+    if (!enabled)
+        clearClipPose3d(clip);
+    pushProjectEdit(before, enabled ? tr("Enable 3D") : tr("Disable 3D"));
+    finishEdit(enabled ? tr("Clip is a 3D layer") : tr("Clip is flat"));
 }
 
 void AppController::setClipFlip(int trackIndex, int clipIndex, bool flipH, bool flipV)
@@ -17912,6 +18186,10 @@ QVariantMap AppController::depthEffectEditorState() const
     out.insert(QStringLiteral("width"), value(media.transformW, m_project.width()));
     out.insert(QStringLiteral("height"), value(media.transformH, m_project.height()));
     out.insert(QStringLiteral("rotation"), value(media.rotation, 0.0));
+    out.insert(QStringLiteral("rotationX"), value(media.rotationX, 0.0));
+    out.insert(QStringLiteral("rotationY"), value(media.rotationY, 0.0));
+    out.insert(QStringLiteral("z"), value(media.positionZ, 0.0));
+    out.insert(QStringLiteral("perspective"), value(media.perspective, drift::kDefaultClipPerspective));
     out.insert(QStringLiteral("hasDepth"), !media.depthPath.isEmpty());
     out.insert(QStringLiteral("effects"), effects);
     return out;
@@ -17976,6 +18254,7 @@ QVariantMap AppController::maskEditorState() const
     double frameW = m_project.width();
     double frameH = m_project.height();
     double frameRotation = 0.0;
+    drift::ClipPose3d framePose;
     bool hasFrame = hostTrack < 0;
     int hostClip = -1;
 
@@ -17999,6 +18278,12 @@ QVariantMap AppController::maskEditorState() const
             frameW = value(clip.transformW, m_project.width());
             frameH = value(clip.transformH, m_project.height());
             frameRotation = value(clip.rotation, 0.0);
+            if (clip.type != drift::ClipType::Model3d) {
+                framePose.rotationX = value(clip.rotationX, 0.0);
+                framePose.rotationY = value(clip.rotationY, 0.0);
+                framePose.positionZ = value(clip.positionZ, 0.0);
+                framePose.perspective = value(clip.perspective, drift::kDefaultClipPerspective);
+            }
             hasFrame = true;
         }
 
@@ -18026,6 +18311,10 @@ QVariantMap AppController::maskEditorState() const
     out.insert(QStringLiteral("width"), frameW);
     out.insert(QStringLiteral("height"), frameH);
     out.insert(QStringLiteral("rotation"), frameRotation);
+    out.insert(QStringLiteral("rotationX"), framePose.rotationX);
+    out.insert(QStringLiteral("rotationY"), framePose.rotationY);
+    out.insert(QStringLiteral("z"), framePose.positionZ);
+    out.insert(QStringLiteral("perspective"), framePose.perspective);
     return out;
 }
 
@@ -18536,9 +18825,12 @@ double AppController::propertyBaseValue(int trackIndex, int clipIndex, const QSt
     if (prop == QLatin1String("opacity") || prop == QLatin1String("volume"))
         return 1.0;
     if (prop == QLatin1String("x") || prop == QLatin1String("y")
-        || prop == QLatin1String("rotation")) {
+        || prop == QLatin1String("rotation") || prop == QLatin1String("rotationX")
+        || prop == QLatin1String("rotationY") || prop == QLatin1String("z")) {
         return 0.0;
     }
+    if (prop == QLatin1String("perspective"))
+        return drift::kDefaultClipPerspective;
 
     // Effect params fall back to the effect's own static value, which is what the compositor
     // reads for an unkeyed param — and that value now sits on the adjustment linked to the clip.
@@ -18678,8 +18970,9 @@ QStringList AppController::clipAnimatedProperties(int trackIndex, int clipIndex)
 
     static const QStringList transformProps = {
         QStringLiteral("x"),       QStringLiteral("y"),       QStringLiteral("width"),
-        QStringLiteral("height"),  QStringLiteral("rotation"), QStringLiteral("opacity"),
-        QStringLiteral("volume"),
+        QStringLiteral("height"),  QStringLiteral("rotation"), QStringLiteral("rotationX"),
+        QStringLiteral("rotationY"), QStringLiteral("z"),     QStringLiteral("perspective"),
+        QStringLiteral("opacity"), QStringLiteral("volume"),
     };
     for (const QString &prop : transformProps) {
         const drift::KeyframeTrack<double> *kt = keyframeTrackForProp(clip, prop);
@@ -18838,6 +19131,7 @@ void AppController::resetClipTransform(int trackIndex, int clipIndex)
     clip.transformW = {};
     clip.transformH = {};
     clip.rotation = {};
+    clearClipPose3d(clip);
     clip.flipH = false;
     clip.flipV = false;
     setClipLayoutPixels(clip, 0, 0, m_project.width(), m_project.height());
@@ -20573,6 +20867,7 @@ QVariantMap AppController::clipboardAttributes() const
     const bool hasTransform = isVisual && (!c.transformX.isEmpty() || !c.transformY.isEmpty()
                                            || !c.transformW.isEmpty() || !c.transformH.isEmpty()
                                            || !c.rotation.isEmpty() || !c.opacity.isEmpty()
+                                           || c.layer3d
                                            || c.blendMode != drift::BlendMode::Normal
                                            || c.flipH || c.flipV
                                            || !item.masks.isEmpty()
@@ -20698,6 +20993,11 @@ void AppController::pasteAttributes(const QVariantMap &options)
             targetClip.transformW = rescaleKeyframeTrackTimes(sourceClip.transformW, srcDurationUs, targetDurationUs);
             targetClip.transformH = rescaleKeyframeTrackTimes(sourceClip.transformH, srcDurationUs, targetDurationUs);
             targetClip.rotation = rescaleKeyframeTrackTimes(sourceClip.rotation, srcDurationUs, targetDurationUs);
+            targetClip.rotationX = rescaleKeyframeTrackTimes(sourceClip.rotationX, srcDurationUs, targetDurationUs);
+            targetClip.rotationY = rescaleKeyframeTrackTimes(sourceClip.rotationY, srcDurationUs, targetDurationUs);
+            targetClip.positionZ = rescaleKeyframeTrackTimes(sourceClip.positionZ, srcDurationUs, targetDurationUs);
+            targetClip.perspective = rescaleKeyframeTrackTimes(sourceClip.perspective, srcDurationUs, targetDurationUs);
+            targetClip.layer3d = sourceClip.layer3d && targetClip.type != drift::ClipType::Model3d;
             targetClip.opacity = rescaleKeyframeTrackTimes(sourceClip.opacity, srcDurationUs, targetDurationUs);
             targetClip.blendMode = sourceClip.blendMode;
             targetClip.flipH = sourceClip.flipH;
@@ -22345,6 +22645,15 @@ void AppController::triggerAction(const QString &actionId)
         nudgeSelection(0.1);
     else if (actionId == QStringLiteral("toggleGuides"))
         setGuidesEnabled(!guidesEnabled());
+    else if (actionId == QStringLiteral("gizmoMove"))
+        setGizmoTool(QStringLiteral("move"));
+    else if (actionId == QStringLiteral("gizmoRotate"))
+        setGizmoTool(QStringLiteral("rotate"));
+    else if (actionId == QStringLiteral("gizmoScale"))
+        setGizmoTool(QStringLiteral("scale"));
+    else if (actionId == QStringLiteral("gizmoOrientation"))
+        setGizmoOrientation(m_gizmoOrientation == QLatin1String("local") ? QStringLiteral("global")
+                                                                         : QStringLiteral("local"));
     else if (actionId == QStringLiteral("toggleBookmark"))
         toggleBookmarkAtPlayhead();
     else if (actionId == QStringLiteral("nextBookmark"))
@@ -25350,6 +25659,13 @@ QVariantMap AppController::mcpCompactClip(int trackIndex, int clipIndex, bool in
                propertyValueAt(trackIndex, clipIndex, QStringLiteral("rotation"), at, 0));
     out.insert(QStringLiteral("opacity"),
                propertyValueAt(trackIndex, clipIndex, QStringLiteral("opacity"), at, 1));
+    if (clip.layer3d) {
+        out.insert(QStringLiteral("layer3d"), true);
+        for (const char *key : {"rotationX", "rotationY", "z", "perspective"}) {
+            const QString k = QLatin1String(key);
+            out.insert(k, propertyValueAt(trackIndex, clipIndex, k, at, 0));
+        }
+    }
     return out;
 }
 
@@ -25419,8 +25735,11 @@ QJsonObject AppController::mcpInspect(const McpInspectOptions &options) const
                     if (!fullClip.isEmpty()) {
                         const QVariantMap canvas = mcpCompactClip(t, c, true);
                         QVariantMap transform;
-                        for (const char *key : {"x", "y", "w", "h", "rotation", "opacity"})
-                            transform.insert(QLatin1String(key), canvas.value(QLatin1String(key)));
+                        for (const char *key : {"x", "y", "w", "h", "rotation", "opacity", "layer3d",
+                                                "rotationX", "rotationY", "z", "perspective"}) {
+                            if (canvas.contains(QLatin1String(key)))
+                                transform.insert(QLatin1String(key), canvas.value(QLatin1String(key)));
+                        }
                         clips.append(mcpDetailRow(fullClip, transform, options.verbose));
                     }
                 } else {
@@ -25651,7 +25970,18 @@ bool AppController::mcpSetClipCanvas(int trackIndex, int clipIndex, const QVaria
     write(QStringLiteral("w"), QStringLiteral("width"));
     write(QStringLiteral("h"), QStringLiteral("height"));
     write(QStringLiteral("rotation"), QStringLiteral("rotation"));
+    write(QStringLiteral("rotationX"), QStringLiteral("rotationX"));
+    write(QStringLiteral("rotationY"), QStringLiteral("rotationY"));
+    write(QStringLiteral("z"), QStringLiteral("z"));
+    write(QStringLiteral("perspective"), QStringLiteral("perspective"));
     write(QStringLiteral("opacity"), QStringLiteral("opacity"));
+    // After the value writes, so an explicit layer3d:false wins over their auto-enable.
+    if (patch.contains(QStringLiteral("layer3d")) && clip.type != drift::ClipType::Model3d) {
+        clip.layer3d = patch.value(QStringLiteral("layer3d")).toBool();
+        if (!clip.layer3d)
+            clearClipPose3d(clip);
+        any = true;
+    }
     if (!any)
         return false;
 

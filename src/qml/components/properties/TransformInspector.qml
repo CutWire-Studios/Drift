@@ -31,6 +31,10 @@ Item {
     readonly property var propWidth: { "key": "width", "label": qsTr("Width"), "def": root.canvasW, "decimals": 0 }
     readonly property var propHeight: { "key": "height", "label": qsTr("Height"), "def": root.canvasH, "decimals": 0 }
     readonly property var propRotation: { "key": "rotation", "label": qsTr("Angle"), "def": 0.0, "decimals": 1 }
+    readonly property var propRotationX: { "key": "rotationX", "label": qsTr("Tilt X"), "def": 0.0, "decimals": 1 }
+    readonly property var propRotationY: { "key": "rotationY", "label": qsTr("Tilt Y"), "def": 0.0, "decimals": 1 }
+    readonly property var propZ: { "key": "z", "label": qsTr("Depth"), "def": 0.0, "decimals": 0 }
+    readonly property var propPerspective: { "key": "perspective", "label": qsTr("Perspective"), "def": 2000.0, "decimals": 0 }
 
     // One slider that scales width and height together about the box centre; the link button
     // swaps it for the separate Width/Height rows.
@@ -313,6 +317,114 @@ Item {
                                        modelData)
                     }
                 }
+            }
+
+            ThemedSwitch {
+                visible: !root.isModel3d
+                text: qsTr("3D layer")
+                tooltip: qsTr("Tilt the clip and push it in depth, with 3D grips on the preview. Turning it off flattens the clip again.")
+                // A Binding rather than a plain one: the click itself assigns `checked`, which
+                // would otherwise sever it and leave the switch stale on the next clip.
+                Binding on checked {
+                    value: {
+                        void root.clipDataRevision
+                        return !!root.clipData.layer3d
+                    }
+                }
+                onToggled: EditorState.setClipLayer3d(EditorState.selectedTrack,
+                                                      EditorState.selectedClip, checked)
+            }
+
+            // The preview gizmo's tool and the axes its handles follow. Editor preferences shared by
+            // every clip, not stored on this one.
+            Row {
+                visible: !root.isModel3d && !!root.clipData.layer3d
+                spacing: 6
+
+                Repeater {
+                    model: [
+                        { value: "move", glyph: Theme.icons.move3d, label: qsTr("Move"), action: "gizmoMove",
+                          tip: qsTr("Arrows on the preview move the clip along each axis") },
+                        { value: "rotate", glyph: Theme.icons.rotate3d, label: qsTr("Rotate"), action: "gizmoRotate",
+                          tip: qsTr("Rings on the preview turn the clip about each axis") },
+                        { value: "scale", glyph: Theme.icons.scale3d, label: qsTr("Scale"), action: "gizmoScale",
+                          tip: qsTr("Handles on the preview stretch the clip along its own edges") }
+                    ]
+                    delegate: IconButton {
+                        required property var modelData
+                        readonly property string key: EditorState.shortcutFor(modelData.action)
+                        glyph: modelData.glyph
+                        variant: "text"
+                        tooltip: (key.length > 0 ? qsTr("%1 (%2)").arg(modelData.label).arg(key)
+                                                 : modelData.label) + "\n" + modelData.tip
+                        Accessible.name: modelData.label
+                        active: EditorState.gizmoTool === modelData.value
+                        onClicked: EditorState.gizmoTool = modelData.value
+                    }
+                }
+            }
+
+            Flow {
+                visible: !root.isModel3d && !!root.clipData.layer3d
+                width: parent.width
+                spacing: 6
+
+                Repeater {
+                    model: [
+                        { value: "global", label: qsTr("Global"),
+                          tip: qsTr("Gizmo follows the camera: X across, Y down, Z toward you") },
+                        { value: "local", label: qsTr("Local"),
+                          tip: qsTr("Gizmo follows the clip's own edges and face, however it is turned") }
+                    ]
+                    delegate: ThemedChip {
+                        required property var modelData
+                        text: modelData.label
+                        tooltip: modelData.tip
+                        selected: EditorState.gizmoOrientation === modelData.value
+                        onClicked: EditorState.gizmoOrientation = modelData.value
+                    }
+                }
+            }
+
+            PropertyKeyframeRow {
+                visible: !root.isModel3d && !!root.clipData.layer3d
+                width: parent.width
+                propDef: root.propRotationX
+                keyframeList: (root.clipData.keyframes && root.clipData.keyframes.rotationX && root.clipData.keyframes.rotationX.points) || []
+                useSlider: true
+                sliderFrom: -180
+                sliderTo: 180
+                unit: "°"
+            }
+            PropertyKeyframeRow {
+                visible: !root.isModel3d && !!root.clipData.layer3d
+                width: parent.width
+                propDef: root.propRotationY
+                keyframeList: (root.clipData.keyframes && root.clipData.keyframes.rotationY && root.clipData.keyframes.rotationY.points) || []
+                useSlider: true
+                sliderFrom: -180
+                sliderTo: 180
+                unit: "°"
+            }
+            PropertyKeyframeRow {
+                visible: !root.isModel3d && !!root.clipData.layer3d
+                width: parent.width
+                propDef: root.propZ
+                keyframeList: (root.clipData.keyframes && root.clipData.keyframes.z && root.clipData.keyframes.z.points) || []
+                useSlider: true
+                sliderFrom: -4000
+                sliderTo: 1500
+                unit: "px"
+            }
+            PropertyKeyframeRow {
+                visible: !root.isModel3d && !!root.clipData.layer3d
+                width: parent.width
+                propDef: root.propPerspective
+                keyframeList: (root.clipData.keyframes && root.clipData.keyframes.perspective && root.clipData.keyframes.perspective.points) || []
+                useSlider: true
+                sliderFrom: 200
+                sliderTo: 8000
+                unit: "px"
             }
 
             Text {

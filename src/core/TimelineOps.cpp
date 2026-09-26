@@ -1188,6 +1188,10 @@ void forEachKeyframeTrack(Clip &clip, Fn &&fn)
     fn(clip.transformW);
     fn(clip.transformH);
     fn(clip.rotation);
+    fn(clip.rotationX);
+    fn(clip.rotationY);
+    fn(clip.positionZ);
+    fn(clip.perspective);
     fn(clip.volume);
     const auto visitMap = [&fn](QMap<QString, KeyframeTrack<double>> &tracks) {
         for (auto it = tracks.begin(); it != tracks.end(); ++it)

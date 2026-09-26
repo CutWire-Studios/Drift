@@ -272,6 +272,14 @@ bool isFixedFunctionBlend(drift::BlendMode mode)
 // the top of the readback image (see promoteImageToTarget), so y is not flipped.
 QMatrix4x4 modelMatrixFor(const GpuLayer &layer, const QSize &canvas)
 {
+    if (layer.pose3d.isActive()) {
+        QMatrix4x4 m;
+        m.translate(-1.f, -1.f);
+        m.scale(2.f / canvas.width(), 2.f / canvas.height());
+        return m
+               * drift::clipQuadToCanvas(layer.rect, layer.rotation, layer.flipH, layer.flipV,
+                                         layer.pose3d, QSizeF(canvas));
+    }
     const double w = layer.rect.width();
     const double h = layer.rect.height();
     const double cx = layer.rect.x() + w * 0.5;
@@ -902,8 +910,15 @@ void drawLayerOnCanvas(GlRuntime &rt, QOpenGLExtraFunctions *gl, GlTarget &canva
 
     // Only worth it when the quad is actually smaller than the texture; at ~1:1 the
     // single bilinear tap is already exact and the copy would be pure cost.
-    const bool minifies = layerTarget.width > layer.rect.width() * 1.05
-                          || layerTarget.height > layer.rect.height() * 1.05;
+    QSizeF drawnSize = layer.rect.size();
+    if (layer.pose3d.isActive()) {
+        const QPolygonF quad =
+            drift::projectedClipQuad(layer.rect, layer.rotation, layer.pose3d, QSizeF(canvasSize));
+        if (!quad.isEmpty())
+            drawnSize = drawnSize.boundedTo(quad.boundingRect().size());
+    }
+    const bool minifies = layerTarget.width > drawnSize.width() * 1.05
+                          || layerTarget.height > drawnSize.height() * 1.05;
     GlTarget mipTarget = minifies ? mipmappedLayerCopy(rt, gl, layerTarget) : GlTarget{};
     const GLuint layerTex = mipTarget.isValid() ? mipTarget.texture() : layerTarget.texture();
     const float layerPremul = mipTarget.isValid() ? 1.f : 0.f;

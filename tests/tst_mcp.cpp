@@ -80,6 +80,7 @@ private slots:
     void catalogDispatcherParity();
     void textResultRoundsNumbers();
     void validateRejectsWrongType();
+    void setTransformWrites3dPose();
     void validateEnumAndRange();
     void effectParamWritesRejectUnknownKeys();
     void unknownOpSuggests();
@@ -3652,6 +3653,93 @@ void McpTest::textResultRoundsNumbers()
     QCOMPARE(nested.value(QStringLiteral("pos")).toDouble(), 0.123457);
     QCOMPARE(nested.value(QStringLiteral("t")).toDouble(), 1.0);
     QCOMPARE(result.value(QStringLiteral("isError")).toBool(), false);
+}
+
+void McpTest::setTransformWrites3dPose()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    drift::mcp::McpDispatcher dispatcher(&state);
+    const QString clip = addTextClip(dispatcher);
+    QVERIFY(!clip.isEmpty());
+
+    const QJsonObject r = dispatcher.applyOne(
+        QStringLiteral("set_transform"), {{QStringLiteral("clip"), clip}, {QStringLiteral("rotationY"), 30.0}});
+    QVERIFY2(r.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(r).toJson(QJsonDocument::Compact)));
+    // Writing a 3D value makes the clip a 3D layer, or the write would render nothing.
+    QVERIFY(r.value(QStringLiteral("layer3d")).toBool());
+    QCOMPARE(r.value(QStringLiteral("rotationY")).toDouble(), 30.0);
+    QCOMPARE(r.value(QStringLiteral("z")).toDouble(), 0.0);
+    QCOMPARE(r.value(QStringLiteral("perspective")).toDouble(), drift::kDefaultClipPerspective);
+
+    const QPair<int, int> loc = state.mcpLocateClip(clip);
+    QVariantMap box;
+    for (const QVariant &entry : state.previewClipsAtPlayhead()) {
+        const QVariantMap m = entry.toMap();
+        if (m.value(QStringLiteral("track")).toInt() == loc.first
+            && m.value(QStringLiteral("clip")).toInt() == loc.second)
+            box = m;
+    }
+    QCOMPARE(box.value(QStringLiteral("rotationY")).toDouble(), 30.0);
+
+    // Hit-testing goes through the projection: the flat box's own edge is outside the tilted quad.
+    const double cx = box.value(QStringLiteral("x")).toDouble() + box.value(QStringLiteral("width")).toDouble() / 2;
+    const double cy = box.value(QStringLiteral("y")).toDouble() + box.value(QStringLiteral("height")).toDouble() / 2;
+    QCOMPARE(state.previewClipAtCanvasPoint(cx, cy).value(QStringLiteral("clip")).toInt(), loc.second);
+    const double flatRight = box.value(QStringLiteral("x")).toDouble() + box.value(QStringLiteral("width")).toDouble() - 1;
+    QVERIFY(state.previewClipAtCanvasPoint(flatRight, cy).isEmpty());
+
+    const QJsonObject pushed = dispatcher.applyOne(
+        QStringLiteral("set_transform"), {{QStringLiteral("clip"), clip}, {QStringLiteral("z"), -500.0}});
+    QCOMPARE(pushed.value(QStringLiteral("z")).toDouble(), -500.0);
+
+    // Switching 3D off flattens the clip: the pose goes back to zero.
+    const QJsonObject flat = dispatcher.applyOne(
+        QStringLiteral("set_transform"), {{QStringLiteral("clip"), clip}, {QStringLiteral("layer3d"), false}});
+    QVERIFY(flat.value(QStringLiteral("ok")).toBool());
+    QVERIFY(!flat.contains(QStringLiteral("rotationY")));
+    QVERIFY(!state.previewClipAtCanvasPoint(flatRight, cy).isEmpty());
+    QCOMPARE(state.propertyValueAt(loc.first, loc.second, QStringLiteral("rotationY"), 0.0, 0.0), 0.0);
+    QCOMPARE(state.propertyValueAt(loc.first, loc.second, QStringLiteral("z"), 0.0, 0.0), 0.0);
+
+    // The inspector switch: on with nothing set yet, off clears what was set since.
+    state.setClipLayer3d(loc.first, loc.second, true);
+    QVERIFY(state.clipAt(loc.first, loc.second).value(QStringLiteral("layer3d")).toBool());
+    state.setClipKeyframe(loc.first, loc.second, QStringLiteral("rotationX"), 0.0, 20.0);
+    state.setClipLayer3d(loc.first, loc.second, false);
+    QVERIFY(!state.clipAt(loc.first, loc.second).value(QStringLiteral("layer3d")).toBool());
+    QCOMPARE(state.propertyValueAt(loc.first, loc.second, QStringLiteral("rotationX"), 0.0, 0.0), 0.0);
+    state.undo();
+    QCOMPARE(state.propertyValueAt(loc.first, loc.second, QStringLiteral("rotationX"), 0.0, 0.0), 20.0);
+
+    // A quarter turn on the gizmo's screen-plane ring writes the spin to the clip.
+    box.insert(QStringLiteral("rotationY"), 0.0);
+    box.insert(QStringLiteral("z"), 0.0);
+    state.setGizmoTool(QStringLiteral("rotate"));
+    state.setGizmoOrientation(QStringLiteral("global"));
+    const QVariantMap rings = state.previewGizmoGeometry(box, 1.0, 1.0);
+    const QPointF origin = rings.value(QStringLiteral("origin")).toPointF();
+    QPointF ringStart;
+    for (const QVariant &h : rings.value(QStringLiteral("handles")).toList()) {
+        const QVariantMap handle = h.toMap();
+        if (handle.value(QStringLiteral("id")).toString() == QLatin1String("z"))
+            ringStart = handle.value(QStringLiteral("front")).toList().first().toList().first().toPointF();
+    }
+    const double radius = QLineF(origin, ringStart).length();
+    QVERIFY(radius > 10);
+    state.previewSetClipKeyframe(loc.first, loc.second, QStringLiteral("rotationY"), 0.0, 0.0);
+    const QVariantMap turned = state.previewApplyGizmoDrag(box, QStringLiteral("z"), origin.x() + radius,
+                                                           origin.y(), origin.x(), origin.y() + radius,
+                                                           true, 1.0);
+    state.commitPreviewDrag();
+    QCOMPARE(turned.value(QStringLiteral("rotation")).toDouble(), 90.0);
+    QCOMPARE(state.propertyValueAt(loc.first, loc.second, QStringLiteral("rotation"), 0.0, 0.0), 90.0);
+
+    const QJsonObject reset = dispatcher.applyOne(QStringLiteral("reset_transform"), {{QStringLiteral("clip"), clip}});
+    QVERIFY(reset.value(QStringLiteral("ok")).toBool());
+    QCOMPARE(state.propertyValueAt(loc.first, loc.second, QStringLiteral("rotationY"), 0.0, 0.0), 0.0);
+    QCOMPARE(state.propertyValueAt(loc.first, loc.second, QStringLiteral("perspective"), 0.0, 0.0),
+             drift::kDefaultClipPerspective);
 }
 
 void McpTest::validateRejectsWrongType()

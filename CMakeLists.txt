@@ -666,6 +666,10 @@ add_library(driftengine STATIC
     src/engine/FaceModelTransform.cpp
     src/engine/ModelAnimation.h
     src/engine/ModelAnimation.cpp
+    src/engine/ClipTransform3d.h
+    src/engine/ClipTransform3d.cpp
+    src/engine/ClipGizmo.h
+    src/engine/ClipGizmo.cpp
     src/engine/ModelClipTransform.h
     src/engine/ModelClipTransform.cpp
     src/engine/ModelClipRenderer.h
@@ -1012,6 +1016,7 @@ qt_add_qml_module(drift
         src/qml/EditorHeader.qml
         src/qml/AssetsPanel.qml
         src/qml/PreviewPanel.qml
+        src/qml/components/preview/TransformGizmo.qml
         src/qml/components/preview/TransformOverlay.qml
         src/qml/components/preview/PreviewDropOverlay.qml
         src/qml/components/preview/CropOverlay.qml

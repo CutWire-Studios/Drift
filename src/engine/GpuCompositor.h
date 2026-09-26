@@ -4,6 +4,7 @@
 #include "core/Effect.h"
 #include "core/Mask.h"
 #include "core/Time.h"
+#include "engine/ClipTransform3d.h"
 #include "engine/DepthSidecar.h"
 #include "engine/FaceLandmarker.h"
 #include "engine/GpuStatus.h"
@@ -75,6 +76,7 @@ struct GpuLayer
     MaskMediaFrame fgr;
     QRectF rect;             // destination rect on the canvas, in canvas pixels
     double rotation = 0.0;   // degrees, clockwise, about the rect centre
+    drift::ClipPose3d pose3d; // tilt and depth on top of rect/rotation, in canvas pixels
     bool flipH = false;
     bool flipV = false;
     double opacity = 1.0;

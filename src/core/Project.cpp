@@ -306,6 +306,16 @@ QJsonObject clipToJson(const Clip &clip)
         json.insert(QStringLiteral("sequenceId"), clip.sequenceId);
     if (clip.sourceFrame != QRectF(0, 0, 1, 1))
         json.insert(QStringLiteral("sourceFrame"), drift::sourceFrameToJson(clip.sourceFrame));
+    if (clip.layer3d)
+        json.insert(QStringLiteral("layer3d"), true);
+    if (!clip.rotationX.isEmpty())
+        json.insert(QStringLiteral("rotationX"), keyframesToJson(clip.rotationX));
+    if (!clip.rotationY.isEmpty())
+        json.insert(QStringLiteral("rotationY"), keyframesToJson(clip.rotationY));
+    if (!clip.positionZ.isEmpty())
+        json.insert(QStringLiteral("z"), keyframesToJson(clip.positionZ));
+    if (!clip.perspective.isEmpty())
+        json.insert(QStringLiteral("perspective"), keyframesToJson(clip.perspective));
     return json;
 }
 
@@ -421,6 +431,13 @@ Clip clipFromJsonV2(const QJsonObject &object, int canvasW = 1920, int canvasH =
     clip.pan = object.value(QStringLiteral("pan")).toDouble(0.0);
     clip.opacity = keyframesFromJson(object.value(QStringLiteral("opacity")).toObject());
     clip.rotation = keyframesFromJson(object.value(QStringLiteral("rotation")).toObject());
+    clip.rotationX = keyframesFromJson(object.value(QStringLiteral("rotationX")).toObject());
+    clip.rotationY = keyframesFromJson(object.value(QStringLiteral("rotationY")).toObject());
+    clip.positionZ = keyframesFromJson(object.value(QStringLiteral("z")).toObject());
+    clip.perspective = keyframesFromJson(object.value(QStringLiteral("perspective")).toObject());
+    clip.layer3d = object.value(QStringLiteral("layer3d")).toBool(false) || !clip.rotationX.isEmpty()
+                   || !clip.rotationY.isEmpty() || !clip.positionZ.isEmpty()
+                   || !clip.perspective.isEmpty();
     clip.rotationCorrection = object.value(QStringLiteral("rotationCorrection")).toInt(0);
     clip.effects = effectsFromJson(object.value(QStringLiteral("effects")).toArray());
     clip.audioEffects = effectsFromJson(object.value(QStringLiteral("audioEffects")).toArray());
@@ -702,6 +719,10 @@ void detachClip(Clip &clip)
     clip.transformW.detachSharedData();
     clip.transformH.detachSharedData();
     clip.rotation.detachSharedData();
+    clip.rotationX.detachSharedData();
+    clip.rotationY.detachSharedData();
+    clip.positionZ.detachSharedData();
+    clip.perspective.detachSharedData();
     clip.volume.detachSharedData();
     clip.speedCurve.detachSharedData();
     clip.mask.points.detach();

@@ -70,6 +70,7 @@ private slots:
     void legacyTrackInterpolationMigratesLosslessly();
     void keyframeNearestQuery();
     void sourceFramingRoundTrip();
+    void clipPose3dRoundTrip();
     void projectSerializationRoundTrip();
     void binFolderSerializationRoundTrip();
     void compositeSequenceRoundTrip();
@@ -453,6 +454,55 @@ void CoreTest::sourceFramingRoundTrip()
     QVERIFY(!QJsonDocument(plain.toJson()).toJson().contains("sourceFrame"));
     QCOMPARE(drift::sourceFrameFromJson({}), QRectF(0, 0, 1, 1));
     QCOMPARE(drift::normalizedSourceFrame(-1, 4, 2, 0.5), QRectF(0, 0.5, 1, 0.5));
+}
+
+void CoreTest::clipPose3dRoundTrip()
+{
+    drift::Project project;
+    drift::Clip clip;
+    clip.layer3d = true;
+    clip.rotationX.setKeyframe(0, 15.0);
+    clip.rotationY.setKeyframe(0, -30.0);
+    clip.rotationY.setKeyframe(500'000, 45.0);
+    clip.positionZ.setKeyframe(0, -400.0);
+    clip.perspective.setKeyframe(0, 1200.0);
+    project.tracks()[0].clips.append(clip);
+    const auto loaded = drift::Project::fromJson(project.toJson());
+    const drift::Clip &back = loaded.tracks()[0].clips[0];
+    QVERIFY(back.layer3d);
+    QCOMPARE(back.rotationX.evaluateAt(0), 15.0);
+    QCOMPARE(back.rotationY.evaluateAt(0), -30.0);
+    QCOMPARE(back.rotationY.evaluateAt(500'000), 45.0);
+    QCOMPARE(back.positionZ.evaluateAt(0), -400.0);
+    QCOMPARE(back.perspective.evaluateAt(0), 1200.0);
+
+    // A flat clip writes none of it and reads back empty tracks.
+    drift::Project plain;
+    plain.tracks()[0].clips.append(drift::Clip{});
+    const QByteArray json = QJsonDocument(plain.toJson()).toJson();
+    QVERIFY(!json.contains("rotationX") && !json.contains("perspective") && !json.contains("layer3d"));
+    const drift::Clip flat = drift::Project::fromJson(plain.toJson()).tracks()[0].clips[0];
+    QVERIFY(!flat.layer3d);
+
+    // Tilt data without the switch (older files, hand-written JSON) comes up as a 3D layer.
+    QJsonObject json3d = plain.toJson();
+    QJsonArray tracks = json3d.value(QStringLiteral("tracks")).toArray();
+    QJsonObject track = tracks.at(0).toObject();
+    QJsonArray clips = track.value(QStringLiteral("clips")).toArray();
+    QJsonObject tilted = clips.at(0).toObject();
+    tilted.insert(QStringLiteral("rotationY"), project.toJson()
+                      .value(QStringLiteral("tracks")).toArray().at(0).toObject()
+                      .value(QStringLiteral("clips")).toArray().at(0).toObject()
+                      .value(QStringLiteral("rotationY")));
+    clips.replace(0, tilted);
+    track.insert(QStringLiteral("clips"), clips);
+    tracks.replace(0, track);
+    json3d.insert(QStringLiteral("tracks"), tracks);
+    const drift::Clip migrated = drift::Project::fromJson(json3d).tracks()[0].clips[0];
+    QVERIFY(migrated.layer3d);
+    QCOMPARE(migrated.rotationY.evaluateAt(0), -30.0);
+    QVERIFY(flat.rotationX.isEmpty() && flat.rotationY.isEmpty() && flat.positionZ.isEmpty()
+            && flat.perspective.isEmpty());
 }
 
 void CoreTest::projectSerializationRoundTrip()

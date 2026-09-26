@@ -64,7 +64,8 @@ QJsonObject transitionIdProp()
 QJsonObject animPropProp()
 {
     return stringProp(QStringLiteral(
-        "Animated property: x, y, width, height, rotation, opacity, volume, fx.<effectIndex>.<paramKey> "
+        "Animated property: x, y, width, height, rotation, rotationX, rotationY, z, perspective, "
+        "opacity, volume, fx.<effectIndex>.<paramKey> "
         "(e.g. fx.0.amount), mask.<x|y|w|h|rotation|feather>, or on a text/subtitle clip text.<key> with "
         "key one of pixelSize, letterSpacing, lineHeight, boxPadding, pathBend, or a shading layer field "
         "text.layer.<layerId>.<opacity|offsetX|offsetY|blur|width|spread|trimStart|trimEnd|dashOffset|"
@@ -617,10 +618,15 @@ const QList<Op> &ops()
                                    {QStringLiteral("w"), numberProp(QStringLiteral("On-canvas width in pixels (not source resolution)"))},
                                    {QStringLiteral("h"), numberProp(QStringLiteral("On-canvas height in pixels"))},
                                    {QStringLiteral("rotation"), numberProp(QStringLiteral("Degrees clockwise"))},
+                                   {QStringLiteral("layer3d"), boolProp(QStringLiteral("Make the clip a 3D layer (true) or flat (false). Writing any of the 3D fields below turns it on; false resets them to 0 and the default perspective"))},
+                                   {QStringLiteral("rotationX"), numberProp(QStringLiteral("3D tilt in degrees; + tips the top edge away"))},
+                                   {QStringLiteral("rotationY"), numberProp(QStringLiteral("3D tilt in degrees; + swings the right edge away"))},
+                                   {QStringLiteral("z"), numberProp(QStringLiteral("Depth in pixels; + toward the viewer, - away"))},
+                                   {QStringLiteral("perspective"), numberProp(QStringLiteral("Eye distance from the canvas centre in pixels (default 2000); smaller = stronger perspective"))},
                                    {QStringLiteral("opacity"), numberProp(QStringLiteral("Opacity"), 0, 1)}},
                                   clipRefProps())) },
         { "reset_transform", "canvas", "Reset a clip to fill the canvas",
-          "Reset position, size, rotation, opacity, and flips to defaults.",
+          "Reset position, size, rotation, 3D tilt/depth/perspective (and the 3D layer switch), opacity, and flips to defaults.",
           objectSchema(clipRefProps()) },
 
         { "seek", "playback", "Jump the playhead",

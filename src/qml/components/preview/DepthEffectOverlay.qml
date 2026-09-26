@@ -107,7 +107,8 @@ Item {
         function onClipPropertiesPreviewed(trackIndex, clipIndex, keys) {
             for (const k of keys) {
                 if (k.startsWith("fx.") || k === "x" || k === "y" || k === "width"
-                        || k === "height" || k === "rotation") {
+                        || k === "height" || k === "rotation" || k === "rotationX"
+                        || k === "rotationY" || k === "z" || k === "perspective") {
                     root.refreshOverlay()
                     return
                 }
@@ -138,7 +139,21 @@ Item {
         width: Math.max(1, (root.editorState.width || root.canvasW) * root.sx)
         height: Math.max(1, (root.editorState.height || root.canvasH) * root.sy)
         transformOrigin: Item.Center
-        rotation: root.editorState.rotation || 0
+        // A tilted clip frame goes through the clip's perspective instead of the flat spin.
+        readonly property bool is3d: (root.editorState.rotationX || 0) !== 0
+                                     || (root.editorState.rotationY || 0) !== 0
+                                     || (root.editorState.z || 0) !== 0
+        rotation: is3d ? 0 : (root.editorState.rotation || 0)
+        transform: Matrix4x4 {
+            matrix: clipFrame.is3d
+                    ? EditorState.previewClipPoseMatrix(root.editorState, root.editorState.x || 0,
+                                                        root.editorState.y || 0,
+                                                        root.editorState.width || root.canvasW,
+                                                        root.editorState.height || root.canvasH,
+                                                        root.editorState.rotation || 0,
+                                                        root.sx, root.sy)
+                    : Qt.matrix4x4()
+        }
 
         Repeater {
             id: handleRepeater

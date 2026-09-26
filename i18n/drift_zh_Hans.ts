@@ -3392,6 +3392,22 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>3D gizmo: move</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>3D gizmo: rotate</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>3D gizmo: scale</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>3D gizmo: switch global/local axes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Custom guides</source>
         <translation type="unfinished"></translation>
     </message>
@@ -3440,6 +3456,18 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Move clip in 3D</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Rotate clip in 3D</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Scale clip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Audio effects go on the timeline.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -3453,6 +3481,22 @@
     </message>
     <message>
         <source>Add to preview</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Enable 3D</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Disable 3D</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Clip is a 3D layer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Clip is flat</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -6990,6 +7034,22 @@
     </message>
     <message>
         <source>Rotation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Tilt X</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Tilt Y</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Depth</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Perspective</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -12911,6 +12971,22 @@ If playback stutters, try another.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Tilt X</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Tilt Y</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Depth</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Perspective</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Video only</source>
         <translation type="unfinished"></translation>
     </message>
@@ -12963,6 +13039,50 @@ If playback stutters, try another.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Tilt the clip and push it in depth, with 3D grips on the preview. Turning it off flattens the clip again.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Arrows on the preview move the clip along each axis</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Rotate</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Rings on the preview turn the clip about each axis</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Handles on the preview stretch the clip along its own edges</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 (%2)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Global</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Gizmo follows the camera: X across, Y down, Z toward you</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Local</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Gizmo follows the clip&apos;s own edges and face, however it is turned</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Flip</source>
         <translation type="unfinished"></translation>
     </message>
@@ -12984,6 +13104,10 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Fix orientation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>3D layer</source>
         <translation type="unfinished"></translation>
     </message>
     <message>

@@ -24,6 +24,7 @@
 #include <QFuture>
 #include <QHash>
 #include <QJsonObject>
+#include <QMatrix4x4>
 #include <QMediaDevices>
 #include <QElapsedTimer>
 #include <QObject>
@@ -369,6 +370,11 @@ class AppController : public QObject
     Q_PROPERTY(int selectedTransitionTrack READ selectedTransitionTrack NOTIFY selectedTransitionDataChanged)
     Q_PROPERTY(int selectedTransitionLeftClip READ selectedTransitionLeftClip NOTIFY selectedTransitionDataChanged)
     Q_PROPERTY(bool guidesEnabled READ guidesEnabled WRITE setGuidesEnabled NOTIFY guidesChanged)
+    // The preview's 3D gizmo on a clip that is a 3D layer: which tool ("move", "rotate", "scale")
+    // and whether its handles follow the camera's axes ("global") or the clip's own ("local").
+    // Editor preferences, not project data.
+    Q_PROPERTY(QString gizmoTool READ gizmoTool WRITE setGizmoTool NOTIFY gizmoChanged)
+    Q_PROPERTY(QString gizmoOrientation READ gizmoOrientation WRITE setGizmoOrientation NOTIFY gizmoChanged)
     // Every set the picker offers: built-ins, the app-wide library, then copies carried by the
     // project for sets this machine's library does not have. Each {id, name, builtIn, active,
     // inLibrary, items}.
@@ -614,6 +620,10 @@ public:
     int selectedTransitionTrack() const { return m_selectedTransitionTrack; }
     int selectedTransitionLeftClip() const { return m_selectedTransitionLeftClip; }
     bool guidesEnabled() const { return m_guidesEnabled; }
+    QString gizmoTool() const { return m_gizmoTool; }
+    void setGizmoTool(const QString &tool);
+    QString gizmoOrientation() const { return m_gizmoOrientation; }
+    void setGizmoOrientation(const QString &orientation);
     QVariantList guideSets() const;
     QVariantList guideItems() const;
     Q_INVOKABLE void setGuideSetActive(const QString &id, bool active);
@@ -1196,6 +1206,22 @@ public:
     Q_INVOKABLE QVariantList builtinShapes() const;
     Q_INVOKABLE QVariantList builtinShapeCategories() const;
     Q_INVOKABLE QVariantList previewClipsAtPlayhead() const;
+    // For a previewClipsAtPlayhead box with a 3D pose: the QtQuick transform of an item laid
+    // out at (x, y, w, h) * scale in overlay px, placing its content where the clip renders.
+    // The 3D gizmo for a previewClipsAtPlayhead box (or a live pose of the same shape), in overlay
+    // px at `scale` overlay px per canvas px. `size` enlarges the handles for touch.
+    // Geometry: {valid, origin:{x,y}, handles:[{id, kind, front:[[{x,y}…]…], back:[…], head:[…]}]}.
+    Q_INVOKABLE QVariantMap previewGizmoGeometry(const QVariantMap &box, double scale, double size) const;
+    Q_INVOKABLE QString previewGizmoPick(const QVariantMap &box, double scale, double size, double x,
+                                         double y, double tolerance) const;
+    // Drags `handle` from press to now (overlay px) starting at `start`, writes the result to the
+    // clip the way the other preview setters do, and returns the new pose in the box's shape.
+    Q_INVOKABLE QVariantMap previewApplyGizmoDrag(const QVariantMap &start, const QString &handle,
+                                                  double pressX, double pressY, double nowX,
+                                                  double nowY, bool snap, double scale);
+    Q_INVOKABLE QMatrix4x4 previewClipPoseMatrix(const QVariantMap &box, double x, double y,
+                                                 double w, double h, double rotation,
+                                                 double scaleX, double scaleY) const;
 
     // Asset drag-and-drop. One resolver for every kind a browser can lift (AssetDrag.qml has
     // the list; media keeps its own asset-index path), shared by the desktop and phone
@@ -1409,6 +1435,9 @@ public:
     Q_INVOKABLE void cancelReverseRender();
     Q_INVOKABLE bool clipHasReverseProxy(int trackIndex, int clipIndex) const;
     Q_INVOKABLE void setClipFlip(int trackIndex, int clipIndex, bool flipH, bool flipV);
+    // Per-clip "3D layer" switch: the tilt/depth/perspective values render (and get grips) only
+    // while it is on. Off keeps the values.
+    Q_INVOKABLE void setClipLayer3d(int trackIndex, int clipIndex, bool enabled);
     // Stereo balance, -1..+1. previewSet* coalesces a slider drag into one undo entry the way
     // previewSetClipSpeed does; setClipPan is the one-shot for typing or resetting to centre.
     Q_INVOKABLE void previewSetClipPan(int trackIndex, int clipIndex, double pan);
@@ -2125,6 +2154,7 @@ signals:
     void subtitleWaveformReady(double startSeconds, double durSeconds, int sampleCount);
     void beatAnalysisChanged();
     void guidesChanged();
+    void gizmoChanged();
     void guideEditSetIdChanged();
     void shortcutsChanged();
     void assetFavoritesChanged();
@@ -2797,6 +2827,8 @@ protected:
     mutable QHash<int, QCursor> m_trimCursorCache;
     QCursor trimCursorFor(int side, int heightPx) const;
     bool m_guidesEnabled = false;
+    QString m_gizmoTool = QStringLiteral("move");
+    QString m_gizmoOrientation = QStringLiteral("global");
     bool m_canvasCropMode = false;
     bool m_maskEditMode = false;
     QStringList m_activeGuideSets{QStringLiteral("thirds")};

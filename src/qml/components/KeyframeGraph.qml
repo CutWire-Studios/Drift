@@ -58,6 +58,10 @@ Item {
         case "width": return qsTr("Width")
         case "height": return qsTr("Height")
         case "rotation": return qsTr("Rotation")
+        case "rotationX": return qsTr("Tilt X")
+        case "rotationY": return qsTr("Tilt Y")
+        case "z": return qsTr("Depth")
+        case "perspective": return qsTr("Perspective")
         case "opacity": return qsTr("Opacity")
         case "volume": return qsTr("Volume")
         case "mask.x": return qsTr("Mask X")
@@ -87,6 +91,10 @@ Item {
         case "width": return "W"
         case "height": return "H"
         case "rotation": return "°"
+        case "rotationX": return "X°"
+        case "rotationY": return "Y°"
+        case "z": return "Z"
+        case "perspective": return "Per"
         case "opacity": return "Op"
         case "volume": return "Vol"
         case "mask.x": return "MX"

@@ -312,6 +312,14 @@ QtObject {
     readonly property color textStylePreviewBg: "#1c1c1c"
     readonly property color textStylePreviewBorder: darkMode ? "#3a3a3a" : "#2a2a2a"
 
+    // --- Colors: 3D transform gizmo (fixed; drawn over footage) --------------
+    // The usual X/Y/Z = red/green/blue, bright enough to hold up on any frame.
+    readonly property color gizmoX: "#f0475a"
+    readonly property color gizmoY: "#5ccf5a"
+    readonly property color gizmoZ: "#4f8ff7"
+    readonly property color gizmoUniform: "#f2f2f2"
+    readonly property color gizmoHot: "#ffd43b"
+
     // --- Colors: keyframe curves (fixed regardless of app theme) -------------
     // One hue per animatable property so overlaid curves, their key diamonds and
     // their gutter chips all read as the same series. Chosen for separation at
@@ -322,6 +330,10 @@ QtObject {
         "width": "#23d160",
         "height": "#e879f9",
         "rotation": "#f43f5e",
+        "rotationX": "#fb923c",
+        "rotationY": "#facc15",
+        "z": "#60a5fa",
+        "perspective": "#94a3b8",
         "opacity": "#a78bfa",
         "volume": "#2dd4bf"
     })
@@ -718,6 +730,9 @@ QtObject {
         lock: "lock",
         lockOpen: "lock-open",
         moveHorizontal: "move-horizontal",
+        move3d: "move-3d",
+        rotate3d: "rotate-3d",
+        scale3d: "scale-3d",
         // CapCut-style select/pointer tool (exit cut modes)
         mousePointer: "mouse-pointer",
 

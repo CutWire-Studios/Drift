@@ -44,6 +44,7 @@
 #include "engine/VdaDepth.h"
 #include "engine/Exporter.h"
 #include "engine/PreviewProxyRenderer.h"
+#include "engine/ClipGizmo.h"
 #include "engine/GpuCompositor.h"
 #include "engine/MediaWaveform.h"
 #include "playback/PlaybackDiagnostics.h"
@@ -141,6 +142,8 @@ private slots:
     void depthEffectsRenderWithDepthAndPassThroughWithout();
     void depthOfFieldKeepsFocusSharpAndBlursTheRest();
     void depthOcclusionHidesLayerBehindNearerPixels();
+    void clipPose3dRendersInPerspective();
+    void clipGizmoSolvesDrags();
     void faceTrackV2CarriesContoursAndPose();
     void faceTrackV1FileStillLoads();
     void smoothFaceTrackHandlesMissingBlocks();
@@ -857,6 +860,183 @@ void EngineTest::depthOfFieldKeepsFocusSharpAndBlursTheRest()
     const QImage flipped = EffectProcessor::applyEffects(frame, {dof}, 0, {}, depth);
     QVERIFY(meanAbsDiff(flipped, frame, soft) < 8.0);
     QVERIFY(meanAbsDiff(flipped, frame, sharp) > 60.0);
+}
+
+void EngineTest::clipPose3dRendersInPerspective()
+{
+    const QSizeF canvasF(128, 128);
+    const QRectF rect(32, 32, 64, 64);
+
+    // Swinging the right edge away shrinks it, and pulls the whole quad narrower.
+    drift::ClipPose3d swung;
+    swung.rotationY = 60.0;
+    swung.perspective = 200.0;
+    const QPolygonF quad = drift::projectedClipQuad(rect, 0.0, swung, canvasF);
+    QCOMPARE(quad.size(), 4);
+    const double leftEdge = quad.at(3).y() - quad.at(0).y();
+    const double rightEdge = quad.at(2).y() - quad.at(1).y();
+    QVERIFY2(leftEdge > rightEdge * 1.2, qPrintable(QStringLiteral("%1 vs %2").arg(leftEdge).arg(rightEdge)));
+    QVERIFY(quad.boundingRect().width() < rect.width() * 0.8);
+
+    // Behind the eye there is nothing to project.
+    drift::ClipPose3d behind;
+    behind.positionZ = 300.0;
+    behind.perspective = 200.0;
+    QVERIFY(drift::projectedClipQuad(rect, 0.0, behind, canvasF).isEmpty());
+
+    if (!GpuCompositor::isAvailable())
+        QSKIP("OpenGL offscreen context unavailable");
+
+    QImage white(64, 64, QImage::Format_RGBA8888);
+    white.fill(Qt::white);
+    const auto render = [&](const drift::ClipPose3d &pose) {
+        GpuLayer layer;
+        layer.source = white;
+        layer.rect = rect;
+        layer.pose3d = pose;
+        layer.valid = true;
+        GpuItem item;
+        item.layer = layer;
+        GpuScene scene;
+        scene.canvasSize = QSize(128, 128);
+        scene.backgroundColor = Qt::black;
+        scene.items.append(item);
+        return GpuCompositor::render(scene).convertToFormat(QImage::Format_RGBA8888);
+    };
+    const auto whiteRows = [](const QImage &img, int x) {
+        int n = 0;
+        for (int y = 0; y < img.height(); ++y)
+            n += img.pixelColor(x, y).red() > 128 ? 1 : 0;
+        return n;
+    };
+
+    // A full turn goes through the 3D path and must land where the flat path does.
+    const QImage flat = render({});
+    drift::ClipPose3d fullTurn;
+    fullTurn.rotationY = 360.0;
+    const QImage turned = render(fullTurn);
+    QVERIFY(!flat.isNull() && !turned.isNull());
+    QCOMPARE(whiteRows(turned, 40), whiteRows(flat, 40));
+    QCOMPARE(whiteRows(turned, 90), whiteRows(flat, 90));
+    QCOMPARE(turned.pixelColor(30, 64).red(), 0);
+
+    const QImage tilted = render(swung);
+    QVERIFY(whiteRows(tilted, 48) > whiteRows(tilted, 74) + 8);
+
+    // Pushed back by the eye distance: half size about the canvas centre.
+    drift::ClipPose3d pushed;
+    pushed.positionZ = -200.0;
+    pushed.perspective = 200.0;
+    const QImage far = render(pushed);
+    QVERIFY(far.pixelColor(64, 64).red() > 200);
+    QVERIFY(far.pixelColor(76, 64).red() > 200);
+    QCOMPARE(far.pixelColor(84, 64).red(), 0);
+    QCOMPARE(far.pixelColor(40, 64).red(), 0);
+}
+
+void EngineTest::clipGizmoSolvesDrags()
+{
+    using namespace drift::gizmo;
+    Pose flat;
+    flat.canvas = QSizeF(1920, 1080);
+    flat.rect = QRectF(760, 340, 400, 400); // centred
+    const double scale = 0.5;               // overlay px per canvas px
+
+    // Euler round trip, including the far side of 90° tilt.
+    for (const auto &angles : {std::array<double, 3>{20, -35, 70}, std::array<double, 3>{-120, 60, 10},
+                               std::array<double, 3>{0, 90, 45}}) {
+        QMatrix4x4 m;
+        m.rotate(float(angles[0]), 1, 0, 0);
+        m.rotate(float(angles[1]), 0, 1, 0);
+        m.rotate(float(angles[2]), 0, 0, 1);
+        double nearest[3] = {angles[0], angles[1], angles[2]};
+        double out[3];
+        eulerFromMatrix(m, nearest, out);
+        QMatrix4x4 back;
+        back.rotate(float(out[0]), 1, 0, 0);
+        back.rotate(float(out[1]), 0, 1, 0);
+        back.rotate(float(out[2]), 0, 0, 1);
+        for (int i = 0; i < 16; ++i)
+            QVERIFY2(std::abs(m.constData()[i] - back.constData()[i]) < 1e-4, qPrintable(QString::number(i)));
+    }
+
+    const auto handleOf = [](const Geometry &g, const QString &id) {
+        for (const Handle &h : g.handles)
+            if (h.id == id)
+                return h;
+        return Handle{};
+    };
+
+    // Move: the arrow tip picks its own handle, and dragging along it moves only that axis.
+    const Geometry move = geometry(flat, Tool::Move, Orientation::Global, scale);
+    QVERIFY(move.valid);
+    const Handle x = handleOf(move, QStringLiteral("x"));
+    QCOMPARE(x.kind, HandleKind::Arrow);
+    // Global Z points at the viewer from the canvas centre, so it is a dolly ring.
+    QCOMPARE(handleOf(move, QStringLiteral("z")).kind, HandleKind::Dolly);
+    const QPointF tip = x.front.first().last();
+    QCOMPARE(pick(move, tip, 8), QStringLiteral("x"));
+    QVERIFY(pick(move, tip + QPointF(0, 40), 8).isEmpty());
+    const DragResult moved = drag(flat, Tool::Move, Orientation::Global, QStringLiteral("x"), tip,
+                                  tip + QPointF(50, 0), true, scale);
+    QVERIFY(std::abs(moved.pose.rect.x() - (flat.rect.x() + 100)) < 0.5); // 50 overlay px = 100 canvas px
+    QCOMPARE(moved.pose.rect.y(), flat.rect.y());
+    QVERIFY(std::abs(moved.pose.pose3d.positionZ) < 1e-3);
+
+    // Global vs local on a clip turned 40° about Y: a global X move keeps depth, a local one
+    // travels along the clip's own face and so changes depth too.
+    Pose turned = flat;
+    turned.pose3d.rotationY = 40;
+    for (const Orientation o : {Orientation::Global, Orientation::Local}) {
+        const QPolygonF line = handleOf(geometry(turned, Tool::Move, o, scale), QStringLiteral("x")).front.first();
+        const QPointF t = line.last();
+        const QPointF dir = (t - line.first()) / QLineF(line.first(), t).length();
+        const DragResult r = drag(turned, Tool::Move, o, QStringLiteral("x"), t, t + dir * 40, true, scale);
+        QVERIFY(r.pose.rect.x() > turned.rect.x() + 10);
+        if (o == Orientation::Global)
+            QVERIFY(std::abs(r.pose.pose3d.positionZ) < 1e-3);
+        else
+            QVERIFY2(r.pose.pose3d.positionZ < -10, qPrintable(QString::number(r.pose.pose3d.positionZ)));
+    }
+
+    // Rotate: a quarter turn around the global Z ring (the screen-plane circle) is +90° of spin
+    // and nothing else. Snapping keeps it exact.
+    const Geometry rings = geometry(flat, Tool::Rotate, Orientation::Global, scale);
+    const QPointF o = rings.origin;
+    const double radius = QLineF(o, handleOf(rings, QStringLiteral("z")).front.first().first()).length();
+    const DragResult spun = drag(flat, Tool::Rotate, Orientation::Global, QStringLiteral("z"),
+                                 o + QPointF(radius, 0), o + QPointF(0, radius), true, scale);
+    QCOMPARE(spun.pose.rotation, 90.0);
+    QVERIFY(std::abs(spun.pose.pose3d.rotationX) < 1e-6 && std::abs(spun.pose.pose3d.rotationY) < 1e-6);
+
+    // On a tilted and spun clip, a global Y turn and a local Y turn store different angles.
+    Pose spunPose = flat;
+    spunPose.rotation = 90;
+    spunPose.pose3d.rotationX = 30;
+    const auto turnY = [&](Orientation orient) {
+        const Handle ring = handleOf(geometry(spunPose, Tool::Rotate, orient, scale), QStringLiteral("y"));
+        QPolygonF line;
+        for (const QPolygonF &part : ring.front)
+            if (part.size() > line.size())
+                line = part;
+        return drag(spunPose, Tool::Rotate, orient, QStringLiteral("y"), line.at(line.size() / 3),
+                    line.at(line.size() / 2), false, scale)
+            .pose;
+    };
+    const Pose globalY = turnY(Orientation::Global);
+    const Pose localY = turnY(Orientation::Local);
+    QVERIFY(std::abs(globalY.pose3d.rotationX - localY.pose3d.rotationX) > 1.0
+            || std::abs(globalY.pose3d.rotationY - localY.pose3d.rotationY) > 1.0
+            || std::abs(globalY.rotation - localY.rotation) > 1.0);
+
+    // Scale: pulling the X handle out to twice its reach doubles the width about the centre.
+    const Handle sx = handleOf(geometry(flat, Tool::Scale, Orientation::Local, scale), QStringLiteral("x"));
+    const QPointF sTip = sx.front.first().last();
+    const DragResult wider = drag(flat, Tool::Scale, Orientation::Local, QStringLiteral("x"), sTip,
+                                  sTip + QPointF(sTip.x() - o.x(), 0), true, scale);
+    QVERIFY2(std::abs(wider.pose.rect.width() - 800) < 1.0, qPrintable(QString::number(wider.pose.rect.width())));
+    QCOMPARE(wider.pose.rect.height(), 400.0);
+    QVERIFY(std::abs(wider.pose.rect.center().x() - flat.rect.center().x()) < 1e-6);
 }
 
 void EngineTest::depthOcclusionHidesLayerBehindNearerPixels()

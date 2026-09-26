@@ -61,6 +61,8 @@ icons=(
   cassette-tape orbit rabbit arrow-down-wide-narrow shield activity audio-waveform
   repeat reply layers circle-dot-dashed circle-dashed unfold-horizontal door-closed
   ear equal maximize
+  # 3D gizmo tools (Transform inspector)
+  move-3d rotate-3d scale-3d
 )
 
 for name in "${icons[@]}"; do

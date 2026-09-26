@@ -21,6 +21,17 @@ Item {
     // edited in place, so the inline editor delegate is not destroyed mid-edit.)
     property bool interacting: false
 
+    // The selected clip's gizmo, when it is a 3D layer, and its pose while a handle is dragged.
+    readonly property var gizmoBox: {
+        for (const b of overlayClips) {
+            if (b.layer3d && b.kind !== "model3d" && b.track === EditorState.selectedTrack
+                    && b.clip === EditorState.selectedClip)
+                return b
+        }
+        return null
+    }
+    readonly property var gizmoLive: gizmo.livePose
+
     // "track:clip" of the text clip currently edited in place, or "".
     property string editingKey: ""
 
@@ -45,6 +56,9 @@ Item {
                     || x.x !== y.x || x.y !== y.y
                     || x.width !== y.width || x.height !== y.height
                     || x.rotation !== y.rotation
+                    || x.layer3d !== y.layer3d
+                    || x.rotationX !== y.rotationX || x.rotationY !== y.rotationY
+                    || x.z !== y.z || x.perspective !== y.perspective
                     || x.canvasWidth !== y.canvasWidth
                     || x.canvasHeight !== y.canvasHeight)
                 return false
@@ -125,7 +139,8 @@ Item {
         function onTracksChanged() { root.refreshOverlay() }
         function onClipPropertiesPreviewed(trackIndex, clipIndex, keys) {
             for (const k of keys) {
-                if (k === "x" || k === "y" || k === "width" || k === "height" || k === "rotation") {
+                if (k === "x" || k === "y" || k === "width" || k === "height" || k === "rotation"
+                        || k === "rotationX" || k === "rotationY" || k === "z" || k === "perspective") {
                     root.refreshOverlay()
                     return
                 }
@@ -163,6 +178,20 @@ Item {
             // A 3D model: the box is the projected model, not the clip's layout rect, so a drag
             // moves the clip anchor by the box delta and there is nothing to resize or spin.
             readonly property bool isModel3d: box.kind === "model3d"
+            // Tilted or pushed in depth: the box is drawn through the clip's perspective
+            // transform, so its outline and grips land on the rendered quad.
+            // The gizmo's live pose while it drags this clip: the model is not rebuilt mid-drag.
+            readonly property var gizmoPose: root.gizmoLive && root.gizmoLive.track === box.track
+                                             && root.gizmoLive.clip === box.clip ? root.gizmoLive : null
+            readonly property var pose3d: gizmoPose || box
+            readonly property bool is3d: !isModel3d && ((pose3d.rotationX || 0) !== 0
+                                                         || (pose3d.rotationY || 0) !== 0
+                                                         || (pose3d.z || 0) !== 0)
+            // How much the perspective magnifies the clip's plane at its depth, so a body drag
+            // keeps the clip under the finger.
+            readonly property real depthScale: is3d
+                ? (box.perspective || 2000) / Math.max(1, (box.perspective || 2000) - (pose3d.z || 0))
+                : 1
             readonly property real anchorOffsetX: box.anchorX !== undefined ? box.anchorX - box.x : 0
             readonly property real anchorOffsetY: box.anchorY !== undefined ? box.anchorY - box.y : 0
             readonly property bool editing: root.editingKey
@@ -252,10 +281,10 @@ Item {
             property real liveH: -1
             property real liveRotation: 1e9
 
-            readonly property real layoutX: liveX > -1e11 ? liveX : box.x
-            readonly property real layoutY: liveY > -1e11 ? liveY : box.y
-            readonly property real layoutW: liveW >= 0 ? liveW : box.width
-            readonly property real layoutH: liveH >= 0 ? liveH : box.height
+            readonly property real layoutX: gizmoPose ? gizmoPose.x : liveX > -1e11 ? liveX : box.x
+            readonly property real layoutY: gizmoPose ? gizmoPose.y : liveY > -1e11 ? liveY : box.y
+            readonly property real layoutW: gizmoPose ? gizmoPose.width : liveW >= 0 ? liveW : box.width
+            readonly property real layoutH: gizmoPose ? gizmoPose.height : liveH >= 0 ? liveH : box.height
             readonly property real centerX: (layoutX + layoutW * 0.5) * sx
             readonly property real centerY: (layoutY + layoutH * 0.5) * sy
 
@@ -271,7 +300,28 @@ Item {
             // catcher order correctly.
             z: handle.editing ? 1000 : handle.selected ? 900 : -box.track
             transformOrigin: Item.Center
-            rotation: liveRotation < 1e8 ? liveRotation : box.rotation
+            readonly property real layoutRotation: gizmoPose ? gizmoPose.rotation
+                                                   : liveRotation < 1e8 ? liveRotation : box.rotation
+            rotation: is3d ? 0 : layoutRotation
+            transform: Matrix4x4 {
+                id: poseTransform
+                matrix: handle.is3d
+                        ? EditorState.previewClipPoseMatrix(handle.pose3d, handle.layoutX, handle.layoutY,
+                                                            handle.layoutW, handle.layoutH,
+                                                            handle.layoutRotation, handle.sx, handle.sy)
+                        : Qt.matrix4x4()
+            }
+
+            // Overlay point -> this box's own (untilted) layout px, through the pose as it stands
+            // now. Taken at a grab and reused for the whole drag, since the pose follows the drag.
+            function overlayToLocalMapper() {
+                const m = Qt.matrix4x4(1, 0, 0, handle.x, 0, 1, 0, handle.y, 0, 0, 1, 0, 0, 0, 0, 1)
+                        .times(poseTransform.matrix).inverted()
+                return function(px, py) {
+                    const v = m.times(Qt.vector4d(px, py, 0, 1))
+                    return Qt.point(v.x / v.w, v.y / v.w)
+                }
+            }
 
             property real dragStartX: 0
             property real dragStartY: 0
@@ -292,7 +342,7 @@ Item {
             readonly property real snapTolY: root.snapTolPx / handle.sy
             // A rotated box has no axis-aligned edges to stick with, so it does
             // not snap — pulling its bounding box would move it sideways.
-            readonly property bool canSnap: Math.abs(handle.rotation) < 0.01
+            readonly property bool canSnap: !handle.is3d && Math.abs(handle.layoutRotation) < 0.01
 
             // Guides are published in overlay px so they can be drawn once, at
             // root level, spanning the whole canvas rather than the clip box.
@@ -393,9 +443,14 @@ Item {
                 // otherwise take the grab from the grip once the drag threshold
                 // is passed, turning a resize into a move.
                 enabled: handle.selected && !handle.editing && !handle.resizing
+                // 3D only: the press point in overlay coordinates, since translation arrives in the
+                // box's projective frame.
+                property point pressOverlay: Qt.point(0, 0)
                 onActiveChanged: {
                     if (active) {
                         root.interacting = true
+                        pressOverlay = root.mapFromItem(null, centroid.scenePosition.x,
+                                                        centroid.scenePosition.y)
                         handle.dragStartX = handle.box.x
                         handle.dragStartY = handle.box.y
                         handle.liveX = handle.dragStartX
@@ -412,10 +467,19 @@ Item {
                     }
                 }
                 onTranslationChanged: {
-                    // translation is in the rotated box frame; rotate it back to canvas axes
-                    const a = handle.rotation * Math.PI / 180
-                    const dx = translation.x * Math.cos(a) - translation.y * Math.sin(a)
-                    const dy = translation.x * Math.sin(a) + translation.y * Math.cos(a)
+                    let dx = 0
+                    let dy = 0
+                    if (handle.is3d) {
+                        const p = root.mapFromItem(null, centroid.scenePosition.x,
+                                                   centroid.scenePosition.y)
+                        dx = (p.x - pressOverlay.x) / handle.depthScale
+                        dy = (p.y - pressOverlay.y) / handle.depthScale
+                    } else {
+                        // translation is in the rotated box frame; rotate it back to canvas axes
+                        const a = handle.layoutRotation * Math.PI / 180
+                        dx = translation.x * Math.cos(a) - translation.y * Math.sin(a)
+                        dy = translation.x * Math.sin(a) + translation.y * Math.cos(a)
+                    }
                     let xPx = handle.dragStartX + dx / handle.sx
                     let yPx = handle.dragStartY + dy / handle.sy
                     // Both edges and the centre stick, so a clip can be landed
@@ -461,7 +525,8 @@ Item {
             // +1 = right/bottom, 0 = stays put). The opposite edge or corner is the
             // anchor and does not move.
             Repeater {
-                model: (handle.selected && !handle.editing && !handle.isModel3d)
+                // A 3D layer is sized with the gizmo's scale tool instead.
+                model: (handle.selected && !handle.editing && !handle.isModel3d && !handle.box.layer3d)
                        ? [
                            { dx: -1, dy:  0 },
                            { dx:  1, dy:  0 },
@@ -516,6 +581,9 @@ Item {
                     // stands still.
                     property real startPx: 0
                     property real startPy: 0
+                    // 3D only: the grab mapped into the box's own layout px.
+                    property var toLocal: null
+                    property point startLocal: Qt.point(0, 0)
 
                     // Resize about the fixed anchor. The maths runs in the box's own
                     // axes, so a rotated clip grows along the direction the grip
@@ -525,13 +593,24 @@ Item {
                     function resizeTo(px, py) {
                         const dxSign = grip.modelData.dx
                         const dySign = grip.modelData.dy
-                        const a = handle.rotation * Math.PI / 180
-                        const ddx = (px - grip.startPx) / handle.sx
-                        const ddy = (py - grip.startPy) / handle.sy
-                        // Canvas axes -> box axes: the inverse of the rotation the
-                        // body drag applies to its translation.
-                        const lx = ddx * Math.cos(a) + ddy * Math.sin(a)
-                        const ly = -ddx * Math.sin(a) + ddy * Math.cos(a)
+                        const a = handle.layoutRotation * Math.PI / 180
+                        let lx = 0
+                        let ly = 0
+                        if (handle.is3d) {
+                            // A tilted box resizes about its centre, which is also the tilt pivot:
+                            // holding an edge still would drag it through depth. Doubling the
+                            // finger's travel in the box plane keeps the grip under the finger.
+                            const l = grip.toLocal(px, py)
+                            lx = 2 * (l.x - grip.startLocal.x) / handle.sx
+                            ly = 2 * (l.y - grip.startLocal.y) / handle.sy
+                        } else {
+                            const ddx = (px - grip.startPx) / handle.sx
+                            const ddy = (py - grip.startPy) / handle.sy
+                            // Canvas axes -> box axes: the inverse of the rotation the
+                            // body drag applies to its translation.
+                            lx = ddx * Math.cos(a) + ddy * Math.sin(a)
+                            ly = -ddx * Math.sin(a) + ddy * Math.cos(a)
+                        }
 
                         const locked = grip.lockRatio
 
@@ -597,8 +676,8 @@ Item {
 
                         // Keeping the anchor still means the centre moves by half the
                         // size change, toward the grip, in box axes.
-                        const shiftX = (w - handle.dragStartW) / 2 * dxSign
-                        const shiftY = (h - handle.dragStartH) / 2 * dySign
+                        const shiftX = handle.is3d ? 0 : (w - handle.dragStartW) / 2 * dxSign
+                        const shiftY = handle.is3d ? 0 : (h - handle.dragStartH) / 2 * dySign
                         const cx = handle.dragStartX + handle.dragStartW / 2
                                    + shiftX * Math.cos(a) - shiftY * Math.sin(a)
                         const cy = handle.dragStartY + handle.dragStartH / 2
@@ -639,6 +718,10 @@ Item {
                             const p = mapToItem(root, mouse.x, mouse.y)
                             grip.startPx = p.x
                             grip.startPy = p.y
+                            if (handle.is3d) {
+                                grip.toLocal = handle.overlayToLocalMapper()
+                                grip.startLocal = grip.toLocal(p.x, p.y)
+                            }
                             handle.dragStartX = handle.layoutX
                             handle.dragStartY = handle.layoutY
                             handle.dragStartW = handle.layoutW
@@ -711,7 +794,7 @@ Item {
             // Rotation handle above the box.
             Item {
                 id: rotateGrip
-                visible: handle.selected && !handle.editing && !handle.isModel3d
+                visible: handle.selected && !handle.editing && !handle.isModel3d && !handle.box.layer3d
                 width: root.gripTouch
                 height: root.gripTouch
                 x: handle.width / 2 - width / 2
@@ -757,7 +840,12 @@ Item {
                             return
                         const p = root.mapFromItem(null, rotateDrag.centroid.scenePosition.x,
                                                    rotateDrag.centroid.scenePosition.y)
-                        const ang = Math.atan2(p.y - handle.centerY, p.x - handle.centerX)
+                        // A tilted box spins about its projected centre.
+                        const c = handle.is3d
+                                ? handle.mapToItem(root, handle.layoutW * handle.sx / 2,
+                                                   handle.layoutH * handle.sy / 2)
+                                : Qt.point(handle.centerX, handle.centerY)
+                        const ang = Math.atan2(p.y - c.y, p.x - c.x)
                         const deg = ang * 180 / Math.PI + 90
                         handle.liveRotation = deg
                         EditorState.previewSetClipRotation(
@@ -767,6 +855,25 @@ Item {
                     }
                 }
             }
+        }
+    }
+
+    TransformGizmo {
+        id: gizmo
+        anchors.fill: parent
+        z: 950
+        touch: true
+        sx: root.width / Math.max(1, root.gizmoBox ? root.gizmoBox.canvasWidth : 1)
+        // Hidden while the box itself is dragged, which it would not follow.
+        box: root.interacting && dragging === "" ? null : root.gizmoBox
+        onDragStarted: {
+            root.interacting = true
+            EditorState.selectClip(box.track, box.clip)
+            Haptics.pickUp()
+        }
+        onDragFinished: {
+            root.endInteraction()
+            Haptics.drop()
         }
     }
 

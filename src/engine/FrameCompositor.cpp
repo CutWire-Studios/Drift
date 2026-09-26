@@ -1235,6 +1235,14 @@ GpuLayer buildGpuLayer(const drift::Project &project, const drift::Clip &clip,
     fillGpuLayerMasks(layer, clip, laneMasks, timelineUs, canvasWidth, canvasHeight);
     layer.rect = destRect;
     layer.rotation = rotation;
+    if (clip.type != drift::ClipType::Model3d) {
+        layer.pose3d.rotationX = transformValue(clip.rotationX, clipTimeUs, 0.0);
+        layer.pose3d.rotationY = transformValue(clip.rotationY, clipTimeUs, 0.0);
+        layer.pose3d.positionZ = transformValue(clip.positionZ, clipTimeUs, 0.0) * renderScale;
+        layer.pose3d.perspective =
+            transformValue(clip.perspective, clipTimeUs, drift::kDefaultClipPerspective)
+            * renderScale;
+    }
     layer.flipH = clip.flipH;
     layer.flipV = clip.flipV;
     layer.opacity = opacity;

@@ -163,6 +163,15 @@ struct Clip
     KeyframeTrack<double> transformW;
     KeyframeTrack<double> transformH;
     KeyframeTrack<double> rotation;
+    // 3D pose on top of the layout (see engine/ClipTransform3d.h). layer3d is the inspector's
+    // "3D layer" switch: on whenever any of the four tracks has data, and switching it off clears
+    // them, so a flat clip never carries a pose. It can also be on with all four empty. Empty
+    // tracks mean 0 for the tilts and depth, and kDefaultClipPerspective px for the eye distance.
+    bool layer3d = false;
+    KeyframeTrack<double> rotationX;
+    KeyframeTrack<double> rotationY;
+    KeyframeTrack<double> positionZ;
+    KeyframeTrack<double> perspective;
     // Discrete pixel-orientation correction (0/90/180/270), applied losslessly at decode time —
     // distinct from `rotation` above, which is a free decorative spin effect. Relative, not
     // absolute: added on top of whatever display-matrix rotation the file actually being decoded
