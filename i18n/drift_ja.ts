@@ -424,7 +424,7 @@
     </message>
     <message>
         <source>Transform layer</source>
-        <translation>トランスフォームレイヤー</translation>
+        <translation>変形レイヤー</translation>
     </message>
     <message>
         <source>Move, scale or tilt several tracks as one</source>
@@ -497,7 +497,7 @@
     </message>
     <message>
         <source>Transform together</source>
-        <translation>まとめてトランスフォーム</translation>
+        <translation>まとめて変形</translation>
     </message>
     <message>
         <source>Fade</source>
@@ -1015,7 +1015,7 @@
     </message>
     <message>
         <source>Paste attributes…</source>
-        <translation>属性を貼り付け...</translation>
+        <translation>属性を貼り付け…</translation>
     </message>
     <message>
         <source>Apply what you copied from another clip</source>
@@ -1055,7 +1055,7 @@
     </message>
     <message>
         <source>Transform together</source>
-        <translation>まとめてトランスフォーム</translation>
+        <translation>まとめて変形</translation>
     </message>
     <message>
         <source>Move, scale or tilt the selected clips&apos; tracks as one</source>
@@ -1063,7 +1063,7 @@
     </message>
     <message>
         <source>Select transform layer</source>
-        <translation>トランスフォームレイヤーを選択</translation>
+        <translation>変形レイヤーを選択</translation>
     </message>
     <message>
         <source>The layer moving this clip</source>
@@ -1179,7 +1179,7 @@
     </message>
     <message>
         <source>Save effects as preset…</source>
-        <translation>エフェクトをプリセットとして保存...</translation>
+        <translation>エフェクトをプリセットとして保存…</translation>
     </message>
     <message>
         <source>Reuse this look on other clips</source>
@@ -1335,7 +1335,7 @@
     </message>
     <message>
         <source>Shorter layers</source>
-        <translation>レイヤーを短く</translation>
+        <translation>レイヤーを低く</translation>
     </message>
     <message>
         <source>Taller layers</source>
@@ -1666,7 +1666,7 @@
     </message>
     <message>
         <source>Transform layer: moves, scales and turns every track its bracket covers</source>
-        <translation>トランスフォームレイヤー : ブラケットがカバーするすべてのトラックを移動、拡大縮小、回転します</translation>
+        <translation>変形レイヤー : ブラケットがカバーするすべてのトラックを移動、拡大縮小、回転します</translation>
     </message>
     <message>
         <source>Keyframes</source>
@@ -2618,11 +2618,11 @@
     </message>
     <message>
         <source>Save project as…</source>
-        <translation>名前を付けてプロジェクトを保存...</translation>
+        <translation>名前を付けてプロジェクトを保存…</translation>
     </message>
     <message>
         <source>Paste attributes…</source>
-        <translation>属性を貼り付け...</translation>
+        <translation>属性を貼り付け…</translation>
     </message>
     <message>
         <source>Go to previous cut point</source>
@@ -3462,11 +3462,11 @@
     </message>
     <message>
         <source>Transform selection together</source>
-        <translation>選択範囲をまとめてトランスフォーム</translation>
+        <translation>選択範囲をまとめて変形</translation>
     </message>
     <message>
         <source>Select transform layer</source>
-        <translation>トランスフォームレイヤーを選択</translation>
+        <translation>変形レイヤーを選択</translation>
     </message>
     <message>
         <source>3D gizmo: move</source>
@@ -3522,7 +3522,7 @@
     </message>
     <message>
         <source>Transform layers take no effects or masks.</source>
-        <translation>トランスフォームレイヤーにはエフェクトやマスクを適用できません。</translation>
+        <translation>変形レイヤーにはエフェクトやマスクを適用できません。</translation>
     </message>
     <message>
         <source>Audio effects go on clips with sound.</source>
@@ -3600,32 +3600,32 @@
     </message>
     <message>
         <source>Add transform layer</source>
-        <translation>トランスフォームレイヤーを追加</translation>
+        <translation>変形レイヤーを追加</translation>
     </message>
     <message>
         <source>Transform layer added</source>
-        <translation>トランスフォームレイヤーを追加しました</translation>
+        <translation>変形レイヤーを追加しました</translation>
     </message>
     <message>
         <source>Add transform clip</source>
-        <translation>トランスフォームクリップを追加</translation>
+        <translation>変形クリップを追加</translation>
     </message>
     <message>
         <source>Transform clip added</source>
-        <translation>トランスフォームクリップを追加しました</translation>
+        <translation>変形クリップを追加しました</translation>
     </message>
     <message>
         <source>Transform together</source>
-        <translation>まとめてトランスフォーム</translation>
+        <translation>まとめて変形</translation>
     </message>
     <message>
         <source>Change transform span</source>
-        <translation>トランスフォームスパンを変更</translation>
+        <translation>変形スパンを変更</translation>
     </message>
     <message numerus="yes">
         <source>Transform layer now covers %n track(s)</source>
         <translation>
-            <numerusform>トランスフォームレイヤーが %n トラックをカバーするようになりました</numerusform>
+            <numerusform>変形レイヤーが %n トラックをカバーするようになりました</numerusform>
         </translation>
     </message>
     <message>
@@ -4698,11 +4698,11 @@
     </message>
     <message>
         <source>Import Files…</source>
-        <translation>インポート ファイル...</translation>
+        <translation>インポート ファイル…</translation>
     </message>
     <message>
         <source>Import Folder…</source>
-        <translation>インポート フォルダー...</translation>
+        <translation>インポート フォルダー…</translation>
     </message>
     <message>
         <source>Collect Media to Folder…</source>
@@ -5985,15 +5985,15 @@
     </message>
     <message>
         <source>Language…</source>
-        <translation>言語...</translation>
+        <translation>言語…</translation>
     </message>
     <message>
         <source>Debug info…</source>
-        <translation>デバッグ情報...</translation>
+        <translation>デバッグ情報…</translation>
     </message>
     <message>
         <source>More settings…</source>
-        <translation>詳細設定...</translation>
+        <translation>詳細設定…</translation>
     </message>
     <message>
         <source>Agent</source>
@@ -7073,7 +7073,7 @@
     </message>
     <message>
         <source>Transform layer</source>
-        <translation>トランスフォームレイヤー</translation>
+        <translation>変形レイヤー</translation>
     </message>
     <message>
         <source>Original dimensions: %1 × %2</source>
@@ -8963,11 +8963,11 @@
     </message>
     <message>
         <source>Change image…</source>
-        <translation>画像の変更...</translation>
+        <translation>画像の変更…</translation>
     </message>
     <message>
         <source>Choose image…</source>
-        <translation>画像の選択...</translation>
+        <translation>画像の選択…</translation>
     </message>
     <message>
         <source>No image</source>
@@ -10055,7 +10055,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Save as…</source>
-        <translation>名前を付けて保存...</translation>
+        <translation>名前を付けて保存…</translation>
     </message>
     <message>
         <source>Save with media…</source>
@@ -11467,7 +11467,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Open Project…</source>
-        <translation>プロジェクトを開く...</translation>
+        <translation>プロジェクトを開く…</translation>
     </message>
     <message>
         <source>Recent Projects</source>
@@ -12550,11 +12550,11 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Change image…</source>
-        <translation>画像の変更...</translation>
+        <translation>画像の変更…</translation>
     </message>
     <message>
         <source>Choose image…</source>
-        <translation>画像の選択...</translation>
+        <translation>画像の選択…</translation>
     </message>
     <message>
         <source>Slot Image</source>
@@ -12795,15 +12795,15 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Transform together</source>
-        <translation>まとめてトランスフォーム</translation>
+        <translation>まとめて変形</translation>
     </message>
     <message>
         <source>Add transform layer</source>
-        <translation>トランスフォームレイヤーを追加</translation>
+        <translation>変形レイヤーを追加</translation>
     </message>
     <message>
         <source>Select transform layer</source>
-        <translation>トランスフォームレイヤーを選択</translation>
+        <translation>変形レイヤーを選択</translation>
     </message>
     <message>
         <source>Covers…</source>
@@ -12859,7 +12859,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Paste attributes…</source>
-        <translation>属性を貼り付け...</translation>
+        <translation>属性を貼り付け…</translation>
     </message>
     <message>
         <source>Duplicate</source>
@@ -12879,7 +12879,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Save effects as preset…</source>
-        <translation>エフェクトをプリセットとして保存...</translation>
+        <translation>エフェクトをプリセットとして保存…</translation>
     </message>
     <message>
         <source>Unlink from clip</source>
@@ -12946,7 +12946,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Transform layer: moves, scales and turns every track its bracket covers</source>
-        <translation>トランスフォームレイヤー : ブラケットがカバーするすべてのトラックを移動、拡大縮小、回転します</translation>
+        <translation>変形レイヤー : ブラケットがカバーするすべてのトラックを移動、拡大縮小、回転します</translation>
     </message>
     <message>
         <source>Save effect preset</source>
@@ -13145,11 +13145,11 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Add transform layer</source>
-        <translation>トランスフォームレイヤーを追加</translation>
+        <translation>変形レイヤーを追加</translation>
     </message>
     <message>
         <source>Add transform layer — moves the selected clips&apos; tracks as one</source>
-        <translation>トランスフォームレイヤーを追加 — 選択したクリップのトラックをまとめて移動します</translation>
+        <translation>変形レイヤーを追加 — 選択したクリップのトラックをまとめて移動します</translation>
     </message>
     <message>
         <source>Main</source>
@@ -13423,11 +13423,11 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Turn transform on</source>
-        <translation>トランスフォームをオンにする</translation>
+        <translation>変形をオンにする</translation>
     </message>
     <message>
         <source>Turn transform off</source>
-        <translation>トランスフォームをオフにする</translation>
+        <translation>変形をオフにする</translation>
     </message>
     <message>
         <source>Covers…</source>
@@ -13439,7 +13439,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Add transform layer above</source>
-        <translation>上にトランスフォームレイヤーを追加</translation>
+        <translation>上に変形レイヤーを追加</translation>
     </message>
     <message>
         <source>Track height</source>
@@ -13761,7 +13761,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Moves, scales, turns and fades every track under it as one. Each clip keeps its own transform inside the group.</source>
-        <translation>下にあるすべてのトラックをまとめて移動、拡大縮小、回転、フェードします。各クリップはグループ内で独自のトランスフォームを保持します。</translation>
+        <translation>下にあるすべてのトラックをまとめて移動、拡大縮小、回転、フェードします。各クリップはグループ内で独自の変形を保持します。</translation>
     </message>
     <message>
         <source>Covers</source>
@@ -13808,7 +13808,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Select the transform layer moving this clip (%1)</source>
-        <translation>このクリップを移動しているトランスフォームレイヤー (%1) を選択</translation>
+        <translation>このクリップを移動している変形レイヤー (%1) を選択</translation>
     </message>
 </context>
 <context>
@@ -13821,7 +13821,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Transform layer span end</source>
-        <translation>トランスフォームレイヤースパンの終端</translation>
+        <translation>変形レイヤースパンの終端</translation>
     </message>
     <message numerus="yes">
         <source>Covers %n track(s)</source>
