@@ -3817,6 +3817,10 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>That style shares its folder with other styles</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Could not delete the face prop</source>
         <translation type="unfinished"></translation>
     </message>
@@ -5679,6 +5683,12 @@
         <source>Add</source>
         <translation type="unfinished"></translation>
     </message>
+    <message numerus="yes">
+        <source>%n style(s)</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
     <message>
         <source>%1 s</source>
         <translation type="unfinished"></translation>
@@ -5722,6 +5732,10 @@
     </message>
     <message>
         <source>Back</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Style</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -6807,6 +6821,30 @@
     </message>
     <message>
         <source>param “occlusion” must be true or false</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>variants must be a list</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>a variant must be an object</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>invalid variant id “%1”</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>a variant must name a .glb model in the prop folder</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>a variant thumbnail must be a file in the prop folder</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>a variant names the same file twice</source>
         <translation type="unfinished"></translation>
     </message>
     <message>

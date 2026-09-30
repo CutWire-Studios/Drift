@@ -46,19 +46,21 @@ FocusScope {
     Keys.onSpacePressed: root.actionRequested()
 
     function metaText() {
+        const bits = []
+        const styles = (asset.variants || []).length
+        if (styles > 1)
+            bits.push(qsTr("%n style(s)", "", styles))
         if (kind === "lottie") {
-            const bits = []
             const d = Number(asset.duration || 0)
             if (d > 0)
                 bits.push(qsTr("%1 s").arg(Math.round(d * 10) / 10))
             const n = Object.keys(asset.slots || {}).length
             if (n > 0)
                 bits.push(qsTr("%n colour(s)", "", n))
-            return bits.join("  ")
+        } else if (kind === "object" && asset.animation) {
+            bits.push(qsTr("Loops, %1 s").arg(Math.round(Number(asset.animation.duration || 0) * 10) / 10))
         }
-        if (kind === "object" && asset.animation)
-            return qsTr("Loops, %1 s").arg(Math.round(Number(asset.animation.duration || 0) * 10) / 10)
-        return ""
+        return bits.join("  ")
     }
 
     HoverHandler {

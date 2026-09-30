@@ -78,6 +78,7 @@ class EditorStateTest : public QObject
 
 private slots:
     void driftAssetStoreInstallsVerified();
+    void driftAssetStoreInstallsOneVariantSeparately();
     void snapTimeEnabled();
     void compositeFromSelectionUndoRedo();
     void compositeClipGetsAPreviewBox();
@@ -464,6 +465,98 @@ void EditorStateTest::driftAssetStoreInstallsVerified()
     QTRY_COMPARE(failed.size(), 1);
     QCOMPARE(store.state(QStringLiteral("tampered")), QStringLiteral("failed"));
     QVERIFY(store.localPath(QStringLiteral("tampered")).isEmpty());
+}
+
+void EditorStateTest::driftAssetStoreInstallsOneVariantSeparately()
+{
+    QStandardPaths::setTestModeEnabled(true);
+    const auto restore = qScopeGuard([] { QStandardPaths::setTestModeEnabled(false); });
+    QDir(DriftAssetStore::installRoot()).removeRecursively();
+
+    QTemporaryDir src;
+    QVERIFY(src.isValid());
+    const QByteArray classic = R"({"v":"5.7.0","fr":30,"ip":0,"op":30,"w":100,"h":100,"layers":[]})";
+    const QByteArray outline = R"({"v":"5.7.0","fr":30,"ip":0,"op":45,"w":100,"h":100,"layers":[]})";
+    auto fileEntry = [&](const QString &role, const QString &name, const QByteArray &bytes) {
+        QFile f(src.filePath(name));
+        if (!f.open(QIODevice::WriteOnly))
+            return QJsonObject();
+        f.write(bytes);
+        return QJsonObject{
+            {QStringLiteral("role"), role},
+            {QStringLiteral("name"), name},
+            {QStringLiteral("size"), qint64(bytes.size())},
+            {QStringLiteral("sha256"),
+             QString::fromLatin1(QCryptographicHash::hash(bytes, QCryptographicHash::Sha256).toHex())},
+            {QStringLiteral("url"), QUrl::fromLocalFile(src.filePath(name)).toString()},
+        };
+    };
+    const QJsonArray classicFiles{
+        fileEntry(QStringLiteral("meta"), QStringLiteral("asset.json"), QByteArray("{}")),
+        fileEntry(QStringLiteral("main"), QStringLiteral("lower-third.json"), classic),
+    };
+    const QJsonArray outlineFiles{
+        fileEntry(QStringLiteral("meta"), QStringLiteral("asset.json"), QByteArray("{}")),
+        fileEntry(QStringLiteral("main"), QStringLiteral("lower-third--outline.json"), outline),
+    };
+
+    AssetLibrary library;
+    AppController state(&library);
+    DriftAssetStore store(nullptr, &library, &state);
+    store.applyPack(QJsonObject{
+        {QStringLiteral("categories"),
+         QJsonArray{QJsonObject{{QStringLiteral("id"), QStringLiteral("reactions")}}}},
+        {QStringLiteral("assets"),
+         QJsonArray{QJsonObject{
+             {QStringLiteral("id"), QStringLiteral("lower-third")},
+             {QStringLiteral("name"), QStringLiteral("Lower Third")},
+             {QStringLiteral("kind"), QStringLiteral("lottie")},
+             {QStringLiteral("category"), QStringLiteral("reactions")},
+             {QStringLiteral("description"), QStringLiteral("A bar for a name")},
+             {QStringLiteral("files"), classicFiles},
+             {QStringLiteral("variants"),
+              QJsonArray{
+                  QJsonObject{{QStringLiteral("id"), QStringLiteral("classic")},
+                              {QStringLiteral("name"), QStringLiteral("Classic")},
+                              {QStringLiteral("files"), classicFiles}},
+                  QJsonObject{{QStringLiteral("id"), QStringLiteral("outline")},
+                              {QStringLiteral("name"), QStringLiteral("Outline")},
+                              {QStringLiteral("description"), QStringLiteral("outlined edges")},
+                              {QStringLiteral("tags"), QJsonArray{QStringLiteral("line")}},
+                              {QStringLiteral("files"), outlineFiles}},
+              }},
+         }}},
+    });
+
+    QCOMPARE(store.search(QStringLiteral("outlined")).size(), 1);
+    QCOMPARE(store.search(QStringLiteral("line")).size(), 1);
+    QCOMPARE(store.installKey(QStringLiteral("lower-third"), QStringLiteral("classic")),
+             QStringLiteral("lower-third"));
+    QCOMPARE(store.installKey(QStringLiteral("lower-third"), QStringLiteral("outline")),
+             QStringLiteral("lower-third--outline"));
+    QCOMPARE(store.variantState(QStringLiteral("lower-third"), QStringLiteral("outline")),
+             QStringLiteral("none"));
+
+    QSignalSpy ready(&store, &DriftAssetStore::ready);
+    store.install(QStringLiteral("lower-third"));
+    QTRY_COMPARE(ready.size(), 1);
+    QCOMPARE(ready.first().at(0).toString(), QStringLiteral("lower-third"));
+    QCOMPARE(readFile(store.localPath(QStringLiteral("lower-third"))), classic);
+
+    store.installVariant(QStringLiteral("lower-third"), QStringLiteral("outline"));
+    QTRY_COMPARE(ready.size(), 2);
+    QCOMPARE(ready.last().at(0).toString(), QStringLiteral("lower-third--outline"));
+    QCOMPARE(ready.last().at(1).toString() == ready.first().at(1).toString(), false);
+    QCOMPARE(readFile(store.localPath(QStringLiteral("lower-third--outline"))), outline);
+    QCOMPARE(store.state(QStringLiteral("lower-third")), QStringLiteral("installed"));
+    QCOMPARE(store.variantState(QStringLiteral("lower-third"), QStringLiteral("outline")),
+             QStringLiteral("installed"));
+
+    const QString root = DriftAssetStore::installRoot() + QStringLiteral("/lottie");
+    QVERIFY(QFileInfo::exists(root + QStringLiteral("/lower-third/lower-third.json")));
+    QVERIFY(!QFileInfo::exists(root + QStringLiteral("/lower-third/lower-third--outline.json")));
+    QVERIFY(QFileInfo::exists(root + QStringLiteral("/lower-third--outline/lower-third--outline.json")));
+    QVERIFY(!QDir(root).exists(QStringLiteral("lower-third--classic")));
 }
 
 void EditorStateTest::audioAdjustmentTrackArrivesWithAClip()

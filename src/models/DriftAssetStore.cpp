@@ -38,7 +38,8 @@ bool validName(const QString &name)
 
 struct DriftAssetStore::Install
 {
-    QString id;
+    QString key;
+    QString finalDir;
     QString partialDir;
     QVariantList files;
     int next = 0;
@@ -128,10 +129,18 @@ QVariantList DriftAssetStore::search(const QString &query) const
     QVariantList out;
     for (const QVariant &a : m_assets) {
         const QVariantMap asset = a.toMap();
+        QString extra;
+        for (const QVariant &item : asset.value(QStringLiteral("variants")).toList()) {
+            const QVariantMap variant = item.toMap();
+            extra += QLatin1Char(' ') + variant.value(QStringLiteral("name")).toString();
+            extra += QLatin1Char(' ') + variant.value(QStringLiteral("description")).toString();
+            extra += QLatin1Char(' ')
+                     + variant.value(QStringLiteral("tags")).toStringList().join(QLatin1Char(' '));
+        }
         const QString hay = (asset.value(QStringLiteral("name")).toString() + QLatin1Char(' ')
                              + asset.value(QStringLiteral("tags")).toStringList().join(QLatin1Char(' '))
                              + QLatin1Char(' ') + asset.value(QStringLiteral("description")).toString()
-                             + QLatin1Char(' ') + asset.value(QStringLiteral("category")).toString())
+                             + QLatin1Char(' ') + asset.value(QStringLiteral("category")).toString() + extra)
                                 .toLower();
         if (std::all_of(words.cbegin(), words.cend(), [&](const QString &w) { return hay.contains(w); }))
             out.append(asset);
@@ -169,18 +178,103 @@ bool DriftAssetStore::isInstalled(const QVariantMap &asset) const
     return true;
 }
 
-QString DriftAssetStore::state(const QString &id) const
+QString DriftAssetStore::defaultVariantId(const QVariantMap &asset) const
 {
-    const QString s = m_states.value(id);
+    const QVariantList variants = asset.value(QStringLiteral("variants")).toList();
+    QString mainName;
+    for (const QVariant &f : asset.value(QStringLiteral("files")).toList()) {
+        const QVariantMap file = f.toMap();
+        if (file.value(QStringLiteral("role")).toString() == QLatin1String("main"))
+            mainName = file.value(QStringLiteral("name")).toString();
+    }
+    for (const QVariant &item : variants) {
+        const QVariantMap variant = item.toMap();
+        for (const QVariant &f : variant.value(QStringLiteral("files")).toList()) {
+            const QVariantMap file = f.toMap();
+            if (file.value(QStringLiteral("role")).toString() == QLatin1String("main")
+                && file.value(QStringLiteral("name")).toString() == mainName)
+                return variant.value(QStringLiteral("id")).toString();
+        }
+    }
+    if (!variants.isEmpty())
+        return variants.first().toMap().value(QStringLiteral("id")).toString();
+    return {};
+}
+
+QString DriftAssetStore::installKey(const QString &id, const QString &variantId) const
+{
+    const QVariantMap asset = assetById(id);
+    if (asset.isEmpty() || variantId.isEmpty() || variantId == defaultVariantId(asset))
+        return id;
+    for (const QVariant &item : asset.value(QStringLiteral("variants")).toList()) {
+        if (item.toMap().value(QStringLiteral("id")).toString() != variantId)
+            continue;
+        const QString key = id + QStringLiteral("--") + variantId;
+        return validId(key) ? key : id;
+    }
+    return id;
+}
+
+QString DriftAssetStore::assetIdForKey(const QString &key) const
+{
+    if (m_index.contains(key))
+        return key;
+    const int sep = key.indexOf(QStringLiteral("--"));
+    if (sep > 0 && m_index.contains(key.left(sep)))
+        return key.left(sep);
+    return key;
+}
+
+QVariantMap DriftAssetStore::viewFor(const QString &assetId, const QString &variantId) const
+{
+    QVariantMap asset = assetById(assetId);
+    if (asset.isEmpty())
+        return {};
+    if (variantId.isEmpty() || variantId == defaultVariantId(asset))
+        return asset;
+    for (const QVariant &item : asset.value(QStringLiteral("variants")).toList()) {
+        const QVariantMap variant = item.toMap();
+        if (variant.value(QStringLiteral("id")).toString() != variantId)
+            continue;
+        const QString key = installKey(assetId, variantId);
+        if (key == assetId)
+            return {};
+        if (variant.contains(QStringLiteral("files")))
+            asset.insert(QStringLiteral("files"), variant.value(QStringLiteral("files")));
+        asset.insert(QStringLiteral("id"), key);
+        return asset;
+    }
+    return {};
+}
+
+QVariantMap DriftAssetStore::viewForKey(const QString &key) const
+{
+    const QString assetId = assetIdForKey(key);
+    if (assetId == key)
+        return viewFor(assetId, QString());
+    return viewFor(assetId, key.mid(assetId.size() + 2));
+}
+
+QString DriftAssetStore::variantState(const QString &id, const QString &variantId) const
+{
+    const QString key = installKey(id, variantId);
+    const QString s = m_states.value(key);
     if (!s.isEmpty() && s != QLatin1String("installed"))
         return s;
-    const QVariantMap asset = assetById(id);
-    return !asset.isEmpty() && isInstalled(asset) ? QStringLiteral("installed") : QStringLiteral("none");
+    const QVariantMap view = viewFor(id, variantId);
+    if (view.isEmpty() || view.value(QStringLiteral("id")).toString() != key)
+        return QStringLiteral("none");
+    return isInstalled(view) ? QStringLiteral("installed") : QStringLiteral("none");
+}
+
+QString DriftAssetStore::state(const QString &id) const
+{
+    return variantState(id, QString());
 }
 
 QString DriftAssetStore::localPath(const QString &id) const
 {
-    const QVariantMap asset = assetById(id);
+    const QVariantMap asset = viewForKey(id);
     if (asset.isEmpty() || !isInstalled(asset))
         return {};
     for (const QVariant &f : asset.value(QStringLiteral("files")).toList()) {
@@ -200,49 +294,57 @@ void DriftAssetStore::setState(const QString &id, const QString &state)
 
 void DriftAssetStore::install(const QString &id)
 {
-    const QVariantMap asset = assetById(id);
-    if (asset.isEmpty() || m_installs.contains(id))
+    installVariant(id, QString());
+}
+
+void DriftAssetStore::installVariant(const QString &id, const QString &variantId)
+{
+    const QVariantMap asset = viewFor(id, variantId);
+    if (asset.isEmpty())
+        return;
+    const QString key = asset.value(QStringLiteral("id")).toString();
+    if (m_installs.contains(key))
         return;
     if (isInstalled(asset)) {
-        finishInstall(id);
+        finishInstall(key);
         return;
     }
     const QVariantList files = asset.value(QStringLiteral("files")).toList();
     for (const QVariant &f : files) {
         if (!validName(f.toMap().value(QStringLiteral("name")).toString())) {
-            failInstall(id, tr("That asset could not be installed."));
+            failInstall(key, tr("That asset could not be installed."));
             return;
         }
     }
 
     auto install = std::make_shared<Install>();
-    install->id = id;
+    install->key = key;
     install->files = files;
-    install->partialDir = assetDir(asset) + QStringLiteral(".partial");
+    install->finalDir = assetDir(asset);
+    install->partialDir = install->finalDir + QStringLiteral(".partial");
     QDir(install->partialDir).removeRecursively();
     if (!QDir().mkpath(install->partialDir)) {
-        failInstall(id, tr("Could not write to the app data folder."));
+        failInstall(key, tr("Could not write to the app data folder."));
         return;
     }
-    m_installs.insert(id, install);
-    setState(id, QStringLiteral("installing"));
-    fetchNext(id);
+    m_installs.insert(key, install);
+    setState(key, QStringLiteral("installing"));
+    fetchNext(key);
 }
 
-void DriftAssetStore::fetchNext(const QString &id)
+void DriftAssetStore::fetchNext(const QString &key)
 {
-    const auto install = m_installs.value(id);
+    const auto install = m_installs.value(key);
     if (!install)
         return;
     if (install->next >= install->files.size()) {
-        const QString dir = assetDir(assetById(id));
-        QDir(dir).removeRecursively();
-        if (!QDir().rename(install->partialDir, dir)) {
-            failInstall(id, tr("Could not write to the app data folder."));
+        QDir(install->finalDir).removeRecursively();
+        if (!QDir().rename(install->partialDir, install->finalDir)) {
+            failInstall(key, tr("Could not write to the app data folder."));
             return;
         }
-        m_installs.remove(id);
-        finishInstall(id);
+        m_installs.remove(key);
+        finishInstall(key);
         return;
     }
 
@@ -251,37 +353,37 @@ void DriftAssetStore::fetchNext(const QString &id)
     request.setTransferTimeout(kFileTimeoutMs);
     QNetworkReply *reply = m_network->get(request);
     install->reply = reply;
-    connect(reply, &QNetworkReply::finished, this, [this, id, file, reply]() {
+    connect(reply, &QNetworkReply::finished, this, [this, key, file, reply]() {
         reply->deleteLater();
-        const auto install = m_installs.value(id);
+        const auto install = m_installs.value(key);
         if (!install)
             return;
         const QByteArray data = reply->readAll();
         if (reply->error() != QNetworkReply::NoError) {
-            failInstall(id, tr("Could not download that asset. Check your connection and try again."));
+            failInstall(key, tr("Could not download that asset. Check your connection and try again."));
             return;
         }
         const QString sha = QString::fromLatin1(
             QCryptographicHash::hash(data, QCryptographicHash::Sha256).toHex());
         if (data.size() != file.value(QStringLiteral("size")).toLongLong()
             || sha != file.value(QStringLiteral("sha256")).toString()) {
-            failInstall(id, tr("That download was damaged. Try again."));
+            failInstall(key, tr("That download was damaged. Try again."));
             return;
         }
         QFile out(install->partialDir + QLatin1Char('/') + file.value(QStringLiteral("name")).toString());
         if (!out.open(QIODevice::WriteOnly) || out.write(data) != data.size()) {
-            failInstall(id, tr("Could not write to the app data folder."));
+            failInstall(key, tr("Could not write to the app data folder."));
             return;
         }
         out.close();
         ++install->next;
-        fetchNext(id);
+        fetchNext(key);
     });
 }
 
-void DriftAssetStore::finishInstall(const QString &id)
+void DriftAssetStore::finishInstall(const QString &key)
 {
-    const QVariantMap asset = assetById(id);
+    const QVariantMap asset = viewForKey(key);
     if (asset.value(QStringLiteral("kind")).toString() == QLatin1String("face-prop")) {
         // A prop is installed once it is in the library; the staged copy has done its job.
         const QString staged = assetDir(asset);
@@ -289,32 +391,32 @@ void DriftAssetStore::finishInstall(const QString &id)
             const QVariantMap result = m_app ? m_app->importFaceProps(QUrl::fromLocalFile(staged))
                                              : QVariantMap();
             QDir(staged).removeRecursively();
-            if (!result.value(QStringLiteral("installed")).toStringList().contains(id)) {
-                failInstall(id, tr("Could not add that face prop."));
+            if (!result.value(QStringLiteral("installed")).toStringList().contains(key)) {
+                failInstall(key, tr("Could not add that face prop."));
                 return;
             }
         }
-        setState(id, QStringLiteral("installed"));
-        emit ready(id, QString());
+        setState(key, QStringLiteral("installed"));
+        emit ready(key, QString());
         return;
     }
 
-    const QStringList ids = m_library ? m_library->importLocalPaths({localPath(id)}) : QStringList();
+    const QStringList ids = m_library ? m_library->importLocalPaths({localPath(key)}) : QStringList();
     if (ids.isEmpty()) {
-        failInstall(id, tr("Could not add that asset to the media bin."));
+        failInstall(key, tr("Could not add that asset to the media bin."));
         return;
     }
-    setState(id, QStringLiteral("installed"));
-    emit ready(id, ids.first());
+    setState(key, QStringLiteral("installed"));
+    emit ready(key, ids.first());
 }
 
-void DriftAssetStore::failInstall(const QString &id, const QString &message)
+void DriftAssetStore::failInstall(const QString &key, const QString &message)
 {
-    if (const auto install = m_installs.take(id)) {
+    if (const auto install = m_installs.take(key)) {
         if (install->reply)
             install->reply->abort();
         QDir(install->partialDir).removeRecursively();
     }
-    setState(id, QStringLiteral("failed"));
-    emit failed(id, message);
+    setState(key, QStringLiteral("failed"));
+    emit failed(key, message);
 }

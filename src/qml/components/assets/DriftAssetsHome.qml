@@ -19,7 +19,7 @@ Item {
     property string openCategory: ""
     property var detailAsset: ({})
     property bool detailShown: false
-    // Actions waiting on an install: {assetId: {mode: "use"|"keep", slots}}.
+    // Actions waiting on an install, keyed by installKey(): {key: {mode, slots, assetId}}.
     property var pending: ({})
     property string justAddedId: ""
 
@@ -65,11 +65,12 @@ Item {
 
     // mode "use": onto the timeline (Lottie, object) or the selected clip (face prop).
     // mode "keep": into the media bin or the Face Props library only.
-    function act(asset, mode, slots) {
+    function act(asset, mode, slots, variantId) {
+        const key = DriftAssets.installKey(asset.id, variantId || "")
         const next = Object.assign({}, pending)
-        next[asset.id] = { mode: mode, slots: slots || {} }
+        next[key] = { mode: mode, slots: slots || {}, assetId: asset.id }
         pending = next
-        DriftAssets.install(asset.id)
+        DriftAssets.installVariant(asset.id, variantId || "")
     }
 
     function cardAction(asset) {
@@ -99,7 +100,8 @@ Item {
             delete next[id]
             root.pending = next
 
-            const asset = DriftAssets.assetById(id)
+            const assetId = p.assetId || id
+            const asset = DriftAssets.assetById(assetId)
             if (asset.kind === "face-prop") {
                 if (p.mode === "keep") {
                     AppController.setLastMessage(qsTr("Added to Face props"), "success")
@@ -107,12 +109,12 @@ Item {
                     AppController.setLastMessage(qsTr("Select a video or image clip to apply a face prop"), "warning")
                     return
                 }
-                root.flashAdded(id)
+                root.flashAdded(assetId)
                 return
             }
             if (p.mode === "keep") {
                 AppController.setLastMessage(qsTr("Added to the media bin"), "success")
-                root.flashAdded(id)
+                root.flashAdded(assetId)
                 return
             }
             AppController.addClipsFromAssets([binAssetId])
@@ -120,7 +122,7 @@ Item {
             const slots = p.slots || {}
             for (const key in slots)
                 AppController.setVectorSlot(AppController.selectedTrack, AppController.selectedClip, key, slots[key])
-            root.flashAdded(id)
+            root.flashAdded(assetId)
         }
 
         function onFailed(id, message) {
@@ -465,7 +467,7 @@ Item {
         Behavior on y { NumberAnimation { duration: Theme.durationSlow; easing.type: Theme.easing } }
 
         onBackRequested: root.detailShown = false
-        onUseRequested: (slots) => root.act(root.detailAsset, "use", slots)
-        onKeepRequested: root.act(root.detailAsset, "keep", {})
+        onUseRequested: (slots) => root.act(root.detailAsset, "use", slots, detail.selectedVariantId)
+        onKeepRequested: root.act(root.detailAsset, "keep", {}, detail.selectedVariantId)
     }
 }

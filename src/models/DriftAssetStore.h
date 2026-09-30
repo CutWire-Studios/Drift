@@ -46,13 +46,21 @@ public:
     // Name, tags and description, every word must match. Pack order.
     Q_INVOKABLE QVariantList search(const QString &query) const;
     Q_INVOKABLE QVariantMap assetById(const QString &id) const;
-    // none | installing | installed | failed
+    // none | installing | installed | failed. `id` is the pack asset id, meaning its default design.
     Q_INVOKABLE QString state(const QString &id) const;
-    // Installs if needed, then: Lottie and objects are imported into the media bin and
-    // `ready(id, binAssetId)` fires; face props are added to the prop library and `ready(id, "")`
-    // fires. Safe to call again while an install is running.
+    // Same as state(), for one design. An empty variantId is the default design.
+    Q_INVOKABLE QString variantState(const QString &id, const QString &variantId) const;
+    // Install directory key: the asset id for its default design, otherwise "<id>--<variant>".
+    Q_INVOKABLE QString installKey(const QString &id, const QString &variantId) const;
+    // Installs the default design if needed, then: Lottie and objects are imported into the media
+    // bin and `ready(id, binAssetId)` fires; face props are added to the prop library and
+    // `ready(id, "")` fires. Safe to call again while an install is running.
     Q_INVOKABLE void install(const QString &id);
+    // Installs one design. variantId empty, or the default design's id, is install().
+    // ready() reports installKey(), which is also the face-prop id the library lists.
+    Q_INVOKABLE void installVariant(const QString &id, const QString &variantId);
     // Absolute path of the installed main file (.json / .glb), empty when not installed.
+    // `id` may be a pack asset id or an installKey().
     Q_INVOKABLE QString localPath(const QString &id) const;
 
     // Test seam and the network reply's destination: replaces the pack.
@@ -72,10 +80,16 @@ private:
 
     QString assetDir(const QVariantMap &asset) const;
     bool isInstalled(const QVariantMap &asset) const;
-    void fetchNext(const QString &id);
-    void finishInstall(const QString &id);
-    void failInstall(const QString &id, const QString &message);
-    void setState(const QString &id, const QString &state);
+    QString defaultVariantId(const QVariantMap &asset) const;
+    // The asset with one design's files overlaid. Empty when that design is not in the pack.
+    // The map's id is the install key.
+    QVariantMap viewFor(const QString &assetId, const QString &variantId) const;
+    QVariantMap viewForKey(const QString &key) const;
+    QString assetIdForKey(const QString &key) const;
+    void fetchNext(const QString &key);
+    void finishInstall(const QString &key);
+    void failInstall(const QString &key, const QString &message);
+    void setState(const QString &key, const QString &state);
 
     QPointer<MarketClient> m_market;
     QPointer<AssetLibrary> m_library;

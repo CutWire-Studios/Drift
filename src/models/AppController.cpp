@@ -20956,7 +20956,17 @@ bool AppController::removeFaceProp(const QString &propId)
     const QList<FacePropEntry> props = facePropsSnapshot();
     const auto prop = std::find_if(props.cbegin(), props.cend(),
                                    [&](const FacePropEntry &e) { return e.id == propId; });
+    int sharingDir = 0;
+    if (prop != props.cend()) {
+        for (const FacePropEntry &e : props)
+            sharingDir += !e.dir.isEmpty() && e.dir == prop->dir;
+    }
     QString error;
+    // Designs expanded out of one prop.json share a folder. Deleting one would delete the rest.
+    if (sharingDir > 1) {
+        setLastMessage(tr("That style shares its folder with other styles"), QStringLiteral("error"));
+        return false;
+    }
     if (prop == props.cend() || !prop->userInstalled
         || !removeUserFaceProp(QFileInfo(prop->dir).fileName(), &error, userFacePropsDir())) {
         setLastMessage(error.isEmpty() ? tr("Could not delete the face prop") : error,

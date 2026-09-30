@@ -189,6 +189,7 @@ private slots:
     void facePropImportReplacesSameId();
     void facePropRemoveStaysInsideRoot();
     void facePropCatalogReadsManifestsAndBareGlb();
+    void facePropVariantsInstallAsSeparateDesigns();
     void faceMeshRestLoadsAndWarps();
     void faceMesh3dPassThroughWithoutMesh();
     void faceMesh3dDrawsWarpedOverlay();
@@ -2797,6 +2798,103 @@ void EngineTest::facePropCatalogReadsManifestsAndBareGlb()
     QVERIFY(plain.dir.isEmpty());
     QVERIFY(plain.params.isEmpty());
     QVERIFY(QFileInfo::exists(find(QStringLiteral("nested")).path));
+}
+
+void EngineTest::facePropVariantsInstallAsSeparateDesigns()
+{
+    QTemporaryDir tmp;
+    QVERIFY(tmp.isValid());
+
+    const auto manifest = [](bool unsafe) {
+        QJsonObject root{
+            {QStringLiteral("schema"), 1},
+            {QStringLiteral("type"), QStringLiteral("face-prop")},
+            {QStringLiteral("id"), QStringLiteral("party-hat")},
+            {QStringLiteral("name"), QStringLiteral("Party Hat")},
+            {QStringLiteral("model"), QStringLiteral("party-hat.glb")},
+            {QStringLiteral("params"), QJsonObject{{QStringLiteral("scale"), 0.5}}},
+            {QStringLiteral("variants"),
+             QJsonArray{
+                 QJsonObject{{QStringLiteral("id"), QStringLiteral("classic")},
+                             {QStringLiteral("name"), QStringLiteral("Pom-Pom Stripes")},
+                             {QStringLiteral("model"), QStringLiteral("party-hat.glb")}},
+                 QJsonObject{{QStringLiteral("id"), QStringLiteral("star")},
+                             {QStringLiteral("name"), QStringLiteral("Gold Star")},
+                             {QStringLiteral("model"),
+                              unsafe ? QStringLiteral("../star.glb") : QStringLiteral("party-hat--star.glb")},
+                             {QStringLiteral("params"), QJsonObject{{QStringLiteral("scale"), 0.9}}}},
+             }},
+        };
+        return QJsonDocument(root).toJson();
+    };
+
+    const QString src = tmp.filePath(QStringLiteral("src/party-hat"));
+    QVERIFY(writeTestFile(src + QStringLiteral("/prop.json"), manifest(false)));
+    QVERIFY(writeTestFile(src + QStringLiteral("/party-hat.glb"), fakeGlb("classic")));
+    QVERIFY(writeTestFile(src + QStringLiteral("/party-hat--star.glb"), fakeGlb("star")));
+
+    const QString dest = tmp.filePath(QStringLiteral("installed"));
+    const FacePropImportResult result =
+        importFacePropsFromDirectory(tmp.filePath(QStringLiteral("src")), dest);
+    QVERIFY2(result.errors.isEmpty(), qPrintable(result.errors.join(QLatin1Char('\n'))));
+    QCOMPARE(QSet<QString>(result.installedIds.cbegin(), result.installedIds.cend()),
+             (QSet<QString>{QStringLiteral("party-hat"), QStringLiteral("party-hat--star")}));
+
+    const auto readManifest = [](const QString &path) {
+        QFile file(path);
+        if (!file.open(QIODevice::ReadOnly))
+            return QJsonObject();
+        return QJsonDocument::fromJson(file.readAll()).object();
+    };
+    const QJsonObject classicJson = readManifest(dest + QStringLiteral("/party-hat/prop.json"));
+    QCOMPARE(classicJson.value(QStringLiteral("id")).toString(), QStringLiteral("party-hat"));
+    QCOMPARE(classicJson.value(QStringLiteral("model")).toString(), QStringLiteral("party-hat.glb"));
+    QCOMPARE(classicJson.value(QStringLiteral("params")).toObject().value(QStringLiteral("scale")).toDouble(), 0.5);
+    QVERIFY(!classicJson.contains(QStringLiteral("variants")));
+    QVERIFY(!QFileInfo::exists(dest + QStringLiteral("/party-hat/party-hat--star.glb")));
+
+    const QJsonObject starJson = readManifest(dest + QStringLiteral("/party-hat--star/prop.json"));
+    QCOMPARE(starJson.value(QStringLiteral("id")).toString(), QStringLiteral("party-hat--star"));
+    QCOMPARE(starJson.value(QStringLiteral("name")).toString(),
+             QStringLiteral("Party Hat \u2014 Gold Star"));
+    QCOMPARE(starJson.value(QStringLiteral("model")).toString(), QStringLiteral("party-hat--star.glb"));
+    QCOMPARE(starJson.value(QStringLiteral("params")).toObject().value(QStringLiteral("scale")).toDouble(), 0.9);
+    QVERIFY(!starJson.contains(QStringLiteral("variants")));
+    QVERIFY(QFileInfo::exists(dest + QStringLiteral("/party-hat--star/party-hat--star.glb")));
+    QVERIFY(!QFileInfo::exists(dest + QStringLiteral("/party-hat--star/party-hat.glb")));
+
+    // A style whose model was not shipped is skipped. The default still installs.
+    const QString partial = tmp.filePath(QStringLiteral("partial/party-hat"));
+    QVERIFY(writeTestFile(partial + QStringLiteral("/prop.json"), manifest(false)));
+    QVERIFY(writeTestFile(partial + QStringLiteral("/party-hat.glb"), fakeGlb()));
+    const QString partialDest = tmp.filePath(QStringLiteral("partial-installed"));
+    const FacePropImportResult partialResult =
+        importFacePropsFromDirectory(tmp.filePath(QStringLiteral("partial")), partialDest);
+    QVERIFY2(partialResult.errors.isEmpty(), qPrintable(partialResult.errors.join(QLatin1Char('\n'))));
+    QCOMPARE(partialResult.installedIds, QStringList{QStringLiteral("party-hat")});
+    QVERIFY(!QFileInfo::exists(partialDest + QStringLiteral("/party-hat--star")));
+
+    FacePropManifest parsed;
+    QString error;
+    QVERIFY(!parseFacePropManifest(manifest(true), QStringLiteral("party-hat"), &parsed, &error));
+    QVERIFY(!error.isEmpty());
+    const QString unsafeSrc = tmp.filePath(QStringLiteral("unsafe/party-hat"));
+    QVERIFY(writeTestFile(unsafeSrc + QStringLiteral("/prop.json"), manifest(true)));
+    QVERIFY(writeTestFile(unsafeSrc + QStringLiteral("/party-hat.glb"), fakeGlb()));
+    const FacePropImportResult unsafeResult = importFacePropsFromDirectory(
+        tmp.filePath(QStringLiteral("unsafe")), tmp.filePath(QStringLiteral("unsafe-installed")));
+    QVERIFY(unsafeResult.installedIds.isEmpty());
+    QCOMPARE(unsafeResult.errors.size(), 1);
+
+    reloadFacePropCatalog({tmp.filePath(QStringLiteral("src"))});
+    const auto restore = qScopeGuard([] { reloadFacePropCatalog(); });
+    QSet<QString> ids;
+    for (const FacePropEntry &entry : facePropsSnapshot()) {
+        ids.insert(entry.id);
+        if (entry.id == QLatin1String("party-hat--star"))
+            QCOMPARE(entry.params.value(QStringLiteral("scale")).toDouble(), 0.9);
+    }
+    QCOMPARE(ids, (QSet<QString>{QStringLiteral("party-hat"), QStringLiteral("party-hat--star")}));
 }
 
 void EngineTest::faceMeshRestLoadsAndWarps()

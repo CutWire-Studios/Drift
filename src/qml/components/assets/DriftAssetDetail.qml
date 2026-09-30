@@ -14,6 +14,8 @@ Rectangle {
     property bool compact: Theme.compact
     // Colour slot overrides chosen here: {slotId: "#RRGGBB"}.
     property var slotValues: ({})
+    // Empty selects the default design. Set when the asset has a variants list.
+    property string selectedVariantId: ""
 
     signal backRequested()
     // Lottie / object: add at the playhead. Face prop: apply to the selected clip.
@@ -22,13 +24,27 @@ Rectangle {
     signal keepRequested()
 
     readonly property string kind: asset.kind || ""
+    readonly property var styleList: asset.variants || []
+    // The design on screen. A pack with variants carries a full copy of each design, including
+    // the default, so the row can swap preview, colours and timing without leaving the asset.
+    readonly property var selectedStyle: {
+        const list = root.styleList
+        if (!list || list.length === 0)
+            return null
+        for (let i = 0; i < list.length; ++i) {
+            if (list[i].id === root.selectedVariantId)
+                return list[i]
+        }
+        return list[0]
+    }
+    readonly property var design: root.selectedStyle || root.asset
     readonly property string installState: {
         void DriftAssets.revision
-        return asset.id ? DriftAssets.state(asset.id) : "none"
+        return asset.id ? DriftAssets.variantState(asset.id, root.selectedVariantId) : "none"
     }
     readonly property bool clipSelected: AppController.selectedClip >= 0
-    readonly property real aspect: kind === "lottie" && Number(asset.preview_height) > 0
-                                   ? Number(asset.preview_width) / Number(asset.preview_height) : 1
+    readonly property real aspect: kind === "lottie" && Number(design.preview_height) > 0
+                                   ? Number(design.preview_width) / Number(design.preview_height) : 1
 
     color: Theme.panelBackground
 
@@ -40,10 +56,13 @@ Rectangle {
         acceptedButtons: Qt.AllButtons
         onWheel: (wheel) => { wheel.accepted = true }
     }
-    onAssetChanged: slotValues = ({})
+    onAssetChanged: {
+        selectedVariantId = ""
+        slotValues = ({})
+    }
 
     function playbackText() {
-        switch (asset.playback) {
+        switch (design.playback) {
         case "loop": return qsTr("Loops seamlessly")
         case "intro-hold": return qsTr("Plays in, then holds")
         case "intro-hold-outro": return qsTr("Plays in, holds, plays out")
@@ -97,7 +116,7 @@ Rectangle {
 
                 AnimatedImage {
                     anchors.fill: parent
-                    source: root.asset.preview_url || ""
+                    source: root.design.preview_url || ""
                     fillMode: Image.PreserveAspectFit
                     asynchronous: true
                     playing: root.visible
@@ -119,13 +138,87 @@ Rectangle {
                 }
                 Text {
                     width: parent.width
-                    text: root.asset.description || ""
+                    text: root.design.description || ""
                     visible: text.length > 0
                     color: Theme.mutedForeground
                     font.family: Theme.fontFamily
                     font.pixelSize: Theme.fontSizeSm
                     lineHeight: 1.3
                     wrapMode: Text.WordWrap
+                }
+            }
+
+            Column {
+                width: parent.width
+                spacing: Theme.spacingMd
+                visible: root.styleList.length > 1
+
+                Text {
+                    text: qsTr("Style")
+                    color: Theme.panelForeground
+                    font.family: Theme.fontFamily
+                    font.pixelSize: Theme.fontSizeSm
+                    font.weight: Font.Medium
+                }
+
+                Flow {
+                    width: parent.width
+                    spacing: Theme.spacingLg
+
+                    Repeater {
+                        model: root.styleList
+                        delegate: Column {
+                            id: styleChoice
+                            required property var modelData
+                            spacing: Theme.spacingXs
+
+                            readonly property bool chosen: modelData.id === (root.selectedStyle && root.selectedStyle.id)
+
+                            Rectangle {
+                                id: styleSwatch
+                                width: Theme.spacing3xl * 2
+                                height: width
+                                radius: root.kind === "face-prop" ? height / 2 : Theme.radiusSm
+                                color: Theme.panelAccent
+                                border.width: styleChoice.chosen || styleHover.hovered ? Theme.borderWidthFocus : Theme.borderWidth
+                                border.color: styleChoice.chosen ? Theme.primary : Theme.panelBorder
+                                clip: true
+
+                                Image {
+                                    anchors.fill: parent
+                                    anchors.margins: styleSwatch.border.width
+                                    source: modelData.thumb_url || ""
+                                    fillMode: root.kind === "lottie" ? Image.PreserveAspectFit : Image.PreserveAspectCrop
+                                    asynchronous: true
+                                    sourceSize.width: Math.ceil(width * Screen.devicePixelRatio)
+                                }
+
+                                HoverHandler { id: styleHover; cursorShape: Qt.PointingHandCursor }
+                                TapHandler {
+                                    onTapped: {
+                                        if (root.selectedVariantId === modelData.id)
+                                            return
+                                        root.selectedVariantId = modelData.id
+                                        root.slotValues = ({})
+                                    }
+                                }
+
+                                Accessible.role: Accessible.Button
+                                Accessible.name: modelData.name || ""
+                                Accessible.checkable: true
+                                Accessible.checked: styleChoice.chosen
+                            }
+                            Text {
+                                width: styleSwatch.width
+                                text: modelData.name || ""
+                                color: Theme.mutedForeground
+                                font.family: Theme.fontFamily
+                                font.pixelSize: Theme.fontSizeXs
+                                elide: Text.ElideRight
+                                horizontalAlignment: Text.AlignHCenter
+                            }
+                        }
+                    }
                 }
             }
 
@@ -165,7 +258,7 @@ Rectangle {
 
                     Repeater {
                         id: slotRepeater
-                        model: Object.keys(root.asset.slots || {})
+                        model: Object.keys(root.design.slots || {})
                         delegate: Column {
                             required property string modelData
                             spacing: Theme.spacingXs
@@ -175,7 +268,7 @@ Rectangle {
                                 width: Theme.spacing3xl + Theme.spacingSm
                                 height: width
                                 radius: Theme.radiusSm
-                                color: root.slotValues[modelData] || root.asset.slots[modelData]
+                                color: root.slotValues[modelData] || root.design.slots[modelData]
                                 border.width: swatchHover.hovered ? Theme.borderWidthFocus : Theme.borderWidth
                                 border.color: swatchHover.hovered ? Theme.primary : Theme.panelBorder
 
@@ -210,18 +303,18 @@ Rectangle {
                     visible: text.length > 0
                     text: {
                         if (root.kind === "lottie") {
-                            const d = Number(root.asset.duration || 0)
+                            const d = Number(root.design.duration || 0)
                             const parts = []
                             if (d > 0)
                                 parts.push(qsTr("%1 s").arg(Math.round(d * 10) / 10))
                             if (root.playbackText().length > 0)
                                 parts.push(root.playbackText())
-                            if (root.asset.text_area)
+                            if (root.design.text_area)
                                 parts.push(qsTr("room for your text"))
                             return parts.join(", ")
                         }
                         if (root.kind === "object")
-                            return qsTr("3D model, loops every %1 s").arg(Math.round(Number((root.asset.animation || {}).duration || 0) * 10) / 10)
+                            return qsTr("3D model, loops every %1 s").arg(Math.round(Number((root.design.animation || {}).duration || 0) * 10) / 10)
                         return qsTr("Tracks a face in the clip it is applied to")
                     }
                     color: Theme.panelForeground

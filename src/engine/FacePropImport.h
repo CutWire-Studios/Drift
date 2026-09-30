@@ -1,13 +1,28 @@
 #pragma once
 
 #include <QByteArray>
+#include <QList>
 #include <QString>
 #include <QStringList>
 #include <QVariantMap>
 
 // The prop.json a face prop ships with (Drift-Assets face-props/<id>/prop.json), and installing
 // props from a .zip or a folder into a face-props root. One archive or folder may carry any number
-// of props: every prop.json found defines one.
+// of props. A prop.json may also list designs under "variants": the default keeps the prop id,
+// and each other design whose model is in the folder is installed as `<id>--<variant>`.
+
+struct FacePropVariant
+{
+    QString id;
+    QString name;
+    QString model;
+    QString thumbnail;
+    QString description;
+    QStringList tags;
+    QVariantMap params;
+    bool hasTags = false;
+    bool hasParams = false;
+};
 
 struct FacePropManifest
 {
@@ -19,7 +34,12 @@ struct FacePropManifest
     QString license;
     QStringList tags;
     QVariantMap params; // only faceModelParamsFromMap placement keys
+    QList<FacePropVariant> variants;
 };
+
+// The default design first, then one manifest per other design. A design whose model file is
+// the default's is not repeated. Callers still have to check the model file exists.
+QList<FacePropManifest> facePropDesigns(const FacePropManifest &manifest);
 
 // `fallbackId` (sanitised) stands in when the manifest has no id — the prop's folder name.
 bool parseFacePropManifest(const QByteArray &json, const QString &fallbackId,

@@ -67,23 +67,26 @@ void rebuildLocked(const QStringList &packageRoots)
                 FacePropManifest manifest;
                 if (!manifestFile.open(QIODevice::ReadOnly)
                     || !parseFacePropManifest(manifestFile.read(64 * 1024), subdir.fileName(),
-                                              &manifest, nullptr)
-                    || !QFileInfo::exists(pack.filePath(manifest.model))) {
+                                              &manifest, nullptr)) {
                     continue;
                 }
-                FacePropEntry entry;
-                entry.id = manifest.id;
-                entry.label = manifest.name;
-                entry.path = pack.filePath(manifest.model);
-                entry.dir = pack.absolutePath();
-                if (!manifest.thumbnail.isEmpty() && QFileInfo::exists(pack.filePath(manifest.thumbnail)))
-                    entry.thumbnailPath = pack.filePath(manifest.thumbnail);
-                entry.description = manifest.description;
-                entry.license = manifest.license;
-                entry.tags = manifest.tags;
-                entry.params = manifest.params;
-                entry.userInstalled = userInstalled;
-                append(entry);
+                for (const FacePropManifest &design : facePropDesigns(manifest)) {
+                    if (!QFileInfo::exists(pack.filePath(design.model)))
+                        continue;
+                    FacePropEntry entry;
+                    entry.id = design.id;
+                    entry.label = design.name;
+                    entry.path = pack.filePath(design.model);
+                    entry.dir = pack.absolutePath();
+                    if (!design.thumbnail.isEmpty() && QFileInfo::exists(pack.filePath(design.thumbnail)))
+                        entry.thumbnailPath = pack.filePath(design.thumbnail);
+                    entry.description = design.description;
+                    entry.license = design.license;
+                    entry.tags = design.tags;
+                    entry.params = design.params;
+                    entry.userInstalled = userInstalled;
+                    append(entry);
+                }
                 continue;
             }
             for (const QFileInfo &file :

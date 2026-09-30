@@ -11,6 +11,7 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QRandomGenerator>
+#include <QSet>
 #include <QRegularExpression>
 
 #include <cmath>
@@ -60,19 +61,49 @@ bool plainFileName(const QString &name)
 using PropFileReader =
     std::function<bool(const QString &name, qint64 cap, QByteArray *data, QString *error)>;
 
+// True when that file is in the folder. A missing variant model is skipped; a missing default
+// model is still an error, reported by the reader.
+using PropExists = std::function<bool(const QString &name)>;
+
 bool writeFile(const QString &path, const QByteArray &data)
 {
     QFile file(path);
     return file.open(QIODevice::WriteOnly) && file.write(data) == data.size();
 }
 
-bool installProp(const QString &destRoot, const QString &fallbackId, const QByteArray &manifestJson,
-                 const PropFileReader &read, QString *installedId, QString *error)
+QByteArray manifestToJson(const FacePropManifest &manifest)
 {
-    FacePropManifest manifest;
-    if (!parseFacePropManifest(manifestJson, fallbackId, &manifest, error))
-        return false;
+    QJsonObject root{
+        {QStringLiteral("schema"), 1},
+        {QStringLiteral("type"), QStringLiteral("face-prop")},
+        {QStringLiteral("id"), manifest.id},
+        {QStringLiteral("name"), manifest.name},
+        {QStringLiteral("model"), manifest.model},
+    };
+    if (!manifest.thumbnail.isEmpty())
+        root.insert(QStringLiteral("thumbnail"), manifest.thumbnail);
+    if (!manifest.description.isEmpty())
+        root.insert(QStringLiteral("description"), manifest.description);
+    if (!manifest.license.isEmpty())
+        root.insert(QStringLiteral("license"), manifest.license);
+    if (!manifest.tags.isEmpty()) {
+        QJsonArray tags;
+        for (const QString &tag : manifest.tags)
+            tags.append(tag);
+        root.insert(QStringLiteral("tags"), tags);
+    }
+    if (!manifest.params.isEmpty()) {
+        QJsonObject params;
+        for (auto it = manifest.params.cbegin(); it != manifest.params.cend(); ++it)
+            params.insert(it.key(), QJsonValue::fromVariant(it.value()));
+        root.insert(QStringLiteral("params"), params);
+    }
+    return QJsonDocument(root).toJson(QJsonDocument::Compact);
+}
 
+bool installOneDesign(const QString &destRoot, const FacePropManifest &manifest,
+                      const PropFileReader &read, QString *installedId, QString *error)
+{
     QByteArray model;
     if (!read(manifest.model, kMaxModelBytes, &model, error))
         return false;
@@ -84,8 +115,10 @@ bool installProp(const QString &destRoot, const QString &fallbackId, const QByte
     // A prop without its thumbnail still works; the picker shows a placeholder tile.
     QByteArray thumbnail;
     QString ignored;
-    if (!manifest.thumbnail.isEmpty() && !read(manifest.thumbnail, kMaxThumbnailBytes, &thumbnail, &ignored))
-        manifest.thumbnail.clear();
+    FacePropManifest written = manifest;
+    written.variants.clear();
+    if (!written.thumbnail.isEmpty() && !read(written.thumbnail, kMaxThumbnailBytes, &thumbnail, &ignored))
+        written.thumbnail.clear();
 
     QDir root(destRoot);
     const QString failedWrite =
@@ -98,10 +131,11 @@ bool installProp(const QString &destRoot, const QString &fallbackId, const QByte
                                     .arg(manifest.id)
                                     .arg(QRandomGenerator::global()->generate(), 8, 16, QLatin1Char('0'));
     QDir staging(root.filePath(stagingName));
+    // Written without the variants list, so the installed folder is this one design.
     if (!root.mkdir(stagingName)
-        || !writeFile(staging.filePath(kManifestName), manifestJson)
+        || !writeFile(staging.filePath(kManifestName), manifestToJson(written))
         || !writeFile(staging.filePath(manifest.model), model)
-        || (!manifest.thumbnail.isEmpty() && !writeFile(staging.filePath(manifest.thumbnail), thumbnail))) {
+        || (!written.thumbnail.isEmpty() && !writeFile(staging.filePath(written.thumbnail), thumbnail))) {
         staging.removeRecursively();
         *error = failedWrite;
         return false;
@@ -119,14 +153,28 @@ bool installProp(const QString &destRoot, const QString &fallbackId, const QByte
 }
 
 void installInto(FacePropImportResult *result, const QString &destRoot, const QString &source,
-                 const QString &fallbackId, const QByteArray &manifestJson, const PropFileReader &read)
+                 const QString &fallbackId, const QByteArray &manifestJson, const PropFileReader &read,
+                 const PropExists &exists)
 {
-    QString id;
+    FacePropManifest manifest;
     QString error;
-    if (installProp(destRoot, fallbackId, manifestJson, read, &id, &error))
-        result->installedIds.append(id);
-    else
+    if (!parseFacePropManifest(manifestJson, fallbackId, &manifest, &error)) {
         result->errors.append(QStringLiteral("%1: %2").arg(source, error));
+        return;
+    }
+    const QList<FacePropManifest> designs = facePropDesigns(manifest);
+    for (int i = 0; i < designs.size(); ++i) {
+        const FacePropManifest &design = designs.at(i);
+        // The default is required. Another design that was not shipped in this folder is skipped,
+        // which is how a marketplace install of one style still succeeds.
+        if (i > 0 && !exists(design.model))
+            continue;
+        QString id;
+        if (installOneDesign(destRoot, design, read, &id, &error))
+            result->installedIds.append(id);
+        else
+            result->errors.append(QStringLiteral("%1: %2").arg(source, error));
+    }
 }
 
 void collectPropDirs(const QDir &dir, int depth, QStringList *out)
@@ -193,31 +241,113 @@ bool parseFacePropManifest(const QByteArray &json, const QString &fallbackId,
             m.tags.append(tag.toString());
     }
 
-    static const QStringList numericKeys{
-        QStringLiteral("scale"),         QStringLiteral("offsetX"),
-        QStringLiteral("offsetY"),       QStringLiteral("offsetZ"),
-        QStringLiteral("rotX"),          QStringLiteral("rotY"),
-        QStringLiteral("rotZ"),          QStringLiteral("occlusionSize"),
-        QStringLiteral("occlusionOffset"), QStringLiteral("occlusionDepth"),
+    const auto readParams = [&](const QJsonObject &params, QVariantMap *into) {
+        static const QStringList numericKeys{
+            QStringLiteral("scale"),           QStringLiteral("offsetX"),
+            QStringLiteral("offsetY"),         QStringLiteral("offsetZ"),
+            QStringLiteral("rotX"),            QStringLiteral("rotY"),
+            QStringLiteral("rotZ"),            QStringLiteral("occlusionSize"),
+            QStringLiteral("occlusionOffset"), QStringLiteral("occlusionDepth"),
+        };
+        for (const QString &key : numericKeys) {
+            if (!params.contains(key))
+                continue;
+            const QJsonValue v = params.value(key);
+            if (!v.isDouble() || !std::isfinite(v.toDouble()))
+                return fail(QCoreApplication::translate("FacePropImport", "param “%1” must be a number").arg(key));
+            into->insert(key, v.toDouble());
+        }
+        if (params.contains(QStringLiteral("occlusion"))) {
+            const QJsonValue v = params.value(QStringLiteral("occlusion"));
+            if (!v.isBool())
+                return fail(QCoreApplication::translate("FacePropImport", "param “occlusion” must be true or false"));
+            into->insert(QStringLiteral("occlusion"), v.toBool());
+        }
+        return true;
     };
-    const QJsonObject params = root.value(QStringLiteral("params")).toObject();
-    for (const QString &key : numericKeys) {
-        if (!params.contains(key))
-            continue;
-        const QJsonValue v = params.value(key);
-        if (!v.isDouble() || !std::isfinite(v.toDouble()))
-            return fail(QCoreApplication::translate("FacePropImport", "param “%1” must be a number").arg(key));
-        m.params.insert(key, v.toDouble());
-    }
-    if (params.contains(QStringLiteral("occlusion"))) {
-        const QJsonValue v = params.value(QStringLiteral("occlusion"));
-        if (!v.isBool())
-            return fail(QCoreApplication::translate("FacePropImport", "param “occlusion” must be true or false"));
-        m.params.insert(QStringLiteral("occlusion"), v.toBool());
+    if (!readParams(root.value(QStringLiteral("params")).toObject(), &m.params))
+        return false;
+
+    const QJsonValue variantsValue = root.value(QStringLiteral("variants"));
+    if (!variantsValue.isUndefined() && !variantsValue.isNull()) {
+        if (!variantsValue.isArray())
+            return fail(QCoreApplication::translate("FacePropImport", "variants must be a list"));
+        QSet<QString> seen;
+        for (const QJsonValue &item : variantsValue.toArray()) {
+            if (!item.isObject())
+                return fail(QCoreApplication::translate("FacePropImport", "a variant must be an object"));
+            const QJsonObject o = item.toObject();
+            FacePropVariant variant;
+            variant.id = o.value(QStringLiteral("id")).toString();
+            if (!validId(variant.id) || seen.contains(variant.id))
+                return fail(QCoreApplication::translate("FacePropImport", "invalid variant id “%1”")
+                                .arg(variant.id));
+            seen.insert(variant.id);
+            variant.model = o.value(QStringLiteral("model")).toString();
+            if (variant.model.isEmpty())
+                variant.model = o.value(QStringLiteral("file")).toString();
+            if (!plainFileName(variant.model) || !variant.model.endsWith(QLatin1String(".glb"), Qt::CaseInsensitive))
+                return fail(QCoreApplication::translate("FacePropImport",
+                                                        "a variant must name a .glb model in the prop folder"));
+            variant.thumbnail = o.value(QStringLiteral("thumbnail")).toString();
+            if (!variant.thumbnail.isEmpty() && !plainFileName(variant.thumbnail))
+                return fail(QCoreApplication::translate("FacePropImport",
+                                                        "a variant thumbnail must be a file in the prop folder"));
+            if (variant.thumbnail == variant.model || variant.thumbnail == kManifestName)
+                return fail(QCoreApplication::translate("FacePropImport", "a variant names the same file twice"));
+            variant.name = o.value(QStringLiteral("name")).toString().trimmed();
+            variant.description = o.value(QStringLiteral("description")).toString();
+            if (o.contains(QStringLiteral("tags"))) {
+                variant.hasTags = true;
+                for (const QJsonValue &tag : o.value(QStringLiteral("tags")).toArray()) {
+                    if (tag.isString())
+                        variant.tags.append(tag.toString());
+                }
+            }
+            if (o.contains(QStringLiteral("params"))) {
+                if (!readParams(o.value(QStringLiteral("params")).toObject(), &variant.params))
+                    return false;
+                variant.hasParams = true;
+            }
+            m.variants.append(variant);
+        }
     }
 
     *out = m;
     return true;
+}
+
+QList<FacePropManifest> facePropDesigns(const FacePropManifest &manifest)
+{
+    FacePropManifest base = manifest;
+    base.variants.clear();
+    QList<FacePropManifest> out{base};
+    for (const FacePropVariant &variant : manifest.variants) {
+        if (variant.model.isEmpty() || variant.model == manifest.model)
+            continue;
+        FacePropManifest design = base;
+        design.id = manifest.id + QStringLiteral("--") + variant.id;
+        if (!validId(design.id))
+            continue;
+        design.model = variant.model;
+        if (!variant.thumbnail.isEmpty())
+            design.thumbnail = variant.thumbnail;
+        if (!variant.name.isEmpty())
+            design.name = manifest.name.isEmpty() ? variant.name
+                                                   : manifest.name + QStringLiteral(" — ") + variant.name;
+        if (!variant.description.isEmpty())
+            design.description = variant.description;
+        if (variant.hasTags) {
+            for (const QString &tag : variant.tags) {
+                if (!design.tags.contains(tag))
+                    design.tags.append(tag);
+            }
+        }
+        if (variant.hasParams)
+            design.params = variant.params;
+        out.append(design);
+    }
+    return out;
 }
 
 FacePropImportResult importFacePropsFromZip(const QString &zipPath, const QString &destRoot)
@@ -296,10 +426,12 @@ FacePropImportResult importFacePropsFromZip(const QString &zipPath, const QStrin
             result.errors.append(QStringLiteral("%1: %2").arg(source, error));
             continue;
         }
-        installInto(&result, destRoot, source, folder, manifestJson,
-                    [&](const QString &name, qint64 cap, QByteArray *data, QString *err) {
-                        return extract(prefix + name, cap, data, err);
-                    });
+        installInto(
+            &result, destRoot, source, folder, manifestJson,
+            [&](const QString &name, qint64 cap, QByteArray *data, QString *err) {
+                return extract(prefix + name, cap, data, err);
+            },
+            [&](const QString &name) { return byPath.contains(prefix + name); });
     }
     return result;
 }
@@ -348,7 +480,11 @@ FacePropImportResult importFacePropsFromDirectory(const QString &dirPath, const 
             result.errors.append(QStringLiteral("%1: %2").arg(dir.dirName(), error));
             continue;
         }
-        installInto(&result, destRoot, dir.dirName(), dir.dirName(), manifestJson, read);
+        installInto(&result, destRoot, dir.dirName(), dir.dirName(), manifestJson, read,
+                    [&](const QString &name) {
+                        const QFileInfo info(dir.filePath(name));
+                        return info.isFile() && !info.isSymLink();
+                    });
     }
     return result;
 }
