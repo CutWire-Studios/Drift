@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Microsoft Store package manifest. .github/workflows/msstore.yml substitutes @VERSION@ and packs
+  it with the staged dist\bin tree.
+
+  Identity Name, Publisher and PublisherDisplayName must be copied exactly from Partner Center >
+  Product management > Product identity; the Store rejects a package whose identity differs from
+  the reserved one.
+-->
+<Package
+  xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10"
+  xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10"
+  xmlns:rescap="http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities"
+  IgnorableNamespaces="uap rescap">
+
+  <Identity
+    Name="CutWireStudios.CutWireDrift"
+    Publisher="CN=A1BDBE2E-BBD1-4A05-AD2B-AAA11012BB68"
+    Version="@VERSION@"
+    ProcessorArchitecture="x64" />
+
+  <Properties>
+    <DisplayName>Drift</DisplayName>
+    <PublisherDisplayName>CutWire Studios</PublisherDisplayName>
+    <Logo>Assets\StoreLogo.png</Logo>
+  </Properties>
+
+  <Dependencies>
+    <TargetDeviceFamily Name="Windows.Desktop" MinVersion="10.0.17763.0" MaxVersionTested="10.0.26100.0" />
+  </Dependencies>
+
+  <Resources>
+    <!-- One per i18n/drift_*.ts; tl is declared as fil, the tag the Store knows Filipino by. -->
+    <Resource Language="en-us" />
+    <Resource Language="ar" />
+    <Resource Language="es" />
+    <Resource Language="es-co" />
+    <Resource Language="fil" />
+    <Resource Language="fr-ca" />
+    <Resource Language="it" />
+    <Resource Language="ja" />
+    <Resource Language="pt-br" />
+    <Resource Language="pt-pt" />
+    <Resource Language="ru" />
+    <Resource Language="si" />
+    <Resource Language="vi" />
+    <Resource Language="zh-hans" />
+  </Resources>
+
+  <Applications>
+    <Application Id="Drift" Executable="drift.exe" EntryPoint="Windows.FullTrustApplication">
+      <uap:VisualElements
+        DisplayName="Drift"
+        Description="Drift video editor"
+        BackgroundColor="transparent"
+        Square150x150Logo="Assets\Square150x150Logo.png"
+        Square44x44Logo="Assets\Square44x44Logo.png" />
+      <Extensions>
+        <uap:Extension Category="windows.fileTypeAssociation">
+          <uap:FileTypeAssociation Name="drift">
+            <uap:DisplayName>Drift Project</uap:DisplayName>
+            <uap:SupportedFileTypes>
+              <uap:FileType>.drift</uap:FileType>
+            </uap:SupportedFileTypes>
+          </uap:FileTypeAssociation>
+        </uap:Extension>
+      </Extensions>
+    </Application>
+  </Applications>
+
+  <Capabilities>
+    <Capability Name="internetClient" />
+    <rescap:Capability Name="runFullTrust" />
+  </Capabilities>
+</Package>

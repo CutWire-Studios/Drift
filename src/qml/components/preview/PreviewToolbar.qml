@@ -373,6 +373,23 @@ Item {
                     decodeGpuDialog.reject()
                 }
             }
+
+            ThemedLabel {
+                width: parent.width
+                visible: EditorState.gpuPreferenceInSystemSettings
+                text: qsTr("Set Drift to High performance in Windows Settings > Display > Graphics, "
+                           + "then restart Drift.")
+            }
+
+            ThemedButton {
+                visible: EditorState.gpuPreferenceInSystemSettings
+                text: qsTr("Open graphics settings")
+                variant: "secondary"
+                onClicked: {
+                    Qt.openUrlExternally("ms-settings:display-advancedgraphics")
+                    decodeGpuDialog.reject()
+                }
+            }
         }
     }
 }

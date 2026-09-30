@@ -6197,6 +6197,11 @@ bool AppController::gpuPreferenceSupported() const
     return drift::gpu::preferenceSupported();
 }
 
+bool AppController::gpuPreferenceInSystemSettings() const
+{
+    return drift::gpu::multipleAdapters() && drift::gpu::packagedApp();
+}
+
 void AppController::setInvertTimelineScroll(bool enabled)
 {
     if (m_invertTimelineScroll == enabled)

@@ -1,0 +1,285 @@
+name: Microsoft Store MSIX
+
+# Manual Microsoft Store package. The Inno installer and portable zip stay in package.yml; this is
+# the one artifact Partner Center accepts for an MSIX submission. It is unsigned on purpose: the
+# Store re-signs every package with its own certificate. Run it from main (so this file and
+# installer/msix exist) and point `ref` at the tag or commit you want inside the package.
+on:
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: "Tag, branch, or commit (short SHA is fine). Empty = this workflow revision. 'latest' = newest GitHub release tag."
+        required: false
+        default: ""
+        type: string
+      version:
+        description: "MSIX version A.B.C.0; leave empty to use the CMake version plus .0. Must increase for each Store upload."
+        required: false
+        default: ""
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: msstore-msix-${{ inputs.ref }}
+  cancel-in-progress: true
+
+env:
+  # Same pins as package.yml; keep them in sync.
+  QT_VERSION: "6.10.3"
+  QT_MODULES: >-
+    qtmultimedia
+    qtimageformats
+  FETCHCONTENT_BASE_DIR: ${{ github.workspace }}/.deps
+  FFMPEG_REPO: "CutWire-Studios/FFmpeg-Builds"
+  FFMPEG_TAG: "n7.1"
+
+jobs:
+  msix:
+    name: Windows MSIX
+    runs-on: windows-2022
+    timeout-minutes: 180
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+
+      # `ref` may be a tag from before installer/msix existed, so the manifest and logos come from
+      # this workflow revision, not from the checkout that gets built.
+      - name: Stash MSIX template
+        shell: bash
+        run: |
+          set -euo pipefail
+          cp -r installer/msix "$RUNNER_TEMP/msix"
+
+      - name: Check out requested ref
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          REF='${{ inputs.ref }}'
+          REF="${REF#"${REF%%[![:space:]]*}"}"
+          REF="${REF%"${REF##*[![:space:]]}"}"
+          case "$REF" in
+            ''|HEAD) ;;
+            latest)
+              REF="$(gh release view --json tagName --jq .tagName)"
+              echo "latest release tag: $REF"
+              git checkout --force "$REF"
+              ;;
+            *)
+              git checkout --force "$REF"
+              ;;
+          esac
+          echo "HEAD=$(git rev-parse HEAD) ($(git describe --tags --always))"
+
+      - name: Record checkout and resolve MSIX version
+        id: meta
+        shell: bash
+        run: |
+          set -euo pipefail
+          SHA="$(git rev-parse HEAD)"
+          VERSION="$(grep -oP '^project\(Drift VERSION \K[0-9]+\.[0-9]+\.[0-9]+' CMakeLists.txt)"
+          MV='${{ inputs.version }}'
+          if [ -n "$MV" ]; then
+            if ! [[ "$MV" =~ ^[0-9]+\.[0-9]+\.[0-9]+\.0$ ]]; then
+              echo "::error::version must be A.B.C.0 (the Store requires the last part to be 0), got '$MV'"
+              exit 1
+            fi
+          else
+            MV="$VERSION.0"
+          fi
+          IFS=. read -r a b c d <<< "$MV"
+          for p in "$a" "$b" "$c"; do
+            if [ "$p" -gt 65535 ]; then
+              echo "::error::each MSIX version part must be at most 65535, got '$MV'"
+              exit 1
+            fi
+          done
+          # Tags from before windows-store existed reject it at configure; they still build as a
+          # Store package, just reported to the marketplace as the plain windows distribution.
+          if grep -q 'windows-store' CMakeLists.txt; then DIST=windows-store; else DIST=windows; fi
+          echo "sha=$SHA" >> "$GITHUB_OUTPUT"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "msix_version=$MV" >> "$GITHUB_OUTPUT"
+          echo "distribution=$DIST" >> "$GITHUB_OUTPUT"
+          echo "Built $SHA (version=$VERSION msix=$MV distribution=$DIST) from ref '${{ inputs.ref }}'"
+
+      - name: Install Qt
+        uses: jurplel/install-qt-action@v4
+        with:
+          version: ${{ env.QT_VERSION }}
+          host: windows
+          target: desktop
+          arch: win64_msvc2022_64
+          modules: ${{ env.QT_MODULES }}
+          cache: true
+          add-tools-to-path: true
+
+      # Same key as package.yml so a Store build reuses the installer job's vcpkg binaries.
+      - name: Restore vcpkg binary cache
+        id: vcpkg-cache
+        uses: actions/cache/restore@v4
+        with:
+          path: ${{ github.workspace }}\vcpkg_bincache
+          key: vcpkg-bincache-win-${{ hashFiles('CMakeLists.txt', '.github/workflows/package.yml') }}
+          restore-keys: |
+            vcpkg-bincache-win-
+
+      # See package.yml for why zlib and Skia are static-md while the rest are dynamic.
+      - name: Install vcpkg dependencies
+        shell: pwsh
+        env:
+          VCPKG_DEFAULT_BINARY_CACHE: ${{ github.workspace }}\vcpkg_bincache
+        run: |
+          New-Item -ItemType Directory -Force -Path $env:VCPKG_DEFAULT_BINARY_CACHE | Out-Null
+          if (-not (Test-Path vcpkg\vcpkg.exe)) {
+            git clone --depth 1 https://github.com/microsoft/vcpkg.git vcpkg
+            .\vcpkg\bootstrap-vcpkg.bat
+          }
+          .\vcpkg\vcpkg.exe install zstd openssl soundtouch --triplet x64-windows
+          .\vcpkg\vcpkg.exe install zlib "skia[gl,harfbuzz,icu,freetype,png]" --triplet x64-windows-static-md
+
+      - name: Save vcpkg binary cache
+        if: always() && steps.vcpkg-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: ${{ github.workspace }}\vcpkg_bincache
+          key: vcpkg-bincache-win-${{ hashFiles('CMakeLists.txt', '.github/workflows/package.yml') }}
+
+      - name: Cache FetchContent dependencies
+        uses: actions/cache@v4
+        with:
+          path: .deps
+          key: v2-deps-win-${{ hashFiles('CMakeLists.txt') }}
+
+      - name: Fetch pinned FFmpeg
+        shell: pwsh
+        run: |
+          Remove-Item -Recurse -Force .deps\ffmpeg, .deps\ffmpeg_extracted -ErrorAction SilentlyContinue
+          New-Item -ItemType Directory -Force -Path .deps\ffmpeg | Out-Null
+          Invoke-WebRequest -Uri "https://github.com/$env:FFMPEG_REPO/releases/download/$env:FFMPEG_TAG/ffmpeg-$env:FFMPEG_TAG-win64-gpl-shared.zip" -OutFile ffmpeg.zip
+          Expand-Archive -Path ffmpeg.zip -DestinationPath .deps\ffmpeg_extracted -Force
+          $extractedRoot = (Get-ChildItem .deps\ffmpeg_extracted)[0].FullName
+          Copy-Item -Path "$extractedRoot\*" -Destination .deps\ffmpeg -Recurse -Force
+
+      # An empty update feed turns the in-app update check off: the Store owns updates here.
+      - name: Configure
+        shell: pwsh
+        run: |
+          cmake -B build -G "Visual Studio 17 2022" -A x64 `
+            -DCMAKE_BUILD_TYPE=Release `
+            -DCMAKE_TOOLCHAIN_FILE=${{ github.workspace }}\vcpkg\scripts\buildsystems\vcpkg.cmake `
+            -DCMAKE_PREFIX_PATH="${{ env.QT_ROOT_DIR }};${{ github.workspace }}\.deps\ffmpeg;${{ github.workspace }}\vcpkg\installed\x64-windows-static-md" `
+            -DFETCHCONTENT_BASE_DIR=${{ env.FETCHCONTENT_BASE_DIR }} `
+            -DZLIB_INCLUDE_DIR=${{ github.workspace }}\vcpkg\installed\x64-windows-static-md\include `
+            -DZLIB_LIBRARY=${{ github.workspace }}\vcpkg\installed\x64-windows-static-md\lib\zs.lib `
+            -DDRIFT_BUNDLE_ONNXRUNTIME=OFF `
+            -DDRIFT_WITH_SKIA=ON `
+            -DDRIFT_DISTRIBUTION=${{ steps.meta.outputs.distribution }} `
+            -DDRIFT_UPDATE_FEED_URL=
+
+      # Only what ships: package.yml already builds and runs the test suite on Windows.
+      - name: Build
+        shell: pwsh
+        run: cmake --build build --config Release --parallel 2 --target drift audiobackendcheck
+
+      - name: Stage runtime files
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path dist\bin | Out-Null
+          Copy-Item build\Release\drift.exe dist\bin -Force
+          # See package.yml for --no-opengl-sw.
+          & "${{ env.QT_ROOT_DIR }}\bin\windeployqt.exe" --release --no-translations `
+            --no-opengl-sw --qmldir src\qml dist\bin\drift.exe
+          Copy-Item vcpkg\installed\x64-windows\bin\*.dll dist\bin -Force
+          Copy-Item .deps\ffmpeg\bin\*.dll dist\bin -Force
+          foreach ($dir in "effects", "transitions", "effect-templates", "audio-effects") {
+            Copy-Item "build\Release\$dir" dist\bin -Recurse -Force
+          }
+
+      # An MSIX cannot run vc_redist.x64.exe at install time, so the CRT goes in app-local.
+      - name: Bundle MSVC runtime
+        shell: pwsh
+        run: |
+          Remove-Item dist\bin\vc_redist*.exe -Force -ErrorAction SilentlyContinue
+          $vs = & "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" -latest -property installationPath
+          $redist = Get-ChildItem "$vs\VC\Redist\MSVC" -Directory |
+            Where-Object { $_.Name -match '^\d+\.\d+\.\d+$' } |
+            Sort-Object { [version]$_.Name } | Select-Object -Last 1
+          $crt = Get-ChildItem "$($redist.FullName)\x64" -Directory -Filter 'Microsoft.VC*.CRT' | Select-Object -First 1
+          if (-not $crt) { throw "no Microsoft.VC*.CRT under $($redist.FullName)\x64" }
+          Write-Host "CRT from $($crt.FullName)"
+          Copy-Item "$($crt.FullName)\*.dll" dist\bin -Force
+
+      - name: Verify audio backend
+        shell: pwsh
+        env:
+          QT_DEBUG_PLUGINS: "1"
+        run: |
+          $pluginRel = "dist\bin\multimedia\ffmpegmediaplugin.dll"
+          if (-not (Test-Path $pluginRel)) {
+            Get-ChildItem dist\bin\multimedia -ErrorAction SilentlyContinue
+            throw "$pluginRel was not deployed; QAudioSink would have no devices at all"
+          }
+          $plugin = (Resolve-Path $pluginRel).Path
+          Copy-Item build\Release\audiobackendcheck.exe dist\bin -Force
+          Push-Location dist\bin
+          try {
+            & .\audiobackendcheck.exe $plugin
+            $status = $LASTEXITCODE
+          } finally {
+            Pop-Location
+          }
+          Remove-Item dist\bin\audiobackendcheck.exe -Force
+          if ($status -ne 0) {
+            throw "the multimedia backend plugin does not load against the DLLs being shipped"
+          }
+
+      - name: Pack MSIX
+        shell: pwsh
+        env:
+          MSIX_VERSION: ${{ steps.meta.outputs.msix_version }}
+        run: |
+          $layout = "$env:RUNNER_TEMP\layout"
+          New-Item -ItemType Directory -Force -Path $layout, out | Out-Null
+          Copy-Item dist\bin\* $layout -Recurse -Force
+          Copy-Item "$env:RUNNER_TEMP\msix\Assets" $layout -Recurse -Force
+          (Get-Content "$env:RUNNER_TEMP\msix\AppxManifest.xml" -Raw).Replace('@VERSION@', $env:MSIX_VERSION) |
+            Set-Content "$layout\AppxManifest.xml" -Encoding utf8
+
+          $makeappx = Get-ChildItem "${env:ProgramFiles(x86)}\Windows Kits\10\bin\10.*\x64\makeappx.exe" |
+            Sort-Object { [version]$_.Directory.Parent.Name } | Select-Object -Last 1
+          if (-not $makeappx) { throw "makeappx.exe not found in the Windows SDK" }
+          Write-Host "Using $($makeappx.FullName)"
+
+          $msix = "out\Drift-$env:MSIX_VERSION-x64.msix"
+          & $makeappx.FullName pack /d $layout /p $msix /o
+          if ($LASTEXITCODE -ne 0) { throw "makeappx pack failed" }
+          & $makeappx.FullName unpack /p $msix /d "$env:RUNNER_TEMP\unpacked" /o
+          if ($LASTEXITCODE -ne 0) { throw "makeappx could not read back $msix" }
+          Get-Item $msix | Format-List Name, Length
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: drift-${{ steps.meta.outputs.msix_version }}-msix
+          path: out/Drift-${{ steps.meta.outputs.msix_version }}-x64.msix
+          retention-days: 30
+          if-no-files-found: error
+
+      - name: Summary
+        shell: bash
+        run: |
+          {
+            echo "## Microsoft Store MSIX"
+            echo "- **ref:** \`${{ inputs.ref }}\`"
+            echo "- **commit:** \`${{ steps.meta.outputs.sha }}\`"
+            echo "- **version:** ${{ steps.meta.outputs.version }}"
+            echo "- **MSIX version:** ${{ steps.meta.outputs.msix_version }}"
+            echo "- **distribution:** ${{ steps.meta.outputs.distribution }}"
+            echo "- **artifact:** \`Drift-${{ steps.meta.outputs.msix_version }}-x64.msix\`"
+          } >> "$GITHUB_STEP_SUMMARY"

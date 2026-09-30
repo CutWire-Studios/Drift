@@ -193,6 +193,7 @@ class AppController : public QObject
     // launch. Hidden on single-GPU machines and off Windows.
     Q_PROPERTY(QString preferredGpu READ preferredGpu WRITE setPreferredGpu NOTIFY preferredGpuChanged)
     Q_PROPERTY(bool gpuPreferenceSupported READ gpuPreferenceSupported CONSTANT)
+    Q_PROPERTY(bool gpuPreferenceInSystemSettings READ gpuPreferenceInSystemSettings CONSTANT)
     Q_PROPERTY(bool invertTimelineScroll READ invertTimelineScroll WRITE setInvertTimelineScroll
                    NOTIFY invertTimelineScrollChanged)
     // Session-only localhost MCP for agents. Off at every launch, unless mcpStartOnLaunch
@@ -546,6 +547,7 @@ public:
     bool mediaCodecZeroCopySupported() const;
     QString preferredGpu() const { return m_preferredGpu; }
     bool gpuPreferenceSupported() const;
+    bool gpuPreferenceInSystemSettings() const;
     bool invertTimelineScroll() const { return m_invertTimelineScroll; }
     QString uiLanguage() const { return m_uiLanguage; }
     QVariantList uiLanguages() const;

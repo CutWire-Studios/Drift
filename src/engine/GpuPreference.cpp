@@ -12,6 +12,7 @@
 #define NOMINMAX
 #endif
 #include <windows.h>
+#include <appmodel.h>
 #include <dxgi.h>
 
 #include <string>
@@ -148,13 +149,28 @@ Preference storedPreference()
     return preferenceFromId(QSettings().value(settingsKey()).toString());
 }
 
-bool preferenceSupported()
+bool multipleAdapters()
 {
 #if defined(Q_OS_WIN)
     return hardwareAdapters().size() >= 2;
 #else
     return false;
 #endif
+}
+
+bool packagedApp()
+{
+#if defined(Q_OS_WIN)
+    UINT32 length = 0;
+    return GetCurrentPackageFullName(&length, nullptr) != APPMODEL_ERROR_NO_PACKAGE;
+#else
+    return false;
+#endif
+}
+
+bool preferenceSupported()
+{
+    return multipleAdapters() && !packagedApp();
 }
 
 void storePreference(Preference preference)

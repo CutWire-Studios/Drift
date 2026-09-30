@@ -36,7 +36,14 @@ Preference preferenceFromId(const QString &id);
 
 Preference storedPreference();
 
-// True where choosing changes anything: Windows with at least two hardware adapters.
+// Windows with at least two hardware adapters.
+bool multipleAdapters();
+
+// Running from an MSIX package (the Microsoft Store build). Its HKCU writes land in a private
+// hive the graphics driver never reads, so the choice has to be made in Windows Settings instead.
+bool packagedApp();
+
+// True where choosing in Drift changes anything: multipleAdapters() and not packagedApp().
 bool preferenceSupported();
 
 // Persists the choice and writes it where Windows keeps per-application GPU preferences. The GPU

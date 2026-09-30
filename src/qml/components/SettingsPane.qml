@@ -227,6 +227,25 @@ Item {
                     }
                     onActivated: EditorState.preferredGpu = model[currentIndex].id
                 }
+
+                ThemedLabel {
+                    visible: EditorState.gpuPreferenceInSystemSettings
+                    text: qsTr("Graphics card")
+                }
+
+                ThemedLabel {
+                    visible: EditorState.gpuPreferenceInSystemSettings
+                    width: parent.width
+                    text: qsTr("Choose which graphics card Drift runs on in Windows Settings, under "
+                               + "Display > Graphics. Takes effect after restart.")
+                }
+
+                ThemedButton {
+                    visible: EditorState.gpuPreferenceInSystemSettings
+                    variant: "secondary"
+                    text: qsTr("Open graphics settings")
+                    onClicked: Qt.openUrlExternally("ms-settings:display-advancedgraphics")
+                }
             }
 
             SettingsSection {

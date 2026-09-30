@@ -124,7 +124,7 @@ message(STATUS "Drift channel: ${DRIFT_CHANNEL} (${DRIFT_VERSION_STRING}, ${DRIF
 
 # Which package this build ships as. Sent to the marketplace so it can hide sources per store
 # (e.g. Play Store moderation) without a separate client build. Every packaging path sets it.
-set(DRIFT_DISTRIBUTIONS source windows macos appimage flatpak flathub arch android-github android-play)
+set(DRIFT_DISTRIBUTIONS source windows windows-store macos appimage flatpak flathub arch android-github android-play)
 set(DRIFT_DISTRIBUTION "source" CACHE STRING "Package type reported to the marketplace")
 set_property(CACHE DRIFT_DISTRIBUTION PROPERTY STRINGS ${DRIFT_DISTRIBUTIONS})
 if(NOT DRIFT_DISTRIBUTION IN_LIST DRIFT_DISTRIBUTIONS)
