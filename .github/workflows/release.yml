@@ -110,6 +110,42 @@ jobs:
             dist/flatpak-bundle/*.flatpak \
             dist/android-apk-*/*.apk
 
+      - name: Update Homebrew Tap
+        continue-on-error: true
+        env:
+          TAP_GITHUB_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
+        run: |
+          if [ -z "$TAP_GITHUB_TOKEN" ]; then
+            echo "::warning::HOMEBREW_TAP_TOKEN secret is not set; skipping Homebrew tap update."
+            exit 0
+          fi
+
+          VERSION="${GITHUB_REF_NAME#v}"
+          DMG_FILE=$(ls dist/macos-dmg/Drift-*-arm64.dmg 2>/dev/null | head -n 1)
+          if [ -z "$DMG_FILE" ] || [ ! -f "$DMG_FILE" ]; then
+            echo "::warning::macOS DMG not found in dist/macos-dmg/; skipping Homebrew tap update."
+            exit 0
+          fi
+
+          SHA256=$(sha256sum "$DMG_FILE" | awk '{print $1}')
+
+          git clone "https://x-access-token:${TAP_GITHUB_TOKEN}@github.com/CutWire-Studios/homebrew-tap.git" tap
+          cd tap
+
+          sed -i.bak -E "s/version \"[0-9.]+\"/version \"${VERSION}\"/" Casks/drift.rb
+          sed -i.bak -E "s/sha256 \"[a-f0-9]{64}\"/sha256 \"${SHA256}\"/" Casks/drift.rb
+          rm -f Casks/drift.rb.bak
+
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add Casks/drift.rb
+          if git diff --staged --quiet; then
+            echo "No changes to Casks/drift.rb; tap is already up to date."
+          else
+            git commit -m "drift ${VERSION}"
+            git push origin main
+          fi
+
       # Posts a branded embed card to CutWire Discord #releases. This lives here
       # rather than in a `release: published` workflow because releases created
       # with GITHUB_TOKEN do not trigger further workflow runs.
