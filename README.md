@@ -44,6 +44,16 @@ What you see in the preview is what you export. One compositor, one look, no sur
 flatpak install flathub org.cutwire.Drift
 flatpak run org.cutwire.Drift
 ```
+**macOS** — install via Homebrew:
+
+```bash
+brew install --cask cutwire-studios/tap/drift
+```
+
+> **First launch on macOS:** Drift is signed ad-hoc. If Gatekeeper blocks opening it, run:
+> ```bash
+> xattr -dr com.apple.quarantine /Applications/Drift.app
+> ```
 
 Or grab a build for your platform from the
 [latest release](https://github.com/CutWire-Studios/Drift/releases/latest):
@@ -52,7 +62,7 @@ Or grab a build for your platform from the
 |----------|---------|
 | Linux | [Flathub](https://flathub.org/apps/org.cutwire.Drift) · [AppImage](https://github.com/CutWire-Studios/Drift/releases/latest) |
 | Windows | [Installer (.exe)](https://github.com/CutWire-Studios/Drift/releases/latest) · [Portable zip](https://github.com/CutWire-Studios/Drift/releases/latest) |
-| macOS | [Disk image (.dmg, Apple Silicon)](https://github.com/CutWire-Studios/Drift/releases/latest) |
+| macOS | [Homebrew Tap](https://github.com/CutWire-Studios/homebrew-tap) · [Disk image (.dmg, Apple Silicon)](https://github.com/CutWire-Studios/Drift/releases/latest) |
 | Android | [APK (arm64-v8a)](https://github.com/CutWire-Studios/Drift/releases/latest) · [APK (armeabi-v7a)](https://github.com/CutWire-Studios/Drift/releases/latest) · [APK (x86_64)](https://github.com/CutWire-Studios/Drift/releases/latest) |
 
 On a phone, grab `Drift-*-arm64-v8a.apk` from the latest release and install it (or `adb install Drift-*-arm64-v8a.apk`). Use `x86_64` for emulators.
