@@ -3918,7 +3918,7 @@
     </message>
     <message>
         <source>That style shares its folder with other styles</source>
-        <translation type="unfinished"></translation>
+        <translation>そのスタイルは、他のスタイルとフォルダを共有しています</translation>
     </message>
     <message>
         <source>Could not delete the face prop</source>
@@ -5785,8 +5785,8 @@
     </message>
     <message numerus="yes">
         <source>%n style(s)</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>%n スタイル</numerusform>
         </translation>
     </message>
     <message>
@@ -5836,7 +5836,7 @@
     </message>
     <message>
         <source>Style</source>
-        <translation type="unfinished">スタイル</translation>
+        <translation>スタイル</translation>
     </message>
     <message>
         <source>Colours</source>
@@ -6929,27 +6929,27 @@
     </message>
     <message>
         <source>variants must be a list</source>
-        <translation type="unfinished"></translation>
+        <translation>variants はリストである必要があります</translation>
     </message>
     <message>
         <source>a variant must be an object</source>
-        <translation type="unfinished"></translation>
+        <translation>variant はオブジェクトである必要があります</translation>
     </message>
     <message>
         <source>invalid variant id “%1”</source>
-        <translation type="unfinished"></translation>
+        <translation>無効な variant ID “%1”</translation>
     </message>
     <message>
         <source>a variant must name a .glb model in the prop folder</source>
-        <translation type="unfinished"></translation>
+        <translation>variant はプロップフォルダー内の .glb モデルを指定する必要があります</translation>
     </message>
     <message>
         <source>a variant thumbnail must be a file in the prop folder</source>
-        <translation type="unfinished"></translation>
+        <translation>variant のサムネイルはプロップフォルダー内のファイルである必要があります</translation>
     </message>
     <message>
         <source>a variant names the same file twice</source>
-        <translation type="unfinished"></translation>
+        <translation>variant が同じファイルを 2回指定しています</translation>
     </message>
     <message>
         <source>Could not open %1</source>
@@ -9560,11 +9560,11 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Set Drift to High performance in Windows Settings &gt; Display &gt; Graphics, then restart Drift.</source>
-        <translation type="unfinished"></translation>
+        <translation>Windows の設定 &gt; ディスプレイ &gt; グラフィックス で Drift を「ハイパフォーマンス」に設定し、Drift を再起動してください。</translation>
     </message>
     <message>
         <source>Open graphics settings</source>
-        <translation type="unfinished"></translation>
+        <translation>グラフィック設定を開く</translation>
     </message>
 </context>
 <context>
@@ -10861,11 +10861,11 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Choose which graphics card Drift runs on in Windows Settings, under Display &gt; Graphics. Takes effect after restart.</source>
-        <translation type="unfinished"></translation>
+        <translation>Windows の設定の ディスプレイ &gt; グラフィックス で、Drift がどのグラフィックスカードで動作するかを選択します。再起動後に有効になります。</translation>
     </message>
     <message>
         <source>Open graphics settings</source>
-        <translation type="unfinished"></translation>
+        <translation>グラフィック設定を開く</translation>
     </message>
     <message>
         <source>Playback</source>
