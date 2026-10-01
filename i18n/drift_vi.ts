@@ -3826,7 +3826,7 @@
     </message>
     <message>
         <source>That style shares its folder with other styles</source>
-        <translation type="unfinished"></translation>
+        <translation>Kiểu đó dùng chung thư mục với các kiểu khác</translation>
     </message>
     <message>
         <source>Could not delete the face prop</source>
@@ -5685,8 +5685,8 @@
     </message>
     <message numerus="yes">
         <source>%n style(s)</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>%n kiểu</numerusform>
         </translation>
     </message>
     <message>
@@ -5736,7 +5736,7 @@
     </message>
     <message>
         <source>Style</source>
-        <translation type="unfinished">Kiểu</translation>
+        <translation>Kiểu</translation>
     </message>
     <message>
         <source>Colours</source>
@@ -6825,27 +6825,27 @@
     </message>
     <message>
         <source>variants must be a list</source>
-        <translation type="unfinished"></translation>
+        <translation>các biến thể phải là một danh sách</translation>
     </message>
     <message>
         <source>a variant must be an object</source>
-        <translation type="unfinished"></translation>
+        <translation>một biến thể phải là một đối tượng</translation>
     </message>
     <message>
         <source>invalid variant id “%1”</source>
-        <translation type="unfinished"></translation>
+        <translation>id biến thể “%1” không hợp lệ</translation>
     </message>
     <message>
         <source>a variant must name a .glb model in the prop folder</source>
-        <translation type="unfinished"></translation>
+        <translation>biến thể phải đặt tên cho mô hình .glb trong thư mục đạo cụ</translation>
     </message>
     <message>
         <source>a variant thumbnail must be a file in the prop folder</source>
-        <translation type="unfinished"></translation>
+        <translation>một ảnh thu nhỏ biến thể phải là một tệp trong thư mục đạo cụ</translation>
     </message>
     <message>
         <source>a variant names the same file twice</source>
-        <translation type="unfinished"></translation>
+        <translation>một biến thể đặt tên cho cùng một tệp hai lần</translation>
     </message>
     <message>
         <source>Could not open %1</source>
@@ -9408,11 +9408,11 @@ Nếu phát lại bị giật, hãy thử cái khác.</translation>
     </message>
     <message>
         <source>Set Drift to High performance in Windows Settings &gt; Display &gt; Graphics, then restart Drift.</source>
-        <translation type="unfinished"></translation>
+        <translation>Đặt Drift ở chế độ Hiệu năng cao trong Cài đặt Windows &gt; Hiển thị &gt; Đồ họa, sau đó khởi động lại Drift.</translation>
     </message>
     <message>
         <source>Open graphics settings</source>
-        <translation type="unfinished"></translation>
+        <translation>Mở cài đặt đồ họa</translation>
     </message>
 </context>
 <context>
@@ -10510,11 +10510,11 @@ Nếu phát lại bị giật, hãy thử cái khác.</translation>
     </message>
     <message>
         <source>Choose which graphics card Drift runs on in Windows Settings, under Display &gt; Graphics. Takes effect after restart.</source>
-        <translation type="unfinished"></translation>
+        <translation>Chọn card đồ họa mà Drift sử dụng trong Cài đặt Windows, trong mục Hiển thị &gt; Đồ họa. Thay đổi sẽ có hiệu lực sau khi khởi động lại.</translation>
     </message>
     <message>
         <source>Open graphics settings</source>
-        <translation type="unfinished"></translation>
+        <translation>Mở cài đặt đồ họa</translation>
     </message>
     <message>
         <source>Playback</source>
