@@ -3,6 +3,7 @@
 #include <QHash>
 #include <QJsonObject>
 #include <QObject>
+#include <QUrl>
 #include <QPointer>
 #include <QVariantList>
 
@@ -36,7 +37,8 @@ public:
 
     // One row per known addon: id, name, description, details, author, license, kind, version,
     // installedVersion, downloadSize, installedSize, items, state.
-    // state is one of: available, downloading, installing, installed, update-available, failed.
+    // state is one of: available, downloading, installing, installed, update-available, failed,
+    // needs-newer-app (minAppVersion is above this build; also sets minAppVersion on the row).
     QVariantList catalog() const;
     QString status() const;
     bool refreshing() const;
@@ -64,6 +66,16 @@ public:
     Q_INVOKABLE QVariantList missingEssentialAddons() const;
     // Installed packs with a newer version on the store.
     Q_INVOKABLE QVariantList updatableAddons() const;
+
+    // --- User packages (.driftfx from Drift Forge) ---------------------------------------
+    // Copies the picked file (a content:// URI on Android) into the cache and reads its manifest.
+    // Returns name, kind ("effects" | "transitions"), version, author and description, or a map
+    // with only `error`. Nothing is installed until installUserPackage(), which acts on the file
+    // inspected last and answers on userPackageInstalled.
+    Q_INVOKABLE QVariantMap inspectUserPackage(const QUrl &url);
+    // Sniffs the magic, since a content:// URI from "Open with" rarely carries the file name.
+    Q_INVOKABLE bool isUserPackage(const QUrl &url) const;
+    Q_INVOKABLE void installUserPackage();
 
     // --- Acceleration ------------------------------------------------------------------
     // Whether an ONNX Runtime is installed at all. Every AI feature needs one, so this gates
@@ -96,6 +108,8 @@ signals:
     // these exist to let callers react to an outcome without reading its prose.
     void transferFailed(const QString &id, const QString &reason);
     void transferSucceeded(const QString &id);
+    // Outcome of installUserPackage(); `error` is empty on success.
+    void userPackageInstalled(const QString &name, const QString &error);
 
 private:
     struct Transfer;
@@ -121,5 +135,6 @@ private:
     QStringList m_awaitingFreshIndex;
     QSet<QString> m_retried;
     bool m_runtimeRestartRequired = false;
+    QString m_userPackagePath;
     QNetworkAccessManager *m_network = nullptr;
 };

@@ -47,6 +47,60 @@ ThemedDialog {
         onRejected: root.pendingRemovalId = ""
     }
 
+    // A .driftfx from Drift Forge. Nothing signs these, so the user confirms before it installs.
+    property var pendingUserPackage: ({})
+
+    function importUserPackage(url) {
+        if (!url || String(url) === "")
+            url = FileDialogs.openFile(qsTr("Import Effect"), [qsTr("Drift effect (*.driftfx)")])
+        if (!url || String(url) === "")
+            return
+        const info = Addons.inspectUserPackage(url)
+        if (info.error) {
+            Toasts.error(info.error)
+            return
+        }
+        root.pendingUserPackage = info
+        if (!root.visible)
+            root.open()
+        confirmUserPackage.open()
+    }
+
+    ThemedDialog {
+        id: confirmUserPackage
+        title: root.pendingUserPackage.kind === "transitions" ? qsTr("Install this transition?")
+                                                               : qsTr("Install this effect?")
+        acceptText: qsTr("Install")
+        preferredWidth: Theme.dialogWidthSm
+
+        contentItem: ThemedLabel {
+            width: parent ? parent.width : Theme.dialogWidthSm
+            wrapMode: Text.WordWrap
+            size: "sm"
+            text: {
+                const p = root.pendingUserPackage
+                const by = p.author ? qsTr("“%1” by %2").arg(p.name).arg(p.author) : qsTr("“%1”").arg(p.name)
+                return qsTr("%1 was made by a user, not the Drift team, and nothing has checked it. Only install files you trust.").arg(by)
+            }
+        }
+
+        onAccepted: {
+            Addons.installUserPackage()
+            root.pendingUserPackage = {}
+        }
+        onRejected: root.pendingUserPackage = {}
+    }
+
+    Connections {
+        target: Addons
+        function onUserPackageInstalled(name, error) {
+            if (error.length > 0)
+                Toasts.error(qsTr("Could not install “%1”: %2").arg(name).arg(error))
+            else
+                Toasts.success(qsTr("Installed “%1”").arg(name))
+        }
+    }
+
     ThemedDialog {
         id: detailsDialog
         title: root.detailsName
@@ -174,6 +228,12 @@ ThemedDialog {
                         root.kindFilterKinds = modelData.kinds
                     }
                 }
+            }
+
+            ThemedButton {
+                text: qsTr("Import effect file…")
+                variant: "ghost"
+                onClicked: root.importUserPackage("")
             }
         }
 
@@ -425,6 +485,8 @@ ThemedDialog {
                                                       .arg(Math.round(row.transfer.fraction * 100))
                             if (row.modelData.state === "failed")
                                 return row.modelData.error
+                            if (row.modelData.state === "needs-newer-app")
+                                return qsTr("Requires Drift %1 or newer").arg(row.modelData.minAppVersion)
                             var parts = [qsTr("%1 download").arg(root.formatSize(row.modelData.downloadSize))]
                             if (row.modelData.items > 0)
                                 parts.push(qsTr("%1 items").arg(row.modelData.items))
@@ -478,6 +540,7 @@ ThemedDialog {
                     ThemedButton {
                         anchors.verticalCenter: parent.verticalCenter
                         visible: !row.active && row.modelData.state !== "installed"
+                                 && row.modelData.state !== "needs-newer-app"
                         text: row.modelData.state === "update-available" ? qsTr("Update")
                             : row.modelData.state === "failed" ? qsTr("Retry")
                             : qsTr("Install")

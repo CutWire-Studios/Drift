@@ -3,9 +3,9 @@
 #include <array>
 #include <cstdint>
 
-// Trust root for .driftpkg addon packages. The matching Ed25519 private key lives outside both
-// this repo and the addon repo (~/.config/drift/addon-signing.key) and never ships. Rotating it
-// means shipping a new binary, so treat this array as an ABI.
+// Trust root for .driftpkg addon packages. The matching Ed25519 private key lives in the addon
+// repo's gitignored drift-addons/.secrets/addon-signing.key (see packer/config.py) and never
+// ships. Rotating it means shipping a new binary, so treat this array as an ABI.
 
 namespace drift::addon {
 

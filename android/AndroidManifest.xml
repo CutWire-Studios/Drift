@@ -104,6 +104,21 @@
                 <data android:pathPattern=".*\\..*\\..*\\.drift" />
             </intent-filter>
 
+            <!-- Open a .driftfx (a Drift Forge effect or transition) the same way. Routed by its
+                 magic bytes rather than this name, since a content:// path rarely has one. -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="content" />
+                <data android:scheme="file" />
+                <data android:mimeType="*/*" />
+                <data android:host="*" />
+                <data android:pathPattern=".*\\.driftfx" />
+                <data android:pathPattern=".*\\..*\\.driftfx" />
+                <data android:pathPattern=".*\\..*\\..*\\.driftfx" />
+            </intent-filter>
+
             <!-- Share targets. Separate filters on purpose: the VIEW filter above matches
                  mimeType="*/*" so that .drift can be opened from anywhere, and adding media
                  types to it would make Drift a candidate for opening every video file on the

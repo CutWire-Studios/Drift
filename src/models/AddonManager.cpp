@@ -4,6 +4,7 @@
 #include "VersionCompare.h"
 #include "engine/AddonPackage.h"
 #include "engine/AddonRegistry.h"
+#include "engine/AndroidUri.h"
 #include "engine/AudioEffectCatalog.h"
 #include "engine/EffectCatalog.h"
 #include "engine/EffectTemplateCatalog.h"
@@ -26,9 +27,11 @@
 #include <QNetworkRequest>
 #include <QSaveFile>
 #include <QSettings>
+#include <QStandardPaths>
 #include <QtConcurrent>
 
 #include <atomic>
+#include <tuple>
 #include <utility>
 
 using namespace drift::addon;
@@ -158,6 +161,9 @@ QVariantList AddonManager::catalog() const
         const QString id = addon.value(QStringLiteral("id")).toString();
         const QString version = addon.value(QStringLiteral("version")).toString();
         const InstalledAddon *installed = installedAddon(id);
+        const QString minAppVersion = addon.value(QStringLiteral("minAppVersion")).toString();
+        const bool needsNewerApp = !minAppVersion.isEmpty()
+                                   && drift::compareVersions(QStringLiteral(DRIFT_VERSION), minAppVersion) < 0;
 
         QString state = QStringLiteral("available");
         if (const auto transfer = m_transfers.value(id))
@@ -165,9 +171,11 @@ QVariantList AddonManager::catalog() const
         else if (m_failures.contains(id))
             state = QStringLiteral("failed");
         else if (installed)
-            state = drift::compareVersions(installed->version, version) < 0
+            state = !needsNewerApp && drift::compareVersions(installed->version, version) < 0
                         ? QStringLiteral("update-available")
                         : QStringLiteral("installed");
+        else if (needsNewerApp)
+            state = QStringLiteral("needs-newer-app");
 
         int items = 0;
         for (const QJsonValue &value : addon.value(QStringLiteral("provides")).toArray())
@@ -195,6 +203,7 @@ QVariantList AddonManager::catalog() const
             {QStringLiteral("state"), state},
             {QStringLiteral("error"), m_failures.value(id)},
             {QStringLiteral("platform"), platform},
+            {QStringLiteral("minAppVersion"), minAppVersion},
         });
     }
     return rows;
@@ -678,12 +687,95 @@ void AddonManager::reloadForKinds(const QStringList &kinds)
     }
 }
 
+QVariantMap AddonManager::inspectUserPackage(const QUrl &url)
+{
+    QFile::remove(m_userPackagePath);
+    m_userPackagePath.clear();
+
+    // Staged locally first: the installer seeks and checks the file size, which a content:// URI
+    // does not reliably support.
+    const auto source = AndroidUri::openForRead(url);
+    if (!source)
+        return {{QStringLiteral("error"), tr("Could not open that file.")}};
+    const QString staged = QDir(addonDownloadCacheDir()).filePath(QStringLiteral("user-import.driftfx"));
+    QFile out(staged);
+    if (!out.open(QIODevice::WriteOnly | QIODevice::Truncate) || out.write(source->readAll()) < 0)
+        return {{QStringLiteral("error"), tr("Could not read that file.")}};
+    out.close();
+
+    QString error;
+    const auto info = readManifest(staged, &error, Container::User);
+    if (!info) {
+        QFile::remove(staged);
+        return {{QStringLiteral("error"), tr("This is not a Drift effect file (%1).").arg(error)}};
+    }
+    m_userPackagePath = staged;
+    return {
+        {QStringLiteral("name"), info->name},
+        {QStringLiteral("kind"), info->provides.first().kind},
+        {QStringLiteral("version"), info->version},
+        {QStringLiteral("author"), info->author},
+        {QStringLiteral("description"), info->description},
+    };
+}
+
+bool AddonManager::isUserPackage(const QUrl &url) const
+{
+    const auto file = AndroidUri::openForRead(url);
+    return file && file->read(8) == QByteArrayLiteral("DRIFTFX\0");
+}
+
+void AddonManager::installUserPackage()
+{
+    if (m_userPackagePath.isEmpty())
+        return;
+    const QString packagePath = std::exchange(m_userPackagePath, QString());
+    const QString appData = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
+
+    using Result = std::tuple<QString, QString, QString>; // name, kind, error
+    auto *watcher = new QFutureWatcher<Result>(this);
+    connect(watcher, &QFutureWatcher<Result>::finished, this, [this, watcher, packagePath] {
+        watcher->deleteLater();
+        QFile::remove(packagePath);
+        const auto [name, kind, error] = watcher->result();
+        if (error.isEmpty())
+            reloadForKinds({kind});
+        emit userPackageInstalled(name, error);
+    });
+
+    watcher->setFuture(QtConcurrent::run([packagePath, appData]() -> Result {
+        QString error;
+        const auto manifest = readManifest(packagePath, &error, Container::User);
+        if (!manifest)
+            return {QString(), QString(), error};
+        const PackageProvide provide = manifest->provides.first();
+        const QString folder = manifest->files.first().path.mid(provide.root.size() + 1).section(QLatin1Char('/'), 0, 0);
+
+        // Extracted next to its final home so the last step is a rename on the same filesystem.
+        // The user folders (<AppData>/effects, <AppData>/transitions) are the same roots the
+        // catalogs already scan for unsigned packages.
+        const QDir kindDir(QDir(appData).filePath(provide.kind));
+        const QString staging = kindDir.filePath(QStringLiteral(".import-") + folder);
+        PackageInfo info;
+        if (!drift::addon::install(packagePath, staging, {}, &info, &error, Container::User))
+            return {manifest->name, provide.kind, error};
+
+        const QString destination = kindDir.filePath(folder);
+        QDir(destination).removeRecursively();
+        const bool moved = QDir().rename(QDir(staging).filePath(provide.root + QLatin1Char('/') + folder), destination);
+        QDir(staging).removeRecursively();
+        if (!moved)
+            return {info.name, provide.kind, QStringLiteral("cannot move %1 into place").arg(folder)};
+        return {info.name, provide.kind, QString()};
+    }));
+}
+
 void AddonManager::sweepDownloadCache()
 {
     // Completed .driftpkg files are removed after a successful install, so anything left here is
     // from a crash. Half-finished .part files are kept — the next install resumes them.
     QDir cache(addonDownloadCacheDir());
-    const QStringList stale = cache.entryList({QStringLiteral("*.driftpkg")}, QDir::Files);
+    const QStringList stale = cache.entryList({QStringLiteral("*.driftpkg"), QStringLiteral("*.driftfx")}, QDir::Files);
     for (const QString &name : stale)
         QFile::remove(cache.filePath(name));
 }

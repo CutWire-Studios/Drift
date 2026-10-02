@@ -135,8 +135,8 @@ public:
     // alongside staticTextures.
     //
     // Kept apart from staticTextures because those are package assets: staticTexture() uploads
-    // them flipped and wrapping, and a photo needs neither — its v axis has to line up with the
-    // landmark uv the mesh carries.
+    // them wrapping, and a photo must clamp — its uv has to line up with the landmark uv the
+    // mesh carries.
     struct FaceSwapPhotoGpu
     {
         GLuint texture = 0; // the photo, unflipped, clamped

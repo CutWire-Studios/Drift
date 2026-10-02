@@ -217,6 +217,10 @@ ApplicationWindow {
             const url = intent.urls && intent.urls.length > 0 ? String(intent.urls[0]) : ""
             if (url === "" || Market.handleIncomingUrl(url))
                 return
+            if (Addons.isUserPackage(url)) {
+                window.importUserPackage(url)
+                return
+            }
             window.confirmIfDirty(function () {
                 EditorState.loadProject(url)
                 Qt.callLater(window.showEditor)
@@ -576,6 +580,10 @@ ApplicationWindow {
     }
 
     LazyLoader { id: addonManagerDialogLoader; sourceComponent: Component { AddonManagerDialog { } } }
+
+    function importUserPackage(url) {
+        addonManagerDialogLoader.ensure().importUserPackage(url)
+    }
     AddonStartupDialog { id: addonStartupDialog }
     LazyLoader { id: missingAddonsDialogLoader; sourceComponent: Component { MissingAddonsDialog { } } }
     LazyLoader { id: updateDialogLoader; sourceComponent: Component { UpdateDialog { } } }
@@ -743,8 +751,13 @@ ApplicationWindow {
             window.routeIncomingIntent(intent)
             return
         }
-        const launched = intent && intent.urls && intent.urls.length > 0
-                         ? String(intent.urls[0]) : ""
+        let launched = intent && intent.urls && intent.urls.length > 0
+                       ? String(intent.urls[0]) : ""
+        // A .driftfx opened from a file manager installs over whatever startup does next.
+        if (launched !== "" && Addons.isUserPackage(launched)) {
+            Qt.callLater(window.importUserPackage, launched)
+            launched = ""
+        }
         if (launched !== "" && !Market.handleIncomingUrl(launched)) {
             // Unless the previous session left a snapshot: loading the launched project
             // deletes it unasked, so park the URL and let the recovery prompt run first.
@@ -868,6 +881,10 @@ ApplicationWindow {
         function onLaunchUrlReceived(url) {
             if (Market.handleIncomingUrl(url))
                 return
+            if (Addons.isUserPackage(url)) {
+                window.importUserPackage(url)
+                return
+            }
             if (recoveryDialog.visible) {
                 window._pendingLaunchUrl = url
                 return

@@ -3044,8 +3044,8 @@ bool blitTextureToTarget(GlRuntime &rt, QOpenGLExtraFunctions *gl, GLuint srcTex
     return true;
 }
 
-// Static package assets live for the process lifetime. They are plain uploads (not FBO-backed),
-// so they must be flipped to match the Y layout of the FBO-promoted source targets.
+// Static package assets live for the process lifetime. Uploaded unflipped, so row 0 of the image
+// sits at v = 0 (the top), the same orientation as clip frames.
 GLuint staticTexture(GlRuntime &rt, QOpenGLExtraFunctions *gl, const QString &path)
 {
     const auto it = rt.staticTextures.find(path);
@@ -3058,7 +3058,7 @@ GLuint staticTexture(GlRuntime &rt, QOpenGLExtraFunctions *gl, const QString &pa
         rt.staticTextures[path] = 0;
         return 0;
     }
-    const GLuint tex = uploadTexture(gl, image, /*flipVertically=*/true);
+    const GLuint tex = uploadTexture(gl, image);
     gl->glBindTexture(GL_TEXTURE_2D, tex);
     gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
     gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);

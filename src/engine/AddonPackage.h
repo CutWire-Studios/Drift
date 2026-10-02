@@ -70,10 +70,17 @@ struct PackageInfo
 // can name upstream's own archive and this string in the same breath.
 QString currentPlatform();
 
+// Official packs are signed .driftpkg files. User packages (.driftfx, exported by Drift Forge) are
+// the same layout with magic "DRIFTFX\0" and no signature trailer; the distinct magic means one can
+// never be passed off as the other. A user package must provide exactly one effect or transition,
+// with every file under <root>/<one folder>/.
+enum class Container { Signed, User };
+
 // Header + manifest only; cheap, and does NOT check the signature — nothing here is trustworthy
 // until install() has run. Use it to show what a sideloaded file claims to be, never to decide
 // whether to trust it.
-std::optional<PackageInfo> readManifest(const QString &packagePath, QString *error);
+std::optional<PackageInfo> readManifest(const QString &packagePath, QString *error,
+                                        Container container = Container::Signed);
 
 // Return false to abort the install.
 using ProgressFn = std::function<bool(qint64 done, qint64 total)>;
@@ -86,6 +93,6 @@ using ProgressFn = std::function<bool(qint64 done, qint64 total)>;
 //
 // destDir must not exist, or must be replaceable; any existing .partial sibling is discarded.
 bool install(const QString &packagePath, const QString &destDir, const ProgressFn &progress,
-             PackageInfo *installed, QString *error);
+             PackageInfo *installed, QString *error, Container container = Container::Signed);
 
 } // namespace drift::addon
