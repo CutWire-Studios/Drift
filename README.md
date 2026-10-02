@@ -36,6 +36,9 @@ What you see in the preview is what you export. One compositor, one look, no sur
   <a href="https://flathub.org/apps/org.cutwire.Drift">
     <img src="https://flathub.org/api/badge?locale=en" alt="Get it on Flathub" width="240">
   </a>
+  <a href="https://apps.microsoft.com/detail/9PHHBZ07FRSZ">
+    <img src="https://get.microsoft.com/images/en-us%20dark.svg" alt="Get it from Microsoft" width="293">
+  </a>
 </p>
 
 **Linux** — install from Flathub:
@@ -61,7 +64,7 @@ Or grab a build for your platform from the
 | Platform | Package |
 |----------|---------|
 | Linux | [Flathub](https://flathub.org/apps/org.cutwire.Drift) · [AppImage](https://github.com/CutWire-Studios/Drift/releases/latest) |
-| Windows | [Installer (.exe)](https://github.com/CutWire-Studios/Drift/releases/latest) · [Portable zip](https://github.com/CutWire-Studios/Drift/releases/latest) |
+| Windows | [Microsoft Store](https://apps.microsoft.com/detail/9PHHBZ07FRSZ) · [Installer (.exe)](https://github.com/CutWire-Studios/Drift/releases/latest) · [Portable zip](https://github.com/CutWire-Studios/Drift/releases/latest) |
 | macOS | [Homebrew Tap](https://github.com/CutWire-Studios/homebrew-tap) · [Disk image (.dmg, Apple Silicon)](https://github.com/CutWire-Studios/Drift/releases/latest) |
 | Android | [APK (arm64-v8a)](https://github.com/CutWire-Studios/Drift/releases/latest) · [APK (armeabi-v7a)](https://github.com/CutWire-Studios/Drift/releases/latest) · [APK (x86_64)](https://github.com/CutWire-Studios/Drift/releases/latest) |
 
