@@ -24,7 +24,13 @@ QString indexPath()
 
 // The bake lives under AppDataLocation, which on this app is "CutWire Drift" —
 // spaces. avformat_open_input is fine with spaces; some decode backends are not.
-// Keep a no-space copy in /tmp named by clip id so preview always has a clean path.
+// Give the decoder a no-space path in /tmp named by clip id so preview always has a clean path.
+//
+// On Unix that path is a symlink: a full copy of every bake (often 1 GB+ each) was never
+// cleaned up, and /tmp is commonly a RAM-backed tmpfs, so a long export filled memory and then
+// hit the tmpfs quota. Where a symlink is not available the copy stays, but a copy that failed
+// for a given bake is not retried — this runs on every decoder open, and retrying re-copied
+// hundreds of MB per call before failing again.
 QString bakePathForDecode(const Clip &clip)
 {
     if (clip.stabilizePath.isEmpty() || !QFile::exists(clip.stabilizePath))
@@ -37,12 +43,34 @@ QString bakePathForDecode(const Clip &clip)
         QDir::temp().filePath(QStringLiteral("drift-stab-out-%1.mp4").arg(clip.id));
     const QFileInfo src(path);
     const QFileInfo dst(tmp);
-    if (!dst.exists() || dst.size() != src.size() || dst.lastModified() < src.lastModified()) {
-        QFile::remove(tmp);
-        if (!QFile::copy(path, tmp) || !QFile::exists(tmp))
+#ifdef Q_OS_UNIX
+    if (dst.isSymLink() && dst.symLinkTarget() == src.absoluteFilePath() && dst.exists())
+        return tmp;
+    QFile::remove(tmp);
+    return QFile::link(src.absoluteFilePath(), tmp) ? tmp : path;
+#else
+    if (dst.exists() && dst.size() == src.size() && dst.lastModified() >= src.lastModified())
+        return tmp;
+
+    static QMutex failedMutex;
+    static QSet<QString> failed;
+    const QString key = src.absoluteFilePath() + QLatin1Char('|')
+        + QString::number(src.size()) + QLatin1Char('|')
+        + QString::number(src.lastModified().toMSecsSinceEpoch());
+    {
+        QMutexLocker lock(&failedMutex);
+        if (failed.contains(key))
             return path;
     }
+    QFile::remove(tmp);
+    if (!QFile::copy(path, tmp) || !QFile::exists(tmp)) {
+        QFile::remove(tmp);
+        QMutexLocker lock(&failedMutex);
+        failed.insert(key);
+        return path;
+    }
     return tmp;
+#endif
 }
 
 QString previewProxyPath(const Clip &clip)
