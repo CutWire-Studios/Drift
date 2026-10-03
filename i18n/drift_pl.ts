@@ -5,134 +5,134 @@
     <name>AddonManager</name>
     <message>
         <source>Automatic (recommended)</source>
-        <translation type="unfinished"></translation>
+        <translation>Automatycznie (zalecane)</translation>
     </message>
     <message>
         <source>This computer</source>
-        <translation type="unfinished"></translation>
+        <translation>Ten komputer</translation>
     </message>
     <message>
         <source>NVIDIA graphics (faster)</source>
-        <translation type="unfinished"></translation>
+        <translation>Karta graficzna NVIDIA (szybszy)</translation>
     </message>
     <message>
         <source>Graphics card (faster)</source>
-        <translation type="unfinished"></translation>
+        <translation>Karta graficzna (szybszy)</translation>
     </message>
     <message>
         <source>Could not open that file.</source>
-        <translation type="unfinished"></translation>
+        <translation>Nie można otworzyć tego pliku.</translation>
     </message>
     <message>
         <source>Could not read that file.</source>
-        <translation type="unfinished"></translation>
+        <translation>Nie można odczytać tego pliku.</translation>
     </message>
     <message>
         <source>This is not a Drift effect file (%1).</source>
-        <translation type="unfinished"></translation>
+        <translation>To nie jest plik efektu Drift (%1).</translation>
     </message>
 </context>
 <context>
     <name>AddonManagerDialog</name>
     <message>
         <source>Extras</source>
-        <translation type="unfinished"></translation>
+        <translation>Dodatki</translation>
     </message>
     <message>
         <source>Close</source>
-        <translation type="unfinished"></translation>
+        <translation>Zamknij</translation>
     </message>
     <message>
         <source>Remove this pack?</source>
-        <translation type="unfinished"></translation>
+        <translation>Usunąć tą paczkę?</translation>
     </message>
     <message>
         <source>Remove</source>
-        <translation type="unfinished"></translation>
+        <translation>Usuń</translation>
     </message>
     <message>
         <source>“%1” and its downloaded data will be deleted. You can install it again later.</source>
-        <translation type="unfinished"></translation>
+        <translation>„%1” i pobrane dane zostaną usunięte. Możesz zainstalować je ponownie później.</translation>
     </message>
     <message>
         <source>Import Effect</source>
-        <translation type="unfinished"></translation>
+        <translation>Importuj efekt</translation>
     </message>
     <message>
         <source>Drift effect (*.driftfx)</source>
-        <translation type="unfinished"></translation>
+        <translation>Plik efektu Drift (*.driftfx)</translation>
     </message>
     <message>
         <source>Install this transition?</source>
-        <translation type="unfinished"></translation>
+        <translation>Zainstalować to tłumaczenie?</translation>
     </message>
     <message>
         <source>Install this effect?</source>
-        <translation type="unfinished"></translation>
+        <translation>Zainstalować ten efekt?</translation>
     </message>
     <message>
         <source>“%1” by %2</source>
-        <translation type="unfinished"></translation>
+        <translation>„%1” przez %2</translation>
     </message>
     <message>
         <source>“%1”</source>
-        <translation type="unfinished"></translation>
+        <translation>“%1”</translation>
     </message>
     <message>
         <source>%1 was made by a user, not the Drift team, and nothing has checked it. Only install files you trust.</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 został stworzony przez użytkownika, a nie przez zespół Drift, i nikt go nie sprawdził. Instaluj tylko pliki, którym ufasz.</translation>
     </message>
     <message>
         <source>Could not install “%1”: %2</source>
-        <translation type="unfinished"></translation>
+        <translation>Nie można zainstalować „%1”: %2</translation>
     </message>
     <message>
         <source>Installed “%1”</source>
-        <translation type="unfinished"></translation>
+        <translation>Zainstalowano „%1”</translation>
     </message>
     <message>
         <source>All</source>
-        <translation type="unfinished"></translation>
+        <translation>Wszystko</translation>
     </message>
     <message>
         <source>Effects</source>
-        <translation type="unfinished"></translation>
+        <translation>Efekty</translation>
     </message>
     <message>
         <source>Transitions</source>
-        <translation type="unfinished"></translation>
+        <translation>Tłumaczenia</translation>
     </message>
     <message>
         <source>Audio FX</source>
-        <translation type="unfinished"></translation>
+        <translation>Efekty dźwiękowe</translation>
     </message>
     <message>
         <source>Fonts</source>
-        <translation type="unfinished"></translation>
+        <translation>Czcionki</translation>
     </message>
     <message>
         <source>Stickers</source>
-        <translation type="unfinished"></translation>
+        <translation>Naklejki</translation>
     </message>
     <message>
         <source>AI tools</source>
-        <translation type="unfinished"></translation>
+        <translation>Narzędzia AI</translation>
     </message>
     <message>
         <source>AI engine</source>
-        <translation type="unfinished"></translation>
+        <translation>Silnik AI</translation>
     </message>
     <message>
         <source>Import effect file…</source>
-        <translation type="unfinished"></translation>
+        <translation>Importuj plik efektu…</translation>
     </message>
     <message>
         <source>Checking for extras…</source>
-        <translation type="unfinished"></translation>
+        <translation>Sprawdzanie dodatków…</translation>
     </message>
     <message>
         <source>How AI runs</source>
-        <translation type="unfinished"></translation>
+        <translation>Jak działa AI</translation>
     </message>
     <message>
         <source>Automatic picks the fastest option you have installed, and uses this computer if the graphics card can&apos;t help.</source>
@@ -140,43 +140,43 @@
     </message>
     <message>
         <source>Install an AI Engine below to unlock auto captions, subject cutout, funny face effects, and noise removal.</source>
-        <translation type="unfinished"></translation>
+        <translation>Zainstaluj poniżej moduł AI, aby odblokować automatyczne napisy, wycinanie obiektów, efekty zabawnych twarzy i usuwanie szumów.</translation>
     </message>
     <message>
         <source>Restart Drift for this to take effect.</source>
-        <translation type="unfinished"></translation>
+        <translation>Aby zmiany zostały wprowadzone, uruchom ponownie Drift.</translation>
     </message>
     <message>
         <source>Can&apos;t reach the download store</source>
-        <translation type="unfinished"></translation>
+        <translation>Nie można uzyskać dostępu do sklepu z plikami do pobrania</translation>
     </message>
     <message>
         <source>Nothing in this category</source>
-        <translation type="unfinished"></translation>
+        <translation>Nic w tej kategorii</translation>
     </message>
     <message>
         <source>Check your connection and try again.</source>
-        <translation type="unfinished"></translation>
+        <translation>Sprawdź połączenie i spróbuj ponownie.</translation>
     </message>
     <message>
         <source>Pick another category above.</source>
-        <translation type="unfinished"></translation>
+        <translation>Wybierz inną kategorię powyżej.</translation>
     </message>
     <message>
         <source>Retry</source>
-        <translation type="unfinished"></translation>
+        <translation>Spróbuj ponownie</translation>
     </message>
     <message>
         <source>Technical details</source>
-        <translation type="unfinished"></translation>
+        <translation>Szczegóły techniczne</translation>
     </message>
     <message>
         <source>%1 → %2</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 → %2</translation>
     </message>
     <message>
         <source>%1… %2%</source>
-        <translation type="unfinished"></translation>
+        <translation>%1… %2%</translation>
     </message>
     <message>
         <source>Requires Drift %1 or newer</source>
