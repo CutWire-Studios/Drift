@@ -21,15 +21,15 @@
     </message>
     <message>
         <source>Could not open that file.</source>
-        <translation type="unfinished"></translation>
+        <translation>そのファイルを開けませんでした。</translation>
     </message>
     <message>
         <source>Could not read that file.</source>
-        <translation type="unfinished"></translation>
+        <translation>そのファイルを読み取れませんでした。</translation>
     </message>
     <message>
         <source>This is not a Drift effect file (%1).</source>
-        <translation type="unfinished"></translation>
+        <translation>これは Drift エフェクトファイルではありません (%1)。</translation>
     </message>
 </context>
 <context>
@@ -56,39 +56,39 @@
     </message>
     <message>
         <source>Import Effect</source>
-        <translation type="unfinished"></translation>
+        <translation>エフェクトをインポート</translation>
     </message>
     <message>
         <source>Drift effect (*.driftfx)</source>
-        <translation type="unfinished"></translation>
+        <translation>Drift エフェクト (*.driftfx)</translation>
     </message>
     <message>
         <source>Install this transition?</source>
-        <translation type="unfinished"></translation>
+        <translation>このトランジションをインストールしますか?</translation>
     </message>
     <message>
         <source>Install this effect?</source>
-        <translation type="unfinished"></translation>
+        <translation>このエフェクトをインストールしますか?</translation>
     </message>
     <message>
         <source>“%1” by %2</source>
-        <translation type="unfinished"></translation>
+        <translation>「%1」(%2 作)</translation>
     </message>
     <message>
         <source>“%1”</source>
-        <translation type="unfinished"></translation>
+        <translation>「%1」</translation>
     </message>
     <message>
         <source>%1 was made by a user, not the Drift team, and nothing has checked it. Only install files you trust.</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 は Drift チームではなく、ユーザーによって作成されたものです。内容は確認されていません。信頼できるファイルのみインストールしてください。</translation>
     </message>
     <message>
         <source>Could not install “%1”: %2</source>
-        <translation type="unfinished"></translation>
+        <translation>「%1」をインストールできませんでした : %2</translation>
     </message>
     <message>
         <source>Installed “%1”</source>
-        <translation type="unfinished"></translation>
+        <translation>「%1」をインストールしました</translation>
     </message>
     <message>
         <source>All</source>
@@ -124,7 +124,7 @@
     </message>
     <message>
         <source>Import effect file…</source>
-        <translation type="unfinished"></translation>
+        <translation>エフェクトファイルをインポート…</translation>
     </message>
     <message>
         <source>Checking for extras…</source>
@@ -180,7 +180,7 @@
     </message>
     <message>
         <source>Requires Drift %1 or newer</source>
-        <translation type="unfinished"></translation>
+        <translation>Drift %1 以降が必要です</translation>
     </message>
     <message>
         <source>%1 download</source>
@@ -3518,15 +3518,15 @@
     </message>
     <message>
         <source>%1 (trimmed)</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 (トリミング済み)</translation>
     </message>
     <message>
         <source>Rendering…</source>
-        <translation type="unfinished"></translation>
+        <translation>レンダリング中…</translation>
     </message>
     <message>
         <source>Render Trimmed Copy</source>
-        <translation type="unfinished"></translation>
+        <translation>トリミングしたコピーをレンダリング</translation>
     </message>
     <message>
         <source>Transform selection together</source>
@@ -3562,35 +3562,35 @@
     </message>
     <message>
         <source>Select a video clip to enhance</source>
-        <translation type="unfinished"></translation>
+        <translation>強化するビデオクリップを選択してください</translation>
     </message>
     <message>
         <source>Choose a model to enhance with</source>
-        <translation type="unfinished"></translation>
+        <translation>強化に使用するモデルを選択してください</translation>
     </message>
     <message>
         <source>This clip is already being enhanced</source>
-        <translation type="unfinished"></translation>
+        <translation>このクリップは既に強化中です</translation>
     </message>
     <message>
         <source>%1 (enhanced %2x)</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 (%2 倍に強化)</translation>
     </message>
     <message>
         <source>%1 (enhanced)</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 (強化済み)</translation>
     </message>
     <message>
         <source>Enhance Video</source>
-        <translation type="unfinished"></translation>
+        <translation>ビデオを強化</translation>
     </message>
     <message>
         <source>Enhanced video added to the media bin</source>
-        <translation type="unfinished"></translation>
+        <translation>強化したビデオをメディアビンに追加しました</translation>
     </message>
     <message>
         <source>Enhancing video…</source>
-        <translation type="unfinished"></translation>
+        <translation>ビデオを強化中…</translation>
     </message>
     <message>
         <source>This build of Drift has no video stabilization support</source>
@@ -6517,7 +6517,7 @@
     </message>
     <message>
         <source>This clip was scanned before the face mesh was supported. Re-detect faces to enable 3D Face Mesh and Face Retouch.</source>
-        <translation type="unfinished"></translation>
+        <translation>このクリップはフェイスメッシュがサポートされる前にスキャンされました。3D フェイスメッシュと顔のレタッチを有効にするには、顔を再検出してください。</translation>
     </message>
     <message>
         <source>Move to a time, set a value, then click the diamond to add a keyframe. With Auto keyframes on, dragging a slider also creates them.</source>
@@ -6609,7 +6609,7 @@
     </message>
     <message>
         <source>Face %1</source>
-        <translation type="unfinished"></translation>
+        <translation>顔 %1</translation>
     </message>
     <message>
         <source>Anything in “%1” nearer than Distance passes in front of this layer.</source>
@@ -7227,11 +7227,11 @@
     </message>
     <message>
         <source>Unlock source frame ratio</source>
-        <translation>ソースフレームの比率のロックを解除</translation>
+        <translation>ソースのフレーム比率のロックを解除</translation>
     </message>
     <message>
         <source>Lock source frame ratio</source>
-        <translation>ソースフレームの比率をロック</translation>
+        <translation>ソースのフレーム比率をロック</translation>
     </message>
     <message>
         <source>Width</source>
@@ -8427,7 +8427,7 @@
     </message>
     <message>
         <source>Trim, crop and upscale…</source>
-        <translation type="unfinished"></translation>
+        <translation>トリミング・クロップ・アップスケール…</translation>
     </message>
     <message>
         <source>Replace media…</source>
@@ -8467,11 +8467,11 @@
     </message>
     <message>
         <source>Edit-friendly</source>
-        <translation>編集向け</translation>
+        <translation>編集に適した形式</translation>
     </message>
     <message>
         <source>Converted to a constant frame rate for smooth editing</source>
-        <translation>スムーズに編集できるよう固定フレームレートに変換済み</translation>
+        <translation>スムーズな編集のために固定フレームレートに変換済み</translation>
     </message>
     <message>
         <source>Collapse folder</source>
@@ -8519,7 +8519,7 @@
     </message>
     <message>
         <source>Convert to edit-friendly format</source>
-        <translation>編集に適したフォーマットに変換</translation>
+        <translation>編集に適した形式に変換</translation>
     </message>
     <message numerus="yes">
         <source>Remove %n items from project</source>
@@ -8651,11 +8651,11 @@
     </message>
     <message>
         <source>Unlock source frame ratio</source>
-        <translation>ソースフレームの比率のロックを解除</translation>
+        <translation>ソースのフレーム比率のロックを解除</translation>
     </message>
     <message>
         <source>Lock source frame ratio</source>
-        <translation>ソースフレームの比率をロック</translation>
+        <translation>ソースのフレーム比率をロック</translation>
     </message>
     <message>
         <source>Reset</source>
@@ -8663,27 +8663,27 @@
     </message>
     <message>
         <source>Upscale this video?</source>
-        <translation type="unfinished"></translation>
+        <translation>このビデオをアップスケールしますか?</translation>
     </message>
     <message>
         <source>%1p</source>
-        <translation type="unfinished"></translation>
+        <translation>%1p</translation>
     </message>
     <message>
         <source>Length %1</source>
-        <translation type="unfinished"></translation>
+        <translation>長さ %1</translation>
     </message>
     <message>
         <source>This video is under 700 pixels on its shorter side. Upscaling it with an AI model can make it look sharper.</source>
-        <translation type="unfinished"></translation>
+        <translation>このビデオは短辺が 700 ピクセル未満です。AI モデルでアップスケールすると、より鮮明に見える場合があります。</translation>
     </message>
     <message>
         <source>This resolution is already good for most projects. You can still upscale it.</source>
-        <translation type="unfinished"></translation>
+        <translation>この解像度はほとんどのプロジェクトで十分です。それでもアップスケールすることは可能です。</translation>
     </message>
     <message>
         <source>Done keeps the original video and stores this range and framing. Upscale renders them as a new video in the media bin, then opens it in the Enhance window.</source>
-        <translation type="unfinished"></translation>
+        <translation>「完了」では元のビデオを保持したまま、この範囲とフレーミングを保存します。「アップスケール」では、それらを新しいビデオとしてメディアビンにレンダリングし、強化ウィンドウで開きます。</translation>
     </message>
     <message>
         <source>Saving…</source>
@@ -8691,7 +8691,7 @@
     </message>
     <message>
         <source>Choose the part and framing to keep, then Next.</source>
-        <translation type="unfinished"></translation>
+        <translation>保持する部分とフレーミングを選択し、「次へ」を押してください。</translation>
     </message>
     <message>
         <source>Save writes a new file over this item in the bin.</source>
@@ -8699,7 +8699,7 @@
     </message>
     <message>
         <source>Save keeps the original video and stores this framing.</source>
-        <translation>「保存」を実行すると元のビデオは保持され、このフレーミングが保存されます。</translation>
+        <translation>保存すると元のビデオは保持され、このフレーミングが保存されます。</translation>
     </message>
     <message>
         <source>Nothing to save — drag this item onto the timeline when you are ready.</source>
@@ -8719,11 +8719,11 @@
     </message>
     <message>
         <source>Back</source>
-        <translation type="unfinished">戻る</translation>
+        <translation>戻る</translation>
     </message>
     <message>
         <source>Upscale…</source>
-        <translation type="unfinished"></translation>
+        <translation>アップスケール…</translation>
     </message>
     <message>
         <source>Save</source>
@@ -8731,11 +8731,11 @@
     </message>
     <message>
         <source>Next</source>
-        <translation type="unfinished"></translation>
+        <translation>次へ</translation>
     </message>
     <message>
         <source>Done</source>
-        <translation type="unfinished">完了</translation>
+        <translation>完了</translation>
     </message>
     <message>
         <source>Rotate</source>
@@ -10124,31 +10124,31 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Loading the models…</source>
-        <translation type="unfinished"></translation>
+        <translation>モデルを読み込み中…</translation>
     </message>
     <message>
         <source>%1 s</source>
-        <translation type="unfinished">%1 秒</translation>
+        <translation>%1 秒</translation>
     </message>
     <message>
         <source>%1 min</source>
-        <translation type="unfinished">%1 分</translation>
+        <translation>%1 分</translation>
     </message>
     <message>
         <source>%1 h %2 min</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 時間 %2 分</translation>
     </message>
     <message>
         <source>Enhancing… %1% — about %2 left</source>
-        <translation type="unfinished"></translation>
+        <translation>強化中… %1% — 残り約 %2</translation>
     </message>
     <message>
         <source>Enhancing… %1%</source>
-        <translation type="unfinished"></translation>
+        <translation>強化中… %1%</translation>
     </message>
     <message>
         <source>Enhancing this frame… %1%</source>
-        <translation type="unfinished"></translation>
+        <translation>このフレームを強化中… %1%</translation>
     </message>
     <message>
         <source>Scanning frame %1 of %2…</source>
@@ -10335,171 +10335,171 @@ If playback stutters, try another.</source>
     <name>RestoreWindow</name>
     <message>
         <source>Enhance video</source>
-        <translation type="unfinished"></translation>
+        <translation>ビデオを強化</translation>
     </message>
     <message>
         <source>None</source>
-        <translation type="unfinished">なし</translation>
+        <translation>なし</translation>
     </message>
     <message>
         <source>%1 (custom, experimental)</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 (カスタム、実験的)</translation>
     </message>
     <message>
         <source>Original</source>
-        <translation type="unfinished">オリジナル</translation>
+        <translation>オリジナル</translation>
     </message>
     <message>
         <source>Enhanced — out of date, preview again</source>
-        <translation type="unfinished"></translation>
+        <translation>強化済み — 古くなっています、再度プレビューしてください</translation>
     </message>
     <message>
         <source>Enhanced %1 × %2</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 × %2 に強化済み</translation>
     </message>
     <message>
         <source>Loading this frame…</source>
-        <translation type="unfinished"></translation>
+        <translation>このフレームを読み込み中…</translation>
     </message>
     <message>
         <source>Working…</source>
-        <translation type="unfinished">処理中…</translation>
+        <translation>処理中…</translation>
     </message>
     <message>
         <source>Choose models, then Preview to compare this frame</source>
-        <translation type="unfinished"></translation>
+        <translation>モデルを選択し、「プレビュー」でこのフレームを比較してください</translation>
     </message>
     <message>
         <source>Frame</source>
-        <translation type="unfinished">フレーム</translation>
+        <translation>フレーム</translation>
     </message>
     <message>
         <source>s</source>
-        <translation type="unfinished">秒</translation>
+        <translation>秒</translation>
     </message>
     <message>
         <source>Fit</source>
-        <translation type="unfinished">フィット</translation>
+        <translation>フィット</translation>
     </message>
     <message>
         <source>Preview one frame, then enhance the whole video. The result is added to the media bin. Enhancing is slow — minutes per second of video without a GPU.</source>
-        <translation type="unfinished"></translation>
+        <translation>1フレームをプレビューしてから、ビデオ全体を強化します。結果はメディアビンに追加されます。強化には時間がかかります — GPU がない場合、ビデオ 1秒あたり数分かかります。</translation>
     </message>
     <message>
         <source>Preview one frame, then enhance the part of the clip used on the timeline. The result is added to the media bin. Enhancing is slow — minutes per second of video without a GPU.</source>
-        <translation type="unfinished"></translation>
+        <translation>1フレームをプレビューしてから、タイムラインで使用されているクリップの部分を強化します。結果はメディアビンに追加されます。強化には時間がかかります — GPU がない場合、ビデオ 1秒あたり数分かかります。</translation>
     </message>
     <message>
         <source>Remove compression</source>
-        <translation type="unfinished"></translation>
+        <translation>圧縮を除去</translation>
     </message>
     <message>
         <source>Upscale</source>
-        <translation type="unfinished"></translation>
+        <translation>アップスケール</translation>
     </message>
     <message>
         <source>Output: %1 × %2</source>
-        <translation type="unfinished"></translation>
+        <translation>出力 : %1 × %2</translation>
     </message>
     <message>
         <source> — larger than 4K, which is slow to edit and export</source>
-        <translation type="unfinished"></translation>
+        <translation> — 4K より大きいため、編集とエクスポートに時間がかかります</translation>
     </message>
     <message>
         <source>Up to about %1 on this computer&apos;s CPU.</source>
-        <translation type="unfinished"></translation>
+        <translation>このコンピューターの CPU で約 %1 かかります。</translation>
     </message>
     <message>
         <source>Up to about %1 on a typical laptop CPU. Preview a frame for an estimate for this computer.</source>
-        <translation type="unfinished"></translation>
+        <translation>一般的なノート PC の CPU で約 %1 かかります。このコンピューターでの見積もりを確認するには、フレームをプレビューしてください。</translation>
     </message>
     <message>
         <source>Preview this frame</source>
-        <translation type="unfinished"></translation>
+        <translation>このフレームをプレビュー</translation>
     </message>
     <message>
         <source>Anime and drawings</source>
-        <translation type="unfinished"></translation>
+        <translation>アニメ・イラスト</translation>
     </message>
     <message>
         <source>Live action</source>
-        <translation type="unfinished"></translation>
+        <translation>実写</translation>
     </message>
     <message>
         <source>3D animation and games</source>
-        <translation type="unfinished"></translation>
+        <translation>3D アニメーション・ゲーム</translation>
     </message>
     <message>
         <source>General</source>
-        <translation type="unfinished">全般</translation>
+        <translation>全般</translation>
     </message>
     <message>
         <source>Choose an upscaler</source>
-        <translation type="unfinished"></translation>
+        <translation>アップスケーラーを選択</translation>
     </message>
     <message>
         <source>All</source>
-        <translation type="unfinished">すべて</translation>
+        <translation>すべて</translation>
     </message>
     <message>
         <source>Speeds are per frame of this clip. Custom models are experimental and may not work. Drop an ONNX export (fp32 or fp16, RGB, 1x/2x/4x) into the folder; put the scale in the file name, e.g. &quot;2x_Name.onnx&quot;.</source>
-        <translation type="unfinished"></translation>
+        <translation>速度はこのクリップの 1フレームあたりです。カスタムモデルは実験的な機能であり、動作しない場合があります。ONNX でエクスポートしたファイル (fp32 または fp16、RGB、1x/2x/4x) をフォルダーにドロップしてください。ファイル名に倍率を含めてください (例 : &quot;2x_Name.onnx&quot;)。</translation>
     </message>
     <message>
         <source>Refresh model list</source>
-        <translation type="unfinished"></translation>
+        <translation>モデルリストを更新</translation>
     </message>
     <message>
         <source>Enhance clip</source>
-        <translation type="unfinished"></translation>
+        <translation>クリップを強化</translation>
     </message>
     <message>
         <source>under a second</source>
-        <translation type="unfinished"></translation>
+        <translation>1秒未満</translation>
     </message>
     <message>
         <source>%1 s</source>
-        <translation type="unfinished">%1 秒</translation>
+        <translation>%1 秒</translation>
     </message>
     <message>
         <source>%1 min</source>
-        <translation type="unfinished">%1 分</translation>
+        <translation>%1 分</translation>
     </message>
     <message>
         <source>%1 h %2 min</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 時間 %2 分</translation>
     </message>
     <message>
         <source>%1 s per frame</source>
-        <translation type="unfinished"></translation>
+        <translation>1フレームあたり %1 秒</translation>
     </message>
     <message>
         <source>No upscaling</source>
-        <translation type="unfinished"></translation>
+        <translation>アップスケールなし</translation>
     </message>
     <message>
         <source>Keep the original size.</source>
-        <translation type="unfinished"></translation>
+        <translation>元のサイズを維持します。</translation>
     </message>
     <message>
         <source>Install AI engine first</source>
-        <translation type="unfinished">まず AI エンジンをインストール</translation>
+        <translation>まず AI エンジンをインストール</translation>
     </message>
     <message>
         <source>Get models (openmodeldb.info)</source>
-        <translation type="unfinished"></translation>
+        <translation>モデルを取得 (openmodeldb.info)</translation>
     </message>
     <message>
         <source>Open custom models folder</source>
-        <translation type="unfinished"></translation>
+        <translation>カスタムモデルフォルダーを開く</translation>
     </message>
     <message>
         <source>Stop</source>
-        <translation type="unfinished">停止</translation>
+        <translation>停止</translation>
     </message>
     <message>
         <source>Close</source>
-        <translation type="unfinished">閉じる</translation>
+        <translation>閉じる</translation>
     </message>
 </context>
 <context>
@@ -11689,7 +11689,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Speed applies to video, audio and composite clips.</source>
-        <translation type="unfinished"></translation>
+        <translation>速度はビデオ、オーディオ、コンポジットクリップに適用されます。</translation>
     </message>
     <message>
         <source>Playback speed</source>
@@ -13216,7 +13216,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Select covered clips</source>
-        <translation>カバーされたクリップを選択</translation>
+        <translation>カバーされているクリップを選択</translation>
     </message>
     <message>
         <source>Split at current time</source>
@@ -13236,7 +13236,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Enhance video…</source>
-        <translation type="unfinished"></translation>
+        <translation>ビデオを強化…</translation>
     </message>
     <message>
         <source>Unlink</source>
@@ -13339,7 +13339,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Previewing from a low-resolution proxy. Export uses the original.</source>
-        <translation>低解像度プロキシでプレビューしています。エクスポートにはオリジナルを使用します。</translation>
+        <translation>低解像度プロキシでプレビュー中。エクスポートにはオリジナルが使用されます。</translation>
     </message>
     <message>
         <source>Edit-friendly</source>
@@ -13351,7 +13351,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Variable frame rate. This clip can drift out of sync with its audio. Right-click it and choose Convert to edit-friendly format.</source>
-        <translation>可変フレームレート。このクリップはオーディオと同期がずれる可能性があります。右クリックして「編集に適した形式に変換」を選択してください。</translation>
+        <translation>可変フレームレート。このクリップはオーディオとの同期がずれる可能性があります。右クリックして「編集に適した形式に変換」を選択してください。</translation>
     </message>
     <message>
         <source>Transform layer: moves, scales and turns every track its bracket covers</source>
@@ -13399,11 +13399,11 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>PAUSED </source>
-        <translation>一時停止中 </translation>
+        <translation>一時停止 </translation>
     </message>
     <message>
         <source>REC </source>
-        <translation>録音中 </translation>
+        <translation>録音 </translation>
     </message>
     <message>
         <source>Rename bookmark</source>
@@ -13435,7 +13435,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>The selected text clips will be replaced by one subtitle clip. Every caption will use the position and style of the first text clip.</source>
-        <translation>選択したテキストクリップは1つの字幕クリップに置き換えられます。すべてのキャプションで最初のテキストクリップの位置とスタイルが使用されます。</translation>
+        <translation>選択したテキストクリップは1つの字幕クリップに置き換えられます。すべてのキャプションに最初のテキストクリップの位置とスタイルが適用されます。</translation>
     </message>
     <message>
         <source>Rename clip</source>
@@ -13844,7 +13844,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Select covered clips</source>
-        <translation>カバーされたクリップを選択</translation>
+        <translation>カバーされているクリップを選択</translation>
     </message>
     <message>
         <source>Add transform layer above</source>
@@ -14204,7 +14204,7 @@ If playback stutters, try another.</source>
     <message numerus="yes">
         <source>%1 · %n clip(s)</source>
         <translation>
-            <numerusform>%1 · %n クリップ</numerusform>
+            <numerusform>%1 · %n 個のクリップ</numerusform>
         </translation>
     </message>
     <message>
@@ -14485,31 +14485,31 @@ If playback stutters, try another.</source>
     <name>UpscaleModelCard</name>
     <message>
         <source>Anime and drawings</source>
-        <translation type="unfinished"></translation>
+        <translation>アニメ・イラスト</translation>
     </message>
     <message>
         <source>Live action</source>
-        <translation type="unfinished"></translation>
+        <translation>実写</translation>
     </message>
     <message>
         <source>3D animation and games</source>
-        <translation type="unfinished"></translation>
+        <translation>3D アニメーション・ゲーム</translation>
     </message>
     <message>
         <source>General</source>
-        <translation type="unfinished">全般</translation>
+        <translation>全般</translation>
     </message>
     <message>
         <source>Before</source>
-        <translation type="unfinished"></translation>
+        <translation>変更前</translation>
     </message>
     <message>
         <source>After</source>
-        <translation type="unfinished"></translation>
+        <translation>変更後</translation>
     </message>
     <message>
         <source>Custom model</source>
-        <translation type="unfinished"></translation>
+        <translation>カスタムモデル</translation>
     </message>
 </context>
 <context>
@@ -14730,7 +14730,7 @@ If playback stutters, try another.</source>
     <name>VfrWarning</name>
     <message>
         <source>Variable frame rate. This clip can drift out of sync with its audio. Right-click it and choose Convert to edit-friendly format.</source>
-        <translation>可変フレームレート。このクリップはオーディオと同期がずれる可能性があります。右クリックして「編集に適した形式に変換」を選択してください。</translation>
+        <translation>可変フレームレート。このクリップはオーディオとの同期がずれる可能性があります。右クリックして「編集に適した形式に変換」を選択してください。</translation>
     </message>
 </context>
 <context>
