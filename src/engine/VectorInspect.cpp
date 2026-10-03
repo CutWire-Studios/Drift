@@ -6,6 +6,9 @@
 #include <QRegularExpression>
 #include <QSet>
 #include <QXmlStreamReader>
+#include <QXmlStreamWriter>
+
+#include <algorithm>
 
 #ifdef DRIFT_WITH_SKIA
 #include "SkiaFonts.h"
@@ -149,7 +152,8 @@ void inspectLottie(const QByteArray &data, InspectReport *report)
 
 void inspectSvg(const QByteArray &data, InspectReport *report)
 {
-    SkMemoryStream stream(data.constData(), size_t(data.size()), false);
+    const SvgScan scan = scanSvg(data);
+    SkMemoryStream stream(scan.rewritten.constData(), size_t(scan.rewritten.size()), false);
     const sk_sp<SkSVGDOM> dom = SkSVGDOM::Builder()
                                     .setFontManager(drift::skia::systemFontMgr())
                                     .setResourceProvider(drift::skia::makeVectorResourceProvider(QString()))
@@ -193,7 +197,7 @@ void inspectSvg(const QByteArray &data, InspectReport *report)
 
     // Only ids the parsed DOM can find are reported: Skia drops <symbol>, <style> and the like
     // with their subtrees.
-    for (const VectorSvgElement &element : scanSvg(data).elements) {
+    for (const VectorSvgElement &element : scan.elements) {
         if (dom->findNodeById(element.id.toUtf8().constData()))
             report->svgElements.append(element);
     }
@@ -230,12 +234,177 @@ QString svgPresentation(const QXmlStreamAttributes &attrs, const QString &name)
     return {};
 }
 
+// One rule of an SVG's <style> sheet, narrowed to a compound selector without combinators or
+// pseudo-classes (tag, .a, #b, tag.a.b). Anything else is dropped rather than misapplied.
+struct CssRule
+{
+    QString tag; // empty matches any
+    QString id;
+    QStringList classes;
+    int specificity = 0;
+    QString declarations;
+};
+
+bool parseCssSelector(const QString &text, CssRule *rule)
+{
+    static const QRegularExpression simple(QStringLiteral("^([A-Za-z][\\w-]*|\\*)?((?:[.#][\\w-]+)*)$"));
+    static const QRegularExpression part(QStringLiteral("([.#])([\\w-]+)"));
+    const QRegularExpressionMatch match = simple.match(text);
+    if (text.isEmpty() || !match.hasMatch())
+        return false;
+    if (match.captured(1) != QLatin1String("*"))
+        rule->tag = match.captured(1);
+    for (auto it = part.globalMatch(match.captured(2)); it.hasNext();) {
+        const QRegularExpressionMatch p = it.next();
+        if (p.captured(1) == QLatin1String("#")) {
+            if (!rule->id.isEmpty())
+                return false;
+            rule->id = p.captured(2);
+        } else {
+            rule->classes.append(p.captured(2));
+        }
+    }
+    rule->specificity = (rule->id.isEmpty() ? 0 : 10000) + int(rule->classes.size()) * 100 + (rule->tag.isEmpty() ? 0 : 1);
+    return true;
+}
+
+// Least specific first, source order among equals, so later declarations win as in CSS.
+QList<CssRule> parseCss(QString css)
+{
+    static const QRegularExpression comments(QStringLiteral("/\\*.*?\\*/"), QRegularExpression::DotMatchesEverythingOption);
+    css.remove(comments);
+    QList<CssRule> rules;
+    qsizetype pos = 0;
+    while (true) {
+        const qsizetype open = css.indexOf(QLatin1Char('{'), pos);
+        if (open < 0)
+            break;
+        const QString prelude = css.mid(pos, open - pos).trimmed();
+        qsizetype close = open + 1;
+        for (int depth = 1; close < css.size() && depth > 0; ++close) {
+            if (css.at(close) == QLatin1Char('{'))
+                ++depth;
+            else if (css.at(close) == QLatin1Char('}'))
+                --depth;
+        }
+        QString declarations = css.mid(open + 1, close - open - 2);
+        pos = close;
+        // @media, @font-face, @keyframes: nothing in them maps onto a static attribute.
+        if (prelude.startsWith(QLatin1Char('@')))
+            continue;
+        declarations.remove(QStringLiteral("!important"));
+        QStringList cleaned;
+        for (const QString &declaration : declarations.split(QLatin1Char(';'))) {
+            if (!declaration.trimmed().isEmpty())
+                cleaned.append(declaration.trimmed());
+        }
+        for (const QString &selector : prelude.split(QLatin1Char(','), Qt::SkipEmptyParts)) {
+            CssRule rule;
+            if (!parseCssSelector(selector.trimmed(), &rule))
+                continue;
+            rule.declarations = cleaned.join(QLatin1Char(';'));
+            rules.append(rule);
+        }
+    }
+    std::stable_sort(rules.begin(), rules.end(),
+                     [](const CssRule &a, const CssRule &b) { return a.specificity < b.specificity; });
+    return rules;
+}
+
+QString localName(QStringView qualified)
+{
+    return qualified.mid(qualified.indexOf(QLatin1Char(':')) + 1).toString();
+}
+
+// Skia's SVG parser stops at any <!ENTITY> declaration (its guard against entity expansion),
+// which is how Illustrator's "SVG 1.1" export opens, and it ignores <style> sheets, which is how
+// Illustrator writes fills and strokes by default; such files failed to import or drew all black.
+// They are rewritten with the entities expanded (QXmlStreamReader caps the expansion), the DTD
+// dropped and the CSS rules folded into each element's style="". Other documents pass as is.
+QByteArray skiaReadySvg(const QByteArray &data)
+{
+    static const QRegularExpression needsRewrite(QStringLiteral("<!DOCTYPE[^>\\[]*\\[|<style\\b"));
+    const QString text = QString::fromUtf8(data);
+    if (!needsRewrite.match(text).hasMatch())
+        return data;
+
+    QString css;
+    {
+        QXmlStreamReader reader(text);
+        reader.setNamespaceProcessing(false);
+        int styleDepth = 0;
+        while (!reader.atEnd()) {
+            const QXmlStreamReader::TokenType token = reader.readNext();
+            if (token == QXmlStreamReader::StartElement && (styleDepth > 0 || localName(reader.qualifiedName()) == QLatin1String("style")))
+                ++styleDepth;
+            else if (token == QXmlStreamReader::EndElement && styleDepth > 0)
+                --styleDepth;
+            else if (token == QXmlStreamReader::Characters && styleDepth > 0)
+                css += reader.text();
+        }
+        if (reader.hasError())
+            return data;
+    }
+    const QList<CssRule> rules = parseCss(css);
+
+    QByteArray out;
+    QXmlStreamWriter writer(&out);
+    writer.writeStartDocument();
+    QXmlStreamReader reader(text);
+    reader.setNamespaceProcessing(false);
+    int styleDepth = 0;
+    while (!reader.atEnd()) {
+        const QXmlStreamReader::TokenType token = reader.readNext();
+        if (token == QXmlStreamReader::StartElement) {
+            const QString tag = localName(reader.qualifiedName());
+            if (styleDepth > 0 || tag == QLatin1String("style")) {
+                ++styleDepth;
+                continue;
+            }
+            const QXmlStreamAttributes attrs = reader.attributes();
+            const QString id = attrs.value(QStringLiteral("id")).toString();
+            const QStringList classes = attrs.value(QStringLiteral("class")).toString().split(QLatin1Char(' '), Qt::SkipEmptyParts);
+            QString style;
+            for (const CssRule &rule : rules) {
+                if ((!rule.tag.isEmpty() && rule.tag != tag) || (!rule.id.isEmpty() && rule.id != id))
+                    continue;
+                if (!std::all_of(rule.classes.begin(), rule.classes.end(),
+                                 [&](const QString &c) { return classes.contains(c); }))
+                    continue;
+                style += rule.declarations + QLatin1Char(';');
+            }
+            // Written last, after the presentation attributes, so it overrides them as CSS does;
+            // the element's own style="" goes after the sheet's for the same reason.
+            style += attrs.value(QStringLiteral("style"));
+            writer.writeStartElement(reader.qualifiedName().toString());
+            for (const QXmlStreamAttribute &attr : attrs) {
+                if (attr.qualifiedName() != QLatin1String("style"))
+                    writer.writeAttribute(attr.qualifiedName().toString(), attr.value().toString());
+            }
+            if (!style.isEmpty())
+                writer.writeAttribute(QStringLiteral("style"), style);
+        } else if (token == QXmlStreamReader::EndElement) {
+            if (styleDepth > 0)
+                --styleDepth;
+            else
+                writer.writeEndElement();
+        } else if (token == QXmlStreamReader::Characters && styleDepth == 0) {
+            writer.writeCharacters(reader.text().toString());
+        }
+    }
+    if (reader.hasError())
+        return data;
+    writer.writeEndDocument();
+    return out;
+}
+
 } // namespace
 
 SvgScan scanSvg(const QByteArray &data)
 {
     SvgScan scan;
-    const QString text = QString::fromUtf8(data);
+    const QByteArray ready = skiaReadySvg(data);
+    const QString text = QString::fromUtf8(ready);
 
     QSet<QString> taken;
     {
@@ -294,7 +463,7 @@ SvgScan scanSvg(const QByteArray &data)
         scan.injectedIds.append(fresh);
     }
     if (reader.hasError()) {
-        scan.rewritten = data;
+        scan.rewritten = ready;
         scan.injectedIds.clear();
         return scan;
     }

@@ -90,6 +90,8 @@ private slots:
     void loopModes();
     void foldStopsOnTheLastDrawnFrame();
     void svgStillRenders();
+    void svgScalesToLayer();
+    void svgIllustratorExport();
     void svgScanListsElementsAndMintsIds();
     void svgOverridesRecolour();
     void svgOverridesShareDocument();
@@ -334,6 +336,57 @@ void VectorTest::loopModes()
     source.loop = VectorLoop::Hold;
     source.startOffsetUs = secondsToUs(1.0);
     QVERIFY(qAbs(boundsOf(renderAt(source, 0.0, QSize(200, 100)), 255, 0, 0).center().x() - 100) <= 2);
+}
+
+void VectorTest::svgScalesToLayer()
+{
+    // still.svg declares width/height, which Skia honours over the container size; it used to
+    // draw at 200x100 in the corner of any larger layer.
+    VectorSource source;
+    source.kind = VectorKind::Svg;
+    source.path = QStringLiteral(DRIFT_TEST_DATA_DIR "/vector/still.svg");
+    const QImage image = renderAt(source, 0.0, QSize(400, 200));
+    QVERIFY(isColor(image.pixel(100, 100), 0, 255, 0));
+    QVERIFY(isColor(image.pixel(300, 100), 0, 0, 255));
+    QVERIFY(isColor(image.pixel(300, 30), 0, 0, 255));
+}
+
+void VectorTest::svgIllustratorExport()
+{
+    // Illustrator's SVG 1.1 export: an entity-declaring DTD, which Skia refuses to parse, and
+    // fills in a <style> sheet, which Skia ignores.
+    const QByteArray doc =
+        "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n"
+        "<!DOCTYPE svg PUBLIC \"-//W3C//DTD SVG 1.1//EN\" \"http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd\" [\n"
+        "\t<!ENTITY ns_ai \"http://ns.adobe.com/AdobeIllustrator/10.0/\">\n"
+        "]>\n"
+        "<svg version=\"1.1\" xmlns:i=\"&ns_ai;\" xmlns=\"http://www.w3.org/2000/svg\" width=\"200px\" height=\"100px\" viewBox=\"0 0 200 100\">\n"
+        "<style type=\"text/css\">\n"
+        "\t/* comment { fill: #000 } */\n"
+        "\t.st0{fill:#FF0000;}\n"
+        "\t.st1{fill:#00FF00;}\n"
+        "\trect.st1.big, #c{fill:#0000FF !important;}\n"
+        "\t@media print { .st0 { fill: #000000; } }\n"
+        "</style>\n"
+        "<rect x=\"0\" y=\"0\" class=\"st0\" fill=\"#000000\" width=\"50\" height=\"50\"/>\n"
+        "<rect x=\"50\" y=\"0\" class=\"st1\" width=\"50\" height=\"50\"/>\n"
+        "<rect x=\"100\" y=\"0\" class=\"st1 big\" width=\"50\" height=\"50\"/>\n"
+        "<rect x=\"150\" y=\"0\" class=\"st0\" style=\"fill:#00FF00\" width=\"50\" height=\"50\"/>\n"
+        "<circle id=\"c\" class=\"st0\" cx=\"100\" cy=\"75\" r=\"20\"/>\n"
+        "</svg>\n";
+    const vec::InspectReport report = vec::inspectVector(doc, VectorKind::Svg);
+    QVERIFY2(report.ok, qPrintable(report.error));
+    QCOMPARE(report.width, 200);
+
+    VectorSource source;
+    source.kind = VectorKind::Svg;
+    source.source = QString::fromUtf8(doc);
+    const QImage image = renderAt(source, 0.0, QSize(200, 100));
+    QVERIFY(isColor(image.pixel(25, 25), 255, 0, 0));  // the sheet beats a presentation attribute
+    QVERIFY(isColor(image.pixel(75, 25), 0, 255, 0));
+    QVERIFY(isColor(image.pixel(125, 25), 0, 0, 255)); // more classes, more specific
+    QVERIFY(isColor(image.pixel(175, 25), 0, 255, 0)); // style="" beats the sheet
+    QVERIFY(isColor(image.pixel(100, 75), 0, 0, 255)); // #id beats a class
 }
 
 void VectorTest::svgStillRenders()

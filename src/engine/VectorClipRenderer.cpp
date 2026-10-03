@@ -394,9 +394,19 @@ public:
             canvas.restore();
             return;
         }
-        canvas.translate(float(dst.x()), float(dst.y()));
         applySvgOverrides(*m_doc, m_overrides);
-        m_doc->svg->setContainerSize(SkSize::Make(float(dst.width()), float(dst.height())));
+        // The container size only stands in for a root without absolute width/height; a root
+        // that has them draws at that size whatever the container, so scale it onto dst instead.
+        if (!m_doc->size.isEmpty()) {
+            const SkSize docSize = SkSize::Make(float(m_doc->size.width()), float(m_doc->size.height()));
+            canvas.concat(SkMatrix::RectToRect(SkRect::MakeSize(docSize),
+                                               SkRect::MakeXYWH(float(dst.x()), float(dst.y()),
+                                                                float(dst.width()), float(dst.height()))));
+            m_doc->svg->setContainerSize(docSize);
+        } else {
+            canvas.translate(float(dst.x()), float(dst.y()));
+            m_doc->svg->setContainerSize(SkSize::Make(float(dst.width()), float(dst.height())));
+        }
         m_doc->svg->render(&canvas);
         canvas.restore();
     }
