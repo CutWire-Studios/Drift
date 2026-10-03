@@ -180,279 +180,279 @@
     </message>
     <message>
         <source>Requires Drift %1 or newer</source>
-        <translation type="unfinished"></translation>
+        <translation>Wymagana jest wersja Drift %1 lub nowsza</translation>
     </message>
     <message>
         <source>%1 download</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 pobierz</translation>
     </message>
     <message>
         <source>%1 items</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 elementy</translation>
     </message>
     <message>
         <source>Cancel</source>
-        <translation type="unfinished"></translation>
+        <translation>Anuluj</translation>
     </message>
     <message>
         <source>Update</source>
-        <translation type="unfinished"></translation>
+        <translation>Aktualizuj</translation>
     </message>
     <message>
         <source>Install</source>
-        <translation type="unfinished"></translation>
+        <translation>Instaluj</translation>
     </message>
     <message>
         <source>Delete this pack&apos;s downloaded data</source>
-        <translation type="unfinished"></translation>
+        <translation>Usuń pobrane dane z tego pakietu</translation>
     </message>
 </context>
 <context>
     <name>AddonStartupDialog</name>
     <message>
         <source>Extra packs</source>
-        <translation type="unfinished"></translation>
+        <translation>Dodatkowe pakiety</translation>
     </message>
     <message>
         <source>Pack updates available</source>
-        <translation type="unfinished"></translation>
+        <translation>Dostępne aktualizacje pakietów</translation>
     </message>
     <message>
         <source>Recommended packs</source>
-        <translation type="unfinished"></translation>
+        <translation>Zalecane pakiety</translation>
     </message>
     <message>
         <source>Install the essential packs for effects, transitions, and audio. You can keep using Drift without them — installing unlocks updates when they improve.</source>
-        <translation type="unfinished"></translation>
+        <translation>Zainstaluj niezbędne pakiety efektów, przejść i dźwięku. Możesz nadal korzystać z Drifta bez nich — instalacja odblokowuje aktualizacje, gdy się poprawią.</translation>
     </message>
     <message>
         <source>%1… %2%</source>
-        <translation type="unfinished"></translation>
+        <translation>%1… %2%</translation>
     </message>
     <message>
         <source>Don&apos;t remind me of essential addons</source>
-        <translation type="unfinished"></translation>
+        <translation>Nie przypominaj mi o niezbędnych dodatkach</translation>
     </message>
     <message>
         <source>Updates are available for packs you already have installed.</source>
-        <translation type="unfinished"></translation>
+        <translation>Aktualizacje są dostępne dla pakietów, które są zainstalowane.</translation>
     </message>
     <message>
         <source>%1 → %2</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 → %2</translation>
     </message>
     <message>
         <source>Don&apos;t remind me of future addon updates</source>
-        <translation type="unfinished"></translation>
+        <translation>Nie przypominaj mi o przyszłych aktualizacjach dodatków</translation>
     </message>
     <message>
         <source>Hide</source>
-        <translation type="unfinished"></translation>
+        <translation>Ukryj</translation>
     </message>
     <message>
         <source>Later</source>
-        <translation type="unfinished"></translation>
+        <translation>Później</translation>
     </message>
     <message>
         <source>Installing…</source>
-        <translation type="unfinished"></translation>
+        <translation>Instalowanie…</translation>
     </message>
     <message>
         <source>Install &amp; update</source>
-        <translation type="unfinished"></translation>
+        <translation>Zainstaluj i zaktualizuj</translation>
     </message>
     <message>
         <source>Update</source>
-        <translation type="unfinished"></translation>
+        <translation>Zaktualizuj</translation>
     </message>
     <message>
         <source>Update all</source>
-        <translation type="unfinished"></translation>
+        <translation>Zaktualizuj wszystko</translation>
     </message>
     <message>
         <source>Install</source>
-        <translation type="unfinished"></translation>
+        <translation>Instaluj</translation>
     </message>
     <message>
         <source>Install all</source>
-        <translation type="unfinished"></translation>
+        <translation>Zainstaluj wszystko</translation>
     </message>
 </context>
 <context>
     <name>AgentAccessControls</name>
     <message>
         <source>Allow for this session</source>
-        <translation type="unfinished"></translation>
+        <translation>Zezwól na tę sesję</translation>
     </message>
     <message>
         <source>Let an assistant on this device edit this project until you turn it off or quit.</source>
-        <translation type="unfinished"></translation>
+        <translation>Pozwól asystentowi na tym urządzeniu edytować ten projekt, dopóki go nie wyłączysz lub nie zamkniesz.</translation>
     </message>
     <message>
         <source>Turn this on, then copy the setup for Cursor or Claude and paste it into that app.</source>
-        <translation type="unfinished"></translation>
+        <translation>Włącz tę opcję, a następnie skopiuj konfigurację Cursor lub Claude i wklej ją do tej aplikacji.</translation>
     </message>
     <message>
         <source>Access is on</source>
-        <translation type="unfinished"></translation>
+        <translation>Dostęp jest włączony</translation>
     </message>
     <message>
         <source>Listening on %1</source>
-        <translation type="unfinished"></translation>
+        <translation>Słuchanie na %1</translation>
     </message>
     <message>
         <source>New key</source>
-        <translation type="unfinished"></translation>
+        <translation>Nowy klucz</translation>
     </message>
     <message>
         <source>Replace the key. Every assistant set up with the old one stops working until you copy the setup again.</source>
-        <translation type="unfinished"></translation>
+        <translation>Zmień klucz. Każdy asystent skonfigurowany przy użyciu starego klucza przestanie działać, dopóki nie skopiujesz ustawień ponownie.</translation>
     </message>
     <message>
         <source>New key made — copy the setup again</source>
-        <translation type="unfinished"></translation>
+        <translation>Stworzono nowy klucz — skopiuj ustawienia ponownie</translation>
     </message>
     <message>
         <source>Copy the setup for the assistant you use. You only need one.</source>
-        <translation type="unfinished"></translation>
+        <translation>Skopiuj konfigurację asystenta, którego używasz. Potrzebujesz tylko jednego.</translation>
     </message>
     <message>
         <source>Copy for Cursor</source>
-        <translation type="unfinished"></translation>
+        <translation>Skopiuj dla Cursor</translation>
     </message>
     <message>
         <source>Copy a setup snippet to paste into Cursor</source>
-        <translation type="unfinished"></translation>
+        <translation>Skopiuj fragment kodu konfiguracji, aby wkleić go do Cursor</translation>
     </message>
     <message>
         <source>Copied for Cursor</source>
-        <translation type="unfinished"></translation>
+        <translation>Skopiowano do Cursor</translation>
     </message>
     <message>
         <source>Copy for Claude</source>
-        <translation type="unfinished"></translation>
+        <translation>Kopia dla Cursor</translation>
     </message>
     <message>
         <source>Copy a command to paste into Claude Code</source>
-        <translation type="unfinished"></translation>
+        <translation>Skopiuj polecenie, aby wkleić je do kodu Claude&apos;a</translation>
     </message>
     <message>
         <source>Copied for Claude</source>
-        <translation type="unfinished"></translation>
+        <translation>Skopiowano dla Claude</translation>
     </message>
     <message>
         <source>Paste that into the assistant. To help it use this editor, copy the how-to next and paste it into the chat.</source>
-        <translation type="unfinished"></translation>
+        <translation>Wklej to do asystenta. Aby ułatwić mu korzystanie z edytora, skopiuj instrukcję i wklej ją do czatu.</translation>
     </message>
     <message>
         <source>Copy a how-to for the agent</source>
-        <translation type="unfinished"></translation>
+        <translation>Skopiuj instrukcję dla agenta</translation>
     </message>
     <message>
         <source>A short list of what the agent can do here — paste it into the chat</source>
-        <translation type="unfinished"></translation>
+        <translation>Krótka lista tego, co agent może tutaj zrobić — wklej ją do czatu</translation>
     </message>
     <message>
         <source>Copied how-to</source>
-        <translation type="unfinished"></translation>
+        <translation>Skopiowano instrukcję</translation>
     </message>
     <message>
         <source>More options</source>
-        <translation type="unfinished"></translation>
+        <translation>Więcej opcji</translation>
     </message>
     <message>
         <source>For a different assistant, copy a one-time setup. The address and key are already in the Cursor and Claude copies above.</source>
-        <translation type="unfinished"></translation>
+        <translation>W przypadku innego asystenta skopiuj jednorazową konfigurację. Adres i klucz znajdują się już w powyższych kopiach kursora i Claude&apos;a.</translation>
     </message>
     <message>
         <source>Copy one-time setup</source>
-        <translation type="unfinished"></translation>
+        <translation>Kopiuj konfigurację jednorazową</translation>
     </message>
     <message>
         <source>Add this once to the assistant’s config. Access still has to be turned on here.</source>
-        <translation type="unfinished"></translation>
+        <translation>Dodaj to raz do konfiguracji asystenta. Dostęp nadal musi być tutaj włączony.</translation>
     </message>
     <message>
         <source>Copied one-time setup</source>
-        <translation type="unfinished"></translation>
+        <translation>Skopiowano konfigurację jednorazową</translation>
     </message>
     <message>
         <source>Start agent on startup</source>
-        <translation type="unfinished"></translation>
+        <translation>Uruchom agenta podczas uruchamiania</translation>
     </message>
     <message>
         <source>Skip the manual toggle next time you open Drift. Turning access off resets this.</source>
-        <translation type="unfinished"></translation>
+        <translation>Pomiń ręczne przełączanie przy następnym otwarciu Drifta. Wyłączenie dostępu zresetuje to.</translation>
     </message>
     <message>
         <source>Let Cursor or Claude edit this project for you — add clips, change the timeline, and check how it looks. Only programs on this device. Off by default each time you open Drift, unless you turn on “Start agent on startup” below; turn it off here when you finish. The key stays the same between sessions, so a setup you pasted once keeps working.</source>
-        <translation type="unfinished"></translation>
+        <translation>Pozwól Cursorowi lub Claude&apos;owi edytować ten projekt za Ciebie — dodaj klipy, zmień oś czasu i sprawdź, jak wygląda. Tylko programy na tym urządzeniu. Domyślnie wyłączone przy każdym uruchomieniu Drifta, chyba że poniżej włączysz opcję „Uruchom agenta przy starcie”; wyłącz ją tutaj po zakończeniu. Klucz pozostaje taki sam między sesjami, więc raz wklejona konfiguracja nadal działa.</translation>
     </message>
 </context>
 <context>
     <name>AgentAccessDialog</name>
     <message>
         <source>Agent access</source>
-        <translation type="unfinished"></translation>
+        <translation>Agent dostępu</translation>
     </message>
     <message>
         <source>Close</source>
-        <translation type="unfinished"></translation>
+        <translation>Zamknij</translation>
     </message>
 </context>
 <context>
     <name>AndroidAddMenu</name>
     <message>
         <source>Add to timeline</source>
-        <translation type="unfinished"></translation>
+        <translation>Dodaj do osi czsu</translation>
     </message>
     <message>
         <source>Media</source>
-        <translation type="unfinished"></translation>
+        <translation>Media</translation>
     </message>
     <message>
         <source>Video, photos and audio from this device</source>
-        <translation type="unfinished"></translation>
+        <translation>Wideo, zdjęcia i dźwięk z tego urządzenia</translation>
     </message>
     <message>
         <source>Market</source>
-        <translation type="unfinished"></translation>
+        <translation>Sklep</translation>
     </message>
     <message>
         <source>Stock photos, video and audio</source>
-        <translation type="unfinished"></translation>
+        <translation>Zdjęcia stockowe, wideo i audio</translation>
     </message>
     <message>
         <source>Text</source>
-        <translation type="unfinished"></translation>
+        <translation>Tekst</translation>
     </message>
     <message>
         <source>A title or caption you type</source>
-        <translation type="unfinished"></translation>
+        <translation>Tytuł lub podpis, który wpisujesz</translation>
     </message>
     <message>
         <source>Subtitles</source>
-        <translation type="unfinished"></translation>
+        <translation>Napisy</translation>
     </message>
     <message>
         <source>Captions, generated or imported</source>
-        <translation type="unfinished"></translation>
+        <translation>Napisy wygenerowane lub zaimportowane</translation>
     </message>
     <message>
         <source>Stickers</source>
-        <translation type="unfinished"></translation>
+        <translation>Naklejki</translation>
     </message>
     <message>
         <source>Emoji and sticker graphics</source>
-        <translation type="unfinished"></translation>
+        <translation>Grafika emoji i naklejek</translation>
     </message>
     <message>
         <source>Shapes</source>
-        <translation type="unfinished"></translation>
+        <translation>Kształty</translation>
     </message>
     <message>
         <source>Boxes, circles and lines</source>
-        <translation type="unfinished"></translation>
+        <translation>Prostokąty, okręgi i linie</translation>
     </message>
     <message>
         <source>Effect templates</source>
@@ -1838,35 +1838,35 @@
     <name>AnimationInspector</name>
     <message>
         <source>None</source>
-        <translation type="unfinished"></translation>
+        <translation>Nic</translation>
     </message>
     <message>
         <source>Fade</source>
-        <translation type="unfinished"></translation>
+        <translation>Zanikanie</translation>
     </message>
     <message>
         <source>Slide up</source>
-        <translation type="unfinished"></translation>
+        <translation>Przeciągnij w górę</translation>
     </message>
     <message>
         <source>Slide down</source>
-        <translation type="unfinished"></translation>
+        <translation>Przeciągnij w dół</translation>
     </message>
     <message>
         <source>Slide left</source>
-        <translation type="unfinished"></translation>
+        <translation>Przeciągnij w lewo</translation>
     </message>
     <message>
         <source>Slide right</source>
-        <translation type="unfinished"></translation>
+        <translation>Przeciągnij w prawo</translation>
     </message>
     <message>
         <source>Zoom in</source>
-        <translation type="unfinished"></translation>
+        <translation>Przybliż</translation>
     </message>
     <message>
         <source>Zoom out</source>
-        <translation type="unfinished"></translation>
+        <translation>Oddal</translation>
     </message>
     <message>
         <source>Pop</source>
@@ -1874,290 +1874,290 @@
     </message>
     <message>
         <source>Spin CW</source>
-        <translation type="unfinished"></translation>
+        <translation>Obrót zgodnie ze wskazówkami zegara</translation>
     </message>
     <message>
         <source>Spin CCW</source>
-        <translation type="unfinished"></translation>
+        <translation>Obrót przeciwnie do wskazówek zegara</translation>
     </message>
     <message>
         <source>Bounce</source>
-        <translation type="unfinished"></translation>
+        <translation>Odbicie</translation>
     </message>
     <message>
         <source>Linear</source>
-        <translation type="unfinished"></translation>
+        <translation>Liniowo</translation>
     </message>
     <message>
         <source>Smooth</source>
-        <translation type="unfinished"></translation>
+        <translation>Wygładzenie</translation>
     </message>
     <message>
         <source>Natural</source>
-        <translation type="unfinished"></translation>
+        <translation>Naturalny</translation>
     </message>
     <message>
         <source>Custom</source>
-        <translation type="unfinished"></translation>
+        <translation>Własne</translation>
     </message>
     <message>
         <source>Bezier</source>
-        <translation type="unfinished"></translation>
+        <translation>Krzywa</translation>
     </message>
     <message>
         <source>Not available</source>
-        <translation type="unfinished"></translation>
+        <translation>Nie dostępne</translation>
     </message>
     <message>
         <source>Animation applies to video, image, shape, text, and audio.</source>
-        <translation type="unfinished"></translation>
+        <translation>Animacja dotyczy wideo, obrazów, kształtów, tekstu i dźwięku.</translation>
     </message>
     <message>
         <source>Fade in / out (volume)</source>
-        <translation type="unfinished"></translation>
+        <translation>Stopniowe zwiększanie/zmniejszanie głośności</translation>
     </message>
     <message>
         <source>Style</source>
-        <translation type="unfinished"></translation>
+        <translation>Styl</translation>
     </message>
     <message>
         <source>Pick how the clip enters and leaves. Fade is one option — same style controls as slide or zoom.</source>
-        <translation type="unfinished"></translation>
+        <translation>Wybierz sposób, w jaki klip ma się pojawiać i znikać. Jedną z opcji jest zanikanie – te same elementy sterujące stylem, co w przypadku slajdu lub powiększenia.</translation>
     </message>
     <message>
         <source>Clear</source>
-        <translation type="unfinished"></translation>
+        <translation>Wyczyść</translation>
     </message>
     <message>
         <source>In</source>
-        <translation type="unfinished"></translation>
+        <translation>W</translation>
     </message>
     <message>
         <source>Out</source>
-        <translation type="unfinished"></translation>
+        <translation>Poza</translation>
     </message>
     <message>
         <source>Edit custom curve…</source>
-        <translation type="unfinished"></translation>
+        <translation>Edytuj niestandardową krzywą…</translation>
     </message>
     <message>
         <source>Letter and word animations live in the Text tab, under Animate. This moves the whole clip.</source>
-        <translation type="unfinished"></translation>
+        <translation>Animacje liter i słów są dostępne na karcie Tekst, w sekcji Animacja. To powoduje ruch całego klipu.</translation>
     </message>
 </context>
 <context>
     <name>AppController</name>
     <message>
         <source>Media removed</source>
-        <translation type="unfinished"></translation>
+        <translation>Media usunięte</translation>
     </message>
     <message>
         <source>Rename media</source>
-        <translation type="unfinished"></translation>
+        <translation>Zmień nazwę mediów</translation>
     </message>
     <message>
         <source>Media renamed</source>
-        <translation type="unfinished"></translation>
+        <translation>Media przemianowane</translation>
     </message>
     <message>
         <source>That file could not be read.</source>
-        <translation type="unfinished"></translation>
+        <translation>Nie udało się odczytać tego pliku.</translation>
     </message>
     <message>
         <source>That file is already in this project.</source>
-        <translation type="unfinished"></translation>
+        <translation>Ten plik już znajduje się w tym projekcie.</translation>
     </message>
     <message>
         <source>Converting %1 to an edit-friendly format…</source>
-        <translation type="unfinished"></translation>
+        <translation>Konwertowanie %1 do formatu przyjaznego edycji…</translation>
     </message>
     <message>
         <source>That media is no longer in this project.</source>
-        <translation type="unfinished"></translation>
+        <translation>Te media nie są już częścią tego projektu.</translation>
     </message>
     <message>
         <source>“%1” is %2, but this slot holds %3.</source>
-        <translation type="unfinished"></translation>
+        <translation>„%1” to %2, ale w tym slocie znajduje się %3.</translation>
     </message>
     <message>
         <source>Media replaced</source>
-        <translation type="unfinished"></translation>
+        <translation>Media zastąpione</translation>
     </message>
     <message>
         <source>New project</source>
-        <translation type="unfinished"></translation>
+        <translation>Nowy projekt</translation>
     </message>
     <message>
         <source>Open project</source>
-        <translation type="unfinished"></translation>
+        <translation>Otwórz projekt</translation>
     </message>
     <message>
         <source>Save project</source>
-        <translation type="unfinished"></translation>
+        <translation>Zapisz projekt</translation>
     </message>
     <message>
         <source>Play/Pause</source>
-        <translation type="unfinished"></translation>
+        <translation>Odtwórz/Pauza</translation>
     </message>
     <message>
         <source>Delete selection</source>
-        <translation type="unfinished"></translation>
+        <translation>Usuń zaznaczenie</translation>
     </message>
     <message>
         <source>Undo</source>
-        <translation type="unfinished"></translation>
+        <translation>Cofnij</translation>
     </message>
     <message>
         <source>Redo</source>
-        <translation type="unfinished"></translation>
+        <translation>Wykonaj ponownie</translation>
     </message>
     <message>
         <source>Copy selection</source>
-        <translation type="unfinished"></translation>
+        <translation>Kopiuj zaznaczone</translation>
     </message>
     <message>
         <source>Cut selection</source>
-        <translation type="unfinished"></translation>
+        <translation>Wytnij zaznaczenie</translation>
     </message>
     <message>
         <source>Paste at current time</source>
-        <translation type="unfinished"></translation>
+        <translation>Wklej w bieżącym czasie</translation>
     </message>
     <message>
         <source>Duplicate selected clip</source>
-        <translation type="unfinished"></translation>
+        <translation>Duplikuj wybrany klip</translation>
     </message>
     <message>
         <source>Split at current time</source>
-        <translation type="unfinished"></translation>
+        <translation>Podzielone w chwili obecnej</translation>
     </message>
     <message>
         <source>Merge adjacent clips</source>
-        <translation type="unfinished"></translation>
+        <translation>Połącz sąsiadujące klipy</translation>
     </message>
     <message>
         <source>Separate audio</source>
-        <translation type="unfinished"></translation>
+        <translation>Oddziel dźwięk</translation>
     </message>
     <message>
         <source>Unlink audio</source>
-        <translation type="unfinished"></translation>
+        <translation>Odłącz dźwięk</translation>
     </message>
     <message>
         <source>Clear selection</source>
-        <translation type="unfinished"></translation>
+        <translation>Wyczyść zaznaczenie</translation>
     </message>
     <message>
         <source>Select all clips</source>
-        <translation type="unfinished"></translation>
+        <translation>Wybierz wszystkie klipy</translation>
     </message>
     <message>
         <source>Move selection left a little</source>
-        <translation type="unfinished"></translation>
+        <translation>Przesuń zaznaczenie nieco w lewo</translation>
     </message>
     <message>
         <source>Move selection right a little</source>
-        <translation type="unfinished"></translation>
+        <translation>Przesuń zaznaczenie nieco w prawo</translation>
     </message>
     <message>
         <source>Toggle guides</source>
-        <translation type="unfinished"></translation>
+        <translation>Przełącz przewodniki</translation>
     </message>
     <message>
         <source>Add/remove bookmark at current time</source>
-        <translation type="unfinished"></translation>
+        <translation>Dodaj/usuń zakładkę w bieżącym czasie</translation>
     </message>
     <message>
         <source>Go to next bookmark</source>
-        <translation type="unfinished"></translation>
+        <translation>Przejdź do następnej zakładki</translation>
     </message>
     <message>
         <source>Go to previous bookmark</source>
-        <translation type="unfinished"></translation>
+        <translation>Przejdź do poprzedniej zakładki</translation>
     </message>
     <message>
         <source>Mark work area in</source>
-        <translation type="unfinished"></translation>
+        <translation>Zaznacz obszar roboczy w</translation>
     </message>
     <message>
         <source>Mark work area out</source>
-        <translation type="unfinished"></translation>
+        <translation>Zaznacz obszar roboczy poza</translation>
     </message>
     <message>
         <source>Go to work area in</source>
-        <translation type="unfinished"></translation>
+        <translation>Przejdź do obszaru roboczego w</translation>
     </message>
     <message>
         <source>Go to work area out</source>
-        <translation type="unfinished"></translation>
+        <translation>Przejdź do obszaru roboczego poza</translation>
     </message>
     <message>
         <source>Clear work area</source>
-        <translation type="unfinished"></translation>
+        <translation>Wyczyść obszar roboczy</translation>
     </message>
     <message>
         <source>Loop work area playback</source>
-        <translation type="unfinished"></translation>
+        <translation>Odtwarzanie w pętli obszaru roboczego</translation>
     </message>
     <message>
         <source>Select tool</source>
-        <translation type="unfinished"></translation>
+        <translation>Wybierz narzędzie</translation>
     </message>
     <message>
         <source>Cut tool</source>
-        <translation type="unfinished"></translation>
+        <translation>Narzędzie do przycinania</translation>
     </message>
     <message>
         <source>Faster preview takes effect after you restart Drift.</source>
-        <translation type="unfinished"></translation>
+        <translation>Szybszy podgląd zostanie włączony po ponownym uruchomieniu Drift.</translation>
     </message>
     <message>
         <source>System default</source>
-        <translation type="unfinished"></translation>
+        <translation>Domyślne ustawienie systemu</translation>
     </message>
     <message>
         <source>Clip added</source>
-        <translation type="unfinished"></translation>
+        <translation>Dodano klip</translation>
     </message>
     <message>
         <source>Clip added on new track</source>
-        <translation type="unfinished"></translation>
+        <translation>Dodano klip do nowego śladu</translation>
     </message>
     <message>
         <source>Clip deleted</source>
-        <translation type="unfinished"></translation>
+        <translation>Klip usunięty</translation>
     </message>
     <message>
         <source>Clip moved</source>
-        <translation type="unfinished"></translation>
+        <translation>Klip przeniesiony</translation>
     </message>
     <message>
         <source>Nothing to split here — move to a clip first</source>
-        <translation type="unfinished"></translation>
+        <translation>Nie ma tu nic do podziału — najpierw przejdź do klipu</translation>
     </message>
     <message>
         <source>Split clip</source>
-        <translation type="unfinished"></translation>
+        <translation>Podziel klip</translation>
     </message>
     <message>
         <source>Split left</source>
-        <translation type="unfinished"></translation>
+        <translation>Podziel na lewo</translation>
     </message>
     <message>
         <source>Split right</source>
-        <translation type="unfinished"></translation>
+        <translation>Podziel na prawo</translation>
     </message>
     <message>
         <source>Trim updated</source>
-        <translation type="unfinished"></translation>
+        <translation>Zaktualizowano przycinanie</translation>
     </message>
     <message>
         <source>Clip duplicated</source>
-        <translation type="unfinished"></translation>
+        <translation>Zduplikowany klip</translation>
     </message>
     <message>
         <source>Your text here</source>
-        <translation type="unfinished"></translation>
+        <translation>Twój tekst tutaj</translation>
     </message>
     <message>
         <source>Text clip added</source>
