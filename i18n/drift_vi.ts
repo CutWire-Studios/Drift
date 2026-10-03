@@ -1319,7 +1319,7 @@
     </message>
     <message>
         <source>Snapping</source>
-        <translation>Bắt điểm</translation>
+        <translation>Bắt dính</translation>
     </message>
     <message>
         <source>Line clip edges up with cuts and markers</source>
@@ -1438,7 +1438,7 @@
     </message>
     <message>
         <source>Guides</source>
-        <translation>Hướng dẫn</translation>
+        <translation>Đường kẻ</translation>
     </message>
     <message>
         <source>Seek</source>
@@ -2058,7 +2058,7 @@
     </message>
     <message>
         <source>Toggle guides</source>
-        <translation>Chuyển đổi hướng dẫn</translation>
+        <translation>Bật tắt đường kẻ</translation>
     </message>
     <message>
         <source>Add/remove bookmark at current time</source>
@@ -3562,7 +3562,7 @@
     </message>
     <message>
         <source>Custom guides</source>
-        <translation>Hướng dẫn tùy chỉnh</translation>
+        <translation>Đường kẻ tùy chỉnh</translation>
     </message>
     <message>
         <source>%1 copy</source>
@@ -7463,7 +7463,7 @@
     </message>
     <message>
         <source>Remove guide</source>
-        <translation>Xóa hướng dẫn</translation>
+        <translation>Xóa đường kẻ</translation>
     </message>
     <message>
         <source>From left</source>
@@ -7491,7 +7491,7 @@
     </message>
     <message>
         <source>Guide colour</source>
-        <translation>Màu hướng dẫn</translation>
+        <translation>Màu đường kẻ</translation>
     </message>
     <message>
         <source>Opacity</source>
@@ -7499,11 +7499,11 @@
     </message>
     <message>
         <source>Show guides</source>
-        <translation>Hiển thị hướng dẫn</translation>
+        <translation>Hiển thị đường kẻ</translation>
     </message>
     <message>
         <source>Guide sets</source>
-        <translation>Cài đặt hướng dẫn</translation>
+        <translation>Bộ đường kẻ</translation>
     </message>
     <message>
         <source>Show this set</source>
@@ -7519,7 +7519,7 @@
     </message>
     <message>
         <source>New guide set</source>
-        <translation>Bộ hướng dẫn mới</translation>
+        <translation>Bộ đường kẻ mới</translation>
     </message>
     <message>
         <source>Duplicate set</source>
@@ -7527,7 +7527,7 @@
     </message>
     <message>
         <source>Save to my guide sets</source>
-        <translation>Lưu vào bộ hướng dẫn của tôi</translation>
+        <translation>Lưu vào bộ đường kẻ của tôi</translation>
     </message>
     <message>
         <source>Delete set</source>
@@ -7547,7 +7547,7 @@
     </message>
     <message>
         <source>This set came with the project. Save it to your guide sets to edit it.</source>
-        <translation>Bộ này đi kèm với dự án. Lưu nó vào bộ hướng dẫn của bạn để chỉnh sửa nó.</translation>
+        <translation>Bộ này đi kèm với dự án. Lưu nó vào bộ đường kẻ của bạn để chỉnh sửa nó.</translation>
     </message>
     <message>
         <source>Vertical</source>
@@ -7563,7 +7563,7 @@
     </message>
     <message>
         <source>Add a guide</source>
-        <translation>Thêm hướng dẫn</translation>
+        <translation>Thêm một đường kẻ</translation>
     </message>
 </context>
 <context>
@@ -9724,11 +9724,11 @@ Nếu phát lại bị giật, hãy thử cái khác.</translation>
     </message>
     <message>
         <source>Toggle guides</source>
-        <translation>Chuyển đổi hướng dẫn</translation>
+        <translation>Bật tắt đường kẻ</translation>
     </message>
     <message>
         <source>Guide sets</source>
-        <translation>Bộ hướng dẫn</translation>
+        <translation>Bộ đường kẻ</translation>
     </message>
     <message>
         <source>Keep mask handles on the preview while another clip is selected</source>
@@ -10969,11 +10969,11 @@ Nếu phát lại bị giật, hãy thử cái khác.</translation>
     </message>
     <message>
         <source>Show guides</source>
-        <translation>Hiển thị hướng dẫn</translation>
+        <translation>Hiển thị đường kẻ</translation>
     </message>
     <message>
         <source>Show alignment guides over the preview</source>
-        <translation>Hiển thị hướng dẫn căn chỉnh trên bản xem trước</translation>
+        <translation>Hiển thị đường kẻ căn chỉnh trên bản xem trước</translation>
     </message>
     <message>
         <source>Background</source>
@@ -13702,7 +13702,7 @@ Nếu phát lại bị giật, hãy thử cái khác.</translation>
     </message>
     <message>
         <source>Trim start — click a clip to drop everything left of the cut</source>
-        <translation>Cắt điểm bắt đầu — nhấp vào clip để bỏ mọi thứ bên trái vị trí cắt</translation>
+        <translation>Cắt phần bắt đầu — nhấp vào clip để bỏ mọi thứ bên trái vị trí cắt</translation>
     </message>
     <message>
         <source>Trim end</source>
