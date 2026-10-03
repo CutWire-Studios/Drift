@@ -9,6 +9,7 @@ extern "C" {
 #include <libavutil/hwcontext.h>
 #include <libavutil/pixfmt.h>
 struct AVCodec;
+struct AVFrame;
 }
 
 // Hardware video device selection, shared by the preview decoder, the exporter and the
@@ -117,5 +118,11 @@ const AVCodec *findMediaCodecDecoder(AVCodecID codecId);
 // preferred software decoder, which for AV1 is libdav1d — it has no hardware config at
 // all, so looking at that codec alone would skip hardware the native `av1` decoder drives.
 const AVCodec *findDecoder(AVCodecID codecId, AVHWDeviceType type, AVPixelFormat *pixFmt);
+
+// vaSyncSurface on a VAAPI frame; a no-op for anything else. Call it on the thread that owns the
+// decoder or VPP graph that wrote the surface, while that context is still alive: iHD's status
+// check dereferences the last context to touch the surface, and nothing clears that pointer when
+// the context is destroyed — so a sync after a seek tore the decoder down is a use-after-free.
+void syncVaapiFrame(const AVFrame *frame);
 
 } // namespace drift::hwaccel

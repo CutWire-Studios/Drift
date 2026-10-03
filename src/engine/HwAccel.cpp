@@ -451,4 +451,29 @@ const AVCodec *findDecoder(AVCodecID codecId, AVHWDeviceType type, AVPixelFormat
     return nullptr;
 }
 
+void syncVaapiFrame(const AVFrame *frame)
+{
+#if defined(Q_OS_WIN) || defined(Q_OS_MACOS) || defined(Q_OS_ANDROID)
+    Q_UNUSED(frame);
+#else
+    if (!frame || frame->format != AV_PIX_FMT_VAAPI || !frame->hw_frames_ctx)
+        return;
+    const auto *fc = reinterpret_cast<const AVHWFramesContext *>(frame->hw_frames_ctx->data);
+    if (!fc || !fc->device_ctx || fc->device_ctx->type != AV_HWDEVICE_TYPE_VAAPI
+        || !fc->device_ctx->hwctx)
+        return;
+    // AVVAAPIDeviceContext::display is its first member; reading it this way avoids pulling
+    // va/va.h into the build just for one pointer.
+    void *display = *reinterpret_cast<void *const *>(fc->device_ctx->hwctx);
+
+    using SyncFn = int (*)(void *, unsigned int);
+    static const SyncFn sync = [] {
+        void *va = dlopen("libva.so.2", RTLD_LAZY | RTLD_LOCAL);
+        return va ? reinterpret_cast<SyncFn>(dlsym(va, "vaSyncSurface")) : nullptr;
+    }();
+    if (sync && display)
+        sync(display, static_cast<unsigned int>(reinterpret_cast<uintptr_t>(frame->data[3])));
+#endif
+}
+
 } // namespace drift::hwaccel

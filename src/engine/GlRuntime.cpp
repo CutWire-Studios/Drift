@@ -1,5 +1,6 @@
 #include "GlRuntime.h"
 
+#include "ClipReader.h"
 #include "Face111.h"
 #include "DepthSidecar.h"
 #include "GlModelRenderer.h"
@@ -58,7 +59,6 @@ extern "C" {
 #if defined(Q_OS_ANDROID)
 #define DRIFT_ANDROID_AHB_IMPORT 1
 #include <android/hardware_buffer.h>
-#include "ClipReader.h"
 #include "MediaCodecImagePool.h"
 #endif
 
@@ -879,7 +879,6 @@ struct VaEglApi
     void *va = nullptr;
     void *egl = nullptr;
     VAStatus (*vaExportSurfaceHandle)(void *, VASurfaceID, uint32_t, uint32_t, void *) = nullptr;
-    VAStatus (*vaSyncSurface)(void *, VASurfaceID) = nullptr;
     // Optional: only used to recognise a driver Auto mode trusts, so a libva without it
     // degrades to "not verified" rather than to no zero-copy path at all.
     const char *(*vaQueryVendorString)(void *) = nullptr;
@@ -910,7 +909,6 @@ VaEglApi &vaEglApi()
         api.vaQueryVendorString = reinterpret_cast<decltype(api.vaQueryVendorString)>(
             dlsym(api.va, "vaQueryVendorString"));
         DRIFT_VA_SYM(api.va, vaExportSurfaceHandle, "vaExportSurfaceHandle");
-        DRIFT_VA_SYM(api.va, vaSyncSurface, "vaSyncSurface");
         DRIFT_VA_SYM(api.egl, eglGetCurrentDisplay, "eglGetCurrentDisplay");
         DRIFT_VA_SYM(api.egl, eglQueryString, "eglQueryString");
 #undef DRIFT_VA_SYM
@@ -2676,9 +2674,9 @@ bool GlRuntime::importVaapiNv12(QOpenGLExtraFunctions *gl, const AVFrame *frame)
         return false;
     }
     const ExportedSurfaceFds fds{&desc};
-    // The decoder or VPP may still be writing. Failing to sync is not a reason to abandon the
-    // path, so its result is deliberately not checked — this matches mpv.
-    api.vaSyncSurface(display, surface);
+    // No vaSyncSurface here. ClipReader already synced the surface on the decode thread
+    // (hwaccel::syncVaapiFrame), and syncing again on this thread crashes iHD once a seek has
+    // destroyed the context that wrote the surface.
 
     // Guards against a libva ABI change shifting every field past objects[]: without them a
     // mismatched struct imports plausible-looking garbage instead of failing. SEPARATE_LAYERS
@@ -3396,11 +3394,17 @@ GlTarget promoteVideoFrameToTarget(GlRuntime &rt, QOpenGLExtraFunctions *gl,
         texY = rt.m_videoY;
         texUV = rt.m_videoUV;
         recordPreviewUploadPath(GlRuntime::PreviewUploadPath::CudaInterop);
-    } else if (rt.importVaapiNv12(gl, av)) {
-        uploaded = true;
-        texY = rt.m_importY;
-        texUV = rt.m_importUV;
-        recordPreviewUploadPath(GlRuntime::PreviewUploadPath::VaapiDmaBuf);
+    } else if (av->format == AV_PIX_FMT_VAAPI) {
+        // Tell ClipReader whether this worked: a VAAPI frame that falls through to the transfer
+        // below syncs its surface on this thread, which crashes iHD once a seek has destroyed
+        // the context that wrote it. While refused, ClipReader downloads on the decode thread.
+        uploaded = rt.importVaapiNv12(gl, av);
+        ClipReader::setVaapiImportRefused(!uploaded);
+        if (uploaded) {
+            texY = rt.m_importY;
+            texUV = rt.m_importUV;
+            recordPreviewUploadPath(GlRuntime::PreviewUploadPath::VaapiDmaBuf);
+        }
     } else if (rt.importD3d11Nv12(gl, av, &texY, &texUV)) {
         uploaded = true;
         d3d11Locked = true;

@@ -429,6 +429,10 @@ std::atomic<int> g_hardwareDecodeMode{static_cast<int>(ClipReader::HardwareDecod
 std::atomic<int> g_pinnedDecodeBackend{static_cast<int>(drift::hwaccel::Backend::None)};
 // -1 until a video decoder opens; otherwise the Backend the last one landed on.
 std::atomic<int> g_activeDecodeBackend{-1};
+// Whether the GL importer fell back to a copy for the last VAAPI frame it was handed. That copy
+// would run on the GL thread, where a seek may already have destroyed the context that wrote the
+// surface — so while this is set, VAAPI preview frames are downloaded here instead.
+std::atomic<bool> g_vaapiImportRefused{false};
 
 #ifdef Q_OS_ANDROID
 // Held images occupy codec output slots, so this bounds the preview cache too — see
@@ -1391,6 +1395,11 @@ bool ClipReader::mediaCodecImportFailed()
 }
 #endif
 
+void ClipReader::setVaapiImportRefused(bool refused)
+{
+    g_vaapiImportRefused.store(refused, std::memory_order_relaxed);
+}
+
 bool ClipReader::fallbackFromHardwareDecoder()
 {
     if (!m_hwAccelActive && !m_hwDeviceCtx && !m_mediaCodecActive)
@@ -1790,6 +1799,27 @@ bool ClipReader::convertFramePreview(const AVFrame *frame, PreviewVideoFrame &ou
         || isHardwarePixelFormat(static_cast<AVPixelFormat>(frame->format));
     if (hw) {
         const AVFrame *scaled = scaleHwFrame(frame, targetWidth, targetHeight);
+        // Every vaSyncSurface on a VAAPI surface — including the one inside
+        // av_hwframe_transfer_data — has to happen here, not on the GL thread: by the time GL
+        // gets the frame a seek may already have destroyed the decoder or VPP context that wrote
+        // it. So a frame the GL side would only copy is copied now.
+        if (scaled->format == AV_PIX_FMT_VAAPI) {
+            const auto *fc = reinterpret_cast<const AVHWFramesContext *>(scaled->hw_frames_ctx->data);
+            if (g_vaapiImportRefused.load(std::memory_order_relaxed) || fc->sw_format != AV_PIX_FMT_NV12) {
+                AVFrame *converted = nullptr;
+                if (!m_swFrame)
+                    m_swFrame = av_frame_alloc();
+                if (m_swFrame && av_hwframe_transfer_data(m_swFrame, scaled, 0) >= 0)
+                    converted = softwareFrameToNv12(m_swFrame, m_swsNv12, targetWidth, targetHeight);
+                if (m_swFrame)
+                    av_frame_unref(m_swFrame);
+                if (scaled == m_vppScaled)
+                    av_frame_unref(m_vppScaled);
+                out = takePreviewFrame(converted, effectiveRotation());
+                return out.isValid();
+            }
+            drift::hwaccel::syncVaapiFrame(scaled);
+        }
         out = makePreviewFrame(scaled, effectiveRotation());
         if (scaled == m_vppScaled)
             av_frame_unref(m_vppScaled);

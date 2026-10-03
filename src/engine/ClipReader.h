@@ -149,6 +149,10 @@ public:
     static void setActiveDecodeBackendRaw(int backend);
     static void setHardwareFallbackCount(quint64 count);
 
+    // Called by the GL importer after each VAAPI frame: true when it could not import the frame
+    // zero-copy. While set, preview VAAPI frames are downloaded on the decode thread instead.
+    static void setVaapiImportRefused(bool refused);
+
 #ifdef Q_OS_ANDROID
     // Called by the GL importer when a latched gralloc buffer cannot be bound. Process-wide and
     // sticky: there is no CPU copy to fall back on for the frame in flight, so the only recovery
