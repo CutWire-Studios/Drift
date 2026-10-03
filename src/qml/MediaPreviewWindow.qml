@@ -8,6 +8,8 @@ import "components"
 Window {
     id: root
 
+    // The main window, to open the enhance window from the finish page.
+    property var host: null
     property string clipId: ""
     property int assetIndex: -1
     property string assetId: ""
@@ -79,6 +81,15 @@ Window {
     readonly property bool dirty: cropDirty || trimDirty || frameResetPending
     readonly property bool saving: EditorState.editingAsset && !EditorState.assetEditIsConversion
 
+    // Bin videos end on a second page that offers an upscale; everything else saves directly.
+    readonly property bool hasFinishPage: isVideo && clipId.length === 0
+    property int page: 0
+    // Set while this window's "Upscale" renders the trimmed copy it hands to the enhance window.
+    property bool renderingCopy: false
+    readonly property int outputWidth: Math.max(1, Math.round(displayW * cropW))
+    readonly property int outputHeight: Math.max(1, Math.round(displayH * cropH))
+    readonly property bool suggestUpscale: Math.min(outputWidth, outputHeight) < 700
+
     width: 920
     height: 680
     minimumWidth: 640
@@ -105,6 +116,8 @@ Window {
         // seek instead of holding wherever the user put it.
         root._kickedForCurrentSource = false
         root.clipId = ""
+        root.page = 0
+        root.renderingCopy = false
         root.assetIndex = index
         root.assetId = asset.id || ""
         root.kind = asset.kind || ""
@@ -182,6 +195,8 @@ Window {
         player.source = ""
         root._kickedForCurrentSource = false
         root.clipId = clip.id
+        root.page = 0
+        root.renderingCopy = false
         root.assetIndex = -1
         root.kind = "video"
         root.sourcePath = clip.path
@@ -248,6 +263,23 @@ Window {
         root._seeking = false
     }
 
+    function upscale() {
+        player.pause()
+        if (AssetLibrary.assetAt(root.assetIndex).id !== root.assetId)
+            return
+        // Nothing trimmed or cropped: the original is already the video to enhance.
+        if (!root.cropDirty && root.inSeconds < 0.02 && root.outSeconds > root.durationSeconds - 0.02) {
+            const id = root.assetId
+            player.stop()
+            root.close()
+            root.host.openRestoreAsset(id)
+            return
+        }
+        root.renderingCopy = EditorState.renderAssetCopy(root.assetIndex, root.inSeconds,
+                                                         root.canTrim ? root.outSeconds : -1,
+                                                         root.cropX, root.cropY, root.cropW, root.cropH)
+    }
+
     function togglePlay() {
         if (root.isImage)
             return
@@ -270,7 +302,16 @@ Window {
 
     Connections {
         target: EditorState
+        function onAssetCopyRendered(assetId) {
+            if (!root.renderingCopy)
+                return
+            root.renderingCopy = false
+            player.stop()
+            root.close()
+            root.host.openRestoreAsset(assetId)
+        }
         function onAssetEditFinished(ok, message) {
+            root.renderingCopy = false
             // A background frame-rate conversion is not this window's save.
             if (!ok || EditorState.assetEditIsConversion)
                 return
@@ -335,11 +376,12 @@ Window {
 
     Shortcut {
         sequence: "Space"
+        enabled: root.page === 0
         onActivated: root.togglePlay()
     }
     Shortcut {
         sequence: "I"
-        enabled: root.canTrim && !root.saving
+        enabled: root.canTrim && !root.saving && root.page === 0
         onActivated: {
             root.inSeconds = Math.max(0, player.position / 1000)
             root.clampRange()
@@ -347,7 +389,7 @@ Window {
     }
     Shortcut {
         sequence: "O"
-        enabled: root.canTrim && !root.saving
+        enabled: root.canTrim && !root.saving && root.page === 0
         onActivated: {
             root.outSeconds = Math.max(root.inSeconds, player.position / 1000)
             root.clampRange()
@@ -367,6 +409,7 @@ Window {
         anchors.bottom: footer.top
         anchors.margins: Theme.spacingLg
         spacing: Theme.spacingLg
+        visible: root.page === 0
 
         ThemedLabel {
             id: hintLabel
@@ -739,12 +782,8 @@ Window {
                 font.family: Theme.monoFontFamily
                 size: "xs"
                 tone: "muted"
-                text: {
-                    const w = Math.max(1, Math.round(root.displayW * root.cropW))
-                    const h = Math.max(1, Math.round(root.displayH * root.cropH))
-                    return qsTr("Original: %1×%2 • Frame: %3×%4")
-                           .arg(root.displayW).arg(root.displayH).arg(w).arg(h)
-                }
+                text: qsTr("Original: %1×%2 • Frame: %3×%4")
+                      .arg(root.displayW).arg(root.displayH).arg(root.outputWidth).arg(root.outputHeight)
             }
 
             IconButton {
@@ -983,6 +1022,103 @@ Window {
         }
     }
 
+    Column {
+        anchors.horizontalCenter: parent.horizontalCenter
+        // Centred in the space above the footer.
+        anchors.verticalCenter: parent.verticalCenter
+        anchors.verticalCenterOffset: -(footer.height + Theme.spacingLg) / 2
+        width: Math.min(parent.width - Theme.spacingLg * 2, 520)
+        spacing: Theme.spacingLg
+        visible: root.page === 1
+
+        ThemedLabel {
+            width: parent.width
+            horizontalAlignment: Text.AlignHCenter
+            wrapMode: Text.WordWrap
+            size: "base"
+            tone: "default"
+            text: qsTr("Upscale this video?")
+        }
+
+        // The grade on the left is the shorter side, the number the upscale suggestion is
+        // judged by; orange while it is under the threshold, green once it clears it.
+        Item {
+            width: parent.width
+            height: resolutionPill.height
+
+            Rectangle {
+                id: resolutionPill
+                readonly property color tint: root.suggestUpscale ? Theme.warning : Theme.constructive
+                readonly property color ink: Theme.darkMode ? tint : Qt.darker(tint, 1.7)
+
+                anchors.horizontalCenter: parent.horizontalCenter
+                width: pillRow.width + 2
+                height: 38
+                radius: height / 2
+                color: Qt.rgba(tint.r, tint.g, tint.b, 0.12)
+                border.width: 1
+                border.color: Qt.rgba(tint.r, tint.g, tint.b, 0.55)
+
+                Row {
+                    id: pillRow
+                    anchors.centerIn: parent
+
+                    Rectangle {
+                        width: gradeText.implicitWidth + 24
+                        height: resolutionPill.height - 2
+                        radius: height / 2
+                        color: resolutionPill.tint
+
+                        Text {
+                            id: gradeText
+                            anchors.centerIn: parent
+                            text: qsTr("%1p").arg(Math.min(root.outputWidth, root.outputHeight))
+                            font.family: Theme.monoFontFamily
+                            font.pixelSize: Theme.fontSizeSm
+                            font.weight: Font.Bold
+                            color: "#1a1206"
+                        }
+                    }
+
+                    Text {
+                        anchors.verticalCenter: parent.verticalCenter
+                        leftPadding: 14
+                        rightPadding: 18
+                        text: root.outputWidth + " × " + root.outputHeight
+                        font.family: Theme.monoFontFamily
+                        font.pixelSize: 18
+                        font.weight: Font.Medium
+                        color: resolutionPill.ink
+                    }
+                }
+            }
+        }
+
+        ThemedLabel {
+            width: parent.width
+            horizontalAlignment: Text.AlignHCenter
+            text: qsTr("Length %1").arg(root.formatTime(root.outSeconds - root.inSeconds))
+        }
+
+        ThemedLabel {
+            width: parent.width
+            horizontalAlignment: Text.AlignHCenter
+            wrapMode: Text.WordWrap
+            size: "sm"
+            tone: "default"
+            text: root.suggestUpscale
+                  ? qsTr("This video is under 700 pixels on its shorter side. Upscaling it with an AI model can make it look sharper.")
+                  : qsTr("This resolution is already good for most projects. You can still upscale it.")
+        }
+
+        ThemedLabel {
+            width: parent.width
+            horizontalAlignment: Text.AlignHCenter
+            wrapMode: Text.WordWrap
+            text: qsTr("Done keeps the original video and stores this range and framing. Upscale renders them as a new video in the media bin, then opens it in the Enhance window.")
+        }
+    }
+
     Row {
         id: footer
         anchors.left: parent.left
@@ -994,12 +1130,16 @@ Window {
         ThemedLabel {
             anchors.verticalCenter: parent.verticalCenter
             width: parent.width - cancelBtn.width - saveBtn.width - parent.spacing * 2
+                   - (backBtn.visible ? backBtn.width + parent.spacing : 0)
+                   - (upscaleBtn.visible ? upscaleBtn.width + parent.spacing : 0)
             elide: Text.ElideRight
             tone: "muted"
             text: root.saving
                   ? (EditorState.assetEditStatus.length > 0
                      ? EditorState.assetEditStatus
                      : qsTr("Saving…"))
+                  : root.page === 1 ? ""
+                  : root.hasFinishPage ? qsTr("Choose the part and framing to keep, then Next.")
                   : root.dirty
                     ? (root.isVideo ? qsTr("Save keeps the original video and stores this framing.") : qsTr("Save writes a new file over this item in the bin."))
                     : (root.clipId.length > 0 ? qsTr("Adjust the frame or Reset to restore the full image.") : qsTr("Nothing to save — drag this item onto the timeline when you are ready."))
@@ -1018,12 +1158,39 @@ Window {
         }
 
         ThemedButton {
+            id: backBtn
+            visible: root.page === 1
+            variant: "ghost"
+            text: qsTr("Back")
+            enabled: !root.saving
+            onClicked: root.page = 0
+        }
+
+        ThemedButton {
+            id: upscaleBtn
+            visible: root.page === 1
+            variant: root.suggestUpscale ? "primary" : "secondary"
+            text: qsTr("Upscale…")
+            enabled: !root.saving
+            onClicked: root.upscale()
+        }
+
+        ThemedButton {
             id: saveBtn
-            variant: "primary"
-            text: qsTr("Save")
-            enabled: root.dirty && !root.saving && (root.assetIndex >= 0 || root.clipId.length > 0)
+            variant: root.hasFinishPage && root.page === 1 && root.suggestUpscale ? "secondary" : "primary"
+            text: !root.hasFinishPage ? qsTr("Save") : root.page === 0 ? qsTr("Next") : qsTr("Done")
+            enabled: !root.saving && (root.hasFinishPage || (root.dirty && (root.assetIndex >= 0 || root.clipId.length > 0)))
             onClicked: {
                 player.pause()
+                if (root.hasFinishPage && root.page === 0) {
+                    root.page = 1
+                    return
+                }
+                if (!root.dirty) {
+                    player.stop()
+                    root.close()
+                    return
+                }
                 if (root.clipId.length > 0) {
                     if (EditorState.setClipSourceFrame(root.clipId, root.cropX, root.cropY, root.cropW, root.cropH))
                         root.close()

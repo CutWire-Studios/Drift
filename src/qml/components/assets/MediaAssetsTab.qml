@@ -864,7 +864,7 @@ Item {
                         onTriggered: root.addToTimelineRequested(root.selectedAssetIds)
                     }
                     ThemedMenuItem {
-                        text: qsTr("Preview and edit…")
+                        text: kind === "video" ? qsTr("Trim, crop and upscale…") : qsTr("Preview and edit…")
                         icon.name: Theme.icons.eye
                         visible: kind !== "composite"
                         onTriggered: root.previewRequested(assetIndex)
@@ -1337,7 +1337,7 @@ Item {
                     onTriggered: root.addToTimelineRequested(root.selectedAssetIds)
                 }
                 ThemedMenuItem {
-                    text: qsTr("Preview and edit…")
+                    text: kind === "video" ? qsTr("Trim, crop and upscale…") : qsTr("Preview and edit…")
                     icon.name: Theme.icons.eye
                     visible: kind !== "composite"
                     onTriggered: root.previewRequested(assetIndex)

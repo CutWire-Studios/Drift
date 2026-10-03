@@ -16,6 +16,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <cstring>
 #include <limits>
 #include <vector>
 
@@ -32,6 +33,7 @@ extern "C" {
 #include <libavutil/pixdesc.h>
 #include <libavutil/samplefmt.h>
 #include <libswresample/swresample.h>
+#include <libswscale/swscale.h>
 }
 
 namespace drift {
@@ -916,8 +918,12 @@ bool editVideo(const MediaEditSpec &spec, QString *errorOut,
         }
     }
 
-    const bool tenBit = sourceBitDepth(vDec) > 8 && x264Supports(AV_PIX_FMT_YUV420P10LE);
+    const bool tenBit = !spec.frameHook && sourceBitDepth(vDec) > 8
+        && x264Supports(AV_PIX_FMT_YUV420P10LE);
     const AVPixelFormat outFormat = tenBit ? AV_PIX_FMT_YUV420P10LE : AV_PIX_FMT_YUV420P;
+    // With a hook the graph hands over RGB for it, and the hook's result is converted to
+    // outFormat on the way to the encoder.
+    const AVPixelFormat graphFormat = spec.frameHook ? AV_PIX_FMT_RGB24 : outFormat;
 
     AVFilterGraph *graph = nullptr;
     AVFilterContext *filterSrc = nullptr;
@@ -935,7 +941,7 @@ bool editVideo(const MediaEditSpec &spec, QString *errorOut,
         // start_time=0 pads from the trim's in-point, so a first frame that lands late still
         // lines up with the audio's first sample.
         chain << QStringLiteral("fps=fps=%1/%2:start_time=0").arg(frameRate.num).arg(frameRate.den)
-              << QStringLiteral("format=%1").arg(QString::fromLatin1(av_get_pix_fmt_name(outFormat)));
+              << QStringLiteral("format=%1").arg(QString::fromLatin1(av_get_pix_fmt_name(graphFormat)));
         if (!buildFilterGraph(vDec, vStream, chain.join(QLatin1Char(',')), &graph, &filterSrc,
                               &filterSink)) {
             if (swr)
@@ -949,6 +955,8 @@ bool editVideo(const MediaEditSpec &spec, QString *errorOut,
     }
 
     Mp4Writer writer;
+    SwsContext *hookSws = nullptr;
+    AVFrame *hooked = spec.frameHook ? av_frame_alloc() : nullptr;
 
     if (inUs > 0) {
         const int64_t ts = av_rescale_q(inUs, {1, AV_TIME_BASE}, vStream->time_base);
@@ -964,11 +972,13 @@ bool editVideo(const MediaEditSpec &spec, QString *errorOut,
     std::vector<float> pcm;
     // Audio decoded before the first filtered video frame opens the writer.
     std::vector<float> pendingPcm;
-    bool ok = packet && frame && filtered;
+    bool ok = packet && frame && filtered && (hooked || !spec.frameHook);
     bool wroteVideo = false;
     const TimeUs spanUs = (outUs == std::numeric_limits<TimeUs>::max() ? durationUs : outUs) - inUs;
 
     auto cleanup = [&] {
+        av_frame_free(&hooked);
+        sws_freeContext(hookSws);
         av_frame_free(&filtered);
         av_frame_free(&frame);
         av_packet_free(&packet);
@@ -996,6 +1006,56 @@ bool editVideo(const MediaEditSpec &spec, QString *errorOut,
                 return true;
             if (rc < 0)
                 return fail(trEdit("Could not convert a frame"));
+            if (spec.frameHook) {
+                QImage image(filtered->width, filtered->height, QImage::Format_RGB888);
+                for (int y = 0; y < filtered->height; ++y)
+                    std::memcpy(image.scanLine(y), filtered->data[0] + y * filtered->linesize[0],
+                                size_t(filtered->width) * 3);
+                QString hookError;
+                if (!spec.frameHook(image, &hookError)) {
+                    av_frame_unref(filtered);
+                    return fail(hookError.isEmpty() ? trEdit("Cancelled") : hookError);
+                }
+                // yuv420 needs even dimensions.
+                const int w = image.width() & ~1;
+                const int h = image.height() & ~1;
+                if (writer.isOpen() && (w != hooked->width || h != hooked->height)) {
+                    av_frame_unref(filtered);
+                    return fail(trEdit("Could not convert a frame"));
+                }
+                if (!hooked->data[0]) {
+                    hooked->format = outFormat;
+                    hooked->width = w;
+                    hooked->height = h;
+                    if (av_frame_get_buffer(hooked, 0) < 0) {
+                        av_frame_unref(filtered);
+                        return fail(trEdit("Could not convert a frame"));
+                    }
+                }
+                hookSws = sws_getCachedContext(hookSws, w, h, AV_PIX_FMT_RGB24, w, h, outFormat,
+                                               SWS_BICUBIC, nullptr, nullptr, nullptr);
+                if (!hookSws || av_frame_make_writable(hooked) < 0) {
+                    av_frame_unref(filtered);
+                    return fail(trEdit("Could not convert a frame"));
+                }
+                // The hook's picture is plain RGB; encode it as limited-range BT.709 and say so.
+                const int *bt709 = sws_getCoefficients(SWS_CS_ITU709);
+                sws_setColorspaceDetails(hookSws, bt709, 1, bt709, 0, 0, 1 << 16, 1 << 16);
+                const uint8_t *srcData[1] = {image.constBits()};
+                const int srcStride[1] = {int(image.bytesPerLine())};
+                sws_scale(hookSws, srcData, srcStride, 0, h, hooked->data, hooked->linesize);
+                hooked->pts = filtered->pts;
+                hooked->duration = filtered->duration;
+                hooked->color_range = AVCOL_RANGE_MPEG;
+                hooked->colorspace = AVCOL_SPC_BT709;
+                hooked->color_primaries = filtered->color_primaries;
+                hooked->color_trc = filtered->color_trc;
+                hooked->sample_aspect_ratio = filtered->sample_aspect_ratio;
+                av_frame_unref(filtered);
+                // The writer takes its size from the first frame it sees, and unrefs nothing, so
+                // hand it a reference and keep the buffer for the next frame.
+                av_frame_ref(filtered, hooked);
+            }
             if (!writer.isOpen()) {
                 // Primaries and transfer ride the stream, not every decoded frame; without them an
                 // HDR source would come out tagged as SDR.

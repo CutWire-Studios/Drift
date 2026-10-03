@@ -17,4 +17,11 @@ void clear();
 QImage frame();
 QImage mask();
 
+// The enhance window's before/after pair, served as image://segment/restore-original and
+// image://segment/restore-enhanced.
+void setRestoreOriginal(const QImage &image);
+void setRestoreEnhanced(const QImage &image);
+QImage restoreOriginal();
+QImage restoreEnhanced();
+
 } // namespace SegmentImageStore

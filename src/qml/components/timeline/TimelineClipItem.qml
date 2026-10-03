@@ -430,6 +430,14 @@ Item {
                 onTriggered: EditorState.convertAssetsToConstantFrameRate([clipItem.mediaAssetId])
             }
             ThemedMenuItem {
+                text: qsTr("Enhance video…")
+                icon.name: Theme.icons.sparkles
+                // Desktop only: AndroidMain has no restore window.
+                visible: clipItem.clipData.kind === "video"
+                         && typeof clipItem.Window.window.openRestore === "function"
+                onTriggered: clipItem.Window.window.openRestore(clipItem.trackIndex, clipItem.clipIndex)
+            }
+            ThemedMenuItem {
                 text: qsTr("Unlink")
                 icon.name: Theme.icons.unlink
                 visible: !!clipItem.clipData.linked && EditorState.unlinkAvailable

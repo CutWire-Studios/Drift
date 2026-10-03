@@ -666,6 +666,8 @@ add_library(driftengine STATIC
     src/engine/RvmMatter.cpp
     src/engine/VdaDepth.h
     src/engine/VdaDepth.cpp
+    src/engine/Restorer.h
+    src/engine/Restorer.cpp
     src/engine/DepthSidecar.h
     src/engine/DepthSidecar.cpp
     src/engine/FaceLandmarker.h
@@ -1046,6 +1048,7 @@ qt_add_qml_module(drift
         src/qml/SegmentationWindow.qml
         src/qml/MulticamWindow.qml
         src/qml/DenoiseWindow.qml
+        src/qml/RestoreWindow.qml
         src/qml/DownloadsWindow.qml
         src/qml/SpeedCurveWindow.qml
         src/qml/FadeCurveWindow.qml
@@ -1176,6 +1179,7 @@ qt_add_qml_module(drift
         src/qml/components/CircularProgress.qml
         src/qml/components/RecoveryDialog.qml
         src/qml/components/UnsavedChangesDialog.qml
+        src/qml/components/UpscaleModelCard.qml
         src/qml/components/RecentProjectsPopup.qml
         src/qml/components/StartScreen.qml
         src/qml/components/NewTrackMenu.qml

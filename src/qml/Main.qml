@@ -534,6 +534,13 @@ ApplicationWindow {
     }
 
     LazyLoader {
+        id: restoreWindowLoader
+        sourceComponent: Component {
+            RestoreWindow { }
+        }
+    }
+
+    LazyLoader {
         id: speedCurveWindowLoader
         sourceComponent: Component {
             SpeedCurveWindow { }
@@ -563,6 +570,18 @@ ApplicationWindow {
         denoiseWindowLoader.ensure().openFor(track, clip, durationSeconds)
     }
 
+    function openRestore(track, clip) {
+        const w = restoreWindowLoader.ensure()
+        w.host = window
+        w.openFor(track, clip)
+    }
+
+    function openRestoreAsset(assetId) {
+        const w = restoreWindowLoader.ensure()
+        w.host = window
+        w.openForAsset(assetId)
+    }
+
     function openSpeedCurve(track, clip) {
         speedCurveWindowLoader.ensure().openFor(track, clip)
     }
@@ -576,7 +595,9 @@ ApplicationWindow {
     }
 
     function openMediaPreview(assetIndex) {
-        mediaPreviewWindowLoader.ensure().openFor(assetIndex)
+        const w = mediaPreviewWindowLoader.ensure()
+        w.host = window
+        w.openFor(assetIndex)
     }
 
     function openSourceFrame(track, clip) {

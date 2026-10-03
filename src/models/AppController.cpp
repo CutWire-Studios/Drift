@@ -67,6 +67,7 @@
 #include "engine/FaceTrack.h"
 #include "engine/DepthSidecar.h"
 #include "engine/VdaDepth.h"
+#include "engine/Restorer.h"
 #include "engine/ModelAsset.h"
 #include "engine/ModelClipTransform.h"
 #include "engine/ReverseProxyCache.h"
@@ -126,6 +127,7 @@
 #include <QThreadPool>
 #include <QSaveFile>
 #include <QTemporaryFile>
+#include <QElapsedTimer>
 #include <QSettings>
 #include <QByteArray>
 #include <QTranslator>
@@ -161,6 +163,8 @@ constexpr quint64 kSegmentEncodeStreamId = 0xA5'11'5C'A4'00'00'00'03ull;
 constexpr quint64 kCutoutRenderStreamId = 0xA5'11'5C'A4'00'00'00'04ull;
 constexpr quint64 kFaceDetectStreamId = 0xA5'11'5C'A4'00'00'00'05ull;
 constexpr quint64 kDepthScanStreamId = 0xA5'11'5C'A4'00'00'00'09ull;
+constexpr quint64 kRestorePreviewStreamId = 0xA5'11'5C'A4'00'00'00'0Aull;
+constexpr quint64 kSegmentScrubStreamId = 0xA5'11'5C'A4'00'00'00'0Bull;
 
 QString stabilizationCacheDir()
 {
@@ -5403,6 +5407,90 @@ bool AppController::saveAssetEdit(int assetIndex, double inSeconds, double outSe
     spec.rotationOverride = asset.value(QStringLiteral("effectiveRotation"), -1).toInt();
 
     startAssetEditJob(assetId, name, spec, false);
+    return true;
+}
+
+bool AppController::renderAssetCopy(int assetIndex, double inSeconds, double outSeconds,
+                                    double cropX, double cropY, double cropW, double cropH)
+{
+    if (m_editingAsset) {
+        setLastMessage(tr("An edit is already saving"), QStringLiteral("warning"));
+        return false;
+    }
+    if (!m_assetLibrary)
+        return false;
+    const drift::MediaAsset *source = m_project.asset(m_assetLibrary->assetIdAt(assetIndex));
+    if (!source || source->kind != drift::MediaKind::Video || !QFileInfo(source->path).isFile()) {
+        setLastMessage(tr("Could not open the media file"), QStringLiteral("error"));
+        return false;
+    }
+    const QString outPath = drift::newEditedMediaPath(m_project.id(), QStringLiteral("video"));
+    if (outPath.isEmpty()) {
+        setLastMessage(tr("Could not create an output file"), QStringLiteral("error"));
+        return false;
+    }
+
+    drift::MediaEditSpec spec;
+    spec.inputPath = source->path;
+    spec.outputPath = outPath;
+    spec.kind = QStringLiteral("video");
+    spec.inSeconds = inSeconds;
+    spec.outSeconds = outSeconds;
+    spec.cropX = cropX;
+    spec.cropY = cropY;
+    spec.cropW = cropW;
+    spec.cropH = cropH;
+    // The crop was drawn against the bin's rotation correction; see saveAssetEdit.
+    spec.rotationOverride = drift::effectiveRotation(*source);
+    const QString name = tr("%1 (trimmed)").arg(source->name);
+    const QString folderId = source->folderId;
+
+    setPlaying(false);
+    m_assetEditCancel.storeRelaxed(0);
+    m_assetEditProgress = 0.0;
+    m_assetEditStatus = tr("Rendering…");
+    m_editingAsset = true;
+    m_editingAssetId = source->id;
+    m_assetEditIsConversion = false;
+    emit assetEditChanged();
+
+    (void)QtConcurrent::run([this, spec, name, folderId]() {
+        QString error;
+        const bool ok = drift::editMedia(spec, &error, [this](double fraction) {
+            if (m_assetEditCancel.loadRelaxed() != 0)
+                return false;
+            QMetaObject::invokeMethod(
+                this,
+                [this, fraction]() {
+                    m_assetEditProgress = fraction;
+                    emit assetEditChanged();
+                },
+                Qt::QueuedConnection);
+            return true;
+        });
+        const MediaInfo info = ok ? MediaProbe::probe(spec.outputPath) : MediaInfo();
+
+        QMetaObject::invokeMethod(
+            this,
+            [this, ok, error, spec, name, folderId, info]() {
+                m_editingAsset = false;
+                m_editingAssetId.clear();
+                m_assetEditProgress = 0.0;
+                m_assetEditStatus = ok ? QString() : error;
+                emit assetEditChanged();
+                if (ok) {
+                    emit assetCopyRendered(addRenderedVideoAsset(spec.outputPath, name, folderId,
+                                                                 info, tr("Render Trimmed Copy")));
+                } else {
+                    QFile::remove(spec.outputPath);
+                    setLastMessage(error.isEmpty() ? tr("Couldn’t save that edit") : error,
+                                   QStringLiteral("error"));
+                    emit assetEditFinished(false, error);
+                }
+                startNextConversion();
+            },
+            Qt::QueuedConnection);
+    });
     return true;
 }
 
@@ -11018,6 +11106,66 @@ void AppController::setSegmentationFrame(double seconds)
     });
 }
 
+void AppController::scrubSegmentationFrame(double seconds)
+{
+    if (!m_segSessionActive || m_segEncoding)
+        return;
+    if (m_segScrubBusy) {
+        m_segScrubPending = seconds;
+        return;
+    }
+    if (m_segTrack < 0 || m_segTrack >= m_project.tracks().size())
+        return;
+    const drift::Track &track = m_project.tracks().at(m_segTrack);
+    if (m_segClip < 0 || m_segClip >= track.clips.size())
+        return;
+
+    const drift::Clip &clip = track.clips.at(m_segClip);
+    const drift::TimeUs timelineUs =
+        qBound(clip.timelineStart, drift::secondsToUs(seconds),
+               clip.timelineStart + clip.timelineDuration - 1);
+    const drift::TimeUs sourceUs = clip.timelineToSourceUs(timelineUs);
+    const QString path = clip.path;
+    const int canvasW = m_project.width();
+    const int canvasH = m_project.height();
+    const int rotationCorrection = clip.rotationCorrection;
+    const int generation = m_segGeneration;
+
+    // Points and mask belong to the frame being left.
+    m_segScrubBusy = true;
+    m_segPoints.clear();
+    ++m_segSeedGeneration;
+
+    (void)QtConcurrent::run([this, path, sourceUs, canvasW, canvasH, rotationCorrection,
+                             generation]() {
+        const QImage frame = ClipReaderPool::instance().readVideoFrame(
+            path, kSegmentScrubStreamId, sourceUs, canvasW, canvasH, QString(), 15, false,
+            rotationCorrection);
+        QMetaObject::invokeMethod(
+            this,
+            [this, frame, generation]() {
+                m_segScrubBusy = false;
+                // The release already started encoding its frame, or the window closed.
+                if (generation != m_segGeneration || !m_segSessionActive || m_segEncoding) {
+                    m_segScrubPending.reset();
+                    return;
+                }
+                if (!frame.isNull()) {
+                    SegmentImageStore::setFrame(frame);
+                    SegmentImageStore::setMask(QImage());
+                    ++m_segRevision;
+                    emit segmentSessionChanged();
+                }
+                if (m_segScrubPending) {
+                    const double next = *m_segScrubPending;
+                    m_segScrubPending.reset();
+                    scrubSegmentationFrame(next);
+                }
+            },
+            Qt::QueuedConnection);
+    });
+}
+
 void AppController::addSegmentationPoint(double x, double y, bool include)
 {
     if (!m_segSessionActive || m_segEncoding)
@@ -11666,6 +11814,467 @@ QVariantMap AppController::depthJob(const QString &clipId) const
             continue;
         }
         return {{QStringLiteral("active"), job.value(QStringLiteral("active")).toBool()},
+                {QStringLiteral("progress"), job.value(QStringLiteral("progress")).toDouble()},
+                {QStringLiteral("status"), job.value(QStringLiteral("status")).toString()},
+                {QStringLiteral("error"), job.value(QStringLiteral("error"))
+                                              .toObject()
+                                              .value(QStringLiteral("message"))
+                                              .toString()}};
+    }
+    return {};
+}
+
+QVariantList AppController::restoreModels()
+{
+    QVariantList out;
+    for (const drift::Restorer::Model &m : drift::Restorer::models()) {
+        out.append(QVariantMap{{QStringLiteral("id"), m.id},
+                               {QStringLiteral("name"), m.name},
+                               {QStringLiteral("task"), m.task},
+                               {QStringLiteral("scale"), m.scale},
+                               {QStringLiteral("custom"), m.custom},
+                               {QStringLiteral("content"), m.content},
+                               {QStringLiteral("summary"), m.summary},
+                               {QStringLiteral("thumbnail"),
+                                m.thumbnail.isEmpty() ? QString()
+                                                      : QUrl::fromLocalFile(m.thumbnail).toString()},
+                               {QStringLiteral("secondsPerMegapixel"), m.secondsPerMegapixel}});
+    }
+    return out;
+}
+
+QString AppController::restoreModelsFolder()
+{
+    const QString dir = drift::Restorer::customModelsDir();
+    QDir().mkpath(dir);
+    return dir;
+}
+
+QString AppController::addRenderedVideoAsset(const QString &path, const QString &name,
+                                             const QString &folderId, const MediaInfo &info,
+                                             const QString &undoText)
+{
+    const drift::Project before = m_project.detachedCopy();
+    drift::MediaAsset asset;
+    asset.kind = drift::MediaKind::Video;
+    asset.path = path;
+    asset.name = name;
+    asset.durationUs = info.durationUs;
+    for (const StreamInfo &stream : info.streams) {
+        if (stream.type == StreamInfo::Type::Video && asset.width == 0) {
+            asset.width = stream.width;
+            asset.height = stream.height;
+            asset.fps = stream.fps;
+        } else if (stream.type == StreamInfo::Type::Audio) {
+            asset.hasAudio = true;
+        }
+    }
+    asset.hasAudioKnown = true;
+    asset.frameRateKnown = true;
+    asset.folderId = folderId;
+    const QString assetId = m_project.addAsset(asset);
+    if (m_assetLibrary) {
+        m_assetLibrary->syncToProject();
+        m_assetLibrary->ensureMedia(m_assetLibrary->indexOfId(assetId));
+    }
+    pushProjectEdit(before, undoText);
+    finishEdit(undoText);
+    return assetId;
+}
+
+std::optional<AppController::RestoreSource> AppController::restoreSource(const QString &targetId) const
+{
+    if (targetId.isEmpty())
+        return std::nullopt;
+    for (const drift::Track &track : m_project.tracks()) {
+        const int index = clipIndexById(track, targetId);
+        if (index < 0)
+            continue;
+        const drift::Clip &clip = track.clips.at(index);
+        if (clip.type != drift::ClipType::Video || clip.path.isEmpty() || clip.srcOut <= clip.srcIn)
+            return std::nullopt;
+        return RestoreSource{clip.path, clip.srcIn, clip.srcOut, clip.rotationCorrection,
+                             m_project.asset(clip.assetId)};
+    }
+    const drift::MediaAsset *asset = m_project.asset(targetId);
+    if (!asset || asset->kind != drift::MediaKind::Video || asset->path.isEmpty()
+        || asset->durationUs <= 0)
+        return std::nullopt;
+    return RestoreSource{asset->path, 0, asset->durationUs, drift::rotationCorrectionOf(*asset),
+                         asset};
+}
+
+QString AppController::restoreVideo(const QString &targetId, const QString &decompressModel,
+                                    const QString &upscaleModel)
+{
+    const std::optional<RestoreSource> src = restoreSource(targetId);
+    if (!src) {
+        setLastMessage(tr("Select a video clip to enhance"), QStringLiteral("warning"));
+        return {};
+    }
+    if (decompressModel.isEmpty() && upscaleModel.isEmpty()) {
+        setLastMessage(tr("Choose a model to enhance with"), QStringLiteral("warning"));
+        return {};
+    }
+    if (m_jobs->hasActive(QStringLiteral("restore"), targetId)) {
+        setLastMessage(tr("This clip is already being enhanced"), QStringLiteral("warning"));
+        return {};
+    }
+
+    const drift::MediaAsset *source = src->asset;
+    const QString sourceName = source ? source->name : QFileInfo(src->path).completeBaseName();
+    const QString folderId = source ? source->folderId : m_currentBinFolderId;
+    drift::MediaEditSpec spec;
+    spec.inputPath = src->path;
+    spec.outputPath = drift::newEditedMediaPath(m_project.id(), QStringLiteral("video"));
+    spec.kind = QStringLiteral("video");
+    spec.inSeconds = drift::usToSeconds(src->srcIn);
+    spec.outSeconds = drift::usToSeconds(src->srcOut);
+    spec.rotationOverride = source ? source->rotationOverride : -1;
+    auto info = std::make_shared<MediaInfo>();
+    auto scale = std::make_shared<int>(1);
+    QPointer<AppController> self(this);
+
+    const QString id = m_jobs->start(
+        QStringLiteral("restore"), targetId, JobRegistry::Lane::Model,
+        [self, spec, targetId, decompressModel, upscaleModel, info, scale](JobContext &ctx) mutable {
+            const auto notify = [self, targetId]() {
+                QMetaObject::invokeMethod(
+                    self.data(),
+                    [self, targetId]() {
+                        if (self)
+                            emit self->restoreJobChanged(targetId);
+                    },
+                    Qt::QueuedConnection);
+            };
+            ctx.progress(0.0, QObject::tr("Loading the models…"));
+            notify();
+
+            QList<std::shared_ptr<drift::Restorer>> chain;
+            for (const QString &model : {decompressModel, upscaleModel}) {
+                if (model.isEmpty())
+                    continue;
+                QString error;
+                std::shared_ptr<drift::Restorer> r = drift::Restorer::load(model, &error);
+                if (!r)
+                    return ctx.fail(QStringLiteral("model_error"), error);
+                *scale *= r->scale();
+                chain.append(r);
+            }
+
+            const auto cancelled = [&ctx](double) { return !ctx.cancelled(); };
+            spec.frameHook = [&](QImage &frame, QString *error) {
+                for (const std::shared_ptr<drift::Restorer> &r : chain) {
+                    if (!r->process(frame, cancelled, error))
+                        return false;
+                }
+                return true;
+            };
+            QString error;
+            int lastPermille = -1;
+            QElapsedTimer timer;
+            timer.start();
+            const bool ok = drift::editMedia(spec, &error, [&](double fraction) {
+                const int permille = int(fraction * 1000);
+                if (permille != lastPermille) {
+                    lastPermille = permille;
+                    const QString percent = QString::number(fraction * 100, 'f', 1);
+                    // Extrapolated from the pace so far, once there is enough of it to go on.
+                    const double elapsed = timer.elapsed() / 1000.0;
+                    QString status;
+                    if (fraction > 0.005 && elapsed > 10.0) {
+                        const qint64 left = qint64(elapsed * (1.0 - fraction) / fraction);
+                        const QString eta =
+                            left < 90 ? QObject::tr("%1 s").arg(left)
+                            : left < 5400 ? QObject::tr("%1 min").arg((left + 30) / 60)
+                                          : QObject::tr("%1 h %2 min").arg(left / 3600).arg(left % 3600 / 60);
+                        status = QObject::tr("Enhancing… %1% — about %2 left").arg(percent, eta);
+                    } else {
+                        status = QObject::tr("Enhancing… %1%").arg(percent);
+                    }
+                    ctx.progress(fraction, status);
+                    notify();
+                }
+                return !ctx.cancelled();
+            });
+            if (ctx.cancelled())
+                return;
+            if (!ok)
+                return ctx.fail(QStringLiteral("render_error"), error);
+            *info = MediaProbe::probe(spec.outputPath);
+            ctx.succeed({{QStringLiteral("path"), spec.outputPath}});
+        },
+        [this, targetId, spec, sourceName, folderId, info, scale](const QJsonObject &job) {
+            if (job.value(QStringLiteral("ok")).toBool()) {
+                addRenderedVideoAsset(spec.outputPath,
+                                      *scale > 1 ? tr("%1 (enhanced %2x)").arg(sourceName).arg(*scale)
+                                                 : tr("%1 (enhanced)").arg(sourceName),
+                                      folderId, *info, tr("Enhance Video"));
+                setLastMessage(tr("Enhanced video added to the media bin"));
+            } else {
+                QFile::remove(spec.outputPath);
+                const QJsonObject error = job.value(QStringLiteral("error")).toObject();
+                if (error.value(QStringLiteral("code")).toString() != QLatin1String("cancelled"))
+                    setLastMessage(error.value(QStringLiteral("message")).toString(),
+                                   QStringLiteral("error"));
+            }
+            emit restoreJobChanged(targetId);
+            return QJsonObject{};
+        });
+    emit restoreJobChanged(targetId);
+    setLastMessage(tr("Enhancing video…"));
+    return id;
+}
+
+void AppController::cancelRestore(const QString &targetId)
+{
+    for (const QJsonValue &v : m_jobs->jobs()) {
+        const QJsonObject job = v.toObject();
+        const QString kind = job.value(QStringLiteral("kind")).toString();
+        if ((kind == QLatin1String("restore") || kind == QLatin1String("restore-preview"))
+            && job.value(QStringLiteral("target")).toString() == targetId
+            && job.value(QStringLiteral("active")).toBool()) {
+            m_jobs->cancel(job.value(QStringLiteral("id")).toString());
+        }
+    }
+}
+
+void AppController::setRestorePreviewFrame(const QString &targetId, double offsetSeconds)
+{
+    const std::optional<RestoreSource> src = restoreSource(targetId);
+    if (!src)
+        return;
+    // The decode pool is shared with playback.
+    setPlaying(false);
+
+    m_restoreFrameLoading = true;
+    m_restoreEnhancedSize = QSize();
+    SegmentImageStore::setRestoreEnhanced(QImage());
+    ++m_restorePreviewRevision;
+    emit restorePreviewChanged();
+
+    // A dragged slider asks faster than full-resolution decodes finish.
+    if (m_restoreDecodeBusy) {
+        m_restorePendingFrame = std::make_pair(targetId, offsetSeconds);
+        return;
+    }
+    m_restoreDecodeBusy = true;
+
+    const quint64 generation = ++m_restorePreviewGeneration;
+    const QString path = src->path;
+    const drift::TimeUs sourceUs =
+        std::clamp(src->srcIn + drift::secondsToUs(offsetSeconds), src->srcIn,
+                   std::max(src->srcIn, src->srcOut - 1));
+    const int rotationCorrection = src->rotationCorrection;
+
+    QPointer<AppController> self(this);
+    (void)QtConcurrent::run([self, generation, path, sourceUs, rotationCorrection]() {
+        // Bounded only to keep a pathological file from allocating without limit: the preview has
+        // to show the source's own pixels, the ones the models will see.
+        const QImage frame = ClipReaderPool::instance().readVideoFrame(
+            path, kRestorePreviewStreamId, sourceUs, 8192, 8192, QString(), 15, false,
+            rotationCorrection);
+        QMetaObject::invokeMethod(
+            self.data(),
+            [self, generation, frame]() {
+                if (!self)
+                    return;
+                self->m_restoreDecodeBusy = false;
+                if (generation == self->m_restorePreviewGeneration) {
+                    self->m_restoreFrameLoading = self->m_restorePendingFrame.has_value();
+                    self->m_restoreOriginalSize = frame.size();
+                    SegmentImageStore::setRestoreOriginal(frame);
+                    ++self->m_restorePreviewRevision;
+                    emit self->restorePreviewChanged();
+                }
+                if (self->m_restorePendingFrame) {
+                    const auto [target, offset] = *self->m_restorePendingFrame;
+                    self->m_restorePendingFrame.reset();
+                    self->setRestorePreviewFrame(target, offset);
+                }
+            },
+            Qt::QueuedConnection);
+    });
+}
+
+QString AppController::previewRestore(const QString &targetId, const QString &decompressModel,
+                                      const QString &upscaleModel)
+{
+    if (!restoreSource(targetId))
+        return {};
+    const QImage original = SegmentImageStore::restoreOriginal();
+    if (original.isNull() || m_restoreFrameLoading)
+        return {};
+    if (decompressModel.isEmpty() && upscaleModel.isEmpty()) {
+        setLastMessage(tr("Choose a model to enhance with"), QStringLiteral("warning"));
+        return {};
+    }
+    if (m_jobs->hasActive(QStringLiteral("restore"), targetId)
+        || m_jobs->hasActive(QStringLiteral("restore-preview"), targetId)) {
+        return {};
+    }
+
+    const quint64 generation = m_restorePreviewGeneration;
+    auto result = std::make_shared<QImage>();
+    auto elapsed = std::make_shared<double>(0.0);
+    QPointer<AppController> self(this);
+
+    const QString id = m_jobs->start(
+        QStringLiteral("restore-preview"), targetId, JobRegistry::Lane::Model,
+        [self, targetId, decompressModel, upscaleModel, original, result, elapsed](JobContext &ctx) {
+            const auto notify = [self, targetId]() {
+                QMetaObject::invokeMethod(
+                    self.data(),
+                    [self, targetId]() {
+                        if (self)
+                            emit self->restoreJobChanged(targetId);
+                    },
+                    Qt::QueuedConnection);
+            };
+            ctx.progress(0.0, QObject::tr("Loading the models…"));
+            notify();
+
+            QList<std::shared_ptr<drift::Restorer>> chain;
+            for (const QString &model : {decompressModel, upscaleModel}) {
+                if (model.isEmpty())
+                    continue;
+                QString error;
+                std::shared_ptr<drift::Restorer> r = drift::Restorer::load(model, &error);
+                if (!r)
+                    return ctx.fail(QStringLiteral("model_error"), error);
+                chain.append(r);
+            }
+
+            QImage frame = original;
+            QElapsedTimer timer;
+            timer.start();
+            for (int i = 0; i < chain.size(); ++i) {
+                QString error;
+                const bool ok = chain.at(i)->process(frame, [&](double fraction) {
+                    ctx.progress((i + fraction) / chain.size(),
+                                 QObject::tr("Enhancing this frame… %1%")
+                                     .arg(int((i + fraction) / chain.size() * 100)));
+                    notify();
+                    return !ctx.cancelled();
+                }, &error);
+                if (ctx.cancelled())
+                    return;
+                if (!ok)
+                    return ctx.fail(QStringLiteral("model_error"), error);
+            }
+            *elapsed = timer.elapsed() / 1000.0;
+            *result = frame;
+            ctx.succeed({});
+        },
+        [this, targetId, generation, result, elapsed, decompressModel, upscaleModel,
+         megapixels = original.width() * original.height() / 1e6](const QJsonObject &job) {
+            if (job.value(QStringLiteral("ok")).toBool())
+                calibrateRestoreSpeed({decompressModel, upscaleModel}, megapixels, *elapsed);
+            if (job.value(QStringLiteral("ok")).toBool() && generation == m_restorePreviewGeneration
+                && !m_restoreFrameLoading) {
+                m_restoreEnhancedSize = result->size();
+                SegmentImageStore::setRestoreEnhanced(*result);
+                ++m_restorePreviewRevision;
+                emit restorePreviewChanged();
+            }
+            emit restoreJobChanged(targetId);
+            return QJsonObject{};
+        });
+    emit restoreJobChanged(targetId);
+    return id;
+}
+
+void AppController::calibrateRestoreSpeed(const QStringList &modelIds, double megapixels,
+                                          double seconds)
+{
+    double reference = 0.0;
+    for (const QString &id : modelIds) {
+        if (id.isEmpty())
+            continue;
+        double spm = 0.0;
+        for (const drift::Restorer::Model &m : drift::Restorer::models()) {
+            if (m.id == id)
+                spm = m.secondsPerMegapixel;
+        }
+        // A model without a reference speed leaves nothing to compare against.
+        if (spm <= 0.0)
+            return;
+        reference += spm * megapixels;
+    }
+    if (reference <= 0.0 || seconds <= 0.0)
+        return;
+    // Averaged with the last reading: one frame is a noisy sample of a loaded machine.
+    QSettings settings;
+    const double measured = seconds / reference;
+    const bool calibrated = settings.value(QStringLiteral("restore/speedCalibrated")).toBool();
+    const double previous = settings.value(QStringLiteral("restore/speedFactor"), measured).toDouble();
+    settings.setValue(QStringLiteral("restore/speedFactor"),
+                      calibrated ? (previous + measured) / 2.0 : measured);
+    settings.setValue(QStringLiteral("restore/speedCalibrated"), true);
+}
+
+QVariantMap AppController::restoreSpeed() const
+{
+    QSettings settings;
+    return {{QStringLiteral("factor"), settings.value(QStringLiteral("restore/speedFactor"), 1.0).toDouble()},
+            {QStringLiteral("calibrated"),
+             settings.value(QStringLiteral("restore/speedCalibrated"), false).toBool()}};
+}
+
+QVariantMap AppController::restoreTargetInfo(const QString &targetId) const
+{
+    const std::optional<RestoreSource> src = restoreSource(targetId);
+    if (!src)
+        return {};
+    int width = src->asset ? src->asset->width : 0;
+    int height = src->asset ? src->asset->height : 0;
+    if (src->asset) {
+        const int rotation = drift::effectiveRotation(*src->asset) % 180;
+        if (rotation == 90)
+            std::swap(width, height);
+    }
+    const double fps = src->asset && src->asset->fps > 0 ? src->asset->fps : m_project.fps();
+    return {{QStringLiteral("seconds"), drift::usToSeconds(src->srcOut - src->srcIn)},
+            {QStringLiteral("width"), width},
+            {QStringLiteral("height"), height},
+            {QStringLiteral("fps"), fps}};
+}
+
+QVariantMap AppController::restorePreviewState() const
+{
+    return {{QStringLiteral("revision"), m_restorePreviewRevision},
+            {QStringLiteral("width"), m_restoreOriginalSize.width()},
+            {QStringLiteral("height"), m_restoreOriginalSize.height()},
+            {QStringLiteral("enhancedWidth"), m_restoreEnhancedSize.width()},
+            {QStringLiteral("enhancedHeight"), m_restoreEnhancedSize.height()},
+            {QStringLiteral("loading"), m_restoreFrameLoading}};
+}
+
+void AppController::endRestorePreview()
+{
+    ++m_restorePreviewGeneration;
+    m_restorePendingFrame.reset();
+    m_restoreFrameLoading = false;
+    m_restoreOriginalSize = QSize();
+    m_restoreEnhancedSize = QSize();
+    SegmentImageStore::setRestoreOriginal(QImage());
+    SegmentImageStore::setRestoreEnhanced(QImage());
+    ++m_restorePreviewRevision;
+    emit restorePreviewChanged();
+}
+
+QVariantMap AppController::restoreJob(const QString &targetId) const
+{
+    const QJsonArray jobs = m_jobs->jobs();
+    for (qsizetype i = jobs.size() - 1; i >= 0; --i) {
+        const QJsonObject job = jobs.at(i).toObject();
+        const QString kind = job.value(QStringLiteral("kind")).toString();
+        if ((kind != QLatin1String("restore") && kind != QLatin1String("restore-preview"))
+            || job.value(QStringLiteral("target")).toString() != targetId) {
+            continue;
+        }
+        return {{QStringLiteral("kind"), kind},
+                {QStringLiteral("active"), job.value(QStringLiteral("active")).toBool()},
                 {QStringLiteral("progress"), job.value(QStringLiteral("progress")).toDouble()},
                 {QStringLiteral("status"), job.value(QStringLiteral("status")).toString()},
                 {QStringLiteral("error"), job.value(QStringLiteral("error"))

@@ -221,7 +221,12 @@ Window {
                     from: 0
                     to: Math.max(0.001, root.clipDurationSeconds)
                     enabled: !EditorState.segmentEncoding && !EditorState.segmenting
-                    // Re-encoding on every slider tick would queue seconds of work per drag.
+                    // Re-encoding on every slider tick would queue seconds of work per drag, so a
+                    // drag only shows frames and the encode waits for the release.
+                    onMoved: {
+                        if (pressed)
+                            EditorState.scrubSegmentationFrame(root.clipStartSeconds + value)
+                    }
                     onPressedChanged: {
                         if (!pressed)
                             EditorState.setSegmentationFrame(root.clipStartSeconds + value)

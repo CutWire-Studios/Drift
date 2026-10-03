@@ -48,6 +48,7 @@
 #include <optional>
 
 struct EffectTemplateEntry;
+struct MediaInfo;
 
 class QTimer;
 class AddonManager;
@@ -961,6 +962,11 @@ public:
     Q_INVOKABLE bool saveAssetEdit(int assetIndex, double inSeconds, double outSeconds,
                                    double cropX, double cropY, double cropW, double cropH);
     Q_INVOKABLE void cancelAssetEdit();
+    // Renders a bin video's trim and crop into a new bin item, "<name> (trimmed)", leaving the
+    // original alone. Reports progress through assetEditChanged like a save; the new item's id
+    // arrives as assetCopyRendered, a failure as assetEditFinished(false, ...).
+    Q_INVOKABLE bool renderAssetCopy(int assetIndex, double inSeconds, double outSeconds,
+                                     double cropX, double cropY, double cropW, double cropH);
     // "Convert to edit-friendly format": re-encodes each video asset onto a constant, standard
     // frame rate and swaps it in, one at a time, the same undoable way a crop does, marking the
     // asset edit-friendly. The original file is left where it was.
@@ -1112,6 +1118,9 @@ public:
     QString transitionCurveMode() const;
     Q_INVOKABLE void setTransitionCurveHandles(double c1x, double c1y, double c2x, double c2y);
     Q_INVOKABLE void setSegmentationFrame(double seconds);
+    // Shows the frame at `seconds` while the frame slider is dragged, without the model pass that
+    // setSegmentationFrame runs on release. Requests made while one decodes collapse into the newest.
+    Q_INVOKABLE void scrubSegmentationFrame(double seconds);
     Q_INVOKABLE void addSegmentationPoint(double x, double y, bool include);
     Q_INVOKABLE void removeSegmentationPoint(int index);
     Q_INVOKABLE void clearSegmentationPoints();
@@ -1141,6 +1150,41 @@ public:
     Q_INVOKABLE bool depthAvailable();
     // {active, progress, status, error} of the newest depth job for a clip; empty if there is none.
     Q_INVOKABLE QVariantMap depthJob(const QString &clipId) const;
+
+    // Restore models (compression removal, upscaling), installed addons and custom .onnx files:
+    // [{id, name, task: "decompress"|"upscale", scale, custom}].
+    Q_INVOKABLE QVariantList restoreModels();
+    // The folder custom restore models are read from, created if missing.
+    Q_INVOKABLE QString restoreModelsFolder();
+    // The enhance window works on a target: a clip id (its used source range) or a bin video's
+    // asset id (the whole file).
+    //
+    // Runs the target through an optional decompression model, then an optional upscaler, into a
+    // new bin item beside its media, as a JobRegistry "restore" job targeting that id. Either
+    // model id may be empty, not both. Returns the job id, or empty when it could not start (the
+    // reason goes to lastMessage).
+    Q_INVOKABLE QString restoreVideo(const QString &targetId, const QString &decompressModel,
+                                     const QString &upscaleModel);
+    Q_INVOKABLE void cancelRestore(const QString &targetId);
+    // {active, progress, status, error, kind} of the newest restore or restore-preview job for a
+    // target; empty if there is none.
+    Q_INVOKABLE QVariantMap restoreJob(const QString &targetId) const;
+    // The enhance window's before/after. Decodes the frame `offsetSeconds` into the target at
+    // source resolution as image://segment/restore-original, dropping any result. Calls made
+    // while a decode runs collapse into the newest, so it can follow a dragged slider.
+    Q_INVOKABLE void setRestorePreviewFrame(const QString &targetId, double offsetSeconds);
+    // Runs the models over that frame as a JobRegistry "restore-preview" job; the result becomes
+    // image://segment/restore-enhanced. Returns the job id, or empty when it could not start.
+    Q_INVOKABLE QString previewRestore(const QString &targetId, const QString &decompressModel,
+                                       const QString &upscaleModel);
+    // {seconds, width, height (upright), fps} of a target.
+    Q_INVOKABLE QVariantMap restoreTargetInfo(const QString &targetId) const;
+    // {factor, calibrated}: how this machine's CPU compares with the one the models'
+    // secondsPerMegapixel were measured on. Each preview run refines it.
+    Q_INVOKABLE QVariantMap restoreSpeed() const;
+    // {revision, width, height, enhancedWidth, enhancedHeight, loading}
+    Q_INVOKABLE QVariantMap restorePreviewState() const;
+    Q_INVOKABLE void endRestorePreview();
     // Normalised depth (0 far, 1 near) under a point of the clip's frame, given in 0..1 frame
     // coordinates, at a timeline time (negative: the playhead). -1 when the clip has no depth.
     Q_INVOKABLE double sampleDepthAt(int trackIndex, int clipIndex, double nx, double ny,
@@ -2180,6 +2224,8 @@ signals:
     void transitionCurveApplied();
     void faceDetectingChanged();
     void depthJobChanged(const QString &clipId);
+    void restoreJobChanged(const QString &clipId);
+    void restorePreviewChanged();
     void faceDetectProgressChanged();
     void faceDetectStatusChanged();
     void faceDetectionFinished(bool ok, const QString &message);
@@ -2263,6 +2309,7 @@ signals:
     void replacingAssetIdChanged();
     void assetEditChanged();
     void assetEditFinished(bool ok, const QString &message);
+    void assetCopyRendered(const QString &assetId);
     // File actions from the shortcut layer — QML owns dialogs and unsaved prompts.
     void newProjectRequested();
     void openRequested();
@@ -2573,6 +2620,21 @@ protected:
     void restoreFilmstripsAfterLoad();
     void normalizeSelection();
     bool isValidClipIndex(int trackIndex, int clipIndex) const;
+    struct RestoreSource
+    {
+        QString path;
+        drift::TimeUs srcIn = 0;
+        drift::TimeUs srcOut = 0;
+        int rotationCorrection = 0;
+        const drift::MediaAsset *asset = nullptr;
+    };
+    // A clip id or asset id resolved to the video it reads; nullopt when it is neither.
+    std::optional<RestoreSource> restoreSource(const QString &targetId) const;
+    void calibrateRestoreSpeed(const QStringList &modelIds, double megapixels, double seconds);
+    // Adds a video Drift rendered to the bin as one undoable edit; returns its asset id.
+    QString addRenderedVideoAsset(const QString &path, const QString &name,
+                                  const QString &folderId, const MediaInfo &info,
+                                  const QString &undoText);
     QList<int> subtitleMergeIndices(const QList<QPair<int, int>> &pairs) const;
     void mergeSubtitleClipsAt(int trackIndex, QList<int> clipIndices);
 
@@ -2882,6 +2944,17 @@ protected:
     int m_segClip = -1;
     double m_segSeconds = 0.0;
     int m_segRevision = 0;
+    bool m_segScrubBusy = false;
+    std::optional<double> m_segScrubPending;
+    // Enhance window preview. The generation drops a frame decode or model run that finishes
+    // after the frame has moved on.
+    int m_restorePreviewRevision = 0;
+    quint64 m_restorePreviewGeneration = 0;
+    bool m_restoreFrameLoading = false;
+    QSize m_restoreOriginalSize;
+    QSize m_restoreEnhancedSize;
+    bool m_restoreDecodeBusy = false;
+    std::optional<std::pair<QString, double>> m_restorePendingFrame;
     int m_segGeneration = 0; // bumped per encode request; stale results are dropped
     int m_segSeedGeneration = 0; // bumped per seed preview; stale masks are dropped
     bool m_segSeedRunning = false;

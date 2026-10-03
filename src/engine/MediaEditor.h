@@ -1,5 +1,6 @@
 #pragma once
 
+#include <QImage>
 #include <QString>
 
 #include <functional>
@@ -30,6 +31,10 @@ struct MediaEditSpec
     bool conformFrameRate = false;
     // Video: an extra libavfilter chain run on the upright frames, before the crop.
     QString videoFilter;
+    // Video: replaces each output frame after the filters, and may change its size — every frame
+    // must come back the same size as the first. Forces 8-bit output. Returning false stops the
+    // edit with the error it set, or "Cancelled" when it set none.
+    std::function<bool(QImage &frame, QString *error)> frameHook;
 };
 
 // Rewrites `inputPath` into `outputPath` with the requested trim and crop. Images become PNG,

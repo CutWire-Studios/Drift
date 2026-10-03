@@ -18,6 +18,10 @@ QImage SegmentImageProvider::requestImage(const QString &id, QSize *size, const 
         image = SegmentImageStore::frame();
     else if (kind == QLatin1String("mask"))
         image = SegmentImageStore::mask();
+    else if (kind == QLatin1String("restore-original"))
+        image = SegmentImageStore::restoreOriginal();
+    else if (kind == QLatin1String("restore-enhanced"))
+        image = SegmentImageStore::restoreEnhanced();
 
     if (image.isNull()) {
         if (size)
