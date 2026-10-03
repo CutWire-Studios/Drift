@@ -3570,35 +3570,35 @@
     </message>
     <message>
         <source>Select a video clip to enhance</source>
-        <translation type="unfinished"></translation>
+        <translation>Chọn một video clip để nâng cấp</translation>
     </message>
     <message>
         <source>Choose a model to enhance with</source>
-        <translation type="unfinished"></translation>
+        <translation>Chọn một mô hình để nâng cấp</translation>
     </message>
     <message>
         <source>This clip is already being enhanced</source>
-        <translation type="unfinished"></translation>
+        <translation>Clip này đã được nâng cấp rồi</translation>
     </message>
     <message>
         <source>%1 (enhanced %2x)</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 (đã nâng cấp %2x)</translation>
     </message>
     <message>
         <source>%1 (enhanced)</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 (đã nâng cấp)</translation>
     </message>
     <message>
         <source>Enhance Video</source>
-        <translation type="unfinished"></translation>
+        <translation>Nâng cấp Video</translation>
     </message>
     <message>
         <source>Enhanced video added to the media bin</source>
-        <translation type="unfinished"></translation>
+        <translation>Video nâng cấp đã được thêm vào ngăn phương tiện</translation>
     </message>
     <message>
         <source>Enhancing video…</source>
-        <translation type="unfinished"></translation>
+        <translation>Đang nâng cấp video…</translation>
     </message>
     <message>
         <source>This build of Drift has no video stabilization support</source>
@@ -6517,7 +6517,7 @@
     </message>
     <message>
         <source>This clip was scanned before the face mesh was supported. Re-detect faces to enable 3D Face Mesh and Face Retouch.</source>
-        <translation type="unfinished"></translation>
+        <translation>Clip này được quét trước khi lưới khuôn mặt được hỗ trợ. Phát hiện lại khuôn mặt để bật Lưới khuôn mặt 3D và Chỉnh sửa khuôn mặt.</translation>
     </message>
     <message>
         <source>Move to a time, set a value, then click the diamond to add a keyframe. With Auto keyframes on, dragging a slider also creates them.</source>
@@ -6609,7 +6609,7 @@
     </message>
     <message>
         <source>Face %1</source>
-        <translation type="unfinished"></translation>
+        <translation>Khuôn mặt %1</translation>
     </message>
     <message>
         <source>Anything in “%1” nearer than Distance passes in front of this layer.</source>
@@ -7032,7 +7032,7 @@
     </message>
     <message>
         <source>Custom model: %1</source>
-        <translation>Mẫu tùy chỉnh: %1</translation>
+        <translation>Mô hình tùy chỉnh: %1</translation>
     </message>
     <message>
         <source>Delete prop…</source>
@@ -8427,7 +8427,7 @@
     </message>
     <message>
         <source>Trim, crop and upscale…</source>
-        <translation type="unfinished"></translation>
+        <translation>Cắt, xén và nâng độ phân giải…</translation>
     </message>
     <message>
         <source>Replace media…</source>
@@ -8667,27 +8667,27 @@
     </message>
     <message>
         <source>Upscale this video?</source>
-        <translation type="unfinished"></translation>
+        <translation>Nâng độ phân giải video này?</translation>
     </message>
     <message>
         <source>%1p</source>
-        <translation type="unfinished"></translation>
+        <translation>%1p</translation>
     </message>
     <message>
         <source>Length %1</source>
-        <translation type="unfinished"></translation>
+        <translation>Độ dài %1</translation>
     </message>
     <message>
         <source>This video is under 700 pixels on its shorter side. Upscaling it with an AI model can make it look sharper.</source>
-        <translation type="unfinished"></translation>
+        <translation>Video này có cạnh ngắn dưới 700 pixel. Nâng cấp bằng mô hình AI có thể làm nó nét hơn.</translation>
     </message>
     <message>
         <source>This resolution is already good for most projects. You can still upscale it.</source>
-        <translation type="unfinished"></translation>
+        <translation>Độ phân giải này đã tốt cho hầu hết các dự án. Bạn vẫn có thể nâng cấp nó.</translation>
     </message>
     <message>
         <source>Done keeps the original video and stores this range and framing. Upscale renders them as a new video in the media bin, then opens it in the Enhance window.</source>
-        <translation type="unfinished"></translation>
+        <translation>Xong sẽ giữ nguyên video gốc và lưu phạm vi cùng khung hình này. Nâng cấp sẽ kết xuất chúng thành video mới trong ngăn phương tiện rồi mở nó trong cửa sổ Nâng cấp.</translation>
     </message>
     <message>
         <source>Saving…</source>
@@ -8695,7 +8695,7 @@
     </message>
     <message>
         <source>Choose the part and framing to keep, then Next.</source>
-        <translation type="unfinished"></translation>
+        <translation>Chọn phần và khung hình cần giữ, sau đó chọn Tiếp theo.</translation>
     </message>
     <message>
         <source>Save writes a new file over this item in the bin.</source>
@@ -8723,11 +8723,11 @@
     </message>
     <message>
         <source>Back</source>
-        <translation type="unfinished">Quay lại</translation>
+        <translation>Quay lại</translation>
     </message>
     <message>
         <source>Upscale…</source>
-        <translation type="unfinished"></translation>
+        <translation>Nâng độ phân giải…</translation>
     </message>
     <message>
         <source>Save</source>
@@ -8735,11 +8735,11 @@
     </message>
     <message>
         <source>Next</source>
-        <translation type="unfinished"></translation>
+        <translation>Tiếp theo</translation>
     </message>
     <message>
         <source>Done</source>
-        <translation type="unfinished"></translation>
+        <translation>Hoàn tất</translation>
     </message>
 </context>
 <context>
@@ -8827,7 +8827,7 @@
     </message>
     <message>
         <source>Which of the file&apos;s animations plays</source>
-        <translation>Hoạt ảnh nào của tập tin phát</translation>
+        <translation>Hoạt ảnh nào của tệp sẽ phát</translation>
     </message>
     <message>
         <source>After the end</source>
@@ -8895,7 +8895,7 @@
     </message>
     <message>
         <source>Drag the light around the sphere. The light stays fixed to the camera, not the model.</source>
-        <translation>Kéo ánh sáng xung quanh quả cầu. Ánh sáng vẫn cố định vào máy ảnh chứ không phải vào người mẫu.</translation>
+        <translation>Kéo ánh sáng xung quanh quả cầu. Ánh sáng vẫn cố định vào máy ảnh chứ không phải vào mô hình.</translation>
     </message>
     <message>
         <source>Behind</source>
@@ -10124,31 +10124,31 @@ Nếu phát lại bị giật, hãy thử cái khác.</translation>
     </message>
     <message>
         <source>Loading the models…</source>
-        <translation type="unfinished"></translation>
+        <translation>Đang tải mô hình…</translation>
     </message>
     <message>
         <source>%1 s</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 giây</translation>
     </message>
     <message>
         <source>%1 min</source>
-        <translation type="unfinished">%1 phút</translation>
+        <translation>%1 phút</translation>
     </message>
     <message>
         <source>%1 h %2 min</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 h %2 phút</translation>
     </message>
     <message>
         <source>Enhancing… %1% — about %2 left</source>
-        <translation type="unfinished"></translation>
+        <translation>Đang nâng cấp… %1% — khoảng %2 còn lại</translation>
     </message>
     <message>
         <source>Enhancing… %1%</source>
-        <translation type="unfinished"></translation>
+        <translation>Đang nâng cấp… %1%</translation>
     </message>
     <message>
         <source>Enhancing this frame… %1%</source>
-        <translation type="unfinished"></translation>
+        <translation>Đang nâng cấp khung hình này… %1%</translation>
     </message>
     <message>
         <source>Scanning frame %1 of %2…</source>
@@ -10335,171 +10335,171 @@ Nếu phát lại bị giật, hãy thử cái khác.</translation>
     <name>RestoreWindow</name>
     <message>
         <source>Enhance video</source>
-        <translation type="unfinished"></translation>
+        <translation>Nâng cấp video</translation>
     </message>
     <message>
         <source>None</source>
-        <translation type="unfinished">Không</translation>
+        <translation>Không</translation>
     </message>
     <message>
         <source>%1 (custom, experimental)</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 (tùy chỉnh, thử nghiệm)</translation>
     </message>
     <message>
         <source>Original</source>
-        <translation type="unfinished">Nguyên bản</translation>
+        <translation>Nguyên bản</translation>
     </message>
     <message>
         <source>Enhanced — out of date, preview again</source>
-        <translation type="unfinished"></translation>
+        <translation>Đã nâng cấp — đã lỗi thời, hãy xem trước lại</translation>
     </message>
     <message>
         <source>Enhanced %1 × %2</source>
-        <translation type="unfinished"></translation>
+        <translation>Đã nâng cấp %1 × %2</translation>
     </message>
     <message>
         <source>Loading this frame…</source>
-        <translation type="unfinished"></translation>
+        <translation>Đang tải khung hình này…</translation>
     </message>
     <message>
         <source>Working…</source>
-        <translation type="unfinished">Đang làm việc…</translation>
+        <translation>Đang làm việc…</translation>
     </message>
     <message>
         <source>Choose models, then Preview to compare this frame</source>
-        <translation type="unfinished"></translation>
+        <translation>Chọn mô hình, sau đó Xem trước để so sánh khung hình này</translation>
     </message>
     <message>
         <source>Frame</source>
-        <translation type="unfinished"></translation>
+        <translation>Khung hình</translation>
     </message>
     <message>
         <source>s</source>
-        <translation type="unfinished"></translation>
+        <translation>giây</translation>
     </message>
     <message>
         <source>Fit</source>
-        <translation type="unfinished">Vừa</translation>
+        <translation>Vừa</translation>
     </message>
     <message>
         <source>Preview one frame, then enhance the whole video. The result is added to the media bin. Enhancing is slow — minutes per second of video without a GPU.</source>
-        <translation type="unfinished"></translation>
+        <translation>Xem trước một khung hình, sau đó nâng cấp toàn bộ video. Kết quả được thêm vào ngăn phương tiện. Quá trình nâng cấp diễn ra chậm — số phút trên giây của video không có GPU.</translation>
     </message>
     <message>
         <source>Preview one frame, then enhance the part of the clip used on the timeline. The result is added to the media bin. Enhancing is slow — minutes per second of video without a GPU.</source>
-        <translation type="unfinished"></translation>
+        <translation>Xem trước một khung hình, sau đó nâng cấp phần clip được sử dụng trên dòng thời gian. Kết quả được thêm vào ngăn phương tiện. Quá trình nâng cấp diễn ra chậm — số phút trên giây của video không có GPU.</translation>
     </message>
     <message>
         <source>Remove compression</source>
-        <translation type="unfinished"></translation>
+        <translation>Loại bỏ nén</translation>
     </message>
     <message>
         <source>Upscale</source>
-        <translation type="unfinished"></translation>
+        <translation>Nâng độ phân giải</translation>
     </message>
     <message>
         <source>Output: %1 × %2</source>
-        <translation type="unfinished"></translation>
+        <translation>Đầu ra: %1 × %2</translation>
     </message>
     <message>
         <source> — larger than 4K, which is slow to edit and export</source>
-        <translation type="unfinished"></translation>
+        <translation> —lớn hơn 4K, làm chậm việc chỉnh sửa và xuất</translation>
     </message>
     <message>
         <source>Up to about %1 on this computer&apos;s CPU.</source>
-        <translation type="unfinished"></translation>
+        <translation>Tối đa khoảng %1 trên CPU của máy tính này.</translation>
     </message>
     <message>
         <source>Up to about %1 on a typical laptop CPU. Preview a frame for an estimate for this computer.</source>
-        <translation type="unfinished"></translation>
+        <translation>Lên tới khoảng %1 trên CPU laptop thông thường. Xem trước một khung hình để ước tính cho máy tính này.</translation>
     </message>
     <message>
         <source>Preview this frame</source>
-        <translation type="unfinished"></translation>
+        <translation>Xem trước khung hình này</translation>
     </message>
     <message>
         <source>Anime and drawings</source>
-        <translation type="unfinished"></translation>
+        <translation>Anime và hình vẽ</translation>
     </message>
     <message>
         <source>Live action</source>
-        <translation type="unfinished"></translation>
+        <translation>Hành động trực tiếp</translation>
     </message>
     <message>
         <source>3D animation and games</source>
-        <translation type="unfinished"></translation>
+        <translation>Hoạt ảnh 3D và trò chơi</translation>
     </message>
     <message>
         <source>General</source>
-        <translation type="unfinished">Chung</translation>
+        <translation>Chung</translation>
     </message>
     <message>
         <source>Choose an upscaler</source>
-        <translation type="unfinished"></translation>
+        <translation>Chọn một trình nâng độ phân giải</translation>
     </message>
     <message>
         <source>All</source>
-        <translation type="unfinished">Tất cả</translation>
+        <translation>Tất cả</translation>
     </message>
     <message>
         <source>Speeds are per frame of this clip. Custom models are experimental and may not work. Drop an ONNX export (fp32 or fp16, RGB, 1x/2x/4x) into the folder; put the scale in the file name, e.g. &quot;2x_Name.onnx&quot;.</source>
-        <translation type="unfinished"></translation>
+        <translation>Tốc độ tính trên mỗi khung hình của clip này. Các mô hình tùy chỉnh chỉ mang tính thử nghiệm và có thể không hoạt động. Thả bản xuất ONNX (fp32 hoặc fp16, RGB, 1x/2x/4x) vào thư mục; đặt tỷ lệ vào tên tệp, ví dụ: &quot;2x_Name.onnx&quot;.</translation>
     </message>
     <message>
         <source>Refresh model list</source>
-        <translation type="unfinished"></translation>
+        <translation>Làm mới danh sách mô hình</translation>
     </message>
     <message>
         <source>Enhance clip</source>
-        <translation type="unfinished"></translation>
+        <translation>Nâng cấp clip</translation>
     </message>
     <message>
         <source>under a second</source>
-        <translation type="unfinished"></translation>
+        <translation>dướt một giây</translation>
     </message>
     <message>
         <source>%1 s</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 giây</translation>
     </message>
     <message>
         <source>%1 min</source>
-        <translation type="unfinished">%1 phút</translation>
+        <translation>%1 phút</translation>
     </message>
     <message>
         <source>%1 h %2 min</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 h %2 phút</translation>
     </message>
     <message>
         <source>%1 s per frame</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 giây mỗi khung hình</translation>
     </message>
     <message>
         <source>No upscaling</source>
-        <translation type="unfinished"></translation>
+        <translation>Không nâng độ phân giải</translation>
     </message>
     <message>
         <source>Keep the original size.</source>
-        <translation type="unfinished"></translation>
+        <translation>Giữ kích thước ban đầu.</translation>
     </message>
     <message>
         <source>Install AI engine first</source>
-        <translation type="unfinished">Cài đặt công cụ AI trước</translation>
+        <translation>Cài đặt công cụ AI trước</translation>
     </message>
     <message>
         <source>Get models (openmodeldb.info)</source>
-        <translation type="unfinished"></translation>
+        <translation>Nhận mô hình (openmodeldb.info)</translation>
     </message>
     <message>
         <source>Open custom models folder</source>
-        <translation type="unfinished"></translation>
+        <translation>Mở thư mục mô hình tùy chỉnh</translation>
     </message>
     <message>
         <source>Stop</source>
-        <translation type="unfinished">Dừng lại</translation>
+        <translation>Dừng</translation>
     </message>
     <message>
         <source>Close</source>
-        <translation type="unfinished">Đóng</translation>
+        <translation>Đóng</translation>
     </message>
 </context>
 <context>
@@ -11049,7 +11049,7 @@ Nếu phát lại bị giật, hãy thử cái khác.</translation>
     </message>
     <message>
         <source>Voice model</source>
-        <translation>Mẫu giọng nói</translation>
+        <translation>Mô hình giọng nói</translation>
     </message>
     <message>
         <source>Transcription model</source>
@@ -11689,7 +11689,7 @@ Nếu phát lại bị giật, hãy thử cái khác.</translation>
     </message>
     <message>
         <source>Speed applies to video, audio and composite clips.</source>
-        <translation type="unfinished"></translation>
+        <translation>Tốc độ áp dụng cho video, âm thanh và tổ hợp clip.</translation>
     </message>
     <message>
         <source>Playback speed</source>
@@ -13236,7 +13236,7 @@ Nếu phát lại bị giật, hãy thử cái khác.</translation>
     </message>
     <message>
         <source>Enhance video…</source>
-        <translation type="unfinished"></translation>
+        <translation>Nâng cấp video…</translation>
     </message>
     <message>
         <source>Unlink</source>
@@ -14485,31 +14485,31 @@ Nếu phát lại bị giật, hãy thử cái khác.</translation>
     <name>UpscaleModelCard</name>
     <message>
         <source>Anime and drawings</source>
-        <translation type="unfinished"></translation>
+        <translation>Anime và hình vẽ</translation>
     </message>
     <message>
         <source>Live action</source>
-        <translation type="unfinished"></translation>
+        <translation>Hành động trực tiếp</translation>
     </message>
     <message>
         <source>3D animation and games</source>
-        <translation type="unfinished"></translation>
+        <translation>Hoạt ảnh 3D và trò chơi</translation>
     </message>
     <message>
         <source>General</source>
-        <translation type="unfinished">Chung</translation>
+        <translation>Chung</translation>
     </message>
     <message>
         <source>Before</source>
-        <translation type="unfinished"></translation>
+        <translation>Trước</translation>
     </message>
     <message>
         <source>After</source>
-        <translation type="unfinished"></translation>
+        <translation>Sau</translation>
     </message>
     <message>
         <source>Custom model</source>
-        <translation type="unfinished"></translation>
+        <translation>Mô hình tùy chỉnh</translation>
     </message>
 </context>
 <context>
