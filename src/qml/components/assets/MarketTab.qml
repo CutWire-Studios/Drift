@@ -18,8 +18,9 @@ Item {
 
     readonly property string query: field.text.trim()
     readonly property real sidePadding: compact ? Theme.androidPagePadding : Theme.pagePadding
-    // Before consent there is no catalog, so the stock tabs collapse into one that leads to it.
-    readonly property var stockTabs: Market.consented
+    // Until the catalog is in (no consent yet, still loading, or unreachable) the stock tabs
+    // collapse into one that leads to the consent panel or the loading and error states.
+    readonly property var stockTabs: Market.consented && Market.types.length > 0
                                      ? Market.types
                                      : [{ id: "stock", label: qsTr("Stock") }]
 
@@ -48,6 +49,17 @@ Item {
         root.showSection(typeId)
         if (sameType)
             stock.runSearch()
+    }
+
+    // Market.types is not persisted, and StockBrowser can't ask for it: it only shows once the
+    // types are there. Without this, consent from an earlier run leaves no stock tabs at all.
+    onVisibleChanged: ensureCatalog()
+    Component.onCompleted: ensureCatalog()
+    function ensureCatalog() {
+        if (!visible || !Market.configured || !Market.consented)
+            return
+        if (Market.types.length === 0 && !Market.catalogLoading)
+            Market.refreshCatalog()
     }
 
     Connections {
@@ -167,7 +179,8 @@ Item {
             visible: root.section === "assets"
             compact: root.compact
             query: root.section === "assets" ? root.query : ""
-            stockTypes: Market.consented ? Market.types : [{ id: "stock", label: qsTr("Stock footage") }]
+            stockTypes: Market.consented && Market.types.length > 0
+                        ? Market.types : [{ id: "stock", label: qsTr("Stock footage") }]
             onSearchStockRequested: (typeId) => root.searchStock(typeId)
         }
 
@@ -175,10 +188,7 @@ Item {
             anchors.fill: parent
             visible: root.section !== "assets" && !Market.consented
             sideMargin: root.sidePadding
-            onAccepted: {
-                if (Market.types.length === 0 && !Market.catalogLoading)
-                    Market.refreshCatalog()
-            }
+            onAccepted: root.ensureCatalog()
         }
 
         EmptyState {
