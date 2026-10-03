@@ -11732,8 +11732,8 @@ If playback stutters, try another.</source>
         <translation>ලබාගත නොහැක</translation>
     </message>
     <message>
-        <source>Speed applies to video and audio clips.</source>
-        <translation>වේගය අදාළ වන්නේ වීඩියෝ සහ ශ්‍රව්‍ය ක්ලිප් සඳහාය.</translation>
+        <source>Speed applies to video, audio and composite clips.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Playback speed</source>

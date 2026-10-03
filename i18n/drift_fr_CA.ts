@@ -11735,8 +11735,8 @@ En cas de saccades à la lecture, essayez un autre mode.</translation>
         <translation>Non disponible</translation>
     </message>
     <message>
-        <source>Speed applies to video and audio clips.</source>
-        <translation>La vitesse s&apos;applique aux clips vidéo et audio.</translation>
+        <source>Speed applies to video, audio and composite clips.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Playback speed</source>

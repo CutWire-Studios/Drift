@@ -10295,7 +10295,7 @@ void AppController::seekAssetPreview(double seconds)
     m_assetPreviewPlayer.seek(drift::secondsToUs(std::max(0.0, seconds)));
 }
 
-void AppController::beginSpeedCurveSession(int trackIndex, int clipIndex)
+void AppController::beginSpeedCurveSession(int trackIndex, int clipIndex, bool allowNested)
 {
     if (trackIndex < 0 || trackIndex >= m_project.tracks().size())
         return;
@@ -10304,11 +10304,16 @@ void AppController::beginSpeedCurveSession(int trackIndex, int clipIndex)
         return;
 
     const drift::Clip &clip = track.clips.at(clipIndex);
-    if (clip.type != drift::ClipType::Video && clip.type != drift::ClipType::Audio) {
+    // A composite reads its nested timeline, which the preview player cannot decode, so only
+    // callers that never show the preview (MCP) may open a session on one.
+    const bool nested = !clip.sequenceId.isEmpty();
+    if ((clip.type != drift::ClipType::Video && clip.type != drift::ClipType::Audio
+         && clip.type != drift::ClipType::Composite)
+        || (nested && !allowNested)) {
         setLastMessage(tr("Custom speed works on video and audio clips"), QStringLiteral("warning"));
         return;
     }
-    if (clip.path.isEmpty() || clip.srcOut <= clip.srcIn) {
+    if ((clip.path.isEmpty() && !nested) || clip.srcOut <= clip.srcIn) {
         setLastMessage(tr("This clip has no media to speed up or slow down"), QStringLiteral("warning"));
         return;
     }
@@ -15852,7 +15857,8 @@ void AppController::previewSetClipSpeed(int trackIndex, int clipIndex, double sp
         return;
 
     drift::Clip &clip = track.clips[clipIndex];
-    if (clip.type != drift::ClipType::Video && clip.type != drift::ClipType::Audio)
+    if (clip.type != drift::ClipType::Video && clip.type != drift::ClipType::Audio
+        && clip.type != drift::ClipType::Composite)
         return;
 
     if (!m_previewDragActive)
@@ -16721,18 +16727,19 @@ void AppController::setClipBlendMode(int trackIndex, int clipIndex, const QStrin
     finishEdit(tr("Blend mode updated"));
 }
 
-void AppController::setClipSpeed(int trackIndex, int clipIndex, double speed)
+bool AppController::setClipSpeed(int trackIndex, int clipIndex, double speed)
 {
     if (trackIndex < 0 || trackIndex >= m_project.tracks().size())
-        return;
+        return false;
 
     drift::Track &track = m_project.tracks()[trackIndex];
     if (clipIndex < 0 || clipIndex >= track.clips.size())
-        return;
+        return false;
 
     drift::Clip &clip = track.clips[clipIndex];
-    if (clip.type != drift::ClipType::Video && clip.type != drift::ClipType::Audio)
-        return;
+    if (clip.type != drift::ClipType::Video && clip.type != drift::ClipType::Audio
+        && clip.type != drift::ClipType::Composite)
+        return false;
 
     const drift::Project before = m_project;
     clip.speed = qBound(0.25, speed, 4.0);
@@ -16740,6 +16747,7 @@ void AppController::setClipSpeed(int trackIndex, int clipIndex, double speed)
     syncLinkedPartnersFrom(m_project, clip);
     pushProjectEdit(before, tr("Speed changed"));
     finishEdit(tr("Clip speed updated"));
+    return true;
 }
 
 void AppController::setClipReverse(int trackIndex, int clipIndex, bool reverse)

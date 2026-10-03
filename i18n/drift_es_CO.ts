@@ -11732,8 +11732,8 @@ Si la reproducción se corta, prueba con otra opción.</translation>
         <translation>No disponible</translation>
     </message>
     <message>
-        <source>Speed applies to video and audio clips.</source>
-        <translation>La velocidad se aplica a clips de vídeo y audio.</translation>
+        <source>Speed applies to video, audio and composite clips.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Playback speed</source>

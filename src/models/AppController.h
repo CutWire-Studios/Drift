@@ -1052,7 +1052,7 @@ public:
     // Speed-curve editing session driving SpeedCurveWindow. The curve is held here as a
     // candidate and auditioned through a private single-clip player; the project is not touched
     // until applySpeedCurve mints the retimed copy.
-    Q_INVOKABLE void beginSpeedCurveSession(int trackIndex, int clipIndex);
+    Q_INVOKABLE void beginSpeedCurveSession(int trackIndex, int clipIndex, bool allowNested = false);
     Q_INVOKABLE void endSpeedCurveSession();
     bool speedCurveSessionActive() const { return m_speedCurveActive; }
     QVariantList speedCurvePoints() const;
@@ -1484,7 +1484,7 @@ public:
     Q_INVOKABLE QVariantList fontCatalog() const;
     Q_INVOKABLE QVariantList fontCategories() const;
     Q_INVOKABLE void setClipBlendMode(int trackIndex, int clipIndex, const QString &mode);
-    Q_INVOKABLE void setClipSpeed(int trackIndex, int clipIndex, double speed);
+    Q_INVOKABLE bool setClipSpeed(int trackIndex, int clipIndex, double speed);
     Q_INVOKABLE void setClipReverse(int trackIndex, int clipIndex, bool reverse);
     // Turns reverse on for a video clip and renders the proxy that makes it play back smoothly.
     // Reverse itself applies immediately; cancelling the render leaves the clip reversed on the

@@ -1004,7 +1004,8 @@ QJsonObject McpDispatcher::applyOneExtended(const QString &tool, const QJsonObje
         if (!args.contains(QStringLiteral("speed")))
             return err("bad_args", QStringLiteral("speed required"));
         const double speed = jsonNumber(args.value(QStringLiteral("speed")), 1.0);
-        m_controller->setClipSpeed(ref.track, ref.clip, speed);
+        if (!m_controller->setClipSpeed(ref.track, ref.clip, speed))
+            return err("bad_args", QStringLiteral("Speed applies to video, audio and composite clips"));
         return ok(clipFeedback(ref, {{QStringLiteral("speed"), speed}}));
     }
 

@@ -930,15 +930,16 @@ const QList<Op> &ops()
         { "list_speed_curve", "speed", "Read a clip's speed ramp",
           "Returns {hasCurve, points:[{pos,speed,…}], retimedDuration}. Despite being a read, this "
           "opens and closes a transient curve session and will CLOSE any speed-curve session already "
-          "open. Fails bad_args on clips that cannot carry a curve (no continuous source: text, shape, "
-          "still image).",
+          "open. Video, audio and composite clips carry curves. Fails bad_args on clips that cannot "
+          "(no continuous source: text, shape, still image).",
           objectSchema(clipRefProps()), false, false, true },
         { "set_speed_curve", "speed", "Apply a custom speed ramp",
           "Replace the clip with a retimed copy carrying the curve. Needs at least two points. Returns "
           "{id, track, index, retimedDuration} with a NEW id — the old clip UUID is dead. An ops array "
           "cannot reference an id produced earlier in the same batch, so END THE BATCH after this op "
-          "and use the returned id in the next apply. Fails bad_args on clips that cannot carry a "
-          "curve.",
+          "and use the returned id in the next apply. Works on video, audio and composite clips "
+          "(composite ramps are MCP-only; the Custom speed window does not open on them). Fails "
+          "bad_args on clips that cannot carry a curve.",
           objectSchema(mergeProps(
               {{QStringLiteral("points"),
                 arrayProp(speedPointSchema(), QStringLiteral("Speed curve control points, at least two, ordered by pos"))}},

@@ -11725,7 +11725,7 @@ If playback stutters, try another.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Speed applies to video and audio clips.</source>
+        <source>Speed applies to video, audio and composite clips.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>

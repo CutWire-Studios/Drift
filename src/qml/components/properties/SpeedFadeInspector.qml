@@ -13,8 +13,10 @@ Item {
     }
     readonly property bool hasSelection: !!clipData && Object.keys(clipData).length > 0
     readonly property string clipKind: hasSelection ? (clipData.kind || "") : ""
-    // Composites (and audio separated from one) do not retime in this version.
-    readonly property bool speedKind: (clipKind === "video" || clipKind === "audio") && !clipData.sequenceId
+    readonly property bool speedKind: clipKind === "video" || clipKind === "audio" || clipKind === "composite"
+    // Composites (and audio separated from one) read a nested timeline, which the Custom speed
+    // preview and the reverse render cannot decode.
+    readonly property bool nestedSource: hasSelection && !!clipData.sequenceId
 
     height: speedColumn.height
     implicitHeight: speedColumn.height
@@ -39,7 +41,7 @@ Item {
             compact: true
             glyph: Theme.icons.gauge
             title: qsTr("Not available")
-            hint: qsTr("Speed applies to video and audio clips.")
+            hint: qsTr("Speed applies to video, audio and composite clips.")
         }
 
         Text {
@@ -63,6 +65,7 @@ Item {
             visible: root.speedKind
 
             ThemedButton {
+                visible: !root.nestedSource
                 text: qsTr("Custom speed…")
                 variant: "secondary"
                 onClicked: root.Window.window.openSpeedCurve(
@@ -139,7 +142,7 @@ Item {
         }
 
         ThemedChip {
-            visible: root.speedKind
+            visible: root.speedKind && !root.nestedSource
             text: qsTr("Reverse")
             selected: {
                 void root.clipDataRevision

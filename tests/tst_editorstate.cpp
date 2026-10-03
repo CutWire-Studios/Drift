@@ -82,6 +82,7 @@ private slots:
     void snapTimeEnabled();
     void compositeFromSelectionUndoRedo();
     void compositeClipGetsAPreviewBox();
+    void compositeClipSpeedRetimesToFit();
     void importedMediaIsCentredAndResetsToItsFit();
     void transformTogetherWrapsTheSelection();
     void transformLayerParentsPreviewBoxes();
@@ -733,6 +734,29 @@ void EditorStateTest::compositeClipGetsAPreviewBox()
             found = true;
     }
     QVERIFY(found);
+}
+
+void EditorStateTest::compositeClipSpeedRetimesToFit()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    setUpTwoClipSelection(library, state);
+    state.makeCompositeFromSelection();
+
+    QVERIFY(state.setClipSpeed(0, 0, 2.0));
+    const drift::Clip composite = state.project()->tracks().at(0).clips.at(0);
+    QCOMPARE(composite.speed, 2.0);
+    QCOMPARE(composite.srcOut - composite.srcIn, drift::secondsToUs(14.0));
+    QCOMPARE(composite.timelineDuration, drift::secondsToUs(7.0));
+
+    state.undo();
+    QCOMPARE(state.project()->tracks().at(0).clips.at(0).timelineDuration, drift::secondsToUs(14.0));
+
+    state.beginSpeedCurveSession(0, 0);
+    QVERIFY(!state.speedCurveSessionActive());
+    state.beginSpeedCurveSession(0, 0, true);
+    QVERIFY(state.speedCurveSessionActive());
+    state.endSpeedCurveSession();
 }
 
 void EditorStateTest::importedMediaIsCentredAndResetsToItsFit()
@@ -7157,6 +7181,11 @@ void EditorStateTest::undoRevertsClipPropertyEdits()
         s.setClipSpeed(0, 0, 2.0);
         QCOMPARE(clip0(s).speed, 2.0);
         s.undo();
+        QCOMPARE(clip0(s).speed, 1.0);
+    }
+    {
+        AssetLibrary l; AppController s(&l); fresh(s, drift::ClipType::Image);
+        QVERIFY(!s.setClipSpeed(0, 0, 2.0));
         QCOMPARE(clip0(s).speed, 1.0);
     }
     {

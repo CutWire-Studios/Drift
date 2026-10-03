@@ -11688,8 +11688,8 @@ If playback stutters, try another.</source>
         <translation>利用できません</translation>
     </message>
     <message>
-        <source>Speed applies to video and audio clips.</source>
-        <translation>スピードはビデオおよびオーディオクリップに適用されます。</translation>
+        <source>Speed applies to video, audio and composite clips.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Playback speed</source>

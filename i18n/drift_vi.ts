@@ -11688,8 +11688,8 @@ Nếu phát lại bị giật, hãy thử cái khác.</translation>
         <translation>Không khả dụng</translation>
     </message>
     <message>
-        <source>Speed applies to video and audio clips.</source>
-        <translation>Tốc độ được áp dụng cho cả video và âm thanh.</translation>
+        <source>Speed applies to video, audio and composite clips.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Playback speed</source>
