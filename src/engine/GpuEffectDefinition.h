@@ -2,6 +2,7 @@
 
 #include <QList>
 #include <QMetaType>
+#include <QRectF>
 #include <QString>
 #include <QVector>
 
@@ -27,7 +28,8 @@ inline bool isEngineBoundGpuUniform(const QString &name)
         || name == QLatin1String("u_timeUs") || name == QLatin1String("u_frameIndex")
         || name == QLatin1String("u_currentTexture") || name == QLatin1String("u_progress")
         || name == QLatin1String("u_fromTexture") || name == QLatin1String("u_toTexture")
-        || name == QLatin1String("u_hasDepth")) {
+        || name == QLatin1String("u_hasDepth") || name == QLatin1String("u_templateBounds")
+        || name == QLatin1String("u_meshAspect")) {
         return true;
     }
     // The depth map and its size, bound for "requires": "depth" packages.
@@ -77,11 +79,19 @@ struct GpuEffectPassOutput
 
 struct GpuEffectPass
 {
+    // Quad covers the output. Face111 copies input 0 into the output, then draws GPUPixel's
+    // 111-point face mesh over it from u_faceLandmarks111, so a template image painted against
+    // the reference face lands on the tracked one. Effects with "requires": "face" only.
+    enum class Geometry { Quad, Face111 };
+
     int passIndex = 0;
     QString fragmentShaderFile;   // relative filename from the package JSON
     QString fragmentShaderSource; // loaded GLSL
     QList<GpuEffectPassInput> inputs;
     GpuEffectPassOutput output;
+    Geometry geometry = Geometry::Quad;
+    // Face111: where the template image sits on the reference face, in its 1280-pixel frame.
+    QRectF templateBounds;
 };
 
 // Parsed, validated GPU package pipeline (effect.json / transition.json + shaders).

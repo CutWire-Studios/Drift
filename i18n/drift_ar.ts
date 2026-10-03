@@ -6593,10 +6593,6 @@
         <translation>تم فحص هذا المقطع قبل دعم المكياج. أعد اكتشاف الوجوه لتفعيل تأثيرات التجميل.</translation>
     </message>
     <message>
-        <source>This clip was scanned before 3D face mesh was supported. Re-detect faces to enable the 3D Face Mesh effect.</source>
-        <translation>تم فحص هذا المقطع قبل دعم شبكة الوجه ثلاثية الأبعاد. أعد اكتشاف الوجوه لتفعيل تأثير شبكة الوجه ثلاثية الأبعاد.</translation>
-    </message>
-    <message>
         <source>Re-detect faces</source>
         <translation>إعادة اكتشاف الوجوه</translation>
     </message>
@@ -6651,6 +6647,10 @@
     <message>
         <source>Download depth estimation (about 160 MB)</source>
         <translation>تنزيل تقدير العمق (حوالي 160 MB)</translation>
+    </message>
+    <message>
+        <source>This clip was scanned before the face mesh was supported. Re-detect faces to enable 3D Face Mesh and Face Retouch.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Depth</source>
@@ -6751,6 +6751,10 @@
     <message>
         <source>Edit %1</source>
         <translation>تعديل %1</translation>
+    </message>
+    <message>
+        <source>Face %1</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Anything in “%1” nearer than Distance passes in front of this layer.</source>

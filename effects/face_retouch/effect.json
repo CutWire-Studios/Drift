@@ -1,0 +1,375 @@
+{
+  "id": "face_retouch",
+  "version": "1.0.0",
+  "displayName": "Face Retouch",
+  "category": "beauty",
+  "description": "Skin smoothing, whitening, slim face, big eyes, lipstick and blush in one effect. Ported from GPUPixel.",
+  "order": 700,
+  "requires": "face",
+  "parameters": [
+    {
+      "identifier": "smoothing",
+      "displayName": "Smoothing",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.6
+    },
+    {
+      "identifier": "sharpen",
+      "displayName": "Sharpen",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.25
+    },
+    {
+      "identifier": "whitening",
+      "displayName": "Whitening",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.3
+    },
+    {
+      "identifier": "skinTone",
+      "displayName": "Skin tone",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0
+    },
+    {
+      "identifier": "toneColor",
+      "displayName": "Tone",
+      "type": "color",
+      "defaultValue": "#d9a982",
+      "swatches": [
+        "#f3d9c8",
+        "#ecc8ae",
+        "#e5b998",
+        "#d9a982",
+        "#c99470",
+        "#c08a5a",
+        "#b07a4e",
+        "#a06a45",
+        "#8d5a3a",
+        "#7a4a30",
+        "#64391f",
+        "#4e2c1a",
+        "#3a2116"
+      ]
+    },
+    {
+      "identifier": "slimFace",
+      "displayName": "Slim face",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.2
+    },
+    {
+      "identifier": "bigEyes",
+      "displayName": "Big eyes",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.2
+    },
+    {
+      "identifier": "lipstick",
+      "displayName": "Lipstick",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0
+    },
+    {
+      "identifier": "lipCustom",
+      "displayName": "Custom lip colour",
+      "type": "bool",
+      "defaultValue": 0
+    },
+    {
+      "identifier": "lipColor",
+      "displayName": "Lip colour",
+      "type": "color",
+      "defaultValue": "#c8324a",
+      "enables": "lipCustom",
+      "swatches": [
+        "#c8324a",
+        "#b01020",
+        "#8e1230",
+        "#e0405a",
+        "#f06070",
+        "#ff7a5c",
+        "#d8705a",
+        "#c08070",
+        "#a8605a",
+        "#b0607a",
+        "#e0708e",
+        "#d0408a",
+        "#8a2a5a",
+        "#5e1e3c",
+        "#4a2a2a"
+      ]
+    },
+    {
+      "identifier": "blush",
+      "displayName": "Blush",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0
+    },
+    {
+      "identifier": "faceIndex",
+      "displayName": "Face",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 3,
+      "defaultValue": 0
+    },
+    {
+      "identifier": "skinFeather",
+      "displayName": "Skin feather",
+      "type": "float",
+      "minValue": 0.05,
+      "maxValue": 1,
+      "defaultValue": 0.45,
+      "group": "Advanced",
+      "groupCollapsed": true
+    },
+    {
+      "identifier": "blushCustom",
+      "displayName": "Custom blush colour",
+      "type": "bool",
+      "defaultValue": 0,
+      "group": "Advanced",
+      "groupCollapsed": true
+    },
+    {
+      "identifier": "blushColor",
+      "displayName": "Blush colour",
+      "type": "color",
+      "defaultValue": "#e66e7a",
+      "group": "Advanced",
+      "groupCollapsed": true
+    }
+  ],
+  "backend": "gpu",
+  "pipeline": {
+    "intermediateBuffers": [
+      {
+        "id": "mean_h",
+        "scale": 0.5
+      },
+      {
+        "id": "mean",
+        "scale": 0.5
+      },
+      {
+        "id": "var_h",
+        "scale": 0.5
+      },
+      {
+        "id": "var",
+        "scale": 0.5
+      },
+      {
+        "id": "skin",
+        "scale": 1.0
+      },
+      {
+        "id": "made",
+        "scale": 1.0
+      }
+    ],
+    "textures": [
+      {
+        "id": "lookup_gray",
+        "file": "lookup_gray.png"
+      },
+      {
+        "id": "lookup_origin",
+        "file": "lookup_origin.png"
+      },
+      {
+        "id": "lookup_skin",
+        "file": "lookup_skin.png"
+      },
+      {
+        "id": "lookup_light",
+        "file": "lookup_light.png"
+      },
+      {
+        "id": "mouth",
+        "file": "mouth.png"
+      },
+      {
+        "id": "blusher",
+        "file": "blusher.png"
+      }
+    ],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "mean_h.frag",
+        "inputs": [
+          {
+            "type": "source_texture"
+          }
+        ],
+        "output": {
+          "type": "buffer",
+          "id": "mean_h"
+        }
+      },
+      {
+        "passIndex": 1,
+        "fragmentShader": "mean_v.frag",
+        "inputs": [
+          {
+            "type": "buffer",
+            "id": "mean_h"
+          }
+        ],
+        "output": {
+          "type": "buffer",
+          "id": "mean"
+        }
+      },
+      {
+        "passIndex": 2,
+        "fragmentShader": "var_h.frag",
+        "inputs": [
+          {
+            "type": "source_texture"
+          },
+          {
+            "type": "buffer",
+            "id": "mean"
+          }
+        ],
+        "output": {
+          "type": "buffer",
+          "id": "var_h"
+        }
+      },
+      {
+        "passIndex": 3,
+        "fragmentShader": "var_v.frag",
+        "inputs": [
+          {
+            "type": "buffer",
+            "id": "var_h"
+          }
+        ],
+        "output": {
+          "type": "buffer",
+          "id": "var"
+        }
+      },
+      {
+        "passIndex": 4,
+        "fragmentShader": "retouch.frag",
+        "inputs": [
+          {
+            "type": "source_texture"
+          },
+          {
+            "type": "buffer",
+            "id": "mean"
+          },
+          {
+            "type": "buffer",
+            "id": "var"
+          },
+          {
+            "type": "texture",
+            "id": "lookup_gray"
+          },
+          {
+            "type": "texture",
+            "id": "lookup_origin"
+          },
+          {
+            "type": "texture",
+            "id": "lookup_skin"
+          },
+          {
+            "type": "texture",
+            "id": "lookup_light"
+          }
+        ],
+        "output": {
+          "type": "buffer",
+          "id": "skin"
+        }
+      },
+      {
+        "passIndex": 5,
+        "fragmentShader": "lipstick.frag",
+        "geometry": "face111",
+        "templateBounds": [
+          502.5,
+          710,
+          262.5,
+          167.5
+        ],
+        "inputs": [
+          {
+            "type": "buffer",
+            "id": "skin"
+          },
+          {
+            "type": "texture",
+            "id": "mouth"
+          }
+        ],
+        "output": {
+          "type": "buffer",
+          "id": "made"
+        }
+      },
+      {
+        "passIndex": 6,
+        "fragmentShader": "blush.frag",
+        "geometry": "face111",
+        "templateBounds": [
+          395,
+          520,
+          489,
+          209
+        ],
+        "inputs": [
+          {
+            "type": "buffer",
+            "id": "made"
+          },
+          {
+            "type": "texture",
+            "id": "blusher"
+          }
+        ],
+        "output": {
+          "type": "buffer",
+          "id": "skin"
+        }
+      },
+      {
+        "passIndex": 7,
+        "fragmentShader": "reshape.frag",
+        "inputs": [
+          {
+            "type": "buffer",
+            "id": "skin"
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  }
+}

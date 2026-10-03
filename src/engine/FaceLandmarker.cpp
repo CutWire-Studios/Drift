@@ -39,30 +39,23 @@ constexpr int kIdxLowerLip = 14;
 constexpr int kIdxMouthLeft = 61;
 constexpr int kIdxMouthRight = 291;
 
-// kFaceOval, kLipInner and the two eye rings live in FaceLandmarker.h — the face-swap alpha ramp
-// seeds its BFS from the same loops, and one definition is the only way those stay in step.
+// The contour loops live in FaceLandmarker.h — the face-swap alpha ramp and Face111 read the same
+// tables, and one definition is the only way those stay in step.
+//
+// HANDEDNESS: everything there is named in *image* space, matching FaceAnchors — "left" means the
+// low-x side of the frame, not the subject's own left. MediaPipe names its sets from the subject's
+// point of view, so Drift's kEyeLeft is MediaPipe's FACEMESH_RIGHT_EYE and vice versa. The
+// existing kIdxMouthLeft = 61 already follows this convention. Swapping a pair produces mirrored
+// liner and shadow, which a symmetric test face will not reveal — check the overlay.
+using mpidx::kBrowLeftRing;
+using mpidx::kBrowRightRing;
+using mpidx::kCheekLeft;
+using mpidx::kCheekRight;
 using mpidx::kEyeLeftRing;
 using mpidx::kEyeRightRing;
 using mpidx::kFaceOval;
 using mpidx::kLipInner;
-
-// The rest of the contour loops, in the order contour::Span expects.
-//
-// HANDEDNESS: everything here is named in *image* space, matching FaceAnchors — "left" means the
-// low-x side of the frame, not the subject's own left. MediaPipe names its sets from the subject's
-// point of view, so Drift's kEyeLeft is MediaPipe's FACEMESH_RIGHT_EYE and vice versa. The
-// existing kIdxMouthLeft = 61 already follows this convention. Swapping a pair here produces
-// mirrored liner and shadow, which a symmetric test face will not reveal — check the overlay.
-constexpr std::array<int, 20> kLipOuter{61,  185, 40,  39,  37,  0,   267, 269, 270, 409,
-                                        291, 375, 321, 405, 314, 17,  84,  181, 91,  146};
-
-constexpr std::array<int, 10> kBrowLeftRing{107, 66, 105, 63, 70, 46, 53, 52, 65, 55};
-constexpr std::array<int, 10> kBrowRightRing{336, 296, 334, 293, 300, 276, 283, 282, 295, 285};
-
-// MediaPipe has no cheek contour. Four mid-cheek vertices averaged is much steadier than any one
-// of them, and blush only needs a centre.
-constexpr std::array<int, 4> kCheekLeft{50, 101, 205, 36};
-constexpr std::array<int, 4> kCheekRight{280, 330, 425, 266};
+using mpidx::kLipOuter;
 
 // Eye-centre pairs (inner and outer corner) used for the pose basis. The iris centres would be the
 // obvious choice but they move with gaze; the corners are rigid to the skull.

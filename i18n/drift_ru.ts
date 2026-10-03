@@ -6506,10 +6506,6 @@
         <translation>Этот клип был просканирован до появления поддержки макияжа. Повторно найдите лица, чтобы использовать эффекты красоты.</translation>
     </message>
     <message>
-        <source>This clip was scanned before 3D face mesh was supported. Re-detect faces to enable the 3D Face Mesh effect.</source>
-        <translation>Этот клип был просканирован до появления поддержки 3D-сетки лица. Повторно найдите лица, чтобы использовать этот эффект.</translation>
-    </message>
-    <message>
         <source>Re-detect faces</source>
         <translation>Повторно найти лица</translation>
     </message>
@@ -6576,6 +6572,10 @@
     <message>
         <source>Clear depth</source>
         <translation>Очистить глубину</translation>
+    </message>
+    <message>
+        <source>This clip was scanned before the face mesh was supported. Re-detect faces to enable 3D Face Mesh and Face Retouch.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Move to a time, set a value, then click the diamond to add a keyframe. With Auto keyframes on, dragging a slider also creates them.</source>
@@ -6664,6 +6664,10 @@
     <message>
         <source>Edit %1</source>
         <translation>Изменить %1</translation>
+    </message>
+    <message>
+        <source>Face %1</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Anything in “%1” nearer than Distance passes in front of this layer.</source>

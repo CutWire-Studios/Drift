@@ -246,6 +246,16 @@ QMap<QString, QVariant> dramaticDefaults(const EffectPresetEntry &def)
     } else if (def.meta.id == QLatin1String("face_swirl")) {
         params.insert(QStringLiteral("twist"), 2.2);
         params.insert(QStringLiteral("coverage"), 1.3);
+    } else if (def.meta.id == QLatin1String("face_retouch")) {
+        params.insert(QStringLiteral("smoothing"), 1.0);
+        params.insert(QStringLiteral("whitening"), 0.7);
+        params.insert(QStringLiteral("slimFace"), 0.8);
+        params.insert(QStringLiteral("bigEyes"), 0.8);
+        params.insert(QStringLiteral("lipstick"), 1.0);
+        params.insert(QStringLiteral("blush"), 1.0);
+        params.insert(QStringLiteral("lipCustom"), true);
+        // Recolouring the photo's skin toward an arbitrary swatch says nothing about the effect.
+        params.insert(QStringLiteral("skinTone"), 0.0);
     } else if (def.meta.id == QLatin1String("duotone")) {
         // String colour params don't survive EffectParamSpec (double-only defaults), so set them
         // explicitly here or the shader mixes black→black.

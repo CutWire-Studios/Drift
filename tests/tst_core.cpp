@@ -758,10 +758,10 @@ void CoreTest::effectColorParamSurvivesRoundTrip()
     clip.timelineDuration = drift::secondsToUs(5.0);
 
     drift::Effect effect;
-    effect.catalogId = QStringLiteral("face_lipstick");
-    effect.parameters.insert(QStringLiteral("shade"), QStringLiteral("#b03048"));
-    effect.parameters.insert(QStringLiteral("opacity"), 0.8);
-    effect.parameters.insert(QStringLiteral("coverInner"), true);
+    effect.catalogId = QStringLiteral("face_retouch");
+    effect.parameters.insert(QStringLiteral("lipColor"), QStringLiteral("#b03048"));
+    effect.parameters.insert(QStringLiteral("lipstick"), 0.8);
+    effect.parameters.insert(QStringLiteral("lipCustom"), true);
     clip.effects.append(effect);
     project.tracks()[0].clips.append(clip);
 
@@ -771,11 +771,11 @@ void CoreTest::effectColorParamSurvivesRoundTrip()
     QCOMPARE(loaded.tracks()[0].clips.size(), 1);
     const drift::Effect &out = loaded.tracks()[0].clips[0].effects.at(0);
 
-    const QVariant shade = out.parameters.value(QStringLiteral("shade"));
+    const QVariant shade = out.parameters.value(QStringLiteral("lipColor"));
     QCOMPARE(shade.typeId(), QMetaType::QString);
     QCOMPARE(shade.toString(), QStringLiteral("#b03048"));
-    QCOMPARE(out.parameters.value(QStringLiteral("opacity")).toDouble(), 0.8);
-    QCOMPARE(out.parameters.value(QStringLiteral("coverInner")).toBool(), true);
+    QCOMPARE(out.parameters.value(QStringLiteral("lipstick")).toDouble(), 0.8);
+    QCOMPARE(out.parameters.value(QStringLiteral("lipCustom")).toBool(), true);
 }
 
 void CoreTest::clipTransformSerialization()

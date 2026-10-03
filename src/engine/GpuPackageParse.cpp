@@ -7,9 +7,12 @@
 #include <QDir>
 #include <QFile>
 #include <QFileInfo>
+#include <QJsonArray>
 #include <QRegularExpression>
 #include <QSet>
 #include <QStandardPaths>
+
+#include <algorithm>
 
 namespace GpuPackageParse {
 
@@ -165,6 +168,7 @@ bool parseParameters(const QJsonArray &params, QList<drift::EffectParamSpec> *ou
             p.value(QStringLiteral("defaultValue")).toDouble(p.value(QStringLiteral("default")).toDouble(0.0));
         spec.desktopGlOnly = p.value(QStringLiteral("desktopGlOnly")).toBool(false);
         spec.group = p.value(QStringLiteral("group")).toString();
+        spec.groupCollapsed = p.value(QStringLiteral("groupCollapsed")).toBool(false);
 
         if (spec.key.isEmpty()) {
             fail(errorOut, QStringLiteral("parameter missing identifier"));
@@ -184,6 +188,17 @@ bool parseParameters(const QJsonArray &params, QList<drift::EffectParamSpec> *ou
             // spelling. Alpha is dropped on purpose: colours bind as vec3, and a package that
             // wants transparency declares a separate opacity float.
             spec.defaultColorHex = color.name(QColor::HexRgb);
+            for (const QJsonValue &sv : p.value(QStringLiteral("swatches")).toArray()) {
+                const QString swatch = sv.toString();
+                const QColor c(swatch);
+                if (!swatch.startsWith(QLatin1Char('#')) || !c.isValid()) {
+                    fail(errorOut, QStringLiteral("parameter '%1' has an invalid swatch '%2'")
+                                       .arg(spec.key, swatch));
+                    return false;
+                }
+                spec.swatches.append(c.name(QColor::HexRgb));
+            }
+            spec.enables = p.value(QStringLiteral("enables")).toString();
         } else if (spec.type == drift::EffectParamType::FilePath) {
             QString def = p.value(QStringLiteral("defaultValue")).toString();
             if (def.isEmpty())
@@ -209,6 +224,18 @@ bool parseParameters(const QJsonArray &params, QList<drift::EffectParamSpec> *ou
             return false;
         }
         out->append(spec);
+    }
+    for (const drift::EffectParamSpec &spec : std::as_const(*out)) {
+        if (spec.enables.isEmpty())
+            continue;
+        const bool found = std::any_of(out->cbegin(), out->cend(), [&](const drift::EffectParamSpec &o) {
+            return o.key == spec.enables && o.isBoolean();
+        });
+        if (!found) {
+            fail(errorOut, QStringLiteral("parameter '%1' enables '%2', which is not a bool parameter")
+                               .arg(spec.key, spec.enables));
+            return false;
+        }
     }
     return true;
 }
@@ -338,6 +365,38 @@ bool loadGpuPipeline(const QJsonObject &root, const QString &packageDir, int max
             && !bufferIds.contains(pass.output.bufferId)) {
             fail(errorOut, QStringLiteral("pass output references unknown buffer '%1'")
                                .arg(pass.output.bufferId));
+            return false;
+        }
+
+        const QString geometry = p.value(QStringLiteral("geometry")).toString(QStringLiteral("quad"));
+        if (geometry == QLatin1String("face111")) {
+            // The mesh only covers the face, so the pass has to start from a copy of a frame
+            // rather than a static texture.
+            if (pass.inputs.first().type == drift::GpuEffectPassInput::Type::Texture) {
+                fail(errorOut,
+                     QStringLiteral("face111 pass %1 needs a source or buffer as input 0").arg(index));
+                return false;
+            }
+            if (maxSourceIndex > 0) {
+                fail(errorOut, QStringLiteral("face111 passes are only supported in effects"));
+                return false;
+            }
+            const QJsonArray bounds = p.value(QStringLiteral("templateBounds")).toArray();
+            if (bounds.size() != 4) {
+                fail(errorOut,
+                     QStringLiteral("face111 pass %1 needs templateBounds [x, y, w, h]").arg(index));
+                return false;
+            }
+            pass.templateBounds = QRectF(bounds.at(0).toDouble(), bounds.at(1).toDouble(),
+                                         bounds.at(2).toDouble(), bounds.at(3).toDouble());
+            if (!(pass.templateBounds.width() > 0.0) || !(pass.templateBounds.height() > 0.0)) {
+                fail(errorOut,
+                     QStringLiteral("face111 pass %1 templateBounds needs a positive size").arg(index));
+                return false;
+            }
+            pass.geometry = drift::GpuEffectPass::Geometry::Face111;
+        } else if (geometry != QLatin1String("quad")) {
+            fail(errorOut, QStringLiteral("pass %1 has unknown geometry '%2'").arg(index).arg(geometry));
             return false;
         }
 

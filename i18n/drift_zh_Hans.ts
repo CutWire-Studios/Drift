@@ -6448,10 +6448,6 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>This clip was scanned before 3D face mesh was supported. Re-detect faces to enable the 3D Face Mesh effect.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Re-detect faces</source>
         <translation type="unfinished"></translation>
     </message>
@@ -6517,6 +6513,10 @@
     </message>
     <message>
         <source>Clear depth</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This clip was scanned before the face mesh was supported. Re-detect faces to enable 3D Face Mesh and Face Retouch.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -6605,6 +6605,10 @@
     </message>
     <message>
         <source>Edit %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Face %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>

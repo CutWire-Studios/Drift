@@ -10,7 +10,9 @@
 #include <QFile>
 #include <QFileInfo>
 #include <QHash>
+#include <QJsonArray>
 #include <QJsonDocument>
+#include <QJsonObject>
 #include <QMatrix4x4>
 #include <QPainter>
 #include <QProcess>
@@ -27,6 +29,7 @@
 #include <atomic>
 
 #include <cmath>
+#include <complex>
 #include <cstring>
 #include <utility>
 #include <random>
@@ -71,6 +74,7 @@
 #include "engine/EffectProcessor.h"
 #include "engine/FaceTrack.h"
 #include "engine/FaceMesh.h"
+#include "engine/Face111.h"
 #include "engine/FacePropCatalog.h"
 #include "engine/FacePropImport.h"
 #include "engine/FaceModelTransform.h"
@@ -201,6 +205,11 @@ private slots:
     void faceSwapDrawsSwappedFace();
     void faceSwapMakeThumbnail();
     void beautyEffectsPassThroughWithoutContours();
+    void face111MappingMatchesGpuPixelReference();
+    void faceRetouchPackageLoads();
+    void faceRetouchPassesThroughWithoutFace();
+    void faceRetouchAltersFace();
+    void gpuPipelineParsesGeometryPasses();
     void emojiCatalogNeedsFontAddon();
     void emojiRasterisesGlyph();
     void effectProcessorPassthroughWithoutEffects();
@@ -1591,6 +1600,16 @@ void EngineTest::applyFaceUniformsEmitsContourArrays()
         QCOMPARE(array.values.size(), loop.count * 2);
     }
 
+    // The 111-point reduction rides along only when there is a mesh to reduce.
+    QVERIFY(!params.contains(QStringLiteral("u_faceLandmarks111")));
+    QMap<QString, QVariant> meshParams;
+    meshParams.insert(QStringLiteral("faceIndex"), 0);
+    drift::applyFaceUniforms(&meshParams, {makeFullAnchorsWithMesh(0.0)});
+    const QVariant landmarks = meshParams.value(QStringLiteral("u_faceLandmarks111"));
+    QVERIFY(landmarks.canConvert<drift::GpuFloatArray>());
+    QCOMPARE(landmarks.value<drift::GpuFloatArray>().tupleSize, 2);
+    QCOMPARE(landmarks.value<drift::GpuFloatArray>().values.size(), drift::face111::kPoints * 2);
+
     QCOMPARE(params.value(QStringLiteral("u_facePoseValid")).toDouble(), 1.0);
     // The pose reaches shaders as a basis, and a frontal-ish head must not come back mirrored.
     QVERIFY(params.value(QStringLiteral("u_facePoseRightX")).toDouble() > 0.9);
@@ -1611,6 +1630,7 @@ void EngineTest::applyFaceUniformsEmitsContourArrays()
     QCOMPARE(legacyParams.value(QStringLiteral("u_facePoseValid")).toDouble(), 0.0);
     for (const auto &loop : loops)
         QVERIFY2(!legacyParams.contains(QLatin1String(loop.name)), loop.name);
+    QVERIFY(!legacyParams.contains(QStringLiteral("u_faceLandmarks111")));
 }
 
 void EngineTest::colorParametersParseAndResolve()
@@ -1648,21 +1668,39 @@ void EngineTest::colorParametersParseAndResolve()
     specs.clear();
     QVERIFY(!parse(R"([{"identifier":"shade","type":"color","defaultValue":0.5}])", &specs, &error));
 
+    // Swatches normalize like the default; a bad one, or `enables` naming a non-bool, is an error.
+    specs.clear();
+    QVERIFY2(parse(R"([{"identifier":"on","type":"bool"},
+                       {"identifier":"shade","type":"color","defaultValue":"#B03048",
+                        "swatches":["#FF0000","#80112233"],"enables":"on"}])",
+                   &specs, &error),
+             qPrintable(error));
+    QCOMPARE(specs.at(1).swatches, QStringList({QStringLiteral("#ff0000"), QStringLiteral("#112233")}));
+    QCOMPARE(specs.at(1).enables, QStringLiteral("on"));
+    specs.clear();
+    QVERIFY(!parse(R"([{"identifier":"shade","type":"color","defaultValue":"#b03048","swatches":["red"]}])",
+                   &specs, &error));
+    QVERIFY(error.contains(QStringLiteral("swatch")));
+    specs.clear();
+    QVERIFY(!parse(R"([{"identifier":"amount","type":"float"},
+                       {"identifier":"shade","type":"color","defaultValue":"#b03048","enables":"amount"}])",
+                   &specs, &error));
+    QVERIFY(error.contains(QStringLiteral("enables")));
+
     // A stale numeric value on a colour key — from a hand-edited project, or a package that changed
     // a parameter's type — must not reach the shader, where it would bind as black.
-    const EffectPresetEntry *def = effectDefForId(QStringLiteral("face_lipstick"));
-    if (!def)
-        QSKIP("face_lipstick package not available (drift-addons staging missing)");
+    const EffectPresetEntry *def = effectDefForId(QStringLiteral("face_retouch"));
+    QVERIFY2(def, "face_retouch package missing from catalog");
     drift::Effect effect;
     effect.catalogId = def->meta.id;
-    effect.parameters.insert(QStringLiteral("shade"), 0.7);
+    effect.parameters.insert(QStringLiteral("lipColor"), 0.7);
     const QMap<QString, QVariant> resolved = resolvedEffectParameters(effect, *def);
-    QCOMPARE(resolved.value(QStringLiteral("shade")).typeId(), QMetaType::QString);
-    QCOMPARE(resolved.value(QStringLiteral("shade")).toString(), QStringLiteral("#b03048"));
+    QCOMPARE(resolved.value(QStringLiteral("lipColor")).typeId(), QMetaType::QString);
+    QCOMPARE(resolved.value(QStringLiteral("lipColor")).toString(), QStringLiteral("#c8324a"));
 
     // A legitimate override still wins.
-    effect.parameters.insert(QStringLiteral("shade"), QStringLiteral("#123456"));
-    QCOMPARE(resolvedEffectParameters(effect, *def).value(QStringLiteral("shade")).toString(),
+    effect.parameters.insert(QStringLiteral("lipColor"), QStringLiteral("#123456"));
+    QCOMPARE(resolvedEffectParameters(effect, *def).value(QStringLiteral("lipColor")).toString(),
              QStringLiteral("#123456"));
 }
 
@@ -3521,10 +3559,9 @@ void EngineTest::beautyEffectsPassThroughWithoutContours()
     if (!GpuEffectExecutor::instance().isAvailable())
         QSKIP("GPU effect executor unavailable");
 
-    const QStringList ids = {QStringLiteral("face_lipstick"),   QStringLiteral("face_blush"),
-                             QStringLiteral("face_teeth_whiten"), QStringLiteral("face_eyeliner"),
-                             QStringLiteral("face_eyeshadow"),  QStringLiteral("face_brow_tint"),
-                             QStringLiteral("face_eye_color"),  QStringLiteral("face_beautify")};
+    const QStringList ids = {QStringLiteral("face_teeth_whiten"), QStringLiteral("face_eyeliner"),
+                             QStringLiteral("face_eyeshadow"),    QStringLiteral("face_brow_tint"),
+                             QStringLiteral("face_eye_color")};
     if (!effectDefForId(ids.first()))
         QSKIP("beauty packages not available (drift-addons staging missing)");
 
@@ -3553,6 +3590,382 @@ void EngineTest::beautyEffectsPassThroughWithoutContours()
         QCOMPARE(out.size(), source.size());
         QVERIFY2(out == source, qPrintable(QStringLiteral("%1 altered a contour-less frame").arg(id)));
     }
+}
+
+namespace {
+
+// A tracked face for Face Retouch: the canonical mesh, plus contour loops taken from it the way
+// the landmarker builds them, so the SDF mask and the 111 points agree on where the face is.
+drift::FaceAnchors retouchTestFace(const drift::FaceMeshRest &rest, bool contours, bool mesh)
+{
+    drift::FaceAnchors a = faceSwapTestAnchors(rest, 0.25);
+    const QList<QVector3D> points = a.mesh;
+    a.leftEye = QPointF(0.4, 0.45);
+    a.rightEye = QPointF(0.6, 0.45);
+    a.eyeRadius = 0.03;
+    if (contours) {
+        auto loop = [&](const auto &ids) {
+            for (int i : ids)
+                a.contour.append(QPointF(points.at(i).x(), points.at(i).y()));
+        };
+        loop(drift::mpidx::kFaceOval);
+        loop(drift::mpidx::kLipOuter);
+        loop(drift::mpidx::kLipInner);
+        loop(drift::mpidx::kEyeLeftRing);
+        loop(drift::mpidx::kEyeRightRing);
+        loop(drift::mpidx::kBrowLeftRing);
+        loop(drift::mpidx::kBrowRightRing);
+        a.hasContours = a.contour.size() == drift::contour::kTotalPoints;
+        // Anchors are uv; the test frames are square, so that is the mesh's own space.
+        auto centroid = [&](const auto &ids) {
+            QPointF sum;
+            for (int i : ids)
+                sum += QPointF(points.at(i).x(), points.at(i).y());
+            return sum / double(ids.size());
+        };
+        a.cheekLeft = centroid(drift::mpidx::kCheekLeft);
+        a.cheekRight = centroid(drift::mpidx::kCheekRight);
+    }
+    if (!mesh) {
+        a.hasMesh = false;
+        a.mesh.clear();
+    }
+    return a;
+}
+
+QImage retouchTestSource(int size)
+{
+    QImage image(size, size, QImage::Format_RGBA8888);
+    for (int y = 0; y < size; ++y) {
+        for (int x = 0; x < size; ++x)
+            image.setPixelColor(x, y, QColor(x * 255 / (size - 1), y * 255 / (size - 1), 150));
+    }
+    return image;
+}
+
+} // namespace
+
+// The 468 -> 111 table is the risky part of Face Retouch: a swapped row puts lipstick on a cheek.
+// The canonical MediaPipe face and GPUPixel's reference face are both frontal averages, so after
+// the best similarity transform they should nearly coincide point for point.
+void EngineTest::face111MappingMatchesGpuPixelReference()
+{
+    const QString bin = QDir(QString::fromUtf8(DRIFT_TEST_EFFECTS_DIR))
+                            .filePath(QStringLiteral("face_swap/mediapipe_face.bin"));
+    const auto rest = drift::loadFaceMeshRest(bin);
+    QVERIFY2(rest, qPrintable(drift::faceMeshRestWarning(bin)));
+
+    QVector<float> mapped;
+    drift::face111::fromMediaPipe(faceSwapTestMesh(*rest, QPointF(0.5, 0.5), 0.25), &mapped);
+    constexpr int n = drift::face111::kPoints;
+    QCOMPARE(mapped.size(), n * 2);
+
+    QVector<float> partial;
+    drift::face111::fromMediaPipe(QList<QVector3D>(10), &partial);
+    QVERIFY(partial.isEmpty());
+
+    const auto &ref = drift::face111::kReferenceUv;
+    using C = std::complex<double>;
+    C meanA, meanB;
+    for (int i = 0; i < n; ++i) {
+        meanA += C(mapped[2 * i], mapped[2 * i + 1]);
+        meanB += C(ref[size_t(2 * i)], ref[size_t(2 * i + 1)]);
+    }
+    meanA /= double(n);
+    meanB /= double(n);
+    C num, den;
+    for (int i = 0; i < n; ++i) {
+        const C a = C(mapped[2 * i], mapped[2 * i + 1]) - meanA;
+        const C b = C(ref[size_t(2 * i)], ref[size_t(2 * i + 1)]) - meanB;
+        num += std::conj(a) * b;
+        den += std::conj(a) * a;
+    }
+    const C scale = num / den;
+    std::array<C, n> fit;
+    double sumSq = 0.0;
+    double worst = 0.0;
+    int worstIndex = -1;
+    for (int i = 0; i < n; ++i) {
+        fit[size_t(i)] = (C(mapped[2 * i], mapped[2 * i + 1]) - meanA) * scale + meanB;
+        const double e = std::abs(fit[size_t(i)] - C(ref[size_t(2 * i)], ref[size_t(2 * i + 1)]));
+        sumSq += e * e;
+        if (e > worst) {
+            worst = e;
+            worstIndex = i;
+        }
+    }
+    const double rms = std::sqrt(sumSq / n);
+    QVERIFY2(rms < 0.02, qPrintable(QStringLiteral("rms %1").arg(rms)));
+    QVERIFY2(worst < 0.05, qPrintable(QStringLiteral("point %1 is off by %2").arg(worstIndex).arg(worst)));
+
+    // A row pointing at the wrong vertex folds the triangles around it over.
+    const auto &tri = drift::face111::kTriangles;
+    auto cross = [](C a, C b, C c) {
+        return (b.real() - a.real()) * (c.imag() - a.imag())
+            - (b.imag() - a.imag()) * (c.real() - a.real());
+    };
+    int kept = 0;
+    for (size_t t = 0; t < tri.size(); t += 3) {
+        for (size_t k = 0; k < 3; ++k)
+            QVERIFY(tri[t + k] < uint32_t(n));
+        const C r0(ref[2 * tri[t]], ref[2 * tri[t] + 1]);
+        const C r1(ref[2 * tri[t + 1]], ref[2 * tri[t + 1] + 1]);
+        const C r2(ref[2 * tri[t + 2]], ref[2 * tri[t + 2] + 1]);
+        if ((cross(r0, r1, r2) > 0.0) == (cross(fit[tri[t]], fit[tri[t + 1]], fit[tri[t + 2]]) > 0.0))
+            ++kept;
+    }
+    const int triangles = int(tri.size() / 3);
+    QVERIFY2(kept >= int(std::ceil(triangles * 0.98)),
+             qPrintable(QStringLiteral("%1 of %2 triangles kept their orientation").arg(kept).arg(triangles)));
+
+    // The jaw runs down to the chin and back up, with the chin lowest (uv.y grows downward).
+    for (int i = 1; i <= 16; ++i)
+        QVERIFY2(mapped[2 * i + 1] > mapped[2 * (i - 1) + 1], qPrintable(QString::number(i)));
+    for (int i = 17; i <= 32; ++i)
+        QVERIFY2(mapped[2 * i + 1] < mapped[2 * (i - 1) + 1], qPrintable(QString::number(i)));
+    for (int i = 0; i <= 32; ++i)
+        QVERIFY(mapped[2 * i + 1] <= mapped[2 * 16 + 1]);
+}
+
+void EngineTest::faceRetouchPackageLoads()
+{
+    const EffectPresetEntry *def = effectDefForId(QStringLiteral("face_retouch"));
+    QVERIFY2(def, "face_retouch package missing from catalog");
+    QVERIFY2(def->isGpu && def->gpu.valid, qPrintable(def->gpu.errorMessage));
+    QVERIFY(def->needsFace);
+    QCOMPARE(def->meta.category, QStringLiteral("beauty"));
+
+    QCOMPARE(def->gpu.passes.size(), 8);
+    for (int i = 0; i < def->gpu.passes.size(); ++i) {
+        const auto expected = (i == 5 || i == 6) ? drift::GpuEffectPass::Geometry::Face111
+                                                 : drift::GpuEffectPass::Geometry::Quad;
+        QVERIFY2(def->gpu.passes[i].geometry == expected, qPrintable(QString::number(i)));
+    }
+    QCOMPARE(def->gpu.passes[5].templateBounds, QRectF(502.5, 710, 262.5, 167.5));
+    QCOMPARE(def->gpu.passes[6].templateBounds, QRectF(395, 520, 489, 209));
+    QCOMPARE(def->gpu.textures.size(), 6);
+
+    const auto lipColor = std::find_if(def->meta.parameters.cbegin(), def->meta.parameters.cend(),
+                                       [](const drift::EffectParamSpec &p) { return p.key == QLatin1String("lipColor"); });
+    QVERIFY(lipColor != def->meta.parameters.cend());
+    QVERIFY(lipColor->swatches.size() >= 8);
+    QCOMPARE(lipColor->enables, QStringLiteral("lipCustom"));
+
+    // Advanced is the last group, and starts folded.
+    const QList<drift::EffectParamSpec> &params = def->meta.parameters;
+    QVERIFY(!params.isEmpty());
+    QCOMPARE(params.last().group, QStringLiteral("Advanced"));
+    bool inAdvanced = false;
+    for (const drift::EffectParamSpec &spec : params) {
+        if (spec.group == QLatin1String("Advanced")) {
+            inAdvanced = true;
+            QVERIFY2(spec.groupCollapsed, qPrintable(spec.key));
+        } else {
+            QVERIFY2(!inAdvanced, qPrintable(spec.key + QStringLiteral(" follows the Advanced group")));
+            QVERIFY(spec.group.isEmpty());
+        }
+    }
+}
+
+// Every pass gates on the face, the contours and the mesh, so anything short of a full track —
+// including a Face slot the frame does not have — leaves the frame exactly as it was.
+void EngineTest::faceRetouchPassesThroughWithoutFace()
+{
+    if (!GpuEffectExecutor::instance().isAvailable())
+        QSKIP("GPU effect executor unavailable");
+    QVERIFY(effectDefForId(QStringLiteral("face_retouch")));
+
+    const QString bin = QDir(QString::fromUtf8(DRIFT_TEST_EFFECTS_DIR))
+                            .filePath(QStringLiteral("face_swap/mediapipe_face.bin"));
+    const auto rest = drift::loadFaceMeshRest(bin);
+    QVERIFY(rest);
+
+    const QImage source = retouchTestSource(128);
+    drift::Effect effect;
+    effect.catalogId = QStringLiteral("face_retouch");
+    effect.parameters.insert(QStringLiteral("lipstick"), 1.0);
+    effect.parameters.insert(QStringLiteral("blush"), 1.0);
+    effect.parameters.insert(QStringLiteral("skinTone"), 1.0);
+
+    drift::FaceAnchors legacy;
+    legacy.valid = true;
+    legacy.faceCenter = QPointF(0.5, 0.5);
+    legacy.faceRx = 0.25;
+    legacy.faceRy = 0.3;
+
+    const struct
+    {
+        const char *name;
+        QList<drift::FaceAnchors> faces;
+        int faceIndex;
+    } cases[] = {
+        {"no faces", {}, 0},
+        {"legacy anchors", {legacy}, 0},
+        {"contours without mesh", {retouchTestFace(*rest, true, false)}, 0},
+        {"face index past the slots", {retouchTestFace(*rest, true, true)}, 1},
+    };
+    for (const auto &c : cases) {
+        drift::Effect e = effect;
+        e.parameters.insert(QStringLiteral("faceIndex"), double(c.faceIndex));
+        const QImage out = EffectProcessor::applyEffects(source, {e}, 0, c.faces);
+        QVERIFY2(!out.isNull(), c.name);
+        QCOMPARE(out.size(), source.size());
+        QVERIFY2(out.convertToFormat(source.format()) == source, c.name);
+    }
+}
+
+void EngineTest::faceRetouchAltersFace()
+{
+    if (!GpuEffectExecutor::instance().isAvailable())
+        QSKIP("GPU effect executor unavailable");
+    QVERIFY(effectDefForId(QStringLiteral("face_retouch")));
+
+    const QString bin = QDir(QString::fromUtf8(DRIFT_TEST_EFFECTS_DIR))
+                            .filePath(QStringLiteral("face_swap/mediapipe_face.bin"));
+    const auto rest = drift::loadFaceMeshRest(bin);
+    QVERIFY(rest);
+    const drift::FaceAnchors face = retouchTestFace(*rest, true, true);
+    QVector<float> p111;
+    drift::face111::fromMediaPipe(face.mesh, &p111);
+    QCOMPARE(p111.size(), drift::face111::kPoints * 2);
+
+    const int size = 256;
+    const QImage source = retouchTestSource(size);
+    // Square frame, so width-normalized points are plain uv.
+    auto pixelAt = [&](QPointF uv) { return QPoint(int(uv.x() * size), int(uv.y() * size)); };
+    auto point = [&](int i) { return QPointF(p111[2 * i], p111[2 * i + 1]); };
+
+    drift::Effect off;
+    off.catalogId = QStringLiteral("face_retouch");
+    for (const char *key : {"smoothing", "sharpen", "whitening", "skinTone", "slimFace", "bigEyes",
+                            "lipstick", "blush"})
+        off.parameters.insert(QLatin1String(key), 0.0);
+
+    // Lipstick lands on the lips and nowhere near the corner. The probe is the middle of the lower
+    // lip: the canonical face's mouth is closed, so its exact centre sits on the lip seam.
+    drift::Effect lips = off;
+    lips.parameters.insert(QStringLiteral("lipstick"), 1.0);
+    lips.parameters.insert(QStringLiteral("lipCustom"), true);
+    lips.parameters.insert(QStringLiteral("lipColor"), QStringLiteral("#20ff20"));
+    const QImage lipOut = EffectProcessor::applyEffects(source, {lips}, 0, {face});
+    QVERIFY(!lipOut.isNull());
+    const QPoint lipProbe = pixelAt((point(93) + point(102)) / 2.0);
+    QVERIFY2(lipOut.pixelColor(lipProbe) != source.pixelColor(lipProbe),
+             qPrintable(QStringLiteral("lip pixel stayed %1").arg(source.pixelColor(lipProbe).name())));
+    QCOMPARE(lipOut.pixelColor(2, 2), source.pixelColor(2, 2));
+    // The templates are opaque, with white meaning "no change". A point on the edge from the lip
+    // corner toward the jaw is inside mouth.png's rectangle but on its white margin, and a custom
+    // colour must leave it alone rather than stain the whole rectangle.
+    const QPoint marginProbe = pixelAt(point(84) * 0.8 + point(8) * 0.2);
+    QCOMPARE(lipOut.pixelColor(marginProbe), source.pixelColor(marginProbe));
+
+    // Skin tone toward a deep swatch darkens the cheek and leaves the eye and the corner alone.
+    drift::Effect tone = off;
+    tone.parameters.insert(QStringLiteral("skinTone"), 1.0);
+    tone.parameters.insert(QStringLiteral("toneColor"), QStringLiteral("#3a2116"));
+    const QImage toneOut = EffectProcessor::applyEffects(source, {tone}, 0, {face});
+    QVERIFY(!toneOut.isNull());
+    const QPoint cheekProbe = pixelAt(point(109));
+    QVERIFY2(qGray(toneOut.pixel(cheekProbe)) < qGray(source.pixel(cheekProbe)) - 20,
+             qPrintable(QStringLiteral("cheek went %1 -> %2").arg(source.pixelColor(cheekProbe).name(),
+                                                                 toneOut.pixelColor(cheekProbe).name())));
+    const QPoint eyeProbe = pixelAt(point(74));
+    QCOMPARE(toneOut.pixelColor(eyeProbe), source.pixelColor(eyeProbe));
+    QCOMPARE(toneOut.pixelColor(2, 2), source.pixelColor(2, 2));
+
+    // Slim face moves the jaw.
+    drift::Effect slim = off;
+    slim.parameters.insert(QStringLiteral("slimFace"), 1.0);
+    const QImage slimOut = EffectProcessor::applyEffects(source, {slim}, 0, {face});
+    QVERIFY(!slimOut.isNull());
+    const QPoint jawProbe = pixelAt(point(7));
+    QVERIFY2(slimOut.pixelColor(jawProbe) != source.pixelColor(jawProbe),
+             qPrintable(QStringLiteral("jaw pixel stayed %1").arg(source.pixelColor(jawProbe).name())));
+    QCOMPARE(slimOut.pixelColor(2, 2), source.pixelColor(2, 2));
+}
+
+void EngineTest::gpuPipelineParsesGeometryPasses()
+{
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    {
+        QFile frag(dir.filePath(QStringLiteral("main.frag")));
+        QVERIFY(frag.open(QIODevice::WriteOnly));
+        frag.write("#version 330 core\nvoid main() {}\n");
+        QImage(4, 4, QImage::Format_RGBA8888).save(dir.filePath(QStringLiteral("tpl.png")));
+    }
+
+    // One face111 pass over the source, then whatever `pass` overrides.
+    auto package = [](const QJsonObject &pass, bool needsFace) {
+        QJsonObject p{{QStringLiteral("fragmentShader"), QStringLiteral("main.frag")},
+                      {QStringLiteral("geometry"), QStringLiteral("face111")},
+                      {QStringLiteral("templateBounds"), QJsonArray{0, 0, 10, 10}},
+                      {QStringLiteral("inputs"),
+                       QJsonArray{QJsonObject{{QStringLiteral("type"), QStringLiteral("source_texture")}},
+                                  QJsonObject{{QStringLiteral("type"), QStringLiteral("texture")},
+                                              {QStringLiteral("id"), QStringLiteral("tpl")}}}},
+                      {QStringLiteral("output"), QJsonObject{{QStringLiteral("type"), QStringLiteral("canvas")}}}};
+        for (auto it = pass.begin(); it != pass.end(); ++it)
+            p.insert(it.key(), it.value());
+        QJsonObject root{{QStringLiteral("id"), QStringLiteral("geom_test")},
+                         {QStringLiteral("backend"), QStringLiteral("gpu")},
+                         {QStringLiteral("pipeline"),
+                          QJsonObject{{QStringLiteral("textures"),
+                                       QJsonArray{QJsonObject{{QStringLiteral("id"), QStringLiteral("tpl")},
+                                                              {QStringLiteral("file"), QStringLiteral("tpl.png")}}}},
+                                      {QStringLiteral("passes"), QJsonArray{p}}}}};
+        if (needsFace)
+            root.insert(QStringLiteral("requires"), QStringLiteral("face"));
+        return root;
+    };
+    auto load = [&](const QJsonObject &root, QString *error) {
+        QFile f(dir.filePath(QStringLiteral("effect.json")));
+        f.open(QIODevice::WriteOnly | QIODevice::Truncate);
+        f.write(QJsonDocument(root).toJson());
+        f.close();
+        return EffectPackageLoader::loadPackage(dir.path(), error);
+    };
+
+    QString error;
+    const EffectPresetEntry ok = load(package({}, true), &error);
+    QVERIFY2(ok.gpu.valid, qPrintable(error));
+    QVERIFY(ok.gpu.passes.first().geometry == drift::GpuEffectPass::Geometry::Face111);
+    QCOMPARE(ok.gpu.passes.first().templateBounds, QRectF(0, 0, 10, 10));
+
+    const EffectPresetEntry quad = load(package({{QStringLiteral("geometry"), QStringLiteral("quad")}}, false), &error);
+    QVERIFY2(quad.gpu.valid, qPrintable(error));
+    QVERIFY(quad.gpu.passes.first().geometry == drift::GpuEffectPass::Geometry::Quad);
+
+    const struct
+    {
+        const char *name;
+        QJsonObject pass;
+        bool needsFace;
+    } rejected[] = {
+        {"unknown geometry", {{QStringLiteral("geometry"), QStringLiteral("sphere")}}, true},
+        {"missing bounds", {{QStringLiteral("templateBounds"), QJsonValue()}}, true},
+        {"zero width", {{QStringLiteral("templateBounds"), QJsonArray{0, 0, 0, 10}}}, true},
+        {"negative height", {{QStringLiteral("templateBounds"), QJsonArray{0, 0, 10, -1}}}, true},
+        {"texture as input 0",
+         {{QStringLiteral("inputs"),
+           QJsonArray{QJsonObject{{QStringLiteral("type"), QStringLiteral("texture")},
+                                  {QStringLiteral("id"), QStringLiteral("tpl")}}}}},
+         true},
+        {"no face requirement", {}, false},
+    };
+    for (const auto &r : rejected) {
+        error.clear();
+        const EffectPresetEntry entry = load(package(r.pass, r.needsFace), &error);
+        QVERIFY2(!entry.gpu.valid, r.name);
+        QVERIFY2(!error.isEmpty(), r.name);
+    }
+
+    // Transitions have no face track to draw from.
+    drift::GpuEffectDefinition transition;
+    error.clear();
+    QVERIFY(!GpuPackageParse::loadGpuPipeline(package({}, true), dir.path(), /*maxSourceIndex=*/1,
+                                              &transition, &error));
+    QVERIFY(error.contains(QStringLiteral("face111")));
 }
 
 // or lands on the wrong frame — silent, and only visible in the composite.

@@ -38,6 +38,14 @@ struct EffectParamSpec
     // Inspector section this parameter folds into ("Light 2"); empty for the effect's own
     // controls. Presentation only: it never reaches the shader.
     QString group;
+    // The group starts folded even when it is the first one ("groupCollapsed": true).
+    bool groupCollapsed = false;
+    // Colour params: preset shades the inspector shows as a grid beside the picker, normalized
+    // to #rrggbb at parse time.
+    QStringList swatches;
+    // Colour params: a bool param that editing this colour switches on, for packages where the
+    // colour only applies once a "custom colour" toggle is set.
+    QString enables;
 
     bool isBoolean() const { return type == EffectParamType::Bool; }
     bool isColor() const { return type == EffectParamType::Color; }

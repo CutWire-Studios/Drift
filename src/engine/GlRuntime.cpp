@@ -1,5 +1,6 @@
 #include "GlRuntime.h"
 
+#include "Face111.h"
 #include "DepthSidecar.h"
 #include "GlModelRenderer.h"
 #include "GpuDevice.h"
@@ -1036,6 +1037,25 @@ out vec2 v_texCoord;
 void main() {
     v_texCoord = a_texCoord;
     gl_Position = vec4(a_position, 0.0, 1.0);
+}
+)";
+
+// "geometry": "face111" passes. a_position is a u_faceLandmarks111 point (width-normalized),
+// a_refUv the same point on GPUPixel's reference face. v_texCoord is the screen uv a quad pass
+// would see there; v_templateCoord is where that point falls in the pass's template image.
+const char *const kFace111VertexShader = R"(#version 330 core
+layout(location = 0) in vec2 a_position;
+layout(location = 1) in vec2 a_refUv;
+uniform float u_meshAspect;     // canvas height / width
+uniform vec4 u_templateBounds;  // x, y, w, h in the reference face's 1280-pixel frame
+out vec2 v_texCoord;
+out vec2 v_templateCoord;
+void main() {
+    vec2 uv = vec2(a_position.x, a_position.y / u_meshAspect);
+    v_texCoord = uv;
+    v_templateCoord = (a_refUv * 1280.0 - u_templateBounds.xy) / u_templateBounds.zw;
+    // uv has v = 0 at the top of the frame, which is NDC bottom in every pooled FBO (see kQuad).
+    gl_Position = vec4(uv * 2.0 - 1.0, 0.0, 1.0);
 }
 )";
 
@@ -2958,8 +2978,11 @@ QOpenGLShaderProgram *GlRuntime::builtinProgram(const QString &id, const char *v
 CompiledEffect *GlRuntime::compile(const QString &cacheKey, const drift::GpuEffectDefinition &gpu)
 {
     QString sourceSig;
-    for (const drift::GpuEffectPass &pass : gpu.passes)
+    for (const drift::GpuEffectPass &pass : gpu.passes) {
         sourceSig += pass.fragmentShaderSource;
+        if (pass.geometry == drift::GpuEffectPass::Geometry::Face111)
+            sourceSig += QLatin1String("#face111");
+    }
     sourceSig += QLatin1Char('#');
     sourceSig += QString::number(gpu.passes.size());
     if (gpu.needsDepth)
@@ -2977,8 +3000,11 @@ CompiledEffect *GlRuntime::compile(const QString &cacheKey, const drift::GpuEffe
     for (const drift::GpuEffectPass &pass : gpu.passes) {
         CompiledPass cp;
         cp.program = std::make_unique<QOpenGLShaderProgram>();
+        const char *vertexSource = pass.geometry == drift::GpuEffectPass::Geometry::Face111
+            ? kFace111VertexShader
+            : kQuadVertexShader;
         if (!cp.program->addShaderFromSourceCode(QOpenGLShader::Vertex,
-                                                translateShader(kQuadVertexShader, false))) {
+                                                translateShader(vertexSource, false))) {
             qWarning("GlRuntime: vertex shader compile failed for %s: %s", qPrintable(cacheKey),
                      qPrintable(cp.program->log()));
             programs.erase(cacheKey);
@@ -3538,6 +3564,58 @@ void setPackageUniforms(QOpenGLShaderProgram *program, const QMap<QString, QVari
     }
 }
 
+namespace {
+
+// Uploads this frame's 111 landmarks beside the reference uv. False when the parameter map has
+// no landmarks, which is how a lost face reaches here.
+bool uploadFace111Mesh(GlRuntime &rt, QOpenGLExtraFunctions *gl,
+                       const QMap<QString, QVariant> &parameters)
+{
+    const QVariant value = parameters.value(QStringLiteral("u_faceLandmarks111"));
+    if (value.userType() != qMetaTypeId<drift::GpuFloatArray>())
+        return false;
+    const QVector<float> points = value.value<drift::GpuFloatArray>().values;
+    constexpr int kCount = drift::face111::kPoints;
+    if (points.size() != kCount * 2)
+        return false;
+
+    std::array<float, kCount * 4> verts{};
+    for (int i = 0; i < kCount; ++i) {
+        verts[size_t(i * 4)] = points[2 * i];
+        verts[size_t(i * 4 + 1)] = points[2 * i + 1];
+        verts[size_t(i * 4 + 2)] = drift::face111::kReferenceUv[size_t(2 * i)];
+        verts[size_t(i * 4 + 3)] = drift::face111::kReferenceUv[size_t(2 * i + 1)];
+    }
+
+    auto &mesh = rt.face111Mesh;
+    if (!mesh.vao) {
+        gl->glGenVertexArrays(1, &mesh.vao);
+        gl->glGenBuffers(1, &mesh.vbo);
+        gl->glGenBuffers(1, &mesh.ibo);
+        gl->glBindVertexArray(mesh.vao);
+        gl->glBindBuffer(GL_ARRAY_BUFFER, mesh.vbo);
+        gl->glBufferData(GL_ARRAY_BUFFER, GLsizeiptr(sizeof(verts)), nullptr, GL_STREAM_DRAW);
+        gl->glEnableVertexAttribArray(0);
+        gl->glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float),
+                                  reinterpret_cast<void *>(0));
+        gl->glEnableVertexAttribArray(1);
+        gl->glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float),
+                                  reinterpret_cast<void *>(2 * sizeof(float)));
+        gl->glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh.ibo);
+        gl->glBufferData(GL_ELEMENT_ARRAY_BUFFER, GLsizeiptr(sizeof(drift::face111::kTriangles)),
+                         drift::face111::kTriangles.data(), GL_STATIC_DRAW);
+        gl->glBindVertexArray(0);
+        mesh.vertexCount = kCount;
+        mesh.indexCount = int(drift::face111::kTriangles.size());
+    }
+    gl->glBindBuffer(GL_ARRAY_BUFFER, mesh.vbo);
+    gl->glBufferSubData(GL_ARRAY_BUFFER, 0, GLsizeiptr(sizeof(verts)), verts.data());
+    gl->glBindBuffer(GL_ARRAY_BUFFER, 0);
+    return true;
+}
+
+} // namespace
+
 GlTarget runPipeline(GlRuntime &rt, QOpenGLExtraFunctions *gl, const QString &cacheKey,
                      const drift::GpuEffectDefinition &gpu, const std::vector<const GlTarget *> &sources,
                      const QMap<QString, QVariant> &parameters, drift::TimeUs timeUs, double progress,
@@ -3603,11 +3681,33 @@ GlTarget runPipeline(GlRuntime &rt, QOpenGLExtraFunctions *gl, const QString &ca
             outTarget = &it->second;
         }
 
+        // A mesh pass starts from a copy of its input 0 and draws only where the face is, so
+        // everything outside the mesh — or the whole frame when the face is lost — passes through.
+        const bool face111 = pass.geometry == drift::GpuEffectPass::Geometry::Face111;
+        bool drawMesh = true;
+        if (face111) {
+            const drift::GpuEffectPassInput &in = pass.inputs.first();
+            GLuint base = 0;
+            if (in.type == drift::GpuEffectPassInput::Type::SourceTexture) {
+                base = sourceTexAt(in.sourceIndex);
+            } else if (in.type == drift::GpuEffectPassInput::Type::Buffer) {
+                const auto it = buffers.find(in.bufferId);
+                base = it == buffers.end() ? 0 : it->second.texture();
+            }
+            if (!base || !blitTextureToTarget(rt, gl, base, *outTarget)) {
+                failed = true;
+                break;
+            }
+            drawMesh = uploadFace111Mesh(rt, gl, parameters);
+        }
+
         outTarget->fbo->bind();
         gl->glViewport(0, 0, outTarget->width, outTarget->height);
         gl->glDisable(GL_BLEND);
-        gl->glClearColor(0.f, 0.f, 0.f, 0.f);
-        gl->glClear(GL_COLOR_BUFFER_BIT);
+        if (!face111) {
+            gl->glClearColor(0.f, 0.f, 0.f, 0.f);
+            gl->glClear(GL_COLOR_BUFFER_BIT);
+        }
 
         program->bind();
         setPackageUniforms(program, parameters, inputSize, timeUs, progress);
@@ -3680,9 +3780,25 @@ GlTarget runPipeline(GlRuntime &rt, QOpenGLExtraFunctions *gl, const QString &ca
                 program->setUniformValue("u_hasDepth", depthTex ? 1.f : 0.f);
             }
 
-            gl->glBindVertexArray(rt.vao);
-            gl->glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-            gl->glBindVertexArray(0);
+            if (face111) {
+                if (drawMesh) {
+                    const QRectF &b = pass.templateBounds;
+                    program->setUniformValue("u_templateBounds",
+                                             QVector4D(float(b.x()), float(b.y()),
+                                                       float(b.width()), float(b.height())));
+                    program->setUniformValue("u_meshAspect",
+                                             float(canvasSize.height())
+                                                 / float(qMax(1, canvasSize.width())));
+                    gl->glBindVertexArray(rt.face111Mesh.vao);
+                    gl->glDrawElements(GL_TRIANGLES, rt.face111Mesh.indexCount, GL_UNSIGNED_INT,
+                                       nullptr);
+                    gl->glBindVertexArray(0);
+                }
+            } else {
+                gl->glBindVertexArray(rt.vao);
+                gl->glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+                gl->glBindVertexArray(0);
+            }
         }
 
         program->release();

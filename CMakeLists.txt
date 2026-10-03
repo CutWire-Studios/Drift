@@ -690,6 +690,8 @@ add_library(driftengine STATIC
     src/engine/ModelClipRenderer.cpp
     src/engine/FaceMesh.h
     src/engine/FaceMesh.cpp
+    src/engine/Face111.h
+    src/engine/Face111.cpp
     src/engine/ModelAsset.h
     src/engine/ModelAsset.cpp
     src/engine/GlFaceSwapRenderer.h
@@ -1238,8 +1240,10 @@ if(ANDROID)
     file(GLOB_RECURSE DRIFT_PACKAGE_FILES RELATIVE "${CMAKE_SOURCE_DIR}" CONFIGURE_DEPENDS
          "effects/*/effect.json"
          "effects/*/*.frag"
-         "effects/*/thumbnail.png"
+         "effects/*/*.png"
          "effects/*/*.bin"
+         "effects/*/NOTICE"
+         "effects/*/LICENSE*"
          "transitions/*/*.json"
          "transitions/*/*.frag"
          "transitions/*/*.png"

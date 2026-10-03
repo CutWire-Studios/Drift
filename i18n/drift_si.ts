@@ -6477,10 +6477,6 @@
         <translation>මේකප් සහය දැක්වීමට පෙර මෙම ක්ලිපය ස්කෑන් කර ඇත. රූපලාවන්‍ය ප්‍රයෝග සක්‍රීය කිරීමට මුහුණු නැවත හඳුනාගන්න.</translation>
     </message>
     <message>
-        <source>This clip was scanned before 3D face mesh was supported. Re-detect faces to enable the 3D Face Mesh effect.</source>
-        <translation>3D මුහුණු දැල සඳහා සහාය දැක්වීමට පෙර මෙම ක්ලිප් එක ස්කෑන් කර ඇත. 3D Face Mesh ප්‍රයෝගය සක්‍රීය කිරීමට මුහුණු නැවත හඳුනාගන්න.</translation>
-    </message>
-    <message>
         <source>Re-detect faces</source>
         <translation>මුහුණු නැවත හඳුනාගන්න</translation>
     </message>
@@ -6547,6 +6543,10 @@
     <message>
         <source>Clear depth</source>
         <translation>ගැඹුර ඉවත් කරන්න</translation>
+    </message>
+    <message>
+        <source>This clip was scanned before the face mesh was supported. Re-detect faces to enable 3D Face Mesh and Face Retouch.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Move to a time, set a value, then click the diamond to add a keyframe. With Auto keyframes on, dragging a slider also creates them.</source>
@@ -6635,6 +6635,10 @@
     <message>
         <source>Edit %1</source>
         <translation>%1 සංස්කරණය කරන්න</translation>
+    </message>
+    <message>
+        <source>Face %1</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Anything in “%1” nearer than Distance passes in front of this layer.</source>

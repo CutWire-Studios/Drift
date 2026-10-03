@@ -259,9 +259,10 @@ Item {
                 return data && data.faceTrackHasMesh === true
             }
 
-            readonly property var beautyIds: ["face_lipstick", "face_blush", "face_teeth_whiten",
-                                              "face_eyeliner", "face_eyeshadow", "face_brow_tint",
-                                              "face_eye_color", "face_beautify"]
+            readonly property var beautyIds: ["face_retouch", "face_teeth_whiten", "face_eyeliner",
+                                              "face_eyeshadow", "face_brow_tint", "face_eye_color"]
+            // Effects that need the 468-vertex mesh, not just the contours.
+            readonly property var meshIds: ["face_mesh_3d", "face_retouch"]
 
             // One pass over the stack for all three answers: whether anything here needs a track
             // at all, and whether what needs it needs a *newer* one.
@@ -278,7 +279,7 @@ Item {
                     any = true
                     if (faceSection.beautyIds.indexOf(id) >= 0)
                         beauty = true
-                    if (id === "face_mesh_3d")
+                    if (faceSection.meshIds.indexOf(id) >= 0)
                         mesh = true
                 }
                 return { any: any, beauty: beauty, mesh: mesh }
@@ -344,8 +345,8 @@ Item {
                 font.pixelSize: Theme.fontSizeXs
             }
 
-            // The 3D Face Mesh effect needs the 468-vertex blob, which tracks baked by older
-            // builds do not carry. It skips drawing in that case, so without this the effect
+            // 3D Face Mesh and Face Retouch need the 468-vertex blob, which tracks baked by older
+            // builds do not carry. They pass through in that case, so without this the effect
             // reads as broken rather than as needing one more scan.
             Text {
                 width: parent.width
@@ -353,7 +354,7 @@ Item {
                 visible: faceSection.canTrack && faceSection.faceReady && faceSection.hasTrack
                          && !faceSection.trackHasMesh && faceSection.faceUse.mesh
                          && !EditorState.faceDetecting
-                text: qsTr("This clip was scanned before 3D face mesh was supported. Re-detect faces to enable the 3D Face Mesh effect.")
+                text: qsTr("This clip was scanned before the face mesh was supported. Re-detect faces to enable 3D Face Mesh and Face Retouch.")
                 color: Theme.warning
                 font.family: Theme.fontFamily
                 font.pixelSize: Theme.fontSizeXs
@@ -507,7 +508,8 @@ Item {
                 spacing: 6
 
                 // Which parameter groups are unfolded. Only the first group starts open, so a
-                // package with several lights shows one and keeps the rest a click away.
+                // package with several lights shows one and keeps the rest a click away. A group
+                // declared "groupCollapsed" starts folded even when it comes first.
                 property var openGroups: ({})
                 readonly property string firstGroup: {
                     for (let i = 0; i < effectParams.length; i++) {
@@ -520,7 +522,13 @@ Item {
                     if (group === "")
                         return true
                     const state = openGroups[group]
-                    return state === undefined ? group === firstGroup : state
+                    if (state !== undefined)
+                        return state
+                    for (let i = 0; i < effectParams.length; i++) {
+                        if (effectParams[i].group === group && effectParams[i].groupCollapsed)
+                            return false
+                    }
+                    return group === firstGroup
                 }
                 function toggleGroup(group) {
                     const next = Object.assign({}, openGroups)
@@ -768,6 +776,48 @@ Item {
                                     }
                                 }
 
+                                // Preset shades a package lists under "swatches" (Face Retouch's lip
+                                // colours). Picking one is the same edit as the picker above.
+                                Flow {
+                                    visible: paramRow.paramData.type === "color"
+                                             && (paramRow.paramData.swatches || []).length > 0
+                                    width: parent.width
+                                    spacing: 6
+                                    Repeater {
+                                        model: paramRow.paramData.type === "color"
+                                               ? (paramRow.paramData.swatches || []) : []
+                                        delegate: Rectangle {
+                                            id: swatch
+                                            required property string modelData
+                                            readonly property bool current: String(paramRow.paramData.value
+                                                                                   || "").toLowerCase()
+                                                                            === modelData
+                                            width: 22
+                                            height: 22
+                                            radius: Theme.radiusSm
+                                            color: modelData
+                                            border.width: current ? 2 : 1
+                                            border.color: current ? Theme.primary
+                                                        : swatchMouse.containsMouse ? Theme.panelForeground
+                                                        : Theme.panelBorder
+                                            MouseArea {
+                                                id: swatchMouse
+                                                anchors.fill: parent
+                                                hoverEnabled: true
+                                                cursorShape: Qt.PointingHandCursor
+                                                onClicked: EditorState.setEffectColorParam(
+                                                               EditorState.selectedTrack, EditorState.selectedClip,
+                                                               effectCard.index, paramRow.paramData.key,
+                                                               swatch.modelData)
+                                            }
+                                            ThemedToolTip {
+                                                visible: swatchMouse.containsMouse
+                                                text: swatch.modelData
+                                            }
+                                        }
+                                    }
+                                }
+
                                 // Clip params: which clip on the timeline the effect works with — Behind
                                 // Subject's clip to sit inside. Picked from the clips beneath this
                                 // one; the first entry leaves the choice to the effect.
@@ -919,8 +969,52 @@ Item {
                                     }
                                 }
 
+                                // Face effects pick a tracked person by slot number. A 0-3 slider
+                                // reads as an amount, so the slots are chips instead, as many as
+                                // the clip's track has faces (and the current choice, if that is
+                                // past them). Nothing to choose without a track or with one face.
+                                Column {
+                                    id: faceChoice
+                                    readonly property bool isFace: paramRow.paramData.type === "float"
+                                                                   && paramRow.paramData.key === "faceIndex"
+                                    readonly property int current: Math.round(Number(paramRow.paramData.value) || 0)
+                                    readonly property int count: {
+                                        void root.clipDataRevision
+                                        const data = EditorState.selectedClipData
+                                        const faces = data ? (data.faceTrackFaceCount || 0) : 0
+                                        const most = Math.round(paramRow.paramData.max || 0) + 1
+                                        return Math.min(most, Math.max(faces, current + 1))
+                                    }
+                                    visible: isFace && count > 1
+                                    width: parent.width
+                                    spacing: 4
+                                    Text {
+                                        text: paramRow.paramData.label
+                                        color: Theme.mutedForeground
+                                        font.family: Theme.fontFamily
+                                        font.pixelSize: Theme.fontSizeXs
+                                    }
+                                    Flow {
+                                        width: parent.width
+                                        spacing: 6
+                                        Repeater {
+                                            model: faceChoice.isFace ? faceChoice.count : 0
+                                            delegate: ThemedChip {
+                                                required property int index
+                                                text: String(index + 1)
+                                                variant: "outline"
+                                                selected: faceChoice.current === index
+                                                tooltip: qsTr("Face %1").arg(index + 1)
+                                                onClicked: EditorState.setEffectParam(
+                                                               EditorState.selectedTrack, EditorState.selectedClip,
+                                                               effectCard.index, paramRow.paramData.key, index)
+                                            }
+                                        }
+                                    }
+                                }
+
                                 PropertyKeyframeRow {
-                                    visible: paramRow.paramData.type === "float"
+                                    visible: paramRow.paramData.type === "float" && !faceChoice.isFace
                                     width: parent.width
                                     // `def` is the param's static value, which the row falls
                                     // back to whenever the track holds no keys.

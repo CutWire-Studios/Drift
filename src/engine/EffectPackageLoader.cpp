@@ -134,6 +134,16 @@ EffectPresetEntry EffectPackageLoader::loadPackage(const QString &packageDir, QS
         if (!GpuPackageParse::loadGpuPipeline(root, packageDir, /*maxSourceIndex=*/0, &entry.gpu,
                                               &error)) {
             setError(errorOut, &entry, error);
+            return entry;
+        }
+        // The mesh comes from the face track, which only "requires": "face" clips get.
+        for (const drift::GpuEffectPass &pass : std::as_const(entry.gpu.passes)) {
+            if (pass.geometry == drift::GpuEffectPass::Geometry::Face111 && !entry.needsFace) {
+                entry.gpu.valid = false;
+                setError(errorOut, &entry,
+                         QStringLiteral("face111 geometry needs \"requires\": \"face\""));
+                return entry;
+            }
         }
         entry.gpu.needsDepth = entry.needsDepth;
         return entry;

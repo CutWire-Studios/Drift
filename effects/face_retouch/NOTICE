@@ -1,0 +1,27 @@
+Face Retouch for Drift
+
+This effect contains code and assets ported from GPUPixel
+(https://github.com/pixpark/gpupixel), Copyright (c) 2021 PixPark,
+licensed under the Apache License, Version 2.0. A copy of the license is in
+LICENSE-APACHE-2.0 next to this file.
+
+Ported from GPUPixel at commit ef552bf8ce2d0d41fa9b979bfb5c7cf79374ca88.
+
+Modified files (rewritten for Drift's GLSL 3.30 package format; each file's
+header lists what changed):
+  mean_h.frag, mean_v.frag   from src/filter/box_mono_blur_filter.cc
+  var_h.frag, var_v.frag     from src/filter/box_difference_filter.cc
+  retouch.frag               from src/filter/beauty_face_unit_filter.cc
+  lipstick.frag, blush.frag  from src/filter/face_makeup_filter.cc
+  reshape.frag               from src/filter/face_reshape_filter.cc
+
+Modified files, converted from src/res by Drift's
+tools/convert_makeup_templates.py (the opaque multiply templates split into a
+tint and a straight alpha that reproduce them exactly):
+  mouth.png, blusher.png
+
+Unmodified files, copied from src/res:
+  lookup_gray.png, lookup_origin.png, lookup_skin.png, lookup_light.png
+
+The 111-point triangle list and reference coordinates in Drift's
+src/engine/Face111.cpp are copied from src/filter/face_makeup_filter.cc.

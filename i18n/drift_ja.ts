@@ -6448,10 +6448,6 @@
         <translation>このクリップはメイクアップがサポートされる前にスキャンされました。ビューティーエフェクトを有効にするには、顔を再検出してください。</translation>
     </message>
     <message>
-        <source>This clip was scanned before 3D face mesh was supported. Re-detect faces to enable the 3D Face Mesh effect.</source>
-        <translation>このクリップは 3D フェイスメッシュがサポートされる前にスキャンされました。3D フェイスメッシュエフェクトを有効にするには、顔を再検出してください。</translation>
-    </message>
-    <message>
         <source>Re-detect faces</source>
         <translation>顔を再検出</translation>
     </message>
@@ -6518,6 +6514,10 @@
     <message>
         <source>Clear depth</source>
         <translation>深度をクリア</translation>
+    </message>
+    <message>
+        <source>This clip was scanned before the face mesh was supported. Re-detect faces to enable 3D Face Mesh and Face Retouch.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Move to a time, set a value, then click the diamond to add a keyframe. With Auto keyframes on, dragging a slider also creates them.</source>
@@ -6606,6 +6606,10 @@
     <message>
         <source>Edit %1</source>
         <translation>%1 を編集</translation>
+    </message>
+    <message>
+        <source>Face %1</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Anything in “%1” nearer than Distance passes in front of this layer.</source>

@@ -48,8 +48,8 @@ inline constexpr int kFaceMeshPoints = 468;
 
 // Raw MediaPipe mesh indices for the loops that anything outside the landmarker needs. These are
 // the definitions the contour spans above are built from; they live here rather than in the .cpp
-// because the face-swap alpha ramp seeds its BFS from the same rings, and a second copy of these
-// tables could silently drift from this one.
+// because the face-swap alpha ramp seeds its BFS from the same rings and Face111 resamples them,
+// and a second copy of these tables could silently drift from this one.
 //
 // HANDEDNESS: named in *image* space, matching FaceAnchors — "left" is the low-x side of the
 // frame, not the subject's own left. MediaPipe names its sets from the subject's point of view,
@@ -71,6 +71,18 @@ inline constexpr std::array<int, 16> kEyeLeftRing{33,  246, 161, 160, 159, 158, 
                                                   133, 155, 154, 153, 145, 144, 163, 7};
 inline constexpr std::array<int, 16> kEyeRightRing{362, 398, 384, 385, 386, 387, 388, 466,
                                                    263, 249, 390, 373, 374, 380, 381, 382};
+
+inline constexpr std::array<int, 20> kLipOuter{61,  185, 40,  39,  37,  0,   267, 269, 270, 409,
+                                               291, 375, 321, 405, 314, 17,  84,  181, 91,  146};
+
+inline constexpr std::array<int, 10> kBrowLeftRing{107, 66, 105, 63, 70, 46, 53, 52, 65, 55};
+inline constexpr std::array<int, 10> kBrowRightRing{336, 296, 334, 293, 300,
+                                                    276, 283, 282, 295, 285};
+
+// MediaPipe has no cheek contour. Four mid-cheek vertices averaged is much steadier than any one
+// of them, and blush only needs a centre.
+inline constexpr std::array<int, 4> kCheekLeft{50, 101, 205, 36};
+inline constexpr std::array<int, 4> kCheekRight{280, 330, 425, 266};
 
 } // namespace mpidx
 

@@ -189,6 +189,10 @@ public:
     // buffers twice per frame.
     FaceMeshGpu faceSwapMesh;
 
+    // "geometry": "face111" package passes: GPUPixel's 111-point mesh, landmark position plus
+    // reference uv per vertex. The IBO is static; the VBO is rewritten for every pass that draws.
+    FaceMeshGpu face111Mesh;
+
     // Depth maps uploaded for "requires": "depth" packages, most recent first. A frame is used by
     // every depth effect on its clip and by the preview and export of the same timestamp, so a
     // handful covers it. Destroyed in shutdown() alongside staticTextures.

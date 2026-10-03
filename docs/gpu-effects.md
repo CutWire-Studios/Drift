@@ -35,6 +35,18 @@ Search order: `DRIFT_EFFECTS_DIR`, `<applicationDir>/effects`, `<AppDataLocation
 | `color` / `colour` | `vec3` | `defaultValue` is a `"#rrggbb"` string; rendered as a swatch |
 | `file` | *(not bound)* | Absolute path string; `fileFilters` for the picker. Used by `model3d` |
 
+A colour parameter may list `"swatches": ["#rrggbb", …]`, preset shades the inspector shows as a
+grid under the picker, and `"enables": "<bool key>"`, a bool parameter that picking any colour
+switches on in the same undo step (Face Retouch's Lip colour turns on Custom lip colour). An
+invalid swatch, or `enables` naming anything but a bool parameter, is a parse error.
+
+A float parameter named `faceIndex` on a face effect is shown as numbered face buttons rather than
+a slider, one per face slot the clip's track uses.
+
+Any parameter may set `group` to fold into a named inspector section. Only the first group starts
+open; `"groupCollapsed": true` on a group's parameters keeps it folded even when it comes first
+(Face Retouch's Advanced section).
+
 Colour parameters bind as **`vec3`** — alpha is dropped, so declare a separate opacity float if you
 need one. Any alpha in `defaultValue` is discarded at parse time and the value is normalized to six
 digits. Colours and file paths are **not keyframable**: the whole keyframe stack is typed `double`.
@@ -48,10 +60,39 @@ Pass outputs: `buffer` or `canvas`.
 "textures": [{ "id": "glyphs", "file": "glyphs.png" }]
 ```
 
+Static textures upload unflipped and **wrap** (`GL_REPEAT`), without mipmaps. A shader that must
+not tile one — a makeup template — has to zero it outside [0, 1] itself.
+
+Bundled packages ride inside the Android binary as Qt resources, and only files matching the glob
+in `CMakeLists.txt` (`effect.json`, `*.frag`, `*.png`, `*.bin`, `NOTICE`, `LICENSE*`) make it in.
+A texture in any other format loads on desktop and fails the package on Android.
+
+### Mesh passes (`"geometry": "face111"`)
+
+A pass may set `"geometry": "face111"` with `"templateBounds": [x, y, w, h]`. Instead of a
+full-screen quad, the engine copies the pass's input 0 into its output, then draws GPUPixel's
+111-point face mesh over it: each vertex sits on the tracked point from `u_faceLandmarks111`, and
+carries the same point on GPUPixel's reference face. The fragment shader gets:
+
+| Varying | Meaning |
+|---|---|
+| `v_texCoord` | Screen uv, exactly what a quad pass sees at that pixel |
+| `v_templateCoord` | uv in the template image. `templateBounds` is where the image sits on the reference face, in its 1280-pixel frame |
+
+`u_templateBounds` and `u_meshAspect` are engine-bound. Outside the mesh, and in the whole frame
+when the clip has no mesh, the output is the plain copy. Rules, all enforced at load time:
+
+- `"requires": "face"` effects only — not transitions.
+- Input 0 must be a `source_texture` or `buffer` (it is what gets copied).
+- `templateBounds` needs four numbers with a positive width and height.
+
+See `effects/face_retouch` for lipstick and blush templates drawn this way, and
+`src/engine/Face111.h` for the point order.
+
 ## GLSL
 
 - `#version 330 core`
-- Reserved: `u_currentTexture`, `u_textureN`, `u_resolution`, `u_time`, `u_timeUs`, `u_frameIndex`, `u_progress`, `u_fromTexture`, `u_toTexture`, `u_depth*`, `u_hasDepth`, `u_face*`
+- Reserved: `u_currentTexture`, `u_textureN`, `u_resolution`, `u_time`, `u_timeUs`, `u_frameIndex`, `u_progress`, `u_fromTexture`, `u_toTexture`, `u_depth*`, `u_hasDepth`, `u_templateBounds`, `u_meshAspect`, `u_face*`
 
 **Grace mode:** compile/GL failure → passthrough.
 
@@ -82,6 +123,8 @@ Two coordinate conventions are in play, and mixing them up produces elliptical w
 | `u_facePoseRight`/`Up`/`Fwd` `X`,`Y`,`Z` | `float` | Orthonormal head basis. `Fwd` points **out of the face toward the viewer** |
 | `u_facePoseOriginX/Y/Z`, `u_facePoseScale` | `float` | Eye midpoint and interocular distance |
 | `u_faceYaw`, `u_facePitch`, `u_faceRoll` | `float` | Radians, derived from the basis for shaders that only want an angle |
+| `u_faceHasMesh` | `float` | 0 for a sidecar baked before the mesh existed |
+| `u_faceLandmarks111[111]` | `vec2[]` | Width-normalized. The 468-point mesh reduced to GPUPixel's 111-point layout (`src/engine/Face111.h`). Only set when `u_faceHasMesh` is 1 |
 
 Both `u_faceValid` and `u_faceHasContours` must be checked by anything using the loops:
 
@@ -91,7 +134,9 @@ if (u_faceValid < 0.5 || u_faceHasContours < 0.5) { fragColor = texture(u_curren
 
 **Uniform budget.** The seven loops together are 256 components. GL 3.3 core guarantees at least
 1024 fragment default-block components, and no shipping package declares more than about 220 — but
-this is why the full 468-point mesh is not delivered this way.
+this is why the full 468-point mesh is not delivered this way. `u_faceLandmarks111` is 222
+components, but many drivers give every array element its own vec4 slot, so count it as 444 and do
+not declare it in the same pass as the seven loops. Face Retouch keeps them in separate passes.
 
 **No `#include`.** The package loader materializes each `.frag` verbatim. The polygon SDF helper is
 duplicated into every beauty package on purpose, which is also what keeps a package self-contained

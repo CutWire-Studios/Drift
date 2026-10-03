@@ -6479,10 +6479,6 @@
         <translation>Ce clip a été scanné avant que le maquillage ne soit pris en charge. Redétectez les visages pour activer les effets Beauté.</translation>
     </message>
     <message>
-        <source>This clip was scanned before 3D face mesh was supported. Re-detect faces to enable the 3D Face Mesh effect.</source>
-        <translation>Ce clip a été scanné avant que le maillage facial 3D ne soit pris en charge. Redétectez les visages pour activer l’effet Maillage Facial 3D.</translation>
-    </message>
-    <message>
         <source>Re-detect faces</source>
         <translation>Redétecter les visages</translation>
     </message>
@@ -6549,6 +6545,10 @@
     <message>
         <source>Clear depth</source>
         <translation>Effacer la profondeur</translation>
+    </message>
+    <message>
+        <source>This clip was scanned before the face mesh was supported. Re-detect faces to enable 3D Face Mesh and Face Retouch.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Move to a time, set a value, then click the diamond to add a keyframe. With Auto keyframes on, dragging a slider also creates them.</source>
@@ -6637,6 +6637,10 @@
     <message>
         <source>Edit %1</source>
         <translation>Modifier %1</translation>
+    </message>
+    <message>
+        <source>Face %1</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Anything in “%1” nearer than Distance passes in front of this layer.</source>

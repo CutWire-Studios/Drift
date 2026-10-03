@@ -1,5 +1,6 @@
 #include "engine/FaceTrack.h"
 
+#include "engine/Face111.h"
 #include "engine/GpuEffectDefinition.h"
 
 #include <QCryptographicHash>
@@ -641,9 +642,16 @@ void applyFaceUniforms(QMap<QString, QVariant> *parameters, const QList<FaceAnch
         parameters->insert(QStringLiteral("u_facePitch"), std::asin(std::clamp(up[2], -1.0, 1.0)));
     }
 
-    // Flag only: 468 vertices are far too large for uniforms. The model3d path reads FaceAnchors
-    // directly from the sampled track.
+    // Flag only for the full mesh: 468 vertices are far too large for uniforms. The model3d path
+    // reads FaceAnchors directly from the sampled track. The 111-point reduction does fit, and is
+    // what "geometry": "face111" passes draw and what reshape shaders read.
     parameters->insert(QStringLiteral("u_faceHasMesh"), face.hasMesh ? 1.0 : 0.0);
+    if (face.hasMesh && face.mesh.size() == kFaceMeshPoints) {
+        GpuFloatArray array;
+        array.tupleSize = 2;
+        face111::fromMediaPipe(face.mesh, &array.values);
+        parameters->insert(QStringLiteral("u_faceLandmarks111"), QVariant::fromValue(array));
+    }
 }
 
 QString faceTrackCacheDir()

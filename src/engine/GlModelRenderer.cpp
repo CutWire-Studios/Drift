@@ -599,6 +599,12 @@ void destroyGlModels(GlRuntime &rt, QOpenGLExtraFunctions *gl)
             gl->glDeleteBuffers(1, &rt.faceSwapMesh.ibo);
             rt.faceSwapMesh = {};
         }
+        if (rt.face111Mesh.vao) {
+            gl->glDeleteVertexArrays(1, &rt.face111Mesh.vao);
+            gl->glDeleteBuffers(1, &rt.face111Mesh.vbo);
+            gl->glDeleteBuffers(1, &rt.face111Mesh.ibo);
+            rt.face111Mesh = {};
+        }
     }
     rt.models.lru.clear();
     rt.models.index.clear();

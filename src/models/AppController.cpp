@@ -79,6 +79,7 @@
 #include "engine/ReverseRenderer.h"
 #include "engine/Sam2Segmenter.h"
 #include "engine/StickerCatalog.h"
+#include "engine/StillImage.h"
 #include "MulticamImageStore.h"
 #include "SegmentImageStore.h"
 #include "engine/FrameSheet.h"
@@ -1276,6 +1277,21 @@ bool faceTrackHasMesh(const QString &path)
         }
     }
     return false;
+}
+
+// The most faces any frame holds, which is how many slots a face effect's Face choice can
+// usefully offer. Slots are positional, so this is the longest frame, not a count of people.
+int faceTrackFaceCount(const QString &path)
+{
+    if (path.isEmpty())
+        return 0;
+    const auto track = drift::loadFaceTrackCached(path);
+    if (!track)
+        return 0;
+    qsizetype most = 0;
+    for (const drift::FaceTrackFrame &frame : track->frames)
+        most = std::max(most, frame.faces.size());
+    return int(most);
 }
 
 QVariantMap transitionToMap(const drift::Project &project, const drift::Track &track, const drift::Transition &t);
@@ -3267,6 +3283,9 @@ QVariantMap effectToMap(const drift::Effect &effect, int effectIndex, drift::Tim
                 {QStringLiteral("type"), paramDef.typeName()},
                 {QStringLiteral("value"), value},
                 {QStringLiteral("group"), paramDef.group},
+                {QStringLiteral("groupCollapsed"), paramDef.groupCollapsed},
+                {QStringLiteral("swatches"), paramDef.swatches},
+                {QStringLiteral("enables"), paramDef.enables},
             };
             if (paramDef.isFilePath()) {
                 param.insert(QStringLiteral("fileFilters"), paramDef.fileFilters);
@@ -4389,6 +4408,7 @@ QVariantMap AppController::clipToMap(const drift::Clip &clip, const drift::Clip 
         {QStringLiteral("hasFaceTrack"), !face.faceTrackPath.isEmpty()},
         {QStringLiteral("faceTrackHasContours"), faceTrackHasContours(face.faceTrackPath)},
         {QStringLiteral("faceTrackHasMesh"), faceTrackHasMesh(face.faceTrackPath)},
+        {QStringLiteral("faceTrackFaceCount"), faceTrackFaceCount(face.faceTrackPath)},
         // Whether there is anything a face scan could run on at all: an unlinked adjustment or an
         // audio clip has no source, and the inspector must not offer to scan one.
         {QStringLiteral("canFaceTrack"), face.type == drift::ClipType::Video
@@ -11728,9 +11748,13 @@ QString AppController::estimateDepthForClip(int trackIndex, int clipIndex, bool 
                 if (ctx.cancelled())
                     return;
                 const drift::TimeUs sourceUs = srcIn + drift::TimeUs(i) * step;
-                const QImage frame = ClipReaderPool::instance().readVideoFrame(
-                    path, kDepthScanStreamId, sourceUs, kDepthDecodeBound, kDepthDecodeBound,
-                    QString(), 15, false, rotationCorrection);
+                // Stills decode the way the compositor draws them; FFmpeg alone cannot open some
+                // files Qt reads fine (a .jpeg, for one). See detectFacesForClip.
+                const QImage frame = still
+                    ? drift::decodeStillImage(path, kDepthDecodeBound, kDepthDecodeBound)
+                    : ClipReaderPool::instance().readVideoFrame(
+                          path, kDepthScanStreamId, sourceUs, kDepthDecodeBound, kDepthDecodeBound,
+                          QString(), 15, false, rotationCorrection);
                 if (frame.isNull())
                     return ctx.fail(QStringLiteral("decode_error"),
                                     QObject::tr("Could not decode frame %1").arg(i));
@@ -12860,8 +12884,11 @@ void AppController::detectFacesForClip(int trackIndex, int clipIndex)
     setLastMessage(tr("Detecting faces…"));
 
     const QString path = clip.path;
-    const drift::TimeUs srcIn = clip.srcIn;
-    const drift::TimeUs srcOut = clip.srcOut;
+    // A still is one frame however long it sits on the timeline, and FaceTrack::sample clamps to
+    // its last frame, so it is scanned once rather than once per frame of its duration.
+    const bool still = clip.type == drift::ClipType::Image;
+    const drift::TimeUs srcIn = still ? 0 : clip.srcIn;
+    const drift::TimeUs srcOut = still ? 1 : clip.srcOut;
     const int fps = qMax(1, m_project.fps());
     const int canvasW = m_project.width();
     const int canvasH = m_project.height();
@@ -12871,7 +12898,7 @@ void AppController::detectFacesForClip(int trackIndex, int clipIndex)
 
     // Landmarks are in frame pixels, so detect on frames oriented the way the compositor shows them.
     const int rotationCorrection = clip.rotationCorrection;
-    (void)QtConcurrent::run([this, path, srcIn, srcOut, fps, canvasW, canvasH, clipId,
+    (void)QtConcurrent::run([this, path, still, srcIn, srcOut, fps, canvasW, canvasH, clipId,
                              rotationCorrection]() {
         auto setProgress = [this](double fraction, const QString &status) {
             QMetaObject::invokeMethod(
@@ -12938,9 +12965,14 @@ void AppController::detectFacesForClip(int trackIndex, int clipIndex)
             }
 
             const drift::TimeUs sourceUs = srcIn + drift::TimeUs(i) * step;
-            const QImage frame = ClipReaderPool::instance().readVideoFrame(
-                path, kFaceDetectStreamId, sourceUs, canvasW, canvasH, QString(), 15, false,
-                rotationCorrection);
+            // Stills decode the way the compositor draws them (Qt first, FFmpeg as fallback).
+            // FFmpeg alone cannot open some files Qt reads fine — a .jpeg, for one — which is
+            // how an image that renders could still fail the scan on frame 0.
+            const QImage frame = still
+                ? drift::decodeStillImage(path, canvasW, canvasH)
+                : ClipReaderPool::instance().readVideoFrame(path, kFaceDetectStreamId, sourceUs,
+                                                            canvasW, canvasH, QString(), 15, false,
+                                                            rotationCorrection);
             if (frame.isNull()) {
                 finish(false, tr("Could not decode frame %1").arg(i), {});
                 return;
@@ -21309,6 +21341,9 @@ bool AppController::setEffectColorParam(int trackIndex, int clipIndex, int effec
 
     const drift::Project before = m_project;
     clip.effects[effectIndex].parameters.insert(key, color.name(QColor::HexRgb));
+    // One undo step: a picked shade that left its "custom colour" switch off would change nothing.
+    if (!specIt->enables.isEmpty())
+        clip.effects[effectIndex].parameters.insert(specIt->enables, true);
     pushProjectEdit(before, tr("Edit effect"));
     finishEdit(tr("Effect updated"));
     return true;
@@ -27059,6 +27094,7 @@ QJsonObject mcpDetailRow(const QVariantMap &clipMap, const QVariantMap &transfor
     if (!m.value(QStringLiteral("hasFaceTrack")).toBool()) {
         m.remove(QStringLiteral("faceTrackHasContours"));
         m.remove(QStringLiteral("faceTrackHasMesh"));
+        m.remove(QStringLiteral("faceTrackFaceCount"));
     }
     if (m.value(QStringLiteral("fadeCurve")).toString() != QLatin1String("custom")) {
         m.remove(QStringLiteral("fadeShape"));
