@@ -14196,6 +14196,14 @@ If playback stutters, try another.</source>
         <translation>%1부터 %2까지</translation>
     </message>
     <message>
+        <source>Turn adjustment on</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Turn adjustment off</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Stop recording</source>
         <translation>녹음 중지</translation>
     </message>

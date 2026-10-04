@@ -14444,6 +14444,14 @@ If playback stutters, try another.</source>
         <translation>من %1 إلى %2</translation>
     </message>
     <message>
+        <source>Turn adjustment on</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Turn adjustment off</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Turn transform on</source>
         <translation>تفعيل التحويل</translation>
     </message>

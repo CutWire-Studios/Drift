@@ -14204,6 +14204,14 @@ Nếu phát lại bị giật, hãy thử cái khác.</translation>
         <translation>%1 đến %2</translation>
     </message>
     <message>
+        <source>Turn adjustment on</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Turn adjustment off</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Stop recording</source>
         <translation>Dừng ghi</translation>
     </message>

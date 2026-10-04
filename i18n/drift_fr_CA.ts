@@ -14257,6 +14257,14 @@ En cas de saccades à la lecture, essayez un autre mode.</translation>
         <translation>%1 à %2</translation>
     </message>
     <message>
+        <source>Turn adjustment on</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Turn adjustment off</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Stop recording</source>
         <translation>Arrêter l&apos;enregistrement</translation>
     </message>

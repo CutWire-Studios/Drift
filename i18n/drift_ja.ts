@@ -14204,6 +14204,14 @@ If playback stutters, try another.</source>
         <translation>%1 から %2</translation>
     </message>
     <message>
+        <source>Turn adjustment on</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Turn adjustment off</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Stop recording</source>
         <translation>録音を停止</translation>
     </message>

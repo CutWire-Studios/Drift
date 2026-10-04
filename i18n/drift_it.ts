@@ -14252,6 +14252,14 @@ Se la riproduzione va a scatti, prova un&apos;altra opzione.</translation>
         <translation>Da %1 a %2</translation>
     </message>
     <message>
+        <source>Turn adjustment on</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Turn adjustment off</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Stop recording</source>
         <translation>Interrompi registrazione</translation>
     </message>

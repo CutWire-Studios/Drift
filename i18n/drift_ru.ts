@@ -14300,6 +14300,14 @@ If playback stutters, try another.</source>
         <translation>От %1 до %2</translation>
     </message>
     <message>
+        <source>Turn adjustment on</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Turn adjustment off</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Stop recording</source>
         <translation>Остановить запись</translation>
     </message>

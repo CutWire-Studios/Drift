@@ -14252,6 +14252,14 @@ If playback stutters, try another.</source>
         <translation>%1 සිට %2 දක්වා</translation>
     </message>
     <message>
+        <source>Turn adjustment on</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Turn adjustment off</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Stop recording</source>
         <translation>පටිගත කිරීම නවත්වන්න</translation>
     </message>
