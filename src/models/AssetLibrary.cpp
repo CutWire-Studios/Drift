@@ -251,9 +251,20 @@ const QStringList &imageExtensions()
     return drift::imageExtensions();
 }
 
+// An animated GIF goes through FFmpeg as video so it plays; a single-frame one stays a still that
+// can be stretched to any length. Animated WebP is left out: the pinned FFmpeg 7.1 has no decoder
+// for it, and newer ones report no duration.
+bool isAnimatedImage(const QString &path)
+{
+    if (QFileInfo(path).suffix().toLower() != QLatin1String("gif"))
+        return false;
+    QImageReader reader(path);
+    return reader.supportsAnimation() && reader.imageCount() != 1;
+}
+
 drift::MediaKind kindFrom(const MediaInfo &info, const QString &path)
 {
-    if (AssetLibrary::isImagePath(path))
+    if (AssetLibrary::isImagePath(path) && !isAnimatedImage(path))
         return drift::MediaKind::Image;
 
     for (const StreamInfo &stream : info.streams) {
@@ -466,7 +477,7 @@ std::optional<drift::MediaAsset> probeAsset(const QString &absolutePath, bool im
         return buildModelAsset(absolutePath, name);
     if (AssetLibrary::isVectorPath(absolutePath))
         return buildVectorAsset(absolutePath, name);
-    if (imageOnly)
+    if (imageOnly && !isAnimatedImage(absolutePath))
         return buildImageAsset(absolutePath, name);
 
     const MediaInfo info = MediaProbe::probe(absolutePath);
