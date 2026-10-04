@@ -50,9 +50,11 @@ Any parameter may set `group` to fold into a named inspector section. Only the f
 open; `"groupCollapsed": true` on a group's parameters keeps it folded even when it comes first
 (Face Retouch's Advanced section).
 
-Colour parameters bind as **`vec3`** — alpha is dropped, so declare a separate opacity float if you
-need one. Any alpha in `defaultValue` is discarded at parse time and the value is normalized to six
-digits. Colours and file paths are **not keyframable**: the whole keyframe stack is typed `double`.
+Colour parameters bind as **`vec3`** unless they declare `"alpha": true`, which makes them a
+**`vec4`** and adds an opacity slider. Without `alpha`, any alpha in `defaultValue` is discarded at
+parse time and the value is normalized to `#rrggbb`; with it, the value is kept as `#rrggbbaa`
+(CSS order, alpha last). A colour keyframes as four channel tracks, `<key>.r/.g/.b/.a` in 0..1,
+folded back into the hex before binding. File paths are **not keyframable**.
 
 Pass inputs: `source_texture` (+ optional `index`), `buffer` (+ `id`), or `texture` (+ `id`). Multiple inputs bind as `u_currentTexture` (unit 0) and `u_texture1`…  
 Pass outputs: `buffer` or `canvas`.

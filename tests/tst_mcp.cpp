@@ -31,7 +31,12 @@
 #include "mcp/McpProtocol.h"
 #include "mcp/McpSession.h"
 #include "mcp/McpStdio.h"
+#include "engine/AddonPackage.h"
+#include "engine/AudioEffectCatalog.h"
 #include "engine/DepthSidecar.h"
+#include "engine/EffectCatalog.h"
+#include "engine/GlRuntime.h"
+#include "engine/TransitionCatalog.h"
 #include "engine/GpuCompositor.h"
 #include "engine/ObjectDetector.h"
 #include "models/AppController.h"
@@ -78,6 +83,7 @@ private slots:
     void applyUnknownOp();
     void depthToolsSampleAndClear();
     void catalogDispatcherParity();
+    void authoredEffectLifecycle();
     void textResultRoundsNumbers();
     void validateRejectsWrongType();
     void setTransformWrites3dPose();
@@ -3630,6 +3636,142 @@ void McpTest::catalogDispatcherParity()
         QVERIFY2(!drift::mcp::toolboxForOp(name).isEmpty(), qPrintable(name));
     }
     dispatcher.applyOne(QStringLiteral("pause"), {});
+}
+
+void McpTest::authoredEffectLifecycle()
+{
+    QStandardPaths::setTestModeEnabled(true);
+    const QString appData = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
+    const auto restore = qScopeGuard([&] {
+        for (const char *sub : {"effects", "transitions", "audio-effects", "exports"})
+            QDir(QDir(appData).filePath(QString::fromLatin1(sub))).removeRecursively();
+        reloadEffectCatalog();
+        reloadTransitionCatalog();
+        reloadAudioEffectCatalog();
+        QStandardPaths::setTestModeEnabled(false);
+    });
+
+    AssetLibrary library;
+    AppController state(&library);
+    drift::mcp::McpDispatcher dispatcher(&state);
+    const auto call = [&](const char *op, const QJsonObject &args) {
+        return dispatcher.applyOne(QString::fromLatin1(op), args);
+    };
+
+    const QJsonObject guide = call("effect_authoring_guide", {{QStringLiteral("kind"), QStringLiteral("audio_effect")}});
+    QVERIFY(guide.value(QStringLiteral("ok")).toBool());
+    QVERIFY(guide.value(QStringLiteral("processors")).toArray().size() > 0);
+
+    const QJsonObject manifest{
+        {QStringLiteral("displayName"), QStringLiteral("Test Tint")},
+        {QStringLiteral("category"), QStringLiteral("color")},
+        {QStringLiteral("parameters"), QJsonArray{QJsonObject{{QStringLiteral("identifier"), QStringLiteral("amount")},
+                                                              {QStringLiteral("type"), QStringLiteral("float")},
+                                                              {QStringLiteral("defaultValue"), 0.5}}}},
+        {QStringLiteral("pipeline"),
+         QJsonObject{{QStringLiteral("intermediateBuffers"), QJsonArray{}},
+                     {QStringLiteral("passes"),
+                      QJsonArray{QJsonObject{{QStringLiteral("passIndex"), 0},
+                                             {QStringLiteral("fragmentShader"), QStringLiteral("main.frag")},
+                                             {QStringLiteral("inputs"), QJsonArray{QJsonObject{{QStringLiteral("type"), QStringLiteral("source_texture")}}}},
+                                             {QStringLiteral("output"), QJsonObject{{QStringLiteral("type"), QStringLiteral("canvas")}}}}}}}},
+    };
+    const QString good = QStringLiteral(
+        "#version 330 core\nin vec2 v_texCoord; out vec4 fragColor;\nuniform sampler2D u_currentTexture; uniform float amount;\n"
+        "void main() { vec4 c = texture(u_currentTexture, v_texCoord); fragColor = vec4(c.rgb * amount, c.a); }\n");
+    const auto effectArgs = [&](const QString &frag) {
+        return QJsonObject{{QStringLiteral("kind"), QStringLiteral("effect")},
+                           {QStringLiteral("slug"), QStringLiteral("test_tint")},
+                           {QStringLiteral("manifest"), manifest},
+                           {QStringLiteral("files"), QJsonObject{{QStringLiteral("main.frag"), frag}}}};
+    };
+    const QString target = QDir(appData).filePath(QStringLiteral("effects/test_tint"));
+
+    QJsonObject missing = effectArgs(good);
+    missing.insert(QStringLiteral("files"), QJsonObject{});
+    QCOMPARE(call("create_effect", missing).value(QStringLiteral("error")).toString(), QStringLiteral("bad_manifest"));
+    QVERIFY(!QFileInfo::exists(target));
+
+    if (drift::gl::runtime().available()) {
+        const QJsonObject broken = call("create_effect", effectArgs(QStringLiteral("#version 330 core\nvoid main() { nope; }\n")));
+        QCOMPARE(broken.value(QStringLiteral("error")).toString(), QStringLiteral("shader_compile_failed"));
+        QVERIFY(!broken.value(QStringLiteral("errors")).toArray().isEmpty());
+        QVERIFY(!QFileInfo::exists(target));
+    }
+
+    const QJsonObject created = call("create_effect", effectArgs(good));
+    QVERIFY2(created.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(created).toJson()));
+    QCOMPARE(created.value(QStringLiteral("id")).toString(), QStringLiteral("user.test_tint"));
+    const EffectPresetEntry *def = effectDefForId(QStringLiteral("user.test_tint"));
+    QVERIFY(def);
+    QCOMPARE(QDir::cleanPath(def->gpu.packageDir), QDir::cleanPath(target));
+    QCOMPARE(call("create_effect", effectArgs(good)).value(QStringLiteral("error")).toString(), QStringLiteral("exists"));
+
+    QJsonObject updateArgs = effectArgs(QString(good).replace(QStringLiteral("c.rgb * amount"), QStringLiteral("c.rgb + amount")));
+    updateArgs.remove(QStringLiteral("slug"));
+    updateArgs.insert(QStringLiteral("id"), QStringLiteral("user.test_tint"));
+    QVERIFY(call("update_effect", updateArgs).value(QStringLiteral("ok")).toBool());
+    const QJsonObject src = call("get_effect_source", {{QStringLiteral("kind"), QStringLiteral("effect")},
+                                                       {QStringLiteral("id"), QStringLiteral("user.test_tint")}});
+    QVERIFY(src.value(QStringLiteral("user")).toBool());
+    QVERIFY(src.value(QStringLiteral("files")).toObject().value(QStringLiteral("main.frag")).toString().contains(QStringLiteral("c.rgb + amount")));
+
+    const QJsonObject bundled = call("update_effect", {{QStringLiteral("kind"), QStringLiteral("effect")},
+                                                       {QStringLiteral("id"), QStringLiteral("adjust.brightness")},
+                                                       {QStringLiteral("manifest"), manifest}});
+    QCOMPARE(bundled.value(QStringLiteral("error")).toString(), QStringLiteral("not_user_effect"));
+
+    QTemporaryDir tmp;
+    const QString out = tmp.filePath(QStringLiteral("tint.driftfx"));
+    const QJsonObject exported = call("export_effect", {{QStringLiteral("kind"), QStringLiteral("effect")},
+                                                        {QStringLiteral("id"), QStringLiteral("user.test_tint")},
+                                                        {QStringLiteral("path"), out}});
+    QVERIFY2(exported.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(exported).toJson()));
+    QString error;
+    const auto info = drift::addon::readManifest(exported.value(QStringLiteral("path")).toString(), &error,
+                                                 drift::addon::Container::User);
+    QVERIFY2(info.has_value(), qPrintable(error));
+    QCOMPARE(info->provides.first().kind, QStringLiteral("effects"));
+    const QString reinstall = tmp.filePath(QStringLiteral("reinstall"));
+    QVERIFY2(drift::addon::install(exported.value(QStringLiteral("path")).toString(), reinstall, {}, nullptr, &error,
+                                   drift::addon::Container::User),
+             qPrintable(error));
+    QVERIFY(QFile::exists(reinstall + QStringLiteral("/effects/test_tint/main.frag")));
+
+    QVERIFY(call("delete_effect", {{QStringLiteral("kind"), QStringLiteral("effect")},
+                                   {QStringLiteral("id"), QStringLiteral("user.test_tint")}})
+                .value(QStringLiteral("ok")).toBool());
+    QVERIFY(!effectDefForId(QStringLiteral("user.test_tint")));
+    QVERIFY(!QFileInfo::exists(target));
+
+    const QJsonObject audio = call("create_effect", {{QStringLiteral("kind"), QStringLiteral("audio_effect")},
+                                                     {QStringLiteral("slug"), QStringLiteral("test_echo")},
+                                                     {QStringLiteral("manifest"), QJsonObject{{QStringLiteral("processor"), QStringLiteral("echo")}}}});
+    QVERIFY2(audio.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(audio).toJson()));
+    QVERIFY(audioEffectDefForId(QStringLiteral("user.test_echo")));
+    const QJsonObject badAudio = call("create_effect", {{QStringLiteral("kind"), QStringLiteral("audio_effect")},
+                                                        {QStringLiteral("slug"), QStringLiteral("test_nope")},
+                                                        {QStringLiteral("manifest"), QJsonObject{{QStringLiteral("processor"), QStringLiteral("nope")}}}});
+    QCOMPARE(badAudio.value(QStringLiteral("error")).toString(), QStringLiteral("bad_manifest"));
+
+    QJsonObject transition = manifest;
+    QJsonObject pipeline = transition.value(QStringLiteral("pipeline")).toObject();
+    QJsonArray passes = pipeline.value(QStringLiteral("passes")).toArray();
+    QJsonObject pass = passes.at(0).toObject();
+    pass.insert(QStringLiteral("inputs"), QJsonArray{QJsonObject{{QStringLiteral("type"), QStringLiteral("source_texture")}, {QStringLiteral("index"), 0}},
+                                                    QJsonObject{{QStringLiteral("type"), QStringLiteral("source_texture")}, {QStringLiteral("index"), 1}}});
+    passes[0] = pass;
+    pipeline.insert(QStringLiteral("passes"), passes);
+    transition.insert(QStringLiteral("pipeline"), pipeline);
+    const QJsonObject made = call("create_effect", {{QStringLiteral("kind"), QStringLiteral("transition")},
+                                                    {QStringLiteral("slug"), QStringLiteral("test_mix")},
+                                                    {QStringLiteral("manifest"), transition},
+                                                    {QStringLiteral("files"), QJsonObject{{QStringLiteral("main.frag"), QStringLiteral(
+        "#version 330 core\nin vec2 v_texCoord; out vec4 fragColor;\nuniform sampler2D u_fromTexture; uniform sampler2D u_toTexture;\n"
+        "uniform float u_progress; uniform float amount;\n"
+        "void main() { fragColor = mix(texture(u_fromTexture, v_texCoord), texture(u_toTexture, v_texCoord), u_progress * amount); }\n")}}}});
+    QVERIFY2(made.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(made).toJson()));
+    QVERIFY(transitionDefForId(QStringLiteral("user.test_mix")));
 }
 
 void McpTest::textResultRoundsNumbers()

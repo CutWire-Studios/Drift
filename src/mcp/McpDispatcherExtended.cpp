@@ -8,6 +8,7 @@
 #include "core/TextPresetStore.h"
 #include "core/TextStyle.h"
 #include "core/TextLook.h"
+#include "mcp/McpEffectAuthoring.h"
 #include "mcp/McpJson.h"
 #include "mcp/McpMarket.h"
 
@@ -2597,6 +2598,19 @@ QJsonObject McpDispatcher::applyOneExtended(const QString &tool, const QJsonObje
         m_controller->removeClipStabilization(ref.track, ref.clip);
         return ok(clipFeedback(ref));
     }
+
+    if (tool == QLatin1String("effect_authoring_guide"))
+        return authoring::guide(argString(args, QStringLiteral("kind")));
+    if (tool == QLatin1String("create_effect"))
+        return authoring::create(m_controller, args);
+    if (tool == QLatin1String("update_effect"))
+        return authoring::update(m_controller, args);
+    if (tool == QLatin1String("get_effect_source"))
+        return authoring::source(args);
+    if (tool == QLatin1String("delete_effect"))
+        return authoring::remove(m_controller, args);
+    if (tool == QLatin1String("export_effect"))
+        return authoring::exportPackage(args);
 
     if (tool == QLatin1String("list_addons"))
         return m_controller->mcpListAddons();

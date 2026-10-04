@@ -2973,6 +2973,31 @@ QOpenGLShaderProgram *GlRuntime::builtinProgram(const QString &id, const char *v
     return cached.passes[0].program.get();
 }
 
+bool GlRuntime::validateProgram(const drift::GpuEffectDefinition &gpu, QStringList *errors)
+{
+    return exec([&]() {
+        for (const drift::GpuEffectPass &pass : gpu.passes) {
+            QOpenGLShaderProgram program;
+            const char *vertexSource = pass.geometry == drift::GpuEffectPass::Geometry::Face111
+                ? kFace111VertexShader
+                : kQuadVertexShader;
+            const QString where = QStringLiteral("pass %1 (%2)").arg(pass.passIndex).arg(pass.fragmentShaderFile);
+            if (!program.addShaderFromSourceCode(QOpenGLShader::Vertex, translateShader(vertexSource, false))) {
+                errors->append(QStringLiteral("%1 vertex: %2").arg(where, program.log().trimmed()));
+                continue;
+            }
+            if (!program.addShaderFromSourceCode(QOpenGLShader::Fragment,
+                                                 translateShader(pass.fragmentShaderSource, true,
+                                                                 gpu.needsDepth ? kDepthPrelude : nullptr))) {
+                errors->append(QStringLiteral("%1: %2").arg(where, program.log().trimmed()));
+                continue;
+            }
+            if (!program.link())
+                errors->append(QStringLiteral("%1 link: %2").arg(where, program.log().trimmed()));
+        }
+    });
+}
+
 CompiledEffect *GlRuntime::compile(const QString &cacheKey, const drift::GpuEffectDefinition &gpu)
 {
     QString sourceSig;

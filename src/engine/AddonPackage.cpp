@@ -5,6 +5,7 @@
 
 #include <QCryptographicHash>
 #include <QDir>
+#include <QDirIterator>
 #include <QFile>
 #include <QFileInfo>
 #include <QJsonArray>
@@ -33,6 +34,18 @@ quint32 readU32(const char *p)
 {
     const auto *b = reinterpret_cast<const quint8 *>(p);
     return quint32(b[0]) | (quint32(b[1]) << 8) | (quint32(b[2]) << 16) | (quint32(b[3]) << 24);
+}
+
+void appendU32(QByteArray *out, quint32 v)
+{
+    for (int i = 0; i < 4; ++i)
+        out->append(char((v >> (8 * i)) & 0xff));
+}
+
+void appendU64(QByteArray *out, quint64 v)
+{
+    for (int i = 0; i < 8; ++i)
+        out->append(char((v >> (8 * i)) & 0xff));
 }
 
 quint64 readU64(const char *p)
@@ -472,6 +485,88 @@ bool install(const QString &packagePath, const QString &destDir, const ProgressF
     guard.promoted = true;
     if (installed)
         *installed = info;
+    return true;
+}
+
+bool writeUserPackage(const QString &packageDir, const QString &kind, const QJsonObject &meta,
+                      const QString &outPath, QString *error)
+{
+    const QDir dir(packageDir);
+    const QString folder = dir.dirName();
+
+    QStringList relPaths;
+    QDirIterator it(packageDir, QDir::Files | QDir::NoDotAndDotDot, QDirIterator::Subdirectories);
+    while (it.hasNext())
+        relPaths.append(dir.relativeFilePath(it.next()));
+    relPaths.sort();
+    if (relPaths.isEmpty())
+        return fail(error, QStringLiteral("%1 has no files").arg(packageDir));
+
+    QByteArray payload;
+    QJsonArray files;
+    for (const QString &rel : std::as_const(relPaths)) {
+        QFile file(dir.filePath(rel));
+        if (!file.open(QIODevice::ReadOnly))
+            return fail(error, QStringLiteral("cannot read %1: %2").arg(file.fileName(), file.errorString()));
+        const QByteArray bytes = file.readAll();
+        files.append(QJsonObject{
+            {QStringLiteral("path"), kind + QLatin1Char('/') + folder + QLatin1Char('/') + rel},
+            {QStringLiteral("offset"), double(payload.size())},
+            {QStringLiteral("size"), double(bytes.size())},
+            {QStringLiteral("sha256"),
+             QString::fromLatin1(QCryptographicHash::hash(bytes, QCryptographicHash::Sha256).toHex())},
+        });
+        payload.append(bytes);
+    }
+    if (quint64(payload.size()) > kMaxUserPayload)
+        return fail(error, QStringLiteral("package is too large"));
+
+    QJsonObject root = meta;
+    root.insert(QStringLiteral("schema"), 1);
+    root.insert(QStringLiteral("platform"), QString());
+    root.insert(QStringLiteral("installedSize"), double(payload.size()));
+    root.insert(QStringLiteral("files"), files);
+    root.insert(QStringLiteral("provides"),
+                QJsonArray{QJsonObject{{QStringLiteral("kind"), kind},
+                                       {QStringLiteral("root"), kind},
+                                       {QStringLiteral("items"), 1}}});
+    if (!root.contains(QStringLiteral("minAppVersion")))
+        root.insert(QStringLiteral("minAppVersion"), QStringLiteral(DRIFT_VERSION));
+    const QByteArray metadata = QJsonDocument(root).toJson(QJsonDocument::Compact);
+
+    QByteArray compressed(qsizetype(ZSTD_compressBound(size_t(payload.size()))), Qt::Uninitialized);
+    const size_t packed = ZSTD_compress(compressed.data(), size_t(compressed.size()), payload.constData(),
+                                        size_t(payload.size()), 19);
+    if (ZSTD_isError(packed))
+        return fail(error, QStringLiteral("zstd error: %1").arg(QString::fromUtf8(ZSTD_getErrorName(packed))));
+    compressed.resize(qsizetype(packed));
+
+    QByteArray out(kUserMagic, sizeof(kUserMagic));
+    appendU32(&out, kFormatVersion);
+    appendU32(&out, quint32(metadata.size()));
+    out.append(metadata);
+    appendU64(&out, quint64(compressed.size()));
+    appendU64(&out, quint64(payload.size()));
+    out.append(compressed);
+    out.append(QCryptographicHash::hash(out, QCryptographicHash::Sha256));
+
+    if (!QDir().mkpath(QFileInfo(outPath).absolutePath()))
+        return fail(error, QStringLiteral("cannot create the parent of %1").arg(outPath));
+    const QString partial = outPath + QStringLiteral(".partial");
+    QFile file(partial);
+    if (!file.open(QIODevice::WriteOnly | QIODevice::Truncate))
+        return fail(error, QStringLiteral("cannot write %1: %2").arg(partial, file.errorString()));
+    const bool written = file.write(out) == out.size();
+    file.close();
+    if (!written) {
+        QFile::remove(partial);
+        return fail(error, QStringLiteral("write failed: %1").arg(file.errorString()));
+    }
+    QFile::remove(outPath);
+    if (!QFile::rename(partial, outPath)) {
+        QFile::remove(partial);
+        return fail(error, QStringLiteral("cannot move %1 into place").arg(partial));
+    }
     return true;
 }
 

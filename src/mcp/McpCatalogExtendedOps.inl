@@ -1388,6 +1388,64 @@
           objectSchema(mergeProps({{QStringLiteral("label"), stringProp(QStringLiteral("Preset name"))}},
                                   clipRefProps()),
                        {QStringLiteral("label")}) },
+        { "effect_authoring_guide", "effects", "How to write a custom effect",
+          "Read before create_effect. Returns {guide} — manifest grammar for effects, transitions and "
+          "audio effects, every parameter type and the inspector control it becomes, GLSL rules and "
+          "a working example — plus {processors:[{processor, examples, params}]} for audio effects.",
+          objectSchema({{QStringLiteral("kind"), effectKindProp()}}), true, false, true },
+        { "create_effect", "effects", "Write a new effect into My Effects",
+          "Create a GPU video effect, transition or audio effect from a manifest and shader sources. "
+          "The package is parsed and its shaders compiled before anything is installed; failures "
+          "return bad_manifest or shader_compile_failed with the driver log. Returns {id, kind, "
+          "shaderCheck: ok|skipped|n/a}; id is user.<slug> and works with add_effect / "
+          "add_transition / add_audio_effect immediately. Not undoable.",
+          objectSchema({{QStringLiteral("kind"), effectKindProp()},
+                        {QStringLiteral("slug"), stringProp(QStringLiteral("a-z, 0-9, _ (max 48); the id becomes user.<slug>"))},
+                        {QStringLiteral("manifest"), QJsonObject{{QStringLiteral("type"), QStringLiteral("object")},
+                                                                 {QStringLiteral("description"), QStringLiteral("effect.json / transition.json / audio-effect.json body; id is set for you")}}},
+                        {QStringLiteral("files"), QJsonObject{{QStringLiteral("type"), QStringLiteral("object")},
+                                                              {QStringLiteral("description"), QStringLiteral("{\"main.frag\": \"<GLSL>\"} — .frag/.glsl sources named by the pipeline")}}},
+                        {QStringLiteral("binary_files"), QJsonObject{{QStringLiteral("type"), QStringLiteral("object")},
+                                                                     {QStringLiteral("description"), QStringLiteral("{\"name.png\": \"<base64>\"} — static textures, thumbnail.png")}}}},
+                       {QStringLiteral("kind"), QStringLiteral("slug"), QStringLiteral("manifest")}) },
+        { "update_effect", "effects", "Replace a My Effects package",
+          "Same as create_effect but replaces an existing user package by id, keeping the id so "
+          "clips already using it pick up the change. Bundled and add-on effects are refused "
+          "(not_user_effect) — fork those with create_effect. Not undoable.",
+          objectSchema({{QStringLiteral("kind"), effectKindProp()},
+                        {QStringLiteral("id"), stringProp(QStringLiteral("Existing user effect id"))},
+                        {QStringLiteral("manifest"), QJsonObject{{QStringLiteral("type"), QStringLiteral("object")},
+                                                                 {QStringLiteral("description"), QStringLiteral("Full manifest body")}}},
+                        {QStringLiteral("files"), QJsonObject{{QStringLiteral("type"), QStringLiteral("object")},
+                                                              {QStringLiteral("description"), QStringLiteral("All shader sources; the package is replaced, not merged")}}},
+                        {QStringLiteral("binary_files"), QJsonObject{{QStringLiteral("type"), QStringLiteral("object")},
+                                                                     {QStringLiteral("description"), QStringLiteral("{\"name.png\": \"<base64>\"}")}}}},
+                       {QStringLiteral("kind"), QStringLiteral("id"), QStringLiteral("manifest")}),
+          false, false, true },
+        { "get_effect_source", "effects", "Read an effect's manifest and shaders",
+          "Returns {id, kind, user, manifest, files:{name: source}, binaryFiles:[names]} for any "
+          "package-backed effect, transition or audio effect — bundled ones too, to learn from or fork.",
+          objectSchema({{QStringLiteral("kind"), effectKindProp()},
+                        {QStringLiteral("id"), stringProp(QStringLiteral("Id from list_effects / list_transitions / list_audio_effects"))}},
+                       {QStringLiteral("kind"), QStringLiteral("id")}), true, false, true },
+        { "delete_effect", "effects", "Remove a My Effects package",
+          "Delete a user effect, transition or audio effect. Refuses with in_use when the project "
+          "uses it unless force:true (those uses then render as passthrough). Not undoable.",
+          objectSchema({{QStringLiteral("kind"), effectKindProp()},
+                        {QStringLiteral("id"), stringProp(QStringLiteral("User effect id"))},
+                        {QStringLiteral("force"), boolProp(QStringLiteral("Delete even if the project uses it"))}},
+                       {QStringLiteral("kind"), QStringLiteral("id")}), false, true },
+        { "export_effect", "effects", "Save a shareable .driftfx",
+          "Pack a My Effects package into a .driftfx the user can import elsewhere. Without path, or "
+          "when Drift is sandboxed (flatpak, snap) and path is outside its data folder, or the write "
+          "fails, the file goes to Drift's exports folder instead. Returns {path, fellBack, reason?} "
+          "— tell the user the returned path.",
+          objectSchema({{QStringLiteral("kind"), effectKindProp()},
+                        {QStringLiteral("id"), stringProp(QStringLiteral("User effect id"))},
+                        {QStringLiteral("path"), stringProp(QStringLiteral("Absolute .driftfx output path (optional)"))},
+                        {QStringLiteral("author"), stringProp(QStringLiteral("Shown in the import dialog"))},
+                        {QStringLiteral("description"), stringProp(QStringLiteral("Shown in the import dialog"))}},
+                       {QStringLiteral("kind"), QStringLiteral("id")}) },
         { "list_export_presets", "project", "Named export sizes",
           "Returns {presets:[{id, label}]} — 1080p, YouTube, vertical, and the rest. Use id with "
           "export_with_preset.",

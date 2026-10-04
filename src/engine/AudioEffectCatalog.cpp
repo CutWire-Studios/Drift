@@ -180,6 +180,11 @@ QStringList defaultAudioEffectSearchPaths()
                                                QStringLiteral("audio-effects"));
 }
 
+std::optional<AudioEffectEntry> loadAudioEffectPackage(const QString &packageDir, QString *errorOut)
+{
+    return loadManifest(packageDir, errorOut);
+}
+
 void reloadAudioEffectCatalog(const QStringList &packageRoots)
 {
     const QStringList roots = packageRoots.isEmpty() ? defaultAudioEffectSearchPaths() : packageRoots;

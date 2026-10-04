@@ -144,7 +144,7 @@ All return `{started:true}` immediately. Every field below except `export` lives
 | `motion` | Lottie animations and SVG drawings as vector clips: add, inspect, swap the document, re-theme through slots or the `svg.*` element overrides |
 | `model3d` | 3D models (glTF binary `.glb`) as model clips: add, inspect, pick the animation, pose and light them — see [3D models](#3d-models) |
 | `subtitles` | Subtitle clips, cues, import/export, Whisper generation |
-| `effects` | Video/audio effects, transitions, templates, effect clipboard |
+| `effects` | Video/audio effects, transitions, templates, effect clipboard, writing new ones into My Effects — see [Custom effects](#custom-effects) |
 | `project` | Open/new/save/package, canvas, background, metadata, export |
 | `keyframes` | Property animation keys and tangents — clip transform, `fx.<i>.<param>`, `mask.<key>`, on text/subtitle clips `text.<key>` (pixelSize, letterSpacing, lineHeight, boxPadding, pathBend) or `text.layer.<id>.<field>` (opacity, offsetX, offsetY, blur, width, spread, trimStart, trimEnd, dashOffset, sketchLength, sketchDeviation, color.r/g/b/a, gradient.angle/offset/scale/center.x/y, gradient.stop.n.pos, effect.<param> for an effect paint's scalar params); the old names outlineWidth, shadowBlur, glowRadius, gradientAngle, color.r… still resolve onto the stroke/shadow/glow/fill layers. On shape clips the same layer fields as `shape.layer.<id>.<field>` (a fresh shape's layers are `fill` and `stroke`) plus `shape.<cornerRadius|points|innerRatio|headSize|thickness|tailX|tailSize>`; on SVG clips `vector.svg.…` (see Motion); on 3D model clips `model3d.<scale\|depth\|rotX\|rotY\|rotZ\|lightYaw\|lightPitch\|lightIntensity\|ambient>` (see 3D models). `set_keyframe` on a property the clip does not have fails `bad_args` |
 | `speed` | Speed ramps; reading custom fade curves (write them with `set_fade_curve` in `canvas`) |
@@ -487,6 +487,30 @@ the clip, 1 = nearest, consistent across the clip) and pass the frame through un
 `inspect({clips:true,detail:true})` reports `hasDepth`. The map is cleared when the clip's pixels
 change (replace source, switch angle, orientation); `clear_depth` removes it by hand. Standalone
 adjustment tracks have no depth of their own, so depth effects there pass through.
+
+### Custom effects
+
+Agents can write new GPU video effects, transitions and audio effects. Each one is an ordinary user
+package under `<AppData>/<effects|transitions|audio-effects>/<slug>/`, the same place an imported
+`.driftfx` lands, so it appears under **My Effects** and works with `add_effect`, `add_transition`
+and `add_audio_effect` as soon as it is created. The format is in
+[custom-effects.md](custom-effects.md).
+
+1. `effect_authoring_guide({kind})` returns the manifest grammar, the parameter types and their
+   inspector controls, and a working example (for audio, also the processors and their params).
+2. `get_effect_source({kind, id})` reads any package, bundled ones included, to fork.
+3. `create_effect({kind, slug, manifest, files})` parses the package and compiles its shaders on
+   the GL thread before installing anything. It fails with `bad_manifest` or
+   `shader_compile_failed` (`errors[]` holds the driver log per pass) and leaves nothing on disk.
+   The id is always `user.<slug>`. Without OpenGL (some headless setups) it installs anyway and
+   reports `shaderCheck:"skipped"`.
+4. `update_effect({kind, id, …})` replaces a user package in place, `delete_effect` removes one
+   (`in_use` unless `force:true` when the project still uses it), and `export_effect({kind, id, path?})`
+   writes a shareable `.driftfx`. Inside flatpak or snap, or without `path`, the file goes to
+   `<AppData>/exports/` and the reply says so with `fellBack` and `reason`.
+
+Bundled and add-on effects are read-only to these ops (`not_user_effect`). None of them are undoable:
+they change files on disk, not the project.
 
 ### Text looks and animation
 

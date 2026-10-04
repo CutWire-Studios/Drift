@@ -25,6 +25,7 @@
 #include <QOpenGLShaderProgram>
 #include <QSize>
 #include <QString>
+#include <QStringList>
 #include <QVariant>
 #include <QVector>
 
@@ -225,6 +226,10 @@ public:
 
     // Compiled programs are cached by key + source signature.
     CompiledEffect *compile(const QString &cacheKey, const drift::GpuEffectDefinition &gpu);
+
+    // Compiles every pass into throwaway programs, leaving the cache alone, and appends each
+    // driver log to `errors`. Returns false when OpenGL is unavailable and nothing was checked.
+    bool validateProgram(const drift::GpuEffectDefinition &gpu, QStringList *errors);
 
     // Framebuffers are recycled by size (and depth attachment): allocating a fresh FBO per
     // effect per frame churns GPU memory during steady-state playback. wantDepth is only set

@@ -95,4 +95,10 @@ using ProgressFn = std::function<bool(qint64 done, qint64 total)>;
 bool install(const QString &packagePath, const QString &destDir, const ProgressFn &progress,
              PackageInfo *installed, QString *error, Container container = Container::Signed);
 
+// Pack <packageDir>'s files into a .driftfx at outPath, as <kind>/<folder name>/... where kind is
+// "effects", "transitions" or "audio-effects". `meta` supplies id, name, version and the other
+// descriptive fields; the layout fields are filled in here. Written via <outPath>.partial.
+bool writeUserPackage(const QString &packageDir, const QString &kind, const QJsonObject &meta,
+                      const QString &outPath, QString *error);
+
 } // namespace drift::addon

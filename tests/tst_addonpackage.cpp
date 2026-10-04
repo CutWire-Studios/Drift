@@ -34,6 +34,7 @@ private slots:
     void reportsCancellation();
     void installedAddonOutranksBundledContent();
     void installsForgeAudioEffectPackage();
+    void writesUserPackageThatInstalls();
 
 private:
     // Copy the fixture and flip one byte at `offset` (negative counts back from the end).
@@ -107,6 +108,43 @@ void TestAddonPackage::installsForgeAudioEffectPackage()
     QCOMPARE(entry->processorId, QStringLiteral("echo"));
     QCOMPARE(entry->parameters.first().defaultValue, 120.0);
     reloadAudioEffectCatalog();
+}
+
+void TestAddonPackage::writesUserPackageThatInstalls()
+{
+    const QString src = m_tmp.filePath(QStringLiteral("authored/tint"));
+    QVERIFY(QDir().mkpath(src + QStringLiteral("/sub")));
+    const QByteArray json = R"({"id":"user.tint","backend":"gpu"})";
+    const QByteArray frag = "void main() {}\n";
+    QFile a(src + QStringLiteral("/effect.json"));
+    QVERIFY(a.open(QIODevice::WriteOnly));
+    a.write(json);
+    a.close();
+    QFile b(src + QStringLiteral("/sub/main.frag"));
+    QVERIFY(b.open(QIODevice::WriteOnly));
+    b.write(frag);
+    b.close();
+
+    const QString out = m_tmp.filePath(QStringLiteral("tint.driftfx"));
+    QString error;
+    QVERIFY2(writeUserPackage(src, QStringLiteral("effects"),
+                              QJsonObject{{QStringLiteral("id"), QStringLiteral("user.tint")},
+                                          {QStringLiteral("name"), QStringLiteral("Tint")},
+                                          {QStringLiteral("version"), QStringLiteral("1.0.0")}},
+                              out, &error),
+             qPrintable(error));
+    QVERIFY(!QFile::exists(out + QStringLiteral(".partial")));
+
+    const auto manifest = readManifest(out, &error, Container::User);
+    QVERIFY2(manifest.has_value(), qPrintable(error));
+    QCOMPARE(manifest->id, QStringLiteral("user.tint"));
+    QCOMPARE(manifest->files.size(), 2);
+
+    const QString dest = m_tmp.filePath(QStringLiteral("authored-install"));
+    QVERIFY2(install(out, dest, {}, nullptr, &error, Container::User), qPrintable(error));
+    QFile installed(dest + QStringLiteral("/effects/tint/sub/main.frag"));
+    QVERIFY(installed.open(QIODevice::ReadOnly));
+    QCOMPARE(installed.readAll(), frag);
 }
 
 void TestAddonPackage::installsAndVerifies()

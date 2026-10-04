@@ -10,6 +10,8 @@
 #include <QStringList>
 #include <QVector>
 
+#include <optional>
+
 // File-based audio effect packages: audio-effects/<name>/audio-effect.json.
 //
 // An audio effect is a chain of JUCE DSP stages applied to a clip's audio in the mixer. Unlike the
@@ -38,6 +40,9 @@ struct AudioEffectEntry
     // Absolute path to package thumbnail.png (or an explicit "thumbnail" asset), if present.
     QString thumbnailPath;
 };
+
+// Parse one package directory without touching the catalog; nullopt with errorOut set on failure.
+std::optional<AudioEffectEntry> loadAudioEffectPackage(const QString &packageDir, QString *errorOut);
 
 const QList<AudioEffectEntry> &audioEffectCatalog();
 const AudioEffectEntry *audioEffectDefForId(const QString &id);

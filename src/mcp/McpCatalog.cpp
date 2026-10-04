@@ -61,6 +61,12 @@ QJsonObject transitionIdProp()
         "tracks[].transitions. Unique within a track only."));
 }
 
+QJsonObject effectKindProp()
+{
+    return enumProp(QStringLiteral("Which catalog the package belongs to"),
+                    {QStringLiteral("effect"), QStringLiteral("transition"), QStringLiteral("audio_effect")});
+}
+
 QJsonObject animPropProp()
 {
     return stringProp(QStringLiteral(
@@ -1072,6 +1078,8 @@ QStringList undoExemptOps()
         QStringLiteral("set_beat_layers"),     QStringLiteral("detect_beats"),
         QStringLiteral("list_speed_curve"),    QStringLiteral("list_fade_curve"),
         QStringLiteral("install_addon"),       QStringLiteral("cancel_addon_install"),
+        QStringLiteral("create_effect"),       QStringLiteral("update_effect"),
+        QStringLiteral("delete_effect"),       QStringLiteral("export_effect"),
         QStringLiteral("set_acceleration"),    QStringLiteral("switch_angle"),
         QStringLiteral("end_multicam"),
         // Background work and stored analysis: nothing on the timeline changes.
@@ -1131,7 +1139,8 @@ QString agentGuideText()
         "  not_found, type_mismatch (also: wrong clip kind for the op), unknown_op, unknown_toolbox,\n"
         "  wrong_endpoint, wrong_toolbox, apply_failed, import_failed, import_timeout, export_busy,\n"
         "  export_failed, export_timeout, capture_failed, conflict, unsupported (no vector renderer\n"
-        "  in this build), market_unavailable, consent_required, market_error, download_failed.\n"
+        "  in this build), market_unavailable, consent_required, market_error, download_failed,\n"
+        "  exists, in_use, not_user_effect, bad_manifest, shader_compile_failed, io_error.\n"
         "- apply is not atomic: on failure the ops before it stay applied; done lists only those.\n"
         "- Toolbox op args are validated against the schema: bad_args (missing/enum/range),\n"
         "  type_mismatch; unknown keys come back as ignored:[…]. inspect, capture, frames and\n"
@@ -1179,6 +1188,14 @@ QString agentGuideText()
         "   bookmark_beats writes it into the project as markers that survive re-analysis.\n"
         "The analysis is transient: any edit that changes the mix drops it, and\n"
         "inspect({detail:true}).beats.stale says whether what you have still describes the audio.\n"
+        "\n"
+        "Custom effects (effects toolbox):\n"
+        "1. effect_authoring_guide({kind}) for the manifest grammar and parameter types.\n"
+        "2. get_effect_source on a bundled effect to fork it, or write one from scratch.\n"
+        "3. create_effect({kind, slug, manifest, files}) — shaders are compiled first; fix and retry\n"
+        "   on shader_compile_failed. The id (user.<slug>) lands in My Effects and works with\n"
+        "   add_effect / add_transition / add_audio_effect straight away.\n"
+        "4. update_effect to iterate, delete_effect to drop it, export_effect for a .driftfx.\n"
         "\n"
         "Understanding the footage (scene toolbox):\n"
         "0. activity → frames → capture shows you the pictures before any scan: activity for\n"

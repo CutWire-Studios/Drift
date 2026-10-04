@@ -899,6 +899,8 @@ target_sources(drift PRIVATE
     src/mcp/McpDispatcher.h
     src/mcp/McpDispatcher.cpp
     src/mcp/McpDispatcherExtended.cpp
+    src/mcp/McpEffectAuthoring.h
+    src/mcp/McpEffectAuthoring.cpp
     src/mcp/McpValidate.h
     src/mcp/McpValidate.cpp
     src/mcp/McpMarket.cpp

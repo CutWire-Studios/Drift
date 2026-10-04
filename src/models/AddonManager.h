@@ -76,6 +76,9 @@ public:
     // Sniffs the magic, since a content:// URI from "Open with" rarely carries the file name.
     Q_INVOKABLE bool isUserPackage(const QUrl &url) const;
     Q_INVOKABLE void installUserPackage();
+    // Reload the catalogs behind these addon kinds and emit kindChanged for each, which is what
+    // refreshes the browsers. Also used by MCP after it writes a package straight to disk.
+    void reloadForKinds(const QStringList &kinds);
 
     // --- Acceleration ------------------------------------------------------------------
     // Whether an ONNX Runtime is installed at all. Every AI feature needs one, so this gates
@@ -121,7 +124,6 @@ private:
     void finishDownload(const QString &id);
     void beginExtract(const QString &id, const QString &packagePath);
     void failTransfer(const QString &id, const QString &message);
-    void reloadForKinds(const QStringList &kinds);
     void sweepDownloadCache();
 
     QString m_status;
