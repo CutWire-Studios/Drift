@@ -27440,7 +27440,7 @@ QJsonObject mcpDetailRow(const QVariantMap &clipMap, const QVariantMap &transfor
         default:
             break;
         }
-        it = drop ? m.erase(it) : it + 1;
+        it = drop ? m.erase(it) : std::next(it);
     }
     return QJsonObject::fromVariantMap(m);
 }

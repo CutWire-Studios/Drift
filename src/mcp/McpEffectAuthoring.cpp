@@ -561,7 +561,8 @@ QJsonObject exportPackage(const QJsonObject &args)
         return err("not_user_effect", QStringLiteral("Only My Effects packages can be exported; fork %1 with create_effect first").arg(id));
 
     QFile manifestFile(QDir(dir).filePath(kind->manifest));
-    manifestFile.open(QIODevice::ReadOnly);
+    if (!manifestFile.open(QIODevice::ReadOnly))
+        return err("io_error", manifestFile.errorString());
     const QJsonObject manifest = QJsonDocument::fromJson(manifestFile.readAll()).object();
     const QString folder = QFileInfo(QDir::cleanPath(dir)).fileName();
     const QString displayName = manifest.value(QStringLiteral("displayName")).toString(folder);

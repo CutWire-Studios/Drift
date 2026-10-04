@@ -410,7 +410,8 @@ void EditorStateTest::driftAssetStoreInstallsVerified()
     auto fileEntry = [&](const QString &role, const QString &name, const QByteArray &data,
                          const QByteArray &claimed) {
         QFile f(src.filePath(name));
-        f.open(QIODevice::WriteOnly);
+        if (!f.open(QIODevice::WriteOnly))
+            qFatal("cannot write %s", qPrintable(f.fileName()));
         f.write(data);
         return QJsonObject{
             {QStringLiteral("role"), role},

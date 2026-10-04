@@ -671,7 +671,8 @@ void EngineTest::effectPackageLoaderParsesDepthRequirement()
         const QString pkg = dir.filePath(name);
         QDir().mkpath(pkg);
         QFile json(QDir(pkg).filePath(QStringLiteral("effect.json")));
-        json.open(QIODevice::WriteOnly | QIODevice::Text);
+        if (!json.open(QIODevice::WriteOnly | QIODevice::Text))
+            qFatal("cannot write %s", qPrintable(json.fileName()));
         json.write(R"({"id": "test.)" + name.toUtf8() + R"(", "backend": "gpu", "requires": )"
                    + requirement + R"(, "parameters": )" + parameters + R"(,
           "pipeline": {"intermediateBuffers": [], "passes": [
@@ -679,7 +680,8 @@ void EngineTest::effectPackageLoaderParsesDepthRequirement()
              "inputs": [{"type": "source_texture"}], "output": {"type": "canvas"}}]}})");
         json.close();
         QFile frag(QDir(pkg).filePath(QStringLiteral("x.frag")));
-        frag.open(QIODevice::WriteOnly | QIODevice::Text);
+        if (!frag.open(QIODevice::WriteOnly | QIODevice::Text))
+            qFatal("cannot write %s", qPrintable(frag.fileName()));
         frag.write("#version 330 core\nin vec2 v_texCoord; out vec4 fragColor;\n"
                    "uniform sampler2D u_currentTexture;\n"
                    "void main(){ fragColor = texture(u_currentTexture, v_texCoord); }\n");
@@ -4041,7 +4043,8 @@ void EngineTest::gpuPipelineParsesGeometryPasses()
     };
     auto load = [&](const QJsonObject &root, QString *error) {
         QFile f(dir.filePath(QStringLiteral("effect.json")));
-        f.open(QIODevice::WriteOnly | QIODevice::Truncate);
+        if (!f.open(QIODevice::WriteOnly | QIODevice::Truncate))
+            qFatal("cannot write %s", qPrintable(f.fileName()));
         f.write(QJsonDocument(root).toJson());
         f.close();
         return EffectPackageLoader::loadPackage(dir.path(), error);
