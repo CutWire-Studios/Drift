@@ -7915,207 +7915,207 @@
     <name>Main</name>
     <message>
         <source>&amp;File</source>
-        <translation type="unfinished"></translation>
+        <translation>ファイル(&amp;F)</translation>
     </message>
     <message>
         <source>&amp;New Project</source>
-        <translation type="unfinished"></translation>
+        <translation>新規プロジェクト(&amp;N)</translation>
     </message>
     <message>
         <source>&amp;Open Project…</source>
-        <translation type="unfinished"></translation>
+        <translation>プロジェクトを開く(&amp;O)…</translation>
     </message>
     <message>
         <source>&amp;Save Project</source>
-        <translation type="unfinished"></translation>
+        <translation>プロジェクトを保存(&amp;S)</translation>
     </message>
     <message>
         <source>Save Project &amp;As…</source>
-        <translation type="unfinished"></translation>
+        <translation>プロジェクトに名前を付けて保存(&amp;A)…</translation>
     </message>
     <message>
         <source>Save Project &amp;JSON…</source>
-        <translation type="unfinished"></translation>
+        <translation>プロジェクトを JSON で保存(&amp;J)…</translation>
     </message>
     <message>
         <source>Open Project JSON…</source>
-        <translation type="unfinished"></translation>
+        <translation>プロジェクト JSON を開く…</translation>
     </message>
     <message>
         <source>&amp;Export Video…</source>
-        <translation type="unfinished"></translation>
+        <translation>ビデオをエクスポート(&amp;E)…</translation>
     </message>
     <message>
         <source>&amp;Package Project…</source>
-        <translation type="unfinished"></translation>
+        <translation>プロジェクトをパッケージ化(&amp;P)…</translation>
     </message>
     <message>
         <source>&amp;Close Project</source>
-        <translation type="unfinished"></translation>
+        <translation>プロジェクトを閉じる(&amp;C)</translation>
     </message>
     <message>
         <source>&amp;Edit</source>
-        <translation type="unfinished"></translation>
+        <translation>編集(&amp;E)</translation>
     </message>
     <message>
         <source>&amp;Undo</source>
-        <translation type="unfinished"></translation>
+        <translation>元に戻す(&amp;U)</translation>
     </message>
     <message>
         <source>&amp;Redo</source>
-        <translation type="unfinished"></translation>
+        <translation>やり直し(&amp;R)</translation>
     </message>
     <message>
         <source>Cu&amp;t</source>
-        <translation type="unfinished"></translation>
+        <translation>切り取り(&amp;T)</translation>
     </message>
     <message>
         <source>&amp;Copy</source>
-        <translation type="unfinished"></translation>
+        <translation>コピー(&amp;C)</translation>
     </message>
     <message>
         <source>&amp;Paste</source>
-        <translation type="unfinished"></translation>
+        <translation>貼り付け(&amp;P)</translation>
     </message>
     <message>
         <source>&amp;Delete</source>
-        <translation type="unfinished"></translation>
+        <translation>削除(&amp;D)</translation>
     </message>
     <message>
         <source>Select &amp;All</source>
-        <translation type="unfinished"></translation>
+        <translation>すべて選択(&amp;A)</translation>
     </message>
     <message>
         <source>Clear Selection</source>
-        <translation type="unfinished"></translation>
+        <translation>選択を解除</translation>
     </message>
     <message>
         <source>Split Clip</source>
-        <translation type="unfinished"></translation>
+        <translation>クリップを分割</translation>
     </message>
     <message>
         <source>Duplicate Clip</source>
-        <translation type="unfinished"></translation>
+        <translation>クリップを複製</translation>
     </message>
     <message>
         <source>Copy Effects</source>
-        <translation type="unfinished"></translation>
+        <translation>エフェクトをコピー</translation>
     </message>
     <message>
         <source>Paste Effects</source>
-        <translation type="unfinished"></translation>
+        <translation>エフェクトを貼り付け</translation>
     </message>
     <message>
         <source>Paste Attributes…</source>
-        <translation type="unfinished"></translation>
+        <translation>属性を貼り付け…</translation>
     </message>
     <message>
         <source>Preferences…</source>
-        <translation type="unfinished"></translation>
+        <translation>環境設定…</translation>
     </message>
     <message>
         <source>&amp;Playback</source>
-        <translation type="unfinished"></translation>
+        <translation>再生(&amp;P)</translation>
     </message>
     <message>
         <source>Play / Pause</source>
-        <translation type="unfinished"></translation>
+        <translation>再生 / 一時停止</translation>
     </message>
     <message>
         <source>Step Back One Frame</source>
-        <translation type="unfinished"></translation>
+        <translation>1フレーム戻る</translation>
     </message>
     <message>
         <source>Step Forward One Frame</source>
-        <translation type="unfinished"></translation>
+        <translation>1フレーム進む</translation>
     </message>
     <message>
         <source>Previous Cut Point</source>
-        <translation type="unfinished"></translation>
+        <translation>前のカットポイント</translation>
     </message>
     <message>
         <source>Next Cut Point</source>
-        <translation type="unfinished"></translation>
+        <translation>次のカットポイント</translation>
     </message>
     <message>
         <source>Go to Start of Timeline</source>
-        <translation type="unfinished"></translation>
+        <translation>タイムラインの先頭に移動</translation>
     </message>
     <message>
         <source>Toggle Bookmark</source>
-        <translation type="unfinished"></translation>
+        <translation>ブックマークの切り替え</translation>
     </message>
     <message>
         <source>Next Bookmark</source>
-        <translation type="unfinished"></translation>
+        <translation>次のブックマーク</translation>
     </message>
     <message>
         <source>Previous Bookmark</source>
-        <translation type="unfinished"></translation>
+        <translation>前のブックマーク</translation>
     </message>
     <message>
         <source>&amp;View</source>
-        <translation type="unfinished"></translation>
+        <translation>表示(&amp;V)</translation>
     </message>
     <message>
         <source>Zoom &amp;In</source>
-        <translation type="unfinished"></translation>
+        <translation>ズームイン(&amp;I)</translation>
     </message>
     <message>
         <source>Zoom &amp;Out</source>
-        <translation type="unfinished"></translation>
+        <translation>ズームアウト(&amp;O)</translation>
     </message>
     <message>
         <source>Toggle Fullscreen Preview</source>
-        <translation type="unfinished"></translation>
+        <translation>フルスクリーンプレビューの切り替え</translation>
     </message>
     <message>
         <source>Toggle Guides</source>
-        <translation type="unfinished"></translation>
+        <translation>ガイドの切り替え</translation>
     </message>
     <message>
         <source>&amp;Window</source>
-        <translation type="unfinished"></translation>
+        <translation>ウィンドウ(&amp;W)</translation>
     </message>
     <message>
         <source>Landscape Workspace</source>
-        <translation type="unfinished"></translation>
+        <translation>横向きワークスペース</translation>
     </message>
     <message>
         <source>Portrait Workspace</source>
-        <translation type="unfinished"></translation>
+        <translation>縦向きワークスペース</translation>
     </message>
     <message>
         <source>Auto Workspace (Follow Canvas)</source>
-        <translation type="unfinished"></translation>
+        <translation>自動ワークスペース (キャンバスに追従)</translation>
     </message>
     <message>
         <source>Downloads</source>
-        <translation type="unfinished">ダウンロード</translation>
+        <translation>ダウンロード</translation>
     </message>
     <message>
         <source>Multicam</source>
-        <translation type="unfinished">マルチカム</translation>
+        <translation>マルチカム</translation>
     </message>
     <message>
         <source>&amp;Help</source>
-        <translation type="unfinished"></translation>
+        <translation>ヘルプ(&amp;H)</translation>
     </message>
     <message>
         <source>Keyboard Shortcuts</source>
-        <translation type="unfinished"></translation>
+        <translation>キーボードショートカット</translation>
     </message>
     <message>
         <source>Extras…</source>
-        <translation type="unfinished"></translation>
+        <translation>エクストラ…</translation>
     </message>
     <message>
         <source>Check for Updates…</source>
-        <translation type="unfinished"></translation>
+        <translation>更新の確認…</translation>
     </message>
     <message>
         <source>Debug Info…</source>
-        <translation type="unfinished"></translation>
+        <translation>デバッグ情報…</translation>
     </message>
     <message>
         <source>Still opening a project — try again in a moment.</source>
