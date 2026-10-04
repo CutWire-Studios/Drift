@@ -75,141 +75,74 @@ On a phone, grab `Drift-*-arm64-v8a.apk` from the latest release and install it 
 
 See [all releases](https://github.com/CutWire-Studios/Drift/releases) for previous versions and full changelogs.
 
-## Screenshots
+## Screenshot
 
 <p align="center">
-  <img src="docs/screenshots/main-window.png" alt="The Drift editor: media bin on the left, video preview in the centre, clip inspector on the right, timeline below" width="900">
+  <img src="docs/screenshots/main-window.png" alt="The Drift editor: media bin on the left, 3D camera in the preview, text inspector on the right, multi-track timeline below" width="900">
 </p>
 
-<p align="center"><em>Everything in one window — media, preview, inspector, and timeline</em></p>
+## Features
 
-<p align="center">
-  <img src="docs/screenshots/timeline.png" alt="Timeline with four stacked tracks: two image overlays, a title, and a video track showing filmstrip thumbnails" width="900">
-</p>
+**An agent can edit the open project.** Import, cut, grade, and export in the project you have open.
+The same editor can run with no window.
 
-<p align="center"><em>A real multi-track timeline, with overlays, titles, and filmstrip thumbnails</em></p>
+**3D on the timeline.** Tilt clips in space, light them, and park a title behind the subject. Drop
+in a 3D model and it plays in the same cut.
 
-<table>
-  <tr>
-    <td width="50%" align="center">
-      <img src="docs/screenshots/effects-panel.png" alt="Effects browser showing live thumbnail previews of glitch and distortion presets" width="380"><br>
-      <strong>Effects that sell the look</strong><br>
-      Every preset is previewed on a real frame
-    </td>
-    <td width="50%" align="center">
-      <img src="docs/screenshots/transitions-panel.png" alt="Transitions browser with animated previews of crossfade, wipe, and push presets" width="380"><br>
-      <strong>Transitions that feel expensive</strong><br>
-      Drop one where two clips overlap
-    </td>
-  </tr>
-  <tr>
-    <td width="50%" align="center">
-      <img src="docs/screenshots/stickers-panel.png" alt="Sticker browser with emoji grouped into categories" width="380"><br>
-      <strong>Stickers and emoji on demand</strong><br>
-      Search, drag, and drop them onto the canvas
-    </td>
-    <td width="50%" align="center">
-      <img src="docs/screenshots/text-styles.png" alt="Text style presets including neon, karaoke pop, word background, and handwritten" width="380"><br>
-      <strong>Titles that actually get watched</strong><br>
-      Neon, karaoke, highlights, and punchy word styles
-    </td>
-  </tr>
-  <tr>
-    <td width="50%" align="center">
-      <img src="docs/screenshots/templates-panel.png" alt="Template browser showing multi-effect looks such as Beat Drop and Glitch Cut" width="380"><br>
-      <strong>Look templates in one click</strong><br>
-      Music-synced stacks like Beat Drop and Glitch Cut
-    </td>
-    <td width="50%" align="center">
-      <img src="docs/screenshots/audio-effects.png" alt="Audio effect browser with EQ, compressor, limiter, noise gate, de-esser, and voice leveler" width="380"><br>
-      <strong>Audio that sounds intentional</strong><br>
-      EQ, compressor, gate, de-esser, and voice tools
-    </td>
-  </tr>
-  <tr>
-    <td width="50%" align="center">
-      <img src="docs/screenshots/speed-fade.png" alt="Speed and fade inspector with speed presets, reverse, and fade in/out sliders" width="380"><br>
-      <strong>Speed, reverse, and fades</strong><br>
-      Slow-mo, ramps, reverse, and clean in/out
-    </td>
-    <td width="50%" align="center">
-      <img src="docs/screenshots/subtitle-editor.png" alt="Subtitle editor listing timed caption lines, with the line at the playhead highlighted" width="380"><br>
-      <strong>Captions from the speech itself</strong><br>
-      Generate them, then edit every line
-    </td>
-  </tr>
-  <tr>
-    <td width="50%" align="center">
-      <img src="docs/screenshots/subject-cutout.png" alt="Subject cutout dialog with a click marker on the person and the isolated subject highlighted" width="380"><br>
-      <strong>Click the subject. Keep only that.</strong><br>
-      Isolate a person or object onto its own clip
-    </td>
-    <td width="50%" align="center">
-      <img src="docs/screenshots/export-dialog.png" alt="Export dialog with downscale presets and advanced encoder settings" width="420"><br>
-      <strong>Export that matches the preview</strong><br>
-      Simple presets up front, extra control when you want it
-    </td>
-  </tr>
-</table>
+**Lottie animations.** Motion graphics and vector art stay sharp at any size. Recolour or reword
+them in place.
 
-## Features that actually ship in the edit
+**Advanced keyframing.** Animate position, scale, rotation, opacity, and effect parameters over
+time. Draw the curve yourself.
 
-**A timeline that behaves like a real editor.** Trim, split, snap, ripple, mute or hide tracks, and
-undo anything. Stack overlays, titles, and B-roll instead of fighting a one-track toy.
+**150+ transitions and 40+ effects.** Every look previews on your footage. One click can drop a
+whole stack — Beat Drop, Glitch Cut, Neon Cutout. Trails of earlier frames, and grades that stick
+to one clip.
 
-**Looks in seconds, not hours.** GPU effects, stylish transitions, and reusable look templates — so
-a clip can go from raw footage to a finished vibe without opening another app.
+**On this machine.** Click a subject and lift it off the shot. Add depth of field and lights that
+belong to the clip. Automatic captions, video upscale, and live face retouch — all on your
+computer.
 
-**Text, stickers, emoji, and shapes on the canvas.** Neon titles, karaoke-style captions, reaction
-stickers, and callouts stay in the same editor as the cut.
+**Edit the words.** Speech becomes text on the clip. Cut phrases, drop fillers, strip silence, pick
+the best takes, label speakers, and build captions from those times.
 
-**Auto captions you can actually fix.** Speech becomes timed subtitle lines. Edit the wording, tweak
-the timing, and export with captions that match how people watch on mute.
+**Titles with a real look.** Thirty-three packs — karaoke, Hormozi-style, neon, chrome, holographic,
+handwritten. Copy one style onto every subtitle on the track.
 
-**Cutouts, masks, and green screen.** Click a subject and lift it onto its own clip. Mask parts of a
-shot, or key out a green screen when you need a cleaner composite.
+**Move a whole stack at once.** One layer can drag, scale, rotate, tilt, and fade everything under
+it. Nest layers, or open a composite when the stack needs its own timeline.
 
-**Motion that hits the beat.** Speed ramps, reverse, fades, and edits that snap to the music — the
-kind of pacing that makes a clip feel designed, not dumped.
+**Cut to the music.** The timeline snaps to the beat. Clips split and land on the bar. Music ducks
+under speech and comes back to its own level. Reframe a landscape take into a vertical video that
+follows the face.
 
-**Audio tools that clean up the mix.** Volume, fades, EQ, compression, noise cleanup, and voice
-effects, so narration and music sit together instead of fighting.
+**A timeline that behaves.** Multi-track filmstrips, ripple, snap, masks, freeze frame, bookmarks,
+a mixer. Split a clip and the grade stays. A crash leaves the last save intact.
 
-**Multicam when one camera is not enough.** Watch every angle at once, punch between cameras, and
-save the take as a clean cut — without rebuilding the timeline by hand.
+**Audio that sounds finished.** Clean up speech, meter loudness, EQ and compress, keep pitch when
+you change speed, record a voiceover.
 
-**Project bundles for sharing and backup.** Package a project with its media so the whole edit moves
-with you, instead of breaking the moment a file path changes.
+**Find shots. Switch cameras.** Search footage for what’s on screen. Watch every angle at once and
+punch the cut.
 
-**Export that looks like the preview.** MP4 with quality presets, GIF loops, and ranged export from
-an In/Out work area. What you signed off on is what you get.
+**Stabilise, export, take the project with you.** Smooth shaky clips, upscale, play heavy files
+smoothly. MP4, GIF, audio-only, or just a range. Pack the media with the edit so paths stay whole.
 
-## Agent access — let an AI edit with you
+**Android is the same editor.** Timeline, effects, and export on the phone. Share straight from the
+app.
 
-Drift has a built-in **MCP server** for local AI tools. Turn on Agent access and Cursor, Claude Code,
-or another compatible agent can work in the open project: import media, place and trim clips, change
-effects, capture a still of the composition, and export.
-
-This is a real editor hook, not a chatbot bolted onto a webpage. The agent sees the timeline and can
-make edits you can undo.
-
-Agent access stays **off until you enable it**, and it only listens on your own computer. Full setup
-and safety notes live in the [MCP guide](docs/MCP.md).
-
-## Addons, without bloating the install
-
-Fonts, stickers, extra effects, and speech models download inside Drift when you need them. Keep the
-app light, then grab only the packs that match the video you are making.
-
-Open the Addon Manager from the header, or follow the install prompt when a feature needs a pack.
+**Stock, voices, and a small install.** Search stock into the bin. Generate voiceover and sound
+effects. Fonts, stickers, and extra models download when you use them. UI in Arabic, Spanish (Spain
+and Colombia), French (Canada), Italian, Japanese, Portuguese (Brazil and Portugal), Russian,
+Sinhala, Tagalog, Vietnamese, and Simplified Chinese.
 
 ## Why people pick Drift
 
 Most “free” editors want an account, a watermark, or a subscription the moment the video starts
 looking good. Drift is the opposite: **yours, on your computer, GPLv3, no login wall.**
 
-It is fast enough for a 30-second social cut and deep enough for a real project — captions, effects,
-audio, cutouts, multicam, and an AI-assisted timeline if you want one.
+It is fast enough for a 30-second social cut and deep enough for a real project — an agent on the
+timeline, 3D and Lottie, captions, effects, audio, cutouts, and multicam.
 
 ## Help us translate Drift
 
@@ -222,7 +155,6 @@ Build, packaging, architecture, and agent protocol live in `docs/`:
 - [Building, testing, packaging, and architecture](docs/BUILDING.md)
 - [GPU effects](docs/gpu-effects.md)
 - [GPU transitions](docs/gpu-transitions.md)
-- [Time Echo architecture](docs/time-echo-architecture.md)
 - [Agent access / MCP](docs/MCP.md)
 
 ## Help and feedback
