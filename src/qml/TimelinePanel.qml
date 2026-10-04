@@ -2005,6 +2005,7 @@ PanelFrame {
                                             property int trackIndex: modelData
                                             width: trackRow.width
                                             height: Theme.adjustmentLaneHeight
+                                            opacity: root.tracks[trackIndex].hidden === true ? 0.4 : 1
 
                                             Rectangle {
                                                 anchors.fill: parent

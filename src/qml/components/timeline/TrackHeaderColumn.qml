@@ -492,6 +492,53 @@ Item {
                 HoverHandler { id: trackDragMouse }
             }
 
+            // One eye per nested adjustment lane, level with its strip at the top of the row.
+            // The lane has no header of its own, so its switch lives on its parent's.
+            Column {
+                anchors.right: parent.right
+                anchors.rightMargin: root.compact ? 4 : 12
+                y: 0
+                Repeater {
+                    model: EditorState.clipsModel(index).adjustmentLanes
+                    delegate: Item {
+                        id: laneEye
+                        required property var modelData
+                        readonly property bool laneHidden: root.tracks[modelData].hidden === true
+                        width: 16
+                        height: Theme.adjustmentLaneHeight
+
+                        IconGlyph {
+                            anchors.centerIn: parent
+                            glyph: laneEye.laneHidden ? Theme.icons.eyeOff : Theme.icons.eye
+                            iconSize: 14
+                            iconColor: laneEye.laneHidden ? Theme.destructive : Theme.mutedForeground
+
+                            ThemedToolTip {
+                                visible: laneEyeMouse.containsMouse
+                                text: laneEye.laneHidden ? qsTr("Turn adjustment on") : qsTr("Turn adjustment off")
+                            }
+
+                            Accessible.role: Accessible.CheckBox
+                            Accessible.name: laneEye.laneHidden ? qsTr("Turn adjustment on") : qsTr("Turn adjustment off")
+                            Accessible.checked: laneEye.laneHidden
+                            Accessible.onToggleAction: laneEyeMouse.clicked(null)
+                        }
+
+                        MouseArea {
+                            id: laneEyeMouse
+                            anchors.fill: parent
+                            anchors.margins: -2
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: {
+                                Haptics.toggle(!laneEye.laneHidden)
+                                EditorState.setTrackHidden(laneEye.modelData, !laneEye.laneHidden)
+                            }
+                        }
+                    }
+                }
+            }
+
             Row {
                 id: trackIconRow
                 anchors.right: parent.right
@@ -642,8 +689,11 @@ Item {
                     // just unmoved.
                     readonly property string hideLabel: trackLabelRow.isTransformLayer
                         ? (trackLabelRow.trackHidden ? qsTr("Turn transform on") : qsTr("Turn transform off"))
-                        : (trackLabelRow.trackHidden ? qsTr("Show track") : qsTr("Hide track"))
+                        : root.tracks[index].type === "adjustment"
+                          ? (trackLabelRow.trackHidden ? qsTr("Turn adjustment on") : qsTr("Turn adjustment off"))
+                          : (trackLabelRow.trackHidden ? qsTr("Show track") : qsTr("Hide track"))
                     visible: root.tracks[index].type === "video"
+                             || root.tracks[index].type === "adjustment"
                              || root.tracks[index].type === "text"
                              || root.tracks[index].type === "subtitle"
                              || root.tracks[index].type === "shape"
