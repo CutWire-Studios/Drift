@@ -282,3 +282,19 @@ jobs:
 
           print(f"Posted Discord message {msg.get('id')} in channel {msg.get('channel_id')}")
           PY
+
+  # GITHUB_TOKEN may dispatch workflow_dispatch runs. Both workflows are loaded from main
+  # (installer/msix only exists there) and build the tag through their `ref` input.
+  store-builds:
+    name: Dispatch store builds
+    runs-on: ubuntu-latest
+    needs: release
+    permissions:
+      actions: write
+    steps:
+      - name: Dispatch Play Store AAB and Microsoft Store MSIX
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh workflow run playstore-aab.yml -R "$GITHUB_REPOSITORY" --ref main -f ref="$GITHUB_REF_NAME"
+          gh workflow run msstore.yml -R "$GITHUB_REPOSITORY" --ref main -f ref="$GITHUB_REF_NAME"
