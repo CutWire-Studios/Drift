@@ -741,22 +741,96 @@ Item {
                                     }
                                 }
 
-                                ThemedSwitch {
+                                Row {
                                     visible: paramRow.paramData.type === "bool"
-                                    checked: !!paramRow.paramData.value
-                                    onToggled: EditorState.setEffectParam(
-                                                   EditorState.selectedTrack, EditorState.selectedClip,
-                                                   effectCard.index, paramRow.paramData.key, checked ? 1 : 0)
+                                    spacing: 8
+                                    ChannelKeyButton {
+                                        anchors.verticalCenter: parent.verticalCenter
+                                        keyframeList: (paramRow.paramData.keyframes
+                                                       && paramRow.paramData.keyframes.points) || []
+                                        label: paramRow.paramData.label
+                                        onAddRequested: EditorState.setClipKeyframe(
+                                                            EditorState.selectedTrack, EditorState.selectedClip,
+                                                            paramRow.paramData.prop, EditorState.playheadSeconds,
+                                                            paramRow.paramData.value ? 1 : 0)
+                                        onRemoveRequested: EditorState.removeClipKeyframe(
+                                                               EditorState.selectedTrack, EditorState.selectedClip,
+                                                               paramRow.paramData.prop, EditorState.playheadSeconds)
+                                    }
+                                    ThemedSwitch {
+                                        readonly property bool animated: !!(paramRow.paramData.keyframes
+                                            && (paramRow.paramData.keyframes.points || []).length > 0)
+                                        checked: animated
+                                                 ? EditorState.propertyValueAt(
+                                                       EditorState.selectedTrack, EditorState.selectedClip,
+                                                       paramRow.paramData.prop,
+                                                       EditorState.inspectorPlayheadSeconds,
+                                                       paramRow.paramData.value ? 1 : 0) > 0.5
+                                                 : !!paramRow.paramData.value
+                                        // Animated: the switch keys the playhead, as the slider does.
+                                        onToggled: animated
+                                                   ? EditorState.setClipKeyframe(
+                                                         EditorState.selectedTrack, EditorState.selectedClip,
+                                                         paramRow.paramData.prop, EditorState.playheadSeconds,
+                                                         checked ? 1 : 0)
+                                                   : EditorState.setEffectParam(
+                                                         EditorState.selectedTrack, EditorState.selectedClip,
+                                                         effectCard.index, paramRow.paramData.key, checked ? 1 : 0)
+                                    }
                                 }
 
                                 // A shade is picked, not dialled, so colours get the swatch and stay
                                 // off the keyframe strip — the track type is double all the way down.
                                 Row {
+                                    id: colorRow
                                     visible: paramRow.paramData.type === "color"
                                     width: parent.width
                                     spacing: 8
+                                    readonly property var colorKeys: (paramRow.paramData.keyframes
+                                                                      && paramRow.paramData.keyframes.points) || []
+                                    // Stored as #rrggbb or #rrggbbaa; Qt reads 8 digits as
+                                    // #aarrggbb, so the colour is rebuilt from channels.
+                                    function channelAt(suffix, fallback) {
+                                        if (colorKeys.length === 0)
+                                            return fallback
+                                        return EditorState.propertyValueAt(
+                                            EditorState.selectedTrack, EditorState.selectedClip,
+                                            paramRow.paramData.prop + suffix,
+                                            EditorState.inspectorPlayheadSeconds, fallback)
+                                    }
+                                    // This row is built for every param type, so the value is often a number
+                                    // or a bool; only a "#..." string is a colour.
+                                    readonly property string staticHex: {
+                                        const v = paramRow.paramData.value
+                                        return typeof v === "string" && v.charAt(0) === "#" ? v : "#ffffff"
+                                    }
+                                    readonly property color staticColor: Qt.color(staticHex.substring(0, 7))
+                                    readonly property real staticAlpha: staticHex.length === 9
+                                        ? parseInt(staticHex.substring(7), 16) / 255 : 1
+                                    readonly property color shownColor: Qt.rgba(
+                                        channelAt(".r", staticColor.r), channelAt(".g", staticColor.g),
+                                        channelAt(".b", staticColor.b), 1)
+                                    readonly property real shownAlpha: channelAt(".a", staticAlpha)
+                                    function hexOf(c) {
+                                        const h = v => ("0" + Math.round(v * 255).toString(16)).slice(-2)
+                                        return "#" + h(c.r) + h(c.g) + h(c.b)
+                                    }
+                                    ChannelKeyButton {
+                                        anchors.verticalCenter: parent.verticalCenter
+                                        keyframeList: colorRow.colorKeys
+                                        label: paramRow.paramData.label
+                                        onAddRequested: EditorState.setClipColorKeyframe(
+                                                            EditorState.selectedTrack, EditorState.selectedClip,
+                                                            paramRow.paramData.prop, EditorState.playheadSeconds,
+                                                            Qt.rgba(colorRow.shownColor.r, colorRow.shownColor.g,
+                                                                    colorRow.shownColor.b, colorRow.shownAlpha))
+                                        onRemoveRequested: EditorState.removeClipChannelKeyframes(
+                                                               EditorState.selectedTrack, EditorState.selectedClip,
+                                                               paramRow.paramData.prop, EditorState.playheadSeconds,
+                                                               [".r", ".g", ".b", ".a"])
+                                    }
                                     Text {
-                                        width: parent.width - 148
+                                        width: parent.width - 148 - 24
                                         elide: Text.ElideRight
                                         text: paramRow.paramData.label
                                         color: Theme.mutedForeground
@@ -766,13 +840,60 @@ Item {
                                     }
                                     ColorSwatchField {
                                         anchors.verticalCenter: parent.verticalCenter
-                                        hex: paramRow.paramData.value || "#ffffff"
+                                        hex: colorRow.hexOf(colorRow.shownColor)
                                         tooltip: qsTr("Choose %1").arg(paramRow.paramData.label)
                                         onEyedropperStarted: root.bypassForEyedropper(effectCard.index)
                                         onEyedropperEnded: EditorState.cancelPreviewDrag()
-                                        onEdited: value => EditorState.setEffectColorParam(
-                                                      EditorState.selectedTrack, EditorState.selectedClip,
-                                                      effectCard.index, paramRow.paramData.key, value)
+                                        onEdited: value => {
+                                            // Animated colours key the playhead, like every other
+                                            // animated param; static ones set the value.
+                                            if (colorRow.colorKeys.length > 0) {
+                                                EditorState.setClipColorKeyframe(
+                                                    EditorState.selectedTrack, EditorState.selectedClip,
+                                                    paramRow.paramData.prop, EditorState.playheadSeconds,
+                                                    Qt.rgba(Qt.color(value).r, Qt.color(value).g,
+                                                            Qt.color(value).b, colorRow.shownAlpha))
+                                            } else {
+                                                EditorState.setEffectColorParam(
+                                                    EditorState.selectedTrack, EditorState.selectedClip,
+                                                    effectCard.index, paramRow.paramData.key, value)
+                                            }
+                                        }
+                                    }
+                                }
+
+                                // Opacity for colours that declare "alpha": the hex above carries
+                                // only the shade, so the fourth channel gets its own slider.
+                                ThemedSlider {
+                                    visible: paramRow.paramData.type === "color" && !!paramRow.paramData.alpha
+                                    width: parent.width
+                                    label: qsTr("%1 opacity").arg(paramRow.paramData.label)
+                                    from: 0
+                                    to: 1
+                                    value: colorRow.shownAlpha
+                                    // Animated: the drag previews the playhead key. Static: there is no
+                                    // colour preview stream, so the value commits once on release.
+                                    onPressedChanged: {
+                                        const keyed = colorRow.colorKeys.length > 0
+                                        if (pressed && keyed) {
+                                            EditorState.beginPreviewDrag(
+                                                qsTr("Edit %1").arg(paramRow.paramData.label))
+                                        } else if (!pressed && keyed) {
+                                            EditorState.commitPreviewDrag()
+                                        } else if (!pressed) {
+                                            const a = ("0" + Math.round(value * 255).toString(16)).slice(-2)
+                                            EditorState.setEffectColorParam(
+                                                EditorState.selectedTrack, EditorState.selectedClip,
+                                                effectCard.index, paramRow.paramData.key,
+                                                colorRow.hexOf(colorRow.staticColor) + a)
+                                        }
+                                    }
+                                    onMoved: {
+                                        if (colorRow.colorKeys.length > 0) {
+                                            EditorState.previewSetClipKeyframe(
+                                                EditorState.selectedTrack, EditorState.selectedClip,
+                                                paramRow.paramData.prop + ".a", EditorState.playheadSeconds, value)
+                                        }
                                     }
                                 }
 
@@ -914,6 +1035,37 @@ Item {
                                     }
                                 }
 
+                                Vec2Param {
+                                    visible: paramRow.paramData.type === "vec2"
+                                    width: parent.width
+                                    paramData: paramRow.paramData
+                                    effectIndex: effectCard.index
+                                }
+
+                                // Enum params (a package's "choice"): the stored value is the option
+                                // index, so the dropdown writes it the way a float slider would.
+                                Column {
+                                    visible: paramRow.paramData.type === "enum"
+                                    width: parent.width
+                                    spacing: 4
+                                    Text {
+                                        width: parent.width
+                                        elide: Text.ElideRight
+                                        text: paramRow.paramData.label
+                                        color: Theme.mutedForeground
+                                        font.family: Theme.fontFamily
+                                        font.pixelSize: Theme.fontSizeXs
+                                    }
+                                    ThemedComboBox {
+                                        width: parent.width
+                                        model: paramRow.paramData.options || []
+                                        currentIndex: Math.round(Number(paramRow.paramData.value) || 0)
+                                        onActivated: (index) => EditorState.setEffectParam(
+                                            EditorState.selectedTrack, EditorState.selectedClip,
+                                            effectCard.index, paramRow.paramData.key, index)
+                                    }
+                                }
+
                                 // Hue params get a swatch as well as the slider: picking the backdrop
                                 // colour is how a chroma key is actually set up, and the slider stays
                                 // for nudging and keyframing. The swatch writes the way the slider's
@@ -1014,7 +1166,8 @@ Item {
                                 }
 
                                 PropertyKeyframeRow {
-                                    visible: paramRow.paramData.type === "float" && !faceChoice.isFace
+                                    visible: (paramRow.paramData.type === "float"
+                                              || paramRow.paramData.type === "int") && !faceChoice.isFace
                                     width: parent.width
                                     // `def` is the param's static value, which the row falls
                                     // back to whenever the track holds no keys.
@@ -1024,14 +1177,17 @@ Item {
                                         key: paramRow.paramData.prop || "",
                                         label: paramRow.paramData.label,
                                         def: paramRow.paramData.value,
-                                        decimals: Math.abs(paramRow.paramData.max
-                                                           - paramRow.paramData.min) >= 10 ? 1 : 2
+                                        decimals: paramRow.paramData.type === "int" ? 0
+                                                  : (paramRow.paramData.step || 0) >= 1 ? 0
+                                                  : Math.abs(paramRow.paramData.max
+                                                             - paramRow.paramData.min) >= 10 ? 1 : 2
                                     })
                                     keyframeList: (paramRow.paramData.keyframes
                                                    && paramRow.paramData.keyframes.points) || []
                                     useSlider: true
                                     sliderFrom: paramRow.paramData.min
                                     sliderTo: paramRow.paramData.max
+                                    sliderStep: paramRow.paramData.step || 0
                                 }
                             }
                         }

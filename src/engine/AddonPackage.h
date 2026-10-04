@@ -72,7 +72,7 @@ QString currentPlatform();
 
 // Official packs are signed .driftpkg files. User packages (.driftfx, exported by Drift Forge) are
 // the same layout with magic "DRIFTFX\0" and no signature trailer; the distinct magic means one can
-// never be passed off as the other. A user package must provide exactly one effect or transition,
+// never be passed off as the other. A user package must provide exactly one effect, transition or audio effect,
 // with every file under <root>/<one folder>/.
 enum class Container { Signed, User };
 

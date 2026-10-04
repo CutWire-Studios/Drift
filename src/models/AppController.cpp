@@ -153,6 +153,18 @@
 #include <utility>
 
 namespace {
+
+// Packages the user brought themselves (an imported .driftfx, or a folder dropped in by hand) live
+// under <AppData>/<subdir>; signed addons install to their own roots, and the bundled ones sit
+// beside the binary. That location is what the "My effects" chip filters on.
+bool isUserPackageDir(const QString &packageDir, const QString &subdir)
+{
+    const QString appData = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
+    if (packageDir.isEmpty() || appData.isEmpty())
+        return false;
+    const QString root = QDir::cleanPath(QDir(appData).filePath(subdir)) + QLatin1Char('/');
+    return QDir::cleanPath(packageDir).startsWith(root);
+}
 QHash<QString, QString> defaultShortcuts();
 int clipIndexById(const drift::Track &track, const QString &id);
 
@@ -3002,7 +3014,8 @@ drift::KeyframeTrack<double> *keyframeTrackForProp(drift::Clip &clip, const QStr
 
     drift::Effect &effect = clip.effects[effectIndex];
 
-    // Colour, file and clip params are not animatable: the track type is double all the way down.
+    // File and clip params are not animatable, and a colour or vec2 only through its channel
+    // tracks ("<key>.r", "<key>.x"): the track type is double all the way down.
     if (const EffectPresetEntry *def = effectDefForId(effect.catalogId)) {
         for (const drift::EffectParamSpec &spec : def->meta.parameters) {
             if (spec.key == paramKey && spec.isText())
@@ -3269,7 +3282,8 @@ QVariantMap effectToMap(const drift::Effect &effect, int effectIndex, drift::Tim
         for (const drift::EffectParamSpec &paramDef : def->meta.parameters) {
             if (paramDef.desktopGlOnly && runningOnGles())
                 continue;
-            QVariant value = effect.parameters.value(paramDef.key);
+            QVariant value = effect.parameters.value(
+                paramDef.isVec2() ? paramDef.key + QLatin1String(".x") : paramDef.key);
             if (!value.isValid())
                 value = paramDef.defaultVariant();
 
@@ -3287,6 +3301,17 @@ QVariantMap effectToMap(const drift::Effect &effect, int effectIndex, drift::Tim
                 {QStringLiteral("swatches"), paramDef.swatches},
                 {QStringLiteral("enables"), paramDef.enables},
             };
+            if (paramDef.isVec2()) {
+                const QVariant y = effect.parameters.value(paramDef.key + QLatin1String(".y"),
+                                                           paramDef.defaultY);
+                param.insert(QStringLiteral("valueY"), y);
+            }
+            if (paramDef.isEnum())
+                param.insert(QStringLiteral("options"), paramDef.options);
+            if (paramDef.step > 0.0)
+                param.insert(QStringLiteral("step"), paramDef.step);
+            if (paramDef.isColor())
+                param.insert(QStringLiteral("alpha"), paramDef.alpha);
             if (paramDef.isFilePath()) {
                 param.insert(QStringLiteral("fileFilters"), paramDef.fileFilters);
                 const QString path = value.toString();
@@ -3305,12 +3330,17 @@ QVariantMap effectToMap(const drift::Effect &effect, int effectIndex, drift::Tim
                 && paramDef.key.endsWith(QLatin1String("hue"), Qt::CaseInsensitive)) {
                 param.insert(QStringLiteral("hue"), true);
             }
-            // Colours, file paths and clips carry no `prop`: the keyframe stack is typed double.
-            if (!paramDef.isText()) {
+            // File paths and clips carry no `prop`: the keyframe stack is typed double. A colour
+            // and a vec2 animate as per-channel tracks ("<key>.r", "<key>.x"), which share their
+            // key times, so the first channel's track stands in for the whole param.
+            if (!paramDef.isFilePath() && !paramDef.isClip()) {
+                const QString trackKey = paramDef.isColor()  ? paramDef.key + QLatin1String(".r")
+                                         : paramDef.isVec2() ? paramDef.key + QLatin1String(".x")
+                                                             : paramDef.key;
                 param.insert(QStringLiteral("prop"),
                              QStringLiteral("fx.%1.%2").arg(effectIndex).arg(paramDef.key));
                 param.insert(QStringLiteral("keyframes"),
-                             keyframeTrackToMap(effect.paramKeyframes.value(paramDef.key),
+                             keyframeTrackToMap(effect.paramKeyframes.value(trackKey),
                                                 timelineStart));
             }
             params.append(param);
@@ -4155,6 +4185,9 @@ bool declaresParam(const QList<drift::EffectParamSpec> &parameters, const QStrin
 {
     for (const drift::EffectParamSpec &param : parameters) {
         if (param.key == key)
+            return true;
+        // A vec2 is stored as "<key>.x" / "<key>.y", so each axis is writable on its own.
+        if (param.isVec2() && (key == param.key + QLatin1String(".x") || key == param.key + QLatin1String(".y")))
             return true;
     }
     return false;
@@ -14444,7 +14477,7 @@ void AppController::addAdjustmentClipWithEffect(const QString &effectId, int tra
             for (auto it = def->fixedParams.constBegin(); it != def->fixedParams.constEnd(); ++it)
                 effect.parameters.insert(it.key(), it.value());
             for (const drift::EffectParamSpec &p : def->meta.parameters)
-                effect.parameters.insert(p.key, p.defaultVariant());
+                p.insertDefault(effect.parameters);
             clip.effects.append(effect);
             clip.name = tr("Adjustment (%1)").arg(def->filterName);
         }
@@ -20033,6 +20066,7 @@ QVariantList AppController::transitionKinds() const
             {QStringLiteral("category"), def.meta.category},
             {QStringLiteral("previewStripPath"), def.previewStripPath},
             {QStringLiteral("previewFrames"), def.previewFrames},
+            {QStringLiteral("user"), isUserPackageDir(def.gpu.packageDir, QStringLiteral("transitions"))},
             {QStringLiteral("params"), params},
         });
     }
@@ -20113,6 +20147,10 @@ void AppController::setClipColorKeyframe(int trackIndex, int clipIndex, const QS
 {
     if (!isValidClipIndex(trackIndex, clipIndex) || !color.isValid())
         return;
+    // "fx.<i>.<param>" lives on the adjustment linked to this clip; other props are untouched.
+    redirectToKeyframeHost(&trackIndex, &clipIndex, prop);
+    if (!isValidClipIndex(trackIndex, clipIndex))
+        return;
     drift::Clip &clip = m_project.tracks()[trackIndex].clips[clipIndex];
     const drift::Project before = m_project;
     const drift::TimeUs rel = qMax<drift::TimeUs>(0, drift::secondsToUs(atSeconds) - clip.timelineStart);
@@ -20125,6 +20163,55 @@ void AppController::setClipColorKeyframe(int trackIndex, int clipIndex, const QS
         return;
     pushProjectEdit(before, tr("Add keyframe"));
     finishEdit(tr("Keyframe set"));
+}
+
+void AppController::setClipVec2Keyframe(int trackIndex, int clipIndex, const QString &prop,
+                                        double atSeconds, double x, double y)
+{
+    if (!isValidClipIndex(trackIndex, clipIndex))
+        return;
+    redirectToKeyframeHost(&trackIndex, &clipIndex, prop);
+    if (!isValidClipIndex(trackIndex, clipIndex))
+        return;
+    drift::Clip &clip = m_project.tracks()[trackIndex].clips[clipIndex];
+    const drift::Project before = m_project;
+    const drift::TimeUs rel = qBound<drift::TimeUs>(
+        0, drift::secondsToUs(atSeconds) - clip.timelineStart, clip.timelineDuration);
+    const bool wroteX = writeClipPropValue(clip, prop + QLatin1String(".x"), rel, x, m_autoKeyEnabled, /*force=*/true);
+    const bool wroteY = writeClipPropValue(clip, prop + QLatin1String(".y"), rel, y, m_autoKeyEnabled, /*force=*/true);
+    if (!wroteX && !wroteY)
+        return;
+    pushProjectEdit(before, tr("Add keyframe"));
+    finishEdit(tr("Keyframe set"));
+}
+
+void AppController::removeClipChannelKeyframes(int trackIndex, int clipIndex, const QString &prop,
+                                               double atSeconds, const QStringList &suffixes)
+{
+    if (!isValidClipIndex(trackIndex, clipIndex))
+        return;
+    redirectToKeyframeHost(&trackIndex, &clipIndex, prop);
+    if (!isValidClipIndex(trackIndex, clipIndex))
+        return;
+    drift::Clip &clip = m_project.tracks()[trackIndex].clips[clipIndex];
+    const drift::Project before = m_project;
+    const drift::TimeUs rel = qMax<drift::TimeUs>(0, drift::secondsToUs(atSeconds) - clip.timelineStart);
+    bool any = false;
+    for (const QString &suffix : suffixes) {
+        drift::KeyframeTrack<double> *kt =
+            keyframeTrackForProp(clip, prop + suffix, /*createIfMissing=*/false);
+        if (!kt)
+            continue;
+        const drift::TimeUs nearest = kt->nearestKeyframe(rel, kKeyframeToleranceUs);
+        if (nearest < 0)
+            continue;
+        kt->removeKeyframe(nearest);
+        any = true;
+    }
+    if (!any)
+        return;
+    pushProjectEdit(before, tr("Remove keyframe"));
+    finishEdit(tr("Keyframe removed"));
 }
 
 void AppController::removeClipKeyframe(int trackIndex, int clipIndex, const QString &prop, double atSeconds)
@@ -20622,6 +20709,7 @@ QVariantList AppController::effectCatalog() const
             {QStringLiteral("categoryLabel"), effectCategoryLabel(def.meta.category)},
             {QStringLiteral("compositorOnly"), def.meta.compositorOnly},
             {QStringLiteral("thumbnailPath"), def.thumbnailPath},
+            {QStringLiteral("user"), isUserPackageDir(def.gpu.packageDir, QStringLiteral("effects"))},
             {QStringLiteral("params"), params},
         });
     }
@@ -20694,7 +20782,7 @@ void AppController::addEffect(int trackIndex, int clipIndex, const QString &effe
     for (auto it = def->fixedParams.constBegin(); it != def->fixedParams.constEnd(); ++it)
         effect.parameters.insert(it.key(), it.value());
     for (const drift::EffectParamSpec &p : def->meta.parameters)
-        effect.parameters.insert(p.key, p.defaultVariant());
+        p.insertDefault(effect.parameters);
 
     // The parent track is about to be addressed by id, so it needs one before the snapshot.
     m_project.ensureTrackIds();
@@ -20759,7 +20847,7 @@ drift::Effect effectFromCatalogEntry(const EffectPresetEntry &def,
         if (overrideIt != overrides.constEnd())
             effect.parameters.insert(p.key, overrideIt.value());
         else
-            effect.parameters.insert(p.key, p.defaultVariant());
+            p.insertDefault(effect.parameters);
     }
     return effect;
 }
@@ -20777,7 +20865,7 @@ drift::Effect audioEffectFromCatalogEntry(const AudioEffectEntry &def,
         if (overrideIt != overrides.constEnd())
             effect.parameters.insert(p.key, overrideIt.value());
         else
-            effect.parameters.insert(p.key, p.defaultVariant());
+            p.insertDefault(effect.parameters);
     }
     return effect;
 }
@@ -21465,6 +21553,46 @@ bool AppController::setEffectParam(int trackIndex, int clipIndex, int effectInde
     return true;
 }
 
+bool AppController::setEffectVec2Param(int trackIndex, int clipIndex, int effectIndex,
+                                       const QString &key, double x, double y)
+{
+    if (trackIndex < 0 || trackIndex >= m_project.tracks().size())
+        return false;
+    if (!redirectToEffectHost(&trackIndex, &clipIndex, drift::AdjustmentKind::VideoEffects,
+                              /*create=*/false)) {
+        return false;
+    }
+    drift::Track &track = m_project.tracks()[trackIndex];
+    if (clipIndex < 0 || clipIndex >= track.clips.size())
+        return false;
+    drift::Clip &clip = track.clips[clipIndex];
+    if (effectIndex < 0 || effectIndex >= clip.effects.size())
+        return false;
+    const EffectPresetEntry *def = effectDefForId(clip.effects[effectIndex].catalogId);
+    if (!def)
+        return false;
+    const auto specIt = std::find_if(def->meta.parameters.cbegin(), def->meta.parameters.cend(),
+                                     [&](const drift::EffectParamSpec &p) { return p.key == key; });
+    if (specIt == def->meta.parameters.cend() || !specIt->isVec2())
+        return false;
+
+    const drift::Project before = m_project;
+    clip.effects[effectIndex].parameters.insert(key + QLatin1String(".x"),
+                                                std::clamp(x, specIt->min, specIt->max));
+    clip.effects[effectIndex].parameters.insert(key + QLatin1String(".y"),
+                                                std::clamp(y, specIt->min, specIt->max));
+    pushProjectEdit(before, tr("Edit effect"));
+    finishEdit(tr("Effect updated"));
+    return true;
+}
+
+void AppController::previewSetEffectVec2Param(int trackIndex, int clipIndex, int effectIndex,
+                                              const QString &key, double x, double y)
+{
+    previewSetEffectParam(trackIndex, clipIndex, effectIndex, key + QLatin1String(".x"), x);
+    previewSetEffectParam(trackIndex, clipIndex, effectIndex, key + QLatin1String(".y"), y);
+}
+
 // Colour params take this path rather than widening setEffectParam, which every existing QML call
 // site passes a double to. There is no preview variant on purpose: a swatch commits once, so there
 // is no drag stream to coalesce the way a slider needs.
@@ -21497,12 +21625,29 @@ bool AppController::setEffectColorParam(int trackIndex, int clipIndex, int effec
 
     // Normalized to the same six-digit form the catalog default carries, so what lands in the
     // project matches what the parser would have produced.
-    const QColor color(value);
-    if (!color.isValid())
-        return false;
+    // An alpha param stores #rrggbbaa, and an eight-digit value is always read that way (Qt
+    // would read it as #aarrggbb). A six-digit pick keeps the opacity already stored.
+    QString stored;
+    if (specIt->alpha && value.size() == 9 && value.startsWith(QLatin1Char('#'))) {
+        const QColor rgb(value.left(7));
+        bool alphaOk = false;
+        value.right(2).toInt(&alphaOk, 16);
+        if (!rgb.isValid() || !alphaOk)
+            return false;
+        stored = rgb.name(QColor::HexRgb) + value.right(2).toLower();
+    } else {
+        const QColor color(value);
+        if (!color.isValid())
+            return false;
+        stored = color.name(QColor::HexRgb);
+        if (specIt->alpha) {
+            const QString old = clip.effects[effectIndex].parameters.value(key).toString();
+            stored += old.size() == 9 ? old.right(2) : QStringLiteral("ff");
+        }
+    }
 
     const drift::Project before = m_project;
-    clip.effects[effectIndex].parameters.insert(key, color.name(QColor::HexRgb));
+    clip.effects[effectIndex].parameters.insert(key, stored);
     // One undo step: a picked shade that left its "custom colour" switch off would change nothing.
     if (!specIt->enables.isEmpty())
         clip.effects[effectIndex].parameters.insert(specIt->enables, true);
@@ -21895,6 +22040,7 @@ QVariantList AppController::audioEffectCatalog() const
             {QStringLiteral("categoryLabel"), audioEffectCategoryLabel(def.category)},
             {QStringLiteral("icon"), def.icon},
             {QStringLiteral("thumbnailPath"), def.thumbnailPath},
+            {QStringLiteral("user"), isUserPackageDir(def.packageDir, QStringLiteral("audio-effects"))},
             {QStringLiteral("params"), params},
         });
     }

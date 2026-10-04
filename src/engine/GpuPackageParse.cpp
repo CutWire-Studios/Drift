@@ -139,6 +139,12 @@ bool parseParameters(const QJsonArray &params, QList<drift::EffectParamSpec> *ou
             spec.type = drift::EffectParamType::FilePath;
         else if (type == QLatin1String("clip"))
             spec.type = drift::EffectParamType::Clip;
+        else if (type == QLatin1String("point") || type == QLatin1String("vec2"))
+            spec.type = drift::EffectParamType::Vec2;
+        else if (type == QLatin1String("choice") || type == QLatin1String("enum"))
+            spec.type = drift::EffectParamType::Enum;
+        else if (type == QLatin1String("int") || type == QLatin1String("integer"))
+            spec.type = drift::EffectParamType::Int;
         else if (type == QLatin1String("float") || type == QLatin1String("number"))
             spec.type = drift::EffectParamType::Float;
         else {
@@ -162,10 +168,41 @@ bool parseParameters(const QJsonArray &params, QList<drift::EffectParamSpec> *ou
                 return false;
             }
         }
-        spec.min = p.value(QStringLiteral("minValue")).toDouble(p.value(QStringLiteral("min")).toDouble(0.0));
-        spec.max = p.value(QStringLiteral("maxValue")).toDouble(p.value(QStringLiteral("max")).toDouble(1.0));
-        spec.defaultValue =
-            p.value(QStringLiteral("defaultValue")).toDouble(p.value(QStringLiteral("default")).toDouble(0.0));
+        // A point carries its range as [min, min] / [max, max]; the axes share one range here.
+        const auto scalarOrFirst = [](const QJsonValue &v, double fallback) {
+            if (v.isArray())
+                return v.toArray().isEmpty() ? fallback : v.toArray().first().toDouble(fallback);
+            return v.toDouble(fallback);
+        };
+        const QJsonValue minV = p.contains(QStringLiteral("minValue")) ? p.value(QStringLiteral("minValue"))
+                                                                       : p.value(QStringLiteral("min"));
+        const QJsonValue maxV = p.contains(QStringLiteral("maxValue")) ? p.value(QStringLiteral("maxValue"))
+                                                                       : p.value(QStringLiteral("max"));
+        spec.min = scalarOrFirst(minV, 0.0);
+        spec.max = scalarOrFirst(maxV, 1.0);
+        const QJsonValue defV = p.contains(QStringLiteral("defaultValue")) ? p.value(QStringLiteral("defaultValue"))
+                                                                           : p.value(QStringLiteral("default"));
+        if (spec.type == drift::EffectParamType::Vec2) {
+            const QJsonArray xy = defV.toArray();
+            spec.defaultX = xy.size() > 0 ? xy.at(0).toDouble(0.0) : 0.0;
+            spec.defaultY = xy.size() > 1 ? xy.at(1).toDouble(0.0) : 0.0;
+        } else {
+            spec.defaultValue = defV.toDouble(0.0);
+        }
+        spec.step = p.value(QStringLiteral("step")).toDouble(
+            p.value(QStringLiteral("ui")).toObject().value(QStringLiteral("step")).toDouble(0.0));
+        if (spec.type == drift::EffectParamType::Int)
+            spec.step = 1.0;
+        if (spec.type == drift::EffectParamType::Enum) {
+            for (const QJsonValue &o : p.value(QStringLiteral("options")).toArray())
+                spec.options.append(o.toString());
+            if (spec.options.size() < 2) {
+                fail(errorOut, QStringLiteral("parameter '%1' needs at least two options").arg(spec.key));
+                return false;
+            }
+            spec.min = 0.0;
+            spec.max = spec.options.size() - 1;
+        }
         spec.desktopGlOnly = p.value(QStringLiteral("desktopGlOnly")).toBool(false);
         spec.group = p.value(QStringLiteral("group")).toString();
         spec.groupCollapsed = p.value(QStringLiteral("groupCollapsed")).toBool(false);
@@ -178,16 +215,29 @@ bool parseParameters(const QJsonArray &params, QList<drift::EffectParamSpec> *ou
             QString hex = p.value(QStringLiteral("defaultValue")).toString();
             if (hex.isEmpty())
                 hex = p.value(QStringLiteral("default")).toString();
-            const QColor color(hex);
-            if (!hex.startsWith(QLatin1Char('#')) || !color.isValid()) {
+            spec.alpha = p.value(QStringLiteral("alpha")).toBool(false);
+            // Package hex is CSS-style #rrggbbaa; Qt reads 8 digits as #aarrggbb, so split it.
+            int alpha = 255;
+            QString rgbHex = hex;
+            if (spec.alpha && hex.size() == 9 && hex.startsWith(QLatin1Char('#'))) {
+                bool ok = false;
+                alpha = hex.right(2).toInt(&ok, 16);
+                if (!ok)
+                    alpha = 255;
+                rgbHex = hex.left(7);
+            }
+            const QColor color(rgbHex);
+            if (!rgbHex.startsWith(QLatin1Char('#')) || !color.isValid()) {
                 fail(errorOut, QStringLiteral("parameter '%1' has an invalid colour default '%2'")
                                    .arg(spec.key, hex));
                 return false;
             }
             // Normalized here so the project file, the swatch and the uniform all agree on one
-            // spelling. Alpha is dropped on purpose: colours bind as vec3, and a package that
-            // wants transparency declares a separate opacity float.
+            // spelling. Alpha survives only when the param declares "alpha": true, as
+            // #rrggbbaa, which binds as a vec4; otherwise it is dropped and the colour is a vec3.
             spec.defaultColorHex = color.name(QColor::HexRgb);
+            if (spec.alpha)
+                spec.defaultColorHex += QStringLiteral("%1").arg(alpha, 2, 16, QLatin1Char('0'));
             for (const QJsonValue &sv : p.value(QStringLiteral("swatches")).toArray()) {
                 const QString swatch = sv.toString();
                 const QColor c(swatch);

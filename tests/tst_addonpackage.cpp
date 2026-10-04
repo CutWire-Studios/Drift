@@ -1,5 +1,6 @@
 #include "engine/AddonPackage.h"
 #include "engine/AddonRegistry.h"
+#include "engine/AudioEffectCatalog.h"
 #include "engine/GpuPackageParse.h"
 
 #include <QCoreApplication>
@@ -32,6 +33,7 @@ private slots:
     void leavesNoStagingBehindOnFailure();
     void reportsCancellation();
     void installedAddonOutranksBundledContent();
+    void installsForgeAudioEffectPackage();
 
 private:
     // Copy the fixture and flip one byte at `offset` (negative counts back from the end).
@@ -80,6 +82,31 @@ void TestAddonPackage::readsManifestWithoutVerifying()
     QCOMPARE(info->provides.first().kind, QStringLiteral("fonts"));
     QCOMPARE(info->provides.first().root, QStringLiteral("fonts"));
     QCOMPARE(info->files.size(), 3);
+}
+
+// tests/data/forge_fixture_echo.driftfx was exported by Drift Forge's audio editor, so this is the
+// contract between the two repos: the user layout check, the install, and the audio catalog.
+void TestAddonPackage::installsForgeAudioEffectPackage()
+{
+    const QString path = QStringLiteral(DRIFT_TEST_DATA_DIR "/forge_fixture_echo.driftfx");
+    QString error;
+    const auto manifest = readManifest(path, &error, Container::User);
+    QVERIFY2(manifest.has_value(), qPrintable(error));
+    QCOMPARE(manifest->provides.size(), 1);
+    QCOMPARE(manifest->provides.first().kind, QStringLiteral("audio-effects"));
+
+    const QString dest = m_tmp.filePath(QStringLiteral("forge-audio"));
+    PackageInfo info;
+    QVERIFY2(install(path, dest, {}, &info, &error, Container::User), qPrintable(error));
+    const QString root = dest + QStringLiteral("/audio-effects");
+    QVERIFY(QFile::exists(root + QStringLiteral("/forge_fixture_echo/audio-effect.json")));
+
+    reloadAudioEffectCatalog({root});
+    const AudioEffectEntry *entry = audioEffectDefForId(QStringLiteral("forge_fixture_echo"));
+    QVERIFY(entry);
+    QCOMPARE(entry->processorId, QStringLiteral("echo"));
+    QCOMPARE(entry->parameters.first().defaultValue, 120.0);
+    reloadAudioEffectCatalog();
 }
 
 void TestAddonPackage::installsAndVerifies()

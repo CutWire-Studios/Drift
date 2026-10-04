@@ -143,6 +143,7 @@ private slots:
     void vdaStitcherAlignsAndBlendsWindows();
     void vdaInferenceSizeKeepsAspectOnPatchGrid();
     void effectPackageLoaderParsesDepthRequirement();
+    void effectPackageNewParamTypes();
     void depthPipelineBindsMapInFrameOrientation();
     void depthEffectsRenderWithDepthAndPassThroughWithout();
     void depthOfFieldKeepsFocusSharpAndBlursTheRest();
@@ -712,6 +713,126 @@ void EngineTest::effectPackageLoaderParsesDepthRequirement()
         writePackage(QStringLiteral("unknown"), "\"normals\"", "[]"), &error);
     QVERIFY(error.contains(QStringLiteral("unsupported requires")));
     Q_UNUSED(unknown);
+}
+
+void EngineTest::effectPackageNewParamTypes()
+{
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    const QString pkg = dir.filePath(QStringLiteral("newparams"));
+    QDir().mkpath(pkg);
+    QFile json(QDir(pkg).filePath(QStringLiteral("effect.json")));
+    QVERIFY(json.open(QIODevice::WriteOnly | QIODevice::Text));
+    json.write(R"({"id": "test.newparams", "backend": "gpu", "parameters": [
+        {"identifier": "pos", "displayName": "Pos", "type": "point",
+         "minValue": [0, 0], "maxValue": [1, 1], "defaultValue": [0.25, 0.75]},
+        {"identifier": "mode", "displayName": "Mode", "type": "choice",
+         "options": ["Left", "Right", "Up"], "defaultValue": 1},
+        {"identifier": "count", "displayName": "Count", "type": "int",
+         "minValue": 1, "maxValue": 8, "defaultValue": 3},
+        {"identifier": "tint", "displayName": "Tint", "type": "color", "alpha": true,
+         "defaultValue": "#ff000080"},
+        {"identifier": "plain", "displayName": "Flat", "type": "color",
+         "defaultValue": "#00ff00"},
+        {"identifier": "snap", "displayName": "Snap", "type": "float",
+         "minValue": 0, "maxValue": 1, "defaultValue": 0, "ui": {"step": 0.25}}],
+      "pipeline": {"intermediateBuffers": [], "passes": [
+        {"passIndex": 0, "fragmentShader": "x.frag",
+         "inputs": [{"type": "source_texture"}], "output": {"type": "canvas"}}]}})");
+    json.close();
+    QFile frag(QDir(pkg).filePath(QStringLiteral("x.frag")));
+    QVERIFY(frag.open(QIODevice::WriteOnly | QIODevice::Text));
+    frag.write("#version 330 core\nin vec2 v_texCoord; out vec4 fragColor;\n"
+               "uniform sampler2D u_currentTexture;\n"
+               "uniform vec2 pos; uniform vec4 tint;\n"
+               "uniform float mode; uniform float count;\n"
+               "void main(){ fragColor = vec4(pos.x, pos.y, tint.a, 1.0); }\n");
+    frag.close();
+
+    QString error;
+    const EffectPresetEntry entry = EffectPackageLoader::loadPackage(pkg, &error);
+    QVERIFY2(entry.gpu.valid, qPrintable(error));
+    const auto &specs = entry.meta.parameters;
+    QCOMPARE(specs.size(), 6);
+    QVERIFY(specs.at(0).isVec2());
+    QCOMPARE(specs.at(0).defaultX, 0.25);
+    QCOMPARE(specs.at(0).defaultY, 0.75);
+    QCOMPARE(specs.at(0).max, 1.0);
+    QVERIFY(specs.at(1).isEnum());
+    QCOMPARE(specs.at(1).options, (QStringList{"Left", "Right", "Up"}));
+    QCOMPARE(specs.at(1).max, 2.0);
+    QVERIFY(specs.at(2).isInt());
+    QCOMPARE(specs.at(2).step, 1.0);
+    QVERIFY(specs.at(3).alpha);
+    QCOMPARE(specs.at(3).defaultColorHex, QStringLiteral("#ff000080"));
+    QCOMPARE(specs.at(4).defaultColorHex, QStringLiteral("#00ff00"));
+    QCOMPARE(specs.at(5).step, 0.25);
+
+    // A choice needs two options; an unknown type is still an error.
+    {
+        QFile bad(QDir(pkg).filePath(QStringLiteral("effect.json")));
+        QVERIFY(bad.open(QIODevice::ReadOnly));
+        QByteArray text = bad.readAll();
+        bad.close();
+        text.replace("\"options\": [\"Left\", \"Right\", \"Up\"]", "\"options\": [\"Left\"]");
+        QVERIFY(bad.open(QIODevice::WriteOnly | QIODevice::Truncate));
+        bad.write(text);
+        bad.close();
+        EffectPackageLoader::loadPackage(pkg, &error);
+        QVERIFY(error.contains(QStringLiteral("two options")));
+    }
+
+    // Defaults seed a vec2 as two entries; int and enum round and clamp; a bool animated to 0.7 is
+    // true.
+    drift::Effect effect;
+    effect.catalogId = entry.meta.id;
+    for (const drift::EffectParamSpec &spec : specs)
+        spec.insertDefault(effect.parameters);
+    QCOMPARE(effect.parameters.value(QStringLiteral("pos.x")).toDouble(), 0.25);
+    QCOMPARE(effect.parameters.value(QStringLiteral("pos.y")).toDouble(), 0.75);
+    QVERIFY(!effect.parameters.contains(QStringLiteral("pos")));
+    effect.parameters.insert(QStringLiteral("count"), 4.6);
+    effect.parameters.insert(QStringLiteral("mode"), 9.0);
+    QMap<QString, QVariant> resolved = resolvedEffectParameters(effect, entry);
+    QCOMPARE(resolved.value(QStringLiteral("count")).toDouble(), 5.0);
+    QCOMPARE(resolved.value(QStringLiteral("mode")).toDouble(), 2.0);
+
+    // A colour keyframed on its channel tracks folds back into #rrggbbaa; the alpha track
+    // interpolates and the unkeyed channels keep the static shade.
+    drift::KeyframeTrack<double> alphaTrack;
+    alphaTrack.setKeyframe(0, 0.0);
+    alphaTrack.setKeyframe(drift::kUsPerSecond, 1.0);
+    drift::KeyframeTrack<double> redTrack;
+    redTrack.setKeyframe(0, 0.0);
+    redTrack.setKeyframe(drift::kUsPerSecond, 1.0);
+    effect.paramKeyframes.insert(QStringLiteral("tint.a"), alphaTrack);
+    effect.paramKeyframes.insert(QStringLiteral("tint.r"), redTrack);
+    const drift::Effect mid = effect.resolvedAt(drift::kUsPerSecond / 2);
+    const QString tint = mid.parameters.value(QStringLiteral("tint")).toString();
+    QCOMPARE(tint.size(), 9);
+    QCOMPARE(tint.mid(1, 2).toInt(nullptr, 16), 128); // red ramped 0 -> 1
+    QCOMPARE(tint.mid(3, 4), QStringLiteral("0000"));  // green and blue stay static
+    QVERIFY(qAbs(tint.right(2).toInt(nullptr, 16) - 128) <= 1);
+
+    if (!GpuEffectExecutor::instance().isAvailable())
+        QSKIP("OpenGL offscreen context unavailable; parse and resolve checks passed");
+
+    // The same map through the real binder: vec2 from the two axes, vec4 from #rrggbbaa.
+    effect.paramKeyframes.clear();
+    effect.parameters.insert(QStringLiteral("count"), 2.0);
+    effect.parameters.insert(QStringLiteral("mode"), 1.0);
+    QImage frame(8, 8, QImage::Format_RGBA8888);
+    frame.fill(Qt::white);
+    GpuEffectExecutor::ChainStep step;
+    step.cacheKey = QStringLiteral("test.newparams");
+    step.gpu = &entry.gpu;
+    step.parameters = resolvedEffectParameters(effect, entry);
+    const QImage out = GpuEffectExecutor::instance().applyChain({step}, frame, 0);
+    QVERIFY(!out.isNull());
+    const QColor px = out.pixelColor(4, 4);
+    QVERIFY2(qAbs(px.red() - 64) <= 2, qPrintable(QString::number(px.red())));
+    QVERIFY2(qAbs(px.green() - 191) <= 2, qPrintable(QString::number(px.green())));
+    QVERIFY2(qAbs(px.blue() - 128) <= 2, qPrintable(QString::number(px.blue())));
 }
 
 void EngineTest::depthPipelineBindsMapInFrameOrientation()

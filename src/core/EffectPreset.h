@@ -18,6 +18,13 @@ enum class EffectParamType {
     FilePath,
     // Another clip on the timeline, by id. Empty means the effect picks one itself.
     Clip,
+    // Stored as two numbers, "<key>.x" and "<key>.y", so each axis keyframes as an ordinary float
+    // track; bound as a vec2.
+    Vec2,
+    // The chosen option's index, stored and bound as a float.
+    Enum,
+    // A float rounded to a whole number at bind time.
+    Int,
 };
 
 // User-adjustable parameter metadata for an effect preset (GUI-free).
@@ -46,11 +53,23 @@ struct EffectParamSpec
     // Colour params: a bool param that editing this colour switches on, for packages where the
     // colour only applies once a "custom colour" toggle is set.
     QString enables;
+    // Enum params: the labels the inspector offers; the stored value is the index.
+    QStringList options;
+    // Float/Int params: the inspector snaps to multiples of this when positive.
+    double step = 0.0;
+    // Vec2 params: default position and per-axis range (min/max above are the shared range).
+    double defaultX = 0.0;
+    double defaultY = 0.0;
+    // Colour params: carries opacity, so the stored hex is #rrggbbaa and the uniform is a vec4.
+    bool alpha = false;
 
     bool isBoolean() const { return type == EffectParamType::Bool; }
     bool isColor() const { return type == EffectParamType::Color; }
     bool isFilePath() const { return type == EffectParamType::FilePath; }
     bool isClip() const { return type == EffectParamType::Clip; }
+    bool isVec2() const { return type == EffectParamType::Vec2; }
+    bool isEnum() const { return type == EffectParamType::Enum; }
+    bool isInt() const { return type == EffectParamType::Int; }
     // Strings on the parameter map rather than numbers: never keyframed, never bound as uniforms.
     bool isText() const { return isColor() || isFilePath() || isClip(); }
 
@@ -67,10 +86,27 @@ struct EffectParamSpec
             return QVariant(defaultString);
         case EffectParamType::Clip:
             return QVariant(QString());
+        case EffectParamType::Vec2:
+            return QVariant(defaultX);
         case EffectParamType::Float:
+        case EffectParamType::Enum:
+        case EffectParamType::Int:
             break;
         }
         return QVariant(defaultValue);
+    }
+
+    // Seeds a parameter map with this param's default. A vec2 is two entries, so callers should
+    // not insert defaultVariant() under `key` themselves.
+    template<typename Map>
+    void insertDefault(Map &params) const
+    {
+        if (type == EffectParamType::Vec2) {
+            params.insert(key + QStringLiteral(".x"), QVariant(defaultX));
+            params.insert(key + QStringLiteral(".y"), QVariant(defaultY));
+            return;
+        }
+        params.insert(key, defaultVariant());
     }
 
     // What effectToMap and the QML inspectors switch on.
@@ -85,6 +121,12 @@ struct EffectParamSpec
             return QStringLiteral("file");
         case EffectParamType::Clip:
             return QStringLiteral("clip");
+        case EffectParamType::Vec2:
+            return QStringLiteral("vec2");
+        case EffectParamType::Enum:
+            return QStringLiteral("enum");
+        case EffectParamType::Int:
+            return QStringLiteral("int");
         case EffectParamType::Float:
             break;
         }

@@ -8,6 +8,9 @@
 #include <QMutexLocker>
 #include <QSet>
 
+#include <algorithm>
+#include <cmath>
+
 namespace {
 
 QString substituteTemplate(QString templ, const QMap<QString, QVariant> &params)
@@ -177,7 +180,7 @@ QMap<QString, QVariant> resolvedEffectParameters(const drift::Effect &effect, co
 {
     QMap<QString, QVariant> params = def.fixedParams;
     for (const drift::EffectParamSpec &spec : def.meta.parameters)
-        params.insert(spec.key, spec.defaultVariant());
+        spec.insertDefault(params);
     for (auto it = effect.parameters.constBegin(); it != effect.parameters.end(); ++it)
         params.insert(it.key(), it.value());
 
@@ -189,6 +192,14 @@ QMap<QString, QVariant> resolvedEffectParameters(const drift::Effect &effect, co
     for (const drift::EffectParamSpec &spec : def.meta.parameters) {
         if (spec.isColor() && params.value(spec.key).typeId() != QMetaType::QString)
             params.insert(spec.key, spec.defaultColorHex);
+        // An animated bool arrives as the interpolated double.
+        if (spec.isBoolean() && params.value(spec.key).typeId() == QMetaType::Double)
+            params.insert(spec.key, params.value(spec.key).toDouble() > 0.5);
+        // Keyframe interpolation lands between whole numbers; a count or an option index must not.
+        if (spec.isInt() || spec.isEnum()) {
+            const double rounded = std::round(params.value(spec.key).toDouble());
+            params.insert(spec.key, std::clamp(rounded, spec.min, spec.max));
+        }
         if (spec.isFilePath() && params.value(spec.key).typeId() != QMetaType::QString)
             params.insert(spec.key, spec.defaultString);
         if (spec.isClip() && params.value(spec.key).typeId() != QMetaType::QString)

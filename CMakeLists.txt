@@ -1126,6 +1126,8 @@ qt_add_qml_module(drift
         src/qml/components/ClipFilmstrip.qml
         src/qml/components/AppScrollBar.qml
         src/qml/components/KeyframeDiamond.qml
+        src/qml/components/ChannelKeyButton.qml
+        src/qml/components/Vec2Param.qml
         src/qml/components/PropertyKeyframeRow.qml
         src/qml/components/KeyframeGraph.qml
         src/qml/components/SubtitleCueLane.qml

@@ -1,7 +1,10 @@
 #include "Effect.h"
 
+#include <QColor>
 #include <QJsonArray>
 #include <QJsonObject>
+
+#include <cmath>
 
 namespace drift {
 
@@ -183,6 +186,33 @@ Effect Effect::resolvedAt(TimeUs clipTimeUs) const
     for (auto it = paramKeyframes.constBegin(); it != paramKeyframes.constEnd(); ++it) {
         if (!it->isEmpty())
             out.parameters.insert(it.key(), it->evaluateAt(clipTimeUs));
+    }
+    // A colour animates as four channel tracks, "<key>.r/.g/.b/.a" in 0..1, and is folded back
+    // into the hex the rest of the pipeline reads. #rrggbbaa is kept when the static value had
+    // an alpha, or when the alpha channel itself is animated.
+    for (auto it = paramKeyframes.constBegin(); it != paramKeyframes.constEnd(); ++it) {
+        if (!it.key().endsWith(QLatin1String(".r")) || it->isEmpty())
+            continue;
+        const QString base = it.key().chopped(2);
+        const QString hex = parameters.value(base).toString();
+        if (!hex.startsWith(QLatin1Char('#')))
+            continue;
+        const auto channel = [&](const char *suffix, double fallback) {
+            const auto t = paramKeyframes.constFind(base + QLatin1String(suffix));
+            const double v = (t == paramKeyframes.constEnd() || t->isEmpty()) ? fallback
+                                                                              : t->evaluateAt(clipTimeUs);
+            return qBound(0, int(std::lround(v * 255.0)), 255);
+        };
+        const QColor base0(hex.left(7));
+        const bool hasAlpha = hex.size() == 9 || paramKeyframes.contains(base + QLatin1String(".a"));
+        const double a0 = hex.size() == 9 ? hex.right(2).toInt(nullptr, 16) / 255.0 : 1.0;
+        QString composed = QStringLiteral("#%1%2%3")
+                               .arg(channel(".r", base0.redF()), 2, 16, QLatin1Char('0'))
+                               .arg(channel(".g", base0.greenF()), 2, 16, QLatin1Char('0'))
+                               .arg(channel(".b", base0.blueF()), 2, 16, QLatin1Char('0'));
+        if (hasAlpha)
+            composed += QStringLiteral("%1").arg(channel(".a", a0), 2, 16, QLatin1Char('0'));
+        out.parameters.insert(base, composed);
     }
     return out;
 }

@@ -31,8 +31,11 @@ Search order: `DRIFT_EFFECTS_DIR`, `<applicationDir>/effects`, `<AppDataLocation
 | `type` | Binds as | Notes |
 |---|---|---|
 | `float` (default) | `float` | `minValue`/`maxValue`/`defaultValue`; keyframable |
-| `bool` / `boolean` | `float` (0 or 1) | Rendered as a switch; not keyframable |
-| `color` / `colour` | `vec3` | `defaultValue` is a `"#rrggbb"` string; rendered as a swatch |
+| `bool` / `boolean` | `float` (0 or 1) | Rendered as a switch; keyframable (the value rounds at 0.5) |
+| `color` / `colour` | `vec3`, or `vec4` with `"alpha": true` | `defaultValue` is a `"#rrggbb"` string, or `"#rrggbbaa"` with `alpha`; rendered as a swatch (plus an opacity slider); keyframable |
+| `point` / `vec2` | `vec2` | `defaultValue` is `[x, y]`; `minValue`/`maxValue` are `[lo, lo]`/`[hi, hi]` (one shared range); a 2D pad; keyframable per axis |
+| `choice` / `enum` | `float` (option index) | `options[]` (at least two); rendered as a dropdown |
+| `int` / `integer` | `float` (rounded) | `minValue`/`maxValue`/`defaultValue`; the slider snaps to whole numbers; keyframable. A `float` may also set `step` (or `ui.step`) to snap |
 | `file` | *(not bound)* | Absolute path string; `fileFilters` for the picker. Used by `model3d` |
 
 A colour parameter may list `"swatches": ["#rrggbb", …]`, preset shades the inspector shows as a

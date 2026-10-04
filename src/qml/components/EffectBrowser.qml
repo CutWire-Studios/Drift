@@ -11,12 +11,23 @@ Column {
     spacing: 0
 
     readonly property string favoritesId: "__favorites__"
-    readonly property var categories: EditorState.effectCategories()
-    readonly property var catalog: EditorState.effectCatalog()
+    readonly property string mineId: "__mine__"
+    // Bumped when an addon changes the effects on disk (an imported .driftfx, a pack install).
+    property int catalogTick: 0
+    readonly property var categories: { void catalogTick; return EditorState.effectCategories() }
+    readonly property var catalog: { void catalogTick; return EditorState.effectCatalog() }
     property string activeCategory: categories.length > 0 ? categories[0].id : ""
     property alias searchText: search.text
     readonly property string query: search.text.trim().toLowerCase()
     property int favoritesTick: 0
+
+    Connections {
+        target: Addons
+        function onKindChanged(kind) {
+            if (kind === "effects")
+                root.catalogTick++
+        }
+    }
 
     Connections {
         target: EditorState
@@ -41,6 +52,8 @@ Column {
                 return EditorState.isAssetFavorite("effects", preset.id)
             })
         }
+        if (root.activeCategory === root.mineId)
+            return root.catalog.filter(function(preset) { return preset.user === true })
         return root.catalog.filter(function(preset) {
             return preset.category === root.activeCategory
         })
@@ -112,7 +125,7 @@ Column {
             spacing: Theme.spacingSm
 
             ThemedButton {
-                width: parent.width
+                width: parent.width - importButton.width - parent.spacing
                 text: qsTr("Add adjustment layer")
                 glyph: Theme.icons.wand
                 variant: "secondary"
@@ -130,6 +143,15 @@ Column {
                     onTapped: EditorState.addAdjustmentClip(-1, -1)
                 }
             }
+
+            ThemedButton {
+                id: importButton
+                text: qsTr("Import")
+                glyph: Theme.icons.download
+                variant: "secondary"
+                tooltip: qsTr("Install a custom effect or transition from a .driftfx file made in Drift Forge")
+                onClicked: root.Window.window.importUserPackage("")
+            }
         }
 
         Item {
@@ -142,6 +164,8 @@ Column {
             width: parent.width
             categories: root.categories
             activeCategory: root.activeCategory
+            showMine: true
+            mineLabel: qsTr("My Effects")
             searching: root.query.length > 0
             onCategoryActivated: (categoryId) => root.activeCategory = categoryId
         }
@@ -157,15 +181,32 @@ Column {
                 y: 12
                 width: parent.width - 24
                 visible: root.visiblePresets.length === 0
+                         && !(root.activeCategory === root.mineId && root.query.length === 0)
                 text: root.query.length > 0
                       ? qsTr("No effects match “%1”.").arg(search.text.trim())
-                      : (root.activeCategory === root.favoritesId
+                      : (root.activeCategory === root.mineId
+                         ? qsTr("Nothing here yet. Import a .driftfx file to add your own.")
+                         : root.activeCategory === root.favoritesId
                          ? qsTr("No favorites yet. Star presets to save them here.")
                          : qsTr("Nothing in this category."))
                 color: Theme.mutedForeground
                 font.family: Theme.fontFamily
                 font.pixelSize: Theme.fontSizeSm
                 wrapMode: Text.WordWrap
+            }
+
+            // Nothing imported yet: the Import call to action sits in the middle of the panel.
+            EmptyState {
+                anchors.centerIn: parent
+                width: Math.min(parent.width - Theme.spacing3xl, 260)
+                visible: root.activeCategory === root.mineId && root.visiblePresets.length === 0
+                         && root.query.length === 0
+                compact: true
+                glyph: Theme.icons.download
+                title: qsTr("%1 is empty").arg(qsTr("My Effects"))
+                hint: qsTr("Import a .driftfx file made in Drift Forge to add your own.")
+                actionText: qsTr("Import")
+                onActionTriggered: root.Window.window.importUserPackage("")
             }
 
             FontMetrics {

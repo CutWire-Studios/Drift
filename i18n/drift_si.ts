@@ -67,6 +67,10 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Install this audio effect?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Install this effect?</source>
         <translation type="unfinished"></translation>
     </message>
@@ -4597,6 +4601,10 @@
 <context>
     <name>AssetCategoryChips</name>
     <message>
+        <source>My Effects</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Favorites</source>
         <translation>ප්‍රියතමයන්</translation>
     </message>
@@ -4939,8 +4947,24 @@
         <translation>ශ්‍රව්‍ය ප්‍රයෝග සොයන්න</translation>
     </message>
     <message>
+        <source>Import audio effect</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Install a custom audio effect or effect from a .driftfx file made in Drift Forge</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>My Audio Effects</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>No audio effects match “%1”.</source>
         <translation>“%1” ට ගැලපෙන ශ්‍රව්‍ය ප්‍රයෝග නැත.</translation>
+    </message>
+    <message>
+        <source>Nothing here yet. Import a .driftfx file to add your own.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>No favorites yet. Star presets to save them here.</source>
@@ -4949,6 +4973,18 @@
     <message>
         <source>Nothing in this category.</source>
         <translation>මෙම ප්‍රවර්ගයේ කිසිවක් නැත.</translation>
+    </message>
+    <message>
+        <source>%1 is empty</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Import a .driftfx file made in Drift Forge to add your own.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Import</source>
+        <translation type="unfinished">ආයාත කරන්න</translation>
     </message>
     <message>
         <source>Apply to selected clip</source>
@@ -5370,6 +5406,17 @@
     <message>
         <source>Reset to Normal</source>
         <translation>Normal වෙත යළි සකසන්න</translation>
+    </message>
+</context>
+<context>
+    <name>ChannelKeyButton</name>
+    <message>
+        <source>Remove %1 keyframe at the playhead</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add %1 keyframe at the playhead</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -6270,8 +6317,24 @@
         <translation>ගැළපුම් ස්තරය</translation>
     </message>
     <message>
+        <source>Import</source>
+        <translation type="unfinished">ආයාත කරන්න</translation>
+    </message>
+    <message>
+        <source>Install a custom effect or transition from a .driftfx file made in Drift Forge</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>My Effects</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>No effects match “%1”.</source>
         <translation>“%1” ට ගැලපෙන ප්‍රයෝග නැත.</translation>
+    </message>
+    <message>
+        <source>Nothing here yet. Import a .driftfx file to add your own.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>No favorites yet. Star presets to save them here.</source>
@@ -6280,6 +6343,14 @@
     <message>
         <source>Nothing in this category.</source>
         <translation>මෙම ප්‍රවර්ගයේ කිසිවක් නැත.</translation>
+    </message>
+    <message>
+        <source>%1 is empty</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Import a .driftfx file made in Drift Forge to add your own.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Apply to selected clip</source>
@@ -6635,6 +6706,10 @@
     <message>
         <source>Choose %1</source>
         <translation>%1 තෝරන්න</translation>
+    </message>
+    <message>
+        <source>%1 opacity</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Automatic (clip beneath)</source>
@@ -14722,6 +14797,18 @@ If playback stutters, try another.</source>
         <translation>සංක්‍රාන්ති සොයන්න</translation>
     </message>
     <message>
+        <source>Import transition</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Install a custom transition or effect from a .driftfx file made in Drift Forge</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>My Transitions</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>No transitions available</source>
         <translation>සංක්‍රාන්ති කිසිවක් නොමැත</translation>
     </message>
@@ -14738,6 +14825,10 @@ If playback stutters, try another.</source>
         <translation>“%1” ට ගැලපෙන සංක්‍රාන්ති නැත</translation>
     </message>
     <message>
+        <source>No custom transitions yet</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>No favorites yet</source>
         <translation>තවමත් ප්‍රියතමයන් නැත</translation>
     </message>
@@ -14750,12 +14841,20 @@ If playback stutters, try another.</source>
         <translation>වෙනත් නමක් උත්සාහ කරන්න.</translation>
     </message>
     <message>
+        <source>Import a .driftfx file made in Drift Forge to add your own.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Star transitions to save them here.</source>
         <translation>මෙහි සුරැකීමට සංක්‍රාන්ති තරු ලකුණු කරන්න.</translation>
     </message>
     <message>
         <source>Pick another category.</source>
         <translation>වෙනත් ප්‍රවර්ගයක් තෝරන්න.</translation>
+    </message>
+    <message>
+        <source>Import</source>
+        <translation type="unfinished">ආයාත කරන්න</translation>
     </message>
     <message>
         <source>%1 — drag onto an overlap between two clips</source>
@@ -14872,6 +14971,13 @@ If playback stutters, try another.</source>
     <message>
         <source>Custom model</source>
         <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>Vec2Param</name>
+    <message>
+        <source>Edit %1</source>
+        <translation type="unfinished">%1 සංස්කරණය කරන්න</translation>
     </message>
 </context>
 <context>

@@ -21,6 +21,8 @@ Column {
     property bool useSlider: false
     property real sliderFrom: 0
     property real sliderTo: 1
+    // Snaps the slider to multiples of this (whole-number effect params); 0 is continuous.
+    property real sliderStep: 0
     property bool percent: false
     property string unit: "" // e.g. "°" — appended to the numeric readout
     // Show the slider readout in decibels with the percentage after it, for gain properties
@@ -477,6 +479,7 @@ Column {
                 anchors.verticalCenter: parent.verticalCenter
                 from: root.sliderFrom
                 to: root.sliderTo
+                stepSize: root.sliderStep
                 // Keep the playhead/model binding off while pressed — same as
                 // PreviewPanel scrub — so preview ticks cannot fight the drag.
                 Binding on value {

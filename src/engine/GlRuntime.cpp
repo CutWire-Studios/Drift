@@ -3523,6 +3523,23 @@ void setPackageUniforms(QOpenGLShaderProgram *program, const QMap<QString, QVari
     for (auto it = parameters.constBegin(); it != parameters.constEnd(); ++it) {
         if (drift::isEngineBoundGpuUniform(it.key()))
             continue;
+        // A vec2 param travels as "<key>.x" and "<key>.y"; the shader sees one vec2 under <key>.
+        if (it.key().endsWith(QLatin1String(".y"))
+            && parameters.contains(it.key().chopped(2) + QLatin1String(".x"))) {
+            continue;
+        }
+        if (it.key().endsWith(QLatin1String(".x"))) {
+            const QString base = it.key().chopped(2);
+            const auto yIt = parameters.constFind(base + QLatin1String(".y"));
+            if (yIt != parameters.constEnd()) {
+                const int vecLoc = program->uniformLocation(base);
+                if (vecLoc >= 0) {
+                    program->setUniformValue(vecLoc, QVector2D(float(it.value().toDouble()),
+                                                               float(yIt->toDouble())));
+                }
+                continue;
+            }
+        }
         const int loc = program->uniformLocation(it.key());
         if (loc < 0)
             continue;
@@ -3545,9 +3562,18 @@ void setPackageUniforms(QOpenGLShaderProgram *program, const QMap<QString, QVari
                 continue;
             }
             if (s.startsWith(QLatin1Char('#'))) {
-                const QColor c(s);
-                program->setUniformValue(loc,
-                                         QVector3D(float(c.redF()), float(c.greenF()), float(c.blueF())));
+                // #rrggbbaa (an alpha colour param) binds as a vec4; Qt would read the same
+                // digits as #aarrggbb, so the channels are split by hand.
+                if (s.size() == 9) {
+                    const QColor c(s.left(7));
+                    const float a = float(s.right(2).toInt(nullptr, 16)) / 255.f;
+                    program->setUniformValue(loc, QVector4D(float(c.redF()), float(c.greenF()),
+                                                            float(c.blueF()), a));
+                } else {
+                    const QColor c(s);
+                    program->setUniformValue(loc, QVector3D(float(c.redF()), float(c.greenF()),
+                                                            float(c.blueF())));
+                }
             } else if (it.key() == QLatin1String("position") || it.key() == QLatin1String("blendMode")) {
                 float mode = 0.f;
                 if (s == QLatin1String("right") || s == QLatin1String("add"))

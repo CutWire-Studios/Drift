@@ -109,7 +109,7 @@ QMap<QString, QVariant> resolvedTransitionParameters(const drift::Transition &tr
 {
     QMap<QString, QVariant> params = def.fixedParams;
     for (const drift::EffectParamSpec &spec : def.meta.parameters)
-        params.insert(spec.key, spec.defaultVariant());
+        spec.insertDefault(params);
     for (auto it = transition.parameters.constBegin(); it != transition.parameters.constEnd(); ++it)
         params.insert(it.key(), it.value());
     return params;

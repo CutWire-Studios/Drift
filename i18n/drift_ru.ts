@@ -67,6 +67,10 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Install this audio effect?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Install this effect?</source>
         <translation type="unfinished"></translation>
     </message>
@@ -4614,6 +4618,10 @@
 <context>
     <name>AssetCategoryChips</name>
     <message>
+        <source>My Effects</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Favorites</source>
         <translation>Избранное</translation>
     </message>
@@ -4962,8 +4970,24 @@
         <translation>Поиск аудиоэффектов</translation>
     </message>
     <message>
+        <source>Import audio effect</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Install a custom audio effect or effect from a .driftfx file made in Drift Forge</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>My Audio Effects</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>No audio effects match “%1”.</source>
         <translation>Нет аудиоэффектов по запросу «%1».</translation>
+    </message>
+    <message>
+        <source>Nothing here yet. Import a .driftfx file to add your own.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>No favorites yet. Star presets to save them here.</source>
@@ -4972,6 +4996,18 @@
     <message>
         <source>Nothing in this category.</source>
         <translation>В этой категории ничего нет.</translation>
+    </message>
+    <message>
+        <source>%1 is empty</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Import a .driftfx file made in Drift Forge to add your own.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Import</source>
+        <translation type="unfinished">Импорт</translation>
     </message>
     <message>
         <source>Apply to selected clip</source>
@@ -5393,6 +5429,17 @@
     <message>
         <source>Reset to Normal</source>
         <translation>Сбросить до обычного режима</translation>
+    </message>
+</context>
+<context>
+    <name>ChannelKeyButton</name>
+    <message>
+        <source>Remove %1 keyframe at the playhead</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add %1 keyframe at the playhead</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -6299,8 +6346,24 @@
         <translation>Корректирующий слой</translation>
     </message>
     <message>
+        <source>Import</source>
+        <translation type="unfinished">Импорт</translation>
+    </message>
+    <message>
+        <source>Install a custom effect or transition from a .driftfx file made in Drift Forge</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>My Effects</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>No effects match “%1”.</source>
         <translation>Нет эффектов по запросу «%1».</translation>
+    </message>
+    <message>
+        <source>Nothing here yet. Import a .driftfx file to add your own.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>No favorites yet. Star presets to save them here.</source>
@@ -6309,6 +6372,14 @@
     <message>
         <source>Nothing in this category.</source>
         <translation>В этой категории ничего нет.</translation>
+    </message>
+    <message>
+        <source>%1 is empty</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Import a .driftfx file made in Drift Forge to add your own.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Apply to selected clip</source>
@@ -6664,6 +6735,10 @@
     <message>
         <source>Choose %1</source>
         <translation>Выбрать %1</translation>
+    </message>
+    <message>
+        <source>%1 opacity</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Automatic (clip beneath)</source>
@@ -14774,6 +14849,18 @@ If playback stutters, try another.</source>
         <translation>Поиск переходов</translation>
     </message>
     <message>
+        <source>Import transition</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Install a custom transition or effect from a .driftfx file made in Drift Forge</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>My Transitions</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>No transitions available</source>
         <translation>Нет доступных переходов</translation>
     </message>
@@ -14790,6 +14877,10 @@ If playback stutters, try another.</source>
         <translation>Нет переходов по запросу «%1»</translation>
     </message>
     <message>
+        <source>No custom transitions yet</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>No favorites yet</source>
         <translation>В избранном пока ничего нет</translation>
     </message>
@@ -14802,12 +14893,20 @@ If playback stutters, try another.</source>
         <translation>Попробуйте другое название.</translation>
     </message>
     <message>
+        <source>Import a .driftfx file made in Drift Forge to add your own.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Star transitions to save them here.</source>
         <translation>Отмечайте переходы звёздочкой, чтобы сохранять их здесь.</translation>
     </message>
     <message>
         <source>Pick another category.</source>
         <translation>Выберите другую категорию.</translation>
+    </message>
+    <message>
+        <source>Import</source>
+        <translation type="unfinished">Импорт</translation>
     </message>
     <message>
         <source>%1 — drag onto an overlap between two clips</source>
@@ -14924,6 +15023,13 @@ If playback stutters, try another.</source>
     <message>
         <source>Custom model</source>
         <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>Vec2Param</name>
+    <message>
+        <source>Edit %1</source>
+        <translation type="unfinished">Изменить %1</translation>
     </message>
 </context>
 <context>

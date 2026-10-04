@@ -69,7 +69,8 @@ ThemedDialog {
     ThemedDialog {
         id: confirmUserPackage
         title: root.pendingUserPackage.kind === "transitions" ? qsTr("Install this transition?")
-                                                               : qsTr("Install this effect?")
+               : root.pendingUserPackage.kind === "audio-effects" ? qsTr("Install this audio effect?")
+                                                                   : qsTr("Install this effect?")
         acceptText: qsTr("Install")
         preferredWidth: Theme.dialogWidthSm
 

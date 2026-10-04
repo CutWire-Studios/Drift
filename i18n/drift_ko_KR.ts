@@ -67,6 +67,10 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Install this audio effect?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Install this effect?</source>
         <translation type="unfinished"></translation>
     </message>
@@ -4580,6 +4584,10 @@
 <context>
     <name>AssetCategoryChips</name>
     <message>
+        <source>My Effects</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Favorites</source>
         <translation>즐겨찾기</translation>
     </message>
@@ -4916,8 +4924,24 @@
         <translation>오디오 효과 검색</translation>
     </message>
     <message>
+        <source>Import audio effect</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Install a custom audio effect or effect from a .driftfx file made in Drift Forge</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>My Audio Effects</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>No audio effects match “%1”.</source>
         <translation>“%1”과(와) 일치하는 오디오 효과가 없습니다.</translation>
+    </message>
+    <message>
+        <source>Nothing here yet. Import a .driftfx file to add your own.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>No favorites yet. Star presets to save them here.</source>
@@ -4926,6 +4950,18 @@
     <message>
         <source>Nothing in this category.</source>
         <translation>이 카테고리에는 항목이 없습니다.</translation>
+    </message>
+    <message>
+        <source>%1 is empty</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Import a .driftfx file made in Drift Forge to add your own.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Import</source>
+        <translation type="unfinished">가져오기</translation>
     </message>
     <message>
         <source>Apply to selected clip</source>
@@ -5347,6 +5383,17 @@
     <message>
         <source>Reset to Normal</source>
         <translation>일반으로 초기화</translation>
+    </message>
+</context>
+<context>
+    <name>ChannelKeyButton</name>
+    <message>
+        <source>Remove %1 keyframe at the playhead</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add %1 keyframe at the playhead</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -6241,8 +6288,24 @@
         <translation>보정 레이어</translation>
     </message>
     <message>
+        <source>Import</source>
+        <translation type="unfinished">가져오기</translation>
+    </message>
+    <message>
+        <source>Install a custom effect or transition from a .driftfx file made in Drift Forge</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>My Effects</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>No effects match “%1”.</source>
         <translation>“%1”과(와) 일치하는 효과가 없습니다.</translation>
+    </message>
+    <message>
+        <source>Nothing here yet. Import a .driftfx file to add your own.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>No favorites yet. Star presets to save them here.</source>
@@ -6251,6 +6314,14 @@
     <message>
         <source>Nothing in this category.</source>
         <translation>이 카테고리에는 항목이 없습니다.</translation>
+    </message>
+    <message>
+        <source>%1 is empty</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Import a .driftfx file made in Drift Forge to add your own.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Apply to selected clip</source>
@@ -6606,6 +6677,10 @@
     <message>
         <source>Choose %1</source>
         <translation>%1 선택</translation>
+    </message>
+    <message>
+        <source>%1 opacity</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Automatic (clip beneath)</source>
@@ -14662,6 +14737,18 @@ If playback stutters, try another.</source>
         <translation>전환 검색</translation>
     </message>
     <message>
+        <source>Import transition</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Install a custom transition or effect from a .driftfx file made in Drift Forge</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>My Transitions</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>No transitions available</source>
         <translation>사용 가능한 전환이 없습니다</translation>
     </message>
@@ -14678,6 +14765,10 @@ If playback stutters, try another.</source>
         <translation>“%1”과(와) 일치하는 전환이 없습니다</translation>
     </message>
     <message>
+        <source>No custom transitions yet</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>No favorites yet</source>
         <translation>아직 즐겨찾기가 없습니다</translation>
     </message>
@@ -14690,12 +14781,20 @@ If playback stutters, try another.</source>
         <translation>다른 이름을 입력해 보세요.</translation>
     </message>
     <message>
+        <source>Import a .driftfx file made in Drift Forge to add your own.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Star transitions to save them here.</source>
         <translation>전환에 별표를 표시하여 여기에 저장하세요.</translation>
     </message>
     <message>
         <source>Pick another category.</source>
         <translation>다른 카테고리를 선택하세요.</translation>
+    </message>
+    <message>
+        <source>Import</source>
+        <translation type="unfinished">가져오기</translation>
     </message>
     <message>
         <source>%1 — drag onto an overlap between two clips</source>
@@ -14812,6 +14911,13 @@ If playback stutters, try another.</source>
     <message>
         <source>Custom model</source>
         <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>Vec2Param</name>
+    <message>
+        <source>Edit %1</source>
+        <translation type="unfinished">%1 편집</translation>
     </message>
 </context>
 <context>

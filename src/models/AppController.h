@@ -1320,6 +1320,8 @@ public:
                                             double atSeconds, double value);
     Q_INVOKABLE void previewSetEffectParam(int trackIndex, int clipIndex, int effectIndex,
                                            const QString &key, double value);
+    Q_INVOKABLE void previewSetEffectVec2Param(int trackIndex, int clipIndex, int effectIndex,
+                                               const QString &key, double x, double y);
     // Needs an explicit beginPreviewDrag; the colour eyedropper bypasses the effect it is picking
     // for (a chroma key would otherwise sample its own keyed-out output) and then cancels.
     Q_INVOKABLE void previewSetEffectEnabled(int trackIndex, int clipIndex, int effectIndex,
@@ -1691,6 +1693,13 @@ public:
                                           double atSeconds, const QColor &color);
     Q_INVOKABLE void setClipKeyframe(int trackIndex, int clipIndex, const QString &prop, double atSeconds,
                                      double value);
+    // A vec2 effect param ("fx.<i>.<key>") keys its two axis tracks (<prop>.x/.y) as one undo step.
+    Q_INVOKABLE void setClipVec2Keyframe(int trackIndex, int clipIndex, const QString &prop,
+                                         double atSeconds, double x, double y);
+    // Removes the key nearest atSeconds from each <prop><suffix> track as one undo step; for
+    // params whose keys live on several channel tracks (colour ".r/.g/.b/.a", vec2 ".x/.y").
+    Q_INVOKABLE void removeClipChannelKeyframes(int trackIndex, int clipIndex, const QString &prop,
+                                                double atSeconds, const QStringList &suffixes);
     Q_INVOKABLE void removeClipKeyframe(int trackIndex, int clipIndex, const QString &prop, double atSeconds);
     Q_INVOKABLE void previewMoveClipKeyframe(int trackIndex, int clipIndex, const QString &prop,
                                              double fromSeconds, double toSeconds, double value);
@@ -1735,6 +1744,8 @@ public:
     Q_INVOKABLE void moveEffect(int trackIndex, int clipIndex, int fromIndex, int toIndex);
     Q_INVOKABLE bool setEffectParam(int trackIndex, int clipIndex, int effectIndex, const QString &key,
                                     double value);
+    Q_INVOKABLE bool setEffectVec2Param(int trackIndex, int clipIndex, int effectIndex,
+                                        const QString &key, double x, double y);
     Q_INVOKABLE bool setEffectColorParam(int trackIndex, int clipIndex, int effectIndex,
                                          const QString &key, const QString &value);
     // File-path params (model3d .glb). Same commit-once path as colour — no preview stream.

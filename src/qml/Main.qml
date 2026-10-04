@@ -1000,6 +1000,12 @@ ApplicationWindow {
             addonManagerDialogLoader.ensure().openForKind(kind)
     }
 
+    // A .driftfx from Drift Forge; an empty url asks with a file dialog. Shared with the effects
+    // panel's Import button.
+    function importUserPackage(url) {
+        addonManagerDialogLoader.ensure().importUserPackage(url)
+    }
+
     // Header Extras button: open the essential/update nudge when the icon is pulsing,
     // otherwise the full manager — same idea as the update badge vs silent check.
     function openExtras() {

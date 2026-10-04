@@ -9,13 +9,24 @@ import "."
 Item {
     id: root
 
-    readonly property var categories: EditorState.transitionCategories()
-    readonly property var catalog: EditorState.transitionKinds()
+    // Bumped when an addon changes the transitions on disk (an imported .driftfx, a pack install).
+    property int catalogTick: 0
+    readonly property var categories: { void catalogTick; return EditorState.transitionCategories() }
+    readonly property var catalog: { void catalogTick; return EditorState.transitionKinds() }
     readonly property string favoritesId: "__favorites__"
+    readonly property string mineId: "__mine__"
     property string activeCategory: categories.length > 0 ? categories[0].id : ""
     property alias searchText: transitionSearch.text
     readonly property string query: transitionSearch.text.trim().toLowerCase()
     property int favoritesTick: 0
+
+    Connections {
+        target: Addons
+        function onKindChanged(kind) {
+            if (kind === "transitions")
+                root.catalogTick++
+        }
+    }
 
     Connections {
         target: EditorState
@@ -40,6 +51,8 @@ Item {
                 return EditorState.isAssetFavorite("transitions", item.kind)
             })
         }
+        if (root.activeCategory === root.mineId)
+            return root.catalog.filter(function(item) { return item.user === true })
         return root.catalog.filter(function(item) {
             return item.category === root.activeCategory
         })
@@ -75,6 +88,19 @@ Item {
             font.family: Theme.fontFamily
         }
 
+        Item { width: 1; height: Theme.spacingSm }
+
+        ThemedButton {
+            id: transitionImport
+            width: parent.width - Theme.pagePadding * 2
+            x: Theme.pagePadding
+            text: qsTr("Import transition")
+            glyph: Theme.icons.download
+            variant: "secondary"
+            tooltip: qsTr("Install a custom transition or effect from a .driftfx file made in Drift Forge")
+            onClicked: root.Window.window.importUserPackage("")
+        }
+
         Item { width: 1; height: Theme.spacingMd }
 
         AssetCategoryChips {
@@ -82,6 +108,8 @@ Item {
             width: parent.width
             categories: root.categories
             activeCategory: root.activeCategory
+            showMine: true
+            mineLabel: qsTr("My Transitions")
             searching: root.query.length > 0
             onCategoryActivated: (categoryId) => root.activeCategory = categoryId
         }
@@ -89,6 +117,7 @@ Item {
         Item {
             width: parent.width
             height: Math.max(0, parent.height - transitionTip.height - transitionSearch.height
+                             - Theme.spacingSm - transitionImport.height
                              - Theme.spacingMd - transitionCategoryChips.height)
 
             // A category whose filter matches nothing used to leave a
@@ -113,14 +142,21 @@ Item {
                 glyph: Theme.icons.search
                 title: root.query.length > 0
                        ? qsTr("No transitions match “%1”").arg(transitionSearch.text.trim())
-                       : (root.activeCategory === root.favoritesId
+                       : (root.activeCategory === root.mineId
+                          ? qsTr("No custom transitions yet")
+                          : root.activeCategory === root.favoritesId
                           ? qsTr("No favorites yet")
                           : qsTr("Nothing in this category"))
                 hint: root.query.length > 0
                       ? qsTr("Try a different name.")
-                      : (root.activeCategory === root.favoritesId
+                      : (root.activeCategory === root.mineId
+                         ? qsTr("Import a .driftfx file made in Drift Forge to add your own.")
+                         : root.activeCategory === root.favoritesId
                          ? qsTr("Star transitions to save them here.")
                          : qsTr("Pick another category."))
+                actionText: root.activeCategory === root.mineId && root.query.length === 0
+                            ? qsTr("Import") : ""
+                onActionTriggered: root.Window.window.importUserPackage("")
             }
 
             FontMetrics {
