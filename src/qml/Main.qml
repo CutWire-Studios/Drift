@@ -59,6 +59,306 @@ ApplicationWindow {
     // Set true after the unsaved prompt resolves so onClosing can finish quit.
     property bool forceClose: false
 
+    // On macOS, assign a native MenuBar to the ApplicationWindow.
+    // On other platforms (Windows, Linux, Android), menuBar remains null so the
+    // custom in-window header (EditorHeader) and window chrome are completely untouched.
+    menuBar: Theme.isMacOS ? macMenuBar : null
+
+    MenuBar {
+        id: macMenuBar
+        visible: Theme.isMacOS
+
+        Menu {
+            title: qsTr("&File")
+
+            Action {
+                text: qsTr("&New Project")
+                shortcut: StandardKey.New
+                onTriggered: window.requestNewProject()
+            }
+            Action {
+                text: qsTr("&Open Project…")
+                shortcut: StandardKey.Open
+                onTriggered: window.requestOpenProjectDialog()
+            }
+            MenuSeparator {}
+            Action {
+                text: qsTr("&Save Project")
+                shortcut: StandardKey.Save
+                enabled: !window.showStartScreen
+                onTriggered: editorHeader.saveProject()
+            }
+            Action {
+                text: qsTr("Save Project &As…")
+                shortcut: StandardKey.SaveAs
+                enabled: !window.showStartScreen
+                onTriggered: editorHeader.saveProjectAs()
+            }
+            Action {
+                text: qsTr("Save Project &JSON…")
+                enabled: !window.showStartScreen
+                onTriggered: editorHeader.saveProjectJson()
+            }
+            Action {
+                text: qsTr("Open Project JSON…")
+                onTriggered: editorHeader.openProjectJson()
+            }
+            MenuSeparator {}
+            Action {
+                text: qsTr("&Export Video…")
+                enabled: !window.showStartScreen && !EditorState.exportInProgress
+                onTriggered: editorHeader.exportVideo()
+            }
+            Action {
+                text: qsTr("&Package Project…")
+                enabled: !window.showStartScreen
+                onTriggered: editorHeader.packageProject()
+            }
+            MenuSeparator {}
+            Action {
+                text: qsTr("&Close Project")
+                shortcut: StandardKey.Close
+                enabled: !window.showStartScreen
+                onTriggered: window.requestCloseProject()
+            }
+        }
+
+        Menu {
+            title: qsTr("&Edit")
+
+            Action {
+                text: qsTr("&Undo")
+                shortcut: StandardKey.Undo
+                enabled: !window.showStartScreen && EditorState.canUndo
+                onTriggered: window.dispatchAction("undo")
+            }
+            Action {
+                text: qsTr("&Redo")
+                shortcut: StandardKey.Redo
+                enabled: !window.showStartScreen && EditorState.canRedo
+                onTriggered: window.dispatchAction("redo")
+            }
+            MenuSeparator {}
+            Action {
+                text: qsTr("Cu&t")
+                shortcut: StandardKey.Cut
+                enabled: !window.showStartScreen
+                onTriggered: window.dispatchAction("cut")
+            }
+            Action {
+                text: qsTr("&Copy")
+                shortcut: StandardKey.Copy
+                enabled: !window.showStartScreen
+                onTriggered: window.dispatchAction("copy")
+            }
+            Action {
+                text: qsTr("&Paste")
+                shortcut: StandardKey.Paste
+                enabled: !window.showStartScreen
+                onTriggered: window.dispatchAction("paste")
+            }
+            Action {
+                text: qsTr("&Delete")
+                shortcut: StandardKey.Delete
+                enabled: !window.showStartScreen
+                onTriggered: window.dispatchAction("delete")
+            }
+            Action {
+                text: qsTr("Select &All")
+                shortcut: StandardKey.SelectAll
+                enabled: !window.showStartScreen
+                onTriggered: window.dispatchAction("selectAll")
+            }
+            Action {
+                text: qsTr("Clear Selection")
+                enabled: !window.showStartScreen
+                onTriggered: window.dispatchAction("clearSelection")
+            }
+            MenuSeparator {}
+            Action {
+                text: qsTr("Split Clip")
+                shortcut: "S"
+                enabled: !window.showStartScreen
+                onTriggered: window.dispatchAction("split")
+            }
+            Action {
+                text: qsTr("Duplicate Clip")
+                shortcut: "Ctrl+D"
+                enabled: !window.showStartScreen
+                onTriggered: window.dispatchAction("duplicate")
+            }
+            Action {
+                text: qsTr("Copy Effects")
+                enabled: !window.showStartScreen
+                onTriggered: window.dispatchAction("copyEffects")
+            }
+            Action {
+                text: qsTr("Paste Effects")
+                enabled: !window.showStartScreen
+                onTriggered: window.dispatchAction("pasteEffects")
+            }
+            Action {
+                text: qsTr("Paste Attributes…")
+                shortcut: "Ctrl+Alt+V"
+                enabled: !window.showStartScreen
+                onTriggered: window.openPasteAttributes()
+            }
+            MenuSeparator {}
+            Action {
+                text: qsTr("Preferences…")
+                shortcut: StandardKey.Preferences
+                onTriggered: window.openSettings()
+            }
+        }
+
+        Menu {
+            title: qsTr("&Playback")
+
+            Action {
+                text: qsTr("Play / Pause")
+                shortcut: "Space"
+                enabled: !window.showStartScreen
+                onTriggered: window.dispatchAction("playPause")
+            }
+            MenuSeparator {}
+            Action {
+                text: qsTr("Step Back One Frame")
+                shortcut: "Left"
+                enabled: !window.showStartScreen
+                onTriggered: window.dispatchAction("stepBack")
+            }
+            Action {
+                text: qsTr("Step Forward One Frame")
+                shortcut: "Right"
+                enabled: !window.showStartScreen
+                onTriggered: window.dispatchAction("stepForward")
+            }
+            Action {
+                text: qsTr("Previous Cut Point")
+                shortcut: "Up"
+                enabled: !window.showStartScreen
+                onTriggered: window.dispatchAction("previousEdit")
+            }
+            Action {
+                text: qsTr("Next Cut Point")
+                shortcut: "Down"
+                enabled: !window.showStartScreen
+                onTriggered: window.dispatchAction("nextEdit")
+            }
+            Action {
+                text: qsTr("Go to Start of Timeline")
+                shortcut: "Home"
+                enabled: !window.showStartScreen
+                onTriggered: window.dispatchAction("goToStart")
+            }
+            MenuSeparator {}
+            Action {
+                text: qsTr("Toggle Bookmark")
+                shortcut: "M"
+                enabled: !window.showStartScreen
+                onTriggered: window.dispatchAction("toggleBookmark")
+            }
+            Action {
+                text: qsTr("Next Bookmark")
+                enabled: !window.showStartScreen
+                onTriggered: window.dispatchAction("nextBookmark")
+            }
+            Action {
+                text: qsTr("Previous Bookmark")
+                enabled: !window.showStartScreen
+                onTriggered: window.dispatchAction("previousBookmark")
+            }
+        }
+
+        Menu {
+            title: qsTr("&View")
+
+            Action {
+                text: qsTr("Zoom &In")
+                shortcut: StandardKey.ZoomIn
+                enabled: !window.showStartScreen
+                onTriggered: window.dispatchAction("zoomIn")
+            }
+            Action {
+                text: qsTr("Zoom &Out")
+                shortcut: StandardKey.ZoomOut
+                enabled: !window.showStartScreen
+                onTriggered: window.dispatchAction("zoomOut")
+            }
+            MenuSeparator {}
+            Action {
+                text: qsTr("Toggle Fullscreen Preview")
+                enabled: !window.showStartScreen
+                onTriggered: window.togglePreviewFullscreen()
+            }
+            Action {
+                text: qsTr("Toggle Guides")
+                enabled: !window.showStartScreen
+                onTriggered: window.dispatchAction("toggleGuides")
+            }
+        }
+
+        Menu {
+            title: qsTr("&Window")
+
+            Action {
+                text: qsTr("Landscape Workspace")
+                checkable: true
+                checked: !EditorState.workspaceLayoutOverridden || EditorState.workspaceLayoutPreferred === "landscape"
+                onTriggered: EditorState.setWorkspaceLayoutPreference("landscape")
+            }
+            Action {
+                text: qsTr("Portrait Workspace")
+                checkable: true
+                checked: EditorState.workspaceLayoutOverridden && EditorState.workspaceLayoutPreferred === "portrait"
+                onTriggered: EditorState.setWorkspaceLayoutPreference("portrait")
+            }
+            Action {
+                text: qsTr("Auto Workspace (Follow Canvas)")
+                checkable: true
+                checked: !EditorState.workspaceLayoutOverridden
+                onTriggered: EditorState.clearWorkspaceLayoutPreference()
+            }
+            MenuSeparator {}
+            Action {
+                text: qsTr("Downloads")
+                onTriggered: downloadsWindowLoader.ensure().show()
+            }
+            Action {
+                text: qsTr("Multicam")
+                onTriggered: window.openMulticam()
+            }
+        }
+
+        Menu {
+            title: qsTr("&Help")
+
+            Action {
+                text: qsTr("Keyboard Shortcuts")
+                shortcut: "F1"
+                onTriggered: {
+                    if (window.previewFullscreen)
+                        window.togglePreviewFullscreen()
+                    assetsPanel.showTab("shortcuts")
+                }
+            }
+            Action {
+                text: qsTr("Extras…")
+                onTriggered: window.openExtras()
+            }
+            Action {
+                text: qsTr("Check for Updates…")
+                onTriggered: window.openUpdateDialog()
+            }
+            MenuSeparator {}
+            Action {
+                text: qsTr("Debug Info…")
+                onTriggered: window.openDebugInfo()
+            }
+        }
+    }
+
+
     onClosing: function (close) {
         // Before any of the branches below, so a quit that is cancelled at the
         // unsaved prompt still records where the window was.
